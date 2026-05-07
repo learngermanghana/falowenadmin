@@ -26,6 +26,8 @@ const CLASS_ID_ALIASES = new Map([
   ["a1 leipzip klasse", "A1 Leipzig Klasse"],
   ["a2 stuttgart", "A2 Stuttgart Klasse"],
   ["a2 stuttgart klasse", "A2 Stuttgart Klasse"],
+  ["a2 freiburg", "A2 Freiburg Klasse"],
+  ["a2 freiburg klasse", "A2 Freiburg Klasse"],
 ]);
 
 const ACTIVE_CLASS_IDS = new Set([
@@ -34,6 +36,7 @@ const ACTIVE_CLASS_IDS = new Set([
   "A1 Hamburg Klasse",
   "A1 Leipzig Klasse",
   "A2 Stuttgart Klasse",
+  "A2 Freiburg Klasse",
 ]);
 
 function normalizeToCanonicalClassId(value) {
@@ -42,6 +45,7 @@ function normalizeToCanonicalClassId(value) {
 
   return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
 }
+
 
 function isActiveClassId(classId) {
   return ACTIVE_CLASS_IDS.has(normalizeToCanonicalClassId(classId));
