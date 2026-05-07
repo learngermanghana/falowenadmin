@@ -30,15 +30,6 @@ const CLASS_ID_ALIASES = new Map([
   ["a2 freiburg klasse", "A2 Freiburg Klasse"],
 ]);
 
-const ACTIVE_CLASS_IDS = new Set([
-  "A1 Dortmund Klasse",
-  "A1 Berlin Klasse",
-  "A1 Hamburg Klasse",
-  "A1 Leipzig Klasse",
-  "A2 Stuttgart Klasse",
-  "A2 Freiburg Klasse",
-]);
-
 function normalizeToCanonicalClassId(value) {
   const normalized = normalizeClassId(value);
   if (!normalized) return "";
@@ -46,10 +37,6 @@ function normalizeToCanonicalClassId(value) {
   return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
 }
 
-
-function isActiveClassId(classId) {
-  return ACTIVE_CLASS_IDS.has(normalizeToCanonicalClassId(classId));
-}
 
 function resolveClassKey(data = {}) {
   return normalizeToCanonicalClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
@@ -67,7 +54,7 @@ export async function listClassesFromPublishedSheetWithLoader(loadRows = loadPub
 
   rows.forEach((row) => {
     const classIdentifier = resolvePublishedClassIdentifier(row);
-    if (!classIdentifier || !isActiveClassId(classIdentifier)) return;
+    if (!classIdentifier) return;
 
     if (!classesMap.has(classIdentifier)) {
       classesMap.set(classIdentifier, {
@@ -103,7 +90,7 @@ export async function listClassesWithDeps(
             classId: resolveClassKey(c),
             name: normalizeToCanonicalClassId(c.name || c.className || c.classId || c.id),
           }))
-          .filter((c) => c.classId && isActiveClassId(c.classId));
+          .filter((c) => c.classId);
       }
 
       const studentsSnap = await getDocsFn(collectionFn(dbInstance, "students"));
@@ -112,7 +99,7 @@ export async function listClassesWithDeps(
       studentsSnap.forEach((docSnap) => {
         const data = docSnap.data();
         const classId = resolveClassKey(data);
-        if (!classId || !isActiveClassId(classId)) return;
+        if (!classId) return;
         if (!classesMap.has(classId)) {
           classesMap.set(classId, {
             classId,
