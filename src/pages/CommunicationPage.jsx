@@ -55,6 +55,12 @@ const QUICK_TEMPLATES = [
     announcement:
       "Hi everyone, there is a light out right now, so please hold on. Once the light is back, you will be notified.",
   },
+  {
+    label: "First day orientation congrats",
+    topic: "Orientation Attendance Congrats",
+    announcement:
+      "Congratulations on attending your first day orientation! Stay consistent with class attendance and participation. We have helped many students, and we want to add your story to our success stories too.",
+  },
 ];
 
 const fieldStyle = { display: "grid", gap: 6 };
