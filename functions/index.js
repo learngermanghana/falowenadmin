@@ -188,14 +188,9 @@ function resolveSessionIdCandidates(sessionId) {
   const normalized = String(sessionId || "").trim();
   if (!normalized) return [];
 
-  const candidates = [normalized];
-  const numeric = Number.parseInt(normalized, 10);
-
-  if (Number.isInteger(numeric) && String(numeric) === normalized && numeric > 0) {
-    candidates.push(String(numeric - 1));
-  }
-
-  return candidates;
+  // Always resolve to the exact session id to avoid accidental day offsets
+  // (for example, checking into Day 2 while opening Day 1).
+  return [normalized];
 }
 
 async function getExistingSessionRef(classId, sessionId) {
