@@ -476,14 +476,13 @@
         "Answer3": "a) schwimmen gehen",
         "Answer4": "d) zum See fahren und dort im Zelt übernachten",
         "Answer5": "b) eine Route mit dem Zug durch das ganze Land",
-        "Answer6": "B) Um 10 Uhr",
-        "Answer7": "B) Eine Rucksack"
       },
       "teil4": {
         "Answer1": "B) Um 10 Uhr",
         "Answer2": "B) Eine Rucksack",
-        "Answer3": "A) Spielen und Spazieren gehen",
-        "Answer4": "C) in einem Restaurant"
+        "Answer3": "A) Ein Piknik mache",
+        "Answer4": "C) in einem Restaurant",
+        "Answer5": "A) Spielen und Spazieren gehen"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1Fy36SwyPWJOPXpAPJjIck6JLTdhIlrk11l6KYw1umvk/gviz/tq?tqx=out:html&sheet=Key",
@@ -499,13 +498,13 @@
         "Answer3": "c) Schokoladenkuchen und Tiramisu",
         "Answer4": "b) Die Suppe ist kalt",
         "Answer5": "c) In bar",
-        "Answer6": "A) Sie trinkt Tee",
-        "Answer7": "B) Mensch aregre"
       },
       "teil4": {
-        "Answer1": "A) Sie geht jogeen",
-        "Answer2": "B) in den Bergen",
-        "Answer3": "B) Klassische Musik"
+        "Answer1": "A) Sie trinkt Tee",
+        "Answer2": "B) Mensch aregre"
+        "Answer3": "A) Sie geht jogeen",
+        "Answer4": "B) in den Bergen",
+        "Answer5": "B) Klassische Musik"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/13s4XR4XAKonwV9KVjT-MOw5wXW6b99l3PMmuod7xu7w/gviz/tq?tqx=out:html&sheet=Key",
