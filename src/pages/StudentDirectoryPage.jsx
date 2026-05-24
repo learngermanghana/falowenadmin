@@ -129,6 +129,34 @@ const addStudentDefaultDraft = {
 const addStudentNumericFields = new Set(["balance", "paid", "dailyLimit"]);
 const addStudentDateFields = new Set(["contractStart", "contractEnd"]);
 
+const followUpTemplates = [
+  {
+    key: "balance",
+    label: "Balance reminder",
+    helper: "For students who still owe fees.",
+  },
+  {
+    key: "assignment",
+    label: "Assignment reminder",
+    helper: "For students who have not submitted class work.",
+  },
+  {
+    key: "exam",
+    label: "Exam practice reminder",
+    helper: "For Goethe/exam preparation follow-up.",
+  },
+  {
+    key: "contract",
+    label: "Contract ending reminder",
+    helper: "For students whose class contract is ending soon.",
+  },
+  {
+    key: "classUpdate",
+    label: "Class update",
+    helper: "General update for class time, level, or learning plan.",
+  },
+];
+
 function buildStudentCodeFromName(name) {
   const safeName = String(name || "")
     .replace(/\s+/g, "")
@@ -154,6 +182,102 @@ function normalizeDateValue(value) {
   return `${utcYear}-${utcMonth}-${utcDay}`;
 }
 
+function toNumber(value) {
+  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatGhs(value) {
+  const amount = toNumber(value);
+  return `GHS ${amount.toLocaleString("en-GH", { maximumFractionDigits: 2 })}`;
+}
+
+function displayValue(...values) {
+  return values.map((value) => String(value ?? "").trim()).find(Boolean) || "";
+}
+
+function resolveStudentName(student) {
+  return displayValue(student?.name, student?.displayName, student?.studentCode, student?.id) || "Student";
+}
+
+function resolveStudentPhone(student, draft = {}) {
+  return displayValue(draft.phone, student?.phone, student?.whatsapp, student?.phoneNumber, student?.guardianPhone);
+}
+
+function resolveStudentClass(student, draft = {}) {
+  return displayValue(draft.className, draft.level, draft.program, student?.className, student?.level, student?.program, student?.location) || "your German class";
+}
+
+function resolveBalance(student, draft = {}) {
+  return displayValue(draft.balanceDue, student?.balanceDue, student?.balance, student?.outstandingBalance, student?.amountDue);
+}
+
+function resolveContractEnd(student, draft = {}) {
+  return displayValue(draft.contractEnd, student?.contractEnd);
+}
+
+function daysUntilDate(value) {
+  const normalized = normalizeDateValue(value);
+  if (!normalized) return null;
+  const target = new Date(`${normalized}T00:00:00Z`);
+  if (Number.isNaN(target.getTime())) return null;
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+}
+
+function formatDisplayDate(value) {
+  const normalized = normalizeDateValue(value);
+  if (!normalized) return "not set";
+  const date = new Date(`${normalized}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return normalized;
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function normalizePhoneForWhatsapp(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("233")) return digits;
+  if (digits.startsWith("0")) return `233${digits.slice(1)}`;
+  if (digits.length === 9) return `233${digits}`;
+  return digits;
+}
+
+function buildFollowUpMessage(templateKey, student, draft = {}) {
+  const name = resolveStudentName(student);
+  const className = resolveStudentClass(student, draft);
+  const balance = resolveBalance(student, draft);
+  const contractEnd = resolveContractEnd(student, draft);
+  const daysLeft = daysUntilDate(contractEnd);
+  const contractDate = formatDisplayDate(contractEnd);
+
+  if (templateKey === "balance") {
+    const balanceText = toNumber(balance) > 0 ? formatGhs(balance) : "your outstanding balance";
+    return `Hello ${name}, this is a reminder from Learn Language Education Academy / Falowen. Your ${className} record shows a balance of ${balanceText}. Kindly make payment early so your learning can continue smoothly. Please update us after payment. Thank you.`;
+  }
+
+  if (templateKey === "assignment") {
+    return `Hello ${name}, kindly remember to complete and submit your pending ${className} assignment. Consistent practice is very important for your German progress. Please submit it and update us when done.`;
+  }
+
+  if (templateKey === "exam") {
+    return `Hello ${name}, this is your exam practice reminder. Please practise one German task today: Schreiben, Sprechen, Lesen, or Hören. Focus on your weak area and send an update on your progress. Do not wait until exam week before practising.`;
+  }
+
+  if (templateKey === "contract") {
+    const remainingText = daysLeft == null ? "soon" : daysLeft <= 0 ? "today or has already ended" : `in ${daysLeft} day(s)`;
+    return `Hello ${name}, your ${className} learning contract ends ${remainingText}${contractEnd ? ` (${contractDate})` : ""}. Kindly contact us if you want to continue, renew, or complete any pending payment/assignment before the end date.`;
+  }
+
+  return `Hello ${name}, this is an update from Learn Language Education Academy / Falowen concerning your ${className}. Kindly check your class information, continue your lessons consistently, and contact us if you need help. Thank you.`;
+}
+
+function whatsappUrl(phone, message) {
+  const normalizedPhone = normalizePhoneForWhatsapp(phone);
+  if (!normalizedPhone) return "";
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+
 export default function StudentDirectoryPage() {
   const { pushToast } = useToast();
   const [activeTab, setActiveTab] = useState("directory");
@@ -166,6 +290,8 @@ export default function StudentDirectoryPage() {
   const [creatingStudent, setCreatingStudent] = useState(false);
   const [createDraft, setCreateDraft] = useState(addStudentDefaultDraft);
   const [error, setError] = useState("");
+  const [followUpType, setFollowUpType] = useState("balance");
+  const [followUpMessage, setFollowUpMessage] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -231,6 +357,14 @@ export default function StudentDirectoryPage() {
     () => filteredStudents.find((student) => student.id === selectedStudentId) || null,
     [filteredStudents, selectedStudentId],
   );
+
+  useEffect(() => {
+    if (!selectedStudent) {
+      setFollowUpMessage("");
+      return;
+    }
+    setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent)));
+  }, [followUpType, selectedStudent, selectedStudentId, drafts]);
 
   const updateDraftField = (studentId, field, value, student) => {
     setDrafts((prev) => {
@@ -332,12 +466,33 @@ export default function StudentDirectoryPage() {
     }
   };
 
+  const copyFollowUpMessage = async () => {
+    if (!followUpMessage.trim()) return;
+    try {
+      await navigator.clipboard.writeText(followUpMessage);
+      pushToast({ type: "success", message: "WhatsApp message copied." });
+    } catch {
+      pushToast({ type: "info", message: "Select and copy the message manually." });
+    }
+  };
+
+  const openWhatsappFollowUp = () => {
+    if (!selectedStudent) return;
+    const phone = resolveStudentPhone(selectedStudent, getDraft(selectedStudent));
+    const url = whatsappUrl(phone, followUpMessage);
+    if (!url) {
+      pushToast({ type: "error", message: "This student has no valid WhatsApp/phone number." });
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div style={{ display: "grid", gap: 12, padding: 16 }}>
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
         <h1 style={{ margin: "0 0 8px" }}>Student Directory</h1>
         <p style={{ margin: "0 0 12px", opacity: 0.8 }}>
-          Open one student at a time to view and edit details from Firestore.
+          Open one student at a time to view details, edit records, and generate WhatsApp follow-up messages.
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <button
@@ -460,6 +615,88 @@ export default function StudentDirectoryPage() {
                             {savingId === selectedStudent.id ? "Saving..." : "Save student"}
                           </button>
                         </div>
+
+                        <section
+                          style={{
+                            marginTop: 18,
+                            border: "1px solid #c7d2fe",
+                            borderRadius: 14,
+                            padding: 14,
+                            background: "linear-gradient(135deg, #eef2ff, #ffffff)",
+                            display: "grid",
+                            gap: 12,
+                          }}
+                        >
+                          <div>
+                            <h3 style={{ margin: "0 0 4px" }}>WhatsApp follow-up generator</h3>
+                            <p style={{ margin: 0, color: "#64748b" }}>
+                              Generate a ready message for balances, assignments, exams, contract renewal, or class updates.
+                            </p>
+                          </div>
+
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+                            {followUpTemplates.map((template) => (
+                              <button
+                                key={template.key}
+                                type="button"
+                                onClick={() => setFollowUpType(template.key)}
+                                style={{
+                                  textAlign: "left",
+                                  border: followUpType === template.key ? "1px solid #4f46e5" : "1px solid #cbd5e1",
+                                  background: followUpType === template.key ? "#eef2ff" : "#fff",
+                                  color: "#0f172a",
+                                  borderRadius: 12,
+                                  padding: "10px 12px",
+                                  boxShadow: followUpType === template.key ? "0 12px 28px -22px rgba(79,70,229,.9)" : "none",
+                                }}
+                              >
+                                <strong style={{ display: "block" }}>{template.label}</strong>
+                                <small style={{ color: "#64748b" }}>{template.helper}</small>
+                              </button>
+                            ))}
+                          </div>
+
+                          <label style={{ display: "grid", gap: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700 }}>Generated message</span>
+                            <textarea
+                              rows={6}
+                              value={followUpMessage}
+                              onChange={(event) => setFollowUpMessage(event.target.value)}
+                              style={{
+                                width: "100%",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: 12,
+                                padding: 12,
+                                background: "#fff",
+                                minHeight: 140,
+                              }}
+                            />
+                          </label>
+
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <button type="button" onClick={openWhatsappFollowUp}>
+                              Open WhatsApp
+                            </button>
+                            <button
+                              type="button"
+                              onClick={copyFollowUpMessage}
+                              style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}
+                            >
+                              Copy message
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent)))}
+                              style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}
+                            >
+                              Reset text
+                            </button>
+                          </div>
+
+                          <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>
+                            Phone used: <strong>{resolveStudentPhone(selectedStudent, getDraft(selectedStudent)) || "No phone number found"}</strong>
+                          </p>
+                        </section>
                       </div>
                     )}
                   </div>
