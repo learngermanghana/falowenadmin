@@ -22,6 +22,13 @@ export default function AttendanceOverviewPage() {
     })();
   }, []);
 
+  const activeClasses = classes.filter((klass) => {
+    const status = String(klass?.status || "").trim().toLowerCase();
+    if (["inactive", "archived", "ended"].includes(status)) return false;
+    if (typeof klass?.active === "boolean") return klass.active;
+    return true;
+  });
+
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -35,12 +42,12 @@ export default function AttendanceOverviewPage() {
       {loading && <p>Loading classes...</p>}
       {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}
 
-      {!loading && !error && classes.length === 0 && (
+      {!loading && !error && activeClasses.length === 0 && (
         <p>No classes found. Add documents in the <b>classes</b> collection or set classId/className on students.</p>
       )}
 
       <div style={{ display: "grid", gap: 10, maxWidth: 520 }}>
-        {classes.map((klass) => (
+        {activeClasses.map((klass) => (
           <div key={klass.classId} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
             <div style={{ fontWeight: 700 }}>{klass.name}</div>
             <div style={{ fontSize: 12, opacity: 0.75 }}>classId: {klass.classId}</div>
