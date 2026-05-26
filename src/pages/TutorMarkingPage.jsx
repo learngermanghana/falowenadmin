@@ -6,63 +6,56 @@ import { deleteTutorReview, loadPendingTutorReviews, saveTutorReviewResponse } f
 const AUTOSAVE_KEY = "tutorMarkingDrafts.v1";
 const FEEDBACK_SNIPPETS = [
   {
-    key: "template_enquiry_opening",
-    label: "Template 1: Enquiry opening",
-    text: "Use this opening for enquiries: \"Ich schreibe Ihnen, weil ich eine Anfrage stellen möchte.\"",
+    key: "word_order",
+    label: "Word order",
+    text: "Please check your German word order. In a normal sentence, use: subject + verb + time/details. Example: \"Ich lerne morgen Deutsch.\"",
   },
   {
-    key: "template_cancellation_opening",
-    label: "Template 2: Appointment cancellation opening",
-    text: "Use this opening to cancel an appointment: \"Ich schreibe Ihnen, weil ich den Termin absagen möchte.\"",
+    key: "formal_opening",
+    label: "Formal opening",
+    text: "Use a clear formal opening: \"Ich schreibe Ihnen, weil ich eine Anfrage stellen möchte.\"",
   },
   {
-    key: "template_enquiry_body",
-    label: "Template 3: Enquiry body (always ask price/payment)",
-    text: "For enquiries (hotel/school booking), include: \"Wie viel kostet das?\" \"Wie kann ich bezahlen? Mit Kreditkarte oder bar?\"",
+    key: "verb_at_end",
+    label: "Verb at end",
+    text: "With \"weil\", the conjugated verb goes to the end. Example: \"..., weil ich den Kurs buchen möchte.\"",
   },
   {
-    key: "weil_rule",
-    label: "Template 4: Weil rule",
-    text: "With \"weil\", put the conjugated verb at the end: \"..., weil ich eine Anfrage stellen möchte.\"",
+    key: "question_structure",
+    label: "Question structure",
+    text: "For questions, check the structure. W-question: \"Wann beginnt der Kurs?\" Yes/No question: \"Haben Sie morgen Zeit?\"",
   },
   {
-    key: "statement_rule",
-    label: "Template 5: Statement word order",
-    text: "Statement rule: Subject + Verb + Time + Other details. Example: \"Ich lerne morgen in der Schule Deutsch.\"",
+    key: "closing",
+    label: "Closing",
+    text: "End your email politely. For formal emails, use: \"Mit freundlichen Grüßen\". For informal emails, use: \"Viele Grüße\".",
   },
   {
-    key: "modal_verb_rule",
-    label: "Template 6: Modal verb rule (fill-in)",
-    text: "Modal verb rule: Subject + modal verb + object/details + infinitive (at the end). Fill-in: \"Ich [modal verb] [object] [infinitive].\" Example: \"Ich möchte den Kurs buchen.\"",
+    key: "too_short",
+    label: "Too short",
+    text: "Your answer is too short. Please add all required points from the task and write complete sentences.",
   },
   {
-    key: "w_question_rule",
-    label: "Template 7: W-question rule (fill-in)",
-    text: "W-question rule: Question word + Verb + Subject + ... ? Fill-in: \"[W-word] [verb] [subject] ... ?\" Example: \"Wann beginnt der Kurs?\"",
+    key: "good_improvement",
+    label: "Good improvement",
+    text: "Good improvement. Your structure is clearer now. Please keep checking small grammar details before submitting.",
   },
   {
-    key: "yes_no_question_rule",
-    label: "Template 8: Yes/No question rule (fill-in)",
-    text: "Yes/No question rule: Verb + Subject + ... ? Fill-in: \"[Verb] [subject] ... ?\" Example: \"Haben Sie morgen Zeit?\"",
+    key: "ask_question",
+    label: "Ask student question",
+    text: "Please reply and explain which part was difficult for you, so I can guide you better.",
   },
-  {
-    key: "course_start_question",
-    label: "Template 9: Ask when the course starts",
-    text: "Use: \"Wann fängt der Kurs an?\"",
-  },
-  {
-    key: "polite_info_request",
-    label: "Template 10: Polite information request",
-    text: "Use: \"Könnten Sie Informationen über + [topic] geben?\" Example: \"Könnten Sie Informationen über die Adresse geben?\"",
-  },
+];
+
+const STATUS_OPTIONS = [
+  { value: "approved", label: "Approve and close", tone: "success" },
+  { value: "needs_improvement", label: "Return for correction", tone: "warning" },
 ];
 
 function extractText(review, keys) {
   for (const key of keys) {
     const value = review?.[key];
-    if (typeof value === "string" && value.trim()) {
-      return value.trim();
-    }
+    if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";
 }
@@ -103,16 +96,13 @@ function getReadingTimeText(text) {
 function getActionableHint(feedback) {
   const normalized = String(feedback || "").trim();
   if (!normalized) return "Add at least one actionable suggestion for the student.";
-  if (normalized.length < 50) return "Try adding specific next steps (what to change + where).";
+  if (normalized.length < 50) return "Try adding specific next steps: what to change + where.";
   if (!/[.!?]/.test(normalized)) return "Use complete sentences so students can follow your guidance clearly.";
   return "Looks good — your feedback includes actionable guidance.";
 }
 
 function getReviewHistory(review) {
-  if (Array.isArray(review?.reviewHistory) && review.reviewHistory.length) {
-    return review.reviewHistory;
-  }
-
+  if (Array.isArray(review?.reviewHistory) && review.reviewHistory.length) return review.reviewHistory;
   const fallback = [];
   if (review?.reviewedAt || review?.reviewStatus || review?.tutorFeedback) {
     fallback.push({
@@ -128,13 +118,98 @@ function getReviewHistory(review) {
 function loadAutosavedDrafts() {
   try {
     const parsed = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || "{}");
-    if (parsed && typeof parsed === "object") {
-      return parsed;
-    }
+    if (parsed && typeof parsed === "object") return parsed;
   } catch {
     // Ignore malformed local cache.
   }
   return {};
+}
+
+function getPriorityBadges(review) {
+  const badges = [];
+  const updatedMillis = toMillis(review?.updatedAt);
+  const ageHours = updatedMillis ? Math.floor((Date.now() - updatedMillis) / (1000 * 60 * 60)) : 0;
+  const unreadReplies = getNewReplies(review).length;
+  const source = String(review?.source || "").trim();
+  const status = String(review?.reviewStatus || review?.status || "").trim().toLowerCase();
+
+  if (unreadReplies > 0) badges.push({ label: "New reply", tone: "warning" });
+  if (ageHours >= 24) badges.push({ label: "Older than 24h", tone: "danger" });
+  if (!review?.reviewedAt && !review?.tutorFeedback) badges.push({ label: "First review", tone: "info" });
+  if (status.includes("improve") || status.includes("revision")) badges.push({ label: "Revision", tone: "warning" });
+  if (source) badges.push({ label: source, tone: "neutral" });
+  if (!badges.length) badges.push({ label: "Standard", tone: "neutral" });
+  return badges;
+}
+
+function badgeStyle(tone) {
+  const palettes = {
+    warning: { background: "#fef3c7", borderColor: "#f59e0b", color: "#92400e" },
+    danger: { background: "#fee2e2", borderColor: "#ef4444", color: "#991b1b" },
+    info: { background: "#dbeafe", borderColor: "#93c5fd", color: "#1e3a8a" },
+    success: { background: "#dcfce7", borderColor: "#86efac", color: "#166534" },
+    neutral: { background: "#f8fafc", borderColor: "#cbd5e1", color: "#334155" },
+  };
+  return {
+    ...(palettes[tone] || palettes.neutral),
+    border: `1px solid ${(palettes[tone] || palettes.neutral).borderColor}`,
+    borderRadius: 999,
+    padding: "3px 8px",
+    fontSize: 12,
+    fontWeight: 700,
+  };
+}
+
+function buttonToneStyle(tone, selected = false) {
+  if (tone === "success") {
+    return {
+      border: selected ? "2px solid #15803d" : "1px solid #86efac",
+      background: selected ? "#dcfce7" : "#f0fdf4",
+      color: "#166534",
+      fontWeight: selected ? 800 : 600,
+    };
+  }
+  if (tone === "warning") {
+    return {
+      border: selected ? "2px solid #b45309" : "1px solid #fbbf24",
+      background: selected ? "#fef3c7" : "#fffbeb",
+      color: "#92400e",
+      fontWeight: selected ? 800 : 600,
+    };
+  }
+  return { border: "1px solid #94a3b8", background: "#f8fafc", color: "#0f172a" };
+}
+
+function buildSuggestedFeedback({ review, currentStatus, aiFeedback, revisedDraft, studentDraft, unreadReplyCount }) {
+  const studentName = review?.studentName || "there";
+  const aiHint = String(aiFeedback || "")
+    .split(/[\n.]/)
+    .map((line) => line.trim())
+    .find((line) => line.length > 25);
+  const draftWords = getWordCount(revisedDraft || studentDraft);
+
+  if (unreadReplyCount > 0) {
+    return `Hello ${studentName}, thank you for your follow-up. Please revise the exact part I mentioned and send it again. ${aiHint ? `Focus especially on this: ${aiHint}.` : "Focus on word order, sentence clarity, and completing all task points."}`;
+  }
+
+  if (currentStatus === "approved") {
+    return `Good work, ${studentName}. Your answer is clear enough and approved. Keep checking word order, article endings, and formal email structure before your next submission.`;
+  }
+
+  if (draftWords < 35) {
+    return `Hello ${studentName}, please expand your answer. It is too short for full marks. Add all task points, use complete sentences, and include a proper greeting and closing.`;
+  }
+
+  return `Hello ${studentName}, good effort. Please revise this work before approval. ${aiHint ? `Main correction: ${aiHint}.` : "Main correction: check word order, verb position, and whether all task points are answered."} After correcting it, submit again for review.`;
+}
+
+function getChecklist(feedback) {
+  const text = String(feedback || "").trim();
+  return [
+    { label: "Mentions what to correct", done: /correct|revise|check|improve|change|verb|word order|grammar|structure/i.test(text) },
+    { label: "Gives the student a next action", done: /submit|send|reply|revise|write|add|check/i.test(text) },
+    { label: "Uses complete sentences", done: /[.!?]/.test(text) && text.length >= 50 },
+  ];
 }
 
 export default function TutorMarkingPage() {
@@ -162,16 +237,13 @@ export default function TutorMarkingPage() {
     return sortedReviews.filter((review) => {
       const reviewSource = review?.source || "unknown";
       if (sourceFilter !== "all" && reviewSource !== sourceFilter) return false;
-
       const ageMillis = now - toMillis(review?.updatedAt);
       if (ageFilter === "older_24h" && ageMillis < 24 * 60 * 60 * 1000) return false;
-
       const replies = Array.isArray(review?.studentReplies) ? review.studentReplies : [];
       const hasNewReplies = getNewReplies(review).length > 0;
       if (followUpFilter === "has_followup" && replies.length === 0) return false;
       if (followUpFilter === "no_followup" && replies.length > 0) return false;
       if (followUpFilter === "unread_followup" && !hasNewReplies) return false;
-
       return true;
     });
   }, [sortedReviews, sourceFilter, ageFilter, followUpFilter]);
@@ -185,19 +257,12 @@ export default function TutorMarkingPage() {
   const activeReview = activeIndex >= 0 ? filteredReviews[activeIndex] : filteredReviews[0] || null;
 
   const queueStats = useMemo(() => {
-    if (sortedReviews.length === 0) {
-      return { pending: 0, oldestHours: 0, unassigned: 0, assigned: 0 };
-    }
+    if (sortedReviews.length === 0) return { pending: 0, oldestHours: 0, unassigned: 0, assigned: 0 };
     const now = Date.now();
     const oldestMillis = Math.min(...sortedReviews.map((review) => toMillis(review?.updatedAt) || now));
     const oldestHours = Math.max(0, Math.floor((now - oldestMillis) / (1000 * 60 * 60)));
     const assigned = sortedReviews.filter((review) => !!review?.assignedTutorId || !!review?.assignedTutorName).length;
-    return {
-      pending: sortedReviews.length,
-      oldestHours,
-      assigned,
-      unassigned: sortedReviews.length - assigned,
-    };
+    return { pending: sortedReviews.length, oldestHours, assigned, unassigned: sortedReviews.length - assigned };
   }, [sortedReviews]);
 
   const waitingOnTutorCount = useMemo(
@@ -215,14 +280,10 @@ export default function TutorMarkingPage() {
         setStatusById(Object.fromEntries(rows.map((row) => [row.id, "approved"])));
         const seededFeedback = {};
         rows.forEach((row) => {
-          if (typeof drafts[row.id] === "string") {
-            seededFeedback[row.id] = drafts[row.id];
-          }
+          if (typeof drafts[row.id] === "string") seededFeedback[row.id] = drafts[row.id];
         });
         setFeedbackById(seededFeedback);
-        if (rows[0]?.id) {
-          setActiveReviewId(rows[0].id);
-        }
+        if (rows[0]?.id) setActiveReviewId(rows[0].id);
       } catch (err) {
         error(err?.message || "Failed to load pending tutor reviews.");
       } finally {
@@ -238,7 +299,6 @@ export default function TutorMarkingPage() {
       event.preventDefault();
       event.returnValue = "";
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [feedbackById]);
@@ -251,14 +311,11 @@ export default function TutorMarkingPage() {
         // Ignore localStorage quota issues.
       }
     }, 500);
-
     return () => clearTimeout(timer);
   }, [feedbackById]);
 
   useEffect(() => {
-    if (!activeReview && filteredReviews[0]?.id) {
-      setActiveReviewId(filteredReviews[0].id);
-    }
+    if (!activeReview && filteredReviews[0]?.id) setActiveReviewId(filteredReviews[0].id);
   }, [activeReview, filteredReviews]);
 
   useEffect(() => {
@@ -274,14 +331,14 @@ export default function TutorMarkingPage() {
         setActiveReviewId(filteredReviews[activeIndex - 1].id);
       }
     };
-
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeIndex, filteredReviews]);
 
-  const handleSubmit = async (reviewId, options = { moveNext: false }) => {
-    const reviewStatus = statusById[reviewId] || "approved";
-    const tutorFeedback = feedbackById[reviewId] || "";
+  const handleSubmit = async (reviewId, options = {}) => {
+    const reviewStatus = options.statusOverride || statusById[reviewId] || "approved";
+    let tutorFeedback = feedbackById[reviewId] || "";
+    if (!tutorFeedback.trim() && options.fallbackFeedback) tutorFeedback = options.fallbackFeedback;
 
     try {
       setSavingId(reviewId);
@@ -312,7 +369,7 @@ export default function TutorMarkingPage() {
         return next;
       });
       setSaveStateById((prev) => ({ ...prev, [reviewId]: "saved" }));
-      success("Tutor review response saved.");
+      success("Tutor response saved. Student will be notified if notifications are enabled.");
 
       if (options.moveNext) {
         const currentIndex = filteredReviews.findIndex((review) => review.id === reviewId);
@@ -330,7 +387,6 @@ export default function TutorMarkingPage() {
   const handleDeleteReview = async (reviewId) => {
     const confirmed = window.confirm("Delete this queue item? This cannot be undone.");
     if (!confirmed) return;
-
     try {
       setDeletingId(reviewId);
       await deleteTutorReview(reviewId);
@@ -341,7 +397,6 @@ export default function TutorMarkingPage() {
         return next;
       });
       success("Queue item deleted.");
-
       const currentIndex = filteredReviews.findIndex((review) => review.id === reviewId);
       const nextReview = filteredReviews[currentIndex + 1] || filteredReviews[currentIndex - 1] || null;
       setActiveReviewId(nextReview?.id || "");
@@ -358,14 +413,14 @@ export default function TutorMarkingPage() {
       const spacer = current.trim() ? "\n\n" : "";
       return { ...prev, [reviewId]: `${current}${spacer}${snippetText}` };
     });
+    setSaveStateById((prev) => ({ ...prev, [reviewId]: "" }));
   };
 
   return (
     <div style={{ padding: 16, display: "grid", gap: 16 }}>
       <h2>Tutor Marking Queue</h2>
       <p style={{ marginTop: -8, opacity: 0.8 }}>
-        Review actionable tutor threads (pending status, new student follow-ups, or campus-writing reflection requests),
-        then save your tutor response.
+        Review student work, insert fast tutor feedback, and save. Desktop now uses a side-by-side marking workspace.
       </p>
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 10 }}>
@@ -381,14 +436,9 @@ export default function TutorMarkingPage() {
           <label>
             Source
             <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} style={{ marginLeft: 6 }}>
-              {sourceOptions.map((source) => (
-                <option key={source} value={source}>
-                  {source}
-                </option>
-              ))}
+              {sourceOptions.map((source) => <option key={source} value={source}>{source}</option>)}
             </select>
           </label>
-
           <label>
             Age
             <select value={ageFilter} onChange={(event) => setAgeFilter(event.target.value)} style={{ marginLeft: 6 }}>
@@ -396,7 +446,6 @@ export default function TutorMarkingPage() {
               <option value="older_24h">&gt;24h</option>
             </select>
           </label>
-
           <label>
             Follow-up
             <select value={followUpFilter} onChange={(event) => setFollowUpFilter(event.target.value)} style={{ marginLeft: 6 }}>
@@ -410,7 +459,6 @@ export default function TutorMarkingPage() {
       </section>
 
       {loading && <p>Loading pending tutor reviews...</p>}
-
       {!loading && filteredReviews.length === 0 && (
         <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
           <p style={{ margin: 0 }}>No actionable reviews found for the current filter set.</p>
@@ -422,7 +470,7 @@ export default function TutorMarkingPage() {
           <b>Recently responded</b>
           {recentlyResponded.map((item) => (
             <div key={`responded-${item.id}`} style={{ fontSize: 13, opacity: 0.9 }}>
-              {item.studentName} · {item.reviewStatus} · {formatTimestamp(item.respondedAt)}
+              {item.studentName} · {item.reviewStatus} · {formatTimestamp(item.respondedAt)} · student notification queued
             </div>
           ))}
         </section>
@@ -441,92 +489,162 @@ export default function TutorMarkingPage() {
         const canMovePrev = activeIndex > 0;
         const canMoveNext = activeIndex < filteredReviews.length - 1;
         const history = getReviewHistory(review);
+        const suggestedFeedback = buildSuggestedFeedback({ review, currentStatus, aiFeedback, revisedDraft, studentDraft, unreadReplyCount });
+        const checklist = getChecklist(currentFeedback);
+        const priorityBadges = getPriorityBadges(review);
 
         studentReplies.sort((a, b) => toMillis(b?.createdAt) - toMillis(a?.createdAt));
 
         return (
-          <section key={review.id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 10 }}>
-            <div style={{ position: "sticky", top: 8, background: "#fff", border: "1px solid #eee", borderRadius: 8, padding: 10, zIndex: 10, display: "grid", gap: 8 }}>
+          <section key={review.id} style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, display: "grid", gap: 12 }}>
+            <div style={{ position: "sticky", top: 8, background: "#fff", border: "1px solid #eee", borderRadius: 10, padding: 10, zIndex: 10, display: "grid", gap: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <div style={{ fontSize: 13, opacity: 0.85 }}>
-                  <b>Review ID:</b> {review.id} · <b>Student:</b> {review.studentName || review.studentId || "Unknown"} · <b>Updated:</b>{" "}
-                  {formatTimestamp(review.updatedAt)} · <b>Source:</b> {review.source || "—"}
+                <div style={{ fontSize: 13, opacity: 0.9 }}>
+                  <b>Student:</b> {review.studentName || review.studentId || "Unknown"} · <b>Updated:</b> {formatTimestamp(review.updatedAt)} · <b>Item:</b> {activeIndex + 1}/{filteredReviews.length}
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => setActiveReviewId(filteredReviews[activeIndex - 1]?.id)} disabled={!canMovePrev}>Previous (K)</button>
                   <button onClick={() => setActiveReviewId(filteredReviews[activeIndex + 1]?.id)} disabled={!canMoveNext}>Next (J)</button>
                 </div>
               </div>
-
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <span style={{ fontWeight: 600, color: "#1e3a8a", background: "#dbeafe", border: "1px solid #93c5fd", borderRadius: 999, padding: "2px 8px" }}>Queue item {activeIndex + 1} / {filteredReviews.length}</span>
-                {unreadReplyCount > 0 && (
-                  <span style={{ background: "#fef3c7", border: "1px solid #f59e0b", color: "#92400e", borderRadius: 999, padding: "2px 8px", fontSize: 12, fontWeight: 600 }}>
-                    awaiting tutor response · {unreadReplyCount} new reply{unreadReplyCount > 1 ? "ies" : ""}
-                  </span>
-                )}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                {priorityBadges.map((badge) => <span key={`${review.id}-${badge.label}`} style={badgeStyle(badge.tone)}>{badge.label}</span>)}
+                <span style={badgeStyle("info")}>{review.level || review.className || "Level/class not set"}</span>
               </div>
+            </div>
 
-              <div style={{ display: "grid", gap: 8 }}>
-                <div role="radiogroup" aria-label="Review status" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {[
-                    { value: "approved", label: "Approved" },
-                    { value: "needs_improvement", label: "Needs improvement" },
-                  ].map((option) => {
-                    const selected = currentStatus === option.value;
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(320px, 1.15fr) minmax(320px, 0.85fr)", gap: 14, alignItems: "start" }}>
+              <div style={{ display: "grid", gap: 10, minWidth: 0 }}>
+                <label style={{ display: "grid", gap: 4 }}>
+                  Student draft <span style={{ opacity: 0.7, fontSize: 12 }}>({getReadingTimeText(studentDraft)})</span>
+                  <textarea readOnly rows={9} value={studentDraft || "No student draft found."} />
+                </label>
+
+                <label style={{ display: "grid", gap: 4 }}>
+                  Revised draft <span style={{ opacity: 0.7, fontSize: 12 }}>({getReadingTimeText(revisedDraft)})</span>
+                  <textarea readOnly rows={9} value={revisedDraft || "No revised draft found."} />
+                </label>
+
+                <details open>
+                  <summary style={{ cursor: "pointer", fontWeight: 700 }}>AI feedback</summary>
+                  <textarea readOnly rows={5} value={aiFeedback || "No AI feedback found."} style={{ width: "100%" }} />
+                </details>
+
+                <details>
+                  <summary style={{ cursor: "pointer", fontWeight: 700 }}>Reflection / question</summary>
+                  <textarea readOnly rows={4} value={reflection || "No reflection question found."} style={{ width: "100%" }} />
+                </details>
+
+                <div style={{ display: "grid", gap: 6 }}>
+                  <b>Student follow-up replies ({studentReplies.length})</b>
+                  {studentReplies.length === 0 && <p style={{ margin: 0, opacity: 0.75 }}>No student replies yet.</p>}
+                  {studentReplies.map((reply, index) => {
+                    const isUnread = toMillis(reply?.createdAt) > toMillis(review?.reviewedAt);
                     return (
-                      <button
-                        key={option.value}
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => setStatusById((prev) => ({ ...prev, [review.id]: option.value }))}
-                        style={{
-                          borderRadius: 999,
-                          border: selected
-                            ? option.value === "approved"
-                              ? "2px solid #15803d"
-                              : "2px solid #b45309"
-                            : "1px solid #94a3b8",
-                          background: selected
-                            ? option.value === "approved"
-                              ? "#dcfce7"
-                              : "#fef3c7"
-                            : "#f8fafc",
-                          color: selected
-                            ? option.value === "approved"
-                              ? "#166534"
-                              : "#92400e"
-                            : "#0f172a",
-                          fontWeight: selected ? 700 : 500,
-                          padding: "6px 12px",
-                        }}
-                      >
-                        {option.label}
-                      </button>
+                      <details key={`${review.id}-reply-${index}`} open={index <= 1 || isUnread}>
+                        <summary style={{ cursor: "pointer" }}>
+                          {(reply?.studentName || "Student")} ({reply?.studentCode || "—"}) · {formatTimestamp(reply?.createdAt)} {isUnread ? "· NEW" : ""}
+                        </summary>
+                        <article style={{ border: "1px solid #eee", borderRadius: 6, padding: 8, marginTop: 6, background: isUnread ? "#fffbeb" : "transparent" }}>
+                          <div style={{ whiteSpace: "pre-wrap" }}>{reply?.message || "(empty message)"}</div>
+                        </article>
+                      </details>
                     );
                   })}
                 </div>
+              </div>
 
-                {currentStatus === "needs_improvement" && (
-                  <p style={{ margin: 0, fontSize: 13, color: "#854d0e" }}>
-                    Support prompt: please include at least one actionable suggestion so the student knows exactly what to revise.
-                  </p>
-                )}
+              <aside style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, display: "grid", gap: 12, position: "sticky", top: 110, background: "#fff", minWidth: 0 }}>
+                <div style={{ display: "grid", gap: 8 }}>
+                  <b>Tutor decision</b>
+                  <div role="radiogroup" aria-label="Review status" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {STATUS_OPTIONS.map((option) => {
+                      const selected = currentStatus === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => setStatusById((prev) => ({ ...prev, [review.id]: option.value }))}
+                          style={{ borderRadius: 999, padding: "7px 12px", ...buttonToneStyle(option.tone, selected) }}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ display: "grid", gap: 6, border: "1px solid #dbeafe", background: "#eff6ff", borderRadius: 8, padding: 10 }}>
+                  <b>Suggested tutor feedback</b>
+                  <div style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{suggestedFeedback}</div>
+                  <button type="button" onClick={() => handleInsertSnippet(review.id, suggestedFeedback)}>
+                    Use suggested comment
+                  </button>
+                </div>
+
+                <label style={{ display: "grid", gap: 4 }}>
+                  Tutor feedback
+                  <textarea
+                    rows={9}
+                    placeholder="Add tutor comments for the student..."
+                    aria-label="Tutor feedback"
+                    value={currentFeedback}
+                    onChange={(e) => {
+                      setFeedbackById((prev) => ({ ...prev, [review.id]: e.target.value }));
+                      setSaveStateById((prev) => ({ ...prev, [review.id]: "" }));
+                    }}
+                  />
+                </label>
+
+                <div style={{ display: "grid", gap: 6 }}>
+                  <b>Quick corrections</b>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {FEEDBACK_SNIPPETS.map((snippet) => (
+                      <button key={snippet.key} type="button" onClick={() => handleInsertSnippet(review.id, snippet.text)}>
+                        + {snippet.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>{getActionableHint(currentFeedback)}</p>
+                </div>
+
+                <div style={{ display: "grid", gap: 5, border: "1px solid #eee", borderRadius: 8, padding: 8 }}>
+                  <b>Feedback checklist</b>
+                  {checklist.map((item) => (
+                    <span key={item.label} style={{ fontSize: 12, color: item.done ? "#166534" : "#92400e" }}>
+                      {item.done ? "✓" : "•"} {item.label}
+                    </span>
+                  ))}
+                </div>
+
+                <div style={{ display: "grid", gap: 8 }}>
                   <button
-                    onClick={() => handleSubmit(review.id)}
+                    onClick={() => handleSubmit(review.id, { statusOverride: "approved", moveNext: true, fallbackFeedback: suggestedFeedback })}
                     disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#1d4ed8", color: "#fff", border: "1px solid #1e40af" }}
+                    style={{ background: "#15803d", color: "#fff", border: "1px solid #166534", fontWeight: 800 }}
                   >
-                    {savingId === review.id ? "Saving..." : "Save tutor response"}
+                    {savingId === review.id ? "Saving..." : "Approve and close"}
                   </button>
                   <button
-                    onClick={() => handleSubmit(review.id, { moveNext: true })}
+                    onClick={() => handleSubmit(review.id, { statusOverride: "needs_improvement", moveNext: true, fallbackFeedback: suggestedFeedback })}
                     disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#4338ca", color: "#fff", border: "1px solid #3730a3" }}
+                    style={{ background: "#b45309", color: "#fff", border: "1px solid #92400e", fontWeight: 800 }}
                   >
-                    {savingId === review.id ? "Saving..." : "Save + Next"}
+                    {savingId === review.id ? "Saving..." : "Return for correction"}
+                  </button>
+                  <button
+                    onClick={() => handleSubmit(review.id, { statusOverride: "needs_improvement", moveNext: true, fallbackFeedback: "Please reply and explain which part was difficult for you, so I can guide you better." })}
+                    disabled={savingId === review.id || deletingId === review.id}
+                    style={{ background: "#4338ca", color: "#fff", border: "1px solid #3730a3", fontWeight: 800 }}
+                  >
+                    {savingId === review.id ? "Saving..." : "Ask student a question"}
+                  </button>
+                  <button
+                    onClick={() => handleSubmit(review.id, { moveNext: true, fallbackFeedback: suggestedFeedback })}
+                    disabled={savingId === review.id || deletingId === review.id}
+                  >
+                    Save selected decision + next
                   </button>
                   <button
                     onClick={() => handleDeleteReview(review.id)}
@@ -535,96 +653,30 @@ export default function TutorMarkingPage() {
                   >
                     {deletingId === review.id ? "Deleting..." : "Delete submission"}
                   </button>
-                  <span style={{ fontSize: 12, opacity: 0.8 }}>
+                  <span style={{ fontSize: 12, opacity: 0.85 }}>
                     {saveStateById[review.id] === "saving" && "Saving..."}
-                    {saveStateById[review.id] === "saved" && "Saved"}
-                    {saveStateById[review.id] === "failed" && "Save failed — Retry"}
-                    {!saveStateById[review.id] && "Autosave draft enabled"}
+                    {saveStateById[review.id] === "saved" && "Saved · student notification queued"}
+                    {saveStateById[review.id] === "failed" && "Save failed — retry"}
+                    {!saveStateById[review.id] && "Autosave draft enabled · student will be notified after save"}
                   </span>
                 </div>
-                {savingId === review.id && (
-                  <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8" }}>
-                    Marking response and closing this thread from the waiting list...
-                  </p>
-                )}
-              </div>
+              </aside>
             </div>
 
-            <label>
-              Student draft <span style={{ opacity: 0.7, fontSize: 12 }}>({getReadingTimeText(studentDraft)})</span>
-              <textarea readOnly rows={8} value={studentDraft || "No student draft found."} />
-            </label>
-
-            <label>
-              AI feedback
-              <textarea readOnly rows={5} value={aiFeedback || "No AI feedback found."} />
-            </label>
-
-            <label>
-              Revised draft <span style={{ opacity: 0.7, fontSize: 12 }}>({getReadingTimeText(revisedDraft)})</span>
-              <textarea readOnly rows={8} value={revisedDraft || "No revised draft found."} />
-            </label>
-
-            <label>
-              Reflection / question
-              <textarea readOnly rows={4} value={reflection || "No reflection question found."} />
-            </label>
-
-            <div style={{ display: "grid", gap: 6 }}>
-              <b>Student follow-up replies ({studentReplies.length})</b>
-              {studentReplies.length === 0 && <p style={{ margin: 0, opacity: 0.75 }}>No student replies yet.</p>}
-              {studentReplies.map((reply, index) => {
-                const isUnread = toMillis(reply?.createdAt) > toMillis(review?.reviewedAt);
-                const hiddenByDefault = index > 1;
-                return (
-                  <details key={`${review.id}-reply-${index}`} open={!hiddenByDefault}>
-                    <summary style={{ cursor: "pointer" }}>
-                      {(reply?.studentName || "Student")} ({reply?.studentCode || "—"}) · {formatTimestamp(reply?.createdAt)} {isUnread ? "· NEW" : ""}
-                    </summary>
-                    <article style={{ border: "1px solid #eee", borderRadius: 6, padding: 8, marginTop: 6, background: isUnread ? "#fffbeb" : "transparent" }}>
-                      <div style={{ whiteSpace: "pre-wrap" }}>{reply?.message || "(empty message)"}</div>
-                    </article>
-                  </details>
-                );
-              })}
-            </div>
-
-            <div style={{ display: "grid", gap: 8 }}>
-              <label>
-                Tutor feedback
-                <textarea
-                  rows={6}
-                  placeholder="Add tutor comments for the student..."
-                  aria-label="Tutor feedback"
-                  value={currentFeedback}
-                  onChange={(e) => {
-                    setFeedbackById((prev) => ({ ...prev, [review.id]: e.target.value }));
-                    setSaveStateById((prev) => ({ ...prev, [review.id]: "" }));
-                  }}
-                />
-              </label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {FEEDBACK_SNIPPETS.map((snippet) => (
-                  <button key={snippet.key} onClick={() => handleInsertSnippet(review.id, snippet.text)}>
-                    + {snippet.label}
-                  </button>
+            <details style={{ border: "1px solid #eee", borderRadius: 8, padding: 10 }}>
+              <summary style={{ cursor: "pointer", fontWeight: 700 }}>Review history</summary>
+              <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+                {history.length === 0 && <p style={{ margin: 0, opacity: 0.75 }}>No prior history available for this thread.</p>}
+                {history.map((item, idx) => (
+                  <div key={`${review.id}-hist-${idx}`} style={{ borderLeft: "2px solid #ddd", paddingLeft: 8 }}>
+                    <div style={{ fontSize: 12, opacity: 0.8 }}>
+                      {formatTimestamp(item?.reviewedAt)} · {item?.reviewerName || "Tutor"} · {item?.reviewStatus || "status unavailable"}
+                    </div>
+                    {item?.tutorFeedback && <div style={{ marginTop: 3, whiteSpace: "pre-wrap" }}>{item.tutorFeedback}</div>}
+                  </div>
                 ))}
               </div>
-              <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>{getActionableHint(currentFeedback)}</p>
-            </div>
-
-            <div style={{ border: "1px solid #eee", borderRadius: 6, padding: 10, display: "grid", gap: 6 }}>
-              <b>Review history</b>
-              {history.length === 0 && <p style={{ margin: 0, opacity: 0.75 }}>No prior history available for this thread.</p>}
-              {history.map((item, idx) => (
-                <div key={`${review.id}-hist-${idx}`} style={{ borderLeft: "2px solid #ddd", paddingLeft: 8 }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>
-                    {formatTimestamp(item?.reviewedAt)} · {item?.reviewerName || "Tutor"} · {item?.reviewStatus || "status unavailable"}
-                  </div>
-                  {item?.tutorFeedback && <div style={{ marginTop: 3, whiteSpace: "pre-wrap" }}>{item.tutorFeedback}</div>}
-                </div>
-              ))}
-            </div>
+            </details>
           </section>
         );
       })()}
