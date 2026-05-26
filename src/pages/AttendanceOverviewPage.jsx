@@ -95,7 +95,8 @@ function resolveScheduleMeta(klass) {
 function classifyClass(klass) {
   const status = String(klass?.status || "").trim().toLowerCase();
   const scheduleMeta = resolveScheduleMeta(klass);
-  const archivedByStatus = ARCHIVED_STATUS_VALUES.has(status) || klass?.active === false;
+  const archivedByFlag = klass?.archived === true || klass?.isArchived === true;
+  const archivedByStatus = archivedByFlag || ARCHIVED_STATUS_VALUES.has(status) || klass?.active === false;
   const archived = archivedByStatus || scheduleMeta.completedBySchedule;
 
   return {
