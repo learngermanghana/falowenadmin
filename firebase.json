@@ -5,7 +5,7 @@
   "functions": [
     {
       "source": "functions",
-      "codebase": "default",
+      "codebase": "falowenadmin",
       "disallowLegacyRuntimeConfig": true,
       "ignore": [
         "node_modules",
