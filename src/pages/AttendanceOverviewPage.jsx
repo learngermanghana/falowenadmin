@@ -1,17 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { listClasses } from "../services/classesService";
+import { listClasses, setClassArchived } from "../services/classesService";
 import { getClassSchedule } from "../data/classSchedules";
-
-const ARCHIVED_STATUS_VALUES = new Set([
-  "inactive",
-  "archived",
-  "ended",
-  "complete",
-  "completed",
-  "finished",
-  "closed",
-]);
 
 const MONTH_INDEX = {
   january: 0,
@@ -27,11 +17,6 @@ const MONTH_INDEX = {
   november: 10,
   december: 11,
 };
-
-function startOfToday() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 function parseClassDate(value) {
   const text = String(value || "").trim();
@@ -76,11 +61,9 @@ function resolveScheduleMeta(klass) {
       schedule,
       startDate: null,
       endDate: null,
-      completedBySchedule: false,
     };
   }
 
-  const today = startOfToday();
   const startDate = parsedDates[0];
   const endDate = parsedDates[parsedDates.length - 1];
 
@@ -88,25 +71,21 @@ function resolveScheduleMeta(klass) {
     schedule,
     startDate,
     endDate,
-    completedBySchedule: endDate.getTime() < today.getTime(),
   };
 }
 
 function classifyClass(klass) {
-  const status = String(klass?.status || "").trim().toLowerCase();
   const scheduleMeta = resolveScheduleMeta(klass);
-  const archivedByStatus = ARCHIVED_STATUS_VALUES.has(status) || klass?.active === false;
-  const archived = archivedByStatus || scheduleMeta.completedBySchedule;
+  const archived = klass?.archived === true || klass?.isArchived === true;
 
   return {
     ...klass,
-    archiveReason: archivedByStatus ? "Status marked completed/archived" : "Schedule completed",
     archived,
     scheduleMeta,
   };
 }
 
-function ClassCard({ klass, archived = false }) {
+function ClassCard({ klass, archived = false, saving = false, onToggleArchived }) {
   const { startDate, endDate, schedule } = klass.scheduleMeta || {};
   const dateText = startDate && endDate ? `${formatDate(startDate)} → ${formatDate(endDate)}` : "No schedule dates";
 
@@ -139,7 +118,27 @@ function ClassCard({ klass, archived = false }) {
       <div style={{ fontSize: 12, opacity: 0.75 }}>classId: {klass.classId}</div>
       <div style={{ fontSize: 12, opacity: 0.75 }}>Schedule: {dateText}</div>
       {schedule?.length ? <div style={{ fontSize: 12, opacity: 0.75 }}>Sessions: {schedule.length}</div> : null}
-      {archived && <div style={{ fontSize: 12, opacity: 0.75 }}>Reason: {klass.archiveReason}</div>}
+      <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => onToggleArchived?.(klass, !archived)}
+          style={{
+            background: "#ffffff",
+            color: "#0f172a",
+            border: `1px solid ${archived ? "#16a34a" : "#dc2626"}`,
+            fontWeight: 700,
+            padding: "8px 12px",
+            borderRadius: 8,
+            cursor: saving ? "default" : "pointer",
+            ...(archived
+              ? { color: "#166534", background: "#ffffff" }
+              : { color: "#991b1b", background: "#ffffff" }),
+          }}
+        >
+          {saving ? "Saving..." : archived ? "Unarchive class" : "Archive class"}
+        </button>
+      </div>
       <div style={{ marginTop: 8 }}>
         <Link to={`/attendance/${encodeURIComponent(klass.classId)}`}>
           {archived ? "View archived attendance" : "Mark attendance"}
@@ -154,6 +153,7 @@ export default function AttendanceOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [savingClassId, setSavingClassId] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -169,6 +169,31 @@ export default function AttendanceOverviewPage() {
       }
     })();
   }, []);
+
+  async function handleToggleArchived(klass, archived) {
+    const classId = klass?.classId;
+    if (!classId || savingClassId) return;
+
+    const previousClasses = classes;
+    setSavingClassId(classId);
+    setError("");
+    setClasses((current) =>
+      current.map((item) =>
+        item.classId === classId
+          ? { ...item, archived, isArchived: archived, active: !archived, status: archived ? "archived" : "ongoing" }
+          : item,
+      ),
+    );
+
+    try {
+      await setClassArchived(classId, archived);
+    } catch (err) {
+      setClasses(previousClasses);
+      setError(err?.message || "Failed to update class archive status");
+    } finally {
+      setSavingClassId("");
+    }
+  }
 
   const classifiedClasses = useMemo(() => classes.map(classifyClass), [classes]);
   const activeClasses = useMemo(
@@ -204,7 +229,12 @@ export default function AttendanceOverviewPage() {
 
       <div style={{ display: "grid", gap: 10, maxWidth: 620, marginTop: 14 }}>
         {activeClasses.map((klass) => (
-          <ClassCard key={klass.classId} klass={klass} />
+          <ClassCard
+            key={klass.classId}
+            klass={klass}
+            saving={savingClassId === klass.classId}
+            onToggleArchived={handleToggleArchived}
+          />
         ))}
       </div>
 
@@ -227,7 +257,13 @@ export default function AttendanceOverviewPage() {
           {showArchived && (
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
               {archivedClasses.map((klass) => (
-                <ClassCard key={klass.classId} klass={klass} archived />
+                <ClassCard
+                  key={klass.classId}
+                  klass={klass}
+                  archived
+                  saving={savingClassId === klass.classId}
+                  onToggleArchived={handleToggleArchived}
+                />
               ))}
             </div>
           )}

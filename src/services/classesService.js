@@ -1,4 +1,4 @@
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, doc, getDocs, orderBy, query, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { loadPublishedStudentRows, readPublishedClassName, readPublishedLevel } from "./publishedSheetService.js";
 import { resolveWithSheetThenFirestore } from "./fallbackResolvers.js";
@@ -37,9 +37,39 @@ function normalizeToCanonicalClassId(value) {
   return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
 }
 
+function normalizeClassArchiveMetadata(data = {}) {
+  const archived = data.archived === true || data.isArchived === true;
+  return {
+    archived,
+    isArchived: archived,
+    active: data.active === false ? false : !archived,
+    status: archived ? "archived" : data.status || "ongoing",
+  };
+}
 
 function resolveClassKey(data = {}) {
   return normalizeToCanonicalClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
+}
+
+async function loadFirestoreClassMetadata({
+  collectionFn,
+  getDocsFn,
+  orderByFn,
+  queryFn,
+  dbInstance,
+}) {
+  const classesCollection = collectionFn(dbInstance, "classes");
+  const classesSnap = await getDocsFn(queryFn(classesCollection, orderByFn("name", "asc")));
+  const metadataByClassId = new Map();
+
+  classesSnap.forEach((docSnap) => {
+    const data = docSnap.data() || {};
+    const classId = resolveClassKey({ id: docSnap.id, ...data });
+    if (!classId) return;
+    metadataByClassId.set(classId, normalizeClassArchiveMetadata(data));
+  });
+
+  return metadataByClassId;
 }
 
 function resolvePublishedClassIdentifier(row) {
@@ -78,7 +108,23 @@ export async function listClassesWithDeps(
   } = {},
 ) {
   return resolveWithSheetThenFirestore({
-    loadFromSheet: () => listClassesFromPublishedSheet(),
+    loadFromSheet: async () => {
+      const [sheetClasses, firestoreMetadata] = await Promise.all([
+        listClassesFromPublishedSheet(),
+        loadFirestoreClassMetadata({ collectionFn, getDocsFn, orderByFn, queryFn, dbInstance }),
+      ]);
+
+      return sheetClasses.map((klass) => {
+        const classId = normalizeToCanonicalClassId(klass.classId || klass.name);
+        const metadata = firestoreMetadata.get(classId) || {};
+        return {
+          ...klass,
+          classId,
+          name: normalizeToCanonicalClassId(klass.name || classId),
+          ...metadata,
+        };
+      });
+    },
     loadFromFirestore: async () => {
       const classesCollection = collectionFn(dbInstance, "classes");
       const classesSnap = await getDocsFn(queryFn(classesCollection, orderByFn("name", "asc")));
@@ -115,4 +161,23 @@ export async function listClassesWithDeps(
 
 export async function listClasses() {
   return listClassesWithDeps();
+}
+
+export async function setClassArchived(classId, archived) {
+  const normalizedClassId = normalizeToCanonicalClassId(classId);
+  if (!normalizedClassId) throw new Error("Missing class id");
+
+  await setDoc(
+    doc(db, "classes", normalizedClassId),
+    {
+      classId: normalizedClassId,
+      name: normalizedClassId,
+      archived,
+      isArchived: archived,
+      active: !archived,
+      status: archived ? "archived" : "ongoing",
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
 }
