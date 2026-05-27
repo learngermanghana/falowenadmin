@@ -18,6 +18,7 @@ import TeachingSlidesPage from "./pages/TeachingSlidesPage";
 import StudentDirectoryPage from "./pages/StudentDirectoryPage";
 import OrientationPage from "./pages/OrientationPage";
 import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
+import ClassOperationsPage from "./pages/ClassOperationsPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -53,23 +54,16 @@ function TopBar() {
             {isStaff ? (
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
-                <Link to="/orientation" onClick={() => setMenuOpen(false)}>Orientation</Link>
-                <Link to="/class-schedule-setup" onClick={() => setMenuOpen(false)}>Class Setup</Link>
+                <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
               </>
             ) : (
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-                <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
-                <Link to="/course-schedule" onClick={() => setMenuOpen(false)}>Course Schedule</Link>
-                <Link to="/marking" onClick={() => setMenuOpen(false)}>Mark Work</Link>
-                <Link to="/grammar-issues" onClick={() => setMenuOpen(false)}>Grammar Issues</Link>
-                <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
-                <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
-                <Link to="/whatsapp-reminders" onClick={() => setMenuOpen(false)}>WhatsApp Reminders</Link>
-                <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
-                <Link to="/orientation" onClick={() => setMenuOpen(false)}>Orientation</Link>
-                <Link to="/class-schedule-setup" onClick={() => setMenuOpen(false)}>Class Setup</Link>
+                <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
+                <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
+                <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
+                <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
               </>
             )}
           </div>
@@ -229,6 +223,14 @@ export default function App() {
             element={
               <ProtectedRoute allowStaff={false}>
                 <ClassScheduleSetupPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/class-operations"
+            element={
+              <ProtectedRoute>
+                <ClassOperationsPage />
               </ProtectedRoute>
             }
           />
