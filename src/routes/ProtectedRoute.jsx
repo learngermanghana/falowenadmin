@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children, allowStaff = true }) {
 
   if (loading) return <div style={{ padding: 16 }}>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (isStaff && !allowStaff) return <Navigate to="/social-post-tracker" replace />;
+  if (isStaff && !allowStaff) return <Navigate to="/students" replace />;
 
   return children;
 }

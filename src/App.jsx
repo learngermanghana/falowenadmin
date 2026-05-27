@@ -15,7 +15,6 @@ import CommunicationPage from "./pages/CommunicationPage";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
 import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
 import TeachingSlidesPage from "./pages/TeachingSlidesPage";
-import SocialPostTrackerPage from "./pages/SocialPostTrackerPage";
 import StudentDirectoryPage from "./pages/StudentDirectoryPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
@@ -44,14 +43,13 @@ function TopBar() {
             ☰
           </button>
 
-          <Link to={isStaff ? "/social-post-tracker" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
+          <Link to={isStaff ? "/students" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
             Falowen Dashboard
           </Link>
 
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
               <>
-                <Link to="/social-post-tracker" onClick={() => setMenuOpen(false)}>Social Post Tracker</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
               </>
             ) : (
@@ -65,7 +63,6 @@ function TopBar() {
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/whatsapp-reminders" onClick={() => setMenuOpen(false)}>WhatsApp Reminders</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
-                <Link to="/social-post-tracker" onClick={() => setMenuOpen(false)}>Social Post Tracker</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
               </>
             )}
@@ -206,17 +203,9 @@ export default function App() {
             }
           />
           <Route
-            path="/social-post-tracker"
-            element={
-              <ProtectedRoute>
-                <SocialPostTrackerPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/students"
             element={
-              <ProtectedRoute allowStaff={false}>
+              <ProtectedRoute>
                 <StudentDirectoryPage />
               </ProtectedRoute>
             }

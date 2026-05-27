@@ -22,7 +22,7 @@ export default function LoginPage() {
 
     try {
       await login(normalizedEmail, password);
-      nav(isStaffEmail(normalizedEmail) ? "/social-post-tracker" : "/");
+      nav(isStaffEmail(normalizedEmail) ? "/students" : "/");
     } catch (e2) {
       const canProvisionStaffAccount =
         isStaffEmail(normalizedEmail) &&
@@ -32,7 +32,7 @@ export default function LoginPage() {
       if (canProvisionStaffAccount) {
         try {
           await createUserWithEmailAndPassword(auth, normalizedEmail, password);
-          nav("/social-post-tracker");
+          nav("/students");
           return;
         } catch (createError) {
           if (createError?.code !== "auth/email-already-in-use") {
@@ -41,7 +41,7 @@ export default function LoginPage() {
           }
 
           await login(normalizedEmail, password);
-          nav("/social-post-tracker");
+          nav("/students");
           return;
         }
       }
