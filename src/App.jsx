@@ -17,6 +17,7 @@ import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
 import TeachingSlidesPage from "./pages/TeachingSlidesPage";
 import StudentDirectoryPage from "./pages/StudentDirectoryPage";
 import OrientationPage from "./pages/OrientationPage";
+import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -53,6 +54,7 @@ function TopBar() {
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/orientation" onClick={() => setMenuOpen(false)}>Orientation</Link>
+                <Link to="/class-schedule-setup" onClick={() => setMenuOpen(false)}>Class Setup</Link>
               </>
             ) : (
               <>
@@ -67,6 +69,7 @@ function TopBar() {
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/orientation" onClick={() => setMenuOpen(false)}>Orientation</Link>
+                <Link to="/class-schedule-setup" onClick={() => setMenuOpen(false)}>Class Setup</Link>
               </>
             )}
           </div>
@@ -218,6 +221,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <StudentDirectoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/class-schedule-setup"
+            element={
+              <ProtectedRoute allowStaff={false}>
+                <ClassScheduleSetupPage />
               </ProtectedRoute>
             }
           />
