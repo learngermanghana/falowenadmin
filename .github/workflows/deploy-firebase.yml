@@ -50,4 +50,5 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
       - name: Deploy falowenadmin Cloud Function
+        # Intentionally deploy only functions:falowenadmin; this service account does not require Firestore index permissions.
         run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin --force --debug
