@@ -414,7 +414,7 @@ export default function DashboardPage() {
               <p className="analytics-eyebrow">Growth</p>
               <h2>Social media analytics</h2>
             </div>
-            <Link to="/social-post-tracker">Open tracker</Link>
+            <Link to="/students">Open directory</Link>
           </div>
           <div className="social-metric-row">
             <span>Total posts <strong>{analytics.socialPosts}</strong></span>
