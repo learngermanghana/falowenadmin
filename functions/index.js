@@ -19,6 +19,8 @@ const STUDENTS_COLLECTION = "students";
 const attendancePinSaltSecret = defineSecret("ATTENDANCE_PIN_SALT");
 const orientationSyncSecret = defineSecret("ORIENTATION_SYNC_SECRET");
 const orientationAppsScriptUrlSecret = defineSecret("ORIENTATION_APPS_SCRIPT_URL");
+const classScheduleSyncSecret = defineSecret("CLASS_SCHEDULE_SYNC_SECRET");
+const classScheduleAppsScriptUrlSecret = defineSecret("CLASS_SCHEDULE_APPS_SCRIPT_URL");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -184,6 +186,15 @@ function resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, cha
     chapter: resolvedChapter,
     sessionLabel: resolvedSessionLabel,
   };
+}
+
+
+function isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+}
+
+function toDateValue(value) {
+  return new Date(`${String(value || "").trim()}T00:00:00.000Z`);
 }
 
 function resolveSessionIdCandidates(sessionId) {
@@ -568,6 +579,79 @@ app.post("/migrateSessionIds", async (req, res) => {
 });
 
 
+
+app.post("/class-schedule/sync", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const appsScriptUrl = String(classScheduleAppsScriptUrlSecret.value() || process.env.CLASS_SCHEDULE_APPS_SCRIPT_URL || "").trim();
+    const syncSecret = String(classScheduleSyncSecret.value() || process.env.CLASS_SCHEDULE_SYNC_SECRET || "").trim();
+
+    if (!appsScriptUrl) {
+      return res.status(500).json({ error: "Missing required env var: CLASS_SCHEDULE_APPS_SCRIPT_URL" });
+    }
+    if (!syncSecret) {
+      return res.status(500).json({ error: "Missing required env var: CLASS_SCHEDULE_SYNC_SECRET" });
+    }
+
+    const body = req.body || {};
+    const className = String(body.className || "").trim();
+    const startDate = String(body.startDate || "").trim();
+    const endDate = String(body.endDate || "").trim();
+    const time = String(body.time || "").trim();
+    const meetingDays = Array.isArray(body.meetingDays)
+      ? body.meetingDays.map((day) => String(day || "").trim()).filter(Boolean)
+      : [];
+
+    const monTime = String(body.monTime || "").trim();
+    const tueTime = String(body.tueTime || "").trim();
+    const wedTime = String(body.wedTime || "").trim();
+    const thuTime = String(body.thuTime || "").trim();
+    const friTime = String(body.friTime || "").trim();
+    const satTime = String(body.satTime || "").trim();
+    const sunTime = String(body.sunTime || "").trim();
+
+    if (!className) return res.status(400).json({ error: "className is required" });
+    if (!isIsoDate(startDate)) return res.status(400).json({ error: "startDate must be YYYY-MM-DD" });
+    if (!isIsoDate(endDate)) return res.status(400).json({ error: "endDate must be YYYY-MM-DD" });
+    if (toDateValue(endDate) < toDateValue(startDate)) {
+      return res.status(400).json({ error: "endDate must be the same day or after startDate" });
+    }
+    if (!time) return res.status(400).json({ error: "time is required" });
+    if (meetingDays.length === 0) return res.status(400).json({ error: "meetingDays must contain at least one day" });
+
+    const upstreamResponse = await fetch(appsScriptUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "syncClassSchedule",
+        secret: syncSecret,
+        className,
+        startDate,
+        endDate,
+        time,
+        meetingDays,
+        monTime,
+        tueTime,
+        wedTime,
+        thuTime,
+        friTime,
+        satTime,
+        sunTime,
+      }),
+    });
+
+    const responseJson = await upstreamResponse.json().catch(() => ({}));
+    if (!upstreamResponse.ok) {
+      return res.status(502).json({ error: "Class schedule sync upstream request failed", details: responseJson });
+    }
+
+    return res.json(responseJson);
+  } catch (e) {
+    return res.status(401).json({ error: e?.message || "Unauthorized" });
+  }
+});
+
 app.post("/orientation/sync", async (req, res) => {
   try {
     await requireAuth(req);
@@ -610,4 +694,4 @@ app.post("/orientation/sync", async (req, res) => {
     return res.status(401).json({ error: e?.message || "Unauthorized" });
   }
 });
-exports.api = onRequest({ secrets: [attendancePinSaltSecret, orientationSyncSecret, orientationAppsScriptUrlSecret] }, app);
+exports.api = onRequest({ secrets: [attendancePinSaltSecret, orientationSyncSecret, orientationAppsScriptUrlSecret, classScheduleSyncSecret, classScheduleAppsScriptUrlSecret] }, app);
