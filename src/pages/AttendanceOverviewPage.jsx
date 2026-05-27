@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { listClasses } from "../services/classesService";
+import {
+  listClassCompletionStatuses,
+  listClasses,
+  setClassCompletedStatus,
+} from "../services/classesService";
 import { getClassSchedule } from "../data/classSchedules";
-
-const ARCHIVED_STATUS_VALUES = new Set([
-  "inactive",
-  "archived",
-  "ended",
-  "complete",
-  "completed",
-  "finished",
-  "closed",
-]);
 
 const MONTH_INDEX = {
   january: 0,
@@ -27,11 +21,6 @@ const MONTH_INDEX = {
   november: 10,
   december: 11,
 };
-
-function startOfToday() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 function parseClassDate(value) {
   const text = String(value || "").trim();
@@ -76,37 +65,30 @@ function resolveScheduleMeta(klass) {
       schedule,
       startDate: null,
       endDate: null,
-      completedBySchedule: false,
     };
   }
 
-  const today = startOfToday();
-  const startDate = parsedDates[0];
-  const endDate = parsedDates[parsedDates.length - 1];
-
   return {
     schedule,
-    startDate,
-    endDate,
-    completedBySchedule: endDate.getTime() < today.getTime(),
+    startDate: parsedDates[0],
+    endDate: parsedDates[parsedDates.length - 1],
   };
 }
 
-function classifyClass(klass) {
-  const status = String(klass?.status || "").trim().toLowerCase();
+function classifyClass(klass, completionStatusMap) {
   const scheduleMeta = resolveScheduleMeta(klass);
-  const archivedByStatus = ARCHIVED_STATUS_VALUES.has(status) || klass?.active === false;
-  const archived = archivedByStatus || scheduleMeta.completedBySchedule;
+  const completionStatus = completionStatusMap[klass.classId] || {};
+  const completed = Boolean(completionStatus.completed);
 
   return {
     ...klass,
-    archiveReason: archivedByStatus ? "Status marked completed/archived" : "Schedule completed",
-    archived,
+    completed,
+    completionStatus,
     scheduleMeta,
   };
 }
 
-function ClassCard({ klass, archived = false }) {
+function ClassCard({ klass, completed = false, busy = false, onToggleCompleted }) {
   const { startDate, endDate, schedule } = klass.scheduleMeta || {};
   const dateText = startDate && endDate ? `${formatDate(startDate)} → ${formatDate(endDate)}` : "No schedule dates";
 
@@ -117,7 +99,7 @@ function ClassCard({ klass, archived = false }) {
         border: "1px solid #ddd",
         borderRadius: 8,
         padding: 12,
-        background: archived ? "#f8fafc" : "#fff",
+        background: completed ? "#f8fafc" : "#fff",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
@@ -128,22 +110,35 @@ function ClassCard({ klass, archived = false }) {
             borderRadius: 999,
             padding: "2px 8px",
             fontSize: 12,
-            background: archived ? "#e5e7eb" : "#dcfce7",
-            color: archived ? "#374151" : "#166534",
+            background: completed ? "#e5e7eb" : "#dcfce7",
+            color: completed ? "#374151" : "#166534",
             fontWeight: 700,
           }}
         >
-          {archived ? "Archived" : "Ongoing"}
+          {completed ? "Completed" : "Ongoing"}
         </span>
       </div>
       <div style={{ fontSize: 12, opacity: 0.75 }}>classId: {klass.classId}</div>
       <div style={{ fontSize: 12, opacity: 0.75 }}>Schedule: {dateText}</div>
       {schedule?.length ? <div style={{ fontSize: 12, opacity: 0.75 }}>Sessions: {schedule.length}</div> : null}
-      {archived && <div style={{ fontSize: 12, opacity: 0.75 }}>Reason: {klass.archiveReason}</div>}
-      <div style={{ marginTop: 8 }}>
+      <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <Link to={`/attendance/${encodeURIComponent(klass.classId)}`}>
-          {archived ? "View archived attendance" : "Mark attendance"}
+          {completed ? "View attendance" : "Mark attendance"}
         </Link>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onToggleCompleted(klass.classId, !completed)}
+          style={{
+            border: "1px solid #cbd5e1",
+            borderRadius: 8,
+            padding: "6px 10px",
+            background: completed ? "#fff" : "#f8fafc",
+            fontWeight: 700,
+          }}
+        >
+          {busy ? "Saving..." : completed ? "Move back to ongoing" : "Mark completed"}
+        </button>
       </div>
     </div>
   );
@@ -151,17 +146,23 @@ function ClassCard({ klass, archived = false }) {
 
 export default function AttendanceOverviewPage() {
   const [classes, setClasses] = useState([]);
+  const [completionStatusMap, setCompletionStatusMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [savingClassId, setSavingClassId] = useState("");
   const [error, setError] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       setError("");
       try {
-        const data = await listClasses();
-        setClasses(data);
+        const [classData, completionData] = await Promise.all([
+          listClasses(),
+          listClassCompletionStatuses(),
+        ]);
+        setClasses(classData);
+        setCompletionStatusMap(completionData);
       } catch (err) {
         setError(err?.message || "Failed to load classes");
       } finally {
@@ -170,15 +171,38 @@ export default function AttendanceOverviewPage() {
     })();
   }, []);
 
-  const classifiedClasses = useMemo(() => classes.map(classifyClass), [classes]);
+  const classifiedClasses = useMemo(
+    () => classes.map((klass) => classifyClass(klass, completionStatusMap)),
+    [classes, completionStatusMap],
+  );
   const activeClasses = useMemo(
-    () => classifiedClasses.filter((klass) => !klass.archived),
+    () => classifiedClasses.filter((klass) => !klass.completed),
     [classifiedClasses],
   );
-  const archivedClasses = useMemo(
-    () => classifiedClasses.filter((klass) => klass.archived),
+  const completedClasses = useMemo(
+    () => classifiedClasses.filter((klass) => klass.completed),
     [classifiedClasses],
   );
+
+  const onToggleCompleted = async (classId, completed) => {
+    setSavingClassId(classId);
+    setError("");
+
+    try {
+      await setClassCompletedStatus(classId, completed);
+      setCompletionStatusMap((current) => ({
+        ...current,
+        [classId]: {
+          ...(current[classId] || {}),
+          completed,
+        },
+      }));
+    } catch (err) {
+      setError(err?.message || "Failed to update class completion status");
+    } finally {
+      setSavingClassId("");
+    }
+  };
 
   return (
     <div style={{ padding: 16 }}>
@@ -186,7 +210,7 @@ export default function AttendanceOverviewPage() {
         <div>
           <h2 style={{ margin: 0 }}>Attendance</h2>
           <p style={{ margin: "6px 0 0", fontSize: 13, opacity: 0.8 }}>
-            Showing ongoing classes only. Completed classes are kept in the archive below.
+            Classes stay ongoing until you manually mark them completed. This protects classes with cancelled or postponed sessions.
           </p>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
@@ -199,20 +223,25 @@ export default function AttendanceOverviewPage() {
       {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}
 
       {!loading && !error && activeClasses.length === 0 && (
-        <p>No ongoing classes found. Completed classes may be in the archive below.</p>
+        <p>No ongoing classes found. Use completed classes below to move one back to ongoing if needed.</p>
       )}
 
       <div style={{ display: "grid", gap: 10, maxWidth: 620, marginTop: 14 }}>
         {activeClasses.map((klass) => (
-          <ClassCard key={klass.classId} klass={klass} />
+          <ClassCard
+            key={klass.classId}
+            klass={klass}
+            busy={savingClassId === klass.classId}
+            onToggleCompleted={onToggleCompleted}
+          />
         ))}
       </div>
 
-      {!loading && !error && archivedClasses.length > 0 && (
+      {!loading && !error && completedClasses.length > 0 && (
         <section style={{ marginTop: 22, maxWidth: 620 }}>
           <button
             type="button"
-            onClick={() => setShowArchived((value) => !value)}
+            onClick={() => setShowCompleted((value) => !value)}
             style={{
               border: "1px solid #cbd5e1",
               borderRadius: 8,
@@ -221,13 +250,19 @@ export default function AttendanceOverviewPage() {
               fontWeight: 700,
             }}
           >
-            {showArchived ? "Hide" : "Show"} archived completed classes ({archivedClasses.length})
+            {showCompleted ? "Hide" : "Show"} completed classes ({completedClasses.length})
           </button>
 
-          {showArchived && (
+          {showCompleted && (
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-              {archivedClasses.map((klass) => (
-                <ClassCard key={klass.classId} klass={klass} archived />
+              {completedClasses.map((klass) => (
+                <ClassCard
+                  key={klass.classId}
+                  klass={klass}
+                  completed
+                  busy={savingClassId === klass.classId}
+                  onToggleCompleted={onToggleCompleted}
+                />
               ))}
             </div>
           )}

@@ -1,7 +1,9 @@
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, doc, getDocs, orderBy, query, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { loadPublishedStudentRows, readPublishedClassName, readPublishedLevel } from "./publishedSheetService.js";
 import { resolveWithSheetThenFirestore } from "./fallbackResolvers.js";
+
+const CLASS_COMPLETION_COLLECTION = "classCompletionStatuses";
 
 function normalizeClassId(value) {
   return String(value || "").trim();
@@ -37,6 +39,17 @@ function normalizeToCanonicalClassId(value) {
   return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
 }
 
+function completionDocIdFor(classId) {
+  return encodeURIComponent(normalizeToCanonicalClassId(classId));
+}
+
+function safeDecodeURIComponent(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 
 function resolveClassKey(data = {}) {
   return normalizeToCanonicalClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
@@ -113,6 +126,65 @@ export async function listClassesWithDeps(
   });
 }
 
+export async function listClassCompletionStatusesWithFirestore(
+  firestore = { collection, getDocs, db },
+) {
+  const snap = await firestore.getDocs(firestore.collection(firestore.db, CLASS_COMPLETION_COLLECTION));
+  const statusMap = {};
+
+  snap.forEach((docSnap) => {
+    const data = docSnap.data() || {};
+    const classId = normalizeToCanonicalClassId(data.classId || safeDecodeURIComponent(docSnap.id));
+    if (!classId) return;
+
+    statusMap[classId] = {
+      completed: Boolean(data.completed),
+      completedAt: data.completedAt || null,
+      reopenedAt: data.reopenedAt || null,
+      updatedAt: data.updatedAt || null,
+    };
+  });
+
+  return statusMap;
+}
+
+export async function setClassCompletedStatusWithFirestore(
+  classId,
+  completed,
+  firestore = { doc, setDoc, serverTimestamp, db },
+) {
+  const safeClassId = normalizeToCanonicalClassId(classId);
+  if (!safeClassId) {
+    throw new Error("Class ID is required");
+  }
+
+  const payload = {
+    classId: safeClassId,
+    completed: Boolean(completed),
+    updatedAt: firestore.serverTimestamp(),
+  };
+
+  if (completed) {
+    payload.completedAt = firestore.serverTimestamp();
+  } else {
+    payload.reopenedAt = firestore.serverTimestamp();
+  }
+
+  await firestore.setDoc(
+    firestore.doc(firestore.db, CLASS_COMPLETION_COLLECTION, completionDocIdFor(safeClassId)),
+    payload,
+    { merge: true },
+  );
+}
+
 export async function listClasses() {
   return listClassesWithDeps();
+}
+
+export async function listClassCompletionStatuses() {
+  return listClassCompletionStatusesWithFirestore();
+}
+
+export async function setClassCompletedStatus(classId, completed) {
+  return setClassCompletedStatusWithFirestore(classId, completed);
 }
