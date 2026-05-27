@@ -17,6 +17,8 @@ app.use(express.json());
 
 const STUDENTS_COLLECTION = "students";
 const attendancePinSaltSecret = defineSecret("ATTENDANCE_PIN_SALT");
+const orientationSyncSecret = defineSecret("ORIENTATION_SYNC_SECRET");
+const orientationAppsScriptUrlSecret = defineSecret("ORIENTATION_APPS_SCRIPT_URL");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -565,4 +567,47 @@ app.post("/migrateSessionIds", async (req, res) => {
   }
 });
 
-exports.api = onRequest({ secrets: [attendancePinSaltSecret] }, app);
+
+app.post("/orientation/sync", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const appsScriptUrl = String(orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || "").trim();
+    const syncSecret = String(orientationSyncSecret.value() || process.env.ORIENTATION_SYNC_SECRET || "").trim();
+
+    if (!appsScriptUrl) {
+      return res.status(500).json({ error: "Missing required env var: ORIENTATION_APPS_SCRIPT_URL" });
+    }
+    if (!syncSecret) {
+      return res.status(500).json({ error: "Missing required env var: ORIENTATION_SYNC_SECRET" });
+    }
+
+    const body = req.body || {};
+    const name = String(body.name || "").trim();
+    const email = String(body.email || "").trim();
+    const level = String(body.level || "").trim().toUpperCase();
+    const startDate = String(body.startDate || "").trim();
+    const studentCode = String(body.studentCode || "").trim();
+
+    if (!name) return res.status(400).json({ error: "name is required" });
+    if (!email) return res.status(400).json({ error: "email is required" });
+    if (!["A1", "A2", "B1"].includes(level)) return res.status(400).json({ error: "level must be A1, A2, or B1" });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return res.status(400).json({ error: "startDate must be YYYY-MM-DD" });
+
+    const upstreamResponse = await fetch(appsScriptUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: syncSecret, name, email, level, startDate, studentCode }),
+    });
+
+    const responseJson = await upstreamResponse.json().catch(() => ({}));
+    if (!upstreamResponse.ok) {
+      return res.status(502).json({ error: "Orientation sync upstream request failed", details: responseJson });
+    }
+
+    return res.json(responseJson);
+  } catch (e) {
+    return res.status(401).json({ error: e?.message || "Unauthorized" });
+  }
+});
+exports.api = onRequest({ secrets: [attendancePinSaltSecret, orientationSyncSecret, orientationAppsScriptUrlSecret] }, app);

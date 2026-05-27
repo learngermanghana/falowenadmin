@@ -16,6 +16,7 @@ import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
 import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
 import TeachingSlidesPage from "./pages/TeachingSlidesPage";
 import StudentDirectoryPage from "./pages/StudentDirectoryPage";
+import OrientationPage from "./pages/OrientationPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -51,6 +52,7 @@ function TopBar() {
             {isStaff ? (
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
+                <Link to="/orientation" onClick={() => setMenuOpen(false)}>Orientation</Link>
               </>
             ) : (
               <>
@@ -64,6 +66,7 @@ function TopBar() {
                 <Link to="/whatsapp-reminders" onClick={() => setMenuOpen(false)}>WhatsApp Reminders</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
+                <Link to="/orientation" onClick={() => setMenuOpen(false)}>Orientation</Link>
               </>
             )}
           </div>
@@ -199,6 +202,14 @@ export default function App() {
             element={
               <ProtectedRoute allowStaff={false}>
                 <TeachingSlidesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orientation"
+            element={
+              <ProtectedRoute allowStaff={false}>
+                <OrientationPage />
               </ProtectedRoute>
             }
           />
