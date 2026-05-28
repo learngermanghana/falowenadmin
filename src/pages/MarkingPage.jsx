@@ -192,6 +192,7 @@ export default function MarkingPage() {
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
   const [loadingAnswerKeys, setLoadingAnswerKeys] = useState(false);
   const [importingAnswerKeys, setImportingAnswerKeys] = useState(false);
+  const [answerImportSummary, setAnswerImportSummary] = useState(null);
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) {
@@ -495,9 +496,10 @@ export default function MarkingPage() {
   const handleImportAnswerDictionary = async () => {
     try {
       setImportingAnswerKeys(true);
-      const imported = await importAnswerDictionary(answersDictionary);
+      const summary = await importAnswerDictionary(answersDictionary);
+      setAnswerImportSummary(summary);
       await refreshAnswerKeyRegistry();
-      success(`Imported ${imported.length} answer key assignments into Firestore.`);
+      success(`Imported ${summary.importedCount} of ${summary.totalAssignments} answer key assignments into Firestore (${summary.failedCount} failed).`);
     } catch (err) {
       error(err?.message || "Failed to import answer dictionary.");
     } finally {
@@ -743,6 +745,18 @@ export default function MarkingPage() {
               </button>
               <button type="button" onClick={refreshAnswerKeyRegistry} disabled={loadingAnswerKeys}>Refresh keys</button>
             </div>
+            {answerImportSummary ? (
+              <div style={{ border: "1px solid #d8e2ef", background: "#f8fbff", borderRadius: 8, padding: 10, fontSize: 13 }}>
+                <strong>Last import validation</strong>
+                <div>Imported: <b>{answerImportSummary.importedCount}</b> · Failed: <b>{answerImportSummary.failedCount}</b> · Total assignments: <b>{answerImportSummary.totalAssignments}</b></div>
+                <div>Sample keys: {answerImportSummary.sampleImportedKeys?.length ? answerImportSummary.sampleImportedKeys.join(", ") : "—"}</div>
+                {answerImportSummary.warnings?.length ? (
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {answerImportSummary.warnings.slice(0, 10).map((warning) => <li key={warning}>{warning}</li>)}
+                  </ul>
+                ) : <div>No warnings for missing assignment_id or answers.</div>}
+              </div>
+            ) : null}
             {loadingAnswerKeys ? <p style={{ margin: 0 }}>Loading answer keys...</p> : (
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -755,13 +769,14 @@ export default function MarkingPage() {
                       <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Parts</th>
                       <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Answers</th>
                       <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Links</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Last imported</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Load status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {answerKeyRegistry.slice(0, 80).map((entry) => {
-                      const parts = Object.values(entry.parts || {});
-                      const answerCount = parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0);
+                      const parts = Object.entries(entry.parts || {}).map(([partKey, part]) => ({ partId: part?.partId || partKey, ...part }));
+                      const answerCount = Number(entry.totalAnswers || parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0));
+                      const loadStatus = answerCount > 0 ? `Loaded ${entry.importedAt ? new Date(entry.importedAt).toLocaleString() : ""}`.trim() : "No parsed answers";
                       return (
                         <tr key={entry.id || entry.assignmentKey}>
                           <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><code>{entry.assignmentKey}</code></td>
@@ -774,7 +789,7 @@ export default function MarkingPage() {
                             {entry.answerUrl ? <a href={entry.answerUrl} target="_blank" rel="noreferrer">answer</a> : "—"}
                             {entry.sheetUrl ? <> · <a href={entry.sheetUrl} target="_blank" rel="noreferrer">sheet</a></> : null}
                           </td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{loadStatus}</td>
                         </tr>
                       );
                     })}

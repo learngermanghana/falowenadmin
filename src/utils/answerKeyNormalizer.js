@@ -1,4 +1,5 @@
 const PART_ID_PATTERN = /teil\s*[1-4]|part\s*[1-4]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i;
+const ANSWER_KEY_PATTERN = /^(?:answer|antwort|frage|question|q|nr\.?)[\s_-]*\d{1,3}$/i;
 
 export function safeRegistryId(value) {
   return String(value || "")
@@ -71,24 +72,36 @@ function uniq(values = []) {
 }
 
 export function normalizeSingleAnswer(key, value, index = 0) {
-  const raw = String(value ?? "").trim();
-  const questionNumber = inferQuestionNumber(key, index, raw);
-  const { correctLetter, correctText } = parseLetterAndText(raw);
+  const rawCorrectAnswer = String(value ?? "").trim();
+  const questionKey = String(key || `Answer${index + 1}`);
+  const questionNumber = inferQuestionNumber(questionKey, index, rawCorrectAnswer);
+  const { correctLetter, correctText } = parseLetterAndText(rawCorrectAnswer);
   const acceptedAnswers = uniq([
     correctLetter,
     correctText,
     correctLetter && correctText ? `${correctLetter} ${correctText}` : "",
-    raw.replace(/[)_:.-]+/g, " ").replace(/\s+/g, " "),
+    rawCorrectAnswer.replace(/[)_:.-]+/g, " ").replace(/\s+/g, " "),
   ]);
 
   return {
+    questionKey,
     questionNumber,
-    sourceKey: String(key || `Answer${questionNumber}`),
-    raw,
+    rawCorrectAnswer,
+    raw: rawCorrectAnswer,
     correctLetter,
     correctText,
     acceptedAnswers,
   };
+}
+
+function isPlainAnswerValue(value) {
+  return ["string", "number", "boolean"].includes(typeof value) || value == null;
+}
+
+function looksLikeFlatAnswerMap(value = {}) {
+  const entries = Object.entries(value || {});
+  if (!entries.length) return true;
+  return entries.every(([key, nested]) => ANSWER_KEY_PATTERN.test(key) && isPlainAnswerValue(nested));
 }
 
 function flattenPlainAnswers(value, prefix = []) {
@@ -103,13 +116,17 @@ function normalizePart(partId, answers = {}) {
   const entries = flattenPlainAnswers(answers).map((entry, index) => normalizeSingleAnswer(entry.key, entry.value, index));
   return {
     partId,
-    answerCount: entries.length,
     answers: entries,
+    answerCount: entries.length,
   };
 }
 
-function splitAnswersIntoParts(answers = {}, level = "", format = "") {
+function splitAnswersIntoParts(answers = {}) {
   if (!answers || typeof answers !== "object") return {};
+  if (looksLikeFlatAnswerMap(answers)) {
+    return { main: normalizePart("main", answers) };
+  }
+
   const explicitPartKeys = Object.keys(answers).filter((key) => PART_ID_PATTERN.test(key));
   if (explicitPartKeys.length) {
     return explicitPartKeys.reduce((parts, key) => {
@@ -119,17 +136,38 @@ function splitAnswersIntoParts(answers = {}, level = "", format = "") {
     }, {});
   }
 
-  const partId = format === "writing" ? "teil2" : level === "A2" || level === "B1" ? "teil3" : "unknown";
-  return { [partId]: normalizePart(partId, answers) };
+  return { main: normalizePart("main", answers) };
+}
+
+function countPartAnswers(parts = {}) {
+  return Object.values(parts).reduce((sum, part) => sum + Number(part?.answerCount || part?.answers?.length || 0), 0);
+}
+
+export function validateAnswerDictionary(dictionary = {}) {
+  const rows = Array.isArray(dictionary)
+    ? dictionary.map((entry, index) => [`entry-${index + 1}`, entry])
+    : Object.entries(dictionary || {});
+
+  return rows.reduce((summary, [sourceKey, sourceEntry]) => {
+    const assignmentId = sourceEntry?.assignment_id || sourceEntry?.assignmentId || sourceEntry?.assignmentKey;
+    if (!assignmentId) {
+      summary.warnings.push(`Missing assignment_id for dictionary entry "${sourceKey}".`);
+    }
+    if (!sourceEntry?.answers || typeof sourceEntry.answers !== "object" || !flattenPlainAnswers(sourceEntry.answers).length) {
+      summary.warnings.push(`Missing answers for dictionary entry "${sourceKey}"${assignmentId ? ` (${assignmentId})` : ""}.`);
+    }
+    return summary;
+  }, { totalAssignments: rows.length, warnings: [] });
 }
 
 export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
-  const assignmentKey = String(sourceEntry.assignment_id || sourceEntry.assignmentId || sourceEntry.assignmentKey || sourceKey || "").trim();
+  const assignmentKey = String(sourceEntry.assignment_id || sourceEntry.assignmentId || sourceEntry.assignmentKey || "").trim();
   const title = String(sourceEntry.title || sourceEntry.assignment || sourceKey || assignmentKey).trim();
-  const level = String(sourceEntry.level || inferLevelFromAssignment(assignmentKey || title)).toUpperCase();
-  const format = String(sourceEntry.format || (level === "A1" && assignmentKey === "A1-12.3" ? "writing" : "objective")).toLowerCase();
-  const rawAnswers = sourceEntry.answers || sourceEntry.answerKeys || sourceEntry.answer_key || {};
-  const parts = splitAnswersIntoParts(rawAnswers, level, format);
+  const level = inferLevelFromAssignment(assignmentKey);
+  const format = String(sourceEntry.format || "objective").toLowerCase();
+  const rawAnswers = sourceEntry.answers || {};
+  const parts = splitAnswersIntoParts(rawAnswers);
+  const totalAnswers = countPartAnswers(parts);
 
   return {
     assignmentKey,
@@ -140,6 +178,7 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
     sheetUrl: sourceEntry.sheetUrl || sourceEntry.sheet_url || "",
     rawAnswers,
     parts,
+    totalAnswers,
   };
 }
 
@@ -150,5 +189,5 @@ export function normalizeAnswerDictionary(dictionary = {}) {
 
   return entries
     .map(([key, value]) => normalizeAnswerKeyEntry(key, value))
-    .filter((entry) => entry.assignmentKey);
+    .filter((entry) => entry.assignmentKey && entry.totalAnswers > 0);
 }

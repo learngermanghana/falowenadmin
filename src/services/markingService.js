@@ -1,6 +1,6 @@
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { normalizeAnswerDictionary, safeRegistryId } from "../utils/answerKeyNormalizer.js";
+import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -455,22 +455,48 @@ export async function loadAnswerKey(assignmentKey) {
 }
 
 export async function importAnswerDictionary(dictionary) {
+  const validation = validateAnswerDictionary(dictionary);
   const normalizedEntries = normalizeAnswerDictionary(dictionary);
   const now = new Date().toISOString();
-
-  await Promise.all(normalizedEntries.map(async (entry) => {
+  const results = await Promise.allSettled(normalizedEntries.map(async (entry) => {
     const safeAssignmentKey = safeRegistryId(entry.assignmentKey);
     const existing = await getDoc(doc(db, "answerKeyRegistry", safeAssignmentKey));
     await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), {
-      ...entry,
-      assignmentKey: safeAssignmentKey,
-      originalAssignmentKey: entry.assignmentKey,
-      createdAt: existing.exists() ? existing.data()?.createdAt || now : now,
+      assignmentKey: entry.assignmentKey,
+      title: entry.title,
+      level: entry.level,
+      format: entry.format,
+      answerUrl: entry.answerUrl,
+      sheetUrl: entry.sheetUrl,
+      rawAnswers: entry.rawAnswers,
+      parts: entry.parts,
+      totalAnswers: entry.totalAnswers,
+      importedAt: now,
       updatedAt: now,
+      createdAt: existing.exists() ? existing.data()?.createdAt || now : now,
     }, { merge: true });
+    return entry.assignmentKey;
   }));
 
-  return normalizedEntries;
+  const importedKeys = results
+    .map((result, index) => result.status === "fulfilled" ? normalizedEntries[index].assignmentKey : "")
+    .filter(Boolean);
+  const failed = results
+    .map((result, index) => result.status === "rejected" ? {
+      assignmentKey: normalizedEntries[index]?.assignmentKey || "unknown",
+      reason: result.reason?.message || String(result.reason || "Import failed"),
+    } : null)
+    .filter(Boolean);
+
+  return {
+    importedCount: importedKeys.length,
+    failedCount: failed.length,
+    totalAssignments: validation.totalAssignments,
+    sampleImportedKeys: importedKeys.slice(0, 8),
+    warnings: validation.warnings,
+    failed,
+    imported: importedKeys,
+  };
 }
 
 export async function upsertAnswerKey({ assignmentKey, answerKey }) {
