@@ -1095,6 +1095,21 @@ app.post("/orientation/sync", async (req, res) => {
     return res.status(401).json({ error: e?.message || "Unauthorized" });
   }
 });
+
+function safeRegistryId(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[/#?[\]]+/g, "_")
+    .replace(/_{2,}/g, "_");
+}
+
+async function loadAnswerKeyRegistryEntry(assignmentKey = "") {
+  const safeAssignmentKey = safeRegistryId(assignmentKey);
+  if (!safeAssignmentKey) return null;
+  const snap = await db.collection("answerKeyRegistry").doc(safeAssignmentKey).get();
+  return snap.exists ? { id: snap.id, ...snap.data() } : null;
+}
+
 function readSubmissionAssignmentKey(data = {}) {
   return String(data.assignmentKey || data.assignment_key || data.assignmentId || data.assignment_id || data.canonicalAssignmentKey || data.assignment || "").trim();
 }
@@ -1151,7 +1166,7 @@ function buildMarkingPrompt(payload = {}) {
     "You are Falowen's German examiner AI. Mark the complete submission with AI.",
     "Use the supplied answerKeyRegistry entry as the source of truth for objective answers. Do not invent missing objective keys; if a required key is missing, set status to needs_review and explain it.",
     "For objective answers, accept correct option letters, correct text, letter plus text, close spelling, and meaningful stems. If the student gives a wrong option letter with the correct text, mark that item needs_review for conflicting option letter and answer text. If the option letter is correct but text is different, the letter is primary and correct.",
-    "Route A2/B1 teil2 as writing, teil3 Lesen as objective, and teil4 Hören as objective. If teil4 key is empty, include 'No Teil 4 answer key found' and do not fail the whole mark. For A1, objective formats use answer keys; letter/email writing uses writing rubric.",
+    "Route A2/B1 teil2 as writing, teil3 Lesen as objective, and teil4 Hören as objective. Use parts.teil3 for Lesen, parts.teil4 for Hören, and parts.main for A1 objective work. If any required objective answer key is missing, do not guess; mark needs_review.",
     "Return JSON only. The feedback field must be exactly 40 words and should be useful to the student. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, corrections, and improvementSummary.",
     `Payload: ${JSON.stringify(payload)}`,
   ].join("\n\n");
@@ -1202,7 +1217,48 @@ app.post("/marking/ai", async (req, res) => {
       return res.status(400).json({ status: "error", message: "submissionText is required" });
     }
 
-    const result = await callOpenAiForMarking(payload);
+    const assignmentKey = String(
+      payload.assignmentKey ||
+      payload.referenceEntry?.assignmentKey ||
+      readSubmissionAssignmentKey(payload.submission || {})
+    ).trim();
+    const registryEntry = payload.referenceEntry?.parts ? payload.referenceEntry : await loadAnswerKeyRegistryEntry(assignmentKey);
+    if (!registryEntry?.parts) {
+      const result = normalizeAiMarkingResult({
+        assignmentKey,
+        level: payload.level || payload.submission?.level || "UNKNOWN",
+        score: 0,
+        finalScore: 0,
+        status: "needs_review",
+        confidence: 0.25,
+        detectedParts: [],
+        parts: [{
+          partId: "unknown",
+          partType: "objective",
+          result: {
+            status: "needs_review",
+            total: 0,
+            needsReview: [{ reason: "No answer key found for this assignment" }],
+            feedback: "No answer key found for this assignment",
+            confidence: 0.25,
+          },
+        }],
+        objectiveScore: null,
+        objectiveCorrect: 0,
+        objectiveTotal: 0,
+        feedback: "No answer key found for this assignment. A tutor must review this submission before any score is sent to the student.",
+        improvementSummary: "Tutor review required because the answer key is missing.",
+        shouldSendAutomatically: false,
+      }, payload);
+      return res.json({ ok: true, result });
+    }
+
+    const result = await callOpenAiForMarking({
+      ...payload,
+      assignmentKey: registryEntry?.assignmentKey || assignmentKey,
+      level: registryEntry?.level || payload.level,
+      referenceEntry: registryEntry || payload.referenceEntry || null,
+    });
     return res.json({ ok: true, result });
   } catch (error) {
     console.error("AI marking failed:", error);

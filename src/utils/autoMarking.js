@@ -172,9 +172,17 @@ function flattenAnswerEntries(referenceAnswers = {}, path = []) {
 
 function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   if (referenceEntry.parts?.[partId]?.answers) return referenceEntry.parts[partId].answers;
+  if (partId === "unknown" && referenceEntry.parts?.main?.answers) return referenceEntry.parts.main.answers;
   if (partId !== "unknown") {
     const matchingPartKey = Object.keys(referenceEntry.parts || {}).find((key) => findPartId(key) === partId);
     if (matchingPartKey && referenceEntry.parts[matchingPartKey]?.answers) return referenceEntry.parts[matchingPartKey].answers;
+  }
+
+  if (partId === "teil3" && referenceEntry.parts?.teil3?.answers) return referenceEntry.parts.teil3.answers;
+  if (partId === "teil4" && referenceEntry.parts?.teil4?.answers) return referenceEntry.parts.teil4.answers;
+  if (partId === "unknown" && Object.keys(referenceEntry.parts || {}).length === 1) {
+    const onlyPart = Object.values(referenceEntry.parts)[0];
+    if (onlyPart?.answers) return onlyPart.answers;
   }
 
   const candidates = [
@@ -193,7 +201,6 @@ function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   }
 
   if (partId === "unknown" || String(referenceEntry.format || "").toLowerCase() === "objective") {
-    if (referenceEntry.parts?.unknown?.answers) return referenceEntry.parts.unknown.answers;
     return referenceEntry.answers || referenceEntry.answerKeys || referenceEntry.key || {};
   }
 
@@ -225,9 +232,9 @@ function stripGermanStem(value = "") {
 function expectedMetadata(expectedRaw) {
   if (expectedRaw && typeof expectedRaw === "object") {
     return {
-      raw: expectedRaw.raw || expectedRaw.correctText || expectedRaw.correctLetter || "",
+      raw: expectedRaw.rawCorrectAnswer || expectedRaw.raw || expectedRaw.correctText || expectedRaw.correctLetter || "",
       correctLetter: String(expectedRaw.correctLetter || "").toUpperCase(),
-      correctText: expectedRaw.correctText || extractOptionText(expectedRaw.raw || ""),
+      correctText: expectedRaw.correctText || extractOptionText(expectedRaw.rawCorrectAnswer || expectedRaw.raw || ""),
       acceptedAnswers: expectedRaw.acceptedAnswers || [],
       questionNumber: expectedRaw.questionNumber,
     };
@@ -248,7 +255,7 @@ function textMatches(expectedTextRaw, studentTextRaw) {
   if (expectedStem.length >= 4 && studentStem.length >= 4 && (expectedStem.includes(studentStem) || studentStem.includes(expectedStem))) return true;
   const maxLength = Math.max(expectedText.length, studentText.length);
   const distance = levenshteinDistance(expectedText, studentText);
-  return maxLength >= 5 && distance <= Math.max(1, Math.floor(maxLength * 0.25));
+  return maxLength >= 5 && distance <= Math.max(1, Math.floor(maxLength * 0.35));
 }
 
 function valuesMatch(expectedRaw, studentRaw) {
@@ -286,7 +293,7 @@ function valuesMatch(expectedRaw, studentRaw) {
 function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = "unknown" } = {}) {
   const studentAnswers = parseStudentObjectiveAnswers(submissionText);
   const entries = Array.isArray(referenceAnswers)
-    ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.sourceKey || `Answer${index + 1}`, value: entry }))
+    ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.questionKey || entry.sourceKey || `Answer${index + 1}`, value: entry }))
     : flattenAnswerEntries(referenceAnswers);
   const total = entries.length;
 
@@ -298,10 +305,10 @@ function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = 
       score: 0,
       percentage: 0,
       total: 0,
-      needsReview: partId === "teil4" ? [] : [{ reason: "No answer key found for this assignment" }],
-      status: partId === "teil4" ? "info" : "needs_review",
+      needsReview: [{ reason: `No answer key found for ${partId === "unknown" ? "this assignment" : partId}` }],
+      status: "needs_review",
       feedback: partId === "teil4" ? "No Teil 4 answer key found" : "No answer key found for this assignment",
-      confidence: partId === "teil4" ? 0.9 : 0.25,
+      confidence: 0.25,
     };
   }
 
@@ -313,7 +320,7 @@ function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = 
   for (const [entryIndex, entry] of entries.entries()) {
     const questionIndex = getQuestionIndex(entry.key) || entryIndex + 1;
     const studentRaw = studentAnswers.get(questionIndex) || "";
-    const item = { question: questionIndex, expected: String(entry.value?.raw || entry.value), submitted: String(studentRaw || "") };
+    const item = { question: questionIndex, expected: String(entry.value?.rawCorrectAnswer || entry.value?.raw || entry.value), submitted: String(studentRaw || "") };
 
     if (!studentRaw) {
       missing.push(item);
@@ -433,7 +440,7 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
   const isObjectiveAssignment = String(referenceEntry?.format || "").toLowerCase() === "objective";
   const unclearStructure = !level || !assignmentKey || (!isObjectiveAssignment && parts.some((part) => part.partId === "unknown" && !looksLikeWritingTask(part.text)));
   const objectiveNeedsReview = parts.some((part) => part.partType === "objective" && (part.result?.status === "needs_review" || part.result?.needsReview?.length));
-  const missingRequiredObjectiveKey = parts.some((part) => part.partType === "objective" && !part.result?.total && part.partId !== "teil4");
+  const missingRequiredObjectiveKey = parts.some((part) => part.partType === "objective" && !part.result?.total);
   const needsReview = unclearStructure || aggregate.confidence < WRITING_CONFIDENCE_THRESHOLD || missingRequiredObjectiveKey || objectiveNeedsReview;
   const status = needsReview ? "needs_review" : "marked";
   const shouldSendAutomatically = !hasWriting || aggregate.confidence >= WRITING_CONFIDENCE_THRESHOLD;
