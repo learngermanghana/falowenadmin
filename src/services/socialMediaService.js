@@ -273,7 +273,12 @@ function sortByDateDescending(rows, key = "date") {
 }
 
 function buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalendarRows }) {
-  const recentPosts = sortByDateDescending(postTrackerRows).slice(0, 8);
+  const recentPosts = sortByDateDescending(
+    postTrackerRows.filter((row) => {
+      const topic = String(row.topic || "").toLowerCase();
+      return topic !== "grammar tip";
+    }),
+  ).slice(0, 8);
 
   const latestSnapshotByPlatform = {};
   for (const row of sortByDateDescending(followerGrowthRows)) {
