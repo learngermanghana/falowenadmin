@@ -19,6 +19,7 @@ import StudentDirectoryPage from "./pages/StudentDirectoryPage";
 import OrientationPage from "./pages/OrientationPage";
 import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
 import ClassOperationsPage from "./pages/ClassOperationsPage";
+import HolidayCalendarPage from "./pages/HolidayCalendarPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -64,6 +65,7 @@ function TopBar() {
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
+                <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
               </>
             )}
           </div>
@@ -223,6 +225,14 @@ export default function App() {
             element={
               <ProtectedRoute allowStaff={false}>
                 <ClassScheduleSetupPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/holiday-calendar"
+            element={
+              <ProtectedRoute allowStaff={false}>
+                <HolidayCalendarPage />
               </ProtectedRoute>
             }
           />
