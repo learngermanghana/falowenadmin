@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const { onRequest } = require("firebase-functions/v2/https");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
@@ -1093,6 +1094,56 @@ app.post("/orientation/sync", async (req, res) => {
     return res.status(401).json({ error: e?.message || "Unauthorized" });
   }
 });
+function readSubmissionAssignmentKey(data = {}) {
+  return String(data.assignmentKey || data.assignment_key || data.assignmentId || data.assignment_id || data.canonicalAssignmentKey || data.assignment || "").trim();
+}
+
+function readSubmissionLevel(data = {}, eventParams = {}) {
+  const candidate = String(data.level || data.className || data.class || data.group || eventParams.level || "").trim().toUpperCase();
+  const match = candidate.match(/\b(A1|A2|B1)\b/);
+  return match ? match[1] : candidate;
+}
+
+async function createAutomaticMarkingJob(event, collectionShape) {
+  const snap = event.data;
+  if (!snap) return;
+
+  const submission = snap.data() || {};
+  if (String(submission.status || submission.submissionStatus || "").trim().toLowerCase() === "draft") return;
+
+  const submissionId = snap.id;
+  const submissionPath = snap.ref.path;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const payload = {
+    submissionId,
+    submissionPath,
+    collectionShape,
+    assignmentKey: readSubmissionAssignmentKey(submission),
+    level: readSubmissionLevel(submission, event.params),
+    status: "pending",
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.collection("markingJobs").add(payload);
+  await snap.ref.set({
+    markingStatus: "pending",
+    markingJobCreatedAt: now,
+  }, { merge: true });
+}
+
+exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
+  await createAutomaticMarkingJob(event, "flat");
+});
+
+exports.createNestedSubmissionMarkingJob = onDocumentCreated("submissions/{level}/{studentCode}/{submissionId}", async (event) => {
+  await createAutomaticMarkingJob(event, "nested");
+});
+
+exports.createPostSubmissionMarkingJob = onDocumentCreated("submissions/{level}/posts/{submissionId}", async (event) => {
+  await createAutomaticMarkingJob(event, "posts");
+});
+
 exports.sendDueHolidayNotices = onSchedule({
   schedule: "0 7 * * *",
   timeZone: "Africa/Accra",

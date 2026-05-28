@@ -1,4 +1,4 @@
-import { addDoc, collection, collectionGroup, deleteDoc, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
@@ -215,6 +215,12 @@ function normalizeSubmission(id, data = {}, path = "") {
     originalSubmittedAt: normalizeTimestamp(data.originalSubmittedAt) || null,
     improvementSummary: normalize(data.improvementSummary),
     previousSubmissionText: normalize(data.previousSubmissionText),
+    markingStatus: normalize(data.markingStatus || data.marking_status),
+    markingResultId: normalize(data.markingResultId || data.marking_result_id),
+    aiConfidence: data.aiConfidence ?? data.ai_confidence ?? null,
+    finalScore: data.finalScore ?? data.final_score ?? null,
+    feedbackSentToStudent: Boolean(data.feedbackSentToStudent || data.feedback_sent_to_student),
+    detectedParts: Array.isArray(data.detectedParts) ? data.detectedParts : [],
     raw: data,
   };
 }
@@ -330,6 +336,116 @@ export async function hideSubmissionFromQueue(path) {
   } catch {
     await setDoc(submissionRef, hiddenPayload, { merge: true });
   }
+}
+
+function safeFirestoreId(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[/#?[\]]+/g, "_")
+    .replace(/_{2,}/g, "_")
+    || `marking-${Date.now()}`;
+}
+
+export async function loadMarkingResult(submissionId) {
+  const safeSubmissionId = safeFirestoreId(submissionId);
+  const snap = await getDoc(doc(db, "markingResults", safeSubmissionId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function saveMarkingResult({ submissionId, submissionPath, result, status, sentToStudent = false, preserveTutorCorrections = true }) {
+  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath);
+  const now = new Date().toISOString();
+  const existing = preserveTutorCorrections ? await loadMarkingResult(safeSubmissionId) : null;
+  const tutorCorrections = existing?.tutorCorrections && preserveTutorCorrections ? { tutorCorrections: existing.tutorCorrections } : {};
+
+  const payload = {
+    submissionId: safeSubmissionId,
+    submissionPath: submissionPath || "",
+    status: status || result?.status || "needs_review",
+    sentToStudent,
+    level: result?.level || "",
+    assignmentKey: result?.assignmentKey || "",
+    detectedParts: result?.detectedParts || [],
+    objectiveScore: result?.objectiveScore ?? null,
+    objectiveCorrect: result?.objectiveCorrect ?? 0,
+    objectiveTotal: result?.objectiveTotal ?? 0,
+    writingScore: result?.writingScore ?? null,
+    finalScore: result?.finalScore ?? result?.score ?? 0,
+    confidence: result?.confidence ?? 0,
+    feedback: result?.feedback || "",
+    corrections: result?.corrections || [],
+    improvementSummary: result?.improvementSummary || "",
+    parts: result?.parts || [],
+    shouldSendAutomatically: Boolean(result?.shouldSendAutomatically),
+    updatedAt: now,
+    createdAt: existing?.createdAt || now,
+    ...tutorCorrections,
+  };
+
+  await setDoc(doc(db, "markingResults", safeSubmissionId), payload, { merge: true });
+
+  if (submissionPath) {
+    await setDoc(doc(db, submissionPath), {
+      markingStatus: payload.status,
+      markingResultId: safeSubmissionId,
+      aiConfidence: payload.confidence,
+      finalScore: payload.finalScore,
+      feedbackSentToStudent: sentToStudent,
+      markingUpdatedAt: now,
+    }, { merge: true });
+  }
+
+  return payload;
+}
+
+export async function createMarkingJob({ submissionId, submissionPath, assignmentKey, level, status = "pending" }) {
+  const payload = {
+    submissionId: safeFirestoreId(submissionId || submissionPath),
+    submissionPath: submissionPath || "",
+    assignmentKey: assignmentKey || "",
+    level: level || "",
+    status,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  const ref = await addDoc(collection(db, "markingJobs"), payload);
+  return { id: ref.id, ...payload };
+}
+
+export async function updateMarkingWorkflowStatus({ submissionId, submissionPath, status, sentToStudent = false }) {
+  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath);
+  const now = new Date().toISOString();
+  await setDoc(doc(db, "markingResults", safeSubmissionId), {
+    status,
+    sentToStudent,
+    updatedAt: now,
+  }, { merge: true });
+
+  if (submissionPath) {
+    await setDoc(doc(db, submissionPath), {
+      markingStatus: status,
+      feedbackSentToStudent: sentToStudent,
+      markingUpdatedAt: now,
+    }, { merge: true });
+  }
+}
+
+export async function upsertMarkingProfile({ assignmentKey, profile }) {
+  const safeAssignmentKey = safeFirestoreId(assignmentKey);
+  await setDoc(doc(db, "markingProfiles", safeAssignmentKey), {
+    assignmentKey: safeAssignmentKey,
+    ...profile,
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
+}
+
+export async function upsertAnswerKey({ assignmentKey, answerKey }) {
+  const safeAssignmentKey = safeFirestoreId(assignmentKey);
+  await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), {
+    assignmentKey: safeAssignmentKey,
+    answerKey,
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
 }
 
 const DEFAULT_SCORES_WEBHOOK_URL =
