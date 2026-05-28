@@ -580,6 +580,121 @@ app.post("/migrateSessionIds", async (req, res) => {
 
 
 
+
+function parseHolidayDateInput(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+}
+
+app.get("/holidays/upcoming", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const year = Number(req.query.year);
+    const countryCode = String(req.query.countryCode || "GH").trim().toUpperCase() || "GH";
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+      return res.status(400).json({ error: "year must be a valid YYYY number" });
+    }
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const startDate = year === Number(todayIso.slice(0, 4)) ? todayIso : `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const snapshot = await db
+      .collection("holidayCalendar")
+      .where("countryCode", "==", countryCode)
+      .where("date", ">=", startDate)
+      .where("date", "<=", endDate)
+      .orderBy("date", "asc")
+      .get();
+
+    const holidays = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return res.json({ holidays });
+  } catch (e) {
+    return res.status(401).json({ error: e?.message || "Unauthorized" });
+  }
+});
+
+app.post("/holidays/import", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const year = Number(req.body?.year);
+    const countryCode = String(req.body?.countryCode || "GH").trim().toUpperCase() || "GH";
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+      return res.status(400).json({ error: "year must be a valid YYYY number" });
+    }
+
+    const endpoint = `https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`;
+    const upstreamResponse = await fetch(endpoint);
+    if (!upstreamResponse.ok) {
+      return res.status(502).json({ error: "Failed to fetch holidays from Nager.Date" });
+    }
+
+    const payload = await upstreamResponse.json();
+    const holidays = Array.isArray(payload) ? payload : [];
+
+    const batch = db.batch();
+    for (const holiday of holidays) {
+      const date = String(holiday?.date || "").trim();
+      if (!parseHolidayDateInput(date)) continue;
+      const docId = `${countryCode}_${date}`;
+      const docRef = db.collection("holidayCalendar").doc(docId);
+      const existingSnap = await docRef.get();
+      const existing = existingSnap.exists ? existingSnap.data() : {};
+
+      batch.set(
+        docRef,
+        {
+          countryCode,
+          date,
+          localName: String(holiday?.localName || "").trim(),
+          name: String(holiday?.name || "").trim(),
+          types: Array.isArray(holiday?.types) ? holiday.types : [],
+          schoolClosed: typeof existing?.schoolClosed === "boolean" ? existing.schoolClosed : true,
+          notes: typeof existing?.notes === "string" ? existing.notes : "",
+          source: "Nager.Date",
+          importedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    await batch.commit();
+    return res.json({ ok: true, year, countryCode, imported: holidays.length });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
+app.post("/holidays/:date/update", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const date = String(req.params.date || "").trim();
+    const countryCode = String(req.body?.countryCode || "GH").trim().toUpperCase() || "GH";
+    if (!parseHolidayDateInput(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+
+    const schoolClosed = req.body?.schoolClosed;
+    const notes = typeof req.body?.notes === "string" ? req.body.notes : "";
+
+    const updatePayload = {
+      notes,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (typeof schoolClosed === "boolean") {
+      updatePayload.schoolClosed = schoolClosed;
+    }
+
+    await db.collection("holidayCalendar").doc(`${countryCode}_${date}`).set(updatePayload, { merge: true });
+
+    return res.json({ ok: true, date, countryCode });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
 app.post("/class-schedule/sync", async (req, res) => {
   try {
     await requireAuth(req);
