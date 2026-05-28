@@ -414,12 +414,12 @@ export default function DashboardPage() {
               <p className="analytics-eyebrow">Growth</p>
               <h2>Social media analytics</h2>
             </div>
-            <Link to="/students">Open directory</Link>
+            <Link to="/course-schedule">Open calendar</Link>
           </div>
           <div className="social-metric-row">
             <span>Total posts <strong>{analytics.socialPosts}</strong></span>
             <span>Follower snapshots <strong>{analytics.followerSnapshots}</strong></span>
-            <span>Calendar items <strong>{socialMetrics?.totalCalendarItems || 0}</strong></span>
+            <span>Holiday calendar <strong>{upcomingHolidays.length}</strong></span>
           </div>
           {socialFollowerPreview.length > 0 ? (
             <div className="social-snapshots">
