@@ -1,17 +1,19 @@
 import { auth } from "../firebase";
 
-async function authHeaders() {
-  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+async function getAuthHeaders() {
+  const user = auth?.currentUser;
+  if (!user) throw new Error("You must be logged in to manage holidays.");
+  const token = await user.getIdToken();
   return {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    Authorization: `Bearer ${token}`,
   };
 }
 
 export async function importHolidays({ year, countryCode = "GH" }) {
   const response = await fetch("/api/holidays/import", {
     method: "POST",
-    headers: await authHeaders(),
+    headers: await getAuthHeaders(),
     body: JSON.stringify({ year, countryCode }),
   });
 
@@ -27,7 +29,7 @@ export async function getUpcomingHolidays({ year, countryCode = "GH" }) {
   const query = new URLSearchParams({ year: String(year), countryCode }).toString();
   const response = await fetch(`/api/holidays/upcoming?${query}`, {
     method: "GET",
-    headers: await authHeaders(),
+    headers: await getAuthHeaders(),
   });
 
   const data = await response.json().catch(() => ({}));
@@ -41,7 +43,7 @@ export async function getUpcomingHolidays({ year, countryCode = "GH" }) {
 export async function updateHoliday({ date, countryCode = "GH", schoolClosed, notes }) {
   const response = await fetch(`/api/holidays/${date}/update`, {
     method: "PATCH",
-    headers: await authHeaders(),
+    headers: await getAuthHeaders(),
     body: JSON.stringify({ countryCode, schoolClosed, notes }),
   });
 
