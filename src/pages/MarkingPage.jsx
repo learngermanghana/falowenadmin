@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
+import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, loadRoster, loadSubmissions, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
 import { autoMarkSubmission } from "../utils/autoMarking.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { useToast } from "../context/ToastContext.jsx";
@@ -187,6 +187,9 @@ export default function MarkingPage() {
   const [autoMarking, setAutoMarking] = useState(false);
   const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
   const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
+  const [markingFilter, setMarkingFilter] = useState("pending");
+  const [smartMarkingResult, setSmartMarkingResult] = useState(null);
+  const [workflowSaving, setWorkflowSaving] = useState(false);
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) {
@@ -343,6 +346,7 @@ export default function MarkingPage() {
 
     setAssignmentValue(nextAssignment);
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
+    setSmartMarkingResult(null);
   }, [
     selectedStudent?.level,
     referenceEntry?.level,
@@ -352,7 +356,24 @@ export default function MarkingPage() {
     selectedSubmission?.assignmentKey,
   ]);
 
-  const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
+  const markingFilterOptions = [
+    { id: "pending", label: "Pending" },
+    { id: "marked", label: "Auto-marked" },
+    { id: "needs_review", label: "Needs review" },
+    { id: "sent", label: "Sent to student" },
+    { id: "failed", label: "Failed" },
+  ];
+
+  const latestNotifications = useMemo(() => {
+    const rows = submissionNotifications.slice(0, 60);
+    if (markingFilter === "pending") {
+      return rows.filter((row) => !row.markingStatus || row.markingStatus === "pending");
+    }
+    if (markingFilter === "sent") {
+      return rows.filter((row) => row.feedbackSentToStudent || row.markingStatus === "sent");
+    }
+    return rows.filter((row) => row.markingStatus === markingFilter);
+  }, [markingFilter, submissionNotifications]);
 
   const combinedReferenceAndSubmission = useMemo(() => {
     const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
@@ -478,14 +499,79 @@ export default function MarkingPage() {
 
     try {
       setAutoMarking(true);
-      const result = autoMarkSubmission({ referenceEntry, submissionText });
-      setScore(String(result.score));
+      const result = autoMarkSubmission({ referenceEntry, submission: selectedSubmission, submissionText });
+      setSmartMarkingResult(result);
+      setScore(String(result.finalScore ?? result.score));
       setFeedback(result.feedback);
-      success("AI auto-mark draft applied. Please review before saving.");
+      await createMarkingJob({
+        submissionId: selectedSubmission.id,
+        submissionPath: selectedSubmission.path,
+        assignmentKey: result.assignmentKey,
+        level: result.level,
+        status: "pending",
+      });
+      await saveMarkingResult({
+        submissionId: selectedSubmission.id,
+        submissionPath: selectedSubmission.path,
+        result,
+        status: result.status,
+        sentToStudent: result.shouldSendAutomatically && result.status === "marked",
+      });
+      success(result.status === "needs_review" ? "Smart marking saved for tutor review." : "Smart marking completed and saved.");
     } catch (err) {
       error(err?.message || "Failed to auto-mark submission.");
     } finally {
       setAutoMarking(false);
+    }
+  };
+
+  const handleApproveAndSend = async () => {
+    if (!selectedSubmission || !smartMarkingResult) {
+      error("Run smart marking before approving feedback.");
+      return;
+    }
+
+    try {
+      setWorkflowSaving(true);
+      await updateMarkingWorkflowStatus({
+        submissionId: selectedSubmission.id,
+        submissionPath: selectedSubmission.path,
+        status: "sent",
+        sentToStudent: true,
+      });
+      setSmartMarkingResult((current) => current ? { ...current, status: "sent" } : current);
+      success("Feedback approved and marked as sent to student.");
+    } catch (err) {
+      error(err?.message || "Failed to approve and send feedback.");
+    } finally {
+      setWorkflowSaving(false);
+    }
+  };
+
+  const handleSendFeedbackToStudent = async () => {
+    await handleApproveAndSend();
+  };
+
+  const handleNeedsTutorReview = async () => {
+    if (!selectedSubmission) {
+      error("Load a submission before sending it to tutor review.");
+      return;
+    }
+
+    try {
+      setWorkflowSaving(true);
+      await updateMarkingWorkflowStatus({
+        submissionId: selectedSubmission.id,
+        submissionPath: selectedSubmission.path,
+        status: "needs_review",
+        sentToStudent: false,
+      });
+      setSmartMarkingResult((current) => current ? { ...current, status: "needs_review" } : current);
+      success("Submission moved to tutor review queue.");
+    } catch (err) {
+      error(err?.message || "Failed to update tutor review status.");
+    } finally {
+      setWorkflowSaving(false);
     }
   };
 
@@ -573,10 +659,26 @@ export default function MarkingPage() {
     <div style={{ padding: 16, display: "grid", gap: 14 }}>
       <h2>Student Work Marking</h2>
       <p style={{ marginTop: -8, opacity: 0.8 }}>
-        5-stage flow: student → reference answer → submission → score/feedback → save to Google Sheets (optional Firestore mirror).
+        Smart flow: detect level/assignment/parts, route objective tasks to answer keys, route writing to the level rubric, then review or send feedback.
       </p>
 
       {loading && <p>Loading roster and submissions...</p>}
+
+      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>Marking queue filters</h3>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {markingFilterOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setMarkingFilter(option.id)}
+              style={{ fontWeight: markingFilter === option.id ? 700 : 400 }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>1) Pick a student</h3>
@@ -682,6 +784,11 @@ export default function MarkingPage() {
                     <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
                     {row.assignmentId ? <> · ID: <code>{row.assignmentId}</code></> : null}
                   </div>
+                  <div style={{ fontSize: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <span>Marking: <b>{row.markingStatus || "pending"}</b></span>
+                    {row.finalScore !== null && row.finalScore !== undefined ? <span>Final score: <b>{row.finalScore}</b></span> : null}
+                    {row.aiConfidence !== null && row.aiConfidence !== undefined ? <span>AI confidence: <b>{row.aiConfidence}</b></span> : null}
+                  </div>
                   {row.improvementSummary ? (
                     <div style={{ fontSize: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 6 }}>
                       <b>Improvement summary:</b> {row.improvementSummary}
@@ -721,6 +828,28 @@ export default function MarkingPage() {
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>5) Enter score and feedback</h3>
         <div style={{ display: "grid", gap: 8 }}>
+          {smartMarkingResult ? (
+            <div style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 10, background: "#eff6ff", display: "grid", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, fontSize: 13 }}>
+                <span>Detected level: <b>{smartMarkingResult.level}</b></span>
+                <span>Detected assignment: <b>{smartMarkingResult.assignmentKey || "Unknown"}</b></span>
+                <span>Objective score: <b>{smartMarkingResult.objectiveScore ?? "—"}</b></span>
+                <span>Writing score: <b>{smartMarkingResult.writingScore ?? "—"}</b></span>
+                <span>Final score: <b>{smartMarkingResult.finalScore}</b></span>
+                <span>AI confidence: <b>{smartMarkingResult.confidence}</b></span>
+                <span>Status: <b>{smartMarkingResult.status}</b></span>
+              </div>
+              <div style={{ fontSize: 13 }}>
+                <b>Detected parts:</b> {smartMarkingResult.detectedParts?.map((part) => `${part.partId} (${part.partType})`).join(", ") || "None"}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving}>Re-run AI marking</button>
+                <button type="button" onClick={handleApproveAndSend} disabled={workflowSaving}>Approve and send</button>
+                <button type="button" onClick={handleSendFeedbackToStudent} disabled={workflowSaving}>Send feedback to student</button>
+                <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving}>Mark as needs tutor review</button>
+              </div>
+            </div>
+          ) : null}
           <label>
             Score (0-100)
             <input
@@ -775,7 +904,7 @@ export default function MarkingPage() {
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
-              {autoMarking ? "Auto-marking..." : "Auto-mark with AI"}
+              {autoMarking ? "Auto-marking..." : "Run smart marking"}
             </button>
             <button onClick={() => { setScore(""); setFeedback(""); }}>Reset</button>
           </div>
