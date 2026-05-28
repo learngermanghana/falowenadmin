@@ -23,6 +23,10 @@ function normalizeLevel(value) {
   return match ? match[1].toUpperCase() : "";
 }
 
+export function normalizeTextForAnswerMatching(value) {
+  return normalizeForCompare(value);
+}
+
 function normalizeAnswer(value) {
   const normalized = normalizeForCompare(value);
   if (["true", "r", "richtig", "wahr", "yes", "ja"].includes(normalized)) return "R";
@@ -35,13 +39,14 @@ function normalizeAnswer(value) {
 }
 
 function extractOptionLetter(value) {
-  const match = String(value || "").trim().match(/^([A-Z])\s*[).:-]?/i);
+  const trimmed = String(value || "").trim();
+  const match = trimmed.match(/^([A-Z])(?:\s*[).:-]|\s+|$)/i);
   return match ? match[1].toUpperCase() : "";
 }
 
 function extractOptionText(value) {
   return String(value || "")
-    .replace(/^\s*[A-Z]\s*[).:-]?\s*/i, "")
+    .replace(/^\s*[A-Z](?:\s*[).:-]|\s+)\s*/i, "")
     .trim();
 }
 
@@ -166,6 +171,12 @@ function flattenAnswerEntries(referenceAnswers = {}, path = []) {
 }
 
 function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
+  if (referenceEntry.parts?.[partId]?.answers) return referenceEntry.parts[partId].answers;
+  if (partId !== "unknown") {
+    const matchingPartKey = Object.keys(referenceEntry.parts || {}).find((key) => findPartId(key) === partId);
+    if (matchingPartKey && referenceEntry.parts[matchingPartKey]?.answers) return referenceEntry.parts[matchingPartKey].answers;
+  }
+
   const candidates = [
     referenceEntry.answerKeys,
     referenceEntry.answer_key,
@@ -182,30 +193,101 @@ function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   }
 
   if (partId === "unknown" || String(referenceEntry.format || "").toLowerCase() === "objective") {
+    if (referenceEntry.parts?.unknown?.answers) return referenceEntry.parts.unknown.answers;
     return referenceEntry.answers || referenceEntry.answerKeys || referenceEntry.key || {};
   }
 
   return {};
 }
 
-function valuesMatch(expectedRaw, studentRaw) {
-  const expected = normalizeAnswer(expectedRaw);
-  const student = normalizeAnswer(studentRaw);
-  if (!expected || !student) return false;
-  if (expected === student) return true;
-
-  const expectedLetter = extractOptionLetter(expectedRaw);
-  const studentLetter = extractOptionLetter(studentRaw);
-  if (expectedLetter && studentLetter && expectedLetter === studentLetter) return true;
-
-  const expectedText = normalizeForCompare(extractOptionText(expectedRaw));
-  const studentText = normalizeForCompare(extractOptionText(studentRaw));
-  return Boolean(expectedText && studentText && (expectedText.includes(studentText) || studentText.includes(expectedText)));
+function levenshteinDistance(a = "", b = "") {
+  const left = String(a);
+  const right = String(b);
+  if (!left) return right.length;
+  if (!right) return left.length;
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let i = 0; i < left.length; i += 1) {
+    const current = [i + 1];
+    for (let j = 0; j < right.length; j += 1) {
+      current[j + 1] = left[i] === right[j]
+        ? previous[j]
+        : Math.min(previous[j] + 1, current[j] + 1, previous[j + 1] + 1);
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[right.length];
 }
 
-function objectiveMarker(referenceAnswers = {}, submissionText = "") {
+function stripGermanStem(value = "") {
+  return normalizeForCompare(value).replace(/(en|ern|er|em|es|e|n|s)$/i, "");
+}
+
+function expectedMetadata(expectedRaw) {
+  if (expectedRaw && typeof expectedRaw === "object") {
+    return {
+      raw: expectedRaw.raw || expectedRaw.correctText || expectedRaw.correctLetter || "",
+      correctLetter: String(expectedRaw.correctLetter || "").toUpperCase(),
+      correctText: expectedRaw.correctText || extractOptionText(expectedRaw.raw || ""),
+      acceptedAnswers: expectedRaw.acceptedAnswers || [],
+      questionNumber: expectedRaw.questionNumber,
+    };
+  }
+  const raw = String(expectedRaw ?? "");
+  const letter = extractOptionLetter(raw);
+  return { raw, correctLetter: letter, correctText: extractOptionText(raw), acceptedAnswers: [], questionNumber: "" };
+}
+
+function textMatches(expectedTextRaw, studentTextRaw) {
+  const expectedText = normalizeForCompare(expectedTextRaw);
+  const studentText = normalizeForCompare(studentTextRaw);
+  if (!expectedText || !studentText) return false;
+  if (expectedText === studentText) return true;
+  if (expectedText.includes(studentText) || studentText.includes(expectedText)) return true;
+  const expectedStem = stripGermanStem(expectedText);
+  const studentStem = stripGermanStem(studentText);
+  if (expectedStem.length >= 4 && studentStem.length >= 4 && (expectedStem.includes(studentStem) || studentStem.includes(expectedStem))) return true;
+  const maxLength = Math.max(expectedText.length, studentText.length);
+  const distance = levenshteinDistance(expectedText, studentText);
+  return maxLength >= 5 && distance <= Math.max(1, Math.floor(maxLength * 0.25));
+}
+
+function valuesMatch(expectedRaw, studentRaw) {
+  const meta = expectedMetadata(expectedRaw);
+  const expected = normalizeAnswer(meta.raw);
+  const student = normalizeAnswer(studentRaw);
+  if (!expected || !student) return { status: "wrong" };
+  if (expected === student) return { status: "correct", reason: "Exact answer match" };
+
+  const expectedLetter = meta.correctLetter || extractOptionLetter(meta.raw);
+  const studentLetter = extractOptionLetter(studentRaw);
+  const studentText = extractOptionText(studentRaw);
+  const expectedText = meta.correctText || extractOptionText(meta.raw);
+
+  if (expectedLetter && studentLetter) {
+    if (expectedLetter === studentLetter) return { status: "correct", reason: "Correct option letter" };
+    if (textMatches(expectedText, studentText || studentRaw)) {
+      return { status: "needs_review", reason: "Conflicting option letter and answer text" };
+    }
+    return { status: "wrong" };
+  }
+
+  if (expectedLetter && normalizeForCompare(studentRaw) === normalizeForCompare(expectedLetter)) {
+    return { status: "correct", reason: "Correct option letter" };
+  }
+
+  const acceptedTextMatch = meta.acceptedAnswers.some((answer) => textMatches(answer, studentRaw));
+  if (acceptedTextMatch || textMatches(expectedText || meta.raw, studentText || studentRaw)) {
+    return { status: "correct", reason: "Correct answer text" };
+  }
+
+  return { status: "wrong" };
+}
+
+function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = "unknown" } = {}) {
   const studentAnswers = parseStudentObjectiveAnswers(submissionText);
-  const entries = flattenAnswerEntries(referenceAnswers);
+  const entries = Array.isArray(referenceAnswers)
+    ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.sourceKey || `Answer${index + 1}`, value: entry }))
+    : flattenAnswerEntries(referenceAnswers);
   const total = entries.length;
 
   if (!total) {
@@ -215,26 +297,35 @@ function objectiveMarker(referenceAnswers = {}, submissionText = "") {
       missing: [],
       score: 0,
       percentage: 0,
-      feedback: "No stored answer key was found for this objective part. AI was not used to guess answers.",
-      confidence: 0.25,
+      total: 0,
+      needsReview: partId === "teil4" ? [] : [{ reason: "No answer key found for this assignment" }],
+      status: partId === "teil4" ? "info" : "needs_review",
+      feedback: partId === "teil4" ? "No Teil 4 answer key found" : "No answer key found for this assignment",
+      confidence: partId === "teil4" ? 0.9 : 0.25,
     };
   }
 
   const correct = [];
   const wrong = [];
   const missing = [];
+  const needsReview = [];
 
   for (const [entryIndex, entry] of entries.entries()) {
     const questionIndex = getQuestionIndex(entry.key) || entryIndex + 1;
     const studentRaw = studentAnswers.get(questionIndex) || "";
-    const item = { question: questionIndex, expected: String(entry.value), submitted: String(studentRaw || "") };
+    const item = { question: questionIndex, expected: String(entry.value?.raw || entry.value), submitted: String(studentRaw || "") };
 
     if (!studentRaw) {
       missing.push(item);
-    } else if (valuesMatch(entry.value, studentRaw)) {
-      correct.push(item);
     } else {
-      wrong.push(item);
+      const match = valuesMatch(entry.value, studentRaw);
+      if (match.status === "correct") {
+        correct.push({ ...item, reason: match.reason });
+      } else if (match.status === "needs_review") {
+        needsReview.push({ ...item, reason: match.reason });
+      } else {
+        wrong.push(item);
+      }
     }
   }
 
@@ -243,11 +334,15 @@ function objectiveMarker(referenceAnswers = {}, submissionText = "") {
     correct,
     wrong,
     missing,
+    needsReview,
     score: correct.length,
     total,
     percentage,
-    feedback: `Objective score: ${correct.length}/${total} correct (${percentage}%).`,
-    confidence: missing.length === total ? 0.45 : 0.95,
+    status: needsReview.length ? "needs_review" : "marked",
+    feedback: needsReview.length
+      ? `Objective score: ${correct.length}/${total} correct (${percentage}%). ${needsReview.length} answer(s) need review.`
+      : `Objective score: ${correct.length}/${total} correct (${percentage}%).`,
+    confidence: needsReview.length ? 0.55 : missing.length === total ? 0.45 : 0.95,
   };
 }
 
@@ -329,14 +424,17 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
     }
 
     const answerKey = getObjectiveAnswerKey(referenceEntry, part.partId);
-    const objectiveResult = objectiveMarker(answerKey, part.text);
-    return { ...part, partType, result: objectiveResult, confidence: Math.min(part.confidence || 0.5, objectiveResult.confidence || 0.5) };
+    const objectiveResult = objectiveMarker(answerKey, part.text, { partId: part.partId });
+    return { ...part, partType, result: objectiveResult, confidence: objectiveResult.confidence || part.confidence || 0.5 };
   });
 
   const aggregate = aggregatePartResults(parts);
   const hasWriting = parts.some((part) => part.partType === "writing");
-  const unclearStructure = !level || !assignmentKey || parts.some((part) => part.partId === "unknown" && !looksLikeWritingTask(part.text));
-  const needsReview = unclearStructure || aggregate.confidence < WRITING_CONFIDENCE_THRESHOLD || parts.some((part) => part.partType === "objective" && !part.result?.total);
+  const isObjectiveAssignment = String(referenceEntry?.format || "").toLowerCase() === "objective";
+  const unclearStructure = !level || !assignmentKey || (!isObjectiveAssignment && parts.some((part) => part.partId === "unknown" && !looksLikeWritingTask(part.text)));
+  const objectiveNeedsReview = parts.some((part) => part.partType === "objective" && (part.result?.status === "needs_review" || part.result?.needsReview?.length));
+  const missingRequiredObjectiveKey = parts.some((part) => part.partType === "objective" && !part.result?.total && part.partId !== "teil4");
+  const needsReview = unclearStructure || aggregate.confidence < WRITING_CONFIDENCE_THRESHOLD || missingRequiredObjectiveKey || objectiveNeedsReview;
   const status = needsReview ? "needs_review" : "marked";
   const shouldSendAutomatically = !hasWriting || aggregate.confidence >= WRITING_CONFIDENCE_THRESHOLD;
 

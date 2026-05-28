@@ -1,5 +1,6 @@
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
+import { normalizeAnswerDictionary, safeRegistryId } from "../utils/answerKeyNormalizer.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -439,13 +440,111 @@ export async function upsertMarkingProfile({ assignmentKey, profile }) {
   }, { merge: true });
 }
 
+export async function loadAnswerKeyRegistry() {
+  const snap = await getDocs(collection(db, "answerKeyRegistry"));
+  const rows = [];
+  snap.forEach((docSnap) => rows.push({ id: docSnap.id, ...docSnap.data() }));
+  return rows.sort((a, b) => String(a.assignmentKey || a.id).localeCompare(String(b.assignmentKey || b.id), undefined, { numeric: true }));
+}
+
+export async function loadAnswerKey(assignmentKey) {
+  const safeAssignmentKey = safeRegistryId(assignmentKey);
+  if (!safeAssignmentKey) return null;
+  const snap = await getDoc(doc(db, "answerKeyRegistry", safeAssignmentKey));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function importAnswerDictionary(dictionary) {
+  const normalizedEntries = normalizeAnswerDictionary(dictionary);
+  const now = new Date().toISOString();
+
+  await Promise.all(normalizedEntries.map(async (entry) => {
+    const safeAssignmentKey = safeRegistryId(entry.assignmentKey);
+    const existing = await getDoc(doc(db, "answerKeyRegistry", safeAssignmentKey));
+    await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), {
+      ...entry,
+      assignmentKey: safeAssignmentKey,
+      originalAssignmentKey: entry.assignmentKey,
+      createdAt: existing.exists() ? existing.data()?.createdAt || now : now,
+      updatedAt: now,
+    }, { merge: true });
+  }));
+
+  return normalizedEntries;
+}
+
 export async function upsertAnswerKey({ assignmentKey, answerKey }) {
-  const safeAssignmentKey = safeFirestoreId(assignmentKey);
+  const safeAssignmentKey = safeRegistryId(assignmentKey);
+  const now = new Date().toISOString();
   await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), {
     assignmentKey: safeAssignmentKey,
-    answerKey,
-    updatedAt: new Date().toISOString(),
+    ...answerKey,
+    updatedAt: now,
   }, { merge: true });
+}
+
+
+function limitWords(value, maxWords = 40) {
+  return String(value || "").trim().split(/\s+/).filter(Boolean).slice(0, maxWords).join(" ");
+}
+
+function normalizeAIMarkingResult(result = {}, payload = {}) {
+  const assignmentKey = String(result.assignmentKey || payload.referenceEntry?.assignmentKey || payload.submission?.assignmentKey || payload.submission?.assignmentId || "").trim();
+  const finalScore = Number.isFinite(Number(result.finalScore ?? result.score)) ? Math.max(0, Math.min(100, Math.round(Number(result.finalScore ?? result.score)))) : 0;
+  const feedback = limitWords(result.feedback || "AI marking completed. Please review the result before sending feedback to the student.", 40);
+  const status = ["marked", "needs_review"].includes(String(result.status || "").toLowerCase()) ? String(result.status).toLowerCase() : "needs_review";
+
+  return {
+    score: finalScore,
+    passed: Boolean(result.passed ?? finalScore >= 60),
+    level: result.level || payload.referenceEntry?.level || payload.submission?.level || "UNKNOWN",
+    assignmentKey,
+    detectedParts: Array.isArray(result.detectedParts) ? result.detectedParts : [],
+    parts: Array.isArray(result.parts) ? result.parts : [],
+    objectiveScore: result.objectiveScore ?? null,
+    objectiveCorrect: Number(result.objectiveCorrect || 0),
+    objectiveTotal: Number(result.objectiveTotal || 0),
+    writingScore: result.writingScore ?? null,
+    finalScore,
+    feedback,
+    corrections: Array.isArray(result.corrections) ? result.corrections : [],
+    improvementSummary: result.improvementSummary || feedback,
+    confidence: Number.isFinite(Number(result.confidence)) ? Math.max(0, Math.min(1, Number(result.confidence))) : 0.5,
+    status,
+    shouldSendAutomatically: Boolean(result.shouldSendAutomatically) && status === "marked",
+    dataModel: result.dataModel || {
+      answerKeyPath: assignmentKey ? `answerKeyRegistry/${assignmentKey}` : "answerKeyRegistry/{assignmentKey}",
+      markingResultPath: payload.submission?.id ? `markingResults/${payload.submission.id}` : "markingResults/{submissionId}",
+      markingJobPath: "markingJobs/{jobId}",
+    },
+    ai: {
+      ...(result.ai || {}),
+      feedbackWordCount: feedback ? feedback.split(/\s+/).filter(Boolean).length : 0,
+    },
+  };
+}
+
+export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
+  const payload = {
+    submission,
+    referenceEntry,
+    assignmentKey: referenceEntry?.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
+    level: referenceEntry?.level || submission.level || "",
+    submissionText,
+  };
+
+  const res = await fetch("/api/marking/ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body?.status === "error") {
+    throw new Error(body?.message || "AI marking failed");
+  }
+
+  return normalizeAIMarkingResult(body.result || body, payload);
 }
 
 const DEFAULT_SCORES_WEBHOOK_URL =

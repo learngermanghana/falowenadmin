@@ -89,3 +89,53 @@ test("A1 letter-like submission uses A1 writing rubric", () => {
   assert.equal(result.parts[0].partType, "writing");
   assert.equal(result.parts[0].result.level, "A1");
 });
+
+import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
+import { normalizeAnswerDictionary, normalizeSingleAnswer } from "../src/utils/answerKeyNormalizer.js";
+
+test("normalizes option-letter answer metadata for registry import", () => {
+  const normalized = normalizeSingleAnswer("Answer1", "B) Tanzen", 0);
+
+  assert.deepEqual(normalized.acceptedAnswers.slice(0, 3), ["B", "Tanzen", "B Tanzen"]);
+  assert.equal(normalized.questionNumber, "1");
+  assert.equal(normalized.correctLetter, "B");
+  assert.equal(normalized.correctText, "Tanzen");
+});
+
+test("objective matching accepts stem and close spelling but flags conflicting option plus text", () => {
+  const referenceEntry = {
+    format: "objective",
+    answers: { Answer1: "B) Tanzen", Answer2: "B) Tanzen", Answer3: "B) Tanzen" },
+  };
+
+  const result = autoMarkSubmission({
+    referenceEntry,
+    submissionText: "1: Tanz\n2: tansen\n3: A Tanzen",
+  });
+
+  assert.equal(result.objectiveCorrect, 2);
+  assert.equal(result.status, "needs_review");
+  assert.match(result.parts[0].result.needsReview[0].reason, /Conflicting option letter/);
+});
+
+test("objective matching treats correct option letter as primary over wrong text", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: { assignmentKey: "A1-3", level: "A1", format: "objective", answers: { Answer1: "B) Tanzen" } },
+    submission: { assignmentKey: "A1-3", level: "A1" },
+    submissionText: "1: B Schwimmen",
+  });
+
+  assert.equal(result.objectiveCorrect, 1);
+  assert.equal(result.status, "marked");
+});
+
+test("normalizes uploaded A2/B1 dictionary entries with Teil 3 and Teil 4 parts", () => {
+  const registry = normalizeAnswerDictionary(answersDictionary);
+  const a2 = registry.find((entry) => entry.assignmentKey === "A2-1.1");
+  const b1 = registry.find((entry) => entry.assignmentKey === "B1-1.1");
+
+  assert.ok(a2.parts.teil3.answerCount > 0);
+  assert.ok(a2.parts.teil4.answerCount > 0);
+  assert.ok(b1.parts.teil3.answerCount > 0);
+  assert.ok(b1.parts.teil4.answerCount > 0);
+});

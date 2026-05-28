@@ -145,7 +145,8 @@ export default async function handler(req, res) {
   if (
     path.startsWith("holidays/") ||
     path.startsWith("orientation/") ||
-    path.startsWith("class-schedule/")
+    path.startsWith("class-schedule/") ||
+    path.startsWith("marking/")
   ) {
     return proxyToFalowenFunction(req, res, path, url);
   }

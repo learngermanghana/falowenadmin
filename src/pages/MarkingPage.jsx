@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, loadRoster, loadSubmissions, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
-import { autoMarkSubmission } from "../utils/autoMarking.js";
+import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, importAnswerDictionary, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { useToast } from "../context/ToastContext.jsx";
 
@@ -190,6 +189,9 @@ export default function MarkingPage() {
   const [markingFilter, setMarkingFilter] = useState("pending");
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
   const [workflowSaving, setWorkflowSaving] = useState(false);
+  const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
+  const [loadingAnswerKeys, setLoadingAnswerKeys] = useState(false);
+  const [importingAnswerKeys, setImportingAnswerKeys] = useState(false);
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) {
@@ -216,6 +218,21 @@ export default function MarkingPage() {
       };
     });
   }, []);
+
+  const refreshAnswerKeyRegistry = useCallback(async () => {
+    setLoadingAnswerKeys(true);
+    try {
+      setAnswerKeyRegistry(await loadAnswerKeyRegistry());
+    } catch (err) {
+      error(err?.message || "Failed to load answer key registry");
+    } finally {
+      setLoadingAnswerKeys(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    refreshAnswerKeyRegistry();
+  }, [refreshAnswerKeyRegistry]);
 
   useEffect(() => {
     (async () => {
@@ -475,6 +492,19 @@ export default function MarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
   };
 
+  const handleImportAnswerDictionary = async () => {
+    try {
+      setImportingAnswerKeys(true);
+      const imported = await importAnswerDictionary(answersDictionary);
+      await refreshAnswerKeyRegistry();
+      success(`Imported ${imported.length} answer key assignments into Firestore.`);
+    } catch (err) {
+      error(err?.message || "Failed to import answer dictionary.");
+    } finally {
+      setImportingAnswerKeys(false);
+    }
+  };
+
   const handleCopyCombined = async () => {
     try {
       await navigator.clipboard.writeText(combinedReferenceAndSubmission);
@@ -486,11 +516,6 @@ export default function MarkingPage() {
 
 
   const handleAutoMark = async () => {
-    if (!referenceEntry) {
-      error("Pick a reference answer before auto-marking.");
-      return;
-    }
-
     const submissionText = selectedSubmission?.text || "";
     if (!submissionText.trim()) {
       error("No student submission available to auto-mark.");
@@ -499,7 +524,26 @@ export default function MarkingPage() {
 
     try {
       setAutoMarking(true);
-      const result = autoMarkSubmission({ referenceEntry, submission: selectedSubmission, submissionText });
+      const candidateKeys = [
+        assignmentIdValue,
+        selectedSubmission?.assignmentKey,
+        selectedSubmission?.assignmentId,
+        selectedSubmission?.raw?.assignment_id,
+        selectedSubmission?.raw?.assignmentId,
+        referenceEntry?.assignmentId,
+        referenceEntry?.assignment_id,
+      ].filter(Boolean);
+      let registryEntry = null;
+      for (const candidateKey of candidateKeys) {
+        registryEntry = await loadAnswerKey(candidateKey);
+        if (registryEntry) break;
+      }
+
+      const result = await markSubmissionWithAI({
+        referenceEntry: registryEntry,
+        submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
+        submissionText,
+      });
       setSmartMarkingResult(result);
       setScore(String(result.finalScore ?? result.score));
       setFeedback(result.feedback);
@@ -527,7 +571,7 @@ export default function MarkingPage() {
 
   const handleApproveAndSend = async () => {
     if (!selectedSubmission || !smartMarkingResult) {
-      error("Run smart marking before approving feedback.");
+      error("Run AI marking before approving feedback.");
       return;
     }
 
@@ -659,7 +703,7 @@ export default function MarkingPage() {
     <div style={{ padding: 16, display: "grid", gap: 14 }}>
       <h2>Student Work Marking</h2>
       <p style={{ marginTop: -8, opacity: 0.8 }}>
-        Smart flow: detect level/assignment/parts, route objective tasks to answer keys, route writing to the level rubric, then review or send feedback.
+        Smart flow: AI marks every submission. Objective parts still receive the Firestore answer key as source-of-truth context; missing keys are sent to tutor review instead of guessed.
       </p>
 
       {loading && <p>Loading roster and submissions...</p>}
@@ -678,6 +722,59 @@ export default function MarkingPage() {
             </button>
           ))}
         </div>
+      </section>
+
+
+      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>Answer Keys</h3>
+        <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
+          Firestore source of truth: <code>answerKeyRegistry/{"{assignment_id}"}</code>. AI marks every submission and uses these objective keys as required marking context.
+        </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+          <button type="button" onClick={handleImportAnswerDictionary} disabled={importingAnswerKeys}>
+            {importingAnswerKeys ? "Importing..." : "Import Answer Dictionary"}
+          </button>
+          <button type="button" onClick={refreshAnswerKeyRegistry} disabled={loadingAnswerKeys}>Refresh keys</button>
+        </div>
+        {loadingAnswerKeys ? <p>Loading answer keys...</p> : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Assignment key</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Title</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Level</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Format</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Parts</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Answers</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Links</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Last imported</th>
+                </tr>
+              </thead>
+              <tbody>
+                {answerKeyRegistry.slice(0, 80).map((entry) => {
+                  const parts = Object.values(entry.parts || {});
+                  const answerCount = parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0);
+                  return (
+                    <tr key={entry.id || entry.assignmentKey}>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><code>{entry.assignmentKey}</code></td>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.title || "—"}</td>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.level || "—"}</td>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.format || "—"}</td>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{parts.map((part) => part.partId).join(", ") || "—"}</td>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{answerCount}</td>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>
+                        {entry.answerUrl ? <a href={entry.answerUrl} target="_blank" rel="noreferrer">answer</a> : "—"}
+                        {entry.sheetUrl ? <> · <a href={entry.sheetUrl} target="_blank" rel="noreferrer">sheet</a></> : null}
+                      </td>
+                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
@@ -904,7 +1001,7 @@ export default function MarkingPage() {
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
-              {autoMarking ? "Auto-marking..." : "Run smart marking"}
+              {autoMarking ? "AI marking..." : "Run AI marking"}
             </button>
             <button onClick={() => { setScore(""); setFeedback(""); }}>Reset</button>
           </div>
