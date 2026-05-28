@@ -6,10 +6,12 @@ Attendance management app for teachers with two capture modes:
 
 ## Architecture
 
-- Frontend: React + Vite (`src/`)
-- Backend API: Firebase Cloud Functions v2 (`functions/index.js`)
-- Database: Firestore
-- Auth: Firebase Authentication (teacher login)
+- Frontend: React + Vite (`src/`) with the production build emitted to `dist/`.
+- Vercel hosting: `vercel.json` runs `npm run build`, serves `dist`, and rewrites `/api/(.*)` to the single API entrypoint `api/router.js`.
+- Vercel API router: `api/router.js` keeps local Vercel routes such as `/api/social-metrics` in-repo and proxies selected Falowen API paths to the Firebase Functions API.
+- Backend API: Firebase Cloud Functions v2 (`functions/index.js`) mounted at the Falowen Functions API base URL.
+- Database: Firestore.
+- Auth: Firebase Authentication (teacher login).
 
 ## Data Model Structure
 
@@ -43,8 +45,13 @@ VITE_FIREBASE_PROJECT_ID=...
 VITE_FIREBASE_STORAGE_BUCKET=...
 VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
-VITE_OPEN_SESSION_API_URL=https://<region>-<project>.cloudfunctions.net/api/openSession
-VITE_CHECKIN_API_URL=https://<region>-<project>.cloudfunctions.net/api/checkin
+# Optional: override only when bypassing the in-repo `/api` router locally.
+VITE_OPEN_SESSION_API_URL=/api/openSession
+VITE_CHECKIN_API_URL=/api/checkin
+
+# Vercel server-side API router override for proxied Falowen Function routes.
+FALOWEN_FUNCTION_BASE_URL=https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api
+
 VITE_STUDENTS_SHEET_CSV_URL=https://docs.google.com/spreadsheets/d/e/<published-sheet-id>/pub?output=csv
 VITE_MARKING_ROSTER_CSV_URL=https://docs.google.com/spreadsheets/d/<sheet-id>/gviz/tq?tqx=out:csv&sheet=Students
 VITE_SCORES_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
@@ -84,6 +91,20 @@ firebase deploy --only firestore:indexes
 
 Tip: when a query needs a new composite index, Firestore returns an error with a direct "Create index" link.
 Use that link once, then run `firebase firestore:indexes > firestore.indexes.json` (or copy from console) to keep the file in sync.
+
+## Vercel API Routing
+
+The Vercel deployment uses one API entrypoint: `api/router.js`. Keep the `/api/(.*)` rewrite pointed at that router instead of adding separate Vercel function files for proxied Falowen routes. The router preserves request methods, JSON bodies, query parameters, authorization headers, and content types when forwarding selected requests to `FALOWEN_FUNCTION_BASE_URL`.
+
+Currently routed Falowen operational endpoints include attendance/session APIs plus the class-operations paths used by the admin UI:
+
+- `POST /api/holidays/import`
+- `GET /api/holidays/upcoming`
+- `PATCH /api/holidays/:date/update`
+- `POST /api/orientation/sync`
+- `POST /api/class-schedule/sync`
+
+The local Vercel route `/api/social-metrics` remains handled by this repo.
 
 ## Functions Setup
 

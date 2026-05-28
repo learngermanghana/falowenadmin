@@ -667,7 +667,7 @@ app.post("/holidays/import", async (req, res) => {
   }
 });
 
-app.post("/holidays/:date/update", async (req, res) => {
+async function updateHolidayHandler(req, res) {
   try {
     await requireAuth(req);
 
@@ -693,7 +693,10 @@ app.post("/holidays/:date/update", async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
   }
-});
+}
+
+app.post("/holidays/:date/update", updateHolidayHandler);
+app.patch("/holidays/:date/update", updateHolidayHandler);
 
 app.post("/class-schedule/sync", async (req, res) => {
   try {

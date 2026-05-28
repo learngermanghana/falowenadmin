@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/$1"
+      "destination": "/api/router?path=$1"
     },
     {
       "source": "/(.*)",

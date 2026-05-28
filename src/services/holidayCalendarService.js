@@ -40,7 +40,7 @@ export async function getUpcomingHolidays({ year, countryCode = "GH" }) {
 
 export async function updateHoliday({ date, countryCode = "GH", schoolClosed, notes }) {
   const response = await fetch(`/api/holidays/${date}/update`, {
-    method: "POST",
+    method: "PATCH",
     headers: await authHeaders(),
     body: JSON.stringify({ countryCode, schoolClosed, notes }),
   });
