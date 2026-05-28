@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const { onRequest } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 
@@ -587,6 +588,139 @@ function parseHolidayDateInput(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
 }
 
+
+function getAccraIsoDateParts(baseDate = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Accra",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(baseDate);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+  };
+}
+
+function addDaysToIsoDate(year, month, day, days) {
+  const utcDate = new Date(Date.UTC(year, month - 1, day + days));
+  return utcDate.toISOString().slice(0, 10);
+}
+
+function getTomorrowIsoInAccra(baseDate = new Date()) {
+  const { year, month, day } = getAccraIsoDateParts(baseDate);
+  return addDaysToIsoDate(year, month, day, 1);
+}
+
+function normalizeNoticeAudienceType(value) {
+  return value === "class" ? "class" : "all_active";
+}
+
+function normalizeNoticeStatus(value) {
+  return ["not_scheduled", "scheduled", "sent", "failed"].includes(value) ? value : "not_scheduled";
+}
+
+function resolveHolidayName(holiday = {}) {
+  return String(holiday.name || holiday.localName || "Holiday").trim() || "Holiday";
+}
+
+function resolveNoticeConfig(source = {}, fallback = {}) {
+  const audienceType = normalizeNoticeAudienceType(source.noticeAudienceType || fallback.noticeAudienceType);
+  return {
+    studentMessage: typeof source.studentMessage === "string" ? source.studentMessage : (typeof fallback.studentMessage === "string" ? fallback.studentMessage : ""),
+    audienceType,
+    className: audienceType === "class"
+      ? String(source.noticeClassName || fallback.noticeClassName || "").trim()
+      : "",
+  };
+}
+
+function buildHolidayNoticePayload({ holiday, date, countryCode, noticeConfig, syncSecret }) {
+  return {
+    secret: syncSecret,
+    action: "sendHolidayNotice",
+    date,
+    countryCode,
+    holidayName: resolveHolidayName(holiday),
+    studentMessage: noticeConfig.studentMessage,
+    audienceType: noticeConfig.audienceType,
+    className: noticeConfig.className,
+  };
+}
+
+async function callHolidayNoticeAppsScript(payload) {
+  const appsScriptUrl = String(holidaysAppsScriptUrlSecret.value() || process.env.HOLIDAYS_APPS_SCRIPT_URL || "").trim();
+  if (!appsScriptUrl) throw new Error("Missing required env var: HOLIDAYS_APPS_SCRIPT_URL");
+
+  const upstreamResponse = await fetch(appsScriptUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const responseJson = await upstreamResponse.json().catch(() => ({}));
+  if (!upstreamResponse.ok || responseJson?.ok === false) {
+    const upstreamError = responseJson?.error || responseJson?.message || `HTTP ${upstreamResponse.status}`;
+    const error = new Error(upstreamError);
+    error.details = responseJson;
+    throw error;
+  }
+
+  return responseJson;
+}
+
+async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, noticeConfig }) {
+  const syncSecret = String(holidaysSyncSecret.value() || process.env.HOLIDAYS_SYNC_SECRET || "").trim();
+  if (!syncSecret) throw new Error("Missing required env var: HOLIDAYS_SYNC_SECRET");
+
+  const payload = buildHolidayNoticePayload({ holiday, date, countryCode, noticeConfig, syncSecret });
+
+  try {
+    const responseJson = await callHolidayNoticeAppsScript(payload);
+    const sent = Number(responseJson?.sent || 0);
+    const skipped = Number(responseJson?.skipped || 0);
+    const failed = Number(responseJson?.failed || 0);
+    const recipientCount = sent;
+    const status = failed > 0 && sent === 0 ? "failed" : "sent";
+    const lastError = status === "failed" ? `Failed: ${failed}; skipped: ${skipped}` : "";
+
+    await docRef.set({
+      noticeStatus: status,
+      noticeSentAt: status === "sent" ? admin.firestore.FieldValue.serverTimestamp() : null,
+      noticeRecipientCount: recipientCount,
+      noticeLastError: lastError,
+      noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return {
+      ok: true,
+      noticeStatus: status,
+      noticeRecipientCount: recipientCount,
+      noticeSentAt: new Date().toISOString(),
+      noticeLastError: lastError,
+      upstream: responseJson,
+    };
+  } catch (error) {
+    const message = error?.message || "Holiday notice send failed";
+    await docRef.set({
+      noticeStatus: "failed",
+      noticeLastError: message,
+      noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    error.noticeResult = {
+      ok: false,
+      noticeStatus: "failed",
+      noticeLastError: message,
+      details: error?.details || null,
+    };
+    throw error;
+  }
+}
+
 app.get("/holidays/upcoming", async (req, res) => {
   try {
     await requireAuth(req);
@@ -655,6 +789,12 @@ app.post("/holidays/import", async (req, res) => {
           schoolClosed: typeof existing?.schoolClosed === "boolean" ? existing.schoolClosed : true,
           adminNote: typeof existing?.adminNote === "string" ? existing.adminNote : (typeof existing?.notes === "string" ? existing.notes : ""),
           studentMessage: typeof existing?.studentMessage === "string" ? existing.studentMessage : "",
+          autoSendNotice: typeof existing?.autoSendNotice === "boolean" ? existing.autoSendNotice : false,
+          noticeAudienceType: normalizeNoticeAudienceType(existing?.noticeAudienceType),
+          noticeClassName: typeof existing?.noticeClassName === "string" ? existing.noticeClassName : "",
+          noticeStatus: normalizeNoticeStatus(existing?.noticeStatus),
+          noticeRecipientCount: typeof existing?.noticeRecipientCount === "number" ? existing.noticeRecipientCount : 0,
+          noticeLastError: typeof existing?.noticeLastError === "string" ? existing.noticeLastError : "",
           source: "Nager.Date",
           importedAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -683,10 +823,27 @@ async function updateHolidayHandler(req, res) {
       ? req.body.adminNote
       : (typeof req.body?.notes === "string" ? req.body.notes : "");
     const studentMessage = typeof req.body?.studentMessage === "string" ? req.body.studentMessage : "";
+    const autoSendNotice = req.body?.autoSendNotice === true;
+    const noticeAudienceType = normalizeNoticeAudienceType(req.body?.noticeAudienceType);
+    const noticeClassName = noticeAudienceType === "class" ? String(req.body?.noticeClassName || "").trim() : "";
+
+    const docRef = db.collection("holidayCalendar").doc(`${countryCode}_${date}`);
+    const existingSnap = await docRef.get();
+    const existing = existingSnap.exists ? existingSnap.data() : {};
+    const existingStatus = normalizeNoticeStatus(existing?.noticeStatus);
+    const noticeStatus = existingStatus === "sent"
+      ? "sent"
+      : (autoSendNotice ? "scheduled" : "not_scheduled");
 
     const updatePayload = {
+      countryCode,
+      date,
       adminNote,
       studentMessage,
+      autoSendNotice,
+      noticeAudienceType,
+      noticeClassName,
+      noticeStatus,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -694,9 +851,9 @@ async function updateHolidayHandler(req, res) {
       updatePayload.schoolClosed = schoolClosed;
     }
 
-    await db.collection("holidayCalendar").doc(`${countryCode}_${date}`).set(updatePayload, { merge: true });
+    await docRef.set(updatePayload, { merge: true });
 
-    return res.json({ ok: true, date, countryCode });
+    return res.json({ ok: true, date, countryCode, noticeStatus });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
   }
@@ -705,6 +862,51 @@ async function updateHolidayHandler(req, res) {
 app.post("/holidays/:date/update", updateHolidayHandler);
 app.patch("/holidays/:date/update", updateHolidayHandler);
 
+
+
+app.post("/holidays/:date/send-now", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const date = String(req.params.date || "").trim();
+    const countryCode = String(req.body?.countryCode || "GH").trim().toUpperCase() || "GH";
+    if (!parseHolidayDateInput(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+
+    const docRef = db.collection("holidayCalendar").doc(`${countryCode}_${date}`);
+    const snap = await docRef.get();
+    if (!snap.exists) return res.status(404).json({ error: "Holiday not found" });
+
+    const holiday = snap.data() || {};
+    const noticeConfig = resolveNoticeConfig(req.body || {}, holiday);
+    if (!noticeConfig.studentMessage.trim()) {
+      return res.status(400).json({ error: "studentMessage is required before sending a holiday notice" });
+    }
+    if (noticeConfig.audienceType === "class" && !noticeConfig.className) {
+      return res.status(400).json({ error: "className is required when audienceType is class" });
+    }
+
+    await docRef.set({
+      studentMessage: noticeConfig.studentMessage,
+      noticeAudienceType: noticeConfig.audienceType,
+      noticeClassName: noticeConfig.className,
+      noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    const result = await sendHolidayNoticeForDoc({
+      docRef,
+      holiday,
+      date,
+      countryCode,
+      noticeConfig,
+    });
+
+    return res.json(result);
+  } catch (e) {
+    const status = e?.noticeResult ? 502 : 500;
+    return res.status(status).json({ error: e?.message || "Holiday notice send failed", details: e?.noticeResult || e?.details || null });
+  }
+});
 
 app.post("/holidays/sync-sheet", async (req, res) => {
   try {
@@ -747,6 +949,10 @@ app.post("/holidays/sync-sheet", async (req, res) => {
           ? holiday.adminNote
           : (typeof holiday.notes === "string" ? holiday.notes : ""),
         studentMessage: typeof holiday.studentMessage === "string" ? holiday.studentMessage : "",
+        autoSendNotice: Boolean(holiday.autoSendNotice),
+        noticeAudienceType: normalizeNoticeAudienceType(holiday.noticeAudienceType),
+        noticeClassName: typeof holiday.noticeClassName === "string" ? holiday.noticeClassName : "",
+        noticeStatus: normalizeNoticeStatus(holiday.noticeStatus),
       };
     });
 
@@ -887,6 +1093,76 @@ app.post("/orientation/sync", async (req, res) => {
     return res.status(401).json({ error: e?.message || "Unauthorized" });
   }
 });
+exports.sendDueHolidayNotices = onSchedule({
+  schedule: "0 7 * * *",
+  timeZone: "Africa/Accra",
+  secrets: [holidaysAppsScriptUrlSecret, holidaysSyncSecret],
+}, async () => {
+  const tomorrowIso = getTomorrowIsoInAccra();
+  console.log(`sendDueHolidayNotices checking ${tomorrowIso}`);
+
+  const snapshot = await db
+    .collection("holidayCalendar")
+    .where("countryCode", "==", "GH")
+    .where("date", "==", tomorrowIso)
+    .where("schoolClosed", "==", true)
+    .where("autoSendNotice", "==", true)
+    .get();
+
+  if (snapshot.empty) {
+    console.log(`sendDueHolidayNotices no due holidays for ${tomorrowIso}`);
+    return;
+  }
+
+  for (const docSnap of snapshot.docs) {
+    const holiday = docSnap.data() || {};
+    const date = String(holiday.date || tomorrowIso).trim();
+    const countryCode = String(holiday.countryCode || "GH").trim().toUpperCase() || "GH";
+    const logPrefix = `sendDueHolidayNotices ${docSnap.id} ${date}`;
+
+    await docSnap.ref.set({
+      noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    if (!String(holiday.studentMessage || "").trim()) {
+      console.log(`${logPrefix} skipped: empty studentMessage`);
+      continue;
+    }
+    if (normalizeNoticeStatus(holiday.noticeStatus) === "sent") {
+      console.log(`${logPrefix} skipped: noticeStatus already sent`);
+      continue;
+    }
+    if (holiday.noticeSentAt) {
+      console.log(`${logPrefix} skipped: noticeSentAt exists`);
+      continue;
+    }
+
+    const noticeConfig = resolveNoticeConfig(holiday, holiday);
+    if (noticeConfig.audienceType === "class" && !noticeConfig.className) {
+      console.log(`${logPrefix} skipped: missing className`);
+      await docSnap.ref.set({
+        noticeStatus: "failed",
+        noticeLastError: "noticeClassName is required for class audience",
+        noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      continue;
+    }
+
+    try {
+      const result = await sendHolidayNoticeForDoc({
+        docRef: docSnap.ref,
+        holiday,
+        date,
+        countryCode,
+        noticeConfig,
+      });
+      console.log(`${logPrefix} sent: ${result.noticeRecipientCount} recipient(s)`);
+    } catch (error) {
+      console.error(`${logPrefix} failed: ${error?.message || error}`);
+    }
+  }
+});
+
 exports.api = onRequest({
   secrets: [
     attendancePinSaltSecret,

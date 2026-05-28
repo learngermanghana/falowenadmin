@@ -56,16 +56,49 @@ export async function syncHolidaysToSheet(year) {
   return data;
 }
 
-export async function updateHoliday({ date, countryCode = "GH", schoolClosed, adminNote, studentMessage }) {
+export async function updateHoliday({
+  date,
+  countryCode = "GH",
+  schoolClosed,
+  adminNote,
+  studentMessage,
+  autoSendNotice,
+  noticeAudienceType,
+  noticeClassName,
+}) {
   const response = await fetch(`/api/holidays/${date}/update`, {
     method: "PATCH",
     headers: await getAuthHeaders(),
-    body: JSON.stringify({ countryCode, schoolClosed, adminNote, studentMessage }),
+    body: JSON.stringify({
+      countryCode,
+      schoolClosed,
+      adminNote,
+      studentMessage,
+      autoSendNotice,
+      noticeAudienceType,
+      noticeClassName,
+    }),
   });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(String(data?.error || "Failed to update holiday"));
+  }
+
+  return data;
+}
+
+export async function sendHolidayNoticeNow(date, payload = {}) {
+  const response = await fetch(`/api/holidays/${date}/send-now`, {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const details = data?.details?.error || data?.details?.message || data?.error;
+    throw new Error(String(details || "Failed to send holiday notice"));
   }
 
   return data;
