@@ -1,13 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
-import { getUpcomingHolidays, importHolidays, updateHoliday } from "../services/holidayCalendarService";
+import {
+  getUpcomingHolidays,
+  importHolidays,
+  syncHolidaysToSheet,
+  updateHoliday,
+} from "../services/holidayCalendarService";
 
 const currentYear = new Date().getFullYear();
+
+function getAdminNote(holiday) {
+  return holiday.adminNote ?? holiday.notes ?? "";
+}
 
 export default function HolidayCalendarPage() {
   const [year, setYear] = useState(currentYear);
   const [holidays, setHolidays] = useState([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [updatingDate, setUpdatingDate] = useState("");
 
   const yearOptions = useMemo(() => [currentYear, currentYear + 1], []);
@@ -41,6 +51,18 @@ export default function HolidayCalendarPage() {
     }
   }
 
+  async function handleSyncSheet() {
+    setSyncing(true);
+    try {
+      await syncHolidaysToSheet(year);
+      setStatus("Holidays synced to Google Sheet.");
+    } catch (error) {
+      setStatus(`Google Sheet sync failed: ${error.message || "Unknown error."}`);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   async function handleUpdate(date, fields) {
     setUpdatingDate(date);
     try {
@@ -66,6 +88,9 @@ export default function HolidayCalendarPage() {
           ))}
         </select>
         <button type="button" onClick={handleImport} disabled={loading}>Import Ghana holidays</button>
+        <button type="button" onClick={handleSyncSheet} disabled={loading || syncing}>
+          {syncing ? "Syncing..." : "Sync to Holidays Sheet"}
+        </button>
       </div>
 
       {status ? <p>{status}</p> : null}
@@ -79,39 +104,72 @@ export default function HolidayCalendarPage() {
               <th>Type</th>
               <th>School Closed</th>
               <th>Action</th>
-              <th>Notes</th>
+              <th>Admin Note</th>
+              <th>Student Message</th>
             </tr>
           </thead>
           <tbody>
-            {holidays.map((holiday) => (
-              <tr key={`${holiday.countryCode}_${holiday.date}`}>
-                <td>{holiday.date}</td>
-                <td>{holiday.name || holiday.localName}</td>
-                <td>{Array.isArray(holiday.types) ? holiday.types.join(", ") : ""}</td>
-                <td>{holiday.schoolClosed ? "YES" : "NO"}</td>
-                <td>
-                  <button
-                    type="button"
-                    disabled={updatingDate === holiday.date}
-                    onClick={() => handleUpdate(holiday.date, { schoolClosed: !holiday.schoolClosed, notes: holiday.notes || "" })}
-                  >
-                    Set {holiday.schoolClosed ? "NO" : "YES"}
-                  </button>
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={holiday.notes || ""}
-                    placeholder="Admin note"
-                    onChange={(e) => {
-                      const nextNotes = e.target.value;
-                      setHolidays((prev) => prev.map((item) => (item.date === holiday.date ? { ...item, notes: nextNotes } : item)));
-                    }}
-                    onBlur={(e) => handleUpdate(holiday.date, { schoolClosed: holiday.schoolClosed, notes: e.target.value })}
-                  />
-                </td>
-              </tr>
-            ))}
+            {holidays.map((holiday) => {
+              const adminNote = getAdminNote(holiday);
+              const studentMessage = holiday.studentMessage || "";
+              return (
+                <tr key={`${holiday.countryCode}_${holiday.date}`}>
+                  <td>{holiday.date}</td>
+                  <td>{holiday.name || holiday.localName}</td>
+                  <td>{Array.isArray(holiday.types) ? holiday.types.join(", ") : ""}</td>
+                  <td>{holiday.schoolClosed ? "YES" : "NO"}</td>
+                  <td>
+                    <button
+                      type="button"
+                      disabled={updatingDate === holiday.date}
+                      onClick={() => handleUpdate(holiday.date, {
+                        schoolClosed: !holiday.schoolClosed,
+                        adminNote,
+                        studentMessage,
+                      })}
+                    >
+                      Set {holiday.schoolClosed ? "NO" : "YES"}
+                    </button>
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={adminNote}
+                      placeholder="Admin note"
+                      onChange={(e) => {
+                        const nextAdminNote = e.target.value;
+                        setHolidays((prev) => prev.map((item) => (
+                          item.date === holiday.date ? { ...item, adminNote: nextAdminNote } : item
+                        )));
+                      }}
+                      onBlur={(e) => handleUpdate(holiday.date, {
+                        schoolClosed: holiday.schoolClosed,
+                        adminNote: e.target.value,
+                        studentMessage,
+                      })}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={studentMessage}
+                      placeholder="Optional student message"
+                      onChange={(e) => {
+                        const nextStudentMessage = e.target.value;
+                        setHolidays((prev) => prev.map((item) => (
+                          item.date === holiday.date ? { ...item, studentMessage: nextStudentMessage } : item
+                        )));
+                      }}
+                      onBlur={(e) => handleUpdate(holiday.date, {
+                        schoolClosed: holiday.schoolClosed,
+                        adminNote,
+                        studentMessage: e.target.value,
+                      })}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
