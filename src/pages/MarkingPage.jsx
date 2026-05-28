@@ -726,55 +726,64 @@ export default function MarkingPage() {
 
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Answer Keys</h3>
-        <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
-          Firestore source of truth: <code>answerKeyRegistry/{"{assignment_id}"}</code>. AI marks every submission and uses these objective keys as required marking context.
-        </p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-          <button type="button" onClick={handleImportAnswerDictionary} disabled={importingAnswerKeys}>
-            {importingAnswerKeys ? "Importing..." : "Import Answer Dictionary"}
-          </button>
-          <button type="button" onClick={refreshAnswerKeyRegistry} disabled={loadingAnswerKeys}>Refresh keys</button>
-        </div>
-        {loadingAnswerKeys ? <p>Loading answer keys...</p> : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Assignment key</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Title</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Level</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Format</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Parts</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Answers</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Links</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Last imported</th>
-                </tr>
-              </thead>
-              <tbody>
-                {answerKeyRegistry.slice(0, 80).map((entry) => {
-                  const parts = Object.values(entry.parts || {});
-                  const answerCount = parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0);
-                  return (
-                    <tr key={entry.id || entry.assignmentKey}>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><code>{entry.assignmentKey}</code></td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.title || "—"}</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.level || "—"}</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.format || "—"}</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{parts.map((part) => part.partId).join(", ") || "—"}</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{answerCount}</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>
-                        {entry.answerUrl ? <a href={entry.answerUrl} target="_blank" rel="noreferrer">answer</a> : "—"}
-                        {entry.sheetUrl ? <> · <a href={entry.sheetUrl} target="_blank" rel="noreferrer">sheet</a></> : null}
-                      </td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : "—"}</td>
+        <details>
+          <summary style={{ cursor: "pointer" }}>
+            <span style={{ fontSize: "1.17em", fontWeight: 700 }}>Answer Keys</span>
+            <span style={{ marginLeft: 8, fontSize: 13, opacity: 0.75 }}>
+              {loadingAnswerKeys ? "Loading..." : `${answerKeyRegistry.length} keys`}
+            </span>
+          </summary>
+          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>
+              Firestore source of truth: <code>answerKeyRegistry/{"{assignment_id}"}</code>. AI marks every submission and uses these objective keys as required marking context.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={handleImportAnswerDictionary} disabled={importingAnswerKeys}>
+                {importingAnswerKeys ? "Importing..." : "Import Answer Dictionary"}
+              </button>
+              <button type="button" onClick={refreshAnswerKeyRegistry} disabled={loadingAnswerKeys}>Refresh keys</button>
+            </div>
+            {loadingAnswerKeys ? <p style={{ margin: 0 }}>Loading answer keys...</p> : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Assignment key</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Title</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Level</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Format</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Parts</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Answers</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Links</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Last imported</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {answerKeyRegistry.slice(0, 80).map((entry) => {
+                      const parts = Object.values(entry.parts || {});
+                      const answerCount = parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0);
+                      return (
+                        <tr key={entry.id || entry.assignmentKey}>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><code>{entry.assignmentKey}</code></td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.title || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.level || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.format || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{parts.map((part) => part.partId).join(", ") || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{answerCount}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>
+                            {entry.answerUrl ? <a href={entry.answerUrl} target="_blank" rel="noreferrer">answer</a> : "—"}
+                            {entry.sheetUrl ? <> · <a href={entry.sheetUrl} target="_blank" rel="noreferrer">sheet</a></> : null}
+                          </td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : "—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
+        </details>
       </section>
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
