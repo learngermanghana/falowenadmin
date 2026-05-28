@@ -40,11 +40,27 @@ export async function getUpcomingHolidays({ year, countryCode = "GH" }) {
   return Array.isArray(data?.holidays) ? data.holidays : [];
 }
 
-export async function updateHoliday({ date, countryCode = "GH", schoolClosed, notes }) {
+export async function syncHolidaysToSheet(year) {
+  const response = await fetch("/api/holidays/sync-sheet", {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ year, countryCode: "GH" }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const details = data?.details?.error || data?.details?.message || data?.error;
+    throw new Error(String(details || "Failed to sync holidays to Google Sheet"));
+  }
+
+  return data;
+}
+
+export async function updateHoliday({ date, countryCode = "GH", schoolClosed, adminNote, studentMessage }) {
   const response = await fetch(`/api/holidays/${date}/update`, {
     method: "PATCH",
     headers: await getAuthHeaders(),
-    body: JSON.stringify({ countryCode, schoolClosed, notes }),
+    body: JSON.stringify({ countryCode, schoolClosed, adminNote, studentMessage }),
   });
 
   const data = await response.json().catch(() => ({}));

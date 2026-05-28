@@ -21,6 +21,8 @@ const orientationSyncSecret = defineSecret("ORIENTATION_SYNC_SECRET");
 const orientationAppsScriptUrlSecret = defineSecret("ORIENTATION_APPS_SCRIPT_URL");
 const classScheduleSyncSecret = defineSecret("CLASS_SCHEDULE_SYNC_SECRET");
 const classScheduleAppsScriptUrlSecret = defineSecret("CLASS_SCHEDULE_APPS_SCRIPT_URL");
+const holidaysAppsScriptUrlSecret = defineSecret("HOLIDAYS_APPS_SCRIPT_URL");
+const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -651,7 +653,8 @@ app.post("/holidays/import", async (req, res) => {
           name: String(holiday?.name || "").trim(),
           types: Array.isArray(holiday?.types) ? holiday.types : [],
           schoolClosed: typeof existing?.schoolClosed === "boolean" ? existing.schoolClosed : true,
-          notes: typeof existing?.notes === "string" ? existing.notes : "",
+          adminNote: typeof existing?.adminNote === "string" ? existing.adminNote : (typeof existing?.notes === "string" ? existing.notes : ""),
+          studentMessage: typeof existing?.studentMessage === "string" ? existing.studentMessage : "",
           source: "Nager.Date",
           importedAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -676,10 +679,14 @@ async function updateHolidayHandler(req, res) {
     if (!parseHolidayDateInput(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
 
     const schoolClosed = req.body?.schoolClosed;
-    const notes = typeof req.body?.notes === "string" ? req.body.notes : "";
+    const adminNote = typeof req.body?.adminNote === "string"
+      ? req.body.adminNote
+      : (typeof req.body?.notes === "string" ? req.body.notes : "");
+    const studentMessage = typeof req.body?.studentMessage === "string" ? req.body.studentMessage : "";
 
     const updatePayload = {
-      notes,
+      adminNote,
+      studentMessage,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -697,6 +704,74 @@ async function updateHolidayHandler(req, res) {
 
 app.post("/holidays/:date/update", updateHolidayHandler);
 app.patch("/holidays/:date/update", updateHolidayHandler);
+
+
+app.post("/holidays/sync-sheet", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const appsScriptUrl = String(holidaysAppsScriptUrlSecret.value() || process.env.HOLIDAYS_APPS_SCRIPT_URL || "").trim();
+    const syncSecret = String(holidaysSyncSecret.value() || process.env.HOLIDAYS_SYNC_SECRET || "").trim();
+
+    if (!appsScriptUrl) {
+      return res.status(500).json({ error: "Missing required env var: HOLIDAYS_APPS_SCRIPT_URL" });
+    }
+    if (!syncSecret) {
+      return res.status(500).json({ error: "Missing required env var: HOLIDAYS_SYNC_SECRET" });
+    }
+
+    const year = Number(req.body?.year);
+    const countryCode = String(req.body?.countryCode || "GH").trim().toUpperCase() || "GH";
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+      return res.status(400).json({ error: "year must be a valid YYYY number" });
+    }
+
+    const snapshot = await db
+      .collection("holidayCalendar")
+      .where("countryCode", "==", countryCode)
+      .where("date", ">=", `${year}-01-01`)
+      .where("date", "<=", `${year}-12-31`)
+      .orderBy("date", "asc")
+      .get();
+
+    const holidays = snapshot.docs.map((doc) => {
+      const holiday = doc.data() || {};
+      return {
+        date: String(holiday.date || "").trim(),
+        name: String(holiday.name || "").trim(),
+        localName: String(holiday.localName || "").trim(),
+        countryCode: String(holiday.countryCode || countryCode).trim().toUpperCase(),
+        types: Array.isArray(holiday.types) ? holiday.types : [],
+        schoolClosed: Boolean(holiday.schoolClosed),
+        adminNote: typeof holiday.adminNote === "string"
+          ? holiday.adminNote
+          : (typeof holiday.notes === "string" ? holiday.notes : ""),
+        studentMessage: typeof holiday.studentMessage === "string" ? holiday.studentMessage : "",
+      };
+    });
+
+    const upstreamResponse = await fetch(appsScriptUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secret: syncSecret,
+        action: "syncHolidays",
+        year,
+        countryCode,
+        holidays,
+      }),
+    });
+
+    const responseJson = await upstreamResponse.json().catch(() => ({}));
+    if (!upstreamResponse.ok || responseJson?.ok === false) {
+      return res.status(502).json({ error: "Holiday sheet sync upstream request failed", details: responseJson });
+    }
+
+    return res.json(responseJson);
+  } catch (e) {
+    return res.status(401).json({ error: e?.message || "Unauthorized" });
+  }
+});
 
 app.post("/class-schedule/sync", async (req, res) => {
   try {
@@ -812,4 +887,14 @@ app.post("/orientation/sync", async (req, res) => {
     return res.status(401).json({ error: e?.message || "Unauthorized" });
   }
 });
-exports.api = onRequest({ secrets: [attendancePinSaltSecret, orientationSyncSecret, orientationAppsScriptUrlSecret, classScheduleSyncSecret, classScheduleAppsScriptUrlSecret] }, app);
+exports.api = onRequest({
+  secrets: [
+    attendancePinSaltSecret,
+    orientationSyncSecret,
+    orientationAppsScriptUrlSecret,
+    classScheduleSyncSecret,
+    classScheduleAppsScriptUrlSecret,
+    holidaysAppsScriptUrlSecret,
+    holidaysSyncSecret,
+  ],
+}, app);
