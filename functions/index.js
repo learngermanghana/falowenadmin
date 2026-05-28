@@ -25,6 +25,7 @@ const classScheduleSyncSecret = defineSecret("CLASS_SCHEDULE_SYNC_SECRET");
 const classScheduleAppsScriptUrlSecret = defineSecret("CLASS_SCHEDULE_APPS_SCRIPT_URL");
 const holidaysAppsScriptUrlSecret = defineSecret("HOLIDAYS_APPS_SCRIPT_URL");
 const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
+const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -1098,6 +1099,120 @@ function readSubmissionAssignmentKey(data = {}) {
   return String(data.assignmentKey || data.assignment_key || data.assignmentId || data.assignment_id || data.canonicalAssignmentKey || data.assignment || "").trim();
 }
 
+
+function countWords(value) {
+  return String(value || "").trim().split(/\s+/).filter(Boolean).length;
+}
+
+function limitWords(value, maxWords = 40) {
+  const words = String(value || "").trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, maxWords).join(" ");
+}
+
+function normalizeAiMarkingResult(result = {}, payload = {}) {
+  const assignmentKey = String(result.assignmentKey || payload.assignmentKey || payload.referenceEntry?.assignmentKey || "").trim();
+  const level = String(result.level || payload.level || payload.referenceEntry?.level || payload.submission?.level || "UNKNOWN").trim() || "UNKNOWN";
+  const feedback = limitWords(result.feedback || "AI marking completed. Review the score, corrections, and suggested improvements before sending feedback to the student.", 40);
+  const finalScore = Number.isFinite(Number(result.finalScore ?? result.score)) ? Math.max(0, Math.min(100, Math.round(Number(result.finalScore ?? result.score)))) : 0;
+  const status = ["marked", "needs_review"].includes(String(result.status || "").toLowerCase()) ? String(result.status).toLowerCase() : "needs_review";
+
+  return {
+    score: finalScore,
+    passed: Boolean(result.passed ?? finalScore >= 60),
+    level,
+    assignmentKey,
+    detectedParts: Array.isArray(result.detectedParts) ? result.detectedParts : [],
+    parts: Array.isArray(result.parts) ? result.parts : [],
+    objectiveScore: result.objectiveScore ?? null,
+    objectiveCorrect: Number(result.objectiveCorrect || 0),
+    objectiveTotal: Number(result.objectiveTotal || 0),
+    writingScore: result.writingScore ?? null,
+    finalScore,
+    feedback,
+    corrections: Array.isArray(result.corrections) ? result.corrections : [],
+    improvementSummary: result.improvementSummary || feedback,
+    confidence: Number.isFinite(Number(result.confidence)) ? Math.max(0, Math.min(1, Number(result.confidence))) : 0.5,
+    status,
+    shouldSendAutomatically: Boolean(result.shouldSendAutomatically) && status === "marked",
+    dataModel: {
+      answerKeyPath: assignmentKey ? `answerKeyRegistry/${assignmentKey}` : "answerKeyRegistry/{assignmentKey}",
+      markingResultPath: payload.submission?.id ? `markingResults/${payload.submission.id}` : "markingResults/{submissionId}",
+      markingJobPath: "markingJobs/{jobId}",
+    },
+    ai: {
+      provider: "openai",
+      feedbackWordCount: countWords(feedback),
+    },
+  };
+}
+
+function buildMarkingPrompt(payload = {}) {
+  return [
+    "You are Falowen's German examiner AI. Mark the complete submission with AI.",
+    "Use the supplied answerKeyRegistry entry as the source of truth for objective answers. Do not invent missing objective keys; if a required key is missing, set status to needs_review and explain it.",
+    "For objective answers, accept correct option letters, correct text, letter plus text, close spelling, and meaningful stems. If the student gives a wrong option letter with the correct text, mark that item needs_review for conflicting option letter and answer text. If the option letter is correct but text is different, the letter is primary and correct.",
+    "Route A2/B1 teil2 as writing, teil3 Lesen as objective, and teil4 Hören as objective. If teil4 key is empty, include 'No Teil 4 answer key found' and do not fail the whole mark. For A1, objective formats use answer keys; letter/email writing uses writing rubric.",
+    "Return JSON only. The feedback field must be exactly 40 words and should be useful to the student. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, corrections, and improvementSummary.",
+    `Payload: ${JSON.stringify(payload)}`,
+  ].join("\n\n");
+}
+
+async function callOpenAiForMarking(payload = {}) {
+  const apiKey = String(openAiApiKeySecret.value() || process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) {
+    const error = new Error("OPENAI_API_KEY is not configured");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const model = String(process.env.OPENAI_MARKING_MODEL || "gpt-4o-mini").trim();
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "Return valid JSON only. Do not include markdown." },
+        { role: "user", content: buildMarkingPrompt(payload) },
+      ],
+    }),
+  });
+
+  const bodyText = await response.text();
+  if (!response.ok) {
+    const error = new Error(bodyText || "OpenAI marking request failed");
+    error.statusCode = response.status;
+    throw error;
+  }
+
+  const body = JSON.parse(bodyText);
+  const content = body?.choices?.[0]?.message?.content || "{}";
+  return normalizeAiMarkingResult(JSON.parse(content), payload);
+}
+
+app.post("/marking/ai", async (req, res) => {
+  try {
+    const payload = req.body || {};
+    if (!String(payload.submissionText || "").trim()) {
+      return res.status(400).json({ status: "error", message: "submissionText is required" });
+    }
+
+    const result = await callOpenAiForMarking(payload);
+    return res.json({ ok: true, result });
+  } catch (error) {
+    console.error("AI marking failed:", error);
+    return res.status(error.statusCode || 500).json({
+      status: "error",
+      message: error?.message || "AI marking failed",
+    });
+  }
+});
+
 function readSubmissionLevel(data = {}, eventParams = {}) {
   const candidate = String(data.level || data.className || data.class || data.group || eventParams.level || "").trim().toUpperCase();
   const match = candidate.match(/\b(A1|A2|B1)\b/);
@@ -1223,5 +1338,6 @@ exports.api = onRequest({
     classScheduleAppsScriptUrlSecret,
     holidaysAppsScriptUrlSecret,
     holidaysSyncSecret,
+    openAiApiKeySecret,
   ],
 }, app);
