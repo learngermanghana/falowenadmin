@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 
 const tabs = [
   { to: "/marking", label: "Mark Work", exact: true },
+  { to: "/marking/exam-review", label: "Exam Review" },
   { to: "/marking/ai-audit", label: "AI Audit" },
   { to: "/marking/answer-keys", label: "Answer Keys" },
 ];
@@ -15,7 +16,7 @@ export default function MarkingWorkspace({ children }) {
         <div>
           <h2 style={{ margin: 0 }}>Marking</h2>
           <p style={{ margin: "4px 0 0", opacity: 0.75 }}>
-            Mark student work, audit AI results, and sync answer keys from one place.
+            Mark class work, review exam-prep writing, audit AI results, and sync answer keys from one place.
           </p>
         </div>
 
