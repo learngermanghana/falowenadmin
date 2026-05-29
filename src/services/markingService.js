@@ -12,6 +12,7 @@ import {
 
 const DEFAULT_ROSTER_SHEET_CSV_URL = import.meta.env.VITE_STUDENTS_SHEET_CSV_URL || "";
 const MARKING_ROSTER_CSV_URL = import.meta.env.VITE_MARKING_ROSTER_CSV_URL || DEFAULT_ROSTER_SHEET_CSV_URL;
+const MARKING_QUEUE_START_DATE = String(import.meta.env.VITE_MARKING_QUEUE_START_DATE || "2026-05-29T00:00:00Z").trim();
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -22,6 +23,10 @@ function normalizeHeader(value) {
 
 function normalize(value) {
   return String(value || "").trim();
+}
+
+function normalizeLower(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function parseCsvLine(line) {
@@ -167,7 +172,7 @@ function readTimestamp(value) {
 
 function normalizeSubmissionDoc(docSnap, fallback = {}) {
   const data = docSnap.data() || {};
-  const createdAt = readTimestamp(data.createdAt || data.submittedAt || data.timestamp || data.date);
+  const createdAt = readTimestamp(data.createdAt || data.submittedAt || data.timestamp || data.date || data.created_at);
   const text = normalize(
     data.text ||
       data.answer ||
@@ -231,58 +236,116 @@ export async function fetchSubmissions(level, studentCode) {
   return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 }
 
-function isOpenMarkingQueueSubmission(row = {}) {
+function safeFirestoreId(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[/#?[\]]+/g, "_")
+    .replace(/_{2,}/g, "_");
+}
+
+function inferAssignmentIdFromSubmission(row = {}) {
+  const candidates = [
+    row.assignmentKey,
+    row.assignmentId,
+    row.raw?.assignmentKey,
+    row.raw?.assignment_id,
+    row.raw?.assignmentId,
+    row.raw?.canonicalAssignmentKey,
+    row.assignment,
+  ];
+  for (const candidate of candidates) {
+    const match = String(candidate || "").match(/([A-Z]\d+-[\d._]+)/i);
+    if (match?.[1]) return match[1].toUpperCase().replace(/_/g, ".");
+  }
+  return String(row.assignmentKey || row.assignmentId || row.assignment || "").trim();
+}
+
+function scoreDedupeId(row = {}) {
+  return safeFirestoreId([
+    row.studentcode || row.studentCode || "unknown-student",
+    row.assignment_id || row.assignmentId || row.assignment || "unknown-assignment",
+  ].join("__"));
+}
+
+function scoreDedupeIdForSubmission(row = {}) {
+  return scoreDedupeId({
+    studentcode: row.studentCode,
+    assignment_id: inferAssignmentIdFromSubmission(row),
+    assignment: row.assignment,
+  });
+}
+
+function isAfterQueueStart(row = {}) {
+  if (!MARKING_QUEUE_START_DATE) return true;
+  const start = new Date(MARKING_QUEUE_START_DATE);
+  if (Number.isNaN(start.getTime())) return true;
+  if (!row.createdAt) return false;
+  return row.createdAt.getTime() >= start.getTime();
+}
+
+function hasExistingScore(row = {}, scoreIds = new Set()) {
+  if (!scoreIds.size) return false;
+  return scoreIds.has(scoreDedupeIdForSubmission(row));
+}
+
+function isOpenMarkingQueueSubmission(row = {}, scoreIds = new Set()) {
   const raw = row.raw || {};
+  if (!isAfterQueueStart(row)) return false;
   if (raw.hiddenFromMarkingQueue || raw.hiddenAt) return false;
 
-  const markingStatus = normalize(row.markingStatus || raw.markingStatus).toLowerCase();
-  const workflowStatus = normalize(raw.workflowStatus || raw.status).toLowerCase();
-  const terminalStatuses = new Set(["marked", "sent", "done", "completed", "complete", "approved", "hidden", "archived"]);
+  const markingStatus = normalizeLower(row.markingStatus || raw.markingStatus);
+  const workflowStatus = normalizeLower(raw.workflowStatus || raw.status || row.status);
+  const terminalStatuses = new Set(["marked", "sent", "done", "completed", "complete", "approved", "hidden", "archived", "saved"]);
   if (terminalStatuses.has(markingStatus) || terminalStatuses.has(workflowStatus)) return false;
 
   if (row.feedbackSentToStudent || raw.feedbackSentToStudent) return false;
-  if ((row.finalScore !== null && row.finalScore !== undefined) && (row.aiConfidence !== null && row.aiConfidence !== undefined)) return false;
-  if (raw.aiFeedback && row.finalScore !== null && row.finalScore !== undefined) return false;
+  if (row.finalScore !== null && row.finalScore !== undefined) return false;
+  if (raw.aiFeedback || raw.tutorFeedback || raw.feedback) return false;
+  if (hasExistingScore(row, scoreIds)) return false;
 
   return true;
+}
+
+async function loadExistingScoreIds() {
+  try {
+    const snap = await getDocs(collection(db, "scores"));
+    const ids = new Set();
+    snap.forEach((docSnap) => {
+      const data = docSnap.data() || {};
+      ids.add(docSnap.id);
+      if (data.dedupe_id) ids.add(String(data.dedupe_id));
+    });
+    return ids;
+  } catch (error) {
+    console.warn("Could not load score index for marking queue filtering.", error);
+    return new Set();
+  }
 }
 
 export async function loadSubmissions({ includeMarked = false } = {}) {
   const results = [];
   const seenPaths = new Set();
 
-  const flatSnap = await getDocs(collection(db, "submissions"));
-  flatSnap.forEach((docSnap) => {
+  async function addDocSnap(docSnap, fallback = {}) {
     if (seenPaths.has(docSnap.ref.path)) return;
     const data = docSnap.data() || {};
     if (data.__collectionShape === "container") return;
     seenPaths.add(docSnap.ref.path);
-    results.push(normalizeSubmissionDoc(docSnap));
-  });
+    results.push(normalizeSubmissionDoc(docSnap, fallback));
+  }
+
+  const flatSnap = await getDocs(collection(db, "submissions"));
+  flatSnap.forEach((docSnap) => addDocSnap(docSnap));
 
   const groupSnap = await getDocs(collectionGroup(db, "posts"));
-  groupSnap.forEach((docSnap) => {
-    if (seenPaths.has(docSnap.ref.path)) return;
-    seenPaths.add(docSnap.ref.path);
-    results.push(normalizeSubmissionDoc(docSnap));
-  });
+  groupSnap.forEach((docSnap) => addDocSnap(docSnap));
 
   const nestedSnap = await getDocs(collectionGroup(db, "submissions"));
-  nestedSnap.forEach((docSnap) => {
-    if (seenPaths.has(docSnap.ref.path)) return;
-    seenPaths.add(docSnap.ref.path);
-    results.push(normalizeSubmissionDoc(docSnap));
-  });
+  nestedSnap.forEach((docSnap) => addDocSnap(docSnap));
 
-  const queueRows = includeMarked ? results : results.filter(isOpenMarkingQueueSubmission);
+  const scoreIds = includeMarked ? new Set() : await loadExistingScoreIds();
+  const queueRows = includeMarked ? results : results.filter((row) => isOpenMarkingQueueSubmission(row, scoreIds));
   return queueRows.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
-}
-
-function safeFirestoreId(value) {
-  return String(value || "")
-    .trim()
-    .replace(/[/#?[\]]+/g, "_")
-    .replace(/_{2,}/g, "_");
 }
 
 export async function createMarkingJob({ submissionId, submissionPath, assignmentKey, level, status = "pending" }) {
@@ -405,6 +468,8 @@ export async function importAnswerDictionary(dictionary) {
       sheetUrl: entry.sheetUrl,
       rawAnswers: entry.rawAnswers,
       parts: entry.parts,
+      expectedParts: entry.expectedParts,
+      answerLayout: entry.answerLayout,
       totalAnswers: entry.totalAnswers,
       importedAt: now,
       updatedAt: now,
@@ -461,6 +526,7 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
     assignmentKey,
     detectedParts: Array.isArray(result.detectedParts) ? result.detectedParts : [],
     parts: Array.isArray(result.parts) ? result.parts : [],
+    expectedParts: Array.isArray(result.expectedParts) ? result.expectedParts : payload.referenceEntry?.expectedParts || [],
     objectiveScore: result.objectiveScore ?? null,
     objectiveCorrect: Number(result.objectiveCorrect || 0),
     objectiveTotal: Number(result.objectiveTotal || 0),
@@ -536,6 +602,7 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
     objectiveCorrect: result.objectiveCorrect ?? null,
     objectiveTotal: result.objectiveTotal ?? null,
     writingScore: result.writingScore ?? null,
+    expectedParts: result.expectedParts || [],
     parts: result.parts || [],
     detectedParts: result.detectedParts || [],
     scoreSaveReceipt: receipt,
@@ -649,13 +716,6 @@ async function postScoreToWebhookNoCors(payload) {
     headers: { "Content-Type": "text/plain;charset=UTF-8" },
     body: JSON.stringify(payload),
   });
-}
-
-function scoreDedupeId(row = {}) {
-  return safeFirestoreId([
-    row.studentcode || row.studentCode || "unknown-student",
-    row.assignment_id || row.assignmentId || row.assignment || "unknown-assignment",
-  ].join("__"));
 }
 
 export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source = "manual", allowDuplicate = false }) {
