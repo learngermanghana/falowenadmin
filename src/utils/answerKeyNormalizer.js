@@ -1,5 +1,6 @@
 const PART_ID_PATTERN = /teil\s*[1-4]|part\s*[1-4]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i;
-const ANSWER_KEY_PATTERN = /^(?:answer|antwort|frage|question|q|nr\.?)[\s_-]*\d{1,3}$/i;
+const ANSWER_KEY_PATTERN = /^(?:answer|antwort|frage|question|q|nr\.?)?[\s_-]*\d{1,3}$/i;
+const VALID_PART_IDS = new Set(["main", "teil1", "teil2", "teil3", "teil4"]);
 
 export function safeRegistryId(value) {
   return String(value || "")
@@ -20,6 +21,25 @@ export function inferPartId(value = "") {
   if (/teil\s*4|part\s*4|horen|hoeren|listening/.test(normalized)) return "teil4";
   if (/teil\s*1|part\s*1/.test(normalized)) return "teil1";
   return "unknown";
+}
+
+function normalizeExpectedPartId(value = "") {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (VALID_PART_IDS.has(raw)) return raw;
+  if (/main|flat/.test(raw)) return "main";
+  const inferred = inferPartId(raw);
+  return VALID_PART_IDS.has(inferred) ? inferred : "";
+}
+
+export function normalizeExpectedParts(value, parts = {}) {
+  const explicit = Array.isArray(value)
+    ? value.map(normalizeExpectedPartId).filter((partId) => VALID_PART_IDS.has(partId))
+    : [];
+  if (explicit.length) return [...new Set(explicit)];
+
+  const partIdsFromAnswers = Object.keys(parts || {}).filter((partId) => VALID_PART_IDS.has(partId));
+  return partIdsFromAnswers.length ? partIdsFromAnswers : ["main"];
 }
 
 function inferQuestionNumber(key = "", fallbackIndex = 0, value = "") {
@@ -168,6 +188,12 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
   const rawAnswers = sourceEntry.answers || {};
   const parts = splitAnswersIntoParts(rawAnswers);
   const totalAnswers = countPartAnswers(parts);
+  const expectedParts = normalizeExpectedParts(sourceEntry.expectedParts || sourceEntry.expected_parts, parts);
+  const answerLayout = String(
+    sourceEntry.answerLayout ||
+      sourceEntry.answer_layout ||
+      (expectedParts.includes("main") ? "flat" : "parts"),
+  ).trim();
 
   return {
     assignmentKey,
@@ -178,6 +204,8 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
     sheetUrl: sourceEntry.sheetUrl || sourceEntry.sheet_url || "",
     rawAnswers,
     parts,
+    expectedParts,
+    answerLayout,
     totalAnswers,
   };
 }
