@@ -489,7 +489,24 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     throw new Error(body?.message || "AI marking failed");
   }
 
-  return normalizeAIMarkingResult(body.result || body, payload);
+  const result = normalizeAIMarkingResult(body.result || body, payload);
+
+  const receipt = await saveScoreRow({
+    studentCode: submission.studentCode || submission.studentcode || submission.uid || "",
+    name: submission.studentName || submission.name || submission.fullName || "",
+    assignment: submission.assignment || referenceEntry?.title || result.assignmentKey || "AI marked assignment",
+    assignmentId: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
+    score: result.finalScore ?? result.score ?? 0,
+    comments: result.feedback || result.improvementSummary || "AI marking completed.",
+    level: result.level || referenceEntry?.level || submission.level || "",
+    link: referenceEntry?.answerUrl || referenceEntry?.answer_url || referenceEntry?.sheetUrl || referenceEntry?.sheet_url || "",
+    source: "ai_marking",
+  });
+
+  return {
+    ...result,
+    scoreSaveReceipt: receipt,
+  };
 }
 
 const DEFAULT_SCORES_WEBHOOK_URL =
