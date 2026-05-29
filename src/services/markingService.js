@@ -235,8 +235,8 @@ function isOpenMarkingQueueSubmission(row = {}) {
   const raw = row.raw || {};
   if (raw.hiddenFromMarkingQueue || raw.hiddenAt) return false;
 
-  const markingStatus = normalize(row.markingStatus || raw.markingStatus);
-  const workflowStatus = normalize(raw.workflowStatus || raw.status);
+  const markingStatus = normalize(row.markingStatus || raw.markingStatus).toLowerCase();
+  const workflowStatus = normalize(raw.workflowStatus || raw.status).toLowerCase();
   const terminalStatuses = new Set(["marked", "sent", "done", "completed", "complete", "approved", "hidden", "archived"]);
   if (terminalStatuses.has(markingStatus) || terminalStatuses.has(workflowStatus)) return false;
 
@@ -484,6 +484,68 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
   };
 }
 
+function isSafeForScoreSheet(result = {}) {
+  const status = String(result.status || "").toLowerCase();
+  const score = Number(result.finalScore ?? result.score);
+  const confidence = Number(result.confidence ?? 0);
+  const objectiveTotal = Number(result.objectiveTotal || 0);
+  const hasWritingScore = result.writingScore !== null && result.writingScore !== undefined;
+
+  if (status !== "marked") return false;
+  if (!Number.isFinite(score)) return false;
+  if (score <= 0 && confidence < 0.6) return false;
+  if (score <= 0 && objectiveTotal === 0 && !hasWritingScore) return false;
+  return true;
+}
+
+function skippedScoreReceipt(row, reason) {
+  return {
+    row,
+    dedupeId: scoreDedupeId(row),
+    duplicateSkipped: false,
+    skippedForReview: true,
+    sheet: {
+      attempted: false,
+      success: true,
+      message: reason,
+    },
+    firestore: {
+      attempted: false,
+      success: true,
+      message: "AI result kept in Firestore marking audit, not saved as final score.",
+    },
+  };
+}
+
+async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason = "" }) {
+  const now = new Date().toISOString();
+  const safeId = safeFirestoreId(submission.id || submission.path || `${submission.studentCode || "student"}_${result.assignmentKey || "assignment"}_${now}`);
+  await setDoc(doc(db, "aiMarkingAudit", safeId), {
+    submissionId: submission.id || "",
+    submissionPath: submission.path || "",
+    studentCode: submission.studentCode || submission.studentcode || submission.uid || "",
+    studentName: submission.studentName || submission.name || submission.fullName || "",
+    assignment: submission.assignment || result.assignmentKey || "",
+    assignmentKey: result.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
+    level: result.level || submission.level || "",
+    finalScore: result.finalScore ?? result.score ?? null,
+    confidence: result.confidence ?? null,
+    status: result.status || "needs_review",
+    feedback: result.feedback || "",
+    objectiveScore: result.objectiveScore ?? null,
+    objectiveCorrect: result.objectiveCorrect ?? null,
+    objectiveTotal: result.objectiveTotal ?? null,
+    writingScore: result.writingScore ?? null,
+    parts: result.parts || [],
+    detectedParts: result.detectedParts || [],
+    scoreSaveReceipt: receipt,
+    sheetSynced: Boolean(receipt?.sheet?.attempted && receipt?.sheet?.success && !receipt?.skippedForReview),
+    reviewReason: reason,
+    createdAt: now,
+    updatedAt: now,
+  }, { merge: true });
+}
+
 export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
   const payload = {
     submission,
@@ -506,18 +568,43 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
   }
 
   const result = normalizeAIMarkingResult(body.result || body, payload);
-
-  const receipt = await saveScoreRow({
-    studentCode: submission.studentCode || submission.studentcode || submission.uid || "",
+  const row = {
+    studentcode: submission.studentCode || submission.studentcode || submission.uid || "",
     name: submission.studentName || submission.name || submission.fullName || "",
     assignment: submission.assignment || referenceEntry?.title || result.assignmentKey || "AI marked assignment",
+    assignment_id: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
     assignmentId: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
     score: result.finalScore ?? result.score ?? 0,
     comments: result.feedback || result.improvementSummary || "AI marking completed.",
+    date: new Date().toString(),
     level: result.level || referenceEntry?.level || submission.level || "",
     link: referenceEntry?.answerUrl || referenceEntry?.answer_url || referenceEntry?.sheetUrl || referenceEntry?.sheet_url || "",
     source: "ai_marking",
-  });
+  };
+
+  let receipt;
+  let reviewReason = "";
+
+  if (isSafeForScoreSheet(result)) {
+    receipt = await saveScoreRow({
+      studentCode: row.studentcode,
+      name: row.name,
+      assignment: row.assignment,
+      assignmentId: row.assignment_id,
+      score: row.score,
+      comments: row.comments,
+      level: row.level,
+      link: row.link,
+      source: row.source,
+    });
+  } else {
+    reviewReason = result.status !== "marked"
+      ? `AI returned ${result.status}; tutor review required before score sheet sync.`
+      : "AI returned an unsafe zero/low-confidence result; kept for audit and blocked from score sheet.";
+    receipt = skippedScoreReceipt(row, reviewReason);
+  }
+
+  await saveAIAudit({ submission, result, receipt, reason: reviewReason });
 
   return {
     ...result,
