@@ -12,6 +12,7 @@ import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
 import MarkingWorkspace from "./pages/MarkingWorkspace";
 import AIMarkingAuditPage from "./pages/AIMarkingAuditPage";
+import ExamTutorReviewQueuePage from "./pages/ExamTutorReviewQueuePage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
@@ -137,10 +138,14 @@ export default function App() {
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route path="/marking" element={<MarkingTab><MarkingPage /></MarkingTab>} />
+          <Route path="/marking/exam-review" element={<MarkingTab><ExamTutorReviewQueuePage /></MarkingTab>} />
+          <Route path="/marking/exam-review/:reviewId" element={<MarkingTab><ExamTutorReviewQueuePage /></MarkingTab>} />
           <Route path="/marking/ai-audit" element={<MarkingTab><AIMarkingAuditPage /></MarkingTab>} />
           <Route path="/marking/answer-keys" element={<MarkingTab><AnswerKeySyncPage /></MarkingTab>} />
           <Route path="/ai-marking-audit" element={<Navigate to="/marking/ai-audit" replace />} />
           <Route path="/answer-key-sync" element={<Navigate to="/marking/answer-keys" replace />} />
+          <Route path="/examTutorReviewQueue" element={<Navigate to="/marking/exam-review" replace />} />
+          <Route path="/examTutorReviewQueue/:reviewId" element={<ProtectedRoute allowStaff={false}><ExamTutorReviewQueuePage /></ProtectedRoute>} />
           <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationPage /></ProtectedRoute>} />
