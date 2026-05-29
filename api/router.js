@@ -61,7 +61,7 @@ function inferPartId(value = "") {
   const normalized = String(value || "").toLowerCase().replace(/ö/g, "o");
   if (/teil\s*2|part\s*2|schreiben|writing/.test(normalized)) return "teil2";
   if (/teil\s*3|part\s*3|lesen|reading/.test(normalized)) return "teil3";
-  if (/teil\s*4|part\s*4|horen|hoeren|listening/.test(normalized)) return "teil4";
+  if (/teil\s*4|part\s*4|audio|horen|hoeren|listening/.test(normalized)) return "teil4";
   if (/teil\s*1|part\s*1/.test(normalized)) return "teil1";
   if (/main|flat/.test(normalized)) return "main";
   return "unknown";
@@ -312,31 +312,27 @@ function makeEmptyAnswerBuckets() {
 function extractStudentObjectiveAnswers(submissionText = "") {
   const answers = makeEmptyAnswerBuckets();
   let currentPart = "teil3";
+  let orderedIndex = 0;
   const lines = String(submissionText || "").split(/\r?\n/);
 
   for (const line of lines) {
     const lower = line.toLowerCase();
     if (/audio|teil\s*4|h[oö]ren|hoeren|listening/.test(lower)) currentPart = "teil4";
     else if (/teil\s*3|lesen|reading/.test(lower)) currentPart = "teil3";
-    else if (/teil\s*2|schreiben|writing/.test(lower)) currentPart = "teil2";
+    else if (/teil\s*2|part\s*2/.test(lower)) currentPart = "teil2";
+    else if (/teil\s*1|part\s*1/.test(lower)) currentPart = "teil1";
 
     const pattern = /(?:^|\s)(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:\-]?\s*([A-D])\b/gi;
     let match = pattern.exec(line);
     while (match) {
       const questionNumber = String(Number(match[1]));
       const letter = normalizeLetter(match[2]);
-      if (letter) answers[currentPart][questionNumber] = letter;
+      if (letter) {
+        answers[currentPart][questionNumber] = letter;
+        orderedIndex += 1;
+        answers.main[String(orderedIndex)] = letter;
+      }
       match = pattern.exec(line);
-    }
-  }
-
-  const anyPartAnswers = Object.entries(answers).some(([partId, bucket]) => partId !== "main" && Object.keys(bucket).length);
-  if (!anyPartAnswers) {
-    const pattern = /(?:^|\s)(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:\-]?\s*([A-D])\b/gi;
-    let match = pattern.exec(String(submissionText || ""));
-    while (match) {
-      answers.main[String(Number(match[1]))] = normalizeLetter(match[2]);
-      match = pattern.exec(String(submissionText || ""));
     }
   }
 
@@ -356,7 +352,9 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
   const submissionText = payload.submissionText || payload.submission?.text || "";
   const studentAnswers = extractStudentObjectiveAnswers(submissionText);
   const scoredParts = [];
-  const detectedParts = Object.entries(studentAnswers).filter(([, bucket]) => Object.keys(bucket).length).map(([partId]) => partId);
+  const detectedParts = Object.entries(studentAnswers)
+    .filter(([, bucket]) => Object.keys(bucket).length)
+    .map(([partId, bucket]) => ({ partId, answerCount: Object.keys(bucket).length }));
   let correct = 0;
   let total = 0;
   const wrongLabels = [];
@@ -364,7 +362,7 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
   for (const partId of expectedParts) {
     const answerPart = parts[partId];
     if (!answerPart?.answers?.length) continue;
-    const bucket = studentAnswers[partId] || (partId === "main" ? studentAnswers.main : {});
+    const bucket = studentAnswers[partId] || {};
     let partCorrect = 0;
     let partTotal = 0;
     const wrong = [];
