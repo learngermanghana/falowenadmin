@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -10,6 +10,7 @@ import CheckinDisplayPage from "./pages/CheckinDisplayPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
+import MarkingWorkspace from "./pages/MarkingWorkspace";
 import AIMarkingAuditPage from "./pages/AIMarkingAuditPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
@@ -65,8 +66,6 @@ function TopBar() {
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
-                <Link to="/ai-marking-audit" onClick={() => setMenuOpen(false)}>AI Audit</Link>
-                <Link to="/answer-key-sync" onClick={() => setMenuOpen(false)}>Answer Keys</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
@@ -109,6 +108,14 @@ function ToastViewport() {
   );
 }
 
+function MarkingTab({ children }) {
+  return (
+    <ProtectedRoute allowStaff={false}>
+      <MarkingWorkspace>{children}</MarkingWorkspace>
+    </ProtectedRoute>
+  );
+}
+
 export default function App() {
   const location = useLocation();
   const isFullscreenRoute = location.pathname === "/checkin/display";
@@ -129,9 +136,11 @@ export default function App() {
           <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
-          <Route path="/marking" element={<ProtectedRoute allowStaff={false}><MarkingPage /></ProtectedRoute>} />
-          <Route path="/ai-marking-audit" element={<ProtectedRoute allowStaff={false}><AIMarkingAuditPage /></ProtectedRoute>} />
-          <Route path="/answer-key-sync" element={<ProtectedRoute allowStaff={false}><AnswerKeySyncPage /></ProtectedRoute>} />
+          <Route path="/marking" element={<MarkingTab><MarkingPage /></MarkingTab>} />
+          <Route path="/marking/ai-audit" element={<MarkingTab><AIMarkingAuditPage /></MarkingTab>} />
+          <Route path="/marking/answer-keys" element={<MarkingTab><AnswerKeySyncPage /></MarkingTab>} />
+          <Route path="/ai-marking-audit" element={<Navigate to="/marking/ai-audit" replace />} />
+          <Route path="/answer-key-sync" element={<Navigate to="/marking/answer-keys" replace />} />
           <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationPage /></ProtectedRoute>} />
