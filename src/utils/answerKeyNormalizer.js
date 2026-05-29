@@ -23,7 +23,7 @@ export function inferPartId(value = "") {
   return "unknown";
 }
 
-function normalizeExpectedPartId(value = "") {
+function normalizePartId(value = "") {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return "";
   if (VALID_PART_IDS.has(raw)) return raw;
@@ -32,13 +32,18 @@ function normalizeExpectedPartId(value = "") {
   return VALID_PART_IDS.has(inferred) ? inferred : "";
 }
 
-export function normalizeExpectedParts(value, parts = {}) {
+function normalizePartList(value, fallback = []) {
   const explicit = Array.isArray(value)
-    ? value.map(normalizeExpectedPartId).filter((partId) => VALID_PART_IDS.has(partId))
+    ? value.map(normalizePartId).filter((partId) => VALID_PART_IDS.has(partId))
     : [];
   if (explicit.length) return [...new Set(explicit)];
+  return [...new Set((fallback || []).map(normalizePartId).filter(Boolean))];
+}
 
+export function normalizeExpectedParts(value, parts = {}) {
   const partIdsFromAnswers = Object.keys(parts || {}).filter((partId) => VALID_PART_IDS.has(partId));
+  const explicit = normalizePartList(value);
+  if (explicit.length) return explicit;
   return partIdsFromAnswers.length ? partIdsFromAnswers : ["main"];
 }
 
@@ -163,6 +168,44 @@ function countPartAnswers(parts = {}) {
   return Object.values(parts).reduce((sum, part) => sum + Number(part?.answerCount || part?.answers?.length || 0), 0);
 }
 
+function defaultPartGrading({ expectedParts = [], referenceAnswerParts = [], writingParts = [], excludedParts = [], sourcePartGrading = {} }) {
+  const referenceSet = new Set(referenceAnswerParts);
+  const writingSet = new Set(writingParts);
+  const excludedSet = new Set(excludedParts);
+  return expectedParts.reduce((grading, partId) => {
+    if (excludedSet.has(partId)) return grading;
+    const provided = sourcePartGrading?.[partId] || {};
+    if (writingSet.has(partId)) {
+      grading[partId] = {
+        label: provided.label || "Teil 2 Schreiben",
+        hasReferenceAnswers: false,
+        gradingMode: provided.gradingMode || "ai_written_response",
+        instruction: provided.instruction || "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity.",
+        ...provided,
+      };
+      return grading;
+    }
+    grading[partId] = {
+      label: provided.label || partId,
+      hasReferenceAnswers: provided.hasReferenceAnswers ?? referenceSet.has(partId),
+      gradingMode: provided.gradingMode || "answer_key",
+      instruction: provided.instruction || "Grade this part against the reference answers in answers.",
+      ...provided,
+    };
+    return grading;
+  }, {});
+}
+
+function normalizeSourcePartGrading(sourcePartGrading = {}) {
+  if (!sourcePartGrading || typeof sourcePartGrading !== "object") return {};
+  return Object.entries(sourcePartGrading).reduce((acc, [key, value]) => {
+    const partId = normalizePartId(key);
+    if (!partId || !value || typeof value !== "object") return acc;
+    acc[partId] = value;
+    return acc;
+  }, {});
+}
+
 export function validateAnswerDictionary(dictionary = {}) {
   const rows = Array.isArray(dictionary)
     ? dictionary.map((entry, index) => [`entry-${index + 1}`, entry])
@@ -188,11 +231,32 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
   const rawAnswers = sourceEntry.answers || {};
   const parts = splitAnswersIntoParts(rawAnswers);
   const totalAnswers = countPartAnswers(parts);
-  const expectedParts = normalizeExpectedParts(sourceEntry.expectedParts || sourceEntry.expected_parts, parts);
+  const isA2OrB1 = /^(A2|B1)-/i.test(assignmentKey);
+  const explicitWritingParts = normalizePartList(sourceEntry.writingParts || sourceEntry.writing_parts);
+  const writingParts = explicitWritingParts.length ? explicitWritingParts : (isA2OrB1 ? ["teil2"] : []);
+  const excludedParts = normalizePartList(sourceEntry.excludedParts || sourceEntry.excluded_parts);
+  const referenceAnswerParts = normalizePartList(
+    sourceEntry.referenceAnswerParts || sourceEntry.reference_answer_parts,
+    Object.keys(parts || {}).filter((partId) => !writingParts.includes(partId) && !excludedParts.includes(partId)),
+  );
+  const expectedParts = normalizeExpectedParts(
+    sourceEntry.expectedParts || sourceEntry.expected_parts,
+    parts,
+  );
+  const normalizedExpectedParts = [...new Set([...expectedParts, ...writingParts, ...referenceAnswerParts].filter((partId) => !excludedParts.includes(partId)))];
+  const aiGradedParts = normalizePartList(sourceEntry.aiGradedParts || sourceEntry.ai_graded_parts, writingParts);
+  const sourcePartGrading = normalizeSourcePartGrading(sourceEntry.partGrading || sourceEntry.part_grading);
+  const partGrading = defaultPartGrading({
+    expectedParts: normalizedExpectedParts,
+    referenceAnswerParts,
+    writingParts,
+    excludedParts,
+    sourcePartGrading,
+  });
   const answerLayout = String(
     sourceEntry.answerLayout ||
       sourceEntry.answer_layout ||
-      (expectedParts.includes("main") ? "flat" : "parts"),
+      (normalizedExpectedParts.includes("main") ? "flat" : "multipart"),
   ).trim();
 
   return {
@@ -204,8 +268,13 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
     sheetUrl: sourceEntry.sheetUrl || sourceEntry.sheet_url || "",
     rawAnswers,
     parts,
-    expectedParts,
+    expectedParts: normalizedExpectedParts,
+    excludedParts,
+    writingParts,
+    aiGradedParts,
+    referenceAnswerParts,
     answerLayout,
+    partGrading,
     totalAnswers,
   };
 }
