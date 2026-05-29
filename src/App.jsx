@@ -10,6 +10,7 @@ import CheckinDisplayPage from "./pages/CheckinDisplayPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
+import AIMarkingAuditPage from "./pages/AIMarkingAuditPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
@@ -64,6 +65,7 @@ function TopBar() {
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
+                <Link to="/ai-marking-audit" onClick={() => setMenuOpen(false)}>AI Audit</Link>
                 <Link to="/answer-key-sync" onClick={() => setMenuOpen(false)}>Answer Keys</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
@@ -128,6 +130,7 @@ export default function App() {
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route path="/marking" element={<ProtectedRoute allowStaff={false}><MarkingPage /></ProtectedRoute>} />
+          <Route path="/ai-marking-audit" element={<ProtectedRoute allowStaff={false}><AIMarkingAuditPage /></ProtectedRoute>} />
           <Route path="/answer-key-sync" element={<ProtectedRoute allowStaff={false}><AnswerKeySyncPage /></ProtectedRoute>} />
           <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
