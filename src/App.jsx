@@ -24,6 +24,7 @@ import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
 import ClassOperationsPage from "./pages/ClassOperationsPage";
 import HolidayCalendarPage from "./pages/HolidayCalendarPage";
 import AnswerKeySyncPage from "./pages/AnswerKeySyncPage";
+import RemoveMarkingQueueFilters from "./components/RemoveMarkingQueueFilters.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -67,7 +68,7 @@ function TopBar() {
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
-                <Link to="/marking/exam-review" onClick={() => setMenuOpen(false)}>Exam Review</Link>
+                <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
@@ -118,6 +119,14 @@ function MarkingTab({ children }) {
   );
 }
 
+function ExamReviewRoute() {
+  return (
+    <ProtectedRoute allowStaff={false}>
+      <ExamTutorReviewQueuePage />
+    </ProtectedRoute>
+  );
+}
+
 export default function App() {
   const location = useLocation();
   const isFullscreenRoute = location.pathname === "/checkin/display";
@@ -138,15 +147,15 @@ export default function App() {
           <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
-          <Route path="/marking" element={<MarkingTab><MarkingPage /></MarkingTab>} />
-          <Route path="/marking/exam-review" element={<MarkingTab><ExamTutorReviewQueuePage /></MarkingTab>} />
-          <Route path="/marking/exam-review/:reviewId" element={<MarkingTab><ExamTutorReviewQueuePage /></MarkingTab>} />
+          <Route path="/marking" element={<MarkingTab><RemoveMarkingQueueFilters /><MarkingPage /></MarkingTab>} />
           <Route path="/marking/ai-audit" element={<MarkingTab><AIMarkingAuditPage /></MarkingTab>} />
           <Route path="/marking/answer-keys" element={<MarkingTab><AnswerKeySyncPage /></MarkingTab>} />
           <Route path="/ai-marking-audit" element={<Navigate to="/marking/ai-audit" replace />} />
           <Route path="/answer-key-sync" element={<Navigate to="/marking/answer-keys" replace />} />
-          <Route path="/examTutorReviewQueue" element={<Navigate to="/marking/exam-review" replace />} />
-          <Route path="/examTutorReviewQueue/:reviewId" element={<ProtectedRoute allowStaff={false}><ExamTutorReviewQueuePage /></ProtectedRoute>} />
+          <Route path="/marking/exam-review" element={<Navigate to="/examTutorReviewQueue" replace />} />
+          <Route path="/marking/exam-review/:reviewId" element={<Navigate to={`/examTutorReviewQueue/${location.pathname.split('/').pop()}`} replace />} />
+          <Route path="/examTutorReviewQueue" element={<ExamReviewRoute />} />
+          <Route path="/examTutorReviewQueue/:reviewId" element={<ExamReviewRoute />} />
           <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationPage /></ProtectedRoute>} />
