@@ -4,7 +4,7 @@ import { db, storage } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 
 export const DEFAULT_ANSWER_KEY_MANIFEST_URL =
-  "https://raw.githubusercontent.com/learngermanghana/falowenexamtrainer/main/functions/data/answerKeyManifest.json";
+  "https://raw.githubusercontent.com/learngermanghana/falowenadmin/main/src/data/answers_dictionary.json";
 
 function checksumForText(text = "") {
   let hash = 0;
@@ -62,6 +62,8 @@ export async function syncAnswerKeysFromGitHub({ manifestUrl = DEFAULT_ANSWER_KE
       title: entry.title,
       level: entry.level,
       format: entry.format,
+      expectedParts: entry.expectedParts,
+      answerLayout: entry.answerLayout,
       totalAnswers: entry.totalAnswers,
     })),
   });
@@ -93,6 +95,8 @@ export async function syncAnswerKeysFromGitHub({ manifestUrl = DEFAULT_ANSWER_KE
       sheetUrl: entry.sheetUrl,
       rawAnswers: entry.rawAnswers,
       parts: entry.parts,
+      expectedParts: entry.expectedParts,
+      answerLayout: entry.answerLayout,
       totalAnswers: entry.totalAnswers,
       storagePath: activeStoragePath,
       activeStoragePath,
@@ -113,6 +117,7 @@ export async function syncAnswerKeysFromGitHub({ manifestUrl = DEFAULT_ANSWER_KE
       assignmentKey: entry.assignmentKey,
       activeStoragePath,
       versionStoragePath,
+      expectedParts: entry.expectedParts,
       totalAnswers: entry.totalAnswers,
     };
   }));
