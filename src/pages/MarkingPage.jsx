@@ -186,7 +186,6 @@ export default function MarkingPage() {
   const [autoMarking, setAutoMarking] = useState(false);
   const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
   const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
-  const [markingFilter, setMarkingFilter] = useState("pending");
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
   const [workflowSaving, setWorkflowSaving] = useState(false);
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
@@ -374,24 +373,7 @@ export default function MarkingPage() {
     selectedSubmission?.assignmentKey,
   ]);
 
-  const markingFilterOptions = [
-    { id: "pending", label: "Pending" },
-    { id: "marked", label: "Auto-marked" },
-    { id: "needs_review", label: "Needs review" },
-    { id: "sent", label: "Sent to student" },
-    { id: "failed", label: "Failed" },
-  ];
-
-  const latestNotifications = useMemo(() => {
-    const rows = submissionNotifications.slice(0, 60);
-    if (markingFilter === "pending") {
-      return rows.filter((row) => !row.markingStatus || row.markingStatus === "pending");
-    }
-    if (markingFilter === "sent") {
-      return rows.filter((row) => row.feedbackSentToStudent || row.markingStatus === "sent");
-    }
-    return rows.filter((row) => row.markingStatus === markingFilter);
-  }, [markingFilter, submissionNotifications]);
+  const latestNotifications = useMemo(() => submissionNotifications.slice(0, 60), [submissionNotifications]);
 
   const combinedReferenceAndSubmission = useMemo(() => {
     const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
@@ -709,23 +691,6 @@ export default function MarkingPage() {
       </p>
 
       {loading && <p>Loading roster and submissions...</p>}
-
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Marking queue filters</h3>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {markingFilterOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setMarkingFilter(option.id)}
-              style={{ fontWeight: markingFilter === option.id ? 700 : 400 }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <details>
