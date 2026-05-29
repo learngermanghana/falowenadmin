@@ -14,7 +14,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1AgS3Kb78KcvbJnZvZijM4-cBJ1PitCVnUwe19T4TMPQ/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-0.1"
+    "assignment_id": "A1-0.1",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Alphabets German Alphabet  0.2": {
     "answers": {
@@ -33,7 +37,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1XJcdMuaivOh2JCnXi1b9E4l5qN4KldyDSRNHJgiHnBs/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-0.2"
+    "assignment_id": "A1-0.2",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Pronouns and Verb Conjugation 1.1": {
     "answers": {
@@ -44,7 +52,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-1.1"
+    "assignment_id": "A1-1.1",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Numbers and Addresses 2": {
     "answers": {
@@ -66,7 +78,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1OVDkJimsz7wZwNa4s4QccST3TFvLkqzt720P_CWPdD8/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-2"
+    "assignment_id": "A1-2",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Introducing Yourself and Reviewing Pronouns 1.2": {
     "answers": {
@@ -87,7 +103,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1NuId_slE2LVNXvhfwQvdjYaqtBGa78aBNVETEw2RMmY/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-1.2"
+    "assignment_id": "A1-1.2",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Countries and Languages 4": {
     "answers": {
@@ -106,7 +126,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1SiYvtaw-LwoeCff7yxlpWsfENMlIbQRqfuh3MPobPOE/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-4"
+    "assignment_id": "A1-4",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Objects and Colors 6": {
     "answers": {
@@ -137,7 +161,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-6"
+    "assignment_id": "A1-6",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Nominative and Accusative Cases 5": {
     "answers": {
@@ -174,7 +202,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1d0dvYURPHf69KlJhToqOxn39V8GCcAsdrhrEAQ78phw/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-5"
+    "assignment_id": "A1-5",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Understanding Time 7": {
     "answers": {
@@ -201,7 +233,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1dCI5BbOvfvI4RekolDshv19jyNFPmzenDSrgBMGL9Uk/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-7"
+    "assignment_id": "A1-7",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 The 24 Hour Clock and Dates 8": {
     "answers": {
@@ -223,7 +259,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-8"
+    "assignment_id": "A1-8",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Food and Negation 9": {
     "answers": {
@@ -245,7 +285,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1paS9hx9oc7iB2VnxGSUg5Y9-hMf8l08nCNGNSU4__SA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-9"
+    "assignment_id": "A1-9",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Food and Daily Life 10": {
     "answers": {
@@ -267,7 +311,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1OOxtH3ZuP6Vd8wfZScnV_Ht1ywke1C3OmFm5_kFrVGs/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-10"
+    "assignment_id": "A1-10",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Instructions and Directions 11": {
     "answers": {
@@ -295,7 +343,12 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1kGGQZ89YZV-xGUdFKIHUFOVYG7wB7PnCBF8DqBd4Zok/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-11"
+    "assignment_id": "A1-11",
+    "expectedParts": [
+      "teil1",
+      "teil2",
+      "teil3"
+    ]
   },
   "A1 Two Case Preposition 12.1": {
     "answers": {
@@ -323,7 +376,17 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1vgjfS9u_dS8ypgMOkCkVp3j_04dM8hwGvQiJdCKT74c/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-12.1"
+    "assignment_id": "A1-12.1",
+    "expectedParts": [
+      "teil1",
+      "teil2",
+      "teil3"
+    ],
+    "partAliases": {
+      "teil1": "Teil 1",
+      "teil2": "Teil 2",
+      "teil3": "Teil 3"
+    }
   },
   "A1 Professions and Prepositions 12.2": {
     "answers": {
@@ -351,14 +414,28 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1DiO7gh0xrt-SyWWhpxVNtMs9lFjEGuzqJww9OMmTjDY/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-12.2"
+    "assignment_id": "A1-12.2",
+    "expectedParts": [
+      "teil1",
+      "teil2",
+      "teil3"
+    ],
+    "partAliases": {
+      "teil1": "Teil 1",
+      "teil2": "Teil 2",
+      "teil3": "Teil 3"
+    }
   },
   "Introduction to Letter Writing  12.3": {
     "answers": {
       "Answer1": "Read comment for answers"
     },
     "answer_url": "",
-    "assignment_id": "A1-12.3"
+    "assignment_id": "A1-12.3",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Weather 13": {
     "answers": {
@@ -374,7 +451,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-13"
+    "assignment_id": "A1-13",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A1 Health and Body Parts 14.1": {
     "answers": {
@@ -396,7 +477,11 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment_id": "A1-14.1"
+    "assignment_id": "A1-14.1",
+    "expectedParts": [
+      "main"
+    ],
+    "answerLayout": "flat"
   },
   "A2 1.1 Small Talk": {
     "answers": {
@@ -420,7 +505,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/edit",
     "format": "objective",
-    "assignment_id": "A2-1.1"
+    "assignment_id": "A2-1.1",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 1.2 Personen Beschreiben": {
     "answers": {
@@ -442,7 +531,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1rjZ3kemRqOJIfZCX2GwQKMt715GRdo0M90IfKdzOGH0/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1rjZ3kemRqOJIfZCX2GwQKMt715GRdo0M90IfKdzOGH0/edit",
     "format": "objective",
-    "assignment_id": "A2-1.2"
+    "assignment_id": "A2-1.2",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 1.3 Dinge und Personen vergleichen": {
     "answers": {
@@ -466,7 +559,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1ftIKdxbCKTlcDJUj7uHNWZu-dRfH_Tuja0FzTgS_97M/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1ftIKdxbCKTlcDJUj7uHNWZu-dRfH_Tuja0FzTgS_97M/edit",
     "format": "objective",
-    "assignment_id": "A2-1.3"
+    "assignment_id": "A2-1.3",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 2.4 Wo möchten wir uns treffen?": {
     "answers": {
@@ -488,7 +585,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1Fy36SwyPWJOPXpAPJjIck6JLTdhIlrk11l6KYw1umvk/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1Fy36SwyPWJOPXpAPJjIck6JLTdhIlrk11l6KYw1umvk/edit",
     "format": "objective",
-    "assignment_id": "A2-2.4"
+    "assignment_id": "A2-2.4",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 2.5 Was machst du in deiner Freizeit": {
     "answers": {
@@ -510,7 +611,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/13s4XR4XAKonwV9KVjT-MOw5wXW6b99l3PMmuod7xu7w/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/13s4XR4XAKonwV9KVjT-MOw5wXW6b99l3PMmuod7xu7w/edit",
     "format": "objective",
-    "assignment_id": "A2-2.5"
+    "assignment_id": "A2-2.5",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 3.6 Möbel und Räume kennenlernen": {
     "answers": {
@@ -532,7 +637,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1eMuNXnkWU_AQr422gKKkm8v6-MQTY7B7pzIEXjt5q3s/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1eMuNXnkWU_AQr422gKKkm8v6-MQTY7B7pzIEXjt5q3s/edit",
     "format": "objective",
-    "assignment_id": "A2-3.6"
+    "assignment_id": "A2-3.6",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 3.7 Eine Wohnung suchen": {
     "answers": {
@@ -556,7 +665,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1eeiY8L1DYMjbBYjXAy9sPfw_gQt2-WrYAYcPGoeN1d4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1eeiY8L1DYMjbBYjXAy9sPfw_gQt2-WrYAYcPGoeN1d4/edit",
     "format": "objective",
-    "assignment_id": "A2-3.7"
+    "assignment_id": "A2-3.7",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 3.8 Rezepte und Essen": {
     "answers": {
@@ -580,7 +693,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1Qdiqusfbg9sqkrkspHljsD3vJPKb0bghFGskL8tCPp0/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1Qdiqusfbg9sqkrkspHljsD3vJPKb0bghFGskL8tCPp0/edit",
     "format": "objective",
-    "assignment_id": "A2-3.8"
+    "assignment_id": "A2-3.8",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 4.9 Urlaub": {
     "answers": {
@@ -604,7 +721,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1YxZ2noWRoB12-oYlPxhum_LPPShshjQvyXOqnwymtAw/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1YxZ2noWRoB12-oYlPxhum_LPPShshjQvyXOqnwymtAw/edit",
     "format": "objective",
-    "assignment_id": "A2-4.9"
+    "assignment_id": "A2-4.9",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 4.10 Tourismus und Traditionelle Feste": {
     "answers": {
@@ -628,7 +749,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1fhMpgMdfNWuZcoRnXMvKhGxXBJLYF-cGV4hyPHmcFu4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1fhMpgMdfNWuZcoRnXMvKhGxXBJLYF-cGV4hyPHmcFu4/edit",
     "format": "objective",
-    "assignment_id": "A2-4.10"
+    "assignment_id": "A2-4.10",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 4.11 Unterwegs: Verkehrsmittel vergleichen": {
     "answers": {
@@ -652,7 +777,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/16aS6UmVL-kQqcje1f3rDeqobEnkoNsxUwCNE_iBokI4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/16aS6UmVL-kQqcje1f3rDeqobEnkoNsxUwCNE_iBokI4/edit",
     "format": "objective",
-    "assignment_id": "A2-4.11"
+    "assignment_id": "A2-4.11",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 5.12 Ein Tag im Leben": {
     "answers": {
@@ -676,7 +805,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1z8wEWz-HJxm1DUvr0a7OE5md3Gj4OR5ZJ3SpJNI-hyQ/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1z8wEWz-HJxm1DUvr0a7OE5md3Gj4OR5ZJ3SpJNI-hyQ/edit",
     "format": "objective",
-    "assignment_id": "A2-5.12"
+    "assignment_id": "A2-5.12",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 5.13 Ein Vorstellungsgespräch": {
     "answers": {
@@ -700,7 +833,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1fySC84kZ7Xl1YfzmK4FaZImNjVI6wsr_YFi-4mfdrm4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1fySC84kZ7Xl1YfzmK4FaZImNjVI6wsr_YFi-4mfdrm4/edit",
     "format": "objective",
-    "assignment_id": "A2-5.13"
+    "assignment_id": "A2-5.13",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 5.14 Beruf und Karriere": {
     "answers": {
@@ -724,7 +861,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1wKcE29sav7yHsSc9SSOwrbmtq15MF33LbVAeDaz4CAw/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1wKcE29sav7yHsSc9SSOwrbmtq15MF33LbVAeDaz4CAw/edit",
     "format": "objective",
-    "assignment_id": "A2-5.14"
+    "assignment_id": "A2-5.14",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 6.15 Mein Lieblingssport": {
     "answers": {
@@ -748,7 +889,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/11cVglcrlXHA5N9UBp5S6Mepm2KFP57Cp__4F2GRLRcM/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/11cVglcrlXHA5N9UBp5S6Mepm2KFP57Cp__4F2GRLRcM/edit",
     "format": "objective",
-    "assignment_id": "A2-6.15"
+    "assignment_id": "A2-6.15",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 6.16 Wohlbefinden und Entspannung": {
     "answers": {
@@ -770,7 +915,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/13fG-McZz3Q_rmcHymAwfLwX7C1illz91v5b2yXyoArI/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/13fG-McZz3Q_rmcHymAwfLwX7C1illz91v5b2yXyoArI/edit",
     "format": "objective",
-    "assignment_id": "A2-6.16"
+    "assignment_id": "A2-6.16",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 6.17 In die Apotheke gehen": {
     "answers": {
@@ -794,7 +943,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1X-H0rjHjyJeTbm_bVNh_Bp8VMT-ZwZBQdhadUS1Coqs/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1X-H0rjHjyJeTbm_bVNh_Bp8VMT-ZwZBQdhadUS1Coqs/edit",
     "format": "objective",
-    "assignment_id": "A2-6.17"
+    "assignment_id": "A2-6.17",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 7.18 Die Bank Anrufen": {
     "answers": {
@@ -816,7 +969,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/11swMhsZxMZKG8YqavvspmntM6RzTtP5NDG6zk19GskI/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/11swMhsZxMZKG8YqavvspmntM6RzTtP5NDG6zk19GskI/edit",
     "format": "objective",
-    "assignment_id": "A2-7.18"
+    "assignment_id": "A2-7.18",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 7.19 Einkaufen? Wo und wie?": {
     "answers": {
@@ -840,7 +997,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1OaEeNnHmG3brY-OhbHDpFmj86YUMLIqzMOEAlpAcnFE/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1OaEeNnHmG3brY-OhbHDpFmj86YUMLIqzMOEAlpAcnFE/edit",
     "format": "objective",
-    "assignment_id": "A2-7.19"
+    "assignment_id": "A2-7.19",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 7.20 Typische Reklamationssituationen üben": {
     "answers": {
@@ -865,7 +1026,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1C-utAPIEGi9Rsp_gI3qsfHddX9IXvazP27sxRrobI40/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1C-utAPIEGi9Rsp_gI3qsfHddX9IXvazP27sxRrobI40/edit",
     "format": "objective",
-    "assignment_id": "A2-7.20"
+    "assignment_id": "A2-7.20",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 8.21 Ein Wochenende planen": {
     "answers": {
@@ -881,7 +1046,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/16SKkqpJNa7NyqrnH5xyiyD5VH6AmmyJWG4dc2SiIVO4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/16SKkqpJNa7NyqrnH5xyiyD5VH6AmmyJWG4dc2SiIVO4/edit",
     "format": "objective",
-    "assignment_id": "A2-8.21"
+    "assignment_id": "A2-8.21",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "A2 8.22 Die Woche Plannung": {
     "answers": {
@@ -897,7 +1068,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1IltGaPYHb_jPazZNClHdjzTu-Tgs94zfHNzixrizvCs/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1IltGaPYHb_jPazZNClHdjzTu-Tgs94zfHNzixrizvCs/edit",
     "format": "objective",
-    "assignment_id": "A2-8.22"
+    "assignment_id": "A2-8.22",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "A2 9.23 Wie kommst du zur Schule / zur Arbeit?": {
     "answers": {
@@ -913,7 +1090,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1u7kFhf4yTXKlRhxVNsr7nmDfaR1XBnkzwG6ZnIwvAmo/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1u7kFhf4yTXKlRhxVNsr7nmDfaR1XBnkzwG6ZnIwvAmo/edit",
     "format": "objective",
-    "assignment_id": "A2-9.23"
+    "assignment_id": "A2-9.23",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "A2 9.24 Einen Urlaub planen": {
     "answers": {
@@ -929,7 +1112,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1VhkmUp18ZHieB-bTyZavqvEs1ikz9bXAHh_aDOai-7E/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1VhkmUp18ZHieB-bTyZavqvEs1ikz9bXAHh_aDOai-7E/edit",
     "format": "objective",
-    "assignment_id": "A2-9.24"
+    "assignment_id": "A2-9.24",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "A2 9.25 Tagesablauf": {
     "answers": {
@@ -951,7 +1140,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1nOtlOXVblDt1RQ8JOLpBBLQfjmnxJ9YF6ylhZo4u6kY/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1nOtlOXVblDt1RQ8JOLpBBLQfjmnxJ9YF6ylhZo4u6kY/edit",
     "format": "objective",
-    "assignment_id": "A2-9.25"
+    "assignment_id": "A2-9.25",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A2 10.26 Gefühle in verschiedenen Situationen beschr": {
     "answers": {
@@ -969,7 +1162,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1SQsUUW6_A3X-SGbOsyMZuOgm6Qo7gGsnqY9pbNxYgmY/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1SQsUUW6_A3X-SGbOsyMZuOgm6Qo7gGsnqY9pbNxYgmY/edit",
     "format": "objective",
-    "assignment_id": "A2-10.26"
+    "assignment_id": "A2-10.26",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "A2 10.27 Digitale Kommunikation": {
     "answers": {
@@ -987,7 +1186,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1CDLU1BEBm-xCS0BEdXunjSN8CHol1UMuxlF_QDSGNc8/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1CDLU1BEBm-xCS0BEdXunjSN8CHol1UMuxlF_QDSGNc8/edit",
     "format": "objective",
-    "assignment_id": "A2-10.27"
+    "assignment_id": "A2-10.27",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "A2 10.28 Über die Zukunft sprechen": {
     "answers": {
@@ -1005,7 +1210,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1fAP60NXAKiJ8wdugvjQtZxDX-3ap88vKya7yZWo9mEs/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1fAP60NXAKiJ8wdugvjQtZxDX-3ap88vKya7yZWo9mEs/edit",
     "format": "objective",
-    "assignment_id": "A2-10.28"
+    "assignment_id": "A2-10.28",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 1.1 Traumwelten": {
     "answers": {
@@ -1029,7 +1240,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1hKJ2W9aka4qCSMg_tYpbrAQPvw1ON2GrlvJYbjJHe54/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1hKJ2W9aka4qCSMg_tYpbrAQPvw1ON2GrlvJYbjJHe54/edit",
     "format": "objective",
-    "assignment_id": "B1-1.1"
+    "assignment_id": "B1-1.1",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 1.2 Freundes für Leben": {
     "answers": {
@@ -1053,7 +1268,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1M8ZeJrG3z1CjUhE09QCEf2p7XtruShjQl-8EzEfWvIQ/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1M8ZeJrG3z1CjUhE09QCEf2p7XtruShjQl-8EzEfWvIQ/edit",
     "format": "objective",
-    "assignment_id": "B1-1.2"
+    "assignment_id": "B1-1.2",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 1.3 Erfolgsgeschichten": {
     "answers": {
@@ -1077,7 +1296,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1EjYVFY9Krq_MmyeBMVUDhOyb8lFLOD_8X0Rg9qpR4G4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1EjYVFY9Krq_MmyeBMVUDhOyb8lFLOD_8X0Rg9qpR4G4/edit",
     "format": "objective",
-    "assignment_id": "B1-1.3"
+    "assignment_id": "B1-1.3",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 2.4 Wohnung suchen": {
     "answers": {
@@ -1101,7 +1324,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/18GckqSrP1SJkHpBuUKlk0yvstL2q6Je10IxmK6vt4XE/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/18GckqSrP1SJkHpBuUKlk0yvstL2q6Je10IxmK6vt4XE/edit",
     "format": "objective",
-    "assignment_id": "B1-2.4"
+    "assignment_id": "B1-2.4",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 2.5 Der Besichtigungsg termin": {
     "answers": {
@@ -1125,7 +1352,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1eQ3oZh5sV9O-ybmCLnxlxjfxIqrCVoa5HpVcszE_Fv0/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1eQ3oZh5sV9O-ybmCLnxlxjfxIqrCVoa5HpVcszE_Fv0/edit",
     "format": "objective",
-    "assignment_id": "B1-2.5"
+    "assignment_id": "B1-2.5",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 2.6 Leben in der Stadt oder auf dem Land?": {
     "answers": {
@@ -1149,7 +1380,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1JXeoYk5ruXOZblqVFx6chD5tMxs8lMA5mDAX3KQwNpE/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1JXeoYk5ruXOZblqVFx6chD5tMxs8lMA5mDAX3KQwNpE/edit",
     "format": "objective",
-    "assignment_id": "B1-2.6"
+    "assignment_id": "B1-2.6",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 3.7 Fast Food vs. Hausmannskost": {
     "answers": {
@@ -1178,7 +1413,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1COQA_nlpRTk-FTLD5fL3HkWoVAvUh0XVrpc4TLE3i-w/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1COQA_nlpRTk-FTLD5fL3HkWoVAvUh0XVrpc4TLE3i-w/edit",
     "format": "objective",
-    "assignment_id": "B1-3.7"
+    "assignment_id": "B1-3.7",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 3.8 Alles für die Gesundheit": {
     "answers": {
@@ -1202,7 +1441,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1eLDjlTYn2coRP8HsnZvH1FURNcNY0jUmGtUF9-4pRY4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1eLDjlTYn2coRP8HsnZvH1FURNcNY0jUmGtUF9-4pRY4/edit",
     "format": "objective",
-    "assignment_id": "B1-3.8"
+    "assignment_id": "B1-3.8",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 3.9 Work-Life-Balance im modernen Arbeitsumfeld": {
     "answers": {
@@ -1226,7 +1469,11 @@
     "answer_url": "",
     "sheet_url": "",
     "format": "objective",
-    "assignment_id": "B1-3.9"
+    "assignment_id": "B1-3.9",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 4.10 Digitale Auszeit und Selbstfürsorge": {
     "answers": {
@@ -1250,7 +1497,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1rpXdbptzIH1c2xSYb1Kz3c7lRsCshNMyqFa-eMtfS_s/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1rpXdbptzIH1c2xSYb1Kz3c7lRsCshNMyqFa-eMtfS_s/edit",
     "format": "objective",
-    "assignment_id": "B1-4.10"
+    "assignment_id": "B1-4.10",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 4.11 Teamspiele und Kooperative Aktivitäten": {
     "answers": {
@@ -1274,7 +1525,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1bd1xCfp9UE7LHJ_dINYIFU4ZBafXFWe1Qdt5Yq0DsJQ/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1bd1xCfp9UE7LHJ_dINYIFU4ZBafXFWe1Qdt5Yq0DsJQ/edit",
     "format": "objective",
-    "assignment_id": "B1-4.11"
+    "assignment_id": "B1-4.11",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 4.12 Abenteuer in der Natur": {
     "answers": {
@@ -1298,7 +1553,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1_MAR_-rTWz4xhS1Oz0D3fd6Rstd10Q8zP1Dc9jHBCcc/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1_MAR_-rTWz4xhS1Oz0D3fd6Rstd10Q8zP1Dc9jHBCcc/edit",
     "format": "objective",
-    "assignment_id": "B1-4.12"
+    "assignment_id": "B1-4.12",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 4.13 Eigene Filmkritik schreiben": {
     "answers": {
@@ -1322,7 +1581,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1BY62D8rPhp8DeGFNZP6uV6Tk3K7Iz5BdjPrZUifyv4s/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1BY62D8rPhp8DeGFNZP6uV6Tk3K7Iz5BdjPrZUifyv4s/edit",
     "format": "objective",
-    "assignment_id": "B1-4.13"
+    "assignment_id": "B1-4.13",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 5.14 Traditionelles vs. digitales Lernen": {
     "answers": {
@@ -1346,7 +1609,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1sdKVEIqVZzqzYlTuEmpXv1W0ozkovfGjoIDFrKvjguM/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1sdKVEIqVZzqzYlTuEmpXv1W0ozkovfGjoIDFrKvjguM/edit",
     "format": "objective",
-    "assignment_id": "B1-5.14"
+    "assignment_id": "B1-5.14",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 5.15 Medien und Arbeiten im Homeoffice": {
     "answers": {
@@ -1370,7 +1637,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1Ukcoo644zSndWMdtK4RE9UKT9eCAQo3MFyzySkGERKs/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1Ukcoo644zSndWMdtK4RE9UKT9eCAQo3MFyzySkGERKs/edit",
     "format": "objective",
-    "assignment_id": "B1-5.15"
+    "assignment_id": "B1-5.15",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 5.16 Prüfungsangst und Stressbewältigung": {
     "answers": {
@@ -1394,7 +1665,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1Yzmp1pDDBIK8axqKMMb48neT1U9qWSrMojawHWz4gok/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1Yzmp1pDDBIK8axqKMMb48neT1U9qWSrMojawHWz4gok/edit",
     "format": "objective",
-    "assignment_id": "B1-5.16"
+    "assignment_id": "B1-5.16",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 5.17 Wie lernt man am besten?": {
     "answers": {
@@ -1418,7 +1693,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/17FL2CY2xn5tHSaaysDTypMsuevxzUtAyfpNVhQtKsX4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/17FL2CY2xn5tHSaaysDTypMsuevxzUtAyfpNVhQtKsX4/edit",
     "format": "objective",
-    "assignment_id": "B1-5.17"
+    "assignment_id": "B1-5.17",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 6.18 Wege zum Wunschberuf": {
     "answers": {
@@ -1442,7 +1721,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1g_zdXMGP06wWELi9fIiM8eDfRzgHUAMOCwcrkUTaLiM/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1g_zdXMGP06wWELi9fIiM8eDfRzgHUAMOCwcrkUTaLiM/edit",
     "format": "objective",
-    "assignment_id": "B1-6.18"
+    "assignment_id": "B1-6.18",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 6.19 Das Vorstellungsgespräch": {
     "answers": {
@@ -1459,7 +1742,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/edit",
     "format": "objective",
-    "assignment_id": "B1-6.19"
+    "assignment_id": "B1-6.19",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 6.20 Wie wird man ?? (Ausbildung und Qu)": {
     "answers": {
@@ -1476,7 +1765,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1MaHnVgNn_PC74l5bfjPJp84Of1xGkL-kXneLL9awNHg/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1MaHnVgNn_PC74l5bfjPJp84Of1xGkL-kXneLL9awNHg/edit",
     "format": "objective",
-    "assignment_id": "B1-6.20"
+    "assignment_id": "B1-6.20",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 7.21 Lebensformen heute ? Familie, Wohnge": {
     "answers": {
@@ -1492,7 +1787,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1Cr7l9lPtiR5KvB7twzyc3FM12OiTTfLow9fu7JfnEU8/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1Cr7l9lPtiR5KvB7twzyc3FM12OiTTfLow9fu7JfnEU8/edit",
     "format": "objective",
-    "assignment_id": "B1-7.21"
+    "assignment_id": "B1-7.21",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 7.22 Was ist dir in einer Beziehung wichtig?": {
     "answers": {
@@ -1514,7 +1815,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/edit",
     "format": "objective",
-    "assignment_id": "B1-7.22"
+    "assignment_id": "B1-7.22",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 7.23 Erstes Date ? Typische Situationen": {
     "answers": {
@@ -1532,7 +1837,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1gHdQ_M00rJyQkHvK30p-mI_ZY3tk7gMGCTjTpL1drOk/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1gHdQ_M00rJyQkHvK30p-mI_ZY3tk7gMGCTjTpL1drOk/edit",
     "format": "objective",
-    "assignment_id": "B1-7.23"
+    "assignment_id": "B1-7.23",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 8.24 Konsum und Nachhaltigkeit": {
     "answers": {
@@ -1548,7 +1859,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1WdDtfi_8MfBJpXrZUj_ypsDqyyAp3DuMhIiB_FNjGnc/edit",
     "format": "objective",
-    "assignment_id": "B1-8.24"
+    "assignment_id": "B1-8.24",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 8.25 Online einkaufen ? Rechte und Risiken": {
     "answers": {
@@ -1566,7 +1883,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1qD3fjXMprCDY-5Xz1-msUH1DgA9_V8KbwxTInF0I0AE/edit",
     "format": "objective",
-    "assignment_id": "B1-8.25"
+    "assignment_id": "B1-8.25",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 9.26 Reiseprobleme und Lösungen": {
     "answers": {
@@ -1583,7 +1906,13 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1o3axSLfa47e16kvcL2zJP5FdtYXTbOwYAEzQ4Xen1VI/edit",
     "format": "objective",
-    "assignment_id": "B1-9.26"
+    "assignment_id": "B1-9.26",
+    "expectedParts": [
+      "teil3"
+    ],
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 10.27 Umweltfreundlich im Alltag": {
     "answers": {
@@ -1607,7 +1936,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/14lfVVKeZkgYlfg3QOArxlRoNddpAFM0SfKwzfit9ZNU/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/14lfVVKeZkgYlfg3QOArxlRoNddpAFM0SfKwzfit9ZNU/edit",
     "format": "objective",
-    "assignment_id": "B1-10.27"
+    "assignment_id": "B1-10.27",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "B1 10.28 Klimafreundlich leben": {
     "answers": {
@@ -1631,7 +1964,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1ZmpTcbi4zR5gxGt80Khu3E2M-1sneiJM0qCOCwa8UKo/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1ZmpTcbi4zR5gxGt80Khu3E2M-1sneiJM0qCOCwa8UKo/edit",
     "format": "objective",
-    "assignment_id": "B1-10.28"
+    "assignment_id": "B1-10.28",
+    "expectedParts": [
+      "teil3",
+      "teil4"
+    ]
   },
   "A1 Asking About Prices 3": {
     "answers": {
@@ -1652,6 +1989,10 @@
         "Answer8": "Ich mag Gartenarbeit. / Ich mag nicht Gartenarbeit."
       }
     },
-    "assignment_id": "A1-3"
+    "assignment_id": "A1-3",
+    "expectedParts": [
+      "teil1",
+      "teil3"
+    ]
   }
 }
