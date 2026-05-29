@@ -38,11 +38,12 @@ const FALOWEN_FUNCTION_BASE_URL =
 
 const ANSWER_KEY_MANIFEST_URL =
   process.env.FALOWEN_ANSWER_KEY_MANIFEST_URL ||
-  "https://raw.githubusercontent.com/learngermanghana/falowenexamtrainer/main/functions/data/answerKeyManifest.json";
+  "https://raw.githubusercontent.com/learngermanghana/falowenadmin/main/src/data/answers_dictionary.json";
 
 let answerKeyManifestCache = null;
 let answerKeyManifestCacheTime = 0;
 const ANSWER_KEY_MANIFEST_CACHE_MS = 5 * 60 * 1000;
+const VALID_PART_IDS = new Set(["main", "teil1", "teil2", "teil3", "teil4"]);
 
 function safeRegistryId(value) {
   return String(value || "")
@@ -62,7 +63,24 @@ function inferPartId(value = "") {
   if (/teil\s*3|part\s*3|lesen|reading/.test(normalized)) return "teil3";
   if (/teil\s*4|part\s*4|horen|hoeren|listening/.test(normalized)) return "teil4";
   if (/teil\s*1|part\s*1/.test(normalized)) return "teil1";
+  if (/main|flat/.test(normalized)) return "main";
   return "unknown";
+}
+
+function normalizeExpectedPartId(value = "") {
+  const raw = String(value || "").trim().toLowerCase();
+  if (VALID_PART_IDS.has(raw)) return raw;
+  const inferred = inferPartId(raw);
+  return VALID_PART_IDS.has(inferred) ? inferred : "";
+}
+
+function normalizeExpectedParts(value, parts = {}) {
+  const explicit = Array.isArray(value)
+    ? value.map(normalizeExpectedPartId).filter(Boolean)
+    : [];
+  if (explicit.length) return [...new Set(explicit)];
+  const fromParts = Object.keys(parts || {}).filter((partId) => VALID_PART_IDS.has(partId));
+  return fromParts.length ? fromParts : ["main"];
 }
 
 function inferQuestionNumber(key = "", fallbackIndex = 0, value = "") {
@@ -190,6 +208,7 @@ function normalizeManifestEntry(sourceKey, sourceEntry = {}) {
   const rawAnswers = sourceEntry.answers || {};
   const parts = splitAnswersIntoParts(rawAnswers);
   const totalAnswers = countPartAnswers(parts);
+  const expectedParts = normalizeExpectedParts(sourceEntry.expectedParts || sourceEntry.expected_parts, parts);
 
   return {
     assignmentKey,
@@ -200,6 +219,8 @@ function normalizeManifestEntry(sourceKey, sourceEntry = {}) {
     sheetUrl: sourceEntry.sheetUrl || sourceEntry.sheet_url || "",
     rawAnswers,
     parts,
+    expectedParts,
+    answerLayout: sourceEntry.answerLayout || sourceEntry.answer_layout || (expectedParts.includes("main") ? "flat" : "parts"),
     totalAnswers,
     source: "github-answer-manifest",
   };
@@ -279,6 +300,151 @@ async function hydrateMarkingPayloadWithManifest(req, path) {
   }
 }
 
+function normalizeLetter(value = "") {
+  const match = String(value || "").trim().match(/\b([A-D])\b/i) || String(value || "").trim().match(/^([A-D])/i);
+  return match?.[1]?.toUpperCase() || "";
+}
+
+function makeEmptyAnswerBuckets() {
+  return { main: {}, teil1: {}, teil2: {}, teil3: {}, teil4: {} };
+}
+
+function extractStudentObjectiveAnswers(submissionText = "") {
+  const answers = makeEmptyAnswerBuckets();
+  let currentPart = "teil3";
+  const lines = String(submissionText || "").split(/\r?\n/);
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    if (/audio|teil\s*4|h[oö]ren|hoeren|listening/.test(lower)) currentPart = "teil4";
+    else if (/teil\s*3|lesen|reading/.test(lower)) currentPart = "teil3";
+    else if (/teil\s*2|schreiben|writing/.test(lower)) currentPart = "teil2";
+
+    const pattern = /(?:^|\s)(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:\-]?\s*([A-D])\b/gi;
+    let match = pattern.exec(line);
+    while (match) {
+      const questionNumber = String(Number(match[1]));
+      const letter = normalizeLetter(match[2]);
+      if (letter) answers[currentPart][questionNumber] = letter;
+      match = pattern.exec(line);
+    }
+  }
+
+  const anyPartAnswers = Object.entries(answers).some(([partId, bucket]) => partId !== "main" && Object.keys(bucket).length);
+  if (!anyPartAnswers) {
+    const pattern = /(?:^|\s)(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:\-]?\s*([A-D])\b/gi;
+    let match = pattern.exec(String(submissionText || ""));
+    while (match) {
+      answers.main[String(Number(match[1]))] = normalizeLetter(match[2]);
+      match = pattern.exec(String(submissionText || ""));
+    }
+  }
+
+  return answers;
+}
+
+function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wrongLabels = [] } = {}) {
+  const firstName = String(name || "Student").trim().split(/\s+/)[0] || "Student";
+  const wrongText = wrongLabels.length ? ` Review ${wrongLabels.slice(0, 5).join(", ")}.` : " All objective answers were correct.";
+  return `Good effort, ${firstName}. You answered ${correct} of ${total} objective questions correctly.${wrongText} Keep practising careful reading, listening for details, and checking each answer before submission.`;
+}
+
+function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
+  const referenceEntry = payload.referenceEntry || {};
+  const parts = referenceEntry.parts || {};
+  const expectedParts = normalizeExpectedParts(referenceEntry.expectedParts || referenceEntry.expected_parts, parts);
+  const submissionText = payload.submissionText || payload.submission?.text || "";
+  const studentAnswers = extractStudentObjectiveAnswers(submissionText);
+  const scoredParts = [];
+  const detectedParts = Object.entries(studentAnswers).filter(([, bucket]) => Object.keys(bucket).length).map(([partId]) => partId);
+  let correct = 0;
+  let total = 0;
+  const wrongLabels = [];
+
+  for (const partId of expectedParts) {
+    const answerPart = parts[partId];
+    if (!answerPart?.answers?.length) continue;
+    const bucket = studentAnswers[partId] || (partId === "main" ? studentAnswers.main : {});
+    let partCorrect = 0;
+    let partTotal = 0;
+    const wrong = [];
+    const missing = [];
+
+    for (const answer of answerPart.answers) {
+      const questionNumber = String(Number(answer.questionNumber || partTotal + 1));
+      const expectedLetter = normalizeLetter(answer.correctLetter || answer.rawCorrectAnswer || answer.correctText);
+      if (!expectedLetter) continue;
+      partTotal += 1;
+      const givenLetter = normalizeLetter(bucket[questionNumber]);
+      if (!givenLetter) {
+        missing.push(questionNumber);
+      } else if (givenLetter === expectedLetter) {
+        partCorrect += 1;
+      } else {
+        wrong.push({ questionNumber, expected: expectedLetter, given: givenLetter });
+        wrongLabels.push(`${partId} ${questionNumber}`);
+      }
+    }
+
+    if (partTotal > 0) {
+      total += partTotal;
+      correct += partCorrect;
+      scoredParts.push({
+        partId,
+        correct: partCorrect,
+        total: partTotal,
+        score: Math.round((partCorrect / partTotal) * 100),
+        wrong,
+        missing,
+      });
+    }
+  }
+
+  if (!total || !detectedParts.length) return null;
+
+  const finalScore = Math.round((correct / total) * 100);
+  const name = payload.submission?.studentName || payload.submission?.name || "Student";
+  return {
+    ...(existingResult || {}),
+    score: finalScore,
+    passed: finalScore >= 60,
+    level: referenceEntry.level || payload.level || existingResult.level || "UNKNOWN",
+    assignmentKey: referenceEntry.assignmentKey || payload.assignmentKey || existingResult.assignmentKey || "",
+    detectedParts,
+    expectedParts,
+    parts: scoredParts,
+    objectiveScore: finalScore,
+    objectiveCorrect: correct,
+    objectiveTotal: total,
+    writingScore: existingResult.writingScore ?? null,
+    finalScore,
+    feedback: buildObjectiveFeedback({ name, correct, total, wrongLabels }),
+    corrections: scoredParts.flatMap((part) => part.wrong.map((item) => ({
+      partId: part.partId,
+      questionNumber: item.questionNumber,
+      expected: item.expected,
+      given: item.given,
+    }))),
+    improvementSummary: buildObjectiveFeedback({ name, correct, total, wrongLabels }),
+    confidence: 0.98,
+    status: "marked",
+    shouldSendAutomatically: false,
+    ai: {
+      ...(existingResult.ai || {}),
+      deterministicObjectiveMarked: true,
+      note: "Objective score calculated from answer key before AI review.",
+    },
+  };
+}
+
+function mergeDeterministicMarkingResponse(originalBody, deterministicResult) {
+  if (!deterministicResult) return originalBody;
+  if (originalBody && typeof originalBody === "object" && originalBody.result) {
+    return { ...originalBody, result: { ...originalBody.result, ...deterministicResult } };
+  }
+  return { ...(originalBody || {}), ...deterministicResult };
+}
+
 async function proxyToFalowenFunction(req, res, path, url) {
   try {
     const target = new URL(`${FALOWEN_FUNCTION_BASE_URL.replace(/\/+$/, "")}/${path}`);
@@ -313,7 +479,10 @@ async function proxyToFalowenFunction(req, res, path, url) {
     res.status(response.status);
 
     try {
-      return res.json(JSON.parse(text));
+      const parsed = JSON.parse(text);
+      const baseResult = parsed?.result || parsed || {};
+      const deterministic = path === "marking/ai" ? buildDeterministicObjectiveResult(req.body || {}, baseResult) : null;
+      return res.json(mergeDeterministicMarkingResponse(parsed, deterministic));
     } catch {
       return res.send(text);
     }
