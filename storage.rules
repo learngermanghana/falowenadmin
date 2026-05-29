@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email in [
+          "moxflex@gmail.com"
+        ];
+    }
+
+    // Answer key files are managed only from Falowen Admin.
+    // This allows the GitHub -> Firebase answer-key sync page to write:
+    // answer-keys/_manifest/latest.json
+    // answer-keys/{assignmentKey}/active.json
+    // answer-keys/{assignmentKey}/versions/{version}.json
+    match /answer-keys/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // Keep every other Storage path locked unless a more specific rule is added later.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
