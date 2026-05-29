@@ -116,7 +116,7 @@ export default function App() {
       <TopBar />
       <ToastViewport />
 
-      <main className={isFullscreenRoute ? undefined : "page-shell"}>
+      <main className={isFullscreenRoute ? undefined : "page-shell"} data-route={location.pathname}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
