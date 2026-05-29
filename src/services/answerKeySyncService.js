@@ -43,6 +43,28 @@ async function fetchManifest(manifestUrl = DEFAULT_ANSWER_KEY_MANIFEST_URL) {
   return response.json();
 }
 
+function registryPayloadForEntry(entry, extra = {}) {
+  return {
+    assignmentKey: entry.assignmentKey,
+    title: entry.title,
+    level: entry.level,
+    format: entry.format,
+    answerUrl: entry.answerUrl,
+    sheetUrl: entry.sheetUrl,
+    rawAnswers: entry.rawAnswers,
+    parts: entry.parts,
+    expectedParts: entry.expectedParts,
+    excludedParts: entry.excludedParts,
+    writingParts: entry.writingParts,
+    aiGradedParts: entry.aiGradedParts,
+    referenceAnswerParts: entry.referenceAnswerParts,
+    answerLayout: entry.answerLayout,
+    partGrading: entry.partGrading,
+    totalAnswers: entry.totalAnswers,
+    ...extra,
+  };
+}
+
 export async function syncAnswerKeysFromGitHub({ manifestUrl = DEFAULT_ANSWER_KEY_MANIFEST_URL } = {}) {
   const dictionary = await fetchManifest(manifestUrl);
   const validation = validateAnswerDictionary(dictionary);
@@ -63,7 +85,12 @@ export async function syncAnswerKeysFromGitHub({ manifestUrl = DEFAULT_ANSWER_KE
       level: entry.level,
       format: entry.format,
       expectedParts: entry.expectedParts,
+      excludedParts: entry.excludedParts,
+      writingParts: entry.writingParts,
+      aiGradedParts: entry.aiGradedParts,
+      referenceAnswerParts: entry.referenceAnswerParts,
       answerLayout: entry.answerLayout,
+      partGrading: entry.partGrading,
       totalAnswers: entry.totalAnswers,
     })),
   });
@@ -86,18 +113,7 @@ export async function syncAnswerKeysFromGitHub({ manifestUrl = DEFAULT_ANSWER_KE
     ]);
 
     const existing = await getDoc(doc(db, "answerKeyRegistry", safeAssignmentKey));
-    await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), {
-      assignmentKey: entry.assignmentKey,
-      title: entry.title,
-      level: entry.level,
-      format: entry.format,
-      answerUrl: entry.answerUrl,
-      sheetUrl: entry.sheetUrl,
-      rawAnswers: entry.rawAnswers,
-      parts: entry.parts,
-      expectedParts: entry.expectedParts,
-      answerLayout: entry.answerLayout,
-      totalAnswers: entry.totalAnswers,
+    await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), registryPayloadForEntry(entry, {
       storagePath: activeStoragePath,
       activeStoragePath,
       activeDownloadUrl: activeUpload.downloadUrl,
@@ -111,13 +127,15 @@ export async function syncAnswerKeysFromGitHub({ manifestUrl = DEFAULT_ANSWER_KE
       updatedAt: now,
       importedAt: now,
       createdAt: existing.exists() ? existing.data()?.createdAt || now : now,
-    }, { merge: true });
+    }), { merge: true });
 
     return {
       assignmentKey: entry.assignmentKey,
       activeStoragePath,
       versionStoragePath,
       expectedParts: entry.expectedParts,
+      writingParts: entry.writingParts,
+      referenceAnswerParts: entry.referenceAnswerParts,
       totalAnswers: entry.totalAnswers,
     };
   }));
