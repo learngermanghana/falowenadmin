@@ -231,7 +231,23 @@ export async function fetchSubmissions(level, studentCode) {
   return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 }
 
-export async function loadSubmissions() {
+function isOpenMarkingQueueSubmission(row = {}) {
+  const raw = row.raw || {};
+  if (raw.hiddenFromMarkingQueue || raw.hiddenAt) return false;
+
+  const markingStatus = normalize(row.markingStatus || raw.markingStatus);
+  const workflowStatus = normalize(raw.workflowStatus || raw.status);
+  const terminalStatuses = new Set(["marked", "sent", "done", "completed", "complete", "approved", "hidden", "archived"]);
+  if (terminalStatuses.has(markingStatus) || terminalStatuses.has(workflowStatus)) return false;
+
+  if (row.feedbackSentToStudent || raw.feedbackSentToStudent) return false;
+  if ((row.finalScore !== null && row.finalScore !== undefined) && (row.aiConfidence !== null && row.aiConfidence !== undefined)) return false;
+  if (raw.aiFeedback && row.finalScore !== null && row.finalScore !== undefined) return false;
+
+  return true;
+}
+
+export async function loadSubmissions({ includeMarked = false } = {}) {
   const results = [];
   const seenPaths = new Set();
 
@@ -258,7 +274,8 @@ export async function loadSubmissions() {
     results.push(normalizeSubmissionDoc(docSnap));
   });
 
-  return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  const queueRows = includeMarked ? results : results.filter(isOpenMarkingQueueSubmission);
+  return queueRows.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 }
 
 function safeFirestoreId(value) {
