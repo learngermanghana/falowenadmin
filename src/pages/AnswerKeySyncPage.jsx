@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { loadAnswerKeyRegistry } from "../services/markingService.js";
-import { DEFAULT_ANSWER_KEY_MANIFEST_URL, syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
+import { loadAnswerKeyRegistryPreview } from "../services/answerKeyRegistryService.js";
 import { useToast } from "../context/ToastContext.jsx";
+
+const DEFAULT_ANSWER_KEY_MANIFEST_URL =
+  "https://raw.githubusercontent.com/learngermanghana/falowenexamtrainer/main/functions/data/answerKeyManifest.json";
 
 export default function AnswerKeySyncPage() {
   const { success, error } = useToast();
@@ -10,13 +12,17 @@ export default function AnswerKeySyncPage() {
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState(null);
   const [registry, setRegistry] = useState([]);
+  const [pageError, setPageError] = useState("");
 
   const refreshRegistry = async () => {
     setLoading(true);
+    setPageError("");
     try {
-      setRegistry(await loadAnswerKeyRegistry());
+      setRegistry(await loadAnswerKeyRegistryPreview(120));
     } catch (err) {
-      error(err?.message || "Failed to load answer key registry");
+      const message = err?.message || "Failed to load answer key registry";
+      setPageError(message);
+      error(message);
     } finally {
       setLoading(false);
     }
@@ -33,13 +39,17 @@ export default function AnswerKeySyncPage() {
     if (!confirmed) return;
 
     setSyncing(true);
+    setPageError("");
     try {
+      const { syncAnswerKeysFromGitHub } = await import("../services/answerKeySyncService.js");
       const result = await syncAnswerKeysFromGitHub({ manifestUrl: manifestUrl.trim() || DEFAULT_ANSWER_KEY_MANIFEST_URL });
       setSummary(result);
       await refreshRegistry();
       success(`Synced ${result.importedCount} answer keys to Firebase Storage.`);
     } catch (err) {
-      error(err?.message || "GitHub answer key sync failed");
+      const message = err?.message || "GitHub answer key sync failed";
+      setPageError(message);
+      error(message);
     } finally {
       setSyncing(false);
     }
@@ -53,6 +63,15 @@ export default function AnswerKeySyncPage() {
       <p style={{ marginTop: -8, opacity: 0.8 }}>
         Use this page when you update answer keys on GitHub. It copies the latest manifest into Firebase Storage and updates Firestore metadata used by AI marking.
       </p>
+
+      {pageError ? (
+        <section style={{ border: "1px solid #fecaca", borderRadius: 8, padding: 12, background: "#fef2f2" }}>
+          <b>Page warning:</b> {pageError}
+          <p style={{ marginBottom: 0, fontSize: 13 }}>
+            The page is still loaded. This usually means Firestore/Storage rules or Firebase config blocked one part of the sync.
+          </p>
+        </section>
+      ) : null}
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 10 }}>
         <h3 style={{ margin: 0 }}>Sync from GitHub to Firebase</h3>
@@ -72,7 +91,7 @@ export default function AnswerKeySyncPage() {
           <button type="button" onClick={refreshRegistry} disabled={loading}>Refresh registry</button>
         </div>
         <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>
-          Storage target: <code>answer-keys/{"{assignmentKey}"}/active.json</code> and <code>answer-keys/{"{assignmentKey}"}/versions/{"{version}"}.json</code>. Firestore target: <code>answerKeyRegistry/{"{assignmentKey}"}</code>.
+          Storage target: <code>answer-keys/assignment/active.json</code> and version backups. Firestore target: <code>answerKeyRegistry/assignment_id</code>.
         </p>
       </section>
 
@@ -123,9 +142,12 @@ export default function AnswerKeySyncPage() {
                     <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.title || "—"}</td>
                     <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.totalAnswers ?? "—"}</td>
                     <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.storagePath ? <code>{entry.storagePath}</code> : "—"}</td>
-                    <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.syncedAt || entry.updatedAt || entry.importedAt || "—"}</td>
+                    <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.syncedAt || "—"}</td>
                   </tr>
                 ))}
+                {!rows.length && !loading ? (
+                  <tr><td colSpan="5" style={{ padding: 8 }}>No registry entries found or access is blocked.</td></tr>
+                ) : null}
               </tbody>
             </table>
           </div>
