@@ -2,7 +2,6 @@ import { useState } from "react";
 import MarkingPage from "./MarkingPage.jsx";
 import AIMarkingAuditPage from "./AIMarkingAuditPage.jsx";
 import AnswerKeySyncPage from "./AnswerKeySyncPage.jsx";
-import RemoveMarkingQueueFilters from "../components/RemoveMarkingQueueFilters.jsx";
 
 const tabs = [
   { id: "work", label: "Mark Work" },
@@ -45,12 +44,7 @@ export default function MarkingHubPage() {
         </nav>
       </section>
 
-      {activeTab === "work" ? (
-        <>
-          <RemoveMarkingQueueFilters />
-          <MarkingPage />
-        </>
-      ) : null}
+      {activeTab === "work" ? <MarkingPage /> : null}
       {activeTab === "ai-audit" ? <AIMarkingAuditPage /> : null}
       {activeTab === "answer-keys" ? <AnswerKeySyncPage /> : null}
     </div>
