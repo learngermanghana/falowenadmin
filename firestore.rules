@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email in [
+          "moxflex@gmail.com"
+        ];
+    }
+
+    // Answer key sync metadata written by Falowen Admin.
+    match /answerKeyRegistry/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /answerKeySyncRuns/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Do not deploy this file blindly if your live project already has broader
+    // Firestore rules in Firebase Console. Merge these answer-key rules into
+    // your existing rules first so other admin pages do not lose access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
