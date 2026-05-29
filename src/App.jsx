@@ -10,6 +10,7 @@ import CheckinDisplayPage from "./pages/CheckinDisplayPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
+import MarkingQuickPage from "./pages/MarkingQuickPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
@@ -63,7 +64,7 @@ function TopBar() {
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
-                <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
+                <Link to="/marking" onClick={() => setMenuOpen(false)}>Quick Marking</Link>
                 <Link to="/answer-key-sync" onClick={() => setMenuOpen(false)}>Answer Keys</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
@@ -122,163 +123,28 @@ export default function App() {
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
 
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/attendance"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <AttendanceOverviewPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/attendance/:classId"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <AttendancePage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/course-schedule"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <CourseSchedulePage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<ProtectedRoute allowStaff={false}><DashboardPage /></ProtectedRoute>} />
+          <Route path="/attendance" element={<ProtectedRoute allowStaff={false}><AttendanceOverviewPage /></ProtectedRoute>} />
+          <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
+          <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
-          <Route
-            path="/marking"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <MarkingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/answer-key-sync"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <AnswerKeySyncPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/campus/tutor-marking"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <TutorMarkingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/grammar-issues"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <GrammarIssueReportsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/communication"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <CommunicationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/whatsapp-reminders"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <WhatsAppRemindersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teaching-slides"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <TeachingSlidesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orientation"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <OrientationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/students"
-            element={
-              <ProtectedRoute>
-                <StudentDirectoryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/class-schedule-setup"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <ClassScheduleSetupPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/holiday-calendar"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <HolidayCalendarPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/class-operations"
-            element={
-              <ProtectedRoute>
-                <ClassOperationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teaching-slides/course/:courseId"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <TeachingSlidesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teaching-slides/course/:courseId/:slideId"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <TeachingSlidesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/marking" element={<ProtectedRoute allowStaff={false}><MarkingQuickPage /></ProtectedRoute>} />
+          <Route path="/marking/advanced" element={<ProtectedRoute allowStaff={false}><MarkingPage /></ProtectedRoute>} />
+          <Route path="/answer-key-sync" element={<ProtectedRoute allowStaff={false}><AnswerKeySyncPage /></ProtectedRoute>} />
+          <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
+          <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
+          <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationPage /></ProtectedRoute>} />
+          <Route path="/whatsapp-reminders" element={<ProtectedRoute allowStaff={false}><WhatsAppRemindersPage /></ProtectedRoute>} />
+          <Route path="/teaching-slides" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
+          <Route path="/orientation" element={<ProtectedRoute allowStaff={false}><OrientationPage /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute><StudentDirectoryPage /></ProtectedRoute>} />
+          <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
+          <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
+          <Route path="/class-operations" element={<ProtectedRoute><ClassOperationsPage /></ProtectedRoute>} />
+          <Route path="/teaching-slides/course/:courseId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
+          <Route path="/teaching-slides/course/:courseId/:slideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/public/:courseId/print" element={<TeachingSlidesPage publicView />} />
-          <Route
-            path="/teaching-slides/:legacySlideId"
-            element={
-              <ProtectedRoute allowStaff={false}>
-                <TeachingSlidesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/teaching-slides/:legacySlideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
         </Routes>
       </main>
     </>
