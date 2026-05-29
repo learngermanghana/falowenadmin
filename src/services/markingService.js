@@ -591,6 +591,7 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
     submissionPath: submission.path || "",
     studentCode: submission.studentCode || submission.studentcode || submission.uid || "",
     studentName: submission.studentName || submission.name || submission.fullName || "",
+    submissionText: submission.text || submission.submissionText || "",
     assignment: submission.assignment || result.assignmentKey || "",
     assignmentKey: result.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
     level: result.level || submission.level || "",

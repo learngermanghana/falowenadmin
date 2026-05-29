@@ -10,6 +10,120 @@ function readTimestamp(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+
+function normalize(value) {
+  return String(value || "").trim();
+}
+
+function inferAssignmentKey(...values) {
+  const normalizedValues = values.map(normalize).filter(Boolean);
+  for (const value of normalizedValues) {
+    const match = value.match(/([A-Z]\d+-[\d._]+)/i);
+    if (match?.[1]) return match[1].toUpperCase().replace(/_/g, ".");
+  }
+  return normalizedValues[0] || "";
+}
+
+function objectHasEntries(value) {
+  return value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length > 0;
+}
+
+function readSubmissionText(data = {}) {
+  const candidate = data.text ||
+    data.submissionText ||
+    data.content ||
+    data.message ||
+    data.writing ||
+    data.answer ||
+    "";
+
+  if (typeof candidate === "string") return candidate.trim();
+  if (Array.isArray(candidate)) return candidate.map((item) => String(item || "").trim()).filter(Boolean).join("\n");
+  if (objectHasEntries(candidate)) {
+    return Object.entries(candidate)
+      .map(([key, value]) => `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`)
+      .join("\n");
+  }
+
+  if (objectHasEntries(data.answers)) {
+    return Object.entries(data.answers)
+      .map(([key, value]) => `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`)
+      .join("\n");
+  }
+
+  return "";
+}
+
+function compactSubmission(data = {}, ref = null) {
+  if (!data || !Object.keys(data).length) return null;
+  return {
+    id: ref?.id || "",
+    path: ref?.path || "",
+    text: readSubmissionText(data),
+    answers: objectHasEntries(data.answers) ? data.answers : null,
+    assignment: normalize(data.assignment || data.assignmentTitle || data.assignmentName || data.topic),
+    assignmentKey: normalize(data.assignmentKey || data.assignment_id || data.assignmentId || data.canonicalAssignmentKey),
+    level: normalize(data.level || data.className || data.class || data.group),
+    studentCode: normalize(data.studentCode || data.studentcode || data.uid),
+    studentName: normalize(data.studentName || data.name || data.fullName),
+    createdAtDate: readTimestamp(data.createdAt || data.submittedAt || data.timestamp || data.date || data.created_at),
+  };
+}
+
+function compactAnswerKey(data = {}, id = "") {
+  if (!data || !Object.keys(data).length) return null;
+  return {
+    id,
+    assignmentKey: data.assignmentKey || data.assignment_id || id,
+    title: data.title || data.assignment || data.assignmentName || "",
+    level: data.level || "",
+    format: data.format || data.answerLayout || "",
+    answerUrl: data.answerUrl || data.answer_url || data.sheetUrl || data.sheet_url || "",
+    expectedParts: data.expectedParts || [],
+    answers: data.answers || null,
+    parts: data.parts || null,
+    partGrading: data.partGrading || null,
+  };
+}
+
+async function enrichAuditRow(row) {
+  let submission = null;
+  const submissionRef = docFromPath(row.submissionPath);
+  if (submissionRef) {
+    const submissionSnap = await getDoc(submissionRef).catch(() => null);
+    if (submissionSnap?.exists()) {
+      submission = compactSubmission(submissionSnap.data() || {}, submissionSnap.ref);
+    }
+  }
+
+  const assignmentKey = inferAssignmentKey(
+    row.assignmentKey,
+    row.assignment,
+    submission?.assignmentKey,
+    submission?.assignment,
+    row.scoreSaveReceipt?.row?.assignment_id,
+    row.scoreSaveReceipt?.row?.assignmentId,
+  );
+
+  let answerKey = null;
+  const safeAssignmentKey = safeFirestoreId(assignmentKey);
+  if (safeAssignmentKey) {
+    const answerSnap = await getDoc(doc(db, "answerKeyRegistry", safeAssignmentKey)).catch(() => null);
+    if (answerSnap?.exists()) {
+      answerKey = compactAnswerKey(answerSnap.data() || {}, answerSnap.id);
+    }
+  }
+
+  return {
+    ...row,
+    assignmentKey: row.assignmentKey || assignmentKey,
+    studentWorkText: row.submissionText || submission?.text || "",
+    studentAnswers: submission?.answers || null,
+    submissionSnapshot: submission,
+    answerKey,
+  };
+}
+
 function safeFirestoreId(value) {
   return String(value || "")
     .trim()
@@ -36,7 +150,8 @@ export async function loadAIMarkingAudit() {
     });
   });
 
-  return rows.sort((a, b) => (b.createdAtDate?.getTime() || 0) - (a.createdAtDate?.getTime() || 0));
+  const sortedRows = rows.sort((a, b) => (b.createdAtDate?.getTime() || 0) - (a.createdAtDate?.getTime() || 0));
+  return Promise.all(sortedRows.map(enrichAuditRow));
 }
 
 export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback }) {
