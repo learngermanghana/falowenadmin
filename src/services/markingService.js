@@ -117,7 +117,6 @@ export async function loadRoster() {
         const studentCode = normalize(readPublishedStudentCode(row) || findCol(row, ["student_code", "uid", "code"]));
         const level = normalize(readPublishedLevel(row) || readPublishedClassName(row) || findCol(row, ["class", "group"]));
         const status = normalize(readPublishedStatus(row) || findCol(row, ["state"]));
-
         return {
           id: studentCode || `${name}-${level}`,
           studentCode,
@@ -128,294 +127,197 @@ export async function loadRoster() {
       })
       .filter((row) => row.studentCode || row.name);
 
-    if (rosterFromPublishedSheet.length > 0) {
+    if (rosterFromPublishedSheet.length) {
       return rosterFromPublishedSheet;
     }
-
-    throw new Error("Published student sheet has no rows");
-  } catch {
-    try {
-      if (!MARKING_ROSTER_CSV_URL) throw new Error("No marking roster sheet URL configured");
-      const rows = await loadCsvRows(MARKING_ROSTER_CSV_URL);
-      return toRosterRows(rows);
-    } catch {
-      const localRows = await loadCsvRows("/students.csv");
-      return toRosterRows(localRows);
-    }
+  } catch (error) {
+    console.warn("Published student sheet roster unavailable; falling back to marking CSV.", error);
   }
+
+  if (MARKING_ROSTER_CSV_URL) {
+    return toRosterRows(await loadCsvRows(MARKING_ROSTER_CSV_URL));
+  }
+
+  try {
+    return toRosterRows(await loadCsvRows("/students.csv"));
+  } catch (error) {
+    console.warn("Local students.csv unavailable; falling back to Firestore students collection.", error);
+  }
+
+  const snap = await getDocs(collection(db, "students"));
+  const rows = [];
+  snap.forEach((docSnap) => {
+    const data = docSnap.data() || {};
+    const studentCode = normalize(data.studentCode || data.studentcode || data.code || docSnap.id);
+    const name = normalize(data.name || data.fullName || data.studentName || data.email || "");
+    const level = normalize(data.level || data.className || data.classId || data.group || "");
+    const status = normalize(data.status || "Active");
+    rows.push({ id: studentCode || docSnap.id, studentCode, name, level, status });
+  });
+  return rows;
 }
 
-function normalizeTimestamp(value) {
+function readTimestamp(value) {
   if (!value) return null;
-  if (value?.toDate && typeof value.toDate === "function") return value.toDate();
-  if (typeof value === "number") return new Date(value);
-  if (typeof value === "string") {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-  if (typeof value === "object" && typeof value.seconds === "number") {
-    return new Date(value.seconds * 1000);
-  }
-  return null;
+  if (typeof value.toDate === "function") return value.toDate();
+  if (typeof value.seconds === "number") return new Date(value.seconds * 1000);
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function readSubmissionText(data) {
-  const submissionLink = data?.submissionLink || data?.submission_link || data?.link || "";
-
-  return (
-    data?.content ||
-    data?.text ||
-    data?.submissionText ||
-    data?.submission_text ||
-    data?.submission ||
-    data?.finalSubmission ||
-    data?.answerText ||
-    data?.response ||
-    data?.answer ||
-    data?.body ||
-    (submissionLink ? `Submission link: ${submissionLink}` : "") ||
-    ""
+function normalizeSubmissionDoc(docSnap, fallback = {}) {
+  const data = docSnap.data() || {};
+  const createdAt = readTimestamp(data.createdAt || data.submittedAt || data.timestamp || data.date);
+  const text = normalize(
+    data.text ||
+      data.answer ||
+      data.answers ||
+      data.content ||
+      data.message ||
+      data.submissionText ||
+      data.writing ||
+      "",
   );
-}
-
-function extractPathInfo(path = "") {
-  const segments = String(path).split("/").filter(Boolean);
-  const submissionsIndex = segments.indexOf("submissions");
-
-  if (submissionsIndex === -1) {
-    return { levelFromPath: "", studentCodeFromPath: "" };
-  }
-
-  const levelFromPath = normalize(segments[submissionsIndex + 1] || "");
-  const studentCodeFromPath = normalize(segments[submissionsIndex + 2] || "");
-  return { levelFromPath, studentCodeFromPath };
-}
-
-function normalizeSubmission(id, data = {}, path = "") {
-  const { levelFromPath, studentCodeFromPath } = extractPathInfo(path);
-  const createdAt =
-    normalizeTimestamp(data.createdAt) ||
-    normalizeTimestamp(data.timestamp) ||
-    normalizeTimestamp(data.created_at) ||
-    normalizeTimestamp(data.submittedAt) ||
-    null;
+  const assignment = normalize(data.assignment || data.assignmentTitle || data.assignmentName || data.topic || fallback.assignment || "");
+  const assignmentId = normalize(data.assignmentId || data.assignment_id || data.assignmentKey || data.canonicalAssignmentKey || fallback.assignmentId || "");
 
   return {
-    id,
-    status: normalize(data.status || data.submissionStatus),
-    studentCode: normalize(data.studentCode || data.student_code || data.uid || data.studentId || data.student_id || studentCodeFromPath),
-    studentName: normalize(data.studentName || data.student_name || data.student || data.name || data.fullName),
-    assignment: normalize(data.assignmentTitle || data.assignment || data.title || data.task || data.topic || data.chapterTitle || data.chapterKey),
-    assignmentId: normalize(data.assignmentId || data.assignment_id || data.assignmentKey || data.assignment_key || data.canonicalAssignmentKey),
-    assignmentKey: normalize(data.assignmentKey || data.assignment_key || data.canonicalAssignmentKey),
-    level: normalize(data.level || data.className || data.class || data.group || levelFromPath),
-    text: normalize(readSubmissionText(data)),
-    submissionLink: normalize(data.submissionLink || data.submission_link || data.link),
+    id: docSnap.id,
+    path: docSnap.ref.path,
+    text,
+    assignment,
+    assignmentId,
+    assignmentKey: normalize(data.assignmentKey || data.assignment_id || data.assignmentId || data.canonicalAssignmentKey || ""),
+    level: normalize(data.level || fallback.level || ""),
+    studentCode: normalize(data.studentCode || data.studentcode || data.uid || fallback.studentCode || ""),
+    studentName: normalize(data.studentName || data.name || data.fullName || fallback.studentName || ""),
+    status: normalize(data.status || data.submissionStatus || "submitted"),
+    markingStatus: normalize(data.markingStatus || "pending"),
+    finalScore: data.finalScore ?? data.score ?? null,
+    aiConfidence: data.aiConfidence ?? data.confidence ?? null,
+    feedbackSentToStudent: Boolean(data.feedbackSentToStudent),
+    improvementSummary: normalize(data.improvementSummary || data.resubmissionSummary || ""),
+    previousSubmissionText: normalize(data.previousSubmissionText || data.previousText || ""),
     createdAt,
-    updatedAt: normalizeTimestamp(data.updatedAt) || normalizeTimestamp(data.lastUpdatedAt) || null,
-    originalSubmittedAt: normalizeTimestamp(data.originalSubmittedAt) || null,
-    improvementSummary: normalize(data.improvementSummary),
-    previousSubmissionText: normalize(data.previousSubmissionText),
-    markingStatus: normalize(data.markingStatus || data.marking_status),
-    markingResultId: normalize(data.markingResultId || data.marking_result_id),
-    aiConfidence: data.aiConfidence ?? data.ai_confidence ?? null,
-    finalScore: data.finalScore ?? data.final_score ?? null,
-    feedbackSentToStudent: Boolean(data.feedbackSentToStudent || data.feedback_sent_to_student),
-    detectedParts: Array.isArray(data.detectedParts) ? data.detectedParts : [],
     raw: data,
   };
 }
 
-
-function isFinalSubmission(submission) {
-  const status = normalize(submission?.status).toLowerCase();
-  return status !== "draft";
-}
-
-function isHiddenSubmission(submission = {}) {
-  return Boolean(
-    submission.hiddenFromQueue ||
-    submission.hidden_from_queue ||
-    submission.markedHidden ||
-    submission.marked_hidden ||
-    submission.archivedAt ||
-    submission.archived_at,
-  );
-}
-
-function sortNewestFirst(rows) {
-  return [...rows].sort((a, b) => {
-    const aTime = a.createdAt ? a.createdAt.getTime() : 0;
-    const bTime = b.createdAt ? b.createdAt.getTime() : 0;
-    return bTime - aTime;
-  });
-}
-
-function normalizeDocs(snapshot) {
-  const rows = [];
-  snapshot.forEach((docSnap) => {
-    const normalized = normalizeSubmission(docSnap.id, docSnap.data(), docSnap.ref.path);
-    if (!isFinalSubmission(normalized)) return;
-    if (isHiddenSubmission(normalized.raw)) return;
-    if (!normalized.studentCode && !normalized.studentName) return;
-    rows.push({
-      ...normalized,
-      path: docSnap.ref.path,
-    });
-  });
-
-  const deduped = Array.from(new Map(rows.map((row) => [row.path || row.id, row])).values());
-  return sortNewestFirst(deduped);
-}
-
 export async function fetchSubmissions(level, studentCode) {
-  const safeLevel = normalize(level);
-  const safeStudentCode = normalize(studentCode);
+  const levelKey = normalize(level);
+  const codeKey = normalize(studentCode);
+  const results = [];
+  const seenPaths = new Set();
 
-  if (!safeLevel || !safeStudentCode) {
-    return [];
+  async function addFromQuery(qs, fallback = {}) {
+    const snap = await getDocs(qs);
+    snap.forEach((docSnap) => {
+      if (seenPaths.has(docSnap.ref.path)) return;
+      seenPaths.add(docSnap.ref.path);
+      results.push(normalizeSubmissionDoc(docSnap, fallback));
+    });
   }
 
-  const oldNestedPathRows = normalizeDocs(await getDocs(collection(db, "submissions", safeLevel, safeStudentCode)));
-  if (oldNestedPathRows.length) return oldNestedPathRows;
+  if (levelKey && codeKey) {
+    const nestedRef = collection(db, "submissions", levelKey, codeKey);
+    await addFromQuery(query(nestedRef), { level: levelKey, studentCode: codeKey });
+  }
 
-  const flatRows = normalizeDocs(
-    await getDocs(query(collection(db, "submissions"), where("studentCode", "==", safeStudentCode))),
-  ).filter((row) => normalize(row.level) === safeLevel);
-  if (flatRows.length) return flatRows;
+  if (codeKey) {
+    await addFromQuery(query(collection(db, "submissions"), where("studentCode", "==", codeKey)), { studentCode: codeKey, level: levelKey });
+    await addFromQuery(query(collection(db, "submissions"), where("studentcode", "==", codeKey)), { studentCode: codeKey, level: levelKey });
+  }
 
-  const flatSnakeRows = normalizeDocs(
-    await getDocs(query(collection(db, "submissions"), where("student_code", "==", safeStudentCode))),
-  ).filter((row) => normalize(row.level) === safeLevel);
-  if (flatSnakeRows.length) return flatSnakeRows;
-
-  const olderPostsRows = normalizeDocs(
-    await getDocs(query(collection(db, "submissions", safeLevel, "posts"), where("studentCode", "==", safeStudentCode))),
-  );
-
-  return olderPostsRows;
+  return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 }
 
 export async function loadSubmissions() {
-  const records = [];
+  const results = [];
+  const seenPaths = new Set();
 
-  const [flatSnap, nestedSnap, postsSnap] = await Promise.allSettled([
-    getDocs(collection(db, "submissions")),
-    getDocs(collectionGroup(db, "submissions")),
-    getDocs(collectionGroup(db, "posts")),
-  ]);
-
-  [flatSnap, nestedSnap, postsSnap].forEach((snapResult) => {
-    if (snapResult.status !== "fulfilled") return;
-    records.push(...normalizeDocs(snapResult.value));
+  const flatSnap = await getDocs(collection(db, "submissions"));
+  flatSnap.forEach((docSnap) => {
+    if (seenPaths.has(docSnap.ref.path)) return;
+    const data = docSnap.data() || {};
+    if (data.__collectionShape === "container") return;
+    seenPaths.add(docSnap.ref.path);
+    results.push(normalizeSubmissionDoc(docSnap));
   });
 
-  const deduped = Array.from(new Map(records.map((record) => [record.path || record.id, record])).values());
-  return sortNewestFirst(deduped);
-}
+  const groupSnap = await getDocs(collectionGroup(db, "posts"));
+  groupSnap.forEach((docSnap) => {
+    if (seenPaths.has(docSnap.ref.path)) return;
+    seenPaths.add(docSnap.ref.path);
+    results.push(normalizeSubmissionDoc(docSnap));
+  });
 
-export async function deleteSubmission(path) {
-  if (!path) {
-    throw new Error("Missing submission path for delete.");
-  }
+  const nestedSnap = await getDocs(collectionGroup(db, "submissions"));
+  nestedSnap.forEach((docSnap) => {
+    if (seenPaths.has(docSnap.ref.path)) return;
+    seenPaths.add(docSnap.ref.path);
+    results.push(normalizeSubmissionDoc(docSnap));
+  });
 
-  await deleteDoc(doc(db, path));
-}
-
-export async function hideSubmissionFromQueue(path) {
-  if (!path) return;
-
-  const submissionRef = doc(db, path);
-  const hiddenPayload = {
-    hiddenFromQueue: true,
-    hiddenAt: new Date().toISOString(),
-    hiddenReason: "marked",
-  };
-
-  try {
-    await updateDoc(submissionRef, hiddenPayload);
-  } catch {
-    await setDoc(submissionRef, hiddenPayload, { merge: true });
-  }
+  return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 }
 
 function safeFirestoreId(value) {
   return String(value || "")
     .trim()
     .replace(/[/#?[\]]+/g, "_")
-    .replace(/_{2,}/g, "_")
-    || `marking-${Date.now()}`;
+    .replace(/_{2,}/g, "_");
 }
 
-export async function loadMarkingResult(submissionId) {
-  const safeSubmissionId = safeFirestoreId(submissionId);
-  const snap = await getDoc(doc(db, "markingResults", safeSubmissionId));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
-}
-
-export async function saveMarkingResult({ submissionId, submissionPath, result, status, sentToStudent = false, preserveTutorCorrections = true }) {
-  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath);
+export async function createMarkingJob({ submissionId, submissionPath, assignmentKey, level, status = "pending" }) {
   const now = new Date().toISOString();
-  const existing = preserveTutorCorrections ? await loadMarkingResult(safeSubmissionId) : null;
-  const tutorCorrections = existing?.tutorCorrections && preserveTutorCorrections ? { tutorCorrections: existing.tutorCorrections } : {};
-
-  const payload = {
-    submissionId: safeSubmissionId,
-    submissionPath: submissionPath || "",
-    status: status || result?.status || "needs_review",
-    sentToStudent,
-    level: result?.level || "",
-    assignmentKey: result?.assignmentKey || "",
-    detectedParts: result?.detectedParts || [],
-    objectiveScore: result?.objectiveScore ?? null,
-    objectiveCorrect: result?.objectiveCorrect ?? 0,
-    objectiveTotal: result?.objectiveTotal ?? 0,
-    writingScore: result?.writingScore ?? null,
-    finalScore: result?.finalScore ?? result?.score ?? 0,
-    confidence: result?.confidence ?? 0,
-    feedback: result?.feedback || "",
-    corrections: result?.corrections || [],
-    improvementSummary: result?.improvementSummary || "",
-    parts: result?.parts || [],
-    shouldSendAutomatically: Boolean(result?.shouldSendAutomatically),
+  await addDoc(collection(db, "markingJobs"), {
+    submissionId,
+    submissionPath,
+    assignmentKey,
+    level,
+    status,
+    createdAt: now,
     updatedAt: now,
-    createdAt: existing?.createdAt || now,
-    ...tutorCorrections,
-  };
+  });
+}
 
-  await setDoc(doc(db, "markingResults", safeSubmissionId), payload, { merge: true });
+export async function saveMarkingResult({ submissionId, submissionPath, result, status = "marked", sentToStudent = false }) {
+  const now = new Date().toISOString();
+  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || crypto.randomUUID?.() || `${Date.now()}`);
+  const payload = {
+    submissionId,
+    submissionPath,
+    result,
+    status,
+    finalScore: result.finalScore ?? result.score ?? null,
+    feedback: result.feedback || "",
+    objectiveScore: result.objectiveScore ?? null,
+    writingScore: result.writingScore ?? null,
+    confidence: result.confidence ?? null,
+    sentToStudent,
+    updatedAt: now,
+  };
+  await setDoc(doc(db, "markingResults", safeSubmissionId), {
+    ...payload,
+    createdAt: now,
+  }, { merge: true });
 
   if (submissionPath) {
-    await setDoc(doc(db, submissionPath), {
-      markingStatus: payload.status,
-      markingResultId: safeSubmissionId,
-      aiConfidence: payload.confidence,
+    const segments = submissionPath.split("/").filter(Boolean);
+    await setDoc(doc(db, ...segments), {
+      markingStatus: status,
       finalScore: payload.finalScore,
+      aiConfidence: payload.confidence,
+      aiFeedback: payload.feedback,
       feedbackSentToStudent: sentToStudent,
       markingUpdatedAt: now,
     }, { merge: true });
   }
-
-  return payload;
-}
-
-export async function createMarkingJob({ submissionId, submissionPath, assignmentKey, level, status = "pending" }) {
-  const payload = {
-    submissionId: safeFirestoreId(submissionId || submissionPath),
-    submissionPath: submissionPath || "",
-    assignmentKey: assignmentKey || "",
-    level: level || "",
-    status,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  const ref = await addDoc(collection(db, "markingJobs"), payload);
-  return { id: ref.id, ...payload };
 }
 
 export async function updateMarkingWorkflowStatus({ submissionId, submissionPath, status, sentToStudent = false }) {
-  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath);
   const now = new Date().toISOString();
+  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || "unknown");
   await setDoc(doc(db, "markingResults", safeSubmissionId), {
     status,
     sentToStudent,
@@ -423,12 +325,28 @@ export async function updateMarkingWorkflowStatus({ submissionId, submissionPath
   }, { merge: true });
 
   if (submissionPath) {
-    await setDoc(doc(db, submissionPath), {
+    const segments = submissionPath.split("/").filter(Boolean);
+    await setDoc(doc(db, ...segments), {
       markingStatus: status,
       feedbackSentToStudent: sentToStudent,
       markingUpdatedAt: now,
     }, { merge: true });
   }
+}
+
+export async function deleteSubmission(path) {
+  const segments = String(path || "").split("/").filter(Boolean);
+  if (!segments.length) throw new Error("Missing submission path");
+  await deleteDoc(doc(db, ...segments));
+}
+
+export async function hideSubmissionFromQueue(path) {
+  const segments = String(path || "").split("/").filter(Boolean);
+  if (!segments.length) throw new Error("Missing submission path");
+  await updateDoc(doc(db, ...segments), {
+    hiddenFromMarkingQueue: true,
+    hiddenAt: new Date().toISOString(),
+  });
 }
 
 export async function upsertMarkingProfile({ assignmentKey, profile }) {
@@ -557,6 +475,7 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     assignmentKey: referenceEntry?.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
     level: referenceEntry?.level || submission.level || "",
     submissionText,
+    feedbackInstruction: "Write exactly 40 words. Highlight what the student actually did in this submission, mention one clear strength or effort, identify the most important correction, and give one next step. Do not use generic feedback.",
   };
 
   const res = await fetch("/api/marking/ai", {
@@ -579,7 +498,7 @@ const SCORES_WEBHOOK_URL = import.meta.env.VITE_SCORES_WEBHOOK_URL || DEFAULT_SC
 const SCORES_WEBHOOK_TOKEN = String(import.meta.env.VITE_SCORES_WEBHOOK_TOKEN || "Xenomexpress7727/").trim();
 const SCORES_WEBHOOK_SHEET_NAME = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_NAME || "").trim();
 const SCORES_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_GID || "2121051612").trim();
-const SAVE_SCORES_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_SCORE_FIRESTORE || "false").toLowerCase() === "true";
+const SAVE_SCORES_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_SCORE_FIRESTORE || "true").toLowerCase() !== "false";
 
 function isLikelyNetworkError(error) {
   return error instanceof TypeError || /networkerror|failed to fetch/i.test(String(error?.message || ""));
@@ -612,8 +531,9 @@ async function postScoreToWebhookNoCors(payload) {
   });
 }
 
-export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link }) {
+export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source = "manual" }) {
   const safeAssignmentId = String(assignmentId || "").trim();
+  const now = new Date().toString();
   const row = {
     studentcode: studentCode,
     name,
@@ -622,9 +542,10 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
     assignmentId: safeAssignmentId,
     score,
     comments,
-    date: new Date().toString(),
+    date: now,
     level,
     link: Number(score) < 60 ? "" : link,
+    source,
   };
 
   const webhookPayload = {
