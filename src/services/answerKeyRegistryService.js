@@ -1,6 +1,33 @@
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase.js";
 
+function formatDateValue(value) {
+  if (!value) return "";
+
+  try {
+    if (typeof value.toDate === "function") {
+      return value.toDate().toLocaleString();
+    }
+
+    if (typeof value.seconds === "number") {
+      return new Date(value.seconds * 1000).toLocaleString();
+    }
+
+    if (value instanceof Date) {
+      return value.toLocaleString();
+    }
+
+    if (typeof value === "string" || typeof value === "number") {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString();
+    }
+  } catch {
+    return "";
+  }
+
+  return String(value);
+}
+
 export async function loadAnswerKeyRegistryPreview(maxRows = 120) {
   const snap = await getDocs(collection(db, "answerKeyRegistry"));
   const rows = [];
@@ -14,7 +41,7 @@ export async function loadAnswerKeyRegistryPreview(maxRows = 120) {
       level: data.level || "",
       totalAnswers: data.totalAnswers ?? "",
       storagePath: data.storagePath || data.activeStoragePath || "",
-      syncedAt: data.syncedAt || data.updatedAt || data.importedAt || "",
+      syncedAt: formatDateValue(data.syncedAt || data.updatedAt || data.importedAt || ""),
       source: data.source || "",
     });
   });
