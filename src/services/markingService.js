@@ -427,7 +427,6 @@ export async function upsertAnswerKey({ assignmentKey, answerKey }) {
   }, { merge: true });
 }
 
-
 function limitWords(value, maxWords = 40) {
   return String(value || "").trim().split(/\s+/).filter(Boolean).slice(0, maxWords).join(" ");
 }
@@ -548,9 +547,17 @@ async function postScoreToWebhookNoCors(payload) {
   });
 }
 
-export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source = "manual" }) {
+function scoreDedupeId(row = {}) {
+  return safeFirestoreId([
+    row.studentcode || row.studentCode || "unknown-student",
+    row.assignment_id || row.assignmentId || row.assignment || "unknown-assignment",
+  ].join("__"));
+}
+
+export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source = "manual", allowDuplicate = false }) {
   const safeAssignmentId = String(assignmentId || "").trim();
   const now = new Date().toString();
+  const nowIso = new Date().toISOString();
   const row = {
     studentcode: studentCode,
     name,
@@ -564,17 +571,25 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
     link: Number(score) < 60 ? "" : link,
     source,
   };
+  const dedupeId = scoreDedupeId(row);
+  const scoreRef = doc(db, "scores", dedupeId);
+  const existingSnap = SAVE_SCORES_TO_FIRESTORE ? await getDoc(scoreRef).catch(() => null) : null;
+  const existingScore = existingSnap?.exists?.() ? existingSnap.data() : null;
+  const alreadySavedToSheet = Boolean(existingScore?.sheetSaved);
 
   const webhookPayload = {
     ...(SCORES_WEBHOOK_TOKEN ? { token: SCORES_WEBHOOK_TOKEN } : {}),
     ...(SCORES_WEBHOOK_SHEET_NAME ? { sheet_name: SCORES_WEBHOOK_SHEET_NAME } : {}),
     ...(SCORES_WEBHOOK_SHEET_GID ? { sheet_gid: SCORES_WEBHOOK_SHEET_GID } : {}),
-    row,
-    rows: [row],
+    dedupe_id: dedupeId,
+    row: { ...row, dedupe_id: dedupeId },
+    rows: [{ ...row, dedupe_id: dedupeId }],
   };
 
   const receipt = {
     row,
+    dedupeId,
+    duplicateSkipped: false,
     sheet: {
       attempted: Boolean(SCORES_WEBHOOK_URL),
       success: !SCORES_WEBHOOK_URL,
@@ -588,22 +603,28 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
   };
 
   if (SCORES_WEBHOOK_URL) {
-    try {
-      await postScoreToWebhook(webhookPayload);
+    if (alreadySavedToSheet && !allowDuplicate) {
       receipt.sheet.success = true;
-      receipt.sheet.message = "Saved to Google Sheets.";
-    } catch (error) {
-      if (!isLikelyNetworkError(error)) {
-        receipt.sheet.success = false;
-        receipt.sheet.message = String(error?.message || "Google Sheets save failed.");
-      } else {
-        try {
-          await postScoreToWebhookNoCors(webhookPayload);
-          receipt.sheet.success = true;
-          receipt.sheet.message = "Sheet request sent via no-cors fallback (delivery cannot be confirmed by browser).";
-        } catch (fallbackError) {
+      receipt.sheet.message = "Skipped duplicate sheet row; this student and assignment were already saved.";
+      receipt.duplicateSkipped = true;
+    } else {
+      try {
+        await postScoreToWebhook(webhookPayload);
+        receipt.sheet.success = true;
+        receipt.sheet.message = "Saved to Google Sheets.";
+      } catch (error) {
+        if (!isLikelyNetworkError(error)) {
           receipt.sheet.success = false;
-          receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
+          receipt.sheet.message = String(error?.message || "Google Sheets save failed.");
+        } else {
+          try {
+            await postScoreToWebhookNoCors(webhookPayload);
+            receipt.sheet.success = true;
+            receipt.sheet.message = "Sheet request sent via no-cors fallback (delivery cannot be confirmed by browser).";
+          } catch (fallbackError) {
+            receipt.sheet.success = false;
+            receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
+          }
         }
       }
     }
@@ -611,12 +632,17 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
 
   if (SAVE_SCORES_TO_FIRESTORE) {
     try {
-      await addDoc(collection(db, "scores"), {
+      await setDoc(scoreRef, {
         ...row,
-        createdAt: new Date().toISOString(),
-      });
+        dedupe_id: dedupeId,
+        sheetSaved: Boolean(receipt.sheet.success),
+        sheetMessage: receipt.sheet.message,
+        duplicateSkipped: receipt.duplicateSkipped,
+        createdAt: existingScore?.createdAt || nowIso,
+        updatedAt: nowIso,
+      }, { merge: true });
       receipt.firestore.success = true;
-      receipt.firestore.message = "Saved to Firestore mirror.";
+      receipt.firestore.message = existingScore ? "Updated Firestore score mirror." : "Saved to Firestore mirror.";
     } catch (error) {
       receipt.firestore.success = false;
       receipt.firestore.message = String(error?.message || "Firestore mirror save failed.");
