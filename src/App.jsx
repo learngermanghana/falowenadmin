@@ -9,9 +9,7 @@ import CheckinPage from "./pages/CheckinPage";
 import CheckinDisplayPage from "./pages/CheckinDisplayPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
-import MarkingPage from "./pages/MarkingPage";
-import MarkingWorkspace from "./pages/MarkingWorkspace";
-import AIMarkingAuditPage from "./pages/AIMarkingAuditPage";
+import MarkingHubPage from "./pages/MarkingHubPage";
 import ExamTutorReviewQueuePage from "./pages/ExamTutorReviewQueuePage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
@@ -23,8 +21,6 @@ import OrientationPage from "./pages/OrientationPage";
 import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
 import ClassOperationsPage from "./pages/ClassOperationsPage";
 import HolidayCalendarPage from "./pages/HolidayCalendarPage";
-import AnswerKeySyncPage from "./pages/AnswerKeySyncPage";
-import RemoveMarkingQueueFilters from "./components/RemoveMarkingQueueFilters.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -111,10 +107,10 @@ function ToastViewport() {
   );
 }
 
-function MarkingTab({ children }) {
+function MarkingRoute() {
   return (
     <ProtectedRoute allowStaff={false}>
-      <MarkingWorkspace>{children}</MarkingWorkspace>
+      <MarkingHubPage />
     </ProtectedRoute>
   );
 }
@@ -147,11 +143,11 @@ export default function App() {
           <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
-          <Route path="/marking" element={<MarkingTab><RemoveMarkingQueueFilters /><MarkingPage /></MarkingTab>} />
-          <Route path="/marking/ai-audit" element={<MarkingTab><AIMarkingAuditPage /></MarkingTab>} />
-          <Route path="/marking/answer-keys" element={<MarkingTab><AnswerKeySyncPage /></MarkingTab>} />
-          <Route path="/ai-marking-audit" element={<Navigate to="/marking/ai-audit" replace />} />
-          <Route path="/answer-key-sync" element={<Navigate to="/marking/answer-keys" replace />} />
+          <Route path="/marking" element={<MarkingRoute />} />
+          <Route path="/marking/ai-audit" element={<Navigate to="/marking" replace />} />
+          <Route path="/marking/answer-keys" element={<Navigate to="/marking" replace />} />
+          <Route path="/ai-marking-audit" element={<Navigate to="/marking" replace />} />
+          <Route path="/answer-key-sync" element={<Navigate to="/marking" replace />} />
           <Route path="/marking/exam-review" element={<Navigate to="/examTutorReviewQueue" replace />} />
           <Route path="/marking/exam-review/:reviewId" element={<Navigate to={`/examTutorReviewQueue/${location.pathname.split('/').pop()}`} replace />} />
           <Route path="/examTutorReviewQueue" element={<ExamReviewRoute />} />
