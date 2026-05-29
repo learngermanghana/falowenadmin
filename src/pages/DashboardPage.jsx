@@ -231,11 +231,18 @@ export default function DashboardPage() {
 
       <section className="quick-actions-grid">
         <ActionCard
-          title="Mark incoming work"
-          body={`${incomingAssignments.length} assignment${incomingAssignments.length === 1 ? "" : "s"} waiting for review.`}
+          title="Marking workspace"
+          body={`${incomingAssignments.length} assignment${incomingAssignments.length === 1 ? "" : "s"} waiting. Opens one page with Mark Work, AI Audit, and Answer Keys tabs.`}
           to="/marking"
-          label="Open marking queue"
+          label="Open Marking"
           tone="indigo"
+        />
+        <ActionCard
+          title="Exam review"
+          body="Review exam warm-up and exam-prep writing sent separately from normal class submissions."
+          to="/examTutorReviewQueue"
+          label="Open Exam Review"
+          tone="blue"
         />
         <ActionCard
           title="Tutor review workflow"
