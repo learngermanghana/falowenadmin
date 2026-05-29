@@ -1,13 +1,26 @@
 ﻿import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { auth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { isStaffEmail, STAFF_ACCOUNT_PASSWORD } from "../utils/authRoles";
 
+const STAFF_ALLOWED_REDIRECTS = new Set(["/students", "/class-operations"]);
+
+function getPostLoginPath(from, normalizedEmail) {
+  const defaultPath = isStaffEmail(normalizedEmail) ? "/students" : "/";
+  const pathname = from?.pathname;
+
+  if (!pathname || pathname === "/login" || !pathname.startsWith("/")) return defaultPath;
+  if (isStaffEmail(normalizedEmail) && !STAFF_ALLOWED_REDIRECTS.has(pathname)) return defaultPath;
+
+  return `${pathname}${from.search || ""}${from.hash || ""}`;
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
   const nav = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -22,7 +35,7 @@ export default function LoginPage() {
 
     try {
       await login(normalizedEmail, password);
-      nav(isStaffEmail(normalizedEmail) ? "/students" : "/");
+      nav(getPostLoginPath(location.state?.from, normalizedEmail), { replace: true });
     } catch (e2) {
       const canProvisionStaffAccount =
         isStaffEmail(normalizedEmail) &&
@@ -32,7 +45,7 @@ export default function LoginPage() {
       if (canProvisionStaffAccount) {
         try {
           await createUserWithEmailAndPassword(auth, normalizedEmail, password);
-          nav("/students");
+          nav(getPostLoginPath(location.state?.from, normalizedEmail), { replace: true });
           return;
         } catch (createError) {
           if (createError?.code !== "auth/email-already-in-use") {
@@ -41,7 +54,7 @@ export default function LoginPage() {
           }
 
           await login(normalizedEmail, password);
-          nav("/students");
+          nav(getPostLoginPath(location.state?.from, normalizedEmail), { replace: true });
           return;
         }
       }
