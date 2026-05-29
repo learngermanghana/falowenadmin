@@ -68,6 +68,10 @@
   margin: 1rem auto;
 }
 
+main[data-route="/marking"] > div > section:first-of-type {
+  display: none !important;
+}
+
 .toast-viewport {
   position: fixed;
   right: 1rem;
