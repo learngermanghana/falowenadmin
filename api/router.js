@@ -1,6 +1,7 @@
 /* global process */
 import { Buffer } from "node:buffer";
 import socialMetricsHandler from "./social-metrics.js";
+import { autoMarkSubmission } from "../src/utils/autoMarking.js";
 
 async function ensureJsonBody(req) {
   if (req.body !== undefined) return req.body;
@@ -322,7 +323,7 @@ function extractStudentObjectiveAnswers(submissionText = "") {
     else if (/teil\s*2|part\s*2/.test(lower)) currentPart = "teil2";
     else if (/teil\s*1|part\s*1/.test(lower)) currentPart = "teil1";
 
-    const pattern = /(?:^|\s)(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:\-]?\s*([A-D])\b/gi;
+    const pattern = /(?:^|\s)(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:-]?\s*([A-D])\b/gi;
     let match = pattern.exec(line);
     while (match) {
       const questionNumber = String(Number(match[1]));
@@ -343,6 +344,52 @@ function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wron
   const firstName = String(name || "Student").trim().split(/\s+/)[0] || "Student";
   const wrongText = wrongLabels.length ? ` Review ${wrongLabels.slice(0, 5).join(", ")}.` : " All objective answers were correct.";
   return `Good effort, ${firstName}. You answered ${correct} of ${total} objective questions correctly.${wrongText} Keep practising careful reading, listening for details, and checking each answer before submission.`;
+}
+
+function hasWritingPart(result = {}) {
+  return Array.isArray(result.parts) && result.parts.some((part) => part?.partType === "writing" || part?.partId === "teil2");
+}
+
+function buildSupplementalWritingResult(payload = {}) {
+  const submissionText = payload.submissionText || payload.submission?.text || "";
+  if (!submissionText || !/(teil\s*2|part\s*2|schreiben|writing)/i.test(submissionText)) return null;
+
+  try {
+    const marked = autoMarkSubmission({
+      referenceEntry: payload.referenceEntry || {},
+      submission: {
+        ...(payload.submission || {}),
+        assignmentKey: payload.assignmentKey || payload.referenceEntry?.assignmentKey || payload.submission?.assignmentKey,
+        level: payload.level || payload.referenceEntry?.level || payload.submission?.level,
+      },
+      submissionText,
+    });
+
+    const writingParts = (marked.parts || []).filter((part) => part.partType === "writing");
+    if (!writingParts.length) return null;
+
+    return {
+      writingScore: marked.writingScore,
+      writingParts,
+      writingFeedback: writingParts.map((part) => part.result?.feedback).filter(Boolean).join("\n"),
+      writingImprovementSummary: writingParts.map((part) => part.result?.improvementSummary).filter(Boolean).join("\n"),
+      confidence: marked.confidence,
+    };
+  } catch (error) {
+    console.error("Supplemental writing mark failed:", error);
+    return null;
+  }
+}
+
+function mergeObjectiveAndWritingParts({ existingResult = {}, writingParts = [], objectiveParts = [] } = {}) {
+  const existingParts = Array.isArray(existingResult.parts) ? existingResult.parts : [];
+  const existingWritingParts = existingParts.filter((part) => part?.partType === "writing" || part?.partId === "teil2");
+  const existingOtherParts = existingParts.filter((part) => !(part?.partType === "writing" || part?.partId === "teil2") && !(part?.partId && objectiveParts.some((objectivePart) => objectivePart.partId === part.partId)));
+  return [
+    ...(existingWritingParts.length ? existingWritingParts : writingParts),
+    ...objectiveParts,
+    ...existingOtherParts,
+  ];
 }
 
 function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
@@ -400,37 +447,56 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
 
   if (!total || !detectedParts.length) return null;
 
-  const finalScore = Math.round((correct / total) * 100);
+  const objectiveScore = Math.round((correct / total) * 100);
   const name = payload.submission?.studentName || payload.submission?.name || "Student";
+  const supplementalWriting = hasWritingPart(existingResult) ? null : buildSupplementalWritingResult(payload);
+  const writingScore = existingResult.writingScore ?? supplementalWriting?.writingScore ?? null;
+  const hasWriting = hasWritingPart(existingResult) || Boolean(supplementalWriting?.writingParts?.length);
+  const finalScore = writingScore === null ? objectiveScore : Math.round((objectiveScore + Number(writingScore)) / 2);
+  const objectiveFeedback = buildObjectiveFeedback({ name, correct, total, wrongLabels });
+  const writingFeedback = hasWritingPart(existingResult) ? "Writing section was marked by AI and preserved alongside the deterministic objective score." : supplementalWriting?.writingFeedback;
+  const feedback = [writingFeedback, objectiveFeedback].filter(Boolean).join("\n");
+  const objectiveCorrections = scoredParts.flatMap((part) => part.wrong.map((item) => ({
+    partId: part.partId,
+    questionNumber: item.questionNumber,
+    expected: item.expected,
+    given: item.given,
+  })));
+
   return {
     ...(existingResult || {}),
     score: finalScore,
     passed: finalScore >= 60,
     level: referenceEntry.level || payload.level || existingResult.level || "UNKNOWN",
     assignmentKey: referenceEntry.assignmentKey || payload.assignmentKey || existingResult.assignmentKey || "",
-    detectedParts,
+    detectedParts: [
+      ...(hasWriting ? [{ partId: "teil2", partType: "writing", answerCount: 1 }] : []),
+      ...detectedParts.filter((part) => part.partId !== "teil2"),
+    ],
     expectedParts,
-    parts: scoredParts,
-    objectiveScore: finalScore,
+    parts: mergeObjectiveAndWritingParts({
+      existingResult,
+      writingParts: supplementalWriting?.writingParts || [],
+      objectiveParts: scoredParts.map((part) => ({ ...part, partType: "objective" })),
+    }),
+    objectiveScore,
     objectiveCorrect: correct,
     objectiveTotal: total,
-    writingScore: existingResult.writingScore ?? null,
+    writingScore,
     finalScore,
-    feedback: buildObjectiveFeedback({ name, correct, total, wrongLabels }),
-    corrections: scoredParts.flatMap((part) => part.wrong.map((item) => ({
-      partId: part.partId,
-      questionNumber: item.questionNumber,
-      expected: item.expected,
-      given: item.given,
-    }))),
-    improvementSummary: buildObjectiveFeedback({ name, correct, total, wrongLabels }),
-    confidence: 0.98,
-    status: "marked",
+    feedback,
+    corrections: [...(Array.isArray(existingResult.corrections) ? existingResult.corrections : []), ...objectiveCorrections],
+    improvementSummary: [supplementalWriting?.writingImprovementSummary, objectiveFeedback].filter(Boolean).join("\n") || existingResult.improvementSummary || feedback,
+    confidence: hasWriting ? Math.min(0.98, Math.max(0.75, Number(supplementalWriting?.confidence || existingResult.confidence || 0.75))) : 0.98,
+    status: existingResult.status === "needs_review" ? "needs_review" : "marked",
     shouldSendAutomatically: false,
     ai: {
       ...(existingResult.ai || {}),
       deterministicObjectiveMarked: true,
-      note: "Objective score calculated from answer key before AI review.",
+      supplementalWritingMarked: Boolean(supplementalWriting?.writingParts?.length),
+      note: hasWriting
+        ? "Objective score calculated from answer key and combined with the writing mark. Writing feedback is preserved or supplemented instead of being overwritten."
+        : "Objective score calculated from answer key before AI review.",
     },
   };
 }

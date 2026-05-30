@@ -139,3 +139,97 @@ test("normalizes uploaded A2/B1 dictionary entries with Teil 3 and Teil 4 parts"
   assert.ok(b1.parts.teil3.answerCount > 0);
   assert.ok(b1.parts.teil4.answerCount > 0);
 });
+
+
+test("marking proxy combines deterministic objective score with Schreiben feedback", async () => {
+  const { default: handler } = await import("../api/router.js");
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    text: async () => JSON.stringify({
+      result: {
+        score: 100,
+        finalScore: 100,
+        objectiveScore: 100,
+        objectiveCorrect: 12,
+        objectiveTotal: 12,
+        feedback: "Objective-only placeholder from upstream AI.",
+        parts: [],
+        status: "marked",
+      },
+    }),
+  });
+
+  const req = {
+    method: "POST",
+    url: "/marking/ai",
+    headers: { host: "localhost", "content-type": "application/json" },
+    body: {
+      assignmentKey: "A2-1.1",
+      level: "A2",
+      submission: { name: "Melchizedek", assignmentKey: "A2-1.1", level: "A2" },
+      referenceEntry: {
+        assignmentKey: "A2-1.1",
+        level: "A2",
+        expectedParts: ["teil3", "teil4"],
+        parts: {
+          teil3: { answers: ["B", "B", "C", "C", "B", "A", "B"].map((correctLetter, index) => ({ questionNumber: String(index + 1), correctLetter })) },
+          teil4: { answers: ["B", "C", "B", "A", "B"].map((correctLetter, index) => ({ questionNumber: String(index + 1), correctLetter })) },
+        },
+      },
+      submissionText: `Teil 2:
+Lieber Felix,
+Wie geht es dir? Ich hoffe, es geht dir gut.
+Ich schreibe dir, weil ich Accra und Kumasi vergleiche und auch Pizza und Hamburger sowie Fußball und Tennis vergleiche.
+Zuerst finde ich Accra interessanter als Kumasi, weil Accra viel schöner und sauberer ist.
+Meiner Meinung nach ist Pizza besser als Hamburger, weil sie leckerer ist.
+Zum Schluss, Fußball macht mehr Spaß als Tennis, weil es spannender ist.
+Ich freue mich auf deine Antwort.
+Viele Grüße,
+Melchizedek.
+
+Teil 3:
+1. B
+2. B
+3. C
+4. C
+5. B
+6. A
+7. B
+
+Teil 4:
+1. B
+2. C
+3. B
+4. A
+5. B`,
+    },
+  };
+
+  let statusCode = 0;
+  let jsonBody;
+  const res = {
+    status(code) { statusCode = code; return this; },
+    json(body) { jsonBody = body; return body; },
+    send(body) { jsonBody = body; return body; },
+    setHeader() {},
+  };
+
+  try {
+    await handler(req, res);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const result = jsonBody.result;
+  assert.equal(statusCode, 200);
+  assert.equal(result.objectiveScore, 100);
+  assert.equal(result.objectiveCorrect, 12);
+  assert.equal(result.objectiveTotal, 12);
+  assert.ok(result.writingScore > 0);
+  assert.ok(result.finalScore < 100);
+  assert.ok(result.parts.some((part) => part.partType === "writing"));
+  assert.match(result.feedback, /Writing marked/);
+  assert.match(result.feedback, /12 of 12 objective questions/);
+});
