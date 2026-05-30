@@ -1167,6 +1167,8 @@ function buildMarkingPrompt(payload = {}) {
     "Use the supplied answerKeyRegistry entry as the source of truth for objective answers. Do not invent missing objective keys; if a required key is missing, set status to needs_review and explain it.",
     "For objective answers, accept correct option letters, correct text, letter plus text, close spelling, and meaningful stems. If the student gives a wrong option letter with the correct text, mark that item needs_review for conflicting option letter and answer text. If the option letter is correct but text is different, the letter is primary and correct.",
     "Route A2/B1 teil2 as writing, teil3 Lesen as objective, and teil4 Hören as objective. Use parts.teil3 for Lesen, parts.teil4 for Hören, and parts.main for A1 objective work. If any required objective answer key is missing, do not guess; mark needs_review.",
+    "Teil 2 Schreiben must be graded even when the reference answer only contains Teil 3/Teil 4 objective keys. Never award 100 solely because objective questions are all correct when a writing section is present; include a writingScore and combine it with the objectiveScore for finalScore.",
+    "For writing, assess task completion, CEFR-appropriate grammar, word order, vocabulary, spelling, structure, and clarity. Mention the writing performance in feedback and improvementSummary, including at least one concrete next step.",
     "Return JSON only. The feedback field must be exactly 40 words and should be useful to the student. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, corrections, and improvementSummary.",
     `Payload: ${JSON.stringify(payload)}`,
   ].join("\n\n");
