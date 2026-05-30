@@ -150,6 +150,12 @@ function parseStudentObjectiveAnswers(submissionText = "") {
     map.set(Number.parseInt(explicitMatch[1], 10), explicitMatch[2].trim());
   }
 
+  const anzeigeRegex = /(?:frage\s*)?(\d{1,3})\s*[).:-]?\s*(?:\d+\s*[).:-]?\s*)?anzeige\s*([a-d])/gi;
+  let anzeigeMatch;
+  while ((anzeigeMatch = anzeigeRegex.exec(text))) {
+    map.set(Number.parseInt(anzeigeMatch[1], 10), anzeigeMatch[2].toUpperCase());
+  }
+
   if (!map.size) {
     text.split(/[\n,;]+/).forEach((chunk, index) => {
       const trimmed = chunk.trim();
@@ -160,6 +166,45 @@ function parseStudentObjectiveAnswers(submissionText = "") {
   }
 
   return map;
+}
+
+const VOCABULARY_ALIASES = {
+  head: ["head"],
+  arm: ["arm"],
+  leg: ["leg"],
+  eye: ["eye"],
+  nose: ["nose"],
+  ear: ["ear"],
+  mouth: ["mouth"],
+  hand: ["hand"],
+  foot: ["foot"],
+  stomach: ["stomach", "belly"],
+};
+
+function findVocabularyKey(value = "") {
+  const normalized = normalizeForCompare(value);
+  return Object.entries(VOCABULARY_ALIASES).find(([, aliases]) => aliases.some((alias) => normalized.includes(alias)))?.[0] || "";
+}
+
+function parseVocabularyPair(value = "") {
+  const match = String(value || "").match(/(?:^[a-z]\s*[).]\s*)?([A-Za-z/ ]+?)\s*[-–:]\s*([A-Za-zÄÖÜäöüß/ ]+)/);
+  if (!match) return null;
+  const vocabularyKey = findVocabularyKey(match[1]);
+  if (!vocabularyKey) return null;
+  const german = String(match[2] || "").split("/")[0].trim();
+  return { vocabularyKey, english: match[1].trim(), german };
+}
+
+function extractVocabularyAnswers(text = "") {
+  const pairs = {};
+  const lines = String(text || "").split(/\n| {2,}/);
+
+  for (const line of lines) {
+    const pair = parseVocabularyPair(line);
+    if (pair) pairs[pair.vocabularyKey] = pair.german;
+  }
+
+  return pairs;
 }
 
 function flattenAnswerEntries(referenceAnswers = {}, path = []) {
@@ -230,18 +275,33 @@ function stripGermanStem(value = "") {
 }
 
 function expectedMetadata(expectedRaw) {
+  const objectRaw = expectedRaw && typeof expectedRaw === "object"
+    ? expectedRaw.rawCorrectAnswer || expectedRaw.raw || expectedRaw.correctText || expectedRaw.correctLetter || ""
+    : String(expectedRaw ?? "");
+  const vocabularyPair = parseVocabularyPair(objectRaw);
+
   if (expectedRaw && typeof expectedRaw === "object") {
     return {
-      raw: expectedRaw.rawCorrectAnswer || expectedRaw.raw || expectedRaw.correctText || expectedRaw.correctLetter || "",
-      correctLetter: String(expectedRaw.correctLetter || "").toUpperCase(),
-      correctText: expectedRaw.correctText || extractOptionText(expectedRaw.rawCorrectAnswer || expectedRaw.raw || ""),
-      acceptedAnswers: expectedRaw.acceptedAnswers || [],
+      raw: vocabularyPair?.german || expectedRaw.rawCorrectAnswer || expectedRaw.raw || expectedRaw.correctText || expectedRaw.correctLetter || "",
+      correctLetter: vocabularyPair ? "" : String(expectedRaw.correctLetter || "").toUpperCase(),
+      correctText: vocabularyPair?.german || expectedRaw.correctText || extractOptionText(expectedRaw.rawCorrectAnswer || expectedRaw.raw || ""),
+      acceptedAnswers: vocabularyPair ? [vocabularyPair.german] : expectedRaw.acceptedAnswers || [],
       questionNumber: expectedRaw.questionNumber,
+      vocabularyKey: vocabularyPair?.vocabularyKey || "",
+      isVocabulary: Boolean(vocabularyPair),
     };
   }
   const raw = String(expectedRaw ?? "");
-  const letter = extractOptionLetter(raw);
-  return { raw, correctLetter: letter, correctText: extractOptionText(raw), acceptedAnswers: [], questionNumber: "" };
+  const letter = vocabularyPair ? "" : extractOptionLetter(raw);
+  return {
+    raw: vocabularyPair?.german || raw,
+    correctLetter: letter,
+    correctText: vocabularyPair?.german || extractOptionText(raw),
+    acceptedAnswers: vocabularyPair ? [vocabularyPair.german] : [],
+    questionNumber: "",
+    vocabularyKey: vocabularyPair?.vocabularyKey || "",
+    isVocabulary: Boolean(vocabularyPair),
+  };
 }
 
 function textMatches(expectedTextRaw, studentTextRaw) {
@@ -264,6 +324,7 @@ function valuesMatch(expectedRaw, studentRaw) {
   const student = normalizeAnswer(studentRaw);
   if (!expected || !student) return { status: "wrong" };
   if (expected === student) return { status: "correct", reason: "Exact answer match" };
+  if (meta.isVocabulary) return { status: "wrong" };
 
   const expectedLetter = meta.correctLetter || extractOptionLetter(meta.raw);
   const studentLetter = extractOptionLetter(studentRaw);
@@ -292,6 +353,7 @@ function valuesMatch(expectedRaw, studentRaw) {
 
 function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = "unknown" } = {}) {
   const studentAnswers = parseStudentObjectiveAnswers(submissionText);
+  const vocabularyAnswers = extractVocabularyAnswers(submissionText);
   const entries = Array.isArray(referenceAnswers)
     ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.questionKey || entry.sourceKey || `Answer${index + 1}`, value: entry }))
     : flattenAnswerEntries(referenceAnswers);
@@ -319,7 +381,8 @@ function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = 
 
   for (const [entryIndex, entry] of entries.entries()) {
     const questionIndex = getQuestionIndex(entry.key) || entryIndex + 1;
-    const studentRaw = studentAnswers.get(questionIndex) || "";
+    const meta = expectedMetadata(entry.value);
+    const studentRaw = studentAnswers.get(questionIndex) || (meta.vocabularyKey ? vocabularyAnswers[meta.vocabularyKey] : "") || "";
     const item = { question: questionIndex, expected: String(entry.value?.rawCorrectAnswer || entry.value?.raw || entry.value), submitted: String(studentRaw || "") };
 
     if (!studentRaw) {
@@ -477,6 +540,22 @@ export function autoMarkSubmission({ referenceEntry = {}, submission = {}, submi
   return routeAndMarkSubmission({ referenceEntry, submission, submissionText, aiWritingMarker });
 }
 
+export function checkDeterministicObjectiveAnswers({ referenceEntry = {}, submissionText = "", partId = "main" } = {}) {
+  const answerKey = getObjectiveAnswerKey(referenceEntry, partId);
+  const result = objectiveMarker(answerKey, submissionText, { partId });
+  if (!result.total) return null;
+
+  return {
+    objectiveScore: result.percentage,
+    objectiveCorrect: result.correct.length,
+    objectiveTotal: result.total,
+    wrongAnswers: [...result.wrong, ...result.missing, ...result.needsReview],
+    detectedParts: [{ partId, partType: "objective", correct: result.correct.length, total: result.total }],
+    parts: [{ partId, partType: "objective", result }],
+    confidence: result.confidence,
+  };
+}
+
 export {
   WRITING_CONFIDENCE_THRESHOLD,
   WRITING_RUBRICS,
@@ -497,6 +576,7 @@ export const __testing__ = {
   extractOptionLetter,
   extractOptionText,
   parseStudentObjectiveAnswers,
+  extractVocabularyAnswers,
   objectiveMarker,
   splitSubmissionIntoParts,
   detectPartType,

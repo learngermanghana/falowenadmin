@@ -1,6 +1,7 @@
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
+import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -550,6 +551,47 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
   };
 }
 
+
+function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObjective = null) {
+  if (!deterministicObjective?.objectiveTotal) return aiResult;
+
+  const writingScore = aiResult.writingScore !== null && aiResult.writingScore !== undefined
+    ? Math.max(0, Math.min(100, Math.round(Number(aiResult.writingScore))))
+    : null;
+  const objectiveScore = deterministicObjective.objectiveScore;
+  const hasWritingScore = writingScore !== null && Number.isFinite(writingScore);
+  const finalScore = hasWritingScore
+    ? Math.round((objectiveScore * 0.8) + (writingScore * 0.2))
+    : objectiveScore;
+  const objectiveFeedback = `Objective score: ${deterministicObjective.objectiveCorrect}/${deterministicObjective.objectiveTotal} correct (${objectiveScore}%).`;
+
+  return {
+    ...aiResult,
+    score: finalScore,
+    passed: finalScore >= 60,
+    objectiveScore,
+    objectiveCorrect: deterministicObjective.objectiveCorrect,
+    objectiveTotal: deterministicObjective.objectiveTotal,
+    writingScore: hasWritingScore ? writingScore : aiResult.writingScore ?? null,
+    finalScore,
+    wrongAnswers: deterministicObjective.wrongAnswers,
+    detectedParts: deterministicObjective.detectedParts,
+    parts: [
+      ...deterministicObjective.parts,
+      ...(Array.isArray(aiResult.parts) ? aiResult.parts.filter((part) => part?.partType !== "objective") : []),
+    ],
+    feedback: [aiResult.feedback, objectiveFeedback].filter(Boolean).join("\n"),
+    confidence: Math.max(Number(aiResult.confidence || 0), deterministicObjective.confidence || 0),
+    status: aiResult.status === "marked" || finalScore >= 60 ? "marked" : aiResult.status,
+    shouldSendAutomatically: false,
+    ai: {
+      ...(aiResult.ai || {}),
+      deterministicObjectiveMarked: true,
+      deterministicObjectiveWeight: hasWritingScore ? 0.8 : 1,
+    },
+  };
+}
+
 function isSafeForScoreSheet(result = {}) {
   const status = String(result.status || "").toLowerCase();
   const score = Number(result.finalScore ?? result.score);
@@ -635,7 +677,13 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     throw new Error(body?.message || "AI marking failed");
   }
 
-  const result = normalizeAIMarkingResult(body.result || body, payload);
+  const aiResult = normalizeAIMarkingResult(body.result || body, payload);
+  const deterministicObjective = checkDeterministicObjectiveAnswers({
+    referenceEntry: referenceEntry || {},
+    submissionText,
+    partId: "main",
+  });
+  const result = combineWithDeterministicObjectiveResult(aiResult, deterministicObjective);
   const row = {
     studentcode: submission.studentCode || submission.studentcode || submission.uid || "",
     name: submission.studentName || submission.name || submission.fullName || "",
