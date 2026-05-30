@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { autoMarkSubmission } from "../src/utils/autoMarking.js";
+import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 
 test("objective auto-mark accepts option letter only", () => {
   const result = autoMarkSubmission({
@@ -46,6 +46,56 @@ test("objective auto-mark catches partial correctness", () => {
 
   assert.equal(result.score, 50);
   assert.match(result.feedback, /1\/2/);
+});
+
+test("A1 14.1 deterministic checker extracts Anzeige and body-part vocabulary answers", () => {
+  const referenceEntry = {
+    assignmentKey: "A1-14.1",
+    level: "A1",
+    format: "objective",
+    answers: {
+      Answer1: "Frage 1: Anzeige A",
+      Answer2: "Frage 2: Anzeige B",
+      Answer3: "Frage 3: Anzeige B",
+      Answer4: "Frage 4: Anzeige A",
+      Answer5: "Frage 5: Anzeige A",
+      Answer6: "a. Head – Kopf",
+      Answer7: "b. Arm – Arm",
+      Answer8: "c. Leg – Bein",
+      Answer9: "d. Eye – Auge",
+      Answer10: "e. Nose – Nase",
+      Answer11: "f. Ear – Ohr",
+      Answer12: "g. Mouth – Mund",
+      Answer13: "h. Hand – Hand",
+      Answer14: "i. Foot – Fuß",
+      Answer15: "j. Stomach / Belly – Bauch",
+    },
+  };
+
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry,
+    submissionText: `1 Anzeige A
+2.Anzeige B
+3 Anzeige B
+4 Anzeige A
+5 Anzeige B
+Head - Kopf
+Arm - Arm
+Leg - Beine
+Eye - Auge
+Nose - Nase
+Ear - Ohr
+Mouth - Mund
+Hand - Hand
+Foot - fuss
+Stomach - Magen`,
+  });
+
+  assert.equal(result.objectiveCorrect, 12);
+  assert.equal(result.objectiveTotal, 15);
+  assert.equal(result.objectiveScore, 80);
+  assert.equal(result.wrongAnswers.length, 3);
+  assert.deepEqual(result.detectedParts[0], { partId: "main", partType: "objective", correct: 12, total: 15 });
 });
 
 test("smart router splits A2 submission and routes Schreiben to writing, Lesen/Hören to objective keys", () => {
