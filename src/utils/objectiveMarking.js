@@ -1,3 +1,5 @@
+import answersDictionary from "../data/answers_dictionary.json" with { type: "json" };
+
 const OPTION_LETTERS = "ABCDEFX";
 const VOCABULARY_ALIASES = {
   head: ["head"],
@@ -44,6 +46,31 @@ export function normalizeAnswer(text = "") {
 
 function normalizeAssignmentId(value = "") {
   return String(value || "").trim().toUpperCase().replace(/_/g, ".");
+}
+
+function findReferenceEntryFromDictionary(assignmentId = "") {
+  const normalizedAssignmentId = normalizeAssignmentId(assignmentId);
+  if (!normalizedAssignmentId) return null;
+
+  for (const [assignmentName, entry] of Object.entries(answersDictionary || {})) {
+    const candidates = [
+      assignmentName,
+      entry?.assignment_id,
+      entry?.assignmentId,
+      entry?.assignmentKey,
+      entry?.assignment,
+    ].filter(Boolean);
+
+    if (candidates.some((candidate) => normalizeAssignmentId(candidate) === normalizedAssignmentId)) {
+      return {
+        assignment: entry?.assignment || assignmentName,
+        assignmentKey: entry?.assignmentKey || entry?.assignment_id || entry?.assignmentId || normalizedAssignmentId,
+        ...entry,
+      };
+    }
+  }
+
+  return null;
 }
 
 function normalizePartId(value = "") {
@@ -378,7 +405,9 @@ export function compareAnswers(refAnswers = {}, stuAnswers = {}) {
 
 // Determine assignment reference answers for supported assignments or dynamic answer-key entries.
 export function getReferenceAnswers(assignmentIdOrReferenceEntry, referenceEntry = null) {
-  const source = typeof assignmentIdOrReferenceEntry === "object" ? assignmentIdOrReferenceEntry : referenceEntry;
+  const source = typeof assignmentIdOrReferenceEntry === "object"
+    ? assignmentIdOrReferenceEntry
+    : referenceEntry || findReferenceEntryFromDictionary(assignmentIdOrReferenceEntry);
   const dynamicItems = buildReferenceItems(source || {});
   if (dynamicItems.length) {
     return Object.fromEntries(dynamicItems.map((item, index) => [index + 1, item.expected]));
@@ -426,7 +455,9 @@ function getStudentAnswerForItem({ item, submissionText, sections, vocabularyInd
 
 // High-level function to compute objective score given the assignment ID/reference entry and submission text.
 export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionText, referenceEntry = null) {
-  const source = typeof assignmentIdOrReferenceEntry === "object" ? assignmentIdOrReferenceEntry : referenceEntry;
+  const source = typeof assignmentIdOrReferenceEntry === "object"
+    ? assignmentIdOrReferenceEntry
+    : referenceEntry || findReferenceEntryFromDictionary(assignmentIdOrReferenceEntry);
   const assignmentId = typeof assignmentIdOrReferenceEntry === "string"
     ? assignmentIdOrReferenceEntry
     : assignmentIdOrReferenceEntry?.assignmentKey || assignmentIdOrReferenceEntry?.assignmentId || assignmentIdOrReferenceEntry?.assignment_id || "";
