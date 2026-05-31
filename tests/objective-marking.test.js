@@ -236,3 +236,36 @@ Teil 4:
   assert.equal(result.details["teil4.1"].expected, "B");
   assert.equal(result.details["teil4.1"].correct, false);
 });
+
+test("A1-4 flat answer key supports restarted numbering across objective parts", () => {
+  const result = computeObjectiveScore("A1-4", `
+Teil 1
+1.Ich komme aus Deutschland.Ich spreche Deutsch.
+2.Sie kommt aus Frankreich.Sie spricht Französisch.
+3.Ihr kommen aus Russland. Ihr sprechen Russisch.
+4.Wir kommen aus Japan.Wir sprechen Japanisch.
+5.Er kommt aus England. Er spricht Englisch.
+
+Teil 2
+1.c
+2.b
+3.d.
+4.a
+5.c
+6.b
+7.c
+
+Teil 3
+1.c
+2.b
+3.c
+4.b
+5.Madrid
+  `);
+
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 9);
+  assert.equal(result.details[9].correct, false);
+  assert.equal(result.details[10].correct, false);
+  assert.equal(result.details[12].correct, false);
+});
