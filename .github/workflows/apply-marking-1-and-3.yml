@@ -16,127 +16,113 @@ jobs:
         run: |
           python <<'PY'
           from pathlib import Path
-          from textwrap import dedent
+          import re
 
           service = Path("src/services/markingService.js")
           text = service.read_text()
-          old = dedent("""\
-            let receipt;
-            let reviewReason = "";
-
-            if (isSafeForScoreSheet(result)) {
-              receipt = await saveScoreRow({
-                studentCode: row.studentcode,
-                name: row.name,
-                assignment: row.assignment,
-                assignmentId: row.assignment_id,
-                score: row.score,
-                comments: row.comments,
-                level: row.level,
-                link: row.link,
-                source: row.source,
-              });
-            } else {
-              reviewReason = result.status !== "marked"
-                ? `AI returned ${result.status}; tutor review required before score sheet sync.`
-                : "AI returned an unsafe zero/low-confidence result; kept for audit and blocked from score sheet.";
-              receipt = skippedScoreReceipt(row, reviewReason);
-            }
-          """)
-          new = dedent("""\
-            const reviewReason = "AI marking saved as draft only. Tutor must click Save Final Score before anything is written to the final score sheet.";
-            const receipt = skippedScoreReceipt(row, reviewReason);
-          """)
-          if old in text:
-            service.write_text(text.replace(old, new))
+          service_pattern = re.compile(
+              r"\n  let receipt;\n  let reviewReason = \"\";\n\n"
+              r"  if \(isSafeForScoreSheet\(result\)\) \{[\s\S]*?"
+              r"\n  \}\n\n  await saveAIAudit",
+              re.M,
+          )
+          service_replacement = (
+              "\n  const reviewReason = \"AI marking saved as draft only. Tutor must click Save Final Score before anything is written to the final score sheet.\";\n"
+              "  const receipt = skippedScoreReceipt(row, reviewReason);\n\n"
+              "  await saveAIAudit"
+          )
+          patched_text, service_count = service_pattern.subn(service_replacement, text, count=1)
+          if service_count:
+            service.write_text(patched_text)
+            print("Patched AI auto-save behavior.")
           else:
             print("AI auto-save block already patched or not found; skipping service patch.")
 
           page = Path("src/pages/MarkingPage.jsx")
           text = page.read_text()
+
           if "function objectiveWrongAnswerRows" not in text:
-            marker = dedent("""\
-              function formatWritingScore(result = {}) {
-                if (result.writingScore === null || result.writingScore === undefined) return "—";
-                const maxWritingScore = getMaxWritingScore(result);
-                const writingPercent = writingScoreToPercent(result.writingScore, maxWritingScore);
-                if (maxWritingScore && maxWritingScore !== 100) {
-                  return `${result.writingScore}/${maxWritingScore} → ${writingPercent}%`;
-                }
-                return `${writingPercent}%`;
-              }
-            """)
-            helper = marker + dedent("""
-              function objectiveWrongAnswerRows(objectiveDetails = {}) {
-                return Object.entries(objectiveDetails || {})
-                  .map(([question, detail]) => ({ question, ...detail }))
-                  .filter((row) => row && row.correct === false);
-              }
-            """)
-            if marker not in text:
-              raise SystemExit("formatWritingScore marker not found")
-            text = text.replace(marker, helper)
+            helper_pattern = re.compile(
+                r"function formatWritingScore\(result = \{\}\) \{[\s\S]*?\n\}",
+                re.M,
+            )
+            helper_replacement = r'''\g<0>
+
+function objectiveWrongAnswerRows(objectiveDetails = {}) {
+  return Object.entries(objectiveDetails || {})
+    .map(([question, detail]) => ({ question, ...detail }))
+    .filter((row) => row && row.correct === false);
+}'''
+            text, helper_count = helper_pattern.subn(helper_replacement, text, count=1)
+            if helper_count:
+              print("Added wrong-answer helper.")
+            else:
+              print("formatWritingScore marker not found; skipping helper patch.")
+          else:
+            print("Wrong-answer helper already exists.")
 
           if "const objectiveWrongRows = useMemo" not in text:
-            marker = dedent("""\
-                const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
-
-                const manualOverrideMessage = useMemo(() => {
-            """)
-            insert = dedent("""\
-                const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
-                const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
-
-                const manualOverrideMessage = useMemo(() => {
-            """)
-            if marker not in text:
-              raise SystemExit("objectiveScorePercent marker not found")
-            text = text.replace(marker, insert)
+            text, wrong_rows_count = re.subn(
+                r"(\n\s*const objectiveScorePercent = objectivePercentFromResult\(objectiveMarkingResult\);)",
+                r"\1\n  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);",
+                text,
+                count=1,
+            )
+            if wrong_rows_count:
+              print("Added objectiveWrongRows memo.")
+            else:
+              print("objectiveScorePercent marker not found; skipping memo patch.")
+          else:
+            print("objectiveWrongRows memo already exists.")
 
           if "Wrong objective answers" not in text:
-            marker = dedent("""\
-                        {objectiveMarkingResult.totalCount > 0 ? (
-                          <div style={{ fontSize: 13, color: "#1f2937", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 8 }}>
-                            Deterministic objective score for {objectiveAssignmentId}: <b>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount} → {Math.round(objectiveScorePercent)}%</b>
-                          </div>
-                        ) : null}
-            """)
-            table = marker + dedent("""
-                        {objectiveWrongRows.length > 0 ? (
-                          <div style={{ border: "1px solid #fecaca", borderRadius: 8, overflow: "hidden", background: "#fff7ed" }}>
-                            <div style={{ padding: 8, fontSize: 13, fontWeight: 700, color: "#7f1d1d" }}>Wrong objective answers</div>
-                            <div style={{ overflowX: "auto" }}>
-                              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                                <thead>
-                                  <tr>
-                                    <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Question</th>
-                                    <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Student</th>
-                                    <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Correct</th>
-                                    <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Status</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {objectiveWrongRows.map((row) => (
-                                    <tr key={row.question}>
-                                      <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.question}</td>
-                                      <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.student || "—"}</td>
-                                      <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.expected || "—"}</td>
-                                      <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>Wrong</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        ) : objectiveMarkingResult.totalCount > 0 ? (
-                          <div style={{ fontSize: 13, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: 8 }}>
-                            No wrong objective answers detected.
-                          </div>
-                        ) : null}
-            """)
-            if marker not in text:
-              raise SystemExit("objective score panel marker not found")
-            text = text.replace(marker, table)
+            score_panel_pattern = re.compile(
+                r"(\n\s*\{objectiveMarkingResult\.totalCount > 0 \? \(\n"
+                r"\s*<div style=\{\{ fontSize: 13, color: \"#1f2937\", background: \"#f8fafc\", border: \"1px solid #e2e8f0\", borderRadius: 6, padding: 8 \}\}>\n"
+                r"\s*Deterministic objective score for \{objectiveAssignmentId\}: <b>\{objectiveMarkingResult\.correctCount\}/\{objectiveMarkingResult\.totalCount\} → \{Math\.round\(objectiveScorePercent\)\}%</b>\n"
+                r"\s*</div>\n"
+                r"\s*\) : null\})",
+                re.M,
+            )
+            table = r'''
+          {objectiveWrongRows.length > 0 ? (
+            <div style={{ border: "1px solid #fecaca", borderRadius: 8, overflow: "hidden", background: "#fff7ed" }}>
+              <div style={{ padding: 8, fontSize: 13, fontWeight: 700, color: "#7f1d1d" }}>Wrong objective answers</div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Question</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Student</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Correct</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objectiveWrongRows.map((row) => (
+                      <tr key={row.question}>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.question}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.student || "—"}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.expected || "—"}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>Wrong</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : objectiveMarkingResult.totalCount > 0 ? (
+            <div style={{ fontSize: 13, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: 8 }}>
+              No wrong objective answers detected.
+            </div>
+          ) : null}'''
+            text, table_count = score_panel_pattern.subn(r"\1" + table, text, count=1)
+            if table_count:
+              print("Added wrong-answer table.")
+            else:
+              print("objective score panel marker not found; skipping table patch.")
+          else:
+            print("Wrong-answer table already exists.")
 
           page.write_text(text)
           PY
