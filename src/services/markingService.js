@@ -613,20 +613,6 @@ function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObj
   };
 }
 
-function isSafeForScoreSheet(result = {}) {
-  const status = String(result.status || "").toLowerCase();
-  const score = Number(result.finalScore ?? result.score);
-  const confidence = Number(result.confidence ?? 0);
-  const objectiveTotal = Number(result.objectiveTotal || 0);
-  const hasWritingScore = result.writingScore !== null && result.writingScore !== undefined;
-
-  if (status !== "marked") return false;
-  if (!Number.isFinite(score)) return false;
-  if (score <= 0 && confidence < 0.6) return false;
-  if (score <= 0 && objectiveTotal === 0 && !hasWritingScore) return false;
-  return true;
-}
-
 function skippedScoreReceipt(row, reason) {
   return {
     row,
@@ -719,27 +705,8 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     source: "ai_marking",
   };
 
-  let receipt;
-  let reviewReason = "";
-
-  if (isSafeForScoreSheet(result)) {
-    receipt = await saveScoreRow({
-      studentCode: row.studentcode,
-      name: row.name,
-      assignment: row.assignment,
-      assignmentId: row.assignment_id,
-      score: row.score,
-      comments: row.comments,
-      level: row.level,
-      link: row.link,
-      source: row.source,
-    });
-  } else {
-    reviewReason = result.status !== "marked"
-      ? `AI returned ${result.status}; tutor review required before score sheet sync.`
-      : "AI returned an unsafe zero/low-confidence result; kept for audit and blocked from score sheet.";
-    receipt = skippedScoreReceipt(row, reviewReason);
-  }
+  const reviewReason = "AI marking saved as draft only. Tutor must click Save Final Score before anything is written to the final score sheet.";
+  const receipt = skippedScoreReceipt(row, reviewReason);
 
   await saveAIAudit({ submission, result, receipt, reason: reviewReason });
 
