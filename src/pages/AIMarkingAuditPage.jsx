@@ -82,6 +82,95 @@ function answerRowsFromAnswerKey(answerKey = null) {
   return rows;
 }
 
+function ComparisonBox({ title, subtitle, children, tone = "neutral" }) {
+  const borderColor = tone === "student" ? "#bbf7d0" : tone === "key" ? "#fde68a" : "#e5e7eb";
+  const background = tone === "student" ? "#f0fdf4" : tone === "key" ? "#fffbeb" : "#fff";
+
+  return (
+    <section style={{ border: `1px solid ${borderColor}`, background, borderRadius: 8, padding: 10, display: "grid", gap: 8, minWidth: 0 }}>
+      <div>
+        <b>{title}</b>
+        {subtitle ? <div style={{ fontSize: 12, opacity: 0.72 }}>{subtitle}</div> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function StudentWorkPanel({ row }) {
+  const workText = row.studentWorkText || "";
+  const answerRows = answerRowsFromMap(row.studentAnswers);
+
+  return (
+    <ComparisonBox
+      title="Student work"
+      subtitle={row.submissionPath ? `From ${row.submissionPath}` : "Submission snapshot was not found"}
+      tone="student"
+    >
+      {workText ? (
+        <pre style={{ margin: 0, whiteSpace: "pre-wrap", overflowX: "auto", fontFamily: "inherit", fontSize: 13, lineHeight: 1.45 }}>
+          {workText}
+        </pre>
+      ) : (
+        <p style={{ margin: 0, fontSize: 13, opacity: 0.75 }}>No student work text was available for this audit record.</p>
+      )}
+
+      {answerRows.length ? (
+        <details>
+          <summary style={{ cursor: "pointer", fontWeight: 700 }}>Structured answers ({answerRows.length})</summary>
+          <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
+            {answerRows.map((answer) => (
+              <div key={answer.key} style={{ display: "grid", gridTemplateColumns: "minmax(90px, 160px) 1fr", gap: 8, fontSize: 13 }}>
+                <b>{answer.key}</b>
+                <span style={{ whiteSpace: "pre-wrap" }}>{answer.value}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
+    </ComparisonBox>
+  );
+}
+
+function AnswerKeyPanel({ row }) {
+  const answerKey = row.answerKey;
+  const answerRows = answerRowsFromAnswerKey(answerKey);
+
+  return (
+    <ComparisonBox
+      title="Answer key / expected answers"
+      subtitle={answerKey ? `${answerKey.assignmentKey || answerKey.id || "Answer key"}${answerKey.format ? ` · ${answerKey.format}` : ""}` : "No matching answer key was found"}
+      tone="key"
+    >
+      {answerKey?.answerUrl ? (
+        <a href={answerKey.answerUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open source answer key</a>
+      ) : null}
+
+      {answerRows.length ? (
+        <div style={{ display: "grid", gap: 6, maxHeight: 280, overflow: "auto", paddingRight: 4 }}>
+          {answerRows.map((answer) => (
+            <div key={answer.key} style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 6, display: "grid", gridTemplateColumns: "minmax(100px, 180px) 1fr", gap: 8, fontSize: 13 }}>
+              <b>{answer.key}</b>
+              <span style={{ whiteSpace: "pre-wrap" }}>{answer.value}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p style={{ margin: 0, fontSize: 13, opacity: 0.75 }}>No objective answer rows were available. Check the technical details for writing-part grading instructions.</p>
+      )}
+
+      {answerKey?.partGrading ? (
+        <details>
+          <summary style={{ cursor: "pointer", fontWeight: 700 }}>Part grading instructions</summary>
+          <pre style={{ marginBottom: 0, whiteSpace: "pre-wrap", overflowX: "auto", fontSize: 12 }}>
+            {JSON.stringify(answerKey.partGrading, null, 2)}
+          </pre>
+        </details>
+      ) : null}
+    </ComparisonBox>
+  );
+}
+
 function buildScoreBreakdown(row = {}) {
   const savedBreakdown = row.scoreBreakdown || row.result?.scoreBreakdown || {};
   const aiMeta = row.result?.ai || row.ai || {};
@@ -294,95 +383,6 @@ function ScoreBreakdownPanel({ row }) {
         </div>
       )}
     </section>
-  );
-}
-
-function ComparisonBox({ title, subtitle, children, tone = "neutral" }) {
-  const borderColor = tone === "student" ? "#bbf7d0" : tone === "key" ? "#fde68a" : "#e5e7eb";
-  const background = tone === "student" ? "#f0fdf4" : tone === "key" ? "#fffbeb" : "#fff";
-
-  return (
-    <section style={{ border: `1px solid ${borderColor}`, background, borderRadius: 8, padding: 10, display: "grid", gap: 8, minWidth: 0 }}>
-      <div>
-        <b>{title}</b>
-        {subtitle ? <div style={{ fontSize: 12, opacity: 0.72 }}>{subtitle}</div> : null}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function StudentWorkPanel({ row }) {
-  const workText = row.studentWorkText || "";
-  const answerRows = answerRowsFromMap(row.studentAnswers);
-
-  return (
-    <ComparisonBox
-      title="Student work"
-      subtitle={row.submissionPath ? `From ${row.submissionPath}` : "Submission snapshot was not found"}
-      tone="student"
-    >
-      {workText ? (
-        <pre style={{ margin: 0, whiteSpace: "pre-wrap", overflowX: "auto", fontFamily: "inherit", fontSize: 13, lineHeight: 1.45 }}>
-          {workText}
-        </pre>
-      ) : (
-        <p style={{ margin: 0, fontSize: 13, opacity: 0.75 }}>No student work text was available for this audit record.</p>
-      )}
-
-      {answerRows.length ? (
-        <details>
-          <summary style={{ cursor: "pointer", fontWeight: 700 }}>Structured answers ({answerRows.length})</summary>
-          <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
-            {answerRows.map((answer) => (
-              <div key={answer.key} style={{ display: "grid", gridTemplateColumns: "minmax(90px, 160px) 1fr", gap: 8, fontSize: 13 }}>
-                <b>{answer.key}</b>
-                <span style={{ whiteSpace: "pre-wrap" }}>{answer.value}</span>
-              </div>
-            ))}
-          </div>
-        </details>
-      ) : null}
-    </ComparisonBox>
-  );
-}
-
-function AnswerKeyPanel({ row }) {
-  const answerKey = row.answerKey;
-  const answerRows = answerRowsFromAnswerKey(answerKey);
-
-  return (
-    <ComparisonBox
-      title="Answer key / expected answers"
-      subtitle={answerKey ? `${answerKey.assignmentKey || answerKey.id || "Answer key"}${answerKey.format ? ` · ${answerKey.format}` : ""}` : "No matching answer key was found"}
-      tone="key"
-    >
-      {answerKey?.answerUrl ? (
-        <a href={answerKey.answerUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open source answer key</a>
-      ) : null}
-
-      {answerRows.length ? (
-        <div style={{ display: "grid", gap: 6, maxHeight: 280, overflow: "auto", paddingRight: 4 }}>
-          {answerRows.map((answer) => (
-            <div key={answer.key} style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 6, display: "grid", gridTemplateColumns: "minmax(100px, 180px) 1fr", gap: 8, fontSize: 13 }}>
-              <b>{answer.key}</b>
-              <span style={{ whiteSpace: "pre-wrap" }}>{answer.value}</span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p style={{ margin: 0, fontSize: 13, opacity: 0.75 }}>No objective answer rows were available. Check the technical details for writing-part grading instructions.</p>
-      )}
-
-      {answerKey?.partGrading ? (
-        <details>
-          <summary style={{ cursor: "pointer", fontWeight: 700 }}>Part grading instructions</summary>
-          <pre style={{ marginBottom: 0, whiteSpace: "pre-wrap", overflowX: "auto", fontSize: 12 }}>
-            {JSON.stringify(answerKey.partGrading, null, 2)}
-          </pre>
-        </details>
-      ) : null}
-    </ComparisonBox>
   );
 }
 
