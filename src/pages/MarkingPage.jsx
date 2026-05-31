@@ -117,6 +117,12 @@ function formatWritingScore(result = {}) {
   return `${writingPercent}%`;
 }
 
+function objectiveWrongAnswerRows(objectiveDetails = {}) {
+  return Object.entries(objectiveDetails || {})
+    .map(([question, detail]) => ({ question, ...detail }))
+    .filter((row) => row && row.correct === false);
+}
+
 function mergeObjectiveScore(result = {}, objectiveResult = {}) {
   const objectivePercent = objectivePercentFromResult(objectiveResult);
   const writingPercent = writingScoreToPercent(result.writingScore, getMaxWritingScore(result));
@@ -515,6 +521,7 @@ export default function MarkingPage() {
   }, [objectiveAssignmentId, selectedSubmission?.text]);
 
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
+  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
 
   const manualOverrideMessage = useMemo(() => {
     if (!smartMarkingResult) return "";
@@ -1115,6 +1122,37 @@ export default function MarkingPage() {
           {objectiveMarkingResult.totalCount > 0 ? (
             <div style={{ fontSize: 13, color: "#1f2937", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 8 }}>
               Deterministic objective score for {objectiveAssignmentId}: <b>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount} → {Math.round(objectiveScorePercent)}%</b>
+            </div>
+          ) : null}
+          {objectiveWrongRows.length > 0 ? (
+            <div style={{ border: "1px solid #fecaca", borderRadius: 8, overflow: "hidden", background: "#fff7ed" }}>
+              <div style={{ padding: 8, fontSize: 13, fontWeight: 700, color: "#7f1d1d" }}>Wrong objective answers</div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Question</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Student</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Correct</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objectiveWrongRows.map((row) => (
+                      <tr key={row.question}>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.question}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.student || "—"}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.expected || row.rawExpected || "—"}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>Wrong</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : objectiveMarkingResult.totalCount > 0 ? (
+            <div style={{ fontSize: 13, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: 8 }}>
+              No wrong objective answers detected.
             </div>
           ) : null}
           <label>
