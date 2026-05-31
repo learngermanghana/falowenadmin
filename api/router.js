@@ -1,7 +1,10 @@
 /* global process */
 import { Buffer } from "node:buffer";
 import socialMetricsHandler from "./social-metrics.js";
-import { autoMarkSubmission } from "../src/utils/autoMarking.js";
+import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
+
+const OBJECTIVE_WEIGHT = 0.5;
+const WRITING_WEIGHT = 0.5;
 
 async function ensureJsonBody(req) {
   if (req.body !== undefined) return req.body;
@@ -394,74 +397,35 @@ function mergeObjectiveAndWritingParts({ existingResult = {}, writingParts = [],
 
 function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
   const referenceEntry = payload.referenceEntry || {};
-  const parts = referenceEntry.parts || {};
-  const expectedParts = normalizeExpectedParts(referenceEntry.expectedParts || referenceEntry.expected_parts, parts);
   const submissionText = payload.submissionText || payload.submission?.text || "";
-  const studentAnswers = extractStudentObjectiveAnswers(submissionText);
-  const scoredParts = [];
-  const detectedParts = Object.entries(studentAnswers)
-    .filter(([, bucket]) => Object.keys(bucket).length)
-    .map(([partId, bucket]) => ({ partId, answerCount: Object.keys(bucket).length }));
-  let correct = 0;
-  let total = 0;
-  const wrongLabels = [];
+  const deterministicObjective = checkDeterministicObjectiveAnswers({ referenceEntry, submissionText, partId: "main" });
+  if (!deterministicObjective?.objectiveTotal) return null;
 
-  for (const partId of expectedParts) {
-    const answerPart = parts[partId];
-    if (!answerPart?.answers?.length) continue;
-    const bucket = studentAnswers[partId] || {};
-    let partCorrect = 0;
-    let partTotal = 0;
-    const wrong = [];
-    const missing = [];
-
-    for (const answer of answerPart.answers) {
-      const questionNumber = String(Number(answer.questionNumber || partTotal + 1));
-      const expectedLetter = normalizeLetter(answer.correctLetter || answer.rawCorrectAnswer || answer.correctText);
-      if (!expectedLetter) continue;
-      partTotal += 1;
-      const givenLetter = normalizeLetter(bucket[questionNumber]);
-      if (!givenLetter) {
-        missing.push(questionNumber);
-      } else if (givenLetter === expectedLetter) {
-        partCorrect += 1;
-      } else {
-        wrong.push({ questionNumber, expected: expectedLetter, given: givenLetter });
-        wrongLabels.push(`${partId} ${questionNumber}`);
-      }
-    }
-
-    if (partTotal > 0) {
-      total += partTotal;
-      correct += partCorrect;
-      scoredParts.push({
-        partId,
-        correct: partCorrect,
-        total: partTotal,
-        score: Math.round((partCorrect / partTotal) * 100),
-        wrong,
-        missing,
-      });
-    }
-  }
-
-  if (!total || !detectedParts.length) return null;
-
-  const objectiveScore = Math.round((correct / total) * 100);
   const name = payload.submission?.studentName || payload.submission?.name || "Student";
   const supplementalWriting = hasWritingPart(existingResult) ? null : buildSupplementalWritingResult(payload);
   const writingScore = existingResult.writingScore ?? supplementalWriting?.writingScore ?? null;
-  const hasWriting = hasWritingPart(existingResult) || Boolean(supplementalWriting?.writingParts?.length);
-  const finalScore = writingScore === null ? objectiveScore : Math.round((objectiveScore + Number(writingScore)) / 2);
-  const objectiveFeedback = buildObjectiveFeedback({ name, correct, total, wrongLabels });
-  const writingFeedback = hasWritingPart(existingResult) ? "Writing section was marked by AI and preserved alongside the deterministic objective score." : supplementalWriting?.writingFeedback;
+  const hasWriting = writingScore !== null && writingScore !== undefined && Number.isFinite(Number(writingScore));
+  const objectiveScore = deterministicObjective.objectiveScore;
+  const finalScore = hasWriting
+    ? Math.round((objectiveScore * OBJECTIVE_WEIGHT) + (Number(writingScore) * WRITING_WEIGHT))
+    : objectiveScore;
+  const wrongLabels = deterministicObjective.wrongAnswers.map((item) => `${item.partId || "objective"} ${item.question}`);
+  const objectiveFeedback = buildObjectiveFeedback({
+    name,
+    correct: deterministicObjective.objectiveCorrect,
+    total: deterministicObjective.objectiveTotal,
+    wrongLabels,
+  });
+  const writingFeedback = hasWritingPart(existingResult)
+    ? "Writing section was marked by AI and preserved alongside the deterministic objective score."
+    : supplementalWriting?.writingFeedback;
   const feedback = [writingFeedback, objectiveFeedback].filter(Boolean).join("\n");
-  const objectiveCorrections = scoredParts.flatMap((part) => part.wrong.map((item) => ({
-    partId: part.partId,
-    questionNumber: item.questionNumber,
+  const objectiveCorrections = deterministicObjective.wrongAnswers.map((item) => ({
+    partId: item.partId,
+    questionNumber: item.question,
     expected: item.expected,
-    given: item.given,
-  })));
+    given: item.student,
+  }));
 
   return {
     ...(existingResult || {}),
@@ -470,33 +434,34 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
     level: referenceEntry.level || payload.level || existingResult.level || "UNKNOWN",
     assignmentKey: referenceEntry.assignmentKey || payload.assignmentKey || existingResult.assignmentKey || "",
     detectedParts: [
-      ...(hasWriting ? [{ partId: "teil2", partType: "writing", answerCount: 1 }] : []),
-      ...detectedParts.filter((part) => part.partId !== "teil2"),
+      ...(hasWriting ? [{ partId: "teil2", partType: "writing", answerCount: 1, summary: "teil2: writing answer marked" }] : []),
+      ...deterministicObjective.detectedParts,
     ],
-    expectedParts,
+    expectedParts: referenceEntry.expectedParts || existingResult.expectedParts || [],
     parts: mergeObjectiveAndWritingParts({
       existingResult,
       writingParts: supplementalWriting?.writingParts || [],
-      objectiveParts: scoredParts.map((part) => ({ ...part, partType: "objective" })),
+      objectiveParts: deterministicObjective.parts,
     }),
     objectiveScore,
-    objectiveCorrect: correct,
-    objectiveTotal: total,
-    writingScore,
+    objectiveCorrect: deterministicObjective.objectiveCorrect,
+    objectiveTotal: deterministicObjective.objectiveTotal,
+    wrongAnswers: deterministicObjective.wrongAnswers,
+    writingScore: hasWriting ? Number(writingScore) : null,
     finalScore,
     feedback,
     corrections: [...(Array.isArray(existingResult.corrections) ? existingResult.corrections : []), ...objectiveCorrections],
     improvementSummary: [supplementalWriting?.writingImprovementSummary, objectiveFeedback].filter(Boolean).join("\n") || existingResult.improvementSummary || feedback,
-    confidence: hasWriting ? Math.min(0.98, Math.max(0.75, Number(supplementalWriting?.confidence || existingResult.confidence || 0.75))) : 0.98,
+    confidence: Math.max(Number(existingResult.confidence || 0), deterministicObjective.confidence || 0.95),
     status: existingResult.status === "needs_review" ? "needs_review" : "marked",
     shouldSendAutomatically: false,
     ai: {
       ...(existingResult.ai || {}),
       deterministicObjectiveMarked: true,
+      deterministicObjectiveWeight: hasWriting ? OBJECTIVE_WEIGHT : 1,
+      deterministicWritingWeight: hasWriting ? WRITING_WEIGHT : 0,
       supplementalWritingMarked: Boolean(supplementalWriting?.writingParts?.length),
-      note: hasWriting
-        ? "Objective score calculated from answer key and combined with the writing mark. Writing feedback is preserved or supplemented instead of being overwritten."
-        : "Objective score calculated from answer key before AI review.",
+      note: "Objective score calculated deterministically from the answer key; AI writing feedback is preserved.",
     },
   };
 }
