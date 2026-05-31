@@ -1,0 +1,139 @@
+name: Apply marking updates 1 and 3
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch marking behavior
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          service = Path('src/services/markingService.js')
+          text = service.read_text()
+          old = '''  let receipt;
+  let reviewReason = "";
+
+  if (isSafeForScoreSheet(result)) {
+    receipt = await saveScoreRow({
+      studentCode: row.studentcode,
+      name: row.name,
+      assignment: row.assignment,
+      assignmentId: row.assignment_id,
+      score: row.score,
+      comments: row.comments,
+      level: row.level,
+      link: row.link,
+      source: row.source,
+    });
+  } else {
+    reviewReason = result.status !== "marked"
+      ? `AI returned ${result.status}; tutor review required before score sheet sync.`
+      : "AI returned an unsafe zero/low-confidence result; kept for audit and blocked from score sheet.";
+    receipt = skippedScoreReceipt(row, reviewReason);
+  }
+'''
+          new = '''  const reviewReason = "AI marking saved as draft only. Tutor must click Save Final Score before anything is written to the final score sheet.";
+  const receipt = skippedScoreReceipt(row, reviewReason);
+'''
+          if old not in text:
+            raise SystemExit('Expected AI auto-save block not found')
+          service.write_text(text.replace(old, new))
+
+          page = Path('src/pages/MarkingPage.jsx')
+          text = page.read_text()
+          if 'function objectiveWrongAnswerRows' not in text:
+            marker = '''function formatWritingScore(result = {}) {
+  if (result.writingScore === null || result.writingScore === undefined) return "—";
+  const maxWritingScore = getMaxWritingScore(result);
+  const writingPercent = writingScoreToPercent(result.writingScore, maxWritingScore);
+  if (maxWritingScore && maxWritingScore !== 100) {
+    return `${result.writingScore}/${maxWritingScore} → ${writingPercent}%`;
+  }
+  return `${writingPercent}%`;
+}
+'''
+            helper = marker + '''
+function objectiveWrongAnswerRows(objectiveDetails = {}) {
+  return Object.entries(objectiveDetails || {})
+    .map(([question, detail]) => ({ question, ...detail }))
+    .filter((row) => row && row.correct === false);
+}
+'''
+            if marker not in text:
+              raise SystemExit('formatWritingScore marker not found')
+            text = text.replace(marker, helper)
+
+          if 'const objectiveWrongRows = useMemo' not in text:
+            marker = '''  const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
+
+  const manualOverrideMessage = useMemo(() => {
+'''
+            insert = '''  const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
+  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
+
+  const manualOverrideMessage = useMemo(() => {
+'''
+            if marker not in text:
+              raise SystemExit('objectiveScorePercent marker not found')
+            text = text.replace(marker, insert)
+
+          if 'Wrong objective answers' not in text:
+            marker = '''          {objectiveMarkingResult.totalCount > 0 ? (
+            <div style={{ fontSize: 13, color: "#1f2937", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 8 }}>
+              Deterministic objective score for {objectiveAssignmentId}: <b>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount} → {Math.round(objectiveScorePercent)}%</b>
+            </div>
+          ) : null}
+'''
+            table = marker + '''          {objectiveWrongRows.length > 0 ? (
+            <div style={{ border: "1px solid #fecaca", borderRadius: 8, overflow: "hidden", background: "#fff7ed" }}>
+              <div style={{ padding: 8, fontSize: 13, fontWeight: 700, color: "#7f1d1d" }}>Wrong objective answers</div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Question</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Student</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Correct</th>
+                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objectiveWrongRows.map((row) => (
+                      <tr key={row.question}>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.question}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.student || "—"}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.expected || "—"}</td>
+                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>Wrong</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : objectiveMarkingResult.totalCount > 0 ? (
+            <div style={{ fontSize: 13, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: 8 }}>
+              No wrong objective answers detected.
+            </div>
+          ) : null}
+'''
+            if marker not in text:
+              raise SystemExit('objective score panel marker not found')
+            text = text.replace(marker, table)
+          page.write_text(text)
+          PY
+      - name: Commit marking updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/services/markingService.js src/pages/MarkingPage.jsx
+          git commit -m "Make AI marking draft-only and show wrong-answer table" || exit 0
+          git push
