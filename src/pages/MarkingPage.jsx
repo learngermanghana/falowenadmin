@@ -926,7 +926,7 @@ export default function MarkingPage() {
                 <span>Status: <b>{smartMarkingResult.status}</b></span>
               </div>
               <div style={{ fontSize: 13 }}>
-                <b>Detected parts:</b> {smartMarkingResult.detectedParts?.map((part) => `${part.partId} (${part.partType})`).join(", ") || "None"}
+                <b>Detected parts:</b> {smartMarkingResult.detectedParts?.map((part) => part.summary || `${part.partId}: ${part.answerCount ?? part.total ?? "—"} ${part.partType || "answers"} found${part.correct !== undefined ? `, ${part.correct} correct, ${part.wrong ?? 0} wrong` : ""}`).join(", ") || "None"}
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving}>Re-run AI marking</button>

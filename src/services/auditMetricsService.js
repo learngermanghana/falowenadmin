@@ -32,7 +32,11 @@ function inferPaymentStatus(row) {
 
   const amountDue = parseMoney(readAny(row, ["amountdue", "tuition", "fee", "totalfee"]));
   const amountPaid = parseMoney(readAny(row, ["amountpaid", "paid", "paidamount"]));
+  const balance = parseMoney(readAny(row, ["balance", "amountbalance", "outstanding"]));
 
+  if (balance > 0 && amountPaid > 0) return "partial";
+  if (balance > 0 && amountPaid <= 0) return "unpaid";
+  if (amountPaid > 0 && balance === 0) return "paid";
   if (amountDue <= 0 && amountPaid <= 0) return "unknown";
   if (amountPaid >= amountDue && amountDue > 0) return "paid";
   if (amountPaid > 0 && amountPaid < amountDue) return "partial";
@@ -43,6 +47,11 @@ function inferPaymentStatus(row) {
 
 function inferContractStatus(row) {
   const explicit = normalizeKey(readAny(row, ["contractstatus", "contract", "agreementstatus"]));
+  const contractStart = readAny(row, ["contractstart", "contract_start", "startdate"]);
+  const contractEnd = readAny(row, ["contractend", "contract_end", "enddate"]);
+  const enrollmentSent = normalizeKey(readAny(row, ["enrollmentsent", "enrollment_sent"]));
+  if (contractStart && contractEnd) return "signed";
+  if (contractStart || ["yes", "y", "true", "sent"].includes(enrollmentSent)) return "pending";
   if (["signed", "complete", "completed"].includes(explicit)) return "signed";
   if (["pending", "awaiting", "review"].includes(explicit)) return "pending";
   if (["missing", "notstarted", "unsigned"].includes(explicit)) return "missing";
@@ -51,6 +60,8 @@ function inferContractStatus(row) {
 
 function inferExpenseStatus(row) {
   const explicit = normalizeKey(readAny(row, ["expensestatus", "expenseapproval", "expense"]));
+  const expenseAmount = parseMoney(readAny(row, ["expense", "expenseamount", "cost", "dailylimit"]));
+  if (expenseAmount > 0) return "approved";
   if (["approved", "reimbursed", "paid"].includes(explicit)) return "approved";
   if (["pending", "submitted", "review"].includes(explicit)) return "pending";
   return explicit ? "pending" : "none";
@@ -63,14 +74,13 @@ function toAuditRow(row) {
     paymentStatus: inferPaymentStatus(row),
     contractStatus: inferContractStatus(row),
     expenseStatus: inferExpenseStatus(row),
-    amountDue: parseMoney(readAny(row, ["amountdue", "tuition", "fee", "totalfee"])),
+    amountDue: parseMoney(readAny(row, ["amountdue", "tuition", "fee", "totalfee"])) || (parseMoney(readAny(row, ["amountpaid", "paid", "paidamount"])) + parseMoney(readAny(row, ["balance", "amountbalance", "outstanding"]))),
     amountPaid: parseMoney(readAny(row, ["amountpaid", "paid", "paidamount"])),
-    expenseAmount: parseMoney(readAny(row, ["expense", "expenseamount", "cost"])),
+    expenseAmount: parseMoney(readAny(row, ["expense", "expenseamount", "cost", "dailylimit"])),
   };
 }
 
-export async function loadAuditMetrics() {
-  const rows = await loadPublishedStudentRows();
+export function buildAuditMetrics(rows = []) {
   const auditRows = rows.map(toAuditRow);
 
   const finance = {
@@ -100,4 +110,8 @@ export async function loadAuditMetrics() {
     contracts,
     expenses,
   };
+}
+
+export async function loadAuditMetrics() {
+  return buildAuditMetrics(await loadPublishedStudentRows());
 }

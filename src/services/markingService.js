@@ -14,6 +14,8 @@ import {
 const DEFAULT_ROSTER_SHEET_CSV_URL = import.meta.env.VITE_STUDENTS_SHEET_CSV_URL || "";
 const MARKING_ROSTER_CSV_URL = import.meta.env.VITE_MARKING_ROSTER_CSV_URL || DEFAULT_ROSTER_SHEET_CSV_URL;
 const MARKING_QUEUE_START_DATE = String(import.meta.env.VITE_MARKING_QUEUE_START_DATE || "2026-05-29T00:00:00Z").trim();
+const OBJECTIVE_WEIGHT = 0.5;
+const WRITING_WEIGHT = 0.5;
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -533,6 +535,7 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
     objectiveTotal: Number(result.objectiveTotal || 0),
     writingScore: result.writingScore ?? null,
     finalScore,
+    wrongAnswers: Array.isArray(result.wrongAnswers) ? result.wrongAnswers : [],
     feedback,
     corrections: Array.isArray(result.corrections) ? result.corrections : [],
     improvementSummary: result.improvementSummary || feedback,
@@ -561,7 +564,7 @@ function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObj
   const objectiveScore = deterministicObjective.objectiveScore;
   const hasWritingScore = writingScore !== null && Number.isFinite(writingScore);
   const finalScore = hasWritingScore
-    ? Math.round((objectiveScore * 0.8) + (writingScore * 0.2))
+    ? Math.round((objectiveScore * OBJECTIVE_WEIGHT) + (writingScore * WRITING_WEIGHT))
     : objectiveScore;
   const objectiveFeedback = `Objective score: ${deterministicObjective.objectiveCorrect}/${deterministicObjective.objectiveTotal} correct (${objectiveScore}%).`;
 
@@ -587,7 +590,8 @@ function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObj
     ai: {
       ...(aiResult.ai || {}),
       deterministicObjectiveMarked: true,
-      deterministicObjectiveWeight: hasWritingScore ? 0.8 : 1,
+      deterministicObjectiveWeight: hasWritingScore ? OBJECTIVE_WEIGHT : 1,
+      deterministicWritingWeight: hasWritingScore ? WRITING_WEIGHT : 0,
     },
   };
 }

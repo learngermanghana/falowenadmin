@@ -1,5 +1,7 @@
 const PART_IDS = ["teil1", "teil2", "teil3", "teil4", "unknown"];
 const WRITING_CONFIDENCE_THRESHOLD = 0.75;
+const OBJECTIVE_OPTION_LETTERS = "ABCDEFX";
+
 
 const WRITING_RUBRICS = {
   A1: ["task completion", "greeting/closing", "simple grammar", "word order", "vocabulary", "spelling"],
@@ -32,7 +34,7 @@ function normalizeAnswer(value) {
   if (["true", "r", "richtig", "wahr", "yes", "ja"].includes(normalized)) return "R";
   if (["false", "f", "falsch", "nein", "no"].includes(normalized)) return "F";
 
-  const option = String(value || "").trim().match(/^([A-D])\s*[).:-]?$/i);
+  const option = String(value || "").trim().match(/^([A-FX])\s*[).:-]?$/i);
   if (option) return option[1].toUpperCase();
 
   return normalized;
@@ -40,7 +42,7 @@ function normalizeAnswer(value) {
 
 function extractOptionLetter(value) {
   const trimmed = String(value || "").trim();
-  const match = trimmed.match(/^([A-Z])(?:\s*[).:-]|\s+|$)/i);
+  const match = trimmed.match(/^([A-FX])(?:\s*[).:-]|\s+|$)/i);
   return match ? match[1].toUpperCase() : "";
 }
 
@@ -140,29 +142,60 @@ function detectPartType({ level, partId, text, referenceEntry = {} } = {}) {
   return "objective";
 }
 
+function normalizeObjectiveOption(value = "") {
+  const match = String(value || "").trim().match(new RegExp(`^([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+  return match ? match[1].toUpperCase() : "";
+}
+
+function parseNumberedObjectiveLine(line = "") {
+  const trimmed = String(line || "").trim();
+  if (!trimmed) return null;
+
+  const numbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+  if (numbered) {
+    return { question: Number.parseInt(numbered[1], 10), answer: numbered[2].toUpperCase() };
+  }
+
+  const anzeigeNumbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*anzeige\\s*[).:-]?\\s*([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+  if (anzeigeNumbered) {
+    return { question: Number.parseInt(anzeigeNumbered[1], 10), answer: anzeigeNumbered[2].toUpperCase() };
+  }
+
+  const textAnswer = trimmed.match(/^(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:-]\s*(.+)$/i);
+  if (textAnswer) {
+    return { question: Number.parseInt(textAnswer[1], 10), answer: textAnswer[2].trim() };
+  }
+
+  return null;
+}
+
 function parseStudentObjectiveAnswers(submissionText = "") {
   const text = String(submissionText || "");
   const map = new Map();
+  let orderedQuestion = 0;
 
-  const explicitRegex = /(?:^|\n|\r)\s*(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:-]\s*([^\n\r]+)/gi;
-  let explicitMatch;
-  while ((explicitMatch = explicitRegex.exec(text))) {
-    map.set(Number.parseInt(explicitMatch[1], 10), explicitMatch[2].trim());
-  }
+  for (const line of text.split(/\r?\n|[,;]+/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
 
-  const anzeigeRegex = /(?:frage\s*)?(\d{1,3})\s*[).:-]?\s*(?:\d+\s*[).:-]?\s*)?anzeige\s*([a-d])/gi;
-  let anzeigeMatch;
-  while ((anzeigeMatch = anzeigeRegex.exec(text))) {
-    map.set(Number.parseInt(anzeigeMatch[1], 10), anzeigeMatch[2].toUpperCase());
-  }
+    const numbered = parseNumberedObjectiveLine(trimmed);
+    if (numbered) {
+      map.set(numbered.question, numbered.answer);
+      orderedQuestion = Math.max(orderedQuestion, numbered.question);
+      continue;
+    }
 
-  if (!map.size) {
-    text.split(/[\n,;]+/).forEach((chunk, index) => {
-      const trimmed = chunk.trim();
-      if (/^[A-DRFrf]$/i.test(trimmed) || /^(richtig|falsch|true|false)$/i.test(trimmed)) {
-        map.set(index + 1, trimmed);
-      }
-    });
+    const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2)) {
+      orderedQuestion += 1;
+      map.set(orderedQuestion, anzeigeOnly[1].toUpperCase());
+      continue;
+    }
+
+    if (/^(richtig|falsch|true|false)$/i.test(trimmed)) {
+      orderedQuestion += 1;
+      map.set(orderedQuestion, trimmed);
+    }
   }
 
   return map;
@@ -187,7 +220,13 @@ function findVocabularyKey(value = "") {
 }
 
 function parseVocabularyPair(value = "") {
-  const match = String(value || "").match(/(?:^[a-z]\s*[).]\s*)?([A-Za-z/ ]+?)\s*[-–:]\s*([A-Za-zÄÖÜäöüß/ ]+)/);
+  const trimmed = String(value || "").trim();
+  const aliasPattern = Object.values(VOCABULARY_ALIASES)
+    .flat()
+    .sort((a, b) => b.length - a.length)
+    .map((alias) => alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+  const match = trimmed.match(new RegExp(`^(?:[a-z]\\s*[).]\\s*)?((?:${aliasPattern})(?:\\s*/\\s*(?:${aliasPattern}))?)\\s*(?:[-–:/]\\s*|\\s+)([A-Za-zÄÖÜäöüß]+(?:\\s*/\\s*[A-Za-zÄÖÜäöüß]+)*)`, "i"));
   if (!match) return null;
   const vocabularyKey = findVocabularyKey(match[1]);
   if (!vocabularyKey) return null;
@@ -205,6 +244,58 @@ function extractVocabularyAnswers(text = "") {
   }
 
   return pairs;
+}
+
+function parseObjectiveReferenceText(text = "") {
+  const entries = [];
+  let orderedQuestion = 0;
+
+  for (const line of String(text || "").split(/\r?\n|[,;]+/)) {
+    const trimmed = line.trim();
+    if (!trimmed || /^(teil|part)\s*\d+\s*:?$/i.test(trimmed)) continue;
+
+    const numbered = parseNumberedObjectiveLine(trimmed);
+    if (numbered) {
+      entries.push({ key: `Answer${numbered.question}`, value: numbered.answer });
+      orderedQuestion = Math.max(orderedQuestion, numbered.question);
+      continue;
+    }
+
+    const vocabularyPair = parseVocabularyPair(trimmed);
+    if (vocabularyPair) {
+      orderedQuestion += 1;
+      entries.push({ key: `Answer${orderedQuestion}`, value: trimmed });
+      continue;
+    }
+
+    const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2)) {
+      orderedQuestion += 1;
+      entries.push({ key: `Answer${orderedQuestion}`, value: anzeigeOnly[1].toUpperCase() });
+    }
+  }
+
+  return entries;
+}
+
+function isObjectiveLeaf(value) {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return true;
+  if (!value || typeof value !== "object") return false;
+  return Boolean(value.correctLetter || value.correctText || value.rawCorrectAnswer || value.raw || value.acceptedAnswers);
+}
+
+function extractObjectiveEntries(referenceAnswers = {}, path = []) {
+  if (typeof referenceAnswers === "string") {
+    const parsed = parseObjectiveReferenceText(referenceAnswers);
+    if (parsed.length > 1) return parsed;
+    return [{ key: path.join("."), value: referenceAnswers }];
+  }
+  if (typeof referenceAnswers === "number" || typeof referenceAnswers === "boolean") {
+    return [{ key: path.join("."), value: String(referenceAnswers) }];
+  }
+  if (!referenceAnswers || typeof referenceAnswers !== "object") return [];
+  if (isObjectiveLeaf(referenceAnswers)) return [{ key: path.join("."), value: referenceAnswers }];
+  return Object.entries(referenceAnswers).flatMap(([key, value]) => extractObjectiveEntries(value, [...path, key]));
 }
 
 function flattenAnswerEntries(referenceAnswers = {}, path = []) {
@@ -238,6 +329,7 @@ function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   ].filter(Boolean);
 
   for (const candidate of candidates) {
+    if (typeof candidate === "string") return candidate;
     if (candidate?.[partId]) return candidate[partId];
     if (partId !== "unknown") {
       const matchingKey = Object.keys(candidate || {}).find((key) => findPartId(key) === partId);
@@ -351,12 +443,17 @@ function valuesMatch(expectedRaw, studentRaw) {
   return { status: "wrong" };
 }
 
+function formatExpectedAnswer(expectedRaw) {
+  const meta = expectedMetadata(expectedRaw);
+  return String(meta.correctLetter || normalizeObjectiveOption(meta.raw) || meta.correctText || meta.raw || "").toUpperCase();
+}
+
 function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = "unknown" } = {}) {
   const studentAnswers = parseStudentObjectiveAnswers(submissionText);
   const vocabularyAnswers = extractVocabularyAnswers(submissionText);
   const entries = Array.isArray(referenceAnswers)
     ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.questionKey || entry.sourceKey || `Answer${index + 1}`, value: entry }))
-    : flattenAnswerEntries(referenceAnswers);
+    : extractObjectiveEntries(referenceAnswers);
   const total = entries.length;
 
   if (!total) {
@@ -383,7 +480,7 @@ function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = 
     const questionIndex = getQuestionIndex(entry.key) || entryIndex + 1;
     const meta = expectedMetadata(entry.value);
     const studentRaw = studentAnswers.get(questionIndex) || (meta.vocabularyKey ? vocabularyAnswers[meta.vocabularyKey] : "") || "";
-    const item = { question: questionIndex, expected: String(entry.value?.rawCorrectAnswer || entry.value?.raw || entry.value), submitted: String(studentRaw || "") };
+    const item = { question: questionIndex, expected: formatExpectedAnswer(entry.value), student: String(studentRaw || ""), submitted: String(studentRaw || "") };
 
     if (!studentRaw) {
       missing.push(item);
@@ -540,19 +637,84 @@ export function autoMarkSubmission({ referenceEntry = {}, submission = {}, submi
   return routeAndMarkSubmission({ referenceEntry, submission, submissionText, aiWritingMarker });
 }
 
+function getReferenceObjectivePartIds(referenceEntry = {}) {
+  const partIds = [];
+  for (const key of Object.keys(referenceEntry.parts || {})) {
+    const partId = findPartId(key);
+    if (partId !== "unknown" && getObjectiveAnswerKey(referenceEntry, partId)) partIds.push(partId);
+  }
+  for (const source of [referenceEntry.answers, referenceEntry.answerKeys, referenceEntry.key, referenceEntry.answer_key]) {
+    if (!source || typeof source !== "object" || Array.isArray(source)) continue;
+    for (const key of Object.keys(source)) {
+      const partId = findPartId(key);
+      if (partId !== "unknown") partIds.push(partId);
+    }
+  }
+  const textSources = [referenceEntry.answers, referenceEntry.answerKeys, referenceEntry.key].filter((value) => typeof value === "string");
+  for (const text of textSources) {
+    const matches = String(text).match(/\b(?:teil|part)\s*[1-4]\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
+    matches.map(findPartId).filter((partId) => partId !== "unknown").forEach((partId) => partIds.push(partId));
+  }
+  return [...new Set(partIds)].filter((partId) => partId !== "teil2");
+}
+
+function selectSubmissionTextForPart(submissionText = "", partId = "main") {
+  if (partId === "main" || partId === "unknown") return submissionText;
+  const parts = splitSubmissionIntoParts(submissionText);
+  const matching = parts.find((part) => part.partId === partId);
+  return matching?.text || submissionText;
+}
+
 export function checkDeterministicObjectiveAnswers({ referenceEntry = {}, submissionText = "", partId = "main" } = {}) {
-  const answerKey = getObjectiveAnswerKey(referenceEntry, partId);
-  const result = objectiveMarker(answerKey, submissionText, { partId });
-  if (!result.total) return null;
+  const requestedParts = partId && partId !== "main" ? [partId] : getReferenceObjectivePartIds(referenceEntry);
+  const partIds = requestedParts.length ? requestedParts : [partId || "main"];
+  const markedParts = [];
+
+  for (const currentPartId of partIds) {
+    const answerKey = getObjectiveAnswerKey(referenceEntry, currentPartId === "main" ? "unknown" : currentPartId);
+    const textForPart = selectSubmissionTextForPart(submissionText, currentPartId);
+    const result = objectiveMarker(answerKey, textForPart, { partId: currentPartId });
+    if (!result.total) continue;
+    markedParts.push({ partId: currentPartId, partType: "objective", result });
+  }
+
+  if (!markedParts.length) return null;
+
+  const objectiveCorrect = markedParts.reduce((sum, part) => sum + part.result.correct.length, 0);
+  const objectiveTotal = markedParts.reduce((sum, part) => sum + part.result.total, 0);
+  if (!objectiveTotal) return null;
+
+  const wrongAnswers = markedParts.flatMap((part) => [...part.result.wrong, ...part.result.missing, ...part.result.needsReview].map((item) => ({
+    partId: part.partId,
+    question: item.question,
+    expected: item.expected,
+    student: item.student || item.submitted || "",
+    ...(item.reason ? { reason: item.reason } : {}),
+  })));
 
   return {
-    objectiveScore: result.percentage,
-    objectiveCorrect: result.correct.length,
-    objectiveTotal: result.total,
-    wrongAnswers: [...result.wrong, ...result.missing, ...result.needsReview],
-    detectedParts: [{ partId, partType: "objective", correct: result.correct.length, total: result.total }],
-    parts: [{ partId, partType: "objective", result }],
-    confidence: result.confidence,
+    objectiveScore: Math.round((objectiveCorrect / objectiveTotal) * 100),
+    objectiveCorrect,
+    objectiveTotal,
+    wrongAnswers,
+    detectedParts: markedParts.map((part) => {
+      const base = {
+        partId: part.partId,
+        partType: "objective",
+        correct: part.result.correct.length,
+        total: part.result.total,
+      };
+      if (part.partId === "main") return base;
+      const wrong = part.result.wrong.length + part.result.missing.length + part.result.needsReview.length;
+      return {
+        ...base,
+        answerCount: part.result.total,
+        wrong,
+        summary: `${part.partId}: ${part.result.total} objective answers found, ${part.result.correct.length} correct, ${wrong} wrong`,
+      };
+    }),
+    parts: markedParts,
+    confidence: Math.min(...markedParts.map((part) => part.result.confidence || 0.95)),
   };
 }
 

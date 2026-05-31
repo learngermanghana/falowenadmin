@@ -2,6 +2,96 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 
+test("deterministic parser scores Anzeige A-F-X answers without AI", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      answers: `teil3:
+Answer1. Anzeige: f
+Answer2. Anzeige: c
+Answer3. Anzeige: X
+Answer4. Anzeige: b
+Answer5. Anzeige: a`,
+    },
+    submissionText: `Lesen
+
+1. F
+2. C
+3. C
+4. E
+5. A`,
+  });
+
+  assert.equal(result.objectiveScore, 60);
+  assert.equal(result.objectiveCorrect, 3);
+  assert.equal(result.objectiveTotal, 5);
+  assert.deepEqual(result.wrongAnswers.map(({ question, expected, student }) => ({ question, expected, student })), [
+    { question: 3, expected: "X", student: "C" },
+    { question: 4, expected: "B", student: "E" },
+  ]);
+  assert.equal(result.detectedParts[0].summary, "teil3: 5 objective answers found, 3 correct, 2 wrong");
+});
+
+test("deterministic parser scores numbered Anzeige answers", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      format: "objective",
+      answers: `1 Anzeige A
+2 Anzeige B
+3 Anzeige B
+4 Anzeige A
+5 Anzeige A`,
+    },
+    submissionText: `1 Anzeige A
+2 Anzeige B
+3 Anzeige B
+4 Anzeige A
+5 Anzeige B`,
+  });
+
+  assert.equal(result.objectiveScore, 80);
+  assert.equal(result.objectiveCorrect, 4);
+  assert.equal(result.objectiveTotal, 5);
+  assert.deepEqual(result.wrongAnswers.map(({ question, expected, student }) => ({ question, expected, student })), [
+    { question: 5, expected: "A", student: "B" },
+  ]);
+});
+
+test("deterministic parser supports German body-part vocabulary pairs", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      format: "objective",
+      answers: `Head Kopf
+Arm Arm
+Leg Bein
+Eye Auge
+Nose Nase
+Ear Ohr
+Mouth Mund
+Hand Hand
+Foot Fuß
+Stomach/Belly Bauch`,
+    },
+    submissionText: `Head Kopf
+Arm Arm
+Leg Beine
+Eye Auge
+Nose Nase
+Ear Ohr
+Mouth Mund
+Hand Hand
+Foot Fuß
+Stomach Magen`,
+  });
+
+  assert.equal(result.objectiveCorrect, 8);
+  assert.equal(result.objectiveTotal, 10);
+  assert.equal(result.objectiveScore, 80);
+  assert.deepEqual(result.wrongAnswers.map(({ question, expected, student }) => ({ question, expected, student })), [
+    { question: 3, expected: "BEIN", student: "Beine" },
+    { question: 10, expected: "BAUCH", student: "Magen" },
+  ]);
+});
+
 test("objective auto-mark accepts option letter only", () => {
   const result = autoMarkSubmission({
     referenceEntry: {
