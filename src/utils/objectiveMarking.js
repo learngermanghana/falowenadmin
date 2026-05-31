@@ -37,6 +37,72 @@ export function extractVocabularyAnswers(text = "") {
   return vocab;
 }
 
+function splitSubmissionIntoSections(text = "") {
+  const sections = [];
+  const source = String(text || "");
+  const markerRegex = /(?:^|\n)\s*(teil|part)\s*(\d+)\s*[:;]?\s*/gi;
+  const markers = [];
+  let match;
+
+  while ((match = markerRegex.exec(source))) {
+    markers.push({
+      index: match.index,
+      end: markerRegex.lastIndex,
+      partNumber: Number(match[2]),
+    });
+  }
+
+  if (!markers.length) {
+    return [{ partNumber: null, text: source }];
+  }
+
+  markers.forEach((marker, index) => {
+    const next = markers[index + 1];
+    sections.push({
+      partNumber: marker.partNumber,
+      text: source.slice(marker.end, next ? next.index : source.length),
+    });
+  });
+
+  return sections;
+}
+
+// Extract numbered German-only vocabulary answers like:
+// Teil 3:
+// 1. Kopf
+// 2. Arm
+// 8 Hand
+// This is common when the reference is Head – Kopf but the student writes only the German answers.
+export function extractNumberedVocabularyAnswers(text = "", preferredPartNumber = 3) {
+  const sections = splitSubmissionIntoSections(text);
+  const preferredSections = [
+    ...sections.filter((section) => section.partNumber === preferredPartNumber),
+    ...sections.filter((section) => section.partNumber !== preferredPartNumber && section.partNumber !== 2),
+  ];
+
+  for (const section of preferredSections) {
+    const answers = [];
+    for (const rawLine of String(section.text || "").split(/\r?\n/)) {
+      const match = rawLine.trim().match(/^\s*(\d{1,2})\s*[).:-]?\s*([A-Za-zÄÖÜäöüß]+(?:\s*\/\s*[A-Za-zÄÖÜäöüß]+)?)\s*$/i);
+      if (!match) continue;
+
+      const answer = match[2].trim();
+      const normalized = normalizeAnswer(answer);
+      if (!normalized || /^[a-d]$/.test(normalized)) continue;
+
+      answers.push({ number: Number(match[1]), answer: normalized });
+    }
+
+    if (answers.length) {
+      return answers
+        .sort((a, b) => a.number - b.number)
+        .map((item) => item.answer);
+    }
+  }
+
+  return [];
+}
+
 // Compare student answers to reference answers. Returns
 // { correctCount, totalCount, details } where details maps each question index to
 // { student: string, expected: string, correct: boolean }.
@@ -100,6 +166,7 @@ export function computeObjectiveScore(assignmentId, submissionText) {
   const choiceAns = extractChoiceAnswers(submissionText);
   const vocabAns = extractVocabularyAnswers(submissionText);
   const vocabValues = Object.values(vocabAns);
+  const numberedVocabularyValues = extractNumberedVocabularyAnswers(submissionText);
   const combined = {};
 
   for (const key of Object.keys(ref)) {
@@ -107,7 +174,8 @@ export function computeObjectiveScore(assignmentId, submissionText) {
     if (choiceAns[numKey]) {
       combined[key] = choiceAns[numKey];
     } else {
-      combined[key] = vocabValues[numKey - 6] ?? "";
+      const vocabularyIndex = numKey - 6;
+      combined[key] = vocabValues[vocabularyIndex] ?? numberedVocabularyValues[vocabularyIndex] ?? "";
     }
   }
 
