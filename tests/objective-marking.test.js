@@ -150,3 +150,89 @@ Teil 3:
   assert.equal(result.totalCount, 15);
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
 });
+
+test("computes partial A1-14.1 objective score for real typo/wrong-answer variants", () => {
+  const result = computeObjectiveScore("A1-14.1", `
+Teil 1:
+1.Anzeige A
+2.Anzeige B
+Frage 3.
+2.Anzeige B
+Frage 4.
+Anzeige A
+Frage 5.
+2.Anzeige B
+
+Teil 3:
+Head-kopf
+Arm -Arm.
+Leg - Beine.
+Eye-Auge.
+Nose-Nase.
+Ear- Ohr.
+Mouth-Mund.
+Hand-Hand.
+Foot-Fuß.
+Stomach /Belly -Magen
+  `);
+
+  assert.equal(result.totalCount, 15);
+  assert.equal(result.correctCount, 12);
+  assert.equal(result.details[5].correct, false);
+  assert.equal(result.details[8].correct, false);
+  assert.equal(result.details[15].correct, false);
+});
+
+test("loads dynamic multipart answer keys from answers_dictionary by assignment id", () => {
+  const result = computeObjectiveScore("A2-1.1", `
+Teil 2:
+Hallo Anna,
+ich komme heute später, weil ich arbeiten muss. Viele Grüße
+
+Teil 3:
+1. C
+2. B
+3. A
+4. B
+5. B
+6. B
+7. C
+
+Teil 4:
+1. B
+2. A
+3. A
+4. B
+5. C
+  `);
+
+  assert.equal(result.correctCount, 12);
+  assert.equal(result.totalCount, 12);
+  assert.equal(Object.values(result.details).filter((detail) => detail.partId === "teil2").length, 0);
+});
+
+test("dynamic multipart answer keys catch wrong answers in the right part", () => {
+  const result = computeObjectiveScore("A2-1.1", `
+Teil 3:
+1. C
+2. B
+3. A
+4. B
+5. B
+6. B
+7. C
+
+Teil 4:
+1. A
+2. A
+3. A
+4. B
+5. C
+  `);
+
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 11);
+  assert.equal(result.details["teil4.1"].student, "A");
+  assert.equal(result.details["teil4.1"].expected, "B");
+  assert.equal(result.details["teil4.1"].correct, false);
+});
