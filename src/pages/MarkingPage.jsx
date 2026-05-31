@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, importAnswerDictionary, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
+import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
@@ -52,6 +53,101 @@ function normalize(value) {
 function normalizeStudentCode(value) {
   return normalize(value).replace(/[^a-z0-9]/g, "");
 }
+
+function clampPercent(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(100, Math.round(numeric)));
+}
+
+function objectivePercentFromResult(objectiveResult = {}) {
+  const total = Number(objectiveResult.totalCount || 0);
+  if (!total) return 0;
+  return (Number(objectiveResult.correctCount || 0) / total) * 100;
+}
+
+function getObjectiveAssignmentId(...candidates) {
+  for (const candidate of candidates) {
+    const assignmentId = inferAssignmentId(candidate);
+    if (assignmentId) return assignmentId;
+  }
+  return "";
+}
+
+function getMaxWritingScore(result = {}) {
+  const candidates = [
+    result.maxWritingScore,
+    result.writingMaxScore,
+    result.maxWritingPoints,
+    result.writingMaxPoints,
+    result.rubricMaxScore,
+    result.writingRubricMax,
+    result.ai?.maxWritingScore,
+    result.ai?.writingMaxScore,
+    ...(Array.isArray(result.parts)
+      ? result.parts
+        .filter((part) => String(part?.partType || "").toLowerCase() === "writing")
+        .flatMap((part) => [part.maxScore, part.maxPoints, part.total, part.totalPoints])
+      : []),
+  ];
+
+  const explicitMax = candidates.find((value) => Number.isFinite(Number(value)) && Number(value) > 0);
+  if (explicitMax) return Number(explicitMax);
+
+  const writingScore = Number(result.writingScore);
+  if (Number.isFinite(writingScore) && writingScore > 0 && writingScore <= 50) return 50;
+  return 100;
+}
+
+function writingScoreToPercent(writingScore, maxWritingScore = 100) {
+  const numericScore = Number(writingScore);
+  const numericMax = Number(maxWritingScore);
+  if (!Number.isFinite(numericScore)) return 0;
+  if (!Number.isFinite(numericMax) || numericMax <= 0) return clampPercent(numericScore);
+  return clampPercent((numericScore / numericMax) * 100);
+}
+
+function formatWritingScore(result = {}) {
+  if (result.writingScore === null || result.writingScore === undefined) return "—";
+  const maxWritingScore = getMaxWritingScore(result);
+  const writingPercent = writingScoreToPercent(result.writingScore, maxWritingScore);
+  if (maxWritingScore && maxWritingScore !== 100) {
+    return `${result.writingScore}/${maxWritingScore} → ${writingPercent}%`;
+  }
+  return `${writingPercent}%`;
+}
+
+function mergeObjectiveScore(result = {}, objectiveResult = {}) {
+  const objectivePercent = objectivePercentFromResult(objectiveResult);
+  const writingPercent = writingScoreToPercent(result.writingScore, getMaxWritingScore(result));
+  const hasObjective = Number(objectiveResult.totalCount || 0) > 0;
+  const hasWriting = result.writingScore !== null && result.writingScore !== undefined && Number.isFinite(Number(result.writingScore));
+
+  let finalScore;
+  if (hasObjective && hasWriting) {
+    finalScore = Math.round((objectivePercent + writingPercent) / 2);
+  } else if (hasObjective) {
+    finalScore = Math.round(objectivePercent);
+  } else {
+    finalScore = Math.round(writingPercent || Number(result.finalScore ?? result.score ?? 0));
+  }
+
+  return {
+    ...result,
+    score: finalScore,
+    finalScore,
+    objectiveCorrect: objectiveResult.correctCount,
+    objectiveTotal: objectiveResult.totalCount,
+    objectiveDetails: objectiveResult.details,
+    objectiveScore: objectivePercent,
+    writingScore: result.writingScore ?? null,
+    writingScorePercent: hasWriting ? writingPercent : null,
+    maxWritingScore: getMaxWritingScore(result),
+    aiOriginalScore: result.aiOriginalScore ?? result.finalScore ?? result.score ?? null,
+    aiOriginalFeedback: result.aiOriginalFeedback ?? result.feedback ?? "",
+  };
+}
+
 
 function flattenAnswers(value, prefix = "") {
   if (typeof value === "string") {
@@ -394,6 +490,40 @@ export default function MarkingPage() {
     return `Reference Answer\n${referenceText}\n\nStudent Submission\n${submissionText}${contextBlock}`;
   }, [formattedReferenceAnswers, selectedSubmission]);
 
+  const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(
+    assignmentIdValue,
+    selectedSubmission?.assignmentKey,
+    selectedSubmission?.assignmentId,
+    selectedSubmission?.raw?.assignment_id,
+    selectedSubmission?.raw?.assignmentId,
+    referenceEntry?.assignmentId,
+    referenceEntry?.assignment_id,
+    referenceEntry?.assignment,
+  ), [
+    assignmentIdValue,
+    selectedSubmission?.assignmentKey,
+    selectedSubmission?.assignmentId,
+    selectedSubmission?.raw?.assignment_id,
+    selectedSubmission?.raw?.assignmentId,
+    referenceEntry?.assignmentId,
+    referenceEntry?.assignment_id,
+    referenceEntry?.assignment,
+  ]);
+
+  const objectiveMarkingResult = useMemo(() => {
+    return computeObjectiveScore(objectiveAssignmentId, selectedSubmission?.text || "");
+  }, [objectiveAssignmentId, selectedSubmission?.text]);
+
+  const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
+
+  const manualOverrideMessage = useMemo(() => {
+    if (!smartMarkingResult) return "";
+    const aiScore = Number(smartMarkingResult.aiOriginalScore ?? smartMarkingResult.finalScore ?? smartMarkingResult.score);
+    const currentScore = Number(score);
+    if (!Number.isFinite(aiScore) || !Number.isFinite(currentScore) || aiScore === currentScore) return "";
+    return `Manual override: Tutor edited score from ${Math.round(aiScore)} to ${Math.round(currentScore)}`;
+  }, [score, smartMarkingResult]);
+
   const handleDeleteSubmission = async (submission) => {
     if (!submission?.path) {
       error("Could not delete submission: missing document path.");
@@ -523,11 +653,21 @@ export default function MarkingPage() {
         if (registryEntry) break;
       }
 
-      const result = await markSubmissionWithAI({
+      const deterministicAssignmentId = getObjectiveAssignmentId(
+        registryEntry?.assignmentKey,
+        assignmentIdValue,
+        selectedSubmission?.assignmentKey,
+        selectedSubmission?.assignmentId,
+        referenceEntry?.assignmentId,
+        referenceEntry?.assignment,
+      );
+      const deterministicObjective = computeObjectiveScore(deterministicAssignmentId, submissionText);
+      const aiResult = await markSubmissionWithAI({
         referenceEntry: registryEntry,
         submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
         submissionText,
       });
+      const result = mergeObjectiveScore(aiResult, deterministicObjective);
       setSmartMarkingResult(result);
       setScore(String(result.finalScore ?? result.score));
       setFeedback(result.feedback);
@@ -645,17 +785,48 @@ export default function MarkingPage() {
       const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
       const safeAssignment = assignmentValue.trim();
 
+      const currentScore = Number(score);
+      const currentFeedback = feedback.trim();
+      const currentObjectiveResult = objectiveMarkingResult;
+      const currentObjectiveScore = objectivePercentFromResult(currentObjectiveResult);
+      const currentWritingScore = smartMarkingResult?.writingScore ?? null;
+      const aiOriginalScore = smartMarkingResult?.aiOriginalScore ?? smartMarkingResult?.finalScore ?? smartMarkingResult?.score ?? null;
+
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
         name: selectedStudent.name,
         assignment: safeAssignment,
         assignmentId: assignmentIdValue.trim(),
-        score: Number(score),
-        comments: feedback.trim(),
+        score: currentScore,
+        comments: currentFeedback,
         level,
         link: referenceEntry.answer_url ?? DEFAULT_REFERENCE_LINK,
       });
       setSaveReceipt(receipt);
+
+      if (selectedSubmission?.id || selectedSubmission?.path) {
+        await saveMarkingResult({
+          submissionId: selectedSubmission.id,
+          submissionPath: selectedSubmission.path,
+          result: {
+            ...(smartMarkingResult || {}),
+            score: currentScore,
+            finalScore: currentScore,
+            feedback: currentFeedback,
+            objectiveCorrect: currentObjectiveResult.correctCount,
+            objectiveTotal: currentObjectiveResult.totalCount,
+            objectiveDetails: currentObjectiveResult.details,
+            objectiveScore: currentObjectiveScore,
+            writingScore: currentWritingScore,
+            writingScorePercent: smartMarkingResult?.writingScorePercent ?? (currentWritingScore === null ? null : writingScoreToPercent(currentWritingScore, getMaxWritingScore(smartMarkingResult || {}))),
+            manualOverride: true,
+            aiOriginalScore,
+            aiOriginalFeedback: smartMarkingResult?.aiOriginalFeedback ?? smartMarkingResult?.feedback ?? "",
+          },
+          status: "marked",
+          sentToStudent: false,
+        });
+      }
 
       const successfulTargets = [
         receipt.sheet.success ? "Google Sheets" : null,
@@ -919,8 +1090,8 @@ export default function MarkingPage() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, fontSize: 13 }}>
                 <span>Detected level: <b>{smartMarkingResult.level}</b></span>
                 <span>Detected assignment: <b>{smartMarkingResult.assignmentKey || "Unknown"}</b></span>
-                <span>Objective score: <b>{smartMarkingResult.objectiveScore ?? "—"}</b></span>
-                <span>Writing score: <b>{smartMarkingResult.writingScore ?? "—"}</b></span>
+                <span>Objective score: <b>{smartMarkingResult.objectiveTotal ? `${smartMarkingResult.objectiveCorrect}/${smartMarkingResult.objectiveTotal} → ${Math.round(smartMarkingResult.objectiveScore ?? 0)}%` : "—"}</b></span>
+                <span>Writing score: <b>{formatWritingScore(smartMarkingResult)}</b></span>
                 <span>Final score: <b>{smartMarkingResult.finalScore}</b></span>
                 <span>AI confidence: <b>{smartMarkingResult.confidence}</b></span>
                 <span>Status: <b>{smartMarkingResult.status}</b></span>
@@ -928,12 +1099,22 @@ export default function MarkingPage() {
               <div style={{ fontSize: 13 }}>
                 <b>Detected parts:</b> {smartMarkingResult.detectedParts?.map((part) => part.summary || `${part.partId}: ${part.answerCount ?? part.total ?? "—"} ${part.partType || "answers"} found${part.correct !== undefined ? `, ${part.correct} correct, ${part.wrong ?? 0} wrong` : ""}`).join(", ") || "None"}
               </div>
+              {manualOverrideMessage ? (
+                <div style={{ fontSize: 13, color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 6, padding: 8 }}>
+                  {manualOverrideMessage}
+                </div>
+              ) : null}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving}>Re-run AI marking</button>
                 <button type="button" onClick={handleApproveAndSend} disabled={workflowSaving}>Approve and send</button>
                 <button type="button" onClick={handleSendFeedbackToStudent} disabled={workflowSaving}>Send feedback to student</button>
                 <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving}>Mark as needs tutor review</button>
               </div>
+            </div>
+          ) : null}
+          {objectiveMarkingResult.totalCount > 0 ? (
+            <div style={{ fontSize: 13, color: "#1f2937", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 8 }}>
+              Deterministic objective score for {objectiveAssignmentId}: <b>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount} → {Math.round(objectiveScorePercent)}%</b>
             </div>
           ) : null}
           <label>
