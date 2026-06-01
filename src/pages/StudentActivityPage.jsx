@@ -28,6 +28,10 @@ function normalizeEmail(value) {
   return lower(value).replace(/\s+/g, "");
 }
 
+function asObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
 function toMillis(value) {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.getTime();
@@ -59,6 +63,7 @@ function recordTime(record = {}) {
     toMillis(record.gradedAt) ??
     toMillis(record.checkedInAt) ??
     toMillis(record.checkinAt) ??
+    toMillis(record.respondedAt) ??
     toMillis(record.updatedAt) ??
     toMillis(record.updated_at) ??
     toMillis(record.timestamp) ??
@@ -106,7 +111,7 @@ function studentCodeFrom(record = {}) {
 }
 
 function studentNameFrom(record = {}) {
-  return clean(record.name || record.studentName || record.fullName || record.displayName || record.customerName || record.email || "Student");
+  return clean(record.name || record.studentName || record.fullName || record.displayName || record.customerName || record.email || record.studentEmail || "Student");
 }
 
 function studentEmailFrom(record = {}) {
@@ -158,6 +163,7 @@ function activityTone(type, value) {
   }
   if (type === "submission") return "#dbeafe";
   if (type === "attendance") return "#fef3c7";
+  if (type === "study_buddy" || type === "falowen_ai") return "#ede9fe";
   return "#f1f5f9";
 }
 
@@ -299,6 +305,96 @@ function createAttendanceEvent(record, studentCode, entry = {}) {
   };
 }
 
+function createAppActivityEvent(record) {
+  const metadata = asObject(record.metadata);
+  const event = clean(record.event || record.eventType || "activity");
+  const feature = clean(record.feature || metadata.feature || "student_app");
+  const action = clean(record.action || record.label || "Used Falowen");
+  const shortcut = clean(metadata.shortcutLabel || record.shortcutLabel || metadata.shortcutKey || record.shortcutKey || "");
+  const itemId = clean(metadata.itemId || record.itemId || "");
+  const destination = clean(metadata.destination || record.destination || "");
+  const questionLength = numberValue(metadata.questionLength ?? record.questionLength, NaN);
+  const completed = typeof metadata.completed === "boolean" ? metadata.completed : typeof record.completed === "boolean" ? record.completed : null;
+  const details = [
+    shortcut,
+    itemId ? `Task: ${itemId}` : "",
+    destination ? `Opened ${destination}` : "",
+    Number.isFinite(questionLength) ? `Question length: ${questionLength}` : "",
+    completed !== null ? (completed ? "Completed" : "Unchecked") : "",
+  ].filter(Boolean).join(" · ");
+
+  return {
+    type: feature === "study_buddy" ? "study_buddy" : "falowen_ai",
+    action,
+    description: details || event.replace(/_/g, " "),
+    at: recordTime(record),
+    assignment: itemId,
+    score: null,
+    source: feature === "study_buddy" ? "Study Buddy" : "Falowen app activity",
+    recordId: clean(record.id || record.path || event),
+    studentKey: studentKeyFrom(record),
+    studentName: studentNameFrom(record),
+    className: studentClassFrom(record),
+  };
+}
+
+function createStudyBuddyLegacyEvent(record) {
+  const event = clean(record.event || "study_buddy");
+  const shortcut = clean(record.shortcutLabel || record.shortcutKey || "");
+  const itemId = clean(record.itemId || "");
+  const questionLength = numberValue(record.questionLength, NaN);
+  const completed = typeof record.completed === "boolean" ? record.completed : null;
+  const actionMap = {
+    quick_question: "Asked Study Buddy AI",
+    quick_question_reply: "Received Study Buddy reply",
+    weekly_plan_toggle: "Updated weekly plan task",
+    shortcut_click: "Clicked Study Buddy shortcut",
+    reopen: "Reopened Study Buddy",
+    expand: "Expanded Study Buddy",
+    collapse: "Collapsed Study Buddy",
+    dismiss: "Dismissed Study Buddy",
+  };
+  const action = actionMap[event] || event.replace(/_/g, " ");
+  const description = [
+    shortcut,
+    itemId ? `Task: ${itemId}` : "",
+    Number.isFinite(questionLength) ? `Question length: ${questionLength}` : "",
+    completed !== null ? (completed ? "Completed" : "Unchecked") : "",
+  ].filter(Boolean).join(" · ") || "Study Buddy interaction";
+
+  return {
+    type: "study_buddy",
+    action,
+    description,
+    at: recordTime(record),
+    assignment: itemId,
+    score: null,
+    source: "Study Buddy",
+    recordId: clean(record.id || record.path || event),
+    studentKey: studentKeyFrom(record),
+    studentName: studentNameFrom(record),
+    className: studentClassFrom(record),
+  };
+}
+
+function createGrammarAiEvent(record) {
+  const question = textPreview(record.question || record.cleanedPrompt || record.normalizedQuestion, 70);
+  const level = clean(record.level || "");
+  return {
+    type: "falowen_ai",
+    action: "Asked Falowen AI grammar",
+    description: `${level ? `${level} · ` : ""}${question || "Grammar question"}`,
+    at: recordTime(record),
+    assignment: level,
+    score: null,
+    source: "Falowen AI grammar",
+    recordId: clean(record.id || record.path || "grammar"),
+    studentKey: studentKeyFrom({ ...record, studentCode: record.studentId || record.studentCode, studentEmail: record.studentEmail }),
+    studentName: studentNameFrom(record),
+    className: studentClassFrom(record),
+  };
+}
+
 function eventsFromAttendanceSession(record = {}) {
   const events = [];
   if (record.students && typeof record.students === "object" && !Array.isArray(record.students)) {
@@ -356,6 +452,7 @@ function buildStudents({ profiles, eventsByStudent }) {
       scores: scores.length,
       failedScores,
       attendance: events.filter((event) => event.type === "attendance").length,
+      aiActions: events.filter((event) => event.type === "study_buddy" || event.type === "falowen_ai").length,
       averageScore,
     };
   }).sort((a, b) => (b.lastAt || 0) - (a.lastAt || 0));
@@ -375,7 +472,7 @@ export default function StudentActivityPage() {
       setLoading(true);
       setError("");
       try {
-        const [studentDocs, scoreDocs, flatSubmissionDocs, nestedSubmissionDocs, postDocs, checkinDocs, attendanceDocs] = await Promise.all([
+        const [studentDocs, scoreDocs, flatSubmissionDocs, nestedSubmissionDocs, postDocs, checkinDocs, attendanceDocs, appActivityDocs, studyBuddyDocs, grammarAiDocs] = await Promise.all([
           safeDocs("students", query(collection(db, "students"), firestoreLimit(READ_LIMIT))),
           safeDocs("scores", query(collection(db, "scores"), firestoreLimit(READ_LIMIT))),
           safeDocs("flat submissions", query(collection(db, "submissions"), firestoreLimit(READ_LIMIT))),
@@ -383,6 +480,9 @@ export default function StudentActivityPage() {
           safeDocs("submission posts", query(collectionGroup(db, "posts"), firestoreLimit(READ_LIMIT))),
           safeDocs("attendance check-ins", query(collectionGroup(db, "checkins"), firestoreLimit(READ_LIMIT))),
           safeDocs("attendance sessions", query(collectionGroup(db, "sessions"), firestoreLimit(READ_LIMIT))),
+          safeDocs("student app activity", query(collection(db, "studentActivityEvents"), firestoreLimit(READ_LIMIT))),
+          safeDocs("Study Buddy usage", query(collection(db, "studyBuddyUsage"), firestoreLimit(READ_LIMIT))),
+          safeDocs("Falowen AI grammar", query(collectionGroup(db, "grammar_answers"), firestoreLimit(READ_LIMIT))),
         ]);
 
         if (cancelled) return;
@@ -408,9 +508,12 @@ export default function StudentActivityPage() {
         scoreDocs.docs.forEach((record) => addUniqueEvent(createScoreEvent(record)));
         checkinDocs.docs.forEach((record) => addUniqueEvent(createCheckinEvent(record)));
         attendanceDocs.docs.forEach((record) => eventsFromAttendanceSession(record).forEach(addUniqueEvent));
+        appActivityDocs.docs.forEach((record) => addUniqueEvent(createAppActivityEvent(record)));
+        studyBuddyDocs.docs.forEach((record) => addUniqueEvent(createStudyBuddyLegacyEvent(record)));
+        grammarAiDocs.docs.forEach((record) => addUniqueEvent(createGrammarAiEvent(record)));
 
         setStudents(buildStudents({ profiles, eventsByStudent }));
-        setSourceErrors([studentDocs, scoreDocs, flatSubmissionDocs, nestedSubmissionDocs, postDocs, checkinDocs, attendanceDocs].filter((result) => !result.ok));
+        setSourceErrors([studentDocs, scoreDocs, flatSubmissionDocs, nestedSubmissionDocs, postDocs, checkinDocs, attendanceDocs, appActivityDocs, studyBuddyDocs, grammarAiDocs].filter((result) => !result.ok));
       } catch (loadError) {
         if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Could not load student activity.");
       } finally {
@@ -442,6 +545,7 @@ export default function StudentActivityPage() {
       activeStudents,
       submissions: students.reduce((sum, student) => sum + student.submissions, 0),
       failedScores: students.reduce((sum, student) => sum + student.failedScores, 0),
+      aiActions: students.reduce((sum, student) => sum + student.aiActions, 0),
     };
   }, [students]);
 
@@ -451,13 +555,14 @@ export default function StudentActivityPage() {
         <p style={{ margin: 0, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.8, opacity: 0.8 }}>Falowen admin monitoring</p>
         <h1 style={{ margin: "8px 0 6px", fontSize: 32 }}>Student Activity</h1>
         <p style={{ margin: 0, maxWidth: 760, lineHeight: 1.7, color: "#dbeafe" }}>
-          See what students are doing: submissions, scores, attendance, check-ins, failed tasks, and recent activity per student.
+          See what students are doing: Study Buddy, Falowen AI, submissions, scores, attendance, check-ins, failed tasks, and recent activity per student.
         </p>
       </section>
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
         <StatCard label="Students tracked" value={stats.students} hint="From students + activity records" />
         <StatCard label="Active students" value={stats.activeStudents} hint="Activity in last 10 days" />
+        <StatCard label="AI / Study Buddy" value={stats.aiActions} hint="Study Buddy + Falowen AI actions" />
         <StatCard label="Submissions" value={stats.submissions} hint="Work submitted" />
         <StatCard label="Failed scores" value={stats.failedScores} hint={`Below ${PASS_MARK}%`} />
       </section>
@@ -467,13 +572,13 @@ export default function StudentActivityPage() {
           <div style={{ padding: 16, borderBottom: "1px solid #e5e7eb", display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap", alignItems: "center" }}>
             <div>
               <h2 style={{ margin: 0 }}>What students did</h2>
-              <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>Recent actions per student, reconstructed from existing Firestore records.</p>
+              <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>Recent actions per student, reconstructed from existing Firestore records and new app activity logs.</p>
             </div>
             <input
               type="search"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Search name, class, score, submission, attendance…"
+              placeholder="Search name, AI, Study Buddy, class, score, submission…"
               style={{ minWidth: 280, border: "1px solid #cbd5e1", borderRadius: 999, padding: "10px 14px" }}
             />
           </div>
@@ -513,7 +618,8 @@ export default function StudentActivityPage() {
                       {student.events.length > 4 ? <p style={{ margin: 0, color: "#64748b", fontSize: 12 }}>+{student.events.length - 4} more actions</p> : null}
                     </div>
                     <div style={{ color: "#334155", fontSize: 13 }}>
-                      <p style={{ margin: 0 }}><strong>{student.submissions}</strong> submissions</p>
+                      <p style={{ margin: 0 }}><strong>{student.aiActions}</strong> AI actions</p>
+                      <p style={{ margin: "6px 0 0" }}><strong>{student.submissions}</strong> submissions</p>
                       <p style={{ margin: "6px 0 0" }}><strong>{student.scores}</strong> scores</p>
                       <p style={{ margin: "6px 0 0" }}><strong>{student.attendance}</strong> attendance</p>
                       <p style={{ margin: "6px 0 0", color: student.failedScores ? "#b91c1c" : "#166534" }}><strong>{student.failedScores}</strong> failed</p>
@@ -545,10 +651,11 @@ export default function StudentActivityPage() {
           <section style={{ border: "1px solid #dbe1ef", borderRadius: 18, background: "#fff", padding: 16 }}>
             <h3 style={{ margin: 0 }}>What is tracked</h3>
             <div style={{ display: "grid", gap: 8, marginTop: 12, color: "#475569", fontSize: 13, lineHeight: 1.5 }}>
+              <p style={{ margin: 0 }}>Study Buddy opens, shortcut clicks, AI questions, weekly plan toggles, dismiss/reopen, and contrast changes.</p>
+              <p style={{ margin: 0 }}>Falowen AI grammar questions from <strong>grammar_answers</strong>.</p>
               <p style={{ margin: 0 }}>Submissions from <strong>submissions</strong> and nested submission records.</p>
               <p style={{ margin: 0 }}>Scores from <strong>scores</strong>, including pass/fail signals.</p>
               <p style={{ margin: 0 }}>Attendance from <strong>attendance sessions</strong> and QR <strong>checkins</strong>.</p>
-              <p style={{ margin: 0 }}>Student profile activity from <strong>students</strong>.</p>
             </div>
           </section>
 
