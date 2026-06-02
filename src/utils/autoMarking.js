@@ -176,7 +176,7 @@ function parseNumberedObjectiveLine(line = "") {
     return { question: Number.parseInt(anzeigeNumbered[1], 10), answer: anzeigeNumbered[2].toUpperCase() };
   }
 
-  const textAnswer = trimmed.match(/^(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:-]\s*(.+)$/i);
+  const textAnswer = trimmed.match(/^(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]\s*(.+)$/i);
   if (textAnswer) {
     return { question: Number.parseInt(textAnswer[1], 10), answer: textAnswer[2].trim() };
   }
@@ -184,18 +184,42 @@ function parseNumberedObjectiveLine(line = "") {
   return null;
 }
 
-function parseStudentObjectiveAnswers(submissionText = "") {
-  const text = String(submissionText || "");
+function splitObjectiveAnswerTokens(text = "") {
+  return String(text || "")
+    .split(/\r?\n/)
+    .flatMap((line) => line.split(/[,;]+/))
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function isObjectiveOptionAnswer(answer = "") {
+  return Boolean(String(answer || "").trim().match(new RegExp(`^[${OBJECTIVE_OPTION_LETTERS}]$`, "i")))
+    || /^(richtig|falsch|true|false)$/i.test(String(answer || "").trim());
+}
+
+function countObjectiveAnswerEvidence(text = "") {
+  return splitObjectiveAnswerTokens(text).reduce((count, token) => {
+    const numbered = parseNumberedObjectiveLine(token);
+    if (numbered && isObjectiveOptionAnswer(numbered.answer)) return count + 1;
+
+    const optionOnly = token.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+    if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2)) return count + 1;
+
+    return /^(richtig|falsch|true|false)$/i.test(token) ? count + 1 : count;
+  }, 0);
+}
+
+function parseStudentObjectiveAnswerTokens(tokens = [], { questionOffset = 0 } = {}) {
   const map = new Map();
   let orderedQuestion = 0;
 
-  for (const line of text.split(/\r?\n|[,;]+/)) {
-    const trimmed = line.trim();
+  for (const trimmed of tokens) {
     if (!trimmed) continue;
 
     const numbered = parseNumberedObjectiveLine(trimmed);
     if (numbered) {
-      map.set(numbered.question, numbered.answer);
+      const question = questionOffset + numbered.question;
+      map.set(question, numbered.answer);
       orderedQuestion = Math.max(orderedQuestion, numbered.question);
       continue;
     }
@@ -203,17 +227,42 @@ function parseStudentObjectiveAnswers(submissionText = "") {
     const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
     if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2)) {
       orderedQuestion += 1;
-      map.set(orderedQuestion, anzeigeOnly[1].toUpperCase());
+      map.set(questionOffset + orderedQuestion, anzeigeOnly[1].toUpperCase());
       continue;
     }
 
     if (/^(richtig|falsch|true|false)$/i.test(trimmed)) {
       orderedQuestion += 1;
-      map.set(orderedQuestion, trimmed);
+      map.set(questionOffset + orderedQuestion, trimmed);
     }
   }
 
-  return map;
+  return { map, localQuestionCount: orderedQuestion };
+}
+
+function mergeAnswerMaps(target, source) {
+  source.forEach((value, key) => target.set(key, value));
+}
+
+function parseStudentObjectiveAnswers(submissionText = "") {
+  const text = String(submissionText || "");
+  const parts = splitSubmissionIntoParts(text).filter((part) => part.partId !== "unknown");
+  const objectiveParts = parts.filter((part) => countObjectiveAnswerEvidence(part.text) > 0);
+
+  if (objectiveParts.length > 1) {
+    const map = new Map();
+    let questionOffset = 0;
+
+    for (const part of objectiveParts) {
+      const parsed = parseStudentObjectiveAnswerTokens(splitObjectiveAnswerTokens(part.text), { questionOffset });
+      mergeAnswerMaps(map, parsed.map);
+      questionOffset += parsed.localQuestionCount;
+    }
+
+    return map;
+  }
+
+  return parseStudentObjectiveAnswerTokens(splitObjectiveAnswerTokens(text)).map;
 }
 
 const VOCABULARY_ALIASES = {
@@ -450,7 +499,12 @@ function valuesMatch(expectedRaw, studentRaw) {
     return { status: "correct", reason: "Correct option letter" };
   }
 
-  const acceptedTextMatch = meta.acceptedAnswers.some((answer) => textMatches(answer, studentRaw));
+  const normalizedExpectedLetter = normalizeForCompare(expectedLetter);
+  const acceptedTextMatch = meta.acceptedAnswers.some((answer) => {
+    const normalizedAccepted = normalizeForCompare(answer);
+    if (!normalizedAccepted || normalizedAccepted === normalizedExpectedLetter || normalizedAccepted.length < 3) return false;
+    return textMatches(answer, studentRaw);
+  });
   if (acceptedTextMatch || textMatches(expectedText || meta.raw, studentText || studentRaw)) {
     return { status: "correct", reason: "Correct answer text" };
   }
