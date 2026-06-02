@@ -260,6 +260,7 @@ export default function TutorMarkingPage() {
   const [saveStateById, setSaveStateById] = useState({});
   const [statusById, setStatusById] = useState({});
   const [feedbackById, setFeedbackById] = useState({});
+  const [quickSnippetById, setQuickSnippetById] = useState({});
   const [phraseMistakesById, setPhraseMistakesById] = useState({});
   const [selectedDraftTextById, setSelectedDraftTextById] = useState({});
   const [activeReviewId, setActiveReviewId] = useState("");
@@ -415,6 +416,11 @@ export default function TutorMarkingPage() {
         delete next[reviewId];
         return next;
       });
+      setQuickSnippetById((prev) => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
       setSelectedDraftTextById((prev) => {
         const next = { ...prev };
         delete next[reviewId];
@@ -449,6 +455,11 @@ export default function TutorMarkingPage() {
         return next;
       });
       setPhraseMistakesById((prev) => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
+      setQuickSnippetById((prev) => {
         const next = { ...prev };
         delete next[reviewId];
         return next;
