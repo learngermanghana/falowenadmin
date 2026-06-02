@@ -2,7 +2,7 @@
 
 Attendance management app for teachers with two capture modes:
 - Manual attendance marking in the dashboard.
-- Student self check-in via QR with email + phone validation through Firebase Cloud Functions.
+- Student self check-in via QR with email + phone validation through Firebase Cloud Functions..
 
 ## Architecture
 
