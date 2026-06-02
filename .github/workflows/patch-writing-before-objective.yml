@@ -98,7 +98,7 @@ jobs:
           print("detectPartType patches:", detect_count)
 
           old_feedback = 'feedback: `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Score: ${score}%.`,'
-          new_feedback = 'feedback: `Writing score: ${score}%. ${score >= 75 ? "Good structure and clear task response." : "Review task completion, sentence accuracy, structure, and level-appropriate vocabulary."}`,'
+          new_feedback = 'feedback: `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${score >= 75 ? "Good structure and clear task response." : "Review task completion, sentence accuracy, structure, and level-appropriate vocabulary."}`,'
           if old_feedback in text:
               text = text.replace(old_feedback, new_feedback)
               print("Updated writing feedback text.")
