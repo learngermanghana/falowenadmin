@@ -269,3 +269,52 @@ Teil 3
   assert.equal(result.details[10].correct, false);
   assert.equal(result.details[12].correct, false);
 });
+
+test("option-only student answers match full answer text in A2-5.14", () => {
+  const referenceEntry = {
+    assignmentKey: "A2-5.14",
+    answers: {
+      teil3: {
+        Answer1: "B) Die Kollegen und die Arbeit",
+        Answer2: "C) Mit „Sie“",
+        Answer3: "C) Eine Arbeitnehmervertretung",
+        Answer4: "C) Arbeitskleidung, Pausen und feste Arbeitszeiten",
+        Answer5: "C) Man kann Arbeitsbeginn und -ende flexibel wählen",
+        Answer6: "C) 38–40 Stunden",
+        Answer7: "B) Den Urlaub eintragen und genehmigen lassen",
+      },
+      teil4: {
+        Answer1: "D) Weiter das Gehalt oder den Lohn",
+        Answer2: "C) Sofort den Arbeitgeber informieren und zum Arzt gehen",
+        Answer3: "C) Auf der Baustelle oder am Flughafen",
+        Answer4: "C) Die Kündigung schriftlich und mit Frist einreichen",
+        Answer5: "C) In der Volkshochschule",
+      },
+    },
+  };
+
+  const result = computeObjectiveScore(referenceEntry, `
+Lieber Felix,
+ich hoffe, es geht dir gut.
+Viele Grüße
+Fred
+
+Lesen
+1. b
+2. c
+3. c
+4. c
+5. c
+6. c
+7. b
+8. d
+9. c
+10. c
+11. c
+12. c
+  `);
+
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 12);
+  assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
+});
