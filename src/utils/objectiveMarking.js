@@ -119,8 +119,13 @@ function extractExpectedChoice(value = "") {
   return option ? option[1].toUpperCase() : "";
 }
 
+function leadingOptionLetter(value = "") {
+  const match = normalizeAnswer(value).match(new RegExp(`^([${OPTION_LETTERS.toLowerCase()}])(?:\\s|$)`, "i"));
+  return match ? match[1].toUpperCase() : "";
+}
+
 function extractOptionLetter(value = "") {
-  return extractExpectedChoice(value) || "";
+  return extractExpectedChoice(value) || leadingOptionLetter(value) || "";
 }
 
 function extractOptionText(value = "") {
@@ -138,45 +143,39 @@ function extractExpectedVocabulary(value = "") {
   if (parts.length < 2) return null;
 
   const leftKey = findVocabularyKey(parts[0]);
-  if (leftKey) {
-    return { expected: normalizeAnswer(parts.slice(1).join(" ").split("/")[0]), vocabularyKey: leftKey };
-  }
+  if (leftKey) return { expected: normalizeAnswer(parts.slice(1).join(" ").split("/")[0]), vocabularyKey: leftKey };
 
   const rightKey = findVocabularyKey(parts.slice(1).join(" "));
-  if (rightKey) {
-    return { expected: normalizeAnswer(parts[0].split("/")[0]), vocabularyKey: rightKey };
-  }
+  if (rightKey) return { expected: normalizeAnswer(parts[0].split("/")[0]), vocabularyKey: rightKey };
 
   return null;
 }
 
 function expectedFromReferenceValue(value = "") {
-  const raw = value && typeof value === "object"
-    ? value.rawCorrectAnswer || value.raw || value.correctText || value.correctLetter || value.acceptedAnswers?.[0] || ""
-    : String(value ?? "");
+  const acceptedAnswers = Array.isArray(value?.acceptedAnswers) ? value.acceptedAnswers : [];
+  const rawCandidates = value && typeof value === "object"
+    ? [value.correctLetter, value.rawCorrectAnswer, value.raw, value.correctText, ...acceptedAnswers].filter(Boolean)
+    : [String(value ?? "")];
+  const raw = rawCandidates.find((candidate) => String(candidate).trim()) || "";
 
-  const vocabulary = extractExpectedVocabulary(raw);
+  const vocabulary = rawCandidates.map(extractExpectedVocabulary).find(Boolean);
   if (vocabulary) return { ...vocabulary, type: "vocabulary", raw };
 
   const choice = value && typeof value === "object"
-    ? value.correctLetter || extractExpectedChoice(raw)
-    : extractExpectedChoice(raw);
-  if (choice) return { expected: choice.toUpperCase(), expectedText: extractOptionText(raw), type: "choice", raw };
+    ? String(value.correctLetter || "").toUpperCase() || rawCandidates.map(extractExpectedChoice).find(Boolean) || rawCandidates.map(leadingOptionLetter).find(Boolean)
+    : extractExpectedChoice(raw) || leadingOptionLetter(raw);
+  if (choice) {
+    const textCandidate = value?.correctText || rawCandidates.find((candidate) => extractExpectedChoice(candidate) || leadingOptionLetter(candidate)) || raw;
+    return { expected: choice.toUpperCase(), expectedText: extractOptionText(textCandidate), type: "choice", raw: textCandidate };
+  }
 
   return { expected: normalizeAnswer(raw), expectedText: normalizeAnswer(raw), type: "text", raw };
 }
 
 function flattenAnswerObject(value = {}, path = []) {
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return [{ key: path.join("."), value: String(value) }];
-  }
-
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return [{ key: path.join("."), value: String(value) }];
   if (!value || typeof value !== "object") return [];
-
-  if (value.correctLetter || value.correctText || value.rawCorrectAnswer || value.raw || value.acceptedAnswers) {
-    return [{ key: path.join("."), value }];
-  }
-
+  if (value.correctLetter || value.correctText || value.rawCorrectAnswer || value.raw || value.acceptedAnswers) return [{ key: path.join("."), value }];
   return Object.entries(value).flatMap(([key, nested]) => flattenAnswerObject(nested, [...path, key]));
 }
 
@@ -274,10 +273,7 @@ function splitSubmissionIntoSections(text = "") {
   const markers = [];
   let match;
 
-  while ((match = markerRegex.exec(source))) {
-    markers.push({ index: match.index, end: markerRegex.lastIndex, partId: `teil${Number(match[2])}`, partNumber: Number(match[2]) });
-  }
-
+  while ((match = markerRegex.exec(source))) markers.push({ index: match.index, end: markerRegex.lastIndex, partId: `teil${Number(match[2])}`, partNumber: Number(match[2]) });
   if (!markers.length) return [{ partId: "main", partNumber: null, text: source }];
 
   markers.forEach((marker, index) => {
@@ -423,22 +419,21 @@ function getStudentAnswerForItem({ item, index, submissionText, sections, vocabu
   if (item.vocabularyKey && vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
 
   const numberedVocabularyValues = extractNumberedVocabularyAnswers(submissionText);
-  if (item.type === "vocabulary" && numberedVocabularyValues[vocabularyIndexes.get(item) ?? -1]) {
-    return numberedVocabularyValues[vocabularyIndexes.get(item)];
-  }
+  if (item.type === "vocabulary" && numberedVocabularyValues[vocabularyIndexes.get(item) ?? -1]) return numberedVocabularyValues[vocabularyIndexes.get(item)];
 
-  return extractNumberedTextAnswers(sectionText)[item.questionNumber]
-    || extractNumberedTextAnswers(submissionText)[item.questionNumber]
-    || "";
+  return extractNumberedTextAnswers(sectionText)[item.questionNumber] || extractNumberedTextAnswers(submissionText)[item.questionNumber] || "";
 }
 
 function isCorrectAnswer(item, student) {
-  if (item.type === "choice") {
-    const studentLetter = extractOptionLetter(student);
-    if (studentLetter) return studentLetter === item.expected;
-    return Boolean(item.expectedText && normalizeAnswer(student) === normalizeAnswer(item.expectedText));
-  }
+  const expectedLetter = item.type === "choice"
+    ? extractOptionLetter(item.expected)
+    : extractOptionLetter(item.expectedRaw) || leadingOptionLetter(item.expected);
+  const studentLetter = extractOptionLetter(student);
 
+  if (expectedLetter && studentLetter) return expectedLetter === studentLetter;
+  if (expectedLetter && normalizeAnswer(student) === normalizeAnswer(expectedLetter)) return true;
+
+  if (item.type === "choice" && item.expectedText) return normalizeAnswer(student) === normalizeAnswer(item.expectedText);
   return Boolean(normalizeAnswer(item.expected) && normalizeAnswer(student) && normalizeAnswer(item.expected) === normalizeAnswer(student));
 }
 
@@ -456,9 +451,12 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
 
   const sections = splitSubmissionIntoSections(submissionText);
   const sequentialObjectiveAnswers = extractSequentialObjectiveAnswers(submissionText);
+  const partIds = new Set(referenceItems.map((item) => item.partId));
   const flatMainReference = referenceItems.every((item) => item.partId === "main");
+  const hasMultipartReference = partIds.size > 1 || referenceItems.some((item) => item.partId !== "main");
+  const hasMatchingPartSections = sections.some((section) => section.partId !== "main" && referenceItems.some((item) => item.partId === section.partId));
   const choiceCount = referenceItems.filter((item) => item.type === "choice").length;
-  const useSequentialChoices = flatMainReference && choiceCount > 1 && sequentialObjectiveAnswers.length >= choiceCount;
+  const useSequentialChoices = (flatMainReference || (hasMultipartReference && !hasMatchingPartSections)) && choiceCount > 1 && sequentialObjectiveAnswers.length >= choiceCount;
 
   const vocabularyIndexes = new Map();
   let vocabularyIndex = 0;
