@@ -373,3 +373,36 @@ Teil 4:
   assert.match(result.feedback, /Writing marked/);
   assert.match(result.feedback, /12 of 12 objective questions/);
 });
+
+test("unlabelled A2 writing before Lesen is included in feedback", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: {
+      assignmentKey: "A2-5.14",
+      level: "A2",
+      answers: {
+        teil3: {
+          Answer1: "B) Die Kollegen und die Arbeit",
+          Answer2: "C) Mit Sie",
+          Answer3: "C) Eine Arbeitnehmervertretung",
+          Answer4: "C) Arbeitskleidung, Pausen und feste Arbeitszeiten",
+          Answer5: "C) Man kann Arbeitsbeginn und -ende flexibel wählen",
+          Answer6: "C) 38-40 Stunden",
+          Answer7: "B) Den Urlaub eintragen und genehmigen lassen",
+        },
+        teil4: {
+          Answer1: "D) Weiter das Gehalt oder den Lohn",
+          Answer2: "C) Sofort den Arbeitgeber informieren und zum Arzt gehen",
+          Answer3: "C) Auf der Baustelle oder am Flughafen",
+          Answer4: "C) Die Kündigung schriftlich und mit Frist einreichen",
+          Answer5: "C) In der Volkshochschule",
+        },
+      },
+    },
+    submission: { assignmentKey: "A2-5.14", level: "A2" },
+    submissionText: `Lieber Felix\n\nich hoffe, es geht dir gut.\nIch schreibe dir, weil ich mich für deinen Vorschlag bedanken möchte.\nIch arbeite jetzt als Projektkoordinator bei SINGA.\nIch freue mich auf deine Antwort.\n\nViele Grüße\nFred\n\nLesen\n1. b\n2. c\n3. c\n4. c\n5. c\n6. c\n7. b\n8. d\n9. c\n10. c\n11. c\n12. c`,
+  });
+
+  assert.equal(result.parts[0].partType, "writing");
+  assert.match(result.feedback, /Writing score:/);
+  assert.match(result.feedback, /Objective score:/);
+});

@@ -110,15 +110,31 @@ function splitSubmissionIntoParts(submissionText = "") {
     return [{ partId: "unknown", title: "Unlabelled submission", text, confidence: 0.45 }];
   }
 
-  return markers.map((marker, index) => {
+  const parts = [];
+  const leadingText = text.slice(0, markers[0].index).trim();
+  if (leadingText) {
+    parts.push({
+      partId: "unknown",
+      title: "Unlabelled writing before objective section",
+      text: leadingText,
+      confidence: 0.7,
+    });
+  }
+
+  markers.forEach((marker, index) => {
     const next = markers[index + 1];
-    return {
-      partId: marker.partId,
-      title: marker.title,
-      text: text.slice(marker.end, next ? next.index : text.length).trim(),
-      confidence: marker.partId === "unknown" ? 0.5 : 0.9,
-    };
-  }).filter((part) => part.text || part.partId !== "unknown");
+    const partText = text.slice(marker.end, next ? next.index : text.length).trim();
+    if (partText || marker.partId !== "unknown") {
+      parts.push({
+        partId: marker.partId,
+        title: marker.title,
+        text: partText,
+        confidence: marker.partId === "unknown" ? 0.5 : 0.9,
+      });
+    }
+  });
+
+  return parts.filter((part) => part.text || part.partId !== "unknown");
 }
 
 function looksLikeWritingTask(text = "") {
@@ -135,10 +151,9 @@ function detectPartType({ level, partId, text, referenceEntry = {} } = {}) {
   const format = String(referenceEntry?.format || "").toLowerCase();
   if (partId === "teil2") return "writing";
   if (["teil3", "teil4"].includes(partId)) return "objective";
+  if (looksLikeWritingTask(text)) return "writing";
   if (format === "objective") return "objective";
   if (format === "writing") return "writing";
-  if (level === "A1" && looksLikeWritingTask(text)) return "writing";
-  if (looksLikeWritingTask(text) && partId === "unknown") return "writing";
   return "objective";
 }
 
@@ -547,7 +562,7 @@ function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = 
     passed: score >= 60,
     level: level || "UNKNOWN",
     partId,
-    feedback: `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Score: ${score}%.`,
+    feedback: `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${score >= 75 ? "Good structure and clear task response." : "Review task completion, sentence accuracy, structure, and level-appropriate vocabulary."}`,
     corrections: [],
     improvementSummary: score >= 75
       ? "Good structure. Keep improving accuracy and range."
