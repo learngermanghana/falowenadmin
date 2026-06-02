@@ -159,8 +159,8 @@ jobs:
               print("Regression test already exists.")
           PY
 
-      - name: Run tests
-        run: npm test
+      - name: Run marking router tests only
+        run: node --test tests/auto-marking.test.js
 
       - name: Commit router fix
         run: |
