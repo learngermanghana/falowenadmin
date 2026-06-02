@@ -602,7 +602,7 @@ export default function TutorMarkingPage() {
 
       {!loading && activeReview && (() => {
         const review = activeReview;
-        const studentDraft = extractText(review, ["studentDraft", "draftText", "originalDraft"]);
+        const studentDraft = extractText(review, ["studentDraft", "draft", "draftText", "originalDraft", "studentAnswer", "answer"]);
         const aiFeedback = extractText(review, ["aiFeedback", "feedback", "aiReviewFeedback"]);
         const revisedDraft = extractText(review, ["revisedDraft", "improvedDraft", "rewrittenDraft"]);
         const reflection = extractText(review, ["reflection"]);
@@ -777,6 +777,71 @@ export default function TutorMarkingPage() {
                   </div>
                 </div>
 
+                <section style={{ display: "grid", gap: 8, border: "2px solid #f59e0b", background: "#fffbeb", borderRadius: 10, padding: 10 }}>
+                  <div style={{ display: "grid", gap: 3 }}>
+                    <b>Phrase mistakes ({phraseMistakes.length})</b>
+                    <span style={{ fontSize: 12, opacity: 0.78 }}>Select exact text in Student draft, then add the mistake.</span>
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.9 }}>
+                    Selected: {selectedDraftText?.phrase?.trim()
+                      ? <><b>“{selectedDraftText.phrase}”</b> ({selectedDraftText.startOffset}–{selectedDraftText.endOffset})</>
+                      : "No phrase selected yet."}
+                  </div>
+                  <button type="button" onClick={() => handleAddPhraseMistake(review.id)} disabled={!studentDraft.trim()}>
+                    Add mistake for selected phrase
+                  </button>
+                  {!studentDraft.trim() && (
+                    <p style={{ margin: 0, fontSize: 12, color: "#92400e" }}>No student draft text is available to select for this item.</p>
+                  )}
+                  {phraseMistakes.length === 0 && studentDraft.trim() && (
+                    <p style={{ margin: 0, fontSize: 12, opacity: 0.78 }}>No phrase mistakes added yet.</p>
+                  )}
+                  {phraseMistakes.map((mistake, index) => (
+                    <article key={mistake.id} style={{ display: "grid", gap: 8, border: "1px solid #fbbf24", background: "#fff", borderRadius: 8, padding: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "start" }}>
+                        <div style={{ display: "grid", gap: 2 }}>
+                          <b>{index + 1}. “{mistake.phrase}”</b>
+                          <span style={{ fontSize: 12, opacity: 0.72 }}>studentDraft · {mistake.startOffset}–{mistake.endOffset}</span>
+                        </div>
+                        <button type="button" onClick={() => handleRemovePhraseMistake(review.id, mistake.id)} style={{ color: "#991b1b", background: "#fff", border: "1px solid #fecaca" }}>
+                          Remove
+                        </button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: 8 }}>
+                        <label style={{ display: "grid", gap: 4 }}>
+                          Type
+                          <select value={mistake.mistakeType} onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "mistakeType", event.target.value)}>
+                            {MISTAKE_TYPE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
+                        <label style={{ display: "grid", gap: 4 }}>
+                          Severity
+                          <select value={mistake.severity} onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "severity", event.target.value)}>
+                            {SEVERITY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
+                      </div>
+                      <label style={{ display: "grid", gap: 4 }}>
+                        Correction
+                        <input
+                          value={mistake.correction}
+                          placeholder="Corrected phrase"
+                          onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "correction", event.target.value)}
+                        />
+                      </label>
+                      <label style={{ display: "grid", gap: 4 }}>
+                        Explanation
+                        <textarea
+                          rows={3}
+                          value={mistake.explanation}
+                          placeholder="Short rule or explanation"
+                          onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "explanation", event.target.value)}
+                        />
+                      </label>
+                    </article>
+                  ))}
+                </section>
+
                 <div style={{ display: "grid", gap: 6, border: "1px solid #dbeafe", background: "#eff6ff", borderRadius: 8, padding: 10 }}>
                   <b>Suggested tutor feedback</b>
                   <div style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{suggestedFeedback}</div>
@@ -800,13 +865,24 @@ export default function TutorMarkingPage() {
                 </label>
 
                 <div style={{ display: "grid", gap: 6 }}>
-                  <b>Quick corrections</b>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {FEEDBACK_SNIPPETS.map((snippet) => (
-                      <button key={snippet.key} type="button" onClick={() => handleInsertSnippet(review.id, snippet.text)}>
-                        + {snippet.label}
-                      </button>
-                    ))}
+                  <b>Quick comment</b>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6 }}>
+                    <select
+                      value={quickSnippetById[review.id] || FEEDBACK_SNIPPETS[0]?.key || ""}
+                      onChange={(event) => setQuickSnippetById((prev) => ({ ...prev, [review.id]: event.target.value }))}
+                      aria-label="Quick comment snippet"
+                    >
+                      {FEEDBACK_SNIPPETS.map((snippet) => <option key={snippet.key} value={snippet.key}>{snippet.label}</option>)}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const selectedSnippet = FEEDBACK_SNIPPETS.find((snippet) => snippet.key === (quickSnippetById[review.id] || FEEDBACK_SNIPPETS[0]?.key));
+                        if (selectedSnippet) handleInsertSnippet(review.id, selectedSnippet.text);
+                      }}
+                    >
+                      Insert
+                    </button>
                   </div>
                   <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>{getActionableHint(currentFeedback)}</p>
                 </div>
@@ -822,36 +898,16 @@ export default function TutorMarkingPage() {
 
                 <div style={{ display: "grid", gap: 8 }}>
                   <button
-                    onClick={() => handleSubmit(review.id, { statusOverride: "approved", moveNext: true, fallbackFeedback: suggestedFeedback })}
-                    disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#15803d", color: "#fff", border: "1px solid #166534", fontWeight: 800 }}
-                  >
-                    {savingId === review.id ? "Saving..." : "Approve and close"}
-                  </button>
-                  <button
-                    onClick={() => handleSubmit(review.id, { statusOverride: "needs_improvement", moveNext: true, fallbackFeedback: suggestedFeedback })}
-                    disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#b45309", color: "#fff", border: "1px solid #92400e", fontWeight: 800 }}
-                  >
-                    {savingId === review.id ? "Saving..." : "Return for correction"}
-                  </button>
-                  <button
-                    onClick={() => handleSubmit(review.id, { statusOverride: "needs_improvement", moveNext: true, fallbackFeedback: "Please reply and explain which part was difficult for you, so I can guide you better." })}
-                    disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#4338ca", color: "#fff", border: "1px solid #3730a3", fontWeight: 800 }}
-                  >
-                    {savingId === review.id ? "Saving..." : "Ask student a question"}
-                  </button>
-                  <button
                     onClick={() => handleSubmit(review.id, { moveNext: true, fallbackFeedback: suggestedFeedback })}
                     disabled={savingId === review.id || deletingId === review.id}
+                    style={{ background: currentStatus === "approved" ? "#15803d" : "#b45309", color: "#fff", border: "1px solid transparent", fontWeight: 800 }}
                   >
-                    Save selected decision + next
+                    {savingId === review.id ? "Saving..." : `Save: ${STATUS_OPTIONS.find((option) => option.value === currentStatus)?.label || "selected decision"}`}
                   </button>
                   <button
                     onClick={() => handleDeleteReview(review.id)}
                     disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#dc2626", color: "#fff", border: "1px solid #991b1b" }}
+                    style={{ background: "#fff", color: "#991b1b", border: "1px solid #fecaca" }}
                   >
                     {deletingId === review.id ? "Deleting..." : "Delete submission"}
                   </button>
