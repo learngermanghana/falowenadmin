@@ -335,15 +335,38 @@ function looksLikeOptionAnswer(value = "") {
   return Boolean(extractOptionLetter(value));
 }
 
+function splitIntoAnswerBlocks(text = "") {
+  return String(text || "")
+    .split(/\n\s*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+}
+
+function looksLikeLongWritingAnswer(value = "") {
+  const raw = String(value || "").trim();
+  const words = normalizeAnswer(raw).split(/\s+/).filter(Boolean);
+  return words.length >= 4 || /[.!?]/.test(raw);
+}
+
 function extractSequentialObjectiveAnswers(text = "") {
   const answers = [];
+
   for (const section of splitSubmissionIntoSections(text)) {
-    const entries = extractNumberedTextEntries(section.text);
-    if (!entries.length) continue;
-    const hasOptionAnswer = entries.some((entry) => looksLikeOptionAnswer(entry.answer));
-    if (!hasOptionAnswer) continue;
-    entries.forEach((entry) => answers.push(entry.answer));
+    const blocks = section.partId === "main" ? splitIntoAnswerBlocks(section.text) : [section.text];
+
+    for (const block of blocks) {
+      const entries = extractNumberedTextEntries(block);
+      if (!entries.length) continue;
+
+      const hasOptionAnswer = entries.some((entry) => looksLikeOptionAnswer(entry.answer));
+      if (!hasOptionAnswer) continue;
+
+      entries
+        .filter((entry) => looksLikeOptionAnswer(entry.answer) || !looksLikeLongWritingAnswer(entry.answer))
+        .forEach((entry) => answers.push(entry.answer));
+    }
   }
+
   return answers;
 }
 
