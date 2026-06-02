@@ -1,0 +1,189 @@
+name: Patch writing before objective sections
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/patch-writing-before-objective.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch auto marking router
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/utils/autoMarking.js')
+          text = path.read_text()
+
+          new_split = r'''function splitSubmissionIntoParts(submissionText = "") {
+  const text = String(submissionText || "").trim();
+  if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];
+
+  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*[1-4]\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
+  const markers = [];
+  let match;
+  while ((match = markerRegex.exec(text))) {
+    markers.push({ index: match.index, end: markerRegex.lastIndex, title: match[1].trim(), partId: findPartId(match[1]) });
+  }
+
+  if (!markers.length) {
+    return [{ partId: "unknown", title: "Unlabelled submission", text, confidence: 0.45 }];
+  }
+
+  const parts = [];
+  const leadingText = text.slice(0, markers[0].index).trim();
+  if (leadingText) {
+    parts.push({
+      partId: "unknown",
+      title: "Unlabelled writing before objective section",
+      text: leadingText,
+      confidence: 0.7,
+    });
+  }
+
+  markers.forEach((marker, index) => {
+    const next = markers[index + 1];
+    const partText = text.slice(marker.end, next ? next.index : text.length).trim();
+    if (partText || marker.partId !== "unknown") {
+      parts.push({
+        partId: marker.partId,
+        title: marker.title,
+        text: partText,
+        confidence: marker.partId === "unknown" ? 0.5 : 0.9,
+      });
+    }
+  });
+
+  return parts.filter((part) => part.text || part.partId !== "unknown");
+}'''
+
+          text, split_count = re.subn(
+              r'function splitSubmissionIntoParts\(submissionText = ""\) \{[\s\S]*?\n\}',
+              new_split,
+              text,
+              count=1,
+          )
+          print('splitSubmissionIntoParts patches:', split_count)
+
+          new_detect = r'''function detectPartType({ level, partId, text, referenceEntry = {} } = {}) {
+  const format = String(referenceEntry?.format || "").toLowerCase();
+  if (partId === "teil2") return "writing";
+  if (["teil3", "teil4"].includes(partId)) return "objective";
+  if (looksLikeWritingTask(text)) return "writing";
+  if (format === "objective") return "objective";
+  if (format === "writing") return "writing";
+  return "objective";
+}'''
+
+          text, detect_count = re.subn(
+              r'function detectPartType\(\{ level, partId, text, referenceEntry = \{\} \} = \{\}\) \{[\s\S]*?\n\}',
+              new_detect,
+              text,
+              count=1,
+          )
+          print('detectPartType patches:', detect_count)
+
+          old_feedback = 'feedback: `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Score: ${score}%.`,'
+          new_feedback = 'feedback: `Writing score: ${score}%. ${score >= 75 ? "Good structure and clear task response." : "Review task completion, sentence accuracy, structure, and level-appropriate vocabulary."}`,'
+          if old_feedback in text:
+            text = text.replace(old_feedback, new_feedback)
+            print('Updated writing feedback text.')
+          else:
+            print('Writing feedback text already updated or marker not found.')
+
+          path.write_text(text)
+          PY
+
+      - name: Add regression test
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/auto-marking.test.js')
+          text = path.read_text()
+          marker = 'unlabelled A2 writing before Lesen is included in feedback'
+          if marker not in text:
+            text += r'''
+
+test("unlabelled A2 writing before Lesen is included in feedback", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: {
+      assignmentKey: "A2-5.14",
+      level: "A2",
+      answers: {
+        teil3: {
+          Answer1: "B) Die Kollegen und die Arbeit",
+          Answer2: "C) Mit Sie",
+          Answer3: "C) Eine Arbeitnehmervertretung",
+          Answer4: "C) Arbeitskleidung, Pausen und feste Arbeitszeiten",
+          Answer5: "C) Man kann Arbeitsbeginn und -ende flexibel wählen",
+          Answer6: "C) 38-40 Stunden",
+          Answer7: "B) Den Urlaub eintragen und genehmigen lassen",
+        },
+        teil4: {
+          Answer1: "D) Weiter das Gehalt oder den Lohn",
+          Answer2: "C) Sofort den Arbeitgeber informieren und zum Arzt gehen",
+          Answer3: "C) Auf der Baustelle oder am Flughafen",
+          Answer4: "C) Die Kündigung schriftlich und mit Frist einreichen",
+          Answer5: "C) In der Volkshochschule",
+        },
+      },
+    },
+    submission: { assignmentKey: "A2-5.14", level: "A2" },
+    submissionText: `Lieber Felix,
+
+ich hoffe, es geht dir gut.
+Ich schreibe dir, weil ich mich für deinen Vorschlag bedanken möchte.
+Ich arbeite jetzt als Projektkoordinator bei SINGA.
+Ich freue mich auf deine Antwort.
+
+Viele Grüße
+Fred
+
+Lesen
+1. b
+2. c
+3. c
+4. c
+5. c
+6. c
+7. b
+8. d
+9. c
+10. c
+11. c
+12. c`,
+  });
+
+  assert.equal(result.parts[0].partType, "writing");
+  assert.match(result.feedback, /Writing score:/);
+  assert.match(result.feedback, /Objective score:/);
+});
+'''
+            path.write_text(text)
+            print('Added regression test.')
+          else:
+            print('Regression test already exists.')
+          PY
+
+      - name: Run tests
+        run: npm test
+
+      - name: Commit router fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/autoMarking.js tests/auto-marking.test.js
+          git commit -m "Include writing before objective sections in marking feedback" || exit 0
+          git push
