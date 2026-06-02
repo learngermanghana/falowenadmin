@@ -406,3 +406,51 @@ test("unlabelled A2 writing before Lesen is included in feedback", () => {
   assert.match(result.feedback, /Writing score:/);
   assert.match(result.feedback, /Objective score:/);
 });
+
+test("A1-4 deterministic checker continues restarted numbering across objective sections", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      assignmentKey: "A1-4",
+      level: "A1",
+      format: "objective",
+      answers: {
+        Answer1: "C) Neun",
+        Answer2: "B) Polnisch",
+        Answer3: "D) Niederländisch",
+        Answer4: "A) Deutsch",
+        Answer5: "C) Paris",
+        Answer6: "B) Amsterdam",
+        Answer7: "C) In der Schweiz",
+        Answer8: "C) In Italien und Frankreich",
+        Answer9: "C) Rom",
+        Answer10: "B) Das Essen",
+        Answer11: "B) Paris",
+        Answer12: "A) Nach Spanien",
+      },
+    },
+    submissionText: `TEIL1
+1. Ich komme aus Deutschland. Ich spreche Deutsch.
+2. Sie kommt aus Frankreich. Sie spricht Französisch.
+3. Sie kommen aus Russland. Sie sprechen Russisch.
+4. Wir kommen aus Japan. Wir sprechen Japanisch.
+5. Er kommt aus England. Er spricht Englisch.
+
+TEIL2:
+1C , 2B, 3D, 4A, 5C, 6B, 7C
+
+TEIL3:
+1C
+2C
+3
+4B
+5- Barcelona oder Madrid`,
+  });
+
+  assert.equal(result.objectiveTotal, 12);
+  assert.equal(result.objectiveCorrect, 10);
+  assert.equal(result.objectiveScore, 83);
+  assert.deepEqual(result.wrongAnswers.map(({ question, expected, student }) => ({ question, expected, student })), [
+    { question: 12, expected: "A", student: "Barcelona oder Madrid" },
+    { question: 10, expected: "B", student: "" },
+  ]);
+});

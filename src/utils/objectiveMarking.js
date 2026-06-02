@@ -274,12 +274,33 @@ function sectionTextForPart(sections = [], partId = "main", fullText = "") {
 
 export function extractChoiceAnswers(text = "") {
   const answers = {};
-  const regex = /(?:frage\s*)?(\d+)\s*\.?\s*(?:anzeige\s*)?([a-fx])\b/gi;
-  let match;
-  while ((match = regex.exec(String(text)))) {
-    const index = Number(match[1]);
-    if (Number.isFinite(index)) answers[index] = match[2].toUpperCase();
+  let pendingQuestion = null;
+
+  for (const rawLine of String(text || "").split(/\r?\n|[,;]+/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const pending = line.match(/^(?:frage|answer|antwort|nr\.?|q)\s*(\d{1,3})\s*[).:-]?\s*$/i);
+    if (pending) {
+      pendingQuestion = Number(pending[1]);
+      continue;
+    }
+
+    const optionOnly = line.match(/^(?:anzeige\s*)?([a-fx])\b/i);
+    if (pendingQuestion && optionOnly) {
+      answers[pendingQuestion] = optionOnly[1].toUpperCase();
+      pendingQuestion = null;
+      continue;
+    }
+
+    const numbered = line.match(/^(?:frage\s*)?(\d+)\s*\.?\s*(?:anzeige\s*)?([a-fx])\b/i);
+    if (numbered) {
+      const index = pendingQuestion || Number(numbered[1]);
+      if (Number.isFinite(index)) answers[index] = numbered[2].toUpperCase();
+      pendingQuestion = null;
+    }
   }
+
   return answers;
 }
 
@@ -290,7 +311,8 @@ export function extractVocabularyAnswers(text = "") {
     if (parts.length < 2) continue;
     const left = normalizeAnswer(parts[0]);
     const right = normalizeAnswer(parts.slice(1).join(" "));
-    if (left && right) vocab[left] = right;
+    const canonicalKey = findVocabularyKey(left) || left;
+    if (canonicalKey && right) vocab[canonicalKey] = right;
   }
   return vocab;
 }
@@ -486,6 +508,7 @@ function isCorrectAnswer(item, student) {
   if (expectedLetter && normalizeAnswer(student) === normalizeAnswer(expectedLetter)) return true;
   if (item.type === "choice" && item.expectedText) return textMatches(item.expectedText, student);
   const accepted = item.accepted?.length ? item.accepted : [item.expected, item.expectedText, item.expectedRaw].filter(Boolean);
+  if (item.type === "vocabulary") return accepted.some((expected) => normalizeAnswer(expected) === normalizeAnswer(student));
   return accepted.some((expected) => textMatches(expected, student));
 }
 
