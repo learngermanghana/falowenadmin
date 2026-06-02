@@ -34,6 +34,12 @@ jobs:
           path = Path("src/utils/objectiveMarking.js")
           text = path.read_text()
 
+          if "const A1_14_1_VOCAB_KEYS" not in text:
+              text = text.replace(
+                  'const HARDCODED_REFERENCE_ANSWERS = {',
+                  'const A1_14_1_VOCAB_KEYS = { 6: "head", 7: "arm", 8: "leg", 9: "eye", 10: "nose", 11: "ear", 12: "mouth", 13: "hand", 14: "foot", 15: "stomach" };\n\nconst HARDCODED_REFERENCE_ANSWERS = {'
+              )
+
           text = text.replace(
               '.replace(/ß/g, "ss")\n    .replace(/[^a-z0-9]+/g, " ")',
               '.replace(/ß/g, "ss")\n    .replace(/\\bheibe\\b/g, "heisse")\n    .replace(/\\bheibt\\b/g, "heisst")\n    .replace(/\\bheiben\\b/g, "heissen")\n    .replace(/[^a-z0-9]+/g, " ")',
@@ -46,6 +52,24 @@ jobs:
               'const markerRegex = /(?:^|\\n)\\s*(teil|part)\\s*(\\d+)\\s*[:;]?\\s*/gi;',
               'const markerRegex = /(?:^|\\n)\\s*(teil|part)\\s*(\\d+)\\s*[.:;]?\\s*/gi;',
           )
+
+          new_extract_vocab = "\n".join([
+              'export function extractVocabularyAnswers(text = "") {',
+              '  const vocab = {};',
+              '  for (const line of String(text).split(/\\n|\\r/)) {',
+              '    const parts = line.split(/[-–:]/);',
+              '    if (parts.length < 2) continue;',
+              '    const left = normalizeAnswer(parts[0]);',
+              '    const right = normalizeAnswer(parts.slice(1).join(" "));',
+              '    if (!left || !right) continue;',
+              '    vocab[left] = right;',
+              '    const aliasKey = findVocabularyKey(left);',
+              '    if (aliasKey) vocab[aliasKey] = right;',
+              '  }',
+              '  return vocab;',
+              '}',
+          ])
+          text = replace_function(text, "extractVocabularyAnswers", new_extract_vocab)
 
           new_extract_numbered = "\n".join([
               'function extractNumberedTextEntries(text = "") {',
@@ -105,6 +129,17 @@ jobs:
               'getStudentAnswerForItem({ item, index, submissionText, sections, vocabularyIndexes, sequentialObjectiveAnswers, sequentialPartAnswers, useSequentialChoices })',
               'getStudentAnswerForItem({ item, index, submissionText, sections, vocabularyIndexes, sequentialObjectiveAnswers, sequentialPartAnswers, sequentialFlatAnswers, useSequentialChoices, useSequentialFlatAnswers })',
           )
+
+          text = text.replace(
+              '    vocabularyKey: "",\n  }));',
+              '    vocabularyKey: A1_14_1_VOCAB_KEYS[Number(key)] || "",\n  }));',
+          )
+
+          if 'if (item.type === "vocabulary") {' not in text:
+              text = text.replace(
+                  'function isCorrectAnswer(item, student) {\n  const expectedLetter = item.type === "choice"',
+                  'function isCorrectAnswer(item, student) {\n  if (item.type === "vocabulary") {\n    const accepted = item.accepted?.length ? item.accepted : [item.expected];\n    return accepted.some((expected) => normalizeAnswer(expected) === normalizeAnswer(student));\n  }\n\n  const expectedLetter = item.type === "choice"'
+              )
 
           path.write_text(text)
           PY
