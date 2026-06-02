@@ -12,6 +12,8 @@ import { db } from "../firebase";
 
 const REVIEW_COLLECTION = "examTutorReviewQueue";
 const PENDING_REVIEW_STATUSES = new Set(["pending", "pending_review", "awaiting_review"]);
+const PHRASE_MISTAKE_SEVERITIES = new Set(["minor", "important", "serious"]);
+
 
 function toMillis(value) {
   if (!value) return 0;
@@ -62,6 +64,51 @@ function buildMessagePreview(value) {
   return normalized.length <= 180 ? normalized : `${normalized.slice(0, 177)}...`;
 }
 
+function normalizeOffset(value, fallback = 0) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(0, Math.trunc(parsed));
+}
+
+function normalizeCreatedAt(value) {
+  if (typeof value === "string" && !Number.isNaN(Date.parse(value))) return new Date(value).toISOString();
+  if (typeof value?.toDate === "function") return value.toDate().toISOString();
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  return new Date().toISOString();
+}
+
+export function normalizePhraseMistakes(phraseMistakes = []) {
+  if (!Array.isArray(phraseMistakes)) return [];
+
+  return phraseMistakes
+    .map((mistake, index) => {
+      const phrase = String(mistake?.phrase || "").trim();
+      const correction = String(mistake?.correction || "").trim();
+      const explanation = String(mistake?.explanation || "").trim();
+      if (!phrase || !correction || !explanation) return null;
+
+      const startOffset = normalizeOffset(mistake?.startOffset);
+      const fallbackEndOffset = Math.max(startOffset, startOffset + phrase.length);
+      const endOffset = Math.max(startOffset, normalizeOffset(mistake?.endOffset, fallbackEndOffset));
+      const severity = PHRASE_MISTAKE_SEVERITIES.has(mistake?.severity) ? mistake.severity : "important";
+      const id = String(mistake?.id || "").trim() || `pm_${Date.now()}_${index}`;
+
+      return {
+        id,
+        source: "studentDraft",
+        phrase,
+        startOffset,
+        endOffset,
+        mistakeType: String(mistake?.mistakeType || "Other").trim() || "Other",
+        correction,
+        explanation,
+        severity,
+        createdAt: normalizeCreatedAt(mistake?.createdAt),
+      };
+    })
+    .filter(Boolean);
+}
+
 export async function loadPendingTutorReviews() {
   const snap = await getDocs(collection(db, REVIEW_COLLECTION));
   return snap.docs.map((reviewDoc) => ({
@@ -70,7 +117,7 @@ export async function loadPendingTutorReviews() {
   })).filter(isActionableReview);
 }
 
-export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFeedback, reviewedByUid, reviewedByName }) {
+export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFeedback, phraseMistakes = [], reviewedByUid, reviewedByName }) {
   const safeReviewId = String(reviewId || "").trim();
   if (!safeReviewId) {
     throw new Error("Missing reviewId.");
@@ -82,6 +129,7 @@ export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFee
   }
 
   const normalizedFeedback = String(tutorFeedback || "").trim();
+  const normalizedPhraseMistakes = normalizePhraseMistakes(phraseMistakes);
   const reviewerName = String(reviewedByName || "").trim() || "Tutor";
   const reviewerUid = String(reviewedByUid || "").trim();
   const respondedAt = Timestamp.now();
@@ -90,6 +138,7 @@ export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFee
   await updateDoc(doc(db, REVIEW_COLLECTION, safeReviewId), {
     reviewStatus: status,
     tutorFeedback: normalizedFeedback,
+    phraseMistakes: normalizedPhraseMistakes,
     reviewedAt: respondedAt,
     reviewedByUid: reviewerUid || null,
     reviewedByName: reviewerName,
@@ -109,11 +158,13 @@ export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFee
       tutorId: reviewerUid || null,
       tutorName: reviewerName,
       createdAt: respondedAt,
+      phraseMistakes: normalizedPhraseMistakes,
     }),
     reviewHistory: arrayUnion({
       reviewedAt: respondedAt,
       reviewStatus: status,
       tutorFeedback: normalizedFeedback,
+      phraseMistakes: normalizedPhraseMistakes,
       reviewerName,
       reviewerUid: reviewerUid || null,
     }),
