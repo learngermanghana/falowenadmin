@@ -154,6 +154,7 @@ export default function App() {
           <Route path="/marking/exam-review/:reviewId" element={<Navigate to={`/examTutorReviewQueue/${location.pathname.split('/').pop()}`} replace />} />
           <Route path="/examTutorReviewQueue" element={<ExamReviewRoute />} />
           <Route path="/examTutorReviewQueue/:reviewId" element={<ExamReviewRoute />} />
+          <Route path="/tutor-marking" element={<Navigate to="/campus/tutor-marking" replace />} />
           <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationPage /></ProtectedRoute>} />

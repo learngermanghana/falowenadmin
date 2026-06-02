@@ -52,6 +52,43 @@ const STATUS_OPTIONS = [
   { value: "needs_improvement", label: "Return for correction", tone: "warning" },
 ];
 
+const MISTAKE_TYPE_OPTIONS = [
+  "Verb conjugation",
+  "Word order",
+  "Article / gender",
+  "Spelling",
+  "Formal / informal",
+  "Missing task point",
+  "Other",
+];
+
+const SEVERITY_OPTIONS = ["minor", "important", "serious"];
+
+function createPhraseMistakeId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `pm_${crypto.randomUUID()}`;
+  }
+  return `pm_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function normalizeUiPhraseMistakes(phraseMistakes = []) {
+  if (!Array.isArray(phraseMistakes)) return [];
+  return phraseMistakes.map((mistake) => ({
+    id: String(mistake?.id || "").trim() || createPhraseMistakeId(),
+    source: "studentDraft",
+    phrase: String(mistake?.phrase || ""),
+    startOffset: Number.isFinite(Number(mistake?.startOffset)) ? Math.max(0, Math.trunc(Number(mistake.startOffset))) : 0,
+    endOffset: Number.isFinite(Number(mistake?.endOffset)) ? Math.max(0, Math.trunc(Number(mistake.endOffset))) : 0,
+    mistakeType: MISTAKE_TYPE_OPTIONS.includes(mistake?.mistakeType) ? mistake.mistakeType : "Other",
+    correction: String(mistake?.correction || ""),
+    explanation: String(mistake?.explanation || ""),
+    severity: SEVERITY_OPTIONS.includes(mistake?.severity) ? mistake.severity : "important",
+    createdAt: typeof mistake?.createdAt === "string" && !Number.isNaN(Date.parse(mistake.createdAt))
+      ? new Date(mistake.createdAt).toISOString()
+      : (typeof mistake?.createdAt?.toDate === "function" ? mistake.createdAt.toDate().toISOString() : new Date().toISOString()),
+  }));
+}
+
 function extractText(review, keys) {
   for (const key of keys) {
     const value = review?.[key];
@@ -223,6 +260,9 @@ export default function TutorMarkingPage() {
   const [saveStateById, setSaveStateById] = useState({});
   const [statusById, setStatusById] = useState({});
   const [feedbackById, setFeedbackById] = useState({});
+  const [quickSnippetById, setQuickSnippetById] = useState({});
+  const [phraseMistakesById, setPhraseMistakesById] = useState({});
+  const [selectedDraftTextById, setSelectedDraftTextById] = useState({});
   const [activeReviewId, setActiveReviewId] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [ageFilter, setAgeFilter] = useState("all");
@@ -283,6 +323,8 @@ export default function TutorMarkingPage() {
           if (typeof drafts[row.id] === "string") seededFeedback[row.id] = drafts[row.id];
         });
         setFeedbackById(seededFeedback);
+        setQuickSnippetById(Object.fromEntries(rows.map((row) => [row.id, FEEDBACK_SNIPPETS[0]?.key || ""])));
+        setPhraseMistakesById(Object.fromEntries(rows.map((row) => [row.id, normalizeUiPhraseMistakes(row.phraseMistakes)])));
         if (rows[0]?.id) setActiveReviewId(rows[0].id);
       } catch (err) {
         error(err?.message || "Failed to load pending tutor reviews.");
@@ -294,14 +336,15 @@ export default function TutorMarkingPage() {
 
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      const hasUnsavedDraft = Object.values(feedbackById).some((value) => String(value || "").trim().length > 0);
+      const hasUnsavedDraft = Object.values(feedbackById).some((value) => String(value || "").trim().length > 0)
+        || Object.values(phraseMistakesById).some((items) => Array.isArray(items) && items.length > 0);
       if (!hasUnsavedDraft) return;
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [feedbackById]);
+  }, [feedbackById, phraseMistakesById]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -349,6 +392,7 @@ export default function TutorMarkingPage() {
         tutorFeedback,
         reviewedByUid: user?.uid,
         reviewedByName: user?.displayName || user?.email || "Tutor",
+        phraseMistakes: phraseMistakesById[reviewId] || [],
       });
       setPendingReviews((prev) => prev.filter((review) => review.id !== reviewId));
       setRecentlyResponded((prev) => {
@@ -364,6 +408,16 @@ export default function TutorMarkingPage() {
         ].slice(0, 6);
       });
       setFeedbackById((prev) => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
+      setPhraseMistakesById((prev) => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
+      setSelectedDraftTextById((prev) => {
         const next = { ...prev };
         delete next[reviewId];
         return next;
@@ -396,6 +450,16 @@ export default function TutorMarkingPage() {
         delete next[reviewId];
         return next;
       });
+      setPhraseMistakesById((prev) => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
+      setSelectedDraftTextById((prev) => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
       success("Queue item deleted.");
       const currentIndex = filteredReviews.findIndex((review) => review.id === reviewId);
       const nextReview = filteredReviews[currentIndex + 1] || filteredReviews[currentIndex - 1] || null;
@@ -405,6 +469,68 @@ export default function TutorMarkingPage() {
     } finally {
       setDeletingId("");
     }
+  };
+
+  const handleStudentDraftSelection = (reviewId, event) => {
+    const { selectionStart, selectionEnd, value } = event.target;
+    if (selectionStart === selectionEnd) {
+      setSelectedDraftTextById((prev) => ({ ...prev, [reviewId]: null }));
+      return;
+    }
+
+    setSelectedDraftTextById((prev) => ({
+      ...prev,
+      [reviewId]: {
+        phrase: value.slice(selectionStart, selectionEnd),
+        startOffset: selectionStart,
+        endOffset: selectionEnd,
+      },
+    }));
+  };
+
+  const handleAddPhraseMistake = (reviewId) => {
+    const selectedDraftText = selectedDraftTextById[reviewId];
+    if (!selectedDraftText?.phrase?.trim()) {
+      error("Highlight text in the student draft first.");
+      return;
+    }
+
+    const phraseMistake = {
+      id: createPhraseMistakeId(),
+      source: "studentDraft",
+      phrase: selectedDraftText.phrase,
+      startOffset: selectedDraftText.startOffset,
+      endOffset: selectedDraftText.endOffset,
+      mistakeType: "Verb conjugation",
+      correction: "",
+      explanation: "",
+      severity: "important",
+      createdAt: new Date().toISOString(),
+    };
+
+    setPhraseMistakesById((prev) => ({
+      ...prev,
+      [reviewId]: [...(prev[reviewId] || []), phraseMistake],
+    }));
+    setSaveStateById((prev) => ({ ...prev, [reviewId]: "" }));
+  };
+
+  const handleUpdatePhraseMistake = (reviewId, mistakeId, field, value) => {
+    setPhraseMistakesById((prev) => ({
+      ...prev,
+      [reviewId]: (prev[reviewId] || []).map((mistake) => (
+        mistake.id === mistakeId ? { ...mistake, [field]: value } : mistake
+      )),
+    }));
+    setSaveStateById((prev) => ({ ...prev, [reviewId]: "" }));
+  };
+
+  const handleRemovePhraseMistake = (reviewId, mistakeId) => {
+    setPhraseMistakesById((prev) => ({
+      ...prev,
+      [reviewId]: (prev[reviewId] || []).filter((mistake) => mistake.id !== mistakeId),
+    }));
+    setSaveStateById((prev) => ({ ...prev, [reviewId]: "" }));
   };
 
   const handleInsertSnippet = (reviewId, snippetText) => {
@@ -478,7 +604,7 @@ export default function TutorMarkingPage() {
 
       {!loading && activeReview && (() => {
         const review = activeReview;
-        const studentDraft = extractText(review, ["studentDraft", "draftText", "originalDraft"]);
+        const studentDraft = extractText(review, ["studentDraft", "draft", "draftText", "originalDraft", "studentAnswer", "answer"]);
         const aiFeedback = extractText(review, ["aiFeedback", "feedback", "aiReviewFeedback"]);
         const revisedDraft = extractText(review, ["revisedDraft", "improvedDraft", "rewrittenDraft"]);
         const reflection = extractText(review, ["reflection"]);
@@ -492,6 +618,8 @@ export default function TutorMarkingPage() {
         const suggestedFeedback = buildSuggestedFeedback({ review, currentStatus, aiFeedback, revisedDraft, studentDraft, unreadReplyCount });
         const checklist = getChecklist(currentFeedback);
         const priorityBadges = getPriorityBadges(review);
+        const phraseMistakes = phraseMistakesById[review.id] || [];
+        const selectedDraftText = selectedDraftTextById[review.id];
 
         studentReplies.sort((a, b) => toMillis(b?.createdAt) - toMillis(a?.createdAt));
 
@@ -517,13 +645,22 @@ export default function TutorMarkingPage() {
               <div style={{ display: "grid", gap: 10, minWidth: 0 }}>
                 <label style={{ display: "grid", gap: 4 }}>
                   Student draft <span style={{ opacity: 0.7, fontSize: 12 }}>({getReadingTimeText(studentDraft)})</span>
-                  <textarea readOnly rows={9} value={studentDraft || "No student draft found."} />
+                  <textarea
+                    readOnly
+                    rows={9}
+                    value={studentDraft || "No student draft found."}
+                    onSelect={(event) => handleStudentDraftSelection(review.id, event)}
+                    onMouseUp={(event) => handleStudentDraftSelection(review.id, event)}
+                    onKeyUp={(event) => handleStudentDraftSelection(review.id, event)}
+                    aria-label="Student draft with selectable text"
+                  />
                 </label>
 
                 <label style={{ display: "grid", gap: 4 }}>
                   Revised draft <span style={{ opacity: 0.7, fontSize: 12 }}>({getReadingTimeText(revisedDraft)})</span>
                   <textarea readOnly rows={9} value={revisedDraft || "No revised draft found."} />
                 </label>
+
 
                 <details open>
                   <summary style={{ cursor: "pointer", fontWeight: 700 }}>AI feedback</summary>
@@ -575,6 +712,71 @@ export default function TutorMarkingPage() {
                   </div>
                 </div>
 
+                <section style={{ display: "grid", gap: 8, border: "2px solid #f59e0b", background: "#fffbeb", borderRadius: 10, padding: 10 }}>
+                  <div style={{ display: "grid", gap: 3 }}>
+                    <b>Phrase mistakes ({phraseMistakes.length})</b>
+                    <span style={{ fontSize: 12, opacity: 0.78 }}>Select exact text in Student draft, then add the mistake.</span>
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.9 }}>
+                    Selected: {selectedDraftText?.phrase?.trim()
+                      ? <><b>“{selectedDraftText.phrase}”</b> ({selectedDraftText.startOffset}–{selectedDraftText.endOffset})</>
+                      : "No phrase selected yet."}
+                  </div>
+                  <button type="button" onClick={() => handleAddPhraseMistake(review.id)} disabled={!studentDraft.trim()}>
+                    Add mistake for selected phrase
+                  </button>
+                  {!studentDraft.trim() && (
+                    <p style={{ margin: 0, fontSize: 12, color: "#92400e" }}>No student draft text is available to select for this item.</p>
+                  )}
+                  {phraseMistakes.length === 0 && studentDraft.trim() && (
+                    <p style={{ margin: 0, fontSize: 12, opacity: 0.78 }}>No phrase mistakes added yet.</p>
+                  )}
+                  {phraseMistakes.map((mistake, index) => (
+                    <article key={mistake.id} style={{ display: "grid", gap: 8, border: "1px solid #fbbf24", background: "#fff", borderRadius: 8, padding: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "start" }}>
+                        <div style={{ display: "grid", gap: 2 }}>
+                          <b>{index + 1}. “{mistake.phrase}”</b>
+                          <span style={{ fontSize: 12, opacity: 0.72 }}>studentDraft · {mistake.startOffset}–{mistake.endOffset}</span>
+                        </div>
+                        <button type="button" onClick={() => handleRemovePhraseMistake(review.id, mistake.id)} style={{ color: "#991b1b", background: "#fff", border: "1px solid #fecaca" }}>
+                          Remove
+                        </button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: 8 }}>
+                        <label style={{ display: "grid", gap: 4 }}>
+                          Type
+                          <select value={mistake.mistakeType} onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "mistakeType", event.target.value)}>
+                            {MISTAKE_TYPE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
+                        <label style={{ display: "grid", gap: 4 }}>
+                          Severity
+                          <select value={mistake.severity} onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "severity", event.target.value)}>
+                            {SEVERITY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
+                      </div>
+                      <label style={{ display: "grid", gap: 4 }}>
+                        Correction
+                        <input
+                          value={mistake.correction}
+                          placeholder="Corrected phrase"
+                          onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "correction", event.target.value)}
+                        />
+                      </label>
+                      <label style={{ display: "grid", gap: 4 }}>
+                        Explanation
+                        <textarea
+                          rows={3}
+                          value={mistake.explanation}
+                          placeholder="Short rule or explanation"
+                          onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "explanation", event.target.value)}
+                        />
+                      </label>
+                    </article>
+                  ))}
+                </section>
+
                 <div style={{ display: "grid", gap: 6, border: "1px solid #dbeafe", background: "#eff6ff", borderRadius: 8, padding: 10 }}>
                   <b>Suggested tutor feedback</b>
                   <div style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{suggestedFeedback}</div>
@@ -598,13 +800,24 @@ export default function TutorMarkingPage() {
                 </label>
 
                 <div style={{ display: "grid", gap: 6 }}>
-                  <b>Quick corrections</b>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {FEEDBACK_SNIPPETS.map((snippet) => (
-                      <button key={snippet.key} type="button" onClick={() => handleInsertSnippet(review.id, snippet.text)}>
-                        + {snippet.label}
-                      </button>
-                    ))}
+                  <b>Quick comment</b>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6 }}>
+                    <select
+                      value={quickSnippetById[review.id] || FEEDBACK_SNIPPETS[0]?.key || ""}
+                      onChange={(event) => setQuickSnippetById((prev) => ({ ...prev, [review.id]: event.target.value }))}
+                      aria-label="Quick comment snippet"
+                    >
+                      {FEEDBACK_SNIPPETS.map((snippet) => <option key={snippet.key} value={snippet.key}>{snippet.label}</option>)}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const selectedSnippet = FEEDBACK_SNIPPETS.find((snippet) => snippet.key === (quickSnippetById[review.id] || FEEDBACK_SNIPPETS[0]?.key));
+                        if (selectedSnippet) handleInsertSnippet(review.id, selectedSnippet.text);
+                      }}
+                    >
+                      Insert
+                    </button>
                   </div>
                   <p style={{ margin: 0, fontSize: 12, opacity: 0.8 }}>{getActionableHint(currentFeedback)}</p>
                 </div>
@@ -620,36 +833,16 @@ export default function TutorMarkingPage() {
 
                 <div style={{ display: "grid", gap: 8 }}>
                   <button
-                    onClick={() => handleSubmit(review.id, { statusOverride: "approved", moveNext: true, fallbackFeedback: suggestedFeedback })}
-                    disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#15803d", color: "#fff", border: "1px solid #166534", fontWeight: 800 }}
-                  >
-                    {savingId === review.id ? "Saving..." : "Approve and close"}
-                  </button>
-                  <button
-                    onClick={() => handleSubmit(review.id, { statusOverride: "needs_improvement", moveNext: true, fallbackFeedback: suggestedFeedback })}
-                    disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#b45309", color: "#fff", border: "1px solid #92400e", fontWeight: 800 }}
-                  >
-                    {savingId === review.id ? "Saving..." : "Return for correction"}
-                  </button>
-                  <button
-                    onClick={() => handleSubmit(review.id, { statusOverride: "needs_improvement", moveNext: true, fallbackFeedback: "Please reply and explain which part was difficult for you, so I can guide you better." })}
-                    disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#4338ca", color: "#fff", border: "1px solid #3730a3", fontWeight: 800 }}
-                  >
-                    {savingId === review.id ? "Saving..." : "Ask student a question"}
-                  </button>
-                  <button
                     onClick={() => handleSubmit(review.id, { moveNext: true, fallbackFeedback: suggestedFeedback })}
                     disabled={savingId === review.id || deletingId === review.id}
+                    style={{ background: currentStatus === "approved" ? "#15803d" : "#b45309", color: "#fff", border: "1px solid transparent", fontWeight: 800 }}
                   >
-                    Save selected decision + next
+                    {savingId === review.id ? "Saving..." : `Save: ${STATUS_OPTIONS.find((option) => option.value === currentStatus)?.label || "selected decision"}`}
                   </button>
                   <button
                     onClick={() => handleDeleteReview(review.id)}
                     disabled={savingId === review.id || deletingId === review.id}
-                    style={{ background: "#dc2626", color: "#fff", border: "1px solid #991b1b" }}
+                    style={{ background: "#fff", color: "#991b1b", border: "1px solid #fecaca" }}
                   >
                     {deletingId === review.id ? "Deleting..." : "Delete submission"}
                   </button>
@@ -673,6 +866,15 @@ export default function TutorMarkingPage() {
                       {formatTimestamp(item?.reviewedAt)} · {item?.reviewerName || "Tutor"} · {item?.reviewStatus || "status unavailable"}
                     </div>
                     {item?.tutorFeedback && <div style={{ marginTop: 3, whiteSpace: "pre-wrap" }}>{item.tutorFeedback}</div>}
+                    {Array.isArray(item?.phraseMistakes) && item.phraseMistakes.length > 0 && (
+                      <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                        {item.phraseMistakes.map((mistake) => (
+                          <li key={mistake.id || `${mistake.phrase}-${mistake.startOffset}`} style={{ fontSize: 12 }}>
+                            <b>{mistake.mistakeType || "Phrase mistake"}:</b> “{mistake.phrase}” → {mistake.correction}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))}
               </div>
