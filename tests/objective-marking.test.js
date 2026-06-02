@@ -318,3 +318,37 @@ Lesen
   assert.equal(result.correctCount, 12);
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
 });
+
+test("A1-4 blank-line separated objective blocks ignore first numbered writing block", () => {
+  const result = computeObjectiveScore("A1-4", `
+1) Ich komme aus Deutschland. Ich spreche Deutsch.
+2) Sie kommt aus Frankreich. Sie spricht Französisch
+3) Sie kommen aus Russland. Sie sprechen Russisch
+4) Wir kommen aus Japan. Wir sprechen Japanisch.
+5) Er kommt aus England.Er spricht Englisch.
+
+
+
+1) C
+2) B
+3) D
+4) A
+5) C
+6) D
+7) C
+
+
+1) C
+2) C
+3) B
+4) B
+5) Barcelona oder Madrid
+  `);
+
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 10);
+  assert.equal(result.details[6].student, "D");
+  assert.equal(result.details[6].correct, false);
+  assert.equal(result.details[12].student, "Barcelona oder Madrid");
+  assert.equal(result.details[12].correct, false);
+});
