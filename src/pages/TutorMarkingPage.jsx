@@ -260,7 +260,6 @@ export default function TutorMarkingPage() {
   const [saveStateById, setSaveStateById] = useState({});
   const [statusById, setStatusById] = useState({});
   const [feedbackById, setFeedbackById] = useState({});
-  const [quickSnippetById, setQuickSnippetById] = useState({});
   const [phraseMistakesById, setPhraseMistakesById] = useState({});
   const [selectedDraftTextById, setSelectedDraftTextById] = useState({});
   const [activeReviewId, setActiveReviewId] = useState("");
@@ -323,7 +322,6 @@ export default function TutorMarkingPage() {
           if (typeof drafts[row.id] === "string") seededFeedback[row.id] = drafts[row.id];
         });
         setFeedbackById(seededFeedback);
-        setQuickSnippetById(Object.fromEntries(rows.map((row) => [row.id, FEEDBACK_SNIPPETS[0]?.key || ""])));
         setPhraseMistakesById(Object.fromEntries(rows.map((row) => [row.id, normalizeUiPhraseMistakes(row.phraseMistakes)])));
         if (rows[0]?.id) setActiveReviewId(rows[0].id);
       } catch (err) {
@@ -661,6 +659,73 @@ export default function TutorMarkingPage() {
                   <textarea readOnly rows={9} value={revisedDraft || "No revised draft found."} />
                 </label>
 
+
+
+                <section style={{ display: "grid", gap: 8, border: "1px solid #fde68a", background: "#fffbeb", borderRadius: 8, padding: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <div>
+                      <b>Phrase-level mistakes</b>
+                      <p style={{ margin: "2px 0 0", fontSize: 12, opacity: 0.78 }}>
+                        Highlight exact text in the Student draft textarea, then add a mistake explanation.
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => handleAddPhraseMistake(review.id)}>
+                      Add mistake for selected phrase
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.85 }}>
+                    Selected: {selectedDraftText?.phrase?.trim()
+                      ? <><b>“{selectedDraftText.phrase}”</b> ({selectedDraftText.startOffset}–{selectedDraftText.endOffset})</>
+                      : "Highlight text in the student draft above."}
+                  </div>
+                  {phraseMistakes.length === 0 && (
+                    <p style={{ margin: 0, fontSize: 13, opacity: 0.78 }}>No phrase mistakes added yet. General tutor feedback can still be saved without these.</p>
+                  )}
+                  {phraseMistakes.map((mistake, index) => (
+                    <article key={mistake.id} style={{ display: "grid", gap: 8, border: "1px solid #fbbf24", background: "#fff", borderRadius: 8, padding: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "start" }}>
+                        <div style={{ display: "grid", gap: 2 }}>
+                          <b>Mistake {index + 1}: “{mistake.phrase}”</b>
+                          <span style={{ fontSize: 12, opacity: 0.72 }}>studentDraft · offsets {mistake.startOffset}–{mistake.endOffset}</span>
+                        </div>
+                        <button type="button" onClick={() => handleRemovePhraseMistake(review.id, mistake.id)} style={{ color: "#991b1b" }}>
+                          Remove
+                        </button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
+                        <label style={{ display: "grid", gap: 4 }}>
+                          Mistake type
+                          <select value={mistake.mistakeType} onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "mistakeType", event.target.value)}>
+                            {MISTAKE_TYPE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
+                        <label style={{ display: "grid", gap: 4 }}>
+                          Severity
+                          <select value={mistake.severity} onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "severity", event.target.value)}>
+                            {SEVERITY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </label>
+                      </div>
+                      <label style={{ display: "grid", gap: 4 }}>
+                        Correction
+                        <input
+                          value={mistake.correction}
+                          placeholder="Corrected version of the selected phrase"
+                          onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "correction", event.target.value)}
+                        />
+                      </label>
+                      <label style={{ display: "grid", gap: 4 }}>
+                        Explanation
+                        <textarea
+                          rows={3}
+                          value={mistake.explanation}
+                          placeholder="Explain the rule or task issue clearly for the student"
+                          onChange={(event) => handleUpdatePhraseMistake(review.id, mistake.id, "explanation", event.target.value)}
+                        />
+                      </label>
+                    </article>
+                  ))}
+                </section>
 
                 <details open>
                   <summary style={{ cursor: "pointer", fontWeight: 700 }}>AI feedback</summary>

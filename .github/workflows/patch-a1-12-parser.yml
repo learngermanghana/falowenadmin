@@ -54,7 +54,7 @@ jobs:
           )
 
           new_extract_vocab = "\n".join([
-              'export function extractVocabularyAnswers(text = "") {',
+              'function extractVocabularyAnswers(text = "") {',
               '  const vocab = {};',
               '  for (const line of String(text).split(/\\n|\\r/)) {',
               '    const parts = line.split(/[-–:]/);',
@@ -70,6 +70,7 @@ jobs:
               '}',
           ])
           text = replace_function(text, "extractVocabularyAnswers", new_extract_vocab)
+          text = text.replace("export export function", "export function")
 
           new_extract_numbered = "\n".join([
               'function extractNumberedTextEntries(text = "") {',

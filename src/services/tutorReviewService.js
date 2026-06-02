@@ -82,10 +82,10 @@ export function normalizePhraseMistakes(phraseMistakes = []) {
 
   return phraseMistakes
     .map((mistake, index) => {
-      const phrase = String(mistake?.phrase || "");
+      const phrase = String(mistake?.phrase || "").trim();
       const correction = String(mistake?.correction || "").trim();
       const explanation = String(mistake?.explanation || "").trim();
-      if (!phrase.trim() || !correction || !explanation) return null;
+      if (!phrase || !correction || !explanation) return null;
 
       const startOffset = normalizeOffset(mistake?.startOffset);
       const fallbackEndOffset = Math.max(startOffset, startOffset + phrase.length);
