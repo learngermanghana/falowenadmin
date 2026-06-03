@@ -365,6 +365,27 @@ function getNumberedBlocks(text = "") {
   return splitIntoAnswerBlocks(text).map((block) => extractNumberedTextEntries(block)).filter((entries) => entries.length);
 }
 
+function buildFlatRestartedNumberingAnswerMap(submissionText = "") {
+  const sectionEntries = splitSubmissionIntoSections(submissionText)
+    .filter((section) => section.partId !== "main")
+    .map((section) => extractNumberedTextEntries(section.text))
+    .filter((entries) => entries.length);
+  if (sectionEntries.length < 2) return new Map();
+
+  const hasRestartedNumbering = sectionEntries.slice(1).some((entries) => entries[0]?.number === 1);
+  if (!hasRestartedNumbering) return new Map();
+
+  const map = new Map();
+  let questionOffset = 0;
+  for (const entries of sectionEntries) {
+    entries.forEach((entry) => {
+      map.set(questionOffset + entry.number, entry.answer);
+    });
+    questionOffset += Math.max(...entries.map((entry) => entry.number));
+  }
+  return map;
+}
+
 function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", hasMatchingPartSections = false) {
   if (hasMatchingPartSections) return new Map();
   const groups = [];
@@ -458,9 +479,14 @@ function buildHardcodedReferenceItems(assignmentId = "") {
   }));
 }
 
-function getStudentAnswerForItem({ item, index, submissionText, sections, vocabularyIndexes, sequentialObjectiveAnswers, sequentialPartAnswers, useSequentialChoices }) {
+function getStudentAnswerForItem({ item, index, submissionText, sections, vocabularyIndexes, sequentialObjectiveAnswers, sequentialPartAnswers, flatRestartedNumberingAnswers, useSequentialChoices }) {
   const sequentialPartAnswer = sequentialPartAnswers.get(`${item.partId}.${item.questionNumber}`);
   if (sequentialPartAnswer !== undefined) return sequentialPartAnswer;
+
+  if (item.partId === "main" && item.type !== "choice") {
+    const flatRestartedAnswer = flatRestartedNumberingAnswers.get(item.questionNumber);
+    if (flatRestartedAnswer !== undefined) return flatRestartedAnswer;
+  }
 
   const sectionText = sectionTextForPart(sections, item.partId, submissionText);
   if (item.type === "choice") {
@@ -531,6 +557,7 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const choiceCount = referenceItems.filter((item) => item.type === "choice").length;
   const useSequentialChoices = (flatMainReference || (hasMultipartReference && !hasMatchingPartSections)) && choiceCount > 1 && sequentialObjectiveAnswers.length >= choiceCount;
   const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);
+  const flatRestartedNumberingAnswers = flatMainReference ? buildFlatRestartedNumberingAnswerMap(submissionText) : new Map();
 
   const vocabularyIndexes = new Map();
   let vocabularyIndex = 0;
@@ -544,7 +571,7 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const details = {};
   let correctCount = 0;
   referenceItems.forEach((item, index) => {
-    const student = getStudentAnswerForItem({ item, index, submissionText, sections, vocabularyIndexes, sequentialObjectiveAnswers, sequentialPartAnswers, useSequentialChoices });
+    const student = getStudentAnswerForItem({ item, index, submissionText, sections, vocabularyIndexes, sequentialObjectiveAnswers, sequentialPartAnswers, flatRestartedNumberingAnswers, useSequentialChoices });
     const correct = isCorrectAnswer(item, student);
     if (correct) correctCount += 1;
     const detailKey = item.partId === "main" ? String(item.questionNumber || index + 1) : `${item.partId}.${item.questionNumber || index + 1}`;
