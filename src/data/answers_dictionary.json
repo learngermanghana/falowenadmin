@@ -2065,11 +2065,11 @@
   "A2 9.24 Einen Urlaub planen": {
     "answers": {
       "teil3": {
-        "Answer1": "Anzeige: f",
-        "Answer2": "Anzeige: c",
-        "Answer3": "Anzeige: X",
-        "Answer4": "Anzeige: b",
-        "Answer5": "Anzeige: a"
+        "Answer1": "D. Anzeige: f",
+        "Answer2": "B. Anzeige: c",
+        "D. Answer3": "Anzeige: X",
+        "B. Answer4": "Anzeige: b",
+        "5. A. Answer5": "Anzeige: a"
       },
       "teil4": {}
     },
