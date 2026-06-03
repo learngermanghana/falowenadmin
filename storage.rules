@@ -13,6 +13,11 @@ service firebase.storage {
         ];
     }
 
+    // Speech trainer uploads are available to any signed-in user.
+    match /speech-trainer/{allPaths=**} {
+      allow read, write: if isSignedIn();
+    }
+
     // Answer key files are managed only from Falowen Admin.
     // This allows the GitHub -> Firebase answer-key sync page to write:
     // answer-keys/_manifest/latest.json
