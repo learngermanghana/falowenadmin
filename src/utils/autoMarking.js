@@ -88,10 +88,10 @@ function detectAssignmentKey({ submission = {}, referenceEntry = {} } = {}) {
 
 function findPartId(value = "") {
   const normalized = normalizeForCompare(value).replace(/\s+/g, "");
-  if (/teil1|part1/.test(normalized)) return "teil1";
-  if (/teil2|part2|schreiben|writing/.test(normalized)) return "teil2";
-  if (/teil3|part3|lesen|reading/.test(normalized)) return "teil3";
-  if (/teil4|part4|horen|hoeren|listening/.test(normalized)) return "teil4";
+  if (/teil(?:1|eins)|part(?:1|one)/.test(normalized)) return "teil1";
+  if (/teil(?:2|zwei)|part(?:2|two)|schreiben|writing/.test(normalized)) return "teil2";
+  if (/teil(?:3|drei)|part(?:3|three)|lesen|reading/.test(normalized)) return "teil3";
+  if (/teil(?:4|vier)|part(?:4|four)|horen|hoeren|listening/.test(normalized)) return "teil4";
   return "unknown";
 }
 
@@ -99,7 +99,7 @@ function splitSubmissionIntoParts(submissionText = "") {
   const text = String(submissionText || "").trim();
   if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];
 
-  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*[1-4]\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
+  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
   const markers = [];
   let match;
   while ((match = markerRegex.exec(text))) {
@@ -370,6 +370,33 @@ function flattenAnswerEntries(referenceAnswers = {}, path = []) {
   return Object.entries(referenceAnswers).flatMap(([key, value]) => flattenAnswerEntries(value, [...path, key]));
 }
 
+function extractReferenceTextForPart(text = "", partId = "unknown") {
+  const lines = String(text || "").split(/\r?\n/);
+  const markerPattern = /^\s*((?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b)\s*:?[ \t]*(.*)$/i;
+  let currentPart = "unknown";
+  let sawPartMarker = false;
+  const selected = [];
+
+  for (const line of lines) {
+    const marker = line.match(markerPattern);
+    if (marker) {
+      const markerPart = findPartId(marker[1]);
+      const rest = String(marker[2] || "").trim();
+      if (markerPart !== "unknown") {
+        sawPartMarker = true;
+        currentPart = markerPart;
+        if (markerPart === partId && rest) selected.push(rest);
+        continue;
+      }
+    }
+
+    if (currentPart === partId) selected.push(line);
+  }
+
+  if (selected.length) return selected.join("\n");
+  return sawPartMarker ? "" : String(text || "");
+}
+
 function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   if (referenceEntry.parts?.[partId]?.answers) return referenceEntry.parts[partId].answers;
   if (partId === "unknown" && referenceEntry.parts?.main?.answers) return referenceEntry.parts.main.answers;
@@ -393,7 +420,9 @@ function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   ].filter(Boolean);
 
   for (const candidate of candidates) {
-    if (typeof candidate === "string") return candidate;
+    if (typeof candidate === "string") {
+      return partId === "unknown" ? candidate : extractReferenceTextForPart(candidate, partId);
+    }
     if (candidate?.[partId]) return candidate[partId];
     if (partId !== "unknown") {
       const matchingKey = Object.keys(candidate || {}).find((key) => findPartId(key) === partId);
@@ -594,6 +623,104 @@ function estimateGrammarSignal(text = "") {
   return Math.min(1, (capitalized + verbLike) / 2);
 }
 
+
+function clipFeedbackSnippet(value = "", maxLength = 70) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
+}
+
+function highlightWritingSnippet(value = "", fallback = "this sentence") {
+  return `**${clipFeedbackSnippet(value) || fallback}**`;
+}
+
+function extractWritingSentences(text = "") {
+  return String(text || "")
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function findWritingIssues(text = "") {
+  const issues = [];
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  let previousLine = "";
+
+  for (const line of lines) {
+    if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine)) {
+      issues.push({
+        submitted: clipFeedbackSnippet(line),
+        suggestion: `${line.charAt(0).toUpperCase()}${line.slice(1)}`,
+        message: `Start this sentence with a capital letter: ${highlightWritingSnippet(line)}.`,
+      });
+      break;
+    }
+    previousLine = line;
+  }
+
+  const zumSchluss = String(text || "").match(/\bZum Schluss,\s*([^.!?]{3,80})/i);
+  if (zumSchluss) {
+    const submitted = clipFeedbackSnippet(zumSchluss[0]);
+    issues.push({
+      submitted,
+      suggestion: submitted.replace(/Zum Schluss,\s*/i, "Zum Schluss "),
+      message: `Remove the comma in ${highlightWritingSnippet("Zum Schluss,")} and keep the verb in position two.`,
+    });
+  }
+
+  const longSentence = extractWritingSentences(text).find((sentence) => tokenize(sentence).length >= 24);
+  if (longSentence) {
+    issues.push({
+      submitted: clipFeedbackSnippet(longSentence),
+      suggestion: "Split this into two shorter sentences or add clearer connectors.",
+      message: `This sentence is long: ${highlightWritingSnippet(longSentence)}. Split it or connect the ideas more clearly.`,
+    });
+  }
+
+  return issues.slice(0, 3);
+}
+
+function extractWritingStrengths(text = "") {
+  const strengths = [];
+  const greeting = String(text || "").match(/\b(?:Lieber|Liebe|Hallo|Guten Tag|Sehr geehrte|Dear|Hello|Hi)\b[^\n,.!]*/i);
+  if (greeting) strengths.push(`clear greeting ${highlightWritingSnippet(greeting[0])}`);
+
+  const connector = String(text || "").match(/\b(?:weil|danach|zuerst|außerdem|ausserdem|deshalb|aber|und)\b/i);
+  if (connector) strengths.push(`connector ${highlightWritingSnippet(connector[0])}`);
+
+  const closing = String(text || "").match(/\b(?:Viele Grüße|Viele Gruesse|Mit freundlichen Grüßen|Mit freundlichen Gruessen|Liebe Grüße|Liebe Gruesse|Regards|Best wishes)\b/i);
+  if (closing) strengths.push(`closing ${highlightWritingSnippet(closing[0])}`);
+
+  return strengths.slice(0, 2);
+}
+
+function buildWritingFeedback({ level = "", score = 0, rubric = [], text = "" } = {}) {
+  const strengths = extractWritingStrengths(text);
+  const issues = findWritingIssues(text);
+  const sentences = extractWritingSentences(text);
+  const lastSentence = sentences[sentences.length - 1] || text;
+  const strengthText = strengths.length
+    ? `You used ${strengths.join(" and ")}.`
+    : `You included ${highlightWritingSnippet(sentences[0] || text, "your own sentences")}.`;
+  const issueText = issues.length
+    ? `Review exact wording: ${issues.map((issue) => issue.message).join(" ")}`
+    : `Next step: expand ${highlightWritingSnippet(lastSentence, "one sentence")} with one more detail and check verb position.`;
+
+  return `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${strengthText} ${issueText}`;
+}
+
+function buildWritingImprovementSummary({ score = 0, text = "" } = {}) {
+  const issues = findWritingIssues(text);
+  if (issues.length) {
+    return `Writing focus: ${issues.map((issue) => `${highlightWritingSnippet(issue.submitted)} → ${issue.suggestion}`).join("; ")}`;
+  }
+  const sentences = extractWritingSentences(text);
+  const lastSentence = sentences[sentences.length - 1] || text;
+  return score >= 75
+    ? `Good structure. Keep improving accuracy and range by adding detail to ${highlightWritingSnippet(lastSentence, "one sentence")}.`
+    : "Improve task completion, sentence accuracy, structure, and level-appropriate vocabulary.";
+}
+
 function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = {}) {
   const words = tokenize(text);
   const wordCount = words.length;
@@ -611,16 +738,22 @@ function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = 
   const confidence = Math.max(0.45, Math.min(0.9, 0.45 + completion * 0.25 + (hasGreeting || hasClosing ? 0.1 : 0) + (wordCount > 15 ? 0.1 : 0)));
   const rubric = WRITING_RUBRICS[level] || WRITING_RUBRICS.A1;
 
+  const writingIssues = findWritingIssues(text);
+
   return {
     score,
     passed: score >= 60,
     level: level || "UNKNOWN",
     partId,
-    feedback: `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${score >= 75 ? "Good structure and clear task response." : "Review task completion, sentence accuracy, structure, and level-appropriate vocabulary."}`,
-    corrections: [],
-    improvementSummary: score >= 75
-      ? "Good structure. Keep improving accuracy and range."
-      : "Improve task completion, sentence accuracy, structure, and level-appropriate vocabulary.",
+    feedback: buildWritingFeedback({ level, score, rubric, text }),
+    corrections: writingIssues.map((issue) => ({
+      partId,
+      type: "writing",
+      submitted: issue.submitted,
+      suggestion: issue.suggestion,
+      message: issue.message,
+    })),
+    improvementSummary: buildWritingImprovementSummary({ score, text }),
     confidence: Number(confidence.toFixed(2)),
     rubric,
   };
@@ -721,7 +854,7 @@ function getReferenceObjectivePartIds(referenceEntry = {}) {
   }
   const textSources = [referenceEntry.answers, referenceEntry.answerKeys, referenceEntry.key].filter((value) => typeof value === "string");
   for (const text of textSources) {
-    const matches = String(text).match(/\b(?:teil|part)\s*[1-4]\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
+    const matches = String(text).match(/\b(?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
     matches.map(findPartId).filter((partId) => partId !== "unknown").forEach((partId) => partIds.push(partId));
   }
   return [...new Set(partIds)].filter((partId) => partId !== "teil2");

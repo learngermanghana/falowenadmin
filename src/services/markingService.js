@@ -572,6 +572,26 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
 }
 
 
+function formatObjectiveAnswerForFeedback(value = "", fallback = "blank") {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  const safe = normalized || fallback;
+  return `**${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}**`;
+}
+
+function buildDetailedObjectiveFeedback(deterministicObjective = {}) {
+  const objectiveScore = deterministicObjective.objectiveScore;
+  const base = `Objective score: ${deterministicObjective.objectiveCorrect}/${deterministicObjective.objectiveTotal} correct (${objectiveScore}%).`;
+  const mistakeDetails = (deterministicObjective.wrongAnswers || []).slice(0, 5).map((item) => {
+    const label = `${item.partId || "objective"} ${item.question || ""}`.trim();
+    const submitted = formatObjectiveAnswerForFeedback(item.student || item.submitted || "", "blank");
+    const expected = formatObjectiveAnswerForFeedback(item.expected || "", "the correct answer");
+    return `${label}: you chose ${submitted}; correct answer is ${expected}`;
+  });
+
+  if (!mistakeDetails.length) return `${base} All objective answers were correct.`;
+  return `${base} Review these exact answers: ${mistakeDetails.join("; ")}.`;
+}
+
 function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObjective = null) {
   if (!deterministicObjective?.objectiveTotal) return aiResult;
 
@@ -583,7 +603,7 @@ function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObj
   const finalScore = hasWritingScore
     ? Math.round((objectiveScore * OBJECTIVE_WEIGHT) + (writingScore * WRITING_WEIGHT))
     : objectiveScore;
-  const objectiveFeedback = `Objective score: ${deterministicObjective.objectiveCorrect}/${deterministicObjective.objectiveTotal} correct (${objectiveScore}%).`;
+  const objectiveFeedback = buildDetailedObjectiveFeedback(deterministicObjective);
 
   return {
     ...aiResult,
@@ -670,7 +690,7 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     assignmentKey: referenceEntry?.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
     level: referenceEntry?.level || submission.level || "",
     submissionText,
-    feedbackInstruction: "Write exactly 40 words. Highlight what the student actually did in this submission, mention one clear strength or effort, identify the most important correction, and give one next step. Do not use generic feedback.",
+    feedbackInstruction: "Write exactly 40 words. Highlight exact words or short phrases from the student's writing in **bold**, name one strength, identify one concrete writing correction using the student's wording, and give one next step. Do not use generic feedback.",
   };
 
   const res = await fetch("/api/marking/ai", {

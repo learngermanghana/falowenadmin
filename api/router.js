@@ -343,10 +343,28 @@ function extractStudentObjectiveAnswers(submissionText = "") {
   return answers;
 }
 
-function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wrongLabels = [] } = {}) {
+function formatAnswerForFeedback(value = "", fallback = "blank") {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  const safe = normalized || fallback;
+  return `**${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}**`;
+}
+
+function formatObjectiveMistake(item = {}) {
+  const label = `${item.partId || "objective"} ${item.question || ""}`.trim();
+  const submitted = formatAnswerForFeedback(item.student || item.submitted || "", "blank");
+  const expected = formatAnswerForFeedback(item.expected || "", "the correct answer");
+  return `${label}: you chose ${submitted}; correct answer is ${expected}`;
+}
+
+function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wrongAnswers = [], wrongLabels = [] } = {}) {
   const firstName = String(name || "Student").trim().split(/\s+/)[0] || "Student";
-  const wrongText = wrongLabels.length ? ` Review ${wrongLabels.slice(0, 5).join(", ")}.` : " All objective answers were correct.";
-  return `Good effort, ${firstName}. You answered ${correct} of ${total} objective questions correctly.${wrongText} Keep practising careful reading, listening for details, and checking each answer before submission.`;
+  const mistakeDetails = wrongAnswers.slice(0, 5).map(formatObjectiveMistake);
+  const fallbackDetails = wrongLabels.slice(0, 5);
+  const details = mistakeDetails.length ? mistakeDetails : fallbackDetails;
+  const wrongText = details.length
+    ? ` Review these exact answers: ${details.join("; ")}.`
+    : " All objective answers were correct.";
+  return `Good effort, ${firstName}. You answered ${correct} of ${total} objective questions correctly.${wrongText} Check the highlighted answer you gave against the correct answer before submission.`;
 }
 
 function hasWritingPart(result = {}) {
@@ -414,6 +432,7 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
     name,
     correct: deterministicObjective.objectiveCorrect,
     total: deterministicObjective.objectiveTotal,
+    wrongAnswers: deterministicObjective.wrongAnswers,
     wrongLabels,
   });
   const writingFeedback = hasWritingPart(existingResult)
