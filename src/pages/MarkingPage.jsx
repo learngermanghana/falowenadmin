@@ -12,7 +12,7 @@ const FEEDBACK_TEMPLATES = [
   {
     id: "grammar-clarity",
     label: "Grammar & clarity",
-    text: "Good effort. Please improve your sentence structure and grammar. Keep each sentence short and clear, and check verb forms before submitting.",
+    text: "Good effort. Please improve your sentence structure and grammar. Keep each sentence short and clear, and check any highlighted corrections before submitting.",
   },
   {
     id: "letter-structure-basics",

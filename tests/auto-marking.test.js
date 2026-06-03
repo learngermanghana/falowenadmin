@@ -574,6 +574,30 @@ test("unlabelled A2 writing before Lesen is included in feedback", () => {
   assert.match(result.feedback, /Objective score:/);
 });
 
+
+test("writing feedback expands substantive text instead of the student signature", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: { assignmentKey: "A2-signature-feedback", level: "A2", format: "writing" },
+    submission: { assignmentKey: "A2-signature-feedback", level: "A2" },
+    submissionText: `Teil 2 (Schreiben)
+Lieber Felix,
+wie geht es dir? Ich hoffe, es geht dir gut. Ich schreibe dir, weil ich Accra und Kumasi, Pizza und Hamburger, Fußball und Tennis vergleichen möchte.
+Ich finde Kumasi schöner als Accra, weil es ruhiger ist und mehr Natur hat. Accra ist größer, aber oft sehr laut.
+Ich bevorzuge Pizza, weil ich Käse und Tomaten sehr mag. Hamburger sind auch lecker, aber Pizza schmeckt mir besser.
+Ich finde Fußball spannender als Tennis, weil es schneller und dynamischer ist. Tennis ist interessant, aber ich schaue lieber Fußball.
+Was denkst du? Welche Stadt, welches Essen und welcher Sport gefallen dir besser? Vielleicht können wir uns bald treffen und darüber sprechen.
+Ich freue mich im Voraus auf deine Antwort.
+Viele Grüße
+Eric`,
+  });
+
+  assert.match(result.feedback, /Next step: add one more clear detail to/);
+  assert.doesNotMatch(result.feedback, /add one more clear detail to \*\*Eric\*\*/);
+  assert.doesNotMatch(result.feedback, /verb (?:position|conjugation)|conjugation/i);
+  assert.match(result.feedback, /\*\*Vielleicht können wir uns bald treffen und darüber sprechen\.\*\*/);
+  assert.match(result.improvementSummary, /\*\*Vielleicht können wir uns bald treffen und darüber sprechen\.\*\*/);
+});
+
 test("A1-4 deterministic checker continues restarted numbering across objective sections", () => {
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: {
