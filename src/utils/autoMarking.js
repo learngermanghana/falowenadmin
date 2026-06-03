@@ -88,10 +88,10 @@ function detectAssignmentKey({ submission = {}, referenceEntry = {} } = {}) {
 
 function findPartId(value = "") {
   const normalized = normalizeForCompare(value).replace(/\s+/g, "");
-  if (/teil1|part1/.test(normalized)) return "teil1";
-  if (/teil2|part2|schreiben|writing/.test(normalized)) return "teil2";
-  if (/teil3|part3|lesen|reading/.test(normalized)) return "teil3";
-  if (/teil4|part4|horen|hoeren|listening/.test(normalized)) return "teil4";
+  if (/teil(?:1|eins)|part(?:1|one)/.test(normalized)) return "teil1";
+  if (/teil(?:2|zwei)|part(?:2|two)|schreiben|writing/.test(normalized)) return "teil2";
+  if (/teil(?:3|drei)|part(?:3|three)|lesen|reading/.test(normalized)) return "teil3";
+  if (/teil(?:4|vier)|part(?:4|four)|horen|hoeren|listening/.test(normalized)) return "teil4";
   return "unknown";
 }
 
@@ -99,7 +99,7 @@ function splitSubmissionIntoParts(submissionText = "") {
   const text = String(submissionText || "").trim();
   if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];
 
-  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*[1-4]\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
+  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
   const markers = [];
   let match;
   while ((match = markerRegex.exec(text))) {
@@ -370,6 +370,33 @@ function flattenAnswerEntries(referenceAnswers = {}, path = []) {
   return Object.entries(referenceAnswers).flatMap(([key, value]) => flattenAnswerEntries(value, [...path, key]));
 }
 
+function extractReferenceTextForPart(text = "", partId = "unknown") {
+  const lines = String(text || "").split(/\r?\n/);
+  const markerPattern = /^\s*((?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b)\s*:?[ \t]*(.*)$/i;
+  let currentPart = "unknown";
+  let sawPartMarker = false;
+  const selected = [];
+
+  for (const line of lines) {
+    const marker = line.match(markerPattern);
+    if (marker) {
+      const markerPart = findPartId(marker[1]);
+      const rest = String(marker[2] || "").trim();
+      if (markerPart !== "unknown") {
+        sawPartMarker = true;
+        currentPart = markerPart;
+        if (markerPart === partId && rest) selected.push(rest);
+        continue;
+      }
+    }
+
+    if (currentPart === partId) selected.push(line);
+  }
+
+  if (selected.length) return selected.join("\n");
+  return sawPartMarker ? "" : String(text || "");
+}
+
 function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   if (referenceEntry.parts?.[partId]?.answers) return referenceEntry.parts[partId].answers;
   if (partId === "unknown" && referenceEntry.parts?.main?.answers) return referenceEntry.parts.main.answers;
@@ -393,7 +420,9 @@ function getObjectiveAnswerKey(referenceEntry = {}, partId = "unknown") {
   ].filter(Boolean);
 
   for (const candidate of candidates) {
-    if (typeof candidate === "string") return candidate;
+    if (typeof candidate === "string") {
+      return partId === "unknown" ? candidate : extractReferenceTextForPart(candidate, partId);
+    }
     if (candidate?.[partId]) return candidate[partId];
     if (partId !== "unknown") {
       const matchingKey = Object.keys(candidate || {}).find((key) => findPartId(key) === partId);
@@ -721,7 +750,7 @@ function getReferenceObjectivePartIds(referenceEntry = {}) {
   }
   const textSources = [referenceEntry.answers, referenceEntry.answerKeys, referenceEntry.key].filter((value) => typeof value === "string");
   for (const text of textSources) {
-    const matches = String(text).match(/\b(?:teil|part)\s*[1-4]\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
+    const matches = String(text).match(/\b(?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
     matches.map(findPartId).filter((partId) => partId !== "unknown").forEach((partId) => partIds.push(partId));
   }
   return [...new Set(partIds)].filter((partId) => partId !== "teil2");
