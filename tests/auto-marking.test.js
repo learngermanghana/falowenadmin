@@ -31,6 +31,50 @@ Answer5. Anzeige: a`,
   assert.equal(result.detectedParts[0].summary, "teil3: 5 objective answers found, 3 correct, 2 wrong");
 });
 
+test("deterministic checker scores German word part labels with prefixed reference lines", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      answers: `teil3: Answer1. a) kurz vor 7 Uhr
+teil3: Answer2. d) Müsli oder Toast mit Marmelade
+teil3: Answer3. b) Hausaufgaben
+teil3: Answer4. a) am Nachmittag
+teil3: Answer5. b) Freunde treffen
+teil4: Answer1. c) die Schweiz
+teil4: Answer2. d) mit dem Zug
+teil4: Answer3. a) an einem kleinen Bahnhof
+teil4: Answer4. d) einen Zimmerschlüssel
+teil4: Answer5. b) das Zimmer ist zu klein`,
+    },
+    submissionText: `ASSIGNMENT 25
+Teil zwei
+
+Liebe Susan,
+
+wie geht es dir?
+
+Teil drei
+1. A
+2. D
+3. B
+4. A
+5. B
+
+Teil vier
+1. c
+2. d
+3. a
+4. d
+5. b`,
+  });
+
+  assert.equal(result.objectiveScore, 100);
+  assert.equal(result.objectiveCorrect, 10);
+  assert.equal(result.objectiveTotal, 10);
+  assert.deepEqual(result.wrongAnswers, []);
+  assert.equal(result.detectedParts[0].summary, "teil3: 5 objective answers found, 5 correct, 0 wrong");
+  assert.equal(result.detectedParts[1].summary, "teil4: 5 objective answers found, 5 correct, 0 wrong");
+});
+
 test("deterministic parser scores numbered Anzeige answers", () => {
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: {
