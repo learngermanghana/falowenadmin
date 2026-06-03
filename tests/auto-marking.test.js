@@ -418,6 +418,84 @@ Teil 4:
   assert.match(result.feedback, /12 of 12 objective questions/);
 });
 
+test("marking proxy feedback includes the student's exact wrong objective answers", async () => {
+  const { default: handler } = await import("../api/router.js");
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    text: async () => JSON.stringify({
+      result: {
+        score: 50,
+        finalScore: 50,
+        feedback: "Upstream placeholder.",
+        parts: [],
+        status: "marked",
+      },
+    }),
+  });
+
+  const req = {
+    method: "POST",
+    url: "/marking/ai",
+    headers: { host: "localhost", "content-type": "application/json" },
+    body: {
+      assignmentKey: "A2-feedback",
+      level: "A2",
+      submission: { name: "Charlotte", assignmentKey: "A2-feedback", level: "A2" },
+      referenceEntry: {
+        assignmentKey: "A2-feedback",
+        level: "A2",
+        parts: {
+          teil3: { answers: { Answer1: "B) Hausaufgaben", Answer2: "D) Müsli" } },
+        },
+      },
+      submissionText: `Teil drei
+1. A
+2. D`,
+    },
+  };
+
+  let statusCode = 0;
+  let jsonBody;
+  const res = {
+    status(code) { statusCode = code; return this; },
+    json(body) { jsonBody = body; return body; },
+    send(body) { jsonBody = body; return body; },
+    setHeader() {},
+  };
+
+  try {
+    await handler(req, res);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const result = jsonBody.result;
+  assert.equal(statusCode, 200);
+  assert.equal(result.objectiveCorrect, 1);
+  assert.match(result.feedback, /Good effort, Charlotte/);
+  assert.match(result.feedback, /teil3 1: you chose \*\*A\*\*; correct answer is \*\*B\*\*/);
+});
+
+test("writing feedback highlights exact submitted wording and concrete corrections", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: { assignmentKey: "A2-writing-feedback", level: "A2", format: "writing" },
+    submission: { assignmentKey: "A2-writing-feedback", level: "A2" },
+    submissionText: `Teil zwei
+Hallo Tom
+ich gehe jeden Morgen zur Schule und danach lerne ich Deutsch, weil ich in Deutschland arbeiten möchte.
+Viele Grüße
+Anna`,
+  });
+
+  assert.equal(result.parts[0].partType, "writing");
+  assert.match(result.feedback, /clear greeting \*\*Hallo Tom\*\*/);
+  assert.match(result.feedback, /Start this sentence with a capital letter: \*\*ich gehe jeden Morgen/);
+  assert.equal(result.corrections[0].type, "writing");
+  assert.match(result.improvementSummary, /\*\*ich gehe jeden Morgen/);
+});
+
 test("unlabelled A2 writing before Lesen is included in feedback", () => {
   const result = autoMarkSubmission({
     referenceEntry: {

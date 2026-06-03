@@ -623,6 +623,104 @@ function estimateGrammarSignal(text = "") {
   return Math.min(1, (capitalized + verbLike) / 2);
 }
 
+
+function clipFeedbackSnippet(value = "", maxLength = 70) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
+}
+
+function highlightWritingSnippet(value = "", fallback = "this sentence") {
+  return `**${clipFeedbackSnippet(value) || fallback}**`;
+}
+
+function extractWritingSentences(text = "") {
+  return String(text || "")
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function findWritingIssues(text = "") {
+  const issues = [];
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  let previousLine = "";
+
+  for (const line of lines) {
+    if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine)) {
+      issues.push({
+        submitted: clipFeedbackSnippet(line),
+        suggestion: `${line.charAt(0).toUpperCase()}${line.slice(1)}`,
+        message: `Start this sentence with a capital letter: ${highlightWritingSnippet(line)}.`,
+      });
+      break;
+    }
+    previousLine = line;
+  }
+
+  const zumSchluss = String(text || "").match(/\bZum Schluss,\s*([^.!?]{3,80})/i);
+  if (zumSchluss) {
+    const submitted = clipFeedbackSnippet(zumSchluss[0]);
+    issues.push({
+      submitted,
+      suggestion: submitted.replace(/Zum Schluss,\s*/i, "Zum Schluss "),
+      message: `Remove the comma in ${highlightWritingSnippet("Zum Schluss,")} and keep the verb in position two.`,
+    });
+  }
+
+  const longSentence = extractWritingSentences(text).find((sentence) => tokenize(sentence).length >= 24);
+  if (longSentence) {
+    issues.push({
+      submitted: clipFeedbackSnippet(longSentence),
+      suggestion: "Split this into two shorter sentences or add clearer connectors.",
+      message: `This sentence is long: ${highlightWritingSnippet(longSentence)}. Split it or connect the ideas more clearly.`,
+    });
+  }
+
+  return issues.slice(0, 3);
+}
+
+function extractWritingStrengths(text = "") {
+  const strengths = [];
+  const greeting = String(text || "").match(/\b(?:Lieber|Liebe|Hallo|Guten Tag|Sehr geehrte|Dear|Hello|Hi)\b[^\n,.!]*/i);
+  if (greeting) strengths.push(`clear greeting ${highlightWritingSnippet(greeting[0])}`);
+
+  const connector = String(text || "").match(/\b(?:weil|danach|zuerst|außerdem|ausserdem|deshalb|aber|und)\b/i);
+  if (connector) strengths.push(`connector ${highlightWritingSnippet(connector[0])}`);
+
+  const closing = String(text || "").match(/\b(?:Viele Grüße|Viele Gruesse|Mit freundlichen Grüßen|Mit freundlichen Gruessen|Liebe Grüße|Liebe Gruesse|Regards|Best wishes)\b/i);
+  if (closing) strengths.push(`closing ${highlightWritingSnippet(closing[0])}`);
+
+  return strengths.slice(0, 2);
+}
+
+function buildWritingFeedback({ level = "", score = 0, rubric = [], text = "" } = {}) {
+  const strengths = extractWritingStrengths(text);
+  const issues = findWritingIssues(text);
+  const sentences = extractWritingSentences(text);
+  const lastSentence = sentences[sentences.length - 1] || text;
+  const strengthText = strengths.length
+    ? `You used ${strengths.join(" and ")}.`
+    : `You included ${highlightWritingSnippet(sentences[0] || text, "your own sentences")}.`;
+  const issueText = issues.length
+    ? `Review exact wording: ${issues.map((issue) => issue.message).join(" ")}`
+    : `Next step: expand ${highlightWritingSnippet(lastSentence, "one sentence")} with one more detail and check verb position.`;
+
+  return `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${strengthText} ${issueText}`;
+}
+
+function buildWritingImprovementSummary({ score = 0, text = "" } = {}) {
+  const issues = findWritingIssues(text);
+  if (issues.length) {
+    return `Writing focus: ${issues.map((issue) => `${highlightWritingSnippet(issue.submitted)} → ${issue.suggestion}`).join("; ")}`;
+  }
+  const sentences = extractWritingSentences(text);
+  const lastSentence = sentences[sentences.length - 1] || text;
+  return score >= 75
+    ? `Good structure. Keep improving accuracy and range by adding detail to ${highlightWritingSnippet(lastSentence, "one sentence")}.`
+    : "Improve task completion, sentence accuracy, structure, and level-appropriate vocabulary.";
+}
+
 function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = {}) {
   const words = tokenize(text);
   const wordCount = words.length;
@@ -640,16 +738,22 @@ function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = 
   const confidence = Math.max(0.45, Math.min(0.9, 0.45 + completion * 0.25 + (hasGreeting || hasClosing ? 0.1 : 0) + (wordCount > 15 ? 0.1 : 0)));
   const rubric = WRITING_RUBRICS[level] || WRITING_RUBRICS.A1;
 
+  const writingIssues = findWritingIssues(text);
+
   return {
     score,
     passed: score >= 60,
     level: level || "UNKNOWN",
     partId,
-    feedback: `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${score >= 75 ? "Good structure and clear task response." : "Review task completion, sentence accuracy, structure, and level-appropriate vocabulary."}`,
-    corrections: [],
-    improvementSummary: score >= 75
-      ? "Good structure. Keep improving accuracy and range."
-      : "Improve task completion, sentence accuracy, structure, and level-appropriate vocabulary.",
+    feedback: buildWritingFeedback({ level, score, rubric, text }),
+    corrections: writingIssues.map((issue) => ({
+      partId,
+      type: "writing",
+      submitted: issue.submitted,
+      suggestion: issue.suggestion,
+      message: issue.message,
+    })),
+    improvementSummary: buildWritingImprovementSummary({ score, text }),
     confidence: Number(confidence.toFixed(2)),
     rubric,
   };
