@@ -237,7 +237,7 @@ function buildSuggestedFeedback({ review, currentStatus, aiFeedback, revisedDraf
     return `Hello ${studentName}, please expand your answer. It is too short for full marks. Add all task points, use complete sentences, and include a proper greeting and closing.`;
   }
 
-  return `Hello ${studentName}, good effort. Please revise this work before approval. ${aiHint ? `Main correction: ${aiHint}.` : "Main correction: check word order, verb position, and whether all task points are answered."} After correcting it, submit again for review.`;
+  return `Hello ${studentName}, good effort. Please revise this work before approval. ${aiHint ? `Main correction: ${aiHint}.` : "Main correction: check sentence clarity, word order, and whether all task points are answered."} After correcting it, submit again for review.`;
 }
 
 function getChecklist(feedback) {
@@ -510,7 +510,7 @@ export default function TutorMarkingPage() {
       phrase: selectedDraftText.phrase,
       startOffset: selectedDraftText.startOffset,
       endOffset: selectedDraftText.endOffset,
-      mistakeType: "Verb conjugation",
+      mistakeType: "Other",
       correction: "",
       explanation: "",
       severity: "important",

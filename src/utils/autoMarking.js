@@ -633,6 +633,30 @@ function extractWritingSentences(text = "") {
     .filter(Boolean);
 }
 
+function isWritingSignoffLine(value = "") {
+  const normalized = String(value || "").trim();
+  if (!normalized) return true;
+
+  const normalizedCompare = normalizeForCompare(normalized);
+  if (/^(viele|liebe|herzliche|beste) (grusse|gruesse|grusse,|gruesse,)|^(mit freundlichen|freundliche) (grussen|gruessen)/i.test(normalizedCompare)) return true;
+  if (/^(regards|best wishes|kind regards|sincerely|yours sincerely|thank you)$/i.test(normalized)) return true;
+  if (/^ich freue mich (?:im voraus )?auf deine antwort/i.test(normalizedCompare)) return true;
+
+  const words = normalized.replace(/[.,!?;:]+$/g, "").split(/\s+/).filter(Boolean);
+  const hasSentencePunctuation = /[.!?]$/.test(normalized);
+  const hasVerbLikeWord = /\b(?:ist|bin|bist|sind|seid|war|hat|habe|hast|haben|geht|gehe|gehen|macht|machen|finde|denke|mochte|möchte|kann|können|werde|wird|schreibe|freue|hoffe|mag|liebe|bevorzuge|schmeckt)\b/i.test(normalized);
+
+  return words.length <= 2 && !hasSentencePunctuation && !hasVerbLikeWord;
+}
+
+function findWritingExpansionTarget(text = "") {
+  const sentences = extractWritingSentences(text);
+  const candidates = sentences.filter((sentence) => !isWritingSignoffLine(sentence));
+  if (!candidates.length) return sentences[sentences.length - 1] || text;
+
+  return candidates[candidates.length - 1];
+}
+
 function findWritingIssues(text = "") {
   const issues = [];
   const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -690,13 +714,13 @@ function buildWritingFeedback({ level = "", score = 0, rubric = [], text = "" } 
   const strengths = extractWritingStrengths(text);
   const issues = findWritingIssues(text);
   const sentences = extractWritingSentences(text);
-  const lastSentence = sentences[sentences.length - 1] || text;
+  const expansionTarget = findWritingExpansionTarget(text);
   const strengthText = strengths.length
     ? `You used ${strengths.join(" and ")}.`
     : `You included ${highlightWritingSnippet(sentences[0] || text, "your own sentences")}.`;
   const issueText = issues.length
     ? `Review exact wording: ${issues.map((issue) => issue.message).join(" ")}`
-    : `Next step: expand ${highlightWritingSnippet(lastSentence, "one sentence")} with one more detail and check verb position.`;
+    : `Next step: add one more clear detail to ${highlightWritingSnippet(expansionTarget, "one sentence")}.`;
 
   return `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${strengthText} ${issueText}`;
 }
@@ -706,10 +730,9 @@ function buildWritingImprovementSummary({ score = 0, text = "" } = {}) {
   if (issues.length) {
     return `Writing focus: ${issues.map((issue) => `${highlightWritingSnippet(issue.submitted)} → ${issue.suggestion}`).join("; ")}`;
   }
-  const sentences = extractWritingSentences(text);
-  const lastSentence = sentences[sentences.length - 1] || text;
+  const expansionTarget = findWritingExpansionTarget(text);
   return score >= 75
-    ? `Good structure. Keep improving accuracy and range by adding detail to ${highlightWritingSnippet(lastSentence, "one sentence")}.`
+    ? `Good structure. Keep improving accuracy and range by adding detail to ${highlightWritingSnippet(expansionTarget, "one sentence")}.`
     : "Improve task completion, sentence accuracy, structure, and level-appropriate vocabulary.";
 }
 
