@@ -22,6 +22,7 @@ import OrientationPage from "./pages/OrientationPage";
 import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
 import ClassOperationsPage from "./pages/ClassOperationsPage";
 import HolidayCalendarPage from "./pages/HolidayCalendarPage";
+import FirebaseStorageBrowserPage from "./pages/FirebaseStorageBrowserPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -70,6 +71,7 @@ function TopBar() {
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
+                <Link to="/firebase-storage" onClick={() => setMenuOpen(false)}>Firebase Storage</Link>
               </>
             )}
           </div>
@@ -166,6 +168,7 @@ export default function App() {
           <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
           <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
           <Route path="/class-operations" element={<ProtectedRoute><ClassOperationsPage /></ProtectedRoute>} />
+          <Route path="/firebase-storage" element={<ProtectedRoute allowStaff={false}><FirebaseStorageBrowserPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/course/:courseId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/course/:courseId/:slideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/public/:courseId/print" element={<TeachingSlidesPage publicView />} />
