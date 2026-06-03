@@ -395,3 +395,48 @@ Teil 3
   assert.equal(result.correctCount, 30);
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
 });
+
+test("A1-5 flat text answer key accepts an unnumbered first answer in a restarted Teil section", () => {
+  const result = computeObjectiveScore("A1-5", `
+Teil 1
+1.der Tisch = the table
+2.die Lampe = the lamp
+3.das Buch = the book
+4.der Stuhl = the chair
+5.die Katze = the cat
+6.das Auto = the car
+7.der Hund = the dog
+8.die Blume = the flower
+9.das Fenster = the window
+10.der Computer = the computer
+
+Teil 2
+1.Der Tisch ist groß.
+2.Die Lampe ist neu.
+3.Das Buch ist interessant.
+4.Der Stuhl ist bequem.
+5.Die Katze ist süß.
+6.Das Auto ist schnell.
+7.Der Hund ist freundlich.
+8.Die Blume ist schön.
+9.Das Fenster ist offen.
+10.Der Computer ist teuer.
+
+Teil 3
+${"\u00a0"}Ich sehe den Tisch.
+2. Sie kauft die Lampe.
+3. Er liest das Buch.
+4. Wir brauchen den Stuhl.
+5. Du fütterst die Katze.
+6. Ich fahre das Auto.
+7. Sie streichelt den Hund.
+8. Er pflückt die Blume.
+9. Wir putzen das Fenster.
+10. Sie benutzen den Computer.
+  `);
+
+  assert.equal(result.totalCount, 30);
+  assert.equal(result.correctCount, 30);
+  assert.equal(result.details[21].student, "Ich sehe den Tisch.");
+  assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
+});
