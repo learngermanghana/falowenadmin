@@ -328,6 +328,26 @@ function extractNumberedTextEntries(text = "") {
   return entries.sort((a, b) => a.number - b.number);
 }
 
+function extractLeadingUnnumberedAnswer(text = "") {
+  for (const rawLine of String(text || "").split(/\r?\n|[,;]+/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (/^\s*1\s*[).:-]?\s*.+/i.test(line)) return "";
+    if (/^\s*2\s*[).:-]?\s*.+/i.test(line)) return "";
+    return line;
+  }
+  return "";
+}
+
+function extractRestartedNumberingEntries(text = "") {
+  const entries = extractNumberedTextEntries(text);
+  if (entries[0]?.number === 2 && !entries.some((entry) => entry.number === 1)) {
+    const leadingAnswer = extractLeadingUnnumberedAnswer(text);
+    if (leadingAnswer) return [{ number: 1, answer: leadingAnswer }, ...entries];
+  }
+  return entries;
+}
+
 function extractNumberedTextAnswers(text = "") {
   return Object.fromEntries(extractNumberedTextEntries(text).map((entry) => [entry.number, entry.answer]));
 }
@@ -368,7 +388,7 @@ function getNumberedBlocks(text = "") {
 function buildFlatRestartedNumberingAnswerMap(submissionText = "") {
   const sectionEntries = splitSubmissionIntoSections(submissionText)
     .filter((section) => section.partId !== "main")
-    .map((section) => extractNumberedTextEntries(section.text))
+    .map((section) => extractRestartedNumberingEntries(section.text))
     .filter((entries) => entries.length);
   if (sectionEntries.length < 2) return new Map();
 
