@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { loadAnswerKeyRegistryPreview } from "../services/answerKeyRegistryService.js";
+import { DEFAULT_ANSWER_KEY_MANIFEST_URL, syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
 import { useToast } from "../context/ToastContext.jsx";
-
-const DEFAULT_ANSWER_KEY_MANIFEST_URL =
-  "https://raw.githubusercontent.com/learngermanghana/falowenexamtrainer/main/functions/data/answerKeyManifest.json";
 
 export default function AnswerKeySyncPage() {
   const { success, error } = useToast();
@@ -14,7 +12,7 @@ export default function AnswerKeySyncPage() {
   const [registry, setRegistry] = useState([]);
   const [pageError, setPageError] = useState("");
 
-  const refreshRegistry = async () => {
+  const refreshRegistry = useCallback(async () => {
     setLoading(true);
     setPageError("");
     try {
@@ -26,11 +24,11 @@ export default function AnswerKeySyncPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [error]);
 
   useEffect(() => {
     void refreshRegistry();
-  }, []);
+  }, [refreshRegistry]);
 
   const handleSync = async () => {
     const confirmed = window.confirm(
@@ -41,7 +39,6 @@ export default function AnswerKeySyncPage() {
     setSyncing(true);
     setPageError("");
     try {
-      const { syncAnswerKeysFromGitHub } = await import("../services/answerKeySyncService.js");
       const result = await syncAnswerKeysFromGitHub({ manifestUrl: manifestUrl.trim() || DEFAULT_ANSWER_KEY_MANIFEST_URL });
       setSummary(result);
       await refreshRegistry();
@@ -68,7 +65,7 @@ export default function AnswerKeySyncPage() {
         <section style={{ border: "1px solid #fecaca", borderRadius: 8, padding: 12, background: "#fef2f2" }}>
           <b>Page warning:</b> {pageError}
           <p style={{ marginBottom: 0, fontSize: 13 }}>
-            The page is still loaded. This usually means Firestore/Storage rules or Firebase config blocked one part of the sync.
+            The page is still loaded. This usually means the GitHub manifest, Firestore/Storage rules, or Firebase config blocked one part of the sync.
           </p>
         </section>
       ) : null}
