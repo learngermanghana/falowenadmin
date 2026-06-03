@@ -352,3 +352,46 @@ test("A1-4 blank-line separated objective blocks ignore first numbered writing b
   assert.equal(result.details[12].student, "Barcelona oder Madrid");
   assert.equal(result.details[12].correct, false);
 });
+test("A1-5 flat text answer key supports restarted numbering across Teil sections", () => {
+  const result = computeObjectiveScore("A1-5", `
+Teil 1
+1.Der Tisch=the table
+2.Die Lampe=the lamp
+3.Das Buch=the book
+4.Der Stuhl=the chair
+5.Die Katze= the cat
+6.Das Auto= the car
+7.Der Hund=the dog
+8.Die Blume=the flower
+9.Das Fenster=the window
+10.Der Computer =the Computer
+
+Teil 2
+1.Der Tisch ist groß.
+2.Die Lampe ist neu.
+3.Das Buch ist interessant.
+4.Der Stuhl ist bequem.
+5.Die Katze ist süß.
+6.Das Auto ist schnell.
+7.Der Hund ist freundlich.
+8.Die Blume ist schön.
+9.Das Fenster ist offen.
+10.Der Computer ist teuer.
+
+Teil 3
+1.Ich sehe den Tisch.
+2.Sie kauft die Lampe.
+3.Er liest das Buch.
+4.Wir brauchen den Stuhl.
+5.Du fütterst die Katze.
+6.Ich fahre das Auto.
+7.Sie streichelt den Hund.
+8.Er pflückt die Blume.
+9.Wir putzen das Fenster.
+10.Sie benutzen den Computer.
+  `);
+
+  assert.equal(result.totalCount, 30);
+  assert.equal(result.correctCount, 30);
+  assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
+});
