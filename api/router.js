@@ -88,7 +88,7 @@ function normalizeExpectedParts(value, parts = {}) {
 }
 
 function inferQuestionNumber(key = "", fallbackIndex = 0, value = "") {
-  const fromValue = String(value || "").match(/(?:frage|answer|antwort|nr\.?|q)\s*(\d{1,3})\b/i);
+  const fromValue = String(value || "").match(/(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\b/i);
   if (fromValue?.[1]) return fromValue[1];
   const fromKey = String(key || "").match(/(\d{1,3})/);
   if (fromKey?.[1]) return fromKey[1];
@@ -97,7 +97,7 @@ function inferQuestionNumber(key = "", fallbackIndex = 0, value = "") {
 
 function stripLeadingQuestionLabel(value = "") {
   return String(value || "")
-    .replace(/^\s*(?:frage|answer|antwort|nr\.?|q)\s*\d{1,3}\s*[).:-]?\s*/i, "")
+    .replace(/^\s*(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*\d{1,3}\s*[).:-]?\s*/i, "")
     .replace(/^\s*anzeige\s*:\s*/i, "Anzeige ")
     .trim();
 }
@@ -180,7 +180,7 @@ function splitAnswersIntoParts(answers = {}) {
   if (!answers || typeof answers !== "object") return {};
 
   const entries = Object.entries(answers || {});
-  const answerKeyPattern = /^(?:answer|antwort|frage|question|q|nr\.?)?[\s_-]*\d{1,3}$/i;
+  const answerKeyPattern = /^(?:answer|antwort|frage|aufgabe|task|exercise|question|q|nr\.?)?[\s_-]*\d{1,3}$/i;
   const partIdPattern = /teil\s*[1-4]|part\s*[1-4]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i;
   const looksFlat = !entries.length || entries.every(([key, nested]) => answerKeyPattern.test(key) && (["string", "number", "boolean"].includes(typeof nested) || nested == null));
 
@@ -302,45 +302,6 @@ async function hydrateMarkingPayloadWithManifest(req, path) {
   } catch (error) {
     console.error("Answer key manifest fallback failed:", error);
   }
-}
-
-function normalizeLetter(value = "") {
-  const match = String(value || "").trim().match(/\b([A-D])\b/i) || String(value || "").trim().match(/^([A-D])/i);
-  return match?.[1]?.toUpperCase() || "";
-}
-
-function makeEmptyAnswerBuckets() {
-  return { main: {}, teil1: {}, teil2: {}, teil3: {}, teil4: {} };
-}
-
-function extractStudentObjectiveAnswers(submissionText = "") {
-  const answers = makeEmptyAnswerBuckets();
-  let currentPart = "teil3";
-  let orderedIndex = 0;
-  const lines = String(submissionText || "").split(/\r?\n/);
-
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-    if (/audio|teil\s*4|h[oö]ren|hoeren|listening/.test(lower)) currentPart = "teil4";
-    else if (/teil\s*3|lesen|reading/.test(lower)) currentPart = "teil3";
-    else if (/teil\s*2|part\s*2/.test(lower)) currentPart = "teil2";
-    else if (/teil\s*1|part\s*1/.test(lower)) currentPart = "teil1";
-
-    const pattern = /(?:^|\s)(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:-]?\s*([A-D])\b/gi;
-    let match = pattern.exec(line);
-    while (match) {
-      const questionNumber = String(Number(match[1]));
-      const letter = normalizeLetter(match[2]);
-      if (letter) {
-        answers[currentPart][questionNumber] = letter;
-        orderedIndex += 1;
-        answers.main[String(orderedIndex)] = letter;
-      }
-      match = pattern.exec(line);
-    }
-  }
-
-  return answers;
 }
 
 function formatAnswerForFeedback(value = "", fallback = "blank") {

@@ -147,7 +147,7 @@ function looksLikeWritingTask(text = "") {
   return (hasGreeting && (hasClosing || wordCount >= 25)) || (firstPerson && sentenceCount >= 3 && wordCount >= 30);
 }
 
-function detectPartType({ level, partId, text, referenceEntry = {} } = {}) {
+function detectPartType({ partId, text, referenceEntry = {} } = {}) {
   const format = String(referenceEntry?.format || "").toLowerCase();
   if (partId === "teil2") return "writing";
   if (["teil3", "teil4"].includes(partId)) return "objective";
@@ -166,17 +166,17 @@ function parseNumberedObjectiveLine(line = "") {
   const trimmed = String(line || "").trim();
   if (!trimmed) return null;
 
-  const numbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+  const numbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
   if (numbered) {
     return { question: Number.parseInt(numbered[1], 10), answer: numbered[2].toUpperCase() };
   }
 
-  const anzeigeNumbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*anzeige\\s*[).:-]?\\s*([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+  const anzeigeNumbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*anzeige\\s*[).:-]?\\s*([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
   if (anzeigeNumbered) {
     return { question: Number.parseInt(anzeigeNumbered[1], 10), answer: anzeigeNumbered[2].toUpperCase() };
   }
 
-  const textAnswer = trimmed.match(/^(?:answer|antwort|frage|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]\s*(.+)$/i);
+  const textAnswer = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]\s*(.+)$/i);
   if (textAnswer) {
     return { question: Number.parseInt(textAnswer[1], 10), answer: textAnswer[2].trim() };
   }
@@ -203,7 +203,7 @@ function countObjectiveAnswerEvidence(text = "") {
     if (numbered && isObjectiveOptionAnswer(numbered.answer)) return count + 1;
 
     const optionOnly = token.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2)) return count + 1;
+    if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2 || /^[A-FX]\s*[).:-]/i.test(token))) return count + 1;
 
     return /^(richtig|falsch|true|false)$/i.test(token) ? count + 1 : count;
   }, 0);
@@ -225,7 +225,7 @@ function parseStudentObjectiveAnswerTokens(tokens = [], { questionOffset = 0 } =
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2)) {
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\s*[).:-]/i.test(trimmed))) {
       orderedQuestion += 1;
       map.set(questionOffset + orderedQuestion, anzeigeOnly[1].toUpperCase());
       continue;
@@ -333,7 +333,7 @@ function parseObjectiveReferenceText(text = "") {
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2)) {
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\s*[).:-]/i.test(trimmed))) {
       orderedQuestion += 1;
       entries.push({ key: `Answer${orderedQuestion}`, value: anzeigeOnly[1].toUpperCase() });
     }
@@ -360,14 +360,6 @@ function extractObjectiveEntries(referenceAnswers = {}, path = []) {
   if (!referenceAnswers || typeof referenceAnswers !== "object") return [];
   if (isObjectiveLeaf(referenceAnswers)) return [{ key: path.join("."), value: referenceAnswers }];
   return Object.entries(referenceAnswers).flatMap(([key, value]) => extractObjectiveEntries(value, [...path, key]));
-}
-
-function flattenAnswerEntries(referenceAnswers = {}, path = []) {
-  if (typeof referenceAnswers === "string" || typeof referenceAnswers === "number" || typeof referenceAnswers === "boolean") {
-    return [{ key: path.join("."), value: String(referenceAnswers) }];
-  }
-  if (!referenceAnswers || typeof referenceAnswers !== "object") return [];
-  return Object.entries(referenceAnswers).flatMap(([key, value]) => flattenAnswerEntries(value, [...path, key]));
 }
 
 function extractReferenceTextForPart(text = "", partId = "unknown") {

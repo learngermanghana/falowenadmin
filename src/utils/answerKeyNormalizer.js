@@ -1,5 +1,5 @@
 const PART_ID_PATTERN = /teil\s*[1-4]|part\s*[1-4]|lesen|h[oö]ren|hoeren|schreiben|writing|reading|listening/i;
-const ANSWER_KEY_PATTERN = /^(?:answer|antwort|frage|question|q|nr\.?)?[\s_-]*\d{1,3}$/i;
+const ANSWER_KEY_PATTERN = /^(?:answer|antwort|frage|aufgabe|task|exercise|question|q|nr\.?)?[\s_-]*\d{1,3}$/i;
 const VALID_PART_IDS = new Set(["main", "teil1", "teil2", "teil3", "teil4"]);
 
 export function safeRegistryId(value) {
@@ -48,7 +48,7 @@ export function normalizeExpectedParts(value, parts = {}) {
 }
 
 function inferQuestionNumber(key = "", fallbackIndex = 0, value = "") {
-  const fromValue = String(value || "").match(/(?:frage|answer|antwort|nr\.?|q)\s*(\d{1,3})\b/i);
+  const fromValue = String(value || "").match(/(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\b/i);
   if (fromValue?.[1]) return fromValue[1];
   const fromKey = String(key || "").match(/(\d{1,3})/);
   if (fromKey?.[1]) return fromKey[1];
@@ -57,7 +57,7 @@ function inferQuestionNumber(key = "", fallbackIndex = 0, value = "") {
 
 function stripLeadingQuestionLabel(value = "") {
   return String(value || "")
-    .replace(/^\s*(?:frage|answer|antwort|nr\.?|q)\s*\d{1,3}\s*[).:-]?\s*/i, "")
+    .replace(/^\s*(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*\d{1,3}\s*[).:-]?\s*/i, "")
     .replace(/^\s*anzeige\s*:\s*/i, "Anzeige ")
     .trim();
 }

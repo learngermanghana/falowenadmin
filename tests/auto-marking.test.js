@@ -75,6 +75,51 @@ Teil vier
   assert.equal(result.detectedParts[1].summary, "teil4: 5 objective answers found, 5 correct, 0 wrong");
 });
 
+test("deterministic checker scores Aufgabe-labelled objective answers", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      assignmentKey: "A2-8.22",
+      level: "A2",
+      answers: `teil3: Answer1. C) Im Moment ist vieles neu für sie.
+teil3: Answer2. B) Für neue Studenten eine Stadtführung gemacht.
+teil3: Answer3. C) Kocht jeder einmal für die anderen.
+teil3: Answer4. B) Deutsch zu sprechen.
+teil3: Answer5. C) Übernachtet Sonja in Marios Zimmer.`,
+    },
+    submissionText: `Assignment 22
+Teil 2
+
+Liebe Sarah,
+
+Ich möchte dich zum Mittagessen einladen.
+
+Teil 3
+
+Aufgabe 1:
+c) im Moment vieles neu für sie ist.
+
+Aufgabe 2:
+ a) den Neuen die Hochschule gezeigt.
+
+Aufgabe 3:
+ c) kocht jeder einmal für die anderen.
+
+Aufgabe 4:
+b) Deutsch zu sprechen.
+
+Aufgabe 5:
+ c) übernachtet Sonja in Marios Zimmer.`,
+  });
+
+  assert.equal(result.objectiveScore, 80);
+  assert.equal(result.objectiveCorrect, 4);
+  assert.equal(result.objectiveTotal, 5);
+  assert.deepEqual(result.wrongAnswers.map(({ question, expected, student }) => ({ question, expected, student })), [
+    { question: 2, expected: "B", student: "A" },
+  ]);
+  assert.equal(result.detectedParts[0].summary, "teil3: 5 objective answers found, 4 correct, 1 wrong");
+});
+
 test("deterministic parser scores numbered Anzeige answers", () => {
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: {
