@@ -27,9 +27,9 @@ service firebase.storage {
       allow read, write: if isAdmin();
     }
 
-    // Keep every other Storage path locked unless a more specific rule is added later.
+    // Falowen Admin Storage browser can inspect and manage any bucket path.
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read, write: if isAdmin();
     }
   }
 }
