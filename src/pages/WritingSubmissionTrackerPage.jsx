@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -98,10 +98,8 @@ function StatCard({ label, value }) {
 
 export default function WritingSubmissionTrackerPage() {
   const params = useParams();
-  const navigate = useNavigate();
   const routeSubmissionId = clean(params.submissionId);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDebugJson, setShowDebugJson] = useState(false);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState("");
   const [trackerState, setTrackerState] = useState({
     submissions: [],
     loading: true,
@@ -138,22 +136,7 @@ export default function WritingSubmissionTrackerPage() {
   }, []);
 
   const submissions = trackerState.submissions;
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-  const filteredSubmissions = useMemo(
-    () => submissions.filter((entry) => {
-      if (!normalizedSearchTerm) return true;
-      return [
-        entry.id,
-        metadataValue(entry, ["studentName", "name", "displayName", "studentEmail", "email", "studentCode", "studentId"]),
-        metadataValue(entry, ["assignmentTitle", "assignmentName", "assignment", "assignmentId", "taskTitle"]),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedSearchTerm);
-    }),
-    [normalizedSearchTerm, submissions],
-  );
-  const selectedId = routeSubmissionId || filteredSubmissions[0]?.id || submissions[0]?.id || "";
+  const selectedId = routeSubmissionId || selectedSubmissionId || submissions[0]?.id || "";
   const submission = submissions.find((entry) => entry.id === selectedId) || null;
   const exists = Boolean(submission);
   const loading = trackerState.loading;
@@ -185,7 +168,6 @@ export default function WritingSubmissionTrackerPage() {
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
         <StatCard label="Documents" value={loading ? "Loading…" : submissions.length} />
-        <StatCard label="Matching" value={loading ? "Loading…" : filteredSubmissions.length} />
         <StatCard label="Status" value={loading ? "Loading…" : error ? "Error" : submissions.length ? "Live" : "No submissions"} />
         <StatCard label="Selected" value={selectedId || "—"} />
         <StatCard label="Last synced" value={lastSyncedAt ? formatDate(lastSyncedAt) : "Not synced yet"} />
@@ -216,30 +198,18 @@ export default function WritingSubmissionTrackerPage() {
         <aside style={{ border: "1px solid #e2e8f0", borderRadius: 22, background: "#fff", overflow: "hidden", alignSelf: "start" }}>
           <header style={{ padding: 18, borderBottom: "1px solid #e2e8f0" }}>
             <p style={{ margin: 0, color: "#64748b", fontWeight: 900, letterSpacing: ".1em", textTransform: "uppercase", fontSize: 12 }}>All submissions</p>
-            <h2 style={{ margin: "6px 0 0", color: "#0f172a" }}>{loading ? "Loading…" : `${filteredSubmissions.length} of ${submissions.length} document${submissions.length === 1 ? "" : "s"}`}</h2>
-            <label style={{ display: "grid", gap: 6, marginTop: 14, color: "#475569", fontWeight: 800, fontSize: 13 }}>
-              Search submissions
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Student, email, assignment, or document id"
-                style={{ width: "100%", border: "1px solid #cbd5e1", borderRadius: 12, padding: "10px 12px", color: "#0f172a" }}
-              />
-            </label>
-            {routeSubmissionId ? <Link to="/writing-submissions" style={{ display: "inline-block", marginTop: 10, color: "#2563eb", fontWeight: 800 }}>Clear direct link selection</Link> : null}
+            <h2 style={{ margin: "6px 0 0", color: "#0f172a" }}>{loading ? "Loading…" : `${submissions.length} document${submissions.length === 1 ? "" : "s"}`}</h2>
           </header>
           <div style={{ display: "grid", gap: 8, padding: 12, maxHeight: 620, overflow: "auto" }}>
             {loading ? <p style={{ margin: 6, color: "#64748b" }}>Loading Firestore collection…</p> : null}
             {!loading && !submissions.length ? <p style={{ margin: 6, color: "#64748b" }}>No writing submissions found.</p> : null}
-            {!loading && submissions.length && !filteredSubmissions.length ? <p style={{ margin: 6, color: "#64748b" }}>No submissions match this search.</p> : null}
-            {filteredSubmissions.map((entry) => {
+            {submissions.map((entry) => {
               const isSelected = entry.id === selectedId;
               return (
                 <button
                   key={entry.id}
                   type="button"
-                  onClick={() => navigate(`/writing-submissions/${entry.id}`)}
+                  onClick={() => setSelectedSubmissionId(entry.id)}
                   style={{
                     textAlign: "left",
                     border: `1px solid ${isSelected ? "#2563eb" : "#e2e8f0"}`,
@@ -311,28 +281,13 @@ export default function WritingSubmissionTrackerPage() {
       </section>
 
       <section style={{ border: "1px solid #e2e8f0", borderRadius: 22, background: "#fff", overflow: "hidden" }}>
-        <header style={{ display: "flex", gap: 14, alignItems: "center", justifyContent: "space-between", padding: 18, borderBottom: "1px solid #e2e8f0", flexWrap: "wrap" }}>
-          <div>
-            <p style={{ margin: 0, color: "#64748b", fontWeight: 900, letterSpacing: ".1em", textTransform: "uppercase", fontSize: 12 }}>Debug Firebase collection</p>
-            <h2 style={{ margin: "6px 0 0", color: "#0f172a" }}>Raw writing submission data</h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowDebugJson((isVisible) => !isVisible)}
-            style={{ border: "1px solid #2563eb", borderRadius: 12, padding: "10px 14px", background: showDebugJson ? "#eff6ff" : "#2563eb", color: showDebugJson ? "#1d4ed8" : "#fff", fontWeight: 900, cursor: "pointer" }}
-          >
-            {showDebugJson ? "Hide raw collection" : "Show raw collection"}
-          </button>
+        <header style={{ padding: 18, borderBottom: "1px solid #e2e8f0" }}>
+          <p style={{ margin: 0, color: "#64748b", fontWeight: 900, letterSpacing: ".1em", textTransform: "uppercase", fontSize: 12 }}>Raw Firebase collection</p>
+          <h2 style={{ margin: "6px 0 0", color: "#0f172a" }}>All writing submission documents</h2>
         </header>
-        {showDebugJson ? (
-          <pre style={{ margin: 0, padding: 18, maxHeight: 620, overflow: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", lineHeight: 1.55, background: "#020617", color: "#dbeafe" }}>
-            {loading ? "Loading raw collection…" : rawCollectionJson}
-          </pre>
-        ) : (
-          <p style={{ margin: 0, padding: 18, color: "#475569", lineHeight: 1.6 }}>
-            Hidden by default to avoid exposing every loaded student field while tutors are reviewing submissions. Use the debug toggle only when you need the complete Firestore payload.
-          </p>
-        )}
+        <pre style={{ margin: 0, padding: 18, maxHeight: 620, overflow: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", lineHeight: 1.55, background: "#020617", color: "#dbeafe" }}>
+          {loading ? "Loading raw collection…" : rawCollectionJson}
+        </pre>
       </section>
     </div>
   );
