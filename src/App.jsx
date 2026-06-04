@@ -18,6 +18,7 @@ import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
 import TeachingSlidesPage from "./pages/TeachingSlidesPage";
 import StudentDirectoryPage from "./pages/StudentDirectoryPage";
 import StudentActivityPage from "./pages/StudentActivityPage";
+import WritingSubmissionTrackerPage from "./pages/WritingSubmissionTrackerPage";
 import OrientationPage from "./pages/OrientationPage";
 import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
 import ClassOperationsPage from "./pages/ClassOperationsPage";
@@ -64,6 +65,7 @@ function TopBar() {
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/student-activity" onClick={() => setMenuOpen(false)}>Student Activity</Link>
+                <Link to="/writing-submissions/uj22ChUTnGSHn7HNWVrN" onClick={() => setMenuOpen(false)}>Writing Live</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
                 <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
@@ -163,6 +165,8 @@ export default function App() {
           <Route path="/orientation" element={<ProtectedRoute allowStaff={false}><OrientationPage /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><StudentDirectoryPage /></ProtectedRoute>} />
           <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><StudentActivityPage /></ProtectedRoute>} />
+          <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
+          <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
           <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
           <Route path="/class-operations" element={<ProtectedRoute><ClassOperationsPage /></ProtectedRoute>} />
