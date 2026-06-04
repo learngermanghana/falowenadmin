@@ -102,12 +102,21 @@ function getQuestionNumber(key = "", fallbackIndex = 0, value = "") {
   return fallbackIndex + 1;
 }
 
+function stripAnswerQuestionLabel(value = "") {
+  return String(value || "")
+    .replace(/^\s*(?:answer|antwort|frage|nr\.?|q)\s*\d{1,3}\s*[).:-]?\s*/i, "")
+    .trim();
+}
+
 function extractExpectedChoice(value = "") {
-  const raw = stripQuestionLabel(value);
+  const raw = stripAnswerQuestionLabel(value);
   const anzeigen = raw.match(new RegExp(`\\banzeige\\s*([${OPTION_LETTERS}])\\b`, "i"));
   if (anzeigen) return anzeigen[1].toUpperCase();
-  const option = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-  return option ? option[1].toUpperCase() : "";
+
+  const explicitOption = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[).:-]|\\s+|$)`, "i"));
+  if (explicitOption) return explicitOption[1].toUpperCase();
+
+  return "";
 }
 
 function leadingOptionLetter(value = "") {
@@ -251,13 +260,25 @@ function buildReferenceItems(referenceEntry = {}) {
   });
 }
 
+function partMarkerToPartId(label = "", number = "") {
+  if (number) return `teil${Number(number)}`;
+  const normalized = normalizeAnswer(label).replace(/\s+/g, "");
+  if (/lesen|reading/.test(normalized)) return "teil3";
+  if (/horen|hoeren|listening/.test(normalized)) return "teil4";
+  if (/schreiben|writing/.test(normalized)) return "teil2";
+  return "main";
+}
+
 function splitSubmissionIntoSections(text = "") {
   const sections = [];
   const source = String(text || "");
-  const markerRegex = /(?:^|\n)\s*(teil|part)\s*(\d+)\s*[:;]?\s*/gi;
+  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\s*[:;]?\s*(?=\n|$)/gi;
   const markers = [];
   let match;
-  while ((match = markerRegex.exec(source))) markers.push({ index: match.index, end: markerRegex.lastIndex, partId: `teil${Number(match[2])}`, partNumber: Number(match[2]) });
+  while ((match = markerRegex.exec(source))) {
+    const partId = partMarkerToPartId(match[1], match[2]);
+    markers.push({ index: match.index, end: markerRegex.lastIndex, partId, partNumber: Number(partId.replace("teil", "")) || null });
+  }
   if (!markers.length) return [{ partId: "main", partNumber: null, text: source }];
   markers.forEach((marker, index) => {
     const next = markers[index + 1];
@@ -573,7 +594,9 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const partIds = new Set(referenceItems.map((item) => item.partId));
   const flatMainReference = referenceItems.every((item) => item.partId === "main");
   const hasMultipartReference = partIds.size > 1 || referenceItems.some((item) => item.partId !== "main");
-  const hasMatchingPartSections = sections.some((section) => section.partId !== "main" && referenceItems.some((item) => item.partId === section.partId));
+  const referencePartIds = [...partIds].filter((partId) => partId !== "main");
+  const sectionPartIds = new Set(sections.filter((section) => section.partId !== "main").map((section) => section.partId));
+  const hasMatchingPartSections = Boolean(referencePartIds.length) && referencePartIds.every((partId) => sectionPartIds.has(partId));
   const choiceCount = referenceItems.filter((item) => item.type === "choice").length;
   const useSequentialChoices = (flatMainReference || (hasMultipartReference && !hasMatchingPartSections)) && choiceCount > 1 && sequentialObjectiveAnswers.length >= choiceCount;
   const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);

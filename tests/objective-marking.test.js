@@ -440,3 +440,34 @@ ${"\u00a0"}Ich sehe den Tisch.
   assert.equal(result.details[21].student, "Ich sehe den Tisch.");
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
 });
+
+test("A2-4.11 choices keep explicit option letters before F-leading German answer text", () => {
+  const result = computeObjectiveScore("A2-4.11", `
+LESEN
+1. B
+2. B
+3. A
+4. B
+5. B
+6. A
+7. B
+
+HÖREN
+1. B
+2. B
+3. B
+4. C
+5. B
+
+SCHREIBEN
+Sehr geehrte Damen und Herren,
+ich möchte ein Auto mieten.
+  `);
+
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 12);
+  assert.equal(result.details["teil3.4"].expected, "B");
+  assert.equal(result.details["teil3.4"].correct, true);
+  assert.equal(result.details["teil4.4"].expected, "C");
+  assert.equal(result.details["teil4.4"].correct, true);
+});
