@@ -22,6 +22,12 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Writing submissions can be monitored from the admin dashboard.
+    match /writingSubmissions/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Do not deploy this file blindly if your live project already has broader
     // Firestore rules in Firebase Console. Merge these answer-key rules into
     // your existing rules first so other admin pages do not lose access.
