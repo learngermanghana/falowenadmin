@@ -26,11 +26,6 @@ const operations = [
     description: "View and manage WhatsApp reminder history.",
     to: "/whatsapp-reminders",
   },
-  {
-    title: "Firebase Storage",
-    description: "Browse Storage folder paths and edit or delete text files directly from the UI.",
-    to: "/firebase-storage",
-  },
 ];
 
 export default function ClassOperationsPage() {
