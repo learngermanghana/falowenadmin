@@ -171,19 +171,49 @@ function AnswerKeyPanel({ row }) {
   );
 }
 
+function normalizeScoreCandidate(value) {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return null;
+  return Math.max(0, Math.min(100, Math.round(numberValue)));
+}
+
+function writingScoreFromParts(parts = []) {
+  const scores = (Array.isArray(parts) ? parts : [])
+    .filter((part) => part?.partType === "writing" || part?.partId === "teil2")
+    .map((part) => normalizeScoreCandidate(part?.result?.score ?? part?.result?.writingScore ?? part?.score ?? part?.writingScore))
+    .filter((score) => score !== null);
+
+  if (!scores.length) return null;
+  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+}
+
 function buildScoreBreakdown(row = {}) {
   const savedBreakdown = row.scoreBreakdown || row.result?.scoreBreakdown || {};
   const aiMeta = row.result?.ai || row.ai || {};
+  const objectiveScore = savedBreakdown.objectiveScore ?? row.objectiveScore ?? row.result?.objectiveScore;
+  const partWritingScore = writingScoreFromParts(row.parts || row.result?.parts);
+  const writingScore = partWritingScore ?? savedBreakdown.writingScore ?? row.writingScore ?? row.result?.writingScore;
+  const objectiveWeight = savedBreakdown.objectiveWeight ?? aiMeta.deterministicObjectiveWeight;
+  const writingWeight = savedBreakdown.writingWeight ?? aiMeta.deterministicWritingWeight;
+  const normalizedObjectiveWeight = Number(objectiveWeight);
+  const normalizedWritingWeight = Number(writingWeight);
+  const canRecalculateFinal = partWritingScore !== null
+    && Number.isFinite(Number(objectiveScore))
+    && Number.isFinite(Number(writingScore));
+  const recalculatedFinal = canRecalculateFinal
+    ? Math.round((Number(objectiveScore) * (Number.isFinite(normalizedObjectiveWeight) ? normalizedObjectiveWeight : 0.5))
+      + (Number(writingScore) * (Number.isFinite(normalizedWritingWeight) ? normalizedWritingWeight : 0.5)))
+    : null;
 
   return {
-    finalScore: savedBreakdown.finalScore ?? row.finalScore ?? row.result?.finalScore ?? row.result?.score,
-    objectiveScore: savedBreakdown.objectiveScore ?? row.objectiveScore ?? row.result?.objectiveScore,
+    finalScore: recalculatedFinal ?? savedBreakdown.finalScore ?? row.finalScore ?? row.result?.finalScore ?? row.result?.score,
+    objectiveScore,
     objectiveCorrect: savedBreakdown.objectiveCorrect ?? row.objectiveCorrect ?? row.result?.objectiveCorrect,
     objectiveTotal: savedBreakdown.objectiveTotal ?? row.objectiveTotal ?? row.result?.objectiveTotal,
-    writingScore: savedBreakdown.writingScore ?? row.writingScore ?? row.result?.writingScore,
+    writingScore,
     confidence: row.confidence ?? row.result?.confidence,
-    objectiveWeight: savedBreakdown.objectiveWeight ?? aiMeta.deterministicObjectiveWeight,
-    writingWeight: savedBreakdown.writingWeight ?? aiMeta.deterministicWritingWeight,
+    objectiveWeight,
+    writingWeight,
   };
 }
 
@@ -388,7 +418,8 @@ function ScoreBreakdownPanel({ row }) {
 
 function AuditCard({ row, onSynced }) {
   const { success, error } = useToast();
-  const [score, setScore] = useState(row.finalScore ?? "");
+  const breakdown = buildScoreBreakdown(row);
+  const [score, setScore] = useState(breakdown.finalScore ?? "");
   const [feedback, setFeedback] = useState(row.feedback || "");
   const [saving, setSaving] = useState(false);
 
@@ -431,7 +462,7 @@ function AuditCard({ row, onSynced }) {
         <span>Original score: <b>{row.finalScore ?? "—"}</b></span>
         <span>Confidence: <b>{row.confidence ?? "—"}</b></span>
         <span>Objective: <b>{row.objectiveCorrect ?? "—"}/{row.objectiveTotal ?? "—"}</b></span>
-        <span>Writing: <b>{row.writingScore ?? "—"}</b></span>
+        <span>Writing: <b>{breakdown.writingScore ?? "—"}</b></span>
         <span>Sheet: <b>{row.sheetSynced ? "Synced" : "Not synced"}</b></span>
       </div>
 

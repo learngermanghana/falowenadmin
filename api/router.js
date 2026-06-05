@@ -363,6 +363,32 @@ function buildSupplementalWritingResult(payload = {}) {
   }
 }
 
+function normalizeScoreCandidate(value) {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return null;
+  return Math.max(0, Math.min(100, Math.round(numberValue)));
+}
+
+function writingScoreFromParts(parts = []) {
+  const scores = (Array.isArray(parts) ? parts : [])
+    .filter((part) => part?.partType === "writing" || part?.partId === "teil2")
+    .map((part) => normalizeScoreCandidate(part?.result?.score ?? part?.result?.writingScore ?? part?.score ?? part?.writingScore))
+    .filter((score) => score !== null);
+
+  if (!scores.length) return null;
+  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+}
+
+function resolveWritingScore(existingResult = {}, supplementalWriting = null) {
+  const partScore = writingScoreFromParts(existingResult.parts);
+  if (partScore !== null) return partScore;
+
+  const topLevelScore = normalizeScoreCandidate(existingResult.writingScore);
+  if (topLevelScore !== null) return topLevelScore;
+
+  return normalizeScoreCandidate(supplementalWriting?.writingScore);
+}
+
 function mergeObjectiveAndWritingParts({ existingResult = {}, writingParts = [], objectiveParts = [] } = {}) {
   const existingParts = Array.isArray(existingResult.parts) ? existingResult.parts : [];
   const existingWritingParts = existingParts.filter((part) => part?.partType === "writing" || part?.partId === "teil2");
@@ -382,11 +408,11 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
 
   const name = payload.submission?.studentName || payload.submission?.name || "Student";
   const supplementalWriting = hasWritingPart(existingResult) ? null : buildSupplementalWritingResult(payload);
-  const writingScore = existingResult.writingScore ?? supplementalWriting?.writingScore ?? null;
-  const hasWriting = writingScore !== null && writingScore !== undefined && Number.isFinite(Number(writingScore));
+  const writingScore = resolveWritingScore(existingResult, supplementalWriting);
+  const hasWriting = writingScore !== null;
   const objectiveScore = deterministicObjective.objectiveScore;
   const finalScore = hasWriting
-    ? Math.round((objectiveScore * OBJECTIVE_WEIGHT) + (Number(writingScore) * WRITING_WEIGHT))
+    ? Math.round((objectiveScore * OBJECTIVE_WEIGHT) + (writingScore * WRITING_WEIGHT))
     : objectiveScore;
   const wrongLabels = deterministicObjective.wrongAnswers.map((item) => `${item.partId || "objective"} ${item.question}`);
   const objectiveFeedback = buildObjectiveFeedback({
@@ -427,7 +453,7 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
     objectiveCorrect: deterministicObjective.objectiveCorrect,
     objectiveTotal: deterministicObjective.objectiveTotal,
     wrongAnswers: deterministicObjective.wrongAnswers,
-    writingScore: hasWriting ? Number(writingScore) : null,
+    writingScore: hasWriting ? writingScore : null,
     finalScore,
     feedback,
     corrections: [...(Array.isArray(existingResult.corrections) ? existingResult.corrections : []), ...objectiveCorrections],
