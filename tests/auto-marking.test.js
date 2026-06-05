@@ -624,6 +624,34 @@ Anna`,
   assert.match(result.improvementSummary, /\*\*ich gehe jeden Morgen/);
 });
 
+
+test("A2 writing feedback names multiple exact phrase corrections", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: { assignmentKey: "A2-9.23", level: "A2", format: "writing" },
+    submission: { assignmentKey: "A2-9.23", level: "A2" },
+    submissionText: `Schreiben
+Liebe Anna
+Wie geht es dir? Mir geht es gut
+Ich hoffe, es geht dir gut
+Ich schreibe dir, weil ich dich zu einem  Autohaus einladen möchte.
+I möchte mit dir zum  Autohaus gehen. Ich brauche ein Auto für die Arbeit.
+Ich schlage vor, wir treffen uns in Accra. Können wir uns nächsten Woche um Freitag treffen?
+Welches Modell würdest du empfehlen?
+Ich freue mich im Voraus auf deine Antwort!
+Viele Grüße
+Bernardette`,
+  });
+
+  assert.match(result.feedback, /Use the German subject pronoun in \*\*I möchte\*\*/);
+  assert.match(result.feedback, /Fix the time phrase \*\*nächsten Woche um Freitag\*\*/);
+  assert.match(result.feedback, /Make the invitation phrase more natural: \*\*zu einem Autohaus einladen\*\*/);
+  assert.deepEqual(result.corrections.slice(0, 3).map((correction) => correction.submitted), [
+    "I möchte",
+    "nächsten Woche um Freitag",
+    "zu einem Autohaus einladen",
+  ]);
+});
+
 test("unlabelled A2 writing before Lesen is included in feedback", () => {
   const result = autoMarkSubmission({
     referenceEntry: {
