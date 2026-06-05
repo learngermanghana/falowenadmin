@@ -171,15 +171,15 @@ export const teachingSlideQuestionDictionary = {
   },
   "A2-5.12": {
     warmupQuestionsDe: [
-      "Wann beginnt dein Tag normalerweise?",
-      "Welche Routine am Morgen hilft dir am meisten?",
-      "Hast du abends genug Zeit für dich?",
+      "Was ist dein Traumberuf und warum?",
+      "Welche Berufe findest du interessant?",
+      "Was ist dir bei einer Arbeit wichtig?",
     ],
     studentQuestionsDe: [
-      "Beschreibe deinen typischen Tag von morgens bis abends.",
-      "Welche Aufgaben machen deinen Alltag stressig?",
-      "Wie organisierst du Pausen an einem langen Tag?",
-      "Was würdest du an deinem Tagesablauf gern ändern?",
+      "Beschreibe deinen Traumberuf mit einfachen Sätzen.",
+      "Welche Aufgaben möchtest du in deinem Traumberuf machen?",
+      "Welche Fähigkeiten brauchst du für deinen Traumberuf?",
+      "Warum passt dieser Beruf gut zu dir?",
     ],
   },
   "A2-5.13": {
