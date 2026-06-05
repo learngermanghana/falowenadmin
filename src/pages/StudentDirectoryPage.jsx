@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
 import { useToast } from "../context/ToastContext";
+import StudentSupportTools from "../components/StudentSupportTools";
 
 const editableFields = [
   "email",
@@ -416,6 +417,21 @@ export default function StudentDirectoryPage() {
     }
   };
 
+  const handleSupportStudentUpdated = (studentId, payload) => {
+    setStudents((prev) => prev.map((record) => (record.id === studentId ? { ...record, ...payload } : record)));
+    setDrafts((prev) => {
+      const existing = prev[studentId];
+      if (!existing) return prev;
+      return {
+        ...prev,
+        [studentId]: {
+          ...existing,
+          ...payload,
+        },
+      };
+    });
+  };
+
   const updateCreateDraftField = (field, value) => {
     setCreateDraft((prev) => ({ ...prev, [field]: value }));
   };
@@ -615,6 +631,13 @@ export default function StudentDirectoryPage() {
                             {savingId === selectedStudent.id ? "Saving..." : "Save student"}
                           </button>
                         </div>
+
+                        <StudentSupportTools
+                          student={selectedStudent}
+                          draft={getDraft(selectedStudent)}
+                          onStudentUpdated={handleSupportStudentUpdated}
+                          pushToast={pushToast}
+                        />
 
                         <section
                           style={{
