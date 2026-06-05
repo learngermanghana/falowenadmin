@@ -657,14 +657,20 @@ function findWritingExpansionTarget(text = "") {
   return candidates[candidates.length - 1];
 }
 
+function addWritingIssue(issues, issue) {
+  if (!issue?.submitted || issues.some((existing) => existing.submitted === issue.submitted)) return;
+  issues.push(issue);
+}
+
 function findWritingIssues(text = "") {
   const issues = [];
-  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const sourceText = String(text || "");
+  const lines = sourceText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   let previousLine = "";
 
   for (const line of lines) {
     if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine)) {
-      issues.push({
+      addWritingIssue(issues, {
         submitted: clipFeedbackSnippet(line),
         suggestion: `${line.charAt(0).toUpperCase()}${line.slice(1)}`,
         message: `Start this sentence with a capital letter: ${highlightWritingSnippet(line)}.`,
@@ -674,19 +680,83 @@ function findWritingIssues(text = "") {
     previousLine = line;
   }
 
-  const zumSchluss = String(text || "").match(/\bZum Schluss,\s*([^.!?]{3,80})/i);
+  const englishPronoun = sourceText.match(/\bI\s+(?:möchte|moechte|will|kann|habe|bin)\b/i);
+  if (englishPronoun) {
+    const submitted = clipFeedbackSnippet(englishPronoun[0]);
+    addWritingIssue(issues, {
+      submitted,
+      suggestion: submitted.replace(/^I\b/, "Ich"),
+      message: `Use the German subject pronoun in ${highlightWritingSnippet(submitted)}: write ${highlightWritingSnippet(submitted.replace(/^I\b/, "Ich"))}.`,
+    });
+  }
+
+  const nextWeekFriday = sourceText.match(/\bnächsten\s+Woche\s+um\s+Freitag\b/i);
+  if (nextWeekFriday) {
+    const submitted = clipFeedbackSnippet(nextWeekFriday[0]);
+    addWritingIssue(issues, {
+      submitted,
+      suggestion: "nächste Woche am Freitag",
+      message: `Fix the time phrase ${highlightWritingSnippet(submitted)}: write ${highlightWritingSnippet("nächste Woche am Freitag")}.`,
+    });
+  } else {
+    const nextWeek = sourceText.match(/\bnächsten\s+Woche\b/i);
+    if (nextWeek) {
+      const submitted = clipFeedbackSnippet(nextWeek[0]);
+      addWritingIssue(issues, {
+        submitted,
+        suggestion: "nächste Woche",
+        message: `Use nominative for this time phrase: ${highlightWritingSnippet(submitted)} → ${highlightWritingSnippet("nächste Woche")}.`,
+      });
+    }
+
+    const friday = sourceText.match(/\bum\s+Freitag\b/i);
+    if (friday) {
+      const submitted = clipFeedbackSnippet(friday[0]);
+      addWritingIssue(issues, {
+        submitted,
+        suggestion: "am Freitag",
+        message: `For days, use ${highlightWritingSnippet("am")} instead of ${highlightWritingSnippet("um")} in ${highlightWritingSnippet(submitted)}.`,
+      });
+    }
+  }
+
+  const autohausInvite = sourceText.match(/\bzu\s+einem\s+Autohaus\s+einladen\b/i);
+  if (autohausInvite) {
+    const submitted = clipFeedbackSnippet(autohausInvite[0]);
+    addWritingIssue(issues, {
+      submitted,
+      suggestion: "in ein Autohaus einladen",
+      message: `Make the invitation phrase more natural: ${highlightWritingSnippet(submitted)} → ${highlightWritingSnippet("in ein Autohaus einladen")}.`,
+    });
+  }
+
+  const zumSchluss = sourceText.match(/\bZum Schluss,\s*([^.!?]{3,80})/i);
   if (zumSchluss) {
     const submitted = clipFeedbackSnippet(zumSchluss[0]);
-    issues.push({
+    addWritingIssue(issues, {
       submitted,
       suggestion: submitted.replace(/Zum Schluss,\s*/i, "Zum Schluss "),
       message: `Remove the comma in ${highlightWritingSnippet("Zum Schluss,")} and keep the verb in position two.`,
     });
   }
 
+  const missingPunctuationLine = lines.find((line) => {
+    if (isWritingSignoffLine(line)) return false;
+    const words = line.split(/\s+/).filter(Boolean);
+    return words.length >= 4 && !/[.!?]$/.test(line);
+  });
+  if (missingPunctuationLine) {
+    const submitted = clipFeedbackSnippet(missingPunctuationLine);
+    addWritingIssue(issues, {
+      submitted,
+      suggestion: `${submitted}.`,
+      message: `Add sentence punctuation after ${highlightWritingSnippet(submitted)}.`,
+    });
+  }
+
   const longSentence = extractWritingSentences(text).find((sentence) => tokenize(sentence).length >= 24);
   if (longSentence) {
-    issues.push({
+    addWritingIssue(issues, {
       submitted: clipFeedbackSnippet(longSentence),
       suggestion: "Split this into two shorter sentences or add clearer connectors.",
       message: `This sentence is long: ${highlightWritingSnippet(longSentence)}. Split it or connect the ideas more clearly.`,
