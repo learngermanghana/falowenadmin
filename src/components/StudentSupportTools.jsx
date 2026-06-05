@@ -6,6 +6,7 @@ import { updateStudentById } from "../services/studentsService.js";
 
 const ACTIVE_STATUSES = ["active", "paid", "partial", "pending", "enrolled", "registered", "ongoing", "current"];
 const BLOCKED_PAYMENT_STATUSES = ["failed", "overdue", "rejected", "cancelled", "canceled"];
+const REVIEW_LINK = "https://g.page/r/Cdogveq3Hy69EBM/review";
 
 function displayValue(...values) {
   return values.map((value) => String(value ?? "").trim()).find(Boolean) || "";
@@ -51,10 +52,6 @@ function daysUntil(value) {
   return Math.ceil((target.getTime() - today.getTime()) / 86400000);
 }
 
-function toNumber(value) {
-  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
 
 function normalizePhoneForWhatsapp(phone) {
   const digits = String(phone || "").replace(/\D/g, "");
@@ -129,6 +126,11 @@ function buildWhatsAppSupportMessage(student, draft = {}) {
   const contractEnd = displayValue(draft.contractEnd, student?.contractEnd);
   const balance = displayValue(draft.balanceDue, student?.balanceDue, student?.balance);
   return `Hello ${name}, this is Learn Language Education Academy / Falowen support. We are checking your student account. Contract end: ${formatDate(contractEnd)}. Balance: ${balance || "not set"}. Please reply here if you still cannot log in or need help. Thank you.`;
+}
+
+function buildReviewRequestMessage(student) {
+  const name = resolveStudentName(student);
+  return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your experience here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
 }
 
 export default function StudentSupportTools({ student, draft = {}, onStudentUpdated, pushToast }) {
@@ -236,14 +238,21 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
     }
   };
 
-  const sendWhatsappMessage = () => {
-    const message = buildWhatsAppSupportMessage(student, draft);
+  const openWhatsappWithMessage = (message) => {
     const url = whatsappUrl(phone, message);
     if (!url) {
       notify("error", "This student has no valid WhatsApp/phone number.");
       return;
     }
     window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const sendWhatsappMessage = () => {
+    openWhatsappWithMessage(buildWhatsAppSupportMessage(student, draft));
+  };
+
+  const sendReviewLink = () => {
+    openWhatsappWithMessage(buildReviewRequestMessage(student));
   };
 
   return (
@@ -286,6 +295,9 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
         </button>
         <button type="button" onClick={sendWhatsappMessage}>
           Send WhatsApp message
+        </button>
+        <button type="button" onClick={sendReviewLink}>
+          Send review link
         </button>
       </div>
 
