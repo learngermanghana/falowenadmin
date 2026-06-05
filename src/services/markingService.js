@@ -578,6 +578,29 @@ function formatObjectiveAnswerForFeedback(value = "", fallback = "blank") {
   return `**${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}**`;
 }
 
+function normalizeScoreCandidate(value) {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return null;
+  return Math.max(0, Math.min(100, Math.round(numberValue)));
+}
+
+function writingScoreFromParts(parts = []) {
+  const scores = (Array.isArray(parts) ? parts : [])
+    .filter((part) => part?.partType === "writing" || part?.partId === "teil2")
+    .map((part) => normalizeScoreCandidate(part?.result?.score ?? part?.result?.writingScore ?? part?.score ?? part?.writingScore))
+    .filter((score) => score !== null);
+
+  if (!scores.length) return null;
+  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+}
+
+function resolveWritingScore(aiResult = {}) {
+  const partScore = writingScoreFromParts(aiResult.parts);
+  if (partScore !== null) return partScore;
+
+  return normalizeScoreCandidate(aiResult.writingScore);
+}
+
 function buildDetailedObjectiveFeedback(deterministicObjective = {}) {
   const objectiveScore = deterministicObjective.objectiveScore;
   const base = `Objective score: ${deterministicObjective.objectiveCorrect}/${deterministicObjective.objectiveTotal} correct (${objectiveScore}%).`;
@@ -595,9 +618,7 @@ function buildDetailedObjectiveFeedback(deterministicObjective = {}) {
 function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObjective = null) {
   if (!deterministicObjective?.objectiveTotal) return aiResult;
 
-  const writingScore = aiResult.writingScore !== null && aiResult.writingScore !== undefined
-    ? Math.max(0, Math.min(100, Math.round(Number(aiResult.writingScore))))
-    : null;
+  const writingScore = resolveWritingScore(aiResult);
   const objectiveScore = deterministicObjective.objectiveScore;
   const hasWritingScore = writingScore !== null && Number.isFinite(writingScore);
   const finalScore = hasWritingScore

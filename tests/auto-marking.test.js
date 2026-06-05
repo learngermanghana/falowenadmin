@@ -463,6 +463,89 @@ Teil 4:
   assert.match(result.feedback, /12 of 12 objective questions/);
 });
 
+test("marking proxy prefers Schreiben part score over stale top-level writing score", async () => {
+  const { default: handler } = await import("../api/router.js");
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    text: async () => JSON.stringify({
+      result: {
+        score: 55,
+        finalScore: 55,
+        objectiveScore: 100,
+        objectiveCorrect: 12,
+        objectiveTotal: 12,
+        writingScore: 10,
+        feedback: "Upstream result with stale writing score.",
+        parts: [{ partId: "teil2", partType: "writing", result: { score: 86 }, feedback: "Writing marked with A2 rubric." }],
+        status: "marked",
+      },
+    }),
+  });
+
+  const req = {
+    method: "POST",
+    url: "/marking/ai",
+    headers: { host: "localhost", "content-type": "application/json" },
+    body: {
+      assignmentKey: "A2-1.1",
+      level: "A2",
+      submission: { name: "Cathy", assignmentKey: "A2-1.1", level: "A2" },
+      referenceEntry: {
+        assignmentKey: "A2-1.1",
+        level: "A2",
+        expectedParts: ["teil3", "teil4"],
+        parts: {
+          teil3: { answers: ["B", "B", "A", "B", "B", "A", "B"].map((correctLetter, index) => ({ questionNumber: String(index + 1), correctLetter })) },
+          teil4: { answers: ["B", "B", "B", "C", "B"].map((correctLetter, index) => ({ questionNumber: String(index + 1), correctLetter })) },
+        },
+      },
+      submissionText: `SCHREIBEN
+Sehr geehrte Damen und Herren,
+Ich schreibe Ihnen, weil ich ein Auto für das Wochenende mieten möchte.
+Mit freundlichen Grüßen,
+Cathy
+
+LESEN
+1. B
+2. B
+3. A
+4. B
+5. B
+6. A
+7. B
+
+HÖREN
+1. B
+2. B
+3. B
+4. C
+5. B`,
+    },
+  };
+
+  let statusCode = 0;
+  let jsonBody;
+  const res = {
+    status(code) { statusCode = code; return this; },
+    json(body) { jsonBody = body; return body; },
+    send(body) { jsonBody = body; return body; },
+    setHeader() {},
+  };
+
+  try {
+    await handler(req, res);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(statusCode, 200);
+  assert.equal(jsonBody.result.objectiveScore, 100);
+  assert.equal(jsonBody.result.writingScore, 86);
+  assert.equal(jsonBody.result.finalScore, 93);
+});
+
 test("marking proxy feedback includes the student's exact wrong objective answers", async () => {
   const { default: handler } = await import("../api/router.js");
   const originalFetch = globalThis.fetch;
