@@ -129,6 +129,7 @@ const addStudentDefaultDraft = {
 
 const addStudentNumericFields = new Set(["balance", "paid", "dailyLimit"]);
 const addStudentDateFields = new Set(["contractStart", "contractEnd"]);
+const REVIEW_LINK = "https://g.page/r/Cdogveq3Hy69EBM/review";
 
 const followUpTemplates = [
   {
@@ -155,6 +156,11 @@ const followUpTemplates = [
     key: "classUpdate",
     label: "Class update",
     helper: "General update for class time, level, or learning plan.",
+  },
+  {
+    key: "review",
+    label: "Review request",
+    helper: "Send the Google review link for course, school, and app feedback.",
   },
 ];
 
@@ -268,6 +274,10 @@ function buildFollowUpMessage(templateKey, student, draft = {}) {
   if (templateKey === "contract") {
     const remainingText = daysLeft == null ? "soon" : daysLeft <= 0 ? "today or has already ended" : `in ${daysLeft} day(s)`;
     return `Hello ${name}, your ${className} learning contract ends ${remainingText}${contractEnd ? ` (${contractDate})` : ""}. Kindly contact us if you want to continue, renew, or complete any pending payment/assignment before the end date.`;
+  }
+
+  if (templateKey === "review") {
+    return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your course, the school, and the app here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
   }
 
   return `Hello ${name}, this is an update from Learn Language Education Academy / Falowen concerning your ${className}. Kindly check your class information, continue your lessons consistently, and contact us if you need help. Thank you.`;
