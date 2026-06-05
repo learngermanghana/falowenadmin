@@ -135,6 +135,7 @@ export async function listClassesWithDeps(
           .map((c) => ({
             classId: resolveClassKey(c),
             name: normalizeToCanonicalClassId(c.name || c.className || c.classId || c.id),
+            ...normalizeClassArchiveMetadata(c),
           }))
           .filter((c) => c.classId);
       }

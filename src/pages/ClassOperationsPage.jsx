@@ -17,9 +17,14 @@ const operations = [
     to: "/attendance",
   },
   {
-    title: "Class Archive",
-    description: "Review published and historical class schedules.",
+    title: "Course Schedule",
+    description: "Build course schedules and export student-facing timetable plans.",
     to: "/course-schedule",
+  },
+  {
+    title: "Class Archive",
+    description: "Review archived completed classes and reopen them when needed.",
+    to: "/class-archive",
   },
   {
     title: "Reminder Logs",
