@@ -160,7 +160,7 @@ const followUpTemplates = [
   {
     key: "review",
     label: "Review request",
-    helper: "Send the Google review link for experience feedback.",
+    helper: "Send the Google review link for course, school, and app feedback.",
   },
 ];
 
@@ -277,7 +277,7 @@ function buildFollowUpMessage(templateKey, student, draft = {}) {
   }
 
   if (templateKey === "review") {
-    return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your experience here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
+    return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your course, the school, and the app here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
   }
 
   return `Hello ${name}, this is an update from Learn Language Education Academy / Falowen concerning your ${className}. Kindly check your class information, continue your lessons consistently, and contact us if you need help. Thank you.`;

@@ -130,7 +130,7 @@ function buildWhatsAppSupportMessage(student, draft = {}) {
 
 function buildReviewRequestMessage(student) {
   const name = resolveStudentName(student);
-  return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your experience here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
+  return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your course, the school, and the app here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
 }
 
 export default function StudentSupportTools({ student, draft = {}, onStudentUpdated, pushToast }) {
