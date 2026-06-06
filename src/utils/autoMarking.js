@@ -947,9 +947,9 @@ function getReferenceObjectivePartIds(referenceEntry = {}) {
 
 function selectSubmissionTextForPart(submissionText = "", partId = "main") {
   if (partId === "main" || partId === "unknown") return submissionText;
-  const parts = splitSubmissionIntoParts(submissionText);
-  const matching = parts.find((part) => part.partId === partId);
-  return matching?.text || submissionText;
+  const matchingParts = splitSubmissionIntoParts(submissionText).filter((part) => part.partId === partId);
+  if (!matchingParts.length) return submissionText;
+  return matchingParts.map((part) => part.text).filter(Boolean).join("\n");
 }
 
 export function checkDeterministicObjectiveAnswers({ referenceEntry = {}, submissionText = "", partId = "main" } = {}) {

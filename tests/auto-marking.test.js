@@ -75,6 +75,53 @@ Teil vier
   assert.equal(result.detectedParts[1].summary, "teil4: 5 objective answers found, 5 correct, 0 wrong");
 });
 
+test("deterministic checker ignores an empty duplicate part heading", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      assignmentKey: "A2-1.2",
+      level: "A2",
+      answers: `teil3: Answer1. B) Ein Jahr
+teil3: Answer2. B) Er ist immer gut gelaunt und organisiert
+teil3: Answer3. C) Einen Anzug und eine Brille
+teil3: Answer4. B) Er geht geduldig auf ihre Anliegen ein
+teil3: Answer5. B) Weil er seine Mitarbeiter regelmäßig lobt
+teil3: Answer6. A) Wenn eine Aufgabe nicht rechtzeitig erledigt wird
+teil3: Answer7. B) Dass er fair ist und die Leistungen der Mitarbeiter wertschätzt
+teil4: Answer1. B) Weil er
+teil4: Answer2. C) Sprachkurse
+teil4: Answer3. A) Jeden Tag`,
+    },
+    submissionText: `Teils 2
+Lieber Felix,
+
+Ich schreibe dir, weil ich dir von meinem Chef erzählen möchte.
+
+Viele Grüße,
+Jeffrey
+
+Teil 3
+1.B
+2.B
+3.C
+4.B
+5.B
+6.A
+7.B
+
+Teil 4
+Teil 4
+1. B
+2. C
+3. A`,
+  });
+
+  assert.equal(result.objectiveScore, 100);
+  assert.equal(result.objectiveCorrect, 10);
+  assert.equal(result.objectiveTotal, 10);
+  assert.deepEqual(result.wrongAnswers, []);
+  assert.equal(result.detectedParts[1].summary, "teil4: 3 objective answers found, 3 correct, 0 wrong");
+});
+
 test("deterministic checker scores Aufgabe-labelled objective answers", () => {
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: {
