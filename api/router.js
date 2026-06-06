@@ -314,18 +314,26 @@ function formatObjectiveMistake(item = {}) {
   const label = `${item.partId || "objective"} ${item.question || ""}`.trim();
   const submitted = formatAnswerForFeedback(item.student || item.submitted || "", "blank");
   const expected = formatAnswerForFeedback(item.expected || "", "the correct answer");
-  return `${label}: you chose ${submitted}; correct answer is ${expected}`;
+  return `- ${label}: Your answer was ${submitted}; correct answer is ${expected}.`;
 }
 
 function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wrongAnswers = [], wrongLabels = [] } = {}) {
   const firstName = String(name || "Student").trim().split(/\s+/)[0] || "Student";
+  const percent = total > 0 ? Math.round((Number(correct || 0) / Number(total)) * 100) : 0;
   const mistakeDetails = wrongAnswers.slice(0, 5).map(formatObjectiveMistake);
-  const fallbackDetails = wrongLabels.slice(0, 5);
+  const fallbackDetails = wrongLabels.slice(0, 5).map((label) => `- ${label}: Please review this answer.`);
   const details = mistakeDetails.length ? mistakeDetails : fallbackDetails;
-  const wrongText = details.length
-    ? ` Review these exact answers: ${details.join("; ")}.`
-    : " All objective answers were correct.";
-  return `Good effort, ${firstName}. You answered ${correct} of ${total} objective questions correctly.${wrongText} Check the highlighted answer you gave against the correct answer before submission.`;
+
+  return [
+    `Good effort, ${firstName}.`,
+    `Objective score: ${correct}/${total} correct (${percent}%).`,
+    details.length
+      ? `Corrections to review:\n${details.join("\n")}`
+      : "Excellent: all objective answers were correct.",
+    details.length
+      ? "Next step: Review only the questions listed above and compare your answer with the correct answer."
+      : "Next step: Continue to the next task.",
+  ].join("\n\n");
 }
 
 function hasWritingPart(result = {}) {
@@ -425,7 +433,7 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
   const writingFeedback = hasWritingPart(existingResult)
     ? "Writing section was marked by AI and preserved alongside the deterministic objective score."
     : supplementalWriting?.writingFeedback;
-  const feedback = [writingFeedback, objectiveFeedback].filter(Boolean).join("\n");
+  const feedback = [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n");
   const objectiveCorrections = deterministicObjective.wrongAnswers.map((item) => ({
     partId: item.partId,
     questionNumber: item.question,
@@ -457,7 +465,7 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
     finalScore,
     feedback,
     corrections: [...(Array.isArray(existingResult.corrections) ? existingResult.corrections : []), ...objectiveCorrections],
-    improvementSummary: [supplementalWriting?.writingImprovementSummary, objectiveFeedback].filter(Boolean).join("\n") || existingResult.improvementSummary || feedback,
+    improvementSummary: [supplementalWriting?.writingImprovementSummary, objectiveFeedback].filter(Boolean).join("\n\n") || existingResult.improvementSummary || feedback,
     confidence: Math.max(Number(existingResult.confidence || 0), deterministicObjective.confidence || 0.95),
     status: existingResult.status === "needs_review" ? "needs_review" : "marked",
     shouldSendAutomatically: false,
