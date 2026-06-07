@@ -623,7 +623,7 @@ function clipFeedbackSnippet(value = "", maxLength = 70) {
 }
 
 function highlightWritingSnippet(value = "", fallback = "this sentence") {
-  return `**${clipFeedbackSnippet(value) || fallback}**`;
+  return `"${clipFeedbackSnippet(value) || fallback}"`;
 }
 
 function extractWritingSentences(text = "") {
@@ -844,6 +844,14 @@ function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = 
   };
 }
 
+function stripBoldMarkdown(value = "") {
+  return String(value || "").replace(/\*\*/g, "");
+}
+
+function combinePartFeedback(parts = []) {
+  return stripBoldMarkdown(parts.map((part) => part.result?.feedback).filter(Boolean).join(" "));
+}
+
 function aggregatePartResults(parts = []) {
   const objectiveResults = parts.filter((part) => part.partType === "objective" && part.result);
   const writingResults = parts.filter((part) => part.partType === "writing" && part.result);
@@ -904,9 +912,9 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
     objectiveTotal: aggregate.objectiveTotal,
     writingScore: aggregate.writingScore,
     finalScore: aggregate.finalScore,
-    feedback: parts.map((part) => part.result?.feedback).filter(Boolean).join("\n"),
+    feedback: combinePartFeedback(parts),
     corrections: parts.flatMap((part) => part.result?.corrections || []),
-    improvementSummary: parts.map((part) => part.result?.improvementSummary).filter(Boolean).join("\n"),
+    improvementSummary: stripBoldMarkdown(parts.map((part) => part.result?.improvementSummary).filter(Boolean).join("\n")),
     confidence: aggregate.confidence,
     status,
     shouldSendAutomatically,

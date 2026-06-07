@@ -420,22 +420,26 @@ test("normalizes uploaded A2/B1 dictionary entries with Teil 3 and Teil 4 parts"
 test("marking proxy combines deterministic objective score with Schreiben feedback", async () => {
   const { default: handler } = await import("../api/router.js");
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => ({
-    ok: true,
-    status: 200,
-    text: async () => JSON.stringify({
-      result: {
-        score: 100,
-        finalScore: 100,
-        objectiveScore: 100,
-        objectiveCorrect: 12,
-        objectiveTotal: 12,
-        feedback: "Objective-only placeholder from upstream AI.",
-        parts: [],
-        status: "marked",
-      },
-    }),
-  });
+  let proxiedPayload;
+  globalThis.fetch = async (_url, options = {}) => {
+    proxiedPayload = JSON.parse(options.body);
+    return {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({
+        result: {
+          score: 100,
+          finalScore: 100,
+          objectiveScore: 100,
+          objectiveCorrect: 12,
+          objectiveTotal: 12,
+          feedback: "Objective-only placeholder from upstream AI.",
+          parts: [],
+          status: "marked",
+        },
+      }),
+    };
+  };
 
   const req = {
     method: "POST",
@@ -503,11 +507,18 @@ Teil 4:
   assert.equal(result.objectiveScore, 100);
   assert.equal(result.objectiveCorrect, 12);
   assert.equal(result.objectiveTotal, 12);
+  assert.deepEqual(proxiedPayload.objectiveFeedbackContext, {
+    correct: 12,
+    total: 12,
+    score: 100,
+    wrongAnswers: [],
+  });
   assert.ok(result.writingScore > 0);
   assert.ok(result.finalScore < 100);
   assert.ok(result.parts.some((part) => part.partType === "writing"));
   assert.match(result.feedback, /Writing marked/);
-  assert.match(result.feedback, /12 of 12 objective questions/);
+  assert.match(result.feedback, /Objective score: 12\/12 correct/);
+  assert.doesNotMatch(result.feedback, /\*\*/);
 });
 
 test("marking proxy prefers Schreiben part score over stale top-level writing score", async () => {
@@ -650,7 +661,8 @@ test("marking proxy feedback includes the student's exact wrong objective answer
   assert.equal(statusCode, 200);
   assert.equal(result.objectiveCorrect, 1);
   assert.match(result.feedback, /Good effort, Charlotte/);
-  assert.match(result.feedback, /teil3 1: you chose \*\*A\*\*; correct answer is \*\*B\*\*/);
+  assert.match(result.feedback, /teil3 1: Your answer was "A"; correct answer is "B"/);
+  assert.doesNotMatch(result.feedback, /\*\*/);
 });
 
 test("writing feedback highlights exact submitted wording and concrete corrections", () => {
@@ -665,10 +677,12 @@ Anna`,
   });
 
   assert.equal(result.parts[0].partType, "writing");
-  assert.match(result.feedback, /clear greeting \*\*Hallo Tom\*\*/);
-  assert.match(result.feedback, /Start this sentence with a capital letter: \*\*ich gehe jeden Morgen/);
+  assert.match(result.feedback, /clear greeting "Hallo Tom"/);
+  assert.match(result.feedback, /Start this sentence with a capital letter: "ich gehe jeden Morgen/);
   assert.equal(result.corrections[0].type, "writing");
-  assert.match(result.improvementSummary, /\*\*ich gehe jeden Morgen/);
+  assert.match(result.improvementSummary, /"ich gehe jeden Morgen/);
+  assert.doesNotMatch(result.feedback, /\*\*/);
+  assert.doesNotMatch(result.improvementSummary, /\*\*/);
 });
 
 
@@ -689,9 +703,9 @@ Viele Grüße
 Bernardette`,
   });
 
-  assert.match(result.feedback, /Use the German subject pronoun in \*\*I möchte\*\*/);
-  assert.match(result.feedback, /Fix the time phrase \*\*nächsten Woche um Freitag\*\*/);
-  assert.match(result.feedback, /Make the invitation phrase more natural: \*\*zu einem Autohaus einladen\*\*/);
+  assert.match(result.feedback, /Use the German subject pronoun in "I möchte"/);
+  assert.match(result.feedback, /Fix the time phrase "nächsten Woche um Freitag"/);
+  assert.match(result.feedback, /Make the invitation phrase more natural: "zu einem Autohaus einladen"/);
   assert.deepEqual(result.corrections.slice(0, 3).map((correction) => correction.submitted), [
     "I möchte",
     "nächsten Woche um Freitag",
@@ -730,6 +744,8 @@ test("unlabelled A2 writing before Lesen is included in feedback", () => {
   assert.equal(result.parts[0].partType, "writing");
   assert.match(result.feedback, /Writing score:/);
   assert.match(result.feedback, /Objective score:/);
+  assert.doesNotMatch(result.feedback, /Both sections contribute equally/);
+  assert.doesNotMatch(result.feedback, /\*\*/);
 });
 
 
@@ -750,10 +766,11 @@ Eric`,
   });
 
   assert.match(result.feedback, /Next step: add one more clear detail to/);
-  assert.doesNotMatch(result.feedback, /add one more clear detail to \*\*Eric\*\*/);
+  assert.doesNotMatch(result.feedback, /add one more clear detail to "Eric"/);
   assert.doesNotMatch(result.feedback, /verb (?:position|conjugation)|conjugation/i);
-  assert.match(result.feedback, /\*\*Vielleicht können wir uns bald treffen und darüber sprechen\.\*\*/);
-  assert.match(result.improvementSummary, /\*\*Vielleicht können wir uns bald treffen und darüber sprechen\.\*\*/);
+  assert.match(result.feedback, /"Vielleicht können wir uns bald treffen und darüber sprechen\."/);
+  assert.match(result.improvementSummary, /"Vielleicht können wir uns bald treffen und darüber sprechen\."/);
+  assert.doesNotMatch(result.feedback, /\*\*/);
 });
 
 test("A1-4 deterministic checker continues restarted numbering across objective sections", () => {

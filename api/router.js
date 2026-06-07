@@ -280,34 +280,57 @@ async function findManifestEntryForAssignment(assignmentKey = "") {
 
 async function hydrateMarkingPayloadWithManifest(req, path) {
   if (req.method !== "POST" || path !== "marking/ai") return;
-  const payload = req.body && typeof req.body === "object" ? req.body : {};
+  let payload = req.body && typeof req.body === "object" ? req.body : {};
 
-  if (payload.referenceEntry?.parts && Object.keys(payload.referenceEntry.parts || {}).length) {
-    return;
+  if (!(payload.referenceEntry?.parts && Object.keys(payload.referenceEntry.parts || {}).length)) {
+    const assignmentKey = readPayloadAssignmentKey(payload);
+    if (assignmentKey) {
+      try {
+        const manifestEntry = await findManifestEntryForAssignment(assignmentKey);
+        if (manifestEntry) {
+          payload = {
+            ...payload,
+            assignmentKey: manifestEntry.assignmentKey,
+            level: payload.level || manifestEntry.level,
+            referenceEntry: manifestEntry,
+          };
+        }
+      } catch (error) {
+        console.error("Answer key manifest fallback failed:", error);
+      }
+    }
   }
 
-  const assignmentKey = readPayloadAssignmentKey(payload);
-  if (!assignmentKey) return;
+  const submissionText = payload.submissionText || payload.submission?.text || "";
+  const objective = checkDeterministicObjectiveAnswers({ referenceEntry: payload.referenceEntry || {}, submissionText, partId: "main" });
+  req.body = {
+    ...payload,
+    objectiveFeedbackContext: objective?.objectiveTotal ? {
+      correct: objective.objectiveCorrect,
+      total: objective.objectiveTotal,
+      score: objective.objectiveScore,
+      wrongAnswers: objective.wrongAnswers,
+    } : null,
+  };
+}
 
-  try {
-    const manifestEntry = await findManifestEntryForAssignment(assignmentKey);
-    if (!manifestEntry) return;
+function stripBoldMarkdown(value = "") {
+  return String(value || "").replace(/\*\*/g, "");
+}
 
-    req.body = {
-      ...payload,
-      assignmentKey: manifestEntry.assignmentKey,
-      level: payload.level || manifestEntry.level,
-      referenceEntry: manifestEntry,
-    };
-  } catch (error) {
-    console.error("Answer key manifest fallback failed:", error);
-  }
+function writingFeedbackFromResult(result = {}) {
+  const partFeedback = (Array.isArray(result.parts) ? result.parts : [])
+    .filter((part) => part?.partType === "writing" || part?.partId === "teil2")
+    .map((part) => part?.result?.feedback || part?.feedback)
+    .filter(Boolean)
+    .join(" ");
+  return partFeedback || result.feedback || "";
 }
 
 function formatAnswerForFeedback(value = "", fallback = "blank") {
   const normalized = String(value || "").replace(/\s+/g, " ").trim();
   const safe = normalized || fallback;
-  return `**${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}**`;
+  return `"${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}"`;
 }
 
 function formatObjectiveMistake(item = {}) {
@@ -431,9 +454,12 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
     wrongLabels,
   });
   const writingFeedback = hasWritingPart(existingResult)
-    ? "Writing section was marked by AI and preserved alongside the deterministic objective score."
+    ? writingFeedbackFromResult(existingResult)
     : supplementalWriting?.writingFeedback;
-  const feedback = [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n");
+  const shouldAppendObjectiveFeedback = !hasWritingPart(existingResult) || deterministicObjective.wrongAnswers.length > 0;
+  const feedback = stripBoldMarkdown(hasWriting
+    ? [writingFeedback, shouldAppendObjectiveFeedback ? objectiveFeedback : ""].filter(Boolean).join(" ")
+    : objectiveFeedback);
   const objectiveCorrections = deterministicObjective.wrongAnswers.map((item) => ({
     partId: item.partId,
     questionNumber: item.question,
@@ -465,7 +491,7 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
     finalScore,
     feedback,
     corrections: [...(Array.isArray(existingResult.corrections) ? existingResult.corrections : []), ...objectiveCorrections],
-    improvementSummary: [supplementalWriting?.writingImprovementSummary, objectiveFeedback].filter(Boolean).join("\n\n") || existingResult.improvementSummary || feedback,
+    improvementSummary: stripBoldMarkdown([supplementalWriting?.writingImprovementSummary, objectiveFeedback].filter(Boolean).join("\n\n") || existingResult.improvementSummary || feedback),
     confidence: Math.max(Number(existingResult.confidence || 0), deterministicObjective.confidence || 0.95),
     status: existingResult.status === "needs_review" ? "needs_review" : "marked",
     shouldSendAutomatically: false,

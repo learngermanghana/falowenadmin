@@ -529,8 +529,12 @@ export async function upsertAnswerKey({ assignmentKey, answerKey }) {
   }, { merge: true });
 }
 
+function stripBoldMarkdown(value = "") {
+  return String(value || "").replace(/\*\*/g, "");
+}
+
 function limitWords(value, maxWords = 40) {
-  return String(value || "").trim().split(/\s+/).filter(Boolean).slice(0, maxWords).join(" ");
+  return stripBoldMarkdown(value).trim().split(/\s+/).filter(Boolean).slice(0, maxWords).join(" ");
 }
 
 function normalizeAIMarkingResult(result = {}, payload = {}) {
@@ -555,7 +559,7 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
     wrongAnswers: Array.isArray(result.wrongAnswers) ? result.wrongAnswers : [],
     feedback,
     corrections: Array.isArray(result.corrections) ? result.corrections : [],
-    improvementSummary: result.improvementSummary || feedback,
+    improvementSummary: stripBoldMarkdown(result.improvementSummary || feedback),
     confidence: Number.isFinite(Number(result.confidence)) ? Math.max(0, Math.min(1, Number(result.confidence))) : 0.5,
     status,
     shouldSendAutomatically: Boolean(result.shouldSendAutomatically) && status === "marked",
@@ -575,7 +579,7 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
 function formatObjectiveAnswerForFeedback(value = "", fallback = "blank") {
   const normalized = String(value || "").replace(/\s+/g, " ").trim();
   const safe = normalized || fallback;
-  return `**${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}**`;
+  return `"${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}"`;
 }
 
 function normalizeScoreCandidate(value) {
@@ -641,7 +645,9 @@ function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObj
       ...deterministicObjective.parts,
       ...(Array.isArray(aiResult.parts) ? aiResult.parts.filter((part) => part?.partType !== "objective") : []),
     ],
-    feedback: [aiResult.feedback, objectiveFeedback].filter(Boolean).join("\n"),
+    feedback: stripBoldMarkdown(hasWritingScore
+      ? [aiResult.feedback, deterministicObjective.wrongAnswers?.length ? objectiveFeedback : ""].filter(Boolean).join(" ")
+      : objectiveFeedback),
     confidence: Math.max(Number(aiResult.confidence || 0), deterministicObjective.confidence || 0),
     status: aiResult.status === "marked" || finalScore >= 60 ? "marked" : aiResult.status,
     shouldSendAutomatically: false,
@@ -705,13 +711,25 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
 }
 
 export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
+  const deterministicObjective = checkDeterministicObjectiveAnswers({
+    referenceEntry: referenceEntry || {},
+    submissionText,
+    partId: "main",
+  });
+  const objectiveFeedbackContext = deterministicObjective?.objectiveTotal ? {
+    correct: deterministicObjective.objectiveCorrect,
+    total: deterministicObjective.objectiveTotal,
+    score: deterministicObjective.objectiveScore,
+    wrongAnswers: deterministicObjective.wrongAnswers,
+  } : null;
   const payload = {
     submission,
     referenceEntry,
     assignmentKey: referenceEntry?.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
     level: referenceEntry?.level || submission.level || "",
     submissionText,
-    feedbackInstruction: "Write exactly 40 words. Highlight exact words or short phrases from the student's writing in **bold**, name one strength, identify one concrete writing correction using the student's wording, and give one next step. Do not use generic feedback.",
+    objectiveFeedbackContext,
+    feedbackInstruction: "Develop feedback specifically from this assignment, its objectives, and the student’s submitted writing. Write exactly 40 words in plain text with no Markdown or asterisks. For mixed submissions, integrate the supplied objective result with a writing strength, a concrete correction using the student’s wording, and a relevant next step. Do not use a stock introduction or generic template.",
   };
 
   const res = await fetch("/api/marking/ai", {
@@ -726,11 +744,6 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
   }
 
   const aiResult = normalizeAIMarkingResult(body.result || body, payload);
-  const deterministicObjective = checkDeterministicObjectiveAnswers({
-    referenceEntry: referenceEntry || {},
-    submissionText,
-    partId: "main",
-  });
   const result = combineWithDeterministicObjectiveResult(aiResult, deterministicObjective);
   const row = {
     studentcode: submission.studentCode || submission.studentcode || submission.uid || "",
