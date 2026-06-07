@@ -8,6 +8,8 @@ const STOPWORDS = new Set([
   "und", "oder", "zu", "in", "mit", "auf", "am", "im", "den", "dem", "des", "mein", "meine",
 ]);
 
+const GERMAN_ARTICLES = new Set(["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines"]);
+
 const VOCABULARY_ALIASES = {
   head: ["head"],
   arm: ["arm"],
@@ -568,6 +570,12 @@ function textMatches(expectedRaw = "", studentRaw = "") {
   return expectedStem.length >= 4 && studentStem.length >= 4 && (expectedStem.includes(studentStem) || studentStem.includes(expectedStem));
 }
 
+function normalizeVocabularyAnswer(value = "") {
+  const tokens = normalizeAnswer(value).split(/\s+/).filter(Boolean);
+  if (tokens.length > 1 && GERMAN_ARTICLES.has(tokens[0])) tokens.shift();
+  return tokens.join(" ");
+}
+
 function isCorrectAnswer(item, student) {
   const expectedLetter = item.type === "choice" ? extractOptionLetter(item.expected) : extractOptionLetter(item.expectedRaw) || leadingOptionLetter(item.expected);
   const studentLetter = extractOptionLetter(student);
@@ -575,7 +583,7 @@ function isCorrectAnswer(item, student) {
   if (expectedLetter && normalizeAnswer(student) === normalizeAnswer(expectedLetter)) return true;
   if (item.type === "choice" && item.expectedText) return textMatches(item.expectedText, student);
   const accepted = item.accepted?.length ? item.accepted : [item.expected, item.expectedText, item.expectedRaw].filter(Boolean);
-  if (item.type === "vocabulary") return accepted.some((expected) => normalizeAnswer(expected) === normalizeAnswer(student));
+  if (item.type === "vocabulary") return accepted.some((expected) => normalizeVocabularyAnswer(expected) === normalizeVocabularyAnswer(student));
   return accepted.some((expected) => textMatches(expected, student));
 }
 
