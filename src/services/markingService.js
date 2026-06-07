@@ -2,6 +2,7 @@ import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, q
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
+import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -533,14 +534,10 @@ function stripBoldMarkdown(value = "") {
   return String(value || "").replace(/\*\*/g, "");
 }
 
-function limitWords(value, maxWords = 40) {
-  return stripBoldMarkdown(value).trim().split(/\s+/).filter(Boolean).slice(0, maxWords).join(" ");
-}
-
 function normalizeAIMarkingResult(result = {}, payload = {}) {
   const assignmentKey = String(result.assignmentKey || payload.referenceEntry?.assignmentKey || payload.submission?.assignmentKey || payload.submission?.assignmentId || "").trim();
   const finalScore = Number.isFinite(Number(result.finalScore ?? result.score)) ? Math.max(0, Math.min(100, Math.round(Number(result.finalScore ?? result.score)))) : 0;
-  const feedback = limitWords(result.feedback || "AI marking completed. Please review the result before sending feedback to the student.", 40);
+  const feedback = limitFeedbackWords(result.feedback || "AI marking completed. Please review the result before sending feedback to the student.");
   const status = ["marked", "needs_review"].includes(String(result.status || "").toLowerCase()) ? String(result.status).toLowerCase() : "needs_review";
 
   return {
@@ -729,7 +726,7 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     level: referenceEntry?.level || submission.level || "",
     submissionText,
     objectiveFeedbackContext,
-    feedbackInstruction: "Develop feedback specifically from this assignment, its objectives, and the student’s submitted writing. Write exactly 40 words in plain text with no Markdown or asterisks. For mixed submissions, integrate the supplied objective result with a writing strength, a concrete correction using the student’s wording, and a relevant next step. Do not use a stock introduction or generic template.",
+    feedbackInstruction: AI_FEEDBACK_INSTRUCTION,
   };
 
   const res = await fetch("/api/marking/ai", {

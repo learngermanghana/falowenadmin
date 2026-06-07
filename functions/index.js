@@ -1115,11 +1115,14 @@ function readSubmissionAssignmentKey(data = {}) {
 }
 
 
+const AI_FEEDBACK_MIN_WORDS = 80;
+const AI_FEEDBACK_MAX_WORDS = 120;
+
 function countWords(value) {
   return String(value || "").trim().split(/\s+/).filter(Boolean).length;
 }
 
-function limitWords(value, maxWords = 40) {
+function limitWords(value, maxWords = AI_FEEDBACK_MAX_WORDS) {
   const words = String(value || "").trim().split(/\s+/).filter(Boolean);
   return words.slice(0, maxWords).join(" ");
 }
@@ -1131,7 +1134,7 @@ function stripBoldMarkdown(value = "") {
 function normalizeAiMarkingResult(result = {}, payload = {}) {
   const assignmentKey = String(result.assignmentKey || payload.assignmentKey || payload.referenceEntry?.assignmentKey || "").trim();
   const level = String(result.level || payload.level || payload.referenceEntry?.level || payload.submission?.level || "UNKNOWN").trim() || "UNKNOWN";
-  const feedback = limitWords(stripBoldMarkdown(result.feedback || "AI marking completed. Review the score, corrections, and suggested improvements before sending feedback to the student."), 40);
+  const feedback = limitWords(stripBoldMarkdown(result.feedback || "AI marking completed. Review the score, corrections, and suggested improvements before sending feedback to the student."));
   const finalScore = Number.isFinite(Number(result.finalScore ?? result.score)) ? Math.max(0, Math.min(100, Math.round(Number(result.finalScore ?? result.score)))) : 0;
   const status = ["marked", "needs_review"].includes(String(result.status || "").toLowerCase()) ? String(result.status).toLowerCase() : "needs_review";
 
@@ -1172,10 +1175,10 @@ function buildMarkingPrompt(payload = {}) {
     "For objective answers, accept correct option letters, correct text, letter plus text, close spelling, and meaningful stems. If the student gives a wrong option letter with the correct text, mark that item needs_review for conflicting option letter and answer text. If the option letter is correct but text is different, the letter is primary and correct.",
     "Route A2/B1 teil2 as writing, teil3 Lesen as objective, and teil4 Hören as objective. Use parts.teil3 for Lesen, parts.teil4 for Hören, and parts.main for A1 objective work. If any required objective answer key is missing, do not guess; mark needs_review.",
     "Teil 2 Schreiben must be graded even when the reference answer only contains Teil 3/Teil 4 objective keys. Never award 100 solely because objective questions are all correct when a writing section is present; include a writingScore and combine it with the objectiveScore for finalScore.",
-    "For writing, assess task completion, CEFR-appropriate grammar, word order, vocabulary, spelling, structure, and clarity. In feedback and improvementSummary, quote exact short words or phrases the student wrote, identify one concrete correction using that wording, and include one next step. Avoid generic writing comments.",
+    "For writing, assess task completion, CEFR-appropriate grammar, word order, vocabulary, spelling, structure, and clarity. In feedback and improvementSummary, explain a genuine strength, give two or three concrete corrections that quote the student’s exact short wording and show improved wording, briefly explain the most useful language rule, and include one task-relevant next step. Avoid generic writing comments.",
     "Develop feedback uniquely from this assignment’s title, task, answer-key objectives, objectiveFeedbackContext, and the student’s actual response. Do not reuse a stock opening or a fixed feedback template.",
-    "When a submission contains both objective and writing work, integrate both naturally in one response. State the supplied objective result accurately, then discuss a writing strength, a correction grounded in the student’s exact wording, and a next step relevant to this task.",
-    "Return JSON only. The feedback field must be exactly 40 words, plain text only, with no Markdown, bold markers, or asterisks. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, corrections, and improvementSummary.",
+    "When a submission contains both objective and writing work, integrate both naturally in one response. State the supplied objective result accurately, identify exact wrong objective answers, then discuss the writing strength, corrections, language rule, and next step relevant to this task.",
+    `Return JSON only. The feedback field must be ${AI_FEEDBACK_MIN_WORDS} to ${AI_FEEDBACK_MAX_WORDS} words, plain text only, with no Markdown, bold markers, or asterisks. Use the available space for specific, actionable guidance rather than filler. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, corrections, and improvementSummary.`,
     `Payload: ${JSON.stringify(payload)}`,
   ].join("\n\n");
 }

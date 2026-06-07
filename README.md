@@ -175,6 +175,8 @@ The app includes a **Mark Work** page with a 5-stage marking workflow:
 
 For objective answers, auto-mark accepts either the option letter (`B`) or the answer text (`Um sieben Uhr`) when matching entries such as `B) Um sieben Uhr`.
 
+AI-generated student feedback targets 80–120 words so it can include assignment-specific strengths, exact corrections with improved wording, a useful language rule, and a concrete next step. Mixed submissions also include the objective result and exact wrong answers.
+
 The target score row schema is: `studentcode, name, assignment, score, comments, date, level, link`.
 If your Apps Script expects auth/sheet selectors, configure `VITE_SCORES_WEBHOOK_TOKEN`, `VITE_SCORES_WEBHOOK_SHEET_NAME`, and/or `VITE_SCORES_WEBHOOK_SHEET_GID`.
 
