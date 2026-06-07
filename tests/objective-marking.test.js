@@ -118,6 +118,41 @@ test("computes A1-14.1 objective score from choices and vocabulary pairs", () =>
   assert.equal(result.totalCount, 15);
 });
 
+test("accepts German articles in A1-14.1 body-part vocabulary answers", () => {
+  const result = computeObjectiveScore("A1-14.1", `
+Frage 1.
+1. Anzeige A
+
+Frage 2
+2. Anzeige B
+
+Frage 3.
+2. Anzeige B
+
+Frage 4
+1. Anzeige B
+
+Frage 5
+1. Anzeige A
+
+Head - Der Kopf
+Arm - Der Arm
+Leg - Das Bein
+Eye - Das Auge
+Nose - Die Nase
+Ear - Das Ohr
+Mouth - Der Mund
+Hand - Die Hand
+Foot - Der Fuß
+Stomach/Belly - Der Bauch
+  `);
+
+  assert.equal(result.correctCount, 14);
+  assert.equal(result.totalCount, 15);
+  assert.equal(result.details[4].correct, false);
+  assert.ok(Object.entries(result.details).filter(([question]) => Number(question) >= 6).every(([, detail]) => detail.correct));
+});
+
 test("computes A1-14.1 objective score from the Reuben numbered German-only sample", () => {
   const result = computeObjectiveScore("A1-14.1", `
 Teil 1:
