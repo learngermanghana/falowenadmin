@@ -506,3 +506,67 @@ ich möchte ein Auto mieten.
   assert.equal(result.details["teil4.4"].expected, "C");
   assert.equal(result.details["teil4.4"].correct, true);
 });
+
+test("A2-1.3 recognizes parenthesized part labels and compact same-line choices", () => {
+  const result = computeObjectiveScore("A2-1.3", `
+Teil 2
+Lieber Thomas,
+Kumasi gefällt mir besser als Accra. Pizza schmeckt mir besser als Hamburger.
+
+Teil 3 (Lesen)
+1.b 2.b 3.c 4.c 5.b 6.a 7.b
+
+Teil 4 (Horen)
+1.C
+2.B
+3.C
+4.A
+5.A
+  `);
+
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 8);
+  assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 4);
+  assert.equal(result.details["teil3.7"].correct, true);
+  assert.equal(result.details["teil4.1"].student, "C");
+});
+
+test("A1-6 maps restarted numbered choice sections after vocabulary answers", () => {
+  const result = computeObjectiveScore("A1-6", `
+Teil 1
+1.Das Wohnzimmer-the living room
+2.Die Küche -the kitchen
+3.Das Schlafzimmer - the bedroom
+4.Das Badezimmer-the bathroom
+5.Der Balkon -the balcony
+6.Der Flur -the hallway
+7.Das Bett - the bed
+8.Der Tisch - the table
+9.Der Stuhl-the chair
+10.Der Schrank - the wardrobe
+
+Teil 2
+1.b
+2.a
+3.b
+4.c
+5.d
+6.b
+7.c
+
+Teil 3
+1.b
+2.a
+3.b
+4.c
+5.d
+6.b
+7.c
+  `);
+
+  assert.equal(result.totalCount, 24);
+  assert.equal(result.correctCount, 23);
+  assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 1);
+  assert.equal(result.details["19"].student, "a");
+  assert.equal(result.details["19"].expected, "B");
+});

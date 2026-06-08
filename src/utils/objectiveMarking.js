@@ -274,7 +274,7 @@ function partMarkerToPartId(label = "", number = "") {
 function splitSubmissionIntoSections(text = "") {
   const sections = [];
   const source = String(text || "");
-  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\s*[:;]?\s*(?=\n|$)/gi;
+  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\s*(?:\([^\n)]*\))?\s*[:;]?\s*(?=\n|$)/gi;
   const markers = [];
   let match;
   while ((match = markerRegex.exec(source))) {
@@ -316,8 +316,8 @@ export function extractChoiceAnswers(text = "") {
       continue;
     }
 
-    const numbered = line.match(/^(?:frage\s*)?(\d+)\s*\.?\s*(?:anzeige\s*)?([a-fx])\b/i);
-    if (numbered) {
+    const numberedMatches = [...line.matchAll(/(?:^|\s)(?:frage\s*)?(\d+)\s*[.)]?\s*(?:anzeige\s*)?([a-fx])\b/gi)];
+    for (const numbered of numberedMatches) {
       const index = pendingQuestion || Number(numbered[1]);
       if (Number.isFinite(index)) answers[index] = numbered[2].toUpperCase();
       pendingQuestion = null;
@@ -526,7 +526,7 @@ function getStudentAnswerForItem({ item, index, submissionText, sections, vocabu
   const sequentialPartAnswer = sequentialPartAnswers.get(`${item.partId}.${item.questionNumber}`);
   if (sequentialPartAnswer !== undefined) return sequentialPartAnswer;
 
-  if (item.partId === "main" && item.type !== "choice") {
+  if (item.partId === "main") {
     const flatRestartedAnswer = flatRestartedNumberingAnswers.get(item.questionNumber);
     if (flatRestartedAnswer !== undefined) return flatRestartedAnswer;
   }
@@ -608,7 +608,12 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const choiceCount = referenceItems.filter((item) => item.type === "choice").length;
   const useSequentialChoices = (flatMainReference || (hasMultipartReference && !hasMatchingPartSections)) && choiceCount > 1 && sequentialObjectiveAnswers.length >= choiceCount;
   const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);
-  const flatRestartedNumberingAnswers = flatMainReference ? buildFlatRestartedNumberingAnswerMap(submissionText) : new Map();
+  let flatRestartedNumberingAnswers = flatMainReference ? buildFlatRestartedNumberingAnswerMap(submissionText) : new Map();
+  const firstReferenceItem = referenceItems[0];
+  const firstRestartedAnswer = flatRestartedNumberingAnswers.get(firstReferenceItem?.questionNumber);
+  const restartedLayoutMatchesReference = firstRestartedAnswer !== undefined
+    && (firstReferenceItem?.type === "choice") === looksLikeOptionAnswer(firstRestartedAnswer);
+  if (!restartedLayoutMatchesReference) flatRestartedNumberingAnswers = new Map();
 
   const vocabularyIndexes = new Map();
   let vocabularyIndex = 0;
