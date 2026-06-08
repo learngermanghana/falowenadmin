@@ -250,6 +250,11 @@ function normalizePhoneForWhatsapp(phone) {
   return digits;
 }
 
+function callUrl(phone) {
+  const normalizedPhone = String(phone || "").trim().replace(/(?!^)\+|[^\d+]/g, "");
+  return normalizedPhone ? `tel:${normalizedPhone}` : "";
+}
+
 function buildFollowUpMessage(templateKey, student, draft = {}) {
   const name = resolveStudentName(student);
   const className = resolveStudentClass(student, draft);
@@ -330,7 +335,7 @@ export default function StudentDirectoryPage() {
         student.studentCode,
         student.className,
         student.status,
-        student.phone,
+        resolveStudentPhone(student),
         student.level,
         student.program,
       ]
@@ -518,7 +523,7 @@ export default function StudentDirectoryPage() {
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
         <h1 style={{ margin: "0 0 8px" }}>Student Directory</h1>
         <p style={{ margin: "0 0 12px", opacity: 0.8 }}>
-          Open one student at a time to view details, edit records, and generate WhatsApp follow-up messages.
+          Search for a student, call them directly, edit records, and generate WhatsApp follow-up messages.
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <button
@@ -555,7 +560,7 @@ export default function StudentDirectoryPage() {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, email, class, student code..."
+              placeholder="Search by name, phone, email, class, student code..."
               style={{ width: "100%", maxWidth: 460, padding: "8px 10px", borderRadius: 8, border: "1px solid #ccd4e2" }}
             />
           </>
@@ -581,27 +586,62 @@ export default function StudentDirectoryPage() {
                     <aside style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 8, maxHeight: 520, overflowY: "auto" }}>
                       {filteredStudents.map((student) => {
                         const isSelected = student.id === selectedStudentId;
+                        const phone = resolveStudentPhone(student, getDraft(student));
+                        const phoneCallUrl = callUrl(phone);
                         return (
-                          <button
+                          <div
                             key={student.id}
-                            type="button"
-                            onClick={() => setSelectedStudentId(student.id)}
                             style={{
-                              width: "100%",
-                              textAlign: "left",
-                              border: isSelected ? "1px solid #2563eb" : "1px solid #e5e7eb",
-                              background: isSelected ? "#eff6ff" : "#fff",
-                              borderRadius: 8,
-                              padding: "10px 8px",
+                              display: "grid",
+                              gridTemplateColumns: phoneCallUrl ? "minmax(0, 1fr) auto" : "1fr",
+                              gap: 8,
+                              alignItems: "stretch",
                               marginBottom: 8,
-                              cursor: "pointer",
-                              color: "#1a2233",
                             }}
                           >
-                            <div style={{ fontWeight: 600 }}>{student.name || "Unnamed"}</div>
-                            <div style={{ fontSize: 12, opacity: 0.8 }}>{student.studentCode || "No student code"}</div>
-                            <div style={{ fontSize: 12, opacity: 0.75 }}>{student.className || "No class"}</div>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedStudentId(student.id)}
+                              style={{
+                                width: "100%",
+                                textAlign: "left",
+                                border: isSelected ? "1px solid #2563eb" : "1px solid #e5e7eb",
+                                background: isSelected ? "#eff6ff" : "#fff",
+                                borderRadius: 8,
+                                padding: "10px 8px",
+                                cursor: "pointer",
+                                color: "#1a2233",
+                              }}
+                            >
+                              <div style={{ fontWeight: 600 }}>{student.name || "Unnamed"}</div>
+                              <div style={{ fontSize: 12, opacity: 0.8 }}>{student.studentCode || "No student code"}</div>
+                              <div style={{ fontSize: 12, opacity: 0.75 }}>{student.className || "No class"}</div>
+                              {phone && <div style={{ fontSize: 12, opacity: 0.75 }}>{phone}</div>}
+                            </button>
+                            {phoneCallUrl && (
+                              <a
+                                href={phoneCallUrl}
+                                aria-label={`Call ${resolveStudentName(student)} at ${phone}`}
+                                title={`Call ${phone}`}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  alignSelf: "stretch",
+                                  minWidth: 68,
+                                  padding: "8px 10px",
+                                  border: "1px solid #15803d",
+                                  borderRadius: 8,
+                                  background: "#16a34a",
+                                  color: "#fff",
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                }}
+                              >
+                                📞 Call
+                              </a>
+                            )}
+                          </div>
                         );
                       })}
                     </aside>
