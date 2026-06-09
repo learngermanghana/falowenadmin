@@ -9,6 +9,7 @@ function normalize(value) {
 function dateLabel(value) {
   if (!value) return "—";
   try {
+    if (typeof value?.toDate === "function") return value.toDate().toLocaleString();
     return value.toLocaleString?.() || new Date(value).toLocaleString();
   } catch {
     return "—";
@@ -227,23 +228,19 @@ function metricCard(title, value, subtitle = "") {
   );
 }
 
-function partRowsFromRow(row = {}) {
-  const rows = [];
-  const detectedParts = Array.isArray(row.detectedParts) ? row.detectedParts : [];
-  const scoredParts = Array.isArray(row.parts) ? row.parts : [];
-
-  detectedParts.forEach((part) => {
-    if (!part) return;
-    rows.push({
-      key: `detected-${part.partId || part.id || rows.length}`,
-      partId: part.partId || part.id || "—",
-      partType: part.partType || part.type || "detected",
-      score: part.score ?? part.percentage ?? part.result?.percentage ?? "",
-      correct: part.correct ?? part.result?.correct?.length ?? "",
-      total: part.total ?? part.answerCount ?? part.result?.total ?? "",
-      source: "Detected",
-    });
+function cleanPartRows(rows = []) {
+  const seen = new Set();
+  return rows.filter((rowItem) => {
+    const key = `${rowItem.partId}-${rowItem.partType}-${rowItem.score}-${rowItem.correct}-${rowItem.total}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
+}
+
+function partRowsFromRow(row = {}) {
+  const scoredRows = [];
+  const scoredParts = Array.isArray(row.parts) ? row.parts : Array.isArray(row.result?.parts) ? row.result.parts : [];
 
   scoredParts.forEach((part, index) => {
     if (!part) return;
@@ -252,7 +249,7 @@ function partRowsFromRow(row = {}) {
     const partType = part.partType || result.partType || result.type || "scored";
     const correct = result.correctCount ?? result.correct?.length ?? part.correct;
     const total = result.totalCount ?? result.total ?? part.total;
-    rows.push({
+    scoredRows.push({
       key: `scored-${partId}-${index}`,
       partId,
       partType,
@@ -263,13 +260,65 @@ function partRowsFromRow(row = {}) {
     });
   });
 
-  const seen = new Set();
-  return rows.filter((rowItem) => {
-    const key = `${rowItem.partId}-${rowItem.partType}-${rowItem.source}-${rowItem.score}-${rowItem.correct}-${rowItem.total}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
+  if (scoredRows.length) return cleanPartRows(scoredRows);
+
+  const detectedRows = [];
+  const detectedParts = Array.isArray(row.detectedParts) ? row.detectedParts : [];
+  detectedParts.forEach((part) => {
+    if (!part) return;
+    detectedRows.push({
+      key: `detected-${part.partId || part.id || detectedRows.length}`,
+      partId: part.partId || part.id || "—",
+      partType: part.partType || part.type || "detected",
+      score: part.score ?? part.percentage ?? part.result?.percentage ?? "",
+      correct: part.correct ?? part.result?.correct?.length ?? "",
+      total: part.total ?? part.answerCount ?? part.result?.total ?? "",
+      source: "Detected",
+    });
   });
+
+  return cleanPartRows(detectedRows);
+}
+
+function getQuestionLabel(item = {}, index = 0) {
+  return item.questionNumber ?? item.question ?? item.key ?? item.sourceKey ?? item.id ?? `Item ${index + 1}`;
+}
+
+function getStudentAnswer(item = {}) {
+  return item.submitted ?? item.student ?? item.given ?? item.answer ?? item.rawSubmitted ?? "—";
+}
+
+function getExpectedAnswer(item = {}) {
+  return item.expected ?? item.rawExpected ?? item.correctAnswer ?? item.correct ?? item.answerKey ?? "—";
+}
+
+function isObjectiveCorrectionLike(item = {}) {
+  return hasValue(item.partId || item.part) || hasValue(item.questionNumber || item.question || item.key || item.sourceKey);
+}
+
+function normalizeWrongRow(item = {}, index = 0, fallback = {}) {
+  if (!item || typeof item !== "object") return null;
+  if (item.correct === true || item.isCorrect === true) return null;
+
+  const status = normalize(item.status || fallback.status || "Wrong");
+  if (status.includes("correct") || status.includes("review") || status.includes("missing") || status.includes("correction")) return null;
+
+  const partId = item.partId || item.part || fallback.partId || "—";
+  const question = getQuestionLabel(item, index);
+  const student = getStudentAnswer(item);
+  const expected = getExpectedAnswer(item);
+
+  if (!hasValue(expected) || expected === "—") return null;
+  if (normalize(student) && normalize(expected) && normalize(student) === normalize(expected)) return null;
+  if (String(question).startsWith("Item ") && partId === "—") return null;
+
+  return {
+    partId,
+    question,
+    student,
+    expected,
+    status: "Wrong",
+  };
 }
 
 function wrongAnswerRowsFromRow(row = {}) {
@@ -278,35 +327,60 @@ function wrongAnswerRowsFromRow(row = {}) {
   const addItems = (items = [], fallback = {}) => {
     if (!Array.isArray(items)) return;
     items.forEach((item, index) => {
-      if (!item) return;
-      const question = item.questionNumber ?? item.question ?? item.key ?? item.sourceKey ?? item.id ?? `Item ${index + 1}`;
-      rows.push({
-        partId: item.partId || fallback.partId || "—",
-        question,
-        student: item.submitted ?? item.student ?? item.given ?? item.answer ?? item.rawSubmitted ?? "—",
-        expected: item.expected ?? item.rawExpected ?? item.correct ?? item.correctAnswer ?? "—",
-        status: item.status || fallback.status || "Wrong",
-      });
+      const normalizedRow = normalizeWrongRow(item, index, fallback);
+      if (normalizedRow) rows.push(normalizedRow);
     });
   };
 
   addItems(row.wrongAnswers, { status: "Wrong" });
-  addItems(row.corrections, { status: "Correction" });
   addItems(row.result?.wrongAnswers, { status: "Wrong" });
-  addItems(row.result?.corrections, { status: "Correction" });
 
-  (Array.isArray(row.parts) ? row.parts : []).forEach((part) => {
+  (Array.isArray(row.parts) ? row.parts : Array.isArray(row.result?.parts) ? row.result.parts : []).forEach((part) => {
     const result = part?.result || part || {};
     const partId = part?.partId || result.partId || "—";
     addItems(result.wrong, { partId, status: "Wrong" });
-    addItems(result.missing, { partId, status: "Missing" });
-    addItems(result.needsReview, { partId, status: "Needs review" });
+    addItems(result.incorrect, { partId, status: "Wrong" });
   });
 
   const seen = new Set();
   return rows.filter((item) => {
-    const key = `${item.partId}-${item.question}-${item.student}-${item.expected}-${item.status}`;
+    const key = `${item.partId}-${item.question}-${normalize(item.student)}-${normalize(item.expected)}`;
     if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function correctionText(item = {}) {
+  if (typeof item === "string") return item.trim();
+  if (!item || typeof item !== "object") return "";
+
+  const from = item.from || item.original || item.student || item.error || "";
+  const to = item.to || item.corrected || item.improved || item.correction || "";
+  const reason = item.reason || item.note || item.explanation || item.text || "";
+
+  if (from && to) return `${from} → ${to}${reason ? ` (${reason})` : ""}`;
+  return reason || to || from;
+}
+
+function writingCorrectionRowsFromRow(row = {}) {
+  const rows = [];
+  const addItems = (items = []) => {
+    if (!Array.isArray(items)) return;
+    items.forEach((item) => {
+      if (item && typeof item === "object" && isObjectiveCorrectionLike(item) && hasValue(getExpectedAnswer(item))) return;
+      const text = correctionText(item);
+      if (text) rows.push(text);
+    });
+  };
+
+  addItems(row.corrections);
+  addItems(row.result?.corrections);
+
+  const seen = new Set();
+  return rows.filter((text) => {
+    const key = normalize(text);
+    if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
@@ -316,6 +390,7 @@ function ScoreBreakdownPanel({ row }) {
   const breakdown = buildScoreBreakdown(row);
   const partRows = partRowsFromRow(row);
   const wrongRows = wrongAnswerRowsFromRow(row);
+  const writingCorrections = writingCorrectionRowsFromRow(row);
   const objectiveWeight = percentLabel(breakdown.objectiveWeight);
   const writingWeight = percentLabel(breakdown.writingWeight);
   const formula = objectiveWeight || writingWeight
@@ -352,6 +427,9 @@ function ScoreBreakdownPanel({ row }) {
       {partRows.length ? (
         <details open>
           <summary style={{ cursor: "pointer", fontWeight: 700 }}>Part-level marks ({partRows.length})</summary>
+          <div style={{ fontSize: 12, opacity: 0.72, marginTop: 4 }}>
+            Showing scored parts only. Detected-only rows are hidden when scored results are available.
+          </div>
           <div style={{ overflowX: "auto", marginTop: 8 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, background: "#fff" }}>
               <thead>
@@ -381,7 +459,7 @@ function ScoreBreakdownPanel({ row }) {
 
       {wrongRows.length ? (
         <details open>
-          <summary style={{ cursor: "pointer", fontWeight: 700, color: "#7f1d1d" }}>Wrong answers / corrections ({wrongRows.length})</summary>
+          <summary style={{ cursor: "pointer", fontWeight: 700, color: "#7f1d1d" }}>Wrong objective answers ({wrongRows.length})</summary>
           <div style={{ overflowX: "auto", marginTop: 8 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, background: "#fff" }}>
               <thead>
@@ -409,9 +487,20 @@ function ScoreBreakdownPanel({ row }) {
         </details>
       ) : (
         <div style={{ fontSize: 13, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: 8 }}>
-          No wrong objective answers or corrections were captured for this audit record.
+          No wrong objective answers were captured for this audit record.
         </div>
       )}
+
+      {writingCorrections.length ? (
+        <details open>
+          <summary style={{ cursor: "pointer", fontWeight: 700, color: "#92400e" }}>Writing corrections ({writingCorrections.length})</summary>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 20, display: "grid", gap: 5, background: "#fff", border: "1px solid #fde68a", borderRadius: 6, paddingTop: 8, paddingBottom: 8 }}>
+            {writingCorrections.map((text) => (
+              <li key={text} style={{ fontSize: 13 }}>{text}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </section>
   );
 }
