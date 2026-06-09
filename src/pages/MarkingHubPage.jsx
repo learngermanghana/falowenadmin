@@ -1,18 +1,16 @@
 import { useState } from "react";
 import MarkingPage from "./MarkingPage.jsx";
-import MarkingQuickPage from "./MarkingQuickPage.jsx";
 import AIMarkingAuditPage from "./AIMarkingAuditPage.jsx";
 import AnswerKeySyncPage from "./AnswerKeySyncPage.jsx";
 
 const tabs = [
-  { id: "quick", label: "Quick Marking", helper: "Recommended: pick work, mark with AI, save final score, notify student." },
-  { id: "work", label: "Full Marking", helper: "Older detailed workspace for manual review and advanced checks." },
-  { id: "ai-audit", label: "AI Audit", helper: "Review AI marking records and saved audit details." },
+  { id: "work", label: "Marking", helper: "Use the original detailed marking workspace for manual review, AI support, final score saving, and student feedback." },
+  { id: "ai-audit", label: "AI Audit", helper: "Review AI marking records and saved audit details before syncing them." },
   { id: "answer-keys", label: "Answer Keys", helper: "Sync and check reference answer keys." },
 ];
 
 export default function MarkingHubPage() {
-  const [activeTab, setActiveTab] = useState("quick");
+  const [activeTab, setActiveTab] = useState("work");
   const activeTabMeta = tabs.find((tab) => tab.id === activeTab) || tabs[0];
 
   return (
@@ -21,7 +19,7 @@ export default function MarkingHubPage() {
         <div>
           <h2 style={{ margin: 0 }}>Marking</h2>
           <p style={{ margin: "4px 0 0", opacity: 0.75 }}>
-            Start with Quick Marking for the normal workflow. Use the other tabs only when you need deeper checks.
+            The marking page now opens the original full marking workspace first. Quick Marking has been removed from this hub.
           </p>
         </div>
 
@@ -49,7 +47,6 @@ export default function MarkingHubPage() {
         <p style={{ margin: 0, fontSize: 13, color: "#4b5563" }}>{activeTabMeta.helper}</p>
       </section>
 
-      {activeTab === "quick" ? <MarkingQuickPage /> : null}
       {activeTab === "work" ? <MarkingPage /> : null}
       {activeTab === "ai-audit" ? <AIMarkingAuditPage /> : null}
       {activeTab === "answer-keys" ? <AnswerKeySyncPage /> : null}
