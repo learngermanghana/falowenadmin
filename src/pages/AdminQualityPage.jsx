@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, collectionGroup, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { collection, collectionGroup, getDocs, limit, query } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { loadSubmissions } from "../services/markingService.js";
+import { loadSubmissions, saveScoreRow } from "../services/markingService.js";
+import { createMarkedAssignmentNotification } from "../services/studentNotificationService.js";
 import { listAllStudents } from "../services/studentsService.js";
 
 const PASS_MARK = 60;
 const LOW_ATTENDANCE = 70;
 const ATTENDANCE_TARGET = 80;
+const RESOLVED_STORAGE_KEY = "falowen.admin.quality.resolvedIds";
 
 function text(value) {
   return String(value ?? "").trim();
@@ -63,6 +65,30 @@ function classLabel(student = {}) {
   return text(student.className || student.class || student.level || student.program || "Unassigned");
 }
 
+function rowStudentCode(row = {}) {
+  return text(row.studentCode || row.studentcode || row.student_code || row.result?.studentCode || row.result?.studentcode || row.data?.studentCode).toLowerCase();
+}
+
+function rowStudentName(row = {}) {
+  return text(row.studentName || row.name || row.result?.studentName || row.result?.name || row.data?.studentName || rowStudentCode(row) || "Unknown student");
+}
+
+function rowAssignment(row = {}) {
+  return text(row.assignment || row.assignmentTitle || row.result?.assignment || row.result?.assignmentTitle || row.data?.assignment || row.assignmentId || row.assignment_id || "Marked assignment");
+}
+
+function rowAssignmentId(row = {}) {
+  return text(row.assignmentId || row.assignment_id || row.assignmentKey || row.result?.assignmentId || row.result?.assignment_id || row.data?.assignmentId || rowAssignment(row));
+}
+
+function rowScore(row = {}) {
+  return scoreNumber(row.finalScore ?? row.score ?? row.result?.finalScore ?? row.result?.score ?? row.data?.score) ?? 0;
+}
+
+function rowLevel(row = {}) {
+  return text(row.level || row.result?.level || row.data?.level).toUpperCase();
+}
+
 function attended(value) {
   if (value === true) return true;
   if (value === false) return false;
@@ -85,6 +111,32 @@ function readStudentAttendanceFromSession(session = {}, code = "") {
   return null;
 }
 
+function loadResolvedIds() {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(RESOLVED_STORAGE_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveResolvedIds(ids) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(RESOLVED_STORAGE_KEY, JSON.stringify(ids));
+}
+
+const buttonStyle = {
+  border: "1px solid #d1d5db",
+  borderRadius: 999,
+  padding: "7px 10px",
+  background: "#fff",
+  color: "#111827",
+  fontSize: 12,
+  fontWeight: 800,
+  cursor: "pointer",
+};
+
 function StatCard({ label, value, helper, tone = "blue" }) {
   return (
     <article style={{ border: "1px solid #e5e7eb", borderRadius: 16, padding: 16, background: "#fff", display: "grid", gap: 6 }}>
@@ -95,21 +147,35 @@ function StatCard({ label, value, helper, tone = "blue" }) {
   );
 }
 
-function ProblemList({ title, items, emptyText, actionLabel = "Open" }) {
+function ProblemList({ title, items, emptyText, actionLabel = "Open", onRepair, onResolve, actionState }) {
   return (
     <section style={{ border: "1px solid #e5e7eb", borderRadius: 16, padding: 16, background: "#fff", display: "grid", gap: 12 }}>
       <h2 style={{ margin: 0, fontSize: 18 }}>{title}</h2>
       {items.length ? (
         <div style={{ display: "grid", gap: 10 }}>
-          {items.slice(0, 12).map((item) => (
-            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, border: "1px solid #f3f4f6", borderRadius: 12, padding: 12, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ display: "grid", gap: 3 }}>
-                <strong>{item.title}</strong>
-                <small style={{ color: "#6b7280" }}>{item.detail}</small>
+          {items.slice(0, 12).map((item) => {
+            const working = actionState.id === item.id;
+            return (
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, border: "1px solid #f3f4f6", borderRadius: 12, padding: 12, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ display: "grid", gap: 3, minWidth: 220 }}>
+                  <strong>{item.title}</strong>
+                  <small style={{ color: "#6b7280" }}>{item.detail}</small>
+                  {item.repairHint ? <small style={{ color: "#1d4ed8", fontWeight: 700 }}>{item.repairHint}</small> : null}
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  {item.repairAction ? (
+                    <button type="button" style={{ ...buttonStyle, background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" }} onClick={() => onRepair(item)} disabled={working}>
+                      {working ? "Working..." : item.repairAction}
+                    </button>
+                  ) : null}
+                  {item.to ? <Link to={item.to} style={{ ...buttonStyle, textDecoration: "none" }}>{actionLabel}</Link> : null}
+                  <button type="button" style={{ ...buttonStyle, background: "#f9fafb" }} onClick={() => onResolve(item)} disabled={working}>
+                    Mark resolved
+                  </button>
+                </div>
               </div>
-              {item.to ? <Link to={item.to} style={{ fontWeight: 800, color: "#2563eb" }}>{actionLabel}</Link> : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <p style={{ margin: 0, color: "#6b7280" }}>{emptyText}</p>
@@ -138,6 +204,8 @@ async function loadSessionRows(maxRows = 300) {
 
 export default function AdminQualityPage() {
   const [state, setState] = useState({ loading: true, errors: [], submissions: [], scores: [], markingResults: [], notifications: [], students: [], sessions: [] });
+  const [resolvedIds, setResolvedIds] = useState(() => loadResolvedIds());
+  const [actionState, setActionState] = useState({ id: "", message: "", type: "" });
 
   const refresh = async () => {
     setState((current) => ({ ...current, loading: true, errors: [] }));
@@ -175,7 +243,7 @@ export default function AdminQualityPage() {
     const pendingQueue = state.submissions.length;
     const failedMarking = state.markingResults.filter((row) => lower(row.status).includes("failed") || lower(row.status).includes("error"));
     const markedNoNotification = state.markingResults.filter((row) => {
-      const score = scoreNumber(row.finalScore ?? row.score);
+      const score = scoreNumber(row.finalScore ?? row.score ?? row.result?.finalScore ?? row.result?.score);
       return score !== null && row.sentToStudent !== true && row.studentNotification?.success !== true;
     });
     const savedFirestoreNotSheet = state.scores.filter((row) => row.sheetSaved === false || lower(row.sheetMessage).includes("failed"));
@@ -237,18 +305,109 @@ export default function AdminQualityPage() {
     };
   }, [state]);
 
-  const problemItems = [
-    ...analytics.markedNoNotification.map((row) => ({ id: `mn-${row.id}`, title: row.studentName || row.studentCode || "Marked result", detail: `Marked but no student notification · ${displayDate(row.updatedAt || row.createdAt)}`, to: "/marking" })),
-    ...analytics.savedFirestoreNotSheet.map((row) => ({ id: `ss-${row.id}`, title: row.name || row.studentcode || "Score row", detail: `Saved in Firestore but Sheet problem: ${row.sheetMessage || "not confirmed"}`, to: "/marking" })),
-    ...analytics.failedMarking.map((row) => ({ id: `fm-${row.id}`, title: row.studentName || row.studentCode || "Failed marking result", detail: row.feedback || row.message || row.status || "Needs review", to: "/marking" })),
-    ...analytics.pendingMoreThan24Hours.map((row) => ({ id: `p24-${row.path || row.id}`, title: row.studentName || row.studentCode || "Pending submission", detail: `${row.assignment || "Assignment"} pending more than 24 hours`, to: "/marking" })),
+  const handleResolve = (item) => {
+    const next = Array.from(new Set([...resolvedIds, item.id]));
+    setResolvedIds(next);
+    saveResolvedIds(next);
+    setActionState({ id: "", type: "success", message: `Resolved: ${item.title}` });
+  };
+
+  const handleRepair = async (item) => {
+    setActionState({ id: item.id, type: "", message: "" });
+    try {
+      if (item.kind === "missing_notification") {
+        const row = item.row || {};
+        const receipt = await createMarkedAssignmentNotification({
+          studentCode: rowStudentCode(row),
+          studentName: rowStudentName(row),
+          assignment: rowAssignment(row),
+          assignmentId: rowAssignmentId(row),
+          score: rowScore(row),
+          level: rowLevel(row),
+          dedupeId: row.dedupeId || row.dedupe_id || row.id || item.id,
+          source: "quality_check_resend",
+        });
+        if (!receipt?.success) throw new Error(receipt?.message || "Notification resend failed.");
+        setActionState({ id: "", type: "success", message: `Notification resent for ${rowStudentName(row)}.` });
+        await refresh();
+        return;
+      }
+
+      if (item.kind === "sheet_retry") {
+        const row = item.row || {};
+        await saveScoreRow({
+          studentCode: rowStudentCode(row),
+          name: rowStudentName(row),
+          assignment: rowAssignment(row),
+          assignmentId: rowAssignmentId(row),
+          score: rowScore(row),
+          comments: text(row.comments || row.feedback || row.result?.feedback || row.markingReason || "Score retried from Quality Check."),
+          level: rowLevel(row),
+          link: text(row.link || row.url || ""),
+          source: "quality_check_sheet_retry",
+          allowDuplicate: true,
+          markingDetails: row.result || row,
+        });
+        setActionState({ id: "", type: "success", message: `Sheet save retried for ${rowStudentName(row)}.` });
+        await refresh();
+        return;
+      }
+
+      setActionState({ id: "", type: "info", message: "This item has no automatic repair yet. Open it and review manually." });
+    } catch (err) {
+      setActionState({ id: "", type: "error", message: err?.message || "Repair failed." });
+    }
+  };
+
+  const rawProblemItems = [
+    ...analytics.markedNoNotification.map((row) => ({
+      id: `mn-${row.id}`,
+      kind: "missing_notification",
+      row,
+      title: rowStudentName(row),
+      detail: `Marked but no student notification · ${displayDate(row.updatedAt || row.createdAt)}`,
+      repairAction: "Resend notification",
+      repairHint: `Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
+      to: "/marking",
+    })),
+    ...analytics.savedFirestoreNotSheet.map((row) => ({
+      id: `ss-${row.id}`,
+      kind: "sheet_retry",
+      row,
+      title: rowStudentName(row) || row.name || row.studentcode || "Score row",
+      detail: `Saved in Firestore but Sheet problem: ${row.sheetMessage || "not confirmed"}`,
+      repairAction: "Retry Sheet save",
+      repairHint: `Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
+      to: "/marking",
+    })),
+    ...analytics.failedMarking.map((row) => ({
+      id: `fm-${row.id}`,
+      kind: "manual_review",
+      row,
+      title: rowStudentName(row) || "Failed marking result",
+      detail: row.feedback || row.message || row.status || "Needs review",
+      repairHint: "Open Marking and review manually.",
+      to: "/marking",
+    })),
+    ...analytics.pendingMoreThan24Hours.map((row) => ({
+      id: `p24-${row.path || row.id}`,
+      kind: "open_submission",
+      row,
+      title: row.studentName || row.studentCode || "Pending submission",
+      detail: `${row.assignment || "Assignment"} pending more than 24 hours`,
+      repairHint: "Open submission and mark now.",
+      to: "/marking",
+    })),
   ];
 
-  const attendanceItems = [
-    ...analytics.lowAttendance.map((row) => ({ id: `low-${studentCode(row.student)}`, title: studentName(row.student), detail: `${row.rate}% attendance · ${row.present}/${row.total} classes`, to: "/students" })),
-    ...analytics.absentThreeTimes.map((row) => ({ id: `streak-${studentCode(row.student)}`, title: studentName(row.student), detail: `${row.absentStreak} absences in a row`, to: "/students" })),
-    ...analytics.notAttendedThisWeek.slice(0, 20).map((row) => ({ id: `week-${studentCode(row.student)}`, title: studentName(row.student), detail: "No confirmed attendance this week", to: "/students" })),
+  const rawAttendanceItems = [
+    ...analytics.lowAttendance.map((row) => ({ id: `low-${studentCode(row.student)}`, kind: "attendance", title: studentName(row.student), detail: `${row.rate}% attendance · ${row.present}/${row.total} classes`, repairHint: "Review student and contact if needed.", to: "/students" })),
+    ...analytics.absentThreeTimes.map((row) => ({ id: `streak-${studentCode(row.student)}`, kind: "attendance", title: studentName(row.student), detail: `${row.absentStreak} absences in a row`, repairHint: "Follow up before progress drops.", to: "/students" })),
+    ...analytics.notAttendedThisWeek.slice(0, 20).map((row) => ({ id: `week-${studentCode(row.student)}`, kind: "attendance", title: studentName(row.student), detail: "No confirmed attendance this week", repairHint: "Review class attendance or contact student.", to: "/students" })),
   ];
+
+  const problemItems = rawProblemItems.filter((item) => !resolvedIds.includes(item.id));
+  const attendanceItems = rawAttendanceItems.filter((item) => !resolvedIds.includes(item.id));
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -256,12 +415,18 @@ export default function AdminQualityPage() {
         <div>
           <p style={{ margin: 0, color: "#bfdbfe", fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>Admin Quality Check</p>
           <h1 style={{ margin: "6px 0", fontSize: 30 }}>Marking, notifications and attendance health</h1>
-          <p style={{ margin: 0, color: "#e0e7ff" }}>Use this page to catch save failures, missing student notifications, old pending work, and attendance risks.</p>
+          <p style={{ margin: 0, color: "#e0e7ff" }}>Use this page to catch and fix save failures, missing student notifications, old pending work, and attendance risks.</p>
         </div>
         <button type="button" onClick={refresh} disabled={state.loading} style={{ alignSelf: "center", border: 0, borderRadius: 999, padding: "10px 16px", fontWeight: 900, color: "#111827", background: "#dcfce7", cursor: "pointer" }}>
           {state.loading ? "Refreshing..." : "Refresh checks"}
         </button>
       </section>
+
+      {actionState.message ? (
+        <section style={{ border: `1px solid ${actionState.type === "error" ? "#fecaca" : "#bbf7d0"}`, background: actionState.type === "error" ? "#fef2f2" : "#f0fdf4", color: actionState.type === "error" ? "#991b1b" : "#065f46", borderRadius: 14, padding: 14, fontWeight: 800 }}>
+          {actionState.message}
+        </section>
+      ) : null}
 
       {state.errors.length ? (
         <section style={{ border: "1px solid #fecaca", background: "#fef2f2", color: "#991b1b", borderRadius: 14, padding: 14 }}>
@@ -282,8 +447,23 @@ export default function AdminQualityPage() {
       </section>
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 }}>
-        <ProblemList title="Problems to fix" items={problemItems} emptyText="No marking or notification problems found in the loaded records." />
-        <ProblemList title="Attendance alerts" items={attendanceItems} emptyText="No low attendance or absence streak alerts found in the loaded records." actionLabel="Review" />
+        <ProblemList
+          title="Problems to fix"
+          items={problemItems}
+          emptyText="No marking or notification problems found in the loaded records."
+          onRepair={handleRepair}
+          onResolve={handleResolve}
+          actionState={actionState}
+        />
+        <ProblemList
+          title="Attendance alerts"
+          items={attendanceItems}
+          emptyText="No low attendance or absence streak alerts found in the loaded records."
+          actionLabel="Review"
+          onRepair={handleRepair}
+          onResolve={handleResolve}
+          actionState={actionState}
+        />
       </section>
     </div>
   );
