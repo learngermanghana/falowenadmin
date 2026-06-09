@@ -1,38 +1,42 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { getClassSchedule } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
+import { getClassSchedule, resolveScheduleKey } from "../data/classSchedules";
+import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext.jsx";
 import { listStudentsByClass } from "../services/studentsService";
 import {
   listSessionCheckins,
   loadAttendanceFromFirestore,
   saveAttendanceToFirestore,
 } from "../services/attendanceService";
-import { useToast } from "../context/ToastContext.jsx";
 import { buildAssignmentId } from "../utils/assignmentId.js";
-import { resolveScheduleKey } from "../data/classSchedules";
-import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
+import { rebuildAttendanceSessionsFromDictionary } from "../utils/attendanceDictionaryRepair.js";
 
 function normalizeScheduleDate(raw) {
   if (!raw) return "";
-  const parsed = dayjs(raw, ["dddd, DD MMMM YYYY", "YYYY-MM-DD"], true);
-  return parsed.isValid() ? parsed.format("YYYY-MM-DD") : "";
+  const parsed = dayjs(raw, ["YYYY-MM-DD", "dddd, DD MMMM YYYY"], true);
+  return parsed.isValid() ? parsed.format("YYYY-MM-DD") : String(raw || "").trim();
 }
 
 function buildScheduleMap(classId) {
   const schedule = getClassSchedule(classId);
-  const map = {};
   const scheduleLevel = resolveScheduleKey(classId);
+  const map = {};
 
   schedule.forEach((item, index) => {
     const sessionId = String(index + 1);
-    const assignmentId = String(item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1));
+    const assignmentId = String(
+      item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1),
+    );
     const topicLabel = getUnifiedTopicLabel(assignmentId, item.topic);
     map[sessionId] = {
       title: `${item.week}: ${topicLabel}`,
-      date: normalizeScheduleDate(item.date),
+      date: normalizeScheduleDate(item.date || item.dateIso),
+      dateLabel: item.dateLabel || item.date || "",
+      weekday: item.weekday || "",
       assignmentId,
       students: {},
     };
@@ -73,7 +77,7 @@ function resolveOpenSessionApiUrl() {
 function toSessionApiErrorMessage(error, actionLabel) {
   const rawMessage = String(error?.message || "").trim();
   if (error instanceof TypeError || /failed to fetch|networkerror|network error/i.test(rawMessage)) {
-    return `Network error while trying to ${actionLabel} check-in. Confirm the API URL is correct and the Firebase Functions endpoint allows this app origin (CORS).`;
+    return `Network error while trying to ${actionLabel} check-in. Confirm the API URL is correct and CORS allows this app.`;
   }
   return rawMessage || `Error trying to ${actionLabel} check-in`;
 }
@@ -92,50 +96,48 @@ function mergeStudentsWithTemplate(studentTemplate, baseStudents) {
   return merged;
 }
 
-function mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendance) {
-  const merged = { ...scheduleAttendanceMap };
-  const scheduleIdsByDate = {};
-
-  for (const [sessionId, session] of Object.entries(scheduleAttendanceMap)) {
-    const date = String(session?.date || "").trim();
-    if (!date) continue;
-    if (!scheduleIdsByDate[date]) scheduleIdsByDate[date] = [];
-    scheduleIdsByDate[date].push(sessionId);
+function buildStudentTemplate(students = []) {
+  const template = {};
+  for (const student of students) {
+    const code = resolveStudentCode(student);
+    if (!code) continue;
+    template[code] = {
+      name: String(student.name || "").trim(),
+      email: String(student.email || "").trim(),
+      present: false,
+    };
   }
+  return template;
+}
 
-  for (const [storedId, storedSession] of Object.entries(storedAttendance || {})) {
-    const storedDate = String(storedSession?.date || "").trim();
-    const dateCandidates = [storedDate, String(storedId || "").trim()].filter(Boolean);
-    const matchedSessionId = dateCandidates
-      .map((candidate) => scheduleIdsByDate[candidate] || [])
-      .find((matches) => matches.length === 1)?.[0];
+function finishAttendanceMap({ scheduleMap, currentMap, studentTemplate }) {
+  const baseMap = rebuildAttendanceSessionsFromDictionary(scheduleMap, currentMap);
+  const nextMap = Object.keys(baseMap).length ? baseMap : {
+    1: {
+      title: "Session 1",
+      date: dayjs().format("YYYY-MM-DD"),
+      assignmentId: "",
+      students: {},
+    },
+  };
 
-    const storedNumericId = Number.parseInt(String(storedId || ""), 10);
-    const legacyOffsetSessionId = Number.isInteger(storedNumericId) && storedNumericId >= 0
-      ? String(storedNumericId + 1)
-      : "";
-    const targetSessionId = matchedSessionId
-      || (legacyOffsetSessionId && scheduleAttendanceMap[legacyOffsetSessionId] ? legacyOffsetSessionId : storedId);
-
-    const existingSession = merged[targetSessionId] || {};
-    const storedTitle = String(storedSession?.title || "").trim();
-    const storedDateValue = String(storedSession?.date || "").trim();
-    const storedAssignmentId = String(storedSession?.assignmentId || storedSession?.assignment_id || "").trim();
-
-    merged[targetSessionId] = {
+  for (const sessionId of Object.keys(nextMap)) {
+    const scheduleSession = scheduleMap[sessionId] || {};
+    const existingSession = nextMap[sessionId] || {};
+    nextMap[sessionId] = {
       ...existingSession,
-      ...storedSession,
-      title: storedTitle || String(existingSession.title || "").trim(),
-      date: storedDateValue || String(existingSession.date || "").trim(),
-      assignmentId: storedAssignmentId || String(existingSession.assignmentId || existingSession.assignment_id || "").trim(),
-      students: {
-        ...(existingSession.students || {}),
-        ...(storedSession?.students || {}),
-      },
+      title: String(existingSession.title || "").trim() || scheduleSession.title || `Session ${Number(sessionId) || 1}`,
+      date: normalizeScheduleDate(existingSession.date || scheduleSession.date || dayjs().format("YYYY-MM-DD")),
+      dateLabel: String(existingSession.dateLabel || "").trim() || scheduleSession.dateLabel || "",
+      weekday: String(existingSession.weekday || "").trim() || scheduleSession.weekday || "",
+      assignmentId: String(existingSession.assignmentId || existingSession.assignment_id || scheduleSession.assignmentId || ""),
+      startTime: String(existingSession.startTime || "").trim(),
+      endTime: String(existingSession.endTime || "").trim(),
+      students: mergeStudentsWithTemplate(studentTemplate, existingSession.students || {}),
     };
   }
 
-  return merged;
+  return nextMap;
 }
 
 export default function AttendancePage() {
@@ -146,15 +148,16 @@ export default function AttendancePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [rebuilding, setRebuilding] = useState(false);
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
   const [attendanceMap, setAttendanceMap] = useState({});
   const [selectedEmailStudentCodes, setSelectedEmailStudentCodes] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState("1");
+  const [studentTemplate, setStudentTemplate] = useState({});
+
   const schedule = useMemo(() => getClassSchedule(classId), [classId]);
-
   const sessionIds = useMemo(() => Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b)), [attendanceMap]);
-
   const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", assignmentId: "", students: {} };
   const checkinSessionDate = String(selectedSession.date || "").trim() || selectedSessionId;
   const checkinSessionId = String(selectedSessionId || "").trim();
@@ -167,18 +170,15 @@ export default function AttendancePage() {
         const item = attendanceMap[id] || {};
         const assignmentId = String(item.assignmentId || "").trim();
         if (!assignmentId) return null;
-        return {
-          assignmentId,
-          label: `${assignmentId} - ${resolveTopicFromTitle(item.title) || "Lesson"}`,
-        };
+        return { assignmentId, label: `${assignmentId} - ${resolveTopicFromTitle(item.title) || "Lesson"}` };
       })
       .filter(Boolean);
   }, [attendanceMap, sessionIds]);
 
   const sessionLabel = useMemo(() => {
-    const selectedSessionNumber = Number(selectedSessionId);
-    const zeroBasedIndex = selectedSessionNumber > 0 ? selectedSessionNumber - 1 : selectedSessionNumber;
-    const scheduleItem = schedule[zeroBasedIndex] || schedule[selectedSessionNumber];
+    const sessionNumber = Number(selectedSessionId);
+    const zeroBasedIndex = sessionNumber > 0 ? sessionNumber - 1 : sessionNumber;
+    const scheduleItem = schedule[zeroBasedIndex] || schedule[sessionNumber];
     if (scheduleItem) return `${scheduleItem.day} - ${scheduleItem.topic}`;
     return selectedSession.title || "";
   }, [schedule, selectedSessionId, selectedSession.title]);
@@ -203,11 +203,7 @@ export default function AttendancePage() {
     return studentRows.filter((row) => selectedCodes.has(row.studentCode));
   }, [selectedEmailStudentCodes, studentRows]);
 
-  const selectedEmails = useMemo(() => {
-    return selectedStudentsForEmail
-      .map((row) => row.email)
-      .filter(Boolean);
-  }, [selectedStudentsForEmail]);
+  const selectedEmails = useMemo(() => selectedStudentsForEmail.map((row) => row.email).filter(Boolean), [selectedStudentsForEmail]);
 
   const summary = useMemo(() => {
     const present = studentRows.filter((row) => row.present).length;
@@ -216,14 +212,10 @@ export default function AttendancePage() {
   }, [studentRows]);
 
   const expectedStudentNames = useMemo(() => {
-    return studentRows
-      .map((row) => String(row.name || "").trim())
-      .filter(Boolean)
-      .slice(0, 15);
+    return studentRows.map((row) => String(row.name || "").trim()).filter(Boolean).slice(0, 15);
   }, [studentRows]);
 
   const checkinUrl = useMemo(() => {
-    const base = window.location.origin;
     const qs = new URLSearchParams({
       classId,
       sessionId: checkinSessionId,
@@ -235,18 +227,23 @@ export default function AttendancePage() {
       expectedStudents: expectedStudentNames.join(", "),
       expectedCount: String(studentRows.length || 0),
     }).toString();
-    return `${base}/checkin?${qs}`;
-  }, [
-    classId,
-    checkinSessionDate,
-    checkinSessionId,
-    expectedStudentNames,
-    checkinStartTime,
-    checkinEndTime,
-    selectedSession.assignmentId,
-    sessionLabel,
-    studentRows.length,
-  ]);
+    return `${window.location.origin}/checkin?${qs}`;
+  }, [classId, checkinSessionDate, checkinSessionId, expectedStudentNames, checkinStartTime, checkinEndTime, selectedSession.assignmentId, sessionLabel, studentRows.length]);
+
+  const checkinDisplayUrl = useMemo(() => {
+    const qs = new URLSearchParams({
+      classId,
+      sessionId: checkinSessionId,
+      date: checkinSessionDate,
+      sessionLabel,
+      assignmentId: String(selectedSession.assignmentId || ""),
+      startTime: checkinStartTime,
+      endTime: checkinEndTime,
+      expectedStudents: expectedStudentNames.join(", "),
+      expectedCount: String(studentRows.length || 0),
+    }).toString();
+    return `${window.location.origin}/checkin/display?${qs}`;
+  }, [classId, checkinSessionDate, checkinSessionId, expectedStudentNames, checkinStartTime, checkinEndTime, selectedSession.assignmentId, sessionLabel, studentRows.length]);
 
   const checkinBackupMailto = useMemo(() => {
     if (selectedEmails.length === 0) return "";
@@ -263,38 +260,9 @@ export default function AttendancePage() {
       "",
       "Thank you.",
     ].join("\n");
-
-    const to = selectedEmails.join(",");
-    return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return `mailto:${selectedEmails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [selectedEmails, classId, sessionLabel, checkinSessionId, checkinUrl, checkinSessionDate]);
 
-
-
-  const checkinDisplayUrl = useMemo(() => {
-    const base = window.location.origin;
-    const qs = new URLSearchParams({
-      classId,
-      sessionId: checkinSessionId,
-      date: checkinSessionDate,
-      sessionLabel,
-      assignmentId: String(selectedSession.assignmentId || ""),
-      startTime: checkinStartTime,
-      endTime: checkinEndTime,
-      expectedStudents: expectedStudentNames.join(", "),
-      expectedCount: String(studentRows.length || 0),
-    }).toString();
-    return `${base}/checkin/display?${qs}`;
-  }, [
-    classId,
-    checkinSessionDate,
-    checkinSessionId,
-    expectedStudentNames,
-    checkinStartTime,
-    checkinEndTime,
-    selectedSession.assignmentId,
-    sessionLabel,
-    studentRows.length,
-  ]);
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -305,50 +273,13 @@ export default function AttendancePage() {
           listStudentsByClass(classId),
           loadAttendanceFromFirestore(classId),
         ]);
-
-        const studentTemplate = {};
-        for (const student of students) {
-          const code = resolveStudentCode(student);
-          if (!code) continue;
-          studentTemplate[code] = {
-            name: String(student.name || "").trim(),
-            email: String(student.email || "").trim(),
-            present: false,
-          };
-        }
-
-        const scheduleAttendanceMap = buildScheduleMap(classId);
-        const nextAttendanceMap = mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendance);
-
-        if (Object.keys(nextAttendanceMap).length === 0) {
-          nextAttendanceMap["1"] = {
-            title: "Session 1",
-            date: dayjs().format("YYYY-MM-DD"),
-            assignmentId: "",
-            students: {},
-          };
-        }
-
-        for (const sessionId of Object.keys(nextAttendanceMap)) {
-          const scheduleSession = scheduleAttendanceMap[sessionId] || {};
-          const existingSession = nextAttendanceMap[sessionId] || {};
-          const baseStudents = nextAttendanceMap[sessionId]?.students || {};
-          nextAttendanceMap[sessionId] = {
-            ...existingSession,
-            title: String(existingSession.title || "").trim() || scheduleSession.title || `Session ${Number(sessionId) || 1}`,
-            date: String(existingSession.date || "").trim() || scheduleSession.date || dayjs().format("YYYY-MM-DD"),
-            assignmentId: String(existingSession.assignmentId || existingSession.assignment_id || scheduleSession.assignmentId || ""),
-            startTime: String(existingSession.startTime || "").trim(),
-            endTime: String(existingSession.endTime || "").trim(),
-            students: mergeStudentsWithTemplate(studentTemplate, baseStudents),
-          };
-        }
-
-        const sortedIds = Object.keys(nextAttendanceMap).sort((a, b) => Number(a) - Number(b));
-        const firstSessionId = sortedIds[0] || "1";
-
-        setAttendanceMap(nextAttendanceMap);
-        setSelectedSessionId((prev) => (nextAttendanceMap[prev] ? prev : firstSessionId));
+        const template = buildStudentTemplate(students);
+        const scheduleMap = buildScheduleMap(classId);
+        const nextMap = finishAttendanceMap({ scheduleMap, currentMap: storedAttendance, studentTemplate: template });
+        const sortedIds = Object.keys(nextMap).sort((a, b) => Number(a) - Number(b));
+        setStudentTemplate(template);
+        setAttendanceMap(nextMap);
+        setSelectedSessionId((prev) => (nextMap[prev] ? prev : sortedIds[0] || "1"));
       } catch (e) {
         error(e?.message || "Failed to load attendance");
       } finally {
@@ -384,10 +315,10 @@ export default function AttendancePage() {
           return updated;
         });
       } catch {
-        // Non-blocking: class page should still render if check-ins fail to load.
+        // Non-blocking: attendance still works if check-ins fail to load.
       }
     })();
-  }, [classId, selectedSessionId, checkinSessionDate, checkinSessionId]);
+  }, [classId, selectedSessionId, checkinSessionDate, checkinSessionId, attendanceMap]);
 
   useEffect(() => {
     const availableCodes = new Set(studentRows.map((row) => row.studentCode));
@@ -410,29 +341,20 @@ export default function AttendancePage() {
     }));
 
     const studentName = selectedSession?.students?.[studentCode]?.name || studentCode;
-    if (present) {
-      success(`${studentName} marked present.`);
-    } else {
-      info(`${studentName} marked absent.`);
-    }
+    if (present) success(`${studentName} marked present.`);
+    else info(`${studentName} marked absent.`);
   };
 
   const toggleStudentEmailSelection = (studentCode, checked) => {
     setSelectedEmailStudentCodes((prev) => {
-      if (checked) {
-        return prev.includes(studentCode) ? prev : [...prev, studentCode];
-      }
+      if (checked) return prev.includes(studentCode) ? prev : [...prev, studentCode];
       return prev.filter((code) => code !== studentCode);
     });
   };
 
   const selectEmailTargets = (mode) => {
     const nextSelection = studentRows
-      .filter((row) => {
-        if (!row.email) return false;
-        if (mode === "absent") return !row.present;
-        return true;
-      })
+      .filter((row) => row.email && (mode === "all" || !row.present))
       .map((row) => row.studentCode);
     setSelectedEmailStudentCodes(nextSelection);
   };
@@ -449,13 +371,34 @@ export default function AttendancePage() {
     }
   };
 
+  const rebuildFromDictionary = async () => {
+    const ok = window.confirm(
+      "Rebuild this class attendance from the course dictionary? Present/absent records will stay, but wrong session titles, dates, weekdays and assignment IDs will be replaced.",
+    );
+    if (!ok) return;
+
+    setRebuilding(true);
+    try {
+      const scheduleMap = buildScheduleMap(classId);
+      if (Object.keys(scheduleMap).length === 0) throw new Error("No schedule dictionary was found for this class.");
+      const rebuilt = finishAttendanceMap({ scheduleMap, currentMap: attendanceMap, studentTemplate });
+      await saveAttendanceToFirestore(classId, rebuilt);
+      const sortedIds = Object.keys(rebuilt).sort((a, b) => Number(a) - Number(b));
+      setAttendanceMap(rebuilt);
+      setSelectedSessionId((prev) => (rebuilt[prev] ? prev : sortedIds[0] || "1"));
+      success("Attendance sessions rebuilt from dictionary and saved.");
+    } catch (e) {
+      error(e?.message || "Could not rebuild attendance sessions");
+    } finally {
+      setRebuilding(false);
+    }
+  };
+
   async function openCheckin() {
     setSessionBusy(true);
     try {
       const selectedAssignmentId = String(selectedSession.assignmentId || "").trim();
-      if (!selectedAssignmentId) {
-        throw new Error("Select an assignment ID before opening check-in.");
-      }
+      if (!selectedAssignmentId) throw new Error("Select an assignment ID before opening check-in.");
 
       const token = await user.getIdToken();
       const res = await fetch(resolveOpenSessionApiUrl(), {
@@ -479,7 +422,6 @@ export default function AttendancePage() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Failed to open check-in");
-
       setSessionOpen(true);
       success("Check-in opened.");
     } catch (e) {
@@ -499,17 +441,11 @@ export default function AttendancePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          classId,
-          sessionId: checkinSessionId,
-          date: checkinSessionDate,
-          action: "close",
-        }),
+        body: JSON.stringify({ classId, sessionId: checkinSessionId, date: checkinSessionDate, action: "close" }),
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Failed to close check-in");
-
       setSessionOpen(false);
       success("Check-in closed.");
     } catch (e) {
@@ -526,20 +462,22 @@ export default function AttendancePage() {
       <h2>Attendance: {classId}</h2>
       {sessionLabel && <div style={{ marginBottom: 8, fontSize: 13, opacity: 0.85 }}>Session: {sessionLabel}</div>}
 
+      <div style={{ border: "1px solid #fde68a", background: "#fffbeb", borderRadius: 10, padding: 12, marginBottom: 14, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontWeight: 800 }}>Dictionary repair</div>
+          <div style={{ fontSize: 12, opacity: 0.85 }}>Use this if day name, date, topic or assignment ID looks inconsistent.</div>
+        </div>
+        <button type="button" disabled={rebuilding || saving || sessionIds.length === 0} onClick={rebuildFromDictionary}>
+          {rebuilding ? "Rebuilding..." : "Rebuild sessions from dictionary"}
+        </button>
+      </div>
+
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
         <label>
           Session:{" "}
-          <select
-            value={selectedSessionId}
-            onChange={(e) => {
-              const nextSessionId = e.target.value;
-              setSelectedSessionId(nextSessionId);
-            }}
-          >
+          <select value={selectedSessionId} onChange={(e) => setSelectedSessionId(e.target.value)}>
             {sessionIds.map((sessionId) => (
-              <option key={sessionId} value={sessionId}>
-                {sessionId}: {attendanceMap[sessionId]?.title || "Untitled"}
-              </option>
+              <option key={sessionId} value={sessionId}>{sessionId}: {attendanceMap[sessionId]?.title || "Untitled"}</option>
             ))}
           </select>
         </label>
@@ -552,18 +490,13 @@ export default function AttendancePage() {
               const nextAssignmentId = e.target.value;
               setAttendanceMap((prev) => ({
                 ...prev,
-                [selectedSessionId]: {
-                  ...(prev[selectedSessionId] || {}),
-                  assignmentId: nextAssignmentId,
-                },
+                [selectedSessionId]: { ...(prev[selectedSessionId] || {}), assignmentId: nextAssignmentId },
               }));
             }}
           >
             <option value="">Select assignment</option>
             {assignmentOptions.map((option) => (
-              <option key={option.assignmentId} value={option.assignmentId}>
-                {option.label}
-              </option>
+              <option key={option.assignmentId} value={option.assignmentId}>{option.label}</option>
             ))}
           </select>
         </label>
@@ -577,10 +510,7 @@ export default function AttendancePage() {
               const nextDate = e.target.value;
               setAttendanceMap((prev) => ({
                 ...prev,
-                [selectedSessionId]: {
-                  ...(prev[selectedSessionId] || {}),
-                  date: nextDate,
-                },
+                [selectedSessionId]: { ...(prev[selectedSessionId] || {}), date: nextDate },
               }));
             }}
           />
@@ -595,10 +525,7 @@ export default function AttendancePage() {
               const nextStartTime = e.target.value;
               setAttendanceMap((prev) => ({
                 ...prev,
-                [selectedSessionId]: {
-                  ...(prev[selectedSessionId] || {}),
-                  startTime: nextStartTime,
-                },
+                [selectedSessionId]: { ...(prev[selectedSessionId] || {}), startTime: nextStartTime },
               }));
             }}
           />
@@ -613,10 +540,7 @@ export default function AttendancePage() {
               const nextEndTime = e.target.value;
               setAttendanceMap((prev) => ({
                 ...prev,
-                [selectedSessionId]: {
-                  ...(prev[selectedSessionId] || {}),
-                  endTime: nextEndTime,
-                },
+                [selectedSessionId]: { ...(prev[selectedSessionId] || {}), endTime: nextEndTime },
               }));
             }}
           />
@@ -629,33 +553,18 @@ export default function AttendancePage() {
 
       <div style={{ marginBottom: 12 }}>
         <b>Title:</b> {selectedSession.title || "-"}
-        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
-          <b>Check-in date:</b> {checkinSessionDate}
-        </div>
-        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
-          <b>Assignment ID:</b> {selectedSession.assignmentId || "-"}
-        </div>
-        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
-          <b>Class time:</b> {checkinStartTime || "--:--"} to {checkinEndTime || "--:--"}
-        </div>
+        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}><b>Check-in date:</b> {checkinSessionDate}</div>
+        {selectedSession.weekday && <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}><b>Weekday:</b> {selectedSession.weekday}</div>}
+        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}><b>Assignment ID:</b> {selectedSession.assignmentId || "-"}</div>
+        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}><b>Class time:</b> {checkinStartTime || "--:--"} to {checkinEndTime || "--:--"}</div>
       </div>
 
       <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ fontWeight: 700 }}>Student QR Check-in</div>
-
-          <button disabled={sessionBusy || sessionOpen || !selectedAssignmentOption} onClick={openCheckin}>
-            {sessionBusy && !sessionOpen ? "Opening..." : "Open Check-in"}
-          </button>
-
-          <button disabled={sessionBusy || !sessionOpen} onClick={closeCheckin}>
-            {sessionBusy && sessionOpen ? "Closing..." : "Close Check-in"}
-          </button>
-
-          <a href={checkinDisplayUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>
-            Open Full-Screen QR Page
-          </a>
-
+          <button disabled={sessionBusy || sessionOpen || !selectedAssignmentOption} onClick={openCheckin}>{sessionBusy && !sessionOpen ? "Opening..." : "Open Check-in"}</button>
+          <button disabled={sessionBusy || !sessionOpen} onClick={closeCheckin}>{sessionBusy && sessionOpen ? "Closing..." : "Close Check-in"}</button>
+          <a href={checkinDisplayUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open Full-Screen QR Page</a>
           <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>Status: {sessionOpen ? "OPEN" : "CLOSED"}</div>
         </div>
 
@@ -677,9 +586,7 @@ export default function AttendancePage() {
           <button type="button" onClick={() => setSelectedEmailStudentCodes([])}>Clear selection</button>
           <a
             href={checkinBackupMailto || undefined}
-            onClick={(e) => {
-              if (!checkinBackupMailto) e.preventDefault();
-            }}
+            onClick={(e) => { if (!checkinBackupMailto) e.preventDefault(); }}
             style={{
               pointerEvents: checkinBackupMailto ? "auto" : "none",
               opacity: checkinBackupMailto ? 1 : 0.5,
@@ -693,9 +600,7 @@ export default function AttendancePage() {
             Email selected students
           </a>
         </div>
-        <div style={{ fontSize: 12, opacity: 0.8 }}>
-          Selected recipients: {selectedEmails.length}
-        </div>
+        <div style={{ fontSize: 12, opacity: 0.8 }}>Selected recipients: {selectedEmails.length}</div>
       </div>
 
       {studentRows.length === 0 ? (
@@ -703,51 +608,26 @@ export default function AttendancePage() {
       ) : (
         <div style={{ display: "grid", gap: 8 }}>
           {studentRows.map((row) => (
-            <div
-              key={row.studentCode}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 8,
-                padding: 10,
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-              }}
-            >
+            <div key={row.studentCode} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 10, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700 }}>{row.name || row.studentCode}</div>
                 <div style={{ fontSize: 12, opacity: 0.7 }}>{row.studentCode}</div>
                 {row.email && <div style={{ fontSize: 12, opacity: 0.7 }}>{row.email}</div>}
-                <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: row.present ? "#147848" : "#6b7280" }}>
-                  {row.present ? "Present" : "Absent"}
-                </div>
+                <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: row.present ? "#147848" : "#6b7280" }}>{row.present ? "Present" : "Absent"}</div>
               </div>
 
               <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                <input
-                  type="checkbox"
-                  disabled={!row.email}
-                  checked={selectedEmailStudentCodes.includes(row.studentCode)}
-                  onChange={(e) => toggleStudentEmailSelection(row.studentCode, e.target.checked)}
-                />
-                Email
+                <input type="checkbox" disabled={!row.email} checked={selectedEmailStudentCodes.includes(row.studentCode)} onChange={(e) => toggleStudentEmailSelection(row.studentCode, e.target.checked)} /> Email
               </label>
-
-              <button onClick={() => setStudentPresent(row.studentCode, true)} style={{ minWidth: 90, background: row.present ? "#147848" : "white", color: row.present ? "white" : "black", borderColor: row.present ? "#147848" : "#c9d1e4" }}>
-                Present
-              </button>
-              <button onClick={() => setStudentPresent(row.studentCode, false)} style={{ minWidth: 90, background: !row.present ? "#6b7280" : "white", color: !row.present ? "white" : "black", borderColor: !row.present ? "#6b7280" : "#c9d1e4" }}>
-                Absent
-              </button>
+              <button onClick={() => setStudentPresent(row.studentCode, true)} style={{ minWidth: 90, background: row.present ? "#147848" : "white", color: row.present ? "white" : "black", borderColor: row.present ? "#147848" : "#c9d1e4" }}>Present</button>
+              <button onClick={() => setStudentPresent(row.studentCode, false)} style={{ minWidth: 90, background: !row.present ? "#6b7280" : "white", color: !row.present ? "white" : "black", borderColor: !row.present ? "#6b7280" : "#c9d1e4" }}>Absent</button>
             </div>
           ))}
         </div>
       )}
 
       <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "center" }}>
-        <button disabled={saving || sessionIds.length === 0} onClick={onSave}>
-          {saving ? "Saving..." : "Save Attendance"}
-        </button>
+        <button disabled={saving || rebuilding || sessionIds.length === 0} onClick={onSave}>{saving ? "Saving..." : "Save Attendance"}</button>
       </div>
     </div>
   );
