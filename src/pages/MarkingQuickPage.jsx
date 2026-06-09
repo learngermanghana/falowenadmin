@@ -7,6 +7,7 @@ import {
   saveMarkingResult,
   saveScoreRow,
 } from "../services/markingService.js";
+import { createMarkedAssignmentNotification } from "../services/studentNotificationService.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 function normalize(value) {
@@ -304,16 +305,41 @@ export default function MarkingQuickPage() {
 
     setSavingManual(true);
     try {
+      const finalScore = Number(score);
+      const finalFeedback = feedback.trim();
+      const assignment = selectedSubmission.assignment || assignmentKey || "Marked assignment";
+      const assignmentId = assignmentKey || selectedSubmission.assignmentId || selectedSubmission.assignmentKey;
+      const finalResult = {
+        ...(result || {}),
+        score: finalScore,
+        finalScore,
+        feedback: finalFeedback,
+        manualOverride: Boolean(result),
+        aiOriginalScore: result?.aiOriginalScore ?? result?.finalScore ?? result?.score ?? null,
+        aiOriginalFeedback: result?.aiOriginalFeedback ?? result?.feedback ?? "",
+      };
+
       const receipt = await saveScoreRow({
         studentCode: selectedSubmission.studentCode,
         name: selectedSubmission.studentName,
-        assignment: selectedSubmission.assignment || assignmentKey || "Marked assignment",
-        assignmentId: assignmentKey || selectedSubmission.assignmentId || selectedSubmission.assignmentKey,
-        score: Number(score),
-        comments: feedback.trim(),
+        assignment,
+        assignmentId,
+        score: finalScore,
+        comments: finalFeedback,
         level: selectedSubmission.level,
         link: "",
         source: "manual_quick_marking",
+        markingDetails: finalResult,
+      });
+
+      const notificationReceipt = await createMarkedAssignmentNotification({
+        studentCode: selectedSubmission.studentCode,
+        studentName: selectedSubmission.studentName,
+        assignment,
+        assignmentId,
+        score: finalScore,
+        level: selectedSubmission.level,
+        dedupeId: receipt.dedupeId,
       });
 
       if (selectedSubmission?.id || selectedSubmission?.path) {
@@ -321,20 +347,15 @@ export default function MarkingQuickPage() {
           submissionId: selectedSubmission.id,
           submissionPath: selectedSubmission.path,
           result: {
-            ...(result || {}),
-            score: Number(score),
-            finalScore: Number(score),
-            feedback: feedback.trim(),
-            manualOverride: Boolean(result),
-            aiOriginalScore: result?.aiOriginalScore ?? result?.finalScore ?? result?.score ?? null,
-            aiOriginalFeedback: result?.aiOriginalFeedback ?? result?.feedback ?? "",
+            ...finalResult,
+            studentNotification: notificationReceipt,
           },
           status: "marked",
-          sentToStudent: false,
+          sentToStudent: Boolean(notificationReceipt.success),
         });
       }
 
-      success(`Manual score saved${receipt.sheet.success ? " to Sheet" : ""}${receipt.firestore.success ? " + Firestore" : ""}.`);
+      success(`Manual score saved${receipt.sheet.success ? " to Sheet" : ""}${receipt.firestore.success ? " + Firestore" : ""}. ${notificationReceipt.success ? "Student notification created." : "Notification could not be created."}`);
     } catch (err) {
       error(err?.message || "Manual save failed.");
     } finally {
@@ -417,7 +438,7 @@ export default function MarkingQuickPage() {
           <details style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
             <summary style={{ cursor: "pointer", fontWeight: 700 }}>Advanced status explanation</summary>
             <p style={{ fontSize: 13, opacity: 0.8 }}>
-              New means the work is waiting. AI marked means AI generated a draft score. Check means tutor should review before saving. Done means it has already been handled. Save Final Score is the final action that writes the score row.
+              New means the work is waiting. AI marked means AI generated a draft score. Check means tutor should review before saving. Done means it has already been handled. Save Final Score writes the score row and creates a student notification.
             </p>
           </details>
         </>
