@@ -39,6 +39,168 @@ function displayDate(value) {
   }
 }
 
+function asPercent(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "—";
+  return `${Math.round(numeric)}%`;
+}
+
+function getMaxWritingScore(result = {}) {
+  const candidates = [
+    result.maxWritingScore,
+    result.writingMaxScore,
+    result.maxWritingPoints,
+    result.writingMaxPoints,
+    result.ai?.maxWritingScore,
+    result.ai?.writingMaxScore,
+    ...(Array.isArray(result.parts)
+      ? result.parts
+        .filter((part) => String(part?.partType || "").toLowerCase() === "writing")
+        .flatMap((part) => [part.maxScore, part.maxPoints, part.total, part.totalPoints])
+      : []),
+  ];
+
+  const explicitMax = candidates.find((value) => Number.isFinite(Number(value)) && Number(value) > 0);
+  if (explicitMax) return Number(explicitMax);
+
+  const writingScore = Number(result.writingScore);
+  if (Number.isFinite(writingScore) && writingScore > 0 && writingScore <= 50) return 50;
+  return 100;
+}
+
+function writingScoreToPercent(writingScore, maxWritingScore = 100) {
+  const numericScore = Number(writingScore);
+  const numericMax = Number(maxWritingScore);
+  if (!Number.isFinite(numericScore)) return null;
+  if (!Number.isFinite(numericMax) || numericMax <= 0) return Math.round(numericScore);
+  return Math.max(0, Math.min(100, Math.round((numericScore / numericMax) * 100)));
+}
+
+function formatWritingScore(result = {}) {
+  if (result.writingScore === null || result.writingScore === undefined) return "—";
+  const maxWritingScore = getMaxWritingScore(result);
+  const percent = writingScoreToPercent(result.writingScore, maxWritingScore);
+  if (maxWritingScore && maxWritingScore !== 100) return `${result.writingScore}/${maxWritingScore} → ${percent}%`;
+  return `${percent}%`;
+}
+
+function buildScoreBreakdown(result = {}) {
+  const rows = [];
+  if (Number(result.objectiveTotal || 0) > 0) {
+    rows.push({
+      label: "Objective / MCQ",
+      value: `${result.objectiveCorrect || 0}/${result.objectiveTotal || 0}`,
+      detail: asPercent(result.objectiveScore),
+    });
+  }
+
+  if (result.writingScore !== null && result.writingScore !== undefined) {
+    rows.push({
+      label: "Writing",
+      value: formatWritingScore(result),
+      detail: "Task, grammar, vocabulary, structure, tone",
+    });
+  }
+
+  if (Array.isArray(result.scoreBreakdown)) {
+    result.scoreBreakdown.forEach((item) => {
+      if (!item?.label) return;
+      rows.push({
+        label: item.label,
+        value: item.score ?? item.value ?? "—",
+        detail: item.reason || item.detail || "",
+      });
+    });
+  }
+
+  if (!rows.length) {
+    rows.push({ label: "Overall", value: result.finalScore ?? result.score ?? "—", detail: "AI score before tutor review" });
+  }
+
+  return rows;
+}
+
+function buildMarkingReason(result = {}) {
+  if (result.markingReason) return result.markingReason;
+  if (result.improvementSummary) return result.improvementSummary;
+
+  const pieces = [];
+  if (Number(result.objectiveTotal || 0) > 0) {
+    pieces.push(`Objective answers: ${result.objectiveCorrect || 0}/${result.objectiveTotal || 0} correct.`);
+  }
+  if (result.writingScore !== null && result.writingScore !== undefined) {
+    pieces.push(`Writing score: ${formatWritingScore(result)}.`);
+  }
+  pieces.push(`Final score: ${result.finalScore ?? result.score ?? "—"}/100.`);
+  return pieces.join(" ");
+}
+
+function detectedPartsSummary(result = {}) {
+  const parts = result.detectedParts || result.parts || [];
+  if (!Array.isArray(parts) || !parts.length) return "None";
+  return parts
+    .map((part) => part.summary || `${part.partId || "part"}: ${part.answerCount ?? part.total ?? "—"} ${part.partType || "answers"} found${part.correct !== undefined ? `, ${part.correct} correct, ${part.wrong ?? 0} wrong` : ""}`)
+    .join(", ");
+}
+
+function ResultAuditPanel({ result }) {
+  if (!result) return null;
+  const breakdownRows = buildScoreBreakdown(result);
+  const rawReason = result.rawAiReason || result.ai?.rawReason || result.ai?.reason || "Stored in result object / ai audit when returned by model.";
+
+  return (
+    <div style={{ border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, background: "#eff6ff", display: "grid", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, fontSize: 13 }}>
+        <span>Score: <b>{result.finalScore ?? result.score ?? "—"}/100</b></span>
+        <span>Confidence: <b>{result.confidence ?? "—"}</b></span>
+        <span>Status: <b>{statusLabel(result.status)}</b></span>
+        <span>Sheet: <b>{result.scoreSaveReceipt?.sheet?.success ? "Saved" : "Draft only"}</b></span>
+        <span>Firestore: <b>{result.scoreSaveReceipt?.firestore?.success ? "Saved" : "Audit saved"}</b></span>
+      </div>
+
+      <div style={{ border: "1px solid #dbeafe", borderRadius: 8, background: "#ffffff", overflow: "hidden" }}>
+        <div style={{ padding: 8, fontWeight: 800, fontSize: 13, background: "#f8fafc" }}>Score breakdown</div>
+        <div style={{ display: "grid" }}>
+          {breakdownRows.map((row, index) => (
+            <div key={`${row.label}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(140px, 1fr) minmax(90px, auto) 2fr", gap: 8, padding: 8, borderTop: "1px solid #e5e7eb", fontSize: 13 }}>
+              <strong>{row.label}</strong>
+              <span>{row.value}</span>
+              <span style={{ opacity: 0.78 }}>{row.detail}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ border: "1px solid #dbeafe", borderRadius: 8, padding: 10, background: "#ffffff", fontSize: 13 }}>
+        <strong>Why this score?</strong>
+        <p style={{ margin: "5px 0 0", lineHeight: 1.5 }}>{buildMarkingReason(result)}</p>
+      </div>
+
+      <div style={{ fontSize: 13 }}>
+        <b>Detected parts:</b> {detectedPartsSummary(result)}
+      </div>
+
+      {Array.isArray(result.wrongAnswers) && result.wrongAnswers.length ? (
+        <div style={{ border: "1px solid #fecaca", borderRadius: 8, padding: 10, background: "#fff7ed", fontSize: 13 }}>
+          <strong>Exact wrong objective answers</strong>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            {result.wrongAnswers.slice(0, 6).map((item, index) => (
+              <li key={`${item.question || index}-${index}`}>
+                {item.partId ? `${item.partId} ` : ""}{item.question || index + 1}: student {item.student || item.submitted || "blank"}; correct {item.expected || "—"}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <details style={{ border: "1px solid #dbeafe", borderRadius: 8, padding: 10, background: "#ffffff" }}>
+        <summary style={{ cursor: "pointer", fontWeight: 800 }}>Raw AI reason / admin audit</summary>
+        <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, margin: "8px 0 0", maxHeight: 220, overflow: "auto" }}>{rawReason}</pre>
+      </details>
+    </div>
+  );
+}
+
 export default function MarkingQuickPage() {
   const { success, error } = useToast();
   const [submissions, setSubmissions] = useState([]);
@@ -121,9 +283,7 @@ export default function MarkingQuickPage() {
       setScore(String(aiResult.finalScore ?? aiResult.score ?? 0));
       setFeedback(aiResult.feedback || "");
 
-      const sheetSaved = aiResult.scoreSaveReceipt?.sheet?.success;
-      const firestoreSaved = aiResult.scoreSaveReceipt?.firestore?.success;
-      success(`AI marked and saved${sheetSaved ? " to Sheet" : ""}${firestoreSaved ? " + Firestore" : ""}.`);
+      success(aiResult.status === "needs_review" ? "AI marked and saved for tutor review." : "AI marked and saved as draft. Review before final save.");
       await refresh();
     } catch (err) {
       error(err?.message || "AI marking failed.");
@@ -155,6 +315,25 @@ export default function MarkingQuickPage() {
         link: "",
         source: "manual_quick_marking",
       });
+
+      if (selectedSubmission?.id || selectedSubmission?.path) {
+        await saveMarkingResult({
+          submissionId: selectedSubmission.id,
+          submissionPath: selectedSubmission.path,
+          result: {
+            ...(result || {}),
+            score: Number(score),
+            finalScore: Number(score),
+            feedback: feedback.trim(),
+            manualOverride: Boolean(result),
+            aiOriginalScore: result?.aiOriginalScore ?? result?.finalScore ?? result?.score ?? null,
+            aiOriginalFeedback: result?.aiOriginalFeedback ?? result?.feedback ?? "",
+          },
+          status: "marked",
+          sentToStudent: false,
+        });
+      }
+
       success(`Manual score saved${receipt.sheet.success ? " to Sheet" : ""}${receipt.firestore.success ? " + Firestore" : ""}.`);
     } catch (err) {
       error(err?.message || "Manual save failed.");
@@ -183,7 +362,7 @@ export default function MarkingQuickPage() {
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <div>
           <h2 style={{ marginBottom: 4 }}>Quick Marking</h2>
-          <p style={{ margin: 0, opacity: 0.75 }}>Simple flow: pick work → mark with AI → result saves to Sheet and Firestore.</p>
+          <p style={{ margin: 0, opacity: 0.75 }}>Pick work → run AI → review score breakdown → final save. AI drafts are kept for tutor review first.</p>
         </div>
         <button type="button" onClick={refresh} disabled={loading}>{loading ? "Refreshing..." : "Refresh"}</button>
       </div>
@@ -214,41 +393,31 @@ export default function MarkingQuickPage() {
           </section>
 
           <section style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, display: "grid", gap: 10 }}>
-            <h3 style={{ margin: 0 }}>3. Mark and save</h3>
+            <h3 style={{ margin: 0 }}>3. Mark, review and save</h3>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button type="button" onClick={handleMarkWithAI} disabled={marking || loading} style={{ fontWeight: 700 }}>
-                {marking ? "Marking and saving..." : "Mark with AI & Save"}
+                {marking ? "Marking..." : "Mark with AI"}
               </button>
-              <button type="button" onClick={handleManualSave} disabled={savingManual || marking}>Manual Save</button>
+              <button type="button" onClick={handleManualSave} disabled={savingManual || marking}>Save Final Score</button>
               <button type="button" onClick={handleHideDone} disabled={hiding || marking}>Remove from Queue</button>
             </div>
 
-            {result ? (
-              <div style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 10, background: "#eff6ff", display: "grid", gap: 6 }}>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: 13 }}>
-                  <span>Score: <b>{result.finalScore}</b></span>
-                  <span>Confidence: <b>{result.confidence}</b></span>
-                  <span>Status: <b>{statusLabel(result.status)}</b></span>
-                  <span>Sheet: <b>{result.scoreSaveReceipt?.sheet?.success ? "Saved" : "Check"}</b></span>
-                  <span>Firestore: <b>{result.scoreSaveReceipt?.firestore?.success ? "Saved" : "Check"}</b></span>
-                </div>
-              </div>
-            ) : null}
+            <ResultAuditPanel result={result} />
 
             <label style={{ display: "grid", gap: 4 }}>
               Score
               <input type="number" min="0" max="100" value={score} onChange={(event) => setScore(event.target.value)} />
             </label>
             <label style={{ display: "grid", gap: 4 }}>
-              40-word feedback
-              <textarea rows={6} value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="AI feedback will appear here." />
+              Student feedback
+              <textarea rows={7} value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="AI feedback will appear here. Tutor can edit before final save." />
             </label>
           </section>
 
           <details style={{ border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
             <summary style={{ cursor: "pointer", fontWeight: 700 }}>Advanced status explanation</summary>
             <p style={{ fontSize: 13, opacity: 0.8 }}>
-              New means the work is waiting. AI marked means AI has generated and saved a score. Check means tutor should review before using it. Done means it has already been handled.
+              New means the work is waiting. AI marked means AI generated a draft score. Check means tutor should review before saving. Done means it has already been handled. Save Final Score is the final action that writes the score row.
             </p>
           </details>
         </>
