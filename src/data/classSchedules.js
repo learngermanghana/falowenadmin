@@ -89,28 +89,44 @@ export const classSchedules = {
   ],
 };
 
+const MONTH_INDEX = {
+  january: 0,
+  february: 1,
+  march: 2,
+  april: 3,
+  may: 4,
+  june: 5,
+  july: 6,
+  august: 7,
+  september: 8,
+  october: 9,
+  november: 10,
+  december: 11,
+};
+
+function pad(value) {
+  return String(value).padStart(2, "0");
+}
+
 function parseScheduleDate(value) {
-  const match = String(value || "").trim().match(/^(\w+),\s+(\d{2})\s+(\w+)\s+(\d{4})$/);
-  if (!match) return null;
+  const text = String(value || "").trim();
+  if (!text) return null;
 
-  const [, , day, monthName, year] = match;
-  const months = {
-    January: 0,
-    February: 1,
-    March: 2,
-    April: 3,
-    May: 4,
-    June: 5,
-    July: 6,
-    August: 7,
-    September: 8,
-    October: 9,
-    November: 10,
-    December: 11,
-  };
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
 
-  if (!(monthName in months)) return null;
-  const date = new Date(Date.UTC(Number.parseInt(year, 10), months[monthName], Number.parseInt(day, 10)));
+  const longMatch = text.match(/^(?:\w+),\s+(\d{1,2})\s+(\w+)\s+(\d{4})$/);
+  if (!longMatch) return null;
+
+  const [, day, monthName, year] = longMatch;
+  const monthIndex = MONTH_INDEX[String(monthName || "").toLowerCase()];
+  if (typeof monthIndex !== "number") return null;
+
+  const date = new Date(Date.UTC(Number.parseInt(year, 10), monthIndex, Number.parseInt(day, 10)));
   if (Number.isNaN(date.getTime())) return null;
   return date;
 }
@@ -121,6 +137,24 @@ function formatScheduleDate(date) {
   const month = date.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
   const year = date.toLocaleDateString("en-US", { year: "numeric", timeZone: "UTC" });
   return `${weekday}, ${day} ${month} ${year}`;
+}
+
+function toIsoDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+}
+
+function normalizeScheduleItem(item) {
+  const parsedDate = parseScheduleDate(item?.date);
+  if (!parsedDate) return { ...item, dateIso: "", dateLabel: item?.date || "", weekday: "" };
+  const dateIso = toIsoDate(parsedDate);
+  return {
+    ...item,
+    date: dateIso,
+    dateIso,
+    dateLabel: formatScheduleDate(parsedDate),
+    weekday: parsedDate.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" }),
+  };
 }
 
 function buildShiftedSchedule(baseSchedule, orientationDateString) {
@@ -148,7 +182,6 @@ classSchedules["A1 Köln klasse"] = buildShiftedSchedule(classSchedules.A1, "Tue
 classSchedules["A1 Köln klasse 2"] = buildShiftedSchedule(classSchedules.A1, "Tuesday, 05 May 2026");
 
 const KNOWN_SCHEDULE_KEYS = Object.keys(classSchedules);
-
 
 function parseDayNumber(dayLabel) {
   const text = String(dayLabel || "").trim();
@@ -180,7 +213,6 @@ export function findScheduleItemBySessionId(classId, sessionId) {
   return schedule[zeroBasedIndex] || schedule[numericSessionId] || null;
 }
 
-
 export function resolveScheduleKey(classId) {
   const normalized = String(classId || "").trim();
   if (!normalized) return "";
@@ -197,7 +229,7 @@ export function resolveScheduleKey(classId) {
 
 export function getClassSchedule(classId) {
   const scheduleKey = resolveScheduleKey(classId);
-  return scheduleKey ? classSchedules[scheduleKey] || [] : [];
+  return scheduleKey ? (classSchedules[scheduleKey] || []).map(normalizeScheduleItem) : [];
 }
 
 export default classSchedules;
