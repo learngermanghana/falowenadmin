@@ -40,7 +40,6 @@ function parseCsvLine(line) {
 
   for (let i = 0; i < line.length; i += 1) {
     const char = line[i];
-
     if (char === '"') {
       if (inQuotes && line[i + 1] === '"') {
         current += '"';
@@ -50,13 +49,11 @@ function parseCsvLine(line) {
       }
       continue;
     }
-
     if (char === "," && !inQuotes) {
       cells.push(current);
       current = "";
       continue;
     }
-
     current += char;
   }
 
@@ -81,7 +78,6 @@ function findCol(row, aliases) {
 
 function toRosterRows(rows) {
   if (rows.length === 0) return [];
-
   const [headerRow, ...dataRows] = rows;
   const headers = headerRow.map(normalizeHeader);
 
@@ -110,10 +106,7 @@ function toRosterRows(rows) {
 
 async function loadCsvRows(url) {
   const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to load CSV from ${url}`);
-  }
-
+  if (!res.ok) throw new Error(`Failed to load CSV from ${url}`);
   return parseCsv(await res.text());
 }
 
@@ -136,16 +129,12 @@ export async function loadRoster() {
       })
       .filter((row) => row.studentCode || row.name);
 
-    if (rosterFromPublishedSheet.length) {
-      return rosterFromPublishedSheet;
-    }
+    if (rosterFromPublishedSheet.length) return rosterFromPublishedSheet;
   } catch (error) {
     console.warn("Published student sheet roster unavailable; falling back to marking CSV.", error);
   }
 
-  if (MARKING_ROSTER_CSV_URL) {
-    return toRosterRows(await loadCsvRows(MARKING_ROSTER_CSV_URL));
-  }
+  if (MARKING_ROSTER_CSV_URL) return toRosterRows(await loadCsvRows(MARKING_ROSTER_CSV_URL));
 
   try {
     return toRosterRows(await loadCsvRows("/students.csv"));
@@ -177,16 +166,7 @@ function readTimestamp(value) {
 function normalizeSubmissionDoc(docSnap, fallback = {}) {
   const data = docSnap.data() || {};
   const createdAt = readTimestamp(data.createdAt || data.submittedAt || data.timestamp || data.date || data.created_at);
-  const text = normalize(
-    data.text ||
-      data.answer ||
-      data.answers ||
-      data.content ||
-      data.message ||
-      data.submissionText ||
-      data.writing ||
-      "",
-  );
+  const text = normalize(data.text || data.answer || data.answers || data.content || data.message || data.submissionText || data.writing || "");
   const assignment = normalize(data.assignment || data.assignmentTitle || data.assignmentName || data.topic || fallback.assignment || "");
   const assignmentId = normalize(data.assignmentId || data.assignment_id || data.assignmentKey || data.canonicalAssignmentKey || fallback.assignmentId || "");
 
@@ -228,10 +208,8 @@ export async function fetchSubmissions(level, studentCode) {
   }
 
   if (levelKey && codeKey) {
-    const nestedRef = collection(db, "submissions", levelKey, codeKey);
-    await addFromQuery(query(nestedRef), { level: levelKey, studentCode: codeKey });
+    await addFromQuery(query(collection(db, "submissions", levelKey, codeKey)), { level: levelKey, studentCode: codeKey });
   }
-
   if (codeKey) {
     await addFromQuery(query(collection(db, "submissions"), where("studentCode", "==", codeKey)), { studentCode: codeKey, level: levelKey });
     await addFromQuery(query(collection(db, "submissions"), where("studentcode", "==", codeKey)), { studentCode: codeKey, level: levelKey });
@@ -248,15 +226,7 @@ function safeFirestoreId(value) {
 }
 
 function inferAssignmentIdFromSubmission(row = {}) {
-  const candidates = [
-    row.assignmentKey,
-    row.assignmentId,
-    row.raw?.assignmentKey,
-    row.raw?.assignment_id,
-    row.raw?.assignmentId,
-    row.raw?.canonicalAssignmentKey,
-    row.assignment,
-  ];
+  const candidates = [row.assignmentKey, row.assignmentId, row.raw?.assignmentKey, row.raw?.assignment_id, row.raw?.assignmentId, row.raw?.canonicalAssignmentKey, row.assignment];
   for (const candidate of candidates) {
     const match = String(candidate || "").match(/([A-Z]\d+-[\d._]+)/i);
     if (match?.[1]) return match[1].toUpperCase().replace(/_/g, ".");
@@ -272,11 +242,7 @@ function scoreDedupeId(row = {}) {
 }
 
 function scoreDedupeIdForSubmission(row = {}) {
-  return scoreDedupeId({
-    studentcode: row.studentCode,
-    assignment_id: inferAssignmentIdFromSubmission(row),
-    assignment: row.assignment,
-  });
+  return scoreDedupeId({ studentcode: row.studentCode, assignment_id: inferAssignmentIdFromSubmission(row), assignment: row.assignment });
 }
 
 function isAfterQueueStart(row = {}) {
@@ -288,25 +254,21 @@ function isAfterQueueStart(row = {}) {
 }
 
 function hasExistingScore(row = {}, scoreIds = new Set()) {
-  if (!scoreIds.size) return false;
-  return scoreIds.has(scoreDedupeIdForSubmission(row));
+  return scoreIds.size ? scoreIds.has(scoreDedupeIdForSubmission(row)) : false;
 }
 
 function isOpenMarkingQueueSubmission(row = {}, scoreIds = new Set()) {
   const raw = row.raw || {};
   if (!isAfterQueueStart(row)) return false;
   if (raw.hiddenFromMarkingQueue || raw.hiddenAt) return false;
-
   const markingStatus = normalizeLower(row.markingStatus || raw.markingStatus);
   const workflowStatus = normalizeLower(raw.workflowStatus || raw.status || row.status);
   const terminalStatuses = new Set(["marked", "sent", "done", "completed", "complete", "approved", "hidden", "archived", "saved"]);
   if (terminalStatuses.has(markingStatus) || terminalStatuses.has(workflowStatus)) return false;
-
   if (row.feedbackSentToStudent || raw.feedbackSentToStudent) return false;
   if (row.finalScore !== null && row.finalScore !== undefined) return false;
   if (raw.aiFeedback || raw.tutorFeedback || raw.feedback) return false;
   if (hasExistingScore(row, scoreIds)) return false;
-
   return true;
 }
 
@@ -340,10 +302,8 @@ export async function loadSubmissions({ includeMarked = false } = {}) {
 
   const flatSnap = await getDocs(collection(db, "submissions"));
   flatSnap.forEach((docSnap) => addDocSnap(docSnap));
-
   const groupSnap = await getDocs(collectionGroup(db, "posts"));
   groupSnap.forEach((docSnap) => addDocSnap(docSnap));
-
   const nestedSnap = await getDocs(collectionGroup(db, "submissions"));
   nestedSnap.forEach((docSnap) => addDocSnap(docSnap));
 
@@ -354,20 +314,12 @@ export async function loadSubmissions({ includeMarked = false } = {}) {
 
 export async function createMarkingJob({ submissionId, submissionPath, assignmentKey, level, status = "pending" }) {
   const now = new Date().toISOString();
-  await addDoc(collection(db, "markingJobs"), {
-    submissionId,
-    submissionPath,
-    assignmentKey,
-    level,
-    status,
-    createdAt: now,
-    updatedAt: now,
-  });
+  await addDoc(collection(db, "markingJobs"), { submissionId, submissionPath, assignmentKey, level, status, createdAt: now, updatedAt: now });
 }
 
 export async function saveMarkingResult({ submissionId, submissionPath, result, status = "marked", sentToStudent = false }) {
   const now = new Date().toISOString();
-  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || crypto.randomUUID?.() || `${Date.now()}`);
+  const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || globalThis.crypto?.randomUUID?.() || `${Date.now()}`);
   const payload = {
     submissionId,
     submissionPath,
@@ -379,9 +331,14 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     objectiveCorrect: result.objectiveCorrect ?? null,
     objectiveTotal: result.objectiveTotal ?? null,
     objectiveDetails: result.objectiveDetails ?? null,
+    wrongAnswers: result.wrongAnswers ?? [],
     writingScore: result.writingScore ?? null,
     writingScorePercent: result.writingScorePercent ?? null,
     maxWritingScore: result.maxWritingScore ?? null,
+    scoreBreakdown: result.scoreBreakdown ?? [],
+    corrections: result.corrections ?? [],
+    improvementSummary: result.improvementSummary || "",
+    markingReason: result.markingReason || result.rawAiReason || result.ai?.reason || "",
     manualOverride: Boolean(result.manualOverride),
     aiOriginalScore: result.aiOriginalScore ?? null,
     aiOriginalFeedback: result.aiOriginalFeedback ?? "",
@@ -389,10 +346,8 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     sentToStudent,
     updatedAt: now,
   };
-  await setDoc(doc(db, "markingResults", safeSubmissionId), {
-    ...payload,
-    createdAt: now,
-  }, { merge: true });
+
+  await setDoc(doc(db, "markingResults", safeSubmissionId), { ...payload, createdAt: now }, { merge: true });
 
   if (submissionPath) {
     const segments = submissionPath.split("/").filter(Boolean);
@@ -402,9 +357,15 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
       objectiveScore: payload.objectiveScore,
       objectiveCorrect: payload.objectiveCorrect,
       objectiveTotal: payload.objectiveTotal,
+      objectiveDetails: payload.objectiveDetails,
+      wrongAnswers: payload.wrongAnswers,
       writingScore: payload.writingScore,
       writingScorePercent: payload.writingScorePercent,
       maxWritingScore: payload.maxWritingScore,
+      scoreBreakdown: payload.scoreBreakdown,
+      corrections: payload.corrections,
+      improvementSummary: payload.improvementSummary,
+      markingReason: payload.markingReason,
       manualOverride: payload.manualOverride,
       aiOriginalScore: payload.aiOriginalScore,
       aiOriginalFeedback: payload.aiOriginalFeedback,
@@ -419,19 +380,10 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
 export async function updateMarkingWorkflowStatus({ submissionId, submissionPath, status, sentToStudent = false }) {
   const now = new Date().toISOString();
   const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || "unknown");
-  await setDoc(doc(db, "markingResults", safeSubmissionId), {
-    status,
-    sentToStudent,
-    updatedAt: now,
-  }, { merge: true });
-
+  await setDoc(doc(db, "markingResults", safeSubmissionId), { status, sentToStudent, updatedAt: now }, { merge: true });
   if (submissionPath) {
     const segments = submissionPath.split("/").filter(Boolean);
-    await setDoc(doc(db, ...segments), {
-      markingStatus: status,
-      feedbackSentToStudent: sentToStudent,
-      markingUpdatedAt: now,
-    }, { merge: true });
+    await setDoc(doc(db, ...segments), { markingStatus: status, feedbackSentToStudent: sentToStudent, markingUpdatedAt: now }, { merge: true });
   }
 }
 
@@ -444,19 +396,12 @@ export async function deleteSubmission(path) {
 export async function hideSubmissionFromQueue(path) {
   const segments = String(path || "").split("/").filter(Boolean);
   if (!segments.length) throw new Error("Missing submission path");
-  await updateDoc(doc(db, ...segments), {
-    hiddenFromMarkingQueue: true,
-    hiddenAt: new Date().toISOString(),
-  });
+  await updateDoc(doc(db, ...segments), { hiddenFromMarkingQueue: true, hiddenAt: new Date().toISOString() });
 }
 
 export async function upsertMarkingProfile({ assignmentKey, profile }) {
   const safeAssignmentKey = safeFirestoreId(assignmentKey);
-  await setDoc(doc(db, "markingProfiles", safeAssignmentKey), {
-    assignmentKey: safeAssignmentKey,
-    ...profile,
-    updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  await setDoc(doc(db, "markingProfiles", safeAssignmentKey), { assignmentKey: safeAssignmentKey, ...profile, updatedAt: new Date().toISOString() }, { merge: true });
 }
 
 export async function loadAnswerKeyRegistry() {
@@ -499,15 +444,11 @@ export async function importAnswerDictionary(dictionary) {
     return entry.assignmentKey;
   }));
 
-  const importedKeys = results
-    .map((result, index) => result.status === "fulfilled" ? normalizedEntries[index].assignmentKey : "")
-    .filter(Boolean);
-  const failed = results
-    .map((result, index) => result.status === "rejected" ? {
-      assignmentKey: normalizedEntries[index]?.assignmentKey || "unknown",
-      reason: result.reason?.message || String(result.reason || "Import failed"),
-    } : null)
-    .filter(Boolean);
+  const importedKeys = results.map((result, index) => result.status === "fulfilled" ? normalizedEntries[index].assignmentKey : "").filter(Boolean);
+  const failed = results.map((result, index) => result.status === "rejected" ? {
+    assignmentKey: normalizedEntries[index]?.assignmentKey || "unknown",
+    reason: result.reason?.message || String(result.reason || "Import failed"),
+  } : null).filter(Boolean);
 
   return {
     importedCount: importedKeys.length,
@@ -522,16 +463,51 @@ export async function importAnswerDictionary(dictionary) {
 
 export async function upsertAnswerKey({ assignmentKey, answerKey }) {
   const safeAssignmentKey = safeRegistryId(assignmentKey);
-  const now = new Date().toISOString();
-  await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), {
-    assignmentKey: safeAssignmentKey,
-    ...answerKey,
-    updatedAt: now,
-  }, { merge: true });
+  await setDoc(doc(db, "answerKeyRegistry", safeAssignmentKey), { assignmentKey: safeAssignmentKey, ...answerKey, updatedAt: new Date().toISOString() }, { merge: true });
 }
 
 function stripBoldMarkdown(value = "") {
   return String(value || "").replace(/\*\*/g, "");
+}
+
+function normalizeScoreCandidate(value) {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return null;
+  return Math.max(0, Math.min(100, Math.round(numberValue)));
+}
+
+function writingScoreFromParts(parts = []) {
+  const scores = (Array.isArray(parts) ? parts : [])
+    .filter((part) => part?.partType === "writing" || part?.partId === "teil2")
+    .map((part) => normalizeScoreCandidate(part?.result?.score ?? part?.result?.writingScore ?? part?.score ?? part?.writingScore))
+    .filter((score) => score !== null);
+  if (!scores.length) return null;
+  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+}
+
+function resolveWritingScore(aiResult = {}) {
+  const partScore = writingScoreFromParts(aiResult.parts);
+  if (partScore !== null) return partScore;
+  return normalizeScoreCandidate(aiResult.writingScore);
+}
+
+function formatObjectiveAnswerForFeedback(value = "", fallback = "blank") {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  const safe = normalized || fallback;
+  return `"${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}"`;
+}
+
+function buildDetailedObjectiveFeedback(deterministicObjective = {}) {
+  const objectiveScore = deterministicObjective.objectiveScore;
+  const base = `Objective score: ${deterministicObjective.objectiveCorrect}/${deterministicObjective.objectiveTotal} correct (${objectiveScore}%).`;
+  const mistakeDetails = (deterministicObjective.wrongAnswers || []).slice(0, 5).map((item) => {
+    const label = `${item.partId || "objective"} ${item.question || ""}`.trim();
+    const submitted = formatObjectiveAnswerForFeedback(item.student || item.submitted || "", "blank");
+    const expected = formatObjectiveAnswerForFeedback(item.expected || "", "the correct answer");
+    return `${label}: you chose ${submitted}; correct answer is ${expected}`;
+  });
+  if (!mistakeDetails.length) return `${base} All objective answers were correct.`;
+  return `${base} Review these exact answers: ${mistakeDetails.join("; ")}.`;
 }
 
 function normalizeAIMarkingResult(result = {}, payload = {}) {
@@ -542,6 +518,7 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
 
   return {
     score: finalScore,
+    finalScore,
     passed: Boolean(result.passed ?? finalScore >= 60),
     level: result.level || payload.referenceEntry?.level || payload.submission?.level || "UNKNOWN",
     assignmentKey,
@@ -551,12 +528,17 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
     objectiveScore: result.objectiveScore ?? null,
     objectiveCorrect: Number(result.objectiveCorrect || 0),
     objectiveTotal: Number(result.objectiveTotal || 0),
-    writingScore: result.writingScore ?? null,
-    finalScore,
+    objectiveDetails: result.objectiveDetails ?? null,
     wrongAnswers: Array.isArray(result.wrongAnswers) ? result.wrongAnswers : [],
-    feedback,
+    writingScore: result.writingScore ?? null,
+    writingScorePercent: result.writingScorePercent ?? null,
+    maxWritingScore: result.maxWritingScore ?? null,
+    scoreBreakdown: Array.isArray(result.scoreBreakdown) ? result.scoreBreakdown : [],
     corrections: Array.isArray(result.corrections) ? result.corrections : [],
+    feedback,
     improvementSummary: stripBoldMarkdown(result.improvementSummary || feedback),
+    markingReason: result.markingReason || result.rawAiReason || result.ai?.reason || "",
+    rawAiReason: result.rawAiReason || result.ai?.rawReason || result.ai?.reason || "",
     confidence: Number.isFinite(Number(result.confidence)) ? Math.max(0, Math.min(1, Number(result.confidence))) : 0.5,
     status,
     shouldSendAutomatically: Boolean(result.shouldSendAutomatically) && status === "marked",
@@ -572,59 +554,12 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
   };
 }
 
-
-function formatObjectiveAnswerForFeedback(value = "", fallback = "blank") {
-  const normalized = String(value || "").replace(/\s+/g, " ").trim();
-  const safe = normalized || fallback;
-  return `"${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}"`;
-}
-
-function normalizeScoreCandidate(value) {
-  const numberValue = Number(value);
-  if (!Number.isFinite(numberValue)) return null;
-  return Math.max(0, Math.min(100, Math.round(numberValue)));
-}
-
-function writingScoreFromParts(parts = []) {
-  const scores = (Array.isArray(parts) ? parts : [])
-    .filter((part) => part?.partType === "writing" || part?.partId === "teil2")
-    .map((part) => normalizeScoreCandidate(part?.result?.score ?? part?.result?.writingScore ?? part?.score ?? part?.writingScore))
-    .filter((score) => score !== null);
-
-  if (!scores.length) return null;
-  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
-}
-
-function resolveWritingScore(aiResult = {}) {
-  const partScore = writingScoreFromParts(aiResult.parts);
-  if (partScore !== null) return partScore;
-
-  return normalizeScoreCandidate(aiResult.writingScore);
-}
-
-function buildDetailedObjectiveFeedback(deterministicObjective = {}) {
-  const objectiveScore = deterministicObjective.objectiveScore;
-  const base = `Objective score: ${deterministicObjective.objectiveCorrect}/${deterministicObjective.objectiveTotal} correct (${objectiveScore}%).`;
-  const mistakeDetails = (deterministicObjective.wrongAnswers || []).slice(0, 5).map((item) => {
-    const label = `${item.partId || "objective"} ${item.question || ""}`.trim();
-    const submitted = formatObjectiveAnswerForFeedback(item.student || item.submitted || "", "blank");
-    const expected = formatObjectiveAnswerForFeedback(item.expected || "", "the correct answer");
-    return `${label}: you chose ${submitted}; correct answer is ${expected}`;
-  });
-
-  if (!mistakeDetails.length) return `${base} All objective answers were correct.`;
-  return `${base} Review these exact answers: ${mistakeDetails.join("; ")}.`;
-}
-
 function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObjective = null) {
   if (!deterministicObjective?.objectiveTotal) return aiResult;
-
   const writingScore = resolveWritingScore(aiResult);
   const objectiveScore = deterministicObjective.objectiveScore;
   const hasWritingScore = writingScore !== null && Number.isFinite(writingScore);
-  const finalScore = hasWritingScore
-    ? Math.round((objectiveScore * OBJECTIVE_WEIGHT) + (writingScore * WRITING_WEIGHT))
-    : objectiveScore;
+  const finalScore = hasWritingScore ? Math.round((objectiveScore * OBJECTIVE_WEIGHT) + (writingScore * WRITING_WEIGHT)) : objectiveScore;
   const objectiveFeedback = buildDetailedObjectiveFeedback(deterministicObjective);
 
   return {
@@ -634,17 +569,16 @@ function combineWithDeterministicObjectiveResult(aiResult = {}, deterministicObj
     objectiveScore,
     objectiveCorrect: deterministicObjective.objectiveCorrect,
     objectiveTotal: deterministicObjective.objectiveTotal,
+    objectiveDetails: deterministicObjective.details || deterministicObjective.objectiveDetails || null,
     writingScore: hasWritingScore ? writingScore : aiResult.writingScore ?? null,
     finalScore,
     wrongAnswers: deterministicObjective.wrongAnswers,
     detectedParts: deterministicObjective.detectedParts,
     parts: [
-      ...deterministicObjective.parts,
+      ...(deterministicObjective.parts || []),
       ...(Array.isArray(aiResult.parts) ? aiResult.parts.filter((part) => part?.partType !== "objective") : []),
     ],
-    feedback: stripBoldMarkdown(hasWritingScore
-      ? [aiResult.feedback, deterministicObjective.wrongAnswers?.length ? objectiveFeedback : ""].filter(Boolean).join(" ")
-      : objectiveFeedback),
+    feedback: stripBoldMarkdown(hasWritingScore ? [aiResult.feedback, deterministicObjective.wrongAnswers?.length ? objectiveFeedback : ""].filter(Boolean).join(" ") : objectiveFeedback),
     confidence: Math.max(Number(aiResult.confidence || 0), deterministicObjective.confidence || 0),
     status: aiResult.status === "marked" || finalScore >= 60 ? "marked" : aiResult.status,
     shouldSendAutomatically: false,
@@ -663,16 +597,8 @@ function skippedScoreReceipt(row, reason) {
     dedupeId: scoreDedupeId(row),
     duplicateSkipped: false,
     skippedForReview: true,
-    sheet: {
-      attempted: false,
-      success: true,
-      message: reason,
-    },
-    firestore: {
-      attempted: false,
-      success: true,
-      message: "AI result kept in Firestore marking audit, not saved as final score.",
-    },
+    sheet: { attempted: false, success: true, message: reason },
+    firestore: { attempted: false, success: true, message: "AI result kept in Firestore marking audit, not saved as final score." },
   };
 }
 
@@ -695,7 +621,15 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
     objectiveScore: result.objectiveScore ?? null,
     objectiveCorrect: result.objectiveCorrect ?? null,
     objectiveTotal: result.objectiveTotal ?? null,
+    objectiveDetails: result.objectiveDetails ?? null,
+    wrongAnswers: result.wrongAnswers || [],
     writingScore: result.writingScore ?? null,
+    writingScorePercent: result.writingScorePercent ?? null,
+    maxWritingScore: result.maxWritingScore ?? null,
+    scoreBreakdown: result.scoreBreakdown || [],
+    corrections: result.corrections || [],
+    improvementSummary: result.improvementSummary || "",
+    markingReason: result.markingReason || result.rawAiReason || result.ai?.reason || "",
     expectedParts: result.expectedParts || [],
     parts: result.parts || [],
     detectedParts: result.detectedParts || [],
@@ -708,11 +642,7 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
 }
 
 export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
-  const deterministicObjective = checkDeterministicObjectiveAnswers({
-    referenceEntry: referenceEntry || {},
-    submissionText,
-    partId: "main",
-  });
+  const deterministicObjective = checkDeterministicObjectiveAnswers({ referenceEntry: referenceEntry || {}, submissionText, partId: "main" });
   const objectiveFeedbackContext = deterministicObjective?.objectiveTotal ? {
     correct: deterministicObjective.objectiveCorrect,
     total: deterministicObjective.objectiveTotal,
@@ -729,42 +659,29 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     feedbackInstruction: AI_FEEDBACK_INSTRUCTION,
   };
 
-  const res = await fetch("/api/marking/ai", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
+  const res = await fetch("/api/marking/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok || body?.status === "error") {
-    throw new Error(body?.message || "AI marking failed");
-  }
+  if (!res.ok || body?.status === "error") throw new Error(body?.message || "AI marking failed");
 
   const aiResult = normalizeAIMarkingResult(body.result || body, payload);
   const result = combineWithDeterministicObjectiveResult(aiResult, deterministicObjective);
-  const row = {
-    studentcode: submission.studentCode || submission.studentcode || submission.uid || "",
+  const row = buildScoreRow({
+    studentCode: submission.studentCode || submission.studentcode || submission.uid || "",
     name: submission.studentName || submission.name || submission.fullName || "",
     assignment: submission.assignment || referenceEntry?.title || result.assignmentKey || "AI marked assignment",
-    assignment_id: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
     assignmentId: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
     score: result.finalScore ?? result.score ?? 0,
     comments: result.feedback || result.improvementSummary || "AI marking completed.",
-    date: new Date().toString(),
     level: result.level || referenceEntry?.level || submission.level || "",
     link: referenceEntry?.answerUrl || referenceEntry?.answer_url || referenceEntry?.sheetUrl || referenceEntry?.sheet_url || "",
     source: "ai_marking",
-  };
+    markingDetails: result,
+  });
 
   const reviewReason = "AI marking saved as draft only. Tutor must click Save Final Score before anything is written to the final score sheet.";
   const receipt = skippedScoreReceipt(row, reviewReason);
-
   await saveAIAudit({ submission, result, receipt, reason: reviewReason });
-
-  return {
-    ...result,
-    scoreSaveReceipt: receipt,
-  };
+  return { ...result, scoreSaveReceipt: receipt };
 }
 
 const DEFAULT_SCORES_WEBHOOK_URL =
@@ -780,36 +697,52 @@ function isLikelyNetworkError(error) {
 }
 
 async function postScoreToWebhook(payload) {
-  const res = await fetch(SCORES_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(body || "Failed to write score to Google Sheets webhook");
-  }
-
+  const res = await fetch(SCORES_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  if (!res.ok) throw new Error(await res.text() || "Failed to write score to Google Sheets webhook");
   const responseBody = await res.json().catch(() => ({}));
-  if (responseBody?.ok === false) {
-    throw new Error(responseBody?.error || "Validation failed while saving to sheet");
-  }
+  if (responseBody?.ok === false) throw new Error(responseBody?.error || "Validation failed while saving to sheet");
 }
 
 async function postScoreToWebhookNoCors(payload) {
-  await fetch(SCORES_WEBHOOK_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "text/plain;charset=UTF-8" },
-    body: JSON.stringify(payload),
-  });
+  await fetch(SCORES_WEBHOOK_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify(payload) });
 }
 
-export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source = "manual", allowDuplicate = false }) {
+function serializeForSheet(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value || "");
+  }
+}
+
+function buildScoreBreakdown(details = {}, row = {}) {
+  if (Array.isArray(details.scoreBreakdown) && details.scoreBreakdown.length) return details.scoreBreakdown;
+  const breakdown = [];
+  if (Number(details.objectiveTotal || 0) > 0) {
+    breakdown.push({
+      label: "Objective / MCQ",
+      score: `${details.objectiveCorrect || 0}/${details.objectiveTotal || 0}`,
+      reason: `${details.objectiveScore ?? ""}% objective score`,
+    });
+  }
+  if (details.writingScore !== null && details.writingScore !== undefined && details.writingScore !== "") {
+    breakdown.push({ label: "Writing", score: details.writingScore, reason: "Task, grammar, vocabulary, structure, tone and clarity" });
+  }
+  if (!breakdown.length) breakdown.push({ label: "Overall", score: row.score ?? details.finalScore ?? details.score ?? "", reason: "Final score saved by tutor/admin" });
+  return breakdown;
+}
+
+function buildMarkingReason(details = {}, row = {}) {
+  return normalize(details.markingReason || details.rawAiReason || details.ai?.reason || details.improvementSummary || row.comments || "Score saved by tutor/admin after review.");
+}
+
+function buildScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source = "manual", markingDetails = {} }) {
   const safeAssignmentId = String(assignmentId || "").trim();
   const now = new Date().toString();
-  const nowIso = new Date().toISOString();
+  const details = markingDetails && typeof markingDetails === "object" ? markingDetails : {};
   const row = {
     studentcode: studentCode,
     name,
@@ -823,6 +756,41 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
     link: Number(score) < 60 ? "" : link,
     source,
   };
+
+  return {
+    ...row,
+    objective_score: details.objectiveScore ?? "",
+    objective_correct: details.objectiveCorrect ?? "",
+    objective_total: details.objectiveTotal ?? "",
+    objective_details: serializeForSheet(details.objectiveDetails || details.objectiveFeedbackContext || ""),
+    wrong_answers: serializeForSheet(details.wrongAnswers || []),
+    writing_score: details.writingScore ?? "",
+    writing_score_percent: details.writingScorePercent ?? "",
+    max_writing_score: details.maxWritingScore ?? "",
+    score_breakdown: serializeForSheet(buildScoreBreakdown(details, row)),
+    corrections: serializeForSheet(details.corrections || []),
+    improvement_summary: details.improvementSummary || "",
+    marking_reason: buildMarkingReason(details, row),
+    ai_reason: buildMarkingReason(details, row),
+    raw_ai_reason: details.rawAiReason || details.ai?.rawReason || details.ai?.reason || "",
+  };
+}
+
+export async function saveScoreRow({
+  studentCode,
+  name,
+  assignment,
+  assignmentId,
+  score,
+  comments,
+  level,
+  link,
+  source = "manual",
+  allowDuplicate = false,
+  markingDetails = {},
+}) {
+  const nowIso = new Date().toISOString();
+  const row = buildScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source, markingDetails });
   const dedupeId = scoreDedupeId(row);
   const scoreRef = doc(db, "scores", dedupeId);
   const existingSnap = SAVE_SCORES_TO_FIRESTORE ? await getDoc(scoreRef).catch(() => null) : null;
@@ -842,16 +810,8 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
     row,
     dedupeId,
     duplicateSkipped: false,
-    sheet: {
-      attempted: Boolean(SCORES_WEBHOOK_URL),
-      success: !SCORES_WEBHOOK_URL,
-      message: SCORES_WEBHOOK_URL ? "Pending" : "Sheet save skipped (webhook not configured).",
-    },
-    firestore: {
-      attempted: SAVE_SCORES_TO_FIRESTORE,
-      success: !SAVE_SCORES_TO_FIRESTORE,
-      message: SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config).",
-    },
+    sheet: { attempted: Boolean(SCORES_WEBHOOK_URL), success: !SCORES_WEBHOOK_URL, message: SCORES_WEBHOOK_URL ? "Pending" : "Sheet save skipped (webhook not configured)." },
+    firestore: { attempted: SAVE_SCORES_TO_FIRESTORE, success: !SAVE_SCORES_TO_FIRESTORE, message: SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config)." },
   };
 
   if (SCORES_WEBHOOK_URL) {
@@ -863,7 +823,7 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
       try {
         await postScoreToWebhook(webhookPayload);
         receipt.sheet.success = true;
-        receipt.sheet.message = "Saved to Google Sheets.";
+        receipt.sheet.message = "Saved to Google Sheets with detailed marking fields.";
       } catch (error) {
         if (!isLikelyNetworkError(error)) {
           receipt.sheet.success = false;
@@ -872,7 +832,7 @@ export async function saveScoreRow({ studentCode, name, assignment, assignmentId
           try {
             await postScoreToWebhookNoCors(webhookPayload);
             receipt.sheet.success = true;
-            receipt.sheet.message = "Sheet request sent via no-cors fallback (delivery cannot be confirmed by browser).";
+            receipt.sheet.message = "Sheet request sent via no-cors fallback with detailed marking fields.";
           } catch (fallbackError) {
             receipt.sheet.success = false;
             receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
