@@ -212,6 +212,16 @@ function rowStudentHint(row = {}, studentIndex) {
   return parts.length ? `${parts.join(" · ")} · ` : "";
 }
 
+function rowSourceLabel(row = {}, fallbackCollection = "") {
+  const explicitPath = text(row.path || row.firestorePath || row.refPath || row.documentPath || row.collectionPath);
+  if (explicitPath) return explicitPath;
+
+  const id = text(row.id || row.docId || row.documentId || row.dedupeId || row.dedupe_id);
+  if (fallbackCollection && id) return `${fallbackCollection}/${id}`;
+  if (id) return id;
+  return fallbackCollection || "Source path unavailable";
+}
+
 function rowAssignment(row = {}) {
   return text(row.assignment || row.assignmentTitle || row.result?.assignment || row.result?.assignmentTitle || row.data?.assignment || row.assignmentId || row.assignment_id || "Marked assignment");
 }
@@ -299,6 +309,7 @@ function ProblemList({ title, items, emptyText, actionLabel = "Open", onRepair, 
                 <div style={{ display: "grid", gap: 3, minWidth: 220 }}>
                   <strong>{item.title}</strong>
                   <small style={{ color: "#6b7280" }}>{item.detail}</small>
+                  {item.sourceInfo ? <small style={{ color: "#4b5563", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", wordBreak: "break-all" }}>Source: {item.sourceInfo}</small> : null}
                   {item.repairHint ? <small style={{ color: "#1d4ed8", fontWeight: 700 }}>{item.repairHint}</small> : null}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -507,6 +518,7 @@ export default function AdminQualityPage() {
       row,
       title: rowStudentName(row, studentIndex),
       detail: `Marked but no student notification · ${displayDate(row.updatedAt || row.createdAt)}`,
+      sourceInfo: rowSourceLabel(row, "markingResults"),
       repairAction: "Resend notification",
       repairHint: `${rowStudentHint(row, studentIndex)}Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
       to: "/marking",
@@ -517,6 +529,7 @@ export default function AdminQualityPage() {
       row,
       title: rowStudentName(row, studentIndex),
       detail: `Saved in Firestore but Sheet problem: ${row.sheetMessage || "not confirmed"}`,
+      sourceInfo: rowSourceLabel(row, "scores"),
       repairAction: "Retry Sheet save",
       repairHint: `${rowStudentHint(row, studentIndex)}Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
       to: "/marking",
@@ -527,6 +540,7 @@ export default function AdminQualityPage() {
       row,
       title: rowStudentName(row, studentIndex),
       detail: row.feedback || row.message || row.status || "Needs review",
+      sourceInfo: rowSourceLabel(row, "markingResults"),
       repairHint: `${rowStudentHint(row, studentIndex)}Open Marking and review manually.`,
       to: "/marking",
     })),
@@ -536,6 +550,7 @@ export default function AdminQualityPage() {
       row,
       title: rowStudentName(row, studentIndex),
       detail: `${row.assignment || "Assignment"} pending more than 24 hours`,
+      sourceInfo: rowSourceLabel(row, "submissions"),
       repairHint: `${rowStudentHint(row, studentIndex)}Open submission and mark now.`,
       to: "/marking",
     })),
