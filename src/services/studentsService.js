@@ -96,27 +96,13 @@ export async function listStudentsByClassWithDeps(
   } = {},
 ) {
   try {
-    const fromSheet = await loadPublishedStudentsByClass(classId);
-    if (fromSheet.length > 0) return fromSheet;
+    const fromFirestore = await loadStudentsByField("className", classId);
+    if (fromFirestore.length > 0) return fromFirestore.sort(byNameAsc);
   } catch {
-    // Fall back when published sheet is unavailable.
+    // Fall back when Firestore is unavailable.
   }
 
-  const fields = ["className"];
-  const merged = [];
-  const seenIds = new Set();
-
-  for (const field of fields) {
-    const records = await loadStudentsByField(field, classId);
-    for (const record of records) {
-      const dedupeKey = String(record?.id || record?.studentCode || record?.studentcode || record?.uid || record?.email || "").trim();
-      if (dedupeKey && seenIds.has(dedupeKey)) continue;
-      if (dedupeKey) seenIds.add(dedupeKey);
-      merged.push(record);
-    }
-  }
-
-  return merged.sort(byNameAsc);
+  return loadPublishedStudentsByClass(classId);
 }
 
 export async function listStudentsByClass(classId) {

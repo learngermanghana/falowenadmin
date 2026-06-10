@@ -83,13 +83,14 @@ function toSessionApiErrorMessage(error, actionLabel) {
 }
 
 function mergeStudentsWithTemplate(studentTemplate, baseStudents) {
-  const merged = { ...studentTemplate };
+  const merged = {};
 
-  for (const [studentCode, baseStudent] of Object.entries(baseStudents || {})) {
+  for (const [studentCode, templateStudent] of Object.entries(studentTemplate || {})) {
+    const savedStudent = baseStudents?.[studentCode] || {};
     merged[studentCode] = {
-      ...(studentTemplate[studentCode] || {}),
-      ...(baseStudent || {}),
-      email: String(baseStudent?.email || studentTemplate[studentCode]?.email || "").trim(),
+      ...templateStudent,
+      present: Boolean(savedStudent.present),
+      email: String(templateStudent.email || savedStudent.email || "").trim(),
     };
   }
 
@@ -303,9 +304,9 @@ export default function AttendancePage() {
 
           for (const c of checkins) {
             const code = String(c.studentCode || c.uid || c.id || "").trim();
-            if (!code) continue;
+            if (!code || !Object.prototype.hasOwnProperty.call(studentsCopy, code)) continue;
             studentsCopy[code] = {
-              name: String(c.name || studentsCopy[code]?.name || "").trim(),
+              name: String(studentsCopy[code]?.name || c.name || "").trim(),
               email: String(studentsCopy[code]?.email || "").trim(),
               present: true,
             };
