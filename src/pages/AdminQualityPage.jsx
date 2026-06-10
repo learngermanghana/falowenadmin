@@ -75,14 +75,25 @@ function directStudentName(student = {}) {
   );
 }
 
+function studentUid(student = {}) {
+  return text(
+    student.studentId ||
+      student.student_id ||
+      student.uid ||
+      student.firebaseUid ||
+      student.firebase_uid ||
+      student.id,
+  ).toLowerCase();
+}
+
 function studentCode(student = {}) {
   return text(
     student.studentCode ||
       student.studentcode ||
       student.student_code ||
       student.code ||
-      student.uid ||
-      student.id,
+      student.studentCodePlain ||
+      student.student_code_plain,
   ).toLowerCase();
 }
 
@@ -91,7 +102,7 @@ function studentEmail(student = {}) {
 }
 
 function studentName(student = {}) {
-  return text(directStudentName(student) || studentEmail(student) || studentCode(student) || "Unknown student");
+  return text(directStudentName(student) || studentEmail(student) || studentCode(student) || studentUid(student) || "Unknown student");
 }
 
 function classLabel(student = {}) {
@@ -102,6 +113,7 @@ function buildStudentIndex(students = []) {
   const byCode = new Map();
   const byEmail = new Map();
   const byName = new Map();
+  const byUid = new Map();
 
   students.forEach((student) => {
     addLookup(byCode, studentCode(student), student);
@@ -109,24 +121,76 @@ function buildStudentIndex(students = []) {
     addLookup(byCode, student.studentcode, student);
     addLookup(byCode, student.student_code, student);
     addLookup(byCode, student.code, student);
-    addLookup(byCode, student.uid, student);
-    addLookup(byCode, student.id, student);
     addLookup(byEmail, studentEmail(student), student);
     addLookup(byEmail, student.email, student);
     addLookup(byEmail, student.studentEmail, student);
     addLookup(byName, directStudentName(student), student);
+    addLookup(byUid, studentUid(student), student);
+    addLookup(byUid, student.studentId, student);
+    addLookup(byUid, student.student_id, student);
+    addLookup(byUid, student.uid, student);
+    addLookup(byUid, student.firebaseUid, student);
+    addLookup(byUid, student.id, student);
   });
 
-  return { byCode, byEmail, byName };
+  return { byCode, byEmail, byName, byUid };
+}
+
+function rowScopeKey(row = {}) {
+  return text(
+    row.studentScopeKey ||
+      row.student_scope_key ||
+      row.scopeKey ||
+      row.result?.studentScopeKey ||
+      row.result?.student_scope_key ||
+      row.data?.studentScopeKey ||
+      row.data?.student_scope_key ||
+      row.raw?.studentScopeKey ||
+      row.raw?.student_scope_key,
+  );
+}
+
+function codeFromScopeKey(value) {
+  const scope = text(value);
+  if (!scope.includes("__")) return "";
+  const parts = scope.split("__").map((part) => text(part)).filter(Boolean);
+  return text(parts[1] || "").toLowerCase();
+}
+
+function uidFromScopeKey(value) {
+  const scope = text(value);
+  if (!scope.includes("__")) return "";
+  const parts = scope.split("__").map((part) => text(part)).filter(Boolean);
+  return text(parts[0] || "").toLowerCase();
+}
+
+function rowStudentUid(row = {}) {
+  const scope = rowScopeKey(row);
+  return text(
+    row.studentId ||
+      row.student_id ||
+      row.uid ||
+      row.firebaseUid ||
+      row.result?.studentId ||
+      row.result?.student_id ||
+      row.result?.uid ||
+      row.data?.studentId ||
+      row.data?.student_id ||
+      row.data?.uid ||
+      row.raw?.studentId ||
+      row.raw?.student_id ||
+      row.raw?.uid ||
+      uidFromScopeKey(scope),
+  ).toLowerCase();
 }
 
 function rowRawStudentCode(row = {}) {
+  const scope = rowScopeKey(row);
   return text(
     row.studentCode ||
       row.studentcode ||
       row.student_code ||
       row.code ||
-      row.uid ||
       row.result?.studentCode ||
       row.result?.studentcode ||
       row.result?.student_code ||
@@ -136,6 +200,7 @@ function rowRawStudentCode(row = {}) {
       row.raw?.studentCode ||
       row.raw?.studentcode ||
       row.raw?.student_code ||
+      codeFromScopeKey(scope) ||
       inferSubmissionIdentity(row).studentCode,
   ).toLowerCase();
 }
@@ -176,9 +241,11 @@ function findStudentForRow(row = {}, studentIndex) {
   const code = rowRawStudentCode(row);
   const email = rowStudentEmail(row);
   const name = rowDirectStudentName(row);
+  const uid = rowStudentUid(row);
 
   if (code && studentIndex.byCode.has(code)) return studentIndex.byCode.get(code);
   if (email && studentIndex.byEmail.has(email)) return studentIndex.byEmail.get(email);
+  if (uid && studentIndex.byUid.has(uid)) return studentIndex.byUid.get(uid);
   if (name && studentIndex.byName.has(normalizeKey(name))) return studentIndex.byName.get(normalizeKey(name));
   return null;
 }
@@ -186,7 +253,12 @@ function findStudentForRow(row = {}, studentIndex) {
 function rowStudentCode(row = {}, studentIndex) {
   const directCode = rowRawStudentCode(row);
   if (directCode) return directCode;
-  return studentCode(findStudentForRow(row, studentIndex) || {});
+
+  const matchedStudent = findStudentForRow(row, studentIndex);
+  const matchedCode = studentCode(matchedStudent || {});
+  if (matchedCode) return matchedCode;
+
+  return "";
 }
 
 function rowStudentName(row = {}, studentIndex) {
@@ -202,15 +274,20 @@ function rowStudentName(row = {}, studentIndex) {
   const email = rowStudentEmail(row);
   if (email) return email;
 
+  const uid = rowStudentUid(row);
+  if (uid) return `Student ID ${uid}`;
+
   return "Unknown student (missing code)";
 }
 
 function rowStudentHint(row = {}, studentIndex) {
   const code = rowStudentCode(row, studentIndex);
   const email = rowStudentEmail(row);
+  const uid = rowStudentUid(row);
   const parts = [];
   if (code) parts.push(`Code ${code.toUpperCase()}`);
   if (email) parts.push(email);
+  if (!code && uid) parts.push(`Student ID ${uid}`);
   return parts.length ? `${parts.join(" · ")} · ` : "";
 }
 
@@ -238,8 +315,7 @@ function rowScore(row = {}) {
 
 function rowLevel(row = {}) {
   return text(row.level || row.result?.level || row.data?.level || inferSubmissionIdentity(row).level).toUpperCase();
-}
-
+}\n
 function attended(value) {
   if (value === true) return true;
   if (value === false) return false;
