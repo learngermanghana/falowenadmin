@@ -6,7 +6,6 @@ import { loadSubmissions, saveScoreRow } from "../services/markingService.js";
 import { createMarkedAssignmentNotification } from "../services/studentNotificationService.js";
 import { listAllStudents } from "../services/studentsService.js";
 
-const PASS_MARK = 60;
 const LOW_ATTENDANCE = 70;
 const ATTENDANCE_TARGET = 80;
 const RESOLVED_STORAGE_KEY = "falowen.admin.quality.resolvedIds";
@@ -53,24 +52,164 @@ function displayDate(value) {
   return new Date(ms).toLocaleString();
 }
 
+function normalizeKey(value) {
+  return lower(value).replace(/\s+/g, " ");
+}
+
+function addLookup(map, key, student) {
+  const normalized = normalizeKey(key);
+  if (!normalized || map.has(normalized)) return;
+  map.set(normalized, student);
+}
+
+function directStudentName(student = {}) {
+  const combinedName = `${text(student.firstName || student.firstname)} ${text(student.lastName || student.lastname)}`.trim();
+  return text(
+    student.name ||
+      student.studentName ||
+      student.fullName ||
+      student.displayName ||
+      student.full_name ||
+      combinedName,
+  );
+}
+
 function studentCode(student = {}) {
-  return text(student.studentCode || student.studentcode || student.code || student.id).toLowerCase();
+  return text(
+    student.studentCode ||
+      student.studentcode ||
+      student.student_code ||
+      student.code ||
+      student.uid ||
+      student.id,
+  ).toLowerCase();
+}
+
+function studentEmail(student = {}) {
+  return lower(student.email || student.studentEmail || student.mail);
 }
 
 function studentName(student = {}) {
-  return text(student.name || student.studentName || student.fullName || student.email || studentCode(student) || "Unknown student");
+  return text(directStudentName(student) || studentEmail(student) || studentCode(student) || "Unknown student");
 }
 
 function classLabel(student = {}) {
   return text(student.className || student.class || student.level || student.program || "Unassigned");
 }
 
-function rowStudentCode(row = {}) {
-  return text(row.studentCode || row.studentcode || row.student_code || row.result?.studentCode || row.result?.studentcode || row.data?.studentCode).toLowerCase();
+function buildStudentIndex(students = []) {
+  const byCode = new Map();
+  const byEmail = new Map();
+  const byName = new Map();
+
+  students.forEach((student) => {
+    addLookup(byCode, studentCode(student), student);
+    addLookup(byCode, student.studentCode, student);
+    addLookup(byCode, student.studentcode, student);
+    addLookup(byCode, student.student_code, student);
+    addLookup(byCode, student.code, student);
+    addLookup(byCode, student.uid, student);
+    addLookup(byCode, student.id, student);
+    addLookup(byEmail, studentEmail(student), student);
+    addLookup(byEmail, student.email, student);
+    addLookup(byEmail, student.studentEmail, student);
+    addLookup(byName, directStudentName(student), student);
+  });
+
+  return { byCode, byEmail, byName };
 }
 
-function rowStudentName(row = {}) {
-  return text(row.studentName || row.name || row.result?.studentName || row.result?.name || row.data?.studentName || rowStudentCode(row) || "Unknown student");
+function rowRawStudentCode(row = {}) {
+  return text(
+    row.studentCode ||
+      row.studentcode ||
+      row.student_code ||
+      row.code ||
+      row.uid ||
+      row.result?.studentCode ||
+      row.result?.studentcode ||
+      row.result?.student_code ||
+      row.data?.studentCode ||
+      row.data?.studentcode ||
+      row.data?.student_code ||
+      row.raw?.studentCode ||
+      row.raw?.studentcode ||
+      row.raw?.student_code,
+  ).toLowerCase();
+}
+
+function rowStudentEmail(row = {}) {
+  return lower(
+    row.email ||
+      row.studentEmail ||
+      row.result?.email ||
+      row.result?.studentEmail ||
+      row.data?.email ||
+      row.data?.studentEmail ||
+      row.raw?.email ||
+      row.raw?.studentEmail,
+  );
+}
+
+function rowDirectStudentName(row = {}) {
+  return text(
+    row.studentName ||
+      row.name ||
+      row.fullName ||
+      row.displayName ||
+      row.result?.studentName ||
+      row.result?.name ||
+      row.result?.fullName ||
+      row.data?.studentName ||
+      row.data?.name ||
+      row.data?.fullName ||
+      row.raw?.studentName ||
+      row.raw?.name ||
+      row.raw?.fullName,
+  );
+}
+
+function findStudentForRow(row = {}, studentIndex) {
+  if (!studentIndex) return null;
+  const code = rowRawStudentCode(row);
+  const email = rowStudentEmail(row);
+  const name = rowDirectStudentName(row);
+
+  if (code && studentIndex.byCode.has(code)) return studentIndex.byCode.get(code);
+  if (email && studentIndex.byEmail.has(email)) return studentIndex.byEmail.get(email);
+  if (name && studentIndex.byName.has(normalizeKey(name))) return studentIndex.byName.get(normalizeKey(name));
+  return null;
+}
+
+function rowStudentCode(row = {}, studentIndex) {
+  const directCode = rowRawStudentCode(row);
+  if (directCode) return directCode;
+  return studentCode(findStudentForRow(row, studentIndex) || {});
+}
+
+function rowStudentName(row = {}, studentIndex) {
+  const directName = rowDirectStudentName(row);
+  if (directName && lower(directName) !== "unknown student") return directName;
+
+  const matchedStudent = findStudentForRow(row, studentIndex);
+  if (matchedStudent) return studentName(matchedStudent);
+
+  const code = rowStudentCode(row, studentIndex);
+  if (code) return `Student ${code.toUpperCase()}`;
+
+  const email = rowStudentEmail(row);
+  if (email) return email;
+
+  return "Unknown student (missing code)";
+}
+
+function rowStudentHint(row = {}, studentIndex) {
+  const code = rowStudentCode(row, studentIndex);
+  const email = rowStudentEmail(row);
+  const parts = [];
+  if (code) parts.push(`Code ${code.toUpperCase()}`);
+  if (email) parts.push(email);
+  return parts.length ? `${parts.join(" · ")} · ` : "";
 }
 
 function rowAssignment(row = {}) {
@@ -234,6 +373,8 @@ export default function AdminQualityPage() {
     refresh();
   }, []);
 
+  const studentIndex = useMemo(() => buildStudentIndex(state.students), [state.students]);
+
   const analytics = useMemo(() => {
     const markedToday = state.scores.filter((row) => isToday(row.date || row.createdAt || row.updatedAt)).length;
     const recentScores = state.scores.filter((row) => withinDays(row.date || row.createdAt || row.updatedAt, 7));
@@ -318,8 +459,8 @@ export default function AdminQualityPage() {
       if (item.kind === "missing_notification") {
         const row = item.row || {};
         const receipt = await createMarkedAssignmentNotification({
-          studentCode: rowStudentCode(row),
-          studentName: rowStudentName(row),
+          studentCode: rowStudentCode(row, studentIndex),
+          studentName: rowStudentName(row, studentIndex),
           assignment: rowAssignment(row),
           assignmentId: rowAssignmentId(row),
           score: rowScore(row),
@@ -328,7 +469,7 @@ export default function AdminQualityPage() {
           source: "quality_check_resend",
         });
         if (!receipt?.success) throw new Error(receipt?.message || "Notification resend failed.");
-        setActionState({ id: "", type: "success", message: `Notification resent for ${rowStudentName(row)}.` });
+        setActionState({ id: "", type: "success", message: `Notification resent for ${rowStudentName(row, studentIndex)}.` });
         await refresh();
         return;
       }
@@ -336,8 +477,8 @@ export default function AdminQualityPage() {
       if (item.kind === "sheet_retry") {
         const row = item.row || {};
         await saveScoreRow({
-          studentCode: rowStudentCode(row),
-          name: rowStudentName(row),
+          studentCode: rowStudentCode(row, studentIndex),
+          name: rowStudentName(row, studentIndex),
           assignment: rowAssignment(row),
           assignmentId: rowAssignmentId(row),
           score: rowScore(row),
@@ -348,7 +489,7 @@ export default function AdminQualityPage() {
           allowDuplicate: true,
           markingDetails: row.result || row,
         });
-        setActionState({ id: "", type: "success", message: `Sheet save retried for ${rowStudentName(row)}.` });
+        setActionState({ id: "", type: "success", message: `Sheet save retried for ${rowStudentName(row, studentIndex)}.` });
         await refresh();
         return;
       }
@@ -364,38 +505,38 @@ export default function AdminQualityPage() {
       id: `mn-${row.id}`,
       kind: "missing_notification",
       row,
-      title: rowStudentName(row),
+      title: rowStudentName(row, studentIndex),
       detail: `Marked but no student notification · ${displayDate(row.updatedAt || row.createdAt)}`,
       repairAction: "Resend notification",
-      repairHint: `Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
+      repairHint: `${rowStudentHint(row, studentIndex)}Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
       to: "/marking",
     })),
     ...analytics.savedFirestoreNotSheet.map((row) => ({
       id: `ss-${row.id}`,
       kind: "sheet_retry",
       row,
-      title: rowStudentName(row) || row.name || row.studentcode || "Score row",
+      title: rowStudentName(row, studentIndex),
       detail: `Saved in Firestore but Sheet problem: ${row.sheetMessage || "not confirmed"}`,
       repairAction: "Retry Sheet save",
-      repairHint: `Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
+      repairHint: `${rowStudentHint(row, studentIndex)}Score ${rowScore(row)}/100 · ${rowAssignment(row)}`,
       to: "/marking",
     })),
     ...analytics.failedMarking.map((row) => ({
       id: `fm-${row.id}`,
       kind: "manual_review",
       row,
-      title: rowStudentName(row) || "Failed marking result",
+      title: rowStudentName(row, studentIndex),
       detail: row.feedback || row.message || row.status || "Needs review",
-      repairHint: "Open Marking and review manually.",
+      repairHint: `${rowStudentHint(row, studentIndex)}Open Marking and review manually.`,
       to: "/marking",
     })),
     ...analytics.pendingMoreThan24Hours.map((row) => ({
       id: `p24-${row.path || row.id}`,
       kind: "open_submission",
       row,
-      title: row.studentName || row.studentCode || "Pending submission",
+      title: rowStudentName(row, studentIndex),
       detail: `${row.assignment || "Assignment"} pending more than 24 hours`,
-      repairHint: "Open submission and mark now.",
+      repairHint: `${rowStudentHint(row, studentIndex)}Open submission and mark now.`,
       to: "/marking",
     })),
   ];
