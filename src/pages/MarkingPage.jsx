@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
+import { MARKING_FEEDBACK_TEMPLATES } from "../data/markingFeedbackTemplates.js";
 import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, importAnswerDictionary, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
@@ -8,44 +9,6 @@ import { useToast } from "../context/ToastContext.jsx";
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
 const REFERENCE_ASSIGNMENT_STORAGE_KEY = "marking.referenceAssignment";
-const FEEDBACK_TEMPLATES = [
-  {
-    id: "grammar-clarity",
-    label: "Grammar & clarity",
-    text: "Good effort. Please improve your sentence structure and grammar. Keep each sentence short and clear, and check any highlighted corrections before submitting.",
-  },
-  {
-    id: "letter-structure-basics",
-    label: "Letter basics",
-    text: "Your writing currently depends too much on translators, which suggests the basics of letter writing are not yet clear. This may slow your progress for exams and the move to A2. Please practice writing your own letter with a simple introduction and conclusion, and use short, clear lines of about 5 to 6 words.",
-  },
-  {
-    id: "missing-introduction-formal-informal",
-    label: "Missing introduction (formal/informal)",
-    text: "You missed the introduction line. Start your letter with a clear opening: Informal: \"Ich schreibe dir, weil ...\" Formal: \"Ich schreibe Ihnen, weil ...\".",
-  },
-  {
-    id: "enquiry-ask-price",
-    label: "Enquiry: ask about price",
-    text: "In an enquiry, you should ask about price/payment. Useful questions: \"Wie viel kostet ...?\" \"Was kostet der Kurs?\" \"Kann ich bar oder mit Karte zahlen?\"",
-  },
-  {
-    id: "vocabulary-range",
-    label: "Vocabulary range",
-    text: "Try to use a wider range of simple vocabulary from class. Avoid repeating the same words and add a few relevant connectors such as 'and', 'but', and 'because'.",
-  },
-  {
-    id: "wrong-or-incomplete-submission",
-    label: "Wrong/incomplete task",
-    text: "This submission does not fully match the assigned task. Please check the assignment instructions carefully and resubmit the correct task. Make sure all required parts are completed before submitting.",
-  },
-  {
-    id: "three-attempts-flat-60",
-    label: "3 attempts: flat 60",
-    text: "You have submitted this work 3 times and could not meet the required standard. A flat mark of 60 has been awarded. Please refer to the previous comments to see the exact errors. You can improve by watching the lecture again and reading through the grammar notes carefully.",
-  },
-];
-
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -282,7 +245,7 @@ export default function MarkingPage() {
   const [assignmentValue, setAssignmentValue] = useState("");
   const [assignmentIdValue, setAssignmentIdValue] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [selectedFeedbackTemplateId, setSelectedFeedbackTemplateId] = useState(FEEDBACK_TEMPLATES[0].id);
+  const [selectedFeedbackTemplateId, setSelectedFeedbackTemplateId] = useState(MARKING_FEEDBACK_TEMPLATES[0].id);
   const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
@@ -751,7 +714,7 @@ export default function MarkingPage() {
   };
 
   const handleInsertTemplate = () => {
-    const template = FEEDBACK_TEMPLATES.find((item) => item.id === selectedFeedbackTemplateId);
+    const template = MARKING_FEEDBACK_TEMPLATES.find((item) => item.id === selectedFeedbackTemplateId);
     if (!template) return;
 
     setFeedback((current) => {
@@ -1190,7 +1153,7 @@ export default function MarkingPage() {
                 value={selectedFeedbackTemplateId}
                 onChange={(e) => setSelectedFeedbackTemplateId(e.target.value)}
               >
-                {FEEDBACK_TEMPLATES.map((template) => (
+                {MARKING_FEEDBACK_TEMPLATES.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.label}
                   </option>

@@ -10,7 +10,11 @@ import {
 test("AI feedback policy allows enough space for actionable writing guidance", () => {
   assert.equal(AI_FEEDBACK_MIN_WORDS, 80);
   assert.equal(AI_FEEDBACK_MAX_WORDS, 120);
+  assert.match(AI_FEEDBACK_INSTRUCTION, /both the objective section and writing are perfect/);
+  assert.match(AI_FEEDBACK_INSTRUCTION, /objective section is strong but writing needs work/);
+  assert.match(AI_FEEDBACK_INSTRUCTION, /writing is strong but the objective section needs work/);
   assert.match(AI_FEEDBACK_INSTRUCTION, /two or three concrete corrections/);
+  assert.match(AI_FEEDBACK_INSTRUCTION, /do not invent corrections/);
   assert.match(AI_FEEDBACK_INSTRUCTION, /show improved wording/);
   assert.match(AI_FEEDBACK_INSTRUCTION, /most useful language rule/);
   assert.match(AI_FEEDBACK_INSTRUCTION, /exact wrong answers/);
