@@ -100,5 +100,7 @@ export function getCourseDictionaryEntry(assignmentId) {
 export function getUnifiedTopicLabel(assignmentId, fallbackTopic = "") {
   const entry = getCourseDictionaryEntry(assignmentId);
   if (!entry) return fallbackTopic;
-  return `${entry.chapter}. ${entry.en}`;
+  const level = String(assignmentId || "").split("-")[0]?.toUpperCase();
+  const title = level === "A1" ? entry.en : entry.de;
+  return `${entry.chapter}. ${title || entry.de || entry.en}`;
 }
