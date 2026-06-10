@@ -5,6 +5,7 @@ import { db } from "../firebase.js";
 import { loadSubmissions, saveScoreRow } from "../services/markingService.js";
 import { createMarkedAssignmentNotification } from "../services/studentNotificationService.js";
 import { listAllStudents } from "../services/studentsService.js";
+import { inferSubmissionIdentity } from "../utils/submissionIdentity.js";
 
 const LOW_ATTENDANCE = 70;
 const ATTENDANCE_TARGET = 80;
@@ -134,7 +135,8 @@ function rowRawStudentCode(row = {}) {
       row.data?.student_code ||
       row.raw?.studentCode ||
       row.raw?.studentcode ||
-      row.raw?.student_code,
+      row.raw?.student_code ||
+      inferSubmissionIdentity(row).studentCode,
   ).toLowerCase();
 }
 
@@ -235,7 +237,7 @@ function rowScore(row = {}) {
 }
 
 function rowLevel(row = {}) {
-  return text(row.level || row.result?.level || row.data?.level).toUpperCase();
+  return text(row.level || row.result?.level || row.data?.level || inferSubmissionIdentity(row).level).toUpperCase();
 }
 
 function attended(value) {
