@@ -315,7 +315,8 @@ function rowScore(row = {}) {
 
 function rowLevel(row = {}) {
   return text(row.level || row.result?.level || row.data?.level || inferSubmissionIdentity(row).level).toUpperCase();
-}\n
+}
+
 function attended(value) {
   if (value === true) return true;
   if (value === false) return false;
