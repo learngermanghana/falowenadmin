@@ -2,6 +2,7 @@ import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, q
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
+import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
 import {
   loadPublishedStudentRows,
@@ -169,6 +170,7 @@ function normalizeSubmissionDoc(docSnap, fallback = {}) {
   const text = normalize(data.text || data.answer || data.answers || data.content || data.message || data.submissionText || data.writing || "");
   const assignment = normalize(data.assignment || data.assignmentTitle || data.assignmentName || data.topic || fallback.assignment || "");
   const assignmentId = normalize(data.assignmentId || data.assignment_id || data.assignmentKey || data.canonicalAssignmentKey || fallback.assignmentId || "");
+  const pathIdentity = inferSubmissionIdentityFromPath(docSnap.ref.path);
 
   return {
     id: docSnap.id,
@@ -177,8 +179,8 @@ function normalizeSubmissionDoc(docSnap, fallback = {}) {
     assignment,
     assignmentId,
     assignmentKey: normalize(data.assignmentKey || data.assignment_id || data.assignmentId || data.canonicalAssignmentKey || ""),
-    level: normalize(data.level || fallback.level || ""),
-    studentCode: normalize(data.studentCode || data.studentcode || data.uid || fallback.studentCode || ""),
+    level: normalize(data.level || fallback.level || pathIdentity.level || ""),
+    studentCode: normalize(data.studentCode || data.studentcode || data.uid || fallback.studentCode || pathIdentity.studentCode || ""),
     studentName: normalize(data.studentName || data.name || data.fullName || fallback.studentName || ""),
     status: normalize(data.status || data.submissionStatus || "submitted"),
     markingStatus: normalize(data.markingStatus || "pending"),
@@ -320,9 +322,13 @@ export async function createMarkingJob({ submissionId, submissionPath, assignmen
 export async function saveMarkingResult({ submissionId, submissionPath, result, status = "marked", sentToStudent = false }) {
   const now = new Date().toISOString();
   const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || globalThis.crypto?.randomUUID?.() || `${Date.now()}`);
+  const pathIdentity = inferSubmissionIdentityFromPath(submissionPath);
   const payload = {
     submissionId,
     submissionPath,
+    studentCode: normalize(result.studentCode || result.studentcode || pathIdentity.studentCode),
+    studentName: normalize(result.studentName || result.name),
+    level: normalize(result.level || pathIdentity.level),
     result,
     status,
     finalScore: result.finalScore ?? result.score ?? null,
