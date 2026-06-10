@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { listPublishedStudentsByClassWithLoader } from "../src/services/studentsService.js";
+import { listPublishedStudentsByClassWithLoader, listStudentsByClassWithDeps } from "../src/services/studentsService.js";
 
 test("matches by full className when present", async () => {
   const rows = [
@@ -62,4 +62,41 @@ test("maps published student email for attendance email selection", async () => 
   const [student] = await listPublishedStudentsByClassWithLoader("A2 Stuttgart Klasse", async () => rows);
 
   assert.equal(student.email, "email.student@example.com");
+});
+
+test("prefers Firestore students as the live class roster", async () => {
+  const calls = [];
+  const result = await listStudentsByClassWithDeps("A1 Hamburg Klasse", {
+    loadStudentsByField: async (field, classId) => {
+      calls.push(`firestore:${field}:${classId}`);
+      return [{ id: "current", name: "Current Student" }];
+    },
+    loadPublishedStudentsByClass: async () => {
+      calls.push("sheet");
+      return [{ id: "removed", name: "Removed Student" }];
+    },
+  });
+
+  assert.deepEqual(result.map((student) => student.name), ["Current Student"]);
+  assert.deepEqual(calls, ["firestore:className:A1 Hamburg Klasse"]);
+});
+
+test("falls back to the published sheet when Firestore has no class students", async () => {
+  const result = await listStudentsByClassWithDeps("A1 Hamburg Klasse", {
+    loadStudentsByField: async () => [],
+    loadPublishedStudentsByClass: async () => [{ id: "sheet", name: "Sheet Student" }],
+  });
+
+  assert.deepEqual(result.map((student) => student.name), ["Sheet Student"]);
+});
+
+test("falls back to the published sheet when Firestore fails", async () => {
+  const result = await listStudentsByClassWithDeps("A1 Hamburg Klasse", {
+    loadStudentsByField: async () => {
+      throw new Error("Firestore unavailable");
+    },
+    loadPublishedStudentsByClass: async () => [{ id: "sheet", name: "Sheet Student" }],
+  });
+
+  assert.deepEqual(result.map((student) => student.name), ["Sheet Student"]);
 });
