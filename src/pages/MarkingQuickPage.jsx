@@ -8,6 +8,7 @@ import {
   saveScoreRow,
 } from "../services/markingService.js";
 import { createMarkedAssignmentNotification } from "../services/studentNotificationService.js";
+import { codeFromScopeKey } from "../utils/studentIdentity.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 function normalize(value) {
@@ -309,8 +310,38 @@ export default function MarkingQuickPage() {
       const finalFeedback = feedback.trim();
       const assignment = selectedSubmission.assignment || assignmentKey || "Marked assignment";
       const assignmentId = assignmentKey || selectedSubmission.assignmentId || selectedSubmission.assignmentKey;
+      const resolvedStudentCode =
+        selectedSubmission.studentCode ||
+        selectedSubmission.studentcode ||
+        selectedSubmission.student_code ||
+        selectedSubmission.raw?.studentCode ||
+        selectedSubmission.raw?.studentcode ||
+        selectedSubmission.raw?.student_code ||
+        codeFromScopeKey(selectedSubmission.studentScopeKey || selectedSubmission.student_scope_key || selectedSubmission.raw?.studentScopeKey || selectedSubmission.raw?.student_scope_key) ||
+        "";
+      const resolvedStudentName =
+        selectedSubmission.studentName ||
+        selectedSubmission.name ||
+        selectedSubmission.raw?.studentName ||
+        selectedSubmission.raw?.name ||
+        "";
+      const resolvedStudentEmail =
+        selectedSubmission.studentEmail ||
+        selectedSubmission.email ||
+        selectedSubmission.raw?.studentEmail ||
+        selectedSubmission.raw?.email ||
+        "";
+      const resolvedStudentId = selectedSubmission.studentId || selectedSubmission.uid || selectedSubmission.raw?.studentId || selectedSubmission.raw?.student_id || selectedSubmission.raw?.uid || "";
+      const resolvedStudentScopeKey = selectedSubmission.studentScopeKey || selectedSubmission.raw?.studentScopeKey || selectedSubmission.raw?.student_scope_key || "";
       const finalResult = {
         ...(result || {}),
+        studentCode: resolvedStudentCode,
+        studentcode: resolvedStudentCode,
+        student_code: resolvedStudentCode,
+        studentName: resolvedStudentName,
+        studentEmail: resolvedStudentEmail,
+        studentId: resolvedStudentId,
+        studentScopeKey: resolvedStudentScopeKey,
         score: finalScore,
         finalScore,
         feedback: finalFeedback,
@@ -320,8 +351,11 @@ export default function MarkingQuickPage() {
       };
 
       const receipt = await saveScoreRow({
-        studentCode: selectedSubmission.studentCode,
-        name: selectedSubmission.studentName,
+        studentCode: resolvedStudentCode,
+        studentEmail: resolvedStudentEmail,
+        studentId: resolvedStudentId,
+        studentScopeKey: resolvedStudentScopeKey,
+        name: resolvedStudentName,
         assignment,
         assignmentId,
         score: finalScore,
@@ -333,8 +367,8 @@ export default function MarkingQuickPage() {
       });
 
       const notificationReceipt = await createMarkedAssignmentNotification({
-        studentCode: selectedSubmission.studentCode,
-        studentName: selectedSubmission.studentName,
+        studentCode: resolvedStudentCode,
+        studentName: resolvedStudentName,
         assignment,
         assignmentId,
         score: finalScore,

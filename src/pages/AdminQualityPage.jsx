@@ -6,6 +6,7 @@ import { loadSubmissions, saveScoreRow } from "../services/markingService.js";
 import { createMarkedAssignmentNotification } from "../services/studentNotificationService.js";
 import { listAllStudents } from "../services/studentsService.js";
 import { inferSubmissionIdentity } from "../utils/submissionIdentity.js";
+import { codeFromScopeKey } from "../utils/studentIdentity.js";
 
 const LOW_ATTENDANCE = 70;
 const ATTENDANCE_TARGET = 80;
@@ -148,13 +149,6 @@ function rowScopeKey(row = {}) {
       row.raw?.studentScopeKey ||
       row.raw?.student_scope_key,
   );
-}
-
-function codeFromScopeKey(value) {
-  const scope = text(value);
-  if (!scope.includes("__")) return "";
-  const parts = scope.split("__").map((part) => text(part)).filter(Boolean);
-  return text(parts[1] || "").toLowerCase();
 }
 
 function uidFromScopeKey(value) {

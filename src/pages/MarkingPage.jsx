@@ -243,7 +243,6 @@ export default function MarkingPage() {
   });
   const [referenceQuery, setReferenceQuery] = useState("");
   const [schreibenMark, setSchreibenMark] = useState("");
-  const [finalScore, setFinalScore] = useState("");
   const [selectedHighlight, setSelectedHighlight] = useState("");
   const [assignmentValue, setAssignmentValue] = useState("");
   const [assignmentIdValue, setAssignmentIdValue] = useState("");
@@ -490,12 +489,8 @@ export default function MarkingPage() {
 
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
   const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
-  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);
-  const displayedCalculatedFinalScore = Number.isInteger(calculatedFinalScore) ? calculatedFinalScore : Number(calculatedFinalScore.toFixed(2));
-
-  useEffect(() => {
-    setFinalScore(String(displayedCalculatedFinalScore));
-  }, [displayedCalculatedFinalScore]);
+  const finalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);
+  const displayedFinalScore = Number.isInteger(finalScore) ? finalScore : Number(finalScore.toFixed(2));
 
   const handleDeleteSubmission = async (submission) => {
     if (!submission?.path) {
@@ -763,16 +758,12 @@ export default function MarkingPage() {
       error("Feedback is required.");
       return;
     }
-    if (finalScore === "" || !Number.isFinite(Number(finalScore))) {
-      error("Final Score is required.");
-      return;
-    }
     try {
       setSavingScore(true);
       const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
       const safeAssignment = assignmentValue.trim();
 
-      const currentScore = Number(finalScore);
+      const currentScore = finalScore;
       const currentFeedback = feedback.trim();
       const currentObjectiveResult = objectiveMarkingResult;
       const currentObjectiveScore = objectivePercentFromResult(currentObjectiveResult);
@@ -1102,7 +1093,7 @@ export default function MarkingPage() {
                 <span>Detected assignment: <b>{smartMarkingResult.assignmentKey || "Unknown"}</b></span>
                 <span>Objective score: <b>{smartMarkingResult.objectiveTotal ? `${smartMarkingResult.objectiveCorrect}/${smartMarkingResult.objectiveTotal} → ${Math.round(smartMarkingResult.objectiveScore ?? 0)}%` : "—"}</b></span>
                 <span>Writing score: <b>{formatWritingScore(smartMarkingResult)}</b></span>
-                <span>Current final score: <b>{finalScore}</b></span>
+                <span>Current final score: <b>{displayedFinalScore}</b></span>
                 <span>AI confidence: <b>{smartMarkingResult.confidence}</b></span>
                 <span>Status: <b>{smartMarkingResult.status}</b></span>
               </div>
@@ -1172,29 +1163,14 @@ export default function MarkingPage() {
               placeholder="Enter writing score"
             />
           </label>
-          <label style={{ padding: 12, borderRadius: 8, border: "2px solid #2563eb", background: "#eff6ff", fontSize: 18 }}>
-            Final Score (editable)
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={finalScore}
-              onChange={(e) => {
-                const nextValue = e.target.value;
-                if (nextValue === "") {
-                  setFinalScore("");
-                  return;
-                }
-
-                setFinalScore(String(Math.max(0, Math.min(100, Number(nextValue)))));
-              }}
-            />
+          <div style={{ padding: 12, borderRadius: 8, border: "2px solid #2563eb", background: "#eff6ff", fontSize: 18 }}>
+            Final Score: <b>{displayedFinalScore}</b>
             <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>
               {schreibenMark === ""
-                ? "Automatically set from Objective Percentage. You can edit it before saving."
-                : `Automatically set to the rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}). You can edit it before saving.`}
+                ? "Using Objective Percentage only because Schreiben Mark is empty."
+                : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
             </div>
-          </label>
+          </div>
           <label>
             Comments / Feedback
             <textarea
@@ -1233,7 +1209,7 @@ export default function MarkingPage() {
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
               {autoMarking ? "AI marking..." : "Run AI marking"}
             </button>
-            <button onClick={() => { setSchreibenMark(""); setFinalScore(String(displayedCalculatedFinalScore)); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
+            <button onClick={() => { setSchreibenMark(""); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
           </div>
         </div>
       </section>
