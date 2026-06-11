@@ -243,6 +243,7 @@ export default function MarkingPage() {
   });
   const [referenceQuery, setReferenceQuery] = useState("");
   const [schreibenMark, setSchreibenMark] = useState("");
+  const [finalScoreOverride, setFinalScoreOverride] = useState(null);
   const [selectedHighlight, setSelectedHighlight] = useState("");
   const [assignmentValue, setAssignmentValue] = useState("");
   const [assignmentIdValue, setAssignmentIdValue] = useState("");
@@ -432,6 +433,7 @@ export default function MarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
     setSchreibenMark("");
+    setFinalScoreOverride(null);
     setSelectedHighlight("");
   }, [
     selectedStudent?.level,
@@ -489,7 +491,13 @@ export default function MarkingPage() {
 
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
   const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
-  const finalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);
+  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);
+  const finalScore = finalScoreOverride === null || finalScoreOverride === ""
+    ? calculatedFinalScore
+    : Number(finalScoreOverride);
+  const displayedCalculatedFinalScore = Number.isInteger(calculatedFinalScore)
+    ? calculatedFinalScore
+    : Number(calculatedFinalScore.toFixed(2));
   const displayedFinalScore = Number.isInteger(finalScore) ? finalScore : Number(finalScore.toFixed(2));
 
   const handleDeleteSubmission = async (submission) => {
@@ -640,6 +648,7 @@ export default function MarkingPage() {
       setSchreibenMark(result.writingScore === null || result.writingScore === undefined
         ? ""
         : String(writingScoreToPercent(result.writingScore, getMaxWritingScore(result))));
+      setFinalScoreOverride(null);
       setFeedback(result.feedback);
       await createMarkingJob({
         submissionId: selectedSubmission.id,
@@ -1155,21 +1164,47 @@ export default function MarkingPage() {
                 const nextValue = e.target.value;
                 if (nextValue === "") {
                   setSchreibenMark("");
+                  setFinalScoreOverride(null);
                   return;
                 }
 
                 setSchreibenMark(String(Math.max(0, Math.min(100, Number(nextValue)))));
+                setFinalScoreOverride(null);
               }}
               placeholder="Enter writing score"
             />
           </label>
-          <div style={{ padding: 12, borderRadius: 8, border: "2px solid #2563eb", background: "#eff6ff", fontSize: 18 }}>
-            Final Score: <b>{displayedFinalScore}</b>
-            <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>
-              {schreibenMark === ""
-                ? "Using Objective Percentage only because Schreiben Mark is empty."
-                : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
+          <div style={{ padding: 12, borderRadius: 8, border: "2px solid #2563eb", background: "#eff6ff", display: "grid", gap: 6 }}>
+            <label style={{ fontSize: 18, fontWeight: 700 }}>
+              Final Score (editable)
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={finalScoreOverride === null ? displayedCalculatedFinalScore : finalScoreOverride}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  if (nextValue === "") {
+                    setFinalScoreOverride("");
+                    return;
+                  }
+
+                  setFinalScoreOverride(String(Math.max(0, Math.min(100, Number(nextValue)))));
+                }}
+              />
+            </label>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>
+              {finalScoreOverride !== null && finalScoreOverride !== ""
+                ? `Manual final score override. Calculated score: ${displayedCalculatedFinalScore}.`
+                : schreibenMark === ""
+                  ? "Using Objective Percentage only because Schreiben Mark is empty."
+                  : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
             </div>
+            {finalScoreOverride !== null ? (
+              <button type="button" onClick={() => setFinalScoreOverride(null)} style={{ justifySelf: "start" }}>
+                Use calculated score ({displayedCalculatedFinalScore})
+              </button>
+            ) : null}
           </div>
           <label>
             Comments / Feedback
@@ -1209,7 +1244,7 @@ export default function MarkingPage() {
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
               {autoMarking ? "AI marking..." : "Run AI marking"}
             </button>
-            <button onClick={() => { setSchreibenMark(""); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
+            <button onClick={() => { setSchreibenMark(""); setFinalScoreOverride(null); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
           </div>
         </div>
       </section>
