@@ -4,6 +4,7 @@ import { MARKING_FEEDBACK_TEMPLATES } from "../data/markingFeedbackTemplates.js"
 import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, importAnswerDictionary, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
+import { calculateFinalScore } from "../utils/finalScore.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
@@ -241,7 +242,8 @@ export default function MarkingPage() {
     return window.localStorage.getItem(REFERENCE_ASSIGNMENT_STORAGE_KEY) || "";
   });
   const [referenceQuery, setReferenceQuery] = useState("");
-  const [score, setScore] = useState("");
+  const [schreibenMark, setSchreibenMark] = useState("");
+  const [selectedHighlight, setSelectedHighlight] = useState("");
   const [assignmentValue, setAssignmentValue] = useState("");
   const [assignmentIdValue, setAssignmentIdValue] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -429,6 +431,8 @@ export default function MarkingPage() {
     setAssignmentValue(nextAssignment);
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
+    setSchreibenMark("");
+    setSelectedHighlight("");
   }, [
     selectedStudent?.level,
     referenceEntry?.level,
@@ -485,14 +489,8 @@ export default function MarkingPage() {
 
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
   const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
-
-  const manualOverrideMessage = useMemo(() => {
-    if (!smartMarkingResult) return "";
-    const aiScore = Number(smartMarkingResult.aiOriginalScore ?? smartMarkingResult.finalScore ?? smartMarkingResult.score);
-    const currentScore = Number(score);
-    if (!Number.isFinite(aiScore) || !Number.isFinite(currentScore) || aiScore === currentScore) return "";
-    return `Manual override: Tutor edited score from ${Math.round(aiScore)} to ${Math.round(currentScore)}`;
-  }, [score, smartMarkingResult]);
+  const finalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);
+  const displayedFinalScore = Number.isInteger(finalScore) ? finalScore : Number(finalScore.toFixed(2));
 
   const handleDeleteSubmission = async (submission) => {
     if (!submission?.path) {
@@ -639,7 +637,9 @@ export default function MarkingPage() {
       });
       const result = mergeObjectiveScore(aiResult, deterministicObjective);
       setSmartMarkingResult(result);
-      setScore(String(result.finalScore ?? result.score));
+      setSchreibenMark(result.writingScore === null || result.writingScore === undefined
+        ? ""
+        : String(writingScoreToPercent(result.writingScore, getMaxWritingScore(result))));
       setFeedback(result.feedback);
       await createMarkingJob({
         submissionId: selectedSubmission.id,
@@ -713,6 +713,19 @@ export default function MarkingPage() {
     }
   };
 
+  const handleSelectSubmissionText = (event) => {
+    const { selectionStart, selectionEnd, value } = event.currentTarget;
+    setSelectedHighlight(selectionEnd > selectionStart ? value.slice(selectionStart, selectionEnd).trim() : "");
+  };
+
+  const handleAddHighlightToComment = () => {
+    if (!selectedHighlight) return;
+
+    const comment = `Issue found: "${selectedHighlight}"\nCorrection:`;
+    setFeedback((current) => current.trim() ? `${current.trimEnd()}\n\n${comment}` : comment);
+    setSelectedHighlight("");
+  };
+
   const handleInsertTemplate = () => {
     const template = MARKING_FEEDBACK_TEMPLATES.find((item) => item.id === selectedFeedbackTemplateId);
     if (!template) return;
@@ -745,21 +758,16 @@ export default function MarkingPage() {
       error("Feedback is required.");
       return;
     }
-    if (score === "") {
-      error("Score is required.");
-      return;
-    }
-
     try {
       setSavingScore(true);
       const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
       const safeAssignment = assignmentValue.trim();
 
-      const currentScore = Number(score);
+      const currentScore = finalScore;
       const currentFeedback = feedback.trim();
       const currentObjectiveResult = objectiveMarkingResult;
       const currentObjectiveScore = objectivePercentFromResult(currentObjectiveResult);
-      const currentWritingScore = smartMarkingResult?.writingScore ?? null;
+      const currentWritingScore = schreibenMark === "" ? null : Number(schreibenMark);
       const aiOriginalScore = smartMarkingResult?.aiOriginalScore ?? smartMarkingResult?.finalScore ?? smartMarkingResult?.score ?? null;
 
       const receipt = await saveScoreRow({
@@ -771,6 +779,16 @@ export default function MarkingPage() {
         comments: currentFeedback,
         level,
         link: referenceEntry.answer_url ?? DEFAULT_REFERENCE_LINK,
+        markingDetails: {
+          objectiveScore: currentObjectiveScore,
+          objectiveCorrect: currentObjectiveResult.correctCount,
+          objectiveTotal: currentObjectiveResult.totalCount,
+          objectiveDetails: currentObjectiveResult.details,
+          writingScore: currentWritingScore,
+          writingScorePercent: currentWritingScore,
+          maxWritingScore: 100,
+          finalScore: currentScore,
+        },
       });
       setSaveReceipt(receipt);
 
@@ -788,7 +806,8 @@ export default function MarkingPage() {
             objectiveDetails: currentObjectiveResult.details,
             objectiveScore: currentObjectiveScore,
             writingScore: currentWritingScore,
-            writingScorePercent: smartMarkingResult?.writingScorePercent ?? (currentWritingScore === null ? null : writingScoreToPercent(currentWritingScore, getMaxWritingScore(smartMarkingResult || {}))),
+            writingScorePercent: currentWritingScore,
+            maxWritingScore: 100,
             manualOverride: true,
             aiOriginalScore,
             aiOriginalFeedback: smartMarkingResult?.aiOriginalFeedback ?? smartMarkingResult?.feedback ?? "",
@@ -992,7 +1011,19 @@ export default function MarkingPage() {
                   <textarea readOnly rows={6} value={selectedSubmission.previousSubmissionText} style={{ marginTop: 8 }} />
                 </details>
               ) : null}
-              <textarea readOnly rows={8} value={selectedSubmission.text || "No submission text available."} />
+              <textarea
+                readOnly
+                rows={8}
+                value={selectedSubmission.text || "No submission text available."}
+                onSelect={handleSelectSubmissionText}
+                aria-label="Student submitted work"
+              />
+              {selectedHighlight ? (
+                <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={handleAddHighlightToComment}>Add Highlight to Comment</button>
+                  <span style={{ fontSize: 12, opacity: 0.8 }}>Selected: “{selectedHighlight}”</span>
+                </div>
+              ) : null}
             </>
           ) : (
             <p style={{ margin: 0 }}>No submission found yet for this student.</p>
@@ -1062,18 +1093,13 @@ export default function MarkingPage() {
                 <span>Detected assignment: <b>{smartMarkingResult.assignmentKey || "Unknown"}</b></span>
                 <span>Objective score: <b>{smartMarkingResult.objectiveTotal ? `${smartMarkingResult.objectiveCorrect}/${smartMarkingResult.objectiveTotal} → ${Math.round(smartMarkingResult.objectiveScore ?? 0)}%` : "—"}</b></span>
                 <span>Writing score: <b>{formatWritingScore(smartMarkingResult)}</b></span>
-                <span>Final score: <b>{smartMarkingResult.finalScore}</b></span>
+                <span>Current final score: <b>{displayedFinalScore}</b></span>
                 <span>AI confidence: <b>{smartMarkingResult.confidence}</b></span>
                 <span>Status: <b>{smartMarkingResult.status}</b></span>
               </div>
               <div style={{ fontSize: 13 }}>
                 <b>Detected parts:</b> {smartMarkingResult.detectedParts?.map((part) => part.summary || `${part.partId}: ${part.answerCount ?? part.total ?? "—"} ${part.partType || "answers"} found${part.correct !== undefined ? `, ${part.correct} correct, ${part.wrong ?? 0} wrong` : ""}`).join(", ") || "None"}
               </div>
-              {manualOverrideMessage ? (
-                <div style={{ fontSize: 13, color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 6, padding: 8 }}>
-                  {manualOverrideMessage}
-                </div>
-              ) : null}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving}>Re-run AI marking</button>
                 <button type="button" onClick={handleApproveAndSend} disabled={workflowSaving}>Approve and send</button>
@@ -1119,25 +1145,34 @@ export default function MarkingPage() {
             </div>
           ) : null}
           <label>
-            Score (0-100)
+            Schreiben Mark (out of 100)
             <input
               type="number"
               min={0}
               max={100}
-              value={score}
+              value={schreibenMark}
               onChange={(e) => {
                 const nextValue = e.target.value;
                 if (nextValue === "") {
-                  setScore("");
+                  setSchreibenMark("");
                   return;
                 }
 
-                setScore(String(Math.max(0, Math.min(100, Number(nextValue)))));
+                setSchreibenMark(String(Math.max(0, Math.min(100, Number(nextValue)))));
               }}
+              placeholder="Enter writing score"
             />
           </label>
+          <div style={{ padding: 12, borderRadius: 8, border: "2px solid #2563eb", background: "#eff6ff", fontSize: 18 }}>
+            Final Score: <b>{displayedFinalScore}</b>
+            <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>
+              {schreibenMark === ""
+                ? "Using Objective Percentage only because Schreiben Mark is empty."
+                : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
+            </div>
+          </div>
           <label>
-            Feedback
+            Comments / Feedback
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
@@ -1174,7 +1209,7 @@ export default function MarkingPage() {
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
               {autoMarking ? "AI marking..." : "Run AI marking"}
             </button>
-            <button onClick={() => { setScore(""); setFeedback(""); }}>Reset</button>
+            <button onClick={() => { setSchreibenMark(""); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
           </div>
         </div>
       </section>
@@ -1184,7 +1219,7 @@ export default function MarkingPage() {
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
           Saves row headers: studentcode, name, assignment, score, comments, date, level, link, assignment_id.
         </p>
-        <button onClick={handleSave} disabled={loading || savingScore}>{savingScore ? "Saving..." : "Save score"}</button>
+        <button onClick={handleSave} disabled={loading || savingScore}>{savingScore ? "Saving..." : "Save Final Score"}</button>
         {savingScore && <p style={{ marginTop: 8, fontSize: 13 }}>Saving score, please wait...</p>}
         {saveReceipt && (
           <div style={{ marginTop: 12, border: "1px solid #ddd", borderRadius: 8, padding: 10, background: "#fafafa", display: "grid", gap: 8 }}>
