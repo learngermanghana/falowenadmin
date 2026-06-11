@@ -3,6 +3,7 @@ import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
 import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js";
+import { resolveStudentIdentity } from "../utils/studentIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
 import {
   loadPublishedStudentRows,
@@ -180,7 +181,7 @@ function normalizeSubmissionDoc(docSnap, fallback = {}) {
     assignmentId,
     assignmentKey: normalize(data.assignmentKey || data.assignment_id || data.assignmentId || data.canonicalAssignmentKey || ""),
     level: normalize(data.level || fallback.level || pathIdentity.level || ""),
-    studentCode: normalize(data.studentCode || data.studentcode || data.uid || fallback.studentCode || pathIdentity.studentCode || ""),
+    ...resolveStudentIdentity({ ...data, raw: data }, fallback.studentCode || pathIdentity.studentCode),
     studentName: normalize(data.studentName || data.name || data.fullName || fallback.studentName || ""),
     status: normalize(data.status || data.submissionStatus || "submitted"),
     markingStatus: normalize(data.markingStatus || "pending"),
@@ -323,11 +324,11 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
   const now = new Date().toISOString();
   const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || globalThis.crypto?.randomUUID?.() || `${Date.now()}`);
   const pathIdentity = inferSubmissionIdentityFromPath(submissionPath);
+  const identity = resolveStudentIdentity(result, pathIdentity.studentCode);
   const payload = {
     submissionId,
     submissionPath,
-    studentCode: normalize(result.studentCode || result.studentcode || pathIdentity.studentCode),
-    studentName: normalize(result.studentName || result.name),
+    ...identity,
     level: normalize(result.level || pathIdentity.level),
     result,
     status,
@@ -523,6 +524,7 @@ function normalizeAIMarkingResult(result = {}, payload = {}) {
   const status = ["marked", "needs_review"].includes(String(result.status || "").toLowerCase()) ? String(result.status).toLowerCase() : "needs_review";
 
   return {
+    ...resolveStudentIdentity({ ...payload.submission, ...result, raw: payload.submission?.raw }),
     score: finalScore,
     finalScore,
     passed: Boolean(result.passed ?? finalScore >= 60),
@@ -610,12 +612,12 @@ function skippedScoreReceipt(row, reason) {
 
 async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason = "" }) {
   const now = new Date().toISOString();
-  const safeId = safeFirestoreId(submission.id || submission.path || `${submission.studentCode || "student"}_${result.assignmentKey || "assignment"}_${now}`);
+  const identity = resolveStudentIdentity({ ...result, ...submission, raw: submission.raw });
+  const safeId = safeFirestoreId(submission.id || submission.path || `${identity.studentCode || "student"}_${result.assignmentKey || "assignment"}_${now}`);
   await setDoc(doc(db, "aiMarkingAudit", safeId), {
     submissionId: submission.id || "",
     submissionPath: submission.path || "",
-    studentCode: submission.studentCode || submission.studentcode || submission.uid || "",
-    studentName: submission.studentName || submission.name || submission.fullName || "",
+    ...identity,
     submissionText: submission.text || submission.submissionText || "",
     assignment: submission.assignment || result.assignmentKey || "",
     assignmentKey: result.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
@@ -671,9 +673,10 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
 
   const aiResult = normalizeAIMarkingResult(body.result || body, payload);
   const result = combineWithDeterministicObjectiveResult(aiResult, deterministicObjective);
+  const identity = resolveStudentIdentity({ ...result, ...submission, raw: submission.raw });
   const row = buildScoreRow({
-    studentCode: submission.studentCode || submission.studentcode || submission.uid || "",
-    name: submission.studentName || submission.name || submission.fullName || "",
+    ...identity,
+    name: identity.studentName || submission.fullName || "",
     assignment: submission.assignment || referenceEntry?.title || result.assignmentKey || "AI marked assignment",
     assignmentId: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
     score: result.finalScore ?? result.score ?? 0,
@@ -745,13 +748,21 @@ function buildMarkingReason(details = {}, row = {}) {
   return normalize(details.markingReason || details.rawAiReason || details.ai?.reason || details.improvementSummary || row.comments || "Score saved by tutor/admin after review.");
 }
 
-function buildScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source = "manual", markingDetails = {} }) {
+function buildScoreRow({ studentCode, studentEmail = "", studentId = "", studentScopeKey = "", name, assignment, assignmentId, score, comments, level, link, source = "manual", markingDetails = {} }) {
   const safeAssignmentId = String(assignmentId || "").trim();
   const now = new Date().toString();
   const details = markingDetails && typeof markingDetails === "object" ? markingDetails : {};
+  const identity = resolveStudentIdentity({
+    ...details,
+    studentCode: studentCode || details.studentCode || details.studentcode || details.student_code,
+    studentEmail: studentEmail || details.studentEmail || details.email,
+    studentId: studentId || details.studentId || details.uid,
+    studentScopeKey: studentScopeKey || details.studentScopeKey || details.student_scope_key,
+    studentName: name || details.studentName || details.name,
+  });
   const row = {
-    studentcode: studentCode,
-    name,
+    ...identity,
+    name: identity.studentName,
     assignment,
     assignment_id: safeAssignmentId,
     assignmentId: safeAssignmentId,
@@ -784,6 +795,9 @@ function buildScoreRow({ studentCode, name, assignment, assignmentId, score, com
 
 export async function saveScoreRow({
   studentCode,
+  studentEmail = "",
+  studentId = "",
+  studentScopeKey = "",
   name,
   assignment,
   assignmentId,
@@ -796,7 +810,7 @@ export async function saveScoreRow({
   markingDetails = {},
 }) {
   const nowIso = new Date().toISOString();
-  const row = buildScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link, source, markingDetails });
+  const row = buildScoreRow({ studentCode, studentEmail, studentId, studentScopeKey, name, assignment, assignmentId, score, comments, level, link, source, markingDetails });
   const dedupeId = scoreDedupeId(row);
   const scoreRef = doc(db, "scores", dedupeId);
   const existingSnap = SAVE_SCORES_TO_FIRESTORE ? await getDoc(scoreRef).catch(() => null) : null;
