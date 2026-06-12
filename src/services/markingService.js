@@ -812,7 +812,7 @@ export async function saveScoreRow({
   const existingScore = existingSnap?.exists?.() ? existingSnap.data() : null;
   const attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);
   Object.assign(row, attemptMetadata);
-  const duplicateSkipped = shouldSkipExistingScore(existingScore, allowDuplicate);
+  const duplicateSkipped = shouldSkipExistingScore(existingScore, row.score, allowDuplicate);
   const sheetDedupeId = attemptMetadata.is_resubmission ? `${dedupeId}__attempt_${attemptMetadata.attempt}` : dedupeId;
 
   const webhookPayload = {

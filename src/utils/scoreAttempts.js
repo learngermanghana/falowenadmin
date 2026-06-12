@@ -21,21 +21,24 @@ export function previousScoreValue(score = null) {
 
 export function buildScoreAttemptMetadata(existingScore = null, currentScore, nowIso = new Date().toISOString()) {
   const previousScore = previousScoreValue(existingScore);
-  const isResubmission = Boolean(existingScore) && previousScore !== null && previousScore < PASS_MARK;
+  const isResubmission = Boolean(existingScore?.sheetSaved);
   const previousAttempt = Math.max(1, Number(existingScore?.attempt || existingScore?.attemptNumber || 1) || 1);
 
   return {
-    attempt: existingScore ? (isResubmission ? previousAttempt + 1 : previousAttempt) : 1,
+    attempt: isResubmission ? previousAttempt + 1 : 1,
     status: scoreResult(currentScore),
     is_resubmission: isResubmission,
-    previous_score: isResubmission ? previousScore : "",
+    previous_score: isResubmission && previousScore !== null ? previousScore : "",
     previous_result: isResubmission ? (scoreResult(previousScore) || existingScore?.status || existingScore?.result || "") : "",
     resubmitted_at: isResubmission ? nowIso : "",
   };
 }
 
-export function shouldSkipExistingScore(existingScore = null, allowDuplicate = false) {
+export function shouldSkipExistingScore(existingScore = null, currentScore = null, allowDuplicate = false) {
   if (!existingScore?.sheetSaved || allowDuplicate) return false;
   const previousScore = previousScoreValue(existingScore);
-  return previousScore === null || previousScore >= PASS_MARK;
+  const nextScore = numericScore(currentScore);
+  return nextScore === null || nextScore >= PASS_MARK
+    ? previousScore === null || previousScore >= PASS_MARK
+    : false;
 }
