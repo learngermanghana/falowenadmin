@@ -5,6 +5,7 @@ import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
 import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js";
 import { resolveStudentIdentity } from "../utils/studentIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
+import { shouldIncludeInIncomingQueue } from "../utils/markingQueue.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -167,8 +168,10 @@ function readTimestamp(value) {
 
 function normalizeSubmissionDoc(docSnap, fallback = {}) {
   const data = docSnap.data() || {};
-  const createdAt = readTimestamp(data.createdAt || data.submittedAt || data.timestamp || data.date || data.created_at);
-  const text = normalize(data.text || data.answer || data.answers || data.content || data.message || data.submissionText || data.writing || "");
+  const submittedAt = readTimestamp(data.submittedAt || data.createdAt || data.timestamp || data.date || data.created_at);
+  const resubmittedAt = readTimestamp(data.resubmittedAt);
+  const createdAt = resubmittedAt || submittedAt;
+  const text = normalize(data.text || data.answer || data.answers || data.content || data.message || data.submissionText || data.writing || data.work || "");
   const assignment = normalize(data.assignment || data.assignmentTitle || data.assignmentName || data.topic || fallback.assignment || "");
   const assignmentId = normalize(data.assignmentId || data.assignment_id || data.assignmentKey || data.canonicalAssignmentKey || fallback.assignmentId || "");
   const pathIdentity = inferSubmissionIdentityFromPath(docSnap.ref.path);
@@ -190,6 +193,11 @@ function normalizeSubmissionDoc(docSnap, fallback = {}) {
     feedbackSentToStudent: Boolean(data.feedbackSentToStudent),
     improvementSummary: normalize(data.improvementSummary || data.resubmissionSummary || ""),
     previousSubmissionText: normalize(data.previousSubmissionText || data.previousText || ""),
+    isResubmission: Boolean(data.isResubmission || normalizeLower(data.status || data.workflowStatus) === "resubmitted" || Number(data.attempt || data.attemptNumber) > 1),
+    attempt: data.attempt ?? data.attemptNumber ?? null,
+    previousScore: data.previousScore ?? data.previous_score ?? data.lastScore ?? null,
+    submittedAt,
+    resubmittedAt,
     createdAt,
     raw: data,
   };
@@ -248,47 +256,30 @@ function scoreDedupeIdForSubmission(row = {}) {
   return scoreDedupeId({ studentcode: row.studentCode, assignment_id: inferAssignmentIdFromSubmission(row), assignment: row.assignment });
 }
 
-function isAfterQueueStart(row = {}) {
-  if (!MARKING_QUEUE_START_DATE) return true;
-  const start = new Date(MARKING_QUEUE_START_DATE);
-  if (Number.isNaN(start.getTime())) return true;
-  if (!row.createdAt) return false;
-  return row.createdAt.getTime() >= start.getTime();
-}
-
-function hasExistingScore(row = {}, scoreIds = new Set()) {
-  return scoreIds.size ? scoreIds.has(scoreDedupeIdForSubmission(row)) : false;
-}
-
-function isOpenMarkingQueueSubmission(row = {}, scoreIds = new Set()) {
-  const raw = row.raw || {};
-  if (!isAfterQueueStart(row)) return false;
-  if (raw.hiddenFromMarkingQueue || raw.hiddenAt) return false;
-  const markingStatus = normalizeLower(row.markingStatus || raw.markingStatus);
-  const workflowStatus = normalizeLower(raw.workflowStatus || raw.status || row.status);
-  const terminalStatuses = new Set(["marked", "sent", "done", "completed", "complete", "approved", "hidden", "archived", "saved"]);
-  if (terminalStatuses.has(markingStatus) || terminalStatuses.has(workflowStatus)) return false;
-  if (row.feedbackSentToStudent || raw.feedbackSentToStudent) return false;
-  if (row.finalScore !== null && row.finalScore !== undefined) return false;
-  if (raw.aiFeedback || raw.tutorFeedback || raw.feedback) return false;
-  if (hasExistingScore(row, scoreIds)) return false;
-  return true;
-}
-
-async function loadExistingScoreIds() {
+async function loadExistingScoreIndex() {
   try {
     const snap = await getDocs(collection(db, "scores"));
-    const ids = new Set();
+    const scores = new Map();
     snap.forEach((docSnap) => {
       const data = docSnap.data() || {};
-      ids.add(docSnap.id);
-      if (data.dedupe_id) ids.add(String(data.dedupe_id));
+      const keys = [docSnap.id, data.dedupe_id, scoreDedupeId(data)].filter(Boolean).map(String);
+      keys.forEach((key) => scores.set(key, data));
     });
-    return ids;
+    return scores;
   } catch (error) {
     console.warn("Could not load score index for marking queue filtering.", error);
-    return new Set();
+    return new Map();
   }
+}
+
+function decorateSubmissionWithPreviousScore(row, scoreIndex) {
+  const score = scoreIndex.get(scoreDedupeIdForSubmission(row));
+  if (!score) return row;
+  return {
+    ...row,
+    previousScore: row.previousScore ?? score.score ?? score.finalScore ?? null,
+    lastMarkedAt: readTimestamp(score.markedAt || score.scoredAt || score.updatedAt || score.createdAt || score.date),
+  };
 }
 
 export async function loadSubmissions({ includeMarked = false } = {}) {
@@ -310,8 +301,11 @@ export async function loadSubmissions({ includeMarked = false } = {}) {
   const nestedSnap = await getDocs(collectionGroup(db, "submissions"));
   nestedSnap.forEach((docSnap) => addDocSnap(docSnap));
 
-  const scoreIds = includeMarked ? new Set() : await loadExistingScoreIds();
-  const queueRows = includeMarked ? results : results.filter((row) => isOpenMarkingQueueSubmission(row, scoreIds));
+  const scoreIndex = await loadExistingScoreIndex();
+  const decoratedRows = results.map((row) => decorateSubmissionWithPreviousScore(row, scoreIndex));
+  const queueRows = includeMarked
+    ? decoratedRows
+    : decoratedRows.filter((row) => shouldIncludeInIncomingQueue(row, scoreIndex.get(scoreDedupeIdForSubmission(row)), MARKING_QUEUE_START_DATE));
   return queueRows.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 }
 
