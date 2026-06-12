@@ -6,6 +6,7 @@ import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js"
 import { resolveStudentIdentity } from "../utils/studentIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
 import { shouldIncludeInIncomingQueue } from "../utils/markingQueue.js";
+import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -809,15 +810,20 @@ export async function saveScoreRow({
   const scoreRef = doc(db, "scores", dedupeId);
   const existingSnap = SAVE_SCORES_TO_FIRESTORE ? await getDoc(scoreRef).catch(() => null) : null;
   const existingScore = existingSnap?.exists?.() ? existingSnap.data() : null;
-  const alreadySavedToSheet = Boolean(existingScore?.sheetSaved);
+  const attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);
+  Object.assign(row, attemptMetadata);
+  const duplicateSkipped = shouldSkipExistingScore(existingScore, allowDuplicate);
+  const sheetDedupeId = attemptMetadata.is_resubmission ? `${dedupeId}__attempt_${attemptMetadata.attempt}` : dedupeId;
 
   const webhookPayload = {
     ...(SCORES_WEBHOOK_TOKEN ? { token: SCORES_WEBHOOK_TOKEN } : {}),
     ...(SCORES_WEBHOOK_SHEET_NAME ? { sheet_name: SCORES_WEBHOOK_SHEET_NAME } : {}),
     ...(SCORES_WEBHOOK_SHEET_GID ? { sheet_gid: SCORES_WEBHOOK_SHEET_GID } : {}),
-    dedupe_id: dedupeId,
-    row: { ...row, dedupe_id: dedupeId },
-    rows: [{ ...row, dedupe_id: dedupeId }],
+    dedupe_id: sheetDedupeId,
+    metadata_columns: ["attempt", "status", "is_resubmission", "previous_score", "previous_result", "resubmitted_at"],
+    create_missing_columns: true,
+    row: { ...row, dedupe_id: sheetDedupeId },
+    rows: [{ ...row, dedupe_id: sheetDedupeId }],
   };
 
   const receipt = {
@@ -829,9 +835,9 @@ export async function saveScoreRow({
   };
 
   if (SCORES_WEBHOOK_URL) {
-    if (alreadySavedToSheet && !allowDuplicate) {
+    if (duplicateSkipped) {
       receipt.sheet.success = true;
-      receipt.sheet.message = "Skipped duplicate sheet row; this student and assignment were already saved.";
+      receipt.sheet.message = "Skipped duplicate sheet row; this student and assignment already has a passing score.";
       receipt.duplicateSkipped = true;
     } else {
       try {
@@ -858,15 +864,24 @@ export async function saveScoreRow({
 
   if (SAVE_SCORES_TO_FIRESTORE) {
     try {
-      await setDoc(scoreRef, {
-        ...row,
-        dedupe_id: dedupeId,
-        sheetSaved: Boolean(receipt.sheet.success),
-        sheetMessage: receipt.sheet.message,
-        duplicateSkipped: receipt.duplicateSkipped,
-        createdAt: existingScore?.createdAt || nowIso,
-        updatedAt: nowIso,
-      }, { merge: true });
+      const firestoreScore = receipt.duplicateSkipped
+        ? {
+            dedupe_id: dedupeId,
+            sheetSaved: Boolean(receipt.sheet.success),
+            sheetMessage: receipt.sheet.message,
+            duplicateSkipped: true,
+            updatedAt: nowIso,
+          }
+        : {
+            ...row,
+            dedupe_id: dedupeId,
+            sheetSaved: Boolean(receipt.sheet.success),
+            sheetMessage: receipt.sheet.message,
+            duplicateSkipped: false,
+            createdAt: existingScore?.createdAt || nowIso,
+            updatedAt: nowIso,
+          };
+      await setDoc(scoreRef, firestoreScore, { merge: true });
       receipt.firestore.success = true;
       receipt.firestore.message = existingScore ? "Updated Firestore score mirror." : "Saved to Firestore mirror.";
     } catch (error) {
