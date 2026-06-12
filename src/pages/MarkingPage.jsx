@@ -18,6 +18,20 @@ function normalizeStudentCode(value) {
   return normalize(value).replace(/[^a-z0-9]/g, "");
 }
 
+function SubmissionAttemptLabels({ submission }) {
+  if (!submission) return null;
+  const isResubmission = Boolean(submission.isResubmission || Number(submission.attempt) > 1 || normalize(submission.status) === "resubmitted");
+  if (!isResubmission && !submission.previousScore && !submission.attempt) return null;
+  const badgeStyle = { border: "1px solid #f59e0b", background: "#fffbeb", color: "#92400e", borderRadius: 999, padding: "2px 7px", fontSize: 11, fontWeight: 700 };
+  return (
+    <span style={{ display: "inline-flex", gap: 5, flexWrap: "wrap", marginLeft: 6 }}>
+      {isResubmission ? <span style={badgeStyle}>Resubmission</span> : null}
+      {submission.attempt ? <span style={badgeStyle}>Attempt {submission.attempt}</span> : null}
+      {submission.previousScore !== null && submission.previousScore !== undefined ? <span style={badgeStyle}>Previous score: {submission.previousScore}</span> : null}
+    </span>
+  );
+}
+
 function clampPercent(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return 0;
@@ -231,6 +245,8 @@ export default function MarkingPage() {
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [submissionNotifications, setSubmissionNotifications] = useState([]);
+  const [allSubmissionAttempts, setAllSubmissionAttempts] = useState([]);
+  const [attemptSearch, setAttemptSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
@@ -345,8 +361,11 @@ export default function MarkingPage() {
     const loadLatestSubmissions = async () => {
       setLoadingNotifications(true);
       try {
-        const rows = await loadSubmissions();
-        if (!cancelled) setSubmissionNotifications(rows);
+        const [rows, allAttempts] = await Promise.all([loadSubmissions(), loadSubmissions({ includeMarked: true })]);
+        if (!cancelled) {
+          setSubmissionNotifications(rows);
+          setAllSubmissionAttempts(allAttempts);
+        }
       } catch (err) {
         if (!cancelled) error(err?.message || "Failed to load submission notifications");
       } finally {
@@ -381,6 +400,13 @@ export default function MarkingPage() {
   const referenceEntry = useMemo(() => {
     return referenceEntries.find((entry) => entry.assignment === referenceAssignment) || null;
   }, [referenceAssignment, referenceEntries]);
+
+  const filteredAttempts = useMemo(() => {
+    if (!attemptSearch.trim()) return [];
+    const search = normalize(attemptSearch);
+    return allSubmissionAttempts.filter((row) => [row.studentCode, row.studentName, row.assignmentId, row.assignmentKey, row.assignment]
+      .some((value) => normalize(value).includes(search)));
+  }, [allSubmissionAttempts, attemptSearch]);
 
   const filteredReferenceEntries = useMemo(() => {
     if (!referenceQuery.trim()) return referenceEntries;
@@ -514,6 +540,7 @@ export default function MarkingPage() {
       await deleteSubmission(submission.path);
       setSubmissions((prev) => prev.filter((row) => row.path !== submission.path));
       setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
+      setAllSubmissionAttempts((prev) => prev.filter((row) => row.path !== submission.path));
       success("Submission deleted.");
     } catch (err) {
       error(err?.message || "Failed to delete submission.");
@@ -998,6 +1025,31 @@ export default function MarkingPage() {
             Incoming notifications
           </button>
         </div>
+        <div style={{ marginBottom: 12, padding: 10, border: "1px solid #e2e8f0", borderRadius: 8, background: "#f8fafc" }}>
+          <label style={{ display: "grid", gap: 5, fontSize: 13, fontWeight: 700 }}>
+            Find all submission attempts
+            <input
+              value={attemptSearch}
+              onChange={(event) => setAttemptSearch(event.target.value)}
+              placeholder="Search student code/name or assignment ID"
+            />
+          </label>
+          {attemptSearch.trim() ? (
+            <div style={{ display: "grid", gap: 6, marginTop: 8, maxHeight: 260, overflow: "auto" }}>
+              {filteredAttempts.map((row) => (
+                <div key={`attempt-${row.path || row.id}`} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: 6 }}>
+                  <div style={{ fontSize: 12 }}>
+                    <b>{row.studentName || "Unknown student"}</b> ({row.studentCode || "No code"}) · {row.assignment || "Unknown assignment"}
+                    {row.assignmentId ? <> · ID: <code>{row.assignmentId}</code></> : null} · {row.createdAt?.toLocaleString() || "Unknown time"}
+                    <SubmissionAttemptLabels submission={row} />
+                  </div>
+                  <button type="button" onClick={() => void handleSelectFromNotification(row)}>Load</button>
+                </div>
+              ))}
+              {!filteredAttempts.length ? <span style={{ fontSize: 12 }}>No attempts match this search.</span> : null}
+            </div>
+          ) : <span style={{ display: "block", marginTop: 5, fontSize: 12, opacity: 0.75 }}>Includes marked, failed, pending, and resubmitted attempts.</span>}
+        </div>
         {loadingSubmissions ? (
           <p style={{ margin: 0 }}>Loading submissions...</p>
         ) : activeSubmissionTab === "latest" ? (
@@ -1007,6 +1059,7 @@ export default function MarkingPage() {
                 Assignment: <b>{selectedSubmission.assignment || "Unknown"}</b>
                 {selectedSubmission.assignmentId ? <> · ID: <code>{selectedSubmission.assignmentId}</code></> : null}
                 {" · "}Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
+                <SubmissionAttemptLabels submission={selectedSubmission} />
               </div>
               {selectedSubmission.improvementSummary ? (
                 <div style={{ marginBottom: 8, padding: 8, borderRadius: 6, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
@@ -1050,6 +1103,7 @@ export default function MarkingPage() {
                   <div style={{ fontSize: 13 }}>
                     <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
                     {row.assignmentId ? <> · ID: <code>{row.assignmentId}</code></> : null}
+                    <SubmissionAttemptLabels submission={row} />
                   </div>
                   <div style={{ fontSize: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
                     <span>Marking: <b>{row.markingStatus || "pending"}</b></span>
