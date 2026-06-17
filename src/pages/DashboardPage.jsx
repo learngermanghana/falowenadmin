@@ -4,8 +4,7 @@ import { loadSubmissions } from "../services/markingService";
 import { loadPendingTutorReviews } from "../services/tutorReviewService";
 import { loadGrammarIssueReports } from "../services/grammarIssueService";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
-import { loadSocialMediaData } from "../services/socialMediaService";
-import { listUpcomingHolidayReminders } from "../services/holidayService";
+import { getUpcomingHolidays } from "../services/holidayCalendarService";
 import { listAllStudents } from "../services/studentsService";
 import "./DashboardPage.css";
 
@@ -111,7 +110,6 @@ export default function DashboardPage() {
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
   const [contractEndingSoon, setContractEndingSoon] = useState([]);
   const [upcomingHolidays, setUpcomingHolidays] = useState([]);
-  const [socialMetrics, setSocialMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -120,13 +118,14 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [studentRows, submissionRows, tutorReviewRows, grammarIssueRows, reminderData, socialData] = await Promise.all([
+        const currentYear = new Date().getFullYear();
+        const [studentRows, submissionRows, tutorReviewRows, grammarIssueRows, reminderData, holidayRows] = await Promise.all([
           listAllStudents(),
           loadSubmissions(),
           loadPendingTutorReviews(),
           loadGrammarIssueReports(),
           loadWhatsappReminderDashboard(),
-          loadSocialMediaData(),
+          getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
         ]);
 
         setStudents(studentRows);
@@ -134,8 +133,7 @@ export default function DashboardPage() {
         setPendingTutorReviewsCount(tutorReviewRows.length);
         setGrammarIssueReports(grammarIssueRows);
         setContractEndingSoon(reminderData.contractEndingSoon || []);
-        setUpcomingHolidays(listUpcomingHolidayReminders({ daysAhead: 30 }));
-        setSocialMetrics(socialData.metrics || null);
+        setUpcomingHolidays(holidayRows);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -152,9 +150,6 @@ export default function DashboardPage() {
     const totalBalance = studentsWithBalance.reduce((sum, student) => sum + studentBalance(student), 0);
     const classBreakdown = groupTopClasses(students);
     const workQueue = incomingAssignments.length + pendingTutorReviewsCount + grammarIssueReports.length;
-    const socialPosts = socialMetrics?.totalPosts || 0;
-    const followerSnapshots = socialMetrics?.totalFollowerSnapshots || 0;
-
     return {
       totalStudents,
       activeStudents,
@@ -163,22 +158,15 @@ export default function DashboardPage() {
       totalBalance,
       classBreakdown,
       workQueue,
-      socialPosts,
-      followerSnapshots,
       paymentRate: pct(paidStudents, totalStudents),
       activeRate: pct(activeStudents, totalStudents),
     };
-  }, [grammarIssueReports.length, incomingAssignments.length, pendingTutorReviewsCount, socialMetrics, students]);
+  }, [grammarIssueReports.length, incomingAssignments.length, pendingTutorReviewsCount, students]);
 
   const incomingAssignmentPreview = useMemo(() => incomingAssignments.slice(0, 5), [incomingAssignments]);
   const grammarIssuePreview = useMemo(() => grammarIssueReports.slice(0, 5), [grammarIssueReports]);
   const contractEndingSoonPreview = useMemo(() => contractEndingSoon.slice(0, 6), [contractEndingSoon]);
   const upcomingHolidayPreview = useMemo(() => upcomingHolidays.slice(0, 8), [upcomingHolidays]);
-  const socialPostPreview = useMemo(() => socialMetrics?.recentPosts?.slice(0, 4) || [], [socialMetrics]);
-  const socialFollowerPreview = useMemo(
-    () => socialMetrics?.latestSnapshotByPlatform?.slice(0, 4) || [],
-    [socialMetrics],
-  );
   const balancePreview = useMemo(
     () => analytics.studentsWithBalance
       .slice()
@@ -212,7 +200,7 @@ export default function DashboardPage() {
           <h1>School operations dashboard</h1>
           <p>
             Track students, marking workload, tutor reviews, grammar issues, WhatsApp reminders,
-            holiday planning, and social performance from one control center.
+            and holiday planning from one control center.
           </p>
         </div>
         <div className="hero-score-card">
@@ -226,7 +214,7 @@ export default function DashboardPage() {
         <StatCard label="Total students" value={analytics.totalStudents} helper={`${analytics.activeRate}% active records`} tone="blue" icon="🎓" />
         <StatCard label="Paid / active" value={analytics.paidStudents} helper={`${analytics.paymentRate}% marked paid or active`} tone="green" icon="✅" />
         <StatCard label="Balance due" value={moneyFormatter.format(analytics.totalBalance)} helper={`${analytics.studentsWithBalance.length} student(s) with balances`} tone="amber" icon="💳" />
-        <StatCard label="Admin queue" value={analytics.workQueue} helper="assignments, tutor reviews, grammar reports" tone="purple" icon="⚡" />
+        <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper="loaded from Holiday Calendar" tone="purple" icon="📅" />
       </section>
 
       <section className="quick-actions-grid">
@@ -391,64 +379,28 @@ export default function DashboardPage() {
         </article>
       </section>
 
-      <section className="analytics-grid two">
+      <section className="analytics-grid">
         <article className="analytics-panel">
           <div className="panel-header compact">
             <div>
               <p className="analytics-eyebrow">Course calendar</p>
               <h2>Upcoming holidays</h2>
             </div>
-            <Link to="/course-schedule">Manage</Link>
+            <Link to="/holiday-calendar">Manage</Link>
           </div>
           <MiniList
             items={upcomingHolidayPreview}
-            emptyText="No holiday reminders in the next 30 days."
+            emptyText="No upcoming holidays loaded from the Holiday Calendar."
             renderItem={(holiday) => (
-              <li key={holiday.isoDate}>
+              <li key={`${holiday.countryCode || "GH"}-${holiday.date}`}>
                 <span className="avatar-chip calendar">📅</span>
                 <span>
-                  <strong>{holiday.displayDate}</strong>
-                  <small>{holiday.daysUntil === 0 ? "Today" : `in ${holiday.daysUntil} day(s)`}</small>
+                  <strong>{holiday.name || holiday.localName || holiday.date}</strong>
+                  <small>{holiday.date} · {holiday.schoolClosed ? "School closed" : "School open"}</small>
                 </span>
               </li>
             )}
           />
-        </article>
-
-        <article className="analytics-panel social-panel">
-          <div className="panel-header compact">
-            <div>
-              <p className="analytics-eyebrow">Growth</p>
-              <h2>Social media analytics</h2>
-            </div>
-            <Link to="/course-schedule">Open calendar</Link>
-          </div>
-          <div className="social-metric-row">
-            <span>Total posts <strong>{analytics.socialPosts}</strong></span>
-            <span>Follower snapshots <strong>{analytics.followerSnapshots}</strong></span>
-            <span>Holiday calendar <strong>{upcomingHolidays.length}</strong></span>
-          </div>
-          {socialFollowerPreview.length > 0 ? (
-            <div className="social-snapshots">
-              {socialFollowerPreview.map((snapshot) => (
-                <div key={`${snapshot.platform}-${snapshot.date || "latest"}`}>
-                  <span>{snapshot.platform || "Unknown"}</span>
-                  <strong>{snapshot.followers || 0}</strong>
-                  <small>followers</small>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          {socialPostPreview.length > 0 ? (
-            <div className="recent-posts">
-              {socialPostPreview.map((post, index) => (
-                <div key={`${post.date || "post"}-${post.topic || index}`}>
-                  <strong>{post.topic || "Untitled post"}</strong>
-                  <small>👍 {post.likes || 0} · 💬 {post.comments || 0} · 🔁 {post.shares || 0}</small>
-                </div>
-              ))}
-            </div>
-          ) : <p className="empty-state">No social data loaded yet.</p>}
         </article>
       </section>
     </div>
