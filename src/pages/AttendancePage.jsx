@@ -15,6 +15,9 @@ import {
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { rebuildAttendanceSessionsFromDictionary } from "../utils/attendanceDictionaryRepair.js";
 
+const CHECKIN_DURATION_OPTIONS = [10, 15, 20, 30, 60];
+const DEFAULT_CHECKIN_DURATION_MINUTES = 20;
+
 function normalizeScheduleDate(raw) {
   if (!raw) return "";
   const parsed = dayjs(raw, ["YYYY-MM-DD", "dddd, DD MMMM YYYY"], true);
@@ -155,6 +158,7 @@ export default function AttendancePage() {
   const [attendanceMap, setAttendanceMap] = useState({});
   const [selectedEmailStudentCodes, setSelectedEmailStudentCodes] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState("1");
+  const [checkinDurationMinutes, setCheckinDurationMinutes] = useState(DEFAULT_CHECKIN_DURATION_MINUTES);
   const [studentTemplate, setStudentTemplate] = useState({});
 
   const schedule = useMemo(() => getClassSchedule(classId), [classId]);
@@ -416,7 +420,7 @@ export default function AttendancePage() {
           assignmentId: selectedAssignmentId,
           topic: resolveTopicFromTitle(selectedSession.title || sessionLabel),
           chapter: selectedAssignmentId.split("-").slice(1).join("-"),
-          windowMinutes: 180,
+          windowMinutes: checkinDurationMinutes,
           action: "open",
         }),
       });
@@ -424,7 +428,7 @@ export default function AttendancePage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Failed to open check-in");
       setSessionOpen(true);
-      success("Check-in opened.");
+      success(`Check-in opened for ${checkinDurationMinutes} minutes.`);
     } catch (e) {
       error(toSessionApiErrorMessage(e, "open"));
     } finally {
@@ -563,6 +567,18 @@ export default function AttendancePage() {
       <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ fontWeight: 700 }}>Student QR Check-in</div>
+          <label style={{ fontSize: 13 }}>
+            Duration:{" "}
+            <select
+              value={checkinDurationMinutes}
+              disabled={sessionBusy || sessionOpen}
+              onChange={(e) => setCheckinDurationMinutes(Number(e.target.value) || DEFAULT_CHECKIN_DURATION_MINUTES)}
+            >
+              {CHECKIN_DURATION_OPTIONS.map((minutes) => (
+                <option key={minutes} value={minutes}>{minutes} minutes</option>
+              ))}
+            </select>
+          </label>
           <button disabled={sessionBusy || sessionOpen || !selectedAssignmentOption} onClick={openCheckin}>{sessionBusy && !sessionOpen ? "Opening..." : "Open Check-in"}</button>
           <button disabled={sessionBusy || !sessionOpen} onClick={closeCheckin}>{sessionBusy && sessionOpen ? "Closing..." : "Close Check-in"}</button>
           <a href={checkinDisplayUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>Open Full-Screen QR Page</a>

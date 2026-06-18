@@ -592,6 +592,7 @@ function methodAllowed(req, res, allowedMethods) {
 }
 
 const FALOWEN_PROXY_ROUTES = new Set([
+  "activeCheckin",
   "checkin",
   "checkin-token",
   "checkinStatus",
