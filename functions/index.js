@@ -275,9 +275,7 @@ app.post("/openSession", async (req, res) => {
     }
 
     const now = admin.firestore.Timestamp.now();
-    const allowedWindowMinutes = new Set([10, 15, 20, 30, 60]);
-    const requestedMins = Number(windowMinutes || 20);
-    const mins = allowedWindowMinutes.has(requestedMins) ? requestedMins : 20;
+    const mins = Number(windowMinutes || 180);
     const openTo = admin.firestore.Timestamp.fromMillis(now.toMillis() + mins * 60 * 1000);
 
     const existing = await ref.get();
@@ -295,7 +293,6 @@ app.post("/openSession", async (req, res) => {
       opened: true,
       openFrom: now,
       openTo,
-      windowMinutes: mins,
       createdBy: user.uid,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
@@ -326,7 +323,6 @@ app.post("/checkin", async (req, res) => {
       assignmentId,
       topic,
       chapter,
-      method: rawMethod,
     } = body;
     const sessionId = String(rawSessionId || "").trim();
 
@@ -404,22 +400,6 @@ app.post("/checkin", async (req, res) => {
     const checkinRef = sessionRef.collection("checkins").doc(checkinDocId);
     const checkinSnap = await checkinRef.get();
 
-    const method = rawMethod === "falowen_button" ? "falowen_button" : "qr";
-    const source = method === "falowen_button" ? "falowen_student_app" : "public_checkin";
-
-    if (checkinSnap.exists) {
-      const existing = checkinSnap.data() || {};
-      return res.json({
-        ok: true,
-        duplicate: true,
-        savedSessionId: sessionRef.id,
-        requestedSessionId: sessionId,
-        usedFallbackSession: sessionLookup.usedFallback,
-        method: existing.method || method,
-        source: existing.source || source,
-      });
-    }
-
     const checkinPayload = {
       uid,
       studentCode: st.studentCode || st.studentcode || "",
@@ -436,15 +416,16 @@ app.post("/checkin", async (req, res) => {
       chapter: metadata.chapter,
       assignment_id: admin.firestore.FieldValue.delete(),
       status: "present",
-      method,
-      source,
+      method: "qr",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       checkedInAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    checkinPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    if (!checkinSnap.exists) {
+      checkinPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
 
-    await checkinRef.create(checkinPayload);
+    await checkinRef.set(checkinPayload, { merge: true });
 
     return res.json({
       ok: true,
@@ -498,55 +479,6 @@ app.get("/checkinStatus", async (req, res) => {
       openFrom,
       openTo,
       serverTime: now,
-    });
-  } catch (e) {
-    return res.status(500).json({ error: e?.message || "Server error" });
-  }
-});
-
-
-app.get("/activeCheckin", async (req, res) => {
-  try {
-    const classId = normalizeClassComparable(req.query.classId || req.query.className);
-    if (!classId) return res.status(400).json({ error: "classId is required" });
-
-    const now = admin.firestore.Timestamp.now();
-    const snap = await db
-      .collection("attendance")
-      .doc(classId)
-      .collection("sessions")
-      .where("opened", "==", true)
-      .limit(20)
-      .get();
-
-    const active = snap.docs
-      .map((doc) => ({ id: doc.id, ...(doc.data() || {}) }))
-      .filter((session) => {
-        const openFrom = session.openFrom;
-        const openTo = session.openTo;
-        if (openFrom && now.toMillis() < openFrom.toMillis()) return false;
-        if (openTo && now.toMillis() > openTo.toMillis()) return false;
-        return true;
-      })
-      .sort((a, b) => (b.openFrom?.toMillis?.() || 0) - (a.openFrom?.toMillis?.() || 0))[0];
-
-    if (!active) {
-      return res.json({ ok: true, active: false, serverTime: now.toMillis() });
-    }
-
-    return res.json({
-      ok: true,
-      active: true,
-      classId,
-      sessionId: active.sessionId || active.id,
-      date: String(active.date || ""),
-      sessionLabel: String(active.sessionLabel || ""),
-      assignmentId: String(active.assignmentId || ""),
-      topic: String(active.topic || ""),
-      chapter: String(active.chapter || ""),
-      openFrom: active.openFrom?.toMillis?.() || null,
-      openTo: active.openTo?.toMillis?.() || null,
-      serverTime: now.toMillis(),
     });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
