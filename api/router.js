@@ -348,7 +348,7 @@ function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wron
   const details = mistakeDetails.length ? mistakeDetails : fallbackDetails;
 
   return [
-    `Good effort, ${firstName}.`,
+    percent === 100 ? `Excellent work, ${firstName}.` : `Good effort, ${firstName}.`,
     `Objective score: ${correct}/${total} correct (${percent}%).`,
     details.length
       ? `Corrections to review:\n${details.join("\n")}`
