@@ -534,6 +534,7 @@ Teil 4:
   assert.ok(result.finalScore < 100);
   assert.ok(result.parts.some((part) => part.partType === "writing"));
   assert.match(result.feedback, /Writing marked/);
+  assert.match(result.feedback, /Excellent work, Melchizedek/);
   assert.match(result.feedback, /Objective score: 12\/12 correct/);
   assert.doesNotMatch(result.feedback, /\*\*/);
 });
@@ -808,6 +809,23 @@ Eric`,
   assert.match(result.feedback, /"Vielleicht können wir uns bald treffen und darüber sprechen\."/);
   assert.match(result.improvementSummary, /"Vielleicht können wir uns bald treffen und darüber sprechen\."/);
   assert.doesNotMatch(result.feedback, /\*\*/);
+});
+
+
+test("A2 hotel reservation feedback gives specific vocabulary extension goals", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: { assignmentKey: "A2-4.9", level: "A2", format: "writing" },
+    submission: { assignmentKey: "A2-4.9", level: "A2" },
+    submissionText: `Teil 2:
+Sehr geehrte Damen und Herren,
+ich hoffe, es geht Ihnen gut. Ich schreibe Ihnen, weil ich eine Anfrage stellen möchte. Ich plane einen Urlaub mit meiner Familie, deshalb möchte ich ein Zimmer reservieren. Haben Sie ein freies Zimmer für drei Personen? Ich suche ein Doppelzimmer mit Balkon, Dusche und Bergblick. Könnten Sie mir bitte die Preise und die zusätzlichen Leistungen schicken? Ich freue mich auf Ihre Antwort.
+Mit freundlichen Grüßen
+Reuben Lamptey`,
+  });
+
+  assert.match(result.feedback, /Your letter has a clear structure, an appropriate greeting, and a polite closing/);
+  assert.match(result.feedback, /breakfast, parking, cancellation conditions, and other hotel services/);
+  assert.doesNotMatch(result.feedback, /add one more clear detail to "Ich freue mich auf Ihre Antwort/);
 });
 
 test("A1-4 deterministic checker continues restarted numbering across objective sections", () => {

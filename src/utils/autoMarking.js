@@ -803,12 +803,15 @@ function buildWritingFeedback({ level = "", score = 0, rubric = [], text = "" } 
   const issues = findWritingIssues(text);
   const sentences = extractWritingSentences(text);
   const expansionTarget = findWritingExpansionTarget(text);
+  const isHotelReservationWriting = /\b(?:urlaub|zimmer|reservier|doppelzimmer|balkon|dusche|bergblick|preis|leistungen|hotel)\b/i.test(text);
   const strengthText = strengths.length
     ? `You used ${strengths.join(" and ")}.`
     : `You included ${highlightWritingSnippet(sentences[0] || text, "your own sentences")}.`;
   const issueText = issues.length
     ? `Review exact wording: ${issues.map((issue) => issue.message).join(" ")}`
-    : `Next step: add one more clear detail to ${highlightWritingSnippet(expansionTarget, "one sentence")}.`;
+    : isHotelReservationWriting
+      ? "Your letter has a clear structure, an appropriate greeting, and a polite closing. Continue improving your vocabulary by adding specific details about breakfast, parking, cancellation conditions, and other hotel services."
+      : `Next step: add one more clear detail to ${highlightWritingSnippet(expansionTarget, "one sentence")}.`;
 
   return `Writing marked with ${level || "default"} rubric (${rubric.join(", ")}). Writing score: ${score}%. ${strengthText} ${issueText}`;
 }
