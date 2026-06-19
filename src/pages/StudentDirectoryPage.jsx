@@ -4,6 +4,7 @@ import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
 
 const editableFields = [
+  "name",
   "email",
   "phone",
   "studentCode",
@@ -25,6 +26,7 @@ const editableFields = [
 const dateFields = new Set(["contractStart", "contractEnd"]);
 
 const fieldLabels = {
+  name: "Name",
   email: "Email",
   phone: "Phone",
   studentCode: "Student code",
