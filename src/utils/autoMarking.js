@@ -633,6 +633,14 @@ function extractWritingSentences(text = "") {
     .filter(Boolean);
 }
 
+function isWritingGreetingLine(value = "") {
+  const normalized = String(value || "").trim();
+  if (!normalized) return false;
+
+  const withoutTrailingPunctuation = normalized.replace(/[.,!?;:]+$/g, "").trim();
+  return /^(?:lieber|liebe|hallo|guten tag|sehr geehrte(?:r|n)?|dear|hello|hi)\b/i.test(withoutTrailingPunctuation);
+}
+
 function isWritingSignoffLine(value = "") {
   const normalized = String(value || "").trim();
   if (!normalized) return true;
@@ -669,6 +677,16 @@ function findWritingIssues(text = "") {
   let previousLine = "";
 
   for (const line of lines) {
+    const formalGreetingCase = line.match(/\bSehr\s+Geehrte\b/);
+    if (formalGreetingCase) {
+      addWritingIssue(issues, {
+        submitted: clipFeedbackSnippet(formalGreetingCase[0]),
+        suggestion: "Sehr geehrte",
+        message: `Use lower-case ${highlightWritingSnippet("geehrte")} in the formal greeting: ${highlightWritingSnippet(formalGreetingCase[0])} → ${highlightWritingSnippet("Sehr geehrte")}.`,
+      });
+      break;
+    }
+
     if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine)) {
       addWritingIssue(issues, {
         submitted: clipFeedbackSnippet(line),
@@ -741,7 +759,7 @@ function findWritingIssues(text = "") {
   }
 
   const missingPunctuationLine = lines.find((line) => {
-    if (isWritingSignoffLine(line)) return false;
+    if (isWritingGreetingLine(line) || isWritingSignoffLine(line)) return false;
     const words = line.split(/\s+/).filter(Boolean);
     return words.length >= 4 && !/[.!?]$/.test(line);
   });
