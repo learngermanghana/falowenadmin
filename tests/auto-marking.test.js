@@ -713,6 +713,26 @@ Bernardette`,
   ]);
 });
 
+test("formal German greeting feedback does not add unclear comma-period punctuation", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: { assignmentKey: "A2-6.17", level: "A2", format: "writing" },
+    submission: { assignmentKey: "A2-6.17", level: "A2" },
+    submissionText: `SCHREIBEN
+
+Sehr Geehrte Damen und Herren,
+
+Ich hoffe es geht Ihnen gut. Ich schreibe Ihnen weil ich ein bestimmtes Medikament kaufen möchte.
+
+Mit freundlichen Grüßen,
+Cathy Summus.`,
+  });
+
+  assert.match(result.feedback, /Use lower-case "geehrte" in the formal greeting/);
+  assert.match(result.improvementSummary, /"Sehr Geehrte" → Sehr geehrte/);
+  assert.doesNotMatch(result.feedback, /Add sentence punctuation after "Sehr Geehrte Damen und Herren,"/);
+  assert.doesNotMatch(result.improvementSummary, /Damen und Herren,\./);
+});
+
 test("unlabelled A2 writing before Lesen is included in feedback", () => {
   const result = autoMarkSubmission({
     referenceEntry: {
