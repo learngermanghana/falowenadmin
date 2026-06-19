@@ -343,7 +343,7 @@ export function extractVocabularyAnswers(text = "") {
 function extractNumberedTextEntries(text = "") {
   const entries = [];
   for (const rawLine of String(text || "").split(/\r?\n|[,;]+/)) {
-    const match = rawLine.trim().match(/^\s*(\d{1,3})\s*[).:-]?\s*(.+?)\s*$/i);
+    const match = rawLine.trim().match(/^\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:-]?\s*(.+?)\s*$/i);
     if (!match) continue;
     const answer = match[2].trim();
     if (answer) entries.push({ number: Number(match[1]), answer });
@@ -355,8 +355,8 @@ function extractLeadingUnnumberedAnswer(text = "") {
   for (const rawLine of String(text || "").split(/\r?\n|[,;]+/)) {
     const line = rawLine.trim();
     if (!line) continue;
-    if (/^\s*1\s*[).:-]?\s*.+/i.test(line)) return "";
-    if (/^\s*2\s*[).:-]?\s*.+/i.test(line)) return "";
+    if (/^\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*1\s*[).:-]?\s*.+/i.test(line)) return "";
+    if (/^\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*2\s*[).:-]?\s*.+/i.test(line)) return "";
     return line;
   }
   return "";

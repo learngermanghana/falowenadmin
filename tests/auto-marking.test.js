@@ -258,6 +258,23 @@ test("objective auto-mark accepts answer text without option letter", () => {
   assert.equal(result.score, 100);
 });
 
+
+test("objective auto-mark ignores case differences in text answers", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: {
+      format: "objective",
+      answers: {
+        Answer1: "Wasser",
+        Answer2: "Brot",
+      },
+    },
+    submissionText: "Answer1: wasser\nAnswer2: BROT",
+  });
+
+  assert.equal(result.score, 100);
+  assert.equal(result.objectiveCorrect, 2);
+});
+
 test("objective auto-mark catches partial correctness", () => {
   const result = autoMarkSubmission({
     referenceEntry: {

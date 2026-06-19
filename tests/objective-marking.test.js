@@ -95,6 +95,21 @@ test("compares nine provided reference answers as 9/9 correct", () => {
   assert.ok(Object.values(result.details).every((detail) => detail.correct));
 });
 
+
+test("objective scoring accepts text answers with different capitalization", () => {
+  const result = computeObjectiveScore({
+    format: "objective",
+    answers: {
+      Answer1: "Wasser",
+      Answer2: "Brot",
+    },
+  }, "Answer1: wasser\nAnswer2: BROT");
+
+  assert.equal(result.correctCount, 2);
+  assert.equal(result.totalCount, 2);
+  assert.ok(Object.values(result.details).every((detail) => detail.correct));
+});
+
 test("computes A1-14.1 objective score from choices and vocabulary pairs", () => {
   const result = computeObjectiveScore("A1-14.1", `
     1. A Anzeige A

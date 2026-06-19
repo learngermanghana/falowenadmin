@@ -18,6 +18,7 @@ test("AI feedback policy allows enough space for actionable writing guidance", (
   assert.match(AI_FEEDBACK_INSTRUCTION, /show improved wording/);
   assert.match(AI_FEEDBACK_INSTRUCTION, /most useful language rule/);
   assert.match(AI_FEEDBACK_INSTRUCTION, /exact wrong answers/);
+  assert.match(AI_FEEDBACK_INSTRUCTION, /ignore capitalisation\/case differences/);
 });
 
 test("feedback normalization removes bold markers and caps feedback at 120 words", () => {
