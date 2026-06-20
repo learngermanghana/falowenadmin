@@ -14,6 +14,7 @@ import {
 import { buildClassUrl, calculateClassProgress, calculateCountdown } from "../utils/liveClassScheduling.js";
 
 const defaultRule = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
+const weekdayOptions = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const emptyForm = {
   name: "",
   levelId: "A1",
@@ -54,6 +55,19 @@ function statusStyle(status) {
   if (status === "completed") return { background: "#dcfce7", color: "#166534" };
   if (status === "live") return { background: "#fef3c7", color: "#92400e" };
   return { background: "#dbeafe", color: "#1e40af" };
+}
+
+function summarizeScheduleRules(scheduleRules = []) {
+  const grouped = scheduleRules.reduce((acc, rule) => {
+    const day = rule.day || "Day";
+    const time = rule.startTime || "--:--";
+    const duration = Number(rule.durationMinutes || 0);
+    acc[day] = [...(acc[day] || []), `${time}${duration ? ` (${duration} min)` : ""}`];
+    return acc;
+  }, {});
+  return weekdayOptions
+    .filter((day) => grouped[day]?.length)
+    .map((day) => `${day}: ${grouped[day].join(", ")}`);
 }
 
 export default function LiveClassesPage() {
@@ -116,6 +130,32 @@ export default function LiveClassesPage() {
         ruleIndex === index ? { ...rule, [field]: field === "durationMinutes" ? Number(value) : value } : rule
       )),
     }));
+  }
+
+  function addRule(day = defaultRule.day) {
+    setForm((current) => ({
+      ...current,
+      scheduleRules: [
+        ...current.scheduleRules,
+        {
+          ...defaultRule,
+          day,
+          startTime: current.scheduleRules.find((rule) => rule.day === day)?.startTime || defaultRule.startTime,
+          durationMinutes: current.scheduleRules.find((rule) => rule.day === day)?.durationMinutes || defaultRule.durationMinutes,
+        },
+      ],
+    }));
+  }
+
+  function toggleDay(day) {
+    setForm((current) => {
+      const hasDay = current.scheduleRules.some((rule) => rule.day === day);
+      if (hasDay && current.scheduleRules.length > 1) {
+        return { ...current, scheduleRules: current.scheduleRules.filter((rule) => rule.day !== day) };
+      }
+      if (hasDay) return current;
+      return { ...current, scheduleRules: [...current.scheduleRules, { ...defaultRule, day }] };
+    });
   }
 
   async function handleCreate(event) {
@@ -208,8 +248,13 @@ export default function LiveClassesPage() {
 
       <article className="card">
         <h2>Create a new class</h2>
+        <p style={{ marginTop: 0, opacity: 0.78 }}>
+          Use the same step-by-step flow as the course schedule generator: choose class details, select the weekly days, then add one or more time slots for each day.
+        </p>
         <form onSubmit={handleCreate} style={{ display: "grid", gap: 14 }}>
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
+          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+            <h3>Step 1: Class details</h3>
+            <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
             <label>Class name<input required value={form.name} placeholder="A1 Munich Klasse" onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
             <label>Level<select value={form.levelId} onChange={(event) => setForm((current) => ({ ...current, levelId: event.target.value }))}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
             <label>Start date<input required type="date" value={form.startDate} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} /></label>
@@ -218,22 +263,54 @@ export default function LiveClassesPage() {
             <label>Zoom profile ID<input value={form.zoomProfileId} placeholder="Optional" onChange={(event) => setForm((current) => ({ ...current, zoomProfileId: event.target.value }))} /></label>
             <label>Status<select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}>{["draft", "upcoming", "active"].map((status) => <option key={status}>{status}</option>)}</select></label>
             <label>Timezone<input required value={form.timezone} onChange={(event) => setForm((current) => ({ ...current, timezone: event.target.value }))} /></label>
-          </div>
+            </div>
+          </section>
 
-          <div>
-            <h3>Weekly class times</h3>
+          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+            <h3>Step 2: Teaching days</h3>
+            <p style={{ marginTop: 0, opacity: 0.78 }}>
+              Select every day this class meets. You can add multiple time slots on the same day when a cohort meets twice.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              {weekdayOptions.map((day) => {
+                const selected = form.scheduleRules.some((rule) => rule.day === day);
+                return (
+                  <label key={day} style={{ border: "1px solid #ddd", borderRadius: 999, padding: "6px 10px", background: selected ? "#eff6ff" : "#fff" }}>
+                    <input type="checkbox" checked={selected} onChange={() => toggleDay(day)} /> {day}
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+
+          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+            <h3>Step 3: Weekly class times</h3>
             <div style={{ display: "grid", gap: 10 }}>
               {form.scheduleRules.map((rule, index) => (
-                <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
-                  <label>Day<select value={rule.day} onChange={(event) => updateRule(index, "day", event.target.value)}>{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => <option key={day}>{day}</option>)}</select></label>
+                <div key={`${index}-${rule.day}`} style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", alignItems: "end", borderTop: index ? "1px solid #eee" : "none", paddingTop: index ? 10 : 0 }}>
+                  <label>Day<select value={rule.day} onChange={(event) => updateRule(index, "day", event.target.value)}>{weekdayOptions.map((day) => <option key={day}>{day}</option>)}</select></label>
                   <label>Start time<input type="time" required value={rule.startTime} onChange={(event) => updateRule(index, "startTime", event.target.value)} /></label>
                   <label>Duration (minutes)<input type="number" min="30" step="15" required value={rule.durationMinutes} onChange={(event) => updateRule(index, "durationMinutes", event.target.value)} /></label>
                   {form.scheduleRules.length > 1 ? <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, ruleIndex) => ruleIndex !== index) }))}>Remove</button> : null}
                 </div>
               ))}
             </div>
-            <button type="button" style={{ marginTop: 8 }} onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...defaultRule }] }))}>Add another day</button>
-          </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+              <button type="button" onClick={() => addRule(form.scheduleRules.at(-1)?.day || defaultRule.day)}>Add another time slot</button>
+              <button type="button" onClick={() => addRule(weekdayOptions.find((day) => !form.scheduleRules.some((rule) => rule.day === day)) || defaultRule.day)}>Add another day</button>
+            </div>
+          </section>
+
+          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+            <h3>Step 4: Schedule preview</h3>
+            {summarizeScheduleRules(form.scheduleRules).length ? (
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {summarizeScheduleRules(form.scheduleRules).map((line) => <li key={line}>{line}</li>)}
+              </ul>
+            ) : (
+              <p style={{ margin: 0, opacity: 0.7 }}>No weekly class times selected.</p>
+            )}
+          </section>
 
           <button type="submit" disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
         </form>

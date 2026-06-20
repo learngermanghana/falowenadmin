@@ -164,6 +164,7 @@ export default function App() {
           <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><StudentActivityPage /></ProtectedRoute>} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
+          <Route path="/quality-check" element={<Navigate to="/" replace />} />
           <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
           <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
           <Route path="/class-operations" element={<ProtectedRoute><ClassOperationsPage /></ProtectedRoute>} />
