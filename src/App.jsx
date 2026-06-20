@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import AttendanceOverviewPage from "./pages/AttendanceOverviewPage";
 import AttendancePage from "./pages/AttendancePage";
+import CanonicalAttendancePage from "./pages/CanonicalAttendancePage.jsx";
 import CheckinPage from "./pages/CheckinPage";
 import CheckinDisplayPage from "./pages/CheckinDisplayPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
@@ -60,6 +61,8 @@ function TopBar() {
             {isStaff ? (
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
+                <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
+                <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
               </>
             ) : (
@@ -68,6 +71,8 @@ function TopBar() {
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/student-activity" onClick={() => setMenuOpen(false)}>Student Activity</Link>
                 <Link to="/writing-submissions" onClick={() => setMenuOpen(false)}>Writing Live</Link>
+                <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
+                <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
                 <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
@@ -98,15 +103,12 @@ function TopBar() {
 
 function ToastViewport() {
   const { toasts, dismissToast } = useToast();
-
   return (
     <div className="toast-viewport" aria-live="polite" aria-atomic="true">
       {toasts.map((toast) => (
         <div key={toast.id} className={`toast-item toast-item-${toast.type}`}>
           <span>{toast.message}</span>
-          <button className="toast-dismiss" onClick={() => dismissToast(toast.id)} aria-label="Dismiss notification">
-            ×
-          </button>
+          <button className="toast-dismiss" onClick={() => dismissToast(toast.id)} aria-label="Dismiss notification">×</button>
         </div>
       ))}
     </div>
@@ -114,19 +116,11 @@ function ToastViewport() {
 }
 
 function MarkingRoute() {
-  return (
-    <ProtectedRoute allowStaff={false}>
-      <MarkingHubPage />
-    </ProtectedRoute>
-  );
+  return <ProtectedRoute allowStaff={false}><MarkingHubPage /></ProtectedRoute>;
 }
 
 function ExamReviewRoute() {
-  return (
-    <ProtectedRoute allowStaff={false}>
-      <ExamTutorReviewQueuePage />
-    </ProtectedRoute>
-  );
+  return <ProtectedRoute allowStaff={false}><ExamTutorReviewQueuePage /></ProtectedRoute>;
 }
 
 export default function App() {
@@ -146,6 +140,7 @@ export default function App() {
 
           <Route path="/" element={<ProtectedRoute allowStaff={false}><DashboardPage /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute allowStaff={false}><AttendanceOverviewPage /></ProtectedRoute>} />
+          <Route path="/attendance/session/:classId" element={<ProtectedRoute><CanonicalAttendancePage /></ProtectedRoute>} />
           <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
