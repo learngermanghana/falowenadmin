@@ -182,8 +182,17 @@ export default function LiveClassesPage() {
       if (action === "cancel") {
         const reason = window.prompt("Why is this class cancelled? Students will see this reason.", session.cancellationReason || "");
         if (reason === null) return;
-        await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
-        setMessage("Session cancelled. Attendance, reminders, student notice and calendar status were updated.");
+        const confirmed = window.confirm("Cancel this session and email all active students in this class?");
+        if (!confirmed) return;
+        const result = await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
+        if (result?.emailSubmitted) {
+          const recipientText = result.recipientCount === 1
+            ? " for 1 active student"
+            : ` for ${result.recipientCount || 0} active students`;
+          setMessage(`Session cancelled. Attendance, reminders, student notice and calendar status were updated. The cancellation email was submitted${recipientText}.`);
+        } else {
+          setMessage(`Session cancelled and all class records were updated, but the email could not be submitted: ${result?.emailMessage || "Unknown email error"}`);
+        }
       }
 
       if (action === "reschedule") {

@@ -20,6 +20,13 @@ import {
   slugifyClassName,
 } from "../utils/liveClassScheduling.js";
 import { getCourseDictionaryEntry } from "../data/courseDictionary.js";
+import { saveAnnouncementRow } from "./communicationService.js";
+import { listStudentsByClass } from "./studentsService.js";
+import {
+  buildCancellationAnnouncement,
+  findNextScheduledSession,
+  getCancellationRecipients,
+} from "../utils/liveClassCancellationEmail.js";
 
 function attendanceSessionRef(classId, sessionId) {
   return doc(db, "attendance", String(classId), "sessions", String(sessionId));
@@ -184,6 +191,9 @@ export async function updateSession(sessionId, patch) {
 
 export async function cancelSession(sessionId, { reason, adminId }) {
   const sessionRef = doc(db, "classSessions", sessionId);
+  const emailQueueRef = doc(collection(db, "emailQueue"));
+  let cancellationContext = null;
+
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
@@ -199,6 +209,7 @@ export async function cancelSession(sessionId, { reason, adminId }) {
       updatedAt: serverTimestamp(),
     };
 
+    cancellationContext = { klass, session, patch };
     transaction.update(sessionRef, patch);
     transaction.set(attendanceSessionRef(session.classId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
     transaction.set(doc(collection(db, "auditLogs")), {
@@ -217,19 +228,100 @@ export async function cancelSession(sessionId, { reason, adminId }) {
       body: patch.cancellationReason || "A live class session was cancelled.",
       createdAt: serverTimestamp(),
     });
-    transaction.set(doc(collection(db, "emailQueue")), {
+    transaction.set(emailQueueRef, {
       type: "classSession.cancelled",
       classId: session.classId,
+      className: klass.name || "",
       sessionId,
+      sessionStartsAt: session.startsAt || "",
+      sessionEndsAt: session.endsAt || "",
+      reason: patch.cancellationReason,
       dedupeKey: `cancel_${session.classId}_${sessionId}_${patch.sequence}`,
-      status: "queued",
+      recipientMode: "class",
+      deliveryChannel: "announcement_webhook",
+      status: "preparing",
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
     transaction.set(doc(db, "calendarFeeds", session.classId), {
       classId: session.classId,
       updatedAt: serverTimestamp(),
     }, { merge: true });
   });
+
+  const { klass, session, patch } = cancellationContext;
+  let recipients = [];
+  let recipientLookupError = "";
+  try {
+    recipients = getCancellationRecipients(await listStudentsByClass(klass.name || session.classId));
+  } catch (error) {
+    recipientLookupError = error?.message || "Student recipient lookup failed";
+  }
+
+  const sessions = await listClassSessions(session.classId).catch(() => []);
+  const nextSession = findNextScheduledSession(sessions, session);
+  const emailPayload = buildCancellationAnnouncement({
+    klass,
+    session,
+    reason: patch.cancellationReason,
+    nextSession,
+  });
+
+  try {
+    const receipt = await saveAnnouncementRow(emailPayload);
+    const emailSubmitted = Boolean(receipt?.sheet?.attempted && receipt?.sheet?.success);
+    const deliveryStatus = emailSubmitted
+      ? (receipt.sheet.unverified ? "submitted_unverified" : "submitted")
+      : "failed";
+    const deliveryError = emailSubmitted
+      ? recipientLookupError
+      : (receipt?.sheet?.message || "Announcement email webhook is not configured");
+
+    await setDoc(emailQueueRef, {
+      subject: emailPayload.subject,
+      body: emailPayload.announcement,
+      classUrl: emailPayload.link,
+      recipientCount: recipients.length,
+      recipientLookupError,
+      status: deliveryStatus,
+      deliveryError,
+      deliveryReceipt: receipt?.sheet || null,
+      submittedAt: emailSubmitted ? serverTimestamp() : null,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return {
+      classId: session.classId,
+      sessionId,
+      emailQueueId: emailQueueRef.id,
+      emailSubmitted,
+      emailStatus: deliveryStatus,
+      emailMessage: deliveryError,
+      recipientCount: recipients.length,
+    };
+  } catch (error) {
+    const deliveryError = error?.message || "Cancellation email submission failed";
+    await setDoc(emailQueueRef, {
+      subject: emailPayload.subject,
+      body: emailPayload.announcement,
+      classUrl: emailPayload.link,
+      recipientCount: recipients.length,
+      recipientLookupError,
+      status: "failed",
+      deliveryError,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return {
+      classId: session.classId,
+      sessionId,
+      emailQueueId: emailQueueRef.id,
+      emailSubmitted: false,
+      emailStatus: "failed",
+      emailMessage: deliveryError,
+      recipientCount: recipients.length,
+    };
+  }
 }
 
 export async function rescheduleSession(sessionId, { startsAt, endsAt, adminId, reason = "" }) {
