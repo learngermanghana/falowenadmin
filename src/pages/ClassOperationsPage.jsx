@@ -22,6 +22,11 @@ const operations = [
     to: "/course-schedule",
   },
   {
+    title: "Live Class Scheduling",
+    description: "Manage canonical class cohorts, sessions, cancellations, rescheduling, communication and audit history.",
+    to: "/live-classes",
+  },
+  {
     title: "Class Archive",
     description: "Review archived completed classes and reopen them when needed.",
     to: "/class-archive",
