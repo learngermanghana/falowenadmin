@@ -182,6 +182,8 @@ export default function LiveClassesPage() {
       if (action === "cancel") {
         const reason = window.prompt("Why is this class cancelled? Students will see this reason.", session.cancellationReason || "");
         if (reason === null) return;
+        const confirmed = window.confirm("Cancel this session and email all active students in this class?");
+        if (!confirmed) return;
         const result = await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
         if (result?.emailSubmitted) {
           const recipientText = result.recipientCount === 1
