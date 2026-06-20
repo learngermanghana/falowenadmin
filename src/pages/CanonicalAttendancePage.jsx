@@ -82,7 +82,8 @@ function dateParts(value) {
 function sessionLabel(session, klass) {
   const starts = dateParts(session?.startsAt);
   const assignments = (session?.assignmentIds || []).join(", ");
-  return `${starts.date} · ${starts.time}${session?.topic ? ` · ${session.topic}` : assignments ? ` · ${assignments}` : ""}`;
+  const detail = String(session?.topic || assignments || klass?.name || "").trim();
+  return `${starts.date} · ${starts.time}${detail ? ` · ${detail}` : ""}`;
 }
 
 export default function CanonicalAttendancePage() {
@@ -142,7 +143,7 @@ export default function CanonicalAttendancePage() {
       }
     })();
     return () => { active = false; };
-  }, [routeClassId]);
+  }, [routeClassId, error]);
 
   useEffect(() => {
     if (!selectedSessionId) return;
