@@ -1396,6 +1396,95 @@ exports.sendDueHolidayNotices = onSchedule({
   }
 });
 
+
+function toIcsDate(value) {
+  return new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function stableClassUrl(klass = {}) {
+  const slug = String(klass.slug || klass.classSlug || klass.name || klass.id || "").trim().toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return `/classes/${slug}`;
+}
+
+function chapterTitle(levelId, chapterId) {
+  return `${String(levelId || "").toUpperCase()}-${chapterId}`;
+}
+
+async function loadClassSessions(classId) {
+  const snap = await db.collection("classSessions").where("classId", "==", classId).orderBy("startsAt", "asc").get();
+  return snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+}
+
+function nextValidSession(sessions, now = Date.now()) {
+  return sessions.filter((session) => !["cancelled", "completed"].includes(String(session.status || "")) && new Date(session.startsAt).getTime() >= now).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))[0] || null;
+}
+
+app.get("/calendar/class/:classId.ics", async (req, res) => {
+  try {
+    const classId = String(req.params.classId || "").trim();
+    const classSnap = await db.collection("classes").doc(classId).get();
+    if (!classSnap.exists) return res.status(404).send("Class not found");
+    const klass = classSnap.data() || {};
+    const sessions = await loadClassSessions(classId);
+    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Falowen//Live Classes//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+    for (const session of sessions) {
+      const uid = session.uid || `falowen-class-${classId}-${session.id}@falowen.com`;
+      lines.push("BEGIN:VEVENT", `UID:${uid}`, `SEQUENCE:${Number(session.sequence || 0)}`, `DTSTAMP:${toIcsDate(new Date())}`, `DTSTART:${toIcsDate(session.startsAt)}`, `DTEND:${toIcsDate(session.endsAt || session.startsAt)}`, `SUMMARY:${String(session.topic || klass.name || "Falowen live class").replace(/\n/g, " ")}`);
+      if (session.status === "cancelled") lines.push("STATUS:CANCELLED");
+      lines.push("END:VEVENT");
+    }
+    lines.push("END:VCALENDAR");
+    res.set("Content-Type", "text/calendar; charset=utf-8");
+    res.send(`${lines.join("\r\n")}\r\n`);
+  } catch (e) {
+    res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
+app.get("/admin/classes/:classId/next-session", async (req, res) => {
+  try {
+    await requireAuth(req);
+    const classId = String(req.params.classId || "").trim();
+    const classSnap = await db.collection("classes").doc(classId).get();
+    if (!classSnap.exists) return res.status(404).json({ error: "Class not found" });
+    const klass = { id: classSnap.id, ...(classSnap.data() || {}) };
+    const sessions = await loadClassSessions(classId);
+    const session = nextValidSession(sessions);
+    if (!session) return res.json({ ok: true, classId, classUrl: stableClassUrl(klass), session: null, zoom: null, chapters: [] });
+    let zoom = null;
+    if (klass.zoomProfileId) {
+      const zoomSnap = await db.collection("zoomProfiles").doc(String(klass.zoomProfileId)).get();
+      zoom = zoomSnap.exists ? { id: zoomSnap.id, ...(zoomSnap.data() || {}) } : { id: klass.zoomProfileId };
+    }
+    const chapters = (session.chapterIds || []).map((chapterId) => ({ id: chapterId, dictionaryId: chapterTitle(klass.levelId, chapterId) }));
+    res.json({ ok: true, classId, classUrl: stableClassUrl(klass), session, zoom, chapters });
+  } catch (e) {
+    res.status(401).json({ error: e?.message || "Unauthorized" });
+  }
+});
+
+app.post("/admin/classes/:classId/sessions/:sessionId/cancel", async (req, res) => {
+  try {
+    const user = await requireAuth(req);
+    const { classId, sessionId } = req.params;
+    const reason = String(req.body?.reason || "").trim();
+    await db.runTransaction(async (transaction) => {
+      const ref = db.collection("classSessions").doc(sessionId);
+      const snap = await transaction.get(ref);
+      if (!snap.exists) throw new Error("Session not found");
+      const session = snap.data() || {};
+      transaction.update(ref, { status: "cancelled", cancellationReason: reason, cancelledBy: user.uid, cancelledAt: admin.firestore.FieldValue.serverTimestamp(), remindersSuppressed: true, sequence: Number(session.sequence || 0) + 1, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+      transaction.set(db.collection("auditLogs").doc(), { type: "classSession.cancelled", classId, sessionId, actorId: user.uid, reason, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      transaction.set(db.collection("studentNotifications").doc(), { type: "classSession.cancelled", classId, sessionId, title: "Live class cancelled", body: reason || "A live class was cancelled.", createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      transaction.set(db.collection("emailQueue").doc(), { type: "classSession.cancelled", classId, sessionId, status: "queued", createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      transaction.set(db.collection("calendarFeeds").doc(classId), { classId, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
 exports.api = onRequest({
   secrets: [
     attendancePinSaltSecret,
