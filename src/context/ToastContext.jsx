@@ -28,14 +28,26 @@ export function ToastProvider({ children }) {
     }
   }, [dismissToast]);
 
+  const success = useCallback((message, options = {}) => {
+    pushToast({ ...options, type: "success", message });
+  }, [pushToast]);
+
+  const error = useCallback((message, options = {}) => {
+    pushToast({ ...options, type: "error", message });
+  }, [pushToast]);
+
+  const info = useCallback((message, options = {}) => {
+    pushToast({ ...options, type: "info", message });
+  }, [pushToast]);
+
   const api = useMemo(() => ({
     toasts,
     pushToast,
     dismissToast,
-    success: (message, options = {}) => pushToast({ ...options, type: "success", message }),
-    error: (message, options = {}) => pushToast({ ...options, type: "error", message }),
-    info: (message, options = {}) => pushToast({ ...options, type: "info", message }),
-  }), [dismissToast, pushToast, toasts]);
+    success,
+    error,
+    info,
+  }), [dismissToast, error, info, pushToast, success, toasts]);
 
   return <ToastContext.Provider value={api}>{children}</ToastContext.Provider>;
 }
