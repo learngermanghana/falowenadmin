@@ -3,7 +3,6 @@ import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-r
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import AdminQualityPage from "./pages/AdminQualityPage";
 import AttendanceOverviewPage from "./pages/AttendanceOverviewPage";
 import AttendancePage from "./pages/AttendancePage";
 import CheckinPage from "./pages/CheckinPage";
@@ -66,7 +65,6 @@ function TopBar() {
             ) : (
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-                <Link to="/quality-check" onClick={() => setMenuOpen(false)}>Quality Check</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/student-activity" onClick={() => setMenuOpen(false)}>Student Activity</Link>
                 <Link to="/writing-submissions" onClick={() => setMenuOpen(false)}>Writing Live</Link>
@@ -147,7 +145,6 @@ export default function App() {
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
 
           <Route path="/" element={<ProtectedRoute allowStaff={false}><DashboardPage /></ProtectedRoute>} />
-          <Route path="/quality-check" element={<ProtectedRoute allowStaff={false}><AdminQualityPage /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute allowStaff={false}><AttendanceOverviewPage /></ProtectedRoute>} />
           <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
