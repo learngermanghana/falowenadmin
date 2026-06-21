@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
+import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 
 const editableFields = [
   "name",
@@ -129,7 +130,7 @@ const addStudentDefaultDraft = {
   uid: "",
 };
 
-const addStudentNumericFields = new Set(["balance", "paid", "dailyLimit"]);
+const addStudentNumericFields = new Set(["tuitionFee", "initialPaymentAmount", "paymentIntentAmount", "balanceDue", "balance", "paid", "dailyLimit"]);
 const addStudentDateFields = new Set(["contractStart", "contractEnd"]);
 const REVIEW_LINK = "https://g.page/r/Cdogveq3Hy69EBM/review";
 
@@ -192,8 +193,7 @@ function normalizeDateValue(value) {
 }
 
 function toNumber(value) {
-  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
+  return parseMoneyValue(value);
 }
 
 function formatGhs(value) {
@@ -450,7 +450,13 @@ export default function StudentDirectoryPage() {
   };
 
   const updateCreateDraftField = (field, value) => {
-    setCreateDraft((prev) => ({ ...prev, [field]: value }));
+    setCreateDraft((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "initialPaymentAmount") {
+        next.paymentIntentAmount = String(calculatePaystackGrossAmount(value));
+      }
+      return next;
+    });
   };
 
   const createStudentRecord = async () => {
@@ -468,6 +474,7 @@ export default function StudentDirectoryPage() {
       name,
       studentCode,
       studentcode: studentCode,
+      paymentIntentAmount: calculatePaystackGrossAmount(createDraft.initialPaymentAmount),
       notificationsLastSeenAt: Date.now(),
     };
 
@@ -787,6 +794,14 @@ export default function StudentDirectoryPage() {
             <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.8 }}>
               Create a new student record in Firestore with the same structure used in existing student documents.
             </p>
+            <div style={{ margin: "0 0 12px", padding: 12, border: "1px solid #bfdbfe", borderRadius: 10, background: "#eff6ff", color: "#1e3a8a" }}>
+              Paystack charge is split with the student. For example, an initial payment of
+              {" "}<strong>{formatGhs(createDraft.initialPaymentAmount)}</strong> becomes
+              {" "}<strong>{formatGhs(calculatePaystackGrossAmount(createDraft.initialPaymentAmount))}</strong>,
+              so the student's estimated share is {" "}
+              <strong>{formatGhs(calculatePaystackCharge(createDraft.initialPaymentAmount))}</strong>
+              {" "}({(STUDENT_PAYSTACK_CHARGE_SHARE * 100).toFixed(0)}% of the Paystack fee at {(PAYSTACK_CHARGE_RATE * 100).toFixed(2)}%).
+            </div>
             <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
               {addStudentFields.map((field) => (
                 <label key={`create-${field}`} style={{ display: "grid", gap: 6 }}>
