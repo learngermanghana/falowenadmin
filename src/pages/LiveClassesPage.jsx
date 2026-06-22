@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -11,7 +11,7 @@ import {
   resolveSessionChapters,
   updateSession,
 } from "../services/liveClassService.js";
-import { buildClassUrl, calculateClassEndDate, calculateClassProgress, calculateCountdown } from "../utils/liveClassScheduling.js";
+import { buildClassUrl, calculateClassEndDate, calculateClassProgress, calculateCountdown, validateIanaTimezone } from "../utils/liveClassScheduling.js";
 
 const defaultRule = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
 const weekdayOptions = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -77,7 +77,10 @@ export default function LiveClassesPage() {
   const [dashboard, setDashboard] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
+  const [createResult, setCreateResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const createResultRef = useRef(null);
+  const fieldRefs = useRef({});
   const [endDateAutoManaged, setEndDateAutoManaged] = useState(true);
 
   async function refreshClasses(nextSelectedId = selectedClassId) {
@@ -126,7 +129,35 @@ export default function LiveClassesPage() {
 
   function withAutoEndDate(nextForm) {
     const calculatedEndDate = calculateClassEndDate(nextForm);
-    return calculatedEndDate ? { ...nextForm, endDate: calculatedEndDate } : nextForm;
+    if (calculatedEndDate) return { ...nextForm, endDate: calculatedEndDate };
+    if (["B2", "C1"].includes(String(nextForm.levelId || "").toUpperCase())) return { ...nextForm, endDate: "" };
+    return nextForm;
+  }
+
+  function setCreateStatus(type, text) {
+    setCreateResult({ type, text });
+    window.setTimeout(() => createResultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+  }
+
+  function focusField(field) {
+    window.setTimeout(() => fieldRefs.current[field]?.focus(), 0);
+  }
+
+  function validateCreateForm(values) {
+    const rules = Array.isArray(values.scheduleRules) ? values.scheduleRules : [];
+    if (!String(values.name || "").trim()) return { field: "name", message: "Class name is required." };
+    if (!String(values.levelId || "").trim()) return { field: "levelId", message: "Level is required." };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(values.startDate || ""))) return { field: "startDate", message: "Start date is required." };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(values.endDate || ""))) return { field: "endDate", message: "End date is required." };
+    if (!String(values.timezone || "").trim()) return { field: "timezone", message: "Timezone is required." };
+    if (!validateIanaTimezone(values.timezone)) return { field: "timezone", message: "Timezone must be a valid IANA timezone." };
+    if (!rules.length) return { field: "scheduleRules", message: "At least one schedule rule is required." };
+    for (let index = 0; index < rules.length; index += 1) {
+      const rule = rules[index] || {};
+      if (!/^\d{2}:\d{2}$/.test(String(rule.startTime || ""))) return { field: `startTime-${index}`, message: `Valid start time is required for schedule rule ${index + 1}.` };
+      if (Number(rule.durationMinutes) < 30) return { field: `durationMinutes-${index}`, message: `Duration must be at least 30 minutes for schedule rule ${index + 1}.` };
+    }
+    return null;
   }
 
   function updateCreateForm(updater, { autoEndDate = endDateAutoManaged } = {}) {
@@ -173,17 +204,28 @@ export default function LiveClassesPage() {
 
   async function handleCreate(event) {
     event.preventDefault();
+    if (busy) return;
+    const validationError = validateCreateForm(form);
+    if (validationError) {
+      setCreateStatus("error", validationError.message);
+      focusField(validationError.field);
+      return;
+    }
     setBusy(true);
-    setMessage("");
+    setCreateResult(null);
     try {
       const record = await createClassCohort(form);
-      setMessage(`Created ${record.name}. All class sessions and attendance dates were generated automatically.`);
+      setCreateStatus("success", "Class created successfully.");
       setForm({ ...emptyForm, scheduleRules: [{ ...defaultRule }] });
       setEndDateAutoManaged(true);
-      await refreshClasses(record.id);
-      await refreshDashboard(record.id);
+      try {
+        await refreshClasses(record.id);
+        await refreshDashboard(record.id);
+      } catch (refreshError) {
+        setCreateStatus("warning", `The class was created, but the generated sessions could not be displayed: ${refreshError?.message || "Unknown dashboard loading error"}.`);
+      }
     } catch (error) {
-      setMessage(error?.message || "Class creation failed");
+      setCreateStatus("error", error?.message || "Class creation failed");
     } finally {
       setBusy(false);
     }
@@ -274,22 +316,22 @@ export default function LiveClassesPage() {
         <p style={{ marginTop: 0, opacity: 0.78 }}>
           Use the same step-by-step flow as the course schedule generator: choose class details, select the weekly days, then add one or more time slots for each day.
         </p>
-        <form onSubmit={handleCreate} style={{ display: "grid", gap: 14 }}>
+        <form noValidate onSubmit={handleCreate} style={{ display: "grid", gap: 14 }}>
           <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
             <h3>Step 1: Class details</h3>
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
-            <label>Class name<input required value={form.name} placeholder="A1 Munich Klasse" onChange={(event) => updateCreateForm({ name: event.target.value }, { autoEndDate: false })} /></label>
-            <label>Level<select value={form.levelId} onChange={(event) => updateCreateForm({ levelId: event.target.value })}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
-            <label>Start date<input required type="date" value={form.startDate} onChange={(event) => { setEndDateAutoManaged(true); updateCreateForm({ startDate: event.target.value }, { autoEndDate: true }); }} /></label>
-            <label>End date<input required type="date" value={form.endDate} onChange={(event) => { setEndDateAutoManaged(false); updateCreateForm({ endDate: event.target.value }, { autoEndDate: false }); }} /><small>Auto-calculated from the selected level dictionary and weekly class days. You can still edit it manually.</small></label>
+            <label>Class name<input ref={(element) => { fieldRefs.current.name = element; }} required value={form.name} placeholder="A1 Munich Klasse" onChange={(event) => updateCreateForm({ name: event.target.value }, { autoEndDate: false })} /></label>
+            <label>Level<select ref={(element) => { fieldRefs.current.levelId = element; }} value={form.levelId} onChange={(event) => updateCreateForm({ levelId: event.target.value })}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
+            <label>Start date<input ref={(element) => { fieldRefs.current.startDate = element; }} required type="date" value={form.startDate} onChange={(event) => { setEndDateAutoManaged(true); updateCreateForm({ startDate: event.target.value }, { autoEndDate: true }); }} /></label>
+            <label>End date<input ref={(element) => { fieldRefs.current.endDate = element; }} required type="date" value={form.endDate} onChange={(event) => { setEndDateAutoManaged(false); updateCreateForm({ endDate: event.target.value }, { autoEndDate: false }); }} /><small>{["B2", "C1"].includes(form.levelId) ? "Automatic end-date calculation is not available for this level yet. Please enter the graduation date manually." : "Auto-calculated from the selected level dictionary and weekly class days. You can still edit it manually."}</small></label>
             <label>Tutor ID<input value={form.tutorId} placeholder="Optional" onChange={(event) => updateCreateForm({ tutorId: event.target.value }, { autoEndDate: false })} /></label>
             <label>Zoom profile ID<input value={form.zoomProfileId} placeholder="Optional" onChange={(event) => updateCreateForm({ zoomProfileId: event.target.value }, { autoEndDate: false })} /></label>
             <label>Status<select value={form.status} onChange={(event) => updateCreateForm({ status: event.target.value }, { autoEndDate: false })}>{["draft", "upcoming", "active"].map((status) => <option key={status}>{status}</option>)}</select></label>
-            <label>Timezone<input required value={form.timezone} onChange={(event) => updateCreateForm({ timezone: event.target.value }, { autoEndDate: false })} /></label>
+            <label>Timezone<input ref={(element) => { fieldRefs.current.timezone = element; }} required value={form.timezone} onChange={(event) => updateCreateForm({ timezone: event.target.value }, { autoEndDate: false })} /></label>
             </div>
           </section>
 
-          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+          <section ref={(element) => { fieldRefs.current.scheduleRules = element; }} tabIndex={-1} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
             <h3>Step 2: Teaching days</h3>
             <p style={{ marginTop: 0, opacity: 0.78 }}>
               Select every day this class meets. You can add multiple time slots on the same day when a cohort meets twice.
@@ -312,8 +354,8 @@ export default function LiveClassesPage() {
               {form.scheduleRules.map((rule, index) => (
                 <div key={`${index}-${rule.day}`} style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", alignItems: "end", borderTop: index ? "1px solid #eee" : "none", paddingTop: index ? 10 : 0 }}>
                   <label>Day<select value={rule.day} onChange={(event) => updateRule(index, "day", event.target.value)}>{weekdayOptions.map((day) => <option key={day}>{day}</option>)}</select></label>
-                  <label>Start time<input type="time" required value={rule.startTime} onChange={(event) => updateRule(index, "startTime", event.target.value)} /></label>
-                  <label>Duration (minutes)<input type="number" min="30" step="15" required value={rule.durationMinutes} onChange={(event) => updateRule(index, "durationMinutes", event.target.value)} /></label>
+                  <label>Start time<input ref={(element) => { fieldRefs.current[`startTime-${index}`] = element; }} type="time" required value={rule.startTime} onChange={(event) => updateRule(index, "startTime", event.target.value)} /></label>
+                  <label>Duration (minutes)<input ref={(element) => { fieldRefs.current[`durationMinutes-${index}`] = element; }} type="number" min="30" step="15" required value={rule.durationMinutes} onChange={(event) => updateRule(index, "durationMinutes", event.target.value)} /></label>
                   {form.scheduleRules.length > 1 ? <button type="button" onClick={() => updateCreateForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, ruleIndex) => ruleIndex !== index) }))}>Remove</button> : null}
                 </div>
               ))}
@@ -335,7 +377,23 @@ export default function LiveClassesPage() {
             )}
           </section>
 
-          <button type="submit" disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
+          {createResult ? (
+            <div
+              ref={createResultRef}
+              role={createResult.type === "error" ? "alert" : undefined}
+              aria-live={createResult.type === "error" ? undefined : "polite"}
+              style={{
+                padding: 12,
+                borderRadius: 8,
+                border: `1px solid ${createResult.type === "error" ? "#fecaca" : createResult.type === "warning" ? "#fde68a" : "#bbf7d0"}`,
+                background: createResult.type === "error" ? "#fef2f2" : createResult.type === "warning" ? "#fffbeb" : "#f0fdf4",
+                color: createResult.type === "error" ? "#991b1b" : createResult.type === "warning" ? "#92400e" : "#166534",
+              }}
+            >
+              {createResult.text}
+            </div>
+          ) : null}
+          <button type="submit" disabled={busy} aria-disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
         </form>
       </article>
 
