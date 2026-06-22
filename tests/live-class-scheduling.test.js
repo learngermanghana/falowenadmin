@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildClassUrl, calculateClassProgress, calculateCountdown, generateSessionOccurrences, resolveChapterDictionary, selectNextSession, sessionStatusDoesNotArchiveClass, shouldSendReminderForSession, slugifyClassName, zonedLocalToUtcIso } from "../src/utils/liveClassScheduling.js";
+import { buildClassUrl, calculateClassEndDate, calculateClassProgress, calculateCountdown, generateSessionOccurrences, resolveChapterDictionary, selectNextSession, sessionStatusDoesNotArchiveClass, shouldSendReminderForSession, slugifyClassName, zonedLocalToUtcIso } from "../src/utils/liveClassScheduling.js";
 
 test("Ghana timezone conversion stores UTC without one-hour shift", () => {
   assert.equal(zonedLocalToUtcIso("2026-06-20", "09:00", "Africa/Accra"), "2026-06-20T09:00:00.000Z");
@@ -53,4 +53,24 @@ test("chapter dictionary resolution loads titles by IDs", () => {
 
 test("progress ignores cancelled sessions", () => {
   assert.equal(calculateClassProgress([{ status: "completed" }, { status: "scheduled" }, { status: "cancelled" }]), 50);
+});
+
+
+test("calculates class end date from course dictionary and weekly schedule", () => {
+  assert.equal(calculateClassEndDate({
+    levelId: "A1",
+    startDate: "2026-06-20",
+    scheduleRules: [{ day: "Sat", startTime: "09:00", durationMinutes: 120 }],
+  }), "2026-12-19");
+});
+
+test("calculates class end date using multiple weekly sessions", () => {
+  assert.equal(calculateClassEndDate({
+    levelId: "A2",
+    startDate: "2026-06-22",
+    scheduleRules: [
+      { day: "Mon", startTime: "18:00", durationMinutes: 120 },
+      { day: "Wed", startTime: "18:00", durationMinutes: 120 },
+    ],
+  }), "2026-09-23");
 });
