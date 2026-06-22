@@ -28,6 +28,39 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Live class administration collections used by /live-classes.
+    match /classes/{classId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /classSessions/{sessionId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /attendance/{classId}/sessions/{sessionId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /attendance/{classId}/sessions/{sessionId}/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    match /calendarFeeds/{feedId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /studentNotifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /emailQueue/{emailId} {
+      allow read, write: if isAdmin();
+    }
+
     // Do not deploy this file blindly if your live project already has broader
     // Firestore rules in Firebase Console. Merge these answer-key rules into
     // your existing rules first so other admin pages do not lose access.

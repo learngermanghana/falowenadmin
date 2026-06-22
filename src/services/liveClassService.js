@@ -8,6 +8,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -92,12 +93,29 @@ export async function createClassCohort(payload) {
     scheduleRules: payload.scheduleRules || [],
     classUrl: buildClassUrl({ slug }),
     createdAt: serverTimestamp(),
+    generationStatus: "pending",
+    generationError: "",
     updatedAt: serverTimestamp(),
   };
 
   await setDoc(classRef, record);
-  await generateClassSessions(classRef.id, record);
-  return record;
+  try {
+    const generation = await generateClassSessions(classRef.id, record);
+    await updateDoc(classRef, {
+      generationStatus: "complete",
+      generationError: "",
+      generatedSessionCount: generation.total,
+      updatedAt: serverTimestamp(),
+    });
+    return { ...record, generationStatus: "complete", generatedSessionCount: generation.total };
+  } catch (error) {
+    await updateDoc(classRef, {
+      generationStatus: "failed",
+      generationError: error?.message || "Session generation failed",
+      updatedAt: serverTimestamp(),
+    });
+    throw new Error(`Class was saved, but session generation failed: ${error?.message || "Unknown error"}. You can safely retry session generation for this class without creating duplicate sessions.`);
+  }
 }
 
 export async function generateClassSessions(classId, classRecord = null) {
