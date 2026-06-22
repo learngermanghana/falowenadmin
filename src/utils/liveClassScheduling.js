@@ -1,4 +1,4 @@
-import { getCourseDictionaryEntry } from "../data/courseDictionary.js";
+import { courseDictionary, getCourseDictionaryEntry } from "../data/courseDictionary.js";
 
 export const CLASS_STATUSES = ["draft", "upcoming", "active", "graduated", "archived"];
 export const SESSION_STATUSES = ["scheduled", "live", "completed", "cancelled", "rescheduled"];
@@ -40,6 +40,37 @@ export function zonedLocalToUtcIso(dateIso, time = "00:00", timezone = "Africa/A
 export function normalizeScheduleRules(scheduleRules = []) {
   const rules = Array.isArray(scheduleRules) ? scheduleRules : scheduleRules.weekly || [];
   return rules.map((rule) => ({ day: String(rule.day || rule.weekday || "").slice(0, 3).toLowerCase(), startTime: String(rule.startTime || rule.time || ""), durationMinutes: Number(rule.durationMinutes || 120) })).filter((rule) => DAY_INDEX[rule.day] != null && /^\d{2}:\d{2}$/.test(rule.startTime));
+}
+
+
+function formatIsoDateUtc(date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+export function getCourseDictionarySessionCount(levelId) {
+  const entries = courseDictionary[String(levelId || "").trim().toUpperCase()];
+  return entries ? Object.keys(entries).length : 0;
+}
+
+export function calculateClassEndDate({ levelId, startDate, scheduleRules = [] }) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
+  const sessionCount = getCourseDictionarySessionCount(levelId);
+  if (!sessionCount) return "";
+
+  const rules = normalizeScheduleRules(scheduleRules);
+  if (!rules.length) return "";
+
+  let remainingSessions = sessionCount;
+  const cursor = new Date(`${startDate}T00:00:00.000Z`);
+  for (let guard = 0; guard < 730; guard += 1) {
+    const weekday = cursor.getUTCDay();
+    const sessionsOnDate = rules.filter((rule) => DAY_INDEX[rule.day] === weekday).length;
+    remainingSessions -= sessionsOnDate;
+    if (remainingSessions <= 0) return formatIsoDateUtc(cursor);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return "";
 }
 
 export function generateSessionOccurrences({ classId, startDate, endDate, timezone = "Africa/Accra", scheduleRules = [] }) {

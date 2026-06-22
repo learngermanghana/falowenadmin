@@ -11,7 +11,7 @@ import {
   resolveSessionChapters,
   updateSession,
 } from "../services/liveClassService.js";
-import { buildClassUrl, calculateClassProgress, calculateCountdown } from "../utils/liveClassScheduling.js";
+import { buildClassUrl, calculateClassEndDate, calculateClassProgress, calculateCountdown } from "../utils/liveClassScheduling.js";
 
 const defaultRule = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
 const weekdayOptions = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -78,6 +78,7 @@ export default function LiveClassesPage() {
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [endDateAutoManaged, setEndDateAutoManaged] = useState(true);
 
   async function refreshClasses(nextSelectedId = selectedClassId) {
     const rows = await listClassCohorts();
@@ -123,8 +124,20 @@ export default function LiveClassesPage() {
     ? resolveSessionChapters(dashboard.klass.levelId, dashboard.nextSession)
     : [];
 
+  function withAutoEndDate(nextForm) {
+    const calculatedEndDate = calculateClassEndDate(nextForm);
+    return calculatedEndDate ? { ...nextForm, endDate: calculatedEndDate } : nextForm;
+  }
+
+  function updateCreateForm(updater, { autoEndDate = endDateAutoManaged } = {}) {
+    setForm((current) => {
+      const nextForm = typeof updater === "function" ? updater(current) : { ...current, ...updater };
+      return autoEndDate ? withAutoEndDate(nextForm) : nextForm;
+    });
+  }
+
   function updateRule(index, field, value) {
-    setForm((current) => ({
+    updateCreateForm((current) => ({
       ...current,
       scheduleRules: current.scheduleRules.map((rule, ruleIndex) => (
         ruleIndex === index ? { ...rule, [field]: field === "durationMinutes" ? Number(value) : value } : rule
@@ -133,7 +146,7 @@ export default function LiveClassesPage() {
   }
 
   function addRule(day = defaultRule.day) {
-    setForm((current) => ({
+    updateCreateForm((current) => ({
       ...current,
       scheduleRules: [
         ...current.scheduleRules,
@@ -148,7 +161,7 @@ export default function LiveClassesPage() {
   }
 
   function toggleDay(day) {
-    setForm((current) => {
+    updateCreateForm((current) => {
       const hasDay = current.scheduleRules.some((rule) => rule.day === day);
       if (hasDay && current.scheduleRules.length > 1) {
         return { ...current, scheduleRules: current.scheduleRules.filter((rule) => rule.day !== day) };
@@ -166,6 +179,7 @@ export default function LiveClassesPage() {
       const record = await createClassCohort(form);
       setMessage(`Created ${record.name}. All class sessions and attendance dates were generated automatically.`);
       setForm({ ...emptyForm, scheduleRules: [{ ...defaultRule }] });
+      setEndDateAutoManaged(true);
       await refreshClasses(record.id);
       await refreshDashboard(record.id);
     } catch (error) {
@@ -264,14 +278,14 @@ export default function LiveClassesPage() {
           <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
             <h3>Step 1: Class details</h3>
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
-            <label>Class name<input required value={form.name} placeholder="A1 Munich Klasse" onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
-            <label>Level<select value={form.levelId} onChange={(event) => setForm((current) => ({ ...current, levelId: event.target.value }))}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
-            <label>Start date<input required type="date" value={form.startDate} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} /></label>
-            <label>End date<input required type="date" value={form.endDate} onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))} /></label>
-            <label>Tutor ID<input value={form.tutorId} placeholder="Optional" onChange={(event) => setForm((current) => ({ ...current, tutorId: event.target.value }))} /></label>
-            <label>Zoom profile ID<input value={form.zoomProfileId} placeholder="Optional" onChange={(event) => setForm((current) => ({ ...current, zoomProfileId: event.target.value }))} /></label>
-            <label>Status<select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}>{["draft", "upcoming", "active"].map((status) => <option key={status}>{status}</option>)}</select></label>
-            <label>Timezone<input required value={form.timezone} onChange={(event) => setForm((current) => ({ ...current, timezone: event.target.value }))} /></label>
+            <label>Class name<input required value={form.name} placeholder="A1 Munich Klasse" onChange={(event) => updateCreateForm({ name: event.target.value }, { autoEndDate: false })} /></label>
+            <label>Level<select value={form.levelId} onChange={(event) => updateCreateForm({ levelId: event.target.value })}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
+            <label>Start date<input required type="date" value={form.startDate} onChange={(event) => { setEndDateAutoManaged(true); updateCreateForm({ startDate: event.target.value }, { autoEndDate: true }); }} /></label>
+            <label>End date<input required type="date" value={form.endDate} onChange={(event) => { setEndDateAutoManaged(false); updateCreateForm({ endDate: event.target.value }, { autoEndDate: false }); }} /><small>Auto-calculated from the selected level dictionary and weekly class days. You can still edit it manually.</small></label>
+            <label>Tutor ID<input value={form.tutorId} placeholder="Optional" onChange={(event) => updateCreateForm({ tutorId: event.target.value }, { autoEndDate: false })} /></label>
+            <label>Zoom profile ID<input value={form.zoomProfileId} placeholder="Optional" onChange={(event) => updateCreateForm({ zoomProfileId: event.target.value }, { autoEndDate: false })} /></label>
+            <label>Status<select value={form.status} onChange={(event) => updateCreateForm({ status: event.target.value }, { autoEndDate: false })}>{["draft", "upcoming", "active"].map((status) => <option key={status}>{status}</option>)}</select></label>
+            <label>Timezone<input required value={form.timezone} onChange={(event) => updateCreateForm({ timezone: event.target.value }, { autoEndDate: false })} /></label>
             </div>
           </section>
 
@@ -300,7 +314,7 @@ export default function LiveClassesPage() {
                   <label>Day<select value={rule.day} onChange={(event) => updateRule(index, "day", event.target.value)}>{weekdayOptions.map((day) => <option key={day}>{day}</option>)}</select></label>
                   <label>Start time<input type="time" required value={rule.startTime} onChange={(event) => updateRule(index, "startTime", event.target.value)} /></label>
                   <label>Duration (minutes)<input type="number" min="30" step="15" required value={rule.durationMinutes} onChange={(event) => updateRule(index, "durationMinutes", event.target.value)} /></label>
-                  {form.scheduleRules.length > 1 ? <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, ruleIndex) => ruleIndex !== index) }))}>Remove</button> : null}
+                  {form.scheduleRules.length > 1 ? <button type="button" onClick={() => updateCreateForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, ruleIndex) => ruleIndex !== index) }))}>Remove</button> : null}
                 </div>
               ))}
             </div>
