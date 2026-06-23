@@ -3,7 +3,6 @@ import { courseDictionary, getCourseDictionaryEntry } from "../data/courseDictio
 export const CLASS_STATUSES = ["draft", "upcoming", "active", "graduated", "archived"];
 export const SESSION_STATUSES = ["scheduled", "live", "completed", "cancelled", "rescheduled"];
 const DAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function slugifyClassName(name) {
   const slug = String(name || "").trim().toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -42,7 +41,6 @@ export function normalizeScheduleRules(scheduleRules = []) {
   return rules.map((rule) => ({ day: String(rule.day || rule.weekday || "").slice(0, 3).toLowerCase(), startTime: String(rule.startTime || rule.time || ""), durationMinutes: Number(rule.durationMinutes || 120) })).filter((rule) => DAY_INDEX[rule.day] != null && /^\d{2}:\d{2}$/.test(rule.startTime));
 }
 
-
 function formatIsoDateUtc(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 }
@@ -56,7 +54,6 @@ export function calculateClassEndDate({ levelId, startDate, scheduleRules = [] }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
   const sessionCount = getCourseDictionarySessionCount(levelId);
   if (!sessionCount) return "";
-
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "";
 
@@ -69,13 +66,13 @@ export function calculateClassEndDate({ levelId, startDate, scheduleRules = [] }
     if (remainingSessions <= 0) return formatIsoDateUtc(cursor);
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
-
   return "";
 }
 
-export function generateSessionOccurrences({ classId, startDate, endDate, timezone = "Africa/Accra", scheduleRules = [] }) {
+export function generateSessionOccurrences({ classId, id, startDate, endDate, timezone = "Africa/Accra", scheduleRules = [] }) {
+  const resolvedClassId = String(classId || id || "").trim();
   const rules = normalizeScheduleRules(scheduleRules);
-  if (!classId) throw new Error("classId is required");
+  if (!resolvedClassId) throw new Error("classId is required");
   if (rules.length === 0) throw new Error("at least one weekly schedule rule is required");
   const sessions = [];
   for (let cursor = new Date(`${startDate}T00:00:00.000Z`); cursor <= new Date(`${endDate}T00:00:00.000Z`); cursor.setUTCDate(cursor.getUTCDate() + 1)) {
@@ -84,7 +81,7 @@ export function generateSessionOccurrences({ classId, startDate, endDate, timezo
     for (const rule of rules.filter((item) => DAY_INDEX[item.day] === weekday)) {
       const startsAt = zonedLocalToUtcIso(dateIso, rule.startTime, timezone);
       const endsAt = new Date(new Date(startsAt).getTime() + rule.durationMinutes * 60000).toISOString();
-      sessions.push({ id: `${classId}_${dateIso}_${rule.startTime.replace(":", "")}`, classId, startsAt, endsAt, status: "scheduled", topic: "", chapterIds: [] });
+      sessions.push({ id: `${resolvedClassId}_${dateIso}_${rule.startTime.replace(":", "")}`, classId: resolvedClassId, startsAt, endsAt, status: "scheduled", topic: "", chapterIds: [] });
     }
   }
   return sessions.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
