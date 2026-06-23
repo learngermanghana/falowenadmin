@@ -20,6 +20,18 @@ test("generated sessions are deterministic for idempotent writes", () => {
   assert.equal(new Set(generateSessionOccurrences(input).map((s) => s.id)).size, generateSessionOccurrences(input).length);
 });
 
+test("session generation accepts the canonical class document id", () => {
+  const sessions = generateSessionOccurrences({
+    id: "a1-munich",
+    startDate: "2026-07-01",
+    endDate: "2026-07-08",
+    timezone: "Africa/Accra",
+    scheduleRules: [{ day: "Wed", startTime: "18:00", durationMinutes: 60 }],
+  });
+  assert.equal(sessions[0].classId, "a1-munich");
+  assert.match(sessions[0].id, /^a1-munich_/);
+});
+
 test("class remains active after an individual session completes", () => {
   assert.equal(sessionStatusDoesNotArchiveClass("active", "completed"), "active");
 });
@@ -54,7 +66,6 @@ test("chapter dictionary resolution loads titles by IDs", () => {
 test("progress ignores cancelled sessions", () => {
   assert.equal(calculateClassProgress([{ status: "completed" }, { status: "scheduled" }, { status: "cancelled" }]), 50);
 });
-
 
 test("calculates class end date from course dictionary and weekly schedule", () => {
   assert.equal(calculateClassEndDate({
