@@ -20,7 +20,11 @@ import {
   selectNextSession,
   slugifyClassName,
 } from "../utils/liveClassScheduling.js";
-import { getCourseDictionaryEntry } from "../data/courseDictionary.js";
+import {
+  courseDictionary,
+  getCourseDictionaryEntry,
+  getUnifiedTopicLabel,
+} from "../data/courseDictionary.js";
 import { saveAnnouncementRow } from "./communicationService.js";
 import { listStudentsByClass } from "./studentsService.js";
 import {
@@ -29,13 +33,78 @@ import {
   getCancellationRecipients,
 } from "../utils/liveClassCancellationEmail.js";
 
+const CURRICULUM_SOURCE = "courseDictionary";
+const CURRICULUM_VERSION = 1;
+
 function attendanceSessionRef(classId, sessionId) {
   return doc(db, "attendance", String(classId), "sessions", String(sessionId));
 }
 
+function arrayWithValues(value) {
+  return Array.isArray(value) ? value.filter((item) => String(item || "").trim()) : [];
+}
+
 function normalizeAssignmentIds(session = {}) {
-  const source = session.assignmentIds || session.chapterIds || [];
-  return [...new Set(source.map((value) => String(value || "").trim()).filter(Boolean))];
+  const assignmentIds = arrayWithValues(session.assignmentIds);
+  const chapterIds = arrayWithValues(session.chapterIds);
+  const curriculumIds = arrayWithValues(session.curriculumIds);
+  const singularId = String(session.assignment_id || "").trim();
+  const source = assignmentIds.length
+    ? assignmentIds
+    : chapterIds.length
+      ? chapterIds
+      : curriculumIds.length
+        ? curriculumIds
+        : singularId
+          ? [singularId]
+          : [];
+  return [...new Set(source.map((value) => String(value || "").trim().toUpperCase()).filter(Boolean))];
+}
+
+function arraysEqual(left = [], right = []) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function curriculumEntries(levelId) {
+  const level = String(levelId || "").trim().toUpperCase();
+  return Object.values(courseDictionary[level] || {});
+}
+
+function buildCurriculumPatch(levelId, sessionIndex, session = {}, { force = false } = {}) {
+  const entry = curriculumEntries(levelId)[sessionIndex];
+  if (!entry?.assignment_id) return null;
+
+  const assignmentIds = [String(entry.assignment_id).trim().toUpperCase()];
+  const currentIds = normalizeAssignmentIds(session);
+  const currentTopic = String(session.topic || "").trim();
+  const topic = getUnifiedTopicLabel(assignmentIds[0], entry.de || entry.en || "");
+  const patch = {};
+
+  if (force || !currentIds.length) {
+    patch.assignmentIds = assignmentIds;
+    patch.chapterIds = assignmentIds;
+    patch.curriculumIds = assignmentIds;
+  } else {
+    const currentAssignmentIds = arrayWithValues(session.assignmentIds)
+      .map((value) => String(value).trim().toUpperCase());
+    const currentChapterIds = arrayWithValues(session.chapterIds)
+      .map((value) => String(value).trim().toUpperCase());
+    const currentCurriculumIds = arrayWithValues(session.curriculumIds)
+      .map((value) => String(value).trim().toUpperCase());
+    if (!arraysEqual(currentAssignmentIds, currentIds)) patch.assignmentIds = currentIds;
+    if (!arraysEqual(currentChapterIds, currentIds)) patch.chapterIds = currentIds;
+    if (!arraysEqual(currentCurriculumIds, currentIds)) patch.curriculumIds = currentIds;
+  }
+
+  if (force || !currentTopic) patch.topic = topic;
+  if (Number(session.curriculumIndex || 0) !== sessionIndex + 1) patch.curriculumIndex = sessionIndex + 1;
+  if (session.curriculumSource !== CURRICULUM_SOURCE) patch.curriculumSource = CURRICULUM_SOURCE;
+  if (Number(session.curriculumVersion || 0) !== CURRICULUM_VERSION) patch.curriculumVersion = CURRICULUM_VERSION;
+  if (session.curriculumAutoAssigned !== true && (!currentIds.length || !currentTopic || force)) {
+    patch.curriculumAutoAssigned = true;
+  }
+
+  return Object.keys(patch).length ? patch : null;
 }
 
 function sessionDate(startsAt) {
@@ -51,13 +120,19 @@ function attendanceMetadata(klass = {}, session = {}, patch = {}) {
     className: klass.name || "",
     classSessionId: merged.id || "",
     title: String(merged.topic || klass.name || "Live class").trim(),
+    topic: String(merged.topic || "").trim(),
     date: sessionDate(merged.startsAt),
     startsAt: merged.startsAt || "",
     endsAt: merged.endsAt || "",
     sessionStatus: merged.status || "scheduled",
     cancellationReason: String(merged.cancellationReason || "").trim(),
     assignmentIds,
+    chapterIds: assignmentIds,
+    curriculumIds: assignmentIds,
     assignment_id: assignmentIds[0] || "",
+    curriculumIndex: Number(merged.curriculumIndex || 0),
+    curriculumSource: String(merged.curriculumSource || ""),
+    curriculumVersion: Number(merged.curriculumVersion || 0),
     updatedAt: serverTimestamp(),
   };
 }
@@ -105,9 +180,15 @@ export async function createClassCohort(payload) {
       generationStatus: "complete",
       generationError: "",
       generatedSessionCount: generation.total,
+      curriculumMappedSessionCount: generation.mapped,
       updatedAt: serverTimestamp(),
     });
-    return { ...record, generationStatus: "complete", generatedSessionCount: generation.total };
+    return {
+      ...record,
+      generationStatus: "complete",
+      generatedSessionCount: generation.total,
+      curriculumMappedSessionCount: generation.mapped,
+    };
   } catch (error) {
     await updateDoc(classRef, {
       generationStatus: "failed",
@@ -122,16 +203,36 @@ export async function generateClassSessions(classId, classRecord = null) {
   const klass = classRecord || (await loadClassRecord(classId));
   const occurrences = generateSessionOccurrences({ classId, ...klass });
   const existingSnap = await getDocs(query(collection(db, "classSessions"), where("classId", "==", classId)));
-  const existingIds = new Set(existingSnap.docs.map((item) => item.id));
+  const existingById = new Map(existingSnap.docs.map((item) => [item.id, { id: item.id, ...item.data() }]));
   const batch = writeBatch(db);
   let created = 0;
+  let enriched = 0;
+  let mapped = 0;
 
-  occurrences.forEach((occurrence) => {
-    if (existingIds.has(occurrence.id)) return;
+  occurrences.forEach((occurrence, index) => {
+    const existing = existingById.get(occurrence.id);
+    const curriculumPatch = buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !existing });
+    if (curriculumPatch) mapped += 1;
+
+    if (existing) {
+      if (!curriculumPatch) return;
+      const nextPatch = { ...curriculumPatch, updatedAt: serverTimestamp() };
+      batch.update(doc(db, "classSessions", occurrence.id), nextPatch);
+      batch.set(
+        attendanceSessionRef(classId, occurrence.id),
+        attendanceMetadata(klass, existing, nextPatch),
+        { merge: true },
+      );
+      enriched += 1;
+      return;
+    }
+
     const session = {
       ...occurrence,
       assignmentIds: [],
       chapterIds: [],
+      curriculumIds: [],
+      ...(curriculumPatch || {}),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       sequence: 0,
@@ -149,8 +250,8 @@ export async function generateClassSessions(classId, classRecord = null) {
     created += 1;
   });
 
-  if (created > 0) await batch.commit();
-  return { created, total: occurrences.length };
+  if (created > 0 || enriched > 0) await batch.commit();
+  return { created, enriched, mapped, total: occurrences.length };
 }
 
 export async function listClassSessions(classId) {
@@ -158,6 +259,40 @@ export async function listClassSessions(classId) {
     query(collection(db, "classSessions"), where("classId", "==", classId), orderBy("startsAt", "asc")),
   );
   return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+export async function syncClassCurriculum(classId, { force = false } = {}) {
+  const [klass, sessions] = await Promise.all([loadClassRecord(classId), listClassSessions(classId)]);
+  const batch = writeBatch(db);
+  let updated = 0;
+  let mapped = 0;
+
+  sessions.forEach((session, index) => {
+    const patch = buildCurriculumPatch(klass.levelId, index, session, { force });
+    if (!patch) return;
+    mapped += 1;
+    const nextPatch = { ...patch, updatedAt: serverTimestamp() };
+    batch.update(doc(db, "classSessions", session.id), nextPatch);
+    batch.set(attendanceSessionRef(classId, session.id), attendanceMetadata(klass, session, nextPatch), { merge: true });
+    updated += 1;
+  });
+
+  if (updated > 0) {
+    batch.set(doc(db, "classes", classId), {
+      curriculumSyncStatus: "complete",
+      curriculumMappedSessionCount: mapped,
+      curriculumSyncedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    await batch.commit();
+  }
+
+  return {
+    updated,
+    mapped,
+    total: sessions.length,
+    availableCurriculumItems: curriculumEntries(klass.levelId).length,
+  };
 }
 
 export async function listClassCohorts() {
@@ -181,10 +316,14 @@ export async function resolveClassCohort(value) {
 }
 
 export async function getClassDashboard(classId) {
-  const [klass, sessions] = await Promise.all([loadClassRecord(classId), listClassSessions(classId)]);
+  const klass = await loadClassRecord(classId);
+  let sessions = await listClassSessions(classId);
+  const syncResult = await syncClassCurriculum(classId);
+  if (syncResult.updated > 0) sessions = await listClassSessions(classId);
   return {
     klass,
     sessions,
+    curriculumSync: syncResult,
     nextSession: selectNextSession(sessions),
     latestCompletedSession: selectLatestCompletedSession(sessions),
   };
@@ -197,9 +336,15 @@ export async function updateSession(sessionId, patch) {
     if (!sessionSnap.exists()) throw new Error("Session not found");
     const session = { id: sessionSnap.id, ...sessionSnap.data() };
     const klass = await loadClassRecord(session.classId, transaction);
+    const hasCurriculumPatch = Object.prototype.hasOwnProperty.call(patch, "assignmentIds")
+      || Object.prototype.hasOwnProperty.call(patch, "chapterIds")
+      || Object.prototype.hasOwnProperty.call(patch, "curriculumIds");
+    const assignmentIds = hasCurriculumPatch ? normalizeAssignmentIds(patch) : normalizeAssignmentIds(session);
     const nextPatch = {
       ...patch,
-      assignmentIds: patch.assignmentIds ? normalizeAssignmentIds(patch) : normalizeAssignmentIds(session),
+      assignmentIds,
+      chapterIds: assignmentIds,
+      curriculumIds: assignmentIds,
       updatedAt: serverTimestamp(),
     };
     transaction.update(sessionRef, nextPatch);
