@@ -1,31 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import CreateClassCard from "../components/CreateClassCard.jsx";
+import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import {
   cancelSession,
-  createClassCohort,
   getClassDashboard,
   listClassCohorts,
   markSessionCompleted,
   rescheduleSession,
+  resolveClassCohort,
   resolveSessionChapters,
+  syncClassCurriculum,
   updateSession,
 } from "../services/liveClassService.js";
-import { buildClassUrl, calculateClassEndDate, calculateClassProgress, calculateCountdown, validateIanaTimezone } from "../utils/liveClassScheduling.js";
+import { buildClassUrl, calculateClassProgress, calculateCountdown } from "../utils/liveClassScheduling.js";
 
-const defaultRule = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
-const weekdayOptions = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const emptyForm = {
-  name: "",
-  levelId: "A1",
-  tutorId: "",
-  startDate: "",
-  endDate: "",
-  timezone: "Africa/Accra",
-  status: "upcoming",
-  zoomProfileId: "",
-  scheduleRules: [{ ...defaultRule }],
-};
+const tabs = [
+  { id: "overview", label: "Overview" },
+  { id: "details", label: "Class & settings" },
+  { id: "timetable", label: "Timetable" },
+  { id: "sessions", label: "Sessions" },
+  { id: "curriculum", label: "Curriculum" },
+  { id: "communication", label: "Communication" },
+  { id: "create", label: "Create class" },
+];
 
 function formatDateTime(value) {
   if (!value) return "-";
@@ -57,17 +56,29 @@ function statusStyle(status) {
   return { background: "#dbeafe", color: "#1e40af" };
 }
 
-function summarizeScheduleRules(scheduleRules = []) {
-  const grouped = scheduleRules.reduce((acc, rule) => {
-    const day = rule.day || "Day";
-    const time = rule.startTime || "--:--";
-    const duration = Number(rule.durationMinutes || 0);
-    acc[day] = [...(acc[day] || []), `${time}${duration ? ` (${duration} min)` : ""}`];
-    return acc;
-  }, {});
-  return weekdayOptions
-    .filter((day) => grouped[day]?.length)
-    .map((day) => `${day}: ${grouped[day].join(", ")}`);
+function getCurriculumIds(session = {}) {
+  const candidates = [session.assignmentIds, session.chapterIds, session.curriculumIds];
+  const ids = candidates.find((value) => Array.isArray(value) && value.length) || [];
+  if (ids.length) return ids;
+  return session.assignment_id ? [session.assignment_id] : [];
+}
+
+function scheduleRuleLabel(rule = {}) {
+  const minutes = Number(rule.durationMinutes || 0);
+  return `${rule.day || "Day"} · ${rule.startTime || "--:--"}${minutes ? ` · ${minutes} minutes` : ""}`;
+}
+
+function tabStyle(active, disabled) {
+  return {
+    border: active ? "1px solid #2457ff" : "1px solid #cbd5e1",
+    background: active ? "#2457ff" : "#fff",
+    color: active ? "#fff" : "#1e293b",
+    borderRadius: 999,
+    padding: "9px 14px",
+    fontWeight: 700,
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.45 : 1,
+  };
 }
 
 export default function LiveClassesPage() {
@@ -75,18 +86,15 @@ export default function LiveClassesPage() {
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [dashboard, setDashboard] = useState(null);
-  const [form, setForm] = useState(emptyForm);
+  const [activeTab, setActiveTab] = useState("overview");
   const [message, setMessage] = useState("");
-  const [createResult, setCreateResult] = useState(null);
   const [busy, setBusy] = useState(false);
-  const createResultRef = useRef(null);
-  const fieldRefs = useRef({});
-  const [endDateAutoManaged, setEndDateAutoManaged] = useState(true);
 
   async function refreshClasses(nextSelectedId = selectedClassId) {
     const rows = await listClassCohorts();
     setClasses(rows);
     setSelectedClassId(nextSelectedId || rows[0]?.id || "");
+    return rows;
   }
 
   async function refreshDashboard(classId = selectedClassId) {
@@ -95,6 +103,22 @@ export default function LiveClassesPage() {
       return;
     }
     setDashboard(await getClassDashboard(classId));
+  }
+
+  async function handleCreated(classId) {
+    await refreshClasses(classId);
+    await refreshDashboard(classId);
+    setActiveTab("overview");
+    setMessage("Class created. Its public listing, sessions, curriculum and calendars now use this class record.");
+  }
+
+  async function handleDuplicate(className) {
+    const existing = await resolveClassCohort(className);
+    if (!existing) return;
+    setSelectedClassId(existing.id);
+    await refreshDashboard(existing.id);
+    setActiveTab("details");
+    setMessage("This class already exists. Update the existing class instead of creating a second record.");
   }
 
   useEffect(() => {
@@ -126,106 +150,20 @@ export default function LiveClassesPage() {
   const nextAssignments = dashboard?.klass && dashboard?.nextSession
     ? resolveSessionChapters(dashboard.klass.levelId, dashboard.nextSession)
     : [];
+  const missingCoreDates = dashboard && (!dashboard.klass.startDate || !dashboard.klass.endDate);
 
-  function withAutoEndDate(nextForm) {
-    const calculatedEndDate = calculateClassEndDate(nextForm);
-    if (calculatedEndDate) return { ...nextForm, endDate: calculatedEndDate };
-    if (["B2", "C1"].includes(String(nextForm.levelId || "").toUpperCase())) return { ...nextForm, endDate: "" };
-    return nextForm;
-  }
-
-  function setCreateStatus(type, text) {
-    setCreateResult({ type, text });
-    window.setTimeout(() => createResultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
-  }
-
-  function focusField(field) {
-    window.setTimeout(() => fieldRefs.current[field]?.focus(), 0);
-  }
-
-  function validateCreateForm(values) {
-    const rules = Array.isArray(values.scheduleRules) ? values.scheduleRules : [];
-    if (!String(values.name || "").trim()) return { field: "name", message: "Class name is required." };
-    if (!String(values.levelId || "").trim()) return { field: "levelId", message: "Level is required." };
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(values.startDate || ""))) return { field: "startDate", message: "Start date is required." };
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(values.endDate || ""))) return { field: "endDate", message: "End date is required." };
-    if (!String(values.timezone || "").trim()) return { field: "timezone", message: "Timezone is required." };
-    if (!validateIanaTimezone(values.timezone)) return { field: "timezone", message: "Timezone must be a valid IANA timezone." };
-    if (!rules.length) return { field: "scheduleRules", message: "At least one schedule rule is required." };
-    for (let index = 0; index < rules.length; index += 1) {
-      const rule = rules[index] || {};
-      if (!/^\d{2}:\d{2}$/.test(String(rule.startTime || ""))) return { field: `startTime-${index}`, message: `Valid start time is required for schedule rule ${index + 1}.` };
-      if (Number(rule.durationMinutes) < 30) return { field: `durationMinutes-${index}`, message: `Duration must be at least 30 minutes for schedule rule ${index + 1}.` };
-    }
-    return null;
-  }
-
-  function updateCreateForm(updater, { autoEndDate = endDateAutoManaged } = {}) {
-    setForm((current) => {
-      const nextForm = typeof updater === "function" ? updater(current) : { ...current, ...updater };
-      return autoEndDate ? withAutoEndDate(nextForm) : nextForm;
-    });
-  }
-
-  function updateRule(index, field, value) {
-    updateCreateForm((current) => ({
-      ...current,
-      scheduleRules: current.scheduleRules.map((rule, ruleIndex) => (
-        ruleIndex === index ? { ...rule, [field]: field === "durationMinutes" ? Number(value) : value } : rule
-      )),
-    }));
-  }
-
-  function addRule(day = defaultRule.day) {
-    updateCreateForm((current) => ({
-      ...current,
-      scheduleRules: [
-        ...current.scheduleRules,
-        {
-          ...defaultRule,
-          day,
-          startTime: current.scheduleRules.find((rule) => rule.day === day)?.startTime || defaultRule.startTime,
-          durationMinutes: current.scheduleRules.find((rule) => rule.day === day)?.durationMinutes || defaultRule.durationMinutes,
-        },
-      ],
-    }));
-  }
-
-  function toggleDay(day) {
-    updateCreateForm((current) => {
-      const hasDay = current.scheduleRules.some((rule) => rule.day === day);
-      if (hasDay && current.scheduleRules.length > 1) {
-        return { ...current, scheduleRules: current.scheduleRules.filter((rule) => rule.day !== day) };
-      }
-      if (hasDay) return current;
-      return { ...current, scheduleRules: [...current.scheduleRules, { ...defaultRule, day }] };
-    });
-  }
-
-  async function handleCreate(event) {
-    event.preventDefault();
-    if (busy) return;
-    const validationError = validateCreateForm(form);
-    if (validationError) {
-      setCreateStatus("error", validationError.message);
-      focusField(validationError.field);
-      return;
-    }
+  async function handleCurriculumSync() {
+    if (!selectedClassId) return;
     setBusy(true);
-    setCreateResult(null);
+    setMessage("");
     try {
-      const record = await createClassCohort(form);
-      setCreateStatus("success", "Class created successfully.");
-      setForm({ ...emptyForm, scheduleRules: [{ ...defaultRule }] });
-      setEndDateAutoManaged(true);
-      try {
-        await refreshClasses(record.id);
-        await refreshDashboard(record.id);
-      } catch (refreshError) {
-        setCreateStatus("warning", `The class was created, but the generated sessions could not be displayed: ${refreshError?.message || "Unknown dashboard loading error"}.`);
-      }
+      const result = await syncClassCurriculum(selectedClassId);
+      await refreshDashboard(selectedClassId);
+      setMessage(result.updated
+        ? `Curriculum synchronized for ${result.updated} session(s).`
+        : "Curriculum is already synchronized. Manual topics and curriculum IDs were preserved.");
     } catch (error) {
-      setCreateStatus("error", error?.message || "Class creation failed");
+      setMessage(error?.message || "Curriculum synchronization failed");
     } finally {
       setBusy(false);
     }
@@ -238,17 +176,11 @@ export default function LiveClassesPage() {
       if (action === "cancel") {
         const reason = window.prompt("Why is this class cancelled? Students will see this reason.", session.cancellationReason || "");
         if (reason === null) return;
-        const confirmed = window.confirm("Cancel this session and email all active students in this class?");
-        if (!confirmed) return;
+        if (!window.confirm("Cancel this session and email all active students in this class?")) return;
         const result = await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
-        if (result?.emailSubmitted) {
-          const recipientText = result.recipientCount === 1
-            ? " for 1 active student"
-            : ` for ${result.recipientCount || 0} active students`;
-          setMessage(`Session cancelled. Attendance, reminders, student notice and calendar status were updated. The cancellation email was submitted${recipientText}.`);
-        } else {
-          setMessage(`Session cancelled and all class records were updated, but the email could not be submitted: ${result?.emailMessage || "Unknown email error"}`);
-        }
+        setMessage(result?.emailSubmitted
+          ? `Session cancelled and the email was submitted for ${result.recipientCount || 0} active student(s).`
+          : `Session cancelled, but the email could not be submitted: ${result?.emailMessage || "Unknown email error"}`);
       }
 
       if (action === "reschedule") {
@@ -256,12 +188,12 @@ export default function LiveClassesPage() {
         if (!startInput) return;
         const endInput = window.prompt("New end date and time (YYYY-MM-DDTHH:mm)", toDateTimeLocal(session.endsAt));
         if (!endInput) return;
-        const reason = window.prompt("Reason for rescheduling", "") || "";
         const startsAt = new Date(startInput).toISOString();
         const endsAt = new Date(endInput).toISOString();
         if (new Date(endsAt) <= new Date(startsAt)) throw new Error("End time must be after the start time");
+        const reason = window.prompt("Reason for rescheduling", "") || "";
         await rescheduleSession(session.id, { startsAt, endsAt, reason, adminId: user?.uid || user?.email || "admin" });
-        setMessage("Session rescheduled. The same session now has the new date in attendance and the student calendar.");
+        setMessage("Session rescheduled in attendance and the student calendar.");
       }
 
       if (action === "topic") {
@@ -273,18 +205,21 @@ export default function LiveClassesPage() {
       if (action === "assignments") {
         const assignmentIds = (window.prompt(
           "Canonical curriculum IDs, comma-separated (example: A1-2, A1-2.1)",
-          (session.assignmentIds || session.chapterIds || []).join(","),
+          getCurriculumIds(session).join(","),
         ) || "")
           .split(",")
           .map((value) => value.trim().toUpperCase())
           .filter(Boolean);
-        await updateSession(session.id, { assignmentIds, chapterIds: assignmentIds });
-        setMessage("Curriculum IDs updated for the class and attendance check-in.");
+        await updateSession(session.id, {
+          assignmentIds,
+          chapterIds: assignmentIds,
+          curriculumIds: assignmentIds,
+        });
+        setMessage("Curriculum IDs updated for the class, attendance and Falowen student view.");
       }
 
       if (action === "complete") {
-        const confirmed = window.confirm("Mark this live class as completed? It will count toward course progress.");
-        if (!confirmed) return;
+        if (!window.confirm("Mark this live class as completed?")) return;
         await markSessionCompleted(session.id, user?.uid || user?.email || "admin");
         setMessage("Session marked completed and attendance status updated.");
       }
@@ -297,163 +232,171 @@ export default function LiveClassesPage() {
     }
   }
 
+  function renderSessionsTable({ curriculumOnly = false } = {}) {
+    return (
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th>Ghana date and time</th>
+              {!curriculumOnly ? <th>Status</th> : null}
+              <th>Topic / curriculum</th>
+              {!curriculumOnly ? <th>Actions</th> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {(dashboard?.sessions || []).map((session) => {
+              const locked = session.status === "cancelled" || session.status === "completed";
+              const curriculumIds = getCurriculumIds(session);
+              return (
+                <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
+                  {!curriculumOnly ? (
+                    <td style={{ padding: 8 }}>
+                      <span style={{ ...statusStyle(session.status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{session.status}</span>
+                      {session.cancellationReason ? <div style={{ marginTop: 6, color: "#991b1b" }}>{session.cancellationReason}</div> : null}
+                    </td>
+                  ) : null}
+                  <td style={{ padding: 8 }}>{session.topic || "No topic"}<br /><small>{curriculumIds.join(", ") || "No curriculum ID"}</small></td>
+                  {!curriculumOnly ? (
+                    <td style={{ padding: 8 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <Link to={`/attendance/session/${dashboard.klass.id}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
+                        <button disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
+                        <button disabled={busy || locked} onClick={() => handleSessionAction(session, "assignments")}>Curriculum</button>
+                        <button disabled={busy || locked} onClick={() => handleSessionAction(session, "reschedule")}>Reschedule</button>
+                        <button disabled={busy || locked} onClick={() => handleSessionAction(session, "cancel")}>Cancel</button>
+                        <button disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
+                      </div>
+                    </td>
+                  ) : null}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <section className="page-container">
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div>
           <h1>Live Classes</h1>
-          <p>Create a class once. Its schedule, attendance dates, cancellations, reminders and student calendar all use the same sessions.</p>
+          <p>Manage each class from one record shared by public registration, sessions, attendance and student calendars.</p>
         </div>
         <Link to="/attendance">Attendance overview</Link>
       </div>
 
-      {message ? (
-        <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: "#eff6ff", border: "1px solid #bfdbfe" }}>{message}</div>
-      ) : null}
+      {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: "#eff6ff", border: "1px solid #bfdbfe" }}>{message}</div> : null}
 
-      <article className="card">
-        <h2>Create a new class</h2>
-        <p style={{ marginTop: 0, opacity: 0.78 }}>
-          Use the same step-by-step flow as the course schedule generator: choose class details, select the weekly days, then add one or more time slots for each day.
-        </p>
-        <form noValidate onSubmit={handleCreate} style={{ display: "grid", gap: 14 }}>
-          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-            <h3>Step 1: Class details</h3>
-            <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
-            <label>Class name<input ref={(element) => { fieldRefs.current.name = element; }} required value={form.name} placeholder="A1 Munich Klasse" onChange={(event) => updateCreateForm({ name: event.target.value }, { autoEndDate: false })} /></label>
-            <label>Level<select ref={(element) => { fieldRefs.current.levelId = element; }} value={form.levelId} onChange={(event) => updateCreateForm({ levelId: event.target.value })}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
-            <label>Start date<input ref={(element) => { fieldRefs.current.startDate = element; }} required type="date" value={form.startDate} onChange={(event) => { setEndDateAutoManaged(true); updateCreateForm({ startDate: event.target.value }, { autoEndDate: true }); }} /></label>
-            <label>End date<input ref={(element) => { fieldRefs.current.endDate = element; }} required type="date" value={form.endDate} onChange={(event) => { setEndDateAutoManaged(false); updateCreateForm({ endDate: event.target.value }, { autoEndDate: false }); }} /><small>{["B2", "C1"].includes(form.levelId) ? "Automatic end-date calculation is not available for this level yet. Please enter the graduation date manually." : "Auto-calculated from the selected level dictionary and weekly class days. You can still edit it manually."}</small></label>
-            <label>Tutor ID<input value={form.tutorId} placeholder="Optional" onChange={(event) => updateCreateForm({ tutorId: event.target.value }, { autoEndDate: false })} /></label>
-            <label>Zoom profile ID<input value={form.zoomProfileId} placeholder="Optional" onChange={(event) => updateCreateForm({ zoomProfileId: event.target.value }, { autoEndDate: false })} /></label>
-            <label>Status<select value={form.status} onChange={(event) => updateCreateForm({ status: event.target.value }, { autoEndDate: false })}>{["draft", "upcoming", "active"].map((status) => <option key={status}>{status}</option>)}</select></label>
-            <label>Timezone<input ref={(element) => { fieldRefs.current.timezone = element; }} required value={form.timezone} onChange={(event) => updateCreateForm({ timezone: event.target.value }, { autoEndDate: false })} /></label>
-            </div>
-          </section>
-
-          <section ref={(element) => { fieldRefs.current.scheduleRules = element; }} tabIndex={-1} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-            <h3>Step 2: Teaching days</h3>
-            <p style={{ marginTop: 0, opacity: 0.78 }}>
-              Select every day this class meets. You can add multiple time slots on the same day when a cohort meets twice.
-            </p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-              {weekdayOptions.map((day) => {
-                const selected = form.scheduleRules.some((rule) => rule.day === day);
-                return (
-                  <label key={day} style={{ border: "1px solid #ddd", borderRadius: 999, padding: "6px 10px", background: selected ? "#eff6ff" : "#fff" }}>
-                    <input type="checkbox" checked={selected} onChange={() => toggleDay(day)} /> {day}
-                  </label>
-                );
-              })}
-            </div>
-          </section>
-
-          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-            <h3>Step 3: Weekly class times</h3>
-            <div style={{ display: "grid", gap: 10 }}>
-              {form.scheduleRules.map((rule, index) => (
-                <div key={`${index}-${rule.day}`} style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", alignItems: "end", borderTop: index ? "1px solid #eee" : "none", paddingTop: index ? 10 : 0 }}>
-                  <label>Day<select value={rule.day} onChange={(event) => updateRule(index, "day", event.target.value)}>{weekdayOptions.map((day) => <option key={day}>{day}</option>)}</select></label>
-                  <label>Start time<input ref={(element) => { fieldRefs.current[`startTime-${index}`] = element; }} type="time" required value={rule.startTime} onChange={(event) => updateRule(index, "startTime", event.target.value)} /></label>
-                  <label>Duration (minutes)<input ref={(element) => { fieldRefs.current[`durationMinutes-${index}`] = element; }} type="number" min="30" step="15" required value={rule.durationMinutes} onChange={(event) => updateRule(index, "durationMinutes", event.target.value)} /></label>
-                  {form.scheduleRules.length > 1 ? <button type="button" onClick={() => updateCreateForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, ruleIndex) => ruleIndex !== index) }))}>Remove</button> : null}
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-              <button type="button" onClick={() => addRule(form.scheduleRules.at(-1)?.day || defaultRule.day)}>Add another time slot</button>
-              <button type="button" onClick={() => addRule(weekdayOptions.find((day) => !form.scheduleRules.some((rule) => rule.day === day)) || defaultRule.day)}>Add another day</button>
-            </div>
-          </section>
-
-          <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-            <h3>Step 4: Schedule preview</h3>
-            {summarizeScheduleRules(form.scheduleRules).length ? (
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {summarizeScheduleRules(form.scheduleRules).map((line) => <li key={line}>{line}</li>)}
-              </ul>
-            ) : (
-              <p style={{ margin: 0, opacity: 0.7 }}>No weekly class times selected.</p>
-            )}
-          </section>
-
-          {createResult ? (
-            <div
-              ref={createResultRef}
-              role={createResult.type === "error" ? "alert" : undefined}
-              aria-live={createResult.type === "error" ? undefined : "polite"}
-              style={{
-                padding: 12,
-                borderRadius: 8,
-                border: `1px solid ${createResult.type === "error" ? "#fecaca" : createResult.type === "warning" ? "#fde68a" : "#bbf7d0"}`,
-                background: createResult.type === "error" ? "#fef2f2" : createResult.type === "warning" ? "#fffbeb" : "#f0fdf4",
-                color: createResult.type === "error" ? "#991b1b" : createResult.type === "warning" ? "#92400e" : "#166534",
-              }}
-            >
-              {createResult.text}
-            </div>
-          ) : null}
-          <button type="submit" disabled={busy} aria-disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
-        </form>
-      </article>
-
-      <article className="card">
+      <article className="card" style={{ display: "grid", gap: 12 }}>
         <label>
           <strong>Manage class</strong>{" "}
-          <select value={selectedClassId} onChange={(event) => setSelectedClassId(event.target.value)}>
+          <select
+            value={selectedClassId}
+            onChange={(event) => {
+              setSelectedClassId(event.target.value);
+              setActiveTab("overview");
+              setMessage("");
+            }}
+          >
             <option value="">Select a class</option>
             {classes.map((klass) => <option key={klass.id} value={klass.id}>{klass.name}</option>)}
           </select>
         </label>
+        <nav aria-label="Live class sections" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {tabs.map((tab) => {
+            const disabled = tab.id !== "create" && !dashboard;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                disabled={disabled}
+                style={tabStyle(activeTab === tab.id, disabled)}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
       </article>
 
-      {dashboard ? (
-        <>
-          <article className="card">
-            <h2>{dashboard.klass.name}</h2>
-            <p>Status: <strong>{dashboard.klass.status}</strong> · Progress: <strong>{progress}%</strong></p>
-            <p>Stable student URL: <code>{buildClassUrl(dashboard.klass)}</code></p>
-            <p>Start: {dashboard.klass.startDate} · Graduation: {dashboard.klass.endDate} · Timezone: {dashboard.klass.timezone}</p>
-            <p>Zoom profile: {dashboard.klass.zoomProfileId || "Not assigned"}</p>
-          </article>
+      {activeTab === "create" ? (
+        <CreateClassCard onCreated={handleCreated} onDuplicate={handleDuplicate} />
+      ) : null}
 
-          <article className="card">
-            <h2>Schedule and communication</h2>
-            <p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)} {nextCountdown ? `(${nextCountdown.days}d ${nextCountdown.hours}h ${nextCountdown.minutes}m)` : ""}</p>
-            <p>Latest completed: {formatDateTime(dashboard.latestCompletedSession?.startsAt)}</p>
-            <p>Next curriculum: {nextAssignments.map((entry) => entry.en || entry.de).join(", ") || "Not assigned"}</p>
-            <p>Calendar: <a href={`/api/calendar/class/${dashboard.klass.id}.ics`}>Open class calendar feed</a></p>
-          </article>
+      {dashboard && activeTab === "overview" ? (
+        <article className="card">
+          <h2>{dashboard.klass.name}</h2>
+          <p>Status: <strong>{dashboard.klass.status}</strong> · Progress: <strong>{progress}%</strong></p>
+          <p>Stable student URL: <code>{buildClassUrl(dashboard.klass)}</code></p>
+          <p>Start: {dashboard.klass.startDate || "Not set"} · Graduation: {dashboard.klass.endDate || "Not set"} · Timezone: {dashboard.klass.timezone || "Not set"}</p>
+          <p>Public listing: <strong>{dashboard.klass.publicVisible === false ? "Hidden" : "Visible"}</strong> · Registration: <strong>{dashboard.klass.registrationOpen === false ? "Closed" : "Open"}</strong></p>
+          {missingCoreDates ? (
+            <div style={{ padding: 12, borderRadius: 8, background: "#fff7ed", border: "1px solid #fdba74" }}>
+              This class is missing its start or end date. It will not be published as an upcoming class until the dates and status are corrected in <button type="button" onClick={() => setActiveTab("details")}>Class & settings</button>.
+            </div>
+          ) : null}
+        </article>
+      ) : null}
 
-          <article className="card" style={{ overflowX: "auto" }}>
-            <h2>Generated sessions</h2>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr><th>Ghana date and time</th><th>Status</th><th>Topic / curriculum</th><th>Actions</th></tr></thead>
-              <tbody>
-                {dashboard.sessions.map((session) => {
-                  const locked = session.status === "cancelled" || session.status === "completed";
-                  return (
-                    <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                      <td style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
-                      <td style={{ padding: 8 }}><span style={{ ...statusStyle(session.status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{session.status}</span>{session.cancellationReason ? <div style={{ marginTop: 6, color: "#991b1b" }}>{session.cancellationReason}</div> : null}</td>
-                      <td style={{ padding: 8 }}>{session.topic || "No topic"}<br /><small>{(session.assignmentIds || session.chapterIds || []).join(", ") || "No curriculum ID"}</small></td>
-                      <td style={{ padding: 8 }}>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          <Link to={`/attendance/session/${dashboard.klass.id}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
-                          <button disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
-                          <button disabled={busy || locked} onClick={() => handleSessionAction(session, "assignments")}>Curriculum</button>
-                          <button disabled={busy || locked} onClick={() => handleSessionAction(session, "reschedule")}>Reschedule</button>
-                          <button disabled={busy || locked} onClick={() => handleSessionAction(session, "cancel")}>Cancel</button>
-                          <button disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </article>
-        </>
+      {dashboard && activeTab === "details" ? (
+        <ClassEditorCard klass={dashboard.klass} onSaved={async (classId) => {
+          await refreshClasses(classId);
+          await refreshDashboard(classId);
+          setMessage("Class changes saved. Falowen public registration will read the same Firestore record.");
+        }} />
+      ) : null}
+
+      {dashboard && activeTab === "timetable" ? (
+        <article className="card">
+          <h2>Timetable</h2>
+          <p><strong>Course dates:</strong> {dashboard.klass.startDate || "Not set"} to {dashboard.klass.endDate || "Not set"}</p>
+          <p><strong>Timezone:</strong> {dashboard.klass.timezone || "Africa/Accra"}</p>
+          <div style={{ display: "grid", gap: 8, margin: "14px 0" }}>
+            {(dashboard.klass.scheduleRules || []).length
+              ? dashboard.klass.scheduleRules.map((rule, index) => <div key={`${rule.day}-${rule.startTime}-${index}`} style={{ padding: 10, border: "1px solid #e2e8f0", borderRadius: 8 }}>{scheduleRuleLabel(rule)}</div>)
+              : <p>No weekly teaching times are saved.</p>}
+          </div>
+          <p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)} {nextCountdown ? `(${nextCountdown.days}d ${nextCountdown.hours}h ${nextCountdown.minutes}m)` : ""}</p>
+          <button type="button" onClick={() => setActiveTab("details")}>Edit dates and weekly times</button>
+        </article>
+      ) : null}
+
+      {dashboard && activeTab === "sessions" ? (
+        <article className="card">
+          <h2>Generated sessions</h2>
+          <p>Rescheduling a session updates attendance and the student calendar without creating another class.</p>
+          {renderSessionsTable()}
+        </article>
+      ) : null}
+
+      {dashboard && activeTab === "curriculum" ? (
+        <article className="card">
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <div>
+              <h2>Curriculum</h2>
+              <p>Next curriculum: {nextAssignments.map((entry) => entry.en || entry.de).join(", ") || "Not assigned"}</p>
+              <p>Mapped sessions: <strong>{dashboard.klass.curriculumMappedSessionCount || 0}</strong> of <strong>{dashboard.sessions.length}</strong></p>
+            </div>
+            <button type="button" disabled={busy} onClick={handleCurriculumSync}>{busy ? "Synchronizing…" : "Synchronize missing curriculum"}</button>
+          </div>
+          {renderSessionsTable({ curriculumOnly: true })}
+        </article>
+      ) : null}
+
+      {dashboard && activeTab === "communication" ? (
+        <article className="card">
+          <h2>Schedule and communication</h2>
+          <p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)} {nextCountdown ? `(${nextCountdown.days}d ${nextCountdown.hours}h ${nextCountdown.minutes}m)` : ""}</p>
+          <p>Latest completed: {formatDateTime(dashboard.latestCompletedSession?.startsAt)}</p>
+          <p>Calendar: <a href={`/api/calendar/class/${dashboard.klass.id}.ics`}>Open class calendar feed</a></p>
+          <p>Cancellations and reschedules are handled from the Sessions tab. The same action updates attendance, reminders, student notices and calendars.</p>
+          <button type="button" onClick={() => setActiveTab("sessions")}>Open session actions</button>
+        </article>
       ) : null}
     </section>
   );
