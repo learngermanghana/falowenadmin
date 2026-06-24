@@ -151,32 +151,49 @@ export async function createClassCohort(payload) {
 
   const slug = String(payload.slug || slugifyClassName(name)).trim();
   const duplicate = await getDocs(query(collection(db, "classes"), where("slug", "==", slug)));
-  if (!duplicate.empty) throw new Error("A class with this name or URL already exists");
+  const duplicateDoc = duplicate.docs[0] || null;
+  const existing = duplicateDoc ? { id: duplicateDoc.id, ...duplicateDoc.data() } : null;
+  const canRestoreExisting = existing && (
+    ["archived", "draft"].includes(String(existing.status || "").toLowerCase())
+    || !existing.startDate
+    || !existing.endDate
+  );
+  if (existing && !canRestoreExisting) throw new Error("A class with this name or URL already exists");
 
-  const classRef = doc(collection(db, "classes"));
+  const classRef = existing ? doc(db, "classes", existing.id) : doc(collection(db, "classes"));
   const record = {
+    ...(existing || {}),
     id: classRef.id,
     slug,
     name,
-    levelId: String(payload.levelId || "").toUpperCase(),
-    tutorId: String(payload.tutorId || "").trim(),
+    levelId: String(payload.levelId || existing?.levelId || "").toUpperCase(),
+    tutorId: String(payload.tutorId ?? existing?.tutorId ?? "").trim(),
     startDate: payload.startDate,
     endDate: payload.endDate,
-    timezone: payload.timezone || "Africa/Accra",
+    timezone: payload.timezone || existing?.timezone || "Africa/Accra",
     status: payload.status || "upcoming",
-    zoomProfileId: String(payload.zoomProfileId || "").trim(),
-    scheduleRules: payload.scheduleRules || [],
+    zoomProfileId: String(payload.zoomProfileId ?? existing?.zoomProfileId ?? "").trim(),
+    scheduleRules: payload.scheduleRules || existing?.scheduleRules || [],
+    publicVisible: payload.publicVisible ?? existing?.publicVisible ?? true,
+    registrationOpen: payload.registrationOpen ?? existing?.registrationOpen ?? true,
     classUrl: buildClassUrl({ slug }),
-    createdAt: serverTimestamp(),
     generationStatus: "pending",
     generationError: "",
     updatedAt: serverTimestamp(),
+    ...(existing ? {} : { createdAt: serverTimestamp() }),
   };
 
-  await setDoc(classRef, record);
+  await setDoc(classRef, record, { merge: true });
   try {
     const generation = await generateClassSessions(classRef.id, record);
     await updateDoc(classRef, {
+      status: record.status,
+      startDate: record.startDate,
+      endDate: record.endDate,
+      timezone: record.timezone,
+      scheduleRules: record.scheduleRules,
+      publicVisible: record.publicVisible,
+      registrationOpen: record.registrationOpen,
       generationStatus: "complete",
       generationError: "",
       generatedSessionCount: generation.total,
