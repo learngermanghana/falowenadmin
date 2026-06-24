@@ -112,6 +112,42 @@ function sessionDate(startsAt) {
   return value.includes("T") ? value.slice(0, 10) : value;
 }
 
+function normalizeClassLookup(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function canRestoreClassRecord(record = null) {
+  if (!record) return false;
+  return ["archived", "draft"].includes(String(record.status || "").toLowerCase())
+    || record.archived === true
+    || record.isArchived === true
+    || !record.startDate
+    || !record.endDate;
+}
+
+async function findExistingClassForCreate({ name, slug }) {
+  const candidates = new Map();
+  const addSnap = (snap) => {
+    if (snap?.exists?.()) candidates.set(snap.id, { id: snap.id, ...snap.data() });
+  };
+  const addDocs = (snap) => {
+    snap?.docs?.forEach((item) => candidates.set(item.id, { id: item.id, ...item.data() }));
+  };
+
+  addSnap(await getDoc(doc(db, "classes", name)));
+  addDocs(await getDocs(query(collection(db, "classes"), where("slug", "==", slug))));
+  addDocs(await getDocs(query(collection(db, "classes"), where("name", "==", name))));
+  addDocs(await getDocs(query(collection(db, "classes"), where("classId", "==", name))));
+
+  const normalizedName = normalizeClassLookup(name);
+  const matching = [...candidates.values()].filter((item) => {
+    const identifiers = [item.id, item.name, item.classId, item.className, item.slug];
+    return identifiers.some((value) => normalizeClassLookup(value) === normalizedName || String(value || "").trim() === slug);
+  });
+
+  return matching.find(canRestoreClassRecord) || matching[0] || null;
+}
+
 function attendanceMetadata(klass = {}, session = {}, patch = {}) {
   const merged = { ...session, ...patch };
   const assignmentIds = normalizeAssignmentIds(merged);
