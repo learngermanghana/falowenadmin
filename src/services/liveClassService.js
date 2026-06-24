@@ -112,6 +112,42 @@ function sessionDate(startsAt) {
   return value.includes("T") ? value.slice(0, 10) : value;
 }
 
+function normalizeClassLookup(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function canRestoreClassRecord(record = null) {
+  if (!record) return false;
+  return ["archived", "draft"].includes(String(record.status || "").toLowerCase())
+    || record.archived === true
+    || record.isArchived === true
+    || !record.startDate
+    || !record.endDate;
+}
+
+async function findExistingClassForCreate({ name, slug }) {
+  const candidates = new Map();
+  const addSnap = (snap) => {
+    if (snap?.exists?.()) candidates.set(snap.id, { id: snap.id, ...snap.data() });
+  };
+  const addDocs = (snap) => {
+    snap?.docs?.forEach((item) => candidates.set(item.id, { id: item.id, ...item.data() }));
+  };
+
+  addSnap(await getDoc(doc(db, "classes", name)));
+  addDocs(await getDocs(query(collection(db, "classes"), where("slug", "==", slug))));
+  addDocs(await getDocs(query(collection(db, "classes"), where("name", "==", name))));
+  addDocs(await getDocs(query(collection(db, "classes"), where("classId", "==", name))));
+
+  const normalizedName = normalizeClassLookup(name);
+  const matching = [...candidates.values()].filter((item) => {
+    const identifiers = [item.id, item.name, item.classId, item.className, item.slug];
+    return identifiers.some((value) => normalizeClassLookup(value) === normalizedName || String(value || "").trim() === slug);
+  });
+
+  return matching.find(canRestoreClassRecord) || matching[0] || null;
+}
+
 function attendanceMetadata(klass = {}, session = {}, patch = {}) {
   const merged = { ...session, ...patch };
   const assignmentIds = normalizeAssignmentIds(merged);
@@ -150,33 +186,53 @@ export async function createClassCohort(payload) {
   if (!payload.startDate || !payload.endDate) throw new Error("Start and end dates are required");
 
   const slug = String(payload.slug || slugifyClassName(name)).trim();
-  const duplicate = await getDocs(query(collection(db, "classes"), where("slug", "==", slug)));
-  if (!duplicate.empty) throw new Error("A class with this name or URL already exists");
+  const existing = await findExistingClassForCreate({ name, slug });
+  if (existing && !canRestoreClassRecord(existing)) throw new Error("A class with this name or URL already exists");
 
-  const classRef = doc(collection(db, "classes"));
+  const classRef = existing ? doc(db, "classes", existing.id) : doc(collection(db, "classes"));
   const record = {
+    ...(existing || {}),
     id: classRef.id,
     slug,
     name,
-    levelId: String(payload.levelId || "").toUpperCase(),
-    tutorId: String(payload.tutorId || "").trim(),
+    levelId: String(payload.levelId || existing?.levelId || "").toUpperCase(),
+    tutorId: String(payload.tutorId ?? existing?.tutorId ?? "").trim(),
     startDate: payload.startDate,
     endDate: payload.endDate,
-    timezone: payload.timezone || "Africa/Accra",
+    timezone: payload.timezone || existing?.timezone || "Africa/Accra",
     status: payload.status || "upcoming",
-    zoomProfileId: String(payload.zoomProfileId || "").trim(),
-    scheduleRules: payload.scheduleRules || [],
+    zoomProfileId: String(payload.zoomProfileId ?? existing?.zoomProfileId ?? "").trim(),
+    scheduleRules: payload.scheduleRules || existing?.scheduleRules || [],
+    publicVisible: payload.publicVisible ?? existing?.publicVisible ?? true,
+    registrationOpen: payload.registrationOpen ?? existing?.registrationOpen ?? true,
+    archived: false,
+    isArchived: false,
+    active: true,
+    classId: existing?.classId || name,
     classUrl: buildClassUrl({ slug }),
-    createdAt: serverTimestamp(),
     generationStatus: "pending",
     generationError: "",
     updatedAt: serverTimestamp(),
+    ...(existing ? {} : { createdAt: serverTimestamp() }),
   };
 
-  await setDoc(classRef, record);
+  await setDoc(classRef, record, { merge: true });
   try {
     const generation = await generateClassSessions(classRef.id, record);
     await updateDoc(classRef, {
+      status: record.status,
+      startDate: record.startDate,
+      endDate: record.endDate,
+      timezone: record.timezone,
+      scheduleRules: record.scheduleRules,
+      publicVisible: record.publicVisible,
+      registrationOpen: record.registrationOpen,
+      archived: false,
+      isArchived: false,
+      active: true,
+      classId: record.classId,
+      slug: record.slug,
+      classUrl: record.classUrl,
       generationStatus: "complete",
       generationError: "",
       generatedSessionCount: generation.total,
