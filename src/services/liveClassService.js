@@ -186,8 +186,15 @@ export async function createClassCohort(payload) {
   if (!payload.startDate || !payload.endDate) throw new Error("Start and end dates are required");
 
   const slug = String(payload.slug || slugifyClassName(name)).trim();
-  const existing = await findExistingClassForCreate({ name, slug });
-  if (existing && !canRestoreClassRecord(existing)) throw new Error("A class with this name or URL already exists");
+  const duplicate = await getDocs(query(collection(db, "classes"), where("slug", "==", slug)));
+  const duplicateDoc = duplicate.docs[0] || null;
+  const existing = duplicateDoc ? { id: duplicateDoc.id, ...duplicateDoc.data() } : null;
+  const canRestoreExisting = existing && (
+    ["archived", "draft"].includes(String(existing.status || "").toLowerCase())
+    || !existing.startDate
+    || !existing.endDate
+  );
+  if (existing && !canRestoreExisting) throw new Error("A class with this name or URL already exists");
 
   const classRef = existing ? doc(db, "classes", existing.id) : doc(collection(db, "classes"));
   const record = {
@@ -205,10 +212,6 @@ export async function createClassCohort(payload) {
     scheduleRules: payload.scheduleRules || existing?.scheduleRules || [],
     publicVisible: payload.publicVisible ?? existing?.publicVisible ?? true,
     registrationOpen: payload.registrationOpen ?? existing?.registrationOpen ?? true,
-    archived: false,
-    isArchived: false,
-    active: true,
-    classId: existing?.classId || name,
     classUrl: buildClassUrl({ slug }),
     generationStatus: "pending",
     generationError: "",
@@ -227,12 +230,6 @@ export async function createClassCohort(payload) {
       scheduleRules: record.scheduleRules,
       publicVisible: record.publicVisible,
       registrationOpen: record.registrationOpen,
-      archived: false,
-      isArchived: false,
-      active: true,
-      classId: record.classId,
-      slug: record.slug,
-      classUrl: record.classUrl,
       generationStatus: "complete",
       generationError: "",
       generatedSessionCount: generation.total,
