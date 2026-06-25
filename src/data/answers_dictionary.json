@@ -1870,14 +1870,11 @@
         "Answer5": "A) Es gab weniger technische Geräte im Haushalt; B) Die Menschen waren weniger mobil und reisten seltener.; D) Die Arbeitszeiten waren länger und härter"
       },
       "teil4": {
-        "Answer1": "B) Die Berufliche",
-        "Answer2": "B) Man informiert sich",
-        "Answer3": "A) Die Bezahlung",
-        "Answer4": "A) Man sammelt",
-        "Answer5": "A) Geringere",
-        "Answer6": "A) Flexible Arbeitszeiten",
-        "Answer7": "A) Es gab weniger",
-        "Answer8": "B) Sie arbeiteten mehr und hatten weniger Freizeit"
+        "Answer1": "B) Der Wasserkocher funktioniert nicht",
+        "Answer2": "C) Laura bringt den Kassenbon als Kaufnachweis mit",
+        "Answer3": "C) Der Verkäufer bietet ihr einen Umtausch oder eine Rückerstattung an",
+        "Answer4": "C) Die Jacke hat die falsche Größe und ist zu klein",
+        "Answer5": "A) Laura bittet den Kundenservice um einen Retourenschein",
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1C-utAPIEGi9Rsp_gI3qsfHddX9IXvazP27sxRrobI40/gviz/tq?tqx=out:html&sheet=Key",
