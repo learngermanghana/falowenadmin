@@ -103,6 +103,131 @@
   color: #991b1b;
 }
 
+.checkin-display-music {
+  margin: 0 auto 12px;
+  border: 1px solid #d8b4fe;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 52%, #eef2ff 100%);
+  color: #4c1d95;
+  padding: 12px;
+  text-align: left;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.checkin-display-music-playing {
+  border-color: #8b5cf6;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12);
+}
+
+.checkin-display-music-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.checkin-display-music-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.checkin-display-music-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.checkin-display-music-note {
+  margin-top: 3px;
+  color: #6d28d9;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.checkin-display-music-button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 10px;
+  background: #6d28d9;
+  color: #ffffff;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.checkin-display-music-button:hover {
+  background: #5b21b6;
+}
+
+.checkin-display-music-button:focus-visible {
+  outline: 3px solid rgba(139, 92, 246, 0.35);
+  outline-offset: 2px;
+}
+
+.checkin-display-music-visual {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  opacity: 0.45;
+}
+
+.checkin-display-music-visual span {
+  width: 4px;
+  height: 8px;
+  border-radius: 999px;
+  background: #7c3aed;
+}
+
+.checkin-display-music-playing .checkin-display-music-visual {
+  opacity: 1;
+}
+
+.checkin-display-music-playing .checkin-display-music-visual span {
+  animation: checkin-music-pulse 900ms ease-in-out infinite alternate;
+}
+
+.checkin-display-music-playing .checkin-display-music-visual span:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.checkin-display-music-playing .checkin-display-music-visual span:nth-child(3) {
+  animation-delay: 320ms;
+}
+
+.checkin-display-music-playing .checkin-display-music-visual span:nth-child(4) {
+  animation-delay: 480ms;
+}
+
+@keyframes checkin-music-pulse {
+  from { height: 7px; }
+  to { height: 25px; }
+}
+
+.checkin-display-music-volume {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr) 46px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkin-display-music-volume input {
+  width: 100%;
+  accent-color: #7c3aed;
+}
+
+.checkin-display-music-error {
+  margin-top: 8px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 8px 10px;
+  font-size: 13px;
+}
 
 .checkin-display-content {
   display: grid;
@@ -114,6 +239,19 @@
 @media (max-width: 900px) {
   .checkin-display-content {
     grid-template-columns: 1fr;
+  }
+
+  .checkin-display-music-main {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .checkin-display-music-copy {
+    flex-basis: calc(100% - 55px);
+  }
+
+  .checkin-display-music-button {
+    width: 100%;
   }
 }
 
