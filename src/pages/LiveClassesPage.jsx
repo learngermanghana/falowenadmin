@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
+import { deleteClassCohort } from "../services/classDeletionService.js";
 import {
   cancelSession,
-  deleteClassCohort,
   getClassDashboard,
   listClassCohorts,
   markSessionCompleted,
@@ -170,27 +170,30 @@ export default function LiveClassesPage() {
     }
   }
 
-
   async function handleDeleteClass() {
-    if (!dashboard?.klass?.id) return;
-    const className = dashboard.klass.name || dashboard.klass.id;
+    if (!selectedClassId || !dashboard?.klass) return;
+    const className = dashboard.klass.name || selectedClassId;
     const confirmation = window.prompt(
-      `Delete ${className}? This is only allowed after the class end date has passed and every student contract has ended. Type DELETE to confirm.`,
+      `Permanently delete ${className}? This removes Firestore classes/${selectedClassId}, its generated sessions, attendance mirrors and calendar feed. Student accounts are not deleted. Type ${selectedClassId} to confirm.`,
       "",
     );
-    if (confirmation !== "DELETE") return;
+    if (confirmation === null) return;
+    if (confirmation.trim() !== selectedClassId) {
+      setMessage(`Class was not deleted. Type the exact Firestore document ID: ${selectedClassId}`);
+      return;
+    }
 
     setBusy(true);
     setMessage("");
     try {
-      const result = await deleteClassCohort(dashboard.klass.id, { adminId: user?.uid || user?.email || "admin" });
+      const result = await deleteClassCohort(selectedClassId, { adminId: user?.uid || user?.email || "admin" });
       const rows = await refreshClasses("");
       const nextId = rows[0]?.id || "";
       setSelectedClassId(nextId);
       if (nextId) await refreshDashboard(nextId);
       else setDashboard(null);
       setActiveTab("overview");
-      setMessage(`Deleted ${className}. Removed ${result.deletedSessionCount} generated session(s) after checking ${result.checkedStudentCount} student contract(s).`);
+      setMessage(`Deleted ${className}. Firestore confirmed that classes/${result.classId} is gone, together with ${result.deletedSessionCount} generated session(s).`);
     } catch (error) {
       setMessage(error?.message || "Class deletion failed");
     } finally {
@@ -370,10 +373,11 @@ export default function LiveClassesPage() {
             </div>
           ) : null}
           <div style={{ marginTop: 16, padding: 12, borderRadius: 8, background: "#fef2f2", border: "1px solid #fecaca" }}>
-            <h3 style={{ marginTop: 0 }}>Delete ended class</h3>
-            <p>Use this only when the class has ended and every student contract for this class has ended. The action removes the class record, generated sessions, attendance session mirrors and calendar feed.</p>
+            <h3 style={{ marginTop: 0 }}>Permanently delete class</h3>
+            <p>Use this to remove a mistaken, duplicate, upcoming or ended class. It deletes the selected Firestore class record, generated sessions, attendance mirrors and calendar feed. It does not delete student accounts, and it cannot be undone.</p>
+            <p><strong>Firestore document:</strong> <code>classes/{selectedClassId}</code></p>
             <button type="button" disabled={busy} onClick={handleDeleteClass} style={{ background: "#dc2626", color: "#fff", border: 0 }}>
-              {busy ? "Deleting…" : "Delete class"}
+              {busy ? "Deleting…" : "Delete class permanently"}
             </button>
           </div>
         </article>
