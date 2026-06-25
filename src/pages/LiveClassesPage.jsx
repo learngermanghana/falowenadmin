@@ -5,6 +5,7 @@ import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import {
   cancelSession,
+  deleteClassCohort,
   getClassDashboard,
   listClassCohorts,
   markSessionCompleted,
@@ -164,6 +165,34 @@ export default function LiveClassesPage() {
         : "Curriculum is already synchronized. Manual topics and curriculum IDs were preserved.");
     } catch (error) {
       setMessage(error?.message || "Curriculum synchronization failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
+  async function handleDeleteClass() {
+    if (!dashboard?.klass?.id) return;
+    const className = dashboard.klass.name || dashboard.klass.id;
+    const confirmation = window.prompt(
+      `Delete ${className}? This is only allowed after the class end date has passed and every student contract has ended. Type DELETE to confirm.`,
+      "",
+    );
+    if (confirmation !== "DELETE") return;
+
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await deleteClassCohort(dashboard.klass.id, { adminId: user?.uid || user?.email || "admin" });
+      const rows = await refreshClasses("");
+      const nextId = rows[0]?.id || "";
+      setSelectedClassId(nextId);
+      if (nextId) await refreshDashboard(nextId);
+      else setDashboard(null);
+      setActiveTab("overview");
+      setMessage(`Deleted ${className}. Removed ${result.deletedSessionCount} generated session(s) after checking ${result.checkedStudentCount} student contract(s).`);
+    } catch (error) {
+      setMessage(error?.message || "Class deletion failed");
     } finally {
       setBusy(false);
     }
@@ -340,6 +369,13 @@ export default function LiveClassesPage() {
               This class is missing its start or end date. It will not be published as an upcoming class until the dates and status are corrected in <button type="button" onClick={() => setActiveTab("details")}>Class & settings</button>.
             </div>
           ) : null}
+          <div style={{ marginTop: 16, padding: 12, borderRadius: 8, background: "#fef2f2", border: "1px solid #fecaca" }}>
+            <h3 style={{ marginTop: 0 }}>Delete ended class</h3>
+            <p>Use this only when the class has ended and every student contract for this class has ended. The action removes the class record, generated sessions, attendance session mirrors and calendar feed.</p>
+            <button type="button" disabled={busy} onClick={handleDeleteClass} style={{ background: "#dc2626", color: "#fff", border: 0 }}>
+              {busy ? "Deleting…" : "Delete class"}
+            </button>
+          </div>
         </article>
       ) : null}
 
