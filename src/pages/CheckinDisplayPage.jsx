@@ -243,12 +243,12 @@ export default function CheckinDisplayPage() {
   }, []);
 
   const startWaitingMusic = useCallback(async () => {
-    if (statusInfo.kind !== "before" || musicPlaying) return;
+    if (musicPlaying) return;
     setMusicError("");
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
-      setMusicError("This browser does not support waiting-room audio.");
+      setMusicError("This browser does not support background audio.");
       return;
     }
 
@@ -274,9 +274,9 @@ export default function CheckinDisplayPage() {
       setMusicPlaying(true);
     } catch (error) {
       stopWaitingMusic();
-      setMusicError(error?.message || "Waiting-room music could not start. Check the device sound settings and try again.");
+      setMusicError(error?.message || "Background music could not start. Check the device sound settings and try again.");
     }
-  }, [musicPlaying, musicVolume, statusInfo.kind, stopWaitingMusic]);
+  }, [musicPlaying, musicVolume, stopWaitingMusic]);
 
   useEffect(() => {
     const context = audioContextRef.current;
@@ -284,10 +284,6 @@ export default function CheckinDisplayPage() {
     if (!context || !masterGain || context.state === "closed") return;
     masterGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.08);
   }, [musicVolume]);
-
-  useEffect(() => {
-    if (statusInfo.kind !== "before" && musicPlaying) stopWaitingMusic();
-  }, [musicPlaying, statusInfo.kind, stopWaitingMusic]);
 
   useEffect(() => () => {
     if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
@@ -319,47 +315,45 @@ export default function CheckinDisplayPage() {
           <div>{statusInfo.detail}</div>
         </div>
 
-        {statusInfo.kind === "before" && (
-          <div className={`checkin-display-music ${musicPlaying ? "checkin-display-music-playing" : ""}`}>
-            <div className="checkin-display-music-main">
-              <div className="checkin-display-music-copy">
-                <div className="checkin-display-music-title">
-                  <span aria-hidden="true">♫</span> Waiting-room music
-                </div>
-                <div className="checkin-display-music-note">
-                  Gentle background music for students while they check in. It stops automatically when class starts.
-                </div>
+        <div className={`checkin-display-music ${musicPlaying ? "checkin-display-music-playing" : ""}`}>
+          <div className="checkin-display-music-main">
+            <div className="checkin-display-music-copy">
+              <div className="checkin-display-music-title">
+                <span aria-hidden="true">♫</span> Background music
               </div>
-              <div className="checkin-display-music-visual" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
+              <div className="checkin-display-music-note">
+                Built-in gentle ambient music. It continues before, during, or after class until you stop it or close this page.
               </div>
-              <button
-                type="button"
-                className="checkin-display-music-button"
-                onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
-              >
-                {musicPlaying ? "Stop music" : "Start waiting music"}
-              </button>
             </div>
-            <label className="checkin-display-music-volume">
-              <span>Volume</span>
-              <input
-                type="range"
-                min="0.08"
-                max="0.85"
-                step="0.01"
-                value={musicVolume}
-                onChange={(event) => setMusicVolume(Number(event.target.value))}
-                aria-label="Waiting-room music volume"
-              />
-              <span>{Math.round(musicVolume * 100)}%</span>
-            </label>
-            {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
+            <div className="checkin-display-music-visual" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            <button
+              type="button"
+              className="checkin-display-music-button"
+              onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+            >
+              {musicPlaying ? "Stop music" : "Start background music"}
+            </button>
           </div>
-        )}
+          <label className="checkin-display-music-volume">
+            <span>Volume</span>
+            <input
+              type="range"
+              min="0.08"
+              max="0.85"
+              step="0.01"
+              value={musicVolume}
+              onChange={(event) => setMusicVolume(Number(event.target.value))}
+              aria-label="Background music volume"
+            />
+            <span>{Math.round(musicVolume * 100)}%</span>
+          </label>
+          {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
+        </div>
 
         {hasRequiredParams ? (
           <>
