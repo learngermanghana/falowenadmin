@@ -40,6 +40,49 @@ function attendanceSessionRef(classId, sessionId) {
   return doc(db, "attendance", String(classId), "sessions", String(sessionId));
 }
 
+function dateOnlyTimestamp(value) {
+  if (!value) return null;
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+}
+
+function classDeletionEligibility({ klass = {}, sessions = [], students = [], now = new Date() } = {}) {
+  const nowMs = now.getTime();
+  const classEndMs = dateOnlyTimestamp(klass.endDate);
+  if (!classEndMs || classEndMs > nowMs) {
+    return {
+      allowed: false,
+      reason: "This class cannot be deleted until its end date has passed.",
+    };
+  }
+
+  const unfinishedSessions = sessions.filter((session) => {
+    const status = String(session.status || "scheduled").toLowerCase();
+    const endsAtMs = dateOnlyTimestamp(session.endsAt);
+    return !["completed", "cancelled"].includes(status) && (!endsAtMs || endsAtMs > nowMs);
+  });
+  if (unfinishedSessions.length) {
+    return {
+      allowed: false,
+      reason: `This class still has ${unfinishedSessions.length} unfinished future session(s). Complete or cancel them first.`,
+    };
+  }
+
+  const openContracts = students.filter((student) => {
+    const contractEndMs = dateOnlyTimestamp(student.contractEnd || student.contractend || student.contract_end);
+    return !contractEndMs || contractEndMs > nowMs;
+  });
+  if (openContracts.length) {
+    return {
+      allowed: false,
+      reason: `This class still has ${openContracts.length} student contract(s) without an ended contract date.`,
+    };
+  }
+
+  return { allowed: true, reason: "Class ended and all student contracts have ended." };
+}
+
 function arrayWithValues(value) {
   return Array.isArray(value) ? value.filter((item) => String(item || "").trim()) : [];
 }
@@ -538,6 +581,37 @@ export async function cancelSession(sessionId, { reason, adminId }) {
       recipientCount: recipients.length,
     };
   }
+}
+
+export async function deleteClassCohort(classId, { adminId = "admin" } = {}) {
+  const klass = await loadClassRecord(classId);
+  const [sessions, students] = await Promise.all([
+    listClassSessions(classId),
+    listStudentsByClass(klass.name || classId),
+  ]);
+  const eligibility = classDeletionEligibility({ klass, sessions, students });
+  if (!eligibility.allowed) throw new Error(eligibility.reason);
+
+  const batch = writeBatch(db);
+  sessions.forEach((session) => {
+    batch.delete(doc(db, "classSessions", session.id));
+    batch.delete(attendanceSessionRef(classId, session.id));
+  });
+  batch.delete(doc(db, "classes", classId));
+  batch.delete(doc(db, "calendarFeeds", classId));
+  batch.set(doc(collection(db, "auditLogs")), {
+    type: "classCohort.deleted",
+    classId,
+    className: klass.name || "",
+    sessionCount: sessions.length,
+    checkedStudentCount: students.length,
+    actorId: adminId,
+    reason: eligibility.reason,
+    createdAt: serverTimestamp(),
+  });
+  await batch.commit();
+
+  return { classId, deletedSessionCount: sessions.length, checkedStudentCount: students.length };
 }
 
 export async function rescheduleSession(sessionId, { startsAt, endsAt, adminId, reason = "" }) {
