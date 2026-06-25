@@ -104,8 +104,28 @@ function formatDuration(ms) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function scheduleStartChime(context, destination) {
+  const startsAt = context.currentTime + 0.03;
+  [523.25, 659.25].forEach((frequency, index) => {
+    const oscillator = context.createOscillator();
+    const noteGain = context.createGain();
+    const noteStartsAt = startsAt + (index * 0.16);
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, noteStartsAt);
+    noteGain.gain.setValueAtTime(0.0001, noteStartsAt);
+    noteGain.gain.exponentialRampToValueAtTime(0.18, noteStartsAt + 0.035);
+    noteGain.gain.exponentialRampToValueAtTime(0.0001, noteStartsAt + 0.22);
+
+    oscillator.connect(noteGain);
+    noteGain.connect(destination);
+    oscillator.start(noteStartsAt);
+    oscillator.stop(noteStartsAt + 0.24);
+  });
+}
+
 function scheduleWaitingChord(context, destination, chord) {
-  const startsAt = context.currentTime + 0.04;
+  const startsAt = context.currentTime + 0.42;
 
   chord.forEach((frequency, index) => {
     const oscillator = context.createOscillator();
@@ -114,7 +134,7 @@ function scheduleWaitingChord(context, destination, chord) {
     oscillator.type = index === 0 ? "sine" : "triangle";
     oscillator.frequency.setValueAtTime(frequency, startsAt);
     noteGain.gain.setValueAtTime(0.0001, startsAt);
-    noteGain.gain.exponentialRampToValueAtTime(index === 0 ? 0.035 : 0.018, startsAt + 0.65);
+    noteGain.gain.exponentialRampToValueAtTime(index === 0 ? 0.14 : 0.075, startsAt + 0.48);
     noteGain.gain.exponentialRampToValueAtTime(0.0001, startsAt + 3.05);
 
     oscillator.connect(noteGain);
@@ -137,7 +157,7 @@ export default function CheckinDisplayPage() {
   const expectedCount = sp.get("expectedCount") || "";
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [musicPlaying, setMusicPlaying] = useState(false);
-  const [musicVolume, setMusicVolume] = useState(0.42);
+  const [musicVolume, setMusicVolume] = useState(0.6);
   const [musicError, setMusicError] = useState("");
   const audioContextRef = useRef(null);
   const musicGainRef = useRef(null);
@@ -255,15 +275,33 @@ export default function CheckinDisplayPage() {
     try {
       const context = new AudioContextClass();
       const masterGain = context.createGain();
+      const compressor = context.createDynamicsCompressor();
+
       masterGain.gain.setValueAtTime(musicVolume, context.currentTime);
-      masterGain.connect(context.destination);
+      compressor.threshold.setValueAtTime(-18, context.currentTime);
+      compressor.knee.setValueAtTime(18, context.currentTime);
+      compressor.ratio.setValueAtTime(4, context.currentTime);
+      compressor.attack.setValueAtTime(0.003, context.currentTime);
+      compressor.release.setValueAtTime(0.25, context.currentTime);
+      masterGain.connect(compressor);
+      compressor.connect(context.destination);
 
       audioContextRef.current = context;
       musicGainRef.current = masterGain;
+
       await context.resume();
+      if (context.state !== "running") {
+        await new Promise((resolve) => window.setTimeout(resolve, 80));
+        await context.resume();
+      }
+      if (context.state !== "running") {
+        throw new Error("Audio is blocked by this browser. Raise the device media volume, turn off silent mode, and tap Start again.");
+      }
+
+      scheduleStartChime(context, masterGain);
 
       const playNextChord = () => {
-        if (context.state === "closed") return;
+        if (context.state !== "running") return;
         const chord = WAITING_MUSIC_CHORDS[musicChordIndexRef.current % WAITING_MUSIC_CHORDS.length];
         musicChordIndexRef.current += 1;
         scheduleWaitingChord(context, masterGain, chord);
@@ -274,7 +312,7 @@ export default function CheckinDisplayPage() {
       setMusicPlaying(true);
     } catch (error) {
       stopWaitingMusic();
-      setMusicError(error?.message || "Background music could not start. Check the device sound settings and try again.");
+      setMusicError(error?.message || "Background music could not start. Raise the device media volume and try again.");
     }
   }, [musicPlaying, musicVolume, stopWaitingMusic]);
 
@@ -322,7 +360,7 @@ export default function CheckinDisplayPage() {
                 <span aria-hidden="true">♫</span> Background music
               </div>
               <div className="checkin-display-music-note">
-                Built-in gentle ambient music. It continues before, during, or after class until you stop it or close this page.
+                Built-in ambient music with no audio download. You should hear a short confirmation chime when it starts.
               </div>
             </div>
             <div className="checkin-display-music-visual" aria-hidden="true">
@@ -343,8 +381,8 @@ export default function CheckinDisplayPage() {
             <span>Volume</span>
             <input
               type="range"
-              min="0.08"
-              max="0.85"
+              min="0.1"
+              max="1"
               step="0.01"
               value={musicVolume}
               onChange={(event) => setMusicVolume(Number(event.target.value))}
