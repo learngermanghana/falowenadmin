@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
@@ -7,6 +7,12 @@ import "./CheckinDisplayPage.css";
 const ATTENDANCE_UTC_OFFSET_HOURS = 1;
 const ATTENDANCE_TIME_ZONE = "Africa/Lagos";
 const ATTENDANCE_TIME_ZONE_LABEL = "WAT (UTC+01:00)";
+const WAITING_MUSIC_CHORDS = [
+  [261.63, 329.63, 392.0],
+  [220.0, 261.63, 329.63],
+  [174.61, 220.0, 261.63],
+  [196.0, 246.94, 293.66],
+];
 
 function parseSessionDate(dateValue) {
   const raw = String(dateValue || "").trim();
@@ -98,6 +104,26 @@ function formatDuration(ms) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function scheduleWaitingChord(context, destination, chord) {
+  const startsAt = context.currentTime + 0.04;
+
+  chord.forEach((frequency, index) => {
+    const oscillator = context.createOscillator();
+    const noteGain = context.createGain();
+
+    oscillator.type = index === 0 ? "sine" : "triangle";
+    oscillator.frequency.setValueAtTime(frequency, startsAt);
+    noteGain.gain.setValueAtTime(0.0001, startsAt);
+    noteGain.gain.exponentialRampToValueAtTime(index === 0 ? 0.035 : 0.018, startsAt + 0.65);
+    noteGain.gain.exponentialRampToValueAtTime(0.0001, startsAt + 3.05);
+
+    oscillator.connect(noteGain);
+    noteGain.connect(destination);
+    oscillator.start(startsAt);
+    oscillator.stop(startsAt + 3.1);
+  });
+}
+
 export default function CheckinDisplayPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
@@ -110,6 +136,13 @@ export default function CheckinDisplayPage() {
   const expectedStudents = sp.get("expectedStudents") || "";
   const expectedCount = sp.get("expectedCount") || "";
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.42);
+  const [musicError, setMusicError] = useState("");
+  const audioContextRef = useRef(null);
+  const musicGainRef = useRef(null);
+  const musicTimerRef = useRef(null);
+  const musicChordIndexRef = useRef(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -192,6 +225,76 @@ export default function CheckinDisplayPage() {
     };
   }, [dateLabel, nowMs, startTime]);
 
+  const stopWaitingMusic = useCallback(() => {
+    if (musicTimerRef.current) {
+      window.clearInterval(musicTimerRef.current);
+      musicTimerRef.current = null;
+    }
+
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    musicGainRef.current = null;
+    musicChordIndexRef.current = 0;
+
+    if (context && context.state !== "closed") {
+      context.close().catch(() => {});
+    }
+    setMusicPlaying(false);
+  }, []);
+
+  const startWaitingMusic = useCallback(async () => {
+    if (statusInfo.kind !== "before" || musicPlaying) return;
+    setMusicError("");
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      setMusicError("This browser does not support waiting-room audio.");
+      return;
+    }
+
+    try {
+      const context = new AudioContextClass();
+      const masterGain = context.createGain();
+      masterGain.gain.setValueAtTime(musicVolume, context.currentTime);
+      masterGain.connect(context.destination);
+
+      audioContextRef.current = context;
+      musicGainRef.current = masterGain;
+      await context.resume();
+
+      const playNextChord = () => {
+        if (context.state === "closed") return;
+        const chord = WAITING_MUSIC_CHORDS[musicChordIndexRef.current % WAITING_MUSIC_CHORDS.length];
+        musicChordIndexRef.current += 1;
+        scheduleWaitingChord(context, masterGain, chord);
+      };
+
+      playNextChord();
+      musicTimerRef.current = window.setInterval(playNextChord, 3200);
+      setMusicPlaying(true);
+    } catch (error) {
+      stopWaitingMusic();
+      setMusicError(error?.message || "Waiting-room music could not start. Check the device sound settings and try again.");
+    }
+  }, [musicPlaying, musicVolume, statusInfo.kind, stopWaitingMusic]);
+
+  useEffect(() => {
+    const context = audioContextRef.current;
+    const masterGain = musicGainRef.current;
+    if (!context || !masterGain || context.state === "closed") return;
+    masterGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.08);
+  }, [musicVolume]);
+
+  useEffect(() => {
+    if (statusInfo.kind !== "before" && musicPlaying) stopWaitingMusic();
+  }, [musicPlaying, statusInfo.kind, stopWaitingMusic]);
+
+  useEffect(() => () => {
+    if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
+    const context = audioContextRef.current;
+    if (context && context.state !== "closed") context.close().catch(() => {});
+  }, []);
+
   const hasRequiredParams = Boolean(classId && String(sessionId || "").trim());
 
   return (
@@ -215,6 +318,48 @@ export default function CheckinDisplayPage() {
           <div className="checkin-display-alert-title">{statusInfo.title}</div>
           <div>{statusInfo.detail}</div>
         </div>
+
+        {statusInfo.kind === "before" && (
+          <div className={`checkin-display-music ${musicPlaying ? "checkin-display-music-playing" : ""}`}>
+            <div className="checkin-display-music-main">
+              <div className="checkin-display-music-copy">
+                <div className="checkin-display-music-title">
+                  <span aria-hidden="true">♫</span> Waiting-room music
+                </div>
+                <div className="checkin-display-music-note">
+                  Gentle background music for students while they check in. It stops automatically when class starts.
+                </div>
+              </div>
+              <div className="checkin-display-music-visual" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <button
+                type="button"
+                className="checkin-display-music-button"
+                onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+              >
+                {musicPlaying ? "Stop music" : "Start waiting music"}
+              </button>
+            </div>
+            <label className="checkin-display-music-volume">
+              <span>Volume</span>
+              <input
+                type="range"
+                min="0.08"
+                max="0.85"
+                step="0.01"
+                value={musicVolume}
+                onChange={(event) => setMusicVolume(Number(event.target.value))}
+                aria-label="Waiting-room music volume"
+              />
+              <span>{Math.round(musicVolume * 100)}%</span>
+            </label>
+            {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
+          </div>
+        )}
 
         {hasRequiredParams ? (
           <>
