@@ -112,6 +112,174 @@
   font-size: 1.1rem;
 }
 
+/* Live Classes ---------------------------------------------------------- */
+main.page-shell[data-route="/live-classes"] {
+  width: min(1320px, calc(100% - 2rem));
+}
+
+main[data-route="/live-classes"] .page-container {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+main[data-route="/live-classes"] .page-container > div:first-child {
+  align-items: center;
+}
+
+main[data-route="/live-classes"] .page-container > div:first-child h1 {
+  margin-bottom: 0.35rem;
+}
+
+main[data-route="/live-classes"] .page-container > div:first-child p {
+  margin: 0;
+  color: #526079;
+}
+
+main[data-route="/live-classes"] article.card {
+  min-width: 0;
+  padding: 1.15rem;
+  border: 1px solid #dbe3f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(26, 34, 51, 0.06);
+}
+
+main[data-route="/live-classes"] article.card > label:first-child {
+  display: grid;
+  gap: 0.45rem;
+}
+
+main[data-route="/live-classes"] article.card > label:first-child select {
+  min-height: 44px;
+}
+
+main[data-route="/live-classes"] article.card nav {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 0.55rem !important;
+  align-items: stretch;
+}
+
+main[data-route="/live-classes"] article.card nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0.65rem 0.8rem !important;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+}
+
+main[data-route="/live-classes"] article.card h2 {
+  margin-bottom: 0.75rem;
+}
+
+main[data-route="/live-classes"] article.card p:last-child {
+  margin-bottom: 0;
+}
+
+main[data-route="/live-classes"] article.card > div[style*="overflow-x"] {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #e4e9f2;
+  border-radius: 12px;
+}
+
+main[data-route="/live-classes"] table {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: separate !important;
+  border-spacing: 0;
+  background: #fff;
+}
+
+main[data-route="/live-classes"] th,
+main[data-route="/live-classes"] td {
+  padding: 0.8rem !important;
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+main[data-route="/live-classes"] th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f5f7fb;
+  color: #34405a;
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+main[data-route="/live-classes"] tbody tr:nth-child(even) {
+  background: #fafbfe;
+}
+
+main[data-route="/live-classes"] tbody tr:hover {
+  background: #f2f6ff;
+}
+
+main[data-route="/live-classes"] td select {
+  width: 100%;
+  min-width: 0 !important;
+  min-height: 42px;
+}
+
+main[data-route="/live-classes"] tbody td:last-child > div {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(96px, 1fr));
+  gap: 0.45rem !important;
+  align-items: stretch;
+}
+
+main[data-route="/live-classes"] tbody td:last-child > div > a,
+main[data-route="/live-classes"] tbody td:last-child > div > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+main[data-route="/live-classes"] tbody td:last-child > div > a {
+  border: 1px solid #b9c8ef;
+  background: #eef3ff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+main[data-route="/live-classes"] article.card > div > button {
+  min-height: 42px;
+}
+
+@media (max-width: 900px) {
+  main.page-shell[data-route="/live-classes"] {
+    width: min(100% - 1rem, 100%);
+    margin-top: 0.65rem;
+  }
+
+  main[data-route="/live-classes"] article.card {
+    padding: 0.95rem;
+  }
+
+  main[data-route="/live-classes"] table {
+    min-width: 760px;
+  }
+}
+
 @media (max-width: 640px) {
   .topbar-main-row {
     align-items: flex-start;
@@ -154,5 +322,75 @@
     right: 0.7rem;
     left: 0.7rem;
     width: auto;
+  }
+
+  main.page-shell[data-route="/live-classes"] {
+    width: calc(100% - 0.75rem);
+    margin: 0.45rem auto 1rem;
+  }
+
+  main[data-route="/live-classes"] .page-container {
+    gap: 0.75rem;
+  }
+
+  main[data-route="/live-classes"] .page-container > div:first-child {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  main[data-route="/live-classes"] .page-container > div:first-child h1 {
+    font-size: 1.65rem;
+  }
+
+  main[data-route="/live-classes"] .page-container > div:first-child > a {
+    align-self: flex-start;
+  }
+
+  main[data-route="/live-classes"] article.card {
+    padding: 0.8rem;
+    border-radius: 11px;
+  }
+
+  main[data-route="/live-classes"] article.card nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main[data-route="/live-classes"] article.card nav button {
+    min-height: 46px;
+    padding: 0.55rem 0.45rem !important;
+    font-size: 0.9rem;
+  }
+
+  main[data-route="/live-classes"] article.card > div[style*="justify-content: space-between"] {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  main[data-route="/live-classes"] article.card > div[style*="justify-content: space-between"] button {
+    width: 100%;
+  }
+
+  main[data-route="/live-classes"] table {
+    min-width: 690px;
+    font-size: 0.9rem;
+  }
+
+  main[data-route="/live-classes"] th,
+  main[data-route="/live-classes"] td {
+    padding: 0.65rem !important;
+  }
+
+  main[data-route="/live-classes"] tbody td:last-child > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  main[data-route="/live-classes"] article.card nav {
+    grid-template-columns: 1fr;
+  }
+
+  main[data-route="/live-classes"] .page-container > div:first-child h1 {
+    font-size: 1.45rem;
   }
 }
