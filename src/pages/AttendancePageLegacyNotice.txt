@@ -1,0 +1,1 @@
+Legacy attendance routes now use the canonical attendance page.
