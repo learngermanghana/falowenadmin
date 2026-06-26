@@ -75,3 +75,17 @@ try {
 
 fs.writeFileSync(filePath, source);
 console.log("answers_dictionary.json is valid JSON.");
+
+const liveClassesPath = new URL("../src/pages/LiveClassesPage.jsx", import.meta.url);
+let liveClassesSource = fs.readFileSync(liveClassesPath, "utf8");
+const oldProgressCall = "calculateClassProgress(dashboard?.sessions || [])";
+const newProgressCall = "calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {})";
+
+if (liveClassesSource.includes(oldProgressCall)) {
+  liveClassesSource = liveClassesSource.replace(oldProgressCall, newProgressCall);
+} else if (!liveClassesSource.includes(newProgressCall)) {
+  throw new Error("Could not find the Live Classes progress calculation to update.");
+}
+
+fs.writeFileSync(liveClassesPath, liveClassesSource);
+console.log("Live Classes progress now uses the cohort start and graduation dates.");
