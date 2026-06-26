@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { listPublishedStudentsByClassWithLoader, listStudentsByClassWithDeps } from "../src/services/studentsService.js";
+import {
+  listPublishedStudentsByClassWithLoader,
+  listStudentsByClass,
+  listStudentsByClassWithDeps,
+} from "../src/services/studentsService.js";
 
 test("matches by full className when present", async () => {
   const rows = [
@@ -35,7 +39,6 @@ test("normalizes spacing in class name matching", async () => {
   assert.equal(result.length, 1);
 });
 
-
 test("excludes inactive students from attendance rosters", async () => {
   const rows = [
     { classname: "A2 Stuttgart Klasse", level: "A2", status: "Paid", studentcode: "S-003", name: "Paid Student" },
@@ -64,21 +67,69 @@ test("maps published student email for attendance email selection", async () => 
   assert.equal(student.email, "email.student@example.com");
 });
 
-test("prefers Firestore students as the live class roster", async () => {
+test("merges Firestore and published students into one complete roster", async () => {
+  const result = await listStudentsByClassWithDeps("class-record-id", {
+    className: "A1 Hamburg Klasse",
+    loadStudentsByField: async (field, identifier) => {
+      if (field === "classId" && identifier === "class-record-id") {
+        return [{ id: "current", studentCode: "S-001", name: "Current Student" }];
+      }
+      return [];
+    },
+    loadPublishedStudentsByClass: async (identifier) => (
+      identifier === "A1 Hamburg Klasse"
+        ? [{ id: "sheet", studentCode: "S-002", name: "Sheet Student" }]
+        : []
+    ),
+  });
+
+  assert.deepEqual(result.map((student) => student.name), ["Current Student", "Sheet Student"]);
+});
+
+test("deduplicates the same student returned by Firestore and the published sheet", async () => {
+  const result = await listStudentsByClassWithDeps("class-record-id", {
+    className: "A1 Hamburg Klasse",
+    loadStudentsByField: async () => [
+      { id: "firestore-doc", studentCode: "S-001", email: "student@example.com", name: "Current Student" },
+    ],
+    loadPublishedStudentsByClass: async () => [
+      { id: "S-001", studentCode: "S-001", email: "student@example.com", name: "Current Student" },
+    ],
+  });
+
+  assert.equal(result.length, 1);
+});
+
+test("public class roster function forwards className and dependency options", async () => {
   const calls = [];
+  const result = await listStudentsByClass("class-record-id", {
+    className: "A1 Hamburg Klasse",
+    loadStudentsByField: async (field, identifier) => {
+      calls.push(`${field}:${identifier}`);
+      return [];
+    },
+    loadPublishedStudentsByClass: async (identifier) => (
+      identifier === "A1 Hamburg Klasse"
+        ? [{ id: "sheet", studentCode: "S-002", name: "Sheet Student" }]
+        : []
+    ),
+  });
+
+  assert.equal(result[0]?.name, "Sheet Student");
+  assert.ok(calls.includes("className:A1 Hamburg Klasse"));
+});
+
+test("continues loading other roster sources when one Firestore query fails", async () => {
   const result = await listStudentsByClassWithDeps("A1 Hamburg Klasse", {
-    loadStudentsByField: async (field, classId) => {
-      calls.push(`firestore:${field}:${classId}`);
-      return [{ id: "current", name: "Current Student" }];
+    loadStudentsByField: async (field) => {
+      if (field === "classId") throw new Error("Missing index");
+      if (field === "className") return [{ id: "current", name: "Current Student" }];
+      return [];
     },
-    loadPublishedStudentsByClass: async () => {
-      calls.push("sheet");
-      return [{ id: "removed", name: "Removed Student" }];
-    },
+    loadPublishedStudentsByClass: async () => [],
   });
 
   assert.deepEqual(result.map((student) => student.name), ["Current Student"]);
-  assert.deepEqual(calls, ["firestore:classId:A1 Hamburg Klasse", "firestore:classRecordId:A1 Hamburg Klasse", "firestore:className:A1 Hamburg Klasse"]);
 });
 
 test("falls back to the published sheet when Firestore has no class students", async () => {
