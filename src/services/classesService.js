@@ -38,17 +38,76 @@ function normalizeToCanonicalClassId(value) {
 }
 
 function normalizeClassArchiveMetadata(data = {}) {
-  const archived = data.archived === true || data.isArchived === true;
+  const rawStatus = String(data.status || "").trim().toLowerCase();
+  const archived = rawStatus === "archived" || data.archived === true || data.isArchived === true;
+  const status = archived ? "archived" : rawStatus || (data.active === false ? "inactive" : "active");
   return {
     archived,
     isArchived: archived,
-    active: data.active === false ? false : !archived,
-    status: archived ? "archived" : data.status || "ongoing",
+    active: !archived && !["graduated", "inactive"].includes(status),
+    status,
   };
 }
 
 function resolveClassKey(data = {}) {
   return normalizeToCanonicalClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
+}
+
+function dateToMillis(value) {
+  if (!value) return 0;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  const text = String(value).trim();
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T00:00:00.000Z`)
+    : new Date(text);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function statusPriority(status) {
+  return {
+    active: 6,
+    ongoing: 6,
+    upcoming: 5,
+    draft: 3,
+    graduated: 2,
+    inactive: 1,
+    archived: 0,
+  }[String(status || "").toLowerCase()] ?? 1;
+}
+
+function normalizeFirestoreClass(docSnap) {
+  const data = docSnap.data() || {};
+  const classId = resolveClassKey({ id: docSnap.id, ...data });
+  if (!classId) return null;
+
+  const archiveMetadata = normalizeClassArchiveMetadata(data);
+  return {
+    id: docSnap.id,
+    classRecordId: docSnap.id,
+    classId,
+    name: normalizeToCanonicalClassId(data.name || data.className || data.classId || classId),
+    startDate: data.startDate || "",
+    endDate: data.endDate || "",
+    timezone: data.timezone || "Africa/Accra",
+    scheduleRules: Array.isArray(data.scheduleRules) ? data.scheduleRules : [],
+    generatedSessionCount: Number(data.generatedSessionCount || 0),
+    ...archiveMetadata,
+  };
+}
+
+function choosePreferredClassRecord(current, candidate) {
+  if (!current) return candidate;
+  if (current.archived !== candidate.archived) return candidate.archived ? current : candidate;
+
+  const priorityDifference = statusPriority(candidate.status) - statusPriority(current.status);
+  if (priorityDifference !== 0) return priorityDifference > 0 ? candidate : current;
+
+  const candidateStart = dateToMillis(candidate.startDate);
+  const currentStart = dateToMillis(current.startDate);
+  if (candidateStart !== currentStart) return candidateStart > currentStart ? candidate : current;
+
+  return candidate;
 }
 
 async function loadFirestoreClassMetadata({
@@ -63,10 +122,17 @@ async function loadFirestoreClassMetadata({
   const metadataByClassId = new Map();
 
   classesSnap.forEach((docSnap) => {
-    const data = docSnap.data() || {};
-    const classId = resolveClassKey({ id: docSnap.id, ...data });
-    if (!classId) return;
-    metadataByClassId.set(classId, normalizeClassArchiveMetadata(data));
+    const candidate = normalizeFirestoreClass(docSnap);
+    if (!candidate) return;
+
+    const lookupValues = [candidate.classId, candidate.name]
+      .map(normalizeToCanonicalClassId)
+      .filter(Boolean);
+
+    lookupValues.forEach((lookupValue) => {
+      const current = metadataByClassId.get(lookupValue);
+      metadataByClassId.set(lookupValue, choosePreferredClassRecord(current, candidate));
+    });
   });
 
   return metadataByClassId;
@@ -119,9 +185,9 @@ export async function listClassesWithDeps(
         const metadata = firestoreMetadata.get(classId) || {};
         return {
           ...klass,
-          classId,
-          name: normalizeToCanonicalClassId(klass.name || classId),
           ...metadata,
+          classId,
+          name: metadata.name || normalizeToCanonicalClassId(klass.name || classId),
         };
       });
     },
@@ -130,14 +196,16 @@ export async function listClassesWithDeps(
       const classesSnap = await getDocsFn(queryFn(classesCollection, orderByFn("name", "asc")));
 
       if (!classesSnap.empty) {
-        return classesSnap.docs
-          .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
-          .map((c) => ({
-            classId: resolveClassKey(c),
-            name: normalizeToCanonicalClassId(c.name || c.className || c.classId || c.id),
-            ...normalizeClassArchiveMetadata(c),
-          }))
-          .filter((c) => c.classId);
+        const preferredByClassId = new Map();
+        classesSnap.docs.forEach((docSnap) => {
+          const candidate = normalizeFirestoreClass(docSnap);
+          if (!candidate) return;
+          preferredByClassId.set(
+            candidate.classId,
+            choosePreferredClassRecord(preferredByClassId.get(candidate.classId), candidate),
+          );
+        });
+        return [...preferredByClassId.values()].sort((a, b) => a.name.localeCompare(b.name));
       }
 
       const studentsSnap = await getDocsFn(collectionFn(dbInstance, "students"));
@@ -164,19 +232,23 @@ export async function listClasses() {
   return listClassesWithDeps();
 }
 
-export async function setClassArchived(classId, archived) {
+export async function setClassArchived(classId, archived, classRecordId = "") {
   const normalizedClassId = normalizeToCanonicalClassId(classId);
   if (!normalizedClassId) throw new Error("Missing class id");
 
+  const targetRecordId = normalizeClassId(classRecordId) || normalizedClassId;
+  const identityPatch = targetRecordId === normalizedClassId
+    ? { classId: normalizedClassId, name: normalizedClassId }
+    : {};
+
   await setDoc(
-    doc(db, "classes", normalizedClassId),
+    doc(db, "classes", targetRecordId),
     {
-      classId: normalizedClassId,
-      name: normalizedClassId,
+      ...identityPatch,
       archived,
       isArchived: archived,
       active: !archived,
-      status: archived ? "archived" : "ongoing",
+      status: archived ? "archived" : "active",
       updatedAt: serverTimestamp(),
     },
     { merge: true },
