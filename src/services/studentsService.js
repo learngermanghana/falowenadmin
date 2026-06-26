@@ -28,12 +28,27 @@ function isActiveStudent(row = {}) {
   return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled"].includes(status);
 }
 
+function studentIdentityKeys(student = {}) {
+  const strongKeys = [
+    student.studentCode,
+    student.studentcode,
+    student.uid,
+    student.email,
+  ].map(normalizeComparable).filter(Boolean);
+
+  if (strongKeys.length) return strongKeys;
+
+  return [student.id, student.name]
+    .map(normalizeComparable)
+    .filter(Boolean);
+}
+
 function uniqueStudents(rows = []) {
   const seen = new Set();
   return rows.filter((student) => {
-    const key = normalize(student.studentCode || student.studentcode || student.uid || student.id || student.email || student.name).toLowerCase();
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
+    const keys = studentIdentityKeys(student);
+    if (!keys.length || keys.some((key) => seen.has(key))) return false;
+    keys.forEach((key) => seen.add(key));
     return true;
   });
 }
@@ -112,36 +127,42 @@ export async function listStudentsByClassWithDeps(
     loadStudentsByField = loadStudentsByFieldWithFirestore,
   } = {},
 ) {
-  const identifiers = uniqueStudents(
+  const identifiers = [...new Set(
     [classId, className]
-      .map((value) => ({ id: normalize(value) }))
-      .filter((item) => item.id),
-  ).map((item) => item.id);
+      .map(normalize)
+      .filter(Boolean),
+  )];
 
-  const firestoreRows = [];
-  try {
-    const fields = ["classId", "classRecordId", "className"];
-    for (const identifier of identifiers) {
-      for (const field of fields) {
+  const rosterRows = [];
+  const fields = ["classId", "classRecordId", "className"];
+
+  for (const identifier of identifiers) {
+    for (const field of fields) {
+      try {
         const rows = await loadStudentsByField(field, identifier);
-        firestoreRows.push(...rows);
+        rosterRows.push(...rows);
+      } catch {
+        // Continue with the remaining identifiers and the published roster.
       }
     }
-    const activeRows = uniqueStudents(firestoreRows).filter(isActiveStudent);
-    if (activeRows.length > 0) return activeRows.sort(byNameAsc);
-  } catch {
-    // Fall back when Firestore is unavailable.
   }
 
   for (const identifier of identifiers) {
-    const rows = await loadPublishedStudentsByClass(identifier);
-    if (rows.length > 0) return rows.filter(isActiveStudent).sort(byNameAsc);
+    try {
+      const rows = await loadPublishedStudentsByClass(identifier);
+      rosterRows.push(...rows);
+    } catch {
+      // A Firestore roster can still be returned if the published sheet is unavailable.
+    }
   }
-  return [];
+
+  return uniqueStudents(rosterRows)
+    .filter((row) => row.name && isActiveStudent(row))
+    .sort(byNameAsc);
 }
 
-export async function listStudentsByClass(classId) {
-  return listStudentsByClassWithDeps(classId);
+export async function listStudentsByClass(classId, options = {}) {
+  return listStudentsByClassWithDeps(classId, options);
 }
 
 export async function listAllStudents() {
