@@ -103,7 +103,8 @@ export function calculateClassProgress(sessions = [], now = new Date()) {
   const nowMs = new Date(now).getTime();
   const progressed = valid.filter((session) => {
     if (String(session.status || "").toLowerCase() === "completed") return true;
-    const startsAtMs = new Date(session.startsAt || 0).getTime();
+    if (!session.startsAt) return false;
+    const startsAtMs = new Date(session.startsAt).getTime();
     return Number.isFinite(startsAtMs) && startsAtMs <= nowMs;
   });
 
