@@ -67,6 +67,24 @@ test("progress ignores cancelled sessions", () => {
   assert.equal(calculateClassProgress([{ status: "completed" }, { status: "scheduled" }, { status: "cancelled" }]), 50);
 });
 
+test("progress counts scheduled sessions that have already started", () => {
+  const sessions = [
+    { status: "scheduled", startsAt: "2026-06-20T09:00:00.000Z" },
+    { status: "scheduled", startsAt: "2026-06-22T09:00:00.000Z" },
+    { status: "scheduled", startsAt: "2026-06-28T09:00:00.000Z" },
+    { status: "cancelled", startsAt: "2026-06-21T09:00:00.000Z" },
+  ];
+  assert.equal(calculateClassProgress(sessions, new Date("2026-06-26T12:00:00.000Z")), 67);
+});
+
+test("progress remains zero before the first class starts", () => {
+  const sessions = [
+    { status: "scheduled", startsAt: "2026-06-27T09:00:00.000Z" },
+    { status: "scheduled", startsAt: "2026-06-28T09:00:00.000Z" },
+  ];
+  assert.equal(calculateClassProgress(sessions, new Date("2026-06-26T12:00:00.000Z")), 0);
+});
+
 test("calculates class end date from course dictionary and weekly schedule", () => {
   assert.equal(calculateClassEndDate({
     levelId: "A1",
