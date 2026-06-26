@@ -53,11 +53,28 @@ function uniqueStudents(rows = []) {
   });
 }
 
+function studentClassValues(student = {}) {
+  return [
+    student.classId,
+    student.classRecordId,
+    student.className,
+    student.classname,
+    student.class,
+    student.group,
+    student.groupId,
+    student.groupName,
+    student.cohort,
+    student.cohortId,
+    student.cohortName,
+  ].map(normalizeComparable).filter(Boolean);
+}
+
 function resolvePublishedClass(row) {
   const className = normalize(readPublishedClassName(row));
   if (className) return className;
   return normalize(readPublishedLevel(row));
 }
+
 function mapPublishedStudent(row) {
   return {
     id: String(readPublishedStudentCode(row) || readPublishedStudentName(row) || "").trim(),
@@ -125,6 +142,7 @@ export async function listStudentsByClassWithDeps(
     className = "",
     loadPublishedStudentsByClass = listPublishedStudentsByClassWithLoader,
     loadStudentsByField = loadStudentsByFieldWithFirestore,
+    loadAllStudents = listAllStudentsWithFirestore,
   } = {},
 ) {
   const identifiers = [...new Set(
@@ -132,6 +150,7 @@ export async function listStudentsByClassWithDeps(
       .map(normalize)
       .filter(Boolean),
   )];
+  const comparableIdentifiers = new Set(identifiers.map(normalizeComparable));
 
   const rosterRows = [];
   const fields = ["classId", "classRecordId", "className"];
@@ -142,9 +161,18 @@ export async function listStudentsByClassWithDeps(
         const rows = await loadStudentsByField(field, identifier);
         rosterRows.push(...rows);
       } catch {
-        // Continue with the remaining identifiers and the published roster.
+        // Continue with the remaining identifiers and sources.
       }
     }
+  }
+
+  try {
+    const allStudents = await loadAllStudents();
+    rosterRows.push(...allStudents.filter((student) =>
+      studentClassValues(student).some((value) => comparableIdentifiers.has(value)),
+    ));
+  } catch {
+    // Exact Firestore queries and the published roster can still provide students.
   }
 
   for (const identifier of identifiers) {
@@ -152,7 +180,7 @@ export async function listStudentsByClassWithDeps(
       const rows = await loadPublishedStudentsByClass(identifier);
       rosterRows.push(...rows);
     } catch {
-      // A Firestore roster can still be returned if the published sheet is unavailable.
+      // Firestore results can still be returned if the published sheet is unavailable.
     }
   }
 
