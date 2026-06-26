@@ -107,7 +107,7 @@ function ClassCard({ klass, archived = false, saving = false, onToggleArchived }
         </button>
       </div>
       <div style={{ marginTop: 8 }}>
-        <Link to={`/attendance/${encodeURIComponent(routeClassId)}`}>
+        <Link to={`/attendance/session/${encodeURIComponent(routeClassId)}`}>
           {archived ? "View archived attendance" : "Mark attendance"}
         </Link>
       </div>
