@@ -36,7 +36,7 @@ test("normalizes spacing in class name matching", async () => {
 });
 
 
-test("includes all students for matching class without status filtering", async () => {
+test("excludes inactive students from attendance rosters", async () => {
   const rows = [
     { classname: "A2 Stuttgart Klasse", level: "A2", status: "Paid", studentcode: "S-003", name: "Paid Student" },
     { classname: "A2 Stuttgart Klasse", level: "A2", status: "Inactive", studentcode: "S-004", name: "Inactive Student" },
@@ -44,7 +44,7 @@ test("includes all students for matching class without status filtering", async 
 
   const result = await listPublishedStudentsByClassWithLoader("A2 Stuttgart Klasse", async () => rows);
 
-  assert.deepEqual(result.map((s) => s.name), ["Inactive Student", "Paid Student"]);
+  assert.deepEqual(result.map((s) => s.name), ["Paid Student"]);
 });
 
 test("maps published student email for attendance email selection", async () => {
@@ -78,7 +78,7 @@ test("prefers Firestore students as the live class roster", async () => {
   });
 
   assert.deepEqual(result.map((student) => student.name), ["Current Student"]);
-  assert.deepEqual(calls, ["firestore:className:A1 Hamburg Klasse"]);
+  assert.deepEqual(calls, ["firestore:classId:A1 Hamburg Klasse", "firestore:classRecordId:A1 Hamburg Klasse", "firestore:className:A1 Hamburg Klasse"]);
 });
 
 test("falls back to the published sheet when Firestore has no class students", async () => {

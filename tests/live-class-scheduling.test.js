@@ -103,3 +103,17 @@ test("calculates class end date using multiple weekly sessions", () => {
     ],
   }), "2026-09-23");
 });
+
+
+test("session generation rejects duplicate weekly date/time rules", () => {
+  assert.throws(() => generateSessionOccurrences({
+    classId: "abc",
+    startDate: "2026-06-01",
+    endDate: "2026-06-30",
+    timezone: "Africa/Accra",
+    scheduleRules: [
+      { day: "Thu", startTime: "06:00", durationMinutes: 60 },
+      { day: "Thursday", startTime: "06:00", durationMinutes: 60 },
+    ],
+  }), /Duplicate schedule rule/);
+});
