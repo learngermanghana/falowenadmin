@@ -1,97 +1,64 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listClasses, setClassArchived } from "../services/classesService";
-import { getClassSchedule } from "../data/classSchedules";
 
-const MONTH_INDEX = {
-  january: 0,
-  february: 1,
-  march: 2,
-  april: 3,
-  may: 4,
-  june: 5,
-  july: 6,
-  august: 7,
-  september: 8,
-  october: 9,
-  november: 10,
-  december: 11,
-};
+const GHANA_TIMEZONE = "Africa/Accra";
 
 function parseClassDate(value) {
-  const text = String(value || "").trim();
+  if (!value) return null;
+  if (typeof value?.toDate === "function") return value.toDate();
+
+  const text = String(value).trim();
   if (!text) return null;
-
-  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    const date = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  const longMatch = text.match(/^(?:\w+),\s+(\d{1,2})\s+(\w+)\s+(\d{4})$/);
-  if (!longMatch) return null;
-
-  const [, day, monthName, year] = longMatch;
-  const monthIndex = MONTH_INDEX[monthName.toLowerCase()];
-  if (typeof monthIndex !== "number") return null;
-
-  const date = new Date(Number(year), monthIndex, Number(day));
-  return Number.isNaN(date.getTime()) ? null : date;
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T00:00:00.000Z`)
+    : new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function formatDate(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString(undefined, {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: GHANA_TIMEZONE,
+    weekday: "short",
     year: "numeric",
     month: "short",
-    day: "numeric",
-  });
+    day: "2-digit",
+  }).format(date);
+}
+
+function classRecordKey(klass = {}) {
+  return String(klass.classRecordId || klass.id || klass.classId || "").trim();
 }
 
 function resolveScheduleMeta(klass) {
-  const schedule = getClassSchedule(klass?.classId || klass?.name || "");
-  const parsedDates = schedule
-    .map((item) => parseClassDate(item?.date))
-    .filter(Boolean)
-    .sort((a, b) => a.getTime() - b.getTime());
-
-  if (!parsedDates.length) {
-    return {
-      schedule,
-      startDate: null,
-      endDate: null,
-    };
-  }
-
-  const startDate = parsedDates[0];
-  const endDate = parsedDates[parsedDates.length - 1];
-
   return {
-    schedule,
-    startDate,
-    endDate,
+    startDate: parseClassDate(klass?.startDate),
+    endDate: parseClassDate(klass?.endDate),
+    sessionCount: Number(klass?.generatedSessionCount || 0),
   };
 }
 
 function classifyClass(klass) {
-  const scheduleMeta = resolveScheduleMeta(klass);
-  const archived = klass?.archived === true || klass?.isArchived === true;
+  const status = String(klass?.status || "").toLowerCase();
+  const archived = status === "archived" || klass?.archived === true || klass?.isArchived === true;
 
   return {
     ...klass,
     archived,
-    scheduleMeta,
+    scheduleMeta: resolveScheduleMeta(klass),
   };
 }
 
 function ClassCard({ klass, archived = false, saving = false, onToggleArchived }) {
-  const { startDate, endDate, schedule } = klass.scheduleMeta || {};
-  const dateText = startDate && endDate ? `${formatDate(startDate)} → ${formatDate(endDate)}` : "No schedule dates";
+  const { startDate, endDate, sessionCount } = klass.scheduleMeta || {};
+  const dateText = startDate && endDate
+    ? `${formatDate(startDate)} → ${formatDate(endDate)}`
+    : "No live-class dates";
+  const routeClassId = classRecordKey(klass) || klass.classId;
 
   return (
     <div
-      key={klass.classId}
       style={{
         border: "1px solid #ddd",
         borderRadius: 8,
@@ -117,7 +84,7 @@ function ClassCard({ klass, archived = false, saving = false, onToggleArchived }
       </div>
       <div style={{ fontSize: 12, opacity: 0.75 }}>classId: {klass.classId}</div>
       <div style={{ fontSize: 12, opacity: 0.75 }}>Schedule: {dateText}</div>
-      {schedule?.length ? <div style={{ fontSize: 12, opacity: 0.75 }}>Sessions: {schedule.length}</div> : null}
+      {sessionCount > 0 ? <div style={{ fontSize: 12, opacity: 0.75 }}>Sessions: {sessionCount}</div> : null}
       <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <button
           type="button"
@@ -140,7 +107,7 @@ function ClassCard({ klass, archived = false, saving = false, onToggleArchived }
         </button>
       </div>
       <div style={{ marginTop: 8 }}>
-        <Link to={`/attendance/${encodeURIComponent(klass.classId)}`}>
+        <Link to={`/attendance/${encodeURIComponent(routeClassId)}`}>
           {archived ? "View archived attendance" : "Mark attendance"}
         </Link>
       </div>
@@ -172,21 +139,22 @@ export default function AttendanceOverviewPage() {
 
   async function handleToggleArchived(klass, archived) {
     const classId = klass?.classId;
-    if (!classId || savingClassId) return;
+    const recordId = classRecordKey(klass);
+    if (!classId || !recordId || savingClassId) return;
 
     const previousClasses = classes;
-    setSavingClassId(classId);
+    setSavingClassId(recordId);
     setError("");
     setClasses((current) =>
       current.map((item) =>
-        item.classId === classId
-          ? { ...item, archived, isArchived: archived, active: !archived, status: archived ? "archived" : "ongoing" }
+        classRecordKey(item) === recordId
+          ? { ...item, archived, isArchived: archived, active: !archived, status: archived ? "archived" : "active" }
           : item,
       ),
     );
 
     try {
-      await setClassArchived(classId, archived);
+      await setClassArchived(classId, archived, recordId);
     } catch (err) {
       setClasses(previousClasses);
       setError(err?.message || "Failed to update class archive status");
@@ -211,7 +179,7 @@ export default function AttendanceOverviewPage() {
         <div>
           <h2 style={{ margin: 0 }}>Attendance</h2>
           <p style={{ margin: "6px 0 0", fontSize: 13, opacity: 0.8 }}>
-            Showing ongoing classes only. Completed classes are kept in the archive below.
+            Dates and session totals come directly from the current Live Classes record.
           </p>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
@@ -228,14 +196,17 @@ export default function AttendanceOverviewPage() {
       )}
 
       <div style={{ display: "grid", gap: 10, maxWidth: 620, marginTop: 14 }}>
-        {activeClasses.map((klass) => (
-          <ClassCard
-            key={klass.classId}
-            klass={klass}
-            saving={savingClassId === klass.classId}
-            onToggleArchived={handleToggleArchived}
-          />
-        ))}
+        {activeClasses.map((klass) => {
+          const recordId = classRecordKey(klass);
+          return (
+            <ClassCard
+              key={recordId || klass.classId}
+              klass={klass}
+              saving={savingClassId === recordId}
+              onToggleArchived={handleToggleArchived}
+            />
+          );
+        })}
       </div>
 
       {!loading && !error && archivedClasses.length > 0 && (
@@ -256,15 +227,18 @@ export default function AttendanceOverviewPage() {
 
           {showArchived && (
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-              {archivedClasses.map((klass) => (
-                <ClassCard
-                  key={klass.classId}
-                  klass={klass}
-                  archived
-                  saving={savingClassId === klass.classId}
-                  onToggleArchived={handleToggleArchived}
-                />
-              ))}
+              {archivedClasses.map((klass) => {
+                const recordId = classRecordKey(klass);
+                return (
+                  <ClassCard
+                    key={recordId || klass.classId}
+                    klass={klass}
+                    archived
+                    saving={savingClassId === recordId}
+                    onToggleArchived={handleToggleArchived}
+                  />
+                );
+              })}
             </div>
           )}
         </section>
