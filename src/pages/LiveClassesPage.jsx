@@ -146,7 +146,7 @@ export default function LiveClassesPage() {
     return () => { active = false; };
   }, [selectedClassId]);
 
-  const progress = useMemo(() => calculateClassProgress(dashboard?.sessions || []), [dashboard]);
+  const progress = useMemo(() => calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {}), [dashboard]);
   const nextCountdown = dashboard?.nextSession ? calculateCountdown(dashboard.nextSession.startsAt) : null;
   const nextAssignments = dashboard?.klass && dashboard?.nextSession
     ? resolveSessionChapters(dashboard.klass.levelId, dashboard.nextSession)

@@ -22,6 +22,22 @@ function normalizeComparable(value) {
   return normalize(value).toLowerCase().replace(/\s+/g, " ");
 }
 
+function isActiveStudent(row = {}) {
+  const status = normalize(row.status || row.studentStatus || row.enrollmentStatus).toLowerCase();
+  if (!status) return true;
+  return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled"].includes(status);
+}
+
+function uniqueStudents(rows = []) {
+  const seen = new Set();
+  return rows.filter((student) => {
+    const key = normalize(student.studentCode || student.studentcode || student.uid || student.id || student.email || student.name).toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function resolvePublishedClass(row) {
   const className = normalize(readPublishedClassName(row));
   if (className) return className;
@@ -51,7 +67,7 @@ export async function listPublishedStudentsByClassWithLoader(classId, loadRows =
       return className === targetClassName;
     })
     .map(mapPublishedStudent)
-    .filter((row) => row.name)
+    .filter((row) => row.name && isActiveStudent(row))
     .sort(byNameAsc);
 }
 
@@ -91,18 +107,37 @@ export async function createStudentWithFirestore(
 export async function listStudentsByClassWithDeps(
   classId,
   {
+    className = "",
     loadPublishedStudentsByClass = listPublishedStudentsByClassWithLoader,
     loadStudentsByField = loadStudentsByFieldWithFirestore,
   } = {},
 ) {
+  const identifiers = uniqueStudents(
+    [classId, className]
+      .map((value) => ({ id: normalize(value) }))
+      .filter((item) => item.id),
+  ).map((item) => item.id);
+
+  const firestoreRows = [];
   try {
-    const fromFirestore = await loadStudentsByField("className", classId);
-    if (fromFirestore.length > 0) return fromFirestore.sort(byNameAsc);
+    const fields = ["classId", "classRecordId", "className"];
+    for (const identifier of identifiers) {
+      for (const field of fields) {
+        const rows = await loadStudentsByField(field, identifier);
+        firestoreRows.push(...rows);
+      }
+    }
+    const activeRows = uniqueStudents(firestoreRows).filter(isActiveStudent);
+    if (activeRows.length > 0) return activeRows.sort(byNameAsc);
   } catch {
     // Fall back when Firestore is unavailable.
   }
 
-  return loadPublishedStudentsByClass(classId);
+  for (const identifier of identifiers) {
+    const rows = await loadPublishedStudentsByClass(identifier);
+    if (rows.length > 0) return rows.filter(isActiveStudent).sort(byNameAsc);
+  }
+  return [];
 }
 
 export async function listStudentsByClass(classId) {

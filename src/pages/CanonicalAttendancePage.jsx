@@ -58,6 +58,44 @@ function mergeStudents(template = {}, saved = {}) {
   );
 }
 
+function localDateIso(value, timezone = GHANA_TIMEZONE) {
+  const parsed = value ? new Date(value) : new Date();
+  if (Number.isNaN(parsed.getTime())) return String(value || "").slice(0, 10);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(parsed);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function selectAttendanceSession(sessions = [], timezone = GHANA_TIMEZONE, now = new Date()) {
+  const today = localDateIso(now, timezone);
+  const available = sessions.filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled");
+  return available.find((session) => localDateIso(session.startsAt, timezone) === today)
+    || available.find((session) => new Date(session.startsAt).getTime() >= now.getTime())
+    || available[0]
+    || sessions[0]
+    || null;
+}
+
+function findSessionConflicts(sessions = [], timezone = GHANA_TIMEZONE) {
+  const seen = new Map();
+  const conflicts = new Set();
+  sessions.forEach((session) => {
+    const key = `${localDateIso(session.startsAt, timezone)} ${dateParts(session.startsAt).time}`;
+    if (seen.has(key)) {
+      conflicts.add(session.id);
+      conflicts.add(seen.get(key));
+    } else {
+      seen.set(key, session.id);
+    }
+  });
+  return conflicts;
+}
+
 function dateParts(value) {
   if (!value) return { date: "-", time: "-" };
   const parsed = new Date(value);
@@ -111,7 +149,7 @@ export default function CanonicalAttendancePage() {
 
         const [dashboard, students, storedAttendance] = await Promise.all([
           getClassDashboard(resolvedClass.id),
-          listStudentsByClass(resolvedClass.name),
+          listStudentsByClass(resolvedClass.id, { className: resolvedClass.name }),
           loadAttendanceFromFirestore(resolvedClass.id),
         ]);
         if (!active) return;
@@ -133,8 +171,8 @@ export default function CanonicalAttendancePage() {
         setAttendanceBySession(attendanceMap);
         setSelectedSessionId((current) => {
           if (current && attendanceMap[current]) return current;
-          if (dashboard.nextSession?.id && attendanceMap[dashboard.nextSession.id]) return dashboard.nextSession.id;
-          return dashboard.sessions.find((session) => session.status !== "cancelled")?.id || dashboard.sessions[0]?.id || "";
+          const todaysSession = selectAttendanceSession(dashboard.sessions, dashboard.klass.timezone || GHANA_TIMEZONE);
+          return todaysSession?.id || "";
         });
       } catch (e) {
         error(e?.message || "Could not load live-class attendance");
@@ -154,6 +192,12 @@ export default function CanonicalAttendancePage() {
   const selectedSession = attendanceBySession[selectedSessionId] || null;
   const isCancelled = selectedSession?.status === "cancelled";
   const isCompleted = selectedSession?.status === "completed";
+  const schoolTimezone = klass?.timezone || GHANA_TIMEZONE;
+  const selectedSessionDate = selectedSession ? localDateIso(selectedSession.startsAt, schoolTimezone) : "";
+  const todayDate = localDateIso(new Date(), schoolTimezone);
+  const isTodaySession = selectedSessionDate === todayDate;
+  const conflictSessionIds = useMemo(() => findSessionConflicts(sessions, schoolTimezone), [sessions, schoolTimezone]);
+  const hasTimeConflict = selectedSession ? conflictSessionIds.has(selectedSession.id) : false;
   const assignmentId = String(selectedSession?.assignmentIds?.[0] || "").trim();
 
   const rows = useMemo(() => Object.entries(selectedSession?.students || {})
@@ -250,6 +294,10 @@ export default function CanonicalAttendancePage() {
       error("Assign a curriculum ID to this session in Live Classes before opening check-in.");
       return;
     }
+    if (action === "open" && !isTodaySession) {
+      error(`This session is for ${selectedSessionDate}; today in ${schoolTimezone} is ${todayDate}. Select today’s session before opening check-in.`);
+      return;
+    }
     setSessionBusy(true);
     try {
       const token = await user.getIdToken();
@@ -305,7 +353,7 @@ export default function CanonicalAttendancePage() {
           <select value={selectedSessionId} onChange={(event) => setSelectedSessionId(event.target.value)}>
             {sessions.map((session) => (
               <option key={session.id} value={session.id}>
-                {sessionLabel(session, klass)} · {session.status}
+                {sessionLabel(session, klass)} · {session.status}{conflictSessionIds.has(session.id) ? " · time conflict" : ""}
               </option>
             ))}
           </select>
@@ -325,6 +373,16 @@ export default function CanonicalAttendancePage() {
                 {selectedSession.status}
               </strong>
             </div>
+            {!isTodaySession && !isCancelled ? (
+              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+                <strong>This is not today’s session.</strong> Today in {schoolTimezone} is {todayDate}; this session is {selectedSessionDate}. Open today’s session before check-in.
+              </div>
+            ) : null}
+            {hasTimeConflict ? (
+              <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+                <strong>Duplicate session time detected.</strong> Another session for this class starts at the same local date and time. Resolve it in Live Classes before running attendance.
+              </div>
+            ) : null}
             {isCancelled ? (
               <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: 12 }}>
                 <strong>No attendance is required.</strong>
@@ -337,7 +395,7 @@ export default function CanonicalAttendancePage() {
             <article className="card">
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <strong>Student QR check-in</strong>
-                <button disabled={sessionBusy || sessionOpen || !assignmentId || isCompleted} onClick={() => changeCheckin("open")}>Open check-in</button>
+                <button disabled={sessionBusy || sessionOpen || !assignmentId || isCompleted || !isTodaySession || hasTimeConflict} onClick={() => changeCheckin("open")}>Open check-in</button>
                 <button disabled={sessionBusy || !sessionOpen} onClick={() => changeCheckin("close")}>Close check-in</button>
                 <button type="button" onClick={refreshCheckins}>Refresh check-ins</button>
                 <span style={{ marginLeft: "auto" }}>{sessionOpen ? "OPEN" : "CLOSED"}</span>
@@ -369,7 +427,7 @@ export default function CanonicalAttendancePage() {
                   </div>
                 ))}
               </div>
-            ) : <p>No students were found under the class name “{klass.name}”.</p>}
+            ) : <p>No active students were found for class_id “{klass.id}” / “{klass.name}”.</p>}
             <button style={{ marginTop: 14 }} disabled={saving || isCancelled || !rows.length} onClick={saveAttendance}>
               {saving ? "Saving…" : "Save attendance"}
             </button>

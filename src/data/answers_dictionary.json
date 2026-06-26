@@ -806,8 +806,8 @@
       "teil4": {
         "Answer1": "B) Maria ist 28 Jahre alt",
         "Answer2": "C) Maria hat lange, braune Haare",
-        "Answer3": "B) Maria trägt oft eine schwarze Brille"
-        "Answer4": "B) Jonas ist groß und sportlich"
+        "Answer3": "B) Maria trägt oft eine schwarze Brille",
+        "Answer4": "B) Jonas ist groß und sportlich",
         "Answer5": "C) Jonas ist offen und lustig"
       }
     },
@@ -1876,7 +1876,7 @@
         "Answer2": "C) Laura bringt den Kassenbon als Kaufnachweis mit",
         "Answer3": "C) Der Verkäufer bietet ihr einen Umtausch oder eine Rückerstattung an",
         "Answer4": "C) Die Jacke hat die falsche Größe und ist zu klein",
-        "Answer5": "A) Laura bittet den Kundenservice um einen Retourenschein",
+        "Answer5": "A) Laura bittet den Kundenservice um einen Retourenschein"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1C-utAPIEGi9Rsp_gI3qsfHddX9IXvazP27sxRrobI40/gviz/tq?tqx=out:html&sheet=Key",

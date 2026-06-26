@@ -41,6 +41,17 @@ export function normalizeScheduleRules(scheduleRules = []) {
   return rules.map((rule) => ({ day: String(rule.day || rule.weekday || "").slice(0, 3).toLowerCase(), startTime: String(rule.startTime || rule.time || ""), durationMinutes: Number(rule.durationMinutes || 120) })).filter((rule) => DAY_INDEX[rule.day] != null && /^\d{2}:\d{2}$/.test(rule.startTime));
 }
 
+function assertNoDuplicateScheduleRules(rules = []) {
+  const seen = new Set();
+  for (const rule of rules) {
+    const key = `${rule.day}_${rule.startTime}`;
+    if (seen.has(key)) {
+      throw new Error(`Duplicate schedule rule for ${rule.day} at ${rule.startTime}. Use a different start time or remove the duplicate rule.`);
+    }
+    seen.add(key);
+  }
+}
+
 function formatIsoDateUtc(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 }
@@ -86,6 +97,7 @@ export function generateSessionOccurrences({ classId, id, startDate, endDate, ti
   const rules = normalizeScheduleRules(scheduleRules);
   if (!resolvedClassId) throw new Error("classId is required");
   if (rules.length === 0) throw new Error("at least one weekly schedule rule is required");
+  assertNoDuplicateScheduleRules(rules);
   const sessions = [];
   for (let cursor = new Date(`${startDate}T00:00:00.000Z`); cursor <= new Date(`${endDate}T00:00:00.000Z`); cursor.setUTCDate(cursor.getUTCDate() + 1)) {
     const dateIso = cursor.toISOString().slice(0, 10);
