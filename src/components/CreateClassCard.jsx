@@ -1,6 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClassCohort } from "../services/liveClassService.js";
-import { calculateClassEndDate, validateIanaTimezone } from "../utils/liveClassScheduling.js";
+import { loadSchoolClosureDates } from "../services/schoolClosureService.js";
+import {
+  calculateClassEndDate,
+  setSchedulingSchoolClosureDates,
+  validateIanaTimezone,
+} from "../utils/liveClassScheduling.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DEFAULT_RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
@@ -21,13 +26,39 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [autoEnd, setAutoEnd] = useState(true);
+  const [holidayDates, setHolidayDates] = useState([]);
+  const [holidayStatus, setHolidayStatus] = useState("loading");
   const resultRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+    loadSchoolClosureDates({ countryCode: "GH" })
+      .then((dates) => {
+        if (!active) return;
+        setSchedulingSchoolClosureDates(dates);
+        setHolidayDates(dates);
+        setHolidayStatus("ready");
+      })
+      .catch(() => {
+        if (!active) return;
+        setHolidayStatus("error");
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!autoEnd || holidayStatus !== "ready") return;
+    setForm((current) => {
+      const endDate = calculateClassEndDate({ ...current, excludedDates: holidayDates });
+      return endDate && endDate !== current.endDate ? { ...current, endDate } : current;
+    });
+  }, [autoEnd, holidayDates, holidayStatus]);
 
   function patch(values, calculate = autoEnd) {
     setForm((current) => {
       const next = { ...current, ...values };
       if (!calculate) return next;
-      const endDate = calculateClassEndDate(next);
+      const endDate = calculateClassEndDate({ ...next, excludedDates: holidayDates });
       return endDate ? { ...next, endDate } : next;
     });
   }
@@ -39,7 +70,7 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
         scheduleRules: current.scheduleRules.map((rule, itemIndex) => itemIndex === index ? { ...rule, ...values } : rule),
       };
       if (!autoEnd) return next;
-      const endDate = calculateClassEndDate(next);
+      const endDate = calculateClassEndDate({ ...next, excludedDates: holidayDates });
       return endDate ? { ...next, endDate } : next;
     });
   }
@@ -47,6 +78,8 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
   async function submit(event) {
     event.preventDefault();
     setMessage("");
+    if (holidayStatus === "loading") return setMessage("Please wait while the school holiday calendar loads.");
+    if (holidayStatus === "error") return setMessage("The school holiday calendar could not be loaded. The class was not created to prevent sessions being placed on closed dates.");
     if (!form.name.trim()) return setMessage("Class name is required.");
     if (!form.startDate || !form.endDate) return setMessage("Start and end dates are required.");
     if (form.endDate < form.startDate) return setMessage("End date must be after the start date.");
@@ -56,7 +89,8 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
     setBusy(true);
     try {
       const record = await createClassCohort(form);
-      setMessage("Class created successfully. It is now the canonical Falowen class record.");
+      const skipped = record.holidayDatesExcluded?.length || 0;
+      setMessage(`Class created successfully. School holidays were checked${skipped ? ` and ${skipped} closed date(s) were skipped` : ""}. Final end date: ${record.endDate}.`);
       setForm({ ...EMPTY, scheduleRules: [{ ...DEFAULT_RULE }] });
       setAutoEnd(true);
       await onCreated?.(record.id);
@@ -77,7 +111,10 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
   return (
     <article className="card">
       <h2>Create a new class</h2>
-      <p style={{ marginTop: 0, opacity: 0.78 }}>Create it once here. Falowen will use the same class record for sessions, attendance, calendars, registration and public class pages.</p>
+      <p style={{ marginTop: 0, opacity: 0.78 }}>Create it once here. Falowen checks the Course Calendar, skips every date marked “School closed,” and extends the end date so all lessons are still scheduled.</p>
+      <div style={{ padding: 10, borderRadius: 8, background: holidayStatus === "error" ? "#fef2f2" : "#f0fdf4", border: `1px solid ${holidayStatus === "error" ? "#fecaca" : "#bbf7d0"}`, fontSize: 13 }}>
+        {holidayStatus === "loading" ? "Loading Ghana school holidays…" : holidayStatus === "error" ? "Holiday calendar unavailable. Class creation is paused." : `${holidayDates.length} school-closed date(s) loaded from the Course Calendar.`}
+      </div>
       <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
           <label>Class name<input required value={form.name} placeholder="A1 Munich Klasse" onChange={(event) => patch({ name: event.target.value }, false)} /></label>
@@ -102,7 +139,7 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
         <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE }] }))}>Add another time</button>
 
         {message ? <div ref={resultRef} style={{ padding: 10, borderRadius: 8, background: message.includes("successfully") ? "#f0fdf4" : "#fff7ed" }}>{message}</div> : null}
-        <button type="submit" disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
+        <button type="submit" disabled={busy || holidayStatus !== "ready"}>{busy ? "Creating…" : holidayStatus === "loading" ? "Loading holiday calendar…" : "Create class and generate sessions"}</button>
       </form>
     </article>
   );
