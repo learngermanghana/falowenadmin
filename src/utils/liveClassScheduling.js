@@ -3,6 +3,30 @@ import { courseDictionary, getCourseDictionaryEntry } from "../data/courseDictio
 export const CLASS_STATUSES = ["draft", "upcoming", "active", "graduated", "archived"];
 export const SESSION_STATUSES = ["scheduled", "live", "completed", "cancelled", "rescheduled"];
 const DAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+let cachedSchoolClosureDates = new Set();
+
+function normalizeIsoDate(value) {
+  const date = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
+}
+
+function toExcludedDateSet(excludedDates) {
+  const source = excludedDates instanceof Set
+    ? [...excludedDates]
+    : Array.isArray(excludedDates)
+      ? excludedDates
+      : [...cachedSchoolClosureDates];
+  return new Set(source.map(normalizeIsoDate).filter(Boolean));
+}
+
+export function setSchedulingSchoolClosureDates(dates = []) {
+  cachedSchoolClosureDates = toExcludedDateSet(dates);
+  return [...cachedSchoolClosureDates].sort();
+}
+
+export function getSchedulingSchoolClosureDates() {
+  return [...cachedSchoolClosureDates].sort();
+}
 
 export function slugifyClassName(name) {
   const slug = String(name || "").trim().toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -83,20 +107,24 @@ function resolveSessionLimit(levelId, totalSessions) {
   return Number.POSITIVE_INFINITY;
 }
 
-export function calculateClassEndDate({ levelId, startDate, scheduleRules = [] }) {
+export function calculateClassEndDate({ levelId, startDate, scheduleRules = [], excludedDates }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
   const sessionCount = getCourseDictionarySessionCount(levelId);
   if (!sessionCount) return "";
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "";
+  const excluded = toExcludedDateSet(excludedDates);
 
   let remainingSessions = sessionCount;
   const cursor = new Date(`${startDate}T00:00:00.000Z`);
-  for (let guard = 0; guard < 730; guard += 1) {
-    const weekday = cursor.getUTCDay();
-    const sessionsOnDate = rules.filter((rule) => DAY_INDEX[rule.day] === weekday).length;
-    remainingSessions -= sessionsOnDate;
-    if (remainingSessions <= 0) return formatIsoDateUtc(cursor);
+  for (let guard = 0; guard < 1095; guard += 1) {
+    const dateIso = formatIsoDateUtc(cursor);
+    if (!excluded.has(dateIso)) {
+      const weekday = cursor.getUTCDay();
+      const sessionsOnDate = rules.filter((rule) => DAY_INDEX[rule.day] === weekday).length;
+      remainingSessions -= sessionsOnDate;
+      if (remainingSessions <= 0) return dateIso;
+    }
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
   return "";
@@ -111,6 +139,7 @@ export function generateSessionOccurrences({
   endDate,
   timezone = "Africa/Accra",
   scheduleRules = [],
+  excludedDates,
 }) {
   const resolvedClassId = String(classId || id || "").trim();
   const rules = normalizeScheduleRules(scheduleRules);
@@ -119,6 +148,7 @@ export function generateSessionOccurrences({
   assertNoDuplicateScheduleRules(rules);
 
   const sessionLimit = resolveSessionLimit(levelId, totalSessions);
+  const excluded = toExcludedDateSet(excludedDates);
   const sessions = [];
   const finalDate = new Date(`${endDate}T00:00:00.000Z`);
 
@@ -128,6 +158,7 @@ export function generateSessionOccurrences({
     cursor.setUTCDate(cursor.getUTCDate() + 1)
   ) {
     const dateIso = cursor.toISOString().slice(0, 10);
+    if (excluded.has(dateIso)) continue;
     const weekday = cursor.getUTCDay();
     const matchingRules = rules.filter((item) => DAY_INDEX[item.day] === weekday);
 
