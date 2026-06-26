@@ -73,6 +73,16 @@ export function getCourseDictionarySessionCount(levelId) {
   return entries ? Object.keys(entries).length : 0;
 }
 
+function resolveSessionLimit(levelId, totalSessions) {
+  const dictionaryCount = getCourseDictionarySessionCount(levelId);
+  const requestedCount = Number(totalSessions || 0);
+
+  if (dictionaryCount > 0 && requestedCount > 0) return Math.min(dictionaryCount, requestedCount);
+  if (dictionaryCount > 0) return dictionaryCount;
+  if (requestedCount > 0) return requestedCount;
+  return Number.POSITIVE_INFINITY;
+}
+
 export function calculateClassEndDate({ levelId, startDate, scheduleRules = [] }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
   const sessionCount = getCourseDictionarySessionCount(levelId);
@@ -92,22 +102,43 @@ export function calculateClassEndDate({ levelId, startDate, scheduleRules = [] }
   return "";
 }
 
-export function generateSessionOccurrences({ classId, id, startDate, endDate, timezone = "Africa/Accra", scheduleRules = [] }) {
+export function generateSessionOccurrences({
+  classId,
+  id,
+  levelId,
+  totalSessions,
+  startDate,
+  endDate,
+  timezone = "Africa/Accra",
+  scheduleRules = [],
+}) {
   const resolvedClassId = String(classId || id || "").trim();
   const rules = normalizeScheduleRules(scheduleRules);
   if (!resolvedClassId) throw new Error("classId is required");
   if (rules.length === 0) throw new Error("at least one weekly schedule rule is required");
   assertNoDuplicateScheduleRules(rules);
+
+  const sessionLimit = resolveSessionLimit(levelId, totalSessions);
   const sessions = [];
-  for (let cursor = new Date(`${startDate}T00:00:00.000Z`); cursor <= new Date(`${endDate}T00:00:00.000Z`); cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+  const finalDate = new Date(`${endDate}T00:00:00.000Z`);
+
+  for (
+    let cursor = new Date(`${startDate}T00:00:00.000Z`);
+    cursor <= finalDate && sessions.length < sessionLimit;
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  ) {
     const dateIso = cursor.toISOString().slice(0, 10);
     const weekday = cursor.getUTCDay();
-    for (const rule of rules.filter((item) => DAY_INDEX[item.day] === weekday)) {
+    const matchingRules = rules.filter((item) => DAY_INDEX[item.day] === weekday);
+
+    for (const rule of matchingRules) {
+      if (sessions.length >= sessionLimit) break;
       const startsAt = zonedLocalToUtcIso(dateIso, rule.startTime, timezone);
       const endsAt = new Date(new Date(startsAt).getTime() + rule.durationMinutes * 60000).toISOString();
       sessions.push({ id: `${resolvedClassId}_${dateIso}_${rule.startTime.replace(":", "")}`, classId: resolvedClassId, startsAt, endsAt, status: "scheduled", topic: "", chapterIds: [] });
     }
   }
+
   return sessions.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 }
 
