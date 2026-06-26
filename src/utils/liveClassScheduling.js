@@ -45,6 +45,18 @@ function formatIsoDateUtc(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 }
 
+function classDateToMillis(value, endOfDay = false) {
+  if (!value) return null;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+
+  const text = String(value).trim();
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`)
+    : new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+}
+
 export function getCourseDictionarySessionCount(levelId) {
   const entries = courseDictionary[String(levelId || "").trim().toUpperCase()];
   return entries ? Object.keys(entries).length : 0;
@@ -96,11 +108,21 @@ export function selectLatestCompletedSession(sessions = []) {
   return [...sessions].filter((s) => s.status === "completed").sort((a, b) => new Date(b.endsAt || b.startsAt) - new Date(a.endsAt || a.startsAt))[0] || null;
 }
 
-export function calculateClassProgress(sessions = [], now = new Date()) {
+export function calculateClassProgress(sessions = [], now = new Date(), classRecord = {}) {
+  const nowMs = new Date(now).getTime();
+  const startMs = classDateToMillis(classRecord?.startDate, false);
+  const endMs = classDateToMillis(classRecord?.endDate, true);
+
+  if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
+    if (nowMs <= startMs) return 0;
+    if (nowMs >= endMs) return 100;
+    const elapsed = Math.round(((nowMs - startMs) / (endMs - startMs)) * 100);
+    return Math.max(1, Math.min(99, elapsed));
+  }
+
   const valid = sessions.filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled");
   if (!valid.length) return 0;
 
-  const nowMs = new Date(now).getTime();
   const progressed = valid.filter((session) => {
     if (String(session.status || "").toLowerCase() === "completed") return true;
     if (!session.startsAt) return false;
@@ -108,7 +130,9 @@ export function calculateClassProgress(sessions = [], now = new Date()) {
     return Number.isFinite(startsAtMs) && startsAtMs <= nowMs;
   });
 
-  return Math.round((progressed.length / valid.length) * 100);
+  const calculated = Math.round((progressed.length / valid.length) * 100);
+  const allCompleted = valid.every((session) => String(session.status || "").toLowerCase() === "completed");
+  return calculated >= 100 && !allCompleted ? 99 : calculated;
 }
 
 export function calculateCountdown(target, now = new Date()) {
