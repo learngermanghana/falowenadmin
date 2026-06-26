@@ -1,1 +1,1 @@
-export { default } from "./LiveClassesPageCompat.jsx";
+export { default } from "./LiveClassesPageV2.jsx";
