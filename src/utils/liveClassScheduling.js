@@ -96,10 +96,18 @@ export function selectLatestCompletedSession(sessions = []) {
   return [...sessions].filter((s) => s.status === "completed").sort((a, b) => new Date(b.endsAt || b.startsAt) - new Date(a.endsAt || a.startsAt))[0] || null;
 }
 
-export function calculateClassProgress(sessions = []) {
-  const valid = sessions.filter((s) => s.status !== "cancelled");
+export function calculateClassProgress(sessions = [], now = new Date()) {
+  const valid = sessions.filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled");
   if (!valid.length) return 0;
-  return Math.round((valid.filter((s) => s.status === "completed").length / valid.length) * 100);
+
+  const nowMs = new Date(now).getTime();
+  const progressed = valid.filter((session) => {
+    if (String(session.status || "").toLowerCase() === "completed") return true;
+    const startsAtMs = new Date(session.startsAt || 0).getTime();
+    return Number.isFinite(startsAtMs) && startsAtMs <= nowMs;
+  });
+
+  return Math.round((progressed.length / valid.length) * 100);
 }
 
 export function calculateCountdown(target, now = new Date()) {
