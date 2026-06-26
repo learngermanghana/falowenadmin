@@ -15,7 +15,11 @@ function laterDate(left, right) {
 }
 
 export async function updateClassCohort(classId, payload) {
-  const closureDates = await loadSchoolClosureDates({ countryCode: "GH" });
+  const closureDates = await loadSchoolClosureDates({
+    countryCode: "GH",
+    startDate: payload.startDate,
+    endDate: payload.endDate,
+  });
   setSchedulingSchoolClosureDates(closureDates);
   const calculatedEndDate = calculateClassEndDate({
     ...payload,
