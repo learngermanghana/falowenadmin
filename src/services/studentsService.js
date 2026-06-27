@@ -10,6 +10,8 @@ import {
   readPublishedStudentName,
 } from "./publishedSheetService.js";
 
+const ROSTER_SOURCE_TIMEOUT_MS = 8000;
+
 function byNameAsc(a, b) {
   return String(a?.name || "").localeCompare(String(b?.name || ""));
 }
@@ -20,6 +22,13 @@ function normalize(value) {
 
 function normalizeComparable(value) {
   return normalize(value).toLowerCase().replace(/\s+/g, " ");
+}
+
+function settleWithin(promise, fallback = []) {
+  return Promise.race([
+    Promise.resolve(promise).catch(() => fallback),
+    new Promise((resolve) => globalThis.setTimeout(() => resolve(fallback), ROSTER_SOURCE_TIMEOUT_MS)),
+  ]);
 }
 
 function isActiveStudent(row = {}) {
@@ -151,38 +160,27 @@ export async function listStudentsByClassWithDeps(
       .filter(Boolean),
   )];
   const comparableIdentifiers = new Set(identifiers.map(normalizeComparable));
-
-  const rosterRows = [];
   const fields = ["classId", "classRecordId", "className"];
 
-  for (const identifier of identifiers) {
-    for (const field of fields) {
-      try {
-        const rows = await loadStudentsByField(field, identifier);
-        rosterRows.push(...rows);
-      } catch {
-        // Continue with the remaining identifiers and sources.
-      }
-    }
-  }
+  const exactQueries = identifiers.flatMap((identifier) =>
+    fields.map((field) => settleWithin(loadStudentsByField(field, identifier))),
+  );
+  const publishedIdentifiers = [...new Set([className, classId].map(normalize).filter(Boolean))];
+  const publishedQueries = publishedIdentifiers.map((identifier) =>
+    settleWithin(loadPublishedStudentsByClass(identifier)),
+  );
 
-  try {
-    const allStudents = await loadAllStudents();
-    rosterRows.push(...allStudents.filter((student) =>
-      studentClassValues(student).some((value) => comparableIdentifiers.has(value)),
-    ));
-  } catch {
-    // Exact Firestore queries and the published roster can still provide students.
-  }
+  const [exactResults, allStudents, publishedResults] = await Promise.all([
+    Promise.all(exactQueries),
+    settleWithin(loadAllStudents()),
+    Promise.all(publishedQueries),
+  ]);
 
-  for (const identifier of identifiers) {
-    try {
-      const rows = await loadPublishedStudentsByClass(identifier);
-      rosterRows.push(...rows);
-    } catch {
-      // Firestore results can still be returned if the published sheet is unavailable.
-    }
-  }
+  const rosterRows = exactResults.flat();
+  rosterRows.push(...allStudents.filter((student) =>
+    studentClassValues(student).some((value) => comparableIdentifiers.has(value)),
+  ));
+  rosterRows.push(...publishedResults.flat());
 
   return uniqueStudents(rosterRows)
     .filter((row) => row.name && isActiveStudent(row))
