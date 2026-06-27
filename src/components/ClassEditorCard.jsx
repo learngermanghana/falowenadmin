@@ -3,18 +3,39 @@ import { calculateClassEndDate, validateIanaTimezone } from "../utils/liveClassS
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
 const DEFAULT_RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
 
+function inferLevel(klass = {}) {
+  const candidates = [
+    klass.levelId,
+    klass.resolvedLevelId,
+    klass.level,
+    klass.courseLevel,
+    klass.languageLevel,
+    klass.name,
+    klass.className,
+    klass.title,
+    klass.slug,
+  ];
+  for (const candidate of candidates) {
+    const match = String(candidate || "").match(/(?:^|[^a-z0-9])(A1|A2|B1|B2|C1)(?:[^a-z0-9]|$)/i);
+    if (match) return match[1].toUpperCase();
+  }
+  return "";
+}
+
 function fromClass(klass = {}) {
+  const levelId = inferLevel(klass);
   return {
     name: klass.name || "",
     city: klass.city || "",
-    levelId: String(klass.levelId || "A1").toUpperCase(),
+    levelId,
     startDate: klass.startDate || "",
     endDate: klass.endDate || "",
     timezone: klass.timezone || "Africa/Accra",
     status: klass.status || "upcoming",
-    tuitionGhs: Number(klass.tuitionGhs || defaultTuitionForLevel(klass.levelId)),
+    tuitionGhs: Number(klass.tuitionGhs || defaultTuitionForLevel(levelId || "A1")),
     publicVisible: klass.publicVisible !== false,
     registrationOpen: klass.registrationOpen !== false,
     tutorId: klass.tutorId || "",
@@ -61,6 +82,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     event.preventDefault();
     setMessage("");
     if (!form.name.trim()) return setMessage("Class name is required.");
+    if (!LEVELS.includes(form.levelId)) return setMessage("Select the correct level before saving this class.");
     if (!form.startDate || !form.endDate) return setMessage("Start and end dates are required.");
     if (form.endDate < form.startDate) return setMessage("End date must be after the start date.");
     if (!validateIanaTimezone(form.timezone)) return setMessage("Enter a valid timezone such as Africa/Accra.");
@@ -69,7 +91,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true);
     try {
       const result = await updateClassCohort(klass.id, form);
-      setMessage(`Class updated. ${result.removed} old future session(s) removed and ${result.created} future session(s) created.`);
+      setMessage(`Class updated. Level ${form.levelId} saved. ${result.removed} old future session(s) removed and ${result.created} future session(s) created.`);
       await onSaved?.(klass.id);
     } catch (error) {
       setMessage(error?.message || "Class update failed");
@@ -84,16 +106,17 @@ export default function ClassEditorCard({ klass, onSaved }) {
     <article className="card">
       <h2>Edit this class</h2>
       <p style={{ marginTop: 0, opacity: 0.78 }}>
-        Keep the same class ID and student URL while updating its dates and future timetable.
+        Keep the same class ID and student URL while updating its level, dates and future timetable.
       </p>
+      {!form.levelId ? <div style={{ padding: 10, marginBottom: 12, borderRadius: 8, background: "#fff7ed", border: "1px solid #fed7aa" }}>This class has no valid level ID. Select A1, A2, B1, B2 or C1 before saving.</div> : null}
       <form onSubmit={save} style={{ display: "grid", gap: 14 }}>
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
           <label>Class name<input required value={form.name} onChange={(event) => patch({ name: event.target.value })} /></label>
           <label>City<input value={form.city} placeholder="Example: Munich" onChange={(event) => patch({ city: event.target.value })} /></label>
-          <label>Level<select value={form.levelId} onChange={(event) => {
+          <label>Level<select required value={form.levelId} onChange={(event) => {
             const levelId = event.target.value;
             patch({ levelId, tuitionGhs: defaultTuitionForLevel(levelId) }, true);
-          }}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
+          }}><option value="">Select level</option>{LEVELS.map((level) => <option key={level}>{level}</option>)}</select></label>
           <label>Start date<input type="date" required value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, true)} /></label>
           <label>End date<input type="date" required value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
           <label>Tuition (GHS)<input type="number" min="1" value={form.tuitionGhs} onChange={(event) => patch({ tuitionGhs: Number(event.target.value) })} /></label>
