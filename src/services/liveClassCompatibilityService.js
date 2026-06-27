@@ -11,10 +11,7 @@ import {
 import { db } from "../firebase.js";
 import { courseDictionary, getUnifiedTopicLabel } from "../data/courseDictionary.js";
 import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
-import {
-  getClassDashboard as getBaseClassDashboard,
-  syncClassCurriculum as syncBaseClassCurriculum,
-} from "./liveClassService.js";
+import { syncClassCurriculum as syncBaseClassCurriculum } from "./liveClassService.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -60,21 +57,43 @@ async function loadClassRecord(classId) {
   return levelId ? { ...klass, levelId } : klass;
 }
 
+async function querySessions(field, identifier) {
+  const snap = await getDocs(query(collection(db, "classSessions"), where(field, "==", identifier)));
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+function addSessions(target, results = []) {
+  results.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((session) => target.set(session.id, session));
+  });
+}
+
 async function loadCompatibleSessions(classId, klass = {}) {
   const identifiers = identifiersFor(classId, klass);
-  const fields = ["classId", "classRecordId", "className"];
   const found = new Map();
+  const primaryLookups = [
+    ["classId", normalize(classId)],
+    ["classRecordId", normalize(classId)],
+    ["className", normalize(klass.name || klass.className)],
+  ].filter(([, identifier]) => identifier);
 
-  for (const identifier of identifiers) {
-    for (const field of fields) {
-      try {
-        const snap = await getDocs(query(collection(db, "classSessions"), where(field, "==", identifier)));
-        snap.docs.forEach((item) => found.set(item.id, { id: item.id, ...item.data() }));
-      } catch {
-        // Continue through legacy identifiers and fields.
-      }
-    }
+  addSessions(found, await Promise.allSettled(
+    primaryLookups.map(([field, identifier]) => querySessions(field, identifier)),
+  ));
+  if (found.size > 0) {
+    return [...found.values()].sort((left, right) => sessionTime(left) - sessionTime(right));
   }
+
+  const primaryKeys = new Set(primaryLookups.map(([field, identifier]) => `${field}:${identifier}`));
+  const fallbackLookups = identifiers.flatMap((identifier) =>
+    ["classId", "classRecordId", "className"]
+      .map((field) => [field, identifier])
+      .filter(([field, value]) => !primaryKeys.has(`${field}:${value}`)),
+  );
+  addSessions(found, await Promise.allSettled(
+    fallbackLookups.map(([field, identifier]) => querySessions(field, identifier)),
+  ));
 
   if (found.size === 0) {
     try {
@@ -88,7 +107,7 @@ async function loadCompatibleSessions(classId, klass = {}) {
         if (values.some((value) => lookup.has(value))) found.set(session.id, session);
       });
     } catch {
-      // The normal dashboard error will remain visible if Firestore cannot be read.
+      // Return the results found by indexed lookups.
     }
   }
 
@@ -142,40 +161,20 @@ function attendanceMetadata(klass, session, patch) {
 }
 
 export async function getCompatibleClassDashboard(classId) {
-  let baseDashboard = null;
-  let baseError = null;
-
-  try {
-    baseDashboard = await getBaseClassDashboard(classId);
-    if (baseDashboard?.sessions?.length) {
-      const klass = { ...baseDashboard.klass, levelId: resolveLevel(baseDashboard.klass) || baseDashboard.klass.levelId };
-      const sessions = enrichSessions(klass, baseDashboard.sessions);
-      return {
-        ...baseDashboard,
-        klass,
-        sessions,
-        nextSession: selectNextSession(sessions),
-        latestCompletedSession: selectLatestCompletedSession(sessions),
-      };
-    }
-  } catch (error) {
-    baseError = error;
-  }
-
-  const klass = baseDashboard?.klass || await loadClassRecord(classId);
+  const klass = await loadClassRecord(classId);
   const normalizedClass = { ...klass, levelId: resolveLevel(klass) || klass.levelId };
   const sessions = enrichSessions(normalizedClass, await loadCompatibleSessions(classId, normalizedClass));
-
-  if (!sessions.length && baseError) throw baseError;
+  const availableCurriculumItems = Object.keys(courseDictionary[normalizedClass.levelId] || {}).length;
 
   return {
     klass: normalizedClass,
     sessions,
-    curriculumSync: baseDashboard?.curriculumSync || {
+    curriculumSync: {
       updated: 0,
-      mapped: Math.min(sessions.length, Object.keys(courseDictionary[normalizedClass.levelId] || {}).length),
+      mapped: Math.min(sessions.length, availableCurriculumItems),
       total: sessions.length,
-      availableCurriculumItems: Object.keys(courseDictionary[normalizedClass.levelId] || {}).length,
+      availableCurriculumItems,
+      readOnly: true,
     },
     nextSession: selectNextSession(sessions),
     latestCompletedSession: selectLatestCompletedSession(sessions),
