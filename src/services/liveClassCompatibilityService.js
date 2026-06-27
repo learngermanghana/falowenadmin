@@ -5,6 +5,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -115,6 +116,19 @@ async function loadClassRecord(classId) {
   return { id: snap.id, ...snap.data() };
 }
 
+function persistResolvedLevel(classId, klass, inferredLevel) {
+  const existingLevel = levelFromValue(klass.levelId);
+  if (!inferredLevel || existingLevel === inferredLevel) return;
+  updateDoc(doc(db, "classes", normalize(classId)), {
+    levelId: inferredLevel,
+    levelResolutionSource: "automatic-compatibility-repair",
+    levelResolvedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }).catch(() => {
+    // Attendance must still load even when the current user cannot repair the class document.
+  });
+}
+
 async function querySessions(field, identifier) {
   const snap = await getDocs(query(collection(db, "classSessions"), where(field, "==", identifier)));
   return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
@@ -222,6 +236,7 @@ export async function getCompatibleClassDashboard(classId) {
   const klass = await loadClassRecord(classId);
   const rawSessions = await loadCompatibleSessions(classId, klass);
   const inferredLevel = resolveLevel(klass) || resolveLevelFromSessions(rawSessions);
+  persistResolvedLevel(classId, klass, inferredLevel);
   const normalizedClass = {
     ...klass,
     levelId: inferredLevel || normalize(klass.levelId),
