@@ -123,29 +123,7 @@ function ExamReviewRoute() {
   return <ProtectedRoute allowStaff={false}><ExamTutorReviewQueuePage /></ProtectedRoute>;
 }
 
-function localDateIso(value = new Date(), timezone = "Africa/Accra") {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(value);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
-
 function CurrentAttendanceRoute() {
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const sessionId = String(searchParams.get("session") || "");
-  const sessionDate = sessionId.match(/_(\d{4}-\d{2}-\d{2})_\d{4}$/)?.[1] || "";
-
-  if (sessionDate && sessionDate !== localDateIso()) {
-    searchParams.delete("session");
-    const search = searchParams.toString();
-    return <Navigate to={`${location.pathname}${search ? `?${search}` : ""}`} replace />;
-  }
-
   return <CanonicalAttendancePage />;
 }
 
