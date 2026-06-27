@@ -2,6 +2,7 @@ import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { calculateClassEndDate, setSchedulingSchoolClosureDates } from "../utils/liveClassScheduling.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
+import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
 import * as base from "./liveClassServiceBase.js";
 
 export * from "./liveClassServiceBase.js";
@@ -52,9 +53,14 @@ async function saveHolidayMetadata(classId, schedule) {
 export async function createClassCohort(payload) {
   const schedule = await prepareHolidayAwareSchedule(payload);
   const record = await base.createClassCohort(schedule.payload);
+  const grouped = await applyGroupedCurriculumToClass(record.id);
   await saveHolidayMetadata(record.id, schedule);
   return {
     ...record,
+    generatedSessionCount: grouped.total,
+    curriculumMappedSessionCount: grouped.mapped,
+    curriculumAttendanceDayCount: grouped.attendanceDays,
+    curriculumTaskCount: grouped.availableCurriculumItems,
     endDate: schedule.payload.endDate,
     holidayDatesExcluded: schedule.relevantClosures,
     holidayCalendarApplied: true,
@@ -70,6 +76,7 @@ export async function generateClassSessions(classId, classRecord = null) {
   }
   const schedule = await prepareHolidayAwareSchedule(klass);
   const result = await base.generateClassSessions(classId, schedule.payload);
+  const grouped = await applyGroupedCurriculumToClass(classId);
   await updateDoc(doc(db, "classes", String(classId)), {
     endDate: schedule.payload.endDate,
     holidayCalendarCountryCode: "GH",
@@ -78,5 +85,16 @@ export async function generateClassSessions(classId, classRecord = null) {
     holidayDatesExcluded: schedule.relevantClosures,
     holidayAdjustedEndDate: schedule.calculatedEndDate || schedule.payload.endDate || "",
   });
-  return { ...result, endDate: schedule.payload.endDate, holidayDatesExcluded: schedule.relevantClosures };
+  return {
+    ...result,
+    ...grouped,
+    endDate: schedule.payload.endDate,
+    holidayDatesExcluded: schedule.relevantClosures,
+  };
+}
+
+export async function syncClassCurriculum(classId, options = {}) {
+  return applyGroupedCurriculumToClass(classId, {
+    removeExtraFuture: options.removeExtraFuture !== false,
+  });
 }
