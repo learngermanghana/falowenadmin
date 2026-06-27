@@ -16,7 +16,7 @@ import {
   getCompatibleClassDashboard,
   syncCompatibleClassCurriculum,
 } from "../services/liveClassCompatibilityService.js";
-import { buildClassUrl, calculateClassProgress, calculateCountdown } from "../utils/liveClassScheduling.js";
+import { buildClassUrl, calculateClassProgress, calculateCountdown, zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -49,6 +49,21 @@ function toDateTimeLocal(value) {
   if (Number.isNaN(parsed.getTime())) return "";
   const pad = (number) => String(number).padStart(2, "0");
   return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+}
+
+function rescheduledTimes(session, startInput, timezone = "Africa/Accra") {
+  const match = String(startInput || "").trim().match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/);
+  if (!match) throw new Error("Enter the new start as YYYY-MM-DDTHH:mm.");
+  const startsAt = zonedLocalToUtcIso(match[1], match[2], timezone || "Africa/Accra");
+  const oldStart = new Date(session.startsAt || 0).getTime();
+  const oldEnd = new Date(session.endsAt || 0).getTime();
+  const savedDuration = oldEnd - oldStart;
+  const fallbackDuration = Math.max(30, Number(session.durationMinutes || 60)) * 60000;
+  const durationMs = Number.isFinite(savedDuration) && savedDuration > 0 ? savedDuration : fallbackDuration;
+  return {
+    startsAt,
+    endsAt: new Date(new Date(startsAt).getTime() + durationMs).toISOString(),
+  };
 }
 
 function curriculumIds(session = {}) {
@@ -205,22 +220,32 @@ export default function LiveClassesPageCompat() {
         const ids = values.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
         await updateSession(session.id, { assignmentIds: ids, chapterIds: ids, curriculumIds: ids });
       }
-      if (action === "reschedule") {
-        const startInput = window.prompt("New start (YYYY-MM-DDTHH:mm)", toDateTimeLocal(session.startsAt));
-        if (!startInput) return;
-        const endInput = window.prompt("New end (YYYY-MM-DDTHH:mm)", toDateTimeLocal(session.endsAt));
-        if (!endInput) return;
-        await rescheduleSession(session.id, {
-          startsAt: new Date(startInput).toISOString(),
-          endsAt: new Date(endInput).toISOString(),
-          reason: window.prompt("Reason for rescheduling", "") || "",
-          adminId: user?.uid || user?.email || "admin",
-        });
-      }
-      if (action === "cancel") {
-        const reason = window.prompt("Reason for cancellation", session.cancellationReason || "");
-        if (reason === null) return;
-        await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
+      if (action === "change") {
+        const choice = window.prompt("Change this session:\n1 = Reschedule\n2 = Cancel", "1");
+        if (choice === null) return;
+        const normalized = choice.trim().toLowerCase();
+        if (["1", "r", "reschedule"].includes(normalized)) {
+          const startInput = window.prompt("New start (YYYY-MM-DDTHH:mm)", toDateTimeLocal(session.startsAt));
+          if (!startInput) return;
+          const times = rescheduledTimes(session, startInput, dashboard?.klass?.timezone || "Africa/Accra");
+          const result = await rescheduleSession(session.id, {
+            ...times,
+            adminId: user?.uid || user?.email || "admin",
+          });
+          setMessage(result?.emailSubmitted === false
+            ? `Session rescheduled and schedule updated, but the communication email could not be confirmed: ${result.emailMessage || "Unknown delivery error"}`
+            : "Session rescheduled. The schedule, calendar and Communication-sheet email were updated automatically.");
+        } else if (["2", "c", "cancel"].includes(normalized)) {
+          const reason = window.prompt("Reason for cancellation", session.cancellationReason || "");
+          if (reason === null) return;
+          const result = await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
+          setMessage(result?.emailSubmitted === false
+            ? `Session cancelled, but the communication email could not be confirmed: ${result.emailMessage || "Unknown delivery error"}`
+            : "Session cancelled and the Communication-sheet email was submitted.");
+        } else {
+          setMessage("No change was made. Enter 1 to reschedule or 2 to cancel.");
+          return;
+        }
       }
       if (action === "complete") {
         if (!window.confirm("Mark this session completed?")) return;
@@ -256,8 +281,7 @@ export default function LiveClassesPageCompat() {
                       <Link to={`/attendance/session/${dashboard.klass.id}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
                       <button disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
                       <button disabled={busy || locked} onClick={() => handleSessionAction(session, "curriculum")}>Curriculum</button>
-                      <button disabled={busy || locked} onClick={() => handleSessionAction(session, "reschedule")}>Reschedule</button>
-                      <button disabled={busy || locked} onClick={() => handleSessionAction(session, "cancel")}>Cancel</button>
+                      <button disabled={busy || locked} onClick={() => handleSessionAction(session, "change")}>Change session</button>
                       <button disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
                     </div></td>
                   ) : null}
