@@ -12,8 +12,8 @@ const laterDate = (left, right) => {
   if (!a) return b; if (!b) return a; return a >= b ? a : b;
 };
 const isHistorical = (payload = {}) => {
-  const start = String(payload.startDate || "").trim();
-  return payload.historicalMode === true || (/^\d{4}-\d{2}-\d{2}$/.test(start) && start < new Date().toISOString().slice(0, 10));
+  const end = String(payload.endDate || "").trim();
+  return payload.historicalMode === true || payload.historical === true || (/^\d{4}-\d{2}-\d{2}$/.test(end) && end < new Date().toISOString().slice(0, 10));
 };
 
 async function prepare(payload = {}) {
