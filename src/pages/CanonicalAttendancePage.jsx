@@ -1,1 +1,1 @@
-export { default } from "./CanonicalAttendancePageV2.jsx";
+export { default } from "./CanonicalAttendancePageV3.jsx";
