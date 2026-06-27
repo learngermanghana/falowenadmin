@@ -1,4 +1,5 @@
-import { courseDictionary, getCourseDictionaryEntry } from "../data/courseDictionary.js";
+import { getCourseDictionaryEntry } from "../data/courseDictionary.js";
+import { getCourseSessionCount } from "../data/courseSessionGroups.js";
 
 export const CLASS_STATUSES = ["draft", "upcoming", "active", "graduated", "archived"];
 export const SESSION_STATUSES = ["scheduled", "live", "completed", "cancelled", "rescheduled"];
@@ -93,8 +94,7 @@ function classDateToMillis(value, endOfDay = false) {
 }
 
 export function getCourseDictionarySessionCount(levelId) {
-  const entries = courseDictionary[String(levelId || "").trim().toUpperCase()];
-  return entries ? Object.keys(entries).length : 0;
+  return getCourseSessionCount(levelId);
 }
 
 function resolveSessionLimit(levelId, totalSessions) {
