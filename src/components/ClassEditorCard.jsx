@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
+import { deleteClassCohort } from "../services/liveClassService.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
@@ -44,6 +45,27 @@ export default function ClassEditorCard({ klass, onSaved }) {
     finally { setBusy(false); }
   }
 
+  async function removeClass() {
+    const className = form.name || klass?.name || klass?.id || "this class";
+    if (!window.confirm(`Permanently delete ${className}? This removes the class, its sessions and attendance records.`)) return;
+    const confirmation = window.prompt('Type DELETE to confirm permanent deletion.');
+    if (confirmation !== "DELETE") {
+      setMessage("Deletion cancelled. You must type DELETE exactly.");
+      return;
+    }
+
+    setBusy(true); setMessage("");
+    try {
+      const result = await deleteClassCohort(klass.id);
+      window.alert(`Class deleted. ${result.deletedSessionCount || 0} session(s) were removed.`);
+      window.location.assign("/live-classes");
+    } catch (error) {
+      setMessage(error?.message || "Class deletion failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return <article className="card"><h2>Edit this class</h2><form onSubmit={save} style={{ display: "grid", gap: 14 }}>
     <label><input type="checkbox" checked={historicalMode} onChange={(event) => setHistoricalMode(event.target.checked)} /> Historical class: keep exact dates and generate missing past sessions</label>
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
@@ -66,6 +88,12 @@ export default function ClassEditorCard({ klass, onSaved }) {
     </div>)}
     <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE }] }))}>Add another time</button>
     <div><label><input type="checkbox" checked={form.publicVisible} onChange={(event) => patch({ publicVisible: event.target.checked })} /> Show publicly</label> <label><input type="checkbox" checked={form.registrationOpen} onChange={(event) => patch({ registrationOpen: event.target.checked })} /> Registration open</label></div>
-    {message ? <div>{message}</div> : null}<button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
+    {message ? <div style={{ padding: 10, borderRadius: 8, background: message.startsWith("Class updated") ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
+    <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
+    <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid #fecaca" }}>
+      <strong style={{ color: "#991b1b" }}>Danger zone</strong>
+      <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Deletion is allowed only after the class end date, when no unfinished sessions or open student contracts remain.</p>
+      <button type="button" disabled={busy} onClick={removeClass} style={{ background: "#b91c1c", color: "#fff", border: 0, borderRadius: 6, padding: "10px 14px", fontWeight: 700 }}>Delete class permanently</button>
+    </div>
   </form></article>;
 }
