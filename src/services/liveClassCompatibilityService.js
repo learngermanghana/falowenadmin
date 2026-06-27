@@ -21,11 +21,33 @@ function comparable(value) {
   return normalize(value).toLowerCase().replace(/\s+/g, " ");
 }
 
+function levelFromValue(value) {
+  const match = normalize(value).match(/(?:^|[^a-z0-9])(A1|A2|B1|B2|C1|C2)(?:[^a-z0-9]|$)/i);
+  return match ? match[1].toUpperCase() : "";
+}
+
 function resolveLevel(klass = {}) {
-  const candidates = [klass.levelId, klass.level, klass.courseLevel, klass.name, klass.className, klass.classId, klass.id];
+  const candidates = [
+    klass.levelId,
+    klass.level,
+    klass.levelName,
+    klass.languageLevel,
+    klass.curriculumLevel,
+    klass.courseLevel,
+    klass.courseId,
+    klass.course,
+    klass.program,
+    klass.programId,
+    klass.name,
+    klass.title,
+    klass.className,
+    klass.classId,
+    klass.slug,
+    klass.id,
+  ];
   for (const candidate of candidates) {
-    const match = normalize(candidate).match(/\b(A1|A2|B1|B2|C1|C2)\b/i);
-    if (match) return match[1].toUpperCase();
+    const level = levelFromValue(candidate);
+    if (level) return level;
   }
   return "";
 }
@@ -49,12 +71,48 @@ function currentAssignmentIds(session = {}) {
   return [...new Set(source.map((value) => normalize(value).toUpperCase()).filter(Boolean))];
 }
 
+function resolveLevelFromSessions(sessions = []) {
+  for (const session of sessions) {
+    const values = [
+      ...currentAssignmentIds(session),
+      session.assignmentId,
+      session.assignment_id,
+      session.chapterId,
+      session.curriculumId,
+      session.levelId,
+      session.level,
+    ];
+    for (const value of values) {
+      const level = levelFromValue(value);
+      if (level) return level;
+    }
+  }
+
+  const topicScores = Object.fromEntries(Object.keys(courseDictionary).map((level) => [level, 0]));
+  sessions.forEach((session) => {
+    const topic = comparable(session.topic || session.title || session.sessionLabel);
+    if (!topic) return;
+    Object.entries(courseDictionary).forEach(([level, dictionary]) => {
+      Object.values(dictionary).forEach((entry) => {
+        const labels = [entry.en, entry.de].map(comparable).filter(Boolean);
+        if (labels.some((label) => topic === label || topic.includes(label) || label.includes(topic))) {
+          topicScores[level] += 1;
+        }
+      });
+    });
+  });
+
+  const ranked = Object.entries(topicScores).sort((left, right) => right[1] - left[1]);
+  if (ranked[0]?.[1] > 0 && ranked[0][1] > (ranked[1]?.[1] || 0)) return ranked[0][0];
+
+  if (sessions.length === Object.keys(courseDictionary.A1 || {}).length) return "A1";
+  return "";
+}
+
 async function loadClassRecord(classId) {
   const snap = await getDoc(doc(db, "classes", normalize(classId)));
   if (!snap.exists()) throw new Error("Class not found");
-  const klass = { id: snap.id, ...snap.data() };
-  const levelId = resolveLevel(klass);
-  return levelId ? { ...klass, levelId } : klass;
+  return { id: snap.id, ...snap.data() };
 }
 
 async function querySessions(field, identifier) {
@@ -162,8 +220,14 @@ function attendanceMetadata(klass, session, patch) {
 
 export async function getCompatibleClassDashboard(classId) {
   const klass = await loadClassRecord(classId);
-  const normalizedClass = { ...klass, levelId: resolveLevel(klass) || klass.levelId };
-  const sessions = enrichSessions(normalizedClass, await loadCompatibleSessions(classId, normalizedClass));
+  const rawSessions = await loadCompatibleSessions(classId, klass);
+  const inferredLevel = resolveLevel(klass) || resolveLevelFromSessions(rawSessions);
+  const normalizedClass = {
+    ...klass,
+    levelId: inferredLevel || normalize(klass.levelId),
+    resolvedLevelId: inferredLevel || normalize(klass.levelId),
+  };
+  const sessions = enrichSessions(normalizedClass, rawSessions);
   const availableCurriculumItems = Object.keys(courseDictionary[normalizedClass.levelId] || {}).length;
 
   return {
@@ -191,7 +255,7 @@ export async function syncCompatibleClassCurriculum(classId, { force = false } =
 
   const klass = await loadClassRecord(classId);
   const sessions = await loadCompatibleSessions(classId, klass);
-  const levelId = resolveLevel(klass);
+  const levelId = resolveLevel(klass) || resolveLevelFromSessions(sessions);
   const entries = Object.values(courseDictionary[levelId] || {});
   if (!entries.length) {
     throw new Error(`No course dictionary was found for ${klass.name || classId}. Set the class level in Class & settings.`);
