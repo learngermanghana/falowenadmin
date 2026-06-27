@@ -18,6 +18,19 @@ const isHistorical = (payload = {}) => {
   return payload.historicalMode === true || payload.historical === true || (/^\d{4}-\d{2}-\d{2}$/.test(end) && end < new Date().toISOString().slice(0, 10));
 };
 
+function dateInTimezone(value, timezone = "Africa/Accra") {
+  const parsed = new Date(value || 0);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone || "Africa/Accra",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(parsed);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 async function prepare(payload = {}) {
   const closureDates = await loadSchoolClosureDates({ countryCode: "GH", startDate: payload.startDate, endDate: payload.endDate });
   setSchedulingSchoolClosureDates(closureDates);
@@ -38,6 +51,31 @@ async function saveMetadata(classId, schedule) {
     holidayCalendarAppliedAt: serverTimestamp(), holidayDatesExcluded: schedule.relevantClosures,
     holidayAdjustedEndDate: schedule.calculatedEndDate || schedule.payload.endDate || "",
   });
+}
+
+export async function syncClassEndDateFromSessions(classId) {
+  const classRef = doc(db, "classes", String(classId));
+  const classSnap = await getDoc(classRef);
+  if (!classSnap.exists()) throw new Error("Class not found");
+  const klass = { id: classSnap.id, ...classSnap.data() };
+  const sessions = await base.listClassSessions(classId);
+  const validSessions = sessions
+    .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
+    .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
+    .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
+  const latestSession = validSessions[validSessions.length - 1] || null;
+  const sessionEndDate = latestSession ? dateInTimezone(latestSession.startsAt, klass.timezone) : "";
+
+  if (sessionEndDate && sessionEndDate !== String(klass.endDate || "")) {
+    await updateDoc(classRef, {
+      endDate: sessionEndDate,
+      sessionDerivedEndDate: sessionEndDate,
+      endDateSyncedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  return { endDate: sessionEndDate || String(klass.endDate || ""), latestSession };
 }
 
 export async function createClassCohort(payload) {
@@ -63,6 +101,15 @@ export async function generateClassSessions(classId, classRecord = null) {
   return { ...result, ...grouped, endDate: schedule.payload.endDate, historical: schedule.payload.historicalMode === true, holidayDatesExcluded: schedule.relevantClosures };
 }
 
+export async function cancelSession(sessionId, payload) {
+  const result = await base.cancelSession(sessionId, payload);
+  const sessionSnap = await getDoc(doc(db, "classSessions", String(sessionId)));
+  if (sessionSnap.exists()) {
+    await syncClassEndDateFromSessions(sessionSnap.data().classId).catch(() => {});
+  }
+  return result;
+}
+
 export async function rescheduleSession(sessionId, payload) {
   const sessionSnap = await getDoc(doc(db, "classSessions", String(sessionId)));
   if (!sessionSnap.exists()) throw new Error("Session not found");
@@ -71,6 +118,7 @@ export async function rescheduleSession(sessionId, payload) {
   const klass = classSnap.exists() ? { id: classSnap.id, ...classSnap.data() } : { id: session.classId, name: session.className || "Falowen class" };
 
   await base.rescheduleSession(sessionId, payload);
+  await syncClassEndDateFromSessions(session.classId).catch(() => {});
 
   const className = String(klass.name || session.className || "Falowen class").trim();
   const classUrl = String(klass.classUrl || buildClassUrl(klass) || "").trim();
