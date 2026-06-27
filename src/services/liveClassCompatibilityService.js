@@ -10,7 +10,8 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { courseDictionary, getUnifiedTopicLabel } from "../data/courseDictionary.js";
+import { courseDictionary } from "../data/courseDictionary.js";
+import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
 import { syncClassCurriculum as syncBaseClassCurriculum } from "./liveClassService.js";
 
@@ -105,7 +106,6 @@ function resolveLevelFromSessions(sessions = []) {
 
   const ranked = Object.entries(topicScores).sort((left, right) => right[1] - left[1]);
   if (ranked[0]?.[1] > 0 && ranked[0][1] > (ranked[1]?.[1] || 0)) return ranked[0][0];
-  if (sessions.length === Object.keys(courseDictionary.A1 || {}).length) return "A1";
   return "";
 }
 
@@ -192,21 +192,22 @@ async function loadCompatibleSessions(classId, klass = {}) {
 
 function enrichSessions(klass, sessions = []) {
   const levelId = resolveLevel(klass);
-  const entries = Object.values(courseDictionary[levelId] || {});
-  return sessions.map((session, index) => {
-    const entry = entries[index];
-    if (!entry) return session;
-    const existingIds = currentAssignmentIds(session);
-    const assignmentIds = existingIds.length
-      ? existingIds
-      : [normalize(entry.assignment_id).toUpperCase()];
+  const groups = getCourseSessionGroups(levelId);
+  return sessions.slice(0, groups.length).map((session, index) => {
+    const group = groups[index];
+    if (!group) return session;
     return {
       ...session,
-      assignmentIds,
-      chapterIds: assignmentIds,
-      curriculumIds: assignmentIds,
-      topic: normalize(session.topic) || getUnifiedTopicLabel(assignmentIds[0], entry.de || entry.en || ""),
-      curriculumIndex: Number(session.curriculumIndex || index + 1),
+      assignmentIds: group.assignmentIds,
+      chapterIds: group.assignmentIds,
+      curriculumIds: group.assignmentIds,
+      assignment_id: group.assignmentIds[0] || "",
+      topic: group.topic,
+      curriculumIndex: index + 1,
+      curriculumDay: group.day,
+      curriculumTaskCount: group.assignmentIds.length,
+      curriculumSource: "courseDictionary-day-groups",
+      curriculumVersion: 2,
     };
   });
 }
@@ -230,8 +231,10 @@ function attendanceMetadata(klass, session, patch) {
     curriculumIds: assignmentIds,
     assignment_id: assignmentIds[0] || "",
     curriculumIndex: Number(merged.curriculumIndex || 0),
-    curriculumSource: "courseDictionary",
-    curriculumVersion: 1,
+    curriculumDay: Number(merged.curriculumDay ?? -1),
+    curriculumTaskCount: Number(merged.curriculumTaskCount || assignmentIds.length),
+    curriculumSource: "courseDictionary-day-groups",
+    curriculumVersion: 2,
     updatedAt: serverTimestamp(),
   };
 }
@@ -246,6 +249,7 @@ export async function getCompatibleClassDashboard(classId) {
     levelId: inferredLevel || normalize(klass.levelId),
     resolvedLevelId: inferredLevel || normalize(klass.levelId),
   };
+  const groups = getCourseSessionGroups(normalizedClass.levelId);
   const sessions = enrichSessions(normalizedClass, rawSessions);
   const availableCurriculumItems = Object.keys(courseDictionary[normalizedClass.levelId] || {}).length;
 
@@ -254,9 +258,11 @@ export async function getCompatibleClassDashboard(classId) {
     sessions,
     curriculumSync: {
       updated: 0,
-      mapped: Math.min(sessions.length, availableCurriculumItems),
+      mapped: Math.min(sessions.length, groups.length),
       total: sessions.length,
       availableCurriculumItems,
+      attendanceDays: groups.length,
+      hiddenExtraSessionCount: Math.max(0, rawSessions.length - sessions.length),
       readOnly: true,
     },
     nextSession: selectNextSession(sessions),
@@ -297,75 +303,8 @@ export async function updateCompatibleSession(classId, sessionId, patch = {}) {
   return { ...session, ...nextPatch };
 }
 
-export async function syncCompatibleClassCurriculum(classId, { force = false } = {}) {
-  try {
-    const baseResult = await syncBaseClassCurriculum(classId, { force });
-    if (baseResult.total > 0) return baseResult;
-  } catch {
-    // Repair legacy sessions below.
-  }
-
-  const klass = await loadClassRecord(classId);
-  const sessions = await loadCompatibleSessions(classId, klass);
-  const levelId = resolveLevel(klass) || resolveLevelFromSessions(sessions);
-  const entries = Object.values(courseDictionary[levelId] || {});
-  if (!entries.length) {
-    throw new Error(`No course dictionary was found for ${klass.name || classId}. Set the class level in Class & settings.`);
-  }
-
-  const batch = writeBatch(db);
-  let updated = 0;
-  let mapped = 0;
-
-  sessions.forEach((session, index) => {
-    const entry = entries[index];
-    const ids = currentAssignmentIds(session);
-    const patch = {
-      classId,
-      classRecordId: classId,
-      className: klass.name || "",
-    };
-
-    if (normalize(session.classId) !== normalize(classId)) patch.legacyClassId = session.classId || "";
-    if (entry) {
-      mapped += 1;
-      const assignmentIds = ids.length && !force ? ids : [normalize(entry.assignment_id).toUpperCase()];
-      patch.assignmentIds = assignmentIds;
-      patch.chapterIds = assignmentIds;
-      patch.curriculumIds = assignmentIds;
-      patch.topic = !force && normalize(session.topic)
-        ? session.topic
-        : getUnifiedTopicLabel(assignmentIds[0], entry.de || entry.en || "");
-      patch.curriculumIndex = index + 1;
-      patch.curriculumSource = "courseDictionary";
-      patch.curriculumVersion = 1;
-      patch.curriculumAutoAssigned = true;
-    }
-
-    const nextPatch = { ...patch, updatedAt: serverTimestamp() };
-    batch.update(doc(db, "classSessions", session.id), nextPatch);
-    batch.set(
-      doc(db, "attendance", classId, "sessions", session.id),
-      attendanceMetadata(klass, session, nextPatch),
-      { merge: true },
-    );
-    updated += 1;
+export async function syncCompatibleClassCurriculum(classId, options = {}) {
+  return syncBaseClassCurriculum(classId, {
+    removeExtraFuture: options.removeExtraFuture !== false,
   });
-
-  batch.set(doc(db, "classes", classId), {
-    levelId,
-    generatedSessionCount: sessions.length,
-    curriculumSyncStatus: "complete",
-    curriculumMappedSessionCount: mapped,
-    curriculumSyncedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
-  await batch.commit();
-
-  return {
-    updated,
-    mapped,
-    total: sessions.length,
-    availableCurriculumItems: entries.length,
-  };
 }
