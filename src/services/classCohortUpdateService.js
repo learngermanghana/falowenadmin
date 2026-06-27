@@ -2,6 +2,7 @@ import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { calculateClassEndDate, setSchedulingSchoolClosureDates } from "../utils/liveClassScheduling.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
+import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
 import * as base from "./classCohortUpdateServiceBase.js";
 
 export * from "./classCohortUpdateServiceBase.js";
@@ -26,7 +27,8 @@ export async function updateClassCohort(classId, payload) {
     excludedDates: closureDates,
   });
   const endDate = laterDate(payload.endDate, calculatedEndDate);
-  const result = await base.updateClassCohort(classId, { ...payload, endDate });
+  const baseResult = await base.updateClassCohort(classId, { ...payload, endDate });
+  const groupedResult = await applyGroupedCurriculumToClass(classId);
   const relevantClosures = closureDates.filter((date) => date >= payload.startDate && date <= endDate);
   await updateDoc(doc(db, "classes", String(classId)), {
     endDate,
@@ -36,5 +38,10 @@ export async function updateClassCohort(classId, payload) {
     holidayDatesExcluded: relevantClosures,
     holidayAdjustedEndDate: calculatedEndDate || endDate,
   });
-  return { ...result, endDate, holidayDatesExcluded: relevantClosures };
+  return {
+    ...baseResult,
+    ...groupedResult,
+    endDate,
+    holidayDatesExcluded: relevantClosures,
+  };
 }
