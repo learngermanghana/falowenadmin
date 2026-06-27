@@ -3,6 +3,11 @@ const DEFAULT_PUBLISHED_SHEET_CSV_URL =
 
 const PUBLISHED_SHEET_CSV_URL =
   import.meta?.env?.VITE_STUDENTS_SHEET_CSV_URL || DEFAULT_PUBLISHED_SHEET_CSV_URL;
+const SHEET_TIMEOUT_MS = 7000;
+const SHEET_CACHE_MS = 60000;
+let cachedRows = null;
+let cachedAt = 0;
+let pendingRowsRequest = null;
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -83,27 +88,59 @@ function parseCsv(text) {
   return rows;
 }
 
-export async function loadPublishedStudentRows() {
-  const res = await fetch(PUBLISHED_SHEET_CSV_URL);
-  if (!res.ok) {
-    throw new Error("Failed to load published student sheet");
-  }
+async function fetchPublishedStudentRows() {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), SHEET_TIMEOUT_MS);
 
-  const csv = await res.text();
-  const rows = parseCsv(csv);
-
-  if (rows.length === 0) return [];
-
-  const [rawHeaders, ...dataRows] = rows;
-  const headers = rawHeaders.map(normalizeHeader);
-
-  return dataRows.map((row) => {
-    const entry = {};
-    headers.forEach((header, index) => {
-      entry[header] = String(row[index] || "").trim();
+  try {
+    const res = await fetch(PUBLISHED_SHEET_CSV_URL, {
+      signal: controller.signal,
+      cache: "no-store",
     });
-    return entry;
-  });
+    if (!res.ok) {
+      throw new Error("Failed to load published student sheet");
+    }
+
+    const csv = await res.text();
+    const rows = parseCsv(csv);
+    if (rows.length === 0) return [];
+
+    const [rawHeaders, ...dataRows] = rows;
+    const headers = rawHeaders.map(normalizeHeader);
+
+    return dataRows.map((row) => {
+      const entry = {};
+      headers.forEach((header, index) => {
+        entry[header] = String(row[index] || "").trim();
+      });
+      return entry;
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Published student sheet timed out");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+export async function loadPublishedStudentRows() {
+  const now = Date.now();
+  if (cachedRows && now - cachedAt < SHEET_CACHE_MS) return cachedRows;
+  if (pendingRowsRequest) return pendingRowsRequest;
+
+  pendingRowsRequest = fetchPublishedStudentRows()
+    .then((rows) => {
+      cachedRows = rows;
+      cachedAt = Date.now();
+      return rows;
+    })
+    .finally(() => {
+      pendingRowsRequest = null;
+    });
+
+  return pendingRowsRequest;
 }
 
 export function readPublishedStudentName(row) {
