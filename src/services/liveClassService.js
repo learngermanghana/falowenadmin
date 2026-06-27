@@ -7,64 +7,43 @@ import * as base from "./liveClassServiceBase.js";
 
 export * from "./liveClassServiceBase.js";
 
-function laterDate(left, right) {
-  const a = String(left || "").trim();
-  const b = String(right || "").trim();
-  if (!a) return b;
-  if (!b) return a;
-  return a >= b ? a : b;
-}
+const laterDate = (left, right) => {
+  const a = String(left || "").trim(); const b = String(right || "").trim();
+  if (!a) return b; if (!b) return a; return a >= b ? a : b;
+};
+const isHistorical = (payload = {}) => {
+  const end = String(payload.endDate || "").trim();
+  return payload.historicalMode === true || payload.historical === true || (/^\d{4}-\d{2}-\d{2}$/.test(end) && end < new Date().toISOString().slice(0, 10));
+};
 
-function closuresWithinRange(dates, startDate, endDate) {
-  return dates.filter((date) => date >= startDate && date <= endDate);
-}
-
-async function prepareHolidayAwareSchedule(payload = {}) {
-  const closureDates = await loadSchoolClosureDates({
-    countryCode: "GH",
-    startDate: payload.startDate,
-    endDate: payload.endDate,
-  });
+async function prepare(payload = {}) {
+  const closureDates = await loadSchoolClosureDates({ countryCode: "GH", startDate: payload.startDate, endDate: payload.endDate });
   setSchedulingSchoolClosureDates(closureDates);
-  const calculatedEndDate = calculateClassEndDate({
-    ...payload,
-    excludedDates: closureDates,
-  });
-  const endDate = laterDate(payload.endDate, calculatedEndDate);
+  const calculatedEndDate = calculateClassEndDate({ ...payload, excludedDates: closureDates });
+  const historicalMode = isHistorical(payload);
+  const endDate = historicalMode ? String(payload.endDate || calculatedEndDate || "").trim() : laterDate(payload.endDate, calculatedEndDate);
   return {
-    payload: { ...payload, endDate },
-    closureDates,
+    payload: { ...payload, endDate, historicalMode },
     calculatedEndDate,
-    relevantClosures: closuresWithinRange(closureDates, String(payload.startDate || ""), endDate),
+    relevantClosures: closureDates.filter((date) => date >= String(payload.startDate || "") && date <= endDate),
   };
 }
 
-async function saveHolidayMetadata(classId, schedule) {
-  if (!classId) return;
+async function saveMetadata(classId, schedule) {
   await updateDoc(doc(db, "classes", String(classId)), {
-    holidayCalendarCountryCode: "GH",
-    holidayCalendarApplied: true,
-    holidayCalendarAppliedAt: serverTimestamp(),
-    holidayDatesExcluded: schedule.relevantClosures,
+    historical: schedule.payload.historicalMode === true,
+    holidayCalendarCountryCode: "GH", holidayCalendarApplied: true,
+    holidayCalendarAppliedAt: serverTimestamp(), holidayDatesExcluded: schedule.relevantClosures,
     holidayAdjustedEndDate: schedule.calculatedEndDate || schedule.payload.endDate || "",
   });
 }
 
 export async function createClassCohort(payload) {
-  const schedule = await prepareHolidayAwareSchedule(payload);
+  const schedule = await prepare(payload);
   const record = await base.createClassCohort(schedule.payload);
   const grouped = await applyGroupedCurriculumToClass(record.id);
-  await saveHolidayMetadata(record.id, schedule);
-  return {
-    ...record,
-    generatedSessionCount: grouped.total,
-    curriculumMappedSessionCount: grouped.mapped,
-    curriculumAttendanceDayCount: grouped.attendanceDays,
-    curriculumTaskCount: grouped.availableCurriculumItems,
-    endDate: schedule.payload.endDate,
-    holidayDatesExcluded: schedule.relevantClosures,
-    holidayCalendarApplied: true,
-  };
+  await saveMetadata(record.id, schedule);
+  return { ...record, generatedSessionCount: grouped.total, curriculumMappedSessionCount: grouped.mapped, curriculumAttendanceDayCount: grouped.attendanceDays, curriculumTaskCount: grouped.availableCurriculumItems, endDate: schedule.payload.endDate, historical: schedule.payload.historicalMode === true, holidayDatesExcluded: schedule.relevantClosures, holidayCalendarApplied: true };
 }
 
 export async function generateClassSessions(classId, classRecord = null) {
@@ -74,27 +53,14 @@ export async function generateClassSessions(classId, classRecord = null) {
     if (!snap.exists()) throw new Error("Class not found");
     klass = { id: snap.id, ...snap.data() };
   }
-  const schedule = await prepareHolidayAwareSchedule(klass);
+  const schedule = await prepare(klass);
   const result = await base.generateClassSessions(classId, schedule.payload);
   const grouped = await applyGroupedCurriculumToClass(classId);
-  await updateDoc(doc(db, "classes", String(classId)), {
-    endDate: schedule.payload.endDate,
-    holidayCalendarCountryCode: "GH",
-    holidayCalendarApplied: true,
-    holidayCalendarAppliedAt: serverTimestamp(),
-    holidayDatesExcluded: schedule.relevantClosures,
-    holidayAdjustedEndDate: schedule.calculatedEndDate || schedule.payload.endDate || "",
-  });
-  return {
-    ...result,
-    ...grouped,
-    endDate: schedule.payload.endDate,
-    holidayDatesExcluded: schedule.relevantClosures,
-  };
+  await updateDoc(doc(db, "classes", String(classId)), { endDate: schedule.payload.endDate });
+  await saveMetadata(classId, schedule);
+  return { ...result, ...grouped, endDate: schedule.payload.endDate, historical: schedule.payload.historicalMode === true, holidayDatesExcluded: schedule.relevantClosures };
 }
 
 export async function syncClassCurriculum(classId, options = {}) {
-  return applyGroupedCurriculumToClass(classId, {
-    removeExtraFuture: options.removeExtraFuture !== false,
-  });
+  return applyGroupedCurriculumToClass(classId, { removeExtraFuture: options.removeExtraFuture !== false });
 }
