@@ -1,12 +1,10 @@
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
-import { syncClassEndDateFromSessions } from "./liveClassService.js";
 
 export * from "./liveClassCompatibilityServiceBase.js";
 
 export async function getCompatibleClassDashboard(classId) {
-  await syncClassEndDateFromSessions(classId).catch(() => {});
   const dashboard = await base.getCompatibleClassDashboard(classId);
   const sessions = (dashboard.sessions || [])
     .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
