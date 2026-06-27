@@ -105,7 +105,6 @@ function resolveLevelFromSessions(sessions = []) {
 
   const ranked = Object.entries(topicScores).sort((left, right) => right[1] - left[1]);
   if (ranked[0]?.[1] > 0 && ranked[0][1] > (ranked[1]?.[1] || 0)) return ranked[0][0];
-
   if (sessions.length === Object.keys(courseDictionary.A1 || {}).length) return "A1";
   return "";
 }
@@ -124,9 +123,7 @@ function persistResolvedLevel(classId, klass, inferredLevel) {
     levelResolutionSource: "automatic-compatibility-repair",
     levelResolvedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  }).catch(() => {
-    // Attendance must still load even when the current user cannot repair the class document.
-  });
+  }).catch(() => {});
 }
 
 async function querySessions(field, identifier) {
@@ -141,30 +138,37 @@ function addSessions(target, results = []) {
   });
 }
 
+function sessionPreference(session, classId) {
+  let score = 0;
+  if (normalize(session.classId) === normalize(classId)) score += 8;
+  if (normalize(session.classRecordId) === normalize(classId)) score += 4;
+  if (currentAssignmentIds(session).length) score += 2;
+  if (normalize(session.topic)) score += 1;
+  return score;
+}
+
+function dedupeSessions(sessions = [], classId = "") {
+  const byMoment = new Map();
+  sessions.forEach((session) => {
+    const time = sessionTime(session);
+    const key = time ? `time:${time}` : `id:${session.id}`;
+    const existing = byMoment.get(key);
+    if (!existing || sessionPreference(session, classId) > sessionPreference(existing, classId)) {
+      byMoment.set(key, session);
+    }
+  });
+  return [...byMoment.values()].sort((left, right) => sessionTime(left) - sessionTime(right));
+}
+
 async function loadCompatibleSessions(classId, klass = {}) {
   const identifiers = identifiersFor(classId, klass);
   const found = new Map();
-  const primaryLookups = [
-    ["classId", normalize(classId)],
-    ["classRecordId", normalize(classId)],
-    ["className", normalize(klass.name || klass.className)],
-  ].filter(([, identifier]) => identifier);
-
-  addSessions(found, await Promise.allSettled(
-    primaryLookups.map(([field, identifier]) => querySessions(field, identifier)),
-  ));
-  if (found.size > 0) {
-    return [...found.values()].sort((left, right) => sessionTime(left) - sessionTime(right));
-  }
-
-  const primaryKeys = new Set(primaryLookups.map(([field, identifier]) => `${field}:${identifier}`));
-  const fallbackLookups = identifiers.flatMap((identifier) =>
-    ["classId", "classRecordId", "className"]
-      .map((field) => [field, identifier])
-      .filter(([field, value]) => !primaryKeys.has(`${field}:${value}`)),
+  const lookups = identifiers.flatMap((identifier) =>
+    ["classId", "classRecordId", "className"].map((field) => [field, identifier]),
   );
+
   addSessions(found, await Promise.allSettled(
-    fallbackLookups.map(([field, identifier]) => querySessions(field, identifier)),
+    lookups.map(([field, identifier]) => querySessions(field, identifier)),
   ));
 
   if (found.size === 0) {
@@ -179,11 +183,11 @@ async function loadCompatibleSessions(classId, klass = {}) {
         if (values.some((value) => lookup.has(value))) found.set(session.id, session);
       });
     } catch {
-      // Return the results found by indexed lookups.
+      // Return the indexed results already found.
     }
   }
 
-  return [...found.values()].sort((left, right) => sessionTime(left) - sessionTime(right));
+  return dedupeSessions([...found.values()], classId);
 }
 
 function enrichSessions(klass, sessions = []) {
@@ -258,6 +262,39 @@ export async function getCompatibleClassDashboard(classId) {
     nextSession: selectNextSession(sessions),
     latestCompletedSession: selectLatestCompletedSession(sessions),
   };
+}
+
+export async function updateCompatibleSession(classId, sessionId, patch = {}) {
+  const [klass, sessionSnap] = await Promise.all([
+    loadClassRecord(classId),
+    getDoc(doc(db, "classSessions", normalize(sessionId))),
+  ]);
+  if (!sessionSnap.exists()) throw new Error("Session not found");
+
+  const session = { id: sessionSnap.id, ...sessionSnap.data() };
+  const merged = { ...session, ...patch };
+  const assignmentIds = currentAssignmentIds(merged);
+  const nextPatch = {
+    ...patch,
+    classId: klass.id,
+    classRecordId: klass.id,
+    className: klass.name || "",
+    assignmentIds,
+    chapterIds: assignmentIds,
+    curriculumIds: assignmentIds,
+    assignment_id: assignmentIds[0] || "",
+    updatedAt: serverTimestamp(),
+  };
+
+  const batch = writeBatch(db);
+  batch.update(doc(db, "classSessions", session.id), nextPatch);
+  batch.set(
+    doc(db, "attendance", klass.id, "sessions", session.id),
+    attendanceMetadata(klass, session, nextPatch),
+    { merge: true },
+  );
+  await batch.commit();
+  return { ...session, ...nextPatch };
 }
 
 export async function syncCompatibleClassCurriculum(classId, { force = false } = {}) {
