@@ -5,6 +5,7 @@ import { loadPendingTutorReviews } from "../services/tutorReviewService";
 import { loadGrammarIssueReports } from "../services/grammarIssueService";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
 import { getUpcomingHolidays } from "../services/holidayCalendarService";
+import { listClassCohorts } from "../services/liveClassService";
 import { listAllStudents } from "../services/studentsService";
 import "./DashboardPage.css";
 
@@ -73,6 +74,51 @@ function groupTopClasses(students) {
   return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 6);
 }
 
+function isSchoolClosed(holiday = {}) {
+  if (holiday.schoolClosed === true) return true;
+  return ["true", "yes", "1", "closed"].includes(normalize(holiday.schoolClosed));
+}
+
+function holidayWeekday(dateIso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text(dateIso))) return "";
+  const parsed = new Date(`${dateIso}T12:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "UTC" })
+    .format(parsed)
+    .slice(0, 3)
+    .toLowerCase();
+}
+
+function scheduleRulesForClass(klass = {}) {
+  if (Array.isArray(klass.scheduleRules)) return klass.scheduleRules;
+  if (Array.isArray(klass.scheduleRules?.weekly)) return klass.scheduleRules.weekly;
+  return [];
+}
+
+function isClassAffectedByHoliday(klass = {}, holiday = {}) {
+  if (!isSchoolClosed(holiday)) return false;
+  const holidayDate = text(holiday.date);
+  if (!holidayDate) return false;
+
+  const status = normalize(klass.status);
+  if (["archived", "graduated", "draft", "cancelled", "canceled"].includes(status)) return false;
+
+  const startDate = text(klass.startDate);
+  const endDate = text(klass.endDate);
+  if (startDate && holidayDate < startDate) return false;
+  if (endDate && holidayDate > endDate) return false;
+
+  const weekday = holidayWeekday(holidayDate);
+  if (!weekday) return false;
+  return scheduleRulesForClass(klass).some((rule) =>
+    text(rule.day || rule.weekday).slice(0, 3).toLowerCase() === weekday,
+  );
+}
+
+function liveClassName(klass = {}) {
+  return text(klass.name || klass.className || klass.title || klass.id || "Unnamed class");
+}
+
 function StatCard({ label, value, helper, tone = "blue", icon }) {
   return (
     <article className={`analytics-card analytics-card-${tone}`}>
@@ -105,6 +151,7 @@ function MiniList({ items, emptyText, renderItem }) {
 
 export default function DashboardPage() {
   const [students, setStudents] = useState([]);
+  const [liveClasses, setLiveClasses] = useState([]);
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
@@ -119,8 +166,9 @@ export default function DashboardPage() {
       setError("");
       try {
         const currentYear = new Date().getFullYear();
-        const [studentRows, submissionRows, tutorReviewRows, grammarIssueRows, reminderData, holidayRows] = await Promise.all([
+        const [studentRows, classRows, submissionRows, tutorReviewRows, grammarIssueRows, reminderData, holidayRows] = await Promise.all([
           listAllStudents(),
+          listClassCohorts(),
           loadSubmissions(),
           loadPendingTutorReviews(),
           loadGrammarIssueReports(),
@@ -129,6 +177,7 @@ export default function DashboardPage() {
         ]);
 
         setStudents(studentRows);
+        setLiveClasses(classRows);
         setIncomingAssignments(submissionRows);
         setPendingTutorReviewsCount(tutorReviewRows.length);
         setGrammarIssueReports(grammarIssueRows);
@@ -166,7 +215,19 @@ export default function DashboardPage() {
   const incomingAssignmentPreview = useMemo(() => incomingAssignments.slice(0, 5), [incomingAssignments]);
   const grammarIssuePreview = useMemo(() => grammarIssueReports.slice(0, 5), [grammarIssueReports]);
   const contractEndingSoonPreview = useMemo(() => contractEndingSoon.slice(0, 6), [contractEndingSoon]);
-  const upcomingHolidayPreview = useMemo(() => upcomingHolidays.slice(0, 8), [upcomingHolidays]);
+  const upcomingHolidayPreview = useMemo(
+    () => upcomingHolidays.slice(0, 8).map((holiday) => ({
+      ...holiday,
+      affectedClasses: liveClasses
+        .filter((klass) => isClassAffectedByHoliday(klass, holiday))
+        .sort((left, right) => liveClassName(left).localeCompare(liveClassName(right))),
+    })),
+    [liveClasses, upcomingHolidays],
+  );
+  const affectedHolidayClassCount = useMemo(
+    () => new Set(upcomingHolidayPreview.flatMap((holiday) => holiday.affectedClasses.map((klass) => klass.id || liveClassName(klass)))).size,
+    [upcomingHolidayPreview],
+  );
   const balancePreview = useMemo(
     () => analytics.studentsWithBalance
       .slice()
@@ -214,7 +275,7 @@ export default function DashboardPage() {
         <StatCard label="Total students" value={analytics.totalStudents} helper={`${analytics.activeRate}% active records`} tone="blue" icon="🎓" />
         <StatCard label="Paid / active" value={analytics.paidStudents} helper={`${analytics.paymentRate}% marked paid or active`} tone="green" icon="✅" />
         <StatCard label="Balance due" value={moneyFormatter.format(analytics.totalBalance)} helper={`${analytics.studentsWithBalance.length} student(s) with balances`} tone="amber" icon="💳" />
-        <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper="loaded from Holiday Calendar" tone="purple" icon="📅" />
+        <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper={`${affectedHolidayClassCount} affected class${affectedHolidayClassCount === 1 ? "" : "es"}`} tone="purple" icon="📅" />
       </section>
 
       <section className="quick-actions-grid">
@@ -391,15 +452,24 @@ export default function DashboardPage() {
           <MiniList
             items={upcomingHolidayPreview}
             emptyText="No upcoming holidays loaded from the Holiday Calendar."
-            renderItem={(holiday) => (
-              <li key={`${holiday.countryCode || "GH"}-${holiday.date}`}>
-                <span className="avatar-chip calendar">📅</span>
-                <span>
-                  <strong>{holiday.name || holiday.localName || holiday.date}</strong>
-                  <small>{holiday.date} · {holiday.schoolClosed ? "School closed" : "School open"}</small>
-                </span>
-              </li>
-            )}
+            renderItem={(holiday) => {
+              const affectedNames = holiday.affectedClasses.map(liveClassName);
+              return (
+                <li key={`${holiday.countryCode || "GH"}-${holiday.date}`}>
+                  <span className="avatar-chip calendar">📅</span>
+                  <span>
+                    <strong>{holiday.name || holiday.localName || holiday.date}</strong>
+                    <small>{holiday.date} · {isSchoolClosed(holiday) ? "School closed" : "School open"}</small>
+                    <small>
+                      <b>Affected classes:</b>{" "}
+                      {isSchoolClosed(holiday)
+                        ? affectedNames.length ? affectedNames.join(", ") : "None"
+                        : "None — school remains open"}
+                    </small>
+                  </span>
+                </li>
+              );
+            }}
           />
         </article>
       </section>
