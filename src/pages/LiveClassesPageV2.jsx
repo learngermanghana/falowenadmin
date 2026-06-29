@@ -77,6 +77,28 @@ function statusStyle(status) {
   return { background: "#dbeafe", color: "#1e40af" };
 }
 
+
+const SESSION_CHANGE_REASONS = [
+  { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },
+  { label: "Travelled", value: "Class cannot hold because the teacher travelled and is not available." },
+  { label: "Emergency", value: "Class cannot hold because of an emergency." },
+];
+
+function addMinutesToDateTimeLocal(value, minutes) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const next = new Date(parsed.getTime() + Number(minutes || 0) * 60 * 1000);
+  return toDateTimeLocal(next);
+}
+
+function sessionDurationMinutes(session = {}) {
+  const startsAt = new Date(session.startsAt || 0);
+  const endsAt = new Date(session.endsAt || 0);
+  if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) return 60;
+  const minutes = Math.round((endsAt.getTime() - startsAt.getTime()) / 60000);
+  return minutes > 0 ? minutes : 60;
+}
+
 function tabStyle(active, disabled) {
   return {
     border: active ? "1px solid #2457ff" : "1px solid #cbd5e1",
@@ -104,6 +126,7 @@ export default function LiveClassesPageV2() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [sessionChange, setSessionChange] = useState(null);
 
   async function refreshClasses(nextSelectedId = selectedClassId) {
     const rows = await listClassCohorts();
@@ -237,6 +260,48 @@ export default function LiveClassesPageV2() {
     }
   }
 
+  function openSessionChange(session) {
+    setMessage("");
+    setSessionChange({
+      sessionId: session.id,
+      action: "reschedule",
+      startsAt: toDateTimeLocal(session.startsAt),
+      reason: session.rescheduleReason || session.cancellationReason || SESSION_CHANGE_REASONS[0].value,
+      durationMinutes: sessionDurationMinutes(session),
+    });
+  }
+
+  async function handleSessionChangeSubmit(event) {
+    event.preventDefault();
+    if (!sessionChange?.sessionId) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const adminId = user?.uid || user?.email || "admin";
+      if (sessionChange.action === "cancel") {
+        await cancelSession(sessionChange.sessionId, { reason: sessionChange.reason, adminId });
+        setMessage("Session cancelled and the attendance session was updated automatically.");
+      } else {
+        if (!sessionChange.startsAt) throw new Error("Choose the new date and time.");
+        const endsAt = addMinutesToDateTimeLocal(sessionChange.startsAt, sessionChange.durationMinutes);
+        if (!endsAt) throw new Error("Choose a valid new date and time.");
+        await rescheduleSession(sessionChange.sessionId, {
+          startsAt: new Date(sessionChange.startsAt).toISOString(),
+          endsAt: new Date(endsAt).toISOString(),
+          reason: sessionChange.reason,
+          adminId,
+        });
+        setMessage("Session rescheduled and the attendance session was updated automatically.");
+      }
+      setSessionChange(null);
+      await refreshDashboard(selectedClassId);
+    } catch (error) {
+      setMessage(error?.message || "Session update failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSessionAction(session, action) {
     setBusy(true);
     setMessage("");
@@ -245,23 +310,6 @@ export default function LiveClassesPageV2() {
         const topic = window.prompt("Session topic", session.topic || "");
         if (topic === null) return;
         await updateSession(session.id, { topic: topic.trim() });
-      }
-      if (action === "reschedule") {
-        const startInput = window.prompt("New start (YYYY-MM-DDTHH:mm)", toDateTimeLocal(session.startsAt));
-        if (!startInput) return;
-        const endInput = window.prompt("New end (YYYY-MM-DDTHH:mm)", toDateTimeLocal(session.endsAt));
-        if (!endInput) return;
-        await rescheduleSession(session.id, {
-          startsAt: new Date(startInput).toISOString(),
-          endsAt: new Date(endInput).toISOString(),
-          reason: window.prompt("Reason for rescheduling", "") || "",
-          adminId: user?.uid || user?.email || "admin",
-        });
-      }
-      if (action === "cancel") {
-        const reason = window.prompt("Reason for cancellation", session.cancellationReason || "");
-        if (reason === null) return;
-        await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
       }
       if (action === "complete") {
         if (!window.confirm("Mark this session completed?")) return;
@@ -281,6 +329,28 @@ export default function LiveClassesPageV2() {
       return <p>No sessions were found for this class record. Open Class & settings and save the timetable to generate them.</p>;
     }
     return (
+      <>
+      {sessionChange ? (
+        <form onSubmit={handleSessionChangeSubmit} style={{ display: "grid", gap: 10, marginBottom: 16, padding: 12, border: "1px solid #bfdbfe", borderRadius: 8, background: "#eff6ff" }}>
+          <strong>Update session once</strong>
+          <label>Action <select value={sessionChange.action} onChange={(event) => setSessionChange((current) => ({ ...current, action: event.target.value }))}>
+            <option value="reschedule">Reschedule to selected date</option>
+            <option value="cancel">Cancel class</option>
+          </select></label>
+          {sessionChange.action === "reschedule" ? (
+            <label>New selected date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
+          ) : null}
+          <label>Message template <select value="" onChange={(event) => event.target.value && setSessionChange((current) => ({ ...current, reason: event.target.value }))}>
+            <option value="">Choose a ready reason</option>
+            {SESSION_CHANGE_REASONS.map((template) => <option key={template.label} value={template.value}>{template.label}</option>)}
+          </select></label>
+          <label>Reason / message <textarea rows={3} value={sessionChange.reason} onChange={(event) => setSessionChange((current) => ({ ...current, reason: event.target.value }))} placeholder="Write the message students should see" /></label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="submit" disabled={busy}>{sessionChange.action === "cancel" ? "Cancel and update session" : "Reschedule and update session"}</button>
+            <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
+          </div>
+        </form>
+      ) : null}
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th>Ghana date and time</th><th>Status</th><th>Topic</th><th>Complete dictionary selection</th><th>Actions</th></tr></thead>
@@ -311,8 +381,7 @@ export default function LiveClassesPageV2() {
                   <td style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Link to={`/attendance/session/${dashboard.klass.id}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
                     <button disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
-                    <button disabled={busy || locked} onClick={() => handleSessionAction(session, "reschedule")}>Reschedule</button>
-                    <button disabled={busy || locked} onClick={() => handleSessionAction(session, "cancel")}>Cancel</button>
+                    <button disabled={busy || locked} onClick={() => openSessionChange(session)}>Reschedule / Cancel</button>
                     <button disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
                   </div></td>
                 </tr>
@@ -321,6 +390,7 @@ export default function LiveClassesPageV2() {
           </tbody>
         </table>
       </div>
+      </>
     );
   }
 

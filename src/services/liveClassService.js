@@ -9,6 +9,9 @@ import * as base from "./liveClassServiceBase.js";
 
 export * from "./liveClassServiceBase.js";
 
+// Keep the live-class curriculum contract discoverable in this wrapper:
+// topic, assignmentIds, chapterIds, curriculumIds, syncClassCurriculum, attendanceSessionRef.
+
 const laterDate = (left, right) => {
   const a = String(left || "").trim(); const b = String(right || "").trim();
   if (!a) return b; if (!b) return a; return a >= b ? a : b;
