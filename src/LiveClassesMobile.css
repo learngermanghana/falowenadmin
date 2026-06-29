@@ -1,0 +1,95 @@
+@media (max-width: 700px) {
+  main[data-route="/live-classes"] article.card table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    background: transparent;
+  }
+
+  main[data-route="/live-classes"] article.card table thead {
+    display: none;
+  }
+
+  main[data-route="/live-classes"] article.card table tbody {
+    display: grid;
+    gap: 0.8rem;
+    width: 100%;
+  }
+
+  main[data-route="/live-classes"] article.card table tbody tr {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    gap: 0.65rem;
+    padding: 0.85rem;
+    border: 1px solid #dbe3f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(26, 34, 51, 0.06);
+  }
+
+  main[data-route="/live-classes"] article.card table tbody td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 0 !important;
+    overflow-wrap: normal;
+    word-break: normal;
+    white-space: normal;
+  }
+
+  main[data-route="/live-classes"] article.card table tbody td:first-child {
+    padding-bottom: 0.6rem !important;
+    border-bottom: 1px solid #edf1f7;
+    color: #172033;
+    font-weight: 700;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+  }
+
+  main[data-route="/live-classes"] article.card table tbody td:first-child small,
+  main[data-route="/live-classes"] article.card table tbody td small {
+    display: block;
+    margin-top: 0.25rem;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  main[data-route="/live-classes"] article.card table tbody td span {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  main[data-route="/live-classes"] article.card table tbody td:last-child div {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.55rem !important;
+    width: 100%;
+  }
+
+  main[data-route="/live-classes"] article.card table tbody td:last-child a,
+  main[data-route="/live-classes"] article.card table tbody td:last-child button {
+    display: inline-flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0.62rem 0.55rem;
+    border-radius: 9px;
+    font-size: 0.88rem;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 350px) {
+  main[data-route="/live-classes"] article.card table tbody td:last-child div {
+    grid-template-columns: 1fr !important;
+  }
+}

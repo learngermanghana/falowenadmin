@@ -29,6 +29,7 @@ import HolidayCalendarPage from "./pages/HolidayCalendarPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
+import "./LiveClassesMobile.css";
 
 function TopBar() {
   const { user, logout, isStaff } = useAuth();
