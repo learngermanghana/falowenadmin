@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
-import { deleteClassCohort } from "../services/liveClassService.js";
+import { deleteClassCohort, rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
@@ -43,6 +43,20 @@ export default function ClassEditorCard({ klass, onSaved }) {
       await onSaved?.(klass.id);
     } catch (error) { setMessage(error?.message || "Class update failed"); }
     finally { setBusy(false); }
+  }
+
+  async function rebuildSessions() {
+    if (!window.confirm("Rebuild scheduled sessions from this class start date and timetable? Completed, live, cancelled, rescheduled, and attendance-bearing sessions will be preserved.")) return;
+    setBusy(true); setMessage("");
+    try {
+      const result = await rebuildClassSessionsFromSchedule(klass.id, { ...klass, ...form });
+      setMessage(`Sessions rebuilt. ${result.created || 0} created, ${result.refreshed || 0} updated, ${result.removed || 0} stale removed.`);
+      await onSaved?.(klass.id);
+    } catch (error) {
+      setMessage(error?.message || "Session rebuild failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function removeClass() {
@@ -90,6 +104,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     <div><label><input type="checkbox" checked={form.publicVisible} onChange={(event) => patch({ publicVisible: event.target.checked })} /> Show publicly</label> <label><input type="checkbox" checked={form.registrationOpen} onChange={(event) => patch({ registrationOpen: event.target.checked })} /> Registration open</label></div>
     {message ? <div style={{ padding: 10, borderRadius: 8, background: message.startsWith("Class updated") ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
+    <button type="button" disabled={busy} onClick={rebuildSessions}>Rebuild sessions from start date and timetable</button>
     <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid #fecaca" }}>
       <strong style={{ color: "#991b1b" }}>Danger zone</strong>
       <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Deletion is allowed only after the class end date, when no unfinished sessions or open student contracts remain.</p>
