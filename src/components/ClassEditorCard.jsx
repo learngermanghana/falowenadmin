@@ -112,7 +112,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     <div><label><input type="checkbox" checked={form.publicVisible} onChange={(event) => patch({ publicVisible: event.target.checked })} /> Show publicly</label> <label><input type="checkbox" checked={form.registrationOpen} onChange={(event) => patch({ registrationOpen: event.target.checked })} /> Registration open</label></div>
     {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
-    <button type="button" disabled={busy} onClick={rebuildSessions}>{busy ? "Rebuilding sessions…" : "Rebuild sessions from start date and timetable"}</button>
+    <button type="button" disabled={busy} onClick={rebuildSessions}>Rebuild sessions from start date and timetable</button>
     <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid #fecaca" }}>
       <strong style={{ color: "#991b1b" }}>Danger zone</strong>
       <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Deletion is allowed only after the class end date, when no unfinished sessions or open student contracts remain.</p>
