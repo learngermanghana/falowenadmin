@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
+import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";
+import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";
 import "./CheckinDisplayPage.css";
 
 const ATTENDANCE_UTC_OFFSET_HOURS = 1;
@@ -174,6 +176,7 @@ export default function CheckinDisplayPage() {
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.5);
   const [musicError, setMusicError] = useState("");
+  const [currentPianoPiece, setCurrentPianoPiece] = useState(pianoPieces[0][0]);
   const audioContextRef = useRef(null);
   const musicGainRef = useRef(null);
   const musicTimerRef = useRef(null);
@@ -270,6 +273,7 @@ export default function CheckinDisplayPage() {
     audioContextRef.current = null;
     musicGainRef.current = null;
     musicChordIndexRef.current = 0;
+    setCurrentPianoPiece(pianoPieces[0][0]);
 
     if (context && context.state !== "closed") {
       context.close().catch(() => {});
@@ -315,15 +319,16 @@ export default function CheckinDisplayPage() {
 
       scheduleStartChime(context, masterGain);
 
-      const playNextChord = () => {
+      const playNextBar = () => {
         if (context.state !== "running") return;
-        const chord = WAITING_PIANO_CHORDS[musicChordIndexRef.current % WAITING_PIANO_CHORDS.length];
+        const bar = pianoPlaylist[musicChordIndexRef.current % pianoPlaylist.length];
         musicChordIndexRef.current += 1;
-        scheduleWaitingPiano(context, masterGain, chord);
+        setCurrentPianoPiece(bar.title);
+        schedulePianoBar(context, masterGain, bar);
       };
 
-      playNextChord();
-      musicTimerRef.current = window.setInterval(playNextChord, 4300);
+      playNextBar();
+      musicTimerRef.current = window.setInterval(playNextBar, PIANO_BAR_INTERVAL_MS);
       setMusicPlaying(true);
     } catch (error) {
       stopWaitingMusic();
@@ -372,10 +377,10 @@ export default function CheckinDisplayPage() {
           <div className="checkin-display-music-main">
             <div className="checkin-display-music-copy">
               <div className="checkin-display-music-title">
-                <span aria-hidden="true">♫</span> Soft piano music
+                <span aria-hidden="true">♫</span> Extended piano playlist
               </div>
               <div className="checkin-display-music-note">
-                Gentle built-in piano while students wait. You should hear a short piano confirmation when it starts.
+                About four minutes of original modern and cinematic piano before repeating. {musicPlaying ? `Now playing: ${currentPianoPiece}.` : ""}
               </div>
             </div>
             <div className="checkin-display-music-visual" aria-hidden="true">
@@ -389,7 +394,7 @@ export default function CheckinDisplayPage() {
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
             >
-              {musicPlaying ? "Stop piano" : "Start piano music"}
+              {musicPlaying ? "Stop piano" : "Start piano playlist"}
             </button>
           </div>
           <label className="checkin-display-music-volume">
