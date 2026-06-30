@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../context/ToastContext.jsx";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
 import { deleteClassCohort, rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
@@ -22,6 +23,7 @@ function initialForm(klass = {}) {
 }
 
 export default function ClassEditorCard({ klass, onSaved }) {
+  const toast = useToast();
   const [form, setForm] = useState(() => initialForm(klass));
   const [historicalMode, setHistoricalMode] = useState(() => klass?.historical === true || isPastDate(klass?.startDate));
   const [busy, setBusy] = useState(false);
@@ -50,10 +52,14 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true); setMessage("");
     try {
       const result = await rebuildClassSessionsFromSchedule(klass.id, { ...klass, ...form });
-      setMessage(`Sessions rebuilt. ${result.created || 0} created, ${result.refreshed || 0} updated, ${result.removed || 0} stale removed.`);
+      const successMessage = `Sessions rebuilt successfully: ${result.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.`;
+      setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 6000 });
       await onSaved?.(klass.id);
     } catch (error) {
-      setMessage(error?.message || "Session rebuild failed");
+      const errorMessage = error?.message || "Session rebuild failed";
+      setMessage(errorMessage);
+      toast.error(`Session rebuild failed: ${errorMessage}`, { durationMs: 7000 });
     } finally {
       setBusy(false);
     }
@@ -80,6 +86,8 @@ export default function ClassEditorCard({ klass, onSaved }) {
     }
   }
 
+  const messageIsSuccess = message.startsWith("Class updated") || message.startsWith("Sessions rebuilt successfully");
+
   return <article className="card"><h2>Edit this class</h2><form onSubmit={save} style={{ display: "grid", gap: 14 }}>
     <label><input type="checkbox" checked={historicalMode} onChange={(event) => setHistoricalMode(event.target.checked)} /> Historical class: keep exact dates and generate missing past sessions</label>
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
@@ -102,9 +110,9 @@ export default function ClassEditorCard({ klass, onSaved }) {
     </div>)}
     <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE }] }))}>Add another time</button>
     <div><label><input type="checkbox" checked={form.publicVisible} onChange={(event) => patch({ publicVisible: event.target.checked })} /> Show publicly</label> <label><input type="checkbox" checked={form.registrationOpen} onChange={(event) => patch({ registrationOpen: event.target.checked })} /> Registration open</label></div>
-    {message ? <div style={{ padding: 10, borderRadius: 8, background: message.startsWith("Class updated") ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
+    {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
-    <button type="button" disabled={busy} onClick={rebuildSessions}>Rebuild sessions from start date and timetable</button>
+    <button type="button" disabled={busy} onClick={rebuildSessions}>{busy ? "Rebuilding sessions…" : "Rebuild sessions from start date and timetable"}</button>
     <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid #fecaca" }}>
       <strong style={{ color: "#991b1b" }}>Danger zone</strong>
       <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Deletion is allowed only after the class end date, when no unfinished sessions or open student contracts remain.</p>
