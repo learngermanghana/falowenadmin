@@ -1,5 +1,3 @@
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
 
 export * from "./liveClassCompatibilityServiceBase.js";
@@ -13,15 +11,8 @@ export async function getCompatibleClassDashboard(classId) {
   const latest = sessions[sessions.length - 1] || null;
   const endDate = String(latest?.startsAt || "").slice(0, 10) || String(dashboard.klass?.endDate || "");
 
-  if (endDate && endDate !== String(dashboard.klass?.endDate || "")) {
-    updateDoc(doc(db, "classes", String(classId)), {
-      endDate,
-      sessionDerivedEndDate: endDate,
-    }).catch(() => {});
-  }
-
   return {
     ...dashboard,
-    klass: { ...dashboard.klass, endDate, sessionDerivedEndDate: endDate },
+    klass: { ...dashboard.klass, sessionDerivedEndDate: endDate },
   };
 }

@@ -27,6 +27,7 @@ import {
 } from "../data/courseDictionary.js";
 import { saveAnnouncementRow } from "./communicationService.js";
 import { listStudentsByClass } from "./studentsService.js";
+import { buildRebuildClassSessionsPlan } from "../utils/liveClassSessionRebuildPlan.js";
 import {
   buildCancellationAnnouncement,
   findNextScheduledSession,
@@ -155,41 +156,6 @@ function sessionDate(startsAt) {
   return value.includes("T") ? value.slice(0, 10) : value;
 }
 
-function normalizeClassLookup(value) {
-  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function canRestoreClassRecord(record = null) {
-  if (!record) return false;
-  return ["archived", "draft"].includes(String(record.status || "").toLowerCase())
-    || record.archived === true
-    || record.isArchived === true
-    || !record.startDate
-    || !record.endDate;
-}
-
-async function findExistingClassForCreate({ name, slug }) {
-  const candidates = new Map();
-  const addSnap = (snap) => {
-    if (snap?.exists?.()) candidates.set(snap.id, { id: snap.id, ...snap.data() });
-  };
-  const addDocs = (snap) => {
-    snap?.docs?.forEach((item) => candidates.set(item.id, { id: item.id, ...item.data() }));
-  };
-
-  addSnap(await getDoc(doc(db, "classes", name)));
-  addDocs(await getDocs(query(collection(db, "classes"), where("slug", "==", slug))));
-  addDocs(await getDocs(query(collection(db, "classes"), where("name", "==", name))));
-  addDocs(await getDocs(query(collection(db, "classes"), where("classId", "==", name))));
-
-  const normalizedName = normalizeClassLookup(name);
-  const matching = [...candidates.values()].filter((item) => {
-    const identifiers = [item.id, item.name, item.classId, item.className, item.slug];
-    return identifiers.some((value) => normalizeClassLookup(value) === normalizedName || String(value || "").trim() === slug);
-  });
-
-  return matching.find(canRestoreClassRecord) || matching[0] || null;
-}
 
 function attendanceMetadata(klass = {}, session = {}, patch = {}) {
   const merged = { ...session, ...patch };
@@ -293,6 +259,64 @@ export async function createClassCohort(payload) {
     });
     throw new Error(`Class was saved, but session generation failed: ${error?.message || "Unknown error"}. You can safely retry session generation for this class without creating duplicate sessions.`);
   }
+}
+
+export async function rebuildClassSessionsFromSchedule(classId, classRecord = null) {
+  const klass = classRecord || (await loadClassRecord(classId));
+  const normalizedClass = { ...klass, id: klass.id || classId };
+  const occurrences = generateSessionOccurrences({
+    classId,
+    startDate: normalizedClass.startDate,
+    endDate: normalizedClass.endDate,
+    timezone: normalizedClass.timezone,
+    scheduleRules: normalizedClass.scheduleRules,
+    levelId: normalizedClass.levelId,
+  });
+  const existingSnap = await getDocs(query(collection(db, "classSessions"), where("classId", "==", classId)));
+  const sessions = existingSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
+  const attendanceEntries = await Promise.all(sessions.map(async (session) => {
+    const snap = await getDoc(attendanceSessionRef(classId, session.id));
+    return [session.id, snap.exists() ? { id: snap.id, ...snap.data() } : null];
+  }));
+  const plan = buildRebuildClassSessionsPlan({ klass: normalizedClass, occurrences, sessions, attendanceBySessionId: new Map(attendanceEntries), buildCurriculumPatch });
+  const batch = writeBatch(db);
+  let created = 0; let refreshed = 0; let mapped = 0;
+
+  plan.deletions.forEach((session) => {
+    batch.delete(doc(db, "classSessions", session.id));
+    batch.delete(attendanceSessionRef(classId, session.id));
+  });
+
+  plan.upserts.forEach(({ occurrence, existing, patch, curriculumMapped }) => {
+    if (curriculumMapped) mapped += 1;
+    const session = {
+      ...(existing ? existing : { assignmentIds: [], chapterIds: [], curriculumIds: [], sequence: 0 }),
+      ...patch,
+      id: occurrence.id,
+      updatedAt: serverTimestamp(),
+      ...(existing ? {} : { createdAt: serverTimestamp() }),
+    };
+    batch.set(doc(db, "classSessions", occurrence.id), session, { merge: true });
+    batch.set(attendanceSessionRef(classId, occurrence.id), {
+      ...attendanceMetadata(normalizedClass, session),
+      ...(existing ? {} : { createdAt: serverTimestamp(), students: {} }),
+    }, { merge: true });
+    if (existing) refreshed += 1; else created += 1;
+  });
+
+  await batch.commit();
+
+  const curriculum = await syncClassCurriculum(classId, { force: false });
+  const finalMapped = curriculum.mapped || mapped;
+  await updateDoc(doc(db, "classes", classId), {
+    generationStatus: "complete",
+    generationError: "",
+    generatedSessionCount: occurrences.length,
+    curriculumMappedSessionCount: finalMapped,
+    sessionsRebuiltAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return { created, refreshed, removed: plan.deletions.length, preserved: plan.preserved.length, mapped: finalMapped, total: occurrences.length };
 }
 
 export async function generateClassSessions(classId, classRecord = null) {

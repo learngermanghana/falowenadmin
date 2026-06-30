@@ -4,7 +4,7 @@ import { calculateClassEndDate, setSchedulingSchoolClosureDates } from "../utils
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
 import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
 import * as base from "./classCohortUpdateServiceBase.js";
-import { generateClassSessions } from "./liveClassServiceBase.js";
+import { rebuildClassSessionsFromSchedule } from "./liveClassServiceBase.js";
 
 export * from "./classCohortUpdateServiceBase.js";
 
@@ -68,7 +68,7 @@ async function updateHistoricalClass(classId, payload) {
     updatedAt: serverTimestamp(),
   });
 
-  const generation = await generateClassSessions(classId, next);
+  const generation = await rebuildClassSessionsFromSchedule(classId, next);
   const grouped = await applyGroupedCurriculumToClass(classId);
 
   await updateDoc(classRef, {
@@ -81,11 +81,11 @@ async function updateHistoricalClass(classId, payload) {
 
   return {
     classId,
-    removed: 0,
+    removed: generation.removed || 0,
     created: generation.created || 0,
-    refreshed: generation.enriched || 0,
+    refreshed: generation.refreshed || generation.enriched || 0,
     mapped: grouped.mapped || generation.mapped || 0,
-    preserved: Math.max(0, generation.total - (generation.created || 0)),
+    preserved: generation.preserved ?? Math.max(0, generation.total - (generation.created || 0)),
     total: generation.total,
   };
 }
