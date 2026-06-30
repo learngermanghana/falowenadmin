@@ -1,0 +1,63 @@
+name: Apply extended piano playlist
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'extended-original-piano-playlist'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: extended-original-piano-playlist
+      - name: Patch check-in display
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/pages/CheckinDisplayPage.jsx')
+          s = p.read_text()
+          def r(a, b):
+              global s
+              if s.count(a) != 1:
+                  raise SystemExit(f'Expected one match, found {s.count(a)}')
+              s = s.replace(a, b, 1)
+          r('import { getClassSchedule } from "../data/classSchedules";', 'import { getClassSchedule } from "../data/classSchedules";\nimport { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";\nimport { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";')
+          r('  const [musicError, setMusicError] = useState("");', '  const [musicError, setMusicError] = useState("");\n  const [currentPianoPiece, setCurrentPianoPiece] = useState(pianoPieces[0][0]);')
+          r('    musicChordIndexRef.current = 0;', '    musicChordIndexRef.current = 0;\n    setCurrentPianoPiece(pianoPieces[0][0]);')
+          r('''      const playNextChord = () => {
+                if (context.state !== "running") return;
+                const chord = WAITING_PIANO_CHORDS[musicChordIndexRef.current % WAITING_PIANO_CHORDS.length];
+                musicChordIndexRef.current += 1;
+                scheduleWaitingPiano(context, masterGain, chord);
+              };
+
+              playNextChord();
+              musicTimerRef.current = window.setInterval(playNextChord, 4300);''', '''      const playNextBar = () => {
+                if (context.state !== "running") return;
+                const bar = pianoPlaylist[musicChordIndexRef.current % pianoPlaylist.length];
+                musicChordIndexRef.current += 1;
+                setCurrentPianoPiece(bar.title);
+                schedulePianoBar(context, masterGain, bar);
+              };
+
+              playNextBar();
+              musicTimerRef.current = window.setInterval(playNextBar, PIANO_BAR_INTERVAL_MS);''')
+          r('<span aria-hidden="true">♫</span> Soft piano music', '<span aria-hidden="true">♫</span> Extended piano playlist')
+          r('Gentle built-in piano while students wait. You should hear a short piano confirmation when it starts.', 'About four minutes of original modern and cinematic piano before repeating. {musicPlaying ? `Now playing: ${currentPianoPiece}.` : ""}')
+          r('{musicPlaying ? "Stop piano" : "Start piano music"}', '{musicPlaying ? "Stop piano" : "Start piano playlist"}')
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "Falowen Automation"
+          git config user.email "moxflex@gmail.com"
+          rm .github/workflows/apply-piano-playlist.yml
+          git add src/pages/CheckinDisplayPage.jsx .github/workflows/apply-piano-playlist.yml
+          git commit -m "Expand check-in piano playlist"
+          git push origin extended-original-piano-playlist
