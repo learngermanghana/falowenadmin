@@ -7,11 +7,11 @@ import "./CheckinDisplayPage.css";
 const ATTENDANCE_UTC_OFFSET_HOURS = 1;
 const ATTENDANCE_TIME_ZONE = "Africa/Lagos";
 const ATTENDANCE_TIME_ZONE_LABEL = "WAT (UTC+01:00)";
-const WAITING_MUSIC_CHORDS = [
-  [261.63, 329.63, 392.0],
-  [220.0, 261.63, 329.63],
-  [174.61, 220.0, 261.63],
-  [196.0, 246.94, 293.66],
+const WAITING_PIANO_CHORDS = [
+  [130.81, 261.63, 329.63, 392.0],
+  [110.0, 220.0, 261.63, 329.63],
+  [87.31, 174.61, 220.0, 261.63],
+  [98.0, 196.0, 246.94, 293.66],
 ];
 
 function parseSessionDate(dateValue) {
@@ -104,43 +104,58 @@ function formatDuration(ms) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function scheduleStartChime(context, destination) {
-  const startsAt = context.currentTime + 0.03;
-  [523.25, 659.25].forEach((frequency, index) => {
+function schedulePianoNote(context, destination, frequency, startsAt, velocity = 1, duration = 3.6) {
+  const noteGain = context.createGain();
+  const toneFilter = context.createBiquadFilter();
+  const harmonics = [
+    { ratio: 1, gain: 0.18, type: "triangle", detune: -1.5 },
+    { ratio: 2, gain: 0.055, type: "sine", detune: 1.5 },
+    { ratio: 3.01, gain: 0.022, type: "sine", detune: -0.8 },
+  ];
+
+  toneFilter.type = "lowpass";
+  toneFilter.frequency.setValueAtTime(4200, startsAt);
+  toneFilter.frequency.exponentialRampToValueAtTime(1500, startsAt + Math.min(duration, 2.5));
+  toneFilter.Q.setValueAtTime(0.7, startsAt);
+
+  noteGain.gain.setValueAtTime(0.0001, startsAt);
+  noteGain.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.42 * velocity), startsAt + 0.008);
+  noteGain.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.16 * velocity), startsAt + 0.22);
+  noteGain.gain.exponentialRampToValueAtTime(0.0001, startsAt + duration);
+
+  toneFilter.connect(noteGain);
+  noteGain.connect(destination);
+
+  harmonics.forEach((harmonic) => {
     const oscillator = context.createOscillator();
-    const noteGain = context.createGain();
-    const noteStartsAt = startsAt + (index * 0.16);
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency, noteStartsAt);
-    noteGain.gain.setValueAtTime(0.0001, noteStartsAt);
-    noteGain.gain.exponentialRampToValueAtTime(0.18, noteStartsAt + 0.035);
-    noteGain.gain.exponentialRampToValueAtTime(0.0001, noteStartsAt + 0.22);
-
-    oscillator.connect(noteGain);
-    noteGain.connect(destination);
-    oscillator.start(noteStartsAt);
-    oscillator.stop(noteStartsAt + 0.24);
+    const harmonicGain = context.createGain();
+    oscillator.type = harmonic.type;
+    oscillator.frequency.setValueAtTime(frequency * harmonic.ratio, startsAt);
+    oscillator.detune.setValueAtTime(harmonic.detune, startsAt);
+    harmonicGain.gain.setValueAtTime(harmonic.gain, startsAt);
+    oscillator.connect(harmonicGain);
+    harmonicGain.connect(toneFilter);
+    oscillator.start(startsAt);
+    oscillator.stop(startsAt + duration + 0.05);
   });
 }
 
-function scheduleWaitingChord(context, destination, chord) {
-  const startsAt = context.currentTime + 0.42;
+function scheduleStartChime(context, destination) {
+  const startsAt = context.currentTime + 0.03;
+  schedulePianoNote(context, destination, 523.25, startsAt, 0.55, 1.1);
+  schedulePianoNote(context, destination, 659.25, startsAt + 0.18, 0.5, 1.25);
+}
 
-  chord.forEach((frequency, index) => {
-    const oscillator = context.createOscillator();
-    const noteGain = context.createGain();
+function scheduleWaitingPiano(context, destination, chord) {
+  const startsAt = context.currentTime + 0.3;
+  const order = [0, 2, 1, 3];
 
-    oscillator.type = index === 0 ? "sine" : "triangle";
-    oscillator.frequency.setValueAtTime(frequency, startsAt);
-    noteGain.gain.setValueAtTime(0.0001, startsAt);
-    noteGain.gain.exponentialRampToValueAtTime(index === 0 ? 0.14 : 0.075, startsAt + 0.48);
-    noteGain.gain.exponentialRampToValueAtTime(0.0001, startsAt + 3.05);
-
-    oscillator.connect(noteGain);
-    noteGain.connect(destination);
-    oscillator.start(startsAt);
-    oscillator.stop(startsAt + 3.1);
+  order.forEach((chordIndex, sequenceIndex) => {
+    const frequency = chord[chordIndex];
+    if (!frequency) return;
+    const noteStartsAt = startsAt + (sequenceIndex * 0.22);
+    const velocity = sequenceIndex === 0 ? 0.52 : 0.38;
+    schedulePianoNote(context, destination, frequency, noteStartsAt, velocity, 3.8 - (sequenceIndex * 0.12));
   });
 }
 
@@ -157,7 +172,7 @@ export default function CheckinDisplayPage() {
   const expectedCount = sp.get("expectedCount") || "";
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [musicPlaying, setMusicPlaying] = useState(false);
-  const [musicVolume, setMusicVolume] = useState(0.6);
+  const [musicVolume, setMusicVolume] = useState(0.5);
   const [musicError, setMusicError] = useState("");
   const audioContextRef = useRef(null);
   const musicGainRef = useRef(null);
@@ -278,11 +293,11 @@ export default function CheckinDisplayPage() {
       const compressor = context.createDynamicsCompressor();
 
       masterGain.gain.setValueAtTime(musicVolume, context.currentTime);
-      compressor.threshold.setValueAtTime(-18, context.currentTime);
-      compressor.knee.setValueAtTime(18, context.currentTime);
-      compressor.ratio.setValueAtTime(4, context.currentTime);
-      compressor.attack.setValueAtTime(0.003, context.currentTime);
-      compressor.release.setValueAtTime(0.25, context.currentTime);
+      compressor.threshold.setValueAtTime(-20, context.currentTime);
+      compressor.knee.setValueAtTime(16, context.currentTime);
+      compressor.ratio.setValueAtTime(3, context.currentTime);
+      compressor.attack.setValueAtTime(0.006, context.currentTime);
+      compressor.release.setValueAtTime(0.35, context.currentTime);
       masterGain.connect(compressor);
       compressor.connect(context.destination);
 
@@ -302,17 +317,17 @@ export default function CheckinDisplayPage() {
 
       const playNextChord = () => {
         if (context.state !== "running") return;
-        const chord = WAITING_MUSIC_CHORDS[musicChordIndexRef.current % WAITING_MUSIC_CHORDS.length];
+        const chord = WAITING_PIANO_CHORDS[musicChordIndexRef.current % WAITING_PIANO_CHORDS.length];
         musicChordIndexRef.current += 1;
-        scheduleWaitingChord(context, masterGain, chord);
+        scheduleWaitingPiano(context, masterGain, chord);
       };
 
       playNextChord();
-      musicTimerRef.current = window.setInterval(playNextChord, 3200);
+      musicTimerRef.current = window.setInterval(playNextChord, 4300);
       setMusicPlaying(true);
     } catch (error) {
       stopWaitingMusic();
-      setMusicError(error?.message || "Background music could not start. Raise the device media volume and try again.");
+      setMusicError(error?.message || "Piano music could not start. Raise the device media volume and try again.");
     }
   }, [musicPlaying, musicVolume, stopWaitingMusic]);
 
@@ -357,10 +372,10 @@ export default function CheckinDisplayPage() {
           <div className="checkin-display-music-main">
             <div className="checkin-display-music-copy">
               <div className="checkin-display-music-title">
-                <span aria-hidden="true">♫</span> Background music
+                <span aria-hidden="true">♫</span> Soft piano music
               </div>
               <div className="checkin-display-music-note">
-                Built-in ambient music with no audio download. You should hear a short confirmation chime when it starts.
+                Gentle built-in piano while students wait. You should hear a short piano confirmation when it starts.
               </div>
             </div>
             <div className="checkin-display-music-visual" aria-hidden="true">
@@ -374,7 +389,7 @@ export default function CheckinDisplayPage() {
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
             >
-              {musicPlaying ? "Stop music" : "Start background music"}
+              {musicPlaying ? "Stop piano" : "Start piano music"}
             </button>
           </div>
           <label className="checkin-display-music-volume">
@@ -386,7 +401,7 @@ export default function CheckinDisplayPage() {
               step="0.01"
               value={musicVolume}
               onChange={(event) => setMusicVolume(Number(event.target.value))}
-              aria-label="Background music volume"
+              aria-label="Piano music volume"
             />
             <span>{Math.round(musicVolume * 100)}%</span>
           </label>
