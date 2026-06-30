@@ -3,5 +3,6 @@ export function hasUnsavedClassEditorChanges(current = {}, saved = {}) {
 }
 
 export function isSuccessfulClassEditorMessage(message = "") {
-  return String(message).startsWith("Class updated.") || String(message).startsWith("Sessions rebuilt.");
+  const text = String(message);
+  return text.startsWith("Class updated.") || text.startsWith("Sessions rebuilt.");
 }
