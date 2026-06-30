@@ -2,6 +2,7 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
+const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");
 const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -75,8 +76,24 @@ function normalizeClassComparable(value) {
   return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
 }
 
-function resolveStudentClassId(student = {}) {
-  return normalizeClassComparable(student.classId || student.className || student.group || student.groupId || student.groupName);
+async function resolveCanonicalClassKeys(classId) {
+  const fallbackKeys = buildCanonicalClassKeys(classId);
+  const normalizedId = String(classId || "").trim();
+  if (!normalizedId) return fallbackKeys;
+
+  try {
+    const classSnap = await db.collection("classes").doc(normalizedId).get();
+    if (classSnap.exists) {
+      return buildCanonicalClassKeys(classId, classSnap.data(), classSnap.id);
+    }
+  } catch (error) {
+    console.warn("checkin_class_lookup_failed", {
+      classId: normalizedId,
+      message: error?.message || String(error),
+    });
+  }
+
+  return fallbackKeys;
 }
 
 function normalizeText(value) {
@@ -353,46 +370,74 @@ app.post("/checkin", async (req, res) => {
     const normalizedEmail = normalizeText(rawEmail);
     const normalizedPhone = normalizePhoneKey(phoneNumber);
 
-    async function findStudentByEmail(candidateEmail) {
-      const qs = await db.collection(STUDENTS_COLLECTION).where("email", "==", candidateEmail).limit(1).get();
-      return qs.empty ? null : qs.docs[0];
+    function uniqueStudentDocs(docs = []) {
+      const seen = new Set();
+      return docs.filter((studentDoc) => {
+        if (!studentDoc?.id || seen.has(studentDoc.id)) return false;
+        seen.add(studentDoc.id);
+        return true;
+      });
     }
 
-    async function findStudentByPhone(candidatePhone) {
+    async function findStudentsByEmail(candidateEmail) {
+      if (!candidateEmail) return [];
+      const qs = await db.collection(STUDENTS_COLLECTION).where("email", "==", candidateEmail).limit(10).get();
+      return qs.docs;
+    }
+
+    async function findStudentsByPhone(candidatePhone) {
+      if (!candidatePhone) return [];
       const phoneFields = ["phone", "phoneNumber", "phone_number", "contactNumber", "contactNo"];
+      const matches = [];
       for (const field of phoneFields) {
-        const qs = await db.collection(STUDENTS_COLLECTION).where(field, "==", candidatePhone).limit(1).get();
-        if (!qs.empty) return qs.docs[0];
+        const qs = await db.collection(STUDENTS_COLLECTION).where(field, "==", candidatePhone).limit(10).get();
+        matches.push(...qs.docs);
       }
-      return null;
+      return uniqueStudentDocs(matches);
     }
 
-    let studentDoc = await findStudentByEmail(rawEmail);
-    if (!studentDoc && normalizedEmail !== rawEmail) {
-      studentDoc = await findStudentByEmail(normalizedEmail);
+    const emailCandidates = [];
+    for (const emailCandidate of [...new Set([rawEmail, normalizedEmail].filter(Boolean))]) {
+      emailCandidates.push(...await findStudentsByEmail(emailCandidate));
     }
 
-    if (!studentDoc) {
+    let candidateDocs = uniqueStudentDocs(emailCandidates);
+    if (!candidateDocs.length) {
+      const phoneCandidates = [];
       for (const phoneCandidate of candidatePhoneNumbers(phoneNumber)) {
-        studentDoc = await findStudentByPhone(phoneCandidate);
-        if (studentDoc) break;
+        phoneCandidates.push(...await findStudentsByPhone(phoneCandidate));
       }
+      candidateDocs = uniqueStudentDocs(phoneCandidates);
     }
 
-    if (!studentDoc) return res.status(404).json({ error: "Student not found" });
+    if (!candidateDocs.length) return res.status(404).json({ error: "Student not found" });
 
-    const st = studentDoc.data();
-    const storedPhone = normalizePhoneKey(resolveStudentPhone(st));
-    if (!storedPhone) return res.status(400).json({ error: "Student phone is missing in records" });
-    if (!normalizedPhone || storedPhone !== normalizedPhone) {
+    const candidatesWithStoredPhone = candidateDocs.filter((candidate) => normalizePhoneKey(resolveStudentPhone(candidate.data())));
+    if (!candidatesWithStoredPhone.length) {
+      return res.status(400).json({ error: "Student phone is missing in records" });
+    }
+
+    const phoneMatchedDocs = candidatesWithStoredPhone.filter((candidate) =>
+      normalizedPhone && normalizePhoneKey(resolveStudentPhone(candidate.data())) === normalizedPhone
+    );
+    if (!phoneMatchedDocs.length) {
       return res.status(400).json({ error: "Email and phone number do not match student records" });
     }
 
-    if (!isStudentRoleAllowed(st)) return res.status(400).json({ error: "Not a student account" });
-    if (!isStudentStatusAllowed(st)) return res.status(400).json({ error: "Student not active" });
+    const studentRoleDocs = phoneMatchedDocs.filter((candidate) => isStudentRoleAllowed(candidate.data()));
+    if (!studentRoleDocs.length) return res.status(400).json({ error: "Not a student account" });
 
-    const studentClassId = resolveStudentClassId(st);
-    if (normalizeClassComparable(studentClassId) !== normalizeClassComparable(classId)) return res.status(400).json({ error: "Student not in this class" });
+    const activeStudentDocs = studentRoleDocs.filter((candidate) => isStudentStatusAllowed(candidate.data()));
+    if (!activeStudentDocs.length) return res.status(400).json({ error: "Student not active" });
+
+    const canonicalClassKeys = await resolveCanonicalClassKeys(classId);
+    const studentDoc = activeStudentDocs.find((candidate) =>
+      studentMatchesCanonicalClass(candidate.data(), canonicalClassKeys)
+    );
+    if (!studentDoc) return res.status(400).json({ error: "Student not in this class" });
+
+    const st = studentDoc.data();
+    const storedPhone = normalizePhoneKey(resolveStudentPhone(st));
 
     const uid = st.uid || studentDoc.id;
 
