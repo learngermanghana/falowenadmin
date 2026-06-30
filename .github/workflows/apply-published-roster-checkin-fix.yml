@@ -1,0 +1,132 @@
+name: Apply published roster check-in fix
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'fix-checkin-published-roster'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix-checkin-published-roster
+
+      - name: Patch check-in validation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('functions/index.js')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              'const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");',
+              'const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");\nconst { isStudentOnPublishedRoster } = require("./publishedRosterMembership.js");',
+              'published roster import',
+          )
+
+          replace_once(
+          '''    let candidateDocs = uniqueStudentDocs(emailCandidates);
+              if (!candidateDocs.length) {
+                const phoneCandidates = [];
+                for (const phoneCandidate of candidatePhoneNumbers(phoneNumber)) {
+                  phoneCandidates.push(...await findStudentsByPhone(phoneCandidate));
+                }
+                candidateDocs = uniqueStudentDocs(phoneCandidates);
+              }
+
+              if (!candidateDocs.length) return res.status(404).json({ error: "Student not found" });''',
+          '''    const phoneCandidates = [];
+              for (const phoneCandidate of candidatePhoneNumbers(phoneNumber)) {
+                phoneCandidates.push(...await findStudentsByPhone(phoneCandidate));
+              }
+
+              const candidateDocs = uniqueStudentDocs([...emailCandidates, ...phoneCandidates]);
+              if (!candidateDocs.length) return res.status(404).json({ error: "Student not found" });''',
+          'combine email and phone candidates',
+          )
+
+          replace_once(
+          '''    const phoneMatchedDocs = candidatesWithStoredPhone.filter((candidate) =>
+                normalizedPhone && normalizePhoneKey(resolveStudentPhone(candidate.data())) === normalizedPhone
+              );
+              if (!phoneMatchedDocs.length) {
+                return res.status(400).json({ error: "Email and phone number do not match student records" });
+              }
+
+              const studentRoleDocs = phoneMatchedDocs.filter((candidate) => isStudentRoleAllowed(candidate.data()));''',
+          '''    const identityMatchedDocs = candidatesWithStoredPhone.filter((candidate) => {
+                const candidateData = candidate.data();
+                const candidateEmail = normalizeText(candidateData.email || candidateData.emailAddress || candidateData["e-mail"]);
+                const candidatePhone = normalizePhoneKey(resolveStudentPhone(candidateData));
+                return Boolean(normalizedEmail && normalizedPhone && candidateEmail === normalizedEmail && candidatePhone === normalizedPhone);
+              });
+              if (!identityMatchedDocs.length) {
+                return res.status(400).json({ error: "Email and phone number do not match student records" });
+              }
+
+              const studentRoleDocs = identityMatchedDocs.filter((candidate) => isStudentRoleAllowed(candidate.data()));''',
+          'require both email and phone',
+          )
+
+          replace_once(
+          '''    const canonicalClassKeys = await resolveCanonicalClassKeys(classId);
+              const studentDoc = activeStudentDocs.find((candidate) =>
+                studentMatchesCanonicalClass(candidate.data(), canonicalClassKeys)
+              );
+              if (!studentDoc) return res.status(400).json({ error: "Student not in this class" });''',
+          '''    const canonicalClassKeys = await resolveCanonicalClassKeys(classId);
+              let studentDoc = activeStudentDocs.find((candidate) =>
+                studentMatchesCanonicalClass(candidate.data(), canonicalClassKeys)
+              );
+
+              if (!studentDoc) {
+                for (const candidate of activeStudentDocs) {
+                  const candidateData = candidate.data();
+                  const candidateEmail = normalizeText(candidateData.email || candidateData.emailAddress || candidateData["e-mail"] || normalizedEmail);
+                  try {
+                    if (await isStudentOnPublishedRoster(candidateEmail, canonicalClassKeys)) {
+                      studentDoc = candidate;
+                      break;
+                    }
+                  } catch (error) {
+                    console.warn("published_roster_check_failed", {
+                      classId,
+                      email: candidateEmail,
+                      message: error?.message || String(error),
+                    });
+                  }
+                }
+              }
+
+              if (!studentDoc) return res.status(400).json({ error: "Student not in this class" });''',
+          'published roster fallback',
+          )
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Run check-in membership tests
+        run: node --test functions/checkinClassMembership.test.js functions/publishedRosterMembership.test.js
+
+      - name: Commit fix
+        run: |
+          git config user.name "Falowen Automation"
+          git config user.email "moxflex@gmail.com"
+          rm .github/workflows/apply-published-roster-checkin-fix.yml
+          git add functions/index.js functions/checkinClassMembership.js functions/publishedRosterMembership.js functions/publishedRosterMembership.test.js .github/workflows/apply-published-roster-checkin-fix.yml
+          git commit -m "Validate check-in against the published class roster"
+          git push origin fix-checkin-published-roster
