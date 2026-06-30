@@ -21,5 +21,5 @@ export function hasUnsavedClassEditorChanges(current = {}, saved = {}) {
 
 export function isSuccessfulClassEditorMessage(message = "") {
   const text = String(message);
-  return text.startsWith("Class updated.") || text.startsWith("Sessions rebuilt.");
+  return text.startsWith("Class updated.") || text.startsWith("Sessions rebuilt successfully:");
 }
