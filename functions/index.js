@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");
+const { isStudentOnPublishedRoster } = require("./publishedRosterMembership.js");
 const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -401,15 +402,12 @@ app.post("/checkin", async (req, res) => {
       emailCandidates.push(...await findStudentsByEmail(emailCandidate));
     }
 
-    let candidateDocs = uniqueStudentDocs(emailCandidates);
-    if (!candidateDocs.length) {
-      const phoneCandidates = [];
-      for (const phoneCandidate of candidatePhoneNumbers(phoneNumber)) {
-        phoneCandidates.push(...await findStudentsByPhone(phoneCandidate));
-      }
-      candidateDocs = uniqueStudentDocs(phoneCandidates);
+    const phoneCandidates = [];
+    for (const phoneCandidate of candidatePhoneNumbers(phoneNumber)) {
+      phoneCandidates.push(...await findStudentsByPhone(phoneCandidate));
     }
 
+    const candidateDocs = uniqueStudentDocs([...emailCandidates, ...phoneCandidates]);
     if (!candidateDocs.length) return res.status(404).json({ error: "Student not found" });
 
     const candidatesWithStoredPhone = candidateDocs.filter((candidate) => normalizePhoneKey(resolveStudentPhone(candidate.data())));
@@ -417,23 +415,46 @@ app.post("/checkin", async (req, res) => {
       return res.status(400).json({ error: "Student phone is missing in records" });
     }
 
-    const phoneMatchedDocs = candidatesWithStoredPhone.filter((candidate) =>
-      normalizedPhone && normalizePhoneKey(resolveStudentPhone(candidate.data())) === normalizedPhone
-    );
-    if (!phoneMatchedDocs.length) {
+    const identityMatchedDocs = candidatesWithStoredPhone.filter((candidate) => {
+      const candidateData = candidate.data();
+      const candidateEmail = normalizeText(candidateData.email || candidateData.emailAddress || candidateData["e-mail"]);
+      const candidatePhone = normalizePhoneKey(resolveStudentPhone(candidateData));
+      return Boolean(normalizedEmail && normalizedPhone && candidateEmail === normalizedEmail && candidatePhone === normalizedPhone);
+    });
+    if (!identityMatchedDocs.length) {
       return res.status(400).json({ error: "Email and phone number do not match student records" });
     }
 
-    const studentRoleDocs = phoneMatchedDocs.filter((candidate) => isStudentRoleAllowed(candidate.data()));
+    const studentRoleDocs = identityMatchedDocs.filter((candidate) => isStudentRoleAllowed(candidate.data()));
     if (!studentRoleDocs.length) return res.status(400).json({ error: "Not a student account" });
 
     const activeStudentDocs = studentRoleDocs.filter((candidate) => isStudentStatusAllowed(candidate.data()));
     if (!activeStudentDocs.length) return res.status(400).json({ error: "Student not active" });
 
     const canonicalClassKeys = await resolveCanonicalClassKeys(classId);
-    const studentDoc = activeStudentDocs.find((candidate) =>
+    let studentDoc = activeStudentDocs.find((candidate) =>
       studentMatchesCanonicalClass(candidate.data(), canonicalClassKeys)
     );
+
+    if (!studentDoc) {
+      for (const candidate of activeStudentDocs) {
+        const candidateData = candidate.data();
+        const candidateEmail = normalizeText(candidateData.email || candidateData.emailAddress || candidateData["e-mail"] || normalizedEmail);
+        try {
+          if (await isStudentOnPublishedRoster(candidateEmail, canonicalClassKeys)) {
+            studentDoc = candidate;
+            break;
+          }
+        } catch (error) {
+          console.warn("published_roster_check_failed", {
+            classId,
+            email: candidateEmail,
+            message: error?.message || String(error),
+          });
+        }
+      }
+    }
+
     if (!studentDoc) return res.status(400).json({ error: "Student not in this class" });
 
     const st = studentDoc.data();
