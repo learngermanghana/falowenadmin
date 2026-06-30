@@ -1,6 +1,5 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { buildClassUrl } from "../utils/liveClassScheduling.js";
 import { formatAccraDateTime } from "../utils/liveClassCancellationEmail.js";
 import { saveAnnouncementRow } from "./communicationService.js";
 import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
@@ -19,7 +18,6 @@ export async function rescheduleSession(sessionId, payload) {
   await syncClassEndDateFromSessions(session.classId).catch(() => {});
 
   const className = String(klass.name || session.className || "Falowen class").trim();
-  const classUrl = String(klass.classUrl || buildClassUrl(klass) || "").trim();
   const oldTime = formatAccraDateTime(session.startsAt);
   const newTime = formatAccraDateTime(payload.startsAt);
   const subject = `Class Rescheduled: ${className} – ${newTime}`;
@@ -27,16 +25,15 @@ export async function rescheduleSession(sessionId, payload) {
     `Hello everyone, the ${className} live class has been rescheduled.`,
     `Previous time: ${oldTime}`,
     `New time: ${newTime}`,
-    classUrl ? `Class page: ${classUrl}` : "",
-    "Your Falowen schedule and calendar have been updated automatically.",
-  ].filter(Boolean).join("\n\n");
+    "Please check your Falowen homepage for the updated class time.",
+  ].join("\n\n");
 
   try {
     const receipt = await saveAnnouncementRow({
       announcement,
       className,
       date: String(payload.startsAt || "").slice(0, 10),
-      link: classUrl,
+      link: "",
       topic: subject,
     });
     return {
