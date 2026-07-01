@@ -56,7 +56,6 @@ async function repairMissingSessions(classId, dashboard) {
 
 function prepareDashboard(dashboard, repair = null) {
   const sessions = (dashboard.sessions || [])
-    .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
     .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
     .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
   const latest = sessions[sessions.length - 1] || null;
@@ -64,6 +63,7 @@ function prepareDashboard(dashboard, repair = null) {
 
   return {
     ...dashboard,
+    sessions,
     klass: { ...dashboard.klass, sessionDerivedEndDate: endDate },
     sessionRepair: repair,
   };
