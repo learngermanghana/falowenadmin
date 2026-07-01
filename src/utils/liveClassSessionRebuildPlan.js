@@ -7,7 +7,16 @@ export function sessionHasAttendanceData(record = null) {
 }
 
 export function isProtectedRebuildSession(session = {}) {
-  return ["completed", "live", "cancelled", "rescheduled"].includes(String(session.status || "scheduled").toLowerCase());
+  const status = String(session.status || "scheduled").toLowerCase();
+  if (["completed", "live", "cancelled", "rescheduled"].includes(status)) return true;
+
+  return Boolean(
+    session.rescheduledAt
+    || session.rescheduledBy
+    || session.previousStartsAt
+    || session.previousEndsAt
+    || session.rescheduleReason
+  );
 }
 
 export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], sessions = [], attendanceBySessionId = new Map(), buildCurriculumPatch = null } = {}) {
