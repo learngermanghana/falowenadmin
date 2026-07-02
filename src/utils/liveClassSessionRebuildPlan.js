@@ -11,7 +11,10 @@ export function isProtectedRebuildSession(session = {}) {
   if (["completed", "live", "cancelled", "rescheduled"].includes(status)) return true;
 
   return Boolean(
-    session.rescheduledAt
+    session.manualDateOverride
+    || session.manualDateOverrideAt
+    || session.manualDateOverrideBy
+    || session.rescheduledAt
     || session.rescheduledBy
     || session.previousStartsAt
     || session.previousEndsAt
