@@ -65,6 +65,28 @@ test("rebuild plan preserves legacy rescheduled sessions even when status is sch
   assert.deepEqual(plan.preserved, [rescheduled]);
 });
 
+test("rebuild plan does not overwrite a date changed from Attendance", () => {
+  const occurrences = desiredOccurrences();
+  const original = occurrences[0];
+  const overridden = {
+    ...original,
+    startsAt: "2026-06-18T18:00:00.000Z",
+    endsAt: "2026-06-18T20:00:00.000Z",
+    manualDateOverride: true,
+    manualDateOverrideBy: "admin-user",
+    status: "scheduled",
+  };
+
+  const plan = buildRebuildClassSessionsPlan({ klass, occurrences, sessions: [overridden] });
+  const upsert = plan.upserts.find((item) => item.occurrence.id === original.id);
+  const rebuilt = { ...upsert.existing, ...upsert.patch };
+
+  assert.equal(upsert.patch.startsAt, undefined);
+  assert.equal(upsert.patch.endsAt, undefined);
+  assert.equal(rebuilt.startsAt, overridden.startsAt);
+  assert.equal(rebuilt.endsAt, overridden.endsAt);
+});
+
 test("rebuild plan preserves stale sessions that have attendance records", () => {
   const stale = { id: "class-a1_2026-06-29_1800", classId: klass.id, startsAt: "2026-06-29T18:00:00.000Z", status: "scheduled" };
   const plan = buildRebuildClassSessionsPlan({
