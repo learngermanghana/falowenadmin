@@ -43,26 +43,60 @@ function formatDateTime(value) {
   });
 }
 
-function toDateTimeLocal(value) {
-  if (!value) return "";
+function ghanaParts(value) {
   const parsed = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  const pad = (number) => String(number).padStart(2, "0");
-  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+  if (Number.isNaN(parsed.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Accra",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(parsed);
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
 }
 
-function rescheduledTimes(session, startInput, timezone = "Africa/Accra") {
-  const match = String(startInput || "").trim().match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/);
-  if (!match) throw new Error("Enter the new start as YYYY-MM-DDTHH:mm.");
-  const startsAt = zonedLocalToUtcIso(match[1], match[2], timezone || "Africa/Accra");
+function formatGhanaDateInput(value) {
+  const parts = ghanaParts(value);
+  return parts ? `${parts.year}-${parts.month}-${parts.day}` : "";
+}
+
+function formatGhanaTimeInput(value) {
+  const parts = ghanaParts(value);
+  return parts ? `${parts.hour}:${parts.minute}` : "";
+}
+
+function defaultRescheduleTime(session) {
+  const current = formatGhanaTimeInput(session?.startsAt);
+  const hour = Number(String(current || "").slice(0, 2));
+  if (Number.isFinite(hour) && hour > 0 && hour < 8) return "18:00";
+  return current || "18:00";
+}
+
+function sessionDurationMinutes(session = {}) {
   const oldStart = new Date(session.startsAt || 0).getTime();
   const oldEnd = new Date(session.endsAt || 0).getTime();
   const savedDuration = oldEnd - oldStart;
-  const fallbackDuration = Math.max(30, Number(session.durationMinutes || 60)) * 60000;
-  const durationMs = Number.isFinite(savedDuration) && savedDuration > 0 ? savedDuration : fallbackDuration;
+  if (Number.isFinite(savedDuration) && savedDuration > 0) return Math.max(1, Math.round(savedDuration / 60000));
+  return Math.max(30, Number(session.durationMinutes || 120));
+}
+
+function rescheduledTimes(session, dateInput, timeInput, timezone = "Africa/Accra") {
+  const localDate = String(dateInput || "").trim();
+  const localTime = String(timeInput || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(localDate)) throw new Error("Enter the new date as YYYY-MM-DD.");
+  if (!/^\d{2}:\d{2}$/.test(localTime)) throw new Error("Enter the new start time as HH:mm, for example 18:00.");
+  const durationMinutes = sessionDurationMinutes(session);
+  const startsAt = zonedLocalToUtcIso(localDate, localTime, timezone || "Africa/Accra");
   return {
+    localDate,
+    localTime,
+    durationMinutes,
+    timezone: timezone || "Africa/Accra",
     startsAt,
-    endsAt: new Date(new Date(startsAt).getTime() + durationMs).toISOString(),
+    endsAt: new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString(),
   };
 }
 
@@ -225,16 +259,18 @@ export default function LiveClassesPageCompat() {
         if (choice === null) return;
         const normalized = choice.trim().toLowerCase();
         if (["1", "r", "reschedule"].includes(normalized)) {
-          const startInput = window.prompt("New start (YYYY-MM-DDTHH:mm)", toDateTimeLocal(session.startsAt));
-          if (!startInput) return;
-          const times = rescheduledTimes(session, startInput, dashboard?.klass?.timezone || "Africa/Accra");
+          const dateInput = window.prompt("New class date (YYYY-MM-DD)", formatGhanaDateInput(session.startsAt));
+          if (!dateInput) return;
+          const timeInput = window.prompt("New Ghana start time, 24-hour format. Use 18:00 for 6 PM.", defaultRescheduleTime(session));
+          if (!timeInput) return;
+          const times = rescheduledTimes(session, dateInput, timeInput, dashboard?.klass?.timezone || "Africa/Accra");
           const result = await rescheduleSession(session.id, {
             ...times,
             adminId: user?.uid || user?.email || "admin",
           });
           setMessage(result?.emailSubmitted === false
-            ? `Session rescheduled and schedule updated, but the communication email could not be confirmed: ${result.emailMessage || "Unknown delivery error"}`
-            : "Session rescheduled. The schedule, calendar and Communication-sheet email were updated automatically.");
+            ? `Session rescheduled to ${formatDateTime(result.startsAt)} and attendance updated, but the communication email could not be confirmed: ${result.emailMessage || "Unknown delivery error"}`
+            : `Session rescheduled to ${formatDateTime(result.startsAt)}. Live Classes, Attendance and Communication were updated automatically.`);
         } else if (["2", "c", "cancel"].includes(normalized)) {
           const reason = window.prompt("Reason for cancellation", session.cancellationReason || "");
           if (reason === null) return;
