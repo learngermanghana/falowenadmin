@@ -22,31 +22,76 @@ export function isProtectedRebuildSession(session = {}) {
   );
 }
 
+function isLockedRebuildSession(session = {}) {
+  const status = String(session.status || "scheduled").toLowerCase();
+  return ["completed", "live", "cancelled"].includes(status);
+}
+
+function sessionTime(session = {}) {
+  if (typeof session.startsAt?.toDate === "function") return session.startsAt.toDate().getTime();
+  const parsed = new Date(session.startsAt || 0).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function sessionCurriculumIndex(session = {}) {
+  const direct = Number(session.curriculumIndex || 0);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const day = Number(session.curriculumDay || 0);
+  if (Number.isFinite(day) && day >= 0) return day + 1;
+  return 0;
+}
+
+function chooseExistingSession({ occurrence, index, sessions, existingById, usedIds }) {
+  const exact = existingById.get(occurrence.id);
+  if (exact && !usedIds.has(exact.id)) return exact;
+
+  const wantedIndex = index + 1;
+  const byCurriculum = sessions.find((session) => sessionCurriculumIndex(session) === wantedIndex && !usedIds.has(session.id));
+  if (byCurriculum) return byCurriculum;
+
+  return sessions[index] && !usedIds.has(sessions[index].id) ? sessions[index] : null;
+}
+
 export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], sessions = [], attendanceBySessionId = new Map(), buildCurriculumPatch = null } = {}) {
-  const desiredIds = new Set(occurrences.map((occurrence) => occurrence.id));
   const existingById = new Map(sessions.map((session) => [session.id, session]));
+  const sortedSessions = [...sessions].sort((left, right) => {
+    const leftIndex = sessionCurriculumIndex(left);
+    const rightIndex = sessionCurriculumIndex(right);
+    if (leftIndex && rightIndex && leftIndex !== rightIndex) return leftIndex - rightIndex;
+    if (leftIndex && !rightIndex) return -1;
+    if (!leftIndex && rightIndex) return 1;
+    return sessionTime(left) - sessionTime(right);
+  });
+  const usedIds = new Set();
+  const desiredIds = new Set();
   const deletions = [];
   const preserved = [];
   const upserts = [];
 
+  occurrences.forEach((occurrence, index) => {
+    const existing = chooseExistingSession({ occurrence, index, sessions: sortedSessions, existingById, usedIds });
+    if (existing) usedIds.add(existing.id);
+
+    const targetOccurrence = existing ? { ...occurrence, id: existing.id } : occurrence;
+    desiredIds.add(targetOccurrence.id);
+
+    const curriculumPatch = typeof buildCurriculumPatch === "function" ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !existing }) : null;
+    const lockedExisting = existing && isLockedRebuildSession(existing);
+    const basePatch = lockedExisting
+      ? { classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" }
+      : { ...targetOccurrence, classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" };
+
+    upserts.push({ occurrence: targetOccurrence, existing, patch: { ...basePatch, ...(curriculumPatch || {}) }, curriculumMapped: Boolean(curriculumPatch) });
+  });
+
   sessions.forEach((session) => {
-    if (desiredIds.has(session.id)) return;
+    if (usedIds.has(session.id) || desiredIds.has(session.id)) return;
     const attendance = attendanceBySessionId.get(session.id);
     if (!isProtectedRebuildSession(session) && !sessionHasAttendanceData(session) && !sessionHasAttendanceData(attendance)) {
       deletions.push(session);
     } else {
       preserved.push(session);
     }
-  });
-
-  occurrences.forEach((occurrence, index) => {
-    const existing = existingById.get(occurrence.id);
-    const curriculumPatch = typeof buildCurriculumPatch === "function" ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !existing }) : null;
-    const protectedExisting = existing && isProtectedRebuildSession(existing);
-    const basePatch = protectedExisting
-      ? { classId: occurrence.classId, classRecordId: klass.id || occurrence.classId, className: klass.name || "" }
-      : { ...occurrence, classId: occurrence.classId, classRecordId: klass.id || occurrence.classId, className: klass.name || "" };
-    upserts.push({ occurrence, existing, patch: { ...basePatch, ...(curriculumPatch || {}) }, curriculumMapped: Boolean(curriculumPatch) });
   });
 
   return { desiredIds, deletions, preserved, upserts };
