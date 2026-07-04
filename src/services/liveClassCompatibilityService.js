@@ -1,7 +1,7 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
-import { rebuildClassSessionsFromSchedule, syncClassCurriculum } from "./liveClassService.js";
+import { rebuildClassSessionsFromSchedule, syncClassCurriculum, syncClassEndDateFromSessions } from "./liveClassService.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
 
 export * from "./liveClassCompatibilityServiceBase.js";
@@ -87,6 +87,18 @@ export async function getCompatibleClassDashboard(classId) {
   }
 
   return prepareDashboard(dashboard, repair);
+}
+
+export async function updateCompatibleSession(classId, sessionId, patch = {}) {
+  const hasTimeChange = Boolean(patch.startsAt || patch.endsAt || patch.manualDateOverride);
+  const nextPatch = hasTimeChange && !patch.status ? { ...patch, status: "rescheduled" } : patch;
+  const session = await base.updateCompatibleSession(classId, sessionId, nextPatch);
+
+  if (hasTimeChange) {
+    await syncClassEndDateFromSessions(session.classId || classId).catch(() => {});
+  }
+
+  return session;
 }
 
 export async function syncCompatibleClassCurriculum(classId, options = {}) {
