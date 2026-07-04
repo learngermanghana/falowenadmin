@@ -6,48 +6,53 @@ import { saveAnnouncementRow } from "./communicationService.js";
 import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
 import * as base from "./liveClassServiceBase.js";
 
-function deviceTimezone() {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Accra";
-  } catch {
-    return "Africa/Accra";
-  }
+function validLocalDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
 }
 
-function wallClockParts(value, timezone) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return {
-    date: `${values.year}-${values.month}-${values.day}`,
-    time: `${values.hour}:${values.minute}`,
-  };
+function validLocalTime(value) {
+  return /^\d{2}:\d{2}$/.test(String(value || "").trim());
+}
+
+function durationFromPayload(payload = {}) {
+  const explicitMinutes = Number(payload.durationMinutes || 0);
+  if (Number.isFinite(explicitMinutes) && explicitMinutes > 0) return Math.max(1, Math.round(explicitMinutes));
+
+  const sourceStart = new Date(payload.startsAt || 0);
+  const sourceEnd = new Date(payload.endsAt || 0);
+  if (!Number.isNaN(sourceStart.getTime()) && !Number.isNaN(sourceEnd.getTime())) {
+    return Math.max(1, Math.round((sourceEnd.getTime() - sourceStart.getTime()) / 60000));
+  }
+
+  return 120;
 }
 
 function normalizeReschedulePayload(payload = {}, klass = {}) {
+  const classTimezone = String(payload.timezone || klass.timezone || "Africa/Accra").trim() || "Africa/Accra";
+  const localDate = String(payload.localDate || payload.date || "").trim();
+  const localTime = String(payload.localTime || payload.time || "").trim();
+  const durationMinutes = durationFromPayload(payload);
+
+  if (validLocalDate(localDate) && validLocalTime(localTime)) {
+    const startsAt = zonedLocalToUtcIso(localDate, localTime, classTimezone);
+    const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
+    return { ...payload, startsAt, endsAt, durationMinutes };
+  }
+
+  const rawStart = String(payload.startsAt || "").trim();
+  const localMatch = rawStart.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/);
+  if (localMatch) {
+    const startsAt = zonedLocalToUtcIso(localMatch[1], localMatch[2], classTimezone);
+    const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
+    return { ...payload, startsAt, endsAt, durationMinutes };
+  }
+
   const sourceStart = new Date(payload.startsAt || 0);
-  const sourceEnd = new Date(payload.endsAt || 0);
   if (Number.isNaN(sourceStart.getTime())) throw new Error("Choose a valid new date and time.");
 
-  const durationMinutes = Number.isNaN(sourceEnd.getTime())
-    ? 60
-    : Math.max(1, Math.round((sourceEnd.getTime() - sourceStart.getTime()) / 60000));
-  const classTimezone = String(klass.timezone || "Africa/Accra").trim() || "Africa/Accra";
-  const wallClock = wallClockParts(sourceStart, deviceTimezone());
-  if (!wallClock) throw new Error("Choose a valid new date and time.");
-
-  const startsAt = zonedLocalToUtcIso(wallClock.date, wallClock.time, classTimezone);
-  const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-  return { ...payload, startsAt, endsAt };
+  const startsAt = sourceStart.toISOString();
+  const endsAt = new Date(sourceStart.getTime() + durationMinutes * 60000).toISOString();
+  return { ...payload, startsAt, endsAt, durationMinutes };
 }
 
 export async function rescheduleSession(sessionId, payload) {
