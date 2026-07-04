@@ -14,6 +14,20 @@ function validLocalTime(value) {
   return /^\d{2}:\d{2}$/.test(String(value || "").trim());
 }
 
+function normalizeLocalTime(value) {
+  const raw = String(value || "").trim();
+  if (!validLocalTime(raw)) return raw;
+  const [hourRaw, minuteRaw] = raw.split(":");
+  const hour = Number(hourRaw);
+  const minute = Number(minuteRaw);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return raw;
+
+  // Falowen evening classes are often typed as 06:00 for 6 PM.
+  // When rescheduling from Live Classes, treat early 01:00-07:59 entries as PM.
+  if (hour > 0 && hour < 8) return `${String(hour + 12).padStart(2, "0")}:${minuteRaw}`;
+  return raw;
+}
+
 function durationFromPayload(payload = {}) {
   const explicitMinutes = Number(payload.durationMinutes || 0);
   if (Number.isFinite(explicitMinutes) && explicitMinutes > 0) return Math.max(1, Math.round(explicitMinutes));
@@ -30,21 +44,22 @@ function durationFromPayload(payload = {}) {
 function normalizeReschedulePayload(payload = {}, klass = {}) {
   const classTimezone = String(payload.timezone || klass.timezone || "Africa/Accra").trim() || "Africa/Accra";
   const localDate = String(payload.localDate || payload.date || "").trim();
-  const localTime = String(payload.localTime || payload.time || "").trim();
+  const localTime = normalizeLocalTime(payload.localTime || payload.time || "");
   const durationMinutes = durationFromPayload(payload);
 
   if (validLocalDate(localDate) && validLocalTime(localTime)) {
     const startsAt = zonedLocalToUtcIso(localDate, localTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, startsAt, endsAt, durationMinutes };
+    return { ...payload, localTime, startsAt, endsAt, durationMinutes };
   }
 
   const rawStart = String(payload.startsAt || "").trim();
   const localMatch = rawStart.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/);
   if (localMatch) {
-    const startsAt = zonedLocalToUtcIso(localMatch[1], localMatch[2], classTimezone);
+    const startTime = normalizeLocalTime(localMatch[2]);
+    const startsAt = zonedLocalToUtcIso(localMatch[1], startTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, startsAt, endsAt, durationMinutes };
+    return { ...payload, localTime: startTime, startsAt, endsAt, durationMinutes };
   }
 
   const sourceStart = new Date(payload.startsAt || 0);
@@ -53,6 +68,28 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
   const startsAt = sourceStart.toISOString();
   const endsAt = new Date(sourceStart.getTime() + durationMinutes * 60000).toISOString();
   return { ...payload, startsAt, endsAt, durationMinutes };
+}
+
+function lessonLabel(session = {}) {
+  const topic = String(session.topic || session.title || session.sessionLabel || "").trim();
+  const dayNumber = Number.isFinite(Number(session.curriculumDay)) && Number(session.curriculumDay) >= 0
+    ? Number(session.curriculumDay)
+    : Number.isFinite(Number(session.curriculumIndex)) && Number(session.curriculumIndex) > 0
+      ? Number(session.curriculumIndex) - 1
+      : null;
+  const assignmentIds = [
+    ...(Array.isArray(session.assignmentIds) ? session.assignmentIds : []),
+    ...(Array.isArray(session.chapterIds) ? session.chapterIds : []),
+    ...(Array.isArray(session.curriculumIds) ? session.curriculumIds : []),
+    session.assignment_id,
+  ].map((value) => String(value || "").trim().toUpperCase()).filter(Boolean);
+  const uniqueAssignments = [...new Set(assignmentIds)];
+
+  const parts = [];
+  if (dayNumber !== null) parts.push(`Day ${dayNumber}`);
+  if (topic) parts.push(topic.replace(/^Day\s+\d+\s*:\s*/i, ""));
+  if (uniqueAssignments.length) parts.push(`Assignment ${uniqueAssignments.join(", ")}`);
+  return parts.length ? parts.join(" — ") : "Selected lesson";
 }
 
 export async function rescheduleSession(sessionId, payload) {
@@ -70,11 +107,13 @@ export async function rescheduleSession(sessionId, payload) {
   await syncClassEndDateFromSessions(session.classId).catch(() => {});
 
   const className = String(klass.name || session.className || "Falowen class").trim();
+  const lesson = lessonLabel(session);
   const oldTime = formatAccraDateTime(session.startsAt);
   const newTime = formatAccraDateTime(normalizedPayload.startsAt);
-  const subject = `Class Rescheduled: ${className} – ${newTime}`;
+  const subject = `Class Rescheduled: ${className} — ${lesson} — ${newTime}`;
   const announcement = [
     `Hello everyone, the ${className} live class has been rescheduled.`,
+    `Lesson: ${lesson}`,
     `Previous time: ${oldTime}`,
     `New time: ${newTime}`,
     "Please check your Falowen homepage for the updated class time.",
