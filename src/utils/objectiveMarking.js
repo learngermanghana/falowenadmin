@@ -482,21 +482,21 @@ function isLikelyWritingBlock(entries = []) {
 }
 
 function getFlatAnswerCandidateSequences(submissionText = "") {
-  const sections = splitSubmissionIntoSections(submissionText).filter((section) => normalizePartId(section.partId) !== "teil2");
+  const sections = splitSubmissionIntoSections(submissionText);
   const sectionGroups = sections
     .map((section) => extractRestartedNumberingEntries(section.text))
-    .filter((entries) => entries.length);
+    .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
 
   const blockGroups = splitIntoAnswerBlocks(submissionText)
     .map((block) => extractRestartedNumberingEntries(block))
-    .filter((entries) => entries.length);
+    .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
 
   const groups = sectionGroups.length > 1 ? sectionGroups : blockGroups.length > 1 ? blockGroups : sectionGroups.length ? sectionGroups : blockGroups;
   if (!groups.length) return [];
 
   const candidates = [];
   for (let start = 0; start < groups.length; start += 1) {
-    const selectedGroups = groups.slice(start).filter((entries, index) => index > 0 || !isLikelyWritingBlock(entries));
+    const selectedGroups = groups.slice(start);
     const answers = selectedGroups.flatMap((entries) => entries.sort((a, b) => a.number - b.number).map((entry) => entry.answer));
     if (answers.length) candidates.push(answers);
   }
