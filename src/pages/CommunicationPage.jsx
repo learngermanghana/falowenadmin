@@ -63,11 +63,15 @@ const QUICK_TEMPLATES = [
   },
 ];
 
+const ALL_ACTIVE_AUDIENCE = "all_active";
+const ALL_ACTIVE_AUDIENCE_LABEL = "Everyone / all active students";
+const ACCOUNT_UPGRADE_LINK = "https://www.falowen.app/campus/account";
+
 const UPCOMING_CLASS_PROMO = {
   label: "Upcoming class ad",
   topic: "Next Class Registration",
   announcement:
-    "Hi everyone, your current level is almost complete. Our next class, {upcoming_class}, starts on {upcoming_start_date}. You can register here: {registration_link}",
+    "Hi everyone, your current level is almost complete. Our next class, {upcoming_class}, starts on {upcoming_start_date}. When you are ready, go to your account and upgrade here: {account_link}. Class details: {class_details}",
 };
 
 function toDateInputValue(value) {
@@ -89,14 +93,53 @@ function classRegistrationLink(klass = {}) {
   return String(klass.registrationLink || klass.classUrl || klass.link || "").trim();
 }
 
+function formatMoney(value, currency = "") {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const currencyText = String(currency || "").trim();
+  return currencyText && !text.includes(currencyText) ? `${currencyText} ${text}` : text;
+}
+
+function formatScheduleRules(rules = []) {
+  if (!Array.isArray(rules) || !rules.length) return "";
+  return rules
+    .map((rule) => {
+      const day = String(rule.day || rule.weekday || "").trim();
+      const time = String(rule.time || rule.startTime || "").trim();
+      return [day, time].filter(Boolean).join(" ");
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
+function buildClassDetails(klass = {}) {
+  const details = [
+    ["Start date", toDateInputValue(klass.startDate)],
+    ["End date", toDateInputValue(klass.endDate)],
+    ["Price", formatMoney(klass.price || klass.fee || klass.tuition, klass.currency)],
+    ["Schedule", formatScheduleRules(klass.scheduleRules)],
+    ["Timezone", klass.timezone],
+    ["Registration link", classRegistrationLink(klass)],
+    ["Account upgrade link", ACCOUNT_UPGRADE_LINK],
+  ];
+
+  return details
+    .filter(([, value]) => String(value || "").trim())
+    .map(([label, value]) => `${label}: ${value}`)
+    .join("; ");
+}
+
 function buildUpcomingClassAnnouncement(template, klass = {}) {
   const upcomingClass = String(klass.name || klass.className || klass.classId || "").trim();
   const startDate = toDateInputValue(klass.startDate) || "soon";
-  const link = classRegistrationLink(klass) || "the registration page";
+  const link = classRegistrationLink(klass) || ACCOUNT_UPGRADE_LINK;
+  const classDetails = buildClassDetails(klass) || `Account upgrade link: ${ACCOUNT_UPGRADE_LINK}`;
   return template.announcement
     .replaceAll("{upcoming_class}", upcomingClass || "the next class")
     .replaceAll("{upcoming_start_date}", startDate)
-    .replaceAll("{registration_link}", link);
+    .replaceAll("{registration_link}", link)
+    .replaceAll("{account_link}", ACCOUNT_UPGRADE_LINK)
+    .replaceAll("{class_details}", classDetails);
 }
 
 const fieldStyle = { display: "grid", gap: 6 };
@@ -141,7 +184,7 @@ export default function CommunicationPage() {
 
   useEffect(() => {
     const className = form.className.trim();
-    if (!className) {
+    if (!className || className === ALL_ACTIVE_AUDIENCE) {
       setStudents([]);
       return;
     }
@@ -206,7 +249,7 @@ export default function CommunicationPage() {
       promoClassId: classId,
       topic: UPCOMING_CLASS_PROMO.topic,
       announcement: selectedClass ? buildUpcomingClassAnnouncement(UPCOMING_CLASS_PROMO, selectedClass) : UPCOMING_CLASS_PROMO.announcement,
-      link: selectedClass ? classRegistrationLink(selectedClass) : current.link,
+      link: selectedClass ? classRegistrationLink(selectedClass) || ACCOUNT_UPGRADE_LINK : current.link,
     }));
   }
 
@@ -274,19 +317,23 @@ export default function CommunicationPage() {
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
           <label style={fieldStyle}>
             <span>Audience class *</span>
-            <input
-              list="communication-class-options"
+            <select
               style={inputStyle}
               value={form.className}
               onChange={(event) => updateField("className", event.target.value)}
-              placeholder={loadingClasses ? "Loading classes..." : "Choose or type class"}
+              disabled={loadingClasses}
               required
-            />
-            <datalist id="communication-class-options">
-              {classes.map((klass) => (
-                <option key={klass.classId || klass.id || klass.name} value={klass.name} />
-              ))}
-            </datalist>
+            >
+              <option value="">{loadingClasses ? "Loading classes..." : "Select audience"}</option>
+              <option value={ALL_ACTIVE_AUDIENCE}>{ALL_ACTIVE_AUDIENCE_LABEL} — sends all_active to sheet</option>
+              {classes.map((klass) => {
+                const className = String(klass.name || klass.className || klass.classId || klass.id || "").trim();
+                return className ? <option key={klass.classId || klass.id || className} value={className}>{className}</option> : null;
+              })}
+            </select>
+            <small style={{ opacity: 0.75 }}>
+              Selecting {ALL_ACTIVE_AUDIENCE_LABEL} writes <code>{ALL_ACTIVE_AUDIENCE}</code> in the sheet class column.
+            </small>
           </label>
 
 
@@ -317,7 +364,7 @@ export default function CommunicationPage() {
               style={inputStyle}
               value={form.studentId}
               onChange={(event) => onSelectStudent(event.target.value)}
-              disabled={!form.className.trim() || loadingStudents}
+              disabled={!form.className.trim() || form.className === ALL_ACTIVE_AUDIENCE || loadingStudents}
             >
               <option value="">{loadingStudents ? "Loading students..." : "Select student (optional)"}</option>
               {students.map((student) => {
