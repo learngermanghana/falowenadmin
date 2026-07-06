@@ -63,6 +63,42 @@ const QUICK_TEMPLATES = [
   },
 ];
 
+const UPCOMING_CLASS_PROMO = {
+  label: "Upcoming class ad",
+  topic: "Next Class Registration",
+  announcement:
+    "Hi everyone, your current level is almost complete. Our next class, {upcoming_class}, starts on {upcoming_start_date}. You can register here: {registration_link}",
+};
+
+function toDateInputValue(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.includes("T") ? value.slice(0, 10) : value.slice(0, 10);
+  const date = typeof value?.toDate === "function" ? value.toDate() : value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+function isUpcomingClass(klass = {}, today = new Date().toISOString().slice(0, 10)) {
+  const status = String(klass.status || "").toLowerCase();
+  const startDate = toDateInputValue(klass.startDate);
+  if (["archived", "graduated", "inactive"].includes(status)) return false;
+  return status === "upcoming" || (startDate && startDate >= today);
+}
+
+function classRegistrationLink(klass = {}) {
+  return String(klass.registrationLink || klass.classUrl || klass.link || "").trim();
+}
+
+function buildUpcomingClassAnnouncement(template, klass = {}) {
+  const upcomingClass = String(klass.name || klass.className || klass.classId || "").trim();
+  const startDate = toDateInputValue(klass.startDate) || "soon";
+  const link = classRegistrationLink(klass) || "the registration page";
+  return template.announcement
+    .replaceAll("{upcoming_class}", upcomingClass || "the next class")
+    .replaceAll("{upcoming_start_date}", startDate)
+    .replaceAll("{registration_link}", link);
+}
+
 const fieldStyle = { display: "grid", gap: 6 };
 const inputStyle = { padding: 10, borderRadius: 8, border: "1px solid #d0d7de" };
 
@@ -84,6 +120,7 @@ export default function CommunicationPage() {
     certLevel: "",
     studentId: "",
     studentName: "",
+    promoClassId: "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -122,6 +159,8 @@ export default function CommunicationPage() {
     })();
   }, [form.className]);
 
+  const upcomingClasses = useMemo(() => classes.filter((klass) => isUpcomingClass(klass)), [classes]);
+
   const canSubmit = useMemo(() => {
     return Boolean(form.announcement.trim() && form.className.trim() && form.date.trim() && !saving);
   }, [form.announcement, form.className, form.date, saving]);
@@ -159,6 +198,18 @@ export default function CommunicationPage() {
     }));
   }
 
+  function applyUpcomingClassPromo(classId) {
+    const selectedClass = classes.find((klass) => String(klass.classId || klass.id || klass.name || "") === classId);
+
+    setForm((current) => ({
+      ...current,
+      promoClassId: classId,
+      topic: UPCOMING_CLASS_PROMO.topic,
+      announcement: selectedClass ? buildUpcomingClassAnnouncement(UPCOMING_CLASS_PROMO, selectedClass) : UPCOMING_CLASS_PROMO.announcement,
+      link: selectedClass ? classRegistrationLink(selectedClass) : current.link,
+    }));
+  }
+
   async function onSubmit(event) {
     event.preventDefault();
     setSaving(true);
@@ -182,6 +233,7 @@ export default function CommunicationPage() {
         certLevel: "",
         studentId: "",
         studentName: "",
+        promoClassId: "",
       }));
     } catch (error) {
       toast.error(error?.message || "Failed to save broadcast.");
@@ -200,7 +252,7 @@ export default function CommunicationPage() {
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {QUICK_TEMPLATES.map((template) => (
+        {[...QUICK_TEMPLATES, UPCOMING_CLASS_PROMO].map((template) => (
           <button key={template.label} type="button" onClick={() => applyTemplate(template)}>
             {template.label}
           </button>
@@ -221,7 +273,7 @@ export default function CommunicationPage() {
 
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
           <label style={fieldStyle}>
-            <span>Class *</span>
+            <span>Audience class *</span>
             <input
               list="communication-class-options"
               style={inputStyle}
@@ -232,9 +284,31 @@ export default function CommunicationPage() {
             />
             <datalist id="communication-class-options">
               {classes.map((klass) => (
-                <option key={klass.classId} value={klass.name} />
+                <option key={klass.classId || klass.id || klass.name} value={klass.name} />
               ))}
             </datalist>
+          </label>
+
+
+          <label style={fieldStyle}>
+            <span>Promote upcoming class</span>
+            <select
+              style={inputStyle}
+              value={form.promoClassId}
+              onChange={(event) => applyUpcomingClassPromo(event.target.value)}
+              disabled={loadingClasses}
+            >
+              <option value="">Select upcoming class to advertise</option>
+              {upcomingClasses.map((klass) => {
+                const classId = String(klass.classId || klass.id || klass.name || "");
+                const startDate = toDateInputValue(klass.startDate);
+                return (
+                  <option key={classId} value={classId}>
+                    {klass.name || klass.classId}{startDate ? ` — starts ${startDate}` : ""}
+                  </option>
+                );
+              })}
+            </select>
           </label>
 
           <label style={fieldStyle}>

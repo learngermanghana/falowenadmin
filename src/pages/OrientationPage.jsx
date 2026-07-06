@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { listAllStudents } from "../services/studentsService";
+import { listClassCohorts } from "../services/liveClassService";
 import { syncOrientationStudent } from "../services/orientationService";
 
 const LEVEL_LINKS = {
@@ -8,18 +9,56 @@ const LEVEL_LINKS = {
   B1: "https://www.falowen.app/campus/course/b1-day-0-orientation-and-knowledge-test-workbook",
 };
 
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
+function normalizeComparable(value) {
+  return normalizeText(value).toLowerCase().replace(/\s+/g, " ");
+}
+
+function toDateInputValue(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.includes("T") ? value.slice(0, 10) : value.slice(0, 10);
+  const date = typeof value?.toDate === "function" ? value.toDate() : value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
 function normalizeStudent(student = {}) {
   return {
-    id: String(student.id || student.studentCode || student.email || student.name || "").trim(),
-    name: String(student.name || "").trim(),
-    email: String(student.email || "").trim(),
-    className: String(student.className || student.class || student.level || "").trim(),
-    studentCode: String(student.studentCode || student.studentcode || "").trim(),
+    id: normalizeText(student.id || student.studentCode || student.email || student.name),
+    name: normalizeText(student.name),
+    email: normalizeText(student.email),
+    className: normalizeText(student.className || student.class || student.level),
+    studentCode: normalizeText(student.studentCode || student.studentcode),
   };
+}
+
+function normalizeClassCohort(klass = {}) {
+  return {
+    id: normalizeText(klass.id),
+    name: normalizeText(klass.name || klass.className),
+    slug: normalizeText(klass.slug),
+    levelId: normalizeText(klass.levelId || klass.level).toUpperCase(),
+    startDate: toDateInputValue(klass.startDate),
+  };
+}
+
+function findClassForStudent(student, classCohorts) {
+  const classKey = normalizeComparable(student?.className);
+  if (!classKey) return null;
+  return classCohorts.find((klass) => (
+    [klass.name, klass.id, klass.slug]
+      .map(normalizeComparable)
+      .filter(Boolean)
+      .includes(classKey)
+  )) || null;
 }
 
 export default function OrientationPage() {
   const [students, setStudents] = useState([]);
+  const [classCohorts, setClassCohorts] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [form, setForm] = useState({ name: "", email: "", level: "A1", startDate: "", studentCode: "" });
@@ -30,10 +69,11 @@ export default function OrientationPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    listAllStudents()
-      .then((rows) => {
+    Promise.all([listAllStudents(), listClassCohorts()])
+      .then(([studentRows, classRows]) => {
         if (!active) return;
-        setStudents((rows || []).map(normalizeStudent).filter((row) => row.id));
+        setStudents((studentRows || []).map(normalizeStudent).filter((row) => row.id));
+        setClassCohorts((classRows || []).map(normalizeClassCohort).filter((row) => row.id || row.name));
       })
       .catch((err) => {
         if (!active) return;
@@ -55,6 +95,7 @@ export default function OrientationPage() {
   }, [students, search]);
 
   const selectedStudent = useMemo(() => students.find((s) => s.id === selectedId), [students, selectedId]);
+  const selectedClass = useMemo(() => findClassForStudent(selectedStudent, classCohorts), [selectedStudent, classCohorts]);
 
   useEffect(() => {
     if (!selectedStudent) return;
@@ -63,8 +104,10 @@ export default function OrientationPage() {
       name: selectedStudent.name,
       email: selectedStudent.email,
       studentCode: selectedStudent.studentCode,
+      level: LEVEL_LINKS[selectedClass?.levelId] ? selectedClass.levelId : "A1",
+      startDate: selectedClass?.startDate || "",
     }));
-  }, [selectedStudent]);
+  }, [selectedStudent, selectedClass]);
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -96,7 +139,7 @@ export default function OrientationPage() {
         ))}
       </select>
 
-      {loading && <p>Loading students...</p>}
+      {loading && <p>Loading students and live classes...</p>}
 
       <form onSubmit={onSubmit}>
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>

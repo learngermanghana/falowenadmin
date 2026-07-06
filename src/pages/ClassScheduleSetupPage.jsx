@@ -4,9 +4,54 @@ import { syncClassSchedule } from "../services/classScheduleSyncService";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+function toDateInputValue(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.includes("T") ? value.slice(0, 10) : value.slice(0, 10);
+  const date = typeof value?.toDate === "function" ? value.toDate() : value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+function toTimeInputValue(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/(\d{1,2}):(\d{2})/);
+  if (!match) return "";
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
+function normalizeDay(value) {
+  const text = String(value || "").slice(0, 3).toLowerCase();
+  return DAYS.find((day) => day.toLowerCase() === text) || "";
+}
+
+function normalizeScheduleRules(rules = []) {
+  const normalizedRules = Array.isArray(rules) ? rules : [];
+  const meetingDays = [];
+  const dayTimes = {};
+
+  normalizedRules.forEach((rule) => {
+    const day = normalizeDay(rule.day || rule.weekday || rule.dayName);
+    if (!day) return;
+    if (!meetingDays.includes(day)) meetingDays.push(day);
+    const time = toTimeInputValue(rule.time || rule.startTime || rule.startsAt);
+    if (time) dayTimes[`${day.toLowerCase()}Time`] = time;
+  });
+
+  return { meetingDays, dayTimes };
+}
+
 function normalizeClassRow(row = {}) {
   const className = String(row.name || row.classId || row.className || "").trim();
-  return { id: className, name: className };
+  const { meetingDays, dayTimes } = normalizeScheduleRules(row.scheduleRules);
+  return {
+    id: String(row.id || row.classRecordId || className).trim(),
+    name: className,
+    startDate: toDateInputValue(row.startDate),
+    endDate: toDateInputValue(row.endDate),
+    time: toTimeInputValue(row.time || row.startTime || row.classTime || row.scheduleTime || Object.values(dayTimes)[0]),
+    meetingDays,
+    ...dayTimes,
+  };
 }
 
 export default function ClassScheduleSetupPage() {
@@ -67,9 +112,22 @@ export default function ClassScheduleSetupPage() {
 
   function handleClassSelect(value) {
     setSelectedClassName(value);
-    if (!form.className.trim()) {
-      setForm((prev) => ({ ...prev, className: value }));
-    }
+    const selectedClass = classes.find((klass) => klass.name === value);
+    setForm((prev) => ({
+      ...prev,
+      className: value || prev.className,
+      startDate: selectedClass?.startDate || prev.startDate,
+      endDate: selectedClass?.endDate || prev.endDate,
+      time: selectedClass?.time || prev.time,
+      meetingDays: selectedClass?.meetingDays?.length ? selectedClass.meetingDays : prev.meetingDays,
+      monTime: selectedClass?.monTime || prev.monTime,
+      tueTime: selectedClass?.tueTime || prev.tueTime,
+      wedTime: selectedClass?.wedTime || prev.wedTime,
+      thuTime: selectedClass?.thuTime || prev.thuTime,
+      friTime: selectedClass?.friTime || prev.friTime,
+      satTime: selectedClass?.satTime || prev.satTime,
+      sunTime: selectedClass?.sunTime || prev.sunTime,
+    }));
   }
 
   async function handleSubmit(event) {
