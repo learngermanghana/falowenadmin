@@ -69,7 +69,7 @@ const ACCOUNT_UPGRADE_LINK = "https://www.falowen.app/campus/account";
 
 const UPCOMING_CLASS_PROMO = {
   label: "Upcoming class ad",
-  topic: "Next Class Registration",
+  topic: "Upcoming Class Upgrade and Registration",
   announcement:
     "Hi everyone, your current level is almost complete. Our next class, {upcoming_class}, starts on {upcoming_start_date}. When you are ready, go to your account and upgrade here: {account_link}. Class details: {class_details}",
 };
@@ -82,11 +82,9 @@ function toDateInputValue(value) {
   return date.toISOString().slice(0, 10);
 }
 
-function isUpcomingClass(klass = {}, today = new Date().toISOString().slice(0, 10)) {
+function isAdvertisableClass(klass = {}) {
   const status = String(klass.status || "").toLowerCase();
-  const startDate = toDateInputValue(klass.startDate);
-  if (["archived", "graduated", "inactive"].includes(status)) return false;
-  return status === "upcoming" || (startDate && startDate >= today);
+  return !["archived", "graduated", "inactive"].includes(status);
 }
 
 function classRegistrationLink(klass = {}) {
@@ -202,7 +200,7 @@ export default function CommunicationPage() {
     })();
   }, [form.className]);
 
-  const upcomingClasses = useMemo(() => classes.filter((klass) => isUpcomingClass(klass)), [classes]);
+  const advertisableClasses = useMemo(() => classes.filter((klass) => isAdvertisableClass(klass)), [classes]);
 
   const canSubmit = useMemo(() => {
     return Boolean(form.announcement.trim() && form.className.trim() && form.date.trim() && !saving);
@@ -338,15 +336,15 @@ export default function CommunicationPage() {
 
 
           <label style={fieldStyle}>
-            <span>Promote upcoming class</span>
+            <span>Promote available class</span>
             <select
               style={inputStyle}
               value={form.promoClassId}
               onChange={(event) => applyUpcomingClassPromo(event.target.value)}
               disabled={loadingClasses}
             >
-              <option value="">Select upcoming class to advertise</option>
-              {upcomingClasses.map((klass) => {
+              <option value="">Select available class to advertise</option>
+              {advertisableClasses.map((klass) => {
                 const classId = String(klass.classId || klass.id || klass.name || "");
                 const startDate = toDateInputValue(klass.startDate);
                 return (
