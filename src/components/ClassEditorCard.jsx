@@ -22,13 +22,24 @@ function initialForm(klass = {}) {
   };
 }
 
+function timestampSignature(value) {
+  if (!value) return "";
+  if (typeof value?.toMillis === "function") return String(value.toMillis());
+  if (typeof value?.seconds === "number") return `${value.seconds}_${value.nanoseconds || 0}`;
+  return String(value);
+}
+
 export default function ClassEditorCard({ klass, onSaved }) {
   const toast = useToast();
   const [form, setForm] = useState(() => initialForm(klass));
   const [historicalMode, setHistoricalMode] = useState(() => klass?.historical === true || isPastDate(klass?.startDate));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  useEffect(() => { setForm(initialForm(klass)); setHistoricalMode(klass?.historical === true || isPastDate(klass?.startDate)); }, [klass?.id]);
+  const scheduleSignature = JSON.stringify(klass?.scheduleRules || []);
+  useEffect(() => {
+    setForm(initialForm(klass));
+    setHistoricalMode(klass?.historical === true || isPastDate(klass?.startDate));
+  }, [klass?.id, klass?.startDate, klass?.endDate, klass?.sessionDerivedEndDate, scheduleSignature, timestampSignature(klass?.updatedAt)]);
   const patch = (values) => setForm((current) => ({ ...current, ...values }));
   const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
 
@@ -41,6 +52,9 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true); setMessage("");
     try {
       const result = await updateClassCohort(klass.id, { ...form, historicalMode });
+      if (result.endDate) {
+        setForm((current) => ({ ...current, endDate: result.endDate }));
+      }
       const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.requestedEndDate
         ? ` End date was synced to the last generated session: ${result.sessionDerivedEndDate}.`
         : "";
@@ -55,7 +69,11 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true); setMessage("");
     try {
       const result = await rebuildClassSessionsFromSchedule(klass.id, { ...klass, ...form });
-      const endDateSync = await syncClassEndDateFromSessions(klass.id).catch(() => null);
+      const endDateSync = await syncClassEndDateFromSessions(klass.id).catch((error) => ({ error }));
+      if (endDateSync?.error) throw endDateSync.error;
+      if (endDateSync?.endDate) {
+        setForm((current) => ({ ...current, endDate: endDateSync.endDate }));
+      }
       const endDateNote = endDateSync?.endDate ? ` End date synced to ${endDateSync.endDate}.` : "";
       const successMessage = `Sessions rebuilt successfully: ${result.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${endDateNote}`;
       setMessage(successMessage);
