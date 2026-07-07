@@ -26,6 +26,7 @@ import ClassOperationsPage from "./pages/ClassOperationsPage";
 import ClassArchivePage from "./pages/ClassArchivePage";
 import LiveClassesPage from "./pages/LiveClassesPage";
 import HolidayCalendarPage from "./pages/HolidayCalendarPage";
+import StudentResultsComparePage from "./pages/StudentResultsComparePage.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -76,6 +77,7 @@ function TopBar() {
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
+                <Link to="/student-results" onClick={() => setMenuOpen(false)}>Results</Link>
                 <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
@@ -150,6 +152,7 @@ export default function App() {
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route path="/marking" element={<MarkingRoute />} />
+          <Route path="/student-results" element={<ProtectedRoute allowStaff={false}><StudentResultsComparePage /></ProtectedRoute>} />
           <Route path="/marking/ai-audit" element={<Navigate to="/marking" replace />} />
           <Route path="/marking/answer-keys" element={<Navigate to="/marking" replace />} />
           <Route path="/ai-marking-audit" element={<Navigate to="/marking" replace />} />
