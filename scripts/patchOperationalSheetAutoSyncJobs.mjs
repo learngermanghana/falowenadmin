@@ -1,0 +1,278 @@
+import { readFileSync, writeFileSync } from "node:fs";
+
+const path = "functions/index.js";
+let source = readFileSync(path, "utf8");
+
+const marker = "function readSubmissionLevel";
+
+const block = `
+function getIsoDateFromValue(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.includes("T") ? value.slice(0, 10) : value.slice(0, 10);
+  const date = typeof value?.toDate === "function" ? value.toDate() : value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+function inferGermanLevel(value) {
+  const match = String(value || "").match(/\\b(A1|A2|B1|B2|C1|C2)\\b/i);
+  return match ? match[1].toUpperCase() : "";
+}
+
+function readStudentLevelForOrientation(student = {}, klass = {}) {
+  const candidates = [
+    student.orientationLevel,
+    student.level,
+    student.classLevel,
+    student.courseLevel,
+    student.languageLevel,
+    student.className,
+    student.class,
+    klass.levelId,
+    klass.level,
+    klass.name,
+    klass.className,
+  ];
+
+  for (const candidate of candidates) {
+    const level = inferGermanLevel(candidate);
+    if (["A1", "A2", "B1"].includes(level)) return level;
+  }
+  return "";
+}
+
+function readStudentStartDateForOrientation(student = {}, klass = {}) {
+  return getIsoDateFromValue(
+    student.orientationStartDate ||
+      student.startDate ||
+      student.classStartDate ||
+      student.contractStart ||
+      student.contractStartDate ||
+      klass.startDate ||
+      klass.orientationStartDate ||
+      "",
+  );
+}
+
+async function findClassForOperationalSync(student = {}) {
+  const candidates = [student.classId, student.className, student.class, student.group, student.level]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    const directSnap = await db.collection("classes").doc(candidate).get();
+    if (directSnap.exists) return { id: directSnap.id, ...(directSnap.data() || {}) };
+
+    const byName = await db.collection("classes").where("name", "==", candidate).limit(1).get();
+    if (!byName.empty) {
+      const item = byName.docs[0];
+      return { id: item.id, ...(item.data() || {}) };
+    }
+  }
+
+  return null;
+}
+
+async function syncStudentToOrientationSheet(docSnap, options = {}) {
+  const student = docSnap.data() || {};
+  if (student.orientationSheetAutoSyncStatus === "sent" || student.orientationSheetAutoSyncedAt) return { status: "already_sent" };
+
+  const appsScriptUrl = String(orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || "").trim();
+  const syncSecret = String(orientationSyncSecret.value() || process.env.ORIENTATION_SYNC_SECRET || "").trim();
+  if (!appsScriptUrl || !syncSecret) return { status: "skipped", reason: "orientation sheet secrets missing" };
+
+  const klass = await findClassForOperationalSync(student) || {};
+  const name = String(student.name || student.fullName || student.displayName || "").trim();
+  const email = String(student.email || student.emailAddress || student.contactEmail || "").trim();
+  const level = readStudentLevelForOrientation(student, klass);
+  const startDate = readStudentStartDateForOrientation(student, klass);
+  const studentCode = String(student.studentCode || student.studentcode || student.code || docSnap.id || "").trim();
+
+  if (!name || !email || !level || !startDate) {
+    const reason = `Missing required orientation data: ${[
+      !name ? "name" : "",
+      !email ? "email" : "",
+      !level ? "level" : "",
+      !startDate ? "startDate" : "",
+    ].filter(Boolean).join(", ")}`;
+    if (options.writeStatus !== false) {
+      await docSnap.ref.set({
+        orientationSheetAutoSyncStatus: "skipped",
+        orientationSheetAutoSyncLastError: reason,
+        orientationSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    return { status: "skipped", reason };
+  }
+
+  const upstreamResponse = await fetch(appsScriptUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ secret: syncSecret, name, email, level, startDate, studentCode }),
+  });
+
+  const responseJson = await upstreamResponse.json().catch(() => ({}));
+  if (!upstreamResponse.ok || responseJson?.ok === false) {
+    const reason = responseJson?.error || `Orientation sheet returned ${upstreamResponse.status}`;
+    await docSnap.ref.set({
+      orientationSheetAutoSyncStatus: "failed",
+      orientationSheetAutoSyncLastError: reason,
+      orientationSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { status: "failed", reason };
+  }
+
+  await docSnap.ref.set({
+    orientationSheetAutoSyncStatus: "sent",
+    orientationSheetAutoSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+    orientationSheetAutoSyncLastError: admin.firestore.FieldValue.delete(),
+    orientationSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+  return { status: "sent", level, startDate };
+}
+
+function normalizeScheduleRulesForSheet(klass = {}) {
+  const rules = Array.isArray(klass.scheduleRules) ? klass.scheduleRules : [];
+  const meetingDays = [];
+  const dayTimes = {};
+
+  for (const rule of rules) {
+    const dayRaw = String(rule.day || rule.weekday || "").trim();
+    const day = dayRaw.slice(0, 3);
+    const startTime = String(rule.startTime || rule.time || "").trim();
+    if (!day) continue;
+    if (!meetingDays.includes(day)) meetingDays.push(day);
+    const key = `${day.toLowerCase()}Time`;
+    if (startTime && !dayTimes[key]) dayTimes[key] = startTime;
+  }
+
+  return { meetingDays, dayTimes, firstTime: Object.values(dayTimes)[0] || "" };
+}
+
+async function syncClassToScheduleSheet(docSnap, options = {}) {
+  const klass = { id: docSnap.id, ...(docSnap.data() || {}) };
+  if (klass.classScheduleSheetAutoSyncStatus === "sent" || klass.classScheduleSheetAutoSyncedAt) return { status: "already_sent" };
+
+  const appsScriptUrl = String(classScheduleAppsScriptUrlSecret.value() || process.env.CLASS_SCHEDULE_APPS_SCRIPT_URL || "").trim();
+  const syncSecret = String(classScheduleSyncSecret.value() || process.env.CLASS_SCHEDULE_SYNC_SECRET || "").trim();
+  if (!appsScriptUrl || !syncSecret) return { status: "skipped", reason: "class schedule sheet secrets missing" };
+
+  const status = String(klass.status || "").trim().toLowerCase();
+  if (["archived", "graduated", "inactive", "cancelled", "canceled", "closed"].includes(status)) {
+    return { status: "skipped", reason: `class status is ${status}` };
+  }
+
+  const className = String(klass.name || klass.className || klass.classId || docSnap.id || "").trim();
+  const startDate = getIsoDateFromValue(klass.startDate || klass.startsAt || klass.start || "");
+  const endDate = getIsoDateFromValue(klass.endDate || klass.graduationDate || klass.endsAt || "");
+  const { meetingDays, dayTimes, firstTime } = normalizeScheduleRulesForSheet(klass);
+  const time = String(klass.time || klass.startTime || klass.classTime || firstTime || "").trim();
+
+  if (!className || !startDate || !endDate || !time || !meetingDays.length) {
+    const reason = `Missing required class schedule data: ${[
+      !className ? "className" : "",
+      !startDate ? "startDate" : "",
+      !endDate ? "endDate" : "",
+      !time ? "time" : "",
+      !meetingDays.length ? "meetingDays" : "",
+    ].filter(Boolean).join(", ")}`;
+    if (options.writeStatus !== false) {
+      await docSnap.ref.set({
+        classScheduleSheetAutoSyncStatus: "skipped",
+        classScheduleSheetAutoSyncLastError: reason,
+        classScheduleSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    return { status: "skipped", reason };
+  }
+
+  const upstreamResponse = await fetch(appsScriptUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "syncClassSchedule",
+      secret: syncSecret,
+      className,
+      startDate,
+      endDate,
+      time,
+      meetingDays,
+      monTime: dayTimes.monTime || "",
+      tueTime: dayTimes.tueTime || "",
+      wedTime: dayTimes.wedTime || "",
+      thuTime: dayTimes.thuTime || "",
+      friTime: dayTimes.friTime || "",
+      satTime: dayTimes.satTime || "",
+      sunTime: dayTimes.sunTime || "",
+    }),
+  });
+
+  const responseJson = await upstreamResponse.json().catch(() => ({}));
+  if (!upstreamResponse.ok || responseJson?.ok === false) {
+    const reason = responseJson?.error || `Class schedule sheet returned ${upstreamResponse.status}`;
+    await docSnap.ref.set({
+      classScheduleSheetAutoSyncStatus: "failed",
+      classScheduleSheetAutoSyncLastError: reason,
+      classScheduleSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { status: "failed", reason };
+  }
+
+  await docSnap.ref.set({
+    classScheduleSheetAutoSyncStatus: "sent",
+    classScheduleSheetAutoSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+    classScheduleSheetAutoSyncLastError: admin.firestore.FieldValue.delete(),
+    classScheduleSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+  return { status: "sent", className, startDate };
+}
+
+exports.autoSyncNewStudentToOrientationSheet = onDocumentCreated({
+  document: "students/{studentId}",
+  secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
+}, async (event) => {
+  if (!event.data) return;
+  const result = await syncStudentToOrientationSheet(event.data);
+  console.log("autoSyncNewStudentToOrientationSheet", event.params.studentId, result);
+});
+
+exports.autoSyncNewLiveClassToScheduleSheet = onDocumentCreated({
+  document: "classes/{classId}",
+  secrets: [classScheduleAppsScriptUrlSecret, classScheduleSyncSecret],
+}, async (event) => {
+  if (!event.data) return;
+  const result = await syncClassToScheduleSheet(event.data);
+  console.log("autoSyncNewLiveClassToScheduleSheet", event.params.classId, result);
+});
+
+exports.syncPendingOperationalSheets = onSchedule({
+  schedule: "every 60 minutes",
+  timeZone: "Africa/Accra",
+  secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret, classScheduleAppsScriptUrlSecret, classScheduleSyncSecret],
+}, async () => {
+  const studentSnap = await db.collection("students").limit(100).get();
+  let studentSynced = 0;
+  for (const docSnap of studentSnap.docs) {
+    const result = await syncStudentToOrientationSheet(docSnap);
+    if (result.status === "sent") studentSynced += 1;
+  }
+
+  const classSnap = await db.collection("classes").limit(100).get();
+  let classSynced = 0;
+  for (const docSnap of classSnap.docs) {
+    const result = await syncClassToScheduleSheet(docSnap);
+    if (result.status === "sent") classSynced += 1;
+  }
+
+  console.log("syncPendingOperationalSheets", { studentSynced, classSynced });
+});
+`;
+
+if (!source.includes("autoSyncNewStudentToOrientationSheet")) {
+  const index = source.indexOf(marker);
+  if (index === -1) throw new Error(`Could not find marker: ${marker}`);
+  source = `${source.slice(0, index)}${block}\n${source.slice(index)}`;
+}
+
+writeFileSync(path, source);
+console.log("Operational sheet auto-sync jobs are present in functions/index.js.");
