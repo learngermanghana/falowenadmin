@@ -16,7 +16,7 @@ export async function syncClassEndDateFromSessions(classId) {
   const latestSession = validSessions[validSessions.length - 1] || null;
   const sessionEndDate = latestSessionDateInTimezone(validSessions, klass.timezone);
 
-  if (sessionEndDate && sessionEndDate !== String(klass.endDate || "")) {
+  if (sessionEndDate && (sessionEndDate !== String(klass.endDate || "") || sessionEndDate !== String(klass.sessionDerivedEndDate || ""))) {
     await updateDoc(classRef, {
       endDate: sessionEndDate,
       sessionDerivedEndDate: sessionEndDate,
@@ -25,5 +25,6 @@ export async function syncClassEndDateFromSessions(classId) {
     });
   }
 
-  return { endDate: sessionEndDate || String(klass.endDate || ""), latestSession };
+  const endDate = sessionEndDate || String(klass.endDate || "");
+  return { endDate, sessionDerivedEndDate: sessionEndDate, configuredEndDate: String(klass.configuredEndDate || klass.endDate || ""), latestSession };
 }

@@ -3,6 +3,7 @@ import { db } from "../firebase.js";
 import { liveClassRebuildSettings } from "../utils/classEditorState.js";
 import { getSchedulingSchoolClosureDates, setSchedulingSchoolClosureDates } from "../utils/liveClassScheduling.js";
 import { prepareLiveClassSchedule, saveLiveClassScheduleMetadata } from "./liveClassSchedulePreparation.js";
+import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
 import * as base from "./liveClassServiceBase.js";
 
 export async function rebuildClassSessionsFromSchedule(classId, candidateRecord = null) {
@@ -19,9 +20,11 @@ export async function rebuildClassSessionsFromSchedule(classId, candidateRecord 
     const schedule = await prepareLiveClassSchedule(savedClass);
     const result = await base.rebuildClassSessionsFromSchedule(classId, schedule.payload);
     await saveLiveClassScheduleMetadata(classId, schedule);
+    const endDateSync = await syncClassEndDateFromSessions(classId);
     return {
       ...result,
-      endDate: schedule.payload.endDate,
+      endDate: endDateSync.endDate || result.endDate || schedule.payload.endDate,
+      sessionDerivedEndDate: endDateSync.sessionDerivedEndDate || endDateSync.endDate || result.sessionDerivedEndDate || result.endDate || "",
       historical: schedule.payload.historicalMode === true,
       holidayDatesExcluded: schedule.relevantClosures,
     };

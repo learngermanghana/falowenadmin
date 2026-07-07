@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
-import { deleteClassCohort, rebuildClassSessionsFromSchedule, syncClassEndDateFromSessions } from "../services/liveClassService.js";
+import { deleteClassCohort, rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
@@ -69,12 +69,10 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true); setMessage("");
     try {
       const result = await rebuildClassSessionsFromSchedule(klass.id, { ...klass, ...form });
-      const endDateSync = await syncClassEndDateFromSessions(klass.id).catch((error) => ({ error }));
-      if (endDateSync?.error) throw endDateSync.error;
-      if (endDateSync?.endDate) {
-        setForm((current) => ({ ...current, endDate: endDateSync.endDate }));
+      if (result.endDate) {
+        setForm((current) => ({ ...current, endDate: result.endDate }));
       }
-      const endDateNote = endDateSync?.endDate ? ` End date synced to ${endDateSync.endDate}.` : "";
+      const endDateNote = result.endDate ? ` End date synced to ${result.endDate}.` : "";
       const successMessage = `Sessions rebuilt successfully: ${result.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${endDateNote}`;
       setMessage(successMessage);
       toast.success(successMessage, { durationMs: 6000 });
@@ -110,6 +108,9 @@ export default function ClassEditorCard({ klass, onSaved }) {
   }
 
   const messageIsSuccess = message.startsWith("Class updated") || message.startsWith("Sessions rebuilt successfully");
+  const configuredEndDate = String(klass?.configuredEndDate || klass?.holidayAdjustedEndDate || "").trim();
+  const derivedEndDate = String(klass?.sessionDerivedEndDate || "").trim();
+  const showEndDateWarning = configuredEndDate && derivedEndDate && configuredEndDate !== derivedEndDate;
 
   return <article className="card"><h2>Edit this class</h2><form onSubmit={save} style={{ display: "grid", gap: 14 }}>
     <label><input type="checkbox" checked={historicalMode} onChange={(event) => setHistoricalMode(event.target.checked)} /> Historical class: keep exact dates and generate missing past sessions</label>
@@ -133,6 +134,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     </div>)}
     <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE }] }))}>Add another time</button>
     <div><label><input type="checkbox" checked={form.publicVisible} onChange={(event) => patch({ publicVisible: event.target.checked })} /> Show publicly</label> <label><input type="checkbox" checked={form.registrationOpen} onChange={(event) => patch({ registrationOpen: event.target.checked })} /> Registration open</label></div>
+    {showEndDateWarning ? <div style={{ padding: 10, borderRadius: 8, background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}>This class has sessions after the configured graduation date ({configuredEndDate}). Rebuild/sync will update the effective class end date to {derivedEndDate}.</div> : null}
     {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
     <button type="button" disabled={busy} onClick={rebuildSessions}>Rebuild sessions from start date and timetable</button>
