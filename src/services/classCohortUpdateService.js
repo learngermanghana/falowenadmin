@@ -113,6 +113,7 @@ export async function updateClassCohort(classId, payload) {
   const relevantClosures = closureDates.filter((date) => date >= payload.startDate && date <= endDate);
   await updateDoc(doc(db, "classes", String(classId)), {
     endDate,
+    configuredEndDate: String(payload.endDate || endDate || "").trim(),
     historical: payload.historicalMode === true,
     holidayCalendarCountryCode: "GH",
     holidayCalendarApplied: true,
