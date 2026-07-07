@@ -14,7 +14,8 @@
       "predeploy": [
         "node scripts/patchSheetRowManagementRoutes.mjs",
         "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
-        "node scripts/patchLiveClassUpdateScheduleSync.mjs"
+        "node scripts/patchLiveClassUpdateScheduleSync.mjs",
+        "node scripts/patchHolidayClassScheduleAwareness.mjs"
       ],
       "ignore": [
         "node_modules",
