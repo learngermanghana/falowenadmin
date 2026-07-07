@@ -20,7 +20,7 @@ import TeachingSlidesPage from "./pages/TeachingSlidesPage";
 import StudentDirectoryPage from "./pages/StudentDirectoryPage";
 import StudentActivityPage from "./pages/StudentActivityPage";
 import WritingSubmissionTrackerPage from "./pages/WritingSubmissionTrackerPage";
-import OrientationPage from "./pages/OrientationPage";
+import OrientationPage from "./pages/OrientationSetupTabsPage.jsx";
 import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
 import ClassOperationsPage from "./pages/ClassOperationsPage";
 import ClassArchivePage from "./pages/ClassArchivePage";
