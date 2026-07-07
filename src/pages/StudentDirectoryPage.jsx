@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
+import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
+import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 
 const editableFields = [
   "name",
@@ -205,6 +207,24 @@ function displayValue(...values) {
   return values.map((value) => String(value ?? "").trim()).find(Boolean) || "";
 }
 
+function normalizeClassLookupValue(value) {
+  return displayValue(value).toLowerCase();
+}
+
+function findStudentClass(student = {}, draft = {}, classes = []) {
+  const wanted = [draft.className, student.className, draft.level, student.level, draft.program, student.program, student.location]
+    .map(normalizeClassLookupValue)
+    .filter(Boolean);
+  if (!wanted.length) return null;
+
+  return classes.find((klass) => {
+    const candidates = [klass.id, klass.name, klass.className, klass.title, klass.levelId, klass.level, klass.program, klass.location]
+      .map(normalizeClassLookupValue)
+      .filter(Boolean);
+    return wanted.some((value) => candidates.includes(value));
+  }) || null;
+}
+
 function resolveStudentName(student) {
   return displayValue(student?.name, student?.displayName, student?.studentCode, student?.id) || "Student";
 }
@@ -221,8 +241,12 @@ function resolveBalance(student, draft = {}) {
   return displayValue(draft.balanceDue, student?.balanceDue, student?.balance, student?.outstandingBalance, student?.amountDue);
 }
 
-function resolveContractEnd(student, draft = {}) {
-  return displayValue(draft.contractEnd, student?.contractEnd);
+function resolveContractEnd(student, draft = {}, classes = []) {
+  const explicitEnd = displayValue(draft.contractEnd, student?.contractEnd);
+  if (explicitEnd) return explicitEnd;
+
+  const klass = findStudentClass(student, draft, classes);
+  return klass ? getEffectiveClassEndDate(klass) : "";
 }
 
 function daysUntilDate(value) {
@@ -257,11 +281,11 @@ function callUrl(phone) {
   return normalizedPhone ? `tel:${normalizedPhone}` : "";
 }
 
-function buildFollowUpMessage(templateKey, student, draft = {}) {
+function buildFollowUpMessage(templateKey, student, draft = {}, classes = []) {
   const name = resolveStudentName(student);
   const className = resolveStudentClass(student, draft);
   const balance = resolveBalance(student, draft);
-  const contractEnd = resolveContractEnd(student, draft);
+  const contractEnd = resolveContractEnd(student, draft, classes);
   const daysLeft = daysUntilDate(contractEnd);
   const contractDate = formatDisplayDate(contractEnd);
 
@@ -300,6 +324,7 @@ export default function StudentDirectoryPage() {
   const { pushToast } = useToast();
   const [activeTab, setActiveTab] = useState("directory");
   const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
@@ -316,8 +341,9 @@ export default function StudentDirectoryPage() {
       setLoading(true);
       setError("");
       try {
-        const records = await listAllStudents();
+        const [records, classRows] = await Promise.all([listAllStudents(), listClassCohorts()]);
         setStudents(records);
+        setClasses(classRows);
       } catch (err) {
         setError(err?.message || "Failed to load students");
       } finally {
@@ -381,8 +407,8 @@ export default function StudentDirectoryPage() {
       setFollowUpMessage("");
       return;
     }
-    setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent)));
-  }, [followUpType, selectedStudent, selectedStudentId, drafts]);
+    setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent), classes));
+  }, [followUpType, selectedStudent, selectedStudentId, drafts, classes]);
 
   const updateDraftField = (studentId, field, value, student) => {
     setDrafts((prev) => {
@@ -768,7 +794,7 @@ export default function StudentDirectoryPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent)))}
+                              onClick={() => setFollowUpMessage(buildFollowUpMessage(followUpType, selectedStudent, getDraft(selectedStudent), classes))}
                               style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}
                             >
                               Reset text

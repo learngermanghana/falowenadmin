@@ -6,6 +6,7 @@ import { loadGrammarIssueReports } from "../services/grammarIssueService";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
 import { getUpcomingHolidays } from "../services/holidayCalendarService";
 import { listClassCohorts } from "../services/liveClassService";
+import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { listAllStudents } from "../services/studentsService";
 import "./DashboardPage.css";
 
@@ -104,7 +105,7 @@ function isClassAffectedByHoliday(klass = {}, holiday = {}) {
   if (["archived", "graduated", "draft", "cancelled", "canceled"].includes(status)) return false;
 
   const startDate = text(klass.startDate);
-  const endDate = text(klass.endDate);
+  const endDate = text(getEffectiveClassEndDate(klass));
   if (startDate && holidayDate < startDate) return false;
   if (endDate && holidayDate > endDate) return false;
 

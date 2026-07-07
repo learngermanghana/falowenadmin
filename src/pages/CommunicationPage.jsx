@@ -3,6 +3,7 @@ import { listClasses } from "../services/classesService";
 import { saveAnnouncementRow } from "../services/communicationService";
 import { listAllStudents, listStudentsByClass } from "../services/studentsService";
 import { useToast } from "../context/ToastContext";
+import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 
 const QUICK_TEMPLATES = [
   {
@@ -189,7 +190,7 @@ function formatScheduleRules(rules = []) {
 function buildClassDetails(klass = {}) {
   const details = [
     ["Start date", toDateInputValue(klass.startDate)],
-    ["End date", toDateInputValue(klass.endDate)],
+    ["End date", toDateInputValue(getEffectiveClassEndDate(klass))],
     ["Price", formatMoney(klass.price || klass.fee || klass.tuition, klass.currency)],
     ["Schedule", formatScheduleRules(klass.scheduleRules)],
     ["Timezone", klass.timezone],

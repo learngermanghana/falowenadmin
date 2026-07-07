@@ -196,6 +196,17 @@ export function latestSessionDateInTimezone(sessions = [], timezone = "Africa/Ac
   return latest ? sessionDateInTimezone(latest.startsAt, timezone) : "";
 }
 
+
+export function getEffectiveClassEndDate(klass = {}, sessions = []) {
+  const sessionDerivedEndDate = String(klass?.sessionDerivedEndDate || "").trim();
+  if (sessionDerivedEndDate) return sessionDerivedEndDate;
+
+  const endDate = String(klass?.endDate || "").trim();
+  if (endDate) return endDate;
+
+  return latestSessionDateInTimezone(sessions, klass?.timezone || "Africa/Accra");
+}
+
 export function selectNextSession(sessions = [], now = new Date()) {
   const nowMs = new Date(now).getTime();
   return [...sessions].filter((s) => !["cancelled", "completed"].includes(s.status) && new Date(s.startsAt).getTime() >= nowMs).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))[0] || null;
@@ -208,7 +219,7 @@ export function selectLatestCompletedSession(sessions = []) {
 export function calculateClassProgress(sessions = [], now = new Date(), classRecord = {}) {
   const nowMs = new Date(now).getTime();
   const startMs = classDateToMillis(classRecord?.startDate, false);
-  const endMs = classDateToMillis(classRecord?.endDate, true);
+  const endMs = classDateToMillis(getEffectiveClassEndDate(classRecord, sessions), true);
 
   if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
     if (nowMs <= startMs) return 0;

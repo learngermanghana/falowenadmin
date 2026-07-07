@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildClassUrl, calculateClassEndDate, calculateClassProgress, calculateCountdown, generateSessionOccurrences, resolveChapterDictionary, selectNextSession, sessionStatusDoesNotArchiveClass, shouldSendReminderForSession, slugifyClassName, zonedLocalToUtcIso } from "../src/utils/liveClassScheduling.js";
+import { buildClassUrl, calculateClassEndDate, calculateClassProgress, calculateCountdown, generateSessionOccurrences, getEffectiveClassEndDate, resolveChapterDictionary, selectNextSession, sessionStatusDoesNotArchiveClass, shouldSendReminderForSession, slugifyClassName, zonedLocalToUtcIso } from "../src/utils/liveClassScheduling.js";
 
 test("Ghana timezone conversion stores UTC without one-hour shift", () => {
   assert.equal(zonedLocalToUtcIso("2026-06-20", "09:00", "Africa/Accra"), "2026-06-20T09:00:00.000Z");
@@ -61,6 +61,18 @@ test("automatic URL generation is stable from slug", () => {
 test("chapter dictionary resolution loads titles by IDs", () => {
   const chapters = resolveChapterDictionary("A1", ["1.1"]);
   assert.equal(chapters[0].en, "Personal Pronouns and Verb Conjugation");
+});
+
+
+test("effective class end date prefers session-derived, then stored, then session fallback", () => {
+  const sessions = [
+    { startsAt: "2026-08-01T09:00:00.000Z", status: "scheduled" },
+    { startsAt: "2026-08-08T09:00:00.000Z", status: "cancelled" },
+  ];
+
+  assert.equal(getEffectiveClassEndDate({ sessionDerivedEndDate: "2026-07-30", endDate: "2026-07-15" }, sessions), "2026-07-30");
+  assert.equal(getEffectiveClassEndDate({ endDate: "2026-07-15" }, sessions), "2026-07-15");
+  assert.equal(getEffectiveClassEndDate({}, sessions), "2026-08-01");
 });
 
 test("progress ignores cancelled sessions", () => {
