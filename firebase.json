@@ -13,7 +13,8 @@
       "disallowLegacyRuntimeConfig": true,
       "predeploy": [
         "node scripts/patchSheetRowManagementRoutes.mjs",
-        "node scripts/patchOperationalSheetAutoSyncJobs.mjs"
+        "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
+        "node scripts/patchLiveClassUpdateScheduleSync.mjs"
       ],
       "ignore": [
         "node_modules",
