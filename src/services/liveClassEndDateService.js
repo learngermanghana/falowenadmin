@@ -1,19 +1,7 @@
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
+import { latestSessionDateInTimezone } from "../utils/liveClassScheduling.js";
 import * as base from "./liveClassServiceBase.js";
-
-function dateInTimezone(value, timezone = "Africa/Accra") {
-  const parsed = new Date(value || 0);
-  if (Number.isNaN(parsed.getTime())) return "";
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone || "Africa/Accra",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(parsed);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
 
 export async function syncClassEndDateFromSessions(classId) {
   const classRef = doc(db, "classes", String(classId));
@@ -26,7 +14,7 @@ export async function syncClassEndDateFromSessions(classId) {
     .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
     .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
   const latestSession = validSessions[validSessions.length - 1] || null;
-  const sessionEndDate = latestSession ? dateInTimezone(latestSession.startsAt, klass.timezone) : "";
+  const sessionEndDate = latestSessionDateInTimezone(validSessions, klass.timezone);
 
   if (sessionEndDate && sessionEndDate !== String(klass.endDate || "")) {
     await updateDoc(classRef, {

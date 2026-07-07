@@ -173,6 +173,29 @@ export function generateSessionOccurrences({
   return sessions.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 }
 
+
+export function sessionDateInTimezone(value, timezone = "Africa/Accra") {
+  const parsed = new Date(value || 0);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone || "Africa/Accra",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(parsed);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+export function latestSessionDateInTimezone(sessions = [], timezone = "Africa/Accra") {
+  const latest = [...sessions]
+    .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
+    .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
+    .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt))
+    .at(-1);
+  return latest ? sessionDateInTimezone(latest.startsAt, timezone) : "";
+}
+
 export function selectNextSession(sessions = [], now = new Date()) {
   const nowMs = new Date(now).getTime();
   return [...sessions].filter((s) => !["cancelled", "completed"].includes(s.status) && new Date(s.startsAt).getTime() >= nowMs).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))[0] || null;

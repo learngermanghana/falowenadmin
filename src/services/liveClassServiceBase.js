@@ -16,6 +16,7 @@ import { db } from "../firebase.js";
 import {
   buildClassUrl,
   generateSessionOccurrences,
+  latestSessionDateInTimezone,
   selectLatestCompletedSession,
   selectNextSession,
   slugifyClassName,
@@ -308,7 +309,9 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
 
   const curriculum = await syncClassCurriculum(classId, { force: false });
   const finalMapped = curriculum.mapped || mapped;
+  const sessionDerivedEndDate = latestSessionDateInTimezone(occurrences, normalizedClass.timezone);
   await updateDoc(doc(db, "classes", classId), {
+    ...(sessionDerivedEndDate ? { endDate: sessionDerivedEndDate, sessionDerivedEndDate, endDateSyncedAt: serverTimestamp() } : {}),
     generationStatus: "complete",
     generationError: "",
     generatedSessionCount: occurrences.length,
@@ -316,7 +319,7 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
     sessionsRebuiltAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-  return { created, refreshed, removed: plan.deletions.length, preserved: plan.preserved.length, mapped: finalMapped, total: occurrences.length };
+  return { created, refreshed, removed: plan.deletions.length, preserved: plan.preserved.length, mapped: finalMapped, total: occurrences.length, endDate: sessionDerivedEndDate };
 }
 
 export async function generateClassSessions(classId, classRecord = null) {
