@@ -71,7 +71,7 @@ const UPCOMING_CLASS_PROMO = {
   label: "Upcoming class ad",
   topic: "Upcoming Class Upgrade and Registration",
   announcement:
-    "Hi everyone, your current level is almost complete. Our next class, {upcoming_class}, starts on {upcoming_start_date}. When you are ready, go to your account and upgrade here: {account_link}. Class details: {class_details}",
+    "Hi everyone, if you are close to course completion, our next class, {upcoming_class}, starts on {upcoming_start_date}. When you are ready, go to your account and upgrade here: {account_link}. Class details: {class_details}",
 };
 
 function toDateInputValue(value) {
@@ -82,9 +82,85 @@ function toDateInputValue(value) {
   return date.toISOString().slice(0, 10);
 }
 
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
+function normalizeStatus(value) {
+  return normalizeText(value).toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function inferLevelFromText(value) {
+  const match = normalizeText(value).match(/\b(A1|A2|B1|B2|C1|C2)\b/i);
+  return match?.[1]?.toUpperCase() || "";
+}
+
+function inferClassLevel(klass = {}) {
+  const candidates = [
+    klass.level,
+    klass.courseLevel,
+    klass.languageLevel,
+    klass.classLevel,
+    klass.programLevel,
+    klass.name,
+    klass.className,
+    klass.classId,
+    klass.id,
+  ];
+
+  for (const candidate of candidates) {
+    const level = inferLevelFromText(candidate);
+    if (level) return level;
+  }
+  return "";
+}
+
+function inferStudentLevel(student = {}) {
+  const candidates = [
+    student.level,
+    student.classLevel,
+    student.courseLevel,
+    student.className,
+    student.class,
+    student.group,
+  ];
+
+  for (const candidate of candidates) {
+    const level = inferLevelFromText(candidate);
+    if (level) return level;
+  }
+  return "";
+}
+
+function classSelectValue(klass = {}) {
+  return normalizeText(klass.name || klass.className || klass.classId || klass.id || "");
+}
+
+function classOptionId(klass = {}) {
+  return normalizeText(klass.classId || klass.id || klass.name || klass.className || "");
+}
+
+function findClassByValue(classes = [], value = "") {
+  const target = normalizeText(value);
+  if (!target) return null;
+  return classes.find((klass) => {
+    const candidates = [klass.classId, klass.id, klass.name, klass.className, classSelectValue(klass)];
+    return candidates.some((candidate) => normalizeText(candidate) === target);
+  }) || null;
+}
+
 function isAdvertisableClass(klass = {}) {
-  const status = String(klass.status || "").toLowerCase();
-  return !["archived", "graduated", "inactive"].includes(status);
+  const status = normalizeStatus(klass.status || klass.state || klass.workflowStatus);
+  const terminalStatuses = new Set(["archived", "graduated", "inactive", "completed", "complete", "cancelled", "canceled", "ended", "closed"]);
+  const inProgressStatuses = new Set(["active", "in_progress", "inprogress", "ongoing", "running", "started", "current", "live"]);
+
+  if (terminalStatuses.has(status)) return false;
+  if (inProgressStatuses.has(status) || status.includes("progress")) return false;
+
+  const startDate = toDateInputValue(klass.startDate || klass.startsAt || klass.start || klass.date);
+  if (startDate) return startDate >= new Date().toISOString().slice(0, 10);
+
+  return ["upcoming", "planned", "scheduled", "registration_open", "enrolling", "open"].some((token) => status.includes(token));
 }
 
 function classRegistrationLink(klass = {}) {
@@ -138,6 +214,19 @@ function buildUpcomingClassAnnouncement(template, klass = {}) {
     .replaceAll("{registration_link}", link)
     .replaceAll("{account_link}", ACCOUNT_UPGRADE_LINK)
     .replaceAll("{class_details}", classDetails);
+}
+
+function inferCertificateLevelFromForm(form = {}, classes = [], students = []) {
+  const selectedClass = findClassByValue(classes, form.className) || classes.find((klass) => classOptionId(klass) === normalizeText(form.promoClassId));
+  const selectedStudent = students.find((student) => String(student.id || student.studentCode || student.email || "") === form.studentId);
+  return (
+    normalizeText(form.certLevel) ||
+    inferClassLevel(selectedClass) ||
+    inferStudentLevel(selectedStudent) ||
+    inferLevelFromText(form.className) ||
+    inferLevelFromText(form.topic) ||
+    inferLevelFromText(form.announcement)
+  );
 }
 
 const fieldStyle = { display: "grid", gap: 6 };
@@ -216,7 +305,10 @@ export default function CommunicationPage() {
     })();
   }, [form.className]);
 
-  const advertisableClasses = useMemo(() => classes.filter((klass) => isAdvertisableClass(klass)), [classes]);
+  const advertisableClasses = useMemo(
+    () => classes.filter((klass) => isAdvertisableClass(klass)),
+    [classes],
+  );
   const availableStudents = form.className.trim() && form.className !== ALL_ACTIVE_AUDIENCE ? students : allStudents;
   const studentSelectLoading = form.className.trim() && form.className !== ALL_ACTIVE_AUDIENCE ? loadingStudents : loadingAllStudents;
 
@@ -228,20 +320,40 @@ export default function CommunicationPage() {
   function updateField(field, value) {
     setForm((current) => {
       if (field === "className") {
-        return { ...current, className: value, studentId: "", studentName: "" };
+        const selectedClass = findClassByValue(classes, value);
+        const nextLevel = inferClassLevel(selectedClass) || inferLevelFromText(value);
+        return {
+          ...current,
+          className: value,
+          studentId: "",
+          studentName: "",
+          certLevel: current.certLevel || nextLevel,
+        };
       }
+
+      if (field === "attachCertificate") {
+        const nextLevel = inferCertificateLevelFromForm(current, classes, availableStudents);
+        return {
+          ...current,
+          attachCertificate: value,
+          certLevel: value ? current.certLevel || nextLevel : current.certLevel,
+        };
+      }
+
       return { ...current, [field]: value };
     });
   }
 
   function onSelectStudent(studentId) {
     const selectedStudent = availableStudents.find((student) => String(student.id || student.studentCode || student.email || "") === studentId);
+    const nextLevel = inferStudentLevel(selectedStudent);
 
     setForm((current) => ({
       ...current,
       studentId,
       email: selectedStudent ? String(selectedStudent.email || selectedStudent.contactEmail || "") : current.email,
       studentName: selectedStudent ? String(selectedStudent.name || "") : "",
+      certLevel: current.certLevel || nextLevel,
       announcement:
         selectedStudent && current.announcement.includes("{student_name}")
           ? current.announcement.replaceAll("{student_name}", String(selectedStudent.name || ""))
@@ -250,16 +362,21 @@ export default function CommunicationPage() {
   }
 
   function applyTemplate(template) {
-    setForm((current) => ({
-      ...current,
-      topic: template.topic,
-      announcement: template.announcement,
-      attachCertificate: Boolean(template.attachCertificate),
-    }));
+    setForm((current) => {
+      const shouldAttachCertificate = Boolean(template.attachCertificate);
+      const nextLevel = inferCertificateLevelFromForm(current, classes, availableStudents);
+      return {
+        ...current,
+        topic: template.topic,
+        announcement: template.announcement,
+        attachCertificate: shouldAttachCertificate,
+        certLevel: shouldAttachCertificate ? current.certLevel || nextLevel : current.certLevel,
+      };
+    });
   }
 
   function applyUpcomingClassPromo(classId) {
-    const selectedClass = classes.find((klass) => String(klass.classId || klass.id || klass.name || "") === classId);
+    const selectedClass = classes.find((klass) => classOptionId(klass) === classId);
 
     setForm((current) => ({
       ...current,
@@ -275,7 +392,11 @@ export default function CommunicationPage() {
     setSaving(true);
 
     try {
-      const receipt = await saveAnnouncementRow(form);
+      const submissionForm = {
+        ...form,
+        certLevel: inferCertificateLevelFromForm(form, classes, availableStudents),
+      };
+      const receipt = await saveAnnouncementRow(submissionForm);
 
       if (receipt?.sheet?.success && receipt?.sheet?.unverified) {
         toast.info(receipt.sheet.message || "Broadcast request was sent, but the browser cannot verify sheet delivery.");
@@ -343,7 +464,7 @@ export default function CommunicationPage() {
               <option value="">{loadingClasses ? "Loading classes..." : "Select audience"}</option>
               <option value={ALL_ACTIVE_AUDIENCE}>{ALL_ACTIVE_AUDIENCE_LABEL} — sends all_active to sheet</option>
               {classes.map((klass) => {
-                const className = String(klass.name || klass.className || klass.classId || klass.id || "").trim();
+                const className = classSelectValue(klass);
                 return className ? <option key={klass.classId || klass.id || className} value={className}>{className}</option> : null;
               })}
             </select>
@@ -352,26 +473,28 @@ export default function CommunicationPage() {
             </small>
           </label>
 
-
           <label style={fieldStyle}>
-            <span>Promote available class</span>
+            <span>Promote upcoming class</span>
             <select
               style={inputStyle}
               value={form.promoClassId}
               onChange={(event) => applyUpcomingClassPromo(event.target.value)}
               disabled={loadingClasses}
             >
-              <option value="">Select available class to advertise</option>
+              <option value="">Select upcoming class to advertise</option>
               {advertisableClasses.map((klass) => {
-                const classId = String(klass.classId || klass.id || klass.name || "");
-                const startDate = toDateInputValue(klass.startDate);
+                const classId = classOptionId(klass);
+                const startDate = toDateInputValue(klass.startDate || klass.startsAt || klass.start || klass.date);
                 return (
                   <option key={classId} value={classId}>
-                    {klass.name || klass.classId}{startDate ? ` — starts ${startDate}` : ""}
+                    {klass.name || klass.className || klass.classId}{startDate ? ` — starts ${startDate}` : ""}
                   </option>
                 );
               })}
             </select>
+            <small style={{ opacity: 0.75 }}>
+              Only upcoming classes are shown here. Active/in-progress, completed, archived, or inactive classes are hidden.
+            </small>
           </label>
 
           <label style={fieldStyle}>
