@@ -12,7 +12,8 @@
       "codebase": "falowenadmin",
       "disallowLegacyRuntimeConfig": true,
       "predeploy": [
-        "node scripts/patchSheetRowManagementRoutes.mjs"
+        "node scripts/patchSheetRowManagementRoutes.mjs",
+        "node scripts/patchOperationalSheetAutoSyncJobs.mjs"
       ],
       "ignore": [
         "node_modules",
