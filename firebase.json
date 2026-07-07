@@ -11,6 +11,9 @@
       "source": "functions",
       "codebase": "falowenadmin",
       "disallowLegacyRuntimeConfig": true,
+      "predeploy": [
+        "node scripts/patchSheetRowManagementRoutes.mjs"
+      ],
       "ignore": [
         "node_modules",
         ".git",
