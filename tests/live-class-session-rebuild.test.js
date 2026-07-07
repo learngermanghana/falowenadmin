@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { generateSessionOccurrences, latestSessionDateInTimezone } from "../src/utils/liveClassScheduling.js";
-import { buildRebuildClassSessionsPlan } from "../src/utils/liveClassSessionRebuildPlan.js";
+import { buildFinalRebuildSessionList, buildRebuildClassSessionsPlan } from "../src/utils/liveClassSessionRebuildPlan.js";
 
 const klass = {
   id: "class-a1",
@@ -107,6 +107,15 @@ test("latest session date helper derives synced class end date from sessions", (
   ];
 
   assert.equal(latestSessionDateInTimezone(sessions, "Africa/Accra"), "2026-07-01");
+});
+
+test("final rebuild session list includes preserved sessions when deriving end date", () => {
+  const preserved = { id: "class-a1_2026-07-10_1800", classId: klass.id, startsAt: "2026-07-10T18:00:00.000Z", status: "completed" };
+  const plan = buildRebuildClassSessionsPlan({ klass, occurrences: desiredOccurrences(), sessions: [preserved] });
+  const finalSessions = buildFinalRebuildSessionList(plan);
+
+  assert.equal(latestSessionDateInTimezone(desiredOccurrences(), "Africa/Accra"), "2026-06-24");
+  assert.equal(latestSessionDateInTimezone(finalSessions, "Africa/Accra"), "2026-07-10");
 });
 
 test("repeated rebuild plans upsert existing desired sessions without duplicates", () => {

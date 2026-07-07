@@ -34,10 +34,14 @@ function sessionTime(session = {}) {
 }
 
 function sessionCurriculumIndex(session = {}) {
-  const direct = Number(session.curriculumIndex || 0);
-  if (Number.isFinite(direct) && direct > 0) return direct;
-  const day = Number(session.curriculumDay || 0);
-  if (Number.isFinite(day) && day >= 0) return day + 1;
+  if (session.curriculumIndex !== undefined && session.curriculumIndex !== null && session.curriculumIndex !== "") {
+    const direct = Number(session.curriculumIndex);
+    if (Number.isFinite(direct) && direct > 0) return direct;
+  }
+  if (session.curriculumDay !== undefined && session.curriculumDay !== null && session.curriculumDay !== "") {
+    const day = Number(session.curriculumDay);
+    if (Number.isFinite(day) && day >= 0) return day + 1;
+  }
   return 0;
 }
 
@@ -49,7 +53,7 @@ function chooseExistingSession({ occurrence, index, sessions, existingById, used
   const byCurriculum = sessions.find((session) => sessionCurriculumIndex(session) === wantedIndex && !usedIds.has(session.id));
   if (byCurriculum) return byCurriculum;
 
-  return sessions[index] && !usedIds.has(sessions[index].id) ? sessions[index] : null;
+  return null;
 }
 
 export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], sessions = [], attendanceBySessionId = new Map(), buildCurriculumPatch = null } = {}) {
@@ -76,7 +80,7 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
     desiredIds.add(targetOccurrence.id);
 
     const curriculumPatch = typeof buildCurriculumPatch === "function" ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !existing }) : null;
-    const lockedExisting = existing && isLockedRebuildSession(existing);
+    const lockedExisting = existing && (isLockedRebuildSession(existing) || isProtectedRebuildSession(existing));
     const basePatch = lockedExisting
       ? { classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" }
       : { ...targetOccurrence, classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" };
@@ -95,4 +99,12 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
   });
 
   return { desiredIds, deletions, preserved, upserts };
+}
+
+export function buildFinalRebuildSessionList(plan = {}) {
+  const upserted = Array.isArray(plan.upserts)
+    ? plan.upserts.map(({ existing, patch }) => ({ ...(existing || {}), ...(patch || {}) }))
+    : [];
+  const preserved = Array.isArray(plan.preserved) ? plan.preserved : [];
+  return [...upserted, ...preserved];
 }
