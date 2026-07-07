@@ -126,8 +126,7 @@ if (!source.includes("sendHolidayNoticeWithClassSchedule")) {
   source = `${source.slice(0, index)}${helperBlock}\n${source.slice(index)}`;
 }
 
-source = source.replaceAll("sendHolidayNoticeForDoc({", "sendHolidayNoticeWithClassSchedule({");
-source = source.replace("async function sendHolidayNoticeWithClassSchedule({ docRef, holiday, date, countryCode, noticeConfig }) {\n  const syncSecret", "async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, noticeConfig }) {\n  const syncSecret");
+source = source.replaceAll("const result = await sendHolidayNoticeForDoc({", "const result = await sendHolidayNoticeWithClassSchedule({");
 
 writeFileSync(path, source);
 console.log("Holiday notices now derive all-active recipients from live class sessions on the holiday date.");
