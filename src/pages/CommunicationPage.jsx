@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { listClasses } from "../services/classesService";
 import { saveAnnouncementRow } from "../services/communicationService";
-import { listStudentsByClass } from "../services/studentsService";
+import { listAllStudents, listStudentsByClass } from "../services/studentsService";
 import { useToast } from "../context/ToastContext";
 
 const QUICK_TEMPLATES = [
@@ -148,7 +148,9 @@ export default function CommunicationPage() {
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [students, setStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingAllStudents, setLoadingAllStudents] = useState(true);
 
   const [form, setForm] = useState({
     announcement: "",
@@ -181,6 +183,20 @@ export default function CommunicationPage() {
   }, []);
 
   useEffect(() => {
+    (async () => {
+      setLoadingAllStudents(true);
+      try {
+        const rows = await listAllStudents();
+        setAllStudents(rows);
+      } catch {
+        setAllStudents([]);
+      } finally {
+        setLoadingAllStudents(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     const className = form.className.trim();
     if (!className || className === ALL_ACTIVE_AUDIENCE) {
       setStudents([]);
@@ -201,10 +217,13 @@ export default function CommunicationPage() {
   }, [form.className]);
 
   const advertisableClasses = useMemo(() => classes.filter((klass) => isAdvertisableClass(klass)), [classes]);
+  const availableStudents = form.className.trim() && form.className !== ALL_ACTIVE_AUDIENCE ? students : allStudents;
+  const studentSelectLoading = form.className.trim() && form.className !== ALL_ACTIVE_AUDIENCE ? loadingStudents : loadingAllStudents;
 
   const canSubmit = useMemo(() => {
-    return Boolean(form.announcement.trim() && form.className.trim() && form.date.trim() && !saving);
-  }, [form.announcement, form.className, form.date, saving]);
+    const hasAudience = Boolean(form.className.trim() || form.email.trim());
+    return Boolean(form.announcement.trim() && hasAudience && form.date.trim() && !saving);
+  }, [form.announcement, form.className, form.date, form.email, saving]);
 
   function updateField(field, value) {
     setForm((current) => {
@@ -216,7 +235,7 @@ export default function CommunicationPage() {
   }
 
   function onSelectStudent(studentId) {
-    const selectedStudent = students.find((student) => String(student.id || "") === studentId);
+    const selectedStudent = availableStudents.find((student) => String(student.id || student.studentCode || student.email || "") === studentId);
 
     setForm((current) => ({
       ...current,
@@ -314,13 +333,12 @@ export default function CommunicationPage() {
 
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
           <label style={fieldStyle}>
-            <span>Audience class *</span>
+            <span>Audience class</span>
             <select
               style={inputStyle}
               value={form.className}
               onChange={(event) => updateField("className", event.target.value)}
               disabled={loadingClasses}
-              required
             >
               <option value="">{loadingClasses ? "Loading classes..." : "Select audience"}</option>
               <option value={ALL_ACTIVE_AUDIENCE}>{ALL_ACTIVE_AUDIENCE_LABEL} — sends all_active to sheet</option>
@@ -330,7 +348,7 @@ export default function CommunicationPage() {
               })}
             </select>
             <small style={{ opacity: 0.75 }}>
-              Selecting {ALL_ACTIVE_AUDIENCE_LABEL} writes <code>{ALL_ACTIVE_AUDIENCE}</code> in the sheet class column.
+              Select a class for group broadcasts, or leave this blank and choose/type a student email for a one-student message. Selecting {ALL_ACTIVE_AUDIENCE_LABEL} writes <code>{ALL_ACTIVE_AUDIENCE}</code> in the sheet class column.
             </small>
           </label>
 
@@ -362,11 +380,11 @@ export default function CommunicationPage() {
               style={inputStyle}
               value={form.studentId}
               onChange={(event) => onSelectStudent(event.target.value)}
-              disabled={!form.className.trim() || form.className === ALL_ACTIVE_AUDIENCE || loadingStudents}
+              disabled={studentSelectLoading}
             >
-              <option value="">{loadingStudents ? "Loading students..." : "Select student (optional)"}</option>
-              {students.map((student) => {
-                const studentId = String(student.id || "");
+              <option value="">{studentSelectLoading ? "Loading students..." : "Select student (optional)"}</option>
+              {availableStudents.map((student) => {
+                const studentId = String(student.id || student.studentCode || student.email || "");
                 return (
                   <option key={studentId} value={studentId}>
                     {student.name || "Unnamed student"}
@@ -387,13 +405,13 @@ export default function CommunicationPage() {
           </label>
 
           <label style={fieldStyle}>
-            <span>Email</span>
+            <span>Email {form.className.trim() ? "" : "*"}</span>
             <input
               type="email"
               style={inputStyle}
               value={form.email}
               onChange={(event) => updateField("email", event.target.value)}
-              placeholder="Optional target email"
+              placeholder="Student email for a one-student message"
             />
           </label>
 
