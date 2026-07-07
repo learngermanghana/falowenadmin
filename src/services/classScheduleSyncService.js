@@ -5,6 +5,14 @@ function normalizeMeetingDays(meetingDays) {
   return meetingDays.map((day) => String(day || "").trim()).filter(Boolean);
 }
 
+async function authHeaders() {
+  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 function validatePayload(payload = {}) {
   const className = String(payload.className || "").trim();
   const startDate = String(payload.startDate || "").trim();
@@ -45,20 +53,42 @@ function validatePayload(payload = {}) {
 
 export async function syncClassSchedule(payload) {
   const body = validatePayload(payload);
-  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
 
   const response = await fetch("/api/class-schedule/sync", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: await authHeaders(),
     body: JSON.stringify(body),
   });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(String(data?.error || "Failed to sync class schedule"));
+  }
+
+  return data;
+}
+
+export async function deleteClassScheduleRow(row = {}) {
+  const rowNumber = Number(row.rowNumber || row.sheetRowNumber);
+  const className = String(row.values?.Class || row.values?.class || row.values?.ClassName || row.values?.className || row.className || "").trim();
+
+  if (!Number.isInteger(rowNumber) || rowNumber < 2) {
+    throw new Error("A valid sheet row number is required before deleting.");
+  }
+
+  const response = await fetch("/api/class-schedule/delete-row", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({
+      rowNumber,
+      className,
+      row,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.ok === false) {
+    throw new Error(String(data?.error || "Failed to delete class schedule row"));
   }
 
   return data;
