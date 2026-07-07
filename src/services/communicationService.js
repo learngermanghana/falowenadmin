@@ -15,6 +15,34 @@ function boolToSheetValue(value) {
   return value ? "TRUE" : "FALSE";
 }
 
+function inferLevelFromText(value) {
+  const match = normalize(value).match(/\b(A1|A2|B1|B2|C1|C2)\b/i);
+  return match?.[1]?.toUpperCase() || "";
+}
+
+function inferCertificateLevel(input = {}) {
+  const candidates = [
+    input.certLevel,
+    input.cert_level,
+    input.level,
+    input.classLevel,
+    input.courseLevel,
+    input.languageLevel,
+    input.className,
+    input.class,
+    input.topic,
+    input.announcement,
+  ];
+
+  for (const candidate of candidates) {
+    const direct = normalize(candidate);
+    if (/^(A1|A2|B1|B2|C1|C2)$/i.test(direct)) return direct.toUpperCase();
+    const inferred = inferLevelFromText(direct);
+    if (inferred) return inferred;
+  }
+  return "";
+}
+
 function isLikelyNetworkError(error) {
   return error instanceof TypeError || /networkerror|failed to fetch/i.test(String(error?.message || ""));
 }
@@ -30,7 +58,7 @@ export function buildAnnouncementRow(input = {}) {
     topic: normalize(input.topic),
     email: normalize(input.email),
     attach_certificate: boolToSheetValue(Boolean(input.attachCertificate)),
-    cert_level: normalize(input.certLevel),
+    cert_level: inferCertificateLevel(input),
   };
 }
 
