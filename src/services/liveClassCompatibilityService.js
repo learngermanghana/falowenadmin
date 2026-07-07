@@ -1,6 +1,7 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
+import { latestSessionDateInTimezone } from "../utils/liveClassScheduling.js";
 import { rebuildClassSessionsFromSchedule, syncClassCurriculum, syncClassEndDateFromSessions } from "./liveClassService.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
 
@@ -58,13 +59,12 @@ function prepareDashboard(dashboard, repair = null) {
   const sessions = (dashboard.sessions || [])
     .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
     .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
-  const latest = sessions[sessions.length - 1] || null;
-  const endDate = String(latest?.startsAt || "").slice(0, 10) || String(dashboard.klass?.endDate || "");
+  const endDate = latestSessionDateInTimezone(sessions, dashboard.klass?.timezone) || String(dashboard.klass?.endDate || "");
 
   return {
     ...dashboard,
     sessions,
-    klass: { ...dashboard.klass, sessionDerivedEndDate: endDate },
+    klass: { ...dashboard.klass, endDate, sessionDerivedEndDate: endDate },
     sessionRepair: repair,
   };
 }
