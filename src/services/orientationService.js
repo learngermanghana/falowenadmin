@@ -1,5 +1,13 @@
 import { auth } from "../firebase";
 
+async function authHeaders() {
+  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 function validatePayload(payload = {}) {
   const name = String(payload.name || "").trim();
   const email = String(payload.email || "").trim();
@@ -17,20 +25,39 @@ function validatePayload(payload = {}) {
 
 export async function syncOrientationStudent(payload) {
   const body = validatePayload(payload);
-  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
 
   const response = await fetch("/api/orientation/sync", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: await authHeaders(),
     body: JSON.stringify(body),
   });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(String(data?.error || "Failed to sync orientation student"));
+  }
+
+  return data;
+}
+
+export async function removeOrientationSheetRow(row = {}) {
+  const rowNumber = Number(row.rowNumber || row.sheetRowNumber);
+  const email = String(row.values?.Email || row.values?.email || row.email || "").trim();
+  const studentCode = String(row.values?.StudentCode || row.values?.studentCode || row.values?.studentcode || row.studentCode || "").trim();
+
+  if (!Number.isInteger(rowNumber) || rowNumber < 2) {
+    throw new Error("A valid sheet row number is required before removing.");
+  }
+
+  const response = await fetch("/api/orientation/delete-row", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ rowNumber, email, studentCode, row }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.ok === false) {
+    throw new Error(String(data?.error || "Failed to remove orientation sheet row"));
   }
 
   return data;
