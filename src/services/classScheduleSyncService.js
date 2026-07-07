@@ -89,3 +89,5 @@ export async function removeClassScheduleSheetRow(row = {}) {
 
   return data;
 }
+
+export const deleteClassScheduleRow = removeClassScheduleSheetRow;
