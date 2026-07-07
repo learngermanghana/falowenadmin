@@ -139,6 +139,69 @@ function patchAssignmentId() {
   writeFileSync(path, text);
 }
 
+function patchDashboardPage() {
+  const path = "src/pages/DashboardPage.jsx";
+  let text = readFileSync(path, "utf8");
+
+  const oldAnalyticsQueue = `    const classBreakdown = groupTopClasses(students);
+    const workQueue = incomingAssignments.length + pendingTutorReviewsCount + grammarIssueReports.length;
+    return {
+      totalStudents,
+      activeStudents,
+      paidStudents,
+      studentsWithBalance,
+      totalBalance,
+      classBreakdown,
+      workQueue,
+      paymentRate: pct(paidStudents, totalStudents),
+      activeRate: pct(activeStudents, totalStudents),
+    };`;
+
+  const newAnalyticsQueue = `    const classBreakdown = groupTopClasses(students);
+    const incomingQueue = incomingAssignments.length;
+    const adminAttentionQueue = pendingTutorReviewsCount + grammarIssueReports.length;
+    const operationalQueue = incomingQueue + adminAttentionQueue;
+    return {
+      totalStudents,
+      activeStudents,
+      paidStudents,
+      studentsWithBalance,
+      totalBalance,
+      classBreakdown,
+      incomingQueue,
+      adminAttentionQueue,
+      operationalQueue,
+      workQueue: incomingQueue,
+      paymentRate: pct(paidStudents, totalStudents),
+      activeRate: pct(activeStudents, totalStudents),
+    };`;
+
+  text = replaceRequired(text, oldAnalyticsQueue, newAnalyticsQueue, "dashboard queue breakdown");
+
+  const oldHeroQueue = `        <div className="hero-score-card">
+          <span>Operational queue</span>
+          <strong>{analytics.workQueue}</strong>
+          <p>{analytics.workQueue === 0 ? "No urgent admin work pending." : "items need attention"}</p>
+        </div>`;
+
+  const newHeroQueue = `        <div className="hero-score-card">
+          <span>Incoming work</span>
+          <strong>{analytics.incomingQueue}</strong>
+          <p>
+            {analytics.incomingQueue === 0
+              ? analytics.adminAttentionQueue
+                ? \`No incoming work. \${analytics.adminAttentionQueue} other admin item\${analytics.adminAttentionQueue === 1 ? "" : "s"} need attention.\`
+                : "No incoming submitted work pending."
+              : \`\${analytics.incomingQueue} submitted item\${analytics.incomingQueue === 1 ? "" : "s"} waiting for marking.\`}
+          </p>
+        </div>`;
+
+  text = replaceRequired(text, oldHeroQueue, newHeroQueue, "dashboard incoming-work hero card");
+
+  writeFileSync(path, text);
+}
+
 patchMarkingPage();
 patchAssignmentId();
-console.log("Applied Falowen admin manual marking selection fix.");
+patchDashboardPage();
+console.log("Applied Falowen admin manual marking and dashboard queue fixes.");
