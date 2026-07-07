@@ -56,7 +56,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
         setForm((current) => ({ ...current, endDate: result.endDate }));
       }
       const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.requestedEndDate
-        ? ` End date was synced to the last generated session: ${result.sessionDerivedEndDate}.`
+        ? ` Generated sessions end on ${result.sessionDerivedEndDate}, but class graduation date is ${result.requestedEndDate}.`
         : "";
       setMessage(`Class updated. ${result.created || 0} session(s) created.${endDateNote}`);
       await onSaved?.(klass.id);
@@ -72,7 +72,9 @@ export default function ClassEditorCard({ klass, onSaved }) {
       if (result.endDate) {
         setForm((current) => ({ ...current, endDate: result.endDate }));
       }
-      const endDateNote = result.endDate ? ` End date synced to ${result.endDate}.` : "";
+      const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.endDate
+        ? ` Generated sessions end on ${result.sessionDerivedEndDate}, but class graduation date is ${result.endDate}.`
+        : result.sessionDerivedEndDate ? ` Generated sessions end on ${result.sessionDerivedEndDate}.` : "";
       const successMessage = `Sessions rebuilt successfully: ${result.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${endDateNote}`;
       setMessage(successMessage);
       toast.success(successMessage, { durationMs: 6000 });
@@ -134,7 +136,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     </div>)}
     <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE }] }))}>Add another time</button>
     <div><label><input type="checkbox" checked={form.publicVisible} onChange={(event) => patch({ publicVisible: event.target.checked })} /> Show publicly</label> <label><input type="checkbox" checked={form.registrationOpen} onChange={(event) => patch({ registrationOpen: event.target.checked })} /> Registration open</label></div>
-    {showEndDateWarning ? <div style={{ padding: 10, borderRadius: 8, background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}>This class has sessions after the configured graduation date ({configuredEndDate}). Rebuild/sync will update the effective class end date to {derivedEndDate}.</div> : null}
+    {showEndDateWarning ? <div style={{ padding: 10, borderRadius: 8, background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}>Generated sessions end on {derivedEndDate}, but class graduation date is {configuredEndDate}. The graduation date is preserved separately from the session-derived final date.</div> : null}
     {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
     <button type="button" disabled={busy} onClick={rebuildSessions}>Rebuild sessions from start date and timetable</button>

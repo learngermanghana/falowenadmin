@@ -123,14 +123,14 @@ export async function updateClassCohort(classId, payload) {
   });
 
   const sessionEndDate = await syncClassEndDateFromSessions(classId).catch(() => null);
-  const finalEndDate = sessionEndDate?.endDate || endDate;
 
   return {
     ...baseResult,
     ...groupedResult,
-    endDate: finalEndDate,
+    endDate,
     requestedEndDate: endDate,
-    sessionDerivedEndDate: sessionEndDate?.endDate || "",
+    configuredEndDate: String(payload.endDate || endDate || "").trim(),
+    sessionDerivedEndDate: sessionEndDate?.sessionDerivedEndDate || "",
     holidayDatesExcluded: relevantClosures,
   };
 }
