@@ -848,6 +848,86 @@ export async function loadStudentResultSources(studentCode) {
   return { firestoreRows, sheetRows: sheetResult.rows, sheetConfigured: sheetResult.configured };
 }
 
+export async function updateFirestoreScore(scoreId, updates = {}) {
+  if (!scoreId) throw new Error("Missing Firestore score id.");
+  const nowIso = new Date().toISOString();
+  const scoreValue = Number(updates.score);
+  const patch = {
+    assignment: normalize(updates.assignment),
+    assignmentId: normalize(updates.assignmentId || updates.assignment_id),
+    assignment_id: normalize(updates.assignmentId || updates.assignment_id),
+    score: Number.isFinite(scoreValue) ? Math.max(0, Math.min(100, Math.round(scoreValue))) : updates.score,
+    finalScore: Number.isFinite(scoreValue) ? Math.max(0, Math.min(100, Math.round(scoreValue))) : updates.score,
+    comments: String(updates.comments || "").trim(),
+    feedback: String(updates.comments || updates.feedback || "").trim(),
+    level: normalize(updates.level),
+    updatedAt: nowIso,
+    manuallyEdited: true,
+    manuallyEditedAt: nowIso,
+  };
+  await updateDoc(doc(db, "scores", scoreId), patch);
+  return patch;
+}
+
+export async function syncFirestoreScoresToSheet(scores = []) {
+  const rows = scores.map((score) => buildScoreRow({
+    studentCode: score.studentCode || score.studentcode,
+    studentEmail: score.studentEmail || score.email || "",
+    studentId: score.studentId || "",
+    studentScopeKey: score.studentScopeKey || "",
+    name: score.name || score.studentName,
+    assignment: score.assignment,
+    assignmentId: score.assignmentId || score.assignment_id,
+    score: score.score ?? score.finalScore,
+    comments: score.comments || score.feedback || score.improvement_summary || score.improvementSummary || "Synced from Firestore score mirror.",
+    level: score.level,
+    link: score.link || "",
+    source: "firestore_sheet_bulk_override",
+    markingDetails: score,
+  })).map((row) => ({ ...row, dedupe_id: scoreDedupeId(row) }));
+
+  if (!rows.length) return { rows: [], sheet: { attempted: false, success: true, message: "No selected scores to sync." } };
+
+  const webhookPayload = {
+    ...(SCORES_WEBHOOK_TOKEN ? { token: SCORES_WEBHOOK_TOKEN } : {}),
+    ...(SCORES_WEBHOOK_SHEET_NAME ? { sheet_name: SCORES_WEBHOOK_SHEET_NAME } : {}),
+    ...(SCORES_WEBHOOK_SHEET_GID ? { sheet_gid: SCORES_WEBHOOK_SHEET_GID } : {}),
+    metadata_columns: ["attempt", "status", "is_resubmission", "previous_score", "previous_result", "resubmitted_at"],
+    create_missing_columns: true,
+    rows,
+  };
+
+  const receipt = {
+    rows,
+    sheet: { attempted: Boolean(SCORES_WEBHOOK_URL), success: !SCORES_WEBHOOK_URL, message: SCORES_WEBHOOK_URL ? "Pending" : "Sheet save skipped (webhook not configured)." },
+  };
+
+  if (SCORES_WEBHOOK_URL) {
+    try {
+      await postScoreToWebhook(webhookPayload);
+      receipt.sheet.success = true;
+      receipt.sheet.message = `Synced ${rows.length} selected score rows to Google Sheets.`;
+    } catch (error) {
+      if (!isLikelyNetworkError(error)) {
+        receipt.sheet.success = false;
+        receipt.sheet.message = String(error?.message || "Google Sheets bulk sync failed.");
+      } else {
+        try {
+          await postScoreToWebhookNoCors(webhookPayload);
+          receipt.sheet.success = true;
+          receipt.sheet.message = `Bulk sheet request sent via no-cors fallback for ${rows.length} selected score rows.`;
+        } catch (fallbackError) {
+          receipt.sheet.success = false;
+          receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets bulk sync failed.");
+        }
+      }
+    }
+  }
+
+  if (!receipt.sheet.success) throw new Error(receipt.sheet.message);
+  return receipt;
+}
+
 export async function syncFirestoreScoreToSheet(score = {}) {
   const receipt = await saveScoreRow({
     studentCode: score.studentCode || score.studentcode,
