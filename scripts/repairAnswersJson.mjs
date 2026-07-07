@@ -91,3 +91,4 @@ fs.writeFileSync(liveClassesPath, liveClassesSource);
 console.log("Live Classes progress now uses the cohort start and graduation dates.");
 
 await import("./applyMarkingManualSelectionFix.mjs");
+await import("./patchCommunicationUpcomingClasses.mjs");
