@@ -778,10 +778,6 @@ export default function MarkingPage() {
       error("Pick a student before saving.");
       return;
     }
-    if (!referenceEntry) {
-      error("Pick a reference answer before saving.");
-      return;
-    }
     if (!assignmentValue.trim()) {
       error("Assignment is required.");
       return;
@@ -796,7 +792,7 @@ export default function MarkingPage() {
     }
     try {
       setSavingScore(true);
-      const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
+      const level = selectedStudent.level || referenceEntry?.level || inferLevel(referenceEntry?.assignment || assignmentValue);
       const safeAssignment = assignmentValue.trim();
 
       const currentScore = finalScore;
@@ -814,7 +810,9 @@ export default function MarkingPage() {
         score: currentScore,
         comments: currentFeedback,
         level,
-        link: referenceEntry.answer_url ?? DEFAULT_REFERENCE_LINK,
+        link: referenceEntry?.answer_url ?? DEFAULT_REFERENCE_LINK,
+        allowDuplicate: true,
+        forceSheetDedupeId: true,
         markingDetails: {
           objectiveScore: currentObjectiveScore,
           objectiveCorrect: currentObjectiveResult.correctCount,
