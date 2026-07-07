@@ -28,7 +28,7 @@ import {
 } from "../data/courseDictionary.js";
 import { saveAnnouncementRow } from "./communicationService.js";
 import { listStudentsByClass } from "./studentsService.js";
-import { buildRebuildClassSessionsPlan } from "../utils/liveClassSessionRebuildPlan.js";
+import { buildFinalRebuildSessionList, buildRebuildClassSessionsPlan } from "../utils/liveClassSessionRebuildPlan.js";
 import {
   buildCancellationAnnouncement,
   findNextScheduledSession,
@@ -309,7 +309,8 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
 
   const curriculum = await syncClassCurriculum(classId, { force: false });
   const finalMapped = curriculum.mapped || mapped;
-  const sessionDerivedEndDate = latestSessionDateInTimezone(occurrences, normalizedClass.timezone);
+  const finalSessions = buildFinalRebuildSessionList(plan);
+  const sessionDerivedEndDate = latestSessionDateInTimezone(finalSessions, normalizedClass.timezone);
   await updateDoc(doc(db, "classes", classId), {
     ...(sessionDerivedEndDate ? { endDate: sessionDerivedEndDate, sessionDerivedEndDate, endDateSyncedAt: serverTimestamp() } : {}),
     generationStatus: "complete",
