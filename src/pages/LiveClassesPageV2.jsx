@@ -16,7 +16,7 @@ import {
   getCompatibleClassDashboard,
   syncCompatibleClassCurriculum,
 } from "../services/liveClassCompatibilityService.js";
-import { buildClassUrl, calculateClassProgress, calculateCountdown } from "../utils/liveClassScheduling.js";
+import { buildClassUrl, calculateClassProgress, getEffectiveClassEndDate, calculateCountdown } from "../utils/liveClassScheduling.js";
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -451,14 +451,14 @@ export default function LiveClassesPageV2() {
         <p>Status: <strong>{dashboard.klass.status || "active"}</strong> · Progress: <strong>{progress}%</strong></p>
         <p>Level: <strong>{levelId || "Not set"}</strong> · Sessions found: <strong>{dashboard.sessions.length}</strong> · Dictionary items: <strong>{dictionaryEntries.length}</strong></p>
         <p>Stable student URL: <code>{buildClassUrl(dashboard.klass)}</code></p>
-        <p>Start: {dashboard.klass.startDate || "Not set"} · Graduation: {dashboard.klass.endDate || "Not set"} · Timezone: {dashboard.klass.timezone || "Africa/Accra"}</p>
+        <p>Start: {dashboard.klass.startDate || "Not set"} · Graduation: {getEffectiveClassEndDate(dashboard.klass, dashboard.sessions) || "Not set"} · Timezone: {dashboard.klass.timezone || "Africa/Accra"}</p>
       </article> : null}
 
       {!loading && dashboard && activeTab === "details" ? <ClassEditorCard klass={dashboard.klass} onSaved={async (classId) => { await refreshClasses(classId); await refreshDashboard(classId); setMessage("Class changes saved and sessions refreshed."); }} /> : null}
 
       {!loading && dashboard && activeTab === "timetable" ? <article className="card">
         <h2>Timetable</h2>
-        <p><strong>Course dates:</strong> {dashboard.klass.startDate || "Not set"} to {dashboard.klass.endDate || "Not set"}</p>
+        <p><strong>Course dates:</strong> {dashboard.klass.startDate || "Not set"} to {getEffectiveClassEndDate(dashboard.klass, dashboard.sessions) || "Not set"}</p>
         <div style={{ display: "grid", gap: 8, margin: "14px 0" }}>{(dashboard.klass.scheduleRules || []).length ? dashboard.klass.scheduleRules.map((rule, index) => <div key={`${rule.day}-${rule.startTime}-${index}`} style={{ padding: 10, border: "1px solid #e2e8f0", borderRadius: 8 }}>{scheduleRuleLabel(rule)}</div>) : <p>No weekly teaching times are saved.</p>}</div>
         <p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)} {nextCountdown ? `(${nextCountdown.days}d ${nextCountdown.hours}h ${nextCountdown.minutes}m)` : ""}</p>
       </article> : null}
