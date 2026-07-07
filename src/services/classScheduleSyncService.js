@@ -68,27 +68,23 @@ export async function syncClassSchedule(payload) {
   return data;
 }
 
-export async function deleteClassScheduleRow(row = {}) {
+export async function removeClassScheduleSheetRow(row = {}) {
   const rowNumber = Number(row.rowNumber || row.sheetRowNumber);
   const className = String(row.values?.Class || row.values?.class || row.values?.ClassName || row.values?.className || row.className || "").trim();
 
   if (!Number.isInteger(rowNumber) || rowNumber < 2) {
-    throw new Error("A valid sheet row number is required before deleting.");
+    throw new Error("A valid sheet row number is required before removing.");
   }
 
-  const response = await fetch("/api/class-schedule/delete-row", {
+  const response = await fetch("/api/class-schedule/remove-row", {
     method: "POST",
     headers: await authHeaders(),
-    body: JSON.stringify({
-      rowNumber,
-      className,
-      row,
-    }),
+    body: JSON.stringify({ rowNumber, className, row }),
   });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data?.ok === false) {
-    throw new Error(String(data?.error || "Failed to delete class schedule row"));
+    throw new Error(String(data?.error || "Failed to remove class schedule sheet row"));
   }
 
   return data;
