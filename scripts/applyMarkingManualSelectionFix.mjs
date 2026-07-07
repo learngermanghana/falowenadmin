@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 function replaceRequired(text, oldBlock, newBlock, label) {
+  if (text.includes(newBlock)) return text;
   if (!text.includes(oldBlock)) {
     throw new Error(`Could not find block for ${label}`);
   }
@@ -114,10 +115,11 @@ function patchMarkingPage() {
   text = replaceRequired(text, oldTabButtons, newTabInfo, "remove latest submission tab");
 
   const attemptSearchPattern = /\n        <div style=\{\{ marginBottom: 12, padding: 10, border: "1px solid #e2e8f0", borderRadius: 8, background: "#f8fafc" \}\}>\n          <label style=\{\{ display: "grid", gap: 5, fontSize: 13, fontWeight: 700 \}\}>\n            Find all submission attempts\n[\s\S]*?        <\/div>\n        \{loadingSubmissions \? \(\n          <p style=\{\{ margin: 0 \}\}>Loading submissions\.\.\.<\/p>\n        \) : activeSubmissionTab === "latest" \? \(/;
-  if (!attemptSearchPattern.test(text)) {
+  if (attemptSearchPattern.test(text)) {
+    text = text.replace(attemptSearchPattern, '\n        {activeSubmissionTab === "latest" ? (');
+  } else if (!text.includes('{activeSubmissionTab === "latest" ? (')) {
     throw new Error("Could not remove all-attempt/latest loading block");
   }
-  text = text.replace(attemptSearchPattern, '\n        {activeSubmissionTab === "latest" ? (');
 
   text = text.replace(
     '<p style={{ margin: 0 }}>No submission found yet for this student.</p>',
