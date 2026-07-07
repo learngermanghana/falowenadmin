@@ -3,6 +3,7 @@ import { db } from "../firebase.js";
 import { calculateClassEndDate, setSchedulingSchoolClosureDates } from "../utils/liveClassScheduling.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
 import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
+import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
 import * as base from "./classCohortUpdateServiceBase.js";
 import { rebuildClassSessionsFromSchedule } from "./liveClassServiceBase.js";
 
@@ -119,10 +120,16 @@ export async function updateClassCohort(classId, payload) {
     holidayDatesExcluded: relevantClosures,
     holidayAdjustedEndDate: calculatedEndDate || endDate,
   });
+
+  const sessionEndDate = await syncClassEndDateFromSessions(classId).catch(() => null);
+  const finalEndDate = sessionEndDate?.endDate || endDate;
+
   return {
     ...baseResult,
     ...groupedResult,
-    endDate,
+    endDate: finalEndDate,
+    requestedEndDate: endDate,
+    sessionDerivedEndDate: sessionEndDate?.endDate || "",
     holidayDatesExcluded: relevantClosures,
   };
 }
