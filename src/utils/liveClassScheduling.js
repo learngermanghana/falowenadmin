@@ -198,13 +198,17 @@ export function latestSessionDateInTimezone(sessions = [], timezone = "Africa/Ac
 
 
 export function getEffectiveClassEndDate(klass = {}, sessions = []) {
-  const sessionDerivedEndDate = String(klass?.sessionDerivedEndDate || "").trim();
-  if (sessionDerivedEndDate) return sessionDerivedEndDate;
+  const candidates = [
+    klass?.endDate,
+    klass?.configuredEndDate,
+    klass?.holidayAdjustedEndDate,
+    klass?.sessionDerivedEndDate,
+    latestSessionDateInTimezone(sessions, klass?.timezone || "Africa/Accra"),
+  ]
+    .map(normalizeIsoDate)
+    .filter(Boolean);
 
-  const endDate = String(klass?.endDate || "").trim();
-  if (endDate) return endDate;
-
-  return latestSessionDateInTimezone(sessions, klass?.timezone || "Africa/Accra");
+  return candidates.length ? candidates.sort().at(-1) : "";
 }
 
 export function selectNextSession(sessions = [], now = new Date()) {
