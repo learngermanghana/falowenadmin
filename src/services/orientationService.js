@@ -49,7 +49,7 @@ export async function removeOrientationSheetRow(row = {}) {
     throw new Error("A valid sheet row number is required before removing.");
   }
 
-  const response = await fetch("/api/orientation/delete-row", {
+  const response = await fetch("/api/orientation/remove-row", {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ rowNumber, email, studentCode, row }),
