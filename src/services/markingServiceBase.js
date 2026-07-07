@@ -788,6 +788,87 @@ function buildScoreRow({ studentCode, studentEmail = "", studentId = "", student
   };
 }
 
+const SCORES_SHEET_CSV_URL = String(import.meta.env.VITE_SCORES_SHEET_CSV_URL || "").trim();
+
+function normalizeScoreSheetHeader(value) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function toScoreSheetRows(rows) {
+  if (!rows.length) return [];
+  const [headerRow, ...dataRows] = rows;
+  const headers = headerRow.map(normalizeScoreSheetHeader);
+  return dataRows.map((row, index) => {
+    const entry = { sheetRowNumber: index + 2 };
+    headers.forEach((header, idx) => {
+      entry[header] = normalize(row[idx]);
+    });
+    return {
+      ...entry,
+      studentCode: entry.studentcode || entry.studentid || entry.uid || "",
+      name: entry.name || entry.studentname || "",
+      assignment: entry.assignment || "",
+      assignmentId: entry.assignmentid || entry.assignment_id || entry.assignmentkey || "",
+      score: entry.score || entry.finalscore || "",
+      comments: entry.comments || entry.feedback || "",
+      date: entry.date || entry.markedat || entry.updatedat || "",
+      level: entry.level || entry.class || entry.classname || "",
+      dedupeId: entry.dedupeid || entry.dedupe_id || "",
+    };
+  });
+}
+
+export async function loadScoreSheetRowsForStudent(studentCode) {
+  const code = normalizeLower(studentCode);
+  if (!SCORES_SHEET_CSV_URL) return { configured: false, rows: [] };
+  const rows = toScoreSheetRows(await loadCsvRows(SCORES_SHEET_CSV_URL));
+  return {
+    configured: true,
+    rows: rows.filter((row) => normalizeLower(row.studentCode) === code),
+  };
+}
+
+export async function loadFirestoreScoresForStudent(studentCode) {
+  const code = normalizeLower(studentCode);
+  const snap = await getDocs(collection(db, "scores"));
+  const rows = [];
+  snap.forEach((docSnap) => {
+    const data = docSnap.data() || {};
+    if (normalizeLower(data.studentCode || data.studentcode) !== code) return;
+    rows.push({ id: docSnap.id, ...data });
+  });
+  return rows.sort((a, b) => String(b.updatedAt || b.date || "").localeCompare(String(a.updatedAt || a.date || "")));
+}
+
+export async function loadStudentResultSources(studentCode) {
+  const [firestoreRows, sheetResult] = await Promise.all([
+    loadFirestoreScoresForStudent(studentCode),
+    loadScoreSheetRowsForStudent(studentCode),
+  ]);
+  return { firestoreRows, sheetRows: sheetResult.rows, sheetConfigured: sheetResult.configured };
+}
+
+export async function syncFirestoreScoreToSheet(score = {}) {
+  const receipt = await saveScoreRow({
+    studentCode: score.studentCode || score.studentcode,
+    studentEmail: score.studentEmail || score.email || "",
+    studentId: score.studentId || "",
+    studentScopeKey: score.studentScopeKey || "",
+    name: score.name || score.studentName,
+    assignment: score.assignment,
+    assignmentId: score.assignmentId || score.assignment_id,
+    score: score.score ?? score.finalScore,
+    comments: score.comments || score.feedback || score.improvement_summary || score.improvementSummary || "Synced from Firestore score mirror.",
+    level: score.level,
+    link: score.link || "",
+    source: "firestore_sheet_override",
+    allowDuplicate: true,
+    forceSheetDedupeId: true,
+    markingDetails: score,
+  });
+  return receipt;
+}
+
 export async function saveScoreRow({
   studentCode,
   studentEmail = "",
@@ -803,6 +884,7 @@ export async function saveScoreRow({
   source = "manual",
   allowDuplicate = false,
   markingDetails = {},
+  forceSheetDedupeId = false,
 }) {
   const nowIso = new Date().toISOString();
   const row = buildScoreRow({ studentCode, studentEmail, studentId, studentScopeKey, name, assignment, assignmentId, score, comments, level, link, source, markingDetails });
@@ -813,7 +895,7 @@ export async function saveScoreRow({
   const attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);
   Object.assign(row, attemptMetadata);
   const duplicateSkipped = shouldSkipExistingScore(existingScore, row.score, allowDuplicate);
-  const sheetDedupeId = attemptMetadata.is_resubmission ? `${dedupeId}__attempt_${attemptMetadata.attempt}` : dedupeId;
+  const sheetDedupeId = forceSheetDedupeId ? dedupeId : (attemptMetadata.is_resubmission ? `${dedupeId}__attempt_${attemptMetadata.attempt}` : dedupeId);
 
   const webhookPayload = {
     ...(SCORES_WEBHOOK_TOKEN ? { token: SCORES_WEBHOOK_TOKEN } : {}),
