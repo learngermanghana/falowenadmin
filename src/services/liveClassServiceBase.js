@@ -312,7 +312,7 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
   const finalSessions = buildFinalRebuildSessionList(plan);
   const sessionDerivedEndDate = latestSessionDateInTimezone(finalSessions, normalizedClass.timezone);
   await updateDoc(doc(db, "classes", classId), {
-    ...(sessionDerivedEndDate ? { endDate: sessionDerivedEndDate, sessionDerivedEndDate, endDateSyncedAt: serverTimestamp() } : {}),
+    ...(sessionDerivedEndDate ? { sessionDerivedEndDate, sessionDerivedEndDateSyncedAt: serverTimestamp() } : {}),
     generationStatus: "complete",
     generationError: "",
     generatedSessionCount: occurrences.length,
@@ -320,7 +320,16 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
     sessionsRebuiltAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-  return { created, refreshed, removed: plan.deletions.length, preserved: plan.preserved.length, mapped: finalMapped, total: occurrences.length, endDate: sessionDerivedEndDate };
+  return {
+    created,
+    refreshed,
+    removed: plan.deletions.length,
+    preserved: plan.preserved.length,
+    mapped: finalMapped,
+    total: occurrences.length,
+    endDate: normalizedClass.endDate || "",
+    sessionDerivedEndDate,
+  };
 }
 
 export async function generateClassSessions(classId, classRecord = null) {

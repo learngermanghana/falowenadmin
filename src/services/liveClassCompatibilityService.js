@@ -36,9 +36,9 @@ async function repairMissingSessions(classId, dashboard) {
   }
 
   const generation = await rebuildClassSessionsFromSchedule(classId);
-  if (generation.endDate) {
+  if (generation.sessionDerivedEndDate || generation.endDate) {
     await updateDoc(doc(db, "classes", String(classId)), {
-      endDate: generation.endDate,
+      ...(generation.sessionDerivedEndDate ? { sessionDerivedEndDate: generation.sessionDerivedEndDate } : {}),
       generatedSessionCount: generation.total,
       sessionRepairStatus: "complete",
       sessionRepairAt: serverTimestamp(),
@@ -60,13 +60,12 @@ function prepareDashboard(dashboard, repair = null) {
     .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
     .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
   const sessionDerivedEndDate = latestSessionDateInTimezone(sessions, dashboard.klass?.timezone) || String(dashboard.klass?.sessionDerivedEndDate || "");
-  const effectiveKlass = { ...dashboard.klass, sessionDerivedEndDate };
-  const endDate = getEffectiveClassEndDate(effectiveKlass, sessions);
+  const effectiveEndDate = getEffectiveClassEndDate({ ...dashboard.klass, sessionDerivedEndDate }, sessions);
 
   return {
     ...dashboard,
     sessions,
-    klass: { ...effectiveKlass, endDate },
+    klass: { ...dashboard.klass, sessionDerivedEndDate, effectiveEndDate },
     sessionRepair: repair,
   };
 }
