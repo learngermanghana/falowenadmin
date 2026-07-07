@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
-import { deleteClassCohort, rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
+import { deleteClassCohort, rebuildClassSessionsFromSchedule, syncClassEndDateFromSessions } from "../services/liveClassService.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
@@ -41,7 +41,10 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true); setMessage("");
     try {
       const result = await updateClassCohort(klass.id, { ...form, historicalMode });
-      setMessage(`Class updated. ${result.created || 0} session(s) created.`);
+      const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.requestedEndDate
+        ? ` End date was synced to the last generated session: ${result.sessionDerivedEndDate}.`
+        : "";
+      setMessage(`Class updated. ${result.created || 0} session(s) created.${endDateNote}`);
       await onSaved?.(klass.id);
     } catch (error) { setMessage(error?.message || "Class update failed"); }
     finally { setBusy(false); }
@@ -52,7 +55,9 @@ export default function ClassEditorCard({ klass, onSaved }) {
     setBusy(true); setMessage("");
     try {
       const result = await rebuildClassSessionsFromSchedule(klass.id, { ...klass, ...form });
-      const successMessage = `Sessions rebuilt successfully: ${result.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.`;
+      const endDateSync = await syncClassEndDateFromSessions(klass.id).catch(() => null);
+      const endDateNote = endDateSync?.endDate ? ` End date synced to ${endDateSync.endDate}.` : "";
+      const successMessage = `Sessions rebuilt successfully: ${result.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${endDateNote}`;
       setMessage(successMessage);
       toast.success(successMessage, { durationMs: 6000 });
       await onSaved?.(klass.id);
