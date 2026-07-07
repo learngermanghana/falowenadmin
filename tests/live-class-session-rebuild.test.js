@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { generateSessionOccurrences, latestSessionDateInTimezone } from "../src/utils/liveClassScheduling.js";
+import { generateSessionOccurrences, getEffectiveClassEndDate, latestSessionDateInTimezone } from "../src/utils/liveClassScheduling.js";
 import { buildFinalRebuildSessionList, buildRebuildClassSessionsPlan } from "../src/utils/liveClassSessionRebuildPlan.js";
 
 const klass = {
@@ -116,6 +116,23 @@ test("final rebuild session list includes preserved sessions when deriving end d
 
   assert.equal(latestSessionDateInTimezone(desiredOccurrences(), "Africa/Accra"), "2026-06-24");
   assert.equal(latestSessionDateInTimezone(finalSessions, "Africa/Accra"), "2026-07-10");
+});
+
+test("effective class end date keeps a later manual graduation date over an older session-derived date", () => {
+  assert.equal(
+    getEffectiveClassEndDate({ endDate: "2026-07-29", sessionDerivedEndDate: "2026-07-28" }),
+    "2026-07-29",
+  );
+});
+
+test("effective class end date uses sessions when sessions extend past the saved class date", () => {
+  assert.equal(
+    getEffectiveClassEndDate(
+      { endDate: "2026-07-28", timezone: "Africa/Accra" },
+      [{ startsAt: "2026-07-29T18:00:00.000Z", status: "scheduled" }],
+    ),
+    "2026-07-29",
+  );
 });
 
 test("repeated rebuild plans upsert existing desired sessions without duplicates", () => {
