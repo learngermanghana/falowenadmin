@@ -77,8 +77,8 @@ function statusStyle(status) {
   return { background: "#dbeafe", color: "#1e40af" };
 }
 
+
 const SESSION_CHANGE_REASONS = [
-  { label: "Wrong date", value: "This class had the wrong date in the timetable, so the class date has been corrected." },
   { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },
   { label: "Travelled", value: "Class cannot hold because the teacher travelled and is not available." },
   { label: "Emergency", value: "Class cannot hold because of an emergency." },
@@ -264,8 +264,6 @@ export default function LiveClassesPageV2() {
     setMessage("");
     setSessionChange({
       sessionId: session.id,
-      classId: session.classId || dashboard?.klass?.id || selectedClassId,
-      className: dashboard?.klass?.name || session.className || "",
       action: "reschedule",
       startsAt: toDateTimeLocal(session.startsAt),
       reason: session.rescheduleReason || session.cancellationReason || SESSION_CHANGE_REASONS[0].value,
@@ -282,27 +280,21 @@ export default function LiveClassesPageV2() {
       const adminId = user?.uid || user?.email || "admin";
       if (sessionChange.action === "cancel") {
         await cancelSession(sessionChange.sessionId, { reason: sessionChange.reason, adminId });
-        setSessionChange(null);
-        await refreshDashboard(selectedClassId);
-        setMessage("Session cancelled successfully. The attendance session was updated automatically.");
+        setMessage("Session cancelled and the attendance session was updated automatically.");
       } else {
         if (!sessionChange.startsAt) throw new Error("Choose the new date and time.");
         const endsAt = addMinutesToDateTimeLocal(sessionChange.startsAt, sessionChange.durationMinutes);
         if (!endsAt) throw new Error("Choose a valid new date and time.");
-        const result = await rescheduleSession(sessionChange.sessionId, {
+        await rescheduleSession(sessionChange.sessionId, {
           startsAt: new Date(sessionChange.startsAt).toISOString(),
           endsAt: new Date(endsAt).toISOString(),
           reason: sessionChange.reason,
           adminId,
-          classId: sessionChange.classId || dashboard?.klass?.id || selectedClassId,
-          className: sessionChange.className || dashboard?.klass?.name || "",
-          timezone: dashboard?.klass?.timezone || "Africa/Accra",
         });
-        setSessionChange(null);
-        await refreshDashboard(selectedClassId);
-        const emailNote = result.emailSubmitted === false ? ` Communication email could not be confirmed: ${result.emailMessage || "check Communication"}` : "";
-        setMessage(`Session rescheduled successfully to ${formatDateTime(result.startsAt)}. Attendance was updated automatically.${emailNote}`);
+        setMessage("Session rescheduled and the attendance session was updated automatically.");
       }
+      setSessionChange(null);
+      await refreshDashboard(selectedClassId);
     } catch (error) {
       setMessage(error?.message || "Session update failed");
     } finally {
