@@ -1,12 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase.js";
-import { fetchSubmissions } from "../services/markingService.js";
 import { updateStudentById } from "../services/studentsService.js";
-
-const ACTIVE_STATUSES = ["active", "paid", "partial", "pending", "enrolled", "registered", "ongoing", "current"];
-const BLOCKED_PAYMENT_STATUSES = ["failed", "overdue", "rejected", "cancelled", "canceled"];
-const REVIEW_LINK = "https://g.page/r/Cdogveq3Hy69EBM/review";
 
 function displayValue(...values) {
   return values.map((value) => String(value ?? "").trim()).find(Boolean) || "";
@@ -52,7 +47,6 @@ function daysUntil(value) {
   return Math.ceil((target.getTime() - today.getTime()) / 86400000);
 }
 
-
 function normalizePhoneForWhatsapp(phone) {
   const digits = String(phone || "").replace(/\D/g, "");
   if (!digits) return "";
@@ -80,64 +74,17 @@ function resolveStudentPhone(student, draft = {}) {
   return displayValue(draft.phone, student?.phone, student?.whatsapp, student?.phoneNumber, student?.guardianPhone);
 }
 
-function resolveLevel(student, draft = {}) {
-  return displayValue(draft.level, student?.level, student?.className, student?.program);
-}
-
-function buildLoginProblemSummary(student, draft = {}) {
-  const status = displayValue(draft.status, student?.status) || "Not set";
-  const paymentStatus = displayValue(draft.paymentStatus, student?.paymentStatus) || "Not set";
-  const contractEnd = displayValue(draft.contractEnd, student?.contractEnd);
-  const contractDaysLeft = daysUntil(contractEnd);
-  const normalizedStatus = status.toLowerCase();
-  const normalizedPaymentStatus = paymentStatus.toLowerCase();
-
-  let allowed = true;
-  let reason = "Login should be allowed based on status, contract, and payment fields.";
-
-  if (normalizedStatus && status !== "Not set" && !ACTIVE_STATUSES.includes(normalizedStatus)) {
-    allowed = false;
-    reason = `Login blocked because account status is ${status}.`;
-  } else if (contractDaysLeft !== null && contractDaysLeft < 0) {
-    allowed = false;
-    reason = `Login blocked because contract ended on ${formatDate(contractEnd)}.`;
-  } else if (BLOCKED_PAYMENT_STATUSES.includes(normalizedPaymentStatus)) {
-    allowed = false;
-    reason = `Login blocked because payment status is ${paymentStatus}.`;
-  }
-
-  return [
-    `Login allowed: ${allowed ? "YES" : "NO"}`,
-    `Reason: ${reason}`,
-    `Student: ${resolveStudentName(student)}`,
-    `Student code: ${resolveStudentCode(student, draft) || "Not set"}`,
-    `Email: ${displayValue(draft.email, student?.email) || "Not set"}`,
-    `Status: ${status}`,
-    `Contract start: ${formatDate(displayValue(draft.contractStart, student?.contractStart))}`,
-    `Contract end: ${formatDate(contractEnd)}`,
-    `Days left: ${contractDaysLeft === null ? "Unknown" : contractDaysLeft}`,
-    `Payment status: ${paymentStatus}`,
-    `Balance due: ${displayValue(draft.balanceDue, student?.balanceDue, student?.balance) || "Not set"}`,
-  ].join("\n");
-}
-
 function buildWhatsAppSupportMessage(student, draft = {}) {
   const name = resolveStudentName(student);
   const contractEnd = displayValue(draft.contractEnd, student?.contractEnd);
   const balance = displayValue(draft.balanceDue, student?.balanceDue, student?.balance);
-  return `Hello ${name}, this is Learn Language Education Academy / Falowen support. We are checking your student account. Contract end: ${formatDate(contractEnd)}. Balance: ${balance || "not set"}. Please reply here if you still cannot log in or need help. Thank you.`;
-}
-
-function buildReviewRequestMessage(student) {
-  const name = resolveStudentName(student);
-  return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your course, the school, and the app here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
+  return `Hello ${name}, this is Learn Language Education Academy / Falowen support. We are checking your student account. Contract end: ${formatDate(contractEnd)}. Balance: ${balance || "not set"}. Please reply here if you need help. Thank you.`;
 }
 
 export default function StudentSupportTools({ student, draft = {}, onStudentUpdated, pushToast }) {
   const [busyAction, setBusyAction] = useState("");
-  const [supportSummary, setSupportSummary] = useState("");
-  const [latestSubmissions, setLatestSubmissions] = useState([]);
-  const [showSubmissions, setShowSubmissions] = useState(false);
+
+  if (!student) return null;
 
   const studentName = resolveStudentName(student);
   const studentCode = resolveStudentCode(student, draft);
@@ -147,13 +94,6 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
   const contractDaysLeft = daysUntil(contractEnd);
   const paymentStatus = displayValue(draft.paymentStatus, student?.paymentStatus) || "Not set";
   const balanceDue = displayValue(draft.balanceDue, student?.balanceDue, student?.balance) || "Not set";
-
-  const paymentCardText = useMemo(
-    () => [`Payment status: ${paymentStatus}`, `Balance due: ${balanceDue}`, `Paid: ${displayValue(student?.paid, student?.initialPaymentAmount) || "Not set"}`].join("\n"),
-    [balanceDue, paymentStatus, student],
-  );
-
-  if (!student) return null;
 
   const notify = (type, message) => {
     if (typeof pushToast === "function") pushToast({ type, message });
@@ -203,56 +143,18 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
 
   const reactivateAccount = () =>
     runAction("reactivate", async () => {
-      const nextStatus = window.prompt("Set student status to:", "Enrolled");
-      if (nextStatus === null) return;
-      const cleanedStatus = nextStatus.trim() || "Enrolled";
+      const cleanedStatus = window.confirm("Reactivate this student account and set status to Enrolled?") ? "Enrolled" : "";
+      if (!cleanedStatus) return;
       await updateStudent({ status: cleanedStatus }, `Account status updated to ${cleanedStatus}.`);
     });
 
-  const viewLoginProblem = async () => {
-    const summary = buildLoginProblemSummary(student, draft);
-    setSupportSummary(summary);
-    try {
-      await navigator.clipboard.writeText(summary);
-      notify("success", "Login problem summary copied for support.");
-    } catch {
-      notify("info", "Login problem summary shown below.");
-    }
-  };
-
-  const viewLatestSubmissions = () =>
-    runAction("submissions", async () => {
-      const rows = await fetchSubmissions(resolveLevel(student, draft), studentCode);
-      setLatestSubmissions(rows.slice(0, 5));
-      setShowSubmissions(true);
-      notify("success", `Loaded ${Math.min(rows.length, 5)} latest submission(s).`);
-    });
-
-  const viewPaymentStatus = async () => {
-    setSupportSummary(paymentCardText);
-    try {
-      await navigator.clipboard.writeText(paymentCardText);
-      notify("success", "Payment status copied.");
-    } catch {
-      notify("info", "Payment status shown below.");
-    }
-  };
-
-  const openWhatsappWithMessage = (message) => {
-    const url = whatsappUrl(phone, message);
+  const sendWhatsappMessage = () => {
+    const url = whatsappUrl(phone, buildWhatsAppSupportMessage(student, draft));
     if (!url) {
       notify("error", "This student has no valid WhatsApp/phone number.");
       return;
     }
     window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-  const sendWhatsappMessage = () => {
-    openWhatsappWithMessage(buildWhatsAppSupportMessage(student, draft));
-  };
-
-  const sendReviewLink = () => {
-    openWhatsappWithMessage(buildReviewRequestMessage(student));
   };
 
   return (
@@ -268,13 +170,13 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
       }}
     >
       <div>
-        <h3 style={{ margin: "0 0 4px" }}>Student support tools</h3>
+        <h3 style={{ margin: "0 0 4px" }}>Student support</h3>
         <p style={{ margin: 0, color: "#64748b" }}>
-          Quick actions for login help, contract updates, payment checks, submissions, and WhatsApp support.
+          Main actions only: password, contract, account status, and WhatsApp help.
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
         <button type="button" onClick={resetPassword} disabled={busyAction === "reset"}>
           {busyAction === "reset" ? "Sending..." : "Reset password"}
         </button>
@@ -284,20 +186,8 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
         <button type="button" onClick={reactivateAccount} disabled={busyAction === "reactivate"}>
           Reactivate account
         </button>
-        <button type="button" onClick={viewLoginProblem}>
-          View login problem
-        </button>
-        <button type="button" onClick={viewLatestSubmissions} disabled={busyAction === "submissions"}>
-          {busyAction === "submissions" ? "Loading..." : "View latest submissions"}
-        </button>
-        <button type="button" onClick={viewPaymentStatus}>
-          View payment status
-        </button>
         <button type="button" onClick={sendWhatsappMessage}>
-          Send WhatsApp message
-        </button>
-        <button type="button" onClick={sendReviewLink}>
-          Send review link
+          WhatsApp support
         </button>
       </div>
 
@@ -317,43 +207,6 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
           <div style={{ color: "#64748b", fontSize: 13 }}>{paymentStatus} · Balance: {balanceDue}</div>
         </div>
       </div>
-
-      {supportSummary && (
-        <pre
-          style={{
-            margin: 0,
-            whiteSpace: "pre-wrap",
-            border: "1px solid #cbd5e1",
-            borderRadius: 12,
-            padding: 12,
-            background: "#fff",
-            color: "#0f172a",
-            fontFamily: "inherit",
-            fontSize: 13,
-          }}
-        >
-          {supportSummary}
-        </pre>
-      )}
-
-      {showSubmissions && (
-        <div style={{ display: "grid", gap: 8 }}>
-          <strong>Latest submissions</strong>
-          {latestSubmissions.length === 0 ? (
-            <p style={{ margin: 0, color: "#64748b" }}>No submissions found for this student code.</p>
-          ) : (
-            latestSubmissions.map((submission) => (
-              <div key={submission.path || submission.id} style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 10, background: "#fff" }}>
-                <div style={{ fontWeight: 700 }}>{submission.assignment || submission.assignmentId || "Untitled submission"}</div>
-                <div style={{ color: "#64748b", fontSize: 13 }}>
-                  {submission.createdAt ? submission.createdAt.toLocaleString() : "No date"} · {submission.markingStatus || submission.status || "submitted"}
-                  {submission.finalScore !== null && typeof submission.finalScore !== "undefined" ? ` · Score: ${submission.finalScore}` : ""}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
     </section>
   );
 }
