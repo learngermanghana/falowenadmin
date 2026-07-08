@@ -1,6 +1,7 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { calculateClassEndDate, setSchedulingSchoolClosureDates } from "../utils/liveClassScheduling.js";
+import { isHistoricalSchedulePayload } from "../utils/liveClassScheduleMode.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
 
 const laterDate = (left, right) => {
@@ -11,13 +12,6 @@ const laterDate = (left, right) => {
   return a >= b ? a : b;
 };
 
-const isHistorical = (payload = {}) => {
-  const end = String(payload.endDate || "").trim();
-  return payload.historicalMode === true
-    || payload.historical === true
-    || (/^\d{4}-\d{2}-\d{2}$/.test(end) && end < new Date().toISOString().slice(0, 10));
-};
-
 export async function prepareLiveClassSchedule(payload = {}) {
   const closureDates = await loadSchoolClosureDates({
     countryCode: "GH",
@@ -26,7 +20,7 @@ export async function prepareLiveClassSchedule(payload = {}) {
   });
   setSchedulingSchoolClosureDates(closureDates);
   const calculatedEndDate = calculateClassEndDate({ ...payload, excludedDates: closureDates });
-  const historicalMode = isHistorical(payload);
+  const historicalMode = isHistoricalSchedulePayload(payload);
   const endDate = historicalMode
     ? String(payload.endDate || calculatedEndDate || "").trim()
     : laterDate(payload.endDate, calculatedEndDate);

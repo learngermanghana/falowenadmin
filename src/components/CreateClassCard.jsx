@@ -5,7 +5,6 @@ import { calculateClassEndDate, validateIanaTimezone } from "../utils/liveClassS
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
 const emptyForm = () => ({ name: "", levelId: "A1", tutorId: "", startDate: "", endDate: "", timezone: "Africa/Accra", status: "upcoming", zoomProfileId: "", scheduleRules: [{ ...RULE }] });
-const isPastDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "")) && value < new Date().toISOString().slice(0, 10);
 
 export default function CreateClassCard({ onCreated, onDuplicate }) {
   const [form, setForm] = useState(emptyForm);
@@ -35,7 +34,7 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
       <label>Class name<input required value={form.name} onChange={(event) => patch({ name: event.target.value })} /></label>
       <label>Level<select value={form.levelId} onChange={(event) => patch({ levelId: event.target.value }, !historicalMode)}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
-      <label>Start date<input required type="date" value={form.startDate} onChange={(event) => { const startDate = event.target.value; const historical = isPastDate(startDate); setHistoricalMode(historical); patch({ startDate }, !historical); }} /></label>
+      <label>Start date<input required type="date" value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, !historicalMode)} /></label>
       <label>Graduation / end date<input required type="date" value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
       <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated"].map((status) => <option key={status}>{status}</option>)}</select></label><label>Timezone<input required value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
