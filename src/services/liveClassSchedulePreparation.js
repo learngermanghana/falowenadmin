@@ -32,12 +32,14 @@ export async function prepareLiveClassSchedule(payload = {}) {
 }
 
 export async function saveLiveClassScheduleMetadata(classId, schedule) {
+  const preparedEndDate = String(schedule.payload?.endDate || "").trim();
   await updateDoc(doc(db, "classes", String(classId)), {
+    ...(preparedEndDate ? { endDate: preparedEndDate } : {}),
     historical: schedule.payload.historicalMode === true,
     holidayCalendarCountryCode: "GH",
     holidayCalendarApplied: true,
     holidayCalendarAppliedAt: serverTimestamp(),
     holidayDatesExcluded: schedule.relevantClosures,
-    holidayAdjustedEndDate: schedule.calculatedEndDate || schedule.payload.endDate || "",
+    holidayAdjustedEndDate: schedule.calculatedEndDate || preparedEndDate || "",
   });
 }
