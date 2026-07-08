@@ -56,30 +56,12 @@ function formatDateTime(value) {
   });
 }
 
-function accraDateTimeParts(value) {
-  const parsed = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Africa/Accra",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(parsed);
-  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
-}
-
 function toDateTimeLocal(value) {
-  const parts = accraDateTimeParts(value);
-  return parts ? `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}` : "";
-}
-
-function splitDateTimeLocal(value) {
-  const text = String(value || "").trim();
-  const match = text.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
-  return match ? { localDate: match[1], localTime: match[2] } : { localDate: "", localTime: "" };
+  if (!value) return "";
+  const parsed = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
 }
 
 function curriculumIds(session = {}) {
@@ -94,7 +76,6 @@ function statusStyle(status) {
   if (status === "live") return { background: "#fef3c7", color: "#92400e" };
   return { background: "#dbeafe", color: "#1e40af" };
 }
-
 
 const SESSION_CHANGE_REASONS = [
   { label: "Wrong date", value: "This class had the wrong date in the timetable, so the class date has been corrected." },
@@ -306,12 +287,11 @@ export default function LiveClassesPageV2() {
         setMessage("Session cancelled successfully. The attendance session was updated automatically.");
       } else {
         if (!sessionChange.startsAt) throw new Error("Choose the new date and time.");
-        const { localDate, localTime } = splitDateTimeLocal(sessionChange.startsAt);
-        if (!localDate || !localTime) throw new Error("Choose a valid new date and time.");
+        const endsAt = addMinutesToDateTimeLocal(sessionChange.startsAt, sessionChange.durationMinutes);
+        if (!endsAt) throw new Error("Choose a valid new date and time.");
         const result = await rescheduleSession(sessionChange.sessionId, {
-          localDate,
-          localTime,
-          durationMinutes: sessionChange.durationMinutes,
+          startsAt: new Date(sessionChange.startsAt).toISOString(),
+          endsAt: new Date(endsAt).toISOString(),
           reason: sessionChange.reason,
           adminId,
           classId: sessionChange.classId || dashboard?.klass?.id || selectedClassId,
@@ -320,7 +300,8 @@ export default function LiveClassesPageV2() {
         });
         setSessionChange(null);
         await refreshDashboard(selectedClassId);
-        setMessage(`Session rescheduled successfully to ${formatDateTime(result.startsAt)}. Attendance was updated automatically.${result.emailSubmitted === false ? ` Communication email could not be confirmed: ${result.emailMessage || "check Communication"}` : ""}`);
+        const emailNote = result.emailSubmitted === false ? ` Communication email could not be confirmed: ${result.emailMessage || "check Communication"}` : "";
+        setMessage(`Session rescheduled successfully to ${formatDateTime(result.startsAt)}. Attendance was updated automatically.${emailNote}`);
       }
     } catch (error) {
       setMessage(error?.message || "Session update failed");
@@ -365,7 +346,7 @@ export default function LiveClassesPageV2() {
             <option value="cancel">Cancel class</option>
           </select></label>
           {sessionChange.action === "reschedule" ? (
-            <label>New Ghana date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
+            <label>New selected date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
           ) : null}
           <label>Message template <select value="" onChange={(event) => event.target.value && setSessionChange((current) => ({ ...current, reason: event.target.value }))}>
             <option value="">Choose a ready reason</option>
@@ -455,7 +436,7 @@ export default function LiveClassesPageV2() {
         <Link to="/attendance">Attendance overview</Link>
       </div>
 
-      {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: message.toLowerCase().includes("success") ? "#f0fdf4" : "#eff6ff", border: message.toLowerCase().includes("success") ? "1px solid #bbf7d0" : "1px solid #bfdbfe" }}>{message}</div> : null}
+      {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: "#eff6ff", border: "1px solid #bfdbfe" }}>{message}</div> : null}
 
       <article className="card" style={{ display: "grid", gap: 12 }}>
         <label><strong>Manage class</strong>{" "}<select value={selectedClassId} onChange={(event) => { setSelectedClassId(event.target.value); setActiveTab("overview"); setMessage(""); }}>
