@@ -50,7 +50,7 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
   if (validLocalDate(localDate) && validLocalTime(localTime)) {
     const startsAt = zonedLocalToUtcIso(localDate, localTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, localTime, startsAt, endsAt, durationMinutes };
+    return { ...payload, localDate, localTime, startsAt, endsAt, durationMinutes };
   }
 
   const rawStart = String(payload.startsAt || "").trim();
@@ -59,7 +59,7 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
     const startTime = normalizeLocalTime(localMatch[2]);
     const startsAt = zonedLocalToUtcIso(localMatch[1], startTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, localTime: startTime, startsAt, endsAt, durationMinutes };
+    return { ...payload, localDate: localMatch[1], localTime: startTime, startsAt, endsAt, durationMinutes };
   }
 
   const sourceStart = new Date(payload.startsAt || 0);
@@ -96,15 +96,17 @@ export async function rescheduleSession(sessionId, payload) {
   const sessionSnap = await getDoc(doc(db, "classSessions", String(sessionId)));
   if (!sessionSnap.exists()) throw new Error("Session not found");
   const session = { id: sessionSnap.id, ...sessionSnap.data() };
-  const classSnap = await getDoc(doc(db, "classes", String(session.classId)));
+  const resolvedClassId = String(payload.classId || session.classId || "").trim();
+  if (!resolvedClassId) throw new Error("This session is missing its class link. Select the class again and retry.");
+
+  const classSnap = await getDoc(doc(db, "classes", resolvedClassId));
   const klass = classSnap.exists()
     ? { id: classSnap.id, ...classSnap.data() }
-    : { id: session.classId, name: session.className || "Falowen class", timezone: "Africa/Accra" };
-  const normalizedPayload = normalizeReschedulePayload(payload, klass);
+    : { id: resolvedClassId, name: payload.className || session.className || "Falowen class", timezone: "Africa/Accra" };
+  const normalizedPayload = normalizeReschedulePayload({ ...payload, classId: resolvedClassId, className: klass.name || payload.className || session.className || "" }, klass);
 
   await base.rescheduleSession(sessionId, normalizedPayload);
-  await base.updateSession(sessionId, { status: "rescheduled" });
-  await syncClassEndDateFromSessions(session.classId).catch(() => {});
+  await syncClassEndDateFromSessions(resolvedClassId).catch(() => {});
 
   const className = String(klass.name || session.className || "Falowen class").trim();
   const lesson = lessonLabel(session);
@@ -129,6 +131,7 @@ export async function rescheduleSession(sessionId, payload) {
     });
     return {
       sessionId,
+      classId: resolvedClassId,
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
       emailSubmitted: Boolean(receipt?.sheet?.success),
@@ -137,6 +140,7 @@ export async function rescheduleSession(sessionId, payload) {
   } catch (error) {
     return {
       sessionId,
+      classId: resolvedClassId,
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
       emailSubmitted: false,
