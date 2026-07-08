@@ -1,9 +1,10 @@
-import { collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 import { formatAccraDateTime } from "../utils/liveClassCancellationEmail.js";
 import { saveAnnouncementRow } from "./communicationService.js";
 import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
+import * as base from "./liveClassServiceBase.js";
 
 function validLocalDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
@@ -49,7 +50,7 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
   if (validLocalDate(localDate) && validLocalTime(localTime)) {
     const startsAt = zonedLocalToUtcIso(localDate, localTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, localDate, localTime, startsAt, endsAt, durationMinutes };
+    return { ...payload, localTime, startsAt, endsAt, durationMinutes };
   }
 
   const rawStart = String(payload.startsAt || "").trim();
@@ -58,7 +59,7 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
     const startTime = normalizeLocalTime(localMatch[2]);
     const startsAt = zonedLocalToUtcIso(localMatch[1], startTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, localDate: localMatch[1], localTime: startTime, startsAt, endsAt, durationMinutes };
+    return { ...payload, localTime: startTime, startsAt, endsAt, durationMinutes };
   }
 
   const sourceStart = new Date(payload.startsAt || 0);
@@ -91,82 +92,6 @@ function lessonLabel(session = {}) {
   return parts.length ? parts.join(" — ") : "Selected lesson";
 }
 
-function normalizeAssignmentIds(session = {}) {
-  const ids = [session.assignmentIds, session.chapterIds, session.curriculumIds]
-    .find((value) => Array.isArray(value) && value.length) || [];
-  return ids.map((value) => String(value || "").trim().toUpperCase()).filter(Boolean);
-}
-
-function attendanceMetadata(klass = {}, session = {}, patch = {}) {
-  const merged = { ...session, ...patch };
-  const assignmentIds = normalizeAssignmentIds(merged);
-  return {
-    classId: merged.classId || klass.id || "",
-    className: merged.className || klass.name || "",
-    classSessionId: session.id || "",
-    title: String(merged.topic || klass.name || merged.className || "Live class").trim(),
-    topic: String(merged.topic || "").trim(),
-    date: String(merged.startsAt || "").slice(0, 10),
-    startsAt: merged.startsAt || "",
-    endsAt: merged.endsAt || "",
-    sessionStatus: merged.status || "rescheduled",
-    cancellationReason: "",
-    assignmentIds,
-    chapterIds: assignmentIds,
-    curriculumIds: assignmentIds,
-    assignment_id: assignmentIds[0] || "",
-    curriculumIndex: Number(merged.curriculumIndex || 0),
-    curriculumDay: Number(merged.curriculumDay ?? -1),
-    curriculumTaskCount: Number(merged.curriculumTaskCount || assignmentIds.length),
-    curriculumSource: String(merged.curriculumSource || ""),
-    curriculumVersion: Number(merged.curriculumVersion || 0),
-    updatedAt: serverTimestamp(),
-  };
-}
-
-async function writeRescheduledSession(sessionId, session, klass, payload) {
-  const className = String(klass.name || payload.className || session.className || "Falowen class").trim();
-  const patch = {
-    classId: payload.classId,
-    className,
-    previousStartsAt: session.startsAt || "",
-    previousEndsAt: session.endsAt || "",
-    startsAt: payload.startsAt,
-    endsAt: payload.endsAt,
-    status: "rescheduled",
-    rescheduleReason: String(payload.reason || "").trim(),
-    rescheduledBy: payload.adminId || "admin",
-    rescheduledAt: serverTimestamp(),
-    sequence: Number(session.sequence || 0) + 1,
-    remindersSuppressed: false,
-    cancellationReason: "",
-    updatedAt: serverTimestamp(),
-  };
-
-  await updateDoc(doc(db, "classSessions", String(sessionId)), patch);
-  await setDoc(doc(db, "attendance", payload.classId, "sessions", String(sessionId)), attendanceMetadata(klass, session, patch), { merge: true });
-  await setDoc(doc(collection(db, "auditLogs")), {
-    type: "classSession.rescheduled",
-    classId: payload.classId,
-    sessionId,
-    actorId: payload.adminId || "admin",
-    reason: patch.rescheduleReason,
-    createdAt: serverTimestamp(),
-  });
-  await setDoc(doc(collection(db, "studentNotifications")), {
-    type: "classSession.rescheduled",
-    classId: payload.classId,
-    sessionId,
-    title: "Live class rescheduled",
-    body: patch.rescheduleReason || "A live class session was rescheduled.",
-    createdAt: serverTimestamp(),
-  });
-  await setDoc(doc(db, "calendarFeeds", payload.classId), {
-    classId: payload.classId,
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
-}
-
 export async function rescheduleSession(sessionId, payload) {
   const sessionSnap = await getDoc(doc(db, "classSessions", String(sessionId)));
   if (!sessionSnap.exists()) throw new Error("Session not found");
@@ -180,8 +105,8 @@ export async function rescheduleSession(sessionId, payload) {
     : { id: resolvedClassId, name: payload.className || session.className || "Falowen class", timezone: "Africa/Accra" };
   const normalizedPayload = normalizeReschedulePayload({ ...payload, classId: resolvedClassId, className: klass.name || payload.className || session.className || "" }, klass);
 
-  await writeRescheduledSession(sessionId, session, klass, normalizedPayload);
-  await syncClassEndDateFromSessions(resolvedClassId).catch(() => {});
+  await base.rescheduleSession(sessionId, normalizedPayload);
+  await syncClassEndDateFromSessions(session.classId).catch(() => {});
 
   const className = String(klass.name || session.className || "Falowen class").trim();
   const lesson = lessonLabel(session);
@@ -206,7 +131,6 @@ export async function rescheduleSession(sessionId, payload) {
     });
     return {
       sessionId,
-      classId: resolvedClassId,
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
       emailSubmitted: Boolean(receipt?.sheet?.success),
@@ -215,7 +139,6 @@ export async function rescheduleSession(sessionId, payload) {
   } catch (error) {
     return {
       sessionId,
-      classId: resolvedClassId,
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
       emailSubmitted: false,
