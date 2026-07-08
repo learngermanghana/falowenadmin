@@ -37,10 +37,25 @@ function normalizeToCanonicalClassId(value) {
   return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
 }
 
+function dateToMillis(value) {
+  if (!value) return 0;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  const text = String(value).trim();
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T00:00:00.000Z`)
+    : new Date(text);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
 function normalizeClassArchiveMetadata(data = {}) {
   const rawStatus = String(data.status || "").trim().toLowerCase();
   const archived = rawStatus === "archived" || data.archived === true || data.isArchived === true;
-  const status = archived ? "archived" : rawStatus || (data.active === false ? "inactive" : "active");
+  const startMs = dateToMillis(data.startDate || data.startsAt || data.start || data.date);
+  const todayMs = dateToMillis(new Date().toISOString().slice(0, 10));
+  const fallbackStatus = data.active === false ? "inactive" : startMs && startMs >= todayMs ? "upcoming" : "active";
+  const status = archived ? "archived" : rawStatus || fallbackStatus;
+
   return {
     archived,
     isArchived: archived,
@@ -51,17 +66,6 @@ function normalizeClassArchiveMetadata(data = {}) {
 
 function resolveClassKey(data = {}) {
   return normalizeToCanonicalClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
-}
-
-function dateToMillis(value) {
-  if (!value) return 0;
-  if (typeof value?.toMillis === "function") return value.toMillis();
-  if (typeof value?.toDate === "function") return value.toDate().getTime();
-  const text = String(value).trim();
-  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text)
-    ? new Date(`${text}T00:00:00.000Z`)
-    : new Date(text);
-  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 }
 
 function statusPriority(status) {
