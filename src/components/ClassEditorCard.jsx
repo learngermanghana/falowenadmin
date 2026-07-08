@@ -4,7 +4,8 @@ import { buildClassEndDateMismatchWarning } from "../utils/classEndDateWarning.j
 import { shouldShowHistoricalScheduleMode } from "../utils/liveClassScheduleMode.js";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
-import { deleteClassCohort, rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
+import { deleteClassCohort } from "../services/classDeletionService.js";
+import { rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
