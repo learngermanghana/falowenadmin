@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 import { formatAccraDateTime } from "../utils/liveClassCancellationEmail.js";
@@ -92,6 +92,15 @@ function lessonLabel(session = {}) {
   return parts.length ? parts.join(" — ") : "Selected lesson";
 }
 
+async function repairSessionClassLink(sessionId, session, resolvedClassId, klass) {
+  const nextClassName = String(klass.name || session.className || "").trim();
+  if (String(session.classId || "") === resolvedClassId && String(session.className || "") === nextClassName) return;
+  await updateDoc(doc(db, "classSessions", String(sessionId)), {
+    classId: resolvedClassId,
+    className: nextClassName,
+  });
+}
+
 export async function rescheduleSession(sessionId, payload) {
   const sessionSnap = await getDoc(doc(db, "classSessions", String(sessionId)));
   if (!sessionSnap.exists()) throw new Error("Session not found");
@@ -100,13 +109,13 @@ export async function rescheduleSession(sessionId, payload) {
   if (!resolvedClassId) throw new Error("This session is missing its class link. Select the class again and retry.");
 
   const classSnap = await getDoc(doc(db, "classes", resolvedClassId));
-  const klass = classSnap.exists()
-    ? { id: classSnap.id, ...classSnap.data() }
-    : { id: resolvedClassId, name: payload.className || session.className || "Falowen class", timezone: "Africa/Accra" };
+  if (!classSnap.exists()) throw new Error("Class not found. Select the class again and retry.");
+  const klass = { id: classSnap.id, ...classSnap.data() };
   const normalizedPayload = normalizeReschedulePayload({ ...payload, classId: resolvedClassId, className: klass.name || payload.className || session.className || "" }, klass);
 
+  await repairSessionClassLink(sessionId, session, resolvedClassId, klass);
   await base.rescheduleSession(sessionId, normalizedPayload);
-  await syncClassEndDateFromSessions(session.classId).catch(() => {});
+  await syncClassEndDateFromSessions(resolvedClassId).catch(() => {});
 
   const className = String(klass.name || session.className || "Falowen class").trim();
   const lesson = lessonLabel(session);
