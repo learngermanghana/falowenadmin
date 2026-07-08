@@ -43,12 +43,30 @@ function inferCertificateLevel(input = {}) {
   return "";
 }
 
+function inferDeliveryMode(input = {}) {
+  const requestedMode = normalize(input.deliveryMode || input.delivery_mode).toLowerCase();
+  if (["auto", "individual", "bcc_batch", "queue_only"].includes(requestedMode)) return requestedMode;
+  return "auto";
+}
+
+function canUseBccFallback(input = {}) {
+  const announcement = normalize(input.announcement).toLowerCase();
+  const hasSingleEmailTarget = Boolean(normalize(input.email));
+
+  if (Boolean(input.attachCertificate)) return false;
+  if (hasSingleEmailTarget) return false;
+  if (announcement.includes("{student_name}") || announcement.includes("student_name")) return false;
+
+  return true;
+}
+
 function isLikelyNetworkError(error) {
   return error instanceof TypeError || /networkerror|failed to fetch/i.test(String(error?.message || ""));
 }
 
 export function buildAnnouncementRow(input = {}) {
   const rowDate = normalize(input.date) || new Date().toISOString().slice(0, 10);
+  const deliveryMode = inferDeliveryMode(input);
 
   return {
     announcement: normalize(input.announcement),
@@ -59,6 +77,8 @@ export function buildAnnouncementRow(input = {}) {
     email: normalize(input.email),
     attach_certificate: boolToSheetValue(Boolean(input.attachCertificate)),
     cert_level: inferCertificateLevel(input),
+    delivery_mode: deliveryMode,
+    allow_bcc_fallback: boolToSheetValue(deliveryMode !== "individual" && canUseBccFallback(input)),
   };
 }
 
