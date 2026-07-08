@@ -163,9 +163,9 @@ function attendanceMetadata(klass = {}, session = {}, patch = {}) {
   const assignmentIds = normalizeAssignmentIds(merged);
   return {
     classId: klass.id || merged.classId || "",
-    className: klass.name || merged.className || "",
+    className: klass.name || "",
     classSessionId: merged.id || "",
-    title: String(merged.topic || klass.name || merged.className || "Live class").trim(),
+    title: String(merged.topic || klass.name || "Live class").trim(),
     topic: String(merged.topic || "").trim(),
     date: sessionDate(merged.startsAt),
     startsAt: merged.startsAt || "",
@@ -620,27 +620,19 @@ export async function cancelSession(sessionId, { reason, adminId }) {
   }
 }
 
-export async function rescheduleSession(sessionId, { startsAt, endsAt, adminId, reason = "", classId = "", className = "" }) {
+export async function rescheduleSession(sessionId, { startsAt, endsAt, adminId, reason = "" }) {
   const sessionRef = doc(db, "classSessions", sessionId);
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
     const session = { id: sessionSnap.id, ...sessionSnap.data() };
-    const resolvedClassId = String(classId || session.classId || "").trim();
-    if (!resolvedClassId) throw new Error("This session is missing its class link. Select the class again and retry.");
-    const classRef = doc(db, "classes", resolvedClassId);
-    const classSnap = await transaction.get(classRef);
-    const klass = classSnap.exists()
-      ? { id: classSnap.id, ...classSnap.data() }
-      : { id: resolvedClassId, name: className || session.className || "Falowen class", timezone: "Africa/Accra" };
+    const klass = await loadClassRecord(session.classId, transaction);
     const patch = {
-      classId: resolvedClassId,
-      className: klass.name || className || session.className || "",
       previousStartsAt: session.startsAt || "",
       previousEndsAt: session.endsAt || "",
       startsAt,
       endsAt,
-      status: "rescheduled",
+      status: "scheduled",
       rescheduleReason: String(reason || "").trim(),
       rescheduledBy: adminId || "admin",
       rescheduledAt: serverTimestamp(),
@@ -651,10 +643,10 @@ export async function rescheduleSession(sessionId, { startsAt, endsAt, adminId, 
     };
 
     transaction.update(sessionRef, patch);
-    transaction.set(attendanceSessionRef(resolvedClassId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
+    transaction.set(attendanceSessionRef(session.classId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
     transaction.set(doc(collection(db, "auditLogs")), {
       type: "classSession.rescheduled",
-      classId: resolvedClassId,
+      classId: session.classId,
       sessionId,
       actorId: adminId || "admin",
       reason: patch.rescheduleReason,
@@ -662,14 +654,14 @@ export async function rescheduleSession(sessionId, { startsAt, endsAt, adminId, 
     });
     transaction.set(doc(collection(db, "studentNotifications")), {
       type: "classSession.rescheduled",
-      classId: resolvedClassId,
+      classId: session.classId,
       sessionId,
       title: "Live class rescheduled",
       body: patch.rescheduleReason || "A live class session was rescheduled.",
       createdAt: serverTimestamp(),
     });
-    transaction.set(doc(db, "calendarFeeds", resolvedClassId), {
-      classId: resolvedClassId,
+    transaction.set(doc(db, "calendarFeeds", session.classId), {
+      classId: session.classId,
       updatedAt: serverTimestamp(),
     }, { merge: true });
   });
