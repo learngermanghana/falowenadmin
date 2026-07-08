@@ -5,6 +5,7 @@ export {
   generateClassSessions,
   syncClassCurriculum,
 } from "./liveClassCohortWriteService.js";
+export { deleteClassCohort } from "./classDeletionService.js";
 export { rebuildClassSessionsFromSchedule } from "./liveClassRebuildService.js";
 export { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
 export { cancelSession } from "./liveClassCancelService.js";
