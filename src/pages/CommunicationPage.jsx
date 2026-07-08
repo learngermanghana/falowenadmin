@@ -67,6 +67,8 @@ const QUICK_TEMPLATES = [
 const ALL_ACTIVE_AUDIENCE = "all_active";
 const ALL_ACTIVE_AUDIENCE_LABEL = "Everyone / all active students";
 const ACCOUNT_UPGRADE_LINK = "https://www.falowen.app/campus/account";
+const LEVEL_AUDIENCE_PREFIX = "__level_audience__:";
+const LEVEL_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 const UPCOMING_CLASS_PROMO = {
   label: "Upcoming class ad",
@@ -94,6 +96,21 @@ function normalizeStatus(value) {
 function inferLevelFromText(value) {
   const match = normalizeText(value).match(/\b(A1|A2|B1|B2|C1|C2)\b/i);
   return match?.[1]?.toUpperCase() || "";
+}
+
+function levelAudienceValue(level) {
+  return `${LEVEL_AUDIENCE_PREFIX}${String(level || "").toUpperCase()}`;
+}
+
+function parseLevelAudience(value) {
+  const text = normalizeText(value);
+  if (!text.startsWith(LEVEL_AUDIENCE_PREFIX)) return "";
+  const level = text.slice(LEVEL_AUDIENCE_PREFIX.length).toUpperCase();
+  return LEVEL_ORDER.includes(level) ? level : "";
+}
+
+function isLevelOnlyClassName(value) {
+  return /^(A1|A2|B1|B2|C1|C2)$/i.test(normalizeText(value));
 }
 
 function inferClassLevel(klass = {}) {
@@ -143,11 +160,47 @@ function classOptionId(klass = {}) {
 
 function findClassByValue(classes = [], value = "") {
   const target = normalizeText(value);
-  if (!target) return null;
+  if (!target || parseLevelAudience(target)) return null;
   return classes.find((klass) => {
     const candidates = [klass.classId, klass.id, klass.name, klass.className, classSelectValue(klass)];
     return candidates.some((candidate) => normalizeText(candidate) === target);
   }) || null;
+}
+
+function isClassAvailableForAudience(klass = {}) {
+  if (klass.archived === true || klass.isArchived === true) return false;
+  if (klass.active === false) return false;
+
+  const status = normalizeStatus(klass.status || klass.state || klass.workflowStatus);
+  const terminalStatuses = new Set(["archived", "graduated", "inactive", "completed", "complete", "cancelled", "canceled", "ended", "closed", "deleted"]);
+  return !terminalStatuses.has(status);
+}
+
+function uniqueClassesByName(classes = []) {
+  const seen = new Set();
+  const result = [];
+
+  classes.forEach((klass) => {
+    const className = classSelectValue(klass);
+    const key = className.toLowerCase();
+    if (!className || seen.has(key)) return;
+    seen.add(key);
+    result.push(klass);
+  });
+
+  return result;
+}
+
+function getAvailableClassesForLevel(classes = [], level = "") {
+  const targetLevel = String(level || "").toUpperCase();
+  if (!targetLevel) return [];
+
+  return uniqueClassesByName(
+    classes
+      .filter((klass) => isClassAvailableForAudience(klass))
+      .filter((klass) => inferClassLevel(klass) === targetLevel)
+      .filter((klass) => !isLevelOnlyClassName(classSelectValue(klass))),
+  ).sort((a, b) => classSelectValue(a).localeCompare(classSelectValue(b)));
 }
 
 function isAdvertisableClass(klass = {}) {
@@ -222,12 +275,27 @@ function inferCertificateLevelFromForm(form = {}, classes = [], students = []) {
   const selectedStudent = students.find((student) => String(student.id || student.studentCode || student.email || "") === form.studentId);
   return (
     normalizeText(form.certLevel) ||
+    parseLevelAudience(form.className) ||
     inferClassLevel(selectedClass) ||
     inferStudentLevel(selectedStudent) ||
     inferLevelFromText(form.className) ||
     inferLevelFromText(form.topic) ||
     inferLevelFromText(form.announcement)
   );
+}
+
+function studentKey(student = {}) {
+  return String(student.id || student.studentCode || student.email || student.name || "").trim().toLowerCase();
+}
+
+function uniqueStudents(students = []) {
+  const seen = new Set();
+  return students.filter((student) => {
+    const key = studentKey(student);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 const fieldStyle = { display: "grid", gap: 6 };
@@ -288,6 +356,7 @@ export default function CommunicationPage() {
 
   useEffect(() => {
     const className = form.className.trim();
+    const selectedLevel = parseLevelAudience(className);
     if (!className || className === ALL_ACTIVE_AUDIENCE) {
       setStudents([]);
       return;
@@ -296,6 +365,18 @@ export default function CommunicationPage() {
     (async () => {
       setLoadingStudents(true);
       try {
+        if (selectedLevel) {
+          const levelClassNames = getAvailableClassesForLevel(classes, selectedLevel).map(classSelectValue);
+          if (!levelClassNames.length) {
+            setStudents([]);
+            return;
+          }
+
+          const studentGroups = await Promise.all(levelClassNames.map((name) => listStudentsByClass(name).catch(() => [])));
+          setStudents(uniqueStudents(studentGroups.flat()));
+          return;
+        }
+
         const rows = await listStudentsByClass(className);
         setStudents(rows);
       } catch {
@@ -304,7 +385,20 @@ export default function CommunicationPage() {
         setLoadingStudents(false);
       }
     })();
-  }, [form.className]);
+  }, [form.className, classes]);
+
+  const levelAudienceOptions = useMemo(
+    () => LEVEL_ORDER
+      .map((level) => ({ level, classes: getAvailableClassesForLevel(classes, level) }))
+      .filter((entry) => entry.classes.length > 0),
+    [classes],
+  );
+
+  const selectedLevelAudience = parseLevelAudience(form.className);
+  const selectedLevelClasses = useMemo(
+    () => getAvailableClassesForLevel(classes, selectedLevelAudience),
+    [classes, selectedLevelAudience],
+  );
 
   const advertisableClasses = useMemo(
     () => classes.filter((klass) => isAdvertisableClass(klass)),
@@ -321,8 +415,9 @@ export default function CommunicationPage() {
   function updateField(field, value) {
     setForm((current) => {
       if (field === "className") {
+        const selectedLevel = parseLevelAudience(value);
         const selectedClass = findClassByValue(classes, value);
-        const nextLevel = inferClassLevel(selectedClass) || inferLevelFromText(value);
+        const nextLevel = selectedLevel || inferClassLevel(selectedClass) || inferLevelFromText(value);
         return {
           ...current,
           className: value,
@@ -397,12 +492,28 @@ export default function CommunicationPage() {
         ...form,
         certLevel: inferCertificateLevelFromForm(form, classes, availableStudents),
       };
-      const receipt = await saveAnnouncementRow(submissionForm);
+      const selectedLevel = parseLevelAudience(submissionForm.className);
 
-      if (receipt?.sheet?.success && receipt?.sheet?.unverified) {
-        toast.info(receipt.sheet.message || "Broadcast request was sent, but the browser cannot verify sheet delivery.");
-      } else if (receipt?.sheet?.success || receipt?.firestore?.success) {
-        toast.success(receipt?.sheet?.message || receipt?.firestore?.message || "Broadcast saved successfully.");
+      if (selectedLevel) {
+        const targetClasses = getAvailableClassesForLevel(classes, selectedLevel);
+        if (!targetClasses.length) throw new Error(`No available ${selectedLevel} classes were found.`);
+
+        const receipts = await Promise.all(targetClasses.map((klass) => saveAnnouncementRow({
+          ...submissionForm,
+          className: classSelectValue(klass),
+          certLevel: submissionForm.certLevel || selectedLevel,
+        })));
+
+        const savedCount = receipts.filter((receipt) => receipt?.sheet?.success || receipt?.firestore?.success).length;
+        toast.success(`Broadcast saved for ${savedCount} ${selectedLevel} class(es).`);
+      } else {
+        const receipt = await saveAnnouncementRow(submissionForm);
+
+        if (receipt?.sheet?.success && receipt?.sheet?.unverified) {
+          toast.info(receipt.sheet.message || "Broadcast request was sent, but the browser cannot verify sheet delivery.");
+        } else if (receipt?.sheet?.success || receipt?.firestore?.success) {
+          toast.success(receipt?.sheet?.message || receipt?.firestore?.message || "Broadcast saved successfully.");
+        }
       }
 
       setForm((current) => ({
@@ -464,14 +575,31 @@ export default function CommunicationPage() {
             >
               <option value="">{loadingClasses ? "Loading classes..." : "Select audience"}</option>
               <option value={ALL_ACTIVE_AUDIENCE}>{ALL_ACTIVE_AUDIENCE_LABEL} — sends all_active to sheet</option>
-              {classes.map((klass) => {
-                const className = classSelectValue(klass);
-                return className ? <option key={klass.classId || klass.id || className} value={className}>{className}</option> : null;
-              })}
+              {levelAudienceOptions.length ? (
+                <optgroup label="Level broadcasts">
+                  {levelAudienceOptions.map((entry) => (
+                    <option key={entry.level} value={levelAudienceValue(entry.level)}>
+                      All available {entry.level} classes ({entry.classes.length})
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+              <optgroup label="Single class">
+                {classes.map((klass) => {
+                  const className = classSelectValue(klass);
+                  if (!className || isLevelOnlyClassName(className)) return null;
+                  return <option key={klass.classId || klass.id || className} value={className}>{className}</option>;
+                })}
+              </optgroup>
             </select>
             <small style={{ opacity: 0.75 }}>
-              Select a class for group broadcasts, or leave this blank and choose/type a student email for a one-student message. Selecting {ALL_ACTIVE_AUDIENCE_LABEL} writes <code>{ALL_ACTIVE_AUDIENCE}</code> in the sheet class column.
+              Select one class, all active students, or a level broadcast. Level broadcasts create one sheet row per available class, so choosing A1 will write A1 Berlin Klasse, A1 Dortmund Klasse, etc. instead of only writing A1.
             </small>
+            {selectedLevelAudience ? (
+              <small style={{ opacity: 0.8 }}>
+                Selected {selectedLevelAudience} classes: {selectedLevelClasses.map(classSelectValue).join(", ") || "none found"}
+              </small>
+            ) : null}
           </label>
 
           <label style={fieldStyle}>
