@@ -82,16 +82,32 @@ function normalizeFirestoreClass(docSnap) {
   if (!classId) return null;
 
   const archiveMetadata = normalizeClassArchiveMetadata(data);
+  const levelId = String(data.levelId || data.level || data.courseLevel || data.languageLevel || "").toUpperCase();
+
   return {
     id: docSnap.id,
     classRecordId: docSnap.id,
     classId,
     name: normalizeToCanonicalClassId(data.name || data.className || data.classId || classId),
+    levelId,
+    level: data.level || levelId,
+    courseLevel: data.courseLevel || levelId,
+    languageLevel: data.languageLevel || levelId,
     startDate: data.startDate || "",
     endDate: data.endDate || "",
+    startsAt: data.startsAt || "",
     timezone: data.timezone || "Africa/Accra",
     scheduleRules: Array.isArray(data.scheduleRules) ? data.scheduleRules : [],
     generatedSessionCount: Number(data.generatedSessionCount || 0),
+    registrationOpen: data.registrationOpen,
+    publicVisible: data.publicVisible,
+    registrationLink: data.registrationLink || data.classUrl || data.link || "",
+    classUrl: data.classUrl || "",
+    link: data.link || data.classUrl || "",
+    price: data.price || "",
+    fee: data.fee || "",
+    tuition: data.tuition || "",
+    currency: data.currency || "",
     ...archiveMetadata,
   };
 }
@@ -180,16 +196,36 @@ export async function listClassesWithDeps(
         loadFirestoreClassMetadata({ collectionFn, getDocsFn, orderByFn, queryFn, dbInstance }),
       ]);
 
-      return sheetClasses.map((klass) => {
+      const mergedByClassId = new Map();
+
+      sheetClasses.forEach((klass) => {
         const classId = normalizeToCanonicalClassId(klass.classId || klass.name);
+        if (!classId) return;
+
         const metadata = firestoreMetadata.get(classId) || {};
-        return {
+        mergedByClassId.set(classId, {
           ...klass,
           ...metadata,
           classId,
           name: metadata.name || normalizeToCanonicalClassId(klass.name || classId),
-        };
+        });
       });
+
+      // Include newly-created Firestore classes even before students appear in
+      // the published student sheet. This keeps the Communication page's
+      // "Promote upcoming class" dropdown from hiding new A2/A2.2 cohorts.
+      firestoreMetadata.forEach((metadata) => {
+        const classId = normalizeToCanonicalClassId(metadata.classId || metadata.name);
+        if (!classId || mergedByClassId.has(classId)) return;
+
+        mergedByClassId.set(classId, {
+          ...metadata,
+          classId,
+          name: metadata.name || classId,
+        });
+      });
+
+      return [...mergedByClassId.values()].sort((a, b) => a.name.localeCompare(b.name));
     },
     loadFromFirestore: async () => {
       const classesCollection = collectionFn(dbInstance, "classes");
