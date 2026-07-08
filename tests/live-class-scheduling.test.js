@@ -117,6 +117,20 @@ test("calculates class end date using multiple weekly sessions", () => {
 });
 
 
+
+test("calculates A2 end date to include all 28 sessions when a teaching day is closed", () => {
+  assert.equal(calculateClassEndDate({
+    levelId: "A2",
+    startDate: "2026-06-01",
+    scheduleRules: [
+      { day: "Mon", startTime: "19:00", durationMinutes: 120 },
+      { day: "Tue", startTime: "19:00", durationMinutes: 120 },
+      { day: "Wed", startTime: "19:00", durationMinutes: 120 },
+    ],
+    excludedDates: ["2026-06-22"],
+  }), "2026-08-04");
+});
+
 test("session generation rejects duplicate weekly date/time rules", () => {
   assert.throws(() => generateSessionOccurrences({
     classId: "abc",

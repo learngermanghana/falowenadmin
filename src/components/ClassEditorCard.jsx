@@ -8,7 +8,6 @@ import { deleteClassCohort, rebuildClassSessionsFromSchedule } from "../services
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
 const DEFAULT_RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
-const isPastDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "")) && value < new Date().toISOString().slice(0, 10);
 
 function initialForm(klass = {}) {
   const levelId = String(klass.levelId || klass.level || "").toUpperCase();
@@ -33,13 +32,13 @@ function timestampSignature(value) {
 export default function ClassEditorCard({ klass, onSaved }) {
   const toast = useToast();
   const [form, setForm] = useState(() => initialForm(klass));
-  const [historicalMode, setHistoricalMode] = useState(() => klass?.historical === true || isPastDate(klass?.startDate));
+  const [historicalMode, setHistoricalMode] = useState(() => klass?.historical === true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const scheduleSignature = JSON.stringify(klass?.scheduleRules || []);
   useEffect(() => {
     setForm(initialForm(klass));
-    setHistoricalMode(klass?.historical === true || isPastDate(klass?.startDate));
+    setHistoricalMode(klass?.historical === true);
   }, [klass?.id, klass?.startDate, klass?.endDate, klass?.sessionDerivedEndDate, scheduleSignature, timestampSignature(klass?.updatedAt)]);
   const patch = (values) => setForm((current) => ({ ...current, ...values }));
   const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
@@ -124,7 +123,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
       <label>Class name<input required value={form.name} onChange={(event) => patch({ name: event.target.value })} /></label>
       <label>City<input value={form.city} onChange={(event) => patch({ city: event.target.value })} /></label>
       <label>Level<select value={form.levelId} onChange={(event) => { const levelId = event.target.value; patch({ levelId, tuitionGhs: defaultTuitionForLevel(levelId) }); }}>{LEVELS.map((level) => <option key={level}>{level}</option>)}</select></label>
-      <label>Start date<input type="date" required value={form.startDate} onChange={(event) => { const startDate = event.target.value; patch({ startDate }); setHistoricalMode(isPastDate(startDate)); }} /></label>
+      <label>Start date<input type="date" required value={form.startDate} onChange={(event) => patch({ startDate: event.target.value })} /></label>
       <label>Graduation / end date<input type="date" required value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
       <label>Tuition (GHS)<input type="number" min="1" value={form.tuitionGhs} onChange={(event) => patch({ tuitionGhs: Number(event.target.value) })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated", "archived"].map((status) => <option key={status}>{status}</option>)}</select></label>
