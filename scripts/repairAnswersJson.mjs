@@ -93,3 +93,4 @@ console.log("Live Classes progress now uses the cohort start and graduation date
 await import("./applyMarkingManualSelectionFix.mjs");
 await import("./patchCommunicationUpcomingClasses.mjs");
 await import("./patchLiveClassRescheduleUi.mjs");
+await import("./patchMarkingScoreConsistency.mjs");
