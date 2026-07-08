@@ -2,57 +2,27 @@ import { useEffect, useMemo, useState } from "react";
 import PublishedSheetManager from "../components/PublishedSheetManager.jsx";
 import { listClasses } from "../services/classesService";
 import { deleteClassScheduleRow, syncClassSchedule } from "../services/classScheduleSyncService";
+import { classRecordToScheduleSheetPayload } from "../utils/classScheduleSheetPayload.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const CLASS_SCHEDULE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBlSaiByfuH5Z2x3lF6tRGuCVAoIa6ttSnWF4obCk8cwh7-SHZgGqJ1OS8yYehYQ51Em_i75qWCFqF/pubhtml";
 
-function toDateInputValue(value) {
-  if (!value) return "";
-  if (typeof value === "string") return value.includes("T") ? value.slice(0, 10) : value.slice(0, 10);
-  const date = typeof value?.toDate === "function" ? value.toDate() : value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10);
-}
-
-function toTimeInputValue(value) {
-  const text = String(value || "").trim();
-  const match = text.match(/(\d{1,2}):(\d{2})/);
-  if (!match) return "";
-  return `${match[1].padStart(2, "0")}:${match[2]}`;
-}
-
-function normalizeDay(value) {
-  const text = String(value || "").slice(0, 3).toLowerCase();
-  return DAYS.find((day) => day.toLowerCase() === text) || "";
-}
-
-function normalizeScheduleRules(rules = []) {
-  const normalizedRules = Array.isArray(rules) ? rules : [];
-  const meetingDays = [];
-  const dayTimes = {};
-
-  normalizedRules.forEach((rule) => {
-    const day = normalizeDay(rule.day || rule.weekday || rule.dayName);
-    if (!day) return;
-    if (!meetingDays.includes(day)) meetingDays.push(day);
-    const time = toTimeInputValue(rule.time || rule.startTime || rule.startsAt);
-    if (time) dayTimes[`${day.toLowerCase()}Time`] = time;
-  });
-
-  return { meetingDays, dayTimes };
-}
-
 function normalizeClassRow(row = {}) {
-  const className = String(row.name || row.classId || row.className || "").trim();
-  const { meetingDays, dayTimes } = normalizeScheduleRules(row.scheduleRules);
+  const payload = classRecordToScheduleSheetPayload(row);
   return {
-    id: String(row.id || row.classRecordId || className).trim(),
-    name: className,
-    startDate: toDateInputValue(row.startDate),
-    endDate: toDateInputValue(row.endDate),
-    time: toTimeInputValue(row.time || row.startTime || row.classTime || row.scheduleTime || Object.values(dayTimes)[0]),
-    meetingDays,
-    ...dayTimes,
+    id: String(row.id || row.classRecordId || payload.className).trim(),
+    name: payload.className,
+    startDate: payload.startDate,
+    endDate: payload.endDate,
+    time: payload.time,
+    meetingDays: payload.meetingDays,
+    monTime: payload.monTime,
+    tueTime: payload.tueTime,
+    wedTime: payload.wedTime,
+    thuTime: payload.thuTime,
+    friTime: payload.friTime,
+    satTime: payload.satTime,
+    sunTime: payload.sunTime,
   };
 }
 

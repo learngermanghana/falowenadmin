@@ -59,7 +59,12 @@ export default function ClassEditorCard({ klass, onSaved }) {
       const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.requestedEndDate
         ? ` Generated sessions end on ${result.sessionDerivedEndDate}, but class graduation date is ${result.requestedEndDate}.`
         : "";
-      setMessage(`Class updated. ${result.created || 0} session(s) created.${endDateNote}`);
+      const sheetNote = result.classScheduleSheetSync?.status === "failed"
+        ? ` Class was saved, but the class schedule sheet did not update: ${result.classScheduleSheetSync.error}`
+        : result.classScheduleSheetSync?.status === "synced"
+          ? " Class schedule sheet synced."
+          : "";
+      setMessage(`Class updated. ${result.created || 0} session(s) created.${endDateNote}${sheetNote}`);
       await onSaved?.(klass.id);
     } catch (error) { setMessage(error?.message || "Class update failed"); }
     finally { setBusy(false); }

@@ -6,6 +6,8 @@ import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
 import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
 import * as base from "./classCohortUpdateServiceBase.js";
 import { rebuildClassSessionsFromSchedule } from "./liveClassServiceBase.js";
+import { syncClassSchedule } from "./classScheduleSyncService.js";
+import { classRecordToScheduleSheetPayload } from "../utils/classScheduleSheetPayload.js";
 
 export * from "./classCohortUpdateServiceBase.js";
 
@@ -123,6 +125,17 @@ export async function updateClassCohort(classId, payload) {
   });
 
   const sessionEndDate = await syncClassEndDateFromSessions(classId).catch(() => null);
+  const sheetPayload = classRecordToScheduleSheetPayload({
+    ...payload,
+    id: classId,
+    name: payload.name,
+    endDate: sessionEndDate?.endDate || endDate,
+  });
+  const classScheduleSheetSync = sheetPayload.className && sheetPayload.startDate && sheetPayload.endDate && sheetPayload.time && sheetPayload.meetingDays.length
+    ? await syncClassSchedule(sheetPayload)
+      .then((result) => ({ status: "synced", result }))
+      .catch((error) => ({ status: "failed", error: error?.message || "Class schedule sheet sync failed" }))
+    : { status: "skipped", error: "Missing required class schedule sheet data" };
 
   return {
     ...baseResult,
@@ -132,5 +145,6 @@ export async function updateClassCohort(classId, payload) {
     configuredEndDate: String(payload.endDate || endDate || "").trim(),
     sessionDerivedEndDate: sessionEndDate?.sessionDerivedEndDate || "",
     holidayDatesExcluded: relevantClosures,
+    classScheduleSheetSync,
   };
 }
