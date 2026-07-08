@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { buildClassEndDateMismatchWarning } from "../utils/classEndDateWarning.js";
+import { shouldShowHistoricalScheduleMode } from "../utils/liveClassScheduleMode.js";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
 import { deleteClassCohort, rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
@@ -32,14 +33,14 @@ function timestampSignature(value) {
 export default function ClassEditorCard({ klass, onSaved }) {
   const toast = useToast();
   const [form, setForm] = useState(() => initialForm(klass));
-  const [historicalMode, setHistoricalMode] = useState(() => klass?.historical === true);
+  const [historicalMode, setHistoricalMode] = useState(() => shouldShowHistoricalScheduleMode(klass));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const scheduleSignature = JSON.stringify(klass?.scheduleRules || []);
   useEffect(() => {
     setForm(initialForm(klass));
-    setHistoricalMode(klass?.historical === true);
-  }, [klass?.id, klass?.startDate, klass?.endDate, klass?.sessionDerivedEndDate, scheduleSignature, timestampSignature(klass?.updatedAt)]);
+    setHistoricalMode(shouldShowHistoricalScheduleMode(klass));
+  }, [klass?.id, klass?.startDate, klass?.endDate, klass?.sessionDerivedEndDate, klass?.historical, klass?.status, scheduleSignature, timestampSignature(klass?.updatedAt)]);
   const patch = (values) => setForm((current) => ({ ...current, ...values }));
   const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
 
@@ -58,12 +59,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
       const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.requestedEndDate
         ? ` Generated sessions end on ${result.sessionDerivedEndDate}, but class graduation date is ${result.requestedEndDate}.`
         : "";
-      const sheetNote = result.classScheduleSheetSync?.status === "failed"
-        ? ` Class was saved, but the class schedule sheet did not update: ${result.classScheduleSheetSync.error}`
-        : result.classScheduleSheetSync?.status === "synced"
-          ? " Class schedule sheet synced."
-          : "";
-      setMessage(`Class updated. ${result.created || 0} session(s) created.${endDateNote}${sheetNote}`);
+      setMessage(`Class updated. ${result.created || 0} session(s) created.${endDateNote}`);
       await onSaved?.(klass.id);
     } catch (error) { setMessage(error?.message || "Class update failed"); }
     finally { setBusy(false); }
