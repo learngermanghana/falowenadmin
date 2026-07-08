@@ -3,6 +3,8 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase.js";
 import { updateStudentById } from "../services/studentsService.js";
 
+const REVIEW_LINK = "https://g.page/r/Cdogveq3Hy69EBM/review";
+
 function displayValue(...values) {
   return values.map((value) => String(value ?? "").trim()).find(Boolean) || "";
 }
@@ -24,17 +26,6 @@ function formatDate(value) {
   const date = new Date(`${normalized}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return normalized;
   return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function addMonthsToDate(value, months) {
-  const normalized = normalizeDateValue(value);
-  const start = normalized ? new Date(`${normalized}T00:00:00Z`) : new Date();
-  const base = Number.isNaN(start.getTime()) ? new Date() : start;
-  const today = new Date();
-  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-  const date = base.getTime() < todayUtc.getTime() ? todayUtc : base;
-  date.setUTCMonth(date.getUTCMonth() + months);
-  return date.toISOString().slice(0, 10);
 }
 
 function daysUntil(value) {
@@ -74,11 +65,31 @@ function resolveStudentPhone(student, draft = {}) {
   return displayValue(draft.phone, student?.phone, student?.whatsapp, student?.phoneNumber, student?.guardianPhone);
 }
 
-function buildWhatsAppSupportMessage(student, draft = {}) {
+function resolveStudentClass(student, draft = {}) {
+  return displayValue(draft.className, draft.level, draft.program, student?.className, student?.level, student?.program, student?.location) || "your German class";
+}
+
+function parseMoney(value) {
+  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatGhs(value) {
+  const amount = parseMoney(value);
+  return `GHS ${amount.toLocaleString("en-GH", { maximumFractionDigits: 2 })}`;
+}
+
+function buildPaymentReminderMessage(student, draft = {}) {
   const name = resolveStudentName(student);
-  const contractEnd = displayValue(draft.contractEnd, student?.contractEnd);
-  const balance = displayValue(draft.balanceDue, student?.balanceDue, student?.balance);
-  return `Hello ${name}, this is Learn Language Education Academy / Falowen support. We are checking your student account. Contract end: ${formatDate(contractEnd)}. Balance: ${balance || "not set"}. Please reply here if you need help. Thank you.`;
+  const className = resolveStudentClass(student, draft);
+  const balance = displayValue(draft.balanceDue, student?.balanceDue, student?.balance, student?.outstandingBalance, student?.amountDue);
+  const balanceText = parseMoney(balance) > 0 ? formatGhs(balance) : "your outstanding balance";
+  return `Hello ${name}, this is a reminder from Learn Language Education Academy / Falowen. Your ${className} record shows a balance of ${balanceText}. Kindly make payment early so your learning can continue smoothly. Please update us after payment. Thank you.`;
+}
+
+function buildReviewRequestMessage(student) {
+  const name = resolveStudentName(student);
+  return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your course, the school, and the app here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
 }
 
 export default function StudentSupportTools({ student, draft = {}, onStudentUpdated, pushToast }) {
@@ -128,19 +139,6 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
       notify("success", `Password reset email sent to ${email}.`);
     });
 
-  const extendContract = () =>
-    runAction("extend", async () => {
-      const monthsInput = window.prompt("Extend contract by how many months?", "1");
-      if (monthsInput === null) return;
-      const months = Number(monthsInput);
-      if (!Number.isFinite(months) || months <= 0) {
-        notify("error", "Enter a valid number of months.");
-        return;
-      }
-      const nextEnd = addMonthsToDate(contractEnd, months);
-      await updateStudent({ contractEnd: nextEnd, status: draft.status || student.status || "Enrolled" }, `Contract extended to ${formatDate(nextEnd)}.`);
-    });
-
   const reactivateAccount = () =>
     runAction("reactivate", async () => {
       const cleanedStatus = window.confirm("Reactivate this student account and set status to Enrolled?") ? "Enrolled" : "";
@@ -148,13 +146,21 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
       await updateStudent({ status: cleanedStatus }, `Account status updated to ${cleanedStatus}.`);
     });
 
-  const sendWhatsappMessage = () => {
-    const url = whatsappUrl(phone, buildWhatsAppSupportMessage(student, draft));
+  const openWhatsappWithMessage = (message, missingPhoneMessage) => {
+    const url = whatsappUrl(phone, message);
     if (!url) {
-      notify("error", "This student has no valid WhatsApp/phone number.");
+      notify("error", missingPhoneMessage || "This student has no valid WhatsApp/phone number.");
       return;
     }
     window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const sendPaymentReminder = () => {
+    openWhatsappWithMessage(buildPaymentReminderMessage(student, draft));
+  };
+
+  const sendReviewLink = () => {
+    openWhatsappWithMessage(buildReviewRequestMessage(student), "This student has no valid WhatsApp/phone number for the review link.");
   };
 
   return (
@@ -172,7 +178,7 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
       <div>
         <h3 style={{ margin: "0 0 4px" }}>Student support</h3>
         <p style={{ margin: 0, color: "#64748b" }}>
-          Main actions only: password, contract, account status, and WhatsApp help.
+          Main actions only: password, account status, payment reminder, and review link.
         </p>
       </div>
 
@@ -180,14 +186,14 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
         <button type="button" onClick={resetPassword} disabled={busyAction === "reset"}>
           {busyAction === "reset" ? "Sending..." : "Reset password"}
         </button>
-        <button type="button" onClick={extendContract} disabled={busyAction === "extend"}>
-          Extend contract
-        </button>
         <button type="button" onClick={reactivateAccount} disabled={busyAction === "reactivate"}>
           Reactivate account
         </button>
-        <button type="button" onClick={sendWhatsappMessage}>
-          WhatsApp support
+        <button type="button" onClick={sendPaymentReminder}>
+          Payment reminder
+        </button>
+        <button type="button" onClick={sendReviewLink}>
+          Review link
         </button>
       </div>
 
