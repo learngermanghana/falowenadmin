@@ -1,6 +1,6 @@
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { latestSessionDateInTimezone } from "../utils/liveClassScheduling.js";
+import { classScheduleBoundsFromSessions } from "../utils/attendanceSessionOverride.js";
 import * as base from "./liveClassServiceBase.js";
 
 export async function syncClassEndDateFromSessions(classId) {
@@ -9,21 +9,34 @@ export async function syncClassEndDateFromSessions(classId) {
   if (!classSnap.exists()) throw new Error("Class not found");
   const klass = { id: classSnap.id, ...classSnap.data() };
   const sessions = await base.listClassSessions(classId);
-  const validSessions = sessions
-    .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
-    .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
-    .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
-  const latestSession = validSessions[validSessions.length - 1] || null;
-  const sessionEndDate = latestSessionDateInTimezone(validSessions, klass.timezone);
+  const bounds = classScheduleBoundsFromSessions(sessions, klass.timezone || "Africa/Accra");
 
-  if (sessionEndDate && sessionEndDate !== String(klass.sessionDerivedEndDate || "")) {
+  const patch = {};
+  if (bounds.sessionDerivedStartDate && bounds.sessionDerivedStartDate !== String(klass.sessionDerivedStartDate || "")) {
+    patch.sessionDerivedStartDate = bounds.sessionDerivedStartDate;
+    patch.sessionDerivedStartDateSyncedAt = serverTimestamp();
+  }
+  if (bounds.sessionDerivedEndDate && bounds.sessionDerivedEndDate !== String(klass.sessionDerivedEndDate || "")) {
+    patch.sessionDerivedEndDate = bounds.sessionDerivedEndDate;
+    patch.sessionDerivedEndDateSyncedAt = serverTimestamp();
+  }
+
+  if (Object.keys(patch).length) {
     await updateDoc(classRef, {
-      sessionDerivedEndDate: sessionEndDate,
-      sessionDerivedEndDateSyncedAt: serverTimestamp(),
+      ...patch,
       updatedAt: serverTimestamp(),
     });
   }
 
   const endDate = String(klass.endDate || "");
-  return { endDate, sessionDerivedEndDate: sessionEndDate, configuredEndDate: String(klass.configuredEndDate || klass.endDate || ""), latestSession };
+  return {
+    startDate: String(klass.startDate || ""),
+    endDate,
+    sessionDerivedStartDate: bounds.sessionDerivedStartDate,
+    sessionDerivedEndDate: bounds.sessionDerivedEndDate,
+    configuredStartDate: String(klass.configuredStartDate || klass.startDate || ""),
+    configuredEndDate: String(klass.configuredEndDate || klass.endDate || ""),
+    firstSession: bounds.firstSession,
+    latestSession: bounds.latestSession,
+  };
 }
