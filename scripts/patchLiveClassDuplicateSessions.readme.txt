@@ -1,0 +1,1 @@
+This branch adds duplicate session suppression in src/utils/liveClassSessionDedupe.js and wires it into liveClassCompatibilityServiceBase.js.
