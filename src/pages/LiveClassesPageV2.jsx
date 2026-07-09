@@ -28,6 +28,13 @@ const tabs = [
   { id: "create", label: "Create class" },
 ];
 
+const SESSION_CHANGE_REASONS = [
+  { label: "Wrong date", value: "This class had the wrong date in the timetable, so the class date has been corrected." },
+  { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },
+  { label: "Travelled", value: "Class cannot hold because the teacher travelled and is not available." },
+  { label: "Emergency", value: "Class cannot hold because of an emergency." },
+];
+
 function normalize(value) {
   return String(value || "").trim();
 }
@@ -56,12 +63,32 @@ function formatDateTime(value) {
   });
 }
 
-function toDateTimeLocal(value) {
-  if (!value) return "";
+function ghanaParts(value) {
   const parsed = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  const pad = (number) => String(number).padStart(2, "0");
-  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+  if (Number.isNaN(parsed.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Accra",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(parsed);
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+
+function toDateTimeLocal(value) {
+  const parts = ghanaParts(value);
+  if (!parts) return "";
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+function splitDateTimeLocal(value) {
+  const [localDate = "", localTime = ""] = String(value || "").split("T");
+  const time = localTime.slice(0, 5);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(localDate) || !/^\d{2}:\d{2}$/.test(time)) return null;
+  return { localDate, localTime: time };
 }
 
 function curriculumIds(session = {}) {
@@ -75,20 +102,6 @@ function statusStyle(status) {
   if (status === "completed") return { background: "#dcfce7", color: "#166534" };
   if (status === "live") return { background: "#fef3c7", color: "#92400e" };
   return { background: "#dbeafe", color: "#1e40af" };
-}
-
-
-const SESSION_CHANGE_REASONS = [
-  { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },
-  { label: "Travelled", value: "Class cannot hold because the teacher travelled and is not available." },
-  { label: "Emergency", value: "Class cannot hold because of an emergency." },
-];
-
-function addMinutesToDateTimeLocal(value, minutes) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  const next = new Date(parsed.getTime() + Number(minutes || 0) * 60 * 1000);
-  return toDateTimeLocal(next);
 }
 
 function sessionDurationMinutes(session = {}) {
@@ -194,6 +207,7 @@ export default function LiveClassesPageV2() {
   );
   const nextCountdown = dashboard?.nextSession ? calculateCountdown(dashboard.nextSession.startsAt) : null;
   const mappedCount = (dashboard?.sessions || []).filter((session) => curriculumIds(session).length).length;
+  const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled/i.test(message);
 
   const sessionsByDictionaryId = useMemo(() => {
     const result = new Map();
@@ -264,6 +278,8 @@ export default function LiveClassesPageV2() {
     setMessage("");
     setSessionChange({
       sessionId: session.id,
+      classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,
+      className: dashboard?.klass?.name || session.className || "",
       action: "reschedule",
       startsAt: toDateTimeLocal(session.startsAt),
       reason: session.rescheduleReason || session.cancellationReason || SESSION_CHANGE_REASONS[0].value,
@@ -278,23 +294,34 @@ export default function LiveClassesPageV2() {
     setMessage("");
     try {
       const adminId = user?.uid || user?.email || "admin";
+      let successMessage = "";
       if (sessionChange.action === "cancel") {
-        await cancelSession(sessionChange.sessionId, { reason: sessionChange.reason, adminId });
-        setMessage("Session cancelled and the attendance session was updated automatically.");
+        const cancelResult = await cancelSession(sessionChange.sessionId, { reason: sessionChange.reason, adminId });
+        successMessage = cancelResult?.emailSubmitted === false
+          ? `Session cancelled successfully, but the Communication email could not be confirmed: ${cancelResult.emailMessage || "check Communication"}`
+          : "Session cancelled successfully. Attendance, calendar feed and Communication were updated automatically.";
       } else {
-        if (!sessionChange.startsAt) throw new Error("Choose the new date and time.");
-        const endsAt = addMinutesToDateTimeLocal(sessionChange.startsAt, sessionChange.durationMinutes);
-        if (!endsAt) throw new Error("Choose a valid new date and time.");
-        await rescheduleSession(sessionChange.sessionId, {
-          startsAt: new Date(sessionChange.startsAt).toISOString(),
-          endsAt: new Date(endsAt).toISOString(),
+        const parts = splitDateTimeLocal(sessionChange.startsAt);
+        if (!parts) throw new Error("Choose the new Ghana date and time.");
+        const rescheduleResult = await rescheduleSession(sessionChange.sessionId, {
+          localDate: parts.localDate,
+          localTime: parts.localTime,
+          startsAt: sessionChange.startsAt,
           reason: sessionChange.reason,
           adminId,
+          classId: sessionChange.classId || dashboard?.klass?.id || selectedClassId,
+          className: sessionChange.className || dashboard?.klass?.name || "",
+          timezone: dashboard?.klass?.timezone || "Africa/Accra",
+          durationMinutes: sessionChange.durationMinutes,
         });
-        setMessage("Session rescheduled and the attendance session was updated automatically.");
+        const emailNote = rescheduleResult?.emailSubmitted === false
+          ? ` Communication email could not be confirmed: ${rescheduleResult.emailMessage || "check Communication"}`
+          : "";
+        successMessage = `Session rescheduled successfully to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Attendance, calendar feed and Communication were updated automatically.${emailNote}`;
       }
       setSessionChange(null);
       await refreshDashboard(selectedClassId);
+      setMessage(successMessage);
     } catch (error) {
       setMessage(error?.message || "Session update failed");
     } finally {
@@ -323,34 +350,37 @@ export default function LiveClassesPageV2() {
     }
   }
 
+  function renderSessionChangeForm(session) {
+    if (!sessionChange || sessionChange.sessionId !== session.id) return null;
+    return (
+      <form onSubmit={handleSessionChangeSubmit} style={{ display: "grid", gap: 10, padding: 12, border: "1px solid #bfdbfe", borderRadius: 8, background: "#eff6ff" }}>
+        <strong>Update this session: {formatDateTime(session.startsAt)}</strong>
+        <label>Action <select value={sessionChange.action} onChange={(event) => setSessionChange((current) => ({ ...current, action: event.target.value }))}>
+          <option value="reschedule">Reschedule to selected date</option>
+          <option value="cancel">Cancel class</option>
+        </select></label>
+        {sessionChange.action === "reschedule" ? (
+          <label>New Ghana date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
+        ) : null}
+        <label>Message template <select value="" onChange={(event) => event.target.value && setSessionChange((current) => ({ ...current, reason: event.target.value }))}>
+          <option value="">Choose a ready reason</option>
+          {SESSION_CHANGE_REASONS.map((template) => <option key={template.label} value={template.value}>{template.label}</option>)}
+        </select></label>
+        <label>Reason / message <textarea rows={3} value={sessionChange.reason} onChange={(event) => setSessionChange((current) => ({ ...current, reason: event.target.value }))} placeholder="Write the message students should see" /></label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="submit" disabled={busy}>{busy ? "Saving…" : sessionChange.action === "cancel" ? "Cancel and update session" : "Reschedule and update session"}</button>
+          <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
+        </div>
+      </form>
+    );
+  }
+
   function renderSessions() {
     const sessions = dashboard?.sessions || [];
     if (!sessions.length) {
       return <p>No sessions were found for this class record. Open Class & settings and save the timetable to generate them.</p>;
     }
     return (
-      <>
-      {sessionChange ? (
-        <form onSubmit={handleSessionChangeSubmit} style={{ display: "grid", gap: 10, marginBottom: 16, padding: 12, border: "1px solid #bfdbfe", borderRadius: 8, background: "#eff6ff" }}>
-          <strong>Update session once</strong>
-          <label>Action <select value={sessionChange.action} onChange={(event) => setSessionChange((current) => ({ ...current, action: event.target.value }))}>
-            <option value="reschedule">Reschedule to selected date</option>
-            <option value="cancel">Cancel class</option>
-          </select></label>
-          {sessionChange.action === "reschedule" ? (
-            <label>New selected date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
-          ) : null}
-          <label>Message template <select value="" onChange={(event) => event.target.value && setSessionChange((current) => ({ ...current, reason: event.target.value }))}>
-            <option value="">Choose a ready reason</option>
-            {SESSION_CHANGE_REASONS.map((template) => <option key={template.label} value={template.value}>{template.label}</option>)}
-          </select></label>
-          <label>Reason / message <textarea rows={3} value={sessionChange.reason} onChange={(event) => setSessionChange((current) => ({ ...current, reason: event.target.value }))} placeholder="Write the message students should see" /></label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="submit" disabled={busy}>{sessionChange.action === "cancel" ? "Cancel and update session" : "Reschedule and update session"}</button>
-            <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
-          </div>
-        </form>
-      ) : null}
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th>Ghana date and time</th><th>Status</th><th>Topic</th><th>Complete dictionary selection</th><th>Actions</th></tr></thead>
@@ -358,7 +388,7 @@ export default function LiveClassesPageV2() {
             {sessions.map((session) => {
               const locked = ["cancelled", "completed"].includes(String(session.status || "").toLowerCase());
               const currentId = curriculumIds(session)[0] || "";
-              return (
+              return [
                 <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
                   <td style={{ padding: 8 }}><span style={{ ...statusStyle(session.status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{session.status || "scheduled"}</span></td>
@@ -380,17 +410,21 @@ export default function LiveClassesPageV2() {
                   </td>
                   <td style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Link to={`/attendance/session/${dashboard.klass.id}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
-                    <button disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
-                    <button disabled={busy || locked} onClick={() => openSessionChange(session)}>Reschedule / Cancel</button>
-                    <button disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
+                    <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
+                    <button type="button" disabled={busy || locked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Editing…" : "Reschedule / Cancel"}</button>
+                    <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
                   </div></td>
-                </tr>
-              );
+                </tr>,
+                sessionChange?.sessionId === session.id ? (
+                  <tr key={`${session.id}-change`}>
+                    <td colSpan={5} style={{ padding: "0 8px 12px" }}>{renderSessionChangeForm(session)}</td>
+                  </tr>
+                ) : null,
+              ];
             })}
           </tbody>
         </table>
       </div>
-      </>
     );
   }
 
@@ -428,17 +462,17 @@ export default function LiveClassesPageV2() {
         <Link to="/attendance">Attendance overview</Link>
       </div>
 
-      {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: "#eff6ff", border: "1px solid #bfdbfe" }}>{message}</div> : null}
+      {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#eff6ff", border: messageIsSuccess ? "1px solid #bbf7d0" : "1px solid #bfdbfe" }}>{message}</div> : null}
 
       <article className="card" style={{ display: "grid", gap: 12 }}>
-        <label><strong>Manage class</strong>{" "}<select value={selectedClassId} onChange={(event) => { setSelectedClassId(event.target.value); setActiveTab("overview"); setMessage(""); }}>
+        <label><strong>Manage class</strong>{" "}<select value={selectedClassId} onChange={(event) => { setSelectedClassId(event.target.value); setActiveTab("overview"); setMessage(""); setSessionChange(null); }}>
           <option value="">Select a class</option>
           {classes.map((klass) => <option key={klass.id} value={klass.id}>{klass.name || klass.className || klass.id}</option>)}
         </select></label>
         <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {tabs.map((tab) => {
             const disabled = tab.id !== "create" && !dashboard;
-            return <button key={tab.id} type="button" disabled={disabled} style={tabStyle(activeTab === tab.id, disabled)} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>;
+            return <button key={tab.id} type="button" disabled={disabled} style={tabStyle(activeTab === tab.id, disabled)} onClick={() => { setActiveTab(tab.id); setSessionChange(null); }}>{tab.label}</button>;
           })}
         </nav>
       </article>
