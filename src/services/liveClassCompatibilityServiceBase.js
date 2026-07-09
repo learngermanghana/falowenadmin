@@ -13,6 +13,7 @@ import { db } from "../firebase.js";
 import { courseDictionary } from "../data/courseDictionary.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
+import { dedupeCompatibleSessions } from "../utils/liveClassSessionDedupe.js";
 import { syncClassCurriculum as syncBaseClassCurriculum } from "./liveClassService.js";
 
 function normalize(value) {
@@ -58,12 +59,6 @@ function identifiersFor(classId, klass = {}) {
   return [...new Set([classId, klass.id, klass.name, klass.classId, klass.className, klass.slug]
     .map(normalize)
     .filter(Boolean))];
-}
-
-function sessionTime(session = {}) {
-  if (typeof session.startsAt?.toDate === "function") return session.startsAt.toDate().getTime();
-  const parsed = new Date(session.startsAt || 0).getTime();
-  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function currentAssignmentIds(session = {}) {
@@ -138,28 +133,6 @@ function addSessions(target, results = []) {
   });
 }
 
-function sessionPreference(session, classId) {
-  let score = 0;
-  if (normalize(session.classId) === normalize(classId)) score += 8;
-  if (normalize(session.classRecordId) === normalize(classId)) score += 4;
-  if (currentAssignmentIds(session).length) score += 2;
-  if (normalize(session.topic)) score += 1;
-  return score;
-}
-
-function dedupeSessions(sessions = [], classId = "") {
-  const byMoment = new Map();
-  sessions.forEach((session) => {
-    const time = sessionTime(session);
-    const key = time ? `time:${time}` : `id:${session.id}`;
-    const existing = byMoment.get(key);
-    if (!existing || sessionPreference(session, classId) > sessionPreference(existing, classId)) {
-      byMoment.set(key, session);
-    }
-  });
-  return [...byMoment.values()].sort((left, right) => sessionTime(left) - sessionTime(right));
-}
-
 async function loadCompatibleSessions(classId, klass = {}) {
   const identifiers = identifiersFor(classId, klass);
   const found = new Map();
@@ -187,7 +160,10 @@ async function loadCompatibleSessions(classId, klass = {}) {
     }
   }
 
-  return dedupeSessions([...found.values()], classId);
+  return dedupeCompatibleSessions([...found.values()], {
+    classId,
+    timezone: klass.timezone || "Africa/Accra",
+  });
 }
 
 function enrichSessions(klass, sessions = []) {
