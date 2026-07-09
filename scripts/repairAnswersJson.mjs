@@ -76,19 +76,38 @@ try {
 fs.writeFileSync(filePath, source);
 console.log("answers_dictionary.json is valid JSON.");
 
-const liveClassesPath = new URL("../src/pages/LiveClassesPage.jsx", import.meta.url);
-let liveClassesSource = fs.readFileSync(liveClassesPath, "utf8");
 const oldProgressCall = "calculateClassProgress(dashboard?.sessions || [])";
 const newProgressCall = "calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {})";
+const liveClassPaths = [
+  "../src/pages/LiveClassesPage.jsx",
+  "../src/pages/LiveClassesPageV2.jsx",
+  "../src/pages/LiveClassesPageCompat.jsx",
+];
+let progressCallFound = false;
+let progressCallPatched = false;
 
-if (liveClassesSource.includes(oldProgressCall)) {
-  liveClassesSource = liveClassesSource.replace(oldProgressCall, newProgressCall);
-} else if (!liveClassesSource.includes(newProgressCall)) {
-  throw new Error("Could not find the Live Classes progress calculation to update.");
+for (const relativePath of liveClassPaths) {
+  const liveClassesPath = new URL(relativePath, import.meta.url);
+  if (!fs.existsSync(liveClassesPath)) continue;
+
+  let liveClassesSource = fs.readFileSync(liveClassesPath, "utf8");
+  if (liveClassesSource.includes(oldProgressCall)) {
+    liveClassesSource = liveClassesSource.replaceAll(oldProgressCall, newProgressCall);
+    fs.writeFileSync(liveClassesPath, liveClassesSource);
+    progressCallFound = true;
+    progressCallPatched = true;
+  } else if (liveClassesSource.includes(newProgressCall)) {
+    progressCallFound = true;
+  }
 }
 
-fs.writeFileSync(liveClassesPath, liveClassesSource);
-console.log("Live Classes progress now uses the cohort start and graduation dates.");
+if (!progressCallFound) {
+  console.log("Live Classes progress calculation is already managed outside the legacy repair script.");
+} else if (progressCallPatched) {
+  console.log("Live Classes progress now uses the cohort start and graduation dates.");
+} else {
+  console.log("Live Classes progress already uses the cohort start and graduation dates.");
+}
 
 await import("./applyMarkingManualSelectionFix.mjs");
 await import("./patchCommunicationUpcomingClasses.mjs");
