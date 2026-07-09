@@ -12,9 +12,9 @@ import {
 import { resolveClassCohort } from "../services/liveClassService.js";
 import {
   getCompatibleClassDashboard,
-  updateCompatibleSession,
+  overrideCompatibleSessionDate,
 } from "../services/liveClassCompatibilityService.js";
-import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
+import { buildManualDateOverridePatch } from "../utils/attendanceSessionOverride.js";
 
 const TIMEZONE = "Africa/Accra";
 
@@ -288,23 +288,32 @@ export default function CanonicalAttendancePageV3() {
 
   async function saveDateOverride() {
     if (!klass || !selected || !dateDraft) return;
-    const oldStart = asDate(selected.startsAt);
-    const oldEnd = asDate(selected.endsAt);
-    if (!oldStart) return error("This lesson has no valid start time.");
 
     setSessionBusy(true);
     try {
-      const startClock = localTime(oldStart, timezone) || "09:00";
-      const startsAt = zonedLocalToUtcIso(dateDraft, startClock, timezone);
-      const durationMs = oldEnd && oldEnd > oldStart ? oldEnd.getTime() - oldStart.getTime() : 2 * 60 * 60 * 1000;
-      const endsAt = new Date(new Date(startsAt).getTime() + durationMs).toISOString();
-      await updateCompatibleSession(klass.id, selected.id, {
-        startsAt,
-        endsAt,
-        manualDateOverride: true,
-        manualDateOverrideBy: user?.uid || "admin",
+      const overridePatch = buildManualDateOverridePatch({
+        session: selected,
+        dateDraft,
+        timezone,
+        actorId: user?.uid || user?.email || "admin",
       });
-      const patch = { startsAt, endsAt, classId: klass.id, classRecordId: klass.id, className: klass.name || "" };
+      const result = await overrideCompatibleSessionDate(klass.id, selected.id, overridePatch);
+      const savedSession = result?.session || {};
+      const patch = {
+        ...overridePatch,
+        ...savedSession,
+        classId: klass.id,
+        classRecordId: klass.id,
+        className: klass.name || "",
+      };
+
+      if (result?.schedule) {
+        setKlass((current) => current ? {
+          ...current,
+          sessionDerivedStartDate: result.schedule.sessionDerivedStartDate || current.sessionDerivedStartDate,
+          sessionDerivedEndDate: result.schedule.sessionDerivedEndDate || current.sessionDerivedEndDate,
+        } : current);
+      }
       setAttendance((current) => ({
         ...current,
         [selectedId]: { ...current[selectedId], ...patch },
@@ -312,7 +321,7 @@ export default function CanonicalAttendancePageV3() {
       setSessions((current) => current
         .map((session) => session.id === selected.id ? { ...session, ...patch } : session)
         .sort((left, right) => (asDate(left.startsAt)?.getTime() || 0) - (asDate(right.startsAt)?.getTime() || 0)));
-      success(`Lesson date changed to ${dateDraft}. Falowen students will use this same session date.`);
+      success(`Lesson date changed to ${dateDraft}. Live Classes, attendance and class schedule dates now use the same session record.`);
     } catch (cause) {
       error(cause?.message || "Could not change the lesson date.");
     } finally {

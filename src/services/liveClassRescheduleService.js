@@ -1,4 +1,4 @@
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 import { formatAccraDateTime } from "../utils/liveClassCancellationEmail.js";
@@ -50,7 +50,7 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
   if (validLocalDate(localDate) && validLocalTime(localTime)) {
     const startsAt = zonedLocalToUtcIso(localDate, localTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, localTime, startsAt, endsAt, durationMinutes };
+    return { ...payload, localDate, localTime, startsAt, endsAt, durationMinutes };
   }
 
   const rawStart = String(payload.startsAt || "").trim();
@@ -59,7 +59,7 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
     const startTime = normalizeLocalTime(localMatch[2]);
     const startsAt = zonedLocalToUtcIso(localMatch[1], startTime, classTimezone);
     const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-    return { ...payload, localTime: startTime, startsAt, endsAt, durationMinutes };
+    return { ...payload, localDate: localMatch[1], localTime: startTime, startsAt, endsAt, durationMinutes };
   }
 
   const sourceStart = new Date(payload.startsAt || 0);
@@ -93,29 +93,50 @@ function lessonLabel(session = {}) {
 }
 
 async function repairSessionClassLink(sessionId, session, resolvedClassId, klass) {
-  const nextClassName = String(klass.name || session.className || "").trim();
-  if (String(session.classId || "") === resolvedClassId && String(session.className || "") === nextClassName) return;
+  const nextClassName = String(klass.name || klass.className || session.className || "").trim();
+  const hasClassId = String(session.classId || "") === resolvedClassId;
+  const hasClassRecordId = String(session.classRecordId || "") === resolvedClassId;
+  const hasClassName = String(session.className || "") === nextClassName;
+  if (hasClassId && hasClassRecordId && hasClassName) return;
   await updateDoc(doc(db, "classSessions", String(sessionId)), {
     classId: resolvedClassId,
+    classRecordId: resolvedClassId,
     className: nextClassName,
   });
+}
+
+async function markClassScheduleTouched(classId, sessionId, normalizedPayload) {
+  await updateDoc(doc(db, "classes", String(classId)), {
+    lastRescheduledSessionId: String(sessionId),
+    lastRescheduledStartsAt: normalizedPayload.startsAt,
+    lastRescheduledEndsAt: normalizedPayload.endsAt,
+    sessionScheduleVersion: Date.now(),
+    sessionScheduleUpdatedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }).catch(() => {});
 }
 
 export async function rescheduleSession(sessionId, payload) {
   const sessionSnap = await getDoc(doc(db, "classSessions", String(sessionId)));
   if (!sessionSnap.exists()) throw new Error("Session not found");
   const session = { id: sessionSnap.id, ...sessionSnap.data() };
-  const resolvedClassId = String(payload.classId || session.classId || "").trim();
+  const resolvedClassId = String(payload.classId || session.classId || session.classRecordId || "").trim();
   if (!resolvedClassId) throw new Error("This session is missing its class link. Select the class again and retry.");
 
   const classSnap = await getDoc(doc(db, "classes", resolvedClassId));
   if (!classSnap.exists()) throw new Error("Class not found. Select the class again and retry.");
   const klass = { id: classSnap.id, ...classSnap.data() };
-  const normalizedPayload = normalizeReschedulePayload({ ...payload, classId: resolvedClassId, className: klass.name || payload.className || session.className || "" }, klass);
+  const normalizedPayload = normalizeReschedulePayload({
+    ...payload,
+    classId: resolvedClassId,
+    classRecordId: resolvedClassId,
+    className: klass.name || klass.className || payload.className || session.className || "",
+  }, klass);
 
   await repairSessionClassLink(sessionId, session, resolvedClassId, klass);
   await base.rescheduleSession(sessionId, normalizedPayload);
   await syncClassEndDateFromSessions(resolvedClassId).catch(() => {});
+  await markClassScheduleTouched(resolvedClassId, sessionId, normalizedPayload);
 
   const className = String(klass.name || session.className || "Falowen class").trim();
   const lesson = lessonLabel(session);
@@ -139,6 +160,7 @@ export async function rescheduleSession(sessionId, payload) {
       topic: subject,
     });
     return {
+      classId: resolvedClassId,
       sessionId,
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
@@ -147,6 +169,7 @@ export async function rescheduleSession(sessionId, payload) {
     };
   } catch (error) {
     return {
+      classId: resolvedClassId,
       sessionId,
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
