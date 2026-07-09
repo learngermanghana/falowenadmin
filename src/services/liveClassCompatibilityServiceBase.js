@@ -13,7 +13,11 @@ import { db } from "../firebase.js";
 import { courseDictionary } from "../data/courseDictionary.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
-import { dedupeCompatibleSessions } from "../utils/liveClassSessionDedupe.js";
+import {
+  assignmentIdsForSession,
+  dedupeCompatibleSessions,
+  enrichSessionsWithStableCurriculum,
+} from "../utils/liveClassSessionDedupe.js";
 import { syncClassCurriculum as syncBaseClassCurriculum } from "./liveClassService.js";
 
 function normalize(value) {
@@ -62,10 +66,7 @@ function identifiersFor(classId, klass = {}) {
 }
 
 function currentAssignmentIds(session = {}) {
-  const arrays = [session.assignmentIds, session.chapterIds, session.curriculumIds];
-  const source = arrays.find((value) => Array.isArray(value) && value.length)
-    || (session.assignment_id ? [session.assignment_id] : []);
-  return [...new Set(source.map((value) => normalize(value).toUpperCase()).filter(Boolean))];
+  return assignmentIdsForSession(session);
 }
 
 function resolveLevelFromSessions(sessions = []) {
@@ -169,23 +170,7 @@ async function loadCompatibleSessions(classId, klass = {}) {
 function enrichSessions(klass, sessions = []) {
   const levelId = resolveLevel(klass);
   const groups = getCourseSessionGroups(levelId);
-  return sessions.slice(0, groups.length).map((session, index) => {
-    const group = groups[index];
-    if (!group) return session;
-    return {
-      ...session,
-      assignmentIds: group.assignmentIds,
-      chapterIds: group.assignmentIds,
-      curriculumIds: group.assignmentIds,
-      assignment_id: group.assignmentIds[0] || "",
-      topic: group.topic,
-      curriculumIndex: index + 1,
-      curriculumDay: group.day,
-      curriculumTaskCount: group.assignmentIds.length,
-      curriculumSource: "courseDictionary-day-groups",
-      curriculumVersion: 2,
-    };
-  });
+  return enrichSessionsWithStableCurriculum(klass, sessions, groups);
 }
 
 function attendanceMetadata(klass, session, patch) {
