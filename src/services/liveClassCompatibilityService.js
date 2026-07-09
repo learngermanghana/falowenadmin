@@ -1,8 +1,9 @@
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
-import { getEffectiveClassEndDate, latestSessionDateInTimezone } from "../utils/liveClassScheduling.js";
-import { rebuildClassSessionsFromSchedule, syncClassCurriculum, syncClassEndDateFromSessions } from "./liveClassService.js";
+import { classScheduleBoundsFromSessions } from "../utils/attendanceSessionOverride.js";
+import { getEffectiveClassEndDate } from "../utils/liveClassScheduling.js";
+import { rebuildClassSessionsFromSchedule, listClassSessions, syncClassCurriculum, syncClassEndDateFromSessions } from "./liveClassService.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
 
 export * from "./liveClassCompatibilityServiceBase.js";
@@ -59,15 +60,39 @@ function prepareDashboard(dashboard, repair = null) {
   const sessions = (dashboard.sessions || [])
     .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
     .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
-  const sessionDerivedEndDate = latestSessionDateInTimezone(sessions, dashboard.klass?.timezone) || String(dashboard.klass?.sessionDerivedEndDate || "");
+  const bounds = classScheduleBoundsFromSessions(sessions, dashboard.klass?.timezone);
+  const sessionDerivedStartDate = bounds.sessionDerivedStartDate || String(dashboard.klass?.sessionDerivedStartDate || "");
+  const sessionDerivedEndDate = bounds.sessionDerivedEndDate || String(dashboard.klass?.sessionDerivedEndDate || "");
   const effectiveEndDate = getEffectiveClassEndDate({ ...dashboard.klass, sessionDerivedEndDate }, sessions);
 
   return {
     ...dashboard,
     sessions,
-    klass: { ...dashboard.klass, sessionDerivedEndDate, effectiveEndDate },
+    klass: { ...dashboard.klass, sessionDerivedStartDate, sessionDerivedEndDate, effectiveEndDate },
     sessionRepair: repair,
   };
+}
+
+async function syncClassScheduleBoundsFromSessions(classId, { changedSessionId = "", actorId = "" } = {}) {
+  const classRef = doc(db, "classes", String(classId));
+  const classSnap = await getDoc(classRef);
+  if (!classSnap.exists()) throw new Error("Class not found");
+
+  const klass = { id: classSnap.id, ...classSnap.data() };
+  const sessions = await listClassSessions(classId);
+  const bounds = classScheduleBoundsFromSessions(sessions, klass.timezone || "Africa/Accra");
+  const patch = {
+    ...(bounds.sessionDerivedStartDate ? { sessionDerivedStartDate: bounds.sessionDerivedStartDate } : {}),
+    ...(bounds.sessionDerivedEndDate ? { sessionDerivedEndDate: bounds.sessionDerivedEndDate } : {}),
+    ...(changedSessionId ? { lastManualDateOverrideSessionId: String(changedSessionId) } : {}),
+    ...(actorId ? { lastManualDateOverrideBy: String(actorId) } : {}),
+    sessionScheduleVersion: Date.now(),
+    sessionScheduleUpdatedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  await updateDoc(classRef, patch);
+  return { ...bounds, patch };
 }
 
 export async function getCompatibleClassDashboard(classId) {
@@ -97,9 +122,25 @@ export async function updateCompatibleSession(classId, sessionId, patch = {}) {
 
   if (hasTimeChange) {
     await syncClassEndDateFromSessions(session.classId || classId).catch(() => {});
+    await syncClassScheduleBoundsFromSessions(session.classId || classId, {
+      changedSessionId: sessionId,
+      actorId: patch.manualDateOverrideBy || patch.rescheduledBy || "",
+    }).catch(() => {});
   }
 
   return session;
+}
+
+export async function overrideCompatibleSessionDate(classId, sessionId, patch = {}) {
+  const session = await base.updateCompatibleSession(classId, sessionId, {
+    ...patch,
+    status: patch.status || "rescheduled",
+  });
+  const schedule = await syncClassScheduleBoundsFromSessions(session.classId || classId, {
+    changedSessionId: sessionId,
+    actorId: patch.manualDateOverrideBy || "",
+  });
+  return { session, schedule };
 }
 
 export async function syncCompatibleClassCurriculum(classId, options = {}) {
