@@ -1,13 +1,47 @@
+function normalizeStatus(value) {
+  return String(value || "scheduled").trim().toLowerCase();
+}
+
+function datePart(value) {
+  if (!value) return "";
+  if (typeof value?.toDate === "function") return value.toDate().toISOString().slice(0, 10);
+  if (typeof value?.toMillis === "function") return new Date(value.toMillis()).toISOString().slice(0, 10);
+  if (typeof value === "object" && Number.isFinite(value.seconds)) return new Date(Number(value.seconds) * 1000).toISOString().slice(0, 10);
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value || "").slice(0, 10) : parsed.toISOString().slice(0, 10);
+}
+
+function hasMarkedStudent(students = {}) {
+  if (!students || typeof students !== "object") return false;
+  return Object.values(students).some((entry) => {
+    if (entry === true) return true;
+    if (!entry || typeof entry !== "object") return false;
+    return entry.present === true
+      || Boolean(entry.checkedInAt || entry.checkinAt || entry.markedAt)
+      || ["present", "late", "absent", "excused"].includes(String(entry.status || "").toLowerCase());
+  });
+}
+
+function hasMarkedRecord(records = []) {
+  return Array.isArray(records) && records.some((record) => {
+    if (!record || typeof record !== "object") return Boolean(record);
+    return Boolean(record.present)
+      || Boolean(record.checkedInAt || record.checkinAt || record.markedAt)
+      || ["present", "late", "absent", "excused"].includes(String(record.status || "").toLowerCase());
+  });
+}
+
 export function sessionHasAttendanceData(record = null) {
   if (!record) return false;
-  const containers = [record.students, record.attendance, record.attendanceRecords, record.records, record.checkins];
-  if (containers.some((value) => value && typeof value === "object" && Object.keys(value).length > 0)) return true;
+  if (record.markedBy || record.savedBy || record.attendanceSavedAt || record.submittedAt) return true;
+  if (hasMarkedStudent(record.students)) return true;
+  if (hasMarkedRecord(record.records) || hasMarkedRecord(record.attendanceRecords) || hasMarkedRecord(record.checkins)) return true;
   const arrays = [record.studentIds, record.presentStudentIds, record.absentStudentIds, record.lateStudentIds, record.attendees];
   return arrays.some((value) => Array.isArray(value) && value.length > 0);
 }
 
 export function isProtectedRebuildSession(session = {}) {
-  const status = String(session.status || "scheduled").toLowerCase();
+  const status = normalizeStatus(session.status);
   if (["completed", "live", "cancelled", "rescheduled"].includes(status)) return true;
 
   return Boolean(
@@ -23,7 +57,7 @@ export function isProtectedRebuildSession(session = {}) {
 }
 
 function isLockedRebuildSession(session = {}) {
-  const status = String(session.status || "scheduled").toLowerCase();
+  const status = normalizeStatus(session.status);
   return ["completed", "live", "cancelled"].includes(status);
 }
 
@@ -45,12 +79,20 @@ function sessionCurriculumIndex(session = {}) {
   return 0;
 }
 
-function chooseExistingSession({ occurrence, index, sessions, existingById, usedIds }) {
+function sessionIsBeforeClassStart(session = {}, klass = {}) {
+  const startDate = String(klass.startDate || "").trim();
+  if (!startDate || normalizeStatus(session.status) !== "scheduled") return false;
+  if (isProtectedRebuildSession(session)) return false;
+  const sessionDate = datePart(session.startsAt);
+  return Boolean(sessionDate && sessionDate < startDate);
+}
+
+function chooseExistingSession({ occurrence, index, sessions, existingById, usedIds, klass }) {
   const exact = existingById.get(occurrence.id);
-  if (exact && !usedIds.has(exact.id)) return exact;
+  if (exact && !usedIds.has(exact.id) && !sessionIsBeforeClassStart(exact, klass)) return exact;
 
   const wantedIndex = index + 1;
-  const byCurriculum = sessions.find((session) => sessionCurriculumIndex(session) === wantedIndex && !usedIds.has(session.id));
+  const byCurriculum = sessions.find((session) => sessionCurriculumIndex(session) === wantedIndex && !usedIds.has(session.id) && !sessionIsBeforeClassStart(session, klass));
   if (byCurriculum) return byCurriculum;
 
   return null;
@@ -73,7 +115,7 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
   const upserts = [];
 
   occurrences.forEach((occurrence, index) => {
-    const existing = chooseExistingSession({ occurrence, index, sessions: sortedSessions, existingById, usedIds });
+    const existing = chooseExistingSession({ occurrence, index, sessions: sortedSessions, existingById, usedIds, klass });
     if (existing) usedIds.add(existing.id);
 
     const targetOccurrence = existing ? { ...occurrence, id: existing.id } : occurrence;
