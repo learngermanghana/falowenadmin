@@ -91,11 +91,7 @@ function chooseExistingSession({ occurrence, index, sessions, existingById, used
   const exact = existingById.get(occurrence.id);
   if (exact && !usedIds.has(exact.id) && !sessionIsBeforeClassStart(exact, klass)) return exact;
 
-  const wantedIndex = index + 1;
-  const byCurriculum = sessions.find((session) => sessionCurriculumIndex(session) === wantedIndex && !usedIds.has(session.id) && !sessionIsBeforeClassStart(session, klass));
-  if (byCurriculum) return byCurriculum;
-
-  return null;
+  return undefined;
 }
 
 export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], sessions = [], attendanceBySessionId = new Map(), buildCurriculumPatch = null } = {}) {
@@ -121,8 +117,10 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
     const targetOccurrence = existing ? { ...occurrence, id: existing.id } : occurrence;
     desiredIds.add(targetOccurrence.id);
 
-    const curriculumPatch = typeof buildCurriculumPatch === "function" ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !existing }) : null;
     const lockedExisting = existing && (isLockedRebuildSession(existing) || isProtectedRebuildSession(existing));
+    const curriculumPatch = typeof buildCurriculumPatch === "function"
+      ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !lockedExisting })
+      : null;
     const basePatch = lockedExisting
       ? { classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" }
       : { ...targetOccurrence, classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" };

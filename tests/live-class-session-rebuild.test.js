@@ -135,6 +135,83 @@ test("rebuild deletes old pre-start sessions that only contain a roster template
   assert.deepEqual(plan.deletions.map((session) => session.id), [oldBeforeStart.id]);
 });
 
+
+test("A1 Munich rebuild deletes stale pre-start roster templates and starts Day 0 on first generated occurrence", () => {
+  const munich = {
+    id: "a1-munich",
+    name: "A1 Munich Klasse",
+    levelId: "A1",
+    startDate: "2026-06-27",
+    endDate: "2026-07-31",
+    timezone: "Africa/Accra",
+    historical: false,
+    scheduleRules: [
+      { day: "Thu", startTime: "18:00", durationMinutes: 60 },
+      { day: "Fri", startTime: "18:00", durationMinutes: 60 },
+      { day: "Sat", startTime: "08:00", durationMinutes: 60 },
+    ],
+  };
+  const staleSessions = [
+    { id: "a1-munich_2026-06-25_0600", startsAt: "2026-06-25T06:00:00.000Z", status: "scheduled", curriculumIndex: 1 },
+    { id: "a1-munich_2026-06-26_0600", startsAt: "2026-06-26T06:00:00.000Z", status: "scheduled", curriculumIndex: 2 },
+  ];
+  const occurrences = generateSessionOccurrences({ classId: munich.id, ...munich });
+  const plan = buildRebuildClassSessionsPlan({
+    klass: munich,
+    occurrences,
+    sessions: staleSessions,
+    attendanceBySessionId: new Map(staleSessions.map((session) => [session.id, {
+      students: {
+        s1: { name: "Student One", present: false },
+        s2: { name: "Student Two", present: false },
+      },
+    }])),
+    buildCurriculumPatch: (levelId, index) => ({ curriculumIndex: index + 1, topic: `Day ${index}` }),
+  });
+  const finalSessions = buildFinalRebuildSessionList(plan);
+
+  assert.equal(occurrences[0].id, "a1-munich_2026-06-27_0800");
+  assert.equal(occurrences[0].startsAt, "2026-06-27T08:00:00.000Z");
+  assert.deepEqual(plan.deletions.map((session) => session.id), staleSessions.map((session) => session.id));
+  assert.equal(plan.upserts[0].existing, undefined);
+  assert.equal(plan.upserts[0].patch.curriculumIndex, 1);
+  assert.equal(plan.upserts[0].patch.topic, "Day 0");
+  assert.equal(finalSessions.some((session) => String(session.startsAt).slice(0, 10) < munich.startDate), false);
+});
+
+test("A1 Munich rebuild preserves real pre-start attendance without shifting generated Day 0", () => {
+  const munich = {
+    id: "a1-munich",
+    name: "A1 Munich Klasse",
+    levelId: "A1",
+    startDate: "2026-06-27",
+    endDate: "2026-07-31",
+    timezone: "Africa/Accra",
+    historical: false,
+    scheduleRules: [
+      { day: "Thu", startTime: "18:00", durationMinutes: 60 },
+      { day: "Fri", startTime: "18:00", durationMinutes: 60 },
+      { day: "Sat", startTime: "08:00", durationMinutes: 60 },
+    ],
+  };
+  const protectedStale = { id: "a1-munich_2026-06-25_0600", startsAt: "2026-06-25T06:00:00.000Z", status: "scheduled", curriculumIndex: 15 };
+  const occurrences = generateSessionOccurrences({ classId: munich.id, ...munich });
+  const plan = buildRebuildClassSessionsPlan({
+    klass: munich,
+    occurrences,
+    sessions: [protectedStale],
+    attendanceBySessionId: new Map([[protectedStale.id, { students: { s1: { name: "Student One", present: true } } }]]),
+    buildCurriculumPatch: (levelId, index) => ({ curriculumIndex: index + 1, topic: `Day ${index}` }),
+  });
+
+  assert.deepEqual(plan.deletions, []);
+  assert.deepEqual(plan.preserved, [protectedStale]);
+  assert.equal(plan.upserts[0].existing, undefined);
+  assert.equal(plan.upserts[0].occurrence.startsAt, "2026-06-27T08:00:00.000Z");
+  assert.equal(plan.upserts[0].patch.curriculumIndex, 1);
+  assert.equal(plan.upserts[0].patch.topic, "Day 0");
+});
+
 test("latest session date helper derives synced class end date from sessions", () => {
   const sessions = [
     { startsAt: "2026-06-29T18:00:00.000Z", status: "scheduled" },
