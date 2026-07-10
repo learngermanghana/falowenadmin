@@ -1,13 +1,11 @@
-import { sessionDateInTimezone } from "./liveClassScheduling.js";
+import { sessionDateInTimezone, toSessionDate } from "./liveClassScheduling.js";
 
 function normalize(value) {
   return String(value || "").trim();
 }
 
 function sessionTime(session = {}) {
-  if (typeof session.startsAt?.toDate === "function") return session.startsAt.toDate().getTime();
-  const parsed = new Date(session.startsAt || 0).getTime();
-  return Number.isNaN(parsed) ? 0 : parsed;
+  return toSessionDate(session.startsAt)?.getTime() || 0;
 }
 
 export function assignmentIdsForSession(session = {}) {
@@ -83,7 +81,8 @@ export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone
 }
 
 export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0) {
-  const ids = assignmentIdsForSession(session);
+  const canUseStoredMapping = hasManualScheduleChange(session);
+  const ids = canUseStoredMapping ? assignmentIdsForSession(session) : [];
   if (ids.length) {
     const exactMatch = groups.find((group) => sameAssignmentSet(ids, group.assignmentIds || []));
     if (exactMatch) return exactMatch;
@@ -93,9 +92,11 @@ export function resolveSessionCourseGroup(session = {}, groups = [], fallbackInd
     if (overlappingMatch) return overlappingMatch;
   }
 
-  const storedIndex = Number(session.curriculumIndex || 0);
-  if (Number.isFinite(storedIndex) && storedIndex > 0 && groups[storedIndex - 1]) {
-    return groups[storedIndex - 1];
+  if (canUseStoredMapping) {
+    const storedIndex = Number(session.curriculumIndex || 0);
+    if (Number.isFinite(storedIndex) && storedIndex > 0 && groups[storedIndex - 1]) {
+      return groups[storedIndex - 1];
+    }
   }
 
   return groups[fallbackIndex] || null;
