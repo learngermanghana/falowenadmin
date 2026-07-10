@@ -31,6 +31,14 @@ function timestampSignature(value) {
   return String(value);
 }
 
+function validateForm(form = {}) {
+  if (!form.name.trim()) return "Class name is required.";
+  if (!LEVELS.includes(form.levelId)) return "Select the correct level.";
+  if (!form.startDate || !form.endDate || form.endDate < form.startDate) return "Enter valid start and end dates.";
+  if (!validateIanaTimezone(form.timezone)) return "Enter a valid timezone such as Africa/Accra.";
+  return "";
+}
+
 export default function ClassEditorCard({ klass, onSaved }) {
   const toast = useToast();
   const [form, setForm] = useState(() => initialForm(klass));
@@ -45,41 +53,46 @@ export default function ClassEditorCard({ klass, onSaved }) {
   const patch = (values) => setForm((current) => ({ ...current, ...values }));
   const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
 
+  async function saveClassSettings({ notifyParent = true } = {}) {
+    const validationError = validateForm(form);
+    if (validationError) throw new Error(validationError);
+
+    const result = await updateClassCohort(klass.id, { ...form, historicalMode });
+    if (result.endDate) {
+      setForm((current) => ({ ...current, endDate: result.endDate }));
+    }
+    if (notifyParent) await onSaved?.(klass.id);
+    return result;
+  }
+
   async function save(event) {
     event.preventDefault();
-    if (!form.name.trim()) return setMessage("Class name is required.");
-    if (!LEVELS.includes(form.levelId)) return setMessage("Select the correct level.");
-    if (!form.startDate || !form.endDate || form.endDate < form.startDate) return setMessage("Enter valid start and end dates.");
-    if (!validateIanaTimezone(form.timezone)) return setMessage("Enter a valid timezone such as Africa/Accra.");
     setBusy(true); setMessage("");
     try {
-      const result = await updateClassCohort(klass.id, { ...form, historicalMode });
-      if (result.endDate) {
-        setForm((current) => ({ ...current, endDate: result.endDate }));
-      }
+      const result = await saveClassSettings();
       const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.requestedEndDate
         ? ` Generated sessions end on ${result.sessionDerivedEndDate}, but class graduation date is ${result.requestedEndDate}.`
         : "";
       setMessage(`Class updated. ${result.created || 0} session(s) created.${endDateNote}`);
-      await onSaved?.(klass.id);
     } catch (error) { setMessage(error?.message || "Class update failed"); }
     finally { setBusy(false); }
   }
 
   async function rebuildSessions() {
-    if (!window.confirm("Rebuild scheduled sessions from this class start date and timetable? Completed, live, cancelled, rescheduled, and attendance-bearing sessions will be preserved.")) return;
+    if (!window.confirm("Save these class settings and rebuild scheduled sessions from the start date and timetable? Completed, live, cancelled, rescheduled, and attendance-bearing sessions will be preserved.")) return;
     setBusy(true); setMessage("");
     try {
-      const result = await rebuildClassSessionsFromSchedule(klass.id, { ...klass, ...form });
+      const saveResult = await saveClassSettings({ notifyParent: false });
+      const result = await rebuildClassSessionsFromSchedule(klass.id);
       if (result.endDate) {
         setForm((current) => ({ ...current, endDate: result.endDate }));
       }
       const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.endDate
         ? ` Generated sessions end on ${result.sessionDerivedEndDate}, but class graduation date is ${result.endDate}.`
         : result.sessionDerivedEndDate ? ` Generated sessions end on ${result.sessionDerivedEndDate}.` : "";
-      const successMessage = `Sessions rebuilt successfully: ${result.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${endDateNote}`;
+      const successMessage = `Class settings saved. Sessions rebuilt successfully: ${result.created || saveResult.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${endDateNote}`;
       setMessage(successMessage);
-      toast.success(successMessage, { durationMs: 6000 });
+      toast.success(successMessage, { durationMs: 7000 });
       await onSaved?.(klass.id);
     } catch (error) {
       const errorMessage = error?.message || "Session rebuild failed";
@@ -111,7 +124,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     }
   }
 
-  const messageIsSuccess = message.startsWith("Class updated") || message.startsWith("Sessions rebuilt successfully");
+  const messageIsSuccess = message.startsWith("Class updated") || message.startsWith("Class settings saved") || message.startsWith("Sessions rebuilt successfully");
   const endDateWarning = buildClassEndDateMismatchWarning(klass);
 
   return <article className="card"><h2>Edit this class</h2><form onSubmit={save} style={{ display: "grid", gap: 14 }}>
@@ -139,7 +152,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     {endDateWarning ? <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}>{endDateWarning}</div> : null}
     {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
     <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save class changes"}</button>
-    <button type="button" disabled={busy} onClick={rebuildSessions}>Rebuild sessions from start date and timetable</button>
+    <button type="button" disabled={busy} onClick={rebuildSessions}>{busy ? "Saving and rebuilding…" : "Save and rebuild sessions from start date and timetable"}</button>
     <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid #fecaca" }}>
       <strong style={{ color: "#991b1b" }}>Danger zone</strong>
       <p style={{ margin: "6px 0 10px", fontSize: 13 }}>Deletion is allowed only after the class end date, when no unfinished sessions or open student contracts remain.</p>
