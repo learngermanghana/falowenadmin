@@ -1,4 +1,5 @@
 export const STUDENT_LEADS_PUBLISHED_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDD46qAiCuuza-u4jTzwgiuMR5HwtBhQdvElQw5SIQOHCEJ7RCNLx7Zlarf7HvhYOCXkiVcwTCyXp6/pubhtml";
+export const STUDENT_LEADS_SHEET_NAME = "Leads";
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -38,12 +39,25 @@ function firstValue(row = {}, names = []) {
   return "";
 }
 
-export function publishedSheetToCsvUrl(url = STUDENT_LEADS_PUBLISHED_URL) {
+function extractPublishedSheetId(url = STUDENT_LEADS_PUBLISHED_URL) {
   const source = String(url || "").trim();
-  const match = source.match(/\/spreadsheets\/d\/e\/([^/]+)/);
-  if (match) return `https://docs.google.com/spreadsheets/d/e/${match[1]}/pub?output=csv`;
-  if (/output=csv/i.test(source)) return source;
-  if (/pubhtml/i.test(source)) return source.replace(/pubhtml.*$/i, "pub?output=csv");
+  return source.match(/\/spreadsheets\/d\/e\/([^/]+)/)?.[1] || "";
+}
+
+export function publishedSheetToCsvUrl(url = STUDENT_LEADS_PUBLISHED_URL, sheetName = STUDENT_LEADS_SHEET_NAME) {
+  const source = String(url || "").trim();
+  if (/output=csv/i.test(source) || /tqx=out:csv/i.test(source)) return source;
+
+  const publishedId = extractPublishedSheetId(source);
+  if (publishedId) {
+    const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
+    return `https://docs.google.com/spreadsheets/d/e/${publishedId}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
+  }
+
+  if (/pubhtml/i.test(source)) {
+    return source.replace(/pubhtml.*$/i, `gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME)}`);
+  }
+
   return source;
 }
 
@@ -153,7 +167,7 @@ export function normalizeStudentLeadRows(rows = []) {
 }
 
 export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
-  const response = await fetch(publishedSheetToCsvUrl(url), { cache: "no-store" });
+  const response = await fetch(publishedSheetToCsvUrl(url, STUDENT_LEADS_SHEET_NAME), { cache: "no-store" });
   if (!response.ok) throw new Error(`Student leads sheet could not be loaded (${response.status}).`);
   const csvText = await response.text();
   return normalizeStudentLeadRows(csvToObjects(csvText));

@@ -7,10 +7,17 @@ import {
   publishedSheetToCsvUrl,
 } from "../src/services/studentLeadService.js";
 
-test("published sheet URL is converted to CSV endpoint", () => {
+test("published sheet URL targets the Leads sheet CSV endpoint", () => {
   assert.equal(
     publishedSheetToCsvUrl("https://docs.google.com/spreadsheets/d/e/abc123/pubhtml"),
-    "https://docs.google.com/spreadsheets/d/e/abc123/pub?output=csv",
+    "https://docs.google.com/spreadsheets/d/e/abc123/gviz/tq?tqx=out:csv&sheet=Leads",
+  );
+});
+
+test("published sheet URL can target a named sheet", () => {
+  assert.equal(
+    publishedSheetToCsvUrl("https://docs.google.com/spreadsheets/d/e/abc123/pubhtml", "My Leads"),
+    "https://docs.google.com/spreadsheets/d/e/abc123/gviz/tq?tqx=out:csv&sheet=My%20Leads",
   );
 });
 

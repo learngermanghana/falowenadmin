@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchStudentLeads, STUDENT_LEADS_PUBLISHED_URL } from "../services/studentLeadService.js";
+import { fetchStudentLeads, STUDENT_LEADS_PUBLISHED_URL, STUDENT_LEADS_SHEET_NAME } from "../services/studentLeadService.js";
 
 function callUrl(phone) {
   const normalizedPhone = String(phone || "").trim().replace(/(?!^)\+|[^\d+]/g, "");
@@ -53,14 +53,14 @@ export default function StudentLeadsPanel() {
         <div>
           <h2 style={{ margin: "0 0 6px" }}>Student Leads</h2>
           <p style={{ margin: 0, opacity: 0.78 }}>
-            Reading only name, email, number and level from the published class-leads sheet. Duplicate leads are hidden automatically.
+            Reading only name, email, number and level from the published <strong>{STUDENT_LEADS_SHEET_NAME}</strong> sheet. Duplicate leads are hidden automatically.
           </p>
         </div>
         <button type="button" onClick={loadLeads} disabled={loading}>{loading ? "Refreshing…" : "Refresh leads"}</button>
       </div>
 
       <div style={{ padding: 12, border: "1px solid #bfdbfe", borderRadius: 10, background: "#eff6ff", color: "#1e3a8a" }}>
-        Source: <a href={STUDENT_LEADS_PUBLISHED_URL} target="_blank" rel="noreferrer">published Google Sheet</a>
+        Source: <a href={STUDENT_LEADS_PUBLISHED_URL} target="_blank" rel="noreferrer">published Google Sheet</a> · Sheet tab: <strong>{STUDENT_LEADS_SHEET_NAME}</strong>
       </div>
 
       <label style={{ display: "grid", gap: 6, maxWidth: 460 }}>
