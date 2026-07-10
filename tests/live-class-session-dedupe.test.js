@@ -6,6 +6,7 @@ import {
   resolveSessionCourseGroup,
   suppressGeneratedDateDuplicates,
 } from "../src/utils/liveClassSessionDedupe.js";
+import { sessionDateInTimezone } from "../src/utils/liveClassScheduling.js";
 
 test("manual rescheduled session suppresses generated scheduled session on the same Ghana date", () => {
   const sessions = suppressGeneratedDateDuplicates([
@@ -14,6 +15,17 @@ test("manual rescheduled session suppresses generated scheduled session on the s
     { id: "day-14", status: "scheduled", startsAt: "2026-07-10T18:00:00.000Z" },
   ], "Africa/Accra");
 
+  assert.deepEqual(sessions.map((session) => session.id), ["day-12", "day-14"]);
+});
+
+test("manual duplicate suppression works when startsAt is a Firestore Timestamp-like value", () => {
+  const sessions = suppressGeneratedDateDuplicates([
+    { id: "day-12", status: "rescheduled", manualDateOverride: true, startsAt: { toDate: () => new Date("2026-07-09T06:00:00.000Z") } },
+    { id: "day-13", status: "scheduled", startsAt: { toDate: () => new Date("2026-07-09T17:00:00.000Z") } },
+    { id: "day-14", status: "scheduled", startsAt: { toDate: () => new Date("2026-07-10T18:00:00.000Z") } },
+  ], "Africa/Accra");
+
+  assert.equal(sessionDateInTimezone({ toDate: () => new Date("2026-07-09T17:00:00.000Z") }, "Africa/Accra"), "2026-07-09");
   assert.deepEqual(sessions.map((session) => session.id), ["day-12", "day-14"]);
 });
 
@@ -68,4 +80,24 @@ test("rescheduled session keeps the selected curriculum instead of taking the ne
   assert.equal(moved.assignment_id, "A1-0.3");
   assert.equal(moved.topic, "Day 3");
   assert.equal(moved.curriculumIndex, 3);
+});
+
+test("normal scheduled sessions follow main source order even when old stored IDs are wrong", () => {
+  const groups = [
+    { index: 1, day: 1, assignmentIds: ["A1-0.1"], topic: "Day 1" },
+    { index: 2, day: 2, assignmentIds: ["A1-0.2"], topic: "Day 2" },
+    { index: 3, day: 3, assignmentIds: ["A1-0.3"], topic: "Day 3" },
+    { index: 4, day: 4, assignmentIds: ["A1-0.4"], topic: "Day 4" },
+  ];
+
+  const enriched = enrichSessionsWithStableCurriculum({}, [
+    { id: "slot-1", status: "scheduled", startsAt: "2026-07-01T18:00:00.000Z", assignmentIds: ["A1-0.1"] },
+    { id: "slot-2", status: "scheduled", startsAt: "2026-07-02T18:00:00.000Z", assignmentIds: ["A1-0.4"], topic: "Wrong old Day 4" },
+    { id: "slot-3", status: "scheduled", startsAt: "2026-07-03T18:00:00.000Z", assignmentIds: ["A1-0.2"] },
+  ], groups);
+
+  assert.equal(enriched[1].assignment_id, "A1-0.2");
+  assert.equal(enriched[1].topic, "Day 2");
+  assert.equal(enriched[2].assignment_id, "A1-0.3");
+  assert.equal(enriched[2].topic, "Day 3");
 });
