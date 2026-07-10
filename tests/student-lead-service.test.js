@@ -3,22 +3,34 @@ import assert from "node:assert/strict";
 import {
   csvToObjects,
   dedupeStudentLeads,
+  extractSheetGidFromPublishedHtml,
   normalizeStudentLeadRows,
+  publishedSheetCsvCandidates,
   publishedSheetToCsvUrl,
 } from "../src/services/studentLeadService.js";
 
-test("published sheet URL targets the Leads sheet CSV endpoint", () => {
+test("published sheet URL starts with the safer pub CSV endpoint for Leads", () => {
   assert.equal(
     publishedSheetToCsvUrl("https://docs.google.com/spreadsheets/d/e/abc123/pubhtml"),
-    "https://docs.google.com/spreadsheets/d/e/abc123/gviz/tq?tqx=out:csv&sheet=Leads",
+    "https://docs.google.com/spreadsheets/d/e/abc123/pub?output=csv&sheet=Leads",
   );
 });
 
-test("published sheet URL can target a named sheet", () => {
-  assert.equal(
-    publishedSheetToCsvUrl("https://docs.google.com/spreadsheets/d/e/abc123/pubhtml", "My Leads"),
-    "https://docs.google.com/spreadsheets/d/e/abc123/gviz/tq?tqx=out:csv&sheet=My%20Leads",
+test("published sheet URL candidates include gid fallback before named sheet URLs", () => {
+  assert.deepEqual(
+    publishedSheetCsvCandidates("https://docs.google.com/spreadsheets/d/e/abc123/pubhtml", "Leads", "987654321"),
+    [
+      "https://docs.google.com/spreadsheets/d/e/abc123/pub?gid=987654321&single=true&output=csv",
+      "https://docs.google.com/spreadsheets/d/e/abc123/pub?output=csv&sheet=Leads",
+      "https://docs.google.com/spreadsheets/d/e/abc123/gviz/tq?tqx=out:csv&sheet=Leads",
+      "https://docs.google.com/spreadsheets/d/e/abc123/pub?output=csv",
+    ],
   );
+});
+
+test("extracts Leads gid from published html tab markup", () => {
+  const html = '<a href="/spreadsheets/d/e/abc/pubhtml?gid=12345&single=true">Leads</a><a href="?gid=999">Students</a>';
+  assert.equal(extractSheetGidFromPublishedHtml(html, "Leads"), "12345");
 });
 
 test("CSV parser keeps quoted commas and maps lead headers", () => {
