@@ -99,6 +99,42 @@ test("rebuild plan preserves stale sessions that have attendance records", () =>
   assert.deepEqual(plan.preserved, [stale]);
 });
 
+test("rebuild deletes old pre-start sessions that only contain a roster template", () => {
+  const corrected = {
+    ...klass,
+    startDate: "2026-06-27",
+    endDate: "2026-07-31",
+    scheduleRules: [
+      { day: "Thu", startTime: "18:00", durationMinutes: 60 },
+      { day: "Fri", startTime: "18:00", durationMinutes: 60 },
+      { day: "Sat", startTime: "08:00", durationMinutes: 60 },
+    ],
+  };
+  const occurrences = generateSessionOccurrences({ classId: corrected.id, ...corrected });
+  const oldBeforeStart = {
+    id: "class-a1_2026-06-25_0600",
+    classId: corrected.id,
+    startsAt: "2026-06-25T06:00:00.000Z",
+    status: "scheduled",
+    curriculumIndex: 1,
+  };
+  const plan = buildRebuildClassSessionsPlan({
+    klass: corrected,
+    occurrences,
+    sessions: [oldBeforeStart],
+    attendanceBySessionId: new Map([[oldBeforeStart.id, {
+      students: {
+        student1: { name: "Student One", present: false },
+        student2: { name: "Student Two", present: false },
+      },
+    }]]),
+  });
+
+  assert.equal(occurrences[0].startsAt, "2026-06-27T08:00:00.000Z");
+  assert.equal(plan.upserts[0].existing, undefined);
+  assert.deepEqual(plan.deletions.map((session) => session.id), [oldBeforeStart.id]);
+});
+
 test("latest session date helper derives synced class end date from sessions", () => {
   const sessions = [
     { startsAt: "2026-06-29T18:00:00.000Z", status: "scheduled" },
