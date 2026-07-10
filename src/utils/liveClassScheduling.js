@@ -81,6 +81,25 @@ function formatIsoDateUtc(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 }
 
+export function toSessionDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value?.toDate === "function") {
+    const parsed = value.toDate();
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (typeof value?.toMillis === "function") {
+    const parsed = new Date(value.toMillis());
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (typeof value === "object" && Number.isFinite(value.seconds)) {
+    const parsed = new Date((Number(value.seconds) * 1000) + Math.round(Number(value.nanoseconds || 0) / 1000000));
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function classDateToMillis(value, endOfDay = false) {
   if (!value) return null;
   if (typeof value?.toMillis === "function") return value.toMillis();
@@ -175,8 +194,8 @@ export function generateSessionOccurrences({
 
 
 export function sessionDateInTimezone(value, timezone = "Africa/Accra") {
-  const parsed = new Date(value || 0);
-  if (Number.isNaN(parsed.getTime())) return "";
+  const parsed = toSessionDate(value);
+  if (!parsed) return "";
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone || "Africa/Accra",
     year: "numeric",
@@ -190,8 +209,8 @@ export function sessionDateInTimezone(value, timezone = "Africa/Accra") {
 export function latestSessionDateInTimezone(sessions = [], timezone = "Africa/Accra") {
   const latest = [...sessions]
     .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
-    .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
-    .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt))
+    .filter((session) => Boolean(toSessionDate(session.startsAt)))
+    .sort((left, right) => toSessionDate(left.startsAt).getTime() - toSessionDate(right.startsAt).getTime())
     .at(-1);
   return latest ? sessionDateInTimezone(latest.startsAt, timezone) : "";
 }
@@ -213,11 +232,11 @@ export function getEffectiveClassEndDate(klass = {}, sessions = []) {
 
 export function selectNextSession(sessions = [], now = new Date()) {
   const nowMs = new Date(now).getTime();
-  return [...sessions].filter((s) => !["cancelled", "completed"].includes(s.status) && new Date(s.startsAt).getTime() >= nowMs).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))[0] || null;
+  return [...sessions].filter((s) => !["cancelled", "completed"].includes(s.status) && Number.isFinite(toSessionDate(s.startsAt)?.getTime()) && toSessionDate(s.startsAt).getTime() >= nowMs).sort((a, b) => toSessionDate(a.startsAt).getTime() - toSessionDate(b.startsAt).getTime())[0] || null;
 }
 
 export function selectLatestCompletedSession(sessions = []) {
-  return [...sessions].filter((s) => s.status === "completed").sort((a, b) => new Date(b.endsAt || b.startsAt) - new Date(a.endsAt || a.startsAt))[0] || null;
+  return [...sessions].filter((s) => s.status === "completed").sort((a, b) => (toSessionDate(b.endsAt || b.startsAt)?.getTime() || 0) - (toSessionDate(a.endsAt || a.startsAt)?.getTime() || 0))[0] || null;
 }
 
 export function calculateClassProgress(sessions = [], now = new Date(), classRecord = {}) {
@@ -237,18 +256,17 @@ export function calculateClassProgress(sessions = [], now = new Date(), classRec
 
   const progressed = valid.filter((session) => {
     if (String(session.status || "").toLowerCase() === "completed") return true;
-    if (!session.startsAt) return false;
-    const startsAtMs = new Date(session.startsAt).getTime();
+    const startsAtMs = toSessionDate(session.startsAt)?.getTime();
     return Number.isFinite(startsAtMs) && startsAtMs <= nowMs;
   });
 
   const calculated = Math.round((progressed.length / valid.length) * 100);
-  const allCompleted = valid.every((session) => String(session.status || "").toLowerCase() === "completed");
+  const allCompleted = valid.every((session) => String(session.status || "scheduled").toLowerCase() === "completed");
   return calculated >= 100 && !allCompleted ? 99 : calculated;
 }
 
 export function calculateCountdown(target, now = new Date()) {
-  const diffMs = Math.max(0, new Date(target).getTime() - new Date(now).getTime());
+  const diffMs = Math.max(0, (toSessionDate(target)?.getTime() || 0) - new Date(now).getTime());
   return { totalMs: diffMs, days: Math.floor(diffMs / 86400000), hours: Math.floor((diffMs % 86400000) / 3600000), minutes: Math.floor((diffMs % 3600000) / 60000) };
 }
 
