@@ -53,13 +53,37 @@ function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function decodeHtmlEntities(value = "") {
+  return String(value || "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+}
+
+function stripHtml(value = "") {
+  return decodeHtmlEntities(String(value || "")
+    .replace(/<br\s*\/?\s*>/gi, " ")
+    .replace(/<[^>]*>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function extractSheetGidFromPublishedHtml(html = "", sheetName = STUDENT_LEADS_SHEET_NAME) {
   const wanted = normalizeHeader(sheetName);
   const source = String(html || "");
-  const aroundGidPattern = /gid=(\d+)[\s\S]{0,900}?>([^<>]+)</gi;
+  const tabPattern = /<a\b[^>]*href=["'][^"']*gid=(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match;
+  while ((match = tabPattern.exec(source))) {
+    const label = normalizeHeader(stripHtml(match[2]));
+    if (label === wanted) return match[1];
+  }
+
+  const aroundGidPattern = /gid=(\d+)[\s\S]{0,900}?>([^<>]+)</gi;
   while ((match = aroundGidPattern.exec(source))) {
-    const label = normalizeHeader(match[2].replace(/&amp;/g, "&"));
+    const label = normalizeHeader(decodeHtmlEntities(match[2]));
     if (label === wanted) return match[1];
   }
 
@@ -87,6 +111,18 @@ export function publishedSheetCsvCandidates(url = STUDENT_LEADS_PUBLISHED_URL, s
     `${base}/pub?output=csv&sheet=${sheet}`,
     `${base}/gviz/tq?tqx=out:csv&sheet=${sheet}`,
     `${base}/pub?output=csv`,
+  ]);
+}
+
+export function publishedSheetHtmlCandidates(url = STUDENT_LEADS_PUBLISHED_URL, sheetName = STUDENT_LEADS_SHEET_NAME, gid = "") {
+  const source = String(url || "").trim();
+  const base = basePublishedUrl(source);
+  if (!base) return [source].filter(Boolean);
+  const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
+  return unique([
+    gid ? `${base}/pubhtml?gid=${encodeURIComponent(gid)}&single=true` : "",
+    `${base}/pubhtml?sheet=${sheet}&single=true`,
+    `${base}/pubhtml`,
   ]);
 }
 
@@ -160,6 +196,25 @@ export function csvToObjects(csvText = "") {
     if (header) record[header] = row[index] || "";
     return record;
   }, {}));
+}
+
+export function publishedHtmlTablesToObjects(html = "") {
+  const source = String(html || "");
+  const tableMatches = [...source.matchAll(/<table\b[\s\S]*?<\/table>/gi)];
+  return tableMatches.map((tableMatch) => {
+    const rowMatches = [...tableMatch[0].matchAll(/<tr\b[\s\S]*?<\/tr>/gi)];
+    const rows = rowMatches.map((rowMatch) => {
+      const cellMatches = [...rowMatch[0].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)];
+      return cellMatches.map((cellMatch) => stripHtml(cellMatch[1]));
+    }).filter((row) => row.some((cell) => String(cell || "").trim()));
+
+    if (!rows.length) return [];
+    const headers = rows[0].map(normalizeHeader);
+    return rows.slice(1).map((row) => headers.reduce((record, header, index) => {
+      if (header) record[header] = row[index] || "";
+      return record;
+    }, {}));
+  }).filter((rows) => rows.length);
 }
 
 export function normalizeStudentLead(row = {}, index = 0) {
@@ -253,5 +308,20 @@ export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
     }
   }
 
-  throw new Error(`Student leads sheet could not be loaded. Tried the Leads tab but Google did not return a valid CSV. ${errors.slice(0, 3).join("; ")}`);
+  for (const candidate of publishedSheetHtmlCandidates(url, STUDENT_LEADS_SHEET_NAME, gid)) {
+    try {
+      const html = await fetchText(candidate);
+      const tables = publishedHtmlTablesToObjects(html);
+      for (const rows of tables) {
+        if (!rows.length || looksLikeStudentDirectory(Object.keys(rows[0] || {}).join(","))) continue;
+        const result = normalizeStudentLeadRows(rows);
+        if (result.total > 0) return { ...result, sourceUrl: candidate, sheetName: STUDENT_LEADS_SHEET_NAME };
+      }
+      errors.push(`${candidate} returned no Leads table`);
+    } catch (error) {
+      errors.push(`${candidate} failed (${error?.message || "error"})`);
+    }
+  }
+
+  throw new Error(`Student leads sheet could not be loaded. Tried the Leads tab but Google did not return a valid CSV or readable published table. ${errors.slice(0, 4).join("; ")}`);
 }

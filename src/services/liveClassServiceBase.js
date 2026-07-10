@@ -307,8 +307,7 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
 
   await batch.commit();
 
-  const curriculum = await syncClassCurriculum(classId, { force: false });
-  const finalMapped = curriculum.mapped || mapped;
+  const finalMapped = mapped;
   const finalSessions = buildFinalRebuildSessionList(plan);
   const sessionDerivedEndDate = latestSessionDateInTimezone(finalSessions, normalizedClass.timezone);
   await updateDoc(doc(db, "classes", classId), {
