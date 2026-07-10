@@ -44,21 +44,50 @@ function extractPublishedSheetId(url = STUDENT_LEADS_PUBLISHED_URL) {
   return source.match(/\/spreadsheets\/d\/e\/([^/]+)/)?.[1] || "";
 }
 
+function basePublishedUrl(url = STUDENT_LEADS_PUBLISHED_URL) {
+  const publishedId = extractPublishedSheetId(url);
+  return publishedId ? `https://docs.google.com/spreadsheets/d/e/${publishedId}` : "";
+}
+
+function unique(values = []) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+export function extractSheetGidFromPublishedHtml(html = "", sheetName = STUDENT_LEADS_SHEET_NAME) {
+  const wanted = normalizeHeader(sheetName);
+  const source = String(html || "");
+  const aroundGidPattern = /gid=(\d+)[\s\S]{0,900}?>([^<>]+)</gi;
+  let match;
+  while ((match = aroundGidPattern.exec(source))) {
+    const label = normalizeHeader(match[2].replace(/&amp;/g, "&"));
+    if (label === wanted) return match[1];
+  }
+
+  const labelFirstPattern = new RegExp(`${sheetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]{0,900}?gid=(\\d+)`, "i");
+  return source.match(labelFirstPattern)?.[1] || "";
+}
+
 export function publishedSheetToCsvUrl(url = STUDENT_LEADS_PUBLISHED_URL, sheetName = STUDENT_LEADS_SHEET_NAME) {
   const source = String(url || "").trim();
   if (/output=csv/i.test(source) || /tqx=out:csv/i.test(source)) return source;
 
-  const publishedId = extractPublishedSheetId(source);
-  if (publishedId) {
-    const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
-    return `https://docs.google.com/spreadsheets/d/e/${publishedId}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
-  }
+  const base = basePublishedUrl(source);
+  if (!base) return source;
+  const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
+  return `${base}/pub?output=csv&sheet=${sheet}`;
+}
 
-  if (/pubhtml/i.test(source)) {
-    return source.replace(/pubhtml.*$/i, `gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME)}`);
-  }
-
-  return source;
+export function publishedSheetCsvCandidates(url = STUDENT_LEADS_PUBLISHED_URL, sheetName = STUDENT_LEADS_SHEET_NAME, gid = "") {
+  const source = String(url || "").trim();
+  const base = basePublishedUrl(source);
+  if (!base) return [source].filter(Boolean);
+  const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
+  return unique([
+    gid ? `${base}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv` : "",
+    `${base}/pub?output=csv&sheet=${sheet}`,
+    `${base}/gviz/tq?tqx=out:csv&sheet=${sheet}`,
+    `${base}/pub?output=csv`,
+  ]);
 }
 
 export function parseCsv(text = "") {
@@ -104,6 +133,25 @@ export function parseCsv(text = "") {
   return rows;
 }
 
+function csvHeaders(csvText = "") {
+  return (parseCsv(csvText)[0] || []).map(normalizeHeader).filter(Boolean);
+}
+
+function looksLikeStudentDirectory(csvText = "") {
+  const headers = new Set(csvHeaders(csvText));
+  return [
+    "studentcode",
+    "student code",
+    "class name",
+    "balance due",
+    "payment status",
+    "contract start",
+    "contract end",
+    "paid",
+    "uid",
+  ].some((header) => headers.has(header));
+}
+
 export function csvToObjects(csvText = "") {
   const rows = parseCsv(csvText);
   if (!rows.length) return [];
@@ -142,7 +190,7 @@ export function leadDedupeKey(lead = {}) {
 
 export function dedupeStudentLeads(leads = []) {
   const seen = new Set();
-  const unique = [];
+  const uniqueLeads = [];
   let duplicateCount = 0;
 
   leads.forEach((lead) => {
@@ -152,10 +200,10 @@ export function dedupeStudentLeads(leads = []) {
       return;
     }
     if (key) seen.add(key);
-    unique.push(lead);
+    uniqueLeads.push(lead);
   });
 
-  return { leads: unique, duplicateCount, total: leads.length };
+  return { leads: uniqueLeads, duplicateCount, total: leads.length };
 }
 
 export function normalizeStudentLeadRows(rows = []) {
@@ -166,9 +214,44 @@ export function normalizeStudentLeadRows(rows = []) {
   );
 }
 
+async function fetchText(url) {
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error(`${response.status}`);
+  return response.text();
+}
+
+async function discoverLeadSheetGid(url = STUDENT_LEADS_PUBLISHED_URL) {
+  try {
+    const html = await fetchText(url);
+    return extractSheetGidFromPublishedHtml(html, STUDENT_LEADS_SHEET_NAME);
+  } catch {
+    return "";
+  }
+}
+
 export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
-  const response = await fetch(publishedSheetToCsvUrl(url, STUDENT_LEADS_SHEET_NAME), { cache: "no-store" });
-  if (!response.ok) throw new Error(`Student leads sheet could not be loaded (${response.status}).`);
-  const csvText = await response.text();
-  return normalizeStudentLeadRows(csvToObjects(csvText));
+  const gid = await discoverLeadSheetGid(url);
+  const candidates = publishedSheetCsvCandidates(url, STUDENT_LEADS_SHEET_NAME, gid);
+  const errors = [];
+
+  for (const candidate of candidates) {
+    try {
+      const csvText = await fetchText(candidate);
+      if (/^\s*</.test(csvText)) {
+        errors.push(`${candidate} returned HTML, not CSV`);
+        continue;
+      }
+      if (looksLikeStudentDirectory(csvText)) {
+        errors.push(`${candidate} looked like full student data, not Leads`);
+        continue;
+      }
+      const result = normalizeStudentLeadRows(csvToObjects(csvText));
+      if (result.total > 0) return { ...result, sourceUrl: candidate, sheetName: STUDENT_LEADS_SHEET_NAME };
+      errors.push(`${candidate} returned no lead rows`);
+    } catch (error) {
+      errors.push(`${candidate} failed (${error?.message || "error"})`);
+    }
+  }
+
+  throw new Error(`Student leads sheet could not be loaded. Tried the Leads tab but Google did not return a valid CSV. ${errors.slice(0, 3).join("; ")}`);
 }
