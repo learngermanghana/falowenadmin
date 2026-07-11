@@ -4,7 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import {
-  cancelSession,
   listClassCohorts,
   markSessionCompleted,
   rescheduleSession,
@@ -217,11 +216,6 @@ export default function LiveClassesPageCompat() {
           adminId: user?.uid || user?.email || "admin",
         });
       }
-      if (action === "cancel") {
-        const reason = window.prompt("Reason for cancellation", session.cancellationReason || "");
-        if (reason === null) return;
-        await cancelSession(session.id, { reason, adminId: user?.uid || user?.email || "admin" });
-      }
       if (action === "complete") {
         if (!window.confirm("Mark this session completed?")) return;
         await markSessionCompleted(session.id, user?.uid || user?.email || "admin");
@@ -257,7 +251,6 @@ export default function LiveClassesPageCompat() {
                       <button disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
                       <button disabled={busy || locked} onClick={() => handleSessionAction(session, "curriculum")}>Curriculum</button>
                       <button disabled={busy || locked} onClick={() => handleSessionAction(session, "reschedule")}>Reschedule</button>
-                      <button disabled={busy || locked} onClick={() => handleSessionAction(session, "cancel")}>Cancel</button>
                       <button disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
                     </div></td>
                   ) : null}

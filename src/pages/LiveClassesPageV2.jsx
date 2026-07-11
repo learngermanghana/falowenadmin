@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import { courseDictionary, getUnifiedTopicLabel } from "../data/courseDictionary.js";
 import {
-  cancelSession,
   listClassCohorts,
   markSessionCompleted,
   rescheduleSession,
@@ -132,6 +132,7 @@ function scheduleRuleLabel(rule = {}) {
 
 export default function LiveClassesPageV2() {
   const { user } = useAuth();
+  const toast = useToast();
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [dashboard, setDashboard] = useState(null);
@@ -294,34 +295,27 @@ export default function LiveClassesPageV2() {
     setMessage("");
     try {
       const adminId = user?.uid || user?.email || "admin";
-      let successMessage = "";
-      if (sessionChange.action === "cancel") {
-        const cancelResult = await cancelSession(sessionChange.sessionId, { reason: sessionChange.reason, adminId });
-        successMessage = cancelResult?.emailSubmitted === false
-          ? `Session cancelled successfully, but the Communication email could not be confirmed: ${cancelResult.emailMessage || "check Communication"}`
-          : "Session cancelled successfully. Attendance, calendar feed and Communication were updated automatically.";
-      } else {
-        const parts = splitDateTimeLocal(sessionChange.startsAt);
-        if (!parts) throw new Error("Choose the new Ghana date and time.");
-        const rescheduleResult = await rescheduleSession(sessionChange.sessionId, {
-          localDate: parts.localDate,
-          localTime: parts.localTime,
-          startsAt: sessionChange.startsAt,
-          reason: sessionChange.reason,
-          adminId,
-          classId: sessionChange.classId || dashboard?.klass?.id || selectedClassId,
-          className: sessionChange.className || dashboard?.klass?.name || "",
-          timezone: dashboard?.klass?.timezone || "Africa/Accra",
-          durationMinutes: sessionChange.durationMinutes,
-        });
-        const emailNote = rescheduleResult?.emailSubmitted === false
-          ? ` Communication email could not be confirmed: ${rescheduleResult.emailMessage || "check Communication"}`
-          : "";
-        successMessage = `Session rescheduled successfully to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Attendance, calendar feed and Communication were updated automatically.${emailNote}`;
-      }
+      const parts = splitDateTimeLocal(sessionChange.startsAt);
+      if (!parts) throw new Error("Choose the new Ghana date and time.");
+      const rescheduleResult = await rescheduleSession(sessionChange.sessionId, {
+        localDate: parts.localDate,
+        localTime: parts.localTime,
+        startsAt: sessionChange.startsAt,
+        reason: sessionChange.reason,
+        adminId,
+        classId: sessionChange.classId || dashboard?.klass?.id || selectedClassId,
+        className: sessionChange.className || dashboard?.klass?.name || "",
+        timezone: dashboard?.klass?.timezone || "Africa/Accra",
+        durationMinutes: sessionChange.durationMinutes,
+      });
+      const emailNote = rescheduleResult?.emailSubmitted === false
+        ? ` Communication email could not be confirmed: ${rescheduleResult.emailMessage || "check Communication"}`
+        : "";
+      const successMessage = `Success: session rescheduled to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Attendance, calendar feed and Communication were updated automatically.${emailNote}`;
       setSessionChange(null);
       await refreshDashboard(selectedClassId);
       setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 7000 });
     } catch (error) {
       setMessage(error?.message || "Session update failed");
     } finally {
@@ -355,20 +349,14 @@ export default function LiveClassesPageV2() {
     return (
       <form onSubmit={handleSessionChangeSubmit} style={{ display: "grid", gap: 10, padding: 12, border: "1px solid #bfdbfe", borderRadius: 8, background: "#eff6ff" }}>
         <strong>Update this session: {formatDateTime(session.startsAt)}</strong>
-        <label>Action <select value={sessionChange.action} onChange={(event) => setSessionChange((current) => ({ ...current, action: event.target.value }))}>
-          <option value="reschedule">Reschedule to selected date</option>
-          <option value="cancel">Cancel class</option>
-        </select></label>
-        {sessionChange.action === "reschedule" ? (
-          <label>New Ghana date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
-        ) : null}
+        <label>New Ghana date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
         <label>Message template <select value="" onChange={(event) => event.target.value && setSessionChange((current) => ({ ...current, reason: event.target.value }))}>
           <option value="">Choose a ready reason</option>
           {SESSION_CHANGE_REASONS.map((template) => <option key={template.label} value={template.value}>{template.label}</option>)}
         </select></label>
         <label>Reason / message <textarea rows={3} value={sessionChange.reason} onChange={(event) => setSessionChange((current) => ({ ...current, reason: event.target.value }))} placeholder="Write the message students should see" /></label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="submit" disabled={busy}>{busy ? "Saving…" : sessionChange.action === "cancel" ? "Cancel and update session" : "Reschedule and update session"}</button>
+          <button type="submit" disabled={busy}>{busy ? "Saving…" : "Reschedule and update session"}</button>
           <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
         </div>
       </form>
@@ -411,7 +399,7 @@ export default function LiveClassesPageV2() {
                   <td style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Link to={`/attendance/session/${dashboard.klass.id}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
                     <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
-                    <button type="button" disabled={busy || locked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Editing…" : "Reschedule / Cancel"}</button>
+                    <button type="button" disabled={busy || locked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Editing…" : "Reschedule"}</button>
                     <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
                   </div></td>
                 </tr>,
