@@ -102,22 +102,63 @@ export function resolveSessionCourseGroup(session = {}, groups = [], fallbackInd
   return groups[fallbackIndex] || null;
 }
 
+function sessionCurriculumDayKey(session = {}) {
+  const direct = Number(session.curriculumDay);
+  if (Number.isFinite(direct) && direct >= 0) return `day:${direct}`;
+  const index = Number(session.curriculumIndex);
+  if (Number.isFinite(index) && index > 0) return `index:${index}`;
+  return assignmentIdsForSession(session).join("|");
+}
+
+function applyCurriculumGroup(session, group, index) {
+  if (!group) return session;
+  return {
+    ...session,
+    assignmentIds: group.assignmentIds,
+    chapterIds: group.assignmentIds,
+    curriculumIds: group.assignmentIds,
+    assignment_id: group.assignmentIds[0] || "",
+    topic: group.topic,
+    curriculumIndex: group.index || index + 1,
+    curriculumDay: group.day,
+    curriculumTaskCount: group.assignmentIds.length,
+    curriculumSource: "courseDictionary-day-groups",
+    curriculumVersion: 2,
+  };
+}
+
+export function suppressNormalCurriculumDuplicates(sessions = []) {
+  const seenNormalDays = new Set();
+  return sessions.filter((session) => {
+    if (!isPlainGeneratedScheduledSession(session)) return true;
+    const key = sessionCurriculumDayKey(session);
+    if (!key) return true;
+    if (seenNormalDays.has(key)) return false;
+    seenNormalDays.add(key);
+    return true;
+  });
+}
+
 export function enrichSessionsWithStableCurriculum(klass = {}, sessions = [], groups = []) {
-  return sessions.slice(0, groups.length).map((session, index) => {
-    const group = resolveSessionCourseGroup(session, groups, index);
-    if (!group) return session;
-    return {
-      ...session,
-      assignmentIds: group.assignmentIds,
-      chapterIds: group.assignmentIds,
-      curriculumIds: group.assignmentIds,
-      assignment_id: group.assignmentIds[0] || "",
-      topic: group.topic,
-      curriculumIndex: group.index || index + 1,
-      curriculumDay: group.day,
-      curriculumTaskCount: group.assignmentIds.length,
-      curriculumSource: "courseDictionary-day-groups",
-      curriculumVersion: 2,
-    };
+  const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
+  let normalIndex = 0;
+
+  const enriched = ordered.map((session) => {
+    if (!isPlainGeneratedScheduledSession(session)) {
+      const group = resolveSessionCourseGroup(session, groups, normalIndex);
+      return applyCurriculumGroup(session, group, normalIndex);
+    }
+
+    const index = normalIndex;
+    normalIndex += 1;
+    return applyCurriculumGroup(session, groups[index] || null, index);
+  });
+
+  const visible = suppressNormalCurriculumDuplicates(enriched);
+  let normalCount = 0;
+  return visible.filter((session) => {
+    if (!isPlainGeneratedScheduledSession(session)) return true;
+    normalCount += 1;
+    return normalCount <= groups.length;
   });
 }
