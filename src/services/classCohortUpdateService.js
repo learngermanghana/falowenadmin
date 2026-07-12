@@ -95,8 +95,13 @@ async function updateHistoricalClass(classId, payload) {
 }
 
 export async function updateClassCohort(classId, payload) {
-  const scheduleRules = singleSessionPerWeekdayRules(payload.scheduleRules || []);
-  const normalizedPayload = { ...payload, scheduleRules };
+  const classRef = doc(db, "classes", String(classId));
+  const classSnap = await getDoc(classRef);
+  if (!classSnap.exists()) throw new Error("Class not found");
+  const current = { id: classSnap.id, ...classSnap.data() };
+  const sourceRules = Array.isArray(payload.scheduleRules) ? payload.scheduleRules : current.scheduleRules || [];
+  const scheduleRules = singleSessionPerWeekdayRules(sourceRules);
+  const normalizedPayload = { ...current, ...payload, id: classId, scheduleRules };
   const closureDates = await loadSchoolClosureDates({
     countryCode: "GH",
     startDate: normalizedPayload.startDate,
@@ -116,7 +121,7 @@ export async function updateClassCohort(classId, payload) {
     ? {}
     : await applyGroupedCurriculumToClass(classId);
   const relevantClosures = closureDates.filter((date) => date >= normalizedPayload.startDate && date <= endDate);
-  await updateDoc(doc(db, "classes", String(classId)), {
+  await updateDoc(classRef, {
     endDate,
     scheduleRules,
     configuredEndDate: String(normalizedPayload.endDate || endDate || "").trim(),
