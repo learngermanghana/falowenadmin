@@ -70,7 +70,7 @@ export function getCourseSessionGroups(levelId) {
 
   return [...groups.values()].map((group, index) => {
     const assignmentIds = group.entries
-      .map((entry) => normalizeAssignmentId(entry.assignment_id))
+      .map((entry) => String(entry.assignment_id || "").trim())
       .filter(Boolean);
     const titles = group.entries.map((entry) => entryTitle(level, entry)).filter(Boolean);
     const chapters = group.entries.map((entry) => String(entry.chapter || "").trim()).filter(Boolean);
@@ -105,6 +105,6 @@ export function findCourseSessionGroup(levelId, assignmentIds = []) {
     .filter(Boolean));
   if (!ids.size) return null;
   return getCourseSessionGroups(levelId).find((group) =>
-    group.assignmentIds.some((id) => ids.has(id)),
+    group.assignmentIds.some((id) => ids.has(normalizeAssignmentId(id))),
   ) || null;
 }
