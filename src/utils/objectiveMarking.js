@@ -294,7 +294,7 @@ function partMarkerToPartId(label = "", number = "") {
 function splitSubmissionIntoSections(text = "") {
   const sections = [];
   const source = String(text || "");
-  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\s*(?:\([^\n)]*\))?\s*[:;]?\s*(?=\n|$)/gi;
+  const markerRegex = /(?:^|\n)[ \t]*((?:teil|part)[ \t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[:;]?[ \t]*(?=\n|$)/gi;
   const markers = [];
   let match;
   while ((match = markerRegex.exec(source))) {
@@ -320,20 +320,40 @@ function parseNumberedEntriesFromChunk(chunk = "") {
   const compactPattern = /(?:^|\s)(\d{1,3})\s*[).:–-]?\s*(.*?)(?=\s+\d{1,3}\s*[).:–-]?|$)/g;
   const compactMatches = [...source.matchAll(compactPattern)]
     .map((match) => ({ number: Number(match[1]), answer: String(match[2] || "").trim() }))
-    .filter((entry) => Number.isFinite(entry.number) && entry.answer);
+    .filter((entry) => Number.isFinite(entry.number) && normalizeAnswer(entry.answer));
 
   if (compactMatches.length > 1) return compactMatches;
 
   const single = source.match(/^\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
-  if (single) return [{ number: Number(single[1]), answer: single[2].trim() }];
+  if (single && normalizeAnswer(single[2])) return [{ number: Number(single[1]), answer: single[2].trim() }];
 
   return [];
 }
 
 function extractNumberedTextEntries(text = "") {
   const entries = [];
+  let pendingQuestionNumber = null;
   for (const rawLine of String(text || "").split(/\r?\n|[,;]+/)) {
-    entries.push(...parseNumberedEntriesFromChunk(rawLine));
+    const line = rawLine.trim();
+    if (!line) continue;
+    const questionLabel = line.match(/^\s*(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:-]?\s*$/i);
+    if (questionLabel) {
+      pendingQuestionNumber = Number(questionLabel[1]);
+      continue;
+    }
+    const parsed = parseNumberedEntriesFromChunk(line);
+    if (pendingQuestionNumber && parsed.length === 1) {
+      entries.push({ number: pendingQuestionNumber, answer: parsed[0].answer });
+      pendingQuestionNumber = null;
+      continue;
+    }
+    if (parsed.length) {
+      entries.push(...parsed);
+      pendingQuestionNumber = null;
+    } else if (pendingQuestionNumber && normalizeAnswer(line)) {
+      entries.push({ number: pendingQuestionNumber, answer: line });
+      pendingQuestionNumber = null;
+    }
   }
   return entries.sort((a, b) => a.number - b.number);
 }
@@ -564,6 +584,17 @@ function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", 
 }
 
 function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers }) {
+  if (item.type === "vocabulary") {
+    const vocabularyPairs = extractVocabularyAnswers(submissionText);
+    if (item.vocabularyKey && vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
+    const pairedVocabularyValues = Object.values(vocabularyPairs);
+    const pairedVocabularyIndex = Math.max(0, index - 5);
+    if (pairedVocabularyValues[pairedVocabularyIndex]) return pairedVocabularyValues[pairedVocabularyIndex];
+    const vocabularyValues = extractNumberedVocabularyAnswers(submissionText);
+    const vocabularyIndex = Math.max(0, index - 5);
+    if (vocabularyValues[vocabularyIndex]) return vocabularyValues[vocabularyIndex];
+  }
+
   if (item.partId === "main") return flatAnswers[index] || "";
 
   const sequentialPartAnswer = sequentialPartAnswers.get(`${item.partId}.${item.questionNumber}`);
@@ -576,6 +607,9 @@ function getStudentAnswerForItem({ item, index, submissionText, sections, flatAn
   if (item.type === "vocabulary") {
     const vocabularyPairs = extractVocabularyAnswers(submissionText);
     if (item.vocabularyKey && vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
+    const pairedVocabularyValues = Object.values(vocabularyPairs);
+    const pairedVocabularyIndex = Math.max(0, index - 5);
+    if (pairedVocabularyValues[pairedVocabularyIndex]) return pairedVocabularyValues[pairedVocabularyIndex];
     const vocabularyValues = extractNumberedVocabularyAnswers(submissionText);
     const vocabularyIndex = Math.max(0, index - sections.length);
     if (vocabularyValues[vocabularyIndex]) return vocabularyValues[vocabularyIndex];
@@ -590,8 +624,9 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
     ? assignmentIdOrReferenceEntry
     : assignmentIdOrReferenceEntry?.assignmentKey || assignmentIdOrReferenceEntry?.assignmentId || assignmentIdOrReferenceEntry?.assignment_id || "";
 
+  const hardcodedItems = buildHardcodedReferenceItems(assignmentId);
   const items = buildReferenceItems(source || {});
-  const referenceItems = items.length ? items : buildHardcodedReferenceItems(assignmentId);
+  const referenceItems = hardcodedItems.length ? hardcodedItems : items;
   if (!referenceItems.length) return { correctCount: 0, totalCount: 0, details: {} };
 
   const sections = splitSubmissionIntoSections(submissionText);
@@ -600,7 +635,13 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const referencePartIds = [...partIds].filter((partId) => partId !== "main");
   const sectionPartIds = new Set(sections.filter((section) => section.partId !== "main").map((section) => section.partId));
   const hasMatchingPartSections = Boolean(referencePartIds.length) && referencePartIds.every((partId) => sectionPartIds.has(partId));
-  const flatAnswers = flatMainReference ? chooseBestFlatAnswers(referenceItems, submissionText) : [];
+  let flatAnswers = flatMainReference ? chooseBestFlatAnswers(referenceItems, submissionText) : [];
+  if (flatMainReference) {
+    const sectionAnswers = sections
+      .filter((section) => section.partId !== "main")
+      .flatMap((section) => extractRestartedNumberingEntries(section.text).sort((a, b) => a.number - b.number).map((entry) => entry.answer));
+    if (scoreFlatCandidate(referenceItems, sectionAnswers).correct > scoreFlatCandidate(referenceItems, flatAnswers).correct) flatAnswers = sectionAnswers;
+  }
   const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);
 
   const details = {};

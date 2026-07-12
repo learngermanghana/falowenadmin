@@ -3,7 +3,7 @@ export const courseDictionary = {
     "A1-Tutorial": { assignment_id: "A1-Tutorial", chapter: "0", de: "Einführung und Orientierung", en: "Orientation and Tutorial" },
     "A1-0.1": { assignment_id: "A1-0.1", chapter: "0.1", de: "Begrüßungen und Wohlbefinden", en: "Greetings and Asking About Well-being" },
     "A1-0.2": { assignment_id: "A1-0.2", chapter: "0.2", de: "Alphabet", en: "German Alphabet" },
-    "A1-1.1": { assignment_id: "A1-1.1", chapter: "1.1", de: "Personalpronomen und grundlegende Verbkonjugation", en: "Personal Pronouns and Basic Verb Conjugation" },
+    "A1-1.1": { assignment_id: "A1-1.1", chapter: "1.1", de: "Personalpronomen und grundlegende Verbkonjugation", en: "Personal Pronouns and Verb Conjugation" },
     "A1-1.1-practice": { assignment_id: "A1-1.1-practice", chapter: "1.1", de: "Persönliche Informationen, Artikel, Adjektive und W-Fragen", en: "Personal Information, Articles, Adjectives and W-Questions" },
     "A1-1.2": { assignment_id: "A1-1.2", chapter: "1.2", de: "Verbkonjugation im Präsens üben", en: "Present-Tense Verb Conjugation Practice" },
     "A1-2": { assignment_id: "A1-2", chapter: "2", de: "Zahlen, Telefonnummern und Adressen", en: "Numbers, Phone Numbers and Addresses" },

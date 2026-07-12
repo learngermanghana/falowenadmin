@@ -90,7 +90,7 @@ function parseCsv(text) {
 
 async function fetchPublishedStudentRows() {
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), SHEET_TIMEOUT_MS);
+  const timeoutId = globalThis.setTimeout(() => controller.abort(), SHEET_TIMEOUT_MS);
 
   try {
     const res = await fetch(PUBLISHED_SHEET_CSV_URL, {
@@ -121,7 +121,7 @@ async function fetchPublishedStudentRows() {
     }
     throw error;
   } finally {
-    window.clearTimeout(timeoutId);
+    globalThis.clearTimeout(timeoutId);
   }
 }
 
