@@ -7,6 +7,7 @@ import {
   toggleDictionarySelection,
 } from "../src/utils/liveClassDictionarySelection.js";
 
+// This file also triggers the live-class workflow, which runs these tests and a production dashboard build.
 const entries = [
   { assignment_id: "A1-Tutorial", chapter: "0", en: "Orientation and Tutorial", de: "Einführung und Orientierung" },
   { assignment_id: "A1-1.1-practice", chapter: "1.1", en: "Personal Information", de: "Persönliche Informationen" },
