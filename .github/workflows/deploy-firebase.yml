@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'functions/**'
+      - 'scripts/**'
       - 'firebase.json'
       - 'firestore.indexes.json'
       - '.github/workflows/deploy-firebase.yml'
@@ -30,12 +31,33 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Show deployment revision
+        run: |
+          echo "Deploying commit $GITHUB_SHA from $GITHUB_REF_NAME"
+          git log -1 --oneline
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: functions/package-lock.json
+
+      - name: Validate Firebase predeploy patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in \
+            scripts/patchSheetRowManagementRoutes.mjs \
+            scripts/patchOperationalSheetAutoSyncJobs.mjs \
+            scripts/patchLiveClassUpdateScheduleSync.mjs \
+            scripts/patchHolidayClassScheduleAwareness.mjs
+          do
+            echo "Checking $script"
+            node --check "$script"
+            node "$script"
+          done
+          node --check functions/index.js
 
       - name: Install functions dependencies
         working-directory: functions
