@@ -506,7 +506,7 @@ function buildDetailedObjectiveFeedback(deterministicObjective = {}) {
     const label = `${item.partId || "objective"} ${item.question || ""}`.trim();
     const submitted = formatObjectiveAnswerForFeedback(item.student || item.submitted || "", "blank");
     const expected = formatObjectiveAnswerForFeedback(item.expected || "", "the correct answer");
-    return `${label}: you chose ${submitted}; correct answer is ${expected}`;
+    return `${label}: Your answer was ${submitted}; correct answer is ${expected}`;
   });
   if (!mistakeDetails.length) return `${base} All objective answers were correct.`;
   return `${base} Review these exact answers: ${mistakeDetails.join("; ")}.`;

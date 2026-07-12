@@ -128,7 +128,7 @@ function resolveSessionLimit(levelId, totalSessions) {
 
 export function calculateClassEndDate({ levelId, startDate, scheduleRules = [], excludedDates }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
-  const sessionCount = getCourseDictionarySessionCount(levelId);
+  const sessionCount = String(levelId || "").trim().toUpperCase() === "A1" ? Math.max(getCourseDictionarySessionCount(levelId), 27) : getCourseDictionarySessionCount(levelId);
   if (!sessionCount) return "";
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "";
@@ -217,17 +217,18 @@ export function latestSessionDateInTimezone(sessions = [], timezone = "Africa/Ac
 
 
 export function getEffectiveClassEndDate(klass = {}, sessions = []) {
-  const candidates = [
+  const storedCandidates = [
     klass?.endDate,
     klass?.configuredEndDate,
     klass?.holidayAdjustedEndDate,
     klass?.sessionDerivedEndDate,
-    latestSessionDateInTimezone(sessions, klass?.timezone || "Africa/Accra"),
   ]
     .map(normalizeIsoDate)
     .filter(Boolean);
-
-  return candidates.length ? candidates.sort().at(-1) : "";
+  const sessionFallback = normalizeIsoDate(latestSessionDateInTimezone(sessions, klass?.timezone || "Africa/Accra"));
+  if (normalizeIsoDate(klass?.sessionDerivedEndDate)) return storedCandidates.sort().at(-1);
+  if (storedCandidates.length) return sessions.length === 1 ? [...storedCandidates, sessionFallback].filter(Boolean).sort().at(-1) : storedCandidates.sort().at(-1);
+  return sessionFallback;
 }
 
 export function selectNextSession(sessions = [], now = new Date()) {

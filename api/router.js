@@ -730,7 +730,9 @@ function formatObjectiveMistake(item = {}, index = 0) {
   const submitted = formatAnswerForFeedback(item.student || item.submitted || "", "blank");
   const expected = item.expectedDisplay || item.expected || "the correct answer";
   const reason = item.reason ? `\n   - Note: ${item.reason}` : "";
-  return `${index + 1}. ${label}\n   - Your answer: ${submitted}\n   - Correct: ${expected}${reason}`;
+  const compactLabel = label.replace(/\bquestion\s+/i, "");
+  const compactExpected = String(expected || "").match(/^[A-FX]\b/i)?.[0]?.toUpperCase() || expected;
+  return `${index + 1}. ${label}\n   - ${compactLabel}: Your answer was ${submitted}; correct answer is "${compactExpected}"\n   - Your answer: ${submitted}\n   - Correct: ${expected}${reason}`;
 }
 
 function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wrongAnswers = [] } = {}) {
@@ -744,7 +746,7 @@ function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wron
     percent === 100 ? `Excellent work, ${firstName}.` : `Good effort, ${firstName}.`,
     "",
     "📊 Score",
-    `- Objective: ${correct}/${total} correct (${percent}%)`,
+    `- Objective score: ${correct}/${total} correct (${percent}%)`,
     "",
     details.length
       ? ["🛠 Corrections to review", ...details, extraCount ? `...and ${extraCount} more answer(s).` : ""].filter(Boolean).join("\n")
