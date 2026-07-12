@@ -17,6 +17,11 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
+function safeIdentifier(value) {
+  const identifier = normalize(value);
+  return identifier && !identifier.includes("/") ? identifier : "";
+}
+
 function identifiersFor(classId, klass = {}) {
   return [...new Set([
     classId,
@@ -25,7 +30,7 @@ function identifiersFor(classId, klass = {}) {
     klass.classId,
     klass.className,
     klass.slug,
-  ].map(normalize).filter(Boolean))];
+  ].map(safeIdentifier).filter(Boolean))];
 }
 
 async function querySessions(field, identifier) {
@@ -71,12 +76,18 @@ async function loadAttendance(identifiers = []) {
 }
 
 export async function cleanupLegacyClassSessions({ classId, klass = {}, desiredSessionIds = [] } = {}) {
-  const canonicalClassId = normalize(classId || klass.id);
+  const canonicalClassId = safeIdentifier(classId || klass.id);
   if (!canonicalClassId) return { removed: 0, canonicalized: 0 };
 
   const desiredIds = desiredSessionIds instanceof Set ? desiredSessionIds : new Set(desiredSessionIds);
   const { identifiers, sessions } = await loadCompatibleSessions(canonicalClassId, klass);
-  const { records: attendance, locations } = await loadAttendance(identifiers);
+  const attendanceIdentifiers = [...new Set([
+    ...identifiers,
+    ...sessions.flatMap((session) => [session.classId, session.classRecordId, session.className])
+      .map(safeIdentifier)
+      .filter(Boolean),
+  ])];
+  const { records: attendance, locations } = await loadAttendance(attendanceIdentifiers);
   const batch = writeBatch(db);
   let removed = 0;
   let canonicalized = 0;
