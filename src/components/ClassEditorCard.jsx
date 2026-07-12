@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { buildClassEndDateMismatchWarning } from "../utils/classEndDateWarning.js";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
+import {
+  duplicateScheduleWeekdays,
+  nextUnusedScheduleDay,
+  scheduleRulesForEditor,
+} from "../utils/liveClassScheduleRules.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
 import { deleteClassCohort } from "../services/classDeletionService.js";
 import { rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
@@ -9,9 +14,11 @@ import { rebuildClassSessionsFromSchedule } from "../services/liveClassService.j
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
 const DEFAULT_RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
+const dayLabel = (value) => String(value || "").slice(0, 3).toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 
 function initialForm(klass = {}) {
   const levelId = String(klass.levelId || klass.level || "").toUpperCase();
+  const normalizedRules = scheduleRulesForEditor(klass.scheduleRules || []);
   return {
     name: klass.name || "", city: klass.city || "", levelId,
     startDate: klass.startDate || "", endDate: klass.endDate || "",
@@ -19,7 +26,7 @@ function initialForm(klass = {}) {
     tuitionGhs: Number(klass.tuitionGhs || defaultTuitionForLevel(levelId || "A1")),
     publicVisible: klass.publicVisible !== false, registrationOpen: klass.registrationOpen !== false,
     tutorId: klass.tutorId || "", zoomProfileId: klass.zoomProfileId || "",
-    scheduleRules: Array.isArray(klass.scheduleRules) && klass.scheduleRules.length ? klass.scheduleRules : [{ ...DEFAULT_RULE }],
+    scheduleRules: normalizedRules.length ? normalizedRules : [{ ...DEFAULT_RULE }],
   };
 }
 
@@ -35,6 +42,7 @@ function validateForm(form = {}) {
   if (!LEVELS.includes(form.levelId)) return "Select the correct level.";
   if (!form.startDate || !form.endDate || form.endDate < form.startDate) return "Enter valid start and end dates.";
   if (!validateIanaTimezone(form.timezone)) return "Enter a valid timezone such as Africa/Accra.";
+  if (!scheduleRulesForEditor(form.scheduleRules).length) return "Add at least one weekly teaching time.";
   return "";
 }
 
@@ -49,14 +57,24 @@ export default function ClassEditorCard({ klass, onSaved }) {
   }, [klass?.id, klass?.startDate, klass?.endDate, klass?.sessionDerivedEndDate, klass?.status, scheduleSignature, timestampSignature(klass?.updatedAt)]);
   const patch = (values) => setForm((current) => ({ ...current, ...values }));
   const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
+  const removeRule = (index) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, i) => i !== index) }));
+  const addRule = () => setForm((current) => {
+    const nextDay = nextUnusedScheduleDay(current.scheduleRules);
+    if (!nextDay) {
+      setMessage("All seven weekdays already have a teaching time. A class can have only one session per date.");
+      return current;
+    }
+    return { ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE, day: dayLabel(nextDay) }] };
+  });
 
   async function saveClassSettings({ notifyParent = true } = {}) {
     const validationError = validateForm(form);
     if (validationError) throw new Error(validationError);
+    const scheduleRules = scheduleRulesForEditor(form.scheduleRules);
 
-    const result = await updateClassCohort(klass.id, { ...form, historicalMode: false });
+    const result = await updateClassCohort(klass.id, { ...form, scheduleRules, historicalMode: false });
     if (result.endDate) {
-      setForm((current) => ({ ...current, endDate: result.endDate }));
+      setForm((current) => ({ ...current, endDate: result.endDate, scheduleRules }));
     }
     if (notifyParent) await onSaved?.(klass.id);
     return result;
@@ -87,7 +105,8 @@ export default function ClassEditorCard({ klass, onSaved }) {
       const endDateNote = result.sessionDerivedEndDate && result.sessionDerivedEndDate !== result.endDate
         ? ` Generated sessions end on ${result.sessionDerivedEndDate}, but class graduation date is ${result.endDate}.`
         : result.sessionDerivedEndDate ? ` Generated sessions end on ${result.sessionDerivedEndDate}.` : "";
-      const successMessage = `Class settings saved. Sessions rebuilt successfully: ${result.created || saveResult.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${endDateNote}`;
+      const legacyNote = result.legacyRemoved ? ` ${result.legacyRemoved} legacy duplicate(s) removed.` : "";
+      const successMessage = `Class settings saved. Sessions rebuilt successfully: ${result.created || saveResult.created || 0} created, ${result.refreshed || 0} updated, and ${result.removed || 0} stale removed.${legacyNote}${endDateNote}`;
       setMessage(successMessage);
       toast.success(successMessage, { durationMs: 7000 });
       await onSaved?.(klass.id);
@@ -103,7 +122,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
   async function removeClass() {
     const className = form.name || klass?.name || klass?.id || "this class";
     if (!window.confirm(`Permanently delete ${className}? This removes the class, its sessions and attendance records.`)) return;
-    const confirmation = window.prompt('Type DELETE to confirm permanent deletion.');
+    const confirmation = window.prompt("Type DELETE to confirm permanent deletion.");
     if (confirmation !== "DELETE") {
       setMessage("Deletion cancelled. You must type DELETE exactly.");
       return;
@@ -123,6 +142,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
 
   const messageIsSuccess = message.startsWith("Class updated") || message.startsWith("Class settings saved") || message.startsWith("Sessions rebuilt successfully");
   const endDateWarning = buildClassEndDateMismatchWarning(klass);
+  const duplicateDays = duplicateScheduleWeekdays(klass?.scheduleRules || []);
 
   return <article className="card"><h2>Edit this class</h2><form onSubmit={save} style={{ display: "grid", gap: 14 }}>
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
@@ -138,12 +158,15 @@ export default function ClassEditorCard({ klass, onSaved }) {
       <label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
     </div>
     <strong>Weekly teaching times</strong>
+    <p style={{ margin: 0, fontSize: 13 }}>Use one teaching time per weekday. Rebuild will create only one curriculum session on each class date.</p>
+    {duplicateDays.length ? <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}>Duplicate timetable days were found for {duplicateDays.join(", ")}. They have been consolidated to one time per day below. Review the times, then save and rebuild.</div> : null}
     {form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      <select value={String(rule.day || "Sat").slice(0, 3)} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day}>{day}</option>)}</select>
+      <select value={String(rule.day || "Sat").slice(0, 3)} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select>
       <input type="time" value={rule.startTime || "09:00"} onChange={(event) => patchRule(index, { startTime: event.target.value })} />
       <input type="number" min="30" step="15" value={Number(rule.durationMinutes || 120)} onChange={(event) => patchRule(index, { durationMinutes: Number(event.target.value) })} />
+      <button type="button" disabled={form.scheduleRules.length === 1} onClick={() => removeRule(index)}>Remove</button>
     </div>)}
-    <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE }] }))}>Add another time</button>
+    <button type="button" onClick={addRule}>Add another weekday</button>
     <div><label><input type="checkbox" checked={form.publicVisible} onChange={(event) => patch({ publicVisible: event.target.checked })} /> Show publicly</label> <label><input type="checkbox" checked={form.registrationOpen} onChange={(event) => patch({ registrationOpen: event.target.checked })} /> Registration open</label></div>
     {endDateWarning ? <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}>{endDateWarning}</div> : null}
     {message ? <div style={{ padding: 10, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#fef2f2" }}>{message}</div> : null}
