@@ -8,7 +8,6 @@ const emptyForm = () => ({ name: "", levelId: "A1", tutorId: "", startDate: "", 
 
 export default function CreateClassCard({ onCreated, onDuplicate }) {
   const [form, setForm] = useState(emptyForm);
-  const [historicalMode, setHistoricalMode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const patch = (values, recalculate = false) => setForm((current) => { const next = { ...current, ...values }; const endDate = recalculate ? calculateClassEndDate(next) : ""; return endDate ? { ...next, endDate } : next; });
@@ -21,8 +20,8 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
     if (!validateIanaTimezone(form.timezone)) return setMessage("Enter a valid timezone such as Africa/Accra.");
     setBusy(true);
     try {
-      const record = await createClassCohort({ ...form, historicalMode });
-      setMessage(`Class created successfully. Final end date: ${record.endDate}.`); setForm(emptyForm()); setHistoricalMode(false); await onCreated?.(record.id);
+      const record = await createClassCohort({ ...form, historicalMode: false });
+      setMessage(`Class created successfully. Final end date: ${record.endDate}.`); setForm(emptyForm()); await onCreated?.(record.id);
     } catch (error) {
       const text = error?.message || "Class creation failed";
       if (text.toLowerCase().includes("already exists")) { setMessage("This class already exists and has been opened for editing."); await onDuplicate?.(form.name); } else setMessage(text);
@@ -30,16 +29,15 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
   }
 
   return <article className="card"><h2>Create a new class</h2><form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
-    <label><input type="checkbox" checked={historicalMode} onChange={(event) => setHistoricalMode(event.target.checked)} /> Historical class: keep exact dates and generate past sessions</label>
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
       <label>Class name<input required value={form.name} onChange={(event) => patch({ name: event.target.value })} /></label>
-      <label>Level<select value={form.levelId} onChange={(event) => patch({ levelId: event.target.value }, !historicalMode)}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
-      <label>Start date<input required type="date" value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, !historicalMode)} /></label>
+      <label>Level<select value={form.levelId} onChange={(event) => patch({ levelId: event.target.value }, true)}>{["A1", "A2", "B1", "B2", "C1"].map((level) => <option key={level}>{level}</option>)}</select></label>
+      <label>Start date<input required type="date" value={form.startDate} onChange={(event) => patch({ startDate: event.target.value }, true)} /></label>
       <label>Graduation / end date<input required type="date" value={form.endDate} onChange={(event) => patch({ endDate: event.target.value })} /></label>
       <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated"].map((status) => <option key={status}>{status}</option>)}</select></label><label>Timezone<input required value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
     </div>
     <strong>Weekly teaching times</strong>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8 }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input type="number" min="30" step="15" value={rule.durationMinutes} onChange={(event) => patchRule(index, { durationMinutes: Number(event.target.value) })} /></div>)}
-    <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...RULE }] }))}>Add another time</button>{message ? <div>{message}</div> : null}<button type="submit" disabled={busy}>{busy ? "Creating…" : historicalMode ? "Create historical class" : "Create class and generate sessions"}</button>
+    <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...RULE }] }))}>Add another time</button>{message ? <div>{message}</div> : null}<button type="submit" disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
   </form></article>;
 }

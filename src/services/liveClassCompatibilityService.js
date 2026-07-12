@@ -1,4 +1,4 @@
-import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { classScheduleBoundsFromSessions } from "../utils/attendanceSessionOverride.js";
@@ -92,6 +92,10 @@ async function syncClassScheduleBoundsFromSessions(classId, { changedSessionId =
   };
 
   await updateDoc(classRef, patch);
+  await setDoc(doc(db, "calendarFeeds", String(classId)), {
+    classId: String(classId),
+    updatedAt: serverTimestamp(),
+  }, { merge: true }).catch(() => {});
   return { ...bounds, patch };
 }
 

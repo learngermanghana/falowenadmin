@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { buildClassEndDateMismatchWarning } from "../utils/classEndDateWarning.js";
-import { shouldShowHistoricalScheduleMode } from "../utils/liveClassScheduleMode.js";
 import { validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
 import { deleteClassCohort } from "../services/classDeletionService.js";
@@ -42,14 +41,12 @@ function validateForm(form = {}) {
 export default function ClassEditorCard({ klass, onSaved }) {
   const toast = useToast();
   const [form, setForm] = useState(() => initialForm(klass));
-  const [historicalMode, setHistoricalMode] = useState(() => shouldShowHistoricalScheduleMode(klass));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const scheduleSignature = JSON.stringify(klass?.scheduleRules || []);
   useEffect(() => {
     setForm(initialForm(klass));
-    setHistoricalMode(shouldShowHistoricalScheduleMode(klass));
-  }, [klass?.id, klass?.startDate, klass?.endDate, klass?.sessionDerivedEndDate, klass?.historical, klass?.status, scheduleSignature, timestampSignature(klass?.updatedAt)]);
+  }, [klass?.id, klass?.startDate, klass?.endDate, klass?.sessionDerivedEndDate, klass?.status, scheduleSignature, timestampSignature(klass?.updatedAt)]);
   const patch = (values) => setForm((current) => ({ ...current, ...values }));
   const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
 
@@ -57,7 +54,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
     const validationError = validateForm(form);
     if (validationError) throw new Error(validationError);
 
-    const result = await updateClassCohort(klass.id, { ...form, historicalMode });
+    const result = await updateClassCohort(klass.id, { ...form, historicalMode: false });
     if (result.endDate) {
       setForm((current) => ({ ...current, endDate: result.endDate }));
     }
@@ -128,7 +125,6 @@ export default function ClassEditorCard({ klass, onSaved }) {
   const endDateWarning = buildClassEndDateMismatchWarning(klass);
 
   return <article className="card"><h2>Edit this class</h2><form onSubmit={save} style={{ display: "grid", gap: 14 }}>
-    <label><input type="checkbox" checked={historicalMode} onChange={(event) => setHistoricalMode(event.target.checked)} /> Historical class: keep exact dates and generate missing past sessions</label>
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
       <label>Class name<input required value={form.name} onChange={(event) => patch({ name: event.target.value })} /></label>
       <label>City<input value={form.city} onChange={(event) => patch({ city: event.target.value })} /></label>
