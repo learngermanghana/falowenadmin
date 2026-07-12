@@ -1,4 +1,3 @@
-/* global process */
 import { Buffer } from "node:buffer";
 import socialMetricsHandler from "./social-metrics.js";
 import { autoMarkSubmission } from "../src/utils/autoMarking.js";

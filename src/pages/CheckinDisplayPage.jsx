@@ -148,19 +148,6 @@ function scheduleStartChime(context, destination) {
   schedulePianoNote(context, destination, 659.25, startsAt + 0.18, 0.5, 1.25);
 }
 
-function scheduleWaitingPiano(context, destination, chord) {
-  const startsAt = context.currentTime + 0.3;
-  const order = [0, 2, 1, 3];
-
-  order.forEach((chordIndex, sequenceIndex) => {
-    const frequency = chord[chordIndex];
-    if (!frequency) return;
-    const noteStartsAt = startsAt + (sequenceIndex * 0.22);
-    const velocity = sequenceIndex === 0 ? 0.52 : 0.38;
-    schedulePianoNote(context, destination, frequency, noteStartsAt, velocity, 3.8 - (sequenceIndex * 0.12));
-  });
-}
-
 export default function CheckinDisplayPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";

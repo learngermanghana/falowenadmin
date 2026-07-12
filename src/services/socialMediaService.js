@@ -103,13 +103,6 @@ function isLikelyNetworkError(error) {
   return error instanceof TypeError || /networkerror|failed to fetch|cors/i.test(String(error?.message || ""));
 }
 
-function normalizeSheetName(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/[_-]+/g, "");
-}
 
 function normalizeHeader(value) {
   return String(value || "")

@@ -53,7 +53,7 @@ function canUseBccFallback(input = {}) {
   const announcement = normalize(input.announcement).toLowerCase();
   const hasSingleEmailTarget = Boolean(normalize(input.email));
 
-  if (Boolean(input.attachCertificate)) return false;
+  if (input.attachCertificate) return false;
   if (hasSingleEmailTarget) return false;
   if (announcement.includes("{student_name}") || announcement.includes("student_name")) return false;
 

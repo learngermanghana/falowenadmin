@@ -61,24 +61,6 @@ function isLockedRebuildSession(session = {}) {
   return ["completed", "live", "cancelled"].includes(status);
 }
 
-function sessionTime(session = {}) {
-  if (typeof session.startsAt?.toDate === "function") return session.startsAt.toDate().getTime();
-  const parsed = new Date(session.startsAt || 0).getTime();
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function sessionCurriculumIndex(session = {}) {
-  if (session.curriculumIndex !== undefined && session.curriculumIndex !== null && session.curriculumIndex !== "") {
-    const direct = Number(session.curriculumIndex);
-    if (Number.isFinite(direct) && direct > 0) return direct;
-  }
-  if (session.curriculumDay !== undefined && session.curriculumDay !== null && session.curriculumDay !== "") {
-    const day = Number(session.curriculumDay);
-    if (Number.isFinite(day) && day >= 0) return day + 1;
-  }
-  return 0;
-}
-
 function sessionIsBeforeClassStart(session = {}, klass = {}) {
   const startDate = String(klass.startDate || "").trim();
   if (!startDate || normalizeStatus(session.status) !== "scheduled") return false;
@@ -87,7 +69,7 @@ function sessionIsBeforeClassStart(session = {}, klass = {}) {
   return Boolean(sessionDate && sessionDate < startDate);
 }
 
-function chooseExistingSession({ occurrence, index, sessions, existingById, usedIds, klass }) {
+function chooseExistingSession({ occurrence, existingById, usedIds, klass }) {
   const exact = existingById.get(occurrence.id);
   if (exact && !usedIds.has(exact.id) && !sessionIsBeforeClassStart(exact, klass)) return exact;
 
@@ -96,14 +78,6 @@ function chooseExistingSession({ occurrence, index, sessions, existingById, used
 
 export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], sessions = [], attendanceBySessionId = new Map(), buildCurriculumPatch = null } = {}) {
   const existingById = new Map(sessions.map((session) => [session.id, session]));
-  const sortedSessions = [...sessions].sort((left, right) => {
-    const leftIndex = sessionCurriculumIndex(left);
-    const rightIndex = sessionCurriculumIndex(right);
-    if (leftIndex && rightIndex && leftIndex !== rightIndex) return leftIndex - rightIndex;
-    if (leftIndex && !rightIndex) return -1;
-    if (!leftIndex && rightIndex) return 1;
-    return sessionTime(left) - sessionTime(right);
-  });
   const usedIds = new Set();
   const desiredIds = new Set();
   const deletions = [];
@@ -111,7 +85,7 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
   const upserts = [];
 
   occurrences.forEach((occurrence, index) => {
-    const existing = chooseExistingSession({ occurrence, index, sessions: sortedSessions, existingById, usedIds, klass });
+    const existing = chooseExistingSession({ occurrence, existingById, usedIds, klass });
     if (existing) usedIds.add(existing.id);
 
     const targetOccurrence = existing ? { ...occurrence, id: existing.id } : occurrence;
