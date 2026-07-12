@@ -44,7 +44,15 @@ function isPlainGeneratedScheduledSession(session = {}) {
   return status === "scheduled" && !hasManualScheduleChange(session);
 }
 
-export function suppressGeneratedDateDuplicates(sessions = [], timezone = "Africa/Accra") {
+function preferredSessionForDate(group = [], classId = "") {
+  return [...group].sort((left, right) => {
+    const preference = sessionPreference(right, classId) - sessionPreference(left, classId);
+    if (preference) return preference;
+    return sessionTime(left) - sessionTime(right) || normalize(left.id).localeCompare(normalize(right.id));
+  })[0] || null;
+}
+
+export function suppressGeneratedDateDuplicates(sessions = [], timezone = "Africa/Accra", classId = "") {
   const byDate = new Map();
   sessions.forEach((session) => {
     const date = sessionDateInTimezone(session.startsAt, timezone || "Africa/Accra") || `id:${session.id}`;
@@ -52,18 +60,10 @@ export function suppressGeneratedDateDuplicates(sessions = [], timezone = "Afric
     byDate.get(date).push(session);
   });
 
-  const filtered = [];
-  byDate.forEach((group) => {
-    const hasChangedSession = group.some(hasManualScheduleChange);
-    if (!hasChangedSession) {
-      filtered.push(...group);
-      return;
-    }
-
-    filtered.push(...group.filter((session) => !isPlainGeneratedScheduledSession(session)));
-  });
-
-  return filtered.sort((left, right) => sessionTime(left) - sessionTime(right));
+  return [...byDate.values()]
+    .map((group) => preferredSessionForDate(group, classId))
+    .filter(Boolean)
+    .sort((left, right) => sessionTime(left) - sessionTime(right));
 }
 
 export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone = "Africa/Accra" } = {}) {
@@ -77,7 +77,7 @@ export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone
     }
   });
 
-  return suppressGeneratedDateDuplicates([...byMoment.values()], timezone);
+  return suppressGeneratedDateDuplicates([...byMoment.values()], timezone, classId);
 }
 
 export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0) {
