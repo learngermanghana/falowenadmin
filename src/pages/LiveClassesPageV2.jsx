@@ -4,7 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
-import { courseDictionary, getUnifiedTopicLabel } from "../data/courseDictionary.js";
+import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
+import { courseDictionary } from "../data/courseDictionary.js";
 import {
   listClassCohorts,
   markSessionCompleted,
@@ -16,7 +17,16 @@ import {
   getCompatibleClassDashboard,
   syncCompatibleClassCurriculum,
 } from "../services/liveClassCompatibilityService.js";
-import { buildClassUrl, calculateClassProgress, getEffectiveClassEndDate, calculateCountdown } from "../utils/liveClassScheduling.js";
+import {
+  buildDictionarySelectionTopic,
+  canonicalDictionarySelection,
+} from "../utils/liveClassDictionarySelection.js";
+import {
+  buildClassUrl,
+  calculateClassProgress,
+  getEffectiveClassEndDate,
+  calculateCountdown,
+} from "../utils/liveClassScheduling.js";
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -252,24 +262,31 @@ export default function LiveClassesPageV2() {
     }
   }
 
-  async function assignDictionaryItem(session, assignmentId) {
-    if (!assignmentId) return;
-    const entry = courseDictionary[levelId]?.[assignmentId];
-    const topic = getUnifiedTopicLabel(assignmentId, entry?.en || entry?.de || session.topic || "");
+  async function saveDictionarySelection(session, assignmentIds) {
+    const selectedIds = canonicalDictionarySelection(dictionaryEntries, assignmentIds);
+    const topic = buildDictionarySelectionTopic({
+      entries: dictionaryEntries,
+      assignmentIds: selectedIds,
+      levelId,
+      existingTopic: session.topic,
+    });
+
     setBusy(true);
     setMessage("");
     try {
       await updateSession(session.id, {
-        assignmentIds: [assignmentId],
-        chapterIds: [assignmentId],
-        curriculumIds: [assignmentId],
-        assignment_id: assignmentId,
+        assignmentIds: selectedIds,
+        chapterIds: selectedIds,
+        curriculumIds: selectedIds,
+        assignment_id: selectedIds[0] || "",
         topic,
       });
       await refreshDashboard(selectedClassId);
-      setMessage(`${assignmentId} assigned to ${formatDateTime(session.startsAt)}.`);
+      const successMessage = `${selectedIds.length} dictionary item(s) saved for ${formatDateTime(session.startsAt)}.`;
+      setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 5000 });
     } catch (error) {
-      setMessage(error?.message || "Could not assign curriculum");
+      setMessage(error?.message || "Could not save the session dictionary");
     } finally {
       setBusy(false);
     }
@@ -375,29 +392,21 @@ export default function LiveClassesPageV2() {
           <tbody>
             {sessions.map((session) => {
               const locked = ["cancelled", "completed"].includes(String(session.status || "").toLowerCase());
-              const currentId = curriculumIds(session)[0] || "";
               return [
-                <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb", verticalAlign: "top" }}>
                   <td style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
                   <td style={{ padding: 8 }}><span style={{ ...statusStyle(session.status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{session.status || "scheduled"}</span></td>
                   <td style={{ padding: 8 }}>{session.topic || "No topic"}</td>
-                  <td style={{ padding: 8 }}>
-                    <select
-                      value={currentId}
+                  <td style={{ padding: 8, minWidth: 350 }}>
+                    <SessionDictionaryPicker
+                      entries={dictionaryEntries}
+                      assignmentIds={curriculumIds(session)}
                       disabled={busy || locked || !dictionaryEntries.length}
-                      onChange={(event) => assignDictionaryItem(session, event.target.value)}
-                      style={{ minWidth: 280 }}
-                    >
-                      <option value="">Select from all {dictionaryEntries.length} items</option>
-                      {dictionaryEntries.map((entry) => (
-                        <option key={entry.assignment_id} value={entry.assignment_id}>
-                          {entry.assignment_id} — {entry.en || entry.de}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(nextIds) => saveDictionarySelection(session, nextIds)}
+                    />
                   </td>
                   <td style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <Link to={`/attendance/session/${dashboard.klass.id}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
+                    <Link to={`/attendance/session/${dashboard.klass.id || selectedClassId}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
                     <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
                     <button type="button" disabled={busy || locked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Editing…" : "Reschedule"}</button>
                     <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
@@ -485,7 +494,7 @@ export default function LiveClassesPageV2() {
         <p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)} {nextCountdown ? `(${nextCountdown.days}d ${nextCountdown.hours}h ${nextCountdown.minutes}m)` : ""}</p>
       </article> : null}
 
-      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Every session curriculum selector now contains the complete {levelId} dictionary.</p>{renderSessions()}</article> : null}
+      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Click a session dictionary control to open the complete {levelId} dictionary, search all {dictionaryEntries.length} items and select one or several assignments.</p>{renderSessions()}</article> : null}
 
       {!loading && dashboard && activeTab === "curriculum" ? <article className="card">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
