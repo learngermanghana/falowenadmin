@@ -128,18 +128,25 @@ function applyCurriculumGroup(session, group, index) {
 }
 
 export function suppressNormalCurriculumDuplicates(sessions = []) {
+  const protectedDays = new Set(
+    sessions
+      .filter((session) => !isPlainGeneratedScheduledSession(session))
+      .map(sessionCurriculumDayKey)
+      .filter(Boolean),
+  );
   const seenNormalDays = new Set();
   return sessions.filter((session) => {
     if (!isPlainGeneratedScheduledSession(session)) return true;
     const key = sessionCurriculumDayKey(session);
     if (!key) return true;
+    if (protectedDays.has(key)) return false;
     if (seenNormalDays.has(key)) return false;
     seenNormalDays.add(key);
     return true;
   });
 }
 
-export function enrichSessionsWithStableCurriculum(klass = {}, sessions = [], groups = []) {
+export function enrichSessionsWithStableCurriculum(_ = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
   let normalIndex = 0;
 

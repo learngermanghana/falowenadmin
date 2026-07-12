@@ -82,6 +82,33 @@ test("rescheduled session keeps the selected curriculum instead of taking the ne
   assert.equal(moved.curriculumIndex, 3);
 });
 
+
+test("manual rescheduled curriculum hides the generated original slot", () => {
+  const groups = [
+    { index: 10, day: 10, assignmentIds: ["A1-1.6"], topic: "Day 10" },
+    { index: 11, day: 11, assignmentIds: ["A1-1.7"], topic: "Day 11" },
+    { index: 12, day: 12, assignmentIds: ["A1-1.8"], topic: "Day 12" },
+  ];
+
+  const enriched = enrichSessionsWithStableCurriculum({}, [
+    { id: "day-10", status: "scheduled", startsAt: "2026-07-09T18:00:00.000Z" },
+    {
+      id: "day-11",
+      status: "rescheduled",
+      manualDateOverride: true,
+      startsAt: "2026-07-11T18:00:00.000Z",
+      assignmentIds: ["A1-1.7"],
+      curriculumIndex: 11,
+      curriculumDay: 11,
+    },
+    { id: "generated-original-day-11", status: "scheduled", startsAt: "2026-07-30T18:00:00.000Z" },
+    { id: "day-12", status: "scheduled", startsAt: "2026-07-31T18:00:00.000Z" },
+  ], groups);
+
+  assert.deepEqual(enriched.map((session) => session.id), ["day-10", "day-11", "day-12"]);
+  assert.equal(enriched.find((session) => session.id === "day-11").topic, "Day 11");
+});
+
 test("normal scheduled sessions follow main source order even when old stored IDs are wrong", () => {
   const groups = [
     { index: 1, day: 1, assignmentIds: ["A1-0.1"], topic: "Day 1" },
