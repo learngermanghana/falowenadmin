@@ -29,13 +29,13 @@ test("manual duplicate suppression works when startsAt is a Firestore Timestamp-
   assert.deepEqual(sessions.map((session) => session.id), ["day-12", "day-14"]);
 });
 
-test("normal generated same-date sessions stay visible when no manual reschedule exists", () => {
+test("normal generated same-date sessions collapse to one official class date", () => {
   const sessions = suppressGeneratedDateDuplicates([
     { id: "morning", status: "scheduled", startsAt: "2026-06-25T06:00:00.000Z" },
     { id: "evening", status: "scheduled", startsAt: "2026-06-25T18:00:00.000Z" },
   ], "Africa/Accra");
 
-  assert.deepEqual(sessions.map((session) => session.id), ["morning", "evening"]);
+  assert.deepEqual(sessions.map((session) => session.id), ["morning"]);
 });
 
 test("date duplicate suppression runs after exact-time dedupe and keeps preferred manual session", () => {
