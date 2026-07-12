@@ -1,7 +1,10 @@
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { calculateClassEndDate, setSchedulingSchoolClosureDates } from "../utils/liveClassScheduling.js";
-import { singleSessionPerWeekdayRules } from "../utils/liveClassScheduleRules.js";
+import {
+  duplicateScheduleWeekdays,
+  singleSessionPerWeekdayRules,
+} from "../utils/liveClassScheduleRules.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
 import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
 import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
@@ -25,6 +28,18 @@ function exactOrCalculatedEndDate(payload, calculatedEndDate) {
     return String(payload.endDate || calculatedEndDate || "").trim();
   }
   return laterDate(payload.endDate, calculatedEndDate);
+}
+
+function generationResult(classId, generation = {}) {
+  return {
+    classId,
+    removed: generation.removed || 0,
+    created: generation.created || 0,
+    refreshed: generation.refreshed || generation.enriched || 0,
+    mapped: generation.mapped || 0,
+    preserved: generation.preserved ?? Math.max(0, generation.total - (generation.created || 0)),
+    total: generation.total,
+  };
 }
 
 async function updateHistoricalClass(classId, payload) {
@@ -83,15 +98,56 @@ async function updateHistoricalClass(classId, payload) {
     updatedAt: serverTimestamp(),
   });
 
-  return {
-    classId,
-    removed: generation.removed || 0,
-    created: generation.created || 0,
-    refreshed: generation.refreshed || generation.enriched || 0,
-    mapped: grouped.mapped || generation.mapped || 0,
-    preserved: generation.preserved ?? Math.max(0, generation.total - (generation.created || 0)),
-    total: generation.total,
+  return { ...generationResult(classId, generation), mapped: grouped.mapped || generation.mapped || 0 };
+}
+
+async function repairDuplicateTimetableClass(classId, current, payload) {
+  const classRef = doc(db, "classes", String(classId));
+  const next = {
+    ...current,
+    ...payload,
+    id: classId,
+    name: String(payload.name || current.name || "").trim(),
+    city: String(payload.city ?? current.city ?? "").trim(),
+    levelId: String(payload.levelId || current.levelId || "").trim().toUpperCase(),
+    startDate: String(payload.startDate || current.startDate || "").trim(),
+    endDate: String(payload.endDate || current.endDate || "").trim(),
+    timezone: String(payload.timezone || current.timezone || "Africa/Accra").trim(),
+    status: String(payload.status || current.status || "active").toLowerCase(),
+    scheduleRules: singleSessionPerWeekdayRules(payload.scheduleRules || current.scheduleRules || []),
+    historical: false,
   };
+
+  await updateDoc(classRef, {
+    name: next.name,
+    city: next.city,
+    levelId: next.levelId,
+    startDate: next.startDate,
+    endDate: next.endDate,
+    timezone: next.timezone,
+    status: next.status,
+    tuitionGhs: Number(next.tuitionGhs || 3000),
+    publicVisible: next.publicVisible !== false,
+    registrationOpen: next.registrationOpen !== false,
+    tutorId: String(next.tutorId || "").trim(),
+    zoomProfileId: String(next.zoomProfileId || "").trim(),
+    scheduleRules: next.scheduleRules,
+    historical: false,
+    generationStatus: "pending",
+    generationError: "",
+    duplicateTimetableRepairAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  const generation = await rebuildClassSessionsFromSchedule(classId, next);
+  await updateDoc(classRef, {
+    generationStatus: "complete",
+    generationError: "",
+    generatedSessionCount: generation.total,
+    curriculumMappedSessionCount: generation.mapped || 0,
+    updatedAt: serverTimestamp(),
+  });
+  return generationResult(classId, generation);
 }
 
 export async function updateClassCohort(classId, payload) {
@@ -114,9 +170,12 @@ export async function updateClassCohort(classId, payload) {
   });
   const endDate = exactOrCalculatedEndDate(normalizedPayload, calculatedEndDate);
   const preparedPayload = { ...normalizedPayload, endDate };
+  const repairingDuplicateTimetable = duplicateScheduleWeekdays(current.scheduleRules || []).length > 0;
   const baseResult = normalizedPayload.historicalMode === true
     ? await updateHistoricalClass(classId, preparedPayload)
-    : await base.updateClassCohort(classId, preparedPayload);
+    : repairingDuplicateTimetable
+      ? await repairDuplicateTimetableClass(classId, current, preparedPayload)
+      : await base.updateClassCohort(classId, preparedPayload);
   const groupedResult = normalizedPayload.historicalMode === true
     ? {}
     : await applyGroupedCurriculumToClass(classId);
