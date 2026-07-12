@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { findScheduleItemBySessionId } from "../data/classSchedules";
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides";
@@ -92,6 +92,15 @@ function formatEndTimeLabel(endTime, checkinStatus) {
   return "just now";
 }
 
+function maskEmail(value) {
+  return String(value || "").trim().replace(/(^.).*(@.*$)/, "$1***$2");
+}
+
+function submittedStorageKey(classId, sessionId) {
+  if (!classId || !sessionId) return "";
+  return `falowen-checkin-success:${classId}:${sessionId}`;
+}
+
 function parseExpectedNames(raw) {
   return String(raw || "")
     .split(",")
@@ -130,6 +139,8 @@ export default function CheckinPage() {
     ? String(sessionLabel).trim()
     : (scheduleInfo?.sessionDisplayLabel || "");
 
+  const emailRef = useRef(null);
+  const phoneRef = useRef(null);
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
@@ -163,17 +174,38 @@ export default function CheckinPage() {
     return `attendance/${classId}/sessions/${savedSessionId || sessionId}/checkins`;
   }, [classId, sessionId, savedSessionId]);
 
-  const validationError = useMemo(() => {
-    if (!email.trim()) return "Email is required.";
-    if (!phoneNumber.trim()) return "Phone number is required.";
-    return "";
-  }, [email, phoneNumber]);
+  const fieldErrors = useMemo(() => {
+    const errors = {};
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phoneNumber.trim();
+    if (!trimmedEmail) errors.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) errors.email = "Enter a valid email address.";
+    if (!trimmedPhone) errors.phoneNumber = "Phone number is required.";
+    else if (normalizedPhonePreview.length < 7) errors.phoneNumber = "Enter the phone number linked to your student record.";
+    return errors;
+  }, [email, phoneNumber, normalizedPhonePreview]);
+
+  const validationError = useMemo(() => fieldErrors.email || fieldErrors.phoneNumber || "", [fieldErrors]);
 
   const canSubmit = useMemo(() => {
-    return classId && sessionId && !validationError;
-  }, [classId, sessionId, validationError]);
+    return classId && sessionId && !validationError && !submittedInfo;
+  }, [classId, sessionId, validationError, submittedInfo]);
 
   const statusApiUrl = useMemo(resolveStatusApiUrl, []);
+
+  useEffect(() => {
+    const key = submittedStorageKey(classId, sessionId);
+    if (!key) return;
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(key) || "null");
+      if (stored?.checkedInAt) {
+        setSubmittedInfo(stored);
+        setSavedSessionId(String(stored.savedSessionId || sessionId || ""));
+      }
+    } catch {
+      // Ignore corrupt local confirmation cache; the server remains authoritative.
+    }
+  }, [classId, sessionId]);
 
   useEffect(() => {
     if (!classId || !sessionId || !statusApiUrl) return;
@@ -306,8 +338,14 @@ export default function CheckinPage() {
 
   const submit = async (e) => {
     e.preventDefault();
+    if (submittedInfo) {
+      error("This device has already submitted check-in for this session.");
+      return;
+    }
     if (validationError) {
       error(validationError);
+      if (fieldErrors.email) emailRef.current?.focus();
+      else if (fieldErrors.phoneNumber) phoneRef.current?.focus();
       return;
     }
 
@@ -334,11 +372,15 @@ export default function CheckinPage() {
       const resolvedSavedSessionId = String(data?.savedSessionId || sessionId || "").trim();
       setSavedSessionId(resolvedSavedSessionId);
       success("Check-in successful. You are marked present.");
-      setSubmittedInfo({
-        checkedInAt: Date.now(),
-        maskedEmail: trimmedEmail.replace(/(^.).*(@.*$)/, "$1***$2"),
+      const confirmation = {
+        checkedInAt: data?.submittedAt || Date.now(),
+        maskedEmail: data?.maskedEmail || maskEmail(trimmedEmail),
         savedSessionId: resolvedSavedSessionId,
-      });
+        sessionDisplayLabel: sessionLabel || sessionDisplayLabel,
+      };
+      setSubmittedInfo(confirmation);
+      const key = submittedStorageKey(classId, sessionId);
+      if (key) window.localStorage.setItem(key, JSON.stringify(confirmation));
       setEmail("");
       setPhoneNumber("");
     } catch (err) {
@@ -424,21 +466,37 @@ export default function CheckinPage() {
           </div>
         )}
 
-        <form onSubmit={submit} className="checkin-form">
-          <input
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-label="Email"
-            type="email"
-          />
-          <input
-            placeholder="Phone number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            aria-label="Phone number"
-            type="tel"
-          />
+        <form onSubmit={submit} className="checkin-form" noValidate>
+          <label className="checkin-field">
+            <span>Email</span>
+            <input
+              ref={emailRef}
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              aria-label="Email"
+              aria-invalid={Boolean(fieldErrors.email)}
+              aria-describedby={fieldErrors.email ? "checkin-email-error" : undefined}
+              type="email"
+              disabled={busy || Boolean(submittedInfo)}
+            />
+            {fieldErrors.email && <span id="checkin-email-error" className="checkin-inline-error">{fieldErrors.email}</span>}
+          </label>
+          <label className="checkin-field">
+            <span>Phone number</span>
+            <input
+              ref={phoneRef}
+              placeholder="Phone number"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              aria-label="Phone number"
+              aria-invalid={Boolean(fieldErrors.phoneNumber)}
+              aria-describedby={fieldErrors.phoneNumber ? "checkin-phone-error" : undefined}
+              type="tel"
+              disabled={busy || Boolean(submittedInfo)}
+            />
+            {fieldErrors.phoneNumber && <span id="checkin-phone-error" className="checkin-inline-error">{fieldErrors.phoneNumber}</span>}
+          </label>
 
           {normalizedPhonePreview && (
             <div className="checkin-help">
@@ -448,7 +506,7 @@ export default function CheckinPage() {
 
           {!canSubmit && classId && sessionId && <div className="checkin-inline-error">{validationError}</div>}
 
-          <button disabled={!canSubmit || busy}>{busy ? "Submitting..." : "Mark me present"}</button>
+          <button disabled={!canSubmit || busy}>{submittedInfo ? "Already checked in" : busy ? "Submitting..." : "Mark me present"}</button>
         </form>
 
         <div className="checkin-share">

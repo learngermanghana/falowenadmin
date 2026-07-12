@@ -20,6 +20,38 @@ app.use(cors({ origin: true }));
 app.use(express.json());
 
 const STUDENTS_COLLECTION = "students";
+const CHECKIN_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const CHECKIN_RATE_LIMIT_MAX = 8;
+const checkinRateLimitBuckets = new Map();
+
+function maskEmail(value) {
+  return String(value || "").trim().replace(/(^.).*(@.*$)/, "$1***$2");
+}
+
+function clientRateLimitKey(req, body = {}) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  const ip = forwarded || req.ip || req.socket?.remoteAddress || "unknown";
+  const email = normalizeText(body.email || "");
+  return `${ip}:${email}`;
+}
+
+function consumeCheckinRateLimit(req, body = {}) {
+  const now = Date.now();
+  const key = clientRateLimitKey(req, body);
+  for (const [bucketKey, bucket] of checkinRateLimitBuckets.entries()) {
+    if (!bucket || now - bucket.windowStart > CHECKIN_RATE_LIMIT_WINDOW_MS * 2) checkinRateLimitBuckets.delete(bucketKey);
+  }
+  const bucket = checkinRateLimitBuckets.get(key);
+  if (!bucket || now - bucket.windowStart > CHECKIN_RATE_LIMIT_WINDOW_MS) {
+    checkinRateLimitBuckets.set(key, { windowStart: now, count: 1 });
+    return { allowed: true };
+  }
+  bucket.count += 1;
+  if (bucket.count > CHECKIN_RATE_LIMIT_MAX) {
+    return { allowed: false, retryAfterSeconds: Math.ceil((CHECKIN_RATE_LIMIT_WINDOW_MS - (now - bucket.windowStart)) / 1000) };
+  }
+  return { allowed: true };
+}
 const attendancePinSaltSecret = defineSecret("ATTENDANCE_PIN_SALT");
 const orientationSyncSecret = defineSecret("ORIENTATION_SYNC_SECRET");
 const orientationAppsScriptUrlSecret = defineSecret("ORIENTATION_APPS_SCRIPT_URL");
@@ -330,6 +362,11 @@ app.post("/openSession", async (req, res) => {
 app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
+    const rateLimit = consumeCheckinRateLimit(req, body);
+    if (!rateLimit.allowed) {
+      res.set("Retry-After", String(rateLimit.retryAfterSeconds || 60));
+      return res.status(429).json({ error: "Too many check-in attempts. Please wait a minute and try again." });
+    }
     const classId = normalizeClassComparable(body.classId || body.className);
     const {
       sessionId: rawSessionId,
@@ -465,6 +502,22 @@ app.post("/checkin", async (req, res) => {
     const checkinDocId = String(uid || st.studentCode || st.studentcode || studentDoc.id || "").trim();
     const checkinRef = sessionRef.collection("checkins").doc(checkinDocId);
     const checkinSnap = await checkinRef.get();
+    if (checkinSnap.exists) {
+      await checkinRef.set({
+        attemptCount: admin.firestore.FieldValue.increment(1),
+        lastDuplicateAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      return res.status(409).json({
+        error: "You have already checked in for this session.",
+        ok: true,
+        duplicate: true,
+        savedSessionId: sessionRef.id,
+        requestedSessionId: sessionId,
+        maskedEmail: maskEmail(rawEmail),
+        submittedAt: Date.now(),
+      });
+    }
 
     const checkinPayload = {
       uid,
@@ -483,6 +536,9 @@ app.post("/checkin", async (req, res) => {
       assignment_id: admin.firestore.FieldValue.delete(),
       status: "present",
       method: "qr",
+      source: "student_self_checkin",
+      submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+      attemptCount: 1,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       checkedInAt: admin.firestore.FieldValue.serverTimestamp(),
     };
@@ -498,6 +554,8 @@ app.post("/checkin", async (req, res) => {
       savedSessionId: sessionRef.id,
       requestedSessionId: sessionId,
       usedFallbackSession: sessionLookup.usedFallback,
+      maskedEmail: maskEmail(rawEmail),
+      submittedAt: Date.now(),
     });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
