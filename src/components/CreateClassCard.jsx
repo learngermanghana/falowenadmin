@@ -1,26 +1,39 @@
 import { useState } from "react";
 import { createClassCohort } from "../services/liveClassService.js";
 import { calculateClassEndDate, validateIanaTimezone } from "../utils/liveClassScheduling.js";
+import { nextUnusedScheduleDay, scheduleRulesForEditor } from "../utils/liveClassScheduleRules.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
 const emptyForm = () => ({ name: "", levelId: "A1", tutorId: "", startDate: "", endDate: "", timezone: "Africa/Accra", status: "upcoming", zoomProfileId: "", scheduleRules: [{ ...RULE }] });
+const dayLabel = (value) => String(value || "").slice(0, 3).toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 
 export default function CreateClassCard({ onCreated, onDuplicate }) {
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const patch = (values, recalculate = false) => setForm((current) => { const next = { ...current, ...values }; const endDate = recalculate ? calculateClassEndDate(next) : ""; return endDate ? { ...next, endDate } : next; });
+  const patch = (values, recalculate = false) => setForm((current) => { const next = { ...current, ...values }; const endDate = recalculate ? calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) }) : ""; return endDate ? { ...next, endDate } : next; });
   const patchRule = (index, values) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.map((rule, i) => i === index ? { ...rule, ...values } : rule) }));
+  const removeRule = (index) => setForm((current) => ({ ...current, scheduleRules: current.scheduleRules.filter((_, i) => i !== index) }));
+  const addRule = () => setForm((current) => {
+    const nextDay = nextUnusedScheduleDay(current.scheduleRules);
+    if (!nextDay) {
+      setMessage("All seven weekdays already have a teaching time. A class can have only one session per date.");
+      return current;
+    }
+    return { ...current, scheduleRules: [...current.scheduleRules, { ...RULE, day: dayLabel(nextDay) }] };
+  });
 
   async function submit(event) {
     event.preventDefault(); setMessage("");
     if (!form.name.trim()) return setMessage("Class name is required.");
     if (!form.startDate || !form.endDate || form.endDate < form.startDate) return setMessage("Enter valid start and end dates.");
     if (!validateIanaTimezone(form.timezone)) return setMessage("Enter a valid timezone such as Africa/Accra.");
+    const scheduleRules = scheduleRulesForEditor(form.scheduleRules);
+    if (!scheduleRules.length) return setMessage("Add at least one weekly teaching time.");
     setBusy(true);
     try {
-      const record = await createClassCohort({ ...form, historicalMode: false });
+      const record = await createClassCohort({ ...form, scheduleRules, historicalMode: false });
       setMessage(`Class created successfully. Final end date: ${record.endDate}.`); setForm(emptyForm()); await onCreated?.(record.id);
     } catch (error) {
       const text = error?.message || "Class creation failed";
@@ -37,7 +50,7 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
       <label>Tutor ID<input value={form.tutorId} onChange={(event) => patch({ tutorId: event.target.value })} /></label><label>Zoom profile ID<input value={form.zoomProfileId} onChange={(event) => patch({ zoomProfileId: event.target.value })} /></label>
       <label>Status<select value={form.status} onChange={(event) => patch({ status: event.target.value })}>{["draft", "upcoming", "active", "graduated"].map((status) => <option key={status}>{status}</option>)}</select></label><label>Timezone<input required value={form.timezone} onChange={(event) => patch({ timezone: event.target.value })} /></label>
     </div>
-    <strong>Weekly teaching times</strong>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8 }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input type="number" min="30" step="15" value={rule.durationMinutes} onChange={(event) => patchRule(index, { durationMinutes: Number(event.target.value) })} /></div>)}
-    <button type="button" onClick={() => setForm((current) => ({ ...current, scheduleRules: [...current.scheduleRules, { ...RULE }] }))}>Add another time</button>{message ? <div>{message}</div> : null}<button type="submit" disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
+    <strong>Weekly teaching times</strong><p style={{ margin: 0, fontSize: 13 }}>Use one teaching time per weekday. This prevents two curriculum sessions from being created on the same date.</p>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input type="number" min="30" step="15" value={rule.durationMinutes} onChange={(event) => patchRule(index, { durationMinutes: Number(event.target.value) })} /><button type="button" disabled={form.scheduleRules.length === 1} onClick={() => removeRule(index)}>Remove</button></div>)}
+    <button type="button" onClick={addRule}>Add another weekday</button>{message ? <div>{message}</div> : null}<button type="submit" disabled={busy}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
   </form></article>;
 }
