@@ -93,10 +93,12 @@ export const courseDictionary = {
 };
 
 export function getCourseDictionaryEntry(assignmentId) {
-  const normalizedId = String(assignmentId || "").trim();
+  const normalizedId = String(assignmentId || "").trim().toUpperCase();
   const level = normalizedId.split("-")[0]?.toUpperCase();
   if (!level || !courseDictionary[level]) return null;
-  return courseDictionary[level][normalizedId] || null;
+  return Object.values(courseDictionary[level]).find((entry) =>
+    String(entry.assignment_id || "").trim().toUpperCase() === normalizedId,
+  ) || null;
 }
 
 export function getUnifiedTopicLabel(assignmentId, fallbackTopic = "") {

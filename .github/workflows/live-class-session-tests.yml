@@ -5,6 +5,8 @@ on:
     paths:
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
+      - 'src/data/courseDictionary.js'
+      - 'src/data/courseSessionGroups.js'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassSchedulePreparation.js'
@@ -13,6 +15,7 @@ on:
       - 'src/utils/liveClassScheduling.js'
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
+      - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
@@ -23,6 +26,8 @@ on:
     paths:
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
+      - 'src/data/courseDictionary.js'
+      - 'src/data/courseSessionGroups.js'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassSchedulePreparation.js'
@@ -31,6 +36,7 @@ on:
       - 'src/utils/liveClassScheduling.js'
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
+      - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
@@ -57,6 +63,7 @@ jobs:
       - name: Run live class session tests
         run: >-
           node --test
+          tests/course-dictionary-id-casing.test.js
           tests/live-class-schedule-rules.test.js
           tests/live-class-session-dedupe.test.js
           tests/live-class-session-rebuild.test.js
