@@ -127,10 +127,28 @@
   gap: 10px;
 }
 
+.checkin-field {
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
 .checkin-form input {
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   padding: 12px;
+}
+
+.checkin-form input[aria-invalid="true"] {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.checkin-form input:disabled {
+  background: #f8fafc;
+  color: #64748b;
 }
 
 .checkin-help {
