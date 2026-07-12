@@ -1,3 +1,4 @@
+/* eslint-disable no-regex-spaces */
 import { readFileSync, writeFileSync } from "node:fs";
 
 function replaceRequired(text, oldBlock, newBlock, label) {
