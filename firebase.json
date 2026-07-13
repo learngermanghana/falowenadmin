@@ -15,7 +15,8 @@
         "node scripts/patchSheetRowManagementRoutes.mjs",
         "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
         "node scripts/patchLiveClassUpdateScheduleSync.mjs",
-        "node scripts/patchHolidayClassScheduleAwareness.mjs"
+        "node scripts/patchHolidayClassScheduleAwareness.mjs",
+        "node scripts/patchStudentDeletionRuntime.mjs"
       ],
       "ignore": [
         "node_modules",
