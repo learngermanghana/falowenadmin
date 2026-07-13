@@ -60,6 +60,8 @@ const classScheduleAppsScriptUrlSecret = defineSecret("CLASS_SCHEDULE_APPS_SCRIP
 const holidaysAppsScriptUrlSecret = defineSecret("HOLIDAYS_APPS_SCRIPT_URL");
 const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
 const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");
+const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIPT_URL");
+const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -1346,6 +1348,176 @@ async function callOpenAiForMarking(payload = {}) {
   return normalizeAiMarkingResult(JSON.parse(content), payload);
 }
 
+
+function cleanIdentifier(value) {
+  return String(value || "").trim();
+}
+
+function normalizeLower(value) {
+  return cleanIdentifier(value).toLowerCase();
+}
+
+function uniqueNonEmpty(values = []) {
+  return [...new Set(values.map(cleanIdentifier).filter(Boolean))];
+}
+
+async function deleteQuerySnapshot(queryRef, summary, label) {
+  const snap = await queryRef.get();
+  await Promise.all(snap.docs.map((docSnap) => docSnap.ref.delete()));
+  summary.deleted += snap.size;
+  summary.collections[label] = (summary.collections[label] || 0) + snap.size;
+}
+
+async function deleteMatchingCollectionDocs(collectionId, fieldNames, values, summary) {
+  for (const fieldName of fieldNames) {
+    for (const value of values) {
+      await deleteQuerySnapshot(
+        db.collection(collectionId).where(fieldName, "==", value),
+        summary,
+        collectionId,
+      );
+    }
+  }
+}
+
+async function deleteMatchingCollectionGroupDocs(collectionId, fieldNames, values, summary) {
+  for (const fieldName of fieldNames) {
+    for (const value of values) {
+      await deleteQuerySnapshot(
+        db.collectionGroup(collectionId).where(fieldName, "==", value),
+        summary,
+        `${collectionId}/*`,
+      );
+    }
+  }
+}
+
+async function deleteKnownNestedSubmissionScopes(studentCodeValues, summary) {
+  const levelValues = ["A1", "A2", "B1", "a1", "a2", "b1"];
+  for (const level of levelValues) {
+    for (const code of studentCodeValues) {
+      const scopeRef = db.doc(`submissions/${level}/${code}`);
+      await db.recursiveDelete(scopeRef).catch(() => undefined);
+      summary.deleted += 1;
+      summary.collections["submissions/nested-scope"] = (summary.collections["submissions/nested-scope"] || 0) + 1;
+    }
+  }
+}
+
+async function removeStudentFromAttendanceMaps(identifierValues, summary) {
+  const sessions = await db.collectionGroup("sessions").get();
+  const deleteValue = admin.firestore.FieldValue.delete();
+  const exactIdentifiers = new Set(identifierValues.map(cleanIdentifier));
+  const lowerIdentifiers = new Set(identifierValues.map(normalizeLower));
+  let updated = 0;
+  for (const session of sessions.docs) {
+    const data = session.data() || {};
+    if (!data.students || typeof data.students !== "object") continue;
+    const updateArgs = [];
+    for (const key of Object.keys(data.students)) {
+      const entry = data.students[key] || {};
+      const candidates = [key, entry.studentCode, entry.studentId, entry.uid, entry.email].map(cleanIdentifier);
+      if (candidates.some((candidate) => exactIdentifiers.has(candidate) || lowerIdentifiers.has(normalizeLower(candidate)))) {
+        updateArgs.push(new admin.firestore.FieldPath("students", key), deleteValue);
+      }
+    }
+    if (updateArgs.length) {
+      await session.ref.update(...updateArgs);
+      updated += 1;
+    }
+  }
+  summary.attendanceSessionMapsUpdated = updated;
+}
+
+async function deleteAuthUserIfPresent({ uid, email }) {
+  const candidates = uniqueNonEmpty([uid]);
+  if (email) {
+    const user = await admin.auth().getUserByEmail(email).catch(() => null);
+    if (user?.uid) candidates.push(user.uid);
+  }
+  const deleted = [];
+  for (const candidate of uniqueNonEmpty(candidates)) {
+    await admin.auth().deleteUser(candidate).then(() => deleted.push(candidate)).catch(() => undefined);
+  }
+  return deleted;
+}
+
+async function deleteStudentRowsFromSheet({ studentId, studentCode, email, student }) {
+  const appsScriptUrl = String(studentDeleteAppsScriptUrlSecret.value() || process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim();
+  const syncSecret = String(studentDeleteSyncSecret.value() || process.env.STUDENT_DELETE_SYNC_SECRET || "").trim();
+  if (!appsScriptUrl || !syncSecret) {
+    return { attempted: false, success: true, message: "Student delete Google Sheets webhook is not configured." };
+  }
+
+  const response = await fetch(appsScriptUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      secret: syncSecret,
+      action: "deleteStudentAccount",
+      studentId,
+      studentCode,
+      email,
+      student,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  return {
+    attempted: true,
+    success: response.ok && data?.ok !== false,
+    message: data?.message || (response.ok ? "Google Sheet cleanup completed." : "Google Sheet cleanup failed."),
+    details: data,
+  };
+}
+
+app.post("/students/delete-account", async (req, res) => {
+  try {
+    await requireAuth(req);
+    const body = req.body || {};
+    const student = body.student || {};
+    const studentId = cleanIdentifier(body.studentId || student.id);
+    const studentCode = cleanIdentifier(body.studentCode || student.studentCode || student.studentcode || student.uid || studentId);
+    const email = normalizeLower(body.email || student.email);
+    if (!studentId && !studentCode && !email) return res.status(400).json({ error: "studentId, studentCode, or email is required" });
+
+    const studentDocIds = uniqueNonEmpty([studentId, studentCode, student.uid]);
+    const codeValues = uniqueNonEmpty([studentCode, student.studentCode, student.studentcode, student.uid, studentId]);
+    const emailValues = uniqueNonEmpty([email, student.email]);
+    const allValues = uniqueNonEmpty([...studentDocIds, ...codeValues, ...emailValues]);
+    const summary = { deleted: 0, collections: {}, attendanceSessionMapsUpdated: 0, authUsersDeleted: [] };
+
+    for (const docId of studentDocIds) {
+      const ref = db.collection(STUDENTS_COLLECTION).doc(docId);
+      const snap = await ref.get();
+      if (snap.exists) {
+        await db.recursiveDelete(ref);
+        summary.deleted += 1;
+        summary.collections.students = (summary.collections.students || 0) + 1;
+      }
+    }
+
+    await deleteMatchingCollectionDocs("submissions", ["studentCode", "studentcode", "studentId", "uid", "email", "studentEmail"], allValues, summary);
+    await deleteMatchingCollectionDocs("scores", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
+    await deleteMatchingCollectionDocs("markingResults", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
+    await deleteMatchingCollectionDocs("markingJobs", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
+    await deleteMatchingCollectionDocs("aiAudits", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
+    await deleteMatchingCollectionDocs("studentNotifications", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
+    await deleteMatchingCollectionGroupDocs("notifications", ["studentCode", "studentcode", "studentId", "studentEmail", "email"], allValues, summary);
+    await deleteMatchingCollectionGroupDocs("checkins", ["studentCode", "studentcode", "studentId", "uid", "email"], allValues, summary);
+    await deleteKnownNestedSubmissionScopes(codeValues, summary);
+    await removeStudentFromAttendanceMaps(allValues, summary);
+    summary.authUsersDeleted = await deleteAuthUserIfPresent({ uid: student.uid || studentId, email });
+
+    const sheet = await deleteStudentRowsFromSheet({ studentId, studentCode, email, student });
+    if (sheet.attempted && !sheet.success) {
+      return res.status(502).json({ ok: false, error: sheet.message, firestore: summary, sheet });
+    }
+    return res.json({ ok: true, firestore: summary, sheet });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || "Student account deletion failed" });
+  }
+});
+
 app.post("/marking/ai", async (req, res) => {
   try {
     const payload = req.body || {};
@@ -1620,5 +1792,7 @@ exports.api = onRequest({
     holidaysAppsScriptUrlSecret,
     holidaysSyncSecret,
     openAiApiKeySecret,
+    studentDeleteAppsScriptUrlSecret,
+    studentDeleteSyncSecret,
   ],
 }, app);

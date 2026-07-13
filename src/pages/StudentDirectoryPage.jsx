@@ -460,6 +460,16 @@ export default function StudentDirectoryPage() {
     }
   };
 
+  const handleSupportStudentDeleted = (studentId) => {
+    setStudents((prev) => prev.filter((record) => record.id !== studentId));
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[studentId];
+      return next;
+    });
+    setSelectedStudentId("");
+  };
+
   const handleSupportStudentUpdated = (studentId, payload) => {
     setStudents((prev) => prev.map((record) => (record.id === studentId ? { ...record, ...payload } : record)));
     setDrafts((prev) => {
@@ -720,6 +730,7 @@ export default function StudentDirectoryPage() {
                         <StudentSupportTools
                           student={selectedStudent}
                           draft={getDraft(selectedStudent)}
+                          onStudentDeleted={handleSupportStudentDeleted}
                           onStudentUpdated={handleSupportStudentUpdated}
                           pushToast={pushToast}
                         />

@@ -1053,6 +1053,7 @@ export default async function handler(req, res) {
     path.startsWith("holidays/") ||
     path.startsWith("orientation/") ||
     path.startsWith("class-schedule/") ||
+    path.startsWith("students/") ||
     path.startsWith("marking/")
   ) {
     return proxyToFalowenFunction(req, res, path, url);
