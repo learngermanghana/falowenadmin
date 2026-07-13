@@ -208,6 +208,29 @@ async function authHeaders() {
   };
 }
 
+export function parseStudentDeletionResponse(response = {}, responseText = "") {
+  const text = String(responseText || "").trim();
+  let data = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {};
+    }
+  }
+
+  if (!response.ok || data?.ok === false) {
+    const nonHtmlText = text && !/^\s*</.test(text) ? text.slice(0, 500) : "";
+    const statusLabel = [response.status, response.statusText].filter(Boolean).join(" ");
+    const fallback = response.status === 404
+      ? "Student deletion endpoint is not deployed yet. Deploy the latest Firebase function and retry."
+      : `Student deletion request failed${statusLabel ? ` (${statusLabel})` : ""}.`;
+    throw new Error(String(data?.error || data?.message || nonHtmlText || fallback));
+  }
+
+  return data;
+}
+
 export async function deleteStudentAccount(student = {}) {
   const studentId = normalize(student.id);
   const studentCode = normalize(student.studentCode || student.studentcode || student.uid || studentId);
@@ -223,12 +246,8 @@ export async function deleteStudentAccount(student = {}) {
     body: JSON.stringify({ studentId, studentCode, email, student }),
   });
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data?.ok === false) {
-    throw new Error(String(data?.error || "Failed to delete student account"));
-  }
-
-  return data;
+  const responseText = await response.text();
+  return parseStudentDeletionResponse(response, responseText);
 }
 
 export async function createStudent(studentId, payload) {
