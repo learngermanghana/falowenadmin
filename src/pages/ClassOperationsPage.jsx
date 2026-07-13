@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 
 const operations = [
   {
@@ -38,6 +39,7 @@ export default function ClassOperationsPage() {
     <div className="page-container">
       <h1>Class Operations</h1>
       <p>Access all class administration tools from one place.</p>
+      <OperationsCommunicationPanel context="class-operations" />
 
       <div className="card-grid">
         {operations.map((operation) => (

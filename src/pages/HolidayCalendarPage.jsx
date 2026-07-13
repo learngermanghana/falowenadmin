@@ -7,6 +7,7 @@ import {
   updateHoliday,
 } from "../services/holidayCalendarService";
 import { listClasses } from "../services/classesService";
+import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 
 const currentYear = new Date().getFullYear();
 
@@ -158,6 +159,7 @@ export default function HolidayCalendarPage() {
   return (
     <div className="page-container">
       <h1>Holiday Calendar (Ghana)</h1>
+      <OperationsCommunicationPanel context="holidays" />
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
         <label htmlFor="holiday-year">Year:</label>
