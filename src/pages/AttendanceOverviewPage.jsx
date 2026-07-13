@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listClasses, setClassArchived } from "../services/classesService";
+import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 
 const GHANA_TIMEZONE = "Africa/Accra";
 
@@ -187,6 +188,8 @@ export default function AttendanceOverviewPage() {
           <Link to="/marking">Open marking console</Link>
         </div>
       </div>
+
+      <OperationsCommunicationPanel context="attendance" />
 
       {loading && <p>Loading classes...</p>}
       {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}

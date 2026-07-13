@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
@@ -458,6 +459,8 @@ export default function LiveClassesPageV2() {
         <div><h1>Live Classes</h1><p>Manage classes, sessions, attendance and the complete course dictionary from the same record.</p></div>
         <Link to="/attendance">Attendance overview</Link>
       </div>
+
+      <OperationsCommunicationPanel context="live-classes" />
 
       {message ? <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: messageIsSuccess ? "#f0fdf4" : "#eff6ff", border: messageIsSuccess ? "1px solid #bbf7d0" : "1px solid #bfdbfe" }}>{message}</div> : null}
 
