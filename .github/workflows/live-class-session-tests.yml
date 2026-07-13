@@ -8,10 +8,14 @@ on:
       - 'src/components/SessionDictionaryPicker.jsx'
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
+      - 'src/pages/CanonicalAttendancePage.jsx'
+      - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/classCohortUpdateService.js'
+      - 'src/services/liveClassCancelService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassRebuildService.js'
+      - 'src/services/liveClassRescheduleService.js'
       - 'src/services/liveClassSchedulePreparation.js'
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/utils/liveClassDictionarySelection.js'
@@ -27,6 +31,7 @@ on:
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
+      - 'tests/live-class-unified-session-change-ui.test.js'
       - '.github/workflows/live-class-session-tests.yml'
   push:
     branches:
@@ -37,10 +42,14 @@ on:
       - 'src/components/SessionDictionaryPicker.jsx'
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
+      - 'src/pages/CanonicalAttendancePage.jsx'
+      - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/classCohortUpdateService.js'
+      - 'src/services/liveClassCancelService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassRebuildService.js'
+      - 'src/services/liveClassRescheduleService.js'
       - 'src/services/liveClassSchedulePreparation.js'
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/utils/liveClassDictionarySelection.js'
@@ -56,6 +65,7 @@ on:
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
+      - 'tests/live-class-unified-session-change-ui.test.js'
       - '.github/workflows/live-class-session-tests.yml'
   workflow_dispatch:
 
@@ -86,6 +96,7 @@ jobs:
           tests/live-class-schedule-rules.test.js
           tests/live-class-session-dedupe.test.js
           tests/live-class-session-rebuild.test.js
+          tests/live-class-unified-session-change-ui.test.js
 
       - name: Build dashboard
         run: npm run build

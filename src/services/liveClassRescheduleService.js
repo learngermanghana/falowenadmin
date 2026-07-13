@@ -107,6 +107,9 @@ async function repairSessionClassLink(sessionId, session, resolvedClassId, klass
 
 async function markClassScheduleTouched(classId, sessionId, normalizedPayload) {
   await updateDoc(doc(db, "classes", String(classId)), {
+    lastSessionChangeType: "rescheduled",
+    lastChangedSessionId: String(sessionId),
+    lastSessionChangeReason: String(normalizedPayload.reason || "").trim(),
     lastRescheduledSessionId: String(sessionId),
     lastRescheduledStartsAt: normalizedPayload.startsAt,
     lastRescheduledEndsAt: normalizedPayload.endsAt,
@@ -162,6 +165,7 @@ export async function rescheduleSession(sessionId, payload) {
     return {
       classId: resolvedClassId,
       sessionId,
+      status: "scheduled",
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
       emailSubmitted: Boolean(receipt?.sheet?.success),
@@ -171,6 +175,7 @@ export async function rescheduleSession(sessionId, payload) {
     return {
       classId: resolvedClassId,
       sessionId,
+      status: "scheduled",
       startsAt: normalizedPayload.startsAt,
       endsAt: normalizedPayload.endsAt,
       emailSubmitted: false,
