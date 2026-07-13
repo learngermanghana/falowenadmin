@@ -19,7 +19,7 @@ test("same-day A1 tasks share one attendance session", () => {
   );
   assert.deepEqual(
     findCourseSessionGroup("A1", "A1-1.2")?.assignmentIds,
-    ["A1-1.1-PRACTICE", "A1-1.2"],
+    ["A1-1.1-practice", "A1-1.2"],
   );
   assert.deepEqual(
     findCourseSessionGroup("A1", "A1-9")?.assignmentIds,
