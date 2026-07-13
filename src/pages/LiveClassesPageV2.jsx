@@ -8,6 +8,7 @@ import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
 import { courseDictionary } from "../data/courseDictionary.js";
 import {
+  cancelSession,
   listClassCohorts,
   markSessionCompleted,
   rescheduleSession,
@@ -41,9 +42,9 @@ const tabs = [
 
 const SESSION_CHANGE_REASONS = [
   { label: "Wrong date", value: "This class had the wrong date in the timetable, so the class date has been corrected." },
-  { label: "Raining / light out", value: "Class cannot hold because it is raining and the lights are out." },
-  { label: "Travelled", value: "Class cannot hold because the teacher travelled and is not available." },
-  { label: "Emergency", value: "Class cannot hold because of an emergency." },
+  { label: "Raining / light out", value: "The class cannot hold because of heavy rain and a power outage." },
+  { label: "Tutor travelled", value: "The class cannot hold because the tutor is unavailable due to travel." },
+  { label: "Emergency", value: "The class cannot hold because of an emergency." },
 ];
 
 function normalize(value) {
@@ -219,7 +220,7 @@ export default function LiveClassesPageV2() {
   );
   const nextCountdown = dashboard?.nextSession ? calculateCountdown(dashboard.nextSession.startsAt) : null;
   const mappedCount = (dashboard?.sessions || []).filter((session) => curriculumIds(session).length).length;
-  const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled/i.test(message);
+  const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled|rescheduled|moved/i.test(message);
 
   const sessionsByDictionaryId = useMemo(() => {
     const result = new Map();
@@ -294,6 +295,7 @@ export default function LiveClassesPageV2() {
   }
 
   function openSessionChange(session) {
+    const status = String(session.status || "scheduled").toLowerCase();
     setMessage("");
     setSessionChange({
       sessionId: session.id,
@@ -301,8 +303,11 @@ export default function LiveClassesPageV2() {
       className: dashboard?.klass?.name || session.className || "",
       action: "reschedule",
       startsAt: toDateTimeLocal(session.startsAt),
-      reason: session.rescheduleReason || session.cancellationReason || SESSION_CHANGE_REASONS[0].value,
+      reason: status === "cancelled"
+        ? (session.cancellationReason || "This cancelled session has been moved to a new date and reactivated.")
+        : (session.rescheduleReason || SESSION_CHANGE_REASONS[0].value),
       durationMinutes: sessionDurationMinutes(session),
+      originalStatus: status,
     });
   }
 
@@ -311,31 +316,56 @@ export default function LiveClassesPageV2() {
     if (!sessionChange?.sessionId) return;
     setBusy(true);
     setMessage("");
+
     try {
       const adminId = user?.uid || user?.email || "admin";
+      const classId = sessionChange.classId || dashboard?.klass?.id || selectedClassId;
+      const className = sessionChange.className || dashboard?.klass?.name || "";
+      const reason = String(sessionChange.reason || "").trim();
+      if (!reason) throw new Error("Write the reason or message students should receive.");
+
+      if (sessionChange.action === "cancel") {
+        const cancelResult = await cancelSession(sessionChange.sessionId, {
+          reason,
+          adminId,
+          classId,
+          className,
+        });
+        const emailNote = cancelResult?.emailSubmitted === false
+          ? ` Communication email could not be confirmed: ${cancelResult.emailMessage || "check Communication"}.`
+          : "";
+        const successMessage = `Session cancelled. Attendance and check-in are locked, the class schedule and calendar feed were updated, and student communication was prepared.${emailNote}`;
+        setSessionChange(null);
+        await refreshDashboard(selectedClassId);
+        setMessage(successMessage);
+        toast.success(successMessage, { durationMs: 8000 });
+        return;
+      }
+
       const parts = splitDateTimeLocal(sessionChange.startsAt);
       if (!parts) throw new Error("Choose the new Ghana date and time.");
       const rescheduleResult = await rescheduleSession(sessionChange.sessionId, {
         localDate: parts.localDate,
         localTime: parts.localTime,
         startsAt: sessionChange.startsAt,
-        reason: sessionChange.reason,
+        reason,
         adminId,
-        classId: sessionChange.classId || dashboard?.klass?.id || selectedClassId,
-        className: sessionChange.className || dashboard?.klass?.name || "",
+        classId,
+        className,
         timezone: dashboard?.klass?.timezone || "Africa/Accra",
         durationMinutes: sessionChange.durationMinutes,
       });
       const emailNote = rescheduleResult?.emailSubmitted === false
-        ? ` Communication email could not be confirmed: ${rescheduleResult.emailMessage || "check Communication"}`
+        ? ` Communication email could not be confirmed: ${rescheduleResult.emailMessage || "check Communication"}.`
         : "";
-      const successMessage = `Success: session rescheduled to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Attendance, calendar feed and Communication were updated automatically.${emailNote}`;
+      const successMessage = `Session moved to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Attendance, class schedule, calendar feed and student communication were updated automatically.${emailNote}`;
       setSessionChange(null);
       await refreshDashboard(selectedClassId);
       setMessage(successMessage);
-      toast.success(successMessage, { durationMs: 7000 });
+      toast.success(successMessage, { durationMs: 8000 });
     } catch (error) {
       setMessage(error?.message || "Session update failed");
+      toast.error(error?.message || "Session update failed", { durationMs: 7000 });
     } finally {
       setBusy(false);
     }
@@ -364,17 +394,50 @@ export default function LiveClassesPageV2() {
 
   function renderSessionChangeForm(session) {
     if (!sessionChange || sessionChange.sessionId !== session.id) return null;
+    const cancelling = sessionChange.action === "cancel";
+    const alreadyCancelled = sessionChange.originalStatus === "cancelled";
+
     return (
-      <form onSubmit={handleSessionChangeSubmit} style={{ display: "grid", gap: 10, padding: 12, border: "1px solid #bfdbfe", borderRadius: 8, background: "#eff6ff" }}>
-        <strong>Update this session: {formatDateTime(session.startsAt)}</strong>
-        <label>New Ghana date and time <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required /></label>
-        <label>Message template <select value="" onChange={(event) => event.target.value && setSessionChange((current) => ({ ...current, reason: event.target.value }))}>
-          <option value="">Choose a ready reason</option>
-          {SESSION_CHANGE_REASONS.map((template) => <option key={template.label} value={template.value}>{template.label}</option>)}
-        </select></label>
-        <label>Reason / message <textarea rows={3} value={sessionChange.reason} onChange={(event) => setSessionChange((current) => ({ ...current, reason: event.target.value }))} placeholder="Write the message students should see" /></label>
+      <form onSubmit={handleSessionChangeSubmit} style={{ display: "grid", gap: 12, padding: 14, border: "1px solid #bfdbfe", borderRadius: 10, background: "#eff6ff" }}>
+        <div>
+          <strong>Change session: {formatDateTime(session.startsAt)}</strong>
+          <div style={{ marginTop: 4, fontSize: 13, color: "#475569" }}>One workflow updates Live Classes, Attendance, the class schedule, calendar feed and student communication.</div>
+        </div>
+
+        <label style={{ display: "grid", gap: 6 }}>
+          <strong>What should happen?</strong>
+          <select value={sessionChange.action} onChange={(event) => setSessionChange((current) => ({ ...current, action: event.target.value }))}>
+            <option value="reschedule">Move to another date or time</option>
+            <option value="cancel" disabled={alreadyCancelled}>Cancel without a new date</option>
+          </select>
+        </label>
+
+        {!cancelling ? (
+          <label style={{ display: "grid", gap: 6 }}>
+            <strong>New Ghana date and time</strong>
+            <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required />
+          </label>
+        ) : (
+          <div style={{ padding: 10, borderRadius: 8, background: "#fff7ed", border: "1px solid #fed7aa", color: "#9a3412" }}>
+            The session will remain visible as cancelled. Attendance and QR check-in will be locked, reminders will stop, and students will be notified.
+          </div>
+        )}
+
+        <label style={{ display: "grid", gap: 6 }}>
+          <strong>Message template</strong>
+          <select value="" onChange={(event) => event.target.value && setSessionChange((current) => ({ ...current, reason: event.target.value }))}>
+            <option value="">Choose a ready reason</option>
+            {SESSION_CHANGE_REASONS.map((template) => <option key={template.label} value={template.value}>{template.label}</option>)}
+          </select>
+        </label>
+
+        <label style={{ display: "grid", gap: 6 }}>
+          <strong>Reason / message to students</strong>
+          <textarea rows={3} value={sessionChange.reason} onChange={(event) => setSessionChange((current) => ({ ...current, reason: event.target.value }))} placeholder="Write the message students should receive" required />
+        </label>
+
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="submit" disabled={busy}>{busy ? "Saving…" : "Reschedule and update session"}</button>
+          <button type="submit" disabled={busy}>{busy ? "Saving…" : cancelling ? "Cancel session and notify students" : alreadyCancelled ? "Move and reactivate session" : "Move session and notify students"}</button>
           <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
         </div>
       </form>
@@ -386,31 +449,38 @@ export default function LiveClassesPageV2() {
     if (!sessions.length) {
       return <p>No sessions were found for this class record. Open Class & settings and save the timetable to generate them.</p>;
     }
+
     return (
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th>Ghana date and time</th><th>Status</th><th>Topic</th><th>Complete dictionary selection</th><th>Actions</th></tr></thead>
           <tbody>
             {sessions.map((session) => {
-              const locked = ["cancelled", "completed"].includes(String(session.status || "").toLowerCase());
+              const status = String(session.status || "scheduled").toLowerCase();
+              const contentLocked = ["cancelled", "completed"].includes(status);
+              const changeLocked = status === "completed";
               return [
                 <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb", verticalAlign: "top" }}>
                   <td style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
-                  <td style={{ padding: 8 }}><span style={{ ...statusStyle(session.status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{session.status || "scheduled"}</span></td>
+                  <td style={{ padding: 8 }}>
+                    <span style={{ ...statusStyle(status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{status}</span>
+                    {status === "cancelled" && session.cancellationReason ? <small style={{ display: "block", marginTop: 6, color: "#991b1b" }}>{session.cancellationReason}</small> : null}
+                    {status === "scheduled" && session.rescheduleReason ? <small style={{ display: "block", marginTop: 6, color: "#475569" }}>Moved: {session.rescheduleReason}</small> : null}
+                  </td>
                   <td style={{ padding: 8 }}>{session.topic || "No topic"}</td>
                   <td style={{ padding: 8, minWidth: 350 }}>
                     <SessionDictionaryPicker
                       entries={dictionaryEntries}
                       assignmentIds={curriculumIds(session)}
-                      disabled={busy || locked || !dictionaryEntries.length}
+                      disabled={busy || contentLocked || !dictionaryEntries.length}
                       onChange={(nextIds) => saveDictionarySelection(session, nextIds)}
                     />
                   </td>
                   <td style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Link to={`/attendance/session/${dashboard.klass.id || selectedClassId}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
-                    <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
-                    <button type="button" disabled={busy || locked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Editing…" : "Reschedule"}</button>
-                    <button type="button" disabled={busy || locked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
+                    <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
+                    <button type="button" disabled={busy || changeLocked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Changing…" : status === "cancelled" ? "Move / reactivate" : "Change session"}</button>
+                    <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "complete")}>Complete</button>
                   </div></td>
                 </tr>,
                 sessionChange?.sessionId === session.id ? (
@@ -457,7 +527,7 @@ export default function LiveClassesPageV2() {
     <section className="page-container">
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div><h1>Live Classes</h1><p>Manage classes, sessions, attendance and the complete course dictionary from the same record.</p></div>
-        <Link to="/attendance">Attendance overview</Link>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}><Link to="/attendance">Attendance overview</Link><Link to="/class-schedule-setup">Class schedule page</Link></div>
       </div>
 
       <OperationsCommunicationPanel context="live-classes" />
@@ -495,9 +565,10 @@ export default function LiveClassesPageV2() {
         <p><strong>Course dates:</strong> {dashboard.klass.startDate || "Not set"} to {getEffectiveClassEndDate(dashboard.klass, dashboard.sessions) || "Not set"}</p>
         <div style={{ display: "grid", gap: 8, margin: "14px 0" }}>{(dashboard.klass.scheduleRules || []).length ? dashboard.klass.scheduleRules.map((rule, index) => <div key={`${rule.day}-${rule.startTime}-${index}`} style={{ padding: 10, border: "1px solid #e2e8f0", borderRadius: 8 }}>{scheduleRuleLabel(rule)}</div>) : <p>No weekly teaching times are saved.</p>}</div>
         <p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)} {nextCountdown ? `(${nextCountdown.days}d ${nextCountdown.hours}h ${nextCountdown.minutes}m)` : ""}</p>
+        <p><Link to="/class-schedule-setup">Open Class Schedule Setup</Link> to review the base weekly schedule. Individual moved or cancelled lessons remain controlled by the shared session record here.</p>
       </article> : null}
 
-      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Click a session dictionary control to open the complete {levelId} dictionary, search all {dictionaryEntries.length} items and select one or several assignments.</p>{renderSessions()}</article> : null}
+      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Use <strong>Change session</strong> to move a lesson or cancel it without a replacement date. The same change appears in Attendance and the class schedule workflow.</p><p>Click a session dictionary control to open the complete {levelId} dictionary, search all {dictionaryEntries.length} items and select one or several assignments.</p>{renderSessions()}</article> : null}
 
       {!loading && dashboard && activeTab === "curriculum" ? <article className="card">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -507,7 +578,7 @@ export default function LiveClassesPageV2() {
         {renderFullDictionary()}
       </article> : null}
 
-      {!loading && dashboard && activeTab === "communication" ? <article className="card"><h2>Schedule and communication</h2><p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)}</p><p>Latest completed: {formatDateTime(dashboard.latestCompletedSession?.startsAt)}</p><p>Calendar: <a href={`/api/calendar/class/${dashboard.klass.id}.ics`}>Open class calendar feed</a></p></article> : null}
+      {!loading && dashboard && activeTab === "communication" ? <article className="card"><h2>Schedule and communication</h2><p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)}</p><p>Latest completed: {formatDateTime(dashboard.latestCompletedSession?.startsAt)}</p><p>Calendar: <a href={`/api/calendar/class/${dashboard.klass.id}.ics`}>Open class calendar feed</a></p><p>Moving or cancelling a session creates the matching student notification and communication record automatically.</p></article> : null}
     </section>
   );
 }
