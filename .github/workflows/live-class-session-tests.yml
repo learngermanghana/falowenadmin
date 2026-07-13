@@ -10,6 +10,7 @@ on:
       - 'src/data/courseSessionGroups.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/classCohortUpdateService.js'
+      - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassSchedulePreparation.js'
       - 'src/services/liveClassSessionCleanupService.js'
@@ -20,6 +21,7 @@ on:
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
@@ -37,6 +39,7 @@ on:
       - 'src/data/courseSessionGroups.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/classCohortUpdateService.js'
+      - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassSchedulePreparation.js'
       - 'src/services/liveClassSessionCleanupService.js'
@@ -47,6 +50,7 @@ on:
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
@@ -76,6 +80,7 @@ jobs:
         run: >-
           node --test
           tests/course-dictionary-id-casing.test.js
+          tests/live-class-complete-session-visibility.test.js
           tests/live-class-dictionary-selection.test.js
           tests/live-class-rebuild-identity.test.js
           tests/live-class-schedule-rules.test.js
