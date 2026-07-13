@@ -14,12 +14,14 @@ on:
       - 'src/services/liveClassSchedulePreparation.js'
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassScheduleRules.js'
       - 'src/utils/liveClassScheduling.js'
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
+      - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
@@ -39,12 +41,14 @@ on:
       - 'src/services/liveClassSchedulePreparation.js'
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassScheduleRules.js'
       - 'src/utils/liveClassScheduling.js'
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
+      - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
@@ -73,6 +77,7 @@ jobs:
           node --test
           tests/course-dictionary-id-casing.test.js
           tests/live-class-dictionary-selection.test.js
+          tests/live-class-rebuild-identity.test.js
           tests/live-class-schedule-rules.test.js
           tests/live-class-session-dedupe.test.js
           tests/live-class-session-rebuild.test.js
