@@ -51,7 +51,8 @@ jobs:
             scripts/patchSheetRowManagementRoutes.mjs \
             scripts/patchOperationalSheetAutoSyncJobs.mjs \
             scripts/patchLiveClassUpdateScheduleSync.mjs \
-            scripts/patchHolidayClassScheduleAwareness.mjs
+            scripts/patchHolidayClassScheduleAwareness.mjs \
+            scripts/patchStudentDeletionRuntime.mjs
           do
             echo "Checking $script"
             node --check "$script"
