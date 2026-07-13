@@ -114,6 +114,8 @@ export default function StudentSupportTools({ student, draft = {}, onStudentDele
     setBusyAction(key);
     try {
       await handler();
+    } catch (error) {
+      notify("error", error?.message || "The requested student action failed.");
     } finally {
       setBusyAction("");
     }
@@ -175,10 +177,15 @@ export default function StudentSupportTools({ student, draft = {}, onStudentDele
 
       const result = await deleteStudentAccount({ ...student, ...draft, id: student.id });
       onStudentDeleted?.(student.id, result);
+      const warningCount = Array.isArray(result?.firestore?.warnings) ? result.firestore.warnings.length : 0;
       const sheetMessage = result?.sheet?.attempted
-        ? (result.sheet.success ? " Google Sheet cleanup completed." : ` Google Sheet cleanup needs attention: ${result.sheet.message || "failed"}`)
-        : " Google Sheet cleanup skipped because the webhook is not configured.";
-      notify("success", `Deleted ${studentName}'s student account and ${result?.firestore?.deleted || 0} Firestore record(s).${sheetMessage}`);
+        ? (result.sheet.success ? " Google Sheet cleanup completed." : ` Google Sheet cleanup needs attention: ${result.sheet.message || "failed"}.`)
+        : " Google Sheet cleanup was skipped because the webhook is not configured.";
+      const warningMessage = warningCount ? ` ${warningCount} additional cleanup warning(s) were recorded.` : "";
+      notify(
+        "success",
+        `Deleted ${studentName}'s student account and ${result?.firestore?.deleted || 0} Firestore record(s).${sheetMessage}${warningMessage}`,
+      );
     });
 
   return (
