@@ -66,7 +66,7 @@ export function suppressGeneratedDateDuplicates(sessions = [], timezone = "Afric
     .sort((left, right) => sessionTime(left) - sessionTime(right));
 }
 
-export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone = "Africa/Accra" } = {}) {
+export function dedupeCompatibleSessionRecords(sessions = [], { classId = "" } = {}) {
   const byMoment = new Map();
   sessions.forEach((session) => {
     const time = sessionTime(session);
@@ -77,7 +77,15 @@ export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone
     }
   });
 
-  return suppressGeneratedDateDuplicates([...byMoment.values()], timezone, classId);
+  return [...byMoment.values()].sort((left, right) => sessionTime(left) - sessionTime(right));
+}
+
+export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone = "Africa/Accra" } = {}) {
+  return suppressGeneratedDateDuplicates(
+    dedupeCompatibleSessionRecords(sessions, { classId }),
+    timezone,
+    classId,
+  );
 }
 
 export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0) {
@@ -108,6 +116,15 @@ function sessionCurriculumDayKey(session = {}) {
   const index = Number(session.curriculumIndex);
   if (Number.isFinite(index) && index > 0) return `index:${index}`;
   return assignmentIdsForSession(session).join("|");
+}
+
+function courseGroupKey(group = null) {
+  if (!group) return "";
+  if (normalize(group.key)) return normalize(group.key);
+  const day = Number(group.day);
+  if (Number.isFinite(day)) return `day:${day}`;
+  const ids = Array.isArray(group.assignmentIds) ? group.assignmentIds : [];
+  return ids.map((value) => normalize(value).toUpperCase()).filter(Boolean).join("|");
 }
 
 function applyCurriculumGroup(session, group, index) {
@@ -146,10 +163,42 @@ export function suppressNormalCurriculumDuplicates(sessions = []) {
   });
 }
 
+function enrichCompleteSessionSet(ordered = [], groups = []) {
+  const protectedGroups = new Map();
+  const claimedGroupKeys = new Set();
+
+  ordered.forEach((session) => {
+    if (isPlainGeneratedScheduledSession(session)) return;
+    const group = resolveSessionCourseGroup(session, groups, -1);
+    const key = courseGroupKey(group);
+    if (!group || !key || claimedGroupKeys.has(key)) return;
+    protectedGroups.set(session.id, group);
+    claimedGroupKeys.add(key);
+  });
+
+  const remainingGroups = groups.filter((group) => !claimedGroupKeys.has(courseGroupKey(group)));
+  let remainingIndex = 0;
+
+  return ordered.map((session, index) => {
+    const protectedGroup = protectedGroups.get(session.id);
+    if (protectedGroup) return applyCurriculumGroup(session, protectedGroup, index);
+    const group = remainingGroups[remainingIndex] || null;
+    remainingIndex += 1;
+    return applyCurriculumGroup(session, group, index);
+  });
+}
+
 export function enrichSessionsWithStableCurriculum(_ = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
-  let normalIndex = 0;
 
+  // When the rebuilt record count already matches the curriculum-day count, every
+  // official session must remain visible. Protected/rescheduled sessions keep their
+  // stored curriculum and the remaining groups fill the remaining chronological rows.
+  if (ordered.length <= groups.length) {
+    return enrichCompleteSessionSet(ordered, groups);
+  }
+
+  let normalIndex = 0;
   const enriched = ordered.map((session) => {
     if (!isPlainGeneratedScheduledSession(session)) {
       const group = resolveSessionCourseGroup(session, groups, normalIndex);
