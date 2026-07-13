@@ -67,7 +67,7 @@ replaceRequired(
           collectionId,
         );
       } catch (error) {
-        addStudentDeletionWarning(summary, \`${collectionId}.${fieldName}\`, error);
+        addStudentDeletionWarning(summary, \`\${collectionId}.\${fieldName}\`, error);
       }
     }
   }
@@ -83,7 +83,7 @@ replaceRequired(
       await deleteQuerySnapshot(
         db.collectionGroup(collectionId).where(fieldName, "==", value),
         summary,
-        \`${collectionId}/*\`,
+        \`\${collectionId}/*\`,
       );
     }
   }
@@ -96,10 +96,10 @@ replaceRequired(
         await deleteQuerySnapshot(
           db.collectionGroup(collectionId).where(fieldName, "==", value),
           summary,
-          \`${collectionId}/*\`,
+          \`\${collectionId}/*\`,
         );
       } catch (error) {
-        addStudentDeletionWarning(summary, \`${collectionId}/*.${fieldName}\`, error);
+        addStudentDeletionWarning(summary, \`\${collectionId}/*.\${fieldName}\`, error);
       }
     }
   }
@@ -113,7 +113,7 @@ replaceRequired(
   const levelValues = ["A1", "A2", "B1", "a1", "a2", "b1"];
   for (const level of levelValues) {
     for (const code of studentCodeValues) {
-      const scopeRef = db.doc(\`submissions/${level}/${code}\`);
+      const scopeRef = db.doc(\`submissions/\${level}/\${code}\`);
       await db.recursiveDelete(scopeRef).catch(() => undefined);
       summary.deleted += 1;
       summary.collections["submissions/nested-scope"] = (summary.collections["submissions/nested-scope"] || 0) + 1;
@@ -136,7 +136,7 @@ replaceRequired(
         summary.deleted += directDocs.size;
         summary.collections["submissions/nested-scope"] = (summary.collections["submissions/nested-scope"] || 0) + directDocs.size;
       } catch (error) {
-        addStudentDeletionWarning(summary, \`submissions/${level}/${code}\`, error);
+        addStudentDeletionWarning(summary, \`submissions/\${level}/\${code}\`, error);
       }
     }
   }
@@ -194,7 +194,7 @@ replaceRequired(
     }
     const warningCount = summary.warnings.length;
     const message = warningCount
-      ? \`Student account deletion completed with ${warningCount} cleanup warning(s).\`
+      ? \`Student account deletion completed with \${warningCount} cleanup warning(s).\`
       : "Student account deletion completed successfully.";
     return res.json({ ok: true, message, firestore: summary, sheet });
   } catch (e) {
