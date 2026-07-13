@@ -15,7 +15,7 @@ import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
 import {
   assignmentIdsForSession,
-  dedupeCompatibleSessions,
+  dedupeCompatibleSessionRecords,
   enrichSessionsWithStableCurriculum,
 } from "../utils/liveClassSessionDedupe.js";
 import { syncClassCurriculum as syncBaseClassCurriculum } from "./liveClassService.js";
@@ -161,10 +161,9 @@ async function loadCompatibleSessions(classId, klass = {}) {
     }
   }
 
-  return dedupeCompatibleSessions([...found.values()], {
-    classId,
-    timezone: klass.timezone || "Africa/Accra",
-  });
+  // Remove true duplicate aliases at the same moment, but do not hide a separate
+  // lesson merely because another lesson was rescheduled onto the same Ghana date.
+  return dedupeCompatibleSessionRecords([...found.values()], { classId });
 }
 
 function enrichSessions(klass, sessions = []) {
