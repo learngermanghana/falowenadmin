@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase.js";
-import { updateStudentById } from "../services/studentsService.js";
+import { deleteStudentAccount, updateStudentById } from "../services/studentsService.js";
 
 const REVIEW_LINK = "https://g.page/r/Cdogveq3Hy69EBM/review";
 
@@ -92,7 +92,7 @@ function buildReviewRequestMessage(student) {
   return `Hello ${name}, thank you for learning with Learn Language Education Academy / Falowen. Please share a review about your course, the school, and the app here: ${REVIEW_LINK}. Your feedback helps us improve and helps other students find us. Thank you.`;
 }
 
-export default function StudentSupportTools({ student, draft = {}, onStudentUpdated, pushToast }) {
+export default function StudentSupportTools({ student, draft = {}, onStudentDeleted, onStudentUpdated, pushToast }) {
   const [busyAction, setBusyAction] = useState("");
 
   if (!student) return null;
@@ -163,6 +163,24 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
     openWhatsappWithMessage(buildReviewRequestMessage(student), "This student has no valid WhatsApp/phone number for the review link.");
   };
 
+  const deleteAccount = () =>
+    runAction("delete", async () => {
+      const typed = window.prompt(
+        `This permanently deletes ${studentName}'s Falowen account, submissions, scores, notifications, attendance check-ins, and linked Google Sheet rows where configured. Type DELETE to continue.`,
+      );
+      if (typed !== "DELETE") {
+        notify("info", "Student account deletion cancelled.");
+        return;
+      }
+
+      const result = await deleteStudentAccount({ ...student, ...draft, id: student.id });
+      onStudentDeleted?.(student.id, result);
+      const sheetMessage = result?.sheet?.attempted
+        ? (result.sheet.success ? " Google Sheet cleanup completed." : ` Google Sheet cleanup needs attention: ${result.sheet.message || "failed"}`)
+        : " Google Sheet cleanup skipped because the webhook is not configured.";
+      notify("success", `Deleted ${studentName}'s student account and ${result?.firestore?.deleted || 0} Firestore record(s).${sheetMessage}`);
+    });
+
   return (
     <section
       style={{
@@ -178,7 +196,7 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
       <div>
         <h3 style={{ margin: "0 0 4px" }}>Student support</h3>
         <p style={{ margin: 0, color: "#64748b" }}>
-          Main actions only: password, account status, payment reminder, and review link.
+          Main actions only: password, account status, payment reminder, review link, and permanent account deletion.
         </p>
       </div>
 
@@ -194,6 +212,14 @@ export default function StudentSupportTools({ student, draft = {}, onStudentUpda
         </button>
         <button type="button" onClick={sendReviewLink}>
           Review link
+        </button>
+        <button
+          type="button"
+          onClick={deleteAccount}
+          disabled={busyAction === "delete"}
+          style={{ background: "#dc2626", borderColor: "#b91c1c" }}
+        >
+          {busyAction === "delete" ? "Deleting..." : "Delete account"}
         </button>
       </div>
 

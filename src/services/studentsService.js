@@ -1,4 +1,5 @@
 import { collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
+import { auth } from "../firebase.js";
 import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
@@ -197,6 +198,37 @@ export async function listAllStudents() {
 
 export async function updateStudentById(studentId, payload) {
   return updateStudentByIdWithFirestore(studentId, payload);
+}
+
+async function authHeaders() {
+  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : "";
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+export async function deleteStudentAccount(student = {}) {
+  const studentId = normalize(student.id);
+  const studentCode = normalize(student.studentCode || student.studentcode || student.uid || studentId);
+  const email = normalize(student.email).toLowerCase();
+
+  if (!studentId && !studentCode && !email) {
+    throw new Error("Student ID, student code, or email is required");
+  }
+
+  const response = await fetch("/api/students/delete-account", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ studentId, studentCode, email, student }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.ok === false) {
+    throw new Error(String(data?.error || "Failed to delete student account"));
+  }
+
+  return data;
 }
 
 export async function createStudent(studentId, payload) {
