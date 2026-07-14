@@ -57,6 +57,25 @@ function activeSession(session = {}) {
   return status !== "cancelled" && status !== "superseded" && session.superseded !== true;
 }
 
+function a1SessionNumber(session = {}, groups = []) {
+  const directDay = Number(session.curriculumDay);
+  if (Number.isFinite(directDay) && directDay >= 0) {
+    const directIndex = groups.findIndex((group) => Number(group.day) === directDay);
+    if (directIndex >= 0) return directIndex + 1;
+  }
+
+  const topic = normalize(session.topic || session.title);
+  const dayMatch = topic.match(/\bDay\s+(\d+)\b/i);
+  if (dayMatch) {
+    const day = Number(dayMatch[1]);
+    const topicIndex = groups.findIndex((group) => Number(group.day) === day);
+    if (topicIndex >= 0) return topicIndex + 1;
+    if (day >= 0 && day < groups.length) return day + 1;
+  }
+
+  return null;
+}
+
 export function countSessionTimeCollisions(sessions = []) {
   const byMoment = new Map();
   sessions.filter(activeSession).forEach((session) => {
@@ -113,8 +132,19 @@ function sessionRecordPreference(session = {}, classId = "") {
 }
 
 export function sessionLessonNumber(session = {}) {
-  const topicMatch = normalize(session.topic || session.title).match(/\bLesson\s+(\d+)\b/i);
+  const topic = normalize(session.topic || session.title);
+
+  const dayMatch = topic.match(/\bDay\s+(\d+)\b/i);
+  if (dayMatch) return Number(dayMatch[1]) + 1;
+
+  const directDay = Number(session.curriculumDay);
+  if (Number.isFinite(directDay) && directDay >= 0) return directDay + 1;
+
+  const topicMatch = topic.match(/\bLesson\s+(\d+)\b/i);
   if (topicMatch) return Number(topicMatch[1]);
+
+  const curriculumIndex = Number(session.curriculumIndex || 0);
+  if (Number.isFinite(curriculumIndex) && curriculumIndex > 0) return curriculumIndex;
 
   const ids = assignmentIdsForSession(session);
   for (const value of ids) {
@@ -122,13 +152,17 @@ export function sessionLessonNumber(session = {}) {
     if (match) return Number(match[1]);
   }
 
-  const curriculumIndex = Number(session.curriculumIndex || 0);
-  if (Number.isFinite(curriculumIndex) && curriculumIndex > 0) return curriculumIndex;
-
   return null;
 }
 
 export function resolveOfficialSessionNumber(session = {}, groups = [], levelId = "") {
+  const normalizedLevel = normalize(levelId).toUpperCase();
+
+  if (normalizedLevel === "A1") {
+    const dayNumber = a1SessionNumber(session, groups);
+    if (dayNumber) return dayNumber;
+  }
+
   const ids = assignmentIdsForSession(session);
   if (ids.length) {
     const exactIndex = groups.findIndex((group) => sameAssignmentSet(ids, group.assignmentIds || []));
@@ -146,15 +180,6 @@ export function resolveOfficialSessionNumber(session = {}, groups = [], levelId 
   if (lessonMatch) {
     const value = Number(lessonMatch[1]);
     if (value >= 1 && value <= groups.length) return value;
-  }
-
-  if (normalize(levelId).toUpperCase() === "A1") {
-    const dayMatch = topic.match(/\bDay\s+(\d+)\b/i);
-    if (dayMatch) {
-      const day = Number(dayMatch[1]);
-      const groupIndex = groups.findIndex((group) => Number(group.day) === day);
-      if (groupIndex >= 0) return groupIndex + 1;
-    }
   }
 
   const curriculumIndex = Number(session.curriculumIndex || 0);
