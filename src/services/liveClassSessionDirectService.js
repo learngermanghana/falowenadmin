@@ -4,9 +4,8 @@ import {
   getDoc,
   getDocs,
   query,
+  runTransaction,
   serverTimestamp,
-  setDoc,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../firebase.js";
@@ -117,39 +116,123 @@ async function assertTargetSlotAvailable({ classId, sessionId, startsAt, session
   throw error;
 }
 
-async function syncOptionalReferences({ classId, sessionId, patch, changeType, reason, classPatch = {} }) {
-  if (!classId) return ["The session was saved, but its class link is missing."];
+function staleChangeError(message) {
+  const error = new Error(message);
+  error.code = "live-class/stale-session";
+  return error;
+}
 
-  const writes = [
-    setDoc(doc(db, "attendance", classId, "sessions", sessionId), {
+async function commitSessionChangeAtomically({
+  classId,
+  session,
+  patch,
+  changeType,
+  reason,
+  adminId = "admin",
+  classPatch = {},
+  expectedClassScheduleVersion = 0,
+}) {
+  if (!classId) throw new Error("The session is not linked to a class.");
+
+  const sessionRef = doc(db, "classSessions", normalize(session.id));
+  const attendanceRef = doc(db, "attendance", classId, "sessions", normalize(session.id));
+  const classRef = doc(db, "classes", classId);
+  const calendarRef = doc(db, "calendarFeeds", classId);
+  const auditRef = doc(collection(db, "auditLogs"));
+  const scheduleVersion = Date.now();
+  const expectedSessionSequence = Number(session.sequence || 0);
+  const expectedClassVersion = Number(expectedClassScheduleVersion || 0);
+
+  await runTransaction(db, async (transaction) => {
+    const [latestSessionSnap, latestClassSnap] = await Promise.all([
+      transaction.get(sessionRef),
+      transaction.get(classRef),
+    ]);
+
+    if (!latestSessionSnap.exists()) throw new Error("Session not found");
+    if (!latestClassSnap.exists()) throw new Error("Class not found");
+
+    const latestSession = { id: latestSessionSnap.id, ...latestSessionSnap.data() };
+    const latestClass = { id: latestClassSnap.id, ...latestClassSnap.data() };
+    const latestSessionSequence = Number(latestSession.sequence || 0);
+    const latestClassVersion = Number(latestClass.sessionScheduleVersion || 0);
+
+    if (latestSessionSequence !== expectedSessionSequence) {
+      throw staleChangeError("This session changed while you were editing it. Refresh Live Classes and try again.");
+    }
+    if (latestClassVersion !== expectedClassVersion) {
+      throw staleChangeError("This class timetable changed while you were editing it. Refresh Live Classes and try again.");
+    }
+
+    const changeMetadata = {
+      ...classPatch,
+      lastSessionChangeType: changeType,
+      lastChangedSessionId: normalize(session.id),
+      lastSessionChangeReason: reason,
+      lastSessionChangeBy: adminId,
+      lastSessionChangeAt: serverTimestamp(),
+      lastSessionChangePreviousStartsAt: session.startsAt || "",
+      lastSessionChangePreviousEndsAt: session.endsAt || "",
+      lastSessionChangeStartsAt: patch.startsAt || "",
+      lastSessionChangeEndsAt: patch.endsAt || "",
+      ...(changeType === "rescheduled" ? {
+        lastRescheduledSessionId: normalize(session.id),
+        lastRescheduledStartsAt: patch.startsAt || "",
+      } : {}),
+      ...(changeType === "cancelled" ? {
+        lastCancelledSessionId: normalize(session.id),
+      } : {}),
+      sessionScheduleVersion: scheduleVersion,
+      sessionScheduleUpdatedAt: serverTimestamp(),
+      reminderScheduleVersion: scheduleVersion,
+      reminderScheduleUpdatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    transaction.update(sessionRef, patch);
+    transaction.set(attendanceRef, {
       classId,
-      classSessionId: sessionId,
+      classSessionId: normalize(session.id),
       startsAt: patch.startsAt || "",
       endsAt: patch.endsAt || "",
       sessionStatus: patch.status,
       cancellationReason: patch.cancellationReason || "",
+      reminderScheduleVersion: scheduleVersion,
       updatedAt: serverTimestamp(),
-    }, { merge: true }),
-    setDoc(doc(db, "classes", classId), {
-      ...classPatch,
-      lastSessionChangeType: changeType,
-      lastChangedSessionId: sessionId,
-      lastSessionChangeReason: reason,
-      sessionScheduleVersion: Date.now(),
-      sessionScheduleUpdatedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    }, { merge: true }),
-    setDoc(doc(db, "calendarFeeds", classId), {
+    }, { merge: true });
+    transaction.set(classRef, changeMetadata, { merge: true });
+    transaction.set(calendarRef, {
       classId,
+      sessionScheduleVersion: scheduleVersion,
       updatedAt: serverTimestamp(),
-    }, { merge: true }),
-  ];
+    }, { merge: true });
+    transaction.set(auditRef, {
+      type: "live-class-session-change",
+      entityType: "classSession",
+      classId,
+      sessionId: normalize(session.id),
+      changeType,
+      reason,
+      adminId,
+      previousStartsAt: session.startsAt || "",
+      previousEndsAt: session.endsAt || "",
+      previousStatus: normalize(session.status || "scheduled"),
+      nextStartsAt: patch.startsAt || "",
+      nextEndsAt: patch.endsAt || "",
+      nextStatus: normalize(patch.status || session.status || "scheduled"),
+      sessionSequenceBefore: expectedSessionSequence,
+      sessionSequenceAfter: Number(patch.sequence || expectedSessionSequence),
+      classScheduleVersionBefore: expectedClassVersion,
+      classScheduleVersionAfter: scheduleVersion,
+      createdAt: serverTimestamp(),
+    });
+  });
 
-  const labels = ["attendance", "class schedule", "calendar feed"];
-  const results = await Promise.allSettled(writes);
-  return results
-    .map((result, index) => result.status === "rejected" ? `${labels[index]} sync failed` : "")
-    .filter(Boolean);
+  return {
+    atomicWrite: true,
+    auditLogId: auditRef.id,
+    scheduleVersion,
+  };
 }
 
 async function loadSession(sessionId) {
@@ -160,9 +243,10 @@ async function loadSession(sessionId) {
 }
 
 export async function cancelSession(sessionId, payload = {}) {
-  const { sessionRef, session } = await loadSession(sessionId);
+  const { session } = await loadSession(sessionId);
   const classId = normalize(payload.classId || session.classId || session.classRecordId);
   const reason = normalize(payload.reason);
+  const klass = await loadClassRecord(classId);
   const patch = {
     startsAt: session.startsAt || "",
     endsAt: session.endsAt || "",
@@ -175,27 +259,29 @@ export async function cancelSession(sessionId, payload = {}) {
     updatedAt: serverTimestamp(),
   };
 
-  await updateDoc(sessionRef, patch);
-  const syncWarnings = await syncOptionalReferences({
+  const atomic = await commitSessionChangeAtomically({
     classId,
-    sessionId: session.id,
+    session,
     patch,
     changeType: "cancelled",
     reason,
+    adminId: payload.adminId || "admin",
+    expectedClassScheduleVersion: klass.sessionScheduleVersion,
   });
 
   return {
     classId,
     sessionId: session.id,
     status: "cancelled",
+    ...atomic,
     emailSubmitted: false,
     emailMessage: "Student email is no longer part of the save action. Use the Communication tab to notify students.",
-    syncWarnings,
+    syncWarnings: [],
   };
 }
 
 export async function rescheduleSession(sessionId, payload = {}) {
-  const { sessionRef, session } = await loadSession(sessionId);
+  const { session } = await loadSession(sessionId);
   const classId = normalize(payload.classId || session.classId || session.classRecordId);
   const reason = normalize(payload.reason);
   const times = resolveMoveTimes(payload, session);
@@ -248,7 +334,6 @@ export async function rescheduleSession(sessionId, payload = {}) {
     enforceEndDate: true,
   });
 
-  await updateDoc(sessionRef, patch);
   const classPatch = {
     endDate: proposedEndDate,
     configuredEndDate: proposedEndDate,
@@ -260,13 +345,15 @@ export async function rescheduleSession(sessionId, payload = {}) {
     timetableIntegrityIssueCount: 0,
     timetableIntegrityValidatedAt: serverTimestamp(),
   };
-  const syncWarnings = await syncOptionalReferences({
+  const atomic = await commitSessionChangeAtomically({
     classId,
-    sessionId: session.id,
+    session,
     patch,
     changeType: "rescheduled",
     reason,
+    adminId: payload.adminId || "admin",
     classPatch,
+    expectedClassScheduleVersion: klass.sessionScheduleVersion,
   });
 
   return {
@@ -277,8 +364,9 @@ export async function rescheduleSession(sessionId, payload = {}) {
     endsAt: times.endsAt,
     endDate: proposedEndDate,
     integrity,
+    ...atomic,
     emailSubmitted: false,
     emailMessage: "Student email is no longer part of the save action. Use the Communication tab to notify students.",
-    syncWarnings,
+    syncWarnings: [],
   };
 }
