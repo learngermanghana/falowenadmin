@@ -3,6 +3,11 @@ name: Live Class Session Tests
 on:
   pull_request:
     paths:
+      - 'functions/attendanceConfirmationEmails.js'
+      - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'firebase.json'
+      - 'src/App.jsx'
+      - 'src/components/AttendanceConfirmationAutomationPanel.jsx'
       - 'src/components/ClassAttendanceTracker.jsx'
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
@@ -14,9 +19,11 @@ on:
       - 'src/pages/AttendanceOverviewPage.jsx'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
       - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/attendanceAnalyticsService.js'
+      - 'src/services/attendanceConfirmationEmailService.js'
       - 'src/services/attendanceService.js'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassCancelService.js'
@@ -38,6 +45,8 @@ on:
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/attendance-analytics.test.js'
+      - 'tests/attendance-confirmation-email-ui.test.js'
+      - 'tests/attendance-confirmation-emails.test.js'
       - 'tests/attendance-tracking-ui.test.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-a1-b1-timetable-repair.test.js'
@@ -56,6 +65,11 @@ on:
     branches:
       - main
     paths:
+      - 'functions/attendanceConfirmationEmails.js'
+      - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'firebase.json'
+      - 'src/App.jsx'
+      - 'src/components/AttendanceConfirmationAutomationPanel.jsx'
       - 'src/components/ClassAttendanceTracker.jsx'
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
@@ -67,9 +81,11 @@ on:
       - 'src/pages/AttendanceOverviewPage.jsx'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
       - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/attendanceAnalyticsService.js'
+      - 'src/services/attendanceConfirmationEmailService.js'
       - 'src/services/attendanceService.js'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassCancelService.js'
@@ -91,6 +107,8 @@ on:
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/attendance-analytics.test.js'
+      - 'tests/attendance-confirmation-email-ui.test.js'
+      - 'tests/attendance-confirmation-emails.test.js'
       - 'tests/attendance-tracking-ui.test.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-a1-b1-timetable-repair.test.js'
@@ -124,10 +142,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate attendance confirmation worker
+        run: |
+          node --check functions/attendanceConfirmationEmails.js
+          node --check scripts/patchAttendanceConfirmationEmails.mjs
+
       - name: Run live class session tests
         run: >-
           node --test
           tests/attendance-analytics.test.js
+          tests/attendance-confirmation-email-ui.test.js
+          tests/attendance-confirmation-emails.test.js
           tests/attendance-tracking-ui.test.js
           tests/course-dictionary-id-casing.test.js
           tests/live-class-a1-b1-timetable-repair.test.js
