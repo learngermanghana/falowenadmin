@@ -25,18 +25,17 @@ function resolveMoveTimes(payload = {}, session = {}) {
   const localTime = normalize(payload.localTime || payload.time);
   const minutes = durationMinutes(payload, session);
 
-  let startsAt = "";
+  let startsAtDate = null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(localDate) && /^\d{2}:\d{2}$/.test(localTime)) {
-    startsAt = zonedLocalToUtcIso(localDate, localTime, timezone);
+    startsAtDate = new Date(zonedLocalToUtcIso(localDate, localTime, timezone));
   } else {
     const rawStart = normalize(payload.startsAt);
     const localMatch = rawStart.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/);
-    startsAt = localMatch
-      ? zonedLocalToUtcIso(localMatch[1], localMatch[2], timezone)
-      : new Date(rawStart).toISOString();
+    startsAtDate = localMatch
+      ? new Date(zonedLocalToUtcIso(localMatch[1], localMatch[2], timezone))
+      : new Date(rawStart);
   }
 
-  const startsAtDate = new Date(startsAt);
   if (Number.isNaN(startsAtDate.getTime())) throw new Error("Choose a valid new date and time.");
 
   return {
@@ -92,6 +91,8 @@ export async function cancelSession(sessionId, payload = {}) {
   const classId = normalize(payload.classId || session.classId || session.classRecordId);
   const reason = normalize(payload.reason);
   const patch = {
+    startsAt: session.startsAt || "",
+    endsAt: session.endsAt || "",
     status: "cancelled",
     cancellationReason: reason,
     cancelledBy: payload.adminId || "admin",
