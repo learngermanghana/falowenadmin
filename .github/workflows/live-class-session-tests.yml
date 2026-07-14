@@ -32,6 +32,7 @@ on:
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/live-class-a1-b1-timetable-repair.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
@@ -76,6 +77,7 @@ on:
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
       - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/live-class-a1-b1-timetable-repair.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
@@ -110,6 +112,7 @@ jobs:
         run: >-
           node --test
           tests/course-dictionary-id-casing.test.js
+          tests/live-class-a1-b1-timetable-repair.test.js
           tests/live-class-complete-session-visibility.test.js
           tests/live-class-dictionary-selection.test.js
           tests/live-class-direct-session-change.test.js
