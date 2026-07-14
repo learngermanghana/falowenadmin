@@ -11,5 +11,9 @@ export {
   cancelSession,
   rescheduleSession,
 } from "./liveClassSessionDirectService.js";
+export {
+  inspectLegacyRescheduleCollision,
+  recoverLegacyRescheduleCollision,
+} from "./liveClassRescheduleRecoveryService.js";
 
 // Curriculum/session contract fields: topic, assignmentIds, chapterIds, curriculumIds, attendanceSessionRef.

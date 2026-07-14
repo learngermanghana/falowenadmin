@@ -133,6 +133,29 @@ function assertCurriculumBoundary({ ordered, selectedIndex, targetStart, mode })
   }
 }
 
+function recoveryBaseline({ klass = {}, selectedSession = {}, selectedCurrent, target, mode }) {
+  if (mode !== "following" || target.start.getTime() !== selectedCurrent.start.getTime()) {
+    return selectedCurrent;
+  }
+
+  const latestSessionId = normalize(klass.lastRescheduledSessionId || klass.lastChangedSessionId);
+  const selectedId = normalize(selectedSession.id);
+  const previousStartsAt = selectedSession.previousStartsAt
+    || (latestSessionId === selectedId ? klass.lastSessionChangePreviousStartsAt : "");
+  const previousEndsAt = selectedSession.previousEndsAt
+    || (latestSessionId === selectedId ? klass.lastSessionChangePreviousEndsAt : "");
+  const previousStart = toDate(previousStartsAt);
+  if (!previousStart || previousStart.getTime() >= target.start.getTime()) return selectedCurrent;
+
+  const previousEnd = toDate(previousEndsAt);
+  const currentDuration = selectedCurrent.end.getTime() - selectedCurrent.start.getTime();
+  const baselineEnd = previousEnd && previousEnd.getTime() > previousStart.getTime()
+    ? previousEnd
+    : new Date(previousStart.getTime() + currentDuration);
+
+  return { start: previousStart, end: baselineEnd };
+}
+
 export function buildSessionReschedulePlan({
   klass = {},
   sessions = [],
@@ -149,6 +172,13 @@ export function buildSessionReschedulePlan({
 
   const selected = ordered[selectedIndex];
   const selectedCurrent = validInterval(selected.session.startsAt, selected.session.endsAt, sessionLabel(selected.session));
+  const selectedBaseline = recoveryBaseline({
+    klass,
+    selectedSession: selected.session,
+    selectedCurrent,
+    target,
+    mode: normalizedMode,
+  });
   assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
 
   const affected = normalizedMode === "following" ? ordered.slice(selectedIndex) : [selected];
@@ -162,16 +192,16 @@ export function buildSessionReschedulePlan({
   }
 
   const deltaMs = normalizedMode === "following"
-    ? target.start.getTime() - selectedCurrent.start.getTime()
+    ? target.start.getTime() - selectedBaseline.start.getTime()
     : 0;
 
   const changes = affected.map(({ session, number }, index) => {
     const current = validInterval(session.startsAt, session.endsAt, sessionLabel(session));
     const startsAt = normalizedMode === "following"
-      ? new Date(current.start.getTime() + deltaMs)
+      ? (index === 0 ? target.start : new Date(current.start.getTime() + deltaMs))
       : target.start;
     const endsAt = normalizedMode === "following"
-      ? new Date(current.end.getTime() + deltaMs)
+      ? (index === 0 ? target.end : new Date(current.end.getTime() + deltaMs))
       : target.end;
     const plannedStatus = index === 0 ? "scheduled" : normalize(session.status || "scheduled").toLowerCase();
     return {
@@ -210,6 +240,7 @@ export function buildSessionReschedulePlan({
     levelId,
     selectedSessionNumber: selected.number,
     deltaMs,
+    recoveredFromPreviousStart: selectedBaseline.start.getTime() !== selectedCurrent.start.getTime(),
     affectedCount: changes.length,
     changes,
   };

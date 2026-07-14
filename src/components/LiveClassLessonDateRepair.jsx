@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityService.js";
 import { repairClassToOfficialLessonSchedule } from "../services/liveClassLessonDateRepairService.js";
-import { listClassCohorts } from "../services/liveClassService.js";
+import {
+  listClassCohorts,
+  recoverLegacyRescheduleCollision,
+} from "../services/liveClassService.js";
 import { buildOfficialLessonSchedulePlan } from "../utils/liveClassLessonOrder.js";
 
 function formatDateTime(value) {
@@ -39,6 +42,7 @@ export default function LiveClassLessonDateRepair() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const recoveryStarted = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -79,6 +83,39 @@ export default function LiveClassLessonDateRepair() {
 
     return () => { active = false; };
   }, [classId]);
+
+  useEffect(() => {
+    if (!classes.length || recoveryStarted.current) return undefined;
+    recoveryStarted.current = true;
+    let active = true;
+
+    (async () => {
+      const repaired = [];
+      for (const klass of classes) {
+        try {
+          const result = await recoverLegacyRescheduleCollision(klass.id, {
+            adminId: user?.uid || user?.email || "schedule-recovery",
+          });
+          if (result.repaired) repaired.push(result);
+        } catch (error) {
+          console.warn(`Could not inspect legacy reschedule for ${klass.id}`, error);
+        }
+      }
+
+      if (!active || !repaired.length) return;
+      const moved = repaired.reduce((total, result) => total + Number(result.movedSessions || 0), 0);
+      const successMessage = `${repaired.length} legacy reschedule collision(s) repaired. ${moved} session(s) were shifted to restore curriculum order.`;
+      setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 10000 });
+
+      if (classId) {
+        const next = await getCompatibleClassDashboard(classId).catch(() => null);
+        if (active && next) setDashboard(next);
+      }
+    })();
+
+    return () => { active = false; };
+  }, [classes, classId, toast, user?.email, user?.uid]);
 
   const preview = useMemo(() => {
     if (!dashboard || !classId) return { plan: null, error: "" };

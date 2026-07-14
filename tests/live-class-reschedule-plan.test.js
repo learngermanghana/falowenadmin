@@ -112,12 +112,49 @@ test("following mode shifts the selected and every later curriculum session by t
   assert.equal(plan.mode, "following");
   assert.equal(plan.affectedCount, 3);
   assert.equal(plan.deltaMs, 24 * 60 * 60 * 1000);
+  assert.equal(plan.recoveredFromPreviousStart, false);
   assert.deepEqual(
     plan.changes.map((change) => [change.session.id, change.startsAt, change.plannedStatus]),
     [
       ["day-1", "2026-06-21T08:00:00.000Z", "scheduled"],
       ["day-2", "2026-06-26T18:00:00.000Z", "scheduled"],
       ["day-3", "2026-06-27T18:00:00.000Z", "cancelled"],
+    ],
+  );
+});
+
+test("following mode repairs a legacy move that placed Day 20 on Day 21", () => {
+  const day19 = session(19, "2026-07-13T19:00:00.000Z");
+  const day20 = {
+    ...session(20, "2026-07-15T19:00:00.000Z"),
+    previousStartsAt: "2026-07-14T19:00:00.000Z",
+    previousEndsAt: "2026-07-14T20:00:00.000Z",
+  };
+  const day21 = session(21, "2026-07-15T19:00:00.000Z");
+  const day22 = session(22, "2026-07-16T19:00:00.000Z");
+
+  const plan = buildSessionReschedulePlan({
+    klass: {
+      ...klass,
+      lastRescheduledSessionId: day20.id,
+      lastSessionChangePreviousStartsAt: day20.previousStartsAt,
+      lastSessionChangePreviousEndsAt: day20.previousEndsAt,
+    },
+    sessions: [day19, day20, day21, day22],
+    sessionId: day20.id,
+    targetStartsAt: day20.startsAt,
+    targetEndsAt: day20.endsAt,
+    mode: "following",
+  });
+
+  assert.equal(plan.recoveredFromPreviousStart, true);
+  assert.equal(plan.deltaMs, 24 * 60 * 60 * 1000);
+  assert.deepEqual(
+    plan.changes.map((change) => [change.session.id, change.startsAt]),
+    [
+      ["day-20", "2026-07-15T19:00:00.000Z"],
+      ["day-21", "2026-07-16T19:00:00.000Z"],
+      ["day-22", "2026-07-17T19:00:00.000Z"],
     ],
   );
 });
