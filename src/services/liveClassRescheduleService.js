@@ -2,6 +2,7 @@ import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 import { formatAccraDateTime } from "../utils/liveClassCancellationEmail.js";
+import { buildRescheduleAnnouncement } from "../utils/liveClassRescheduleEmail.js";
 import { saveAnnouncementRow } from "./communicationService.js";
 import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
 import * as base from "./liveClassServiceBase.js";
@@ -70,28 +71,6 @@ function normalizeReschedulePayload(payload = {}, klass = {}) {
   return { ...payload, startsAt, endsAt, durationMinutes };
 }
 
-function lessonLabel(session = {}) {
-  const topic = String(session.topic || session.title || session.sessionLabel || "").trim();
-  const dayNumber = Number.isFinite(Number(session.curriculumDay)) && Number(session.curriculumDay) >= 0
-    ? Number(session.curriculumDay)
-    : Number.isFinite(Number(session.curriculumIndex)) && Number(session.curriculumIndex) > 0
-      ? Number(session.curriculumIndex) - 1
-      : null;
-  const assignmentIds = [
-    ...(Array.isArray(session.assignmentIds) ? session.assignmentIds : []),
-    ...(Array.isArray(session.chapterIds) ? session.chapterIds : []),
-    ...(Array.isArray(session.curriculumIds) ? session.curriculumIds : []),
-    session.assignment_id,
-  ].map((value) => String(value || "").trim().toUpperCase()).filter(Boolean);
-  const uniqueAssignments = [...new Set(assignmentIds)];
-
-  const parts = [];
-  if (dayNumber !== null) parts.push(`Day ${dayNumber}`);
-  if (topic) parts.push(topic.replace(/^Day\s+\d+\s*:\s*/i, ""));
-  if (uniqueAssignments.length) parts.push(`Assignment ${uniqueAssignments.join(", ")}`);
-  return parts.length ? parts.join(" — ") : "Selected lesson";
-}
-
 async function repairSessionClassLink(sessionId, session, resolvedClassId, klass) {
   const nextClassName = String(klass.name || klass.className || session.className || "").trim();
   const hasClassId = String(session.classId || "") === resolvedClassId;
@@ -141,26 +120,20 @@ export async function rescheduleSession(sessionId, payload) {
   await syncClassEndDateFromSessions(resolvedClassId).catch(() => {});
   await markClassScheduleTouched(resolvedClassId, sessionId, normalizedPayload);
 
-  const className = String(klass.name || session.className || "Falowen class").trim();
-  const lesson = lessonLabel(session);
-  const oldTime = formatAccraDateTime(session.startsAt);
-  const newTime = formatAccraDateTime(normalizedPayload.startsAt);
-  const subject = `Class Rescheduled: ${className} — ${lesson} — ${newTime}`;
-  const announcement = [
-    `Hello everyone, the ${className} live class has been rescheduled.`,
-    `Lesson: ${lesson}`,
-    `Previous time: ${oldTime}`,
-    `New time: ${newTime}`,
-    "Please check your Falowen homepage for the updated class time.",
-  ].join("\n\n");
+  const emailPayload = buildRescheduleAnnouncement({
+    klass,
+    session,
+    previousTime: formatAccraDateTime(session.startsAt),
+    newTime: formatAccraDateTime(normalizedPayload.startsAt),
+  });
 
   try {
     const receipt = await saveAnnouncementRow({
-      announcement,
-      className,
+      announcement: emailPayload.announcement,
+      className: emailPayload.className,
       date: String(normalizedPayload.startsAt || "").slice(0, 10),
       link: "",
-      topic: subject,
+      topic: emailPayload.topic,
     });
     return {
       classId: resolvedClassId,
