@@ -142,7 +142,7 @@ test("Live Classes normalizes stale aliases before legacy reschedule recovery", 
 
   assert.match(recoverySource, /normalizeSupersededSessionStatuses\(normalizedClassId/);
   assert.match(recoverySource, /supersededRecordsNormalized/);
-  assert.match(cleanupSource, /status:\s*"superseded"/);
+  assert.match(cleanupSource, /\.\.\.patch/);
   assert.match(cleanupSource, /sessionStatus:\s*"superseded"/);
   assert.match(cleanupSource, /live-class-superseded-status-normalized/);
 });
