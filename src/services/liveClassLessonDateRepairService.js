@@ -266,10 +266,21 @@ export async function repairClassToOfficialLessonSchedule({
     aliasesSuperseded += 1;
   });
 
+  const planStartDate = normalize(plan.startDate || klass.startDate);
   const relevantClosures = excludedDates.filter((date) =>
-    date >= normalize(klass.startDate) && date <= plan.endDate,
+    date >= planStartDate && date <= plan.endDate,
   );
   batch.set(doc(db, "classes", resolvedClassId), {
+    ...(plan.scheduleAnchor ? {
+      startDate: planStartDate,
+      configuredStartDate: planStartDate,
+      scheduleAnchorSessionNumber: plan.scheduleAnchor.sessionNumber,
+      scheduleAnchorDay: plan.scheduleAnchor.day,
+      scheduleAnchorStartsAt: plan.scheduleAnchor.startsAt,
+      scheduleAnchorSource: plan.scheduleAnchor.source,
+      scheduleAnchorUpdatedAt: serverTimestamp(),
+      scheduleAnchorUpdatedBy: adminId,
+    } : {}),
     endDate: plan.endDate,
     configuredEndDate: plan.endDate,
     holidayAdjustedEndDate: plan.endDate,
@@ -297,7 +308,9 @@ export async function repairClassToOfficialLessonSchedule({
   return {
     classId: resolvedClassId,
     levelId: plan.levelId,
+    startDate: planStartDate,
     endDate: plan.endDate,
+    scheduleAnchor: plan.scheduleAnchor,
     expectedLessons: plan.expectedLessons,
     countLabel: plan.countLabel,
     created,
