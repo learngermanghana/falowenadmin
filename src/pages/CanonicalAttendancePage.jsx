@@ -13,7 +13,7 @@ function CancelledSessionNotice() {
   useEffect(() => {
     let active = true;
     if (!classId || !requestedSessionId) {
-      setSession(null);
+      queueMicrotask(() => { if (active) setSession(null); });
       return () => { active = false; };
     }
 

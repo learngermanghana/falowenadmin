@@ -92,6 +92,35 @@ export const courseDictionary = {
   },
 };
 
+function dictionarySortValue(entry = {}) {
+  const id = String(entry.assignment_id || "").trim();
+  const chapter = String(entry.chapter || "").trim();
+  const sortable = chapter || id.replace(/^[A-Z]+-/i, "");
+  return sortable.split(/[^0-9A-Za-z]+/).flatMap((part) => {
+    if (!part) return [];
+    const number = Number(part);
+    return Number.isFinite(number) && /^\d+$/.test(part) ? [number] : [part.toUpperCase()];
+  });
+}
+
+export function compareCourseDictionaryEntries(left = {}, right = {}) {
+  const leftParts = dictionarySortValue(left);
+  const rightParts = dictionarySortValue(right);
+  const length = Math.max(leftParts.length, rightParts.length);
+
+  for (let index = 0; index < length; index += 1) {
+    const leftPart = leftParts[index];
+    const rightPart = rightParts[index];
+    if (leftPart == null) return -1;
+    if (rightPart == null) return 1;
+    if (leftPart === rightPart) continue;
+    if (typeof leftPart === "number" && typeof rightPart === "number") return leftPart - rightPart;
+    return String(leftPart).localeCompare(String(rightPart), undefined, { numeric: true });
+  }
+
+  return String(left.assignment_id || "").localeCompare(String(right.assignment_id || ""), undefined, { numeric: true });
+}
+
 export function getCourseDictionaryEntry(assignmentId) {
   const normalizedId = String(assignmentId || "").trim().toUpperCase();
   const level = normalizedId.split("-")[0]?.toUpperCase();

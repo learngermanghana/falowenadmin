@@ -1,4 +1,4 @@
-import { courseDictionary } from "./courseDictionary.js";
+import { compareCourseDictionaryEntries, courseDictionary } from "./courseDictionary.js";
 
 const A1_DAY_BY_ASSIGNMENT_ID = Object.freeze({
   "A1-TUTORIAL": 0,
@@ -57,7 +57,7 @@ export function getCourseTaskDay(levelId, assignmentId, fallbackIndex = 0) {
 
 export function getCourseSessionGroups(levelId) {
   const level = normalizeLevel(levelId);
-  const entries = Object.values(courseDictionary[level] || {});
+  const entries = Object.values(courseDictionary[level] || {}).sort(compareCourseDictionaryEntries);
   const groups = new Map();
 
   entries.forEach((entry, index) => {

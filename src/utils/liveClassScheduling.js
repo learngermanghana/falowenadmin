@@ -120,7 +120,6 @@ function resolveSessionLimit(levelId, totalSessions) {
   const dictionaryCount = getCourseDictionarySessionCount(levelId);
   const requestedCount = Number(totalSessions || 0);
 
-  if (dictionaryCount > 0 && requestedCount > 0) return Math.min(dictionaryCount, requestedCount);
   if (dictionaryCount > 0) return dictionaryCount;
   if (requestedCount > 0) return requestedCount;
   return Number.POSITIVE_INFINITY;
