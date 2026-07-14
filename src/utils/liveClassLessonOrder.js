@@ -33,25 +33,6 @@ function sessionDurationMinutes(session = {}) {
   return Math.max(1, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
 }
 
-function uniqueChronologicalSlots(sessions = []) {
-  const byMoment = new Map();
-  sessions
-    .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
-    .forEach((session) => {
-      const startsAt = toDate(session.startsAt);
-      if (!startsAt) return;
-      const key = startsAt.toISOString();
-      if (byMoment.has(key)) return;
-      const minutes = sessionDurationMinutes(session);
-      byMoment.set(key, {
-        startsAt: startsAt.toISOString(),
-        endsAt: new Date(startsAt.getTime() + minutes * 60000).toISOString(),
-        durationMinutes: minutes,
-      });
-    });
-  return [...byMoment.values()].sort((left, right) => left.startsAt.localeCompare(right.startsAt));
-}
-
 function assignmentIdsForSession(session = {}) {
   const arrays = [session.assignmentIds, session.chapterIds, session.curriculumIds];
   const values = arrays.find((value) => Array.isArray(value) && value.length)
@@ -69,6 +50,64 @@ function sameAssignmentSet(left = [], right = []) {
 function resolveLevelId(klass = {}) {
   return normalize(klass.levelId || klass.level || klass.name)
     .match(/\b(A1|A2|B1|B2|C1|C2)\b/i)?.[1]?.toUpperCase() || "";
+}
+
+function activeSession(session = {}) {
+  return normalize(session.status || "scheduled").toLowerCase() !== "cancelled";
+}
+
+export function countSessionTimeCollisions(sessions = []) {
+  const byMoment = new Map();
+  sessions.filter(activeSession).forEach((session) => {
+    const startsAt = toDate(session.startsAt);
+    if (!startsAt) return;
+    const key = startsAt.toISOString();
+    byMoment.set(key, (byMoment.get(key) || 0) + 1);
+  });
+  return [...byMoment.values()].reduce((total, count) => total + Math.max(0, count - 1), 0);
+}
+
+function buildOfficialSlots({ startDate, rules, timezone, excluded, expectedLessons }) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalize(startDate))) {
+    throw new Error("The class start date is missing or invalid.");
+  }
+
+  const weekdayIndex = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+  const slots = [];
+  let cursorDate = normalize(startDate);
+
+  for (let guard = 0; slots.length < expectedLessons && guard < 1095; guard += 1) {
+    if (!excluded.has(cursorDate)) {
+      const weekday = new Date(`${cursorDate}T00:00:00.000Z`).getUTCDay();
+      const matchingRules = rules
+        .filter((rule) => weekdayIndex[rule.day] === weekday)
+        .sort((left, right) => left.startTime.localeCompare(right.startTime));
+
+      matchingRules.forEach((rule) => {
+        if (slots.length >= expectedLessons) return;
+        const startsAt = zonedLocalToUtcIso(cursorDate, rule.startTime, timezone);
+        const durationMinutes = Number(rule.durationMinutes || 120);
+        const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
+        slots.push({ startsAt, endsAt, durationMinutes });
+      });
+    }
+    cursorDate = addDays(cursorDate, 1);
+  }
+
+  if (slots.length !== expectedLessons) {
+    throw new Error(`Could only build ${slots.length} of ${expectedLessons} official class dates.`);
+  }
+  return slots;
+}
+
+function sessionRecordPreference(session = {}, classId = "") {
+  let score = 0;
+  if (normalize(session.classId) === normalize(classId)) score += 8;
+  if (normalize(session.classRecordId) === normalize(classId)) score += 4;
+  if (assignmentIdsForSession(session).length) score += 2;
+  if (normalize(session.topic || session.title)) score += 1;
+  if (session.manualDateOverride === true || session.rescheduledAt || session.previousStartsAt) score += 1;
+  return score;
 }
 
 export function sessionLessonNumber(session = {}) {
@@ -142,7 +181,7 @@ export function compareSessionsByLesson(left = {}, right = {}) {
 
 export function buildLessonDateRepairPlan(sessions = []) {
   const eligible = sessions
-    .filter((session) => String(session.status || "scheduled").toLowerCase() !== "cancelled")
+    .filter(activeSession)
     .map((session) => ({
       session,
       lessonNumber: sessionLessonNumber(session),
@@ -200,41 +239,22 @@ export function buildOfficialLessonSchedulePlan({
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
 
   const excluded = new Set((excludedDates || []).map((value) => normalize(value)).filter(Boolean));
-  const slots = uniqueChronologicalSlots(sessions).slice(0, expectedLessons);
-  if (!slots.length) throw new Error("No existing class dates were found.");
-
-  let cursorDate = sessionDateInTimezone(slots.at(-1).startsAt, timezone);
-  const weekdayIndex = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
-  const existingMoments = new Set(slots.map((slot) => slot.startsAt));
-
-  for (let guard = 0; slots.length < expectedLessons && guard < 730; guard += 1) {
-    cursorDate = addDays(cursorDate, 1);
-    if (excluded.has(cursorDate)) continue;
-    const weekday = new Date(`${cursorDate}T00:00:00.000Z`).getUTCDay();
-    const matchingRules = rules
-      .filter((rule) => weekdayIndex[rule.day] === weekday)
-      .sort((left, right) => left.startTime.localeCompare(right.startTime));
-
-    matchingRules.forEach((rule) => {
-      if (slots.length >= expectedLessons) return;
-      const startsAt = zonedLocalToUtcIso(cursorDate, rule.startTime, timezone);
-      if (existingMoments.has(startsAt)) return;
-      const durationMinutes = Number(rule.durationMinutes || 120);
-      const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
-      slots.push({ startsAt, endsAt, durationMinutes });
-      existingMoments.add(startsAt);
-    });
-  }
-
-  if (slots.length !== expectedLessons) {
-    throw new Error(`Could only build ${slots.length} of ${expectedLessons} official class dates.`);
-  }
+  const slots = buildOfficialSlots({
+    startDate: klass.startDate,
+    rules,
+    timezone,
+    excluded,
+    expectedLessons,
+  });
 
   const sessionsByNumber = new Map();
   sessions.forEach((session) => {
     const sessionNumber = resolveOfficialSessionNumber(session, groups, levelId);
-    if (!sessionNumber || sessionsByNumber.has(sessionNumber)) return;
-    sessionsByNumber.set(sessionNumber, session);
+    if (!sessionNumber) return;
+    const existing = sessionsByNumber.get(sessionNumber);
+    if (!existing || sessionRecordPreference(session, classId) > sessionRecordPreference(existing, classId)) {
+      sessionsByNumber.set(sessionNumber, session);
+    }
   });
 
   const items = groups.map((group, index) => {
@@ -260,9 +280,10 @@ export function buildOfficialLessonSchedulePlan({
     levelId,
     timezone,
     expectedLessons,
-    currentSessions: sessions.length,
+    currentSessions: sessions.filter(activeSession).length,
     missingLessons: items.filter((item) => !item.session).length,
     changedLessons: items.filter((item) => item.changed).length,
+    collisionCount: countSessionTimeCollisions(sessions),
     endDate: sessionDateInTimezone(slots.at(-1).startsAt, timezone),
     itemLabel: isA1 ? "Day" : "Lesson",
     countLabel: isA1 ? "attendance sessions" : "lessons",
