@@ -26,9 +26,11 @@ function normalizeStudentEntry(studentCode, value) {
 
   if (value && typeof value === "object") {
     return {
+      ...value,
       name: String(value.name || "").trim(),
       email: String(value.email || "").trim(),
       present: Boolean(value.present),
+      status: String(value.status || value.attendanceStatus || "").trim(),
     };
   }
 
@@ -50,6 +52,7 @@ function normalizeSessionDoc(data = {}) {
         name: String(record.studentName || "").trim(),
         email: String(record.email || "").trim(),
         present: String(record.status || "").toLowerCase() === "present",
+        status: String(record.status || "").trim(),
       };
     }
   }
@@ -65,11 +68,11 @@ function normalizeSessionDoc(data = {}) {
     weekday: String(data.weekday || "").trim(),
     startTime: String(data.startTime || "").trim(),
     endTime: String(data.endTime || "").trim(),
-    startsAt: String(data.startsAt || "").trim(),
-    endsAt: String(data.endsAt || "").trim(),
+    startsAt: data.startsAt || "",
+    endsAt: data.endsAt || "",
     classId: String(data.classId || "").trim(),
     className: String(data.className || "").trim(),
-    classSessionId: String(data.classSessionId || "").trim(),
+    classSessionId: String(data.classSessionId || data.sessionId || "").trim(),
     sessionStatus: String(data.sessionStatus || data.status || "scheduled").trim(),
     cancellationReason: String(data.cancellationReason || "").trim(),
     assignmentIds,
@@ -201,4 +204,46 @@ export async function listSessionCheckins({ classId, sessionId }) {
 
   const snap = await getDocs(collection(db, "attendance", safeClassId, "sessions", safeSessionId, "checkins"));
   return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+function checkinMergeKey(checkin = {}) {
+  return [
+    normalizeClassId(checkin.classId),
+    String(checkin.sessionId || checkin.classSessionId || "").trim(),
+    String(checkin.uid || checkin.studentCode || checkin.id || checkin.email || "").trim(),
+  ].join("::");
+}
+
+async function listClassCheckinsByCollectionGroup(classKey) {
+  const snap = await getDocs(query(collectionGroup(db, "checkins"), where("classId", "==", classKey)));
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+async function listClassCheckinsBySessionPaths(classKey, sessionIds = []) {
+  const results = await Promise.allSettled(sessionIds.map((sessionId) => listSessionCheckins({ classId: classKey, sessionId })));
+  return results.flatMap((result) => result.status === "fulfilled" ? result.value : []);
+}
+
+export async function listClassCheckins({ classId, className = "", sessionIds = [] } = {}) {
+  const identifiers = [...new Set([classId, className].map(normalizeClassId).filter(Boolean))];
+  if (!identifiers.length) return [];
+
+  const found = new Map();
+  const groupResults = await Promise.allSettled(identifiers.map(listClassCheckinsByCollectionGroup));
+  groupResults.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((checkin) => found.set(checkinMergeKey(checkin), checkin));
+  });
+
+  if (!found.size && sessionIds.length) {
+    const nestedResults = await Promise.allSettled(
+      identifiers.map((identifier) => listClassCheckinsBySessionPaths(identifier, sessionIds)),
+    );
+    nestedResults.forEach((result) => {
+      if (result.status !== "fulfilled") return;
+      result.value.forEach((checkin) => found.set(checkinMergeKey(checkin), checkin));
+    });
+  }
+
+  return [...found.values()];
 }
