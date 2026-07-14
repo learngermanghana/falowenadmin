@@ -12,7 +12,7 @@ import CourseSchedulePage from "./pages/CourseSchedulePage";
 import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingHubPage from "./pages/MarkingHubPage";
 import ExamTutorReviewQueuePage from "./pages/ExamTutorReviewQueuePage";
-import TutorMarkingPage from "./pages/TutorMarkingPage";
+import TutorMarkingSimplePage from "./pages/TutorMarkingSimplePage.jsx";
 import CommunicationHubPage from "./pages/CommunicationHubPage.jsx";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
 import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
@@ -162,7 +162,7 @@ export default function App() {
           <Route path="/examTutorReviewQueue" element={<ExamReviewRoute />} />
           <Route path="/examTutorReviewQueue/:reviewId" element={<ExamReviewRoute />} />
           <Route path="/tutor-marking" element={<Navigate to="/campus/tutor-marking" replace />} />
-          <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
+          <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingSimplePage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationHubPage /></ProtectedRoute>} />
           <Route path="/whatsapp-reminders" element={<ProtectedRoute allowStaff={false}><WhatsAppRemindersPage /></ProtectedRoute>} />
