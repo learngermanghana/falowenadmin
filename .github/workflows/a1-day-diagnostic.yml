@@ -1,0 +1,34 @@
+name: A1 Day Diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/liveClassLessonOrder.js'
+      - 'tests/live-class-a1-b1-timetable-repair.test.js'
+      - '.github/workflows/a1-day-diagnostic.yml'
+
+jobs:
+  focused-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --silent
+      - name: Run focused A1 and B1 repair tests
+        id: focused
+        continue-on-error: true
+        run: node --test tests/live-class-a1-b1-timetable-repair.test.js > a1-day-output.txt 2>&1
+      - name: Upload focused output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-day-output
+          path: a1-day-output.txt
+      - name: Report focused result
+        if: steps.focused.outcome == 'failure'
+        run: |
+          cat a1-day-output.txt
+          exit 1
