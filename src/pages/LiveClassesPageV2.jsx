@@ -6,7 +6,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
 import ClassEditorCard from "../components/ClassEditorCard.jsx";
 import SessionDictionaryPicker from "../components/SessionDictionaryPicker.jsx";
-import { courseDictionary } from "../data/courseDictionary.js";
+import { compareCourseDictionaryEntries, courseDictionary } from "../data/courseDictionary.js";
 import {
   cancelSession,
   listClassCohorts,
@@ -213,7 +213,7 @@ export default function LiveClassesPageV2() {
   }, [selectedClassId]);
 
   const levelId = useMemo(() => resolveLevel(dashboard?.klass || {}), [dashboard?.klass]);
-  const dictionaryEntries = useMemo(() => Object.values(courseDictionary[levelId] || {}), [levelId]);
+  const dictionaryEntries = useMemo(() => Object.values(courseDictionary[levelId] || {}).sort(compareCourseDictionaryEntries), [levelId]);
   const progress = useMemo(
     () => calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {}),
     [dashboard],

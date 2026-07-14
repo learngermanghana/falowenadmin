@@ -143,3 +143,16 @@ test("session generation rejects duplicate weekly date/time rules", () => {
     ],
   }), /Duplicate schedule rule/);
 });
+
+test("A2 generation uses all 28 dictionary sessions even when an old record requested 26", () => {
+  const sessions = generateSessionOccurrences({
+    classId: "a2-munich",
+    levelId: "A2",
+    totalSessions: 26,
+    startDate: "2026-06-01",
+    endDate: "2026-12-31",
+    timezone: "Africa/Accra",
+    scheduleRules: [{ day: "Mon", startTime: "19:00", durationMinutes: 120 }],
+  });
+  assert.equal(sessions.length, 28);
+});

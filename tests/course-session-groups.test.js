@@ -38,3 +38,12 @@ test("A1-1.1-practice and A1-1.3 stay on different attendance days", () => {
   assert.equal(day5?.day, 5);
   assert.notEqual(day3?.key, day5?.key);
 });
+
+test("A2 curriculum keeps numeric order through all 28 lessons", () => {
+  const groups = getCourseSessionGroups("A2");
+  assert.equal(getCourseSessionCount("A2"), 28);
+  assert.equal(groups[4]?.assignmentIds[0], "A2-2.5");
+  assert.equal(groups[5]?.assignmentIds[0], "A2-3.6");
+  assert.equal(groups[9]?.assignmentIds[0], "A2-4.10");
+  assert.equal(groups.at(-1)?.assignmentIds[0], "A2-10.28");
+});
