@@ -9,6 +9,7 @@ import {
 import { db } from "../firebase.js";
 import { buildSessionReschedulePlan } from "../utils/liveClassReschedulePlan.js";
 import { rescheduleSession } from "./liveClassSessionDirectService.js";
+import { normalizeSupersededSessionStatuses } from "./liveClassSupersededStatusService.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -103,18 +104,35 @@ function needsCascadeRecovery({ klass, sessions, session }) {
   }
 }
 
-export async function inspectLegacyRescheduleCollision(classId) {
+export async function inspectLegacyRescheduleCollision(classId, payload = {}) {
   const normalizedClassId = normalize(classId);
   if (!normalizedClassId) return { needsRepair: false, reason: "missing-class-id" };
+
+  const supersededCleanup = await normalizeSupersededSessionStatuses(normalizedClassId, {
+    adminId: payload.adminId || "schedule-cleanup",
+  }).catch((error) => ({
+    repaired: 0,
+    classId: normalizedClassId,
+    sessionIds: [],
+    error: error?.message || "Could not normalize superseded session aliases.",
+  }));
 
   const [klass, sessions] = await Promise.all([
     loadClassRecord(normalizedClassId),
     loadClassSessions(normalizedClassId),
   ]);
-  if (!klass) return { needsRepair: false, reason: "class-not-found" };
+  if (!klass) return { needsRepair: false, reason: "class-not-found", supersededCleanup };
 
   const session = latestRescheduledSession(klass, sessions);
-  if (!session) return { needsRepair: false, reason: "no-rescheduled-session", klass, sessions };
+  if (!session) {
+    return {
+      needsRepair: false,
+      reason: "no-rescheduled-session",
+      klass,
+      sessions,
+      supersededCleanup,
+    };
+  }
 
   return {
     needsRepair: needsCascadeRecovery({ klass, sessions, session }),
@@ -122,16 +140,18 @@ export async function inspectLegacyRescheduleCollision(classId) {
     sessions,
     session,
     previousStartsAt: previousStartFor(klass, session),
+    supersededCleanup,
   };
 }
 
 export async function recoverLegacyRescheduleCollision(classId, payload = {}) {
-  const inspection = await inspectLegacyRescheduleCollision(classId);
+  const inspection = await inspectLegacyRescheduleCollision(classId, payload);
   if (!inspection.needsRepair) {
     return {
       repaired: false,
       classId: normalize(classId),
       reason: inspection.reason || "timetable-does-not-need-cascade-recovery",
+      supersededRecordsNormalized: Number(inspection.supersededCleanup?.repaired || 0),
     };
   }
 
@@ -159,6 +179,7 @@ export async function recoverLegacyRescheduleCollision(classId, payload = {}) {
     repaired: true,
     recoveredSessionId: session.id,
     previousStartsAt: inspection.previousStartsAt,
+    supersededRecordsNormalized: Number(inspection.supersededCleanup?.repaired || 0),
     ...result,
   };
 }
