@@ -3,10 +3,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const directServicePath = new URL("../src/services/liveClassSessionDirectService.js", import.meta.url);
+const recoveryServicePath = new URL("../src/services/liveClassRescheduleRecoveryService.js", import.meta.url);
 const serviceIndexPath = new URL("../src/services/liveClassService.js", import.meta.url);
 const reschedulePlanPath = new URL("../src/utils/liveClassReschedulePlan.js", import.meta.url);
 const healthServicePath = new URL("../src/services/liveClassScheduleHealthService.js", import.meta.url);
 const healthDashboardPath = new URL("../src/components/ScheduleHealthDashboard.jsx", import.meta.url);
+const repairPanelPath = new URL("../src/components/LiveClassLessonDateRepair.jsx", import.meta.url);
 
 async function source(path) {
   return readFile(path, "utf8");
@@ -62,6 +64,25 @@ test("rescheduling detects partial overlaps and supports shifting following less
   assert.match(reschedulePlan, /live-class\/curriculum-order/);
   assert.match(reschedulePlan, /Move this and all following sessions/);
   assert.match(reschedulePlan, /ordered\.slice\(selectedIndex\)/);
+});
+
+test("legacy collisions recover the latest moved lesson and all following lessons", async () => {
+  const [serviceIndex, recoveryService, reschedulePlan, repairPanel] = await Promise.all([
+    source(serviceIndexPath),
+    source(recoveryServicePath),
+    source(reschedulePlanPath),
+    source(repairPanelPath),
+  ]);
+  assert.match(serviceIndex, /recoverLegacyRescheduleCollision/);
+  assert.match(recoveryService, /inspectLegacyRescheduleCollision/);
+  assert.match(recoveryService, /moveMode: "following"/);
+  assert.match(recoveryService, /previousStartsAt/);
+  assert.match(recoveryService, /live-class\/curriculum-order/);
+  assert.match(recoveryService, /live-class\/time-overlap/);
+  assert.match(reschedulePlan, /recoveryBaseline/);
+  assert.match(reschedulePlan, /recoveredFromPreviousStart/);
+  assert.match(repairPanel, /recoverLegacyRescheduleCollision/);
+  assert.match(repairPanel, /legacy reschedule collision\(s\) repaired/);
 });
 
 test("moves and cancellations recalculate all class end-date fields and timetable health", async () => {
