@@ -168,7 +168,23 @@ jobs:
           node --check scripts/patchAttendanceConfirmationEmails.mjs
 
       - name: Test superseded status normalization
-        run: node --test tests/live-class-superseded-status.test.js
+        id: superseded_test
+        continue-on-error: true
+        run: node --test tests/live-class-superseded-status.test.js > superseded-test.log 2>&1
+
+      - name: Upload superseded status test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: superseded-status-test-report
+          path: superseded-test.log
+          if-no-files-found: error
+
+      - name: Fail when superseded status test fails
+        if: steps.superseded_test.outcome == 'failure'
+        run: |
+          cat superseded-test.log
+          exit 1
 
       - name: Run existing live class session tests
         run: >-
