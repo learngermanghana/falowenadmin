@@ -127,7 +127,7 @@ function resolveSessionLimit(levelId, totalSessions) {
 
 export function calculateClassEndDate({ levelId, startDate, scheduleRules = [], excludedDates }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate || ""))) return "";
-  const sessionCount = String(levelId || "").trim().toUpperCase() === "A1" ? Math.max(getCourseDictionarySessionCount(levelId), 27) : getCourseDictionarySessionCount(levelId);
+  const sessionCount = getCourseDictionarySessionCount(levelId);
   if (!sessionCount) return "";
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "";
