@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { listStudentsByClass } from "../services/studentsService.js";
+import { loadClassAttendanceAnalytics } from "../services/attendanceAnalyticsService.js";
 
 function normalize(value) {
   return String(value ?? "").trim();
+}
+
+function comparable(value) {
+  return normalize(value).toLowerCase();
 }
 
 function displayValue(...values) {
@@ -12,10 +16,10 @@ function displayValue(...values) {
 
 function studentKey(student = {}, index = 0) {
   return displayValue(
-    student.id,
     student.studentCode,
     student.studentcode,
     student.uid,
+    student.id,
     student.email,
     `${student.name || "student"}-${index}`,
   );
@@ -62,6 +66,40 @@ function whatsappNumber(value) {
   return digits;
 }
 
+function formatDateTime(value, timezone = "Africa/Accra") {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("en-GB", {
+    timeZone: timezone,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function statusLabel(status) {
+  return ({
+    present: "Present",
+    late: "Late",
+    absent: "Absent",
+    excused: "Excused",
+    cancelled: "Cancelled",
+    upcoming: "Upcoming",
+  })[status] || status || "Unknown";
+}
+
+function statusStyle(status) {
+  if (status === "present") return { background: "#dcfce7", color: "#166534" };
+  if (status === "late") return { background: "#fef3c7", color: "#92400e" };
+  if (status === "absent") return { background: "#fee2e2", color: "#991b1b" };
+  if (status === "excused") return { background: "#e0e7ff", color: "#3730a3" };
+  return { background: "#e2e8f0", color: "#334155" };
+}
+
 function detail(label, value) {
   return (
     <div style={{ padding: 10, border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff" }}>
@@ -71,8 +109,29 @@ function detail(label, value) {
   );
 }
 
-export default function LiveClassStudentsPanel({ classId = "", className = "", levelId = "" }) {
+function attendanceSummaryFor(analytics, student = {}) {
+  if (!analytics) return null;
+  const identifiers = new Set([
+    studentKey(student),
+    studentCode(student),
+    student.email,
+  ].map(comparable).filter(Boolean));
+  return analytics.studentSummaries.find((summary) => [
+    summary.studentKey,
+    summary.studentCode,
+    summary.studentEmail,
+  ].map(comparable).some((value) => identifiers.has(value))) || null;
+}
+
+export default function LiveClassStudentsPanel({
+  classId = "",
+  className = "",
+  levelId = "",
+  sessions = [],
+  timezone = "Africa/Accra",
+}) {
   const [students, setStudents] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [selectedKey, setSelectedKey] = useState("");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,24 +145,31 @@ export default function LiveClassStudentsPanel({ classId = "", className = "", l
     setQuery("");
     setSelectedKey("");
 
-    listStudentsByClass(classId, { className })
-      .then((rows) => {
+    loadClassAttendanceAnalytics({
+      classId,
+      className,
+      sessions,
+      klass: { id: classId, name: className, timezone },
+    })
+      .then((result) => {
         if (!active) return;
-        const nextRows = Array.isArray(rows) ? rows : [];
+        const nextRows = Array.isArray(result.students) ? result.students : [];
         setStudents(nextRows);
+        setAnalytics(result.analytics);
         setSelectedKey(nextRows.length ? studentKey(nextRows[0], 0) : "");
       })
       .catch((loadError) => {
         if (!active) return;
         setStudents([]);
-        setError(loadError?.message || "Could not load students for this class.");
+        setAnalytics(null);
+        setError(loadError?.message || "Could not load students and attendance for this class.");
       })
       .finally(() => {
         if (active) setLoading(false);
       });
 
     return () => { active = false; };
-  }, [classId, className, reloadToken]);
+  }, [classId, className, reloadToken, sessions, timezone]);
 
   const roster = useMemo(() => students.map((student, index) => ({
     student,
@@ -131,6 +197,9 @@ export default function LiveClassStudentsPanel({ classId = "", className = "", l
   const whatsapp = whatsappNumber(phone);
   const email = normalize(selected?.email);
   const name = selected ? studentName(selected) : "";
+  const selectedAttendance = attendanceSummaryFor(analytics, selected || {});
+  const attendanceHistory = useMemo(() => [...(selectedAttendance?.records || [])]
+    .sort((left, right) => (right.startsAtMs || 0) - (left.startsAtMs || 0)), [selectedAttendance?.records]);
 
   return (
     <article className="card">
@@ -138,20 +207,20 @@ export default function LiveClassStudentsPanel({ classId = "", className = "", l
         <div>
           <h2 style={{ marginTop: 0 }}>Students in {className || "this class"}</h2>
           <p style={{ marginBottom: 0 }}>
-            Select one student to review their class, contact, payment and contract information.
+            Select one student to review their profile and complete attendance history.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <strong>{students.length} student{students.length === 1 ? "" : "s"}</strong>
           <button type="button" disabled={loading} onClick={() => setReloadToken((value) => value + 1)}>
-            {loading ? "Loading…" : "Refresh roster"}
+            {loading ? "Loading…" : "Refresh roster and check-ins"}
           </button>
           <Link to="/students">Open full Students page</Link>
         </div>
       </div>
 
       {error ? <div style={{ marginTop: 14, padding: 12, border: "1px solid #fecaca", background: "#fef2f2", color: "#991b1b", borderRadius: 8 }}>{error}</div> : null}
-      {loading ? <p>Loading students for the selected class…</p> : null}
+      {loading ? <p>Loading students and attendance for the selected class…</p> : null}
 
       {!loading && !error && !students.length ? (
         <div style={{ marginTop: 16, padding: 14, border: "1px solid #fde68a", background: "#fffbeb", borderRadius: 10 }}>
@@ -175,6 +244,7 @@ export default function LiveClassStudentsPanel({ classId = "", className = "", l
             <div style={{ display: "grid", gap: 8, marginTop: 12, maxHeight: 520, overflowY: "auto" }}>
               {filteredRoster.map((entry) => {
                 const active = entry.key === selectedEntry?.key;
+                const summary = attendanceSummaryFor(analytics, entry.student);
                 return (
                   <button
                     type="button"
@@ -191,6 +261,7 @@ export default function LiveClassStudentsPanel({ classId = "", className = "", l
                   >
                     <strong style={{ display: "block" }}>{entry.name}</strong>
                     <small>{displayValue(studentCode(entry.student), entry.student.email)}</small>
+                    {summary ? <small style={{ display: "block", marginTop: 4 }}>Attendance: {summary.attendancePercent}% · Absent: {summary.absent}</small> : null}
                   </button>
                 );
               })}
@@ -231,6 +302,47 @@ export default function LiveClassStudentsPanel({ classId = "", className = "", l
                 {detail("Contract start", displayValue(selected.contractStart, selected.enrollDate))}
                 {detail("Contract end", displayValue(selected.contractEnd))}
               </div>
+
+              <section style={{ marginTop: 22, borderTop: "1px solid #e2e8f0", paddingTop: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <div>
+                    <h3 style={{ margin: 0 }}>Attendance history</h3>
+                    <p style={{ margin: "5px 0 0", color: "#64748b" }}>QR scans and manual attendance use the same class records.</p>
+                  </div>
+                  <Link to="/attendance">Open full attendance tracker</Link>
+                </div>
+
+                {selectedAttendance ? (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: 9, marginTop: 14 }}>
+                      {detail("Sessions held", selectedAttendance.sessionsHeld)}
+                      {detail("Attendance", `${selectedAttendance.attendancePercent}%`)}
+                      {detail("Present", selectedAttendance.present)}
+                      {detail("Late", selectedAttendance.late)}
+                      {detail("Absent", selectedAttendance.absent)}
+                      {detail("Consecutive absences", selectedAttendance.consecutiveAbsences)}
+                      {detail("Last check-in", formatDateTime(selectedAttendance.lastCheckin, analytics?.timezone || timezone))}
+                    </div>
+
+                    <div style={{ overflowX: "auto", marginTop: 14, maxHeight: 480 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}>
+                        <thead><tr><th>Session</th><th>Date</th><th>Status</th><th>Check-in time</th><th>Method</th></tr></thead>
+                        <tbody>
+                          {attendanceHistory.map((record) => (
+                            <tr key={`${record.sessionId}-${record.studentKey}`} style={{ borderTop: "1px solid #e2e8f0" }}>
+                              <td style={{ padding: 8 }}>{record.sessionTopic}</td>
+                              <td style={{ padding: 8 }}>{formatDateTime(record.startsAt, analytics?.timezone || timezone)}</td>
+                              <td style={{ padding: 8 }}><span style={{ ...statusStyle(record.status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{statusLabel(record.status)}</span></td>
+                              <td style={{ padding: 8 }}>{formatDateTime(record.checkedInAt, analytics?.timezone || timezone)}</td>
+                              <td style={{ padding: 8 }}>{record.method || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : <p>No attendance record is available for this student yet.</p>}
+              </section>
             </section>
           ) : null}
         </div>
