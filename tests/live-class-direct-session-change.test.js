@@ -5,6 +5,8 @@ import { readFile } from "node:fs/promises";
 const directServicePath = new URL("../src/services/liveClassSessionDirectService.js", import.meta.url);
 const serviceIndexPath = new URL("../src/services/liveClassService.js", import.meta.url);
 const reschedulePlanPath = new URL("../src/utils/liveClassReschedulePlan.js", import.meta.url);
+const healthServicePath = new URL("../src/services/liveClassScheduleHealthService.js", import.meta.url);
+const healthDashboardPath = new URL("../src/components/ScheduleHealthDashboard.jsx", import.meta.url);
 
 async function source(path) {
   return readFile(path, "utf8");
@@ -60,4 +62,31 @@ test("rescheduling detects partial overlaps and supports shifting following less
   assert.match(reschedulePlan, /live-class\/curriculum-order/);
   assert.match(reschedulePlan, /Move this and all following sessions/);
   assert.match(reschedulePlan, /ordered\.slice\(selectedIndex\)/);
+});
+
+test("moves and cancellations recalculate all class end-date fields and timetable health", async () => {
+  const directService = await source(directServicePath);
+  assert.match(directService, /buildClassScheduleHealth/);
+  assert.match(directService, /proposedEndDate/);
+  assert.match(directService, /scheduleStateClassPatch/);
+  assert.match(directService, /configuredEndDate: endDate/);
+  assert.match(directService, /holidayAdjustedEndDate: endDate/);
+  assert.match(directService, /sessionDerivedEndDate: endDate/);
+  assert.match(directService, /changeType: "cancelled"[\s\S]*?classPatch/);
+  assert.match(directService, /changeType: "rescheduled"[\s\S]*?classPatch/);
+  assert.match(directService, /timetableHealthClassFields/);
+});
+
+test("schedule health persistence pauses and restores future reminders", async () => {
+  const [healthService, healthDashboard] = await Promise.all([
+    source(healthServicePath),
+    source(healthDashboardPath),
+  ]);
+  assert.match(healthService, /validateAndSaveClassScheduleHealth/);
+  assert.match(healthService, /scheduleHealthRemindersSuppressed/);
+  assert.match(healthService, /reminderSuppressionSource: pauseForHealth \? "schedule-health" : ""/);
+  assert.match(healthService, /writeBatch/);
+  assert.match(healthDashboard, /ScheduleHealthPanel/);
+  assert.match(healthDashboard, /Check every class/);
+  assert.match(healthDashboard, /validateAndSaveClassScheduleHealth/);
 });
