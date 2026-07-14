@@ -1,4 +1,12 @@
-import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  serverTimestamp,
+  where,
+  writeBatch,
+} from "firebase/firestore";
 import { db } from "../firebase.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
 import { buildOfficialLessonSchedulePlan } from "../utils/liveClassLessonOrder.js";
@@ -29,6 +37,41 @@ function localDateTimeParts(value, timezone = "Africa/Accra") {
 function generatedSessionId(classId, startsAt, timezone) {
   const parts = localDateTimeParts(startsAt, timezone);
   return parts ? `${classId}_${parts.date}_${parts.time}` : `${classId}_lesson_${Date.now()}`;
+}
+
+async function querySessions(field, identifier) {
+  const snap = await getDocs(
+    query(collection(db, "classSessions"), where(field, "==", identifier)),
+  );
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+export async function loadRawRepairSessions(classId, klass = {}, fallbackSessions = []) {
+  const found = new Map();
+  fallbackSessions.forEach((session) => {
+    if (normalize(session?.id)) found.set(normalize(session.id), session);
+  });
+
+  const identifiers = [...new Set([
+    classId,
+    klass.id,
+    klass.classId,
+    klass.name,
+    klass.className,
+    klass.slug,
+  ].map(normalize).filter(Boolean))];
+  const lookups = identifiers.flatMap((identifier) =>
+    ["classId", "classRecordId", "className"].map((field) => [field, identifier]),
+  );
+  const results = await Promise.allSettled(
+    lookups.map(([field, identifier]) => querySessions(field, identifier)),
+  );
+  results.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((session) => found.set(session.id, session));
+  });
+
+  return [...found.values()];
 }
 
 function officialSessionPatch({ classId, className, item, adminId, plan }) {
@@ -66,7 +109,7 @@ function officialSessionPatch({ classId, className, item, adminId, plan }) {
       manualDateOverrideAt: serverTimestamp(),
       rescheduledBy: adminId,
       rescheduledAt: serverTimestamp(),
-      rescheduleReason: `${plan.levelId} official ${plan.expectedLessons}-${plan.countLabel} timetable repaired atomically without rotating topics.`,
+      rescheduleReason: `${plan.levelId} official ${plan.expectedLessons}-${plan.countLabel} timetable repaired atomically without duplicate times.`,
     } : {}),
     updatedAt: serverTimestamp(),
   };
@@ -118,14 +161,15 @@ export async function repairClassToOfficialLessonSchedule({
     ...loadedClosures,
   ].map(normalize).filter(Boolean))];
 
+  const repairSessions = await loadRawRepairSessions(resolvedClassId, klass, sessions);
   const plan = buildOfficialLessonSchedulePlan({
     classId: resolvedClassId,
     klass,
-    sessions,
+    sessions: repairSessions,
     excludedDates,
   });
   const className = normalize(klass.name || klass.className);
-  const existingIds = new Set(sessions.map((session) => normalize(session.id)).filter(Boolean));
+  const existingIds = new Set(repairSessions.map((session) => normalize(session.id)).filter(Boolean));
   const assignedIds = new Set();
   const batch = writeBatch(db);
   let created = 0;
@@ -202,5 +246,6 @@ export async function repairClassToOfficialLessonSchedule({
     created,
     moved,
     repaired: plan.changedLessons,
+    collisionsResolved: plan.collisionCount,
   };
 }
