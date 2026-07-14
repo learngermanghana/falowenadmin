@@ -17,7 +17,9 @@ on:
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassRescheduleService.js'
       - 'src/services/liveClassSchedulePreparation.js'
+      - 'src/services/liveClassService.js'
       - 'src/services/liveClassSessionCleanupService.js'
+      - 'src/services/liveClassSessionDirectService.js'
       - 'src/utils/liveClassDictionarySelection.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassScheduleRules.js'
@@ -27,6 +29,7 @@ on:
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
+      - 'tests/live-class-direct-session-change.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
@@ -51,7 +54,9 @@ on:
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassRescheduleService.js'
       - 'src/services/liveClassSchedulePreparation.js'
+      - 'src/services/liveClassService.js'
       - 'src/services/liveClassSessionCleanupService.js'
+      - 'src/services/liveClassSessionDirectService.js'
       - 'src/utils/liveClassDictionarySelection.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassScheduleRules.js'
@@ -61,6 +66,7 @@ on:
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
+      - 'tests/live-class-direct-session-change.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
@@ -92,6 +98,7 @@ jobs:
           tests/course-dictionary-id-casing.test.js
           tests/live-class-complete-session-visibility.test.js
           tests/live-class-dictionary-selection.test.js
+          tests/live-class-direct-session-change.test.js
           tests/live-class-rebuild-identity.test.js
           tests/live-class-schedule-rules.test.js
           tests/live-class-session-dedupe.test.js
