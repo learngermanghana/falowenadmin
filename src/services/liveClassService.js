@@ -7,7 +7,9 @@ export {
 } from "./liveClassCohortWriteService.js";
 export { rebuildClassSessionsFromSchedule } from "./liveClassRebuildService.js";
 export { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
-export { cancelSession } from "./liveClassCancelService.js";
-export { rescheduleSession } from "./liveClassRescheduleService.js";
+export {
+  cancelSession,
+  rescheduleSession,
+} from "./liveClassSessionDirectService.js";
 
 // Curriculum/session contract fields: topic, assignmentIds, chapterIds, curriculumIds, attendanceSessionRef.
