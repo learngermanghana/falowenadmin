@@ -220,7 +220,7 @@ export default function LiveClassesPageV2() {
   );
   const nextCountdown = dashboard?.nextSession ? calculateCountdown(dashboard.nextSession.startsAt) : null;
   const mappedCount = (dashboard?.sessions || []).filter((session) => curriculumIds(session).length).length;
-  const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled|rescheduled|moved/i.test(message);
+  const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled|rescheduled|moved|shifted/i.test(message);
 
   const sessionsByDictionaryId = useMemo(() => {
     const result = new Map();
@@ -302,6 +302,7 @@ export default function LiveClassesPageV2() {
       classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,
       className: dashboard?.klass?.name || session.className || "",
       action: "reschedule",
+      moveMode: "single",
       startsAt: toDateTimeLocal(session.startsAt),
       reason: status === "cancelled"
         ? (session.cancellationReason || "This cancelled session has been moved to a new date and reactivated.")
@@ -348,6 +349,7 @@ export default function LiveClassesPageV2() {
         localDate: parts.localDate,
         localTime: parts.localTime,
         startsAt: sessionChange.startsAt,
+        moveMode: sessionChange.moveMode,
         reason,
         adminId,
         classId,
@@ -358,7 +360,10 @@ export default function LiveClassesPageV2() {
       const emailNote = rescheduleResult?.emailSubmitted === false
         ? ` Communication email could not be confirmed: ${rescheduleResult.emailMessage || "check Communication"}.`
         : "";
-      const successMessage = `Session moved to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Attendance, class schedule, calendar feed and student communication were updated automatically.${emailNote}`;
+      const movedCount = Number(rescheduleResult?.movedSessions || 1);
+      const successMessage = rescheduleResult?.moveMode === "following"
+        ? `${movedCount} sessions shifted. The selected lesson now starts ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}, and every following lesson kept its curriculum order. Attendance, class dates, reminders and calendar feed were updated atomically.${emailNote}`
+        : `Session moved to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Curriculum order, overlaps, Attendance, class dates, reminders and calendar feed were checked and updated atomically.${emailNote}`;
       setSessionChange(null);
       await refreshDashboard(selectedClassId);
       setMessage(successMessage);
@@ -396,12 +401,13 @@ export default function LiveClassesPageV2() {
     if (!sessionChange || sessionChange.sessionId !== session.id) return null;
     const cancelling = sessionChange.action === "cancel";
     const alreadyCancelled = sessionChange.originalStatus === "cancelled";
+    const shiftingFollowing = sessionChange.moveMode === "following";
 
     return (
       <form onSubmit={handleSessionChangeSubmit} style={{ display: "grid", gap: 12, padding: 14, border: "1px solid #bfdbfe", borderRadius: 10, background: "#eff6ff" }}>
         <div>
           <strong>Change session: {formatDateTime(session.startsAt)}</strong>
-          <div style={{ marginTop: 4, fontSize: 13, color: "#475569" }}>One workflow updates Live Classes, Attendance, the class schedule, calendar feed and student communication.</div>
+          <div style={{ marginTop: 4, fontSize: 13, color: "#475569" }}>One atomic workflow updates Live Classes, Attendance, class dates, reminders, calendar feed and the audit history.</div>
         </div>
 
         <label style={{ display: "grid", gap: 6 }}>
@@ -413,10 +419,26 @@ export default function LiveClassesPageV2() {
         </label>
 
         {!cancelling ? (
-          <label style={{ display: "grid", gap: 6 }}>
-            <strong>New Ghana date and time</strong>
-            <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required />
-          </label>
+          <>
+            <label style={{ display: "grid", gap: 6 }}>
+              <strong>Which lessons should move?</strong>
+              <select value={sessionChange.moveMode || "single"} onChange={(event) => setSessionChange((current) => ({ ...current, moveMode: event.target.value }))}>
+                <option value="single">Move only this session</option>
+                <option value="following">Move this and all following sessions</option>
+              </select>
+            </label>
+
+            <div style={{ padding: 10, borderRadius: 8, background: shiftingFollowing ? "#fff7ed" : "#fff", border: shiftingFollowing ? "1px solid #fdba74" : "1px solid #bfdbfe", color: shiftingFollowing ? "#9a3412" : "#334155" }}>
+              {shiftingFollowing
+                ? "The selected lesson and every later curriculum lesson will shift by the same amount. Cancelled future lessons stay cancelled. The operation stops if a completed/live lesson would be moved or any new time would overlap another lesson."
+                : "Only this lesson will move. Its new time must remain after the previous curriculum lesson and before the next one, with no partial or full overlap."}
+            </div>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              <strong>{shiftingFollowing ? "New date and time for this lesson (Ghana)" : "New Ghana date and time"}</strong>
+              <input type="datetime-local" value={sessionChange.startsAt} onChange={(event) => setSessionChange((current) => ({ ...current, startsAt: event.target.value }))} required />
+            </label>
+          </>
         ) : (
           <div style={{ padding: 10, borderRadius: 8, background: "#fff7ed", border: "1px solid #fed7aa", color: "#9a3412" }}>
             The session will remain visible as cancelled. Attendance and QR check-in will be locked, reminders will stop, and students will be notified.
@@ -437,7 +459,7 @@ export default function LiveClassesPageV2() {
         </label>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="submit" disabled={busy}>{busy ? "Saving…" : cancelling ? "Cancel session and notify students" : alreadyCancelled ? "Move and reactivate session" : "Move session and notify students"}</button>
+          <button type="submit" disabled={busy}>{busy ? "Saving…" : cancelling ? "Cancel session and notify students" : shiftingFollowing ? "Shift this and following sessions" : alreadyCancelled ? "Move and reactivate session" : "Move only this session"}</button>
           <button type="button" disabled={busy} onClick={() => setSessionChange(null)}>Close</button>
         </div>
       </form>
@@ -568,7 +590,7 @@ export default function LiveClassesPageV2() {
         <p><Link to="/class-schedule-setup">Open Class Schedule Setup</Link> to review the base weekly schedule. Individual moved or cancelled lessons remain controlled by the shared session record here.</p>
       </article> : null}
 
-      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Use <strong>Change session</strong> to move a lesson or cancel it without a replacement date. The same change appears in Attendance and the class schedule workflow.</p><p>Click a session dictionary control to open the complete {levelId} dictionary, search all {dictionaryEntries.length} items and select one or several assignments.</p>{renderSessions()}</article> : null}
+      {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Use <strong>Change session</strong> to move one lesson safely, shift it together with all following lessons, or cancel it without a replacement date. The system blocks overlaps and curriculum-order errors before saving.</p><p>Click a session dictionary control to open the complete {levelId} dictionary, search all {dictionaryEntries.length} items and select one or several assignments.</p>{renderSessions()}</article> : null}
 
       {!loading && dashboard && activeTab === "curriculum" ? <article className="card">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
