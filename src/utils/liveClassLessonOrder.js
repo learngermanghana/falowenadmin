@@ -120,6 +120,147 @@ function buildOfficialSlots({ startDate, rules, timezone, excluded, expectedLess
   return slots;
 }
 
+function localDateTimeParts(value, timezone = "Africa/Accra") {
+  const date = toDate(value);
+  if (!date) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    date: `${values.year}-${values.month}-${values.day}`,
+    time: `${values.hour}:${values.minute}`,
+  };
+}
+
+function ruleSlotsForDate({ dateIso, rules, timezone, excluded }) {
+  if (excluded.has(dateIso)) return [];
+  const weekdayIndex = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+  const weekday = new Date(`${dateIso}T00:00:00.000Z`).getUTCDay();
+  return rules
+    .filter((rule) => weekdayIndex[rule.day] === weekday)
+    .sort((left, right) => left.startTime.localeCompare(right.startTime))
+    .map((rule) => {
+      const startsAt = zonedLocalToUtcIso(dateIso, rule.startTime, timezone);
+      const durationMinutes = Number(rule.durationMinutes || 120);
+      const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
+      return { startsAt, endsAt, durationMinutes };
+    });
+}
+
+function resolveScheduleAnchor(klass = {}, levelId = "", expectedLessons = 0) {
+  const storedSessionNumber = Number(
+    klass.scheduleAnchorSessionNumber
+      || (Number.isFinite(Number(klass.scheduleAnchorDay)) ? Number(klass.scheduleAnchorDay) + 1 : 0),
+  );
+  const storedStartsAt = toDate(klass.scheduleAnchorStartsAt);
+  if (
+    Number.isFinite(storedSessionNumber)
+    && storedSessionNumber >= 1
+    && storedSessionNumber <= expectedLessons
+    && storedStartsAt
+  ) {
+    return {
+      sessionNumber: storedSessionNumber,
+      startsAt: storedStartsAt.toISOString(),
+      source: "stored-class-anchor",
+    };
+  }
+
+  const identity = [
+    klass.id,
+    klass.slug,
+    klass.classId,
+    klass.name,
+    klass.className,
+  ].map(normalize).join(" ").toLowerCase();
+
+  const isReportedMunichClass = normalize(levelId).toUpperCase() === "A1"
+    && /a1[\s-]+munich[\s-]+klasse/.test(identity)
+    && normalize(klass.startDate) === "2026-06-27"
+    && klass.scheduleAnchorDisabled !== true;
+
+  if (isReportedMunichClass) {
+    return {
+      sessionNumber: 14,
+      startsAt: "2026-07-18T08:00:00.000Z",
+      source: "a1-munich-day-13-progress-correction",
+    };
+  }
+
+  return null;
+}
+
+function buildOfficialSlotsAroundAnchor({
+  anchor,
+  anchorSession,
+  rules,
+  timezone,
+  excluded,
+  expectedLessons,
+}) {
+  const anchorDate = toDate(anchor?.startsAt);
+  const anchorSessionNumber = Number(anchor?.sessionNumber || 0);
+  if (!anchorDate || anchorSessionNumber < 1 || anchorSessionNumber > expectedLessons) {
+    throw new Error("The timetable anchor is missing or invalid.");
+  }
+
+  const anchorParts = localDateTimeParts(anchorDate, timezone);
+  if (!anchorParts) throw new Error("The timetable anchor date is invalid.");
+
+  const anchorMoment = anchorDate.getTime();
+  const matchingRule = ruleSlotsForDate({
+    dateIso: anchorParts.date,
+    rules,
+    timezone,
+    excluded: new Set(),
+  }).find((slot) => slot.startsAt === anchorDate.toISOString());
+  const durationMinutes = matchingRule?.durationMinutes || sessionDurationMinutes(anchorSession);
+  const anchorSlot = {
+    startsAt: anchorDate.toISOString(),
+    endsAt: new Date(anchorMoment + durationMinutes * 60000).toISOString(),
+    durationMinutes,
+  };
+
+  const preceding = [];
+  let cursorDate = anchorParts.date;
+  for (let guard = 0; preceding.length < anchorSessionNumber - 1 && guard < 1095; guard += 1) {
+    const slots = ruleSlotsForDate({ dateIso: cursorDate, rules, timezone, excluded })
+      .filter((slot) => new Date(slot.startsAt).getTime() < anchorMoment)
+      .sort((left, right) => right.startsAt.localeCompare(left.startsAt));
+    for (const slot of slots) {
+      if (preceding.length >= anchorSessionNumber - 1) break;
+      preceding.push(slot);
+    }
+    cursorDate = addDays(cursorDate, -1);
+  }
+
+  const following = [];
+  cursorDate = anchorParts.date;
+  const followingCount = expectedLessons - anchorSessionNumber;
+  for (let guard = 0; following.length < followingCount && guard < 1095; guard += 1) {
+    const slots = ruleSlotsForDate({ dateIso: cursorDate, rules, timezone, excluded })
+      .filter((slot) => new Date(slot.startsAt).getTime() > anchorMoment);
+    for (const slot of slots) {
+      if (following.length >= followingCount) break;
+      following.push(slot);
+    }
+    cursorDate = addDays(cursorDate, 1);
+  }
+
+  if (preceding.length !== anchorSessionNumber - 1 || following.length !== followingCount) {
+    throw new Error(`Could only build the official timetable around ${anchor.startsAt}.`);
+  }
+
+  return [...preceding.reverse(), anchorSlot, ...following];
+}
+
 function sessionRecordPreference(session = {}, classId = "") {
   let score = 0;
   if (session.repairPreferredRecord === true) score += 1000;
@@ -267,14 +408,6 @@ export function buildOfficialLessonSchedulePlan({
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
 
   const excluded = new Set((excludedDates || []).map((value) => normalize(value)).filter(Boolean));
-  const slots = buildOfficialSlots({
-    startDate: klass.startDate,
-    rules,
-    timezone,
-    excluded,
-    expectedLessons,
-  });
-
   const candidatesByNumber = new Map();
   sessions.filter(activeSession).forEach((session) => {
     const sessionNumber = resolveOfficialSessionNumber(session, groups, levelId);
@@ -305,6 +438,24 @@ export function buildOfficialLessonSchedulePlan({
     });
   });
 
+  const anchor = resolveScheduleAnchor(klass, levelId, expectedLessons);
+  const slots = anchor
+    ? buildOfficialSlotsAroundAnchor({
+      anchor,
+      anchorSession: sessionsByNumber.get(anchor.sessionNumber),
+      rules,
+      timezone,
+      excluded,
+      expectedLessons,
+    })
+    : buildOfficialSlots({
+      startDate: klass.startDate,
+      rules,
+      timezone,
+      excluded,
+      expectedLessons,
+    });
+
   const items = groups.map((group, index) => {
     const lessonNumber = index + 1;
     const session = sessionsByNumber.get(lessonNumber) || null;
@@ -334,7 +485,14 @@ export function buildOfficialLessonSchedulePlan({
     collisionCount: countSessionTimeCollisions(sessions),
     duplicateCount: duplicateSessions.length,
     duplicateSessions,
+    startDate: sessionDateInTimezone(slots[0].startsAt, timezone),
     endDate: sessionDateInTimezone(slots.at(-1).startsAt, timezone),
+    scheduleAnchor: anchor
+      ? {
+        ...anchor,
+        day: isA1 ? anchor.sessionNumber - 1 : null,
+      }
+      : null,
     itemLabel: isA1 ? "Day" : "Lesson",
     countLabel: isA1 ? "attendance sessions" : "lessons",
     slots,
