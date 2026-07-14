@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const directServicePath = new URL("../src/services/liveClassSessionDirectService.js", import.meta.url);
 const serviceIndexPath = new URL("../src/services/liveClassService.js", import.meta.url);
+const reschedulePlanPath = new URL("../src/utils/liveClassReschedulePlan.js", import.meta.url);
 
 async function source(path) {
   return readFile(path, "utf8");
@@ -19,11 +20,13 @@ test("move and cancel use the direct session mutation service", async () => {
 test("session, attendance, class, calendar and audit records commit atomically", async () => {
   const directService = await source(directServicePath);
   assert.match(directService, /runTransaction/);
-  assert.match(directService, /transaction\.update\(sessionRef, patch\)/);
-  assert.match(directService, /transaction\.set\(attendanceRef,[\s\S]*?\{ merge: true \}\)/);
+  assert.match(directService, /preparedChanges\.forEach/);
+  assert.match(directService, /transaction\.update\(change\.sessionRef, change\.patch\)/);
+  assert.match(directService, /transaction\.set\(change\.attendanceRef,[\s\S]*?\{ merge: true \}\)/);
   assert.match(directService, /transaction\.set\(classRef, changeMetadata, \{ merge: true \}\)/);
   assert.match(directService, /transaction\.set\(calendarRef,[\s\S]*?\{ merge: true \}\)/);
   assert.match(directService, /transaction\.set\(auditRef,/);
+  assert.match(directService, /affectedSessionIds/);
   assert.match(directService, /reminderScheduleVersion/);
   assert.match(directService, /atomicWrite: true/);
   assert.doesNotMatch(directService, /await updateDoc\(sessionRef, patch\)/);
@@ -36,17 +39,25 @@ test("session, attendance, class, calendar and audit records commit atomically",
 
 test("atomic session changes reject stale concurrent edits", async () => {
   const directService = await source(directServicePath);
-  assert.match(directService, /latestSessionSequence !== expectedSessionSequence/);
+  assert.match(directService, /latestSequence !== change\.expectedSequence/);
   assert.match(directService, /latestClassVersion !== expectedClassVersion/);
   assert.match(directService, /live-class\/stale-session/);
   assert.match(directService, /Refresh Live Classes and try again/);
 });
 
-test("rescheduling cannot create two lessons at the same class time", async () => {
-  const directService = await source(directServicePath);
-  assert.match(directService, /assertTargetSlotAvailable/);
-  assert.match(directService, /live-class\/time-conflict/);
-  assert.match(directService, /already used by/);
-  assert.match(directService, /Official class timetable repair/);
-  assert.match(directService, /await assertTargetSlotAvailable\([\s\S]*?await commitSessionChangeAtomically\(/);
+test("rescheduling detects partial overlaps and supports shifting following lessons", async () => {
+  const [directService, reschedulePlan] = await Promise.all([
+    source(directServicePath),
+    source(reschedulePlanPath),
+  ]);
+  assert.match(directService, /buildSessionReschedulePlan/);
+  assert.match(directService, /mode: payload\.moveMode/);
+  assert.match(directService, /commitSessionChangesAtomically/);
+  assert.match(directService, /movedSessions: reschedulePlan\.affectedCount/);
+  assert.match(reschedulePlan, /left\.start\.getTime\(\) < right\.end\.getTime\(\)/);
+  assert.match(reschedulePlan, /left\.end\.getTime\(\) > right\.start\.getTime\(\)/);
+  assert.match(reschedulePlan, /live-class\/time-overlap/);
+  assert.match(reschedulePlan, /live-class\/curriculum-order/);
+  assert.match(reschedulePlan, /Move this and all following sessions/);
+  assert.match(reschedulePlan, /ordered\.slice\(selectedIndex\)/);
 });
