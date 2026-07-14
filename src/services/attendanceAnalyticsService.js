@@ -22,7 +22,7 @@ export async function loadClassAttendanceAnalytics({
   if (!resolvedClassId) throw new Error("Select a class to load attendance tracking.");
 
   let dashboard = null;
-  let resolvedSessions = Array.isArray(sessions) ? sessions : null;
+  let resolvedSessions = Array.isArray(sessions) && sessions.length ? sessions : null;
   let resolvedClass = klass || null;
   if (!resolvedSessions || !resolvedClass) {
     dashboard = await getCompatibleClassDashboard(resolvedClassId);
