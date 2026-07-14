@@ -1,4 +1,5 @@
 import { inspectTimetableIntegrity } from "./liveClassTimetableIntegrity.js";
+import { latestSessionDateInTimezone } from "./liveClassScheduling.js";
 
 const BROKEN_CODES = new Set([
   "session-count",
@@ -20,12 +21,23 @@ const CURRICULUM_METADATA_CODES = new Set([
   "stale-curriculum-index",
 ]);
 
+function normalize(value) {
+  return String(value || "").trim();
+}
+
 function countCode(items = [], code) {
   return items.filter((item) => item.code === code).length;
 }
 
 function allFindings(report = {}) {
   return [...(report.issues || []), ...(report.warnings || [])];
+}
+
+function activeSessionsForEndDate(sessions = []) {
+  return sessions.filter((session) => {
+    const status = normalize(session.status || "scheduled").toLowerCase();
+    return status !== "cancelled" && status !== "superseded" && session.superseded !== true;
+  });
 }
 
 export function classifyTimetableHealth(report = {}) {
@@ -64,12 +76,32 @@ export function buildClassScheduleHealth({
   requireCurriculum = true,
   enforceEndDate = true,
 } = {}) {
-  return classifyTimetableHealth(inspectTimetableIntegrity({
+  const base = inspectTimetableIntegrity({
     klass,
     sessions,
     requireCurriculum,
-    enforceEndDate,
-  }));
+    enforceEndDate: false,
+  });
+  const timezone = normalize(klass.timezone) || "Africa/Accra";
+  const derivedEndDate = latestSessionDateInTimezone(activeSessionsForEndDate(sessions), timezone);
+  const storedEndDate = normalize(klass.endDate);
+  const issues = [...(base.issues || [])];
+
+  if (enforceEndDate && derivedEndDate && storedEndDate !== derivedEndDate) {
+    issues.push({
+      code: "end-date-mismatch",
+      message: `The class end date is ${storedEndDate || "not set"}, but the latest active timetable record is on ${derivedEndDate}.`,
+      storedEndDate,
+      derivedEndDate,
+    });
+  }
+
+  return classifyTimetableHealth({
+    ...base,
+    healthy: issues.length === 0,
+    derivedEndDate,
+    issues,
+  });
 }
 
 export function timetableHealthClassFields(health = {}, {
