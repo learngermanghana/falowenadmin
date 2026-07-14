@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityService.js";
-import { listClassCohorts, rescheduleSession } from "../services/liveClassService.js";
-import { buildLessonDateRepairPlan } from "../utils/liveClassLessonOrder.js";
+import { repairClassToOfficialLessonSchedule } from "../services/liveClassLessonDateRepairService.js";
+import { listClassCohorts } from "../services/liveClassService.js";
+import { buildOfficialLessonSchedulePlan } from "../utils/liveClassLessonOrder.js";
 
 function formatDateTime(value) {
   const parsed = new Date(value || 0);
@@ -19,8 +20,14 @@ function formatDateTime(value) {
   });
 }
 
-function mismatchLabel(item) {
-  return `Lesson ${item.lessonNumber}: ${formatDateTime(item.session.startsAt)} → ${formatDateTime(item.targetStartsAt)}`;
+function formatDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return value || "Not set";
+  return new Date(`${value}T12:00:00.000Z`).toLocaleDateString("en-GB", {
+    timeZone: "Africa/Accra",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default function LiveClassLessonDateRepair() {
@@ -44,7 +51,7 @@ export default function LiveClassLessonDateRepair() {
         setClassId(nextClassId);
       })
       .catch((error) => {
-        if (active) setMessage(error?.message || "Could not load classes for lesson repair.");
+        if (active) setMessage(error?.message || "Could not load classes for timetable repair.");
       });
     return () => { active = false; };
   }, []);
@@ -64,7 +71,7 @@ export default function LiveClassLessonDateRepair() {
         if (active) setDashboard(next);
       })
       .catch((error) => {
-        if (active) setMessage(error?.message || "Could not load lesson dates.");
+        if (active) setMessage(error?.message || "Could not load the class timetable.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -73,8 +80,32 @@ export default function LiveClassLessonDateRepair() {
     return () => { active = false; };
   }, [classId]);
 
-  const plan = useMemo(() => buildLessonDateRepairPlan(dashboard?.sessions || []), [dashboard?.sessions]);
-  const mismatches = useMemo(() => plan.filter((item) => item.changed), [plan]);
+  const preview = useMemo(() => {
+    if (!dashboard || !classId) return { plan: null, error: "" };
+    try {
+      return {
+        plan: buildOfficialLessonSchedulePlan({
+          classId,
+          klass: dashboard.klass,
+          sessions: dashboard.sessions,
+          excludedDates: dashboard.klass?.holidayDatesExcluded || [],
+        }),
+        error: "",
+      };
+    } catch (error) {
+      return { plan: null, error: error?.message || "Could not prepare the official lesson timetable." };
+    }
+  }, [classId, dashboard]);
+
+  const plan = preview.plan;
+  const changedItems = plan?.items.filter((item) => item.changed) || [];
+  const needsRepair = Boolean(
+    plan && (
+      changedItems.length
+      || plan.currentSessions < plan.expectedLessons
+      || String(dashboard?.klass?.endDate || "") !== plan.endDate
+    )
+  );
 
   async function refresh() {
     if (!classId) return null;
@@ -83,44 +114,36 @@ export default function LiveClassLessonDateRepair() {
     return next;
   }
 
-  async function repairLessonDates() {
-    if (!mismatches.length || busy) return;
-    const preview = mismatches.slice(0, 6).map(mismatchLabel).join("\n");
-    const extra = mismatches.length > 6 ? `\n…and ${mismatches.length - 6} more change(s).` : "";
+  async function repairOfficialTimetable() {
+    if (!plan || !needsRepair || busy) return;
+    const lesson20 = plan.items.find((item) => item.lessonNumber === 20);
     const confirmed = window.confirm(
-      `Repair ${mismatches.length} lesson date assignment(s)?\n\n${preview}${extra}\n\nThis keeps the existing chronological class slots but assigns them to Lesson 1, Lesson 2, Lesson 3, and so on.`,
+      `Repair this class to the official ${plan.expectedLessons}-lesson timetable?\n\n`
+      + `Start date: ${dashboard.klass?.startDate || "Not set"}\n`
+      + `Corrected end date: ${plan.endDate}\n`
+      + `Missing lessons to create: ${plan.missingLessons}\n`
+      + `Lesson 20 target: ${lesson20 ? formatDateTime(lesson20.targetStartsAt) : "Not available"}\n\n`
+      + "All lesson dates and curriculum identities are written in one atomic update, so topics cannot rotate between lessons.",
     );
     if (!confirmed) return;
 
     setBusy(true);
     setMessage("");
     try {
-      const adminId = user?.uid || user?.email || "admin";
-      const timezone = dashboard?.klass?.timezone || "Africa/Accra";
-      const className = dashboard?.klass?.name || dashboard?.klass?.className || "";
-      const warnings = [];
-
-      for (const item of mismatches) {
-        const result = await rescheduleSession(item.session.id, {
-          startsAt: item.targetStartsAt,
-          durationMinutes: item.durationMinutes,
-          reason: "Lesson order corrected so the teaching topics follow the official curriculum sequence.",
-          adminId,
-          classId,
-          className,
-          timezone,
-        });
-        if (Array.isArray(result?.syncWarnings)) warnings.push(...result.syncWarnings);
-      }
-
+      const result = await repairClassToOfficialLessonSchedule({
+        classId,
+        klass: dashboard.klass,
+        sessions: dashboard.sessions,
+        adminId: user?.uid || user?.email || "admin",
+      });
       await refresh();
-      const successMessage = `${mismatches.length} lesson date assignment(s) repaired. Lessons now follow the correct curriculum order.`;
-      setMessage(warnings.length ? `${successMessage} Optional sync warning: ${[...new Set(warnings)].join(", ")}.` : successMessage);
-      toast.success(successMessage, { durationMs: 8000 });
+      const successMessage = `Official timetable repaired: ${result.expectedLessons} lessons, ${result.created} missing lesson(s) created, ${result.moved} date(s) corrected, end date ${formatDate(result.endDate)}.`;
+      setMessage(successMessage);
+      toast.success(successMessage, { durationMs: 10000 });
     } catch (error) {
-      const errorMessage = `${error?.code ? `${error.code}: ` : ""}${error?.message || "Lesson date repair failed"}`;
+      const errorMessage = `${error?.code ? `${error.code}: ` : ""}${error?.message || "Official timetable repair failed"}`;
       setMessage(errorMessage);
-      toast.error(errorMessage, { durationMs: 9000 });
+      toast.error(errorMessage, { durationMs: 10000 });
     } finally {
       setBusy(false);
     }
@@ -129,8 +152,8 @@ export default function LiveClassLessonDateRepair() {
   return (
     <article className="card" style={{ display: "grid", gap: 12, marginBottom: 16, border: "2px solid #f59e0b", background: "#fffbeb" }}>
       <div>
-        <h2 style={{ marginBottom: 6 }}>Lesson date repair</h2>
-        <p style={{ margin: 0 }}>Use this when a later topic appears before an earlier lesson or the normal Change session button is not working.</p>
+        <h2 style={{ marginBottom: 6 }}>Official lesson timetable repair</h2>
+        <p style={{ margin: 0 }}>Use this once when lesson dates have rotated or fewer than the official number of lessons are visible. The repair is atomic and does not move topics one-by-one.</p>
       </div>
 
       <label style={{ display: "grid", gap: 6 }}>
@@ -143,35 +166,45 @@ export default function LiveClassLessonDateRepair() {
         </select>
       </label>
 
-      {loading ? <p>Checking lesson order…</p> : null}
-      {!loading && dashboard ? (
+      {loading ? <p>Checking the official lesson timetable…</p> : null}
+      {!loading && dashboard && plan ? (
         <div style={{ display: "grid", gap: 10 }}>
-          <p style={{ margin: 0 }}>
-            Class: <strong>{dashboard.klass?.name || dashboard.klass?.className || classId}</strong> · Sessions checked: <strong>{plan.length}</strong> · Wrong date assignments: <strong>{mismatches.length}</strong>
-          </p>
+          <div style={{ display: "grid", gap: 5, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
+            <div>Class: <strong>{dashboard.klass?.name || dashboard.klass?.className || classId}</strong></div>
+            <div>Start date: <strong>{formatDate(dashboard.klass?.startDate)}</strong></div>
+            <div>Current end date: <strong>{formatDate(dashboard.klass?.endDate)}</strong></div>
+            <div>Correct end date: <strong>{formatDate(plan.endDate)}</strong></div>
+            <div>Visible sessions: <strong>{plan.currentSessions}</strong> of <strong>{plan.expectedLessons}</strong></div>
+            <div>Missing lessons: <strong>{plan.missingLessons}</strong> · Date corrections: <strong>{changedItems.length}</strong></div>
+          </div>
 
-          {mismatches.length ? (
+          {changedItems.length ? (
             <div style={{ display: "grid", gap: 6, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
-              {mismatches.slice(0, 8).map((item) => (
-                <div key={item.session.id}>{mismatchLabel(item)}</div>
+              {changedItems.slice(0, 10).map((item) => (
+                <div key={item.lessonNumber}>
+                  Lesson {item.lessonNumber}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
+                </div>
               ))}
-              {mismatches.length > 8 ? <small>Plus {mismatches.length - 8} more change(s).</small> : null}
+              {changedItems.length > 10 ? <small>Plus {changedItems.length - 10} more correction(s).</small> : null}
             </div>
-          ) : (
+          ) : null}
+
+          {!needsRepair ? (
             <div style={{ padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
-              Lesson dates already follow the curriculum order.
+              This class already has the complete official timetable.
             </div>
-          )}
+          ) : null}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={repairLessonDates} disabled={busy || !mismatches.length}>
-              {busy ? "Repairing lesson dates…" : `Repair ${mismatches.length || ""} lesson date${mismatches.length === 1 ? "" : "s"}`}
+            <button type="button" onClick={repairOfficialTimetable} disabled={busy || !needsRepair}>
+              {busy ? "Repairing all lessons atomically…" : `Repair to ${plan.expectedLessons} official lessons`}
             </button>
             <button type="button" onClick={refresh} disabled={busy}>Check again</button>
           </div>
         </div>
       ) : null}
 
+      {!loading && preview.error ? <div style={{ padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #fca5a5", color: "#991b1b" }}>{preview.error}</div> : null}
       {message ? <div style={{ padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #fcd34d" }}>{message}</div> : null}
     </article>
   );
