@@ -13,7 +13,7 @@ import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingHubPage from "./pages/MarkingHubPage";
 import ExamTutorReviewQueuePage from "./pages/ExamTutorReviewQueuePage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
-import CommunicationPage from "./pages/CommunicationPage";
+import CommunicationHubPage from "./pages/CommunicationHubPage.jsx";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
 import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
 import TeachingSlidesPage from "./pages/TeachingSlidesPage";
@@ -164,7 +164,7 @@ export default function App() {
           <Route path="/tutor-marking" element={<Navigate to="/campus/tutor-marking" replace />} />
           <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingPage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
-          <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationPage /></ProtectedRoute>} />
+          <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationHubPage /></ProtectedRoute>} />
           <Route path="/whatsapp-reminders" element={<ProtectedRoute allowStaff={false}><WhatsAppRemindersPage /></ProtectedRoute>} />
           <Route path="/teaching-slides" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/orientation" element={<ProtectedRoute allowStaff={false}><OrientationPage /></ProtectedRoute>} />
