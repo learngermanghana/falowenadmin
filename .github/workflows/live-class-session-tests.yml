@@ -5,14 +5,17 @@ on:
     paths:
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
+      - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'src/components/SessionDictionaryPicker.jsx'
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
+      - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassCancelService.js'
+      - 'src/services/liveClassCompatibilityService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassRescheduleService.js'
@@ -21,6 +24,7 @@ on:
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/services/liveClassSessionDirectService.js'
       - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/utils/liveClassLessonOrder.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassScheduleRules.js'
       - 'src/utils/liveClassScheduling.js'
@@ -30,6 +34,7 @@ on:
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
+      - 'tests/live-class-lesson-order-repair.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
@@ -42,14 +47,17 @@ on:
     paths:
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
+      - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'src/components/SessionDictionaryPicker.jsx'
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
+      - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassCancelService.js'
+      - 'src/services/liveClassCompatibilityService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassRescheduleService.js'
@@ -58,6 +66,7 @@ on:
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/services/liveClassSessionDirectService.js'
       - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/utils/liveClassLessonOrder.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassScheduleRules.js'
       - 'src/utils/liveClassScheduling.js'
@@ -67,6 +76,7 @@ on:
       - 'tests/live-class-complete-session-visibility.test.js'
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
+      - 'tests/live-class-lesson-order-repair.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
@@ -99,6 +109,7 @@ jobs:
           tests/live-class-complete-session-visibility.test.js
           tests/live-class-dictionary-selection.test.js
           tests/live-class-direct-session-change.test.js
+          tests/live-class-lesson-order-repair.test.js
           tests/live-class-rebuild-identity.test.js
           tests/live-class-schedule-rules.test.js
           tests/live-class-session-dedupe.test.js
