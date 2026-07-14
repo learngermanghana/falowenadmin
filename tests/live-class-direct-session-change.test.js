@@ -25,3 +25,12 @@ test("the session save is required while secondary synchronization is best effor
   assert.doesNotMatch(directService, /auditLogs/);
   assert.doesNotMatch(directService, /studentNotifications/);
 });
+
+test("rescheduling cannot create two lessons at the same class time", async () => {
+  const directService = await source(directServicePath);
+  assert.match(directService, /assertTargetSlotAvailable/);
+  assert.match(directService, /live-class\/time-conflict/);
+  assert.match(directService, /already used by/);
+  assert.match(directService, /Official class timetable repair/);
+  assert.match(directService, /await assertTargetSlotAvailable\([\s\S]*?await updateDoc\(sessionRef, patch\);/);
+});
