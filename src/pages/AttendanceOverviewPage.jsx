@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listClasses, setClassArchived } from "../services/classesService";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
+import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
 
 const GHANA_TIMEZONE = "Africa/Accra";
 
@@ -51,7 +52,7 @@ function classifyClass(klass) {
   };
 }
 
-function ClassCard({ klass, archived = false, saving = false, onToggleArchived }) {
+function ClassCard({ klass, archived = false, saving = false, onToggleArchived, onTrack }) {
   const { startDate, endDate, sessionCount } = klass.scheduleMeta || {};
   const dateText = startDate && endDate
     ? `${formatDate(startDate)} → ${formatDate(endDate)}`
@@ -87,30 +88,26 @@ function ClassCard({ klass, archived = false, saving = false, onToggleArchived }
       <div style={{ fontSize: 12, opacity: 0.75 }}>Schedule: {dateText}</div>
       {sessionCount > 0 ? <div style={{ fontSize: 12, opacity: 0.75 }}>Sessions: {sessionCount}</div> : null}
       <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <button type="button" onClick={() => onTrack?.(routeClassId)}>View attendance tracker</button>
+        <Link to={`/attendance/session/${encodeURIComponent(routeClassId)}`}>
+          {archived ? "View archived attendance" : "Mark attendance"}
+        </Link>
         <button
           type="button"
           disabled={saving}
           onClick={() => onToggleArchived?.(klass, !archived)}
           style={{
             background: "#ffffff",
-            color: "#0f172a",
+            color: archived ? "#166534" : "#991b1b",
             border: `1px solid ${archived ? "#16a34a" : "#dc2626"}`,
             fontWeight: 700,
             padding: "8px 12px",
             borderRadius: 8,
             cursor: saving ? "default" : "pointer",
-            ...(archived
-              ? { color: "#166534", background: "#ffffff" }
-              : { color: "#991b1b", background: "#ffffff" }),
           }}
         >
           {saving ? "Saving..." : archived ? "Unarchive class" : "Archive class"}
         </button>
-      </div>
-      <div style={{ marginTop: 8 }}>
-        <Link to={`/attendance/session/${encodeURIComponent(routeClassId)}`}>
-          {archived ? "View archived attendance" : "Mark attendance"}
-        </Link>
       </div>
     </div>
   );
@@ -122,6 +119,7 @@ export default function AttendanceOverviewPage() {
   const [error, setError] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [savingClassId, setSavingClassId] = useState("");
+  const [selectedTrackerId, setSelectedTrackerId] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -130,6 +128,7 @@ export default function AttendanceOverviewPage() {
       try {
         const data = await listClasses();
         setClasses(data);
+        setSelectedTrackerId((current) => current || classRecordKey(data.find((klass) => !classifyClass(klass).archived) || data[0]));
       } catch (err) {
         setError(err?.message || "Failed to load classes");
       } finally {
@@ -173,6 +172,7 @@ export default function AttendanceOverviewPage() {
     () => classifiedClasses.filter((klass) => klass.archived),
     [classifiedClasses],
   );
+  const selectedTrackerClass = classifiedClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || activeClasses[0] || archivedClasses[0] || null;
 
   return (
     <div style={{ padding: 16 }}>
@@ -180,12 +180,12 @@ export default function AttendanceOverviewPage() {
         <div>
           <h2 style={{ margin: 0 }}>Attendance</h2>
           <p style={{ margin: "6px 0 0", fontSize: 13, opacity: 0.8 }}>
-            Dates and session totals come directly from the current Live Classes record.
+            Track QR check-ins, manual attendance, late arrivals and absence patterns from the current Live Classes records.
           </p>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           <Link to="/">View dashboard</Link>
-          <Link to="/marking">Open marking console</Link>
+          <Link to="/live-classes">Open Live Classes</Link>
         </div>
       </div>
 
@@ -198,7 +198,7 @@ export default function AttendanceOverviewPage() {
         <p>No ongoing classes found. Completed classes may be in the archive below.</p>
       )}
 
-      <div style={{ display: "grid", gap: 10, maxWidth: 620, marginTop: 14 }}>
+      <div style={{ display: "grid", gap: 10, maxWidth: 720, marginTop: 14 }}>
         {activeClasses.map((klass) => {
           const recordId = classRecordKey(klass);
           return (
@@ -207,13 +207,14 @@ export default function AttendanceOverviewPage() {
               klass={klass}
               saving={savingClassId === recordId}
               onToggleArchived={handleToggleArchived}
+              onTrack={setSelectedTrackerId}
             />
           );
         })}
       </div>
 
       {!loading && !error && archivedClasses.length > 0 && (
-        <section style={{ marginTop: 22, maxWidth: 620 }}>
+        <section style={{ marginTop: 22, maxWidth: 720 }}>
           <button
             type="button"
             onClick={() => setShowArchived((value) => !value)}
@@ -239,6 +240,7 @@ export default function AttendanceOverviewPage() {
                     archived
                     saving={savingClassId === recordId}
                     onToggleArchived={handleToggleArchived}
+                    onTrack={setSelectedTrackerId}
                   />
                 );
               })}
@@ -246,6 +248,23 @@ export default function AttendanceOverviewPage() {
           )}
         </section>
       )}
+
+      {!loading && selectedTrackerClass ? (
+        <section style={{ marginTop: 26 }}>
+          <label style={{ display: "grid", gap: 6, maxWidth: 440 }}>
+            <strong>Class shown in tracker</strong>
+            <select value={classRecordKey(selectedTrackerClass)} onChange={(event) => setSelectedTrackerId(event.target.value)}>
+              {classifiedClasses.map((klass) => (
+                <option key={classRecordKey(klass)} value={classRecordKey(klass)}>{klass.name || klass.className || classRecordKey(klass)}{klass.archived ? " (archived)" : ""}</option>
+              ))}
+            </select>
+          </label>
+          <ClassAttendanceTracker
+            classId={classRecordKey(selectedTrackerClass)}
+            className={selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }
