@@ -167,7 +167,10 @@ jobs:
           node --check functions/attendanceConfirmationEmails.js
           node --check scripts/patchAttendanceConfirmationEmails.mjs
 
-      - name: Run live class session tests
+      - name: Test superseded status normalization
+        run: node --test tests/live-class-superseded-status.test.js
+
+      - name: Run existing live class session tests
         run: >-
           node --test
           tests/attendance-analytics.test.js
@@ -186,7 +189,6 @@ jobs:
           tests/live-class-schedule-rules.test.js
           tests/live-class-session-dedupe.test.js
           tests/live-class-session-rebuild.test.js
-          tests/live-class-superseded-status.test.js
           tests/live-class-unified-session-change-ui.test.js
           tests/tutor-marking-simplification.test.js
 
