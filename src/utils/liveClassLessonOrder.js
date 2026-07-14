@@ -14,9 +14,6 @@ function toDate(value) {
 }
 
 export function sessionLessonNumber(session = {}) {
-  const curriculumIndex = Number(session.curriculumIndex || 0);
-  if (Number.isFinite(curriculumIndex) && curriculumIndex > 0) return curriculumIndex;
-
   const topicMatch = normalize(session.topic || session.title).match(/\bLesson\s+(\d+)\b/i);
   if (topicMatch) return Number(topicMatch[1]);
 
@@ -31,6 +28,9 @@ export function sessionLessonNumber(session = {}) {
     const match = normalize(value).match(/(?:^|[.-])(\d+)$/);
     if (match) return Number(match[1]);
   }
+
+  const curriculumIndex = Number(session.curriculumIndex || 0);
+  if (Number.isFinite(curriculumIndex) && curriculumIndex > 0) return curriculumIndex;
 
   return null;
 }
