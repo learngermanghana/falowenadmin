@@ -20,6 +20,7 @@ on:
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/pages/TutorMarkingSimplePage.jsx'
       - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/attendanceAnalyticsService.js'
@@ -60,6 +61,7 @@ on:
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
       - 'tests/live-class-unified-session-change-ui.test.js'
+      - 'tests/tutor-marking-simplification.test.js'
       - '.github/workflows/live-class-session-tests.yml'
   push:
     branches:
@@ -82,6 +84,7 @@ on:
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/pages/TutorMarkingSimplePage.jsx'
       - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
       - 'src/services/attendanceAnalyticsService.js'
@@ -122,6 +125,7 @@ on:
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
       - 'tests/live-class-unified-session-change-ui.test.js'
+      - 'tests/tutor-marking-simplification.test.js'
       - '.github/workflows/live-class-session-tests.yml'
   workflow_dispatch:
 
@@ -166,6 +170,7 @@ jobs:
           tests/live-class-session-dedupe.test.js
           tests/live-class-session-rebuild.test.js
           tests/live-class-unified-session-change-ui.test.js
+          tests/tutor-marking-simplification.test.js
 
       - name: Build dashboard
         run: npm run build
