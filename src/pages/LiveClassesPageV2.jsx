@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
+import LiveClassStudentsPanel from "../components/LiveClassStudentsPanel.jsx";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext.jsx";
 import CreateClassCard from "../components/CreateClassCard.jsx";
@@ -15,10 +16,7 @@ import {
   resolveClassCohort,
   updateSession,
 } from "../services/liveClassService.js";
-import {
-  getCompatibleClassDashboard,
-  syncCompatibleClassCurriculum,
-} from "../services/liveClassCompatibilityService.js";
+import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityService.js";
 import {
   buildDictionarySelectionTopic,
   canonicalDictionarySelection,
@@ -35,7 +33,7 @@ const tabs = [
   { id: "details", label: "Class & settings" },
   { id: "timetable", label: "Timetable" },
   { id: "sessions", label: "Sessions" },
-  { id: "curriculum", label: "Curriculum" },
+  { id: "students", label: "Students" },
   { id: "communication", label: "Communication" },
   { id: "create", label: "Create class" },
 ];
@@ -219,20 +217,7 @@ export default function LiveClassesPageV2() {
     [dashboard],
   );
   const nextCountdown = dashboard?.nextSession ? calculateCountdown(dashboard.nextSession.startsAt) : null;
-  const mappedCount = (dashboard?.sessions || []).filter((session) => curriculumIds(session).length).length;
   const messageIsSuccess = /successfully|updated automatically|assigned|created|saved|checked|cancelled|rescheduled|moved|shifted/i.test(message);
-
-  const sessionsByDictionaryId = useMemo(() => {
-    const result = new Map();
-    (dashboard?.sessions || []).forEach((session) => {
-      curriculumIds(session).forEach((id) => {
-        const normalizedId = normalize(id).toUpperCase();
-        if (!result.has(normalizedId)) result.set(normalizedId, []);
-        result.get(normalizedId).push(session);
-      });
-    });
-    return result;
-  }, [dashboard?.sessions]);
 
   async function handleCreated(classId) {
     await refreshClasses(classId);
@@ -247,21 +232,6 @@ export default function LiveClassesPageV2() {
     setSelectedClassId(existing.id);
     setActiveTab("details");
     setMessage("This class already exists. Update the existing class instead.");
-  }
-
-  async function synchronizeCurriculum() {
-    if (!selectedClassId) return;
-    setBusy(true);
-    setMessage("");
-    try {
-      const result = await syncCompatibleClassCurriculum(selectedClassId);
-      await refreshDashboard(selectedClassId);
-      setMessage(`Curriculum checked: ${result.mapped} of ${result.total} session(s) mapped. The full ${levelId || "course"} dictionary contains ${dictionaryEntries.length} item(s).`);
-    } catch (error) {
-      setMessage(error?.message || "Curriculum synchronization failed");
-    } finally {
-      setBusy(false);
-    }
   }
 
   async function saveDictionarySelection(session, assignmentIds) {
@@ -518,37 +488,10 @@ export default function LiveClassesPageV2() {
     );
   }
 
-  function renderFullDictionary() {
-    if (!levelId) return <p>The class level is missing. Save A1, A2 or B1 in Class & settings.</p>;
-    if (!dictionaryEntries.length) return <p>No dictionary is configured for {levelId}.</p>;
-    return (
-      <div style={{ overflowX: "auto", marginTop: 16 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr><th>#</th><th>Assignment ID</th><th>Chapter</th><th>English</th><th>German</th><th>Session mapping</th></tr></thead>
-          <tbody>
-            {dictionaryEntries.map((entry, index) => {
-              const mappedSessions = sessionsByDictionaryId.get(entry.assignment_id.toUpperCase()) || [];
-              return (
-                <tr key={entry.assignment_id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                  <td style={{ padding: 8 }}>{index + 1}</td>
-                  <td style={{ padding: 8 }}><strong>{entry.assignment_id}</strong></td>
-                  <td style={{ padding: 8 }}>{entry.chapter}</td>
-                  <td style={{ padding: 8 }}>{entry.en}</td>
-                  <td style={{ padding: 8 }}>{entry.de}</td>
-                  <td style={{ padding: 8 }}>{mappedSessions.length ? mappedSessions.map((session) => formatDateTime(session.startsAt)).join(", ") : "Not mapped yet"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
   return (
     <section className="page-container">
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <div><h1>Live Classes</h1><p>Manage classes, sessions, attendance and the complete course dictionary from the same record.</p></div>
+        <div><h1>Live Classes</h1><p>Manage classes, sessions, students, attendance and teaching records from the same class.</p></div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}><Link to="/attendance">Attendance overview</Link><Link to="/class-schedule-setup">Class schedule page</Link></div>
       </div>
 
@@ -592,13 +535,13 @@ export default function LiveClassesPageV2() {
 
       {!loading && dashboard && activeTab === "sessions" ? <article className="card"><h2>Generated sessions</h2><p>Use <strong>Change session</strong> to move one lesson safely, shift it together with all following lessons, or cancel it without a replacement date. The system blocks overlaps and curriculum-order errors before saving.</p><p>Click a session dictionary control to open the complete {levelId} dictionary, search all {dictionaryEntries.length} items and select one or several assignments.</p>{renderSessions()}</article> : null}
 
-      {!loading && dashboard && activeTab === "curriculum" ? <article className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div><h2>Complete {levelId || "course"} dictionary</h2><p>Showing <strong>{dictionaryEntries.length}</strong> dictionary item(s), not only the items already attached to generated sessions.</p><p>Mapped sessions: <strong>{mappedCount}</strong> of <strong>{dashboard.sessions.length}</strong></p></div>
-          <button type="button" disabled={busy} onClick={synchronizeCurriculum}>{busy ? "Synchronizing…" : "Repair and synchronize curriculum"}</button>
-        </div>
-        {renderFullDictionary()}
-      </article> : null}
+      {!loading && dashboard && activeTab === "students" ? (
+        <LiveClassStudentsPanel
+          classId={dashboard.klass.id || selectedClassId}
+          className={dashboard.klass.name || dashboard.klass.className || selectedClassId}
+          levelId={levelId}
+        />
+      ) : null}
 
       {!loading && dashboard && activeTab === "communication" ? <article className="card"><h2>Schedule and communication</h2><p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)}</p><p>Latest completed: {formatDateTime(dashboard.latestCompletedSession?.startsAt)}</p><p>Calendar: <a href={`/api/calendar/class/${dashboard.klass.id}.ics`}>Open class calendar feed</a></p><p>Moving or cancelling a session creates the matching student notification and communication record automatically.</p></article> : null}
     </section>
