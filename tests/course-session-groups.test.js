@@ -47,3 +47,12 @@ test("A2 curriculum keeps numeric order through all 28 lessons", () => {
   assert.equal(groups[9]?.assignmentIds[0], "A2-4.10");
   assert.equal(groups.at(-1)?.assignmentIds[0], "A2-10.28");
 });
+
+test("B1 curriculum keeps numeric order through all 28 lessons", () => {
+  const groups = getCourseSessionGroups("B1");
+  assert.equal(getCourseSessionCount("B1"), 28);
+  assert.equal(groups[4]?.assignmentIds[0], "B1-2.5");
+  assert.equal(groups[5]?.assignmentIds[0], "B1-2.6");
+  assert.equal(groups[9]?.assignmentIds[0], "B1-4.10");
+  assert.equal(groups.at(-1)?.assignmentIds[0], "B1-10.28");
+});
