@@ -52,13 +52,15 @@ jobs:
             scripts/patchOperationalSheetAutoSyncJobs.mjs \
             scripts/patchLiveClassUpdateScheduleSync.mjs \
             scripts/patchHolidayClassScheduleAwareness.mjs \
-            scripts/patchStudentDeletionRuntime.mjs
+            scripts/patchStudentDeletionRuntime.mjs \
+            scripts/patchAttendanceConfirmationEmails.mjs
           do
             echo "Checking $script"
             node --check "$script"
             node "$script"
           done
           node --check functions/index.js
+          node --check functions/attendanceConfirmationEmails.js
 
       - name: Install functions dependencies
         working-directory: functions
