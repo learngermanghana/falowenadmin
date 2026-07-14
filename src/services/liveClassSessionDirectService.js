@@ -1,9 +1,29 @@
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { db } from "../firebase.js";
 import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
 
 function normalize(value) {
   return String(value || "").trim();
+}
+
+function toMillis(value) {
+  if (!value) return Number.NaN;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  if (typeof value === "object" && Number.isFinite(value.seconds)) {
+    return (Number(value.seconds) * 1000) + Math.round(Number(value.nanoseconds || 0) / 1000000);
+  }
+  return new Date(value).getTime();
 }
 
 function durationMinutes(payload = {}, session = {}) {
@@ -43,6 +63,41 @@ function resolveMoveTimes(payload = {}, session = {}) {
     endsAt: new Date(startsAtDate.getTime() + minutes * 60000).toISOString(),
     durationMinutes: minutes,
   };
+}
+
+async function queryClassSessions(field, classId) {
+  const snap = await getDocs(
+    query(collection(db, "classSessions"), where(field, "==", classId)),
+  );
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+async function assertTargetSlotAvailable({ classId, sessionId, startsAt }) {
+  if (!classId) return;
+  const targetMs = toMillis(startsAt);
+  const found = new Map();
+  const results = await Promise.allSettled([
+    queryClassSessions("classId", classId),
+    queryClassSessions("classRecordId", classId),
+  ]);
+  results.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((session) => found.set(session.id, session));
+  });
+
+  const conflict = [...found.values()].find((candidate) => {
+    if (normalize(candidate.id) === normalize(sessionId)) return false;
+    if (normalize(candidate.status || "scheduled").toLowerCase() === "cancelled") return false;
+    return Number.isFinite(targetMs) && toMillis(candidate.startsAt) === targetMs;
+  });
+  if (!conflict) return;
+
+  const label = normalize(conflict.topic || conflict.title) || "another lesson";
+  const error = new Error(
+    `This date and time is already used by ${label}. Run Official class timetable repair so the conflicting lesson is moved automatically.`,
+  );
+  error.code = "live-class/time-conflict";
+  throw error;
 }
 
 async function syncOptionalReferences({ classId, sessionId, patch, changeType, reason }) {
@@ -126,6 +181,8 @@ export async function rescheduleSession(sessionId, payload = {}) {
   const classId = normalize(payload.classId || session.classId || session.classRecordId);
   const reason = normalize(payload.reason);
   const times = resolveMoveTimes(payload, session);
+  await assertTargetSlotAvailable({ classId, sessionId: session.id, startsAt: times.startsAt });
+
   const patch = {
     previousStartsAt: session.startsAt || "",
     previousEndsAt: session.endsAt || "",
