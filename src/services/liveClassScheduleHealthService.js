@@ -13,6 +13,16 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
+function toMillis(value) {
+  if (!value) return Number.NaN;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  if (typeof value === "object" && Number.isFinite(value.seconds)) {
+    return (Number(value.seconds) * 1000) + Math.round(Number(value.nanoseconds || 0) / 1000000);
+  }
+  return new Date(value).getTime();
+}
+
 function superseded(session = {}) {
   return session.superseded === true || normalize(session.status).toLowerCase() === "superseded";
 }
@@ -21,7 +31,7 @@ function shouldPauseFutureReminder(session = {}, broken = false, nowMs = Date.no
   if (!broken || superseded(session)) return false;
   const status = normalize(session.status || "scheduled").toLowerCase();
   if (["cancelled", "completed"].includes(status)) return false;
-  const startsAtMs = new Date(session.startsAt || 0).getTime();
+  const startsAtMs = toMillis(session.startsAt);
   return Number.isFinite(startsAtMs) && startsAtMs > nowMs;
 }
 
