@@ -137,13 +137,14 @@ export function sessionLessonNumber(session = {}) {
   const dayMatch = topic.match(/\bDay\s+(\d+)\b/i);
   if (dayMatch) return Number(dayMatch[1]) + 1;
 
-  const directDay = Number(session.curriculumDay);
-  if (Number.isFinite(directDay) && directDay >= 0) return directDay + 1;
-
   const topicMatch = topic.match(/\bLesson\s+(\d+)\b/i);
   if (topicMatch) return Number(topicMatch[1]);
 
   const ids = assignmentIdsForSession(session);
+  const isA1Record = ids.some((value) => /^A1(?:-|$)/i.test(value));
+  const directDay = Number(session.curriculumDay);
+  if (isA1Record && Number.isFinite(directDay) && directDay >= 0) return directDay + 1;
+
   for (const value of ids) {
     const match = normalize(value).match(/(?:^|[.-])(\d+)$/);
     if (match) return Number(match[1]);
