@@ -74,7 +74,8 @@ test("A1 repairs to 25 grouped attendance sessions", () => {
   assert.equal(plan.countLabel, "attendance sessions");
   assert.equal(plan.itemLabel, "Day");
   assert.equal(plan.endDate, "2026-07-27");
-  assert.equal(plan.items.at(-1).group.assignmentIds.includes("A1-5.10"), true);
+  assert.equal(plan.items.at(-1).group.day, 24);
+  assert.match(plan.items.at(-1).group.topic, /^Day 24:/);
 });
 
 test("B1 repairs to all 28 lessons", () => {
