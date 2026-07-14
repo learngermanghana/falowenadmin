@@ -53,7 +53,8 @@ function resolveLevelId(klass = {}) {
 }
 
 function activeSession(session = {}) {
-  return normalize(session.status || "scheduled").toLowerCase() !== "cancelled";
+  const status = normalize(session.status || "scheduled").toLowerCase();
+  return status !== "cancelled" && status !== "superseded" && session.superseded !== true;
 }
 
 export function countSessionTimeCollisions(sessions = []) {
@@ -102,6 +103,7 @@ function buildOfficialSlots({ startDate, rules, timezone, excluded, expectedLess
 
 function sessionRecordPreference(session = {}, classId = "") {
   let score = 0;
+  if (session.repairPreferredRecord === true) score += 1000;
   if (normalize(session.classId) === normalize(classId)) score += 8;
   if (normalize(session.classRecordId) === normalize(classId)) score += 4;
   if (assignmentIdsForSession(session).length) score += 2;
@@ -247,14 +249,34 @@ export function buildOfficialLessonSchedulePlan({
     expectedLessons,
   });
 
-  const sessionsByNumber = new Map();
-  sessions.forEach((session) => {
+  const candidatesByNumber = new Map();
+  sessions.filter(activeSession).forEach((session) => {
     const sessionNumber = resolveOfficialSessionNumber(session, groups, levelId);
     if (!sessionNumber) return;
-    const existing = sessionsByNumber.get(sessionNumber);
-    if (!existing || sessionRecordPreference(session, classId) > sessionRecordPreference(existing, classId)) {
-      sessionsByNumber.set(sessionNumber, session);
-    }
+    if (!candidatesByNumber.has(sessionNumber)) candidatesByNumber.set(sessionNumber, []);
+    candidatesByNumber.get(sessionNumber).push(session);
+  });
+
+  const sessionsByNumber = new Map();
+  const duplicateSessions = [];
+  candidatesByNumber.forEach((candidates, sessionNumber) => {
+    const ordered = [...candidates].sort((left, right) => {
+      const score = sessionRecordPreference(right, classId) - sessionRecordPreference(left, classId);
+      if (score) return score;
+      return normalize(left.id).localeCompare(normalize(right.id));
+    });
+    const canonical = ordered[0] || null;
+    if (!canonical) return;
+    sessionsByNumber.set(sessionNumber, canonical);
+    ordered.slice(1).forEach((session) => {
+      const status = normalize(session.status || "scheduled").toLowerCase();
+      if (["completed", "live"].includes(status)) return;
+      duplicateSessions.push({
+        lessonNumber: sessionNumber,
+        session,
+        canonicalSessionId: normalize(canonical.id),
+      });
+    });
   });
 
   const items = groups.map((group, index) => {
@@ -284,6 +306,8 @@ export function buildOfficialLessonSchedulePlan({
     missingLessons: items.filter((item) => !item.session).length,
     changedLessons: items.filter((item) => item.changed).length,
     collisionCount: countSessionTimeCollisions(sessions),
+    duplicateCount: duplicateSessions.length,
+    duplicateSessions,
     endDate: sessionDateInTimezone(slots.at(-1).startsAt, timezone),
     itemLabel: isA1 ? "Day" : "Lesson",
     countLabel: isA1 ? "attendance sessions" : "lessons",
