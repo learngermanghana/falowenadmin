@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { buildOfficialLessonSchedulePlan } from "../src/utils/liveClassLessonOrder.js";
 
 const repairServicePath = new URL("../src/services/liveClassLessonDateRepairService.js", import.meta.url);
+const compatibilityServicePath = new URL("../src/services/liveClassCompatibilityServiceBase.js", import.meta.url);
 const EXCLUDED_DATES = ["2026-07-15", "2026-07-20", "2026-07-22"];
 const SCHEDULE_RULES = [
   { day: "mon", startTime: "19:00", durationMinutes: 120 },
@@ -108,9 +109,43 @@ test("a Lesson 20 and Lesson 23 time collision is repaired into unique official 
   assert.notEqual(lesson20.targetStartsAt, lesson23.targetStartsAt);
 });
 
-test("the repair service loads raw Firestore sessions before building the atomic plan", async () => {
-  const source = await readFile(repairServicePath, "utf8");
-  assert.match(source, /loadRawRepairSessions/);
-  assert.match(source, /sessions:\s*repairSessions/);
-  assert.match(source, /collisionsResolved:\s*plan\.collisionCount/);
+test("the visible enriched record stays canonical and the generated alias is superseded", () => {
+  const visibleLesson20 = {
+    ...session(20, "2026-07-15"),
+    id: "visible-lesson-20",
+    assignmentIds: ["A2-7.20"],
+    repairPreferredRecord: true,
+  };
+  const generatedAlias = {
+    ...session(20, "2026-07-14"),
+    id: "generated-lesson-20-alias",
+    classId: "a2-class",
+    assignmentIds: ["A2-7.20"],
+  };
+  const sessions = reportedSessions()
+    .filter((item) => item.id !== "lesson-20")
+    .concat(visibleLesson20, generatedAlias);
+  const plan = buildPlan(sessions);
+  const lesson20 = plan.items.find((item) => item.lessonNumber === 20);
+
+  assert.equal(plan.missingLessons, 3);
+  assert.equal(lesson20.session.id, "visible-lesson-20");
+  assert.equal(lesson20.targetStartsAt, "2026-07-14T19:00:00.000Z");
+  assert.equal(lesson20.changed, true);
+  assert.equal(plan.duplicateCount, 1);
+  assert.equal(plan.duplicateSessions[0].session.id, "generated-lesson-20-alias");
+  assert.equal(plan.duplicateSessions[0].canonicalSessionId, "visible-lesson-20");
+});
+
+test("the repair service preserves visible identities and hides superseded aliases", async () => {
+  const [repairSource, compatibilitySource] = await Promise.all([
+    readFile(repairServicePath, "utf8"),
+    readFile(compatibilityServicePath, "utf8"),
+  ]);
+  assert.match(repairSource, /loadRawRepairSessions/);
+  assert.match(repairSource, /repairPreferredRecord:\s*true/);
+  assert.match(repairSource, /status:\s*"superseded"/);
+  assert.match(repairSource, /aliasesSuperseded/);
+  assert.match(compatibilitySource, /filter\(isVisibleSession\)/);
+  assert.match(compatibilitySource, /status !== "superseded"/);
 });
