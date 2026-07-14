@@ -52,17 +52,30 @@ function uniqueChronologicalSlots(sessions = []) {
   return [...byMoment.values()].sort((left, right) => left.startsAt.localeCompare(right.startsAt));
 }
 
+function assignmentIdsForSession(session = {}) {
+  const arrays = [session.assignmentIds, session.chapterIds, session.curriculumIds];
+  const values = arrays.find((value) => Array.isArray(value) && value.length)
+    || (session.assignment_id ? [session.assignment_id] : []);
+  return [...new Set(values.map((value) => normalize(value).toUpperCase()).filter(Boolean))];
+}
+
+function sameAssignmentSet(left = [], right = []) {
+  const leftSet = new Set(left.map((value) => normalize(value).toUpperCase()).filter(Boolean));
+  const rightSet = new Set(right.map((value) => normalize(value).toUpperCase()).filter(Boolean));
+  if (!leftSet.size || leftSet.size !== rightSet.size) return false;
+  return [...leftSet].every((value) => rightSet.has(value));
+}
+
+function resolveLevelId(klass = {}) {
+  return normalize(klass.levelId || klass.level || klass.name)
+    .match(/\b(A1|A2|B1|B2|C1|C2)\b/i)?.[1]?.toUpperCase() || "";
+}
+
 export function sessionLessonNumber(session = {}) {
   const topicMatch = normalize(session.topic || session.title).match(/\bLesson\s+(\d+)\b/i);
   if (topicMatch) return Number(topicMatch[1]);
 
-  const ids = [
-    ...(Array.isArray(session.assignmentIds) ? session.assignmentIds : []),
-    ...(Array.isArray(session.chapterIds) ? session.chapterIds : []),
-    ...(Array.isArray(session.curriculumIds) ? session.curriculumIds : []),
-    session.assignment_id,
-  ];
-
+  const ids = assignmentIdsForSession(session);
   for (const value of ids) {
     const match = normalize(value).match(/(?:^|[.-])(\d+)$/);
     if (match) return Number(match[1]);
@@ -72,6 +85,44 @@ export function sessionLessonNumber(session = {}) {
   if (Number.isFinite(curriculumIndex) && curriculumIndex > 0) return curriculumIndex;
 
   return null;
+}
+
+export function resolveOfficialSessionNumber(session = {}, groups = [], levelId = "") {
+  const ids = assignmentIdsForSession(session);
+  if (ids.length) {
+    const exactIndex = groups.findIndex((group) => sameAssignmentSet(ids, group.assignmentIds || []));
+    if (exactIndex >= 0) return exactIndex + 1;
+
+    const overlapping = groups
+      .map((group, index) => ({ group, index }))
+      .filter(({ group }) => (group.assignmentIds || [])
+        .some((assignmentId) => ids.includes(normalize(assignmentId).toUpperCase())));
+    if (overlapping.length === 1) return overlapping[0].index + 1;
+  }
+
+  const topic = normalize(session.topic || session.title);
+  const lessonMatch = topic.match(/\bLesson\s+(\d+)\b/i);
+  if (lessonMatch) {
+    const value = Number(lessonMatch[1]);
+    if (value >= 1 && value <= groups.length) return value;
+  }
+
+  if (normalize(levelId).toUpperCase() === "A1") {
+    const dayMatch = topic.match(/\bDay\s+(\d+)\b/i);
+    if (dayMatch) {
+      const day = Number(dayMatch[1]);
+      const groupIndex = groups.findIndex((group) => Number(group.day) === day);
+      if (groupIndex >= 0) return groupIndex + 1;
+    }
+  }
+
+  const curriculumIndex = Number(session.curriculumIndex || 0);
+  if (Number.isFinite(curriculumIndex) && curriculumIndex >= 1 && curriculumIndex <= groups.length) {
+    return curriculumIndex;
+  }
+
+  const fallback = sessionLessonNumber(session);
+  return fallback && fallback <= groups.length ? fallback : null;
 }
 
 export function compareSessionsByLesson(left = {}, right = {}) {
@@ -138,11 +189,11 @@ export function buildOfficialLessonSchedulePlan({
   sessions = [],
   excludedDates = [],
 } = {}) {
-  const levelId = normalize(klass.levelId || klass.level || klass.name).match(/\b(A1|A2|B1|B2|C1|C2)\b/i)?.[1]?.toUpperCase() || "";
+  const levelId = resolveLevelId(klass);
   const groups = getCourseSessionGroups(levelId);
   const expectedLessons = groups.length;
   if (!classId) throw new Error("Class ID is required.");
-  if (!expectedLessons) throw new Error("The class level does not have an official lesson count.");
+  if (!expectedLessons) throw new Error("The class level does not have an official session count.");
 
   const timezone = normalize(klass.timezone) || "Africa/Accra";
   const rules = normalizeScheduleRules(klass.scheduleRules || []);
@@ -150,7 +201,7 @@ export function buildOfficialLessonSchedulePlan({
 
   const excluded = new Set((excludedDates || []).map((value) => normalize(value)).filter(Boolean));
   const slots = uniqueChronologicalSlots(sessions).slice(0, expectedLessons);
-  if (!slots.length) throw new Error("No existing lesson dates were found.");
+  if (!slots.length) throw new Error("No existing class dates were found.");
 
   let cursorDate = sessionDateInTimezone(slots.at(-1).startsAt, timezone);
   const weekdayIndex = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
@@ -176,19 +227,19 @@ export function buildOfficialLessonSchedulePlan({
   }
 
   if (slots.length !== expectedLessons) {
-    throw new Error(`Could only build ${slots.length} of ${expectedLessons} official lesson dates.`);
+    throw new Error(`Could only build ${slots.length} of ${expectedLessons} official class dates.`);
   }
 
-  const sessionsByLesson = new Map();
+  const sessionsByNumber = new Map();
   sessions.forEach((session) => {
-    const lessonNumber = sessionLessonNumber(session);
-    if (!lessonNumber || sessionsByLesson.has(lessonNumber)) return;
-    sessionsByLesson.set(lessonNumber, session);
+    const sessionNumber = resolveOfficialSessionNumber(session, groups, levelId);
+    if (!sessionNumber || sessionsByNumber.has(sessionNumber)) return;
+    sessionsByNumber.set(sessionNumber, session);
   });
 
   const items = groups.map((group, index) => {
     const lessonNumber = index + 1;
-    const session = sessionsByLesson.get(lessonNumber) || null;
+    const session = sessionsByNumber.get(lessonNumber) || null;
     const slot = slots[index];
     const currentStartsAt = toDate(session?.startsAt)?.toISOString() || "";
     const currentEndsAt = toDate(session?.endsAt)?.toISOString() || "";
@@ -203,6 +254,7 @@ export function buildOfficialLessonSchedulePlan({
     };
   });
 
+  const isA1 = levelId === "A1";
   return {
     classId,
     levelId,
@@ -212,6 +264,8 @@ export function buildOfficialLessonSchedulePlan({
     missingLessons: items.filter((item) => !item.session).length,
     changedLessons: items.filter((item) => item.changed).length,
     endDate: sessionDateInTimezone(slots.at(-1).startsAt, timezone),
+    itemLabel: isA1 ? "Day" : "Lesson",
+    countLabel: isA1 ? "attendance sessions" : "lessons",
     slots,
     items,
   };
