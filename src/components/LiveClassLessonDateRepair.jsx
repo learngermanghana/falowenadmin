@@ -93,7 +93,7 @@ export default function LiveClassLessonDateRepair() {
         error: "",
       };
     } catch (error) {
-      return { plan: null, error: error?.message || "Could not prepare the official lesson timetable." };
+      return { plan: null, error: error?.message || "Could not prepare the official class timetable." };
     }
   }, [classId, dashboard]);
 
@@ -116,14 +116,14 @@ export default function LiveClassLessonDateRepair() {
 
   async function repairOfficialTimetable() {
     if (!plan || !needsRepair || busy) return;
-    const lesson20 = plan.items.find((item) => item.lessonNumber === 20);
+    const finalItem = plan.items.at(-1);
     const confirmed = window.confirm(
-      `Repair this class to the official ${plan.expectedLessons}-lesson timetable?\n\n`
+      `Repair this ${plan.levelId} class to the official ${plan.expectedLessons} ${plan.countLabel}?\n\n`
       + `Start date: ${dashboard.klass?.startDate || "Not set"}\n`
       + `Corrected end date: ${plan.endDate}\n`
-      + `Missing lessons to create: ${plan.missingLessons}\n`
-      + `Lesson 20 target: ${lesson20 ? formatDateTime(lesson20.targetStartsAt) : "Not available"}\n\n`
-      + "All lesson dates and curriculum identities are written in one atomic update, so topics cannot rotate between lessons.",
+      + `Missing ${plan.countLabel} to create: ${plan.missingLessons}\n`
+      + `Final ${plan.itemLabel.toLowerCase()} target: ${finalItem ? formatDateTime(finalItem.targetStartsAt) : "Not available"}\n\n`
+      + "All dates and curriculum identities are written in one atomic update, so topics cannot rotate between sessions.",
     );
     if (!confirmed) return;
 
@@ -137,7 +137,7 @@ export default function LiveClassLessonDateRepair() {
         adminId: user?.uid || user?.email || "admin",
       });
       await refresh();
-      const successMessage = `Official timetable repaired: ${result.expectedLessons} lessons, ${result.created} missing lesson(s) created, ${result.moved} date(s) corrected, end date ${formatDate(result.endDate)}.`;
+      const successMessage = `${result.levelId} timetable repaired: ${result.expectedLessons} ${result.countLabel}, ${result.created} missing session(s) created, ${result.moved} date(s) corrected, end date ${formatDate(result.endDate)}.`;
       setMessage(successMessage);
       toast.success(successMessage, { durationMs: 10000 });
     } catch (error) {
@@ -152,8 +152,8 @@ export default function LiveClassLessonDateRepair() {
   return (
     <article className="card" style={{ display: "grid", gap: 12, marginBottom: 16, border: "2px solid #f59e0b", background: "#fffbeb" }}>
       <div>
-        <h2 style={{ marginBottom: 6 }}>Official lesson timetable repair</h2>
-        <p style={{ margin: 0 }}>Use this once when lesson dates have rotated or fewer than the official number of lessons are visible. The repair is atomic and does not move topics one-by-one.</p>
+        <h2 style={{ marginBottom: 6 }}>Official class timetable repair</h2>
+        <p style={{ margin: 0 }}>Supports A1, A2 and B1. A1 uses 25 grouped attendance sessions; A2 and B1 use 28 lessons. The repair is atomic and does not move topics one-by-one.</p>
       </div>
 
       <label style={{ display: "grid", gap: 6 }}>
@@ -166,23 +166,25 @@ export default function LiveClassLessonDateRepair() {
         </select>
       </label>
 
-      {loading ? <p>Checking the official lesson timetable…</p> : null}
+      {loading ? <p>Checking the official class timetable…</p> : null}
       {!loading && dashboard && plan ? (
         <div style={{ display: "grid", gap: 10 }}>
           <div style={{ display: "grid", gap: 5, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
             <div>Class: <strong>{dashboard.klass?.name || dashboard.klass?.className || classId}</strong></div>
+            <div>Level: <strong>{plan.levelId}</strong></div>
+            <div>Official requirement: <strong>{plan.expectedLessons} {plan.countLabel}</strong></div>
             <div>Start date: <strong>{formatDate(dashboard.klass?.startDate)}</strong></div>
             <div>Current end date: <strong>{formatDate(dashboard.klass?.endDate)}</strong></div>
             <div>Correct end date: <strong>{formatDate(plan.endDate)}</strong></div>
             <div>Visible sessions: <strong>{plan.currentSessions}</strong> of <strong>{plan.expectedLessons}</strong></div>
-            <div>Missing lessons: <strong>{plan.missingLessons}</strong> · Date corrections: <strong>{changedItems.length}</strong></div>
+            <div>Missing sessions: <strong>{plan.missingLessons}</strong> · Date corrections: <strong>{changedItems.length}</strong></div>
           </div>
 
           {changedItems.length ? (
             <div style={{ display: "grid", gap: 6, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
               {changedItems.slice(0, 10).map((item) => (
                 <div key={item.lessonNumber}>
-                  Lesson {item.lessonNumber}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
+                  {item.group.topic}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
                 </div>
               ))}
               {changedItems.length > 10 ? <small>Plus {changedItems.length - 10} more correction(s).</small> : null}
@@ -197,7 +199,7 @@ export default function LiveClassLessonDateRepair() {
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button type="button" onClick={repairOfficialTimetable} disabled={busy || !needsRepair}>
-              {busy ? "Repairing all lessons atomically…" : `Repair to ${plan.expectedLessons} official lessons`}
+              {busy ? "Repairing all sessions atomically…" : `Repair to ${plan.expectedLessons} ${plan.countLabel}`}
             </button>
             <button type="button" onClick={refresh} disabled={busy}>Check again</button>
           </div>
