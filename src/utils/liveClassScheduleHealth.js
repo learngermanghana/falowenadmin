@@ -7,7 +7,6 @@ const BROKEN_CODES = new Set([
   "invalid-duration",
   "duplicate-time",
   "overlap",
-  "active-superseded-record",
   "duplicate-curriculum-position",
   "missing-curriculum-position",
   "curriculum-order",
@@ -65,7 +64,7 @@ export function classifyTimetableHealth(report = {}) {
       curriculumMetadata: findings.filter((item) => CURRICULUM_METADATA_CODES.has(item.code)).length,
       invalidTimes: countCode(findings, "invalid-time") + countCode(findings, "invalid-duration"),
       duplicateCurriculumPositions: countCode(findings, "duplicate-curriculum-position"),
-      activeSupersededRecords: countCode(findings, "active-superseded-record"),
+      activeSupersededRecords: countCode(findings, "stale-superseded-status"),
     },
   };
 }
