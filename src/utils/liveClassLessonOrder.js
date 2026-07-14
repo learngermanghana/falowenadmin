@@ -143,14 +143,14 @@ export function sessionLessonNumber(session = {}) {
   const topicMatch = topic.match(/\bLesson\s+(\d+)\b/i);
   if (topicMatch) return Number(topicMatch[1]);
 
-  const curriculumIndex = Number(session.curriculumIndex || 0);
-  if (Number.isFinite(curriculumIndex) && curriculumIndex > 0) return curriculumIndex;
-
   const ids = assignmentIdsForSession(session);
   for (const value of ids) {
     const match = normalize(value).match(/(?:^|[.-])(\d+)$/);
     if (match) return Number(match[1]);
   }
+
+  const curriculumIndex = Number(session.curriculumIndex || 0);
+  if (Number.isFinite(curriculumIndex) && curriculumIndex > 0) return curriculumIndex;
 
   return null;
 }
