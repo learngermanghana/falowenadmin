@@ -2,6 +2,7 @@ import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firest
 import { db } from "../firebase.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { classScheduleBoundsFromSessions } from "../utils/attendanceSessionOverride.js";
+import { compareSessionsByLesson } from "../utils/liveClassLessonOrder.js";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling.js";
 import { rebuildClassSessionsFromSchedule, listClassSessions, syncClassCurriculum, syncClassEndDateFromSessions } from "./liveClassService.js";
 import * as base from "./liveClassCompatibilityServiceBase.js";
@@ -57,13 +58,14 @@ async function repairMissingSessions(classId, dashboard) {
 }
 
 function prepareDashboard(dashboard, repair = null) {
-  const sessions = (dashboard.sessions || [])
+  const chronologicalSessions = (dashboard.sessions || [])
     .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
     .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
-  const bounds = classScheduleBoundsFromSessions(sessions, dashboard.klass?.timezone);
+  const sessions = [...chronologicalSessions].sort(compareSessionsByLesson);
+  const bounds = classScheduleBoundsFromSessions(chronologicalSessions, dashboard.klass?.timezone);
   const sessionDerivedStartDate = bounds.sessionDerivedStartDate || String(dashboard.klass?.sessionDerivedStartDate || "");
   const sessionDerivedEndDate = bounds.sessionDerivedEndDate || String(dashboard.klass?.sessionDerivedEndDate || "");
-  const effectiveEndDate = getEffectiveClassEndDate({ ...dashboard.klass, sessionDerivedEndDate }, sessions);
+  const effectiveEndDate = getEffectiveClassEndDate({ ...dashboard.klass, sessionDerivedEndDate }, chronologicalSessions);
 
   return {
     ...dashboard,
