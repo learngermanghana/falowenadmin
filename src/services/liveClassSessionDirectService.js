@@ -10,10 +10,11 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
+import { assertTimetableIntegrity } from "../utils/liveClassTimetableIntegrity.js";
 import {
-  assertTimetableIntegrity,
-  inspectTimetableIntegrity,
-} from "../utils/liveClassTimetableIntegrity.js";
+  buildClassScheduleHealth,
+  timetableHealthClassFields,
+} from "../utils/liveClassScheduleHealth.js";
 import { buildSessionReschedulePlan } from "../utils/liveClassReschedulePlan.js";
 
 function normalize(value) {
@@ -91,6 +92,20 @@ function staleChangeError(message) {
   const error = new Error(message);
   error.code = "live-class/stale-session";
   return error;
+}
+
+function scheduleStateClassPatch({ health, endDate, adminId }) {
+  const validatedAt = serverTimestamp();
+  return {
+    endDate,
+    configuredEndDate: endDate,
+    holidayAdjustedEndDate: endDate,
+    sessionDerivedEndDate: endDate,
+    ...timetableHealthClassFields(health, {
+      validatedAt,
+      validatedBy: adminId,
+    }),
+  };
 }
 
 async function commitSessionChangesAtomically({
@@ -184,6 +199,7 @@ async function commitSessionChangesAtomically({
         endsAt: change.patch.endsAt || "",
         sessionStatus: change.patch.status,
         cancellationReason: change.patch.cancellationReason || "",
+        remindersSuppressed: change.patch.remindersSuppressed === true,
         reminderScheduleVersion: scheduleVersion,
         updatedAt: serverTimestamp(),
       }, { merge: true });
@@ -271,18 +287,47 @@ export async function cancelSession(sessionId, payload = {}) {
   const { session } = await loadSession(sessionId);
   const classId = normalize(payload.classId || session.classId || session.classRecordId);
   const reason = normalize(payload.reason);
-  const klass = await loadClassRecord(classId);
+  const [klass, classSessions] = await Promise.all([
+    loadClassRecord(classId),
+    loadClassSessions(classId),
+  ]);
+  const adminId = payload.adminId || "admin";
   const patch = {
     startsAt: session.startsAt || "",
     endsAt: session.endsAt || "",
     status: "cancelled",
     cancellationReason: reason,
-    cancelledBy: payload.adminId || "admin",
+    cancelledBy: adminId,
     cancelledAt: serverTimestamp(),
     remindersSuppressed: true,
     sequence: Number(session.sequence || 0) + 1,
     updatedAt: serverTimestamp(),
   };
+  const proposedSessions = classSessions.map((candidate) => (
+    normalize(candidate.id) === normalize(session.id) ? { ...candidate, ...patch } : candidate
+  ));
+  if (!proposedSessions.some((candidate) => normalize(candidate.id) === normalize(session.id))) {
+    proposedSessions.push({ ...session, ...patch });
+  }
+
+  const preliminaryHealth = buildClassScheduleHealth({
+    klass,
+    sessions: proposedSessions,
+    requireCurriculum: true,
+    enforceEndDate: false,
+  });
+  const proposedEndDate = preliminaryHealth.derivedEndDate || normalize(klass.endDate);
+  const health = buildClassScheduleHealth({
+    klass: { ...klass, endDate: proposedEndDate },
+    sessions: proposedSessions,
+    requireCurriculum: true,
+    enforceEndDate: true,
+  });
+  const classPatch = scheduleStateClassPatch({
+    health,
+    endDate: proposedEndDate,
+    adminId,
+  });
 
   const atomic = await commitSessionChangeAtomically({
     classId,
@@ -290,7 +335,8 @@ export async function cancelSession(sessionId, payload = {}) {
     patch,
     changeType: "cancelled",
     reason,
-    adminId: payload.adminId || "admin",
+    adminId,
+    classPatch,
     expectedClassScheduleVersion: klass.sessionScheduleVersion,
   });
 
@@ -298,6 +344,8 @@ export async function cancelSession(sessionId, payload = {}) {
     classId,
     sessionId: session.id,
     status: "cancelled",
+    endDate: proposedEndDate,
+    health,
     ...atomic,
     emailSubmitted: false,
     emailMessage: "Student email is no longer part of the save action. Use the Communication tab to notify students.",
@@ -359,31 +407,30 @@ export async function rescheduleSession(sessionId, payload = {}) {
     proposedSessions.push({ ...session, ...primaryPatch });
   }
 
-  const preliminary = inspectTimetableIntegrity({
+  assertTimetableIntegrity({
     klass,
     sessions: proposedSessions,
     requireCurriculum: true,
     enforceEndDate: false,
   });
-  const proposedEndDate = preliminary.derivedEndDate || normalize(klass.endDate);
-  const integrity = assertTimetableIntegrity({
+  const preliminaryHealth = buildClassScheduleHealth({
+    klass,
+    sessions: proposedSessions,
+    requireCurriculum: true,
+    enforceEndDate: false,
+  });
+  const proposedEndDate = preliminaryHealth.derivedEndDate || normalize(klass.endDate);
+  const health = buildClassScheduleHealth({
     klass: { ...klass, endDate: proposedEndDate },
     sessions: proposedSessions,
     requireCurriculum: true,
     enforceEndDate: true,
   });
-
-  const classPatch = {
+  const classPatch = scheduleStateClassPatch({
+    health,
     endDate: proposedEndDate,
-    configuredEndDate: proposedEndDate,
-    holidayAdjustedEndDate: proposedEndDate,
-    sessionDerivedEndDate: proposedEndDate,
-    timetableIntegrityStatus: "healthy",
-    timetableIntegrityExpectedCount: integrity.expectedCount,
-    timetableIntegrityActualCount: integrity.actualCount,
-    timetableIntegrityIssueCount: 0,
-    timetableIntegrityValidatedAt: serverTimestamp(),
-  };
+    adminId,
+  });
   const atomic = await commitSessionChangesAtomically({
     classId,
     sessionChanges,
@@ -405,7 +452,7 @@ export async function rescheduleSession(sessionId, payload = {}) {
     endDate: proposedEndDate,
     moveMode: reschedulePlan.mode,
     movedSessions: reschedulePlan.affectedCount,
-    integrity,
+    integrity: health,
     ...atomic,
     emailSubmitted: false,
     emailMessage: "Student email is no longer part of the save action. Use the Communication tab to notify students.",
