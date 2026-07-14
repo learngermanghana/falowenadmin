@@ -11,6 +11,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { zonedLocalToUtcIso } from "../utils/liveClassScheduling.js";
+import {
+  assertTimetableIntegrity,
+  inspectTimetableIntegrity,
+} from "../utils/liveClassTimetableIntegrity.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -72,9 +76,8 @@ async function queryClassSessions(field, classId) {
   return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
 }
 
-async function assertTargetSlotAvailable({ classId, sessionId, startsAt }) {
-  if (!classId) return;
-  const targetMs = toMillis(startsAt);
+async function loadClassSessions(classId) {
+  if (!classId) return [];
   const found = new Map();
   const results = await Promise.allSettled([
     queryClassSessions("classId", classId),
@@ -82,12 +85,26 @@ async function assertTargetSlotAvailable({ classId, sessionId, startsAt }) {
   ]);
   results.forEach((result) => {
     if (result.status !== "fulfilled") return;
-    result.value.forEach((session) => found.set(session.id, session));
+    result.value.forEach((session) => found.set(normalize(session.id), session));
   });
+  return [...found.values()];
+}
 
-  const conflict = [...found.values()].find((candidate) => {
+async function loadClassRecord(classId) {
+  if (!classId) throw new Error("The session is not linked to a class.");
+  const snap = await getDoc(doc(db, "classes", classId));
+  if (!snap.exists()) throw new Error("Class not found");
+  return { id: snap.id, ...snap.data() };
+}
+
+async function assertTargetSlotAvailable({ classId, sessionId, startsAt, sessions = null }) {
+  if (!classId) return;
+  const targetMs = toMillis(startsAt);
+  const candidates = Array.isArray(sessions) ? sessions : await loadClassSessions(classId);
+  const conflict = candidates.find((candidate) => {
     if (normalize(candidate.id) === normalize(sessionId)) return false;
-    if (normalize(candidate.status || "scheduled").toLowerCase() === "cancelled") return false;
+    const status = normalize(candidate.status || "scheduled").toLowerCase();
+    if (status === "cancelled" || status === "superseded" || candidate.superseded === true) return false;
     return Number.isFinite(targetMs) && toMillis(candidate.startsAt) === targetMs;
   });
   if (!conflict) return;
@@ -100,7 +117,7 @@ async function assertTargetSlotAvailable({ classId, sessionId, startsAt }) {
   throw error;
 }
 
-async function syncOptionalReferences({ classId, sessionId, patch, changeType, reason }) {
+async function syncOptionalReferences({ classId, sessionId, patch, changeType, reason, classPatch = {} }) {
   if (!classId) return ["The session was saved, but its class link is missing."];
 
   const writes = [
@@ -114,6 +131,7 @@ async function syncOptionalReferences({ classId, sessionId, patch, changeType, r
       updatedAt: serverTimestamp(),
     }, { merge: true }),
     setDoc(doc(db, "classes", classId), {
+      ...classPatch,
       lastSessionChangeType: changeType,
       lastChangedSessionId: sessionId,
       lastSessionChangeReason: reason,
@@ -181,7 +199,16 @@ export async function rescheduleSession(sessionId, payload = {}) {
   const classId = normalize(payload.classId || session.classId || session.classRecordId);
   const reason = normalize(payload.reason);
   const times = resolveMoveTimes(payload, session);
-  await assertTargetSlotAvailable({ classId, sessionId: session.id, startsAt: times.startsAt });
+  const [klass, classSessions] = await Promise.all([
+    loadClassRecord(classId),
+    loadClassSessions(classId),
+  ]);
+  await assertTargetSlotAvailable({
+    classId,
+    sessionId: session.id,
+    startsAt: times.startsAt,
+    sessions: classSessions,
+  });
 
   const patch = {
     previousStartsAt: session.startsAt || "",
@@ -198,13 +225,48 @@ export async function rescheduleSession(sessionId, payload = {}) {
     updatedAt: serverTimestamp(),
   };
 
+  const proposedSessions = classSessions.map((candidate) =>
+    normalize(candidate.id) === normalize(session.id)
+      ? { ...candidate, ...patch }
+      : candidate,
+  );
+  if (!proposedSessions.some((candidate) => normalize(candidate.id) === normalize(session.id))) {
+    proposedSessions.push({ ...session, ...patch });
+  }
+
+  const preliminary = inspectTimetableIntegrity({
+    klass,
+    sessions: proposedSessions,
+    requireCurriculum: true,
+    enforceEndDate: false,
+  });
+  const proposedEndDate = preliminary.derivedEndDate || normalize(klass.endDate);
+  const integrity = assertTimetableIntegrity({
+    klass: { ...klass, endDate: proposedEndDate },
+    sessions: proposedSessions,
+    requireCurriculum: true,
+    enforceEndDate: true,
+  });
+
   await updateDoc(sessionRef, patch);
+  const classPatch = {
+    endDate: proposedEndDate,
+    configuredEndDate: proposedEndDate,
+    holidayAdjustedEndDate: proposedEndDate,
+    sessionDerivedEndDate: proposedEndDate,
+    timetableIntegrityStatus: "healthy",
+    timetableIntegrityExpectedCount: integrity.expectedCount,
+    timetableIntegrityActualCount: integrity.actualCount,
+    timetableIntegrityIssueCount: 0,
+    timetableIntegrityValidatedAt: serverTimestamp(),
+  };
   const syncWarnings = await syncOptionalReferences({
     classId,
     sessionId: session.id,
     patch,
     changeType: "rescheduled",
     reason,
+    classPatch,
   });
 
   return {
@@ -213,6 +275,8 @@ export async function rescheduleSession(sessionId, payload = {}) {
     status: "scheduled",
     startsAt: times.startsAt,
     endsAt: times.endsAt,
+    endDate: proposedEndDate,
+    integrity,
     emailSubmitted: false,
     emailMessage: "Student email is no longer part of the save action. Use the Communication tab to notify students.",
     syncWarnings,
