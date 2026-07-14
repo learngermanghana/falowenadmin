@@ -152,6 +152,39 @@ test("A1 repairs the reported mixed dates into the official Day 0 to Day 24 sequ
   assert.equal(targetForDay(24), "2026-08-22T08:00:00.000Z");
 });
 
+test("A1 Munich anchors Day 13 to Saturday 18 July and rebuilds the full sequence around actual progress", () => {
+  const plan = buildOfficialLessonSchedulePlan({
+    classId: "a1-munich-klasse-2026-06-12",
+    klass: {
+      id: "a1-munich-klasse-2026-06-12",
+      slug: "a1-munich-klasse-2026-06-12",
+      name: "A1 Munich Klasse",
+      levelId: "A1",
+      startDate: "2026-06-27",
+      endDate: "2026-08-22",
+      timezone: "Africa/Accra",
+      scheduleRules: a1ScheduleRules,
+    },
+    sessions: a1CorruptedSessions(),
+    excludedDates: [],
+  });
+
+  const targetForDay = (day) => plan.items.find((item) => Number(item.group.day) === day)?.targetStartsAt;
+
+  assert.equal(plan.scheduleAnchor?.day, 13);
+  assert.equal(plan.scheduleAnchor?.startsAt, "2026-07-18T08:00:00.000Z");
+  assert.equal(plan.scheduleAnchor?.source, "a1-munich-day-13-progress-correction");
+  assert.equal(plan.startDate, "2026-06-19");
+  assert.equal(plan.endDate, "2026-08-14");
+  assert.equal(plan.missingLessons, 0);
+  assert.equal(targetForDay(0), "2026-06-19T18:00:00.000Z");
+  assert.equal(targetForDay(10), "2026-07-11T08:00:00.000Z");
+  assert.equal(targetForDay(12), "2026-07-17T18:00:00.000Z");
+  assert.equal(targetForDay(13), "2026-07-18T08:00:00.000Z");
+  assert.equal(targetForDay(14), "2026-07-23T18:00:00.000Z");
+  assert.equal(targetForDay(24), "2026-08-14T18:00:00.000Z");
+});
+
 test("A1 repairs to 25 grouped attendance sessions", () => {
   const plan = buildOfficialLessonSchedulePlan({
     classId: "a1-class",
