@@ -68,7 +68,12 @@ export function getCourseSessionGroups(levelId) {
     groups.get(key).entries.push(entry);
   });
 
-  return [...groups.values()].map((group, index) => {
+  const orderedGroups = [...groups.values()];
+  if (level === "A1") {
+    orderedGroups.sort((left, right) => Number(left.day) - Number(right.day));
+  }
+
+  return orderedGroups.map((group, index) => {
     const assignmentIds = group.entries
       .map((entry) => String(entry.assignment_id || "").trim())
       .filter(Boolean);

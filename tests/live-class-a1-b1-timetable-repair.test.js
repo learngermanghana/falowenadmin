@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { getCourseSessionGroups } from "../src/data/courseSessionGroups.js";
 import {
   buildOfficialLessonSchedulePlan,
+  compareSessionsByLesson,
   resolveOfficialSessionNumber,
+  sessionLessonNumber,
 } from "../src/utils/liveClassLessonOrder.js";
 
 const CLASS_DATES = [
@@ -25,6 +27,40 @@ const scheduleRules = [
   { day: "wed", startTime: "19:00", durationMinutes: 120 },
 ];
 
+const a1ScheduleRules = [
+  { day: "thu", startTime: "18:00", durationMinutes: 60 },
+  { day: "fri", startTime: "18:00", durationMinutes: 60 },
+  { day: "sat", startTime: "08:00", durationMinutes: 60 },
+];
+
+const A1_CORRUPTED_DATES = {
+  0: ["2026-06-27", "08:00"],
+  1: ["2026-07-02", "18:00"],
+  2: ["2026-07-03", "18:00"],
+  3: ["2026-07-04", "08:00"],
+  4: ["2026-07-10", "18:00"],
+  5: ["2026-07-09", "18:00"],
+  6: ["2026-07-11", "08:00"],
+  7: ["2026-07-16", "18:00"],
+  8: ["2026-07-23", "18:00"],
+  9: ["2026-07-25", "08:00"],
+  10: ["2026-08-01", "08:00"],
+  11: ["2026-08-06", "18:00"],
+  12: ["2026-08-07", "18:00"],
+  13: ["2026-07-17", "18:00"],
+  14: ["2026-07-18", "08:00"],
+  15: ["2026-07-24", "18:00"],
+  16: ["2026-08-08", "08:00"],
+  17: ["2026-08-13", "18:00"],
+  18: ["2026-08-14", "18:00"],
+  19: ["2026-07-30", "18:00"],
+  20: ["2026-08-15", "08:00"],
+  21: ["2026-08-20", "18:00"],
+  22: ["2026-08-21", "18:00"],
+  23: ["2026-08-22", "08:00"],
+  24: ["2026-07-31", "18:00"],
+};
+
 function sessionsFor(levelId, count) {
   const groups = getCourseSessionGroups(levelId);
   return groups.slice(0, count).map((group, index) => ({
@@ -32,24 +68,88 @@ function sessionsFor(levelId, count) {
     topic: group.topic,
     assignmentIds: group.assignmentIds,
     curriculumIndex: index + 1,
+    curriculumDay: group.day,
     startsAt: `${CLASS_DATES[index]}T19:00:00.000Z`,
     endsAt: `${CLASS_DATES[index]}T21:00:00.000Z`,
     status: "scheduled",
   }));
 }
 
-test("A1 grouped assignment identity overrides a stale curriculum index", () => {
-  const groups = getCourseSessionGroups("A1");
-  const groupIndex = groups.findIndex((group) => group.assignmentIds.length > 1);
-  assert.ok(groupIndex >= 0);
+function a1CorruptedSessions() {
+  return getCourseSessionGroups("A1").map((group, index) => {
+    const [date, time] = A1_CORRUPTED_DATES[group.day];
+    const start = new Date(`${date}T${time}:00.000Z`);
+    return {
+      id: `a1-day-${group.day}`,
+      topic: group.topic,
+      assignmentIds: group.assignmentIds,
+      curriculumIndex: index + 1,
+      curriculumDay: group.day,
+      startsAt: start.toISOString(),
+      endsAt: new Date(start.getTime() + 60 * 60000).toISOString(),
+      status: "scheduled",
+    };
+  });
+}
 
+test("A1 day identity overrides assignment suffixes and stale indexes", () => {
+  const groups = getCourseSessionGroups("A1");
   const session = {
-    topic: groups[groupIndex].topic,
-    assignmentIds: groups[groupIndex].assignmentIds,
+    topic: "Day 18: Two-way Prepositions + Professions and Prepositions",
+    assignmentIds: ["A1-0.1"],
     curriculumIndex: 1,
+    curriculumDay: 18,
   };
 
-  assert.equal(resolveOfficialSessionNumber(session, groups, "A1"), groupIndex + 1);
+  assert.equal(resolveOfficialSessionNumber(session, groups, "A1"), 19);
+  assert.equal(sessionLessonNumber(session), 19);
+});
+
+test("A1 table sorting follows Day 0 to Day 24 instead of assignment suffixes", () => {
+  const sessions = [
+    { id: "day-18", topic: "Day 18: Example", assignmentIds: ["A1-12.1"], curriculumDay: 18 },
+    { id: "day-2", topic: "Day 2: Example", assignmentIds: ["A1-0.2"], curriculumDay: 2 },
+    { id: "day-22", topic: "Day 22: Example", assignmentIds: ["A1-14.1"], curriculumDay: 22 },
+    { id: "day-1", topic: "Day 1: Example", assignmentIds: ["A1-0.1"], curriculumDay: 1 },
+  ];
+
+  assert.deepEqual(
+    [...sessions].sort(compareSessionsByLesson).map((session) => session.id),
+    ["day-1", "day-2", "day-18", "day-22"],
+  );
+});
+
+test("A1 repairs the reported mixed dates into the official Day 0 to Day 24 sequence", () => {
+  const plan = buildOfficialLessonSchedulePlan({
+    classId: "a1-reported-class",
+    klass: {
+      id: "a1-reported-class",
+      levelId: "A1",
+      startDate: "2026-06-27",
+      endDate: "2026-08-22",
+      timezone: "Africa/Accra",
+      scheduleRules: a1ScheduleRules,
+    },
+    sessions: a1CorruptedSessions(),
+    excludedDates: [],
+  });
+
+  const targetForDay = (day) => plan.items.find((item) => Number(item.group.day) === day)?.targetStartsAt;
+
+  assert.equal(plan.expectedLessons, 25);
+  assert.equal(plan.currentSessions, 25);
+  assert.equal(plan.missingLessons, 0);
+  assert.equal(plan.endDate, "2026-08-22");
+  assert.equal(targetForDay(0), "2026-06-27T08:00:00.000Z");
+  assert.equal(targetForDay(1), "2026-07-02T18:00:00.000Z");
+  assert.equal(targetForDay(4), "2026-07-09T18:00:00.000Z");
+  assert.equal(targetForDay(5), "2026-07-10T18:00:00.000Z");
+  assert.equal(targetForDay(8), "2026-07-17T18:00:00.000Z");
+  assert.equal(targetForDay(9), "2026-07-18T08:00:00.000Z");
+  assert.equal(targetForDay(10), "2026-07-23T18:00:00.000Z");
+  assert.equal(targetForDay(13), "2026-07-30T18:00:00.000Z");
+  assert.equal(targetForDay(18), "2026-08-08T08:00:00.000Z");
+  assert.equal(targetForDay(24), "2026-08-22T08:00:00.000Z");
 });
 
 test("A1 repairs to 25 grouped attendance sessions", () => {
