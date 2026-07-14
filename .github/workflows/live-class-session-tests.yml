@@ -3,16 +3,21 @@ name: Live Class Session Tests
 on:
   pull_request:
     paths:
+      - 'src/components/ClassAttendanceTracker.jsx'
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
       - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/components/LiveClassStudentsPanel.jsx'
       - 'src/components/SessionDictionaryPicker.jsx'
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
+      - 'src/pages/AttendanceOverviewPage.jsx'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
+      - 'src/services/attendanceAnalyticsService.js'
+      - 'src/services/attendanceService.js'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassCancelService.js'
       - 'src/services/liveClassCompatibilityService.js'
@@ -24,6 +29,7 @@ on:
       - 'src/services/liveClassService.js'
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/services/liveClassSessionDirectService.js'
+      - 'src/utils/attendanceAnalytics.js'
       - 'src/utils/liveClassDictionarySelection.js'
       - 'src/utils/liveClassLessonOrder.js'
       - 'src/utils/liveClassRebuildIdentity.js'
@@ -31,6 +37,8 @@ on:
       - 'src/utils/liveClassScheduling.js'
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
+      - 'tests/attendance-analytics.test.js'
+      - 'tests/attendance-tracking-ui.test.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-a1-b1-timetable-repair.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
@@ -48,16 +56,21 @@ on:
     branches:
       - main
     paths:
+      - 'src/components/ClassAttendanceTracker.jsx'
       - 'src/components/ClassEditorCard.jsx'
       - 'src/components/CreateClassCard.jsx'
       - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/components/LiveClassStudentsPanel.jsx'
       - 'src/components/SessionDictionaryPicker.jsx'
       - 'src/data/courseDictionary.js'
       - 'src/data/courseSessionGroups.js'
+      - 'src/pages/AttendanceOverviewPage.jsx'
       - 'src/pages/CanonicalAttendancePage.jsx'
       - 'src/pages/ClassScheduleSetupPage.jsx'
       - 'src/pages/LiveClassesPage.js'
       - 'src/pages/LiveClassesPageV2.jsx'
+      - 'src/services/attendanceAnalyticsService.js'
+      - 'src/services/attendanceService.js'
       - 'src/services/classCohortUpdateService.js'
       - 'src/services/liveClassCancelService.js'
       - 'src/services/liveClassCompatibilityService.js'
@@ -69,6 +82,7 @@ on:
       - 'src/services/liveClassService.js'
       - 'src/services/liveClassSessionCleanupService.js'
       - 'src/services/liveClassSessionDirectService.js'
+      - 'src/utils/attendanceAnalytics.js'
       - 'src/utils/liveClassDictionarySelection.js'
       - 'src/utils/liveClassLessonOrder.js'
       - 'src/utils/liveClassRebuildIdentity.js'
@@ -76,6 +90,8 @@ on:
       - 'src/utils/liveClassScheduling.js'
       - 'src/utils/liveClassSessionDedupe.js'
       - 'src/utils/liveClassSessionRebuildPlan.js'
+      - 'tests/attendance-analytics.test.js'
+      - 'tests/attendance-tracking-ui.test.js'
       - 'tests/course-dictionary-id-casing.test.js'
       - 'tests/live-class-a1-b1-timetable-repair.test.js'
       - 'tests/live-class-complete-session-visibility.test.js'
@@ -111,6 +127,8 @@ jobs:
       - name: Run live class session tests
         run: >-
           node --test
+          tests/attendance-analytics.test.js
+          tests/attendance-tracking-ui.test.js
           tests/course-dictionary-id-casing.test.js
           tests/live-class-a1-b1-timetable-repair.test.js
           tests/live-class-complete-session-visibility.test.js
