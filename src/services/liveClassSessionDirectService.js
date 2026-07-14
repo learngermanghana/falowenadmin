@@ -14,19 +14,10 @@ import {
   assertTimetableIntegrity,
   inspectTimetableIntegrity,
 } from "../utils/liveClassTimetableIntegrity.js";
+import { buildSessionReschedulePlan } from "../utils/liveClassReschedulePlan.js";
 
 function normalize(value) {
   return String(value || "").trim();
-}
-
-function toMillis(value) {
-  if (!value) return Number.NaN;
-  if (typeof value?.toMillis === "function") return value.toMillis();
-  if (typeof value?.toDate === "function") return value.toDate().getTime();
-  if (typeof value === "object" && Number.isFinite(value.seconds)) {
-    return (Number(value.seconds) * 1000) + Math.round(Number(value.nanoseconds || 0) / 1000000);
-  }
-  return new Date(value).getTime();
 }
 
 function durationMinutes(payload = {}, session = {}) {
@@ -96,30 +87,154 @@ async function loadClassRecord(classId) {
   return { id: snap.id, ...snap.data() };
 }
 
-async function assertTargetSlotAvailable({ classId, sessionId, startsAt, sessions = null }) {
-  if (!classId) return;
-  const targetMs = toMillis(startsAt);
-  const candidates = Array.isArray(sessions) ? sessions : await loadClassSessions(classId);
-  const conflict = candidates.find((candidate) => {
-    if (normalize(candidate.id) === normalize(sessionId)) return false;
-    const status = normalize(candidate.status || "scheduled").toLowerCase();
-    if (status === "cancelled" || status === "superseded" || candidate.superseded === true) return false;
-    return Number.isFinite(targetMs) && toMillis(candidate.startsAt) === targetMs;
-  });
-  if (!conflict) return;
-
-  const label = normalize(conflict.topic || conflict.title) || "another lesson";
-  const error = new Error(
-    `This date and time is already used by ${label}. Run Official class timetable repair so the conflicting lesson is moved automatically.`,
-  );
-  error.code = "live-class/time-conflict";
-  throw error;
-}
-
 function staleChangeError(message) {
   const error = new Error(message);
   error.code = "live-class/stale-session";
   return error;
+}
+
+async function commitSessionChangesAtomically({
+  classId,
+  sessionChanges = [],
+  primarySessionId = "",
+  changeType,
+  changeMode = "single",
+  reason,
+  adminId = "admin",
+  classPatch = {},
+  expectedClassScheduleVersion = 0,
+}) {
+  if (!classId) throw new Error("The session is not linked to a class.");
+  if (!sessionChanges.length) throw new Error("No session changes were prepared.");
+
+  const normalizedPrimaryId = normalize(primarySessionId || sessionChanges[0]?.session?.id);
+  const preparedChanges = sessionChanges.map(({ session, patch }) => ({
+    session,
+    patch,
+    sessionId: normalize(session?.id),
+    sessionRef: doc(db, "classSessions", normalize(session?.id)),
+    attendanceRef: doc(db, "attendance", classId, "sessions", normalize(session?.id)),
+    expectedSequence: Number(session?.sequence || 0),
+  }));
+  const primary = preparedChanges.find((change) => change.sessionId === normalizedPrimaryId) || preparedChanges[0];
+  const classRef = doc(db, "classes", classId);
+  const calendarRef = doc(db, "calendarFeeds", classId);
+  const auditRef = doc(collection(db, "auditLogs"));
+  const scheduleVersion = Date.now();
+  const expectedClassVersion = Number(expectedClassScheduleVersion || 0);
+
+  await runTransaction(db, async (transaction) => {
+    const snapshots = await Promise.all([
+      transaction.get(classRef),
+      ...preparedChanges.map((change) => transaction.get(change.sessionRef)),
+    ]);
+    const latestClassSnap = snapshots[0];
+    const latestSessionSnaps = snapshots.slice(1);
+
+    if (!latestClassSnap.exists()) throw new Error("Class not found");
+    const latestClass = { id: latestClassSnap.id, ...latestClassSnap.data() };
+    const latestClassVersion = Number(latestClass.sessionScheduleVersion || 0);
+    if (latestClassVersion !== expectedClassVersion) {
+      throw staleChangeError("This class timetable changed while you were editing it. Refresh Live Classes and try again.");
+    }
+
+    latestSessionSnaps.forEach((snapshot, index) => {
+      const change = preparedChanges[index];
+      if (!snapshot.exists()) throw new Error("Session not found");
+      const latestSession = { id: snapshot.id, ...snapshot.data() };
+      const latestSequence = Number(latestSession.sequence || 0);
+      if (latestSequence !== change.expectedSequence) {
+        throw staleChangeError(`${normalize(change.session.topic || change.session.title) || "A session"} changed while you were editing it. Refresh Live Classes and try again.`);
+      }
+    });
+
+    const changeMetadata = {
+      ...classPatch,
+      lastSessionChangeType: changeType,
+      lastSessionChangeMode: changeMode,
+      lastSessionChangeAffectedCount: preparedChanges.length,
+      lastChangedSessionId: primary.sessionId,
+      lastSessionChangeReason: reason,
+      lastSessionChangeBy: adminId,
+      lastSessionChangeAt: serverTimestamp(),
+      lastSessionChangePreviousStartsAt: primary.session.startsAt || "",
+      lastSessionChangePreviousEndsAt: primary.session.endsAt || "",
+      lastSessionChangeStartsAt: primary.patch.startsAt || "",
+      lastSessionChangeEndsAt: primary.patch.endsAt || "",
+      ...(changeType === "rescheduled" ? {
+        lastRescheduledSessionId: primary.sessionId,
+        lastRescheduledStartsAt: primary.patch.startsAt || "",
+      } : {}),
+      ...(changeType === "cancelled" ? {
+        lastCancelledSessionId: primary.sessionId,
+      } : {}),
+      sessionScheduleVersion: scheduleVersion,
+      sessionScheduleUpdatedAt: serverTimestamp(),
+      reminderScheduleVersion: scheduleVersion,
+      reminderScheduleUpdatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    preparedChanges.forEach((change) => {
+      transaction.update(change.sessionRef, change.patch);
+      transaction.set(change.attendanceRef, {
+        classId,
+        classSessionId: change.sessionId,
+        startsAt: change.patch.startsAt || "",
+        endsAt: change.patch.endsAt || "",
+        sessionStatus: change.patch.status,
+        cancellationReason: change.patch.cancellationReason || "",
+        reminderScheduleVersion: scheduleVersion,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    });
+
+    transaction.set(classRef, changeMetadata, { merge: true });
+    transaction.set(calendarRef, {
+      classId,
+      sessionScheduleVersion: scheduleVersion,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    transaction.set(auditRef, {
+      type: "live-class-session-change",
+      entityType: preparedChanges.length > 1 ? "classTimetable" : "classSession",
+      classId,
+      sessionId: primary.sessionId,
+      affectedSessionIds: preparedChanges.map((change) => change.sessionId),
+      affectedSessionCount: preparedChanges.length,
+      changeType,
+      changeMode,
+      reason,
+      adminId,
+      previousStartsAt: primary.session.startsAt || "",
+      previousEndsAt: primary.session.endsAt || "",
+      previousStatus: normalize(primary.session.status || "scheduled"),
+      nextStartsAt: primary.patch.startsAt || "",
+      nextEndsAt: primary.patch.endsAt || "",
+      nextStatus: normalize(primary.patch.status || primary.session.status || "scheduled"),
+      changes: preparedChanges.map((change) => ({
+        sessionId: change.sessionId,
+        previousStartsAt: change.session.startsAt || "",
+        previousEndsAt: change.session.endsAt || "",
+        previousStatus: normalize(change.session.status || "scheduled"),
+        nextStartsAt: change.patch.startsAt || "",
+        nextEndsAt: change.patch.endsAt || "",
+        nextStatus: normalize(change.patch.status || change.session.status || "scheduled"),
+        sessionSequenceBefore: change.expectedSequence,
+        sessionSequenceAfter: Number(change.patch.sequence || change.expectedSequence),
+      })),
+      classScheduleVersionBefore: expectedClassVersion,
+      classScheduleVersionAfter: scheduleVersion,
+      createdAt: serverTimestamp(),
+    });
+  });
+
+  return {
+    atomicWrite: true,
+    auditLogId: auditRef.id,
+    scheduleVersion,
+    affectedSessionCount: preparedChanges.length,
+  };
 }
 
 async function commitSessionChangeAtomically({
@@ -132,107 +247,17 @@ async function commitSessionChangeAtomically({
   classPatch = {},
   expectedClassScheduleVersion = 0,
 }) {
-  if (!classId) throw new Error("The session is not linked to a class.");
-
-  const sessionRef = doc(db, "classSessions", normalize(session.id));
-  const attendanceRef = doc(db, "attendance", classId, "sessions", normalize(session.id));
-  const classRef = doc(db, "classes", classId);
-  const calendarRef = doc(db, "calendarFeeds", classId);
-  const auditRef = doc(collection(db, "auditLogs"));
-  const scheduleVersion = Date.now();
-  const expectedSessionSequence = Number(session.sequence || 0);
-  const expectedClassVersion = Number(expectedClassScheduleVersion || 0);
-
-  await runTransaction(db, async (transaction) => {
-    const [latestSessionSnap, latestClassSnap] = await Promise.all([
-      transaction.get(sessionRef),
-      transaction.get(classRef),
-    ]);
-
-    if (!latestSessionSnap.exists()) throw new Error("Session not found");
-    if (!latestClassSnap.exists()) throw new Error("Class not found");
-
-    const latestSession = { id: latestSessionSnap.id, ...latestSessionSnap.data() };
-    const latestClass = { id: latestClassSnap.id, ...latestClassSnap.data() };
-    const latestSessionSequence = Number(latestSession.sequence || 0);
-    const latestClassVersion = Number(latestClass.sessionScheduleVersion || 0);
-
-    if (latestSessionSequence !== expectedSessionSequence) {
-      throw staleChangeError("This session changed while you were editing it. Refresh Live Classes and try again.");
-    }
-    if (latestClassVersion !== expectedClassVersion) {
-      throw staleChangeError("This class timetable changed while you were editing it. Refresh Live Classes and try again.");
-    }
-
-    const changeMetadata = {
-      ...classPatch,
-      lastSessionChangeType: changeType,
-      lastChangedSessionId: normalize(session.id),
-      lastSessionChangeReason: reason,
-      lastSessionChangeBy: adminId,
-      lastSessionChangeAt: serverTimestamp(),
-      lastSessionChangePreviousStartsAt: session.startsAt || "",
-      lastSessionChangePreviousEndsAt: session.endsAt || "",
-      lastSessionChangeStartsAt: patch.startsAt || "",
-      lastSessionChangeEndsAt: patch.endsAt || "",
-      ...(changeType === "rescheduled" ? {
-        lastRescheduledSessionId: normalize(session.id),
-        lastRescheduledStartsAt: patch.startsAt || "",
-      } : {}),
-      ...(changeType === "cancelled" ? {
-        lastCancelledSessionId: normalize(session.id),
-      } : {}),
-      sessionScheduleVersion: scheduleVersion,
-      sessionScheduleUpdatedAt: serverTimestamp(),
-      reminderScheduleVersion: scheduleVersion,
-      reminderScheduleUpdatedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-
-    transaction.update(sessionRef, patch);
-    transaction.set(attendanceRef, {
-      classId,
-      classSessionId: normalize(session.id),
-      startsAt: patch.startsAt || "",
-      endsAt: patch.endsAt || "",
-      sessionStatus: patch.status,
-      cancellationReason: patch.cancellationReason || "",
-      reminderScheduleVersion: scheduleVersion,
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-    transaction.set(classRef, changeMetadata, { merge: true });
-    transaction.set(calendarRef, {
-      classId,
-      sessionScheduleVersion: scheduleVersion,
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-    transaction.set(auditRef, {
-      type: "live-class-session-change",
-      entityType: "classSession",
-      classId,
-      sessionId: normalize(session.id),
-      changeType,
-      reason,
-      adminId,
-      previousStartsAt: session.startsAt || "",
-      previousEndsAt: session.endsAt || "",
-      previousStatus: normalize(session.status || "scheduled"),
-      nextStartsAt: patch.startsAt || "",
-      nextEndsAt: patch.endsAt || "",
-      nextStatus: normalize(patch.status || session.status || "scheduled"),
-      sessionSequenceBefore: expectedSessionSequence,
-      sessionSequenceAfter: Number(patch.sequence || expectedSessionSequence),
-      classScheduleVersionBefore: expectedClassVersion,
-      classScheduleVersionAfter: scheduleVersion,
-      createdAt: serverTimestamp(),
-    });
+  return commitSessionChangesAtomically({
+    classId,
+    sessionChanges: [{ session, patch }],
+    primarySessionId: session.id,
+    changeType,
+    changeMode: "single",
+    reason,
+    adminId,
+    classPatch,
+    expectedClassScheduleVersion,
   });
-
-  return {
-    atomicWrite: true,
-    auditLogId: auditRef.id,
-    scheduleVersion,
-  };
 }
 
 async function loadSession(sessionId) {
@@ -289,35 +314,49 @@ export async function rescheduleSession(sessionId, payload = {}) {
     loadClassRecord(classId),
     loadClassSessions(classId),
   ]);
-  await assertTargetSlotAvailable({
-    classId,
-    sessionId: session.id,
-    startsAt: times.startsAt,
+  const reschedulePlan = buildSessionReschedulePlan({
+    klass,
     sessions: classSessions,
+    sessionId: session.id,
+    targetStartsAt: times.startsAt,
+    targetEndsAt: times.endsAt,
+    mode: payload.moveMode,
   });
 
-  const patch = {
-    previousStartsAt: session.startsAt || "",
-    previousEndsAt: session.endsAt || "",
-    startsAt: times.startsAt,
-    endsAt: times.endsAt,
-    status: "scheduled",
-    rescheduleReason: reason,
-    rescheduledBy: payload.adminId || "admin",
-    rescheduledAt: serverTimestamp(),
-    remindersSuppressed: false,
-    cancellationReason: "",
-    sequence: Number(session.sequence || 0) + 1,
-    updatedAt: serverTimestamp(),
-  };
+  const adminId = payload.adminId || "admin";
+  const sessionChanges = reschedulePlan.changes.map((change) => {
+    const existingStatus = normalize(change.session.status || "scheduled").toLowerCase();
+    const primary = normalize(change.session.id) === normalize(session.id);
+    const nextStatus = primary ? "scheduled" : existingStatus;
+    const cancellationReason = primary ? "" : normalize(change.session.cancellationReason);
+    return {
+      session: change.session,
+      patch: {
+        previousStartsAt: change.session.startsAt || "",
+        previousEndsAt: change.session.endsAt || "",
+        startsAt: change.startsAt,
+        endsAt: change.endsAt,
+        status: nextStatus,
+        rescheduleReason: reason,
+        rescheduleMode: reschedulePlan.mode,
+        rescheduledBy: adminId,
+        rescheduledAt: serverTimestamp(),
+        remindersSuppressed: ["cancelled", "completed"].includes(nextStatus),
+        cancellationReason,
+        sequence: Number(change.session.sequence || 0) + 1,
+        updatedAt: serverTimestamp(),
+      },
+    };
+  });
 
-  const proposedSessions = classSessions.map((candidate) =>
-    normalize(candidate.id) === normalize(session.id)
-      ? { ...candidate, ...patch }
-      : candidate,
-  );
+  const patchesById = new Map(sessionChanges.map((change) => [normalize(change.session.id), change.patch]));
+  const proposedSessions = classSessions.map((candidate) => {
+    const patch = patchesById.get(normalize(candidate.id));
+    return patch ? { ...candidate, ...patch } : candidate;
+  });
   if (!proposedSessions.some((candidate) => normalize(candidate.id) === normalize(session.id))) {
-    proposedSessions.push({ ...session, ...patch });
+    const primaryPatch = patchesById.get(normalize(session.id));
+    proposedSessions.push({ ...session, ...primaryPatch });
   }
 
   const preliminary = inspectTimetableIntegrity({
@@ -345,13 +384,14 @@ export async function rescheduleSession(sessionId, payload = {}) {
     timetableIntegrityIssueCount: 0,
     timetableIntegrityValidatedAt: serverTimestamp(),
   };
-  const atomic = await commitSessionChangeAtomically({
+  const atomic = await commitSessionChangesAtomically({
     classId,
-    session,
-    patch,
+    sessionChanges,
+    primarySessionId: session.id,
     changeType: "rescheduled",
+    changeMode: reschedulePlan.mode,
     reason,
-    adminId: payload.adminId || "admin",
+    adminId,
     classPatch,
     expectedClassScheduleVersion: klass.sessionScheduleVersion,
   });
@@ -363,6 +403,8 @@ export async function rescheduleSession(sessionId, payload = {}) {
     startsAt: times.startsAt,
     endsAt: times.endsAt,
     endDate: proposedEndDate,
+    moveMode: reschedulePlan.mode,
+    movedSessions: reschedulePlan.affectedCount,
     integrity,
     ...atomic,
     emailSubmitted: false,
