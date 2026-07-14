@@ -134,6 +134,11 @@ function addSessions(target, results = []) {
   });
 }
 
+function isVisibleSession(session = {}) {
+  const status = normalize(session.status || "scheduled").toLowerCase();
+  return session.superseded !== true && status !== "superseded";
+}
+
 async function loadCompatibleSessions(classId, klass = {}) {
   const identifiers = identifiersFor(classId, klass);
   const found = new Map();
@@ -161,9 +166,9 @@ async function loadCompatibleSessions(classId, klass = {}) {
     }
   }
 
-  // Remove true duplicate aliases at the same moment, but do not hide a separate
-  // lesson merely because another lesson was rescheduled onto the same Ghana date.
-  return dedupeCompatibleSessionRecords([...found.values()], { classId });
+  // Superseded aliases are retained for audit history but never appear as live sessions.
+  const visibleSessions = [...found.values()].filter(isVisibleSession);
+  return dedupeCompatibleSessionRecords(visibleSessions, { classId });
 }
 
 function enrichSessions(klass, sessions = []) {
