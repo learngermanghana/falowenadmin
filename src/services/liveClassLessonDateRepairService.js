@@ -49,7 +49,13 @@ async function querySessions(field, identifier) {
 export async function loadRawRepairSessions(classId, klass = {}, fallbackSessions = []) {
   const found = new Map();
   fallbackSessions.forEach((session) => {
-    if (normalize(session?.id)) found.set(normalize(session.id), session);
+    const sessionId = normalize(session?.id);
+    if (!sessionId) return;
+    found.set(sessionId, {
+      ...session,
+      id: sessionId,
+      repairPreferredRecord: true,
+    });
   });
 
   const identifiers = [...new Set([
@@ -68,7 +74,20 @@ export async function loadRawRepairSessions(classId, klass = {}, fallbackSession
   );
   results.forEach((result) => {
     if (result.status !== "fulfilled") return;
-    result.value.forEach((session) => found.set(session.id, session));
+    result.value.forEach((session) => {
+      const sessionId = normalize(session.id);
+      const preferred = found.get(sessionId);
+      if (preferred?.repairPreferredRecord === true) {
+        found.set(sessionId, {
+          ...session,
+          ...preferred,
+          id: sessionId,
+          repairPreferredRecord: true,
+        });
+        return;
+      }
+      found.set(sessionId, session);
+    });
   });
 
   return [...found.values()];
@@ -89,6 +108,8 @@ function officialSessionPatch({ classId, className, item, adminId, plan }) {
     startsAt: item.targetStartsAt,
     endsAt: item.targetEndsAt,
     status,
+    superseded: false,
+    supersededBySessionId: "",
     topic: item.group.topic,
     assignmentIds,
     chapterIds: assignmentIds,
@@ -126,6 +147,8 @@ function attendancePatch({ classId, className, sessionId, item, sessionPatch }) 
     startsAt: item.targetStartsAt,
     endsAt: item.targetEndsAt,
     sessionStatus: sessionPatch.status,
+    superseded: false,
+    supersededBySessionId: "",
     cancellationReason: sessionPatch.status === "cancelled"
       ? normalize(item.session?.cancellationReason)
       : "",
@@ -174,6 +197,7 @@ export async function repairClassToOfficialLessonSchedule({
   const batch = writeBatch(db);
   let created = 0;
   let moved = 0;
+  let aliasesSuperseded = 0;
 
   plan.items.forEach((item) => {
     let sessionId = normalize(item.session?.id);
@@ -210,6 +234,38 @@ export async function repairClassToOfficialLessonSchedule({
     );
   });
 
+  plan.duplicateSessions.forEach(({ lessonNumber, session, canonicalSessionId }) => {
+    const sessionId = normalize(session?.id);
+    if (!sessionId || assignedIds.has(sessionId)) return;
+    const status = normalize(session.status || "scheduled").toLowerCase();
+    if (["completed", "live", "cancelled", "superseded"].includes(status)) return;
+
+    const duplicatePatch = {
+      status: "superseded",
+      originalStatus: normalize(session.status || "scheduled"),
+      superseded: true,
+      supersededBySessionId: canonicalSessionId,
+      supersededLessonNumber: lessonNumber,
+      supersededReason: "Duplicate session alias removed by official timetable repair.",
+      remindersSuppressed: true,
+      supersededAt: serverTimestamp(),
+      supersededBy: adminId,
+      updatedAt: serverTimestamp(),
+    };
+    batch.set(doc(db, "classSessions", sessionId), duplicatePatch, { merge: true });
+    batch.set(doc(db, "attendance", resolvedClassId, "sessions", sessionId), {
+      classId: resolvedClassId,
+      className,
+      classSessionId: sessionId,
+      sessionStatus: "superseded",
+      superseded: true,
+      supersededBySessionId: canonicalSessionId,
+      remindersSuppressed: true,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    aliasesSuperseded += 1;
+  });
+
   const relevantClosures = excludedDates.filter((date) =>
     date >= normalize(klass.startDate) && date <= plan.endDate,
   );
@@ -225,6 +281,7 @@ export async function repairClassToOfficialLessonSchedule({
     generationError: "",
     sessionRepairStatus: "complete",
     sessionRepairAt: serverTimestamp(),
+    duplicateSessionAliasesSuperseded: aliasesSuperseded,
     lastSessionChangeType: "official-schedule-repair",
     sessionScheduleVersion: Date.now(),
     sessionScheduleUpdatedAt: serverTimestamp(),
@@ -247,5 +304,6 @@ export async function repairClassToOfficialLessonSchedule({
     moved,
     repaired: plan.changedLessons,
     collisionsResolved: plan.collisionCount,
+    aliasesSuperseded,
   };
 }
