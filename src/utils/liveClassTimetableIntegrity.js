@@ -1,6 +1,10 @@
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { resolveOfficialSessionNumber } from "./liveClassLessonOrder.js";
 import { sessionDateInTimezone } from "./liveClassScheduling.js";
+import {
+  isSupersededRecord,
+  needsSupersededStatusNormalization,
+} from "./liveClassSupersededRecords.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -34,13 +38,8 @@ function sameAssignmentSet(left = [], right = []) {
   return leftSet.size === rightSet.size && [...leftSet].every((value) => rightSet.has(value));
 }
 
-function supersededRecord(session = {}) {
-  const status = normalize(session.status).toLowerCase();
-  return status === "superseded" || session.superseded === true;
-}
-
 function collisionEligible(session = {}) {
-  return !supersededRecord(session) && normalize(session.status || "scheduled").toLowerCase() !== "cancelled";
+  return !isSupersededRecord(session) && normalize(session.status || "scheduled").toLowerCase() !== "cancelled";
 }
 
 function sessionLabel(session = {}, fallback = "session") {
@@ -61,20 +60,19 @@ export function inspectTimetableIntegrity({
   const groups = getCourseSessionGroups(levelId);
   const expectedCount = groups.length;
   const timezone = normalize(klass.timezone) || "Africa/Accra";
-  const canonicalSessions = sessions.filter((session) => !supersededRecord(session));
+  const canonicalSessions = sessions.filter((session) => !isSupersededRecord(session));
   const issues = [];
   const warnings = [];
 
   sessions.forEach((session) => {
+    if (!needsSupersededStatusNormalization(session)) return;
     const status = normalize(session.status || "scheduled").toLowerCase();
-    if (session.superseded === true && status !== "superseded") {
-      pushIssue(
-        issues,
-        "active-superseded-record",
-        `${sessionLabel(session)} is marked superseded but still has status ${status}.`,
-        { sessionId: normalize(session.id) },
-      );
-    }
+    pushIssue(
+      warnings,
+      "stale-superseded-status",
+      `${sessionLabel(session)} is an inactive superseded alias but still stores status ${status}. It will be normalized automatically.`,
+      { sessionId: normalize(session.id) },
+    );
   });
 
   if (expectedCount > 0 && canonicalSessions.length !== expectedCount) {
