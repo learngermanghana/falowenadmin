@@ -31,7 +31,7 @@ function generatedSessionId(classId, startsAt, timezone) {
   return parts ? `${classId}_${parts.date}_${parts.time}` : `${classId}_lesson_${Date.now()}`;
 }
 
-function officialSessionPatch({ classId, className, item, adminId }) {
+function officialSessionPatch({ classId, className, item, adminId, plan }) {
   const existing = item.session || {};
   const currentStatus = normalize(existing.status || "scheduled").toLowerCase();
   const lockedStatus = ["completed", "cancelled", "live"].includes(currentStatus);
@@ -66,7 +66,7 @@ function officialSessionPatch({ classId, className, item, adminId }) {
       manualDateOverrideAt: serverTimestamp(),
       rescheduledBy: adminId,
       rescheduledAt: serverTimestamp(),
-      rescheduleReason: "Official 28-lesson timetable repaired without rotating lesson topics.",
+      rescheduleReason: `${plan.levelId} official ${plan.expectedLessons}-${plan.countLabel} timetable repaired atomically without rotating topics.`,
     } : {}),
     updatedAt: serverTimestamp(),
   };
@@ -137,7 +137,7 @@ export async function repairClassToOfficialLessonSchedule({
       const preferredId = generatedSessionId(resolvedClassId, item.targetStartsAt, plan.timezone);
       sessionId = !existingIds.has(preferredId) && !assignedIds.has(preferredId)
         ? preferredId
-        : `${resolvedClassId}_lesson_${String(item.lessonNumber).padStart(2, "0")}`;
+        : `${resolvedClassId}_session_${String(item.lessonNumber).padStart(2, "0")}`;
       created += 1;
     } else if (item.changed) {
       moved += 1;
@@ -149,6 +149,7 @@ export async function repairClassToOfficialLessonSchedule({
       className,
       item,
       adminId,
+      plan,
     });
     batch.set(doc(db, "classSessions", sessionId), {
       id: sessionId,
@@ -194,8 +195,10 @@ export async function repairClassToOfficialLessonSchedule({
 
   return {
     classId: resolvedClassId,
+    levelId: plan.levelId,
     endDate: plan.endDate,
     expectedLessons: plan.expectedLessons,
+    countLabel: plan.countLabel,
     created,
     moved,
     repaired: plan.changedLessons,
