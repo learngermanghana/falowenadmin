@@ -96,7 +96,9 @@ export function buildRescheduleAnnouncement({
       : "",
     lastAffectedLabel ? `Last affected lesson: ${lastAffectedLabel}` : "",
     lastAffectedLabel && lastAffectedTime ? `Last affected time: ${lastAffectedTime}` : "",
-    "Please check your Falowen homepage for the updated class times.",
+    followingCount > 0
+      ? "Please check your Falowen homepage for the updated class times."
+      : "Please check your Falowen homepage for the updated class time.",
   ].filter(Boolean).join("\n\n");
 
   return {
