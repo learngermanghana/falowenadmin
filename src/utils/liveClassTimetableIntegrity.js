@@ -42,10 +42,16 @@ function slotReleased(session = {}) {
   return session.slotReleased === true || session.timetableSlotReleased === true;
 }
 
+function statusOf(session = {}) {
+  return normalize(session.status || "scheduled").toLowerCase();
+}
+
 function collisionEligible(session = {}) {
+  const status = statusOf(session);
   return !isSupersededRecord(session)
     && !slotReleased(session)
-    && normalize(session.status || "scheduled").toLowerCase() !== "cancelled";
+    && status !== "cancelled"
+    && status !== "completed";
 }
 
 function sessionLabel(session = {}, fallback = "session") {
@@ -80,7 +86,7 @@ export function inspectTimetableIntegrity({
         { sessionId: normalize(session.id) },
       );
     }
-    if (slotReleased(session) && normalize(session.status).toLowerCase() === "completed") {
+    if (slotReleased(session) && statusOf(session) === "completed") {
       pushIssue(
         warnings,
         "completed-slot-released",
@@ -218,7 +224,7 @@ export function inspectTimetableIntegrity({
     }
 
     const activeNumbered = numbered
-      .filter(({ session }) => !slotReleased(session))
+      .filter(({ session }) => !slotReleased(session) && statusOf(session) !== "completed")
       .sort((left, right) => left.number - right.number);
     for (let index = 1; index < activeNumbered.length; index += 1) {
       const previous = activeNumbered[index - 1];
