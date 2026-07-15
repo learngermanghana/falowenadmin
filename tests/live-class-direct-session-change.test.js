@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const directServicePath = new URL("../src/services/liveClassSessionDirectService.js", import.meta.url);
+const manualRescheduleServicePath = new URL("../src/services/liveClassManualRescheduleService.js", import.meta.url);
+const rescheduleCommunicationServicePath = new URL("../src/services/liveClassRescheduleCommunicationService.js", import.meta.url);
 const recoveryServicePath = new URL("../src/services/liveClassRescheduleRecoveryService.js", import.meta.url);
 const serviceIndexPath = new URL("../src/services/liveClassService.js", import.meta.url);
 const reschedulePlanPath = new URL("../src/utils/liveClassReschedulePlan.js", import.meta.url);
@@ -39,6 +41,23 @@ test("session, attendance, class, calendar and audit records commit atomically",
   assert.doesNotMatch(directService, /saveAnnouncementRow/);
   assert.doesNotMatch(directService, /emailQueue/);
   assert.doesNotMatch(directService, /studentNotifications/);
+});
+
+test("manual reschedule queues one communication only after the atomic save", async () => {
+  const [manualService, communicationService] = await Promise.all([
+    source(manualRescheduleServicePath),
+    source(rescheduleCommunicationServicePath),
+  ]);
+
+  const saveIndex = manualService.indexOf("await rescheduleSessionDirect");
+  const communicationIndex = manualService.indexOf("await submitRescheduleCommunication");
+  assert.ok(saveIndex >= 0);
+  assert.ok(communicationIndex > saveIndex);
+  assert.match(manualService, /affectedCount: Number\(result\.movedSessions \|\| 1\)/);
+  assert.equal((communicationService.match(/saveAnnouncementRow\(/g) || []).length, 1);
+  assert.match(communicationService, /loadAffectedSessions/);
+  assert.match(communicationService, /ordered\.slice\(primaryIndex, primaryIndex \+ Math\.max\(1, Number\(affectedCount \|\| 1\)\)\)/);
+  assert.match(communicationService, /deliveryMode: "auto"/);
 });
 
 test("atomic session changes reject stale concurrent edits", async () => {
