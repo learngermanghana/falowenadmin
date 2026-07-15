@@ -1,3 +1,10 @@
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { db } from "../firebase.js";
 import { formatAccraDateTime } from "../utils/liveClassCancellationEmail.js";
 import { buildRescheduleAnnouncement } from "../utils/liveClassRescheduleEmail.js";
 import { saveAnnouncementRow } from "./communicationService.js";
@@ -6,10 +13,53 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
-function byNewStart(left = {}, right = {}) {
-  const leftTime = new Date(left.patch?.startsAt || left.session?.startsAt || 0).getTime();
-  const rightTime = new Date(right.patch?.startsAt || right.session?.startsAt || 0).getTime();
-  return leftTime - rightTime;
+function inactiveSession(session = {}) {
+  const status = normalize(session.status || session.sessionStatus).toLowerCase();
+  return ["cancelled", "completed", "superseded", "deleted"].includes(status)
+    || session.superseded === true
+    || session.isSuperseded === true
+    || Boolean(normalize(session.supersededBySessionId));
+}
+
+function curriculumPosition(session = {}) {
+  const candidates = [session.curriculumIndex, session.curriculumDay, session.sequenceIndex];
+  for (const candidate of candidates) {
+    const value = Number(candidate);
+    if (Number.isInteger(value) && value >= 0) return value;
+  }
+  return Number.POSITIVE_INFINITY;
+}
+
+function byCurriculumOrder(left = {}, right = {}) {
+  const curriculumDifference = curriculumPosition(left) - curriculumPosition(right);
+  if (Number.isFinite(curriculumDifference) && curriculumDifference !== 0) return curriculumDifference;
+  return new Date(left.startsAt || 0).getTime() - new Date(right.startsAt || 0).getTime();
+}
+
+async function queryClassSessions(field, classId) {
+  const snap = await getDocs(
+    query(collection(db, "classSessions"), where(field, "==", classId)),
+  );
+  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+async function loadAffectedSessions(classId, primarySessionId, affectedCount) {
+  const found = new Map();
+  const results = await Promise.allSettled([
+    queryClassSessions("classId", classId),
+    queryClassSessions("classRecordId", classId),
+  ]);
+  results.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((session) => found.set(normalize(session.id), session));
+  });
+
+  const ordered = [...found.values()]
+    .filter((session) => !inactiveSession(session))
+    .sort(byCurriculumOrder);
+  const primaryIndex = ordered.findIndex((session) => normalize(session.id) === normalize(primarySessionId));
+  if (primaryIndex < 0) return [];
+  return ordered.slice(primaryIndex, primaryIndex + Math.max(1, Number(affectedCount || 1)));
 }
 
 function confirmedDelivery(receipt = {}) {
@@ -28,41 +78,31 @@ function deliveryMessage(receipt = {}) {
 export async function submitRescheduleCommunication({
   klass = {},
   primarySession = {},
-  sessionChanges = [],
+  affectedCount = 1,
   startsAt = "",
-  suppressCommunication = false,
 } = {}) {
-  if (suppressCommunication) {
-    return {
-      emailSubmitted: true,
-      emailMessage: "Automatic recovery completed without sending a student announcement.",
-      communicationSuppressed: true,
-    };
-  }
-
-  const orderedChanges = [...sessionChanges].sort(byNewStart);
-  const lastChange = orderedChanges[orderedChanges.length - 1] || null;
-  const lastAffectedSession = lastChange?.session || null;
-  const lastAffectedStartsAt = lastChange?.patch?.startsAt || lastAffectedSession?.startsAt || "";
-  const nextPrimaryStart = startsAt || orderedChanges.find((change) => (
-    normalize(change.session?.id) === normalize(primarySession.id)
-  ))?.patch?.startsAt || "";
+  const classId = normalize(klass.id || klass.classId || primarySession.classId || primarySession.classRecordId);
+  const affectedSessions = classId
+    ? await loadAffectedSessions(classId, primarySession.id, affectedCount).catch(() => [])
+    : [];
+  const lastAffectedSession = affectedSessions[affectedSessions.length - 1] || null;
+  const normalizedAffectedCount = Math.max(1, Number(affectedCount || affectedSessions.length || 1));
 
   const emailPayload = buildRescheduleAnnouncement({
     klass,
     session: primarySession,
     previousTime: formatAccraDateTime(primarySession.startsAt),
-    newTime: formatAccraDateTime(nextPrimaryStart),
-    affectedCount: Math.max(1, orderedChanges.length),
+    newTime: formatAccraDateTime(startsAt),
+    affectedCount: normalizedAffectedCount,
     lastAffectedSession,
-    lastAffectedTime: formatAccraDateTime(lastAffectedStartsAt),
+    lastAffectedTime: formatAccraDateTime(lastAffectedSession?.startsAt),
   });
 
   try {
     const receipt = await saveAnnouncementRow({
       announcement: emailPayload.announcement,
       className: emailPayload.className,
-      date: String(nextPrimaryStart || new Date().toISOString()).slice(0, 10),
+      date: String(startsAt || new Date().toISOString()).slice(0, 10),
       deliveryMode: "auto",
       link: "",
       topic: emailPayload.topic,
@@ -71,7 +111,6 @@ export async function submitRescheduleCommunication({
     return {
       emailSubmitted,
       emailMessage: deliveryMessage(receipt),
-      communicationSuppressed: false,
       communicationTopic: emailPayload.topic,
       communicationAffectedCount: emailPayload.affectedCount,
       communicationFollowingCount: emailPayload.followingCount,
@@ -81,7 +120,6 @@ export async function submitRescheduleCommunication({
     return {
       emailSubmitted: false,
       emailMessage: error?.message || "Could not queue the reschedule announcement.",
-      communicationSuppressed: false,
       communicationTopic: emailPayload.topic,
       communicationAffectedCount: emailPayload.affectedCount,
       communicationFollowingCount: emailPayload.followingCount,
