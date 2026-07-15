@@ -1,4 +1,4 @@
-export const STUDENT_LEADS_PUBLISHED_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDD46qAiCuuza-u4jTzwgiuMR5HwtBhQdvElQw5SIQOHCEJ7RCNLx7Zlarf7HvhYOCXkiVcwTCyXp6/pubhtml";
+export const STUDENT_LEADS_PUBLISHED_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDD46qAiCuuza-u4jTzwgiuMR5HwtBhQdvElQw5SIQOHCEJ7RCNLx7Zlarf7HvhYOCXkiVcwTCyXp6/pubhtml?gid=1052282144&single=true";
 export const STUDENT_LEADS_SHEET_NAME = "Leads";
 
 function normalizeHeader(value) {
@@ -32,16 +32,22 @@ function normalizeLeadName(value) {
 
 function firstValue(row = {}, names = []) {
   for (const name of names) {
-    const key = normalizeHeader(name);
-    const value = row[key];
+    const value = row[normalizeHeader(name)];
     if (String(value || "").trim()) return String(value).trim();
   }
   return "";
 }
 
 function extractPublishedSheetId(url = STUDENT_LEADS_PUBLISHED_URL) {
-  const source = String(url || "").trim();
-  return source.match(/\/spreadsheets\/d\/e\/([^/]+)/)?.[1] || "";
+  return String(url || "").match(/\/spreadsheets\/d\/e\/([^/]+)/)?.[1] || "";
+}
+
+function extractGidFromUrl(url = "") {
+  try {
+    return new URL(String(url || "")).searchParams.get("gid") || "";
+  } catch {
+    return String(url || "").match(/[?&]gid=(\d+)/)?.[1] || "";
+  }
 }
 
 function basePublishedUrl(url = STUDENT_LEADS_PUBLISHED_URL) {
@@ -76,38 +82,36 @@ export function extractSheetGidFromPublishedHtml(html = "", sheetName = STUDENT_
   const source = String(html || "");
   const tabPattern = /<a\b[^>]*href=["'][^"']*gid=(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match;
+
   while ((match = tabPattern.exec(source))) {
-    const label = normalizeHeader(stripHtml(match[2]));
-    if (label === wanted) return match[1];
+    if (normalizeHeader(stripHtml(match[2])) === wanted) return match[1];
   }
 
   const aroundGidPattern = /gid=(\d+)[\s\S]{0,900}?>([^<>]+)</gi;
   while ((match = aroundGidPattern.exec(source))) {
-    const label = normalizeHeader(decodeHtmlEntities(match[2]));
-    if (label === wanted) return match[1];
+    if (normalizeHeader(decodeHtmlEntities(match[2])) === wanted) return match[1];
   }
 
-  const labelFirstPattern = new RegExp(`${sheetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]{0,900}?gid=(\\d+)`, "i");
-  return source.match(labelFirstPattern)?.[1] || "";
+  const escapedName = String(sheetName || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return source.match(new RegExp(`${escapedName}[\\s\\S]{0,900}?gid=(\\d+)`, "i"))?.[1] || "";
 }
 
 export function publishedSheetToCsvUrl(url = STUDENT_LEADS_PUBLISHED_URL, sheetName = STUDENT_LEADS_SHEET_NAME) {
   const source = String(url || "").trim();
   if (/output=csv/i.test(source) || /tqx=out:csv/i.test(source)) return source;
-
   const base = basePublishedUrl(source);
   if (!base) return source;
-  const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
-  return `${base}/pub?output=csv&sheet=${sheet}`;
+  return `${base}/pub?output=csv&sheet=${encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME)}`;
 }
 
 export function publishedSheetCsvCandidates(url = STUDENT_LEADS_PUBLISHED_URL, sheetName = STUDENT_LEADS_SHEET_NAME, gid = "") {
   const source = String(url || "").trim();
   const base = basePublishedUrl(source);
   if (!base) return [source].filter(Boolean);
+  const resolvedGid = gid || extractGidFromUrl(source);
   const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
   return unique([
-    gid ? `${base}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv` : "",
+    resolvedGid ? `${base}/pub?gid=${encodeURIComponent(resolvedGid)}&single=true&output=csv` : "",
     `${base}/pub?output=csv&sheet=${sheet}`,
     `${base}/gviz/tq?tqx=out:csv&sheet=${sheet}`,
     `${base}/pub?output=csv`,
@@ -118,9 +122,10 @@ export function publishedSheetHtmlCandidates(url = STUDENT_LEADS_PUBLISHED_URL, 
   const source = String(url || "").trim();
   const base = basePublishedUrl(source);
   if (!base) return [source].filter(Boolean);
+  const resolvedGid = gid || extractGidFromUrl(source);
   const sheet = encodeURIComponent(sheetName || STUDENT_LEADS_SHEET_NAME);
   return unique([
-    gid ? `${base}/pubhtml?gid=${encodeURIComponent(gid)}&single=true` : "",
+    resolvedGid ? `${base}/pubhtml?gid=${encodeURIComponent(resolvedGid)}&single=true` : "",
     `${base}/pubhtml?sheet=${sheet}&single=true`,
     `${base}/pubhtml`,
   ]);
@@ -174,18 +179,19 @@ function csvHeaders(csvText = "") {
 }
 
 function headersLookLikeLeadSheet(headers = []) {
-  const normalizedHeaders = new Set(
-    headers.map(normalizeHeader).filter(Boolean)
-  );
+  const set = new Set(headers.map(normalizeHeader).filter(Boolean));
+  const hasName = set.has("name") || set.has("full name") || set.has("student name");
+  const hasContact = set.has("email") || set.has("email address") || set.has("phone") || set.has("phone number") || set.has("number");
+  const leadMarkers = [
+    "lead id", "created at", "source", "status", "class id", "class slug",
+    "payment status", "next follow up at", "last follow up at",
+  ];
+  const studentOnlyMarkers = ["uid", "contract start", "contract end", "daily limit", "emergency contact phone number"];
 
-  return (
-    normalizedHeaders.has("lead id") &&
-    normalizedHeaders.has("name") &&
-    (
-      normalizedHeaders.has("email") ||
-      normalizedHeaders.has("phone")
-    )
-  );
+  if (!hasName || !hasContact) return false;
+  if (leadMarkers.some((header) => set.has(header))) return true;
+  if (studentOnlyMarkers.some((header) => set.has(header))) return false;
+  return set.has("level");
 }
 
 function looksLikeLeadSheet(csvText = "") {
@@ -203,13 +209,12 @@ export function csvToObjects(csvText = "") {
 }
 
 export function publishedHtmlTablesToObjects(html = "") {
-  const source = String(html || "");
-  const tableMatches = [...source.matchAll(/<table\b[\s\S]*?<\/table>/gi)];
+  const tableMatches = [...String(html || "").matchAll(/<table\b[\s\S]*?<\/table>/gi)];
   return tableMatches.map((tableMatch) => {
     const rowMatches = [...tableMatch[0].matchAll(/<tr\b[\s\S]*?<\/tr>/gi)];
     const rows = rowMatches.map((rowMatch) => {
-      const cellMatches = [...rowMatch[0].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)];
-      return cellMatches.map((cellMatch) => stripHtml(cellMatch[1]));
+      const cells = [...rowMatch[0].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)];
+      return cells.map((cell) => stripHtml(cell[1]));
     }).filter((row) => row.some((cell) => String(cell || "").trim()));
 
     if (!rows.length) return [];
@@ -227,18 +232,6 @@ export function normalizeStudentLead(row = {}, index = 0) {
   const email = firstValue(row, ["email", "email address"]);
   const number = firstValue(row, ["phone", "number", "phone number", "whatsapp", "mobile", "contact"]);
   const level = firstValue(row, ["level", "language level", "class level"]);
-  const className = firstValue(row, ["class name", "class_name", "class"]);
-  const registrationDate = firstValue(row, ["created at", "created_at", "registration date", "registration_date", "registered at", "registered_at"]);
-  const status = firstValue(row, ["status", "lead status", "lead_status"]);
-  const paymentStatus = firstValue(row, ["payment status", "payment_status"]);
-  const amountPaid = firstValue(row, ["student paid", "student_paid", "amount paid", "amount_paid", "paid"]);
-  const balance = firstValue(row, ["student balance", "student_balance", "balance", "balance due", "balance_due"]);
-  const studentCode = firstValue(row, ["student code", "student_code"]);
-  const nextFollowUpAt = firstValue(row, ["next follow up at", "next_follow_up_at", "next followup", "next_followup"]);
-  const lastFollowUpAt = firstValue(row, ["last follow up at", "last_follow_up_at", "last followup", "last_followup"]);
-  const source = firstValue(row, ["source", "lead source", "lead_source"]);
-  const startDate = firstValue(row, ["start date", "start_date", "class start", "class_start"]);
-  const endDate = firstValue(row, ["end date", "end_date", "class end", "class_end"]);
   const normalizedLevel = String(level || "").trim().toUpperCase();
   const fallbackId = normalizeLeadEmail(email)
     || normalizeLeadPhone(number)
@@ -252,18 +245,18 @@ export function normalizeStudentLead(row = {}, index = 0) {
     email,
     number,
     level: normalizedLevel,
-    className,
-    registrationDate,
-    status,
-    paymentStatus,
-    amountPaid,
-    balance,
-    studentCode,
-    nextFollowUpAt,
-    lastFollowUpAt,
-    source,
-    startDate,
-    endDate,
+    className: firstValue(row, ["class name", "class_name", "class"]),
+    registrationDate: firstValue(row, ["created at", "created_at", "registration date", "registration_date", "registered at", "registered_at"]),
+    status: firstValue(row, ["status", "lead status", "lead_status"]),
+    paymentStatus: firstValue(row, ["payment status", "payment_status"]),
+    amountPaid: firstValue(row, ["student paid", "student_paid", "amount paid", "amount_paid", "paid"]),
+    balance: firstValue(row, ["student balance", "student_balance", "balance", "balance due", "balance_due"]),
+    studentCode: firstValue(row, ["student code", "student_code"]),
+    nextFollowUpAt: firstValue(row, ["next follow up at", "next_follow_up_at", "next followup", "next_followup"]),
+    lastFollowUpAt: firstValue(row, ["last follow up at", "last_follow_up_at", "last followup", "last_followup"]),
+    source: firstValue(row, ["source", "lead source", "lead_source"]),
+    startDate: firstValue(row, ["start date", "start_date", "class start", "class_start"]),
+    endDate: firstValue(row, ["end date", "end_date", "class end", "class_end"]),
   };
 }
 
@@ -274,8 +267,7 @@ export function leadDedupeKey(lead = {}) {
   if (phone) return `phone:${phone}`;
   const name = normalizeLeadName(lead.name);
   const level = String(lead.level || "").trim().toUpperCase();
-  if (name || level) return `name-level:${name}|${level}`;
-  return "";
+  return name || level ? `name-level:${name}|${level}` : "";
 }
 
 export function dedupeStudentLeads(leads = []) {
@@ -311,20 +303,29 @@ async function fetchText(url) {
 }
 
 async function discoverLeadSheetGid(url = STUDENT_LEADS_PUBLISHED_URL) {
+  const gidFromUrl = extractGidFromUrl(url);
+  if (gidFromUrl) return gidFromUrl;
   try {
-    const html = await fetchText(url);
-    return extractSheetGidFromPublishedHtml(html, STUDENT_LEADS_SHEET_NAME);
+    return extractSheetGidFromPublishedHtml(await fetchText(url), STUDENT_LEADS_SHEET_NAME);
   } catch {
     return "";
   }
 }
 
+function resultWithSource(result, candidate) {
+  return {
+    ...result,
+    sourceUrl: candidate,
+    sheetName: STUDENT_LEADS_SHEET_NAME,
+    empty: result.total === 0,
+  };
+}
+
 export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
   const gid = await discoverLeadSheetGid(url);
-  const candidates = publishedSheetCsvCandidates(url, STUDENT_LEADS_SHEET_NAME, gid);
   const errors = [];
 
-  for (const candidate of candidates) {
+  for (const candidate of publishedSheetCsvCandidates(url, STUDENT_LEADS_SHEET_NAME, gid)) {
     try {
       const csvText = await fetchText(candidate);
       if (/^\s*</.test(csvText)) {
@@ -335,9 +336,9 @@ export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
         errors.push(`${candidate} did not contain valid Leads headers`);
         continue;
       }
-      const result = normalizeStudentLeadRows(csvToObjects(csvText));
-      if (result.total > 0) return { ...result, sourceUrl: candidate, sheetName: STUDENT_LEADS_SHEET_NAME };
-      errors.push(`${candidate} returned no lead rows`);
+
+      // A valid Leads sheet with only headers is not a loading failure.
+      return resultWithSource(normalizeStudentLeadRows(csvToObjects(csvText)), candidate);
     } catch (error) {
       errors.push(`${candidate} failed (${error?.message || "error"})`);
     }
@@ -348,14 +349,8 @@ export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
       const html = await fetchText(candidate);
       const tables = publishedHtmlTablesToObjects(html);
       for (const rows of tables) {
-        if (
-          !rows.length ||
-          !headersLookLikeLeadSheet(Object.keys(rows[0] || {}))
-        ) {
-          continue;
-        }
-        const result = normalizeStudentLeadRows(rows);
-        if (result.total > 0) return { ...result, sourceUrl: candidate, sheetName: STUDENT_LEADS_SHEET_NAME };
+        if (!rows.length || !headersLookLikeLeadSheet(Object.keys(rows[0] || {}))) continue;
+        return resultWithSource(normalizeStudentLeadRows(rows), candidate);
       }
       errors.push(`${candidate} returned no Leads table`);
     } catch (error) {
@@ -363,5 +358,5 @@ export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
     }
   }
 
-  throw new Error(`Student leads sheet could not be loaded. Tried the Leads tab but Google did not return a valid CSV or readable published table. ${errors.slice(0, 4).join("; ")}`);
+  throw new Error(`Student leads sheet could not be loaded. Tried the Leads tab but Google did not return a valid CSV or readable published table. ${errors.slice(0, 6).join("; ")}`);
 }
