@@ -5,13 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/repairAnswersJson.mjs",
+    "prebuild": "node scripts/repairAnswersJson.mjs && node scripts/patchStudentLeadManagement.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test",
+    "test": "node scripts/repairAnswersJson.mjs && node scripts/patchStudentLeadManagement.mjs && node --test",
     "deploy:indexes": "firebase deploy --only firestore:indexes",
-    "deploy:falowenadmin": "firebase deploy --project \"$FIREBASE_PROJECT_ID\" --only functions:falowenadmin --force --debug"
+    "deploy:falowenadmin": "node scripts/patchStudentLeadDeletionRuntime.mjs && firebase deploy --project \"$FIREBASE_PROJECT_ID\" --only functions:falowenadmin --force --debug"
   },
   "dependencies": {
     "dayjs": "^1.11.19",
