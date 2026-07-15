@@ -53,11 +53,22 @@ export function cleanRescheduleLessonTitle(session = {}) {
     .trim() || "Live class lesson";
 }
 
+function affectedLessonLabel(session = {}) {
+  const lessonNumber = resolveRescheduleLessonNumber(session);
+  const lessonTitle = cleanRescheduleLessonTitle(session);
+  return lessonNumber === null
+    ? lessonTitle
+    : `Lesson ${lessonNumber}: ${lessonTitle}`;
+}
+
 export function buildRescheduleAnnouncement({
   klass = {},
   session = {},
   previousTime = "",
   newTime = "",
+  affectedCount = 1,
+  lastAffectedSession = null,
+  lastAffectedTime = "",
 } = {}) {
   const className = normalize(klass.name || klass.className || session.className) || "Falowen class";
   const lessonNumber = resolveRescheduleLessonNumber(session);
@@ -67,6 +78,11 @@ export function buildRescheduleAnnouncement({
     ? lessonTitle
     : `Day ${lessonNumber}: ${lessonTitle}`;
   const topic = `Class rescheduled: ${className}${lessonNumber === null ? "" : ` — Day ${lessonNumber}`}`;
+  const normalizedAffectedCount = Math.max(1, Number(affectedCount || 1));
+  const followingCount = Math.max(0, normalizedAffectedCount - 1);
+  const lastAffectedLabel = lastAffectedSession && followingCount > 0
+    ? affectedLessonLabel(lastAffectedSession)
+    : "";
 
   const announcement = [
     "Hello everyone,",
@@ -75,7 +91,12 @@ export function buildRescheduleAnnouncement({
     ids.length ? `Assignment: ${ids.join(", ")}` : "",
     previousTime ? `Previous time: ${previousTime}` : "",
     newTime ? `New time: ${newTime}` : "",
-    "Please check your Falowen homepage for the updated class time.",
+    followingCount > 0
+      ? `${followingCount} following lesson${followingCount === 1 ? " was" : "s were"} also shifted to preserve the curriculum order.`
+      : "",
+    lastAffectedLabel ? `Last affected lesson: ${lastAffectedLabel}` : "",
+    lastAffectedLabel && lastAffectedTime ? `Last affected time: ${lastAffectedTime}` : "",
+    "Please check your Falowen homepage for the updated class times.",
   ].filter(Boolean).join("\n\n");
 
   return {
@@ -86,5 +107,8 @@ export function buildRescheduleAnnouncement({
     lesson,
     lessonNumber,
     assignmentIds: ids,
+    affectedCount: normalizedAffectedCount,
+    followingCount,
+    lastAffectedLesson: lastAffectedLabel,
   };
 }
