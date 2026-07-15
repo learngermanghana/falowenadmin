@@ -1,35 +1,56 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { listClasses, setClassArchived } from "../services/classesService";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
+import { listClassCohorts } from "../services/liveClassService.js";
 import {
   ATTENDANCE_EMAIL_MODES,
   loadAttendanceEmailSettings,
 } from "../services/attendanceConfirmationEmailService.js";
 
 const GHANA_TIMEZONE = "Africa/Accra";
+const TERMINAL_CLASS_STATUSES = new Set([
+  "archived",
+  "graduated",
+  "inactive",
+  "cancelled",
+  "canceled",
+  "completed",
+  "closed",
+  "draft",
+]);
+
+function normalize(value) {
+  return String(value || "").trim();
+}
+
+function normalizeStatus(value) {
+  return normalize(value).toLowerCase();
+}
+
+function classRecordKey(klass = {}) {
+  return normalize(klass.id || klass.classRecordId || klass.classId);
+}
 
 function parseClassDate(value) {
   if (!value) return null;
   if (typeof value?.toDate === "function") return value.toDate();
-
-  const text = String(value).trim();
+  const text = normalize(value);
   if (!text) return null;
   const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text)
-    ? new Date(`${text}T00:00:00.000Z`)
+    ? new Date(`${text}T12:00:00.000Z`)
     : new Date(text);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function formatDate(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+function formatDate(value) {
+  const date = value instanceof Date ? value : parseClassDate(value);
+  if (!date) return "Not set";
   return new Intl.DateTimeFormat("en-GB", {
     timeZone: GHANA_TIMEZONE,
-    weekday: "short",
-    year: "numeric",
-    month: "short",
     day: "2-digit",
+    month: "short",
+    year: "numeric",
   }).format(date);
 }
 
@@ -48,27 +69,19 @@ function formatDateTime(value) {
   });
 }
 
-function classRecordKey(klass = {}) {
-  return String(klass.classRecordId || klass.id || klass.classId || "").trim();
-}
+function isActiveLiveClass(klass = {}) {
+  const status = normalizeStatus(klass.status);
+  if (klass.archived === true || klass.isArchived === true || klass.active === false) return false;
+  if (TERMINAL_CLASS_STATUSES.has(status)) return false;
 
-function resolveScheduleMeta(klass) {
-  return {
-    startDate: parseClassDate(klass?.startDate),
-    endDate: parseClassDate(klass?.endDate),
-    sessionCount: Number(klass?.generatedSessionCount || 0),
-  };
-}
+  if (["active", "ongoing", "upcoming", "scheduled", "open"].includes(status)) return true;
 
-function classifyClass(klass) {
-  const status = String(klass?.status || "").toLowerCase();
-  const archived = status === "archived" || klass?.archived === true || klass?.isArchived === true;
+  const endDate = parseClassDate(klass.endDate);
+  if (!endDate) return Boolean(klass.name || klass.className);
 
-  return {
-    ...klass,
-    archived,
-    scheduleMeta: resolveScheduleMeta(klass),
-  };
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12));
+  return endDate.getTime() >= today.getTime();
 }
 
 function emailModeLabel(settings = {}) {
@@ -84,156 +97,111 @@ function emailStatusText(settings = {}) {
   if (settings.mode === ATTENDANCE_EMAIL_MODES.EACH_CLASS) {
     return `The job checks every 15 minutes and sends after class ends, the ${settings.delayMinutes}-minute delay passes, and the QR check-in window closes.`;
   }
-  return "The job checks every 15 minutes and sends one summary after the final class of the week and the check-in window closes.";
+  return "The job checks every 15 minutes and sends one summary after the final class of the week and the QR check-in window closes.";
 }
 
-function ClassCard({ klass, archived = false, saving = false, onToggleArchived, onTrack }) {
-  const { startDate, endDate, sessionCount } = klass.scheduleMeta || {};
-  const dateText = startDate && endDate
-    ? `${formatDate(startDate)} → ${formatDate(endDate)}`
-    : "No live-class dates";
-  const routeClassId = classRecordKey(klass) || klass.classId;
+function tabButtonStyle(active) {
+  return {
+    border: active ? "1px solid #2457ff" : "1px solid #cbd5e1",
+    background: active ? "#2457ff" : "#fff",
+    color: active ? "#fff" : "#1e293b",
+    borderRadius: 999,
+    padding: "9px 14px",
+    fontWeight: 700,
+  };
+}
+
+function ActiveClassCard({ klass, onOpenTracker }) {
+  const classId = classRecordKey(klass);
+  const status = normalizeStatus(klass.status) || "active";
+  const sessionCount = Number(klass.generatedSessionCount || klass.sessionCount || 0);
 
   return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: 8,
-        padding: 12,
-        background: archived ? "#f8fafc" : "#fff",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <div style={{ fontWeight: 700 }}>{klass.name}</div>
-        <span
-          style={{
-            border: "1px solid #d1d5db",
-            borderRadius: 999,
-            padding: "2px 8px",
-            fontSize: 12,
-            background: archived ? "#e5e7eb" : "#dcfce7",
-            color: archived ? "#374151" : "#166534",
-            fontWeight: 700,
-          }}
-        >
-          {archived ? "Archived" : "Ongoing"}
+    <article style={{ border: "1px solid #dbe3ee", borderRadius: 12, padding: 14, background: "#fff" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <div>
+          <h3 style={{ margin: 0 }}>{klass.name || klass.className || classId}</h3>
+          <small style={{ color: "#64748b" }}>{classId}</small>
+        </div>
+        <span style={{ padding: "4px 9px", borderRadius: 999, background: "#dcfce7", color: "#166534", fontWeight: 800, fontSize: 12 }}>
+          {status.replace(/[_-]+/g, " ")}
         </span>
       </div>
-      <div style={{ fontSize: 12, opacity: 0.75 }}>classId: {klass.classId}</div>
-      <div style={{ fontSize: 12, opacity: 0.75 }}>Schedule: {dateText}</div>
-      {sessionCount > 0 ? <div style={{ fontSize: 12, opacity: 0.75 }}>Sessions: {sessionCount}</div> : null}
-      <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+
+      <div style={{ display: "grid", gap: 4, marginTop: 10, fontSize: 13 }}>
+        <span><strong>Course dates:</strong> {formatDate(klass.startDate)} → {formatDate(klass.endDate)}</span>
+        <span><strong>Level:</strong> {klass.levelId || klass.level || "Not set"}</span>
+        {sessionCount > 0 ? <span><strong>Generated sessions:</strong> {sessionCount}</span> : null}
+      </div>
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
         <button
           type="button"
           aria-controls="attendance-tracker-panel"
-          onClick={() => onTrack?.(routeClassId)}
+          onClick={() => onOpenTracker(classId)}
         >
           View attendance tracker
         </button>
-        <Link to={`/attendance/session/${encodeURIComponent(routeClassId)}`}>
-          {archived ? "View archived attendance" : "Mark attendance"}
-        </Link>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => onToggleArchived?.(klass, !archived)}
-          style={{
-            background: "#ffffff",
-            color: archived ? "#166534" : "#991b1b",
-            border: `1px solid ${archived ? "#16a34a" : "#dc2626"}`,
-            fontWeight: 700,
-            padding: "8px 12px",
-            borderRadius: 8,
-            cursor: saving ? "default" : "pointer",
-          }}
-        >
-          {saving ? "Saving..." : archived ? "Unarchive class" : "Archive class"}
-        </button>
+        <Link to={`/attendance/session/${encodeURIComponent(classId)}`}>Mark attendance</Link>
+        <Link to="/live-classes">Open in Live Classes</Link>
       </div>
-    </div>
+    </article>
   );
 }
 
 export default function AttendanceOverviewPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
-  const [savingClassId, setSavingClassId] = useState("");
-  const [selectedTrackerId, setSelectedTrackerId] = useState("");
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") === "tracker" ? "tracker" : "classes");
+  const [selectedTrackerId, setSelectedTrackerId] = useState(() => searchParams.get("classId") || "");
   const [emailSettings, setEmailSettings] = useState(null);
   const [emailSettingsLoading, setEmailSettingsLoading] = useState(false);
   const [emailSettingsError, setEmailSettingsError] = useState("");
-  const trackerRef = useRef(null);
-  const trackerHeadingRef = useRef(null);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const data = await listClasses();
-        setClasses(data);
-        setSelectedTrackerId((current) => current || classRecordKey(data.find((klass) => !classifyClass(klass).archived) || data[0]));
-      } catch (err) {
-        setError(err?.message || "Failed to load classes");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  async function handleToggleArchived(klass, archived) {
-    const classId = klass?.classId;
-    const recordId = classRecordKey(klass);
-    if (!classId || !recordId || savingClassId) return;
-
-    const previousClasses = classes;
-    setSavingClassId(recordId);
-    setError("");
-    setClasses((current) =>
-      current.map((item) =>
-        classRecordKey(item) === recordId
-          ? { ...item, archived, isArchived: archived, active: !archived, status: archived ? "archived" : "active" }
-          : item,
-      ),
-    );
-
-    try {
-      await setClassArchived(classId, archived, recordId);
-    } catch (err) {
-      setClasses(previousClasses);
-      setError(err?.message || "Failed to update class archive status");
-    } finally {
-      setSavingClassId("");
-    }
-  }
-
-  function openTracker(classId) {
-    if (!classId) return;
-    setSelectedTrackerId(classId);
-    window.requestAnimationFrame(() => {
-      window.setTimeout(() => {
-        trackerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        trackerHeadingRef.current?.focus({ preventScroll: true });
-      }, 0);
-    });
-  }
-
-  const classifiedClasses = useMemo(() => classes.map(classifyClass), [classes]);
-  const activeClasses = useMemo(
-    () => classifiedClasses.filter((klass) => !klass.archived),
-    [classifiedClasses],
-  );
-  const archivedClasses = useMemo(
-    () => classifiedClasses.filter((klass) => klass.archived),
-    [classifiedClasses],
-  );
-  const selectedTrackerClass = classifiedClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || activeClasses[0] || archivedClasses[0] || null;
 
   useEffect(() => {
     let active = true;
-    if (!selectedTrackerId) {
+    setLoading(true);
+    setError("");
+
+    listClassCohorts()
+      .then((rows) => {
+        if (!active) return;
+        setClasses(Array.isArray(rows) ? rows : []);
+      })
+      .catch((loadError) => {
+        if (!active) return;
+        setClasses([]);
+        setError(loadError?.message || "Failed to load active Live Classes");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  const activeClasses = useMemo(
+    () => classes.filter(isActiveLiveClass),
+    [classes],
+  );
+
+  useEffect(() => {
+    if (!activeClasses.length) {
+      setSelectedTrackerId("");
+      return;
+    }
+    if (!activeClasses.some((klass) => classRecordKey(klass) === selectedTrackerId)) {
+      setSelectedTrackerId(classRecordKey(activeClasses[0]));
+    }
+  }, [activeClasses, selectedTrackerId]);
+
+  const selectedTrackerClass = activeClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || activeClasses[0] || null;
+
+  useEffect(() => {
+    let active = true;
+    if (activeTab !== "tracker" || !selectedTrackerId) {
       setEmailSettings(null);
       setEmailSettingsError("");
       return () => { active = false; };
@@ -255,15 +223,27 @@ export default function AttendanceOverviewPage() {
       });
 
     return () => { active = false; };
-  }, [selectedTrackerId]);
+  }, [activeTab, selectedTrackerId]);
+
+  function openClassesTab() {
+    setActiveTab("classes");
+    setSearchParams({ tab: "classes" }, { replace: true });
+  }
+
+  function openTracker(classId = selectedTrackerId) {
+    const nextId = classId || classRecordKey(activeClasses[0]);
+    if (nextId) setSelectedTrackerId(nextId);
+    setActiveTab("tracker");
+    setSearchParams({ tab: "tracker", ...(nextId ? { classId: nextId } : {}) }, { replace: true });
+  }
 
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div>
-          <h2 style={{ margin: 0 }}>Attendance</h2>
+          <h1 style={{ margin: 0 }}>Attendance</h1>
           <p style={{ margin: "6px 0 0", fontSize: 13, opacity: 0.8 }}>
-            Track QR check-ins, manual attendance, late arrivals and absence patterns from the current Live Classes records.
+            Track QR check-ins, manual attendance, late arrivals and absence patterns using active classes from Live Classes only.
           </p>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
@@ -274,106 +254,82 @@ export default function AttendanceOverviewPage() {
 
       <OperationsCommunicationPanel context="attendance" />
 
-      {loading && <p>Loading classes...</p>}
-      {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}
+      <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0" }} aria-label="Attendance sections">
+        <button type="button" style={tabButtonStyle(activeTab === "classes")} onClick={openClassesTab}>
+          Active classes ({activeClasses.length})
+        </button>
+        <button type="button" style={tabButtonStyle(activeTab === "tracker")} onClick={() => openTracker()} disabled={!activeClasses.length}>
+          Attendance tracker
+        </button>
+      </nav>
 
-      {!loading && !error && activeClasses.length === 0 && (
-        <p>No ongoing classes found. Completed classes may be in the archive below.</p>
-      )}
+      {loading ? <p>Loading active Live Classes…</p> : null}
+      {error ? <p style={{ color: "#a00000" }}>❌ {error}</p> : null}
 
-      <div style={{ display: "grid", gap: 10, maxWidth: 720, marginTop: 14 }}>
-        {activeClasses.map((klass) => {
-          const recordId = classRecordKey(klass);
-          return (
-            <ClassCard
-              key={recordId || klass.classId}
-              klass={klass}
-              saving={savingClassId === recordId}
-              onToggleArchived={handleToggleArchived}
-              onTrack={openTracker}
-            />
-          );
-        })}
-      </div>
-
-      {!loading && !error && archivedClasses.length > 0 && (
-        <section style={{ marginTop: 22, maxWidth: 720 }}>
-          <button
-            type="button"
-            onClick={() => setShowArchived((value) => !value)}
-            style={{
-              border: "1px solid #cbd5e1",
-              borderRadius: 8,
-              padding: "8px 12px",
-              background: "#f8fafc",
-              fontWeight: 700,
-            }}
-          >
-            {showArchived ? "Hide" : "Show"} archived completed classes ({archivedClasses.length})
-          </button>
-
-          {showArchived && (
-            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-              {archivedClasses.map((klass) => {
-                const recordId = classRecordKey(klass);
-                return (
-                  <ClassCard
-                    key={recordId || klass.classId}
-                    klass={klass}
-                    archived
-                    saving={savingClassId === recordId}
-                    onToggleArchived={handleToggleArchived}
-                    onTrack={openTracker}
-                  />
-                );
-              })}
+      {!loading && !error && activeTab === "classes" ? (
+        <section>
+          <h2>Active classes</h2>
+          {!activeClasses.length ? (
+            <p>No active classes were found in Live Classes.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+              {activeClasses.map((klass) => (
+                <ActiveClassCard key={classRecordKey(klass)} klass={klass} onOpenTracker={openTracker} />
+              ))}
             </div>
           )}
         </section>
-      )}
+      ) : null}
 
-      {!loading && selectedTrackerClass ? (
-        <section
-          id="attendance-tracker-panel"
-          ref={trackerRef}
-          style={{ marginTop: 26, scrollMarginTop: 90 }}
-        >
-          <h2 ref={trackerHeadingRef} tabIndex="-1" style={{ outline: "none" }}>
-            Tracker for {selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
-          </h2>
-          <label style={{ display: "grid", gap: 6, maxWidth: 440 }}>
-            <strong>Class shown in tracker</strong>
-            <select value={classRecordKey(selectedTrackerClass)} onChange={(event) => openTracker(event.target.value)}>
-              {classifiedClasses.map((klass) => (
-                <option key={classRecordKey(klass)} value={classRecordKey(klass)}>{klass.name || klass.className || classRecordKey(klass)}{klass.archived ? " (archived)" : ""}</option>
-              ))}
-            </select>
-          </label>
-
-          <div style={{ marginTop: 14, padding: 13, border: "1px solid #bfdbfe", background: "#eff6ff", borderRadius: 10 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-              <div>
-                <strong>Attendance email: {emailSettingsLoading ? "Checking…" : emailModeLabel(emailSettings || {})}</strong>
-                {!emailSettingsLoading && emailSettings ? <p style={{ margin: "5px 0 0" }}>{emailStatusText(emailSettings)}</p> : null}
-              </div>
-              <Link to="/communication">Open email settings</Link>
+      {!loading && !error && activeTab === "tracker" ? (
+        <section id="attendance-tracker-panel" style={{ scrollMarginTop: 90 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "end" }}>
+            <div>
+              <h2 style={{ marginBottom: 6 }}>Attendance tracker</h2>
+              <p style={{ margin: 0, color: "#64748b" }}>View one active class at a time.</p>
             </div>
-            {!emailSettingsLoading && emailSettings ? (
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8, fontSize: 13 }}>
-                <span>Delivery: <strong>{emailSettings.deliveryConfigured ? "Configured" : "Not configured"}</strong></span>
-                <span>Last job: <strong>{formatDateTime(emailSettings.lastRunAt)}</strong></span>
-                <span>Last send: <strong>{formatDateTime(emailSettings.lastSentAt)}</strong></span>
-                <span>Last status: <strong>{emailSettings.lastStatus || "Not yet"}</strong></span>
-              </div>
-            ) : null}
-            {emailSettingsError ? <div style={{ marginTop: 8, color: "#991b1b" }}>{emailSettingsError}</div> : null}
-            {emailSettings?.lastError ? <div style={{ marginTop: 8, color: "#991b1b" }}>Delivery job error: {emailSettings.lastError}</div> : null}
+            <label style={{ display: "grid", gap: 6, minWidth: 280 }}>
+              <strong>Class shown in tracker</strong>
+              <select value={selectedTrackerId} onChange={(event) => openTracker(event.target.value)}>
+                {activeClasses.map((klass) => (
+                  <option key={classRecordKey(klass)} value={classRecordKey(klass)}>
+                    {klass.name || klass.className || classRecordKey(klass)}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
-          <ClassAttendanceTracker
-            classId={classRecordKey(selectedTrackerClass)}
-            className={selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
-          />
+          {selectedTrackerClass ? (
+            <>
+              <div style={{ marginTop: 14, padding: 13, border: "1px solid #bfdbfe", background: "#eff6ff", borderRadius: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <div>
+                    <strong>Attendance email: {emailSettingsLoading ? "Checking…" : emailModeLabel(emailSettings || {})}</strong>
+                    {!emailSettingsLoading && emailSettings ? <p style={{ margin: "5px 0 0" }}>{emailStatusText(emailSettings)}</p> : null}
+                  </div>
+                  <Link to="/communication">Open email settings</Link>
+                </div>
+                {!emailSettingsLoading && emailSettings ? (
+                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8, fontSize: 13 }}>
+                    <span>Delivery: <strong>{emailSettings.deliveryConfigured ? "Configured" : "Not configured"}</strong></span>
+                    <span>Last job: <strong>{formatDateTime(emailSettings.lastRunAt)}</strong></span>
+                    <span>Last send: <strong>{formatDateTime(emailSettings.lastSentAt)}</strong></span>
+                    <span>Last status: <strong>{emailSettings.lastStatus || "Not yet"}</strong></span>
+                  </div>
+                ) : null}
+                {emailSettingsError ? <div style={{ marginTop: 8, color: "#991b1b" }}>{emailSettingsError}</div> : null}
+                {emailSettings?.lastError ? <div style={{ marginTop: 8, color: "#991b1b" }}>Delivery job error: {emailSettings.lastError}</div> : null}
+              </div>
+
+              <ClassAttendanceTracker
+                classId={classRecordKey(selectedTrackerClass)}
+                className={selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
+              />
+            </>
+          ) : (
+            <p>No active class is available for the tracker.</p>
+          )}
         </section>
       ) : null}
     </div>
