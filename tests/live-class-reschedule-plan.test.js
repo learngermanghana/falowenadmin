@@ -5,6 +5,7 @@ import {
   buildSessionReschedulePlan,
   intervalsOverlap,
 } from "../src/utils/liveClassReschedulePlan.js";
+import { inspectTimetableIntegrity } from "../src/utils/liveClassTimetableIntegrity.js";
 
 const groups = getCourseSessionGroups("A1");
 
@@ -31,6 +32,34 @@ const klass = {
   timezone: "Africa/Accra",
 };
 
+const A1_MUNICH_DATES = [
+  "2026-06-19T18:00:00.000Z",
+  "2026-06-20T08:00:00.000Z",
+  "2026-06-25T18:00:00.000Z",
+  "2026-06-26T18:00:00.000Z",
+  "2026-06-27T08:00:00.000Z",
+  "2026-07-02T18:00:00.000Z",
+  "2026-07-03T18:00:00.000Z",
+  "2026-07-04T08:00:00.000Z",
+  "2026-07-09T18:00:00.000Z",
+  "2026-07-10T18:00:00.000Z",
+  "2026-07-11T08:00:00.000Z",
+  "2026-07-16T18:00:00.000Z",
+  "2026-07-17T18:00:00.000Z",
+  "2026-07-18T08:00:00.000Z",
+  "2026-07-23T18:00:00.000Z",
+  "2026-07-24T18:00:00.000Z",
+  "2026-07-25T08:00:00.000Z",
+  "2026-07-30T18:00:00.000Z",
+  "2026-07-31T18:00:00.000Z",
+  "2026-08-01T08:00:00.000Z",
+  "2026-08-06T18:00:00.000Z",
+  "2026-08-07T18:00:00.000Z",
+  "2026-08-08T08:00:00.000Z",
+  "2026-08-13T18:00:00.000Z",
+  "2026-08-14T18:00:00.000Z",
+];
+
 test("interval overlap detects partial collisions, not only equal start times", () => {
   assert.equal(
     intervalsOverlap(
@@ -52,7 +81,7 @@ test("interval overlap detects partial collisions, not only equal start times", 
   );
 });
 
-test("single-session move is blocked when it overlaps another lesson", () => {
+test("single-session move is blocked when it overlaps another unfinished lesson", () => {
   const sessions = [
     session(0, "2026-06-19T18:00:00.000Z"),
     session(1, "2026-06-20T08:00:00.000Z"),
@@ -112,6 +141,52 @@ test("completed predecessors do not block the next unfinished lesson from moving
   assert.equal(plan.affectedCount, 1);
   assert.equal(plan.changes[0].session.id, "day-13");
   assert.equal(plan.changes[0].startsAt, "2026-07-16T08:00:00.000Z");
+});
+
+test("Day 13 can reuse Day 11's exact time after Day 11 and Day 12 are completed", () => {
+  const sessions = [
+    session(11, "2026-07-16T18:00:00.000Z", "completed"),
+    session(12, "2026-07-17T18:00:00.000Z", "completed"),
+    session(13, "2026-07-18T08:00:00.000Z"),
+    session(14, "2026-07-23T18:00:00.000Z"),
+  ];
+
+  const plan = buildSessionReschedulePlan({
+    klass,
+    sessions,
+    sessionId: "day-13",
+    targetStartsAt: "2026-07-16T18:00:00.000Z",
+    targetEndsAt: "2026-07-16T19:00:00.000Z",
+    mode: "single",
+  });
+
+  assert.equal(plan.affectedCount, 1);
+  assert.equal(plan.releasedCompletedCount, 2);
+  assert.deepEqual(
+    plan.releasedCompletedSessions.map(({ session: item }) => item.id),
+    ["day-11", "day-12"],
+  );
+  assert.equal(plan.changes[0].startsAt, "2026-07-16T18:00:00.000Z");
+});
+
+test("completed history still counts toward all 25 lessons without causing an active duplicate", () => {
+  const sessions = A1_MUNICH_DATES.map((startsAt, day) => session(
+    day,
+    day === 13 ? "2026-07-16T18:00:00.000Z" : startsAt,
+    day <= 12 ? "completed" : "scheduled",
+  ));
+
+  const report = inspectTimetableIntegrity({
+    klass,
+    sessions,
+    requireCurriculum: true,
+    enforceEndDate: true,
+  });
+
+  assert.equal(report.actualCount, 25);
+  assert.equal(report.expectedCount, 25);
+  assert.equal(report.healthy, true, JSON.stringify(report.issues, null, 2));
+  assert.equal(report.issues.some((issue) => ["duplicate-time", "overlap", "curriculum-order"].includes(issue.code)), false);
 });
 
 test("an unfinished predecessor still blocks an invalid backward move", () => {
