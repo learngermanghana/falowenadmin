@@ -173,19 +173,23 @@ function csvHeaders(csvText = "") {
   return (parseCsv(csvText)[0] || []).map(normalizeHeader).filter(Boolean);
 }
 
-function looksLikeStudentDirectory(csvText = "") {
-  const headers = new Set(csvHeaders(csvText));
-  return [
-    "studentcode",
-    "student code",
-    "class name",
-    "balance due",
-    "payment status",
-    "contract start",
-    "contract end",
-    "paid",
-    "uid",
-  ].some((header) => headers.has(header));
+function headersLookLikeLeadSheet(headers = []) {
+  const normalizedHeaders = new Set(
+    headers.map(normalizeHeader).filter(Boolean)
+  );
+
+  return (
+    normalizedHeaders.has("lead id") &&
+    normalizedHeaders.has("name") &&
+    (
+      normalizedHeaders.has("email") ||
+      normalizedHeaders.has("phone")
+    )
+  );
+}
+
+function looksLikeLeadSheet(csvText = "") {
+  return headersLookLikeLeadSheet(csvHeaders(csvText));
 }
 
 export function csvToObjects(csvText = "") {
@@ -296,8 +300,8 @@ export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
         errors.push(`${candidate} returned HTML, not CSV`);
         continue;
       }
-      if (looksLikeStudentDirectory(csvText)) {
-        errors.push(`${candidate} looked like full student data, not Leads`);
+      if (!looksLikeLeadSheet(csvText)) {
+        errors.push(`${candidate} did not contain valid Leads headers`);
         continue;
       }
       const result = normalizeStudentLeadRows(csvToObjects(csvText));
@@ -313,7 +317,12 @@ export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
       const html = await fetchText(candidate);
       const tables = publishedHtmlTablesToObjects(html);
       for (const rows of tables) {
-        if (!rows.length || looksLikeStudentDirectory(Object.keys(rows[0] || {}).join(","))) continue;
+        if (
+          !rows.length ||
+          !headersLookLikeLeadSheet(Object.keys(rows[0] || {}))
+        ) {
+          continue;
+        }
         const result = normalizeStudentLeadRows(rows);
         if (result.total > 0) return { ...result, sourceUrl: candidate, sheetName: STUDENT_LEADS_SHEET_NAME };
       }
