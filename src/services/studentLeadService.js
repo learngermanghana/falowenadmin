@@ -222,17 +222,48 @@ export function publishedHtmlTablesToObjects(html = "") {
 }
 
 export function normalizeStudentLead(row = {}, index = 0) {
+  const leadId = firstValue(row, ["lead id", "lead_id", "id"]);
   const name = firstValue(row, ["name", "full name", "student name"]);
   const email = firstValue(row, ["email", "email address"]);
   const number = firstValue(row, ["phone", "number", "phone number", "whatsapp", "mobile", "contact"]);
   const level = firstValue(row, ["level", "language level", "class level"]);
+  const className = firstValue(row, ["class name", "class_name", "class"]);
+  const registrationDate = firstValue(row, ["created at", "created_at", "registration date", "registration_date", "registered at", "registered_at"]);
+  const status = firstValue(row, ["status", "lead status", "lead_status"]);
+  const paymentStatus = firstValue(row, ["payment status", "payment_status"]);
+  const amountPaid = firstValue(row, ["student paid", "student_paid", "amount paid", "amount_paid", "paid"]);
+  const balance = firstValue(row, ["student balance", "student_balance", "balance", "balance due", "balance_due"]);
+  const studentCode = firstValue(row, ["student code", "student_code"]);
+  const nextFollowUpAt = firstValue(row, ["next follow up at", "next_follow_up_at", "next followup", "next_followup"]);
+  const lastFollowUpAt = firstValue(row, ["last follow up at", "last_follow_up_at", "last followup", "last_followup"]);
+  const source = firstValue(row, ["source", "lead source", "lead_source"]);
+  const startDate = firstValue(row, ["start date", "start_date", "class start", "class_start"]);
+  const endDate = firstValue(row, ["end date", "end_date", "class end", "class_end"]);
+  const normalizedLevel = String(level || "").trim().toUpperCase();
+  const fallbackId = normalizeLeadEmail(email)
+    || normalizeLeadPhone(number)
+    || [normalizeLeadName(name), normalizedLevel].filter(Boolean).join("|")
+    || String(index);
 
   return {
-    id: `${normalizeLeadEmail(email) || normalizeLeadPhone(number) || `${normalizeLeadName(name)}-${String(level).toUpperCase()}` || index}`,
+    id: leadId || fallbackId,
+    leadId,
     name,
     email,
     number,
-    level: String(level || "").trim().toUpperCase(),
+    level: normalizedLevel,
+    className,
+    registrationDate,
+    status,
+    paymentStatus,
+    amountPaid,
+    balance,
+    studentCode,
+    nextFollowUpAt,
+    lastFollowUpAt,
+    source,
+    startDate,
+    endDate,
   };
 }
 
