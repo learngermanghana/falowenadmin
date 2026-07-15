@@ -115,3 +115,4 @@ await import("./patchLiveClassRescheduleUi.mjs");
 await import("./patchMarkingScoreConsistency.mjs");
 await import("./patchStudentLeadsTab.mjs");
 await import("./patchLiveClassStudentsLoading.mjs");
+await import("./patchAttendanceBccEmailTemplates.mjs");
