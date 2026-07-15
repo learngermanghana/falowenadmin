@@ -21,8 +21,16 @@ function levelIdForClass(klass = {}) {
     .match(/\b(A1|A2|B1|B2|C1|C2)\b/i)?.[1]?.toUpperCase() || "";
 }
 
+function statusOf(session = {}) {
+  return normalize(session.status || "scheduled").toLowerCase();
+}
+
 function superseded(session = {}) {
-  return session.superseded === true || normalize(session.status).toLowerCase() === "superseded";
+  return session.superseded === true || statusOf(session) === "superseded";
+}
+
+function completed(session = {}) {
+  return statusOf(session) === "completed";
 }
 
 function collisionEligible(session = {}, plannedStatus = null) {
@@ -110,8 +118,16 @@ function canonicalOrderedSessions(klass = {}, sessions = []) {
   return { levelId, groups, ordered };
 }
 
+function previousUnfinishedSession(ordered = [], selectedIndex = 0) {
+  for (let index = selectedIndex - 1; index >= 0; index -= 1) {
+    const candidate = ordered[index];
+    if (!completed(candidate?.session)) return candidate;
+  }
+  return null;
+}
+
 function assertCurriculumBoundary({ ordered, selectedIndex, targetStart, mode }) {
-  const previous = selectedIndex > 0 ? ordered[selectedIndex - 1] : null;
+  const previous = previousUnfinishedSession(ordered, selectedIndex);
   const next = selectedIndex < ordered.length - 1 ? ordered[selectedIndex + 1] : null;
   const previousStart = toDate(previous?.session?.startsAt);
   const nextStart = toDate(next?.session?.startsAt);
@@ -119,7 +135,7 @@ function assertCurriculumBoundary({ ordered, selectedIndex, targetStart, mode })
   if (previousStart && targetStart.getTime() <= previousStart.getTime()) {
     throw codedError(
       "live-class/curriculum-order",
-      `${sessionLabel(ordered[selectedIndex].session)} must remain after ${sessionLabel(previous.session)}. Choose a later time or shift from an earlier lesson.`,
+      `${sessionLabel(ordered[selectedIndex].session)} cannot move before unfinished ${sessionLabel(previous.session)}. Mark earlier lessons complete first, choose a later time, or shift from an earlier lesson.`,
       { previousSessionId: normalize(previous.session.id) },
     );
   }
@@ -182,11 +198,11 @@ export function buildSessionReschedulePlan({
   assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
 
   const affected = normalizedMode === "following" ? ordered.slice(selectedIndex) : [selected];
-  const locked = affected.find(({ session }) => ["completed", "live"].includes(normalize(session.status).toLowerCase()));
+  const locked = affected.find(({ session }) => ["completed", "live"].includes(statusOf(session)));
   if (locked) {
     throw codedError(
       "live-class/locked-following-session",
-      `${sessionLabel(locked.session)} is ${normalize(locked.session.status).toLowerCase()} and cannot be shifted. Choose “Move only this session”.`,
+      `${sessionLabel(locked.session)} is ${statusOf(locked.session)} and cannot be shifted. Choose “Move only this session”.`,
       { sessionId: normalize(locked.session.id) },
     );
   }
@@ -203,7 +219,7 @@ export function buildSessionReschedulePlan({
     const endsAt = normalizedMode === "following"
       ? (index === 0 ? target.end : new Date(current.end.getTime() + deltaMs))
       : target.end;
-    const plannedStatus = index === 0 ? "scheduled" : normalize(session.status || "scheduled").toLowerCase();
+    const plannedStatus = index === 0 ? "scheduled" : statusOf(session);
     return {
       session,
       sessionNumber: number,
