@@ -26,6 +26,7 @@ import ClassOperationsPage from "./pages/ClassOperationsPage";
 import ClassArchivePage from "./pages/ClassArchivePage";
 import LiveClassesPage from "./pages/LiveClassesPage";
 import HolidayCalendarPage from "./pages/HolidayCalendarPage";
+import GoetheExamConfigPage from "./pages/GoetheExamConfigPage.jsx";
 import StudentResultsComparePage from "./pages/StudentResultsComparePage.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
@@ -80,6 +81,7 @@ function TopBar() {
                 <Link to="/student-results" onClick={() => setMenuOpen(false)}>Results</Link>
                 <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
+                <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
               </>
@@ -165,6 +167,7 @@ export default function App() {
           <Route path="/campus/tutor-marking" element={<ProtectedRoute allowStaff={false}><TutorMarkingSimplePage /></ProtectedRoute>} />
           <Route path="/grammar-issues" element={<ProtectedRoute allowStaff={false}><GrammarIssueReportsPage /></ProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute allowStaff={false}><CommunicationHubPage /></ProtectedRoute>} />
+          <Route path="/exam-file" element={<ProtectedRoute allowStaff={false}><GoetheExamConfigPage /></ProtectedRoute>} />
           <Route path="/whatsapp-reminders" element={<ProtectedRoute allowStaff={false}><WhatsAppRemindersPage /></ProtectedRoute>} />
           <Route path="/teaching-slides" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/orientation" element={<ProtectedRoute allowStaff={false}><OrientationPage /></ProtectedRoute>} />
