@@ -21,10 +21,49 @@ if (!source.includes('StudentLeadsPanel from "../components/StudentLeadsPanel.js
   );
 }
 
+if (!source.includes('new URLSearchParams(window.location.search).get("tab") === "leads"')) {
+  replaceOnce(
+    '  const [activeTab, setActiveTab] = useState("directory");',
+    '  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") === "leads" ? "leads" : "directory");',
+    "Student Leads query tab",
+  );
+}
+
 if (!source.includes('setActiveTab("leads")')) {
   replaceOnce(
-    `          <button\n            type="button"\n            onClick={() => setActiveTab("add")}\n            style={{\n              border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",\n              background: activeTab === "add" ? "#eff6ff" : "#fff",\n              color: "#1a2233",\n            }}\n          >\n            Add Student\n          </button>`,
-    `          <button\n            type="button"\n            onClick={() => setActiveTab("add")}\n            style={{\n              border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",\n              background: activeTab === "add" ? "#eff6ff" : "#fff",\n              color: "#1a2233",\n            }}\n          >\n            Add Student\n          </button>\n          <button\n            type="button"\n            onClick={() => setActiveTab("leads")}\n            style={{\n              border: activeTab === "leads" ? "1px solid #2563eb" : "1px solid #d1d5db",\n              background: activeTab === "leads" ? "#eff6ff" : "#fff",\n              color: "#1a2233",\n            }}\n          >\n            Student Leads\n          </button>`,
+    `          <button
+            type="button"
+            onClick={() => setActiveTab("add")}
+            style={{
+              border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",
+              background: activeTab === "add" ? "#eff6ff" : "#fff",
+              color: "#1a2233",
+            }}
+          >
+            Add Student
+          </button>`,
+    `          <button
+            type="button"
+            onClick={() => setActiveTab("add")}
+            style={{
+              border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",
+              background: activeTab === "add" ? "#eff6ff" : "#fff",
+              color: "#1a2233",
+            }}
+          >
+            Add Student
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("leads")}
+            style={{
+              border: activeTab === "leads" ? "1px solid #2563eb" : "1px solid #d1d5db",
+              background: activeTab === "leads" ? "#eff6ff" : "#fff",
+              color: "#1a2233",
+            }}
+          >
+            Student Leads
+          </button>`,
     "Student Leads tab button",
   );
 }
