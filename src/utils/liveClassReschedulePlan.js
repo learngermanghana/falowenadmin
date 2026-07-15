@@ -33,9 +33,13 @@ function completed(session = {}) {
   return statusOf(session) === "completed";
 }
 
+function slotReleased(session = {}) {
+  return session.slotReleased === true || session.timetableSlotReleased === true;
+}
+
 function collisionEligible(session = {}, plannedStatus = null) {
   const status = normalize(plannedStatus || session.status || "scheduled").toLowerCase();
-  return !superseded(session) && status !== "cancelled";
+  return !superseded(session) && !slotReleased(session) && status !== "cancelled";
 }
 
 function sessionLabel(session = {}) {
@@ -149,6 +153,14 @@ function assertCurriculumBoundary({ ordered, selectedIndex, targetStart, mode })
   }
 }
 
+function completedPredecessorSlotsToRelease({ ordered = [], selectedIndex = 0, target }) {
+  return ordered.slice(0, selectedIndex).filter(({ session }) => {
+    if (!completed(session) || slotReleased(session)) return false;
+    const interval = validInterval(session.startsAt, session.endsAt, sessionLabel(session));
+    return interval.end.getTime() > target.start.getTime();
+  });
+}
+
 function recoveryBaseline({ klass = {}, selectedSession = {}, selectedCurrent, target, mode }) {
   if (mode !== "following" || target.start.getTime() !== selectedCurrent.start.getTime()) {
     return selectedCurrent;
@@ -197,6 +209,13 @@ export function buildSessionReschedulePlan({
   });
   assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
 
+  const releasedCompletedSessions = completedPredecessorSlotsToRelease({
+    ordered,
+    selectedIndex,
+    target,
+  });
+  const releasedIds = new Set(releasedCompletedSessions.map(({ session }) => normalize(session.id)));
+
   const affected = normalizedMode === "following" ? ordered.slice(selectedIndex) : [selected];
   const locked = affected.find(({ session }) => ["completed", "live"].includes(statusOf(session)));
   if (locked) {
@@ -229,7 +248,10 @@ export function buildSessionReschedulePlan({
     };
   });
 
-  const ignoredSessionIds = changes.map((change) => normalize(change.session.id));
+  const ignoredSessionIds = [
+    ...changes.map((change) => normalize(change.session.id)),
+    ...releasedIds,
+  ];
   changes.forEach((change) => {
     if (!collisionEligible(change.session, change.plannedStatus)) return;
     const conflict = findRescheduleOverlap({
@@ -258,6 +280,8 @@ export function buildSessionReschedulePlan({
     deltaMs,
     recoveredFromPreviousStart: selectedBaseline.start.getTime() !== selectedCurrent.start.getTime(),
     affectedCount: changes.length,
+    releasedCompletedCount: releasedCompletedSessions.length,
+    releasedCompletedSessions,
     changes,
   };
 }
