@@ -47,6 +47,7 @@ on:
       - 'src/utils/liveClassManualReschedule.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassRescheduleEmail.js'
+      - 'src/utils/liveClassReschedulePlan.js'
       - 'src/utils/liveClassScheduleHealth.js'
       - 'src/utils/liveClassScheduleRules.js'
       - 'src/utils/liveClassScheduling.js'
@@ -68,6 +69,7 @@ on:
       - 'tests/live-class-official-timetable-repair.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-reschedule-email.test.js'
+      - 'tests/live-class-reschedule-plan.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
@@ -123,6 +125,7 @@ on:
       - 'src/utils/liveClassManualReschedule.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassRescheduleEmail.js'
+      - 'src/utils/liveClassReschedulePlan.js'
       - 'src/utils/liveClassScheduleHealth.js'
       - 'src/utils/liveClassScheduleRules.js'
       - 'src/utils/liveClassScheduling.js'
@@ -144,6 +147,7 @@ on:
       - 'tests/live-class-official-timetable-repair.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-reschedule-email.test.js'
+      - 'tests/live-class-reschedule-plan.test.js'
       - 'tests/live-class-schedule-rules.test.js'
       - 'tests/live-class-session-dedupe.test.js'
       - 'tests/live-class-session-rebuild.test.js'
@@ -177,6 +181,9 @@ jobs:
 
       - name: Test mobile reschedule date handling
         run: node --test tests/live-class-mobile-reschedule-date.test.js
+
+      - name: Test backward reschedule planning
+        run: node --test tests/live-class-reschedule-plan.test.js
 
       - name: Test superseded status normalization
         run: node --test tests/live-class-superseded-status.test.js
