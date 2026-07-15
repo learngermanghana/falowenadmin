@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  dedupeCompatibleSessionRecords,
   dedupeCompatibleSessions,
   enrichSessionsWithStableCurriculum,
   resolveSessionCourseGroup,
@@ -36,6 +37,58 @@ test("normal generated same-date sessions collapse to one official class date", 
   ], "Africa/Accra");
 
   assert.deepEqual(sessions.map((session) => session.id), ["morning"]);
+});
+
+test("different curriculum lessons sharing one timestamp both remain visible", () => {
+  const sessions = dedupeCompatibleSessionRecords([
+    {
+      id: "day-11",
+      classId: "a1-munich",
+      status: "completed",
+      startsAt: "2026-07-16T18:00:00.000Z",
+      assignmentIds: ["A1-7"],
+      curriculumDay: 11,
+      curriculumIndex: 12,
+      topic: "Day 11: The 12 Hour Clock",
+    },
+    {
+      id: "day-13",
+      classRecordId: "a1-munich",
+      status: "scheduled",
+      previousStartsAt: "2026-07-18T08:00:00.000Z",
+      startsAt: "2026-07-16T18:00:00.000Z",
+      assignmentIds: ["A1-3.5"],
+      curriculumDay: 13,
+      curriculumIndex: 14,
+      topic: "Day 13: Numbers, Time and Prices Revision",
+    },
+  ], { classId: "a1-munich" });
+
+  assert.deepEqual(sessions.map((session) => session.id).sort(), ["day-11", "day-13"]);
+});
+
+test("aliases for the same curriculum lesson at one timestamp still collapse", () => {
+  const sessions = dedupeCompatibleSessionRecords([
+    {
+      id: "legacy-day-13",
+      classId: "class-name",
+      status: "scheduled",
+      startsAt: "2026-07-16T18:00:00.000Z",
+      assignmentIds: ["A1-3.5"],
+      curriculumDay: 13,
+    },
+    {
+      id: "official-day-13",
+      classId: "a1-munich",
+      status: "scheduled",
+      previousStartsAt: "2026-07-18T08:00:00.000Z",
+      startsAt: "2026-07-16T18:00:00.000Z",
+      assignmentIds: ["A1-3.5"],
+      curriculumDay: 13,
+    },
+  ], { classId: "a1-munich" });
+
+  assert.deepEqual(sessions.map((session) => session.id), ["official-day-13"]);
 });
 
 test("date duplicate suppression runs after exact-time dedupe and keeps preferred manual session", () => {
