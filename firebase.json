@@ -17,6 +17,7 @@
         "node scripts/patchLiveClassUpdateScheduleSync.mjs",
         "node scripts/patchHolidayClassScheduleAwareness.mjs",
         "node scripts/patchStudentDeletionRuntime.mjs",
+        "node scripts/patchStudentLeadDeletionRuntime.mjs",
         "node scripts/patchAttendanceConfirmationEmails.mjs",
         "node scripts/patchGoetheExamConfig.mjs"
       ],
