@@ -223,9 +223,10 @@ export function inspectTimetableIntegrity({
       }
     }
 
-    const activeNumbered = numbered
-      .filter(({ session }) => !slotReleased(session) && statusOf(session) !== "completed")
-      .sort((left, right) => left.number - right.number);
+    numbered.sort((left, right) => left.number - right.number);
+    const activeNumbered = numbered.filter(
+      ({ session }) => !slotReleased(session) && statusOf(session) !== "completed",
+    );
     for (let index = 1; index < activeNumbered.length; index += 1) {
       const previous = activeNumbered[index - 1];
       const current = activeNumbered[index];
