@@ -12,16 +12,20 @@ async function source(path) {
   return readFile(path, "utf8");
 }
 
-test("Attendance overview opens and focuses the selected-class tracker", async () => {
+test("Attendance overview uses active Live Classes and provides a tracker sub-tab", async () => {
   const overview = await source(overviewPath);
+  assert.match(overview, /listClassCohorts/);
+  assert.match(overview, /isActiveLiveClass/);
+  assert.match(overview, /Active classes/);
+  assert.match(overview, /Attendance tracker/);
   assert.match(overview, /ClassAttendanceTracker/);
   assert.match(overview, /View attendance tracker/);
   assert.match(overview, /Class shown in tracker/);
   assert.match(overview, /Track QR check-ins, manual attendance, late arrivals and absence patterns/);
   assert.match(overview, /id="attendance-tracker-panel"/);
-  assert.match(overview, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
-  assert.match(overview, /trackerHeadingRef\.current\?\.focus/);
   assert.match(overview, /aria-controls="attendance-tracker-panel"/);
+  assert.doesNotMatch(overview, /listClasses\(/);
+  assert.doesNotMatch(overview, /Show archived completed classes/);
 });
 
 test("Attendance overview explains and displays automatic email delivery status", async () => {
