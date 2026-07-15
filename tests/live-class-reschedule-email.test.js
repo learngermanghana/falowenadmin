@@ -52,6 +52,35 @@ test("reschedule email keeps the headline out of the body", () => {
   assert.equal((payload.announcement.match(/A2 Koln Klasse/g) || []).length, 1);
 });
 
+test("one reschedule announcement summarizes all following shifted lessons", () => {
+  const payload = buildRescheduleAnnouncement({
+    klass: { name: "A2 Koln Klasse" },
+    session: {
+      topic: "Lesson 20: Reklamationssituationen",
+      curriculumIndex: 20,
+      assignmentIds: ["A2-7.20"],
+    },
+    previousTime: "Tuesday, 14 July 2026 at 19:00",
+    newTime: "Wednesday, 15 July 2026 at 19:00",
+    affectedCount: 9,
+    lastAffectedSession: {
+      topic: "Lesson 28: Über die Zukunft sprechen",
+      curriculumIndex: 28,
+      assignmentIds: ["A2-10.28"],
+    },
+    lastAffectedTime: "Tuesday, 04 August 2026 at 19:00",
+  });
+
+  assert.equal(payload.affectedCount, 9);
+  assert.equal(payload.followingCount, 8);
+  assert.equal(payload.lastAffectedLesson, "Lesson 28: Über die Zukunft sprechen");
+  assert.match(payload.announcement, /8 following lessons were also shifted/);
+  assert.match(payload.announcement, /Last affected lesson: Lesson 28: Über die Zukunft sprechen/);
+  assert.match(payload.announcement, /Last affected time: Tuesday, 04 August 2026 at 19:00/);
+  assert.equal((payload.announcement.match(/Class rescheduled:/g) || []).length, 0);
+  assert.equal((payload.announcement.match(/Reklamationssituationen/g) || []).length, 1);
+});
+
 test("topic numbering wins for orientation and assignment IDs provide a fallback", () => {
   assert.equal(resolveRescheduleLessonNumber({
     topic: "Day 0: Orientation and Tutorial",
