@@ -92,6 +92,51 @@ test("single-session move must remain between previous and next curriculum posit
   );
 });
 
+test("completed predecessors do not block the next unfinished lesson from moving earlier", () => {
+  const sessions = [
+    session(11, "2026-07-16T18:00:00.000Z", "completed"),
+    session(12, "2026-07-17T18:00:00.000Z", "completed"),
+    session(13, "2026-07-18T08:00:00.000Z"),
+    session(14, "2026-07-23T18:00:00.000Z"),
+  ];
+
+  const plan = buildSessionReschedulePlan({
+    klass,
+    sessions,
+    sessionId: "day-13",
+    targetStartsAt: "2026-07-16T08:00:00.000Z",
+    targetEndsAt: "2026-07-16T09:00:00.000Z",
+    mode: "single",
+  });
+
+  assert.equal(plan.affectedCount, 1);
+  assert.equal(plan.changes[0].session.id, "day-13");
+  assert.equal(plan.changes[0].startsAt, "2026-07-16T08:00:00.000Z");
+});
+
+test("an unfinished predecessor still blocks an invalid backward move", () => {
+  const sessions = [
+    session(11, "2026-07-16T18:00:00.000Z", "completed"),
+    session(12, "2026-07-17T18:00:00.000Z", "scheduled"),
+    session(13, "2026-07-18T08:00:00.000Z"),
+    session(14, "2026-07-23T18:00:00.000Z"),
+  ];
+
+  assert.throws(
+    () => buildSessionReschedulePlan({
+      klass,
+      sessions,
+      sessionId: "day-13",
+      targetStartsAt: "2026-07-16T08:00:00.000Z",
+      targetEndsAt: "2026-07-16T09:00:00.000Z",
+      mode: "single",
+    }),
+    (error) => error?.code === "live-class/curriculum-order"
+      && /cannot move before unfinished/i.test(error.message)
+      && /Mark earlier lessons complete first/i.test(error.message),
+  );
+});
+
 test("following mode shifts the selected and every later curriculum session by the same amount", () => {
   const sessions = [
     session(0, "2026-06-19T18:00:00.000Z"),
