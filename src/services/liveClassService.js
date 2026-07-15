@@ -7,10 +7,8 @@ export {
 } from "./liveClassCohortWriteService.js";
 export { rebuildClassSessionsFromSchedule } from "./liveClassRebuildService.js";
 export { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
-export {
-  cancelSession,
-  rescheduleSession,
-} from "./liveClassSessionDirectService.js";
+export { cancelSession } from "./liveClassSessionDirectService.js";
+export { rescheduleSession } from "./liveClassManualRescheduleService.js";
 export {
   inspectLegacyRescheduleCollision,
   recoverLegacyRescheduleCollision,

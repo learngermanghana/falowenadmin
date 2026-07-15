@@ -31,6 +31,7 @@ on:
       - 'src/services/liveClassCompatibilityService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassLessonDateRepairService.js'
+      - 'src/services/liveClassManualRescheduleService.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassRescheduleRecoveryService.js'
       - 'src/services/liveClassRescheduleService.js'
@@ -42,6 +43,7 @@ on:
       - 'src/utils/attendanceAnalytics.js'
       - 'src/utils/liveClassDictionarySelection.js'
       - 'src/utils/liveClassLessonOrder.js'
+      - 'src/utils/liveClassManualReschedule.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassRescheduleEmail.js'
       - 'src/utils/liveClassScheduleHealth.js'
@@ -61,6 +63,7 @@ on:
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
       - 'tests/live-class-lesson-order-repair.test.js'
+      - 'tests/live-class-mobile-reschedule-date.test.js'
       - 'tests/live-class-official-timetable-repair.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-reschedule-email.test.js'
@@ -103,6 +106,7 @@ on:
       - 'src/services/liveClassCompatibilityService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/services/liveClassLessonDateRepairService.js'
+      - 'src/services/liveClassManualRescheduleService.js'
       - 'src/services/liveClassRebuildService.js'
       - 'src/services/liveClassRescheduleRecoveryService.js'
       - 'src/services/liveClassRescheduleService.js'
@@ -114,6 +118,7 @@ on:
       - 'src/utils/attendanceAnalytics.js'
       - 'src/utils/liveClassDictionarySelection.js'
       - 'src/utils/liveClassLessonOrder.js'
+      - 'src/utils/liveClassManualReschedule.js'
       - 'src/utils/liveClassRebuildIdentity.js'
       - 'src/utils/liveClassRescheduleEmail.js'
       - 'src/utils/liveClassScheduleHealth.js'
@@ -133,6 +138,7 @@ on:
       - 'tests/live-class-dictionary-selection.test.js'
       - 'tests/live-class-direct-session-change.test.js'
       - 'tests/live-class-lesson-order-repair.test.js'
+      - 'tests/live-class-mobile-reschedule-date.test.js'
       - 'tests/live-class-official-timetable-repair.test.js'
       - 'tests/live-class-rebuild-identity.test.js'
       - 'tests/live-class-reschedule-email.test.js'
@@ -166,6 +172,9 @@ jobs:
         run: |
           node --check functions/attendanceConfirmationEmails.js
           node --check scripts/patchAttendanceConfirmationEmails.mjs
+
+      - name: Test mobile reschedule date handling
+        run: node --test tests/live-class-mobile-reschedule-date.test.js
 
       - name: Test superseded status normalization
         run: node --test tests/live-class-superseded-status.test.js
