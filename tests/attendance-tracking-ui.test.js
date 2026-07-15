@@ -31,9 +31,13 @@ test("Attendance overview explains and displays automatic email delivery status"
   assert.match(overview, /The job checks every 15 minutes/);
   assert.match(overview, /after class ends/);
   assert.match(overview, /QR check-in window closes/);
+  assert.match(overview, /Delivery:/);
+  assert.match(overview, /Configured/);
+  assert.match(overview, /Not configured/);
   assert.match(overview, /Last job:/);
   assert.match(overview, /Last send:/);
   assert.match(overview, /Last status:/);
+  assert.match(overview, /Delivery job error:/);
   assert.match(overview, /Open email settings/);
 });
 
