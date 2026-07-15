@@ -28,6 +28,7 @@ import LiveClassesPage from "./pages/LiveClassesPage";
 import HolidayCalendarPage from "./pages/HolidayCalendarPage";
 import GoetheExamConfigPage from "./pages/GoetheExamConfigPage.jsx";
 import StudentResultsComparePage from "./pages/StudentResultsComparePage.jsx";
+import LeadHomepageNotification from "./components/LeadHomepageNotification.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -134,11 +135,13 @@ function CurrentAttendanceRoute() {
 export default function App() {
   const location = useLocation();
   const isFullscreenRoute = location.pathname === "/checkin/display";
+  const showLeadNotification = location.pathname === "/";
 
   return (
     <>
       <TopBar />
       <ToastViewport />
+      {showLeadNotification ? <LeadHomepageNotification /> : null}
 
       <main className={isFullscreenRoute ? undefined : "page-shell"} data-route={location.pathname}>
         <Routes>
