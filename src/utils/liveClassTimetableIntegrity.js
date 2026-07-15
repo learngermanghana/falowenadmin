@@ -38,8 +38,20 @@ function sameAssignmentSet(left = [], right = []) {
   return leftSet.size === rightSet.size && [...leftSet].every((value) => rightSet.has(value));
 }
 
+function slotReleased(session = {}) {
+  return session.slotReleased === true || session.timetableSlotReleased === true;
+}
+
+function statusOf(session = {}) {
+  return normalize(session.status || "scheduled").toLowerCase();
+}
+
 function collisionEligible(session = {}) {
-  return !isSupersededRecord(session) && normalize(session.status || "scheduled").toLowerCase() !== "cancelled";
+  const status = statusOf(session);
+  return !isSupersededRecord(session)
+    && !slotReleased(session)
+    && status !== "cancelled"
+    && status !== "completed";
 }
 
 function sessionLabel(session = {}, fallback = "session") {
@@ -65,14 +77,23 @@ export function inspectTimetableIntegrity({
   const warnings = [];
 
   sessions.forEach((session) => {
-    if (!needsSupersededStatusNormalization(session)) return;
-    const status = normalize(session.status || "scheduled").toLowerCase();
-    pushIssue(
-      warnings,
-      "stale-superseded-status",
-      `${sessionLabel(session)} is an inactive superseded alias but still stores status ${status}. It will be normalized automatically.`,
-      { sessionId: normalize(session.id) },
-    );
+    if (needsSupersededStatusNormalization(session)) {
+      const status = normalize(session.status || "scheduled").toLowerCase();
+      pushIssue(
+        warnings,
+        "stale-superseded-status",
+        `${sessionLabel(session)} is an inactive superseded alias but still stores status ${status}. It will be normalized automatically.`,
+        { sessionId: normalize(session.id) },
+      );
+    }
+    if (slotReleased(session) && statusOf(session) === "completed") {
+      pushIssue(
+        warnings,
+        "completed-slot-released",
+        `${sessionLabel(session)} was completed earlier and no longer reserves its former timetable slot.`,
+        { sessionId: normalize(session.id) },
+      );
+    }
   });
 
   if (expectedCount > 0 && canonicalSessions.length !== expectedCount) {
@@ -203,9 +224,12 @@ export function inspectTimetableIntegrity({
     }
 
     numbered.sort((left, right) => left.number - right.number);
-    for (let index = 1; index < numbered.length; index += 1) {
-      const previous = numbered[index - 1];
-      const current = numbered[index];
+    const activeNumbered = numbered.filter(
+      ({ session }) => !slotReleased(session) && statusOf(session) !== "completed",
+    );
+    for (let index = 1; index < activeNumbered.length; index += 1) {
+      const previous = activeNumbered[index - 1];
+      const current = activeNumbered[index];
       if (!previous.startsAt || !current.startsAt) continue;
       if (current.startsAt.getTime() <= previous.startsAt.getTime()) {
         pushIssue(
