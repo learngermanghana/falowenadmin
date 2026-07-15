@@ -48,7 +48,7 @@ test("Firebase patch provides a public read and protected admin write route", as
   assert.match(source, /normalizeGoetheExamConfig/);
 });
 
-test("Admin exposes one Goethe editor and shared endpoint service", async () => {
+test("Admin exposes the complete shared Goethe editor and endpoint service", async () => {
   const [page, service, app] = await Promise.all([
     readFile(pagePath, "utf8"),
     readFile(servicePath, "utf8"),
@@ -56,6 +56,11 @@ test("Admin exposes one Goethe editor and shared endpoint service", async () => 
   ]);
   assert.match(page, /Publish once to all three systems/);
   assert.match(page, /Add exam date/);
+  assert.match(page, /Daily reminder hour/);
+  assert.match(page, /Daily reminder minute/);
+  assert.match(page, /Urgent opening-window emails/);
+  assert.match(page, /accountSetupCatchUp/);
+  assert.match(page, /reminderWindow/);
   assert.match(service, /cloudfunctions\.net\/api\/exam-file\/config/);
   assert.match(service, /Authorization: `Bearer \$\{token\}`/);
   assert.match(app, /path="\/exam-file"/);
