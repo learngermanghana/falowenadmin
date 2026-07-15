@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/repairAnswersJson.mjs && node scripts/patchStudentLeadManagement.mjs",
+    "prebuild": "node scripts/repairAnswersJson.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node scripts/repairAnswersJson.mjs && node scripts/patchStudentLeadManagement.mjs && node --test",
+    "test": "node --test",
     "deploy:indexes": "firebase deploy --only firestore:indexes",
     "deploy:falowenadmin": "node scripts/patchStudentLeadDeletionRuntime.mjs && firebase deploy --project \"$FIREBASE_PROJECT_ID\" --only functions:falowenadmin --force --debug"
   },
