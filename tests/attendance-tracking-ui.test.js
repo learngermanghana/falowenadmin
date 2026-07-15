@@ -5,6 +5,8 @@ import { readFile } from "node:fs/promises";
 const overviewPath = new URL("../src/pages/AttendanceOverviewPage.jsx", import.meta.url);
 const trackerPath = new URL("../src/components/ClassAttendanceTracker.jsx", import.meta.url);
 const studentsPath = new URL("../src/components/LiveClassStudentsPanel.jsx", import.meta.url);
+const bccPanelPath = new URL("../src/components/AttendanceBccEmailPanel.jsx", import.meta.url);
+const bccPatchPath = new URL("../scripts/patchAttendanceBccEmailTemplates.mjs", import.meta.url);
 const servicePath = new URL("../src/services/attendanceAnalyticsService.js", import.meta.url);
 const attendanceServicePath = new URL("../src/services/attendanceService.js", import.meta.url);
 
@@ -39,6 +41,22 @@ test("Attendance overview explains and displays automatic email delivery status"
   assert.match(overview, /Last send:/);
   assert.match(overview, /Last status:/);
   assert.match(overview, /Open email settings/);
+});
+
+test("attendance session provides BCC backup drafts for starting soon and cancellation", async () => {
+  const [panel, patch] = await Promise.all([
+    source(bccPanelPath),
+    source(bccPatchPath),
+  ]);
+  assert.match(panel, /mailto:\?bcc=/);
+  assert.match(panel, /Class starting soon:/);
+  assert.match(panel, /Class cancelled:/);
+  assert.match(panel, /Student addresses are placed in BCC/);
+  assert.match(panel, /Copy BCC email list/);
+  assert.match(panel, /Copy starting-soon message/);
+  assert.match(panel, /Copy cancellation message/);
+  assert.match(patch, /AttendanceBccEmailPanel/);
+  assert.match(patch, /CanonicalAttendancePageV3\.jsx/);
 });
 
 test("class tracker provides check-in visibility, alerts, filters and CSV", async () => {
