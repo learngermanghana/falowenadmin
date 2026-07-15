@@ -39,7 +39,10 @@ function slotReleased(session = {}) {
 
 function collisionEligible(session = {}, plannedStatus = null) {
   const status = normalize(plannedStatus || session.status || "scheduled").toLowerCase();
-  return !superseded(session) && !slotReleased(session) && status !== "cancelled";
+  return !superseded(session)
+    && !slotReleased(session)
+    && status !== "cancelled"
+    && status !== "completed";
 }
 
 function sessionLabel(session = {}) {
@@ -214,7 +217,6 @@ export function buildSessionReschedulePlan({
     selectedIndex,
     target,
   });
-  const releasedIds = new Set(releasedCompletedSessions.map(({ session }) => normalize(session.id)));
 
   const affected = normalizedMode === "following" ? ordered.slice(selectedIndex) : [selected];
   const locked = affected.find(({ session }) => ["completed", "live"].includes(statusOf(session)));
@@ -248,10 +250,7 @@ export function buildSessionReschedulePlan({
     };
   });
 
-  const ignoredSessionIds = [
-    ...changes.map((change) => normalize(change.session.id)),
-    ...releasedIds,
-  ];
+  const ignoredSessionIds = changes.map((change) => normalize(change.session.id));
   changes.forEach((change) => {
     if (!collisionEligible(change.session, change.plannedStatus)) return;
     const conflict = findRescheduleOverlap({
