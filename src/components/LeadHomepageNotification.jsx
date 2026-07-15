@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { fetchStudentLeads } from "../services/studentLeadService.js";
 
 function normalize(value) {
@@ -38,10 +39,12 @@ function leadDate(lead = {}) {
 }
 
 export default function LeadHomepageNotification() {
+  const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!user) return undefined;
     let active = true;
 
     fetchStudentLeads()
@@ -59,7 +62,7 @@ export default function LeadHomepageNotification() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   const openLeads = useMemo(
     () => leads
@@ -69,6 +72,8 @@ export default function LeadHomepageNotification() {
   );
   const newLeadCount = openLeads.filter(isNewLead).length;
   const preview = openLeads.slice(0, 3);
+
+  if (!user) return null;
 
   return (
     <section
