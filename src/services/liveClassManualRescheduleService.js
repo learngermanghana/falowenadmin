@@ -2,6 +2,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { resolveManualRescheduleDateTime } from "../utils/liveClassManualReschedule.js";
 import { rescheduleSession as rescheduleSessionDirect } from "./liveClassSessionDirectService.js";
+import { submitRescheduleCommunication } from "./liveClassRescheduleCommunicationService.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -38,11 +39,26 @@ export async function rescheduleSession(sessionId, payload = {}) {
     timezone,
   });
 
-  return rescheduleSessionDirect(sessionId, {
+  const result = await rescheduleSessionDirect(sessionId, {
     ...payload,
     startsAt: resolved.startsAt,
     localDate: resolved.localDate,
     localTime: resolved.localTime,
     manualRescheduleInputSource: resolved.source,
   });
+
+  const communication = await submitRescheduleCommunication({
+    klass: {
+      id: normalize(result.classId || payload.classId || session.classId || session.classRecordId),
+      name: normalize(payload.className || session.className),
+    },
+    primarySession: session,
+    affectedCount: Number(result.movedSessions || 1),
+    startsAt: result.startsAt || resolved.startsAt,
+  });
+
+  return {
+    ...result,
+    ...communication,
+  };
 }
