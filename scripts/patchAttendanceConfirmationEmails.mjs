@@ -61,4 +61,19 @@ if (!workerSource.includes("resolveClassWebhookConfig,")) {
 }
 
 fs.writeFileSync(workerPath, workerSource);
-console.log("Attendance confirmation email scheduler patch verified.");
+
+const patchedIndex = fs.readFileSync(indexPath, "utf8");
+const patchedWorker = fs.readFileSync(workerPath, "utf8");
+const requiredChecks = [
+  [patchedIndex.includes(requireLine), "Firebase attendance worker import is missing after patch."],
+  [patchedIndex.includes(exportLine), "Firebase attendance scheduler export is missing after patch."],
+  [patchedWorker.includes("function resolveClassWebhookConfig("), "Class attendance webhook configuration is missing after patch."],
+  [patchedWorker.includes("config: classConfig"), "The attendance worker is not using the selected class delivery configuration."],
+  [patchedWorker.includes('schedule: "*/15 * * * *"'), "The 15-minute attendance scheduler is missing after patch."],
+];
+
+for (const [passed, message] of requiredChecks) {
+  if (!passed) throw new Error(message);
+}
+
+console.log("Attendance confirmation email scheduler patch verified: registered, class-configured, and scheduled every 15 minutes.");

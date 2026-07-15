@@ -12,12 +12,29 @@ async function source(path) {
   return readFile(path, "utf8");
 }
 
-test("Attendance overview includes a selected-class tracker", async () => {
+test("Attendance overview opens and focuses the selected-class tracker", async () => {
   const overview = await source(overviewPath);
   assert.match(overview, /ClassAttendanceTracker/);
   assert.match(overview, /View attendance tracker/);
   assert.match(overview, /Class shown in tracker/);
   assert.match(overview, /Track QR check-ins, manual attendance, late arrivals and absence patterns/);
+  assert.match(overview, /id="attendance-tracker-panel"/);
+  assert.match(overview, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
+  assert.match(overview, /trackerHeadingRef\.current\?\.focus/);
+  assert.match(overview, /aria-controls="attendance-tracker-panel"/);
+});
+
+test("Attendance overview explains and displays automatic email delivery status", async () => {
+  const overview = await source(overviewPath);
+  assert.match(overview, /loadAttendanceEmailSettings/);
+  assert.match(overview, /Attendance email:/);
+  assert.match(overview, /The job checks every 15 minutes/);
+  assert.match(overview, /after class ends/);
+  assert.match(overview, /QR check-in window closes/);
+  assert.match(overview, /Last job:/);
+  assert.match(overview, /Last send:/);
+  assert.match(overview, /Last status:/);
+  assert.match(overview, /Open email settings/);
 });
 
 test("class tracker provides check-in visibility, alerts, filters and CSV", async () => {

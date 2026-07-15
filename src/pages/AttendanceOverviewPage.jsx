@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { listClasses, setClassArchived } from "../services/classesService";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
+import {
+  ATTENDANCE_EMAIL_MODES,
+  loadAttendanceEmailSettings,
+} from "../services/attendanceConfirmationEmailService.js";
 
 const GHANA_TIMEZONE = "Africa/Accra";
 
@@ -29,6 +33,21 @@ function formatDate(date) {
   }).format(date);
 }
 
+function formatDateTime(value) {
+  if (!value) return "Not yet";
+  const date = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not yet";
+  return date.toLocaleString("en-GB", {
+    timeZone: GHANA_TIMEZONE,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 function classRecordKey(klass = {}) {
   return String(klass.classRecordId || klass.id || klass.classId || "").trim();
 }
@@ -50,6 +69,22 @@ function classifyClass(klass) {
     archived,
     scheduleMeta: resolveScheduleMeta(klass),
   };
+}
+
+function emailModeLabel(settings = {}) {
+  if (!settings.enabled || settings.mode === ATTENDANCE_EMAIL_MODES.OFF) return "Off";
+  if (settings.mode === ATTENDANCE_EMAIL_MODES.EACH_CLASS) return "After every class";
+  return "After the final class each week";
+}
+
+function emailStatusText(settings = {}) {
+  if (!settings.enabled || settings.mode === ATTENDANCE_EMAIL_MODES.OFF) {
+    return "Attendance confirmation emails are disabled for this class.";
+  }
+  if (settings.mode === ATTENDANCE_EMAIL_MODES.EACH_CLASS) {
+    return `The job checks every 15 minutes and sends after class ends, the ${settings.delayMinutes}-minute delay passes, and the QR check-in window closes.`;
+  }
+  return "The job checks every 15 minutes and sends one summary after the final class of the week and the check-in window closes.";
 }
 
 function ClassCard({ klass, archived = false, saving = false, onToggleArchived, onTrack }) {
@@ -88,7 +123,13 @@ function ClassCard({ klass, archived = false, saving = false, onToggleArchived, 
       <div style={{ fontSize: 12, opacity: 0.75 }}>Schedule: {dateText}</div>
       {sessionCount > 0 ? <div style={{ fontSize: 12, opacity: 0.75 }}>Sessions: {sessionCount}</div> : null}
       <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-        <button type="button" onClick={() => onTrack?.(routeClassId)}>View attendance tracker</button>
+        <button
+          type="button"
+          aria-controls="attendance-tracker-panel"
+          onClick={() => onTrack?.(routeClassId)}
+        >
+          View attendance tracker
+        </button>
         <Link to={`/attendance/session/${encodeURIComponent(routeClassId)}`}>
           {archived ? "View archived attendance" : "Mark attendance"}
         </Link>
@@ -120,6 +161,11 @@ export default function AttendanceOverviewPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [savingClassId, setSavingClassId] = useState("");
   const [selectedTrackerId, setSelectedTrackerId] = useState("");
+  const [emailSettings, setEmailSettings] = useState(null);
+  const [emailSettingsLoading, setEmailSettingsLoading] = useState(false);
+  const [emailSettingsError, setEmailSettingsError] = useState("");
+  const trackerRef = useRef(null);
+  const trackerHeadingRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -163,6 +209,17 @@ export default function AttendanceOverviewPage() {
     }
   }
 
+  function openTracker(classId) {
+    if (!classId) return;
+    setSelectedTrackerId(classId);
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        trackerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        trackerHeadingRef.current?.focus({ preventScroll: true });
+      }, 0);
+    });
+  }
+
   const classifiedClasses = useMemo(() => classes.map(classifyClass), [classes]);
   const activeClasses = useMemo(
     () => classifiedClasses.filter((klass) => !klass.archived),
@@ -173,6 +230,32 @@ export default function AttendanceOverviewPage() {
     [classifiedClasses],
   );
   const selectedTrackerClass = classifiedClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || activeClasses[0] || archivedClasses[0] || null;
+
+  useEffect(() => {
+    let active = true;
+    if (!selectedTrackerId) {
+      setEmailSettings(null);
+      setEmailSettingsError("");
+      return () => { active = false; };
+    }
+
+    setEmailSettingsLoading(true);
+    setEmailSettingsError("");
+    loadAttendanceEmailSettings(selectedTrackerId)
+      .then((settings) => {
+        if (active) setEmailSettings(settings);
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setEmailSettings(null);
+        setEmailSettingsError(cause?.message || "Could not load attendance email status.");
+      })
+      .finally(() => {
+        if (active) setEmailSettingsLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [selectedTrackerId]);
 
   return (
     <div style={{ padding: 16 }}>
@@ -207,7 +290,7 @@ export default function AttendanceOverviewPage() {
               klass={klass}
               saving={savingClassId === recordId}
               onToggleArchived={handleToggleArchived}
-              onTrack={setSelectedTrackerId}
+              onTrack={openTracker}
             />
           );
         })}
@@ -240,7 +323,7 @@ export default function AttendanceOverviewPage() {
                     archived
                     saving={savingClassId === recordId}
                     onToggleArchived={handleToggleArchived}
-                    onTrack={setSelectedTrackerId}
+                    onTrack={openTracker}
                   />
                 );
               })}
@@ -250,15 +333,43 @@ export default function AttendanceOverviewPage() {
       )}
 
       {!loading && selectedTrackerClass ? (
-        <section style={{ marginTop: 26 }}>
+        <section
+          id="attendance-tracker-panel"
+          ref={trackerRef}
+          style={{ marginTop: 26, scrollMarginTop: 90 }}
+        >
+          <h2 ref={trackerHeadingRef} tabIndex="-1" style={{ outline: "none" }}>
+            Tracker for {selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
+          </h2>
           <label style={{ display: "grid", gap: 6, maxWidth: 440 }}>
             <strong>Class shown in tracker</strong>
-            <select value={classRecordKey(selectedTrackerClass)} onChange={(event) => setSelectedTrackerId(event.target.value)}>
+            <select value={classRecordKey(selectedTrackerClass)} onChange={(event) => openTracker(event.target.value)}>
               {classifiedClasses.map((klass) => (
                 <option key={classRecordKey(klass)} value={classRecordKey(klass)}>{klass.name || klass.className || classRecordKey(klass)}{klass.archived ? " (archived)" : ""}</option>
               ))}
             </select>
           </label>
+
+          <div style={{ marginTop: 14, padding: 13, border: "1px solid #bfdbfe", background: "#eff6ff", borderRadius: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+              <div>
+                <strong>Attendance email: {emailSettingsLoading ? "Checking…" : emailModeLabel(emailSettings || {})}</strong>
+                {!emailSettingsLoading && emailSettings ? <p style={{ margin: "5px 0 0" }}>{emailStatusText(emailSettings)}</p> : null}
+              </div>
+              <Link to="/communication">Open email settings</Link>
+            </div>
+            {!emailSettingsLoading && emailSettings ? (
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8, fontSize: 13 }}>
+                <span>Delivery: <strong>{emailSettings.deliveryConfigured ? "Configured" : "Not configured"}</strong></span>
+                <span>Last job: <strong>{formatDateTime(emailSettings.lastRunAt)}</strong></span>
+                <span>Last send: <strong>{formatDateTime(emailSettings.lastSentAt)}</strong></span>
+                <span>Last status: <strong>{emailSettings.lastStatus || "Not yet"}</strong></span>
+              </div>
+            ) : null}
+            {emailSettingsError ? <div style={{ marginTop: 8, color: "#991b1b" }}>{emailSettingsError}</div> : null}
+            {emailSettings?.lastError ? <div style={{ marginTop: 8, color: "#991b1b" }}>Delivery job error: {emailSettings.lastError}</div> : null}
+          </div>
+
           <ClassAttendanceTracker
             classId={classRecordKey(selectedTrackerClass)}
             className={selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}

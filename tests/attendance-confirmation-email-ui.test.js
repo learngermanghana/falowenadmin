@@ -49,11 +49,16 @@ test("scheduled attendance delivery keeps deduplication and individual delivery"
   assert.match(worker, /status: "sent"/);
   assert.match(worker, /delivery_mode: "individual"/);
   assert.match(worker, /openTo/);
+  assert.match(worker, /schedule: "\*\/15 \* \* \* \*"/);
 });
 
-test("Firebase predeploy includes the attendance scheduler", async () => {
+test("Firebase predeploy registers and validates the attendance scheduler", async () => {
   const patch = await source(patchPath);
   assert.match(patch, /createAttendanceConfirmationEmailJob/);
   assert.match(patch, /sendAttendanceConfirmationEmails/);
-  assert.match(patch, /scheduler patch verified/);
+  assert.match(patch, /resolveClassWebhookConfig/);
+  assert.match(patch, /config: classConfig/);
+  assert.match(patch, /schedule: "\*\/15 \* \* \* \*"/);
+  assert.match(patch, /requiredChecks/);
+  assert.match(patch, /registered, class-configured, and scheduled every 15 minutes/);
 });
