@@ -5,6 +5,7 @@ import {
   STUDENT_LEADS_PUBLISHED_URL,
   STUDENT_LEADS_SHEET_NAME,
 } from "../services/studentLeadService.js";
+import { deleteStudentLead } from "../services/studentLeadDeletionService.js";
 
 const headerCellStyle = {
   textAlign: "left",
@@ -92,6 +93,27 @@ function statusStyle(value) {
   return { background: "#eef2ff", color: "#3730a3", border: "1px solid #c7d2fe" };
 }
 
+function isCompletedLead(lead = {}) {
+  const status = String(lead.status || "").trim().toLowerCase();
+  const paymentStatus = String(lead.paymentStatus || "").trim().toLowerCase();
+  const terminalStatuses = [
+    "student_registered",
+    "completed",
+    "complete",
+    "converted",
+    "closed",
+    "class_started_no_followup",
+    "not_interested",
+    "cancelled",
+    "canceled",
+    "archived",
+  ];
+  const paidStatuses = ["paid", "registered_paid", "success", "successful", "completed", "complete"];
+
+  return terminalStatuses.some((token) => status.includes(token))
+    || paidStatuses.some((token) => paymentStatus.includes(token));
+}
+
 function StatusPill({ value }) {
   if (!String(value || "").trim()) return <span>—</span>;
   return (
@@ -136,6 +158,7 @@ export default function StudentLeadsPanel() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [copyNotice, setCopyNotice] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   async function loadLeads() {
     setLoading(true);
@@ -160,6 +183,33 @@ export default function StudentLeadsPanel() {
       setCopyNotice(`${label} could not be copied.`);
     }
     window.setTimeout(() => setCopyNotice(""), 1800);
+  }
+
+  async function handleDeleteLead(lead) {
+    if (!isCompletedLead(lead)) {
+      setError("Only completed, converted, registered, closed, or fully paid leads can be deleted.");
+      return;
+    }
+
+    const leadLabel = lead.name || lead.email || lead.number || "this lead";
+    const confirmed = window.confirm(
+      `Delete completed lead "${leadLabel}"? This permanently removes the row from the Leads sheet.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(lead.id);
+    setError("");
+    try {
+      await deleteStudentLead(lead);
+      setLeads((current) => current.filter((item) => item.id !== lead.id));
+      setTotalRows((current) => Math.max(0, current - 1));
+      setCopyNotice(`Deleted completed lead: ${leadLabel}.`);
+      window.setTimeout(() => setCopyNotice(""), 2500);
+    } catch (deleteError) {
+      setError(deleteError?.message || "Completed lead could not be deleted.");
+    } finally {
+      setDeletingId("");
+    }
   }
 
   useEffect(() => {
@@ -257,6 +307,7 @@ export default function StudentLeadsPanel() {
                     const phoneLink = callUrl(lead.number);
                     const emailLink = mailUrl(lead.email);
                     const whatsappLink = whatsappUrl(lead.number, lead);
+                    const canDelete = isCompletedLead(lead);
 
                     return (
                       <tr key={`${lead.id}-${index}`} style={{ borderTop: "1px solid #e5e7eb" }}>
@@ -275,7 +326,7 @@ export default function StudentLeadsPanel() {
                         <td style={bodyCellStyle}>{formatDateValue(lead.lastFollowUpAt)}</td>
                         <td style={bodyCellStyle}>{readableLabel(lead.source)}</td>
                         <td style={{ ...bodyCellStyle, position: "sticky", right: 0, background: "#ffffff" }}>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", minWidth: 260 }}>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", minWidth: 320 }}>
                             {whatsappLink ? <a href={whatsappLink} target="_blank" rel="noreferrer">WhatsApp</a> : null}
                             {phoneLink ? <a href={phoneLink}>Call</a> : null}
                             {emailLink ? <a href={emailLink}>Email</a> : null}
@@ -284,6 +335,16 @@ export default function StudentLeadsPanel() {
                             ) : null}
                             {lead.email ? (
                               <button type="button" onClick={() => handleCopy(lead.email, "Email")}>Copy email</button>
+                            ) : null}
+                            {canDelete ? (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteLead(lead)}
+                                disabled={deletingId === lead.id}
+                                style={{ borderColor: "#fecaca", color: "#991b1b", background: "#fff5f5" }}
+                              >
+                                {deletingId === lead.id ? "Deleting…" : "Delete completed"}
+                              </button>
                             ) : null}
                           </div>
                         </td>
