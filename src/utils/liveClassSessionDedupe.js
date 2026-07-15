@@ -15,6 +15,19 @@ export function assignmentIdsForSession(session = {}) {
   return [...new Set(source.map((value) => normalize(value).toUpperCase()).filter(Boolean))];
 }
 
+function sessionCurriculumIdentity(session = {}) {
+  const ids = assignmentIdsForSession(session).sort();
+  if (ids.length) return `assign:${ids.join("|")}`;
+
+  const day = Number(session.curriculumDay);
+  if (Number.isFinite(day) && day >= 0) return `day:${day}`;
+
+  const index = Number(session.curriculumIndex);
+  if (Number.isFinite(index) && index > 0) return `index:${index}`;
+
+  return "";
+}
+
 function sameAssignmentSet(left = [], right = []) {
   const leftSet = new Set(left.map((value) => normalize(value).toUpperCase()).filter(Boolean));
   const rightSet = new Set(right.map((value) => normalize(value).toUpperCase()).filter(Boolean));
@@ -71,13 +84,46 @@ export function dedupeCompatibleSessionRecords(sessions = [], { classId = "" } =
   sessions.forEach((session) => {
     const time = sessionTime(session);
     const key = time ? `time:${time}` : `id:${session.id}`;
-    const existing = byMoment.get(key);
-    if (!existing || sessionPreference(session, classId) > sessionPreference(existing, classId)) {
-      byMoment.set(key, session);
-    }
+    if (!byMoment.has(key)) byMoment.set(key, []);
+    byMoment.get(key).push(session);
   });
 
-  return [...byMoment.values()].sort((left, right) => sessionTime(left) - sessionTime(right));
+  const visible = [];
+  byMoment.forEach((group, key) => {
+    if (!key.startsWith("time:") || group.length === 1) {
+      visible.push(...group);
+      return;
+    }
+
+    const byCurriculum = new Map();
+    const unknown = [];
+    group.forEach((session) => {
+      const identity = sessionCurriculumIdentity(session);
+      if (!identity) {
+        unknown.push(session);
+        return;
+      }
+      if (!byCurriculum.has(identity)) byCurriculum.set(identity, []);
+      byCurriculum.get(identity).push(session);
+    });
+
+    if (byCurriculum.size === 0) {
+      const preferred = preferredSessionForDate(group, classId);
+      if (preferred) visible.push(preferred);
+      return;
+    }
+
+    byCurriculum.forEach((records) => {
+      const preferred = preferredSessionForDate(records, classId);
+      if (preferred) visible.push(preferred);
+    });
+
+    // Identity-free records at a moment with known curriculum records are legacy aliases.
+    // Suppress them rather than hiding a different official lesson or creating an extra row.
+    void unknown;
+  });
+
+  return visible.sort((left, right) => sessionTime(left) - sessionTime(right));
 }
 
 export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone = "Africa/Accra" } = {}) {
