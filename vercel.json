@@ -16,6 +16,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/attendance-confirmation-emails/retry-failed",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/retry-failed"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/router?path=$1"
     },
