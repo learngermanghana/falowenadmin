@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AttendanceConfirmationAutomationPanel from "../components/AttendanceConfirmationAutomationPanel.jsx";
+import AttendanceFailedDeliveryRetryPanel from "../components/AttendanceFailedDeliveryRetryPanel.jsx";
 import CommunicationPage from "./CommunicationPage.jsx";
 
 function tabStyle(active) {
@@ -29,8 +30,9 @@ export default function CommunicationHubPage() {
 
       {activeTab === "broadcasts" ? <CommunicationPage /> : null}
       {activeTab === "attendance" ? (
-        <div style={{ padding: "0 16px 16px", maxWidth: 1000 }}>
+        <div style={{ padding: "0 16px 16px", maxWidth: 1000, display: "grid", gap: 14 }}>
           <AttendanceConfirmationAutomationPanel />
+          <AttendanceFailedDeliveryRetryPanel />
         </div>
       ) : null}
     </div>

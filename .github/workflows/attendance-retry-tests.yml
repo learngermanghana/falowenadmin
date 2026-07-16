@@ -1,0 +1,54 @@
+name: Attendance Retry Tests
+
+on:
+  pull_request:
+    paths:
+      - 'functions/attendanceConfirmationRetry.js'
+      - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/services/attendanceConfirmationRetryService.js'
+      - 'tests/attendance-confirmation-email-ui.test.js'
+      - 'tests/attendance-confirmation-retry.test.js'
+      - '.github/workflows/attendance-retry-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/attendanceConfirmationRetry.js'
+      - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/services/attendanceConfirmationRetryService.js'
+      - 'tests/attendance-confirmation-email-ui.test.js'
+      - 'tests/attendance-confirmation-retry.test.js'
+      - '.github/workflows/attendance-retry-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate protected retry route
+        run: |
+          node --check functions/attendanceConfirmationRetry.js
+          node --check scripts/patchAttendanceConfirmationEmails.mjs
+          node scripts/patchAttendanceConfirmationEmails.mjs
+          node --check functions/index.js
+          grep -F 'app.post("/attendance-confirmation-emails/retry-failed"' functions/index.js
+          grep -F 'await requireAuth(req)' functions/index.js
+          grep -F 'retryFailedAttendanceDeliveries' functions/index.js
+      - name: Test retry behavior and UI
+        run: >-
+          node --test
+          tests/attendance-confirmation-retry.test.js
+          tests/attendance-confirmation-email-ui.test.js
+          tests/attendance-confirmation-emails.test.js
+      - name: Build dashboard
+        run: npm run build
