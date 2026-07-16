@@ -10,6 +10,7 @@ on:
       - 'src/services/attendanceConfirmationRetryService.js'
       - 'tests/attendance-confirmation-email-ui.test.js'
       - 'tests/attendance-confirmation-retry.test.js'
+      - 'vercel.json'
       - '.github/workflows/attendance-retry-tests.yml'
   push:
     branches: [main]
@@ -21,6 +22,7 @@ on:
       - 'src/services/attendanceConfirmationRetryService.js'
       - 'tests/attendance-confirmation-email-ui.test.js'
       - 'tests/attendance-confirmation-retry.test.js'
+      - 'vercel.json'
       - '.github/workflows/attendance-retry-tests.yml'
   workflow_dispatch:
 
@@ -44,6 +46,22 @@ jobs:
           grep -F 'app.post("/attendance-confirmation-emails/retry-failed"' functions/index.js
           grep -F 'await requireAuth(req)' functions/index.js
           grep -F 'retryFailedAttendanceDeliveries' functions/index.js
+      - name: Validate Vercel retry proxy
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+          const retry = (config.rewrites || []).find((item) => item.source === '/api/attendance-confirmation-emails/retry-failed');
+          if (!retry) throw new Error('Attendance retry rewrite is missing');
+          if (retry.destination !== 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/retry-failed') {
+            throw new Error('Attendance retry rewrite points to the wrong backend');
+          }
+          const genericIndex = config.rewrites.findIndex((item) => item.source === '/api/(.*)');
+          const retryIndex = config.rewrites.findIndex((item) => item.source === '/api/attendance-confirmation-emails/retry-failed');
+          if (retryIndex < 0 || genericIndex < 0 || retryIndex >= genericIndex) {
+            throw new Error('Attendance retry rewrite must appear before the generic API router rewrite');
+          }
+          NODE
       - name: Test retry behavior and UI
         run: >-
           node --test
