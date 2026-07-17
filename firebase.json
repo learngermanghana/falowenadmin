@@ -19,6 +19,7 @@
         "node scripts/patchStudentDeletionRuntime.mjs",
         "node scripts/patchStudentLeadDeletionRuntime.mjs",
         "node scripts/patchAttendanceConfirmationEmails.mjs",
+        "node scripts/patchClassSessionReminderEmails.mjs",
         "node scripts/patchGoetheExamConfig.mjs"
       ],
       "ignore": [
