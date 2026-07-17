@@ -1,0 +1,43 @@
+name: Class Session Reminder Tests
+
+on:
+  pull_request:
+    paths:
+      - 'functions/classSessionReminderEmails.js'
+      - 'scripts/patchClassSessionReminderEmails.mjs'
+      - 'tests/class-session-reminder-emails.test.js'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firebase.yml'
+      - '.github/workflows/class-session-reminder-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/classSessionReminderEmails.js'
+      - 'scripts/patchClassSessionReminderEmails.mjs'
+      - 'tests/class-session-reminder-emails.test.js'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firebase.yml'
+      - '.github/workflows/class-session-reminder-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate Firebase scheduler patch
+        run: |
+          node --check functions/classSessionReminderEmails.js
+          node --check scripts/patchClassSessionReminderEmails.mjs
+          node scripts/patchClassSessionReminderEmails.mjs
+          node --check functions/index.js
+          grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
+          grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
+      - name: Test session topics and suppression rules
+        run: node --test tests/class-session-reminder-emails.test.js
