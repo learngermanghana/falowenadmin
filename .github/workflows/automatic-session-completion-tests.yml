@@ -1,0 +1,54 @@
+name: Automatic Session Completion Tests
+
+on:
+  pull_request:
+    paths:
+      - 'functions/autoCompleteClassSessions.js'
+      - 'scripts/patchAutoCompleteClassSessions.mjs'
+      - 'scripts/patchAutomaticSessionCompletionUi.mjs'
+      - 'src/services/liveClassServiceBase.js'
+      - 'src/pages/LiveClassesPageV2.jsx'
+      - 'tests/auto-complete-class-sessions.test.js'
+      - 'package.json'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firebase.yml'
+      - '.github/workflows/automatic-session-completion-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/autoCompleteClassSessions.js'
+      - 'scripts/patchAutoCompleteClassSessions.mjs'
+      - 'scripts/patchAutomaticSessionCompletionUi.mjs'
+      - 'tests/auto-complete-class-sessions.test.js'
+      - 'package.json'
+      - 'firebase.json'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Validate scheduler and UI patches
+        run: |
+          node --check functions/autoCompleteClassSessions.js
+          node --check scripts/patchAutoCompleteClassSessions.mjs
+          node --check scripts/patchAutomaticSessionCompletionUi.mjs
+          node scripts/patchAutoCompleteClassSessions.mjs
+          node scripts/patchAutomaticSessionCompletionUi.mjs
+          node --check functions/index.js
+          grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
+          grep -F 'export async function undoSessionCompletion' src/services/liveClassServiceBase.js
+          grep -F 'Undo completion' src/pages/LiveClassesPageV2.jsx
+          grep -F 'Allow auto-complete' src/pages/LiveClassesPageV2.jsx
+      - name: Test completion eligibility and delay
+        run: node --test tests/auto-complete-class-sessions.test.js
+      - name: Install dashboard dependencies
+        run: npm ci
+      - name: Build dashboard with patched controls
+        run: npm run build
