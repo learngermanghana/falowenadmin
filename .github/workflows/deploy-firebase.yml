@@ -54,6 +54,7 @@ jobs:
             scripts/patchHolidayClassScheduleAwareness.mjs \
             scripts/patchStudentDeletionRuntime.mjs \
             scripts/patchAttendanceConfirmationEmails.mjs \
+            scripts/patchClassSessionReminderEmails.mjs \
             scripts/patchGoetheExamConfig.mjs
           do
             echo "Checking $script"
@@ -62,7 +63,10 @@ jobs:
           done
           node --check functions/index.js
           node --check functions/attendanceConfirmationEmails.js
+          node --check functions/classSessionReminderEmails.js
           node --check functions/goetheExamConfig.js
+          grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
+          grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
           grep -F 'app.get("/exam-file/config"' functions/index.js
           grep -F 'app.put("/exam-file/config"' functions/index.js
 
