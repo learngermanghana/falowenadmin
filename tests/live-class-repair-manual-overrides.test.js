@@ -41,9 +41,11 @@ test("repair plan separates automatic corrections from deliberate moves", () => 
   assert.deepEqual(result.preservedItems, [manual]);
 });
 
-test("repair UI blocks destructive reset and explains preserved moves", async () => {
+test("repair UI protects manual moves and offers anchor-based bulk restoration", async () => {
   const source = await readFile(componentPath, "utf8");
   assert.match(source, /repairBlockedByManualMoves/);
-  assert.match(source, /deliberately moved session\(s\) will be preserved/i);
-  assert.match(source, /Manual moves preserved/);
+  assert.match(source, /deliberately moved session\(s\) were detected/i);
+  assert.match(source, /buildFollowingScheduleRestorePlan/);
+  assert.match(source, /Restore all following sessions to weekly pattern/);
+  assert.match(source, /does not apply one fixed time difference/i);
 });
