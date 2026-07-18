@@ -61,7 +61,12 @@ function prepareDashboard(dashboard, repair = null) {
   const chronologicalSessions = (dashboard.sessions || [])
     .filter((session) => !Number.isNaN(new Date(session.startsAt || 0).getTime()))
     .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
-  const sessions = [...chronologicalSessions].sort(compareSessionsByLesson);
+  const classScheduleRules = Array.isArray(dashboard.klass?.scheduleRules)
+    ? dashboard.klass.scheduleRules
+    : [];
+  const sessions = [...chronologicalSessions]
+    .sort(compareSessionsByLesson)
+    .map((session) => ({ ...session, classScheduleRules }));
   const bounds = classScheduleBoundsFromSessions(chronologicalSessions, dashboard.klass?.timezone);
   const sessionDerivedStartDate = bounds.sessionDerivedStartDate || String(dashboard.klass?.sessionDerivedStartDate || "");
   const sessionDerivedEndDate = bounds.sessionDerivedEndDate || String(dashboard.klass?.sessionDerivedEndDate || "");

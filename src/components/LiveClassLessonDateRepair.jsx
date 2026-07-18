@@ -8,6 +8,7 @@ import {
   recoverLegacyRescheduleCollision,
 } from "../services/liveClassService.js";
 import { buildOfficialLessonSchedulePlan } from "../utils/liveClassLessonOrder.js";
+import { partitionRepairPlanItems } from "../utils/liveClassRepairManualOverrides.js";
 
 function formatDateTime(value) {
   const parsed = new Date(value || 0);
@@ -135,9 +136,12 @@ export default function LiveClassLessonDateRepair() {
   }, [classId, dashboard]);
 
   const plan = preview.plan;
-  const changedItems = plan?.items.filter((item) => item.changed) || [];
+  const repairItems = useMemo(() => partitionRepairPlanItems(plan?.items || []), [plan]);
+  const changedItems = repairItems.automaticItems;
+  const preservedItems = repairItems.preservedItems;
+  const repairBlockedByManualMoves = preservedItems.length > 0;
   const needsRepair = Boolean(
-    plan && (
+    plan && !repairBlockedByManualMoves && (
       changedItems.length
       || plan.currentSessions < plan.expectedLessons
       || String(dashboard?.klass?.endDate || "") !== plan.endDate
@@ -152,7 +156,7 @@ export default function LiveClassLessonDateRepair() {
   }
 
   async function repairOfficialTimetable() {
-    if (!plan || !needsRepair || busy) return;
+    if (!plan || !needsRepair || busy || repairBlockedByManualMoves) return;
     const finalItem = plan.items.at(-1);
     const confirmed = window.confirm(
       `Repair this ${plan.levelId} class to the official ${plan.expectedLessons} ${plan.countLabel}?\n\n`
@@ -212,10 +216,21 @@ export default function LiveClassLessonDateRepair() {
             <div>Official requirement: <strong>{plan.expectedLessons} {plan.countLabel}</strong></div>
             <div>Start date: <strong>{formatDate(dashboard.klass?.startDate)}</strong></div>
             <div>Current end date: <strong>{formatDate(dashboard.klass?.endDate)}</strong></div>
-            <div>Correct end date: <strong>{formatDate(plan.endDate)}</strong></div>
+            <div>Calculated official end date: <strong>{formatDate(plan.endDate)}</strong></div>
             <div>Visible sessions: <strong>{plan.currentSessions}</strong> of <strong>{plan.expectedLessons}</strong></div>
-            <div>Missing sessions: <strong>{plan.missingLessons}</strong> · Date corrections: <strong>{changedItems.length}</strong></div>
+            <div>Missing sessions: <strong>{plan.missingLessons}</strong> · Automatic date corrections: <strong>{changedItems.length}</strong> · Preserved manual moves: <strong>{preservedItems.length}</strong></div>
           </div>
+
+          {preservedItems.length ? (
+            <div style={{ display: "grid", gap: 6, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
+              <strong>{preservedItems.length} deliberately moved session(s) will be preserved.</strong>
+              <div>Official repair is disabled for this class so it cannot move those sessions back to the original weekday pattern. Continue managing these dates through Change session.</div>
+              {preservedItems.slice(0, 10).map((item) => (
+                <div key={item.lessonNumber}>{item.group.topic}: <strong>{formatDateTime(item.session?.startsAt)}</strong></div>
+              ))}
+              {preservedItems.length > 10 ? <small>Plus {preservedItems.length - 10} more preserved move(s).</small> : null}
+            </div>
+          ) : null}
 
           {changedItems.length ? (
             <div style={{ display: "grid", gap: 6, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
@@ -228,15 +243,15 @@ export default function LiveClassLessonDateRepair() {
             </div>
           ) : null}
 
-          {!needsRepair ? (
+          {!needsRepair && !repairBlockedByManualMoves ? (
             <div style={{ padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
               This class already has the complete official timetable.
             </div>
           ) : null}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={repairOfficialTimetable} disabled={busy || !needsRepair}>
-              {busy ? "Repairing all sessions atomically…" : `Repair to ${plan.expectedLessons} ${plan.countLabel}`}
+            <button type="button" onClick={repairOfficialTimetable} disabled={busy || !needsRepair || repairBlockedByManualMoves}>
+              {busy ? "Repairing all sessions atomically…" : repairBlockedByManualMoves ? "Manual moves preserved" : `Repair to ${plan.expectedLessons} ${plan.countLabel}`}
             </button>
             <button type="button" onClick={refresh} disabled={busy}>Check again</button>
           </div>

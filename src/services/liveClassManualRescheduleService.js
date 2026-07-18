@@ -28,15 +28,27 @@ async function loadSession(sessionId) {
   return { id: snap.id, ...snap.data() };
 }
 
+async function loadClassScheduleRules(session = {}, payload = {}) {
+  if (Array.isArray(payload.scheduleRules)) return payload.scheduleRules;
+  const classId = normalize(payload.classId || session.classId || session.classRecordId);
+  if (!classId) return [];
+  const snap = await getDoc(doc(db, "classes", classId));
+  if (!snap.exists()) return [];
+  const rules = snap.data()?.scheduleRules;
+  return Array.isArray(rules) ? rules : [];
+}
+
 export async function rescheduleSession(sessionId, payload = {}) {
   const session = await loadSession(sessionId);
   const timezone = normalize(payload.timezone) || "Africa/Accra";
   const domStartsAt = normalize(payload.domStartsAt) || readVisibleManualRescheduleDateTime();
+  const scheduleRules = await loadClassScheduleRules(session, payload);
   const resolved = resolveManualRescheduleDateTime({
     currentStartsAt: session.startsAt,
     payload,
     domStartsAt,
     timezone,
+    scheduleRules,
   });
 
   const result = await rescheduleSessionDirect(sessionId, {
@@ -45,6 +57,7 @@ export async function rescheduleSession(sessionId, payload = {}) {
     localDate: resolved.localDate,
     localTime: resolved.localTime,
     manualRescheduleInputSource: resolved.source,
+    manualRescheduleScheduleRuleApplied: resolved.scheduleRuleApplied,
   });
 
   const communication = await submitRescheduleCommunication({
