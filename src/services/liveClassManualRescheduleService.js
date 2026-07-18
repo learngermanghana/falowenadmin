@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { resolveManualRescheduleDateTime } from "../utils/liveClassManualReschedule.js";
 import { rescheduleSession as rescheduleSessionDirect } from "./liveClassSessionDirectService.js";
@@ -38,27 +38,84 @@ async function loadClassScheduleRules(session = {}, payload = {}) {
   return Array.isArray(rules) ? rules : [];
 }
 
+function canConfirmManualOverride() {
+  return typeof window !== "undefined" && typeof window.confirm === "function";
+}
+
+function resolveWithScheduleProtection({ session, payload, domStartsAt, timezone, scheduleRules }) {
+  try {
+    return resolveManualRescheduleDateTime({
+      currentStartsAt: session.startsAt,
+      payload,
+      domStartsAt,
+      timezone,
+      scheduleRules,
+    });
+  } catch (error) {
+    const outsideSchedule = error?.code === "live-class/outside-class-schedule";
+    const explicitOverride = payload.manualScheduleOverride === true;
+    if (!outsideSchedule || explicitOverride || !canConfirmManualOverride()) throw error;
+
+    const confirmed = window.confirm(
+      `${error.message}\n\nManual override will save this one lesson outside the normal class timetable and record it in the audit history. Continue?`,
+    );
+    if (!confirmed) throw error;
+
+    return resolveManualRescheduleDateTime({
+      currentStartsAt: session.startsAt,
+      payload: { ...payload, manualScheduleOverride: true },
+      domStartsAt,
+      timezone,
+      scheduleRules,
+    });
+  }
+}
+
 export async function rescheduleSession(sessionId, payload = {}) {
   const session = await loadSession(sessionId);
   const timezone = normalize(payload.timezone) || "Africa/Accra";
   const domStartsAt = normalize(payload.domStartsAt) || readVisibleManualRescheduleDateTime();
   const scheduleRules = await loadClassScheduleRules(session, payload);
-  const resolved = resolveManualRescheduleDateTime({
-    currentStartsAt: session.startsAt,
+  const resolved = resolveWithScheduleProtection({
+    session,
     payload,
     domStartsAt,
     timezone,
     scheduleRules,
   });
 
+  const overrideReason = normalize(payload.reason);
+  if (resolved.manualScheduleOverride && !overrideReason) {
+    const error = new Error("Write a reason before using Manual override outside the class timetable.");
+    error.code = "live-class/manual-override-reason-required";
+    throw error;
+  }
+
+  const adminId = normalize(payload.adminId) || "admin";
+  const reason = resolved.manualScheduleOverride
+    ? `[Manual timetable override] ${overrideReason}`
+    : payload.reason;
+
   const result = await rescheduleSessionDirect(sessionId, {
     ...payload,
+    reason,
     startsAt: resolved.startsAt,
     localDate: resolved.localDate,
     localTime: resolved.localTime,
+    manualScheduleOverride: resolved.manualScheduleOverride,
     manualRescheduleInputSource: resolved.source,
     manualRescheduleScheduleRuleApplied: resolved.scheduleRuleApplied,
   });
+
+  if (resolved.manualScheduleOverride) {
+    await updateDoc(doc(db, "classSessions", String(sessionId)), {
+      manualDateOverride: true,
+      manualDateOverrideBy: adminId,
+      manualDateOverrideAt: serverTimestamp(),
+      manualDateOverrideReason: overrideReason,
+      manualDateOverrideStartsAt: result.startsAt || resolved.startsAt,
+    });
+  }
 
   const communication = await submitRescheduleCommunication({
     klass: {
@@ -73,5 +130,7 @@ export async function rescheduleSession(sessionId, payload = {}) {
   return {
     ...result,
     ...communication,
+    manualScheduleOverride: resolved.manualScheduleOverride,
+    manualRescheduleInputSource: resolved.source,
   };
 }

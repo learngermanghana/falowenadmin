@@ -1,6 +1,15 @@
 import { normalizeScheduleRules } from "./liveClassScheduling.js";
 
 const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const WEEKDAY_LABELS = {
+  sun: "Sunday",
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+};
 
 function normalize(value) {
   return String(value || "").trim();
@@ -58,12 +67,25 @@ function payloadDateTime(payload = {}, timezone = "Africa/Accra") {
   return dateTimeInTimezone(payload.startsAt, timezone);
 }
 
-function scheduleRuleForDate(dateIso, scheduleRules = []) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalize(dateIso))) return null;
-  const weekday = WEEKDAYS[new Date(`${dateIso}T00:00:00.000Z`).getUTCDay()];
+function normalizedRules(scheduleRules = []) {
   return normalizeScheduleRules(scheduleRules)
+    .filter((rule) => WEEKDAYS.includes(rule.day) && /^\d{2}:\d{2}$/.test(rule.startTime || ""));
+}
+
+function rulesForDate(dateIso, scheduleRules = []) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalize(dateIso))) return [];
+  const weekday = WEEKDAYS[new Date(`${dateIso}T00:00:00.000Z`).getUTCDay()];
+  return normalizedRules(scheduleRules)
     .filter((rule) => rule.day === weekday)
-    .sort((left, right) => left.startTime.localeCompare(right.startTime))[0] || null;
+    .sort((left, right) => left.startTime.localeCompare(right.startTime));
+}
+
+export function classScheduleSlotLabel(scheduleRules = []) {
+  const rules = normalizedRules(scheduleRules);
+  if (!rules.length) return "No class timetable slots are saved.";
+  return rules
+    .map((rule) => `${WEEKDAY_LABELS[rule.day] || rule.day} ${rule.startTime}`)
+    .join(", ");
 }
 
 function applyWeekdayRuleToDateOnlyChange(selected, current, scheduleRules = []) {
@@ -74,7 +96,8 @@ function applyWeekdayRuleToDateOnlyChange(selected, current, scheduleRules = [])
     return { selected, scheduleRuleApplied: false };
   }
 
-  const matchingRule = scheduleRuleForDate(selectedDate, scheduleRules);
+  const matchingRules = rulesForDate(selectedDate, scheduleRules);
+  const matchingRule = matchingRules[0] || null;
   if (!matchingRule || matchingRule.startTime === selectedTime) {
     return { selected, scheduleRuleApplied: false };
   }
@@ -83,6 +106,21 @@ function applyWeekdayRuleToDateOnlyChange(selected, current, scheduleRules = [])
     selected: `${selectedDate}T${matchingRule.startTime}`,
     scheduleRuleApplied: true,
   };
+}
+
+function assertSelectedSlotAllowed(selected, scheduleRules = [], manualScheduleOverride = false) {
+  const rules = normalizedRules(scheduleRules);
+  if (!rules.length || manualScheduleOverride) return;
+
+  const [selectedDate, selectedTime] = selected.split("T");
+  const matchingRules = rulesForDate(selectedDate, rules);
+  const matchesTimetable = matchingRules.some((rule) => rule.startTime === selectedTime);
+  if (matchesTimetable) return;
+
+  throw codedError(
+    "live-class/outside-class-schedule",
+    `Choose one of the saved class timetable slots: ${classScheduleSlotLabel(rules)}. Enable Manual override only when this lesson must hold outside the timetable.`,
+  );
 }
 
 export function resolveManualRescheduleDateTime({
@@ -108,8 +146,14 @@ export function resolveManualRescheduleDateTime({
     throw codedError("live-class/invalid-time", "Choose a valid new Ghana date and time.");
   }
 
-  const adjusted = applyWeekdayRuleToDateOnlyChange(selectedInput, current, scheduleRules);
+  const manualScheduleOverride = payload.manualScheduleOverride === true;
+  const adjusted = manualScheduleOverride
+    ? { selected: selectedInput, scheduleRuleApplied: false }
+    : applyWeekdayRuleToDateOnlyChange(selectedInput, current, scheduleRules);
   const selected = adjusted.selected;
+
+  assertSelectedSlotAllowed(selected, scheduleRules, manualScheduleOverride);
+
   if (current && selected === current) {
     throw codedError(
       "live-class/no-reschedule-change",
@@ -119,12 +163,19 @@ export function resolveManualRescheduleDateTime({
 
   const [localDate, localTime] = selected.split("T");
   const baseSource = domChanged ? "mobile-form" : "payload";
+  const source = manualScheduleOverride
+    ? `${baseSource}-manual-schedule-override`
+    : adjusted.scheduleRuleApplied
+      ? `${baseSource}-class-weekday-rule`
+      : baseSource;
+
   return {
     startsAt: selected,
     localDate,
     localTime,
-    source: adjusted.scheduleRuleApplied ? `${baseSource}-class-weekday-rule` : baseSource,
+    source,
     previousLocalDateTime: current,
     scheduleRuleApplied: adjusted.scheduleRuleApplied,
+    manualScheduleOverride,
   };
 }
