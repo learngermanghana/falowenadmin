@@ -322,17 +322,26 @@ export default function DashboardPage() {
           {analytics.classBreakdown.length ? (
             <div className="class-bars">
               {analytics.classBreakdown.map((row) => {
-                const width = Math.max(8, pct(row.count, analytics.totalStudents));
+                const progress = pct(row.paid, row.count);
                 return (
                   <div key={row.label} className="class-bar-row">
                     <div className="class-bar-top">
                       <strong>{row.label}</strong>
                       <span>{row.count} student{row.count === 1 ? "" : "s"}</span>
                     </div>
-                    <div className="class-bar-track">
-                      <span style={{ width: `${width}%` }} />
+                    <div
+                      className="class-bar-track"
+                      role="progressbar"
+                      aria-label={`${row.label} paid or active students`}
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      aria-valuenow={progress}
+                    >
+                      <span style={{ width: `${progress}%` }} />
                     </div>
-                    <small>{row.paid} paid/active · {moneyFormatter.format(row.balance)} balance</small>
+                    <small>
+                      {row.paid} of {row.count} paid/active · {progress}% · {moneyFormatter.format(row.balance)} balance
+                    </small>
                   </div>
                 );
               })}
