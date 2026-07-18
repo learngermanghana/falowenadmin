@@ -1,3 +1,7 @@
+import { normalizeScheduleRules } from "./liveClassScheduling.js";
+
+const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
 function normalize(value) {
   return String(value || "").trim();
 }
@@ -54,11 +58,39 @@ function payloadDateTime(payload = {}, timezone = "Africa/Accra") {
   return dateTimeInTimezone(payload.startsAt, timezone);
 }
 
+function scheduleRuleForDate(dateIso, scheduleRules = []) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalize(dateIso))) return null;
+  const weekday = WEEKDAYS[new Date(`${dateIso}T00:00:00.000Z`).getUTCDay()];
+  return normalizeScheduleRules(scheduleRules)
+    .filter((rule) => rule.day === weekday)
+    .sort((left, right) => left.startTime.localeCompare(right.startTime))[0] || null;
+}
+
+function applyWeekdayRuleToDateOnlyChange(selected, current, scheduleRules = []) {
+  if (!selected || !current) return { selected, scheduleRuleApplied: false };
+  const [selectedDate, selectedTime] = selected.split("T");
+  const [currentDate, currentTime] = current.split("T");
+  if (!selectedDate || !selectedTime || selectedDate === currentDate || selectedTime !== currentTime) {
+    return { selected, scheduleRuleApplied: false };
+  }
+
+  const matchingRule = scheduleRuleForDate(selectedDate, scheduleRules);
+  if (!matchingRule || matchingRule.startTime === selectedTime) {
+    return { selected, scheduleRuleApplied: false };
+  }
+
+  return {
+    selected: `${selectedDate}T${matchingRule.startTime}`,
+    scheduleRuleApplied: true,
+  };
+}
+
 export function resolveManualRescheduleDateTime({
   currentStartsAt,
   payload = {},
   domStartsAt = "",
   timezone = "Africa/Accra",
+  scheduleRules = [],
 } = {}) {
   const current = dateTimeInTimezone(currentStartsAt, timezone);
   const dom = normalizeLocalDateTime(domStartsAt);
@@ -66,15 +98,18 @@ export function resolveManualRescheduleDateTime({
 
   const domChanged = Boolean(dom && dom !== current);
   const payloadChanged = Boolean(submitted && submitted !== current);
-  const selected = domChanged
+  const selectedInput = domChanged
     ? dom
     : payloadChanged
       ? submitted
       : dom || submitted;
 
-  if (!selected) {
+  if (!selectedInput) {
     throw codedError("live-class/invalid-time", "Choose a valid new Ghana date and time.");
   }
+
+  const adjusted = applyWeekdayRuleToDateOnlyChange(selectedInput, current, scheduleRules);
+  const selected = adjusted.selected;
   if (current && selected === current) {
     throw codedError(
       "live-class/no-reschedule-change",
@@ -83,11 +118,13 @@ export function resolveManualRescheduleDateTime({
   }
 
   const [localDate, localTime] = selected.split("T");
+  const baseSource = domChanged ? "mobile-form" : "payload";
   return {
     startsAt: selected,
     localDate,
     localTime,
-    source: domChanged ? "mobile-form" : "payload",
+    source: adjusted.scheduleRuleApplied ? `${baseSource}-class-weekday-rule` : baseSource,
     previousLocalDateTime: current,
+    scheduleRuleApplied: adjusted.scheduleRuleApplied,
   };
 }
