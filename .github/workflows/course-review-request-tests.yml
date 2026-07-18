@@ -1,0 +1,46 @@
+name: Course Review Request Tests
+
+on:
+  pull_request:
+    paths:
+      - 'functions/courseReviewRequestEmails.js'
+      - 'scripts/patchCourseReviewRequestEmails.mjs'
+      - 'tests/course-review-request-emails.test.js'
+      - 'docs/course-review-requests.md'
+      - 'package.json'
+      - '.github/workflows/deploy-firebase.yml'
+      - '.github/workflows/course-review-request-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/courseReviewRequestEmails.js'
+      - 'scripts/patchCourseReviewRequestEmails.mjs'
+      - 'tests/course-review-request-emails.test.js'
+      - 'package.json'
+      - '.github/workflows/deploy-firebase.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Validate worker and Firebase registration
+        run: |
+          node --check functions/courseReviewRequestEmails.js
+          node --check scripts/patchCourseReviewRequestEmails.mjs
+          node scripts/patchCourseReviewRequestEmails.mjs
+          node --check functions/index.js
+          grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
+          grep -F 'schedule: "0 10 * * *"' functions/courseReviewRequestEmails.js
+      - name: Test final-session eligibility, dedupe and review rows
+        run: node --test tests/course-review-request-emails.test.js
+      - name: Install dashboard dependencies
+        run: npm ci
+      - name: Build dashboard
+        run: npm run build
