@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "node --test",
     "deploy:indexes": "firebase deploy --only firestore:indexes",
-    "deploy:falowenadmin": "node scripts/patchAutoCompleteClassSessions.mjs && node scripts/patchStudentLeadDeletionRuntime.mjs && firebase deploy --project \"$FIREBASE_PROJECT_ID\" --only functions:falowenadmin --force --debug"
+    "deploy:falowenadmin": "node scripts/patchCourseReviewRequestEmails.mjs && node scripts/patchAutoCompleteClassSessions.mjs && node scripts/patchStudentLeadDeletionRuntime.mjs && firebase deploy --project \"$FIREBASE_PROJECT_ID\" --only functions:falowenadmin --force --debug"
   },
   "dependencies": {
     "dayjs": "^1.11.19",
