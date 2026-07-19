@@ -6,6 +6,7 @@ import {
   STUDENT_LEADS_SHEET_NAME,
 } from "../services/studentLeadService.js";
 import { deleteStudentLead } from "../services/studentLeadDeletionService.js";
+import "./StudentLeadsPanel.css";
 
 const headerCellStyle = {
   textAlign: "left",
@@ -117,16 +118,94 @@ function isCompletedLead(lead = {}) {
 function StatusPill({ value }) {
   if (!String(value || "").trim()) return <span>—</span>;
   return (
-    <span style={{
-      display: "inline-block",
-      padding: "3px 8px",
-      borderRadius: 999,
-      fontSize: 12,
-      fontWeight: 700,
-      ...statusStyle(value),
-    }}>
+    <span className="student-lead-status-pill" style={statusStyle(value)}>
       {readableLabel(value)}
     </span>
+  );
+}
+
+function Detail({ label, children }) {
+  return (
+    <div className="student-lead-detail">
+      <dt>{label}</dt>
+      <dd>{children || "—"}</dd>
+    </div>
+  );
+}
+
+function LeadActions({ lead, deletingId, onCopy, onDelete }) {
+  const phoneLink = callUrl(lead.number);
+  const emailLink = mailUrl(lead.email);
+  const whatsappLink = whatsappUrl(lead.number, lead);
+  const canDelete = isCompletedLead(lead);
+
+  return (
+    <div className="student-lead-actions">
+      {whatsappLink ? <a href={whatsappLink} target="_blank" rel="noreferrer">WhatsApp</a> : null}
+      {phoneLink ? <a href={phoneLink}>Call</a> : null}
+      {emailLink ? <a href={emailLink}>Email</a> : null}
+      {lead.number ? (
+        <button type="button" onClick={() => onCopy(lead.number, "Phone number")}>Copy phone</button>
+      ) : null}
+      {lead.email ? (
+        <button type="button" onClick={() => onCopy(lead.email, "Email")}>Copy email</button>
+      ) : null}
+      {canDelete ? (
+        <button
+          type="button"
+          className="student-lead-delete-button"
+          onClick={() => onDelete(lead)}
+          disabled={deletingId === lead.id}
+        >
+          {deletingId === lead.id ? "Deleting…" : "Delete completed"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function StudentLeadCard({ lead, deletingId, onCopy, onDelete }) {
+  return (
+    <article className="student-lead-card">
+      <header className="student-lead-card-header">
+        <div>
+          <h3>{lead.name || "Unnamed lead"}</h3>
+          <p>{lead.className || lead.level || "Class not specified"}</p>
+        </div>
+        <span className="student-lead-card-date">{formatDateValue(lead.registrationDate)}</span>
+      </header>
+
+      <div className="student-lead-card-statuses">
+        <StatusPill value={lead.status} />
+        <StatusPill value={lead.paymentStatus} />
+      </div>
+
+      <div className="student-lead-card-contact">
+        <span><strong>Phone:</strong> {lead.number || "—"}</span>
+        <span><strong>Email:</strong> {lead.email || "—"}</span>
+      </div>
+
+      <details className="student-lead-card-details">
+        <summary>View lead details</summary>
+        <dl className="student-lead-details-grid">
+          <Detail label="Level">{lead.level || "—"}</Detail>
+          <Detail label="Class">{lead.className || "—"}</Detail>
+          <Detail label="Amount paid">{formatMoney(lead.amountPaid)}</Detail>
+          <Detail label="Balance">{formatMoney(lead.balance)}</Detail>
+          <Detail label="Student code">{lead.studentCode || "—"}</Detail>
+          <Detail label="Next follow-up">{formatDateValue(lead.nextFollowUpAt)}</Detail>
+          <Detail label="Last follow-up">{formatDateValue(lead.lastFollowUpAt)}</Detail>
+          <Detail label="Source">{readableLabel(lead.source)}</Detail>
+        </dl>
+      </details>
+
+      <LeadActions
+        lead={lead}
+        deletingId={deletingId}
+        onCopy={onCopy}
+        onDelete={onDelete}
+      />
+    </article>
   );
 }
 
@@ -237,80 +316,81 @@ export default function StudentLeadsPanel() {
   }, [leads, query]);
 
   return (
-    <div style={{ display: "grid", gap: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+    <div className="student-leads-panel">
+      <div className="student-leads-toolbar">
         <div>
-          <h2 style={{ margin: "0 0 6px" }}>Student Leads</h2>
-          <p style={{ margin: 0, opacity: 0.78 }}>
+          <h2>Student Leads</h2>
+          <p>
             Showing contact, class, payment, registration and follow-up information from the published <strong>{STUDENT_LEADS_SHEET_NAME}</strong> sheet. Duplicate leads are hidden automatically.
           </p>
         </div>
         <button type="button" onClick={loadLeads} disabled={loading}>{loading ? "Refreshing…" : "Refresh leads"}</button>
       </div>
 
-      <div style={{ padding: 12, border: "1px solid #bfdbfe", borderRadius: 10, background: "#eff6ff", color: "#1e3a8a" }}>
+      <div className="student-leads-source">
         Source: <a href={STUDENT_LEADS_PUBLISHED_URL} target="_blank" rel="noreferrer">published Google Sheet</a> · Sheet tab: <strong>{STUDENT_LEADS_SHEET_NAME}</strong>
       </div>
 
-      <label style={{ display: "grid", gap: 6, maxWidth: 560 }}>
-        <span style={{ fontWeight: 700 }}>Search leads</span>
+      <label className="student-leads-search">
+        <span>Search leads</span>
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search by name, contact, class, status, payment, student code, or source..."
-          style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccd4e2" }}
         />
       </label>
 
-      {copyNotice ? (
-        <div role="status" style={{ padding: "8px 10px", borderRadius: 8, background: "#ecfdf5", color: "#166534", width: "fit-content" }}>
-          {copyNotice}
-        </div>
-      ) : null}
-
+      {copyNotice ? <div role="status" className="student-leads-notice">{copyNotice}</div> : null}
       {loading ? <p>Loading student leads…</p> : null}
-      {error ? <p style={{ color: "#a00000" }}>❌ {error}</p> : null}
+      {error ? <p className="student-leads-error">❌ {error}</p> : null}
 
       {!loading && !error ? (
         <>
-          <p style={{ margin: 0 }}>
+          <p className="student-leads-count">
             Showing <strong>{filteredLeads.length}</strong> lead(s). Hidden duplicates: <strong>{duplicateCount}</strong>. Raw rows checked: <strong>{totalRows}</strong>.
           </p>
 
           {filteredLeads.length === 0 ? <p>No leads found.</p> : null}
 
           {filteredLeads.length > 0 ? (
-            <div style={{ overflowX: "auto", border: "1px solid #e5e7eb", borderRadius: 10 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1700 }}>
-                <thead>
-                  <tr style={{ background: "#f8fafc" }}>
-                    <th style={headerCellStyle}>Name</th>
-                    <th style={headerCellStyle}>Phone</th>
-                    <th style={headerCellStyle}>Email</th>
-                    <th style={headerCellStyle}>Level</th>
-                    <th style={headerCellStyle}>Class</th>
-                    <th style={headerCellStyle}>Lead status</th>
-                    <th style={headerCellStyle}>Payment status</th>
-                    <th style={headerCellStyle}>Amount paid</th>
-                    <th style={headerCellStyle}>Balance</th>
-                    <th style={headerCellStyle}>Student code</th>
-                    <th style={headerCellStyle}>Registered</th>
-                    <th style={headerCellStyle}>Next follow-up</th>
-                    <th style={headerCellStyle}>Last follow-up</th>
-                    <th style={headerCellStyle}>Source</th>
-                    <th style={{ ...headerCellStyle, position: "sticky", right: 0, background: "#f8fafc" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.map((lead, index) => {
-                    const phoneLink = callUrl(lead.number);
-                    const emailLink = mailUrl(lead.email);
-                    const whatsappLink = whatsappUrl(lead.number, lead);
-                    const canDelete = isCompletedLead(lead);
+            <>
+              <div className="student-leads-mobile" aria-label="Student leads mobile list">
+                {filteredLeads.map((lead, index) => (
+                  <StudentLeadCard
+                    key={`${lead.id}-${index}`}
+                    lead={lead}
+                    deletingId={deletingId}
+                    onCopy={handleCopy}
+                    onDelete={handleDeleteLead}
+                  />
+                ))}
+              </div>
 
-                    return (
-                      <tr key={`${lead.id}-${index}`} style={{ borderTop: "1px solid #e5e7eb" }}>
+              <div className="student-leads-desktop">
+                <table className="student-leads-table">
+                  <thead>
+                    <tr>
+                      <th style={headerCellStyle}>Name</th>
+                      <th style={headerCellStyle}>Phone</th>
+                      <th style={headerCellStyle}>Email</th>
+                      <th style={headerCellStyle}>Level</th>
+                      <th style={headerCellStyle}>Class</th>
+                      <th style={headerCellStyle}>Lead status</th>
+                      <th style={headerCellStyle}>Payment status</th>
+                      <th style={headerCellStyle}>Amount paid</th>
+                      <th style={headerCellStyle}>Balance</th>
+                      <th style={headerCellStyle}>Student code</th>
+                      <th style={headerCellStyle}>Registered</th>
+                      <th style={headerCellStyle}>Next follow-up</th>
+                      <th style={headerCellStyle}>Last follow-up</th>
+                      <th style={headerCellStyle}>Source</th>
+                      <th className="student-leads-sticky-header" style={headerCellStyle}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLeads.map((lead, index) => (
+                      <tr key={`${lead.id}-${index}`}>
                         <td style={{ ...bodyCellStyle, fontWeight: 700 }}>{lead.name || "—"}</td>
                         <td style={bodyCellStyle}>{lead.number || "—"}</td>
                         <td style={bodyCellStyle}>{lead.email || "—"}</td>
@@ -325,35 +405,20 @@ export default function StudentLeadsPanel() {
                         <td style={bodyCellStyle}>{formatDateValue(lead.nextFollowUpAt)}</td>
                         <td style={bodyCellStyle}>{formatDateValue(lead.lastFollowUpAt)}</td>
                         <td style={bodyCellStyle}>{readableLabel(lead.source)}</td>
-                        <td style={{ ...bodyCellStyle, position: "sticky", right: 0, background: "#ffffff" }}>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", minWidth: 320 }}>
-                            {whatsappLink ? <a href={whatsappLink} target="_blank" rel="noreferrer">WhatsApp</a> : null}
-                            {phoneLink ? <a href={phoneLink}>Call</a> : null}
-                            {emailLink ? <a href={emailLink}>Email</a> : null}
-                            {lead.number ? (
-                              <button type="button" onClick={() => handleCopy(lead.number, "Phone number")}>Copy phone</button>
-                            ) : null}
-                            {lead.email ? (
-                              <button type="button" onClick={() => handleCopy(lead.email, "Email")}>Copy email</button>
-                            ) : null}
-                            {canDelete ? (
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteLead(lead)}
-                                disabled={deletingId === lead.id}
-                                style={{ borderColor: "#fecaca", color: "#991b1b", background: "#fff5f5" }}
-                              >
-                                {deletingId === lead.id ? "Deleting…" : "Delete completed"}
-                              </button>
-                            ) : null}
-                          </div>
+                        <td className="student-leads-sticky-actions" style={bodyCellStyle}>
+                          <LeadActions
+                            lead={lead}
+                            deletingId={deletingId}
+                            onCopy={handleCopy}
+                            onDelete={handleDeleteLead}
+                          />
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : null}
         </>
       ) : null}
