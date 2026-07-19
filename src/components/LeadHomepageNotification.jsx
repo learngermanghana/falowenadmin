@@ -1,10 +1,50 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchStudentLeads } from "../services/studentLeadService.js";
+import "./LeadHomepageNotification.css";
+
+const SEEN_STORAGE_PREFIX = "falowen:dashboard-leads-seen";
+const REFRESH_INTERVAL_MS = 45_000;
+const MAX_STORED_SEEN_LEADS = 500;
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function leadIdentity(lead = {}) {
+  return String(
+    lead.id
+      || lead.leadId
+      || lead.email
+      || lead.number
+      || `${lead.name || "lead"}-${lead.registrationDate || ""}`,
+  ).trim();
+}
+
+function seenStorageKey(user = {}) {
+  const userKey = String(user.uid || user.email || "signed-in-user").trim().toLowerCase();
+  return `${SEEN_STORAGE_PREFIX}:${userKey}`;
+}
+
+function readSeenLeadIds(storageKey) {
+  if (typeof window === "undefined" || !storageKey) return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
+    return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSeenLeadIds(storageKey, ids = []) {
+  if (typeof window === "undefined" || !storageKey) return;
+  try {
+    const uniqueIds = [...new Set(ids.map(String).filter(Boolean))].slice(-MAX_STORED_SEEN_LEADS);
+    window.localStorage.setItem(storageKey, JSON.stringify(uniqueIds));
+  } catch {
+    // Lead notifications still work when browser storage is unavailable.
+  }
 }
 
 function isCompletedLead(lead = {}) {
@@ -41,28 +81,48 @@ function leadDate(lead = {}) {
 export default function LeadHomepageNotification() {
   const { user } = useAuth();
   const [leads, setLeads] = useState([]);
+  const [seenLeadIds, setSeenLeadIds] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const storageKey = useMemo(() => (user ? seenStorageKey(user) : ""), [user]);
+
+  const loadLeads = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const result = await fetchStudentLeads();
+      setLeads(result.leads || []);
+      setError("");
+    } catch (loadError) {
+      setError(loadError?.message || "Student leads could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    setSeenLeadIds(storageKey ? readSeenLeadIds(storageKey) : []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!user) return undefined;
-    let active = true;
 
-    fetchStudentLeads()
-      .then((result) => {
-        if (!active) return;
-        setLeads(result.leads || []);
-        setError("");
-      })
-      .catch((loadError) => {
-        if (!active) return;
-        setLeads([]);
-        setError(loadError?.message || "Student leads could not be loaded.");
-      });
+    loadLeads();
+    const intervalId = window.setInterval(loadLeads, REFRESH_INTERVAL_MS);
+    const refreshOnFocus = () => loadLeads();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") loadLeads();
+    };
+
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
-      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [user]);
+  }, [loadLeads, user]);
 
   const openLeads = useMemo(
     () => leads
@@ -70,49 +130,84 @@ export default function LeadHomepageNotification() {
       .sort((left, right) => leadDate(right) - leadDate(left)),
     [leads],
   );
-  const newLeadCount = openLeads.filter(isNewLead).length;
-  const preview = openLeads.slice(0, 3);
+  const seenSet = useMemo(() => new Set(seenLeadIds), [seenLeadIds]);
+  const unseenOpenLeads = useMemo(
+    () => openLeads.filter((lead) => !seenSet.has(leadIdentity(lead))),
+    [openLeads, seenSet],
+  );
+  const newLeadCount = unseenOpenLeads.filter(isNewLead).length;
+  const preview = unseenOpenLeads.slice(0, 3);
 
-  if (!user) return null;
+  function persistSeenIds(nextIds) {
+    const uniqueIds = [...new Set(nextIds.map(String).filter(Boolean))];
+    setSeenLeadIds(uniqueIds);
+    writeSeenLeadIds(storageKey, uniqueIds);
+  }
+
+  function markLeadSeen(lead) {
+    const id = leadIdentity(lead);
+    if (!id) return;
+    persistSeenIds([...seenLeadIds, id]);
+  }
+
+  function markAllSeen() {
+    persistSeenIds([
+      ...seenLeadIds,
+      ...unseenOpenLeads.map(leadIdentity),
+    ]);
+  }
+
+  if (!user || (loading && !leads.length && !error)) return null;
+  if (!unseenOpenLeads.length && !error) return null;
 
   return (
-    <section
-      aria-live="polite"
-      style={{
-        maxWidth: 1440,
-        margin: "14px auto 0",
-        padding: "14px 16px",
-        borderRadius: 12,
-        border: `1px solid ${openLeads.length ? "#f59e0b" : "#86efac"}`,
-        background: openLeads.length ? "#fffbeb" : "#f0fdf4",
-        color: "#1f2937",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-        <div>
-          <strong style={{ display: "block", fontSize: 16 }}>🔔 Lead notification</strong>
+    <section className="lead-home-notification" aria-live="polite">
+      <div className="lead-home-header">
+        <div className="lead-home-heading">
+          <strong>🔔 Lead notification</strong>
           <span>
-            {openLeads.length
-              ? `${openLeads.length} lead${openLeads.length === 1 ? "" : "s"} need attention. ${newLeadCount} new.`
-              : "No leads currently need attention."}
+            {unseenOpenLeads.length
+              ? `${unseenOpenLeads.length} unseen lead${unseenOpenLeads.length === 1 ? "" : "s"}. ${newLeadCount} new.`
+              : "Lead notifications could not be refreshed."}
           </span>
-          {error ? <small style={{ display: "block", color: "#991b1b", marginTop: 4 }}>Lead warning: {error}</small> : null}
+          {error ? <small className="lead-home-error">Lead warning: {error}</small> : null}
         </div>
-        <Link to="/students?tab=leads" style={{ fontWeight: 800 }}>Open leads</Link>
+
+        <div className="lead-home-actions">
+          <Link to="/students?tab=leads">Open leads</Link>
+          <button type="button" onClick={loadLeads} disabled={loading}>
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+          {unseenOpenLeads.length ? (
+            <button type="button" onClick={markAllSeen}>Mark all seen</button>
+          ) : null}
+        </div>
       </div>
 
       {preview.length ? (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-          {preview.map((lead) => (
-            <span
-              key={lead.id}
-              style={{ padding: "5px 9px", borderRadius: 999, border: "1px solid #fde68a", background: "#fff" }}
-            >
-              <strong>{lead.name || lead.email || lead.number || "Unnamed lead"}</strong>
-              {lead.className || lead.level ? ` · ${lead.className || lead.level}` : ""}
-            </span>
+        <div className="lead-home-preview">
+          {preview.map((lead, index) => (
+            <div className="lead-home-item" key={`${leadIdentity(lead)}-${index}`}>
+              <span className="lead-home-item-copy">
+                <strong>{lead.name || lead.email || lead.number || "Unnamed lead"}</strong>
+                {lead.className || lead.level ? ` · ${lead.className || lead.level}` : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => markLeadSeen(lead)}
+                title="Hide this dashboard notification. The lead remains on the Leads page."
+              >
+                Mark seen
+              </button>
+            </div>
           ))}
         </div>
+      ) : null}
+
+      {unseenOpenLeads.length ? (
+        <small className="lead-home-note">
+          Marking a lead as seen only hides this dashboard alert. The lead remains on the main Leads page.
+        </small>
       ) : null}
     </section>
   );
