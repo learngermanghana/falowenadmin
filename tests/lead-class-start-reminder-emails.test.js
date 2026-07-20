@@ -50,7 +50,7 @@ test("sends once when an open lead is within the three-day recovery window", () 
   assert.deepEqual(due.map((item) => item.daysUntilStart), [1, 3]);
 });
 
-test("skips registered, paid, closed, missing-email and duplicate leads", () => {
+test("skips registered, paid, closed, previously contacted, missing-email and duplicate leads", () => {
   const now = new Date("2026-07-20T08:00:00.000Z");
   const common = { className: "A2 Accra", startDate: "2026-07-23", status: "new_lead", paymentStatus: "unknown" };
   const due = findDueLeadReminders({
@@ -62,6 +62,8 @@ test("skips registered, paid, closed, missing-email and duplicate leads", () => 
       { ...common, leadId: "paid", email: "paid@example.com", paymentStatus: "paid" },
       { ...common, leadId: "closed", email: "closed@example.com", status: "not_interested" },
       { ...common, leadId: "student-code", email: "code@example.com", studentCode: "A1001" },
+      { ...common, leadId: "already-sent", email: "sent@example.com", followUpCount: 1 },
+      { ...common, leadId: "last-follow-up", email: "followup@example.com", lastFollowUpAt: "2026-07-18T08:00:00Z" },
       { ...common, leadId: "no-email", email: "" },
     ],
   });
