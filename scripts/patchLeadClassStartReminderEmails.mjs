@@ -29,6 +29,26 @@ if (!source.includes(exportLine)) {
 
 fs.writeFileSync(indexPath, source);
 
+let workerSource = fs.readFileSync(workerPath, "utf8");
+const previousReminderGuard = [
+  '    || BLOCKED_PAYMENT_STATUSES.has(comparable(lead.paymentStatus))',
+  '    || Boolean(text(lead.studentCode));',
+].join("\n");
+const fixedReminderGuard = [
+  '    || BLOCKED_PAYMENT_STATUSES.has(comparable(lead.paymentStatus))',
+  '    || Boolean(text(lead.studentCode))',
+  '    || Number(lead.followUpCount || 0) >= 1',
+  '    || Boolean(text(lead.lastFollowUpAt));',
+].join("\n");
+
+if (!workerSource.includes("Number(lead.followUpCount || 0) >= 1")) {
+  if (!workerSource.includes(previousReminderGuard)) {
+    throw new Error("Could not find the lead previous-reminder guard.");
+  }
+  workerSource = workerSource.replace(previousReminderGuard, fixedReminderGuard);
+  fs.writeFileSync(workerPath, workerSource);
+}
+
 const patchedIndex = fs.readFileSync(indexPath, "utf8");
 const worker = fs.readFileSync(workerPath, "utf8");
 const checks = [
@@ -38,6 +58,7 @@ const checks = [
   [worker.includes("communication.announcement_webhook_url"), "Communication webhook fallback is missing."],
   [worker.includes("leadClassStartReminderSends"), "Lead reminder deduplication collection is missing."],
   [worker.includes("lead_class_start_reminder"), "Lead reminder email type is missing."],
+  [worker.includes("Number(lead.followUpCount || 0) >= 1"), "Existing lead follow-up guard is missing."],
 ];
 for (const [passed, message] of checks) {
   if (!passed) throw new Error(message);
