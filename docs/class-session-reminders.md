@@ -9,8 +9,20 @@ The scheduled Firebase worker reads the actual `classSessions` documents. Remind
 - the exact session date and time;
 - the session topic;
 - all grouped assignment IDs;
-- the class and Zoom details;
+- the class and standard Zoom details;
 - the exact class record assigned to each student.
+
+## Standard Zoom meeting
+
+Both the 30-minute and 10-minute reminders use this meeting:
+
+- Join Zoom Meeting: `https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09`
+- Meeting chat: `https://us06web.zoom.us/launch/jc/6886900916`
+- Meeting ID: `688 690 0916`
+- Passcode: `german`
+- SIP: `6886900916@zoomcrc.com`
+
+The main Zoom URL is also written to the announcement row's `link` field, so email templates can display it as the primary class button. Stored class or Zoom-profile values do not replace this standard reminder destination.
 
 ## Suppression
 
