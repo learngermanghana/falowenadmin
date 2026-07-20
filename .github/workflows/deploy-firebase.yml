@@ -55,6 +55,7 @@ jobs:
             scripts/patchStudentDeletionRuntime.mjs \
             scripts/patchAttendanceConfirmationEmails.mjs \
             scripts/patchClassSessionReminderEmails.mjs \
+            scripts/patchLeadClassStartReminderEmails.mjs \
             scripts/patchAutoCompleteClassSessions.mjs \
             scripts/patchCourseReviewRequestEmails.mjs \
             scripts/patchGoetheExamConfig.mjs
@@ -66,13 +67,16 @@ jobs:
           node --check functions/index.js
           node --check functions/attendanceConfirmationEmails.js
           node --check functions/classSessionReminderEmails.js
+          node --check functions/leadClassStartReminderEmails.js
           node --check functions/autoCompleteClassSessions.js
           node --check functions/courseReviewRequestEmails.js
           node --check functions/goetheExamConfig.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
+          grep -F 'exports.sendLeadClassStartReminderEmails = createLeadClassStartReminderEmailJob' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
+          grep -F 'schedule: "0 8 * * *"' functions/leadClassStartReminderEmails.js
           grep -F 'schedule: "*/5 * * * *"' functions/autoCompleteClassSessions.js
           grep -F 'schedule: "0 10 * * *"' functions/courseReviewRequestEmails.js
           grep -F 'app.get("/exam-file/config"' functions/index.js
