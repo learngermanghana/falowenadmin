@@ -1,42 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { markAllLeadNotificationsSeen, summarizeLeadNotifications } from "../services/leadNotificationService.js";
 import { fetchStudentLeads } from "../services/studentLeadService.js";
-
-function normalize(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function isCompletedLead(lead = {}) {
-  const status = normalize(lead.status);
-  const paymentStatus = normalize(lead.paymentStatus);
-  const terminalStatuses = [
-    "student_registered",
-    "completed",
-    "complete",
-    "converted",
-    "closed",
-    "class_started_no_followup",
-    "not_interested",
-    "cancelled",
-    "canceled",
-    "archived",
-  ];
-  const paidStatuses = ["paid", "registered_paid", "success", "successful", "completed", "complete"];
-
-  return terminalStatuses.some((token) => status.includes(token))
-    || paidStatuses.some((token) => paymentStatus.includes(token));
-}
-
-function isNewLead(lead = {}) {
-  const status = normalize(lead.status);
-  return !status || status === "new" || status === "new_lead";
-}
-
-function leadDate(lead = {}) {
-  const parsed = new Date(lead.registrationDate || lead.createdAt || 0);
-  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
-}
 
 export default function LeadHomepageNotification() {
   const { user } = useAuth();
@@ -64,16 +30,15 @@ export default function LeadHomepageNotification() {
     };
   }, [user]);
 
-  const openLeads = useMemo(
-    () => leads
-      .filter((lead) => !isCompletedLead(lead))
-      .sort((left, right) => leadDate(right) - leadDate(left)),
-    [leads],
-  );
-  const newLeadCount = openLeads.filter(isNewLead).length;
-  const preview = openLeads.slice(0, 3);
+  const summary = useMemo(() => summarizeLeadNotifications(leads, user), [leads, user]);
+  const preview = summary.unseenLeads.slice(0, 3);
 
-  if (!user) return null;
+  function handleMarkAllSeen() {
+    markAllLeadNotificationsSeen(user, leads);
+    setLeads((current) => [...current]);
+  }
+
+  if (!user || summary.unseenCount === 0) return null;
 
   return (
     <section
@@ -83,8 +48,8 @@ export default function LeadHomepageNotification() {
         margin: "14px auto 0",
         padding: "14px 16px",
         borderRadius: 12,
-        border: `1px solid ${openLeads.length ? "#f59e0b" : "#86efac"}`,
-        background: openLeads.length ? "#fffbeb" : "#f0fdf4",
+        border: "1px solid #f59e0b",
+        background: "#fffbeb",
         color: "#1f2937",
       }}
     >
@@ -92,13 +57,14 @@ export default function LeadHomepageNotification() {
         <div>
           <strong style={{ display: "block", fontSize: 16 }}>🔔 Lead notification</strong>
           <span>
-            {openLeads.length
-              ? `${openLeads.length} lead${openLeads.length === 1 ? "" : "s"} need attention. ${newLeadCount} new.`
-              : "No leads currently need attention."}
+            {`${summary.unseenCount} unseen lead notification${summary.unseenCount === 1 ? "" : "s"} need attention. ${summary.unresolvedCount} unresolved lead${summary.unresolvedCount === 1 ? "" : "s"} total; ${summary.newUnseenCount} new unseen.`}
           </span>
           {error ? <small style={{ display: "block", color: "#991b1b", marginTop: 4 }}>Lead warning: {error}</small> : null}
         </div>
-        <Link to="/students?tab=leads" style={{ fontWeight: 800 }}>Open leads</Link>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link to="/students?tab=leads" style={{ fontWeight: 800 }}>Open leads</Link>
+          <button type="button" onClick={handleMarkAllSeen} style={{ fontWeight: 800 }}>Mark all as seen</button>
+        </div>
       </div>
 
       {preview.length ? (

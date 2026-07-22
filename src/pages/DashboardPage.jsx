@@ -8,6 +8,9 @@ import { getUpcomingHolidays } from "../services/holidayCalendarService";
 import { listClassCohorts } from "../services/liveClassService";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { listAllStudents } from "../services/studentsService";
+import { useAuth } from "../context/AuthContext";
+import { summarizeLeadNotifications } from "../services/leadNotificationService.js";
+import { fetchStudentLeads } from "../services/studentLeadService.js";
 import "./DashboardPage.css";
 
 const moneyFormatter = new Intl.NumberFormat("en-GH", {
@@ -120,17 +123,24 @@ function liveClassName(klass = {}) {
   return text(klass.name || klass.className || klass.title || klass.id || "Unnamed class");
 }
 
-function StatCard({ label, value, helper, tone = "blue", icon }) {
-  return (
-    <article className={`analytics-card analytics-card-${tone}`}>
+function StatCard({ label, value, helper, tone = "blue", icon, to }) {
+  const className = `analytics-card analytics-card-${tone}${to ? " analytics-card-link" : ""}`;
+  const content = (
+    <>
       <div className="analytics-card-top">
         <span className="analytics-card-icon">{icon}</span>
         <span className="analytics-card-label">{label}</span>
       </div>
       <strong>{value}</strong>
       {helper ? <p>{helper}</p> : null}
-    </article>
+    </>
   );
+
+  if (to) {
+    return <Link to={to} className={className}>{content}</Link>;
+  }
+
+  return <article className={className}>{content}</article>;
 }
 
 function ActionCard({ title, body, to, label, tone = "indigo" }) {
@@ -151,6 +161,7 @@ function MiniList({ items, emptyText, renderItem }) {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [liveClasses, setLiveClasses] = useState([]);
   const [incomingAssignments, setIncomingAssignments] = useState([]);
@@ -158,6 +169,7 @@ export default function DashboardPage() {
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
   const [contractEndingSoon, setContractEndingSoon] = useState([]);
   const [upcomingHolidays, setUpcomingHolidays] = useState([]);
+  const [studentLeads, setStudentLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -167,7 +179,7 @@ export default function DashboardPage() {
       setError("");
       try {
         const currentYear = new Date().getFullYear();
-        const [studentRows, classRows, submissionRows, tutorReviewRows, grammarIssueRows, reminderData, holidayRows] = await Promise.all([
+        const [studentRows, classRows, submissionRows, tutorReviewRows, grammarIssueRows, reminderData, holidayRows, leadData] = await Promise.all([
           listAllStudents(),
           listClassCohorts(),
           loadSubmissions(),
@@ -175,6 +187,7 @@ export default function DashboardPage() {
           loadGrammarIssueReports(),
           loadWhatsappReminderDashboard(),
           getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
+          fetchStudentLeads(),
         ]);
 
         setStudents(studentRows);
@@ -184,6 +197,7 @@ export default function DashboardPage() {
         setGrammarIssueReports(grammarIssueRows);
         setContractEndingSoon(reminderData.contractEndingSoon || []);
         setUpcomingHolidays(holidayRows);
+        setStudentLeads(leadData.leads || []);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -229,6 +243,11 @@ export default function DashboardPage() {
     () => new Set(upcomingHolidayPreview.flatMap((holiday) => holiday.affectedClasses.map((klass) => klass.id || liveClassName(klass)))).size,
     [upcomingHolidayPreview],
   );
+  const leadNotificationSummary = useMemo(
+    () => summarizeLeadNotifications(studentLeads, user),
+    [studentLeads, user],
+  );
+
   const balancePreview = useMemo(
     () => analytics.studentsWithBalance
       .slice()
@@ -245,8 +264,8 @@ export default function DashboardPage() {
           <div className="loading-line" />
           <div className="loading-line short" />
         </section>
-        <div className="analytics-grid four">
-          {[1, 2, 3, 4].map((item) => <div key={item} className="analytics-card skeleton-card" />)}
+        <div className="analytics-grid five">
+          {[1, 2, 3, 4, 5].map((item) => <div key={item} className="analytics-card skeleton-card" />)}
         </div>
       </div>
     );
@@ -272,11 +291,12 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="analytics-grid four">
+      <section className="analytics-grid five">
         <StatCard label="Total students" value={analytics.totalStudents} helper={`${analytics.activeRate}% active records`} tone="blue" icon="🎓" />
         <StatCard label="Paid / active" value={analytics.paidStudents} helper={`${analytics.paymentRate}% marked paid or active`} tone="green" icon="✅" />
         <StatCard label="Balance due" value={moneyFormatter.format(analytics.totalBalance)} helper={`${analytics.studentsWithBalance.length} student(s) with balances`} tone="amber" icon="💳" />
         <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper={`${affectedHolidayClassCount} affected class${affectedHolidayClassCount === 1 ? "" : "es"}`} tone="purple" icon="📅" />
+        <StatCard label="Leads needing attention" value={leadNotificationSummary.unresolvedCount} helper={`${leadNotificationSummary.unseenCount} new unseen lead${leadNotificationSummary.unseenCount === 1 ? "" : "s"}`} tone="rose" icon="🔔" to="/students?tab=leads" />
       </section>
 
       <section className="quick-actions-grid">
