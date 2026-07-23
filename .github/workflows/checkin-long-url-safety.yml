@@ -1,0 +1,32 @@
+name: Check-in long URL safety
+
+on:
+  pull_request:
+    paths:
+      - "package.json"
+      - "scripts/patchCheckinLongUrlFreeze.mjs"
+      - "scripts/checkCheckinLongUrlFreeze.mjs"
+      - "src/pages/CheckinPage.jsx"
+      - "src/pages/CanonicalAttendancePageV3.jsx"
+      - ".github/workflows/checkin-long-url-safety.yml"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply check-in URL patch
+        run: node scripts/patchCheckinLongUrlFreeze.mjs
+      - name: Validate lightweight stable QR contract
+        run: node scripts/checkCheckinLongUrlFreeze.mjs
+      - name: Build admin app
+        run: npm run build
