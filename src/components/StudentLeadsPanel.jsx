@@ -22,6 +22,102 @@ const bodyCellStyle = {
   whiteSpace: "nowrap",
 };
 
+const responsiveLeadStyles = `
+  .student-leads-panel {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .student-leads-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .student-leads-actions-cell,
+  .student-leads-actions-header {
+    box-shadow: -8px 0 12px rgba(15, 23, 42, 0.05);
+  }
+
+  .student-leads-search input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 720px) {
+    .student-leads-panel {
+      gap: 12px !important;
+    }
+
+    .student-leads-table-wrap {
+      border-radius: 8px !important;
+    }
+
+    .student-leads-table {
+      min-width: 1120px !important;
+    }
+
+    .student-leads-table th,
+    .student-leads-table td {
+      padding: 8px !important;
+      font-size: 12.5px;
+    }
+
+    .student-leads-table td {
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+      max-width: 220px;
+    }
+
+    .student-leads-table th:first-child,
+    .student-leads-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      min-width: 135px;
+      max-width: 170px;
+    }
+
+    .student-leads-table th:first-child {
+      background: #f8fafc;
+      z-index: 3;
+    }
+
+    .student-leads-table td:first-child {
+      background: #ffffff;
+      box-shadow: 8px 0 12px rgba(15, 23, 42, 0.05);
+    }
+
+    .student-leads-actions-header,
+    .student-leads-actions-cell {
+      position: static !important;
+      right: auto !important;
+      box-shadow: none !important;
+    }
+
+    .student-leads-actions {
+      min-width: 220px !important;
+      max-width: 260px;
+      gap: 6px !important;
+    }
+
+    .student-leads-actions a,
+    .student-leads-actions button {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 8px 10px;
+    }
+
+    .student-leads-source {
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+  }
+`;
+
 function callUrl(phone) {
   const normalizedPhone = String(phone || "").trim().replace(/(?!^)\+|[^\d+]/g, "");
   return normalizedPhone ? `tel:${normalizedPhone}` : "";
@@ -251,7 +347,9 @@ export default function StudentLeadsPanel() {
   }, [leads, query]);
 
   return (
-    <div style={{ display: "grid", gap: 14 }}>
+    <div className="student-leads-panel" style={{ display: "grid", gap: 14 }}>
+      <style>{responsiveLeadStyles}</style>
+
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <div>
           <h2 style={{ margin: "0 0 6px" }}>Student Leads</h2>
@@ -262,11 +360,11 @@ export default function StudentLeadsPanel() {
         <button type="button" onClick={loadLeads} disabled={loading}>{loading ? "Refreshing…" : "Refresh leads"}</button>
       </div>
 
-      <div style={{ padding: 12, border: "1px solid #bfdbfe", borderRadius: 10, background: "#eff6ff", color: "#1e3a8a" }}>
+      <div className="student-leads-source" style={{ padding: 12, border: "1px solid #bfdbfe", borderRadius: 10, background: "#eff6ff", color: "#1e3a8a" }}>
         Source: <a href={STUDENT_LEADS_PUBLISHED_URL} target="_blank" rel="noreferrer">published Google Sheet</a> · Sheet tab: <strong>{STUDENT_LEADS_SHEET_NAME}</strong>
       </div>
 
-      <label style={{ display: "grid", gap: 6, maxWidth: 560 }}>
+      <label className="student-leads-search" style={{ display: "grid", gap: 6, maxWidth: 560 }}>
         <span style={{ fontWeight: 700 }}>Search leads</span>
         <input
           type="search"
@@ -295,8 +393,8 @@ export default function StudentLeadsPanel() {
           {filteredLeads.length === 0 ? <p>No leads found.</p> : null}
 
           {filteredLeads.length > 0 ? (
-            <div style={{ overflowX: "auto", border: "1px solid #e5e7eb", borderRadius: 10 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1700 }}>
+            <div className="student-leads-table-wrap" style={{ overflowX: "auto", border: "1px solid #e5e7eb", borderRadius: 10 }}>
+              <table className="student-leads-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: 1700 }}>
                 <thead>
                   <tr style={{ background: "#f8fafc" }}>
                     <th style={headerCellStyle}>Name</th>
@@ -313,7 +411,7 @@ export default function StudentLeadsPanel() {
                     <th style={headerCellStyle}>Next follow-up</th>
                     <th style={headerCellStyle}>Last follow-up</th>
                     <th style={headerCellStyle}>Source</th>
-                    <th style={{ ...headerCellStyle, position: "sticky", right: 0, background: "#f8fafc" }}>Actions</th>
+                    <th className="student-leads-actions-header" style={{ ...headerCellStyle, position: "sticky", right: 0, background: "#f8fafc" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -339,8 +437,8 @@ export default function StudentLeadsPanel() {
                         <td style={bodyCellStyle}>{formatDateValue(lead.nextFollowUpAt)}</td>
                         <td style={bodyCellStyle}>{formatDateValue(lead.lastFollowUpAt)}</td>
                         <td style={bodyCellStyle}>{readableLabel(lead.source)}</td>
-                        <td style={{ ...bodyCellStyle, position: "sticky", right: 0, background: "#ffffff" }}>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", minWidth: 320 }}>
+                        <td className="student-leads-actions-cell" style={{ ...bodyCellStyle, position: "sticky", right: 0, background: "#ffffff" }}>
+                          <div className="student-leads-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", minWidth: 320 }}>
                             {whatsappLink ? <a href={whatsappLink} target="_blank" rel="noreferrer">WhatsApp</a> : null}
                             {phoneLink ? <a href={phoneLink}>Call</a> : null}
                             {emailLink ? <a href={emailLink}>Email</a> : null}
