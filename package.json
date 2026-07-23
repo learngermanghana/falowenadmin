@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/patchAutomaticSessionCompletionUi.mjs && node scripts/repairAnswersJson.mjs",
+    "prebuild": "node scripts/patchCheckinLongUrlFreeze.mjs && node scripts/patchAutomaticSessionCompletionUi.mjs && node scripts/repairAnswersJson.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
