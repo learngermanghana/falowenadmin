@@ -49,6 +49,21 @@ function assertSavableScore(value) {
   throw saveError;
 }
 
+function savedScoreLabel(receipt = {}, fallbackScore) {
+  const numeric = Number(receipt?.row?.score ?? fallbackScore);
+  return Number.isFinite(numeric) ? `${Math.round(numeric)}/100` : "unknown score";
+}
+
+function withConfirmedScoreMessage(target = {}, scoreLabel) {
+  if (!target || typeof target !== "object") return target;
+  const prefix = target.success ? `Score saved: ${scoreLabel}.` : `Score attempted: ${scoreLabel}.`;
+  const message = String(target.message || "").trim();
+  return {
+    ...target,
+    message: message ? `${prefix} ${message}` : prefix,
+  };
+}
+
 function stripBoldMarkdown(value = "") {
   return String(value || "").replace(/\*\*/g, "");
 }
@@ -136,5 +151,14 @@ export async function saveMarkingResult(options = {}) {
 
 export async function saveScoreRow(options = {}) {
   assertSavableScore(options.score);
-  return base.saveScoreRow(options);
+  const receipt = await base.saveScoreRow(options);
+  const scoreLabel = savedScoreLabel(receipt, options.score);
+
+  return {
+    ...receipt,
+    savedScore: Number(receipt?.row?.score ?? options.score),
+    savedScoreLabel: scoreLabel,
+    sheet: withConfirmedScoreMessage(receipt.sheet, scoreLabel),
+    firestore: withConfirmedScoreMessage(receipt.firestore, scoreLabel),
+  };
 }
