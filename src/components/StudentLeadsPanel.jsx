@@ -7,6 +7,8 @@ import {
 } from "../services/studentLeadService.js";
 import { deleteStudentLead } from "../services/studentLeadDeletionService.js";
 
+const REGISTRATION_URL = "https://www.falowen.app/signup";
+
 const headerCellStyle = {
   textAlign: "left",
   padding: 10,
@@ -25,21 +27,33 @@ function callUrl(phone) {
   return normalizedPhone ? `tel:${normalizedPhone}` : "";
 }
 
-function mailUrl(email) {
+function registrationMessage(lead = {}) {
+  const greeting = lead.name ? `Hello ${lead.name},` : "Hello,";
+  const course = String(lead.className || lead.level || "").trim();
+  const interest = course
+    ? `Thank you for your interest in ${course}.`
+    : "Thank you for your interest in our language classes.";
+
+  return `${greeting}\n\nThis is Learn Language Education Academy. ${interest}\n\nTo proceed with your registration, please complete your registration here:\n${REGISTRATION_URL}\n\nIf you have any questions before registering, please reply to this message and we'll be happy to assist you.`;
+}
+
+function mailUrl(email, lead = {}) {
   const clean = String(email || "").trim();
-  return clean ? `mailto:${clean}` : "";
+  if (!clean) return "";
+
+  const course = String(lead.className || lead.level || "").trim();
+  const subject = course
+    ? `Registration for ${course} | Learn Language Education Academy`
+    : "Class Registration | Learn Language Education Academy";
+
+  return `mailto:${clean}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(registrationMessage(lead))}`;
 }
 
 function whatsappUrl(phone, lead = {}) {
   const normalizedPhone = normalizeLeadPhone(phone);
   if (!normalizedPhone) return "";
 
-  const greeting = lead.name ? `Hello ${lead.name},` : "Hello,";
-  const course = lead.className || lead.level;
-  const context = course ? ` about your interest in ${course}` : " about your class enquiry";
-  const message = `${greeting} this is Learn Language Education Academy. We received your details${context}. How may we assist you?`;
-
-  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(registrationMessage(lead))}`;
 }
 
 function readableLabel(value) {
@@ -305,7 +319,7 @@ export default function StudentLeadsPanel() {
                 <tbody>
                   {filteredLeads.map((lead, index) => {
                     const phoneLink = callUrl(lead.number);
-                    const emailLink = mailUrl(lead.email);
+                    const emailLink = mailUrl(lead.email, lead);
                     const whatsappLink = whatsappUrl(lead.number, lead);
                     const canDelete = isCompletedLead(lead);
 
