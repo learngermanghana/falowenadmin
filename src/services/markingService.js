@@ -2,6 +2,8 @@ import * as base from "./markingServiceBase.js";
 
 export * from "./markingServiceBase.js";
 
+const BLOCKED_SCORE_MESSAGE = "Score save blocked because the final score is 0 or invalid. Please retry the marking before saving.";
+
 function normalizeStudentCode(value) {
   return String(value || "")
     .trim()
@@ -27,6 +29,24 @@ function normalizePercent(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return null;
   return Math.max(0, Math.min(100, Math.round(numeric)));
+}
+
+function scoreValueFromResult(result = {}) {
+  return result.finalScore ?? result.score ?? null;
+}
+
+function isBlockedScore(value) {
+  if (value === "" || value === null || value === undefined) return true;
+  const numeric = Number(value);
+  return !Number.isFinite(numeric) || numeric <= 0;
+}
+
+function assertSavableScore(value) {
+  if (!isBlockedScore(value)) return Number(value);
+  const saveError = new Error(BLOCKED_SCORE_MESSAGE);
+  saveError.code = "MARKING_SCORE_BLOCKED";
+  saveError.score = value;
+  throw saveError;
 }
 
 function stripBoldMarkdown(value = "") {
@@ -98,6 +118,23 @@ export async function loadSubmissions(options = {}) {
 }
 
 export async function markSubmissionWithAI(options = {}) {
-  const result = await base.markSubmissionWithAI(options);
-  return sanitizeMarkingResult(result);
+  const firstResult = sanitizeMarkingResult(await base.markSubmissionWithAI(options));
+  if (!isBlockedScore(scoreValueFromResult(firstResult))) return firstResult;
+
+  console.warn("AI marking returned a zero/invalid score. Retrying once before allowing any save.", {
+    score: scoreValueFromResult(firstResult),
+    assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
+  });
+
+  return sanitizeMarkingResult(await base.markSubmissionWithAI(options));
+}
+
+export async function saveMarkingResult(options = {}) {
+  assertSavableScore(scoreValueFromResult(options.result || {}));
+  return base.saveMarkingResult(options);
+}
+
+export async function saveScoreRow(options = {}) {
+  assertSavableScore(options.score);
+  return base.saveScoreRow(options);
 }
