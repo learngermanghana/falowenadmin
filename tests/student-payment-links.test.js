@@ -7,6 +7,7 @@ import { calculatePaystackGrossAmount } from "../src/utils/paystackCharges.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
+const countMatches = (text, regex) => (text.match(regex) || []).length;
 
 test("student payment patch exposes the admin UI and production API route", () => {
   const page = read("src/pages/StudentDirectoryPage.jsx");
@@ -27,9 +28,14 @@ test("payment backend requires admin access, reuses the existing Paystack secret
   const functionsSource = read("functions/index.js");
   const paymentPatch = read("scripts/patchStudentPaymentLinks.mjs");
 
-  assert.match(paymentPatch, /defineSecret\("PAYSTACK_SECRET"\)/);
-  assert.doesNotMatch(paymentPatch, /defineSecret\("PAYSTACK_SECRET_KEY"\)/);
+  assert.match(paymentPatch, /const legacySecretDeclaration/);
+  assert.match(paymentPatch, /content\.split\(legacySecretDeclaration\)\.join\(""\)/);
+  assert.match(paymentPatch, /removeGeneratedBlocks\(content, paymentBlockBegin, paymentBlockEnd/);
   assert.match(paymentPatch, /process\.env\.PAYSTACK_SECRET/);
+  assert.equal(countMatches(functionsSource, /const paystackSecretKeySecret = defineSecret\("PAYSTACK_SECRET"\);/g), 1);
+  assert.doesNotMatch(functionsSource, /defineSecret\("PAYSTACK_SECRET_KEY"\)/);
+  assert.equal(countMatches(functionsSource, /\/\/ BEGIN STUDENT PAYMENT LINKS/g), 1);
+  assert.equal(countMatches(functionsSource, /\/\/ END STUDENT PAYMENT LINKS/g), 1);
   assert.match(functionsSource, /async function requirePaymentAdmin\(req\)/);
   assert.match(functionsSource, /decoded\.admin === true/);
   assert.match(functionsSource, /decoded\.staff === true/);
@@ -47,6 +53,15 @@ test("payment backend requires admin access, reuses the existing Paystack secret
   assert.match(functionsSource, /balanceDue: nextBalance/);
   assert.match(functionsSource, /tuitionCredit/);
   assert.match(functionsSource, /checkoutAmount/);
+});
+
+test("payment setup guides consistently use the production PAYSTACK_SECRET name", () => {
+  const primaryGuide = read("docs/student-payment-links.md");
+  const deploymentGuide = read("docs/student-payments.md");
+
+  assert.match(primaryGuide, /functions:secrets:set PAYSTACK_SECRET --project/);
+  assert.doesNotMatch(primaryGuide, /functions:secrets:set PAYSTACK_SECRET_KEY/);
+  assert.match(deploymentGuide, /`PAYSTACK_SECRET`/);
 });
 
 test("payment history preserves authorization status codes and migrates existing routes", () => {
