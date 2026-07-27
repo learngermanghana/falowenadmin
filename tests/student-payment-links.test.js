@@ -46,6 +46,13 @@ test("payment backend requires admin access and verifies webhooks", () => {
   assert.match(functionsSource, /checkoutAmount/);
 });
 
+test("payment history preserves authorization status codes", () => {
+  const historyPatch = read("scripts/patchStudentPaymentHistoryApi.mjs");
+
+  assert.match(historyPatch, /res\.status\(error\?\.statusCode \|\| 401\)/);
+  assert.doesNotMatch(historyPatch, /return res\.status\(401\)\.json\(\{ ok: false, error: error\?\.message \|\| "Could not load payment history" \}\)/);
+});
+
 test("checkout gross can exceed tuition credit without changing the tuition amount", () => {
   const tuitionCredit = 1500;
   const checkoutAmount = calculatePaystackGrossAmount(tuitionCredit);
