@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import {
   buildTutorCalibrationEvent,
   compareExaminerResults,
+  ensureExplicitWritingLabel,
+  hasLikelyUnlabelledWritingBeforeObjective,
   hasWritingEvidence,
 } from "../src/utils/markingIntelligence.js";
 
@@ -40,10 +42,28 @@ test("second examiner respects its own needs_review signal", () => {
   assert.equal(comparison.requiresTutorReview, true);
 });
 
-test("writing evidence is detected from writing score or writing part", () => {
+test("writing evidence is detected from a credible writing score or writing part", () => {
   assert.equal(hasWritingEvidence({ writingScore: 64 }), true);
   assert.equal(hasWritingEvidence({ parts: [{ partId: "teil2", partType: "writing" }] }), true);
+  assert.equal(hasWritingEvidence({ writingScore: 0, parts: [{ partId: "teil3", partType: "objective" }] }), false);
   assert.equal(hasWritingEvidence({ objectiveScore: 80, parts: [{ partId: "teil3", partType: "objective" }] }), false);
+});
+
+test("detects an unlabelled letter before Teil 3 and adds a temporary Teil 2 label", () => {
+  const submission = `Hallo Anna,\n\nwie geht es dir? Ich hoffe, es geht dir gut.\n\nIch schreibe dir, weil ich dich zu meinem Geburtstagsfest einladen möchte. Das Fest ist am Samstag um 18 Uhr in meinem Haus in Accra. Ich würde mich sehr freuen, wenn du kommen könntest.\n\nViele Grüße\nDiana\n\nTeil 3\n1.B\n2.C`;
+
+  assert.equal(hasLikelyUnlabelledWritingBeforeObjective(submission), true);
+  const prepared = ensureExplicitWritingLabel(submission);
+  assert.match(prepared, /^Teil 2 Schreiben\nHallo Anna,/);
+  assert.match(prepared, /\nTeil 3\n1\.B/);
+});
+
+test("does not relabel already labelled writing or objective-only work", () => {
+  const labelled = "Teil 2\nHallo Anna, ich schreibe dir.\nTeil 3\n1.B";
+  const objectiveOnly = "Teil 3\n1.B\n2.C\nTeil 4\n1.A";
+
+  assert.equal(ensureExplicitWritingLabel(labelled), labelled);
+  assert.equal(ensureExplicitWritingLabel(objectiveOnly), objectiveOnly);
 });
 
 test("tutor score increase records AI too strict calibration", () => {
