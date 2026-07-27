@@ -34,6 +34,17 @@ function replaceOnce(content, needle, replacement, label) {
   return content.replace(needle, replacement);
 }
 
+function removeGeneratedBlocks(content, beginMarker, endMarker, label) {
+  let next = content;
+  while (next.includes(beginMarker)) {
+    const start = next.indexOf(beginMarker);
+    const end = next.indexOf(endMarker, start);
+    if (end < 0) throw new Error(`Student payment patch found an incomplete ${label} block.`);
+    next = `${next.slice(0, start)}${next.slice(end + endMarker.length)}`;
+  }
+  return next;
+}
+
 function patchStudentDirectory() {
   const file = "src/pages/StudentDirectoryPage.jsx";
   let content = read(file);
@@ -66,13 +77,19 @@ function patchFunctions() {
   const file = "functions/index.js";
   let content = read(file);
 
+  const legacySecretDeclaration = 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET_KEY");\n';
+  const currentSecretDeclaration = 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET");\n';
+  content = content.split(legacySecretDeclaration).join("");
   content = insertAfter(
     content,
     'const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");\n',
-    'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET");\n',
+    currentSecretDeclaration,
     "student delete secret declarations",
   );
 
+  const paymentBlockBegin = "// BEGIN STUDENT PAYMENT LINKS\n";
+  const paymentBlockEnd = "// END STUDENT PAYMENT LINKS\n\n";
+  content = removeGeneratedBlocks(content, paymentBlockBegin, paymentBlockEnd, "student payment links");
   content = insertBefore(
     content,
     'app.post("/students/delete-account", async (req, res) => {',
