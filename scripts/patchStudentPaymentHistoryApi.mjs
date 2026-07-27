@@ -14,6 +14,15 @@ if (!content.includes('app.get("/payments/student/:studentId"')) {
   content = content.replace(marker, `${route}${marker}`);
 }
 
+// Migrate checkouts that already contain the older generated route. The route
+// generation guard above intentionally skips existing routes, so migrations
+// must run independently and remain idempotent.
+const legacyHistoryCatch = 'return res.status(401).json({ ok: false, error: error?.message || "Could not load payment history" });';
+const statusAwareHistoryCatch = 'return res.status(error?.statusCode || 401).json({ ok: false, error: error?.message || "Could not load payment history" });';
+if (content.includes('app.get("/payments/student/:studentId"') && content.includes(legacyHistoryCatch)) {
+  content = content.replace(legacyHistoryCatch, statusAwareHistoryCatch);
+}
+
 const webhookAnchor = `  const event = req.body || {};\n  if (String(event.event || "") !== "charge.success") return res.status(200).json({ ok: true, ignored: true });\n\n  try {`;
 const webhookReplacement = `  const event = req.body || {};\n  if (String(event.event || "") !== "charge.success") return res.status(200).json({ ok: true, ignored: true });\n  const reference = String(event?.data?.reference || "").trim();\n  if (!reference.startsWith("FAL-")) return res.status(200).json({ ok: true, ignored: true, reason: "non_falowen_reference" });\n\n  try {`;
 
