@@ -1,6 +1,8 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const { _test } = require("../functions/leadClassStartReminderEmails.js");
+import test from "node:test";
+import assert from "node:assert/strict";
+import leadReminderModule from "../functions/leadClassStartReminderEmails.js";
+
+const { _test } = leadReminderModule;
 
 const {
   buildLeadReminderMessage,
