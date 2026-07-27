@@ -82,6 +82,15 @@ jobs:
           grep -F 'app.get("/exam-file/config"' functions/index.js
           grep -F 'app.put("/exam-file/config"' functions/index.js
 
+      - name: Restore clean deployment source
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Validation scripts intentionally patch tracked files in place. Firebase must start
+          # its own predeploy pipeline from the committed source so hook ordering stays stable.
+          git reset --hard "$GITHUB_SHA"
+          git clean -fd
+
       - name: Install functions dependencies
         working-directory: functions
         run: npm ci
