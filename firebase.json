@@ -26,6 +26,7 @@
         "node scripts/patchClassSessionReminderEmails.mjs",
         "node scripts/patchLeadClassStartReminderEmails.mjs",
         "node scripts/patchAutoCompleteClassSessions.mjs",
+        "node scripts/patchCourseReviewRequestEmails.mjs",
         "node scripts/patchGoetheExamConfig.mjs"
       ],
       "ignore": [
