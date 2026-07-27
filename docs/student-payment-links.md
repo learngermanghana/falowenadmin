@@ -20,10 +20,12 @@ Falowen Admin can generate a Paystack checkout link from the Student Directory a
 
 ## Required configuration
 
-Set the Firebase Functions secret:
+The production Firebase Functions secret is named exactly `PAYSTACK_SECRET`. If that secret already exists in Google Cloud Secret Manager for `falowen-examiner-trainer`, reuse it; do not create a duplicate `PAYSTACK_SECRET_KEY` secret.
+
+For a fresh project where the secret does not yet exist, create it with:
 
 ```bash
-firebase functions:secrets:set PAYSTACK_SECRET_KEY --project "$FIREBASE_PROJECT_ID"
+firebase functions:secrets:set PAYSTACK_SECRET --project "$FIREBASE_PROJECT_ID"
 ```
 
 Optional callback URL:
@@ -42,7 +44,7 @@ The webhook endpoint must point directly to the Firebase function so Paystack's 
 
 ## Deployment
 
-`npm run build`, `npm test`, `npm run deploy:falowenadmin`, and the Firebase Functions predeploy hook run both payment patch scripts and then run `node --check functions/index.js`. The patches are idempotent and inject the UI hook, API proxy route, Firebase payment routes, authenticated payment-history endpoint, and Paystack secret registration without replacing unrelated student or marking code.
+`npm run build`, `npm test`, `npm run deploy:falowenadmin`, and the Firebase Functions predeploy hook run the payment patches and then run `node --check functions/index.js`. The payment-link patch also migrates previously generated output: it removes the legacy `PAYSTACK_SECRET_KEY` declaration, refreshes any existing `// BEGIN STUDENT PAYMENT LINKS` block in place, and leaves exactly one current payment backend using `PAYSTACK_SECRET`. This keeps long-lived deployment workspaces safe across patch upgrades.
 
 ## Firestore rules
 
