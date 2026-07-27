@@ -1,6 +1,12 @@
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
-import { buildTutorCalibrationEvent, compareExaminerResults, hasWritingEvidence } from "../utils/markingIntelligence.js";
+import {
+  buildTutorCalibrationEvent,
+  compareExaminerResults,
+  ensureExplicitWritingLabel,
+  hasLikelyUnlabelledWritingBeforeObjective,
+  hasWritingEvidence,
+} from "../utils/markingIntelligence.js";
 import * as base from "./markingServiceBase.js";
 
 export * from "./markingServiceBase.js";
@@ -142,13 +148,50 @@ function primaryConfidence(result = {}) {
   return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.5;
 }
 
+function prepareMarkingOptions(options = {}) {
+  const originalText = options.submissionText || options.submission?.text || "";
+  const preparedText = ensureExplicitWritingLabel(originalText);
+  if (preparedText === originalText) return options;
+
+  return {
+    ...options,
+    submissionText: preparedText,
+  };
+}
+
+function routeMissedWritingToReview(result = {}, submissionText = "") {
+  if (!hasLikelyUnlabelledWritingBeforeObjective(submissionText) || hasWritingEvidence(result)) return result;
+
+  const objectiveScore = normalizePercent(result.objectiveScore);
+  const safeFinalScore = objectiveScore ?? normalizePercent(scoreValueFromResult(result)) ?? 0;
+  const warning = "A writing section was detected before the objective parts, but no reliable writing score was returned. The writing score was not treated as zero; tutor review is required.";
+
+  return sanitizeMarkingResult({
+    ...result,
+    score: safeFinalScore,
+    finalScore: safeFinalScore,
+    writingScore: null,
+    writingScorePercent: null,
+    status: "needs_review",
+    shouldSendAutomatically: false,
+    feedback: [result.feedback, warning].filter(Boolean).join(" "),
+    improvementSummary: [result.improvementSummary, warning].filter(Boolean).join(" "),
+    ai: {
+      ...(result.ai || {}),
+      unlabelledWritingDetected: true,
+      writingScoreMissing: true,
+    },
+  });
+}
+
 async function requestSecondExaminer(options = {}) {
+  const originalText = options.submissionText || options.submission?.text || "";
   const payload = {
     submission: options.submission || {},
     referenceEntry: options.referenceEntry || null,
     assignmentKey: options.referenceEntry?.assignmentKey || options.submission?.assignmentKey || options.submission?.assignmentId || "",
     level: options.referenceEntry?.level || options.submission?.level || "",
-    submissionText: options.submissionText || options.submission?.text || "",
+    submissionText: ensureExplicitWritingLabel(originalText),
     markingMode: "second_examiner",
     secondExaminerInstruction: "Act as an independent second German examiner. Re-mark the submission from scratch using the same answer key and rubric. Do not copy or assume the first examiner's score. Return your own evidence-based result.",
   };
@@ -262,21 +305,26 @@ export async function loadSubmissions(options = {}) {
 }
 
 export async function markSubmissionWithAI(options = {}) {
-  let primary = sanitizeMarkingResult(await base.markSubmissionWithAI(options));
+  const originalSubmissionText = options.submissionText || options.submission?.text || "";
+  const preparedOptions = prepareMarkingOptions(options);
+
+  let primary = sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions));
   if (isBlockedScore(scoreValueFromResult(primary))) {
     console.warn("AI marking returned a zero/invalid score. Retrying once before allowing any save.", {
       score: scoreValueFromResult(primary),
       assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
     });
-    primary = sanitizeMarkingResult(await base.markSubmissionWithAI(options));
+    primary = sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions));
   }
+
+  primary = routeMissedWritingToReview(primary, originalSubmissionText);
 
   if (isBlockedScore(scoreValueFromResult(primary)) || !hasWritingEvidence(primary)) {
     return primary;
   }
 
   try {
-    const secondary = await requestSecondExaminer(options);
+    const secondary = await requestSecondExaminer(preparedOptions);
     return mergeSecondExaminer(primary, secondary);
   } catch (error) {
     console.warn("Second examiner unavailable; routing writing submission to tutor review.", {
