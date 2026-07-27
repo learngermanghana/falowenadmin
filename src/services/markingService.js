@@ -1,3 +1,6 @@
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase.js";
+import { buildTutorCalibrationEvent, compareExaminerResults, hasWritingEvidence } from "../utils/markingIntelligence.js";
 import * as base from "./markingServiceBase.js";
 
 export * from "./markingServiceBase.js";
@@ -127,26 +130,179 @@ function sanitizeMarkingResult(result = {}) {
   };
 }
 
+function safeFirestoreId(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[/#?[\]]+/g, "_")
+    .replace(/_{2,}/g, "_");
+}
+
+function primaryConfidence(result = {}) {
+  const value = Number(result.confidence);
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.5;
+}
+
+async function requestSecondExaminer(options = {}) {
+  const payload = {
+    submission: options.submission || {},
+    referenceEntry: options.referenceEntry || null,
+    assignmentKey: options.referenceEntry?.assignmentKey || options.submission?.assignmentKey || options.submission?.assignmentId || "",
+    level: options.referenceEntry?.level || options.submission?.level || "",
+    submissionText: options.submissionText || options.submission?.text || "",
+    markingMode: "second_examiner",
+    secondExaminerInstruction: "Act as an independent second German examiner. Re-mark the submission from scratch using the same answer key and rubric. Do not copy or assume the first examiner's score. Return your own evidence-based result.",
+  };
+
+  const response = await fetch("/api/marking/ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body?.status === "error") {
+    throw new Error(body?.message || "Second examiner request failed");
+  }
+
+  return sanitizeMarkingResult(body.result || body);
+}
+
+function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
+  const primaryScore = normalizePercent(scoreValueFromResult(primary));
+
+  if (!secondary) {
+    const secondExaminer = {
+      enabled: true,
+      status: "unavailable",
+      primaryScore,
+      secondaryScore: null,
+      scoreDelta: null,
+      agreement: "unknown",
+      requiresTutorReview: true,
+      error: String(error?.message || error || "Second examiner unavailable"),
+    };
+    return {
+      ...primary,
+      verifiedAiScore: primaryScore,
+      status: "needs_review",
+      shouldSendAutomatically: false,
+      secondExaminer,
+      ai: { ...(primary.ai || {}), secondExaminer },
+    };
+  }
+
+  const comparison = compareExaminerResults(primary, secondary);
+  const agreementConfidence = comparison.scoreDelta === null
+    ? 0.5
+    : Math.max(0.35, Math.min(1, 1 - (comparison.scoreDelta / 50)));
+  const confidence = Math.min(primaryConfidence(primary), primaryConfidence(secondary), agreementConfidence);
+  const secondExaminer = {
+    ...comparison,
+    status: comparison.requiresTutorReview ? "disagreed" : "agreed",
+  };
+
+  return {
+    ...primary,
+    verifiedAiScore: primaryScore,
+    confidence: Number(confidence.toFixed(2)),
+    status: comparison.requiresTutorReview ? "needs_review" : primary.status,
+    shouldSendAutomatically: comparison.requiresTutorReview ? false : Boolean(primary.shouldSendAutomatically),
+    secondExaminer,
+    ai: { ...(primary.ai || {}), secondExaminer },
+  };
+}
+
+function hasTutorDecisionMarker(result = {}) {
+  return Object.prototype.hasOwnProperty.call(result, "manualOverride");
+}
+
+function enrichTutorCalibration(result = {}) {
+  if (!hasTutorDecisionMarker(result)) return result;
+
+  const aiScore = result.secondExaminer?.primaryScore ?? result.verifiedAiScore ?? result.aiOriginalScore ?? null;
+  const calibration = buildTutorCalibrationEvent({
+    aiScore,
+    tutorScore: scoreValueFromResult(result),
+    aiFeedback: result.aiOriginalFeedback || "",
+    tutorFeedback: result.feedback || "",
+    secondExaminer: result.secondExaminer || null,
+    source: result.tutorCalibration?.source || "marking_page",
+  });
+
+  return {
+    ...result,
+    manualOverride: calibration.manualOverride,
+    tutorCalibration: calibration,
+  };
+}
+
+async function syncIntelligenceAudit({ submissionId, submissionPath, result = {} } = {}) {
+  if (!result.secondExaminer && !result.tutorCalibration) return;
+  const safeId = safeFirestoreId(submissionId || submissionPath || "");
+  if (!safeId) return;
+
+  const patch = {
+    updatedAt: new Date().toISOString(),
+  };
+  if (result.secondExaminer) {
+    patch.secondExaminer = result.secondExaminer;
+    patch.examinerAgreement = result.secondExaminer.agreement || null;
+    patch.secondExaminerRequiresTutorReview = Boolean(result.secondExaminer.requiresTutorReview);
+  }
+  if (result.tutorCalibration) {
+    patch.tutorCalibration = result.tutorCalibration;
+    patch.manualOverride = Boolean(result.tutorCalibration.manualOverride);
+  }
+
+  await setDoc(doc(db, "aiMarkingAudit", safeId), patch, { merge: true });
+}
+
 export async function loadSubmissions(options = {}) {
   const rows = await base.loadSubmissions(options);
   return rows.filter(hasUsableStudentCode);
 }
 
 export async function markSubmissionWithAI(options = {}) {
-  const firstResult = sanitizeMarkingResult(await base.markSubmissionWithAI(options));
-  if (!isBlockedScore(scoreValueFromResult(firstResult))) return firstResult;
+  let primary = sanitizeMarkingResult(await base.markSubmissionWithAI(options));
+  if (isBlockedScore(scoreValueFromResult(primary))) {
+    console.warn("AI marking returned a zero/invalid score. Retrying once before allowing any save.", {
+      score: scoreValueFromResult(primary),
+      assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
+    });
+    primary = sanitizeMarkingResult(await base.markSubmissionWithAI(options));
+  }
 
-  console.warn("AI marking returned a zero/invalid score. Retrying once before allowing any save.", {
-    score: scoreValueFromResult(firstResult),
-    assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
-  });
+  if (isBlockedScore(scoreValueFromResult(primary)) || !hasWritingEvidence(primary)) {
+    return primary;
+  }
 
-  return sanitizeMarkingResult(await base.markSubmissionWithAI(options));
+  try {
+    const secondary = await requestSecondExaminer(options);
+    return mergeSecondExaminer(primary, secondary);
+  } catch (error) {
+    console.warn("Second examiner unavailable; routing writing submission to tutor review.", {
+      assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
+      message: error?.message || String(error),
+    });
+    return mergeSecondExaminer(primary, null, error);
+  }
 }
 
 export async function saveMarkingResult(options = {}) {
-  assertSavableScore(scoreValueFromResult(options.result || {}));
-  return base.saveMarkingResult(options);
+  const result = enrichTutorCalibration(options.result || {});
+  assertSavableScore(scoreValueFromResult(result));
+  const response = await base.saveMarkingResult({ ...options, result });
+
+  try {
+    await syncIntelligenceAudit({
+      submissionId: options.submissionId,
+      submissionPath: options.submissionPath,
+      result,
+    });
+  } catch (error) {
+    console.warn("Could not sync second-examiner/calibration metadata into AI audit.", error);
+  }
+
+  return response;
 }
 
 export async function saveScoreRow(options = {}) {
