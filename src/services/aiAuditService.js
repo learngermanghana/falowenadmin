@@ -1,5 +1,6 @@
 import { collection, doc, getDoc, getDocs, query, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
+import { buildTutorCalibrationEvent } from "../utils/markingIntelligence.js";
 import { saveScoreRow } from "./markingService.js";
 
 function readTimestamp(value) {
@@ -176,6 +177,17 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
   const now = new Date().toISOString();
   const assignmentId = audit.assignmentKey || audit.assignment || audit.scoreSaveReceipt?.row?.assignment_id || "";
   const assignment = audit.assignment || audit.assignmentKey || "AI marked assignment";
+  const aiBaselineScore = audit.secondExaminer?.primaryScore ?? audit.finalScore ?? audit.result?.finalScore ?? audit.result?.score ?? null;
+  const aiBaselineFeedback = audit.result?.feedback || audit.feedback || "";
+  const tutorCalibration = buildTutorCalibrationEvent({
+    aiScore: aiBaselineScore,
+    tutorScore: finalScore,
+    aiFeedback: aiBaselineFeedback,
+    tutorFeedback: cleanedFeedback,
+    secondExaminer: audit.secondExaminer || audit.result?.secondExaminer || null,
+    source: "ai_audit",
+    capturedAt: now,
+  });
 
   const receipt = await saveScoreRow({
     studentCode: audit.studentCode || audit.scoreSaveReceipt?.row?.studentcode || "",
@@ -195,16 +207,26 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
     score: finalScore,
     feedback: cleanedFeedback,
     status: "marked",
+    manualOverride: tutorCalibration.manualOverride,
+    aiOriginalScore: aiBaselineScore,
+    aiOriginalFeedback: aiBaselineFeedback,
+    tutorCalibration,
   };
 
   await setDoc(auditRef, {
     finalScore,
     feedback: cleanedFeedback,
     status: "approved_synced",
-    editedByTutor: true,
+    editedByTutor: tutorCalibration.manualOverride,
+    manualOverride: tutorCalibration.manualOverride,
+    tutorCalibration,
+    aiOriginalScore: aiBaselineScore,
+    aiOriginalFeedback: aiBaselineFeedback,
     tutorApprovedAt: now,
     updatedAt: now,
-    reviewReason: "Tutor edited and approved this AI result.",
+    reviewReason: tutorCalibration.manualOverride
+      ? `Tutor edited and approved this AI result (${tutorCalibration.reasonCode}).`
+      : "Tutor approved the AI result without material changes.",
     scoreSaveReceipt: receipt,
     sheetSynced: Boolean(receipt?.sheet?.success && !receipt?.skippedForReview),
     firestoreSynced: Boolean(receipt?.firestore?.success),
@@ -221,6 +243,7 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
       feedbackSentToStudent: false,
       markingUpdatedAt: now,
       aiAuditApprovedAt: now,
+      tutorCalibration,
     }, { merge: true });
   }
 
@@ -233,6 +256,8 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
     finalScore,
     feedback: cleanedFeedback,
     confidence: audit.confidence ?? null,
+    manualOverride: tutorCalibration.manualOverride,
+    tutorCalibration,
     sentToStudent: false,
     updatedAt: now,
   }, { merge: true });
