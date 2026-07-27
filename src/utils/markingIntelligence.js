@@ -27,9 +27,40 @@ function readWritingScore(result = {}) {
   return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
 }
 
-export function hasWritingEvidence(result = {}) {
-  if (readWritingScore(result) !== null) return true;
+function writingPartPresent(result = {}) {
   return (Array.isArray(result.parts) ? result.parts : []).some((part) => part?.partType === "writing" || part?.partId === "teil2");
+}
+
+export function hasWritingEvidence(result = {}) {
+  if (writingPartPresent(result)) return true;
+  const score = readWritingScore(result);
+  return score !== null && score > 0;
+}
+
+export function hasLikelyUnlabelledWritingBeforeObjective(submissionText = "") {
+  const text = String(submissionText || "");
+  if (!text.trim()) return false;
+  if (/(?:^|\n)\s*(?:teil|part)\s*(?:2|zwei|two)\b|\b(?:schreiben|writing)\b/i.test(text)) return false;
+
+  const objectiveMarker = text.search(/(?:^|\n)\s*(?:(?:teil|part)\s*(?:3|4|drei|vier|three|four)\b|(?:lesen|h[oö]ren|hoeren|reading|listening)\b)/im);
+  if (objectiveMarker <= 0) return false;
+
+  const leading = text.slice(0, objectiveMarker).trim();
+  const words = leading.split(/\s+/).filter(Boolean);
+  if (words.length < 20) return false;
+
+  const hasGreeting = /\b(?:hallo|lieber|liebe|guten tag|sehr geehrte(?:r|n)?|dear|hello|hi)\b/i.test(leading);
+  const hasClosing = /\b(?:viele gr[üu](?:ß|ss)e|liebe gr[üu](?:ß|ss)e|mit freundlichen gr[üu](?:ß|ss)en|tsch[üu]ss|bis bald|regards|best wishes|sincerely)\b/i.test(leading);
+  const firstPerson = /\b(?:ich|mir|mich|mein|meine|wir|uns)\b/i.test(leading);
+  const sentenceCount = (leading.match(/[.!?]/g) || []).length;
+
+  return firstPerson && sentenceCount >= 2 && (hasGreeting || hasClosing);
+}
+
+export function ensureExplicitWritingLabel(submissionText = "") {
+  const text = String(submissionText || "");
+  if (!hasLikelyUnlabelledWritingBeforeObjective(text)) return text;
+  return `Teil 2 Schreiben\n${text}`;
 }
 
 export function compareExaminerResults(primary = {}, secondary = {}, options = {}) {
