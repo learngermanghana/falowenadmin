@@ -23,10 +23,13 @@ test("student payment patch exposes the admin UI and production API route", () =
   assert.match(component, /listStudentPayments/);
 });
 
-test("payment backend requires admin access and verifies webhooks", () => {
+test("payment backend requires admin access, reuses the existing Paystack secret, and verifies webhooks", () => {
   const functionsSource = read("functions/index.js");
+  const paymentPatch = read("scripts/patchStudentPaymentLinks.mjs");
 
-  assert.match(functionsSource, /defineSecret\("PAYSTACK_SECRET_KEY"\)/);
+  assert.match(paymentPatch, /defineSecret\("PAYSTACK_SECRET"\)/);
+  assert.doesNotMatch(paymentPatch, /defineSecret\("PAYSTACK_SECRET_KEY"\)/);
+  assert.match(paymentPatch, /process\.env\.PAYSTACK_SECRET/);
   assert.match(functionsSource, /async function requirePaymentAdmin\(req\)/);
   assert.match(functionsSource, /decoded\.admin === true/);
   assert.match(functionsSource, /decoded\.staff === true/);
