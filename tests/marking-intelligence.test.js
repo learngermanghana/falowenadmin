@@ -8,6 +8,11 @@ import {
   hasLikelyUnlabelledWritingBeforeObjective,
   hasWritingEvidence,
 } from "../src/utils/markingIntelligence.js";
+import {
+  assignmentHasScoredWriting,
+  buildNaturalStudentFeedback,
+  enforceRegisteredWritingScore,
+} from "../src/utils/naturalMarkingFeedback.js";
 
 test("second examiner accepts close writing scores", () => {
   const comparison = compareExaminerResults(
@@ -64,6 +69,102 @@ test("does not relabel already labelled writing or objective-only work", () => {
 
   assert.equal(ensureExplicitWritingLabel(labelled), labelled);
   assert.equal(ensureExplicitWritingLabel(objectiveOnly), objectiveOnly);
+});
+
+test("A1 objective-only assignment ignores an invented zero writing score", () => {
+  const protectedResult = enforceRegisteredWritingScore({
+    objectiveScore: 86,
+    objectiveCorrect: 12,
+    objectiveTotal: 14,
+    writingScore: 0,
+    writingScorePercent: 0,
+    finalScore: 43,
+    score: 43,
+    status: "needs_review",
+  }, {
+    assignmentKey: "A1-1.2",
+    expectedParts: ["main"],
+    writingParts: [],
+    aiGradedParts: [],
+  });
+
+  assert.equal(assignmentHasScoredWriting({ assignmentKey: "A1-1.2", expectedParts: ["main"] }), false);
+  assert.equal(protectedResult.finalScore, 86);
+  assert.equal(protectedResult.score, 86);
+  assert.equal(protectedResult.writingScore, null);
+  assert.equal(protectedResult.status, "marked");
+});
+
+test("registered A2 writing keeps its writing score for combined marking", () => {
+  const result = { objectiveScore: 75, objectiveTotal: 12, writingScore: 75, finalScore: 75 };
+  const referenceEntry = { assignmentKey: "A2-4.10", writingParts: ["teil2"], aiGradedParts: ["teil2"] };
+
+  assert.equal(assignmentHasScoredWriting(referenceEntry), true);
+  assert.equal(enforceRegisteredWritingScore(result, referenceEntry), result);
+});
+
+test("Mary A1 feedback uses deterministic 12 of 14 and natural tutor style", () => {
+  const result = {
+    studentName: "Mary",
+    objectiveScore: 86,
+    objectiveCorrect: 12,
+    objectiveTotal: 14,
+    objectiveDetails: {
+      1: { correct: true },
+      2: { correct: false },
+      3: { correct: true },
+      4: { correct: true },
+      5: { correct: true },
+      6: { correct: true },
+      7: { correct: true },
+      8: { correct: true },
+      9: { correct: false },
+      10: { correct: true },
+      11: { correct: true },
+      12: { correct: true },
+      13: { correct: true },
+      14: { correct: true },
+    },
+  };
+  const submission = "Ich heiße Mary. Ich komme aus Ghana und wohne in Kasoa. Ich bin 37 jahre alt.";
+  const feedback = buildNaturalStudentFeedback(result, submission);
+
+  assert.match(feedback, /^Good work, Mary\./);
+  assert.match(feedback, /12 of 14 objective questions correctly/);
+  assert.match(feedback, /questions 2 and 9 carefully/);
+  assert.match(feedback, /37 Jahre alt/);
+  assert.doesNotMatch(feedback, /📌|📊|🛠|Marking summary|Good effort/);
+  assert.ok(feedback.split(/\s+/).length <= 60);
+});
+
+test("Diana feedback praises perfect Teil 4 and lists only wrong Teil 3 questions", () => {
+  const result = {
+    studentName: "Diana",
+    objectiveScore: 75,
+    objectiveCorrect: 9,
+    objectiveTotal: 12,
+    objectiveDetails: {
+      "teil3.1": { correct: true },
+      "teil3.2": { correct: true },
+      "teil3.3": { correct: true },
+      "teil3.4": { correct: false },
+      "teil3.5": { correct: true },
+      "teil3.6": { correct: false },
+      "teil3.7": { correct: false },
+      "teil4.1": { correct: true },
+      "teil4.2": { correct: true },
+      "teil4.3": { correct: true },
+      "teil4.4": { correct: true },
+      "teil4.5": { correct: true },
+    },
+  };
+  const submission = "Hallo Anna. Ich freue mich vorfreue mich auf deine Antwort. Viele Grüße Diana";
+  const feedback = buildNaturalStudentFeedback(result, submission);
+
+  assert.match(feedback, /Teil 4 is excellent, with all answers correct/);
+  assert.match(feedback, /In Teil 3, review questions 4, 6, and 7 carefully/);
+  assert.match(feedback, /vorfreue mich/);
+  assert.doesNotMatch(feedback, /📌|📊|🛠|Marking summary/);
 });
 
 test("tutor score increase records AI too strict calibration", () => {
