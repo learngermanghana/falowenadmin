@@ -8,24 +8,33 @@ import { calculatePaystackGrossAmount } from "../src/utils/paystackCharges.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
-test("student payment patch exposes the admin UI and API proxy", () => {
+test("student payment patch exposes the admin UI and production API route", () => {
   const page = read("src/pages/StudentDirectoryPage.jsx");
   const router = read("api/router.js");
   const component = read("src/components/StudentPaymentTools.jsx");
+  const vercel = read("vercel.json");
 
   assert.match(page, /StudentPaymentTools/);
   assert.match(page, /<StudentPaymentTools/);
   assert.match(router, /path\.startsWith\("payments\/"\)/);
+  assert.match(vercel, /"source": "\/api\/payments\/\(\.\*\)"/);
+  assert.match(vercel, /cloudfunctions\.net\/api\/payments\/\$1/);
   assert.doesNotMatch(component, /collection\(db,\s*"payments"\)/);
   assert.match(component, /listStudentPayments/);
 });
 
-test("payment backend keeps Paystack secret server-side and verifies webhooks", () => {
+test("payment backend requires admin access and verifies webhooks", () => {
   const functionsSource = read("functions/index.js");
 
   assert.match(functionsSource, /defineSecret\("PAYSTACK_SECRET_KEY"\)/);
-  assert.match(functionsSource, /app\.post\("\/payments\/create-link"/);
+  assert.match(functionsSource, /async function requirePaymentAdmin\(req\)/);
+  assert.match(functionsSource, /decoded\.admin === true/);
+  assert.match(functionsSource, /decoded\.staff === true/);
+  assert.match(functionsSource, /Admin or staff access required/);
+  assert.match(functionsSource, /const user = await requirePaymentAdmin\(req\)/);
   assert.match(functionsSource, /app\.get\("\/payments\/student\/:studentId"/);
+  assert.match(functionsSource, /await requirePaymentAdmin\(req\)/);
+  assert.match(functionsSource, /app\.post\("\/payments\/create-link"/);
   assert.match(functionsSource, /app\.post\("\/payments\/paystack-webhook"/);
   assert.match(functionsSource, /x-paystack-signature/);
   assert.match(functionsSource, /createHmac\("sha512"/);
