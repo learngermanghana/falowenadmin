@@ -52,8 +52,12 @@ jobs:
           grep -F '}, objectiveResult, submissionText);' src/pages/MarkingPage.jsx
       - name: Test A1-9 final feedback reconciliation
         run: node --test --test-name-pattern="A1-9 final" tests/final-deterministic-feedback.test.js
-      - name: Test A1-0.2 perfect feedback reconciliation
-        run: node --test --test-name-pattern="A1-0.2 perfect" tests/final-deterministic-feedback.test.js
+      - name: Test A1-0.2 perfect deterministic fields
+        run: node --test --test-name-pattern="perfect deterministic fields" tests/final-deterministic-feedback.test.js
+      - name: Test A1-0.2 perfect feedback wording
+        run: node --test --test-name-pattern="perfect feedback states" tests/final-deterministic-feedback.test.js
+      - name: Test A1-0.2 AI audit preservation
+        run: node --test --test-name-pattern="preserves stale AI feedback" tests/final-deterministic-feedback.test.js
       - name: Test marking intelligence
         run: node --test tests/marking-intelligence.test.js
       - name: Test essay feedback evidence
