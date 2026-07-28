@@ -26,9 +26,26 @@ function levelOf(result = {}) {
   return assignment.match(/^(A2|B1)[-_.]/)?.[1] || "";
 }
 
+function objectiveAnswerLike(value = "") {
+  const source = String(value || "");
+  const lines = source.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const answerLine = /^(?:teil\s*\d+\s*)?(?:(?:frage|answer)\s*)?\d+\s*[.)\-:]?\s*(?:[A-DX]|richtig|falsch)(?:\b|[.)!?;,]|$)/i;
+  const answerLines = lines.filter((line) => answerLine.test(line)).length;
+  const compactAnswers = (source.match(/(?:^|\s)\d+\s*[.)\-:]?\s*[A-DX](?=\s|[.,;!?]|$)/gi) || []).length;
+  const proseMarker = /\b(?:ich|wir|mein(?:e|er|en|em|es)?|mir|mich|hallo|liebe?r?|sehr geehrte|meiner meinung nach|ich denke|ich finde|zusammenfassend)\b/i.test(source);
+
+  if (!proseMarker && answerLines >= 2 && answerLines >= Math.ceil(lines.length * 0.5)) return true;
+  return !proseMarker && compactAnswers >= 3;
+}
+
 function freeText(value = "") {
   const source = String(value || "");
-  return source.split(/\s+/).filter(Boolean).length >= 12 && /[.!?]/.test(source);
+  const wordCount = source.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 12 || !/[.!?]/.test(source) || objectiveAnswerLike(source)) return false;
+
+  const sentenceCount = (source.match(/[.!?](?=\s|$)/g) || []).length;
+  const proseMarker = /\b(?:ich|wir|mein(?:e|er|en|em|es)?|mir|mich|hallo|liebe?r?|sehr geehrte|meiner meinung nach|ich denke|ich finde|zusammenfassend)\b/i.test(source);
+  return proseMarker || sentenceCount >= 2;
 }
 
 function hash(value = "") {
@@ -94,6 +111,67 @@ function correctionOf(result = {}) {
     if (from && to && from !== to && from.length <= 90 && to.length <= 120) return { from, to };
   }
   return null;
+}
+
+function writingScoreOf(result = {}) {
+  return percent(
+    result.writingScorePercent
+    ?? result.writingScore
+    ?? result.writing?.scorePercent
+    ?? result.writing?.score
+    ?? result.ai?.writingScorePercent
+    ?? result.ai?.writingScore,
+  );
+}
+
+function meaningfulTaskEvidence(result = {}) {
+  const tasks = [result.taskCompletion, result.writing?.taskCompletion, result.ai?.taskCompletion];
+  const hasTaskObject = tasks.some((task) => {
+    if (typeof task === "string") return Boolean(task.trim());
+    if (Array.isArray(task)) return list(task).length > 0;
+    if (!task || typeof task !== "object") return false;
+
+    const completed = Number(task.completed ?? task.completedPoints);
+    const total = Number(task.total ?? task.totalPoints);
+    if (Number.isFinite(completed) && Number.isFinite(total) && total > 0) return true;
+    return list(task.missing, task.missingPoints, task.completedItems, task.coveredPoints, task.feedback, task.description).length > 0;
+  });
+
+  if (hasTaskObject) return true;
+  return list(
+    result.missingTaskPoints,
+    result.omittedTaskPoints,
+    result.writing?.missingTaskPoints,
+    result.ai?.missingTaskPoints,
+  ).length > 0;
+}
+
+function meaningfulStructuredWritingEvidence(result = {}) {
+  if (correctionOf(result)) return true;
+  if (meaningfulTaskEvidence(result)) return true;
+  if (first(
+    result.writingStrengths,
+    result.strengths,
+    result.writing?.strengths,
+    result.ai?.writingStrengths,
+    result.ai?.strengths,
+    result.rubric?.strengths,
+  )) return true;
+  return Boolean(first(
+    result.nextStep,
+    result.improvementTarget,
+    result.writingNextStep,
+    result.writing?.nextStep,
+    result.ai?.nextStep,
+    result.rubric?.nextStep,
+  ));
+}
+
+function hasWritingEvidence(result = {}) {
+  return result.hasRegisteredWriting === true
+    || result.registeredWritingPart === true
+    || writingScoreOf(result) !== null
+    || meaningfulStructuredWritingEvidence(result);
 }
 
 function taskSentence(result = {}) {
@@ -171,10 +249,8 @@ function conciseObjective(values = []) {
 
 export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", objectiveSentences = [] } = {}) {
   const level = levelOf(result);
-  if (!level || !freeText(submissionText)) return "";
-  const writingScore = percent(result.writingScorePercent ?? result.writingScore);
-  const evidence = Boolean(result.taskCompletion || result.missingTaskPoints || result.writingStrengths || result.strengths || result.corrections);
-  if (writingScore === null && !evidence && String(submissionText).split(/\s+/).length < 35) return "";
+  if (!level || !freeText(submissionText) || !hasWritingEvidence(result)) return "";
+  const writingScore = writingScoreOf(result);
 
   const name = String(result.studentName || result.name || "").trim();
   const history = historyOf(result);
