@@ -60,7 +60,20 @@ jobs:
           console.log(JSON.stringify(result));
           NODE
       - name: Test profile field allow-list
-        run: node --test --test-name-pattern="sanitizer keeps" tests/student-profile-update-api.test.js
+        shell: bash
+        run: |
+          set +e
+          node --test --test-name-pattern="sanitizer keeps" tests/student-profile-update-api.test.js > student-profile-test.log 2>&1
+          status=$?
+          cat student-profile-test.log
+          exit "$status"
+      - name: Upload profile test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-profile-test-log-${{ github.run_id }}
+          path: student-profile-test.log
+          retention-days: 3
       - name: Test authenticated level and class update
         run: node --test --test-name-pattern="authenticated student profile route" tests/student-profile-update-api.test.js
       - name: Test missing student handling
