@@ -6,7 +6,10 @@ function numeric(value, fallback = 0) {
 }
 
 function questionNumber(value, fallback = "") {
-  const match = String(value ?? "").match(/\d+/);
+  const source = String(value ?? "").trim();
+  const multipart = source.match(/^(?:teil|part)\s*[1-4]\s*[._\s-]+(\d+)\s*$/i);
+  if (multipart?.[1]) return multipart[1];
+  const match = source.match(/\d+/);
   return match?.[0] || String(fallback || "").trim();
 }
 
