@@ -63,8 +63,23 @@ function uniqueObjectiveRows(result = {}) {
   return [...rowsByIdentity.values()];
 }
 
+function authoritativeWrongRows(result = {}) {
+  if (Array.isArray(result.wrongAnswers)) {
+    const rowsByIdentity = new Map();
+    result.wrongAnswers.forEach((detail, index) => {
+      const identity = readQuestionIdentity(detail?.question || detail?.questionNumber || `${index + 1}`, detail || {});
+      if (!identity.question) return;
+      const key = `${identity.part || "main"}:${identity.question}`;
+      rowsByIdentity.set(key, { ...identity, correct: false });
+    });
+    return [...rowsByIdentity.values()];
+  }
+
+  return uniqueObjectiveRows(result).filter((row) => !row.correct && row.question);
+}
+
 function groupedWrongQuestions(result = {}) {
-  const wrongRows = uniqueObjectiveRows(result).filter((row) => !row.correct && row.question);
+  const wrongRows = authoritativeWrongRows(result);
   const groups = new Map();
   wrongRows.forEach((row) => {
     const key = row.part || "main";
