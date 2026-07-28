@@ -9,8 +9,24 @@ import {
 
 const {
   sanitizeStudentProfileUpdates,
+  isStudentProfileEditor,
   registerStudentProfileUpdateRoute,
 } = studentProfileUpdateModule;
+
+function createResponse() {
+  return {
+    statusCode: 200,
+    body: null,
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body) {
+      this.body = body;
+      return this;
+    },
+  };
+}
 
 test("student profile sanitizer keeps level and className but blocks privileged fields", () => {
   const updates = sanitizeStudentProfileUpdates({
@@ -29,7 +45,42 @@ test("student profile sanitizer keeps level and className but blocks privileged 
   });
 });
 
-test("authenticated student profile route updates level and className with merge", async () => {
+test("student profile editor authorization is mandatory", () => {
+  assert.equal(isStudentProfileEditor({ email: "student@example.com" }), false);
+  assert.equal(isStudentProfileEditor({ email: "staff@falowen.app" }), true);
+  assert.equal(isStudentProfileEditor({ email: "moxflex@gmail.com" }), true);
+  assert.equal(isStudentProfileEditor({ email: "teacher@example.com" }, ["teacher@example.com"]), true);
+  assert.equal(isStudentProfileEditor({ admin: true, email: "admin-claim@example.com" }), true);
+});
+
+test("ordinary authenticated users cannot update another student", async () => {
+  let routeHandler;
+  let writes = 0;
+  const app = { patch: (_path, handler) => { routeHandler = handler; } };
+  const db = {
+    collection: () => ({
+      doc: () => ({
+        update: async () => { writes += 1; },
+      }),
+    }),
+  };
+  const admin = { firestore: { FieldValue: { serverTimestamp: () => "timestamp" } } };
+  registerStudentProfileUpdateRoute({
+    app,
+    db,
+    admin,
+    requireAuth: async () => ({ uid: "student-user", email: "student@example.com" }),
+  });
+
+  const response = createResponse();
+  await routeHandler({ params: { studentId: "student-1" }, body: { updates: { level: "B1" } } }, response);
+
+  assert.equal(response.statusCode, 403);
+  assert.equal(response.body.error, "Staff authorization required");
+  assert.equal(writes, 0);
+});
+
+test("authorized staff route atomically updates level and className", async () => {
   let routePath = "";
   let routeHandler = null;
   const writes = [];
@@ -41,8 +92,7 @@ test("authenticated student profile route updates level and className with merge
     },
   };
   const studentRef = {
-    get: async () => ({ exists: true }),
-    set: async (payload, options) => writes.push({ payload, options }),
+    update: async (payload) => writes.push(payload),
   };
   const db = {
     collection(name) {
@@ -67,23 +117,17 @@ test("authenticated student profile route updates level and className with merge
     return { uid: "teacher-1", email: "teacher@example.com" };
   };
 
-  registerStudentProfileUpdateRoute({ app, db, admin, requireAuth });
+  registerStudentProfileUpdateRoute({
+    app,
+    db,
+    admin,
+    requireAuth,
+    staffEmails: ["teacher@example.com"],
+  });
   assert.equal(routePath, "/students/:studentId");
   assert.equal(typeof routeHandler, "function");
 
-  const response = {
-    statusCode: 200,
-    body: null,
-    status(code) {
-      this.statusCode = code;
-      return this;
-    },
-    json(body) {
-      this.body = body;
-      return this;
-    },
-  };
-
+  const response = createResponse();
   await routeHandler({
     params: { studentId: "student-1" },
     body: {
@@ -104,42 +148,43 @@ test("authenticated student profile route updates level and className with merge
   });
   assert.equal(writes.length, 1);
   assert.deepEqual(writes[0], {
-    payload: {
-      level: "B1",
-      className: "B1 Berlin",
-      updatedAt: "SERVER_TIMESTAMP",
-      updatedBy: "teacher@example.com",
-    },
-    options: { merge: true },
+    level: "B1",
+    className: "B1 Berlin",
+    updatedAt: "SERVER_TIMESTAMP",
+    updatedBy: "teacher@example.com",
   });
 });
 
-test("student profile route rejects unknown students without writing", async () => {
+test("atomic update does not recreate a concurrently deleted student", async () => {
   let routeHandler;
-  let writes = 0;
+  let updateCalls = 0;
   const app = { patch: (_path, handler) => { routeHandler = handler; } };
   const db = {
     collection: () => ({
       doc: () => ({
-        get: async () => ({ exists: false }),
-        set: async () => { writes += 1; },
+        update: async () => {
+          updateCalls += 1;
+          const error = new Error("No document to update");
+          error.code = 5;
+          throw error;
+        },
       }),
     }),
   };
   const admin = { firestore: { FieldValue: { serverTimestamp: () => "timestamp" } } };
-  registerStudentProfileUpdateRoute({ app, db, admin, requireAuth: async () => ({ uid: "teacher" }) });
+  registerStudentProfileUpdateRoute({
+    app,
+    db,
+    admin,
+    requireAuth: async () => ({ uid: "staff", email: "staff@falowen.app" }),
+  });
 
-  const response = {
-    statusCode: 200,
-    body: null,
-    status(code) { this.statusCode = code; return this; },
-    json(body) { this.body = body; return this; },
-  };
+  const response = createResponse();
   await routeHandler({ params: { studentId: "missing" }, body: { updates: { level: "A2" } } }, response);
 
+  assert.equal(updateCalls, 1);
   assert.equal(response.statusCode, 404);
   assert.equal(response.body.error, "Student not found");
-  assert.equal(writes, 0);
 });
 
 test("browser student update uses authenticated same-origin PATCH", async () => {
