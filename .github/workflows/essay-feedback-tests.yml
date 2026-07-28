@@ -58,6 +58,8 @@ jobs:
         run: node --test --test-name-pattern="perfect feedback states" tests/final-deterministic-feedback.test.js
       - name: Test A1-0.2 AI audit preservation
         run: node --test --test-name-pattern="preserves stale AI feedback" tests/final-deterministic-feedback.test.js
+      - name: Test multipart question identity
+        run: node --test --test-name-pattern="multipart detail keys" tests/final-deterministic-feedback.test.js
       - name: Test marking intelligence
         run: node --test tests/marking-intelligence.test.js
       - name: Test essay feedback evidence
