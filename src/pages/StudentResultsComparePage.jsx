@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { loadRoster, loadStudentResultSources, syncFirestoreScoreToSheet, syncFirestoreScoresToSheet, updateFirestoreScore } from "../services/markingService.js";
+import { loadRoster, updateFirestoreScore } from "../services/markingService.js";
+import { loadStudentResultSources, syncFirestoreScoreToSheet, syncFirestoreScoresToSheet } from "../services/studentResultsService.js";
+import { studentResultKey } from "../utils/studentResultUpsert.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 function norm(value) { return String(value || "").trim().toLowerCase(); }
-function assignmentKey(row = {}) { return norm(row.assignmentId || row.assignment_id || row.assignment); }
+function assignmentKey(row = {}) { return studentResultKey(row) || norm(row.assignmentId || row.assignment_id || row.assignment); }
 
 function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(), onToggleSelected, onToggleAll, allSelected = false, onEdit, editingId = "", editDraft = {}, onEditDraftChange, onCancelEdit, onSaveEdit, savingEditId = "" }) {
   const canBulkSelect = Boolean(onToggleSelected);
@@ -37,7 +39,7 @@ function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(),
                   <button type="button" disabled={savingEditId === id} onClick={() => onSaveEdit(row, id)}>{savingEditId === id ? "Saving..." : "Save edit"}</button>
                   <button type="button" disabled={savingEditId === id} onClick={onCancelEdit}>Cancel</button>
                 </> : onEdit ? <button type="button" onClick={() => onEdit(row, id)}>Edit</button> : null}
-                {onSync ? <button type="button" disabled={syncingId === id || isEditing} onClick={() => onSync(row, id)}>{syncingId === id ? "Syncing..." : "Override sheet"}</button> : null}
+                {onSync ? <button type="button" disabled={syncingId === id || isEditing} onClick={() => onSync(row, id)}>{syncingId === id ? "Updating..." : "Update sheet row"}</button> : null}
                 {!onSync && !onEdit ? "—" : null}
               </div>
             </td>
@@ -48,12 +50,22 @@ function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(),
   );
 }
 
+const EMPTY_RESULT_SOURCES = {
+  firestoreRows: [],
+  sheetRows: [],
+  sheetConfigured: false,
+  firestoreRawCount: 0,
+  firestoreDuplicateCount: 0,
+  sheetRawCount: 0,
+  sheetDuplicateCount: 0,
+};
+
 export default function StudentResultsComparePage() {
   const { success, error } = useToast();
   const [roster, setRoster] = useState([]);
   const [query, setQuery] = useState("");
   const [studentId, setStudentId] = useState("");
-  const [data, setData] = useState({ firestoreRows: [], sheetRows: [], sheetConfigured: false });
+  const [data, setData] = useState(EMPTY_RESULT_SOURCES);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("firestore");
   const [syncingId, setSyncingId] = useState("");
@@ -78,13 +90,13 @@ export default function StudentResultsComparePage() {
   }
 
   async function handleSync(row, id) {
-    if (!window.confirm("Override the Google Sheet row for this student/assignment with the Firestore result?")) return;
+    if (!window.confirm("Update the matching Google Sheet row for this student and assignment? Older duplicate rows for the same result will be removed.")) return;
     setSyncingId(id);
     try {
-      await syncFirestoreScoreToSheet(row);
-      success("Firestore result sent to Google Sheet override webhook.");
+      const receipt = await syncFirestoreScoreToSheet(row);
+      success(receipt.sheet.message);
       await refresh();
-    } catch (err) { error(err?.message || "Failed to sync result to sheet."); }
+    } catch (err) { error(err?.message || "Failed to update result in the sheet."); }
     finally { setSyncingId(""); }
   }
 
@@ -108,14 +120,14 @@ export default function StudentResultsComparePage() {
   async function handleSyncSelected() {
     const rows = Object.entries(selectedRows);
     if (!rows.length) return;
-    if (!window.confirm(`Sync ${rows.length} selected result(s) to the Google Sheet?`)) return;
+    if (!window.confirm(`Update ${rows.length} selected result(s) in the Google Sheet? Matching rows will be replaced and older duplicates removed.`)) return;
     setSyncingId("__bulk__");
     try {
-      await syncFirestoreScoresToSheet(rows.map(([, row]) => row));
-      success(`Synced ${rows.length} selected result(s) to Google Sheet in one request.`);
+      const receipt = await syncFirestoreScoresToSheet(rows.map(([, row]) => row));
+      success(receipt.sheet.message);
       setSelectedRows({});
       await refresh();
-    } catch (err) { error(err?.message || "Failed to sync selected results to sheet."); }
+    } catch (err) { error(err?.message || "Failed to update selected results in the sheet."); }
     finally { setSyncingId(""); }
   }
 
@@ -132,7 +144,7 @@ export default function StudentResultsComparePage() {
     setSavingEditId(id);
     try {
       await updateFirestoreScore(row.id, editDraft);
-      success("Score updated in Firestore. Use Override sheet or Sync selected to update the sheet.");
+      success("Score updated in Firestore. Use Update sheet row to replace the matching sheet result.");
       setEditingId("");
       setEditDraft({});
       await refresh();
@@ -142,7 +154,7 @@ export default function StudentResultsComparePage() {
 
   return <div style={{ padding: 16, display: "grid", gap: 14 }}>
     <h2>Student Result Sources</h2>
-    <p style={{ marginTop: -8, opacity: 0.8 }}>Compare a student’s saved Firestore results with the published score sheet, then override the sheet from Firestore when needed.</p>
+    <p style={{ marginTop: -8, opacity: 0.8 }}>Compare a student’s saved Firestore result with the published score sheet. A student code and assignment ID identify one permanent result row.</p>
     <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 8 }}>
       <input placeholder="Search student name/code/level" value={query} onChange={(e) => setQuery(e.target.value)} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -151,9 +163,11 @@ export default function StudentResultsComparePage() {
         </select>
         <button type="button" disabled={!student || loading} onClick={() => refresh()}>{loading ? "Loading..." : "Refresh"}</button>
       </div>
-      {!data.sheetConfigured ? <p style={{ margin: 0, color: "#92400e" }}>Set <code>VITE_SCORES_SHEET_CSV_URL</code> to show the sheet tab. Firestore view and override sync still work.</p> : null}
-      {student ? <p style={{ margin: 0, fontSize: 13 }}>Selected: <b>{student.name}</b> ({student.studentCode}) · Firestore: <b>{data.firestoreRows.length}</b> · Sheet: <b>{data.sheetRows.length}</b> · Firestore-only: <b>{inconsistentRows.length}</b> · Selected to sync: <b>{selectedIds.size}</b></p> : null}
-      <button type="button" disabled={!selectedIds.size || syncingId === "__bulk__"} onClick={handleSyncSelected} style={{ justifySelf: "start" }}>{syncingId === "__bulk__" ? "Syncing selected..." : `Sync selected to sheet (${selectedIds.size})`}</button>
+      {!data.sheetConfigured ? <p style={{ margin: 0, color: "#92400e" }}>Set <code>VITE_SCORES_SHEET_CSV_URL</code> to show the sheet tab. Firestore view and update sync still work.</p> : null}
+      {student ? <p style={{ margin: 0, fontSize: 13 }}>Selected: <b>{student.name}</b> ({student.studentCode}) · Firestore: <b>{data.firestoreRows.length}</b> · Sheet: <b>{data.sheetRows.length}</b> · Firestore-only: <b>{inconsistentRows.length}</b> · Selected to update: <b>{selectedIds.size}</b></p> : null}
+      {data.sheetDuplicateCount > 0 ? <p style={{ margin: 0, padding: 8, borderRadius: 6, background: "#fff7ed", color: "#9a3412" }}><b>{data.sheetDuplicateCount} older duplicate sheet row{data.sheetDuplicateCount === 1 ? " is" : "s are"} hidden.</b> Update the latest Firestore result once to replace the sheet row and remove its older duplicate.</p> : null}
+      {data.firestoreDuplicateCount > 0 ? <p style={{ margin: 0, color: "#92400e" }}>{data.firestoreDuplicateCount} older Firestore duplicate{data.firestoreDuplicateCount === 1 ? " is" : "s are"} hidden; the newest result is shown.</p> : null}
+      <button type="button" disabled={!selectedIds.size || syncingId === "__bulk__"} onClick={handleSyncSelected} style={{ justifySelf: "start" }}>{syncingId === "__bulk__" ? "Updating selected..." : `Update selected sheet rows (${selectedIds.size})`}</button>
     </section>
     <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{[["firestore", "Firebase / Firestore"], ["sheet", "Sheet"], ["inconsistent", "Firestore-only"]].map(([id, label]) => <button key={id} type="button" onClick={() => setActiveTab(id)} style={{ fontWeight: activeTab === id ? 800 : 500 }}>{label}</button>)}</nav>
     <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
