@@ -45,7 +45,15 @@ jobs:
         run: |
           grep -F 'node scripts/patchStudentProfileUpdateApi.mjs' firebase.json
           grep -F 'node scripts/patchStudentProfileUpdateApi.mjs' package.json
-      - name: Test authenticated profile updates
-        run: node --test tests/student-profile-update-api.test.js
+      - name: Test profile field allow-list
+        run: node --test --test-name-pattern="sanitizer keeps" tests/student-profile-update-api.test.js
+      - name: Test authenticated level and class update
+        run: node --test --test-name-pattern="authenticated student profile route" tests/student-profile-update-api.test.js
+      - name: Test missing student handling
+        run: node --test --test-name-pattern="rejects unknown students" tests/student-profile-update-api.test.js
+      - name: Test browser same-origin PATCH
+        run: node --test --test-name-pattern="browser student update" tests/student-profile-update-api.test.js
+      - name: Test undeployed endpoint message
+        run: node --test --test-name-pattern="undeployed endpoint" tests/student-profile-update-api.test.js
       - name: Preserve existing student service helpers
         run: node --test tests/students-service-admin.test.js
