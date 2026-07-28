@@ -83,20 +83,32 @@ function uniqueSentences(values = []) {
   return [...new Set(values.map(sentence).filter(Boolean))];
 }
 
-function completeSentences(requiredValues, optionalValues, maximum) {
-  const required = uniqueSentences(requiredValues);
-  const requiredSet = new Set(required);
-  const optional = uniqueSentences(optionalValues).filter((value) => !requiredSet.has(value));
+function sentenceWords(value = "") {
+  return sentence(value).split(/\s+/).filter(Boolean).length;
+}
+
+function completeSentences({ opening, objectiveValues, correctionValue, correctionFallback, optionalValues }, maximum) {
+  const correctionCandidates = uniqueSentences([correctionValue, correctionFallback]);
+  const correction = correctionCandidates.find((value) => sentenceWords(value) <= maximum) || "";
+  const correctionWords = sentenceWords(correction);
   const selected = [];
   let words = 0;
 
-  for (const value of required) {
+  for (const value of uniqueSentences([opening, ...(objectiveValues || [])])) {
+    const count = sentenceWords(value);
+    if (words + count + correctionWords > maximum) break;
     selected.push(value);
-    words += value.split(/\s+/).length;
+    words += count;
   }
 
-  for (const value of optional) {
-    const count = value.split(/\s+/).length;
+  if (correction && words + correctionWords <= maximum) {
+    selected.push(correction);
+    words += correctionWords;
+  }
+
+  const selectedSet = new Set(selected);
+  for (const value of uniqueSentences(optionalValues || []).filter((item) => !selectedSet.has(item))) {
+    const count = sentenceWords(value);
     if (words + count > maximum) break;
     selected.push(value);
     words += count;
@@ -235,6 +247,10 @@ function correctionSentence(correction, level, seed, history) {
   return choose(choices, `${seed}:correction`, history);
 }
 
+function compactCorrectionSentence(correction) {
+  return correction ? `“${correction.from}” → “${correction.to}”` : "";
+}
+
 function nextStepOf(result, submission, level, correction, seed, history) {
   const structured = first(result.nextStep, result.improvementTarget, result.writingNextStep, result.writing?.nextStep, result.ai?.nextStep, result.rubric?.nextStep);
   if (structured) return structured;
@@ -277,15 +293,16 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
       : ["Keep improving", "Keep practising", "A useful start"];
   const correction = correctionOf(result);
   const correctionEvidence = correctionSentence(correction, level, seed, history);
-  const requiredSentences = [
-    `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
-    ...conciseObjective(objectiveSentences),
-    correctionEvidence,
-  ];
   const optionalSentences = [
     strengthOf(result, submissionText, level, seed, history),
     taskSentence(result),
     nextStepOf(result, submissionText, level, correction, seed, history),
   ];
-  return completeSentences(requiredSentences, optionalSentences, level === "B1" ? 75 : 60);
+  return completeSentences({
+    opening: `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
+    objectiveValues: conciseObjective(objectiveSentences),
+    correctionValue: correctionEvidence,
+    correctionFallback: compactCorrectionSentence(correction),
+    optionalValues: optionalSentences,
+  }, level === "B1" ? 75 : 60);
 }
