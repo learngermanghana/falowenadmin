@@ -39,12 +39,21 @@ jobs:
       - name: Preserve A2 writing exclusion
         run: node --test --test-name-pattern="registered A2 writing" tests/a1-12.1-objective-parts.test.js
       - name: Run existing objective marking tests
+        id: existing_objective_tests
         shell: bash
         run: |
           set +e
           node --test tests/objective-marking.test.js > objective-test.log 2>&1
           status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
           if [ "$status" -ne 0 ]; then
             grep -n -B 8 -A 24 -E '^(not ok|# AssertionError|# error:|# expected:|# actual:)' objective-test.log || true
           fi
           exit "$status"
+      - name: Upload objective test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: objective-test-log-${{ github.run_id }}
+          path: objective-test.log
+          retention-days: 3
