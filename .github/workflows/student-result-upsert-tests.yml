@@ -1,0 +1,44 @@
+name: Student Result Upsert Tests
+
+on:
+  pull_request:
+    paths:
+      - 'api/router.js'
+      - 'api/student-results-sheet-upsert.js'
+      - 'src/pages/StudentResultsComparePage.jsx'
+      - 'src/services/studentResultsService.js'
+      - 'src/utils/studentResultUpsert.js'
+      - 'docs/apps-script/score-results-upsert.gs'
+      - 'docs/student-result-sheet-upsert.md'
+      - 'tests/student-result-upsert.test.js'
+      - '.github/workflows/student-result-upsert-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/router.js'
+      - 'api/student-results-sheet-upsert.js'
+      - 'src/pages/StudentResultsComparePage.jsx'
+      - 'src/services/studentResultsService.js'
+      - 'src/utils/studentResultUpsert.js'
+      - 'docs/apps-script/score-results-upsert.gs'
+      - 'docs/student-result-sheet-upsert.md'
+      - 'tests/student-result-upsert.test.js'
+      - '.github/workflows/student-result-upsert-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check student result upsert modules
+        run: |
+          node --check api/student-results-sheet-upsert.js
+          node --check api/router.js
+          node --check src/utils/studentResultUpsert.js
+          node --check tests/student-result-upsert.test.js
+      - name: Test canonical result identity and sheet upsert safeguards
+        run: node --test tests/student-result-upsert.test.js
