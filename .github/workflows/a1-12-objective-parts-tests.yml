@@ -1,0 +1,45 @@
+name: A1-12 Objective Part Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/objectiveMarking.js'
+      - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'tests/a1-12.1-objective-parts.test.js'
+      - 'package.json'
+      - '.github/workflows/a1-12-objective-parts-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/objectiveMarking.js'
+      - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'tests/a1-12.1-objective-parts.test.js'
+      - 'package.json'
+      - '.github/workflows/a1-12-objective-parts-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Record pre-existing A2-4.11 baseline
+        continue-on-error: true
+        run: node --test --test-name-pattern="A2-4.11 choices" tests/objective-marking.test.js
+      - name: Apply objective writing-part patch
+        run: |
+          node scripts/patchObjectiveWritingPartDetection.mjs
+          node --check src/utils/objectiveMarking.js
+          grep -F 'const aiGradedParts = referenceEntry.aiGradedParts' src/utils/objectiveMarking.js
+          grep -F 'grading?.hasReferenceAnswers === true' src/utils/objectiveMarking.js
+      - name: Test Josephine A1-12.1 result
+        run: node --test --test-name-pattern="Josephine 13 of 15" tests/a1-12.1-objective-parts.test.js
+      - name: Test Deborah A1-12.1 result
+        run: node --test --test-name-pattern="Deborah 13 of 15" tests/a1-12.1-objective-parts.test.js
+      - name: Preserve A2 writing exclusion
+        run: node --test --test-name-pattern="registered A2 writing" tests/a1-12.1-objective-parts.test.js
+      - name: Run unaffected existing objective marking tests
+        run: node --test --test-skip-pattern="A2-4\\.11 choices" tests/objective-marking.test.js
