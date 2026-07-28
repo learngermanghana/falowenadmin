@@ -89,11 +89,12 @@ test("override refuses a legacy append-only webhook acknowledgement", () => {
 });
 
 test("student results service requires verified upsert and has no no-cors append fallback", () => {
-  const source = read("src/services/studentResultsService.js");
-  assert.match(source, /assertScoreUpsertReceipt/);
-  assert.match(source, /action:\s*"upsertScoreRows"/);
-  assert.doesNotMatch(source, /mode:\s*"no-cors"/);
-  assert.match(source, /collapseStudentResultRows/);
+  const serviceSource = read("src/services/studentResultsService.js");
+  const utilitySource = read("src/utils/studentResultUpsert.js");
+  assert.match(serviceSource, /assertScoreUpsertReceipt/);
+  assert.match(utilitySource, /action:\s*"upsertScoreRows"/);
+  assert.doesNotMatch(serviceSource, /mode:\s*"no-cors"/);
+  assert.match(serviceSource, /collapseStudentResultRows/);
 });
 
 test("Apps Script updates matches and deletes older duplicate rows", () => {
