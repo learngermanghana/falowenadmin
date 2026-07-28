@@ -1,0 +1,45 @@
+name: Objective Time Answer Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'tests/objective-time-answer-parsing.test.js'
+      - 'package.json'
+      - '.github/workflows/objective-time-answer-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'tests/objective-time-answer-parsing.test.js'
+      - 'package.json'
+      - '.github/workflows/objective-time-answer-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply objective parser patches twice
+        run: |
+          node scripts/patchObjectiveWritingPartDetection.mjs
+          node scripts/patchObjectiveAnswerTimeParsing.mjs
+          node scripts/patchObjectiveAnswerTimeParsing.mjs
+          node --check src/utils/objectiveMarking.js
+          node --check src/utils/naturalMarkingFeedback.js
+          grep -F '(?!\d)' src/utils/objectiveMarking.js
+          grep -F 'question${questions.length === 1 ? "" : "s"}' src/utils/naturalMarkingFeedback.js
+      - name: Test complete-sentence clock answer
+        run: node --test --test-name-pattern="preserves 7:30" tests/objective-time-answer-parsing.test.js
+      - name: Test multipart feedback labels
+        run: node --test --test-name-pattern="labels each group" tests/objective-time-answer-parsing.test.js
