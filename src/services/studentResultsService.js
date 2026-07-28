@@ -1,5 +1,5 @@
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase.js";
+import { auth, db } from "../firebase.js";
 import {
   assertScoreUpsertReceipt,
   buildScoreUpsertPayload,
@@ -9,10 +9,7 @@ import {
 
 const env = import.meta.env || {};
 const SCORES_SHEET_CSV_URL = String(env.VITE_SCORES_SHEET_CSV_URL || "").trim();
-const SCORES_WEBHOOK_URL = String(env.VITE_SCORES_WEBHOOK_URL || "").trim();
-const SCORES_WEBHOOK_TOKEN = String(env.VITE_SCORES_WEBHOOK_TOKEN || "").trim();
-const SCORES_WEBHOOK_SHEET_NAME = String(env.VITE_SCORES_WEBHOOK_SHEET_NAME || "").trim();
-const SCORES_WEBHOOK_SHEET_GID = String(env.VITE_SCORES_WEBHOOK_SHEET_GID || "").trim();
+const STUDENT_RESULTS_UPSERT_URL = "/api/student-results/sheet-upsert";
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -126,17 +123,26 @@ export async function loadStudentResultSources(studentCode) {
 }
 
 async function postUpsertPayload(payload) {
-  if (!SCORES_WEBHOOK_URL) throw new Error("The score-sheet webhook is not configured.");
+  const currentUser = auth?.currentUser;
+  if (!currentUser) throw new Error("Sign in again before updating Student Results.");
+  const idToken = await currentUser.getIdToken();
 
   let response;
   try {
-    response = await fetch(SCORES_WEBHOOK_URL, {
+    response = await fetch(STUDENT_RESULTS_UPSERT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "upsertScoreRows",
+        mode: "upsert",
+        rows: payload.rows,
+      }),
     });
   } catch (error) {
-    throw new Error(`Could not verify the sheet update. No append-only fallback was sent: ${error?.message || error}`);
+    throw new Error(`Could not reach the Falowen result-update API: ${error?.message || error}`);
   }
 
   const body = await response.json().catch(() => ({}));
@@ -149,11 +155,7 @@ export async function syncFirestoreScoresToSheet(scores = []) {
     return { rows: [], sheet: { attempted: false, success: true, message: "No selected scores to sync." } };
   }
 
-  const payload = buildScoreUpsertPayload(scores, {
-    token: SCORES_WEBHOOK_TOKEN,
-    sheetName: SCORES_WEBHOOK_SHEET_NAME,
-    sheetGid: SCORES_WEBHOOK_SHEET_GID,
-  });
+  const payload = buildScoreUpsertPayload(scores);
   const response = await postUpsertPayload(payload);
   const inserted = Number(response.inserted || 0);
   const updated = Number(response.updated || 0);
