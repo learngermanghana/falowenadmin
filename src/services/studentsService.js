@@ -196,8 +196,52 @@ export async function listAllStudents() {
   return listAllStudentsWithFirestore();
 }
 
+export function parseStudentProfileUpdateResponse(response = {}, responseText = "") {
+  const text = String(responseText || "").trim();
+  let data = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {};
+    }
+  }
+
+  if (!response.ok || data?.ok === false) {
+    const nonHtmlText = text && !/^\s*</.test(text) ? text.slice(0, 500) : "";
+    const statusLabel = [response.status, response.statusText].filter(Boolean).join(" ");
+    const fallback = response.status === 404
+      ? "Student update endpoint is not deployed yet. Deploy the latest Firebase function and retry."
+      : `Student update failed${statusLabel ? ` (${statusLabel})` : ""}.`;
+    throw new Error(String(data?.error || data?.message || nonHtmlText || fallback));
+  }
+
+  return data;
+}
+
+export async function updateStudentByIdThroughApi(
+  studentId,
+  payload,
+  {
+    fetchImpl = globalThis.fetch,
+    headersLoader = authHeaders,
+  } = {},
+) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) throw new Error("Student ID is required");
+  if (typeof fetchImpl !== "function") throw new Error("Student update transport is unavailable");
+
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}`, {
+    method: "PATCH",
+    headers: await headersLoader(),
+    body: JSON.stringify({ updates: payload || {} }),
+  });
+  const responseText = await response.text();
+  return parseStudentProfileUpdateResponse(response, responseText);
+}
+
 export async function updateStudentById(studentId, payload) {
-  return updateStudentByIdWithFirestore(studentId, payload);
+  return updateStudentByIdThroughApi(studentId, payload);
 }
 
 async function authHeaders() {
