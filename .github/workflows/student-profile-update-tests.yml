@@ -45,6 +45,20 @@ jobs:
         run: |
           grep -F 'node scripts/patchStudentProfileUpdateApi.mjs' firebase.json
           grep -F 'node scripts/patchStudentProfileUpdateApi.mjs' package.json
+      - name: Inspect profile field allow-list
+        run: |
+          node --input-type=module - <<'NODE'
+          import studentProfileUpdateModule from "./functions/studentProfileUpdate.js";
+          const result = studentProfileUpdateModule.sanitizeStudentProfileUpdates({
+            level: " A2 ",
+            className: " Accra Evening ",
+            program: "German",
+            role: "admin",
+            uid: "replacement-auth-user",
+            notificationsLastSeenAt: 0,
+          });
+          console.log(JSON.stringify(result));
+          NODE
       - name: Test profile field allow-list
         run: node --test --test-name-pattern="sanitizer keeps" tests/student-profile-update-api.test.js
       - name: Test authenticated level and class update
