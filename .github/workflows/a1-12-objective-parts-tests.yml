@@ -39,4 +39,10 @@ jobs:
       - name: Preserve A2 writing exclusion
         run: node --test --test-name-pattern="registered A2 writing" tests/a1-12.1-objective-parts.test.js
       - name: Run existing objective marking tests
-        run: node --test tests/objective-marking.test.js
+        shell: bash
+        run: |
+          set +e
+          node --test tests/objective-marking.test.js > objective-test.log 2>&1
+          status=$?
+          tail -n 120 objective-test.log
+          exit "$status"
