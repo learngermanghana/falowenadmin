@@ -40,5 +40,11 @@ jobs:
         run: node --test tests/marking-intelligence.test.js
       - name: Test essay feedback evidence
         run: node --test tests/essay-feedback-evidence.test.js
-      - name: Test review findings
-        run: node --test tests/marking-review-findings.test.js
+      - name: Test missing objective count fallback
+        run: node --test --test-name-pattern="missing objectiveCorrect" tests/marking-review-findings.test.js
+      - name: Test explicit zero count
+        run: node --test --test-name-pattern="explicit zero" tests/marking-review-findings.test.js
+      - name: Test correction priority
+        run: node --test --test-name-pattern="exact writing correction" tests/marking-review-findings.test.js
+      - name: Test legacy writing eligibility
+        run: node --test --test-name-pattern="legacy imported" tests/marking-review-findings.test.js
