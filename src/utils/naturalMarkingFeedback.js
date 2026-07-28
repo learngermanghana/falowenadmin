@@ -8,7 +8,13 @@ function clampPercent(value) {
 }
 
 function normalizePartId(value = "") {
-  return String(value || "").trim().toLowerCase();
+  const raw = String(value || "").trim().toLowerCase().replace(/ö/g, "o");
+  const numbered = raw.match(/^(?:teil|part)\s*([1-4])$/);
+  if (numbered) return `teil${numbered[1]}`;
+  if (/^(?:schreiben|writing)$/.test(raw)) return "teil2";
+  if (/^(?:lesen|reading)$/.test(raw)) return "teil3";
+  if (/^(?:horen|hoeren|listening)$/.test(raw)) return "teil4";
+  return raw;
 }
 
 function unique(values = []) {
