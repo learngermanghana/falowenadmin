@@ -1,4 +1,7 @@
+import { buildEvidenceEssayFeedback } from "./essayFeedbackEvidence.js";
+
 function clampPercent(value) {
+  if (value === null || value === undefined || value === "") return null;
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return null;
   return Math.max(0, Math.min(100, Math.round(numeric)));
@@ -18,6 +21,12 @@ function humanList(values = []) {
   if (items.length === 1) return items[0];
   if (items.length === 2) return `${items[0]} and ${items[1]}`;
   return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+}
+
+function sentence(value = "") {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return /[.!?]$/.test(text) ? text : `${text}.`;
 }
 
 function partLabel(partId = "") {
@@ -79,9 +88,8 @@ function authoritativeWrongRows(result = {}) {
 }
 
 function groupedWrongQuestions(result = {}) {
-  const wrongRows = authoritativeWrongRows(result);
   const groups = new Map();
-  wrongRows.forEach((row) => {
+  authoritativeWrongRows(result).forEach((row) => {
     const key = row.part || "main";
     const current = groups.get(key) || [];
     current.push(row.question);
@@ -92,6 +100,7 @@ function groupedWrongQuestions(result = {}) {
 
 function perfectObjectiveParts(result = {}) {
   const rows = uniqueObjectiveRows(result);
+  const wrongRows = authoritativeWrongRows(result);
   const groups = new Map();
   rows.filter((row) => row.part).forEach((row) => {
     const current = groups.get(row.part) || [];
@@ -99,7 +108,7 @@ function perfectObjectiveParts(result = {}) {
     groups.set(row.part, current);
   });
   return [...groups.entries()]
-    .filter(([, statuses]) => statuses.length && statuses.every(Boolean))
+    .filter(([part, statuses]) => statuses.length && statuses.every(Boolean) && !wrongRows.some((row) => row.part === part))
     .map(([part]) => part);
 }
 
@@ -109,14 +118,16 @@ function resolveObjectiveCorrect(result = {}, objectiveTotal = 0, objectiveScore
     return Math.max(0, Math.min(total, Math.round((objectiveScore / 100) * total)));
   }
 
-  const rows = uniqueObjectiveRows(result);
-  if (total > 0 && rows.length) {
-    const wrongCount = rows.filter((row) => row.correct === false && row.question).length;
-    return Math.max(0, Math.min(total, total - wrongCount));
+  const statedCorrect = Number(result.objectiveCorrect);
+  if (Number.isFinite(statedCorrect)) {
+    return Math.max(0, total > 0 ? Math.min(total, statedCorrect) : statedCorrect);
   }
 
-  const statedCorrect = Number(result.objectiveCorrect);
-  return Number.isFinite(statedCorrect) ? Math.max(0, statedCorrect) : 0;
+  const rows = uniqueObjectiveRows(result);
+  if (total > 0 && rows.length) {
+    return Math.max(0, Math.min(total, total - authoritativeWrongRows(result).length));
+  }
+  return 0;
 }
 
 function looksLikeFreeText(submissionText = "") {
@@ -125,6 +136,19 @@ function looksLikeFreeText(submissionText = "") {
   const firstPerson = /\b(?:ich|mir|mich|mein|meine|wir|uns)\b/i.test(text);
   const greeting = /\b(?:hallo|lieber|liebe|sehr geehrte|guten tag)\b/i.test(text);
   return sentenceCount >= 2 && (firstPerson || greeting);
+}
+
+function writingCorrection(result = {}) {
+  const candidates = [
+    ...(Array.isArray(result.corrections) ? result.corrections : []),
+    ...(Array.isArray(result.writingCorrections) ? result.writingCorrections : []),
+  ];
+  return candidates.find((item) => {
+    if (!item || typeof item !== "object") return false;
+    const part = normalizePartId(item.partId || item.part || "");
+    if (item.question || item.questionNumber || item.key || part === "teil3" || part === "teil4") return false;
+    return Boolean(item.from || item.original || item.student || item.error) && Boolean(item.to || item.corrected || item.improved || item.correction);
+  }) || null;
 }
 
 function writingTip(submissionText = "", result = {}) {
@@ -136,15 +160,11 @@ function writingTip(submissionText = "", result = {}) {
     return "Your short introduction is clear and easy to understand. Remember that German nouns are capitalized, so write “Ich bin 37 Jahre alt.”";
   }
 
-  const writingCorrection = (Array.isArray(result.corrections) ? result.corrections : []).find((item) => {
-    if (!item || typeof item !== "object") return false;
-    if (item.partId || item.part || item.question || item.questionNumber || item.key) return false;
-    return Boolean(item.from || item.original || item.student || item.error) && Boolean(item.to || item.corrected || item.improved || item.correction);
-  });
-  if (writingCorrection) {
-    const from = String(writingCorrection.from || writingCorrection.original || writingCorrection.student || writingCorrection.error || "").trim();
-    const to = String(writingCorrection.to || writingCorrection.corrected || writingCorrection.improved || writingCorrection.correction || "").trim();
-    if (from && to && from.length <= 70 && to.length <= 90) return `Also check this writing point: write “${to}” instead of “${from}.”`;
+  const correction = writingCorrection(result);
+  if (correction) {
+    const from = String(correction.from || correction.original || correction.student || correction.error || "").trim();
+    const to = String(correction.to || correction.corrected || correction.improved || correction.correction || "").trim();
+    if (from && to && from.length <= 90 && to.length <= 120) return `Also check this writing point: write “${to}” instead of “${from}.”`;
   }
 
   return looksLikeFreeText(text) ? "Your free-text response is clear; read it through once more before submitting to catch small language mistakes." : "";
@@ -195,27 +215,32 @@ export function buildNaturalStudentFeedback(result = {}, submissionText = "") {
   const objectiveCorrect = resolveObjectiveCorrect(result, objectiveTotal, objectiveScore);
   const wrongGroups = groupedWrongQuestions(result);
   const perfectParts = perfectObjectiveParts(result);
-  const sentences = [];
-
-  const opening = objectiveScore !== null && objectiveScore >= 80 ? "Good work" : objectiveScore !== null && objectiveScore >= 60 ? "Good progress" : "Keep working steadily";
-  sentences.push(`${opening}${name ? `, ${name}` : ""}.`);
+  const objectiveSentences = [];
 
   const strongestPart = perfectParts.includes("Teil 4") ? "Teil 4" : perfectParts[0];
   if (strongestPart) {
-    sentences.push(`${strongestPart} is excellent, with all answers correct.`);
+    objectiveSentences.push(`${strongestPart} is excellent, with all answers correct`);
   } else if (objectiveTotal > 0) {
-    sentences.push(`You answered ${objectiveCorrect} of ${objectiveTotal} objective questions correctly.`);
+    objectiveSentences.push(`You answered ${objectiveCorrect} of ${objectiveTotal} objective questions correctly`);
   }
 
   const groupedEntries = [...wrongGroups.entries()];
   if (groupedEntries.length === 1) {
     const [part, questions] = groupedEntries[0];
     const prefix = part === "main" ? "" : `In ${part}, `;
-    sentences.push(`${prefix}review question${questions.length === 1 ? "" : "s"} ${humanList(questions)} carefully.`);
+    objectiveSentences.push(`${prefix}${part === "main" ? "Review" : "review"} question${questions.length === 1 ? "" : "s"} ${humanList(questions)} carefully`);
   } else if (groupedEntries.length > 1) {
     const descriptions = groupedEntries.map(([part, questions]) => `${part === "main" ? "questions" : part} ${humanList(questions)}`);
-    sentences.push(`Review ${humanList(descriptions)} carefully.`);
+    objectiveSentences.push(`Review ${humanList(descriptions)} carefully`);
   }
+
+  const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });
+  if (essayFeedback) return essayFeedback;
+
+  const sentences = [];
+  const opening = objectiveScore !== null && objectiveScore >= 80 ? "Good work" : objectiveScore !== null && objectiveScore >= 60 ? "Good progress" : "Keep working steadily";
+  sentences.push(`${opening}${name ? `, ${name}` : ""}.`);
+  objectiveSentences.forEach((value) => sentences.push(sentence(value)));
 
   const tip = writingTip(submissionText, result);
   if (tip) sentences.push(tip);
