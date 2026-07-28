@@ -84,3 +84,29 @@ test("A1-0.2 perfect reconciliation preserves stale AI feedback only for audit",
   assert.equal(result.aiDetailedFeedback, staleFeedback);
   assert.notEqual(result.feedback, staleFeedback);
 });
+
+test("multipart detail keys preserve the question suffix", () => {
+  const result = reconcileFinalDeterministicFeedback({
+    studentName: "Nabi",
+    level: "A2",
+    assignmentKey: "A2-7.18",
+    objectiveScore: 0,
+    objectiveCorrect: 0,
+    objectiveTotal: 4,
+    feedback: "Stale objective feedback.",
+  }, {
+    correctCount: 2,
+    totalCount: 4,
+    details: {
+      "teil3.1": { partId: "teil3", student: "B", expected: "A", correct: false },
+      "teil3.2": { partId: "teil3", student: "C", expected: "C", correct: true },
+      "teil3.3": { partId: "teil3", student: "A", expected: "A", correct: true },
+      "teil3.4": { partId: "teil3", student: "D", expected: "B", correct: false },
+    },
+  }, "1. B 2. C 3. A 4. D");
+
+  assert.deepEqual(result.wrongAnswers.map((row) => row.question), ["1", "4"]);
+  assert.deepEqual(result.wrongAnswers.map((row) => row.partId), ["teil3", "teil3"]);
+  assert.match(result.feedback, /In Teil 3, review questions 1 and 4 carefully/);
+  assert.doesNotMatch(result.feedback, /questions 3 and 3|question 3 carefully/);
+});
