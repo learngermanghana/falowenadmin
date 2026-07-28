@@ -25,6 +25,11 @@ function canonicalAssignmentId_(value) {
   return source.toUpperCase().replace(/\s+/g, " ");
 }
 
+function normalizedAttemptSuffix_(parts) {
+  if (!parts || parts.length < 3) return "";
+  return parts.slice(2).join("__").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+}
+
 function cellValue_(value) {
   if (value === null || value === undefined) return "";
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
@@ -53,7 +58,7 @@ function readHeaders_(sheet) {
 }
 
 function ensureHeaders_(sheet, rows) {
-  let headers = readHeaders_(sheet);
+  const headers = readHeaders_(sheet);
   const existing = {};
   headers.forEach(function (header, index) {
     if (header) existing[normalizedHeader_(header)] = index;
@@ -100,10 +105,14 @@ function firstValue_(row, aliases) {
 function resultKeyFromObject_(row) {
   const explicit = firstValue_(row, ["dedupe_id", "dedupeId"]);
   if (explicit) {
-    const explicitText = String(explicit).trim();
-    const parts = explicitText.split("__");
+    const parts = String(explicit).trim().split("__");
     if (parts.length >= 2) {
-      return normalizedStudentCode_(parts[0]) + "__" + canonicalAssignmentId_(parts.slice(1).join("__"));
+      const studentCode = normalizedStudentCode_(parts[0]);
+      const assignmentId = canonicalAssignmentId_(parts[1]);
+      const suffix = normalizedAttemptSuffix_(parts);
+      if (studentCode && assignmentId) {
+        return studentCode + "__" + assignmentId + (suffix ? "__" + suffix : "");
+      }
     }
   }
 
@@ -171,7 +180,7 @@ function upsertScoreRows_(sheet, rows) {
     }
 
     // Keep the newest existing position, write the incoming result there, then
-    // remove every older row with the same student-code/assignment identity.
+    // remove every older row with the same dedupe identity.
     const target = matches[matches.length - 1];
     sheet.getRange(target.rowNumber, 1, 1, headers.length).setValues([
       mergedValues_(headers, target.values, incoming),
@@ -207,8 +216,10 @@ function doPost(e) {
     if (SCORE_WEBHOOK_TOKEN && body.token !== SCORE_WEBHOOK_TOKEN) {
       return json_({ ok: false, error: "Unauthorized" });
     }
-    if (body.action !== "upsertScoreRows" && body.mode !== "upsert") {
-      return json_({ ok: false, error: "This webhook requires action: upsertScoreRows" });
+    // Existing Marking-page saves may not yet send an action. Treat a missing
+    // action as upsert for backward compatibility, but reject unknown actions.
+    if (body.action && body.action !== "upsertScoreRows" && body.mode !== "upsert") {
+      return json_({ ok: false, error: "Unsupported score webhook action" });
     }
 
     const rows = Array.isArray(body.rows) ? body.rows : (body.row ? [body.row] : []);
