@@ -1,0 +1,36 @@
+name: Patch Student Result Upsert API Once
+
+on:
+  push:
+    branches:
+      - agent/upsert-student-results-sheet
+    paths:
+      - 'scripts/patchStudentResultUpsertApiOnce.mjs'
+      - '.github/workflows/patch-student-result-upsert-api-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/upsert-student-results-sheet
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch the API router
+        run: node scripts/patchStudentResultUpsertApiOnce.mjs
+      - name: Remove one-time migration files and commit router
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm scripts/patchStudentResultUpsertApiOnce.mjs
+          rm .github/workflows/patch-student-result-upsert-api-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add api/router.js scripts/patchStudentResultUpsertApiOnce.mjs .github/workflows/patch-student-result-upsert-api-once.yml
+          git commit -m "Route Student Results upserts through same-origin API" || exit 0
+          git push origin HEAD:agent/upsert-student-results-sheet
