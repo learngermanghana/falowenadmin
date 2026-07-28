@@ -18,9 +18,32 @@ A later Firestore result for this pair must update the Google Sheet result. It m
 
 The old Apps Script example used `sheet.appendRow(...)` for every request. Although Falowen sent a `dedupe_id`, that handler never searched for it, so the button labelled **Override sheet** still appended.
 
+## Final request path
+
+Student Results does not call `script.google.com` from the browser. The flow is:
+
+1. The signed-in browser sends the canonical result rows and a Firebase ID token to `/api/student-results/sheet-upsert`.
+2. Falowen’s same-origin server verifies the Firebase account and rejects the restricted staff account.
+3. The server injects the score webhook URL, shared token and sheet selector from its environment.
+4. The server calls Apps Script and returns the verified upsert receipt to the browser.
+
+This avoids browser CORS/preflight failures without returning to an unverifiable `no-cors` append fallback.
+
+For new deployments, prefer these server-only Vercel variables:
+
+```bash
+SCORES_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
+SCORES_WEBHOOK_TOKEN=<existing-shared-token>
+SCORES_WEBHOOK_SHEET_NAME=Key
+# or SCORES_WEBHOOK_SHEET_GID=<gid>
+FIREBASE_API_KEY=<same-Firebase-web-api-key-used-by-the-app>
+```
+
+The server temporarily accepts the existing `VITE_...` equivalents as migration fallbacks. Do not put a real token in source code or documentation.
+
 ## Required Apps Script upgrade
 
-1. Open the Apps Script project used by `VITE_SCORES_WEBHOOK_URL`.
+1. Open the Apps Script project used by the score webhook URL.
 2. Replace its score `doPost` implementation with:
    - `docs/apps-script/score-results-upsert.gs`
 3. Copy the existing shared token into `SCORE_WEBHOOK_TOKEN`. Do not commit or share the real token.
@@ -41,7 +64,7 @@ The upgraded handler acknowledges successful requests with:
 }
 ```
 
-Falowen deliberately rejects a response without this upsert acknowledgement. It does not send the old `no-cors` fallback, because an unverifiable fallback could append another duplicate.
+Falowen deliberately rejects a response without this upsert acknowledgement.
 
 ## Existing duplicate cleanup
 
@@ -63,5 +86,7 @@ The automated Student Result Upsert tests verify that:
 - identity ignores harmless case, spaces, underscores, and punctuation differences;
 - two rows for the same student and assignment collapse to the newest row;
 - bulk payloads contain only the latest incoming row for each identity;
-- the frontend requires an explicit upsert acknowledgement;
+- the browser uses an authenticated same-origin API instead of contacting Apps Script directly;
+- the API verifies the Firebase user and injects private webhook settings server-side;
+- the frontend and server both require an explicit upsert acknowledgement;
 - the Apps Script updates rows and removes duplicates instead of using an append-only handler.
