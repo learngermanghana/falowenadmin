@@ -1,0 +1,37 @@
+name: Essay Feedback Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
+      - 'tests/essay-feedback-evidence.test.js'
+      - 'tests/marking-intelligence.test.js'
+      - '.github/workflows/essay-feedback-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
+      - 'tests/essay-feedback-evidence.test.js'
+      - 'tests/marking-intelligence.test.js'
+      - '.github/workflows/essay-feedback-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check feedback modules and patch script
+        run: |
+          node --check src/utils/naturalMarkingFeedback.js
+          node --check src/utils/essayFeedbackEvidence.js
+          node --check scripts/patchSmartMarkingNaturalFeedback.mjs
+      - name: Test deterministic and essay feedback
+        run: node --test tests/marking-intelligence.test.js tests/essay-feedback-evidence.test.js
