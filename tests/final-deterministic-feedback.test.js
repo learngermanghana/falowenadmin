@@ -76,7 +76,7 @@ test("A1-0.2 perfect deterministic fields replace stale values", () => {
 test("A1-0.2 perfect feedback states 12 of 12 with no review list", () => {
   const { result } = perfectA102Result();
   assert.match(result.feedback, /12 of 12 objective questions correctly/);
-  assert.doesNotMatch(result.feedback, /2 of 12|Review question/i);
+  assert.doesNotMatch(result.feedback, /\b2 of 12\b|Review question/i);
 });
 
 test("A1-0.2 perfect reconciliation preserves stale AI feedback only for audit", () => {
