@@ -79,15 +79,29 @@ function sentence(value = "") {
   return /[.!?]$/.test(clean) ? clean : `${clean}.`;
 }
 
-function completeSentences(values, maximum) {
+function uniqueSentences(values = []) {
+  return [...new Set(values.map(sentence).filter(Boolean))];
+}
+
+function completeSentences(requiredValues, optionalValues, maximum) {
+  const required = uniqueSentences(requiredValues);
+  const requiredSet = new Set(required);
+  const optional = uniqueSentences(optionalValues).filter((value) => !requiredSet.has(value));
   const selected = [];
   let words = 0;
-  for (const value of [...new Set(values.map(sentence).filter(Boolean))]) {
+
+  for (const value of required) {
+    selected.push(value);
+    words += value.split(/\s+/).length;
+  }
+
+  for (const value of optional) {
     const count = value.split(/\s+/).length;
-    if (selected.length && words + count > maximum) continue;
+    if (words + count > maximum) break;
     selected.push(value);
     words += count;
   }
+
   return selected.join(" ");
 }
 
@@ -262,13 +276,16 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
       ? ["Good progress", "Solid work", "A good attempt"]
       : ["Keep improving", "Keep practising", "A useful start"];
   const correction = correctionOf(result);
-  const sentences = [
+  const correctionEvidence = correctionSentence(correction, level, seed, history);
+  const requiredSentences = [
     `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
     ...conciseObjective(objectiveSentences),
+    correctionEvidence,
+  ];
+  const optionalSentences = [
     strengthOf(result, submissionText, level, seed, history),
-    correctionSentence(correction, level, seed, history),
     taskSentence(result),
     nextStepOf(result, submissionText, level, correction, seed, history),
   ];
-  return completeSentences(sentences, level === "B1" ? 75 : 60);
+  return completeSentences(requiredSentences, optionalSentences, level === "B1" ? 75 : 60);
 }
