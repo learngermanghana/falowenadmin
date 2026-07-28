@@ -182,91 +182,14 @@ If your Apps Script expects auth/sheet selectors, configure `VITE_SCORES_WEBHOOK
 
 ### Set up the marking sheet (auto-send scores)
 
-Use this once so clicking **Save score** in the Marking page writes directly into Google Sheets.
+The previous inline Apps Script example used `sheet.appendRow(...)` and has been retired because it created duplicate rows when Student Results attempted to override an existing score.
 
-1. **Create a Google Sheet** for marking results.
-2. In row 1, add exact headers (in order recommended):
+Use the maintained upsert handler and deployment guide instead:
 
-   ```
-   studentcode,name,assignment,score,comments,date,level,link
-   ```
+- Apps Script source: `docs/apps-script/score-results-upsert.gs`
+- Setup and duplicate-cleanup instructions: `docs/student-result-sheet-upsert.md`
 
-3. Open **Extensions → Apps Script** and paste this web-app handler:
-
-   ```javascript
-   function doPost(e) {
-     try {
-       const body = JSON.parse(e.postData.contents || "{}");
-       const token = "REPLACE_WITH_OPTIONAL_SHARED_TOKEN"; // Set "" to disable token check.
-
-       if (token && body.token !== token) {
-         return ContentService.createTextOutput(
-           JSON.stringify({ ok: false, error: "Unauthorized" })
-         ).setMimeType(ContentService.MimeType.JSON);
-       }
-
-       const ss = SpreadsheetApp.getActiveSpreadsheet();
-       const sheet = body.sheet_gid
-         ? ss.getSheets().find((s) => String(s.getSheetId()) === String(body.sheet_gid))
-         : (body.sheet_name ? ss.getSheetByName(body.sheet_name) : ss.getActiveSheet());
-
-       if (!sheet) {
-         return ContentService.createTextOutput(
-           JSON.stringify({ ok: false, error: "Target sheet not found" })
-         ).setMimeType(ContentService.MimeType.JSON);
-       }
-
-       const rows = Array.isArray(body.rows)
-         ? body.rows
-         : (body.row ? [body.row] : []);
-
-       if (!rows.length) {
-         return ContentService.createTextOutput(
-           JSON.stringify({ ok: false, error: "No row payload" })
-         ).setMimeType(ContentService.MimeType.JSON);
-       }
-
-       rows.forEach((r) => {
-         sheet.appendRow([
-           r.studentcode || "",
-           r.name || "",
-           r.assignment || "",
-           r.score ?? "",
-           r.comments || "",
-           r.date || new Date().toString(),
-           r.level || "",
-           r.link || "",
-         ]);
-       });
-
-       return ContentService.createTextOutput(
-         JSON.stringify({ ok: true, count: rows.length })
-       ).setMimeType(ContentService.MimeType.JSON);
-     } catch (err) {
-       return ContentService.createTextOutput(
-         JSON.stringify({ ok: false, error: String(err) })
-       ).setMimeType(ContentService.MimeType.JSON);
-     }
-   }
-   ```
-
-4. **Deploy** the script as a Web App:
-   - Deploy → New deployment → Type: Web app
-   - Execute as: **Me**
-   - Who has access: **Anyone** (or anyone in your domain)
-   - Copy the `/exec` URL.
-
-5. Add/update the frontend env values:
-
-   ```bash
-   VITE_SCORES_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
-   VITE_SCORES_WEBHOOK_TOKEN=REPLACE_WITH_OPTIONAL_SHARED_TOKEN
-   VITE_SCORES_WEBHOOK_SHEET_NAME=Scores
-   # or
-   VITE_SCORES_WEBHOOK_SHEET_GID=123456789
-   ```
-
-6. Restart the frontend (`npm run dev`), open **Mark Work**, and click **Save score**.
+The handler uses the normalized student code plus canonical assignment ID as the permanent result identity. A later sync updates the matching row, while explicit resubmission attempt IDs remain separate. Falowen's Student Results override also requires an upsert acknowledgement, so it will not silently fall back to an append-only request.
 
 ### Auto-send troubleshooting
 
