@@ -8,6 +8,7 @@ on:
       - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
       - 'tests/essay-feedback-evidence.test.js'
       - 'tests/marking-intelligence.test.js'
+      - 'tests/marking-review-findings.test.js'
       - '.github/workflows/essay-feedback-tests.yml'
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
       - 'tests/essay-feedback-evidence.test.js'
       - 'tests/marking-intelligence.test.js'
+      - 'tests/marking-review-findings.test.js'
       - '.github/workflows/essay-feedback-tests.yml'
 
 jobs:
@@ -33,5 +35,6 @@ jobs:
           node --check src/utils/naturalMarkingFeedback.js
           node --check src/utils/essayFeedbackEvidence.js
           node --check scripts/patchSmartMarkingNaturalFeedback.mjs
+          node --check tests/marking-review-findings.test.js
       - name: Test deterministic and essay feedback
-        run: node --test tests/marking-intelligence.test.js tests/essay-feedback-evidence.test.js
+        run: node --test tests/marking-intelligence.test.js tests/essay-feedback-evidence.test.js tests/marking-review-findings.test.js
