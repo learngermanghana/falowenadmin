@@ -1,0 +1,26 @@
+name: Student Payment Listener Stability
+
+on:
+  pull_request:
+    paths:
+      - 'src/components/StudentPaymentTools.jsx'
+      - 'tests/student-payment-listener-stability.test.js'
+      - '.github/workflows/student-payment-listener-stability.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/components/StudentPaymentTools.jsx'
+      - 'tests/student-payment-listener-stability.test.js'
+      - '.github/workflows/student-payment-listener-stability.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test stable selected-student listener
+        run: node --test tests/student-payment-listener-stability.test.js
