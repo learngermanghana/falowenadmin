@@ -1751,14 +1751,14 @@
         "Answer2": "B. ING-DiBa",
         "Answer3": "A. Sparkasse",
         "Answer4": "C. Volksbank",
-        "Answer5": "A. Commerzbank",
-        "Answer6": "B) Reisepass, Meldebescheinigung, Einkommensnachweis",
-        "Answer7": "B) Eine Stunde"
+        "Answer5": "A. Commerzbank"
       },
       "teil4": {
-        "Answer1": "B) Drei",
-        "Answer2": "A) Basiskonto",
-        "Answer3": "D) Die Formulare vor dem Termin online ausfüllen"
+        "Answer1": "B) Reisepass, Meldebescheinigung, Einkommensnachweis",
+        "Answer7": "B) Eine Stunde",
+        "Answer3": "B) Drei",
+        "Answer4": "A) Basiskonto",
+        "Answer5": "D) Die Formulare vor dem Termin online ausfüllen"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/11swMhsZxMZKG8YqavvspmntM6RzTtP5NDG6zk19GskI/gviz/tq?tqx=out:html&sheet=Key",
