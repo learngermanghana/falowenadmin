@@ -15,7 +15,13 @@ if (!source.includes(naturalImport)) {
 
 const helper = `function applyNaturalStudentFeedback(result = {}, options = {}, submissionText = "") {
   const protectedResult = enforceRegisteredWritingScore(result, options.referenceEntry || {});
-  const studentComment = buildNaturalStudentFeedback(protectedResult, submissionText);
+  const feedbackInput = {
+    ...protectedResult,
+    level: protectedResult.level || options.referenceEntry?.level || options.submission?.level || options.level || "",
+    assignmentKey: protectedResult.assignmentKey || options.referenceEntry?.assignmentKey || options.submission?.assignmentKey || options.submission?.assignmentId || "",
+    previousFeedback: protectedResult.previousFeedback || options.submission?.previousFeedback || options.submission?.feedback || "",
+  };
+  const studentComment = buildNaturalStudentFeedback(feedbackInput, submissionText);
   if (!studentComment) return protectedResult;
 
   return {
@@ -28,10 +34,14 @@ const helper = `function applyNaturalStudentFeedback(result = {}, options = {}, 
 
 `;
 
-if (!source.includes("function applyNaturalStudentFeedback(")) {
-  const anchor = "async function requestSecondExaminer(options = {}) {";
-  if (!source.includes(anchor)) throw new Error("markingService helper anchor changed; update patchSmartMarkingNaturalFeedback.mjs");
-  source = source.replace(anchor, `${helper}${anchor}`);
+const helperStart = source.indexOf("function applyNaturalStudentFeedback(");
+const examinerAnchor = "async function requestSecondExaminer(options = {}) {";
+const examinerStart = source.indexOf(examinerAnchor);
+if (examinerStart < 0) throw new Error("markingService helper anchor changed; update patchSmartMarkingNaturalFeedback.mjs");
+if (helperStart >= 0) {
+  source = `${source.slice(0, helperStart)}${helper}${source.slice(examinerStart)}`;
+} else {
+  source = source.replace(examinerAnchor, `${helper}${examinerAnchor}`);
 }
 
 source = source.replace(
