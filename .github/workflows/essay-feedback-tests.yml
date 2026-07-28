@@ -3,10 +3,13 @@ name: Essay Feedback Tests
 on:
   pull_request:
     paths:
+      - 'src/pages/MarkingPage.jsx'
       - 'src/utils/naturalMarkingFeedback.js'
       - 'src/utils/essayFeedbackEvidence.js'
+      - 'src/utils/finalDeterministicFeedback.js'
       - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
       - 'tests/essay-feedback-evidence.test.js'
+      - 'tests/final-deterministic-feedback.test.js'
       - 'tests/marking-intelligence.test.js'
       - 'tests/marking-review-findings.test.js'
       - '.github/workflows/essay-feedback-tests.yml'
@@ -14,10 +17,13 @@ on:
     branches:
       - main
     paths:
+      - 'src/pages/MarkingPage.jsx'
       - 'src/utils/naturalMarkingFeedback.js'
       - 'src/utils/essayFeedbackEvidence.js'
+      - 'src/utils/finalDeterministicFeedback.js'
       - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
       - 'tests/essay-feedback-evidence.test.js'
+      - 'tests/final-deterministic-feedback.test.js'
       - 'tests/marking-intelligence.test.js'
       - 'tests/marking-review-findings.test.js'
       - '.github/workflows/essay-feedback-tests.yml'
@@ -34,8 +40,18 @@ jobs:
         run: |
           node --check src/utils/naturalMarkingFeedback.js
           node --check src/utils/essayFeedbackEvidence.js
+          node --check src/utils/finalDeterministicFeedback.js
           node --check scripts/patchSmartMarkingNaturalFeedback.mjs
+          node --check tests/final-deterministic-feedback.test.js
           node --check tests/marking-review-findings.test.js
+      - name: Apply production marking patches
+        run: |
+          node scripts/patchSmartMarkingNaturalFeedback.mjs
+          grep -F 'import { reconcileFinalDeterministicFeedback } from "../utils/finalDeterministicFeedback.js";' src/pages/MarkingPage.jsx
+          grep -F 'mergeObjectiveScore(aiResult, deterministicObjective, submissionText)' src/pages/MarkingPage.jsx
+          grep -F '}, objectiveResult, submissionText);' src/pages/MarkingPage.jsx
+      - name: Test final deterministic feedback reconciliation
+        run: node --test tests/final-deterministic-feedback.test.js
       - name: Test marking intelligence
         run: node --test tests/marking-intelligence.test.js
       - name: Test essay feedback evidence
