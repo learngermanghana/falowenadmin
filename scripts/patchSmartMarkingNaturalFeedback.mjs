@@ -14,12 +14,14 @@ if (!source.includes(naturalImport)) {
 }
 
 const helper = `function applyNaturalStudentFeedback(result = {}, options = {}, submissionText = "") {
-  const protectedResult = enforceRegisteredWritingScore(result, options.referenceEntry || {});
+  const referenceEntry = options.referenceEntry || {};
+  const protectedResult = enforceRegisteredWritingScore(result, referenceEntry);
   const feedbackInput = {
     ...protectedResult,
-    level: protectedResult.level || options.referenceEntry?.level || options.submission?.level || options.level || "",
-    assignmentKey: protectedResult.assignmentKey || options.referenceEntry?.assignmentKey || options.submission?.assignmentKey || options.submission?.assignmentId || "",
+    level: protectedResult.level || referenceEntry.level || options.submission?.level || options.level || "",
+    assignmentKey: protectedResult.assignmentKey || referenceEntry.assignmentKey || options.submission?.assignmentKey || options.submission?.assignmentId || "",
     previousFeedback: protectedResult.previousFeedback || options.submission?.previousFeedback || options.submission?.feedback || "",
+    hasRegisteredWriting: assignmentHasScoredWriting(referenceEntry),
   };
   const studentComment = buildNaturalStudentFeedback(feedbackInput, submissionText);
   if (!studentComment) return protectedResult;
