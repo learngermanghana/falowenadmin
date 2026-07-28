@@ -64,6 +64,29 @@ test("exact writing correction is preserved before lower-priority coaching", () 
   assert.ok(feedback.split(/\s+/).length <= 60);
 });
 
+test("exact writing correction stays within the A2 cap when the wrong-question list is long", () => {
+  const original = "ich möchte mit meiner Freundin zusammen einen schönen Urlaub im nächsten Sommer planen";
+  const corrected = "ich möchte im nächsten Sommer zusammen mit meiner Freundin einen schönen Urlaub planen";
+  const feedback = buildEvidenceEssayFeedback({
+    result: {
+      level: "A2",
+      assignmentKey: "A2-7.18",
+      studentName: "Nabi",
+      writingScore: 70,
+      corrections: [{ from: original, to: corrected, partId: "Teil 2" }],
+    },
+    submissionText: "Sehr geehrte Damen und Herren. Ich schreibe Ihnen, weil ich mit meiner Freundin einen Urlaub planen möchte. Können Sie mir bitte antworten? Vielen Dank für Ihre Hilfe.",
+    objectiveSentences: [
+      "You answered 1 of 15 objective questions correctly",
+      "Review questions 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, and 14 carefully",
+    ],
+  });
+
+  assert.match(feedback, new RegExp(corrected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(feedback, new RegExp(original.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.ok(feedback.split(/\s+/).length <= 60);
+});
+
 test("legacy imported A2 and B1 entries with expected Teil 2 keep second-examiner eligibility", () => {
   assert.equal(assignmentHasScoredWriting({
     assignmentKey: "A2-7.18",
@@ -74,6 +97,11 @@ test("legacy imported A2 and B1 entries with expected Teil 2 keep second-examine
   assert.equal(assignmentHasScoredWriting({
     assignmentKey: "B1-3.7",
     expectedParts: ["Teil 2", "Teil 3", "Teil 4"],
+  }), true);
+
+  assert.equal(assignmentHasScoredWriting({
+    assignmentKey: "legacy-writing-entry",
+    partGrading: { writing: { gradingMode: "ai_written_response" } },
   }), true);
 
   assert.equal(assignmentHasScoredWriting({
