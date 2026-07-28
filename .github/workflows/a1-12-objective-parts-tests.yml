@@ -44,5 +44,7 @@ jobs:
           set +e
           node --test tests/objective-marking.test.js > objective-test.log 2>&1
           status=$?
-          tail -n 120 objective-test.log
+          if [ "$status" -ne 0 ]; then
+            grep -n -B 8 -A 24 -E '^(not ok|# AssertionError|# error:|# expected:|# actual:)' objective-test.log || true
+          fi
           exit "$status"
