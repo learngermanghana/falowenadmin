@@ -3,6 +3,8 @@ name: Student Result Upsert Tests
 on:
   pull_request:
     paths:
+      - 'api/router.js'
+      - 'api/student-results-sheet-upsert.js'
       - 'src/pages/StudentResultsComparePage.jsx'
       - 'src/services/studentResultsService.js'
       - 'src/utils/studentResultUpsert.js'
@@ -14,6 +16,8 @@ on:
     branches:
       - main
     paths:
+      - 'api/router.js'
+      - 'api/student-results-sheet-upsert.js'
       - 'src/pages/StudentResultsComparePage.jsx'
       - 'src/services/studentResultsService.js'
       - 'src/utils/studentResultUpsert.js'
@@ -32,6 +36,8 @@ jobs:
           node-version: 22
       - name: Check student result upsert modules
         run: |
+          node --check api/student-results-sheet-upsert.js
+          node --check api/router.js
           node --check src/utils/studentResultUpsert.js
           node --check tests/student-result-upsert.test.js
       - name: Test canonical result identity and sheet upsert safeguards
