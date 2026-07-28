@@ -50,8 +50,10 @@ jobs:
           grep -F 'import { reconcileFinalDeterministicFeedback } from "../utils/finalDeterministicFeedback.js";' src/pages/MarkingPage.jsx
           grep -F 'mergeObjectiveScore(aiResult, deterministicObjective, submissionText)' src/pages/MarkingPage.jsx
           grep -F '}, objectiveResult, submissionText);' src/pages/MarkingPage.jsx
-      - name: Test final deterministic feedback reconciliation
-        run: node --test tests/final-deterministic-feedback.test.js
+      - name: Test A1-9 final feedback reconciliation
+        run: node --test --test-name-pattern="A1-9 final" tests/final-deterministic-feedback.test.js
+      - name: Test A1-0.2 perfect feedback reconciliation
+        run: node --test --test-name-pattern="A1-0.2 perfect" tests/final-deterministic-feedback.test.js
       - name: Test marking intelligence
         run: node --test tests/marking-intelligence.test.js
       - name: Test essay feedback evidence
