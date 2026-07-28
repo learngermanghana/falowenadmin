@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { createStudentPaymentLink, listStudentPayments } from "../services/studentPaymentService.js";
@@ -70,8 +70,13 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
   const [generating, setGenerating] = useState(false);
   const [generatedPayment, setGeneratedPayment] = useState(null);
   const [payments, setPayments] = useState([]);
+  const onStudentUpdatedRef = useRef(onStudentUpdated);
 
   const studentId = String(student?.id || student?.studentCode || "").trim();
+
+  useEffect(() => {
+    onStudentUpdatedRef.current = onStudentUpdated;
+  }, [onStudentUpdated]);
 
   useEffect(() => {
     setAmount(String(resolveDefaultAmount(student, draft) || ""));
@@ -81,13 +86,20 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
 
   useEffect(() => {
     if (!studentId) return undefined;
-    const unsubscribe = onSnapshot(doc(db, "students", studentId), (snapshot) => {
-      if (!snapshot.exists()) return;
-      const nextStudent = { id: snapshot.id, ...snapshot.data() };
-      if (typeof onStudentUpdated === "function") onStudentUpdated(studentId, nextStudent);
-    });
+    const unsubscribe = onSnapshot(
+      doc(db, "students", studentId),
+      (snapshot) => {
+        if (!snapshot.exists()) return;
+        const nextStudent = { id: snapshot.id, ...snapshot.data() };
+        const notifyStudentUpdated = onStudentUpdatedRef.current;
+        if (typeof notifyStudentUpdated === "function") notifyStudentUpdated(studentId, nextStudent);
+      },
+      (error) => {
+        console.warn("Could not refresh the selected student in real time.", error);
+      },
+    );
     return unsubscribe;
-  }, [studentId, onStudentUpdated]);
+  }, [studentId]);
 
   useEffect(() => {
     if (!studentId) {
