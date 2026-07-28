@@ -78,3 +78,53 @@ source = source.replace(
 
 fs.writeFileSync(target, source);
 console.log("Applied smart marking natural-feedback/scoring guard patch.");
+
+function replacePageOnce(pageSource, search, replacement, label) {
+  if (pageSource.includes(replacement)) return pageSource;
+  if (!pageSource.includes(search)) throw new Error(`MarkingPage deterministic feedback anchor changed: ${label}`);
+  return pageSource.replace(search, replacement);
+}
+
+const pageTarget = path.join(root, "src/pages/MarkingPage.jsx");
+let pageSource = fs.readFileSync(pageTarget, "utf8");
+
+const reconciliationImport = 'import { reconcileFinalDeterministicFeedback } from "../utils/finalDeterministicFeedback.js";';
+if (!pageSource.includes(reconciliationImport)) {
+  pageSource = replacePageOnce(
+    pageSource,
+    'import { calculateFinalScore } from "../utils/finalScore.js";',
+    `import { calculateFinalScore } from "../utils/finalScore.js";\n${reconciliationImport}`,
+    "reconciliation import",
+  );
+}
+
+pageSource = replacePageOnce(
+  pageSource,
+  "function mergeObjectiveScore(result = {}, objectiveResult = {}) {",
+  'function mergeObjectiveScore(result = {}, objectiveResult = {}, submissionText = "") {',
+  "mergeObjectiveScore signature",
+);
+
+pageSource = replacePageOnce(
+  pageSource,
+  `  return {\n    ...result,\n    score: finalScore,`,
+  `  return reconcileFinalDeterministicFeedback({\n    ...result,\n    score: finalScore,`,
+  "mergeObjectiveScore reconciliation call",
+);
+
+pageSource = replacePageOnce(
+  pageSource,
+  `    aiOriginalFeedback: result.aiOriginalFeedback ?? result.feedback ?? "",\n  };\n}`,
+  `    aiOriginalFeedback: result.aiOriginalFeedback ?? result.feedback ?? "",\n  }, objectiveResult, submissionText);\n}`,
+  "mergeObjectiveScore reconciliation close",
+);
+
+pageSource = replacePageOnce(
+  pageSource,
+  "const result = mergeObjectiveScore(aiResult, deterministicObjective);",
+  "const result = mergeObjectiveScore(aiResult, deterministicObjective, submissionText);",
+  "final deterministic merge input",
+);
+
+fs.writeFileSync(pageTarget, pageSource);
+console.log("Applied final deterministic feedback reconciliation to MarkingPage.");
