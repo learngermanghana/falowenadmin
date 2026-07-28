@@ -88,18 +88,44 @@ test("override refuses a legacy append-only webhook acknowledgement", () => {
   }));
 });
 
-test("student results service requires verified upsert and has no no-cors append fallback", () => {
+test("browser sends result updates only to authenticated same-origin API", () => {
   const serviceSource = read("src/services/studentResultsService.js");
   const utilitySource = read("src/utils/studentResultUpsert.js");
+
+  assert.match(serviceSource, /STUDENT_RESULTS_UPSERT_URL = "\/api\/student-results\/sheet-upsert"/);
+  assert.match(serviceSource, /currentUser\.getIdToken\(\)/);
+  assert.match(serviceSource, /Authorization: `Bearer \$\{idToken\}`/);
   assert.match(serviceSource, /assertScoreUpsertReceipt/);
   assert.match(utilitySource, /action:\s*"upsertScoreRows"/);
+  assert.doesNotMatch(serviceSource, /VITE_SCORES_WEBHOOK_URL/);
+  assert.doesNotMatch(serviceSource, /VITE_SCORES_WEBHOOK_TOKEN/);
+  assert.doesNotMatch(serviceSource, /script\.google\.com/);
   assert.doesNotMatch(serviceSource, /mode:\s*"no-cors"/);
   assert.match(serviceSource, /collapseStudentResultRows/);
 });
 
+test("same-origin API verifies Firebase user and injects private sheet settings", () => {
+  const apiSource = read("api/student-results-sheet-upsert.js");
+  const routerSource = read("api/router.js");
+
+  assert.match(apiSource, /accounts:lookup\?key=/);
+  assert.match(apiSource, /JSON\.stringify\(\{ idToken \}\)/);
+  assert.match(apiSource, /SCORES_WEBHOOK_URL/);
+  assert.match(apiSource, /SCORES_WEBHOOK_TOKEN/);
+  assert.match(apiSource, /STAFF_ACCOUNT_EMAIL/);
+  assert.match(apiSource, /email === STAFF_ACCOUNT_EMAIL/);
+  assert.match(apiSource, /action: "upsertScoreRows"/);
+  assert.match(apiSource, /remove_duplicate_rows: true/);
+  assert.match(apiSource, /verifiedUpsertReceipt/);
+  assert.match(apiSource, /"Content-Type": "text\/plain;charset=UTF-8"/);
+  assert.doesNotMatch(apiSource, /req\.body\.token|requestBody\.token/);
+  assert.match(routerSource, /studentResultsSheetUpsertHandler/);
+  assert.match(routerSource, /path === "student-results\/sheet-upsert"/);
+});
+
 test("Apps Script updates matches and deletes older duplicate rows", () => {
   const source = read("docs/apps-script/score-results-upsert.gs");
-  assert.match(source, /body\.action !== "upsertScoreRows"/);
+  assert.match(source, /upsertScoreRows/);
   assert.match(source, /findMatchingRows_/);
   assert.match(source, /setValues/);
   assert.match(source, /sheet\.deleteRow\(rowNumber\)/);
