@@ -37,7 +37,7 @@ jobs:
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node --check src/utils/objectiveMarking.js
           node --check src/utils/naturalMarkingFeedback.js
-          grep -F '(?!\\d)' src/utils/objectiveMarking.js
+          grep -F '(?!\d)' src/utils/objectiveMarking.js
           grep -F 'question${questions.length === 1 ? "" : "s"}' src/utils/naturalMarkingFeedback.js
       - name: Test complete-sentence clock answer
         run: node --test --test-name-pattern="preserves 7:30" tests/objective-time-answer-parsing.test.js
