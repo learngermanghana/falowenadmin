@@ -195,7 +195,7 @@ The handler uses the normalized student code plus canonical assignment ID as the
 
 - If save shows success but row is missing, verify the deployed Apps Script version and sheet selector (`sheet_name`/`sheet_gid`).
 - If you get unauthorized/validation errors, confirm `VITE_SCORES_WEBHOOK_TOKEN` matches the token in Apps Script.
-- If your browser blocks CORS for script responses, the app falls back to a `no-cors` request, so check the target sheet directly.
+- Ordinary **Mark Work** saves may use the legacy `no-cors` fallback when a script response is blocked. **Student Results** updates never use that fallback because an override must receive a verified upsert acknowledgement before it is considered successful.
 
 ## Communication Broadcasts
 
