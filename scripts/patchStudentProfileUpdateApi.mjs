@@ -12,7 +12,11 @@ if (!source.includes(moduleImport)) {
   source = source.replace(importAnchor, `${importAnchor}\n${moduleImport}`);
 }
 
-const registration = "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth });";
+const legacyRegistration = "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth });";
+const registration = "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist });";
+if (source.includes(legacyRegistration)) {
+  source = source.replace(legacyRegistration, registration);
+}
 if (!source.includes(registration)) {
   const registrationAnchor = `  return decoded;\n}\n\nfunction sessionDocRef(classId, sessionId) {`;
   if (!source.includes(registrationAnchor)) {
@@ -25,4 +29,4 @@ if (!source.includes(registration)) {
 }
 
 fs.writeFileSync(target, source);
-console.log("Authenticated student profile update API is registered.");
+console.log("Authenticated staff-only student profile update API is registered.");
