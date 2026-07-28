@@ -118,9 +118,12 @@ function resolveObjectiveCorrect(result = {}, objectiveTotal = 0, objectiveScore
     return Math.max(0, Math.min(total, Math.round((objectiveScore / 100) * total)));
   }
 
-  const statedCorrect = Number(result.objectiveCorrect);
-  if (Number.isFinite(statedCorrect)) {
-    return Math.max(0, total > 0 ? Math.min(total, statedCorrect) : statedCorrect);
+  const rawStatedCorrect = result.objectiveCorrect;
+  if (rawStatedCorrect !== null && rawStatedCorrect !== undefined && rawStatedCorrect !== "") {
+    const statedCorrect = Number(rawStatedCorrect);
+    if (Number.isFinite(statedCorrect)) {
+      return Math.max(0, total > 0 ? Math.min(total, statedCorrect) : statedCorrect);
+    }
   }
 
   const rows = uniqueObjectiveRows(result);
@@ -177,8 +180,17 @@ export function assignmentHasScoredWriting(referenceEntry = {}) {
   ].map(normalizePartId);
   if (writingParts.includes("teil2")) return true;
 
-  const grading = referenceEntry.partGrading?.teil2 || referenceEntry.partGrading?.writing || null;
-  return String(grading?.gradingMode || "").toLowerCase() === "ai_written_response";
+  const grading = Object.entries(referenceEntry.partGrading || {})
+    .find(([partId]) => normalizePartId(partId) === "teil2")?.[1] || null;
+  if (String(grading?.gradingMode || "").toLowerCase() === "ai_written_response") return true;
+
+  const assignmentKey = String(referenceEntry.assignmentKey || referenceEntry.assignmentId || referenceEntry.assignment_id || "").trim().toUpperCase();
+  const level = String(referenceEntry.level || "").trim().toUpperCase();
+  const isA2OrB1 = /^(A2|B1)(?:[-_.]|$)/.test(assignmentKey) || /^(A2|B1)$/.test(level);
+  const expectedParts = Array.isArray(referenceEntry.expectedParts)
+    ? referenceEntry.expectedParts.map(normalizePartId)
+    : [];
+  return isA2OrB1 && expectedParts.includes("teil2");
 }
 
 export function enforceRegisteredWritingScore(result = {}, referenceEntry = {}) {
