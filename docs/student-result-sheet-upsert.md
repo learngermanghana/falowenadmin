@@ -1,5 +1,7 @@
 # Student Results: update instead of duplicate
 
+This guide and `docs/apps-script/score-results-upsert.gs` are the maintained source of truth for the score-sheet webhook. The README points here instead of embedding a second Apps Script copy.
+
 ## Permanent result identity
 
 Student Results treats this pair as one permanent result:
