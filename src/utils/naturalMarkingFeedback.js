@@ -44,7 +44,7 @@ function objectiveDetailRows(result = {}) {
     });
   }
 
-  if (!rows.length && Array.isArray(result.wrongAnswers)) {
+  if (Array.isArray(result.wrongAnswers)) {
     result.wrongAnswers.forEach((detail, index) => {
       const identity = readQuestionIdentity(detail?.question || detail?.questionNumber || `${index + 1}`, detail || {});
       rows.push({ ...identity, correct: false });
@@ -53,8 +53,18 @@ function objectiveDetailRows(result = {}) {
   return rows;
 }
 
+function uniqueObjectiveRows(result = {}) {
+  const rowsByIdentity = new Map();
+  objectiveDetailRows(result).forEach((row, index) => {
+    const key = row.question ? `${row.part || "main"}:${row.question}` : `row:${index}`;
+    const previous = rowsByIdentity.get(key);
+    if (!previous || row.correct === false) rowsByIdentity.set(key, row);
+  });
+  return [...rowsByIdentity.values()];
+}
+
 function groupedWrongQuestions(result = {}) {
-  const wrongRows = objectiveDetailRows(result).filter((row) => !row.correct && row.question);
+  const wrongRows = uniqueObjectiveRows(result).filter((row) => !row.correct && row.question);
   const groups = new Map();
   wrongRows.forEach((row) => {
     const key = row.part || "main";
@@ -66,7 +76,7 @@ function groupedWrongQuestions(result = {}) {
 }
 
 function perfectObjectiveParts(result = {}) {
-  const rows = objectiveDetailRows(result);
+  const rows = uniqueObjectiveRows(result);
   const groups = new Map();
   rows.filter((row) => row.part).forEach((row) => {
     const current = groups.get(row.part) || [];
@@ -76,6 +86,22 @@ function perfectObjectiveParts(result = {}) {
   return [...groups.entries()]
     .filter(([, statuses]) => statuses.length && statuses.every(Boolean))
     .map(([part]) => part);
+}
+
+function resolveObjectiveCorrect(result = {}, objectiveTotal = 0, objectiveScore = null) {
+  const total = Number(objectiveTotal || 0);
+  if (total > 0 && objectiveScore !== null) {
+    return Math.max(0, Math.min(total, Math.round((objectiveScore / 100) * total)));
+  }
+
+  const rows = uniqueObjectiveRows(result);
+  if (total > 0 && rows.length) {
+    const wrongCount = rows.filter((row) => row.correct === false && row.question).length;
+    return Math.max(0, Math.min(total, total - wrongCount));
+  }
+
+  const statedCorrect = Number(result.objectiveCorrect);
+  return Number.isFinite(statedCorrect) ? Math.max(0, statedCorrect) : 0;
 }
 
 function looksLikeFreeText(submissionText = "") {
@@ -149,9 +175,9 @@ export function enforceRegisteredWritingScore(result = {}, referenceEntry = {}) 
 
 export function buildNaturalStudentFeedback(result = {}, submissionText = "") {
   const name = String(result.studentName || result.name || "").trim();
-  const objectiveCorrect = Number(result.objectiveCorrect || 0);
   const objectiveTotal = Number(result.objectiveTotal || 0);
   const objectiveScore = clampPercent(result.objectiveScore);
+  const objectiveCorrect = resolveObjectiveCorrect(result, objectiveTotal, objectiveScore);
   const wrongGroups = groupedWrongQuestions(result);
   const perfectParts = perfectObjectiveParts(result);
   const sentences = [];
