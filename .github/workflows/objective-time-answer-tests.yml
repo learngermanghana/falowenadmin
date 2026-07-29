@@ -6,7 +6,9 @@ on:
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
       - 'package.json'
       - '.github/workflows/objective-time-answer-tests.yml'
@@ -17,7 +19,9 @@ on:
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
       - 'package.json'
       - '.github/workflows/objective-time-answer-tests.yml'
@@ -34,12 +38,19 @@ jobs:
         run: |
           node scripts/patchObjectiveWritingPartDetection.mjs
           node scripts/patchObjectiveAnswerTimeParsing.mjs
+          node scripts/patchObjectivePromptAnswerParsing.mjs
           node scripts/patchObjectiveAnswerTimeParsing.mjs
+          node scripts/patchObjectivePromptAnswerParsing.mjs
           node --check src/utils/objectiveMarking.js
           node --check src/utils/naturalMarkingFeedback.js
           grep -F '(?!\d)' src/utils/objectiveMarking.js
+          grep -F 'numberedQuestionPrompt' src/utils/objectiveMarking.js
           grep -F 'question${questions.length === 1 ? "" : "s"}' src/utils/naturalMarkingFeedback.js
       - name: Test complete-sentence clock answer
         run: node --test --test-name-pattern="preserves 7:30" tests/objective-time-answer-parsing.test.js
+      - name: Test copied numbered questions
+        run: node --test --test-name-pattern="reads answers beneath copied numbered questions" tests/objective-time-answer-parsing.test.js
+      - name: Test question-form choice answers
+        run: node --test tests/objective-question-form-choice.test.js
       - name: Test multipart feedback labels
         run: node --test --test-name-pattern="labels each group" tests/objective-time-answer-parsing.test.js
