@@ -61,6 +61,33 @@ Teil 3. Hören
 4. C) In einem Aktenschrank
 5. C) Bar`;
 
+const COMFORT_SUBMISSION = `Teil 1
+1. Wo wohnt Felix?
+Felix wohnt in Berlin.
+2. Mit wem wohnt Felix?
+Felix wohnt mit seiner Frau und seinen drei Kindern.
+3. Wie fährt Felix zur Arbeit?
+Felix fährt mit seinem Auto zur Arbeit.
+4. Wann beginnt Felix' Arbeitstag?
+Felix' Arbeitstag beginnt um 7:30 Uhr.
+5. Wie bezahlt Felix gerne beim Einkaufen?
+a) Barzahlung (cash)
+Er bezahlt gerne bar.
+
+Teil 2
+1.b) Um 9:00 Uhr
+2. b) Um 12:00 Uhr
+3. b) Um 18:00 Uhr
+4. b) Um 21:00 Uhr
+5.d) Alles Genannte
+
+Teil 3
+1. b) Um 9:00 Uhr
+2. b) Um 12:00 Uhr
+3. c) Ein Computer und ein Telefon
+4.c) In einem Aktenschrank
+5. c) Bar`;
+
 test("A1-12.2 preserves 7:30 inside a complete sentence and scores 14 of 15", () => {
   const result = computeObjectiveScore(A1_12_2_REFERENCE, DEBORAH_SUBMISSION);
 
@@ -73,6 +100,22 @@ test("A1-12.2 preserves 7:30 inside a complete sentence and scores 14 of 15", ()
     .filter(([, detail]) => detail.correct === false)
     .map(([key]) => key);
   assert.deepEqual(wrongKeys, ["teil3.3"]);
+});
+
+test("A1-12.2 reads answers beneath copied numbered questions", () => {
+  const result = computeObjectiveScore(A1_12_2_REFERENCE, COMFORT_SUBMISSION);
+
+  assert.equal(result.correctCount, 13);
+  assert.equal(result.totalCount, 15);
+  assert.equal(Math.round((result.correctCount / result.totalCount) * 100), 87);
+  assert.match(result.details["teil1.1"].student, /Felix wohnt in Berlin/i);
+  assert.match(result.details["teil1.4"].student, /7:30 Uhr/i);
+  assert.equal(result.details["teil1.5"].student.toLowerCase(), "a) barzahlung (cash)");
+
+  const wrongKeys = Object.entries(result.details)
+    .filter(([, detail]) => detail.correct === false)
+    .map(([key]) => key);
+  assert.deepEqual(wrongKeys, ["teil3.3", "teil3.4"]);
 });
 
 test("multipart feedback labels each group with question or questions", () => {
