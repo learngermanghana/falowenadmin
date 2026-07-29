@@ -105,17 +105,18 @@ test("A1-12.2 preserves 7:30 inside a complete sentence and scores 14 of 15", ()
 test("A1-12.2 reads answers beneath copied numbered questions", () => {
   const result = computeObjectiveScore(A1_12_2_REFERENCE, COMFORT_SUBMISSION);
 
-  assert.equal(result.correctCount, 13);
+  assert.equal(result.correctCount, 14);
   assert.equal(result.totalCount, 15);
-  assert.equal(Math.round((result.correctCount / result.totalCount) * 100), 87);
+  assert.equal(Math.round((result.correctCount / result.totalCount) * 100), 93);
   assert.match(result.details["teil1.1"].student, /Felix wohnt in Berlin/i);
   assert.match(result.details["teil1.4"].student, /7:30 Uhr/i);
   assert.equal(result.details["teil1.5"].student.toLowerCase(), "a) barzahlung (cash)");
+  assert.equal(result.details["teil3.4"].correct, true);
 
   const wrongKeys = Object.entries(result.details)
     .filter(([, detail]) => detail.correct === false)
     .map(([key]) => key);
-  assert.deepEqual(wrongKeys, ["teil3.3", "teil3.4"]);
+  assert.deepEqual(wrongKeys, ["teil3.3"]);
 });
 
 test("multipart feedback labels each group with question or questions", () => {
