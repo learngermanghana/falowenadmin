@@ -53,9 +53,13 @@ exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
 );
 ${endMarker}`;
 
-const triggerAnchor = 'exports.archiveOldThreads = onSchedule(';
-if (!content.includes(triggerAnchor)) {
-  throw new Error("Automatic orientation sync patch could not find the scheduled-function insertion point.");
+const triggerAnchors = [
+  'exports.createFlatSubmissionMarkingJob = onDocumentCreated(',
+  'exports.sendDueHolidayNotices = onSchedule({',
+];
+const triggerAnchor = triggerAnchors.find((candidate) => content.includes(candidate));
+if (!triggerAnchor) {
+  throw new Error("Automatic orientation sync patch could not find a stable function-export insertion point.");
 }
 content = content.replace(triggerAnchor, `${block}${triggerAnchor}`);
 
