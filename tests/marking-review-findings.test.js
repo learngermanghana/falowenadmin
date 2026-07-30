@@ -50,7 +50,7 @@ test("exact writing correction is preserved before lower-priority coaching", () 
       taskCompletion: { completed: 4, total: 4 },
       nextStep: "Check articles once more before submitting",
     },
-    submissionText: "Sehr geehrte Damen und Herren. Ich schreibe Ihnen, weil ich mit Ihnen einen Termin planen möchte. Können Sie mir bitte antworten? Vielen Dank für Ihre Hilfe.",
+    submissionText: `Sehr geehrte Damen und Herren. Ich schreibe Ihnen, ${original}. Können Sie mir bitte antworten? Vielen Dank für Ihre Hilfe.`,
     objectiveSentences: [
       "You answered 3 of 4 objective questions correctly",
       "Review question 3 carefully",
@@ -75,7 +75,7 @@ test("exact writing correction stays within the A2 cap when the wrong-question l
       writingScore: 70,
       corrections: [{ from: original, to: corrected, partId: "Teil 2" }],
     },
-    submissionText: "Sehr geehrte Damen und Herren. Ich schreibe Ihnen, weil ich mit meiner Freundin einen Urlaub planen möchte. Können Sie mir bitte antworten? Vielen Dank für Ihre Hilfe.",
+    submissionText: `Sehr geehrte Damen und Herren. ${original}. Können Sie mir bitte antworten? Vielen Dank für Ihre Hilfe.`,
     objectiveSentences: [
       "You answered 1 of 15 objective questions correctly",
       "Review questions 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, and 14 carefully",
