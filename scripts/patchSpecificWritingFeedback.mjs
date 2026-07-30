@@ -117,12 +117,18 @@ source = replaceOnce(
 
 source = source.replace('    choices.push("The main purpose of your message is understandable");\n', "");
 
-source = replaceOnce(
-  source,
-  `  if (structured) return structured;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A2") {`,
-  `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "next");\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredNextStep(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A2") {`,
-  "next-step evidence priority",
-);
+const nextBeforeA2 = `  if (structured) return structured;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A2") {`;
+const nextBeforeBeginner = `  if (structured) return structured;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A1" || level === "A2") {`;
+const nextPrefix = `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "next");\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredNextStep(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");\n  const choices = [];\n`;
+if (!source.includes('const aiSpecific = specificAiWritingSentence(result, "next");')) {
+  if (source.includes(nextBeforeBeginner)) {
+    source = source.replace(nextBeforeBeginner, `${nextPrefix}  if (level === "A1" || level === "A2") {`);
+  } else if (source.includes(nextBeforeA2)) {
+    source = source.replace(nextBeforeA2, `${nextPrefix}  if (level === "A2") {`);
+  } else {
+    throw new Error("next-step evidence priority anchor changed; update patchSpecificWritingFeedback.mjs");
+  }
+}
 
 source = source.replace('    choices.push(correction ? "Reread the corrected sentence and check verb position and articles" : "Check verb position, articles and every task point before submitting");\n', "");
 
