@@ -67,6 +67,8 @@ test("production patch preserves structured fields in both OpenAI normalizers", 
   const browserSource = read("src/services/markingServiceBase.js");
   const patchSource = read("scripts/patchStructuredWritingEvidence.mjs");
   const packageSource = read("package.json");
+  const firebaseConfig = read("firebase.json");
+  const deployWorkflow = read(".github/workflows/deploy-firebase.yml");
 
   for (const source of [functionsSource, browserSource]) {
     assert.match(source, /writingStrengths:/);
@@ -79,4 +81,7 @@ test("production patch preserves structured fields in both OpenAI normalizers", 
   assert.match(functionsSource, /Never invent a correction merely to fill a field/);
   assert.match(patchSource, /Structured OpenAI writing evidence is preserved/);
   assert.match(packageSource, /patchStructuredWritingEvidence\.mjs/);
+  assert.match(firebaseConfig, /node scripts\/patchStructuredWritingEvidence\.mjs/);
+  assert.match(deployWorkflow, /scripts\/patchStructuredWritingEvidence\.mjs/);
+  assert.match(deployWorkflow, /grep -F 'writingStrengths:' functions\/index\.js/);
 });
