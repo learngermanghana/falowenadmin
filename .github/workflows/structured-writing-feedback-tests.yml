@@ -11,6 +11,8 @@ on:
       - 'tests/structured-writing-evidence.test.js'
       - 'tests/essay-feedback-evidence.test.js'
       - 'package.json'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firebase.yml'
       - '.github/workflows/structured-writing-feedback-tests.yml'
   push:
     branches:
@@ -24,6 +26,8 @@ on:
       - 'tests/structured-writing-evidence.test.js'
       - 'tests/essay-feedback-evidence.test.js'
       - 'package.json'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firebase.yml'
       - '.github/workflows/structured-writing-feedback-tests.yml'
 
 jobs:
