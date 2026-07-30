@@ -11,7 +11,9 @@ on:
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
       - 'scripts/patchA1PricePreferenceMarking.mjs'
+      - 'scripts/patchObjectiveSectionHeadingPunctuation.mjs'
       - 'tests/a1-price-preference-marking.test.js'
+      - 'tests/objective-punctuated-section-headings.test.js'
       - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
       - 'package.json'
@@ -28,7 +30,9 @@ on:
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
       - 'scripts/patchA1PricePreferenceMarking.mjs'
+      - 'scripts/patchObjectiveSectionHeadingPunctuation.mjs'
       - 'tests/a1-price-preference-marking.test.js'
+      - 'tests/objective-punctuated-section-headings.test.js'
       - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
       - 'package.json'
@@ -48,17 +52,24 @@ jobs:
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
           node scripts/patchA1PricePreferenceMarking.mjs
+          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
           node scripts/patchA1PricePreferenceMarking.mjs
+          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
           node --check src/utils/objectiveMarking.js
           node --check src/utils/essayFeedbackEvidence.js
           node --check src/utils/naturalMarkingFeedback.js
           grep -F 'rootsApproximatelyMatch' src/utils/objectiveMarking.js
-          grep -F 'split(/\r?\n/)' src/utils/objectiveMarking.js
+          grep -F 'split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX]' src/utils/objectiveMarking.js
+          grep -F '[.:;]?' src/utils/objectiveMarking.js
           grep -F 'numberedQuestionPrompt' src/utils/objectiveMarking.js
           grep -F 'question${questions.length === 1 ? "" : "s"}' src/utils/naturalMarkingFeedback.js
           grep -F '"writingParts": [' src/data/answers_dictionary.json
+      - name: Test Abigail punctuated headings
+        run: node --test --test-name-pattern="scores Abigail 12 of 12" tests/objective-punctuated-section-headings.test.js
+      - name: Test numbered punctuated headings
+        run: node --test --test-name-pattern="numbered Teil headings" tests/objective-punctuated-section-headings.test.js
       - name: Test Vicky objective score
         run: node --test --test-name-pattern="preserves prices" tests/a1-price-preference-marking.test.js
       - name: Test A1 writing registration
