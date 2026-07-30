@@ -32,7 +32,7 @@ test("A2 essay feedback uses task evidence and an exact correction", () => {
       from: "weil ich möchte mit dir ein Urlaub planen",
       to: "weil ich mit dir einen Urlaub planen möchte",
     }],
-  }, "Liebe Sandra, ich möchte mit dir einen Urlaub planen. Wir treffen uns am Samstag um 14 Uhr im Café. Viele Grüße, Catherine.");
+  }, "Liebe Sandra, weil ich möchte mit dir ein Urlaub planen. Wir treffen uns am Samstag um 14 Uhr im Café. Viele Grüße, Catherine.");
 
   assert.match(feedback, /3 of 5 objective answers are correct/);
   assert.match(feedback, /Review 1 and 4/);

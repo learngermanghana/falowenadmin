@@ -1275,6 +1275,17 @@ function normalizeAiMarkingResult(result = {}, payload = {}) {
     objectiveCorrect: Number(result.objectiveCorrect || 0),
     objectiveTotal: Number(result.objectiveTotal || 0),
     writingScore: result.writingScore ?? null,
+    writingScorePercent: result.writingScorePercent ?? result.writingScore ?? null,
+    maxWritingScore: result.maxWritingScore ?? null,
+    writingStrengths: Array.isArray(result.writingStrengths)
+      ? result.writingStrengths
+      : result.writingStrengths ? [String(result.writingStrengths)] : [],
+    taskCompletion: result.taskCompletion && typeof result.taskCompletion === "object" ? result.taskCompletion : null,
+    missingTaskPoints: Array.isArray(result.missingTaskPoints) ? result.missingTaskPoints : [],
+    nextStep: String(result.nextStep || result.writingNextStep || result.improvementTarget || "").trim(),
+    writingNextStep: String(result.writingNextStep || result.nextStep || result.improvementTarget || "").trim(),
+    writing: result.writing && typeof result.writing === "object" ? result.writing : null,
+    rubric: result.rubric && typeof result.rubric === "object" ? result.rubric : null,
     finalScore,
     feedback,
     corrections: Array.isArray(result.corrections) ? result.corrections : [],
@@ -1301,11 +1312,11 @@ function buildMarkingPrompt(payload = {}) {
     "For objective answers, accept correct option letters, correct text, letter plus text, close spelling, and meaningful stems. If the student gives a wrong option letter with the correct text, mark that item needs_review for conflicting option letter and answer text. If the option letter is correct but text is different, the letter is primary and correct.",
     "Route A2/B1 teil2 as writing, teil3 Lesen as objective, and teil4 Hören as objective. Use parts.teil3 for Lesen, parts.teil4 for Hören, and parts.main for A1 objective work. If any required objective answer key is missing, do not guess; mark needs_review.",
     "Teil 2 Schreiben must be graded even when the reference answer only contains Teil 3/Teil 4 objective keys. Never award 100 solely because objective questions are all correct when a writing section is present; include a writingScore and combine it with the objectiveScore for finalScore.",
-    "For writing, assess task completion, CEFR-appropriate grammar, word order, vocabulary, spelling, structure, and clarity. When writing needs work, explain a genuine strength, give two or three concrete corrections that quote the student’s exact short wording and show improved wording, briefly explain the most useful language rule, and include one task-relevant next step. When writing is perfect, do not invent corrections; praise specific strengths and give an extension goal instead. Avoid generic writing comments.",
+    "For writing, assess task completion, CEFR-appropriate grammar, word order, vocabulary, spelling, structure, and clarity. Return writingStrengths as one or two short evidence-based strengths that quote or name exact details from the student's text. Return taskCompletion as an object with completed, total, and missing. Return corrections as one or two objects with from, to, reason, and partId 'teil2'; use an empty array when there is no genuine correction. Return nextStep as one specific task-relevant improvement or extension goal. Never invent a correction merely to fill a field, and avoid generic writing comments.",
     "Develop feedback uniquely from this assignment’s title, task, answer-key objectives, objectiveFeedbackContext, and the student’s actual response. Do not reuse a stock opening or a fixed feedback template. Every feedback response must include at least two unique anchors from the student's work, such as a quoted short phrase they wrote, the assignment topic, a missed question number, a specific option selected, or a task requirement they completed or missed.",
     "Do not start with reusable phrases such as \"Good effort\", \"Well done\", \"Great job\", or \"You did a good job\" unless immediately followed by a specific quoted detail from this submission. If the draft feedback could be sent unchanged to another student, rewrite it with exact evidence from this submission.",
     "When a submission contains both objective and writing work, integrate both naturally in one response and match the emphasis to the result. If both sections are perfect, enthusiastically praise the student. If the objective section is strong but writing needs work, praise the objective understanding before prioritizing specific writing improvements. If the writing is strong but the objective section needs work, praise the writing before directing the student to the exact missed objectives. State the supplied objective result accurately and never invent errors or corrections.",
-    `Return JSON only. The feedback field must be ${AI_FEEDBACK_MIN_WORDS} to ${AI_FEEDBACK_MAX_WORDS} words, plain text only, with no Markdown, bold markers, or asterisks. Use the available space for specific, actionable guidance rather than filler. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, corrections, and improvementSummary.`,
+    `Return JSON only. The feedback field must be ${AI_FEEDBACK_MIN_WORDS} to ${AI_FEEDBACK_MAX_WORDS} words, plain text only, with no Markdown, bold markers, or asterisks. Use the available space for specific, actionable guidance rather than filler. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, writingScorePercent, writingStrengths, taskCompletion, missingTaskPoints, corrections, nextStep, and improvementSummary.`,
     `Payload: ${JSON.stringify(payload)}`,
   ].join("\n\n");
 }
@@ -1319,6 +1330,7 @@ async function callOpenAiForMarking(payload = {}) {
   }
 
   const model = String(process.env.OPENAI_MARKING_MODEL || "gpt-4o-mini").trim();
+  const assignmentKey = String(payload.assignmentKey || payload.referenceEntry?.assignmentKey || "").trim();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -1345,7 +1357,18 @@ async function callOpenAiForMarking(payload = {}) {
 
   const body = JSON.parse(bodyText);
   const content = body?.choices?.[0]?.message?.content || "{}";
-  return normalizeAiMarkingResult(JSON.parse(content), payload);
+  const parsed = JSON.parse(content);
+  const normalized = normalizeAiMarkingResult(parsed, payload);
+  console.info("[marking-diagnostic]", {
+    assignmentKey,
+    detectedWritingPart: normalized.detectedParts.some((part) => /teil\s*2|writing|schreiben/i.test(String(part?.partId || part?.id || part))),
+    model,
+    returnedFields: Object.keys(parsed).sort(),
+    structuredWritingEvidence: Boolean(normalized.writingStrengths.length || normalized.taskCompletion || normalized.corrections.length || normalized.nextStep),
+    originalAiFeedbackExists: Boolean(String(parsed.feedback || "").trim()),
+    deploymentRevision: String(process.env.K_REVISION || process.env.GITHUB_SHA || "unknown"),
+  });
+  return normalized;
 }
 
 

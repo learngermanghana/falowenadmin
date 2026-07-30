@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { buildNaturalStudentFeedback } from "../src/utils/naturalMarkingFeedback.js";
+import { reconcileFinalDeterministicFeedback } from "../src/utils/finalDeterministicFeedback.js";
 
 const JEFFREY_SUBMISSION = `Teil 2
 Sehr geehrte Frau Abigail,
@@ -61,6 +62,31 @@ function baseResult(overrides = {}) {
   };
 }
 
+test("Jeffrey evidence survives deterministic objective merging after AI marking", () => {
+  const result = reconcileFinalDeterministicFeedback(baseResult({
+    objectiveScore: 25,
+    objectiveCorrect: 3,
+    feedback: "The email asks about Inhalt, Termine and Kosten. Add a full stop after “positive Rückmeldung” before the closing.",
+  }), {
+    totalCount: 12,
+    correctCount: 12,
+    details: Object.fromEntries(Array.from({ length: 12 }, (_, index) => [
+      `teil4.${index + 1}`,
+      { partId: "teil4", questionNumber: index + 1, correct: true },
+    ])),
+  }, JEFFREY_SUBMISSION);
+
+  assert.equal(result.objectiveScore, 100);
+  assert.equal(result.objectiveCorrect, 12);
+  assert.equal(result.objectiveTotal, 12);
+  assert.match(result.feedback, /Teil 4.*all answers correct/i);
+  assert.match(result.feedback, /Inhalt.*Termine.*Kosten/i);
+  assert.match(result.feedback, /positive Rückmeldung/i);
+  assert.equal(result.aiOriginalFeedback, "The email asks about Inhalt, Termine and Kosten. Add a full stop after “positive Rückmeldung” before the closing.");
+  assert.equal(result.aiDetailedFeedback, result.aiOriginalFeedback);
+  assert.ok(result.feedback.split(/\s+/).length <= 60);
+});
+
 test("Jeffrey feedback uses the original specific OpenAI writing evidence", () => {
   const rawAiFeedback = "Your formal email clearly asks about the seminar content, dates and costs. Avoid repeating ‘Ich freue mich’ and vary one occurrence with a different expression. All objective answers are correct.";
   const feedback = buildNaturalStudentFeedback(baseResult({
@@ -68,7 +94,7 @@ test("Jeffrey feedback uses the original specific OpenAI writing evidence", () =
     aiDetailedFeedback: rawAiFeedback,
   }), JEFFREY_SUBMISSION);
 
-  assert.match(feedback, /seminar content, dates and costs/i);
+  assert.match(feedback, /seminar content, dates and costs|Inhalt.*Termine.*Kosten/i);
   assert.match(feedback, /Avoid repeating/i);
   assert.doesNotMatch(feedback, /The main purpose of your message is understandable/i);
   assert.doesNotMatch(feedback, /Check verb position, articles and every task point/i);
@@ -82,9 +108,34 @@ test("Jeffrey feedback remains specific when OpenAI returns only generic writing
     aiDetailedFeedback: genericAiFeedback,
   }), JEFFREY_SUBMISSION);
 
-  assert.match(feedback, /seminar content, dates and costs/i);
-  assert.match(feedback, /Avoid repeating “Ich freue mich”/i);
+  assert.match(feedback, /Inhalt.*Termine.*Kosten/i);
+  assert.match(feedback, /full stop.*positive Rückmeldung/i);
   assert.doesNotMatch(feedback, /The main purpose of your message is understandable/i);
   assert.doesNotMatch(feedback, /Check verb position, articles and every task point/i);
   assert.ok(feedback.split(/\s+/).length <= 60);
 });
+
+for (const [shape, overrides, required] of [
+  ["full structured fields", {
+    writingStrengths: ["The email asks about Inhalt, Termine and Kosten"],
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    corrections: [{ from: "positive Rückmeldung", to: "positive Rückmeldung.", partId: "teil2" }],
+    nextStep: "Avoid repeating “Ich freue mich”",
+    writingScorePercent: 82,
+  }, /positive Rückmeldung/],
+  ["specific prose without structured fields", {
+    aiOriginalFeedback: "The formal email asks about Inhalt, Termine and Kosten. Add punctuation after “positive Rückmeldung” before the closing.",
+  }, /positive Rückmeldung/],
+  ["empty structured fields", { writingStrengths: [], taskCompletion: {}, corrections: [], nextStep: "" }, /positive Rückmeldung/],
+  ["generic prose", { aiOriginalFeedback: "The main purpose of your message is understandable. Check verb position, articles and every task point before submitting." }, /positive Rückmeldung/],
+  ["malformed or incomplete normalized response", { feedback: "", improvementSummary: "", corrections: [{ from: "invented text", to: "invented correction" }] }, /positive Rückmeldung/],
+]) {
+  test(`Jeffrey production feedback handles ${shape}`, () => {
+    const feedback = buildNaturalStudentFeedback(baseResult(overrides), JEFFREY_SUBMISSION);
+    assert.match(feedback, /Inhalt.*Termine.*Kosten/i);
+    assert.match(feedback, required);
+    assert.doesNotMatch(feedback, /invented text|invented correction/i);
+    assert.doesNotMatch(feedback, /The main purpose of your message is understandable|Check verb position, articles and every task point before submitting/i);
+    assert.ok(feedback.split(/\s+/).length <= 60);
+  });
+}

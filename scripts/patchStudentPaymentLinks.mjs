@@ -80,9 +80,12 @@ function patchFunctions() {
   const legacySecretDeclaration = 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET_KEY");\n';
   const currentSecretDeclaration = 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET");\n';
   content = content.split(legacySecretDeclaration).join("");
+  const secretAnchor = content.includes('const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");\n')
+    ? 'const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");\n'
+    : 'const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");\n';
   content = insertAfter(
     content,
-    'const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");\n',
+    secretAnchor,
     currentSecretDeclaration,
     "student delete secret declarations",
   );
@@ -97,9 +100,12 @@ function patchFunctions() {
     "student delete route",
   );
 
+  const secretListAnchor = content.includes('    studentDeleteSyncSecret,\n')
+    ? '    studentDeleteSyncSecret,\n'
+    : '    openAiApiKeySecret,\n';
   content = insertAfter(
     content,
-    '    studentDeleteSyncSecret,\n',
+    secretListAnchor,
     '    paystackSecretKeySecret,\n',
     "Firebase function secret list",
   );
