@@ -75,7 +75,7 @@ function writingAnchor(submission = "") {
     return { value, score };
   }).sort((left, right) => right.score - left.score);
   const value = ranked[0]?.value || "";
-  return value.length > 120 ? `${value.slice(0, 117).trim()}…` : value;
+  return value.length > 120 ? value.slice(0, 117).trim() + "…" : value;
 }
 
 function submissionAnchoredStrength(submission = "") {
@@ -84,7 +84,7 @@ function submissionAnchoredStrength(submission = "") {
     return "Your request clearly asks about the seminar content, dates and costs";
   }
   const anchor = writingAnchor(submission);
-  return anchor ? `Your sentence “${anchor.replace(/[.!?]+$/, "")}” clearly communicates the purpose of the message` : "";
+  return anchor ? "Your sentence “" + anchor.replace(/[.!?]+$/, "") + "” clearly communicates the purpose of the message" : "";
 }
 
 function submissionAnchoredNextStep(submission = "") {
@@ -99,7 +99,7 @@ function submissionAnchoredNextStep(submission = "") {
     return "Add a full stop after “Rückmeldung” before the closing";
   }
   const anchor = writingAnchor(submission);
-  return anchor ? `Reread “${anchor.replace(/[.!?]+$/, "")}” and improve one wording choice before submitting` : "";
+  return anchor ? "Reread “" + anchor.replace(/[.!?]+$/, "") + "” and improve one wording choice before submitting" : "";
 }
 
 ${helperAnchor}`;
