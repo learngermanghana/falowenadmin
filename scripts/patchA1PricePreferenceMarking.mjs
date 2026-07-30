@@ -22,9 +22,10 @@ if (objectiveSource.includes(legacySinglePattern)) {
 
 const commaSplitting = '.split(/\\r?\\n|[,;]+/)';
 const lineSplitting = '.split(/\\r?\\n/)';
+const compactOptionSplitting = '.split(/\\r?\\n|,(?=\\s*\\d{1,3}\\s*[A-FX](?:\\b|[).,:;–-]))/i)';
 if (objectiveSource.includes(commaSplitting)) {
   objectiveSource = objectiveSource.split(commaSplitting).join(lineSplitting);
-} else if (!objectiveSource.includes(lineSplitting)) {
+} else if (!objectiveSource.includes(lineSplitting) && !objectiveSource.includes(compactOptionSplitting)) {
   throw new Error("objective line splitting changed; update patchA1PricePreferenceMarking.mjs");
 }
 
