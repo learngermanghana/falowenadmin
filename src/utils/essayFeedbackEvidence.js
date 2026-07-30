@@ -20,10 +20,10 @@ function first(...values) {
 
 function levelOf(result = {}) {
   const direct = String(result.level || result.detectedLevel || result.ai?.detectedLevel || "").toUpperCase();
-  const directMatch = direct.match(/\b(A2|B1)\b/);
+  const directMatch = direct.match(/\b(A1|A2|B1)\b/);
   if (directMatch) return directMatch[1];
   const assignment = String(result.assignmentKey || result.assignmentId || result.assignment || result.ai?.assignmentKey || "").toUpperCase();
-  return assignment.match(/^(A2|B1)[-_.]/)?.[1] || "";
+  return assignment.match(/^(A1|A2|B1)[-_.]/)?.[1] || "";
 }
 
 function objectiveAnswerLike(value = "") {
@@ -121,7 +121,7 @@ function historyOf(result = {}) {
   return list(result.recentFeedback, result.previousFeedback, result.ai?.recentFeedback, result.ai?.previousFeedback);
 }
 
-function correctionOf(result = {}) {
+function correctionOf(result = {}, submission = "") {
   const candidates = [
     ...(Array.isArray(result.corrections) ? result.corrections : []),
     ...(Array.isArray(result.writingCorrections) ? result.writingCorrections : []),
@@ -134,7 +134,8 @@ function correctionOf(result = {}) {
     if (item.question || item.questionNumber || item.key || /teil\s*[34]/.test(part)) continue;
     const from = String(item.from || item.original || item.student || item.error || "").trim();
     const to = String(item.to || item.corrected || item.improved || item.correction || "").trim();
-    if (from && to && from !== to && from.length <= 90 && to.length <= 120) return { from, to };
+    if (from && to && from !== to && from.length <= 90 && to.length <= 120
+      && String(submission).toLocaleLowerCase("de").includes(from.toLocaleLowerCase("de"))) return { from, to };
   }
   return null;
 }
@@ -172,8 +173,8 @@ function meaningfulTaskEvidence(result = {}) {
   ).length > 0;
 }
 
-function meaningfulStructuredWritingEvidence(result = {}) {
-  if (correctionOf(result)) return true;
+function meaningfulStructuredWritingEvidence(result = {}, submission = "") {
+  if (correctionOf(result, submission)) return true;
   if (meaningfulTaskEvidence(result)) return true;
   if (first(
     result.writingStrengths,
@@ -193,11 +194,11 @@ function meaningfulStructuredWritingEvidence(result = {}) {
   ));
 }
 
-function hasWritingEvidence(result = {}) {
+function hasWritingEvidence(result = {}, submission = "") {
   return result.hasRegisteredWriting === true
     || result.registeredWritingPart === true
     || writingScoreOf(result) !== null
-    || meaningfulStructuredWritingEvidence(result);
+    || meaningfulStructuredWritingEvidence(result, submission);
 }
 
 function taskSentence(result = {}) {
@@ -212,16 +213,116 @@ function taskSentence(result = {}) {
   return missing[0] ? `A required task point is missing: ${missing[0]}` : "";
 }
 
+function rawFeedbackSentences(result = {}) {
+  const sources = list(
+    result.aiDetailedFeedback,
+    result.aiOriginalFeedback,
+    result.ai?.detailedFeedback,
+    result.ai?.originalFeedback,
+    result.improvementSummary,
+    result.feedback,
+  );
+  return [...new Set(sources.flatMap((value) => String(value || "")
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean)))];
+}
+
+function genericWritingSentence(value = "") {
+  return /^(?:the main purpose of your message is understandable|check verb position, articles and every task point before submitting|your message uses an appropriate greeting and closing|your free-text response is clear)/i.test(String(value || "").trim());
+}
+
+function objectiveFeedbackSentence(value = "") {
+  return /\b(?:objective|questions?\s+\d+|answers?\s+(?:are|is)|teil\s*[34]|score|correct answers?)\b/i.test(String(value || ""));
+}
+
+function specificAiWritingSentence(result = {}, kind = "strength", submission = "") {
+  const cue = kind === "next"
+    ? /\b(?:write|use|replace|correct|revise|avoid|add|change|improve|practise|practice|punctuation|wording|instead of)\b/i
+    : /\b(?:clear|organis|appropriate|formal|asks?|mentions?|includes?|explains?|specific|well structured|easy to follow)\b/i;
+  return rawFeedbackSentences(result).find((value) => {
+    const wordCount = value.split(/\s+/).filter(Boolean).length;
+    const quoted = [...value.matchAll(/[“"]([^”"]{3,90})[”"]/g)].map((match) => match[1]);
+    const correctionIsAnchored = kind !== "next"
+      || !/\b(?:replace|correct|revise|instead of)\b/i.test(value)
+      || quoted.some((quote) => String(submission).toLocaleLowerCase("de").includes(quote.toLocaleLowerCase("de")));
+    return wordCount >= 5
+      && wordCount <= 45
+      && !genericWritingSentence(value)
+      && !objectiveFeedbackSentence(value)
+      && cue.test(value)
+      && correctionIsAnchored;
+  }) || "";
+}
+
+function writingSectionText(submission = "") {
+  let source = String(submission || "").trim();
+  const laterPart = source.search(/(?:^|\n)\s*(?:teil\s*[34]|lesen|reading|h[oö]ren|hoeren|listening)\b/i);
+  if (laterPart >= 0) source = source.slice(0, laterPart);
+  return source.replace(/^\s*teil\s*2\b[.:]?\s*/i, "").trim();
+}
+
+function writingSentenceCandidates(submission = "") {
+  return writingSectionText(submission)
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((value) => value.replace(/\s+/g, " ").trim())
+    .filter((value) => {
+      const words = value.split(/\s+/).filter(Boolean).length;
+      return words >= 5
+        && words <= 24
+        && !/^(?:sehr geehrte|hallo|liebe?r?|mit freundlichen grüßen|viele grüße|liebe grüße)/i.test(value);
+    });
+}
+
+function writingAnchor(submission = "") {
+  const ranked = writingSentenceCandidates(submission).map((value, index) => {
+    let score = -index;
+    if (/\b(?:weil|möchte|interessiere|bitte|können|informationen|seminar)\b/i.test(value)) score += 8;
+    if (/[?]$/.test(value)) score += 3;
+    return { value, score };
+  }).sort((left, right) => right.score - left.score);
+  const value = ranked[0]?.value || "";
+  return value.length > 120 ? value.slice(0, 117).trim() + "…" : value;
+}
+
+function submissionAnchoredStrength(submission = "") {
+  const source = writingSectionText(submission);
+  if (/informationen[^.!?]{0,40}inhalt[^.!?]{0,40}termine[^.!?]{0,40}kosten/i.test(source)) {
+    return "Your seminar request clearly asks about Inhalt, Termine and Kosten";
+  }
+  const anchor = writingAnchor(submission);
+  return anchor ? "Your sentence “" + anchor.replace(/[.!?]+$/, "") + "” clearly communicates the purpose of the message" : "";
+}
+
+function submissionAnchoredNextStep(submission = "") {
+  const source = writingSectionText(submission);
+  if (/rückmeldung\s*(?:\n|$)\s*mit freundlichen grüßen/i.test(source)) {
+    return "Add a full stop after your exact wording “positive Rückmeldung” before the closing";
+  }
+  if ((source.match(/\bich freue mich\b/gi) || []).length >= 2) {
+    return "Avoid repeating “Ich freue mich”; vary one occurrence with a different expression";
+  }
+  if (/informationen\s+über\s+den\s+inhalt/i.test(source)) {
+    return "Use “Informationen zu dem Inhalt, den Terminen und den Kosten” instead of “Informationen über den Inhalt, die Termine und die Kosten” for a more natural request";
+  }
+  const anchor = writingAnchor(submission);
+  return anchor ? "Reread “" + anchor.replace(/[.!?]+$/, "") + "” and improve one wording choice before submitting" : "";
+}
+
 function strengthOf(result, submission, level, seed, history) {
   const structured = first(result.writingStrengths, result.strengths, result.writing?.strengths, result.ai?.writingStrengths, result.ai?.strengths, result.rubric?.strengths);
   if (structured) return structured;
+  const aiSpecific = specificAiWritingSentence(result, "strength", submission);
+  if (aiSpecific) return aiSpecific;
+  const anchored = submissionAnchoredStrength(submission);
+  if (anchored) return anchored;
   const source = String(submission || "");
   const choices = [];
-  if (level === "A2") {
+  if (level === "A1" || level === "A2") {
     if (/\b(?:hallo|liebe?r?|sehr geehrte)\b/i.test(source) && /\b(?:viele grüße|mit freundlichen grüßen|liebe grüße)\b/i.test(source)) choices.push("Your message uses an appropriate greeting and closing");
     if (/\b(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|uhr|café|markt|bahnhof)\b/i.test(source)) choices.push("You include practical details that make the message easy to follow");
     if (/\b(?:weil|denn|deshalb)\b/i.test(source)) choices.push("You explain the purpose of the message instead of listing information only");
-    choices.push("The main purpose of your message is understandable");
   } else {
     if (/\b(?:meiner meinung nach|ich denke|ich finde|ich bin der meinung)\b/i.test(source)) choices.push("Your position is clear and easy to identify");
     if (/\b(?:zum beispiel|beispielsweise|etwa)\b/i.test(source)) choices.push("A concrete example helps support your argument");
@@ -254,12 +355,15 @@ function compactCorrectionSentence(correction) {
 function nextStepOf(result, submission, level, correction, seed, history) {
   const structured = first(result.nextStep, result.improvementTarget, result.writingNextStep, result.writing?.nextStep, result.ai?.nextStep, result.rubric?.nextStep);
   if (structured) return structured;
+  const aiSpecific = specificAiWritingSentence(result, "next", submission);
+  if (aiSpecific) return aiSpecific;
+  const anchored = submissionAnchoredNextStep(submission);
+  if (anchored) return anchored;
   const source = String(submission || "");
   const choices = [];
-  if (level === "A2") {
+  if (level === "A1" || level === "A2") {
     if (/\bweil\s+ich\s+(?:möchte|kann|muss|will)\b/i.test(source)) choices.push("For the next task, place the conjugated verb at the end after “weil”");
     if (!/\b(?:weil|aber|deshalb|dann)\b/i.test(source)) choices.push("Connect two ideas with words such as “weil”, “aber” or “deshalb”");
-    choices.push(correction ? "Reread the corrected sentence and check verb position and articles" : "Check verb position, articles and every task point before submitting");
   } else {
     if (!/\b(?:zum beispiel|beispielsweise|etwa)\b/i.test(source)) choices.push("Support each main reason with a concrete example");
     if (source.split(/\n\s*\n/).filter((part) => part.trim()).length < 3) choices.push("Use a short introduction, a developed main section and a clear conclusion");
@@ -279,7 +383,7 @@ function conciseObjective(values = []) {
 
 export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", objectiveSentences = [] } = {}) {
   const level = levelOf(result);
-  if (!level || !freeText(submissionText) || !hasWritingEvidence(result)) return "";
+  if (!level || !freeText(submissionText) || !hasWritingEvidence(result, submissionText)) return "";
   const writingScore = writingScoreOf(result);
 
   const name = String(result.studentName || result.name || "").trim();
@@ -291,18 +395,32 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
     : score !== null && score >= 60
       ? ["Good progress", "Solid work", "A good attempt"]
       : ["Keep improving", "Keep practising", "A useful start"];
-  const correction = correctionOf(result);
+  const correction = correctionOf(result, submissionText);
   const correctionEvidence = correctionSentence(correction, level, seed, history);
   const optionalSentences = [
     strengthOf(result, submissionText, level, seed, history),
     taskSentence(result),
     nextStepOf(result, submissionText, level, correction, seed, history),
   ];
-  return completeSentences({
+  const feedback = completeSentences({
     opening: `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
     objectiveValues: conciseObjective(objectiveSentences),
     correctionValue: correctionEvidence,
     correctionFallback: compactCorrectionSentence(correction),
     optionalValues: optionalSentences,
   }, level === "B1" ? 75 : 60);
+  const hasStructured = meaningfulStructuredWritingEvidence(result, submissionText);
+  const hasSpecificAiProse = Boolean(
+    specificAiWritingSentence(result, "strength", submissionText)
+    || specificAiWritingSentence(result, "next", submissionText),
+  );
+  console.info("[marking-feedback-diagnostic]", {
+    assignmentKey: String(result.assignmentKey || result.assignmentId || "").trim(),
+    detectedWritingPart: true,
+    structuredWritingEvidence: hasStructured,
+    originalAiFeedbackExists: rawFeedbackSentences(result).length > 0,
+    finalFeedbackPath: hasStructured ? "structured-writing-evidence" : hasSpecificAiProse ? "original-ai-prose" : "submission-anchor",
+    genericFallbackUsed: rawFeedbackSentences({ feedback }).some(genericWritingSentence),
+  });
+  return feedback;
 }

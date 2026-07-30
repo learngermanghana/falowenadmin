@@ -82,6 +82,7 @@ test("production patch preserves structured fields in both OpenAI normalizers", 
   assert.match(patchSource, /Structured OpenAI writing evidence is preserved/);
   assert.match(packageSource, /patchStructuredWritingEvidence\.mjs/);
   assert.match(firebaseConfig, /node scripts\/patchStructuredWritingEvidence\.mjs/);
+  assert.match(firebaseConfig, /node scripts\/patchSpecificWritingFeedback\.mjs/);
   assert.match(deployWorkflow, /scripts\/patchStructuredWritingEvidence\.mjs/);
   assert.match(deployWorkflow, /grep -F 'writingStrengths:' functions\/index\.js/);
 });

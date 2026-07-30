@@ -49,6 +49,7 @@ jobs:
           set -euo pipefail
           for script in \
             scripts/patchStructuredWritingEvidence.mjs \
+            scripts/patchSpecificWritingFeedback.mjs \
             scripts/patchSheetRowManagementRoutes.mjs \
             scripts/patchOperationalSheetAutoSyncJobs.mjs \
             scripts/patchLiveClassUpdateScheduleSync.mjs \
@@ -75,6 +76,8 @@ jobs:
           grep -F 'writingStrengths:' functions/index.js
           grep -F 'taskCompletion:' functions/index.js
           grep -F 'Never invent a correction merely to fill a field' functions/index.js
+          ! grep -F 'The main purpose of your message is understandable' src/utils/essayFeedbackEvidence.js
+          ! grep -F 'Check verb position, articles and every task point before submitting' src/utils/essayFeedbackEvidence.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
           grep -F 'exports.sendLeadClassStartReminderEmails = createLeadClassStartReminderEmailJob' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js

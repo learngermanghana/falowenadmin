@@ -108,19 +108,21 @@ if (!source.includes("function rawFeedbackSentences(result = {})")) {
   source = replaceOnce(source, helperAnchor, helpers, "specific feedback helpers");
 }
 
-source = replaceOnce(
-  source,
-  `  if (structured) return structured;\n  const source = String(submission || "");`,
-  `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "strength");\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredStrength(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");`,
-  "strength evidence priority",
-);
+if (!/specificAiWritingSentence\(result, "strength"(?:, submission)?\)/.test(source)) {
+  source = replaceOnce(
+    source,
+    `  if (structured) return structured;\n  const source = String(submission || "");`,
+    `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "strength");\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredStrength(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");`,
+    "strength evidence priority",
+  );
+}
 
 source = source.replace('    choices.push("The main purpose of your message is understandable");\n', "");
 
 const nextBeforeA2 = `  if (structured) return structured;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A2") {`;
 const nextBeforeBeginner = `  if (structured) return structured;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A1" || level === "A2") {`;
 const nextPrefix = `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "next");\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredNextStep(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");\n  const choices = [];\n`;
-if (!source.includes('const aiSpecific = specificAiWritingSentence(result, "next");')) {
+if (!/specificAiWritingSentence\(result, "next"(?:, submission)?\)/.test(source)) {
   if (source.includes(nextBeforeBeginner)) {
     source = source.replace(nextBeforeBeginner, `${nextPrefix}  if (level === "A1" || level === "A2") {`);
   } else if (source.includes(nextBeforeA2)) {
