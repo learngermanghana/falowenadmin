@@ -129,6 +129,19 @@ test("quoted correction prose is rejected when none of its quotes appear in the 
   assert.ok(feedback.split(/\s+/).length <= 60);
 });
 
+test("typographic single-quoted hallucinated corrections are also rejected", () => {
+  const hallucinatedAiFeedback = "Replace ‘a phrase I never wrote’ with ‘eine erfundene Korrektur’.";
+  const feedback = buildNaturalStudentFeedback(baseResult({
+    feedback: hallucinatedAiFeedback,
+    aiOriginalFeedback: hallucinatedAiFeedback,
+    aiDetailedFeedback: hallucinatedAiFeedback,
+  }), JEFFREY_SUBMISSION);
+
+  assert.doesNotMatch(feedback, /a phrase I never wrote|eine erfundene Korrektur/i);
+  assert.match(feedback, /positive Rückmeldung/i);
+  assert.ok(feedback.split(/\s+/).length <= 60);
+});
+
 test("missing punctuation feedback quotes the student's actual Rückmeldung sentence", () => {
   const submission = JEFFREY_SUBMISSION.replace(
     "Ich freue mich im Voraus auf Ihre Antwort und hoffe auf eine positive Rückmeldung",
@@ -141,6 +154,22 @@ test("missing punctuation feedback quotes the student's actual Rückmeldung sent
   }), submission);
 
   assert.match(feedback, /Ich warte auf Ihre Rückmeldung/);
+  assert.doesNotMatch(feedback, /positive Rückmeldung/);
+  assert.ok(feedback.split(/\s+/).length <= 60);
+});
+
+test("missing punctuation is detected after an earlier sentence on the same line", () => {
+  const submission = JEFFREY_SUBMISSION.replace(
+    "Ich freue mich im Voraus auf Ihre Antwort und hoffe auf eine positive Rückmeldung",
+    "Vielen Dank. Ich warte auf Ihre Rückmeldung",
+  );
+  const genericAiFeedback = "The main purpose of your message is understandable. Check verb position, articles and every task point before submitting.";
+  const feedback = buildNaturalStudentFeedback(baseResult({
+    feedback: genericAiFeedback,
+    aiOriginalFeedback: genericAiFeedback,
+  }), submission);
+
+  assert.match(feedback, /full stop.*Ich warte auf Ihre Rückmeldung/i);
   assert.doesNotMatch(feedback, /positive Rückmeldung/);
   assert.ok(feedback.split(/\s+/).length <= 60);
 });
