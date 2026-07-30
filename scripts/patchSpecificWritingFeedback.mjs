@@ -34,17 +34,23 @@ function objectiveFeedbackSentence(value = "") {
   return /\\b(?:objective|questions?\\s+\\d+|answers?\\s+(?:are|is)|teil\\s*[34]|score|correct answers?)\\b/i.test(String(value || ""));
 }
 
-function specificAiWritingSentence(result = {}, kind = "strength") {
+function specificAiWritingSentence(result = {}, kind = "strength", submission = "") {
   const cue = kind === "next"
     ? /\\b(?:write|use|replace|correct|revise|avoid|add|change|improve|practise|practice|punctuation|wording|instead of)\\b/i
     : /\\b(?:clear|organis|appropriate|formal|asks?|mentions?|includes?|explains?|specific|well structured|easy to follow)\\b/i;
   return rawFeedbackSentences(result).find((value) => {
     const wordCount = value.split(/\\s+/).filter(Boolean).length;
+    const quoted = [...value.matchAll(/[“\"]([^”\"]{3,90})[”\"]/g)].map((match) => match[1]);
+    const normalizedSubmission = String(submission).toLocaleLowerCase("de");
+    const correctionIsAnchored = kind !== "next"
+      || quoted.length === 0
+      || quoted.some((quote) => normalizedSubmission.includes(quote.toLocaleLowerCase("de")));
     return wordCount >= 5
       && wordCount <= 45
       && !genericWritingSentence(value)
       && !objectiveFeedbackSentence(value)
-      && cue.test(value);
+      && cue.test(value)
+      && correctionIsAnchored;
   }) || "";
 }
 
@@ -81,7 +87,7 @@ function writingAnchor(submission = "") {
 function submissionAnchoredStrength(submission = "") {
   const source = writingSectionText(submission);
   if (/informationen[^.!?]{0,40}inhalt[^.!?]{0,40}termine[^.!?]{0,40}kosten/i.test(source)) {
-    return "Your request clearly asks about the seminar content, dates and costs";
+    return "Your seminar request clearly asks about Inhalt, Termine and Kosten";
   }
   const anchor = writingAnchor(submission);
   return anchor ? "Your sentence “" + anchor.replace(/[.!?]+$/, "") + "” clearly communicates the purpose of the message" : "";
@@ -89,14 +95,16 @@ function submissionAnchoredStrength(submission = "") {
 
 function submissionAnchoredNextStep(submission = "") {
   const source = writingSectionText(submission);
+  const missingStopMatch = source.match(/(?:^|\\n)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);
+  if (missingStopMatch) {
+    const exactWording = missingStopMatch[1].replace(/\\s+/g, " ").trim();
+    return "Add a full stop after “" + exactWording + "” before the closing";
+  }
   if ((source.match(/\\bich freue mich\\b/gi) || []).length >= 2) {
     return "Avoid repeating “Ich freue mich”; vary one occurrence with a different expression";
   }
   if (/informationen\\s+über\\s+den\\s+inhalt/i.test(source)) {
     return "Use “Informationen zu dem Inhalt, den Terminen und den Kosten” instead of “Informationen über den Inhalt, die Termine und die Kosten” for a more natural request";
-  }
-  if (/rückmeldung\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i.test(source)) {
-    return "Add a full stop after “Rückmeldung” before the closing";
   }
   const anchor = writingAnchor(submission);
   return anchor ? "Reread “" + anchor.replace(/[.!?]+$/, "") + "” and improve one wording choice before submitting" : "";
@@ -108,11 +116,21 @@ if (!source.includes("function rawFeedbackSentences(result = {})")) {
   source = replaceOnce(source, helperAnchor, helpers, "specific feedback helpers");
 }
 
+source = source.replace(
+  `    const correctionIsAnchored = kind !== "next"\n      || !/\\b(?:replace|correct|revise|instead of)\\b/i.test(value)\n      || quoted.some((quote) => String(submission).toLocaleLowerCase("de").includes(quote.toLocaleLowerCase("de")));`,
+  `    const normalizedSubmission = String(submission).toLocaleLowerCase("de");\n    const correctionIsAnchored = kind !== "next"\n      || quoted.length === 0\n      || quoted.some((quote) => normalizedSubmission.includes(quote.toLocaleLowerCase("de")));`,
+);
+
+source = source.replace(
+  `  if (/rückmeldung\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i.test(source)) {\n    return "Add a full stop after your exact wording “positive Rückmeldung” before the closing";\n  }`,
+  `  const missingStopMatch = source.match(/(?:^|\\n)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);\n  if (missingStopMatch) {\n    const exactWording = missingStopMatch[1].replace(/\\s+/g, " ").trim();\n    return "Add a full stop after “" + exactWording + "” before the closing";\n  }`,
+);
+
 if (!/specificAiWritingSentence\(result, "strength"(?:, submission)?\)/.test(source)) {
   source = replaceOnce(
     source,
     `  if (structured) return structured;\n  const source = String(submission || "");`,
-    `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "strength");\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredStrength(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");`,
+    `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "strength", submission);\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredStrength(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");`,
     "strength evidence priority",
   );
 }
@@ -121,7 +139,7 @@ source = source.replace('    choices.push("The main purpose of your message is u
 
 const nextBeforeA2 = `  if (structured) return structured;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A2") {`;
 const nextBeforeBeginner = `  if (structured) return structured;\n  const source = String(submission || "");\n  const choices = [];\n  if (level === "A1" || level === "A2") {`;
-const nextPrefix = `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "next");\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredNextStep(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");\n  const choices = [];\n`;
+const nextPrefix = `  if (structured) return structured;\n  const aiSpecific = specificAiWritingSentence(result, "next", submission);\n  if (aiSpecific) return aiSpecific;\n  const anchored = submissionAnchoredNextStep(submission);\n  if (anchored) return anchored;\n  const source = String(submission || "");\n  const choices = [];\n`;
 if (!/specificAiWritingSentence\(result, "next"(?:, submission)?\)/.test(source)) {
   if (source.includes(nextBeforeBeginner)) {
     source = source.replace(nextBeforeBeginner, `${nextPrefix}  if (level === "A1" || level === "A2") {`);

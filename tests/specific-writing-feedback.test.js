@@ -115,6 +115,36 @@ test("Jeffrey feedback remains specific when OpenAI returns only generic writing
   assert.ok(feedback.split(/\s+/).length <= 60);
 });
 
+test("quoted correction prose is rejected when none of its quotes appear in the submission", () => {
+  const hallucinatedAiFeedback = "Add punctuation after “a phrase I never wrote” before the closing.";
+  const feedback = buildNaturalStudentFeedback(baseResult({
+    feedback: hallucinatedAiFeedback,
+    aiOriginalFeedback: hallucinatedAiFeedback,
+    aiDetailedFeedback: hallucinatedAiFeedback,
+  }), JEFFREY_SUBMISSION);
+
+  assert.doesNotMatch(feedback, /a phrase I never wrote/i);
+  assert.match(feedback, /full stop/i);
+  assert.match(feedback, /positive Rückmeldung/i);
+  assert.ok(feedback.split(/\s+/).length <= 60);
+});
+
+test("missing punctuation feedback quotes the student's actual Rückmeldung sentence", () => {
+  const submission = JEFFREY_SUBMISSION.replace(
+    "Ich freue mich im Voraus auf Ihre Antwort und hoffe auf eine positive Rückmeldung",
+    "Ich warte auf Ihre Rückmeldung",
+  );
+  const genericAiFeedback = "The main purpose of your message is understandable. Check verb position, articles and every task point before submitting.";
+  const feedback = buildNaturalStudentFeedback(baseResult({
+    feedback: genericAiFeedback,
+    aiOriginalFeedback: genericAiFeedback,
+  }), submission);
+
+  assert.match(feedback, /Ich warte auf Ihre Rückmeldung/);
+  assert.doesNotMatch(feedback, /positive Rückmeldung/);
+  assert.ok(feedback.split(/\s+/).length <= 60);
+});
+
 for (const [shape, overrides, required] of [
   ["full structured fields", {
     writingStrengths: ["The email asks about Inhalt, Termine and Kosten"],
