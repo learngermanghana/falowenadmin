@@ -5,10 +5,11 @@ let objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
 
 const legacyCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})\\s*[).:–-]?\\s*(.*?)(?=\\s+\\d{1,3}\\s*[).:–-]?|$)/g;';
 const timeSafeCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[).:–-](?!\\d)\\s*|\\s+)(.*?)(?=\\s+\\d{1,3}(?:\\s*[).:–-](?!\\d)\\s*|\\s+)|$)/g;';
+const priceAndTimeSafeCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))(.*?)(?=\\s+\\d{1,3}(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))|$)/g;';
 
 if (objectiveSource.includes(legacyCompactPattern)) {
   objectiveSource = objectiveSource.replace(legacyCompactPattern, timeSafeCompactPattern);
-} else if (!objectiveSource.includes(timeSafeCompactPattern)) {
+} else if (!objectiveSource.includes(timeSafeCompactPattern) && !objectiveSource.includes(priceAndTimeSafeCompactPattern)) {
   throw new Error("objective answer compact parser changed; update patchObjectiveAnswerTimeParsing.mjs");
 }
 

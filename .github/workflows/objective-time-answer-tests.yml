@@ -3,11 +3,15 @@ name: Objective Time Answer Tests
 on:
   pull_request:
     paths:
+      - 'src/data/answers_dictionary.json'
       - 'src/utils/objectiveMarking.js'
+      - 'src/utils/essayFeedbackEvidence.js'
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'scripts/patchA1PricePreferenceMarking.mjs'
+      - 'tests/a1-price-preference-marking.test.js'
       - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
       - 'package.json'
@@ -16,11 +20,15 @@ on:
     branches:
       - main
     paths:
+      - 'src/data/answers_dictionary.json'
       - 'src/utils/objectiveMarking.js'
+      - 'src/utils/essayFeedbackEvidence.js'
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'scripts/patchA1PricePreferenceMarking.mjs'
+      - 'tests/a1-price-preference-marking.test.js'
       - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
       - 'package.json'
@@ -39,13 +47,24 @@ jobs:
           node scripts/patchObjectiveWritingPartDetection.mjs
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
+          node scripts/patchA1PricePreferenceMarking.mjs
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
+          node scripts/patchA1PricePreferenceMarking.mjs
           node --check src/utils/objectiveMarking.js
+          node --check src/utils/essayFeedbackEvidence.js
           node --check src/utils/naturalMarkingFeedback.js
-          grep -F '(?!\d)' src/utils/objectiveMarking.js
+          grep -F 'rootsApproximatelyMatch' src/utils/objectiveMarking.js
+          grep -F 'split(/\r?\n/)' src/utils/objectiveMarking.js
           grep -F 'numberedQuestionPrompt' src/utils/objectiveMarking.js
           grep -F 'question${questions.length === 1 ? "" : "s"}' src/utils/naturalMarkingFeedback.js
+          grep -F '"writingParts": [' src/data/answers_dictionary.json
+      - name: Test Vicky objective score
+        run: node --test --test-name-pattern="preserves prices" tests/a1-price-preference-marking.test.js
+      - name: Test A1 writing registration
+        run: node --test --test-name-pattern="registers Teil 2" tests/a1-price-preference-marking.test.js
+      - name: Test A1 structured feedback
+        run: node --test --test-name-pattern="structured writing evidence" tests/a1-price-preference-marking.test.js
       - name: Test complete-sentence clock answer
         run: node --test --test-name-pattern="preserves 7:30" tests/objective-time-answer-parsing.test.js
       - name: Test copied numbered questions
