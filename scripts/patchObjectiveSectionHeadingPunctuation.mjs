@@ -5,10 +5,11 @@ let source = fs.readFileSync(target, "utf8");
 
 const markerBefore = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[:;]?[ \\t]*(?=\\n|$)/gi;';
 const markerAfter = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*(?=\\n|$)/gi;';
+const markerWithCommonTypo = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|tiel|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*(?=\\n|$)/gi;';
 
 if (source.includes(markerBefore)) {
   source = source.replace(markerBefore, markerAfter);
-} else if (!source.includes(markerAfter)) {
+} else if (!source.includes(markerAfter) && !source.includes(markerWithCommonTypo)) {
   throw new Error("objective section-heading parser changed; update patchObjectiveSectionHeadingPunctuation.mjs");
 }
 
