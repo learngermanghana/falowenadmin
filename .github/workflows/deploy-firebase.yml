@@ -48,6 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           for script in \
+            scripts/patchStructuredWritingEvidence.mjs \
             scripts/patchSheetRowManagementRoutes.mjs \
             scripts/patchOperationalSheetAutoSyncJobs.mjs \
             scripts/patchLiveClassUpdateScheduleSync.mjs \
@@ -71,6 +72,9 @@ jobs:
           node --check functions/autoCompleteClassSessions.js
           node --check functions/courseReviewRequestEmails.js
           node --check functions/goetheExamConfig.js
+          grep -F 'writingStrengths:' functions/index.js
+          grep -F 'taskCompletion:' functions/index.js
+          grep -F 'Never invent a correction merely to fill a field' functions/index.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
           grep -F 'exports.sendLeadClassStartReminderEmails = createLeadClassStartReminderEmailJob' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js

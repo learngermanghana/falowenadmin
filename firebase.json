@@ -17,6 +17,7 @@
         "node scripts/patchStudentPaymentAdminSecurity.mjs",
         "node scripts/patchStudentProfileUpdateApi.mjs",
         "node scripts/patchAutomaticOrientationSync.mjs",
+        "node scripts/patchStructuredWritingEvidence.mjs",
         "node --check functions/index.js",
         "node scripts/patchSheetRowManagementRoutes.mjs",
         "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
