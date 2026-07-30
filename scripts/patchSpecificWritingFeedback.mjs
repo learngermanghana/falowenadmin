@@ -40,7 +40,9 @@ function specificAiWritingSentence(result = {}, kind = "strength", submission = 
     : /\\b(?:clear|organis|appropriate|formal|asks?|mentions?|includes?|explains?|specific|well structured|easy to follow)\\b/i;
   return rawFeedbackSentences(result).find((value) => {
     const wordCount = value.split(/\\s+/).filter(Boolean).length;
-    const quoted = [...value.matchAll(/[“\"]([^”\"]{3,90})[”\"]/g)].map((match) => match[1]);
+    const quoted = [...value.matchAll(/[“\"]([^”\"]{3,90})[”\"]|[‘']([^’']{3,90})[’']/g)]
+      .map((match) => match[1] || match[2])
+      .filter(Boolean);
     const normalizedSubmission = String(submission).toLocaleLowerCase("de");
     const correctionIsAnchored = kind !== "next"
       || quoted.length === 0
@@ -95,7 +97,7 @@ function submissionAnchoredStrength(submission = "") {
 
 function submissionAnchoredNextStep(submission = "") {
   const source = writingSectionText(submission);
-  const missingStopMatch = source.match(/(?:^|\\n)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);
+  const missingStopMatch = source.match(/(?:^|\\n|[.!?]\\s+)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);
   if (missingStopMatch) {
     const exactWording = missingStopMatch[1].replace(/\\s+/g, " ").trim();
     return "Add a full stop after “" + exactWording + "” before the closing";
@@ -117,13 +119,23 @@ if (!source.includes("function rawFeedbackSentences(result = {})")) {
 }
 
 source = source.replace(
+  `    const quoted = [...value.matchAll(/[“\"]([^”\"]{3,90})[”\"]/g)].map((match) => match[1]);`,
+  `    const quoted = [...value.matchAll(/[“\"]([^”\"]{3,90})[”\"]|[‘']([^’']{3,90})[’']/g)]\n      .map((match) => match[1] || match[2])\n      .filter(Boolean);`,
+);
+
+source = source.replace(
+  `  const missingStopMatch = source.match(/(?:^|\\n)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);`,
+  `  const missingStopMatch = source.match(/(?:^|\\n|[.!?]\\s+)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);`,
+);
+
+source = source.replace(
   `    const correctionIsAnchored = kind !== "next"\n      || !/\\b(?:replace|correct|revise|instead of)\\b/i.test(value)\n      || quoted.some((quote) => String(submission).toLocaleLowerCase("de").includes(quote.toLocaleLowerCase("de")));`,
   `    const normalizedSubmission = String(submission).toLocaleLowerCase("de");\n    const correctionIsAnchored = kind !== "next"\n      || quoted.length === 0\n      || quoted.some((quote) => normalizedSubmission.includes(quote.toLocaleLowerCase("de")));`,
 );
 
 source = source.replace(
   `  if (/rückmeldung\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i.test(source)) {\n    return "Add a full stop after your exact wording “positive Rückmeldung” before the closing";\n  }`,
-  `  const missingStopMatch = source.match(/(?:^|\\n)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);\n  if (missingStopMatch) {\n    const exactWording = missingStopMatch[1].replace(/\\s+/g, " ").trim();\n    return "Add a full stop after “" + exactWording + "” before the closing";\n  }`,
+  `  const missingStopMatch = source.match(/(?:^|\\n|[.!?]\\s+)\\s*([^\\n.!?]{3,120}\\brückmeldung)\\s*(?:\\n|$)\\s*mit freundlichen grüßen/i);\n  if (missingStopMatch) {\n    const exactWording = missingStopMatch[1].replace(/\\s+/g, " ").trim();\n    return "Add a full stop after “" + exactWording + "” before the closing";\n  }`,
 );
 
 if (!/specificAiWritingSentence\(result, "strength"(?:, submission)?\)/.test(source)) {
