@@ -88,6 +88,22 @@ if (objectiveSource.includes(oldTextMatches)) {
 
 fs.writeFileSync(objectiveTarget, objectiveSource);
 
+const feedbackTarget = new URL("../src/utils/essayFeedbackEvidence.js", import.meta.url);
+let feedbackSource = fs.readFileSync(feedbackTarget, "utf8");
+const levelReplacements = [
+  ['  const directMatch = direct.match(/\\b(A2|B1)\\b/);', '  const directMatch = direct.match(/\\b(A1|A2|B1)\\b/);'],
+  ['  return assignment.match(/^(A2|B1)[-_.]/)?.[1] || "";', '  return assignment.match(/^(A1|A2|B1)[-_.]/)?.[1] || "";'],
+];
+for (const [before, after] of levelReplacements) {
+  if (feedbackSource.includes(before)) feedbackSource = feedbackSource.replace(before, after);
+  else if (!feedbackSource.includes(after)) throw new Error("A1 evidence-feedback level detection changed; update patchA1PricePreferenceMarking.mjs");
+}
+const a2Branch = '  if (level === "A2") {';
+const beginnerBranch = '  if (level === "A1" || level === "A2") {';
+if (feedbackSource.includes(a2Branch)) feedbackSource = feedbackSource.split(a2Branch).join(beginnerBranch);
+else if (!feedbackSource.includes(beginnerBranch)) throw new Error("A1 evidence-feedback branch changed; update patchA1PricePreferenceMarking.mjs");
+fs.writeFileSync(feedbackTarget, feedbackSource);
+
 const dictionaryTarget = new URL("../src/data/answers_dictionary.json", import.meta.url);
 const dictionary = JSON.parse(fs.readFileSync(dictionaryTarget, "utf8"));
 const assignmentEntry = Object.values(dictionary).find((entry) => String(entry?.assignment_id || entry?.assignmentId || "").trim().toUpperCase() === "A1-3");
@@ -109,4 +125,4 @@ assignmentEntry.partGrading = {
 };
 
 fs.writeFileSync(dictionaryTarget, `${JSON.stringify(dictionary, null, 2)}\n`);
-console.log("A1-3 now preserves complete comma answers, price values, tolerant preference wording, and registered Teil 2 writing.");
+console.log("A1-3 now preserves complete comma answers, price values, tolerant preference wording, registered Teil 2 writing, and specific A1 writing evidence.");
