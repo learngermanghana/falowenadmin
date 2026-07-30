@@ -63,7 +63,7 @@ function rootsApproximatelyMatch(expectedRoot = "", studentRoot = "") {
   if (!expectedRoot || !studentRoot) return false;
   if (expectedRoot === studentRoot || expectedRoot.includes(studentRoot) || studentRoot.includes(expectedRoot)) return true;
   const length = Math.max(expectedRoot.length, studentRoot.length);
-  const allowance = length >= 8 ? 2 : length >= 4 ? 1 : 0;
+  const allowance = length >= 4 ? Math.min(3, Math.max(1, Math.floor(length * 0.25))) : 0;
   return allowance > 0 && editDistance(expectedRoot, studentRoot) <= allowance;
 }
 
