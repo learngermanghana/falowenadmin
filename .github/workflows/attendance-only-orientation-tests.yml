@@ -1,0 +1,51 @@
+name: Attendance-only Orientation Tests
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/patchAttendanceOnlyOrientationCurriculum.mjs'
+      - 'tests/live-class-attendance-only-orientation.test.js'
+      - 'package.json'
+      - '.github/workflows/attendance-only-orientation-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/patchAttendanceOnlyOrientationCurriculum.mjs'
+      - 'tests/live-class-attendance-only-orientation.test.js'
+      - 'package.json'
+      - '.github/workflows/attendance-only-orientation-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply Day 0 attendance patch twice
+        run: |
+          node scripts/patchAttendanceOnlyOrientationCurriculum.mjs
+          node scripts/patchAttendanceOnlyOrientationCurriculum.mjs
+          node --check scripts/patchAttendanceOnlyOrientationCurriculum.mjs
+          node --check src/data/courseDictionary.js
+          node --check src/data/courseSessionGroups.js
+          node --check src/services/liveClassServiceBase.js
+          node --check src/services/classCohortUpdateServiceBase.js
+          node --check src/services/groupedCurriculumService.js
+          node --check src/data/teachingSlides.js
+      - name: Test Day 0 selection without timetable shifts
+        run: >-
+          node --test
+          tests/live-class-attendance-only-orientation.test.js
+          tests/course-dictionary-id-casing.test.js
+          tests/course-session-groups.test.js
+          tests/live-class-dictionary-selection.test.js
+          tests/live-class-a1-b1-timetable-repair.test.js
+          tests/live-class-official-timetable-repair.test.js
+      - name: Build dashboard
+        run: npm run build

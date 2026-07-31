@@ -9,9 +9,11 @@ on:
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchStructuredWritingEvidence.mjs'
       - 'scripts/patchSpecificWritingFeedback.mjs'
+      - 'scripts/patchAuthoritativeWritingAdvice.mjs'
       - 'tests/structured-writing-evidence.test.js'
       - 'tests/specific-writing-feedback.test.js'
       - 'tests/essay-feedback-evidence.test.js'
+      - 'tests/stale-objective-writing-advice.test.js'
       - 'package.json'
       - 'firebase.json'
       - '.github/workflows/deploy-firebase.yml'
@@ -26,9 +28,11 @@ on:
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchStructuredWritingEvidence.mjs'
       - 'scripts/patchSpecificWritingFeedback.mjs'
+      - 'scripts/patchAuthoritativeWritingAdvice.mjs'
       - 'tests/structured-writing-evidence.test.js'
       - 'tests/specific-writing-feedback.test.js'
       - 'tests/essay-feedback-evidence.test.js'
+      - 'tests/stale-objective-writing-advice.test.js'
       - 'package.json'
       - 'firebase.json'
       - '.github/workflows/deploy-firebase.yml'
@@ -46,16 +50,22 @@ jobs:
         run: |
           node scripts/patchStructuredWritingEvidence.mjs
           node scripts/patchSpecificWritingFeedback.mjs
+          node scripts/patchAuthoritativeWritingAdvice.mjs
           node scripts/patchStructuredWritingEvidence.mjs
           node scripts/patchSpecificWritingFeedback.mjs
+          node scripts/patchAuthoritativeWritingAdvice.mjs
           node --check functions/index.js
           node --check src/services/markingServiceBase.js
           node --check src/utils/essayFeedbackEvidence.js
           node --check scripts/patchStructuredWritingEvidence.mjs
           node --check scripts/patchSpecificWritingFeedback.mjs
+          node --check scripts/patchAuthoritativeWritingAdvice.mjs
           grep -F 'specificAiWritingSentence' src/utils/essayFeedbackEvidence.js
+          grep -F 'safeStructuredWritingSentence' src/utils/essayFeedbackEvidence.js
           ! grep -F 'The main purpose of your message is understandable' src/utils/essayFeedbackEvidence.js
           ! grep -F 'Check verb position, articles and every task point before submitting' src/utils/essayFeedbackEvidence.js
+      - name: Test Diana stale objective-advice safeguard
+        run: node --test tests/stale-objective-writing-advice.test.js
       - name: Test Jeffrey original OpenAI evidence
         run: node --test --test-name-pattern="original specific OpenAI" tests/specific-writing-feedback.test.js
       - name: Test Jeffrey generic-response safeguard
