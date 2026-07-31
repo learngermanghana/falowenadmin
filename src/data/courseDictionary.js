@@ -31,6 +31,7 @@ export const courseDictionary = {
     "A1-5.10": { assignment_id: "A1-5.10", chapter: "5.10", de: "Konjunktionen und grundlegender Satzbau", en: "Conjunctions and Basic Sentence Structure" },
   },
   A2: {
+    "A2-Tutorial": { assignment_id: "A2-Tutorial", chapter: "0", de: "Einführung und Orientierung", en: "Orientation and Tutorial" },
     "A2-1.1": { assignment_id: "A2-1.1", chapter: "1.1", de: "Small Talk", en: "Small Talk" },
     "A2-1.2": { assignment_id: "A2-1.2", chapter: "1.2", de: "Personen beschreiben", en: "Describing People" },
     "A2-1.3": { assignment_id: "A2-1.3", chapter: "1.3", de: "Dinge und Personen vergleichen", en: "Comparing Things and People" },
@@ -61,6 +62,7 @@ export const courseDictionary = {
     "A2-10.28": { assignment_id: "A2-10.28", chapter: "10.28", de: "Über die Zukunft sprechen", en: "Talking About the Future" },
   },
   B1: {
+    "B1-Tutorial": { assignment_id: "B1-Tutorial", chapter: "0", de: "Einführung und Orientierung", en: "Orientation and Tutorial" },
     "B1-1.1": { assignment_id: "B1-1.1", chapter: "1.1", de: "Traumwelten", en: "Dream Worlds" },
     "B1-1.2": { assignment_id: "B1-1.2", chapter: "1.2", de: "Freunde fürs Leben", en: "Friends for Life" },
     "B1-1.3": { assignment_id: "B1-1.3", chapter: "1.3", de: "Erfolgsgeschichten", en: "Success Stories" },
