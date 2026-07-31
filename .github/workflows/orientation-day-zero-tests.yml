@@ -1,0 +1,48 @@
+name: Orientation Day Zero Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/data/courseDictionary.js'
+      - 'src/data/courseSessionGroups.js'
+      - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/pages/CanonicalAttendancePageV2.jsx'
+      - 'src/pages/LiveClassesPageV2.jsx'
+      - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/course-session-groups.test.js'
+      - 'tests/live-class-orientation-day-zero.test.js'
+      - '.github/workflows/orientation-day-zero-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/data/courseDictionary.js'
+      - 'src/data/courseSessionGroups.js'
+      - 'src/utils/liveClassDictionarySelection.js'
+      - 'src/pages/CanonicalAttendancePageV2.jsx'
+      - 'src/pages/LiveClassesPageV2.jsx'
+      - 'tests/course-dictionary-id-casing.test.js'
+      - 'tests/course-session-groups.test.js'
+      - 'tests/live-class-orientation-day-zero.test.js'
+      - '.github/workflows/orientation-day-zero-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Test A2 and B1 Day 0 curriculum
+        run: >-
+          node --test
+          tests/live-class-orientation-day-zero.test.js
+          tests/course-dictionary-id-casing.test.js
+          tests/course-session-groups.test.js
+          tests/live-class-dictionary-selection.test.js
+      - name: Build dashboard
+        run: npm run build
