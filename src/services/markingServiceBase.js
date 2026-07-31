@@ -1,5 +1,6 @@
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
+import { normalizeBrowserMarkingResult } from "../utils/markingResultNormalization.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
 import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js";
@@ -343,6 +344,8 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     taskCompletion: result.taskCompletion ?? null,
     missingTaskPoints: result.missingTaskPoints ?? [],
     nextStep: result.nextStep || result.writingNextStep || "",
+    writingNextStep: result.writingNextStep || result.nextStep || "",
+    improvementTarget: result.improvementTarget || "",
     improvementSummary: result.improvementSummary || "",
     markingReason: result.markingReason || result.rawAiReason || result.ai?.reason || "",
     manualOverride: Boolean(result.manualOverride),
@@ -354,7 +357,10 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     updatedAt: now,
   };
 
-  await setDoc(doc(db, "markingResults", safeSubmissionId), { ...payload, createdAt: now }, { merge: true });
+  // A fresh mark is a complete snapshot. Merging recursively here allowed
+  // omitted nested AI evidence from an older mark to survive beside a fresh
+  // deterministic score and feedback.
+  await setDoc(doc(db, "markingResults", safeSubmissionId), { ...payload, createdAt: now });
 
   if (submissionPath) {
     const segments = submissionPath.split("/").filter(Boolean);
@@ -375,6 +381,8 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
       taskCompletion: payload.taskCompletion,
       missingTaskPoints: payload.missingTaskPoints,
       nextStep: payload.nextStep,
+      writingNextStep: payload.writingNextStep,
+      improvementTarget: payload.improvementTarget,
       improvementSummary: payload.improvementSummary,
       markingReason: payload.markingReason,
       manualOverride: payload.manualOverride,
@@ -523,6 +531,7 @@ function buildDetailedObjectiveFeedback(deterministicObjective = {}) {
 }
 
 export function normalizeAIMarkingResult(result = {}, payload = {}) {
+  const shared = normalizeBrowserMarkingResult(result, payload);
   const assignmentKey = String(result.assignmentKey || payload.referenceEntry?.assignmentKey || payload.submission?.assignmentKey || payload.submission?.assignmentId || "").trim();
   const finalScore = Number.isFinite(Number(result.finalScore ?? result.score)) ? Math.max(0, Math.min(100, Math.round(Number(result.finalScore ?? result.score)))) : 0;
   const feedback = limitFeedbackWords(result.feedback || "AI marking completed. Please review the result before sending feedback to the student.");

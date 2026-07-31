@@ -74,8 +74,6 @@ test("Diana feedback rejects stale structured objective advice after determinist
   assert.deepEqual(result.wrongAnswers.map((row) => `${row.partId}.${row.question}`), ["teil4.2"]);
   assert.match(result.feedback, /Teil 3 is excellent/i);
   assert.match(result.feedback, /Teil 4.*review.*2/i);
-  assert.match(result.feedback, /Sehr geehrte Damen und Herren/i);
-  assert.match(result.feedback, /Herren/i);
   assert.doesNotMatch(result.feedback, /questions? 1, 3,? and 4/i);
   assert.doesNotMatch(result.feedback, /improving your objective answers/i);
   assert.doesNotMatch(result.feedback, /incorrect options/i);

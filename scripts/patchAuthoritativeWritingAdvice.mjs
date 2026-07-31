@@ -103,34 +103,5 @@ replaceOnce(
   "meaningful structured writing evidence filter",
 );
 
-replaceOnce(
-  `function submissionAnchoredStrength(submission = "") {
-  const source = writingSectionText(submission);
-  if (/informationen[^.!?]{0,40}inhalt[^.!?]{0,40}termine[^.!?]{0,40}kosten/i.test(source)) {`,
-  `function submissionAnchoredStrength(submission = "") {
-  const source = writingSectionText(submission);
-  if (/termin\\s+beim\\s+arzt/i.test(source)
-    && /behandlung\\s+kostet/i.test(source)
-    && /krankenversicherung/i.test(source)
-    && /untersuchungen|behandlungen\\s+empfehlen/i.test(source)) {
-    return "Your letter clearly asks about an appointment, treatment costs, insurance and recommended examinations";
-  }
-  if (/informationen[^.!?]{0,40}inhalt[^.!?]{0,40}termine[^.!?]{0,40}kosten/i.test(source)) {`,
-  "doctor letter strength",
-);
-
-replaceOnce(
-  `function submissionAnchoredNextStep(submission = "") {
-  const source = writingSectionText(submission);
-  const missingStopMatch = source.match`,
-  `function submissionAnchoredNextStep(submission = "") {
-  const source = writingSectionText(submission);
-  if (/^\\s*herren\\s*,/i.test(source)) {
-    return "Use “Sehr geehrte Damen und Herren,” instead of “Herren,”";
-  }
-  const missingStopMatch = source.match`,
-  "doctor letter salutation correction",
-);
-
 fs.writeFileSync(target, source);
 console.log("Structured writing advice now rejects stale objective claims and falls back to submission-anchored evidence.");
