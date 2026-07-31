@@ -8,6 +8,7 @@ on:
       - 'src/utils/essayFeedbackEvidence.js'
       - 'src/utils/finalDeterministicFeedback.js'
       - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
+      - 'tests/a1-free-text-feedback.test.js'
       - 'tests/essay-feedback-evidence.test.js'
       - 'tests/final-deterministic-feedback.test.js'
       - 'tests/marking-intelligence.test.js'
@@ -22,6 +23,7 @@ on:
       - 'src/utils/essayFeedbackEvidence.js'
       - 'src/utils/finalDeterministicFeedback.js'
       - 'scripts/patchSmartMarkingNaturalFeedback.mjs'
+      - 'tests/a1-free-text-feedback.test.js'
       - 'tests/essay-feedback-evidence.test.js'
       - 'tests/final-deterministic-feedback.test.js'
       - 'tests/marking-intelligence.test.js'
@@ -42,6 +44,7 @@ jobs:
           node --check src/utils/essayFeedbackEvidence.js
           node --check src/utils/finalDeterministicFeedback.js
           node --check scripts/patchSmartMarkingNaturalFeedback.mjs
+          node --check tests/a1-free-text-feedback.test.js
           node --check tests/final-deterministic-feedback.test.js
           node --check tests/marking-review-findings.test.js
       - name: Apply production marking patches
@@ -50,6 +53,8 @@ jobs:
           grep -F 'import { reconcileFinalDeterministicFeedback } from "../utils/finalDeterministicFeedback.js";' src/pages/MarkingPage.jsx
           grep -F 'mergeObjectiveScore(aiResult, deterministicObjective, submissionText)' src/pages/MarkingPage.jsx
           grep -F '}, objectiveResult, submissionText);' src/pages/MarkingPage.jsx
+      - name: Test A1 free-text evidence
+        run: node --test tests/a1-free-text-feedback.test.js
       - name: Test A1-9 final feedback reconciliation
         run: node --test --test-name-pattern="A1-9 final" tests/final-deterministic-feedback.test.js
       - name: Test A1-0.2 perfect deterministic fields
