@@ -160,6 +160,138 @@ function writingCorrection(result = {}) {
   }) || null;
 }
 
+function feedbackSentences(result = {}) {
+  const sources = [
+    result.aiDetailedFeedback,
+    result.aiOriginalFeedback,
+    result.ai?.detailedFeedback,
+    result.ai?.originalFeedback,
+    result.feedback,
+    result.improvementSummary,
+  ];
+  return unique(sources.flatMap((value) => String(value || "")
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean)));
+}
+
+function genericWritingSentence(value = "") {
+  return /^(?:your free-text response is clear|the main purpose of your message is understandable|check verb position, articles and every task point before submitting|your message uses an appropriate greeting and closing|read it through once more before submitting)/i.test(String(value || "").trim());
+}
+
+function objectiveFeedbackSentence(value = "") {
+  return /\b(?:objective|questions?\s+\d+|answers?\s+(?:are|is)|teil\s*[34]|score|correct answers?|review question)/i.test(String(value || ""));
+}
+
+function quotesAreGrounded(value = "", submissionText = "") {
+  const quotes = [...String(value || "").matchAll(/[“"]([^”"]{3,90})[”"]|[‘']([^’']{3,90})[’']/g)]
+    .map((match) => match[1] || match[2])
+    .filter(Boolean);
+  if (!quotes.length) return true;
+  const source = String(submissionText || "").toLocaleLowerCase("de");
+  return quotes.some((quote) => source.includes(quote.toLocaleLowerCase("de")));
+}
+
+function specificAiWritingTip(result = {}, submissionText = "") {
+  const correctionCue = /\b(?:write|replace|correct|revise|avoid|add|change|spelling|word order|capitalis|punctuation|instead of)\b/i;
+  const writingCue = /\b(?:clear|sentence|grammar|language|country|wording|structure|vocabulary|communicates?|mentions?|includes?)\b/i;
+  const candidates = feedbackSentences(result).filter((value) => {
+    const words = value.split(/\s+/).filter(Boolean).length;
+    return words >= 5
+      && words <= 45
+      && !genericWritingSentence(value)
+      && !objectiveFeedbackSentence(value)
+      && quotesAreGrounded(value, submissionText);
+  });
+  return candidates.find((value) => correctionCue.test(value))
+    || candidates.find((value) => writingCue.test(value))
+    || "";
+}
+
+const A1_COUNTRY_LANGUAGE_TERMS = [
+  "Deutschland", "Deutsch",
+  "Frankreich", "Französisch",
+  "Russland", "Russisch",
+  "Japan", "Japanisch",
+  "England", "Englisch",
+  "Polen", "Polnisch",
+  "Niederlande", "Niederländisch",
+  "Schweiz",
+  "Spanien", "Spanisch",
+  "Italien", "Italienisch",
+  "Österreich", "Österreichisch",
+  "Türkei", "Türkisch",
+  "Ghana", "Ghanaisch",
+  "Nigeria", "Nigerianisch",
+];
+
+function editDistance(left = "", right = "") {
+  const a = String(left).toLocaleLowerCase("de");
+  const b = String(right).toLocaleLowerCase("de");
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let row = 1; row <= a.length; row += 1) {
+    const current = [row];
+    for (let column = 1; column <= b.length; column += 1) {
+      current[column] = Math.min(
+        current[column - 1] + 1,
+        previous[column] + 1,
+        previous[column - 1] + (a[row - 1] === b[column - 1] ? 0 : 1),
+      );
+    }
+    previous = current;
+  }
+  return previous[b.length];
+}
+
+function proseOnlyText(submissionText = "") {
+  return String(submissionText || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => {
+      if (!line || /^(?:teil|part)\s*\d+[.:]?$/i.test(line)) return false;
+      if (/^\d+\s*[.)\-:]\s*(?:[A-DX]|richtig|falsch)(?:\b|[.)!?;,]|$)/i.test(line)) return false;
+      const words = line.split(/\s+/).filter(Boolean);
+      return words.length >= 4
+        && /\b(?:ich|du|er|sie|wir|Sie)\b/.test(line)
+        && /\b(?:komme|kommst|kommt|kommen|spreche|sprichst|spricht|sprechen|bin|bist|ist|sind|habe|hast|hat|haben|möchte|möchten)\b/i.test(line);
+    })
+    .join(" ");
+}
+
+function a1CountryLanguageCorrections(submissionText = "") {
+  const source = proseOnlyText(submissionText);
+  if (!source) return [];
+  const exactTerms = new Set(A1_COUNTRY_LANGUAGE_TERMS.map((term) => term.toLocaleLowerCase("de")));
+  const tokens = source.match(/[A-Za-zÄÖÜäöüß]+/g) || [];
+  const corrections = [];
+
+  tokens.forEach((token) => {
+    if (!/^[A-ZÄÖÜ]/.test(token) || token.length < 5 || exactTerms.has(token.toLocaleLowerCase("de"))) return;
+    const ranked = A1_COUNTRY_LANGUAGE_TERMS
+      .map((term) => ({ term, distance: editDistance(token, term) }))
+      .sort((left, right) => left.distance - right.distance || left.term.localeCompare(right.term, "de"));
+    const best = ranked[0];
+    const second = ranked[1];
+    const threshold = token.length >= 9 ? 3 : 2;
+    if (!best || best.distance > threshold || (second && second.distance === best.distance)) return;
+    if (corrections.some((item) => item.from.toLocaleLowerCase("de") === token.toLocaleLowerCase("de"))) return;
+    corrections.push({ from: token, to: best.term });
+  });
+
+  return corrections.slice(0, 3);
+}
+
+function anchoredWritingTip(submissionText = "") {
+  const candidate = proseOnlyText(submissionText)
+    .split(/(?<=[.!?])\s+/)
+    .map((value) => value.replace(/\s+/g, " ").trim())
+    .find((value) => value.split(/\s+/).filter(Boolean).length >= 4);
+  if (!candidate) return "";
+  const anchor = candidate.replace(/[.!?]+$/, "").slice(0, 100);
+  return `Your sentence “${anchor}” communicates the idea clearly. Check spelling, capitalization and word forms in the remaining sentences before submitting.`;
+}
+
 function writingTip(submissionText = "", result = {}) {
   const text = String(submissionText || "");
   if (/vorfreue\s+mich/i.test(text) || /freue\s+mich[^.!?]{0,35}freue\s+mich/i.test(text)) {
@@ -176,7 +308,16 @@ function writingTip(submissionText = "", result = {}) {
     if (from && to && from.length <= 90 && to.length <= 120) return `Also check this writing point: write “${to}” instead of “${from}.”`;
   }
 
-  return looksLikeFreeText(text) ? "Your free-text response is clear; read it through once more before submitting to catch small language mistakes." : "";
+  const spellingCorrections = a1CountryLanguageCorrections(text);
+  if (spellingCorrections.length) {
+    const corrections = spellingCorrections.map(({ from, to }) => `“${from}” to “${to}”`);
+    return `In Teil 1, correct ${humanList(corrections)}.`;
+  }
+
+  const specificAiTip = specificAiWritingTip(result, text);
+  if (specificAiTip) return sentence(specificAiTip);
+
+  return looksLikeFreeText(text) ? anchoredWritingTip(text) : "";
 }
 
 export function assignmentHasScoredWriting(referenceEntry = {}) {
