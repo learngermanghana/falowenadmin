@@ -4,16 +4,17 @@ import { getCourseSessionGroups } from "../src/data/courseSessionGroups.js";
 import { buildSessionReschedulePlan } from "../src/utils/liveClassReschedulePlan.js";
 
 const groups = getCourseSessionGroups("A1");
+const weeklyRules = [
+  { day: "thu", startTime: "18:00", durationMinutes: 60 },
+  { day: "fri", startTime: "18:00", durationMinutes: 60 },
+  { day: "sat", startTime: "08:00", durationMinutes: 60 },
+];
 const klass = {
   id: "a1-thursday-friday-saturday",
   levelId: "A1",
   startDate: "2026-06-19",
   timezone: "Africa/Accra",
-  scheduleRules: [
-    { day: "thu", startTime: "18:00", durationMinutes: 60 },
-    { day: "fri", startTime: "18:00", durationMinutes: 60 },
-    { day: "sat", startTime: "08:00", durationMinutes: 60 },
-  ],
+  scheduleRules: weeklyRules,
 };
 
 function session(day, startsAt, status = "scheduled") {
@@ -59,7 +60,12 @@ test("following reschedule uses every saved weekly timetable slot", () => {
   );
 });
 
-test("moving Day 22 to Thursday places the next lessons on Friday and Saturday", () => {
+test("object-shaped weekly rules place lessons on Thursday Friday and Saturday", () => {
+  const objectRulesClass = {
+    ...klass,
+    id: "a1-object-weekly-rules",
+    scheduleRules: { weekly: weeklyRules },
+  };
   const sessions = [
     session(20, "2026-08-01T08:00:00.000Z"),
     session(21, "2026-08-01T22:00:00.000Z"),
@@ -69,7 +75,7 @@ test("moving Day 22 to Thursday places the next lessons on Friday and Saturday",
   ];
 
   const plan = buildSessionReschedulePlan({
-    klass,
+    klass: objectRulesClass,
     sessions,
     sessionId: "day-21",
     targetStartsAt: "2026-08-06T18:00:00.000Z",
