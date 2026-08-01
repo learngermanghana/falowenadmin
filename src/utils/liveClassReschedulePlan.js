@@ -1,5 +1,9 @@
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
-import { resolveOfficialSessionNumber } from "./liveClassLessonOrder.js";
+import {
+  buildOfficialLessonSchedulePlan,
+  resolveOfficialSessionNumber,
+} from "./liveClassLessonOrder.js";
+import { normalizeScheduleRules } from "./liveClassScheduling.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -187,6 +191,85 @@ function recoveryBaseline({ klass = {}, selectedSession = {}, selectedCurrent, t
   return { start: previousStart, end: baselineEnd };
 }
 
+function buildFollowingTimetableChanges({
+  klass,
+  sessions,
+  selected,
+  affected,
+  target,
+  levelId,
+}) {
+  const classId = normalize(
+    klass.id
+      || klass.classId
+      || selected.session.classId
+      || selected.session.classRecordId,
+  );
+  if (!classId) {
+    throw codedError(
+      "live-class/missing-class-id",
+      "This session is not linked to a class timetable.",
+    );
+  }
+
+  const selectedId = normalize(selected.session.id);
+  const planningSessions = sessions.map((session) => (
+    normalize(session.id) === selectedId
+      ? {
+        ...session,
+        startsAt: target.start.toISOString(),
+        endsAt: target.end.toISOString(),
+        status: "scheduled",
+      }
+      : session
+  ));
+  const anchoredClass = {
+    ...klass,
+    scheduleAnchorSessionNumber: selected.number,
+    scheduleAnchorDay: levelId === "A1" ? selected.number - 1 : null,
+    scheduleAnchorStartsAt: target.start.toISOString(),
+    scheduleAnchorSource: "live-class-following-reschedule",
+  };
+
+  let officialPlan;
+  try {
+    officialPlan = buildOfficialLessonSchedulePlan({
+      classId,
+      klass: anchoredClass,
+      sessions: planningSessions,
+      excludedDates: Array.isArray(klass.holidayDatesExcluded) ? klass.holidayDatesExcluded : [],
+    });
+  } catch (error) {
+    throw codedError(
+      error?.code || "live-class/following-schedule",
+      error?.message || "Could not rebuild the following lessons from the saved weekly timetable.",
+    );
+  }
+
+  const officialItems = new Map(
+    officialPlan.items.map((item) => [Number(item.lessonNumber), item]),
+  );
+
+  return affected.map(({ session, number }, index) => {
+    const officialItem = officialItems.get(Number(number));
+    if (!officialItem) {
+      throw codedError(
+        "live-class/missing-official-slot",
+        `${sessionLabel(session)} has no matching slot in the saved weekly timetable.`,
+        { sessionId: normalize(session.id), sessionNumber: number },
+      );
+    }
+
+    return {
+      session,
+      sessionNumber: number,
+      startsAt: officialItem.targetStartsAt,
+      endsAt: officialItem.targetEndsAt,
+      plannedStatus: index === 0 ? "scheduled" : statusOf(session),
+    };
+  });
+}
+
 export function buildSessionReschedulePlan({
   klass = {},
   sessions = [],
@@ -232,23 +315,32 @@ export function buildSessionReschedulePlan({
     ? target.start.getTime() - selectedBaseline.start.getTime()
     : 0;
 
-  const changes = affected.map(({ session, number }, index) => {
-    const current = validInterval(session.startsAt, session.endsAt, sessionLabel(session));
-    const startsAt = normalizedMode === "following"
-      ? (index === 0 ? target.start : new Date(current.start.getTime() + deltaMs))
-      : target.start;
-    const endsAt = normalizedMode === "following"
-      ? (index === 0 ? target.end : new Date(current.end.getTime() + deltaMs))
-      : target.end;
-    const plannedStatus = index === 0 ? "scheduled" : statusOf(session);
-    return {
-      session,
-      sessionNumber: number,
-      startsAt: startsAt.toISOString(),
-      endsAt: endsAt.toISOString(),
-      plannedStatus,
-    };
-  });
+  const hasSavedWeeklyTimetable = normalizeScheduleRules(klass.scheduleRules || []).length > 0;
+  const changes = normalizedMode === "following" && hasSavedWeeklyTimetable
+    ? buildFollowingTimetableChanges({
+      klass,
+      sessions,
+      selected,
+      affected,
+      target,
+      levelId,
+    })
+    : affected.map(({ session, number }, index) => {
+      const current = validInterval(session.startsAt, session.endsAt, sessionLabel(session));
+      const startsAt = normalizedMode === "following"
+        ? (index === 0 ? target.start : new Date(current.start.getTime() + deltaMs))
+        : target.start;
+      const endsAt = normalizedMode === "following"
+        ? (index === 0 ? target.end : new Date(current.end.getTime() + deltaMs))
+        : target.end;
+      return {
+        session,
+        sessionNumber: number,
+        startsAt: startsAt.toISOString(),
+        endsAt: endsAt.toISOString(),
+        plannedStatus: index === 0 ? "scheduled" : statusOf(session),
+      };
+    });
 
   const ignoredSessionIds = changes.map((change) => normalize(change.session.id));
   changes.forEach((change) => {

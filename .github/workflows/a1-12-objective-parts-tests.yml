@@ -67,8 +67,9 @@ jobs:
           node --check scripts/patchSequentialMultipartIsolation.mjs
           grep -F 'const aiGradedParts = referenceEntry.aiGradedParts' src/utils/objectiveMarking.js
           grep -F 'grading?.hasReferenceAnswers === true' src/utils/objectiveMarking.js
-          grep -F 'if (sequentialPartAnswers.size > 0) return "";' src/utils/objectiveMarking.js
-      - name: Test Mary unlabelled multipart isolation
+          grep -F 'const hasAnyMatchingPartSections = Boolean(referencePartIds.length)' src/utils/objectiveMarking.js
+          grep -F 'if (sequentialPartAnswers.size > 0 || hasAnyMatchingPartSections) return "";' src/utils/objectiveMarking.js
+      - name: Test unlabelled and partial-labelled multipart isolation
         run: node --test tests/a1-12.1-unlabelled-block-isolation.test.js
       - name: Test Josephine A1-12.1 result
         run: node --test --test-name-pattern="Josephine 13 of 15" tests/a1-12.1-objective-parts.test.js
