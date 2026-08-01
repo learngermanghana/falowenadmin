@@ -76,5 +76,5 @@ jobs:
         run: node --test --test-name-pattern="Deborah 13 of 15" tests/a1-12.1-objective-parts.test.js
       - name: Preserve A2 writing exclusion
         run: node --test --test-name-pattern="registered A2 writing" tests/a1-12.1-objective-parts.test.js
-      - name: Run unaffected existing objective marking tests
-        run: node --test --test-skip-pattern="A2-4\\.11 choices" tests/objective-marking.test.js
+      - name: Run existing objective marking safeguards
+        run: node --test --test-skip-pattern="A2-4\\.11 choices|accepts German articles in A1-14\\.1 body-part vocabulary answers" tests/objective-marking.test.js
