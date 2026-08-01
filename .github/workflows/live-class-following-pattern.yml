@@ -1,0 +1,40 @@
+name: Live class following timetable pattern
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/liveClassReschedulePlan.js'
+      - 'src/utils/liveClassScheduling.js'
+      - 'scripts/patchLiveClassNormalizedScheduleRules.mjs'
+      - 'tests/live-class-following-weekly-pattern.test.js'
+      - 'package.json'
+      - '.github/workflows/live-class-following-pattern.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/liveClassReschedulePlan.js'
+      - 'src/utils/liveClassScheduling.js'
+      - 'scripts/patchLiveClassNormalizedScheduleRules.mjs'
+      - 'tests/live-class-following-weekly-pattern.test.js'
+      - 'package.json'
+      - '.github/workflows/live-class-following-pattern.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply normalized timetable patch twice
+        run: |
+          node scripts/patchLiveClassNormalizedScheduleRules.mjs
+          node scripts/patchLiveClassNormalizedScheduleRules.mjs
+          node --check src/utils/liveClassReschedulePlan.js
+          node --check scripts/patchLiveClassNormalizedScheduleRules.mjs
+          grep -F 'import { normalizeScheduleRules } from "./liveClassScheduling.js";' src/utils/liveClassReschedulePlan.js
+          grep -F 'normalizeScheduleRules(klass.scheduleRules || []).length > 0' src/utils/liveClassReschedulePlan.js
+      - name: Test array and object-shaped weekly rules
+        run: node --test tests/live-class-following-weekly-pattern.test.js
