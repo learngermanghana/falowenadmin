@@ -1,0 +1,51 @@
+name: Marking parser regressions
+
+on:
+  push:
+    paths:
+      - 'scripts/patchSequentialMultipartIsolation.mjs'
+      - 'scripts/patchWritingSignatureIsolation.mjs'
+      - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
+      - 'tests/writing-signature-isolation.test.js'
+      - 'package.json'
+      - '.github/workflows/marking-parser-regressions.yml'
+  pull_request:
+    paths:
+      - 'scripts/patchSequentialMultipartIsolation.mjs'
+      - 'scripts/patchWritingSignatureIsolation.mjs'
+      - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
+      - 'tests/writing-signature-isolation.test.js'
+      - 'package.json'
+      - '.github/workflows/marking-parser-regressions.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply parser patches twice
+        run: |
+          node scripts/patchObjectiveWritingPartDetection.mjs
+          node scripts/patchObjectiveAnswerTimeParsing.mjs
+          node scripts/patchObjectivePromptAnswerParsing.mjs
+          node scripts/patchA1PricePreferenceMarking.mjs
+          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
+          node scripts/patchObjectiveGrammarConsistency.mjs
+          node scripts/patchReorderedObjectiveGroups.mjs
+          node scripts/patchSequentialMultipartIsolation.mjs
+          node scripts/patchWritingSignatureIsolation.mjs
+          node scripts/patchSequentialMultipartIsolation.mjs
+          node scripts/patchWritingSignatureIsolation.mjs
+      - name: Validate patched source
+        run: |
+          node --check src/utils/objectiveMarking.js
+          node --check src/utils/autoMarking.js
+          node --check scripts/patchSequentialMultipartIsolation.mjs
+          node --check scripts/patchWritingSignatureIsolation.mjs
+          grep -F 'if (sequentialPartAnswers.size > 0 || hasAnyMatchingPartSections) return "";' src/utils/objectiveMarking.js
+          grep -F 'const sourceText = writingBodyBeforeSignoff(text);' src/utils/autoMarking.js
+      - name: Run exact regressions
+        run: node --test tests/a1-12.1-unlabelled-block-isolation.test.js tests/writing-signature-isolation.test.js
