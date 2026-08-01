@@ -25,11 +25,71 @@ source = replaceOnce(
   "leading unlabelled section helper",
 );
 
+const originalResolverSignature = 'function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers }) {';
+const mixedPartHelpersAndResolver = [
+  'function orderedReferencePartGroups(referenceItems = []) {',
+  '  const groups = [];',
+  '  const byPartId = new Map();',
+  '  referenceItems.forEach((item) => {',
+  '    if (item.partId === "main") return;',
+  '    if (!byPartId.has(item.partId)) {',
+  '      const group = { partId: item.partId, items: [] };',
+  '      byPartId.set(item.partId, group);',
+  '      groups.push(group);',
+  '    }',
+  '    byPartId.get(item.partId).items.push(item);',
+  '  });',
+  '  return groups;',
+  '}',
+  '',
+  'function buildMixedPartAnswerMap(referenceItems = [], submissionText = "", sections = [], sectionPartIds = new Set()) {',
+  '  const groups = orderedReferencePartGroups(referenceItems);',
+  '  const map = new Map();',
+  '  const merge = (candidate) => candidate.forEach((value, key) => map.set(key, value));',
+  '  const firstExplicitIndex = groups.findIndex((group) => sectionPartIds.has(group.partId));',
+  '',
+  '  if (firstExplicitIndex > 0) {',
+  '    const leadingItems = groups',
+  '      .slice(0, firstExplicitIndex)',
+  '      .filter((group) => !sectionPartIds.has(group.partId))',
+  '      .flatMap((group) => group.items);',
+  '    merge(buildSequentialPartAnswerMap(',
+  '      leadingItems,',
+  '      leadingUnlabelledSubmissionText(submissionText),',
+  '      false,',
+  '    ));',
+  '  }',
+  '',
+  '  groups.forEach((group, groupIndex) => {',
+  '    if (!sectionPartIds.has(group.partId)) return;',
+  '    const sectionText = sections.find((section) => section.partId === group.partId)?.text;',
+  '    if (sectionText === undefined) return;',
+  '    const entries = extractRestartedNumberingEntries(sectionText);',
+  '    const overflow = entries.slice(group.items.length);',
+  '    if (!overflow.length) return;',
+  '',
+  '    let offset = 0;',
+  '    for (let nextIndex = groupIndex + 1; nextIndex < groups.length && offset < overflow.length; nextIndex += 1) {',
+  '      const nextGroup = groups[nextIndex];',
+  '      if (sectionPartIds.has(nextGroup.partId)) continue;',
+  '      nextGroup.items.forEach((item, itemIndex) => {',
+  '        const entry = overflow[offset + itemIndex];',
+  '        if (entry) map.set(`${item.partId}.${item.questionNumber}`, entry.answer);',
+  '      });',
+  '      offset += nextGroup.items.length;',
+  '    }',
+  '  });',
+  '',
+  '  return map;',
+  '}',
+  '',
+  'function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections }) {',
+].join("\n");
 source = replaceOnce(
   source,
-  'function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers }) {',
-  'function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections }) {',
-  "student-answer resolver signature",
+  originalResolverSignature,
+  mixedPartHelpersAndResolver,
+  "mixed part resolver helpers",
 );
 
 const originalLookup = [
@@ -86,13 +146,9 @@ source = replaceOnce(
 
 const originalSequentialSetup = '  const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);';
 const mixedSequentialSetup = [
-  '  const sequentialReferenceItems = hasAnyMatchingPartSections',
-  '    ? referenceItems.filter((item) => item.partId !== "main" && !sectionPartIds.has(item.partId))',
-  '    : referenceItems;',
-  '  const sequentialSubmissionText = hasAnyMatchingPartSections',
-  '    ? leadingUnlabelledSubmissionText(submissionText)',
-  '    : submissionText;',
-  '  const sequentialPartAnswers = buildSequentialPartAnswerMap(sequentialReferenceItems, sequentialSubmissionText, false);',
+  '  const sequentialPartAnswers = hasAnyMatchingPartSections',
+  '    ? buildMixedPartAnswerMap(referenceItems, submissionText, sections, sectionPartIds)',
+  '    : buildSequentialPartAnswerMap(referenceItems, submissionText, false);',
 ].join("\n");
 source = replaceOnce(
   source,
@@ -109,4 +165,4 @@ source = replaceOnce(
 );
 
 fs.writeFileSync(target, source);
-console.log("Sequential multipart answers are isolated while labelled and leading unlabelled sections remain authoritative.");
+console.log("Sequential multipart answers are isolated while labelled sections, leading blocks and overflow remain authoritative.");
