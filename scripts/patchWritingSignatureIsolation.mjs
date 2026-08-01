@@ -65,7 +65,7 @@ function isWritingClosingPhrase(value = "") {
   if (hasGreetingLead && hasGreetingWord) return true;
 
   const hasFriendlyWord = words.some((word) => fuzzyWritingWord(word, ["freundlich", "freundliche", "freundlichen"], 5));
-  if ((words[0] === "mit" || hasFriendlyWord) && hasFriendlyWord && hasGreetingWord) return true;
+  if (words[0] === "mit" && hasFriendlyWord && hasGreetingWord) return true;
 
   return false;
 }
@@ -124,4 +124,4 @@ source = replaceOnce(
 );
 
 fs.writeFileSync(target, source);
-console.log("Writing feedback now treats every line after a recognised German sign-off as signature or name text.");
+console.log("Writing feedback now treats lines after a recognised sign-off as signature text without truncating normal body sentences.");
