@@ -16,6 +16,15 @@ source = replaceOnce(
   "sequential block activation",
 );
 
+const blockHelperAnchor = 'function splitIntoAnswerBlocks(text = "") {\n  return String(text || "").split(/\\n\\s*\\n+/).map((block) => block.trim()).filter(Boolean);\n}';
+const blockHelperWithLeadingText = `${blockHelperAnchor}\n\nfunction leadingUnlabelledSubmissionText(text = "") {\n  const sourceText = String(text || "");\n  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|part)[ \\t]*[1-4]\\b[^\\n]*|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?=\\n|$)/i;\n  const marker = markerRegex.exec(sourceText);\n  return marker ? sourceText.slice(0, marker.index).trim() : sourceText.trim();\n}`;
+source = replaceOnce(
+  source,
+  blockHelperAnchor,
+  blockHelperWithLeadingText,
+  "leading unlabelled section helper",
+);
+
 source = replaceOnce(
   source,
   'function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers }) {',
@@ -75,11 +84,21 @@ source = replaceOnce(
   "partial labelled-section detection",
 );
 
+const originalSequentialSetup = '  const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);';
+const mixedSequentialSetup = [
+  '  const sequentialReferenceItems = hasAnyMatchingPartSections',
+  '    ? referenceItems.filter((item) => item.partId !== "main" && !sectionPartIds.has(item.partId))',
+  '    : referenceItems;',
+  '  const sequentialSubmissionText = hasAnyMatchingPartSections',
+  '    ? leadingUnlabelledSubmissionText(submissionText)',
+  '    : submissionText;',
+  '  const sequentialPartAnswers = buildSequentialPartAnswerMap(sequentialReferenceItems, sequentialSubmissionText, false);',
+].join("\n");
 source = replaceOnce(
   source,
-  '  const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);',
-  '  const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasAnyMatchingPartSections);',
-  "sequential answer-map call",
+  originalSequentialSetup,
+  mixedSequentialSetup,
+  "mixed labelled/unlabelled sequential mapping",
 );
 
 source = replaceOnce(
@@ -90,4 +109,4 @@ source = replaceOnce(
 );
 
 fs.writeFileSync(target, source);
-console.log("Sequential multipart answers are isolated while explicitly labelled partial sections remain authoritative.");
+console.log("Sequential multipart answers are isolated while labelled and leading unlabelled sections remain authoritative.");
