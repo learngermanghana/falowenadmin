@@ -3,6 +3,7 @@ import {
   buildOfficialLessonSchedulePlan,
   resolveOfficialSessionNumber,
 } from "./liveClassLessonOrder.js";
+import { normalizeScheduleRules } from "./liveClassScheduling.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -314,7 +315,7 @@ export function buildSessionReschedulePlan({
     ? target.start.getTime() - selectedBaseline.start.getTime()
     : 0;
 
-  const hasSavedWeeklyTimetable = Array.isArray(klass.scheduleRules) && klass.scheduleRules.length > 0;
+  const hasSavedWeeklyTimetable = normalizeScheduleRules(klass.scheduleRules || []).length > 0;
   const changes = normalizedMode === "following" && hasSavedWeeklyTimetable
     ? buildFollowingTimetableChanges({
       klass,
