@@ -10,6 +10,8 @@ const {
   buildPaymentMessage,
   detectPaymentChange,
   isLikelySecondHalfOfSameSync,
+  resolveClassWebhookConfig,
+  resolveStudentWebhookConfig,
   resolveWebhookConfig,
   rowForPaymentUpdate,
 } = _test;
@@ -24,6 +26,17 @@ test("manual balance reduction is detected as a payment", () => {
   assert.equal(change.source, "balance_decrease");
   assert.equal(change.totalPaid, 1500);
   assert.equal(change.balance, 1300);
+});
+
+test("Ruth test balance reduction from 3000 to zero is detected", () => {
+  const change = detectPaymentChange(
+    { initialPaymentAmount: 3000, balanceDue: 3000, email: "ruth@example.com" },
+    { initialPaymentAmount: 3000, balanceDue: 0, email: "ruth@example.com" },
+  );
+
+  assert.equal(change.amount, 3000);
+  assert.equal(change.source, "balance_decrease");
+  assert.equal(change.balance, 0);
 });
 
 test("stored payment state keeps successive manual balance payments cumulative", () => {
@@ -119,4 +132,54 @@ test("webhook config uses the shared announcement webhook as fallback", () => {
   }, {});
   assert.equal(config.url, "https://example.com/webhook");
   assert.equal(config.token, "secret");
+});
+
+test("saved class delivery config overrides an empty Firebase runtime config", () => {
+  const config = resolveClassWebhookConfig({
+    attendanceConfirmationEmailDelivery: {
+      url: "https://script.google.com/payment-mail",
+      token: "class-secret",
+      sheetName: "Announcements",
+      sheetGid: "123",
+    },
+  }, {});
+
+  assert.equal(config.url, "https://script.google.com/payment-mail");
+  assert.equal(config.token, "class-secret");
+  assert.equal(config.sheetName, "Announcements");
+  assert.equal(config.sheetGid, "123");
+});
+
+test("student class name resolves its saved communication delivery", async () => {
+  const classRecord = {
+    attendanceConfirmationEmailDelivery: {
+      url: "https://script.google.com/payment-mail",
+      token: "class-secret",
+    },
+  };
+  const emptySnap = { exists: false, data: () => ({}) };
+  const querySnap = {
+    empty: false,
+    docs: [{ id: "b1-bonn", data: () => classRecord }],
+  };
+  const classes = {
+    doc: () => ({ get: async () => emptySnap }),
+    where: (field, operator, value) => ({
+      limit: () => ({
+        get: async () => field === "name" && operator === "==" && value === "B1 Bonn Klasse"
+          ? querySnap
+          : { empty: true, docs: [] },
+      }),
+    }),
+  };
+  const db = { collection: (name) => name === "classes" ? classes : null };
+
+  const config = await resolveStudentWebhookConfig({
+    db,
+    student: { className: "B1 Bonn Klasse" },
+    fallback: {},
+  });
+
+  assert.equal(config.url, "https://script.google.com/payment-mail");
+  assert.equal(config.token, "class-secret");
 });
