@@ -1,0 +1,32 @@
+name: Apply normalized reschedule source patch
+
+on:
+  push:
+    branches:
+      - fix/live-class-following-weekly-pattern
+    paths:
+      - '.github/workflows/apply-normalized-reschedule-source.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/live-class-following-weekly-pattern
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply source patch
+        run: node scripts/patchLiveClassNormalizedScheduleRules.mjs
+      - name: Commit patched source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/liveClassReschedulePlan.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Normalize saved timetable rules before reschedule fallback"
+          git push origin HEAD:fix/live-class-following-weekly-pattern
