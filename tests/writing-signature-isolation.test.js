@@ -40,3 +40,24 @@ Cisco.`,
     assert.match(result.feedback, /Mittagessen|Geburtstag|mitbringen|Antwort/i);
   });
 }
+
+test("a normal Freundin sentence is not mistaken for a sign-off", () => {
+  const result = autoMarkSubmission({
+    referenceEntry: { assignmentKey: "A2-letter", level: "A2" },
+    submission: { assignmentKey: "A2-letter", level: "A2" },
+    submissionText: `TEIL 2
+
+Hallo Felix,
+Meine Freundin kommt gerne.
+ich komme am Samstag.
+Liebe Grüße
+Cisco.`,
+  });
+
+  assert.equal(result.parts[0].partType, "writing");
+  assert.equal(
+    result.corrections.some((correction) => /ich komme am Samstag/i.test(`${correction.submitted || ""} ${correction.message || ""}`)),
+    true,
+  );
+  assert.doesNotMatch(result.feedback, /Cisco/i);
+});
