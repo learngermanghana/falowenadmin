@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { _test } = require("../functions/studentPaymentUpdateEmails.js");
 
 const {
+  applyStoredPaymentBaseline,
   buildPaymentMessage,
   detectPaymentChange,
   isLikelySecondHalfOfSameSync,
@@ -19,8 +20,20 @@ test("manual balance reduction is detected as a payment", () => {
 
   assert.equal(change.amount, 500);
   assert.equal(change.source, "balance_decrease");
-  assert.equal(change.totalPaid, 1000);
+  assert.equal(change.totalPaid, 1500);
   assert.equal(change.balance, 1300);
+});
+
+test("stored payment state keeps successive manual balance payments cumulative", () => {
+  const rawChange = detectPaymentChange(
+    { paid: 1000, balanceDue: 1300 },
+    { paid: 1000, balanceDue: 800 },
+  );
+  const adjusted = applyStoredPaymentBaseline({ lastPaid: 1500 }, rawChange);
+
+  assert.equal(adjusted.amount, 500);
+  assert.equal(adjusted.totalPaid, 2000);
+  assert.equal(adjusted.balance, 800);
 });
 
 test("student payment changing paid and balance is counted once from the paid increase", () => {
@@ -87,6 +100,7 @@ test("second half of a two-step paid/balance sync is suppressed", () => {
   const change = {
     source: "balance_decrease",
     amount: 500,
+    paidIncrease: 0,
     totalPaid: 1500,
     balance: 1300,
     reference: "",
