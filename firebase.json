@@ -16,6 +16,7 @@
         "node scripts/patchStudentPaymentHistoryApi.mjs",
         "node scripts/patchStudentPaymentAdminSecurity.mjs",
         "node scripts/patchStudentProfileUpdateApi.mjs",
+        "node scripts/patchStudentPaymentUpdateEmails.mjs",
         "node scripts/patchAutomaticOrientationSync.mjs",
         "node scripts/patchStructuredWritingEvidence.mjs",
         "node scripts/patchSpecificWritingFeedback.mjs",
