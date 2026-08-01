@@ -198,13 +198,6 @@ function buildFollowingTimetableChanges({
   target,
   levelId,
 }) {
-  if (!Array.isArray(klass.scheduleRules) || !klass.scheduleRules.length) {
-    throw codedError(
-      "live-class/missing-class-schedule",
-      "Save the class weekly timetable before moving this and all following sessions.",
-    );
-  }
-
   const classId = normalize(
     klass.id
       || klass.classId
@@ -321,7 +314,8 @@ export function buildSessionReschedulePlan({
     ? target.start.getTime() - selectedBaseline.start.getTime()
     : 0;
 
-  const changes = normalizedMode === "following"
+  const hasSavedWeeklyTimetable = Array.isArray(klass.scheduleRules) && klass.scheduleRules.length > 0;
+  const changes = normalizedMode === "following" && hasSavedWeeklyTimetable
     ? buildFollowingTimetableChanges({
       klass,
       sessions,
@@ -330,13 +324,22 @@ export function buildSessionReschedulePlan({
       target,
       levelId,
     })
-    : affected.map(({ session, number }) => ({
-      session,
-      sessionNumber: number,
-      startsAt: target.start.toISOString(),
-      endsAt: target.end.toISOString(),
-      plannedStatus: "scheduled",
-    }));
+    : affected.map(({ session, number }, index) => {
+      const current = validInterval(session.startsAt, session.endsAt, sessionLabel(session));
+      const startsAt = normalizedMode === "following"
+        ? (index === 0 ? target.start : new Date(current.start.getTime() + deltaMs))
+        : target.start;
+      const endsAt = normalizedMode === "following"
+        ? (index === 0 ? target.end : new Date(current.end.getTime() + deltaMs))
+        : target.end;
+      return {
+        session,
+        sessionNumber: number,
+        startsAt: startsAt.toISOString(),
+        endsAt: endsAt.toISOString(),
+        plannedStatus: index === 0 ? "scheduled" : statusOf(session),
+      };
+    });
 
   const ignoredSessionIds = changes.map((change) => normalize(change.session.id));
   changes.forEach((change) => {
