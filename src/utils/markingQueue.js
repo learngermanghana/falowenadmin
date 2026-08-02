@@ -26,12 +26,27 @@ export function isResubmission(row = {}) {
   return Boolean(row.isResubmission || raw.isResubmission || status === "resubmitted" || Number(row.attempt || raw.attempt || raw.attemptNumber) > 1);
 }
 
+export function requiresDuplicateTutorVerification(row = {}) {
+  const raw = row.raw || {};
+  return Boolean(
+    row.duplicateScoreBlocked ||
+    row.tutorVerificationRequired ||
+    raw.duplicateScoreBlocked ||
+    raw.tutorVerificationRequired,
+  );
+}
+
 export function shouldIncludeInIncomingQueue(row = {}, lastScore = null, queueStartDate = "") {
   const raw = row.raw || {};
   const submissionTime = getSubmissionTimestamp(row);
   const queueStartTime = timestampMillis(queueStartDate);
   if (queueStartTime && (!submissionTime || submissionTime < queueStartTime)) return false;
   if (raw.hiddenFromMarkingQueue || raw.hiddenAt) return false;
+
+  // Duplicate-score blocks are an explicit tutor-verification state. Preserve
+  // them before comparing the canonical score timestamp, which may belong to
+  // the earlier score that caused the block.
+  if (requiresDuplicateTutorVerification(row)) return true;
 
   const scoreTime = timestampMillis(lastScore?.markedAt || lastScore?.scoredAt || lastScore?.updatedAt || lastScore?.createdAt || lastScore?.date);
   if (lastScore && scoreTime && (!submissionTime || submissionTime <= scoreTime)) return false;

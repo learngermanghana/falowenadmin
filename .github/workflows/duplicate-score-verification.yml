@@ -1,0 +1,42 @@
+name: Duplicate Score Verification
+
+on:
+  push:
+    branches:
+      - main
+      - "fix/**"
+  pull_request:
+    paths:
+      - "src/services/markingServiceBase.js"
+      - "src/utils/markingQueue.js"
+      - "src/utils/scoreAttempts.js"
+      - "src/utils/scoreSaveReservation.js"
+      - "scripts/patchDuplicateScoreVerification.mjs"
+      - "tests/marking-queue.test.js"
+      - "tests/score-save-reservation.test.js"
+      - "package.json"
+      - ".github/workflows/duplicate-score-verification.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply patch twice
+        run: |
+          node scripts/patchDuplicateScoreVerification.mjs
+          first_hash="$(sha256sum src/services/markingServiceBase.js | cut -d' ' -f1)"
+          node scripts/patchDuplicateScoreVerification.mjs
+          second_hash="$(sha256sum src/services/markingServiceBase.js | cut -d' ' -f1)"
+          test "$first_hash" = "$second_hash"
+      - name: Validate generated service
+        run: node --check src/services/markingServiceBase.js
+      - name: Run focused regressions
+        run: node --test tests/score-attempts.test.js tests/score-save-reservation.test.js tests/marking-queue.test.js
+      - name: Lint touched JavaScript
+        run: npx eslint src/services/markingServiceBase.js src/utils/markingQueue.js src/utils/scoreSaveReservation.js scripts/patchDuplicateScoreVerification.mjs tests/marking-queue.test.js tests/score-save-reservation.test.js
