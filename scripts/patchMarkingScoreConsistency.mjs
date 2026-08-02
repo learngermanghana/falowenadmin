@@ -6,6 +6,35 @@ function replaceOnce(source, search, replacement, label) {
   throw new Error(`Could not patch marking score consistency: ${label}`);
 }
 
+function addRequiredTargetFlag(source) {
+  const alreadyPatched = [
+    `        allowDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
+    `        blockAnyDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
+  ];
+  if (alreadyPatched.some((candidate) => source.includes(candidate))) {
+    return { source, changed: false };
+  }
+
+  const supportedCalls = [
+    {
+      search: `        blockAnyDuplicate: true,\n        forceSheetDedupeId: true,\n        markingDetails: {`,
+      replacement: `        blockAnyDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
+    },
+    {
+      search: `        allowDuplicate: true,\n        forceSheetDedupeId: true,\n        markingDetails: {`,
+      replacement: `        allowDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
+    },
+  ];
+
+  for (const candidate of supportedCalls) {
+    if (source.includes(candidate.search)) {
+      return { source: source.replace(candidate.search, candidate.replacement), changed: true };
+    }
+  }
+
+  throw new Error("Could not patch marking score consistency: MarkingPage final score save requires sheet and Firestore");
+}
+
 const servicePath = new URL("../src/services/markingServiceBase.js", import.meta.url);
 let serviceSource = fs.readFileSync(servicePath, "utf8");
 let serviceChanged = false;
@@ -35,12 +64,7 @@ const pagePath = new URL("../src/pages/MarkingPage.jsx", import.meta.url);
 let pageSource = fs.readFileSync(pagePath, "utf8");
 let pageChanged = false;
 
-({ source: pageSource, changed: pageChanged } = replaceOnce(
-  pageSource,
-  `        allowDuplicate: true,\n        forceSheetDedupeId: true,\n        markingDetails: {`,
-  `        allowDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
-  "MarkingPage final score save requires sheet and Firestore",
-));
+({ source: pageSource, changed: pageChanged } = addRequiredTargetFlag(pageSource));
 
 fs.writeFileSync(pagePath, pageSource);
 console.log(pageChanged ? "MarkingPage final score save now requires Google Sheet and Firestore consistency." : "MarkingPage final score consistency already patched.");
