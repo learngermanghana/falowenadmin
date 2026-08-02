@@ -6,7 +6,7 @@ import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js"
 import { resolveStudentIdentity } from "../utils/studentIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
 import { shouldIncludeInIncomingQueue } from "../utils/markingQueue.js";
-import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
+import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -984,6 +984,7 @@ export async function saveScoreRow({
   link,
   source = "manual",
   allowDuplicate = false,
+  blockAnyDuplicate = false,
   markingDetails = {},
   forceSheetDedupeId = false,
 }) {
@@ -995,7 +996,9 @@ export async function saveScoreRow({
   const existingScore = existingSnap?.exists?.() ? existingSnap.data() : null;
   const attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);
   Object.assign(row, attemptMetadata);
-  const duplicateSkipped = shouldSkipExistingScore(existingScore, row.score, allowDuplicate);
+  const duplicateSkipped = blockAnyDuplicate
+    ? hasSavedScoreForAssignment(existingScore)
+    : shouldSkipExistingScore(existingScore, row.score, allowDuplicate);
   const sheetDedupeId = forceSheetDedupeId ? dedupeId : (attemptMetadata.is_resubmission ? `${dedupeId}__attempt_${attemptMetadata.attempt}` : dedupeId);
 
   const webhookPayload = {
@@ -1012,34 +1015,31 @@ export async function saveScoreRow({
   const receipt = {
     row,
     dedupeId,
-    duplicateSkipped: false,
+    duplicateSkipped,
     sheet: { attempted: Boolean(SCORES_WEBHOOK_URL), success: !SCORES_WEBHOOK_URL, message: SCORES_WEBHOOK_URL ? "Pending" : "Sheet save skipped (webhook not configured)." },
     firestore: { attempted: SAVE_SCORES_TO_FIRESTORE, success: !SAVE_SCORES_TO_FIRESTORE, message: SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config)." },
   };
 
-  if (SCORES_WEBHOOK_URL) {
-    if (duplicateSkipped) {
+  if (duplicateSkipped) {
+    receipt.sheet.success = true;
+    receipt.sheet.message = "Duplicate score blocked; this student already has a saved score for this assignment. Tutor verification is required.";
+  } else if (SCORES_WEBHOOK_URL) {
+    try {
+      await postScoreToWebhook(webhookPayload);
       receipt.sheet.success = true;
-      receipt.sheet.message = "Skipped duplicate sheet row; this student and assignment already has a passing score.";
-      receipt.duplicateSkipped = true;
-    } else {
-      try {
-        await postScoreToWebhook(webhookPayload);
-        receipt.sheet.success = true;
-        receipt.sheet.message = "Saved to Google Sheets with detailed marking fields.";
-      } catch (error) {
-        if (!isLikelyNetworkError(error)) {
+      receipt.sheet.message = "Saved to Google Sheets with detailed marking fields.";
+    } catch (error) {
+      if (!isLikelyNetworkError(error)) {
+        receipt.sheet.success = false;
+        receipt.sheet.message = String(error?.message || "Google Sheets save failed.");
+      } else {
+        try {
+          await postScoreToWebhookNoCors(webhookPayload);
+          receipt.sheet.success = true;
+          receipt.sheet.message = "Sheet request sent via no-cors fallback with detailed marking fields.";
+        } catch (fallbackError) {
           receipt.sheet.success = false;
-          receipt.sheet.message = String(error?.message || "Google Sheets save failed.");
-        } else {
-          try {
-            await postScoreToWebhookNoCors(webhookPayload);
-            receipt.sheet.success = true;
-            receipt.sheet.message = "Sheet request sent via no-cors fallback with detailed marking fields.";
-          } catch (fallbackError) {
-            receipt.sheet.success = false;
-            receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
-          }
+          receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
         }
       }
     }

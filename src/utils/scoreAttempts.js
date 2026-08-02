@@ -42,3 +42,7 @@ export function shouldSkipExistingScore(existingScore = null, currentScore = nul
     ? previousScore === null || previousScore >= PASS_MARK
     : false;
 }
+
+export function hasSavedScoreForAssignment(existingScore = null) {
+  return Boolean(existingScore?.sheetSaved);
+}

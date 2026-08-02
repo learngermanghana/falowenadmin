@@ -811,7 +811,7 @@ export default function MarkingPage() {
         comments: currentFeedback,
         level,
         link: referenceEntry?.answer_url ?? DEFAULT_REFERENCE_LINK,
-        allowDuplicate: true,
+        blockAnyDuplicate: true,
         forceSheetDedupeId: true,
         markingDetails: {
           objectiveScore: currentObjectiveScore,
@@ -843,12 +843,19 @@ export default function MarkingPage() {
             writingScorePercent: currentWritingScore,
             maxWritingScore: 100,
             manualOverride: true,
+            duplicateScoreBlocked: receipt.duplicateSkipped,
+            tutorVerificationRequired: receipt.duplicateSkipped,
             aiOriginalScore,
             aiOriginalFeedback: smartMarkingResult?.aiOriginalFeedback ?? smartMarkingResult?.feedback ?? "",
           },
-          status: "marked",
+          status: receipt.duplicateSkipped ? "needs_review" : "marked",
           sentToStudent: false,
         });
+      }
+
+      if (receipt.duplicateSkipped) {
+        error("Duplicate score blocked. This student already has a saved score for the same assignment; the submission was flagged for tutor verification.");
+        return;
       }
 
       const successfulTargets = [

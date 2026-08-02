@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../src/utils/scoreAttempts.js";
+import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../src/utils/scoreAttempts.js";
 
 const now = "2026-06-12T10:00:00.000Z";
 
@@ -67,4 +67,11 @@ test("allowDuplicate overrides duplicate suppression", () => {
   const existing = { score: 80, sheetSaved: true };
 
   assert.equal(shouldSkipExistingScore(existing, 90, true), false);
+});
+
+test("detects any previously saved assignment score for strict marking-page duplicate blocking", () => {
+  assert.equal(hasSavedScoreForAssignment({ score: 45, sheetSaved: true }), true);
+  assert.equal(hasSavedScoreForAssignment({ score: 80, sheetSaved: true }), true);
+  assert.equal(hasSavedScoreForAssignment({ score: 80, sheetSaved: false }), false);
+  assert.equal(hasSavedScoreForAssignment(null), false);
 });
