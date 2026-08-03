@@ -149,3 +149,14 @@ test("the repair service preserves visible identities and hides superseded alias
   assert.match(compatibilitySource, /filter\(isVisibleSession\)/);
   assert.match(compatibilitySource, /status !== "superseded"/);
 });
+
+test("loading an existing A2 or B1 class persists one-based session days", async () => {
+  const compatibilitySource = await readFile(compatibilityServicePath, "utf8");
+
+  assert.match(compatibilitySource, /repairOneBasedCurriculumDays/);
+  assert.match(compatibilitySource, /\["A2", "B1"\]\.includes\(levelId\)/);
+  assert.match(compatibilitySource, /batch\.update\(doc\(db, "classSessions", session\.id\), patch\)/);
+  assert.match(compatibilitySource, /doc\(db, "attendance", String\(classId\), "sessions", session\.id\)/);
+  assert.match(compatibilitySource, /curriculumDayNumbering:\s*"one-based"/);
+  assert.match(compatibilitySource, /await repairOneBasedCurriculumDays/);
+});
