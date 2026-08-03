@@ -39,24 +39,30 @@ test("A1-1.1-practice and A1-1.3 stay on different attendance days", () => {
   assert.notEqual(day3?.key, day5?.key);
 });
 
-test("A2 curriculum keeps numeric order through all 28 lessons", () => {
+test("A2 has Day 0 orientation followed by all 28 lessons", () => {
   const groups = getCourseSessionGroups("A2");
-  assert.equal(getCourseSessionCount("A2"), 28);
-  assert.equal(groups[0]?.day, 1);
+  assert.equal(getCourseSessionCount("A2"), 29);
+  assert.equal(groups[0]?.day, 0);
+  assert.equal(groups[0]?.assignmentIds[0], "A2-ORIENTATION");
+  assert.match(groups[0]?.topic || "", /^Day 0:/);
+  assert.equal(groups[1]?.day, 1);
   assert.equal(groups.at(-1)?.day, 28);
-  assert.equal(groups[4]?.assignmentIds[0], "A2-2.5");
-  assert.equal(groups[5]?.assignmentIds[0], "A2-3.6");
-  assert.equal(groups[9]?.assignmentIds[0], "A2-4.10");
+  assert.equal(groups[5]?.assignmentIds[0], "A2-2.5");
+  assert.equal(groups[6]?.assignmentIds[0], "A2-3.6");
+  assert.equal(groups[10]?.assignmentIds[0], "A2-4.10");
   assert.equal(groups.at(-1)?.assignmentIds[0], "A2-10.28");
 });
 
-test("B1 curriculum keeps numeric order through all 28 lessons", () => {
+test("B1 has Day 0 orientation followed by all 28 lessons", () => {
   const groups = getCourseSessionGroups("B1");
-  assert.equal(getCourseSessionCount("B1"), 28);
-  assert.equal(groups[0]?.day, 1);
+  assert.equal(getCourseSessionCount("B1"), 29);
+  assert.equal(groups[0]?.day, 0);
+  assert.equal(groups[0]?.assignmentIds[0], "B1-ORIENTATION");
+  assert.match(groups[0]?.topic || "", /^Day 0:/);
+  assert.equal(groups[1]?.day, 1);
   assert.equal(groups.at(-1)?.day, 28);
-  assert.equal(groups[4]?.assignmentIds[0], "B1-2.5");
-  assert.equal(groups[5]?.assignmentIds[0], "B1-2.6");
-  assert.equal(groups[9]?.assignmentIds[0], "B1-4.10");
+  assert.equal(groups[5]?.assignmentIds[0], "B1-2.5");
+  assert.equal(groups[6]?.assignmentIds[0], "B1-2.6");
+  assert.equal(groups[10]?.assignmentIds[0], "B1-4.10");
   assert.equal(groups.at(-1)?.assignmentIds[0], "B1-10.28");
 });
