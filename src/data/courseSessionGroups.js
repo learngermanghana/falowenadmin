@@ -32,6 +32,23 @@ const A1_DAY_BY_ASSIGNMENT_ID = Object.freeze({
   "A1-5.10": 24,
 });
 
+const ORIENTATION_ENTRY_BY_LEVEL = Object.freeze({
+  A2: Object.freeze({
+    assignment_id: "A2-ORIENTATION",
+    chapter: "0",
+    de: "Einführung und Orientierung",
+    en: "Orientation and Tutorial",
+  }),
+  B1: Object.freeze({
+    assignment_id: "B1-ORIENTATION",
+    chapter: "0",
+    de: "Einführung und Orientierung",
+    en: "Orientation and Tutorial",
+  }),
+});
+
+const DAY_NUMBERED_LEVELS = new Set(["A1", "A2", "B1"]);
+
 function normalizeLevel(value) {
   return String(value || "").trim().toUpperCase();
 }
@@ -52,14 +69,15 @@ export function getCourseTaskDay(levelId, assignmentId, fallbackIndex = 0) {
   if (level === "A1" && Object.prototype.hasOwnProperty.call(A1_DAY_BY_ASSIGNMENT_ID, id)) {
     return A1_DAY_BY_ASSIGNMENT_ID[id];
   }
-  // A1 intentionally includes an orientation/tutorial on Day 0. The A2 and B1
-  // curricula contain lessons only, so their first session is Day 1.
-  return level === "A1" ? fallbackIndex : fallbackIndex + 1;
+  if (id === `${level}-ORIENTATION`) return 0;
+  return ORIENTATION_ENTRY_BY_LEVEL[level] ? fallbackIndex : fallbackIndex + 1;
 }
 
 export function getCourseSessionGroups(levelId) {
   const level = normalizeLevel(levelId);
-  const entries = Object.values(courseDictionary[level] || {}).sort(compareCourseDictionaryEntries);
+  const dictionaryEntries = Object.values(courseDictionary[level] || {}).sort(compareCourseDictionaryEntries);
+  const orientationEntry = ORIENTATION_ENTRY_BY_LEVEL[level];
+  const entries = orientationEntry ? [orientationEntry, ...dictionaryEntries] : dictionaryEntries;
   const groups = new Map();
 
   entries.forEach((entry, index) => {
@@ -81,7 +99,7 @@ export function getCourseSessionGroups(levelId) {
       .filter(Boolean);
     const titles = group.entries.map((entry) => entryTitle(level, entry)).filter(Boolean);
     const chapters = group.entries.map((entry) => String(entry.chapter || "").trim()).filter(Boolean);
-    const dayLabel = level === "A1" ? `Day ${group.day}` : `Lesson ${index + 1}`;
+    const dayLabel = DAY_NUMBERED_LEVELS.has(level) ? `Day ${group.day}` : `Lesson ${index + 1}`;
     const topic = `${dayLabel}: ${titles.join(" + ")}`;
 
     return {
