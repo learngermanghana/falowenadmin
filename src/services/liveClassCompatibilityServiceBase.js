@@ -177,6 +177,42 @@ function enrichSessions(klass, sessions = []) {
   return enrichSessionsWithStableCurriculum(klass, sessions, groups);
 }
 
+async function repairOneBasedCurriculumDays(classId, klass, storedSessions = [], enrichedSessions = []) {
+  const levelId = resolveLevel(klass);
+  if (!["A2", "B1"].includes(levelId)) return 0;
+
+  const storedById = new Map(storedSessions.map((session) => [session.id, session]));
+  const repairs = enrichedSessions.filter((session) => {
+    const stored = storedById.get(session.id);
+    const expectedDay = Number(session.curriculumDay);
+    return stored && Number.isInteger(expectedDay) && expectedDay >= 1
+      && Number(stored.curriculumDay) !== expectedDay;
+  });
+  if (!repairs.length) return 0;
+
+  const batch = writeBatch(db);
+  repairs.forEach((session) => {
+    const patch = {
+      curriculumDay: Number(session.curriculumDay),
+      curriculumIndex: Number(session.curriculumIndex),
+      updatedAt: serverTimestamp(),
+    };
+    batch.update(doc(db, "classSessions", session.id), patch);
+    batch.set(
+      doc(db, "attendance", String(classId), "sessions", session.id),
+      attendanceMetadata(klass, session, patch),
+      { merge: true },
+    );
+  });
+  batch.set(doc(db, "classes", String(classId)), {
+    curriculumDayNumbering: "one-based",
+    curriculumDayNumberingRepairedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+  await batch.commit();
+  return repairs.length;
+}
+
 function attendanceMetadata(klass, session, patch) {
   const merged = { ...session, ...patch };
   const assignmentIds = currentAssignmentIds(merged);
@@ -216,6 +252,18 @@ export async function getCompatibleClassDashboard(classId) {
   };
   const groups = getCourseSessionGroups(normalizedClass.levelId);
   const sessions = enrichSessions(normalizedClass, rawSessions);
+  let repairedDayNumbers = 0;
+  let dayNumberRepairError = "";
+  try {
+    repairedDayNumbers = await repairOneBasedCurriculumDays(
+      classId,
+      normalizedClass,
+      rawSessions,
+      sessions,
+    );
+  } catch (error) {
+    dayNumberRepairError = error?.message || "Could not update existing session day numbers.";
+  }
   const availableCurriculumItems = Object.keys(courseDictionary[normalizedClass.levelId] || {}).length;
 
   return {
@@ -228,6 +276,8 @@ export async function getCompatibleClassDashboard(classId) {
       availableCurriculumItems,
       attendanceDays: groups.length,
       hiddenExtraSessionCount: Math.max(0, rawSessions.length - sessions.length),
+      repairedDayNumbers,
+      error: dayNumberRepairError,
       readOnly: true,
     },
     nextSession: selectNextSession(sessions),
