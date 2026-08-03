@@ -69,13 +69,15 @@ function buildPlan(sessions) {
   });
 }
 
-test("repairs the reported 25-session A2 timetable and extends it to 28 lessons", () => {
+test("repairs the reported A2 timetable to Day 0 orientation plus 28 lessons", () => {
   const plan = buildPlan(reportedSessions());
 
-  assert.equal(plan.expectedLessons, 28);
+  assert.equal(plan.expectedLessons, 29);
   assert.equal(plan.currentSessions, 25);
-  assert.equal(plan.missingLessons, 3);
-  assert.equal(plan.endDate, "2026-08-10");
+  assert.equal(plan.missingLessons, 4);
+  assert.equal(plan.items[0].group.day, 0);
+  assert.equal(plan.items[0].group.assignmentIds[0], "A2-ORIENTATION");
+  assert.equal(plan.endDate, "2026-08-11");
 
   const target = (lessonNumber) => plan.items.find((item) => item.lessonNumber === lessonNumber)?.targetStartsAt;
   assert.equal(target(19), "2026-07-13T19:00:00.000Z");
@@ -86,6 +88,7 @@ test("repairs the reported 25-session A2 timetable and extends it to 28 lessons"
   assert.equal(target(26), "2026-08-04T19:00:00.000Z");
   assert.equal(target(27), "2026-08-05T19:00:00.000Z");
   assert.equal(target(28), "2026-08-10T19:00:00.000Z");
+  assert.equal(target(29), "2026-08-11T19:00:00.000Z");
 });
 
 test("a Lesson 20 and Lesson 23 time collision is repaired into unique official slots", () => {
@@ -110,31 +113,31 @@ test("a Lesson 20 and Lesson 23 time collision is repaired into unique official 
 });
 
 test("the visible enriched record stays canonical and the generated alias is superseded", () => {
-  const visibleLesson20 = {
-    ...session(20, "2026-07-15"),
-    id: "visible-lesson-20",
+  const visibleDay20 = {
+    ...session(21, "2026-07-15"),
+    id: "visible-day-20",
     assignmentIds: ["A2-7.20"],
     repairPreferredRecord: true,
   };
   const generatedAlias = {
-    ...session(20, "2026-07-14"),
-    id: "generated-lesson-20-alias",
+    ...session(21, "2026-07-14"),
+    id: "generated-day-20-alias",
     classId: "a2-class",
     assignmentIds: ["A2-7.20"],
   };
   const sessions = reportedSessions()
-    .filter((item) => item.id !== "lesson-20")
-    .concat(visibleLesson20, generatedAlias);
+    .filter((item) => item.id !== "lesson-21")
+    .concat(visibleDay20, generatedAlias);
   const plan = buildPlan(sessions);
-  const lesson20 = plan.items.find((item) => item.lessonNumber === 20);
+  const day20 = plan.items.find((item) => item.group.assignmentIds.includes("A2-7.20"));
 
-  assert.equal(plan.missingLessons, 3);
-  assert.equal(lesson20.session.id, "visible-lesson-20");
-  assert.equal(lesson20.targetStartsAt, "2026-07-14T19:00:00.000Z");
-  assert.equal(lesson20.changed, true);
+  assert.equal(plan.missingLessons, 4);
+  assert.equal(day20.session.id, "visible-day-20");
+  assert.equal(day20.targetStartsAt, "2026-07-21T19:00:00.000Z");
+  assert.equal(day20.changed, true);
   assert.equal(plan.duplicateCount, 1);
-  assert.equal(plan.duplicateSessions[0].session.id, "generated-lesson-20-alias");
-  assert.equal(plan.duplicateSessions[0].canonicalSessionId, "visible-lesson-20");
+  assert.equal(plan.duplicateSessions[0].session.id, "generated-day-20-alias");
+  assert.equal(plan.duplicateSessions[0].canonicalSessionId, "visible-day-20");
 });
 
 test("the repair service preserves visible identities and hides superseded aliases", async () => {
@@ -150,7 +153,7 @@ test("the repair service preserves visible identities and hides superseded alias
   assert.match(compatibilitySource, /status !== "superseded"/);
 });
 
-test("loading an existing A2 or B1 class persists one-based session days", async () => {
+test("loading an existing A2 or B1 class persists one-based lesson days", async () => {
   const compatibilitySource = await readFile(compatibilityServicePath, "utf8");
 
   assert.match(compatibilitySource, /repairOneBasedCurriculumDays/);
