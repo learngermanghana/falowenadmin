@@ -83,5 +83,59 @@ function getFlatAnswerCandidateSequences(submissionText = "") {
 }`;
 
 source = replaceOnce(source, before, after, "reordered restarted objective groups");
+
+const questionGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
+const questionGroupHelper = `function splitQuestionGroupBlocks(text = "") {
+  const sourceText = String(text || "");
+  const markerRegex = /(?:^|\\n)[ \\t]*q([1-9])\\s*[).:–-]\\s*/gi;
+  const markers = [];
+  let match;
+
+  while ((match = markerRegex.exec(sourceText))) {
+    markers.push({
+      index: match.index,
+      end: markerRegex.lastIndex,
+      number: Number(match[1]),
+    });
+  }
+
+  if (markers.length < 2 || markers.length > 5) return [];
+  if (!markers.every((marker, index) => marker.number === index + 1)) return [];
+
+  const groups = markers.map((marker, index) => {
+    const next = markers[index + 1];
+    const block = sourceText.slice(marker.end, next ? next.index : sourceText.length).trim();
+    return extractRestartedNumberingEntries(block);
+  });
+
+  return groups.every((entries) => entries.length >= 2) ? groups : [];
+}
+
+${questionGroupHelperAnchor}`;
+source = replaceOnce(
+  source,
+  questionGroupHelperAnchor,
+  questionGroupHelper,
+  "Q-numbered objective group helper",
+);
+
+const groupSelectionBefore = "  const groups = sectionGroups.length > 1 ? sectionGroups : blockGroups.length > 1 ? blockGroups : sectionGroups.length ? sectionGroups : blockGroups;";
+const groupSelectionAfter = `  const questionGroups = splitQuestionGroupBlocks(submissionText);
+  const groups = questionGroups.length > 1
+    ? questionGroups
+    : sectionGroups.length > 1
+      ? sectionGroups
+      : blockGroups.length > 1
+        ? blockGroups
+        : sectionGroups.length
+          ? sectionGroups
+          : blockGroups;`;
+source = replaceOnce(
+  source,
+  groupSelectionBefore,
+  groupSelectionAfter,
+  "Q-numbered objective group priority",
+);
+
 fs.writeFileSync(target, source);
-console.log("Flat objective assignments can match restarted answer groups to the correct reference range regardless of submission order.");
+console.log("Flat objective assignments can match restarted answer groups, including Q1/Q2/Q3 section headings, to the correct reference range regardless of submission order.");
