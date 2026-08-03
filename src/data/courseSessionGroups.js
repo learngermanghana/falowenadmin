@@ -52,7 +52,9 @@ export function getCourseTaskDay(levelId, assignmentId, fallbackIndex = 0) {
   if (level === "A1" && Object.prototype.hasOwnProperty.call(A1_DAY_BY_ASSIGNMENT_ID, id)) {
     return A1_DAY_BY_ASSIGNMENT_ID[id];
   }
-  return fallbackIndex;
+  // A1 intentionally includes an orientation/tutorial on Day 0. The A2 and B1
+  // curricula contain lessons only, so their first session is Day 1.
+  return level === "A1" ? fallbackIndex : fallbackIndex + 1;
 }
 
 export function getCourseSessionGroups(levelId) {
