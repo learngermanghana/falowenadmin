@@ -211,7 +211,7 @@ test("A1 repairs to 25 grouped attendance sessions", () => {
   assert.equal(plan.items.at(-1).targetStartsAt, "2026-07-27T19:00:00.000Z");
 });
 
-test("B1 repairs to all 28 lessons", () => {
+test("B1 repairs Day 0 orientation plus all 28 lessons", () => {
   const plan = buildOfficialLessonSchedulePlan({
     classId: "b1-class",
     klass: {
@@ -227,12 +227,12 @@ test("B1 repairs to all 28 lessons", () => {
   });
 
   assert.equal(plan.levelId, "B1");
-  assert.equal(plan.expectedLessons, 28);
+  assert.equal(plan.expectedLessons, 29);
   assert.equal(plan.currentSessions, 25);
-  assert.equal(plan.missingLessons, 3);
-  assert.equal(plan.countLabel, "lessons");
-  assert.equal(plan.itemLabel, "Lesson");
-  assert.equal(plan.endDate, "2026-08-03");
+  assert.equal(plan.missingLessons, 4);
+  assert.equal(plan.items[0].group.day, 0);
+  assert.equal(plan.items[0].group.assignmentIds[0], "B1-ORIENTATION");
+  assert.equal(plan.endDate, "2026-08-04");
   assert.equal(plan.items.at(-1).group.assignmentIds[0], "B1-10.28");
-  assert.equal(plan.items.at(-1).targetStartsAt, "2026-08-03T19:00:00.000Z");
+  assert.equal(plan.items.at(-1).targetStartsAt, "2026-08-04T19:00:00.000Z");
 });
