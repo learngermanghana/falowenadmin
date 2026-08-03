@@ -82,7 +82,11 @@ function getFlatAnswerCandidateSequences(submissionText = "") {
   return candidates;
 }`;
 
-source = replaceOnce(source, before, after, "reordered restarted objective groups");
+if (source.includes(before)) {
+  source = source.replace(before, after);
+} else if (!source.includes("function permuteAnswerGroups(groups = []) {")) {
+  throw new Error("reordered restarted objective groups anchor changed; update patchReorderedObjectiveGroups.mjs");
+}
 
 const questionGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
 const questionGroupHelper = `function splitQuestionGroupBlocks(text = "") {
