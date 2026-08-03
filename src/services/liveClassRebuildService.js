@@ -6,6 +6,7 @@ import {
   setSchedulingSchoolClosureDates,
 } from "../utils/liveClassScheduling.js";
 import { canonicalRebuildClassPayload } from "../utils/liveClassRebuildIdentity.js";
+import { applyGroupedCurriculumToClass } from "./groupedCurriculumService.js";
 import { prepareLiveClassSchedule, saveLiveClassScheduleMetadata } from "./liveClassSchedulePreparation.js";
 import { cleanupLegacyClassSessions } from "./liveClassSessionCleanupService.js";
 import { syncClassEndDateFromSessions } from "./liveClassEndDateService.js";
@@ -27,10 +28,15 @@ export async function rebuildClassSessionsFromSchedule(classId) {
       klass: canonicalSchedule,
       desiredSessionIds: new Set(occurrences.map((occurrence) => occurrence.id)),
     });
+    const grouped = await applyGroupedCurriculumToClass(classId, { removeExtraFuture: false });
     await saveLiveClassScheduleMetadata(classId, { ...schedule, payload: canonicalSchedule });
     const endDateSync = await syncClassEndDateFromSessions(classId);
     return {
       ...result,
+      mapped: grouped.mapped,
+      total: grouped.total,
+      curriculumAttendanceDayCount: grouped.attendanceDays,
+      curriculumTaskCount: grouped.availableCurriculumItems,
       legacyRemoved: cleanup.removed,
       legacyCanonicalized: cleanup.canonicalized,
       endDate: endDateSync.endDate || result.endDate || canonicalSchedule.endDate,
