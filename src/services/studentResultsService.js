@@ -1,10 +1,14 @@
 import { collection, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase.js";
+import answersDictionary from "../data/answers_dictionary.json";
 import {
   assertScoreUpsertReceipt,
   buildScoreUpsertPayload,
+  canonicalAssignmentId,
   collapseStudentResultRows,
+  isInvalidAssignmentTitle,
   normalizeStudentCode,
+  safeAssignmentTitle,
 } from "../utils/studentResultUpsert.js";
 
 const env = import.meta.env || {};
@@ -13,6 +17,33 @@ const STUDENT_RESULTS_UPSERT_URL = "/api/student-results/sheet-upsert";
 
 function normalize(value) {
   return String(value ?? "").trim();
+}
+
+const ASSIGNMENT_TITLE_BY_ID = new Map(
+  Object.entries(answersDictionary || {}).flatMap(([dictionaryTitle, data = {}]) => {
+    const assignmentId = canonicalAssignmentId({
+      assignmentId: data.assignment_id || data.assignmentId || data.assignmentKey || "",
+      assignment: dictionaryTitle,
+    });
+    if (!assignmentId) return [];
+    const explicitTitle = normalize(data.title || data.assignmentTitle || data.assignment_name || data.assignmentName);
+    const title = explicitTitle || normalize(dictionaryTitle);
+    return title ? [[assignmentId, title]] : [];
+  }),
+);
+
+function repairAssignmentTitle(row = {}) {
+  const assignmentId = canonicalAssignmentId(row);
+  const dictionaryTitle = assignmentId ? ASSIGNMENT_TITLE_BY_ID.get(assignmentId) : "";
+  const assignment = isInvalidAssignmentTitle(row.assignment)
+    ? safeAssignmentTitle(row, dictionaryTitle)
+    : normalize(row.assignment);
+  return {
+    ...row,
+    assignment,
+    assignmentId: row.assignmentId || row.assignment_id || assignmentId,
+    assignment_id: row.assignment_id || row.assignmentId || assignmentId,
+  };
 }
 
 function normalizeHeader(value) {
@@ -63,7 +94,7 @@ function toScoreSheetRows(csvRows) {
       entry[header] = normalize(values[columnIndex]);
     });
 
-    return {
+    return repairAssignmentTitle({
       ...entry,
       studentCode: entry.studentcode || entry.studentid || entry.uid || "",
       name: entry.name || entry.studentname || "",
@@ -75,7 +106,7 @@ function toScoreSheetRows(csvRows) {
       level: entry.level || entry.class || entry.classname || "",
       link: entry.link || "",
       dedupeId: entry.dedupeid || "",
-    };
+    });
   });
 }
 
@@ -98,7 +129,7 @@ async function loadFirestoreRows(studentCode) {
   snapshot.forEach((scoreDocument) => {
     const data = scoreDocument.data() || {};
     if (normalizeStudentCode(data.studentCode || data.studentcode) !== code) return;
-    rows.push({ id: scoreDocument.id, ...data });
+    rows.push(repairAssignmentTitle({ id: scoreDocument.id, ...data }));
   });
   return rows;
 }
@@ -155,7 +186,7 @@ export async function syncFirestoreScoresToSheet(scores = []) {
     return { rows: [], sheet: { attempted: false, success: true, message: "No selected scores to sync." } };
   }
 
-  const payload = buildScoreUpsertPayload(scores);
+  const payload = buildScoreUpsertPayload(scores.map(repairAssignmentTitle));
   const response = await postUpsertPayload(payload);
   const inserted = Number(response.inserted || 0);
   const updated = Number(response.updated || 0);
