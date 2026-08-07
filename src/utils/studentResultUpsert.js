@@ -24,6 +24,18 @@ export function canonicalAssignmentId(row = {}) {
   return clean(candidates.find(Boolean)).toUpperCase().replace(/\s+/g, " ");
 }
 
+export function isInvalidAssignmentTitle(value) {
+  if (typeof value === "boolean" || value === null || value === undefined) return true;
+  const normalized = clean(value).toLowerCase();
+  return !normalized || normalized === "true" || normalized === "false" || normalized === "null" || normalized === "undefined";
+}
+
+export function safeAssignmentTitle(row = {}, preferredTitle = "") {
+  if (!isInvalidAssignmentTitle(preferredTitle)) return clean(preferredTitle);
+  if (!isInvalidAssignmentTitle(row.assignment)) return clean(row.assignment);
+  return canonicalAssignmentId(row);
+}
+
 export function studentResultKey(row = {}) {
   const studentCode = normalizeStudentCode(row.studentCode || row.studentcode || row.student_code || row.uid);
   const assignmentId = canonicalAssignmentId(row);
@@ -129,7 +141,7 @@ export function buildScoreUpsertRow(score = {}, now = new Date()) {
     studentcode: studentCode,
     studentCode,
     name: clean(score.name || score.studentName),
-    assignment: clean(score.assignment),
+    assignment: safeAssignmentTitle(score),
     assignment_id: assignmentId,
     assignmentId,
     score: Number.isFinite(numericScore) ? Math.max(0, Math.min(100, Math.round(numericScore))) : value(score, "score", "finalScore"),
