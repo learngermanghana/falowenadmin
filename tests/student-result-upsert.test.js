@@ -7,8 +7,11 @@ import { fileURLToPath } from "node:url";
 import {
   assertScoreUpsertReceipt,
   buildScoreUpsertPayload,
+  buildScoreUpsertRow,
   canonicalAssignmentId,
   collapseStudentResultRows,
+  isInvalidAssignmentTitle,
+  safeAssignmentTitle,
   studentResultKey,
 } from "../src/utils/studentResultUpsert.js";
 
@@ -55,6 +58,24 @@ test("result identity ignores harmless formatting differences", () => {
   assert.equal(canonicalAssignmentId({ assignment: "A2 • Day 18 • A2-7_18" }), "A2-7.18");
 });
 
+test("invalid boolean-like assignment titles never reach sheet upserts", () => {
+  for (const assignment of [true, false, "true", "TRUE", "false", "", null, undefined]) {
+    assert.equal(isInvalidAssignmentTitle(assignment), true);
+    assert.equal(safeAssignmentTitle({ assignment, assignmentId: "A1-7" }), "A1-7");
+    assert.equal(buildScoreUpsertRow({
+      studentCode: "ComfortBrefo258",
+      assignment,
+      assignmentId: "A1-7",
+      score: 100,
+    }).assignment, "A1-7");
+  }
+});
+
+test("a recovered assignment title is preferred over a legacy TRUE value", () => {
+  const row = { assignment: "TRUE", assignmentId: "A1-7" };
+  assert.equal(safeAssignmentTitle(row, "A1 Day 7: Freizeit"), "A1 Day 7: Freizeit");
+});
+
 test("bulk upsert keeps only the latest incoming result for one identity", () => {
   const payload = buildScoreUpsertPayload([
     { studentCode: "NABIFRANCIS921", assignmentId: "A2-7.18", score: 70, comments: "Old" },
@@ -96,7 +117,10 @@ test("browser sends result updates only to authenticated same-origin API", () =>
   assert.match(serviceSource, /currentUser\.getIdToken\(\)/);
   assert.match(serviceSource, /Authorization: `Bearer \$\{idToken\}`/);
   assert.match(serviceSource, /assertScoreUpsertReceipt/);
+  assert.match(serviceSource, /repairAssignmentTitle/);
+  assert.match(serviceSource, /answersDictionary/);
   assert.match(utilitySource, /action:\s*"upsertScoreRows"/);
+  assert.match(utilitySource, /isInvalidAssignmentTitle/);
   assert.doesNotMatch(serviceSource, /VITE_SCORES_WEBHOOK_URL/);
   assert.doesNotMatch(serviceSource, /VITE_SCORES_WEBHOOK_TOKEN/);
   assert.doesNotMatch(serviceSource, /script\.google\.com/);
