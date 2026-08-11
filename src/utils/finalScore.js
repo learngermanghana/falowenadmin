@@ -9,5 +9,5 @@ export function calculateFinalScore(objectivePercentage, schreibenMark = "") {
   const writingScore = Number(schreibenMark);
   if (!Number.isFinite(writingScore)) return safeObjectiveScore;
 
-  return Math.round((safeObjectiveScore + writingScore) / 2);
+  return Math.ceil((safeObjectiveScore + writingScore) / 2);
 }
