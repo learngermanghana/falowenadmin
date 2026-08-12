@@ -1,0 +1,36 @@
+name: A2 malformed writing score tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/finalDeterministicFeedback.js'
+      - 'src/utils/autoMarking.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'tests/a2-malformed-teil-writing-score.test.js'
+      - '.github/workflows/a2-malformed-writing-score-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/finalDeterministicFeedback.js'
+      - 'src/utils/autoMarking.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'tests/a2-malformed-teil-writing-score.test.js'
+      - '.github/workflows/a2-malformed-writing-score-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate source
+        run: |
+          node --check src/utils/finalDeterministicFeedback.js
+          node --check tests/a2-malformed-teil-writing-score.test.js
+      - name: Run Diana A2-8.22 regression
+        run: node --test tests/a2-malformed-teil-writing-score.test.js
