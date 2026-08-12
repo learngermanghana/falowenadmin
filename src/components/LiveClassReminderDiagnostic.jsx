@@ -20,6 +20,13 @@ function formatDateTime(value) {
   });
 }
 
+function formatWorkerTime(value) {
+  if (!value) return "Never";
+  if (typeof value?.toDate === "function") return formatDateTime(value.toDate());
+  if (typeof value?.toMillis === "function") return formatDateTime(new Date(value.toMillis()));
+  return formatDateTime(value);
+}
+
 function windowLabel(value) {
   const labels = {
     "pending-30min": "30-minute reminder pending",
@@ -96,11 +103,17 @@ export default function LiveClassReminderDiagnostic() {
     now: checkedAt,
   }), [dashboard, students, checkedAt]);
 
+  const worker = dashboard?.klass || {};
+  const workerStatus = String(worker.classReminderEmailLastStatus || "").trim();
+  const workerReason = String(worker.classReminderEmailLastSkipReason || worker.classReminderEmailLastError || "").trim();
+  const workerSession = String(worker.classReminderEmailLastSessionId || "").trim();
+  const warningCodes = [...new Set(diagnostic.warningCodes || [])];
+
   return (
     <section className="card" style={{ display: "grid", gap: 9, marginBottom: 16, border: "2px solid #60a5fa", background: "#eff6ff", color: "#1e3a8a" }}>
       <div>
         <h2 style={{ marginBottom: 6 }}>Class reminder diagnostic</h2>
-        <p style={{ margin: 0 }}>Checks the next session, reminder suppression, roster matching and the 30/10-minute reminder windows.</p>
+        <p style={{ margin: 0 }}>Checks the next session, reminder suppression, roster matching, the 30/10-minute reminder windows and the latest server-worker outcome.</p>
       </div>
 
       <label style={{ display: "grid", gap: 6 }}>
@@ -123,15 +136,24 @@ export default function LiveClassReminderDiagnostic() {
           <div>Active matching students: <strong>{diagnostic.activeStudentCount}</strong></div>
           <div>Reminder timing: <strong>{windowLabel(diagnostic.reminderWindow)}</strong></div>
           <div>Timetable health: <strong>{diagnostic.timetableHealth || "unknown"}</strong></div>
-          {diagnostic.warningCodes.length ? <div>Health codes: <strong>{diagnostic.warningCodes.join(", ")}</strong></div> : null}
+          {warningCodes.length ? <div>Health codes: <strong>{warningCodes.join(", ")}</strong></div> : null}
+          <div style={{ marginTop: 5, paddingTop: 8, borderTop: "1px solid #dbeafe" }}>
+            Server worker last status: <strong>{workerStatus || "No recorded worker result yet"}</strong>
+          </div>
+          <div>Server worker last run: <strong>{formatWorkerTime(worker.classReminderEmailLastRunAt)}</strong></div>
+          {workerSession ? <div>Server worker session: <strong>{workerSession}</strong></div> : null}
+          {workerReason ? <div>Server worker detail: <strong>{workerReason}</strong></div> : null}
           {!diagnostic.hasRecipients ? (
             <div style={{ color: "#991b1b" }}><strong>Likely cause:</strong> no active students matched this class record. Check student classId/className/group/cohort values.</div>
           ) : null}
-          {diagnostic.hasRecipients && !diagnostic.eligible ? (
-            <div style={{ color: "#991b1b" }}><strong>Likely cause:</strong> the next session is being excluded by its status or reminder suppression fields.</div>
+          {diagnostic.hasRecipients && !diagnostic.nextSession ? (
+            <div>No future active session exists at the time of this check. A session that has already started is not evidence of reminder suppression; use the server-worker result above to diagnose the most recent reminder attempt.</div>
+          ) : null}
+          {diagnostic.hasRecipients && diagnostic.nextSession && !diagnostic.eligible ? (
+            <div style={{ color: "#991b1b" }}><strong>Likely cause:</strong> the next future session is excluded by its status or reminder suppression fields.</div>
           ) : null}
           {diagnostic.hasRecipients && diagnostic.eligible ? (
-            <div>The class/session/roster checks pass. If mail still does not send during the 30- or 10-minute window, the next place to inspect is the server reminder worker/webhook delivery.</div>
+            <div>The class/session/roster checks pass. If mail still does not send during the 30- or 10-minute window, inspect the server-worker status above for the exact skip or delivery outcome.</div>
           ) : null}
         </div>
       ) : null}
