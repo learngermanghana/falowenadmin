@@ -3,7 +3,7 @@ import fs from "node:fs";
 function replaceOnce(source, search, replacement, label) {
   if (source.includes(replacement)) return source;
   if (!source.includes(search)) throw new Error(`${label} anchor changed; update patchGroundedWritingFeedback.mjs`);
-  return source.replace(search, replacement);
+  return source.replace(search, () => replacement);
 }
 
 const target = new URL("../src/utils/essayFeedbackEvidence.js", import.meta.url);
