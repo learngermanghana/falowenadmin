@@ -9,8 +9,10 @@ on:
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchStructuredWritingEvidence.mjs'
       - 'scripts/patchSpecificWritingFeedback.mjs'
+      - 'scripts/patchGroundedWritingFeedback.mjs'
       - 'tests/structured-writing-evidence.test.js'
       - 'tests/specific-writing-feedback.test.js'
+      - 'tests/grounded-writing-feedback.test.js'
       - 'tests/essay-feedback-evidence.test.js'
       - 'package.json'
       - 'firebase.json'
@@ -26,8 +28,10 @@ on:
       - 'src/utils/naturalMarkingFeedback.js'
       - 'scripts/patchStructuredWritingEvidence.mjs'
       - 'scripts/patchSpecificWritingFeedback.mjs'
+      - 'scripts/patchGroundedWritingFeedback.mjs'
       - 'tests/structured-writing-evidence.test.js'
       - 'tests/specific-writing-feedback.test.js'
+      - 'tests/grounded-writing-feedback.test.js'
       - 'tests/essay-feedback-evidence.test.js'
       - 'package.json'
       - 'firebase.json'
@@ -46,20 +50,26 @@ jobs:
         run: |
           node scripts/patchStructuredWritingEvidence.mjs
           node scripts/patchSpecificWritingFeedback.mjs
+          node scripts/patchGroundedWritingFeedback.mjs
           node scripts/patchStructuredWritingEvidence.mjs
           node scripts/patchSpecificWritingFeedback.mjs
+          node scripts/patchGroundedWritingFeedback.mjs
           node --check functions/index.js
           node --check src/services/markingServiceBase.js
           node --check src/utils/essayFeedbackEvidence.js
           node --check scripts/patchStructuredWritingEvidence.mjs
           node --check scripts/patchSpecificWritingFeedback.mjs
+          node --check scripts/patchGroundedWritingFeedback.mjs
           grep -F 'specificAiWritingSentence' src/utils/essayFeedbackEvidence.js
+          grep -F 'isGroundedCorrectiveFeedback' src/utils/essayFeedbackEvidence.js
           ! grep -F 'The main purpose of your message is understandable' src/utils/essayFeedbackEvidence.js
           ! grep -F 'Check verb position, articles and every task point before submitting' src/utils/essayFeedbackEvidence.js
       - name: Test Jeffrey original OpenAI evidence
         run: node --test --test-name-pattern="original specific OpenAI" tests/specific-writing-feedback.test.js
       - name: Test Jeffrey generic-response safeguard
         run: node --test --test-name-pattern="only generic writing text" tests/specific-writing-feedback.test.js
+      - name: Test Max invented-correction safeguard
+        run: node --test tests/grounded-writing-feedback.test.js
       - name: Test Fred evidence-based feedback
         run: node --test --test-name-pattern="Fred A2 feedback" tests/structured-writing-evidence.test.js
       - name: Test production field preservation
