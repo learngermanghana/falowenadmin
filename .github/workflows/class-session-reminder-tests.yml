@@ -5,6 +5,7 @@ on:
     paths:
       - 'functions/classSessionReminderEmails.js'
       - 'scripts/patchClassSessionReminderEmails.mjs'
+      - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
       - 'firebase.json'
@@ -15,6 +16,7 @@ on:
     paths:
       - 'functions/classSessionReminderEmails.js'
       - 'scripts/patchClassSessionReminderEmails.mjs'
+      - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
       - 'firebase.json'
@@ -37,11 +39,15 @@ jobs:
         run: |
           node --check functions/classSessionReminderEmails.js
           node --check scripts/patchClassSessionReminderEmails.mjs
+          node --check scripts/patchClassReminderDiagnosticBestEffort.mjs
           node scripts/patchClassSessionReminderEmails.mjs
+          node scripts/patchClassReminderDiagnosticBestEffort.mjs
+          node scripts/patchClassReminderDiagnosticBestEffort.mjs
           node --check functions/index.js
           node --check functions/classSessionReminderEmails.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
+          grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
           grep -F 'https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09' functions/classSessionReminderEmails.js
           grep -F 'https://us06web.zoom.us/launch/jc/6886900916' functions/classSessionReminderEmails.js
           grep -F '6886900916@zoomcrc.com' functions/classSessionReminderEmails.js
