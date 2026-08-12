@@ -225,14 +225,17 @@ export default function LiveClassLessonDateRepair() {
 
   async function restoreFollowingPattern() {
     const restorePlan = followingRestorePreview.plan;
-    if (!restorePlan || !anchorSessionId || busy || !restorePlan.restorableItems.length) return;
+    if (!restorePlan || !anchorSessionId || busy) return;
+    const hasTimetableMoves = restorePlan.restorableItems.length > 0;
     const confirmed = window.confirm(
-      `Keep ${restorePlan.anchorSession.topic || "the selected session"} at ${formatDateTime(restorePlan.anchorStartsAt)} and restore every later lesson to the saved weekly pattern?\n\n`
-      + `${restorePlan.movedCount} existing session(s) will move.\n`
-      + `${restorePlan.createdCount} missing session(s) will be created.\n`
-      + `${restorePlan.skippedCancelled.length} cancelled session(s) will remain cancelled.\n`
-      + `New class end date: ${formatDate(restorePlan.endDate)}.\n\n`
-      + "This does not apply one fixed time difference. It assigns each later lesson to the next valid Thursday, Friday or Saturday timetable slot in curriculum order.",
+      hasTimetableMoves
+        ? `Keep ${restorePlan.anchorSession.topic || "the selected session"} at ${formatDateTime(restorePlan.anchorStartsAt)} and restore every later lesson to the saved weekly pattern?\n\n`
+          + `${restorePlan.movedCount} existing session(s) will move.\n`
+          + `${restorePlan.createdCount} missing session(s) will be created.\n`
+          + `${restorePlan.skippedCancelled.length} cancelled session(s) will remain cancelled.\n`
+          + `New class end date: ${formatDate(restorePlan.endDate)}.\n\n`
+          + "This does not apply one fixed time difference. It assigns each later lesson to the next valid Thursday, Friday or Saturday timetable slot in curriculum order."
+        : `All sessions after ${restorePlan.anchorSession.topic || "the selected anchor"} already follow the saved weekly timetable.\n\nRecheck timetable health and release any stale schedule-health reminder suppression for future active sessions?`,
     );
     if (!confirmed) return;
 
@@ -248,7 +251,11 @@ export default function LiveClassLessonDateRepair() {
       });
       await refresh();
       setAnchorSessionId("");
-      const successMessage = `Weekly pattern restored after the selected anchor: ${result.moved} session(s) moved, ${result.created} created, ${result.skippedCancelled} cancelled session(s) preserved. New end date: ${formatDate(result.endDate)}.`;
+      const successMessage = Number(result.remindersReleased || 0) > 0
+        ? `Timetable health is ${result.healthStatus}. Re-enabled reminders for ${result.remindersReleased} future session(s) that were still suppressed by the old schedule-health state.`
+        : !hasTimetableMoves
+          ? `Timetable health is ${result.healthStatus || "healthy"}. No timetable moves were needed and no stale schedule-health reminder suppression remained.`
+          : `Weekly pattern restored after the selected anchor: ${result.moved} session(s) moved, ${result.created} created, ${result.skippedCancelled} cancelled session(s) preserved. New end date: ${formatDate(result.endDate)}.`;
       setMessage(successMessage);
       toast.success(successMessage, { durationMs: 12000 });
     } catch (error) {
@@ -325,12 +332,16 @@ export default function LiveClassLessonDateRepair() {
                     </div>
                   ))}
                   {followingRestorePreview.plan.restorableItems.length > 10 ? <small>Plus {followingRestorePreview.plan.restorableItems.length - 10} more correction(s).</small> : null}
-                  {!followingRestorePreview.plan.restorableItems.length ? <div>All sessions after this anchor already follow the weekly timetable.</div> : null}
+                  {!followingRestorePreview.plan.restorableItems.length ? <div>All sessions after this anchor already follow the weekly timetable. You can still repair stale reminder suppression below.</div> : null}
                 </div>
               ) : null}
 
-              <button type="button" onClick={restoreFollowingPattern} disabled={busy || !followingRestorePreview.plan?.restorableItems.length}>
-                {busy ? "Restoring weekly pattern…" : "Restore all following sessions to weekly pattern"}
+              <button type="button" onClick={restoreFollowingPattern} disabled={busy || !followingRestorePreview.plan}>
+                {busy
+                  ? "Checking timetable and reminders…"
+                  : followingRestorePreview.plan?.restorableItems.length
+                    ? "Restore all following sessions to weekly pattern"
+                    : "Repair reminder state"}
               </button>
             </div>
           ) : null}
