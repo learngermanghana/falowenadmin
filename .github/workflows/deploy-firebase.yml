@@ -113,13 +113,13 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
-      - name: Deploy Falowen payment API
-        # Deploy only the HTTP API. A full-codebase deployment is currently blocked by
-        # an unrelated scheduled function hitting the regional Cloud Run CPU quota.
+      - name: Deploy Falowen API and class reminder worker
+        # Keep deployment targeted so unrelated scheduled functions do not hit the
+        # regional Cloud Run CPU quota, while ensuring reminder-worker changes actually reach production.
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:sendClassSessionReminderEmails --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
