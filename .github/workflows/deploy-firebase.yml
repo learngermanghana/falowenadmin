@@ -61,6 +61,7 @@ jobs:
             scripts/patchStudentDeletionRuntime.mjs \
             scripts/patchAttendanceConfirmationEmails.mjs \
             scripts/patchClassSessionReminderEmails.mjs \
+            scripts/patchClassReminderDiagnosticBestEffort.mjs \
             scripts/patchLeadClassStartReminderEmails.mjs \
             scripts/patchAutoCompleteClassSessions.mjs \
             scripts/patchCourseReviewRequestEmails.mjs \
@@ -86,6 +87,7 @@ jobs:
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
+          grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
           grep -F 'schedule: "0 8 * * *"' functions/leadClassStartReminderEmails.js
           grep -F 'schedule: "*/5 * * * *"' functions/autoCompleteClassSessions.js
           grep -F 'schedule: "0 10 * * *"' functions/courseReviewRequestEmails.js
