@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityService.js";
+import { listClassCohorts } from "../services/liveClassService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
 import { buildClassReminderDiagnostic } from "../utils/liveClassReminderDiagnostic.js";
 
@@ -32,7 +34,10 @@ function windowLabel(value) {
   return labels[value] || value || "Unknown";
 }
 
-export default function LiveClassReminderDiagnostic({ classId = "", dashboard = null }) {
+export default function LiveClassReminderDiagnostic() {
+  const [classes, setClasses] = useState([]);
+  const [classId, setClassId] = useState("");
+  const [dashboard, setDashboard] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,31 +45,49 @@ export default function LiveClassReminderDiagnostic({ classId = "", dashboard = 
 
   useEffect(() => {
     let active = true;
-    if (!classId || !dashboard?.klass) {
+    listClassCohorts()
+      .then((rows) => {
+        if (!active) return;
+        setClasses(rows);
+        const remembered = window.localStorage.getItem("falowen-live-class-repair-class-id") || "";
+        const nextId = rows.some((item) => item.id === remembered) ? remembered : rows[0]?.id || "";
+        setClassId(nextId);
+      })
+      .catch((err) => {
+        if (active) setError(err?.message || "Could not load classes for reminder diagnostics.");
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    if (!classId) {
+      setDashboard(null);
       setStudents([]);
-      setError("");
       return () => { active = false; };
     }
     setLoading(true);
     setError("");
-    listStudentsByClass(classId, {
-      className: dashboard.klass?.name || dashboard.klass?.className || "",
-    })
-      .then((rows) => {
+    (async () => {
+      try {
+        const nextDashboard = await getCompatibleClassDashboard(classId);
+        const className = nextDashboard.klass?.name || nextDashboard.klass?.className || "";
+        const rows = await listStudentsByClass(classId, { className });
         if (!active) return;
+        setDashboard(nextDashboard);
         setStudents(rows);
         setCheckedAt(new Date());
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!active) return;
+        setDashboard(null);
         setStudents([]);
-        setError(err?.message || "Could not load the class roster for reminder diagnostics.");
-      })
-      .finally(() => {
+        setError(err?.message || "Could not run the class reminder diagnostic.");
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    })();
     return () => { active = false; };
-  }, [classId, dashboard?.klass?.name, dashboard?.klass?.className]);
+  }, [classId]);
 
   const diagnostic = useMemo(() => buildClassReminderDiagnostic({
     klass: dashboard?.klass || {},
@@ -73,15 +96,27 @@ export default function LiveClassReminderDiagnostic({ classId = "", dashboard = 
     now: checkedAt,
   }), [dashboard, students, checkedAt]);
 
-  if (!dashboard) return null;
-
   return (
-    <section style={{ display: "grid", gap: 7, padding: 12, borderRadius: 10, background: "#eff6ff", border: "1px solid #93c5fd", color: "#1e3a8a" }}>
-      <strong>Class reminder diagnostic</strong>
+    <section className="card" style={{ display: "grid", gap: 9, marginBottom: 16, border: "2px solid #60a5fa", background: "#eff6ff", color: "#1e3a8a" }}>
+      <div>
+        <h2 style={{ marginBottom: 6 }}>Class reminder diagnostic</h2>
+        <p style={{ margin: 0 }}>Checks the next session, reminder suppression, roster matching and the 30/10-minute reminder windows.</p>
+      </div>
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <strong>Class to diagnose</strong>
+        <select value={classId} onChange={(event) => setClassId(event.target.value)} disabled={loading}>
+          <option value="">Select a class</option>
+          {classes.map((klass) => (
+            <option key={klass.id} value={klass.id}>{klass.name || klass.className || klass.id}</option>
+          ))}
+        </select>
+      </label>
+
       {loading ? <div>Checking reminder eligibility and student matching…</div> : null}
       {error ? <div role="alert" style={{ color: "#991b1b" }}>{error}</div> : null}
-      {!loading ? (
-        <>
+      {!loading && dashboard ? (
+        <div style={{ display: "grid", gap: 7, padding: 12, borderRadius: 9, background: "#fff", border: "1px solid #93c5fd", color: "#1f2937" }}>
           <div>Next session: <strong>{formatDateTime(diagnostic.nextStartsAt)}</strong></div>
           <div>Session reminder eligible: <strong>{diagnostic.eligible ? "Yes" : "No"}</strong></div>
           <div>Suppression: <strong>{diagnostic.suppressionReason || "None"}</strong></div>
@@ -96,9 +131,9 @@ export default function LiveClassReminderDiagnostic({ classId = "", dashboard = 
             <div style={{ color: "#991b1b" }}><strong>Likely cause:</strong> the next session is being excluded by its status or reminder suppression fields.</div>
           ) : null}
           {diagnostic.hasRecipients && diagnostic.eligible ? (
-            <div>The class/session/roster checks pass. If mail still does not send during the 30- or 10-minute window, inspect the server reminder worker/webhook delivery next.</div>
+            <div>The class/session/roster checks pass. If mail still does not send during the 30- or 10-minute window, the next place to inspect is the server reminder worker/webhook delivery.</div>
           ) : null}
-        </>
+        </div>
       ) : null}
     </section>
   );
