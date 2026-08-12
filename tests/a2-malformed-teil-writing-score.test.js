@@ -30,6 +30,7 @@ test("A2 writing is not allowed to collapse to zero when a complete letter prece
     objectiveTotal: 5,
     writingScore: 0,
     writingScorePercent: 0,
+    maxWritingScore: 20,
     finalScore: 40,
     score: 40,
     status: "marked",
@@ -37,6 +38,8 @@ test("A2 writing is not allowed to collapse to zero when a complete letter prece
 
   assert.ok(recovered.writingScore >= 60, `expected a non-zero A2 writing score, got ${recovered.writingScore}`);
   assert.ok(recovered.finalScore > 40, `final score should recover from the false 40, got ${recovered.finalScore}`);
+  assert.equal(recovered.writingScore, recovered.writingScorePercent);
+  assert.equal(recovered.maxWritingScore, 100);
   assert.equal(recovered.status, "needs_review");
   assert.equal(recovered.shouldSendAutomatically, false);
   assert.equal(recovered.ai.recoveredZeroWritingScore, true);
