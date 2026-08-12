@@ -6,6 +6,12 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { buildFollowingScheduleRestorePlan } from "../utils/liveClassFollowingScheduleRestore.js";
+import { buildClassScheduleHealth } from "../utils/liveClassScheduleHealth.js";
+import {
+  hasScheduleHealthReminderSuppression,
+  scheduleHealthReminderReleasePatch,
+  shouldReleaseScheduleHealthReminderSuppression,
+} from "../utils/liveClassReminderSuppression.js";
 import { loadRawRepairSessions } from "./liveClassLessonDateRepairService.js";
 import { loadSchoolClosureDates } from "./schoolClosureService.js";
 
@@ -62,6 +68,11 @@ function restoredSessionPatch({ classId, className, item, adminId, levelId, expe
     curriculumSource: "courseDictionary-day-groups",
     curriculumVersion: 2,
     remindersSuppressed: false,
+    scheduleHealthRemindersSuppressed: false,
+    scheduleRemindersSuppressed: false,
+    reminderSuppressionSource: "",
+    reminderSuppressionReason: "",
+    scheduleReminderSuppressionReason: "",
     cancellationReason: "",
     manualDateOverride: false,
     manualDateOverrideSource: "official-schedule-repair",
@@ -93,6 +104,11 @@ function restoredAttendancePatch({ classId, className, sessionId, item, sessionP
     supersededBySessionId: "",
     cancellationReason: "",
     remindersSuppressed: false,
+    scheduleHealthRemindersSuppressed: false,
+    scheduleRemindersSuppressed: false,
+    reminderSuppressionSource: "",
+    reminderSuppressionReason: "",
+    scheduleReminderSuppressionReason: "",
     assignmentIds: sessionPatch.assignmentIds,
     chapterIds: sessionPatch.assignmentIds,
     curriculumIds: sessionPatch.assignmentIds,
@@ -104,6 +120,79 @@ function restoredAttendancePatch({ classId, className, sessionId, item, sessionP
     curriculumVersion: 2,
     updatedAt: serverTimestamp(),
   };
+}
+
+async function releaseHealthyScheduleReminderSuppression({
+  classId,
+  klass,
+  sessions,
+  plan,
+  adminId,
+}) {
+  const health = buildClassScheduleHealth({
+    klass: { ...klass, endDate: plan.endDate },
+    sessions,
+  });
+  if (health.status === "broken") {
+    return { healthStatus: health.status, remindersReleased: 0 };
+  }
+
+  const scheduleVersion = Date.now();
+  const timestamp = serverTimestamp();
+  const releasePatch = scheduleHealthReminderReleasePatch(scheduleVersion);
+  const batch = writeBatch(db);
+  let writes = 0;
+  let remindersReleased = 0;
+
+  if (hasScheduleHealthReminderSuppression(klass)) {
+    batch.set(doc(db, "classes", classId), {
+      ...releasePatch,
+      timetableIntegrityStatus: health.status,
+      timetableIntegrityIssueCount: Number(health.blockingIssues?.length || 0),
+      timetableIntegrityWarningCount: Number(health.advisoryIssues?.length || 0),
+      reminderScheduleUpdatedAt: timestamp,
+      updatedAt: timestamp,
+    }, { merge: true });
+    writes += 1;
+  }
+
+  const nowMs = Date.now();
+  sessions.forEach((session) => {
+    const sessionId = normalize(session.id);
+    if (!sessionId || !shouldReleaseScheduleHealthReminderSuppression(session, nowMs)) return;
+    const patch = {
+      ...releasePatch,
+      reminderScheduleUpdatedAt: timestamp,
+      updatedAt: timestamp,
+    };
+    batch.set(doc(db, "classSessions", sessionId), patch, { merge: true });
+    batch.set(doc(db, "attendance", classId, "sessions", sessionId), {
+      classId,
+      classSessionId: sessionId,
+      ...patch,
+    }, { merge: true });
+    writes += 2;
+    remindersReleased += 1;
+  });
+
+  if (!writes) {
+    return { healthStatus: health.status, remindersReleased: 0 };
+  }
+
+  batch.set(doc(collection(db, "auditLogs")), {
+    type: "live-class-stale-reminder-suppression-released",
+    entityType: "classTimetable",
+    classId,
+    anchorSessionId: normalize(plan.anchorSession?.id),
+    anchorLessonNumber: plan.anchorLessonNumber,
+    releasedSessionCount: remindersReleased,
+    timetableHealthStatus: health.status,
+    adminId,
+    createdAt: timestamp,
+  });
+  await batch.commit();
+
+  return { healthStatus: health.status, remindersReleased };
 }
 
 export async function restoreFollowingSessionsToWeeklyPattern({
@@ -135,6 +224,13 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     excludedDates,
   });
   if (!plan.restorableItems.length) {
+    const reminderRepair = await releaseHealthyScheduleReminderSuppression({
+      classId: resolvedClassId,
+      klass,
+      sessions: repairSessions,
+      plan,
+      adminId,
+    });
     return {
       classId: resolvedClassId,
       levelId: plan.levelId,
@@ -144,6 +240,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       endDate: plan.endDate,
       anchorLessonNumber: plan.anchorLessonNumber,
       anchorStartsAt: plan.anchorStartsAt,
+      ...reminderRepair,
     };
   }
 
