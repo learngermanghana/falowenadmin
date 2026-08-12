@@ -24,12 +24,27 @@ markingService = replaceOnce(
   `import * as base from "./markingServiceBase.js";\nimport { recoverZeroWritingScore } from "../utils/finalDeterministicFeedback.js";`,
   "shared recovery import",
 );
-markingService = replaceOnce(
-  markingService,
-  `  primary = routeMissedWritingToReview(primary, originalSubmissionText);`,
-  `  primary = recoverZeroWritingScore(primary, originalSubmissionText);\n  primary = routeMissedWritingToReview(primary, originalSubmissionText);`,
-  "shared recovery invocation",
-);
+
+const recoveryInvocation = `  primary = recoverZeroWritingScore(primary, originalSubmissionText);`;
+if (!markingService.includes(recoveryInvocation)) {
+  const plainRoute = `  primary = routeMissedWritingToReview(primary, originalSubmissionText);`;
+  const naturalRoute = `  primary = applyNaturalStudentFeedback(routeMissedWritingToReview(primary, originalSubmissionText), options, originalSubmissionText);`;
+
+  if (markingService.includes(naturalRoute)) {
+    markingService = markingService.replace(
+      naturalRoute,
+      `${recoveryInvocation}\n${naturalRoute}`,
+    );
+  } else if (markingService.includes(plainRoute)) {
+    markingService = markingService.replace(
+      plainRoute,
+      `${recoveryInvocation}\n${plainRoute}`,
+    );
+  } else {
+    throw new Error("shared recovery invocation anchor changed; update patchSharedWritingScoreRecovery.mjs");
+  }
+}
+
 fs.writeFileSync(markingServicePath, markingService);
 
 console.log("Shared marking now recovers malformed-boundary writing scores and normalizes recovered percentages to /100.");
