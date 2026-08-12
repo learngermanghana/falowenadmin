@@ -48,4 +48,6 @@ test("repair UI protects manual moves and offers anchor-based bulk restoration",
   assert.match(source, /buildFollowingScheduleRestorePlan/);
   assert.match(source, /Restore all following sessions to weekly pattern/);
   assert.match(source, /does not apply one fixed time difference/i);
+  assert.match(source, /Repair reminder state/);
+  assert.match(source, /release any stale schedule-health reminder suppression/i);
 });
