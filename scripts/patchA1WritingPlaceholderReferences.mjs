@@ -52,4 +52,36 @@ patchFile(new URL("../src/utils/naturalMarkingFeedback.js", import.meta.url), (s
   return source;
 });
 
-console.log("Placeholder-only answer keys are treated as AI-graded writing and never as objective questions.");
+patchFile(new URL("../src/utils/autoMarking.js", import.meta.url), (source) => {
+  source = replaceOnce(
+    source,
+    'function extractObjectiveEntries(referenceAnswers = {}, path = []) {\n  if (typeof referenceAnswers === "string") {',
+    `function isPlaceholderReferenceValue(value = "") {\n  return /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(String(value || "").trim().toLowerCase());\n}\n\nfunction extractObjectiveEntries(referenceAnswers = {}, path = []) {\n  if (typeof referenceAnswers === "string") {\n    if (isPlaceholderReferenceValue(referenceAnswers)) return [];`,
+    "auto marking placeholder exclusion",
+  );
+  source = replaceOnce(
+    source,
+    '  if (typeof referenceAnswers === "number" || typeof referenceAnswers === "boolean") {',
+    '  if (typeof referenceAnswers === "number" || typeof referenceAnswers === "boolean") {',
+    "auto marking numeric anchor",
+  );
+  return source;
+});
+
+patchFile(new URL("../api/router.js", import.meta.url), (source) => {
+  source = replaceOnce(
+    source,
+    'function flattenPlainAnswers(value, prefix = []) {\n  if (Array.isArray(value)) {',
+    `function isPlaceholderReferenceValue(value = "") {\n  return /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(String(value || "").trim().toLowerCase());\n}\n\nfunction flattenPlainAnswers(value, prefix = []) {\n  if (Array.isArray(value)) {`,
+    "router placeholder helper",
+  );
+  source = replaceOnce(
+    source,
+    '  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {\n    return [{ key: prefix.join(".") || `Answer${prefix[prefix.length - 1] || 1}`, value: String(value) }];\n  }',
+    '  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {\n    if (typeof value === "string" && isPlaceholderReferenceValue(value)) return [];\n    return [{ key: prefix.join(".") || `Answer${prefix[prefix.length - 1] || 1}`, value: String(value) }];\n  }',
+    "router placeholder exclusion",
+  );
+  return source;
+});
+
+console.log("Placeholder-only answer keys are treated as AI-graded writing and excluded from every deterministic objective scorer.");
