@@ -301,6 +301,16 @@ function resolveWebhookConfig(runtimeConfig = {}, env = process.env) {
   };
 }
 
+function resolveClassWebhookConfig(klass = {}, fallback = {}) {
+  const stored = klass.attendanceConfirmationEmailDelivery || {};
+  return {
+    url: normalize(stored.url) || fallback.url || "",
+    token: normalize(stored.token) || fallback.token || "",
+    sheetName: normalize(stored.sheetName) || fallback.sheetName || "",
+    sheetGid: normalize(stored.sheetGid) || fallback.sheetGid || "",
+  };
+}
+
 function rowForDelivery({ klass, student, mode, message, date, periodKey }) {
   return {
     announcement: message,
@@ -362,9 +372,15 @@ async function reserveDelivery({ db, admin, id, payload, now }) {
 async function loadSessionsForClass(db, klass) {
   const identifiers = [...new Set([klass.id, klass.classId, klass.classRecordId, klass.name, klass.className].map(normalize).filter(Boolean))];
   const result = new Map();
-  for (const identifier of identifiers) {
-    const snap = await db.collection("classSessions").where("classId", "==", identifier).get();
-    snap.docs.forEach((docSnap) => result.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }));
+  // Session writers have historically used both canonical IDs and display
+  // names, and newer rescheduling flows also persist classRecordId/className.
+  // Read all supported identity fields so changing a session does not make it
+  // disappear from the attendance-email worker.
+  for (const field of ["classId", "classRecordId", "className"]) {
+    for (const identifier of identifiers) {
+      const snap = await db.collection("classSessions").where(field, "==", identifier).get();
+      snap.docs.forEach((docSnap) => result.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }));
+    }
   }
   return [...result.values()].filter(isActiveSession).sort((a, b) => (sessionStart(a)?.getTime() || 0) - (sessionStart(b)?.getTime() || 0));
 }
@@ -554,8 +570,9 @@ async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}
     const klass = { id: classDoc.id, ...classDoc.data() };
     if (modeForClass(klass) === MODE_OFF) continue;
     try {
-      if (!config.url) throw new Error("Set communication.announcement_webhook_url in FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG or ANNOUNCEMENT_WEBHOOK_URL for automatic attendance emails.");
-      const result = await processClass({ admin, db, klass, allStudents, config, now, fetchImpl });
+      const classConfig = resolveClassWebhookConfig(klass, config);
+      if (!classConfig.url) throw new Error("Save this class under Communication → Attendance confirmation emails, or set communication.announcement_webhook_url in FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG.");
+      const result = await processClass({ admin, db, klass, allStudents, config: classConfig, now, fetchImpl });
       results.push({ classId: klass.id, ok: true, ...result });
     } catch (error) {
       await classDoc.ref.set({
@@ -596,6 +613,7 @@ module.exports = {
     groupDueSessions,
     modeForClass,
     resolveWebhookConfig,
+    resolveClassWebhookConfig,
     studentBelongsToClass,
     weekKey,
   },

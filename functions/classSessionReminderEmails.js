@@ -158,7 +158,13 @@ function findDueSessionReminders({
     const minutesUntilStart = (startsAt.getTime() - nowDate.getTime()) / 60000;
     if (minutesUntilStart <= 0) return;
     leads.forEach((leadMin) => {
-      if (minutesUntilStart <= leadMin && minutesUntilStart >= leadMin - grace) {
+      // Always keep the final reminder eligible until the class starts. This is
+      // important when an administrator moves a session into the near future:
+      // the new time may already be outside the ordinary scheduler grace window.
+      const windowStart = leadMin === leads[leads.length - 1]
+        ? 0
+        : Math.max(0, leadMin - grace);
+      if (minutesUntilStart <= leadMin && minutesUntilStart > windowStart) {
         due.push({ session, startsAt, leadMin, reminderType: `${leadMin}min` });
       }
     });
