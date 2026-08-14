@@ -72,6 +72,7 @@ jobs:
             node "$script"
           done
           node --check functions/index.js
+          node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
           grep -F 'app.post("/payments/paystack-webhook"' functions/index.js
@@ -83,11 +84,14 @@ jobs:
           ! grep -F 'The main purpose of your message is understandable' src/utils/essayFeedbackEvidence.js
           ! grep -F 'Check verb position, articles and every task point before submitting' src/utils/essayFeedbackEvidence.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
+          grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
           grep -F 'exports.sendLeadClassStartReminderEmails = createLeadClassStartReminderEmailJob' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
           grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
+          grep -F 'schedule: "*/15 * * * *"' functions/attendanceConfirmationEmails.js
+          grep -F 'acceptClassNameSessionMatch(session, klass)' functions/attendanceConfirmationEmails.js
           grep -F 'schedule: "0 8 * * *"' functions/leadClassStartReminderEmails.js
           grep -F 'schedule: "*/5 * * * *"' functions/autoCompleteClassSessions.js
           grep -F 'schedule: "0 10 * * *"' functions/courseReviewRequestEmails.js
@@ -115,13 +119,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
-      - name: Deploy Falowen API and class reminder worker
-        # Keep deployment targeted so unrelated scheduled functions do not hit the
-        # regional Cloud Run CPU quota, while ensuring reminder-worker changes actually reach production.
+      - name: Deploy Falowen API and class email workers
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:sendClassSessionReminderEmails --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
