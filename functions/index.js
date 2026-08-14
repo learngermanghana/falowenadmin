@@ -9,6 +9,8 @@ const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
+const { createAttendanceConfirmationEmailJob } = require("./attendanceConfirmationEmails.js");
+const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
 
 setGlobalOptions({ region: "us-central1" });
 
@@ -1804,6 +1806,24 @@ app.post("/admin/classes/:classId/sessions/:sessionId/cancel", async (req, res) 
     res.status(500).json({ error: e?.message || "Server error" });
   }
 });
+
+app.post("/attendance-confirmation-emails/retry-failed", async (req, res) => {
+  try {
+    await requireAuth(req);
+    const classId = String(req.body?.classId || "").trim();
+    if (!classId) return res.status(400).json({ ok: false, error: "Select a class before retrying failed attendance emails." });
+    const result = await retryFailedAttendanceDeliveries({ admin, db, classId, runtimeConfig });
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    const unauthorized = /Authorization|Not allowed|token/i.test(String(error?.message || ""));
+    return res.status(unauthorized ? 401 : 400).json({
+      ok: false,
+      error: error?.message || "Could not retry failed attendance emails.",
+    });
+  }
+});
+
+exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });
 
 exports.api = onRequest({
   secrets: [
