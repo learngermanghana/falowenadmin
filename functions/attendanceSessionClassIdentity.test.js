@@ -18,6 +18,21 @@ test("class-name match is rejected when session belongs to a different canonical
   assert.equal(acceptClassNameSessionMatch(session, klass), false);
 });
 
+test("name-valued classId is rejected when classRecordId proves another owner", () => {
+  const klass = {
+    id: "class-a",
+    classRecordId: "class-a",
+    name: "legacy-class-b",
+  };
+  const session = {
+    className: "legacy-class-b",
+    classId: "legacy-class-b",
+    classRecordId: "class-b",
+  };
+
+  assert.equal(acceptClassNameSessionMatch(session, klass), false);
+});
+
 test("class-name match is accepted when canonical session id matches the class", () => {
   const klass = {
     id: "class-a",
