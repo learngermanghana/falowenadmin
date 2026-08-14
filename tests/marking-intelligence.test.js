@@ -8,6 +8,7 @@ import {
   hasLikelyUnlabelledWritingBeforeObjective,
   hasWritingEvidence,
 } from "../src/utils/markingIntelligence.js";
+import { heuristicWritingMarker } from "../src/utils/autoMarking.js";
 import {
   assignmentHasScoredWriting,
   buildNaturalStudentFeedback,
@@ -165,6 +166,49 @@ test("Diana feedback praises perfect Teil 4 and lists only wrong Teil 3 question
   assert.match(feedback, /In Teil 3, review questions 4, 6, and 7 carefully/);
   assert.match(feedback, /vorfreue mich/);
   assert.doesNotMatch(feedback, /📌|📊|🛠|Marking summary/);
+});
+
+test("A2 informal letter keeps lowercase continuation after comma greeting", () => {
+  const letter = `Hallo Alex,\n\nwie geht es dir? Ich hoffe, dir geht es gut. Ich schreibe dir, weil ich am Wochenende Zeit habe und gern etwas mit dir zusammen machen möchte. Hast du am Wochenende frei? Hast du einen Vorschlag für eine Aktivität?\n\nLiebe Grüße\nJoel`;
+  const marked = heuristicWritingMarker({ level: "A2", partId: "teil2", text: letter });
+
+  assert.doesNotMatch(marked.feedback, /Start this sentence with a capital letter: "wie geht es dir\?/i);
+  assert.equal(marked.corrections.some((item) => /wie geht es dir/i.test(String(item?.submitted || ""))), false);
+});
+
+test("A2 deterministic feedback includes exact corrections instead of only question numbers", () => {
+  const feedback = buildNaturalStudentFeedback({
+    studentName: "Joel Darko",
+    objectiveScore: 60,
+    objectiveCorrect: 6,
+    objectiveTotal: 10,
+    objectiveDetails: {
+      "teil3.1": { correct: false },
+      "teil3.2": { correct: false },
+      "teil3.3": { correct: false },
+      "teil3.4": { correct: true },
+      "teil3.5": { correct: false },
+      "teil4.1": { correct: true },
+      "teil4.2": { correct: true },
+      "teil4.3": { correct: true },
+      "teil4.4": { correct: true },
+      "teil4.5": { correct: true },
+    },
+    wrongAnswers: [
+      { partId: "teil3", question: 1, expected: "C) Nudeln, Pizza und Salat", student: "a" },
+      { partId: "teil3", question: 2, expected: "C) Den grünen Salat", student: "b" },
+      { partId: "teil3", question: 3, expected: "C) Schokoladenkuchen und Tiramisu", student: "a" },
+      { partId: "teil3", question: 5, expected: "C) In bar", student: "b" },
+    ],
+    writingScore: 70,
+    hasRegisteredWriting: true,
+  }, "Hallo Alex,\nwie geht es dir?\nLiebe Grüße\nJoel");
+
+  assert.match(feedback, /Correct answers:/);
+  assert.match(feedback, /teil3 question 1 → C\) Nudeln, Pizza und Salat/i);
+  assert.match(feedback, /teil3 question 2 → C\) Den grünen Salat/i);
+  assert.match(feedback, /teil3 question 3 → C\) Schokoladenkuchen und Tiramisu/i);
+  assert.match(feedback, /teil3 question 5 → C\) In bar/i);
 });
 
 test("tutor score increase records AI too strict calibration", () => {
