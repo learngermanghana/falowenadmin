@@ -82,14 +82,20 @@ if (!workerSource.includes("function resolveClassWebhookConfig(")) {
 }
 
 const unsafeSessionCollection = '      snap.docs.forEach((docSnap) => result.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }));';
-const guardedSessionCollection = `      snap.docs.forEach((docSnap) => {
+const oldGuardedSessionCollection = `      snap.docs.forEach((docSnap) => {
         const session = { id: docSnap.id, ...docSnap.data() };
         if (field === "className" && !acceptClassNameSessionMatch(session, klass)) return;
         result.set(docSnap.id, session);
       });`;
+const guardedSessionCollection = `      snap.docs.forEach((docSnap) => {
+        const session = { id: docSnap.id, ...docSnap.data() };
+        if (!acceptClassNameSessionMatch(session, klass)) return;
+        result.set(docSnap.id, session);
+      });`;
 if (!workerSource.includes(guardedSessionCollection)) {
-  if (!workerSource.includes(unsafeSessionCollection)) throw new Error("Attendance confirmation session lookup anchor changed; update patchAttendanceConfirmationEmails.mjs.");
-  workerSource = workerSource.replace(unsafeSessionCollection, guardedSessionCollection);
+  const anchor = workerSource.includes(oldGuardedSessionCollection) ? oldGuardedSessionCollection : unsafeSessionCollection;
+  if (!workerSource.includes(anchor)) throw new Error("Attendance confirmation session lookup anchor changed; update patchAttendanceConfirmationEmails.mjs.");
+  workerSource = workerSource.replace(anchor, guardedSessionCollection);
 }
 
 const oldRunBlock = `      if (!config.url) throw new Error("Set communication.announcement_webhook_url in FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG or ANNOUNCEMENT_WEBHOOK_URL for automatic attendance emails.");
@@ -123,7 +129,8 @@ const requiredChecks = [
   [patchedWorker.includes("function resolveClassWebhookConfig("), "Class attendance webhook configuration is missing after patch."],
   [patchedWorker.includes("config: classConfig"), "The attendance worker is not using the selected class delivery configuration."],
   [patchedWorker.includes(classIdentityRequire), "Attendance worker is missing canonical class identity validation."],
-  [patchedWorker.includes('field === "className" && !acceptClassNameSessionMatch(session, klass)'), "Attendance worker still accepts conflicting class-name session matches."],
+  [patchedWorker.includes('if (!acceptClassNameSessionMatch(session, klass)) return;'), "Attendance worker still accepts conflicting session identity matches."],
+  [!patchedWorker.includes('field === "className" && !acceptClassNameSessionMatch(session, klass)'), "Attendance worker still guards only className query results."],
   [patchedWorker.includes('schedule: "*/15 * * * *"'), "The 15-minute attendance scheduler is missing after patch."],
   [retrySource.includes('status: "failed"'), "The failed-delivery retry worker is missing failure-state protection."],
   [retrySource.includes('status: "sent"'), "The failed-delivery retry worker is missing success-state updates."],
@@ -133,4 +140,4 @@ for (const [passed, message] of requiredChecks) {
   if (!passed) throw new Error(message);
 }
 
-console.log("Attendance confirmation email scheduler, class identity guard, and protected failed-delivery retry route verified.");
+console.log("Attendance confirmation email scheduler, all-field class identity guard, and protected failed-delivery retry route verified.");
