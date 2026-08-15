@@ -40,10 +40,7 @@ export function sessionHasAttendanceData(record = null) {
   return arrays.some((value) => Array.isArray(value) && value.length > 0);
 }
 
-export function isProtectedRebuildSession(session = {}) {
-  const status = normalizeStatus(session.status);
-  if (["completed", "live", "cancelled", "rescheduled"].includes(status)) return true;
-
+function hasManualScheduleHistory(session = {}) {
   return Boolean(
     session.manualDateOverride
     || session.manualDateOverrideAt
@@ -54,6 +51,29 @@ export function isProtectedRebuildSession(session = {}) {
     || session.previousEndsAt
     || session.rescheduleReason
   );
+}
+
+export function isAutomaticCompletion(session = {}) {
+  return normalizeStatus(session.status) === "completed"
+    && (
+      String(session.completionSource || "").trim().toLowerCase() === "automatic"
+      || String(session.completedBy || "").trim().toLowerCase() === "system:auto-session-completion"
+      || Boolean(session.autoCompletedAt)
+    );
+}
+
+export function isDisposableAutomaticCompletion(session = {}, attendance = null) {
+  return isAutomaticCompletion(session)
+    && !hasManualScheduleHistory(session)
+    && !sessionHasAttendanceData(session)
+    && !sessionHasAttendanceData(attendance);
+}
+
+export function isProtectedRebuildSession(session = {}) {
+  const status = normalizeStatus(session.status);
+  if (["completed", "live", "cancelled", "rescheduled"].includes(status)) return true;
+
+  return hasManualScheduleHistory(session);
 }
 
 function isLockedRebuildSession(session = {}) {
@@ -105,7 +125,8 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
   sessions.forEach((session) => {
     if (usedIds.has(session.id) || desiredIds.has(session.id)) return;
     const attendance = attendanceBySessionId.get(session.id);
-    if (!isProtectedRebuildSession(session) && !sessionHasAttendanceData(session) && !sessionHasAttendanceData(attendance)) {
+    const disposableAutomaticCompletion = isDisposableAutomaticCompletion(session, attendance);
+    if (disposableAutomaticCompletion || (!isProtectedRebuildSession(session) && !sessionHasAttendanceData(session) && !sessionHasAttendanceData(attendance))) {
       deletions.push(session);
     } else {
       preserved.push(session);
