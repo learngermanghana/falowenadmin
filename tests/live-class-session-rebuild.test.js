@@ -295,12 +295,13 @@ test("B1 rebuild anchors sequencing to real history and discards stale automatic
   });
   const rebuilt = buildFinalRebuildSessionList(first).sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
 
-  assert.deepEqual(first.deletions.map((session) => session.id).sort(), ["b1-slot-1", "b1-slot-2", "b1-slot-3", "b1-slot-4"]);
+  assert.deepEqual(first.deletions, []);
   assert.equal(rebuilt.filter((session) => session.curriculumIndex === 1).length, 1);
+  assert.ok(rebuilt.slice(1, 5).every((session) => session.status === "scheduled"));
   assert.equal(rebuilt.find((session) => session.id === "b1-slot-5").topic, "Day 1: Traumwelten");
   assert.equal(rebuilt.find((session) => session.id === "b1-slot-5").status, "completed");
   assert.equal(attendance.get("b1-slot-5").students.learner.present, true);
-  assert.deepEqual(rebuilt.map((session) => session.curriculumIndex), [1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(rebuilt.map((session) => session.curriculumIndex), [1, 3, 4, 5, 6, 2, 7, 8, 9, 10]);
 
   const second = buildRebuildClassSessionsPlan({
     klass: b1, occurrences, sessions: rebuilt, attendanceBySessionId: attendance, buildCurriculumPatch: curriculumPatch,
@@ -308,4 +309,52 @@ test("B1 rebuild anchors sequencing to real history and discards stale automatic
   const rebuiltAgain = buildFinalRebuildSessionList(second).sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
   assert.deepEqual(second.deletions, []);
   assert.deepEqual(rebuiltAgain.map((session) => [session.id, session.curriculumIndex]), rebuilt.map((session) => [session.id, session.curriculumIndex]));
+});
+
+test("rebuild retains missing timetable occurrences before a timestamp-backed historical anchor", () => {
+  const occurrences = desiredOccurrences();
+  const historical = {
+    ...occurrences[1],
+    status: "completed",
+    curriculumIndex: 2,
+    startsAt: { toDate: () => new Date(occurrences[1].startsAt), toMillis: () => Date.parse(occurrences[1].startsAt) },
+  };
+
+  const plan = buildRebuildClassSessionsPlan({
+    klass,
+    occurrences,
+    sessions: [historical],
+    buildCurriculumPatch: (levelId, index) => ({ curriculumIndex: index + 1 }),
+  });
+
+  assert.equal(plan.upserts.length, occurrences.length);
+  assert.equal(plan.upserts[0].occurrence.id, occurrences[0].id);
+  assert.equal(plan.upserts[1].existing, historical);
+});
+
+test("protected unindexed orientation remains Day 0 when a later lesson anchors sequencing", () => {
+  const occurrences = desiredOccurrences();
+  const orientation = {
+    ...occurrences[0],
+    status: "completed",
+    topic: "Day 0: Einführung und Orientierung",
+    assignmentIds: ["A1-ORIENTATION"],
+  };
+  const lesson = { ...occurrences[1], status: "completed", curriculumIndex: 2, topic: "Day 1" };
+
+  const plan = buildRebuildClassSessionsPlan({
+    klass,
+    occurrences,
+    sessions: [orientation, lesson],
+    buildCurriculumPatch: (levelId, index, session, { force }) => ({
+      curriculumIndex: index + 1,
+      ...((force || !session.topic) ? { topic: `Day ${index}` } : {}),
+    }),
+  });
+
+  const orientationUpsert = plan.upserts.find(({ existing }) => existing?.id === orientation.id);
+  assert.equal(orientationUpsert.patch.curriculumIndex, 1);
+  assert.equal(orientationUpsert.patch.topic, undefined);
+  assert.equal(buildFinalRebuildSessionList(plan).find(({ id }) => id === orientation.id).topic, orientation.topic);
+  assert.equal(plan.upserts.find(({ existing }) => existing?.id === lesson.id).patch.curriculumIndex, 2);
 });

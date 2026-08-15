@@ -117,23 +117,22 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
   const preserved = [];
   const upserts = [];
 
-  // A protected session with an explicit curriculum position is historical
-  // truth.  In particular, a manual Day 1 must anchor the next generated row
-  // at Day 2; unrelated auto-completed records before it must not shift it.
+  // Protected sessions with explicit curriculum positions are historical
+  // truth. A protected orientation is also legitimate when its legacy
+  // curriculumIndex is absent, because its assignment/topic still anchors Day 0.
   const legitimate = sessions.filter((session) => {
     const attendance = attendanceBySessionId.get(session.id);
     const onOrAfterClassStart = !klass.startDate || datePart(session.startsAt) >= String(klass.startDate);
-    return curriculumPosition(session) !== null
+    return (curriculumPosition(session) !== null || isOrientationSession(session))
       && onOrAfterClassStart
       && !isDisposableAutomaticCompletion(session, attendance)
       && (isProtectedRebuildSession(session) || sessionHasAttendanceData(session) || sessionHasAttendanceData(attendance));
   });
   const legitimateIds = new Set(legitimate.map((session) => session.id));
-  const lastLegitimateTime = legitimate.reduce((latest, session) => {
-    const time = new Date(session.startsAt || 0).getTime();
-    return Number.isFinite(time) ? Math.max(latest, time) : latest;
+  let nextCurriculumPosition = legitimate.reduce((next, session) => {
+    const position = curriculumPosition(session);
+    return position === null ? next : Math.max(next, position + 1);
   }, 0);
-  let nextCurriculumPosition = legitimate.reduce((next, session) => Math.max(next, curriculumPosition(session) + 1), 0);
   let orientationId = legitimate.find(isOrientationSession)?.id || "";
   if (!orientationId) {
     orientationId = sessions
@@ -142,16 +141,17 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
   }
 
   occurrences.forEach((occurrence) => {
-    const existing = chooseExistingSession({ occurrence, existingById, usedIds, klass });
-    const attendance = existing ? attendanceBySessionId.get(existing.id) : null;
+    let existing = chooseExistingSession({ occurrence, existingById, usedIds, klass });
+    let attendance = existing ? attendanceBySessionId.get(existing.id) : null;
     const disposable = existing && isDisposableAutomaticCompletion(existing, attendance);
     const keepOrientation = disposable && existing.id === orientationId;
-    const historicalGap = !existing && lastLegitimateTime && new Date(occurrence.startsAt || 0).getTime() <= lastLegitimateTime;
 
-    // Do not recreate schedule slots that pre-date the latest real historical
-    // lesson. Disposable automatic rows in those slots are stale generator
-    // artefacts, except for the single canonical orientation.
-    if ((disposable && !keepOrientation) || historicalGap) return;
+    // Replace stale automatic completions with the persisted timetable
+    // occurrence rather than allowing the stale document to remove that date.
+    if (disposable && !keepOrientation) {
+      existing = undefined;
+      attendance = null;
+    }
     if (existing) usedIds.add(existing.id);
 
     const targetOccurrence = existing ? { ...occurrence, id: existing.id } : occurrence;
@@ -160,7 +160,8 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
     const lockedExisting = existing && (isLockedRebuildSession(existing) || isProtectedRebuildSession(existing));
     const repairableAutomaticCompletion = existing && isDisposableAutomaticCompletion(existing, attendance);
     let curriculumIndex;
-    if (legitimateIds.has(existing?.id)) curriculumIndex = curriculumPosition(existing);
+    if (legitimateIds.has(existing?.id) && isOrientationSession(existing)) curriculumIndex = 0;
+    else if (legitimateIds.has(existing?.id)) curriculumIndex = curriculumPosition(existing);
     else if (keepOrientation) curriculumIndex = 0;
     else curriculumIndex = nextCurriculumPosition++;
     const curriculumPatch = typeof buildCurriculumPatch === "function"
