@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
+  isDisposableAutomaticCompletion,
   isProtectedRebuildSession,
   sessionHasAttendanceData,
 } from "../utils/liveClassSessionRebuildPlan.js";
@@ -95,9 +96,12 @@ export async function cleanupLegacyClassSessions({ classId, klass = {}, desiredS
   sessions.forEach((session) => {
     const attendanceRecord = attendance.get(session.id);
     const desired = desiredIds.has(session.id);
-    const protectedSession = isProtectedRebuildSession(session)
+    const disposableAutomaticCompletion = isDisposableAutomaticCompletion(session, attendanceRecord);
+    const protectedSession = !disposableAutomaticCompletion && (
+      isProtectedRebuildSession(session)
       || sessionHasAttendanceData(session)
-      || sessionHasAttendanceData(attendanceRecord);
+      || sessionHasAttendanceData(attendanceRecord)
+    );
 
     if (!desired && !protectedSession) {
       batch.delete(doc(db, "classSessions", session.id));
