@@ -111,10 +111,15 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
     const targetOccurrence = existing ? { ...occurrence, id: existing.id } : occurrence;
     desiredIds.add(targetOccurrence.id);
 
+    const attendance = existing ? attendanceBySessionId.get(existing.id) : null;
     const lockedExisting = existing && (isLockedRebuildSession(existing) || isProtectedRebuildSession(existing));
+    const repairableAutomaticCompletion = existing && isDisposableAutomaticCompletion(existing, attendance);
     const curriculumPatch = typeof buildCurriculumPatch === "function"
-      ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !lockedExisting })
+      ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !lockedExisting || repairableAutomaticCompletion })
       : null;
+    // Keep completed/live/cancelled session timing and status immutable. A system
+    // auto-completion with no real attendance or manual history may still have
+    // stale curriculum metadata, so only its curriculum patch is forced above.
     const basePatch = lockedExisting
       ? { classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" }
       : { ...targetOccurrence, classId: targetOccurrence.classId, classRecordId: klass.id || targetOccurrence.classId, className: klass.name || "" };
