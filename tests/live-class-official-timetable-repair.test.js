@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { buildOfficialLessonSchedulePlan } from "../src/utils/liveClassLessonOrder.js";
+import { inspectTimetableIntegrity } from "../src/utils/liveClassTimetableIntegrity.js";
+import { buildSessionReschedulePlan } from "../src/utils/liveClassReschedulePlan.js";
+import { getCourseSessionGroups } from "../src/data/courseSessionGroups.js";
 
 const repairServicePath = new URL("../src/services/liveClassLessonDateRepairService.js", import.meta.url);
 const compatibilityServicePath = new URL("../src/services/liveClassCompatibilityServiceBase.js", import.meta.url);
@@ -162,4 +165,111 @@ test("loading an existing A2 or B1 class persists one-based lesson days", async 
   assert.match(compatibilitySource, /doc\(db, "attendance", String\(classId\), "sessions", session\.id\)/);
   assert.match(compatibilitySource, /curriculumDayNumbering:\s*"one-based"/);
   assert.match(compatibilitySource, /await repairOneBasedCurriculumDays/);
+});
+
+test("B1 official repair classifies an unassigned same-time session as an orphan", () => {
+  const groups = getCourseSessionGroups("B1");
+  assert.equal(groups.length, 29);
+  const klass = {
+    id: "b1-class",
+    name: "B1 Klasse",
+    levelId: "B1",
+    startDate: "2026-08-03",
+    endDate: "2026-09-10",
+    timezone: "Africa/Accra",
+    scheduleRules: [
+      { day: "mon", startTime: "19:00", durationMinutes: 120 },
+      { day: "tue", startTime: "19:00", durationMinutes: 120 },
+      { day: "wed", startTime: "19:00", durationMinutes: 120 },
+      { day: "thu", startTime: "19:00", durationMinutes: 120 },
+      { day: "fri", startTime: "19:00", durationMinutes: 120 },
+    ],
+  };
+  const initialPlan = buildOfficialLessonSchedulePlan({
+    classId: klass.id,
+    klass,
+    sessions: [],
+  });
+  klass.endDate = initialPlan.endDate;
+  const official = initialPlan.items.map((item) => ({
+    id: `b1-lesson-${item.lessonNumber}`,
+    classId: klass.id,
+    status: "scheduled",
+    topic: item.group.topic,
+    assignmentIds: item.group.assignmentIds,
+    chapterIds: item.group.assignmentIds,
+    curriculumIds: item.group.assignmentIds,
+    assignment_id: item.group.assignmentIds[0],
+    curriculumIndex: item.lessonNumber,
+    curriculumDay: item.group.day,
+    startsAt: item.targetStartsAt,
+    endsAt: item.targetEndsAt,
+  }));
+  const orphan = {
+    id: "XEO4NwyAZ85gThEf7krP_2026-11-12_1900",
+    classId: klass.id,
+    status: "scheduled",
+    startsAt: official[25].startsAt,
+    endsAt: official[25].endsAt,
+    assignmentIds: [],
+    chapterIds: [],
+    curriculumIds: [],
+  };
+
+  const before = inspectTimetableIntegrity({ klass, sessions: [...official, orphan] });
+  assert.equal(before.actualCount, 30);
+  assert.ok(before.issues.some((issue) => issue.code === "duplicate-time"));
+
+  const repairPlan = buildOfficialLessonSchedulePlan({
+    classId: klass.id,
+    klass,
+    sessions: [...official, orphan],
+  });
+  assert.equal(repairPlan.orphanCount, 1);
+  assert.equal(repairPlan.orphanSessions[0].session.id, orphan.id);
+  assert.equal(repairPlan.orphanSessions[0].matchedCanonicalStart, true);
+  assert.equal(repairPlan.orphanSessions[0].canonicalSessionId, official[25].id);
+
+  const repaired = [...official, {
+    ...orphan,
+    status: "superseded",
+    superseded: true,
+    supersededBySessionId: official[25].id,
+    remindersSuppressed: true,
+  }];
+  const after = inspectTimetableIntegrity({ klass, sessions: repaired });
+  assert.equal(after.healthy, true);
+  assert.equal(after.actualCount, 29);
+  assert.equal(after.expectedCount, 29);
+  assert.equal(after.issues.some((issue) => issue.code === "duplicate-time"), false);
+  assert.equal(after.issues.some((issue) =>
+    issue.code === "missing-assignment-ids" && issue.sessionId === orphan.id), false);
+
+  const single = buildSessionReschedulePlan({
+    klass,
+    sessions: repaired,
+    sessionId: official[10].id,
+    targetStartsAt: new Date(new Date(official[10].startsAt).getTime() + 30 * 60000).toISOString(),
+    targetEndsAt: new Date(new Date(official[10].endsAt).getTime() + 30 * 60000).toISOString(),
+    mode: "single",
+  });
+  assert.equal(single.affectedCount, 1);
+
+  // Historical B1 case: completed Day 3 is 20 Aug while Day 4 was stored on
+  // 15 Aug. A following move can put Day 4 after Day 3 and rebuild later slots.
+  const historical = repaired.map((record, index) => {
+    if (index === 2) return { ...record, status: "completed", startsAt: "2026-08-20T19:00:00.000Z", endsAt: "2026-08-20T21:00:00.000Z" };
+    if (index === 3) return { ...record, startsAt: "2026-08-15T19:00:00.000Z", endsAt: "2026-08-15T21:00:00.000Z" };
+    return record;
+  });
+  const following = buildSessionReschedulePlan({
+    klass,
+    sessions: historical,
+    sessionId: official[3].id,
+    targetStartsAt: "2026-08-21T19:00:00.000Z",
+    targetEndsAt: "2026-08-21T21:00:00.000Z",
+    mode: "following",
+  });
+  assert.equal(following.mode, "following");
+  assert.equal(following.affectedCount, 26);
 });

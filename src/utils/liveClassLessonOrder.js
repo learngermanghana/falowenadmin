@@ -40,6 +40,23 @@ function assignmentIdsForSession(session = {}) {
   return [...new Set(values.map((value) => normalize(value).toUpperCase()).filter(Boolean))];
 }
 
+function protectedOrphanSession(session = {}) {
+  const status = normalize(session.status || "scheduled").toLowerCase();
+  if (["completed", "live", "cancelled"].includes(status)) return true;
+
+  // Manual moves are historical evidence that this is a deliberate timetable
+  // record, rather than an automatically generated alias. Never discard that
+  // evidence merely because an older record is missing curriculum fields.
+  return session.manualDateOverride === true
+    || Boolean(session.rescheduledAt)
+    || Boolean(session.rescheduledBy)
+    || Boolean(session.previousStartsAt)
+    || Boolean(session.slotReleased)
+    || Boolean(session.timetableSlotReleased)
+    || Number(session.attendanceCount || session.attendeeCount || 0) > 0
+    || (session.students && Object.keys(session.students).length > 0);
+}
+
 function sameAssignmentSet(left = [], right = []) {
   const leftSet = new Set(left.map((value) => normalize(value).toUpperCase()).filter(Boolean));
   const rightSet = new Set(right.map((value) => normalize(value).toUpperCase()).filter(Boolean));
@@ -473,6 +490,31 @@ export function buildOfficialLessonSchedulePlan({
     };
   });
 
+  const canonicalIds = new Set(
+    items.map((item) => normalize(item.session?.id)).filter(Boolean),
+  );
+  const canonicalByStart = new Map();
+  items.forEach((item) => {
+    const sessionId = normalize(item.session?.id);
+    if (!sessionId) return;
+    [toDate(item.session?.startsAt)?.toISOString(), item.targetStartsAt]
+      .filter(Boolean)
+      .forEach((startsAt) => canonicalByStart.set(startsAt, sessionId));
+  });
+  const orphanSessions = sessions
+    .filter(activeSession)
+    .filter((session) => !canonicalIds.has(normalize(session.id)))
+    .filter((session) => assignmentIdsForSession(session).length === 0)
+    .filter((session) => !protectedOrphanSession(session))
+    .map((session) => {
+      const startsAt = toDate(session.startsAt)?.toISOString() || "";
+      return {
+        session,
+        canonicalSessionId: canonicalByStart.get(startsAt) || "",
+        matchedCanonicalStart: canonicalByStart.has(startsAt),
+      };
+    });
+
   const isA1 = levelId === "A1";
   return {
     classId,
@@ -485,6 +527,8 @@ export function buildOfficialLessonSchedulePlan({
     collisionCount: countSessionTimeCollisions(sessions),
     duplicateCount: duplicateSessions.length,
     duplicateSessions,
+    orphanCount: orphanSessions.length,
+    orphanSessions,
     startDate: sessionDateInTimezone(slots[0].startsAt, timezone),
     endDate: sessionDateInTimezone(slots.at(-1).startsAt, timezone),
     scheduleAnchor: anchor
