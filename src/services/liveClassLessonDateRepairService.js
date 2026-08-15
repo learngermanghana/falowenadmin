@@ -263,7 +263,7 @@ export async function repairClassToOfficialLessonSchedule({
       originalStatus: normalize(session.status || "scheduled"),
       superseded: true,
       supersededBySessionId: canonicalSessionId,
-      supersededLessonNumber: lessonNumber,
+      ...(!isOrphan ? { supersededLessonNumber: lessonNumber } : {}),
       supersededReason: reason,
       supersededRepairType: isOrphan ? "official-timetable-orphan" : "official-timetable-duplicate",
       remindersSuppressed: true,
