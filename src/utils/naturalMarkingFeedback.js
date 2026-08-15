@@ -147,6 +147,23 @@ function looksLikeFreeText(submissionText = "") {
   return sentenceCount >= 2 && (firstPerson || greeting);
 }
 
+function looksLikeObjectiveAnswerList(submissionText = "") {
+  const lines = String(submissionText || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length < 3) return false;
+
+  const objectiveLines = lines.filter((line) => {
+    if (!/^\d{1,3}\s*[.)-]?\s*/.test(line)) return false;
+    return /(?:\/\s*)?[A-FX]\s*$/i.test(line)
+      || /^\d{1,3}\s*[.)-]?\s*[A-FX]\s*$/i.test(line);
+  });
+
+  return objectiveLines.length / lines.length >= 0.8;
+}
+
 function writingCorrection(result = {}) {
   const candidates = [
     ...(Array.isArray(result.corrections) ? result.corrections : []),
@@ -162,6 +179,8 @@ function writingCorrection(result = {}) {
 
 function writingTip(submissionText = "", result = {}) {
   const text = String(submissionText || "");
+  if (looksLikeObjectiveAnswerList(text)) return "";
+
   if (/vorfreue\s+mich/i.test(text) || /freue\s+mich[^.!?]{0,35}freue\s+mich/i.test(text)) {
     return "Also check your writing before submitting to avoid repeated wording such as “vorfreue mich.”";
   }
