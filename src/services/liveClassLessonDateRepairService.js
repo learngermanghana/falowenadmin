@@ -198,6 +198,7 @@ export async function repairClassToOfficialLessonSchedule({
   let created = 0;
   let moved = 0;
   let aliasesSuperseded = 0;
+  let orphansSuperseded = 0;
 
   plan.items.forEach((item) => {
     let sessionId = normalize(item.session?.id);
@@ -234,11 +235,28 @@ export async function repairClassToOfficialLessonSchedule({
     );
   });
 
-  plan.duplicateSessions.forEach(({ lessonNumber, session, canonicalSessionId }) => {
+  const supersededCandidates = [
+    ...plan.orphanSessions.map((candidate) => ({ ...candidate, kind: "orphan" })),
+    ...plan.duplicateSessions.map((candidate) => ({ ...candidate, kind: "duplicate" })),
+  ];
+  const supersededIds = new Set();
+  supersededCandidates.forEach(({
+    lessonNumber,
+    session,
+    canonicalSessionId,
+    matchedCanonicalStart,
+    kind,
+  }) => {
     const sessionId = normalize(session?.id);
-    if (!sessionId || assignedIds.has(sessionId)) return;
+    if (!sessionId || assignedIds.has(sessionId) || supersededIds.has(sessionId)) return;
     const status = normalize(session.status || "scheduled").toLowerCase();
     if (["completed", "live", "cancelled", "superseded"].includes(status)) return;
+
+    supersededIds.add(sessionId);
+    const isOrphan = kind === "orphan";
+    const reason = isOrphan
+      ? `Unassigned orphan session removed by official timetable repair${matchedCanonicalStart ? " after matching a canonical start time" : ""}.`
+      : "Duplicate session alias removed by official timetable repair.";
 
     const duplicatePatch = {
       status: "superseded",
@@ -246,7 +264,8 @@ export async function repairClassToOfficialLessonSchedule({
       superseded: true,
       supersededBySessionId: canonicalSessionId,
       supersededLessonNumber: lessonNumber,
-      supersededReason: "Duplicate session alias removed by official timetable repair.",
+      supersededReason: reason,
+      supersededRepairType: isOrphan ? "official-timetable-orphan" : "official-timetable-duplicate",
       remindersSuppressed: true,
       supersededAt: serverTimestamp(),
       supersededBy: adminId,
@@ -260,10 +279,15 @@ export async function repairClassToOfficialLessonSchedule({
       sessionStatus: "superseded",
       superseded: true,
       supersededBySessionId: canonicalSessionId,
+      supersededReason: reason,
+      supersededRepairType: isOrphan ? "official-timetable-orphan" : "official-timetable-duplicate",
+      supersededAt: serverTimestamp(),
+      supersededBy: adminId,
       remindersSuppressed: true,
       updatedAt: serverTimestamp(),
     }, { merge: true });
     aliasesSuperseded += 1;
+    if (isOrphan) orphansSuperseded += 1;
   });
 
   const planStartDate = normalize(plan.startDate || klass.startDate);
@@ -293,6 +317,7 @@ export async function repairClassToOfficialLessonSchedule({
     sessionRepairStatus: "complete",
     sessionRepairAt: serverTimestamp(),
     duplicateSessionAliasesSuperseded: aliasesSuperseded,
+    orphanSessionsSuperseded: orphansSuperseded,
     lastSessionChangeType: "official-schedule-repair",
     sessionScheduleVersion: Date.now(),
     sessionScheduleUpdatedAt: serverTimestamp(),
@@ -318,5 +343,6 @@ export async function repairClassToOfficialLessonSchedule({
     repaired: plan.changedLessons,
     collisionsResolved: plan.collisionCount,
     aliasesSuperseded,
+    orphansSuperseded,
   };
 }
