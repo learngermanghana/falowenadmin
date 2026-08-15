@@ -147,6 +147,59 @@ function looksLikeFreeText(submissionText = "") {
   return sentenceCount >= 2 && (firstPerson || greeting);
 }
 
+function looksLikeObjectiveAnswerList(submissionText = "") {
+  const lines = String(submissionText || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length < 3) return false;
+
+  const objectiveLines = lines.filter((line) => {
+    if (!/^\d{1,3}\s*[.)-]?\s*/.test(line)) return false;
+    return /(?:\/\s*)?[A-FX]\s*$/i.test(line)
+      || /^\d{1,3}\s*[.)-]?\s*[A-FX]\s*$/i.test(line);
+  });
+
+  return objectiveLines.length / lines.length >= 0.8;
+}
+
+function followsCommaSalutation(submissionText = "", snippet = "") {
+  const lines = String(submissionText || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const target = String(snippet || "").replace(/[…]+$/, "").replace(/[.!?]+$/, "").trim().toLocaleLowerCase("de");
+  if (!target) return false;
+
+  for (let index = 1; index < lines.length; index += 1) {
+    const current = lines[index].replace(/[.!?]+$/, "").trim().toLocaleLowerCase("de");
+    const previous = lines[index - 1];
+    const isSalutation = /^(?:lieber|liebe|sehr geehrte(?:r|n)?|hallo)\b.*,$/i.test(previous);
+    if (isSalutation && (current === target || current.startsWith(target) || target.startsWith(current))) return true;
+  }
+  return false;
+}
+
+function sanitizeFalseWritingFeedback(feedback = "", submissionText = "") {
+  let text = String(feedback || "");
+
+  text = text.replace(
+    /\s*(?:Next step:\s*)?add one more (?:clear )?detail to\s*[“"]([^”"]+)[”"]\.?/gi,
+    "",
+  );
+
+  text = text.replace(
+    /\s*(?:Review exact wording:\s*)?Start this sentence with a capital letter:\s*[“"]([^”"]+)[”"]\.?/gi,
+    (match, snippet) => (followsCommaSalutation(submissionText, snippet) ? "" : match),
+  );
+
+  return text
+    .replace(/\s{2,}/g, " ")
+    .replace(/\.\s*\./g, ".")
+    .trim();
+}
+
 function writingCorrection(result = {}) {
   const candidates = [
     ...(Array.isArray(result.corrections) ? result.corrections : []),
@@ -162,6 +215,8 @@ function writingCorrection(result = {}) {
 
 function writingTip(submissionText = "", result = {}) {
   const text = String(submissionText || "");
+  if (looksLikeObjectiveAnswerList(text)) return "";
+
   if (/vorfreue\s+mich/i.test(text) || /freue\s+mich[^.!?]{0,35}freue\s+mich/i.test(text)) {
     return "Also check your writing before submitting to avoid repeated wording such as “vorfreue mich.”";
   }
@@ -253,7 +308,7 @@ export function buildNaturalStudentFeedback(result = {}, submissionText = "") {
   }
 
   const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });
-  if (essayFeedback) return essayFeedback;
+  if (essayFeedback) return sanitizeFalseWritingFeedback(essayFeedback, submissionText);
 
   const sentences = [];
   const opening = objectiveScore !== null && objectiveScore >= 80 ? "Good work" : objectiveScore !== null && objectiveScore >= 60 ? "Good progress" : "Keep working steadily";
@@ -264,5 +319,5 @@ export function buildNaturalStudentFeedback(result = {}, submissionText = "") {
   if (tip) sentences.push(tip);
 
   const comment = sentences.join(" ").replace(/\s+/g, " ").trim();
-  return comment.split(/\s+/).slice(0, 60).join(" ");
+  return sanitizeFalseWritingFeedback(comment.split(/\s+/).slice(0, 60).join(" "), submissionText);
 }
