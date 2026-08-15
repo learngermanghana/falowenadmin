@@ -53,6 +53,19 @@ function hasManualScheduleHistory(session = {}) {
   );
 }
 
+function curriculumPosition(session = {}) {
+  const index = Number(session.curriculumIndex || 0);
+  return Number.isInteger(index) && index > 0 ? index - 1 : null;
+}
+
+function isOrientationSession(session = {}) {
+  const ids = [session.assignment_id, ...(session.assignmentIds || []), ...(session.curriculumIds || [])]
+    .map((value) => String(value || "").trim().toUpperCase());
+  return curriculumPosition(session) === 0
+    || ids.some((id) => id.endsWith("-ORIENTATION") || id.endsWith("-TUTORIAL"))
+    || /(?:day\s*0|einführung|einfuehrung|orientierung|orientation)/i.test(String(session.topic || ""));
+}
+
 export function isAutomaticCompletion(session = {}) {
   return normalizeStatus(session.status) === "completed"
     && (
@@ -104,18 +117,54 @@ export function buildRebuildClassSessionsPlan({ klass = {}, occurrences = [], se
   const preserved = [];
   const upserts = [];
 
-  occurrences.forEach((occurrence, index) => {
+  // A protected session with an explicit curriculum position is historical
+  // truth.  In particular, a manual Day 1 must anchor the next generated row
+  // at Day 2; unrelated auto-completed records before it must not shift it.
+  const legitimate = sessions.filter((session) => {
+    const attendance = attendanceBySessionId.get(session.id);
+    const onOrAfterClassStart = !klass.startDate || datePart(session.startsAt) >= String(klass.startDate);
+    return curriculumPosition(session) !== null
+      && onOrAfterClassStart
+      && !isDisposableAutomaticCompletion(session, attendance)
+      && (isProtectedRebuildSession(session) || sessionHasAttendanceData(session) || sessionHasAttendanceData(attendance));
+  });
+  const legitimateIds = new Set(legitimate.map((session) => session.id));
+  const lastLegitimateTime = legitimate.reduce((latest, session) => {
+    const time = new Date(session.startsAt || 0).getTime();
+    return Number.isFinite(time) ? Math.max(latest, time) : latest;
+  }, 0);
+  let nextCurriculumPosition = legitimate.reduce((next, session) => Math.max(next, curriculumPosition(session) + 1), 0);
+  let orientationId = legitimate.find(isOrientationSession)?.id || "";
+  if (!orientationId) {
+    orientationId = sessions
+      .filter((session) => isOrientationSession(session) && isDisposableAutomaticCompletion(session, attendanceBySessionId.get(session.id)))
+      .sort((left, right) => new Date(left.startsAt || 0) - new Date(right.startsAt || 0))[0]?.id || "";
+  }
+
+  occurrences.forEach((occurrence) => {
     const existing = chooseExistingSession({ occurrence, existingById, usedIds, klass });
+    const attendance = existing ? attendanceBySessionId.get(existing.id) : null;
+    const disposable = existing && isDisposableAutomaticCompletion(existing, attendance);
+    const keepOrientation = disposable && existing.id === orientationId;
+    const historicalGap = !existing && lastLegitimateTime && new Date(occurrence.startsAt || 0).getTime() <= lastLegitimateTime;
+
+    // Do not recreate schedule slots that pre-date the latest real historical
+    // lesson. Disposable automatic rows in those slots are stale generator
+    // artefacts, except for the single canonical orientation.
+    if ((disposable && !keepOrientation) || historicalGap) return;
     if (existing) usedIds.add(existing.id);
 
     const targetOccurrence = existing ? { ...occurrence, id: existing.id } : occurrence;
     desiredIds.add(targetOccurrence.id);
 
-    const attendance = existing ? attendanceBySessionId.get(existing.id) : null;
     const lockedExisting = existing && (isLockedRebuildSession(existing) || isProtectedRebuildSession(existing));
     const repairableAutomaticCompletion = existing && isDisposableAutomaticCompletion(existing, attendance);
+    let curriculumIndex;
+    if (legitimateIds.has(existing?.id)) curriculumIndex = curriculumPosition(existing);
+    else if (keepOrientation) curriculumIndex = 0;
+    else curriculumIndex = nextCurriculumPosition++;
     const curriculumPatch = typeof buildCurriculumPatch === "function"
-      ? buildCurriculumPatch(klass.levelId, index, existing || {}, { force: !lockedExisting || repairableAutomaticCompletion })
+      ? buildCurriculumPatch(klass.levelId, curriculumIndex, existing || {}, { force: !lockedExisting || repairableAutomaticCompletion })
       : null;
     // Keep completed/live/cancelled session timing and status immutable. A system
     // auto-completion with no real attendance or manual history may still have

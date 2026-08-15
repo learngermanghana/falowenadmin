@@ -22,10 +22,10 @@ import {
   slugifyClassName,
 } from "../utils/liveClassScheduling.js";
 import {
-  courseDictionary,
   getCourseDictionaryEntry,
   getUnifiedTopicLabel,
 } from "../data/courseDictionary.js";
+import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { saveAnnouncementRow } from "./communicationService.js";
 import { listStudentsByClass } from "./studentsService.js";
 import { buildFinalRebuildSessionList, buildRebuildClassSessionsPlan } from "../utils/liveClassSessionRebuildPlan.js";
@@ -68,18 +68,22 @@ function arraysEqual(left = [], right = []) {
 }
 
 function curriculumEntries(levelId) {
-  const level = String(levelId || "").trim().toUpperCase();
-  return Object.values(courseDictionary[level] || {});
+  return getCourseSessionGroups(levelId).map((group) => ({
+    assignment_id: group.assignmentIds[0],
+    assignmentIds: group.assignmentIds,
+    de: group.topic,
+  }));
 }
 
 function buildCurriculumPatch(levelId, sessionIndex, session = {}, { force = false } = {}) {
   const entry = curriculumEntries(levelId)[sessionIndex];
   if (!entry?.assignment_id) return null;
 
-  const assignmentIds = [String(entry.assignment_id).trim().toUpperCase()];
+  const assignmentIds = (entry.assignmentIds || [entry.assignment_id])
+    .map((value) => String(value).trim().toUpperCase());
   const currentIds = normalizeAssignmentIds(session);
   const currentTopic = String(session.topic || "").trim();
-  const topic = getUnifiedTopicLabel(assignmentIds[0], entry.de || entry.en || "");
+  const topic = entry.assignmentIds ? entry.de : getUnifiedTopicLabel(assignmentIds[0], entry.de || entry.en || "");
   const patch = {};
 
   if (force || !currentIds.length) {
