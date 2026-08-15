@@ -137,12 +137,12 @@ export async function updateClassCohort(classId, payload) {
   const nowMs = Date.now();
   const hasStarted = sessions.some((session) => protectedSession(session, nowMs) && String(session.status || "").toLowerCase() !== "cancelled");
   const currentLevel = String(current.levelId || "").toUpperCase();
-  const scheduleChanged = startDate !== current.startDate
+  const protectedClassIdentityChanged = startDate !== current.startDate
     || levelId !== currentLevel
-    || timezone !== String(current.timezone || "Africa/Accra")
-    || !sameRules(scheduleRules, current.scheduleRules);
-  if (hasStarted && scheduleChanged) {
-    throw new Error("This class has already started. Keep its start date and weekly timetable, then use Reschedule on individual future sessions. You may still extend the graduation date.");
+    || timezone !== String(current.timezone || "Africa/Accra");
+  const timetableChanged = !sameRules(scheduleRules, current.scheduleRules);
+  if (hasStarted && protectedClassIdentityChanged) {
+    throw new Error("This class has already started. Keep its original start date, level, and timezone. You can still change the weekly timetable for future sessions and extend the graduation date.");
   }
 
   const tuitionGhs = Number(payload.tuitionGhs ?? current.tuitionGhs ?? TUITION[levelId] ?? 3000);
@@ -241,6 +241,7 @@ export async function updateClassCohort(classId, payload) {
     generatedSessionCount: occurrences.length,
     curriculumMappedSessionCount: mapped,
     publicDataVersion: 1,
+    timetableChangedAfterStart: hasStarted && timetableChanged,
     updatedAt: serverTimestamp(),
   }, { merge: true });
   batch.set(doc(db, "calendarFeeds", String(classId)), { classId, updatedAt: serverTimestamp() }, { merge: true });
