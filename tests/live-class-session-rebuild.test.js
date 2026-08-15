@@ -257,3 +257,55 @@ test("repeated rebuild plans upsert existing desired sessions without duplicates
   assert.equal(new Set(plan.upserts.map((item) => item.occurrence.id)).size, occurrences.length);
   assert.ok(plan.upserts.every((item) => item.existing));
 });
+
+test("B1 rebuild anchors sequencing to real history and discards stale automatic orientations", () => {
+  const b1 = { ...klass, id: "b1-accra", name: "B1 Accra", levelId: "B1", startDate: "2026-08-01", endDate: "2026-09-30" };
+  const times = [
+    "2026-08-06T19:00:00.000Z", "2026-08-08T07:00:00.000Z",
+    "2026-08-13T19:00:00.000Z", "2026-08-15T07:00:00.000Z",
+    "2026-08-15T08:00:00.000Z", "2026-08-22T07:00:00.000Z",
+    "2026-08-27T19:00:00.000Z", "2026-08-29T07:00:00.000Z",
+    "2026-09-03T19:00:00.000Z", "2026-09-05T07:00:00.000Z",
+  ];
+  const occurrences = times.map((startsAt, index) => ({
+    id: `b1-slot-${index}`, classId: b1.id, startsAt, endsAt: startsAt, status: "scheduled",
+  }));
+  const automatic = (index, curriculumIndex = 1, topic = "Day 0: Einführung und Orientierung") => ({
+    ...occurrences[index], status: "completed", completionSource: "automatic", autoCompletedAt: "2026-08-15T10:00:00.000Z",
+    curriculumIndex, topic, assignmentIds: curriculumIndex === 1 ? ["B1-ORIENTATION"] : ["B1-STALE"],
+  });
+  const sessions = [
+    automatic(0), automatic(1), automatic(2), automatic(3),
+    automatic(4, 5, "Day 4: Wohnung suchen"),
+    {
+      ...occurrences[5], status: "completed", completionSource: "manual", completedBy: "admin-1",
+      curriculumIndex: 2, topic: "Day 1: Traumwelten", assignmentIds: ["B1-1"],
+    },
+    ...occurrences.slice(6),
+  ];
+  const attendance = new Map([["b1-slot-5", { markedBy: "admin-1", students: { learner: { present: true } } }]]);
+  const curriculumPatch = (level, index, session, { force }) => ({
+    curriculumIndex: index + 1,
+    ...((force || !session.topic) ? { topic: index === 0 ? "Day 0: Einführung und Orientierung" : `Day ${index}: lesson` } : {}),
+    ...((force || !session.assignmentIds?.length) ? { assignmentIds: [index === 0 ? "B1-ORIENTATION" : `B1-${index}`] } : {}),
+  });
+
+  const first = buildRebuildClassSessionsPlan({
+    klass: b1, occurrences, sessions, attendanceBySessionId: attendance, buildCurriculumPatch: curriculumPatch,
+  });
+  const rebuilt = buildFinalRebuildSessionList(first).sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
+
+  assert.deepEqual(first.deletions.map((session) => session.id).sort(), ["b1-slot-1", "b1-slot-2", "b1-slot-3", "b1-slot-4"]);
+  assert.equal(rebuilt.filter((session) => session.curriculumIndex === 1).length, 1);
+  assert.equal(rebuilt.find((session) => session.id === "b1-slot-5").topic, "Day 1: Traumwelten");
+  assert.equal(rebuilt.find((session) => session.id === "b1-slot-5").status, "completed");
+  assert.equal(attendance.get("b1-slot-5").students.learner.present, true);
+  assert.deepEqual(rebuilt.map((session) => session.curriculumIndex), [1, 2, 3, 4, 5, 6]);
+
+  const second = buildRebuildClassSessionsPlan({
+    klass: b1, occurrences, sessions: rebuilt, attendanceBySessionId: attendance, buildCurriculumPatch: curriculumPatch,
+  });
+  const rebuiltAgain = buildFinalRebuildSessionList(second).sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
+  assert.deepEqual(second.deletions, []);
+  assert.deepEqual(rebuiltAgain.map((session) => [session.id, session.curriculumIndex]), rebuilt.map((session) => [session.id, session.curriculumIndex]));
+});
