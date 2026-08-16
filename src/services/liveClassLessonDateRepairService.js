@@ -250,7 +250,7 @@ export async function repairClassToOfficialLessonSchedule({
     const sessionId = normalize(session?.id);
     if (!sessionId || assignedIds.has(sessionId) || supersededIds.has(sessionId)) return;
     const status = normalize(session.status || "scheduled").toLowerCase();
-    if (["completed", "live", "cancelled", "superseded"].includes(status)) return;
+    if (["cancelled", "superseded"].includes(status)) return;
 
     supersededIds.add(sessionId);
     const isOrphan = kind === "orphan";

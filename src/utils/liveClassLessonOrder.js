@@ -171,7 +171,12 @@ function ruleSlotsForDate({ dateIso, rules, timezone, excluded }) {
     });
 }
 
-function resolveScheduleAnchor(klass = {}, levelId = "", expectedLessons = 0) {
+function resolveScheduleAnchor(
+  klass = {},
+  levelId = "",
+  expectedLessons = 0,
+  startDateSlots = [],
+) {
   const storedSessionNumber = Number(
     klass.scheduleAnchorSessionNumber
       || (Number.isFinite(Number(klass.scheduleAnchorDay)) ? Number(klass.scheduleAnchorDay) + 1 : 0),
@@ -183,11 +188,16 @@ function resolveScheduleAnchor(klass = {}, levelId = "", expectedLessons = 0) {
     && storedSessionNumber <= expectedLessons
     && storedStartsAt
   ) {
-    return {
-      sessionNumber: storedSessionNumber,
-      startsAt: storedStartsAt.toISOString(),
-      source: "stored-class-anchor",
-    };
+    // A persisted anchor is only a progress marker. It must never redefine the
+    // timetable derived from the class's authoritative start date.
+    const officialSlot = startDateSlots[storedSessionNumber - 1];
+    if (officialSlot?.startsAt === storedStartsAt.toISOString()) {
+      return {
+        sessionNumber: storedSessionNumber,
+        startsAt: storedStartsAt.toISOString(),
+        source: "stored-class-anchor",
+      };
+    }
   }
 
   const identity = [
@@ -278,14 +288,41 @@ function buildOfficialSlotsAroundAnchor({
   return [...preceding.reverse(), anchorSlot, ...following];
 }
 
-function sessionRecordPreference(session = {}, classId = "") {
+function hasRealAttendance(session = {}) {
+  return Number(session.attendanceCount || session.attendeeCount || 0) > 0
+    || (session.students && Object.keys(session.students).length > 0);
+}
+
+function sessionRecordPreference(session = {}, classId = "", officialStartsAt = "") {
   let score = 0;
-  if (session.repairPreferredRecord === true) score += 1000;
+  const status = normalize(session.status || "scheduled").toLowerCase();
+  const attended = hasRealAttendance(session);
+  const completionSource = normalize(session.completionSource).toLowerCase();
+  const completedBy = normalize(session.completedBy || session.manualCompletedBy).toLowerCase();
+  const manuallyCompleted = status === "completed" && (
+    session.manualCompletion === true
+    || session.manuallyCompleted === true
+    || completionSource === "manual"
+    || (Boolean(completedBy) && !completedBy.startsWith("system:"))
+  );
+  const manualOverride = session.manualDateOverride === true
+    || Boolean(session.rescheduledAt)
+    || Boolean(session.rescheduledBy)
+    || Boolean(session.previousStartsAt);
+
+  // Keep these bands far apart: repairPreferredRecord is only a source hint
+  // and cannot defeat attendance, completion, or a legitimate manual move.
+  if (status === "completed" && attended) score += 60000;
+  else if (manuallyCompleted) score += 50000;
+  else if (attended) score += 40000;
+  else if (manualOverride) score += 30000;
+  else if (toDate(session.startsAt)?.toISOString() === officialStartsAt) score += 20000;
+  else score += 10000;
+  if (session.repairPreferredRecord === true) score += 10;
   if (normalize(session.classId) === normalize(classId)) score += 8;
   if (normalize(session.classRecordId) === normalize(classId)) score += 4;
   if (assignmentIdsForSession(session).length) score += 2;
   if (normalize(session.topic || session.title)) score += 1;
-  if (session.manualDateOverride === true || session.rescheduledAt || session.previousStartsAt) score += 1;
   return score;
 }
 
@@ -425,6 +462,25 @@ export function buildOfficialLessonSchedulePlan({
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
 
   const excluded = new Set((excludedDates || []).map((value) => normalize(value)).filter(Boolean));
+  const startDateSlots = buildOfficialSlots({
+    startDate: klass.startDate,
+    rules,
+    timezone,
+    excluded,
+    expectedLessons,
+  });
+  const anchor = resolveScheduleAnchor(klass, levelId, expectedLessons, startDateSlots);
+  const slots = anchor
+    ? buildOfficialSlotsAroundAnchor({
+      anchor,
+      anchorSession: null,
+      rules,
+      timezone,
+      excluded,
+      expectedLessons,
+    })
+    : startDateSlots;
+
   const candidatesByNumber = new Map();
   sessions.filter(activeSession).forEach((session) => {
     const sessionNumber = resolveOfficialSessionNumber(session, groups, levelId);
@@ -437,7 +493,9 @@ export function buildOfficialLessonSchedulePlan({
   const duplicateSessions = [];
   candidatesByNumber.forEach((candidates, sessionNumber) => {
     const ordered = [...candidates].sort((left, right) => {
-      const score = sessionRecordPreference(right, classId) - sessionRecordPreference(left, classId);
+      const officialStartsAt = slots[sessionNumber - 1]?.startsAt || "";
+      const score = sessionRecordPreference(right, classId, officialStartsAt)
+        - sessionRecordPreference(left, classId, officialStartsAt);
       if (score) return score;
       return normalize(left.id).localeCompare(normalize(right.id));
     });
@@ -445,8 +503,6 @@ export function buildOfficialLessonSchedulePlan({
     if (!canonical) return;
     sessionsByNumber.set(sessionNumber, canonical);
     ordered.slice(1).forEach((session) => {
-      const status = normalize(session.status || "scheduled").toLowerCase();
-      if (["completed", "live"].includes(status)) return;
       duplicateSessions.push({
         lessonNumber: sessionNumber,
         session,
@@ -454,24 +510,6 @@ export function buildOfficialLessonSchedulePlan({
       });
     });
   });
-
-  const anchor = resolveScheduleAnchor(klass, levelId, expectedLessons);
-  const slots = anchor
-    ? buildOfficialSlotsAroundAnchor({
-      anchor,
-      anchorSession: sessionsByNumber.get(anchor.sessionNumber),
-      rules,
-      timezone,
-      excluded,
-      expectedLessons,
-    })
-    : buildOfficialSlots({
-      startDate: klass.startDate,
-      rules,
-      timezone,
-      excluded,
-      expectedLessons,
-    });
 
   const items = groups.map((group, index) => {
     const lessonNumber = index + 1;

@@ -273,3 +273,117 @@ test("B1 official repair classifies an unassigned same-time session as an orphan
   assert.equal(following.mode, "following");
   assert.equal(following.affectedCount, 26);
 });
+
+test("B1 repair uses the persisted start date and repairs the reported Thu/Sat corruption", () => {
+  const groups = getCourseSessionGroups("B1");
+  const klass = {
+    id: "XEO4NwyAZ85gThEf7krP",
+    name: "B1 Klasse",
+    levelId: "B1",
+    startDate: "2026-08-06",
+    timezone: "Africa/Accra",
+    scheduleRules: [
+      { day: "thu", startTime: "19:00", durationMinutes: 120 },
+      { day: "sat", startTime: "07:00", durationMinutes: 120 },
+    ],
+    // This stale anchor used to shift the entire generated timetable forward.
+    scheduleAnchorSessionNumber: 2,
+    scheduleAnchorStartsAt: "2026-08-13T19:00:00.000Z",
+  };
+  const makeRecord = (id, day, startsAt, extra = {}) => ({
+    id,
+    classId: klass.id,
+    topic: groups[day].topic,
+    assignmentIds: groups[day].assignmentIds,
+    curriculumIndex: day + 1,
+    curriculumDay: groups[day].day,
+    startsAt,
+    endsAt: new Date(new Date(startsAt).getTime() + 120 * 60000).toISOString(),
+    status: "scheduled",
+    ...extra,
+  });
+  const broken = [
+    makeRecord("day-0", 0, "2026-08-06T19:00:00.000Z"),
+    makeRecord("day-1", 1, "2026-08-13T19:00:00.000Z"),
+    makeRecord("day-2", 2, "2026-08-15T07:00:00.000Z"),
+    makeRecord("stale-day-4", 4, "2026-08-15T08:00:00.000Z", { repairPreferredRecord: true }),
+    makeRecord("day-3", 3, "2026-08-20T19:00:00.000Z"),
+    makeRecord("completed-day-4", 4, "2026-08-22T07:00:00.000Z", {
+      status: "completed",
+      manuallyCompleted: true,
+      attendanceCount: 8,
+    }),
+    makeRecord("day-5", 5, "2026-08-29T07:00:00.000Z"),
+  ];
+
+  const seedPlan = buildOfficialLessonSchedulePlan({ classId: klass.id, klass, sessions: broken });
+  assert.equal(seedPlan.scheduleAnchor, null);
+  assert.equal(seedPlan.items[4].session.id, "completed-day-4");
+  assert.equal(seedPlan.duplicateSessions[0].session.id, "stale-day-4");
+
+  const canonical = seedPlan.items.map((item) => ({
+    ...(item.session || { id: `generated-day-${item.lessonNumber - 1}`, status: "scheduled" }),
+    topic: item.group.topic,
+    assignmentIds: item.group.assignmentIds,
+    curriculumIndex: item.lessonNumber,
+    curriculumDay: item.group.day,
+    startsAt: item.targetStartsAt,
+    endsAt: item.targetEndsAt,
+  }));
+  const orphan = {
+    id: "XEO4NwyAZ85gThEf7krP_2026-11-12_1900",
+    classId: klass.id,
+    status: "scheduled",
+    startsAt: canonical[28].startsAt,
+    endsAt: canonical[28].endsAt,
+  };
+  const withOrphanPlan = buildOfficialLessonSchedulePlan({
+    classId: klass.id,
+    klass,
+    sessions: [...canonical, broken[3], orphan],
+  });
+  assert.equal(withOrphanPlan.orphanSessions[0].session.id, orphan.id);
+
+  const superseded = [broken[3], orphan].map((record) => ({
+    ...record,
+    status: "superseded",
+    superseded: true,
+  }));
+  const repaired = [...canonical, ...superseded];
+  const beginning = canonical.slice(0, 8).map((record, index) => [
+    `Day ${index}`,
+    record.startsAt.slice(0, 16),
+  ]);
+  assert.deepEqual(beginning, [
+    ["Day 0", "2026-08-06T19:00"],
+    ["Day 1", "2026-08-08T07:00"],
+    ["Day 2", "2026-08-13T19:00"],
+    ["Day 3", "2026-08-15T07:00"],
+    ["Day 4", "2026-08-20T19:00"],
+    ["Day 5", "2026-08-22T07:00"],
+    ["Day 6", "2026-08-27T19:00"],
+    ["Day 7", "2026-08-29T07:00"],
+  ]);
+  assert.equal(canonical.length, 29);
+  assert.equal(canonical.filter((record) => record.curriculumIndex === 5).length, 1);
+
+  klass.endDate = seedPlan.endDate;
+  const integrity = inspectTimetableIntegrity({ klass, sessions: repaired });
+  assert.equal(integrity.healthy, true);
+  assert.equal(integrity.actualCount, 29);
+  assert.deepEqual(integrity.issues, []);
+
+  const repeated = buildOfficialLessonSchedulePlan({ classId: klass.id, klass, sessions: repaired });
+  assert.equal(repeated.changedLessons, 0);
+  assert.equal(repeated.missingLessons, 0);
+
+  const shifted = buildSessionReschedulePlan({
+    klass,
+    sessions: repaired,
+    sessionId: canonical[10].id,
+    targetStartsAt: new Date(new Date(canonical[10].startsAt).getTime() + 30 * 60000).toISOString(),
+    targetEndsAt: new Date(new Date(canonical[10].endsAt).getTime() + 30 * 60000).toISOString(),
+    mode: "following",
+  });
+  assert.equal(shifted.affectedCount, 19);
+});
