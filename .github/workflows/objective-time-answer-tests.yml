@@ -11,9 +11,11 @@ on:
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'scripts/patchA1WritingPlaceholderReferences.mjs'
       - 'scripts/patchA1PricePreferenceMarking.mjs'
       - 'scripts/patchObjectiveSectionHeadingPunctuation.mjs'
       - 'scripts/patchObjectiveGrammarConsistency.mjs'
+      - 'scripts/patchInlineObjectiveSectionAnswers.mjs'
       - 'scripts/patchReorderedObjectiveGroups.mjs'
       - 'tests/a1-price-preference-marking.test.js'
       - 'tests/a1-grammar-objective-consistency.test.js'
@@ -21,6 +23,7 @@ on:
       - 'tests/objective-punctuated-section-headings.test.js'
       - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
+      - 'tests/objective-inline-part-headings.test.js'
       - 'package.json'
       - '.github/workflows/objective-time-answer-tests.yml'
   push:
@@ -35,9 +38,11 @@ on:
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
+      - 'scripts/patchA1WritingPlaceholderReferences.mjs'
       - 'scripts/patchA1PricePreferenceMarking.mjs'
       - 'scripts/patchObjectiveSectionHeadingPunctuation.mjs'
       - 'scripts/patchObjectiveGrammarConsistency.mjs'
+      - 'scripts/patchInlineObjectiveSectionAnswers.mjs'
       - 'scripts/patchReorderedObjectiveGroups.mjs'
       - 'tests/a1-price-preference-marking.test.js'
       - 'tests/a1-grammar-objective-consistency.test.js'
@@ -45,6 +50,7 @@ on:
       - 'tests/objective-punctuated-section-headings.test.js'
       - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
+      - 'tests/objective-inline-part-headings.test.js'
       - 'package.json'
       - '.github/workflows/objective-time-answer-tests.yml'
 
@@ -59,23 +65,28 @@ jobs:
       - name: Apply objective parser patches twice
         run: |
           node scripts/patchObjectiveWritingPartDetection.mjs
+          node scripts/patchA1WritingPlaceholderReferences.mjs
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
           node scripts/patchA1PricePreferenceMarking.mjs
           node scripts/patchObjectiveSectionHeadingPunctuation.mjs
           node scripts/patchObjectiveGrammarConsistency.mjs
+          node scripts/patchInlineObjectiveSectionAnswers.mjs
           node scripts/patchReorderedObjectiveGroups.mjs
+          node scripts/patchA1WritingPlaceholderReferences.mjs
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
           node scripts/patchA1PricePreferenceMarking.mjs
           node scripts/patchObjectiveSectionHeadingPunctuation.mjs
           node scripts/patchObjectiveGrammarConsistency.mjs
+          node scripts/patchInlineObjectiveSectionAnswers.mjs
           node scripts/patchReorderedObjectiveGroups.mjs
           node --check src/utils/objectiveMarking.js
           node --check src/utils/essayFeedbackEvidence.js
           node --check src/utils/naturalMarkingFeedback.js
           node --check src/utils/finalDeterministicFeedback.js
           node --check scripts/patchObjectiveGrammarConsistency.mjs
+          node --check scripts/patchInlineObjectiveSectionAnswers.mjs
           node --check scripts/patchReorderedObjectiveGroups.mjs
           grep -F 'rootsApproximatelyMatch' src/utils/objectiveMarking.js
           grep -F 'strictGrammarTextMatches' src/utils/objectiveMarking.js
@@ -108,5 +119,7 @@ jobs:
         run: node --test --test-name-pattern="reads answers beneath copied numbered questions" tests/objective-time-answer-parsing.test.js
       - name: Test question-form choice answers
         run: node --test tests/objective-question-form-choice.test.js
+      - name: Test Ruth compact objective sections
+        run: node --test tests/objective-inline-part-headings.test.js
       - name: Test multipart feedback labels
         run: node --test --test-name-pattern="labels each group" tests/objective-time-answer-parsing.test.js
