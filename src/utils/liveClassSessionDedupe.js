@@ -45,7 +45,15 @@ function sessionPreference(session = {}, classId = "") {
   return score;
 }
 
+function isOfficialScheduleRepair(session = {}) {
+  const reason = normalize(session.rescheduleReason || session.manualDateOverrideReason).toLowerCase();
+  const source = normalize(session.scheduleRepairSource || session.manualDateOverrideSource).toLowerCase();
+  return source === "official-schedule-repair"
+    || /official.*timetable.*repair|timetable repaired atomically/.test(reason);
+}
+
 export function hasManualScheduleChange(session = {}) {
+  if (isOfficialScheduleRepair(session)) return false;
   const status = normalize(session.status).toLowerCase();
   return status === "rescheduled"
     || session.manualDateOverride === true
