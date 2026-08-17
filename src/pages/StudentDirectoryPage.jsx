@@ -3,6 +3,7 @@ import { createStudent, listAllStudents, updateStudentById } from "../services/s
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
+import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 
@@ -593,6 +594,17 @@ export default function StudentDirectoryPage() {
           >
             Add Student
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("brochure")}
+            style={{
+              border: activeTab === "brochure" ? "1px solid #2563eb" : "1px solid #d1d5db",
+              background: activeTab === "brochure" ? "#eff6ff" : "#fff",
+              color: "#1a2233",
+            }}
+          >
+            Send Brochure
+          </button>
         </div>
 
         {activeTab === "directory" && (
@@ -860,6 +872,8 @@ export default function StudentDirectoryPage() {
             </div>
           </div>
         )}
+
+        {activeTab === "brochure" && <BrochureWhatsappPanel pushToast={pushToast} />}
       </section>
     </div>
   );
