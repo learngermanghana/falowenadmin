@@ -2,6 +2,7 @@ import answersDictionary from "../data/answers_dictionary.json" with { type: "js
 
 const OPTION_LETTERS = "ABCDEFX";
 const GERMAN_ARTICLES = new Set(["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines"]);
+const ENGLISH_ARTICLES = new Set(["the", "a", "an"]);
 const STOPWORDS = new Set([
   "ich", "du", "er", "sie", "es", "wir", "ihr", "ja", "nein", "gern", "gerne", "mag", "mochte", "moechte",
   "nicht", "spiele", "spielen", "kostet", "kosten", "ist", "sind", "bin", "ein", "eine", "der", "die", "das",
@@ -115,15 +116,15 @@ function stripAnswerQuestionLabel(value = "") {
 
 function extractOptionLetter(value = "") {
   const raw = stripAnswerQuestionLabel(value);
-  const anzeige = raw.match(new RegExp(`\\banzeige\\s*([${OPTION_LETTERS}])\\b`, "i"));
+  const anzeige = raw.match(new RegExp(`\banzeige\s*([${OPTION_LETTERS}])\b`, "i"));
   if (anzeige) return anzeige[1].toUpperCase();
-  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[).:-]|\\s+|$)`, "i"));
+  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\s*[).:-]|\s+|$)`, "i"));
   return explicit ? explicit[1].toUpperCase() : "";
 }
 
 function extractOptionText(value = "") {
   return stripQuestionLabel(value)
-    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[).:-]|\\s+)`, "i"), "")
+    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\s*[).:-]|\s+)`, "i"), "")
     .trim();
 }
 
@@ -480,7 +481,7 @@ function textMatches(expectedRaw = "", studentRaw = "") {
 function normalizeVocabularyAnswer(value = "") {
   const tokens = normalizeAnswer(value).split(/\s+/).filter(Boolean);
   if (tokens.length > 1 && GERMAN_ARTICLES.has(tokens[0])) tokens.shift();
-  return tokens.join(" ");
+  return tokens.filter((token) => !ENGLISH_ARTICLES.has(token)).join(" ");
 }
 
 function isCorrectAnswer(item, student) {
