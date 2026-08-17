@@ -7,12 +7,15 @@ const before = `  const collisions = countSessionTimeCollisions(proposedSessions
 
 const after = `  // Repair is intentionally anchored: earlier sessions are historical and must not block\n  // rebuilding the timetable from the administrator-selected last-correct session onward.\n  // We still reject collisions involving the anchor or any later lesson.\n  const anchorAndFollowingSessions = proposedSessions.filter((session) => {\n    const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);\n    if (lessonNumber) return lessonNumber >= anchorLessonNumber;\n    const startsAt = toDate(session.startsAt);\n    return Boolean(startsAt && startsAt.getTime() >= anchorStartsAt.getTime());\n  });\n  const collisions = countSessionTimeCollisions(anchorAndFollowingSessions);\n  if (collisions > 0) {\n    throw new Error("A session at or after the selected anchor would still overlap another active session. Choose the last correct session and Falowen will rebuild only the lessons after it.");\n  }`;
 
-if (source.includes(after)) {
-  process.exit(0);
+if (!source.includes(after)) {
+  if (!source.includes(before)) {
+    throw new Error("Following restore collision anchor changed; update patchFollowingRestoreAnchorCollisions.mjs");
+  }
+  source = source.replace(before, after);
+  await writeFile(target, source);
+  console.log("Patched following-session restore to ignore historical pre-anchor overlaps.");
 }
-if (!source.includes(before)) {
-  throw new Error("Following restore collision anchor changed; update patchFollowingRestoreAnchorCollisions.mjs");
-}
-source = source.replace(before, after);
-await writeFile(target, source);
-console.log("Patched following-session restore to ignore historical pre-anchor overlaps.");
+
+// This script is already part of predev/prebuild/pretest, so use it to keep
+// the Live Classes session table synchronized with successful repair actions.
+await import("./patchLiveClassRepairRefresh.mjs");
