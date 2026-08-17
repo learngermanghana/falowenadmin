@@ -118,8 +118,6 @@ export function dedupeCompatibleSessionRecords(sessions = [], { classId = "" } =
       if (preferred) visible.push(preferred);
     });
 
-    // Identity-free records at a moment with known curriculum records are legacy aliases.
-    // Suppress them rather than hiding a different official lesson or creating an extra row.
     void unknown;
   });
 
@@ -173,6 +171,10 @@ function courseGroupKey(group = null) {
   return ids.map((value) => normalize(value).toUpperCase()).filter(Boolean).join("|");
 }
 
+function isChronologicalDayCurriculum(groups = []) {
+  return groups.length > 0 && groups.every((group) => /^day:\d+$/.test(courseGroupKey(group)));
+}
+
 function applyCurriculumGroup(session, group, index) {
   if (!group) return session;
   return {
@@ -210,6 +212,10 @@ export function suppressNormalCurriculumDuplicates(sessions = []) {
 }
 
 function enrichCompleteSessionSet(ordered = [], groups = []) {
+  if (isChronologicalDayCurriculum(groups)) {
+    return ordered.map((session, index) => applyCurriculumGroup(session, groups[index] || null, index));
+  }
+
   const protectedGroups = new Map();
   const claimedGroupKeys = new Set();
 
@@ -237,9 +243,14 @@ function enrichCompleteSessionSet(ordered = [], groups = []) {
 export function enrichSessionsWithStableCurriculum(_ = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
 
-  // When the rebuilt record count already matches the curriculum-day count, every
-  // official session must remain visible. Protected/rescheduled sessions keep their
-  // stored curriculum and the remaining groups fill the remaining chronological rows.
+  // A1 uses day:* groups. For A1, the timetable order is the curriculum order.
+  // Never let stale assignment/day metadata make a later lesson (for example Day 20)
+  // appear before Day 1 or Day 2 after dates are repaired or shifted.
+  if (isChronologicalDayCurriculum(groups)) {
+    return ordered.slice(0, groups.length)
+      .map((session, index) => applyCurriculumGroup(session, groups[index] || null, index));
+  }
+
   if (ordered.length <= groups.length) {
     return enrichCompleteSessionSet(ordered, groups);
   }
