@@ -855,7 +855,7 @@ export default function MarkingPage() {
       }
 
       if (receipt.duplicateSkipped) {
-        error("Duplicate score blocked. This student already has a saved score for the same assignment; the submission was flagged for tutor verification.");
+        error(receipt.sheet?.message || "Score save blocked. Review the existing score or wait for the current save to finish, then try again.");
         return;
       }
 

@@ -16,15 +16,20 @@ export function isActiveScoreSaveReservation(existingScore = null, now = Date.no
   return Boolean(expiresAt && expiresAt > now);
 }
 
-export function shouldBlockScoreSave(existingScore = null, currentScore = null, {
+export function getScoreSaveBlockReason(existingScore = null, currentScore = null, {
   allowDuplicate = false,
   blockAnyDuplicate = false,
   now = Date.now(),
 } = {}) {
-  if (isActiveScoreSaveReservation(existingScore, now)) return true;
-  return blockAnyDuplicate
+  if (isActiveScoreSaveReservation(existingScore, now)) return "in_progress";
+  const blocked = blockAnyDuplicate
     ? hasSavedScoreForAssignment(existingScore)
     : shouldSkipExistingScore(existingScore, currentScore, allowDuplicate);
+  return blocked ? "same_score" : "";
+}
+
+export function shouldBlockScoreSave(existingScore = null, currentScore = null, options = {}) {
+  return Boolean(getScoreSaveBlockReason(existingScore, currentScore, options));
 }
 
 export function buildScoreSaveReservation(token, nowIso = new Date().toISOString()) {

@@ -32,7 +32,7 @@ source = replaceRequired(
 source = replaceRequired(
   source,
   'import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";',
-  'import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";\nimport { buildScoreSaveReservation, shouldBlockScoreSave } from "../utils/scoreSaveReservation.js";',
+  'import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";\nimport { buildScoreSaveReservation, getScoreSaveBlockReason } from "../utils/scoreSaveReservation.js";',
   "score reservation helper import",
 );
 
@@ -60,6 +60,7 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
     '  let existingScore = null;',
     '  let attemptMetadata = null;',
     '  let duplicateSkipped = false;',
+    '  let duplicateBlockReason = "";',
     '',
     '  if (SAVE_SCORES_TO_FIRESTORE) {',
     '    try {',
@@ -67,10 +68,11 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
     '        const existingSnap = await transaction.get(scoreRef);',
     '        existingScore = existingSnap.exists() ? existingSnap.data() : null;',
     '        attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);',
-    '        duplicateSkipped = shouldBlockScoreSave(existingScore, row.score, {',
+    '        duplicateBlockReason = getScoreSaveBlockReason(existingScore, row.score, {',
     '          allowDuplicate,',
     '          blockAnyDuplicate,',
     '        });',
+    '        duplicateSkipped = Boolean(duplicateBlockReason);',
     '        if (duplicateSkipped) return;',
     '',
     '        transaction.set(scoreRef, {',
@@ -91,6 +93,7 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
     '    existingScore = existingSnap?.exists?.() ? existingSnap.data() : null;',
     '    attemptMetadata = buildScoreAttemptMetadata(existingScore, row.score, nowIso);',
     '    duplicateSkipped = shouldSkipExistingScore(existingScore, row.score, allowDuplicate);',
+    '    duplicateBlockReason = duplicateSkipped ? "same_score" : "";',
     '  }',
     '',
     '  Object.assign(row, attemptMetadata);',
@@ -106,7 +109,7 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
 
   const legacyBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked; this student already has a saved score for this assignment. Tutor verification is required.";\n  } else if (SCORES_WEBHOOK_URL) {';
   const sameScoreBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n  } else if (SCORES_WEBHOOK_URL) {';
-  const atomicBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.attempted = false;\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked atomically because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n    receipt.firestore.success = true;\n    receipt.firestore.message = "Existing Firestore score left unchanged for tutor verification.";\n  } else if (SCORES_WEBHOOK_URL) {';
+  const atomicBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.attempted = false;\n    receipt.sheet.success = true;\n    receipt.sheet.message = duplicateBlockReason === "in_progress"\n      ? "Score save blocked because another save for this assignment is still in progress. Wait a moment and try again."\n      : "Duplicate score blocked atomically because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n    receipt.firestore.success = true;\n    receipt.firestore.message = duplicateBlockReason === "in_progress"\n      ? "Active Firestore score reservation left unchanged; retry after the current save finishes."\n      : "Existing Firestore score left unchanged for tutor verification.";\n  } else if (SCORES_WEBHOOK_URL) {';
   if (!source.includes(atomicBlockedReceipt)) {
     const receiptAnchor = source.includes(sameScoreBlockedReceipt) ? sameScoreBlockedReceipt : legacyBlockedReceipt;
     source = replaceRequired(source, receiptAnchor, atomicBlockedReceipt, "blocked duplicate receipt");
@@ -163,7 +166,7 @@ for (const marker of [
   "runTransaction",
   "duplicateScoreBlocked: Boolean(result.duplicateScoreBlocked)",
   "tutorVerificationRequired: payload.tutorVerificationRequired",
-  "shouldBlockScoreSave(existingScore, row.score",
+  "getScoreSaveBlockReason(existingScore, row.score",
   "saveReservationStatus: \"completed\"",
   "Existing Firestore score left unchanged for tutor verification.",
 ]) {

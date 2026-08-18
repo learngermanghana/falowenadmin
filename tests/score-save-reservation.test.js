@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   SCORE_SAVE_RESERVATION_TTL_MS,
   buildScoreSaveReservation,
+  getScoreSaveBlockReason,
   isActiveScoreSaveReservation,
   shouldBlockScoreSave,
 } from "../src/utils/scoreSaveReservation.js";
@@ -27,6 +28,20 @@ test("blocks a second request while the first reservation is active", () => {
   };
   assert.equal(isActiveScoreSaveReservation(existing, now), true);
   assert.equal(shouldBlockScoreSave(existing, 85, { blockAnyDuplicate: true, now }), true);
+});
+
+test("reports an in-progress reason even when the overlapping score is different", () => {
+  const now = Date.parse("2026-08-02T11:00:00.000Z");
+  const existing = {
+    score: 40,
+    saveReservationStatus: "pending",
+    saveReservationExpiresAt: "2026-08-02T11:05:00.000Z",
+  };
+  assert.equal(getScoreSaveBlockReason(existing, 75, { now }), "in_progress");
+});
+
+test("reports a same-score reason for a completed duplicate", () => {
+  assert.equal(getScoreSaveBlockReason({ score: 40, sheetSaved: true }, 40), "same_score");
 });
 
 test("allows takeover after an abandoned reservation expires", () => {
