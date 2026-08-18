@@ -987,6 +987,7 @@ export async function saveScoreRow({
   blockAnyDuplicate = false,
   markingDetails = {},
   forceSheetDedupeId = false,
+  requireAllTargets = false,
 }) {
   const nowIso = new Date().toISOString();
   const row = buildScoreRow({ studentCode, studentEmail, studentId, studentScopeKey, name, assignment, assignmentId, score, comments, level, link, source, markingDetails });
@@ -1070,6 +1071,21 @@ export async function saveScoreRow({
     } catch (error) {
       receipt.firestore.success = false;
       receipt.firestore.message = String(error?.message || "Firestore mirror save failed.");
+    }
+  }
+
+  if (requireAllTargets) {
+    const failedTargets = [];
+    if (receipt.sheet.attempted && !receipt.sheet.success) {
+      failedTargets.push(`Google Sheets: ${receipt.sheet.message || "failed"}`);
+    }
+    if (receipt.firestore.attempted && !receipt.firestore.success) {
+      failedTargets.push(`Firestore: ${receipt.firestore.message || "failed"}`);
+    }
+    if (failedTargets.length) {
+      const saveError = new Error(`Final score was not saved to all required targets. ${failedTargets.join(" | ")}`);
+      saveError.receipt = receipt;
+      throw saveError;
     }
   }
 
