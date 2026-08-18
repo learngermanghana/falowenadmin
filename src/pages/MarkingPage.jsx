@@ -811,7 +811,7 @@ export default function MarkingPage() {
         comments: currentFeedback,
         level,
         link: referenceEntry?.answer_url ?? DEFAULT_REFERENCE_LINK,
-        blockAnyDuplicate: true,
+        blockAnyDuplicate: false,
         forceSheetDedupeId: true,
         markingDetails: {
           objectiveScore: currentObjectiveScore,

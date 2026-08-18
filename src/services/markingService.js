@@ -8,6 +8,7 @@ import {
   hasWritingEvidence,
 } from "../utils/markingIntelligence.js";
 import * as base from "./markingServiceBase.js";
+import { withResubmissionComparison } from "../utils/resubmissionFeedback.js";
 
 export * from "./markingServiceBase.js";
 
@@ -320,18 +321,18 @@ export async function markSubmissionWithAI(options = {}) {
   primary = routeMissedWritingToReview(primary, originalSubmissionText);
 
   if (isBlockedScore(scoreValueFromResult(primary)) || !hasWritingEvidence(primary)) {
-    return primary;
+    return withResubmissionComparison(primary, options.submission);
   }
 
   try {
     const secondary = await requestSecondExaminer(preparedOptions);
-    return mergeSecondExaminer(primary, secondary);
+    return withResubmissionComparison(mergeSecondExaminer(primary, secondary), options.submission);
   } catch (error) {
     console.warn("Second examiner unavailable; routing writing submission to tutor review.", {
       assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
       message: error?.message || String(error),
     });
-    return mergeSecondExaminer(primary, null, error);
+    return withResubmissionComparison(mergeSecondExaminer(primary, null, error), options.submission);
   }
 }
 

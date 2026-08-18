@@ -116,15 +116,15 @@ function stripAnswerQuestionLabel(value = "") {
 
 function extractOptionLetter(value = "") {
   const raw = stripAnswerQuestionLabel(value);
-  const anzeige = raw.match(new RegExp(`\banzeige\s*([${OPTION_LETTERS}])\b`, "i"));
+  const anzeige = raw.match(new RegExp(`\\banzeige\\s*([${OPTION_LETTERS}])\\b`, "i"));
   if (anzeige) return anzeige[1].toUpperCase();
-  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\s*[).:-]|\s+|$)`, "i"));
+  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:-]|\\s+|$)`, "i"));
   return explicit ? explicit[1].toUpperCase() : "";
 }
 
 function extractOptionText(value = "") {
   return stripQuestionLabel(value)
-    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\s*[).:-]|\s+)`, "i"), "")
+    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:-]|\\s+)`, "i"), "")
     .trim();
 }
 
@@ -318,6 +318,11 @@ function parseNumberedEntriesFromChunk(chunk = "") {
   const source = String(chunk || "").trim();
   if (!source) return [];
 
+  const labelled = source.match(/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
+  if (labelled && normalizeAnswer(labelled[2])) {
+    return [{ number: Number(labelled[1]), answer: labelled[2].trim() }];
+  }
+
   const compactPattern = /(?:^|\s)(\d{1,3})\s*[).:–-]?\s*(.*?)(?=\s+\d{1,3}\s*[).:–-]?|$)/g;
   const compactMatches = [...source.matchAll(compactPattern)]
     .map((match) => ({ number: Number(match[1]), answer: String(match[2] || "").trim() }))
@@ -325,7 +330,7 @@ function parseNumberedEntriesFromChunk(chunk = "") {
 
   if (compactMatches.length > 1) return compactMatches;
 
-  const single = source.match(/^\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
+  const single = source.match(/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
   if (single && normalizeAnswer(single[2])) return [{ number: Number(single[1]), answer: single[2].trim() }];
 
   return [];
@@ -535,9 +540,37 @@ function scoreFlatCandidate(referenceItems = [], answers = []) {
   return { correct, missing, answers };
 }
 
+function alignRestartedGroups(referenceItems = [], groups = []) {
+  if (!groups.length || !referenceItems.length) return [];
+  if (groups.length === 1 && groups[0].length >= referenceItems.length) return [];
+  let candidates = [{ answers: Array(referenceItems.length).fill(""), nextStart: 0 }];
+  for (const group of groups) {
+    const ordered = [...group].sort((left, right) => left.number - right.number);
+    const nextCandidates = [];
+    for (const candidate of candidates) {
+      const lastStart = referenceItems.length - ordered.length;
+      for (let start = candidate.nextStart; start <= lastStart; start += 1) {
+        const answers = [...candidate.answers];
+        ordered.forEach((entry, index) => { answers[start + index] = entry.answer; });
+        nextCandidates.push({ answers, nextStart: start + ordered.length });
+      }
+    }
+    candidates = nextCandidates
+      .map((candidate) => ({ ...candidate, ...scoreFlatCandidate(referenceItems, candidate.answers) }))
+      .sort((left, right) => right.correct - left.correct || left.missing - right.missing)
+      .slice(0, 40);
+  }
+  return candidates[0]?.answers || [];
+}
+
 function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
   const candidates = getFlatAnswerCandidateSequences(submissionText);
   if (!candidates.length) return [];
+  const restartedGroups = splitIntoAnswerBlocks(submissionText)
+    .map((block) => extractRestartedNumberingEntries(block))
+    .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
+  const aligned = alignRestartedGroups(referenceItems, restartedGroups);
+  if (aligned.length) candidates.push(aligned);
   return candidates
     .map((answers) => scoreFlatCandidate(referenceItems, answers))
     .sort((a, b) => b.correct - a.correct || a.missing - b.missing || b.answers.length - a.answers.length)[0]?.answers || [];
