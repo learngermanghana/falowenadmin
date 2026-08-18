@@ -16,12 +16,19 @@ source = replaceOnce(
   "compact Uhr spacing normalization",
 );
 
-source = replaceOnce(
-  source,
-  '  if (!source) return [];\n\n  const compactPattern =',
-  '  if (!source) return [];\n\n  const cleanParsedAnswer = (value = "") => String(value || "")\n    .replace(/^[).,:;–-]+\\s*/, "")\n    .trim();\n\n  const compactPattern =',
-  "repeated answer delimiter cleanup helper",
-);
+const cleanupHelper = '  const cleanParsedAnswer = (value = "") => String(value || "")\n    .replace(/^[).,:;–-]+\\s*/, "")\n    .trim();';
+if (!source.includes(cleanupHelper)) {
+  const parserAnchor = source.includes('  if (!source) return [];\n\n  const labelled =')
+    ? '  if (!source) return [];\n\n  const labelled ='
+    : '  if (!source) return [];\n\n  const compactPattern =';
+  if (!source.includes(parserAnchor)) {
+    throw new Error("repeated answer delimiter cleanup helper anchor changed; update patchMultipartObjectiveAnswerBlocks.mjs");
+  }
+  source = source.replace(
+    parserAnchor,
+    `${parserAnchor.split("\n\n")[0]}\n\n${cleanupHelper}\n\n${parserAnchor.split("\n\n")[1]}`,
+  );
+}
 
 source = replaceOnce(
   source,
