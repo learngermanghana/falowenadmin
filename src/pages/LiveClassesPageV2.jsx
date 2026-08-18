@@ -114,6 +114,33 @@ function statusStyle(status) {
   return { background: "#dbeafe", color: "#1e40af" };
 }
 
+function emailStatusStyle(status) {
+  const value = normalize(status).toLowerCase();
+  if (["sent", "retry_sent"].includes(value)) return { background: "#dcfce7", color: "#166534" };
+  if (["failed", "retry_failed"].includes(value)) return { background: "#fee2e2", color: "#991b1b" };
+  if (["skipped", "no_recipients", "no_sessions"].includes(value)) return { background: "#fef3c7", color: "#92400e" };
+  return { background: "#e2e8f0", color: "#334155" };
+}
+
+function EmailDeliveryStatus({ title, status, lastRunAt, lastSentAt, sentCount, recipientCount, detail }) {
+  const normalizedStatus = normalize(status) || "Not checked yet";
+  const sent = ["sent", "retry_sent"].includes(normalizedStatus.toLowerCase());
+  return (
+    <div style={{ border: "1px solid #dbe3ee", borderRadius: 10, padding: 12, background: "#fff", display: "grid", gap: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <strong>{title}</strong>
+        <span style={{ ...emailStatusStyle(normalizedStatus), borderRadius: 999, padding: "4px 9px", fontWeight: 800, fontSize: 12 }}>
+          {sent ? "SENT" : normalizedStatus.replace(/[_-]+/g, " ").toUpperCase()}
+        </span>
+      </div>
+      <span>Last worker check: <strong>{formatDateTime(lastRunAt)}</strong></span>
+      <span>Last successful send: <strong>{formatDateTime(lastSentAt)}</strong></span>
+      <span>Recipients: <strong>{Number(recipientCount ?? sentCount ?? 0)}</strong> · Emails sent: <strong>{Number(sentCount || 0)}</strong></span>
+      {detail ? <span style={{ color: normalizedStatus.toLowerCase().includes("fail") ? "#991b1b" : "#92400e" }}>Detail: <strong>{detail}</strong></span> : null}
+    </div>
+  );
+}
+
 function sessionDurationMinutes(session = {}) {
   const startsAt = new Date(session.startsAt || 0);
   const endsAt = new Date(session.endsAt || 0);
@@ -543,7 +570,35 @@ export default function LiveClassesPageV2() {
         />
       ) : null}
 
-      {!loading && dashboard && activeTab === "communication" ? <article className="card"><h2>Schedule and communication</h2><p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)}</p><p>Latest completed: {formatDateTime(dashboard.latestCompletedSession?.startsAt)}</p><p>Calendar: <a href={`/api/calendar/class/${dashboard.klass.id}.ics`}>Open class calendar feed</a></p><p>Moving or cancelling a session creates the matching student notification and communication record automatically.</p></article> : null}
+      {!loading && dashboard && activeTab === "communication" ? <article className="card">
+        <h2>Schedule and communication</h2>
+        <p>Next valid session: {formatDateTime(dashboard.nextSession?.startsAt)}</p>
+        <p>Latest completed: {formatDateTime(dashboard.latestCompletedSession?.startsAt)}</p>
+        <p>Calendar: <a href={`/api/calendar/class/${dashboard.klass.id}.ics`}>Open class calendar feed</a></p>
+        <h3>Email delivery status</h3>
+        <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+          <EmailDeliveryStatus
+            title="Class about-to-start reminder"
+            status={dashboard.klass.classReminderEmailLastStatus}
+            lastRunAt={dashboard.klass.classReminderEmailLastRunAt}
+            lastSentAt={dashboard.klass.classReminderEmailLastSentAt}
+            sentCount={dashboard.klass.classReminderEmailLastSentCount}
+            recipientCount={dashboard.klass.classReminderEmailLastRecipientCount}
+            detail={dashboard.klass.classReminderEmailLastSkipReason || dashboard.klass.classReminderEmailLastError}
+          />
+          <EmailDeliveryStatus
+            title="Attendance summary email"
+            status={dashboard.klass.attendanceConfirmationEmailLastStatus}
+            lastRunAt={dashboard.klass.attendanceConfirmationEmailLastRunAt}
+            lastSentAt={dashboard.klass.attendanceConfirmationEmailLastSentAt}
+            sentCount={dashboard.klass.attendanceConfirmationEmailLastSentCount}
+            recipientCount={dashboard.klass.attendanceConfirmationEmailLastRecipientCount}
+            detail={dashboard.klass.attendanceConfirmationEmailLastError}
+          />
+        </div>
+        <p><Link to="/communication">Open Communication settings</Link> to change the attendance email frequency or turn it off.</p>
+        <p>Moving or cancelling a session creates the matching student notification and communication record automatically.</p>
+      </article> : null}
     </section>
   );
 }
