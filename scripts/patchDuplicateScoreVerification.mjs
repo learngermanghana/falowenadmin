@@ -104,12 +104,13 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
     "atomic duplicate reservation",
   );
 
-  source = replaceRequired(
-    source,
-    '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked; this student already has a saved score for this assignment. Tutor verification is required.";\n  } else if (SCORES_WEBHOOK_URL) {',
-    '  if (duplicateSkipped) {\n    receipt.sheet.attempted = false;\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked atomically; this student already has a saved or in-progress score for this assignment. Tutor verification is required.";\n    receipt.firestore.success = true;\n    receipt.firestore.message = "Existing Firestore score left unchanged for tutor verification.";\n  } else if (SCORES_WEBHOOK_URL) {',
-    "blocked duplicate receipt",
-  );
+  const legacyBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked; this student already has a saved score for this assignment. Tutor verification is required.";\n  } else if (SCORES_WEBHOOK_URL) {';
+  const sameScoreBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n  } else if (SCORES_WEBHOOK_URL) {';
+  const atomicBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.attempted = false;\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked atomically because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n    receipt.firestore.success = true;\n    receipt.firestore.message = "Existing Firestore score left unchanged for tutor verification.";\n  } else if (SCORES_WEBHOOK_URL) {';
+  if (!source.includes(atomicBlockedReceipt)) {
+    const receiptAnchor = source.includes(sameScoreBlockedReceipt) ? sameScoreBlockedReceipt : legacyBlockedReceipt;
+    source = replaceRequired(source, receiptAnchor, atomicBlockedReceipt, "blocked duplicate receipt");
+  }
 
   const reservedFirestoreWrite = [
     '  if (SAVE_SCORES_TO_FIRESTORE && !receipt.duplicateSkipped) {',
