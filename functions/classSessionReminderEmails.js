@@ -3,13 +3,6 @@ const crypto = require("crypto");
 const TZ = "Africa/Accra";
 const DEFAULT_LEADS = [30, 10];
 const DEFAULT_GRACE_MIN = 7;
-const DEFAULT_CLASS_REMINDER_ZOOM = Object.freeze({
-  joinUrl: "https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09",
-  chatUrl: "https://us06web.zoom.us/launch/jc/6886900916",
-  meetingId: "688 690 0916",
-  passcode: "german",
-  sip: "6886900916@zoomcrc.com",
-});
 const PROCESSING_STALE_MS = 20 * 60 * 1000;
 const BLOCKED_SESSION_STATUSES = new Set([
   "cancelled", "canceled", "completed", "superseded", "deleted",
@@ -299,13 +292,18 @@ function resolveClassWebhookConfig(klass = {}, fallback = {}) {
   };
 }
 
-function zoomDetails() {
+function zoomDetails(klass = {}, profile = {}) {
   return {
-    url: DEFAULT_CLASS_REMINDER_ZOOM.joinUrl,
-    chatUrl: DEFAULT_CLASS_REMINDER_ZOOM.chatUrl,
-    meetingId: DEFAULT_CLASS_REMINDER_ZOOM.meetingId,
-    passcode: DEFAULT_CLASS_REMINDER_ZOOM.passcode,
-    sip: DEFAULT_CLASS_REMINDER_ZOOM.sip,
+    url: text(
+      klass.zoomUrl || klass.zoomLink || klass.meetingUrl || klass.joinUrl
+      || profile.joinUrl || profile.url || profile.zoomUrl,
+    ),
+    meetingId: text(
+      klass.zoomMeetingId || klass.meetingId || profile.meetingId || profile.zoomMeetingId,
+    ),
+    passcode: text(
+      klass.zoomPasscode || klass.passcode || profile.passcode || profile.zoomPasscode,
+    ),
   };
 }
 
@@ -325,13 +323,11 @@ function buildReminderMessage({ student, klass, session, leadMin, zoom = {} } = 
     `Date: ${formatDate(startsAt, timezone)}`,
     `Time: ${formatTime(startsAt, timezone)} Ghana time`,
   ];
-  if (zoom.url || zoom.chatUrl || zoom.meetingId || zoom.passcode || zoom.sip) {
-    lines.push("", "Join Zoom Meeting");
+  if (zoom.url || zoom.meetingId || zoom.passcode) {
+    lines.push("", "Join the class:");
     if (zoom.url) lines.push(zoom.url);
-    if (zoom.chatUrl) lines.push("", "Meeting chat link", zoom.chatUrl);
-    if (zoom.meetingId) lines.push("", `Meeting ID: ${zoom.meetingId}`);
+    if (zoom.meetingId) lines.push(`Meeting ID: ${zoom.meetingId}`);
     if (zoom.passcode) lines.push(`Passcode: ${zoom.passcode}`);
-    if (zoom.sip) lines.push("", "Join by SIP", `• ${zoom.sip}`);
   }
   lines.push("", "Please join 5 minutes early.", "", "Best regards,", "Learn Language Education Academy (Falowen)");
   return lines.join("\n");
@@ -342,7 +338,7 @@ function rowForReminder({ klass, student, session, leadMin, message } = {}) {
     announcement: message,
     class: text(klass.name || klass.className || klass.classId || klass.id),
     date: isoDate(sessionStart(session), text(klass.timezone) || TZ),
-    link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),
+    link: "",
     topic: `Class reminder — ${topicForSession(session)}`,
     email: text(student.email),
     attach_certificate: "FALSE",
@@ -449,28 +445,10 @@ function classReminderEnabled(klass = {}) {
   return !["off", "disabled"].includes(comparable(klass.classReminderEmailMode));
 }
 
-async function writeClassReminderState({ db, admin, klass, session, leadMin, status, skipReason = "", error = "", recipientCount = null }) {
-  if (!klass?.id) return;
-  const timestamp = admin.firestore.FieldValue.serverTimestamp();
-  const payload = {
-    classReminderEmailLastRunAt: timestamp,
-    classReminderEmailLastStatus: status,
-    classReminderEmailLastSkipReason: skipReason,
-    classReminderEmailLastError: error,
-    classReminderEmailLastSessionId: text(session?.id),
-    classReminderEmailLastTopic: topicForSession(session || {}),
-    classReminderEmailLastLeadMinutes: Number(leadMin || 0),
-    classReminderEmailLastSessionStartsAt: sessionStart(session)?.toISOString() || "",
-  };
-  if (recipientCount !== null) payload.classReminderEmailLastRecipientCount = Number(recipientCount || 0);
-  await db.collection("classes").doc(klass.id).set(payload, { merge: true });
-}
-
 async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl }) {
   const { session, leadMin } = due;
   const klass = resolveClassForSession(session, classes);
   if (!klass || BLOCKED_CLASS_STATUSES.has(comparable(klass.status)) || !classReminderEnabled(klass)) {
-    if (klass) await writeClassReminderState({ db, admin, klass, session, leadMin, status: "skipped", skipReason: "inactive_or_missing_class" });
     return { sent: 0, skipped: "inactive_or_missing_class" };
   }
 
@@ -481,33 +459,16 @@ async function processReminder({ admin, db, due, classes, students, config, now,
       sessionId: session.id,
       holiday: text(holiday.name || holiday.localName),
     });
-    await writeClassReminderState({ db, admin, klass, session, leadMin, status: "skipped", skipReason: "holiday_closed" });
     return { sent: 0, skipped: "holiday_closed" };
   }
 
   const recipients = students.filter((student) =>
     isActiveStudent(student) && studentBelongsToClass(student, klass) && text(student.email),
   );
-  if (!recipients.length) {
-    await db.collection("classes").doc(klass.id).set({
-      classReminderEmailLastRunAt: admin.firestore.FieldValue.serverTimestamp(),
-      classReminderEmailLastStatus: "skipped",
-      classReminderEmailLastSkipReason: "no_recipients",
-      classReminderEmailLastRecipientCount: 0,
-      classReminderEmailLastSessionId: text(session.id),
-      classReminderEmailLastSessionStartsAt: sessionStart(session)?.toISOString() || "",
-      classReminderEmailLastError: "",
-    }, { merge: true });
-    return { sent: 0, skipped: "no_recipients" };
-  }
+  if (!recipients.length) return { sent: 0, skipped: "no_recipients" };
 
   const sendRef = await reserveSend({ db, admin, klass, session, leadMin, now });
-  if (!sendRef) {
-    await writeClassReminderState({ db, admin, klass, session, leadMin, status: "skipped", skipReason: "already_sent_or_changed", recipientCount: recipients.length });
-    return { sent: 0, skipped: "already_sent_or_changed" };
-  }
-
-  await writeClassReminderState({ db, admin, klass, session, leadMin, status: "processing", recipientCount: recipients.length });
+  if (!sendRef) return { sent: 0, skipped: "already_sent_or_changed" };
 
   const profile = await loadZoomProfile(db, klass);
   const zoom = zoomDetails(klass, profile);
@@ -532,10 +493,6 @@ async function processReminder({ admin, db, due, classes, students, config, now,
       classReminderEmailLastSentAt: timestamp,
       classReminderEmailLastStatus: "sent",
       classReminderEmailLastSentCount: rows.length,
-      classReminderEmailLastRecipientCount: rows.length,
-      classReminderEmailLastLeadMinutes: leadMin,
-      classReminderEmailLastSessionStartsAt: sessionStart(session)?.toISOString() || "",
-      classReminderEmailLastSkipReason: "",
       classReminderEmailLastSessionId: text(session.id),
       classReminderEmailLastTopic: topicForSession(session),
       classReminderEmailLastError: "",
@@ -547,9 +504,6 @@ async function processReminder({ admin, db, due, classes, students, config, now,
     await db.collection("classes").doc(klass.id).set({
       classReminderEmailLastRunAt: timestamp,
       classReminderEmailLastStatus: "failed",
-      classReminderEmailLastSkipReason: "",
-      classReminderEmailLastLeadMinutes: leadMin,
-      classReminderEmailLastSessionStartsAt: sessionStart(session)?.toISOString() || "",
       classReminderEmailLastError: message,
     }, { merge: true });
     throw error;

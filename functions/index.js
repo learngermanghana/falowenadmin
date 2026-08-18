@@ -4,15 +4,11 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");
 const { isStudentOnPublishedRoster } = require("./publishedRosterMembership.js");
-const { registerStudentProfileUpdateRoute } = require("./studentProfileUpdate.js");
 const { onRequest } = require("firebase-functions/v2/https");
-const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
-const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");
-const { createStudentPaymentUpdateEmailTrigger } = require("./studentPaymentUpdateEmails.js");
-const { createClassSessionReminderEmailJob } = require("./classSessionReminderEmails.js");
 const { createAttendanceConfirmationEmailJob } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
 
@@ -68,7 +64,6 @@ const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
 const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");
 const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIPT_URL");
 const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");
-const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -225,8 +220,6 @@ async function requireAuth(req) {
 
   return decoded;
 }
-
-registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist });
 
 function sessionDocRef(classId, sessionId) {
   return db.doc(`attendance/${classId}/sessions/${sessionId}`);
@@ -1502,331 +1495,6 @@ async function deleteStudentRowsFromSheet({ studentId, studentCode, email, stude
   };
 }
 
-// BEGIN STUDENT PAYMENT LINKS
-const PAYSTACK_API_BASE_URL = "https://api.paystack.co";
-const PAYSTACK_CURRENCY = "GHS";
-const PAYSTACK_CHARGE_RATE_FOR_STUDENTS = 0.0195;
-const PAYSTACK_STUDENT_CHARGE_SHARE = 0.5;
-
-function paymentNumber(value) {
-  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function roundMoney(value) {
-  return Math.round((paymentNumber(value) + Number.EPSILON) * 100) / 100;
-}
-
-function calculateStudentCheckoutAmount(netAmount) {
-  const amount = roundMoney(netAmount);
-  if (amount <= 0) return 0;
-  return Math.ceil(amount / (1 - PAYSTACK_CHARGE_RATE_FOR_STUDENTS * PAYSTACK_STUDENT_CHARGE_SHARE));
-}
-
-function paystackSecret() {
-  return String(paystackSecretKeySecret.value() || process.env.PAYSTACK_SECRET || process.env.PAYSTACK_SECRET_KEY || "").trim();
-}
-
-function paystackCallbackUrl() {
-  const paymentConfig = runtimeConfig.payments || {};
-  return String(paymentConfig.callback_url || process.env.PAYSTACK_CALLBACK_URL || "").trim();
-}
-
-function safePaymentReferencePart(value) {
-  return String(value || "student").replace(/[^a-zA-Z0-9.-]/g, "-").replace(/-+/g, "-").slice(0, 36) || "student";
-}
-
-function createPaymentReference(studentId) {
-  const suffix = crypto.randomBytes(5).toString("hex");
-  return "FAL-" + safePaymentReferencePart(studentId) + "-" + Date.now() + "-" + suffix;
-}
-
-function resolveStudentPaymentEmail(student = {}, requestedEmail = "") {
-  return String(requestedEmail || student.email || student.studentEmail || "").trim().toLowerCase();
-}
-
-function resolveStudentCurrentBalance(student = {}) {
-  const explicitValues = [student.balanceDue, student.balance, student.outstandingBalance, student.amountDue];
-  for (const value of explicitValues) {
-    const amount = paymentNumber(value);
-    if (amount > 0) return roundMoney(amount);
-  }
-  const tuitionFee = paymentNumber(student.tuitionFee);
-  const paid = paymentNumber(student.paid);
-  return tuitionFee > 0 ? roundMoney(Math.max(0, tuitionFee - paid)) : 0;
-}
-
-function paymentAdminEmailSet() {
-  const paymentConfig = runtimeConfig.payments || {};
-  const configuredEmails = [
-    paymentConfig.admin_emails,
-    process.env.PAYMENT_ADMIN_EMAILS,
-  ]
-    .flatMap((value) => String(value || "").split(","))
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-  return new Set([
-    "moxflex@gmail.com",
-    ...teacherAllowlist,
-    ...configuredEmails,
-  ]);
-}
-
-async function requirePaymentAdmin(req) {
-  const header = String(req.headers.authorization || "");
-  const match = header.match(/^Bearer (.+)$/);
-  if (!match) {
-    const error = new Error("Missing Authorization Bearer token");
-    error.statusCode = 401;
-    throw error;
-  }
-
-  const decoded = await admin.auth().verifyIdToken(match[1]);
-  const email = String(decoded.email || "").trim().toLowerCase();
-  const role = String(decoded.role || decoded.user_role || "").trim().toLowerCase();
-  const claimAllowed = decoded.admin === true || decoded.staff === true || role === "admin" || role === "staff";
-  const emailAllowed = email && paymentAdminEmailSet().has(email);
-
-  if (!claimAllowed && !emailAllowed) {
-    console.warn("payment_admin_auth_failure", { uid: decoded.uid, email });
-    const error = new Error("Admin or staff access required");
-    error.statusCode = 403;
-    throw error;
-  }
-
-  return decoded;
-}
-
-async function initializePaystackPayment({ email, checkoutAmount, reference, metadata }) {
-  const secret = paystackSecret();
-  if (!secret) {
-    const error = new Error("PAYSTACK_SECRET is not configured");
-    error.statusCode = 503;
-    throw error;
-  }
-
-  const payload = {
-    email,
-    amount: String(Math.round(roundMoney(checkoutAmount) * 100)),
-    currency: PAYSTACK_CURRENCY,
-    reference,
-    metadata: JSON.stringify(metadata),
-  };
-  const callbackUrl = paystackCallbackUrl();
-  if (callbackUrl) payload.callback_url = callbackUrl;
-
-  const response = await fetch(PAYSTACK_API_BASE_URL + "/transaction/initialize", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + secret,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data?.status !== true || !data?.data?.authorization_url) {
-    const error = new Error(data?.message || "Paystack could not initialize this payment");
-    error.statusCode = response.status || 502;
-    throw error;
-  }
-  return data.data;
-}
-
-function webhookSignatureIsValid(req) {
-  const secret = paystackSecret();
-  const received = String(req.headers["x-paystack-signature"] || "").trim().toLowerCase();
-  if (!secret || !received) return false;
-  const candidates = [];
-  if (Buffer.isBuffer(req.rawBody) && req.rawBody.length) candidates.push(req.rawBody);
-  candidates.push(Buffer.from(JSON.stringify(req.body || {}), "utf8"));
-  return candidates.some((payload) => crypto.createHmac("sha512", secret).update(payload).digest("hex").toLowerCase() === received);
-}
-
-async function applySuccessfulPaystackPayment(eventData = {}) {
-  const reference = String(eventData.reference || "").trim();
-  if (!reference) throw new Error("Paystack webhook is missing a transaction reference");
-
-  const paymentRef = db.collection("payments").doc(reference);
-  return db.runTransaction(async (transaction) => {
-    const paymentSnap = await transaction.get(paymentRef);
-    if (!paymentSnap.exists) throw new Error("Unknown Falowen payment reference: " + reference);
-    const payment = paymentSnap.data() || {};
-    if (String(payment.status || "").toLowerCase() === "paid") {
-      return { duplicate: true, studentId: payment.studentId, reference };
-    }
-
-    const expectedSubunit = Math.round(paymentNumber(payment.checkoutAmount) * 100);
-    const receivedSubunit = Number(eventData.amount || 0);
-    const currency = String(eventData.currency || "").trim().toUpperCase();
-    if (!Number.isFinite(receivedSubunit) || receivedSubunit !== expectedSubunit) {
-      throw new Error("Paystack amount does not match the generated payment intent");
-    }
-    if (currency !== PAYSTACK_CURRENCY) throw new Error("Unexpected Paystack currency: " + currency);
-
-    const studentId = String(payment.studentId || "").trim();
-    if (!studentId) throw new Error("Payment intent is missing studentId");
-    const studentRef = db.collection(STUDENTS_COLLECTION).doc(studentId);
-    const studentSnap = await transaction.get(studentRef);
-    if (!studentSnap.exists) throw new Error("Student record not found for payment");
-    const student = studentSnap.data() || {};
-
-    const tuitionCredit = roundMoney(payment.tuitionCredit);
-    const currentPaid = roundMoney(student.paid);
-    const currentBalance = resolveStudentCurrentBalance(student);
-    const nextPaid = roundMoney(currentPaid + tuitionCredit);
-    const nextBalance = roundMoney(Math.max(0, currentBalance - tuitionCredit));
-    const paymentStatus = nextBalance <= 0 ? "Paid" : "Partially Paid";
-    const paidAtValue = eventData.paid_at || eventData.paidAt || null;
-
-    transaction.set(studentRef, {
-      paid: nextPaid,
-      balanceDue: nextBalance,
-      balance: nextBalance,
-      paymentStatus,
-      status: nextBalance <= 0 ? "Paid" : (student.status || "Active"),
-      lastPaymentAmount: tuitionCredit,
-      lastPaymentProvider: "Paystack",
-      lastPaymentReference: reference,
-      lastPaymentAt: paidAtValue ? admin.firestore.Timestamp.fromDate(new Date(paidAtValue)) : admin.firestore.FieldValue.serverTimestamp(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    transaction.set(paymentRef, {
-      status: "paid",
-      paidAt: paidAtValue ? admin.firestore.Timestamp.fromDate(new Date(paidAtValue)) : admin.firestore.FieldValue.serverTimestamp(),
-      paystackTransactionId: eventData.id || null,
-      channel: eventData.channel || "",
-      gatewayResponse: eventData.gateway_response || eventData.gatewayResponse || "",
-      verifiedCurrency: currency,
-      verifiedAmountSubunit: receivedSubunit,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    return { duplicate: false, studentId, reference, nextPaid, nextBalance, paymentStatus };
-  });
-}
-
-app.post("/payments/create-link", async (req, res) => {
-  try {
-    const user = await requirePaymentAdmin(req);
-    const studentId = String(req.body?.studentId || "").trim();
-    const tuitionCredit = roundMoney(req.body?.amount);
-    const purpose = String(req.body?.purpose || "balance").trim() || "balance";
-    if (!studentId) return res.status(400).json({ ok: false, error: "studentId is required" });
-    if (tuitionCredit <= 0) return res.status(400).json({ ok: false, error: "amount must be greater than zero" });
-
-    const studentRef = db.collection(STUDENTS_COLLECTION).doc(studentId);
-    const studentSnap = await studentRef.get();
-    if (!studentSnap.exists) return res.status(404).json({ ok: false, error: "Student not found" });
-    const student = studentSnap.data() || {};
-    const email = resolveStudentPaymentEmail(student, req.body?.email);
-    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "A valid student email is required by Paystack" });
-
-    const checkoutAmount = calculateStudentCheckoutAmount(tuitionCredit);
-    const processingShare = roundMoney(checkoutAmount - tuitionCredit);
-    const reference = createPaymentReference(studentId);
-    const metadata = {
-      source: "falowen_admin_student_directory",
-      studentId,
-      studentCode: String(student.studentCode || student.studentcode || studentId),
-      studentName: String(student.name || student.studentName || ""),
-      purpose,
-      tuitionCredit,
-      checkoutAmount,
-    };
-
-    const paystack = await initializePaystackPayment({ email, checkoutAmount, reference, metadata });
-    const payment = {
-      reference,
-      studentId,
-      studentCode: metadata.studentCode,
-      studentName: metadata.studentName,
-      email,
-      purpose,
-      currency: PAYSTACK_CURRENCY,
-      tuitionCredit,
-      checkoutAmount,
-      processingShare,
-      amountSubunit: Math.round(checkoutAmount * 100),
-      provider: "Paystack",
-      status: "pending",
-      authorizationUrl: paystack.authorization_url,
-      accessCode: paystack.access_code || "",
-      createdBy: user.uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
-    await db.collection("payments").doc(reference).set(payment, { merge: true });
-
-    return res.json({
-      ok: true,
-      payment: {
-        ...payment,
-        createdAt: new Date().toISOString(),
-      },
-    });
-  } catch (error) {
-    console.error("student_payment_link_failed", { message: error?.message || String(error) });
-    return res.status(error?.statusCode || 500).json({ ok: false, error: error?.message || "Could not generate payment link" });
-  }
-});
-
-app.get("/payments/student/:studentId", async (req, res) => {
-  try {
-    await requirePaymentAdmin(req);
-    const studentId = String(req.params.studentId || "").trim();
-    if (!studentId) return res.status(400).json({ ok: false, error: "studentId is required" });
-
-    const snapshot = await db.collection("payments").where("studentId", "==", studentId).get();
-    const toIso = (value) => {
-      if (!value) return null;
-      if (typeof value.toDate === "function") return value.toDate().toISOString();
-      const parsed = new Date(value);
-      return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
-    };
-    const payments = snapshot.docs
-      .map((docSnap) => {
-        const data = docSnap.data() || {};
-        return {
-          id: docSnap.id,
-          ...data,
-          createdAt: toIso(data.createdAt),
-          paidAt: toIso(data.paidAt),
-          updatedAt: toIso(data.updatedAt),
-        };
-      })
-      .sort((a, b) => new Date(b.paidAt || b.createdAt || 0).getTime() - new Date(a.paidAt || a.createdAt || 0).getTime())
-      .slice(0, 50);
-
-    return res.json({ ok: true, payments });
-  } catch (error) {
-    return res.status(error?.statusCode || 401).json({ ok: false, error: error?.message || "Could not load payment history" });
-  }
-});
-
-app.post("/payments/paystack-webhook", async (req, res) => {
-  if (!webhookSignatureIsValid(req)) {
-    console.warn("paystack_webhook_rejected", { reason: "invalid_signature" });
-    return res.status(401).json({ ok: false, error: "Invalid Paystack signature" });
-  }
-
-  const event = req.body || {};
-  if (String(event.event || "") !== "charge.success") return res.status(200).json({ ok: true, ignored: true });
-  const reference = String(event?.data?.reference || "").trim();
-  if (!reference.startsWith("FAL-")) return res.status(200).json({ ok: true, ignored: true, reason: "non_falowen_reference" });
-
-  try {
-    const result = await applySuccessfulPaystackPayment(event.data || {});
-    console.log("paystack_payment_applied", result);
-    return res.status(200).json({ ok: true, ...result });
-  } catch (error) {
-    console.error("paystack_payment_apply_failed", { message: error?.message || String(error), reference: event?.data?.reference || "" });
-    return res.status(500).json({ ok: false, error: error?.message || "Payment could not be applied" });
-  }
-});
-// END STUDENT PAYMENT LINKS
-
 app.post("/students/delete-account", async (req, res) => {
   try {
     await requireAuth(req);
@@ -1967,35 +1635,6 @@ async function createAutomaticMarkingJob(event, collectionShape) {
     markingJobCreatedAt: now,
   }, { merge: true });
 }
-
-exports.sendStudentPaymentUpdateEmail = createStudentPaymentUpdateEmailTrigger({
-  admin,
-  db,
-  onDocumentUpdated,
-  runtimeConfig,
-});
-
-// BEGIN AUTOMATIC PAID STUDENT ORIENTATION SYNC
-const automaticPaidStudentOrientationHandler = createOrientationAutoSyncHandler({
-  db,
-  appsScriptUrl: () => String(
-    orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || ""
-  ).trim(),
-  syncSecret: () => String(
-    orientationSyncSecret.value() || process.env.ORIENTATION_SYNC_SECRET || ""
-  ).trim(),
-});
-
-exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
-  {
-    region: "europe-west1",
-    document: "students/{studentCode}",
-    secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
-    timeoutSeconds: 60,
-  },
-  automaticPaidStudentOrientationHandler
-);
-// END AUTOMATIC PAID STUDENT ORIENTATION SYNC
 
 exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
   await createAutomaticMarkingJob(event, "flat");
@@ -2186,8 +1825,6 @@ app.post("/attendance-confirmation-emails/retry-failed", async (req, res) => {
 
 exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });
 
-exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob({ admin, db, onSchedule, runtimeConfig });
-
 exports.api = onRequest({
   secrets: [
     attendancePinSaltSecret,
@@ -2200,6 +1837,5 @@ exports.api = onRequest({
     openAiApiKeySecret,
     studentDeleteAppsScriptUrlSecret,
     studentDeleteSyncSecret,
-    paystackSecretKeySecret,
   ],
 }, app);
