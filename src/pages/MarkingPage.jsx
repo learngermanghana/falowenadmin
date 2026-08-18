@@ -813,6 +813,7 @@ export default function MarkingPage() {
         link: referenceEntry?.answer_url ?? DEFAULT_REFERENCE_LINK,
         blockAnyDuplicate: false,
         forceSheetDedupeId: true,
+        requireAllTargets: true,
         markingDetails: {
           objectiveScore: currentObjectiveScore,
           objectiveCorrect: currentObjectiveResult.correctCount,

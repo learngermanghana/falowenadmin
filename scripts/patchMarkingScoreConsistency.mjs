@@ -10,12 +10,17 @@ function addRequiredTargetFlag(source) {
   const alreadyPatched = [
     `        allowDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
     `        blockAnyDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
+    `        blockAnyDuplicate: false,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
   ];
   if (alreadyPatched.some((candidate) => source.includes(candidate))) {
     return { source, changed: false };
   }
 
   const supportedCalls = [
+    {
+      search: `        blockAnyDuplicate: false,\n        forceSheetDedupeId: true,\n        markingDetails: {`,
+      replacement: `        blockAnyDuplicate: false,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
+    },
     {
       search: `        blockAnyDuplicate: true,\n        forceSheetDedupeId: true,\n        markingDetails: {`,
       replacement: `        blockAnyDuplicate: true,\n        forceSheetDedupeId: true,\n        requireAllTargets: true,\n        markingDetails: {`,
