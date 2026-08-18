@@ -34,7 +34,7 @@ export default function CreateClassCard({ onCreated, onDuplicate }) {
     setBusy(true);
     try {
       const record = await createClassCohort({ ...form, scheduleRules, historicalMode: false });
-      setMessage(`Class created successfully. Final end date: ${record.endDate}.`); setForm(emptyForm()); await onCreated?.(record.id);
+      setMessage(`Class created successfully. ${record.generatedSessionCount || 0} sessions generated. Class reminders and weekly attendance emails are enabled; delivery status is available in the reminder diagnostic.`); setForm(emptyForm()); await onCreated?.(record.id);
     } catch (error) {
       const text = error?.message || "Class creation failed";
       if (text.toLowerCase().includes("already exists")) { setMessage("This class already exists and has been opened for editing."); await onDuplicate?.(form.name); } else setMessage(text);

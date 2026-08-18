@@ -107,6 +107,9 @@ export default function LiveClassReminderDiagnostic() {
   const workerStatus = String(worker.classReminderEmailLastStatus || "").trim();
   const workerReason = String(worker.classReminderEmailLastSkipReason || worker.classReminderEmailLastError || "").trim();
   const workerSession = String(worker.classReminderEmailLastSessionId || "").trim();
+  const reminderSent = workerStatus === "sent";
+  const attendanceStatus = String(worker.attendanceConfirmationEmailLastStatus || "").trim();
+  const attendanceSent = ["sent", "retry_sent"].includes(attendanceStatus);
   const warningCodes = [...new Set(diagnostic.warningCodes || [])];
 
   return (
@@ -138,11 +141,22 @@ export default function LiveClassReminderDiagnostic() {
           <div>Timetable health: <strong>{diagnostic.timetableHealth || "unknown"}</strong></div>
           {warningCodes.length ? <div>Health codes: <strong>{warningCodes.join(", ")}</strong></div> : null}
           <div style={{ marginTop: 5, paddingTop: 8, borderTop: "1px solid #dbeafe" }}>
-            Server worker last status: <strong>{workerStatus || "No recorded worker result yet"}</strong>
+            Server worker last status: <strong style={{ color: reminderSent ? "#166534" : undefined }}>{reminderSent ? "SENT" : workerStatus || "No recorded worker result yet"}</strong>
           </div>
           <div>Server worker last run: <strong>{formatWorkerTime(worker.classReminderEmailLastRunAt)}</strong></div>
           {workerSession ? <div>Server worker session: <strong>{workerSession}</strong></div> : null}
           {workerReason ? <div>Server worker detail: <strong>{workerReason}</strong></div> : null}
+          <div style={{ marginTop: 5, paddingTop: 8, borderTop: "1px solid #dbeafe" }}>
+            Attendance email last status: <strong style={{ color: attendanceSent ? "#166534" : undefined }}>{attendanceSent ? "SENT" : attendanceStatus || "No recorded worker result yet"}</strong>
+          </div>
+          <div>Attendance worker last run: <strong>{formatWorkerTime(worker.attendanceConfirmationEmailLastRunAt)}</strong></div>
+          <div>Attendance recipients matched: <strong>{Number(worker.attendanceConfirmationEmailLastRecipientCount || 0)}</strong></div>
+          <div>Attendance sessions found: <strong>{Number(worker.attendanceConfirmationEmailLastSessionCount || 0)}</strong></div>
+          <div>Attendance summaries due: <strong>{Number(worker.attendanceConfirmationEmailLastDueGroupCount || 0)}</strong></div>
+          {worker.attendanceConfirmationEmailLastSentAt ? <div>Attendance email last sent: <strong>{formatWorkerTime(worker.attendanceConfirmationEmailLastSentAt)}</strong></div> : null}
+          {worker.attendanceConfirmationEmailLastSentCount ? <div>Attendance emails sent: <strong>{Number(worker.attendanceConfirmationEmailLastSentCount)}</strong></div> : null}
+          {worker.attendanceConfirmationEmailLastPeriodKey ? <div>Attendance summary period: <strong>{worker.attendanceConfirmationEmailLastPeriodKey}</strong></div> : null}
+          {worker.attendanceConfirmationEmailLastError ? <div style={{ color: "#991b1b" }}>Attendance worker error: <strong>{worker.attendanceConfirmationEmailLastError}</strong></div> : null}
           {!diagnostic.hasRecipients ? (
             <div style={{ color: "#991b1b" }}><strong>Likely cause:</strong> no active students matched this class record. Check student classId/className/group/cohort values.</div>
           ) : null}

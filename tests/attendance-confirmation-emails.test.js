@@ -117,6 +117,24 @@ test("weekly grouping waits for the final session of a week", () => {
   assert.deepEqual(afterFinal[0].sessions.map((item) => item.id), ["session-1", "session-2"]);
 });
 
+test("missed attendance summaries remain retryable for fourteen days", () => {
+  const due = groupDueSessions({
+    sessions: [session],
+    mode: MODE_EACH_CLASS,
+    now: new Date("2026-07-24T12:00:00.000Z"),
+    timezone: "Africa/Accra",
+  });
+  assert.equal(due.length, 1);
+
+  const expired = groupDueSessions({
+    sessions: [session],
+    mode: MODE_EACH_CLASS,
+    now: new Date("2026-08-01T12:00:00.000Z"),
+    timezone: "Africa/Accra",
+  });
+  assert.equal(expired.length, 0);
+});
+
 test("personalized emails include confirmed status and weekly totals", () => {
   const record = { session, status: "late", method: "qr", checkedAt: new Date("2026-07-14T18:20:00.000Z") };
   const eachMessage = buildEachClassMessage({ student, klass, record, replyNote: "Reply if this is wrong." });

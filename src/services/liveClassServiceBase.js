@@ -37,6 +37,13 @@ import {
 
 const CURRICULUM_SOURCE = "courseDictionary";
 const CURRICULUM_VERSION = 1;
+const CLASS_EMAIL_DELIVERY = Object.freeze({
+  url: String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_URL || "").trim(),
+  token: String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN || "").trim(),
+  sheetName: String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME || "").trim(),
+  sheetGid: String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID || "").trim(),
+  source: "class_creation",
+});
 
 function attendanceSessionRef(classId, sessionId) {
   return doc(db, "attendance", String(classId), "sessions", String(sessionId));
@@ -184,6 +191,20 @@ export async function createClassCohort(payload) {
     publicVisible: payload.publicVisible ?? existing?.publicVisible ?? true,
     registrationOpen: payload.registrationOpen ?? existing?.registrationOpen ?? true,
     classUrl: buildClassUrl({ slug }),
+    classReminderEmailEnabled: existing?.classReminderEmailEnabled ?? true,
+    classReminderEmailMode: existing?.classReminderEmailMode || "automatic",
+    classReminderEmailLastStatus: existing?.classReminderEmailLastStatus || "waiting_for_first_session",
+    classReminderEmailLastError: "",
+    attendanceConfirmationEmailEnabled: existing?.attendanceConfirmationEmailEnabled ?? true,
+    attendanceConfirmationEmailMode: existing?.attendanceConfirmationEmailMode || "weekly",
+    attendanceConfirmationEmailDelayMinutes: Number(existing?.attendanceConfirmationEmailDelayMinutes ?? 30),
+    attendanceConfirmationLateMinutes: Number(existing?.attendanceConfirmationLateMinutes ?? 15),
+    attendanceConfirmationEmailLastStatus: existing?.attendanceConfirmationEmailLastStatus || "waiting_for_first_session",
+    attendanceConfirmationEmailLastError: "",
+    ...(CLASS_EMAIL_DELIVERY.url ? {
+      classReminderEmailDelivery: existing?.classReminderEmailDelivery || CLASS_EMAIL_DELIVERY,
+      attendanceConfirmationEmailDelivery: existing?.attendanceConfirmationEmailDelivery || CLASS_EMAIL_DELIVERY,
+    } : {}),
     generationStatus: "pending",
     generationError: "",
     updatedAt: serverTimestamp(),

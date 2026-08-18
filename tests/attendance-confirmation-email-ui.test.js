@@ -45,6 +45,7 @@ test("attendance settings persist on the class document", async () => {
   assert.match(service, /attendanceConfirmationEmailEnabled/);
   assert.match(service, /attendanceConfirmationEmailMode/);
   assert.match(service, /attendanceConfirmationEmailDelayMinutes/);
+  assert.match(service, /attendanceConfirmationEmailLookbackDays/);
   assert.match(service, /attendanceConfirmationLateMinutes/);
   assert.match(service, /setDoc/);
 });

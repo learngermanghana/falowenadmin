@@ -126,7 +126,8 @@ if (!workerSource.includes('skipReason: "holiday_closed"')) {
     return { sent: 0, skipped: "holiday_closed" };`);
 }
 
-if (!workerSource.includes('skipReason: "no_recipients"')) {
+if (!workerSource.includes('skipReason: "no_recipients"')
+  && !workerSource.includes('classReminderEmailLastSkipReason: "no_recipients"')) {
   workerSource = workerSource.replace(
 `  if (!recipients.length) return { sent: 0, skipped: "no_recipients" };`,
 `  if (!recipients.length) {
@@ -188,7 +189,7 @@ const checks = [
   [worker.includes("classReminderSends"), "Class reminder deduplication is missing."],
   [worker.includes("async function writeClassReminderState"), "Server reminder diagnostic writer is missing."],
   [worker.includes('skipReason: "already_sent_or_changed"'), "Reminder reservation skip diagnostics are missing."],
-  [worker.includes('skipReason: "no_recipients"'), "Reminder recipient skip diagnostics are missing."],
+  [worker.includes('skipReason: "no_recipients"') || worker.includes('classReminderEmailLastSkipReason: "no_recipients"'), "Reminder recipient skip diagnostics are missing."],
   [worker.includes("https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09"), "Class reminder Zoom join link is missing."],
   [worker.includes("https://us06web.zoom.us/launch/jc/6886900916"), "Class reminder Zoom chat link is missing."],
   [worker.includes("6886900916@zoomcrc.com"), "Class reminder Zoom SIP address is missing."],
