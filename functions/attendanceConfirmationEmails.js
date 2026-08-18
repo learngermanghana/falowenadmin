@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { acceptClassNameSessionMatch } = require("./attendanceSessionClassIdentity.js");
 
 const ACCRA_TIMEZONE = "Africa/Accra";
 const MODE_OFF = "off";
@@ -6,7 +7,7 @@ const MODE_EACH_CLASS = "each_class";
 const MODE_WEEKLY = "weekly";
 const DEFAULT_DELAY_MINUTES = 30;
 const DEFAULT_LATE_MINUTES = 15;
-const DELIVERY_LOOKBACK_MS = 36 * 60 * 60 * 1000;
+const DEFAULT_DELIVERY_LOOKBACK_DAYS = 14;
 const PROCESSING_STALE_MS = 30 * 60 * 1000;
 
 function normalize(value) {
@@ -379,7 +380,11 @@ async function loadSessionsForClass(db, klass) {
   for (const field of ["classId", "classRecordId", "className"]) {
     for (const identifier of identifiers) {
       const snap = await db.collection("classSessions").where(field, "==", identifier).get();
-      snap.docs.forEach((docSnap) => result.set(docSnap.id, { id: docSnap.id, ...docSnap.data() }));
+      snap.docs.forEach((docSnap) => {
+        const session = { id: docSnap.id, ...docSnap.data() };
+        if (!acceptClassNameSessionMatch(session, klass)) return;
+        result.set(docSnap.id, session);
+      });
     }
   }
   return [...result.values()].filter(isActiveSession).sort((a, b) => (sessionStart(a)?.getTime() || 0) - (sessionStart(b)?.getTime() || 0));
@@ -416,12 +421,13 @@ function dueAfter({ session, attendance, delayMinutes }) {
   return openTo && openTo > delayed ? openTo : delayed;
 }
 
-function groupDueSessions({ sessions, mode, now, timezone }) {
+function groupDueSessions({ sessions, mode, now, timezone, lookbackDays = DEFAULT_DELIVERY_LOOKBACK_DAYS }) {
+  const lookbackMs = Math.max(1, Number(lookbackDays) || DEFAULT_DELIVERY_LOOKBACK_DAYS) * 24 * 60 * 60 * 1000;
   if (mode === MODE_EACH_CLASS) {
     return sessions
       .filter((session) => {
         const end = sessionEnd(session);
-        return end && end <= now && now.getTime() - end.getTime() <= DELIVERY_LOOKBACK_MS;
+        return end && end <= now && now.getTime() - end.getTime() <= lookbackMs;
       })
       .map((session) => ({ periodKey: session.id, sessions: [session] }));
   }
@@ -440,7 +446,7 @@ function groupDueSessions({ sessions, mode, now, timezone }) {
     }))
     .filter((group) => {
       const finalEnd = sessionEnd(group.sessions[group.sessions.length - 1]);
-      return finalEnd && finalEnd <= now && now.getTime() - finalEnd.getTime() <= DELIVERY_LOOKBACK_MS;
+      return finalEnd && finalEnd <= now && now.getTime() - finalEnd.getTime() <= lookbackMs;
     });
 }
 
@@ -459,14 +465,34 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
   const lateMinutes = clampNumber(klass.attendanceConfirmationLateMinutes, DEFAULT_LATE_MINUTES, 0, 120);
   const replyNote = normalize(klass.attendanceConfirmationEmailReplyNote);
   const sessions = await loadSessionsForClass(db, klass);
-  const groups = groupDueSessions({ sessions, mode, now, timezone });
+  const lookbackDays = clampNumber(
+    klass.attendanceConfirmationEmailLookbackDays || process.env.ATTENDANCE_CONFIRMATION_LOOKBACK_DAYS,
+    DEFAULT_DELIVERY_LOOKBACK_DAYS,
+    1,
+    60,
+  );
+  const groups = groupDueSessions({ sessions, mode, now, timezone, lookbackDays });
   const students = allStudents.filter((student) => isActiveStudent(student) && studentBelongsToClass(student, klass) && normalize(student.email));
 
   await classRef.set({
     attendanceConfirmationEmailLastRunAt: timestamp,
-    attendanceConfirmationEmailLastStatus: groups.length ? "checking_due_deliveries" : "no_delivery_due",
+    attendanceConfirmationEmailLastStatus: !sessions.length
+      ? "no_sessions"
+      : !students.length
+        ? "no_recipients"
+        : groups.length
+          ? "checking_due_deliveries"
+          : "no_delivery_due",
+    attendanceConfirmationEmailLastSessionCount: sessions.length,
+    attendanceConfirmationEmailLastRecipientCount: students.length,
+    attendanceConfirmationEmailLastDueGroupCount: groups.length,
+    attendanceConfirmationEmailLookbackDays: lookbackDays,
     attendanceConfirmationEmailLastError: "",
   }, { merge: true });
+
+  if (!sessions.length || !students.length) {
+    return { sent: 0, skipped: true, reason: !sessions.length ? "no_sessions" : "no_recipients" };
+  }
 
   let totalSent = 0;
   for (const group of groups) {
@@ -538,6 +564,14 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
         lastError: "",
       });
       totalSent += rows.length;
+      await classRef.set({
+        attendanceConfirmationEmailLastStatus: "sent",
+        attendanceConfirmationEmailLastSentAt: timestamp,
+        attendanceConfirmationEmailLastSentCount: rows.length,
+        attendanceConfirmationEmailLastPeriodKey: group.periodKey,
+        attendanceConfirmationEmailLastSessionIds: group.sessions.map((session) => session.id),
+        attendanceConfirmationEmailLastError: "",
+      }, { merge: true });
     } catch (error) {
       await markDeliveryRefs(deliveryRefs, {
         status: "failed",
@@ -551,7 +585,7 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
 
   await classRef.set({
     attendanceConfirmationEmailLastRunAt: timestamp,
-    attendanceConfirmationEmailLastStatus: totalSent ? "sent" : "no_new_recipients",
+    attendanceConfirmationEmailLastStatus: totalSent ? "sent" : "already_sent_or_not_due",
     attendanceConfirmationEmailLastSentCount: totalSent,
     ...(totalSent ? { attendanceConfirmationEmailLastSentAt: timestamp } : {}),
     attendanceConfirmationEmailLastError: "",

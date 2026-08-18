@@ -54,6 +54,11 @@ export function normalizeAttendanceEmailSettings(data = {}) {
     lastRunAt: data.attendanceConfirmationEmailLastRunAt || null,
     lastSentAt: data.attendanceConfirmationEmailLastSentAt || null,
     lastSentCount: Number(data.attendanceConfirmationEmailLastSentCount || 0),
+    lastRecipientCount: Number(data.attendanceConfirmationEmailLastRecipientCount || 0),
+    lastSessionCount: Number(data.attendanceConfirmationEmailLastSessionCount || 0),
+    lastDueGroupCount: Number(data.attendanceConfirmationEmailLastDueGroupCount || 0),
+    lastPeriodKey: normalize(data.attendanceConfirmationEmailLastPeriodKey),
+    lookbackDays: clampNumber(data.attendanceConfirmationEmailLookbackDays, 14, 1, 60),
     lastStatus: normalize(data.attendanceConfirmationEmailLastStatus),
     lastError: normalize(data.attendanceConfirmationEmailLastError),
   };
