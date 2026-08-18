@@ -110,6 +110,58 @@ test("objective scoring accepts text answers with different capitalization", () 
   assert.ok(Object.values(result.details).every((detail) => detail.correct));
 });
 
+test("A1-0.2 keeps a missing question gap when vocabulary numbering restarts", () => {
+  const reference = { format: "objective", answers: {
+    Answer1: "C) 26", Answer2: "A) A, O, U, B", Answer3: "A) Eszett", Answer4: "A) K",
+    Answer5: "A) A-Umlaut", Answer6: "A) A, O, U, B", Answer7: "B) 4", Answer8: "Wasser",
+    Answer9: "Kaffee", Answer10: "Blume", Answer11: "Schule", Answer12: "Tisch",
+  } };
+  const submission = `1. A (26)
+2. A (ä,ö,ü,ß)
+3. A (Eszett)
+4. A (K)
+5. A (A-Umlaut)
+6. A (Ä,Ö,Ü,ß)
+
+1. Wasser
+2. Kaffee
+3. Blume
+4. Stuhle
+5. Tisch`;
+  const result = computeObjectiveScore(reference, submission);
+  assert.equal(result.correctCount, 9);
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.details[7].student, "");
+  assert.equal(result.details[8].student, "Wasser");
+  assert.equal(result.details[12].student, "Tisch");
+  assert.equal(result.details[2].correct, true);
+  assert.equal(result.details[6].correct, true);
+});
+
+test("partial final answer block numbered 1 to 5 aligns with questions 11 to 15", () => {
+  const reference = { format: "objective", answers: {
+    Answer1: "Falsch", Answer2: "Wahr", Answer3: "Falsch", Answer4: "Wahr", Answer5: "Wahr",
+    Answer6: "Falsch", Answer7: "Wahr", Answer8: "Falsch", Answer9: "Falsch", Answer10: "Falsch",
+    Answer11: "B) Einmal pro Woche", Answer12: "C) Apfel und Bananen", Answer13: "A) Ein halbes Kilo",
+    Answer14: "B) 10 Euro", Answer15: "B) Einen schönen Tag",
+  } };
+  const submission = `Question 1.B) Jede Woche
+Question 2.C) Äpfel und Bananen
+Question 3.B) Ein kilo
+Question 4.B) 10 Euro
+Question 5. B) Einen schönen Tag`;
+
+  const result = computeObjectiveScore(reference, submission);
+
+  assert.equal(result.correctCount, 4);
+  assert.equal(result.totalCount, 15);
+  assert.equal(result.details[1].student, "");
+  assert.equal(result.details[10].student, "");
+  assert.equal(result.details[11].student, "B) Jede Woche");
+  assert.equal(result.details[15].student, "B) Einen schönen Tag");
+  assert.equal(result.details[13].correct, false);
+});
+
 test("computes A1-14.1 objective score from choices and vocabulary pairs", () => {
   const result = computeObjectiveScore("A1-14.1", `
     1. A Anzeige A

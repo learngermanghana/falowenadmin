@@ -1022,7 +1022,7 @@ export async function saveScoreRow({
 
   if (duplicateSkipped) {
     receipt.sheet.success = true;
-    receipt.sheet.message = "Duplicate score blocked; this student already has a saved score for this assignment. Tutor verification is required.";
+    receipt.sheet.message = "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different.";
   } else if (SCORES_WEBHOOK_URL) {
     try {
       await postScoreToWebhook(webhookPayload);

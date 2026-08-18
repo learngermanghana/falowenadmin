@@ -113,13 +113,13 @@ function stripLeadingQuestionLabel(value = "") {
 
 function extractOptionLetter(value = "") {
   const cleaned = stripLeadingQuestionLabel(value);
-  const match = cleaned.match(new RegExp(`^([${OBJECTIVE_OPTION_LETTERS}])(?:\\s*[).:-]|\\s+|$)`, "i"));
+  const match = cleaned.match(new RegExp(`^([${OBJECTIVE_OPTION_LETTERS}])(?:\\s*[().:-]|\\s+|$)`, "i"));
   return match ? match[1].toUpperCase() : "";
 }
 
 function extractOptionText(value = "") {
   return stripLeadingQuestionLabel(value)
-    .replace(new RegExp(`^\\s*[${OBJECTIVE_OPTION_LETTERS}](?:\\s*[).:-]|\\s+)\\s*`, "i"), "")
+    .replace(new RegExp(`^\\s*[${OBJECTIVE_OPTION_LETTERS}](?:\\s*[().:-]|\\s+)\\s*`, "i"), "")
     .trim();
 }
 
@@ -391,15 +391,15 @@ function parseStudentAnswerToken(token = "", pendingQuestion = null) {
   const trimmed = String(token || "").trim();
   if (!trimmed) return null;
 
-  const headingOnly = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:-]?$/i);
+  const headingOnly = trimmed.match(/^(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:-]?$/i);
   if (headingOnly) return { pendingQuestion: Number.parseInt(headingOnly[1], 10) };
 
-  const compactOption = trimmed.match(new RegExp(`^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*(?:anzeige\\s*)?([${OBJECTIVE_OPTION_LETTERS}])\\s*$`, "i"));
+  const compactOption = trimmed.match(new RegExp(`^(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*(?:anzeige\\s*)?([${OBJECTIVE_OPTION_LETTERS}])\\s*$`, "i"));
   if (compactOption) {
     return { question: Number.parseInt(compactOption[1], 10), answer: compactOption[2].toUpperCase() };
   }
 
-  const numbered = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]?\s*(.+)$/i);
+  const numbered = trimmed.match(/^(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]?\s*(.+)$/i);
   if (numbered) {
     const answer = numbered[2].trim().replace(/^anzeige\s*[).:-]?\s*/i, "");
     return { question: Number.parseInt(numbered[1], 10), answer };
@@ -580,6 +580,29 @@ function scoreEntriesWithAnswers(entries = [], studentAnswers = [], partId = "ma
   };
 }
 
+function alignRestartedAnswerGroups(entries = [], groups = []) {
+  if (!groups.length || !entries.length) return [];
+  if (groups.length === 1 && groups[0].length >= entries.length) return [];
+  let candidates = [{ answers: Array(entries.length).fill(""), nextStart: 0 }];
+  for (const group of groups) {
+    const ordered = [...group].sort((left, right) => left.question - right.question);
+    const nextCandidates = [];
+    for (const candidate of candidates) {
+      const lastStart = entries.length - ordered.length;
+      for (let start = candidate.nextStart; start <= lastStart; start += 1) {
+        const answers = [...candidate.answers];
+        ordered.forEach((item, index) => { answers[start + index] = item.answer; });
+        const preview = scoreEntriesWithAnswers(entries, answers, "main");
+        nextCandidates.push({ answers, nextStart: start + ordered.length, correct: preview.correct.length, missing: preview.missing.length, wrong: preview.wrong.length + preview.needsReview.length });
+      }
+    }
+    candidates = nextCandidates
+      .sort((left, right) => right.correct - left.correct || left.missing - right.missing || left.wrong - right.wrong)
+      .slice(0, 40);
+  }
+  return candidates[0]?.answers || [];
+}
+
 function chooseBestFlatStudentAnswers(entries = [], sections = []) {
   const parsedSections = sections
     .map((section) => ({ ...section, parsed: parseStudentPartAnswers(section.text) }))
@@ -592,6 +615,15 @@ function chooseBestFlatStudentAnswers(entries = [], sections = []) {
     const answers = parsedSections.slice(start).flatMap((section) => section.parsed.ordered.map((item) => item.answer));
     const preview = scoreEntriesWithAnswers(entries, answers.slice(0, entries.length), "main");
     candidates.push({ answers, correct: preview.correct.length, missing: preview.missing.length, wrong: preview.wrong.length + preview.needsReview.length });
+  }
+  const restartedGroups = String(sections.map((section) => section.text).join("\n\n"))
+    .split(/\n\s*\n+/)
+    .map((block) => parseStudentPartAnswers(block).ordered)
+    .filter((group) => group.length);
+  const aligned = alignRestartedAnswerGroups(entries, restartedGroups);
+  if (aligned.length) {
+    const preview = scoreEntriesWithAnswers(entries, aligned, "main");
+    candidates.push({ answers: aligned, correct: preview.correct.length, missing: preview.missing.length, wrong: preview.wrong.length + preview.needsReview.length });
   }
 
   candidates.sort((a, b) => b.correct - a.correct || a.missing - b.missing || a.wrong - b.wrong);

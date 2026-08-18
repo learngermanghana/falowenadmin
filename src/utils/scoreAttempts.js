@@ -38,9 +38,8 @@ export function shouldSkipExistingScore(existingScore = null, currentScore = nul
   if (!existingScore?.sheetSaved || allowDuplicate) return false;
   const previousScore = previousScoreValue(existingScore);
   const nextScore = numericScore(currentScore);
-  return nextScore === null || nextScore >= PASS_MARK
-    ? previousScore === null || previousScore >= PASS_MARK
-    : false;
+  if (previousScore === null || nextScore === null) return false;
+  return Math.abs(previousScore - nextScore) < 0.001;
 }
 
 export function hasSavedScoreForAssignment(existingScore = null) {

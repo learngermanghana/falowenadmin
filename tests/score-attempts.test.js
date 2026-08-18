@@ -32,16 +32,31 @@ test("saves a newly entered failed attempt even when an older passing score exis
   });
 });
 
-test("skips a duplicate when both the existing and new results passed", () => {
+test("allows a changed score even when both the existing and new results passed", () => {
   const existing = { score: 60, status: "passed", attempt: 1, sheetSaved: true };
 
-  assert.equal(shouldSkipExistingScore(existing, 80), true);
+  assert.equal(shouldSkipExistingScore(existing, 80), false);
+});
+
+test("blocks a failed resubmission only when its score is unchanged", () => {
+  const existing = { score: 45, status: "failed", attempt: 1, sheetSaved: true };
+
+  assert.equal(shouldSkipExistingScore(existing, 45), true);
+  assert.equal(shouldSkipExistingScore(existing, 50), false);
+});
+
+test("blocks a passed resubmission only when its score is unchanged", () => {
+  const existing = { score: 75, status: "passed", attempt: 1, sheetSaved: true };
+
+  assert.equal(shouldSkipExistingScore(existing, 75), true);
+  assert.equal(shouldSkipExistingScore(existing, 80), false);
 });
 
 test("recognizes percentage-formatted failed scores", () => {
   const existing = { score: "59%", sheetSaved: true };
 
   assert.equal(shouldSkipExistingScore(existing, "50%"), false);
+  assert.equal(shouldSkipExistingScore(existing, "59%"), true);
   assert.equal(buildScoreAttemptMetadata(existing, 50, now).previous_score, 59);
 });
 
