@@ -5,18 +5,20 @@ let objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
 
 const previousCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[).:–-](?!\\d)\\s*|\\s+)(.*?)(?=\\s+\\d{1,3}(?:\\s*[).:–-](?!\\d)\\s*|\\s+)|$)/g;';
 const robustCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))(.*?)(?=\\s+\\d{1,3}(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))|$)/g;';
+const questionAwareCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})\\s*[).:–-]?\\s*(.*?)(?=\\s+\\d{1,3}\\s*[).:–-]?|$)/g;';
 
 if (objectiveSource.includes(previousCompactPattern)) {
   objectiveSource = objectiveSource.replace(previousCompactPattern, robustCompactPattern);
-} else if (!objectiveSource.includes(robustCompactPattern)) {
+} else if (!objectiveSource.includes(robustCompactPattern) && !objectiveSource.includes(questionAwareCompactPattern)) {
   throw new Error("objective compact-answer parser changed; update patchA1PricePreferenceMarking.mjs");
 }
 
 const legacySinglePattern = '  const single = source.match(/^\\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:–-]?\\s*(.+?)\\s*$/i);';
 const commaSafeSinglePattern = '  const single = source.match(/^\\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).,:–-]?\\s*(.+?)\\s*$/i);';
+const questionAwareSinglePattern = '  const single = source.match(/^\\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:–-]?\\s*(.+?)\\s*$/i);';
 if (objectiveSource.includes(legacySinglePattern)) {
   objectiveSource = objectiveSource.replace(legacySinglePattern, commaSafeSinglePattern);
-} else if (!objectiveSource.includes(commaSafeSinglePattern)) {
+} else if (!objectiveSource.includes(commaSafeSinglePattern) && !objectiveSource.includes(questionAwareSinglePattern)) {
   throw new Error("objective single-answer parser changed; update patchA1PricePreferenceMarking.mjs");
 }
 
