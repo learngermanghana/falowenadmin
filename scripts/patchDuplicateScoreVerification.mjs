@@ -29,12 +29,14 @@ source = replaceRequired(
   "Firestore transaction import",
 );
 
-source = replaceRequired(
-  source,
-  'import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";',
-  'import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";\nimport { buildScoreSaveReservation, getScoreSaveBlockReason } from "../utils/scoreSaveReservation.js";',
-  "score reservation helper import",
-);
+const pristineScoreImports = 'import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";';
+const previousReservationImports = 'import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";\nimport { buildScoreSaveReservation, shouldBlockScoreSave } from "../utils/scoreSaveReservation.js";';
+const reasonAwareReservationImports = 'import { buildScoreAttemptMetadata, shouldSkipExistingScore } from "../utils/scoreAttempts.js";\nimport { buildScoreSaveReservation, getScoreSaveBlockReason } from "../utils/scoreSaveReservation.js";';
+if (source.includes(previousReservationImports)) {
+  source = source.replace(previousReservationImports, reasonAwareReservationImports);
+} else {
+  source = replaceRequired(source, pristineScoreImports, reasonAwareReservationImports, "score reservation helper import");
+}
 
 source = replaceRequired(
   source,
@@ -49,6 +51,24 @@ source = replaceRequired(
   '      manualOverride: payload.manualOverride,\n      duplicateScoreBlocked: payload.duplicateScoreBlocked,\n      tutorVerificationRequired: payload.tutorVerificationRequired,\n      aiOriginalScore: payload.aiOriginalScore,',
   "submission duplicate flags",
 );
+
+const previousReservationDecision = '        duplicateSkipped = shouldBlockScoreSave(existingScore, row.score, {\n          allowDuplicate,\n          blockAnyDuplicate,\n        });\n        if (duplicateSkipped) return;';
+const reasonAwareReservationDecision = '        duplicateBlockReason = getScoreSaveBlockReason(existingScore, row.score, {\n          allowDuplicate,\n          blockAnyDuplicate,\n        });\n        duplicateSkipped = Boolean(duplicateBlockReason);\n        if (duplicateSkipped) return;';
+if (source.includes(previousReservationDecision)) {
+  source = source.replace(previousReservationDecision, reasonAwareReservationDecision);
+  source = replaceRequired(
+    source,
+    '  let duplicateSkipped = false;\n\n  if (SAVE_SCORES_TO_FIRESTORE) {',
+    '  let duplicateSkipped = false;\n  let duplicateBlockReason = "";\n\n  if (SAVE_SCORES_TO_FIRESTORE) {',
+    "generated reservation block reason",
+  );
+}
+
+const previousAtomicBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.attempted = false;\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked atomically because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n    receipt.firestore.success = true;\n    receipt.firestore.message = "Existing Firestore score left unchanged for tutor verification.";\n  } else if (SCORES_WEBHOOK_URL) {';
+const reasonAwareAtomicBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.attempted = false;\n    receipt.sheet.success = true;\n    receipt.sheet.message = duplicateBlockReason === "in_progress"\n      ? "Score save blocked because another save for this assignment is still in progress. Wait a moment and try again."\n      : "Duplicate score blocked atomically because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n    receipt.firestore.success = true;\n    receipt.firestore.message = duplicateBlockReason === "in_progress"\n      ? "Active Firestore score reservation left unchanged; retry after the current save finishes."\n      : "Existing Firestore score left unchanged for tutor verification.";\n  } else if (SCORES_WEBHOOK_URL) {';
+if (source.includes(previousAtomicBlockedReceipt)) {
+  source = source.replace(previousAtomicBlockedReceipt, reasonAwareAtomicBlockedReceipt);
+}
 
 if (!source.includes("Could not reserve the score key safely; no score was posted.")) {
   const atomicReservationBlock = [
@@ -109,7 +129,7 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
 
   const legacyBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked; this student already has a saved score for this assignment. Tutor verification is required.";\n  } else if (SCORES_WEBHOOK_URL) {';
   const sameScoreBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n  } else if (SCORES_WEBHOOK_URL) {';
-  const atomicBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.attempted = false;\n    receipt.sheet.success = true;\n    receipt.sheet.message = duplicateBlockReason === "in_progress"\n      ? "Score save blocked because another save for this assignment is still in progress. Wait a moment and try again."\n      : "Duplicate score blocked atomically because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n    receipt.firestore.success = true;\n    receipt.firestore.message = duplicateBlockReason === "in_progress"\n      ? "Active Firestore score reservation left unchanged; retry after the current save finishes."\n      : "Existing Firestore score left unchanged for tutor verification.";\n  } else if (SCORES_WEBHOOK_URL) {';
+  const atomicBlockedReceipt = reasonAwareAtomicBlockedReceipt;
   if (!source.includes(atomicBlockedReceipt)) {
     const receiptAnchor = source.includes(sameScoreBlockedReceipt) ? sameScoreBlockedReceipt : legacyBlockedReceipt;
     source = replaceRequired(source, receiptAnchor, atomicBlockedReceipt, "blocked duplicate receipt");
