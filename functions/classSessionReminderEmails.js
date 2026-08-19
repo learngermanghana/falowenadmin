@@ -109,9 +109,11 @@ function officialSessionId(session = {}) {
 }
 
 function sessionClassKey(session = {}) {
+  // Display names and legacy group labels are not unique: two separate class
+  // documents may share them. Only canonical document identities are safe for
+  // class-and-time collision deduplication.
   return comparable(
-    session.classRecordId || session.classId || session.classDocumentId
-    || session.className || session.class || session.group,
+    session.classRecordId || session.classId || session.classDocumentId,
   );
 }
 
