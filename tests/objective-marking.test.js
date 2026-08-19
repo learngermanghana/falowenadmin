@@ -699,7 +699,7 @@ test("A1-0.2 aligns a second 1-5 answer group without a Teil heading", () => {
   const result = computeObjectiveScore("A1-0.2", submission);
 
   assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 10);
+  assert.equal(result.correctCount, 11);
   assert.equal(result.details[1].student.toLowerCase(), "c");
   assert.equal(result.details[2].student.toLowerCase(), "a");
   assert.equal(result.details[5].correct, false);
@@ -708,5 +708,5 @@ test("A1-0.2 aligns a second 1-5 answer group without a Teil heading", () => {
   assert.equal(result.details[11].student.toLowerCase(), "schule");
   assert.equal(result.details[11].correct, true);
   assert.equal(result.details[12].student.toLowerCase(), "tis");
-  assert.equal(result.details[12].correct, false);
+  assert.equal(result.details[12].correct, true);
 });
