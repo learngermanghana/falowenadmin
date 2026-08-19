@@ -192,9 +192,11 @@ function sanitizeFalseWritingFeedback(feedback = "", submissionText = "") {
   text = text.replace(
     /\s*(?:Review exact wording:\s*)?Start this sentence with a capital letter:\s*[“"](?:([^”"\n]+?)[”"]\.?|([^”"\n]*?[.!?…]))/gi,
     (match, closedSnippet, unclosedSnippet) => {
-      const submitted = String(closedSnippet || unclosedSnippet || "").trim().replace(/[.!?…]+$/, "");
+      const submitted = String(closedSnippet || unclosedSnippet || "").trim();
       if (followsCommaSalutation(submissionText, submitted)) return "";
-      const corrected = submitted ? `${submitted.charAt(0).toLocaleUpperCase("de")}${submitted.slice(1)}` : "";
+      const punctuation = submitted.match(/[.!?…]+$/)?.[0] || "";
+      const wording = punctuation ? submitted.slice(0, -punctuation.length) : submitted;
+      const corrected = wording ? `${wording.charAt(0).toLocaleUpperCase("de")}${wording.slice(1)}${punctuation}` : "";
       return corrected ? ` Write “${corrected}” instead of “${submitted}”.` : match;
     },
   );
