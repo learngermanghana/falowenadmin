@@ -88,6 +88,35 @@ if (source.includes(before)) {
   throw new Error("reordered restarted objective groups anchor changed; update patchReorderedObjectiveGroups.mjs");
 }
 
+const numberResetGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
+const numberResetGroupHelper = `function splitNumberResetAnswerGroups(text = "") {
+  const groups = [];
+  let current = [];
+
+  for (const rawLine of String(text || "").split(/\\r?\\n/)) {
+    const entries = parseNumberedEntriesFromChunk(rawLine);
+    for (const entry of entries) {
+      const previousNumber = current[current.length - 1]?.number || 0;
+      if (current.length && entry.number <= previousNumber) {
+        groups.push(current);
+        current = [];
+      }
+      current.push(entry);
+    }
+  }
+
+  if (current.length) groups.push(current);
+  return groups.length > 1 && groups.every((entries) => entries.length >= 2) ? groups : [];
+}
+
+${numberResetGroupHelperAnchor}`;
+source = replaceOnce(
+  source,
+  numberResetGroupHelperAnchor,
+  numberResetGroupHelper,
+  "restarted numbering group helper",
+);
+
 const questionGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
 const questionGroupHelper = `function splitQuestionGroupBlocks(text = "") {
   const sourceText = String(text || "");
@@ -139,6 +168,13 @@ source = replaceOnce(
   groupSelectionBefore,
   groupSelectionAfter,
   "Q-numbered objective group priority",
+);
+
+source = replaceOnce(
+  source,
+  groupSelectionAfter,
+  "  const questionGroups = splitQuestionGroupBlocks(submissionText);\n  const numberResetGroups = splitNumberResetAnswerGroups(submissionText);\n  const groups = questionGroups.length > 1\n    ? questionGroups\n    : sectionGroups.length > 1\n      ? sectionGroups\n      : numberResetGroups.length > 1\n        ? numberResetGroups\n        : blockGroups.length > 1\n          ? blockGroups\n          : sectionGroups.length\n            ? sectionGroups\n            : blockGroups;",
+  "number-reset objective group priority",
 );
 
 fs.writeFileSync(target, source);
