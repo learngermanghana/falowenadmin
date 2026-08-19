@@ -40,7 +40,7 @@ const previousStrictHelper = [
   '  return Boolean(expected && student && expected === student);',
   '}',
 ].join("\n");
-const strictHelper = [
+const broadShortAnswerStrictHelper = [
   'function normalizeStrictGrammarToken(value = "") {',
   '  return normalizeAnswer(value)',
   '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
@@ -56,11 +56,34 @@ const strictHelper = [
   '  }',
   '  return expectedTokens.join(" ") === studentTokens.join(" ");',
   '}',
+].join("\n");
+const strictHelper = [
+  'function normalizeStrictGrammarToken(value = "") {',
+  '  return normalizeAnswer(value)',
+  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
+  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
+  '}',
+  '',
+  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
+  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
+  '  const studentTokens = normalizeStrictGrammarToken(studentRaw).split(/\\s+/).filter(Boolean);',
+  '  if (!expectedTokens.length || !studentTokens.length) return false;',
+  '  if (studentTokens.length === 1 && expectedTokens.length > 1) {',
+  '    const expectedVerbForms = String(expectedRaw || "")',
+  '      .split(/\\s*\\/\\s*/)',
+  '      .map((alternative) => normalizeStrictGrammarToken(alternative).split(/\\s+/).filter(Boolean)[1])',
+  '      .filter(Boolean);',
+  '    return expectedVerbForms.includes(studentTokens[0]);',
+  '  }',
+  '  return expectedTokens.join(" ") === studentTokens.join(" ");',
+  '}',
   '',
   correctAnswerAnchor,
 ].join("\n");
 if (objectiveSource.includes(previousStrictHelper)) {
   objectiveSource = objectiveSource.replace(previousStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
+} else if (objectiveSource.includes(broadShortAnswerStrictHelper)) {
+  objectiveSource = objectiveSource.replace(broadShortAnswerStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
 } else if (!objectiveSource.includes("function normalizeStrictGrammarToken(")) {
   objectiveSource = replaceOnce(objectiveSource, correctAnswerAnchor, strictHelper, "strict grammar helper");
 }
