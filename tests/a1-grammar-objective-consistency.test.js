@@ -115,6 +115,35 @@ test("does not award a shortened conjugation point for a pronoun, preposition, o
   }
 });
 
+test("accepts compact Q6 verb alternatives without weakening strict grammar", () => {
+  const submission = `Teil 1
+1. Ich heiße Anna
+2. Du heißt Max
+3. Er heißt Peter
+4. Wir kommen aus Italien
+5. ihr kommt Brasilien
+6. Sie kommen/kommt aus Russland Sie(They/She)
+7. Ich wohne in Berlin
+8. Du wohnst in Madrid
+9. Sie wohnen in Wien
+
+Teil 3
+1. A) Anna
+2. C) Aus Italien
+3. D) In Berlin
+4. B) Tom
+5. A) In Berlin`;
+  const result = computeObjectiveScore("A1-1.2", submission);
+
+  assert.equal(result.totalCount, 14);
+  assert.equal(result.correctCount, 12);
+  assert.equal(result.details[5].correct, false);
+  assert.equal(result.details[6].student, "Sie kommen/kommt aus Russland Sie(They/She)");
+  assert.equal(result.details[6].correct, true);
+  assert.equal(result.details[9].correct, false);
+  assert.deepEqual(wrongQuestions(result), [5, 9]);
+});
+
 test("keeps Mary's A1-4 choice result at 10 of 12", () => {
   const result = computeObjectiveScore("A1-4", marySubmission);
 
