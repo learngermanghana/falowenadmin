@@ -104,6 +104,17 @@ test("scores shortened A1-1.2 conjugation answers against the verb in each refer
   assert.equal(result.details[9].correct, false);
 });
 
+test("does not award a shortened conjugation point for a pronoun, preposition, or place", () => {
+  for (const incompleteAnswer of ["Wir", "aus", "Italien"]) {
+    const submission = nanayaaSubmission.replace("4.kommen", `4.${incompleteAnswer}`);
+    const result = computeObjectiveScore("A1-1.2", submission);
+
+    assert.equal(result.details[4].student, incompleteAnswer);
+    assert.equal(result.details[4].correct, false);
+    assert.equal(result.correctCount, 12);
+  }
+});
+
 test("keeps Mary's A1-4 choice result at 10 of 12", () => {
   const result = computeObjectiveScore("A1-4", marySubmission);
 
