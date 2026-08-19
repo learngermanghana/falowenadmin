@@ -163,19 +163,23 @@ const groupSelectionAfter = `  const questionGroups = splitQuestionGroupBlocks(s
         : sectionGroups.length
           ? sectionGroups
           : blockGroups;`;
-source = replaceOnce(
-  source,
-  groupSelectionBefore,
-  groupSelectionAfter,
-  "Q-numbered objective group priority",
-);
+const numberResetGroupSelection = "  const questionGroups = splitQuestionGroupBlocks(submissionText);\n  const numberResetGroups = splitNumberResetAnswerGroups(submissionText);\n  const groups = questionGroups.length > 1\n    ? questionGroups\n    : sectionGroups.length > 1\n      ? sectionGroups\n      : numberResetGroups.length > 1\n        ? numberResetGroups\n        : blockGroups.length > 1\n          ? blockGroups\n          : sectionGroups.length\n            ? sectionGroups\n            : blockGroups;";
 
-source = replaceOnce(
-  source,
-  groupSelectionAfter,
-  "  const questionGroups = splitQuestionGroupBlocks(submissionText);\n  const numberResetGroups = splitNumberResetAnswerGroups(submissionText);\n  const groups = questionGroups.length > 1\n    ? questionGroups\n    : sectionGroups.length > 1\n      ? sectionGroups\n      : numberResetGroups.length > 1\n        ? numberResetGroups\n        : blockGroups.length > 1\n          ? blockGroups\n          : sectionGroups.length\n            ? sectionGroups\n            : blockGroups;",
-  "number-reset objective group priority",
-);
+if (!source.includes(numberResetGroupSelection)) {
+  source = replaceOnce(
+    source,
+    groupSelectionBefore,
+    groupSelectionAfter,
+    "Q-numbered objective group priority",
+  );
+
+  source = replaceOnce(
+    source,
+    groupSelectionAfter,
+    numberResetGroupSelection,
+    "number-reset objective group priority",
+  );
+}
 
 fs.writeFileSync(target, source);
 console.log("Flat objective assignments can match restarted answer groups, including Q1/Q2/Q3 section headings, to the correct reference range regardless of submission order.");
