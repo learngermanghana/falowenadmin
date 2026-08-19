@@ -11,7 +11,9 @@ let objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
 
 const sectionMarkerBefore = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*(?=\\n|$)/gi;';
 const sectionMarkerAfter = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|tiel|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*(?=\\n|$)/gi;';
-objectiveSource = replaceOnce(objectiveSource, sectionMarkerBefore, sectionMarkerAfter, "common Tiel heading typo");
+if (!objectiveSource.includes("(?:teil|tiel|part)")) {
+  objectiveSource = replaceOnce(objectiveSource, sectionMarkerBefore, sectionMarkerAfter, "common Tiel heading typo");
+}
 
 const itemMetadataBefore = [
   '      type: meta.type,',
