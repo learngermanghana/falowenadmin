@@ -42,13 +42,13 @@ function normalizeAnswer(value) {
 
 function extractOptionLetter(value) {
   const trimmed = String(value || "").trim();
-  const match = trimmed.match(/^([A-FX])(?:\s*[).:-]|\s+|$)/i);
+  const match = trimmed.match(/^([A-FX])(?:\s*[).:/-]|\s+|$)/i);
   return match ? match[1].toUpperCase() : "";
 }
 
 function extractOptionText(value) {
   return String(value || "")
-    .replace(/^\s*[A-Z](?:\s*[).:-]|\s+)\s*/i, "")
+    .replace(/^\s*[A-Z](?:\s*[).:/-]|\s+)\s*/i, "")
     .trim();
 }
 
