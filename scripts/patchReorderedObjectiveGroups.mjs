@@ -106,7 +106,7 @@ const numberResetGroupHelper = `function splitNumberResetAnswerGroups(text = "")
   }
 
   if (current.length) groups.push(current);
-  return groups.length > 1 && groups.every((entries) => entries.length >= 2) ? groups : [];
+  return groups.length === 2 && groups[0].length === 7 && groups[1].length === 5 ? groups : [];
 }
 
 ${numberResetGroupHelperAnchor}`;
