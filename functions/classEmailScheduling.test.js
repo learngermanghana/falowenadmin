@@ -74,6 +74,39 @@ test("reminders at the same time remain separate for different classes", () => {
   }).length, 2);
 });
 
+test("name-only legacy sessions are not deduplicated across ambiguous class names", () => {
+  const startsAt = "2026-08-19T17:00:00.000Z";
+  const sessions = [
+    {
+      id: "legacy-cohort-one",
+      officialSessionId: "legacy-one-day-4",
+      className: "A1 Evening Klasse",
+      startsAt,
+      status: "scheduled",
+      topic: "Cohort one Day 4",
+    },
+    {
+      id: "legacy-cohort-two",
+      officialSessionId: "legacy-two-day-4",
+      className: "A1 Evening Klasse",
+      startsAt,
+      status: "scheduled",
+      topic: "Cohort two Day 4",
+    },
+  ];
+
+  const due = reminder.findDueSessionReminders({
+    sessions,
+    now: new Date("2026-08-19T16:50:00.000Z"),
+    leadMinutes: [10],
+  });
+
+  assert.deepEqual(due.map(({ session }) => session.id).sort(), [
+    "legacy-cohort-one",
+    "legacy-cohort-two",
+  ]);
+});
+
 test("attendance delivery uses the class-specific announcement sheet configuration", () => {
   const fallback = {
     url: "https://global.example/webhook",
