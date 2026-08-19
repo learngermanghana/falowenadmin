@@ -145,6 +145,24 @@ Teil 3
   assert.deepEqual(wrongQuestions(result), [9]);
 });
 
+test("strict grammar still requires the complete normalized sentence", () => {
+  const strictReference = {
+    assignment_id: "STRICT-GRAMMAR-REGRESSION",
+    answerMatchingMode: "strict_grammar",
+    answers: {
+      Answer1: "Ihr kommt aus Brasilien",
+    },
+  };
+
+  const wrongCountry = computeObjectiveScore(strictReference, "1. Ihr kommt aus Russland");
+  const exactSentence = computeObjectiveScore(strictReference, "1. Ihr kommt aus Brasilien");
+
+  assert.equal(wrongCountry.details[1].correct, false);
+  assert.equal(wrongCountry.correctCount, 0);
+  assert.equal(exactSentence.details[1].correct, true);
+  assert.equal(exactSentence.correctCount, 1);
+});
+
 test("keeps Mary's A1-4 choice result at 10 of 12", () => {
   const result = computeObjectiveScore("A1-4", marySubmission);
 
