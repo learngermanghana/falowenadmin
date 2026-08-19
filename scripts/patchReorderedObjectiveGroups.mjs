@@ -110,12 +110,14 @@ const numberResetGroupHelper = `function splitNumberResetAnswerGroups(text = "")
 }
 
 ${numberResetGroupHelperAnchor}`;
-source = replaceOnce(
-  source,
-  numberResetGroupHelperAnchor,
-  numberResetGroupHelper,
-  "restarted numbering group helper",
-);
+if (!source.includes("function splitNumberResetAnswerGroups(text = \"\") {")) {
+  source = replaceOnce(
+    source,
+    numberResetGroupHelperAnchor,
+    numberResetGroupHelper,
+    "restarted numbering group helper",
+  );
+}
 
 const questionGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
 const questionGroupHelper = `function splitQuestionGroupBlocks(text = "") {
