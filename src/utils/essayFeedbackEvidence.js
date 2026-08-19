@@ -230,7 +230,7 @@ function rawFeedbackSentences(result = {}) {
 }
 
 function genericWritingSentence(value = "") {
-  return /^(?:the main purpose of your message is understandable|check verb position, articles and every task point before submitting|your message uses an appropriate greeting and closing|your free-text response is clear)/i.test(String(value || "").trim());
+  return /^(?:the main purpose of your message is understandable|check verb position, articles and every task point before submitting|your message uses an appropriate greeting and closing|your free-text response is clear|reread .+ improve one wording choice before submitting)/i.test(String(value || "").trim());
 }
 
 function objectiveFeedbackSentence(value = "") {
@@ -300,6 +300,9 @@ function submissionAnchoredStrength(submission = "") {
 
 function submissionAnchoredNextStep(submission = "") {
   const source = writingSectionText(submission);
+  if (/\bauf\s+widersehen\b/i.test(source)) {
+    return "Write “Auf Wiedersehen” instead of “Auf Widersehen”";
+  }
   const missingStopMatch = source.match(/(?:^|\n|[.!?]\s+)\s*([^\n.!?]{3,120}\brückmeldung)\s*(?:\n|$)\s*mit freundlichen grüßen/i);
   if (missingStopMatch) {
     const exactWording = missingStopMatch[1].replace(/\s+/g, " ").trim();
@@ -311,13 +314,12 @@ function submissionAnchoredNextStep(submission = "") {
   if (/informationen\s+über\s+den\s+inhalt/i.test(source)) {
     return "Use “Informationen zu dem Inhalt, den Terminen und den Kosten” instead of “Informationen über den Inhalt, die Termine und die Kosten” for a more natural request";
   }
-  const anchor = writingAnchor(submission);
-  return anchor ? "Reread “" + anchor.replace(/[.!?]+$/, "") + "” and improve one wording choice before submitting" : "";
+  return "";
 }
 
 function strengthOf(result, submission, level, seed, history) {
   const structured = first(result.writingStrengths, result.strengths, result.writing?.strengths, result.ai?.writingStrengths, result.ai?.strengths, result.rubric?.strengths);
-  if (structured) return structured;
+  if (structured && !genericWritingSentence(structured)) return structured;
   const aiSpecific = specificAiWritingSentence(result, "strength", submission);
   if (aiSpecific) return aiSpecific;
   const anchored = submissionAnchoredStrength(submission);

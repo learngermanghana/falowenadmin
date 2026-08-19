@@ -162,6 +162,49 @@ Question 5. B) Einen schönen Tag`;
   assert.equal(result.details[13].correct, false);
 });
 
+test("A1-0.2 accepts slash-separated option letters with umlaut details", () => {
+  const reference = {
+    assignmentKey: "A1-0.2",
+    answers: {
+      Answer1: "C) 26",
+      Answer2: "A) A, O, U, B",
+      Answer3: "A) Eszett",
+      Answer4: "A) K",
+      Answer5: "A) A-Umlaut",
+      Answer6: "A) A, O, U, B",
+      Answer7: "B 4",
+      Answer8: "Wasser",
+      Answer9: "Kaffee",
+      Answer10: "Blume",
+      Answer11: "Schule",
+      Answer12: "Tisch",
+    },
+  };
+  const submission = `TEIL 1
+1.C/26
+2.A/Ä,Ö,Ü,SS
+3.A/Eszett
+4.A/K
+5.A/ A-umlaut
+6.A/ Ä,Ö,Ü,SS
+7.B/ 4
+
+TEIL 3
+1. Wasser
+2. Kaffee
+3. Blume
+4. Schule
+5. Tisch`;
+
+  const result = computeObjectiveScore(reference, submission);
+
+  assert.equal(result.correctCount, 12);
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.details[2].student, "A/Ä,Ö,Ü,SS");
+  assert.equal(result.details[2].correct, true);
+  assert.equal(result.details[6].correct, true);
+});
+
 test("computes A1-14.1 objective score from choices and vocabulary pairs", () => {
   const result = computeObjectiveScore("A1-14.1", `
     1. A Anzeige A
