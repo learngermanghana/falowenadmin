@@ -82,7 +82,7 @@ const conjugatedShortAnswerStrictHelper = [
   '',
   correctAnswerAnchor,
 ].join("\n");
-const strictHelper = [
+const slashAlternativeStrictHelper = [
   'function normalizeStrictGrammarToken(value = "") {',
   '  return normalizeAnswer(value)',
   '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
@@ -120,12 +120,58 @@ const strictHelper = [
   '',
   correctAnswerAnchor,
 ].join("\n");
+const strictHelper = [
+  'function normalizeStrictGrammarToken(value = "") {',
+  '  return normalizeAnswer(value)',
+  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
+  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
+  '}',
+  '',
+  'function strictGrammarStudentVariants(value = "") {',
+  '  const source = String(value || "")',
+  '    .replace(/\\s+\\bSie\\s*\\([^)]*\\)\\s*$/i, "")',
+  '    .replace(/\\([^)]*\\)/g, " ")',
+  '    .replace(/\\s+/g, " ")',
+  '    .trim();',
+  '  const variants = [source];',
+  '  const compactVerbAlternative = source.match(/^(.*?\\s)([A-Za-zÄÖÜäöüß]+)\\s*\\/\\s*([A-Za-zÄÖÜäöüß]+)(\\s+.*)$/);',
+  '  if (compactVerbAlternative) {',
+  '    const [, prefix, firstVerb, secondVerb, suffix] = compactVerbAlternative;',
+  '    variants.push(`${prefix}${firstVerb}${suffix}`, `${prefix}${secondVerb}${suffix}`);',
+  '  }',
+  '  return [...new Set(variants.map(normalizeStrictGrammarToken).filter(Boolean))];',
+  '}',
+  '',
+  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
+  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
+  '  const studentVariants = strictGrammarStudentVariants(studentRaw);',
+  '  if (!expectedTokens.length || !studentVariants.length) return false;',
+  '  if (studentVariants.length === 1 && studentVariants[0].split(/\\s+/).length === 1 && expectedTokens.length > 1) {',
+  '    const expectedVerbForms = String(expectedRaw || "")',
+  '      .split(/\\s*\\/\\s*/)',
+  '      .map((alternative) => normalizeStrictGrammarToken(alternative).split(/\\s+/).filter(Boolean)[1])',
+  '      .filter(Boolean);',
+  '    return expectedVerbForms.includes(studentVariants[0]);',
+  '  }',
+  '  const expectedSentence = expectedTokens.join(" ");',
+  '  if (studentVariants.includes(expectedSentence)) return true;',
+  '  if (expectedTokens.length < 2) return false;',
+  '  return studentVariants.some((variant) => {',
+  '    const studentTokens = variant.split(/\\s+/).filter(Boolean);',
+  '    return studentTokens[0] === expectedTokens[0] && studentTokens[1] === expectedTokens[1];',
+  '  });',
+  '}',
+  '',
+  correctAnswerAnchor,
+].join("\n");
 if (objectiveSource.includes(previousStrictHelper)) {
   objectiveSource = objectiveSource.replace(previousStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
 } else if (objectiveSource.includes(broadShortAnswerStrictHelper)) {
   objectiveSource = objectiveSource.replace(broadShortAnswerStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
 } else if (objectiveSource.includes(conjugatedShortAnswerStrictHelper)) {
   objectiveSource = objectiveSource.replace(conjugatedShortAnswerStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
+} else if (objectiveSource.includes(slashAlternativeStrictHelper)) {
+  objectiveSource = objectiveSource.replace(slashAlternativeStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
 } else if (!objectiveSource.includes("function normalizeStrictGrammarToken(")) {
   objectiveSource = replaceOnce(objectiveSource, correctAnswerAnchor, strictHelper, "strict grammar helper");
 }

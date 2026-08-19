@@ -115,7 +115,7 @@ test("does not award a shortened conjugation point for a pronoun, preposition, o
   }
 });
 
-test("accepts compact Q6 verb alternatives without weakening strict grammar", () => {
+test("grades sentence fragments by the expected subject and conjugated verb", () => {
   const submission = `Teil 1
 1. Ich heiße Anna
 2. Du heißt Max
@@ -136,12 +136,13 @@ Teil 3
   const result = computeObjectiveScore("A1-1.2", submission);
 
   assert.equal(result.totalCount, 14);
-  assert.equal(result.correctCount, 12);
-  assert.equal(result.details[5].correct, false);
+  assert.equal(result.correctCount, 13);
+  assert.equal(result.details[5].student, "ihr kommt Brasilien");
+  assert.equal(result.details[5].correct, true);
   assert.equal(result.details[6].student, "Sie kommen/kommt aus Russland Sie(They/She)");
   assert.equal(result.details[6].correct, true);
   assert.equal(result.details[9].correct, false);
-  assert.deepEqual(wrongQuestions(result), [5, 9]);
+  assert.deepEqual(wrongQuestions(result), [9]);
 });
 
 test("keeps Mary's A1-4 choice result at 10 of 12", () => {
