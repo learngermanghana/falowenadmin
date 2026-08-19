@@ -87,3 +87,18 @@ Teil 4
   assert.doesNotMatch(feedback, /capital letter|Write “Ich schreibe/i);
   assert.match(feedback, /Teil 4 is excellent|all answers correct/i);
 });
+
+
+test("preserves sentence punctuation in a genuine capitalization correction", () => {
+  const submission = `Teil 2
+wie geht es dir?`;
+
+  const feedback = buildNaturalStudentFeedback({
+    ...baseResult,
+    assignmentKey: "A2-CAPITALIZATION-TEST",
+    writingStrengths: ["The question is understandable"],
+    nextStep: "Review exact wording: Start this sentence with a capital letter: \"wie geht es dir?\".",
+  }, submission);
+
+  assert.match(feedback, /Write “Wie geht es dir\?” instead of “wie geht es dir\?”/);
+});
