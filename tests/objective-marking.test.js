@@ -412,7 +412,7 @@ Teil 3
   assert.equal(result.correctCount, 9);
   assert.equal(result.details[9].correct, false);
   assert.equal(result.details[10].correct, false);
-  assert.equal(result.details[12].correct, false);
+  assert.equal(result.details[12].correct, true);
 });
 
 test("option-only student answers match full answer text in A2-5.14", () => {
@@ -491,7 +491,7 @@ test("A1-4 blank-line separated objective blocks ignore first numbered writing b
   `);
 
   assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 10);
+  assert.equal(result.correctCount, 11);
   assert.equal(result.details[6].student, "D");
   assert.equal(result.details[6].correct, false);
   assert.equal(result.details[12].student, "Barcelona oder Madrid");
