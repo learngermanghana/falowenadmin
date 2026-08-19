@@ -33,16 +33,35 @@ const itemMetadataAfter = [
 objectiveSource = replaceOnce(objectiveSource, itemMetadataBefore, itemMetadataAfter, "answer matching metadata");
 
 const correctAnswerAnchor = 'function isCorrectAnswer(item, student) {';
-const strictHelper = [
+const previousStrictHelper = [
   'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
   '  const expected = normalizeAnswer(expectedRaw);',
   '  const student = normalizeAnswer(studentRaw);',
   '  return Boolean(expected && student && expected === student);',
   '}',
+].join("\n");
+const strictHelper = [
+  'function normalizeStrictGrammarToken(value = "") {',
+  '  return normalizeAnswer(value)',
+  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
+  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
+  '}',
+  '',
+  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
+  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
+  '  const studentTokens = normalizeStrictGrammarToken(studentRaw).split(/\\s+/).filter(Boolean);',
+  '  if (!expectedTokens.length || !studentTokens.length) return false;',
+  '  if (studentTokens.length === 1 && expectedTokens.length > 1) {',
+  '    return expectedTokens.includes(studentTokens[0]);',
+  '  }',
+  '  return expectedTokens.join(" ") === studentTokens.join(" ");',
+  '}',
   '',
   correctAnswerAnchor,
 ].join("\n");
-if (!objectiveSource.includes("function strictGrammarTextMatches(")) {
+if (objectiveSource.includes(previousStrictHelper)) {
+  objectiveSource = objectiveSource.replace(previousStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
+} else if (!objectiveSource.includes("function normalizeStrictGrammarToken(")) {
   objectiveSource = replaceOnce(objectiveSource, correctAnswerAnchor, strictHelper, "strict grammar helper");
 }
 

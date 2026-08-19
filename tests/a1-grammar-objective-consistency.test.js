@@ -49,6 +49,28 @@ Teil 3
 4.B.Paris
 5.Madrid`;
 
+const nanayaaSubmission = `Teil 1
+1.heiBe
+2.heiBt
+3.heiBt
+4.kommen
+5.kommt
+6.kommen
+7.wohne
+8.wohnst
+9.wohnen
+
+Teil 2
+Ich heiße Nanayaa. Ich komme aus Ghana, ich wohne in Kasoa.
+Guten Abend
+
+Teil 3
+1.A) Anna
+2.C) Aus Italien
+3.D) In Berlin
+4\\. B) Tom
+5.A) In Berlin`;
+
 function wrongQuestions(result) {
   return Object.entries(result.details)
     .filter(([, detail]) => detail.correct === false)
@@ -66,6 +88,20 @@ test("scores Josh A1-1.2 with strict pronoun and verb conjugation", () => {
   assert.match(result.details[9].student, /Sie wohnen in Wien/i);
   assert.equal(result.details[10].correct, true);
   assert.equal(result.details[14].correct, true);
+});
+
+test("scores shortened A1-1.2 conjugation answers against the verb in each reference sentence", () => {
+  const result = computeObjectiveScore("A1-1.2", nanayaaSubmission);
+
+  assert.equal(result.totalCount, 14);
+  assert.equal(result.correctCount, 13);
+  assert.deepEqual(wrongQuestions(result), [9]);
+  assert.equal(result.details[1].student, "heiBe");
+  assert.equal(result.details[1].correct, true);
+  assert.equal(result.details[2].correct, true);
+  assert.equal(result.details[3].correct, true);
+  assert.equal(result.details[9].student, "wohnen");
+  assert.equal(result.details[9].correct, false);
 });
 
 test("keeps Mary's A1-4 choice result at 10 of 12", () => {
