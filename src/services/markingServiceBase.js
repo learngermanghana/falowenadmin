@@ -6,6 +6,7 @@ import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js"
 import { resolveStudentIdentity } from "../utils/studentIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
 import { shouldIncludeInIncomingQueue } from "../utils/markingQueue.js";
+import { buildManualScoreCorrection } from "../utils/manualScoreCorrection.js";
 import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
 import {
   loadPublishedStudentRows,
@@ -872,19 +873,14 @@ export async function loadStudentResultSources(studentCode) {
 export async function updateFirestoreScore(scoreId, updates = {}) {
   if (!scoreId) throw new Error("Missing Firestore score id.");
   const nowIso = new Date().toISOString();
-  const scoreValue = Number(updates.score);
   const patch = {
     assignment: normalize(updates.assignment),
     assignmentId: normalize(updates.assignmentId || updates.assignment_id),
     assignment_id: normalize(updates.assignmentId || updates.assignment_id),
-    score: Number.isFinite(scoreValue) ? Math.max(0, Math.min(100, Math.round(scoreValue))) : updates.score,
-    finalScore: Number.isFinite(scoreValue) ? Math.max(0, Math.min(100, Math.round(scoreValue))) : updates.score,
     comments: String(updates.comments || "").trim(),
     feedback: String(updates.comments || updates.feedback || "").trim(),
     level: normalize(updates.level),
-    updatedAt: nowIso,
-    manuallyEdited: true,
-    manuallyEditedAt: nowIso,
+    ...buildManualScoreCorrection(updates.score, nowIso),
   };
   await updateDoc(doc(db, "scores", scoreId), patch);
   return patch;
