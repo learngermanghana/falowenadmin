@@ -691,7 +691,7 @@ function findWritingIssues(text = "") {
       addWritingIssue(issues, {
         submitted: clipFeedbackSnippet(line),
         suggestion: `${line.charAt(0).toUpperCase()}${line.slice(1)}`,
-        message: `Start this sentence with a capital letter: ${highlightWritingSnippet(line)}.`,
+        message: `Write ${highlightWritingSnippet(`${line.charAt(0).toUpperCase()}${line.slice(1)}`)} instead of ${highlightWritingSnippet(line)}.`,
       });
       break;
     }
