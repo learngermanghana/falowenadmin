@@ -88,6 +88,43 @@ if (source.includes(before)) {
   throw new Error("reordered restarted objective groups anchor changed; update patchReorderedObjectiveGroups.mjs");
 }
 
+const numberResetGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
+const numberResetGroupHelper = `function splitNumberResetAnswerGroups(text = "") {
+  const groups = [];
+  let current = [];
+
+  for (const rawLine of String(text || "").split(/\\r?\\n/)) {
+    const entries = parseNumberedEntriesFromChunk(rawLine);
+    for (const entry of entries) {
+      const previousNumber = current[current.length - 1]?.number || 0;
+      if (current.length && entry.number <= previousNumber) {
+        groups.push(current);
+        current = [];
+      }
+      current.push(entry);
+    }
+  }
+
+  if (current.length) groups.push(current);
+  const alphabetListening = ["wasser", "kaffee", "blume", "schule"];
+  const matchesAlphabetWorkbook = groups.length === 2
+    && groups[0].length === 7
+    && groups[1].length === 5
+    && alphabetListening.every((answer, index) => normalizeAnswer(groups[1][index]?.answer) === answer)
+    && normalizeAnswer(groups[1][4]?.answer).startsWith("tis");
+  return matchesAlphabetWorkbook ? groups : [];
+}
+
+${numberResetGroupHelperAnchor}`;
+if (!source.includes("function splitNumberResetAnswerGroups(text = \"\") {")) {
+  source = replaceOnce(
+    source,
+    numberResetGroupHelperAnchor,
+    numberResetGroupHelper,
+    "restarted numbering group helper",
+  );
+}
+
 const questionGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
 const questionGroupHelper = `function splitQuestionGroupBlocks(text = "") {
   const sourceText = String(text || "");
@@ -134,11 +171,33 @@ const groupSelectionAfter = `  const questionGroups = splitQuestionGroupBlocks(s
         : sectionGroups.length
           ? sectionGroups
           : blockGroups;`;
+const numberResetGroupSelection = `${groupSelectionAfter}
+  const numberResetGroups = splitNumberResetAnswerGroups(submissionText);`;
+
+const resetCandidateBefore = "  permuteAnswerGroups(groups).forEach((orderedGroups) => addCandidate(flattenAnswerGroups(orderedGroups)));";
+const resetCandidateAfter = `  if (numberResetGroups.length > 1) addCandidate(flattenAnswerGroups(numberResetGroups));\n\n  permuteAnswerGroups(groups).forEach((orderedGroups) => addCandidate(flattenAnswerGroups(orderedGroups)));`;
+
+if (!source.includes(numberResetGroupSelection)) {
+  source = replaceOnce(
+    source,
+    groupSelectionBefore,
+    groupSelectionAfter,
+    "Q-numbered objective group priority",
+  );
+
+  source = replaceOnce(
+    source,
+    groupSelectionAfter,
+    numberResetGroupSelection,
+    "number-reset objective group priority",
+  );
+}
+
 source = replaceOnce(
   source,
-  groupSelectionBefore,
-  groupSelectionAfter,
-  "Q-numbered objective group priority",
+  resetCandidateBefore,
+  resetCandidateAfter,
+  "number-reset objective candidate",
 );
 
 fs.writeFileSync(target, source);

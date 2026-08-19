@@ -412,7 +412,7 @@ Teil 3
   assert.equal(result.correctCount, 9);
   assert.equal(result.details[9].correct, false);
   assert.equal(result.details[10].correct, false);
-  assert.equal(result.details[12].correct, false);
+  assert.equal(result.details[12].correct, true);
 });
 
 test("option-only student answers match full answer text in A2-5.14", () => {
@@ -491,7 +491,7 @@ test("A1-4 blank-line separated objective blocks ignore first numbered writing b
   `);
 
   assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 10);
+  assert.equal(result.correctCount, 11);
   assert.equal(result.details[6].student, "D");
   assert.equal(result.details[6].correct, false);
   assert.equal(result.details[12].student, "Barcelona oder Madrid");
@@ -679,4 +679,34 @@ Teil 3
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 1);
   assert.equal(result.details["19"].student, "a");
   assert.equal(result.details["19"].expected, "B");
+});
+
+
+test("A1-0.2 aligns a second 1-5 answer group without a Teil heading", () => {
+  const submission = `1 c
+2 A
+3 A
+4 A
+5 B
+6 A
+7 B
+1 Wasser
+2 Kaffee
+3 Blume
+4 Schule
+5 Tis`;
+
+  const result = computeObjectiveScore("A1-0.2", submission);
+
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 11);
+  assert.equal(result.details[1].student.toLowerCase(), "c");
+  assert.equal(result.details[2].student.toLowerCase(), "a");
+  assert.equal(result.details[5].correct, false);
+  assert.equal(result.details[8].student.toLowerCase(), "wasser");
+  assert.equal(result.details[8].correct, true);
+  assert.equal(result.details[11].student.toLowerCase(), "schule");
+  assert.equal(result.details[11].correct, true);
+  assert.equal(result.details[12].student.toLowerCase(), "tis");
+  assert.equal(result.details[12].correct, true);
 });
