@@ -190,8 +190,13 @@ function sanitizeFalseWritingFeedback(feedback = "", submissionText = "") {
   );
 
   text = text.replace(
-    /\s*(?:Review exact wording:\s*)?Start this sentence with a capital letter:\s*[“"]([^”"]+)[”"]\.?/gi,
-    (match, snippet) => (followsCommaSalutation(submissionText, snippet) ? "" : match),
+    /\s*(?:Review exact wording:\s*)?Start this sentence with a capital letter:\s*[“"](?:([^”"\n]+?)[”"]\.?|([^”"\n]*?[.!?…]))/gi,
+    (match, closedSnippet, unclosedSnippet) => {
+      const submitted = String(closedSnippet || unclosedSnippet || "").trim().replace(/[.!?…]+$/, "");
+      if (followsCommaSalutation(submissionText, submitted)) return "";
+      const corrected = submitted ? `${submitted.charAt(0).toLocaleUpperCase("de")}${submitted.slice(1)}` : "";
+      return corrected ? ` Write “${corrected}” instead of “${submitted}”.` : match;
+    },
   );
 
   return text

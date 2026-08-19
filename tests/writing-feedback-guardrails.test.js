@@ -54,3 +54,36 @@ test("does not tell students to capitalize the first line after a comma salutati
 
   assert.doesNotMatch(feedback, /Start this sentence with a capital letter/i);
 });
+
+
+test("removes an unclosed-quote capitalization warning after a formal comma salutation", () => {
+  const submission = `Teil 2
+Sehr geehrte Damen und Herren,
+
+ich schreibe, weil ich eine Wohnung in der Stadt suche. Haben Sie eine Wohnung frei?
+
+Mit freundlichen Grüßen
+Joel
+
+Teil 3
+1) b
+2) c
+
+Teil 4
+1) c`;
+
+  const feedback = buildNaturalStudentFeedback({
+    ...baseResult,
+    studentName: "Joel Darko",
+    assignmentKey: "A2-3.7",
+    objectiveScore: 100,
+    objectiveCorrect: 12,
+    objectiveTotal: 12,
+    writingScorePercent: 84,
+    writingStrengths: ["Your sentence “ich schreibe, weil ich eine Wohnung in der Stadt suche” clearly communicates the purpose of the message"],
+    nextStep: "Review exact wording: Start this sentence with a capital letter: \"ich schreibe, weil ich eine Wohnung in der Stadt suche.",
+  }, submission);
+
+  assert.doesNotMatch(feedback, /capital letter|Write “Ich schreibe/i);
+  assert.match(feedback, /Teil 4 is excellent|all answers correct/i);
+});
