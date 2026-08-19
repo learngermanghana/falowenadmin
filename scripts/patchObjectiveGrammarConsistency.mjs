@@ -117,7 +117,7 @@ const strictHelper = [
   '}',
   '',
   correctAnswerAnchor,
-].join("\\n");
+].join("\n");
 if (objectiveSource.includes(previousStrictHelper)) {
   objectiveSource = objectiveSource.replace(previousStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
 } else if (objectiveSource.includes(broadShortAnswerStrictHelper)) {
