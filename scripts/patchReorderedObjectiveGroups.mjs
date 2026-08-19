@@ -106,7 +106,13 @@ const numberResetGroupHelper = `function splitNumberResetAnswerGroups(text = "")
   }
 
   if (current.length) groups.push(current);
-  return groups.length === 2 && groups[0].length === 7 && groups[1].length === 5 ? groups : [];
+  const alphabetListening = ["wasser", "kaffee", "blume", "schule"];
+  const matchesAlphabetWorkbook = groups.length === 2
+    && groups[0].length === 7
+    && groups[1].length === 5
+    && alphabetListening.every((answer, index) => normalizeAnswer(groups[1][index]?.answer) === answer)
+    && normalizeAnswer(groups[1][4]?.answer).startsWith("tis");
+  return matchesAlphabetWorkbook ? groups : [];
 }
 
 ${numberResetGroupHelperAnchor}`;
