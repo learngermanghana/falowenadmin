@@ -174,7 +174,7 @@ const groupSelectionAfter = `  const questionGroups = splitQuestionGroupBlocks(s
         : sectionGroups.length
           ? sectionGroups
           : blockGroups;`;
-const numberResetGroupSelection = "  const questionGroups = splitQuestionGroupBlocks(submissionText);\n  const numberResetGroups = splitNumberResetAnswerGroups(submissionText);\n  const groups = questionGroups.length > 1\n    ? questionGroups\n    : sectionGroups.length > 1\n      ? sectionGroups\n      : numberResetGroups.length > 1\n        ? numberResetGroups\n        : blockGroups.length > 1\n          ? blockGroups\n          : sectionGroups.length\n            ? sectionGroups\n            : blockGroups;";
+const numberResetGroupSelection = "  const questionGroups = splitQuestionGroupBlocks(submissionText);\n  const numberResetGroups = sections.length <= 1 ? splitNumberResetAnswerGroups(submissionText) : [];\n  const groups = questionGroups.length > 1\n    ? questionGroups\n    : sectionGroups.length > 1\n      ? sectionGroups\n      : numberResetGroups.length > 1\n        ? numberResetGroups\n        : blockGroups.length > 1\n          ? blockGroups\n          : sectionGroups.length\n            ? sectionGroups\n            : blockGroups;";
 
 if (!source.includes(numberResetGroupSelection)) {
   source = replaceOnce(
