@@ -88,6 +88,15 @@ if (source.includes(before)) {
   throw new Error("reordered restarted objective groups anchor changed; update patchReorderedObjectiveGroups.mjs");
 }
 
+const singleTokenTextMatchBefore = '  if (expected === student || expected.includes(student) || student.includes(expected)) return true;';
+const singleTokenTextMatchAfter = '  if (expected === student) return true;\\n  if (!expected.includes(" ") && !student.includes(" ")) return false;\\n  if (expected.includes(student) || student.includes(expected)) return true;';
+source = replaceOnce(
+  source,
+  singleTokenTextMatchBefore,
+  singleTokenTextMatchAfter,
+  "single-token objective text matching",
+);
+
 const numberResetGroupHelperAnchor = "function permuteAnswerGroups(groups = []) {";
 const numberResetGroupHelper = `function splitNumberResetAnswerGroups(text = "") {
   const groups = [];
