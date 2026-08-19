@@ -113,13 +113,13 @@ function stripLeadingQuestionLabel(value = "") {
 
 function extractOptionLetter(value = "") {
   const cleaned = stripLeadingQuestionLabel(value);
-  const match = cleaned.match(new RegExp(`^([${OBJECTIVE_OPTION_LETTERS}])(?:\\s*[().:-]|\\s+|$)`, "i"));
+  const match = cleaned.match(new RegExp(`^([${OBJECTIVE_OPTION_LETTERS}])(?:\\s*[().:/-]|\\s+|$)`, "i"));
   return match ? match[1].toUpperCase() : "";
 }
 
 function extractOptionText(value = "") {
   return stripLeadingQuestionLabel(value)
-    .replace(new RegExp(`^\\s*[${OBJECTIVE_OPTION_LETTERS}](?:\\s*[().:-]|\\s+)\\s*`, "i"), "")
+    .replace(new RegExp(`^\\s*[${OBJECTIVE_OPTION_LETTERS}](?:\\s*[().:/-]|\\s+)\\s*`, "i"), "")
     .trim();
 }
 
