@@ -696,7 +696,7 @@ Anna`,
 
   assert.equal(result.parts[0].partType, "writing");
   assert.match(result.feedback, /clear greeting "Hallo Tom"/);
-  assert.match(result.feedback, /Start this sentence with a capital letter: "ich gehe jeden Morgen/);
+  assert.match(result.feedback, /Write "Ich gehe jeden Morgen.*instead of "ich gehe jeden Morgen/);
   assert.equal(result.corrections[0].type, "writing");
   assert.match(result.improvementSummary, /"ich gehe jeden Morgen/);
   assert.doesNotMatch(result.feedback, /\*\*/);
