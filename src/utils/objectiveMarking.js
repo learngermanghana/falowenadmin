@@ -118,13 +118,13 @@ function extractOptionLetter(value = "") {
   const raw = stripAnswerQuestionLabel(value);
   const anzeige = raw.match(new RegExp(`\\banzeige\\s*([${OPTION_LETTERS}])\\b`, "i"));
   if (anzeige) return anzeige[1].toUpperCase();
-  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:-]|\\s+|$)`, "i"));
+  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:/-]|\\s+|$)`, "i"));
   return explicit ? explicit[1].toUpperCase() : "";
 }
 
 function extractOptionText(value = "") {
   return stripQuestionLabel(value)
-    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:-]|\\s+)`, "i"), "")
+    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:/-]|\\s+)`, "i"), "")
     .trim();
 }
 
