@@ -108,13 +108,24 @@ function officialSessionId(session = {}) {
   );
 }
 
-function sessionClassKey(session = {}) {
-  // Display names and legacy group labels are not unique: two separate class
-  // documents may share them. Only canonical document identities are safe for
-  // class-and-time collision deduplication.
-  return comparable(
+function sessionClassKey(session = {}, classes = []) {
+  const canonical = comparable(
     session.classRecordId || session.classId || session.classDocumentId,
   );
+  if (canonical) return canonical;
+
+  // Resolve a legacy name only when it points to exactly one class document.
+  // Ambiguous display names remain on the official-session fallback key.
+  const legacyValues = new Set([
+    session.className, session.class, session.group,
+  ].map(comparable).filter(Boolean));
+  if (!legacyValues.size) return "";
+
+  const matchedIds = new Set(classes
+    .filter((klass) => classValues(klass).some((value) => legacyValues.has(value)))
+    .map((klass) => comparable(klass.id || klass.classId || klass.classRecordId))
+    .filter(Boolean));
+  return matchedIds.size === 1 ? [...matchedIds][0] : "";
 }
 
 function preferredSessionScore(session = {}) {
@@ -136,13 +147,13 @@ function sessionUpdatedTime(session = {}) {
   )?.getTime() || 0;
 }
 
-function dedupeSessions(sessions = []) {
+function dedupeSessions(sessions = [], classes = []) {
   const preferred = new Map();
   sessions.forEach((session) => {
     const start = sessionStart(session);
     const officialId = officialSessionId(session);
     if (!start || !officialId) return;
-    const classKey = sessionClassKey(session);
+    const classKey = sessionClassKey(session, classes);
     // One class can have only one official lesson at an exact start time.
     // Grouping by class + start prevents a stale generated alias with a
     // different officialSessionId from sending the wrong reminder.
@@ -173,6 +184,7 @@ function findDueSessionReminders({
   now = new Date(),
   leadMinutes = DEFAULT_LEADS,
   graceMinutes = DEFAULT_GRACE_MIN,
+  classes = [],
 } = {}) {
   const nowDate = asDate(now);
   if (!nowDate) return [];
@@ -180,7 +192,7 @@ function findDueSessionReminders({
   const grace = Math.max(0, Number(graceMinutes) || 0);
   const due = [];
 
-  dedupeSessions(sessions).forEach((session) => {
+  dedupeSessions(sessions, classes).forEach((session) => {
     if (isSuppressedSession(session)) return;
     const startsAt = sessionStart(session);
     if (!startsAt) return;
@@ -553,6 +565,7 @@ async function runClassSessionReminderEmailJob({
   const communication = runtimeConfig.communication || {};
   const due = findDueSessionReminders({
     sessions,
+    classes,
     now,
     leadMinutes: communication.class_reminder_leads_minutes
       || process.env.CLASS_REMINDER_LEADS_MINUTES

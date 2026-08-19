@@ -74,6 +74,45 @@ test("reminders at the same time remain separate for different classes", () => {
   }).length, 2);
 });
 
+test("unique legacy A2 class name resolves to the authoritative Day 8 session", () => {
+  const startsAt = "2026-08-19T18:00:00.000Z";
+  const sessions = [
+    {
+      id: "stale-a2-4-9",
+      officialSessionId: "a2-munich-4-9",
+      className: "A2 Munich Klasse",
+      curriculumIndex: 9,
+      startsAt,
+      status: "scheduled",
+      topic: "4.9. Urlaub",
+      assignmentId: "A2-4.9",
+    },
+    {
+      id: "official-a2-3-8",
+      officialSessionId: "a2-munich-day-8",
+      classRecordId: "Y4xjoaF5wK0RmDyIEvkY",
+      curriculumIndex: 8,
+      repairPreferredRecord: true,
+      attendanceSessionId: "attendance-a2-day-8",
+      startsAt,
+      status: "scheduled",
+      topic: "Day 8: Rezepte und Essen",
+      assignmentId: "A2-3.8",
+    },
+  ];
+
+  const due = reminder.findDueSessionReminders({
+    sessions,
+    classes: [{ id: "Y4xjoaF5wK0RmDyIEvkY", name: "A2 Munich Klasse" }],
+    now: new Date("2026-08-19T17:50:00.000Z"),
+    leadMinutes: [10],
+  });
+
+  assert.equal(due.length, 1);
+  assert.equal(due[0].session.id, "official-a2-3-8");
+  assert.equal(reminder.topicForSession(due[0].session), "Day 8: Rezepte und Essen (A2-3.8)");
+});
+
 test("name-only legacy sessions are not deduplicated across ambiguous class names", () => {
   const startsAt = "2026-08-19T17:00:00.000Z";
   const sessions = [
@@ -97,6 +136,10 @@ test("name-only legacy sessions are not deduplicated across ambiguous class name
 
   const due = reminder.findDueSessionReminders({
     sessions,
+    classes: [
+      { id: "cohort-one", name: "A1 Evening Klasse" },
+      { id: "cohort-two", name: "A1 Evening Klasse" },
+    ],
     now: new Date("2026-08-19T16:50:00.000Z"),
     leadMinutes: [10],
   });
