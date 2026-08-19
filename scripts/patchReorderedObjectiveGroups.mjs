@@ -169,7 +169,7 @@ const numberResetGroupSelection = `${groupSelectionAfter}
   const numberResetGroups = splitNumberResetAnswerGroups(submissionText);`;
 
 const resetCandidateBefore = "  permuteAnswerGroups(groups).forEach((orderedGroups) => addCandidate(flattenAnswerGroups(orderedGroups)));";
-const resetCandidateAfter = "  if (numberResetGroups.length > 1) addCandidate(flattenAnswerGroups(numberResetGroups));\\n\\n  permuteAnswerGroups(groups).forEach((orderedGroups) => addCandidate(flattenAnswerGroups(orderedGroups)));";
+const resetCandidateAfter = `  if (numberResetGroups.length > 1) addCandidate(flattenAnswerGroups(numberResetGroups));\n\n  permuteAnswerGroups(groups).forEach((orderedGroups) => addCandidate(flattenAnswerGroups(orderedGroups)));`;
 
 if (!source.includes(numberResetGroupSelection)) {
   source = replaceOnce(
