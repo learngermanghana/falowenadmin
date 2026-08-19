@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import "./patchSlashObjectiveOptionParsing.mjs";
 
 const target = new URL("../src/utils/objectiveMarking.js", import.meta.url);
 let source = fs.readFileSync(target, "utf8");
