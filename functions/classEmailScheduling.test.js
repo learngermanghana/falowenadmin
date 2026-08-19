@@ -23,6 +23,57 @@ test("final class reminder catches a session moved inside the normal grace windo
   assert.deepEqual(due.map(({ leadMin }) => leadMin), [10]);
 });
 
+test("class reminder keeps Day 4 when a stale Day 3 alias shares its class time", () => {
+  const startsAt = "2026-08-19T17:00:00.000Z";
+  const staleDay3 = {
+    id: "stale-day-3",
+    officialSessionId: "A1-DORTMUND-day-3",
+    classRecordId: "xTq2ZiYSmtVlpr3I5Zon",
+    curriculumIndex: 3,
+    startsAt,
+    status: "scheduled",
+    topic: "Day 3: Personal Information, Articles, Adjectives and W-Questions",
+    assignmentIds: ["A1-1.1-practice", "A1-1.2"],
+  };
+  const officialDay4 = {
+    id: "official-day-4",
+    officialSessionId: "A1-DORTMUND-day-4",
+    classRecordId: "xTq2ZiYSmtVlpr3I5Zon",
+    curriculumIndex: 4,
+    repairPreferredRecord: true,
+    attendanceSessionId: "attendance-day-4",
+    startsAt,
+    status: "scheduled",
+    topic: "Day 4: Numbers, Phone Numbers and Addresses",
+    assignmentId: "A1-2",
+  };
+
+  const due = reminder.findDueSessionReminders({
+    sessions: [staleDay3, officialDay4],
+    now: new Date("2026-08-19T16:50:00.000Z"),
+    leadMinutes: [10],
+    graceMinutes: 7,
+  });
+
+  assert.equal(due.length, 1);
+  assert.equal(due[0].session.id, "official-day-4");
+  assert.equal(reminder.topicForSession(due[0].session), "Day 4: Numbers, Phone Numbers and Addresses (A1-2)");
+});
+
+test("reminders at the same time remain separate for different classes", () => {
+  const startsAt = "2026-08-19T17:00:00.000Z";
+  const sessions = [
+    { id: "bonn", officialSessionId: "bonn-day-4", classRecordId: "bonn", startsAt, status: "scheduled" },
+    { id: "dortmund", officialSessionId: "dortmund-day-4", classRecordId: "dortmund", startsAt, status: "scheduled" },
+  ];
+
+  assert.equal(reminder.findDueSessionReminders({
+    sessions,
+    now: new Date("2026-08-19T16:50:00.000Z"),
+    leadMinutes: [10],
+  }).length, 2);
+});
+
 test("attendance delivery uses the class-specific announcement sheet configuration", () => {
   const fallback = {
     url: "https://global.example/webhook",

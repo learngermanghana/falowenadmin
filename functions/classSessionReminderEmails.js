@@ -108,12 +108,30 @@ function officialSessionId(session = {}) {
   );
 }
 
+function sessionClassKey(session = {}) {
+  return comparable(
+    session.classRecordId || session.classId || session.classDocumentId
+    || session.className || session.class || session.group,
+  );
+}
+
 function preferredSessionScore(session = {}) {
-  return (text(session.officialSessionId) ? 20 : 0)
+  const curriculumIndex = Number(session.curriculumIndex);
+  return (session.repairPreferredRecord === true || session.authoritativeSession === true ? 1000 : 0)
+    + (text(session.attendanceSessionId || session.attendanceRecordId) ? 300 : 0)
+    + (session.manuallyCompleted === true || session.manualOverride === true ? 150 : 0)
+    + (text(session.officialSessionId) ? 20 : 0)
     + (text(session.curriculumSource) ? 10 : 0)
-    + (Number.isFinite(Number(session.curriculumIndex)) ? 8 : 0)
+    + (Number.isFinite(curriculumIndex) ? 8 + Math.max(0, curriculumIndex) : 0)
     + (assignmentIds(session).length ? 6 : 0)
     + (text(session.topic || session.title) ? 4 : 0);
+}
+
+function sessionUpdatedTime(session = {}) {
+  return asDate(
+    session.updatedAt || session.rescheduledAt || session.manuallyUpdatedAt
+    || session.createdAt,
+  )?.getTime() || 0;
 }
 
 function dedupeSessions(sessions = []) {
@@ -122,9 +140,18 @@ function dedupeSessions(sessions = []) {
     const start = sessionStart(session);
     const officialId = officialSessionId(session);
     if (!start || !officialId) return;
-    const key = `${officialId}::${start.toISOString()}`;
+    const classKey = sessionClassKey(session);
+    // One class can have only one official lesson at an exact start time.
+    // Grouping by class + start prevents a stale generated alias with a
+    // different officialSessionId from sending the wrong reminder.
+    const key = classKey
+      ? `${classKey}::${start.toISOString()}`
+      : `${officialId}::${start.toISOString()}`;
     const current = preferred.get(key);
-    if (!current || preferredSessionScore(session) > preferredSessionScore(current)) {
+    const currentScore = preferredSessionScore(current || {});
+    const candidateScore = preferredSessionScore(session);
+    if (!current || candidateScore > currentScore
+      || (candidateScore === currentScore && sessionUpdatedTime(session) > sessionUpdatedTime(current))) {
       preferred.set(key, session);
     }
   });
