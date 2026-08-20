@@ -58,10 +58,11 @@ function resolvePhone(student = {}, draft = {}) {
 
 export default function StudentUpgradeTools({ student, draft = {}, onStudentUpdated, pushToast }) {
   const studentId = String(student?.id || student?.studentCode || "").trim();
-  const currentLevel = normalizeLevel(student?.level || draft.level);
-  const suggestedTarget = nextLevel(currentLevel);
+  const visibleLevel = normalizeLevel(student?.level || draft.level);
+  const paidLevel = normalizeLevel(student?.paidLevel) || visibleLevel;
+  const suggestedTarget = nextLevel(paidLevel);
   const upgradeStatus = String(student?.upgradeStatus || "").trim().toLowerCase();
-  const hasUpgrade = ["pending", "expired", "completed"].includes(upgradeStatus);
+  const hasUpgrade = ["awaiting_payment", "pending", "expired", "completed"].includes(upgradeStatus);
   const remainingUpgradeBalance = parseMoneyValue(student?.upgradeBalanceDue);
   const upgradeTargetLevel = normalizeLevel(student?.upgradeToLevel);
   const effectiveTarget = upgradeTargetLevel || suggestedTarget;
@@ -83,12 +84,11 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
     setPaymentAmount(remaining > 0 ? String(remaining) : "");
     setGeneratedPayment(null);
     reconciliationStarted.current = false;
-  }, [studentId, student?.upgradeId]);
+  }, [studentId, student?.upgradeId, upgradeTargetLevel, suggestedTarget, student?.upgradeTargetClassName, student?.upgradeTuitionFee, student?.upgradeBalanceDue, draft.tuitionFee, student?.tuitionFee]);
 
   useEffect(() => {
     if (!studentId) return undefined;
     let active = true;
-    let timer = null;
 
     const reconcile = async () => {
       if (!active) return;
@@ -106,27 +106,39 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
       reconciliationStarted.current = true;
       reconcile();
     }
-    timer = window.setInterval(reconcile, 30000);
+    const timer = window.setInterval(reconcile, 30000);
     return () => {
       active = false;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, [studentId, pushToast]);
 
-  const canStartUpgrade = Boolean(studentId && suggestedTarget && !["pending", "expired"].includes(upgradeStatus));
-  const canGenerateUpgradePayment = Boolean(studentId && ["pending", "expired"].includes(upgradeStatus) && remainingUpgradeBalance > 0);
+  const unfinishedUpgrade = ["awaiting_payment", "pending", "expired"].includes(upgradeStatus);
+  const canStartUpgrade = Boolean(studentId && suggestedTarget && !unfinishedUpgrade);
+  const canGenerateUpgradePayment = Boolean(studentId && unfinishedUpgrade && remainingUpgradeBalance > 0);
   const phone = resolvePhone(student, draft);
   const normalizedPhone = normalizePhoneForWhatsapp(phone);
   const numericPaymentAmount = parseMoneyValue(paymentAmount);
 
   const statusSummary = useMemo(() => {
-    if (upgradeStatus === "pending") return `Temporary ${effectiveTarget} access is active until ${formatDate(student?.upgradeGraceEnd)}.`;
-    if (upgradeStatus === "expired") return `The grace period ended. The student was returned to ${normalizeLevel(student?.level) || student?.upgradeFromLevel || "the previous level"}.`;
-    if (upgradeStatus === "completed") return `${effectiveTarget} is fully paid. Contract now ends ${formatDate(student?.contractEnd)}.`;
-    return suggestedTarget ? `Next eligible level: ${suggestedTarget}.` : "No higher Falowen level is configured after this level.";
-  }, [upgradeStatus, effectiveTarget, suggestedTarget, student?.upgradeGraceEnd, student?.contractEnd, student?.level, student?.upgradeFromLevel]);
+    if (upgradeStatus === "awaiting_payment") {
+      return `${effectiveTarget} upgrade is prepared. The student stays on ${paidLevel || "the current paid level"} until payment succeeds. A partial payment starts one month of temporary ${effectiveTarget} access; full payment completes the upgrade immediately.`;
+    }
+    if (upgradeStatus === "pending") {
+      return `Temporary ${effectiveTarget} access is active until ${formatDate(student?.upgradeGraceEnd)} because the new-level fee is only partially paid.`;
+    }
+    if (upgradeStatus === "expired") {
+      return `The one-month partial-payment access ended. The student was returned to ${normalizeLevel(student?.level) || student?.upgradeFromLevel || "the previous paid level"}.`;
+    }
+    if (upgradeStatus === "completed") {
+      return `${effectiveTarget} is fully paid. The paid contract now ends ${formatDate(student?.contractEnd)}.`;
+    }
+    return suggestedTarget
+      ? `Next eligible level: ${suggestedTarget}. Prepare the upgrade, then choose whether the student pays part or all of the new-level fee.`
+      : "No higher Falowen level is configured after this level.";
+  }, [upgradeStatus, effectiveTarget, suggestedTarget, student?.upgradeGraceEnd, student?.contractEnd, student?.level, student?.upgradeFromLevel, paidLevel]);
 
-  const startUpgrade = async () => {
+  const prepareUpgrade = async () => {
     const numericFee = parseMoneyValue(tuitionFee);
     if (!canStartUpgrade) return;
     if (numericFee <= 0) {
@@ -143,9 +155,12 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
       });
       if (response?.studentUpdate && typeof onStudentUpdated === "function") onStudentUpdated(studentId, response.studentUpdate);
       setPaymentAmount(String(numericFee));
-      pushToast?.({ type: "success", message: `${targetLevel || suggestedTarget} one-month upgrade started. The previous contract remains intact.` });
+      pushToast?.({
+        type: "success",
+        message: `${targetLevel || suggestedTarget} upgrade prepared. No new-level access is granted until Paystack confirms payment.`,
+      });
     } catch (error) {
-      pushToast?.({ type: "error", message: error?.message || "Could not start the level upgrade." });
+      pushToast?.({ type: "error", message: error?.message || "Could not prepare the level upgrade." });
     } finally {
       setBusy("");
     }
@@ -172,7 +187,13 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
       });
       const payment = response.payment || response.data || response;
       setGeneratedPayment(payment);
-      pushToast?.({ type: "success", message: `${effectiveTarget} upgrade payment link generated.` });
+      const isFullRemainingPayment = Math.abs(numericPaymentAmount - remainingUpgradeBalance) <= 0.01;
+      pushToast?.({
+        type: "success",
+        message: isFullRemainingPayment
+          ? `${effectiveTarget} full-payment link generated. Successful payment will complete the upgrade and add 6 months.`
+          : `${effectiveTarget} partial-payment link generated. Successful payment will start one month of temporary access.`,
+      });
     } catch (error) {
       pushToast?.({ type: "error", message: error?.message || "Could not generate the upgrade payment link." });
     } finally {
@@ -198,7 +219,11 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
       return;
     }
     const name = displayValue(student?.name, student?.studentName, "Student");
-    const message = `Hello ${name}, here is your ${effectiveTarget} Falowen payment link for ${formatGhs(numericPaymentAmount)}. Your current paid contract remains protected during the upgrade process.\n\n${generatedPayment.authorizationUrl}`;
+    const isFullRemainingPayment = Math.abs(numericPaymentAmount - remainingUpgradeBalance) <= 0.01;
+    const accessNote = isFullRemainingPayment
+      ? `Once the full payment is confirmed, your ${effectiveTarget} upgrade becomes fully active and 6 months are added to your existing contract.`
+      : `Because this is a partial payment, successful payment gives one month of temporary ${effectiveTarget} access while the remaining balance is due.`;
+    const message = `Hello ${name}, here is your ${effectiveTarget} Falowen payment link for ${formatGhs(numericPaymentAmount)}. ${accessNote}\n\n${generatedPayment.authorizationUrl}`;
     window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
@@ -207,7 +232,12 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
     try {
       const result = await reconcileStudentPayments(studentId);
       const applied = Number(result?.applied || 0);
-      pushToast?.({ type: applied > 0 ? "success" : "info", message: applied > 0 ? `${applied} Paystack payment(s) applied to the student.` : "No new successful Paystack payment was waiting to be applied." });
+      pushToast?.({
+        type: applied > 0 ? "success" : "info",
+        message: applied > 0
+          ? `${applied} Paystack payment(s) applied to the student.`
+          : "No new successful Paystack payment was waiting to be applied.",
+      });
     } catch (error) {
       pushToast?.({ type: "error", message: error?.message || "Could not verify pending Paystack payments." });
     } finally {
@@ -225,11 +255,12 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
         <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: 10 }}>
           <strong>Paid contract</strong>
-          <div style={{ fontSize: 13, color: "#64748b" }}>Paid level: {normalizeLevel(student?.paidLevel) || currentLevel || "—"}</div>
+          <div style={{ fontSize: 13, color: "#64748b" }}>Paid level: {paidLevel || "—"}</div>
           <div style={{ fontSize: 13, color: "#64748b" }}>Ends: {formatDate(student?.contractEnd || draft.contractEnd)}</div>
         </div>
         <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: 10 }}>
           <strong>Upgrade</strong>
+          <div style={{ fontSize: 13, color: "#64748b" }}>Target: {effectiveTarget || "—"}</div>
           <div style={{ fontSize: 13, color: "#64748b" }}>Status: {upgradeStatus || "none"}</div>
           <div style={{ fontSize: 13, color: "#64748b" }}>Balance: {formatGhs(remainingUpgradeBalance)}</div>
         </div>
@@ -251,9 +282,12 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
               <input value={targetClassName} onChange={(event) => setTargetClassName(event.target.value)} placeholder={`${suggestedTarget} class name`} />
             </label>
           </div>
-          <button type="button" onClick={startUpgrade} disabled={busy === "start"}>
-            {busy === "start" ? "Starting..." : `Start 1-month ${suggestedTarget} upgrade`}
+          <button type="button" onClick={prepareUpgrade} disabled={busy === "start"}>
+            {busy === "start" ? "Preparing..." : `Prepare ${suggestedTarget} upgrade payment`}
           </button>
+          <span style={{ fontSize: 12, color: "#64748b" }}>
+            Preparing an upgrade does not change access. Access changes only after Paystack confirms a payment.
+          </span>
         </div>
       )}
 
@@ -267,6 +301,9 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
             <button type="button" onClick={generateUpgradePayment} disabled={busy === "payment"}>
               {busy === "payment" ? "Generating..." : "Generate upgrade payment link"}
             </button>
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            Pay less than the remaining fee → one month of temporary {effectiveTarget} access. Pay the full remaining fee → complete the upgrade immediately and add 6 months to the contract.
           </div>
           {generatedPayment?.authorizationUrl && (
             <div style={{ display: "grid", gap: 8, border: "1px solid #e2e8f0", borderRadius: 10, padding: 10, overflowWrap: "anywhere" }}>
@@ -287,9 +324,15 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
         <span style={{ fontSize: 12, color: "#64748b" }}>Pending links are also checked automatically while this student page is open.</span>
       </div>
 
+      {hasUpgrade && upgradeStatus === "awaiting_payment" && (
+        <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>
+          No grace-period countdown has started yet. The one-month countdown begins only if the first successful new-level payment is less than the full fee.
+        </p>
+      )}
+
       {hasUpgrade && upgradeStatus === "pending" && (
         <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>
-          If the balance is not fully paid by {formatDate(student?.upgradeGraceEnd)}, Falowen will return the student to {student?.upgradeFromLevel || "the previous level"} without changing the existing paid contract end date.
+          If the remaining balance is not fully paid by {formatDate(student?.upgradeGraceEnd)}, Falowen will return the student to {student?.upgradeFromLevel || "the previous paid level"} without changing the existing paid contract end date.
         </p>
       )}
     </section>

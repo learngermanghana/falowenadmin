@@ -26,21 +26,44 @@ test("upgrade grace and contract extension use calendar months", () => {
   assert.equal(lifecycle.contractIsActive("2026-08-19", "2026-08-20"), false);
 });
 
-test("payment lifecycle patch wires reconciliation, upgrade grace, downgrade, and six-month extension", () => {
+test("payment-driven upgrade rules start grace only after a partial payment", () => {
+  const functionsSource = read("functions/index.js");
+  const start = functionsSource.indexOf('app.post("/payments/start-upgrade"');
+  const end = functionsSource.indexOf('app.post("/payments/reconcile-student/:studentId"', start);
+  assert.ok(start >= 0 && end > start);
+  const startRoute = functionsSource.slice(start, end);
+
+  assert.match(startRoute, /upgradeStatus: "awaiting_payment"/);
+  assert.match(startRoute, /Complete the current level balance before preparing a next-level upgrade/);
+  assert.doesNotMatch(startRoute, /level: targetLevel/);
+  assert.doesNotMatch(startRoute, /balanceDue: tuitionFee/);
+  assert.doesNotMatch(startRoute, /paymentReminderLevel: targetLevel/);
+
+  const accountingStart = functionsSource.indexOf('if (paymentPurpose === "level_upgrade")');
+  const accountingEnd = functionsSource.indexOf('transaction.set(studentRef, studentUpdate', accountingStart);
+  assert.ok(accountingStart >= 0 && accountingEnd > accountingStart);
+  const accounting = functionsSource.slice(accountingStart, accountingEnd);
+
+  assert.match(accounting, /\["awaiting_payment", "pending", "expired"\]/);
+  assert.match(accounting, /if \(upgradeCompleted\)/);
+  assert.match(accounting, /computeExtendedContractEnd\(student\.contractEnd, paidAtDate, CONTRACT_TERM_MONTHS\)/);
+  assert.match(accounting, /else if \(upgradeStatus === "awaiting_payment"\)/);
+  assert.match(accounting, /computeUpgradeGraceEnd\(paidAtDate\)/);
+  assert.match(accounting, /upgradeStatus: "pending"/);
+  assert.match(accounting, /paymentReminderLevel: targetLevel/);
+});
+
+test("payment lifecycle still wires reconciliation, downgrade, and six-month completion", () => {
   const functionsSource = read("functions/index.js");
   const directory = read("src/pages/StudentDirectoryPage.jsx");
   const support = read("src/components/StudentSupportTools.jsx");
   const paymentEmails = read("functions/studentPaymentUpdateEmails.js");
 
-  assert.match(functionsSource, /app\.post\("\/payments\/start-upgrade"/);
   assert.match(functionsSource, /app\.post\("\/payments\/reconcile-student\/:studentId"/);
   assert.match(functionsSource, /exports\.maintainStudentPaymentContracts = onSchedule/);
-  assert.match(functionsSource, /paymentPurpose === "level_upgrade"/);
   assert.match(functionsSource, /upgradeStatus: "expired"/);
   assert.match(functionsSource, /upgradeStatus: "completed"/);
-  assert.match(functionsSource, /computeExtendedContractEnd\(student\.contractEnd, paidAtDate, CONTRACT_TERM_MONTHS\)/);
   assert.match(functionsSource, /contractTermMonths: String\(CONTRACT_TERM_MONTHS\)/);
-  assert.match(functionsSource, /if \(value === null \|\| value === undefined \|\| String\(value\)\.trim\(\) === ""\) continue;/);
   assert.match(functionsSource, /verifyPaystackTransaction/);
 
   assert.match(directory, /StudentUpgradeTools/);
@@ -51,15 +74,20 @@ test("payment lifecycle patch wires reconciliation, upgrade grace, downgrade, an
   assert.match(paymentEmails, /upgradeToLevel/);
 });
 
-test("upgrade UI and service expose admin actions without changing the existing payment link API", () => {
+test("upgrade UI explains partial versus full payment behavior", () => {
   const component = read("src/components/StudentUpgradeTools.jsx");
   const service = read("src/services/studentContractService.js");
   const paymentService = read("src/services/studentPaymentService.js");
+  const packageJson = read("package.json");
 
-  assert.match(component, /Start 1-month/);
+  assert.match(component, /Prepare .* upgrade payment/);
+  assert.doesNotMatch(component, /Start 1-month/);
+  assert.match(component, /partial payment starts one month/i);
+  assert.match(component, /full payment.*add 6 months/i);
   assert.match(component, /purpose: "level_upgrade"/);
   assert.match(component, /Recheck pending Paystack payments/);
   assert.match(service, /\/api\/payments\/start-upgrade/);
   assert.match(service, /\/api\/payments\/reconcile-student/);
   assert.match(paymentService, /\/api\/payments\/create-link/);
+  assert.match(packageJson, /patchStudentUpgradePaymentDriven\.mjs/);
 });
