@@ -51,6 +51,8 @@ jobs:
             scripts/patchStudentPaymentLinks.mjs \
             scripts/patchStudentPaymentHistoryApi.mjs \
             scripts/patchStudentPaymentAdminSecurity.mjs \
+            scripts/patchStudentPaymentContractLifecycle.mjs \
+            scripts/patchStudentUpgradePaymentDriven.mjs \
             scripts/patchStudentPaymentUpdateEmails.mjs \
             scripts/patchStructuredWritingEvidence.mjs \
             scripts/patchSpecificWritingFeedback.mjs \
@@ -73,10 +75,13 @@ jobs:
           done
           node --check functions/index.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
-          node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js
+          node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
           grep -F 'app.post("/payments/paystack-webhook"' functions/index.js
           grep -F 'app.get("/payments/student/:studentId"' functions/index.js
+          grep -F 'app.post("/payments/start-upgrade"' functions/index.js
+          grep -F 'app.post("/payments/reconcile-student/:studentId"' functions/index.js
+          grep -F 'exports.maintainStudentPaymentContracts = onSchedule' functions/index.js
           grep -F 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET")' functions/index.js
           grep -F 'writingStrengths:' functions/index.js
           grep -F 'taskCompletion:' functions/index.js
@@ -119,11 +124,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
-      - name: Deploy Falowen API and class email workers
+      - name: Deploy Falowen API, contract worker, and class email workers
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
