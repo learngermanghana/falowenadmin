@@ -128,9 +128,22 @@ function sessionClassKey(session = {}, classes = []) {
   return matchedIds.size === 1 ? [...matchedIds][0] : "";
 }
 
-function preferredSessionScore(session = {}) {
+function hasExactClassDocumentId(session = {}, classes = []) {
+  const documentIds = new Set(classes
+    .map((klass) => comparable(klass.id))
+    .filter(Boolean));
+  return [session.classRecordId, session.classDocumentId, session.classId]
+    .map(comparable)
+    .some((id) => id && documentIds.has(id));
+}
+
+function preferredSessionScore(session = {}, classes = []) {
   const curriculumIndex = Number(session.curriculumIndex);
   return (session.repairPreferredRecord === true || session.authoritativeSession === true ? 1000 : 0)
+    // A class document ID is stronger identity evidence than a legacy class
+    // name. Without this preference, a stale name-only alias for the next
+    // lesson can win merely because its curriculum index is one higher.
+    + (hasExactClassDocumentId(session, classes) ? 500 : 0)
     + (text(session.attendanceSessionId || session.attendanceRecordId) ? 300 : 0)
     + (session.manuallyCompleted === true || session.manualOverride === true ? 150 : 0)
     + (text(session.officialSessionId) ? 20 : 0)
@@ -161,8 +174,8 @@ function dedupeSessions(sessions = [], classes = []) {
       ? `${classKey}::${start.toISOString()}`
       : `${officialId}::${start.toISOString()}`;
     const current = preferred.get(key);
-    const currentScore = preferredSessionScore(current || {});
-    const candidateScore = preferredSessionScore(session);
+    const currentScore = preferredSessionScore(current || {}, classes);
+    const candidateScore = preferredSessionScore(session, classes);
     if (!current || candidateScore > currentScore
       || (candidateScore === currentScore && sessionUpdatedTime(session) > sessionUpdatedTime(current))) {
       preferred.set(key, session);

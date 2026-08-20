@@ -113,6 +113,51 @@ test("unique legacy A2 class name resolves to the authoritative Day 8 session", 
   assert.equal(reminder.topicForSession(due[0].session), "Day 8: Rezepte und Essen (A2-3.8)");
 });
 
+test("canonical B1 class session beats the next-lesson name-only alias", () => {
+  const startsAt = "2026-08-20T18:00:00.000Z";
+  const classId = "XEO4NwyAZ85gThEf7krP";
+  const sessions = [
+    {
+      id: "stale-b1-2-5",
+      officialSessionId: "b1-bonn-2-5",
+      className: "B1 Bonn Klasse",
+      curriculumIndex: 5,
+      curriculumSource: "courseDictionary-day-groups",
+      startsAt,
+      status: "scheduled",
+      topic: "2.5. Der Besichtigungstermin",
+      assignmentId: "B1-2.5",
+      updatedAt: "2026-08-20T17:55:00.000Z",
+    },
+    {
+      id: "official-b1-day-4",
+      officialSessionId: "b1-bonn-day-4",
+      classRecordId: classId,
+      curriculumIndex: 4,
+      curriculumSource: "courseDictionary-day-groups",
+      startsAt,
+      status: "scheduled",
+      topic: "Day 4: Wohnung suchen",
+      assignmentId: "B1-2.4",
+      updatedAt: "2026-08-20T17:00:00.000Z",
+    },
+  ];
+
+  const due = reminder.findDueSessionReminders({
+    sessions,
+    classes: [{ id: classId, name: "B1 Bonn Klasse" }],
+    now: new Date("2026-08-20T17:30:00.000Z"),
+    leadMinutes: [30],
+  });
+
+  assert.equal(due.length, 1);
+  assert.equal(due[0].session.id, "official-b1-day-4");
+  assert.equal(
+    reminder.topicForSession(due[0].session),
+    "Day 4: Wohnung suchen (B1-2.4)",
+  );
+});
+
 test("name-only legacy sessions are not deduplicated across ambiguous class names", () => {
   const startsAt = "2026-08-19T17:00:00.000Z";
   const sessions = [
