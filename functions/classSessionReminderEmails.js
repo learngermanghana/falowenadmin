@@ -139,13 +139,12 @@ function hasExactClassDocumentId(session = {}, classes = []) {
 
 function preferredSessionScore(session = {}, classes = []) {
   const curriculumIndex = Number(session.curriculumIndex);
-  return (session.repairPreferredRecord === true || session.authoritativeSession === true ? 1000 : 0)
+  return (session.repairPreferredRecord === true || session.authoritativeSession === true ? 1_000_000 : 0)
+    + (text(session.attendanceSessionId || session.attendanceRecordId) ? 100_000 : 0)
+    + (session.manuallyCompleted === true || session.manualOverride === true ? 10_000 : 0)
     // A class document ID is stronger identity evidence than a legacy class
-    // name. Without this preference, a stale name-only alias for the next
-    // lesson can win merely because its curriculum index is one higher.
-    + (hasExactClassDocumentId(session, classes) ? 500 : 0)
-    + (text(session.attendanceSessionId || session.attendanceRecordId) ? 300 : 0)
-    + (session.manuallyCompleted === true || session.manualOverride === true ? 150 : 0)
+    // name, but it must remain below every session-authority signal.
+    + (hasExactClassDocumentId(session, classes) ? 1_000 : 0)
     + (text(session.officialSessionId) ? 20 : 0)
     + (text(session.curriculumSource) ? 10 : 0)
     + (Number.isFinite(curriculumIndex) ? 8 + Math.max(0, curriculumIndex) : 0)
