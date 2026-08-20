@@ -158,6 +158,70 @@ test("canonical B1 class session beats the next-lesson name-only alias", () => {
   );
 });
 
+test("attendance authority beats a competing exact class document ID", () => {
+  const startsAt = "2026-08-20T18:00:00.000Z";
+  const classId = "XEO4NwyAZ85gThEf7krP";
+  const due = reminder.findDueSessionReminders({
+    sessions: [
+      {
+        id: "stale-exact-class-record",
+        officialSessionId: "b1-bonn-stale",
+        classRecordId: classId,
+        curriculumIndex: 5,
+        startsAt,
+        topic: "Stale topic",
+      },
+      {
+        id: "attendance-authoritative-record",
+        officialSessionId: "b1-bonn-authoritative",
+        className: "B1 Bonn Klasse",
+        attendanceSessionId: "attendance-b1-day-4",
+        curriculumIndex: 4,
+        startsAt,
+        topic: "Authoritative attendance topic",
+      },
+    ],
+    classes: [{ id: classId, name: "B1 Bonn Klasse" }],
+    now: new Date("2026-08-20T17:30:00.000Z"),
+    leadMinutes: [30],
+  });
+
+  assert.equal(due.length, 1);
+  assert.equal(due[0].session.id, "attendance-authoritative-record");
+});
+
+test("manual authority beats a competing exact class document ID", () => {
+  const startsAt = "2026-08-20T18:00:00.000Z";
+  const classId = "XEO4NwyAZ85gThEf7krP";
+  const due = reminder.findDueSessionReminders({
+    sessions: [
+      {
+        id: "stale-exact-class-record",
+        officialSessionId: "b1-bonn-stale",
+        classRecordId: classId,
+        curriculumIndex: 5,
+        startsAt,
+        topic: "Stale topic",
+      },
+      {
+        id: "manually-authoritative-record",
+        officialSessionId: "b1-bonn-authoritative",
+        className: "B1 Bonn Klasse",
+        manualOverride: true,
+        curriculumIndex: 4,
+        startsAt,
+        topic: "Manually selected topic",
+      },
+    ],
+    classes: [{ id: classId, name: "B1 Bonn Klasse" }],
+    now: new Date("2026-08-20T17:30:00.000Z"),
+    leadMinutes: [30],
+  });
+
+  assert.equal(due.length, 1);
+  assert.equal(due[0].session.id, "manually-authoritative-record");
+});
+
 test("name-only legacy sessions are not deduplicated across ambiguous class names", () => {
   const startsAt = "2026-08-19T17:00:00.000Z";
   const sessions = [
