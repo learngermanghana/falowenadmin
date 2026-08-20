@@ -114,6 +114,8 @@ function isLevelOnlyClassName(value) {
 }
 
 function inferClassLevel(klass = {}) {
+  if (!klass) return "";
+
   const candidates = [
     klass.level,
     klass.courseLevel,
