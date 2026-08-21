@@ -323,7 +323,10 @@ function parseNumberedEntriesFromChunk(chunk = "") {
     return [{ number: Number(labelled[1]), answer: labelled[2].trim() }];
   }
 
-  const compactPattern = /(?:^|\s)(\d{1,3})\s*[).:–-]?\s*(.*?)(?=\s+\d{1,3}\s*[).:–-]?|$)/g;
+  // A compact question marker must have punctuation ("1.", "2:") or be
+  // followed by an option letter ("1A", "2 B"). Bare numbers inside an
+  // answer, such as "10 Euro" or "7 Uhr", are answer text, not a new item.
+  const compactPattern = /(?:^|\s)(\d{1,3})(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))(.*?)(?=\s+\d{1,3}(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))|$)/g;
   const compactMatches = [...source.matchAll(compactPattern)]
     .map((match) => ({ number: Number(match[1]), answer: String(match[2] || "").trim() }))
     .filter((entry) => Number.isFinite(entry.number) && normalizeAnswer(entry.answer));
