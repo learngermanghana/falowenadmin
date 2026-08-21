@@ -46,12 +46,18 @@ feedbackSource = replaceOnce(
   "exact objective correction collection",
 );
 
-feedbackSource = replaceOnce(
-  feedbackSource,
-  '  const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });',
-  '  if (exactCorrections.length) {\n    objectiveSentences.push(`Correct answers: ${exactCorrections.join("; ")}`);\n  }\n\n  const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });',
-  "exact objective correction feedback",
-);
+const legacyExactCorrectionFeedback = '  if (exactCorrections.length) {\n    objectiveSentences.push(`Correct answers: ${exactCorrections.join("; ")}`);\n  }';
+const passingExactCorrectionFeedback = '  if (objectiveScore !== null && objectiveScore >= 60 && exactCorrections.length) {\n    objectiveSentences.push(`Correct answers: ${exactCorrections.join("; ")}`);\n  }';
+if (feedbackSource.includes(legacyExactCorrectionFeedback)) {
+  feedbackSource = feedbackSource.replace(legacyExactCorrectionFeedback, passingExactCorrectionFeedback);
+} else {
+  feedbackSource = replaceOnce(
+    feedbackSource,
+    '  const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });',
+    `${passingExactCorrectionFeedback}\n\n  const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });`,
+    "passing-score objective correction feedback",
+  );
+}
 
 fs.writeFileSync(feedbackTarget, feedbackSource);
 console.log("A2 feedback now respects comma greetings and includes exact deterministic corrections.");
