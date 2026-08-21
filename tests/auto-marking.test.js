@@ -875,3 +875,34 @@ TEIL3:
     { question: 10, expected: "B", student: "" },
   ]);
 });
+
+test("flat objective keys align a Teil 2-only submission without treating 10 Euro as question 10", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: {
+      assignmentKey: "A1-shopping-partial",
+      level: "A1",
+      format: "objective",
+      answers: {
+        Answer1: "Falsch", Answer2: "Wahr", Answer3: "Falsch", Answer4: "Wahr", Answer5: "Wahr",
+        Answer6: "Falsch", Answer7: "Wahr", Answer8: "Falsch", Answer9: "Falsch", Answer10: "Falsch",
+        Answer11: "B) Einmal pro Woche", Answer12: "C) Apfel und Bananen", Answer13: "A) Ein halbes Kilo",
+        Answer14: "B) 10 Euro", Answer15: "B) Einen schönen Tag",
+      },
+    },
+    submissionText: `Teil 2.
+1. B: Jede woche
+2. C: Äpfel und Bananen
+3. B: Ein kilo
+4. B: 10 euro
+5. B: Einen schönen Tag`,
+  });
+
+  assert.equal(result.objectiveTotal, 15);
+  assert.equal(result.objectiveCorrect, 4);
+  assert.deepEqual(result.parts[0].result.correct.map(({ question }) => question), [11, 12, 14, 15]);
+  assert.deepEqual(
+    [...result.parts[0].result.wrong, ...result.parts[0].result.needsReview].map(({ question }) => question),
+    [13],
+  );
+  assert.deepEqual(result.parts[0].result.missing.map(({ question }) => question), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+});
