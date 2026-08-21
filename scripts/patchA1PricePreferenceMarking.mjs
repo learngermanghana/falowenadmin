@@ -5,7 +5,7 @@ let objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
 
 const previousCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[).:–-](?!\\d)\\s*|\\s+)(.*?)(?=\\s+\\d{1,3}(?:\\s*[).:–-](?!\\d)\\s*|\\s+)|$)/g;';
 const robustCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))(.*?)(?=\\s+\\d{1,3}(?:\\s*[)–-]\\s*|\\s*[.,:](?!\\d)\\s*|\\s+(?=[A-FX](?:\\s*[).,:–-]|\\s|$)))|$)/g;';
-const questionAwareCompactPattern = '  const compactPattern = /(?:^|\\s)(\\d{1,3})\\s*[).:–-]?\\s*(.*?)(?=\\s+\\d{1,3}\\s*[).:–-]?|$)/g;';
+const questionAwareCompactPattern = robustCompactPattern;
 
 if (objectiveSource.includes(previousCompactPattern)) {
   objectiveSource = objectiveSource.replace(previousCompactPattern, robustCompactPattern);
