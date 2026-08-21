@@ -263,3 +263,21 @@ test("unchanged tutor approval becomes a positive calibration example", () => {
   assert.equal(calibration.manualOverride, false);
   assert.equal(calibration.reasonCode, "ai_approved");
 });
+
+test("objective feedback hides correct answers below the 60 percent pass mark", () => {
+  const feedback = buildNaturalStudentFeedback({
+    studentName: "Princess Ugoma Omanye Ukekwe",
+    objectiveScore: 27,
+    objectiveCorrect: 4,
+    objectiveTotal: 15,
+    wrongAnswers: [
+      { question: 1, expected: "Falsch", student: "" },
+      { question: 2, expected: "Wahr", student: "" },
+      { question: 13, expected: "A) Ein halbes Kilo", student: "B) Ein Kilo" },
+    ],
+  }, "Teil 2.\n1. B\n2. C\n3. B\n4. B\n5. B");
+
+  assert.match(feedback, /You answered 4 of 15 objective questions correctly/);
+  assert.match(feedback, /Review questions 1, 2, and 13 carefully/);
+  assert.doesNotMatch(feedback, /Correct answers:|Ein halbes Kilo|→/i);
+});
