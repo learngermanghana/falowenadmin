@@ -281,3 +281,19 @@ test("objective feedback hides correct answers below the 60 percent pass mark", 
   assert.match(feedback, /Review questions 1, 2, and 13 carefully/);
   assert.doesNotMatch(feedback, /Correct answers:|Ein halbes Kilo|→/i);
 });
+
+test("objective feedback derives a passing score from authoritative counts when percentage is missing", () => {
+  const feedback = buildNaturalStudentFeedback({
+    studentName: "Legacy Student",
+    objectiveScore: null,
+    objectiveCorrect: 3,
+    objectiveTotal: 4,
+    wrongAnswers: [
+      { question: 4, expected: "B) Correct option", student: "A) Wrong option" },
+    ],
+  }, "1. A\n2. B\n3. C\n4. A");
+
+  assert.match(feedback, /You answered 3 of 4 objective questions correctly/);
+  assert.match(feedback, /Correct answers:/);
+  assert.match(feedback, /question 4 → B\) Correct option/i);
+});
