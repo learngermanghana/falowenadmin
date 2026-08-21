@@ -47,9 +47,12 @@ feedbackSource = replaceOnce(
 );
 
 const legacyExactCorrectionFeedback = '  if (exactCorrections.length) {\n    objectiveSentences.push(`Correct answers: ${exactCorrections.join("; ")}`);\n  }';
-const passingExactCorrectionFeedback = '  if (objectiveScore !== null && objectiveScore >= 60 && exactCorrections.length) {\n    objectiveSentences.push(`Correct answers: ${exactCorrections.join("; ")}`);\n  }';
+const previousPassingExactCorrectionFeedback = '  if (objectiveScore !== null && objectiveScore >= 60 && exactCorrections.length) {\n    objectiveSentences.push(`Correct answers: ${exactCorrections.join("; ")}`);\n  }';
+const passingExactCorrectionFeedback = '  const resolvedObjectiveScore = objectiveScore ?? (objectiveTotal > 0 ? Math.round((objectiveCorrect / objectiveTotal) * 100) : null);\n  if (resolvedObjectiveScore !== null && resolvedObjectiveScore >= 60 && exactCorrections.length) {\n    objectiveSentences.push(`Correct answers: ${exactCorrections.join("; ")}`);\n  }';
 if (feedbackSource.includes(legacyExactCorrectionFeedback)) {
   feedbackSource = feedbackSource.replace(legacyExactCorrectionFeedback, passingExactCorrectionFeedback);
+} else if (feedbackSource.includes(previousPassingExactCorrectionFeedback)) {
+  feedbackSource = feedbackSource.replace(previousPassingExactCorrectionFeedback, passingExactCorrectionFeedback);
 } else {
   feedbackSource = replaceOnce(
     feedbackSource,
