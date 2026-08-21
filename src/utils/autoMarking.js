@@ -538,13 +538,42 @@ function formatExpectedAnswer(expectedRaw) {
   return String(meta.correctLetter || normalizeObjectiveOption(meta.raw) || meta.correctText || meta.raw || "").toUpperCase();
 }
 
+function alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submissionText = "") {
+  if (!(studentAnswers instanceof Map) || !studentAnswers.size || studentAnswers.size >= entries.length) return studentAnswers;
+
+  const parts = splitSubmissionIntoParts(submissionText).filter((part) => part.partId !== "unknown");
+  const objectiveParts = parts.filter((part) => countObjectiveAnswerEvidence(part.text) > 0);
+  if (objectiveParts.length !== 1 || objectiveParts[0].partId !== "teil2") return studentAnswers;
+
+  const localEntries = [...studentAnswers.entries()].sort(([left], [right]) => left - right);
+  const maxOffset = entries.length - Math.max(...localEntries.map(([question]) => question));
+  if (maxOffset <= 0) return studentAnswers;
+
+  const scoreOffset = (offset) => localEntries.reduce((score, [question, studentRaw]) => {
+    const reference = entries[question + offset - 1];
+    return score + (reference && valuesMatch(reference.value, studentRaw).status === "correct" ? 1 : 0);
+  }, 0);
+  const candidates = Array.from({ length: maxOffset + 1 }, (_, offset) => ({ offset, score: scoreOffset(offset) }))
+    .sort((left, right) => right.score - left.score || right.offset - left.offset);
+  const best = candidates[0];
+  const unshiftedScore = scoreOffset(0);
+
+  // Require clear evidence before changing explicit question numbers. This
+  // supports a lone restarted "Teil 2" block while avoiding speculative
+  // offsets for weak or mostly incorrect submissions.
+  if (!best?.offset || best.score < 2 || best.score <= unshiftedScore) return studentAnswers;
+  return new Map(localEntries.map(([question, answer]) => [question + best.offset, answer]));
+}
+
 function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = "unknown" } = {}) {
-  const studentAnswers = parseStudentObjectiveAnswers(submissionText);
+  let studentAnswers = parseStudentObjectiveAnswers(submissionText);
   const vocabularyAnswers = extractVocabularyAnswers(submissionText);
   const entries = Array.isArray(referenceAnswers)
     ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.questionKey || entry.sourceKey || `Answer${index + 1}`, value: entry }))
     : extractObjectiveEntries(referenceAnswers);
   const total = entries.length;
+
+  studentAnswers = alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submissionText);
 
   if (!total) {
     return {
