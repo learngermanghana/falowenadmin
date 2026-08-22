@@ -64,3 +64,5 @@ if (feedbackSource.includes(legacyExactCorrectionFeedback)) {
 
 fs.writeFileSync(feedbackTarget, feedbackSource);
 console.log("A2 feedback now respects comma greetings and includes exact deterministic corrections.");
+
+await import("./patchB1WritingFeedbackDepth.mjs");
