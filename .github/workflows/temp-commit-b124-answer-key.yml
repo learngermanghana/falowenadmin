@@ -1,0 +1,46 @@
+name: Commit B1-2.4 answer key correction
+
+on:
+  push:
+    branches:
+      - fix/b1-2-4-committed-answer-key
+
+permissions:
+  contents: write
+
+jobs:
+  correct-answer-key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/b1-2-4-committed-answer-key
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Correct committed B1-2.4 answer key
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path = 'src/data/answers_dictionary.json';
+          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const entry = Object.values(data).find((candidate) => String(candidate?.assignment_id || candidate?.assignmentId || '').toUpperCase() === 'B1-2.4');
+          if (!entry?.answers?.teil3 || !entry?.answers?.teil4) throw new Error('B1-2.4 answer groups missing');
+          delete entry.answers.teil3.Answer6;
+          delete entry.answers.teil3.Answer7;
+          const teil3Count = Object.keys(entry.answers.teil3).filter((key) => /^Answer\d+$/i.test(key)).length;
+          const teil4Count = Object.keys(entry.answers.teil4).filter((key) => /^Answer\d+$/i.test(key)).length;
+          if (teil3Count !== 5 || teil4Count !== 5) throw new Error(`Expected 5 + 5 answers, found ${teil3Count} + ${teil4Count}`);
+          fs.writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`);
+          NODE
+      - name: Commit correction
+        run: |
+          if git diff --quiet -- src/data/answers_dictionary.json; then
+            echo 'Answer key already corrected.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/data/answers_dictionary.json
+          git commit -m 'Commit corrected B1-2.4 answer key'
+          git push origin HEAD:fix/b1-2-4-committed-answer-key
