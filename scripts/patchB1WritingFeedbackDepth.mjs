@@ -22,7 +22,9 @@ const helper = `function b1WritingDepthSentences(result = {}, submission = "") {
   const politeStructures = /\\b(?:wäre .{0,35} möglich|könnten sie|bitte bestätigen|teilen sie mir|möchte gern wissen)\\b/i.test(source);
   const connectors = source.match(/\\b(?:außerdem|alternativ|jedoch|deshalb|daher|obwohl|während|einerseits|andererseits|zudem|sowie|und|aber|weil)\\b/gi) || [];
 
-  if (formalLetter && asksAppointment && (asksAddress || asksDocuments)) {
+  if (formalLetter && asksAppointment && asksAddress && asksDocuments) {
+    points.push("Your Teil 2 letter is task-focused: you request a viewing, propose a concrete appointment, and ask for the exact address and documents to bring");
+  } else if (formalLetter && asksAppointment && (asksAddress || asksDocuments)) {
     points.push("Your Teil 2 letter is task-focused: you request a viewing, propose a concrete appointment and ask for the practical information needed to attend");
   } else if (formalLetter) {
     points.push("The formal register is appropriate from the salutation through the closing, and the purpose remains clear throughout the letter");
@@ -101,6 +103,8 @@ const regressionFeedback = buildEvidenceEssayFeedback({
 const requiredEvidence = [
   /Teil 2 letter is task-focused/i,
   /request a viewing/i,
+  /exact address/i,
+  /documents to bring/i,
   /Wäre ein Termin/i,
   /subordinate clause|language range|connectors/i,
 ];
