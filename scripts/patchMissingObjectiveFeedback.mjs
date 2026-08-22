@@ -61,17 +61,19 @@ feedbackSource = replaceOnce(
 );
 
 const groupedEntriesAnchor = '  const groupedEntries = [...wrongGroups.entries()];';
-const missingFeedback = `  const missingEntries = [...missingGroups.entries()];
-  if (missingEntries.length === 1) {
-    const [part, questions] = missingEntries[0];
-    const prefix = part === "main" ? "" : `In ${part}, `;
-    objectiveSentences.push(`${prefix}question${questions.length === 1 ? "" : "s"} ${humanList(questions)} ${questions.length === 1 ? "was" : "were"} not answered`);
-  } else if (missingEntries.length > 1) {
-    const descriptions = missingEntries.map(([part, questions]) => `${part === "main" ? "questions" : part} ${humanList(questions)}`);
-    objectiveSentences.push(`Not answered: ${humanList(descriptions)}`);
-  }
-
-${groupedEntriesAnchor}`;
+const missingFeedback = [
+  '  const missingEntries = [...missingGroups.entries()];',
+  '  if (missingEntries.length === 1) {',
+  '    const [part, questions] = missingEntries[0];',
+  '    const prefix = part === "main" ? "" : `In ${part}, `;',
+  '    objectiveSentences.push(`${prefix}question${questions.length === 1 ? "" : "s"} ${humanList(questions)} ${questions.length === 1 ? "was" : "were"} not answered`);',
+  '  } else if (missingEntries.length > 1) {',
+  '    const descriptions = missingEntries.map(([part, questions]) => `${part === "main" ? "questions" : part} ${humanList(questions)}`);',
+  '    objectiveSentences.push(`Not answered: ${humanList(descriptions)}`);',
+  '  }',
+  '',
+  groupedEntriesAnchor,
+].join("\n");
 feedbackSource = replaceOnce(feedbackSource, groupedEntriesAnchor, missingFeedback, "missing objective feedback sentence");
 
 fs.writeFileSync(feedbackTarget, feedbackSource);
