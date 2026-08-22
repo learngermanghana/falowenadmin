@@ -32,14 +32,14 @@ const helper = `function b1WritingDepthSentences(result = {}, submission = "") {
     points.push("Polite B1 structures such as “Wäre ein Termin … möglich?” and “Bitte bestätigen Sie mir den Termin” make the request natural and appropriately formal");
   }
 
-  if (asksAddress && asksDocuments) {
-    points.push("You develop the request with useful follow-up questions about the exact address and the documents to bring, rather than stopping after the appointment request");
-  }
-
   if (connectors.length < 3 || new Set(connectors.map((value) => value.toLocaleLowerCase("de"))).size < 3) {
     points.push("For a stronger B1 response, vary the linking language beyond simple coordination; add connectors such as “außerdem”, “daher” or a short “weil” clause where they fit naturally");
   } else {
     points.push("Your ideas are linked clearly; the next step is to add one slightly more complex subordinate clause so the sentence range is more clearly B1");
+  }
+
+  if (asksAddress && asksDocuments) {
+    points.push("You develop the request with useful follow-up questions about the exact address and the documents to bring, rather than stopping after the appointment request");
   }
 
   return [...new Set(points)].slice(0, 4);
@@ -73,5 +73,43 @@ policySource = replaceOnce(
   "B1 feedback policy",
 );
 fs.writeFileSync(policyTarget, policySource);
+
+const regressionSubmission = `Teil 2 : Schreiben
+
+Sehr geehrte Damen und Herren,
+
+ich habe Ihre Wohnungsanzeige im Internet gesehen und interessiere mich sehr für die angebotene Wohnung. Gern würde ich sie persönlich besichtigen. Wäre ein Termin am Freitag um 16 Uhr möglich? Alternativ könnte ich am Samstagvormittag kommen.
+
+Bitte bestätigen Sie mir den Termin und teilen Sie mir die genaue Adresse mit. Außerdem möchte ich gern wissen, welche Unterlagen ich zur Besichtigung mitbringen soll. Sie erreichen mich per E-Mail oder telefonisch unter 0123 456789.
+
+Vielen Dank im Voraus. Ich freue mich auf Ihre Rückmeldung.
+
+Mit freundlichen Grüßen
+Ruth`;
+const { buildEvidenceEssayFeedback } = await import(`${feedbackTarget.href}?b1-depth=${Date.now()}`);
+const regressionFeedback = buildEvidenceEssayFeedback({
+  result: {
+    studentName: "Ruth Ndekiro Shao",
+    level: "B1",
+    assignmentKey: "B1-2.5",
+    writingScore: 82,
+    writingScorePercent: 82,
+  },
+  submissionText: regressionSubmission,
+  objectiveSentences: ["Teil 4 is excellent, with all answers correct"],
+});
+const requiredEvidence = [
+  /Teil 2 letter is task-focused/i,
+  /request a viewing/i,
+  /Wäre ein Termin/i,
+  /subordinate clause|language range|connectors/i,
+];
+if (requiredEvidence.some((pattern) => !pattern.test(regressionFeedback))) {
+  throw new Error(`B1 feedback depth regression failed: ${regressionFeedback}`);
+}
+const regressionWordCount = regressionFeedback.split(/\s+/).filter(Boolean).length;
+if (regressionWordCount < 60 || regressionWordCount > 115) {
+  throw new Error(`B1 feedback word budget regression failed (${regressionWordCount} words): ${regressionFeedback}`);
+}
 
 console.log("B1 writing feedback now gives task-specific, language-specific coaching instead of shallow greeting/connector praise.");
