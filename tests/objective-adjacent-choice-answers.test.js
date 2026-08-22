@@ -35,3 +35,23 @@ Teil 4
   assert.equal(result.correctCount, 12);
   assert.deepEqual(Object.values(result.details).map(({ student }) => student), ["B", "B", "B", "B", "A", "B", "C", "A", "B", "B", "C", "B"]);
 });
+
+test("embedded identifiers such as Zimmer 2B are not parsed as another answer", () => {
+  const embeddedIdentifierReference = {
+    assignmentKey: "embedded-identifier-test",
+    expectedParts: ["Teil 3"],
+    parts: {
+      "Teil 3": {
+        answers: ["Zimmer 2B", "B) Zweite Antwort"],
+      },
+    },
+  };
+
+  const result = computeObjectiveScore(embeddedIdentifierReference, `Teil 3
+1: Zimmer 2B`);
+
+  assert.equal(result.totalCount, 2);
+  assert.equal(result.correctCount, 1);
+  assert.equal(result.details["teil3.1"].student, "Zimmer 2B");
+  assert.equal(result.details["teil3.2"].student, "");
+});
