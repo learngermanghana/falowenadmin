@@ -19,3 +19,6 @@ if (!source.includes(after)) {
 // This script is already part of predev/prebuild/pretest, so use it to keep
 // the Live Classes session table synchronized with successful repair actions.
 await import("./patchLiveClassRepairRefresh.mjs");
+
+// Keep omitted deterministic objective answers distinct from answered-but-wrong items.
+await import("./patchMissingObjectiveFeedback.mjs");
