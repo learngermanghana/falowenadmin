@@ -317,7 +317,7 @@ function splitIntoAnswerBlocks(text = "") {
 function parseNumberedEntriesFromChunk(chunk = "") {
   const source = String(chunk || "")
     .trim()
-    .replace(/(^|\\s)(\\d{1,3})(?=[A-FX](?:\\s|$))/gi, "$1$2.");
+    .replace(/(^|\s)(\d{1,3})(?=[A-FX](?:\s|$))/gi, "$1$2.");
   if (!source) return [];
 
   const labelled = source.match(/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
