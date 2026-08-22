@@ -75,6 +75,7 @@ try {
 
 fs.writeFileSync(filePath, source);
 console.log("answers_dictionary.json is valid JSON.");
+await import("./patchB124AnswerKeyCount.mjs");
 
 const oldProgressCall = "calculateClassProgress(dashboard?.sessions || [])";
 const newProgressCall = "calculateClassProgress(dashboard?.sessions || [], new Date(), dashboard?.klass || {})";
