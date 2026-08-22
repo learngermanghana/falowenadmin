@@ -184,10 +184,34 @@ function parseNumberedObjectiveLine(line = "") {
   return null;
 }
 
+function splitCompactNumberedObjectiveSequence(line = "") {
+  const trimmed = String(line || "").trim();
+  if (!trimmed) return [];
+
+  const tokenPattern = new RegExp(
+    `\\d{1,3}\\s*[).:-]?\\s*[${OBJECTIVE_OPTION_LETTERS}]\\s*[).:-]?(?=\\s|$)`,
+    "gi",
+  );
+  const matches = [...trimmed.matchAll(tokenPattern)];
+  if (matches.length < 2) return [trimmed];
+
+  let cursor = 0;
+  const unmatched = matches.reduce((remainder, match) => {
+    const index = Number(match.index || 0);
+    const gap = trimmed.slice(cursor, index);
+    cursor = index + match[0].length;
+    return remainder + gap;
+  }, "") + trimmed.slice(cursor);
+
+  if (unmatched.trim()) return [trimmed];
+  return matches.map((match) => match[0].trim());
+}
+
 function splitObjectiveAnswerTokens(text = "") {
   return String(text || "")
     .split(/\r?\n/)
     .flatMap((line) => line.split(/[,;]+/))
+    .flatMap((line) => splitCompactNumberedObjectiveSequence(line))
     .map((line) => line.trim())
     .filter(Boolean);
 }

@@ -315,10 +315,13 @@ function splitIntoAnswerBlocks(text = "") {
 }
 
 function parseNumberedEntriesFromChunk(chunk = "") {
-  const source = String(chunk || "")
-    .trim()
-    .replace(/(^|\\s)(\\d{1,3})(?=[A-FX](?:\\s|$))/gi, "$1$2.");
-  if (!source) return [];
+  const trimmed = String(chunk || "").trim();
+  if (!trimmed) return [];
+
+  const compactChoiceSequence = /^(?:\d{1,3}\s*[A-FX](?:\s*[).,:–-])?)(?:\s+\d{1,3}\s*[A-FX](?:\s*[).,:–-])?)+$/i;
+  const source = compactChoiceSequence.test(trimmed)
+    ? trimmed.replace(/(^|\s)(\d{1,3})(?=[A-FX](?:\s*[).,:–-]|\s|$))/gi, "$1$2.")
+    : trimmed;
 
   const labelled = source.match(/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
   if (labelled && normalizeAnswer(labelled[2])) {
