@@ -1,38 +1,43 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
-import AttendanceOverviewPage from "./pages/AttendanceOverviewPage";
-import AttendancePage from "./pages/AttendancePage";
-import CanonicalAttendancePage from "./pages/CanonicalAttendancePage.jsx";
-import CheckinPage from "./pages/CheckinPage";
-import CheckinDisplayPage from "./pages/CheckinDisplayPage";
-import CourseSchedulePage from "./pages/CourseSchedulePage";
-import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
-import MarkingHubPage from "./pages/MarkingHubPage";
-import ExamTutorReviewQueuePage from "./pages/ExamTutorReviewQueuePage";
-import TutorMarkingSimplePage from "./pages/TutorMarkingSimplePage.jsx";
-import CommunicationHubPage from "./pages/CommunicationHubPage.jsx";
-import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
-import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
-import TeachingSlidesPage from "./pages/TeachingSlidesPage";
-import StudentDirectoryPage from "./pages/StudentDirectoryPage";
-import StudentActivityPage from "./pages/StudentActivityPage";
-import WritingSubmissionTrackerPage from "./pages/WritingSubmissionTrackerPage";
-import OrientationPage from "./pages/OrientationSetupTabsPage.jsx";
-import ClassScheduleSetupPage from "./pages/ClassScheduleSetupPage";
-import ClassOperationsPage from "./pages/ClassOperationsPage";
-import ClassArchivePage from "./pages/ClassArchivePage";
-import LiveClassesPage from "./pages/LiveClassesPage";
-import HolidayCalendarPage from "./pages/HolidayCalendarPage";
-import GoetheExamConfigPage from "./pages/GoetheExamConfigPage.jsx";
-import StudentResultsComparePage from "./pages/StudentResultsComparePage.jsx";
-import LeadHomepageNotification from "./components/LeadHomepageNotification.jsx";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
 import "./LiveClassesMobile.css";
+
+const LeadHomepageNotification = lazy(() => import("./components/LeadHomepageNotification.jsx"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const AttendanceOverviewPage = lazy(() => import("./pages/AttendanceOverviewPage"));
+const AttendancePage = lazy(() => import("./pages/AttendancePage"));
+const CanonicalAttendancePage = lazy(() => import("./pages/CanonicalAttendancePage.jsx"));
+const CheckinPage = lazy(() => import("./pages/CheckinPage"));
+const CheckinDisplayPage = lazy(() => import("./pages/CheckinDisplayPage"));
+const CourseSchedulePage = lazy(() => import("./pages/CourseSchedulePage"));
+const PublicCourseSchedulePage = lazy(() => import("./pages/PublicCourseSchedulePage"));
+const MarkingHubPage = lazy(() => import("./pages/MarkingHubPage"));
+const ExamTutorReviewQueuePage = lazy(() => import("./pages/ExamTutorReviewQueuePage"));
+const TutorMarkingSimplePage = lazy(() => import("./pages/TutorMarkingSimplePage.jsx"));
+const CommunicationHubPage = lazy(() => import("./pages/CommunicationHubPage.jsx"));
+const GrammarIssueReportsPage = lazy(() => import("./pages/GrammarIssueReportsPage"));
+const WhatsAppRemindersPage = lazy(() => import("./pages/WhatsAppRemindersPage"));
+const TeachingSlidesPage = lazy(() => import("./pages/TeachingSlidesPage"));
+const StudentDirectoryPage = lazy(() => import("./pages/StudentDirectoryPage"));
+const StudentActivityPage = lazy(() => import("./pages/StudentActivityPage"));
+const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
+const OrientationPage = lazy(() => import("./pages/OrientationSetupTabsPage.jsx"));
+const ClassScheduleSetupPage = lazy(() => import("./pages/ClassScheduleSetupPage"));
+const ClassOperationsPage = lazy(() => import("./pages/ClassOperationsPage"));
+const ClassArchivePage = lazy(() => import("./pages/ClassArchivePage"));
+const LiveClassesPage = lazy(() => import("./pages/LiveClassesPage"));
+const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage"));
+const GoetheExamConfigPage = lazy(() => import("./pages/GoetheExamConfigPage.jsx"));
+const StudentResultsComparePage = lazy(() => import("./pages/StudentResultsComparePage.jsx"));
+
+function RouteFallback() {
+  return <div className="route-loading" role="status" aria-live="polite">Loading…</div>;
+}
 
 function TopBar() {
   const { user, logout, isStaff } = useAuth();
@@ -141,10 +146,11 @@ export default function App() {
     <>
       <TopBar />
       <ToastViewport />
-      {showLeadNotification ? <LeadHomepageNotification /> : null}
+      {showLeadNotification ? <Suspense fallback={null}><LeadHomepageNotification /></Suspense> : null}
 
       <main className={isFullscreenRoute ? undefined : "page-shell"} data-route={location.pathname}>
-        <Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/checkin/display" element={<CheckinDisplayPage />} />
@@ -187,7 +193,8 @@ export default function App() {
           <Route path="/teaching-slides/course/:courseId/:slideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/public/:courseId/print" element={<TeachingSlidesPage publicView />} />
           <Route path="/teaching-slides/:legacySlideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </main>
     </>
   );

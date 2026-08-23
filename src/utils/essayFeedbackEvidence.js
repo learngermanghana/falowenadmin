@@ -1,3 +1,5 @@
+import { writingDepthSentences } from "./writingFeedbackDepth.js";
+
 function percent(value) {
   if (value === null || value === undefined || value === "") return null;
   const number = Number(value);
@@ -405,6 +407,7 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
   const correction = correctionOf(result, submissionText);
   const correctionEvidence = correctionSentence(correction, level, seed, history);
   const optionalSentences = [
+    ...writingDepthSentences(result, submissionText, level),
     strengthOf(result, submissionText, level, seed, history),
     taskSentence(result),
     nextStepOf(result, submissionText, level, correction, seed, history),
@@ -415,7 +418,7 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
     correctionValue: correctionEvidence,
     correctionFallback: compactCorrectionSentence(correction),
     optionalValues: optionalSentences,
-  }, level === "B1" ? 75 : 60);
+  }, level === "B1" ? 120 : level === "A2" ? 100 : 60);
   const hasStructured = meaningfulStructuredWritingEvidence(result, submissionText);
   const hasSpecificAiProse = Boolean(
     specificAiWritingSentence(result, "strength", submissionText)
