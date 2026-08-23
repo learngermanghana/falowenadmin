@@ -150,6 +150,7 @@ export default function App() {
 
       <main className={isFullscreenRoute ? undefined : "page-shell"} data-route={location.pathname}>
         <Suspense fallback={<RouteFallback />}>
+          <Suspense fallback={<RouteFallback />}>
           <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
