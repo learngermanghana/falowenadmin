@@ -32,17 +32,22 @@ function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }
 
-function b1FormalLetter(source = "") {
+function b1FormalLetter(result = {}, source = "") {
   const points = [];
+  const assignmentKey = String(result.assignmentKey || result.assignmentId || result.assignment || "").toUpperCase();
+  const viewingContext = /\b(?:wohnungsanzeige|wohnung|besichtig(?:en|ung)?)\b/i.test(source)
+    || /^B1[-_. ]2\.5(?:\b|$)/i.test(assignmentKey);
   const asksAppointment = /\b(?:termin|besichtig|freitag|samstag|uhr)\b/i.test(source);
   const asksAddress = /\b(?:adresse|anschrift)\b/i.test(source);
   const asksDocuments = /\b(?:unterlagen|dokument|mitbringen)\b/i.test(source);
   const politeSentence = quoteSentence(source, /\b(?:wäre .{0,45} möglich|könnten sie|bitte bestätigen|teilen sie mir|möchte gern wissen)\b/i);
 
-  if (asksAppointment && asksAddress && asksDocuments) {
+  if (viewingContext && asksAppointment && asksAddress && asksDocuments) {
     points.push("Your Teil 2 letter is task-focused: you request a viewing, propose a concrete appointment, and ask for the exact address and documents to bring");
+  } else if (viewingContext && asksAppointment && (asksAddress || asksDocuments)) {
+    points.push("Your Teil 2 letter develops the viewing request beyond the opening: you propose a concrete appointment and ask for the practical information needed to attend");
   } else if (asksAppointment && (asksAddress || asksDocuments)) {
-    points.push("Your Teil 2 letter develops the request beyond the opening: you propose a concrete appointment and ask for the practical information needed to attend");
+    points.push("Your Teil 2 letter develops the request beyond the opening: you propose a concrete appointment and ask for practical information needed to attend");
   } else {
     points.push("Your Teil 2 letter has a clear purpose and develops the request in a logical order instead of relying only on a formal greeting");
   }
@@ -150,5 +155,5 @@ export function writingDepthSentences(result = {}, submission = "", explicitLeve
 
   const formal = /\bsehr geehrte\b/i.test(source) && /\bmit freundlichen gr(?:ü|u)(?:ß|ss)en\b/i.test(source);
   const opinion = /\b(?:meiner meinung nach|ich bin der meinung|ich denke|ich finde|ich glaube|einerseits|andererseits|zusammenfassend)\b/i.test(source);
-  return unique(formal && !opinion ? b1FormalLetter(source) : b1OpinionText(source)).slice(0, 4);
+  return unique(formal && !opinion ? b1FormalLetter(result, source) : b1OpinionText(source)).slice(0, 4);
 }
