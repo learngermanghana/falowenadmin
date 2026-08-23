@@ -422,29 +422,45 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
     result.ai?.nextStep,
     result.rubric?.nextStep,
   );
+  const priorityStrength = structuredStrength && !genericWritingSentence(structuredStrength) ? structuredStrength : "";
+  const priorityTask = taskSentence(result);
   const specificStrength = specificAiWritingSentence(result, "strength", submissionText);
   const specificNextStep = specificAiWritingSentence(result, "next", submissionText);
   const anchoredStrength = submissionAnchoredStrength(submissionText);
   const anchoredNextStep = submissionAnchoredNextStep(submissionText);
+  const specificAnchoredStrength = anchoredStrength && !/^Your sentence “/i.test(anchoredStrength) ? anchoredStrength : "";
   const optionalSentences = [
-    structuredStrength && !genericWritingSentence(structuredStrength) ? structuredStrength : "",
-    taskSentence(result),
+    priorityStrength,
+    priorityTask,
     structuredNextStep,
     specificStrength,
     specificNextStep,
-    anchoredStrength,
+    specificAnchoredStrength,
     anchoredNextStep,
     ...writingDepthSentences(result, submissionText, level),
+    anchoredStrength,
     strengthOf(result, submissionText, level, seed, history),
     nextStepOf(result, submissionText, level, correction, seed, history),
   ];
+  const hasPriorityWritingEvidence = Boolean(
+    priorityStrength
+    || priorityTask
+    || structuredNextStep
+    || specificStrength
+    || specificNextStep
+    || specificAnchoredStrength
+    || anchoredNextStep,
+  );
+  const feedbackMaximum = hasPriorityWritingEvidence
+    ? level === "B1" ? 75 : 60
+    : level === "B1" ? 120 : level === "A2" ? 100 : 60;
   const feedback = completeSentences({
     opening: `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
     objectiveValues: conciseObjective(objectiveSentences),
     correctionValue: correctionEvidence,
     correctionFallback: compactCorrectionSentence(correction),
     optionalValues: optionalSentences,
-  }, level === "B1" ? 120 : level === "A2" ? 100 : 60);
+  }, feedbackMaximum);
   const hasStructured = meaningfulStructuredWritingEvidence(result, submissionText);
   const hasSpecificAiProse = Boolean(
     specificAiWritingSentence(result, "strength", submissionText)
