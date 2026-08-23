@@ -406,10 +406,28 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
       : ["Keep improving", "Keep practising", "A useful start"];
   const correction = correctionOf(result, submissionText);
   const correctionEvidence = correctionSentence(correction, level, seed, history);
+  const structuredStrength = first(
+    result.writingStrengths,
+    result.strengths,
+    result.writing?.strengths,
+    result.ai?.writingStrengths,
+    result.ai?.strengths,
+    result.rubric?.strengths,
+  );
+  const structuredNextStep = first(
+    result.nextStep,
+    result.improvementTarget,
+    result.writingNextStep,
+    result.writing?.nextStep,
+    result.ai?.nextStep,
+    result.rubric?.nextStep,
+  );
   const optionalSentences = [
+    structuredStrength && !genericWritingSentence(structuredStrength) ? structuredStrength : "",
+    taskSentence(result),
+    structuredNextStep,
     ...writingDepthSentences(result, submissionText, level),
     strengthOf(result, submissionText, level, seed, history),
-    taskSentence(result),
     nextStepOf(result, submissionText, level, correction, seed, history),
   ];
   const feedback = completeSentences({
