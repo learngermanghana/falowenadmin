@@ -1,0 +1,99 @@
+name: Prioritize structured writing evidence
+
+on:
+  push:
+    branches:
+      - fix/structured-feedback-priority
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/structured-feedback-priority
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply review fixes
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          function replaceOnce(source, search, replacement, label) {
+            if (source.includes(replacement)) return source;
+            if (!source.includes(search)) throw new Error(`${label} anchor changed`);
+            return source.replace(search, replacement);
+          }
+
+          const essayPath = 'src/utils/essayFeedbackEvidence.js';
+          let essay = fs.readFileSync(essayPath, 'utf8');
+
+          const strengthAnchor = `function strengthOf(result, submission, level, seed, history) {\n  const structured = first(result.writingStrengths, result.strengths, result.writing?.strengths, result.ai?.writingStrengths, result.ai?.strengths, result.rubric?.strengths);\n  if (structured && !genericWritingSentence(structured)) return structured;`;
+          const strengthReplacement = `function structuredStrengthOf(result = {}) {\n  const structured = first(\n    result.writingStrengths,\n    result.strengths,\n    result.writing?.strengths,\n    result.ai?.writingStrengths,\n    result.ai?.strengths,\n    result.rubric?.strengths,\n  );\n  return structured && !genericWritingSentence(structured) ? structured : \"\";\n}\n\nfunction strengthOf(result, submission, level, seed, history) {\n  const structured = structuredStrengthOf(result);\n  if (structured) return structured;`;
+          essay = replaceOnce(essay, strengthAnchor, strengthReplacement, 'structured strength helper');
+
+          const nextAnchor = `function nextStepOf(result, submission, level, correction, seed, history) {\n  const structured = first(result.nextStep, result.improvementTarget, result.writingNextStep, result.writing?.nextStep, result.ai?.nextStep, result.rubric?.nextStep);\n  if (structured) return structured;`;
+          const nextReplacement = `function structuredNextStepOf(result = {}) {\n  return first(\n    result.nextStep,\n    result.improvementTarget,\n    result.writingNextStep,\n    result.writing?.nextStep,\n    result.ai?.nextStep,\n    result.rubric?.nextStep,\n  );\n}\n\nfunction nextStepOf(result, submission, level, correction, seed, history) {\n  const structured = structuredNextStepOf(result);\n  if (structured) return structured;`;
+          essay = replaceOnce(essay, nextAnchor, nextReplacement, 'structured next-step helper');
+
+          const optionalAnchor = `  const optionalSentences = [\n    ...writingDepthSentences(result, submissionText, level),\n    strengthOf(result, submissionText, level, seed, history),\n    taskSentence(result),\n    nextStepOf(result, submissionText, level, correction, seed, history),\n  ];`;
+          const optionalReplacement = `  const optionalSentences = [\n    structuredStrengthOf(result),\n    taskSentence(result),\n    structuredNextStepOf(result),\n    ...writingDepthSentences(result, submissionText, level),\n    strengthOf(result, submissionText, level, seed, history),\n    nextStepOf(result, submissionText, level, correction, seed, history),\n  ];`;
+          essay = replaceOnce(essay, optionalAnchor, optionalReplacement, 'structured evidence ordering');
+          fs.writeFileSync(essayPath, essay);
+
+          const depthPath = 'src/utils/writingFeedbackDepth.js';
+          let depth = fs.readFileSync(depthPath, 'utf8');
+          depth = replaceOnce(
+            depth,
+            `function b1FormalLetter(source = \"\") {\n  const points = [];\n  const asksAppointment = /\\b(?:termin|besichtig|freitag|samstag|uhr)\\b/i.test(source);`,
+            `function b1FormalLetter(result = {}, source = \"\") {\n  const points = [];\n  const assignmentKey = String(result.assignmentKey || result.assignmentId || result.assignment || \"\").toUpperCase();\n  const viewingContext = /\\b(?:wohnungsanzeige|wohnung|besichtig(?:en|ung)?)\\b/i.test(source) || /^B1[-_. ]2\\.5(?:\\b|$)/i.test(assignmentKey);\n  const asksAppointment = /\\b(?:termin|besichtig|freitag|samstag|uhr)\\b/i.test(source);`,
+            'B1 formal context',
+          );
+          depth = replaceOnce(
+            depth,
+            `  if (asksAppointment && asksAddress && asksDocuments) {\n    points.push(\"Your Teil 2 letter is task-focused: you request a viewing, propose a concrete appointment, and ask for the exact address and documents to bring\");\n  } else if (asksAppointment && (asksAddress || asksDocuments)) {\n    points.push(\"Your Teil 2 letter develops the request beyond the opening: you propose a concrete appointment and ask for the practical information needed to attend\");\n  } else {`,
+            `  if (viewingContext && asksAppointment && asksAddress && asksDocuments) {\n    points.push(\"Your Teil 2 letter is task-focused: you request a viewing, propose a concrete appointment, and ask for the exact address and documents to bring\");\n  } else if (viewingContext && asksAppointment && (asksAddress || asksDocuments)) {\n    points.push(\"Your Teil 2 letter develops the viewing request beyond the opening: you propose a concrete appointment and ask for the practical information needed to attend\");\n  } else if (asksAppointment && (asksAddress || asksDocuments)) {\n    points.push(\"Your Teil 2 letter develops the request beyond the opening: you propose a concrete appointment and ask for practical information needed to attend\");\n  } else {`,
+            'viewing-specific praise',
+          );
+          depth = replaceOnce(
+            depth,
+            `return unique(formal && !opinion ? b1FormalLetter(source) : b1OpinionText(source)).slice(0, 4);`,
+            `return unique(formal && !opinion ? b1FormalLetter(result, source) : b1OpinionText(source)).slice(0, 4);`,
+            'B1 formal result context',
+          );
+          fs.writeFileSync(depthPath, depth);
+
+          const testPath = 'tests/rich-writing-feedback.test.js';
+          let tests = fs.readFileSync(testPath, 'utf8');
+          const marker = 'structured marking evidence stays ahead of inferred depth praise';
+          if (!tests.includes(marker)) {
+            tests += `\n\ntest(\"structured marking evidence stays ahead of inferred depth praise\", () => {\n  const feedback = buildNaturalStudentFeedback({\n    studentName: \"Sandra\",\n    level: \"A2\",\n    assignmentKey: \"A2-9.24\",\n    hasRegisteredWriting: true,\n    objectiveScore: 60,\n    objectiveTotal: 5,\n    wrongAnswers: [{ question: 1 }, { question: 4 }],\n    writingScore: 77,\n    taskCompletion: { completed: 3, total: 4, missing: [\"transport\"] },\n    strengths: [\"Your invitation gives a clear meeting time and place\"],\n    nextStep: \"Add how you will travel there so the invitation answers the transport point\",\n    corrections: [{\n      partId: \"teil2\",\n      from: \"weil ich möchte mit dir ein Urlaub planen\",\n      to: \"weil ich mit dir einen Urlaub planen möchte\",\n    }],\n  }, \"Liebe Sandra, weil ich möchte mit dir ein Urlaub planen. Wir treffen uns am Samstag um 14 Uhr im Café. Hast du Zeit? Viele Grüße, Catherine.\");\n\n  assert.match(feedback, /clear meeting time and place/i);\n  assert.match(feedback, /transport is missing/i);\n  assert.match(feedback, /Add how you will travel there/i);\n  const strengthIndex = feedback.indexOf(\"clear meeting time and place\");\n  const inferredIndex = feedback.indexOf(\"develops the reason for writing\");\n  assert.ok(inferredIndex === -1 || strengthIndex < inferredIndex, feedback);\n});\n\ntest(\"formal interview feedback never invents a housing viewing\", () => {\n  const submission = \`Teil 2 Schreiben\n\nSehr geehrte Frau Müller,\n\nvielen Dank für die Einladung zum Vorstellungsgespräch. Der Termin am Freitag um 10 Uhr passt mir gut. Könnten Sie mir bitte die genaue Adresse mitteilen und sagen, welche Unterlagen ich mitbringen soll? Ich freue mich auf das Gespräch.\n\nMit freundlichen Grüßen\nKojo\`;\n\n  const feedback = buildNaturalStudentFeedback({\n    studentName: \"Kojo\",\n    level: \"B1\",\n    assignmentKey: \"B1-6.19\",\n    writingScore: 82,\n    writingScorePercent: 82,\n  }, submission);\n\n  assert.match(feedback, /appointment|practical information|formal|request/i);\n  assert.doesNotMatch(feedback, /request a viewing|viewing request|besichtigung/i);\n});\n`;
+          }
+          fs.writeFileSync(testPath, tests);
+          NODE
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run feedback regressions
+        run: node --test tests/essay-feedback-evidence.test.js tests/rich-writing-feedback.test.js tests/b1-writing-feedback-depth.test.js
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit review fixes
+        run: |
+          if git diff --quiet -- src tests; then
+            echo 'Review fixes already applied.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src tests
+          git commit -m 'Prioritize structured writing feedback evidence'
+          git push origin HEAD:fix/structured-feedback-priority
