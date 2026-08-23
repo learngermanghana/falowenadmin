@@ -460,19 +460,6 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
   const anchoredStrength = submissionAnchoredStrength(submissionText);
   const anchoredNextStep = submissionAnchoredNextStep(submissionText);
   const specificAnchoredStrength = anchoredStrength && !/^Your sentence “/i.test(anchoredStrength) ? anchoredStrength : "";
-  const optionalSentences = [
-    priorityStrength,
-    priorityTask,
-    priorityNextStep,
-    specificStrength,
-    specificNextStep,
-    specificAnchoredStrength,
-    anchoredNextStep,
-    ...writingDepthSentences(result, submissionText, level),
-    anchoredStrength,
-    strengthOf(result, submissionText, level, seed, history),
-    nextStepOf(result, submissionText, level, correction, seed, history),
-  ];
   const hasPriorityWritingEvidence = Boolean(
     priorityStrength
     || priorityTask
@@ -482,8 +469,31 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
     || specificAnchoredStrength
     || anchoredNextStep,
   );
+  const fallbackStrength = priorityStrength || specificStrength || specificAnchoredStrength
+    ? ""
+    : strengthOf(result, submissionText, level, seed, history);
+  const fallbackNextStep = priorityNextStep || specificNextStep || anchoredNextStep
+    ? ""
+    : nextStepOf(result, submissionText, level, correction, seed, history);
+  const supplementalSentences = hasPriorityWritingEvidence
+    ? [fallbackStrength, fallbackNextStep]
+    : [
+      ...writingDepthSentences(result, submissionText, level),
+      fallbackStrength,
+      fallbackNextStep,
+    ];
+  const optionalSentences = [
+    priorityStrength,
+    priorityTask,
+    priorityNextStep,
+    specificStrength,
+    specificNextStep,
+    priorityStrength || specificStrength ? "" : specificAnchoredStrength,
+    anchoredNextStep,
+    ...supplementalSentences,
+  ];
   const feedbackMaximum = hasPriorityWritingEvidence
-    ? level === "B1" ? 75 : 60
+    ? level === "B1" ? 90 : level === "A2" ? 75 : 60
     : level === "B1" ? 120 : level === "A2" ? 100 : 60;
   const feedback = completeSentences({
     opening: `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
