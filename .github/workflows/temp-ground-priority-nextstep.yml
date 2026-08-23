@@ -1,0 +1,54 @@
+name: Temporary grounded priority next-step patch
+
+on:
+  push:
+    branches:
+      - fix/structured-feedback-priority
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/structured-feedback-priority
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ground authoritative next step before prioritizing it
+        run: |
+          node scripts/patchGroundedWritingFeedback.mjs
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path = 'src/utils/essayFeedbackEvidence.js';
+          let source = fs.readFileSync(path, 'utf8');
+          const anchor = `  const structuredNextStep = first(\n    result.nextStep,\n    result.improvementTarget,\n    result.writingNextStep,\n    result.writing?.nextStep,\n    result.ai?.nextStep,\n    result.rubric?.nextStep,\n  );`;
+          const replacement = `${anchor}\n  const priorityNextStep = structuredNextStep && isGroundedCorrectiveFeedback(structuredNextStep, submissionText)\n    ? structuredNextStep\n    : "";`;
+          if (!source.includes(replacement)) {
+            if (!source.includes(anchor)) throw new Error('structured next step anchor changed');
+            source = source.replace(anchor, replacement);
+          }
+          source = source.replace(
+            `    priorityTask,\n    structuredNextStep,\n    specificStrength,`,
+            `    priorityTask,\n    priorityNextStep,\n    specificStrength,`,
+          );
+          source = source.replace(
+            `    || priorityTask\n    || structuredNextStep\n    || specificStrength`,
+            `    || priorityTask\n    || priorityNextStep\n    || specificStrength`,
+          );
+          fs.writeFileSync(path, source);
+          NODE
+      - name: Commit patch
+        run: |
+          if git diff --quiet -- src/utils/essayFeedbackEvidence.js; then
+            echo 'Already patched.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/utils/essayFeedbackEvidence.js
+          git commit -m 'Ground prioritized writing next steps'
+          git push origin HEAD:fix/structured-feedback-priority
