@@ -56,3 +56,53 @@ Heutzutage ist die Wohnungssuche besonders in Großstädten sehr schwierig. Ich 
   assert.ok(words(feedback) >= 65, feedback);
   assert.ok(words(feedback) <= 120, feedback);
 });
+
+test("structured marking evidence stays ahead of inferred depth praise", () => {
+  const feedback = buildNaturalStudentFeedback({
+    studentName: "Sandra",
+    level: "A2",
+    assignmentKey: "A2-9.24",
+    hasRegisteredWriting: true,
+    objectiveScore: 60,
+    objectiveTotal: 5,
+    wrongAnswers: [{ question: 1 }, { question: 4 }],
+    writingScore: 77,
+    taskCompletion: { completed: 3, total: 4, missing: ["transport"] },
+    strengths: ["Your invitation gives a clear meeting time and place"],
+    nextStep: "Add how you will travel there so the invitation answers the transport point",
+    corrections: [{
+      partId: "teil2",
+      from: "weil ich möchte mit dir ein Urlaub planen",
+      to: "weil ich mit dir einen Urlaub planen möchte",
+    }],
+  }, "Liebe Sandra, weil ich möchte mit dir ein Urlaub planen. Wir treffen uns am Samstag um 14 Uhr im Café. Hast du Zeit? Viele Grüße, Catherine.");
+
+  assert.match(feedback, /clear meeting time and place/i);
+  assert.match(feedback, /transport is missing/i);
+  assert.match(feedback, /Add how you will travel there/i);
+  const strengthIndex = feedback.indexOf("clear meeting time and place");
+  const inferredIndex = feedback.indexOf("develops the reason for writing");
+  assert.ok(inferredIndex === -1 || strengthIndex < inferredIndex, feedback);
+});
+
+test("formal interview feedback never invents a housing viewing", () => {
+  const submission = `Teil 2 Schreiben
+
+Sehr geehrte Frau Müller,
+
+vielen Dank für die Einladung zum Vorstellungsgespräch. Der Termin am Freitag um 10 Uhr passt mir gut. Könnten Sie mir bitte die genaue Adresse mitteilen und sagen, welche Unterlagen ich mitbringen soll? Ich freue mich auf das Gespräch.
+
+Mit freundlichen Grüßen
+Kojo`;
+
+  const feedback = buildNaturalStudentFeedback({
+    studentName: "Kojo",
+    level: "B1",
+    assignmentKey: "B1-6.19",
+    writingScore: 82,
+    writingScorePercent: 82,
+  }, submission);
+
+  assert.match(feedback, /appointment|practical information|formal|request/i);
+  assert.doesNotMatch(feedback, /request a viewing|viewing request|besichtigung/i);
+});

@@ -235,6 +235,34 @@ function genericWritingSentence(value = "") {
   return /^(?:the main purpose of your message is understandable|check verb position, articles and every task point before submitting|your message uses an appropriate greeting and closing|your free-text response is clear|reread .+ improve one wording choice before submitting)/i.test(String(value || "").trim());
 }
 
+function quotedFeedbackPhrases(value = "") {
+  return [...String(value || "").matchAll(/[“"]([^”"]{2,90})[”"]|[‘']([^’']{2,90})[’']/g)]
+    .map((match) => String(match[1] || match[2] || "").trim())
+    .filter(Boolean);
+}
+
+function isCorrectiveWritingClaim(value = "") {
+  return /\b(?:write|use|replace|correct|revise|avoid|change|fix|article|articles|grammar|word order|spelling|instead of|rather than)\b/i.test(String(value || ""));
+}
+
+function submissionContainsExactPhrase(submission = "", phrase = "") {
+  const source = String(submission || "").toLocaleLowerCase("de");
+  const needle = String(phrase || "").trim().toLocaleLowerCase("de");
+  if (!needle) return false;
+  if (!/^[\p{L}\p{N}]+$/u.test(needle)) return source.includes(needle);
+  const escaped = needle.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+  return new RegExp("(?:^|[^\\p{L}\\p{N}])" + escaped + "(?:$|[^\\p{L}\\p{N}])", "iu").test(source);
+}
+
+function isGroundedCorrectiveFeedback(value = "", submission = "") {
+  const feedback = String(value || "").trim();
+  if (genericWritingSentence(feedback)) return false;
+  if (!feedback || !isCorrectiveWritingClaim(feedback)) return Boolean(feedback);
+  const quoted = quotedFeedbackPhrases(feedback);
+  if (!quoted.length) return false;
+  return quoted.some((quote) => submissionContainsExactPhrase(submission, quote));
+}
+
 function objectiveFeedbackSentence(value = "") {
   return /\b(?:objective|questions?\s+\d+|answers?\s+(?:are|is)|teil\s*[34]|score|correct answers?)\b/i.test(String(value || ""));
 }
@@ -250,8 +278,8 @@ function specificAiWritingSentence(result = {}, kind = "strength", submission = 
       .filter(Boolean);
     const normalizedSubmission = String(submission).toLocaleLowerCase("de");
     const correctionIsAnchored = kind !== "next"
-      || quoted.length === 0
-      || quoted.some((quote) => normalizedSubmission.includes(quote.toLocaleLowerCase("de")));
+      || !isCorrectiveWritingClaim(value)
+      || (quoted.length > 0 && quoted.some((quote) => submissionContainsExactPhrase(submission, quote)));
     return wordCount >= 5
       && wordCount <= 45
       && !genericWritingSentence(value)
@@ -363,7 +391,7 @@ function compactCorrectionSentence(correction) {
 
 function nextStepOf(result, submission, level, correction, seed, history) {
   const structured = first(result.nextStep, result.improvementTarget, result.writingNextStep, result.writing?.nextStep, result.ai?.nextStep, result.rubric?.nextStep);
-  if (structured) return structured;
+  if (structured && isGroundedCorrectiveFeedback(structured, submission)) return structured;
   const aiSpecific = specificAiWritingSentence(result, "next", submission);
   if (aiSpecific) return aiSpecific;
   const anchored = submissionAnchoredNextStep(submission);
@@ -406,19 +434,74 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
       : ["Keep improving", "Keep practising", "A useful start"];
   const correction = correctionOf(result, submissionText);
   const correctionEvidence = correctionSentence(correction, level, seed, history);
+  const structuredStrength = first(
+    result.writingStrengths,
+    result.strengths,
+    result.writing?.strengths,
+    result.ai?.writingStrengths,
+    result.ai?.strengths,
+    result.rubric?.strengths,
+  );
+  const structuredNextStep = first(
+    result.nextStep,
+    result.improvementTarget,
+    result.writingNextStep,
+    result.writing?.nextStep,
+    result.ai?.nextStep,
+    result.rubric?.nextStep,
+  );
+  const priorityNextStep = structuredNextStep && isGroundedCorrectiveFeedback(structuredNextStep, submissionText)
+    ? structuredNextStep
+    : "";
+  const priorityStrength = structuredStrength && !genericWritingSentence(structuredStrength) ? structuredStrength : "";
+  const priorityTask = taskSentence(result);
+  const specificStrength = specificAiWritingSentence(result, "strength", submissionText);
+  const specificNextStep = specificAiWritingSentence(result, "next", submissionText);
+  const anchoredStrength = submissionAnchoredStrength(submissionText);
+  const anchoredNextStep = submissionAnchoredNextStep(submissionText);
+  const specificAnchoredStrength = anchoredStrength && !/^Your sentence “/i.test(anchoredStrength) ? anchoredStrength : "";
+  const hasPriorityWritingEvidence = Boolean(
+    priorityStrength
+    || priorityTask
+    || priorityNextStep
+    || specificStrength
+    || specificNextStep
+    || specificAnchoredStrength
+    || anchoredNextStep,
+  );
+  const fallbackStrength = priorityStrength || specificStrength || specificAnchoredStrength
+    ? ""
+    : strengthOf(result, submissionText, level, seed, history);
+  const fallbackNextStep = priorityNextStep || specificNextStep || anchoredNextStep
+    ? ""
+    : nextStepOf(result, submissionText, level, correction, seed, history);
+  const supplementalSentences = hasPriorityWritingEvidence
+    ? [fallbackStrength, fallbackNextStep]
+    : [
+      ...writingDepthSentences(result, submissionText, level),
+      fallbackStrength,
+      fallbackNextStep,
+    ];
   const optionalSentences = [
-    ...writingDepthSentences(result, submissionText, level),
-    strengthOf(result, submissionText, level, seed, history),
-    taskSentence(result),
-    nextStepOf(result, submissionText, level, correction, seed, history),
+    priorityStrength,
+    priorityTask,
+    priorityNextStep,
+    specificStrength,
+    specificNextStep,
+    priorityStrength || specificStrength ? "" : specificAnchoredStrength,
+    anchoredNextStep,
+    ...supplementalSentences,
   ];
+  const feedbackMaximum = hasPriorityWritingEvidence
+    ? level === "B1" ? 90 : level === "A2" ? 75 : 60
+    : level === "B1" ? 120 : level === "A2" ? 100 : 60;
   const feedback = completeSentences({
     opening: `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
     objectiveValues: conciseObjective(objectiveSentences),
     correctionValue: correctionEvidence,
     correctionFallback: compactCorrectionSentence(correction),
     optionalValues: optionalSentences,
-  }, level === "B1" ? 120 : level === "A2" ? 100 : 60);
+  }, feedbackMaximum);
   const hasStructured = meaningfulStructuredWritingEvidence(result, submissionText);
   const hasSpecificAiProse = Boolean(
     specificAiWritingSentence(result, "strength", submissionText)

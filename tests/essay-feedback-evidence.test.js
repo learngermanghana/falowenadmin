@@ -40,7 +40,7 @@ test("A2 essay feedback uses task evidence and an exact correction", () => {
   assert.match(feedback, /weil ich mit dir einen Urlaub planen möchte/);
   assert.match(feedback, /transport is missing/);
   assert.doesNotMatch(feedback, /Your free-text response is clear/);
-  assert.ok(feedback.split(/\s+/).length <= 60);
+  assert.ok(feedback.split(/\s+/).length <= 75);
   assert.match(feedback, /[.!?]$/);
 });
 
