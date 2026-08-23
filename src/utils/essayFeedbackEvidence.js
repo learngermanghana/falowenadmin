@@ -422,10 +422,18 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
     result.ai?.nextStep,
     result.rubric?.nextStep,
   );
+  const specificStrength = specificAiWritingSentence(result, "strength", submissionText);
+  const specificNextStep = specificAiWritingSentence(result, "next", submissionText);
+  const anchoredStrength = submissionAnchoredStrength(submissionText);
+  const anchoredNextStep = submissionAnchoredNextStep(submissionText);
   const optionalSentences = [
     structuredStrength && !genericWritingSentence(structuredStrength) ? structuredStrength : "",
     taskSentence(result),
     structuredNextStep,
+    specificStrength,
+    specificNextStep,
+    anchoredStrength,
+    anchoredNextStep,
     ...writingDepthSentences(result, submissionText, level),
     strengthOf(result, submissionText, level, seed, history),
     nextStepOf(result, submissionText, level, correction, seed, history),
