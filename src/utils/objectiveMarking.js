@@ -86,6 +86,10 @@ function findReferenceEntryFromDictionary(assignmentId = "") {
 
 function isWritingPart(referenceEntry = {}, partId = "main") {
   const normalizedPartId = normalizePartId(partId);
+  const rawAnswers = referenceEntry.rawAnswers || referenceEntry.answers || {};
+  const answerValues = Object.values(rawAnswers).map((value) => String(value || "").trim().toLowerCase());
+  const writingPlaceholder = answerValues.length > 0 && answerValues.every((value) => /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(value));
+  if (normalizedPartId === "main" && writingPlaceholder) return true;
   const writingParts = referenceEntry.writingParts || referenceEntry.writing_parts || [];
   if (Array.isArray(writingParts) && writingParts.map(normalizePartId).includes(normalizedPartId)) return true;
   const grading = referenceEntry.partGrading?.[partId] || referenceEntry.partGrading?.[normalizedPartId];
