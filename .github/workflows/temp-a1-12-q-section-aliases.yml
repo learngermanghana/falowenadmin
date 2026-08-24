@@ -1,9 +1,9 @@
 name: Temporary A1-12 Q-section parser validation
 
 on:
-  push:
+  pull_request:
     branches:
-      - fix/a1-12-q-section-aliases
+      - main
 
 permissions:
   contents: read
