@@ -138,15 +138,15 @@ function stripAnswerQuestionLabel(value = "") {
 
 function extractOptionLetter(value = "") {
   const raw = stripAnswerQuestionLabel(value);
-  const anzeige = raw.match(new RegExp(`\banzeige\s*([${OPTION_LETTERS}])\b`, "i"));
+  const anzeige = raw.match(new RegExp(`\\banzeige\\s*([${OPTION_LETTERS}])\\b`, "i"));
   if (anzeige) return anzeige[1].toUpperCase();
-  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\s*[().:/-]|\s+|$)`, "i"));
+  const explicit = raw.match(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:/-]|\\s+|$)`, "i"));
   return explicit ? explicit[1].toUpperCase() : "";
 }
 
 function extractOptionText(value = "") {
   return stripQuestionLabel(value)
-    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\s*[().:/-]|\s+)`, "i"), "")
+    .replace(new RegExp(`^([${OPTION_LETTERS}])(?:\\s*[().:/-]|\\s+)`, "i"), "")
     .trim();
 }
 
@@ -316,25 +316,6 @@ const splitSubmissionIntoSections = parseSubmissionSections;
 
 function splitIntoAnswerBlocks(text = "") {
   return String(text || "").split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
-}
-
-function extractShortUnnumberedAnswerBlock(block = "") {
-  if (extractNumberedTextEntries(block).length) return [];
-  const lines = String(block || "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (!lines.length || lines.length > 12) return [];
-
-  const invalid = lines.some((line) => {
-    if (/^(?:teil|tiel|part)\b|^(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\b/i.test(line)) return true;
-    if (/\?\s*$/.test(line)) return true;
-    if (/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)\s*\d+/i.test(line)) return true;
-    const normalized = normalizeAnswer(line);
-    return !normalized || normalized.split(/\s+/).length > 4;
-  });
-
-  return invalid ? [] : lines;
 }
 
 function leadingUnlabelledSubmissionText(text = "") {
@@ -796,21 +777,6 @@ function alignRestartedGroups(referenceItems = [], groups = []) {
 function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
   const candidates = getFlatAnswerCandidateSequences(submissionText);
   if (!candidates.length) return [];
-
-  const unnumberedBlocks = splitIntoAnswerBlocks(submissionText)
-    .map((block) => extractShortUnnumberedAnswerBlock(block))
-    .filter((answers) => answers.length);
-  if (unnumberedBlocks.length) {
-    const baseCandidates = [...candidates];
-    for (const blockAnswers of unnumberedBlocks) {
-      for (const answers of baseCandidates) {
-        if (answers.length + blockAnswers.length > referenceItems.length) continue;
-        candidates.push([...answers, ...blockAnswers]);
-        candidates.push([...blockAnswers, ...answers]);
-      }
-    }
-  }
-
   const restartedGroups = splitIntoAnswerBlocks(submissionText)
     .map((block) => extractRestartedNumberingEntries(block))
     .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
