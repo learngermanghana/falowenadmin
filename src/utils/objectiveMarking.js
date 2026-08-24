@@ -1,4 +1,5 @@
 import answersDictionary from "../data/answers_dictionary.json" with { type: "json" };
+import { parseSubmissionSections } from "./submissionSections.js";
 
 const OPTION_LETTERS = "ABCDEFX";
 const GERMAN_ARTICLES = new Set(["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines"]);
@@ -307,42 +308,7 @@ function buildReferenceItems(referenceEntry = {}) {
   });
 }
 
-function partMarkerToPartId(label = "", number = "") {
-  if (number) return `teil${Number(number)}`;
-  const normalized = normalizeAnswer(label).replace(/\s+/g, "");
-  if (/lesen|reading/.test(normalized)) return "teil3";
-  if (/horen|hoeren|listening/.test(normalized)) return "teil4";
-  if (/schreiben|writing/.test(normalized)) return "teil2";
-  return normalizePartId(label);
-}
-
-function splitSubmissionIntoSections(text = "") {
-  const sections = [];
-  const rawSource = String(text || "");
-  const qSectionAliasRegex = /(^|\n)[ \t]*q(?:uestion)?[ \t]*([1-4])(?:\.[ \t]*\d+(?=[ \t]+\d{1,3}\s*[).:])|\.[ \t]*(?=\d{1,3}\s*[).:])|(?=[ \t]*(?:\n|$)))[ \t]*/gi;
-  const sourceWithQAliases = rawSource.replace(
-    qSectionAliasRegex,
-    (_match, prefix, partNumber) => prefix + "Teil " + partNumber + "\n",
-  );
-  const source = sourceWithQAliases !== rawSource
-    && /^\s*\d{1,3}\s*[).:]/.test(sourceWithQAliases)
-    && /(?:^|\n)Teil 2\n/i.test(sourceWithQAliases)
-      ? "Teil 1\n" + sourceWithQAliases
-      : sourceWithQAliases;
-  const markerRegex = /(?:^|\n)[ \t]*((?:teil|tiel|part)[ \t]*([1-4])(?:[ \t]*(?:[.:;|·•–-][ \t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[.:;]?[ \t]*/gi;
-  const markers = [];
-  let match;
-  while ((match = markerRegex.exec(source))) {
-    const partId = partMarkerToPartId(match[1], match[2]);
-    markers.push({ index: match.index, end: markerRegex.lastIndex, partId, partNumber: Number(partId.replace("teil", "")) || null });
-  }
-  if (!markers.length) return [{ partId: "main", partNumber: null, text: source }];
-  markers.forEach((marker, index) => {
-    const next = markers[index + 1];
-    sections.push({ partId: marker.partId, partNumber: marker.partNumber, text: source.slice(marker.end, next ? next.index : source.length) });
-  });
-  return sections;
-}
+const splitSubmissionIntoSections = parseSubmissionSections;
 
 function splitIntoAnswerBlocks(text = "") {
   return String(text || "").split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
