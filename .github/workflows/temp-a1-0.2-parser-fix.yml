@@ -1,0 +1,94 @@
+name: Temporary A1-0.2 parser fix
+
+on:
+  push:
+    branches:
+      - fix/a1-0.2-unnumbered-text-block
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[a1-0.2-parser-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/a1-0.2-unnumbered-text-block
+      - name: Patch committed parser source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/utils/objectiveMarking.js')
+          source = path.read_text()
+          before = '''function splitIntoAnswerBlocks(text = "") {
+  return String(text || "").split(/\\n\\s*\\n+/).map((block) => block.trim()).filter(Boolean);
+}
+'''
+          after = before + '''
+function extractShortUnnumberedAnswerBlock(block = "") {
+  if (extractNumberedTextEntries(block).length) return [];
+  const lines = String(block || "")
+    .split(/\\r?\\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!lines.length || lines.length > 12) return [];
+
+  const invalid = lines.some((line) => {
+    if (/^(?:teil|tiel|part)\\b|^(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\\b/i.test(line)) return true;
+    if (/\\?\\s*$/.test(line)) return true;
+    if (/^\\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\\.?|q)\\s*\\d+/i.test(line)) return true;
+    const normalized = normalizeAnswer(line);
+    return !normalized || normalized.split(/\\s+/).length > 4;
+  });
+
+  return invalid ? [] : lines;
+}
+'''
+          if before not in source:
+              raise SystemExit('splitIntoAnswerBlocks anchor not found')
+          source = source.replace(before, after, 1)
+
+          before2 = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
+  const candidates = getFlatAnswerCandidateSequences(submissionText);
+  if (!candidates.length) return [];
+  const restartedGroups = splitIntoAnswerBlocks(submissionText)
+'''
+          after2 = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
+  const candidates = getFlatAnswerCandidateSequences(submissionText);
+  if (!candidates.length) return [];
+
+  const unnumberedBlocks = splitIntoAnswerBlocks(submissionText)
+    .map((block) => extractShortUnnumberedAnswerBlock(block))
+    .filter((answers) => answers.length);
+  if (unnumberedBlocks.length) {
+    const baseCandidates = [...candidates];
+    for (const blockAnswers of unnumberedBlocks) {
+      for (const answers of baseCandidates) {
+        if (answers.length + blockAnswers.length > referenceItems.length) continue;
+        candidates.push([...answers, ...blockAnswers]);
+        candidates.push([...blockAnswers, ...answers]);
+      }
+    }
+  }
+
+  const restartedGroups = splitIntoAnswerBlocks(submissionText)
+'''
+          if before2 not in source:
+              raise SystemExit('chooseBestFlatAnswers anchor not found')
+          source = source.replace(before2, after2, 1)
+          path.write_text(source)
+          PY
+      - name: Validate regression
+        run: |
+          node --check src/utils/objectiveMarking.js
+          node --test tests/a1-0.2-unnumbered-text-block.test.js tests/a1-9-ans-prefix.test.js tests/objective-parser-format-matrix.test.js tests/golden-known-submissions.test.js
+      - name: Commit parser fix and remove temporary workflow
+        run: |
+          rm .github/workflows/temp-a1-0.2-parser-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/objectiveMarking.js tests/a1-0.2-unnumbered-text-block.test.js .github/workflows/temp-a1-0.2-parser-fix.yml
+          git commit -m "Recover short unnumbered objective answer blocks [a1-0.2-parser-applied]"
+          git push origin HEAD:fix/a1-0.2-unnumbered-text-block
