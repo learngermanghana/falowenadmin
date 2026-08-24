@@ -204,17 +204,66 @@ export function buildFollowingScheduleRestorePlan({
     });
   });
 
-  // Earlier sessions are historical and never block a rebuild from the selected
-  // anchor. Only collisions at the anchor or later are relevant.
-  const anchorAndFollowingSessions = proposedSessions.filter((session) => {
+  const canonicalIds = new Set(
+    rebuiltItems.map((item) => normalize(item.session?.id)).filter(Boolean),
+  );
+  const targetLessonByStartsAt = new Map(
+    followingItems.map((item) => [item.targetStartsAt, item.lessonNumber]),
+  );
+  const anchorStartsAtIso = anchorStartsAt.toISOString();
+  const normalizedAnchorSessionId = normalize(anchorSession.id);
+
+  // Future duplicate and orphan records are stale once the administrator picks
+  // the last correct session. They are planned for supersession in the same
+  // Firestore batch as the rebuilt canonical lessons, preserving attendance data
+  // while preventing two active sessions from surviving at the same time.
+  const staleFutureRecords = sessions
+    .filter((session) => {
+      const sessionId = normalize(session.id);
+      if (!sessionId || sessionId === normalizedAnchorSessionId || canonicalIds.has(sessionId)) return false;
+      const status = statusOf(session);
+      if (["cancelled", "superseded"].includes(status) || session.superseded === true) return false;
+
+      const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
+      const startsAt = toDate(session.startsAt);
+      const startsAtIso = startsAt?.toISOString() || "";
+      const collidesWithAnchorOrTarget = startsAtIso === anchorStartsAtIso
+        || targetLessonByStartsAt.has(startsAtIso);
+      const isFollowingDuplicate = Number.isFinite(lessonNumber) && lessonNumber > anchorLessonNumber;
+      const isFutureOrphan = !lessonNumber && startsAt && startsAt.getTime() >= anchorStartsAt.getTime();
+      return collidesWithAnchorOrTarget || isFollowingDuplicate || isFutureOrphan;
+    })
+    .map((session) => {
+      const startsAtIso = toDate(session.startsAt)?.toISOString() || "";
+      const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
+      return {
+        session,
+        sessionId: normalize(session.id),
+        lessonNumber: lessonNumber || null,
+        collisionTargetLessonNumber: startsAtIso === anchorStartsAtIso
+          ? anchorLessonNumber
+          : (targetLessonByStartsAt.get(startsAtIso) || null),
+      };
+    });
+
+  // Keep the invariant that the committed result cannot contain active collisions.
+  // Unlike the old gate, we first neutralize every stale future duplicate/orphan
+  // in the preview and only reject if a collision remains among canonical records.
+  const staleFutureIds = new Set(staleFutureRecords.map((item) => item.sessionId));
+  const collisionSafeSessions = proposedSessions.map((session) => (
+    staleFutureIds.has(normalize(session.id))
+      ? { ...session, status: "superseded", superseded: true }
+      : session
+  ));
+  const anchorAndFollowingSessions = collisionSafeSessions.filter((session) => {
     const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
     if (lessonNumber) return lessonNumber >= anchorLessonNumber;
     const startsAt = toDate(session.startsAt);
     return Boolean(startsAt && startsAt.getTime() >= anchorStartsAt.getTime());
   });
-  const collisions = countSessionTimeCollisions(anchorAndFollowingSessions);
-  if (collisions > 0) {
-    throw new Error("A session at or after the selected anchor would still overlap another active session. Choose the last correct session and Falowen will rebuild only the lessons after it.");
+  const unresolvedCollisions = countSessionTimeCollisions(anchorAndFollowingSessions);
+  if (unresolvedCollisions > 0) {
+    throw new Error("The rebuild still contains a collision between canonical sessions after stale future records were neutralized.");
   }
 
   return {
@@ -234,6 +283,8 @@ export function buildFollowingScheduleRestorePlan({
     anchorStartsAt: anchorStartsAt.toISOString(),
     followingItems,
     restorableItems,
+    staleFutureRecords,
+    unresolvedCollisions,
     skippedCancelled,
     movedCount: restorableItems.filter((item) => item.session).length,
     createdCount: restorableItems.filter((item) => !item.session).length,
