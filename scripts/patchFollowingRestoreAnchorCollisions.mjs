@@ -7,30 +7,18 @@ const before = `  const collisions = countSessionTimeCollisions(proposedSessions
 
 const after = `  // Repair is intentionally anchored: earlier sessions are historical and must not block\n  // rebuilding the timetable from the administrator-selected last-correct session onward.\n  // We still reject collisions involving the anchor or any later lesson.\n  const anchorAndFollowingSessions = proposedSessions.filter((session) => {\n    const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);\n    if (lessonNumber) return lessonNumber >= anchorLessonNumber;\n    const startsAt = toDate(session.startsAt);\n    return Boolean(startsAt && startsAt.getTime() >= anchorStartsAt.getTime());\n  });\n  const collisions = countSessionTimeCollisions(anchorAndFollowingSessions);\n  if (collisions > 0) {\n    throw new Error("A session at or after the selected anchor would still overlap another active session. Choose the last correct session and Falowen will rebuild only the lessons after it.");\n  }`;
 
-// Newer source can contain the same anchor-aware collision protection directly,
-// with slightly different comments. Treat that as already patched instead of
-// making predev/prebuild/pretest fail because an exact legacy string changed.
+// New source plans stale future duplicate/orphan records for supersession before
+// checking the final collision invariant. Never strip that safety logic at build time.
+const safeSupersessionMarker = "const staleFutureRecords = sessions";
 const anchoredCollisionMarker = "const anchorAndFollowingSessions = proposedSessions.filter((session) => {";
 
-if (!source.includes(after) && !source.includes(anchoredCollisionMarker)) {
+if (!source.includes(safeSupersessionMarker) && !source.includes(after) && !source.includes(anchoredCollisionMarker)) {
   if (!source.includes(before)) {
     throw new Error("Following restore collision anchor changed; update patchFollowingRestoreAnchorCollisions.mjs");
   }
   source = source.replace(before, after);
   await writeFile(target, source);
   console.log("Patched following-session restore to ignore historical pre-anchor overlaps.");
-}
-
-// Once the admin has explicitly selected the last live/correct session, that
-// choice is authoritative. Stale duplicate or overlapping records after the
-// anchor must not veto rebuilding the future timetable.
-const strictPostAnchorCollisionGate = `  const collisions = countSessionTimeCollisions(anchorAndFollowingSessions);\n  if (collisions > 0) {\n    throw new Error("A session at or after the selected anchor would still overlap another active session. Choose the last correct session and Falowen will rebuild only the lessons after it.");\n  }`;
-const nonBlockingPostAnchorCollisionGate = `  // The administrator-selected anchor is authoritative. Future duplicate or\n  // overlapping records are not allowed to block rebuilding from this point.\n  // The rebuild rewrites the canonical future lesson records to the requested slots.`;
-
-if (source.includes(strictPostAnchorCollisionGate)) {
-  source = source.replace(strictPostAnchorCollisionGate, nonBlockingPostAnchorCollisionGate);
-  await writeFile(target, source);
-  console.log("Patched following-session rebuild to ignore post-anchor overlap locks.");
 }
 
 // A last-live-session restore is intentionally different from a full official timetable repair.
