@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const componentUrl = new URL("../src/components/LiveClassLessonDateRepair.jsx", import.meta.url);
 const serviceUrl = new URL("../src/services/liveClassFollowingScheduleRestoreService.js", import.meta.url);
+const officialRepairServiceUrl = new URL("../src/services/liveClassLessonDateRepairService.js", import.meta.url);
 
 test("anchor options are built from sessions scoped to the selected class", async () => {
   const source = await readFile(componentUrl, "utf8");
@@ -48,5 +49,14 @@ test("no-op reminder repair uses the same selected-class session scope", async (
   assert.match(
     source,
     /releaseHealthyScheduleReminderSuppression\(\{[\s\S]*?sessions: scopedRepairSessions,[\s\S]*?plan,/,
+  );
+});
+
+test("official timetable repair re-scopes sessions after raw className reload", async () => {
+  const source = await readFile(officialRepairServiceUrl, "utf8");
+  assert.match(source, /const scopedRepairSessions = repairSessions\.filter/);
+  assert.match(
+    source,
+    /buildOfficialLessonSchedulePlan\(\{[\s\S]*?sessions: scopedRepairSessions,[\s\S]*?excludedDates,/,
   );
 });
