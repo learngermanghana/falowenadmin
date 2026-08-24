@@ -8,6 +8,15 @@ test("committed answer dictionary has no blocking integrity errors", () => {
   assert.equal(result.ok, true, JSON.stringify(result.errors, null, 2));
 });
 
+test("validator requires an explicit stable assignment id", () => {
+  const result = validateAnswerEntry("Display Name Only", {
+    expectedParts: ["main"],
+    referenceAnswerParts: ["main"],
+    answers: { Answer1: "A" },
+  });
+  assert.ok(result.errors.some((item) => item.code === "missing-assignment-id"));
+});
+
 test("validator catches missing and duplicate objective answer numbers", () => {
   const result = validateAnswerEntry("Synthetic", {
     assignment_id: "TEST-1",
