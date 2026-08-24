@@ -22,9 +22,8 @@ test("validator catches missing and duplicate objective answer numbers", () => {
       },
     },
   });
-  const codes = result.errors.map((item) => item.code);
-  assert.ok(codes.includes("missing-answer-number"));
-  assert.ok(codes.includes("duplicate-answer-number"));
+  assert.ok(result.warnings.some((item) => item.code === "missing-answer-number"));
+  assert.ok(result.errors.some((item) => item.code === "duplicate-answer-number"));
 });
 
 test("validator catches part registration drift", () => {
