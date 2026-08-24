@@ -7,7 +7,12 @@ const before = `  const collisions = countSessionTimeCollisions(proposedSessions
 
 const after = `  // Repair is intentionally anchored: earlier sessions are historical and must not block\n  // rebuilding the timetable from the administrator-selected last-correct session onward.\n  // We still reject collisions involving the anchor or any later lesson.\n  const anchorAndFollowingSessions = proposedSessions.filter((session) => {\n    const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);\n    if (lessonNumber) return lessonNumber >= anchorLessonNumber;\n    const startsAt = toDate(session.startsAt);\n    return Boolean(startsAt && startsAt.getTime() >= anchorStartsAt.getTime());\n  });\n  const collisions = countSessionTimeCollisions(anchorAndFollowingSessions);\n  if (collisions > 0) {\n    throw new Error("A session at or after the selected anchor would still overlap another active session. Choose the last correct session and Falowen will rebuild only the lessons after it.");\n  }`;
 
-if (!source.includes(after)) {
+// Newer source can contain the same anchor-aware collision protection directly,
+// with slightly different comments. Treat that as already patched instead of
+// making predev/prebuild/pretest fail because an exact legacy string changed.
+const anchoredCollisionMarker = "const anchorAndFollowingSessions = proposedSessions.filter((session) => {";
+
+if (!source.includes(after) && !source.includes(anchoredCollisionMarker)) {
   if (!source.includes(before)) {
     throw new Error("Following restore collision anchor changed; update patchFollowingRestoreAnchorCollisions.mjs");
   }
