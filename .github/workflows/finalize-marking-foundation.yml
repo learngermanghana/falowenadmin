@@ -1,0 +1,86 @@
+name: Finalize marking foundation source
+
+on:
+  push:
+    branches:
+      - improve/marking-foundation
+    paths:
+      - '.github/workflows/finalize-marking-foundation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: improve/marking-foundation
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Commit A1-3 answer-layout metadata and retain cross-file patches
+        run: |
+          python <<'PY'
+          import json
+          from pathlib import Path
+
+          dictionary_path = Path('src/data/answers_dictionary.json')
+          dictionary = json.loads(dictionary_path.read_text())
+          entry = next((value for value in dictionary.values() if str(value.get('assignment_id') or value.get('assignmentId') or '').strip().upper() == 'A1-3'), None)
+          if entry is None:
+              raise SystemExit('A1-3 answer-key entry not found')
+          entry['expectedParts'] = ['teil1', 'teil2', 'teil3']
+          entry['writingParts'] = ['teil2']
+          entry['aiGradedParts'] = ['teil2']
+          entry['referenceAnswerParts'] = ['teil1', 'teil3']
+          entry['answerLayout'] = 'multipart'
+          part_grading = entry.get('partGrading') or {}
+          part_grading['teil2'] = {
+              'label': 'Teil 2 Schreiben',
+              'hasReferenceAnswers': False,
+              'gradingMode': 'ai_written_response',
+              'instruction': 'Teil 2 is a Schreiben/writing part. Grade it with AI using A1 task completion, understandable sentences, basic verb forms, spelling, capitalization, plural forms, vocabulary, and clarity. Do not mark it wrong because there is no fixed reference answer.',
+          }
+          entry['partGrading'] = part_grading
+          dictionary_path.write_text(json.dumps(dictionary, ensure_ascii=False, indent=2) + '\n')
+
+          package_path = Path('package.json')
+          package = json.loads(package_path.read_text())
+          restore = [
+              'node scripts/patchObjectiveAnswerTimeParsing.mjs',
+              'node scripts/patchObjectivePromptAnswerParsing.mjs',
+              'node scripts/patchA1PricePreferenceMarking.mjs',
+              'node scripts/patchObjectiveGrammarConsistency.mjs',
+              'node scripts/patchNumberedTextObjectiveSections.mjs',
+          ]
+          anchor = 'node scripts/patchA1WritingPlaceholderReferences.mjs'
+          for script_name in ('predev', 'prebuild', 'pretest'):
+              command = package.get('scripts', {}).get(script_name, '')
+              steps = command.split(' && ') if command else []
+              steps = [step for step in steps if step not in restore]
+              if anchor not in steps:
+                  raise SystemExit(f'{anchor} missing from {script_name}')
+              index = steps.index(anchor) + 1
+              steps[index:index] = restore
+              package['scripts'][script_name] = ' && '.join(steps)
+          package_path.write_text(json.dumps(package, indent=2) + '\n')
+          PY
+      - name: Validate committed marking source
+        run: |
+          node --check src/utils/objectiveMarking.js
+          node --check src/utils/submissionSections.js
+          node --check src/utils/writingRubric.js
+          node --check src/utils/writingFeedbackDepth.js
+      - name: Commit final source metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json src/data/answers_dictionary.json
+          if git diff --cached --quiet; then
+            echo "No finalization changes"
+            exit 0
+          fi
+          git commit -m "Keep cross-file marking patches and commit A1-3 layout"
+          git push origin HEAD:improve/marking-foundation
