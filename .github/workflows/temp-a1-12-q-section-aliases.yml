@@ -1,0 +1,24 @@
+name: Temporary A1-12 Q-section parser validation
+
+on:
+  push:
+    branches:
+      - fix/a1-12-q-section-aliases
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply objective parser patches
+        run: node scripts/patchMultipartObjectiveAnswerBlocks.mjs
+      - name: Validate syntax
+        run: node --check src/utils/objectiveMarking.js
+      - name: Run A1-12 and compact regressions
+        run: node --test tests/a1-12.1-objective-parts.test.js tests/a1-12.1-q-section-aliases.test.js tests/compact-objective-paste.test.js
