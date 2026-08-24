@@ -60,3 +60,5 @@ source = replaceOnce(
 
 fs.writeFileSync(target, source);
 console.log("Aligned multipart objective blocks preserve full-sentence answers and tolerate compact time and repeated delimiters.");
+
+await import("./patchQSectionAliasHeadings.mjs");
