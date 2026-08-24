@@ -3932,6 +3932,7 @@
     "assignment_id": "A1-3",
     "expectedParts": [
       "teil1",
+      "teil2",
       "teil3"
     ],
     "referenceAnswerParts": [
@@ -3951,7 +3952,19 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil2": {
+        "label": "Teil 2 Schreiben",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Teil 2 is a Schreiben/writing part. Grade it with AI using A1 task completion, understandable sentences, basic verb forms, spelling, capitalization, plural forms, vocabulary, and clarity. Do not mark it wrong because there is no fixed reference answer."
       }
-    }
+    },
+    "writingParts": [
+      "teil2"
+    ],
+    "aiGradedParts": [
+      "teil2"
+    ]
   }
 }
