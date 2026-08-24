@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { getCourseSessionGroups } from "../src/data/courseSessionGroups.js";
 import { buildFollowingScheduleRestorePlan } from "../src/utils/liveClassFollowingScheduleRestore.js";
+import { buildOfficialLessonSchedulePlan } from "../src/utils/liveClassLessonOrder.js";
 
 const groups = getCourseSessionGroups("A1");
 const scheduleRules = [
@@ -118,4 +119,24 @@ test("rebuilds later completed or live sessions instead of letting their status 
   const restoredIds = new Set(plan.restorableItems.map((item) => item.session?.id));
   assert.equal(restoredIds.has("day-17"), true);
   assert.equal(restoredIds.has("day-18"), true);
+});
+
+test("persisted off-pattern admin anchor is null-safe in the official timetable planner", () => {
+  const anchoredKlass = {
+    ...klass,
+    scheduleAnchorSessionNumber: 16,
+    scheduleAnchorDay: 15,
+    scheduleAnchorStartsAt: "2026-07-19T08:00:00.000Z",
+    scheduleAnchorSource: "admin-selected-following-restore",
+  };
+
+  const plan = buildOfficialLessonSchedulePlan({
+    classId: klass.id,
+    klass: anchoredKlass,
+    sessions: damagedSessions(),
+  });
+
+  assert.equal(plan.scheduleAnchor?.sessionNumber, 16);
+  assert.equal(plan.scheduleAnchor?.startsAt, "2026-07-19T08:00:00.000Z");
+  assert.equal(plan.scheduleAnchor?.source, "admin-selected-following-restore");
 });
