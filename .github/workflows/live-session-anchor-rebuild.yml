@@ -1,0 +1,40 @@
+name: Live session anchor rebuild
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/liveClassFollowingScheduleRestore.js'
+      - 'src/services/liveClassFollowingScheduleRestoreService.js'
+      - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'tests/live-class-following-schedule-restore.test.js'
+      - 'scripts/patchFollowingRestoreAnchorCollisions.mjs'
+      - '.github/workflows/live-session-anchor-rebuild.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/liveClassFollowingScheduleRestore.js'
+      - 'src/services/liveClassFollowingScheduleRestoreService.js'
+      - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'tests/live-class-following-schedule-restore.test.js'
+      - 'scripts/patchFollowingRestoreAnchorCollisions.mjs'
+      - '.github/workflows/live-session-anchor-rebuild.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check committed source
+        run: |
+          node --check src/utils/liveClassFollowingScheduleRestore.js
+          node --check src/services/liveClassFollowingScheduleRestoreService.js
+      - name: Run anchor rebuild regressions
+        run: node --test tests/live-class-following-schedule-restore.test.js
+      - name: Verify build-time compatibility
+        run: npm run build
