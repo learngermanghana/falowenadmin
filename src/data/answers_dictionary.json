@@ -135,7 +135,7 @@
       "Answer3": "Er heißt Peter",
       "Answer4": "Wir kommen aus Italien",
       "Answer5": "Ihr kommt aus Brasilien",
-      "Answer6": "Sie kommt/k kommen aus Russland",
+      "Answer6": "Sie kommt aus Russland / Sie kommen aus Russland",
       "Answer7": "Ich wohne in Berlin",
       "Answer8": "Du wohnst in Madrid",
       "Answer9": "Sie wohnt in Wien",
@@ -162,7 +162,8 @@
         "gradingMode": "answer_key",
         "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
       }
-    }
+    },
+    "answerMatchingMode": "subject_verb"
   },
   "A1 Countries and Languages 4": {
     "answers": {
