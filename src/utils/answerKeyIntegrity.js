@@ -60,7 +60,8 @@ function pushIssue(target, code, assignment, message, extra = {}) {
 export function validateAnswerEntry(assignmentName, entry = {}) {
   const errors = [];
   const warnings = [];
-  const assignment = String(entry.assignment_id || entry.assignmentId || assignmentName || "").trim();
+  const stableAssignmentId = String(entry.assignment_id || entry.assignmentId || "").trim();
+  const assignment = stableAssignmentId || String(assignmentName || "").trim();
   const expected = normalizedParts(entry.expectedParts || entry.expected_parts || []);
   const reference = normalizedParts(entry.referenceAnswerParts || entry.reference_answer_parts || []);
   const writing = normalizedParts(entry.writingParts || entry.writing_parts || []);
@@ -68,7 +69,7 @@ export function validateAnswerEntry(assignmentName, entry = {}) {
   const excluded = normalizedParts(entry.excludedParts || entry.excluded_parts || []);
   const sections = answerSections(entry);
 
-  if (!assignment) pushIssue(errors, "missing-assignment-id", assignmentName, "Assignment has no stable assignment id.");
+  if (!stableAssignmentId) pushIssue(errors, "missing-assignment-id", assignment || assignmentName, "Assignment has no stable assignment_id or assignmentId.");
 
   for (const [label, values] of [["expectedParts", expected], ["referenceAnswerParts", reference], ["writingParts", writing], ["aiGradedParts", aiGraded], ["excludedParts", excluded]]) {
     if (values.length !== unique(values).length) {
