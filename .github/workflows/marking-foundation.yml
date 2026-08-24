@@ -1,0 +1,49 @@
+name: Marking foundation regressions
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/submissionSections.js'
+      - 'src/utils/writingRubric.js'
+      - 'src/utils/writingFeedbackDepth.js'
+      - 'src/data/answers_dictionary.json'
+      - 'tests/golden-*.test.js'
+      - 'tests/submission-sections.test.js'
+      - 'tests/writing-rubric.test.js'
+      - 'package.json'
+      - '.github/workflows/marking-foundation.yml'
+  push:
+    branches:
+      - improve/marking-foundation
+      - main
+    paths:
+      - 'src/utils/objectiveMarking.js'
+      - 'src/utils/submissionSections.js'
+      - 'src/utils/writingRubric.js'
+      - 'src/utils/writingFeedbackDepth.js'
+      - 'src/data/answers_dictionary.json'
+      - 'tests/golden-*.test.js'
+      - 'tests/submission-sections.test.js'
+      - 'tests/writing-rubric.test.js'
+      - 'package.json'
+      - '.github/workflows/marking-foundation.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate committed marking source without patch scripts
+        run: |
+          node --check src/utils/objectiveMarking.js
+          node --check src/utils/submissionSections.js
+          node --check src/utils/writingRubric.js
+          node --check src/utils/writingFeedbackDepth.js
+      - name: Run direct marking goldens without npm pretest
+        run: node --test tests/submission-sections.test.js tests/writing-rubric.test.js tests/golden-known-submissions.test.js tests/golden-objective-coverage.test.js tests/a1-12.1-objective-parts.test.js tests/compact-objective-paste.test.js
