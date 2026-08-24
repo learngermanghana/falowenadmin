@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { getCourseSessionGroups } from "../src/data/courseSessionGroups.js";
 import { buildFollowingScheduleRestorePlan } from "../src/utils/liveClassFollowingScheduleRestore.js";
 import { buildOfficialLessonSchedulePlan } from "../src/utils/liveClassLessonOrder.js";
@@ -119,6 +120,51 @@ test("rebuilds later completed or live sessions instead of letting their status 
   const restoredIds = new Set(plan.restorableItems.map((item) => item.session?.id));
   assert.equal(restoredIds.has("day-17"), true);
   assert.equal(restoredIds.has("day-18"), true);
+});
+
+test("plans colliding future duplicate and protected orphan records for atomic supersession", () => {
+  const sessions = damagedSessions();
+  const duplicate = {
+    ...sessionForDay(16, "2026-07-23T18:00:00.000Z"),
+    id: "duplicate-day-16",
+  };
+  const protectedOrphan = {
+    id: "protected-orphan",
+    classId: klass.id,
+    classRecordId: klass.id,
+    className: klass.name,
+    status: "completed",
+    startsAt: "2026-07-23T18:00:00.000Z",
+    endsAt: "2026-07-23T19:00:00.000Z",
+    topic: "Legacy manual session",
+    students: { student1: { present: true } },
+    attendanceCount: 1,
+    manualDateOverride: true,
+  };
+  sessions.push(duplicate, protectedOrphan);
+
+  const plan = buildFollowingScheduleRestorePlan({
+    classId: klass.id,
+    klass,
+    sessions,
+    anchorSessionId: "day-15",
+  });
+
+  const staleIds = new Set(plan.staleFutureRecords.map((item) => item.sessionId));
+  assert.equal(staleIds.has("duplicate-day-16"), true);
+  assert.equal(staleIds.has("protected-orphan"), true);
+  assert.equal(plan.unresolvedCollisions, 0);
+});
+
+test("restore service supersedes stale future records in both session and attendance documents", async () => {
+  const serviceSource = await readFile(
+    new URL("../src/services/liveClassFollowingScheduleRestoreService.js", import.meta.url),
+    "utf8",
+  );
+  assert.match(serviceSource, /plan\.staleFutureRecords\.forEach/);
+  assert.match(serviceSource, /sessionStatus: "superseded"/);
+  assert.match(serviceSource, /supersededRepairType: "anchor-following-collision"/);
+  assert.match(serviceSource, /remindersSuppressed: true/);
 });
 
 test("persisted off-pattern admin anchor is null-safe in the official timetable planner", () => {

@@ -152,6 +152,49 @@ function restoredAttendancePatch({ classId, className, sessionId, item, sessionP
   };
 }
 
+function staleFutureSessionPatch({ session, canonicalSessionId, adminId }) {
+  return {
+    status: "superseded",
+    originalStatus: normalize(session.status || "scheduled"),
+    superseded: true,
+    supersededBySessionId: normalize(canonicalSessionId),
+    supersededReason: "Stale future duplicate or orphan neutralized by rebuild from the administrator-selected last live/correct session.",
+    supersededRepairType: "anchor-following-collision",
+    remindersSuppressed: true,
+    scheduleHealthRemindersSuppressed: true,
+    scheduleRemindersSuppressed: true,
+    reminderSuppressionSource: "anchor-following-collision",
+    reminderSuppressionReason: "Superseded stale future session.",
+    scheduleReminderSuppressionReason: "Superseded stale future session.",
+    supersededAt: serverTimestamp(),
+    supersededBy: adminId,
+    updatedAt: serverTimestamp(),
+  };
+}
+
+function staleFutureAttendancePatch({ classId, className, sessionId, session, canonicalSessionId, adminId }) {
+  return {
+    classId,
+    className,
+    classSessionId: sessionId,
+    sessionStatus: "superseded",
+    previousSessionStatus: statusOf(session),
+    superseded: true,
+    supersededBySessionId: normalize(canonicalSessionId),
+    supersededReason: "Stale future duplicate or orphan neutralized by rebuild from the administrator-selected last live/correct session.",
+    supersededRepairType: "anchor-following-collision",
+    remindersSuppressed: true,
+    scheduleHealthRemindersSuppressed: true,
+    scheduleRemindersSuppressed: true,
+    reminderSuppressionSource: "anchor-following-collision",
+    reminderSuppressionReason: "Superseded stale future session.",
+    scheduleReminderSuppressionReason: "Superseded stale future session.",
+    supersededAt: serverTimestamp(),
+    supersededBy: adminId,
+    updatedAt: serverTimestamp(),
+  };
+}
+
 async function releaseHealthyScheduleReminderSuppression({
   classId,
   klass,
@@ -253,7 +296,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     anchorSessionId,
     excludedDates,
   });
-  if (!plan.restorableItems.length) {
+  if (!plan.restorableItems.length && !plan.staleFutureRecords.length) {
     const reminderRepair = await releaseHealthyScheduleReminderSuppression({
       classId: resolvedClassId,
       klass,
@@ -267,6 +310,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       moved: 0,
       created: 0,
       completionFlagsReset: 0,
+      supersededFutureRecords: 0,
       skippedCancelled: plan.skippedCancelled.length,
       endDate: plan.endDate,
       anchorLessonNumber: plan.anchorLessonNumber,
@@ -278,10 +322,21 @@ export async function restoreFollowingSessionsToWeeklyPattern({
   const className = normalize(klass.name || klass.className);
   const existingIds = new Set(repairSessions.map((session) => normalize(session.id)).filter(Boolean));
   const assignedIds = new Set();
+  const canonicalIdByLesson = new Map(
+    plan.followingItems
+      .filter((item) => item.session?.id)
+      .map((item) => [item.lessonNumber, normalize(item.session.id)]),
+  );
+  const canonicalIdByStartsAt = new Map(
+    plan.followingItems
+      .filter((item) => item.session?.id)
+      .map((item) => [item.targetStartsAt, normalize(item.session.id)]),
+  );
   const batch = writeBatch(db);
   let moved = 0;
   let created = 0;
   let completionFlagsReset = 0;
+  let supersededFutureRecords = 0;
 
   plan.restorableItems.forEach((item) => {
     let sessionId = normalize(item.session?.id);
@@ -296,6 +351,8 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       if (["completed", "live"].includes(statusOf(item.session))) completionFlagsReset += 1;
     }
     assignedIds.add(sessionId);
+    canonicalIdByLesson.set(item.lessonNumber, sessionId);
+    canonicalIdByStartsAt.set(item.targetStartsAt, sessionId);
 
     const sessionPatch = restoredSessionPatch({
       classId: resolvedClassId,
@@ -313,6 +370,38 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     batch.set(doc(db, "attendance", resolvedClassId, "sessions", sessionId), {
       ...restoredAttendancePatch({ classId: resolvedClassId, className, sessionId, item, sessionPatch }),
       ...(item.session ? {} : { createdAt: serverTimestamp(), students: {} }),
+    }, { merge: true });
+  });
+
+  const supersededIds = new Set();
+  plan.staleFutureRecords.forEach((candidate) => {
+    const session = candidate.session || {};
+    const sessionId = normalize(candidate.sessionId || session.id);
+    if (!sessionId || assignedIds.has(sessionId) || supersededIds.has(sessionId)) return;
+    if (["cancelled", "superseded"].includes(statusOf(session)) || session.superseded === true) return;
+
+    const currentStartsAt = new Date(session.startsAt || 0);
+    const currentStartsAtIso = Number.isNaN(currentStartsAt.getTime()) ? "" : currentStartsAt.toISOString();
+    const canonicalSessionId = canonicalIdByLesson.get(candidate.lessonNumber)
+      || canonicalIdByLesson.get(candidate.collisionTargetLessonNumber)
+      || canonicalIdByStartsAt.get(currentStartsAtIso)
+      || "";
+
+    supersededIds.add(sessionId);
+    supersededFutureRecords += 1;
+    batch.set(doc(db, "classSessions", sessionId), {
+      id: sessionId,
+      ...staleFutureSessionPatch({ session, canonicalSessionId, adminId }),
+    }, { merge: true });
+    batch.set(doc(db, "attendance", resolvedClassId, "sessions", sessionId), {
+      ...staleFutureAttendancePatch({
+        classId: resolvedClassId,
+        className,
+        sessionId,
+        session,
+        canonicalSessionId,
+        adminId,
+      }),
     }, { merge: true });
   });
 
@@ -338,7 +427,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     sessionRepairAt: serverTimestamp(),
     lastSessionChangeType: "restore-following-weekly-pattern",
     lastSessionChangeMode: "anchor-following",
-    lastSessionChangeAffectedCount: plan.restorableItems.length,
+    lastSessionChangeAffectedCount: plan.restorableItems.length + supersededFutureRecords,
     lastChangedSessionId: normalize(plan.anchorSession.id),
     lastSessionChangeBy: adminId,
     lastSessionChangeAt: serverTimestamp(),
@@ -361,10 +450,12 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     anchorLessonNumber: plan.anchorLessonNumber,
     anchorStartsAt: plan.anchorStartsAt,
     affectedSessionIds: plan.restorableItems.map((item) => normalize(item.session?.id)).filter(Boolean),
-    affectedSessionCount: plan.restorableItems.length,
+    affectedSessionCount: plan.restorableItems.length + supersededFutureRecords,
     movedCount: moved,
     createdCount: created,
     completionFlagsReset,
+    supersededFutureRecordCount: supersededFutureRecords,
+    supersededFutureSessionIds: [...supersededIds],
     skippedCancelledCount: plan.skippedCancelled.length,
     endDate: plan.endDate,
     adminId,
@@ -378,6 +469,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     moved,
     created,
     completionFlagsReset,
+    supersededFutureRecords,
     skippedCancelled: plan.skippedCancelled.length,
     endDate: plan.endDate,
     anchorLessonNumber: plan.anchorLessonNumber,
