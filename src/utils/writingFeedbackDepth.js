@@ -73,6 +73,13 @@ function contextualB1OpinionSentence(source = "") {
   return "For stronger B1 argumentation, state the position explicitly and develop one reason with a contrasting view, a concrete example and a short consequence";
 }
 
+function combineRubricAndContext(rubric = [], contextual = "") {
+  const ordered = rubric.length
+    ? [rubric[0], contextual, ...rubric.slice(1)]
+    : [contextual];
+  return unique(ordered).slice(0, 4);
+}
+
 export function writingDepthSentences(result = {}, submission = "", explicitLevel = "") {
   const level = String(explicitLevel || result.level || result.detectedLevel || result.ai?.detectedLevel || "").toUpperCase().match(/\b(A1|A2|B1)\b/)?.[1] || "";
   if (level !== "A2" && level !== "B1") return [];
@@ -82,7 +89,7 @@ export function writingDepthSentences(result = {}, submission = "", explicitLeve
   if (words < 20) return [];
 
   const rubric = rubricFeedbackSentences(result, submission, level);
-  if (level === "A2") return unique([...rubric, contextualA2Sentence(source)]).slice(0, 4);
+  if (level === "A2") return combineRubricAndContext(rubric, contextualA2Sentence(source));
 
   const formal = /\bsehr geehrte\b/i.test(source) && /\bmit freundlichen gr(?:ü|u)(?:ß|ss)en\b/i.test(source);
   const opinion = /\b(?:meiner meinung nach|ich bin der meinung|ich denke|ich finde|ich glaube|einerseits|andererseits|zusammenfassend)\b/i.test(source);
@@ -90,5 +97,5 @@ export function writingDepthSentences(result = {}, submission = "", explicitLeve
     ? contextualB1FormalSentence(result, source)
     : contextualB1OpinionSentence(source);
 
-  return unique([...rubric, contextual]).slice(0, 4);
+  return combineRubricAndContext(rubric, contextual);
 }
