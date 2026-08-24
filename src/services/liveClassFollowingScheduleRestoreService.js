@@ -19,6 +19,10 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
+function statusOf(session = {}) {
+  return normalize(session.status || "scheduled").toLowerCase();
+}
+
 function localDateTimeParts(value, timezone = "Africa/Accra") {
   const date = new Date(value || 0);
   if (Number.isNaN(date.getTime())) return null;
@@ -48,6 +52,7 @@ function restoredSessionPatch({ classId, className, item, adminId, levelId, expe
   const existing = item.session || {};
   const assignmentIds = item.group.assignmentIds || [];
   const changed = item.changed === true;
+  const staleCompletion = ["completed", "live"].includes(statusOf(existing));
   return {
     classId,
     classRecordId: classId,
@@ -76,20 +81,34 @@ function restoredSessionPatch({ classId, className, item, adminId, levelId, expe
     cancellationReason: "",
     manualDateOverride: false,
     manualDateOverrideSource: "official-schedule-repair",
-    manualDateOverrideReason: "Following sessions restored to the saved weekly timetable pattern.",
-    sequence: Number(existing.sequence || 0) + (changed ? 1 : 0),
+    manualDateOverrideReason: "Following sessions rebuilt from the administrator-selected last live/correct session.",
+    sequence: Number(existing.sequence || 0) + (changed || staleCompletion ? 1 : 0),
+    ...(staleCompletion ? {
+      previousStatus: normalize(existing.status || "scheduled"),
+      completionSource: "",
+      completedAt: null,
+      completedBy: "",
+      manualCompletedBy: "",
+      manualCompletion: false,
+      manuallyCompleted: false,
+      autoCompleted: false,
+      completionResetByScheduleRebuild: true,
+      completionResetBy: adminId,
+      completionResetAt: serverTimestamp(),
+    } : {}),
     ...(changed ? {
       previousStartsAt: existing.startsAt || "",
       previousEndsAt: existing.endsAt || "",
       rescheduledBy: adminId,
       rescheduledAt: serverTimestamp(),
-      rescheduleReason: `${levelId} official timetable repair restored following sessions to the saved weekday pattern (${expectedLessons} sessions).`,
+      rescheduleReason: `${levelId} timetable rebuilt after the selected live/correct session (${expectedLessons} sessions).`,
     } : {}),
     updatedAt: serverTimestamp(),
   };
 }
 
 function restoredAttendancePatch({ classId, className, sessionId, item, sessionPatch }) {
+  const staleCompletion = ["completed", "live"].includes(statusOf(item.session || {}));
   return {
     classId,
     className,
@@ -118,6 +137,17 @@ function restoredAttendancePatch({ classId, className, sessionId, item, sessionP
     curriculumTaskCount: sessionPatch.assignmentIds.length,
     curriculumSource: "courseDictionary-day-groups",
     curriculumVersion: 2,
+    ...(staleCompletion ? {
+      previousSessionStatus: statusOf(item.session),
+      completionSource: "",
+      completedAt: null,
+      completedBy: "",
+      manualCompletedBy: "",
+      manualCompletion: false,
+      manuallyCompleted: false,
+      autoCompleted: false,
+      completionResetByScheduleRebuild: true,
+    } : {}),
     updatedAt: serverTimestamp(),
   };
 }
@@ -236,6 +266,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       levelId: plan.levelId,
       moved: 0,
       created: 0,
+      completionFlagsReset: 0,
       skippedCancelled: plan.skippedCancelled.length,
       endDate: plan.endDate,
       anchorLessonNumber: plan.anchorLessonNumber,
@@ -250,6 +281,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
   const batch = writeBatch(db);
   let moved = 0;
   let created = 0;
+  let completionFlagsReset = 0;
 
   plan.restorableItems.forEach((item) => {
     let sessionId = normalize(item.session?.id);
@@ -261,6 +293,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       created += 1;
     } else {
       moved += 1;
+      if (["completed", "live"].includes(statusOf(item.session))) completionFlagsReset += 1;
     }
     assignedIds.add(sessionId);
 
@@ -291,6 +324,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     scheduleAnchorDay: plan.levelId === "A1" ? plan.anchorLessonNumber - 1 : null,
     scheduleAnchorStartsAt: plan.anchorStartsAt,
     scheduleAnchorSource: "admin-selected-following-restore",
+    scheduleAnchorMode: "rebuild-from-selected-session",
     scheduleAnchorUpdatedAt: serverTimestamp(),
     scheduleAnchorUpdatedBy: adminId,
     endDate: plan.endDate,
@@ -330,6 +364,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     affectedSessionCount: plan.restorableItems.length,
     movedCount: moved,
     createdCount: created,
+    completionFlagsReset,
     skippedCancelledCount: plan.skippedCancelled.length,
     endDate: plan.endDate,
     adminId,
@@ -342,6 +377,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     levelId: plan.levelId,
     moved,
     created,
+    completionFlagsReset,
     skippedCancelled: plan.skippedCancelled.length,
     endDate: plan.endDate,
     anchorLessonNumber: plan.anchorLessonNumber,
