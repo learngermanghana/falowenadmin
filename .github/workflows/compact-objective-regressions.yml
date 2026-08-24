@@ -5,6 +5,8 @@ on:
     paths:
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/autoMarking.js'
+      - 'scripts/patchMultipartObjectiveAnswerBlocks.mjs'
+      - 'scripts/patchQSectionAliasHeadings.mjs'
       - 'tests/objective-adjacent-choice-answers.test.js'
       - 'tests/compact-objective-paste.test.js'
       - 'tests/auto-marking.test.js'
@@ -15,6 +17,8 @@ on:
     paths:
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/autoMarking.js'
+      - 'scripts/patchMultipartObjectiveAnswerBlocks.mjs'
+      - 'scripts/patchQSectionAliasHeadings.mjs'
       - 'tests/objective-adjacent-choice-answers.test.js'
       - 'tests/compact-objective-paste.test.js'
       - 'tests/auto-marking.test.js'
@@ -32,5 +36,7 @@ jobs:
         run: |
           node --check src/utils/objectiveMarking.js
           node --check src/utils/autoMarking.js
+          node --check scripts/patchMultipartObjectiveAnswerBlocks.mjs
+          node --check scripts/patchQSectionAliasHeadings.mjs
       - name: Run compact objective regressions
         run: node --test tests/objective-adjacent-choice-answers.test.js tests/compact-objective-paste.test.js tests/auto-marking.test.js
