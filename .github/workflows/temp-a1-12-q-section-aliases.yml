@@ -16,9 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply objective parser patches
-        run: node scripts/patchMultipartObjectiveAnswerBlocks.mjs
-      - name: Validate syntax
-        run: node --check src/utils/objectiveMarking.js
-      - name: Run A1-12 and compact regressions
-        run: node --test tests/a1-12.1-objective-parts.test.js tests/a1-12.1-q-section-aliases.test.js tests/compact-objective-paste.test.js
+          cache: npm
+      - run: npm ci
+      - name: Run A1-12 and compact regressions through pretest patch chain
+        run: npm test -- tests/a1-12.1-objective-parts.test.js tests/a1-12.1-q-section-aliases.test.js tests/compact-objective-paste.test.js
