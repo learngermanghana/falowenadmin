@@ -38,6 +38,15 @@ function statusOf(session = {}) {
   return normalize(session.status || "scheduled").toLowerCase();
 }
 
+function sessionOwnership(session = {}, resolvedClassId = "") {
+  const owners = [...new Set([
+    session.classId,
+    session.classRecordId,
+  ].map(normalize).filter(Boolean))];
+  if (!owners.length) return "unknown";
+  return owners.includes(normalize(resolvedClassId)) ? "match" : "other";
+}
+
 function localParts(value, timezone = "Africa/Accra") {
   const date = toDate(value);
   if (!date) return null;
@@ -109,11 +118,19 @@ export function buildFollowingScheduleRestorePlan({
   const resolvedClassId = normalize(classId || klass.id);
   if (!resolvedClassId) throw new Error("Class ID is required.");
 
+  // Queries used by the repair loader can include className for legacy records.
+  // If two classes share that name, never allow an explicitly foreign owner into
+  // this class's rebuild plan. Ownerless legacy records remain readable, but are
+  // treated conservatively later and are never auto-superseded.
+  const scopedSessions = sessions.filter(
+    (session) => sessionOwnership(session, resolvedClassId) !== "other",
+  );
+
   const levelId = levelIdForClass(klass);
   const groups = getCourseSessionGroups(levelId);
   if (!groups.length) throw new Error("This class level has no official lesson order.");
 
-  const anchorSession = sessions.find((session) => normalize(session.id) === normalize(anchorSessionId));
+  const anchorSession = scopedSessions.find((session) => normalize(session.id) === normalize(anchorSessionId));
   if (!anchorSession) throw new Error("Select the last live or correct session that should remain unchanged.");
   if (["cancelled", "superseded"].includes(statusOf(anchorSession)) || anchorSession.superseded === true) {
     throw new Error("A cancelled or superseded session cannot be used as the timetable anchor.");
@@ -143,7 +160,7 @@ export function buildFollowingScheduleRestorePlan({
   const officialPlan = buildOfficialLessonSchedulePlan({
     classId: resolvedClassId,
     klass,
-    sessions,
+    sessions: scopedSessions,
     excludedDates,
   });
   const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
@@ -189,7 +206,7 @@ export function buildFollowingScheduleRestorePlan({
         endsAt: item.targetEndsAt,
       }]),
   );
-  const proposedSessions = sessions.map((session) => {
+  const proposedSessions = scopedSessions.map((session) => {
     const patch = patchesById.get(normalize(session.id));
     return patch ? { ...session, ...patch } : session;
   });
@@ -214,13 +231,13 @@ export function buildFollowingScheduleRestorePlan({
   const normalizedAnchorSessionId = normalize(anchorSession.id);
 
   // Future duplicate and orphan records are stale once the administrator picks
-  // the last correct session. They are planned for supersession in the same
-  // Firestore batch as the rebuilt canonical lessons, preserving attendance data
-  // while preventing two active sessions from surviving at the same time.
-  const staleFutureRecords = sessions
+  // the last correct session. Automatic supersession is deliberately stricter
+  // than read compatibility: the record must positively belong to this class.
+  const staleFutureRecords = scopedSessions
     .filter((session) => {
       const sessionId = normalize(session.id);
       if (!sessionId || sessionId === normalizedAnchorSessionId || canonicalIds.has(sessionId)) return false;
+      if (sessionOwnership(session, resolvedClassId) !== "match") return false;
       const status = statusOf(session);
       if (["cancelled", "superseded"].includes(status) || session.superseded === true) return false;
 
@@ -247,8 +264,8 @@ export function buildFollowingScheduleRestorePlan({
     });
 
   // Keep the invariant that the committed result cannot contain active collisions.
-  // Unlike the old gate, we first neutralize every stale future duplicate/orphan
-  // in the preview and only reject if a collision remains among canonical records.
+  // Unlike the old gate, we first neutralize owned stale future duplicate/orphan
+  // records and only reject if a collision remains among records in this class scope.
   const staleFutureIds = new Set(staleFutureRecords.map((item) => item.sessionId));
   const collisionSafeSessions = proposedSessions.map((session) => (
     staleFutureIds.has(normalize(session.id))
