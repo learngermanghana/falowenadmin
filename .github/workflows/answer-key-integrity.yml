@@ -28,97 +28,15 @@ on:
       - 'tests/a1-0.2-unnumbered-text-block.test.js'
       - '.github/workflows/answer-key-integrity.yml'
 
-permissions:
-  contents: write
-
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: fix/a1-0.2-safe-source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Materialize safe unnumbered-answer recovery
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('src/utils/objectiveMarking.js')
-          source = path.read_text()
-          if 'function extractShortUnnumberedAnswerBlock' not in source:
-              anchor = 'function leadingUnlabelledSubmissionText(text = "") {'
-              helper = '''function extractShortUnnumberedAnswerBlock(block = "") {
-  if (extractNumberedTextEntries(block).length) return [];
-  const lines = String(block || "")
-    .split(/\\r?\\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (!lines.length || lines.length > 12) return [];
-
-  const invalid = lines.some((line) => {
-    if (/^(?:teil|tiel|part)\\b|^(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\\b/i.test(line)) return true;
-    if (/\\?\\s*$/.test(line)) return true;
-    if (/^\\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\\.?|q)\\s*\\d+/i.test(line)) return true;
-    const normalized = normalizeAnswer(line);
-    return !normalized || normalized.split(/\\s+/).length > 4;
-  });
-
-  return invalid ? [] : lines;
-}
-
-'''
-              if anchor not in source:
-                  raise SystemExit('helper anchor not found')
-              source = source.replace(anchor, helper + anchor, 1)
-          if 'const unnumberedBlocks = splitIntoAnswerBlocks(submissionText)' not in source:
-              before = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
-  const candidates = getFlatAnswerCandidateSequences(submissionText);
-  if (!candidates.length) return [];
-  const restartedGroups = splitIntoAnswerBlocks(submissionText)
-'''
-              after = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
-  const candidates = getFlatAnswerCandidateSequences(submissionText);
-  if (!candidates.length) return [];
-
-  const unnumberedBlocks = splitIntoAnswerBlocks(submissionText)
-    .map((block) => extractShortUnnumberedAnswerBlock(block))
-    .filter((answers) => answers.length);
-  if (unnumberedBlocks.length) {
-    const baseCandidates = [...candidates];
-    for (const blockAnswers of unnumberedBlocks) {
-      for (const answers of baseCandidates) {
-        if (answers.length + blockAnswers.length > referenceItems.length) continue;
-        candidates.push([...answers, ...blockAnswers]);
-        candidates.push([...blockAnswers, ...answers]);
-      }
-    }
-  }
-
-  const restartedGroups = splitIntoAnswerBlocks(submissionText)
-'''
-              if before not in source:
-                  raise SystemExit('candidate anchor not found')
-              source = source.replace(before, after, 1)
-          path.write_text(source)
-          PY
-      - name: Validate build-patch compatibility
-        run: |
-          node --check src/utils/objectiveMarking.js
-          node scripts/patchSlashObjectiveOptionParsing.mjs
+      - name: Validate answer dictionary structure
+        run: node scripts/validateAnswerDictionary.mjs
       - name: Run integrity and parser format matrix
-        run: |
-          node scripts/validateAnswerDictionary.mjs
-          node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/a1-9-ans-prefix.test.js tests/a1-0.2-unnumbered-text-block.test.js tests/golden-known-submissions.test.js
-      - name: Commit materialized source when needed
-        run: |
-          if git diff --quiet -- src/utils/objectiveMarking.js; then
-            echo "Source already materialized."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/utils/objectiveMarking.js
-          git commit -m "Recover short unnumbered objective answer blocks [a1-0.2-materialized]"
-          git push origin HEAD:fix/a1-0.2-safe-source
+        run: node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/a1-9-ans-prefix.test.js tests/a1-0.2-unnumbered-text-block.test.js tests/golden-known-submissions.test.js
