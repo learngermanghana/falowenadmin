@@ -6,6 +6,7 @@ on:
       - 'src/utils/liveClassFollowingScheduleRestore.js'
       - 'src/utils/liveClassLessonOrder.js'
       - 'src/services/liveClassFollowingScheduleRestoreService.js'
+      - 'src/services/liveClassLessonDateRepairService.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
       - 'tests/live-class-anchor-options-scope.test.js'
@@ -18,6 +19,7 @@ on:
       - 'src/utils/liveClassFollowingScheduleRestore.js'
       - 'src/utils/liveClassLessonOrder.js'
       - 'src/services/liveClassFollowingScheduleRestoreService.js'
+      - 'src/services/liveClassLessonDateRepairService.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
       - 'tests/live-class-anchor-options-scope.test.js'
@@ -39,6 +41,7 @@ jobs:
           node --check src/utils/liveClassFollowingScheduleRestore.js
           node --check src/utils/liveClassLessonOrder.js
           node --check src/services/liveClassFollowingScheduleRestoreService.js
+          node --check src/services/liveClassLessonDateRepairService.js
       - name: Run anchor rebuild regressions
         run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js
       - name: Verify build-time compatibility
