@@ -31,8 +31,15 @@ function normalizeQSectionAliases(text = "") {
   return hasImplicitOpeningAnswers ? `Teil 1\n${normalized}` : normalized;
 }
 
+function normalizeStandaloneAnswerPrefixes(text = "") {
+  return String(text || "").replace(
+    /(^|\n)([ \t]*)(?:ans(?:wer)?|antwort)[ \t]*[:.-]?[ \t]*([A-FX])(?:[ \t]*[.)])?[ \t]*(?=\n|$)/gi,
+    (_match, prefix, indent, option) => `${prefix}${indent}${option.toUpperCase()}`,
+  );
+}
+
 export function parseSubmissionSections(text = "") {
-  const source = normalizeQSectionAliases(text);
+  const source = normalizeStandaloneAnswerPrefixes(normalizeQSectionAliases(text));
   const markerRegex = /(?:^|\n)[ \t]*((?:teil|tiel|part)[ \t]*([1-4])(?:[ \t]*(?:[.:;|·•–-][ \t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[.:;]?[ \t]*/gi;
   const markers = [];
   let match;
