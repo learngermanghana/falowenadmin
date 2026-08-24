@@ -85,31 +85,37 @@ test("restores each following lesson to the next valid weekly slot instead of ap
   assert.deepEqual(movedDays, [16, 18, 19, 21, 22, 24]);
 });
 
-test("rejects an anchor that is outside the saved timetable", () => {
+test("accepts the selected last live session as the anchor even when it was held outside the saved weekly slot", () => {
   const sessions = damagedSessions();
-  sessions[0] = sessionForDay(15, "2026-07-19T08:00:00.000Z");
-  assert.throws(
-    () => buildFollowingScheduleRestorePlan({
-      classId: klass.id,
-      klass,
-      sessions,
-      anchorSessionId: "day-15",
-    }),
-    /matches the saved timetable/i,
-  );
+  sessions[0] = sessionForDay(15, "2026-07-19T08:00:00.000Z", "live");
+
+  const plan = buildFollowingScheduleRestorePlan({
+    classId: klass.id,
+    klass,
+    sessions,
+    anchorSessionId: "day-15",
+  });
+
+  assert.equal(plan.anchorLessonNumber, 16);
+  assert.equal(plan.anchorStartsAt, "2026-07-19T08:00:00.000Z");
+  assert.ok(plan.followingItems.length > 0);
 });
 
-test("does not move a completed following lesson", () => {
+test("rebuilds later completed or live sessions instead of letting their status block the anchor restore", () => {
   const sessions = damagedSessions();
+  const liveIndex = sessions.findIndex((session) => session.id === "day-17");
   const completedIndex = sessions.findIndex((session) => session.id === "day-18");
+  sessions[liveIndex] = { ...sessions[liveIndex], status: "live" };
   sessions[completedIndex] = { ...sessions[completedIndex], status: "completed" };
-  assert.throws(
-    () => buildFollowingScheduleRestorePlan({
-      classId: klass.id,
-      klass,
-      sessions,
-      anchorSessionId: "day-15",
-    }),
-    /completed and cannot be moved/i,
-  );
+
+  const plan = buildFollowingScheduleRestorePlan({
+    classId: klass.id,
+    klass,
+    sessions,
+    anchorSessionId: "day-15",
+  });
+
+  const restoredIds = new Set(plan.restorableItems.map((item) => item.session?.id));
+  assert.equal(restoredIds.has("day-17"), true);
+  assert.equal(restoredIds.has("day-18"), true);
 });
