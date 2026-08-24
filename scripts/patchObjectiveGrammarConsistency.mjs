@@ -6,256 +6,30 @@ function replaceOnce(source, before, after, label) {
   return source.replace(before, after);
 }
 
+// Objective grammar behavior is now committed directly in objectiveMarking.js.
+// Keep this lifecycle patch focused on the remaining cross-file feedback safeguards.
 const objectiveTarget = new URL("../src/utils/objectiveMarking.js", import.meta.url);
-let objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
-
-const sectionMarkerBefore = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*(?=\\n|$)/gi;';
-const sectionMarkerAfter = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|tiel|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*(?=\\n|$)/gi;';
-if (!objectiveSource.includes("(?:teil|tiel|part)")) {
-  objectiveSource = replaceOnce(objectiveSource, sectionMarkerBefore, sectionMarkerAfter, "common Tiel heading typo");
+const objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
+for (const required of [
+  "matchingMode: String(",
+  "function subjectVerbGrammarMatches(",
+  'item.matchingMode === "subject_verb"',
+]) {
+  if (!objectiveSource.includes(required)) {
+    throw new Error(`Committed objective grammar behavior is missing: ${required}`);
+  }
 }
-
-const itemMetadataBefore = [
-  '      type: meta.type,',
-  '      vocabularyKey: meta.vocabularyKey || "",',
-  '    });',
-].join("\n");
-const itemMetadataAfter = [
-  '      type: meta.type,',
-  '      vocabularyKey: meta.vocabularyKey || "",',
-  '      matchingMode: String(',
-  '        referenceEntry.answerMatchingMode',
-  '          || referenceEntry.textMatchingMode',
-  '          || referenceEntry.partGrading?.[partId]?.answerMatchingMode',
-  '          || referenceEntry.partGrading?.[normalizedPartId]?.answerMatchingMode',
-  '          || "",',
-  '      ).trim().toLowerCase(),',
-  '    });',
-].join("\n");
-objectiveSource = replaceOnce(objectiveSource, itemMetadataBefore, itemMetadataAfter, "answer matching metadata");
-
-const correctAnswerAnchor = 'function isCorrectAnswer(item, student) {';
-const previousStrictHelper = [
-  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
-  '  const expected = normalizeAnswer(expectedRaw);',
-  '  const student = normalizeAnswer(studentRaw);',
-  '  return Boolean(expected && student && expected === student);',
-  '}',
-].join("\n");
-const broadShortAnswerStrictHelper = [
-  'function normalizeStrictGrammarToken(value = "") {',
-  '  return normalizeAnswer(value)',
-  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
-  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
-  '}',
-  '',
-  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
-  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
-  '  const studentTokens = normalizeStrictGrammarToken(studentRaw).split(/\\s+/).filter(Boolean);',
-  '  if (!expectedTokens.length || !studentTokens.length) return false;',
-  '  if (studentTokens.length === 1 && expectedTokens.length > 1) {',
-  '    return expectedTokens.includes(studentTokens[0]);',
-  '  }',
-  '  return expectedTokens.join(" ") === studentTokens.join(" ");',
-  '}',
-].join("\n");
-const conjugatedShortAnswerStrictHelper = [
-  'function normalizeStrictGrammarToken(value = "") {',
-  '  return normalizeAnswer(value)',
-  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
-  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
-  '}',
-  '',
-  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
-  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
-  '  const studentTokens = normalizeStrictGrammarToken(studentRaw).split(/\\s+/).filter(Boolean);',
-  '  if (!expectedTokens.length || !studentTokens.length) return false;',
-  '  if (studentTokens.length === 1 && expectedTokens.length > 1) {',
-  '    const expectedVerbForms = String(expectedRaw || "")',
-  '      .split(/\\s*\\/\\s*/)',
-  '      .map((alternative) => normalizeStrictGrammarToken(alternative).split(/\\s+/).filter(Boolean)[1])',
-  '      .filter(Boolean);',
-  '    return expectedVerbForms.includes(studentTokens[0]);',
-  '  }',
-  '  return expectedTokens.join(" ") === studentTokens.join(" ");',
-  '}',
-  '',
-  correctAnswerAnchor,
-].join("\n");
-const slashAlternativeStrictHelper = [
-  'function normalizeStrictGrammarToken(value = "") {',
-  '  return normalizeAnswer(value)',
-  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
-  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
-  '}',
-  '',
-  'function strictGrammarStudentVariants(value = "") {',
-  '  const source = String(value || "")',
-  '    .replace(/\\s+\\bSie\\s*\\([^)]*\\)\\s*$/i, "")',
-  '    .replace(/\\([^)]*\\)/g, " ")',
-  '    .replace(/\\s+/g, " ")',
-  '    .trim();',
-  '  const variants = [source];',
-  '  const compactVerbAlternative = source.match(/^(.*?\\s)([A-Za-zÄÖÜäöüß]+)\\s*\\/\\s*([A-Za-zÄÖÜäöüß]+)(\\s+.*)$/);',
-  '  if (compactVerbAlternative) {',
-  '    const [, prefix, firstVerb, secondVerb, suffix] = compactVerbAlternative;',
-  '    variants.push(`${prefix}${firstVerb}${suffix}`, `${prefix}${secondVerb}${suffix}`);',
-  '  }',
-  '  return [...new Set(variants.map(normalizeStrictGrammarToken).filter(Boolean))];',
-  '}',
-  '',
-  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
-  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
-  '  const studentVariants = strictGrammarStudentVariants(studentRaw);',
-  '  if (!expectedTokens.length || !studentVariants.length) return false;',
-  '  if (studentVariants.length === 1 && studentVariants[0].split(/\\s+/).length === 1 && expectedTokens.length > 1) {',
-  '    const expectedVerbForms = String(expectedRaw || "")',
-  '      .split(/\\s*\\/\\s*/)',
-  '      .map((alternative) => normalizeStrictGrammarToken(alternative).split(/\\s+/).filter(Boolean)[1])',
-  '      .filter(Boolean);',
-  '    return expectedVerbForms.includes(studentVariants[0]);',
-  '  }',
-  '  return studentVariants.includes(expectedTokens.join(" "));',
-  '}',
-  '',
-  correctAnswerAnchor,
-].join("\n");
-const subjectVerbPrefixStrictHelper = [
-  'function normalizeStrictGrammarToken(value = "") {',
-  '  return normalizeAnswer(value)',
-  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
-  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
-  '}',
-  '',
-  'function strictGrammarStudentVariants(value = "") {',
-  '  const source = String(value || "")',
-  '    .replace(/\\s+\\bSie\\s*\\([^)]*\\)\\s*$/i, "")',
-  '    .replace(/\\([^)]*\\)/g, " ")',
-  '    .replace(/\\s+/g, " ")',
-  '    .trim();',
-  '  const variants = [source];',
-  '  const compactVerbAlternative = source.match(/^(.*?\\s)([A-Za-zÄÖÜäöüß]+)\\s*\\/\\s*([A-Za-zÄÖÜäöüß]+)(\\s+.*)$/);',
-  '  if (compactVerbAlternative) {',
-  '    const [, prefix, firstVerb, secondVerb, suffix] = compactVerbAlternative;',
-  '    variants.push(`${prefix}${firstVerb}${suffix}`, `${prefix}${secondVerb}${suffix}`);',
-  '  }',
-  '  return [...new Set(variants.map(normalizeStrictGrammarToken).filter(Boolean))];',
-  '}',
-  '',
-  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
-  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
-  '  const studentVariants = strictGrammarStudentVariants(studentRaw);',
-  '  if (!expectedTokens.length || !studentVariants.length) return false;',
-  '  if (studentVariants.length === 1 && studentVariants[0].split(/\\s+/).length === 1 && expectedTokens.length > 1) {',
-  '    const expectedVerbForms = String(expectedRaw || "")',
-  '      .split(/\\s*\\/\\s*/)',
-  '      .map((alternative) => normalizeStrictGrammarToken(alternative).split(/\\s+/).filter(Boolean)[1])',
-  '      .filter(Boolean);',
-  '    return expectedVerbForms.includes(studentVariants[0]);',
-  '  }',
-  '  const expectedSentence = expectedTokens.join(" ");',
-  '  if (studentVariants.includes(expectedSentence)) return true;',
-  '  if (expectedTokens.length < 2) return false;',
-  '  return studentVariants.some((variant) => {',
-  '    const studentTokens = variant.split(/\\s+/).filter(Boolean);',
-  '    return studentTokens[0] === expectedTokens[0] && studentTokens[1] === expectedTokens[1];',
-  '  });',
-  '}',
-  '',
-  correctAnswerAnchor,
-].join("\n");
-const strictHelper = [
-  'function normalizeStrictGrammarToken(value = "") {',
-  '  return normalizeAnswer(value)',
-  '    .replace(/\\bhei(?:b|ß)e\\b/g, "heisse")',
-  '    .replace(/\\bhei(?:b|ß)t\\b/g, "heisst");',
-  '}',
-  '',
-  'function strictGrammarStudentVariants(value = "") {',
-  '  const source = String(value || "")',
-  '    .replace(/\\s+\\bSie\\s*\\([^)]*\\)\\s*$/i, "")',
-  '    .replace(/\\([^)]*\\)/g, " ")',
-  '    .replace(/\\s+/g, " ")',
-  '    .trim();',
-  '  const variants = [source];',
-  '  const compactVerbAlternative = source.match(/^(.*?\\s)([A-Za-zÄÖÜäöüß]+)\\s*\\/\\s*([A-Za-zÄÖÜäöüß]+)(\\s+.*)$/);',
-  '  if (compactVerbAlternative) {',
-  '    const [, prefix, firstVerb, secondVerb, suffix] = compactVerbAlternative;',
-  '    variants.push(`${prefix}${firstVerb}${suffix}`, `${prefix}${secondVerb}${suffix}`);',
-  '  }',
-  '  return [...new Set(variants.map(normalizeStrictGrammarToken).filter(Boolean))];',
-  '}',
-  '',
-  'function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {',
-  '  const expected = normalizeStrictGrammarToken(expectedRaw);',
-  '  const student = normalizeStrictGrammarToken(studentRaw);',
-  '  return Boolean(expected && student && expected === student);',
-  '}',
-  '',
-  'function subjectVerbGrammarMatches(expectedRaw = "", studentRaw = "") {',
-  '  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\\s+/).filter(Boolean);',
-  '  const studentVariants = strictGrammarStudentVariants(studentRaw);',
-  '  if (!expectedTokens.length || !studentVariants.length) return false;',
-  '  if (studentVariants.length === 1 && studentVariants[0].split(/\\s+/).length === 1 && expectedTokens.length > 1) {',
-  '    const expectedVerbForms = String(expectedRaw || "")',
-  '      .split(/\\s*\\/\\s*/)',
-  '      .map((alternative) => normalizeStrictGrammarToken(alternative).split(/\\s+/).filter(Boolean)[1])',
-  '      .filter(Boolean);',
-  '    return expectedVerbForms.includes(studentVariants[0]);',
-  '  }',
-  '  const expectedSentence = expectedTokens.join(" ");',
-  '  if (studentVariants.includes(expectedSentence)) return true;',
-  '  if (expectedTokens.length < 2) return false;',
-  '  return studentVariants.some((variant) => {',
-  '    const studentTokens = variant.split(/\\s+/).filter(Boolean);',
-  '    return studentTokens[0] === expectedTokens[0] && studentTokens[1] === expectedTokens[1];',
-  '  });',
-  '}',
-  '',
-  correctAnswerAnchor,
-].join("\n");
-if (objectiveSource.includes(previousStrictHelper)) {
-  objectiveSource = objectiveSource.replace(previousStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
-} else if (objectiveSource.includes(broadShortAnswerStrictHelper)) {
-  objectiveSource = objectiveSource.replace(broadShortAnswerStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
-} else if (objectiveSource.includes(conjugatedShortAnswerStrictHelper)) {
-  objectiveSource = objectiveSource.replace(conjugatedShortAnswerStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
-} else if (objectiveSource.includes(slashAlternativeStrictHelper)) {
-  objectiveSource = objectiveSource.replace(slashAlternativeStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
-} else if (objectiveSource.includes(subjectVerbPrefixStrictHelper)) {
-  objectiveSource = objectiveSource.replace(subjectVerbPrefixStrictHelper, strictHelper.split(`\n\n${correctAnswerAnchor}`)[0]);
-} else if (!objectiveSource.includes("function normalizeStrictGrammarToken(")) {
-  objectiveSource = replaceOnce(objectiveSource, correctAnswerAnchor, strictHelper, "strict grammar helper");
-}
-
-const tolerantBranchBefore = [
-  '  if (expectedLetter && normalizeAnswer(student) === normalizeAnswer(expectedLetter)) return true;',
-  '  if (item.type === "choice" && item.expectedText) return textMatches(item.expectedText, student);',
-  '  const accepted = item.accepted?.length ? item.accepted : [item.expected, item.expectedText, item.expectedRaw].filter(Boolean);',
-].join("\n");
-const tolerantBranchAfter = [
-  '  if (expectedLetter && normalizeAnswer(student) === normalizeAnswer(expectedLetter)) return true;',
-  '  if (item.type === "choice" && item.expectedText) return textMatches(item.expectedText, student);',
-  '  const accepted = item.accepted?.length ? item.accepted : [item.expected, item.expectedText, item.expectedRaw].filter(Boolean);',
-  '  if (item.type === "text" && item.matchingMode === "strict_grammar") {',
-  '    return accepted.some((expected) => strictGrammarTextMatches(expected, student));',
-  '  }',
-  '  if (item.type === "text" && item.matchingMode === "subject_verb") {',
-  '    return accepted.some((expected) => subjectVerbGrammarMatches(expected, student));',
-  '  }',
-].join("\n");
-objectiveSource = replaceOnce(objectiveSource, tolerantBranchBefore, tolerantBranchAfter, "strict grammar answer branch");
-fs.writeFileSync(objectiveTarget, objectiveSource);
 
 const dictionaryTarget = new URL("../src/data/answers_dictionary.json", import.meta.url);
 const dictionary = JSON.parse(fs.readFileSync(dictionaryTarget, "utf8"));
 const grammarEntry = Object.values(dictionary).find((entry) => String(entry?.assignment_id || entry?.assignmentId || "").trim().toUpperCase() === "A1-1.2");
 if (!grammarEntry) throw new Error("A1-1.2 answer-key entry not found");
-grammarEntry.answerMatchingMode = "subject_verb";
-if (grammarEntry.answers && typeof grammarEntry.answers === "object") {
-  grammarEntry.answers.Answer6 = "Sie kommt aus Russland / Sie kommen aus Russland";
+if (grammarEntry.answerMatchingMode !== "subject_verb") {
+  throw new Error('A1-1.2 must commit answerMatchingMode: "subject_verb"');
 }
-fs.writeFileSync(dictionaryTarget, `${JSON.stringify(dictionary, null, 2)}\n`);
+if (grammarEntry.answers?.Answer6 !== "Sie kommt aus Russland / Sie kommen aus Russland") {
+  throw new Error("A1-1.2 Answer6 must commit both accepted Russland forms");
+}
 
 const naturalTarget = new URL("../src/utils/naturalMarkingFeedback.js", import.meta.url);
 let naturalSource = fs.readFileSync(naturalTarget, "utf8");
@@ -376,6 +150,7 @@ const detectedPartsHelper = [
 if (!deterministicSource.includes("function authoritativeDetectedParts(")) {
   deterministicSource = replaceOnce(deterministicSource, reconcileAnchor, detectedPartsHelper, "authoritative detected parts helper");
 }
+
 const wrongAnswersBefore = [
   '    objectiveDetails,',
   '    wrongAnswers,',
@@ -388,6 +163,7 @@ const wrongAnswersAfter = [
   '    aiOriginalFeedback: result.aiOriginalFeedback ?? originalFeedback,',
 ].join("\n");
 deterministicSource = replaceOnce(deterministicSource, wrongAnswersBefore, wrongAnswersAfter, "deterministic detected part replacement");
+
 const aiFlagBefore = [
   '      ...(result.ai || {}),',
   '      finalDeterministicFeedbackReconciled: true,',
@@ -400,4 +176,4 @@ const aiFlagAfter = [
 deterministicSource = replaceOnce(deterministicSource, aiFlagBefore, aiFlagAfter, "deterministic part diagnostic flag");
 fs.writeFileSync(deterministicTarget, deterministicSource);
 
-console.log("A1 grammar objectives now require exact sentence forms, Tiel headings are recognized, and objective feedback counts stay authoritative.");
+console.log("Committed A1 grammar rules verified; cross-file objective feedback safeguards applied.");

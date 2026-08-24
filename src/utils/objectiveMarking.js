@@ -1,4 +1,5 @@
 import answersDictionary from "../data/answers_dictionary.json" with { type: "json" };
+import { parseSubmissionSections } from "./submissionSections.js";
 
 const OPTION_LETTERS = "ABCDEFX";
 const GERMAN_ARTICLES = new Set(["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines"]);
@@ -49,6 +50,7 @@ export function normalizeAnswer(text = "") {
     .replace(/\p{Diacritic}/gu, "")
     .replace(/ß/g, "ss")
     .replace(/[^a-z0-9]+/g, " ")
+    .replace(/(\d)(uhr)\b/g, "$1 $2")
     .trim();
 }
 
@@ -84,12 +86,32 @@ function findReferenceEntryFromDictionary(assignmentId = "") {
 
 function isWritingPart(referenceEntry = {}, partId = "main") {
   const normalizedPartId = normalizePartId(partId);
+  const rawAnswers = referenceEntry.rawAnswers || referenceEntry.answers || {};
+  const answerValues = Object.values(rawAnswers).map((value) => String(value || "").trim().toLowerCase());
+  const writingPlaceholder = answerValues.length > 0 && answerValues.every((value) => /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(value));
+  if (normalizedPartId === "main" && writingPlaceholder) return true;
   const writingParts = referenceEntry.writingParts || referenceEntry.writing_parts || [];
   if (Array.isArray(writingParts) && writingParts.map(normalizePartId).includes(normalizedPartId)) return true;
   const grading = referenceEntry.partGrading?.[partId] || referenceEntry.partGrading?.[normalizedPartId];
   const gradingMode = normalizeAnswer(grading?.gradingMode || grading?.mode || grading?.instruction || "");
   if (/writing|schreiben|ai written response/.test(gradingMode)) return true;
-  return normalizedPartId === "teil2" && Array.isArray(referenceEntry.expectedParts) && referenceEntry.expectedParts.length > 1;
+  const aiGradedParts = referenceEntry.aiGradedParts || referenceEntry.ai_graded_parts || [];
+  if (Array.isArray(aiGradedParts) && aiGradedParts.map(normalizePartId).includes(normalizedPartId)) return true;
+
+  const referenceAnswerParts = referenceEntry.referenceAnswerParts || referenceEntry.reference_answer_parts || [];
+  const normalizedReferenceAnswerParts = Array.isArray(referenceAnswerParts) ? referenceAnswerParts.map(normalizePartId) : [];
+  if (grading?.hasReferenceAnswers === true || normalizedReferenceAnswerParts.includes(normalizedPartId)) return false;
+
+  const expectedParts = referenceEntry.expectedParts || referenceEntry.expected_parts || [];
+  const normalizedExpectedParts = Array.isArray(expectedParts) ? expectedParts.map(normalizePartId) : [];
+  const level = String(referenceEntry.level || referenceEntry.assignmentKey || referenceEntry.assignment_id || referenceEntry.assignmentId || "").toUpperCase();
+  const legacyWritingPart = /^(A2|B1)(?:\b|-)/.test(level)
+    && normalizedPartId === "teil2"
+    && normalizedExpectedParts.includes(normalizedPartId)
+    && normalizedReferenceAnswerParts.length > 0
+    && !normalizedReferenceAnswerParts.includes(normalizedPartId);
+
+  return legacyWritingPart;
 }
 
 function stripQuestionLabel(value = "") {
@@ -207,7 +229,7 @@ function flattenAnswerObject(value = {}, path = []) {
 function parseReferenceText(text = "", partId = "main") {
   const entries = [];
   let orderedQuestion = 0;
-  for (const line of String(text || "").split(/\r?\n|[,;]+/)) {
+  for (const line of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/i)) {
     const trimmed = line.trim();
     if (!trimmed || /^(teil|part)\s*\d+\s*:?$/i.test(trimmed)) continue;
     const numbered = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:-]?\s*(.+)$/i);
@@ -239,6 +261,13 @@ function addReferenceItems(items, entries, partId = "main", referenceEntry = {})
       accepted: meta.accepted || [],
       type: meta.type,
       vocabularyKey: meta.vocabularyKey || "",
+      matchingMode: String(
+        referenceEntry.answerMatchingMode
+          || referenceEntry.textMatchingMode
+          || referenceEntry.partGrading?.[partId]?.answerMatchingMode
+          || referenceEntry.partGrading?.[normalizedPartId]?.answerMatchingMode
+          || "",
+      ).trim().toLowerCase(),
     });
   });
 }
@@ -283,35 +312,17 @@ function buildReferenceItems(referenceEntry = {}) {
   });
 }
 
-function partMarkerToPartId(label = "", number = "") {
-  if (number) return `teil${Number(number)}`;
-  const normalized = normalizeAnswer(label).replace(/\s+/g, "");
-  if (/lesen|reading/.test(normalized)) return "teil3";
-  if (/horen|hoeren|listening/.test(normalized)) return "teil4";
-  if (/schreiben|writing/.test(normalized)) return "teil2";
-  return normalizePartId(label);
-}
-
-function splitSubmissionIntoSections(text = "") {
-  const sections = [];
-  const source = String(text || "");
-  const markerRegex = /(?:^|\n)[ \t]*((?:teil|part)[ \t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[:;]?[ \t]*(?=\n|$)/gi;
-  const markers = [];
-  let match;
-  while ((match = markerRegex.exec(source))) {
-    const partId = partMarkerToPartId(match[1], match[2]);
-    markers.push({ index: match.index, end: markerRegex.lastIndex, partId, partNumber: Number(partId.replace("teil", "")) || null });
-  }
-  if (!markers.length) return [{ partId: "main", partNumber: null, text: source }];
-  markers.forEach((marker, index) => {
-    const next = markers[index + 1];
-    sections.push({ partId: marker.partId, partNumber: marker.partNumber, text: source.slice(marker.end, next ? next.index : source.length) });
-  });
-  return sections;
-}
+const splitSubmissionIntoSections = parseSubmissionSections;
 
 function splitIntoAnswerBlocks(text = "") {
   return String(text || "").split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
+}
+
+function leadingUnlabelledSubmissionText(text = "") {
+  const sourceText = String(text || "");
+  const markerRegex = /(?:^|\n)[ \t]*((?:teil|part)[ \t]*[1-4]\b[^\n]*|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?=\n|$)/i;
+  const marker = markerRegex.exec(sourceText);
+  return marker ? sourceText.slice(0, marker.index).trim() : sourceText.trim();
 }
 
 function parseNumberedEntriesFromChunk(chunk = "") {
@@ -323,6 +334,10 @@ function parseNumberedEntriesFromChunk(chunk = "") {
     ? trimmed.replace(/(^|\s)(\d{1,3})(?=[A-FX](?:\s*[).,:–-]|\s|$))/gi, "$1$2.")
     : trimmed;
 
+  const cleanParsedAnswer = (value = "") => String(value || "")
+    .replace(/^[).,:;–-]+\s*/, "")
+    .trim();
+
   const labelled = source.match(/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
   if (labelled && normalizeAnswer(labelled[2])) {
     return [{ number: Number(labelled[1]), answer: labelled[2].trim() }];
@@ -333,13 +348,13 @@ function parseNumberedEntriesFromChunk(chunk = "") {
   // answer, such as "10 Euro" or "7 Uhr", are answer text, not a new item.
   const compactPattern = /(?:^|\s)(\d{1,3})(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))(.*?)(?=\s+\d{1,3}(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))|$)/g;
   const compactMatches = [...source.matchAll(compactPattern)]
-    .map((match) => ({ number: Number(match[1]), answer: String(match[2] || "").trim() }))
+    .map((match) => ({ number: Number(match[1]), answer: cleanParsedAnswer(match[2]) }))
     .filter((entry) => Number.isFinite(entry.number) && normalizeAnswer(entry.answer));
 
   if (compactMatches.length > 1) return compactMatches;
 
   const single = source.match(/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)?\s*(\d{1,3})\s*[).:–-]?\s*(.+?)\s*$/i);
-  if (single && normalizeAnswer(single[2])) return [{ number: Number(single[1]), answer: single[2].trim() }];
+  if (single && normalizeAnswer(single[2])) return [{ number: Number(single[1]), answer: cleanParsedAnswer(single[2]) }];
 
   return [];
 }
@@ -347,7 +362,8 @@ function parseNumberedEntriesFromChunk(chunk = "") {
 function extractNumberedTextEntries(text = "") {
   const entries = [];
   let pendingQuestionNumber = null;
-  for (const rawLine of String(text || "").split(/\r?\n|[,;]+/)) {
+  let pendingNumberedQuestion = null;
+  for (const rawLine of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/i)) {
     const line = rawLine.trim();
     if (!line) continue;
     const questionLabel = line.match(/^\s*(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\s*[).:-]?\s*$/i);
@@ -356,6 +372,24 @@ function extractNumberedTextEntries(text = "") {
       continue;
     }
     const parsed = parseNumberedEntriesFromChunk(line);
+    const numberedQuestionPrompt = parsed.length === 1
+      && /\?\s*$/.test(parsed[0].answer)
+      && !extractOptionLetter(parsed[0].answer);
+    if (numberedQuestionPrompt) {
+      if (pendingNumberedQuestion) entries.push(pendingNumberedQuestion);
+      pendingNumberedQuestion = { number: parsed[0].number, answer: parsed[0].answer };
+      pendingQuestionNumber = null;
+      continue;
+    }
+    if (pendingNumberedQuestion) {
+      if (!parsed.length && normalizeAnswer(line)) {
+        entries.push({ number: pendingNumberedQuestion.number, answer: line });
+        pendingNumberedQuestion = null;
+        continue;
+      }
+      entries.push(pendingNumberedQuestion);
+      pendingNumberedQuestion = null;
+    }
     if (pendingQuestionNumber && parsed.length === 1) {
       entries.push({ number: pendingQuestionNumber, answer: parsed[0].answer });
       pendingQuestionNumber = null;
@@ -369,11 +403,12 @@ function extractNumberedTextEntries(text = "") {
       pendingQuestionNumber = null;
     }
   }
+  if (pendingNumberedQuestion) entries.push(pendingNumberedQuestion);
   return entries.sort((a, b) => a.number - b.number);
 }
 
 function extractLeadingUnnumberedAnswer(text = "") {
-  for (const rawLine of String(text || "").split(/\r?\n|[,;]+/)) {
+  for (const rawLine of String(text || "").split(/\r?\n|,(?=\s*\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/i)) {
     const line = rawLine.trim();
     if (!line) continue;
     if (/^\s*(?:answer|antwort|frage|aufgabe|task|exercise|nr\.?|q)?\s*[12]\s*[).:-]?\s*.+/i.test(line)) return "";
@@ -478,23 +513,96 @@ function meaningfulRoots(value = "") {
   return normalizeAnswer(value).split(/\s+/).map(rootToken).filter((token) => token && token.length > 1 && !STOPWORDS.has(token));
 }
 
+function editDistance(left = "", right = "") {
+  const a = String(left || "");
+  const b = String(right || "");
+  if (!a) return b.length;
+  if (!b) return a.length;
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 0; i < a.length; i += 1) {
+    const current = [i + 1];
+    for (let j = 0; j < b.length; j += 1) {
+      current[j + 1] = a[i] === b[j]
+        ? previous[j]
+        : Math.min(previous[j] + 1, current[j] + 1, previous[j + 1] + 1);
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[b.length];
+}
+
+function rootsApproximatelyMatch(expectedRoot = "", studentRoot = "") {
+  if (!expectedRoot || !studentRoot) return false;
+  if (expectedRoot === studentRoot || expectedRoot.includes(studentRoot) || studentRoot.includes(expectedRoot)) return true;
+  const length = Math.max(expectedRoot.length, studentRoot.length);
+  const allowance = length >= 4 ? Math.min(3, Math.max(1, Math.floor(length * 0.25))) : 0;
+  return allowance > 0 && editDistance(expectedRoot, studentRoot) <= allowance;
+}
+
 function textMatches(expectedRaw = "", studentRaw = "") {
   const expected = normalizeAnswer(expectedRaw);
   const student = normalizeAnswer(studentRaw);
   if (!expected || !student) return false;
   if (expected === student || expected.includes(student) || student.includes(expected)) return true;
   const expectedRoots = meaningfulRoots(expectedRaw);
-  const studentRoots = new Set(meaningfulRoots(studentRaw));
-  if (expectedRoots.length && expectedRoots.every((root) => studentRoots.has(root))) return true;
+  const studentRoots = meaningfulRoots(studentRaw);
+  if (expectedRoots.length && expectedRoots.every((root) => studentRoots.some((candidate) => rootsApproximatelyMatch(root, candidate)))) return true;
   const expectedStem = rootToken(expected);
   const studentStem = rootToken(student);
-  return expectedStem.length >= 4 && studentStem.length >= 4 && (expectedStem.includes(studentStem) || studentStem.includes(expectedStem));
+  return expectedStem.length >= 4 && studentStem.length >= 4 && rootsApproximatelyMatch(expectedStem, studentStem);
 }
 
 function normalizeVocabularyAnswer(value = "") {
   const tokens = normalizeAnswer(value).split(/\s+/).filter(Boolean);
   if (tokens.length > 1 && GERMAN_ARTICLES.has(tokens[0])) tokens.shift();
   return tokens.filter((token) => !ENGLISH_ARTICLES.has(token)).join(" ");
+}
+
+function normalizeStrictGrammarToken(value = "") {
+  return normalizeAnswer(value)
+    .replace(/\bhei(?:b|ß)e\b/g, "heisse")
+    .replace(/\bhei(?:b|ß)t\b/g, "heisst");
+}
+
+function strictGrammarStudentVariants(value = "") {
+  const source = String(value || "")
+    .replace(/\s+\bSie\s*\([^)]*\)\s*$/i, "")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const variants = [source];
+  const compactVerbAlternative = source.match(/^(.*?\s)([A-Za-zÄÖÜäöüß]+)\s*\/\s*([A-Za-zÄÖÜäöüß]+)(\s+.*)$/);
+  if (compactVerbAlternative) {
+    const [, prefix, firstVerb, secondVerb, suffix] = compactVerbAlternative;
+    variants.push(`${prefix}${firstVerb}${suffix}`, `${prefix}${secondVerb}${suffix}`);
+  }
+  return [...new Set(variants.map(normalizeStrictGrammarToken).filter(Boolean))];
+}
+
+function strictGrammarTextMatches(expectedRaw = "", studentRaw = "") {
+  const expected = normalizeStrictGrammarToken(expectedRaw);
+  const student = normalizeStrictGrammarToken(studentRaw);
+  return Boolean(expected && student && expected === student);
+}
+
+function subjectVerbGrammarMatches(expectedRaw = "", studentRaw = "") {
+  const expectedTokens = normalizeStrictGrammarToken(expectedRaw).split(/\s+/).filter(Boolean);
+  const studentVariants = strictGrammarStudentVariants(studentRaw);
+  if (!expectedTokens.length || !studentVariants.length) return false;
+  if (studentVariants.length === 1 && studentVariants[0].split(/\s+/).length === 1 && expectedTokens.length > 1) {
+    const expectedVerbForms = String(expectedRaw || "")
+      .split(/\s*\/\s*/)
+      .map((alternative) => normalizeStrictGrammarToken(alternative).split(/\s+/).filter(Boolean)[1])
+      .filter(Boolean);
+    return expectedVerbForms.includes(studentVariants[0]);
+  }
+  const expectedSentence = expectedTokens.join(" ");
+  if (studentVariants.includes(expectedSentence)) return true;
+  if (expectedTokens.length < 2) return false;
+  return studentVariants.some((variant) => {
+    const studentTokens = variant.split(/\s+/).filter(Boolean);
+    return studentTokens[0] === expectedTokens[0] && studentTokens[1] === expectedTokens[1];
+  });
 }
 
 function isCorrectAnswer(item, student) {
@@ -504,6 +612,12 @@ function isCorrectAnswer(item, student) {
   if (expectedLetter && normalizeAnswer(student) === normalizeAnswer(expectedLetter)) return true;
   if (item.type === "choice" && item.expectedText) return textMatches(item.expectedText, student);
   const accepted = item.accepted?.length ? item.accepted : [item.expected, item.expectedText, item.expectedRaw].filter(Boolean);
+  if (item.type === "text" && item.matchingMode === "strict_grammar") {
+    return accepted.some((expected) => strictGrammarTextMatches(expected, student));
+  }
+  if (item.type === "text" && item.matchingMode === "subject_verb") {
+    return accepted.some((expected) => subjectVerbGrammarMatches(expected, student));
+  }
   if (item.type === "vocabulary") return accepted.some((expected) => normalizeVocabularyAnswer(expected) === normalizeVocabularyAnswer(student));
   return accepted.some((expected) => textMatches(expected, student));
 }
@@ -513,6 +627,76 @@ function isLikelyWritingBlock(entries = []) {
   const longSentenceCount = entries.filter((entry) => normalizeAnswer(entry.answer).split(/\s+/).length >= 5 || /[.!?]/.test(entry.answer)).length;
   const optionCount = entries.filter((entry) => extractOptionLetter(entry.answer)).length;
   return longSentenceCount >= Math.max(2, entries.length * 0.7) && optionCount === 0;
+}
+
+function splitNumberResetAnswerGroups(text = "") {
+  const groups = [];
+  let current = [];
+
+  for (const rawLine of String(text || "").split(/\r?\n/)) {
+    const entries = parseNumberedEntriesFromChunk(rawLine);
+    for (const entry of entries) {
+      const previousNumber = current[current.length - 1]?.number || 0;
+      if (current.length && entry.number <= previousNumber) {
+        groups.push(current);
+        current = [];
+      }
+      current.push(entry);
+    }
+  }
+
+  if (current.length) groups.push(current);
+  const alphabetListening = ["wasser", "kaffee", "blume", "schule"];
+  const matchesAlphabetWorkbook = groups.length === 2
+    && groups[0].length === 7
+    && groups[1].length === 5
+    && alphabetListening.every((answer, index) => normalizeAnswer(groups[1][index]?.answer) === answer)
+    && normalizeAnswer(groups[1][4]?.answer).startsWith("tis");
+  return matchesAlphabetWorkbook ? groups : [];
+}
+
+function splitQuestionGroupBlocks(text = "") {
+  const sourceText = String(text || "");
+  const markerRegex = /(?:^|\n)[ \t]*q([1-9])\s*[).:–-]\s*/gi;
+  const markers = [];
+  let match;
+
+  while ((match = markerRegex.exec(sourceText))) {
+    markers.push({
+      index: match.index,
+      end: markerRegex.lastIndex,
+      number: Number(match[1]),
+    });
+  }
+
+  if (markers.length < 2 || markers.length > 5) return [];
+  if (!markers.every((marker, index) => marker.number === index + 1)) return [];
+
+  const groups = markers.map((marker, index) => {
+    const next = markers[index + 1];
+    const block = sourceText.slice(marker.end, next ? next.index : sourceText.length).trim();
+    return extractRestartedNumberingEntries(block);
+  });
+
+  return groups.every((entries) => entries.length >= 2) ? groups : [];
+}
+
+function permuteAnswerGroups(groups = []) {
+  if (groups.length <= 1) return [groups];
+  if (groups.length > 5) return [groups];
+
+  const permutations = [];
+  groups.forEach((group, index) => {
+    const remaining = groups.filter((_, candidateIndex) => candidateIndex !== index);
+    permuteAnswerGroups(remaining).forEach((tail) => permutations.push([group, ...tail]));
+  });
+  return permutations;
+}
+
+function flattenAnswerGroups(groups = []) {
+  return groups.flatMap((entries) => [...entries]
+    .sort((a, b) => a.number - b.number)
+    .map((entry) => entry.answer));
 }
 
 function getFlatAnswerCandidateSequences(submissionText = "") {
@@ -525,17 +709,36 @@ function getFlatAnswerCandidateSequences(submissionText = "") {
     .map((block) => extractRestartedNumberingEntries(block))
     .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
 
-  const groups = sectionGroups.length > 1 ? sectionGroups : blockGroups.length > 1 ? blockGroups : sectionGroups.length ? sectionGroups : blockGroups;
+  const questionGroups = splitQuestionGroupBlocks(submissionText);
+  const groups = questionGroups.length > 1
+    ? questionGroups
+    : sectionGroups.length > 1
+      ? sectionGroups
+      : blockGroups.length > 1
+        ? blockGroups
+        : sectionGroups.length
+          ? sectionGroups
+          : blockGroups;
+  const numberResetGroups = splitNumberResetAnswerGroups(submissionText);
   if (!groups.length) return [];
 
   const candidates = [];
+  const seen = new Set();
+  const addCandidate = (answers) => {
+    if (!answers.length) return;
+    const key = JSON.stringify(answers);
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push(answers);
+  };
+
   for (let start = 0; start < groups.length; start += 1) {
-    const selectedGroups = groups.slice(start);
-    const answers = selectedGroups.flatMap((entries) => entries.sort((a, b) => a.number - b.number).map((entry) => entry.answer));
-    if (answers.length) candidates.push(answers);
+    addCandidate(flattenAnswerGroups(groups.slice(start)));
   }
 
-  candidates.push(groups.flatMap((entries) => entries.sort((a, b) => a.number - b.number).map((entry) => entry.answer)));
+  if (numberResetGroups.length > 1) addCandidate(flattenAnswerGroups(numberResetGroups));
+
+  permuteAnswerGroups(groups).forEach((orderedGroups) => addCandidate(flattenAnswerGroups(orderedGroups)));
   return candidates;
 }
 
@@ -584,8 +787,8 @@ function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
     .sort((a, b) => b.correct - a.correct || a.missing - b.missing || b.answers.length - a.answers.length)[0]?.answers || [];
 }
 
-function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", hasMatchingPartSections = false) {
-  if (hasMatchingPartSections) return new Map();
+function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", hasExplicitPartSections = false) {
+  if (hasExplicitPartSections) return new Map();
   const groups = [];
   const seen = new Set();
   for (const item of referenceItems) {
@@ -598,7 +801,14 @@ function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", 
   }
   if (!groups.length) return new Map();
 
-  const blocks = splitIntoAnswerBlocks(submissionText).map(extractNumberedTextEntries).filter((entries) => entries.length && !isLikelyWritingBlock(entries));
+  const parsedBlocks = splitIntoAnswerBlocks(submissionText)
+    .map(extractNumberedTextEntries)
+    .filter((entries) => entries.length);
+  const blocksAlignToReferenceParts = parsedBlocks.length === groups.length
+    && groups.every((group, index) => parsedBlocks[index]?.length === group.items.length);
+  const blocks = blocksAlignToReferenceParts
+    ? parsedBlocks
+    : parsedBlocks.filter((entries) => !isLikelyWritingBlock(entries));
   if (!blocks.length) return new Map();
   const map = new Map();
 
@@ -625,7 +835,63 @@ function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", 
   return map;
 }
 
-function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers }) {
+function orderedReferencePartGroups(referenceItems = []) {
+  const groups = [];
+  const byPartId = new Map();
+  referenceItems.forEach((item) => {
+    if (item.partId === "main") return;
+    if (!byPartId.has(item.partId)) {
+      const group = { partId: item.partId, items: [] };
+      byPartId.set(item.partId, group);
+      groups.push(group);
+    }
+    byPartId.get(item.partId).items.push(item);
+  });
+  return groups;
+}
+
+function buildMixedPartAnswerMap(referenceItems = [], submissionText = "", sections = [], sectionPartIds = new Set()) {
+  const groups = orderedReferencePartGroups(referenceItems);
+  const map = new Map();
+  const merge = (candidate) => candidate.forEach((value, key) => map.set(key, value));
+  const firstExplicitIndex = groups.findIndex((group) => sectionPartIds.has(group.partId));
+
+  if (firstExplicitIndex > 0) {
+    const leadingItems = groups
+      .slice(0, firstExplicitIndex)
+      .filter((group) => !sectionPartIds.has(group.partId))
+      .flatMap((group) => group.items);
+    merge(buildSequentialPartAnswerMap(
+      leadingItems,
+      leadingUnlabelledSubmissionText(submissionText),
+      false,
+    ));
+  }
+
+  groups.forEach((group, groupIndex) => {
+    if (!sectionPartIds.has(group.partId)) return;
+    const sectionText = sections.find((section) => section.partId === group.partId)?.text;
+    if (sectionText === undefined) return;
+    const entries = extractRestartedNumberingEntries(sectionText);
+    const overflow = entries.slice(group.items.length);
+    if (!overflow.length) return;
+
+    let offset = 0;
+    for (let nextIndex = groupIndex + 1; nextIndex < groups.length && offset < overflow.length; nextIndex += 1) {
+      const nextGroup = groups[nextIndex];
+      if (sectionPartIds.has(nextGroup.partId)) continue;
+      nextGroup.items.forEach((item, itemIndex) => {
+        const entry = overflow[offset + itemIndex];
+        if (entry) map.set(`${item.partId}.${item.questionNumber}`, entry.answer);
+      });
+      offset += nextGroup.items.length;
+    }
+  });
+
+  return map;
+}
+
+function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections }) {
   if (item.type === "vocabulary") {
     const vocabularyPairs = extractVocabularyAnswers(submissionText);
     if (item.vocabularyKey && vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
@@ -639,10 +905,17 @@ function getStudentAnswerForItem({ item, index, submissionText, sections, flatAn
 
   if (item.partId === "main") return flatAnswers[index] || "";
 
+  const matchingSectionText = sections.find((section) => section.partId === item.partId)?.text;
+  if (matchingSectionText !== undefined) {
+    const matchingSectionAnswers = extractNumberedTextAnswers(matchingSectionText);
+    return matchingSectionAnswers[item.questionNumber] ?? "";
+  }
+
   const sequentialPartAnswer = sequentialPartAnswers.get(`${item.partId}.${item.questionNumber}`);
   if (sequentialPartAnswer !== undefined) return sequentialPartAnswer;
+  if (sequentialPartAnswers.size > 0 || hasAnyMatchingPartSections) return "";
 
-  const sectionText = sections.find((section) => section.partId === item.partId)?.text || submissionText;
+  const sectionText = submissionText;
   const numberedAnswers = extractNumberedTextAnswers(sectionText);
   if (numberedAnswers[item.questionNumber] !== undefined) return numberedAnswers[item.questionNumber];
 
@@ -676,7 +949,7 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const flatMainReference = referenceItems.every((item) => item.partId === "main");
   const referencePartIds = [...partIds].filter((partId) => partId !== "main");
   const sectionPartIds = new Set(sections.filter((section) => section.partId !== "main").map((section) => section.partId));
-  const hasMatchingPartSections = Boolean(referencePartIds.length) && referencePartIds.every((partId) => sectionPartIds.has(partId));
+  const hasAnyMatchingPartSections = Boolean(referencePartIds.length) && referencePartIds.some((partId) => sectionPartIds.has(partId));
   let flatAnswers = flatMainReference ? chooseBestFlatAnswers(referenceItems, submissionText) : [];
   if (flatMainReference) {
     const sectionAnswers = sections
@@ -684,13 +957,15 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
       .flatMap((section) => extractRestartedNumberingEntries(section.text).sort((a, b) => a.number - b.number).map((entry) => entry.answer));
     if (scoreFlatCandidate(referenceItems, sectionAnswers).correct > scoreFlatCandidate(referenceItems, flatAnswers).correct) flatAnswers = sectionAnswers;
   }
-  const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);
+  const sequentialPartAnswers = hasAnyMatchingPartSections
+    ? buildMixedPartAnswerMap(referenceItems, submissionText, sections, sectionPartIds)
+    : buildSequentialPartAnswerMap(referenceItems, submissionText, false);
 
   const details = {};
   let correctCount = 0;
 
   referenceItems.forEach((item, index) => {
-    const student = getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers });
+    const student = getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections });
     const correct = isCorrectAnswer(item, student);
     if (correct) correctCount += 1;
     const detailKey = item.partId === "main" ? String(item.questionNumber || index + 1) : `${item.partId}.${item.questionNumber || index + 1}`;
