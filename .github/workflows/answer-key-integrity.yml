@@ -11,6 +11,7 @@ on:
       - 'tests/answer-key-integrity.test.js'
       - 'tests/objective-parser-format-matrix.test.js'
       - 'tests/a1-9-ans-prefix.test.js'
+      - 'tests/a1-0.2-unnumbered-text-block.test.js'
       - '.github/workflows/answer-key-integrity.yml'
   push:
     branches:
@@ -24,6 +25,7 @@ on:
       - 'tests/answer-key-integrity.test.js'
       - 'tests/objective-parser-format-matrix.test.js'
       - 'tests/a1-9-ans-prefix.test.js'
+      - 'tests/a1-0.2-unnumbered-text-block.test.js'
       - '.github/workflows/answer-key-integrity.yml'
 
 jobs:
@@ -37,4 +39,4 @@ jobs:
       - name: Validate answer dictionary structure
         run: node scripts/validateAnswerDictionary.mjs
       - name: Run integrity and parser format matrix
-        run: node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/a1-9-ans-prefix.test.js tests/golden-known-submissions.test.js
+        run: node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/a1-9-ans-prefix.test.js tests/a1-0.2-unnumbered-text-block.test.js tests/golden-known-submissions.test.js
