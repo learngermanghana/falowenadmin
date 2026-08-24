@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Commit A1-3 answer-layout metadata and retain cross-file patches
+      - name: Commit answer-key metadata and retain cross-file patches
         run: |
           python <<'PY'
           import json
@@ -28,22 +28,31 @@ jobs:
 
           dictionary_path = Path('src/data/answers_dictionary.json')
           dictionary = json.loads(dictionary_path.read_text())
-          entry = next((value for value in dictionary.values() if str(value.get('assignment_id') or value.get('assignmentId') or '').strip().upper() == 'A1-3'), None)
-          if entry is None:
+
+          a13 = next((value for value in dictionary.values() if str(value.get('assignment_id') or value.get('assignmentId') or '').strip().upper() == 'A1-3'), None)
+          if a13 is None:
               raise SystemExit('A1-3 answer-key entry not found')
-          entry['expectedParts'] = ['teil1', 'teil2', 'teil3']
-          entry['writingParts'] = ['teil2']
-          entry['aiGradedParts'] = ['teil2']
-          entry['referenceAnswerParts'] = ['teil1', 'teil3']
-          entry['answerLayout'] = 'multipart'
-          part_grading = entry.get('partGrading') or {}
+          a13['expectedParts'] = ['teil1', 'teil2', 'teil3']
+          a13['writingParts'] = ['teil2']
+          a13['aiGradedParts'] = ['teil2']
+          a13['referenceAnswerParts'] = ['teil1', 'teil3']
+          a13['answerLayout'] = 'multipart'
+          part_grading = a13.get('partGrading') or {}
           part_grading['teil2'] = {
               'label': 'Teil 2 Schreiben',
               'hasReferenceAnswers': False,
               'gradingMode': 'ai_written_response',
               'instruction': 'Teil 2 is a Schreiben/writing part. Grade it with AI using A1 task completion, understandable sentences, basic verb forms, spelling, capitalization, plural forms, vocabulary, and clarity. Do not mark it wrong because there is no fixed reference answer.',
           }
-          entry['partGrading'] = part_grading
+          a13['partGrading'] = part_grading
+
+          a112 = next((value for value in dictionary.values() if str(value.get('assignment_id') or value.get('assignmentId') or '').strip().upper() == 'A1-1.2'), None)
+          if a112 is None:
+              raise SystemExit('A1-1.2 answer-key entry not found')
+          a112['answerMatchingMode'] = 'subject_verb'
+          if isinstance(a112.get('answers'), dict):
+              a112['answers']['Answer6'] = 'Sie kommt aus Russland / Sie kommen aus Russland'
+
           dictionary_path.write_text(json.dumps(dictionary, ensure_ascii=False, indent=2) + '\n')
 
           package_path = Path('package.json')
@@ -82,5 +91,5 @@ jobs:
             echo "No finalization changes"
             exit 0
           fi
-          git commit -m "Keep cross-file marking patches and commit A1-3 layout"
+          git commit -m "Preserve cross-file marking behavior in committed metadata"
           git push origin HEAD:improve/marking-foundation
