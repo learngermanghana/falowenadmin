@@ -4,7 +4,9 @@ import {
   countSessionTimeCollisions,
   resolveOfficialSessionNumber,
 } from "./liveClassLessonOrder.js";
-import { normalizeScheduleRules } from "./liveClassScheduling.js";
+import { normalizeScheduleRules, zonedLocalToUtcIso } from "./liveClassScheduling.js";
+
+const WEEKDAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
 
 function normalize(value) {
   return String(value || "").trim();
@@ -21,6 +23,12 @@ function toDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function addDays(dateIso, amount = 1) {
+  const date = new Date(`${dateIso}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + amount);
+  return date.toISOString().slice(0, 10);
+}
+
 function levelIdForClass(klass = {}) {
   return normalize(klass.levelId || klass.level || klass.name)
     .match(/\b(A1|A2|B1|B2|C1|C2)\b/i)?.[1]?.toUpperCase() || "";
@@ -28,6 +36,67 @@ function levelIdForClass(klass = {}) {
 
 function statusOf(session = {}) {
   return normalize(session.status || "scheduled").toLowerCase();
+}
+
+function localParts(value, timezone = "Africa/Accra") {
+  const date = toDate(value);
+  if (!date) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: normalize(timezone) || "Africa/Accra",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    dateIso: `${values.year}-${values.month}-${values.day}`,
+    time: `${values.hour}:${values.minute}`,
+  };
+}
+
+function buildFollowingSlotsFromAnchor({
+  anchorStartsAt,
+  rules,
+  timezone,
+  excludedDates = [],
+  count = 0,
+}) {
+  const anchor = toDate(anchorStartsAt);
+  const anchorParts = localParts(anchor, timezone);
+  if (!anchor || !anchorParts) throw new Error("The selected anchor session has an invalid date.");
+
+  const excluded = new Set((excludedDates || []).map(normalize).filter(Boolean));
+  const slots = [];
+  let cursorDate = anchorParts.dateIso;
+  const anchorMs = anchor.getTime();
+
+  for (let guard = 0; slots.length < count && guard < 1095; guard += 1) {
+    if (!excluded.has(cursorDate)) {
+      const weekday = new Date(`${cursorDate}T00:00:00.000Z`).getUTCDay();
+      const matchingRules = rules
+        .filter((rule) => WEEKDAY_INDEX[rule.day] === weekday)
+        .sort((left, right) => normalize(left.startTime).localeCompare(normalize(right.startTime)));
+
+      for (const rule of matchingRules) {
+        if (slots.length >= count) break;
+        const startsAt = zonedLocalToUtcIso(cursorDate, rule.startTime, timezone);
+        if (new Date(startsAt).getTime() <= anchorMs) continue;
+        const durationMinutes = Number(rule.durationMinutes || 120);
+        const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
+        slots.push({ startsAt, endsAt, durationMinutes });
+      }
+    }
+    cursorDate = addDays(cursorDate, 1);
+  }
+
+  if (slots.length !== count) {
+    throw new Error(`Could only rebuild ${slots.length} of ${count} sessions after the selected anchor.`);
+  }
+  return slots;
 }
 
 export function buildFollowingScheduleRestorePlan({
@@ -55,12 +124,10 @@ export function buildFollowingScheduleRestorePlan({
 
   const anchorStartsAt = toDate(anchorSession.startsAt);
   if (!anchorStartsAt) throw new Error("The selected anchor session has an invalid date.");
+  const timezone = normalize(klass.timezone) || "Africa/Accra";
   const rules = normalizeScheduleRules(klass.scheduleRules || []);
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
 
-  // The administrator-selected session is authoritative for this rebuild. It can
-  // be a manually moved/live/completed session and does not have to match the
-  // class's original start-date-derived slot. Everything after it is rebuilt.
   const anchoredClass = {
     ...klass,
     scheduleAnchorSessionNumber: anchorLessonNumber,
@@ -69,23 +136,48 @@ export function buildFollowingScheduleRestorePlan({
     scheduleAnchorSource: "admin-selected-following-restore",
     scheduleAnchorMode: "rebuild-from-selected-session",
   };
+
+  // Use the normal planner only for curriculum/session identity. The dates after
+  // the selected anchor are rebuilt independently from that actual session, so
+  // the anchor does not need to match the class's original start-date-derived slot.
   const officialPlan = buildOfficialLessonSchedulePlan({
     classId: resolvedClassId,
-    klass: anchoredClass,
+    klass,
     sessions,
     excludedDates,
   });
+  const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
+  const followingSlots = buildFollowingSlotsFromAnchor({
+    anchorStartsAt,
+    rules,
+    timezone,
+    excludedDates,
+    count: baseFollowingItems.length,
+  });
+  const followingItems = baseFollowingItems.map((item, index) => {
+    const slot = followingSlots[index];
+    const currentStartsAt = toDate(item.session?.startsAt)?.toISOString() || "";
+    const currentEndsAt = toDate(item.session?.endsAt)?.toISOString() || "";
+    return {
+      ...item,
+      targetStartsAt: slot.startsAt,
+      targetEndsAt: slot.endsAt,
+      durationMinutes: slot.durationMinutes,
+      changed: currentStartsAt !== slot.startsAt || currentEndsAt !== slot.endsAt,
+    };
+  });
+  const followingByLesson = new Map(followingItems.map((item) => [item.lessonNumber, item]));
+  const rebuiltItems = officialPlan.items.map((item) => followingByLesson.get(item.lessonNumber) || item);
+  const finalTarget = rebuiltItems.at(-1)?.targetStartsAt || anchorStartsAt.toISOString();
+  const endDate = localParts(finalTarget, timezone)?.dateIso || officialPlan.endDate;
 
-  const followingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
   const skippedCancelled = followingItems.filter((item) => item.session && statusOf(item.session) === "cancelled");
   const restorableItems = followingItems.filter((item) => {
     const status = statusOf(item.session || {});
     if (["cancelled", "superseded"].includes(status) || item.session?.superseded === true) return false;
 
-    // Completion/live flags after the chosen anchor are not locks. The selected
-    // anchor is the administrator's declaration of real progress. Include later
-    // completed/live records even when their time already matches so the writer
-    // can normalize them back to scheduled future sessions.
+    // Completion/live flags after the chosen anchor are deliberately ignored.
+    // The selected anchor is the administrator's declaration of real progress.
     return item.changed || (item.session && ["completed", "live"].includes(status));
   });
 
@@ -112,9 +204,8 @@ export function buildFollowingScheduleRestorePlan({
     });
   });
 
-  // Repair is intentionally anchored: earlier sessions are historical and must not block
-  // rebuilding the timetable from the administrator-selected last-correct session onward.
-  // We still reject collisions involving the anchor or any later lesson.
+  // Earlier sessions are historical and never block a rebuild from the selected
+  // anchor. Only collisions at the anchor or later are relevant.
   const anchorAndFollowingSessions = proposedSessions.filter((session) => {
     const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
     if (lessonNumber) return lessonNumber >= anchorLessonNumber;
@@ -128,6 +219,15 @@ export function buildFollowingScheduleRestorePlan({
 
   return {
     ...officialPlan,
+    items: rebuiltItems,
+    endDate,
+    changedLessons: rebuiltItems.filter((item) => item.changed).length,
+    scheduleAnchor: {
+      sessionNumber: anchorLessonNumber,
+      day: levelId === "A1" ? anchorLessonNumber - 1 : null,
+      startsAt: anchorStartsAt.toISOString(),
+      source: "admin-selected-following-restore",
+    },
     anchoredClass,
     anchorSession,
     anchorLessonNumber,
