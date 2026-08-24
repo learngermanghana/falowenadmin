@@ -23,6 +23,16 @@ function statusOf(session = {}) {
   return normalize(session.status || "scheduled").toLowerCase();
 }
 
+function belongsToSelectedClass(session = {}, classId = "") {
+  const resolvedClassId = normalize(classId);
+  if (!resolvedClassId) return false;
+  const owners = [...new Set([
+    session.classId,
+    session.classRecordId,
+  ].map(normalize).filter(Boolean))];
+  return !owners.length || owners.includes(resolvedClassId);
+}
+
 function localDateTimeParts(value, timezone = "Africa/Accra") {
   const date = new Date(value || 0);
   if (Number.isNaN(date.getTime())) return null;
@@ -289,10 +299,13 @@ export async function restoreFollowingSessionsToWeeklyPattern({
   ].map(normalize).filter(Boolean))];
 
   const repairSessions = await loadRawRepairSessions(resolvedClassId, klass, sessions);
+  const scopedRepairSessions = repairSessions.filter(
+    (session) => belongsToSelectedClass(session, resolvedClassId),
+  );
   const plan = buildFollowingScheduleRestorePlan({
     classId: resolvedClassId,
     klass,
-    sessions: repairSessions,
+    sessions: scopedRepairSessions,
     anchorSessionId,
     excludedDates,
   });
@@ -300,7 +313,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     const reminderRepair = await releaseHealthyScheduleReminderSuppression({
       classId: resolvedClassId,
       klass,
-      sessions: repairSessions,
+      sessions: scopedRepairSessions,
       plan,
       adminId,
     });
