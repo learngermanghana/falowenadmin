@@ -30,3 +30,5 @@ test("A1-0.2 recovers a short unnumbered text-answer block around numbered choic
   assert.equal(result.details[11].correct, true);
   assert.equal(result.details[12].correct, false);
 });
+
+// Keep this real submission in the permanent parser stress suite.
