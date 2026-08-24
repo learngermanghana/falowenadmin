@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/utils/liveClassFollowingScheduleRestore.js'
+      - 'src/utils/liveClassLessonOrder.js'
       - 'src/services/liveClassFollowingScheduleRestoreService.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
@@ -14,6 +15,7 @@ on:
       - main
     paths:
       - 'src/utils/liveClassFollowingScheduleRestore.js'
+      - 'src/utils/liveClassLessonOrder.js'
       - 'src/services/liveClassFollowingScheduleRestoreService.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
@@ -33,8 +35,11 @@ jobs:
       - name: Check committed source
         run: |
           node --check src/utils/liveClassFollowingScheduleRestore.js
+          node --check src/utils/liveClassLessonOrder.js
           node --check src/services/liveClassFollowingScheduleRestoreService.js
       - name: Run anchor rebuild regressions
         run: node --test tests/live-class-following-schedule-restore.test.js
       - name: Verify build-time compatibility
         run: npm run build
+      - name: Re-run anchor regressions after prebuild patches
+        run: node --test tests/live-class-following-schedule-restore.test.js

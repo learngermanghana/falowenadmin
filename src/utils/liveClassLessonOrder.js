@@ -27,8 +27,8 @@ function addDays(dateIso, amount = 1) {
 }
 
 function sessionDurationMinutes(session = {}) {
-  const startsAt = toDate(session.startsAt);
-  const endsAt = toDate(session.endsAt);
+  const startsAt = toDate(session?.startsAt);
+  const endsAt = toDate(session?.endsAt);
   if (!startsAt || !endsAt) return 120;
   return Math.max(1, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
 }
@@ -188,14 +188,15 @@ function resolveScheduleAnchor(
     && storedSessionNumber <= expectedLessons
     && storedStartsAt
   ) {
-    // A persisted anchor is only a progress marker. It must never redefine the
-    // timetable derived from the class's authoritative start date.
+    // Normal persisted anchors stay strict. An explicit admin following-restore anchor is
+    // authoritative because it represents the actual last live/correct session selected in UI.
     const officialSlot = startDateSlots[storedSessionNumber - 1];
-    if (officialSlot?.startsAt === storedStartsAt.toISOString()) {
+    const isAdminFollowingRestore = normalize(klass.scheduleAnchorSource) === "admin-selected-following-restore";
+    if (isAdminFollowingRestore || officialSlot?.startsAt === storedStartsAt.toISOString()) {
       return {
         sessionNumber: storedSessionNumber,
         startsAt: storedStartsAt.toISOString(),
-        source: "stored-class-anchor",
+        source: isAdminFollowingRestore ? "admin-selected-following-restore" : "stored-class-anchor",
       };
     }
   }
