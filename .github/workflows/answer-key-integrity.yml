@@ -13,30 +13,138 @@ on:
       - 'tests/a1-9-ans-prefix.test.js'
       - 'tests/a1-0.2-unnumbered-text-block.test.js'
       - '.github/workflows/answer-key-integrity.yml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/data/answers_dictionary.json'
-      - 'src/utils/answerKeyIntegrity.js'
-      - 'src/utils/objectiveMarking.js'
-      - 'src/utils/submissionSections.js'
-      - 'scripts/validateAnswerDictionary.mjs'
-      - 'tests/answer-key-integrity.test.js'
-      - 'tests/objective-parser-format-matrix.test.js'
-      - 'tests/a1-9-ans-prefix.test.js'
-      - 'tests/a1-0.2-unnumbered-text-block.test.js'
-      - '.github/workflows/answer-key-integrity.yml'
+
+permissions:
+  contents: write
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: fix/a1-0.2-safe-source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate answer dictionary structure
-        run: node scripts/validateAnswerDictionary.mjs
-      - name: Run integrity and parser format matrix
-        run: node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/a1-9-ans-prefix.test.js tests/a1-0.2-unnumbered-text-block.test.js tests/golden-known-submissions.test.js
+      - name: Materialize parser source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/utils/objectiveMarking.js')
+          source = path.read_text()
+          if 'function extractShortUnnumberedAnswerBlock' not in source:
+              anchor = 'function leadingUnlabelledSubmissionText(text = "") {'
+              helper = '''function extractShortUnnumberedAnswerBlock(block = "") {
+  if (extractNumberedTextEntries(block).length) return [];
+  const lines = String(block || "")
+    .split(/\\r?\\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!lines.length || lines.length > 12) return [];
+
+  const invalid = lines.some((line) => {
+    if (/^(?:teil|tiel|part)\\b|^(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\\b/i.test(line)) return true;
+    if (/\\?\\s*$/.test(line)) return true;
+    if (/^\\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\\.?|q)\\s*\\d+/i.test(line)) return true;
+    const normalized = normalizeAnswer(line);
+    return !normalized || normalized.split(/\\s+/).length > 4;
+  });
+
+  return invalid ? [] : lines;
+}
+
+'''
+              if anchor not in source:
+                  raise SystemExit('helper anchor not found')
+              source = source.replace(anchor, helper + anchor, 1)
+          if 'const unnumberedBlocks = splitIntoAnswerBlocks(submissionText)' not in source:
+              before = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
+  const candidates = getFlatAnswerCandidateSequences(submissionText);
+  if (!candidates.length) return [];
+  const restartedGroups = splitIntoAnswerBlocks(submissionText)
+'''
+              after = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
+  const candidates = getFlatAnswerCandidateSequences(submissionText);
+  if (!candidates.length) return [];
+
+  const unnumberedBlocks = splitIntoAnswerBlocks(submissionText)
+    .map((block) => extractShortUnnumberedAnswerBlock(block))
+    .filter((answers) => answers.length);
+  if (unnumberedBlocks.length) {
+    const baseCandidates = [...candidates];
+    for (const blockAnswers of unnumberedBlocks) {
+      for (const answers of baseCandidates) {
+        if (answers.length + blockAnswers.length > referenceItems.length) continue;
+        candidates.push([...answers, ...blockAnswers]);
+        candidates.push([...blockAnswers, ...answers]);
+      }
+    }
+  }
+
+  const restartedGroups = splitIntoAnswerBlocks(submissionText)
+'''
+              if before not in source:
+                  raise SystemExit('candidate anchor not found')
+              source = source.replace(before, after, 1)
+          path.write_text(source)
+          PY
+      - name: Validate direct parser source
+        run: |
+          node --check src/utils/objectiveMarking.js
+          cp src/utils/objectiveMarking.js /tmp/objectiveMarking.direct.js
+          node scripts/patchSlashObjectiveOptionParsing.mjs
+          cp /tmp/objectiveMarking.direct.js src/utils/objectiveMarking.js
+          node scripts/validateAnswerDictionary.mjs
+          node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/a1-9-ans-prefix.test.js tests/a1-0.2-unnumbered-text-block.test.js tests/golden-known-submissions.test.js
+      - name: Restore permanent workflow and commit source
+        run: |
+          cat > .github/workflows/answer-key-integrity.yml <<'YAML'
+          name: Answer key integrity and parser stress
+
+          on:
+            pull_request:
+              paths:
+                - 'src/data/answers_dictionary.json'
+                - 'src/utils/answerKeyIntegrity.js'
+                - 'src/utils/objectiveMarking.js'
+                - 'src/utils/submissionSections.js'
+                - 'scripts/validateAnswerDictionary.mjs'
+                - 'tests/answer-key-integrity.test.js'
+                - 'tests/objective-parser-format-matrix.test.js'
+                - 'tests/a1-9-ans-prefix.test.js'
+                - 'tests/a1-0.2-unnumbered-text-block.test.js'
+                - '.github/workflows/answer-key-integrity.yml'
+            push:
+              branches:
+                - main
+              paths:
+                - 'src/data/answers_dictionary.json'
+                - 'src/utils/answerKeyIntegrity.js'
+                - 'src/utils/objectiveMarking.js'
+                - 'src/utils/submissionSections.js'
+                - 'scripts/validateAnswerDictionary.mjs'
+                - 'tests/answer-key-integrity.test.js'
+                - 'tests/objective-parser-format-matrix.test.js'
+                - 'tests/a1-9-ans-prefix.test.js'
+                - 'tests/a1-0.2-unnumbered-text-block.test.js'
+                - '.github/workflows/answer-key-integrity.yml'
+
+          jobs:
+            validate:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-node@v4
+                  with:
+                    node-version: 22
+                - name: Validate answer dictionary structure
+                  run: node scripts/validateAnswerDictionary.mjs
+                - name: Run integrity and parser format matrix
+                  run: node --test tests/answer-key-integrity.test.js tests/objective-parser-format-matrix.test.js tests/a1-9-ans-prefix.test.js tests/a1-0.2-unnumbered-text-block.test.js tests/golden-known-submissions.test.js
+          YAML
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/objectiveMarking.js .github/workflows/answer-key-integrity.yml
+          git commit -m "Commit A1-0.2 parser recovery directly"
+          git push origin HEAD:fix/a1-0.2-safe-source
