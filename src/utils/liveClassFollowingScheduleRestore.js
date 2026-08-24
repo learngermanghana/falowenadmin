@@ -55,19 +55,19 @@ export function buildFollowingScheduleRestorePlan({
 
   const anchorStartsAt = toDate(anchorSession.startsAt);
   if (!anchorStartsAt) throw new Error("The selected anchor session has an invalid date.");
-  const timezone = normalize(klass.timezone) || "Africa/Accra";
   const rules = normalizeScheduleRules(klass.scheduleRules || []);
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
 
-  // The administrator-selected last live/correct session is authoritative, even when it
-  // was held outside the normal weekly slot. Everything after it is rebuilt from that
-  // actual point in curriculum order using the saved weekly timetable.
+  // The administrator-selected session is authoritative for this rebuild. It can
+  // be a manually moved/live/completed session and does not have to match the
+  // class's original start-date-derived slot. Everything after it is rebuilt.
   const anchoredClass = {
     ...klass,
     scheduleAnchorSessionNumber: anchorLessonNumber,
     scheduleAnchorDay: levelId === "A1" ? anchorLessonNumber - 1 : null,
     scheduleAnchorStartsAt: anchorStartsAt.toISOString(),
     scheduleAnchorSource: "admin-selected-following-restore",
+    scheduleAnchorMode: "rebuild-from-selected-session",
   };
   const officialPlan = buildOfficialLessonSchedulePlan({
     classId: resolvedClassId,
@@ -80,10 +80,11 @@ export function buildFollowingScheduleRestorePlan({
   const skippedCancelled = followingItems.filter((item) => item.session && statusOf(item.session) === "cancelled");
   const restorableItems = followingItems.filter((item) => {
     const status = statusOf(item.session || {});
-    if (status === "cancelled") return false;
+    if (["cancelled", "superseded"].includes(status) || item.session?.superseded === true) return false;
 
-    // A stale completed/live flag after the chosen anchor must never block a rebuild.
-    // Include those records even when their date already matches so the restore service
+    // Completion/live flags after the chosen anchor are not locks. The selected
+    // anchor is the administrator's declaration of real progress. Include later
+    // completed/live records even when their time already matches so the writer
     // can normalize them back to scheduled future sessions.
     return item.changed || (item.session && ["completed", "live"].includes(status));
   });
@@ -110,9 +111,19 @@ export function buildFollowingScheduleRestorePlan({
       curriculumIndex: item.lessonNumber,
     });
   });
-  const collisions = countSessionTimeCollisions(proposedSessions);
+
+  // Repair is intentionally anchored: earlier sessions are historical and must not block
+  // rebuilding the timetable from the administrator-selected last-correct session onward.
+  // We still reject collisions involving the anchor or any later lesson.
+  const anchorAndFollowingSessions = proposedSessions.filter((session) => {
+    const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
+    if (lessonNumber) return lessonNumber >= anchorLessonNumber;
+    const startsAt = toDate(session.startsAt);
+    return Boolean(startsAt && startsAt.getTime() >= anchorStartsAt.getTime());
+  });
+  const collisions = countSessionTimeCollisions(anchorAndFollowingSessions);
   if (collisions > 0) {
-    throw new Error("The restored timetable would overlap another active session. Review cancelled or duplicate session records first.");
+    throw new Error("A session at or after the selected anchor would still overlap another active session. Choose the last correct session and Falowen will rebuild only the lessons after it.");
   }
 
   return {
