@@ -6,8 +6,6 @@ import {
 } from "./liveClassLessonOrder.js";
 import { normalizeScheduleRules } from "./liveClassScheduling.js";
 
-const WEEKDAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
-
 function normalize(value) {
   return String(value || "").trim();
 }
@@ -32,42 +30,6 @@ function statusOf(session = {}) {
   return normalize(session.status || "scheduled").toLowerCase();
 }
 
-function localParts(value, timezone = "Africa/Accra") {
-  const date = toDate(value);
-  if (!date) return null;
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: normalize(timezone) || "Africa/Accra",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    hourCycle: "h23",
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const dateIso = `${values.year}-${values.month}-${values.day}`;
-  return {
-    dateIso,
-    time: `${values.hour}:${values.minute}`,
-    weekday: new Date(`${dateIso}T00:00:00.000Z`).getUTCDay(),
-  };
-}
-
-function assertAnchorMatchesSchedule(anchorSession, rules, timezone) {
-  const parts = localParts(anchorSession.startsAt, timezone);
-  if (!parts) throw new Error("The selected anchor session has an invalid date or time.");
-  const matchingRule = rules.find((rule) => (
-    WEEKDAY_INDEX[rule.day] === parts.weekday
-    && normalize(rule.startTime).slice(0, 5) === parts.time
-  ));
-  if (!matchingRule) {
-    const allowed = rules.map((rule) => `${String(rule.day || "").toUpperCase()} ${rule.startTime}`).join(" · ");
-    throw new Error(`Choose a correct session that already matches the saved timetable (${allowed}).`);
-  }
-  return matchingRule;
-}
-
 export function buildFollowingScheduleRestorePlan({
   classId,
   klass = {},
@@ -83,7 +45,7 @@ export function buildFollowingScheduleRestorePlan({
   if (!groups.length) throw new Error("This class level has no official lesson order.");
 
   const anchorSession = sessions.find((session) => normalize(session.id) === normalize(anchorSessionId));
-  if (!anchorSession) throw new Error("Select the correct session that should remain unchanged.");
+  if (!anchorSession) throw new Error("Select the last live or correct session that should remain unchanged.");
   if (["cancelled", "superseded"].includes(statusOf(anchorSession)) || anchorSession.superseded === true) {
     throw new Error("A cancelled or superseded session cannot be used as the timetable anchor.");
   }
@@ -96,8 +58,10 @@ export function buildFollowingScheduleRestorePlan({
   const timezone = normalize(klass.timezone) || "Africa/Accra";
   const rules = normalizeScheduleRules(klass.scheduleRules || []);
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
-  assertAnchorMatchesSchedule(anchorSession, rules, timezone);
 
+  // The administrator-selected last live/correct session is authoritative, even when it
+  // was held outside the normal weekly slot. Everything after it is rebuilt from that
+  // actual point in curriculum order using the saved weekly timetable.
   const anchoredClass = {
     ...klass,
     scheduleAnchorSessionNumber: anchorLessonNumber,
@@ -113,17 +77,16 @@ export function buildFollowingScheduleRestorePlan({
   });
 
   const followingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
-  const lockedItems = followingItems.filter((item) => item.session && ["completed", "live"].includes(statusOf(item.session)));
-  if (lockedItems.length) {
-    const first = lockedItems[0];
-    throw new Error(`${first.group.topic} is ${statusOf(first.session)} and cannot be moved. Choose a later correct anchor.`);
-  }
-
   const skippedCancelled = followingItems.filter((item) => item.session && statusOf(item.session) === "cancelled");
-  const restorableItems = followingItems.filter((item) => (
-    statusOf(item.session || {}) !== "cancelled"
-    && item.changed
-  ));
+  const restorableItems = followingItems.filter((item) => {
+    const status = statusOf(item.session || {});
+    if (status === "cancelled") return false;
+
+    // A stale completed/live flag after the chosen anchor must never block a rebuild.
+    // Include those records even when their date already matches so the restore service
+    // can normalize them back to scheduled future sessions.
+    return item.changed || (item.session && ["completed", "live"].includes(status));
+  });
 
   const patchesById = new Map(
     restorableItems
