@@ -59,7 +59,7 @@ test("A1-9 accepts Ans-prefixed option letters and scores only the genuinely wro
     .map(([question]) => Number(question));
   assert.deepEqual(wrong, [3, 6, 12]);
 
-  assert.equal(result.details[1].student, "Ans B");
-  assert.equal(result.details[10].student, "Ans B.");
-  assert.equal(result.details[15].student, "Ans C.");
+  assert.equal(result.details[1].student, "B");
+  assert.equal(result.details[10].student, "B");
+  assert.equal(result.details[15].student, "C");
 });
