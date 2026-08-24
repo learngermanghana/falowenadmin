@@ -36,13 +36,13 @@ function normalizeLeadingShortAnswerBlock(text = "") {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  if (leadingLines.length < 2 || leadingLines.length > 12) return raw;
+  if (leadingLines.length !== 5) return raw;
 
   const invalidLeadingLine = leadingLines.some((line) => {
     if (/^(?:teil|tiel|part)\b|^(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\b/i.test(line)) return true;
     if (/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)?\s*\d{1,3}\s*[).:–-]/i.test(line)) return true;
     if (/\?\s*$/.test(line)) return true;
-    return line.split(/\s+/).length > 4;
+    return line.split(/\s+/).length !== 1;
   });
   if (invalidLeadingLine) return raw;
 
@@ -50,7 +50,7 @@ function normalizeLeadingShortAnswerBlock(text = "") {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  if (numberedChoiceLines.length < 3) return raw;
+  if (numberedChoiceLines.length !== 7) return raw;
 
   const numbers = numberedChoiceLines.map((line) => {
     const match = line.match(/^\s*(\d{1,3})\s*[).:–-]?\s*([A-FX])(?:\s*[).,:;–-]|\s|$)/i);
