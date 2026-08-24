@@ -20,20 +20,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Move section parsing into committed source
-        run: node scripts/refactorObjectiveSections.mjs
-      - name: Validate committed parser source
+      - name: Remove legacy objective patch lifecycle steps
+        run: node scripts/removeObjectivePatchLifecycle.mjs
+      - name: Validate committed marking source
         run: |
           node --check src/utils/submissionSections.js
           node --check src/utils/objectiveMarking.js
-      - name: Commit refactored source
+          node --check src/utils/writingRubric.js
+          node --check src/utils/writingFeedbackDepth.js
+      - name: Commit lifecycle cleanup
         run: |
-          if git diff --quiet -- src/utils/objectiveMarking.js; then
-            echo "No parser refactor changes to commit"
+          if git diff --quiet -- package.json; then
+            echo "No lifecycle cleanup changes to commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/utils/objectiveMarking.js
-          git commit -m "Use shared submission section parser"
+          git add package.json
+          git commit -m "Stop patching objective marking at runtime"
           git push origin HEAD:improve/marking-foundation
