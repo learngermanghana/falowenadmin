@@ -15,6 +15,16 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
+function belongsToSelectedClass(session = {}, classId = "") {
+  const resolvedClassId = normalize(classId);
+  if (!resolvedClassId) return false;
+  const owners = [...new Set([
+    session.classId,
+    session.classRecordId,
+  ].map(normalize).filter(Boolean))];
+  return !owners.length || owners.includes(resolvedClassId);
+}
+
 function localDateTimeParts(value, timezone = "Africa/Accra") {
   const date = new Date(value || 0);
   if (Number.isNaN(date.getTime())) return null;
@@ -185,13 +195,18 @@ export async function repairClassToOfficialLessonSchedule({
   ].map(normalize).filter(Boolean))];
 
   const repairSessions = await loadRawRepairSessions(resolvedClassId, klass, sessions);
+  const scopedRepairSessions = repairSessions.filter(
+    (session) => belongsToSelectedClass(session, resolvedClassId),
+  );
   const plan = buildOfficialLessonSchedulePlan({
     classId: resolvedClassId,
     klass,
-    sessions: repairSessions,
+    sessions: scopedRepairSessions,
     excludedDates,
   });
   const className = normalize(klass.name || klass.className);
+  // Keep all raw IDs reserved because classSessions IDs are globally keyed, but
+  // only selected-class records are allowed to participate in the repair plan.
   const existingIds = new Set(repairSessions.map((session) => normalize(session.id)).filter(Boolean));
   const assignedIds = new Set();
   const batch = writeBatch(db);

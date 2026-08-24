@@ -42,6 +42,19 @@ function statusOf(session = {}) {
   return String(session.status || "scheduled").trim().toLowerCase();
 }
 
+function belongsToSelectedClass(session = {}, classId = "") {
+  const resolvedClassId = String(classId || "").trim();
+  if (!resolvedClassId) return false;
+  const owners = [...new Set([
+    session.classId,
+    session.classRecordId,
+  ].map((value) => String(value || "").trim()).filter(Boolean))];
+  // Keep ownerless legacy sessions visible for compatibility, matching the
+  // restore planner. Explicitly foreign same-name cohorts must never win the
+  // canonical lesson used to populate the anchor selector.
+  return !owners.length || owners.includes(resolvedClassId);
+}
+
 export default function LiveClassLessonDateRepair() {
   const { user } = useAuth();
   const toast = useToast();
@@ -128,6 +141,11 @@ export default function LiveClassLessonDateRepair() {
     return () => { active = false; };
   }, [classes, classId, toast, user?.email, user?.uid]);
 
+  const scopedSessions = useMemo(
+    () => (dashboard?.sessions || []).filter((session) => belongsToSelectedClass(session, classId)),
+    [classId, dashboard],
+  );
+
   const preview = useMemo(() => {
     if (!dashboard || !classId) return { plan: null, error: "" };
     try {
@@ -135,7 +153,7 @@ export default function LiveClassLessonDateRepair() {
         plan: buildOfficialLessonSchedulePlan({
           classId,
           klass: dashboard.klass,
-          sessions: dashboard.sessions,
+          sessions: scopedSessions,
           excludedDates: dashboard.klass?.holidayDatesExcluded || [],
         }),
         error: "",
@@ -143,7 +161,7 @@ export default function LiveClassLessonDateRepair() {
     } catch (error) {
       return { plan: null, error: error?.message || "Could not prepare the official class timetable." };
     }
-  }, [classId, dashboard]);
+  }, [classId, dashboard, scopedSessions]);
 
   const plan = preview.plan;
   const repairItems = useMemo(() => partitionRepairPlanItems(plan?.items || []), [plan]);
@@ -170,7 +188,7 @@ export default function LiveClassLessonDateRepair() {
         plan: buildFollowingScheduleRestorePlan({
           classId,
           klass: dashboard.klass,
-          sessions: dashboard.sessions,
+          sessions: scopedSessions,
           anchorSessionId,
           excludedDates: dashboard.klass?.holidayDatesExcluded || [],
         }),
@@ -179,7 +197,7 @@ export default function LiveClassLessonDateRepair() {
     } catch (error) {
       return { plan: null, error: error?.message || "Could not prepare the following-session restoration." };
     }
-  }, [anchorSessionId, classId, dashboard]);
+  }, [anchorSessionId, classId, dashboard, scopedSessions]);
 
   async function refresh() {
     if (!classId) return null;
@@ -207,7 +225,7 @@ export default function LiveClassLessonDateRepair() {
       const result = await repairClassToOfficialLessonSchedule({
         classId,
         klass: dashboard.klass,
-        sessions: dashboard.sessions,
+        sessions: scopedSessions,
         adminId: user?.uid || user?.email || "admin",
       });
       await refresh();
@@ -245,7 +263,7 @@ export default function LiveClassLessonDateRepair() {
       const result = await restoreFollowingSessionsToWeeklyPattern({
         classId,
         klass: dashboard.klass,
-        sessions: dashboard.sessions,
+        sessions: scopedSessions,
         anchorSessionId,
         adminId: user?.uid || user?.email || "admin",
       });
