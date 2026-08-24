@@ -9,7 +9,8 @@ const after = `  // Repair is intentionally anchored: earlier sessions are histo
 
 // New source plans stale future duplicate/orphan records for supersession before
 // checking the final collision invariant. Never strip that safety logic at build time.
-const safeSupersessionMarker = "const staleFutureRecords = sessions";
+// Match both the original `sessions` implementation and the class-scoped variant.
+const safeSupersessionMarker = "const staleFutureRecords =";
 const anchoredCollisionMarker = "const anchorAndFollowingSessions = proposedSessions.filter((session) => {";
 
 if (!source.includes(safeSupersessionMarker) && !source.includes(after) && !source.includes(anchoredCollisionMarker)) {

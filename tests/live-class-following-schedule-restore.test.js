@@ -156,6 +156,53 @@ test("plans colliding future duplicate and protected orphan records for atomic s
   assert.equal(plan.unresolvedCollisions, 0);
 });
 
+test("ignores same-name sessions that explicitly belong to another class", () => {
+  const sessions = damagedSessions();
+  const foreignSameNameSession = {
+    ...sessionForDay(16, "2026-07-23T18:00:00.000Z"),
+    id: "other-class-day-16",
+    classId: "a1-munich-second-cohort",
+    classRecordId: "a1-munich-second-cohort",
+    className: klass.name,
+  };
+  sessions.push(foreignSameNameSession);
+
+  const plan = buildFollowingScheduleRestorePlan({
+    classId: klass.id,
+    klass,
+    sessions,
+    anchorSessionId: "day-15",
+  });
+
+  const staleIds = new Set(plan.staleFutureRecords.map((item) => item.sessionId));
+  const canonicalIds = new Set(plan.items.map((item) => item.session?.id).filter(Boolean));
+  assert.equal(staleIds.has("other-class-day-16"), false);
+  assert.equal(canonicalIds.has("other-class-day-16"), false);
+  assert.equal(plan.unresolvedCollisions, 0);
+});
+
+test("does not auto-supersede ownerless legacy records", () => {
+  const sessions = damagedSessions();
+  sessions.push({
+    id: "ownerless-legacy",
+    className: klass.name,
+    status: "scheduled",
+    startsAt: "2026-07-23T18:00:00.000Z",
+    endsAt: "2026-07-23T19:00:00.000Z",
+    topic: "Legacy session without owner IDs",
+  });
+
+  assert.throws(
+    () => buildFollowingScheduleRestorePlan({
+      classId: klass.id,
+      klass,
+      sessions,
+      anchorSessionId: "day-15",
+    }),
+    /collision between canonical sessions/,
+  );
+});
+
 test("restore service supersedes stale future records in both session and attendance documents", async () => {
   const serviceSource = await readFile(
     new URL("../src/services/liveClassFollowingScheduleRestoreService.js", import.meta.url),
