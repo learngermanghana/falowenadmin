@@ -27,6 +27,46 @@ export function normalizeSubmissionPart(label = "", explicitNumber = "") {
   return "main";
 }
 
+function normalizeLeadingShortAnswerBlock(text = "") {
+  const raw = String(text || "");
+  const blocks = raw.split(/\n\s*\n+/);
+  if (blocks.length !== 2) return raw;
+
+  const leadingLines = blocks[0]
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (leadingLines.length !== 5) return raw;
+
+  const invalidLeadingLine = leadingLines.some((line) => {
+    if (/^(?:teil|tiel|part)\b|^(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)\b/i.test(line)) return true;
+    if (/^\s*(?:answer|antwort|frage|question|aufgabe|task|exercise|nr\.?|q)?\s*\d{1,3}\s*[).:–-]/i.test(line)) return true;
+    if (/\?\s*$/.test(line)) return true;
+    return line.split(/\s+/).length !== 1;
+  });
+  if (invalidLeadingLine) return raw;
+
+  const numberedChoiceLines = blocks[1]
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (numberedChoiceLines.length !== 7) return raw;
+
+  const numbers = numberedChoiceLines.map((line) => {
+    const match = line.match(/^\s*(\d{1,3})\s*[).:–-]?\s*([A-FX])(?:\s*[).,:;–-]|\s|$)/i);
+    return match ? Number(match[1]) : null;
+  });
+  if (numbers.some((number) => number === null)) return raw;
+  if (!numbers.every((number, index) => number === index + 1)) return raw;
+
+  const startNumber = numbers.length + 1;
+  const normalizedLeading = leadingLines
+    .map((line, index) => `${startNumber + index}) ${line}`)
+    .join("\n");
+
+  return `${normalizedLeading}\n\n${blocks[1]}`;
+}
+
 function normalizeQSectionAliases(text = "") {
   const raw = String(text || "");
   const alias = /(^|\n)[ \t]*q(?:uestion)?[ \t]*([1-4])(?:\.[ \t]*\d+(?=[ \t]+\d{1,3}\s*[).:])|\.[ \t]*(?=\d{1,3}\s*[).:])|(?=[ \t]*(?:\n|$)))[ \t]*/gi;
@@ -47,7 +87,9 @@ function normalizeStandaloneAnswerPrefixes(text = "") {
 }
 
 export function parseSubmissionSections(text = "") {
-  const source = normalizeStandaloneAnswerPrefixes(normalizeQSectionAliases(text));
+  const source = normalizeStandaloneAnswerPrefixes(
+    normalizeQSectionAliases(normalizeLeadingShortAnswerBlock(text)),
+  );
   const markerRegex = /(?:^|\n)[ \t]*((?:teil|tiel|part)[ \t]*([1-4]|I{1,3}|IV)(?:[ \t]*(?:[.:;|·•–-][ \t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[.:;]?[ \t]*/gi;
   const markers = [];
   let match;
