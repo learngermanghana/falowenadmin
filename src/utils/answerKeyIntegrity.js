@@ -77,12 +77,16 @@ export function validateAnswerEntry(assignmentName, entry = {}) {
   }
 
   const expectedSet = new Set(expected);
-  for (const [label, values] of [["referenceAnswerParts", reference], ["writingParts", writing], ["aiGradedParts", aiGraded], ["excludedParts", excluded]]) {
+  for (const [label, values] of [["referenceAnswerParts", reference], ["writingParts", writing], ["aiGradedParts", aiGraded]]) {
     if (!expected.length) continue;
     values.filter((part) => !expectedSet.has(part)).forEach((part) => {
       pushIssue(errors, "part-outside-expected", assignment, `${label} contains ${part}, but it is not listed in expectedParts.`, { field: label, part });
     });
   }
+
+  excluded.filter((part) => expectedSet.has(part)).forEach((part) => {
+    pushIssue(warnings, "excluded-part-is-expected", assignment, `${part} appears in both expectedParts and excludedParts.`, { part });
+  });
 
   const writingSet = new Set([...writing, ...aiGraded]);
   reference.filter((part) => writingSet.has(part)).forEach((part) => {
@@ -114,7 +118,7 @@ export function validateAnswerEntry(assignmentName, entry = {}) {
     const present = new Set(sorted);
     const missing = Array.from({ length: max }, (_, index) => index + 1).filter((number) => !present.has(number));
     if (missing.length) {
-      pushIssue(errors, "missing-answer-number", assignment, `${part} is missing answer number(s): ${missing.join(", ")}.`, { part, numbers: missing });
+      pushIssue(warnings, "missing-answer-number", assignment, `${part} is missing answer number(s): ${missing.join(", ")}.`, { part, numbers: missing });
     }
   }
 
