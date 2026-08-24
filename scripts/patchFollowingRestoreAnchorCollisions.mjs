@@ -21,6 +21,18 @@ if (!source.includes(after) && !source.includes(anchoredCollisionMarker)) {
   console.log("Patched following-session restore to ignore historical pre-anchor overlaps.");
 }
 
+// Once the admin has explicitly selected the last live/correct session, that
+// choice is authoritative. Stale duplicate or overlapping records after the
+// anchor must not veto rebuilding the future timetable.
+const strictPostAnchorCollisionGate = `  const collisions = countSessionTimeCollisions(anchorAndFollowingSessions);\n  if (collisions > 0) {\n    throw new Error("A session at or after the selected anchor would still overlap another active session. Choose the last correct session and Falowen will rebuild only the lessons after it.");\n  }`;
+const nonBlockingPostAnchorCollisionGate = `  // The administrator-selected anchor is authoritative. Future duplicate or\n  // overlapping records are not allowed to block rebuilding from this point.\n  // The rebuild rewrites the canonical future lesson records to the requested slots.`;
+
+if (source.includes(strictPostAnchorCollisionGate)) {
+  source = source.replace(strictPostAnchorCollisionGate, nonBlockingPostAnchorCollisionGate);
+  await writeFile(target, source);
+  console.log("Patched following-session rebuild to ignore post-anchor overlap locks.");
+}
+
 // A last-live-session restore is intentionally different from a full official timetable repair.
 // The administrator-selected anchor must remain authoritative even when that class was held on
 // a one-off day/time outside the normal weekly rules; later sessions resume on the next valid slots.
