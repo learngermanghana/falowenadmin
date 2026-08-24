@@ -8,11 +8,19 @@ function normalizedLabel(value = "") {
     .trim();
 }
 
+function partNumberFromToken(value = "") {
+  const token = String(value || "").trim().toUpperCase();
+  if (/^[1-4]$/.test(token)) return Number(token);
+  return ({ I: 1, II: 2, III: 3, IV: 4 })[token] || null;
+}
+
 export function normalizeSubmissionPart(label = "", explicitNumber = "") {
-  if (explicitNumber) return `teil${Number(explicitNumber)}`;
+  const explicitPart = partNumberFromToken(explicitNumber);
+  if (explicitPart) return `teil${explicitPart}`;
   const normalized = normalizedLabel(label);
-  const numbered = normalized.match(/(?:teil|tiel|part)([1-4])/);
-  if (numbered) return `teil${Number(numbered[1])}`;
+  const numbered = normalized.match(/(?:teil|tiel|part)([1-4]|i{1,3}|iv)/i);
+  const numberedPart = partNumberFromToken(numbered?.[1]);
+  if (numberedPart) return `teil${numberedPart}`;
   if (/schreiben|writing/.test(normalized)) return "teil2";
   if (/lesen|reading/.test(normalized)) return "teil3";
   if (/horen|hoeren|listening|audio/.test(normalized)) return "teil4";
@@ -40,7 +48,7 @@ function normalizeStandaloneAnswerPrefixes(text = "") {
 
 export function parseSubmissionSections(text = "") {
   const source = normalizeStandaloneAnswerPrefixes(normalizeQSectionAliases(text));
-  const markerRegex = /(?:^|\n)[ \t]*((?:teil|tiel|part)[ \t]*([1-4])(?:[ \t]*(?:[.:;|·•–-][ \t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[.:;]?[ \t]*/gi;
+  const markerRegex = /(?:^|\n)[ \t]*((?:teil|tiel|part)[ \t]*([1-4]|I{1,3}|IV)(?:[ \t]*(?:[.:;|·•–-][ \t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[.:;]?[ \t]*/gi;
   const markers = [];
   let match;
 
