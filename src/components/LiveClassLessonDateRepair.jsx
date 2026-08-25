@@ -65,6 +65,7 @@ export default function LiveClassLessonDateRepair() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [anchorSessionId, setAnchorSessionId] = useState("");
+  const [anchorNotBeforeStartsAt, setAnchorNotBeforeStartsAt] = useState("");
   const recoveryStarted = useRef(false);
 
   useEffect(() => {
@@ -86,6 +87,7 @@ export default function LiveClassLessonDateRepair() {
   useEffect(() => {
     let active = true;
     setAnchorSessionId("");
+    setAnchorNotBeforeStartsAt("");
     if (!classId) {
       setDashboard(null);
       return () => { active = false; };
@@ -191,13 +193,14 @@ export default function LiveClassLessonDateRepair() {
           sessions: scopedSessions,
           anchorSessionId,
           excludedDates: dashboard.klass?.holidayDatesExcluded || [],
+          notBeforeStartsAt: anchorNotBeforeStartsAt,
         }),
         error: "",
       };
     } catch (error) {
       return { plan: null, error: error?.message || "Could not prepare the following-session restoration." };
     }
-  }, [anchorSessionId, classId, dashboard, scopedSessions]);
+  }, [anchorNotBeforeStartsAt, anchorSessionId, classId, dashboard, scopedSessions]);
 
   async function refresh() {
     if (!classId) return null;
@@ -244,16 +247,19 @@ export default function LiveClassLessonDateRepair() {
   async function restoreFollowingPattern() {
     const restorePlan = followingRestorePreview.plan;
     if (!restorePlan || !anchorSessionId || busy) return;
+    const staleFutureCount = Number(restorePlan.staleFutureRecords?.length || 0);
     const hasTimetableMoves = restorePlan.restorableItems.length > 0;
+    const hasRepairWork = hasTimetableMoves || staleFutureCount > 0;
     const confirmed = window.confirm(
-      hasTimetableMoves
-        ? `Keep ${restorePlan.anchorSession.topic || "the selected session"} at ${formatDateTime(restorePlan.anchorStartsAt)} and restore every later lesson to the saved weekly pattern?\n\n`
+      hasRepairWork
+        ? `Keep ${restorePlan.anchorSession.topic || "the selected session"} at ${formatDateTime(restorePlan.anchorStartsAt)} and rebuild every later lesson from the next available timetable slot?\n\n`
           + `${restorePlan.movedCount} existing session(s) will move.\n`
           + `${restorePlan.createdCount} missing session(s) will be created.\n`
+          + `${staleFutureCount} stale future duplicate/orphan record(s) will be superseded.\n`
           + `${restorePlan.skippedCancelled.length} cancelled session(s) will remain cancelled.\n`
           + `New class end date: ${formatDate(restorePlan.endDate)}.\n\n`
-          + "This does not apply one fixed time difference. It assigns each later lesson to the next valid Thursday, Friday or Saturday timetable slot in curriculum order."
-        : `All sessions after ${restorePlan.anchorSession.topic || "the selected anchor"} already follow the saved weekly timetable.\n\nRecheck timetable health and release any stale schedule-health reminder suppression for future active sessions?`,
+          + "Any saved timetable slot that had already passed when you selected the anchor is skipped, so the next lesson starts at the next still-available class time."
+        : `Save ${restorePlan.anchorSession.topic || "the selected anchor"} as the last correct/live session?\n\nEarlier historical gaps will no longer block future session rescheduling.`,
     );
     if (!confirmed) return;
 
@@ -265,15 +271,18 @@ export default function LiveClassLessonDateRepair() {
         klass: dashboard.klass,
         sessions: scopedSessions,
         anchorSessionId,
+        notBeforeStartsAt: restorePlan.notBeforeStartsAt,
         adminId: user?.uid || user?.email || "admin",
       });
       await refresh();
       setAnchorSessionId("");
+      setAnchorNotBeforeStartsAt("");
+      const cleaned = Number(result.supersededFutureRecords || 0);
       const successMessage = Number(result.remindersReleased || 0) > 0
-        ? `Timetable health is ${result.healthStatus}. Re-enabled reminders for ${result.remindersReleased} future session(s) that were still suppressed by the old schedule-health state.`
-        : !hasTimetableMoves
-          ? `Timetable health is ${result.healthStatus || "healthy"}. No timetable moves were needed and no stale schedule-health reminder suppression remained.`
-          : `Weekly pattern restored after the selected anchor: ${result.moved} session(s) moved, ${result.created} created, ${result.skippedCancelled} cancelled session(s) preserved. New end date: ${formatDate(result.endDate)}.`;
+        ? `Anchor saved. Timetable health is ${result.healthStatus}. Re-enabled reminders for ${result.remindersReleased} future session(s).`
+        : Number(result.moved || 0) || Number(result.created || 0) || cleaned
+          ? `Weekly pattern restored after the selected anchor: ${result.moved} session(s) moved, ${result.created} created, ${cleaned} stale future record(s) superseded. New end date: ${formatDate(result.endDate)}.`
+          : `Anchor saved. Earlier historical gaps will not block future session rescheduling. Timetable health is ${result.healthStatus || "healthy"}.`;
       setMessage(successMessage);
       toast.success(successMessage, { durationMs: 12000 });
     } catch (error) {
@@ -319,7 +328,7 @@ export default function LiveClassLessonDateRepair() {
           {preservedItems.length ? (
             <div style={{ display: "grid", gap: 10, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
               <strong>{preservedItems.length} deliberately moved session(s) were detected.</strong>
-              <div>Do not correct all 25 sessions one by one. Choose the last session whose date and time are correct. Falowen will keep it as the anchor and place every later lesson into the next valid saved timetable slot.</div>
+              <div>Choose the last session whose date and time are correct. Falowen keeps it as the anchor, skips timetable slots that have already passed, and rebuilds every later lesson into the next available saved slot.</div>
               {preservedItems.slice(0, 10).map((item) => (
                 <div key={item.lessonNumber}>{item.group.topic}: <strong>{formatDateTime(item.session?.startsAt)}</strong></div>
               ))}
@@ -327,7 +336,15 @@ export default function LiveClassLessonDateRepair() {
 
               <label style={{ display: "grid", gap: 6, marginTop: 4 }}>
                 <strong>Correct session to keep as the timetable anchor</strong>
-                <select value={anchorSessionId} onChange={(event) => setAnchorSessionId(event.target.value)} disabled={busy}>
+                <select
+                  value={anchorSessionId}
+                  onChange={(event) => {
+                    const nextAnchorSessionId = event.target.value;
+                    setAnchorSessionId(nextAnchorSessionId);
+                    setAnchorNotBeforeStartsAt(nextAnchorSessionId ? new Date().toISOString() : "");
+                  }}
+                  disabled={busy}
+                >
                   <option value="">Select the last correct session</option>
                   {anchorOptions.map((item) => (
                     <option key={item.session.id} value={item.session.id}>{item.group.topic} — {formatDateTime(item.session.startsAt)}</option>
@@ -343,23 +360,24 @@ export default function LiveClassLessonDateRepair() {
                 <div style={{ display: "grid", gap: 7, padding: 12, borderRadius: 9, background: "#fff", border: "1px solid #86efac", color: "#1f2937" }}>
                   <strong>Bulk restoration preview</strong>
                   <div>Anchor remains: <strong>{formatDateTime(followingRestorePreview.plan.anchorStartsAt)}</strong></div>
-                  <div>Existing sessions to move: <strong>{followingRestorePreview.plan.movedCount}</strong> · Missing sessions to create: <strong>{followingRestorePreview.plan.createdCount}</strong></div>
+                  <div>Rebuild begins no earlier than: <strong>{formatDateTime(followingRestorePreview.plan.notBeforeStartsAt)}</strong></div>
+                  <div>Existing sessions to move: <strong>{followingRestorePreview.plan.movedCount}</strong> · Missing sessions to create: <strong>{followingRestorePreview.plan.createdCount}</strong> · Stale future records to supersede: <strong>{followingRestorePreview.plan.staleFutureRecords?.length || 0}</strong></div>
                   {followingRestorePreview.plan.restorableItems.slice(0, 10).map((item) => (
                     <div key={item.lessonNumber} style={{ overflowWrap: "anywhere" }}>
                       {item.group.topic}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
                     </div>
                   ))}
                   {followingRestorePreview.plan.restorableItems.length > 10 ? <small>Plus {followingRestorePreview.plan.restorableItems.length - 10} more correction(s).</small> : null}
-                  {!followingRestorePreview.plan.restorableItems.length ? <div>All sessions after this anchor already follow the weekly timetable. You can still repair stale reminder suppression below.</div> : null}
+                  {!followingRestorePreview.plan.restorableItems.length && !(followingRestorePreview.plan.staleFutureRecords?.length || 0) ? <div>The future timetable already matches the selected anchor. Saving the anchor will still stop earlier historical gaps from blocking future rescheduling.</div> : null}
                 </div>
               ) : null}
 
               <button type="button" onClick={restoreFollowingPattern} disabled={busy || !followingRestorePreview.plan}>
                 {busy
-                  ? "Checking timetable and reminders…"
-                  : followingRestorePreview.plan?.restorableItems.length
-                    ? "Restore all following sessions to weekly pattern"
-                    : "Repair reminder state"}
+                  ? "Rebuilding timetable…"
+                  : (followingRestorePreview.plan?.restorableItems.length || followingRestorePreview.plan?.staleFutureRecords?.length)
+                    ? "Rebuild all sessions after this anchor"
+                    : "Save this session as the repair anchor"}
               </button>
             </div>
           ) : null}
