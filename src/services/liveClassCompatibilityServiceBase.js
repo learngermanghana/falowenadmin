@@ -169,10 +169,11 @@ async function loadCompatibleSessions(classId, klass = {}) {
 
   // className is only a discovery fallback. Once records are loaded, explicitly
   // foreign same-name cohorts must not leak back into Live Classes or Attendance.
-  // Ownerless legacy sessions stay readable so old classes still work.
+  // Legacy class-name/slug ownership remains readable only when no conflicting
+  // canonical classRecordId says the record belongs to another cohort.
   const visibleSessions = [...found.values()]
     .filter(isVisibleSession)
-    .filter((session) => belongsToSelectedClass(session, classId));
+    .filter((session) => belongsToSelectedClass(session, classId, identifiers));
   return dedupeCompatibleSessionRecords(visibleSessions, { classId });
 }
 
