@@ -43,5 +43,9 @@ if (!lessonOrderSource.includes(restoreStoredAnchor)) {
 // the Live Classes session table synchronized with successful repair actions.
 await import("./patchLiveClassRepairRefresh.mjs");
 
+// A direct Attendance link must keep the exact clicked/repaired session selected
+// instead of silently switching to today's or the next lesson.
+await import("./patchCanonicalAttendanceRequestedSession.mjs");
+
 // Keep omitted deterministic objective answers distinct from answered-but-wrong items.
 await import("./patchMissingObjectiveFeedback.mjs");
