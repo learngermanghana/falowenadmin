@@ -10,10 +10,13 @@ on:
       - 'src/services/liveClassLessonDateRepairService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/pages/CanonicalAttendancePageV3.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
       - 'tests/live-class-anchor-options-scope.test.js'
       - 'tests/live-class-compatible-session-scope.test.js'
+      - 'tests/canonical-attendance-requested-session.test.js'
       - 'scripts/patchFollowingRestoreAnchorCollisions.mjs'
+      - 'scripts/patchCanonicalAttendanceRequestedSession.mjs'
       - '.github/workflows/live-session-anchor-rebuild.yml'
   push:
     branches:
@@ -26,10 +29,13 @@ on:
       - 'src/services/liveClassLessonDateRepairService.js'
       - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
+      - 'src/pages/CanonicalAttendancePageV3.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
       - 'tests/live-class-anchor-options-scope.test.js'
       - 'tests/live-class-compatible-session-scope.test.js'
+      - 'tests/canonical-attendance-requested-session.test.js'
       - 'scripts/patchFollowingRestoreAnchorCollisions.mjs'
+      - 'scripts/patchCanonicalAttendanceRequestedSession.mjs'
       - '.github/workflows/live-session-anchor-rebuild.yml'
 
 jobs:
@@ -50,9 +56,10 @@ jobs:
           node --check src/services/liveClassFollowingScheduleRestoreService.js
           node --check src/services/liveClassLessonDateRepairService.js
           node --check src/services/liveClassCompatibilityServiceBase.js
+          node --check scripts/patchCanonicalAttendanceRequestedSession.mjs
       - name: Run anchor rebuild regressions
-        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-compatible-session-scope.test.js
+        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-compatible-session-scope.test.js tests/canonical-attendance-requested-session.test.js
       - name: Verify build-time compatibility
         run: npm run build
       - name: Re-run anchor regressions after prebuild patches
-        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-compatible-session-scope.test.js
+        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-compatible-session-scope.test.js tests/canonical-attendance-requested-session.test.js
