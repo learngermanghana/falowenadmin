@@ -5,12 +5,16 @@ on:
     paths:
       - 'src/utils/liveClassFollowingScheduleRestore.js'
       - 'src/utils/liveClassLessonOrder.js'
+      - 'src/utils/liveClassSessionOwnership.js'
       - 'src/services/liveClassFollowingScheduleRestoreService.js'
       - 'src/services/liveClassLessonDateRepairService.js'
+      - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
       - 'tests/live-class-anchor-options-scope.test.js'
       - 'tests/live-class-anchor-persistence.test.js'
+      - 'tests/live-class-compatible-session-scope.test.js'
+      - 'tests/live-class-day5-next-slot.test.js'
       - 'scripts/patchFollowingRestoreAnchorCollisions.mjs'
       - '.github/workflows/live-session-anchor-rebuild.yml'
   push:
@@ -19,12 +23,16 @@ on:
     paths:
       - 'src/utils/liveClassFollowingScheduleRestore.js'
       - 'src/utils/liveClassLessonOrder.js'
+      - 'src/utils/liveClassSessionOwnership.js'
       - 'src/services/liveClassFollowingScheduleRestoreService.js'
       - 'src/services/liveClassLessonDateRepairService.js'
+      - 'src/services/liveClassCompatibilityServiceBase.js'
       - 'src/components/LiveClassLessonDateRepair.jsx'
       - 'tests/live-class-following-schedule-restore.test.js'
       - 'tests/live-class-anchor-options-scope.test.js'
       - 'tests/live-class-anchor-persistence.test.js'
+      - 'tests/live-class-compatible-session-scope.test.js'
+      - 'tests/live-class-day5-next-slot.test.js'
       - 'scripts/patchFollowingRestoreAnchorCollisions.mjs'
       - '.github/workflows/live-session-anchor-rebuild.yml'
 
@@ -42,11 +50,13 @@ jobs:
         run: |
           node --check src/utils/liveClassFollowingScheduleRestore.js
           node --check src/utils/liveClassLessonOrder.js
+          node --check src/utils/liveClassSessionOwnership.js
           node --check src/services/liveClassFollowingScheduleRestoreService.js
           node --check src/services/liveClassLessonDateRepairService.js
+          node --check src/services/liveClassCompatibilityServiceBase.js
       - name: Run anchor rebuild regressions
-        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-anchor-persistence.test.js
+        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-anchor-persistence.test.js tests/live-class-compatible-session-scope.test.js tests/live-class-day5-next-slot.test.js
       - name: Verify build-time compatibility
         run: npm run build
       - name: Re-run anchor regressions after prebuild patches
-        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-anchor-persistence.test.js
+        run: node --test tests/live-class-following-schedule-restore.test.js tests/live-class-anchor-options-scope.test.js tests/live-class-anchor-persistence.test.js tests/live-class-compatible-session-scope.test.js tests/live-class-day5-next-slot.test.js
