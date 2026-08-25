@@ -205,6 +205,39 @@ function staleFutureAttendancePatch({ classId, className, sessionId, session, ca
   };
 }
 
+function anchorClassPatch({ plan, adminId, relevantClosures, scheduleVersion, affectedCount = 0 }) {
+  return {
+    scheduleAnchorSessionNumber: plan.anchorLessonNumber,
+    scheduleAnchorDay: plan.levelId === "A1" ? plan.anchorLessonNumber - 1 : null,
+    scheduleAnchorStartsAt: plan.anchorStartsAt,
+    scheduleAnchorNotBeforeStartsAt: plan.notBeforeStartsAt || plan.anchorStartsAt,
+    scheduleAnchorSource: "admin-selected-following-restore",
+    scheduleAnchorMode: "rebuild-from-selected-session",
+    scheduleAnchorUpdatedAt: serverTimestamp(),
+    scheduleAnchorUpdatedBy: adminId,
+    endDate: plan.endDate,
+    configuredEndDate: plan.endDate,
+    holidayAdjustedEndDate: plan.endDate,
+    sessionDerivedEndDate: plan.endDate,
+    holidayDatesExcluded: relevantClosures,
+    generationStatus: "complete",
+    generationError: "",
+    sessionRepairStatus: "complete",
+    sessionRepairAt: serverTimestamp(),
+    lastSessionChangeType: "restore-following-weekly-pattern",
+    lastSessionChangeMode: "anchor-following",
+    lastSessionChangeAffectedCount: affectedCount,
+    lastChangedSessionId: normalize(plan.anchorSession.id),
+    lastSessionChangeBy: adminId,
+    lastSessionChangeAt: serverTimestamp(),
+    sessionScheduleVersion: scheduleVersion,
+    sessionScheduleUpdatedAt: serverTimestamp(),
+    reminderScheduleVersion: scheduleVersion,
+    reminderScheduleUpdatedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+}
+
 async function releaseHealthyScheduleReminderSuppression({
   classId,
   klass,
@@ -283,6 +316,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
   klass = {},
   sessions = [],
   anchorSessionId = "",
+  notBeforeStartsAt = "",
   adminId = "admin",
 } = {}) {
   const resolvedClassId = normalize(classId || klass.id);
@@ -308,11 +342,58 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     sessions: scopedRepairSessions,
     anchorSessionId,
     excludedDates,
+    notBeforeStartsAt,
   });
+  const planStartDate = normalize(plan.startDate || klass.startDate);
+  const relevantClosures = excludedDates.filter((date) => date >= planStartDate && date <= plan.endDate);
+
   if (!plan.restorableItems.length && !plan.staleFutureRecords.length) {
+    // Selecting the last correct/live session is itself a state change. Persist
+    // the anchor even when all future canonical records already use the requested
+    // slots, otherwise normal rescheduling keeps validating the imperfect history
+    // as if the administrator never established a repair boundary.
+    const scheduleVersion = Date.now();
+    const batch = writeBatch(db);
+    batch.set(doc(db, "classes", resolvedClassId), anchorClassPatch({
+      plan,
+      adminId,
+      relevantClosures,
+      scheduleVersion,
+      affectedCount: 0,
+    }), { merge: true });
+    batch.set(doc(db, "calendarFeeds", resolvedClassId), {
+      classId: resolvedClassId,
+      sessionScheduleVersion: scheduleVersion,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    batch.set(doc(collection(db, "auditLogs")), {
+      type: "live-class-following-schedule-anchor-saved",
+      entityType: "classTimetable",
+      classId: resolvedClassId,
+      anchorSessionId: normalize(plan.anchorSession.id),
+      anchorLessonNumber: plan.anchorLessonNumber,
+      anchorStartsAt: plan.anchorStartsAt,
+      notBeforeStartsAt: plan.notBeforeStartsAt,
+      affectedSessionCount: 0,
+      endDate: plan.endDate,
+      adminId,
+      createdAt: serverTimestamp(),
+    });
+    await batch.commit();
+
+    const anchoredKlass = {
+      ...klass,
+      scheduleAnchorSessionNumber: plan.anchorLessonNumber,
+      scheduleAnchorDay: plan.levelId === "A1" ? plan.anchorLessonNumber - 1 : null,
+      scheduleAnchorStartsAt: plan.anchorStartsAt,
+      scheduleAnchorNotBeforeStartsAt: plan.notBeforeStartsAt,
+      scheduleAnchorSource: "admin-selected-following-restore",
+      scheduleAnchorMode: "rebuild-from-selected-session",
+      endDate: plan.endDate,
+    };
     const reminderRepair = await releaseHealthyScheduleReminderSuppression({
       classId: resolvedClassId,
-      klass,
+      klass: anchoredKlass,
       sessions: scopedRepairSessions,
       plan,
       adminId,
@@ -328,6 +409,8 @@ export async function restoreFollowingSessionsToWeeklyPattern({
       endDate: plan.endDate,
       anchorLessonNumber: plan.anchorLessonNumber,
       anchorStartsAt: plan.anchorStartsAt,
+      notBeforeStartsAt: plan.notBeforeStartsAt,
+      anchorSaved: true,
       ...reminderRepair,
     };
   }
@@ -418,38 +501,14 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     }, { merge: true });
   });
 
-  const planStartDate = normalize(plan.startDate || klass.startDate);
-  const relevantClosures = excludedDates.filter((date) => date >= planStartDate && date <= plan.endDate);
   const scheduleVersion = Date.now();
-  batch.set(doc(db, "classes", resolvedClassId), {
-    scheduleAnchorSessionNumber: plan.anchorLessonNumber,
-    scheduleAnchorDay: plan.levelId === "A1" ? plan.anchorLessonNumber - 1 : null,
-    scheduleAnchorStartsAt: plan.anchorStartsAt,
-    scheduleAnchorSource: "admin-selected-following-restore",
-    scheduleAnchorMode: "rebuild-from-selected-session",
-    scheduleAnchorUpdatedAt: serverTimestamp(),
-    scheduleAnchorUpdatedBy: adminId,
-    endDate: plan.endDate,
-    configuredEndDate: plan.endDate,
-    holidayAdjustedEndDate: plan.endDate,
-    sessionDerivedEndDate: plan.endDate,
-    holidayDatesExcluded: relevantClosures,
-    generationStatus: "complete",
-    generationError: "",
-    sessionRepairStatus: "complete",
-    sessionRepairAt: serverTimestamp(),
-    lastSessionChangeType: "restore-following-weekly-pattern",
-    lastSessionChangeMode: "anchor-following",
-    lastSessionChangeAffectedCount: plan.restorableItems.length + supersededFutureRecords,
-    lastChangedSessionId: normalize(plan.anchorSession.id),
-    lastSessionChangeBy: adminId,
-    lastSessionChangeAt: serverTimestamp(),
-    sessionScheduleVersion: scheduleVersion,
-    sessionScheduleUpdatedAt: serverTimestamp(),
-    reminderScheduleVersion: scheduleVersion,
-    reminderScheduleUpdatedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
+  batch.set(doc(db, "classes", resolvedClassId), anchorClassPatch({
+    plan,
+    adminId,
+    relevantClosures,
+    scheduleVersion,
+    affectedCount: plan.restorableItems.length + supersededFutureRecords,
+  }), { merge: true });
   batch.set(doc(db, "calendarFeeds", resolvedClassId), {
     classId: resolvedClassId,
     sessionScheduleVersion: scheduleVersion,
@@ -462,6 +521,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     anchorSessionId: normalize(plan.anchorSession.id),
     anchorLessonNumber: plan.anchorLessonNumber,
     anchorStartsAt: plan.anchorStartsAt,
+    notBeforeStartsAt: plan.notBeforeStartsAt,
     affectedSessionIds: plan.restorableItems.map((item) => normalize(item.session?.id)).filter(Boolean),
     affectedSessionCount: plan.restorableItems.length + supersededFutureRecords,
     movedCount: moved,
@@ -487,5 +547,7 @@ export async function restoreFollowingSessionsToWeeklyPattern({
     endDate: plan.endDate,
     anchorLessonNumber: plan.anchorLessonNumber,
     anchorStartsAt: plan.anchorStartsAt,
+    notBeforeStartsAt: plan.notBeforeStartsAt,
+    anchorSaved: true,
   };
 }
