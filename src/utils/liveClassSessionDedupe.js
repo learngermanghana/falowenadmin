@@ -251,10 +251,11 @@ function enrichCompleteSessionSet(ordered = [], groups = []) {
 export function enrichSessionsWithStableCurriculum(_ = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
 
-  // A1 uses day:* groups. For A1, the timetable order is the curriculum order.
-  // Never let stale assignment/day metadata make a later lesson (for example Day 20)
-  // appear before Day 1 or Day 2 after dates are repaired or shifted.
-  if (isChronologicalDayCurriculum(groups)) {
+  // A complete A1 day set follows chronological timetable order. If extra records
+  // exist, however, they may be generated aliases for an explicitly rescheduled
+  // day. Let the overfull path preserve that manual identity first, then suppress
+  // the generated alias instead of dropping a real later day.
+  if (isChronologicalDayCurriculum(groups) && ordered.length <= groups.length) {
     return ordered.slice(0, groups.length)
       .map((session, index) => applyCurriculumGroup(session, groups[index] || null, index));
   }
