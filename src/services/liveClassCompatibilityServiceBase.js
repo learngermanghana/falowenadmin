@@ -13,6 +13,7 @@ import { db } from "../firebase.js";
 import { courseDictionary } from "../data/courseDictionary.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
+import { belongsToSelectedClass } from "../utils/liveClassSessionOwnership.js";
 import {
   assignmentIdsForSession,
   dedupeCompatibleSessionRecords,
@@ -166,8 +167,13 @@ async function loadCompatibleSessions(classId, klass = {}) {
     }
   }
 
-  // Superseded aliases are retained for audit history but never appear as live sessions.
-  const visibleSessions = [...found.values()].filter(isVisibleSession);
+  // className is only a discovery fallback. Once records are loaded, explicitly
+  // foreign same-name cohorts must not leak back into Live Classes or Attendance.
+  // Legacy class-name/slug ownership remains readable only when no conflicting
+  // canonical classRecordId says the record belongs to another cohort.
+  const visibleSessions = [...found.values()]
+    .filter(isVisibleSession)
+    .filter((session) => belongsToSelectedClass(session, classId, identifiers));
   return dedupeCompatibleSessionRecords(visibleSessions, { classId });
 }
 
