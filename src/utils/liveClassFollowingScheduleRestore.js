@@ -154,13 +154,34 @@ export function buildFollowingScheduleRestorePlan({
     scheduleAnchorMode: "rebuild-from-selected-session",
   };
 
+  // loadRawRepairSessions marks the records that came from the exact dashboard
+  // preview as repairPreferredRecord. Hidden same-class duplicates may have stronger
+  // historical signals (attendance/completion/manual move) and used to replace the
+  // preview record when the service rebuilt the plan. That made the UI show the
+  // correct target dates but the click mutated a different hidden document. If a
+  // lesson has a preview record, keep that exact record canonical for this rebuild;
+  // hidden records remain in scopedSessions so they can still be superseded below.
+  const previewLessonNumbers = new Set(
+    scopedSessions
+      .filter((session) => session.repairPreferredRecord === true)
+      .map((session) => resolveOfficialSessionNumber(session, groups, levelId))
+      .filter(Boolean),
+  );
+  const plannerSessions = previewLessonNumbers.size
+    ? scopedSessions.filter((session) => {
+      const lessonNumber = resolveOfficialSessionNumber(session, groups, levelId);
+      if (!lessonNumber || !previewLessonNumbers.has(lessonNumber)) return true;
+      return session.repairPreferredRecord === true;
+    })
+    : scopedSessions;
+
   // Use the normal planner only for curriculum/session identity. The dates after
   // the selected anchor are rebuilt independently from that actual session, so
   // the anchor does not need to match the class's original start-date-derived slot.
   const officialPlan = buildOfficialLessonSchedulePlan({
     classId: resolvedClassId,
     klass,
-    sessions: scopedSessions,
+    sessions: plannerSessions,
     excludedDates,
   });
   const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
