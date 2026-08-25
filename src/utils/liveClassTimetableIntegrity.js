@@ -62,6 +62,29 @@ function pushIssue(issues, code, message, details = {}) {
   issues.push({ code, message, ...details });
 }
 
+function selectedAnchorBoundary(klass = {}, expectedCount = 0) {
+  const mode = normalize(klass.scheduleAnchorMode).toLowerCase();
+  const source = normalize(klass.scheduleAnchorSource).toLowerCase();
+  const sessionNumber = Number(klass.scheduleAnchorSessionNumber || 0);
+  const explicitlySelected = mode === "rebuild-from-selected-session"
+    || source === "admin-selected-following-restore";
+  if (!explicitlySelected || !Number.isInteger(sessionNumber) || sessionNumber < 1 || sessionNumber > expectedCount) {
+    return null;
+  }
+  return {
+    sessionNumber,
+    startsAt: toDate(klass.scheduleAnchorStartsAt),
+  };
+}
+
+function beforeSelectedAnchor(session = {}, groups = [], levelId = "", anchor = null) {
+  if (!anchor) return false;
+  const number = resolveOfficialSessionNumber(session, groups, levelId);
+  if (number) return number < anchor.sessionNumber;
+  const startsAt = toDate(session.startsAt);
+  return Boolean(anchor.startsAt && startsAt && startsAt.getTime() < anchor.startsAt.getTime());
+}
+
 export function inspectTimetableIntegrity({
   klass = {},
   sessions = [],
@@ -75,6 +98,7 @@ export function inspectTimetableIntegrity({
   const canonicalSessions = sessions.filter((session) => !isSupersededRecord(session));
   const issues = [];
   const warnings = [];
+  const anchor = selectedAnchorBoundary(klass, expectedCount);
 
   sessions.forEach((session) => {
     if (needsSupersededStatusNormalization(session)) {
@@ -97,12 +121,21 @@ export function inspectTimetableIntegrity({
   });
 
   if (expectedCount > 0 && canonicalSessions.length !== expectedCount) {
-    pushIssue(
-      issues,
-      "session-count",
-      `Expected ${expectedCount} timetable records for ${levelId}, but found ${canonicalSessions.length}.`,
-      { expectedCount, actualCount: canonicalSessions.length },
-    );
+    if (anchor) {
+      pushIssue(
+        warnings,
+        "historical-session-count",
+        `The stored class history contains ${canonicalSessions.length} of ${expectedCount} timetable records. The administrator-selected anchor makes earlier historical gaps non-blocking.`,
+        { expectedCount, actualCount: canonicalSessions.length, anchorSessionNumber: anchor.sessionNumber },
+      );
+    } else {
+      pushIssue(
+        issues,
+        "session-count",
+        `Expected ${expectedCount} timetable records for ${levelId}, but found ${canonicalSessions.length}.`,
+        { expectedCount, actualCount: canonicalSessions.length },
+      );
+    }
   }
 
   const dated = [];
@@ -110,18 +143,20 @@ export function inspectTimetableIntegrity({
     const startsAt = toDate(session.startsAt);
     const endsAt = toDate(session.endsAt);
     if (!startsAt || !endsAt) {
+      const target = beforeSelectedAnchor(session, groups, levelId, anchor) ? warnings : issues;
       pushIssue(
-        issues,
-        "invalid-time",
+        target,
+        target === warnings ? "historical-invalid-time" : "invalid-time",
         `${sessionLabel(session)} has a missing or invalid start/end time.`,
         { sessionId: normalize(session.id) },
       );
       return;
     }
     if (endsAt.getTime() <= startsAt.getTime()) {
+      const target = beforeSelectedAnchor(session, groups, levelId, anchor) ? warnings : issues;
       pushIssue(
-        issues,
-        "invalid-duration",
+        target,
+        target === warnings ? "historical-invalid-duration" : "invalid-duration",
         `${sessionLabel(session)} must end after it starts.`,
         { sessionId: normalize(session.id) },
       );
@@ -140,9 +175,13 @@ export function inspectTimetableIntegrity({
       const right = activeDated[rightIndex];
       if (right.startsAt.getTime() >= left.endsAt.getTime()) break;
       const duplicate = right.startsAt.getTime() === left.startsAt.getTime();
+      const historical = beforeSelectedAnchor(left.session, groups, levelId, anchor)
+        && beforeSelectedAnchor(right.session, groups, levelId, anchor);
+      const target = historical ? warnings : issues;
+      const code = duplicate ? "duplicate-time" : "overlap";
       pushIssue(
-        issues,
-        duplicate ? "duplicate-time" : "overlap",
+        target,
+        historical ? `historical-${code}` : code,
         duplicate
           ? `${sessionLabel(left.session)} and ${sessionLabel(right.session)} use the same start time.`
           : `${sessionLabel(left.session)} overlaps ${sessionLabel(right.session)}.`,
@@ -160,9 +199,10 @@ export function inspectTimetableIntegrity({
     canonicalSessions.forEach((session) => {
       const number = resolveOfficialSessionNumber(session, groups, levelId);
       if (!number) {
+        const historical = beforeSelectedAnchor(session, groups, levelId, anchor);
         pushIssue(
-          issues,
-          "missing-curriculum-identity",
+          historical ? warnings : issues,
+          historical ? "historical-missing-curriculum-identity" : "missing-curriculum-identity",
           `${sessionLabel(session)} cannot be matched to an official ${levelId} curriculum position.`,
           { sessionId: normalize(session.id) },
         );
@@ -175,14 +215,14 @@ export function inspectTimetableIntegrity({
       const currentIds = assignmentIds(session);
       if (!currentIds.length) {
         pushIssue(
-          issues,
+          warnings,
           "missing-assignment-ids",
           `${sessionLabel(session)} has no curriculum assignment IDs.`,
           { sessionId: normalize(session.id), sessionNumber: number },
         );
       } else if (group && !sameAssignmentSet(currentIds, group.assignmentIds || [])) {
         pushIssue(
-          issues,
+          warnings,
           "wrong-curriculum-identity",
           `${sessionLabel(session)} does not contain the official assignment IDs for ${levelId} ${levelId === "A1" ? `Day ${number - 1}` : `Lesson ${number}`}.`,
           { sessionId: normalize(session.id), sessionNumber: number },
@@ -203,9 +243,10 @@ export function inspectTimetableIntegrity({
 
     byNumber.forEach((records, number) => {
       if (records.length > 1) {
+        const historical = Boolean(anchor && number < anchor.sessionNumber);
         pushIssue(
-          issues,
-          "duplicate-curriculum-position",
+          historical ? warnings : issues,
+          historical ? "historical-duplicate-curriculum-position" : "duplicate-curriculum-position",
           `${records.length} records are assigned to official position ${number}.`,
           { sessionNumber: number, sessionIds: records.map((record) => normalize(record.id)) },
         );
@@ -214,19 +255,23 @@ export function inspectTimetableIntegrity({
 
     for (let number = 1; number <= expectedCount; number += 1) {
       if (!byNumber.has(number)) {
+        const historical = Boolean(anchor && number < anchor.sessionNumber);
         pushIssue(
-          issues,
-          "missing-curriculum-position",
+          historical ? warnings : issues,
+          historical ? "historical-missing-curriculum-position" : "missing-curriculum-position",
           `Official ${levelId} ${levelId === "A1" ? `Day ${number - 1}` : `Lesson ${number}`} is missing.`,
           { sessionNumber: number },
         );
       }
     }
 
-    numbered.sort((left, right) => left.number - right.number);
-    for (let index = 1; index < numbered.length; index += 1) {
-      const previous = numbered[index - 1];
-      const current = numbered[index];
+    const orderedForValidation = anchor
+      ? numbered.filter((item) => item.number >= anchor.sessionNumber)
+      : numbered;
+    orderedForValidation.sort((left, right) => left.number - right.number);
+    for (let index = 1; index < orderedForValidation.length; index += 1) {
+      const previous = orderedForValidation[index - 1];
+      const current = orderedForValidation[index];
       if (!previous.startsAt || !current.startsAt) continue;
       if (current.startsAt.getTime() <= previous.startsAt.getTime()) {
         pushIssue(
@@ -263,9 +308,10 @@ export function inspectTimetableIntegrity({
     dated.forEach(({ session, startsAt }) => {
       const date = sessionDateInTimezone(startsAt, timezone);
       if (date && date < startDate) {
+        const historical = beforeSelectedAnchor(session, groups, levelId, anchor);
         pushIssue(
-          issues,
-          "before-class-start",
+          historical ? warnings : issues,
+          historical ? "historical-before-class-start" : "before-class-start",
           `${sessionLabel(session)} is scheduled before the class start date ${startDate}.`,
           { sessionId: normalize(session.id), date, startDate },
         );
