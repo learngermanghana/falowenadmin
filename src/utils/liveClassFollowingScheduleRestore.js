@@ -69,6 +69,7 @@ function localParts(value, timezone = "Africa/Accra") {
 
 function buildFollowingSlotsFromAnchor({
   anchorStartsAt,
+  notBeforeStartsAt = "",
   rules,
   timezone,
   excludedDates = [],
@@ -78,10 +79,12 @@ function buildFollowingSlotsFromAnchor({
   const anchorParts = localParts(anchor, timezone);
   if (!anchor || !anchorParts) throw new Error("The selected anchor session has an invalid date.");
 
+  const notBefore = toDate(notBeforeStartsAt);
   const excluded = new Set((excludedDates || []).map(normalize).filter(Boolean));
   const slots = [];
   let cursorDate = anchorParts.dateIso;
   const anchorMs = anchor.getTime();
+  const floorMs = Math.max(anchorMs, notBefore?.getTime() || anchorMs);
 
   for (let guard = 0; slots.length < count && guard < 1095; guard += 1) {
     if (!excluded.has(cursorDate)) {
@@ -93,9 +96,10 @@ function buildFollowingSlotsFromAnchor({
       for (const rule of matchingRules) {
         if (slots.length >= count) break;
         const startsAt = zonedLocalToUtcIso(cursorDate, rule.startTime, timezone);
-        if (new Date(startsAt).getTime() <= anchorMs) continue;
+        const startsAtMs = new Date(startsAt).getTime();
+        if (startsAtMs <= anchorMs || startsAtMs < floorMs) continue;
         const durationMinutes = Number(rule.durationMinutes || 120);
-        const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60000).toISOString();
+        const endsAt = new Date(startsAtMs + durationMinutes * 60000).toISOString();
         slots.push({ startsAt, endsAt, durationMinutes });
       }
     }
@@ -114,6 +118,7 @@ export function buildFollowingScheduleRestorePlan({
   sessions = [],
   anchorSessionId = "",
   excludedDates = [],
+  notBeforeStartsAt = "",
 } = {}) {
   const resolvedClassId = normalize(classId || klass.id);
   if (!resolvedClassId) throw new Error("Class ID is required.");
@@ -141,6 +146,7 @@ export function buildFollowingScheduleRestorePlan({
 
   const anchorStartsAt = toDate(anchorSession.startsAt);
   if (!anchorStartsAt) throw new Error("The selected anchor session has an invalid date.");
+  const normalizedNotBefore = toDate(notBeforeStartsAt)?.toISOString() || anchorStartsAt.toISOString();
   const timezone = normalize(klass.timezone) || "Africa/Accra";
   const rules = normalizeScheduleRules(klass.scheduleRules || []);
   if (!rules.length) throw new Error("The class timetable has no weekly teaching days.");
@@ -150,6 +156,7 @@ export function buildFollowingScheduleRestorePlan({
     scheduleAnchorSessionNumber: anchorLessonNumber,
     scheduleAnchorDay: levelId === "A1" ? anchorLessonNumber - 1 : null,
     scheduleAnchorStartsAt: anchorStartsAt.toISOString(),
+    scheduleAnchorNotBeforeStartsAt: normalizedNotBefore,
     scheduleAnchorSource: "admin-selected-following-restore",
     scheduleAnchorMode: "rebuild-from-selected-session",
   };
@@ -187,6 +194,7 @@ export function buildFollowingScheduleRestorePlan({
   const baseFollowingItems = officialPlan.items.filter((item) => item.lessonNumber > anchorLessonNumber);
   const followingSlots = buildFollowingSlotsFromAnchor({
     anchorStartsAt,
+    notBeforeStartsAt: normalizedNotBefore,
     rules,
     timezone,
     excludedDates,
@@ -313,12 +321,14 @@ export function buildFollowingScheduleRestorePlan({
       sessionNumber: anchorLessonNumber,
       day: levelId === "A1" ? anchorLessonNumber - 1 : null,
       startsAt: anchorStartsAt.toISOString(),
+      notBeforeStartsAt: normalizedNotBefore,
       source: "admin-selected-following-restore",
     },
     anchoredClass,
     anchorSession,
     anchorLessonNumber,
     anchorStartsAt: anchorStartsAt.toISOString(),
+    notBeforeStartsAt: normalizedNotBefore,
     followingItems,
     restorableItems,
     staleFutureRecords,
