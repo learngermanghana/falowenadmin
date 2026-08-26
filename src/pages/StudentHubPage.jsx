@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import StudentDirectoryPage from "./StudentDirectoryPage";
 import StudentActivityPage from "./StudentActivityPage";
 
@@ -27,16 +28,19 @@ function normalizeTab(value) {
 }
 
 export default function StudentHubPage() {
+  const { isStaff } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const queryTab = normalizeTab(searchParams.get("tab"));
+  const requestedTab = normalizeTab(searchParams.get("tab"));
+  const queryTab = isStaff ? "students" : requestedTab;
   const [activeTab, setActiveTab] = useState(queryTab);
 
   useEffect(() => {
     setActiveTab(queryTab);
-  }, [queryTab]);
+    if (isStaff && requestedTab === "activity") setSearchParams({}, { replace: true });
+  }, [isStaff, queryTab, requestedTab, setSearchParams]);
 
   const selectTab = (tab) => {
-    const nextTab = normalizeTab(tab);
+    const nextTab = isStaff ? "students" : normalizeTab(tab);
     setActiveTab(nextTab);
     if (nextTab === "activity") {
       setSearchParams({ tab: "activity" });
@@ -63,7 +67,7 @@ export default function StudentHubPage() {
         <div>
           <h1 style={{ margin: 0, fontSize: 22 }}>Students</h1>
           <p style={{ margin: "4px 0 0", color: "#64748b" }}>
-            Manage student records and review student activity from one place.
+            {isStaff ? "Manage student records from one place." : "Manage student records and review student activity from one place."}
           </p>
         </div>
 
@@ -80,22 +84,24 @@ export default function StudentHubPage() {
           >
             Students
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "activity"}
-            onClick={() => selectTab("activity")}
-            style={{
-              ...TAB_STYLES.base,
-              ...(activeTab === "activity" ? TAB_STYLES.active : TAB_STYLES.inactive),
-            }}
-          >
-            Student Activity
-          </button>
+          {!isStaff && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "activity"}
+              onClick={() => selectTab("activity")}
+              style={{
+                ...TAB_STYLES.base,
+                ...(activeTab === "activity" ? TAB_STYLES.active : TAB_STYLES.inactive),
+              }}
+            >
+              Student Activity
+            </button>
+          )}
         </div>
       </section>
 
-      {activeTab === "activity" ? <StudentActivityPage /> : <StudentDirectoryPage />}
+      {!isStaff && activeTab === "activity" ? <StudentActivityPage /> : <StudentDirectoryPage />}
     </div>
   );
 }
