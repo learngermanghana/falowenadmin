@@ -46,6 +46,16 @@ autoSource = replaceOnce(
 
 fs.writeFileSync(autoTarget, autoSource);
 
+const objectiveTarget = new URL("../src/utils/objectiveMarking.js", import.meta.url);
+let objectiveSource = fs.readFileSync(objectiveTarget, "utf8");
+objectiveSource = replaceOnce(
+  objectiveSource,
+  '  return Object.entries(VOCABULARY_ALIASES).find(([, aliases]) => aliases.some((alias) => normalized.includes(alias)))?.[0] || "";',
+  '  const words = new Set(normalized.split(/\\s+/).filter(Boolean));\n  return Object.entries(VOCABULARY_ALIASES).find(([, aliases]) => aliases.some((alias) => words.has(normalizeAnswer(alias))))?.[0] || "";',
+  "vocabulary alias whole-word matching",
+);
+fs.writeFileSync(objectiveTarget, objectiveSource);
+
 const evidenceTarget = new URL("../src/utils/essayFeedbackEvidence.js", import.meta.url);
 let evidenceSource = fs.readFileSync(evidenceTarget, "utf8");
 
@@ -110,4 +120,4 @@ if (feedbackSource.includes(legacyExactCorrectionFeedback)) {
 }
 
 fs.writeFileSync(feedbackTarget, feedbackSource);
-console.log("A2 feedback now respects comma greetings, preserves exact deterministic corrections, and develops connector range.");
+console.log("A2 feedback now respects comma greetings, preserves exact deterministic corrections, develops connector range, and uses whole-word vocabulary aliases.");
