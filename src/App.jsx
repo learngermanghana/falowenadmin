@@ -23,8 +23,8 @@ const CommunicationHubPage = lazy(() => import("./pages/CommunicationHubPage.jsx
 const GrammarIssueReportsPage = lazy(() => import("./pages/GrammarIssueReportsPage"));
 const WhatsAppRemindersPage = lazy(() => import("./pages/WhatsAppRemindersPage"));
 const TeachingSlidesPage = lazy(() => import("./pages/TeachingSlidesPage"));
-const StudentDirectoryPage = lazy(() => import("./pages/StudentDirectoryPage"));
-const StudentActivityPage = lazy(() => import("./pages/StudentActivityPage"));
+const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
+const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
 const OrientationPage = lazy(() => import("./pages/OrientationSetupTabsPage.jsx"));
 const ClassScheduleSetupPage = lazy(() => import("./pages/ClassScheduleSetupPage"));
@@ -78,9 +78,9 @@ function TopBar() {
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
-                <Link to="/student-activity" onClick={() => setMenuOpen(false)}>Student Activity</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
+                <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
@@ -179,8 +179,9 @@ export default function App() {
           <Route path="/whatsapp-reminders" element={<ProtectedRoute allowStaff={false}><WhatsAppRemindersPage /></ProtectedRoute>} />
           <Route path="/teaching-slides" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/orientation" element={<ProtectedRoute allowStaff={false}><OrientationPage /></ProtectedRoute>} />
-          <Route path="/students" element={<ProtectedRoute><StudentDirectoryPage /></ProtectedRoute>} />
-          <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><StudentActivityPage /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
+          <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><Navigate to="/students?tab=activity" replace /></ProtectedRoute>} />
+          <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/quality-check" element={<Navigate to="/" replace />} />
