@@ -10,13 +10,20 @@ const FORMATS = [
 ];
 
 const TEMPLATES = [
-  { id: "academy", label: "Academy Blue", background: "#071a3a", accent: "#f8c84a", soft: "#12366f", text: "#ffffff", layout: "split" },
-  { id: "falowen", label: "Falowen Gradient", background: "#111827", accent: "#60a5fa", soft: "#1d4ed8", text: "#ffffff", layout: "diagonal" },
-  { id: "gold", label: "Premium Gold", background: "#17120b", accent: "#f7c65a", soft: "#3a2c14", text: "#fffaf0", layout: "editorial" },
+  { id: "academy", label: "Academy Blue", background: "#071a3a", accent: "#f8c84a", soft: "#12366f", text: "#ffffff", layout: "photo" },
+  { id: "falowen", label: "Falowen Gradient", background: "#111827", accent: "#60a5fa", soft: "#1d4ed8", text: "#ffffff", layout: "photo" },
+  { id: "gold", label: "Premium Gold", background: "#17120b", accent: "#f7c65a", soft: "#3a2c14", text: "#fffaf0", layout: "photo" },
   { id: "clean", label: "Clean Light", background: "#f8fafc", accent: "#1d4ed8", soft: "#dbeafe", text: "#0f172a", layout: "clean" },
   { id: "germany", label: "Germany", background: "#111111", accent: "#ef4444", soft: "#facc15", text: "#ffffff", layout: "flag" },
-  { id: "green", label: "Fresh Green", background: "#062d25", accent: "#86efac", soft: "#14532d", text: "#f0fdf4", layout: "split" },
+  { id: "green", label: "Fresh Green", background: "#062d25", accent: "#86efac", soft: "#14532d", text: "#f0fdf4", layout: "photo" },
 ];
+
+const DEFAULT_PHOTO = {
+  x: 50,
+  y: 42,
+  zoom: 1,
+  width: 45,
+};
 
 const panelStyle = {
   border: "1px solid #e2e8f0",
@@ -80,12 +87,10 @@ function formatSchedule(scheduleRules = []) {
   const dayNames = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "Schedule to be announced";
-
   const uniqueTimes = [...new Set(rules.map((rule) => rule.startTime))];
   if (uniqueTimes.length === 1) {
     return `${rules.map((rule) => dayNames[rule.day] || rule.day).join(" • ")} | ${uniqueTimes[0]}`;
   }
-
   return rules.map((rule) => `${dayNames[rule.day] || rule.day} ${rule.startTime}`).join(" • ");
 }
 
@@ -180,25 +185,6 @@ function roundRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-function drawCoverImage(ctx, image, x, y, width, height) {
-  if (!image) return;
-  const imageRatio = image.width / image.height;
-  const boxRatio = width / height;
-  let sx = 0;
-  let sy = 0;
-  let sw = image.width;
-  let sh = image.height;
-
-  if (imageRatio > boxRatio) {
-    sw = image.height * boxRatio;
-    sx = (image.width - sw) / 2;
-  } else {
-    sh = image.width / boxRatio;
-    sy = (image.height - sh) / 2;
-  }
-  ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
-}
-
 function loadLocalImage(src) {
   if (!src) return Promise.resolve(null);
   return new Promise((resolve) => {
@@ -209,66 +195,131 @@ function loadLocalImage(src) {
   });
 }
 
-function drawPosterBackground(ctx, width, height, template, photo) {
+function drawFocalCover(ctx, image, x, y, width, height, controls) {
+  if (!image) return;
+  const zoom = Math.max(1, Number(controls?.zoom || 1));
+  const focusX = Math.min(100, Math.max(0, Number(controls?.x ?? 50))) / 100;
+  const focusY = Math.min(100, Math.max(0, Number(controls?.y ?? 50))) / 100;
+  const scale = Math.max(width / image.width, height / image.height) * zoom;
+  const drawWidth = image.width * scale;
+  const drawHeight = image.height * scale;
+  const overflowX = Math.max(0, drawWidth - width);
+  const overflowY = Math.max(0, drawHeight - height);
+  const drawX = x - overflowX * focusX;
+  const drawY = y - overflowY * focusY;
+  ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+}
+
+function drawPhotoPanel(ctx, width, height, template, photo, controls) {
+  if (!photo) return null;
+  const panelWidth = width * (Math.min(58, Math.max(36, Number(controls.width || 45))) / 100);
+  const photoX = width - panelWidth;
+  const curve = Math.max(28, width * 0.035);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(photoX + curve, 0);
+  ctx.quadraticCurveTo(photoX - curve * 1.2, height * 0.5, photoX + curve, height);
+  ctx.lineTo(width, height);
+  ctx.lineTo(width, 0);
+  ctx.closePath();
+  ctx.clip();
+  drawFocalCover(ctx, photo, photoX - curve * 1.2, 0, panelWidth + curve * 1.2, height, controls);
+  ctx.restore();
+
+  const blend = ctx.createLinearGradient(photoX - width * 0.06, 0, photoX + width * 0.1, 0);
+  blend.addColorStop(0, template.background);
+  blend.addColorStop(0.55, `${template.background}dd`);
+  blend.addColorStop(1, `${template.background}00`);
+  ctx.fillStyle = blend;
+  ctx.fillRect(photoX - width * 0.08, 0, width * 0.2, height);
+
+  return { photoX, panelWidth };
+}
+
+function drawBackground(ctx, width, height, template, photo, photoControls) {
   ctx.fillStyle = template.background;
   ctx.fillRect(0, 0, width, height);
 
-  if (template.layout === "diagonal") {
+  if (template.id === "falowen") {
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, template.background);
-    gradient.addColorStop(0.56, template.soft);
+    gradient.addColorStop(0.58, template.soft);
     gradient.addColorStop(1, template.background);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
 
   if (template.layout === "flag") {
-    ctx.fillStyle = "#111111";
-    ctx.fillRect(0, 0, width, height * 0.34);
+    ctx.globalAlpha = 0.18;
     ctx.fillStyle = "#d91f26";
-    ctx.fillRect(0, height * 0.34, width, height * 0.33);
+    ctx.fillRect(0, height * 0.32, width, height * 0.22);
     ctx.fillStyle = "#f2c500";
-    ctx.fillRect(0, height * 0.67, width, height * 0.33);
-    ctx.fillStyle = "rgba(0,0,0,.52)";
-    ctx.fillRect(0, 0, width, height);
-  }
-
-  if (photo) {
-    if (template.layout === "clean") {
-      drawCoverImage(ctx, photo, width * 0.55, 0, width * 0.45, height * 0.54);
-      const gradient = ctx.createLinearGradient(width * 0.48, 0, width, 0);
-      gradient.addColorStop(0, template.background);
-      gradient.addColorStop(1, "rgba(248,250,252,.08)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(width * 0.42, 0, width * 0.58, height * 0.58);
-    } else {
-      drawCoverImage(ctx, photo, width * 0.58, 0, width * 0.42, height);
-      const gradient = ctx.createLinearGradient(width * 0.45, 0, width, 0);
-      gradient.addColorStop(0, template.background);
-      gradient.addColorStop(0.72, "rgba(0,0,0,.15)");
-      gradient.addColorStop(1, "rgba(0,0,0,.28)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(width * 0.38, 0, width * 0.62, height);
-    }
-  } else {
-    ctx.globalAlpha = 0.1;
-    ctx.fillStyle = template.accent;
-    ctx.beginPath();
-    ctx.moveTo(width * 0.62, 0);
-    ctx.lineTo(width, 0);
-    ctx.lineTo(width, height);
-    ctx.lineTo(width * 0.8, height);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillRect(0, height * 0.54, width, height * 0.18);
     ctx.globalAlpha = 1;
   }
+
+  if (photo) return drawPhotoPanel(ctx, width, height, template, photo, photoControls);
+
+  ctx.globalAlpha = 0.09;
+  ctx.fillStyle = template.accent;
+  ctx.beginPath();
+  ctx.moveTo(width * 0.65, 0);
+  ctx.lineTo(width, 0);
+  ctx.lineTo(width, height);
+  ctx.lineTo(width * 0.82, height);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  return null;
 }
 
-async function renderPoster(canvas, data, template, format, photoSrc, isCurrent = () => true) {
-  if (!canvas) return false;
+function drawBrand(ctx, width, data, template, pad, maxWidth) {
+  const top = width * 0.055;
+  ctx.fillStyle = template.text;
+  ctx.font = `800 ${Math.round(width * 0.023)}px Arial, sans-serif`;
+  ctx.fillText("LEARN LANGUAGE EDUCATION ACADEMY", pad, top);
+  ctx.globalAlpha = 0.8;
+  ctx.font = `600 ${Math.round(width * 0.016)}px Arial, sans-serif`;
+  ctx.fillText("Powered by Falowen", pad, top + width * 0.028);
+  ctx.globalAlpha = 1;
 
-  // Wait for the selected photo before touching the visible canvas. This prevents
-  // blank exports while an image is loading and lets stale renders be discarded.
+  const pillText = String(data.eyebrow || "LEARN GERMAN WITH US").toUpperCase();
+  ctx.font = `800 ${Math.round(width * 0.019)}px Arial, sans-serif`;
+  const pillWidth = Math.min(maxWidth, ctx.measureText(pillText).width + width * 0.065);
+  const pillHeight = width * 0.052;
+  const pillY = top + width * 0.055;
+  roundRect(ctx, pad, pillY, pillWidth, pillHeight, pillHeight / 2);
+  ctx.fillStyle = template.accent;
+  ctx.fill();
+  ctx.fillStyle = template.id === "clean" ? "#ffffff" : template.background;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(pillText, pad + pillWidth / 2, pillY + pillHeight / 2 + 1);
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  return pillY + pillHeight + width * 0.055;
+}
+
+function drawDetailRow(ctx, template, width, pad, maxWidth, label, value, y) {
+  if (!String(value || "").trim()) return y;
+  ctx.fillStyle = template.accent;
+  ctx.font = `800 ${Math.round(width * 0.019)}px Arial, sans-serif`;
+  ctx.fillText(label, pad, y);
+  ctx.fillStyle = template.text;
+  ctx.font = `600 ${Math.round(width * 0.025)}px Arial, sans-serif`;
+  return wrapText(ctx, value, pad, y + width * 0.032, maxWidth, width * 0.034, 2) + width * 0.024;
+}
+
+function displayWebsite(value) {
+  return String(value || "")
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
+}
+
+async function renderPoster(canvas, data, template, format, photoSrc, photoControls, isCurrent = () => true) {
+  if (!canvas) return false;
   const photo = await loadLocalImage(photoSrc);
   if (!isCurrent()) return false;
 
@@ -280,95 +331,83 @@ async function renderPoster(canvas, data, template, format, photoSrc, isCurrent 
   const ctx = buffer.getContext("2d");
   if (!ctx) return false;
 
-  drawPosterBackground(ctx, width, height, template, photo);
-
-  const pad = Math.round(width * 0.07);
-  const contentWidth = photo && template.layout !== "clean" ? width * 0.53 - pad : width - pad * 2;
-  const titleMax = Math.max(410, contentWidth);
-  const top = height * 0.09;
-
-  ctx.fillStyle = template.accent;
-  ctx.font = `700 ${Math.round(width * 0.025)}px Arial, sans-serif`;
-  ctx.fillText(String(data.eyebrow || "").toUpperCase(), pad, top);
+  const photoLayout = drawBackground(ctx, width, height, template, photo, photoControls);
+  const pad = Math.round(width * 0.065);
+  const rightBoundary = photoLayout ? photoLayout.photoX - width * 0.035 : width - pad;
+  const maxWidth = Math.max(width * 0.38, rightBoundary - pad);
+  let y = drawBrand(ctx, width, data, template, pad, maxWidth);
 
   ctx.fillStyle = template.text;
-  ctx.font = `800 ${Math.round(width * (format.id === "story" ? 0.064 : 0.058))}px Arial, sans-serif`;
-  let y = top + width * 0.082;
-  y = wrapText(ctx, data.className, pad, y, titleMax, width * 0.068, format.id === "story" ? 4 : 3);
+  ctx.font = `800 ${Math.round(width * (format.id === "story" ? 0.057 : 0.052))}px Arial, sans-serif`;
+  y = wrapText(ctx, data.className, pad, y, maxWidth, width * 0.062, format.id === "story" ? 4 : 3);
 
   if (data.level) {
     const badgeText = String(data.level).toUpperCase();
-    ctx.font = `800 ${Math.round(width * 0.032)}px Arial, sans-serif`;
-    const badgeWidth = Math.min(titleMax, ctx.measureText(badgeText).width + width * 0.07);
-    const badgeHeight = width * 0.065;
-    roundRect(ctx, pad, y + width * 0.015, badgeWidth, badgeHeight, badgeHeight * 0.25);
+    ctx.font = `800 ${Math.round(width * 0.029)}px Arial, sans-serif`;
+    const badgeHeight = width * 0.06;
+    const badgeWidth = Math.min(maxWidth, ctx.measureText(badgeText).width + width * 0.06);
+    const badgeY = y + width * 0.018;
+    roundRect(ctx, pad, badgeY, badgeWidth, badgeHeight, badgeHeight * 0.28);
     ctx.fillStyle = template.accent;
     ctx.fill();
-    ctx.fillStyle = template.layout === "clean" ? "#fff" : template.background;
+    ctx.fillStyle = template.id === "clean" ? "#ffffff" : template.background;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(badgeText, pad + badgeWidth / 2, y + width * 0.015 + badgeHeight / 2 + 1);
+    ctx.fillText(badgeText, pad + badgeWidth / 2, badgeY + badgeHeight / 2 + 1);
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    y += width * 0.11;
+    y = badgeY + badgeHeight + width * 0.05;
   }
 
-  const detailRows = [
-    ["START", data.startDate],
-    ["SCHEDULE", data.schedule],
-    ["MODE", data.mode],
-    ["FEE", data.fee],
-  ].filter(([, value]) => String(value || "").trim());
-
-  detailRows.forEach(([label, value]) => {
-    ctx.fillStyle = template.accent;
-    ctx.font = `800 ${Math.round(width * 0.02)}px Arial, sans-serif`;
-    ctx.fillText(label, pad, y);
-    ctx.fillStyle = template.text;
-    ctx.font = `600 ${Math.round(width * 0.027)}px Arial, sans-serif`;
-    y = wrapText(ctx, value, pad, y + width * 0.034, titleMax, width * 0.036, 2) + width * 0.022;
-  });
+  y = drawDetailRow(ctx, template, width, pad, maxWidth, "START", data.startDate, y);
+  y = drawDetailRow(ctx, template, width, pad, maxWidth, "SCHEDULE", data.schedule, y);
+  y = drawDetailRow(ctx, template, width, pad, maxWidth, "MODE", data.mode, y);
+  y = drawDetailRow(ctx, template, width, pad, maxWidth, "FEE", data.fee, y);
 
   if (data.duration) {
+    const boxY = y + width * 0.005;
+    const boxHeight = width * 0.055;
+    roundRect(ctx, pad, boxY, Math.min(maxWidth, width * 0.45), boxHeight, boxHeight * 0.3);
+    ctx.fillStyle = `${template.soft}cc`;
+    ctx.fill();
     ctx.fillStyle = template.text;
-    ctx.globalAlpha = 0.82;
-    ctx.font = `500 ${Math.round(width * 0.023)}px Arial, sans-serif`;
-    y = wrapText(ctx, data.duration, pad, y, titleMax, width * 0.032, 2) + width * 0.03;
+    ctx.globalAlpha = 0.9;
+    ctx.font = `600 ${Math.round(width * 0.02)}px Arial, sans-serif`;
+    ctx.fillText(data.duration, pad + width * 0.018, boxY + boxHeight * 0.66);
     ctx.globalAlpha = 1;
+    y = boxY + boxHeight + width * 0.04;
   }
 
-  const buttonWidth = Math.min(titleMax, width * 0.4);
-  const buttonHeight = width * 0.082;
-  const maxButtonY = height - width * 0.23;
-  const buttonY = Math.min(y, maxButtonY);
+  const footerSpace = width * 0.19;
+  const buttonHeight = width * 0.075;
+  const buttonWidth = Math.min(maxWidth, width * 0.39);
+  const buttonY = Math.min(y, height - footerSpace - buttonHeight);
   roundRect(ctx, pad, buttonY, buttonWidth, buttonHeight, buttonHeight / 2);
   ctx.fillStyle = template.accent;
   ctx.fill();
-  ctx.fillStyle = template.layout === "clean" ? "#ffffff" : template.background;
-  ctx.font = `800 ${Math.round(width * 0.025)}px Arial, sans-serif`;
+  ctx.fillStyle = template.id === "clean" ? "#ffffff" : template.background;
+  ctx.font = `800 ${Math.round(width * 0.024)}px Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(data.cta || "REGISTER NOW", pad + buttonWidth / 2, buttonY + buttonHeight / 2 + 1);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
-  const footerY = height - pad * 0.55;
+  const footerY = height - width * 0.07;
   ctx.fillStyle = template.text;
-  ctx.globalAlpha = 0.94;
-  ctx.font = `700 ${Math.round(width * 0.022)}px Arial, sans-serif`;
-  const websiteText = String(data.website || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
-  wrapText(ctx, websiteText, pad, footerY - width * 0.045, width - pad * 2, width * 0.027, 2);
+  ctx.globalAlpha = 0.96;
+  ctx.font = `700 ${Math.round(width * 0.021)}px Arial, sans-serif`;
+  wrapText(ctx, displayWebsite(data.website), pad, footerY - width * 0.05, width - pad * 2, width * 0.027, 2);
   if (data.phone) {
-    ctx.font = `500 ${Math.round(width * 0.019)}px Arial, sans-serif`;
-    ctx.fillText(data.phone, pad, footerY - width * 0.008);
+    ctx.font = `500 ${Math.round(width * 0.018)}px Arial, sans-serif`;
+    ctx.fillText(data.phone, pad, footerY - width * 0.014);
   }
   ctx.globalAlpha = 0.68;
-  ctx.font = `500 ${Math.round(width * 0.017)}px Arial, sans-serif`;
-  wrapText(ctx, data.footer, pad, footerY + width * 0.025, width - pad * 2, width * 0.023, 2);
+  ctx.font = `500 ${Math.round(width * 0.016)}px Arial, sans-serif`;
+  wrapText(ctx, data.footer, pad, footerY + width * 0.02, width - pad * 2, width * 0.022, 2);
   ctx.globalAlpha = 1;
 
   if (!isCurrent()) return false;
-
   const visibleCtx = canvas.getContext("2d");
   if (!visibleCtx) return false;
   canvas.width = width;
@@ -378,11 +417,23 @@ async function renderPoster(canvas, data, template, format, photoSrc, isCurrent 
   return true;
 }
 
-function Field({ label, value, onChange, type = "text", placeholder = "" }) {
+function Field({ label, value, onChange, placeholder = "" }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
       <span style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>{label}</span>
-      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} style={inputStyle} />
+      <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} style={inputStyle} />
+    </label>
+  );
+}
+
+function Slider({ label, value, min, max, step = 1, onChange, suffix = "" }) {
+  return (
+    <label style={{ display: "grid", gap: 6 }}>
+      <span style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, fontWeight: 700, color: "#334155" }}>
+        <span>{label}</span>
+        <span style={{ color: "#64748b" }}>{value}{suffix}</span>
+      </span>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} />
     </label>
   );
 }
@@ -398,6 +449,7 @@ export default function SocialMediaPage() {
   const [formatId, setFormatId] = useState(FORMATS[0].id);
   const [photoSrc, setPhotoSrc] = useState("");
   const [photoReading, setPhotoReading] = useState(false);
+  const [photoControls, setPhotoControls] = useState(DEFAULT_PHOTO);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState(draftFromClass({}));
@@ -408,8 +460,8 @@ export default function SocialMediaPage() {
   const format = useMemo(() => FORMATS.find((item) => item.id === formatId) || FORMATS[0], [formatId]);
   const selectedClass = useMemo(() => classes.find((item) => item.id === selectedClassId) || null, [classes, selectedClassId]);
   const posterSignature = useMemo(
-    () => JSON.stringify({ draft, templateId, formatId, photoSrc }),
-    [draft, templateId, formatId, photoSrc],
+    () => JSON.stringify({ draft, templateId, formatId, photoSrc, photoControls }),
+    [draft, templateId, formatId, photoSrc, photoControls],
   );
   const exportReady = !photoReading && !rendering && renderedSignature === posterSignature;
 
@@ -445,9 +497,9 @@ export default function SocialMediaPage() {
         template,
         format,
         photoSrc,
+        photoControls,
         () => !cancelled && renderVersionRef.current === renderVersion,
       );
-
       if (!cancelled && renderVersionRef.current === renderVersion) {
         if (completed) setRenderedSignature(posterSignature);
         setRendering(false);
@@ -457,7 +509,7 @@ export default function SocialMediaPage() {
     return () => {
       cancelled = true;
     };
-  }, [draft, template, format, photoSrc, posterSignature]);
+  }, [draft, template, format, photoSrc, photoControls, posterSignature]);
 
   const chooseClass = (classId) => {
     setSelectedClassId(classId);
@@ -472,6 +524,7 @@ export default function SocialMediaPage() {
   };
 
   const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const updatePhotoControl = (field, value) => setPhotoControls((current) => ({ ...current, [field]: value }));
 
   const uploadPhoto = (file) => {
     if (!file) return;
@@ -479,11 +532,11 @@ export default function SocialMediaPage() {
       pushToast({ type: "error", message: "Please choose an image file." });
       return;
     }
-
     setPhotoReading(true);
     const reader = new FileReader();
     reader.onload = () => {
       setPhotoSrc(typeof reader.result === "string" ? reader.result : "");
+      setPhotoControls(DEFAULT_PHOTO);
       setPhotoReading(false);
     };
     reader.onerror = () => {
@@ -493,12 +546,16 @@ export default function SocialMediaPage() {
     reader.readAsDataURL(file);
   };
 
+  const removePhoto = () => {
+    setPhotoSrc("");
+    setPhotoControls(DEFAULT_PHOTO);
+  };
+
   const exportImage = () => {
     if (!exportReady) {
       pushToast({ type: "info", message: "Please wait for the latest poster preview to finish rendering." });
       return;
     }
-
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.toBlob((blob) => {
@@ -549,7 +606,7 @@ export default function SocialMediaPage() {
           <div>
             <h1 style={{ margin: 0 }}>Social Media</h1>
             <p style={{ margin: "6px 0 0", color: "#64748b", maxWidth: 760 }}>
-              Select an upcoming class, choose a reusable design, adjust the auto-filled details, then export a ready PNG for Instagram, Facebook, WhatsApp Status, or Stories.
+              Select a class, choose a design, adjust the auto-filled details and photo crop, then export a ready PNG.
             </p>
           </div>
           {selectedClass && startDays != null && (
@@ -560,15 +617,7 @@ export default function SocialMediaPage() {
         </div>
       </section>
 
-      <div
-        style={{
-          display: "grid",
-          gap: 16,
-          gridTemplateColumns: isNarrow ? "minmax(0, 1fr)" : "minmax(300px, 430px) minmax(0, 1fr)",
-          alignItems: "start",
-          minWidth: 0,
-        }}
-      >
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: isNarrow ? "minmax(0, 1fr)" : "minmax(300px, 430px) minmax(0, 1fr)", alignItems: "start", minWidth: 0 }}>
         <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
           <section style={panelStyle}>
             <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>1. Choose class</h2>
@@ -584,30 +633,14 @@ export default function SocialMediaPage() {
                 ))}
               </select>
             )}
-            <button type="button" onClick={resetFromClass} disabled={!selectedClass} style={{ marginTop: 10 }}>
-              Reset details from class
-            </button>
+            <button type="button" onClick={resetFromClass} disabled={!selectedClass} style={{ marginTop: 10 }}>Reset details from class</button>
           </section>
 
           <section style={panelStyle}>
             <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>2. Choose template</h2>
             <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {TEMPLATES.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setTemplateId(item.id)}
-                  style={{
-                    minHeight: 76,
-                    borderRadius: 12,
-                    border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1",
-                    background: item.background,
-                    color: item.text,
-                    padding: 10,
-                    fontWeight: 800,
-                    textAlign: "left",
-                  }}
-                >
+                <button key={item.id} type="button" onClick={() => setTemplateId(item.id)} style={{ minHeight: 76, borderRadius: 12, border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1", background: item.background, color: item.text, padding: 10, fontWeight: 800, textAlign: "left" }}>
                   <span style={{ display: "block", width: 26, height: 5, borderRadius: 999, background: item.accent, marginBottom: 8 }} />
                   {item.label}
                 </button>
@@ -616,7 +649,7 @@ export default function SocialMediaPage() {
           </section>
 
           <section style={panelStyle}>
-            <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>3. Size & photo</h2>
+            <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>3. Size & temporary photo</h2>
             <div style={{ display: "grid", gap: 10 }}>
               {FORMATS.map((item) => (
                 <label key={item.id} style={{ display: "flex", gap: 9, alignItems: "center", cursor: "pointer" }}>
@@ -625,11 +658,25 @@ export default function SocialMediaPage() {
                 </label>
               ))}
               <label style={{ display: "grid", gap: 6, marginTop: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>Optional student/class photo</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Upload student/class photo</span>
                 <input type="file" accept="image/*" onChange={(event) => uploadPhoto(event.target.files?.[0] || null)} />
+                <small style={{ color: "#64748b" }}>Temporary only — the photo is not uploaded or saved.</small>
               </label>
               {photoReading ? <small style={{ color: "#64748b" }}>Reading photo…</small> : null}
-              {photoSrc ? <button type="button" onClick={() => setPhotoSrc("")}>Remove photo</button> : null}
+
+              {photoSrc ? (
+                <div style={{ display: "grid", gap: 10, marginTop: 4, paddingTop: 12, borderTop: "1px solid #e2e8f0" }}>
+                  <strong style={{ fontSize: 13 }}>Adjust photo crop</strong>
+                  <Slider label="Left / right" value={photoControls.x} min={0} max={100} onChange={(value) => updatePhotoControl("x", value)} suffix="%" />
+                  <Slider label="Up / down" value={photoControls.y} min={0} max={100} onChange={(value) => updatePhotoControl("y", value)} suffix="%" />
+                  <Slider label="Zoom" value={Math.round(photoControls.zoom * 100)} min={100} max={180} onChange={(value) => updatePhotoControl("zoom", value / 100)} suffix="%" />
+                  <Slider label="Photo area" value={photoControls.width} min={36} max={58} onChange={(value) => updatePhotoControl("width", value)} suffix="%" />
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button type="button" onClick={() => setPhotoControls(DEFAULT_PHOTO)}>Reset photo position</button>
+                    <button type="button" onClick={removePhoto}>Remove photo</button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
 
@@ -657,26 +704,14 @@ export default function SocialMediaPage() {
             <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 17 }}>Live preview</h2>
-                <small style={{ color: "#64748b" }}>
-                  {format.width} × {format.height}px PNG{rendering || photoReading ? " • Rendering…" : ""}
-                </small>
+                <small style={{ color: "#64748b" }}>{format.width} × {format.height}px PNG{rendering || photoReading ? " • Rendering…" : ""}</small>
               </div>
               <button type="button" onClick={exportImage} disabled={!exportReady} style={{ fontWeight: 800 }}>
                 {exportReady ? "Export PNG" : "Rendering…"}
               </button>
             </div>
             <div style={{ display: "grid", placeItems: "center", borderRadius: 14, background: "#e2e8f0", padding: isNarrow ? 6 : 12, overflow: "hidden", minWidth: 0 }}>
-              <canvas
-                ref={canvasRef}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  maxWidth: format.id === "story" ? 460 : 650,
-                  height: "auto",
-                  borderRadius: 10,
-                  boxShadow: "0 18px 45px rgba(15,23,42,.18)",
-                }}
-              />
+              <canvas ref={canvasRef} style={{ display: "block", width: "100%", maxWidth: format.id === "story" ? 460 : 650, height: "auto", borderRadius: 10, boxShadow: "0 18px 45px rgba(15,23,42,.18)" }} />
             </div>
           </section>
 
