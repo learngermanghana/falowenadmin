@@ -32,7 +32,29 @@ const inputStyle = {
   padding: "9px 10px",
   background: "#fff",
   color: "#0f172a",
+  boxSizing: "border-box",
 };
+
+function useNarrowWorkspace() {
+  const query = "(max-width: 820px)";
+  const [isNarrow, setIsNarrow] = useState(() => (
+    typeof window !== "undefined" ? window.matchMedia(query).matches : false
+  ));
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const update = () => setIsNarrow(media.matches);
+    update();
+    if (typeof media.addEventListener === "function") media.addEventListener("change", update);
+    else media.addListener(update);
+    return () => {
+      if (typeof media.removeEventListener === "function") media.removeEventListener("change", update);
+      else media.removeListener(update);
+    };
+  }, []);
+
+  return isNarrow;
+}
 
 function textValue(...values) {
   return values.map((value) => String(value ?? "").trim()).find(Boolean) || "";
@@ -58,15 +80,19 @@ function formatSchedule(scheduleRules = []) {
   const dayNames = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
   const rules = normalizeScheduleRules(scheduleRules);
   if (!rules.length) return "Schedule to be announced";
-  return rules
-    .map((rule) => `${dayNames[rule.day] || rule.day} ${rule.startTime}`)
-    .join(" • ");
+
+  const uniqueTimes = [...new Set(rules.map((rule) => rule.startTime))];
+  if (uniqueTimes.length === 1) {
+    return `${rules.map((rule) => dayNames[rule.day] || rule.day).join(" • ")} | ${uniqueTimes[0]}`;
+  }
+
+  return rules.map((rule) => `${dayNames[rule.day] || rule.day} ${rule.startTime}`).join(" • ");
 }
 
 function formatFee(value) {
   if (value == null || value === "") return "";
   const numeric = Number(String(value).replace(/[^0-9.]/g, ""));
-  if (!Number.isFinite(numeric) || numeric <= 0) return String(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return String(value).trim();
   return `GHS ${numeric.toLocaleString("en-GH", { maximumFractionDigits: 2 })}`;
 }
 
@@ -106,7 +132,7 @@ function draftFromClass(klass = {}) {
     startDate: startDate || "Starting soon",
     schedule: formatSchedule(klass.scheduleRules),
     mode: mode || "Online & in-person options",
-    fee: fee || "Contact us for fees",
+    fee,
     duration: endDate ? `Runs until ${endDate}` : "",
     cta: "REGISTER NOW",
     website: registerUrl,
@@ -135,9 +161,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 4) {
   const visible = lines.slice(0, maxLines);
   if (lines.length > maxLines && visible.length) {
     let last = visible[visible.length - 1];
-    while (last && ctx.measureText(`${last}…`).width > maxWidth) {
-      last = last.slice(0, -1);
-    }
+    while (last && ctx.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
     visible[visible.length - 1] = `${last}…`;
   }
 
@@ -227,49 +251,67 @@ function drawPosterBackground(ctx, width, height, template, photo) {
       ctx.fillRect(width * 0.38, 0, width * 0.62, height);
     }
   } else {
-    ctx.globalAlpha = 0.12;
+    ctx.globalAlpha = 0.1;
     ctx.fillStyle = template.accent;
     ctx.beginPath();
-    ctx.arc(width * 0.87, height * 0.14, width * 0.22, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(width * 0.8, height * 0.82, width * 0.34, 0, Math.PI * 2);
+    ctx.moveTo(width * 0.62, 0);
+    ctx.lineTo(width, 0);
+    ctx.lineTo(width, height);
+    ctx.lineTo(width * 0.8, height);
+    ctx.closePath();
     ctx.fill();
     ctx.globalAlpha = 1;
   }
 }
 
-async function renderPoster(canvas, data, template, format, photoSrc) {
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+async function renderPoster(canvas, data, template, format, photoSrc, isCurrent = () => true) {
+  if (!canvas) return false;
+
+  // Wait for the selected photo before touching the visible canvas. This prevents
+  // blank exports while an image is loading and lets stale renders be discarded.
+  const photo = await loadLocalImage(photoSrc);
+  if (!isCurrent()) return false;
+
   const width = format.width;
   const height = format.height;
-  canvas.width = width;
-  canvas.height = height;
-  const photo = await loadLocalImage(photoSrc);
+  const buffer = document.createElement("canvas");
+  buffer.width = width;
+  buffer.height = height;
+  const ctx = buffer.getContext("2d");
+  if (!ctx) return false;
 
   drawPosterBackground(ctx, width, height, template, photo);
 
-  const pad = Math.round(width * 0.075);
-  const contentWidth = photo && template.layout !== "clean" ? width * 0.54 - pad : width - pad * 2;
-  const titleMax = Math.max(430, contentWidth);
-  const top = height * 0.11;
+  const pad = Math.round(width * 0.07);
+  const contentWidth = photo && template.layout !== "clean" ? width * 0.53 - pad : width - pad * 2;
+  const titleMax = Math.max(410, contentWidth);
+  const top = height * 0.09;
 
   ctx.fillStyle = template.accent;
-  ctx.font = `700 ${Math.round(width * 0.027)}px Arial, sans-serif`;
-  ctx.letterSpacing = "2px";
+  ctx.font = `700 ${Math.round(width * 0.025)}px Arial, sans-serif`;
   ctx.fillText(String(data.eyebrow || "").toUpperCase(), pad, top);
 
   ctx.fillStyle = template.text;
-  ctx.font = `800 ${Math.round(width * (format.id === "story" ? 0.068 : 0.062))}px Arial, sans-serif`;
-  let y = top + width * 0.09;
-  y = wrapText(ctx, data.className, pad, y, titleMax, width * 0.073, format.id === "story" ? 4 : 3);
+  ctx.font = `800 ${Math.round(width * (format.id === "story" ? 0.064 : 0.058))}px Arial, sans-serif`;
+  let y = top + width * 0.082;
+  y = wrapText(ctx, data.className, pad, y, titleMax, width * 0.068, format.id === "story" ? 4 : 3);
 
-  ctx.fillStyle = template.accent;
-  ctx.font = `800 ${Math.round(width * 0.04)}px Arial, sans-serif`;
-  ctx.fillText(data.level, pad, y + width * 0.03);
-  y += width * 0.09;
+  if (data.level) {
+    const badgeText = String(data.level).toUpperCase();
+    ctx.font = `800 ${Math.round(width * 0.032)}px Arial, sans-serif`;
+    const badgeWidth = Math.min(titleMax, ctx.measureText(badgeText).width + width * 0.07);
+    const badgeHeight = width * 0.065;
+    roundRect(ctx, pad, y + width * 0.015, badgeWidth, badgeHeight, badgeHeight * 0.25);
+    ctx.fillStyle = template.accent;
+    ctx.fill();
+    ctx.fillStyle = template.layout === "clean" ? "#fff" : template.background;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(badgeText, pad + badgeWidth / 2, y + width * 0.015 + badgeHeight / 2 + 1);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    y += width * 0.11;
+  }
 
   const detailRows = [
     ["START", data.startDate],
@@ -280,49 +322,60 @@ async function renderPoster(canvas, data, template, format, photoSrc) {
 
   detailRows.forEach(([label, value]) => {
     ctx.fillStyle = template.accent;
-    ctx.font = `800 ${Math.round(width * 0.022)}px Arial, sans-serif`;
+    ctx.font = `800 ${Math.round(width * 0.02)}px Arial, sans-serif`;
     ctx.fillText(label, pad, y);
     ctx.fillStyle = template.text;
-    ctx.font = `600 ${Math.round(width * 0.029)}px Arial, sans-serif`;
-    y = wrapText(ctx, value, pad, y + width * 0.037, titleMax, width * 0.038, 2) + width * 0.024;
+    ctx.font = `600 ${Math.round(width * 0.027)}px Arial, sans-serif`;
+    y = wrapText(ctx, value, pad, y + width * 0.034, titleMax, width * 0.036, 2) + width * 0.022;
   });
 
   if (data.duration) {
     ctx.fillStyle = template.text;
     ctx.globalAlpha = 0.82;
-    ctx.font = `500 ${Math.round(width * 0.025)}px Arial, sans-serif`;
-    ctx.fillText(data.duration, pad, y);
+    ctx.font = `500 ${Math.round(width * 0.023)}px Arial, sans-serif`;
+    y = wrapText(ctx, data.duration, pad, y, titleMax, width * 0.032, 2) + width * 0.03;
     ctx.globalAlpha = 1;
-    y += width * 0.055;
   }
 
-  const buttonWidth = Math.min(titleMax, width * 0.38);
-  const buttonHeight = width * 0.09;
-  roundRect(ctx, pad, y, buttonWidth, buttonHeight, buttonHeight / 2);
+  const buttonWidth = Math.min(titleMax, width * 0.4);
+  const buttonHeight = width * 0.082;
+  const maxButtonY = height - width * 0.23;
+  const buttonY = Math.min(y, maxButtonY);
+  roundRect(ctx, pad, buttonY, buttonWidth, buttonHeight, buttonHeight / 2);
   ctx.fillStyle = template.accent;
   ctx.fill();
   ctx.fillStyle = template.layout === "clean" ? "#ffffff" : template.background;
-  ctx.font = `800 ${Math.round(width * 0.027)}px Arial, sans-serif`;
+  ctx.font = `800 ${Math.round(width * 0.025)}px Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(data.cta, pad + buttonWidth / 2, y + buttonHeight / 2 + 1);
+  ctx.fillText(data.cta || "REGISTER NOW", pad + buttonWidth / 2, buttonY + buttonHeight / 2 + 1);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
-  const footerY = height - pad * 0.72;
+  const footerY = height - pad * 0.55;
   ctx.fillStyle = template.text;
-  ctx.globalAlpha = 0.92;
-  ctx.font = `600 ${Math.round(width * 0.023)}px Arial, sans-serif`;
+  ctx.globalAlpha = 0.94;
+  ctx.font = `700 ${Math.round(width * 0.022)}px Arial, sans-serif`;
   const websiteText = String(data.website || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
-  ctx.fillText(websiteText, pad, footerY - width * 0.043);
+  wrapText(ctx, websiteText, pad, footerY - width * 0.045, width - pad * 2, width * 0.027, 2);
   if (data.phone) {
-    ctx.font = `500 ${Math.round(width * 0.021)}px Arial, sans-serif`;
-    ctx.fillText(data.phone, pad, footerY - width * 0.01);
+    ctx.font = `500 ${Math.round(width * 0.019)}px Arial, sans-serif`;
+    ctx.fillText(data.phone, pad, footerY - width * 0.008);
   }
-  ctx.globalAlpha = 0.72;
-  ctx.font = `500 ${Math.round(width * 0.019)}px Arial, sans-serif`;
-  wrapText(ctx, data.footer, pad, footerY + width * 0.025, width - pad * 2, width * 0.026, 2);
+  ctx.globalAlpha = 0.68;
+  ctx.font = `500 ${Math.round(width * 0.017)}px Arial, sans-serif`;
+  wrapText(ctx, data.footer, pad, footerY + width * 0.025, width - pad * 2, width * 0.023, 2);
   ctx.globalAlpha = 1;
+
+  if (!isCurrent()) return false;
+
+  const visibleCtx = canvas.getContext("2d");
+  if (!visibleCtx) return false;
+  canvas.width = width;
+  canvas.height = height;
+  visibleCtx.clearRect(0, 0, width, height);
+  visibleCtx.drawImage(buffer, 0, 0);
+  return true;
 }
 
 function Field({ label, value, onChange, type = "text", placeholder = "" }) {
@@ -337,18 +390,28 @@ function Field({ label, value, onChange, type = "text", placeholder = "" }) {
 export default function SocialMediaPage() {
   const { pushToast } = useToast();
   const canvasRef = useRef(null);
+  const renderVersionRef = useRef(0);
+  const isNarrow = useNarrowWorkspace();
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
   const [formatId, setFormatId] = useState(FORMATS[0].id);
   const [photoSrc, setPhotoSrc] = useState("");
+  const [photoReading, setPhotoReading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState(draftFromClass({}));
+  const [rendering, setRendering] = useState(true);
+  const [renderedSignature, setRenderedSignature] = useState("");
 
   const template = useMemo(() => TEMPLATES.find((item) => item.id === templateId) || TEMPLATES[0], [templateId]);
   const format = useMemo(() => FORMATS.find((item) => item.id === formatId) || FORMATS[0], [formatId]);
   const selectedClass = useMemo(() => classes.find((item) => item.id === selectedClassId) || null, [classes, selectedClassId]);
+  const posterSignature = useMemo(
+    () => JSON.stringify({ draft, templateId, formatId, photoSrc }),
+    [draft, templateId, formatId, photoSrc],
+  );
+  const exportReady = !photoReading && !rendering && renderedSignature === posterSignature;
 
   useEffect(() => {
     (async () => {
@@ -371,8 +434,30 @@ export default function SocialMediaPage() {
   }, []);
 
   useEffect(() => {
-    void renderPoster(canvasRef.current, draft, template, format, photoSrc);
-  }, [draft, template, format, photoSrc]);
+    const renderVersion = ++renderVersionRef.current;
+    let cancelled = false;
+    setRendering(true);
+
+    (async () => {
+      const completed = await renderPoster(
+        canvasRef.current,
+        draft,
+        template,
+        format,
+        photoSrc,
+        () => !cancelled && renderVersionRef.current === renderVersion,
+      );
+
+      if (!cancelled && renderVersionRef.current === renderVersion) {
+        if (completed) setRenderedSignature(posterSignature);
+        setRendering(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [draft, template, format, photoSrc, posterSignature]);
 
   const chooseClass = (classId) => {
     setSelectedClassId(classId);
@@ -394,13 +479,26 @@ export default function SocialMediaPage() {
       pushToast({ type: "error", message: "Please choose an image file." });
       return;
     }
+
+    setPhotoReading(true);
     const reader = new FileReader();
-    reader.onload = () => setPhotoSrc(typeof reader.result === "string" ? reader.result : "");
-    reader.onerror = () => pushToast({ type: "error", message: "Could not read that image." });
+    reader.onload = () => {
+      setPhotoSrc(typeof reader.result === "string" ? reader.result : "");
+      setPhotoReading(false);
+    };
+    reader.onerror = () => {
+      setPhotoReading(false);
+      pushToast({ type: "error", message: "Could not read that image." });
+    };
     reader.readAsDataURL(file);
   };
 
   const exportImage = () => {
+    if (!exportReady) {
+      pushToast({ type: "info", message: "Please wait for the latest poster preview to finish rendering." });
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.toBlob((blob) => {
@@ -410,12 +508,13 @@ export default function SocialMediaPage() {
       }
       const link = document.createElement("a");
       const className = String(draft.className || "class-promo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      link.href = URL.createObjectURL(blob);
+      const objectUrl = URL.createObjectURL(blob);
+      link.href = objectUrl;
       link.download = `${className || "class-promo"}-${format.id}.png`;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       pushToast({ type: "success", message: "Promo image exported as PNG." });
     }, "image/png");
   };
@@ -444,7 +543,7 @@ export default function SocialMediaPage() {
   const startDays = selectedClass ? daysUntil(selectedClass.startDate) : null;
 
   return (
-    <div style={{ display: "grid", gap: 16, padding: 16 }}>
+    <div style={{ display: "grid", gap: 16, padding: isNarrow ? 8 : 16, minWidth: 0 }}>
       <section style={panelStyle}>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
@@ -461,8 +560,16 @@ export default function SocialMediaPage() {
         </div>
       </section>
 
-      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(300px, 430px) minmax(0, 1fr)", alignItems: "start" }}>
-        <div style={{ display: "grid", gap: 14 }}>
+      <div
+        style={{
+          display: "grid",
+          gap: 16,
+          gridTemplateColumns: isNarrow ? "minmax(0, 1fr)" : "minmax(300px, 430px) minmax(0, 1fr)",
+          alignItems: "start",
+          minWidth: 0,
+        }}
+      >
+        <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
           <section style={panelStyle}>
             <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>1. Choose class</h2>
             {loading ? <p>Loading classes...</p> : null}
@@ -484,7 +591,7 @@ export default function SocialMediaPage() {
 
           <section style={panelStyle}>
             <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>2. Choose template</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {TEMPLATES.map((item) => (
                 <button
                   key={item.id}
@@ -521,6 +628,7 @@ export default function SocialMediaPage() {
                 <span style={{ fontSize: 13, fontWeight: 700 }}>Optional student/class photo</span>
                 <input type="file" accept="image/*" onChange={(event) => uploadPhoto(event.target.files?.[0] || null)} />
               </label>
+              {photoReading ? <small style={{ color: "#64748b" }}>Reading photo…</small> : null}
               {photoSrc ? <button type="button" onClick={() => setPhotoSrc("")}>Remove photo</button> : null}
             </div>
           </section>
@@ -534,7 +642,7 @@ export default function SocialMediaPage() {
               <Field label="Start date" value={draft.startDate} onChange={(value) => updateDraft("startDate", value)} />
               <Field label="Schedule" value={draft.schedule} onChange={(value) => updateDraft("schedule", value)} />
               <Field label="Mode / location" value={draft.mode} onChange={(value) => updateDraft("mode", value)} />
-              <Field label="Fee" value={draft.fee} onChange={(value) => updateDraft("fee", value)} />
+              <Field label="Fee (leave blank to hide)" value={draft.fee} onChange={(value) => updateDraft("fee", value)} />
               <Field label="Duration / extra line" value={draft.duration} onChange={(value) => updateDraft("duration", value)} />
               <Field label="Button text" value={draft.cta} onChange={(value) => updateDraft("cta", value)} />
               <Field label="Registration URL" value={draft.website} onChange={(value) => updateDraft("website", value)} />
@@ -544,18 +652,20 @@ export default function SocialMediaPage() {
           </section>
         </div>
 
-        <div style={{ display: "grid", gap: 14, position: "sticky", top: 12 }}>
-          <section style={{ ...panelStyle, display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gap: 14, position: isNarrow ? "static" : "sticky", top: isNarrow ? undefined : 12, minWidth: 0 }}>
+          <section style={{ ...panelStyle, display: "grid", gap: 12, minWidth: 0 }}>
             <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 17 }}>Live preview</h2>
-                <small style={{ color: "#64748b" }}>{format.width} × {format.height}px PNG</small>
+                <small style={{ color: "#64748b" }}>
+                  {format.width} × {format.height}px PNG{rendering || photoReading ? " • Rendering…" : ""}
+                </small>
               </div>
-              <button type="button" onClick={exportImage} style={{ fontWeight: 800 }}>
-                Export PNG
+              <button type="button" onClick={exportImage} disabled={!exportReady} style={{ fontWeight: 800 }}>
+                {exportReady ? "Export PNG" : "Rendering…"}
               </button>
             </div>
-            <div style={{ display: "grid", placeItems: "center", borderRadius: 14, background: "#e2e8f0", padding: 12, overflow: "auto" }}>
+            <div style={{ display: "grid", placeItems: "center", borderRadius: 14, background: "#e2e8f0", padding: isNarrow ? 6 : 12, overflow: "hidden", minWidth: 0 }}>
               <canvas
                 ref={canvasRef}
                 style={{
@@ -571,7 +681,7 @@ export default function SocialMediaPage() {
           </section>
 
           <section style={panelStyle}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
               <h2 style={{ margin: 0, fontSize: 17 }}>Ready caption</h2>
               <button type="button" onClick={copyCaption}>Copy caption</button>
             </div>
