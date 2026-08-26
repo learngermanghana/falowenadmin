@@ -124,7 +124,7 @@ function draftFromClass(klass = {}) {
   const startDate = formatDate(klass.startDate);
   const endDate = formatShortDate(klass.endDate);
   const mode = textValue(klass.learningMode, klass.mode, klass.location);
-  const fee = formatFee(klass.tuitionFee ?? klass.fee ?? klass.price);
+  const fee = formatFee(textValue(klass.tuitionFee, klass.fee, klass.price, 3000));
   const classUrl = textValue(klass.classUrl, klass.registrationUrl, klass.url);
   const registerUrl = classUrl
     ? classUrl.startsWith("http") ? classUrl : `https://www.falowen.app${classUrl.startsWith("/") ? classUrl : `/${classUrl}`}`
@@ -141,7 +141,7 @@ function draftFromClass(klass = {}) {
     duration: endDate ? `Runs until ${endDate}` : "",
     cta: "REGISTER NOW",
     website: registerUrl,
-    phone: textValue(klass.phone, klass.contactPhone),
+    phone: textValue(klass.phone, klass.contactPhone, "0205706589"),
     footer: "Learn Language Education Academy • Powered by Falowen",
   };
 }
@@ -396,11 +396,11 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
   const footerY = height - width * 0.07;
   ctx.fillStyle = template.text;
   ctx.globalAlpha = 0.96;
-  ctx.font = `700 ${Math.round(width * 0.021)}px Arial, sans-serif`;
-  wrapText(ctx, displayWebsite(data.website), pad, footerY - width * 0.05, width - pad * 2, width * 0.027, 2);
+  ctx.font = `700 ${Math.round(width * 0.021)}px Arial, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+  wrapText(ctx, `🌐 ${displayWebsite(data.website)}`, pad, footerY - width * 0.05, width - pad * 2, width * 0.027, 2);
   if (data.phone) {
-    ctx.font = `500 ${Math.round(width * 0.018)}px Arial, sans-serif`;
-    ctx.fillText(data.phone, pad, footerY - width * 0.014);
+    ctx.font = `600 ${Math.round(width * 0.018)}px Arial, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+    ctx.fillText(`📞 Call / WhatsApp: ${data.phone}`, pad, footerY - width * 0.014);
   }
   ctx.globalAlpha = 0.68;
   ctx.font = `500 ${Math.round(width * 0.016)}px Arial, sans-serif`;
