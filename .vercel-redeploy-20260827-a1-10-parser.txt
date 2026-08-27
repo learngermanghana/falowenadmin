@@ -1,0 +1,2 @@
+Redeploy Falowen Admin after A1-10 deterministic objective parser fix.
+Includes commit 1c653f505a25c66cc966692c0cbea875fa55754e.
