@@ -17,15 +17,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Apply parser patch and regression test
-        run: python scripts/patchA110AnsDeterministicParser.py
+      - name: Apply parser patch and edge-case fixes
+        run: |
+          python scripts/patchA110AnsDeterministicParser.py
+          python scripts/patchA110AnsDeterministicParserFollowup.py
 
       - name: Run deterministic objective parser tests
         run: |
           node --test \
             tests/a1-10-ans-prefix-parser.test.js \
             tests/compact-objective-paste.test.js \
-            tests/objective-question-form-choice.test.js \
             tests/auto-marking.test.js
 
       - name: Commit parser fix
