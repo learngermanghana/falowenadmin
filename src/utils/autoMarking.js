@@ -87,11 +87,11 @@ function detectAssignmentKey({ submission = {}, referenceEntry = {} } = {}) {
 }
 
 function findPartId(value = "") {
-  const normalized = normalizeForCompare(value).replace(/\s+/g, "");
-  if (/teil(?:1|eins)|part(?:1|one)/.test(normalized)) return "teil1";
-  if (/teil(?:2|zwei)|part(?:2|two)|schreiben|writing/.test(normalized)) return "teil2";
-  if (/teil(?:3|drei)|part(?:3|three)|lesen|reading/.test(normalized)) return "teil3";
-  if (/teil(?:4|vier)|part(?:4|four)|horen|hoeren|listening/.test(normalized)) return "teil4";
+  const normalized = normalizeForCompare(value);
+  if (/\bteil\s*(?:1|eins|i)\b|\bpart\s*(?:1|one|i)\b/.test(normalized)) return "teil1";
+  if (/\bteil\s*(?:2|zwei|ii)\b|\bpart\s*(?:2|two|ii)\b|\bschreiben\b|\bwriting\b/.test(normalized)) return "teil2";
+  if (/\bteil\s*(?:3|drei|iii)\b|\bpart\s*(?:3|three|iii)\b|\blesen\b|\breading\b/.test(normalized)) return "teil3";
+  if (/\bteil\s*(?:4|vier|iv)\b|\bpart\s*(?:4|four|iv)\b|\bhoren\b|\bhoeren\b|\blistening\b/.test(normalized)) return "teil4";
   return "unknown";
 }
 
@@ -99,7 +99,7 @@ function splitSubmissionIntoParts(submissionText = "") {
   const text = String(submissionText || "").trim();
   if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];
 
-  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
+  const markerRegex = /(?:^|\n)\s*((?:teil|part)\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)\b[^\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\b[^\n]*)\s*:?\s*(?=\n|$)/gi;
   const markers = [];
   let match;
   while ((match = markerRegex.exec(text))) {
@@ -216,35 +216,60 @@ function splitObjectiveAnswerTokens(text = "") {
     .filter(Boolean);
 }
 
+function parsePrefixedObjectiveAnswer(line = "") {
+  const trimmed = String(line || "").trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(?:ans(?:wer)?|antwort)\b\s*[:=.\-)\]]?\s*(.+)$/i);
+  return match ? String(match[1] || "").trim() : "";
+}
+
 function isObjectiveOptionAnswer(answer = "") {
-  return Boolean(String(answer || "").trim().match(new RegExp(`^[${OBJECTIVE_OPTION_LETTERS}]$`, "i")))
-    || /^(richtig|falsch|true|false)$/i.test(String(answer || "").trim());
+  const normalized = normalizeAnswer(answer);
+  return /^[A-FX]$/.test(normalized) || normalized === "R" || normalized === "F";
 }
 
 function countObjectiveAnswerEvidence(text = "") {
   return splitObjectiveAnswerTokens(text).reduce((count, token) => {
+    const prefixedAnswer = parsePrefixedObjectiveAnswer(token);
+    if (prefixedAnswer) return count + 1;
+
     const numbered = parseNumberedObjectiveLine(token);
     if (numbered && isObjectiveOptionAnswer(numbered.answer)) return count + 1;
 
     const optionOnly = token.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
     if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2 || /^[A-FX]\s*[).:-]/i.test(token))) return count + 1;
 
-    return /^(richtig|falsch|true|false)$/i.test(token) ? count + 1 : count;
+    return isObjectiveOptionAnswer(token) ? count + 1 : count;
   }, 0);
 }
 
 function parseStudentObjectiveAnswerTokens(tokens = [], { questionOffset = 0 } = {}) {
   const map = new Map();
   let orderedQuestion = 0;
+  let pendingQuestion = null;
 
   for (const trimmed of tokens) {
     if (!trimmed) continue;
+
+    const prefixedAnswer = parsePrefixedObjectiveAnswer(trimmed);
+    if (prefixedAnswer) {
+      if (pendingQuestion !== null) {
+        map.set(questionOffset + pendingQuestion, prefixedAnswer);
+        orderedQuestion = Math.max(orderedQuestion, pendingQuestion);
+        pendingQuestion = null;
+      } else {
+        orderedQuestion += 1;
+        map.set(questionOffset + orderedQuestion, prefixedAnswer);
+      }
+      continue;
+    }
 
     const numbered = parseNumberedObjectiveLine(trimmed);
     if (numbered) {
       const question = questionOffset + numbered.question;
       map.set(question, numbered.answer);
       orderedQuestion = Math.max(orderedQuestion, numbered.question);
+      pendingQuestion = numbered.question;
       continue;
     }
 
@@ -252,12 +277,14 @@ function parseStudentObjectiveAnswerTokens(tokens = [], { questionOffset = 0 } =
     if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\s*[).:-]/i.test(trimmed))) {
       orderedQuestion += 1;
       map.set(questionOffset + orderedQuestion, anzeigeOnly[1].toUpperCase());
+      pendingQuestion = null;
       continue;
     }
 
-    if (/^(richtig|falsch|true|false)$/i.test(trimmed)) {
+    if (isObjectiveOptionAnswer(trimmed)) {
       orderedQuestion += 1;
       map.set(questionOffset + orderedQuestion, trimmed);
+      pendingQuestion = null;
     }
   }
 
@@ -567,6 +594,75 @@ function alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submission
 
   const parts = splitSubmissionIntoParts(submissionText).filter((part) => part.partId !== "unknown");
   const objectiveParts = parts.filter((part) => countObjectiveAnswerEvidence(part.text) > 0);
+  if (!objectiveParts.length) return studentAnswers;
+
+  const expectedKind = (value) => {
+    const meta = expectedMetadata(value);
+    const normalized = normalizeAnswer(meta.raw);
+    if (normalized === "R" || normalized === "F") return "boolean";
+    if (meta.correctLetter || extractOptionLetter(meta.raw)) return "choice";
+    return "text";
+  };
+
+  const studentKind = (value) => {
+    const normalized = normalizeAnswer(value);
+    if (normalized === "R" || normalized === "F") return "boolean";
+    if (extractOptionLetter(value)) return "choice";
+    return "text";
+  };
+
+  const pairFitScore = (reference, studentRaw) => {
+    if (!reference || !studentRaw) return -1000;
+    const match = valuesMatch(reference.value, studentRaw);
+    const typeBonus = expectedKind(reference.value) === studentKind(studentRaw) ? 1 : 0;
+    return (match.status === "correct" ? 4 : 0) + typeBonus;
+  };
+
+  const mapFitScore = (answerMap) => [...answerMap.entries()].reduce((score, [question, studentRaw]) => {
+    const reference = entries[question - 1];
+    return reference ? score + pairFitScore(reference, studentRaw) : score;
+  }, 0);
+
+  if (objectiveParts.length > 1) {
+    const aligned = new Map();
+    let minimumGlobalQuestion = 1;
+
+    objectiveParts.forEach((part, partIndex) => {
+      const localParsed = parseStudentObjectiveAnswerTokens(splitObjectiveAnswerTokens(part.text));
+      const localEntries = [...localParsed.map.entries()].sort(([left], [right]) => left - right);
+      if (!localEntries.length) return;
+
+      const minLocal = localEntries[0][0];
+      const maxLocal = localEntries[localEntries.length - 1][0];
+      let chosenOffset = 0;
+
+      if (partIndex > 0) {
+        const minOffset = Math.max(0, minimumGlobalQuestion - minLocal);
+        const maxOffset = entries.length - maxLocal;
+        const candidates = [];
+
+        for (let offset = minOffset; offset <= maxOffset; offset += 1) {
+          const score = localEntries.reduce((total, [question, studentRaw]) => {
+            const reference = entries[question + offset - 1];
+            return total + pairFitScore(reference, studentRaw);
+          }, 0);
+          candidates.push({ offset, score });
+        }
+
+        candidates.sort((left, right) => right.score - left.score || left.offset - right.offset);
+        chosenOffset = candidates[0]?.offset ?? minOffset;
+      }
+
+      localEntries.forEach(([question, answer]) => aligned.set(question + chosenOffset, answer));
+      minimumGlobalQuestion = Math.max(
+        minimumGlobalQuestion,
+        ...localEntries.map(([question]) => question + chosenOffset + 1),
+      );
+    });
+
+    if (aligned.size && mapFitScore(aligned) > mapFitScore(studentAnswers)) return aligned;
+  }
+
   if (objectiveParts.length !== 1 || objectiveParts[0].partId !== "teil2") return studentAnswers;
 
   const localEntries = [...studentAnswers.entries()].sort(([left], [right]) => left - right);
@@ -582,9 +678,6 @@ function alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submission
   const best = candidates[0];
   const unshiftedScore = scoreOffset(0);
 
-  // Require clear evidence before changing explicit question numbers. This
-  // supports a lone restarted "Teil 2" block while avoiding speculative
-  // offsets for weak or mostly incorrect submissions.
   if (!best?.offset || best.score < 2 || best.score <= unshiftedScore) return studentAnswers;
   return new Map(localEntries.map(([question, answer]) => [question + best.offset, answer]));
 }
