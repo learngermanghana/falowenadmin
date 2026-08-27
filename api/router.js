@@ -217,12 +217,17 @@ function normalizeReferenceAnswerEntry(key, value, index = 0) {
   };
 }
 
+function isPlaceholderReferenceValue(value = "") {
+  return /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(String(value || "").trim().toLowerCase());
+}
+
 function flattenPlainAnswers(value, prefix = []) {
   if (Array.isArray(value)) {
     return value.flatMap((nested, index) => flattenPlainAnswers(nested, [...prefix, String(index + 1)]));
   }
 
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    if (typeof value === "string" && isPlaceholderReferenceValue(value)) return [];
     return [{ key: prefix.join(".") || `Answer${prefix[prefix.length - 1] || 1}`, value: String(value) }];
   }
 

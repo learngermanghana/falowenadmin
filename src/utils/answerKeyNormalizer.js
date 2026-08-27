@@ -227,13 +227,15 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
   const assignmentKey = String(sourceEntry.assignment_id || sourceEntry.assignmentId || sourceEntry.assignmentKey || "").trim();
   const title = String(sourceEntry.title || sourceEntry.assignment || sourceKey || assignmentKey).trim();
   const level = inferLevelFromAssignment(assignmentKey);
-  const format = String(sourceEntry.format || "objective").toLowerCase();
   const rawAnswers = sourceEntry.answers || {};
+  const placeholderValues = flattenPlainAnswers(rawAnswers).map((entry) => String(entry.value || "").trim().toLowerCase());
+  const placeholderWriting = placeholderValues.length > 0 && placeholderValues.every((value) => /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(value));
+  const format = String(sourceEntry.format || (placeholderWriting ? "writing" : "objective")).toLowerCase();
   const parts = splitAnswersIntoParts(rawAnswers);
   const totalAnswers = countPartAnswers(parts);
   const isA2OrB1 = /^(A2|B1)-/i.test(assignmentKey);
   const explicitWritingParts = normalizePartList(sourceEntry.writingParts || sourceEntry.writing_parts);
-  const writingParts = explicitWritingParts.length ? explicitWritingParts : (isA2OrB1 ? ["teil2"] : []);
+  const writingParts = explicitWritingParts.length ? explicitWritingParts : (placeholderWriting ? ["main"] : (isA2OrB1 ? ["teil2"] : []));
   const excludedParts = normalizePartList(sourceEntry.excludedParts || sourceEntry.excluded_parts);
   const referenceAnswerParts = normalizePartList(
     sourceEntry.referenceAnswerParts || sourceEntry.reference_answer_parts,

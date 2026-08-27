@@ -242,11 +242,15 @@ function writingTip(submissionText = "", result = {}) {
 }
 
 export function assignmentHasScoredWriting(referenceEntry = {}) {
+  const rawAnswers = referenceEntry.rawAnswers || referenceEntry.answers || {};
+  const answerValues = Object.values(rawAnswers).map((value) => String(value || "").trim().toLowerCase());
+  if (answerValues.length > 0 && answerValues.every((value) => /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(value))) return true;
+
   const writingParts = [
     ...(Array.isArray(referenceEntry.writingParts) ? referenceEntry.writingParts : []),
     ...(Array.isArray(referenceEntry.aiGradedParts) ? referenceEntry.aiGradedParts : []),
   ].map(normalizePartId);
-  if (writingParts.includes("teil2")) return true;
+  if (writingParts.includes("teil2") || writingParts.includes("main")) return true;
 
   const grading = Object.entries(referenceEntry.partGrading || {})
     .find(([partId]) => normalizePartId(partId) === "teil2")?.[1] || null;

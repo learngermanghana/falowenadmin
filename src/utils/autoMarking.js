@@ -399,8 +399,13 @@ function isObjectiveLeaf(value) {
   return Boolean(value.correctLetter || value.correctText || value.rawCorrectAnswer || value.raw || value.acceptedAnswers);
 }
 
+function isPlaceholderReferenceValue(value = "") {
+  return /^(read|see|check) (the )?(comment|comments|instructions?)( for (the )?answers?)?$/.test(String(value || "").trim().toLowerCase());
+}
+
 function extractObjectiveEntries(referenceAnswers = {}, path = []) {
   if (typeof referenceAnswers === "string") {
+    if (isPlaceholderReferenceValue(referenceAnswers)) return [];
     const parsed = parseObjectiveReferenceText(referenceAnswers);
     if (parsed.length > 1) return parsed;
     return [{ key: path.join("."), value: referenceAnswers }];
