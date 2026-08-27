@@ -12,9 +12,19 @@ function replaceOnce(needle, replacement, label) {
   content = content.replace(needle, replacement);
 }
 
-replaceOnce(
-  'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\\b[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
-  'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*\\(?\\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\\s*\\)?\\b[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
+function replaceAny(needles, replacement, label) {
+  if (content.includes(replacement)) return;
+  const needle = needles.find((candidate) => content.includes(candidate));
+  if (!needle) throw new Error(`Could not find ${label}`);
+  content = content.replace(needle, replacement);
+}
+
+replaceAny(
+  [
+    'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\\b[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
+    'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)\\b[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
+  ],
+  'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*\\(?\\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)(?=\\s|\\)|:|$)\\s*\\)?[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
   "part heading parser",
 );
 
