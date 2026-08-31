@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import TeachingSlidePresenter from "../components/TeachingSlidePresenter.jsx";
+import TeacherLessonBlocks from "../components/TeacherLessonBlocks.jsx";
 import {
   getAvailableSlideCourses,
   getSlideNavigation,
@@ -12,56 +13,6 @@ import "./TeachingSlidesPage.css";
 import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
-
-function SlideBlocks({ slide, handoutMode = false }) {
-  return (
-    <>
-      <section className="slide-panel slide-panel-highlight">
-        <h2>Warm-up (DE)</h2>
-        <ul>{slide.warmupQuestionsDe.map((item) => <li key={item}>{item}</li>)}</ul>
-      </section>
-
-      <section className="slide-panel">
-        <h2>Key phrases (DE)</h2>
-        <ul>{slide.keyPhrasesDe.map((item) => <li key={item}>{item}</li>)}</ul>
-      </section>
-
-      <section className="slide-panel">
-        <div className="slide-panel-heading">
-          <div>
-            <h2>Student questions (DE)</h2>
-            <p className="slide-panel-subtitle">Improved prompts are grouped here so they are easy to review and edit.</p>
-          </div>
-          <span className="slide-question-count">{slide.studentQuestionsDe.length} prompts</span>
-        </div>
-        <ol>{slide.studentQuestionsDe.map((item) => <li key={item}>{item}</li>)}</ol>
-      </section>
-
-      {!handoutMode && (
-        <>
-          <section className="slide-panel">
-            <h2>Teacher notes (EN)</h2>
-            <ul>{slide.teacherNotesEn.map((item) => <li key={item}>{item}</li>)}</ul>
-          </section>
-
-          <section className="slide-panel">
-            <h2>Interaction flow (EN)</h2>
-            <ol>
-              {slide.interactionFlow.map((item) => (
-                <li key={item.phase}><strong>{item.phase}:</strong> {item.detailEn}</li>
-              ))}
-            </ol>
-          </section>
-        </>
-      )}
-
-      <section className="slide-panel">
-        <h2>Wrap-up task (DE)</h2>
-        <p>{slide.wrapUpTaskDe}</p>
-      </section>
-    </>
-  );
-}
 
 function SlideHeader({ slide }) {
   return (
@@ -84,7 +35,7 @@ function SlideCoursesIndex() {
   return (
     <section className="slides-index">
       <h1>Teaching Slides</h1>
-      <p>Projector-friendly speaking slides with bilingual guidance, searchable lesson indexes, and copy-ready lesson documents.</p>
+      <p>Teacher lesson guides with objectives, language focus, guided practice, common mistakes, and a classroom-ready Presenter Mode.</p>
       <div className="slide-card-grid">
         {courses.map((courseId) => {
           const slides = getSlidesByCourse(courseId);
@@ -156,14 +107,14 @@ function SlideDetail({ slide, courseId }) {
   return (
     <article className={`teaching-slide ${handoutMode ? "handout-mode" : ""}`}>
       <SlideHeader slide={slide} />
-      <div className="slide-grid"><SlideBlocks slide={slide} handoutMode={handoutMode} /></div>
+      <div className="slide-grid"><TeacherLessonBlocks slide={slide} handoutMode={handoutMode} /></div>
 
       <footer className="slide-actions no-print">
         <button type="button" className="slide-present-button" onClick={() => setPresenterMode(true)}>Start Presenter Mode</button>
-        <button type="button" onClick={() => window.print()}>Print this slide / Download PDF</button>
+        <button type="button" onClick={() => window.print()}>Print this teacher guide / Download PDF</button>
         <label className="handout-toggle">
           <input type="checkbox" checked={handoutMode} onChange={(event) => setHandoutMode(event.target.checked)} />
-          Student handout mode
+          Preview student handout
         </label>
       </footer>
       <p className="slide-presenter-help no-print">Presenter controls: ← / →, Page Up / Page Down, Space, Home and End.</p>
@@ -314,7 +265,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
     <section className="print-pack">
       <header className="print-pack-header no-print">
         <h1>{courseId.toUpperCase()} Printable Teaching Pack</h1>
-        <p>{publicView ? "Public student view. Use print to save all slides as one PDF." : "Use print to save all slides as one PDF for students/teachers."}</p>
+        <p>{publicView ? "Public student view. Use print to save the student-facing lesson pages as one PDF." : "Teacher teaching pack. Use print to save the full lesson guides as one PDF."}</p>
         <div className="slide-actions">
           <button type="button" onClick={() => window.print()}>Print all {courseId.toUpperCase()} slides</button>
           {!publicView && <Link to={`/teaching-slides/course/${courseId}`}>Back to course slide index</Link>}
@@ -343,7 +294,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
       {slides.map((slide) => (
         <article key={slide.id} id={`print-${slide.id}`} className="teaching-slide print-pack-slide">
           <SlideHeader slide={slide} />
-          <div className="slide-grid"><SlideBlocks slide={slide} handoutMode /></div>
+          <div className="slide-grid"><TeacherLessonBlocks slide={slide} handoutMode={publicView} /></div>
         </article>
       ))}
     </section>
