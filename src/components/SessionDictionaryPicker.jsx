@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import {
   canonicalDictionarySelection,
   dictionaryEntriesForSelection,
@@ -30,6 +32,12 @@ export default function SessionDictionaryPicker({
   );
   const selectedSet = useMemo(
     () => new Set(selectedIds.map(normalizeDictionaryId)),
+    [selectedIds],
+  );
+  const presentationSlides = useMemo(
+    () => selectedIds
+      .map((assignmentId) => ({ assignmentId, slide: getTeachingSlideByAssignmentId(assignmentId) }))
+      .filter((entry) => entry.slide),
     [selectedIds],
   );
   const filteredEntries = useMemo(() => {
@@ -76,6 +84,32 @@ export default function SessionDictionaryPicker({
             <span key={entry.assignment_id} style={{ background: "#dbeafe", color: "#1e40af", borderRadius: 999, padding: "3px 8px", fontSize: 12 }}>
               {entry.assignment_id}
             </span>
+          ))}
+        </div>
+      ) : null}
+
+      {presentationSlides.length ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+          {presentationSlides.map(({ assignmentId, slide }) => (
+            <Link
+              key={assignmentId}
+              to={`/teaching-slides/course/${slide.course}/${slide.id}?present=1`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                borderRadius: 8,
+                padding: "6px 10px",
+                background: "#1d4ed8",
+                color: "#fff",
+                textDecoration: "none",
+                fontWeight: 800,
+                fontSize: 13,
+              }}
+            >
+              Present {assignmentId}
+            </Link>
           ))}
         </div>
       ) : null}

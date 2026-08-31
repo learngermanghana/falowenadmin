@@ -84,6 +84,27 @@
   scroll-margin-top: 7rem;
 }
 
+.slide-card-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+
+.slide-card-actions a:last-child,
+.slide-present-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 1px solid #244296;
+  background: #244296;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 800;
+  padding: 0.55rem 0.85rem;
+}
+
 .slide-card-topline,
 .slide-title-row,
 .slide-panel-heading,
@@ -192,6 +213,12 @@
   margin-top: 1.2rem;
 }
 
+.slide-presenter-help {
+  margin: 0.65rem 0 0;
+  color: #5f6b85;
+  font-size: 0.92rem;
+}
+
 .handout-toggle {
   display: inline-flex;
   align-items: center;
@@ -283,6 +310,177 @@
   display: none;
 }
 
+.presenter-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 2vh 2vw;
+  background: #0f172a;
+  color: #0f172a;
+}
+
+.presenter-stage {
+  width: min(96vw, calc(94vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  max-height: 94vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.presenter-topbar,
+.presenter-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: clamp(0.8rem, 1.6vw, 1.35rem) clamp(1rem, 2.4vw, 2rem);
+  background: #f8fafc;
+}
+
+.presenter-topbar {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.presenter-footer {
+  border-top: 1px solid #e2e8f0;
+}
+
+.presenter-kicker,
+.presenter-lesson-label {
+  display: block;
+}
+
+.presenter-kicker {
+  color: #1d4ed8;
+  font-weight: 900;
+  font-size: clamp(0.95rem, 1.6vw, 1.25rem);
+  letter-spacing: 0.03em;
+}
+
+.presenter-lesson-label {
+  margin-top: 0.2rem;
+  color: #64748b;
+  font-weight: 700;
+  font-size: clamp(0.75rem, 1.1vw, 1rem);
+}
+
+.presenter-top-actions,
+.presenter-footer {
+  flex-wrap: wrap;
+}
+
+.presenter-top-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.presenter-top-actions button,
+.presenter-footer button {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: clamp(0.45rem, 1vw, 0.75rem) clamp(0.7rem, 1.4vw, 1rem);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.presenter-top-actions button:first-child,
+.presenter-footer button:last-child {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.presenter-footer button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.presenter-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(1.5rem, 4.5vw, 4.5rem) clamp(2rem, 6vw, 6rem);
+  overflow: auto;
+}
+
+.presenter-content h1 {
+  margin: 0 0 clamp(1rem, 2.5vw, 2rem);
+  font-size: clamp(2rem, 5vw, 4.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.presenter-topic {
+  margin: 0 0 1.2rem;
+  color: #1d4ed8;
+  font-size: clamp(1.25rem, 2.6vw, 2.5rem);
+  font-weight: 850;
+}
+
+.presenter-objective {
+  max-width: 90%;
+  margin: 0;
+  font-size: clamp(1.15rem, 2.3vw, 2.1rem);
+  line-height: 1.35;
+}
+
+.presenter-duration {
+  margin: 1.4rem 0 0;
+  color: #64748b;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  font-weight: 700;
+}
+
+.presenter-list {
+  display: grid;
+  gap: clamp(0.65rem, 1.5vw, 1.2rem);
+  margin: 0;
+  padding-left: 1.35em;
+  font-size: clamp(1.25rem, 2.7vw, 2.65rem);
+  line-height: 1.28;
+}
+
+.presenter-task {
+  max-width: 92%;
+  margin: 0;
+  font-size: clamp(1.55rem, 3.6vw, 3.5rem);
+  line-height: 1.28;
+  font-weight: 750;
+}
+
+.presenter-progress-wrap {
+  min-width: min(34vw, 360px);
+  display: grid;
+  gap: 0.35rem;
+  color: #475569;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.presenter-progress-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.presenter-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: #1d4ed8;
+  transition: width 160ms ease;
+}
+
 @media (max-width: 900px) {
   .slide-grid {
     grid-template-columns: 1fr;
@@ -297,12 +495,28 @@
     flex-direction: column;
     align-items: stretch;
   }
+
+  .presenter-shell {
+    padding: 0;
+  }
+
+  .presenter-stage {
+    width: 100vw;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  .presenter-top-actions button,
+  .presenter-footer button {
+    font-size: 0.8rem;
+  }
 }
 
 @media print {
   .topbar,
   .toast-viewport,
-  .no-print {
+  .no-print,
+  .presenter-shell {
     display: none !important;
   }
 
