@@ -1,0 +1,131 @@
+.teacher-section-wide {
+  grid-column: 1 / -1;
+}
+
+.teacher-overview-panel {
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%);
+  border-color: #cfdcff;
+}
+
+.teacher-objective-panel {
+  border-left: 4px solid #244296;
+}
+
+.teacher-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-bottom: 0.65rem;
+}
+
+.teacher-section-heading h2 {
+  margin: 0;
+}
+
+.teacher-section-heading .slide-panel-subtitle {
+  margin: 0.2rem 0 0;
+}
+
+.teacher-section-step {
+  display: inline-flex;
+  min-width: 2.15rem;
+  height: 2.15rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #eef4ff;
+  border: 1px solid #cfdcff;
+  color: #244296;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+
+.teacher-overview-copy,
+.teacher-objective-copy,
+.teacher-wrapup-task {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.teacher-objective-copy {
+  font-weight: 650;
+}
+
+.teacher-overview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.2rem;
+  margin-top: 0.85rem;
+  color: #4d5b78;
+  font-size: 0.94rem;
+}
+
+.teacher-grammar-panel {
+  background: #fbfcff;
+}
+
+.teacher-notes-panel {
+  background: #fffdf6;
+  border-color: #e8dfc3;
+}
+
+.teacher-mistakes-panel {
+  background: #fff9f7;
+  border-color: #ecd8d1;
+}
+
+.teacher-wrapup-panel {
+  background: #f7fbf7;
+  border-color: #d6e6d6;
+}
+
+.teacher-flow-list {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  padding-left: 0 !important;
+}
+
+.teacher-flow-list li {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.28fr) 1fr;
+  gap: 0.8rem;
+  align-items: start;
+  padding: 0.72rem 0.8rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e5eaf3;
+}
+
+.teacher-flow-list strong {
+  color: #244296;
+}
+
+.teacher-flow-list span {
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .teacher-flow-list li {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
+@media print {
+  .teacher-section-step {
+    border-color: #bbb;
+    background: #fff;
+    color: #222;
+  }
+
+  .teacher-overview-panel,
+  .teacher-grammar-panel,
+  .teacher-notes-panel,
+  .teacher-mistakes-panel,
+  .teacher-wrapup-panel {
+    background: #fff;
+  }
+}
