@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { resolveClassCohort } from "../services/liveClassService.js";
 import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityService.js";
+import BulkAttendanceRepairPanel from "../components/BulkAttendanceRepairPanel.jsx";
 import CanonicalAttendancePageV3 from "./CanonicalAttendancePageV3.jsx";
 
 function CancelledSessionNotice() {
@@ -53,6 +54,7 @@ export default function CanonicalAttendancePage() {
   return (
     <>
       <CancelledSessionNotice />
+      <BulkAttendanceRepairPanel />
       <CanonicalAttendancePageV3 />
     </>
   );
