@@ -1,0 +1,40 @@
+name: Teaching presenter tests
+
+on:
+  pull_request:
+    paths:
+      - "src/components/SessionDictionaryPicker.jsx"
+      - "src/components/TeachingSlidePresenter.jsx"
+      - "src/pages/TeachingSlidesPage.jsx"
+      - "src/pages/TeachingSlidesPage.css"
+      - "src/utils/teachingPresenter.js"
+      - "tests/teaching-presenter.test.js"
+      - ".github/workflows/teaching-presenter-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/components/SessionDictionaryPicker.jsx"
+      - "src/components/TeachingSlidePresenter.jsx"
+      - "src/pages/TeachingSlidesPage.jsx"
+      - "src/pages/TeachingSlidesPage.css"
+      - "src/utils/teachingPresenter.js"
+      - "tests/teaching-presenter.test.js"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run presenter regression tests
+        run: node --test tests/teaching-presenter.test.js
+      - name: Build production bundle
+        run: npm run build
