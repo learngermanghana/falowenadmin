@@ -1,14 +1,18 @@
-name: Teaching presenter tests
+name: Teaching slides tests
 
 on:
   pull_request:
     paths:
       - "src/components/SessionDictionaryPicker.jsx"
       - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/TeacherLessonBlocks.jsx"
+      - "src/components/TeacherLessonBlocks.css"
+      - "src/data/teacherSlideSupport.js"
       - "src/pages/TeachingSlidesPage.jsx"
       - "src/pages/TeachingSlidesPage.css"
       - "src/utils/teachingPresenter.js"
       - "tests/teaching-presenter.test.js"
+      - "tests/teacher-slide-support.test.js"
       - ".github/workflows/teaching-presenter-tests.yml"
   push:
     branches:
@@ -16,10 +20,14 @@ on:
     paths:
       - "src/components/SessionDictionaryPicker.jsx"
       - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/TeacherLessonBlocks.jsx"
+      - "src/components/TeacherLessonBlocks.css"
+      - "src/data/teacherSlideSupport.js"
       - "src/pages/TeachingSlidesPage.jsx"
       - "src/pages/TeachingSlidesPage.css"
       - "src/utils/teachingPresenter.js"
       - "tests/teaching-presenter.test.js"
+      - "tests/teacher-slide-support.test.js"
 
 jobs:
   test-and-build:
@@ -34,7 +42,7 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Run presenter regression tests
-        run: node --test tests/teaching-presenter.test.js
+      - name: Run teaching slide regression tests
+        run: node --test tests/teaching-presenter.test.js tests/teacher-slide-support.test.js
       - name: Build production bundle
         run: npm run build
