@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import TeachingSlidePresenter from "../components/TeachingSlidePresenter.jsx";
 import {
   getAvailableSlideCourses,
   getSlideNavigation,
@@ -17,16 +18,12 @@ function SlideBlocks({ slide, handoutMode = false }) {
     <>
       <section className="slide-panel slide-panel-highlight">
         <h2>Warm-up (DE)</h2>
-        <ul>
-          {slide.warmupQuestionsDe.map((item) => <li key={item}>{item}</li>)}
-        </ul>
+        <ul>{slide.warmupQuestionsDe.map((item) => <li key={item}>{item}</li>)}</ul>
       </section>
 
       <section className="slide-panel">
         <h2>Key phrases (DE)</h2>
-        <ul>
-          {slide.keyPhrasesDe.map((item) => <li key={item}>{item}</li>)}
-        </ul>
+        <ul>{slide.keyPhrasesDe.map((item) => <li key={item}>{item}</li>)}</ul>
       </section>
 
       <section className="slide-panel">
@@ -37,27 +34,21 @@ function SlideBlocks({ slide, handoutMode = false }) {
           </div>
           <span className="slide-question-count">{slide.studentQuestionsDe.length} prompts</span>
         </div>
-        <ol>
-          {slide.studentQuestionsDe.map((item) => <li key={item}>{item}</li>)}
-        </ol>
+        <ol>{slide.studentQuestionsDe.map((item) => <li key={item}>{item}</li>)}</ol>
       </section>
 
       {!handoutMode && (
         <>
           <section className="slide-panel">
             <h2>Teacher notes (EN)</h2>
-            <ul>
-              {slide.teacherNotesEn.map((item) => <li key={item}>{item}</li>)}
-            </ul>
+            <ul>{slide.teacherNotesEn.map((item) => <li key={item}>{item}</li>)}</ul>
           </section>
 
           <section className="slide-panel">
             <h2>Interaction flow (EN)</h2>
             <ol>
               {slide.interactionFlow.map((item) => (
-                <li key={item.phase}>
-                  <strong>{item.phase}:</strong> {item.detailEn}
-                </li>
+                <li key={item.phase}><strong>{item.phase}:</strong> {item.detailEn}</li>
               ))}
             </ol>
           </section>
@@ -94,7 +85,6 @@ function SlideCoursesIndex() {
     <section className="slides-index">
       <h1>Teaching Slides</h1>
       <p>Projector-friendly speaking slides with bilingual guidance, searchable lesson indexes, and copy-ready lesson documents.</p>
-
       <div className="slide-card-grid">
         {courses.map((courseId) => {
           const slides = getSlidesByCourse(courseId);
@@ -108,7 +98,6 @@ function SlideCoursesIndex() {
           );
         })}
       </div>
-
       {teachingSlides.length === 0 && <p>No teaching slides available yet.</p>}
     </section>
   );
@@ -130,13 +119,9 @@ function CourseSlidesIndex({ courseId }) {
   return (
     <section className="slides-index">
       <h1>{courseId.toUpperCase()} Teaching Slides</h1>
-
       <div className="slide-toolbar no-print">
-        <div className="slide-actions">
-          <Link to="/teaching-slides">Back to all courses</Link>
-        </div>
+        <div className="slide-actions"><Link to="/teaching-slides">Back to all courses</Link></div>
       </div>
-
       <div className="slide-card-grid">
         {slides.map((slide) => (
           <article key={slide.id} id={slide.id} className="slide-card slide-card-lesson">
@@ -147,7 +132,10 @@ function CourseSlidesIndex({ courseId }) {
             <h2>{slide.title}</h2>
             <p className="slide-topic-line">{getUnifiedTopicLabel(slide.assignmentId, slide.topic)}</p>
             <p className="slide-assignment-id">Assignment: {slide.assignmentId}</p>
-            <Link to={`/teaching-slides/course/${courseId}/${slide.id}`}>Open lesson slide</Link>
+            <div className="slide-card-actions">
+              <Link to={`/teaching-slides/course/${courseId}/${slide.id}`}>Open lesson</Link>
+              <Link to={`/teaching-slides/course/${courseId}/${slide.id}?present=1`}>Present</Link>
+            </div>
           </article>
         ))}
       </div>
@@ -157,30 +145,29 @@ function CourseSlidesIndex({ courseId }) {
 
 function SlideDetail({ slide, courseId }) {
   const [handoutMode, setHandoutMode] = useState(false);
+  const [presenterMode, setPresenterMode] = useState(() => new URLSearchParams(window.location.search).get("present") === "1");
   const { previous, next } = getSlideNavigation(slide.id, courseId);
+  const topicLabel = getUnifiedTopicLabel(slide.assignmentId, slide.topic);
+
+  if (presenterMode) {
+    return <TeachingSlidePresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;
+  }
 
   return (
     <article className={`teaching-slide ${handoutMode ? "handout-mode" : ""}`}>
       <SlideHeader slide={slide} />
-
-      <div className="slide-grid">
-        <SlideBlocks slide={slide} handoutMode={handoutMode} />
-      </div>
+      <div className="slide-grid"><SlideBlocks slide={slide} handoutMode={handoutMode} /></div>
 
       <footer className="slide-actions no-print">
+        <button type="button" className="slide-present-button" onClick={() => setPresenterMode(true)}>Start Presenter Mode</button>
         <button type="button" onClick={() => window.print()}>Print this slide / Download PDF</button>
         <label className="handout-toggle">
-          <input
-            type="checkbox"
-            checked={handoutMode}
-            onChange={(event) => setHandoutMode(event.target.checked)}
-          />
+          <input type="checkbox" checked={handoutMode} onChange={(event) => setHandoutMode(event.target.checked)} />
           Student handout mode
         </label>
       </footer>
-      <div className="no-print">
-        <SlideEmailShare courseId={courseId} />
-      </div>
+      <p className="slide-presenter-help no-print">Presenter controls: ← / →, Page Up / Page Down, Space, Home and End.</p>
+      <div className="no-print"><SlideEmailShare courseId={courseId} /></div>
 
       <nav className="slide-nav no-print" aria-label="Slide navigation">
         {previous ? <Link to={`/teaching-slides/course/${courseId}/${previous.id}`}>← Previous</Link> : <span />}
@@ -201,10 +188,7 @@ function SlideEmailShare({ courseId }) {
     (async () => {
       try {
         const classes = await listClasses();
-        const normalized = classes
-          .map((entry) => String(entry?.classId || entry?.name || "").trim())
-          .filter(Boolean);
-        setClassOptions(normalized);
+        setClassOptions(classes.map((entry) => String(entry?.classId || entry?.name || "").trim()).filter(Boolean));
       } catch {
         setClassOptions([]);
       }
@@ -216,17 +200,11 @@ function SlideEmailShare({ courseId }) {
       setRecipientEmails([]);
       return;
     }
-
     (async () => {
       setLoadingRecipients(true);
       try {
         const students = await listStudentsByClass(selectedClassId);
-        const emails = [...new Set(
-          students
-            .map((student) => String(student?.email || "").trim())
-            .filter(Boolean),
-        )];
-        setRecipientEmails(emails);
+        setRecipientEmails([...new Set(students.map((student) => String(student?.email || "").trim()).filter(Boolean))]);
       } catch {
         setRecipientEmails([]);
       } finally {
@@ -237,7 +215,6 @@ function SlideEmailShare({ courseId }) {
 
   const shareMailtoLink = useMemo(() => {
     if (recipientEmails.length === 0 || !selectedClassId) return "";
-
     const subject = `${courseId.toUpperCase()} teaching slides PDF`;
     const body = [
       "Hi class,",
@@ -250,7 +227,6 @@ function SlideEmailShare({ courseId }) {
       "Best regards,",
       "Teacher",
     ].join("\n");
-
     return `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [courseId, recipientEmails, selectedClassId]);
 
@@ -263,21 +239,10 @@ function SlideEmailShare({ courseId }) {
           {classOptions.map((classId) => <option key={classId} value={classId}>{classId}</option>)}
         </select>
       </label>
-      <a
-        href={shareMailtoLink || undefined}
-        onClick={(event) => {
-          if (!shareMailtoLink) event.preventDefault();
-        }}
-        className="slide-mailto-link"
-        aria-disabled={!shareMailtoLink}
-      >
+      <a href={shareMailtoLink || undefined} onClick={(event) => { if (!shareMailtoLink) event.preventDefault(); }} className="slide-mailto-link" aria-disabled={!shareMailtoLink}>
         Email PDF link to selected class
       </a>
-      <p className="slide-email-help">
-        {loadingRecipients
-          ? "Loading student emails..."
-          : `Recipients with email: ${recipientEmails.length}`}
-      </p>
+      <p className="slide-email-help">{loadingRecipients ? "Loading student emails..." : `Recipients with email: ${recipientEmails.length}`}</p>
     </div>
   );
 }
@@ -293,10 +258,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
     (async () => {
       try {
         const classes = await listClasses();
-        const normalized = classes
-          .map((entry) => String(entry?.classId || entry?.name || "").trim())
-          .filter(Boolean);
-        setClassOptions(normalized);
+        setClassOptions(classes.map((entry) => String(entry?.classId || entry?.name || "").trim()).filter(Boolean));
       } catch {
         setClassOptions([]);
       }
@@ -308,17 +270,11 @@ function SlidePrintPack({ courseId, publicView = false }) {
       setRecipientEmails([]);
       return;
     }
-
     (async () => {
       setLoadingRecipients(true);
       try {
         const students = await listStudentsByClass(selectedClassId);
-        const emails = [...new Set(
-          students
-            .map((student) => String(student?.email || "").trim())
-            .filter(Boolean),
-        )];
-        setRecipientEmails(emails);
+        setRecipientEmails([...new Set(students.map((student) => String(student?.email || "").trim()).filter(Boolean))]);
       } catch {
         setRecipientEmails([]);
       } finally {
@@ -329,7 +285,6 @@ function SlidePrintPack({ courseId, publicView = false }) {
 
   const shareMailtoLink = useMemo(() => {
     if (recipientEmails.length === 0 || !selectedClassId) return "";
-
     const subject = `${courseId.toUpperCase()} teaching slides PDF`;
     const body = [
       "Hi class,",
@@ -342,7 +297,6 @@ function SlidePrintPack({ courseId, publicView = false }) {
       "Best regards,",
       "Teacher",
     ].join("\n");
-
     return `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [courseId, recipientEmails, selectedClassId]);
 
@@ -360,11 +314,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
     <section className="print-pack">
       <header className="print-pack-header no-print">
         <h1>{courseId.toUpperCase()} Printable Teaching Pack</h1>
-        <p>
-          {publicView
-            ? "Public student view. Use print to save all slides as one PDF."
-            : "Use print to save all slides as one PDF for students/teachers."}
-        </p>
+        <p>{publicView ? "Public student view. Use print to save all slides as one PDF." : "Use print to save all slides as one PDF for students/teachers."}</p>
         <div className="slide-actions">
           <button type="button" onClick={() => window.print()}>Print all {courseId.toUpperCase()} slides</button>
           {!publicView && <Link to={`/teaching-slides/course/${courseId}`}>Back to course slide index</Link>}
@@ -377,30 +327,15 @@ function SlidePrintPack({ courseId, publicView = false }) {
               {classOptions.map((classId) => <option key={classId} value={classId}>{classId}</option>)}
             </select>
           </label>
-          <a
-            href={shareMailtoLink || undefined}
-            onClick={(event) => {
-              if (!shareMailtoLink) event.preventDefault();
-            }}
-            className="slide-mailto-link"
-            aria-disabled={!shareMailtoLink}
-          >
+          <a href={shareMailtoLink || undefined} onClick={(event) => { if (!shareMailtoLink) event.preventDefault(); }} className="slide-mailto-link" aria-disabled={!shareMailtoLink}>
             Email PDF link to selected class
           </a>
-          <p className="slide-email-help">
-            {loadingRecipients
-              ? "Loading student emails..."
-              : `Recipients with email: ${recipientEmails.length}`}
-          </p>
+          <p className="slide-email-help">{loadingRecipients ? "Loading student emails..." : `Recipients with email: ${recipientEmails.length}`}</p>
         </div>
         <div className="slide-pack-toc">
           <strong>Jump to a day:</strong>
           <div className="slide-day-jump">
-            {slides.map((slide) => (
-              <a key={slide.id} href={`#print-${slide.id}`} className="slide-day-chip">
-                {slide.day}
-              </a>
-            ))}
+            {slides.map((slide) => <a key={slide.id} href={`#print-${slide.id}`} className="slide-day-chip">{slide.day}</a>)}
           </div>
         </div>
       </header>
@@ -408,9 +343,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
       {slides.map((slide) => (
         <article key={slide.id} id={`print-${slide.id}`} className="teaching-slide print-pack-slide">
           <SlideHeader slide={slide} />
-          <div className="slide-grid">
-            <SlideBlocks slide={slide} handoutMode />
-          </div>
+          <div className="slide-grid"><SlideBlocks slide={slide} handoutMode /></div>
         </article>
       ))}
     </section>
@@ -419,9 +352,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
 
 export default function TeachingSlidesPage({ publicView = false }) {
   const { slideId, courseId, legacySlideId } = useParams();
-  if (publicView && courseId) {
-    return <SlidePrintPack courseId={courseId} publicView />;
-  }
+  if (publicView && courseId) return <SlidePrintPack courseId={courseId} publicView />;
 
   if (publicView) {
     return (
@@ -432,20 +363,11 @@ export default function TeachingSlidesPage({ publicView = false }) {
     );
   }
 
-  if (!courseId && !slideId && !legacySlideId) {
-    return <SlideCoursesIndex />;
-  }
-
-  if (courseId && slideId === "print") {
-    return <SlidePrintPack courseId={courseId} />;
-  }
-
-  if (courseId && !slideId) {
-    return <CourseSlidesIndex courseId={courseId} />;
-  }
+  if (!courseId && !slideId && !legacySlideId) return <SlideCoursesIndex />;
+  if (courseId && slideId === "print") return <SlidePrintPack courseId={courseId} />;
+  if (courseId && !slideId) return <CourseSlidesIndex courseId={courseId} />;
 
   const resolvedSlide = getTeachingSlideById(slideId || legacySlideId);
-
   if (!resolvedSlide) {
     return (
       <section className="slides-index">
@@ -457,11 +379,5 @@ export default function TeachingSlidesPage({ publicView = false }) {
   }
 
   const resolvedCourseId = courseId || resolvedSlide.course;
-
-  return (
-    <SlideDetail
-      slide={resolvedSlide}
-      courseId={resolvedCourseId}
-    />
-  );
+  return <SlideDetail slide={resolvedSlide} courseId={resolvedCourseId} />;
 }
