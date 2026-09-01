@@ -1,5 +1,6 @@
 import { courseDictionary } from "./courseDictionary.js";
 import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";
+import { a1WorkbookAlignedSlidesDays1To5 } from "./a1WorkbookAlignedSlidesDays1To5.js";
 import { a2WorkbookAlignedSlides } from "./a2WorkbookAlignedSlides.js";
 import { a2WorkbookAlignedSlidesDays6To10 } from "./a2WorkbookAlignedSlidesDays6To10.js";
 import { a2WorkbookAlignedSlidesDays11To15 } from "./a2WorkbookAlignedSlidesDays11To15.js";
@@ -183,6 +184,7 @@ function buildLevelSlides(level) {
 const curatedSlidesByAssignment = Object.fromEntries(
   [
     ...curatedSlides,
+    ...a1WorkbookAlignedSlidesDays1To5,
     ...a2WorkbookAlignedSlides,
     ...a2WorkbookAlignedSlidesDays6To10,
     ...a2WorkbookAlignedSlidesDays11To15,
@@ -195,7 +197,7 @@ const curatedSlidesByAssignment = Object.fromEntries(
   ].map((slide) => [slide.assignmentId, slide]),
 );
 
-const a1Slides = buildLevelSlides("A1");
+const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 const b1Slides = buildLevelSlides("B1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 
