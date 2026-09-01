@@ -1,5 +1,6 @@
 import { courseDictionary } from "./courseDictionary";
 import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary";
+import { a2WorkbookAlignedSlides } from "./a2WorkbookAlignedSlides.js";
 
 const curatedSlides = [
   {
@@ -171,7 +172,9 @@ function buildLevelSlides(level) {
   return entries.map((entry, index) => createTemplateSlide(level, entry, index + 1));
 }
 
-const curatedSlidesByAssignment = Object.fromEntries(curatedSlides.map((slide) => [slide.assignmentId, slide]));
+const curatedSlidesByAssignment = Object.fromEntries(
+  [...curatedSlides, ...a2WorkbookAlignedSlides].map((slide) => [slide.assignmentId, slide]),
+);
 
 const a1Slides = buildLevelSlides("A1");
 const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
