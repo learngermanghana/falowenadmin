@@ -1,15 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   a2WorkbookAlignedSlidesDays11To15,
   getA2WorkbookAlignedSlideDay11To15,
 } from "../src/data/a2WorkbookAlignedSlidesDays11To15.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 
 const EXPECTED = {
   "A2-4.11": {
@@ -54,11 +50,14 @@ test("A2 days 11-15 each expose the exact in-app grammar and workbook routes", (
   }
 });
 
-test("Teaching Slides wires the Day 11-15 aligned collection into the assignment resolver", () => {
-  const source = fs.readFileSync(path.resolve(__dirname, "../src/data/teachingSlides.js"), "utf8");
-  assert.match(source, /import \{ a2WorkbookAlignedSlidesDays11To15 \} from "\.\/a2WorkbookAlignedSlidesDays11To15\.js";/);
-  assert.match(source, /\.\.\.a2WorkbookAlignedSlidesDays11To15/);
-  assert.match(source, /curatedSlidesByAssignment\[slide\.assignmentId\] \|\| slide/);
+test("A2 days 11-15 are selected by the native-Node Teaching Slides resolver", () => {
+  for (const assignmentId of Object.keys(EXPECTED)) {
+    const aligned = getA2WorkbookAlignedSlideDay11To15(assignmentId);
+    const resolved = getTeachingSlideByAssignmentId(assignmentId);
+    assert.ok(resolved, `${assignmentId} should resolve in teachingSlides`);
+    assert.equal(resolved.id, aligned.id);
+    assert.equal(resolved.workbookConnection.workbookUrl, aligned.workbookConnection.workbookUrl);
+  }
 });
 
 test("A2 days 11-15 teacher support matches the grammar actually taught in Falowen", () => {
