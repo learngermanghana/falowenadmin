@@ -9,7 +9,7 @@ import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 
 const EXPECTED = {
   "B1-1.1": { day: 1, supportTerms: ["Präsens", "Perfekt", "haben", "sein", "Partizip"] },
-  "B1-1.2": { day: 2, supportTerms: ["Adjektiv", "weil", "denn", "deshalb"] },
+  "B1-1.2": { day: 2, supportTerms: ["adjective", "weil", "denn", "deshalb"] },
   "B1-1.3": { day: 3, supportTerms: ["Nominativ", "Akkusativ", "Dativ", "einen erfolgreichen"] },
   "B1-2.4": { day: 4, supportTerms: ["sowohl", "sondern auch", "einerseits", "weder"] },
   "B1-2.5": { day: 5, supportTerms: ["Könnten Sie", "Wäre", "würde", "indirect"] },
