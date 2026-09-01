@@ -26,7 +26,7 @@ const EXPECTED = {
   "A2-7.19": {
     grammarRoute: "/campus/course/einkaufen-wo-und-wie-7-19-oder-denn-grammar-notes",
     workbookRoute: "/campus/course/a2-day-19-einkaufen-wo-und-wie-workbook",
-    supportTerms: ["oder", "denn", "main-clause", "subject + verb"],
+    supportTerms: ["oder", "denn", "main clause", "subject + verb"],
   },
   "A2-7.20": {
     grammarRoute: "/campus/course/typische-reklamationssituationen-7-20-hoefliche-bitten-und-begruendungen-grammar-notes",
