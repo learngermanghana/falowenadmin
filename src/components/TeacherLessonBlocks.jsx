@@ -1,4 +1,5 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
+import { getTeacherLessonGuidance } from "../data/teacherLessonGuidance.js";
 import "./TeacherLessonBlocks.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -60,6 +61,7 @@ function WorkbookConnection({ connection }) {
 
 export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
   const support = buildTeacherSlideSupport(slide);
+  const guidance = getTeacherLessonGuidance(slide);
 
   if (handoutMode) {
     return (
@@ -111,32 +113,32 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
       <WorkbookConnection connection={slide.workbookConnection} />
 
       <section className="slide-panel slide-panel-highlight">
-        <SectionHeading step="04" title="Warm-up" subtitle="Activate what students already know before teaching new language." />
+        <SectionHeading step={guidance.steps.warmup} title="Warm-up" subtitle="Activate what students already know before teaching new language." />
         <List items={slide.warmupQuestionsDe} />
       </section>
 
       <section className="slide-panel">
-        <SectionHeading step="05" title="Vocabulary & useful language" subtitle="Keep these visible while students speak." />
+        <SectionHeading step={guidance.steps.vocabulary} title="Vocabulary & useful language" subtitle="Keep these visible while students speak." />
         <List items={slide.keyPhrasesDe} />
       </section>
 
       <section className="slide-panel teacher-grammar-panel">
-        <SectionHeading step="06" title="Grammar focus" subtitle="Teach the same grammar decision students need in the workbook." />
+        <SectionHeading step={guidance.steps.grammar} title="Grammar focus" subtitle={guidance.grammarSubtitle} />
         <List items={support.grammarFocusEn} />
       </section>
 
       <section className="slide-panel">
-        <SectionHeading step="07" title="Model examples" subtitle="Give students a complete model before asking for freer production." />
+        <SectionHeading step={guidance.steps.examples} title="Model examples" subtitle="Give students a complete model before asking for freer production." />
         <List items={support.modelExamplesDe} />
       </section>
 
       <section className="slide-panel teacher-notes-panel">
-        <SectionHeading step="08" title="Teacher notes" subtitle="Delivery guidance and workbook bridges for this lesson." />
+        <SectionHeading step={guidance.steps.notes} title="Teacher notes" subtitle={guidance.notesSubtitle} />
         <List items={slide.teacherNotesEn} />
       </section>
 
       <section className="slide-panel teacher-section-wide">
-        <SectionHeading step="09" title="Guided practice" subtitle="Move through the same thinking route students will need in their workbook tasks." />
+        <SectionHeading step={guidance.steps.guidedPractice} title="Guided practice" subtitle={guidance.guidedPracticeSubtitle} />
         <ol className="teacher-flow-list">
           {slide.interactionFlow.map((item) => (
             <li key={item.phase}>
@@ -149,19 +151,19 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
 
       <section className="slide-panel teacher-section-wide">
         <div className="slide-panel-heading">
-          <SectionHeading step="10" title="Speaking questions" subtitle="Use these to prepare and extend the workbook Sprechen task." />
+          <SectionHeading step={guidance.steps.speaking} title="Speaking questions" subtitle={guidance.speakingSubtitle} />
           <span className="slide-question-count">{slide.studentQuestionsDe.length} prompts</span>
         </div>
         <List items={slide.studentQuestionsDe} ordered />
       </section>
 
       <section className="slide-panel teacher-mistakes-panel">
-        <SectionHeading step="11" title="Common mistakes to watch" subtitle="Correct selectively after practice instead of interrupting every answer." />
+        <SectionHeading step={guidance.steps.mistakes} title="Common mistakes to watch" subtitle={guidance.mistakesSubtitle} />
         <List items={support.commonMistakesEn} />
       </section>
 
       <section className="slide-panel teacher-wrapup-panel">
-        <SectionHeading step="12" title="Wrap-up" subtitle="Finish with a short production task that checks readiness for the workbook." />
+        <SectionHeading step={guidance.steps.wrapUp} title="Wrap-up" subtitle={guidance.wrapUpSubtitle} />
         <p className="teacher-wrapup-task">{slide.wrapUpTaskDe}</p>
       </section>
     </>
