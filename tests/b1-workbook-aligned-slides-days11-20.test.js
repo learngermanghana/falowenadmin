@@ -91,17 +91,22 @@ test("Day 17 does not invent a direct grammar route and points teachers to the w
   assert.match(part(slide, "Grammar").detailEn, /inside the workbook Grammar tab/i);
 });
 
-test("Day 19 records that Teil 4 has no Hören medium and is a second Lesen task", () => {
+test("Day 19 keeps both reading texts in scored Teil 3 and excludes Teil 4", () => {
   const slide = getB1WorkbookAlignedSlideDay11To20("B1-6.19");
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   const listeningSlot = part(slide, "Teil 4 · Hören").detailEn;
 
   assert.match(reading, /Feldheim/i);
-  assert.match(reading, /green energy|grüne Energie/i);
-  assert.match(listeningSlot, /NO HÖREN MEDIUM/i);
-  assert.match(listeningSlot, /second reading/i);
-  assert.match(listeningSlot, /Murten/i);
-  assert.match(slide.workbookConnection.subtitle, /no audio/i);
+  assert.match(reading, /Murten/i);
+  assert.match(reading, /questions 1–3|questions 1-3/i);
+  assert.match(reading, /questions 4–6|questions 4-6/i);
+  assert.match(reading, /under Teil 3/i);
+  assert.match(listeningSlot, /NO SCORED TEIL 4/i);
+  assert.match(listeningSlot, /excluded/i);
+  assert.match(listeningSlot, /nothing should be submitted/i);
+  assert.match(listeningSlot, /Murten answers 4–6 belong to Teil 3|Murten answers 4-6 belong to Teil 3/i);
+  assert.match(slide.workbookConnection.subtitle, /Teil 3 contains both/i);
+  assert.match(slide.workbookConnection.subtitle, /Teil 4.*excluded/i);
 });
 
 test("Day 20 keeps the lost-wallet Lesen separate and Hören self-check only", () => {
