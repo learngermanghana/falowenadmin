@@ -8,6 +8,7 @@ on:
       - "src/components/TeacherLessonBlocks.jsx"
       - "src/components/TeacherLessonBlocks.css"
       - "src/data/a2WorkbookAlignedSlides.js"
+      - "src/data/a2WorkbookAlignedSlidesDays6To10.js"
       - "src/data/teachingSlides.js"
       - "src/data/teacherLessonGuidance.js"
       - "src/data/teacherSlideSupport.js"
@@ -15,6 +16,7 @@ on:
       - "src/pages/TeachingSlidesPage.css"
       - "src/utils/teachingPresenter.js"
       - "tests/a2-workbook-aligned-slides.test.js"
+      - "tests/a2-workbook-aligned-slides-days6-10.test.js"
       - "tests/teaching-presenter.test.js"
       - "tests/teacher-lesson-guidance.test.js"
       - "tests/teacher-slide-support.test.js"
@@ -28,6 +30,7 @@ on:
       - "src/components/TeacherLessonBlocks.jsx"
       - "src/components/TeacherLessonBlocks.css"
       - "src/data/a2WorkbookAlignedSlides.js"
+      - "src/data/a2WorkbookAlignedSlidesDays6To10.js"
       - "src/data/teachingSlides.js"
       - "src/data/teacherLessonGuidance.js"
       - "src/data/teacherSlideSupport.js"
@@ -35,6 +38,7 @@ on:
       - "src/pages/TeachingSlidesPage.css"
       - "src/utils/teachingPresenter.js"
       - "tests/a2-workbook-aligned-slides.test.js"
+      - "tests/a2-workbook-aligned-slides-days6-10.test.js"
       - "tests/teaching-presenter.test.js"
       - "tests/teacher-lesson-guidance.test.js"
       - "tests/teacher-slide-support.test.js"
@@ -53,6 +57,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run teaching slide regression tests
-        run: node --test tests/teaching-presenter.test.js tests/teacher-slide-support.test.js tests/a2-workbook-aligned-slides.test.js tests/teacher-lesson-guidance.test.js
+        run: node --test tests/teaching-presenter.test.js tests/teacher-slide-support.test.js tests/a2-workbook-aligned-slides.test.js tests/a2-workbook-aligned-slides-days6-10.test.js tests/teacher-lesson-guidance.test.js
       - name: Build production bundle
         run: npm run build
