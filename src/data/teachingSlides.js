@@ -7,6 +7,7 @@ import { a2WorkbookAlignedSlidesDays16To20 } from "./a2WorkbookAlignedSlidesDays
 import { a2WorkbookAlignedSlidesDays21To24 } from "./a2WorkbookAlignedSlidesDays21To24.js";
 import { a2WorkbookAlignedSlidesDays25To28 } from "./a2WorkbookAlignedSlidesDays25To28.js";
 import { b1WorkbookAlignedSlidesDays1To10 } from "./b1WorkbookAlignedSlidesDays1To10.js";
+import { b1WorkbookAlignedSlidesDays11To20 } from "./b1WorkbookAlignedSlidesDays11To20.js";
 
 const curatedSlides = [
   {
@@ -188,6 +189,7 @@ const curatedSlidesByAssignment = Object.fromEntries(
     ...a2WorkbookAlignedSlidesDays21To24,
     ...a2WorkbookAlignedSlidesDays25To28,
     ...b1WorkbookAlignedSlidesDays1To10,
+    ...b1WorkbookAlignedSlidesDays11To20,
   ].map((slide) => [slide.assignmentId, slide]),
 );
 
