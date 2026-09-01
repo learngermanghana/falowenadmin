@@ -35,7 +35,7 @@ const EXPECTED = {
   "A2-6.15": {
     grammarRoute: "/campus/course/mein-lieblingssport-6-15-seit-dativ-praesens-grammar-notes",
     workbookRoute: "/campus/course/a2-day-15-mein-lieblingssport-workbook",
-    supportTerms: ["seit", "Dativ", "Präsens", "einem", "vor"],
+    supportTerms: ["seit", "Dativ", "present tense", "einem", "vor"],
   },
 };
 
