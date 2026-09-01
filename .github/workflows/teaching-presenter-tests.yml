@@ -15,6 +15,7 @@ on:
       - "src/data/a2WorkbookAlignedSlidesDays25To28.js"
       - "src/data/b1WorkbookAlignedSlidesDays1To10.js"
       - "src/data/b1WorkbookAlignedSlidesDays11To20.js"
+      - "src/data/b1WorkbookAlignedSlidesDays21To28.js"
       - "src/data/teachingSlides.js"
       - "src/data/teacherLessonGuidance.js"
       - "src/data/teacherSlideSupport.js"
@@ -29,6 +30,7 @@ on:
       - "tests/a2-workbook-aligned-slides-days25-28.test.js"
       - "tests/b1-workbook-aligned-slides-days1-10.test.js"
       - "tests/b1-workbook-aligned-slides-days11-20.test.js"
+      - "tests/b1-workbook-aligned-slides-days21-28.test.js"
       - "tests/teaching-presenter.test.js"
       - "tests/teacher-lesson-guidance.test.js"
       - "tests/teacher-slide-support.test.js"
@@ -49,6 +51,7 @@ on:
       - "src/data/a2WorkbookAlignedSlidesDays25To28.js"
       - "src/data/b1WorkbookAlignedSlidesDays1To10.js"
       - "src/data/b1WorkbookAlignedSlidesDays11To20.js"
+      - "src/data/b1WorkbookAlignedSlidesDays21To28.js"
       - "src/data/teachingSlides.js"
       - "src/data/teacherLessonGuidance.js"
       - "src/data/teacherSlideSupport.js"
@@ -63,6 +66,7 @@ on:
       - "tests/a2-workbook-aligned-slides-days25-28.test.js"
       - "tests/b1-workbook-aligned-slides-days1-10.test.js"
       - "tests/b1-workbook-aligned-slides-days11-20.test.js"
+      - "tests/b1-workbook-aligned-slides-days21-28.test.js"
       - "tests/teaching-presenter.test.js"
       - "tests/teacher-lesson-guidance.test.js"
       - "tests/teacher-slide-support.test.js"
@@ -81,6 +85,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run teaching slide regression tests
-        run: node --test tests/teaching-presenter.test.js tests/teacher-slide-support.test.js tests/a2-workbook-aligned-slides.test.js tests/a2-workbook-aligned-slides-days6-10.test.js tests/a2-workbook-aligned-slides-days11-15.test.js tests/a2-workbook-aligned-slides-days16-20.test.js tests/a2-workbook-aligned-slides-days21-24.test.js tests/a2-workbook-aligned-slides-days25-28.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/teacher-lesson-guidance.test.js
+        run: node --test tests/teaching-presenter.test.js tests/teacher-slide-support.test.js tests/a2-workbook-aligned-slides.test.js tests/a2-workbook-aligned-slides-days6-10.test.js tests/a2-workbook-aligned-slides-days11-15.test.js tests/a2-workbook-aligned-slides-days16-20.test.js tests/a2-workbook-aligned-slides-days21-24.test.js tests/a2-workbook-aligned-slides-days25-28.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js tests/teacher-lesson-guidance.test.js
       - name: Build production bundle
         run: npm run build
