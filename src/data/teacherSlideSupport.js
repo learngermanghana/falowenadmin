@@ -142,14 +142,16 @@ export function buildTeacherSlideSupport(slide = {}) {
   const level = String(slide.course || "A2").toUpperCase();
   const defaults = LEVEL_DEFAULTS[level] || LEVEL_DEFAULTS.A2;
   const curated = CURATED_OVERRIDES[String(slide.assignmentId || "").toUpperCase()] || {};
+  const direct = slide.teacherSupport || {};
   const topic = cleanTopic(slide);
 
   return {
     lessonOverviewEn:
+      direct.lessonOverviewEn ||
       curated.lessonOverviewEn ||
       `Teacher-led lesson on ${topic}. Activate prior knowledge, establish useful language, model the target communication, then move from guided practice to freer speaking.`,
-    grammarFocusEn: curated.grammarFocusEn || defaults.grammarFocusEn,
-    modelExamplesDe: curated.modelExamplesDe || defaults.modelExamplesDe,
-    commonMistakesEn: curated.commonMistakesEn || defaults.commonMistakesEn,
+    grammarFocusEn: direct.grammarFocusEn || curated.grammarFocusEn || defaults.grammarFocusEn,
+    modelExamplesDe: direct.modelExamplesDe || curated.modelExamplesDe || defaults.modelExamplesDe,
+    commonMistakesEn: direct.commonMistakesEn || curated.commonMistakesEn || defaults.commonMistakesEn,
   };
 }
