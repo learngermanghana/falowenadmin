@@ -112,7 +112,7 @@ test("Day 23 keeps the planned listening placeholder out of scoring", () => {
   const listening = part(slide, "Teil 4 · Hören").detailEn;
   assert.match(listening, /NO SCORED TEIL 4/i);
   assert.match(listening, /planned listening placeholder/i);
-  assert.match(listening, /excluded/i);
+  assert.match(listening, /excludes?/i);
 });
 
 test("Day 24 flags the seven-statement workbook versus five-reference-answer grading mismatch", () => {
@@ -126,7 +126,7 @@ test("Day 24 flags the seven-statement workbook versus five-reference-answer gra
   assert.match(reading, /seven/i);
   assert.match(reading, /five reference answers/i);
   assert.match(listening, /UNSCORED/i);
-  assert.match(listening, /excluded/i);
+  assert.match(listening, /excludes?/i);
 });
 
 test("Day 25 excludes the removed listening and submits only writing plus reading", () => {
