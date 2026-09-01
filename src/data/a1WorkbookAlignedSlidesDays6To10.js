@@ -263,7 +263,7 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
       "Was ist das? – der Tisch, die Lampe oder das Buch?",
       "Wer macht die Aktion im Satz?",
       "Was siehst du im Zimmer?",
-      "Welche Form ist richtig: der Mann oder den Mann nach sehen?",
+      "Welche Form ist nach „sehen“ richtig: der Mann oder den Mann?",
     ],
     keyPhrasesDe: [
       "Der Mann ist nett.",
