@@ -32,6 +32,8 @@ function WorkbookConnection({ connection }) {
   const parts = Array.isArray(connection.parts) ? connection.parts : [];
   const grammarHref = falowenHref(connection.grammarUrl);
   const workbookHref = falowenHref(connection.workbookUrl);
+  const subtitle = connection.subtitle ||
+    "Teach toward the same Grammar, Sprechen, Schreiben, Lesen and Hören tasks students see in Falowen.";
 
   return (
     <section className="slide-panel teacher-section-wide teacher-workbook-panel">
@@ -39,7 +41,7 @@ function WorkbookConnection({ connection }) {
         <SectionHeading
           step="03"
           title="Workbook connection"
-          subtitle="Teach toward the same Grammar, Sprechen, Schreiben, Lesen and Hören tasks students see in Falowen."
+          subtitle={subtitle}
         />
         <div className="teacher-workbook-links no-print">
           {grammarHref ? <a href={grammarHref} target="_blank" rel="noreferrer">Open grammar notes</a> : null}
