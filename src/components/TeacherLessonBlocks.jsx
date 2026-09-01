@@ -1,6 +1,8 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import "./TeacherLessonBlocks.css";
 
+const FALOWEN_BASE_URL = "https://www.falowen.app";
+
 function List({ items = [], ordered = false }) {
   const Tag = ordered ? "ol" : "ul";
   return <Tag>{items.map((item) => <li key={item}>{item}</li>)}</Tag>;
@@ -15,6 +17,44 @@ function SectionHeading({ step, title, subtitle }) {
         {subtitle ? <p className="slide-panel-subtitle">{subtitle}</p> : null}
       </div>
     </div>
+  );
+}
+
+function falowenHref(path = "") {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${FALOWEN_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function WorkbookConnection({ connection }) {
+  if (!connection) return null;
+  const parts = Array.isArray(connection.parts) ? connection.parts : [];
+  const grammarHref = falowenHref(connection.grammarUrl);
+  const workbookHref = falowenHref(connection.workbookUrl);
+
+  return (
+    <section className="slide-panel teacher-section-wide teacher-workbook-panel">
+      <div className="teacher-workbook-header">
+        <SectionHeading
+          step="03"
+          title="Workbook connection"
+          subtitle="Teach toward the same Grammar, Sprechen, Schreiben, Lesen and Hören tasks students see in Falowen."
+        />
+        <div className="teacher-workbook-links no-print">
+          {grammarHref ? <a href={grammarHref} target="_blank" rel="noreferrer">Open grammar notes</a> : null}
+          {workbookHref ? <a href={workbookHref} target="_blank" rel="noreferrer">Open student workbook</a> : null}
+        </div>
+      </div>
+
+      <div className="teacher-workbook-grid">
+        {parts.map((part) => (
+          <article key={part.label} className="teacher-workbook-card">
+            <strong>{part.label}</strong>
+            <p>{part.detailEn}</p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -68,33 +108,35 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
         <p className="teacher-objective-copy">{slide.objective}</p>
       </section>
 
+      <WorkbookConnection connection={slide.workbookConnection} />
+
       <section className="slide-panel slide-panel-highlight">
-        <SectionHeading step="03" title="Warm-up" subtitle="Activate what students already know before teaching new language." />
+        <SectionHeading step="04" title="Warm-up" subtitle="Activate what students already know before teaching new language." />
         <List items={slide.warmupQuestionsDe} />
       </section>
 
       <section className="slide-panel">
-        <SectionHeading step="04" title="Vocabulary & useful language" subtitle="Keep these visible while students speak." />
+        <SectionHeading step="05" title="Vocabulary & useful language" subtitle="Keep these visible while students speak." />
         <List items={slide.keyPhrasesDe} />
       </section>
 
       <section className="slide-panel teacher-grammar-panel">
-        <SectionHeading step="05" title="Grammar focus" subtitle="What the teacher should watch and reinforce during this lesson." />
+        <SectionHeading step="06" title="Grammar focus" subtitle="Teach the same grammar decision students need in the workbook." />
         <List items={support.grammarFocusEn} />
       </section>
 
       <section className="slide-panel">
-        <SectionHeading step="06" title="Model examples" subtitle="Give students a complete model before asking for freer production." />
+        <SectionHeading step="07" title="Model examples" subtitle="Give students a complete model before asking for freer production." />
         <List items={support.modelExamplesDe} />
       </section>
 
       <section className="slide-panel teacher-notes-panel">
-        <SectionHeading step="07" title="Teacher notes" subtitle="Delivery guidance for this lesson." />
+        <SectionHeading step="08" title="Teacher notes" subtitle="Delivery guidance and workbook bridges for this lesson." />
         <List items={slide.teacherNotesEn} />
       </section>
 
       <section className="slide-panel teacher-section-wide">
-        <SectionHeading step="08" title="Guided practice" subtitle="Move from controlled practice to freer production." />
+        <SectionHeading step="09" title="Guided practice" subtitle="Move through the same thinking route students will need in their workbook tasks." />
         <ol className="teacher-flow-list">
           {slide.interactionFlow.map((item) => (
             <li key={item.phase}>
@@ -107,19 +149,19 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
 
       <section className="slide-panel teacher-section-wide">
         <div className="slide-panel-heading">
-          <SectionHeading step="09" title="Speaking questions" subtitle="Use these for pair work, follow-ups, or whole-class discussion." />
+          <SectionHeading step="10" title="Speaking questions" subtitle="Use these to prepare and extend the workbook Sprechen task." />
           <span className="slide-question-count">{slide.studentQuestionsDe.length} prompts</span>
         </div>
         <List items={slide.studentQuestionsDe} ordered />
       </section>
 
       <section className="slide-panel teacher-mistakes-panel">
-        <SectionHeading step="10" title="Common mistakes to watch" subtitle="Correct selectively after the speaking phase instead of interrupting every answer." />
+        <SectionHeading step="11" title="Common mistakes to watch" subtitle="Correct selectively after practice instead of interrupting every answer." />
         <List items={support.commonMistakesEn} />
       </section>
 
       <section className="slide-panel teacher-wrapup-panel">
-        <SectionHeading step="11" title="Wrap-up" subtitle="Finish with one short production task that checks the lesson objective." />
+        <SectionHeading step="12" title="Wrap-up" subtitle="Finish with a short production task that checks readiness for the workbook." />
         <p className="teacher-wrapup-task">{slide.wrapUpTaskDe}</p>
       </section>
     </>
