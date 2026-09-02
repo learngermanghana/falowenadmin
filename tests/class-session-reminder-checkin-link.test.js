@@ -44,7 +44,7 @@ test("class reminder builds the same canonical long check-in URL used by the att
   );
 });
 
-test("check-in URL is included in both reminder text and webhook button fields", () => {
+test("check-in URL is included in reminder text and dedicated webhook fields", () => {
   const klass = { id: "a2-munich", name: "A2 Munich Klasse", timezone: "Africa/Accra" };
   const session = {
     id: "a2-munich-2026-09-02-1900",
@@ -72,11 +72,10 @@ test("check-in URL is included in both reminder text and webhook button fields",
     checkinUrl,
   });
 
-  assert.match(message, /Attendance check-in:/);
+  assert.match(message, /Check In Now/);
   assert.match(message, /https:\/\/admin\.falowen\.app\/checkin\?/);
-  assert.equal(row.link, checkinUrl);
   assert.equal(row.checkin_link, checkinUrl);
-  assert.equal(row.link_label, "Check In Now");
+  assert.equal(row.checkin_link_label, "Check In Now");
 });
 
 test("check-in base URL can be configured but defaults to Falowen Admin", () => {
