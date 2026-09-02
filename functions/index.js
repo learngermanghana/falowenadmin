@@ -10,7 +10,8 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
-const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");\nconst { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
+const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
+const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 
 setGlobalOptions({ region: "us-central1" });
 
