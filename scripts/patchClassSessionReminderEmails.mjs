@@ -103,7 +103,7 @@ const stateHelper = `async function writeClassReminderState({ db, admin, klass, 
 `;
 
 if (!workerSource.includes("async function writeClassReminderState")) {
-  const anchor = "async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl }) {";
+  const anchor = "async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl, runtimeConfig = {} }) {";
   if (!workerSource.includes(anchor)) throw new Error("Could not find class reminder process function.");
   workerSource = workerSource.replace(anchor, `${stateHelper}${anchor}`);
 }
@@ -193,9 +193,11 @@ const checks = [
   [worker.includes("https://us06web.zoom.us/launch/jc/6886900916"), "Class reminder Zoom chat link is missing."],
   [worker.includes("6886900916@zoomcrc.com"), "Class reminder Zoom SIP address is missing."],
   [worker.includes("link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),"), "Announcement row Zoom link is missing."],
+  [worker.includes("runAutoOpenCheckins"), "Automatic 30-minute attendance opener is missing."],
+  [worker.includes("baseUrl: resolveCheckinBaseUrl(runtimeConfig)"), "Runtime check-in base URL is not threaded into reminder delivery."],
 ];
 for (const [passed, message] of checks) {
   if (!passed) throw new Error(message);
 }
 
-console.log("Session-topic class reminder scheduler, delivery diagnostics and standard Zoom meeting verified.");
+console.log("Session-topic class reminder scheduler, auto check-in, runtime URL delivery diagnostics and standard Zoom meeting verified.");
