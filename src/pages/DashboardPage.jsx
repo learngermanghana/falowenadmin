@@ -174,36 +174,58 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    (async () => {
+    let active = true;
+
+    const loadDashboard = async () => {
       setLoading(true);
       setError("");
+
       try {
-        const currentYear = new Date().getFullYear();
-        const [studentRows, classRows, submissionRows, tutorReviewRows, grammarIssueRows, reminderData, holidayRows, leadData] = await Promise.all([
+        // Load the records needed for the headline metrics first. Slower
+        // operational panels continue loading after the dashboard is visible.
+        const [studentRows, classRows] = await Promise.all([
           listAllStudents(),
           listClassCohorts(),
-          loadSubmissions(),
-          loadPendingTutorReviews(),
-          loadGrammarIssueReports(),
-          loadWhatsappReminderDashboard(),
-          getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
-          fetchStudentLeads(),
         ]);
-
+        if (!active) return;
         setStudents(studentRows);
         setLiveClasses(classRows);
-        setIncomingAssignments(submissionRows);
-        setPendingTutorReviewsCount(tutorReviewRows.length);
-        setGrammarIssueReports(grammarIssueRows);
-        setContractEndingSoon(reminderData.contractEndingSoon || []);
-        setUpcomingHolidays(holidayRows);
-        setStudentLeads(leadData.leads || []);
       } catch (err) {
+        if (!active) return;
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
-    })();
+
+      const currentYear = new Date().getFullYear();
+      const results = await Promise.allSettled([
+        loadSubmissions(),
+        loadPendingTutorReviews(),
+        loadGrammarIssueReports(),
+        loadWhatsappReminderDashboard(),
+        getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
+        fetchStudentLeads(),
+      ]);
+      if (!active) return;
+
+      const [submissions, tutorReviews, grammarIssues, reminders, holidays, leads] = results;
+      if (submissions.status === "fulfilled") setIncomingAssignments(submissions.value);
+      if (tutorReviews.status === "fulfilled") setPendingTutorReviewsCount(tutorReviews.value.length);
+      if (grammarIssues.status === "fulfilled") setGrammarIssueReports(grammarIssues.value);
+      if (reminders.status === "fulfilled") setContractEndingSoon(reminders.value.contractEndingSoon || []);
+      if (holidays.status === "fulfilled") setUpcomingHolidays(holidays.value);
+      if (leads.status === "fulfilled") setStudentLeads(leads.value.leads || []);
+
+      const failedPanel = results.find((result) => result.status === "rejected");
+      if (failedPanel) {
+        console.warn("Some secondary dashboard panels could not be loaded.", failedPanel.reason);
+      }
+    };
+
+    loadDashboard();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const analytics = useMemo(() => {
