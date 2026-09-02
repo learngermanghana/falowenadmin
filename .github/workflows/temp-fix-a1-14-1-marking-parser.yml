@@ -1,0 +1,103 @@
+name: Temp Fix A1 14.1 Marking Parser
+
+on:
+  push:
+    branches:
+      - agent/fix-a1-14-1-marking-parser
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/fix-a1-14-1-marking-parser
+          fetch-depth: 0
+
+      - name: Patch deterministic objective parser and regression test
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('src/utils/objectiveMarking.js')
+          source = source_path.read_text()
+
+          anchor = '''};\n\nexport function normalizeAnswer(text = "") {'''
+          replacement = '''};\n\nconst HARDCODED_VOCABULARY_KEYS = {\n  "A1-14.1": {\n    6: "head",\n    7: "arm",\n    8: "leg",\n    9: "eye",\n    10: "nose",\n    11: "ear",\n    12: "mouth",\n    13: "hand",\n    14: "foot",\n    15: "stomach",\n  },\n};\n\nexport function normalizeAnswer(text = "") {'''
+          if 'const HARDCODED_VOCABULARY_KEYS' not in source:
+              if anchor not in source:
+                  raise SystemExit('hardcoded vocabulary insertion anchor not found')
+              source = source.replace(anchor, replacement, 1)
+
+          old_vocab = '''export function extractVocabularyAnswers(text = "") {\n  const vocab = {};\n  for (const line of String(text).split(/\\n|\\r/)) {\n    const parts = line.split(/[-–:=]/);\n    if (parts.length < 2) continue;\n    const left = normalizeAnswer(parts[0]);\n    const right = normalizeAnswer(parts.slice(1).join(" "));\n    const canonicalKey = findVocabularyKey(left) || left;\n    if (canonicalKey && right) vocab[canonicalKey] = right;\n  }\n  return vocab;\n}'''
+          new_vocab = '''export function extractVocabularyAnswers(text = "") {\n  const vocab = {};\n  for (const rawLine of String(text).split(/\\n|\\r/)) {\n    const line = String(rawLine || "").trim();\n    if (!line) continue;\n\n    const parts = line.split(/[-–:=]/);\n    let leftRaw = "";\n    let rightRaw = "";\n\n    if (parts.length >= 2) {\n      leftRaw = parts[0];\n      rightRaw = parts.slice(1).join(" ");\n    } else {\n      const whitespacePair = line.match(/^(head|arm|leg|eye|nose|ear|mouth|hand|foot|stomach(?:\\s*\\/\\s*belly)?|belly)\\s+(.+)$/i);\n      if (!whitespacePair) continue;\n      leftRaw = whitespacePair[1];\n      rightRaw = whitespacePair[2];\n    }\n\n    const left = normalizeAnswer(leftRaw);\n    const right = normalizeAnswer(rightRaw);\n    const canonicalKey = findVocabularyKey(left) || left;\n    if (canonicalKey && right) vocab[canonicalKey] = right;\n  }\n  return vocab;\n}'''
+          if old_vocab in source:
+              source = source.replace(old_vocab, new_vocab, 1)
+          elif new_vocab not in source:
+              raise SystemExit('extractVocabularyAnswers replacement anchor not found')
+
+          old_hardcoded = '''function buildHardcodedReferenceItems(assignmentId = "") {\n  const ref = HARDCODED_REFERENCE_ANSWERS[normalizeAssignmentId(assignmentId)];\n  if (!ref) return [];\n  return Object.entries(ref).map(([key, expected]) => ({\n    key,\n    partId: "main",\n    questionNumber: Number(key),\n    expected: String(expected).toUpperCase() === String(expected) && /^[A-FX]$/.test(String(expected)) ? String(expected).toUpperCase() : normalizeAnswer(expected),\n    expectedText: "",\n    expectedRaw: expected,\n    expectedDisplay: expected,\n    accepted: [expected],\n    type: /^[A-FX]$/i.test(String(expected)) ? "choice" : "vocabulary",\n    vocabularyKey: "",\n  }));\n}'''
+          new_hardcoded = '''function buildHardcodedReferenceItems(assignmentId = "") {\n  const normalizedAssignmentId = normalizeAssignmentId(assignmentId);\n  const ref = HARDCODED_REFERENCE_ANSWERS[normalizedAssignmentId];\n  if (!ref) return [];\n  const vocabularyKeys = HARDCODED_VOCABULARY_KEYS[normalizedAssignmentId] || {};\n  return Object.entries(ref).map(([key, expected]) => ({\n    key,\n    partId: "main",\n    questionNumber: Number(key),\n    expected: String(expected).toUpperCase() === String(expected) && /^[A-FX]$/.test(String(expected)) ? String(expected).toUpperCase() : normalizeAnswer(expected),\n    expectedText: "",\n    expectedRaw: expected,\n    expectedDisplay: expected,\n    accepted: [expected],\n    type: /^[A-FX]$/i.test(String(expected)) ? "choice" : "vocabulary",\n    vocabularyKey: vocabularyKeys[Number(key)] || "",\n  }));\n}'''
+          if old_hardcoded in source:
+              source = source.replace(old_hardcoded, new_hardcoded, 1)
+          elif new_hardcoded not in source:
+              raise SystemExit('buildHardcodedReferenceItems replacement anchor not found')
+
+          old_score = '''function scoreFlatCandidate(referenceItems = [], answers = []) {\n  let correct = 0;\n  referenceItems.forEach((item, index) => {\n    if (isCorrectAnswer(item, answers[index] || "")) correct += 1;\n  });\n  const missing = Math.max(0, referenceItems.length - answers.length);\n  return { correct, missing, answers };\n}'''
+          new_score = '''function buildExplicitTeil1AnswerAnchors(submissionText = "") {\n  const teil1 = splitSubmissionIntoSections(submissionText).find((section) => section.partId === "teil1");\n  if (!teil1) return new Map();\n  return new Map(extractNumberedTextEntries(teil1.text).map((entry) => [entry.number, entry.answer]));\n}\n\nfunction scoreFlatCandidate(referenceItems = [], answers = [], anchors = new Map()) {\n  let correct = 0;\n  referenceItems.forEach((item, index) => {\n    if (isCorrectAnswer(item, answers[index] || "")) correct += 1;\n  });\n  const missing = Math.max(0, referenceItems.length - answers.length);\n  const anchorMismatches = [...anchors.entries()].reduce((count, [questionNumber, anchoredAnswer]) => {\n    const candidateAnswer = answers[questionNumber - 1] || "";\n    return count + (normalizeAnswer(candidateAnswer) === normalizeAnswer(anchoredAnswer) ? 0 : 1);\n  }, 0);\n  return { correct, missing, anchorMismatches, answers };\n}'''
+          if old_score in source:
+              source = source.replace(old_score, new_score, 1)
+          elif new_score not in source:
+              raise SystemExit('scoreFlatCandidate replacement anchor not found')
+
+          old_choose = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {\n  const candidates = getFlatAnswerCandidateSequences(submissionText);\n  if (!candidates.length) return [];\n  const restartedGroups = splitIntoAnswerBlocks(submissionText)\n    .map((block) => extractRestartedNumberingEntries(block))\n    .filter((entries) => entries.length && !isLikelyWritingBlock(entries));\n  const aligned = alignRestartedGroups(referenceItems, restartedGroups);\n  if (aligned.length) candidates.push(aligned);\n  return candidates\n    .map((answers) => scoreFlatCandidate(referenceItems, answers))\n    .sort((a, b) => b.correct - a.correct || a.missing - b.missing || b.answers.length - a.answers.length)[0]?.answers || [];\n}'''
+          new_choose = '''function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {\n  const candidates = getFlatAnswerCandidateSequences(submissionText);\n  if (!candidates.length) return [];\n  const anchors = buildExplicitTeil1AnswerAnchors(submissionText);\n  const restartedGroups = splitIntoAnswerBlocks(submissionText)\n    .map((block) => extractRestartedNumberingEntries(block))\n    .filter((entries) => entries.length && !isLikelyWritingBlock(entries));\n  const aligned = alignRestartedGroups(referenceItems, restartedGroups);\n  if (aligned.length) candidates.push(aligned);\n  return candidates\n    .map((answers) => scoreFlatCandidate(referenceItems, answers, anchors))\n    .sort((a, b) => a.anchorMismatches - b.anchorMismatches || b.correct - a.correct || a.missing - b.missing || b.answers.length - a.answers.length)[0]?.answers || [];\n}'''
+          if old_choose in source:
+              source = source.replace(old_choose, new_choose, 1)
+          elif new_choose not in source:
+              raise SystemExit('chooseBestFlatAnswers replacement anchor not found')
+
+          old_student = '''function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections }) {\n  if (item.type === "vocabulary") {\n    const vocabularyPairs = extractVocabularyAnswers(submissionText);\n    if (item.vocabularyKey && vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];\n    const pairedVocabularyValues = Object.values(vocabularyPairs);\n    const pairedVocabularyIndex = Math.max(0, index - 5);\n    if (pairedVocabularyValues[pairedVocabularyIndex]) return pairedVocabularyValues[pairedVocabularyIndex];\n    const vocabularyValues = extractNumberedVocabularyAnswers(submissionText);\n    const vocabularyIndex = Math.max(0, index - 5);\n    if (vocabularyValues[vocabularyIndex]) return vocabularyValues[vocabularyIndex];\n  }\n\n  if (item.partId === "main") return flatAnswers[index] || "";'''
+          new_student = '''function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections }) {\n  if (item.type === "vocabulary") {\n    const vocabularyPairs = extractVocabularyAnswers(submissionText);\n    if (item.vocabularyKey) return vocabularyPairs[item.vocabularyKey] || "";\n    const pairedVocabularyValues = Object.values(vocabularyPairs);\n    const pairedVocabularyIndex = Math.max(0, index - 5);\n    if (pairedVocabularyValues[pairedVocabularyIndex]) return pairedVocabularyValues[pairedVocabularyIndex];\n    const vocabularyValues = extractNumberedVocabularyAnswers(submissionText);\n    const vocabularyIndex = Math.max(0, index - 5);\n    if (vocabularyValues[vocabularyIndex]) return vocabularyValues[vocabularyIndex];\n  }\n\n  if (item.partId === "main") {\n    const flatAnswer = flatAnswers[index] || "";\n    if (item.type === "choice" && normalizeAnswer(flatAnswer) === "anzeige") return "";\n    return flatAnswer;\n  }'''
+          if old_student in source:
+              source = source.replace(old_student, new_student, 1)
+          elif new_student not in source:
+              raise SystemExit('getStudentAnswerForItem replacement anchor not found')
+
+          source_path.write_text(source)
+
+          test_path = Path('tests/objective-marking.test.js')
+          tests = test_path.read_text()
+          marker = 'A1-14.1 preserves explicit Teil 1 positions and keyed body-part labels'
+          if marker not in tests:
+              tests += r'''\n\ntest("A1-14.1 preserves explicit Teil 1 positions and keyed body-part labels", () => {\n  const result = computeObjectiveScore("A1-14.1", `\nTeil 1\nFrage 1 Anzeige B\nFrage 2 Anzeige B\nFrage 3 Anzeige A\nFrage 4 Anzeige A\nFrage 5 Anzeige\n\nTeil 2\n\nLeiber Felix\n\nWie geht's dir? Ich schreibe, weil ich nicht an der Geburtstagsfeier teilnehmen kann. Ich bin krank. Ich habe kopfschmerzen Könnten wir einen anderen Termin vereinbaren?\n\nIch freue mich auf deine Antwort\n\nLiebe Grüße\nVicky\n\nTeil 3\nHead - die köpfe\nArm- der Arm\nLeg die Beine\nEye -die Augen\nNose -die Nase\nEar -das Ohr\nMouth -der Mund\nHand - die Hände\nFoot - der Fuß\nStomach - der Baunch\n  `);\n\n  assert.equal(result.totalCount, 15);\n  assert.equal(result.correctCount, 7);\n  assert.equal(result.details[1].student, "Anzeige B");\n  assert.equal(result.details[1].correct, false);\n  assert.equal(result.details[2].correct, true);\n  assert.equal(result.details[3].student, "Anzeige A");\n  assert.equal(result.details[3].correct, false);\n  assert.equal(result.details[4].correct, true);\n  assert.equal(result.details[5].student, "");\n  assert.equal(result.details[6].student, "die kopfe");\n  assert.equal(result.details[7].student, "der arm");\n  assert.equal(result.details[7].correct, true);\n  assert.equal(result.details[8].student, "die beine");\n  assert.equal(result.details[9].student, "die augen");\n  assert.equal(result.details[10].student, "die nase");\n  assert.equal(result.details[10].correct, true);\n  assert.equal(result.details[11].correct, true);\n  assert.equal(result.details[12].correct, true);\n  assert.equal(result.details[13].student, "die hande");\n  assert.equal(result.details[13].correct, false);\n  assert.equal(result.details[14].correct, true);\n  assert.equal(result.details[15].student, "der baunch");\n  assert.equal(result.details[15].correct, false);\n});\n'''
+              test_path.write_text(tests)
+          PY
+
+      - name: Run objective parser regression tests
+        run: >-
+          node --test
+          tests/objective-marking.test.js
+          tests/a1-reordered-objective-groups.test.js
+          tests/a1-0.2-unnumbered-text-block.test.js
+          tests/a1-12.1-unlabelled-block-isolation.test.js
+          tests/golden-known-submissions.test.js
+
+      - name: Commit parser fix
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No parser changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/objectiveMarking.js tests/objective-marking.test.js
+          git commit -m "Fix A1-14.1 objective parser alignment"
+          git push origin HEAD:agent/fix-a1-14-1-marking-parser
