@@ -274,7 +274,7 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
             </button>
           </div>
           <div style={{ fontSize: 12, color: "#64748b" }}>
-            Pay less than the remaining fee → one month of temporary {effectiveTarget} access. Pay the full remaining fee → complete the upgrade immediately and add 6 months to the contract.
+            Pay less than the remaining fee → one month of temporary {effectiveTarget} access. A full payment will complete the upgrade immediately and add 6 months to the contract.
           </div>
           {generatedPayment?.authorizationUrl && (
             <div style={{ display: "grid", gap: 8, border: "1px solid #e2e8f0", borderRadius: 10, padding: 10, overflowWrap: "anywhere" }}>
