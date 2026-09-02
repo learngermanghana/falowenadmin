@@ -151,6 +151,7 @@ test("scheduler opens the canonical attendance session once and preserves manual
     now: new Date("2026-09-02T18:30:00.000Z"),
   });
   assert.equal(first.opened, 1);
+  assert.equal(first.refreshed, 0);
   assert.equal(db.readNested(path).opened, true);
   assert.equal(db.readNested(path).assignmentId, "A2-5.14");
   assert.equal(db.readNested(path).autoOpenLeadMinutes, 30);
@@ -164,6 +165,7 @@ test("scheduler opens the canonical attendance session once and preserves manual
     now: new Date("2026-09-02T18:35:00.000Z"),
   });
   assert.equal(second.opened, 0);
+  assert.equal(second.refreshed, 0);
   assert.equal(second.results[0].skipped, "already_open");
 
   db.seedNested(path, {
@@ -179,7 +181,82 @@ test("scheduler opens the canonical attendance session once and preserves manual
     now: new Date("2026-09-02T18:40:00.000Z"),
   });
   assert.equal(afterManualClose.opened, 0);
+  assert.equal(afterManualClose.refreshed, 0);
   assert.equal(afterManualClose.results[0].skipped, "manually_closed");
+});
+
+test("stale auto-open window is refreshed for the rescheduled class time", async () => {
+  const { klass, session } = fixture();
+  const db = createFirestore({
+    holidayCalendar: {},
+    classSessions: { [session.id]: session },
+  });
+  const path = `attendance/${klass.id}/sessions/${session.id}`;
+
+  await runAutoOpenCheckins({
+    admin,
+    db,
+    classes: [klass],
+    sessions: [session],
+    now: new Date("2026-09-02T18:30:00.000Z"),
+  });
+
+  const rescheduled = {
+    ...session,
+    startsAt: "2026-09-02T21:00:00.000Z",
+    endsAt: "2026-09-02T22:30:00.000Z",
+  };
+  const refreshed = await runAutoOpenCheckins({
+    admin,
+    db,
+    classes: [klass],
+    sessions: [rescheduled],
+    now: new Date("2026-09-02T20:30:00.000Z"),
+  });
+
+  assert.equal(refreshed.opened, 0);
+  assert.equal(refreshed.refreshed, 1);
+  assert.equal(refreshed.results[0].skipped, "");
+  assert.equal(db.readNested(path).opened, true);
+  assert.equal(db.readNested(path).openFrom.toMillis(), Date.parse("2026-09-02T20:30:00.000Z"));
+  assert.equal(db.readNested(path).openTo.toMillis(), Date.parse("2026-09-02T23:30:00.000Z"));
+  assert.equal(db.readNested(path).autoOpenSessionStartsAt, "2026-09-02T21:00:00.000Z");
+});
+
+test("manual open is not replaced by the automatic reschedule refresh", async () => {
+  const { klass, session } = fixture();
+  const rescheduled = {
+    ...session,
+    startsAt: "2026-09-02T21:00:00.000Z",
+    endsAt: "2026-09-02T22:30:00.000Z",
+  };
+  const db = createFirestore({ holidayCalendar: {} });
+  const path = `attendance/${klass.id}/sessions/${session.id}`;
+  const manualOpenFrom = admin.firestore.Timestamp.fromMillis(Date.parse("2026-09-02T20:15:00.000Z"));
+  const manualOpenTo = admin.firestore.Timestamp.fromMillis(Date.parse("2026-09-02T22:45:00.000Z"));
+  db.seedNested(path, {
+    classId: klass.id,
+    sessionId: session.id,
+    opened: true,
+    autoOpened: false,
+    openedBy: "teacher-uid",
+    openFrom: manualOpenFrom,
+    openTo: manualOpenTo,
+  });
+
+  const result = await runAutoOpenCheckins({
+    admin,
+    db,
+    classes: [klass],
+    sessions: [rescheduled],
+    now: new Date("2026-09-02T20:30:00.000Z"),
+  });
+
+  assert.equal(result.opened, 0);
+  assert.equal(result.refreshed, 0);
+  assert.equal(result.results[0].skipped, "already_open");
+  assert.equal(db.readNested(path).openFrom.toMillis(), manualOpenFrom.toMillis());
+  assert.equal(db.readNested(path).openTo.toMillis(), manualOpenTo.toMillis());
 });
 
 test("automatic opening can be disabled per class", async () => {
@@ -194,4 +271,5 @@ test("automatic opening can be disabled per class", async () => {
   });
   assert.equal(result.checked, 0);
   assert.equal(result.opened, 0);
+  assert.equal(result.refreshed, 0);
 });
