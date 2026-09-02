@@ -48,7 +48,9 @@ test("reschedule refreshes only automation-owned attendance windows atomically",
   assert.match(directService, /transaction\.get\(change\.attendanceRef\)/);
   assert.match(directService, /autoOpenedAttendanceReschedulePatch/);
   assert.match(directService, /attendance\.autoOpened !== true \|\| attendance\.opened !== true/);
-  assert.match(directService, /normalize\(attendance\.openedBy\) \|\| normalize\(attendance\.closedBy\)/);
+  assert.match(directService, /normalize\(attendance\.openedBy\)/);
+  assert.match(directService, /normalize\(attendance\.createdBy\)/);
+  assert.match(directService, /normalize\(attendance\.closedBy\)/);
   assert.match(directService, /autoOpenLeadMinutes/);
   assert.match(directService, /autoOpenWindowMinutes/);
   assert.match(directService, /autoOpenSessionStartsAt: startsAt\.toISOString\(\)/);
