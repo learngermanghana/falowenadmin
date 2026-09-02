@@ -43,6 +43,20 @@ test("session, attendance, class, calendar and audit records commit atomically",
   assert.doesNotMatch(directService, /studentNotifications/);
 });
 
+test("reschedule refreshes only automation-owned attendance windows atomically", async () => {
+  const directService = await source(directServicePath);
+  assert.match(directService, /transaction\.get\(change\.attendanceRef\)/);
+  assert.match(directService, /autoOpenedAttendanceReschedulePatch/);
+  assert.match(directService, /attendance\.autoOpened !== true \|\| attendance\.opened !== true/);
+  assert.match(directService, /normalize\(attendance\.openedBy\) \|\| normalize\(attendance\.closedBy\)/);
+  assert.match(directService, /autoOpenLeadMinutes/);
+  assert.match(directService, /autoOpenWindowMinutes/);
+  assert.match(directService, /autoOpenSessionStartsAt: startsAt\.toISOString\(\)/);
+  assert.match(directService, /autoOpenWindowRefreshedAt: serverTimestamp\(\)/);
+  assert.match(directService, /changeType === "rescheduled"[\s\S]*?autoOpenedAttendanceReschedulePatch/);
+  assert.match(directService, /\.\.\.autoOpenWindowPatch/);
+});
+
 test("manual reschedule queues one communication only after the atomic save", async () => {
   const [manualService, communicationService] = await Promise.all([
     source(manualRescheduleServicePath),
