@@ -473,6 +473,48 @@ test("marking proxy accepts A1 matching options through J", async () => {
   assert.deepEqual(jsonBody.result.wrongAnswers, []);
 });
 
+test("flat A1 keys do not repeat Teil 1 answers into an empty Teil 3", async () => {
+  const { default: handler } = await import("../api/router.js");
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true, status: 200,
+    text: async () => JSON.stringify({ result: { writingScore: 80, feedback: "Writing marked.", parts: [{ partId: "teil2", partType: "writing", result: { score: 80 } }], status: "marked" } }),
+  });
+  const answers = ["Frage 1: Anzeige A", "Frage 2: Anzeige B", "Frage 3: Anzeige B", "Frage 4: Anzeige A", "Frage 5: Anzeige A", "a. Head – Kopf", "b. Arm – Arm", "c. Leg – Bein", "d. Eye – Auge", "e. Nose – Nase", "f. Ear – Ohr", "g. Mouth – Mund", "h. Hand – Hand", "i. Foot – Fuß", "j. Stomach / Belly – Bauch"];
+  const submissionText = `Teil 1.
+Frage1:1. Anzeige A
+Frage2: 2. Anzeige B
+Frage3:2. Anzeige B
+Frage4:1. Anzeige A
+Frage 5: 1. Anzeige A
+
+Teil 2.
+Hallo Felix, vielen Dank für deine Einladung zu deinem Geburtstag. Ich kann leider nicht kommen, weil ich krank bin. Können wir einen anderen Termin vereinbaren?
+
+Liebe Grüße
+Princess
+
+Teil 3`;
+  const referenceEntry = { assignmentKey: "A1-14.1", level: "A1", format: "objective", answers: Object.fromEntries(answers.map((answer, index) => [`Answer${index + 1}`, answer])) };
+  const directResult = checkDeterministicObjectiveAnswers({ referenceEntry, submissionText });
+  assert.deepEqual(directResult.wrongAnswers.map(({ question, student }) => ({ question, student })), [
+    ...Array.from({ length: 10 }, (_, index) => ({ question: index + 6, student: "" })),
+  ]);
+  const req = { method: "POST", url: "/marking/ai", headers: { host: "localhost", "content-type": "application/json" }, body: {
+    assignmentKey: "A1-14.1", level: "A1", submission: { name: "Princess", assignmentKey: "A1-14.1", level: "A1" },
+    referenceEntry: { ...referenceEntry, parts: { main: { answers: referenceEntry.answers } } },
+    submissionText,
+  } };
+  let jsonBody;
+  const res = { status() { return this; }, json(body) { jsonBody = body; return body; }, send(body) { jsonBody = body; return body; }, setHeader() {} };
+  try { await handler(req, res); } finally { globalThis.fetch = originalFetch; }
+  assert.equal(jsonBody.result.objectiveCorrect, 5);
+  assert.equal(jsonBody.result.objectiveTotal, 15);
+  assert.deepEqual(jsonBody.result.wrongAnswers.map(({ question, student }) => ({ question, student })), [
+    ...Array.from({ length: 10 }, (_, index) => ({ question: index + 6, student: "" })),
+  ]);
+});
+
 
 test("marking proxy combines deterministic objective score with Schreiben feedback", async () => {
   const { default: handler } = await import("../api/router.js");
