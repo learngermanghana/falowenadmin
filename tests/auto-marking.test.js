@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
+import { objectiveMarkingRegressions } from "./fixtures/objective-marking-regressions.js";
+
+for (const fixture of objectiveMarkingRegressions) {
+  test(`objective regression: ${fixture.name}`, () => {
+    const result = checkDeterministicObjectiveAnswers(fixture);
+    assert.equal(result.objectiveCorrect, fixture.expectedCorrect);
+    assert.equal(result.objectiveTotal, fixture.expectedTotal);
+    assert.deepEqual(result.wrongAnswers, []);
+  });
+}
 
 test("deterministic parser scores Anzeige A-F-X answers without AI", () => {
   const result = checkDeterministicObjectiveAnswers({
