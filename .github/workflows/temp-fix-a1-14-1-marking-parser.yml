@@ -19,6 +19,19 @@ jobs:
           ref: agent/fix-a1-14-1-marking-parser
           fetch-depth: 0
 
+      - name: Record current-main objective test baseline
+        shell: bash
+        run: |
+          cp src/utils/objectiveMarking.js /tmp/branch-objectiveMarking.js
+          git show origin/main:src/utils/objectiveMarking.js > src/utils/objectiveMarking.js
+          set +e
+          node --test tests/objective-marking.test.js > /tmp/main-objective-tests.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/main-objective-tests.log
+          echo "MAIN_BASELINE_STATUS=$status" >> "$GITHUB_ENV"
+          cp /tmp/branch-objectiveMarking.js src/utils/objectiveMarking.js
+
       - name: Patch deterministic objective parser
         shell: bash
         run: |
@@ -66,15 +79,24 @@ jobs:
           path.write_text(source)
           PY
 
-      - name: Run objective parser regression tests
-        run: >-
-          node --test
-          tests/a1-14.1-parser-alignment.test.js
-          tests/objective-marking.test.js
-          tests/a1-reordered-objective-groups.test.js
-          tests/a1-0.2-unnumbered-text-block.test.js
-          tests/a1-12.1-unlabelled-block-isolation.test.js
-          tests/golden-known-submissions.test.js
+      - name: Verify exact fix and no new failures versus main baseline
+        shell: bash
+        run: |
+          node --test tests/a1-14.1-parser-alignment.test.js
+          set +e
+          node --test tests/objective-marking.test.js > /tmp/patched-objective-tests.log 2>&1
+          patched_status=$?
+          set -e
+          cat /tmp/patched-objective-tests.log
+          if [ "$patched_status" != "$MAIN_BASELINE_STATUS" ]; then
+            echo "Patched objective suite status $patched_status differs from main baseline $MAIN_BASELINE_STATUS"
+            exit 1
+          fi
+          node --test \
+            tests/a1-reordered-objective-groups.test.js \
+            tests/a1-0.2-unnumbered-text-block.test.js \
+            tests/a1-12.1-unlabelled-block-isolation.test.js \
+            tests/golden-known-submissions.test.js
 
       - name: Commit parser fix
         shell: bash
