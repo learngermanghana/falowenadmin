@@ -9,7 +9,7 @@ const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
-const { createAttendanceConfirmationEmailJob } = require("./attendanceConfirmationEmails.js");
+const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
 
 setGlobalOptions({ region: "us-central1" });
@@ -1760,10 +1760,20 @@ async function applyAssignmentAttendance(event, submission = {}) {
     });
 
     if (applied) {
+      const matchedStudent = Object.entries(session.students || {}).find(([code, student]) =>
+        assignmentAttendanceAliasesIntersect(studentAliases, assignmentAttendanceSavedAliases(code, student || {})),
+      );
+      const savedStudent = matchedStudent?.[1] || {};
       credited.push({
         sessionId: String(session.classSessionId || sessionSnap.id),
         classId: String(session.classId || ""),
+        className: String(session.className || ""),
+        sessionLabel: String(session.title || session.sessionLabel || session.lesson || assignmentKey),
+        sessionDate: session.startsAt || session.date || submittedAt.toISOString(),
         attendancePath: sessionSnap.ref.path,
+        studentKey: String(matchedStudent?.[0] || ""),
+        studentName: String(savedStudent.name || submission.studentName || submission.name || ""),
+        studentEmail: String(savedStudent.email || submission.email || submission.studentEmail || ""),
       });
     }
   }
@@ -1777,6 +1787,25 @@ async function applyAssignmentAttendance(event, submission = {}) {
         appliedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
     }, { merge: true });
+
+    for (const credit of credited) {
+      try {
+        await sendAssignmentAttendanceCreditEmail({
+          admin,
+          db,
+          runtimeConfig,
+          ...credit,
+          assignmentId: assignmentKey,
+          submissionId: snap.id,
+        });
+      } catch (error) {
+        console.error("assignment_attendance_email_failed", {
+          submissionPath: snap.ref.path,
+          sessionId: credit.sessionId,
+          message: error?.message || String(error),
+        });
+      }
+    }
   }
   return credited;
 }
