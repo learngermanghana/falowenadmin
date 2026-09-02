@@ -433,6 +433,46 @@ test("normalizes uploaded A2/B1 dictionary entries with Teil 3 and Teil 4 parts"
   assert.ok(b1.parts.teil4.answerCount > 0);
 });
 
+test("marking proxy accepts A1 matching options through J", async () => {
+  const { default: handler } = await import("../api/router.js");
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true, status: 200,
+    text: async () => JSON.stringify({ result: { feedback: "placeholder", parts: [], status: "marked" } }),
+  });
+  const nouns = [
+    ["J", "Der Tisch", "the table"], ["C", "Die Lampe", "the lamp"], ["G", "Das Buch", "the book"],
+    ["E", "Der Stuhl", "the chair"], ["F", "Die Katze", "the cat"], ["H", "Das Auto", "the car"],
+    ["A", "Der Hund", "the dog"], ["B", "Die Blume", "the flower"], ["D", "Das Fenster", "the window"],
+    ["I", "Der Computer", "the computer"],
+  ];
+  const descriptions = ["ist groß", "ist neu", "ist interessant", "ist bequem", "ist süß", "ist schnell", "ist freundlich", "ist schön", "ist offen", "ist teuer"];
+  const actions = ["Ich sehe den Tisch", "Sie kauft die Lampe", "Er liest das Buch", "Wir brauchen den Stuhl", "Du fütterst die Katze", "Ich fahre das Auto", "Sie streichelt den Hund", "Er pflückt die Blume", "Wir putzen das Fenster", "Sie benutzen den Computer"];
+  const answers = [
+    ...nouns.map(([, german, english]) => `${german} – ${english}`),
+    ...nouns.map(([, german], index) => `${german} ${descriptions[index]}`),
+    ...actions,
+  ];
+  const numbered = (values) => values.map((value, index) => `${index + 1}. ${value}`).join("\n");
+  const submissionText = [
+    `Teil 1\n${numbered(nouns.map(([letter,, english]) => `${letter}- ${english}`))}`,
+    `Teil 2\n${numbered(nouns.map(([, german], index) => `${german} ${descriptions[index]}.`))}`,
+    `Teil 3\n${numbered(actions.map((answer) => `${answer}.`))}`,
+  ].join("\n\n");
+  const req = { method: "POST", url: "/marking/ai", headers: { host: "localhost", "content-type": "application/json" }, body: {
+    assignmentKey: "A1-5", level: "A1", submission: { name: "Student", assignmentKey: "A1-5", level: "A1" },
+    referenceEntry: { assignmentKey: "A1-5", level: "A1", format: "objective", parts: { main: { answers: Object.fromEntries(answers.map((answer, index) => [`Answer${index + 1}`, answer])) } } },
+    submissionText,
+  } };
+  let jsonBody;
+  const res = { status() { return this; }, json(body) { jsonBody = body; return body; }, send(body) { jsonBody = body; return body; }, setHeader() {} };
+  try { await handler(req, res); } finally { globalThis.fetch = originalFetch; }
+  assert.equal(jsonBody.result.objectiveCorrect, 30);
+  assert.equal(jsonBody.result.objectiveTotal, 30);
+  assert.equal(jsonBody.result.objectiveScore, 100);
+  assert.deepEqual(jsonBody.result.wrongAnswers, []);
+});
+
 
 test("marking proxy combines deterministic objective score with Schreiben feedback", async () => {
   const { default: handler } = await import("../api/router.js");
