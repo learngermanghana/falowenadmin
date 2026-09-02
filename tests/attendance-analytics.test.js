@@ -138,3 +138,42 @@ test("filters and CSV export preserve the selected attendance records", () => {
   assert.match(csv, /session/i);
   assert.match(csv, /absent/);
 });
+
+
+test("assignment attendance counts as attended and remains visibly distinct", () => {
+  const analytics = buildAttendanceAnalytics({
+    sessions,
+    students,
+    attendanceBySession: {
+      "session-2": {
+        classSessionId: "session-2",
+        students: {
+          A001: { name: "Ama Mensah", present: true },
+          B002: {
+            name: "Kojo Asare",
+            present: true,
+            status: "present_by_assignment",
+            source: "assignment_submission",
+            method: "Assignment",
+            assignmentId: "A1-day-2",
+          },
+        },
+      },
+    },
+    checkins,
+    now: "2026-07-14T12:00:00.000Z",
+  });
+
+  const kojo = analytics.studentSummaries.find((student) => student.studentCode === "B002");
+  const assignmentRecord = analytics.records.find(
+    (record) => record.studentCode === "B002" && record.sessionId === "session-2",
+  );
+
+  assert.equal(assignmentRecord.status, "present_by_assignment");
+  assert.equal(assignmentRecord.method, "Assignment");
+  assert.equal(assignmentRecord.source, "assignment_submission");
+  assert.equal(kojo.presentByAssignment, 1);
+  assert.equal(kojo.absent, 0);
+  assert.equal(kojo.attendancePercent, 100);
+  assert.equal(analytics.classSummary.presentByAssignment, 1);
+});
