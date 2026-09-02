@@ -593,6 +593,104 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
   return { sent: totalSent, skipped: false };
 }
 
+async function sendAssignmentAttendanceCreditEmail({
+  admin,
+  db,
+  runtimeConfig = {},
+  classId = "",
+  className = "",
+  sessionId = "",
+  sessionLabel = "",
+  sessionDate = "",
+  assignmentId = "",
+  submissionId = "",
+  studentKey = "",
+  studentName = "",
+  studentEmail = "",
+  fetchImpl = fetch,
+}) {
+  const email = normalize(studentEmail);
+  if (!email) return { sent: false, skipped: "missing_email" };
+
+  let klass = {};
+  const normalizedClassId = normalize(classId);
+  if (normalizedClassId) {
+    const classSnap = await db.collection("classes").doc(normalizedClassId).get();
+    if (classSnap.exists) klass = { id: classSnap.id, ...classSnap.data() };
+  }
+  if (!klass.id && normalize(className)) {
+    const classQuery = await db.collection("classes").where("name", "==", normalize(className)).limit(1).get();
+    if (!classQuery.empty) klass = { id: classQuery.docs[0].id, ...classQuery.docs[0].data() };
+  }
+
+  const fallbackConfig = resolveWebhookConfig(runtimeConfig);
+  const config = resolveClassWebhookConfig(klass, fallbackConfig);
+  if (!config.url) throw new Error("Attendance email delivery is not configured for this class.");
+
+  const name = normalize(studentName) || "student";
+  const classLabel = normalize(className || klass.name || klass.className || classId) || "your class";
+  const lessonLabel = normalize(sessionLabel) || "the class session";
+  const message = `Hello ${name}, your attendance for ${classLabel} — ${lessonLabel} has been updated to Present by assignment. You missed the live check-in, but your matching assignment was submitted within 24 hours, so it counts toward your attendance. You do not need to take any action.`;
+  const id = crypto.createHash("sha256")
+    .update(["assignment_attendance", normalizedClassId || classLabel, sessionId, studentKey || email, assignmentId, submissionId].join("::"))
+    .digest("hex");
+  const payload = {
+    classId: normalizedClassId || normalize(klass.id),
+    className: classLabel,
+    sessionId: normalize(sessionId),
+    studentKey: normalize(studentKey),
+    studentName: name,
+    studentEmail: email,
+    assignmentId: normalize(assignmentId),
+    submissionId: normalize(submissionId),
+    mode: "assignment",
+    periodKey: normalize(assignmentId || sessionId),
+    message,
+    dueAt: sessionDate || new Date().toISOString(),
+    deliveryType: "assignment_attendance_credit",
+  };
+  const ref = await reserveDelivery({ db, admin, id, payload, now: new Date() });
+  if (!ref) return { sent: false, skipped: "already_sent_or_processing" };
+
+  const row = {
+    announcement: message,
+    class: classLabel,
+    date: normalize(sessionDate).slice(0, 10),
+    link: "",
+    topic: "Attendance updated — Present by assignment",
+    email,
+    attach_certificate: "FALSE",
+    cert_level: normalize(klass.levelId || klass.level),
+    delivery_mode: "individual",
+    allow_bcc_fallback: "FALSE",
+    email_type: "attendance",
+    show_progress: "FALSE",
+    show_review: "FALSE",
+    show_app_button: "TRUE",
+    show_class: "TRUE",
+    show_date: "TRUE",
+  };
+
+  try {
+    await postAnnouncementRows(config, [row], fetchImpl);
+    await ref.set({
+      status: "sent",
+      sentAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastError: "",
+    }, { merge: true });
+    return { sent: true };
+  } catch (error) {
+    await ref.set({
+      status: "failed",
+      failedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastError: error?.message || "Assignment attendance email failed",
+    }, { merge: true });
+    throw error;
+  }
+}
+
 async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}, now = new Date(), fetchImpl = fetch }) {
   const config = resolveWebhookConfig(runtimeConfig);
   const classSnap = await db.collection("classes").get();
@@ -635,6 +733,7 @@ function createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeCo
 module.exports = {
   createAttendanceConfirmationEmailJob,
   runAttendanceConfirmationEmailJob,
+  sendAssignmentAttendanceCreditEmail,
   _test: {
     MODE_OFF,
     MODE_EACH_CLASS,
