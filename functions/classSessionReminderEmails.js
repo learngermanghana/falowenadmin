@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const TZ = "Africa/Accra";
 const DEFAULT_LEADS = [30, 10];
 const DEFAULT_GRACE_MIN = 7;
+const DEFAULT_CHECKIN_BASE_URL = "https://admin.falowen.app";
 const PROCESSING_STALE_MS = 20 * 60 * 1000;
 const BLOCKED_SESSION_STATUSES = new Set([
   "cancelled", "canceled", "completed", "superseded", "deleted",
@@ -66,8 +67,23 @@ function formatTime(value, timezone = TZ) {
   }).format(date);
 }
 
+function formatTime24(value, timezone = TZ) {
+  const date = asDate(value);
+  if (!date) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 function sessionStart(session = {}) {
   return asDate(session.startsAt || session.startAt || session.startDateTime || session.date);
+}
+
+function sessionEnd(session = {}) {
+  return asDate(session.endsAt || session.endAt || session.endDateTime || session.endDate);
 }
 
 function sessionStatus(session = {}) {
@@ -345,6 +361,55 @@ function resolveClassWebhookConfig(klass = {}, fallback = {}) {
   };
 }
 
+function resolveCheckinBaseUrl(runtimeConfig = {}, env = process.env) {
+  const communication = runtimeConfig.communication
+    || runtimeConfig.announcements
+    || runtimeConfig.announcement
+    || {};
+  return text(
+    env.CLASS_CHECKIN_BASE_URL
+    || env.FALOWEN_ADMIN_BASE_URL
+    || communication.class_checkin_base_url
+    || communication.admin_base_url
+    || DEFAULT_CHECKIN_BASE_URL,
+  ).replace(/\/+$/, "") || DEFAULT_CHECKIN_BASE_URL;
+}
+
+function activeClassRoster(students = [], klass = {}) {
+  return students
+    .filter((student) => isActiveStudent(student) && studentBelongsToClass(student, klass))
+    .sort((left, right) => {
+      const leftName = text(left.name || left.displayName || left.studentCode || left.email || left.id);
+      const rightName = text(right.name || right.displayName || right.studentCode || right.email || right.id);
+      return leftName.localeCompare(rightName);
+    });
+}
+
+function buildCheckinUrl({ klass = {}, session = {}, students = [], baseUrl = DEFAULT_CHECKIN_BASE_URL } = {}) {
+  const classId = text(klass.id || klass.classId || klass.classRecordId);
+  const sessionId = text(session.id);
+  if (!classId || !sessionId) return "";
+
+  const timezone = text(klass.timezone) || TZ;
+  const roster = activeClassRoster(students, klass);
+  const expectedNames = roster
+    .map((student) => text(student.name || student.displayName))
+    .filter(Boolean)
+    .slice(0, 15);
+  const params = new URLSearchParams({
+    classId,
+    sessionId,
+    date: isoDate(sessionStart(session), timezone),
+    sessionLabel: text(session.topic || klass.name || klass.className || "Live class"),
+    assignmentId: assignmentIds(session)[0] || "",
+    startTime: formatTime24(sessionStart(session), timezone),
+    endTime: formatTime24(sessionEnd(session), timezone),
+    expectedStudents: expectedNames.join(", "),
+    expectedCount: String(roster.length),
+  });
+  return `${text(baseUrl).replace(/\/+$/, "") || DEFAULT_CHECKIN_BASE_URL}/checkin?${params.toString()}`;
+}
+
 function zoomDetails(klass = {}, profile = {}) {
   return {
     url: text(
@@ -360,7 +425,7 @@ function zoomDetails(klass = {}, profile = {}) {
   };
 }
 
-function buildReminderMessage({ student, klass, session, leadMin, zoom = {} } = {}) {
+function buildReminderMessage({ student, klass, session, leadMin, zoom = {}, checkinUrl = "" } = {}) {
   const timezone = text(klass.timezone) || TZ;
   const startsAt = sessionStart(session);
   const name = text(student.name || student.displayName) || "Student";
@@ -382,16 +447,21 @@ function buildReminderMessage({ student, klass, session, leadMin, zoom = {} } = 
     if (zoom.meetingId) lines.push(`Meeting ID: ${zoom.meetingId}`);
     if (zoom.passcode) lines.push(`Passcode: ${zoom.passcode}`);
   }
+  if (checkinUrl) {
+    lines.push("", "Attendance check-in:", checkinUrl);
+  }
   lines.push("", "Please join 5 minutes early.", "", "Best regards,", "Learn Language Education Academy (Falowen)");
   return lines.join("\n");
 }
 
-function rowForReminder({ klass, student, session, leadMin, message } = {}) {
+function rowForReminder({ klass, student, session, leadMin, message, checkinUrl = "" } = {}) {
   return {
     announcement: message,
     class: text(klass.name || klass.className || klass.classId || klass.id),
     date: isoDate(sessionStart(session), text(klass.timezone) || TZ),
-    link: "",
+    link: checkinUrl,
+    checkin_link: checkinUrl,
+    link_label: checkinUrl ? "Check In Now" : "",
     topic: `Class reminder — ${topicForSession(session)}`,
     email: text(student.email),
     attach_certificate: "FALSE",
@@ -498,7 +568,7 @@ function classReminderEnabled(klass = {}) {
   return !["off", "disabled"].includes(comparable(klass.classReminderEmailMode));
 }
 
-async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl }) {
+async function processReminder({ admin, db, due, classes, students, config, checkinBaseUrl, now, fetchImpl }) {
   const { session, leadMin } = due;
   const klass = resolveClassForSession(session, classes);
   if (!klass || BLOCKED_CLASS_STATUSES.has(comparable(klass.status)) || !classReminderEnabled(klass)) {
@@ -525,9 +595,15 @@ async function processReminder({ admin, db, due, classes, students, config, now,
 
   const profile = await loadZoomProfile(db, klass);
   const zoom = zoomDetails(klass, profile);
+  const checkinUrl = buildCheckinUrl({
+    klass,
+    session,
+    students,
+    baseUrl: checkinBaseUrl,
+  });
   const rows = recipients.map((student) => {
-    const message = buildReminderMessage({ student, klass, session, leadMin, zoom });
-    return rowForReminder({ klass, student, session, leadMin, message });
+    const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl });
+    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl });
   });
   const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
@@ -539,6 +615,8 @@ async function processReminder({ admin, db, due, classes, students, config, now,
       updatedAt: timestamp,
       recipientCount: rows.length,
       upstreamCount: Number(upstream?.count || upstream?.sent || rows.length),
+      checkinUrl,
+      checkinLinkIncluded: Boolean(checkinUrl),
       lastError: "",
     }, { merge: true });
     await db.collection("classes").doc(klass.id).set({
@@ -548,9 +626,11 @@ async function processReminder({ admin, db, due, classes, students, config, now,
       classReminderEmailLastSentCount: rows.length,
       classReminderEmailLastSessionId: text(session.id),
       classReminderEmailLastTopic: topicForSession(session),
+      classReminderEmailLastCheckinUrl: checkinUrl,
+      classReminderEmailLastCheckinIncluded: Boolean(checkinUrl),
       classReminderEmailLastError: "",
     }, { merge: true });
-    return { sent: rows.length, skipped: "" };
+    return { sent: rows.length, skipped: "", checkinUrl };
   } catch (error) {
     const message = error?.message || "Class reminder email delivery failed";
     await sendRef.set({ status: "failed", failedAt: timestamp, updatedAt: timestamp, lastError: message }, { merge: true });
@@ -587,6 +667,7 @@ async function runClassSessionReminderEmailJob({
       || DEFAULT_GRACE_MIN,
   });
   const config = resolveWebhookConfig(runtimeConfig);
+  const checkinBaseUrl = resolveCheckinBaseUrl(runtimeConfig);
   const nowDate = asDate(now) || new Date();
   const results = [];
 
@@ -596,7 +677,17 @@ async function runClassSessionReminderEmailJob({
         sessionId: text(item.session.id),
         leadMin: item.leadMin,
         ok: true,
-        ...await processReminder({ admin, db, due: item, classes, students, config, now: nowDate, fetchImpl }),
+        ...await processReminder({
+          admin,
+          db,
+          due: item,
+          classes,
+          students,
+          config,
+          checkinBaseUrl,
+          now: nowDate,
+          fetchImpl,
+        }),
       });
     } catch (error) {
       console.error("class_session_reminder_failed", {
@@ -628,14 +719,18 @@ module.exports = {
   createClassSessionReminderEmailJob,
   runClassSessionReminderEmailJob,
   _test: {
+    activeClassRoster,
     assignmentIds,
+    buildCheckinUrl,
     buildReminderMessage,
     dedupeSessions,
     findDueSessionReminders,
+    formatTime24,
     isHolidayClosed,
     isSuppressedSession,
     normalizeLeads,
     officialSessionId,
+    resolveCheckinBaseUrl,
     resolveClassForSession,
     resolveClassWebhookConfig,
     resolveWebhookConfig,
