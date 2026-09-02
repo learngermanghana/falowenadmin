@@ -124,11 +124,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
-      - name: Deploy Falowen API, contract worker, and class email workers
+      - name: Deploy Falowen API, assignment automation, contract worker, and class email workers
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
