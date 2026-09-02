@@ -1,6 +1,6 @@
 const PART_IDS = ["teil1", "teil2", "teil3", "teil4", "unknown"];
 const WRITING_CONFIDENCE_THRESHOLD = 0.75;
-const OBJECTIVE_OPTION_LETTERS = "ABCDEFX";
+const OBJECTIVE_OPTION_LETTERS = "ABCDEFGHIJX";
 
 
 const WRITING_RUBRICS = {
@@ -166,6 +166,14 @@ function parseNumberedObjectiveLine(line = "") {
   const trimmed = String(line || "").trim();
   if (!trimmed) return null;
 
+  // Some students repeat the local option number after the question label,
+  // for example "Frage3:2. Anzeige B". The outer Frage number identifies
+  // the question; the repeated number must not become part of the answer.
+  const nestedAnzeige = trimmed.match(new RegExp(`^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)\\s*(\\d{1,3})\\s*[).:-]?\\s*\\d{1,3}\\s*[).:-]\\s*anzeige\\s*[).:-]?\\s*([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+  if (nestedAnzeige) {
+    return { question: Number.parseInt(nestedAnzeige[1], 10), answer: nestedAnzeige[2].toUpperCase() };
+  }
+
   const numbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
   if (numbered) {
     return { question: Number.parseInt(numbered[1], 10), answer: numbered[2].toUpperCase() };
@@ -225,7 +233,7 @@ function parsePrefixedObjectiveAnswer(line = "") {
 
 function isObjectiveOptionAnswer(answer = "") {
   const normalized = normalizeAnswer(answer);
-  return /^[A-FX]$/.test(normalized) || normalized === "R" || normalized === "F";
+  return new RegExp(`^[${OBJECTIVE_OPTION_LETTERS}]$`).test(normalized) || normalized === "R" || normalized === "F";
 }
 
 function countObjectiveAnswerEvidence(text = "") {
