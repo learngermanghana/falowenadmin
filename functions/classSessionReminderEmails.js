@@ -416,12 +416,14 @@ function zoomDetails(klass = {}, profile = {}) {
       klass.zoomUrl || klass.zoomLink || klass.meetingUrl || klass.joinUrl
       || profile.joinUrl || profile.url || profile.zoomUrl,
     ),
+    chatUrl: text(klass.zoomChatUrl || profile.chatUrl),
     meetingId: text(
       klass.zoomMeetingId || klass.meetingId || profile.meetingId || profile.zoomMeetingId,
     ),
     passcode: text(
       klass.zoomPasscode || klass.passcode || profile.passcode || profile.zoomPasscode,
     ),
+    sip: text(klass.zoomSip || profile.sip),
   };
 }
 
@@ -441,14 +443,16 @@ function buildReminderMessage({ student, klass, session, leadMin, zoom = {}, che
     `Date: ${formatDate(startsAt, timezone)}`,
     `Time: ${formatTime(startsAt, timezone)} Ghana time`,
   ];
-  if (zoom.url || zoom.meetingId || zoom.passcode) {
-    lines.push("", "Join the class:");
+  if (zoom.url || zoom.chatUrl || zoom.meetingId || zoom.passcode || zoom.sip) {
+    lines.push("", "Join Zoom Meeting");
     if (zoom.url) lines.push(zoom.url);
-    if (zoom.meetingId) lines.push(`Meeting ID: ${zoom.meetingId}`);
+    if (zoom.chatUrl) lines.push("", "Meeting chat link", zoom.chatUrl);
+    if (zoom.meetingId) lines.push("", `Meeting ID: ${zoom.meetingId}`);
     if (zoom.passcode) lines.push(`Passcode: ${zoom.passcode}`);
+    if (zoom.sip) lines.push("", "Join by SIP", `• ${zoom.sip}`);
   }
   if (checkinUrl) {
-    lines.push("", "Attendance check-in:", checkinUrl);
+    lines.push("", "Check In Now", checkinUrl);
   }
   lines.push("", "Please join 5 minutes early.", "", "Best regards,", "Learn Language Education Academy (Falowen)");
   return lines.join("\n");
@@ -459,9 +463,9 @@ function rowForReminder({ klass, student, session, leadMin, message, checkinUrl 
     announcement: message,
     class: text(klass.name || klass.className || klass.classId || klass.id),
     date: isoDate(sessionStart(session), text(klass.timezone) || TZ),
-    link: checkinUrl,
+    link: "",
     checkin_link: checkinUrl,
-    link_label: checkinUrl ? "Check In Now" : "",
+    checkin_link_label: checkinUrl ? "Check In Now" : "",
     topic: `Class reminder — ${topicForSession(session)}`,
     email: text(student.email),
     attach_certificate: "FALSE",
@@ -568,7 +572,7 @@ function classReminderEnabled(klass = {}) {
   return !["off", "disabled"].includes(comparable(klass.classReminderEmailMode));
 }
 
-async function processReminder({ admin, db, due, classes, students, config, checkinBaseUrl, now, fetchImpl }) {
+async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl }) {
   const { session, leadMin } = due;
   const klass = resolveClassForSession(session, classes);
   if (!klass || BLOCKED_CLASS_STATUSES.has(comparable(klass.status)) || !classReminderEnabled(klass)) {
@@ -599,7 +603,7 @@ async function processReminder({ admin, db, due, classes, students, config, chec
     klass,
     session,
     students,
-    baseUrl: checkinBaseUrl,
+    baseUrl: resolveCheckinBaseUrl(),
   });
   const rows = recipients.map((student) => {
     const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl });
@@ -667,7 +671,6 @@ async function runClassSessionReminderEmailJob({
       || DEFAULT_GRACE_MIN,
   });
   const config = resolveWebhookConfig(runtimeConfig);
-  const checkinBaseUrl = resolveCheckinBaseUrl(runtimeConfig);
   const nowDate = asDate(now) || new Date();
   const results = [];
 
@@ -677,17 +680,7 @@ async function runClassSessionReminderEmailJob({
         sessionId: text(item.session.id),
         leadMin: item.leadMin,
         ok: true,
-        ...await processReminder({
-          admin,
-          db,
-          due: item,
-          classes,
-          students,
-          config,
-          checkinBaseUrl,
-          now: nowDate,
-          fetchImpl,
-        }),
+        ...await processReminder({ admin, db, due: item, classes, students, config, now: nowDate, fetchImpl }),
       });
     } catch (error) {
       console.error("class_session_reminder_failed", {
