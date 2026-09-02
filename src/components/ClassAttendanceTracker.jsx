@@ -33,6 +33,7 @@ function formatDateTime(value, timezone = "Africa/Accra") {
 function statusLabel(status) {
   return ({
     present: "Present",
+    present_by_assignment: "Present by assignment",
     late: "Late",
     absent: "Absent",
     excused: "Excused",
@@ -43,6 +44,7 @@ function statusLabel(status) {
 
 function statusStyle(status) {
   if (status === "present") return { background: "#dcfce7", color: "#166534" };
+  if (status === "present_by_assignment") return { background: "#dbeafe", color: "#1e40af" };
   if (status === "late") return { background: "#fef3c7", color: "#92400e" };
   if (status === "absent") return { background: "#fee2e2", color: "#991b1b" };
   if (status === "excused") return { background: "#e0e7ff", color: "#3730a3" };
@@ -142,8 +144,9 @@ export default function ClassAttendanceTracker({ classId = "", className = "" })
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: 10, marginTop: 16 }}>
             {summaryCard("Students", analytics.classSummary.totalStudents)}
             {summaryCard("Sessions held", analytics.classSummary.sessionsHeld)}
-            {summaryCard("Attendance", `${analytics.classSummary.attendancePercent}%`, "Present and late")}
+            {summaryCard("Attendance", `${analytics.classSummary.attendancePercent}%`, "Present, assignment and late")}
             {summaryCard("Present", analytics.classSummary.present)}
+            {summaryCard("By assignment", analytics.classSummary.presentByAssignment)}
             {summaryCard("Late", analytics.classSummary.late, `More than ${analytics.lateMinutes} minutes`)}
             {summaryCard("Absent", analytics.classSummary.absent)}
             {summaryCard("Checked in today", analytics.classSummary.todayCheckedIn)}
@@ -167,13 +170,14 @@ export default function ClassAttendanceTracker({ classId = "", className = "" })
             <h3>Student attendance summary</h3>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
-                <thead><tr><th>Student</th><th>Held</th><th>Present</th><th>Late</th><th>Absent</th><th>Rate</th><th>Consecutive absences</th><th>Last check-in</th></tr></thead>
+                <thead><tr><th>Student</th><th>Held</th><th>Present</th><th>By assignment</th><th>Late</th><th>Absent</th><th>Rate</th><th>Consecutive absences</th><th>Last check-in</th></tr></thead>
                 <tbody>
                   {analytics.studentSummaries.map((student) => (
                     <tr key={student.studentKey} style={{ borderTop: "1px solid #e2e8f0" }}>
                       <td style={{ padding: 8 }}><strong>{student.studentName}</strong><br /><small>{student.studentCode || student.studentEmail}</small></td>
                       <td style={{ padding: 8 }}>{student.sessionsHeld}</td>
                       <td style={{ padding: 8 }}>{student.present}</td>
+                      <td style={{ padding: 8 }}>{student.presentByAssignment}</td>
                       <td style={{ padding: 8 }}>{student.late}</td>
                       <td style={{ padding: 8 }}>{student.absent}</td>
                       <td style={{ padding: 8 }}><strong>{student.attendancePercent}%</strong></td>
@@ -219,7 +223,7 @@ export default function ClassAttendanceTracker({ classId = "", className = "" })
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginTop: 12 }}>
               <label style={{ display: "grid", gap: 5 }}><strong>Search</strong><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Student, code or session" /></label>
-              <label style={{ display: "grid", gap: 5 }}><strong>Status</strong><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="present">Present</option><option value="late">Late</option><option value="absent">Absent</option><option value="excused">Excused</option><option value="cancelled">Cancelled</option><option value="upcoming">Upcoming</option></select></label>
+              <label style={{ display: "grid", gap: 5 }}><strong>Status</strong><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="present">Present</option><option value="present_by_assignment">Present by assignment</option><option value="late">Late</option><option value="absent">Absent</option><option value="excused">Excused</option><option value="cancelled">Cancelled</option><option value="upcoming">Upcoming</option></select></label>
               <label style={{ display: "grid", gap: 5 }}><strong>From</strong><input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label>
               <label style={{ display: "grid", gap: 5 }}><strong>To</strong><input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label>
             </div>
