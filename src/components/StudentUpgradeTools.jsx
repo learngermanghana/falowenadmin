@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createStudentPaymentLink } from "../services/studentPaymentService.js";
 import { reconcileStudentPayments, startStudentUpgrade } from "../services/studentContractService.js";
 import { parseMoneyValue } from "../utils/paystackCharges.js";
@@ -73,7 +73,6 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
   const [paymentAmount, setPaymentAmount] = useState("");
   const [busy, setBusy] = useState("");
   const [generatedPayment, setGeneratedPayment] = useState(null);
-  const reconciliationStarted = useRef(false);
 
   useEffect(() => {
     setTargetLevel(upgradeTargetLevel || suggestedTarget);
@@ -83,35 +82,7 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
     const remaining = parseMoneyValue(student?.upgradeBalanceDue);
     setPaymentAmount(remaining > 0 ? String(remaining) : "");
     setGeneratedPayment(null);
-    reconciliationStarted.current = false;
   }, [studentId, student?.upgradeId, upgradeTargetLevel, suggestedTarget, student?.upgradeTargetClassName, student?.upgradeTuitionFee, student?.upgradeBalanceDue, draft.tuitionFee, student?.tuitionFee]);
-
-  useEffect(() => {
-    if (!studentId) return undefined;
-    let active = true;
-
-    const reconcile = async () => {
-      if (!active) return;
-      try {
-        const result = await reconcileStudentPayments(studentId);
-        if (active && Number(result?.applied || 0) > 0) {
-          pushToast?.({ type: "success", message: `${result.applied} Paystack payment(s) reconciled and applied.` });
-        }
-      } catch (error) {
-        if (active) console.warn("Could not reconcile pending Paystack payments.", error);
-      }
-    };
-
-    if (!reconciliationStarted.current) {
-      reconciliationStarted.current = true;
-      reconcile();
-    }
-    const timer = window.setInterval(reconcile, 30000);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-    };
-  }, [studentId, pushToast]);
 
   const unfinishedUpgrade = ["awaiting_payment", "pending", "expired"].includes(upgradeStatus);
   const canStartUpgrade = Boolean(studentId && suggestedTarget && !unfinishedUpgrade);
@@ -321,7 +292,7 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
         <button type="button" onClick={reconcileNow} disabled={busy === "reconcile"}>
           {busy === "reconcile" ? "Checking Paystack..." : "Recheck pending Paystack payments"}
         </button>
-        <span style={{ fontSize: 12, color: "#64748b" }}>Pending links are also checked automatically while this student page is open.</span>
+        <span style={{ fontSize: 12, color: "#64748b" }}>Use this only when a Paystack payment has succeeded but the student record has not updated.</span>
       </div>
 
       {hasUpgrade && upgradeStatus === "awaiting_payment" && (
