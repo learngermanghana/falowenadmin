@@ -43,6 +43,21 @@ const HARDCODED_REFERENCE_ANSWERS = {
   },
 };
 
+const HARDCODED_VOCABULARY_KEYS = {
+  "A1-14.1": {
+    6: "head",
+    7: "arm",
+    8: "leg",
+    9: "eye",
+    10: "nose",
+    11: "ear",
+    12: "mouth",
+    13: "hand",
+    14: "foot",
+    15: "stomach",
+  },
+};
+
 export function normalizeAnswer(text = "") {
   return String(text)
     .toLowerCase()
@@ -441,11 +456,26 @@ export function extractChoiceAnswers(text = "") {
 
 export function extractVocabularyAnswers(text = "") {
   const vocab = {};
-  for (const line of String(text).split(/\n|\r/)) {
+  for (const rawLine of String(text).split(/\n|\r/)) {
+    const line = String(rawLine || "").trim();
+    if (!line) continue;
+
     const parts = line.split(/[-–:=]/);
-    if (parts.length < 2) continue;
-    const left = normalizeAnswer(parts[0]);
-    const right = normalizeAnswer(parts.slice(1).join(" "));
+    let leftRaw = "";
+    let rightRaw = "";
+
+    if (parts.length >= 2) {
+      leftRaw = parts[0];
+      rightRaw = parts.slice(1).join(" ");
+    } else {
+      const whitespacePair = line.match(/^(head|arm|leg|eye|nose|ear|mouth|hand|foot|stomach(?:\s*\/\s*belly)?|belly)\s+(.+)$/i);
+      if (!whitespacePair) continue;
+      leftRaw = whitespacePair[1];
+      rightRaw = whitespacePair[2];
+    }
+
+    const left = normalizeAnswer(leftRaw);
+    const right = normalizeAnswer(rightRaw);
     const canonicalKey = findVocabularyKey(left) || left;
     if (canonicalKey && right) vocab[canonicalKey] = right;
   }
@@ -489,8 +519,10 @@ export function getReferenceAnswers(assignmentIdOrReferenceEntry, referenceEntry
 }
 
 function buildHardcodedReferenceItems(assignmentId = "") {
-  const ref = HARDCODED_REFERENCE_ANSWERS[normalizeAssignmentId(assignmentId)];
+  const normalizedAssignmentId = normalizeAssignmentId(assignmentId);
+  const ref = HARDCODED_REFERENCE_ANSWERS[normalizedAssignmentId];
   if (!ref) return [];
+  const vocabularyKeys = HARDCODED_VOCABULARY_KEYS[normalizedAssignmentId] || {};
   return Object.entries(ref).map(([key, expected]) => ({
     key,
     partId: "main",
@@ -501,7 +533,8 @@ function buildHardcodedReferenceItems(assignmentId = "") {
     expectedDisplay: expected,
     accepted: [expected],
     type: /^[A-FX]$/i.test(String(expected)) ? "choice" : "vocabulary",
-    vocabularyKey: "",
+    vocabularyKey: vocabularyKeys[Number(key)] || "",
+    preserveFlatPosition: normalizedAssignmentId === "A1-14.1",
   }));
 }
 
@@ -775,6 +808,21 @@ function alignRestartedGroups(referenceItems = [], groups = []) {
 }
 
 function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
+  const shouldPreserveTeil1Positions = referenceItems.some((item) => item.preserveFlatPosition === true);
+  if (shouldPreserveTeil1Positions) {
+    const teil1 = splitSubmissionIntoSections(submissionText).find((section) => section.partId === "teil1");
+    const explicitEntries = teil1 ? extractNumberedTextEntries(teil1.text) : [];
+    if (explicitEntries.length) {
+      const fixedAnswers = Array(referenceItems.length).fill("");
+      explicitEntries.forEach((entry) => {
+        if (entry.number >= 1 && entry.number <= referenceItems.length) {
+          fixedAnswers[entry.number - 1] = entry.answer;
+        }
+      });
+      return fixedAnswers;
+    }
+  }
+
   const candidates = getFlatAnswerCandidateSequences(submissionText);
   if (!candidates.length) return [];
   const restartedGroups = splitIntoAnswerBlocks(submissionText)
@@ -894,7 +942,12 @@ function buildMixedPartAnswerMap(referenceItems = [], submissionText = "", secti
 function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections }) {
   if (item.type === "vocabulary") {
     const vocabularyPairs = extractVocabularyAnswers(submissionText);
-    if (item.vocabularyKey && vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
+    if (item.vocabularyKey) {
+      if (vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
+      const numberedVocabularyValues = extractNumberedVocabularyAnswers(submissionText);
+      const keyedVocabularyIndex = Math.max(0, index - 5);
+      return numberedVocabularyValues[keyedVocabularyIndex] || "";
+    }
     const pairedVocabularyValues = Object.values(vocabularyPairs);
     const pairedVocabularyIndex = Math.max(0, index - 5);
     if (pairedVocabularyValues[pairedVocabularyIndex]) return pairedVocabularyValues[pairedVocabularyIndex];
@@ -903,7 +956,11 @@ function getStudentAnswerForItem({ item, index, submissionText, sections, flatAn
     if (vocabularyValues[vocabularyIndex]) return vocabularyValues[vocabularyIndex];
   }
 
-  if (item.partId === "main") return flatAnswers[index] || "";
+  if (item.partId === "main") {
+    const flatAnswer = flatAnswers[index] || "";
+    if (item.preserveFlatPosition === true && item.type === "choice" && normalizeAnswer(flatAnswer) === "anzeige") return "";
+    return flatAnswer;
+  }
 
   const matchingSectionText = sections.find((section) => section.partId === item.partId)?.text;
   if (matchingSectionText !== undefined) {
