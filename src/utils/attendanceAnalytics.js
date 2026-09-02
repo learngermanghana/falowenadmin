@@ -84,6 +84,7 @@ function intersects(left = new Set(), right = new Set()) {
 function normalizeStatus(value) {
   const status = comparable(value);
   if (["present", "checked in", "checked-in", "attended"].includes(status)) return "present";
+  if (["present_by_assignment", "present by assignment", "assignment"].includes(status)) return "present_by_assignment";
   if (["late", "tardy"].includes(status)) return "late";
   if (["excused", "excused absence", "permission"].includes(status)) return "excused";
   if (["absent", "missing"].includes(status)) return "absent";
@@ -161,6 +162,7 @@ function statusForRecord({ session, saved, checkin, nowDate, lateMinutes }) {
   const explicit = normalizeStatus(saved?.status || saved?.attendanceStatus);
   if (explicit === "excused") return "excused";
   if (explicit === "late") return "late";
+  if (explicit === "present_by_assignment") return "present_by_assignment";
 
   const checkedAt = attendanceDate(checkin?.checkedInAt || checkin?.submittedAt || checkin?.createdAt);
   if (checkin && checkedAt && startsAt && checkedAt.getTime() > startsAt.getTime() + lateMinutes * 60000) return "late";
@@ -171,7 +173,7 @@ function statusForRecord({ session, saved, checkin, nowDate, lateMinutes }) {
 function trailingAbsences(records = []) {
   let count = 0;
   const held = records
-    .filter((record) => ["present", "late", "absent", "excused"].includes(record.status))
+    .filter((record) => ["present", "present_by_assignment", "late", "absent", "excused"].includes(record.status))
     .sort((left, right) => (right.startsAtMs || 0) - (left.startsAtMs || 0));
   for (const record of held) {
     if (record.status !== "absent") break;
@@ -225,7 +227,7 @@ export function buildAttendanceAnalytics({
     const endsAt = sessionEnd(session);
     const date = attendanceDateKey(startsAt || savedDoc.date, timezone);
     const topic = sessionTopic({ ...savedDoc, ...session });
-    const statusCounts = { present: 0, late: 0, absent: 0, excused: 0, cancelled: 0, upcoming: 0 };
+    const statusCounts = { present: 0, present_by_assignment: 0, late: 0, absent: 0, excused: 0, cancelled: 0, upcoming: 0 };
 
     roster.forEach((entry) => {
       const saved = findSavedStudent(savedStudents, entry.aliases);
@@ -252,7 +254,7 @@ export function buildAttendanceAnalytics({
 
     const held = !["cancelled", "canceled"].includes(activeSessionStatus({ ...savedDoc, ...session }))
       && (activeSessionStatus({ ...savedDoc, ...session }) === "completed" || activeSessionStatus({ ...savedDoc, ...session }) === "live" || Boolean(startsAt && startsAt.getTime() <= nowDate.getTime()));
-    const attended = statusCounts.present + statusCounts.late;
+    const attended = statusCounts.present + statusCounts.present_by_assignment + statusCounts.late;
     const eligible = Math.max(0, roster.length - statusCounts.excused);
     sessionSummaries.push({
       sessionId: id,
@@ -273,6 +275,7 @@ export function buildAttendanceAnalytics({
     const studentRecords = records.filter((record) => record.studentKey === entry.key);
     const heldRecords = studentRecords.filter((record) => ["present", "late", "absent", "excused"].includes(record.status));
     const present = heldRecords.filter((record) => record.status === "present").length;
+    const presentByAssignment = heldRecords.filter((record) => record.status === "present_by_assignment").length;
     const late = heldRecords.filter((record) => record.status === "late").length;
     const absent = heldRecords.filter((record) => record.status === "absent").length;
     const excused = heldRecords.filter((record) => record.status === "excused").length;
@@ -286,11 +289,12 @@ export function buildAttendanceAnalytics({
       student: entry.student,
       sessionsHeld: heldRecords.length,
       present,
+      presentByAssignment,
       late,
       absent,
       excused,
-      attended: present + late,
-      attendancePercent: percentage(present + late, eligible),
+      attended: present + presentByAssignment + late,
+      attendancePercent: percentage(present + presentByAssignment + late, eligible),
       consecutiveAbsences: trailingAbsences(studentRecords),
       lastCheckin: checkinDates[0]?.toISOString() || "",
       records: studentRecords,
@@ -298,8 +302,8 @@ export function buildAttendanceAnalytics({
   });
 
   const heldSessions = sessionSummaries.filter((session) => session.held);
-  const eligibleRecords = records.filter((record) => ["present", "late", "absent"].includes(record.status));
-  const presentRecords = eligibleRecords.filter((record) => ["present", "late"].includes(record.status));
+  const eligibleRecords = records.filter((record) => ["present", "present_by_assignment", "late", "absent"].includes(record.status));
+  const presentRecords = eligibleRecords.filter((record) => ["present", "present_by_assignment", "late"].includes(record.status));
   const today = attendanceDateKey(nowDate, timezone);
   const todayRecords = records.filter((record) => record.date === today && !["cancelled", "upcoming"].includes(record.status));
 
@@ -314,11 +318,12 @@ export function buildAttendanceAnalytics({
       totalStudents: roster.length,
       sessionsHeld: heldSessions.length,
       present: eligibleRecords.filter((record) => record.status === "present").length,
+      presentByAssignment: eligibleRecords.filter((record) => record.status === "present_by_assignment").length,
       late: eligibleRecords.filter((record) => record.status === "late").length,
       absent: eligibleRecords.filter((record) => record.status === "absent").length,
       excused: records.filter((record) => record.status === "excused").length,
       attendancePercent: percentage(presentRecords.length, eligibleRecords.length),
-      todayCheckedIn: todayRecords.filter((record) => ["present", "late"].includes(record.status)).length,
+      todayCheckedIn: todayRecords.filter((record) => ["present", "present_by_assignment", "late"].includes(record.status)).length,
       todayMissing: todayRecords.filter((record) => record.status === "absent").length,
     },
   };
