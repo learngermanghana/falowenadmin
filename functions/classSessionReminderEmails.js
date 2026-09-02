@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { runAutoOpenCheckins } = require("./classSessionAutoCheckin.js");
 
 const TZ = "Africa/Accra";
 const DEFAULT_LEADS = [30, 10];
@@ -130,8 +131,6 @@ function sessionClassKey(session = {}, classes = []) {
   );
   if (canonical) return canonical;
 
-  // Resolve a legacy name only when it points to exactly one class document.
-  // Ambiguous display names remain on the official-session fallback key.
   const legacyValues = new Set([
     session.className, session.class, session.group,
   ].map(comparable).filter(Boolean));
@@ -158,8 +157,6 @@ function preferredSessionScore(session = {}, classes = []) {
   return (session.repairPreferredRecord === true || session.authoritativeSession === true ? 1_000_000 : 0)
     + (text(session.attendanceSessionId || session.attendanceRecordId) ? 100_000 : 0)
     + (session.manuallyCompleted === true || session.manualOverride === true ? 10_000 : 0)
-    // A class document ID is stronger identity evidence than a legacy class
-    // name, but it must remain below every session-authority signal.
     + (hasExactClassDocumentId(session, classes) ? 1_000 : 0)
     + (text(session.officialSessionId) ? 20 : 0)
     + (text(session.curriculumSource) ? 10 : 0)
@@ -182,9 +179,6 @@ function dedupeSessions(sessions = [], classes = []) {
     const officialId = officialSessionId(session);
     if (!start || !officialId) return;
     const classKey = sessionClassKey(session, classes);
-    // One class can have only one official lesson at an exact start time.
-    // Grouping by class + start prevents a stale generated alias with a
-    // different officialSessionId from sending the wrong reminder.
     const key = classKey
       ? `${classKey}::${start.toISOString()}`
       : `${officialId}::${start.toISOString()}`;
@@ -227,9 +221,6 @@ function findDueSessionReminders({
     const minutesUntilStart = (startsAt.getTime() - nowDate.getTime()) / 60000;
     if (minutesUntilStart <= 0) return;
     leads.forEach((leadMin) => {
-      // Always keep the final reminder eligible until the class starts. This is
-      // important when an administrator moves a session into the near future:
-      // the new time may already be outside the ordinary scheduler grace window.
       const windowStart = leadMin === leads[leads.length - 1]
         ? 0
         : Math.max(0, leadMin - grace);
@@ -572,7 +563,7 @@ function classReminderEnabled(klass = {}) {
   return !["off", "disabled"].includes(comparable(klass.classReminderEmailMode));
 }
 
-async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl }) {
+async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl, runtimeConfig = {} }) {
   const { session, leadMin } = due;
   const klass = resolveClassForSession(session, classes);
   if (!klass || BLOCKED_CLASS_STATUSES.has(comparable(klass.status)) || !classReminderEnabled(klass)) {
@@ -603,7 +594,7 @@ async function processReminder({ admin, db, due, classes, students, config, now,
     klass,
     session,
     students,
-    baseUrl: resolveCheckinBaseUrl(),
+    baseUrl: resolveCheckinBaseUrl(runtimeConfig),
   });
   const rows = recipients.map((student) => {
     const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl });
@@ -658,11 +649,20 @@ async function runClassSessionReminderEmailJob({
   const classes = classSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
   const sessions = sessionSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
   const students = studentSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  const nowDate = asDate(now) || new Date();
+  const autoOpen = await runAutoOpenCheckins({
+    admin,
+    db,
+    classes,
+    sessions: dedupeSessions(sessions, classes),
+    runtimeConfig,
+    now: nowDate,
+  });
   const communication = runtimeConfig.communication || {};
   const due = findDueSessionReminders({
     sessions,
     classes,
-    now,
+    now: nowDate,
     leadMinutes: communication.class_reminder_leads_minutes
       || process.env.CLASS_REMINDER_LEADS_MINUTES
       || DEFAULT_LEADS,
@@ -671,7 +671,6 @@ async function runClassSessionReminderEmailJob({
       || DEFAULT_GRACE_MIN,
   });
   const config = resolveWebhookConfig(runtimeConfig);
-  const nowDate = asDate(now) || new Date();
   const results = [];
 
   for (const item of due) {
@@ -680,7 +679,17 @@ async function runClassSessionReminderEmailJob({
         sessionId: text(item.session.id),
         leadMin: item.leadMin,
         ok: true,
-        ...await processReminder({ admin, db, due: item, classes, students, config, now: nowDate, fetchImpl }),
+        ...await processReminder({
+          admin,
+          db,
+          due: item,
+          classes,
+          students,
+          config,
+          now: nowDate,
+          fetchImpl,
+          runtimeConfig,
+        }),
       });
     } catch (error) {
       console.error("class_session_reminder_failed", {
@@ -696,8 +705,8 @@ async function runClassSessionReminderEmailJob({
   }
 
   const sent = results.reduce((sum, result) => sum + Number(result.sent || 0), 0);
-  console.log("class_session_reminder_job_complete", { due: due.length, sent });
-  return { due: due.length, sent, results };
+  console.log("class_session_reminder_job_complete", { due: due.length, sent, autoOpened: autoOpen.opened });
+  return { due: due.length, sent, autoOpen, results };
 }
 
 function createClassSessionReminderEmailJob({ admin, db, onSchedule, runtimeConfig = {} }) {
@@ -723,6 +732,7 @@ module.exports = {
     isSuppressedSession,
     normalizeLeads,
     officialSessionId,
+    processReminder,
     resolveCheckinBaseUrl,
     resolveClassForSession,
     resolveClassWebhookConfig,
