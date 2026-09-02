@@ -108,6 +108,28 @@ function scheduleStateClassPatch({ health, endDate, adminId }) {
   };
 }
 
+function autoOpenedAttendanceReschedulePatch(attendance = {}, sessionPatch = {}) {
+  if (attendance.autoOpened !== true || attendance.opened !== true) return {};
+  if (normalize(attendance.openedBy) || normalize(attendance.closedBy)) return {};
+
+  const startsAt = new Date(sessionPatch.startsAt || "");
+  if (Number.isNaN(startsAt.getTime())) return {};
+
+  const leadMinutes = Math.max(1, Math.min(240, Number(attendance.autoOpenLeadMinutes || 30) || 30));
+  const windowMinutes = Math.max(30, Math.min(720, Number(attendance.autoOpenWindowMinutes || 180) || 180));
+  const openFrom = new Date(startsAt.getTime() - leadMinutes * 60 * 1000);
+  const openTo = new Date(openFrom.getTime() + windowMinutes * 60 * 1000);
+
+  return {
+    openFrom,
+    openTo,
+    autoOpenLeadMinutes: leadMinutes,
+    autoOpenWindowMinutes: windowMinutes,
+    autoOpenSessionStartsAt: startsAt.toISOString(),
+    autoOpenWindowRefreshedAt: serverTimestamp(),
+  };
+}
+
 async function commitSessionChangesAtomically({
   classId,
   sessionChanges = [],
@@ -142,9 +164,13 @@ async function commitSessionChangesAtomically({
     const snapshots = await Promise.all([
       transaction.get(classRef),
       ...preparedChanges.map((change) => transaction.get(change.sessionRef)),
+      ...preparedChanges.map((change) => transaction.get(change.attendanceRef)),
     ]);
     const latestClassSnap = snapshots[0];
-    const latestSessionSnaps = snapshots.slice(1);
+    const sessionStartIndex = 1;
+    const attendanceStartIndex = sessionStartIndex + preparedChanges.length;
+    const latestSessionSnaps = snapshots.slice(sessionStartIndex, attendanceStartIndex);
+    const latestAttendanceSnaps = snapshots.slice(attendanceStartIndex);
 
     if (!latestClassSnap.exists()) throw new Error("Class not found");
     const latestClass = { id: latestClassSnap.id, ...latestClassSnap.data() };
@@ -190,7 +216,13 @@ async function commitSessionChangesAtomically({
       updatedAt: serverTimestamp(),
     };
 
-    preparedChanges.forEach((change) => {
+    preparedChanges.forEach((change, index) => {
+      const attendanceSnap = latestAttendanceSnaps[index];
+      const existingAttendance = attendanceSnap?.exists() ? attendanceSnap.data() || {} : {};
+      const autoOpenWindowPatch = changeType === "rescheduled"
+        ? autoOpenedAttendanceReschedulePatch(existingAttendance, change.patch)
+        : {};
+
       transaction.update(change.sessionRef, change.patch);
       transaction.set(change.attendanceRef, {
         classId,
@@ -201,6 +233,7 @@ async function commitSessionChangesAtomically({
         cancellationReason: change.patch.cancellationReason || "",
         remindersSuppressed: change.patch.remindersSuppressed === true,
         reminderScheduleVersion: scheduleVersion,
+        ...autoOpenWindowPatch,
         updatedAt: serverTimestamp(),
       }, { merge: true });
     });

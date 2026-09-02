@@ -24,6 +24,16 @@ function asDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function timestampMillis(value) {
+  if (!value) return null;
+  if (typeof value?.toMillis === "function") {
+    const millis = Number(value.toMillis());
+    return Number.isFinite(millis) ? millis : null;
+  }
+  const date = asDate(value);
+  return date ? date.getTime() : null;
+}
+
 function isoDate(value, timezone = TZ) {
   const date = asDate(value);
   if (!date) return "";
@@ -136,14 +146,26 @@ function dueForAutoOpen({ session, klass, now, runtimeConfig }) {
   return minutesUntilStart > 0 && minutesUntilStart <= settings.leadMinutes;
 }
 
+function automationOwnsOpenWindow(existing = {}) {
+  return existing.autoOpened === true
+    && existing.opened === true
+    && !text(existing.openedBy)
+    && !text(existing.closedBy);
+}
+
+function storedWindowMatches(existing = {}, openFromMs, openToMs) {
+  return timestampMillis(existing.openFrom) === openFromMs
+    && timestampMillis(existing.openTo) === openToMs;
+}
+
 async function openOneSession({ admin, db, klass, session, runtimeConfig, now }) {
   const classId = text(klass.id || klass.classId || klass.classRecordId);
   const sessionId = text(session.id);
   const assignmentId = assignmentIdForSession(session);
-  if (!classId || !sessionId) return { opened: false, skipped: "missing_identity" };
-  if (!assignmentId) return { opened: false, skipped: "missing_assignment" };
+  if (!classId || !sessionId) return { opened: false, refreshed: false, skipped: "missing_identity" };
+  if (!assignmentId) return { opened: false, refreshed: false, skipped: "missing_assignment" };
   if (await holidayClosesSession({ db, klass, session })) {
-    return { opened: false, skipped: "holiday_closed" };
+    return { opened: false, refreshed: false, skipped: "holiday_closed" };
   }
 
   const settings = autoOpenSettings(klass, runtimeConfig);
@@ -153,20 +175,29 @@ async function openOneSession({ admin, db, klass, session, runtimeConfig, now })
   const openFrom = admin.firestore.Timestamp.fromMillis(openFromMs);
   const openTo = admin.firestore.Timestamp.fromMillis(openToMs);
   const ref = db.doc(`attendance/${classId}/sessions/${sessionId}`);
-  let outcome = { opened: false, skipped: "already_open" };
+  let outcome = { opened: false, refreshed: false, skipped: "already_open" };
 
   await db.runTransaction(async (transaction) => {
     const snap = await transaction.get(ref);
     const existing = snap.exists ? snap.data() || {} : {};
+    const autoOwnedWindow = automationOwnsOpenWindow(existing);
+
     if (existing.opened === true) {
-      outcome = { opened: false, skipped: "already_open" };
-      return;
+      if (!autoOwnedWindow) {
+        outcome = { opened: false, refreshed: false, skipped: "already_open" };
+        return;
+      }
+      if (storedWindowMatches(existing, openFromMs, openToMs)) {
+        outcome = { opened: false, refreshed: false, skipped: "already_open" };
+        return;
+      }
     }
     if (existing.opened === false && text(existing.closedBy)) {
-      outcome = { opened: false, skipped: "manually_closed" };
+      outcome = { opened: false, refreshed: false, skipped: "manually_closed" };
       return;
     }
 
+    const refreshing = autoOwnedWindow;
     const topic = text(session.topic || session.title || session.sessionLabel || klass.name || klass.className || "Live class");
     transaction.set(ref, {
       classId,
@@ -182,19 +213,29 @@ async function openOneSession({ admin, db, klass, session, runtimeConfig, now })
       autoOpened: true,
       autoOpenLeadMinutes: settings.leadMinutes,
       autoOpenWindowMinutes: settings.windowMinutes,
-      autoOpenedAt: admin.firestore.FieldValue.serverTimestamp(),
+      autoOpenSessionStartsAt: startsAt.toISOString(),
+      ...(refreshing
+        ? { autoOpenWindowRefreshedAt: admin.firestore.FieldValue.serverTimestamp() }
+        : { autoOpenedAt: admin.firestore.FieldValue.serverTimestamp() }),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(snap.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
     }, { merge: true });
-    outcome = { opened: true, skipped: "", openFromMs, openToMs };
+    outcome = {
+      opened: !refreshing,
+      refreshed: refreshing,
+      skipped: "",
+      openFromMs,
+      openToMs,
+    };
   });
 
-  if (outcome.opened) {
+  if (outcome.opened || outcome.refreshed) {
     try {
       await db.collection("classSessions").doc(sessionId).set({
         attendanceSessionId: sessionId,
         attendanceAutoOpenedAt: admin.firestore.FieldValue.serverTimestamp(),
         attendanceAutoOpenLeadMinutes: settings.leadMinutes,
+        attendanceAutoOpenWindowRefreshed: outcome.refreshed === true,
       }, { merge: true });
     } catch (error) {
       console.warn("attendance_auto_open_session_diagnostic_failed", {
@@ -239,13 +280,15 @@ async function runAutoOpenCheckins({
         sessionId: text(session.id),
         ok: false,
         opened: false,
+        refreshed: false,
         error: error?.message || String(error),
       });
     }
   }
 
   const opened = results.filter((result) => result.opened).length;
-  return { checked: results.length, opened, results };
+  const refreshed = results.filter((result) => result.refreshed).length;
+  return { checked: results.length, opened, refreshed, results };
 }
 
 module.exports = {
@@ -253,8 +296,11 @@ module.exports = {
   _test: {
     assignmentIdForSession,
     autoOpenSettings,
+    automationOwnsOpenWindow,
     dueForAutoOpen,
     openOneSession,
     resolveClassForSession,
+    storedWindowMatches,
+    timestampMillis,
   },
 };
