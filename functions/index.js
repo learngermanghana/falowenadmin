@@ -10,7 +10,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
-const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
+const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");\nconst { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 
 setGlobalOptions({ region: "us-central1" });
 
@@ -1698,8 +1698,21 @@ async function applyAssignmentAttendance(event, submission = {}) {
   const assignmentKey = readSubmissionAssignmentKey(submission);
   if (!assignmentKey) return [];
 
-  const submissionStatus = attendanceComparable(submission.status || submission.submissionStatus);
-  if (["draft", "deleted", "rejected"].includes(submissionStatus)) return [];
+  const eligibility = assignmentAttendanceEligibility(submission);
+  if (!eligibility.eligible) {
+    await snap.ref.set({
+      attendanceCredit: {
+        status: "not_eligible",
+        reason: eligibility.reason,
+        checkedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+    }, { merge: true });
+    console.info("assignment_attendance_not_eligible", {
+      submissionPath: snap.ref.path,
+      reason: eligibility.reason,
+    });
+    return [];
+  }
 
   const studentAliases = assignmentAttendanceStudentAliases(submission, event.params || {});
   if (!studentAliases.size) return [];
