@@ -1608,7 +1608,8 @@ function readSubmissionLevel(data = {}, eventParams = {}) {
   return match ? match[1] : candidate;
 }
 
-const ASSIGNMENT_ATTENDANCE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const ASSIGNMENT_ATTENDANCE_WINDOW_HOURS = 24;
+const ASSIGNMENT_ATTENDANCE_WINDOW_MS = ASSIGNMENT_ATTENDANCE_WINDOW_HOURS * 60 * 60 * 1000;
 
 function attendanceComparable(value) {
   return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
