@@ -1608,6 +1608,178 @@ function readSubmissionLevel(data = {}, eventParams = {}) {
   return match ? match[1] : candidate;
 }
 
+const ASSIGNMENT_ATTENDANCE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+function attendanceComparable(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function submissionDate(value, fallback = "") {
+  if (value && typeof value.toDate === "function") return value.toDate();
+  if (value && typeof value.toMillis === "function") return new Date(value.toMillis());
+  if (value && typeof value.seconds === "number") return new Date(value.seconds * 1000);
+  const parsed = new Date(value || fallback);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function assignmentAttendanceStudentAliases(submission = {}, eventParams = {}) {
+  return new Set([
+    submission.studentCode,
+    submission.studentcode,
+    submission.studentId,
+    submission.student_id,
+    submission.uid,
+    submission.userId,
+    submission.email,
+    submission.studentEmail,
+    eventParams.studentCode,
+  ].map(attendanceComparable).filter(Boolean));
+}
+
+function assignmentAttendanceSavedAliases(code, student = {}) {
+  return new Set([
+    code,
+    student.id,
+    student.uid,
+    student.studentCode,
+    student.studentcode,
+    student.email,
+  ].map(attendanceComparable).filter(Boolean));
+}
+
+function assignmentAttendanceAliasesIntersect(left, right) {
+  for (const value of left) if (right.has(value)) return true;
+  return false;
+}
+
+function assignmentAttendanceClassMatches(submission = {}, session = {}, eventParams = {}) {
+  const submissionClasses = [
+    submission.classId,
+    submission.className,
+    submission.class,
+    submission.group,
+    submission.level,
+    eventParams.level,
+  ].map(attendanceComparable).filter(Boolean);
+  const sessionClasses = [
+    session.classId,
+    session.className,
+  ].map(attendanceComparable).filter(Boolean);
+  if (!submissionClasses.length || !sessionClasses.length) return true;
+  return submissionClasses.some((left) => sessionClasses.some((right) =>
+    left === right || left.startsWith(right + " ") || right.startsWith(left + " "),
+  ));
+}
+
+async function findAttendanceSessionsForAssignment(assignmentKey) {
+  const found = new Map();
+  const queries = [
+    db.collectionGroup("sessions").where("assignmentIds", "array-contains", assignmentKey).get(),
+    db.collectionGroup("sessions").where("assignment_id", "==", assignmentKey).get(),
+  ];
+  const results = await Promise.allSettled(queries);
+  for (const result of results) {
+    if (result.status !== "fulfilled") {
+      console.warn("assignment_attendance_session_lookup_failed", {
+        assignmentKey,
+        message: result.reason?.message || String(result.reason),
+      });
+      continue;
+    }
+    result.value.docs.forEach((docSnap) => found.set(docSnap.ref.path, docSnap));
+  }
+  return [...found.values()];
+}
+
+async function applyAssignmentAttendance(event, submission = {}) {
+  const snap = event.data;
+  if (!snap) return [];
+  const assignmentKey = readSubmissionAssignmentKey(submission);
+  if (!assignmentKey) return [];
+
+  const submissionStatus = attendanceComparable(submission.status || submission.submissionStatus);
+  if (["draft", "deleted", "rejected"].includes(submissionStatus)) return [];
+
+  const studentAliases = assignmentAttendanceStudentAliases(submission, event.params || {});
+  if (!studentAliases.size) return [];
+
+  const submittedAt = submissionDate(
+    submission.submittedAt || submission.resubmittedAt || submission.createdAt || submission.timestamp || submission.date,
+    event.time,
+  );
+  if (!submittedAt) return [];
+
+  const sessions = await findAttendanceSessionsForAssignment(assignmentKey);
+  const credited = [];
+
+  for (const sessionSnap of sessions) {
+    const session = sessionSnap.data() || {};
+    if (!assignmentAttendanceClassMatches(submission, session, event.params || {})) continue;
+
+    const startsAt = submissionDate(session.startsAt || session.date);
+    if (!startsAt) continue;
+    const ageMs = submittedAt.getTime() - startsAt.getTime();
+    if (ageMs < 0 || ageMs > ASSIGNMENT_ATTENDANCE_WINDOW_MS) continue;
+
+    let applied = false;
+    await db.runTransaction(async (transaction) => {
+      const latestSnap = await transaction.get(sessionSnap.ref);
+      if (!latestSnap.exists) return;
+      const latest = latestSnap.data() || {};
+      const students = { ...(latest.students || {}) };
+      const match = Object.entries(students).find(([code, student]) =>
+        assignmentAttendanceAliasesIntersect(studentAliases, assignmentAttendanceSavedAliases(code, student || {})),
+      );
+      if (!match) return;
+
+      const [studentKey, currentValue] = match;
+      const current = currentValue && typeof currentValue === "object" ? currentValue : { present: Boolean(currentValue) };
+      const currentStatus = attendanceComparable(current.status || current.attendanceStatus);
+      if (current.present === true || ["present", "late", "excused", "present_by_assignment"].includes(currentStatus)) return;
+
+      students[studentKey] = {
+        ...current,
+        present: true,
+        status: "present_by_assignment",
+        attendanceStatus: "present_by_assignment",
+        method: "Assignment",
+        source: "assignment_submission",
+        assignmentId: assignmentKey,
+        assignmentSubmissionId: snap.id,
+        assignmentSubmissionPath: snap.ref.path,
+        assignmentSubmittedAt: admin.firestore.Timestamp.fromDate(submittedAt),
+        automaticallyUpdated: true,
+      };
+      transaction.set(sessionSnap.ref, {
+        students,
+        assignmentAttendanceUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      applied = true;
+    });
+
+    if (applied) {
+      credited.push({
+        sessionId: String(session.classSessionId || sessionSnap.id),
+        classId: String(session.classId || ""),
+        attendancePath: sessionSnap.ref.path,
+      });
+    }
+  }
+
+  if (credited.length) {
+    await snap.ref.set({
+      attendanceCredit: {
+        status: "present_by_assignment",
+        assignmentId: assignmentKey,
+        sessions: credited,
+        appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+    }, { merge: true });
+  }
+  return credited;
+}
+
 async function createAutomaticMarkingJob(event, collectionShape) {
   const snap = event.data;
   if (!snap) return;
@@ -1634,6 +1806,15 @@ async function createAutomaticMarkingJob(event, collectionShape) {
     markingStatus: "pending",
     markingJobCreatedAt: now,
   }, { merge: true });
+
+  try {
+    await applyAssignmentAttendance(event, submission);
+  } catch (error) {
+    console.error("assignment_attendance_automation_failed", {
+      submissionPath,
+      message: error?.message || String(error),
+    });
+  }
 }
 
 exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
