@@ -110,7 +110,11 @@ function scheduleStateClassPatch({ health, endDate, adminId }) {
 
 function autoOpenedAttendanceReschedulePatch(attendance = {}, sessionPatch = {}) {
   if (attendance.autoOpened !== true || attendance.opened !== true) return {};
-  if (normalize(attendance.openedBy) || normalize(attendance.closedBy)) return {};
+  if (
+    normalize(attendance.openedBy)
+    || normalize(attendance.createdBy)
+    || normalize(attendance.closedBy)
+  ) return {};
 
   const startsAt = new Date(sessionPatch.startsAt || "");
   if (Number.isNaN(startsAt.getTime())) return {};
