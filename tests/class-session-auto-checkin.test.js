@@ -259,6 +259,46 @@ test("manual open is not replaced by the automatic reschedule refresh", async ()
   assert.equal(db.readNested(path).openTo.toMillis(), manualOpenTo.toMillis());
 });
 
+test("createdBy from manual /openSession takes ownership even when autoOpened remains true", async () => {
+  const { klass, session } = fixture();
+  const rescheduled = {
+    ...session,
+    startsAt: "2026-09-02T21:00:00.000Z",
+    endsAt: "2026-09-02T22:30:00.000Z",
+  };
+  const db = createFirestore({ holidayCalendar: {} });
+  const path = `attendance/${klass.id}/sessions/${session.id}`;
+  const manualOpenFrom = admin.firestore.Timestamp.fromMillis(Date.parse("2026-09-02T20:10:00.000Z"));
+  const manualOpenTo = admin.firestore.Timestamp.fromMillis(Date.parse("2026-09-02T22:10:00.000Z"));
+  db.seedNested(path, {
+    classId: klass.id,
+    sessionId: session.id,
+    opened: true,
+    autoOpened: true,
+    createdBy: "teacher-uid",
+    openFrom: manualOpenFrom,
+    openTo: manualOpenTo,
+    autoOpenLeadMinutes: 30,
+    autoOpenWindowMinutes: 180,
+  });
+
+  assert.equal(_test.automationOwnsOpenWindow(db.readNested(path)), false);
+
+  const result = await runAutoOpenCheckins({
+    admin,
+    db,
+    classes: [klass],
+    sessions: [rescheduled],
+    now: new Date("2026-09-02T20:30:00.000Z"),
+  });
+
+  assert.equal(result.opened, 0);
+  assert.equal(result.refreshed, 0);
+  assert.equal(result.results[0].skipped, "already_open");
+  assert.equal(db.readNested(path).openFrom.toMillis(), manualOpenFrom.toMillis());
+  assert.equal(db.readNested(path).openTo.toMillis(), manualOpenTo.toMillis());
+});
+
 test("automatic opening can be disabled per class", async () => {
   const { klass, session } = fixture();
   const db = createFirestore({ holidayCalendar: {} });
