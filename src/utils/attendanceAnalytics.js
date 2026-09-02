@@ -248,7 +248,7 @@ export function buildAttendanceAnalytics({
         status: recordStatus,
         checkedInAt: formatCheckinIso(checkin || {}, saved || {}),
         method: checkinMethod(checkin || {}, saved || {}),
-        source: checkin ? "checkin" : saved ? "attendance" : "derived",
+        source: checkin ? "checkin" : saved?.source || (saved ? "attendance" : "derived"),
       });
     });
 
@@ -273,7 +273,7 @@ export function buildAttendanceAnalytics({
 
   const studentSummaries = roster.map((entry) => {
     const studentRecords = records.filter((record) => record.studentKey === entry.key);
-    const heldRecords = studentRecords.filter((record) => ["present", "late", "absent", "excused"].includes(record.status));
+    const heldRecords = studentRecords.filter((record) => ["present", "present_by_assignment", "late", "absent", "excused"].includes(record.status));
     const present = heldRecords.filter((record) => record.status === "present").length;
     const presentByAssignment = heldRecords.filter((record) => record.status === "present_by_assignment").length;
     const late = heldRecords.filter((record) => record.status === "late").length;
