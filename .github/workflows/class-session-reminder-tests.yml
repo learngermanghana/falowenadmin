@@ -8,6 +8,7 @@ on:
       - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
+      - 'tests/class-session-reminder-checkin-link.test.js'
       - 'firebase.json'
       - '.github/workflows/deploy-firebase.yml'
       - '.github/workflows/class-session-reminder-tests.yml'
@@ -19,6 +20,7 @@ on:
       - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
+      - 'tests/class-session-reminder-checkin-link.test.js'
       - 'firebase.json'
       - '.github/workflows/deploy-firebase.yml'
       - '.github/workflows/class-session-reminder-tests.yml'
@@ -51,5 +53,7 @@ jobs:
           grep -F 'https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09' functions/classSessionReminderEmails.js
           grep -F 'https://us06web.zoom.us/launch/jc/6886900916' functions/classSessionReminderEmails.js
           grep -F '6886900916@zoomcrc.com' functions/classSessionReminderEmails.js
-      - name: Test session topics, suppression rules and Zoom details
-        run: node --test tests/class-session-reminder-emails.test.js tests/class-session-reminder-zoom.test.js
+          grep -F 'checkin_link: checkinUrl' functions/classSessionReminderEmails.js
+          grep -F 'Check In Now' functions/classSessionReminderEmails.js
+      - name: Test session topics, suppression rules, Zoom details and attendance link
+        run: node --test tests/class-session-reminder-emails.test.js tests/class-session-reminder-zoom.test.js tests/class-session-reminder-checkin-link.test.js
