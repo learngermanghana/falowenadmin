@@ -19,6 +19,40 @@ const moneyFormatter = new Intl.NumberFormat("en-GH", {
   maximumFractionDigits: 0,
 });
 
+const DASHBOARD_CACHE_KEY = "falowen-admin-dashboard-core-v1";
+const DASHBOARD_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+
+function readDashboardCache() {
+  try {
+    const raw = window.localStorage.getItem(DASHBOARD_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (!cached?.savedAt || Date.now() - cached.savedAt > DASHBOARD_CACHE_MAX_AGE_MS) {
+      window.localStorage.removeItem(DASHBOARD_CACHE_KEY);
+      return null;
+    }
+    return {
+      students: Array.isArray(cached.students) ? cached.students : [],
+      liveClasses: Array.isArray(cached.liveClasses) ? cached.liveClasses : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function updateDashboardCache(partial) {
+  try {
+    const current = readDashboardCache() || {};
+    window.localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+      ...current,
+      ...partial,
+      savedAt: Date.now(),
+    }));
+  } catch {
+    // Storage can be unavailable in private browsing. Live loading still works.
+  }
+}
+
 function toNumber(value) {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
@@ -162,72 +196,85 @@ function MiniList({ items, emptyText, renderItem }) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [liveClasses, setLiveClasses] = useState([]);
+  const [initialCache] = useState(() => readDashboardCache());
+  const [students, setStudents] = useState(() => initialCache?.students || []);
+  const [liveClasses, setLiveClasses] = useState(() => initialCache?.liveClasses || []);
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
   const [contractEndingSoon, setContractEndingSoon] = useState([]);
   const [upcomingHolidays, setUpcomingHolidays] = useState([]);
   const [studentLeads, setStudentLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !initialCache);
+  const [refreshing, setRefreshing] = useState(() => Boolean(initialCache));
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
     const loadDashboard = async () => {
-      setLoading(true);
       setError("");
 
-      try {
-        // Load the records needed for the headline metrics first. Slower
-        // operational panels continue loading after the dashboard is visible.
-        const [studentRows, classRows] = await Promise.all([
-          listAllStudents(),
-          listClassCohorts(),
-        ]);
-        if (!active) return;
-        setStudents(studentRows);
-        setLiveClasses(classRows);
-      } catch (err) {
-        if (!active) return;
-        setError(err?.message || "Failed to load dashboard metrics");
-      } finally {
-        if (active) setLoading(false);
-      }
+      // Start every request together. Student metrics control only the headline
+      // loading state; class and operational panels never block the page.
+      const studentTask = listAllStudents()
+        .then((rows) => {
+          if (!active) return;
+          setStudents(rows);
+          updateDashboardCache({ students: rows });
+        })
+        .catch((err) => {
+          if (!active) return;
+          if (!initialCache) setError(err?.message || "Failed to load dashboard metrics");
+          else console.warn("Could not refresh cached student metrics.", err);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+
+      const classTask = listClassCohorts()
+        .then((rows) => {
+          if (!active) return;
+          setLiveClasses(rows);
+          updateDashboardCache({ liveClasses: rows });
+        })
+        .catch((err) => {
+          console.warn("Could not refresh class data.", err);
+        });
 
       const currentYear = new Date().getFullYear();
-      const results = await Promise.allSettled([
+      const secondaryTask = Promise.allSettled([
         loadSubmissions(),
         loadPendingTutorReviews(),
         loadGrammarIssueReports(),
         loadWhatsappReminderDashboard(),
         getUpcomingHolidays({ year: currentYear, countryCode: "GH" }),
         fetchStudentLeads(),
-      ]);
-      if (!active) return;
+      ]).then((results) => {
+        if (!active) return;
+        const [submissions, tutorReviews, grammarIssues, reminders, holidays, leads] = results;
+        if (submissions.status === "fulfilled") setIncomingAssignments(submissions.value);
+        if (tutorReviews.status === "fulfilled") setPendingTutorReviewsCount(tutorReviews.value.length);
+        if (grammarIssues.status === "fulfilled") setGrammarIssueReports(grammarIssues.value);
+        if (reminders.status === "fulfilled") setContractEndingSoon(reminders.value.contractEndingSoon || []);
+        if (holidays.status === "fulfilled") setUpcomingHolidays(holidays.value);
+        if (leads.status === "fulfilled") setStudentLeads(leads.value.leads || []);
 
-      const [submissions, tutorReviews, grammarIssues, reminders, holidays, leads] = results;
-      if (submissions.status === "fulfilled") setIncomingAssignments(submissions.value);
-      if (tutorReviews.status === "fulfilled") setPendingTutorReviewsCount(tutorReviews.value.length);
-      if (grammarIssues.status === "fulfilled") setGrammarIssueReports(grammarIssues.value);
-      if (reminders.status === "fulfilled") setContractEndingSoon(reminders.value.contractEndingSoon || []);
-      if (holidays.status === "fulfilled") setUpcomingHolidays(holidays.value);
-      if (leads.status === "fulfilled") setStudentLeads(leads.value.leads || []);
+        const failedPanel = results.find((result) => result.status === "rejected");
+        if (failedPanel) {
+          console.warn("Some secondary dashboard panels could not be loaded.", failedPanel.reason);
+        }
+      });
 
-      const failedPanel = results.find((result) => result.status === "rejected");
-      if (failedPanel) {
-        console.warn("Some secondary dashboard panels could not be loaded.", failedPanel.reason);
-      }
+      await Promise.allSettled([studentTask, classTask, secondaryTask]);
+      if (active) setRefreshing(false);
     };
 
     loadDashboard();
     return () => {
       active = false;
     };
-  }, []);
-
+  }, [initialCache]);
   const analytics = useMemo(() => {
     const totalStudents = students.length;
     const activeStudents = students.filter(isActiveStudent).length;
@@ -278,24 +325,10 @@ export default function DashboardPage() {
     [analytics.studentsWithBalance],
   );
 
-  if (loading) {
-    return (
-      <div className="analytics-shell">
-        <section className="analytics-hero analytics-loading-hero">
-          <p>Loading Falowen Admin analytics…</p>
-          <div className="loading-line" />
-          <div className="loading-line short" />
-        </section>
-        <div className="analytics-grid five">
-          {[1, 2, 3, 4, 5].map((item) => <div key={item} className="analytics-card skeleton-card" />)}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="analytics-shell">
-      {error ? <p className="analytics-error">❌ {error}</p> : null}
+      {error ? <p className="analytics-error">{error}</p> : null}
+      {refreshing ? <p className="analytics-refresh-status">Refreshing dashboard data…</p> : null}
 
       <section className="analytics-hero">
         <div>
@@ -314,9 +347,9 @@ export default function DashboardPage() {
       </section>
 
       <section className="analytics-grid five">
-        <StatCard label="Total students" value={analytics.totalStudents} helper={`${analytics.activeRate}% active records`} tone="blue" icon="🎓" />
-        <StatCard label="Paid / active" value={analytics.paidStudents} helper={`${analytics.paymentRate}% marked paid or active`} tone="green" icon="✅" />
-        <StatCard label="Balance due" value={moneyFormatter.format(analytics.totalBalance)} helper={`${analytics.studentsWithBalance.length} student(s) with balances`} tone="amber" icon="💳" />
+        <StatCard label="Total students" value={loading ? "—" : analytics.totalStudents} helper={loading ? "Loading student records…" : `${analytics.activeRate}% active records`} tone="blue" icon="🎓" />
+        <StatCard label="Paid / active" value={loading ? "—" : analytics.paidStudents} helper={loading ? "Loading payment status…" : `${analytics.paymentRate}% marked paid or active`} tone="green" icon="✅" />
+        <StatCard label="Balance due" value={loading ? "—" : moneyFormatter.format(analytics.totalBalance)} helper={loading ? "Loading balances…" : `${analytics.studentsWithBalance.length} student(s) with balances`} tone="amber" icon="💳" />
         <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper={`${affectedHolidayClassCount} affected class${affectedHolidayClassCount === 1 ? "" : "es"}`} tone="purple" icon="📅" />
         <StatCard label="Leads needing attention" value={leadNotificationSummary.unresolvedCount} helper={`${leadNotificationSummary.unseenCount} new unseen lead${leadNotificationSummary.unseenCount === 1 ? "" : "s"}`} tone="rose" icon="🔔" to="/students?tab=leads" />
       </section>
