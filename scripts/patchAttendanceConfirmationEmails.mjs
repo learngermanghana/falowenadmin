@@ -9,7 +9,7 @@ const workerPath = path.join(repoRoot, "functions", "attendanceConfirmationEmail
 const retryPath = path.join(repoRoot, "functions", "attendanceConfirmationRetry.js");
 
 let indexSource = fs.readFileSync(indexPath, "utf8");
-const requireLine = 'const { createAttendanceConfirmationEmailJob } = require("./attendanceConfirmationEmails.js");';
+const requireLine = 'const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");';
 const retryRequireLine = 'const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");';
 const exportLine = "exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });";
 const retryRouteMarker = 'app.post("/attendance-confirmation-emails/retry-failed"';
