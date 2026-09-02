@@ -150,6 +150,7 @@ function automationOwnsOpenWindow(existing = {}) {
   return existing.autoOpened === true
     && existing.opened === true
     && !text(existing.openedBy)
+    && !text(existing.createdBy)
     && !text(existing.closedBy);
 }
 
