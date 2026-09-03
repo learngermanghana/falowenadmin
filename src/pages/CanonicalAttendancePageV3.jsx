@@ -16,7 +16,6 @@ import {
   overrideCompatibleSessionDate,
 } from "../services/liveClassCompatibilityService.js";
 import { buildManualDateOverridePatch } from "../utils/attendanceSessionOverride.js";
-import AttendanceBccEmailPanel from "../components/AttendanceBccEmailPanel.jsx";
 
 const TIMEZONE = "Africa/Accra";
 
@@ -49,24 +48,11 @@ function localTime(value, timezone = TIMEZONE) {
   }).format(date);
 }
 
-function attendanceLessonTitle(session, levelId = "") {
-  const topic = String(session?.topic || "Lesson details to be confirmed").trim();
-  const level = String(levelId || "").trim().toUpperCase();
-  if (level === "A1") {
-    const explicitDay = Number(session?.curriculumDay);
-    const topicDay = topic.match(/^Day\s+(\d+)\s*:/i);
-    const day = Number.isFinite(explicitDay) ? explicitDay : Number(topicDay?.[1]);
-    const title = topic.replace(/^Day\s+\d+\s*:\s*/i, "").trim();
-    if (Number.isFinite(day)) return `Day ${day} — ${title || "Lesson details to be confirmed"}`;
-  }
-  const assignmentId = String(session?.assignmentIds?.[0] || session?.assignment_id || "").trim();
-  return [assignmentId, topic].filter(Boolean).join(" — ");
-}
-
-function lessonLabel(session, timezone = TIMEZONE, levelId = "") {
+function lessonLabel(session, timezone = TIMEZONE) {
   const date = asDate(session?.startsAt);
-  const lesson = attendanceLessonTitle(session, levelId);
-  if (!date) return lesson;
+  const assignmentId = String(session?.assignmentIds?.[0] || session?.assignment_id || "").trim();
+  const topic = String(session?.topic || "Lesson details to be confirmed").trim();
+  if (!date) return [assignmentId, topic].filter(Boolean).join(" — ");
   const text = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
     weekday: "short",
@@ -77,7 +63,7 @@ function lessonLabel(session, timezone = TIMEZONE, levelId = "") {
     minute: "2-digit",
     hour12: false,
   }).format(date);
-  return `${text} · ${lesson}`;
+  return `${text} · ${assignmentId ? `${assignmentId} — ` : ""}${topic}`;
 }
 
 function codeOf(student = {}) {
@@ -235,8 +221,9 @@ export default function CanonicalAttendancePageV3() {
     assignmentId,
     startTime,
     endTime,
+    expectedStudents: expectedNames.join(", "),
     expectedCount: String(rows.length),
-  }).toString(), [assignmentId, endTime, klass?.id, rows.length, selected?.id, selectedDate, sessionLabel, startTime]);
+  }).toString(), [assignmentId, endTime, expectedNames, klass?.id, rows.length, selected?.id, selectedDate, sessionLabel, startTime]);
 
   const checkinUrl = checkinQuery ? `${window.location.origin}/checkin?${checkinQuery}` : "";
   const displayUrl = checkinQuery ? `${window.location.origin}/checkin/display?${checkinQuery}` : "";
@@ -449,15 +436,15 @@ export default function CanonicalAttendancePageV3() {
         <label style={{ display: "grid", gap: 6 }}>
           <strong>Lesson</strong>
           <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
-            {sessions.map((session) => <option key={session.id} value={session.id}>{lessonLabel(session, klass.timezone || TIMEZONE, klass.levelId || klass.level)} · {session.status || "scheduled"}</option>)}
+            {sessions.map((session) => <option key={session.id} value={session.id}>{lessonLabel(session, klass.timezone || TIMEZONE)} · {session.status || "scheduled"}</option>)}
           </select>
         </label>
 
         {selected ? <>
           <div>
             <div style={{ fontSize: 12, opacity: 0.72 }}>Official lesson source</div>
-            <h2 style={{ margin: "4px 0" }}>{attendanceLessonTitle(selected, klass?.levelId || klass?.level)}</h2>
-            <div style={{ fontSize: 13, opacity: 0.75 }}>For A1, attendance shows one visible label per teaching day. The underlying chapter and curriculum IDs remain unchanged for assignments, marking and check-in.</div>
+            <h2 style={{ margin: "4px 0" }}>{assignmentId ? `${assignmentId} — ` : ""}{selected.topic || "Lesson details to be confirmed"}</h2>
+            <div style={{ fontSize: 13, opacity: 0.75 }}>The lesson title and curriculum ID come from this class session. Change lesson mapping under Live Classes, not on the attendance page.</div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 260px) auto", gap: 10, alignItems: "end" }}>
@@ -495,16 +482,6 @@ export default function CanonicalAttendancePageV3() {
           </div>
           <div style={{ marginTop: 8, fontSize: 12 }}>Selected recipients: {selectedEmailRows.length}</div>
         </article>
-
-        <AttendanceBccEmailPanel
-          rows={rows}
-          klass={klass}
-          session={selected}
-          selectedDate={selectedDate}
-          startTime={startTime}
-          endTime={endTime}
-          sessionLabel={sessionLabel}
-        />
 
         <article className="card">
           <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}><h2 style={{ margin: 0 }}>Students</h2><span>Present: {present} · Absent: {rows.length - present}</span></div>
