@@ -23,6 +23,10 @@ const B2_PRESENTER_V2_ASSIGNMENTS = new Set(
   }),
 );
 
+const C1_PRESENTER_V2_ASSIGNMENTS = new Set(
+  Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`),
+);
+
 function normalizedAssignmentId(slide = {}) {
   return String(slide.assignmentId || "").trim().toUpperCase();
 }
@@ -47,11 +51,16 @@ export function isB2PresenterV2Slide(slide = {}) {
   return B2_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide));
 }
 
+export function isC1PresenterV2Slide(slide = {}) {
+  return C1_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide));
+}
+
 export function isTeachingPresenterV2Slide(slide = {}) {
   return isA1PresenterV2Slide(slide)
     || isA2PresenterV2Slide(slide)
     || isB1PresenterV2Slide(slide)
-    || isB2PresenterV2Slide(slide);
+    || isB2PresenterV2Slide(slide)
+    || isC1PresenterV2Slide(slide);
 }
 
 export function parsePresenterMinutes(value = "") {
