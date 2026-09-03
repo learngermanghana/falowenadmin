@@ -90,6 +90,36 @@ export const courseDictionary = {
     "B1-10.27": { assignment_id: "B1-10.27", chapter: "10.27", de: "Umweltfreundlich im Alltag", en: "Environmentally Friendly in Everyday Life" },
     "B1-10.28": { assignment_id: "B1-10.28", chapter: "10.28", de: "Klimafreundlich leben", en: "Living in a Climate-Friendly Way" },
   },
+  B2: {
+    "B2-1.1": { assignment_id: "B2-1.1", chapter: "1.1", de: "Persönliche Identität und Selbstverständnis", en: "Persönliche Identität und Selbstverständnis" },
+    "B2-1.2": { assignment_id: "B2-1.2", chapter: "1.2", de: "Beziehungen und Kommunikation", en: "Beziehungen und Kommunikation" },
+    "B2-1.3": { assignment_id: "B2-1.3", chapter: "1.3", de: "Öffentliches vs. Privates Leben", en: "Öffentliches vs. Privates Leben" },
+    "B2-1.4": { assignment_id: "B2-1.4", chapter: "1.4", de: "Beruf und Karriere", en: "Beruf und Karriere" },
+    "B2-2.5": { assignment_id: "B2-2.5", chapter: "2.5", de: "Bildung und Lernen", en: "Bildung und Lernen" },
+    "B2-2.6": { assignment_id: "B2-2.6", chapter: "2.6", de: "Kultur und Gesellschaft", en: "Kultur und Gesellschaft" },
+    "B2-2.7": { assignment_id: "B2-2.7", chapter: "2.7", de: "Medien und digitale Welt", en: "Medien und digitale Welt" },
+    "B2-2.8": { assignment_id: "B2-2.8", chapter: "2.8", de: "Wissenschaft und Technologie", en: "Wissenschaft und Technologie" },
+    "B2-3.9": { assignment_id: "B2-3.9", chapter: "3.9", de: "Politik und Gesellschaft", en: "Politik und Gesellschaft" },
+    "B2-3.10": { assignment_id: "B2-3.10", chapter: "3.10", de: "Wirtschaft und Finanzen", en: "Wirtschaft und Finanzen" },
+    "B2-3.11": { assignment_id: "B2-3.11", chapter: "3.11", de: "Umwelt und Nachhaltigkeit", en: "Umwelt und Nachhaltigkeit" },
+    "B2-3.12": { assignment_id: "B2-3.12", chapter: "3.12", de: "Gesundheit und Wohlbefinden", en: "Gesundheit und Wohlbefinden" },
+    "B2-4.13": { assignment_id: "B2-4.13", chapter: "4.13", de: "Ernährung und Lebensstil", en: "Ernährung und Lebensstil" },
+    "B2-4.14": { assignment_id: "B2-4.14", chapter: "4.14", de: "Reisen und Mobilität", en: "Reisen und Mobilität" },
+    "B2-4.15": { assignment_id: "B2-4.15", chapter: "4.15", de: "Wohnen und Lebensräume", en: "Wohnen und Lebensräume" },
+    "B2-4.16": { assignment_id: "B2-4.16", chapter: "4.16", de: "Freizeit, Hobbys und Interessen", en: "Freizeit, Hobbys und Interessen" },
+    "B2-5.17": { assignment_id: "B2-5.17", chapter: "5.17", de: "Feste und Traditionen", en: "Feste und Traditionen" },
+    "B2-5.18": { assignment_id: "B2-5.18", chapter: "5.18", de: "Werte und Normen", en: "Werte und Normen" },
+    "B2-5.19": { assignment_id: "B2-5.19", chapter: "5.19", de: "Migration und Integration", en: "Migration und Integration" },
+    "B2-5.20": { assignment_id: "B2-5.20", chapter: "5.20", de: "Diskriminierung und Gleichstellung", en: "Diskriminierung und Gleichstellung" },
+    "B2-6.21": { assignment_id: "B2-6.21", chapter: "6.21", de: "Recht und Ordnung", en: "Recht und Ordnung" },
+    "B2-6.22": { assignment_id: "B2-6.22", chapter: "6.22", de: "Konfliktmanagement", en: "Konfliktmanagement" },
+    "B2-6.23": { assignment_id: "B2-6.23", chapter: "6.23", de: "Globalisierung", en: "Globalisierung" },
+    "B2-6.24": { assignment_id: "B2-6.24", chapter: "6.24", de: "Zukunft und Innovation", en: "Zukunft und Innovation" },
+    "B2-7.25": { assignment_id: "B2-7.25", chapter: "7.25", de: "Kommunikation im Berufsleben", en: "Kommunikation im Berufsleben" },
+    "B2-7.26": { assignment_id: "B2-7.26", chapter: "7.26", de: "Wissenschaftliches Arbeiten", en: "Wissenschaftliches Arbeiten" },
+    "B2-7.27": { assignment_id: "B2-7.27", chapter: "7.27", de: "Zeitmanagement und Organisation", en: "Zeitmanagement und Organisation" },
+    "B2-7.28": { assignment_id: "B2-7.28", chapter: "7.28", de: "Zusammenfassung & Prüfungsvorbereitung", en: "Zusammenfassung & Prüfungsvorbereitung" },
+  },
   C1: {
     "C1 1": { assignment_id: "C1 1", chapter: "1", de: "Wissenschaft und Forschung", en: "Wissenschaft und Forschung" },
     "C1 2": { assignment_id: "C1 2", chapter: "2", de: "Kunst und Kultur", en: "Kunst und Kultur" },
@@ -149,6 +179,11 @@ export function compareCourseDictionaryEntries(left = {}, right = {}) {
   }
 
   return String(left.assignment_id || "").localeCompare(String(right.assignment_id || ""), undefined, { numeric: true });
+}
+
+function getAssignmentLevel(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  return normalized.match(/^([A-Z]\d)(?:[-\s]|$)/)?.[1] || "";
 }
 
 export function getCourseDictionaryEntry(assignmentId) {

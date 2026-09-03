@@ -1,3 +1,4 @@
+import { parseAssignmentChapter } from "../utils/assignmentChapter.js";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
@@ -375,7 +376,7 @@ export default function CanonicalAttendancePageV3() {
           sessionLabel,
           assignmentId,
           topic: selected.topic || sessionLabel,
-          chapter: assignmentId.split("-").slice(1).join("-"),
+          chapter: parseAssignmentChapter(assignmentId),
           windowMinutes: 180,
           action: "open",
         } : {

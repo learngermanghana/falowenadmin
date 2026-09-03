@@ -2,6 +2,7 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
+const { parseAssignmentChapter } = require("./assignmentChapter.js");
 const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");
 const { isStudentOnPublishedRoster } = require("./publishedRosterMembership.js");
 const { onRequest } = require("firebase-functions/v2/https");
@@ -224,12 +225,6 @@ async function requireAuth(req) {
 
 function sessionDocRef(classId, sessionId) {
   return db.doc(`attendance/${classId}/sessions/${sessionId}`);
-}
-
-function parseAssignmentChapter(assignmentId) {
-  const normalized = String(assignmentId || "").trim();
-  const parts = normalized.split("-");
-  return parts.length > 1 ? String(parts.slice(1).join("-")).trim() : "";
 }
 
 function resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, chapter, existingSession = {} }) {
