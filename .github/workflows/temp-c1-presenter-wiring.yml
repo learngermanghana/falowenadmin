@@ -17,52 +17,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: agent/a1-a2-b1-b2-c1-presenter-v2-all-days
-      - name: Wire C1 source and CI
+      - name: Wire C1 source
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          # Teaching Slides collection.
           p = Path('src/data/teachingSlides.js')
           text = p.read_text()
           marker = 'import { b2PresenterSlides } from "./b2PresenterSlides.js";\n'
           add = 'import { c1PresenterSlides } from "./c1PresenterSlides.js";\n'
           if add not in text:
-              if marker not in text:
-                  raise SystemExit('teachingSlides import marker missing')
               text = text.replace(marker, marker + add)
-          old = 'export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides];'
-          new = 'export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];'
-          if old in text:
-              text = text.replace(old, new)
-          elif new not in text:
-              raise SystemExit('teachingSlides export marker missing')
+          text = text.replace(
+              'export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides];',
+              'export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];',
+          )
           p.write_text(text)
 
-          # Presenter 2 selector.
           p = Path('src/utils/teachingPresenter.js')
           text = p.read_text()
           c1set = '''const C1_PRESENTER_V2_ASSIGNMENTS = new Set(\n  Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`),\n);\n\n'''
-          marker = 'function normalizedAssignmentId(slide = {}) {'
           if c1set not in text:
-              if marker not in text:
-                  raise SystemExit('presenter selector marker missing')
-              text = text.replace(marker, c1set + marker)
+              text = text.replace('function normalizedAssignmentId(slide = {}) {', c1set + 'function normalizedAssignmentId(slide = {}) {')
           c1fn = '''export function isC1PresenterV2Slide(slide = {}) {\n  return C1_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide));\n}\n\n'''
-          marker2 = 'export function isTeachingPresenterV2Slide(slide = {}) {'
           if c1fn not in text:
-              if marker2 not in text:
-                  raise SystemExit('presenter generic selector marker missing')
-              text = text.replace(marker2, c1fn + marker2)
-          old_generic = '''  return isA1PresenterV2Slide(slide)\n    || isA2PresenterV2Slide(slide)\n    || isB1PresenterV2Slide(slide)\n    || isB2PresenterV2Slide(slide);'''
-          new_generic = '''  return isA1PresenterV2Slide(slide)\n    || isA2PresenterV2Slide(slide)\n    || isB1PresenterV2Slide(slide)\n    || isB2PresenterV2Slide(slide)\n    || isC1PresenterV2Slide(slide);'''
-          if old_generic in text:
-              text = text.replace(old_generic, new_generic)
-          elif new_generic not in text:
-              raise SystemExit('presenter generic selector body missing')
+              text = text.replace('export function isTeachingPresenterV2Slide(slide = {}) {', c1fn + 'export function isTeachingPresenterV2Slide(slide = {}) {')
+          text = text.replace(
+              '    || isB2PresenterV2Slide(slide);',
+              '    || isB2PresenterV2Slide(slide)\n    || isC1PresenterV2Slide(slide);',
+          )
           p.write_text(text)
 
-          # Add C1 to course dictionary using the legacy assignment style used by the existing C1 answer sheet.
           p = Path('src/data/courseDictionary.js')
           text = p.read_text()
           if '  C1: {\n' not in text:
@@ -86,10 +71,10 @@ jobs:
                   lines.append(f'    "{aid}": {{ assignment_id: "{aid}", chapter: "{day}", de: "{esc}", en: "{esc}" }},')
               lines.append('  },')
               block = '\n'.join(lines) + '\n'
-              close_marker = '  },\n};\n\nfunction dictionarySortValue'
-              if close_marker not in text:
-                  raise SystemExit('courseDictionary close marker missing')
-              text = text.replace(close_marker, '  },\n' + block + '};\n\nfunction dictionarySortValue', 1)
+              marker = '  },\n};\n\nfunction dictionarySortValue'
+              if marker not in text:
+                  raise SystemExit('courseDictionary marker missing')
+              text = text.replace(marker, '  },\n' + block + '};\n\nfunction dictionarySortValue', 1)
           text = text.replace(
               '  const level = normalizedId.split("-")[0]?.toUpperCase();',
               '  const level = normalizedId.match(/^(A1|A2|B1|B2|C1|C2)(?=[\\s-]|$)/i)?.[1]?.toUpperCase();',
@@ -99,30 +84,12 @@ jobs:
               '  const level = String(assignmentId || "").trim().match(/^(A1|A2|B1|B2|C1|C2)(?=[\\s-]|$)/i)?.[1]?.toUpperCase();',
           )
           p.write_text(text)
-
-          # Permanent CI coverage.
-          p = Path('.github/workflows/b1-presenter-v2-tests.yml')
-          text = p.read_text()
-          text = text.replace('name: A1+A2+B1+B2 Presenter 2.0 Tests', 'name: A1+A2+B1+B2+C1 Presenter 2.0 Tests')
-          if '      - "src/data/c1PresenterSlides.js"\n' not in text:
-              text = text.replace('      - "src/data/b2PresenterSlides.js"\n', '      - "src/data/b2PresenterSlides.js"\n      - "src/data/c1PresenterSlides.js"\n')
-          if '      - "tests/c1-presenter-v2-all-days.test.js"\n' not in text:
-              text = text.replace('      - "tests/b2-presenter-v2-all-days.test.js"\n', '      - "tests/b2-presenter-v2-all-days.test.js"\n      - "tests/c1-presenter-v2-all-days.test.js"\n')
-          text = text.replace(
-              'Test complete A1, A2, B1 and B2 Presenter 2.0 rollout',
-              'Test complete A1, A2, B1, B2 and C1 Presenter 2.0 rollout',
-          )
-          old_cmd = 'tests/b2-presenter-v2-all-days.test.js tests/teaching-presenter.test.js'
-          new_cmd = 'tests/b2-presenter-v2-all-days.test.js tests/c1-presenter-v2-all-days.test.js tests/teaching-presenter.test.js'
-          if old_cmd in text:
-              text = text.replace(old_cmd, new_cmd)
-          p.write_text(text)
           PY
-      - name: Commit C1 wiring
+      - name: Commit C1 source wiring
         run: |
           git config user.name "learngermanghana"
           git config user.email "learngermanghana@gmail.com"
-          git add src/data/teachingSlides.js src/utils/teachingPresenter.js src/data/courseDictionary.js .github/workflows/b1-presenter-v2-tests.yml
+          git add src/data/teachingSlides.js src/utils/teachingPresenter.js src/data/courseDictionary.js
           git diff --cached --quiet && exit 0
           git commit -m "Wire C1 into Teaching Slides and Presenter 2"
           git push origin HEAD:agent/a1-a2-b1-b2-c1-presenter-v2-all-days
