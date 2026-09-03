@@ -5,12 +5,13 @@ import { b1WorkbookAlignedSlidesDays1To10 } from "../src/data/b1WorkbookAlignedS
 import {
   buildTeachingPresenterStages,
   isB1PresenterV2Slide,
+  isTeachingPresenterV2Slide,
   parsePresenterMinutes,
 } from "../src/utils/teachingPresenter.js";
 
 const firstSix = b1WorkbookAlignedSlidesDays1To10.filter((slide) => slide.dayNumber >= 1 && slide.dayNumber <= 6);
 
-test("B1 Day 1-6 use Presenter 2.0 stages", () => {
+test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
   assert.equal(firstSix.length, 6);
 
   firstSix.forEach((slide) => {
@@ -31,17 +32,35 @@ test("B1 Day 1-6 use Presenter 2.0 stages", () => {
   });
 });
 
-test("B1 Day 7 remains on the classic presenter until rollout expands", () => {
-  const day7 = b1WorkbookAlignedSlidesDays1To10.find((slide) => slide.dayNumber === 7);
-  assert.ok(day7);
-  assert.equal(isB1PresenterV2Slide(day7), false);
+test("lessons outside A1, A2, B1, B2 and C1 remain on the classic presenter", () => {
+  const slide = {
+    course: "C2",
+    day: "Lesson 1",
+    dayNumber: 1,
+    assignmentId: "C2-1.1",
+    title: "C2 lesson",
+    topic: "Topic",
+    objective: "Objective",
+    warmupQuestionsDe: ["Warm-up"],
+    keyPhrasesDe: ["Phrase"],
+    studentQuestionsDe: ["Question"],
+    interactionFlow: [{ phase: "Flow", detailEn: "8 min: practice." }],
+    teacherSupport: {
+      grammarFocusEn: ["Grammar"],
+      modelExamplesDe: ["Example"],
+      commonMistakesEn: ["Mistake"],
+    },
+    wrapUpTaskDe: "Wrap up.",
+  };
 
-  const stages = buildTeachingPresenterStages(day7, day7.topic);
+  assert.equal(isB1PresenterV2Slide(slide), false);
+  assert.equal(isTeachingPresenterV2Slide(slide), false);
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
   assert.deepEqual(stages.map((stage) => stage.id), ["intro", "warmup", "phrases", "questions", "wrapup"]);
   assert.equal(stages.find((stage) => stage.id === "questions")?.type, "numbered-list");
 });
 
-test("presenter minute parser reads the B1 interaction-flow format", () => {
+test("presenter minute parser reads the interaction-flow format", () => {
   assert.equal(parsePresenterMinutes("6 min: students discuss."), 6);
   assert.equal(parsePresenterMinutes("12 min: speaking rehearsal."), 12);
   assert.equal(parsePresenterMinutes("No timer"), 0);
