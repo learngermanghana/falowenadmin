@@ -5,6 +5,7 @@ import { b1WorkbookAlignedSlidesDays1To10 } from "../src/data/b1WorkbookAlignedS
 import {
   buildTeachingPresenterStages,
   isB1PresenterV2Slide,
+  isTeachingPresenterV2Slide,
   parsePresenterMinutes,
 } from "../src/utils/teachingPresenter.js";
 
@@ -31,13 +32,13 @@ test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
   });
 });
 
-test("non-B1 lessons remain on the classic presenter", () => {
+test("lessons outside A2, B1 and B2 remain on the classic presenter", () => {
   const slide = {
-    course: "A2",
-    day: "Day 7",
-    dayNumber: 7,
-    assignmentId: "A2-3.7",
-    title: "A2 lesson",
+    course: "A1",
+    day: "Day 1",
+    dayNumber: 1,
+    assignmentId: "A1-0.1",
+    title: "A1 lesson",
     topic: "Topic",
     objective: "Objective",
     warmupQuestionsDe: ["Warm-up"],
@@ -53,12 +54,13 @@ test("non-B1 lessons remain on the classic presenter", () => {
   };
 
   assert.equal(isB1PresenterV2Slide(slide), false);
+  assert.equal(isTeachingPresenterV2Slide(slide), false);
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   assert.deepEqual(stages.map((stage) => stage.id), ["intro", "warmup", "phrases", "questions", "wrapup"]);
   assert.equal(stages.find((stage) => stage.id === "questions")?.type, "numbered-list");
 });
 
-test("presenter minute parser reads the B1 interaction-flow format", () => {
+test("presenter minute parser reads the interaction-flow format", () => {
   assert.equal(parsePresenterMinutes("6 min: students discuss."), 6);
   assert.equal(parsePresenterMinutes("12 min: speaking rehearsal."), 12);
   assert.equal(parsePresenterMinutes("No timer"), 0);
