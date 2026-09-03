@@ -84,20 +84,19 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   useEffect(() => {
     if (!timerRunning) return undefined;
     const interval = window.setInterval(() => {
-      setTimerSeconds((current) => {
-        if (current <= 1) {
-          setTimerRunning(false);
-          return 0;
-        }
-        return current - 1;
-      });
+      setTimerSeconds((current) => Math.max(0, current - 1));
     }, 1000);
     return () => window.clearInterval(interval);
   }, [timerRunning]);
 
   useEffect(() => {
+    if (timerRunning && timerSeconds === 0) setTimerRunning(false);
+  }, [timerRunning, timerSeconds]);
+
+  useEffect(() => {
     function onKeyDown(event) {
-      if (["INPUT", "TEXTAREA", "SELECT"].includes(event.target?.tagName)) return;
+      const targetTag = event.target?.tagName;
+      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(targetTag) || event.target?.isContentEditable) return;
       if (["ArrowRight", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
         next();
