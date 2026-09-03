@@ -1,9 +1,34 @@
 import { useEffect, useMemo, useState } from "react";
-import { buildTeachingPresenterStages, clampPresenterIndex } from "../utils/teachingPresenter.js";
+import {
+  buildTeachingPresenterStages,
+  clampPresenterIndex,
+  isB1PresenterV2Slide,
+} from "../utils/teachingPresenter.js";
+import "./TeachingSlidePresenter.css";
+
+const FALOWEN_BASE_URL = "https://www.falowen.app";
+
+function formatTimer(totalSeconds = 0) {
+  const safeSeconds = Math.max(0, Number(totalSeconds || 0));
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function lessonUrl(value = "") {
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
+}
 
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const stages = useMemo(() => buildTeachingPresenterStages(slide, topicLabel), [slide, topicLabel]);
+  const presenterV2 = isB1PresenterV2Slide(slide);
   const [stageIndex, setStageIndex] = useState(0);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [showQuestionSupport, setShowQuestionSupport] = useState(false);
+  const [timerRemaining, setTimerRemaining] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
   const stage = stages[stageIndex] || stages[0];
 
   function goTo(index) {
@@ -11,11 +36,37 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   function next() {
+    if (stage?.type === "question-reveal" && questionIndex < stage.items.length - 1) {
+      setQuestionIndex((current) => current + 1);
+      setShowQuestionSupport(false);
+      return;
+    }
     goTo(stageIndex + 1);
   }
 
   function previous() {
+    if (stage?.type === "question-reveal" && questionIndex > 0) {
+      setQuestionIndex((current) => current - 1);
+      setShowQuestionSupport(false);
+      return;
+    }
     goTo(stageIndex - 1);
+  }
+
+  function setTimerMinutes(minutes) {
+    const seconds = Math.max(0, Number(minutes || 0)) * 60;
+    setTimerRemaining(seconds);
+    setTimerRunning(false);
+  }
+
+  function randomQuestion() {
+    if (stage?.type !== "question-reveal" || stage.items.length < 2) return;
+    let nextIndex = questionIndex;
+    while (nextIndex === questionIndex) {
+      nextIndex = Math.floor(Math.random() * stage.items.length);
+    }
+    setQuestionIndex(nextIndex);
+    setShowQuestionSupport(false);
   }
 
   async function enterFullscreen() {
@@ -27,8 +78,29 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   useEffect(() => {
+    setQuestionIndex(0);
+    setShowQuestionSupport(false);
+    setTimerRunning(false);
+    setTimerRemaining(stage?.suggestedMinutes ? stage.suggestedMinutes * 60 : 0);
+  }, [stage?.id, stage?.suggestedMinutes]);
+
+  useEffect(() => {
+    if (!timerRunning || timerRemaining <= 0) return undefined;
+    const timer = window.setInterval(() => {
+      setTimerRemaining((current) => {
+        if (current <= 1) {
+          setTimerRunning(false);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [timerRunning, timerRemaining]);
+
+  useEffect(() => {
     function onKeyDown(event) {
-      if (["INPUT", "TEXTAREA", "SELECT"].includes(event.target?.tagName)) return;
+      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(event.target?.tagName)) return;
       if (["ArrowRight", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
         next();
@@ -46,11 +118,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [stageIndex, stages.length]);
+  }, [stageIndex, stages.length, questionIndex, stage?.type, stage?.items?.length]);
 
   if (!stage) return null;
 
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
+  const activeQuestion = stage.type === "question-reveal" ? stage.items[questionIndex] : "";
+  const timerExpired = presenterV2 && timerRemaining === 0 && !timerRunning;
+  const timerPresets = [...new Set([stage.suggestedMinutes, 2, 5, 10].filter(Boolean))];
 
   return (
     <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
@@ -60,6 +135,31 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <span className="presenter-kicker">{stage.kicker}</span>
             <span className="presenter-lesson-label">{slide.course} · {slide.day}</span>
           </div>
+
+          {presenterV2 ? (
+            <div className="presenter-v2-tools">
+              <label className="presenter-stage-jump">
+                <span>Jump to</span>
+                <select value={stageIndex} onChange={(event) => goTo(Number(event.target.value))}>
+                  {stages.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
+                </select>
+              </label>
+
+              <div className={`presenter-timer ${timerExpired ? "presenter-timer-expired" : ""}`}>
+                <strong>{formatTimer(timerRemaining)}</strong>
+                <button type="button" onClick={() => setTimerRunning((current) => !current)} disabled={timerRemaining <= 0}>
+                  {timerRunning ? "Pause" : "Start"}
+                </button>
+                <button type="button" onClick={() => setTimerMinutes(stage.suggestedMinutes || 5)}>Reset</button>
+                <div className="presenter-timer-presets">
+                  {timerPresets.map((minutes) => (
+                    <button key={minutes} type="button" onClick={() => setTimerMinutes(minutes)}>{minutes}m</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="presenter-top-actions">
             <button type="button" onClick={enterFullscreen}>Fullscreen</button>
             <button type="button" onClick={onExit}>Exit presenter</button>
@@ -73,6 +173,55 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
+            </>
+          ) : stage.type === "question-reveal" ? (
+            <section className="presenter-question-reveal">
+              <div className="presenter-question-counter">Question {questionIndex + 1} of {stage.items.length}</div>
+              <h1>{stage.title}</h1>
+              <p className="presenter-question">{activeQuestion}</p>
+              <div className="presenter-question-actions">
+                <button type="button" onClick={() => setShowQuestionSupport((current) => !current)}>
+                  {showQuestionSupport ? "Hide model support" : "Reveal model support"}
+                </button>
+                <button type="button" onClick={randomQuestion}>Random question</button>
+              </div>
+              {showQuestionSupport && stage.supportItems?.length ? (
+                <div className="presenter-model-support">
+                  <strong>Model language</strong>
+                  <ul>{stage.supportItems.slice(0, 4).map((item) => <li key={item}>{item}</li>)}</ul>
+                </div>
+              ) : null}
+            </section>
+          ) : stage.type === "flow" ? (
+            <>
+              <h1>{stage.title}</h1>
+              <div className="presenter-flow-grid">
+                {stage.items.map((item) => (
+                  <article key={`${item.title}-${item.detail}`} className="presenter-flow-card">
+                    <div>
+                      <strong>{item.title}</strong>
+                      <p>{item.detail}</p>
+                    </div>
+                    {item.minutes ? <button type="button" onClick={() => setTimerMinutes(item.minutes)}>Set {item.minutes} min</button> : null}
+                  </article>
+                ))}
+              </div>
+            </>
+          ) : stage.type === "workbook" ? (
+            <>
+              <h1>{stage.title}</h1>
+              <div className="presenter-workbook-list">
+                {stage.items.map((item) => (
+                  <article key={`${item.label}-${item.detail}`}>
+                    <strong>{item.label}</strong>
+                    <p>{item.detail}</p>
+                  </article>
+                ))}
+              </div>
+              <div className="presenter-workbook-actions">
+                {stage.grammarUrl ? <a href={lessonUrl(stage.grammarUrl)} target="_blank" rel="noreferrer">Open grammar notes</a> : null}
+                {stage.workbookUrl ? <a href={lessonUrl(stage.workbookUrl)} target="_blank" rel="noreferrer">Open workbook</a> : null}
+              </div>
             </>
           ) : (
             <>
@@ -93,12 +242,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
         </main>
 
         <footer className="presenter-footer">
-          <button type="button" onClick={previous} disabled={stageIndex === 0}>← Previous</button>
+          <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0}>← Previous</button>
           <div className="presenter-progress-wrap" aria-label={`Slide ${stageIndex + 1} of ${stages.length}`}>
             <span>{stageIndex + 1} / {stages.length}</span>
             <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${progress}%` }} /></div>
           </div>
-          <button type="button" onClick={next} disabled={stageIndex === stages.length - 1}>Next →</button>
+          <button type="button" onClick={next} disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}>
+            {stage.type === "question-reveal" && questionIndex < stage.items.length - 1 ? "Next question →" : "Next →"}
+          </button>
         </footer>
       </div>
     </div>
