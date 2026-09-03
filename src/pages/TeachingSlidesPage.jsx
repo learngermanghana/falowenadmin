@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import TeachingSlidePresenter from "../components/TeachingSlidePresenter.jsx";
 import TeacherLessonBlocks from "../components/TeacherLessonBlocks.jsx";
+import StudentCourseSlides from "../components/StudentCourseSlides.jsx";
 import {
   getAvailableSlideCourses,
   getSlideNavigation,
@@ -303,7 +304,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
 
 export default function TeachingSlidesPage({ publicView = false }) {
   const { slideId, courseId, legacySlideId } = useParams();
-  if (publicView && courseId) return <SlidePrintPack courseId={courseId} publicView />;
+  if (publicView && courseId) return <StudentCourseSlides courseId={courseId} />;
 
   if (publicView) {
     return (
