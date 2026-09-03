@@ -87,7 +87,7 @@ function makeSlide(lesson, index) {
       `Welche Nachteile oder unbeabsichtigten Folgen könnten entstehen?`,
       `Welches Gegenargument findest du am stärksten und wie würdest du darauf reagieren?`,
       `Welche konkrete Maßnahme oder Alternative würdest du vorschlagen?`,
-      `Nimm in 60–90 Sekunden differenziert Stellung zu „${topic}“.",
+      `Nimm in 60–90 Sekunden differenziert Stellung zu „${topic}“.`,
     ],
     teacherNotesEn: [
       "Require claim → reason → example → consequence rather than isolated opinions.",
