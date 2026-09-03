@@ -108,6 +108,19 @@ test("C1 practice stays student-facing in German while teacher guidance remains 
   assert.match(teacherText, /position|precision|counterargument|correct/i);
 });
 
+test("C1 condition entries preserve both the condition and Konjunktiv II targets", () => {
+  const slide = getTeachingSlideByAssignmentId("C1 3");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const grammar = stages.find((stage) => stage.id === "grammar");
+  const grammarText = grammar.items.join(" ");
+
+  assert.match(grammarText, /Bedingungen formulieren/i);
+  assert.match(grammarText, /falls/i);
+  assert.match(grammarText, /sofern/i);
+  assert.match(grammarText, /Konjunktiv II/i);
+  assert.ok(grammar.items.length >= 4, "combined C1 condition entry should not drop one of its targets");
+});
+
 test("existing A1, A2, B1 and B2 Presenter 2 courses remain enabled", () => {
   for (const course of ["A1", "A2", "B1", "B2"]) {
     const slides = getSlidesByCourse(course).filter((slide) => slide.assignmentId !== "A1-Tutorial");

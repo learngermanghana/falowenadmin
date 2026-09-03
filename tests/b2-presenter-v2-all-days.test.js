@@ -49,6 +49,12 @@ function expectedAssignmentId(day) {
   return `B2-${Math.ceil(day / 4)}.${day}`;
 }
 
+function grammarTextFor(assignmentId) {
+  const slide = getTeachingSlideByAssignmentId(assignmentId);
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  return stages.find((stage) => stage.id === "grammar")?.items.join(" ") || "";
+}
+
 test("B2 Teaching Slides expose the complete 28-day LLEA curriculum", () => {
   const slides = getSlidesByCourse("B2");
   assert.equal(slides.length, 28);
@@ -124,6 +130,24 @@ test("B2 Day 1 matches the real identity grammar and avoids old connector drills
   assert.match(supportText, /während/i);
   assert.doesNotMatch(practiceText, /Online|offline/i);
   assert.equal(practice.items.length, 4);
+});
+
+test("B2 combined grammar entries preserve temporal and alternative targets", () => {
+  const day16Grammar = grammarTextFor("B2-4.16");
+  assert.match(day16Grammar, /Zeitliche Abläufe/i);
+  assert.match(day16Grammar, /bevor/i);
+  assert.match(day16Grammar, /nachdem/i);
+  assert.doesNotMatch(day16Grammar, /Kontrast präzise ausdrücken/i);
+  assert.match(day16Grammar, /ohne … zu/i);
+  assert.match(day16Grammar, /statt … zu/i);
+
+  for (const assignmentId of ["B2-3.12", "B2-7.27"]) {
+    const grammarText = grammarTextFor(assignmentId);
+    assert.match(grammarText, /Alternative oder vermiedene Handlung/i, assignmentId);
+    assert.match(grammarText, /ohne … zu/i, assignmentId);
+    assert.match(grammarText, /statt … zu/i, assignmentId);
+    assert.doesNotMatch(grammarText, /Zielstruktur: Formuliere einen vollständigen Satz/i, assignmentId);
+  }
 });
 
 test("B2 does not invent unverified direct workbook or grammar URLs", () => {
