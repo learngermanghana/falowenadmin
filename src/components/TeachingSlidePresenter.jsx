@@ -100,7 +100,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   useEffect(() => {
     function onKeyDown(event) {
-      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(event.target?.tagName)) return;
+      const tagName = event.target?.tagName;
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(tagName)) return;
+      if (tagName === "BUTTON" && [" ", "Enter"].includes(event.key)) return;
+
       if (["ArrowRight", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
         next();
