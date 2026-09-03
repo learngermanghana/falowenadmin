@@ -1,0 +1,24 @@
+name: Temp B1 Presenter Branch Tests
+
+on:
+  push:
+    branches:
+      - agent/b1-days1-6-presenter-2
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run presenter and B1 regressions
+        run: node --test tests/teaching-presenter.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/teacher-slide-support.test.js tests/teacher-lesson-guidance.test.js
+      - name: Build production bundle
+        run: npm run build
