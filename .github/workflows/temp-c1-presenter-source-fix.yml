@@ -1,0 +1,38 @@
+name: Temp C1 Presenter Source Fix
+
+on:
+  push:
+    branches:
+      - agent/a1-a2-b1-b2-c1-presenter-v2-all-days
+    paths:
+      - .github/workflows/temp-c1-presenter-source-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/a1-a2-b1-b2-c1-presenter-v2-all-days
+      - name: Fix C1 question template
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/data/c1PresenterSlides.js')
+          text = p.read_text()
+          bad = '      `Nimm in 60–90 Sekunden differenziert Stellung zu „${topic}“.\",\n'
+          good = '      `Nimm in 60–90 Sekunden differenziert Stellung zu „${topic}“.`,\n'
+          if bad not in text:
+              raise SystemExit('expected C1 question syntax marker not found')
+          p.write_text(text.replace(bad, good))
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "learngermanghana"
+          git config user.email "learngermanghana@gmail.com"
+          git add src/data/c1PresenterSlides.js
+          git commit -m "Fix C1 speaking question template"
+          git push origin HEAD:agent/a1-a2-b1-b2-c1-presenter-v2-all-days
