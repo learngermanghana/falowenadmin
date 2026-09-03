@@ -95,11 +95,12 @@ const ADVANCED_GRAMMAR_RULES = [
   { pattern: /passive|modal passive/i, de: "Passiv und Modalpassiv: Handlung, Regel oder Ergebnis stehen im Mittelpunkt." },
   { pattern: /reported|laut|zufolge|nach angaben|source-report/i, de: "Quellen wiedergeben: laut / zufolge / nach Angaben; eigene Meinung klar davon trennen." },
   { pattern: /concess|obwohl|obgleich|wenngleich|trotz|dennoch/i, de: "Konzessive Verknüpfungen: obwohl / obgleich / wenngleich / trotz / dennoch." },
-  { pattern: /contrast|während|wohingegen|hingegen/i, de: "Kontrast präzise ausdrücken: während / wohingegen / hingegen / im Gegensatz dazu." },
+  { pattern: /wohingegen|hingegen|im gegensatz|explicit contrasts/i, de: "Kontrast präzise ausdrücken: während / wohingegen / hingegen / im Gegensatz dazu." },
   { pattern: /paired connector|einerseits|zwar .*jedoch|nicht nur|sowohl|structure complex arguments/i, de: "Argumente strukturieren: einerseits … andererseits / zwar … jedoch / nicht nur … sondern auch / sowohl … als auch." },
   { pattern: /consequence|causal|aufgrund|sodass|weshalb|wodurch|infolgedessen/i, de: "Ursache und Folge präzise verbinden: aufgrund / sodass / weshalb / wodurch / infolgedessen." },
-  { pattern: /condition|sofern|falls|vorausgesetzt/i, de: "Bedingungen formulieren: falls / sofern / vorausgesetzt, dass; Hypothesen mit Konjunktiv II." },
+  { pattern: /condition|conditions|sofern|falls|vorausgesetzt/i, de: "Bedingungen formulieren: falls / sofern / vorausgesetzt, dass; Hypothesen mit Konjunktiv II." },
   { pattern: /purpose|indem|dadurch|um \.\.\. zu|damit/i, de: "Zweck und Methode ausdrücken: um … zu / damit / indem / dadurch, dass." },
+  { pattern: /ohne \.\.\. zu|statt \.\.\. zu|alternative|avoided behavio(?:u)?r/i, de: "Alternative oder vermiedene Handlung: ohne … zu / statt … zu." },
   { pattern: /temporal|bevor|nachdem|sobald|solange/i, de: "Zeitliche Abläufe verbinden: bevor / nachdem / sobald / solange / während." },
   { pattern: /futur i|prediction/i, de: "Prognosen formulieren: Futur I mit Vermutungswörtern wie vermutlich oder wahrscheinlich." },
   { pattern: /je \.\.\. desto/i, de: "je … desto: zwei Entwicklungen oder Bedingungen direkt miteinander verknüpfen." },
@@ -108,10 +109,15 @@ const ADVANCED_GRAMMAR_RULES = [
   { pattern: /dass-clause|dass clause/i, de: "dass-Sätze: das konjugierte Verb steht am Ende des Nebensatzes." },
 ];
 
-function advancedGrammarItemDe(value = "") {
+function advancedGrammarItemsDe(value = "") {
   const text = String(value || "").trim();
-  const rule = ADVANCED_GRAMMAR_RULES.find(({ pattern }) => pattern.test(text));
-  return rule?.de || "Zielstruktur: Formuliere einen vollständigen Satz mit der neuen Struktur dieser Lektion.";
+  const matches = ADVANCED_GRAMMAR_RULES
+    .filter(({ pattern }) => pattern.test(text))
+    .map(({ de }) => de);
+
+  return matches.length
+    ? [...new Set(matches)]
+    : ["Zielstruktur: Formuliere einen vollständigen Satz mit der neuen Struktur dieser Lektion."];
 }
 
 function buildAdvancedGrammarItems(slide = {}, support = {}) {
@@ -123,7 +129,7 @@ function buildAdvancedGrammarItems(slide = {}, support = {}) {
   }
 
   const source = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];
-  return [...new Set(source.map(advancedGrammarItemDe))].slice(0, 3);
+  return [...new Set(source.flatMap(advancedGrammarItemsDe))];
 }
 
 function buildAdvancedMistakes(slide = {}) {
