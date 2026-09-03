@@ -54,6 +54,7 @@ jobs:
             scripts/patchStudentPaymentContractLifecycle.mjs \
             scripts/patchStudentUpgradePaymentDriven.mjs \
             scripts/patchStudentPaymentUpdateEmails.mjs \
+            scripts/patchAutomaticOrientationSync.mjs \
             scripts/patchStructuredWritingEvidence.mjs \
             scripts/patchSpecificWritingFeedback.mjs \
             scripts/patchSheetRowManagementRoutes.mjs \
@@ -75,13 +76,15 @@ jobs:
           done
           node --check functions/index.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
-          node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js
+          node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
           grep -F 'app.post("/payments/paystack-webhook"' functions/index.js
           grep -F 'app.get("/payments/student/:studentId"' functions/index.js
           grep -F 'app.post("/payments/start-upgrade"' functions/index.js
           grep -F 'app.post("/payments/reconcile-student/:studentId"' functions/index.js
           grep -F 'exports.maintainStudentPaymentContracts = onSchedule' functions/index.js
+          grep -F 'exports.autoSyncPaidStudentOrientation = onDocumentUpdated' functions/index.js
+          grep -F 'document: "payments/{reference}"' functions/index.js
           grep -F 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET")' functions/index.js
           grep -F 'writingStrengths:' functions/index.js
           grep -F 'taskCompletion:' functions/index.js
@@ -124,11 +127,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
-      - name: Deploy Falowen API, assignment automation, contract worker, and class email workers
+      - name: Deploy Falowen API, assignment automation, payment orientation sync, contract worker, and class email workers
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
