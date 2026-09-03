@@ -1,0 +1,21 @@
+name: Temp B1 Presenter All Days
+
+on:
+  push:
+    branches:
+      - agent/b1-presenter-v2-all-days
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run complete B1 presenter and workbook regressions
+        run: node --test tests/b1-presenter-v2-days1-6.test.js tests/b1-presenter-v2-all-days.test.js tests/teaching-presenter.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js
+      - name: Build production bundle
+        run: npm run build
