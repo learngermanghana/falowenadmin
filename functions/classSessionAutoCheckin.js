@@ -1,3 +1,4 @@
+const { parseAssignmentChapter } = require("./assignmentChapter.js");
 const TZ = "Africa/Accra";
 const DEFAULT_AUTO_OPEN_LEAD_MINUTES = 30;
 const DEFAULT_AUTO_OPEN_WINDOW_MINUTES = 180;
@@ -57,12 +58,6 @@ function assignmentIdForSession(session = {}) {
     || session.assignmentId
     || session.assignment_id,
   );
-}
-
-function parseAssignmentChapter(assignmentId) {
-  const normalized = text(assignmentId);
-  const parts = normalized.split("-");
-  return parts.length > 1 ? text(parts.slice(1).join("-")) : "";
 }
 
 function classValues(klass = {}) {

@@ -2,13 +2,18 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
+const { CONTRACT_TERM_MONTHS, normalizeLevel: normalizeContractLevel, nextLevel: nextContractLevel, computeUpgradeGraceEnd, contractIsActive, computeExtendedContractEnd, isUpgradeGraceExpired, asDate: contractAsDate } = require("./studentContractLifecycle.js");
+const { parseAssignmentChapter } = require("./assignmentChapter.js");
 const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");
 const { isStudentOnPublishedRoster } = require("./publishedRosterMembership.js");
+const { registerStudentProfileUpdateRoute } = require("./studentProfileUpdate.js");
 const { onRequest } = require("firebase-functions/v2/https");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
+const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");
+const { createStudentPaymentUpdateEmailTrigger } = require("./studentPaymentUpdateEmails.js");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
@@ -65,6 +70,7 @@ const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
 const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");
 const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIPT_URL");
 const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");
+const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -222,14 +228,10 @@ async function requireAuth(req) {
   return decoded;
 }
 
+registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist });
+
 function sessionDocRef(classId, sessionId) {
   return db.doc(`attendance/${classId}/sessions/${sessionId}`);
-}
-
-function parseAssignmentChapter(assignmentId) {
-  const normalized = String(assignmentId || "").trim();
-  const parts = normalized.split("-");
-  return parts.length > 1 ? String(parts.slice(1).join("-")).trim() : "";
 }
 
 function resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, chapter, existingSession = {} }) {
@@ -1496,6 +1498,652 @@ async function deleteStudentRowsFromSheet({ studentId, studentCode, email, stude
   };
 }
 
+// BEGIN STUDENT PAYMENT LINKS
+const PAYSTACK_API_BASE_URL = "https://api.paystack.co";
+const PAYSTACK_CURRENCY = "GHS";
+const PAYSTACK_CHARGE_RATE_FOR_STUDENTS = 0.0195;
+const PAYSTACK_STUDENT_CHARGE_SHARE = 0.5;
+
+function paymentNumber(value) {
+  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function roundMoney(value) {
+  return Math.round((paymentNumber(value) + Number.EPSILON) * 100) / 100;
+}
+
+function calculateStudentCheckoutAmount(netAmount) {
+  const amount = roundMoney(netAmount);
+  if (amount <= 0) return 0;
+  return Math.ceil(amount / (1 - PAYSTACK_CHARGE_RATE_FOR_STUDENTS * PAYSTACK_STUDENT_CHARGE_SHARE));
+}
+
+function paystackSecret() {
+  return String(paystackSecretKeySecret.value() || process.env.PAYSTACK_SECRET || process.env.PAYSTACK_SECRET_KEY || "").trim();
+}
+
+function paystackCallbackUrl() {
+  const paymentConfig = runtimeConfig.payments || {};
+  return String(paymentConfig.callback_url || process.env.PAYSTACK_CALLBACK_URL || "").trim();
+}
+
+function safePaymentReferencePart(value) {
+  return String(value || "student").replace(/[^a-zA-Z0-9.-]/g, "-").replace(/-+/g, "-").slice(0, 36) || "student";
+}
+
+function createPaymentReference(studentId) {
+  const suffix = crypto.randomBytes(5).toString("hex");
+  return "FAL-" + safePaymentReferencePart(studentId) + "-" + Date.now() + "-" + suffix;
+}
+
+function resolveStudentPaymentEmail(student = {}, requestedEmail = "") {
+  return String(requestedEmail || student.email || student.studentEmail || "").trim().toLowerCase();
+}
+
+function resolveStudentCurrentBalance(student = {}) {
+  const explicitValues = [student.balanceDue, student.balance, student.outstandingBalance, student.amountDue];
+  for (const value of explicitValues) {
+    if (value === null || value === undefined || String(value).trim() === "") continue;
+    return roundMoney(Math.max(0, paymentNumber(value)));
+  }
+  const tuitionFee = paymentNumber(student.tuitionFee);
+  const paid = resolveStudentCurrentPaid(student);
+  return tuitionFee > 0 ? roundMoney(Math.max(0, tuitionFee - paid)) : 0;
+}
+
+function resolveStudentCurrentPaid(student = {}) {
+  const values = [student.paid, student.amountPaid, student.amount_paid, student.totalPaid, student.initialPaymentAmount];
+  for (const value of values) {
+    if (value === null || value === undefined || String(value).trim() === "") continue;
+    return roundMoney(Math.max(0, paymentNumber(value)));
+  }
+  return 0;
+}
+
+function paymentAdminEmailSet() {
+  const paymentConfig = runtimeConfig.payments || {};
+  const configuredEmails = [
+    paymentConfig.admin_emails,
+    process.env.PAYMENT_ADMIN_EMAILS,
+  ]
+    .flatMap((value) => String(value || "").split(","))
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  return new Set([
+    "moxflex@gmail.com",
+    ...teacherAllowlist,
+    ...configuredEmails,
+  ]);
+}
+
+async function requirePaymentAdmin(req) {
+  const header = String(req.headers.authorization || "");
+  const match = header.match(/^Bearer (.+)$/);
+  if (!match) {
+    const error = new Error("Missing Authorization Bearer token");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const decoded = await admin.auth().verifyIdToken(match[1]);
+  const email = String(decoded.email || "").trim().toLowerCase();
+  const role = String(decoded.role || decoded.user_role || "").trim().toLowerCase();
+  const claimAllowed = decoded.admin === true || decoded.staff === true || role === "admin" || role === "staff";
+  const emailAllowed = email && paymentAdminEmailSet().has(email);
+
+  if (!claimAllowed && !emailAllowed) {
+    console.warn("payment_admin_auth_failure", { uid: decoded.uid, email });
+    const error = new Error("Admin or staff access required");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return decoded;
+}
+
+async function initializePaystackPayment({ email, checkoutAmount, reference, metadata }) {
+  const secret = paystackSecret();
+  if (!secret) {
+    const error = new Error("PAYSTACK_SECRET is not configured");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const payload = {
+    email,
+    amount: String(Math.round(roundMoney(checkoutAmount) * 100)),
+    currency: PAYSTACK_CURRENCY,
+    reference,
+    metadata: JSON.stringify(metadata),
+  };
+  const callbackUrl = paystackCallbackUrl();
+  if (callbackUrl) payload.callback_url = callbackUrl;
+
+  const response = await fetch(PAYSTACK_API_BASE_URL + "/transaction/initialize", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + secret,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.status !== true || !data?.data?.authorization_url) {
+    const error = new Error(data?.message || "Paystack could not initialize this payment");
+    error.statusCode = response.status || 502;
+    throw error;
+  }
+  return data.data;
+}
+
+function webhookSignatureIsValid(req) {
+  const secret = paystackSecret();
+  const received = String(req.headers["x-paystack-signature"] || "").trim().toLowerCase();
+  if (!secret || !received) return false;
+  const candidates = [];
+  if (Buffer.isBuffer(req.rawBody) && req.rawBody.length) candidates.push(req.rawBody);
+  candidates.push(Buffer.from(JSON.stringify(req.body || {}), "utf8"));
+  return candidates.some((payload) => crypto.createHmac("sha512", secret).update(payload).digest("hex").toLowerCase() === received);
+}
+
+async function applySuccessfulPaystackPayment(eventData = {}) {
+  const reference = String(eventData.reference || "").trim();
+  if (!reference) throw new Error("Paystack webhook is missing a transaction reference");
+
+  const paymentRef = db.collection("payments").doc(reference);
+  return db.runTransaction(async (transaction) => {
+    const paymentSnap = await transaction.get(paymentRef);
+    if (!paymentSnap.exists) throw new Error("Unknown Falowen payment reference: " + reference);
+    const payment = paymentSnap.data() || {};
+    if (String(payment.status || "").toLowerCase() === "paid") {
+      return { duplicate: true, studentId: payment.studentId, reference };
+    }
+
+    const expectedSubunit = Math.round(paymentNumber(payment.checkoutAmount) * 100);
+    const receivedSubunit = Number(eventData.amount || 0);
+    const currency = String(eventData.currency || "").trim().toUpperCase();
+    if (!Number.isFinite(receivedSubunit) || receivedSubunit !== expectedSubunit) {
+      throw new Error("Paystack amount does not match the generated payment intent");
+    }
+    if (currency !== PAYSTACK_CURRENCY) throw new Error("Unexpected Paystack currency: " + currency);
+
+    const studentId = String(payment.studentId || "").trim();
+    if (!studentId) throw new Error("Payment intent is missing studentId");
+    const studentRef = db.collection(STUDENTS_COLLECTION).doc(studentId);
+    const studentSnap = await transaction.get(studentRef);
+    if (!studentSnap.exists) throw new Error("Student record not found for payment");
+    const student = studentSnap.data() || {};
+
+    const tuitionCredit = roundMoney(payment.tuitionCredit);
+    if (tuitionCredit <= 0) throw new Error("Payment intent has no tuition credit");
+    const currentPaid = resolveStudentCurrentPaid(student);
+    const nextPaid = roundMoney(currentPaid + tuitionCredit);
+    const paymentPurpose = String(payment.purpose || "balance").trim().toLowerCase();
+    const paidAtValue = eventData.paid_at || eventData.paidAt || null;
+    const paidAtDate = paidAtValue ? new Date(paidAtValue) : new Date();
+    const paymentTimestamp = paidAtValue ? admin.firestore.Timestamp.fromDate(paidAtDate) : admin.firestore.FieldValue.serverTimestamp();
+    let nextBalance = 0;
+    let paymentStatus = "Paid";
+    let studentUpdate = {};
+
+    if (paymentPurpose === "level_upgrade") {
+      const upgradeStatus = String(student.upgradeStatus || "").trim().toLowerCase();
+      const targetLevel = normalizeContractLevel(payment.targetLevel || student.upgradeToLevel);
+      const expectedTargetLevel = normalizeContractLevel(student.upgradeToLevel);
+      if (!["awaiting_payment", "pending", "expired"].includes(upgradeStatus)) throw new Error("Student has no payable level upgrade");
+      if (!targetLevel || (expectedTargetLevel && targetLevel !== expectedTargetLevel)) throw new Error("Payment target level does not match the student upgrade");
+
+      const currentUpgradeBalance = roundMoney(student.upgradeBalanceDue);
+      if (currentUpgradeBalance <= 0) throw new Error("Student upgrade has no outstanding balance");
+      if (tuitionCredit > currentUpgradeBalance + 0.01) throw new Error("Upgrade payment exceeds the remaining balance");
+
+      const nextUpgradePaid = roundMoney(paymentNumber(student.upgradePaid) + tuitionCredit);
+      const nextUpgradeBalance = roundMoney(Math.max(0, currentUpgradeBalance - tuitionCredit));
+      const upgradeCompleted = nextUpgradeBalance <= 0;
+      nextBalance = nextUpgradeBalance;
+      paymentStatus = upgradeCompleted ? "Paid" : "Partially Paid";
+
+      studentUpdate = {
+        paid: nextPaid,
+        upgradePaid: nextUpgradePaid,
+        upgradeBalanceDue: nextUpgradeBalance,
+        lastPaymentAmount: tuitionCredit,
+        lastPaymentProvider: "Paystack",
+        lastPaymentReference: reference,
+        lastPaymentAt: paymentTimestamp,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (upgradeCompleted) {
+        const extendedContractEnd = computeExtendedContractEnd(student.contractEnd, paidAtDate, CONTRACT_TERM_MONTHS);
+        Object.assign(studentUpdate, {
+          level: targetLevel,
+          paidLevel: targetLevel,
+          balanceDue: 0,
+          balance: 0,
+          paymentStatus: "Paid",
+          status: "Paid",
+          contractEnd: extendedContractEnd,
+          contractTermMonths: String(CONTRACT_TERM_MONTHS),
+          upgradeStatus: "completed",
+          upgradeCompletedAt: paymentTimestamp,
+          paymentReminderLevel: admin.firestore.FieldValue.delete(),
+        });
+        if (String(student.upgradeTargetClassName || "").trim()) studentUpdate.className = String(student.upgradeTargetClassName).trim();
+      } else if (upgradeStatus === "awaiting_payment") {
+        const graceEnd = computeUpgradeGraceEnd(paidAtDate);
+        Object.assign(studentUpdate, {
+          level: targetLevel,
+          balanceDue: nextUpgradeBalance,
+          balance: nextUpgradeBalance,
+          paymentStatus: "Partially Paid",
+          status: "Active",
+          upgradeStatus: "pending",
+          upgradeStartedAt: paymentTimestamp,
+          upgradeGraceEnd: graceEnd ? graceEnd.toISOString().slice(0, 10) : "",
+          paymentReminderLevel: targetLevel,
+        });
+        if (String(student.upgradeTargetClassName || "").trim()) studentUpdate.className = String(student.upgradeTargetClassName).trim();
+      } else if (upgradeStatus === "pending") {
+        Object.assign(studentUpdate, {
+          level: targetLevel,
+          balanceDue: nextUpgradeBalance,
+          balance: nextUpgradeBalance,
+          paymentStatus: "Partially Paid",
+          status: "Active",
+          paymentReminderLevel: targetLevel,
+        });
+        if (String(student.upgradeTargetClassName || "").trim()) studentUpdate.className = String(student.upgradeTargetClassName).trim();
+      }
+    } else {
+      const currentBalance = resolveStudentCurrentBalance(student);
+      nextBalance = roundMoney(Math.max(0, currentBalance - tuitionCredit));
+      paymentStatus = nextBalance <= 0 ? "Paid" : "Partially Paid";
+      const grantContract = nextBalance <= 0 && (paymentPurpose === "renewal" || !String(student.contractEnd || "").trim());
+      studentUpdate = {
+        paid: nextPaid,
+        balanceDue: nextBalance,
+        balance: nextBalance,
+        paymentStatus,
+        status: nextBalance <= 0 ? "Paid" : (student.status || "Active"),
+        lastPaymentAmount: tuitionCredit,
+        lastPaymentProvider: "Paystack",
+        lastPaymentReference: reference,
+        lastPaymentAt: paymentTimestamp,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (grantContract) {
+        studentUpdate.contractEnd = computeExtendedContractEnd(student.contractEnd, paidAtDate, CONTRACT_TERM_MONTHS);
+        studentUpdate.contractTermMonths = String(CONTRACT_TERM_MONTHS);
+        studentUpdate.paidLevel = normalizeContractLevel(student.level || student.paidLevel) || student.paidLevel || "";
+      }
+    }
+
+    transaction.set(studentRef, studentUpdate, { merge: true });
+
+    transaction.set(paymentRef, {
+      status: "paid",
+      paidAt: paymentTimestamp,
+      paystackTransactionId: eventData.id || null,
+      channel: eventData.channel || "",
+      gatewayResponse: eventData.gateway_response || eventData.gatewayResponse || "",
+      verifiedCurrency: currency,
+      verifiedAmountSubunit: receivedSubunit,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return { duplicate: false, studentId, reference, nextPaid, nextBalance, paymentStatus, purpose: paymentPurpose };
+  });
+}
+
+app.post("/payments/create-link", async (req, res) => {
+  try {
+    const user = await requirePaymentAdmin(req);
+    const studentId = String(req.body?.studentId || "").trim();
+    const tuitionCredit = roundMoney(req.body?.amount);
+    const purpose = String(req.body?.purpose || "balance").trim() || "balance";
+    if (!studentId) return res.status(400).json({ ok: false, error: "studentId is required" });
+    if (tuitionCredit <= 0) return res.status(400).json({ ok: false, error: "amount must be greater than zero" });
+
+    const studentRef = db.collection(STUDENTS_COLLECTION).doc(studentId);
+    const studentSnap = await studentRef.get();
+    if (!studentSnap.exists) return res.status(404).json({ ok: false, error: "Student not found" });
+    const student = studentSnap.data() || {};
+    if (purpose === "level_upgrade") {
+      const upgradeStatus = String(student.upgradeStatus || "").trim().toLowerCase();
+      const upgradeBalance = roundMoney(student.upgradeBalanceDue);
+      if (!["awaiting_payment", "pending", "expired"].includes(upgradeStatus)) return res.status(409).json({ ok: false, error: "This student has no payable level upgrade." });
+      if (upgradeBalance <= 0) return res.status(409).json({ ok: false, error: "This level upgrade is already fully paid." });
+      if (tuitionCredit > upgradeBalance + 0.01) return res.status(400).json({ ok: false, error: "Upgrade payment cannot exceed the remaining upgrade balance." });
+    }
+    const email = resolveStudentPaymentEmail(student, req.body?.email);
+    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "A valid student email is required by Paystack" });
+
+    const checkoutAmount = calculateStudentCheckoutAmount(tuitionCredit);
+    const processingShare = roundMoney(checkoutAmount - tuitionCredit);
+    const reference = createPaymentReference(studentId);
+    const metadata = {
+      source: "falowen_admin_student_directory",
+      studentId,
+      studentCode: String(student.studentCode || student.studentcode || studentId),
+      studentName: String(student.name || student.studentName || ""),
+      purpose,
+      tuitionCredit,
+      checkoutAmount,
+      upgradeId: purpose === "level_upgrade" ? String(student.upgradeId || "") : "",
+      targetLevel: purpose === "level_upgrade" ? normalizeContractLevel(student.upgradeToLevel) : "",
+    };
+
+    const paystack = await initializePaystackPayment({ email, checkoutAmount, reference, metadata });
+    const payment = {
+      reference,
+      studentId,
+      studentCode: metadata.studentCode,
+      studentName: metadata.studentName,
+      email,
+      purpose,
+      upgradeId: metadata.upgradeId,
+      targetLevel: metadata.targetLevel,
+      currency: PAYSTACK_CURRENCY,
+      tuitionCredit,
+      checkoutAmount,
+      processingShare,
+      amountSubunit: Math.round(checkoutAmount * 100),
+      provider: "Paystack",
+      status: "pending",
+      authorizationUrl: paystack.authorization_url,
+      accessCode: paystack.access_code || "",
+      createdBy: user.uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    await db.collection("payments").doc(reference).set(payment, { merge: true });
+
+    return res.json({
+      ok: true,
+      payment: {
+        ...payment,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error("student_payment_link_failed", { message: error?.message || String(error) });
+    return res.status(error?.statusCode || 500).json({ ok: false, error: error?.message || "Could not generate payment link" });
+  }
+});
+
+app.get("/payments/student/:studentId", async (req, res) => {
+  try {
+    await requirePaymentAdmin(req);
+    const studentId = String(req.params.studentId || "").trim();
+    if (!studentId) return res.status(400).json({ ok: false, error: "studentId is required" });
+
+    const snapshot = await db.collection("payments").where("studentId", "==", studentId).get();
+    const toIso = (value) => {
+      if (!value) return null;
+      if (typeof value.toDate === "function") return value.toDate().toISOString();
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+    };
+    const payments = snapshot.docs
+      .map((docSnap) => {
+        const data = docSnap.data() || {};
+        return {
+          id: docSnap.id,
+          ...data,
+          createdAt: toIso(data.createdAt),
+          paidAt: toIso(data.paidAt),
+          updatedAt: toIso(data.updatedAt),
+        };
+      })
+      .sort((a, b) => new Date(b.paidAt || b.createdAt || 0).getTime() - new Date(a.paidAt || a.createdAt || 0).getTime())
+      .slice(0, 50);
+
+    return res.json({ ok: true, payments });
+  } catch (error) {
+    return res.status(error?.statusCode || 401).json({ ok: false, error: error?.message || "Could not load payment history" });
+  }
+});
+
+app.post("/payments/paystack-webhook", async (req, res) => {
+  if (!webhookSignatureIsValid(req)) {
+    console.warn("paystack_webhook_rejected", { reason: "invalid_signature" });
+    return res.status(401).json({ ok: false, error: "Invalid Paystack signature" });
+  }
+
+  const event = req.body || {};
+  if (String(event.event || "") !== "charge.success") return res.status(200).json({ ok: true, ignored: true });
+  const reference = String(event?.data?.reference || "").trim();
+  if (!reference.startsWith("FAL-")) return res.status(200).json({ ok: true, ignored: true, reason: "non_falowen_reference" });
+
+  try {
+    const result = await applySuccessfulPaystackPayment(event.data || {});
+    console.log("paystack_payment_applied", result);
+    return res.status(200).json({ ok: true, ...result });
+  } catch (error) {
+    console.error("paystack_payment_apply_failed", { message: error?.message || String(error), reference: event?.data?.reference || "" });
+    return res.status(500).json({ ok: false, error: error?.message || "Payment could not be applied" });
+  }
+});
+// END STUDENT PAYMENT LINKS
+
+// BEGIN STUDENT CONTRACT LIFECYCLE
+function createUpgradeId(studentId) {
+  return "UPG-" + safePaymentReferencePart(studentId) + "-" + Date.now() + "-" + crypto.randomBytes(4).toString("hex");
+}
+
+async function verifyPaystackTransaction(reference) {
+  const secret = paystackSecret();
+  if (!secret) throw new Error("PAYSTACK_SECRET is not configured");
+  const response = await fetch(PAYSTACK_API_BASE_URL + "/transaction/verify/" + encodeURIComponent(reference), {
+    method: "GET",
+    headers: { Authorization: "Bearer " + secret },
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body?.status !== true || !body?.data) {
+    const error = new Error(body?.message || "Paystack could not verify this payment");
+    error.statusCode = response.status || 502;
+    throw error;
+  }
+  return body.data;
+}
+
+async function reconcilePaymentReference(reference) {
+  const normalizedReference = String(reference || "").trim();
+  if (!normalizedReference) return { checked: false, applied: false, reason: "missing_reference" };
+  const paymentRef = db.collection("payments").doc(normalizedReference);
+  const paymentSnap = await paymentRef.get();
+  if (!paymentSnap.exists) return { checked: false, applied: false, reason: "unknown_reference" };
+  const payment = paymentSnap.data() || {};
+  if (String(payment.status || "").toLowerCase() === "paid") return { checked: true, applied: false, reason: "already_paid" };
+  const verified = await verifyPaystackTransaction(normalizedReference);
+  if (String(verified.status || "").toLowerCase() !== "success") return { checked: true, applied: false, reason: String(verified.status || "not_successful") };
+  const result = await applySuccessfulPaystackPayment(verified);
+  return { checked: true, applied: !result?.duplicate, result };
+}
+
+async function expireStudentUpgrade(studentRef, student, now = new Date()) {
+  const upgradeStatus = String(student.upgradeStatus || "").trim().toLowerCase();
+  if (upgradeStatus !== "pending" || !isUpgradeGraceExpired(student.upgradeGraceEnd, now) || roundMoney(student.upgradeBalanceDue) <= 0) return false;
+  const previousLevel = normalizeContractLevel(student.upgradePreviousLevel || student.upgradeFromLevel || student.paidLevel);
+  const previousBalance = roundMoney(student.upgradePreviousBalanceDue);
+  const update = {
+    level: previousLevel || student.level,
+    balanceDue: previousBalance,
+    balance: previousBalance,
+    paymentStatus: String(student.upgradePreviousPaymentStatus || (previousBalance <= 0 ? "Paid" : "Partially Paid")),
+    status: String(student.upgradePreviousStatus || (previousBalance <= 0 ? "Paid" : "Active")),
+    upgradeStatus: "expired",
+    upgradeExpiredAt: admin.firestore.FieldValue.serverTimestamp(),
+    paymentReminderLevel: admin.firestore.FieldValue.delete(),
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  if (String(student.upgradeTargetClassName || "").trim()) {
+    update.className = String(student.upgradePreviousClassName || "").trim() || admin.firestore.FieldValue.delete();
+  }
+  await studentRef.set(update, { merge: true });
+  await db.collection("auditLogs").add({
+    type: "studentUpgrade.expired",
+    studentId: studentRef.id,
+    fromLevel: student.upgradeFromLevel || "",
+    targetLevel: student.upgradeToLevel || "",
+    remainingBalance: roundMoney(student.upgradeBalanceDue),
+    contractEnd: student.contractEnd || "",
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return true;
+}
+
+app.post("/payments/start-upgrade", async (req, res) => {
+  try {
+    const user = await requirePaymentAdmin(req);
+    const studentId = String(req.body?.studentId || "").trim();
+    const requestedTargetLevel = normalizeContractLevel(req.body?.targetLevel);
+    const tuitionFee = roundMoney(req.body?.tuitionFee);
+    const targetClassName = String(req.body?.targetClassName || "").trim();
+    if (!studentId) return res.status(400).json({ ok: false, error: "studentId is required" });
+    if (tuitionFee <= 0) return res.status(400).json({ ok: false, error: "A valid full tuition fee is required" });
+
+    const studentRef = db.collection(STUDENTS_COLLECTION).doc(studentId);
+    let responseUpdate = null;
+    await db.runTransaction(async (transaction) => {
+      const snap = await transaction.get(studentRef);
+      if (!snap.exists) { const error = new Error("Student not found"); error.statusCode = 404; throw error; }
+      const student = snap.data() || {};
+      const currentLevel = normalizeContractLevel(student.paidLevel || student.level);
+      const expectedTargetLevel = nextContractLevel(currentLevel);
+      const targetLevel = requestedTargetLevel || expectedTargetLevel;
+      if (!currentLevel || !expectedTargetLevel) { const error = new Error("This student has no next Falowen level to upgrade to"); error.statusCode = 400; throw error; }
+      if (targetLevel !== expectedTargetLevel) { const error = new Error("Upgrades must move to the next level: " + expectedTargetLevel); error.statusCode = 400; throw error; }
+      if (!contractIsActive(student.contractEnd, new Date())) { const error = new Error("The current paid contract has expired. Renew the current level before preparing a next-level upgrade."); error.statusCode = 409; throw error; }
+
+      const previousBalance = resolveStudentCurrentBalance(student);
+      if (previousBalance > 0.01) { const error = new Error("Complete the current level balance before preparing a next-level upgrade."); error.statusCode = 409; throw error; }
+
+      const existingUpgradeStatus = String(student.upgradeStatus || "").trim().toLowerCase();
+      if (["awaiting_payment", "pending", "expired"].includes(existingUpgradeStatus)) { const error = new Error("This student already has an unfinished level upgrade."); error.statusCode = 409; throw error; }
+
+      const upgradeId = createUpgradeId(studentId);
+      const paidLevel = normalizeContractLevel(student.paidLevel || currentLevel) || currentLevel;
+      const update = {
+        paidLevel,
+        upgradeId,
+        upgradeStatus: "awaiting_payment",
+        upgradeFromLevel: currentLevel,
+        upgradeToLevel: targetLevel,
+        upgradeTuitionFee: tuitionFee,
+        upgradePaid: 0,
+        upgradeBalanceDue: tuitionFee,
+        upgradePreviousLevel: currentLevel,
+        upgradePreviousClassName: String(student.className || ""),
+        upgradePreviousBalanceDue: previousBalance,
+        upgradePreviousPaymentStatus: String(student.paymentStatus || "Paid"),
+        upgradePreviousStatus: String(student.status || "Paid"),
+        upgradeTargetClassName: targetClassName,
+        upgradeCreatedBy: user.uid,
+        upgradeCreatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        upgradeStartedAt: admin.firestore.FieldValue.delete(),
+        upgradeGraceEnd: admin.firestore.FieldValue.delete(),
+        paymentReminderLevel: admin.firestore.FieldValue.delete(),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      transaction.set(studentRef, update, { merge: true });
+      responseUpdate = {
+        paidLevel,
+        upgradeId,
+        upgradeStatus: "awaiting_payment",
+        upgradeFromLevel: currentLevel,
+        upgradeToLevel: targetLevel,
+        upgradeTuitionFee: tuitionFee,
+        upgradePaid: 0,
+        upgradeBalanceDue: tuitionFee,
+        upgradePreviousLevel: currentLevel,
+        upgradePreviousClassName: String(student.className || ""),
+        upgradePreviousBalanceDue: previousBalance,
+        upgradePreviousPaymentStatus: String(student.paymentStatus || "Paid"),
+        upgradePreviousStatus: String(student.status || "Paid"),
+        upgradeTargetClassName: targetClassName,
+      };
+    });
+    return res.json({ ok: true, studentUpdate: responseUpdate });
+  } catch (error) {
+    return res.status(error?.statusCode || 500).json({ ok: false, error: error?.message || "Could not prepare level upgrade" });
+  }
+});
+
+app.post("/payments/reconcile-student/:studentId", async (req, res) => {
+  try {
+    await requirePaymentAdmin(req);
+    const studentId = String(req.params.studentId || "").trim();
+    if (!studentId) return res.status(400).json({ ok: false, error: "studentId is required" });
+    const snapshot = await db.collection("payments").where("studentId", "==", studentId).limit(30).get();
+    const pending = snapshot.docs
+      .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }))
+      .filter((payment) => String(payment.status || "").toLowerCase() === "pending")
+      .slice(0, 8);
+    let checked = 0;
+    let applied = 0;
+    const results = [];
+    for (const payment of pending) {
+      try {
+        const result = await reconcilePaymentReference(payment.reference || payment.id);
+        if (result.checked) checked += 1;
+        if (result.applied) applied += 1;
+        results.push({ reference: payment.reference || payment.id, ...result });
+      } catch (error) {
+        results.push({ reference: payment.reference || payment.id, checked: true, applied: false, error: error?.message || String(error) });
+      }
+    }
+    return res.json({ ok: true, checked, applied, results });
+  } catch (error) {
+    return res.status(error?.statusCode || 500).json({ ok: false, error: error?.message || "Could not reconcile student payments" });
+  }
+});
+
+exports.maintainStudentPaymentContracts = onSchedule({
+  schedule: "*/30 * * * *",
+  timeZone: "Africa/Accra",
+  secrets: [paystackSecretKeySecret],
+}, async () => {
+  const now = new Date();
+  const students = await db.collection(STUDENTS_COLLECTION).where("upgradeStatus", "==", "pending").limit(100).get();
+  let expiredUpgrades = 0;
+  for (const docSnap of students.docs) {
+    try {
+      if (await expireStudentUpgrade(docSnap.ref, docSnap.data() || {}, now)) expiredUpgrades += 1;
+    } catch (error) {
+      console.error("student_upgrade_expiry_failed", { studentId: docSnap.id, message: error?.message || String(error) });
+    }
+  }
+
+  const payments = await db.collection("payments").where("status", "==", "pending").limit(100).get();
+  let checkedPayments = 0;
+  let appliedPayments = 0;
+  for (const docSnap of payments.docs) {
+    if (checkedPayments >= 20) break;
+    const payment = docSnap.data() || {};
+    const createdAt = contractAsDate(payment.createdAt);
+    if (!createdAt) continue;
+    const ageMs = now.getTime() - createdAt.getTime();
+    if (ageMs > 14 * 86400000) {
+      await docSnap.ref.set({ status: "expired", expiredAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      continue;
+    }
+    if (ageMs < 2 * 60000) continue;
+    checkedPayments += 1;
+    try {
+      const result = await reconcilePaymentReference(payment.reference || docSnap.id);
+      if (result.applied) appliedPayments += 1;
+    } catch (error) {
+      console.warn("student_payment_reconcile_failed", { reference: payment.reference || docSnap.id, message: error?.message || String(error) });
+    }
+  }
+  console.log("student_payment_contract_maintenance", { expiredUpgrades, checkedPayments, appliedPayments });
+});
+// END STUDENT CONTRACT LIFECYCLE
+
 app.post("/students/delete-account", async (req, res) => {
   try {
     await requireAuth(req);
@@ -1861,6 +2509,83 @@ async function createAutomaticMarkingJob(event, collectionShape) {
   }
 }
 
+exports.sendStudentPaymentUpdateEmail = createStudentPaymentUpdateEmailTrigger({
+  admin,
+  db,
+  onDocumentUpdated,
+  runtimeConfig,
+});
+
+// BEGIN AUTOMATIC PAID STUDENT ORIENTATION SYNC
+const automaticPaidStudentOrientationHandler = createOrientationAutoSyncHandler({
+  db,
+  appsScriptUrl: () => String(
+    orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || ""
+  ).trim(),
+  syncSecret: () => String(
+    orientationSyncSecret.value() || process.env.ORIENTATION_SYNC_SECRET || ""
+  ).trim(),
+});
+
+async function automaticPaidPaymentOrientationHandler(event) {
+  const beforePayment = event?.data?.before?.exists ? event.data.before.data() || {} : {};
+  const afterPayment = event?.data?.after?.exists ? event.data.after.data() || {} : {};
+  const beforeStatus = String(beforePayment.status || "").trim().toLowerCase();
+  const afterStatus = String(afterPayment.status || "").trim().toLowerCase();
+
+  if (afterStatus !== "paid" || beforeStatus === "paid") {
+    return { skipped: true, reason: "payment_not_newly_paid" };
+  }
+
+  const studentId = String(afterPayment.studentId || "").trim();
+  if (!studentId) throw new Error("Paid payment is missing studentId for orientation sync.");
+
+  const studentRef = db.collection("students").doc(studentId);
+  const studentSnapshot = await studentRef.get();
+  if (!studentSnapshot.exists) {
+    throw new Error("Student record not found for paid payment: " + studentId);
+  }
+
+  const currentStudent = studentSnapshot.data() || {};
+  const syntheticBefore = {
+    ...currentStudent,
+    paymentStatus: "pending",
+    payment_status: "pending",
+    paid: 0,
+    paidAmount: 0,
+    initialPaymentAmount: 0,
+  };
+  const beforeStudentSnapshot = {
+    exists: true,
+    id: studentSnapshot.id || studentId,
+    ref: studentRef,
+    data: () => syntheticBefore,
+  };
+
+  return automaticPaidStudentOrientationHandler({
+    ...event,
+    params: {
+      ...(event?.params || {}),
+      studentCode: studentSnapshot.id || studentId,
+    },
+    data: {
+      before: beforeStudentSnapshot,
+      after: studentSnapshot,
+    },
+  });
+}
+
+exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
+  {
+    region: "europe-west1",
+    document: "payments/{reference}",
+    secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
+    timeoutSeconds: 60,
+  },
+  automaticPaidPaymentOrientationHandler
+);
+// END AUTOMATIC PAID STUDENT ORIENTATION SYNC
+
 exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
   await createAutomaticMarkingJob(event, "flat");
 });
@@ -2062,5 +2787,6 @@ exports.api = onRequest({
     openAiApiKeySecret,
     studentDeleteAppsScriptUrlSecret,
     studentDeleteSyncSecret,
+    paystackSecretKeySecret,
   ],
 }, app);
