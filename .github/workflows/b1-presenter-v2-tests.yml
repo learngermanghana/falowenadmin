@@ -1,0 +1,35 @@
+name: B1 Presenter 2.0 Tests
+
+on:
+  pull_request:
+    paths:
+      - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/TeachingSlidePresenter.css"
+      - "src/utils/teachingPresenter.js"
+      - "src/data/b1WorkbookAlignedSlidesDays1To10.js"
+      - "tests/b1-presenter-v2-days1-6.test.js"
+      - ".github/workflows/b1-presenter-v2-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test B1 Day 1-6 presenter scope
+        run: node --test tests/b1-presenter-v2-days1-6.test.js
+
+      - name: Build Falowen Admin
+        run: npm run build
