@@ -95,8 +95,13 @@
 .presenter-flow-card {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
+}
+
+.presenter-flow-card-main {
+  min-width: 0;
+  flex: 1;
 }
 
 .presenter-flow-card strong,
@@ -109,6 +114,49 @@
   margin: 0.3rem 0 0;
   font-size: clamp(0.95rem, 1.45vw, 1.2rem);
   line-height: 1.35;
+}
+
+.presenter-practice-instruction {
+  font-weight: 720;
+}
+
+.presenter-practice-prompts {
+  margin: 0.55rem 0 0;
+  padding-left: 1.3rem;
+  font-size: clamp(0.92rem, 1.3vw, 1.1rem);
+  line-height: 1.4;
+}
+
+.presenter-practice-prompts li + li {
+  margin-top: 0.25rem;
+}
+
+.presenter-practice-details {
+  margin-top: 0.55rem;
+  border-top: 1px solid #dbe4f0;
+  padding-top: 0.45rem;
+}
+
+.presenter-practice-details summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #1d4ed8;
+}
+
+.presenter-practice-details ul {
+  margin: 0.45rem 0 0;
+  padding-left: 1.2rem;
+  line-height: 1.4;
+}
+
+.presenter-teacher-note summary {
+  color: #64748b;
+  font-size: 0.84rem;
+}
+
+.presenter-teacher-note p {
+  color: #64748b;
+  font-size: 0.86rem;
 }
 
 .presenter-workbook-actions,
@@ -187,6 +235,10 @@
   .presenter-flow-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .presenter-flow-card > button {
+    align-self: flex-start;
   }
 
   .presenter-question {

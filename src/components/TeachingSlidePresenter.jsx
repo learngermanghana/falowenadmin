@@ -24,6 +24,7 @@ function lessonUrl(value = "") {
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const stages = useMemo(() => buildTeachingPresenterStages(slide, topicLabel), [slide, topicLabel]);
   const presenterV2 = isTeachingPresenterV2Slide(slide);
+  const advancedClassroom = ["B2", "C1"].includes(String(slide.course || "").toUpperCase());
   const [stageIndex, setStageIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showQuestionSupport, setShowQuestionSupport] = useState(false);
@@ -179,18 +180,20 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             </>
           ) : stage.type === "question-reveal" ? (
             <section className="presenter-question-reveal">
-              <div className="presenter-question-counter">Question {questionIndex + 1} of {stage.items.length}</div>
+              <div className="presenter-question-counter">{advancedClassroom ? "Frage" : "Question"} {questionIndex + 1} {advancedClassroom ? "von" : "of"} {stage.items.length}</div>
               <h1>{stage.title}</h1>
               <p className="presenter-question">{activeQuestion}</p>
               <div className="presenter-question-actions">
                 <button type="button" onClick={() => setShowQuestionSupport((current) => !current)}>
-                  {showQuestionSupport ? "Hide model support" : "Reveal model support"}
+                  {showQuestionSupport
+                    ? (advancedClassroom ? "Modell ausblenden" : "Hide model support")
+                    : (advancedClassroom ? "Modell anzeigen" : "Reveal model support")}
                 </button>
-                <button type="button" onClick={randomQuestion}>Random question</button>
+                <button type="button" onClick={randomQuestion}>{advancedClassroom ? "Zufallsfrage" : "Random question"}</button>
               </div>
               {showQuestionSupport && stage.supportItems?.length ? (
                 <div className="presenter-model-support">
-                  <strong>Model language</strong>
+                  <strong>{advancedClassroom ? "Modellsprache" : "Model language"}</strong>
                   <ul>{stage.supportItems.slice(0, 4).map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
               ) : null}
@@ -199,11 +202,28 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <>
               <h1>{stage.title}</h1>
               <div className="presenter-flow-grid">
-                {stage.items.map((item) => (
-                  <article key={`${item.title}-${item.detail}`} className="presenter-flow-card">
-                    <div>
+                {stage.items.map((item, itemIndex) => (
+                  <article key={`${item.title}-${item.detail || item.instruction || itemIndex}`} className="presenter-flow-card">
+                    <div className="presenter-flow-card-main">
                       <strong>{item.title}</strong>
-                      <p>{item.detail}</p>
+                      {item.instruction ? <p className="presenter-practice-instruction">{item.instruction}</p> : <p>{item.detail}</p>}
+                      {Array.isArray(item.prompts) && item.prompts.length ? (
+                        <ol className="presenter-practice-prompts">
+                          {item.prompts.map((prompt) => <li key={prompt}>{prompt}</li>)}
+                        </ol>
+                      ) : null}
+                      {Array.isArray(item.modelItems) && item.modelItems.length ? (
+                        <details className="presenter-practice-details">
+                          <summary>Modell anzeigen</summary>
+                          <ul>{item.modelItems.map((model) => <li key={model}>{model}</li>)}</ul>
+                        </details>
+                      ) : null}
+                      {item.teacherNote ? (
+                        <details className="presenter-practice-details presenter-teacher-note">
+                          <summary>Teacher note (EN)</summary>
+                          <p>{item.teacherNote}</p>
+                        </details>
+                      ) : null}
                     </div>
                     {item.minutes ? <button type="button" onClick={() => setTimerMinutes(item.minutes)}>Set {item.minutes} min</button> : null}
                   </article>
@@ -251,7 +271,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${progress}%` }} /></div>
           </div>
           <button type="button" onClick={next} disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}>
-            {stage.type === "question-reveal" && questionIndex < stage.items.length - 1 ? "Next question →" : "Next →"}
+            {stage.type === "question-reveal" && questionIndex < stage.items.length - 1
+              ? (advancedClassroom ? "Nächste Frage →" : "Next question →")
+              : "Next →"}
           </button>
         </footer>
       </div>
