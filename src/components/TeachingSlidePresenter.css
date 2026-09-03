@@ -1,0 +1,194 @@
+.presenter-v2-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.presenter-stage-jump {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.presenter-stage-jump select {
+  max-width: 220px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-weight: 750;
+}
+
+.presenter-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0.35rem 0.45rem;
+  background: #fff;
+}
+
+.presenter-timer strong {
+  min-width: 68px;
+  text-align: center;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.presenter-timer button,
+.presenter-question-actions button,
+.presenter-flow-card button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.presenter-timer-expired strong {
+  color: #b91c1c;
+}
+
+.presenter-timer-presets {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.presenter-timer-presets button {
+  padding-inline: 0.45rem;
+  font-size: 0.78rem;
+}
+
+.presenter-content-flow,
+.presenter-content-workbook,
+.presenter-content-question-reveal {
+  justify-content: flex-start;
+  padding-top: clamp(1.2rem, 3vw, 2.6rem);
+}
+
+.presenter-flow-grid,
+.presenter-workbook-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.presenter-flow-card,
+.presenter-workbook-list article,
+.presenter-model-support {
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+}
+
+.presenter-flow-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.presenter-flow-card strong,
+.presenter-workbook-list strong {
+  font-size: clamp(1rem, 1.7vw, 1.35rem);
+}
+
+.presenter-flow-card p,
+.presenter-workbook-list p {
+  margin: 0.3rem 0 0;
+  font-size: clamp(0.95rem, 1.45vw, 1.2rem);
+  line-height: 1.35;
+}
+
+.presenter-workbook-actions,
+.presenter-question-actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.presenter-workbook-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #1d4ed8;
+  color: #fff;
+  padding: 0.55rem 0.85rem;
+  text-decoration: none;
+  font-weight: 850;
+}
+
+.presenter-question-reveal {
+  width: 100%;
+}
+
+.presenter-question-counter {
+  color: #1d4ed8;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+}
+
+.presenter-question {
+  max-width: 95%;
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 4rem);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.presenter-model-support {
+  margin-top: 1rem;
+}
+
+.presenter-model-support ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  font-size: clamp(1rem, 1.8vw, 1.45rem);
+  line-height: 1.35;
+}
+
+@media (max-width: 1100px) {
+  .presenter-topbar {
+    align-items: flex-start;
+  }
+
+  .presenter-v2-tools {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .presenter-stage-jump,
+  .presenter-stage-jump select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .presenter-timer {
+    width: 100%;
+  }
+
+  .presenter-flow-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .presenter-question {
+    font-size: clamp(1.55rem, 7vw, 2.6rem);
+  }
+}
