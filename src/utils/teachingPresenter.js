@@ -1,7 +1,7 @@
-function isB1PresenterPilot(slide = {}) {
+function isB1Presenter2Eligible(slide = {}) {
   const course = String(slide.course || "").trim().toUpperCase();
   const dayNumber = Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 0);
-  return course === "B1" && dayNumber >= 1 && dayNumber <= 6;
+  return course === "B1" && dayNumber >= 1 && dayNumber <= 12;
 }
 
 function list(value) {
@@ -29,7 +29,7 @@ function workbookItems(slide = {}) {
 }
 
 export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
-  const pilot = isB1PresenterPilot(slide);
+  const presenter2 = isB1Presenter2Eligible(slide);
   const support = slide.teacherSupport || {};
   const stages = [
     {
@@ -58,7 +58,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       items: list(slide.keyPhrasesDe),
       suggestedMinutes: 6,
     },
-    ...(pilot ? [
+    ...(presenter2 ? [
       {
         id: "grammar",
         type: "list",
@@ -86,14 +86,14 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
     ] : []),
     {
       id: "questions",
-      type: pilot ? "question-reveal" : "numbered-list",
+      type: presenter2 ? "question-reveal" : "numbered-list",
       kicker: "Sprechen",
       title: "Student questions",
       items: list(slide.studentQuestionsDe),
-      modelItems: pilot ? list(support.modelExamplesDe) : [],
+      modelItems: presenter2 ? list(support.modelExamplesDe) : [],
       suggestedMinutes: 10,
     },
-    ...(pilot ? [
+    ...(presenter2 ? [
       {
         id: "workbook",
         type: "numbered-list",
