@@ -211,15 +211,21 @@ test("a duplicate payment event skips when the current student already has the s
   assert.equal(fetchCount, 0);
 });
 
-test("deployment patch is wired into build, test and Firebase predeploy safeguards", () => {
+test("deployment patch listens only to paid payment-document updates", () => {
   const patch = read("scripts/patchAutomaticOrientationSync.mjs");
   const packageJson = read("package.json");
   const firebaseJson = read("firebase.json");
+  const workflow = read(".github/workflows/deploy-firebase.yml");
 
   assert.match(patch, /exports\.autoSyncPaidStudentOrientation/);
   assert.match(patch, /onDocumentUpdated/);
+  assert.match(patch, /document: "payments\/\{reference\}"/);
+  assert.doesNotMatch(patch, /document: "students\/\{studentCode\}"/);
+  assert.match(patch, /payment_not_newly_paid/);
   assert.match(patch, /orientationAppsScriptUrlSecret/);
   assert.match(patch, /orientationSyncSecret/);
   assert.match(packageJson, /patchAutomaticOrientationSync\.mjs/);
   assert.match(firebaseJson, /patchAutomaticOrientationSync\.mjs/);
+  assert.match(workflow, /patchAutomaticOrientationSync\.mjs/);
+  assert.match(workflow, /functions:falowenadmin:autoSyncPaidStudentOrientation/);
 });
