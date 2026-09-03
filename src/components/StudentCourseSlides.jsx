@@ -6,6 +6,7 @@ import { normalizeStudentPracticeItems } from "../utils/studentSlidePractice.js"
 import "./StudentCourseSlides.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
+const MOBILE_SLIDES_QUERY = "(max-width: 720px)";
 
 function falowenHref(path = "") {
   const value = String(path || "").trim();
@@ -25,6 +26,33 @@ function hashSlideId(slides = []) {
 function lessonLabel(slide = {}) {
   const day = slide.day || (slide.dayNumber ? `Day ${slide.dayNumber}` : "Lesson");
   return `${day} — ${slide.title || slide.topic || "Lesson"}`;
+}
+
+function compactDayLabel(slide = {}, index = 0) {
+  return slide.day || (slide.dayNumber ? `Day ${slide.dayNumber}` : `Day ${index + 1}`);
+}
+
+function useMobileSlidesLayout() {
+  const [isMobile, setIsMobile] = useState(() => (
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia(MOBILE_SLIDES_QUERY).matches
+      : false
+  ));
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
+    const media = window.matchMedia(MOBILE_SLIDES_QUERY);
+    const onChange = (event) => setIsMobile(event.matches);
+    setIsMobile(media.matches);
+    if (typeof media.addEventListener === "function") media.addEventListener("change", onChange);
+    else media.addListener(onChange);
+    return () => {
+      if (typeof media.removeEventListener === "function") media.removeEventListener("change", onChange);
+      else media.removeListener(onChange);
+    };
+  }, []);
+
+  return isMobile;
 }
 
 function StageList({ items = [] }) {
@@ -56,9 +84,24 @@ function PracticeBlock({ item, index }) {
   );
 }
 
+function ReviewSection({ label, isMobile, desktopOpen = true, className = "", children }) {
+  return (
+    <details
+      className={`student-slide-section student-collapsible-section ${className}`.trim()}
+      open={isMobile ? false : desktopOpen}
+    >
+      <summary className="student-collapsible-summary">
+        <span className="student-section-kicker">{label}</span>
+      </summary>
+      <div className="student-collapsible-content">{children}</div>
+    </details>
+  );
+}
+
 export default function StudentCourseSlides({ courseId }) {
   const slides = useMemo(() => getSlidesByCourse(courseId), [courseId]);
   const [selectedId, setSelectedId] = useState(() => hashSlideId(slides) || slides[0]?.id || "");
+  const isMobile = useMobileSlidesLayout();
 
   useEffect(() => {
     const fromHash = hashSlideId(slides);
@@ -133,7 +176,7 @@ export default function StudentCourseSlides({ courseId }) {
         <header className="student-slide-hero">
           <div className="student-slide-hero-topline">
             <span className="student-slide-level">{slide.course}</span>
-            <span className="student-slide-day">{slide.day || `Day ${slide.dayNumber || selectedIndex + 1}`}</span>
+            <span className="student-slide-day">{compactDayLabel(slide, selectedIndex)}</span>
           </div>
           <h1>{slide.title}</h1>
           <p className="student-slide-topic">{topicLabel}</p>
@@ -145,31 +188,25 @@ export default function StudentCourseSlides({ courseId }) {
         </section>
 
         {Array.isArray(grammar.items) && grammar.items.length ? (
-          <section className="student-slide-section">
+          <section className="student-slide-section student-grammar-section">
             <p className="student-section-kicker">Neue Grammatik</p>
             <StageList items={grammar.items} />
           </section>
         ) : null}
 
         {Array.isArray(phrases.items) && phrases.items.length ? (
-          <section className="student-slide-section">
-            <p className="student-section-kicker">Redemittel</p>
+          <ReviewSection label="Redemittel" isMobile={isMobile}>
             <StageList items={phrases.items.slice(0, 8)} />
-          </section>
+          </ReviewSection>
         ) : null}
 
         {Array.isArray(examples.items) && examples.items.length ? (
-          <section className="student-slide-section">
-            <p className="student-section-kicker">Beispiele</p>
-            <details className="student-model-details student-model-details-wide">
-              <summary>Beispiele anzeigen</summary>
-              <StageList items={examples.items.slice(0, 4)} />
-            </details>
-          </section>
+          <ReviewSection label="Beispiele" isMobile={isMobile} desktopOpen={false}>
+            <StageList items={examples.items.slice(0, 4)} />
+          </ReviewSection>
         ) : null}
 
-        <section className="student-slide-section">
-          <p className="student-section-kicker">Übung</p>
+        <ReviewSection label="Übung" isMobile={isMobile}>
           {studentPractice.length ? (
             <div className="student-practice-grid">
               {studentPractice.slice(0, 4).map((item, index) => <PracticeBlock key={`${item.title}-${index}`} item={item} index={index} />)}
@@ -182,40 +219,52 @@ export default function StudentCourseSlides({ courseId }) {
               </ol>
             </>
           )}
-        </section>
+        </ReviewSection>
 
         {speakingQuestions.length ? (
-          <section className="student-slide-section student-speaking-section">
-            <p className="student-section-kicker">Sprechen</p>
+          <ReviewSection label="Sprechen" isMobile={isMobile} className="student-speaking-section">
             <p className="student-section-help">Antworte frei und versuche, die neue Grammatik und mindestens zwei Redemittel zu benutzen.</p>
             <ol className="student-question-list">
               {speakingQuestions.slice(-2).map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}
             </ol>
-          </section>
+          </ReviewSection>
         ) : null}
 
         {(workbookHref || grammarHref) ? (
-          <section className="student-slide-section student-workbook-section no-print">
-            <p className="student-section-kicker">Weiterlernen in Falowen</p>
+          <ReviewSection label="Weiterlernen in Falowen" isMobile={isMobile} className="student-workbook-section no-print">
             <div className="student-workbook-links">
               {workbookHref ? <a href={workbookHref} target="_blank" rel="noreferrer">Workbook öffnen</a> : null}
               {grammarHref ? <a href={grammarHref} target="_blank" rel="noreferrer">Grammatik öffnen</a> : null}
             </div>
-          </section>
+          </ReviewSection>
         ) : null}
 
         {wrapup.body ? (
-          <section className="student-slide-section student-summary-section">
-            <p className="student-section-kicker">Zusammenfassung</p>
+          <ReviewSection label="Zusammenfassung" isMobile={isMobile} className="student-summary-section">
             <p>{wrapup.body}</p>
-          </section>
+          </ReviewSection>
         ) : null}
       </article>
 
       <nav className="student-slide-navigation no-print" aria-label="Previous and next lesson">
-        <button type="button" onClick={() => chooseSlide(selectedIndex - 1)} disabled={selectedIndex === 0}>← Vorheriger Tag</button>
+        <button type="button" onClick={() => chooseSlide(selectedIndex - 1)} disabled={selectedIndex === 0} aria-label="Vorheriger Tag">
+          <span className="student-nav-full">← Vorheriger Tag</span>
+          <span className="student-nav-mobile" aria-hidden="true">←</span>
+        </button>
         <button type="button" className="student-print-button" onClick={() => window.print()}>Diese Lektion drucken</button>
-        <button type="button" onClick={() => chooseSlide(selectedIndex + 1)} disabled={selectedIndex === slides.length - 1}>Nächster Tag →</button>
+        <div className="student-mobile-day-select">
+          <select
+            aria-label="Tag auswählen"
+            value={slide.id}
+            onChange={(event) => chooseSlide(slides.findIndex((entry) => entry.id === event.target.value))}
+          >
+            {slides.map((entry, index) => <option key={entry.id} value={entry.id}>{compactDayLabel(entry, index)}</option>)}
+          </select>
+        </div>
+        <button type="button" onClick={() => chooseSlide(selectedIndex + 1)} disabled={selectedIndex === slides.length - 1} aria-label="Nächster Tag">
+          <span className="student-nav-full">Nächster Tag →</span>
+          <span className="student-nav-mobile" aria-hidden="true">→</span>
+        </button>
       </nav>
     </main>
   );

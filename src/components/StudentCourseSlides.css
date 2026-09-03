@@ -110,7 +110,9 @@
 
 .student-slide-section {
   padding: 1.15rem 1.4rem;
+  border: 0;
   border-bottom: 1px solid #eef1f6;
+  background: #fff;
 }
 
 .student-slide-section:last-child {
@@ -121,8 +123,12 @@
   background: #fbfdff;
 }
 
+.student-grammar-section {
+  background: #fff;
+}
+
 .student-slide-objective > p:last-child,
-.student-summary-section > p:last-child {
+.student-summary-section .student-collapsible-content > p:last-child {
   margin: 0;
   font-size: 1.08rem;
   line-height: 1.55;
@@ -146,18 +152,53 @@
   line-height: 1.5;
 }
 
+.student-collapsible-section {
+  display: block;
+}
+
+.student-collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.student-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.student-collapsible-summary::after {
+  content: "+";
+  display: inline-grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1d4ed8;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.student-collapsible-section[open] > .student-collapsible-summary::after {
+  content: "−";
+}
+
+.student-collapsible-summary .student-section-kicker {
+  margin-bottom: 0;
+}
+
+.student-collapsible-content {
+  padding-top: 0.75rem;
+}
+
 .student-model-details {
   margin-top: 0.7rem;
   border-top: 1px dashed #d7dfef;
   padding-top: 0.65rem;
-}
-
-.student-model-details-wide {
-  margin-top: 0;
-  border: 1px solid #dbe1ef;
-  border-radius: 10px;
-  padding: 0.75rem 0.9rem;
-  background: #f9fbff;
 }
 
 .student-model-details summary {
@@ -281,6 +322,11 @@
   color: #475569 !important;
 }
 
+.student-mobile-day-select,
+.student-nav-mobile {
+  display: none;
+}
+
 .student-slides-empty {
   border: 1px solid #dbe1ef;
   border-radius: 14px;
@@ -290,37 +336,177 @@
 
 @media (max-width: 720px) {
   .student-slides-shell {
-    padding: 0.65rem;
+    width: 100%;
+    padding: 0.45rem 0.45rem 0.6rem;
   }
 
   .student-slides-toolbar {
-    position: static;
-    display: grid;
-    align-items: stretch;
+    display: none;
   }
 
-  .student-lesson-select {
-    min-width: 0;
+  .student-slide-card {
+    border-radius: 12px;
+    box-shadow: none;
   }
 
-  .student-slide-hero,
+  .student-slide-hero {
+    padding: 0.8rem 0.85rem 0.75rem;
+  }
+
+  .student-slide-level,
+  .student-slide-day {
+    padding: 0.22rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .student-slide-hero h1 {
+    margin: 0.6rem 0 0.22rem;
+    font-size: clamp(1.3rem, 7vw, 1.7rem);
+    line-height: 1.12;
+  }
+
+  .student-slide-topic {
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
   .student-slide-section {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding: 0.78rem 0.85rem;
+  }
+
+  .student-slides-eyebrow,
+  .student-section-kicker {
+    font-size: 0.72rem;
+  }
+
+  .student-slide-objective > p:last-child,
+  .student-summary-section .student-collapsible-content > p:last-child {
+    font-size: 0.96rem;
+    line-height: 1.45;
+  }
+
+  .student-slide-list,
+  .student-question-list {
+    padding-left: 1.05rem;
+  }
+
+  .student-slide-list li,
+  .student-question-list li {
+    margin: 0.38rem 0;
+    font-size: 0.94rem;
+    line-height: 1.42;
+  }
+
+  .student-collapsible-summary {
+    min-height: 2rem;
+  }
+
+  .student-collapsible-summary::after {
+    width: 1.45rem;
+    height: 1.45rem;
+    font-size: 0.9rem;
+  }
+
+  .student-collapsible-content {
+    padding-top: 0.6rem;
+  }
+
+  .student-section-help {
+    margin-bottom: 0.55rem;
+    font-size: 0.9rem;
+  }
+
+  .student-practice-grid {
+    gap: 0;
+  }
+
+  .student-practice-card {
+    border: 0;
+    border-top: 1px solid #e4e9f2;
+    border-radius: 0;
+    padding: 0.7rem 0;
+    background: transparent;
+  }
+
+  .student-practice-card:first-child {
+    border-top: 0;
+    padding-top: 0.1rem;
+  }
+
+  .student-practice-heading h3 {
+    font-size: 0.96rem;
+  }
+
+  .student-practice-heading span {
+    padding: 0.16rem 0.45rem;
+    font-size: 0.7rem;
+  }
+
+  .student-practice-instruction {
+    margin: 0.4rem 0;
+    font-size: 0.92rem;
+  }
+
+  .student-workbook-links {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .student-workbook-links a {
+    min-height: 40px;
+    padding: 0.45rem 0.65rem;
   }
 
   .student-slide-navigation {
-    grid-template-columns: 1fr 1fr;
+    position: sticky;
+    bottom: 0.45rem;
+    z-index: 30;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 0.4rem;
+    margin: 0.65rem 0 0;
+    padding: 0.4rem;
+    border: 1px solid #dbe1ef;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 10px 28px rgba(18, 38, 101, 0.14);
+    backdrop-filter: blur(10px);
   }
 
-  .student-print-button {
-    grid-column: 1 / -1;
-    grid-row: 2;
+  .student-slide-navigation button {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-self: stretch !important;
+    font-size: 1.15rem;
   }
 
-  .student-slide-navigation button:first-child,
-  .student-slide-navigation button:last-child {
-    justify-self: stretch;
+  .student-print-button,
+  .student-nav-full {
+    display: none !important;
+  }
+
+  .student-nav-mobile,
+  .student-mobile-day-select {
+    display: block;
+  }
+
+  .student-mobile-day-select {
+    min-width: 0;
+  }
+
+  .student-mobile-day-select select {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #cfd7ea;
+    border-radius: 9px;
+    padding: 0 0.6rem;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 850;
+    text-align: center;
   }
 }
 
@@ -341,6 +527,18 @@
     border: none;
     border-radius: 0;
     box-shadow: none;
+  }
+
+  .student-collapsible-section {
+    display: block;
+  }
+
+  .student-collapsible-summary::after {
+    display: none;
+  }
+
+  .student-collapsible-content {
+    display: block !important;
   }
 
   .student-model-details:not([open]) > *:not(summary) {
