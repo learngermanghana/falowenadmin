@@ -63,6 +63,7 @@ jobs:
             scripts/patchHolidayClassScheduleAwareness.mjs \
             scripts/patchStudentDeletionRuntime.mjs \
             scripts/patchAttendanceConfirmationEmails.mjs \
+            scripts/patchAttendanceConfirmationEventDrivenV2.mjs \
             scripts/patchClassSessionReminderEmails.mjs \
             scripts/patchClassReminderDiagnosticBestEffort.mjs \
             scripts/patchLeadClassStartReminderEmails.mjs \
@@ -78,6 +79,7 @@ jobs:
           node --check functions/index.js
           node --check functions/classSessionReminderEmails.js
           node --check functions/autoCompleteClassSessions.js
+          node --check functions/attendanceConfirmationEmails.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
@@ -96,6 +98,9 @@ jobs:
           ! grep -F 'Check verb position, articles and every task point before submitting' src/utils/essayFeedbackEvidence.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
           grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
+          grep -F 'exports.queueAttendanceConfirmationFromSession = onDocumentWritten' functions/index.js
+          grep -F 'exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten' functions/index.js
+          grep -F 'exports.queueAttendanceConfirmationFromClassSession = onDocumentWritten' functions/index.js
           grep -F 'exports.sendLeadClassStartReminderEmails = createLeadClassStartReminderEmailJob' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
@@ -105,6 +110,10 @@ jobs:
           ! grep -F 'db.collection("classSessions").get(),' functions/classSessionReminderEmails.js
           grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
           grep -F 'schedule: "*/15 * * * *"' functions/attendanceConfirmationEmails.js
+          grep -F 'async function queueAttendanceConfirmationEvent' functions/attendanceConfirmationEmails.js
+          grep -F '.where("nextRunAt", "<=",' functions/attendanceConfirmationEmails.js
+          ! grep -F 'const classSnap = await db.collection("classes").get();' functions/attendanceConfirmationEmails.js
+          ! grep -F 'const studentSnap = await db.collection("students").get();' functions/attendanceConfirmationEmails.js
           grep -F 'acceptClassNameSessionMatch(session, klass)' functions/attendanceConfirmationEmails.js
           grep -F 'schedule: "0 8 * * *"' functions/leadClassStartReminderEmails.js
           grep -F 'schedule: "*/5 * * * *"' functions/autoCompleteClassSessions.js
@@ -139,7 +148,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:autoCompleteClassSessions --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:queueAttendanceConfirmationFromSession,functions:falowenadmin:queueAttendanceConfirmationFromCheckin,functions:falowenadmin:queueAttendanceConfirmationFromClassSession,functions:falowenadmin:autoCompleteClassSessions --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
