@@ -1,3 +1,7 @@
+import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
+
+const A1_PRESENTER_V2_EXCLUDED_ASSIGNMENTS = new Set(["A1-TUTORIAL"]);
+
 const A2_PRESENTER_V2_ASSIGNMENTS = new Set([
   "A2-1.1", "A2-1.2", "A2-1.3", "A2-2.4", "A2-2.5", "A2-3.6", "A2-3.7", "A2-3.8", "A2-4.9",
   "A2-4.10", "A2-4.11", "A2-5.12", "A2-5.13", "A2-5.14", "A2-6.15", "A2-6.16", "A2-6.17",
@@ -23,6 +27,14 @@ function normalizedAssignmentId(slide = {}) {
   return String(slide.assignmentId || "").trim().toUpperCase();
 }
 
+export function isA1PresenterV2Slide(slide = {}) {
+  const assignmentId = normalizedAssignmentId(slide);
+  const course = String(slide.course || "").trim().toUpperCase();
+  return course === "A1"
+    && assignmentId.startsWith("A1-")
+    && !A1_PRESENTER_V2_EXCLUDED_ASSIGNMENTS.has(assignmentId);
+}
+
 export function isA2PresenterV2Slide(slide = {}) {
   return A2_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide));
 }
@@ -36,7 +48,10 @@ export function isB2PresenterV2Slide(slide = {}) {
 }
 
 export function isTeachingPresenterV2Slide(slide = {}) {
-  return isA2PresenterV2Slide(slide) || isB1PresenterV2Slide(slide) || isB2PresenterV2Slide(slide);
+  return isA1PresenterV2Slide(slide)
+    || isA2PresenterV2Slide(slide)
+    || isB1PresenterV2Slide(slide)
+    || isB2PresenterV2Slide(slide);
 }
 
 export function parsePresenterMinutes(value = "") {
@@ -91,7 +106,7 @@ function buildClassicStages(slide = {}, topicLabel = "") {
 }
 
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
-  const support = slide.teacherSupport || {};
+  const support = buildTeacherSlideSupport(slide);
   const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
   const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
 
