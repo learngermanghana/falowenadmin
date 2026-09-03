@@ -10,7 +10,7 @@ import {
 
 const firstSix = b1WorkbookAlignedSlidesDays1To10.filter((slide) => slide.dayNumber >= 1 && slide.dayNumber <= 6);
 
-test("B1 Day 1-6 use Presenter 2.0 stages", () => {
+test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
   assert.equal(firstSix.length, 6);
 
   firstSix.forEach((slide) => {
@@ -31,12 +31,29 @@ test("B1 Day 1-6 use Presenter 2.0 stages", () => {
   });
 });
 
-test("B1 Day 7 remains on the classic presenter until rollout expands", () => {
-  const day7 = b1WorkbookAlignedSlidesDays1To10.find((slide) => slide.dayNumber === 7);
-  assert.ok(day7);
-  assert.equal(isB1PresenterV2Slide(day7), false);
+test("non-B1 lessons remain on the classic presenter", () => {
+  const slide = {
+    course: "A2",
+    day: "Day 7",
+    dayNumber: 7,
+    assignmentId: "A2-3.7",
+    title: "A2 lesson",
+    topic: "Topic",
+    objective: "Objective",
+    warmupQuestionsDe: ["Warm-up"],
+    keyPhrasesDe: ["Phrase"],
+    studentQuestionsDe: ["Question"],
+    interactionFlow: [{ phase: "Flow", detailEn: "8 min: practice." }],
+    teacherSupport: {
+      grammarFocusEn: ["Grammar"],
+      modelExamplesDe: ["Example"],
+      commonMistakesEn: ["Mistake"],
+    },
+    wrapUpTaskDe: "Wrap up.",
+  };
 
-  const stages = buildTeachingPresenterStages(day7, day7.topic);
+  assert.equal(isB1PresenterV2Slide(slide), false);
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
   assert.deepEqual(stages.map((stage) => stage.id), ["intro", "warmup", "phrases", "questions", "wrapup"]);
   assert.equal(stages.find((stage) => stage.id === "questions")?.type, "numbered-list");
 });
