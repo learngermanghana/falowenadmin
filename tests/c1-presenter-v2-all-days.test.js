@@ -60,7 +60,7 @@ test("C1 Teaching Slides expose a complete 28-day curriculum", () => {
   });
 });
 
-test("all C1 days use Presenter 2.0 with advanced classroom stages", () => {
+test("all C1 days use Presenter 2.0 with concise German classroom practice", () => {
   for (const slide of getSlidesByCourse("C1")) {
     assert.equal(isC1PresenterV2Slide(slide), true, slide.assignmentId);
     assert.equal(isTeachingPresenterV2Slide(slide), true, slide.assignmentId);
@@ -75,11 +75,17 @@ test("all C1 days use Presenter 2.0 with advanced classroom stages", () => {
     const practice = stages.find((stage) => stage.id === "practice");
     const workbook = stages.find((stage) => stage.id === "workbook");
     const questions = stages.find((stage) => stage.id === "questions");
+    const mistakes = stages.find((stage) => stage.id === "mistakes");
 
-    assert.ok(grammar.items.length >= 3, `${slide.assignmentId} missing C1 grammar`);
+    assert.ok(grammar.items.length >= 2, `${slide.assignmentId} missing C1 grammar`);
+    assert.ok(grammar.items.every((item) => !/^Use\b|^Structure\b|^Express\b|^Separate\b|^Distinguish\b/i.test(item)), `${slide.assignmentId} grammar should be classroom German`);
     assert.equal(practice.type, "flow");
-    assert.ok(practice.items.length >= 5, `${slide.assignmentId} missing guided phases`);
+    assert.equal(practice.items.length, 4, `${slide.assignmentId} should keep guided practice concise`);
+    assert.ok(practice.items.every((item) => item.instruction), `${slide.assignmentId} should show actual student instructions`);
+    assert.ok(practice.items.every((item) => Array.isArray(item.prompts) && item.prompts.length > 0), `${slide.assignmentId} should show actual prompts`);
+    assert.ok(practice.items.every((item) => item.teacherNote), `${slide.assignmentId} should keep short English teacher notes available`);
     assert.ok(practice.items.some((item) => item.minutes > 0), `${slide.assignmentId} missing timer minutes`);
+    assert.ok(mistakes.items.every((item) => !/^Using\b|^Giving\b|^Repeating\b|^Overusing\b/i.test(item)), `${slide.assignmentId} mistakes should be classroom German`);
     assert.equal(workbook.type, "workbook");
     assert.ok(workbook.items.length >= 5, `${slide.assignmentId} missing C1 classroom bridge`);
     assert.equal(workbook.grammarUrl, "", slide.assignmentId);
@@ -88,6 +94,18 @@ test("all C1 days use Presenter 2.0 with advanced classroom stages", () => {
     assert.ok(questions.items.length >= 5, `${slide.assignmentId} missing speaking prompts`);
     assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} missing model language`);
   }
+});
+
+test("C1 practice stays student-facing in German while teacher guidance remains optional English", () => {
+  const slide = getTeachingSlideByAssignmentId("C1 1");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const practice = stages.find((stage) => stage.id === "practice");
+  const visibleText = practice.items.flatMap((item) => [item.title, item.instruction, ...(item.prompts || [])]).join(" ");
+  const teacherText = practice.items.map((item) => item.teacherNote).join(" ");
+
+  assert.match(visibleText, /Spontane Position|Satz-Upgrade|Gegenargument|Stellungnahme/);
+  assert.match(visibleText, /Antworte|Formuliere|Nutze|Sprich/);
+  assert.match(teacherText, /position|precision|counterargument|correct/i);
 });
 
 test("existing A1, A2, B1 and B2 Presenter 2 courses remain enabled", () => {

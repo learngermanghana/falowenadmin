@@ -130,6 +130,22 @@ const CURATED_OVERRIDES = {
       "Using würde gern without the infinitive at the end.",
     ],
   },
+  "B2-1.1": {
+    grammarFocusEn: [
+      "Use adjective endings in noun phrases with ein/eine/einen: ein ruhiger Mensch, eine prägende Erfahrung, einen zuverlässigen Menschen.",
+      "Focus on new B2 contrast expressions: während, hingegen, auf der einen Seite ... auf der anderen Seite, im Gegensatz dazu.",
+    ],
+    modelExamplesDe: [
+      "Ich bin ein eher ruhiger, aber zuverlässiger Mensch.",
+      "Eine prägende Erfahrung hat mich selbstständiger gemacht.",
+      "Während ich im Beruf eher zurückhaltend bin, spreche ich mit Freunden sehr offen.",
+    ],
+    commonMistakesEn: [
+      "Leaving off the adjective ending before a noun: ein ruhiger Mensch, not ein ruhig Mensch.",
+      "Forgetting masculine accusative endings: einen zuverlässigen Menschen.",
+      "Falling back on familiar B1 connectors instead of practising the new B2 contrast expressions.",
+    ],
+  },
 };
 
 function cleanTopic(slide = {}) {
@@ -141,17 +157,29 @@ function cleanTopic(slide = {}) {
 export function buildTeacherSlideSupport(slide = {}) {
   const level = String(slide.course || "A2").toUpperCase();
   const defaults = LEVEL_DEFAULTS[level] || LEVEL_DEFAULTS.A2;
-  const curated = CURATED_OVERRIDES[String(slide.assignmentId || "").toUpperCase()] || {};
+  const assignmentId = String(slide.assignmentId || "").toUpperCase();
+  const curated = CURATED_OVERRIDES[assignmentId] || {};
   const direct = slide.teacherSupport || {};
   const topic = cleanTopic(slide);
+  const preferCurated = assignmentId === "B2-1.1";
+
+  const grammarFocusEn = preferCurated
+    ? curated.grammarFocusEn || direct.grammarFocusEn || defaults.grammarFocusEn
+    : direct.grammarFocusEn || curated.grammarFocusEn || defaults.grammarFocusEn;
+  const modelExamplesDe = preferCurated
+    ? curated.modelExamplesDe || direct.modelExamplesDe || defaults.modelExamplesDe
+    : direct.modelExamplesDe || curated.modelExamplesDe || defaults.modelExamplesDe;
+  const commonMistakesEn = preferCurated
+    ? curated.commonMistakesEn || direct.commonMistakesEn || defaults.commonMistakesEn
+    : direct.commonMistakesEn || curated.commonMistakesEn || defaults.commonMistakesEn;
 
   return {
     lessonOverviewEn:
       direct.lessonOverviewEn ||
       curated.lessonOverviewEn ||
       `Teacher-led lesson on ${topic}. Activate prior knowledge, establish useful language, model the target communication, then move from guided practice to freer speaking.`,
-    grammarFocusEn: direct.grammarFocusEn || curated.grammarFocusEn || defaults.grammarFocusEn,
-    modelExamplesDe: direct.modelExamplesDe || curated.modelExamplesDe || defaults.modelExamplesDe,
-    commonMistakesEn: direct.commonMistakesEn || curated.commonMistakesEn || defaults.commonMistakesEn,
+    grammarFocusEn,
+    modelExamplesDe,
+    commonMistakesEn,
   };
 }
