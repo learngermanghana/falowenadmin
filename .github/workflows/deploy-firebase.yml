@@ -67,6 +67,7 @@ jobs:
             scripts/patchClassReminderDiagnosticBestEffort.mjs \
             scripts/patchLeadClassStartReminderEmails.mjs \
             scripts/patchAutoCompleteClassSessions.mjs \
+            scripts/patchCloudCostOptimizations.mjs \
             scripts/patchCourseReviewRequestEmails.mjs \
             scripts/patchGoetheExamConfig.mjs
           do
@@ -75,6 +76,8 @@ jobs:
             node "$script"
           done
           node --check functions/index.js
+          node --check functions/classSessionReminderEmails.js
+          node --check functions/autoCompleteClassSessions.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
@@ -97,11 +100,16 @@ jobs:
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
+          grep -F 'async function loadReminderSessionWindow' functions/classSessionReminderEmails.js
+          grep -F 'async function loadStudentsForDueClasses' functions/classSessionReminderEmails.js
+          ! grep -F 'db.collection("classSessions").get(),' functions/classSessionReminderEmails.js
           grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
           grep -F 'schedule: "*/15 * * * *"' functions/attendanceConfirmationEmails.js
           grep -F 'acceptClassNameSessionMatch(session, klass)' functions/attendanceConfirmationEmails.js
           grep -F 'schedule: "0 8 * * *"' functions/leadClassStartReminderEmails.js
           grep -F 'schedule: "*/5 * * * *"' functions/autoCompleteClassSessions.js
+          grep -F 'async function loadRecentCompletionCandidates' functions/autoCompleteClassSessions.js
+          ! grep -F 'const snapshot = await db.collection("classSessions").get();' functions/autoCompleteClassSessions.js
           grep -F 'schedule: "0 10 * * *"' functions/courseReviewRequestEmails.js
           grep -F 'app.get("/exam-file/config"' functions/index.js
           grep -F 'app.put("/exam-file/config"' functions/index.js
@@ -131,7 +139,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:autoCompleteClassSessions --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
