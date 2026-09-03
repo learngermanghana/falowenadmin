@@ -42,14 +42,62 @@ const block = `${beginMarker}const automaticPaidStudentOrientationHandler = crea
   ).trim(),
 });
 
+async function automaticPaidPaymentOrientationHandler(event) {
+  const beforePayment = event?.data?.before?.exists ? event.data.before.data() || {} : {};
+  const afterPayment = event?.data?.after?.exists ? event.data.after.data() || {} : {};
+  const beforeStatus = String(beforePayment.status || "").trim().toLowerCase();
+  const afterStatus = String(afterPayment.status || "").trim().toLowerCase();
+
+  if (afterStatus !== "paid" || beforeStatus === "paid") {
+    return { skipped: true, reason: "payment_not_newly_paid" };
+  }
+
+  const studentId = String(afterPayment.studentId || "").trim();
+  if (!studentId) throw new Error("Paid payment is missing studentId for orientation sync.");
+
+  const studentRef = db.collection("students").doc(studentId);
+  const studentSnapshot = await studentRef.get();
+  if (!studentSnapshot.exists) {
+    throw new Error(`Student record not found for paid payment: ${studentId}`);
+  }
+
+  const currentStudent = studentSnapshot.data() || {};
+  const syntheticBefore = {
+    ...currentStudent,
+    paymentStatus: "pending",
+    payment_status: "pending",
+    paid: 0,
+    paidAmount: 0,
+    initialPaymentAmount: 0,
+  };
+  const beforeStudentSnapshot = {
+    exists: true,
+    id: studentSnapshot.id || studentId,
+    ref: studentRef,
+    data: () => syntheticBefore,
+  };
+
+  return automaticPaidStudentOrientationHandler({
+    ...event,
+    params: {
+      ...(event?.params || {}),
+      studentCode: studentSnapshot.id || studentId,
+    },
+    data: {
+      before: beforeStudentSnapshot,
+      after: studentSnapshot,
+    },
+  });
+}
+
 exports.autoSyncPaidStudentOrientation = onDocumentUpdated(
   {
     region: "europe-west1",
-    document: "students/{studentCode}",
+    document: "payments/{reference}",
     secrets: [orientationSyncSecret, orientationAppsScriptUrlSecret],
     timeoutSeconds: 60,
   },
-  automaticPaidStudentOrientationHandler
+  automaticPaidPaymentOrientationHandler
 );
 ${endMarker}`;
 
@@ -64,4 +112,4 @@ if (!triggerAnchor) {
 content = content.replace(triggerAnchor, `${block}${triggerAnchor}`);
 
 fs.writeFileSync(functionsPath, content, "utf8");
-console.log("Automatic paid-student orientation sync patch applied.");
+console.log("Automatic paid-payment orientation sync patch applied.");
