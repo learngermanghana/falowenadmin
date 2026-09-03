@@ -1,4 +1,4 @@
-name: B1+B2 Presenter 2.0 Tests
+name: A2+B1+B2 Presenter 2.0 Tests
 
 on:
   pull_request:
@@ -7,10 +7,17 @@ on:
       - "src/components/TeachingSlidePresenter.css"
       - "src/utils/teachingPresenter.js"
       - "src/data/teachingSlides.js"
+      - "src/data/a2WorkbookAlignedSlides.js"
+      - "src/data/a2WorkbookAlignedSlidesDays6To10.js"
+      - "src/data/a2WorkbookAlignedSlidesDays11To15.js"
+      - "src/data/a2WorkbookAlignedSlidesDays16To20.js"
+      - "src/data/a2WorkbookAlignedSlidesDays21To24.js"
+      - "src/data/a2WorkbookAlignedSlidesDays25To28.js"
       - "src/data/b2PresenterSlides.js"
       - "src/data/b1WorkbookAlignedSlidesDays1To10.js"
       - "src/data/b1WorkbookAlignedSlidesDays11To20.js"
       - "src/data/b1WorkbookAlignedSlidesDays21To28.js"
+      - "tests/a2-presenter-v2-all-days.test.js"
       - "tests/b1-presenter-v2-days1-6.test.js"
       - "tests/b1-presenter-v2-all-days.test.js"
       - "tests/b2-presenter-v2-all-days.test.js"
@@ -37,8 +44,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Test complete B1 and B2 Presenter 2.0 rollout
-        run: node --test tests/b1-presenter-v2-days1-6.test.js tests/b1-presenter-v2-all-days.test.js tests/b2-presenter-v2-all-days.test.js tests/teaching-presenter.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js
+      - name: Test complete A2, B1 and B2 Presenter 2.0 rollout
+        run: node --test tests/a2-presenter-v2-all-days.test.js tests/b1-presenter-v2-days1-6.test.js tests/b1-presenter-v2-all-days.test.js tests/b2-presenter-v2-all-days.test.js tests/teaching-presenter.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js
 
       - name: Build Falowen Admin
         run: npm run build
