@@ -32,13 +32,13 @@ test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
   });
 });
 
-test("lessons outside A2, B1 and B2 remain on the classic presenter", () => {
+test("lessons outside A1, A2, B1 and B2 remain on the classic presenter", () => {
   const slide = {
-    course: "A1",
-    day: "Day 1",
+    course: "C1",
+    day: "Lesson 1",
     dayNumber: 1,
-    assignmentId: "A1-0.1",
-    title: "A1 lesson",
+    assignmentId: "C1-1.1",
+    title: "C1 lesson",
     topic: "Topic",
     objective: "Objective",
     warmupQuestionsDe: ["Warm-up"],
