@@ -1,0 +1,45 @@
+name: Temp Reconcile Presenter Production
+
+on:
+  push:
+    branches:
+      - agent/presenter-v2-production
+    paths:
+      - .github/workflows/temp-reconcile-presenter-production.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/presenter-v2-production
+          fetch-depth: 0
+      - name: Copy validated Presenter files from completed rollout
+        run: |
+          git fetch origin agent/a1-a2-b1-b2-c1-presenter-v2-all-days
+          git checkout origin/agent/a1-a2-b1-b2-c1-presenter-v2-all-days -- \
+            src/components/TeachingSlidePresenter.jsx \
+            src/components/TeachingSlidePresenter.css \
+            src/data/b2PresenterSlides.js \
+            src/data/c1PresenterSlides.js \
+            src/data/courseDictionary.js \
+            src/data/teachingSlides.js \
+            src/utils/teachingPresenter.js \
+            tests/a1-presenter-v2-all-lessons.test.js \
+            tests/a2-presenter-v2-all-days.test.js \
+            tests/b1-presenter-v2-all-days.test.js \
+            tests/b1-presenter-v2-days1-6.test.js \
+            tests/b2-presenter-v2-all-days.test.js \
+            tests/c1-presenter-v2-all-days.test.js
+      - name: Commit reconciled Presenter rollout
+        run: |
+          git config user.name "learngermanghana"
+          git config user.email "learngermanghana@gmail.com"
+          git add src/components/TeachingSlidePresenter.jsx src/components/TeachingSlidePresenter.css src/data/b2PresenterSlides.js src/data/c1PresenterSlides.js src/data/courseDictionary.js src/data/teachingSlides.js src/utils/teachingPresenter.js tests/a1-presenter-v2-all-lessons.test.js tests/a2-presenter-v2-all-days.test.js tests/b1-presenter-v2-all-days.test.js tests/b1-presenter-v2-days1-6.test.js tests/b2-presenter-v2-all-days.test.js tests/c1-presenter-v2-all-days.test.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Reconcile Presenter 2 rollout with latest main"
+          git push origin HEAD:agent/presenter-v2-production
