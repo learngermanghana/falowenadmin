@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getSlidesByCourse } from "../data/teachingSlides.js";
 import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 import { buildTeachingPresenterStages } from "../utils/teachingPresenter.js";
+import { normalizeStudentPracticeItems } from "../utils/studentSlidePractice.js";
 import "./StudentCourseSlides.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -99,9 +100,7 @@ export default function StudentCourseSlides({ courseId }) {
   const practice = stage("practice");
   const questions = stage("questions");
   const wrapup = stage("wrapup");
-  const advancedPractice = Array.isArray(practice.items)
-    ? practice.items.filter((item) => Array.isArray(item.prompts) && item.prompts.length)
-    : [];
+  const studentPractice = normalizeStudentPracticeItems(practice.items);
   const speakingQuestions = Array.isArray(questions.items) ? questions.items : [];
   const workbookHref = falowenHref(slide.workbookConnection?.workbookUrl);
   const grammarHref = falowenHref(slide.workbookConnection?.grammarUrl);
@@ -171,9 +170,9 @@ export default function StudentCourseSlides({ courseId }) {
 
         <section className="student-slide-section">
           <p className="student-section-kicker">Übung</p>
-          {advancedPractice.length ? (
+          {studentPractice.length ? (
             <div className="student-practice-grid">
-              {advancedPractice.slice(0, 4).map((item, index) => <PracticeBlock key={`${item.title}-${index}`} item={item} index={index} />)}
+              {studentPractice.slice(0, 4).map((item, index) => <PracticeBlock key={`${item.title}-${index}`} item={item} index={index} />)}
             </div>
           ) : (
             <>
