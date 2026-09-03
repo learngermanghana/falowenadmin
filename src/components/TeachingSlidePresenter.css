@@ -1,3 +1,7 @@
+.presenter-topbar {
+  flex-wrap: wrap;
+}
+
 .presenter-timer {
   display: grid;
   justify-items: center;
