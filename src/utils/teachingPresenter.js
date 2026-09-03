@@ -1,36 +1,31 @@
 const B1_PRESENTER_V2_ASSIGNMENTS = new Set([
-  "B1-1.1",
-  "B1-1.2",
-  "B1-1.3",
-  "B1-2.4",
-  "B1-2.5",
-  "B1-2.6",
-  "B1-3.7",
-  "B1-3.8",
-  "B1-3.9",
-  "B1-4.10",
-  "B1-4.11",
-  "B1-4.12",
-  "B1-4.13",
-  "B1-5.14",
-  "B1-5.15",
-  "B1-5.16",
-  "B1-5.17",
-  "B1-6.18",
-  "B1-6.19",
-  "B1-6.20",
-  "B1-7.21",
-  "B1-7.22",
-  "B1-7.23",
-  "B1-8.24",
-  "B1-8.25",
-  "B1-9.26",
-  "B1-10.27",
-  "B1-10.28",
+  "B1-1.1", "B1-1.2", "B1-1.3", "B1-2.4", "B1-2.5", "B1-2.6", "B1-3.7", "B1-3.8", "B1-3.9",
+  "B1-4.10", "B1-4.11", "B1-4.12", "B1-4.13", "B1-5.14", "B1-5.15", "B1-5.16", "B1-5.17",
+  "B1-6.18", "B1-6.19", "B1-6.20", "B1-7.21", "B1-7.22", "B1-7.23", "B1-8.24", "B1-8.25",
+  "B1-9.26", "B1-10.27", "B1-10.28",
 ]);
 
+const B2_PRESENTER_V2_ASSIGNMENTS = new Set(
+  Array.from({ length: 28 }, (_, index) => {
+    const day = index + 1;
+    return `B2-${Math.ceil(day / 4)}.${day}`;
+  }),
+);
+
+function normalizedAssignmentId(slide = {}) {
+  return String(slide.assignmentId || "").trim().toUpperCase();
+}
+
 export function isB1PresenterV2Slide(slide = {}) {
-  return B1_PRESENTER_V2_ASSIGNMENTS.has(String(slide.assignmentId || "").trim().toUpperCase());
+  return B1_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide));
+}
+
+export function isB2PresenterV2Slide(slide = {}) {
+  return B2_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide));
+}
+
+export function isTeachingPresenterV2Slide(slide = {}) {
+  return isB1PresenterV2Slide(slide) || isB2PresenterV2Slide(slide);
 }
 
 export function parsePresenterMinutes(value = "") {
@@ -84,7 +79,7 @@ function buildClassicStages(slide = {}, topicLabel = "") {
   ];
 }
 
-function buildB1PresenterV2Stages(slide = {}, topicLabel = "") {
+function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const support = slide.teacherSupport || {};
   const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
   const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
@@ -179,8 +174,8 @@ function buildB1PresenterV2Stages(slide = {}, topicLabel = "") {
 }
 
 export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
-  const stages = isB1PresenterV2Slide(slide)
-    ? buildB1PresenterV2Stages(slide, topicLabel)
+  const stages = isTeachingPresenterV2Slide(slide)
+    ? buildPresenterV2Stages(slide, topicLabel)
     : buildClassicStages(slide, topicLabel);
 
   return stages.filter((stage) => {
