@@ -1,0 +1,51 @@
+name: Temp B2 Presenter Source Patch
+
+on:
+  push:
+    branches:
+      - agent/b1-b2-presenter-v2-all-days
+    paths:
+      - .github/workflows/temp-b2-presenter-source-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/b1-b2-presenter-v2-all-days
+      - name: Wire B2 slides and generic Presenter 2 predicate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          slides = Path('src/data/teachingSlides.js')
+          text = slides.read_text()
+          import_line = 'import { b2PresenterSlides } from "./b2PresenterSlides.js";\n'
+          if import_line not in text:
+              marker = 'import { b1WorkbookAlignedSlidesDays21To28 } from "./b1WorkbookAlignedSlidesDays21To28.js";\n'
+              text = text.replace(marker, marker + import_line)
+          old = 'export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides];'
+          new = 'export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides];'
+          if old not in text and new not in text:
+              raise SystemExit('teachingSlides export marker not found')
+          text = text.replace(old, new)
+          slides.write_text(text)
+
+          presenter = Path('src/components/TeachingSlidePresenter.jsx')
+          text = presenter.read_text()
+          text = text.replace('  isB1PresenterV2Slide,\n', '  isTeachingPresenterV2Slide,\n')
+          text = text.replace('const presenterV2 = isB1PresenterV2Slide(slide);', 'const presenterV2 = isTeachingPresenterV2Slide(slide);')
+          presenter.write_text(text)
+          PY
+      - name: Commit source wiring
+        run: |
+          git config user.name "learngermanghana"
+          git config user.email "learngermanghana@gmail.com"
+          git add src/data/teachingSlides.js src/components/TeachingSlidePresenter.jsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Wire B2 into Teaching Slides and Presenter 2"
+          git push origin HEAD:agent/b1-b2-presenter-v2-all-days
