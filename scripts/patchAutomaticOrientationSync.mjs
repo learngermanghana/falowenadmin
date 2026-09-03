@@ -58,7 +58,7 @@ async function automaticPaidPaymentOrientationHandler(event) {
   const studentRef = db.collection("students").doc(studentId);
   const studentSnapshot = await studentRef.get();
   if (!studentSnapshot.exists) {
-    throw new Error(`Student record not found for paid payment: ${studentId}`);
+    throw new Error("Student record not found for paid payment: " + studentId);
   }
 
   const currentStudent = studentSnapshot.data() || {};
