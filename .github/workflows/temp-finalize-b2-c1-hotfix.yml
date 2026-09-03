@@ -1,0 +1,85 @@
+name: Temp Finalize B2 C1 Hotfix
+
+on:
+  push:
+    branches:
+      - agent/fix-b2-dictionary-c1-chapter
+    paths:
+      - .github/workflows/temp-finalize-b2-c1-hotfix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/fix-b2-dictionary-c1-chapter
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies first
+        run: npm ci
+      - name: Prepare minimal attendance parser patch
+        run: |
+          git fetch origin main
+          cat > /tmp/minimal_patch.py <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          files = ['functions/index.js', 'src/pages/CanonicalAttendancePageV2.jsx', 'src/pages/CanonicalAttendancePageV3.jsx']
+          subprocess.run(['git', 'checkout', 'origin/main', '--', *files], check=True)
+
+          p = Path('functions/index.js')
+          data = p.read_bytes()
+          nl = b'\r\n' if b'\r\n' in data else b'\n'
+          anchor = b'const crypto = require("crypto");' + nl
+          require_line = b'const { parseAssignmentChapter } = require("./assignmentChapter.js");' + nl
+          if require_line not in data:
+              if anchor not in data: raise SystemExit('crypto anchor missing')
+              data = data.replace(anchor, anchor + require_line, 1)
+          parser = re.compile(
+              rb'function parseAssignmentChapter\(assignmentId\) \{\r?\n'
+              rb'  const normalized = String\(assignmentId \|\| ""\)\.trim\(\);\r?\n'
+              rb'  const parts = normalized\.split\("-"\);\r?\n'
+              rb'  return parts\.length > 1 \? String\(parts\.slice\(1\)\.join\("-"\)\)\.trim\(\) : "";\r?\n'
+              rb'\}\r?\n\r?\n'
+          )
+          data, count = parser.subn(b'', data, count=1)
+          if count != 1: raise SystemExit(f'index parser replacement count {count}')
+          p.write_bytes(data)
+
+          for name in files[1:]:
+              p = Path(name)
+              data = p.read_bytes()
+              nl = b'\r\n' if b'\r\n' in data else b'\n'
+              imp = b'import { parseAssignmentChapter } from "../utils/assignmentChapter.js";' + nl
+              if imp not in data: data = imp + data
+              old = b'assignmentId.split("-").slice(1).join("-")'
+              if old not in data: raise SystemExit(f'old chapter expression missing: {name}')
+              data = data.replace(old, b'parseAssignmentChapter(assignmentId)', 1)
+              p.write_bytes(data)
+          PY
+          python /tmp/minimal_patch.py
+      - name: Test hotfix
+        run: node --test tests/b2-c1-liveclass-regressions.test.js tests/course-session-groups.test.js tests/live-class-session-picker.test.js tests/c1-presenter-v2-all-days.test.js tests/b2-presenter-v2-all-days.test.js tests/teaching-presenter.test.js
+      - name: Build Falowen Admin
+        run: npm run build
+      - name: Reapply minimal patch after build and verify diff
+        run: |
+          python /tmp/minimal_patch.py
+          git diff --stat origin/main...HEAD || true
+          git diff --stat origin/main -- functions/index.js src/pages/CanonicalAttendancePageV2.jsx src/pages/CanonicalAttendancePageV3.jsx
+      - name: Commit cleanup
+        run: |
+          git config user.name "learngermanghana"
+          git config user.email "learngermanghana@gmail.com"
+          git add functions/index.js src/pages/CanonicalAttendancePageV2.jsx src/pages/CanonicalAttendancePageV3.jsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Keep C1 attendance parser patch focused"
+          git push origin HEAD:agent/fix-b2-dictionary-c1-chapter
