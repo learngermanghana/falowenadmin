@@ -90,6 +90,36 @@ export const courseDictionary = {
     "B1-10.27": { assignment_id: "B1-10.27", chapter: "10.27", de: "Umweltfreundlich im Alltag", en: "Environmentally Friendly in Everyday Life" },
     "B1-10.28": { assignment_id: "B1-10.28", chapter: "10.28", de: "Klimafreundlich leben", en: "Living in a Climate-Friendly Way" },
   },
+  C1: {
+    "C1 1": { assignment_id: "C1 1", chapter: "1", de: "Wissenschaft und Forschung", en: "Wissenschaft und Forschung" },
+    "C1 2": { assignment_id: "C1 2", chapter: "2", de: "Kunst und Kultur", en: "Kunst und Kultur" },
+    "C1 3": { assignment_id: "C1 3", chapter: "3", de: "Künstliche Intelligenz und Arbeitswelt", en: "Künstliche Intelligenz und Arbeitswelt" },
+    "C1 4": { assignment_id: "C1 4", chapter: "4", de: "Digitalisierung und Datenschutz", en: "Digitalisierung und Datenschutz" },
+    "C1 5": { assignment_id: "C1 5", chapter: "5", de: "Personalisierte Werbung", en: "Personalisierte Werbung" },
+    "C1 6": { assignment_id: "C1 6", chapter: "6", de: "Online- und Offline-Identität", en: "Online- und Offline-Identität" },
+    "C1 7": { assignment_id: "C1 7", chapter: "7", de: "Gesellschaftlicher Zusammenhalt", en: "Gesellschaftlicher Zusammenhalt" },
+    "C1 8": { assignment_id: "C1 8", chapter: "8", de: "Mehrsprachigkeit", en: "Mehrsprachigkeit" },
+    "C1 9": { assignment_id: "C1 9", chapter: "9", de: "Migration und Integration", en: "Migration und Integration" },
+    "C1 10": { assignment_id: "C1 10", chapter: "10", de: "Ehrenamt und gesellschaftlicher Pflichtdienst", en: "Ehrenamt und gesellschaftlicher Pflichtdienst" },
+    "C1 11": { assignment_id: "C1 11", chapter: "11", de: "Demokratie und soziale Medien", en: "Demokratie und soziale Medien" },
+    "C1 12": { assignment_id: "C1 12", chapter: "12", de: "Bildung und Prüfungsformate", en: "Bildung und Prüfungsformate" },
+    "C1 13": { assignment_id: "C1 13", chapter: "13", de: "Lebenslanges Lernen", en: "Lebenslanges Lernen" },
+    "C1 14": { assignment_id: "C1 14", chapter: "14", de: "Homeoffice und moderne Arbeitsformen", en: "Homeoffice und moderne Arbeitsformen" },
+    "C1 15": { assignment_id: "C1 15", chapter: "15", de: "Fachkräftemangel und berufliche Mobilität", en: "Fachkräftemangel und berufliche Mobilität" },
+    "C1 16": { assignment_id: "C1 16", chapter: "16", de: "Bedingungsloses Grundeinkommen", en: "Bedingungsloses Grundeinkommen" },
+    "C1 17": { assignment_id: "C1 17", chapter: "17", de: "Nachhaltigkeit in der Wirtschaft", en: "Nachhaltigkeit in der Wirtschaft" },
+    "C1 18": { assignment_id: "C1 18", chapter: "18", de: "Klimawandel und Verkehr", en: "Klimawandel und Verkehr" },
+    "C1 19": { assignment_id: "C1 19", chapter: "19", de: "Nachhaltiger Konsum", en: "Nachhaltiger Konsum" },
+    "C1 20": { assignment_id: "C1 20", chapter: "20", de: "Reisen und Nachhaltigkeit", en: "Reisen und Nachhaltigkeit" },
+    "C1 21": { assignment_id: "C1 21", chapter: "21", de: "Gesundheit und Impfpflicht", en: "Gesundheit und Impfpflicht" },
+    "C1 22": { assignment_id: "C1 22", chapter: "22", de: "Ernährung und moderner Lebensstil", en: "Ernährung und moderner Lebensstil" },
+    "C1 23": { assignment_id: "C1 23", chapter: "23", de: "Wohnen, Mieten und soziale Gerechtigkeit", en: "Wohnen, Mieten und soziale Gerechtigkeit" },
+    "C1 24": { assignment_id: "C1 24", chapter: "24", de: "Zukunftstechnologien und Innovation", en: "Zukunftstechnologien und Innovation" },
+    "C1 25": { assignment_id: "C1 25", chapter: "25", de: "Globalisierung und internationale Zusammenarbeit", en: "Globalisierung und internationale Zusammenarbeit" },
+    "C1 26": { assignment_id: "C1 26", chapter: "26", de: "Wissenschaftliches Arbeiten und Quellen", en: "Wissenschaftliches Arbeiten und Quellen" },
+    "C1 27": { assignment_id: "C1 27", chapter: "27", de: "Stellungnahme und formelle Korrespondenz", en: "Stellungnahme und formelle Korrespondenz" },
+    "C1 28": { assignment_id: "C1 28", chapter: "28", de: "Prüfungsvorbereitung und spontane Argumentation", en: "Prüfungsvorbereitung und spontane Argumentation" },
+  },
 };
 
 function dictionarySortValue(entry = {}) {
@@ -123,7 +153,7 @@ export function compareCourseDictionaryEntries(left = {}, right = {}) {
 
 export function getCourseDictionaryEntry(assignmentId) {
   const normalizedId = String(assignmentId || "").trim().toUpperCase();
-  const level = normalizedId.split("-")[0]?.toUpperCase();
+  const level = normalizedId.match(/^(A1|A2|B1|B2|C1|C2)(?=[\s-]|$)/i)?.[1]?.toUpperCase();
   if (!level || !courseDictionary[level]) return null;
   return Object.values(courseDictionary[level]).find((entry) =>
     String(entry.assignment_id || "").trim().toUpperCase() === normalizedId,
@@ -133,7 +163,7 @@ export function getCourseDictionaryEntry(assignmentId) {
 export function getUnifiedTopicLabel(assignmentId, fallbackTopic = "") {
   const entry = getCourseDictionaryEntry(assignmentId);
   if (!entry) return fallbackTopic;
-  const level = String(assignmentId || "").split("-")[0]?.toUpperCase();
+  const level = String(assignmentId || "").trim().match(/^(A1|A2|B1|B2|C1|C2)(?=[\s-]|$)/i)?.[1]?.toUpperCase();
   const title = level === "A1" ? entry.en : entry.de;
   return `${entry.chapter}. ${title || entry.de || entry.en}`;
 }

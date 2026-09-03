@@ -11,6 +11,8 @@ import { a2WorkbookAlignedSlidesDays25To28 } from "./a2WorkbookAlignedSlidesDays
 import { b1WorkbookAlignedSlidesDays1To10 } from "./b1WorkbookAlignedSlidesDays1To10.js";
 import { b1WorkbookAlignedSlidesDays11To20 } from "./b1WorkbookAlignedSlidesDays11To20.js";
 import { b1WorkbookAlignedSlidesDays21To28 } from "./b1WorkbookAlignedSlidesDays21To28.js";
+import { b2PresenterSlides } from "./b2PresenterSlides.js";
+import { c1PresenterSlides } from "./c1PresenterSlides.js";
 
 const curatedSlides = [
   {
@@ -203,7 +205,7 @@ const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment
 const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 const b1Slides = buildLevelSlides("B1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 
-export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides];
+export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];
 
 export function getTeachingSlideById(id) {
   return teachingSlides.find((slide) => slide.id === id) || null;

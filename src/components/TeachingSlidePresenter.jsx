@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   buildTeachingPresenterStages,
   clampPresenterIndex,
-  isB1PresenterV2Slide,
+  isTeachingPresenterV2Slide,
 } from "../utils/teachingPresenter.js";
 import "./TeachingSlidePresenter.css";
 
@@ -23,7 +23,7 @@ function lessonUrl(value = "") {
 
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const stages = useMemo(() => buildTeachingPresenterStages(slide, topicLabel), [slide, topicLabel]);
-  const presenterV2 = isB1PresenterV2Slide(slide);
+  const presenterV2 = isTeachingPresenterV2Slide(slide);
   const [stageIndex, setStageIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showQuestionSupport, setShowQuestionSupport] = useState(false);
@@ -100,7 +100,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   useEffect(() => {
     function onKeyDown(event) {
-      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(event.target?.tagName)) return;
+      const tagName = event.target?.tagName;
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(tagName)) return;
+      if (tagName === "BUTTON" && [" ", "Enter"].includes(event.key)) return;
+
       if (["ArrowRight", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
         next();
