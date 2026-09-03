@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildTeachingPresenterStages, clampPresenterIndex } from "../utils/teachingPresenter.js";
+import "./TeachingSlidePresenter.css";
 
 function formatTimer(totalSeconds = 0) {
   const safeSeconds = Math.max(0, Number(totalSeconds || 0));
