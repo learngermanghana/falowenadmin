@@ -25,36 +25,36 @@ test("presenter builds student-facing lesson stages without teacher notes", () =
   assert.equal(stages[0].topic, "1.1 Small Talk");
 });
 
-test("B1 Day 1-6 use Presenter 2 stages with question reveal and classroom timing", () => {
+test("B1 Day 1-12 use Presenter 2 stages with question reveal and classroom timing", () => {
   const stages = buildTeachingPresenterStages({
     course: "B1",
-    day: "Day 6",
-    dayNumber: 6,
-    title: "B1 Day 6",
-    topic: "Wohnen",
-    objective: "Compare options.",
+    day: "Day 12",
+    dayNumber: 12,
+    title: "B1 Day 12",
+    topic: "Abenteuer in der Natur",
+    objective: "Tell a coherent past story.",
     estimatedDuration: "60 minutes",
-    warmupQuestionsDe: ["Wo wohnst du?"],
-    keyPhrasesDe: ["Im Vergleich zu ..."],
-    studentQuestionsDe: ["Welche Wohnung ist besser?", "Warum?"],
+    warmupQuestionsDe: ["Welches Naturerlebnis erinnerst du?"],
+    keyPhrasesDe: ["Als wir ankamen, war ..."],
+    studentQuestionsDe: ["Wo war dein Abenteuer?", "Was ist passiert?"],
     teacherNotesEn: ["Never project this teacher note"],
     interactionFlow: [
-      { phase: "Comparison drill", detailEn: "5 min: compare two flats." },
-      { phase: "Pair work", detailEn: "8 min: justify one choice." },
+      { phase: "Timeline sort", detailEn: "7 min: order the events." },
+      { phase: "Story rehearsal", detailEn: "12 min: tell the story." },
     ],
     workbookConnection: {
       parts: [
-        { label: "Grammar", detailEn: "Comparative forms and relative clauses." },
-        { label: "Sprechen", detailEn: "Compare two housing options." },
+        { label: "Grammar", detailEn: "Perfekt, Präteritum and temporal connectors." },
+        { label: "Sprechen", detailEn: "Tell a nature adventure." },
       ],
     },
     teacherSupport: {
-      grammarFocusEn: ["Use the comparative to compare two options."],
-      modelExamplesDe: ["Diese Wohnung ist größer als die andere."],
-      commonMistakesEn: ["Do not forget als after the comparative."],
+      grammarFocusEn: ["Use Perfekt for main completed actions and war/hatte for background."],
+      modelExamplesDe: ["Als wir ankamen, war das Wetter noch schön."],
+      commonMistakesEn: ["Do not use wenn for a single completed past event."],
     },
-    wrapUpTaskDe: "Vergleiche zwei Wohnungen.",
-  }, "2.6 Wohnen");
+    wrapUpTaskDe: "Erzähle dein Abenteuer in sechs Sätzen.",
+  }, "4.12 Abenteuer in der Natur");
 
   assert.deepEqual(stages.map((stage) => stage.id), [
     "intro",
@@ -69,14 +69,19 @@ test("B1 Day 1-6 use Presenter 2 stages with question reveal and classroom timin
     "wrapup",
   ]);
   assert.equal(stages.find((stage) => stage.id === "questions")?.type, "question-reveal");
-  assert.deepEqual(stages.find((stage) => stage.id === "questions")?.modelItems, ["Diese Wohnung ist größer als die andere."]);
+  assert.deepEqual(stages.find((stage) => stage.id === "questions")?.modelItems, ["Als wir ankamen, war das Wetter noch schön."]);
   assert.equal(stages.find((stage) => stage.id === "grammar")?.suggestedMinutes, 10);
   assert.equal(stages.find((stage) => stage.id === "questions")?.suggestedMinutes, 10);
   assert.equal(JSON.stringify(stages).includes("Never project this teacher note"), false);
 });
 
-test("the real B1 Day 1-6 lessons all provide complete Presenter 2 classroom stages", () => {
-  const assignmentIds = ["B1-1.1", "B1-1.2", "B1-1.3", "B1-2.4", "B1-2.5", "B1-2.6"];
+test("the real B1 Day 1-12 lessons all provide complete Presenter 2 classroom stages", () => {
+  const assignmentIds = [
+    "B1-1.1", "B1-1.2", "B1-1.3",
+    "B1-2.4", "B1-2.5", "B1-2.6",
+    "B1-3.7", "B1-3.8", "B1-3.9",
+    "B1-4.10", "B1-4.11", "B1-4.12",
+  ];
   const requiredStageIds = ["grammar", "examples", "guided-practice", "questions", "workbook", "mistakes"];
 
   assignmentIds.forEach((assignmentId) => {
@@ -97,13 +102,13 @@ test("the real B1 Day 1-6 lessons all provide complete Presenter 2 classroom sta
   });
 });
 
-test("B1 Day 7 and later remain on the existing presenter until rollout expands", () => {
+test("B1 Day 13 and later remain on the existing presenter until rollout expands", () => {
   const stages = buildTeachingPresenterStages({
     course: "B1",
-    day: "Day 7",
-    dayNumber: 7,
-    title: "B1 Day 7",
-    topic: "Topic",
+    day: "Day 13",
+    dayNumber: 13,
+    title: "B1 Day 13",
+    topic: "Filmkritik",
     objective: "Objective",
     warmupQuestionsDe: ["Warm-up"],
     keyPhrasesDe: ["Phrase"],
