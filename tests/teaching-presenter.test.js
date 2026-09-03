@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages, clampPresenterIndex } from "../src/utils/teachingPresenter.js";
 
 test("presenter builds student-facing lesson stages without teacher notes", () => {
@@ -72,6 +73,28 @@ test("B1 Day 1-6 use Presenter 2 stages with question reveal and classroom timin
   assert.equal(stages.find((stage) => stage.id === "grammar")?.suggestedMinutes, 10);
   assert.equal(stages.find((stage) => stage.id === "questions")?.suggestedMinutes, 10);
   assert.equal(JSON.stringify(stages).includes("Never project this teacher note"), false);
+});
+
+test("the real B1 Day 1-6 lessons all provide complete Presenter 2 classroom stages", () => {
+  const assignmentIds = ["B1-1.1", "B1-1.2", "B1-1.3", "B1-2.4", "B1-2.5", "B1-2.6"];
+  const requiredStageIds = ["grammar", "examples", "guided-practice", "questions", "workbook", "mistakes"];
+
+  assignmentIds.forEach((assignmentId) => {
+    const slide = getTeachingSlideByAssignmentId(assignmentId);
+    assert.ok(slide, `${assignmentId} slide should exist`);
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const stageIds = new Set(stages.map((stage) => stage.id));
+
+    requiredStageIds.forEach((stageId) => {
+      assert.equal(stageIds.has(stageId), true, `${assignmentId} should include ${stageId}`);
+    });
+
+    const questionStage = stages.find((stage) => stage.id === "questions");
+    assert.equal(questionStage?.type, "question-reveal", `${assignmentId} should use question reveal mode`);
+    assert.ok(questionStage?.items?.length > 0, `${assignmentId} should contain speaking questions`);
+    assert.ok(questionStage?.modelItems?.length > 0, `${assignmentId} should contain model language`);
+    assert.ok(stages.every((stage) => Number(stage.suggestedMinutes || 0) > 0), `${assignmentId} should give every stage a classroom timer suggestion`);
+  });
 });
 
 test("B1 Day 7 and later remain on the existing presenter until rollout expands", () => {
