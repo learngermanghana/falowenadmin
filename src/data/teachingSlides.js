@@ -2,6 +2,7 @@ import { courseDictionary } from "./courseDictionary.js";
 import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";
 import { a1WorkbookAlignedSlidesDays1To5 } from "./a1WorkbookAlignedSlidesDays1To5.js";
 import { a1WorkbookAlignedSlidesDays6To10 } from "./a1WorkbookAlignedSlidesDays6To10.js";
+import { a1LaterTeachingSlides } from "./a1LaterTeachingSlides.js";
 import { a2WorkbookAlignedSlides } from "./a2WorkbookAlignedSlides.js";
 import { a2WorkbookAlignedSlidesDays6To10 } from "./a2WorkbookAlignedSlidesDays6To10.js";
 import { a2WorkbookAlignedSlidesDays11To15 } from "./a2WorkbookAlignedSlidesDays11To15.js";
@@ -189,6 +190,7 @@ const curatedSlidesByAssignment = Object.fromEntries(
     ...curatedSlides,
     ...a1WorkbookAlignedSlidesDays1To5,
     ...a1WorkbookAlignedSlidesDays6To10,
+    ...a1LaterTeachingSlides,
     ...a2WorkbookAlignedSlides,
     ...a2WorkbookAlignedSlidesDays6To10,
     ...a2WorkbookAlignedSlidesDays11To15,
