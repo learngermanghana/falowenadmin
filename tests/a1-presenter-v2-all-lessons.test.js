@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { a1WorkbookAlignedSlidesDays1To5 } from "../src/data/a1WorkbookAlignedSlidesDays1To5.js";
 import { a1WorkbookAlignedSlidesDays6To10 } from "../src/data/a1WorkbookAlignedSlidesDays6To10.js";
+import { a1LaterTeachingSlides } from "../src/data/a1LaterTeachingSlides.js";
 import {
   buildTeachingPresenterStages,
   isA1PresenterV2Slide,
@@ -19,6 +20,10 @@ const WORKBOOK_ALIGNED = [
   ...a1WorkbookAlignedSlidesDays1To5,
   ...a1WorkbookAlignedSlidesDays6To10,
 ];
+
+const VERIFIED_LATER_IDS = new Set(
+  a1LaterTeachingSlides.map((slide) => String(slide.assignmentId || "").toUpperCase()),
+);
 
 function isTutorial(slide = {}) {
   return String(slide.assignmentId || "").trim().toUpperCase() === "A1-TUTORIAL";
@@ -64,9 +69,32 @@ test("A1 workbook-aligned Day 1-10 lessons retain their real workbook bridge", (
   }
 });
 
+test("A1-5.10 has a dedicated conjunctions slide linked to the Falowen grammar page", () => {
+  const slide = getSlidesByCourse("A1").find((entry) => entry.assignmentId === "A1-5.10");
+  assert.ok(slide, "A1-5.10 slide missing");
+  assert.equal(slide.id, "a1-conjunctions-5-10");
+  assert.equal(slide.workbookConnection?.grammarUrl, "/campus/course/conjunctions-5-10");
+  assert.equal(slide.workbookConnection?.workbookUrl, "");
+
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const workbook = stages.find((stage) => stage.id === "workbook");
+  assert.ok(workbook, "A1-5.10 missing workbook/grammar bridge stage");
+  assert.equal(workbook.grammarUrl, "/campus/course/conjunctions-5-10");
+  assert.equal(workbook.workbookUrl, "");
+  assert.ok(workbook.items.length >= 4);
+
+  const classroomContent = JSON.stringify(stages);
+  for (const conjunction of ["und", "aber", "oder", "denn"]) {
+    assert.match(classroomContent, new RegExp(`\\b${conjunction}\\b`, "i"), `A1-5.10 missing ${conjunction}`);
+  }
+});
+
 test("later A1 generic lessons do not invent workbook links", () => {
   const alignedIds = new Set(WORKBOOK_ALIGNED.map((slide) => String(slide.assignmentId || "").toUpperCase()));
-  const laterSlides = getSlidesByCourse("A1").filter((slide) => !isTutorial(slide) && !alignedIds.has(String(slide.assignmentId || "").toUpperCase()));
+  const laterSlides = getSlidesByCourse("A1").filter((slide) => {
+    const assignmentId = String(slide.assignmentId || "").toUpperCase();
+    return !isTutorial(slide) && !alignedIds.has(assignmentId) && !VERIFIED_LATER_IDS.has(assignmentId);
+  });
   assert.ok(laterSlides.length > 0);
 
   for (const slide of laterSlides) {
