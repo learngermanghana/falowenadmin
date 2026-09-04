@@ -72,7 +72,7 @@ test("A1 workbook-aligned Day 1-10 lessons retain their real workbook bridge", (
 test("A1-5.10 has a dedicated conjunctions slide linked to the Falowen grammar page", () => {
   const slide = getSlidesByCourse("A1").find((entry) => entry.assignmentId === "A1-5.10");
   assert.ok(slide, "A1-5.10 slide missing");
-  assert.equal(slide.id, "a1-conjunctions-5-10");
+  assert.equal(slide.id, "a1-5-10");
   assert.equal(slide.workbookConnection?.grammarUrl, "/campus/course/conjunctions-5-10");
   assert.equal(slide.workbookConnection?.workbookUrl, "");
 
