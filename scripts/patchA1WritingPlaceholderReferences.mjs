@@ -17,7 +17,18 @@ const placeholderExpression = 'answerValues.length > 0 && answerValues.every((va
 patchFile(new URL("../src/utils/objectiveMarking.js", import.meta.url), (source) => {
   const anchor = 'function isWritingPart(referenceEntry = {}, partId = "main") {\n  const normalizedPartId = normalizePartId(partId);';
   const replacement = `function isWritingPart(referenceEntry = {}, partId = "main") {\n  const normalizedPartId = normalizePartId(partId);\n  const rawAnswers = referenceEntry.rawAnswers || referenceEntry.answers || {};\n  const answerValues = Object.values(rawAnswers).map((value) => String(value || "").trim().toLowerCase());\n  const writingPlaceholder = ${placeholderExpression};\n  if (normalizedPartId === "main" && writingPlaceholder) return true;`;
-  return replaceOnce(source, anchor, replacement, "objective writing placeholder");
+  source = replaceOnce(source, anchor, replacement, "objective writing placeholder");
+
+  const labelledAnswerAnchor = '  const accepted = rawCandidates.flatMap(splitAlternatives).map(normalizeAnswer).filter(Boolean);';
+  const labelledAnswerReplacement = `  const labelledAcceptedAnswers = rawCandidates.flatMap((candidate) => {\n    const text = String(candidate || "").trim();\n    if (!text || /^[A-FX]\\s*[).:-]/i.test(text)) return [];\n\n    const labelled = text.match(/^[^:\\n]{2,100}:\\s*(?:'([^']+)'|"([^"]+)"|“([^”]+)”|„([^“]+)“)\\s*$/);\n    const phrase = [labelled?.[1], labelled?.[2], labelled?.[3], labelled?.[4]].find(Boolean)?.trim();\n    if (!phrase) return [];\n\n    const withoutPoliteLeadIn = phrase\n      .replace(/^\\s*(?:entschuldigung|entschuldigen\\s+sie(?:\\s+bitte)?|bitte)\\s*[,;:!.-]?\\s*/i, "")\n      .trim();\n    return [phrase, withoutPoliteLeadIn].filter(Boolean);\n  });\n  const accepted = [...rawCandidates.flatMap(splitAlternatives), ...labelledAcceptedAnswers]\n    .map(normalizeAnswer)\n    .filter(Boolean);`;
+  source = replaceOnce(
+    source,
+    labelledAnswerAnchor,
+    labelledAnswerReplacement,
+    "objective labelled reference answers",
+  );
+
+  return source;
 });
 
 patchFile(new URL("../src/utils/answerKeyNormalizer.js", import.meta.url), (source) => {
@@ -84,4 +95,4 @@ patchFile(new URL("../api/router.js", import.meta.url), (source) => {
   return source;
 });
 
-console.log("Placeholder-only answer keys are treated as AI-graded writing and excluded from every deterministic objective scorer.");
+console.log("Placeholder-only answer keys are treated as AI-graded writing; quoted labelled objective answers also expose their actual answer phrase for matching.");
