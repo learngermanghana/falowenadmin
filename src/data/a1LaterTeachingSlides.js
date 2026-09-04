@@ -1,6 +1,6 @@
 export const a1LaterTeachingSlides = [
   {
-    id: "a1-conjunctions-5-10",
+    id: "a1-5-10",
     course: "A1",
     day: "Lesson 17",
     dayNumber: 17,
