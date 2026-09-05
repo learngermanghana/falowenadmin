@@ -4,6 +4,48 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script data-safari14-polyfills>
+      // Vite's build target can transpile syntax, but it does not polyfill newer
+      // runtime built-ins. Safari/iPadOS 14 does not provide .at(), so install
+      // the small compatibility shim before the module graph is evaluated.
+      (function installSafari14AtPolyfill() {
+        function at(index) {
+          if (this == null) throw new TypeError('Cannot use at() on null or undefined');
+          var object = Object(this);
+          var length = Number(object.length) || 0;
+          var relativeIndex = Math.trunc(Number(index)) || 0;
+          if (relativeIndex < 0) relativeIndex += length;
+          if (relativeIndex < 0 || relativeIndex >= length) return undefined;
+          return object[relativeIndex];
+        }
+
+        function install(prototype) {
+          if (!prototype || typeof prototype.at === 'function') return;
+          Object.defineProperty(prototype, 'at', {
+            value: at,
+            writable: true,
+            configurable: true,
+          });
+        }
+
+        install(Array.prototype);
+        install(String.prototype);
+
+        [
+          typeof Int8Array !== 'undefined' && Int8Array.prototype,
+          typeof Uint8Array !== 'undefined' && Uint8Array.prototype,
+          typeof Uint8ClampedArray !== 'undefined' && Uint8ClampedArray.prototype,
+          typeof Int16Array !== 'undefined' && Int16Array.prototype,
+          typeof Uint16Array !== 'undefined' && Uint16Array.prototype,
+          typeof Int32Array !== 'undefined' && Int32Array.prototype,
+          typeof Uint32Array !== 'undefined' && Uint32Array.prototype,
+          typeof Float32Array !== 'undefined' && Float32Array.prototype,
+          typeof Float64Array !== 'undefined' && Float64Array.prototype,
+          typeof BigInt64Array !== 'undefined' && BigInt64Array.prototype,
+          typeof BigUint64Array !== 'undefined' && BigUint64Array.prototype,
+        ].forEach(install);
+      })();
+    </script>
     <title>Falowen Dashboard</title>
   </head>
   <body>
