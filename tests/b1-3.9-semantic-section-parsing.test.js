@@ -17,8 +17,8 @@ test("semantic Lesen and Hören labels override a stale Teil 2 prefix", () => {
   const sections = parseSubmissionSections(submission);
 
   assert.deepEqual(sections.map((section) => section.partId), ["teil2", "teil3", "teil4"]);
-  assert.equal(sections[1].text, "1B · 2C · 3A · 4B · 5C · 6B · 7B");
-  assert.equal(sections[2].text, "1B · 2C · 3A · 4B · 5B");
+  assert.equal(sections[1].text, "1B 2C 3A 4B 5C 6B 7B");
+  assert.equal(sections[2].text, "1B 2C 3A 4B 5B");
 });
 
 test("B1-3.9 marks compact Lesen and Hören answers instead of treating them as unanswered", () => {
