@@ -31,6 +31,28 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "Was ändert sich, wenn das Wetter schlecht ist?",
       "Welche Frage mit ob brauchst du, bevor du deinen Plan festlegst?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Wie sieht dein ideales Wochenende aus?",
+        "modelAnswerDe": "An meinem idealen Wochenende schlafe ich etwas länger und habe Zeit für Freunde. Ich möchte auch spazieren gehen und mich ausruhen."
+      },
+      {
+        "questionDe": "Was machst du am Samstag und was am Sonntag?",
+        "modelAnswerDe": "Am Samstag kaufe ich ein und treffe meine Freunde. Am Sonntag besuche ich meine Familie und koche mit ihr."
+      },
+      {
+        "questionDe": "Mit wem möchtest du Zeit verbringen und warum?",
+        "modelAnswerDe": "Ich möchte Zeit mit meiner Schwester verbringen, weil wir uns unter der Woche selten sehen. Wir können zusammen essen und reden."
+      },
+      {
+        "questionDe": "Was ändert sich, wenn das Wetter schlecht ist?",
+        "modelAnswerDe": "Wenn das Wetter schlecht ist, bleiben wir zu Hause. Dann kochen wir zusammen oder sehen einen Film."
+      },
+      {
+        "questionDe": "Welche Frage mit ob brauchst du, bevor du deinen Plan festlegst?",
+        "modelAnswerDe": "Ich möchte wissen, ob meine Freunde am Samstag Zeit haben. Danach können wir einen Treffpunkt vereinbaren."
+      }
+    ],
     teacherNotesEn: [
       "Use the actual Day 21 grammar page as the source of truth: wenn and falls introduce conditions; ob introduces an indirect yes/no question; the conjugated verb goes to the end of each subordinate clause.",
       "When the subordinate clause comes first, reinforce the main-clause inversion pattern: Wenn das Wetter gut ist, gehen wir ... .",
@@ -110,6 +132,28 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "Wann kannst du Sport machen oder Freunde treffen?",
       "Was musst du erledigen?",
       "Wann und wo würdest du jemanden zum Mittagessen einladen?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Wie planst du Montag bis Freitag?",
+        "modelAnswerDe": "Von Montag bis Freitag arbeite ich tagsüber. Am Dienstag und Donnerstag besuche ich abends meinen Deutschkurs."
+      },
+      {
+        "questionDe": "Welche Termine hast du diese Woche?",
+        "modelAnswerDe": "Am Dienstag habe ich einen Zahnarzttermin. Am Freitag treffe ich meine Freundin um 18 Uhr."
+      },
+      {
+        "questionDe": "Wann kannst du Sport machen oder Freunde treffen?",
+        "modelAnswerDe": "Am Mittwoch kann ich nach der Arbeit Sport machen. Für meine Freunde habe ich am Freitagabend Zeit."
+      },
+      {
+        "questionDe": "Was musst du erledigen?",
+        "modelAnswerDe": "Ich muss diese Woche Lebensmittel einkaufen und meine Hausaufgaben machen. Außerdem muss ich meine Wohnung putzen."
+      },
+      {
+        "questionDe": "Wann und wo würdest du jemanden zum Mittagessen einladen?",
+        "modelAnswerDe": "Möchtest du am Freitag um 12 Uhr mit mir zu Mittag essen? Wir könnten uns im Café neben meinem Büro treffen."
+      }
     ],
     teacherNotesEn: [
       "Teach the actual Day 22 grammar target: Präsens plus a clear future-time expression is normal for fixed near-future plans.",
@@ -191,6 +235,28 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "Wann benutzt du öffentliche Verkehrsmittel, ein Auto oder ein Fahrrad?",
       "Was würdest du einen Freund fragen, bevor ihr zusammen ein Auto anschaut?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Mit welchem Verkehrsmittel fährst du zur Arbeit oder zur Schule?",
+        "modelAnswerDe": "Ich fahre meistens mit dem Bus zur Arbeit. Die Haltestelle ist in der Nähe meiner Wohnung."
+      },
+      {
+        "questionDe": "Wie lange dauert dein Weg?",
+        "modelAnswerDe": "Mein Weg dauert ungefähr 40 Minuten. Wenn es viel Verkehr gibt, brauche ich länger."
+      },
+      {
+        "questionDe": "Welche Vor- und Nachteile hat dein Verkehrsmittel?",
+        "modelAnswerDe": "Der Bus ist günstig, und ich muss keinen Parkplatz suchen. Manchmal ist er aber voll oder kommt zu spät."
+      },
+      {
+        "questionDe": "Wann benutzt du öffentliche Verkehrsmittel, ein Auto oder ein Fahrrad?",
+        "modelAnswerDe": "Zur Arbeit nehme ich meistens den Bus. Für kurze Wege benutze ich das Fahrrad, und mit viel Gepäck fahre ich manchmal im Auto meiner Schwester mit."
+      },
+      {
+        "questionDe": "Was würdest du einen Freund fragen, bevor ihr zusammen ein Auto anschaut?",
+        "modelAnswerDe": "Hast du am Samstag Zeit, mit mir ein gebrauchtes Auto anzuschauen? Kannst du mir helfen zu prüfen, ob es in gutem Zustand ist?"
+      }
+    ],
     teacherNotesEn: [
       "Use the real Day 23 grammar page: transport normally uses mit + Dativ; destinations use zu + Dativ and nach for cities/countries without an article; zu Fuß is a fixed expression.",
       "Make the article change visible: die Bahn → mit der Bahn; der Bus → mit dem Bus.",
@@ -270,6 +336,28 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "Welches Verkehrsmittel und welche Unterkunft wählst du?",
       "Welche Aktivitäten planst du?",
       "Was musst du vor der Reise organisieren oder einpacken?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Wohin möchtest du reisen und warum?",
+        "modelAnswerDe": "Ich möchte nach Hamburg reisen, weil ich den Hafen sehen möchte. Außerdem möchte ich dort eine Freundin besuchen."
+      },
+      {
+        "questionDe": "Wie lange möchtest du bleiben?",
+        "modelAnswerDe": "Ich möchte eine Woche bleiben. So habe ich genug Zeit für meine Freundin und die Stadt."
+      },
+      {
+        "questionDe": "Welches Verkehrsmittel und welche Unterkunft wählst du?",
+        "modelAnswerDe": "Ich möchte mit dem Zug nach Hamburg fahren. Dort möchte ich in einem kleinen Hotel in der Nähe des Bahnhofs übernachten."
+      },
+      {
+        "questionDe": "Welche Aktivitäten planst du?",
+        "modelAnswerDe": "Ich möchte den Hafen besuchen und durch die Stadt spazieren. An einem Tag möchte ich mit meiner Freundin in ein Museum gehen."
+      },
+      {
+        "questionDe": "Was musst du vor der Reise organisieren oder einpacken?",
+        "modelAnswerDe": "Ich muss die Fahrkarte und das Hotel buchen. Außerdem packe ich meinen Ausweis, Kleidung und ein Ladegerät ein."
+      }
     ],
     teacherNotesEn: [
       "Teach the actual Day 24 destination system: nach for cities/countries without an article, in + Akkusativ for destinations such as in die Schweiz, and an + Akkusativ for water destinations such as ans Meer.",
