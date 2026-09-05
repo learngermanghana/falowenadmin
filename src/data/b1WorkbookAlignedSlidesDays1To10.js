@@ -445,7 +445,158 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
         "questionDe": "Wie würdest du höflich um einen Besichtigungstermin bitten?",
         "modelAnswerDe": "Guten Tag, ich interessiere mich für Ihre Wohnung. Wäre es möglich, einen Besichtigungstermin zu vereinbaren? Am Dienstag oder Donnerstag hätte ich nachmittags Zeit."
       },
-      {…3037 tokens truncated…rs help weigh perspectives.",
+      {
+        "questionDe": "Welche vier Fragen würdest du dem Vermieter stellen?",
+        "modelAnswerDe": "Wie hoch ist die Warmmiete? Welche Nebenkosten kommen noch dazu? Ab wann ist die Wohnung verfügbar? Wie hoch ist die Kaution?"
+      },
+      {
+        "questionDe": "Wie fragst du indirekt, ob die Wohnung noch frei ist?",
+        "modelAnswerDe": "Könnten Sie mir bitte sagen, ob die Wohnung noch frei ist? Ich interessiere mich sehr für das Angebot. Falls sie verfügbar ist, würde ich sie gern besichtigen."
+      },
+      {
+        "questionDe": "Wie fragst du indirekt nach den Nebenkosten?",
+        "modelAnswerDe": "Ich würde gern wissen, wie hoch die monatlichen Nebenkosten sind. Könnten Sie mir auch sagen, ob die Heizkosten darin enthalten sind? Diese Information ist für meine Planung wichtig."
+      },
+      {
+        "questionDe": "Wie bittest du höflich um eine Bestätigung?",
+        "modelAnswerDe": "Könnten Sie mir den Besichtigungstermin bitte per E-Mail bestätigen? Wir hatten Dienstag um 15 Uhr vereinbart. Vielen Dank für Ihre Rückmeldung."
+      }
+    ],
+    teacherNotesEn: [
+      "Teach Konjunktiv-II politeness through reusable chunks: Könnten Sie..., Wäre ... möglich?, Ich würde gern....",
+      "Contrast direct questions with indirect ob/W-questions and highlight verb-final order in the indirect clause.",
+      "Use the workbook speaking task as a landlord/applicant role-play with at least four concrete apartment questions.",
+      "The writing task needs interest in the flat, appointment request/proposal, confirmation and contact information; require at least two polite structures.",
+      "Lesen follows Anna’s actual viewing and decision; Hören focuses on viewing practices, neighborhood, quick decisions and required documents.",
+    ],
+    interactionFlow: [
+      { phase: "Direct to polite", detailEn: "7 min: transform direct commands/questions into könnten/wäre/würde forms." },
+      { phase: "Indirect questions", detailEn: "10 min: convert yes/no and W-questions to ob/wann/wo/wie with verb final." },
+      { phase: "Viewing role-play", detailEn: "15 min: applicant arranges appointment and asks four apartment questions; landlord answers and confirms." },
+      { phase: "Email plan", detailEn: "8 min: order interest → appointment → confirmation/contact → closing." },
+      { phase: "Workbook bridge", detailEn: "5 min: preview Anna’s viewing details and the practical listening vocabulary for documents and group viewings." },
+    ],
+    wrapUpTaskDe: "Schreibe vier höfliche Sätze für eine Wohnungsbesichtigung: eine Bitte mit könnten, einen Vorschlag mit wäre, einen Wunsch mit würde und eine indirekte Frage.",
+    workbookConnection: {
+      grammarUrl: lessonRoute(5, "grammar"),
+      workbookUrl: lessonRoute(5, "workbook"),
+      parts: [
+        { label: "Grammar", detailEn: "Polite appointment language with Konjunktiv II (könnten, würde, wäre) plus indirect yes/no questions with ob and indirect W-questions with wann, wo, wie, welche; indirect-clause verb final." },
+        { label: "Teil 1 · Sprechen", detailEn: "Applicant/landlord role-play: politely arrange a viewing and ask at least four questions about rent, deposit, equipment, pets or availability. Practice only." },
+        { label: "Teil 2 · Schreiben", detailEn: "80–100 word polite email to the landlord: state interest, ask for or suggest a viewing appointment, request confirmation and explain how the landlord can reach you." },
+        { label: "Teil 3 · Lesen", detailEn: "Anna’s city-centre apartment viewing: appointment time, apartment features, deposit, availability, contract duration and her final decision." },
+        { label: "Teil 4 · Hören", detailEn: "Apartment-viewing practices: common appointment times, group-viewing advantage, neighborhood checks, why a quick decision matters and which documents applicants should bring." },
+      ],
+    },
+    teacherSupport: {
+      lessonOverviewEn: "Day 5 is a functional politeness lesson. Students should leave able to request, clarify and confirm an apartment viewing in both speech and email, using Konjunktiv II and indirect questions rather than blunt commands.",
+      grammarFocusEn: [
+        "Könnten Sie ...? is a polite request/question; with a second verb, the infinitive remains at the end.",
+        "Ich würde gern ... expresses a polite wish; Wäre ... möglich? makes a polite proposal.",
+        "Indirect yes/no question: Ich möchte wissen, ob die Wohnung noch frei ist.",
+        "Indirect W-question keeps the W-word but moves the conjugated verb to the end: Könnten Sie mir sagen, wann die Besichtigung ist?",
+      ],
+      modelExamplesDe: [
+        "Könnten Sie mir bitte einen Besichtigungstermin anbieten?",
+        "Wäre Samstag um 14 Uhr möglich?",
+        "Ich würde die Wohnung gern am Wochenende besichtigen.",
+        "Könnten Sie mir sagen, wie hoch die Nebenkosten sind?",
+      ],
+      commonMistakesEn: [
+        "Ich möchte wissen, wann ist der Termin instead of wann der Termin ist.",
+        "Dropping the infinitive at the end after könnten.",
+        "Using direct imperatives in a formal landlord email instead of polite Konjunktiv-II forms.",
+        "Forgetting the confirmation/contact point in the writing task.",
+      ],
+    },
+  },
+  {
+    id: "b1-day-6-stadt-oder-land",
+    course: "B1",
+    day: "Day 6",
+    dayNumber: 6,
+    assignmentId: "B1-2.6",
+    title: "B1 Day 6 · Leben in der Stadt oder auf dem Land",
+    topic: "2.6 Leben in der Stadt oder auf dem Land",
+    objective: "Students build a balanced B1 comparison of city and country life using comparative forms, reason/contrast connectors and relative clauses, then transfer that structure into the workbook speaking and opinion-writing tasks.",
+    estimatedDuration: "45–60 minutes",
+    warmupQuestionsDe: [
+      "Wo wohnst du lieber: in der Stadt oder auf dem Land?",
+      "Was ist auf dem Land besser als in der Stadt?",
+      "Welchen Nachteil hat das Leben in einer Großstadt?",
+      "Welche Rolle spielen Arbeit, Verkehr, Natur und Miete bei deiner Entscheidung?",
+    ],
+    keyPhrasesDe: [
+      "... ist ruhiger / günstiger / besser als ...",
+      "... ist so ... wie ...",
+      "Ich bevorzuge ..., weil ...",
+      "Obwohl ..., ...",
+      "Während ..., ...",
+      "Einerseits ..., andererseits ...",
+      "Das ist die Stadt, in der ...",
+      "Zusammenfassend würde ich sagen, dass ...",
+    ],
+    studentQuestionsDe: [
+      "Wo lebt man besser – in der Stadt oder auf dem Land?",
+      "Welche zwei Vorteile hat die Stadt?",
+      "Welchen Nachteil hat das Land oder die Stadt?",
+      "Wie würdest du Stadt und Land direkt vergleichen?",
+      "Welche Wohnform passt zu dir und warum?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Wo lebt man besser – in der Stadt oder auf dem Land?",
+        "modelAnswerDe": "Für mich lebt man in der Stadt besser, weil die Wege zur Arbeit und zu Geschäften kürzer sind. Auf dem Land ist es dagegen ruhiger. Da ich kein Auto habe, passt die Stadt momentan besser zu mir."
+      },
+      {
+        "questionDe": "Welche zwei Vorteile hat die Stadt?",
+        "modelAnswerDe": "Die Stadt bietet viele Arbeits- und Ausbildungsmöglichkeiten. Außerdem gibt es meist mehr öffentliche Verkehrsmittel. Dadurch kann man viele Orte auch ohne eigenes Auto erreichen."
+      },
+      {
+        "questionDe": "Welchen Nachteil hat das Land oder die Stadt?",
+        "modelAnswerDe": "Ein Nachteil der Stadt sind die hohen Wohnkosten. Außerdem stören mich manchmal der Verkehr und der Lärm. Auf dem Land ist es ruhiger, aber die Wege sind oft länger."
+      },
+      {
+        "questionDe": "Wie würdest du Stadt und Land direkt vergleichen?",
+        "modelAnswerDe": "Die Stadt ist oft lebhafter und teurer als das Land. Auf dem Land gibt es dagegen mehr Ruhe und Natur. Während man in der Stadt viele Angebote in der Nähe hat, braucht man auf dem Land häufiger ein Auto."
+      },
+      {
+        "questionDe": "Welche Wohnform passt zu dir und warum?",
+        "modelAnswerDe": "Eine kleine Wohnung in der Stadt passt zu mir, weil ich unabhängig sein möchte. Wichtig ist mir, dass ich meinen Arbeitsplatz gut erreichen kann. Später könnte ich mir auch ein Haus auf dem Land vorstellen."
+      }
+    ],
+    teacherNotesEn: [
+      "Treat Day 6 as a broad B1 argument-building lesson: comparisons, reasons, contrasts and relative clauses all support one coherent opinion.",
+      "Do not overload students with every structure equally; require at least one comparison, one reason connector and one contrast in productive work.",
+      "Use relative clauses as an extension for describing places: die Stadt, die... / das Dorf, in dem....",
+      "The exact speaking task allows city, country or suburbs but requires two advantages, one disadvantage and a justified personal choice.",
+      "The reading shifts to housing types in Germany; listening compares WGs, family houses, city flats and sustainable housing, so label them as workbook comprehension extensions.",
+    ],
+    interactionFlow: [
+      { phase: "City-country spectrum", detailEn: "6 min: students position themselves on city / suburb / country and give one reason." },
+      { phase: "Comparison practice", detailEn: "9 min: build Komparativ + als and so ... wie sentences from housing prompts." },
+      { phase: "Argument connectors", detailEn: "10 min: add weil/da/denn plus obwohl/während/einerseits-andererseits to balanced statements." },
+      { phase: "B1 mini-presentation", detailEn: "12 min: two advantages + one disadvantage + opinion + example/conclusion." },
+      { phase: "Workbook bridge", detailEn: "7 min: outline the opinion response to Tanja and preview housing-type reading/listening vocabulary." },
+    ],
+    wrapUpTaskDe: "Formuliere einen 6-Satz-Meinungsbeitrag zu Stadt oder Land. Nutze einen Vergleich mit als, einen Grund mit weil und einen Gegensatz mit obwohl oder einerseits/andererseits.",
+    workbookConnection: {
+      grammarUrl: lessonRoute(6, "grammar"),
+      workbookUrl: lessonRoute(6, "workbook"),
+      parts: [
+        { label: "Grammar", detailEn: "B1 comparison toolkit: Komparativ + als / so ... wie, reasons with weil/da/denn, contrasts with aber/obwohl/während/paired connectors and relative clauses for housing/place descriptions." },
+        { label: "Teil 1 · Sprechen", detailEn: "Answer where one lives better—city, country or suburbs. Give at least two advantages, one possible disadvantage and justify the personal choice. Practice only." },
+        { label: "Teil 2 · Schreiben", detailEn: "Approximately 80-word Stadt-or-Land opinion responding to Tanja; compare both places and explain the personal decision." },
+        { label: "Teil 3 · Lesen", detailEn: "Separate housing-form comprehension: different ways of living in Germany and their features." },
+        { label: "Teil 4 · Hören", detailEn: "Separate housing-form listening covering WGs, single-family houses, city apartments and sustainable housing." },
+      ],
+    },
+    teacherSupport: {
+      lessonOverviewEn: "Day 6 consolidates several B1 structures into one communicative goal: make a balanced, well-supported choice between city and country life. The teacher should prioritise coherence and argument quality over using every grammar item at once.",
+      grammarFocusEn: [
+        "Differences: Komparativ + als; equality: so ... wie.",
+        "weil/da send the conjugated verb to the end; denn keeps normal main-clause word order.",
+        "obwohl introduces a verb-final contrast clause; während can contrast two situations; paired connectors help weigh perspectives.",
         "Relative clauses add place information: Das ist die Stadt, in der ich studiert habe; Das Dorf, in dem meine Familie lebt, ist ruhig.",
       ],
       modelExamplesDe: [
