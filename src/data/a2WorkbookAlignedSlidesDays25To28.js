@@ -31,6 +31,28 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Wie sieht deine Abendroutine aus?",
       "Was ist am Wochenende anders?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Wie beginnt dein normaler Tag?",
+        "modelAnswerDe": "Mein Tag beginnt um sechs Uhr. Ich stehe auf, dusche und frühstücke."
+      },
+      {
+        "questionDe": "Was machst du bei der Arbeit oder in der Schule?",
+        "modelAnswerDe": "Bei der Arbeit berate ich Kunden und beantworte Fragen. Außerdem kontrolliere ich die Waren im Geschäft."
+      },
+      {
+        "questionDe": "Was machst du in der Mittagspause und am Nachmittag?",
+        "modelAnswerDe": "In der Mittagspause esse ich mit meinen Kollegen. Am Nachmittag arbeite ich weiter und fahre danach nach Hause."
+      },
+      {
+        "questionDe": "Wie sieht deine Abendroutine aus?",
+        "modelAnswerDe": "Am Abend koche ich und mache meine Deutschaufgaben. Danach lese ich ein bisschen und gehe ins Bett."
+      },
+      {
+        "questionDe": "Was ist am Wochenende anders?",
+        "modelAnswerDe": "Am Wochenende stehe ich später auf. Ich habe mehr Zeit für meine Familie und treffe meine Freunde."
+      }
+    ],
     teacherNotesEn: [
       "Day 25 has no separate grammar-notes route. The grammar is taught inside the workbook: Präsens for routines, time expressions, separable verbs such as aufstehen and fernsehen, and sequence words such as dann, danach and später.",
       "Keep the separable-verb frame visible: Ich stehe um 7 Uhr auf. / Abends sehe ich fern.",
@@ -112,6 +134,28 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Was machst du, wenn du gestresst bist?",
       "Wann hast du dich zuletzt bei jemandem für Hilfe bedankt?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Wie fühlst du dich vor einer Prüfung und warum?",
+        "modelAnswerDe": "Vor einer Prüfung bin ich nervös, weil ich keine Fehler machen möchte. Wenn ich gut vorbereitet bin, fühle ich mich sicherer."
+      },
+      {
+        "questionDe": "Wie fühlst du dich, wenn du gute Nachrichten bekommst?",
+        "modelAnswerDe": "Wenn ich gute Nachrichten bekomme, freue ich mich sehr. Meistens rufe ich meine Familie an und erzähle ihr davon."
+      },
+      {
+        "questionDe": "Welche Situation macht dich wütend, traurig oder enttäuscht?",
+        "modelAnswerDe": "Ich bin enttäuscht, wenn ein Freund unser Treffen ohne Nachricht absagt. Wenn jemand unhöflich mit mir spricht, werde ich manchmal wütend."
+      },
+      {
+        "questionDe": "Was machst du, wenn du gestresst bist?",
+        "modelAnswerDe": "Wenn ich gestresst bin, gehe ich spazieren oder höre ruhige Musik. Danach fühle ich mich meistens besser."
+      },
+      {
+        "questionDe": "Wann hast du dich zuletzt bei jemandem für Hilfe bedankt?",
+        "modelAnswerDe": "Gestern habe ich mich bei meiner Schwester bedankt. Sie hat mir bei meinen Hausaufgaben geholfen."
+      }
+    ],
     teacherNotesEn: [
       "Day 26 has no separate canonical grammar-notes route. The real late-A2 learning upgrade is embedded in the workbook and teaches feelings with wenn; the conjugated verb goes to the end of the wenn-clause.",
       "Move from situation → feeling → reaction/help so students do more than list emotion adjectives.",
@@ -192,6 +236,28 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Was ist dir beim Schutz deiner Daten wichtig?",
       "Welche Eigenschaften wären dir bei einem neuen Handy wichtig?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Kommunikationsmittel benutzt du am meisten und wann?",
+        "modelAnswerDe": "Ich benutze WhatsApp am meisten, um mit Freunden zu schreiben. Bei der Arbeit schreibe ich oft E-Mails."
+      },
+      {
+        "questionDe": "Was findest du an WhatsApp, E-Mail oder sozialen Medien praktisch?",
+        "modelAnswerDe": "Bei WhatsApp kann ich schnell eine Nachricht oder ein Foto schicken. E-Mails finde ich für längere Informationen praktisch."
+      },
+      {
+        "questionDe": "Welche Nachteile gibt es?",
+        "modelAnswerDe": "Viele Nachrichten können mich ablenken. Außerdem verbringe ich manchmal zu viel Zeit am Handy."
+      },
+      {
+        "questionDe": "Was ist dir beim Schutz deiner Daten wichtig?",
+        "modelAnswerDe": "Ich möchte nicht, dass fremde Personen meine privaten Informationen sehen. Deshalb teile ich mein Passwort nicht und prüfe meine Einstellungen."
+      },
+      {
+        "questionDe": "Welche Eigenschaften wären dir bei einem neuen Handy wichtig?",
+        "modelAnswerDe": "Bei einem neuen Handy wären mir ein guter Akku und genug Speicher wichtig. Es sollte auch nicht zu teuer sein."
+      }
+    ],
     teacherNotesEn: [
       "Day 27 has no separate canonical grammar-notes route. The workbook's late-A2 learning upgrade teaches opinions with dass; after dass the conjugated verb goes to the end.",
       "Use the workbook speaking route: communication tool → use → opinion with dass → advantage/disadvantage → real example → conclusion.",
@@ -271,6 +337,28 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Welche beruflichen oder schulischen Pläne hast du?",
       "Möchtest du reisen, umziehen oder im Ausland leben?",
       "Welche persönlichen Ziele möchtest du erreichen?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Was sind deine wichtigsten Ziele für die Zukunft?",
+        "modelAnswerDe": "Ich möchte meine Deutschkenntnisse verbessern und eine gute Arbeit finden. Außerdem möchte ich mehr Zeit für meine Familie haben."
+      },
+      {
+        "questionDe": "Was wirst du nächstes Jahr machen?",
+        "modelAnswerDe": "Nächstes Jahr werde ich einen weiteren Deutschkurs besuchen. Ich werde auch regelmäßig für meine Prüfung lernen."
+      },
+      {
+        "questionDe": "Welche beruflichen oder schulischen Pläne hast du?",
+        "modelAnswerDe": "Ich werde mich um einen Ausbildungsplatz bewerben. Dafür werde ich meinen Lebenslauf vorbereiten und Informationen sammeln."
+      },
+      {
+        "questionDe": "Möchtest du reisen, umziehen oder im Ausland leben?",
+        "modelAnswerDe": "Ich möchte später eine Zeit lang in Deutschland leben. Zuerst möchte ich aber das Land besuchen und mein Deutsch verbessern."
+      },
+      {
+        "questionDe": "Welche persönlichen Ziele möchtest du erreichen?",
+        "modelAnswerDe": "Ich möchte regelmäßig Sport machen und etwas Geld sparen. Außerdem möchte ich selbstbewusster Deutsch sprechen."
+      }
     ],
     teacherNotesEn: [
       "Use the canonical Day 28 grammar route: Futur I = conjugated werden in position 2 + main infinitive at the end.",
