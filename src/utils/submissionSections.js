@@ -15,9 +15,18 @@ function partNumberFromToken(value = "") {
 }
 
 export function normalizeSubmissionPart(label = "", explicitNumber = "") {
-  const explicitPart = partNumberFromToken(explicitNumber);
-  if (explicitPart) return `teil${explicitPart}`;
   const normalized = normalizedLabel(label);
+  const explicitPart = partNumberFromToken(explicitNumber);
+  const rawLabel = String(label || "");
+
+  // Some B1 workbook exports repeat the Schreiben prefix for later sections,
+  // producing the exact heading style "Teil 2 · Lesen" / "Teil 2 · Hören".
+  // Scope the correction to the middle-dot workbook heading so legacy exam
+  // prompts such as "Teil 2. Lesen Sie ..." keep their intentional part number.
+  if (explicitPart === 2 && /(?:teil|tiel|part)\s*2\s*·\s*(?:lesen|reading)\b/i.test(rawLabel)) return "teil3";
+  if (explicitPart === 2 && /(?:teil|tiel|part)\s*2\s*·\s*(?:h[oö]ren|hoeren|listening|audio)\b/i.test(rawLabel)) return "teil4";
+
+  if (explicitPart) return `teil${explicitPart}`;
   const numbered = normalized.match(/(?:teil|tiel|part)([1-4]|i{1,3}|iv)/i);
   const numberedPart = partNumberFromToken(numbered?.[1]);
   if (numberedPart) return `teil${numberedPart}`;
@@ -86,6 +95,13 @@ function normalizeStandaloneAnswerPrefixes(text = "") {
   );
 }
 
+function normalizeCompactObjectiveSeparators(text = "") {
+  return String(text || "").replace(
+    /\s*[·•|]\s*(?=\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/gi,
+    " ",
+  );
+}
+
 export function parseSubmissionSections(text = "") {
   const source = normalizeStandaloneAnswerPrefixes(
     normalizeQSectionAliases(normalizeLeadingShortAnswerBlock(text)),
@@ -112,11 +128,15 @@ export function parseSubmissionSections(text = "") {
   const sections = [];
   markers.forEach((marker, index) => {
     const next = markers[index + 1];
+    const rawText = source.slice(marker.end, next ? next.index : source.length).trim();
+    const sectionText = marker.partId === "teil3" || marker.partId === "teil4"
+      ? normalizeCompactObjectiveSeparators(rawText)
+      : rawText;
     sections.push({
       partId: marker.partId,
       partNumber: marker.partNumber,
       heading: marker.heading,
-      text: source.slice(marker.end, next ? next.index : source.length).trim(),
+      text: sectionText,
     });
   });
   return sections;
