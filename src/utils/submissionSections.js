@@ -95,6 +95,13 @@ function normalizeStandaloneAnswerPrefixes(text = "") {
   );
 }
 
+function normalizeCompactObjectiveSeparators(text = "") {
+  return String(text || "").replace(
+    /\s*[·•|]\s*(?=\d{1,3}\s*[A-FX](?:\b|[).,:;–-]))/gi,
+    " ",
+  );
+}
+
 export function parseSubmissionSections(text = "") {
   const source = normalizeStandaloneAnswerPrefixes(
     normalizeQSectionAliases(normalizeLeadingShortAnswerBlock(text)),
@@ -121,11 +128,15 @@ export function parseSubmissionSections(text = "") {
   const sections = [];
   markers.forEach((marker, index) => {
     const next = markers[index + 1];
+    const rawText = source.slice(marker.end, next ? next.index : source.length).trim();
+    const sectionText = marker.partId === "teil3" || marker.partId === "teil4"
+      ? normalizeCompactObjectiveSeparators(rawText)
+      : rawText;
     sections.push({
       partId: marker.partId,
       partNumber: marker.partNumber,
       heading: marker.heading,
-      text: source.slice(marker.end, next ? next.index : source.length).trim(),
+      text: sectionText,
     });
   });
   return sections;
