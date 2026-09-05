@@ -69,3 +69,16 @@ test("A1-12.1 Q2/Q3 aliases do not shift answers between parts", () => {
   ];
   variants.forEach((submission, index) => assertPerfect("A1-12.1", submission, 15, `Q alias variant ${index + 1}`));
 });
+
+test("B1-3.9 recognizes compact answers under stale Teil 2 middle-dot Lesen/Hören headings", () => {
+  const submission = `Teil 2 · Schreiben
+Work-Life-Balance im modernen Arbeitsumfeld
+
+Heutzutage ist das Thema Work-Life-Balance sehr wichtig. Ich bin der Meinung, dass flexible Arbeitsmodelle hilfreich sind.
+
+Teil 2 · Lesen 1B · 2C · 3A · 4B · 5C · 6B · 7B
+
+Teil 2 · Hören 1B · 2C · 3A · 4B · 5B`;
+
+  assertPerfect("B1-3.9", submission, 12, "stale B1 middle-dot headings");
+});
