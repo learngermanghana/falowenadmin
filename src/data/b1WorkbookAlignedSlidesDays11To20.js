@@ -39,6 +39,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Wie kann man Konflikte im Team lösen?",
       "Welche persönliche Erfahrung hast du mit Teamarbeit gemacht?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Warum sind Teamspiele für Lernen und persönliche Entwicklung wichtig?",
+        "modelAnswerDe": "Teamspiele sind wichtig, weil man dabei Zusammenarbeit und Rücksicht lernt. Man muss Regeln beachten und auf andere reagieren. Außerdem lernt man, mit Erfolgen und Niederlagen umzugehen."
+      },
+      {
+        "questionDe": "Welche Vorteile hat gute Teamarbeit?",
+        "modelAnswerDe": "Bei guter Teamarbeit können sich die Mitglieder gegenseitig unterstützen. Jeder bringt andere Stärken mit, sodass schwierige Aufgaben leichter werden. Außerdem entstehen gemeinsam oft mehr Ideen."
+      },
+      {
+        "questionDe": "Welche Schwierigkeiten können entstehen?",
+        "modelAnswerDe": "Schwierigkeiten entstehen, wenn Aufgaben unfair verteilt sind oder niemand zuhört. Unterschiedliche Meinungen können ebenfalls zu Streit führen. Deshalb sollte das Team früh klare Regeln vereinbaren."
+      },
+      {
+        "questionDe": "Wie kann man Konflikte im Team lösen?",
+        "modelAnswerDe": "Zuerst sollte jeder seine Sicht ruhig erklären dürfen. Danach kann das Team nach einer Lösung suchen, die für alle akzeptabel ist. Klare Aufgaben und gemeinsame Regeln helfen, neue Konflikte zu vermeiden."
+      },
+      {
+        "questionDe": "Welche persönliche Erfahrung hast du mit Teamarbeit gemacht?",
+        "modelAnswerDe": "Ich habe einmal mit drei Mitschülern eine Präsentation vorbereitet. Am Anfang war unklar, wer welche Aufgabe übernimmt. Nachdem wir die Arbeit verteilt hatten, konnten wir gut zusammenarbeiten und pünktlich fertig werden."
+      }
+    ],
     teacherNotesEn: [
       "Teach the actual reciprocal-language focus: einander plus miteinander, füreinander, voneinander, aufeinander and gegeneinander.",
       "Contrast sich with explicit reciprocal meaning: Die Spieler begrüßen sich can be reciprocal, but einander removes ambiguity.",
@@ -113,6 +135,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Was ist zuerst, danach und am Ende passiert?",
       "Welche Schwierigkeit gab es und wie hast du sie gelöst?",
       "Was hast du aus dem Erlebnis gelernt?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Wo und wann war dein Abenteuer?",
+        "modelAnswerDe": "Mein Abenteuer war eine Wanderung in den Bergen im letzten Sommer. Wir waren einen ganzen Tag unterwegs. Besonders aufregend war es, als plötzlich dichter Nebel kam."
+      },
+      {
+        "questionDe": "Mit wem warst du unterwegs?",
+        "modelAnswerDe": "Ich war mit zwei Freunden unterwegs. Einer von ihnen kannte die Strecke schon. Wir hatten gemeinsam Essen, Wasser und Regenjacken eingepackt."
+      },
+      {
+        "questionDe": "Was ist zuerst, danach und am Ende passiert?",
+        "modelAnswerDe": "Zuerst sind wir früh am Morgen losgegangen. Danach haben wir eine Pause an einem Aussichtspunkt gemacht. Am Ende sind wir wegen des Nebels auf demselben Weg zurückgekehrt."
+      },
+      {
+        "questionDe": "Welche Schwierigkeit gab es und wie hast du sie gelöst?",
+        "modelAnswerDe": "Als Nebel aufkam, konnten wir den Weg schlechter erkennen. Wir blieben zusammen und kehrten um, statt weiterzugehen. Zum Glück erreichten wir den Ausgangspunkt noch vor Einbruch der Dunkelheit."
+      },
+      {
+        "questionDe": "Was hast du aus dem Erlebnis gelernt?",
+        "modelAnswerDe": "Ich habe gelernt, dass gute Vorbereitung sehr wichtig ist. Man sollte das Wetter prüfen und seine Grenzen kennen. Außerdem ist es besser, eine Tour abzubrechen, als ein unnötiges Risiko einzugehen."
+      }
     ],
     teacherNotesEn: [
       "Teach the actual timeline logic: Perfekt for main completed actions and Präteritum especially with war/hatte for background.",
@@ -189,6 +233,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Welche Produktionsinformation kannst du im Passiv nennen?",
       "Würdest du den Film empfehlen? Begründe deine Antwort.",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Worum geht es im Film?",
+        "modelAnswerDe": "In meinem Filmbeispiel geht es um eine junge Frau, die für ihre Ausbildung in eine fremde Stadt zieht. Am Anfang fühlt sie sich allein. Durch neue Freundschaften wird sie selbstständiger und findet ihren Weg."
+      },
+      {
+        "questionDe": "Wie bewertest du Schauspiel, Musik und Atmosphäre?",
+        "modelAnswerDe": "Die Schauspieler wirken glaubwürdig, besonders in den ruhigen Gesprächen. Die Musik passt gut zu den Gefühlen der Hauptfigur. Dadurch entsteht eine nachdenkliche, aber hoffnungsvolle Atmosphäre."
+      },
+      {
+        "questionDe": "Welche Stärke und welche Schwäche hat der Film?",
+        "modelAnswerDe": "Eine Stärke ist die glaubwürdige Entwicklung der Hauptfigur. Man versteht gut, warum sie bestimmte Entscheidungen trifft. Eine Schwäche ist, dass einige Szenen in der Mitte etwas zu lang sind."
+      },
+      {
+        "questionDe": "Welche Produktionsinformation kannst du im Passiv nennen?",
+        "modelAnswerDe": "Für mein erfundenes Filmbeispiel würde ich sagen: Der Film wurde in einer kleinen Stadt gedreht. Die Hauptrolle wurde von einer jungen Schauspielerin gespielt. Die Musik wurde eigens für den Film komponiert."
+      },
+      {
+        "questionDe": "Würdest du den Film empfehlen? Begründe deine Antwort.",
+        "modelAnswerDe": "Ja, ich würde den Film Menschen empfehlen, die Geschichten über Freundschaft und Neuanfänge mögen. Die Figuren sind glaubwürdig und die Handlung regt zum Nachdenken an. Wer viel Action erwartet, findet ihn vielleicht zu ruhig."
+      }
+    ],
     teacherNotesEn: [
       "Use Passiv for production facts: wurde gedreht / wurde veröffentlicht, not for every sentence in the review.",
       "Separate neutral plot/production information from evaluation with ich finde, dass / besonders gut fand ich.",
@@ -264,6 +330,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Welche Methode wird in deinem Heimatland häufiger genutzt?",
       "Welche Methode bevorzugst du und warum?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Unterschiede gibt es bei Lernumgebung und Kommunikation?",
+        "modelAnswerDe": "Im Präsenzunterricht lernen alle im selben Raum und können direkt miteinander sprechen. Beim Online-Lernen sitzt jeder an einem anderen Ort und kommuniziert über Kamera, Mikrofon oder Chat. Zu Hause gibt es manchmal mehr Ablenkung."
+      },
+      {
+        "questionDe": "Welche Methode ist flexibler?",
+        "modelAnswerDe": "Online-Lernen ist häufig flexibler, weil der Weg zum Kurs entfällt. Aufgezeichnete Inhalte kann man auch später ansehen. Bei einem Live-Onlinekurs muss man allerdings trotzdem die festen Unterrichtszeiten beachten."
+      },
+      {
+        "questionDe": "Welche Vor- und Nachteile haben beide Methoden?",
+        "modelAnswerDe": "Online-Lernen spart Wege und ermöglicht die Teilnahme von zu Hause, braucht aber eine stabile Internetverbindung. Präsenzunterricht erleichtert persönliche Gespräche und gemeinsames Üben. Dafür muss man zum Kurs fahren und ist weniger flexibel."
+      },
+      {
+        "questionDe": "Welche Methode wird in deinem Heimatland häufiger genutzt?",
+        "modelAnswerDe": "Nach meiner Erfahrung wird in Ghana häufig im Klassenraum gelernt. Onlinekurse werden aber auch genutzt, besonders wenn die Teilnehmenden weit entfernt wohnen. Wie häufig beide Formen vorkommen, hängt von der Schule und dem Kurs ab."
+      },
+      {
+        "questionDe": "Welche Methode bevorzugst du und warum?",
+        "modelAnswerDe": "Ich bevorzuge Präsenzunterricht, weil ich mich dort besser konzentrieren kann. Fragen kann ich direkt stellen und in den Pausen mit anderen sprechen. Onlineunterricht ist für mich eine gute Ergänzung, wenn ich nicht zum Kurs fahren kann."
+      }
+    ],
     teacherNotesEn: [
       "Compare one dimension at a time: flexibility, personal contact, cost, concentration or time management.",
       "Teach während as a subordinate connector, versus hingegen/dagegen in main-clause structures.",
@@ -338,6 +426,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Welche Regeln müssen beim Datenschutz beachtet werden?",
       "Wie kann man ständige Erreichbarkeit reduzieren?",
       "Ist eine Mischung aus Büro und Homeoffice besser? Warum?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche digitalen Medien sind im Homeoffice wichtig?",
+        "modelAnswerDe": "Im Homeoffice sind E-Mail, Videokonferenzen und gemeinsame digitale Dokumente wichtig. Über einen Teamchat kann man kurze Fragen klären. Ein gemeinsamer Kalender hilft dabei, Termine abzustimmen."
+      },
+      {
+        "questionDe": "Welche Vorteile und Nachteile hat Homeoffice?",
+        "modelAnswerDe": "Ein Vorteil ist, dass der Arbeitsweg wegfällt. Außerdem kann man zu Hause oft ungestört arbeiten. Nachteile sind der fehlende persönliche Kontakt und die Gefahr, Arbeit und Freizeit nicht klar zu trennen."
+      },
+      {
+        "questionDe": "Welche Regeln müssen beim Datenschutz beachtet werden?",
+        "modelAnswerDe": "Vertrauliche Daten dürfen nicht an unbefugte Personen weitergegeben werden. Man sollte sichere Passwörter verwenden und den Bildschirm sperren, wenn man den Arbeitsplatz verlässt. Außerdem müssen die Datenschutzregeln der Firma eingehalten werden."
+      },
+      {
+        "questionDe": "Wie kann man ständige Erreichbarkeit reduzieren?",
+        "modelAnswerDe": "Man kann feste Zeiten vereinbaren, zu denen man erreichbar ist. Nach Feierabend sollten berufliche Benachrichtigungen ausgeschaltet werden. Wichtig ist, diese Grenzen auch im Team klar zu kommunizieren."
+      },
+      {
+        "questionDe": "Ist eine Mischung aus Büro und Homeoffice besser? Warum?",
+        "modelAnswerDe": "Für mich ist eine Mischung besser, weil beide Formen Vorteile haben. Im Büro kann ich mich persönlich mit Kollegen austauschen. Zu Hause kann ich Aufgaben erledigen, bei denen ich viel Ruhe brauche."
+      }
     ],
     teacherNotesEn: [
       "Teach process-centred Passiv: werden + Partizip II when the action/process matters more than the actor.",
@@ -415,6 +525,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Was sollte man direkt vor einer Prüfung tun?",
       "Welche eigene Erfahrung hast du mit Prüfungsstress?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Ursachen hat Prüfungsangst?",
+        "modelAnswerDe": "Prüfungsangst kann durch hohen Leistungsdruck oder schlechte Erfahrungen entstehen. Auch ungenügende Vorbereitung kann unsicher machen. Manche Menschen haben vor allem Angst, andere zu enttäuschen."
+      },
+      {
+        "questionDe": "Welche Symptome können auftreten?",
+        "modelAnswerDe": "Bei Prüfungsangst können zum Beispiel Herzklopfen, schwitzende Hände oder Bauchschmerzen auftreten. Manche Menschen können sich schlechter konzentrieren. Andere vergessen vor Aufregung Dinge, die sie eigentlich gelernt haben."
+      },
+      {
+        "questionDe": "Welche drei Strategien helfen gegen Stress?",
+        "modelAnswerDe": "Mir helfen ein realistischer Lernplan, regelmäßige Pausen und ruhiges Atmen. Mit einem Plan weiß ich, was ich noch üben muss. Pausen geben mir neue Energie, und ruhiges Atmen hilft mir, mich zu sammeln."
+      },
+      {
+        "questionDe": "Was sollte man direkt vor einer Prüfung tun?",
+        "modelAnswerDe": "Direkt vor der Prüfung sollte man rechtzeitig ankommen und die nötigen Materialien bereithalten. Ich würde nicht mehr versuchen, viele neue Inhalte zu lernen. Lieber atme ich ruhig und lese die Aufgaben aufmerksam."
+      },
+      {
+        "questionDe": "Welche eigene Erfahrung hast du mit Prüfungsstress?",
+        "modelAnswerDe": "Vor meiner letzten Sprachprüfung war ich sehr nervös und habe schlecht geschlafen. Dann habe ich mit einem Freund typische Aufgaben geübt. Dadurch wurde ich sicherer und konnte mich in der Prüfung besser konzentrieren."
+      }
+    ],
     teacherNotesEn: [
       "Teach cause/condition clauses with weil, dass and wenn before moving to advice.",
       "Use sollte/kann/muss/darf for practical recommendations and limits.",
@@ -489,6 +621,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Wie planst du Lernzeiten und Pausen?",
       "Was hilft dir bei Motivation und Konzentration?",
       "Welche Methode würdest du anderen empfehlen und warum?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Lernmethode hilft dir am meisten?",
+        "modelAnswerDe": "Mir hilft es am meisten, neue Wörter in eigenen Sätzen zu benutzen. So lerne ich nicht nur die Bedeutung, sondern auch die Verwendung. Zusätzlich wiederhole ich die Wörter regelmäßig."
+      },
+      {
+        "questionDe": "Welche Lernumgebung brauchst du?",
+        "modelAnswerDe": "Ich brauche einen ruhigen Platz mit einem aufgeräumten Tisch. Mein Handy lege ich außer Reichweite, damit ich nicht ständig abgelenkt werde. Außerdem sollte der Raum hell und angenehm sein."
+      },
+      {
+        "questionDe": "Wie planst du Lernzeiten und Pausen?",
+        "modelAnswerDe": "Ich lerne meistens eine halbe Stunde und mache danach eine kurze Pause. Schwierige Aufgaben erledige ich zuerst, wenn ich noch konzentriert bin. Am Ende wiederhole ich kurz, was ich gelernt habe."
+      },
+      {
+        "questionDe": "Was hilft dir bei Motivation und Konzentration?",
+        "modelAnswerDe": "Kleine, erreichbare Ziele motivieren mich. Wenn ich sehe, dass ich Fortschritte mache, lerne ich gern weiter. Für meine Konzentration helfen mir Ruhe, Pausen und ein klarer Plan."
+      },
+      {
+        "questionDe": "Welche Methode würdest du anderen empfehlen und warum?",
+        "modelAnswerDe": "Ich würde empfehlen, regelmäßig kurze Einheiten zu lernen und das Gelernte aktiv anzuwenden. Zum Beispiel kann man neue Wörter in einem Gespräch benutzen. Das ist für mich wirksamer, als nur lange Listen zu lesen."
+      }
     ],
     teacherNotesEn: [
       "Choose the function before the connector: condition → wenn, reason → weil, opinion/content → dass, purpose → um ... zu / damit.",
@@ -568,6 +722,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Welche Fähigkeit möchtest du noch verbessern?",
       "Welcher nächste Schritt bringt dich deinem Ziel näher?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welcher Beruf interessiert dich und warum?",
+        "modelAnswerDe": "Mich interessiert der Beruf des Lehrers, weil ich gern erkläre und mit Menschen arbeite. Ich möchte Lernende dabei unterstützen, ihre Ziele zu erreichen. Besonders spannend finde ich, Unterricht abwechslungsreich zu gestalten."
+      },
+      {
+        "questionDe": "Welche Ausbildung oder Qualifikation brauchst du?",
+        "modelAnswerDe": "Für meinen geplanten Weg brauche ich eine passende pädagogische Ausbildung und gute Fachkenntnisse. Welche Qualifikation genau verlangt wird, hängt vom Land und von der Schule ab. Deshalb würde ich mich bei der gewünschten Ausbildungsstelle informieren."
+      },
+      {
+        "questionDe": "Welche Rolle spielen Praktikum und Weiterbildung?",
+        "modelAnswerDe": "Ein Praktikum zeigt mir, wie der Arbeitsalltag wirklich aussieht. Dabei kann ich prüfen, ob der Beruf zu mir passt. Durch Weiterbildungen kann ich später neue Methoden lernen und meine Kenntnisse erweitern."
+      },
+      {
+        "questionDe": "Welche Fähigkeit möchtest du noch verbessern?",
+        "modelAnswerDe": "Ich möchte noch besser vor Gruppen sprechen können. Manchmal werde ich nervös, wenn viele Menschen zuhören. Deshalb übe ich kurze Präsentationen und bitte andere um Rückmeldung."
+      },
+      {
+        "questionDe": "Welcher nächste Schritt bringt dich deinem Ziel näher?",
+        "modelAnswerDe": "Mein nächster Schritt ist, einen Praktikumsplatz an einer Schule zu suchen. Dafür möchte ich meinen Lebenslauf aktualisieren und Bewerbungen schreiben. So kann ich praktische Erfahrungen sammeln."
+      }
+    ],
     teacherNotesEn: [
       "Teach goals with um ... zu and broader Infinitiv-mit-zu frames such as Es ist wichtig, ... zu ... .",
       "Use relative clauses to define professions, skills and experiences precisely.",
@@ -643,6 +819,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Welche Stärke kannst du mit einem Beispiel belegen?",
       "Wie würdest du eine höfliche Frage an den Arbeitgeber formulieren?",
       "Welche Vorbereitung reduziert Stress vor dem Gespräch?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Wie stellst du dich professionell vor?",
+        "modelAnswerDe": "Guten Tag, mein Name ist Alex Mensah. Ich habe eine kaufmännische Ausbildung abgeschlossen und bereits im Kundenservice gearbeitet. Besonders gern berate ich Kunden und löse organisatorische Aufgaben."
+      },
+      {
+        "questionDe": "Warum möchtest du bei dieser Firma arbeiten?",
+        "modelAnswerDe": "Mich interessiert die ausgeschriebene Stelle, weil sie gut zu meiner Erfahrung im Kundenservice passt. Ich möchte meine Kenntnisse einbringen und mich fachlich weiterentwickeln. Besonders wichtig ist mir eine gute Zusammenarbeit im Team."
+      },
+      {
+        "questionDe": "Welche Stärke kannst du mit einem Beispiel belegen?",
+        "modelAnswerDe": "Eine meiner Stärken ist Geduld. In meiner letzten Stelle habe ich einem unzufriedenen Kunden ruhig zugehört und eine passende Lösung gefunden. Am Ende war er mit der Beratung zufrieden."
+      },
+      {
+        "questionDe": "Wie würdest du eine höfliche Frage an den Arbeitgeber formulieren?",
+        "modelAnswerDe": "Könnten Sie mir bitte erklären, wie die Einarbeitung abläuft? Außerdem würde ich gern wissen, mit welchem Team ich zusammenarbeiten würde. Das hilft mir, die Stelle besser zu verstehen."
+      },
+      {
+        "questionDe": "Welche Vorbereitung reduziert Stress vor dem Gespräch?",
+        "modelAnswerDe": "Ich informiere mich vorher über die Firma und übe typische Fragen. Außerdem lege ich meine Unterlagen bereit und plane die Anfahrt. Wenn ich rechtzeitig losfahre, fühle ich mich deutlich ruhiger."
+      }
     ],
     teacherNotesEn: [
       "Keep formal Sie/Ihnen/Ihr consistent throughout the interview role-play.",
@@ -721,6 +919,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Welche persönlichen Eigenschaften sind wichtig?",
       "Wie sieht der Karriereweg aus?",
       "Warum passt dieser Beruf zu dir oder nicht?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Ausbildung und Qualifikationen braucht man für deinen Beruf?",
+        "modelAnswerDe": "Für meinen Wunschberuf als Koch brauche ich eine passende berufliche Ausbildung und praktische Erfahrung. Wichtig sind auch Kenntnisse über Lebensmittel und Hygiene. Welche Nachweise erforderlich sind, würde ich beim Ausbildungsbetrieb erfragen."
+      },
+      {
+        "questionDe": "Welche Aufgaben hat man in diesem Beruf?",
+        "modelAnswerDe": "Ein Koch bereitet Zutaten vor und kocht verschiedene Gerichte. Er plant Arbeitsabläufe und achtet auf Hygiene. Außerdem kontrolliert er, ob genügend Lebensmittel vorhanden sind."
+      },
+      {
+        "questionDe": "Welche persönlichen Eigenschaften sind wichtig?",
+        "modelAnswerDe": "Ein Koch sollte sorgfältig, belastbar und teamfähig sein. Wenn viele Bestellungen gleichzeitig kommen, muss er ruhig bleiben. Kreativität ist ebenfalls hilfreich, um neue Gerichte zu entwickeln."
+      },
+      {
+        "questionDe": "Wie sieht der Karriereweg aus?",
+        "modelAnswerDe": "Nach der Ausbildung kann man zunächst Erfahrungen in verschiedenen Küchen sammeln. Später kann man mehr Verantwortung übernehmen und ein Team leiten. Mit genügend Erfahrung könnte man auch ein eigenes Restaurant eröffnen."
+      },
+      {
+        "questionDe": "Warum passt dieser Beruf zu dir oder nicht?",
+        "modelAnswerDe": "Der Beruf passt zu mir, weil ich gern koche und praktisch arbeite. Auch die Zusammenarbeit im Team gefällt mir. Allerdings müsste ich mich an die Arbeit am Abend und am Wochenende gewöhnen."
+      }
     ],
     teacherNotesEn: [
       "Use relative clauses to define jobs and duties precisely: eine Person, die ... / ein Beruf, der ... .",

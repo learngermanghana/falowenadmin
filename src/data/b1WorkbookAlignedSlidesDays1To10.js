@@ -32,6 +32,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Welche Erfahrung hast du schon gemacht, die zu deinem Traum passt?",
       "Ist persönlicher Kontakt im Traumberuf wichtiger als flexible Arbeit im Homeoffice? Warum?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Was ist dein Traumberuf und welche zwei Gründe hast du dafür?",
+        "modelAnswerDe": "Mein Traumberuf ist Lehrer, weil ich gern Wissen vermittle. Außerdem macht es mir Freude, Menschen bei ihren Zielen zu unterstützen. Besonders schön finde ich es, wenn jemand etwas Schwieriges endlich versteht."
+      },
+      {
+        "questionDe": "Welche Fähigkeiten sind für diesen Beruf wichtig?",
+        "modelAnswerDe": "Ein Lehrer muss verständlich erklären und gut zuhören können. Geduld ist ebenfalls wichtig, weil nicht alle gleich schnell lernen. Außerdem sollte er seinen Unterricht gut organisieren."
+      },
+      {
+        "questionDe": "Was möchtest du tun, um dieses Ziel zu erreichen?",
+        "modelAnswerDe": "Ich möchte eine passende Ausbildung machen und meine Deutschkenntnisse verbessern. Danach möchte ich praktische Erfahrungen an einer Schule sammeln. Deshalb lerne ich regelmäßig und suche nach einem Praktikumsplatz."
+      },
+      {
+        "questionDe": "Welche Erfahrung hast du schon gemacht, die zu deinem Traum passt?",
+        "modelAnswerDe": "Ich habe schon einem Freund beim Deutschlernen geholfen. Wir haben gemeinsam Grammatik geübt und kurze Gespräche geführt. Dabei habe ich gemerkt, dass mir das Erklären Spaß macht."
+      },
+      {
+        "questionDe": "Ist persönlicher Kontakt im Traumberuf wichtiger als flexible Arbeit im Homeoffice? Warum?",
+        "modelAnswerDe": "Für mich ist persönlicher Kontakt als Lehrer wichtiger, weil ich die Reaktionen der Lernenden direkt sehe. So kann ich schneller auf Fragen eingehen. Homeoffice ist zwar flexibel, aber ich würde es vor allem für die Unterrichtsvorbereitung nutzen."
+      }
+    ],
     teacherNotesEn: [
       "Teach the actual Day 1 contrast: Präsens for current/general habits and future plans with a time marker; Perfekt for completed past experience.",
       "Keep haben/sein + Partizip II visible and contrast Ich habe geträumt / gesehen with Ich bin gereist.",
@@ -111,6 +133,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Wie habt ihr euch kennengelernt?",
       "Wie kann man einen Konflikt in einer Freundschaft lösen?",
       "Warum ist Vertrauen wichtig? Begründe mit weil, denn oder deshalb.",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Was macht eine Freundschaft für dich besonders?",
+        "modelAnswerDe": "Eine Freundschaft ist für mich besonders, wenn wir offen miteinander sprechen können. Ein guter Freund hört auch bei Problemen zu. Außerdem können wir zusammen lachen, ohne uns verstellen zu müssen."
+      },
+      {
+        "questionDe": "Welche drei Eigenschaften muss ein guter Freund haben?",
+        "modelAnswerDe": "Ein guter Freund sollte ehrlich, zuverlässig und verständnisvoll sein. Ehrlichkeit schafft Vertrauen, und auf einen zuverlässigen Freund kann ich mich verlassen. Verständnis ist wichtig, wenn ich einen Fehler mache."
+      },
+      {
+        "questionDe": "Wie habt ihr euch kennengelernt?",
+        "modelAnswerDe": "Wir haben uns in einem Deutschkurs kennengelernt. Zuerst haben wir zusammen eine Aufgabe gemacht und danach unsere Telefonnummern ausgetauscht. Seitdem treffen wir uns regelmäßig und helfen uns beim Lernen."
+      },
+      {
+        "questionDe": "Wie kann man einen Konflikt in einer Freundschaft lösen?",
+        "modelAnswerDe": "Man sollte zuerst ruhig erklären, was einen verletzt hat. Danach sollte man dem anderen zuhören, ohne ihn zu unterbrechen. Wenn beide einen Fehler zugeben können, finden sie oft einen Kompromiss."
+      },
+      {
+        "questionDe": "Warum ist Vertrauen wichtig? Begründe mit weil, denn oder deshalb.",
+        "modelAnswerDe": "Vertrauen ist wichtig, weil ich mit einem Freund auch über persönliche Probleme sprechen möchte. Ich muss sicher sein, dass er meine Geheimnisse nicht weitererzählt. Deshalb ist Ehrlichkeit für mich die Grundlage einer Freundschaft."
+      }
     ],
     teacherNotesEn: [
       "Use the rendered Day 2 grammar page as source of truth: adjective forms plus weil-sentences, with denn and deshalb as alternatives.",
@@ -192,6 +236,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Welche Strategie hat zum Erfolg geführt?",
       "Welche Eigenschaften braucht ein erfolgreicher Mensch?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Was ist für dich eine Erfolgsgeschichte?",
+        "modelAnswerDe": "Eine Erfolgsgeschichte zeigt für mich, wie jemand trotz Schwierigkeiten ein Ziel erreicht. Erfolg bedeutet nicht nur, viel Geld zu verdienen. Auch eine bestandene Prüfung nach mehreren Versuchen kann eine Erfolgsgeschichte sein."
+      },
+      {
+        "questionDe": "Welche Person oder Situation ist ein gutes Beispiel?",
+        "modelAnswerDe": "Ein gutes Beispiel ist meine Freundin, die ihre Deutschprüfung beim zweiten Versuch bestanden hat. Beim ersten Mal war sie sehr nervös und hat zu wenig gesprochen. Danach hat sie regelmäßig geübt und sich deutlich verbessert."
+      },
+      {
+        "questionDe": "Welche Herausforderung musste diese Person überwinden?",
+        "modelAnswerDe": "Sie musste ihre Prüfungsangst überwinden und neben ihrer Arbeit Zeit zum Lernen finden. Nach dem ersten Versuch war sie enttäuscht. Trotzdem hat sie weitergemacht und Unterstützung gesucht."
+      },
+      {
+        "questionDe": "Welche Strategie hat zum Erfolg geführt?",
+        "modelAnswerDe": "Sie hat einen Lernplan erstellt und jeden Tag eine halbe Stunde gesprochen. Außerdem hat sie ihre Fehler aufgeschrieben und gezielt wiederholt. Durch diese regelmäßige Übung wurde sie sicherer."
+      },
+      {
+        "questionDe": "Welche Eigenschaften braucht ein erfolgreicher Mensch?",
+        "modelAnswerDe": "Ein erfolgreicher Mensch braucht Geduld, Ausdauer und die Bereitschaft zu lernen. Er sollte Kritik annehmen und aus Fehlern lernen können. Wichtig ist auch, sich realistische Ziele zu setzen."
+      }
+    ],
     teacherNotesEn: [
       "Teach the actual Day 3 grammar page: adjective declension after ein/eine/kein and possessive articles across Nominativ, Akkusativ and Dativ.",
       "Prioritize the contrast ein erfolgreicher Mann → einen erfolgreichen Mann → mit einem erfolgreichen Mann.",
@@ -271,6 +337,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Welchen Nachteil haben persönliche Kontakte oder Online-Portale?",
       "Was ist bei einer Wohnung sowohl praktisch als auch wichtig?",
       "Welche Methode würdest du wählen und warum?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Methode ist erfolgreicher: Online-Portale oder persönliche Kontakte?",
+        "modelAnswerDe": "Für mich sind Online-Portale erfolgreicher, weil ich dort viele Angebote vergleichen kann. Persönliche Kontakte können zwar gute Hinweise geben, aber die Auswahl ist oft kleiner. Deshalb würde ich beide Wege nutzen und zuerst online suchen."
+      },
+      {
+        "questionDe": "Welchen Vorteil haben Online-Portale?",
+        "modelAnswerDe": "Online-Portale bieten viele Angebote an einem Ort. Ich kann nach Preis, Größe und Lage filtern und spare dadurch Zeit. Außerdem lassen sich verschiedene Wohnungen direkt vergleichen."
+      },
+      {
+        "questionDe": "Welchen Nachteil haben persönliche Kontakte oder Online-Portale?",
+        "modelAnswerDe": "Bei persönlichen Kontakten hängt die Suche davon ab, ob jemand eine freie Wohnung kennt. Auf Online-Portalen gibt es dagegen oft sehr viele Bewerber. Außerdem sollte man vorsichtig sein, weil nicht jede Anzeige seriös ist."
+      },
+      {
+        "questionDe": "Was ist bei einer Wohnung sowohl praktisch als auch wichtig?",
+        "modelAnswerDe": "Bei einer Wohnung ist eine gute Verkehrsanbindung sowohl praktisch als auch wichtig. Ich komme dadurch leichter zur Arbeit und brauche vielleicht kein Auto. Auch eine bezahlbare Miete ist entscheidend."
+      },
+      {
+        "questionDe": "Welche Methode würdest du wählen und warum?",
+        "modelAnswerDe": "Ich würde zuerst ein Online-Portal nutzen, weil ich gezielt nach meinem Budget suchen kann. Gleichzeitig würde ich Freunde fragen, ob sie etwas wissen. So erhöhe ich meine Chancen, eine passende Wohnung zu finden."
+      }
     ],
     teacherNotesEn: [
       "Make paired connectors the organising system of the lesson, not just decorative vocabulary.",
@@ -352,119 +440,12 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Wie fragst du indirekt nach den Nebenkosten?",
       "Wie bittest du höflich um eine Bestätigung?",
     ],
-    teacherNotesEn: [
-      "Teach Konjunktiv-II politeness through reusable chunks: Könnten Sie..., Wäre ... möglich?, Ich würde gern....",
-      "Contrast direct questions with indirect ob/W-questions and highlight verb-final order in the indirect clause.",
-      "Use the workbook speaking task as a landlord/applicant role-play with at least four concrete apartment questions.",
-      "The writing task needs interest in the flat, appointment request/proposal, confirmation and contact information; require at least two polite structures.",
-      "Lesen follows Anna’s actual viewing and decision; Hören focuses on viewing practices, neighborhood, quick decisions and required documents.",
-    ],
-    interactionFlow: [
-      { phase: "Direct to polite", detailEn: "7 min: transform direct commands/questions into könnten/wäre/würde forms." },
-      { phase: "Indirect questions", detailEn: "10 min: convert yes/no and W-questions to ob/wann/wo/wie with verb final." },
-      { phase: "Viewing role-play", detailEn: "15 min: applicant arranges appointment and asks four apartment questions; landlord answers and confirms." },
-      { phase: "Email plan", detailEn: "8 min: order interest → appointment → confirmation/contact → closing." },
-      { phase: "Workbook bridge", detailEn: "5 min: preview Anna’s viewing details and the practical listening vocabulary for documents and group viewings." },
-    ],
-    wrapUpTaskDe: "Schreibe vier höfliche Sätze für eine Wohnungsbesichtigung: eine Bitte mit könnten, einen Vorschlag mit wäre, einen Wunsch mit würde und eine indirekte Frage.",
-    workbookConnection: {
-      grammarUrl: lessonRoute(5, "grammar"),
-      workbookUrl: lessonRoute(5, "workbook"),
-      parts: [
-        { label: "Grammar", detailEn: "Polite appointment language with Konjunktiv II (könnten, würde, wäre) plus indirect yes/no questions with ob and indirect W-questions with wann, wo, wie, welche; indirect-clause verb final." },
-        { label: "Teil 1 · Sprechen", detailEn: "Applicant/landlord role-play: politely arrange a viewing and ask at least four questions about rent, deposit, equipment, pets or availability. Practice only." },
-        { label: "Teil 2 · Schreiben", detailEn: "80–100 word polite email to the landlord: state interest, ask for or suggest a viewing appointment, request confirmation and explain how the landlord can reach you." },
-        { label: "Teil 3 · Lesen", detailEn: "Anna’s city-centre apartment viewing: appointment time, apartment features, deposit, availability, contract duration and her final decision." },
-        { label: "Teil 4 · Hören", detailEn: "Apartment-viewing practices: common appointment times, group-viewing advantage, neighborhood checks, why a quick decision matters and which documents applicants should bring." },
-      ],
-    },
-    teacherSupport: {
-      lessonOverviewEn: "Day 5 is a functional politeness lesson. Students should leave able to request, clarify and confirm an apartment viewing in both speech and email, using Konjunktiv II and indirect questions rather than blunt commands.",
-      grammarFocusEn: [
-        "Könnten Sie ...? is a polite request/question; with a second verb, the infinitive remains at the end.",
-        "Ich würde gern ... expresses a polite wish; Wäre ... möglich? makes a polite proposal.",
-        "Indirect yes/no question: Ich möchte wissen, ob die Wohnung noch frei ist.",
-        "Indirect W-question keeps the W-word but moves the conjugated verb to the end: Könnten Sie mir sagen, wann die Besichtigung ist?",
-      ],
-      modelExamplesDe: [
-        "Könnten Sie mir bitte einen Besichtigungstermin anbieten?",
-        "Wäre Samstag um 14 Uhr möglich?",
-        "Ich würde die Wohnung gern am Wochenende besichtigen.",
-        "Könnten Sie mir sagen, wie hoch die Nebenkosten sind?",
-      ],
-      commonMistakesEn: [
-        "Ich möchte wissen, wann ist der Termin instead of wann der Termin ist.",
-        "Dropping the infinitive at the end after könnten.",
-        "Using direct imperatives in a formal landlord email instead of polite Konjunktiv-II forms.",
-        "Forgetting the confirmation/contact point in the writing task.",
-      ],
-    },
-  },
-  {
-    id: "b1-day-6-stadt-oder-land",
-    course: "B1",
-    day: "Day 6",
-    dayNumber: 6,
-    assignmentId: "B1-2.6",
-    title: "B1 Day 6 · Leben in der Stadt oder auf dem Land",
-    topic: "2.6 Leben in der Stadt oder auf dem Land",
-    objective: "Students build a balanced B1 comparison of city and country life using comparative forms, reason/contrast connectors and relative clauses, then transfer that structure into the workbook speaking and opinion-writing tasks.",
-    estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: [
-      "Wo wohnst du lieber: in der Stadt oder auf dem Land?",
-      "Was ist auf dem Land besser als in der Stadt?",
-      "Welchen Nachteil hat das Leben in einer Großstadt?",
-      "Welche Rolle spielen Arbeit, Verkehr, Natur und Miete bei deiner Entscheidung?",
-    ],
-    keyPhrasesDe: [
-      "... ist ruhiger / günstiger / besser als ...",
-      "... ist so ... wie ...",
-      "Ich bevorzuge ..., weil ...",
-      "Obwohl ..., ...",
-      "Während ..., ...",
-      "Einerseits ..., andererseits ...",
-      "Das ist die Stadt, in der ...",
-      "Zusammenfassend würde ich sagen, dass ...",
-    ],
-    studentQuestionsDe: [
-      "Wo lebt man besser – in der Stadt oder auf dem Land?",
-      "Welche zwei Vorteile hat die Stadt?",
-      "Welchen Nachteil hat das Land oder die Stadt?",
-      "Wie würdest du Stadt und Land direkt vergleichen?",
-      "Welche Wohnform passt zu dir und warum?",
-    ],
-    teacherNotesEn: [
-      "Treat Day 6 as a broad B1 argument-building lesson: comparisons, reasons, contrasts and relative clauses all support one coherent opinion.",
-      "Do not overload students with every structure equally; require at least one comparison, one reason connector and one contrast in productive work.",
-      "Use relative clauses as an extension for describing places: die Stadt, die... / das Dorf, in dem....",
-      "The exact speaking task allows city, country or suburbs but requires two advantages, one disadvantage and a justified personal choice.",
-      "The reading shifts to housing types in Germany; listening compares WGs, family houses, city flats and sustainable housing, so label them as workbook comprehension extensions.",
-    ],
-    interactionFlow: [
-      { phase: "City-country spectrum", detailEn: "6 min: students position themselves on city / suburb / country and give one reason." },
-      { phase: "Comparison practice", detailEn: "9 min: build Komparativ + als and so ... wie sentences from housing prompts." },
-      { phase: "Argument connectors", detailEn: "10 min: add weil/da/denn plus obwohl/während/einerseits-andererseits to balanced statements." },
-      { phase: "B1 mini-presentation", detailEn: "12 min: two advantages + one disadvantage + opinion + example/conclusion." },
-      { phase: "Workbook bridge", detailEn: "7 min: outline the opinion response to Tanja and preview housing-type reading/listening vocabulary." },
-    ],
-    wrapUpTaskDe: "Formuliere einen 6-Satz-Meinungsbeitrag zu Stadt oder Land. Nutze einen Vergleich mit als, einen Grund mit weil und einen Gegensatz mit obwohl oder einerseits/andererseits.",
-    workbookConnection: {
-      grammarUrl: lessonRoute(6, "grammar"),
-      workbookUrl: lessonRoute(6, "workbook"),
-      parts: [
-        { label: "Grammar", detailEn: "B1 comparison toolkit: Komparativ + als / so ... wie, reasons with weil/da/denn, contrasts with aber/obwohl/während/paired connectors and relative clauses for housing/place descriptions." },
-        { label: "Teil 1 · Sprechen", detailEn: "Answer where one lives better—city, country or suburbs. Give at least two advantages, one possible disadvantage and justify the personal choice. Practice only." },
-        { label: "Teil 2 · Schreiben", detailEn: "Approximately 80-word Stadt-or-Land opinion responding to Tanja; compare both places and explain the personal decision." },
-        { label: "Teil 3 · Lesen", detailEn: "Separate housing-form comprehension: different ways of living in Germany and their features." },
-        { label: "Teil 4 · Hören", detailEn: "Separate housing-form listening covering WGs, single-family houses, city apartments and sustainable housing." },
-      ],
-    },
-    teacherSupport: {
-      lessonOverviewEn: "Day 6 consolidates several B1 structures into one communicative goal: make a balanced, well-supported choice between city and country life. The teacher should prioritise coherence and argument quality over using every grammar item at once.",
-      grammarFocusEn: [
-        "Differences: Komparativ + als; equality: so ... wie.",
-        "weil/da send the conjugated verb to the end; denn keeps normal main-clause word order.",
-        "obwohl introduces a verb-final contrast clause; während can contrast two situations; paired connectors help weigh perspectives.",
+    speakingModels: [
+      {
+        "questionDe": "Wie würdest du höflich um einen Besichtigungstermin bitten?",
+        "modelAnswerDe": "Guten Tag, ich interessiere mich für Ihre Wohnung. Wäre es möglich, einen Besichtigungstermin zu vereinbaren? Am Dienstag oder Donnerstag hätte ich nachmittags Zeit."
+      },
+      {…3037 tokens truncated…rs help weigh perspectives.",
         "Relative clauses add place information: Das ist die Stadt, in der ich studiert habe; Das Dorf, in dem meine Familie lebt, ist ruhig.",
       ],
       modelExamplesDe: [
@@ -512,6 +493,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Warum isst du bestimmte Lebensmittel selten oder oft? Nutze wegen.",
       "Was machst du trotz eines Nachteils? Nutze trotz.",
       "Sind Fertiggerichte eine gute Wahl für eine gesunde Ernährung?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Fast Food oder Hausmannskost – was ist besser?",
+        "modelAnswerDe": "Für mich ist Hausmannskost besser, weil ich die Zutaten selbst auswählen kann. Ich kann zum Beispiel mehr Gemüse und weniger Salz verwenden. Fast Food ist praktisch, wenn ich wenig Zeit habe, sollte aber nicht meine einzige Wahl sein."
+      },
+      {
+        "questionDe": "Welche zwei Vorteile und zwei Nachteile hat Fast Food?",
+        "modelAnswerDe": "Fast Food ist schnell verfügbar und oft bequem unterwegs zu essen. Allerdings enthalten viele Angebote viel Salz oder Fett. Außerdem entsteht durch die Verpackung häufig viel Müll."
+      },
+      {
+        "questionDe": "Warum isst du bestimmte Lebensmittel selten oder oft? Nutze wegen.",
+        "modelAnswerDe": "Wegen ihres hohen Zuckergehalts trinke ich Limonade nur selten. Gemüse esse ich dagegen oft wegen seiner Vitamine. Außerdem schmeckt mir ein frisch gekochtes Essen besser."
+      },
+      {
+        "questionDe": "Was machst du trotz eines Nachteils? Nutze trotz.",
+        "modelAnswerDe": "Trotz meines vollen Terminkalenders koche ich abends meistens selbst. Ich bereite einfache Gerichte zu, die nicht lange dauern. Dadurch muss ich nicht jeden Tag Essen bestellen."
+      },
+      {
+        "questionDe": "Sind Fertiggerichte eine gute Wahl für eine gesunde Ernährung?",
+        "modelAnswerDe": "Das hängt von den Zutaten ab. Manche Fertiggerichte enthalten viel Salz, andere können eine praktische Ergänzung sein. Ich würde die Zutatenliste prüfen und zum Beispiel frisches Gemüse dazu essen."
+      }
     ],
     teacherNotesEn: [
       "Teach Genitiv as a functional case: possession/relationship and especially the prepositions wegen and trotz in standard written German.",
@@ -592,6 +595,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Wann muss man ärztliche Hilfe suchen?",
       "Welche Methode kann Stress reduzieren?",
       "Sind regelmäßige Sporteinheiten der Schlüssel zu einem gesunden Leben?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Wie wichtig ist eine gesunde Lebensweise für dich?",
+        "modelAnswerDe": "Eine gesunde Lebensweise ist mir wichtig, weil ich mich im Alltag fit fühlen möchte. Ich achte auf Bewegung, ausreichend Schlaf und abwechslungsreiches Essen. Trotzdem möchte ich mir gelegentlich auch etwas Süßes gönnen."
+      },
+      {
+        "questionDe": "Welche drei Dinge sollte man regelmäßig tun?",
+        "modelAnswerDe": "Man sollte sich regelmäßig bewegen, abwechslungsreich essen und ausreichend schlafen. Ich gehe zum Beispiel oft spazieren und koche mit Gemüse. Feste Schlafzeiten helfen mir, morgens ausgeruht zu sein."
+      },
+      {
+        "questionDe": "Wann muss man ärztliche Hilfe suchen?",
+        "modelAnswerDe": "Wenn Beschwerden stark sind, länger anhalten oder schlimmer werden, sollte man ärztlichen Rat suchen. Bei plötzlich auftretenden ernsten Beschwerden muss man sofort Hilfe holen. Ich würde gesundheitliche Probleme nicht einfach ignorieren."
+      },
+      {
+        "questionDe": "Welche Methode kann Stress reduzieren?",
+        "modelAnswerDe": "Ein ruhiger Spaziergang hilft mir, Stress zu reduzieren. Dabei lege ich mein Handy weg und konzentriere mich auf meine Umgebung. Danach kann ich oft wieder klarer denken."
+      },
+      {
+        "questionDe": "Sind regelmäßige Sporteinheiten der Schlüssel zu einem gesunden Leben?",
+        "modelAnswerDe": "Regelmäßiger Sport ist ein wichtiger Teil eines gesunden Lebens, aber nicht der einzige. Auch Schlaf, Ernährung und Erholung spielen eine Rolle. Für mich ist eine gute Mischung entscheidend."
+      }
     ],
     teacherNotesEn: [
       "Teach modal meaning, not only form: sollte recommendation, muss necessity, kann possibility, darf permission/healthy boundary, möchte personal intention.",
@@ -674,6 +699,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Welche persönliche Strategie hilft dir?",
       "Welche Vor- und Nachteile hat Homeoffice?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Ist eine gute Work-Life-Balance in der modernen Welt möglich?",
+        "modelAnswerDe": "Ja, eine gute Work-Life-Balance ist möglich, aber man muss Grenzen setzen. Arbeit und Freizeit sollten nicht ständig ineinander übergehen. Auch der Arbeitgeber muss darauf achten, dass die Aufgaben in der Arbeitszeit zu schaffen sind."
+      },
+      {
+        "questionDe": "Welche Faktoren stören die Balance am stärksten?",
+        "modelAnswerDe": "Zu viele Überstunden und ständige Erreichbarkeit stören die Balance besonders. Lange Arbeitswege nehmen ebenfalls Zeit weg. Dadurch bleibt weniger Zeit für Familie, Freunde und Erholung."
+      },
+      {
+        "questionDe": "Wie können Arbeitgeber helfen? Nutze damit oder indem.",
+        "modelAnswerDe": "Arbeitgeber können flexible Arbeitszeiten anbieten, damit Beschäftigte ihren Alltag besser planen können. Sie helfen auch, indem sie Aufgaben fair verteilen. Außerdem sollten sie Nachrichten nach Feierabend nicht sofort beantwortet erwarten."
+      },
+      {
+        "questionDe": "Welche persönliche Strategie hilft dir?",
+        "modelAnswerDe": "Ich plane feste Zeiten für Arbeit und Freizeit. Nach Feierabend schalte ich berufliche Benachrichtigungen aus. Außerdem reserviere ich bewusst Zeit für Sport und Freunde."
+      },
+      {
+        "questionDe": "Welche Vor- und Nachteile hat Homeoffice?",
+        "modelAnswerDe": "Im Homeoffice spare ich den Arbeitsweg und kann meinen Tag flexibler gestalten. Allerdings fehlen manchmal persönliche Gespräche mit Kollegen. Außerdem fällt es mir schwerer, nach der Arbeit wirklich abzuschalten."
+      }
+    ],
     teacherNotesEn: [
       "Organize grammar by communicative function: purpose (um ... zu/damit), method (indem), alternative/absence (statt/ohne ... zu), contrast (obwohl/trotzdem).",
       "Keep the subject rule explicit: um ... zu normally requires the same subject; damit allows a separate subject.",
@@ -755,6 +802,28 @@ export const b1WorkbookAlignedSlidesDays1To10 = [
       "Welche Strategie ist am wichtigsten und warum?",
       "Je weniger Bildschirmzeit du hast, desto was verändert sich bei dir?",
       "Welche Schwierigkeit hat eine digitale Auszeit im Alltag?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Brauchen wir digitale Auszeiten für unsere Gesundheit?",
+        "modelAnswerDe": "Ja, digitale Auszeiten können helfen, bewusster mit dem Handy umzugehen. Wenn ich ständig Nachrichten lese, kann ich mich schlechter konzentrieren. Deshalb lege ich beim Essen und vor dem Schlafengehen mein Handy weg."
+      },
+      {
+        "questionDe": "Welche Aktivität ist für dich entspannender als Scrollen?",
+        "modelAnswerDe": "Ein Spaziergang ist für mich entspannender als Scrollen. Ich bewege mich und nehme meine Umgebung wahr. Danach fühle ich mich ruhiger als nach einer Stunde am Handy."
+      },
+      {
+        "questionDe": "Welche Strategie ist am wichtigsten und warum?",
+        "modelAnswerDe": "Für mich sind feste handyfreie Zeiten am wichtigsten. Eine klare Regel ist leichter einzuhalten als der allgemeine Wunsch, weniger online zu sein. Deshalb benutze ich beim gemeinsamen Essen kein Handy."
+      },
+      {
+        "questionDe": "Je weniger Bildschirmzeit du hast, desto was verändert sich bei dir?",
+        "modelAnswerDe": "Je weniger Zeit ich am Bildschirm verbringe, desto mehr Zeit habe ich für Freunde und Bewegung. Außerdem fällt es mir leichter, mich auf eine Aufgabe zu konzentrieren. Für meine Arbeit brauche ich den Computer natürlich weiterhin."
+      },
+      {
+        "questionDe": "Welche Schwierigkeit hat eine digitale Auszeit im Alltag?",
+        "modelAnswerDe": "Eine Schwierigkeit ist, dass viele berufliche Informationen digital kommen. Ich kann mein Handy deshalb nicht den ganzen Tag ausschalten. Stattdessen plane ich kurze Auszeiten und sage anderen, wann ich erreichbar bin."
+      }
     ],
     teacherNotesEn: [
       "Teach the full comparison system: difference with Komparativ + als, equality with so/genauso ... wie, highest degree with Superlativ and relationship with je ... desto/umso.",

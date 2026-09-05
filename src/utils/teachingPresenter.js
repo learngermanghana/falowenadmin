@@ -425,6 +425,8 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       title: advanced ? "Sprechtraining" : "Speaking questions",
       items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [],
       supportItems: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+      questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [],
+      requiresQuestionModel: String(slide.course || "").toUpperCase() === "B1",
       suggestedMinutes: interactionMinutes(slide, 3) || 10,
     },
     {
@@ -436,6 +438,10 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       suggestedMinutes: 5,
     },
   ];
+}
+
+export function getSpeakingQuestionModel(stage = {}, question = "") {
+  return stage.questionModels?.find((item) => item.questionDe === question) || null;
 }
 
 export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {

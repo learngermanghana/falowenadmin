@@ -39,6 +39,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Kann sich die passende Lebensform im Laufe des Lebens ändern?",
       "Wie ist die Situation in deinem Heimatland?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Vor- und Nachteile haben Familie, WG und Singleleben?",
+        "modelAnswerDe": "Bei der Familie bekommt man Unterstützung, hat aber manchmal weniger Freiheit. In einer WG kann man Kosten teilen, muss jedoch Rücksicht auf Mitbewohner nehmen. Allein zu wohnen bietet viel Privatsphäre, ist aber oft teurer und manchmal einsam."
+      },
+      {
+        "questionDe": "Welche Rolle spielen Kosten, Privatsphäre und Unterstützung?",
+        "modelAnswerDe": "Die Kosten entscheiden oft darüber, welche Wohnform möglich ist. Privatsphäre ist wichtig, damit man sich zurückziehen kann. Gleichzeitig finde ich Unterstützung im Alltag wertvoll, besonders wenn es Probleme gibt."
+      },
+      {
+        "questionDe": "Welche Lebensform würdest du heute wählen und warum?",
+        "modelAnswerDe": "Ich würde heute eine WG wählen, weil ich die Miete teilen und mit anderen zusammenleben möchte. Trotzdem hätte ich gern ein eigenes Zimmer. Klare Regeln für Ruhe und Sauberkeit wären mir wichtig."
+      },
+      {
+        "questionDe": "Kann sich die passende Lebensform im Laufe des Lebens ändern?",
+        "modelAnswerDe": "Ja, die passende Lebensform kann sich ändern. Während der Ausbildung ist eine WG vielleicht praktisch, später möchte man möglicherweise mit einem Partner zusammenwohnen. Im Alter kann die Nähe zur Familie wieder wichtiger werden."
+      },
+      {
+        "questionDe": "Wie ist die Situation in deinem Heimatland?",
+        "modelAnswerDe": "Nach meiner Erfahrung leben in Ghana viele Menschen mit Familienangehörigen zusammen. Das kann Unterstützung bieten und Kosten sparen. Es gibt aber auch Menschen, die allein oder mit Freunden wohnen, besonders wegen Arbeit oder Ausbildung."
+      }
+    ],
     teacherNotesEn: [
       "Teach the actual Day 21 grammar: weil/obwohl/während/dass with verb-final order plus einerseits … andererseits, zwar … aber and nicht nur … sondern auch.",
       "The speaking and writing tasks both require comparison plus a clear personal judgement; do not accept lists of advantages without evaluation.",
@@ -113,6 +135,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Wie wichtig sind gemeinsame Zukunftspläne?",
       "Welche Chancen und Risiken hat Online-Dating?",
       "Was ist wichtiger: gemeinsame Interessen oder gegenseitiger Respekt?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Eigenschaften sollte ein idealer Partner haben?",
+        "modelAnswerDe": "Mein idealer Partner sollte ehrlich, zuverlässig und verständnisvoll sein. Mir ist wichtig, dass wir offen über Probleme sprechen können. Außerdem sollte jeder die persönlichen Ziele des anderen respektieren."
+      },
+      {
+        "questionDe": "Was bedeutet gute Kommunikation für dich?",
+        "modelAnswerDe": "Gute Kommunikation bedeutet für mich, ehrlich zu sprechen und aufmerksam zuzuhören. Man sollte Probleme ansprechen, ohne den anderen zu beleidigen. Wichtig ist auch, nachzufragen, wenn man etwas nicht versteht."
+      },
+      {
+        "questionDe": "Wie wichtig sind gemeinsame Zukunftspläne?",
+        "modelAnswerDe": "Gemeinsame Zukunftspläne sind wichtig, weil große Entscheidungen beide betreffen. Zum Beispiel sollte man über Wohnort, Beruf und Familie sprechen. Trotzdem dürfen sich Wünsche ändern, wenn man gemeinsam darüber redet."
+      },
+      {
+        "questionDe": "Welche Chancen und Risiken hat Online-Dating?",
+        "modelAnswerDe": "Online-Dating bietet die Chance, Menschen außerhalb des eigenen Freundeskreises kennenzulernen. Allerdings können Profile falsche Informationen enthalten. Deshalb würde ich persönliche Daten vorsichtig teilen und mich zuerst an einem öffentlichen Ort treffen."
+      },
+      {
+        "questionDe": "Was ist wichtiger: gemeinsame Interessen oder gegenseitiger Respekt?",
+        "modelAnswerDe": "Gegenseitiger Respekt ist für mich wichtiger. Gemeinsame Interessen sind schön, aber man muss nicht jedes Hobby teilen. Ohne Respekt kann eine Beziehung meiner Meinung nach nicht gut funktionieren."
+      }
     ],
     teacherNotesEn: [
       "The intended deep grammar is verified in Falowen source: dass clauses, relative clauses and reciprocal expressions miteinander/füreinander/voneinander/aufeinander, plus weil/wenn/obwohl.",
@@ -191,6 +235,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Was kann man tun, wenn man nervös ist?",
       "Wie wichtig ist der erste Eindruck?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Treffpunkte würdest du vorschlagen?",
+        "modelAnswerDe": "Ich würde ein ruhiges Café oder einen Spaziergang in einem belebten Park vorschlagen. Dort kann man sich gut unterhalten. Für ein erstes Treffen wäre mir ein öffentlicher Ort wichtig."
+      },
+      {
+        "questionDe": "Welche Vor- und Nachteile haben Restaurant und Spaziergang?",
+        "modelAnswerDe": "Im Restaurant kann man bequem sitzen und gemeinsam essen, aber es kann teuer oder laut sein. Ein Spaziergang kostet wenig und wirkt oft lockerer. Allerdings ist man dabei vom Wetter abhängig."
+      },
+      {
+        "questionDe": "Wie reagiert man höflich, wenn man kein weiteres Treffen möchte?",
+        "modelAnswerDe": "Vielen Dank für das Treffen, ich habe mich über unser Gespräch gefreut. Ich habe aber gemerkt, dass es für mich nicht für ein weiteres Date passt. Ich möchte ehrlich sein und wünsche dir alles Gute."
+      },
+      {
+        "questionDe": "Was kann man tun, wenn man nervös ist?",
+        "modelAnswerDe": "Man kann vorher ein paar einfache Gesprächsthemen überlegen und ruhig durchatmen. Mir hilft es, das Treffen nicht wie eine Prüfung zu sehen. Außerdem darf man offen sagen, dass man ein bisschen nervös ist."
+      },
+      {
+        "questionDe": "Wie wichtig ist der erste Eindruck?",
+        "modelAnswerDe": "Der erste Eindruck spielt eine Rolle, weil er beeinflusst, wie wohl man sich fühlt. Trotzdem zeigt ein kurzes Treffen nicht den ganzen Charakter. Ich würde deshalb auch darauf achten, wie die Person zuhört und mit anderen umgeht."
+      }
+    ],
     teacherNotesEn: [
       "The deep Day 23 grammar is available inside the workbook Grammar tab, but the lesson route does not expose a separate direct grammar page; leave grammarUrl unset and use the workbook link.",
       "Teach polite suggestions with könnten/würden, reasons with weil/da, conditions with wenn and balanced reactions with obwohl/aber.",
@@ -267,6 +333,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Welche Rolle spielen Secondhand, regionale Produkte und Verpackungen?",
       "Wie unterscheiden sich Konsumgewohnheiten in Deutschland und deinem Heimatland?",
       "Welche Maßnahme ist für dich besonders realistisch?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Wie kann man nachhaltiger konsumieren?",
+        "modelAnswerDe": "Man kann nachhaltiger konsumieren, indem man nur kauft, was man wirklich braucht. Außerdem kann man Dinge reparieren und gebraucht kaufen. Beim Essen plane ich meine Einkäufe, damit weniger verdirbt."
+      },
+      {
+        "questionDe": "Welche Nachteile haben nachhaltige Alternativen?",
+        "modelAnswerDe": "Nachhaltige Alternativen können teurer oder schwerer zu finden sein. Reparaturen brauchen manchmal Zeit, und gebrauchte Waren sind nicht immer in der passenden Größe verfügbar. Deshalb muss man prüfen, welche Lösung im Alltag möglich ist."
+      },
+      {
+        "questionDe": "Welche Rolle spielen Secondhand, regionale Produkte und Verpackungen?",
+        "modelAnswerDe": "Secondhand verlängert die Nutzung von Kleidung und anderen Dingen. Regionale und saisonale Lebensmittel können lange Transportwege vermeiden. Weniger Einwegverpackung hilft außerdem, Müll zu reduzieren."
+      },
+      {
+        "questionDe": "Wie unterscheiden sich Konsumgewohnheiten in Deutschland und deinem Heimatland?",
+        "modelAnswerDe": "Ich kenne aus Deutschland Pfandsysteme und viele Angebote für Mülltrennung. In Ghana werden nach meiner Erfahrung manche Dinge lange genutzt und repariert, während Verpackungsmüll ebenfalls ein Problem ist. Die Gewohnheiten unterscheiden sich aber auch innerhalb beider Länder."
+      },
+      {
+        "questionDe": "Welche Maßnahme ist für dich besonders realistisch?",
+        "modelAnswerDe": "Für mich ist es besonders realistisch, mit einer Einkaufsliste einzukaufen. So kaufe ich weniger unnötige Lebensmittel und spare Geld. Außerdem möchte ich Kleidung länger tragen, bevor ich etwas Neues kaufe."
+      }
     ],
     teacherNotesEn: [
       "Day 24 has no day-specific deep grammar page. The workbook Grammar tab supplies general B1 advantage/disadvantage/opinion training; build the lesson language from the workbook's own dass/weil/um … zu/sollten/einerseits … andererseits frames.",
@@ -345,6 +433,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Wie reklamiert man beschädigte Ware höflich?",
       "Wann würdest du Ersatz statt Geld zurück verlangen?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Vorteile hat Online-Shopping?",
+        "modelAnswerDe": "Online-Shopping ist bequem, weil ich unabhängig von Öffnungszeiten bestellen kann. Ich kann Preise und Angebote leicht vergleichen. Außerdem finde ich manchmal Produkte, die es in meiner Nähe nicht gibt."
+      },
+      {
+        "questionDe": "Welche Risiken gibt es bei Fake-Shops und Datenschutz?",
+        "modelAnswerDe": "Bei Fake-Shops besteht das Risiko, dass ich bezahle und keine Ware bekomme. Persönliche Daten können außerdem missbraucht werden. Deshalb würde ich unbekannte Anbieter sorgfältig prüfen und nicht unnötig viele Daten angeben."
+      },
+      {
+        "questionDe": "Was sollte man vor einer Bestellung prüfen?",
+        "modelAnswerDe": "Vor einer Bestellung prüfe ich den Gesamtpreis, die Lieferkosten und die Lieferzeit. Außerdem schaue ich nach Angaben zum Anbieter und zu Rücksendungen. Bewertungen können helfen, sollten aber nicht die einzige Grundlage sein."
+      },
+      {
+        "questionDe": "Wie reklamiert man beschädigte Ware höflich?",
+        "modelAnswerDe": "Guten Tag, meine Bestellung ist heute angekommen, leider ist der Artikel beschädigt. Im Anhang finden Sie ein Foto des Schadens. Könnten Sie mir bitte mitteilen, ob ein Ersatz möglich ist?"
+      },
+      {
+        "questionDe": "Wann würdest du Ersatz statt Geld zurück verlangen?",
+        "modelAnswerDe": "Ich würde Ersatz verlangen, wenn ich den Artikel weiterhin brauche und nur dieses Exemplar beschädigt ist. Voraussetzung wäre, dass ein einwandfreier Ersatz zeitnah verfügbar ist. Wenn ich kein Vertrauen mehr in das Produkt hätte, würde ich lieber um eine Rückzahlung bitten."
+      }
+    ],
     teacherNotesEn: [
       "Day 25 has no day-specific deep grammar page; use functional complaint language from the workbook plus the general B1 argument training in the Grammar tab.",
       "For writing, insist on formal register, clear chronology (purchase → damage → return) and one explicit requested solution.",
@@ -421,6 +531,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Was sollte man vor der Reise vorbereiten?",
       "Wie reagiert man höflich bei einer Reklamation?",
       "Welche Reise würdest du planen und welche Risiken gibt es?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Probleme können bei Flug, Zug, Hotel oder Gepäck entstehen?",
+        "modelAnswerDe": "Ein Flug kann ausfallen, und ein Zug kann sich verspäten. Im Hotel kann eine Buchung fehlen oder das Zimmer nicht sauber sein. Außerdem kann Gepäck verloren gehen oder beschädigt ankommen."
+      },
+      {
+        "questionDe": "Welche Lösung passt zu welchem Problem?",
+        "modelAnswerDe": "Bei einem ausgefallenen Flug würde ich nach einer alternativen Verbindung fragen. Bei einem schmutzigen Hotelzimmer würde ich um Reinigung oder ein anderes Zimmer bitten. Fehlendes Gepäck würde ich direkt am zuständigen Schalter melden."
+      },
+      {
+        "questionDe": "Was sollte man vor der Reise vorbereiten?",
+        "modelAnswerDe": "Vor der Reise sollte man Buchungen, Ausweisdokumente und notwendige Reiseinformationen prüfen. Ich würde wichtige Unterlagen auch offline speichern. Außerdem plane ich genügend Zeit und einen kleinen finanziellen Puffer ein."
+      },
+      {
+        "questionDe": "Wie reagiert man höflich bei einer Reklamation?",
+        "modelAnswerDe": "Guten Tag, ich habe ein ruhiges Zimmer gebucht, aber neben meinem Zimmer finden laute Bauarbeiten statt. Könnten Sie mir bitte ein anderes Zimmer anbieten? Ich wäre Ihnen für eine schnelle Lösung dankbar."
+      },
+      {
+        "questionDe": "Welche Reise würdest du planen und welche Risiken gibt es?",
+        "modelAnswerDe": "Ich würde eine kurze Städtereise mit dem Zug planen. Mögliche Risiken sind Verspätungen, schlechtes Wetter oder eine fehlerhafte Hotelbuchung. Deshalb würde ich Verbindungen und Buchungen vorher prüfen und Alternativen bereithalten."
+      }
     ],
     teacherNotesEn: [
       "Day 26 has no day-specific deep grammar page. Use the workbook's functional conditionals with wenn/falls, Konjunktiv II with würden/könnten and advice with sollten.",
@@ -499,6 +631,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Welche Maßnahme kostet wenig oder nichts?",
       "Was sollten Schule, Arbeit oder Familie zusätzlich tun?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Wie kann man zu Hause Energie und Wasser sparen?",
+        "modelAnswerDe": "Zu Hause kann man Licht ausschalten, wenn es nicht gebraucht wird, und Geräte nicht unnötig laufen lassen. Wasser spart man zum Beispiel durch kürzeres Duschen. Einen tropfenden Wasserhahn sollte man reparieren lassen."
+      },
+      {
+        "questionDe": "Wie kann man nachhaltiger einkaufen?",
+        "modelAnswerDe": "Man kann mit einer Einkaufsliste einkaufen und langlebige Produkte wählen. Gebrauchte Kleidung ist ebenfalls eine Möglichkeit. Bei Lebensmitteln hilft es, nur die Mengen zu kaufen, die man verbrauchen kann."
+      },
+      {
+        "questionDe": "Welche Mobilitätslösungen sind realistisch?",
+        "modelAnswerDe": "Für kurze Wege sind Gehen und Radfahren realistisch, wenn die Wege sicher sind. Für längere Strecken kommen Busse oder Fahrgemeinschaften infrage. Welche Lösung passt, hängt vom Wohnort und vom Angebot ab."
+      },
+      {
+        "questionDe": "Welche Maßnahme kostet wenig oder nichts?",
+        "modelAnswerDe": "Das Licht in leeren Räumen auszuschalten kostet nichts. Auch Lebensmittelreste zu verwerten kann Geld sparen. Ich würde mit solchen einfachen Gewohnheiten anfangen."
+      },
+      {
+        "questionDe": "Was sollten Schule, Arbeit oder Familie zusätzlich tun?",
+        "modelAnswerDe": "Schulen und Betriebe könnten Abfall vermeiden und Energiesparregeln gemeinsam festlegen. In der Familie kann man Einkäufe und Fahrten besser planen. Wichtig ist, dass alle mitmachen und die Regeln im Alltag umsetzbar sind."
+      }
+    ],
     teacherNotesEn: [
       "Day 27 has no day-specific deep grammar page; use the workbook Grammar tab's general B1 argument training and the lesson's own indem/dass/wenn/könnte frames.",
       "Teil 3 is a coherent seven-question environment text on recycling, energy, transport and consumption.",
@@ -575,6 +729,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "Welche Hindernisse gibt es auf dem Land oder bei wenig Geld?",
       "Wie ist die Situation in deinem Land?",
       "Welche Maßnahme würdest du persönlich zuerst umsetzen?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Maßnahmen helfen bei Energie, Verkehr, Konsum und Ernährung?",
+        "modelAnswerDe": "Bei Energie helfen sparsame Geräte und das Ausschalten unnötiger Beleuchtung. Im Verkehr kann man öfter Bus fahren oder Wege gemeinsam zurücklegen. Beim Konsum helfen Reparieren und Secondhand, bei der Ernährung weniger Lebensmittelverschwendung und häufiger pflanzliche Mahlzeiten."
+      },
+      {
+        "questionDe": "Welche Vorteile und Nachteile haben diese Maßnahmen?",
+        "modelAnswerDe": "Viele Maßnahmen sparen Ressourcen und auf Dauer auch Geld. Busfahren oder Reparieren kann aber mehr Zeit brauchen. Manche Anschaffungen sind zunächst teuer, deshalb sollte man Nutzen und Kosten vergleichen."
+      },
+      {
+        "questionDe": "Welche Hindernisse gibt es auf dem Land oder bei wenig Geld?",
+        "modelAnswerDe": "Auf dem Land fahren Busse manchmal selten und die Wege sind lang. Wer wenig Geld hat, kann nicht sofort neue sparsame Geräte kaufen. Deshalb braucht man auch günstige Lösungen und bessere öffentliche Angebote."
+      },
+      {
+        "questionDe": "Wie ist die Situation in deinem Land?",
+        "modelAnswerDe": "In Ghana hängt vieles vom Wohnort und vom Einkommen ab. Nach meiner Erfahrung werden Gegenstände oft repariert und lange genutzt. Gleichzeitig können unzuverlässige Verkehrsangebote und fehlende Möglichkeiten zur Mülltrennung nachhaltiges Verhalten erschweren."
+      },
+      {
+        "questionDe": "Welche Maßnahme würdest du persönlich zuerst umsetzen?",
+        "modelAnswerDe": "Ich würde zuerst meine Lebensmitteleinkäufe besser planen. Mit einer Einkaufsliste und kleineren Mengen werfe ich weniger weg. Das ist sofort möglich und spart gleichzeitig Geld."
+      }
     ],
     teacherNotesEn: [
       "Day 28 has no day-specific deep grammar page. Use the workbook's general B1 argument training and the lesson's indem/dass/weil/trotzdem contrast-and-reason frames.",
