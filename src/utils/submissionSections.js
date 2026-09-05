@@ -15,15 +15,21 @@ function partNumberFromToken(value = "") {
 }
 
 export function normalizeSubmissionPart(label = "", explicitNumber = "") {
-  const explicitPart = partNumberFromToken(explicitNumber);
-  if (explicitPart) return `teil${explicitPart}`;
   const normalized = normalizedLabel(label);
-  const numbered = normalized.match(/(?:teil|tiel|part)([1-4]|i{1,3}|iv)/i);
-  const numberedPart = partNumberFromToken(numbered?.[1]);
-  if (numberedPart) return `teil${numberedPart}`;
+
+  // Prefer a semantic section label when it is present. Some workbook exports
+  // reuse a stale numeric prefix (for example "Teil 2 · Lesen" and
+  // "Teil 2 · Hören"). In those cases the skill name is the reliable signal
+  // for the reference part used by deterministic marking.
   if (/schreiben|writing/.test(normalized)) return "teil2";
   if (/lesen|reading/.test(normalized)) return "teil3";
   if (/horen|hoeren|listening|audio/.test(normalized)) return "teil4";
+
+  const explicitPart = partNumberFromToken(explicitNumber);
+  if (explicitPart) return `teil${explicitPart}`;
+  const numbered = normalized.match(/(?:teil|tiel|part)([1-4]|i{1,3}|iv)/i);
+  const numberedPart = partNumberFromToken(numbered?.[1]);
+  if (numberedPart) return `teil${numberedPart}`;
   return "main";
 }
 
