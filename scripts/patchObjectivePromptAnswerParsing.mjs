@@ -94,4 +94,39 @@ if (source.includes(returnAnchor) && !source.includes(returnReplacement)) {
 }
 
 fs.writeFileSync(target, source);
-console.log("Objective parsing now reads answers beneath numbered question prompts without dropping question-form choices.");
+
+// The smart/AI marking service has its own submission-section parser in
+// autoMarking.js. Some B1 workbook exports repeat the Schreiben number in
+// middle-dot headings ("Teil 2 · Lesen" / "Teil 2 · Hören") and put compact
+// answers on that same line. Normalize only that workbook form, preserving
+// intentional legacy prompts such as "Teil 2. Lesen Sie ...".
+const autoTarget = new URL("../src/utils/autoMarking.js", import.meta.url);
+let autoSource = fs.readFileSync(autoTarget, "utf8");
+
+const autoSplitBefore = `function splitSubmissionIntoParts(submissionText = "") {
+  const text = String(submissionText || "").trim();
+  if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];`;
+const autoSplitAfter = `function splitSubmissionIntoParts(submissionText = "") {
+  const text = String(submissionText || "")
+    .trim()
+    .replace(/(^|\\n)([ \\t]*(?:teil|part)[ \\t]*)2([ \\t]*·[ \\t]*(?:lesen|reading)\\b)/gi, "$1$23$3")
+    .replace(/(^|\\n)([ \\t]*(?:teil|part)[ \\t]*)2([ \\t]*·[ \\t]*(?:h[oö]ren|hoeren|listening)\\b)/gi, "$1$24$3")
+    .replace(/((?:teil|part)[ \\t]*[34][ \\t]*·[ \\t]*(?:lesen|reading|h[oö]ren|hoeren|listening)\\b)[ \\t]+(?=\\d{1,3}[ \\t]*[A-FX](?:\\b|[).,:;–-]))/gi, "$1\\n");
+  if (!text) return [{ partId: "unknown", title: "Unknown", text: "", confidence: 0 }];`;
+
+if (autoSource.includes(autoSplitBefore)) {
+  autoSource = autoSource.replace(autoSplitBefore, autoSplitAfter);
+} else if (!autoSource.includes(".replace(/(^|\\n)([ \\t]*(?:teil|part)[ \\t]*)2([ \\t]*·[ \\t]*(?:lesen|reading)")) {
+  throw new Error("smart marking section parser changed; update patchObjectivePromptAnswerParsing.mjs");
+}
+
+const compactBefore = `.flatMap((line) => line.split(/[,;]+/))`;
+const compactAfter = `.flatMap((line) => line.split(/[,;·•|]+/))`;
+if (autoSource.includes(compactBefore)) {
+  autoSource = autoSource.replace(compactBefore, compactAfter);
+} else if (!autoSource.includes(compactAfter)) {
+  throw new Error("smart marking compact objective parser changed; update patchObjectivePromptAnswerParsing.mjs");
+}
+
+fs.writeFileSync(autoTarget, autoSource);
+console.log("Objective parsing now reads answers beneath numbered prompts and compact B1 Lesen/Hören workbook sections.");
