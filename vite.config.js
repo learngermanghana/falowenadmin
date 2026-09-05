@@ -17,6 +17,10 @@ export default defineConfig({
     },
   },
   build: {
+    // Vite 7 defaults to newer Safari versions. Lower the production target
+    // so older iPads on Safari/iPadOS 14+ receive syntax they can execute.
+    // Safari 14 still supports the native ESM features Vite requires.
+    target: 'safari14',
     // Work around a Firefox runtime error in the minified bundle:
     // "can't access lexical declaration before initialization".
     minify: false,
