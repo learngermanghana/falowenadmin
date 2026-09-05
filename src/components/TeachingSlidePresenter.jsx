@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   buildTeachingPresenterStages,
   clampPresenterIndex,
+  getSpeakingQuestionModel,
   isTeachingPresenterV2Slide,
 } from "../utils/teachingPresenter.js";
 import "./TeachingSlidePresenter.css";
@@ -128,6 +129,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
   const activeQuestion = stage.type === "question-reveal" ? stage.items[questionIndex] : "";
+  const activeModel = getSpeakingQuestionModel(stage, activeQuestion);
+  const directAnswerMode = stage.requiresQuestionModel || Boolean(activeModel);
   const timerExpired = presenterV2 && timerRemaining === 0 && !timerRunning;
   const timerPresets = [...new Set([stage.suggestedMinutes, 2, 5, 10].filter(Boolean))];
 
@@ -186,12 +189,18 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               <div className="presenter-question-actions">
                 <button type="button" onClick={() => setShowQuestionSupport((current) => !current)}>
                   {showQuestionSupport
-                    ? (advancedClassroom ? "Modell ausblenden" : "Hide model support")
-                    : (advancedClassroom ? "Modell anzeigen" : "Reveal model support")}
+                    ? (advancedClassroom ? "Modell ausblenden" : directAnswerMode ? "Hide model answer" : "Hide model support")
+                    : (advancedClassroom ? "Modell anzeigen" : directAnswerMode ? "Reveal model answer" : "Reveal model support")}
                 </button>
                 <button type="button" onClick={randomQuestion}>{advancedClassroom ? "Zufallsfrage" : "Random question"}</button>
               </div>
-              {showQuestionSupport && stage.supportItems?.length ? (
+              {showQuestionSupport && directAnswerMode ? (
+                <div className="presenter-model-support">
+                  <strong>Possible model answer</strong>
+                  <p>{activeModel?.modelAnswerDe || "A model answer has not been added for this question yet."}</p>
+                  {activeModel?.modelAnswerDe ? <small>Example only — adapt the details to your own experience.</small> : null}
+                </div>
+              ) : showQuestionSupport && stage.supportItems?.length ? (
                 <div className="presenter-model-support">
                   <strong>{advancedClassroom ? "Modellsprache" : "Model language"}</strong>
                   <ul>{stage.supportItems.slice(0, 4).map((item) => <li key={item}>{item}</li>)}</ul>
