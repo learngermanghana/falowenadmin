@@ -255,7 +255,7 @@ function buildWeeklyMessage({ student, klass, records, replyNote = "", timezone 
     .map((record) => `${formatDate(record.session.startsAt, timezone)}: ${statusLabel(record.status)}`)
     .join("; ");
   const correction = normalize(replyNote) ? ` ${normalize(replyNote)}` : "";
-  return `Hello ${name}, here is your attendance summary for ${normalize(klass.name || klass.className || klass.classId) || "your class"}, covering ${formatDate(first, timezone)} to ${formatDate(last, timezone)}. Present: ${counts.present || 0}; Late: ${counts.late || 0}; Excused: ${counts.excused || 0}; Absent: ${counts.absent || 0}. Attendance rate: ${attendanceRate(records)}%. Lessons: ${lessons}.${correction}`;
+  return `Hello ${name}, here is your attendance summary for ${normalize(klass.name || klass.className || klass.classId) || "your class"}, covering ${formatDate(first, timezone)} to ${formatDate(last, timezone)}. Present: ${counts.present || 0}; Late: ${counts.late || 0}; Excused: ${counts.excused || 0}; Absent: ${counts.absent || 0}. Attendance rate: ${attendanceRate(records)}%. Lessons: ${lessons}. How attendance works: Your attendance is recorded when you check in. If you do not check in, the app marks you absent. A Late status means you checked in late; it does not necessarily mean you joined the class late. You are responsible for checking in for every class, so always open the check-in link and complete your check-in on time.${correction}`;
 }
 
 function deliveryId({ classId, mode, periodKey, studentKey }) {

@@ -154,6 +154,11 @@ test("personalized emails include confirmed status and weekly totals", () => {
   assert.match(weeklyMessage, /Present: 1/);
   assert.match(weeklyMessage, /Absent: 1/);
   assert.match(weeklyMessage, /Attendance rate: 50%/);
+  assert.match(weeklyMessage, /How attendance works: Your attendance is recorded when you check in\./);
+  assert.match(weeklyMessage, /If you do not check in, the app marks you absent\./);
+  assert.match(weeklyMessage, /A Late status means you checked in late; it does not necessarily mean you joined the class late\./);
+  assert.match(weeklyMessage, /You are responsible for checking in for every class/);
+  assert.match(weeklyMessage, /complete your check-in on time\./);
   assert.equal(attendanceRate([{ status: "present" }, { status: "late" }, { status: "absent" }, { status: "excused" }]), 67);
 });
 
