@@ -32,6 +32,32 @@ export const a2WorkbookAlignedSlides = [
       "Wie ist das Wetter heute? Magst du dieses Wetter? Warum?",
       "Wohin möchtest du gern reisen und warum?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Wer gehört zu deiner Familie?",
+        "modelAnswerDe": "Zu meiner Familie gehören meine Eltern, meine Schwester und mein Bruder. Wir wohnen in Accra und essen am Sonntag oft zusammen."
+      },
+      {
+        "questionDe": "Welche Sprachen sprichst du oder lernst du?",
+        "modelAnswerDe": "Ich spreche Englisch und Twi. Jetzt lerne ich Deutsch, weil ich später in Deutschland arbeiten möchte."
+      },
+      {
+        "questionDe": "Was machst du beruflich oder was studierst du?",
+        "modelAnswerDe": "Ich arbeite als Verkäufer in einem kleinen Geschäft. Dort berate ich Kunden und verkaufe Kleidung."
+      },
+      {
+        "questionDe": "Was machst du gern in deiner Freizeit und warum?",
+        "modelAnswerDe": "In meiner Freizeit spiele ich gern Fußball. Das macht Spaß, und ich treffe dabei meine Freunde."
+      },
+      {
+        "questionDe": "Wie ist das Wetter heute? Magst du dieses Wetter? Warum?",
+        "modelAnswerDe": "Heute ist es sonnig und sehr warm. Ich mag dieses Wetter, weil ich draußen spazieren gehen kann."
+      },
+      {
+        "questionDe": "Wohin möchtest du gern reisen und warum?",
+        "modelAnswerDe": "Ich möchte gern nach Berlin reisen. Ich möchte die Stadt kennenlernen und dort Deutsch sprechen."
+      }
+    ],
     teacherNotesEn: [
       "Mirror the workbook speaking map: Familie → Sprachen → Beruf/Studium → Hobbys. Students should learn a route for thinking, not memorize one long text.",
       "Before teaching connector word order, establish meaning first: weil/denn give a reason; deshalb gives a result.",
@@ -111,6 +137,28 @@ export const a2WorkbookAlignedSlides = [
       "Wie ist ihr Charakter? Nenne zwei oder drei Eigenschaften.",
       "Was gefällt dir an dieser Person und warum?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Wen möchtest du beschreiben und woher kennst du die Person?",
+        "modelAnswerDe": "Ich möchte meine Freundin Ama beschreiben. Ich kenne sie aus unserem Deutschkurs."
+      },
+      {
+        "questionDe": "Wie sieht die Person aus?",
+        "modelAnswerDe": "Ama ist groß und hat kurze schwarze Haare. Sie hat braune Augen und trägt eine Brille."
+      },
+      {
+        "questionDe": "Welche Kleidung trägt sie oft?",
+        "modelAnswerDe": "Sie trägt oft eine blaue Jeans und ein weißes T-Shirt. Zur Arbeit trägt sie meistens eine Bluse."
+      },
+      {
+        "questionDe": "Wie ist ihr Charakter? Nenne zwei oder drei Eigenschaften.",
+        "modelAnswerDe": "Sie ist freundlich, geduldig und zuverlässig. Wenn ich ein Problem habe, hört sie mir zu."
+      },
+      {
+        "questionDe": "Was gefällt dir an dieser Person und warum?",
+        "modelAnswerDe": "Mir gefällt, dass sie anderen Menschen hilft. Außerdem können wir viel zusammen lachen."
+      }
+    ],
     teacherNotesEn: [
       "Follow the workbook speaking order exactly: Beziehung → Aussehen → Kleidung → Charakter → Meinung + Grund.",
       "Teach adjective endings as a decision routine: noun → subject/object → article → ending. Keep the first lesson limited to indefinite articles in nominative and accusative.",
@@ -188,6 +236,28 @@ export const a2WorkbookAlignedSlides = [
       "Vergleiche zwei Handys, Städte oder Verkehrsmittel.",
       "Was ist in deiner Gruppe am teuersten, schnellsten oder interessantesten?",
       "Welche Möglichkeit findest du besser und warum?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Vergleiche zwei Personen aus deiner Familie: Was ist gleich?",
+        "modelAnswerDe": "Meine Schwester und mein Bruder sind beide freundlich. Meine Schwester ist genauso groß wie mein Bruder."
+      },
+      {
+        "questionDe": "Welche zwei Unterschiede kannst du mit ... als ... ausdrücken?",
+        "modelAnswerDe": "Meine Schwester ist älter als mein Bruder. Mein Bruder ist sportlicher als meine Schwester."
+      },
+      {
+        "questionDe": "Vergleiche zwei Handys, Städte oder Verkehrsmittel.",
+        "modelAnswerDe": "Der Bus ist günstiger als das Taxi. Das Taxi ist aber bequemer, weil es direkt zu meinem Haus fährt."
+      },
+      {
+        "questionDe": "Was ist in deiner Gruppe am teuersten, schnellsten oder interessantesten?",
+        "modelAnswerDe": "In unserer Gruppe ist Pauls Handy am teuersten. Den Deutschkurs finden wir am interessantesten."
+      },
+      {
+        "questionDe": "Welche Möglichkeit findest du besser und warum?",
+        "modelAnswerDe": "Ich finde den Bus besser, weil die Fahrt weniger kostet. Wenn ich viel Gepäck habe, nehme ich lieber ein Taxi."
+      }
     ],
     teacherNotesEn: [
       "Use the workbook decision first: equal → genauso ... wie; different → comparative + als; number 1 in a group → am + superlative.",
@@ -267,6 +337,28 @@ export const a2WorkbookAlignedSlides = [
       "Wann trefft ihr euch und wie kommst du dorthin?",
       "Welche Alternative schlägst du vor, wenn der erste Plan nicht passt?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Was möchtest du mit deinen Freunden machen?",
+        "modelAnswerDe": "Ich möchte mit meinen Freunden einen Film sehen. Danach können wir zusammen etwas essen."
+      },
+      {
+        "questionDe": "Wo trefft ihr euch? Benutze eine Wo?-Antwort mit Dativ.",
+        "modelAnswerDe": "Wir treffen uns vor dem Kino. Ich warte neben der Eingangstür auf meine Freunde."
+      },
+      {
+        "questionDe": "Wohin geht ihr danach? Benutze eine Wohin?-Antwort mit Akkusativ.",
+        "modelAnswerDe": "Danach gehen wir in ein Restaurant. Dort essen wir zusammen zu Abend."
+      },
+      {
+        "questionDe": "Wann trefft ihr euch und wie kommst du dorthin?",
+        "modelAnswerDe": "Wir treffen uns am Samstag um 17 Uhr. Ich fahre mit dem Bus zum Kino."
+      },
+      {
+        "questionDe": "Welche Alternative schlägst du vor, wenn der erste Plan nicht passt?",
+        "modelAnswerDe": "Wenn der Kinobesuch nicht passt, können wir uns am Sonntag im Park treffen. Wir können dort spazieren gehen."
+      }
+    ],
     teacherNotesEn: [
       "Correct the current lesson around the actual grammar page: Wo? = location/position → Dativ; Wohin? = movement/direction → Akkusativ.",
       "Make the physical distinction visible with pairs such as im Café / ins Café and im Park / in den Park before students plan a meeting.",
@@ -345,6 +437,28 @@ export const a2WorkbookAlignedSlides = [
       "Wo und mit wem machst du sie?",
       "Welche trennbaren Verben passen zu deiner Freizeit?",
       "Warum machst du diese Aktivität gern und wie fühlst du dich danach?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Was machst du gern in deiner Freizeit?",
+        "modelAnswerDe": "Ich spiele gern Fußball in meiner Freizeit. Manchmal sehe ich auch ein Spiel im Fernsehen."
+      },
+      {
+        "questionDe": "Wann und wie oft machst du diese Aktivität?",
+        "modelAnswerDe": "Ich spiele zweimal pro Woche Fußball. Meistens habe ich am Mittwochabend und am Samstag Zeit."
+      },
+      {
+        "questionDe": "Wo und mit wem machst du sie?",
+        "modelAnswerDe": "Ich spiele mit meinen Freunden auf dem Sportplatz. Der Platz ist in der Nähe meiner Wohnung."
+      },
+      {
+        "questionDe": "Welche trennbaren Verben passen zu deiner Freizeit?",
+        "modelAnswerDe": "Am Wochenende stehe ich später auf und kaufe danach ein. Abends rufe ich meine Freunde an."
+      },
+      {
+        "questionDe": "Warum machst du diese Aktivität gern und wie fühlst du dich danach?",
+        "modelAnswerDe": "Ich spiele gern Fußball, weil ich mich dabei viel bewege. Danach bin ich müde, aber glücklich."
+      }
     ],
     teacherNotesEn: [
       "Follow the workbook speaking route: Hobby → Wann/wie oft? → Wo? → Mit wem? → Warum/Gefühl. The separable verb is the grammar tool inside that answer.",

@@ -31,6 +31,28 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       "Welcher Platz gefällt dir am besten und warum?",
       "Wie würdest du dein neues Zimmer einer Freundin oder einem Freund beschreiben?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Beschreibe einen Raum: Wie ist er und welche Möbel gibt es dort?",
+        "modelAnswerDe": "Mein Wohnzimmer ist hell und gemütlich. Dort stehen ein Sofa, ein Tisch und zwei Stühle."
+      },
+      {
+        "questionDe": "Wo stehen oder liegen drei wichtige Dinge?",
+        "modelAnswerDe": "Das Sofa steht an der Wand. Der Tisch steht vor dem Sofa, und mein Buch liegt auf dem Tisch."
+      },
+      {
+        "questionDe": "Was möchtest du im Raum verändern und wohin stellst oder legst du es?",
+        "modelAnswerDe": "Ich möchte mehr Platz am Fenster haben. Deshalb stelle ich den Tisch neben das Sofa und lege die Bücher in das Regal."
+      },
+      {
+        "questionDe": "Welcher Platz gefällt dir am besten und warum?",
+        "modelAnswerDe": "Der Platz auf dem Sofa gefällt mir am besten. Dort kann ich bequem sitzen und lesen."
+      },
+      {
+        "questionDe": "Wie würdest du dein neues Zimmer einer Freundin oder einem Freund beschreiben?",
+        "modelAnswerDe": "Mein neues Zimmer ist klein, aber hell. Es hat ein großes Fenster, und neben dem Bett steht ein Schreibtisch."
+      }
+    ],
     teacherNotesEn: [
       "Follow the workbook speaking route: Raum → Möbel → Wo? → Veränderung/Wohin? → Lieblingsplatz + weil.",
       "Teach Wechselpräpositionen as a meaning decision before article endings: fixed position answers Wo? and takes dative; movement toward a destination answers Wohin? and takes accusative.",
@@ -110,6 +132,28 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       "Beschreibe eine passende Wohnung mit einem Relativsatz.",
       "Welche Fragen würdest du einem Vermieter stellen?",
       "Wann könntest du die Wohnung besichtigen?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Wohnung suchst du: Größe, Zimmer und Lage?",
+        "modelAnswerDe": "Ich suche eine Wohnung mit zwei Zimmern und ungefähr 50 Quadratmetern. Sie soll in der Nähe meiner Arbeit liegen."
+      },
+      {
+        "questionDe": "Welche Kosten und welche Ausstattung sind dir wichtig?",
+        "modelAnswerDe": "Die Miete soll zu meinem Budget passen, und die Nebenkosten dürfen nicht zu hoch sein. Eine Küche und ein Bad mit Dusche sind mir wichtig."
+      },
+      {
+        "questionDe": "Beschreibe eine passende Wohnung mit einem Relativsatz.",
+        "modelAnswerDe": "Ich suche eine Wohnung, die einen Balkon hat. Außerdem möchte ich ein Zimmer, das hell und ruhig ist."
+      },
+      {
+        "questionDe": "Welche Fragen würdest du einem Vermieter stellen?",
+        "modelAnswerDe": "Wie hoch ist die Miete mit Nebenkosten? Hat die Wohnung eine Küche, und ab wann ist sie frei?"
+      },
+      {
+        "questionDe": "Wann könntest du die Wohnung besichtigen?",
+        "modelAnswerDe": "Ich könnte die Wohnung am Dienstag nach 16 Uhr besichtigen. Am Samstagvormittag hätte ich auch Zeit."
+      }
     ],
     teacherNotesEn: [
       "Follow the workbook speaking map: Größe/Zimmer → Lage → Miete/Kosten → Ausstattung → Besichtigung.",
@@ -191,6 +235,28 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       "Wie schmeckt das Gericht und wann isst du es?",
       "Wie würdest du höflich in einem Restaurant nach einem Tisch, Menü und Preisen fragen?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Welches Gericht möchtest du erklären?",
+        "modelAnswerDe": "Ich möchte erklären, wie man Reis mit Gemüse kocht. Das Gericht ist einfach und schmeckt mir sehr gut."
+      },
+      {
+        "questionDe": "Welche Zutaten brauchst du?",
+        "modelAnswerDe": "Ich brauche Reis, Wasser, Karotten, Tomaten und eine Zwiebel. Außerdem brauche ich etwas Öl und Salz."
+      },
+      {
+        "questionDe": "Welche drei Kochschritte kannst du im Imperativ geben?",
+        "modelAnswerDe": "Wasche zuerst das Gemüse! Schneide es danach in kleine Stücke! Koche dann den Reis nach der Anleitung auf der Packung und brate das Gemüse in einer Pfanne!"
+      },
+      {
+        "questionDe": "Wie schmeckt das Gericht und wann isst du es?",
+        "modelAnswerDe": "Das Gericht schmeckt frisch und würzig. Ich esse es oft zum Mittagessen mit meiner Familie."
+      },
+      {
+        "questionDe": "Wie würdest du höflich in einem Restaurant nach einem Tisch, Menü und Preisen fragen?",
+        "modelAnswerDe": "Haben Sie bitte einen Tisch für zwei Personen? Könnten wir die Speisekarte sehen, und wie viel kostet das Tagesgericht?"
+      }
+    ],
     teacherNotesEn: [
       "Follow the speaking route: Gericht → Zutaten → Vorbereitung → Kochschritte → Geschmack/Anlass.",
       "Teach the imperative through the actual recipe language: du, ihr and Sie. Make students choose the audience before forming the command.",
@@ -271,6 +337,28 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       "Was hat dir besonders gut gefallen und warum?",
       "Welche Informationen würdest du in einer Hotelanfrage nennen?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Wohin bist du zuletzt gereist?",
+        "modelAnswerDe": "Ich bin zuletzt nach Cape Coast gereist. Dort habe ich meine Tante besucht."
+      },
+      {
+        "questionDe": "Wie bist du dorthin gekommen und wie lange bist du geblieben?",
+        "modelAnswerDe": "Ich bin mit dem Bus dorthin gefahren. Ich bin drei Tage bei meiner Tante geblieben."
+      },
+      {
+        "questionDe": "Welche drei Dinge hast du im Urlaub gemacht?",
+        "modelAnswerDe": "Ich habe meine Tante besucht und einen Spaziergang am Strand gemacht. Außerdem habe ich auf dem Markt Obst gekauft."
+      },
+      {
+        "questionDe": "Was hat dir besonders gut gefallen und warum?",
+        "modelAnswerDe": "Der Strand hat mir besonders gut gefallen. Dort konnte ich mich ausruhen und das Meer sehen."
+      },
+      {
+        "questionDe": "Welche Informationen würdest du in einer Hotelanfrage nennen?",
+        "modelAnswerDe": "Ich würde meine Reisedaten und die Zahl der Gäste nennen. Zum Beispiel: Ich suche vom 10. bis zum 12. Oktober ein Doppelzimmer für zwei Personen."
+      }
+    ],
     teacherNotesEn: [
       "Use the holiday story to teach Perfekt as the normal spoken past for completed actions.",
       "Make the auxiliary decision visible: most verbs use haben; many movement/change-of-state verbs use sein. Then place Partizip II at the end of the main clause.",
@@ -350,6 +438,28 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       "Welche Vorteile oder Probleme gibt es für Touristen?",
       "Erzähle zwei Dinge in der Vergangenheit mit war/hatte oder einer weiteren Präteritumform.",
       "Wie würdest du einen Freund zu diesem Fest einladen?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welches Fest oder welchen Ort möchtest du vorstellen?",
+        "modelAnswerDe": "Ich möchte ein Musikfest in meiner Stadt vorstellen. Dort spielen verschiedene Bands, und viele Familien kommen zusammen."
+      },
+      {
+        "questionDe": "Was kann man dort sehen, essen oder machen?",
+        "modelAnswerDe": "Man kann dort Musik hören und tanzen. An kleinen Ständen kann man Reisgerichte und Snacks kaufen."
+      },
+      {
+        "questionDe": "Welche Vorteile oder Probleme gibt es für Touristen?",
+        "modelAnswerDe": "Touristen können lokale Musik kennenlernen und neue Gerichte probieren. Es ist aber manchmal sehr laut, und die Straßen sind voll."
+      },
+      {
+        "questionDe": "Erzähle zwei Dinge in der Vergangenheit mit war/hatte oder einer weiteren Präteritumform.",
+        "modelAnswerDe": "Letztes Jahr war ich mit meiner Schwester auf dem Fest. Wir hatten viel Spaß und blieben bis zum Abend."
+      },
+      {
+        "questionDe": "Wie würdest du einen Freund zu diesem Fest einladen?",
+        "modelAnswerDe": "Hallo Alex, möchtest du am Samstag mit mir zum Musikfest gehen? Wir können uns um 16 Uhr vor dem Eingang treffen."
+      }
     ],
     teacherNotesEn: [
       "Follow the workbook presentation route: Ort → Fest/Tradition → Aktivitäten → Vorteil/Nachteil → eigene Meinung.",

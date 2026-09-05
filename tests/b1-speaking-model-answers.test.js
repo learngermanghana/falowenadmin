@@ -52,7 +52,7 @@ test("each day's first answer stays on its own lesson topic", () => {
 });
 
 test("other levels retain lesson-level model support", () => {
-  for (const level of ["A1", "A2", "B2", "C1"]) {
+  for (const level of ["A1", "B2", "C1"]) {
     for (const slide of getSlidesByCourse(level)) {
       const stage = buildTeachingPresenterStages(slide).find((item) => item.type === "question-reveal");
       if (!stage) continue;

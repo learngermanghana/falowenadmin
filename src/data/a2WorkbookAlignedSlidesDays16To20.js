@@ -31,6 +31,28 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       "Welche Symptome würdest du einem Arzt beschreiben?",
       "Welche Fragen würdest du in einer E-Mail an eine Arztpraxis stellen?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Was machst du für dein körperliches und mentales Wohlbefinden?",
+        "modelAnswerDe": "Ich gehe regelmäßig spazieren und schlafe genug. Für mein mentales Wohlbefinden spreche ich mit Freunden und mache Pausen."
+      },
+      {
+        "questionDe": "Welche zwei reflexiven Verben kannst du für deinen Alltag benutzen?",
+        "modelAnswerDe": "Ich wasche mich jeden Morgen. Nach der Arbeit entspanne ich mich auf dem Sofa."
+      },
+      {
+        "questionDe": "Was machst du, wenn du krank oder gestresst bist?",
+        "modelAnswerDe": "Wenn ich krank bin, ruhe ich mich aus und frage bei Bedarf einen Arzt. Wenn ich gestresst bin, mache ich eine Pause."
+      },
+      {
+        "questionDe": "Welche Symptome würdest du einem Arzt beschreiben?",
+        "modelAnswerDe": "Ich habe seit gestern Halsschmerzen und Husten. Außerdem fühle ich mich müde und habe schlecht geschlafen."
+      },
+      {
+        "questionDe": "Welche Fragen würdest du in einer E-Mail an eine Arztpraxis stellen?",
+        "modelAnswerDe": "Haben Sie diese Woche einen freien Termin? Welche Unterlagen soll ich zum Termin mitbringen?"
+      }
+    ],
     teacherNotesEn: [
       "Use the actual Day 16 grammar page as the source of truth: the target is reflexive verbs with mich, dich, sich, uns and euch.",
       "Keep the pronoun mapping visible and tie each form to a meaningful health or relaxation action instead of drilling pronouns in isolation.",
@@ -110,6 +132,28 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       "Welche Frage stellst du zur Dosierung?",
       "Welche Frage stellst du zu Nebenwirkungen oder Kosten?",
       "Was muss eine gute Apothekenberatung erklären?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welche Symptome hast du und was brauchst du aus der Apotheke?",
+        "modelAnswerDe": "Ich habe seit gestern Husten und Halsschmerzen. Ich brauche eine Beratung und möchte wissen, ob ein geeignetes Mittel helfen kann."
+      },
+      {
+        "questionDe": "Wie würdest du höflich nach einer Empfehlung fragen?",
+        "modelAnswerDe": "Könnten Sie mir bitte etwas gegen meine Beschwerden empfehlen? Ich möchte auch wissen, ob ich damit zum Arzt gehen sollte."
+      },
+      {
+        "questionDe": "Welche Frage stellst du zur Dosierung?",
+        "modelAnswerDe": "Wie viel soll ich davon nehmen und wie oft am Tag? Wie lange darf ich das Mittel verwenden?"
+      },
+      {
+        "questionDe": "Welche Frage stellst du zu Nebenwirkungen oder Kosten?",
+        "modelAnswerDe": "Welche Nebenwirkungen kann das Mittel haben? Und wie viel kostet es?"
+      },
+      {
+        "questionDe": "Was muss eine gute Apothekenberatung erklären?",
+        "modelAnswerDe": "Eine gute Beratung erklärt, wie man ein Mittel richtig verwendet. Sie erklärt auch mögliche Nebenwirkungen und wann man ärztliche Hilfe braucht."
+      }
     ],
     teacherNotesEn: [
       "Teach the actual Day 17 modal-verb target: können for a polite possibility/request, müssen for necessity and sollen for advice/recommendation.",
@@ -191,6 +235,28 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       "Wie fragst du höflich nach der Dauer?",
       "Welche Punkte würdest du vergleichen, bevor du eine Bank auswählst?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Warum rufst du bei der Bank an?",
+        "modelAnswerDe": "Ich rufe an, weil ich ein Konto eröffnen möchte. Ich brauche Informationen zu den Kosten und zum Termin."
+      },
+      {
+        "questionDe": "Welche höfliche Bitte stellst du zuerst?",
+        "modelAnswerDe": "Könnten Sie mir bitte bei der Kontoeröffnung helfen? Ich möchte wissen, welche Unterlagen ich brauche."
+      },
+      {
+        "questionDe": "Welche Dokumente oder Informationen könnten erforderlich sein?",
+        "modelAnswerDe": "Ein Ausweis und meine Adresse könnten erforderlich sein. Ich würde die Bank fragen, welche Unterlagen sie genau braucht."
+      },
+      {
+        "questionDe": "Wie fragst du höflich nach der Dauer?",
+        "modelAnswerDe": "Könnten Sie mir bitte sagen, wie lange die Kontoeröffnung dauert? Wann kann ich das Konto benutzen?"
+      },
+      {
+        "questionDe": "Welche Punkte würdest du vergleichen, bevor du eine Bank auswählst?",
+        "modelAnswerDe": "Ich würde die Kontogebühren und die Öffnungszeiten vergleichen. Außerdem ist mir wichtig, ob ich Onlinebanking nutzen kann."
+      }
+    ],
     teacherNotesEn: [
       "Teach telephone politeness through two reusable frames: Könnten Sie bitte ...? and Ich würde gern ... .",
       "With könnten, keep the requested infinitive at the end: Könnten Sie meine Karte entsperren?",
@@ -271,6 +337,28 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       "Was machst du für nachhaltigen Konsum?",
       "Wie würdest du einen Freund zum Möbelkauf einladen und nach seiner Meinung fragen?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Kaufst du lieber online oder im Geschäft und warum?",
+        "modelAnswerDe": "Ich kaufe Kleidung lieber im Geschäft, weil ich sie dort anprobieren kann. Außerdem kann ich direkt Fragen stellen."
+      },
+      {
+        "questionDe": "Welche Zahlungsmethode benutzt du: bar oder Karte?",
+        "modelAnswerDe": "Meistens bezahle ich bar. Bei größeren Einkäufen benutze ich manchmal meine Karte."
+      },
+      {
+        "questionDe": "Welche Angebote oder Rabatte sind für dich interessant?",
+        "modelAnswerDe": "Rabatte auf Lebensmittel und Kleidung sind für mich interessant. Ich kaufe aber nur Dinge, die ich wirklich brauche."
+      },
+      {
+        "questionDe": "Was machst du für nachhaltigen Konsum?",
+        "modelAnswerDe": "Ich benutze meine eigene Einkaufstasche und kaufe manchmal gebrauchte Kleidung. Außerdem plane ich meine Einkäufe, damit ich weniger Essen wegwerfe."
+      },
+      {
+        "questionDe": "Wie würdest du einen Freund zum Möbelkauf einladen und nach seiner Meinung fragen?",
+        "modelAnswerDe": "Hallo Alex, möchtest du am Samstag mit mir einen Tisch kaufen gehen? Was meinst du: Passt ein runder Tisch in mein Wohnzimmer?"
+      }
+    ],
     teacherNotesEn: [
       "Keep the grammar distinction simple: oder connects alternatives; denn connects two main clauses and gives a reason.",
       "After denn, normal main-clause word order remains: denn es ist bequem, not denn es bequem ist.",
@@ -350,6 +438,28 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       "Welche Unterlagen brauchst du als Kaufnachweis?",
       "Welche höfliche Lösung verlangst du?",
       "Wie reagierst du, wenn der Kundendienst einen Umtausch oder eine Rückerstattung anbietet?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welches Produkt reklamierst du und was ist das Problem?",
+        "modelAnswerDe": "Ich möchte diesen Wasserkocher reklamieren. Ich habe ihn gestern gekauft, aber er wird nicht warm."
+      },
+      {
+        "questionDe": "Wie begründest du deine Reklamation mit weil oder denn?",
+        "modelAnswerDe": "Ich reklamiere den Wasserkocher, weil er nicht funktioniert. Ich kann damit kein Wasser kochen."
+      },
+      {
+        "questionDe": "Welche Unterlagen brauchst du als Kaufnachweis?",
+        "modelAnswerDe": "Ich habe den Kassenbon als Kaufnachweis dabei. Bei einer Onlinebestellung würde ich die Rechnung mitbringen."
+      },
+      {
+        "questionDe": "Welche höfliche Lösung verlangst du?",
+        "modelAnswerDe": "Könnten Sie den Wasserkocher bitte umtauschen? Ich hätte gern ein Gerät, das funktioniert."
+      },
+      {
+        "questionDe": "Wie reagierst du, wenn der Kundendienst einen Umtausch oder eine Rückerstattung anbietet?",
+        "modelAnswerDe": "Vielen Dank, ich nehme gern einen neuen Wasserkocher. Wenn kein Ersatz verfügbar ist, hätte ich gern mein Geld zurück."
+      }
     ],
     teacherNotesEn: [
       "Teach the complaint as a three-step communication structure: problem → reason → polite solution.",

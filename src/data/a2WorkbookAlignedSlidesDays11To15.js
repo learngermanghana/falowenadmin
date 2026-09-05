@@ -31,6 +31,28 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       "Welche drei Fragen würdest du einer Autovermietung stellen?",
       "Welche Dokumente und Versicherungsinformationen sind beim Mieten eines Autos wichtig?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Vergleiche Bus, Auto und Fahrrad nach Preis, Zeit und Komfort.",
+        "modelAnswerDe": "Der Bus ist günstiger als das Auto, aber man muss manchmal warten. Das Auto ist bequem, steht aber oft im Stau. Das Fahrrad kostet wenig und ist für kurze Wege oft schnell."
+      },
+      {
+        "questionDe": "Welches Verkehrsmittel ist für kurze Wege am besten und warum?",
+        "modelAnswerDe": "Für kurze Wege finde ich das Fahrrad am besten, wenn es sichere Wege gibt. Ich spare Geld und bewege mich."
+      },
+      {
+        "questionDe": "Welches Verkehrsmittel ist für lange Reisen besser als die anderen?",
+        "modelAnswerDe": "Für lange Reisen finde ich den Zug bequemer als das Auto, wenn es eine passende Verbindung gibt. Ich kann unterwegs lesen und muss nicht selbst fahren."
+      },
+      {
+        "questionDe": "Welche drei Fragen würdest du einer Autovermietung stellen?",
+        "modelAnswerDe": "Wie viel kostet das Auto pro Tag? Wie viele Kilometer sind im Preis enthalten? Ist eine Versicherung dabei?"
+      },
+      {
+        "questionDe": "Welche Dokumente und Versicherungsinformationen sind beim Mieten eines Autos wichtig?",
+        "modelAnswerDe": "Ich würde fragen, welchen Führerschein und welchen Ausweis ich mitbringen muss. Außerdem möchte ich wissen, was die Versicherung bezahlt und was ich bei einem Schaden selbst bezahlen muss."
+      }
+    ],
     teacherNotesEn: [
       "Follow the workbook speaking focus: compare two or three transport options through price, speed, comfort, safety and environment, then give a clear preference.",
       "Teach the grammar as a three-form system: Positiv → Komparativ + als → am + Superlativ, including irregular forms such as gut → besser → am besten.",
@@ -110,6 +132,28 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       "Welche zwei Fähigkeiten kannst du für diesen Beruf gut einsetzen?",
       "Was denkst du, welche Qualifikation für diesen Beruf besonders wichtig ist?",
       "Welche Fragen würdest du einem Unternehmen zu offenen Stellen, Arbeitszeiten und Gehalt stellen?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Was ist dein Traumberuf und warum interessiert er dich?",
+        "modelAnswerDe": "Mein Traumberuf ist Koch, weil ich gern Essen zubereite. Ich möchte neue Gerichte lernen und in einer Küche arbeiten."
+      },
+      {
+        "questionDe": "Wo möchtest du arbeiten und mit wem?",
+        "modelAnswerDe": "Ich möchte in einem Restaurant arbeiten. Dort möchte ich mit anderen Köchen in einem Team zusammenarbeiten."
+      },
+      {
+        "questionDe": "Welche zwei Fähigkeiten kannst du für diesen Beruf gut einsetzen?",
+        "modelAnswerDe": "Ich kann gut kochen und meine Arbeit gut organisieren. Außerdem bleibe ich ruhig, wenn viele Gäste kommen."
+      },
+      {
+        "questionDe": "Was denkst du, welche Qualifikation für diesen Beruf besonders wichtig ist?",
+        "modelAnswerDe": "Ich denke, dass eine Ausbildung als Koch besonders wichtig ist. Dabei lernt man auch, wie man sauber und sicher mit Lebensmitteln arbeitet."
+      },
+      {
+        "questionDe": "Welche Fragen würdest du einem Unternehmen zu offenen Stellen, Arbeitszeiten und Gehalt stellen?",
+        "modelAnswerDe": "Haben Sie zurzeit eine freie Stelle in der Küche? Wie sind die Arbeitszeiten, und wie hoch ist das Gehalt?"
+      }
     ],
     teacherNotesEn: [
       "Follow the workbook career route: dream job → workplace → alone/team → skills → reason/future goal.",
@@ -191,6 +235,28 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       "Was musstest du dort regelmäßig tun?",
       "Welche Frage würdest du am Ende zu Arbeitszeiten, Aufgaben oder Weiterbildung stellen?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Stell dich wie in einem Vorstellungsgespräch kurz vor.",
+        "modelAnswerDe": "Guten Tag, mein Name ist Alex Mensah. Ich bin Verkäufer und interessiere mich für Ihre freie Stelle."
+      },
+      {
+        "questionDe": "Welche Ausbildung und Berufserfahrung bringst du mit?",
+        "modelAnswerDe": "Ich habe eine Ausbildung im Verkauf gemacht. Danach habe ich zwei Jahre in einem Kleidungsgeschäft gearbeitet."
+      },
+      {
+        "questionDe": "Was konntest du in deiner letzten Arbeit besonders gut machen?",
+        "modelAnswerDe": "Ich konnte Kunden gut beraten. Auch bei schwierigen Fragen konnte ich meistens helfen."
+      },
+      {
+        "questionDe": "Was musstest du dort regelmäßig tun?",
+        "modelAnswerDe": "Ich musste jeden Morgen die Waren kontrollieren. Außerdem musste ich regelmäßig die Regale aufräumen."
+      },
+      {
+        "questionDe": "Welche Frage würdest du am Ende zu Arbeitszeiten, Aufgaben oder Weiterbildung stellen?",
+        "modelAnswerDe": "Könnten Sie mir bitte sagen, wie die Arbeitszeiten sind? Gibt es auch Möglichkeiten zur Weiterbildung?"
+      }
+    ],
     teacherNotesEn: [
       "Follow the workbook interview structure: personal introduction → education → experience → skills/qualifications → motivation for the position.",
       "Teach the three core past modal forms as interview tools: konnte for past ability/opportunity, musste for past obligation and wollte for past intention.",
@@ -271,6 +337,28 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       "Formuliere zwei Karriereziele mit um ... zu.",
       "Welche Informationen würdest du zu einem beruflichen Seminar erfragen?",
     ],
+    speakingModels: [
+      {
+        "questionDe": "Was ist dein Beruf und welche Tätigkeiten machst du?",
+        "modelAnswerDe": "Ich bin Verkäufer und arbeite in einem Geschäft. Ich berate Kunden, räume Waren ein und arbeite an der Kasse."
+      },
+      {
+        "questionDe": "Wie bist du zu diesem Beruf gekommen?",
+        "modelAnswerDe": "Nach der Schule habe ich ein Praktikum in einem Geschäft gemacht. Die Arbeit hat mir gefallen, deshalb habe ich eine Ausbildung begonnen."
+      },
+      {
+        "questionDe": "Was möchtest du in Zukunft beruflich machen?",
+        "modelAnswerDe": "Ich möchte später ein eigenes Geschäft eröffnen. Zuerst möchte ich aber noch mehr Berufserfahrung sammeln."
+      },
+      {
+        "questionDe": "Formuliere zwei Karriereziele mit um ... zu.",
+        "modelAnswerDe": "Ich lerne Deutsch, um mit mehr Kunden sprechen zu können. Ich mache einen Computerkurs, um meine Büroarbeit besser zu organisieren."
+      },
+      {
+        "questionDe": "Welche Informationen würdest du zu einem beruflichen Seminar erfragen?",
+        "modelAnswerDe": "Wann beginnt das Seminar, und wie lange dauert es? Ich möchte auch wissen, welche Themen wir lernen und wie viel die Teilnahme kostet."
+      }
+    ],
     teacherNotesEn: [
       "Follow the workbook speaking focus: current job → route into the job → future career plan.",
       "Teach um ... zu as purpose/intention with the same subject in both parts. Contrast only briefly with damit when the subject changes.",
@@ -350,6 +438,28 @@ export const a2WorkbookAlignedSlidesDays11To15 = [
       "Trainierst du allein oder mit Freunden und wie oft?",
       "Welche gesundheitlichen Vorteile hat dein Sport?",
       "Welche Fragen würdest du einem Sportverein zu freien Plätzen, Trainingszeiten und Kosten stellen?",
+    ],
+    speakingModels: [
+      {
+        "questionDe": "Welchen Sport machst du und warum magst du ihn?",
+        "modelAnswerDe": "Ich spiele Fußball, weil ich gern im Team Sport mache. Dabei kann ich auch meine Freunde treffen."
+      },
+      {
+        "questionDe": "Seit wann machst du diesen Sport?",
+        "modelAnswerDe": "Ich spiele seit zwei Jahren Fußball. Seit letztem Sommer trainiere ich in einem Verein."
+      },
+      {
+        "questionDe": "Trainierst du allein oder mit Freunden und wie oft?",
+        "modelAnswerDe": "Ich trainiere zweimal pro Woche mit meinen Freunden. Manchmal gehe ich am Wochenende auch allein joggen."
+      },
+      {
+        "questionDe": "Welche gesundheitlichen Vorteile hat dein Sport?",
+        "modelAnswerDe": "Beim Fußball bewege ich mich viel und trainiere meine Ausdauer. Nach dem Training fühle ich mich meistens fitter."
+      },
+      {
+        "questionDe": "Welche Fragen würdest du einem Sportverein zu freien Plätzen, Trainingszeiten und Kosten stellen?",
+        "modelAnswerDe": "Haben Sie noch freie Plätze in der Mannschaft? Wann findet das Training statt, und wie viel kostet die Mitgliedschaft?"
+      }
     ],
     teacherNotesEn: [
       "Follow the workbook speaking theme: sport type → training/frequency → health benefit → opinion, and add seit as the lesson's time-language target.",

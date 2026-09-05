@@ -426,7 +426,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [],
       supportItems: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
       questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [],
-      requiresQuestionModel: String(slide.course || "").toUpperCase() === "B1",
+      requiresQuestionModel: ["A2", "B1"].includes(String(slide.course || "").toUpperCase()),
       suggestedMinutes: interactionMinutes(slide, 3) || 10,
     },
     {
