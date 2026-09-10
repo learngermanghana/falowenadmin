@@ -12,6 +12,18 @@ function replaceOnce(source, before, after, label) {
   return source.replace(before, after);
 }
 
+function preferFirestoreDocumentId(source) {
+  const replacements = [
+    ["{ id: item.id, ...item.data() }", "{ ...item.data(), id: item.id }"],
+    ["{ id: snap.id, ...snap.data() }", "{ ...snap.data(), id: snap.id }"],
+    ["{ id: sessionSnap.id, ...sessionSnap.data() }", "{ ...sessionSnap.data(), id: sessionSnap.id }"],
+    ["{ id: classSnap.id, ...classSnap.data() }", "{ ...classSnap.data(), id: classSnap.id }"],
+    ["{ id: latestClassSnap.id, ...latestClassSnap.data() }", "{ ...latestClassSnap.data(), id: latestClassSnap.id }"],
+    ["{ id: snapshot.id, ...snapshot.data() }", "{ ...snapshot.data(), id: snapshot.id }"],
+  ];
+  return replacements.reduce((next, [before, after]) => next.replaceAll(before, after), source);
+}
+
 patchFile(new URL("../src/pages/LiveClassesPageV2.jsx", import.meta.url), (source) => {
   source = replaceOnce(
     source,
@@ -28,12 +40,16 @@ patchFile(new URL("../src/pages/LiveClassesPageV2.jsx", import.meta.url), (sourc
   return source;
 });
 
+patchFile(new URL("../src/services/liveClassCompatibilityServiceBase.js", import.meta.url), (source) => (
+  preferFirestoreDocumentId(source)
+));
+
 patchFile(new URL("../src/services/liveClassManualRescheduleService.js", import.meta.url), (source) => {
   source = source.replaceAll(
     "payload.classId || session.classId || session.classRecordId",
     "payload.classId || session.classRecordId || session.classId",
   );
-  return source;
+  return preferFirestoreDocumentId(source);
 });
 
 patchFile(new URL("../src/services/liveClassSessionDirectService.js", import.meta.url), (source) => {
@@ -41,7 +57,11 @@ patchFile(new URL("../src/services/liveClassSessionDirectService.js", import.met
     "payload.classId || session.classId || session.classRecordId",
     "payload.classId || session.classRecordId || session.classId",
   );
-  return source;
+  return preferFirestoreDocumentId(source);
 });
 
-console.log("Live Class session changes now prefer the canonical class record ID over legacy display-name classId values.");
+patchFile(new URL("../src/services/liveClassServiceBase.js", import.meta.url), (source) => (
+  preferFirestoreDocumentId(source)
+));
+
+console.log("Live Class session changes now prefer canonical class records and Firestore document IDs over legacy stored identity fields.");
