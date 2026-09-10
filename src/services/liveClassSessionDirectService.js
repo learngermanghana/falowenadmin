@@ -16,6 +16,7 @@ import {
   timetableHealthClassFields,
 } from "../utils/liveClassScheduleHealth.js";
 import { buildSessionReschedulePlan } from "../utils/liveClassReschedulePlan.js";
+import { loadMutationClassSessions } from "../utils/liveClassMutationSessions.js";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -64,28 +65,18 @@ async function queryClassSessions(field, classId) {
   const snap = await getDocs(
     query(collection(db, "classSessions"), where(field, "==", classId)),
   );
-  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+  return snap.docs.map((item) => ({ ...item.data(), id: item.id }));
 }
 
-async function loadClassSessions(classId) {
-  if (!classId) return [];
-  const found = new Map();
-  const results = await Promise.allSettled([
-    queryClassSessions("classId", classId),
-    queryClassSessions("classRecordId", classId),
-  ]);
-  results.forEach((result) => {
-    if (result.status !== "fulfilled") return;
-    result.value.forEach((session) => found.set(normalize(session.id), session));
-  });
-  return [...found.values()];
+async function loadClassSessions(classId, klass) {
+  return loadMutationClassSessions(classId, klass, queryClassSessions);
 }
 
 async function loadClassRecord(classId) {
   if (!classId) throw new Error("The session is not linked to a class.");
   const snap = await getDoc(doc(db, "classes", classId));
   if (!snap.exists()) throw new Error("Class not found");
-  return { id: snap.id, ...snap.data() };
+  return { ...snap.data(), id: snap.id };
 }
 
 function staleChangeError(message) {
@@ -177,7 +168,7 @@ async function commitSessionChangesAtomically({
     const latestAttendanceSnaps = snapshots.slice(attendanceStartIndex);
 
     if (!latestClassSnap.exists()) throw new Error("Class not found");
-    const latestClass = { id: latestClassSnap.id, ...latestClassSnap.data() };
+    const latestClass = { ...latestClassSnap.data(), id: latestClassSnap.id };
     const latestClassVersion = Number(latestClass.sessionScheduleVersion || 0);
     if (latestClassVersion !== expectedClassVersion) {
       throw staleChangeError("This class timetable changed while you were editing it. Refresh Live Classes and try again.");
@@ -186,7 +177,7 @@ async function commitSessionChangesAtomically({
     latestSessionSnaps.forEach((snapshot, index) => {
       const change = preparedChanges[index];
       if (!snapshot.exists()) throw new Error("Session not found");
-      const latestSession = { id: snapshot.id, ...snapshot.data() };
+      const latestSession = { ...snapshot.data(), id: snapshot.id };
       const latestSequence = Number(latestSession.sequence || 0);
       if (latestSequence !== change.expectedSequence) {
         throw staleChangeError(`${normalize(change.session.topic || change.session.title) || "A session"} changed while you were editing it. Refresh Live Classes and try again.`);
@@ -317,17 +308,15 @@ async function loadSession(sessionId) {
   const sessionRef = doc(db, "classSessions", normalize(sessionId));
   const sessionSnap = await getDoc(sessionRef);
   if (!sessionSnap.exists()) throw new Error("Session not found");
-  return { sessionRef, session: { id: sessionSnap.id, ...sessionSnap.data() } };
+  return { sessionRef, session: { ...sessionSnap.data(), id: sessionSnap.id } };
 }
 
 export async function cancelSession(sessionId, payload = {}) {
   const { session } = await loadSession(sessionId);
-  const classId = normalize(payload.classId || session.classId || session.classRecordId);
+  const classId = normalize(payload.classId || session.classRecordId || session.classId);
   const reason = normalize(payload.reason);
-  const [klass, classSessions] = await Promise.all([
-    loadClassRecord(classId),
-    loadClassSessions(classId),
-  ]);
+  const klass = await loadClassRecord(classId);
+  const classSessions = await loadClassSessions(classId, klass);
   const adminId = payload.adminId || "admin";
   const patch = {
     startsAt: session.startsAt || "",
@@ -392,13 +381,11 @@ export async function cancelSession(sessionId, payload = {}) {
 
 export async function rescheduleSession(sessionId, payload = {}) {
   const { session } = await loadSession(sessionId);
-  const classId = normalize(payload.classId || session.classId || session.classRecordId);
+  const classId = normalize(payload.classId || session.classRecordId || session.classId);
   const reason = normalize(payload.reason);
   const times = resolveMoveTimes(payload, session);
-  const [klass, classSessions] = await Promise.all([
-    loadClassRecord(classId),
-    loadClassSessions(classId),
-  ]);
+  const klass = await loadClassRecord(classId);
+  const classSessions = await loadClassSessions(classId, klass);
   const reschedulePlan = buildSessionReschedulePlan({
     klass,
     sessions: classSessions,
