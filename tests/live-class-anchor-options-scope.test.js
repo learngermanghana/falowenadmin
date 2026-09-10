@@ -8,17 +8,27 @@ const officialRepairServiceUrl = new URL("../src/services/liveClassLessonDateRep
 
 test("anchor options are built from sessions scoped to the selected class", async () => {
   const source = await readFile(componentUrl, "utf8");
-  const helperMatch = source.match(/function belongsToSelectedClass[\s\S]*?\n}\n\nexport default/);
-  assert.ok(helperMatch, "class ownership helper must remain next to the anchor UI");
+  const helperMatch = source.match(/function belongsToSelectedClass[\s\S]*?\n}\n\n(?=function |export default)/);
+  assert.ok(helperMatch, "class ownership helper must remain independently testable next to the anchor UI");
 
-  const helperSource = helperMatch[0].replace(/\n\nexport default[\s\S]*$/, "");
+  const helperSource = helperMatch[0];
   const belongsToSelectedClass = new Function(`${helperSource}\nreturn belongsToSelectedClass;`)();
 
   const selectedClassId = "a2-munich-2026";
+  const selectedClass = {
+    id: selectedClassId,
+    name: "A2 Munich Klasse",
+    slug: "a2-munich",
+  };
   const local = {
     id: "local-day-5",
     classId: selectedClassId,
     classRecordId: selectedClassId,
+    className: "A2 Munich Klasse",
+  };
+  const legacyAlias = {
+    id: "legacy-alias-day-5",
+    classId: "A2 Munich Klasse",
     className: "A2 Munich Klasse",
   };
   const foreignHigherPreference = {
@@ -34,9 +44,10 @@ test("anchor options are built from sessions scoped to the selected class", asyn
     className: "A2 Munich Klasse",
   };
 
-  assert.equal(belongsToSelectedClass(local, selectedClassId), true);
-  assert.equal(belongsToSelectedClass(foreignHigherPreference, selectedClassId), false);
-  assert.equal(belongsToSelectedClass(ownerlessLegacy, selectedClassId), true);
+  assert.equal(belongsToSelectedClass(local, selectedClassId, selectedClass), true);
+  assert.equal(belongsToSelectedClass(legacyAlias, selectedClassId, selectedClass), true);
+  assert.equal(belongsToSelectedClass(foreignHigherPreference, selectedClassId, selectedClass), false);
+  assert.equal(belongsToSelectedClass(ownerlessLegacy, selectedClassId, selectedClass), true);
 
   assert.match(source, /const scopedSessions = useMemo\(/);
   const scopedPlanUses = source.match(/sessions: scopedSessions,/g) || [];
@@ -59,4 +70,6 @@ test("official timetable repair re-scopes sessions after raw className reload", 
     source,
     /buildOfficialLessonSchedulePlan\(\{[\s\S]*?sessions: scopedRepairSessions,[\s\S]*?excludedDates,/,
   );
+  assert.match(source, /normalizeLegacyRepairOwner/);
+  assert.match(source, /repairCanonicalOwnerInferred/);
 });
