@@ -42,17 +42,74 @@ function statusOf(session = {}) {
   return String(session.status || "scheduled").trim().toLowerCase();
 }
 
-function belongsToSelectedClass(session = {}, classId = "") {
+function belongsToSelectedClass(session = {}, classId = "", klass = {}) {
   const resolvedClassId = String(classId || "").trim();
   if (!resolvedClassId) return false;
-  const owners = [...new Set([
-    session.classId,
-    session.classRecordId,
-  ].map((value) => String(value || "").trim()).filter(Boolean))];
-  // Keep ownerless legacy sessions visible for compatibility, matching the
-  // restore planner. Explicitly foreign same-name cohorts must never win the
-  // canonical lesson used to populate the anchor selector.
-  return !owners.length || owners.includes(resolvedClassId);
+  const accepted = new Set([
+    resolvedClassId,
+    klass.id,
+    klass.classId,
+    klass.name,
+    klass.className,
+    klass.slug,
+  ].map((value) => String(value || "").trim()).filter(Boolean));
+  const canonicalOwner = String(session.classRecordId || "").trim();
+  if (canonicalOwner) return accepted.has(canonicalOwner);
+  const legacyOwner = String(session.classId || "").trim();
+  return !legacyOwner || accepted.has(legacyOwner);
+}
+
+function AnchorRestoreControls({
+  anchorSessionId,
+  anchorOptions,
+  busy,
+  followingRestorePreview,
+  onAnchorChange,
+  onRestore,
+}) {
+  return (
+    <div style={{ display: "grid", gap: 10, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
+      <strong>Rebuild from the last correct/live session</strong>
+      <div>Select the last session whose date and time are correct. Falowen keeps that permanent session as the anchor and rebuilds every later official lesson into the next available saved class slot.</div>
+      <label style={{ display: "grid", gap: 6, marginTop: 4 }}>
+        <strong>Correct session to keep as the timetable anchor</strong>
+        <select value={anchorSessionId} onChange={(event) => onAnchorChange(event.target.value)} disabled={busy}>
+          <option value="">Select the last correct session</option>
+          {anchorOptions.map((item) => (
+            <option key={item.session.id} value={item.session.id}>{item.group.topic} — {formatDateTime(item.session.startsAt)}</option>
+          ))}
+        </select>
+      </label>
+
+      {followingRestorePreview.error ? (
+        <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b" }}>{followingRestorePreview.error}</div>
+      ) : null}
+
+      {followingRestorePreview.plan ? (
+        <div style={{ display: "grid", gap: 7, padding: 12, borderRadius: 9, background: "#fff", border: "1px solid #86efac", color: "#1f2937" }}>
+          <strong>Bulk restoration preview</strong>
+          <div>Anchor remains: <strong>{formatDateTime(followingRestorePreview.plan.anchorStartsAt)}</strong></div>
+          <div>Rebuild begins no earlier than: <strong>{formatDateTime(followingRestorePreview.plan.notBeforeStartsAt)}</strong></div>
+          <div>Existing sessions to move: <strong>{followingRestorePreview.plan.movedCount}</strong> · Missing sessions to create: <strong>{followingRestorePreview.plan.createdCount}</strong> · Stale future records to supersede: <strong>{followingRestorePreview.plan.staleFutureRecords?.length || 0}</strong></div>
+          {followingRestorePreview.plan.restorableItems.slice(0, 10).map((item) => (
+            <div key={item.lessonNumber} style={{ overflowWrap: "anywhere" }}>
+              {item.group.topic}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
+            </div>
+          ))}
+          {followingRestorePreview.plan.restorableItems.length > 10 ? <small>Plus {followingRestorePreview.plan.restorableItems.length - 10} more correction(s).</small> : null}
+          {!followingRestorePreview.plan.restorableItems.length && !(followingRestorePreview.plan.staleFutureRecords?.length || 0) ? <div>The future timetable already matches the selected anchor. Saving the anchor will still stop earlier historical gaps from blocking future rescheduling.</div> : null}
+        </div>
+      ) : null}
+
+      <button type="button" onClick={onRestore} disabled={busy || !followingRestorePreview.plan}>
+        {busy
+          ? "Rebuilding timetable…"
+          : (followingRestorePreview.plan?.restorableItems.length || followingRestorePreview.plan?.staleFutureRecords?.length)
+            ? "Rebuild all sessions after this anchor"
+            : "Save this session as the repair anchor"}
+      </button>
+    </div>
+  );
 }
 
 export default function LiveClassLessonDateRepair() {
@@ -144,7 +201,7 @@ export default function LiveClassLessonDateRepair() {
   }, [classes, classId, toast, user?.email, user?.uid]);
 
   const scopedSessions = useMemo(
-    () => (dashboard?.sessions || []).filter((session) => belongsToSelectedClass(session, classId)),
+    () => (dashboard?.sessions || []).filter((session) => belongsToSelectedClass(session, classId, dashboard?.klass || {})),
     [classId, dashboard],
   );
 
@@ -294,11 +351,16 @@ export default function LiveClassLessonDateRepair() {
     }
   }
 
+  function selectAnchor(nextAnchorSessionId) {
+    setAnchorSessionId(nextAnchorSessionId);
+    setAnchorNotBeforeStartsAt(nextAnchorSessionId ? new Date().toISOString() : "");
+  }
+
   return (
     <article className="card" style={{ display: "grid", gap: 12, marginBottom: 16, border: "2px solid #f59e0b", background: "#fffbeb" }}>
       <div>
         <h2 style={{ marginBottom: 6 }}>Official class timetable repair</h2>
-        <p style={{ margin: 0 }}>Supports A1, A2 and B1. A1 uses 25 grouped attendance sessions; A2 and B1 use 28 lessons. The repair is atomic and does not move topics one-by-one.</p>
+        <p style={{ margin: 0 }}>Supports A1, A2 and B1 and uses each level&apos;s official grouped timetable count. The repair is atomic and does not move topics one-by-one.</p>
       </div>
 
       <label style={{ display: "grid", gap: 6 }}>
@@ -326,61 +388,23 @@ export default function LiveClassLessonDateRepair() {
           </div>
 
           {preservedItems.length ? (
-            <div style={{ display: "grid", gap: 10, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
+            <div style={{ display: "grid", gap: 8, padding: 12, borderRadius: 10, background: "#ecfdf5", border: "1px solid #86efac", color: "#166534" }}>
               <strong>{preservedItems.length} deliberately moved session(s) were detected.</strong>
-              <div>Choose the last session whose date and time are correct. Falowen keeps it as the anchor, skips timetable slots that have already passed, and rebuilds every later lesson into the next available saved slot.</div>
               {preservedItems.slice(0, 10).map((item) => (
                 <div key={item.lessonNumber}>{item.group.topic}: <strong>{formatDateTime(item.session?.startsAt)}</strong></div>
               ))}
               {preservedItems.length > 10 ? <small>Plus {preservedItems.length - 10} more preserved move(s).</small> : null}
-
-              <label style={{ display: "grid", gap: 6, marginTop: 4 }}>
-                <strong>Correct session to keep as the timetable anchor</strong>
-                <select
-                  value={anchorSessionId}
-                  onChange={(event) => {
-                    const nextAnchorSessionId = event.target.value;
-                    setAnchorSessionId(nextAnchorSessionId);
-                    setAnchorNotBeforeStartsAt(nextAnchorSessionId ? new Date().toISOString() : "");
-                  }}
-                  disabled={busy}
-                >
-                  <option value="">Select the last correct session</option>
-                  {anchorOptions.map((item) => (
-                    <option key={item.session.id} value={item.session.id}>{item.group.topic} — {formatDateTime(item.session.startsAt)}</option>
-                  ))}
-                </select>
-              </label>
-
-              {followingRestorePreview.error ? (
-                <div role="alert" style={{ padding: 10, borderRadius: 8, background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b" }}>{followingRestorePreview.error}</div>
-              ) : null}
-
-              {followingRestorePreview.plan ? (
-                <div style={{ display: "grid", gap: 7, padding: 12, borderRadius: 9, background: "#fff", border: "1px solid #86efac", color: "#1f2937" }}>
-                  <strong>Bulk restoration preview</strong>
-                  <div>Anchor remains: <strong>{formatDateTime(followingRestorePreview.plan.anchorStartsAt)}</strong></div>
-                  <div>Rebuild begins no earlier than: <strong>{formatDateTime(followingRestorePreview.plan.notBeforeStartsAt)}</strong></div>
-                  <div>Existing sessions to move: <strong>{followingRestorePreview.plan.movedCount}</strong> · Missing sessions to create: <strong>{followingRestorePreview.plan.createdCount}</strong> · Stale future records to supersede: <strong>{followingRestorePreview.plan.staleFutureRecords?.length || 0}</strong></div>
-                  {followingRestorePreview.plan.restorableItems.slice(0, 10).map((item) => (
-                    <div key={item.lessonNumber} style={{ overflowWrap: "anywhere" }}>
-                      {item.group.topic}: {item.session ? formatDateTime(item.session.startsAt) : "Missing"} → <strong>{formatDateTime(item.targetStartsAt)}</strong>
-                    </div>
-                  ))}
-                  {followingRestorePreview.plan.restorableItems.length > 10 ? <small>Plus {followingRestorePreview.plan.restorableItems.length - 10} more correction(s).</small> : null}
-                  {!followingRestorePreview.plan.restorableItems.length && !(followingRestorePreview.plan.staleFutureRecords?.length || 0) ? <div>The future timetable already matches the selected anchor. Saving the anchor will still stop earlier historical gaps from blocking future rescheduling.</div> : null}
-                </div>
-              ) : null}
-
-              <button type="button" onClick={restoreFollowingPattern} disabled={busy || !followingRestorePreview.plan}>
-                {busy
-                  ? "Rebuilding timetable…"
-                  : (followingRestorePreview.plan?.restorableItems.length || followingRestorePreview.plan?.staleFutureRecords?.length)
-                    ? "Rebuild all sessions after this anchor"
-                    : "Save this session as the repair anchor"}
-              </button>
             </div>
           ) : null}
+
+          <AnchorRestoreControls
+            anchorSessionId={anchorSessionId}
+            anchorOptions={anchorOptions}
+            busy={busy}
+            followingRestorePreview={followingRestorePreview}
+            onAnchorChange={selectAnchor}
+            onRestore={restoreFollowingPattern}
+          />
 
           {changedItems.length ? (
             <div style={{ display: "grid", gap: 6, padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #fcd34d" }}>
