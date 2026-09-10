@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AttendanceConfirmationAutomationPanel from "../components/AttendanceConfirmationAutomationPanel.jsx";
 import AttendanceFailedDeliveryRetryPanel from "../components/AttendanceFailedDeliveryRetryPanel.jsx";
+import CommunicationLiveClassActions from "../components/CommunicationLiveClassActions.jsx";
 import CommunicationPage from "./CommunicationPage.jsx";
 
 function tabStyle(active) {
@@ -28,7 +29,14 @@ export default function CommunicationHubPage() {
         </button>
       </nav>
 
-      {activeTab === "broadcasts" ? <CommunicationPage /> : null}
+      {activeTab === "broadcasts" ? (
+        <div style={{ display: "grid", gap: 14 }}>
+          <div style={{ padding: "0 16px", maxWidth: 900 }}>
+            <CommunicationLiveClassActions />
+          </div>
+          <CommunicationPage />
+        </div>
+      ) : null}
       {activeTab === "attendance" ? (
         <div style={{ padding: "0 16px 16px", maxWidth: 1000, display: "grid", gap: 14 }}>
           <AttendanceConfirmationAutomationPanel />

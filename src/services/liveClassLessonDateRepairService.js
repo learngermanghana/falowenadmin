@@ -25,6 +25,25 @@ function belongsToSelectedClass(session = {}, classId = "") {
   return !owners.length || owners.includes(resolvedClassId);
 }
 
+function normalizeLegacyRepairOwner(session = {}, resolvedClassId = "", identifiers = []) {
+  const canonicalOwner = normalize(session.classRecordId);
+  if (canonicalOwner || !normalize(resolvedClassId)) return session;
+
+  const accepted = new Set((identifiers || []).map(normalize).filter(Boolean));
+  const legacyOwner = normalize(session.classId);
+  const legacyClassName = normalize(session.className);
+  const matchesKnownAlias = (!legacyOwner && !legacyClassName)
+    || (legacyOwner && accepted.has(legacyOwner))
+    || (legacyClassName && accepted.has(legacyClassName));
+
+  if (!matchesKnownAlias) return session;
+  return {
+    ...session,
+    classRecordId: normalize(resolvedClassId),
+    repairCanonicalOwnerInferred: true,
+  };
+}
+
 function localDateTimeParts(value, timezone = "Africa/Accra") {
   const date = new Date(value || 0);
   if (Number.isNaN(date.getTime())) return null;
@@ -57,6 +76,7 @@ async function querySessions(field, identifier) {
 }
 
 export async function loadRawRepairSessions(classId, klass = {}, fallbackSessions = []) {
+  const resolvedClassId = normalize(classId || klass.id);
   const found = new Map();
   fallbackSessions.forEach((session) => {
     const sessionId = normalize(session?.id);
@@ -84,13 +104,16 @@ export async function loadRawRepairSessions(classId, klass = {}, fallbackSession
   );
   results.forEach((result) => {
     if (result.status !== "fulfilled") return;
-    result.value.forEach((session) => {
+    result.value.forEach((rawSession) => {
+      const session = normalizeLegacyRepairOwner(rawSession, resolvedClassId, identifiers);
       const sessionId = normalize(session.id);
       const preferred = found.get(sessionId);
       if (preferred?.repairPreferredRecord === true) {
         found.set(sessionId, {
           ...session,
           ...preferred,
+          classRecordId: normalize(preferred.classRecordId) || normalize(session.classRecordId),
+          repairCanonicalOwnerInferred: preferred.repairCanonicalOwnerInferred === true || session.repairCanonicalOwnerInferred === true,
           id: sessionId,
           repairPreferredRecord: true,
         });
