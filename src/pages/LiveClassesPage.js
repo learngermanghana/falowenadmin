@@ -1,6 +1,5 @@
 import React from "react";
 import LiveClassLessonDateRepair from "../components/LiveClassLessonDateRepair.jsx";
-import LiveClassReminderDiagnostic from "../components/LiveClassReminderDiagnostic.jsx";
 import GhanaDateTimeLocalInjector from "../components/GhanaDateTimeLocalInjector.jsx";
 import LiveClassesPageV2 from "./LiveClassesPageV2.jsx";
 
@@ -93,7 +92,7 @@ export default function LiveClassesPage() {
         "small",
         { style: { color: "#64748b" } },
         activeTab === TAB_REPAIR
-          ? "Inspect and restore lesson dates from the saved weekly timetable, then diagnose class reminder delivery."
+          ? "Inspect and restore lesson dates from the saved weekly timetable."
           : "Manage classes, sessions, students, attendance links and related class operations.",
       ),
     ),
@@ -106,7 +105,6 @@ export default function LiveClassesPage() {
           "aria-labelledby": "live-classes-tab-repair",
         },
         React.createElement(LiveClassLessonDateRepair),
-        React.createElement(LiveClassReminderDiagnostic),
       )
       : React.createElement(
         "div",
