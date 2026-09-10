@@ -5,7 +5,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  updateDoc,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../firebase.js";
@@ -174,17 +174,22 @@ async function prepareCommunicationCancellation(input = {}, row = {}) {
   if (!classId) throw new Error("The selected class has no permanent class document ID.");
   const timezone = normalize(klass.timezone) || "Africa/Accra";
   const sessions = await loadClassSessionsForCommunication(klass);
+  const requestedSessionId = normalize(input.sessionId || input.classSessionId);
   const targetDate = normalize(row.date || input.date);
-  const candidates = sessions
-    .filter(activeCancellationTarget)
-    .filter((session) => localDate(session.startsAt, timezone) === targetDate)
-    .sort((left, right) => (toDate(left.startsAt)?.getTime() || 0) - (toDate(right.startsAt)?.getTime() || 0));
+  const candidates = requestedSessionId
+    ? sessions.filter((session) => normalize(session.id) === requestedSessionId && activeCancellationTarget(session))
+    : sessions
+      .filter(activeCancellationTarget)
+      .filter((session) => localDate(session.startsAt, timezone) === targetDate)
+      .sort((left, right) => (toDate(left.startsAt)?.getTime() || 0) - (toDate(right.startsAt)?.getTime() || 0));
 
   if (!candidates.length) {
-    throw new Error(`No active Live Classes session was found for ${classDisplayName(klass)} on ${targetDate}. Nothing was emailed.`);
+    throw new Error(requestedSessionId
+      ? "The selected Live Classes session no longer exists or is no longer active. Nothing was emailed."
+      : `No active Live Classes session was found for ${classDisplayName(klass)} on ${targetDate}. Nothing was emailed.`);
   }
   if (candidates.length > 1) {
-    throw new Error(`More than one Live Classes session exists for ${classDisplayName(klass)} on ${targetDate}. Cancel the exact session from Live Classes so Falowen can use its permanent Firestore document ID. Nothing was emailed.`);
+    throw new Error(`More than one Live Classes session exists for ${classDisplayName(klass)} on ${targetDate}. Select the exact lesson so Falowen can use its permanent Firestore document ID. Nothing was emailed.`);
   }
 
   const session = candidates[0];
@@ -198,7 +203,9 @@ async function prepareCommunicationCancellation(input = {}, row = {}) {
   // The session + reminder suppression + attendance session status are written by
   // cancelSession transactionally. Explicitly close an already-open check-in gate
   // before the student announcement is allowed to continue.
-  await updateDoc(doc(db, "attendance", classId, "sessions", session.id), {
+  await setDoc(doc(db, "attendance", classId, "sessions", session.id), {
+    classId,
+    classSessionId: session.id,
     opened: false,
     closed: true,
     autoOpened: false,
@@ -207,7 +214,7 @@ async function prepareCommunicationCancellation(input = {}, row = {}) {
     sessionStatus: "cancelled",
     remindersSuppressed: true,
     updatedAt: serverTimestamp(),
-  });
+  }, { merge: true });
 
   const students = await listStudentsByClass(classDisplayName(klass)).catch(() => []);
   const recipientKeys = new Set(students.map((student) => normalize(student.email || student.contactEmail || student.id)).filter(Boolean));
