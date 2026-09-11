@@ -14,6 +14,17 @@ function slideFor(assignmentId) {
   return teachingSlides.find((slide) => String(slide.assignmentId || "").toUpperCase() === assignmentId.toUpperCase());
 }
 
+function resolvedChecksFor(assignmentId) {
+  const slide = slideFor(assignmentId);
+  assert.ok(slide, `${assignmentId} slide missing`);
+  const support = buildTeacherSlideSupport(slide);
+  return getA1PresenterUnderstandingChecks(
+    assignmentId,
+    getA1GrammarChecks(assignmentId, slide),
+    { slide, support },
+  );
+}
+
 test("A1-13 weather gives ten genuinely different class questions plus an exit check", () => {
   const checks = getA1PresenterUnderstandingChecks("A1-13", getA1GrammarChecks("A1-13"));
   const classChecks = checks.slice(0, -1);
@@ -29,15 +40,21 @@ test("A1-13 weather gives ten genuinely different class questions plus an exit c
   assert.equal(new Set(pool.map((item) => item.sourceQuestion)).size, 10);
 });
 
+test("A1-5.9 Goethe speaking has ten distinct class questions plus one separate exit check", () => {
+  const resolved = resolvedChecksFor("A1-5.9");
+  const classChecks = resolved.slice(0, -1);
+  const exitChecks = resolved.slice(-1);
+
+  assert.equal(resolved.length, 11);
+  assert.equal(classChecks.length, 10);
+  assert.equal(exitChecks.length, 1);
+  assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
+  assert.ok(classChecks.every((item) => String(item.answerDe || "").trim()));
+  assert.ok(classChecks.some((item) => /frage|sprechen|bitte|partner|W-question|yes\/no/i.test(`${item.questionDe} ${item.answerDe}`)));
+});
+
 test("other A1 lessons also build ten distinct class questions from their own lesson material", () => {
-  const slide = slideFor("A1-12.3");
-  assert.ok(slide, "A1-12.3 slide missing");
-  const support = buildTeacherSlideSupport(slide);
-  const resolved = getA1PresenterUnderstandingChecks(
-    "A1-12.3",
-    getA1GrammarChecks("A1-12.3", slide),
-    { slide, support },
-  );
+  const resolved = resolvedChecksFor("A1-12.3");
   const classChecks = resolved.slice(0, -1);
 
   assert.equal(classChecks.length, 10);
@@ -46,7 +63,7 @@ test("other A1 lessons also build ten distinct class questions from their own le
   assert.ok(classChecks.some((item) => /Sehr geehrte|formal|message|letter|Schreiben/i.test(`${item.questionDe} ${item.answerDe}`)));
 });
 
-test("A1 presenter makes the full-class question flow explicit", () => {
+test("A1 presenter makes the full-class question flow explicit and hides student rotation outside it", () => {
   const presenter = read("src/components/A1GrammarPresenter.jsx");
 
   assert.match(presenter, /getA1PresenterUnderstandingChecks/);
@@ -55,4 +72,6 @@ test("A1 presenter makes the full-class question flow explicit", () => {
   assert.match(presenter, /Next student →/);
   assert.match(presenter, /Continue lesson →/);
   assert.match(presenter, /if \(participationCheckMode\) return;/);
+  assert.match(presenter, /hidden={!participationCheckMode}/);
+  assert.match(presenter, /aria-hidden={!participationCheckMode}/);
 });
