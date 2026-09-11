@@ -18,10 +18,16 @@ function stageList(slide, topicLabel) {
   const checks = getA1PresenterUnderstandingChecks(
     slide.assignmentId,
     getA1GrammarChecks(slide.assignmentId, slide),
+    { slide, support },
   );
   const mainChecks = checks.slice(0, Math.max(1, checks.length - 1));
   const exitChecks = checks.slice(Math.max(1, checks.length - 1));
   const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
+  const practicePrompts = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [];
+  const hasWorkbookPlan = workbookParts.length > 0;
+  const transferItems = hasWorkbookPlan
+    ? workbookParts.map((part) => ({ label: part.label, detail: part.detailEn }))
+    : practicePrompts.slice(0, 4).map((question, index) => ({ label: `Übung ${index + 1}`, detail: question }));
 
   return [
     {
@@ -36,8 +42,8 @@ function stageList(slide, topicLabel) {
     {
       id: "rule",
       type: "list",
-      kicker: "Grammatik",
-      title: "Regel verstehen",
+      kicker: "Sprachfokus",
+      title: "Muster und Regel verstehen",
       items: Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [],
     },
     {
@@ -50,8 +56,8 @@ function stageList(slide, topicLabel) {
     {
       id: "grammar-check",
       type: "check",
-      kicker: "Grammatik-Check",
-      title: "Zeig, dass du die Regel verstanden hast",
+      kicker: "Verständnis-Check",
+      title: "Zeig, dass du das Thema verstanden hast",
       items: mainChecks,
     },
     {
@@ -65,8 +71,8 @@ function stageList(slide, topicLabel) {
       id: "workbook",
       type: "workbook",
       kicker: "Transfer",
-      title: "Jetzt ins Workbook übertragen",
-      items: workbookParts.map((part) => ({ label: part.label, detail: part.detailEn })),
+      title: hasWorkbookPlan ? "Jetzt ins Workbook übertragen" : "Jetzt anwenden",
+      items: transferItems,
       grammarUrl: slide.workbookConnection?.grammarUrl || "",
       workbookUrl: slide.workbookConnection?.workbookUrl || "",
     },
@@ -180,12 +186,12 @@ export default function A1GrammarPresenter({
   const atEnd = stageIndex === stages.length - 1 && (!manualCheckMode || itemIndex === stage.items.length - 1);
 
   return (
-    <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 grammar teaching presenter">
+    <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
       <div className="presenter-stage">
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
-            <span className="presenter-lesson-label">A1 · Grammar-first</span>
+            <span className="presenter-lesson-label">A1 · Language-first</span>
           </div>
 
           <div className="presenter-v2-tools">
@@ -220,8 +226,8 @@ export default function A1GrammarPresenter({
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
                 <strong>A1 teaching method</strong>
-                <p>Rule → examples → concept check → error correction → workbook transfer → exit check.</p>
-                <small>The live concept check gives each learner a unique question. Workbook gap-fill and form drills stay in the workbook.</small>
+                <p>Language focus → examples → understanding check → error correction → practice/workbook transfer → exit check.</p>
+                <small>The live understanding check gives each learner a unique question. Controlled gap-fill and form drills stay in the workbook when a workbook is linked.</small>
               </div>
             </>
           ) : stage.type === "check" ? (
@@ -237,7 +243,7 @@ export default function A1GrammarPresenter({
               {participationCheckMode && !activeCheck ? (
                 <div className="presenter-model-support">
                   <strong>Pick the first student above</strong>
-                  <p>Falowen assigns a different unused understanding question to each learner. For 10 students, the class can receive 10 questions before a question is reused.</p>
+                  <p>Falowen assigns a different unused understanding question to each learner. For 10 students, the class receives 10 distinct lesson questions before any generated extension is needed.</p>
                   <small>Record Correct, Needs help, Skip or Absent, then click Next student → above to test another learner.</small>
                 </div>
               ) : (
@@ -252,7 +258,7 @@ export default function A1GrammarPresenter({
                     <div className="presenter-model-support">
                       <strong>Richtige Antwort / teacher guide</strong>
                       <p>{activeCheck?.answerDe}</p>
-                      {participationCheckMode ? <small>Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for a different unused question.</small> : null}
+                      {participationCheckMode ? <small>Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for another distinct question.</small> : null}
                       {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
                     </div>
                   ) : (
@@ -260,7 +266,7 @@ export default function A1GrammarPresenter({
                       <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
                       <p>{stage.exitCheck
                         ? "The student answers first. Reveal only after the answer is complete."
-                        : "Let the selected student answer first. Record Correct or Needs help above, then click Next student → to load a different question for another learner."}</p>
+                        : "Let the selected student answer first. Record Correct or Needs help above, then click Next student → to load another distinct question."}</p>
                     </div>
                   )}
                 </>
