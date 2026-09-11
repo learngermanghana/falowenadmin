@@ -79,7 +79,7 @@ export function isPresentAttendance(entry = {}) {
 export function isAbsentAttendance(entry = {}) {
   const status = attendanceStatus(entry);
   if (["absent", "missed", "no_show", "no-show"].includes(status)) return true;
-  return entry.present === false && Boolean(status);
+  return entry.present === false;
 }
 
 export function filterStudentsByAttendance(students = [], session = {}, mode = "all") {
