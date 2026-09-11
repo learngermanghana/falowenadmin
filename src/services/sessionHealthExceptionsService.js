@@ -72,11 +72,15 @@ export async function loadSessionOperationalState({ classId, klass = {}, session
 
   const attendanceBySessionId = {};
   const attendanceDocumentIds = new Set();
+  const attendancePathToCanonicalId = new Map();
   attendanceResults.forEach((result) => {
     if (result.status !== "fulfilled") return;
     result.value.forEach((record) => {
-      const canonicalId = text(record.classSessionId || record.sessionId || record.id);
-      attendanceDocumentIds.add(text(record.id));
+      const documentId = text(record.id);
+      const parentId = text(record.attendanceParentId);
+      const canonicalId = text(record.classSessionId || record.sessionId || documentId);
+      attendanceDocumentIds.add(documentId);
+      attendancePathToCanonicalId.set(`${parentId}::${documentId}`, canonicalId);
       if (canonicalId && !attendanceBySessionId[canonicalId]) {
         attendanceBySessionId[canonicalId] = record;
       }
@@ -92,9 +96,11 @@ export async function loadSessionOperationalState({ classId, klass = {}, session
   const checkinRequests = aliases.flatMap((alias) => sessionIds.map((sessionId) => ({ alias, sessionId })));
   const results = await Promise.allSettled(checkinRequests.map(async ({ alias, sessionId }) => {
     const snap = await getDocs(collection(db, "attendance", alias, "sessions", sessionId, "checkins"));
+    const canonicalSessionId = attendancePathToCanonicalId.get(`${alias}::${sessionId}`) || sessionId;
     return snap.docs.map((item) => ({
       id: item.id,
-      sessionId,
+      sessionId: canonicalSessionId,
+      attendanceDocumentId: sessionId,
       classId: alias,
       attendanceParentId: alias,
       ...item.data(),
@@ -108,7 +114,7 @@ export async function loadSessionOperationalState({ classId, klass = {}, session
     if (result.status === "fulfilled") {
       result.value.forEach((checkin) => {
         const studentKey = text(checkin.studentCode || checkin.uid || checkin.email || checkin.id);
-        const key = [request.sessionId, checkin.id, studentKey].join("::");
+        const key = [checkin.sessionId, checkin.id, studentKey].join("::");
         if (!checkinMap.has(key)) checkinMap.set(key, checkin);
       });
       return;
