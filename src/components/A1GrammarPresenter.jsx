@@ -209,13 +209,15 @@ export default function A1GrammarPresenter({
           </div>
         </header>
 
-        <PresenterStudentPicker
-          slide={slide}
-          questions={participationCheckMode ? stage.items : []}
-          questionContext={participationCheckMode ? stage.id : ""}
-          onQuestionChange={setParticipationQuestion}
-          renderQuestionExternally
-        />
+        <div hidden={!participationCheckMode} aria-hidden={!participationCheckMode}>
+          <PresenterStudentPicker
+            slide={slide}
+            questions={participationCheckMode ? stage.items : []}
+            questionContext={participationCheckMode ? stage.id : ""}
+            onQuestionChange={setParticipationQuestion}
+            renderQuestionExternally
+          />
+        </div>
 
         <main className={`presenter-content presenter-content-${stage.type}`}>
           {stage.type === "intro" ? (
