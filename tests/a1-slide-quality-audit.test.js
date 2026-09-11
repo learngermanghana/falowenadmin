@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
 import { teachingSlides } from "../src/data/teachingSlides.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
@@ -15,12 +16,51 @@ const GENERIC_PHRASES = [
   "Students can communicate about",
 ];
 
+const TOPIC_SIGNALS = {
+  "A1-0.1": ["guten morgen", "ihnen", "tschüss"],
+  "A1-0.2": ["buchstab", "eszett", "umlaut"],
+  "A1-1.1": ["heiße", "wohn", "komm"],
+  "A1-1.1-PRACTICE": ["w-frag", "wer", "woher"],
+  "A1-1.2": ["verb", "-st", "-t"],
+  "A1-2": ["telefon", "adresse", "nummer"],
+  "A1-1.3": ["artikel", "ein", "eine"],
+  "A1-2.3": ["famil", "gern", "sprache"],
+  "A1-3": ["kostet", "kosten", "euro"],
+  "A1-4": ["land", "sprache", "aus"],
+  "A1-5": ["nominativ", "akkusativ", "den"],
+  "A1-6": ["possess", "mein", "farbe"],
+  "A1-7": ["halb", "vor", "nach"],
+  "A1-8": ["uhr", "datum", "am"],
+  "A1-3.5": ["zahl", "uhr", "euro"],
+  "A1-3.6": ["können", "müssen", "möchten"],
+  "A1-4.7": ["goethe", "sprechen", "teil"],
+  "A1-9": ["kein", "nicht", "essen"],
+  "A1-10": ["alltag", "frühstück", "gern"],
+  "A1-11": ["imperativ", "bitte", "sie"],
+  "A1-12.1": ["wohin", "dativ", "akkusativ"],
+  "A1-12.2": ["beruf", "als", "bei"],
+  "A1-5.9": ["sprechen", "frage", "bitte"],
+  "A1-12.3": ["sehr geehrte", "liebe", "gruß"],
+  "A1-13": ["wetter", "regnet", "grad"],
+  "A1-14.1": ["kopfschmerz", "weh", "körper"],
+  "A1-14.2": ["dativ", "akkusativ", "helfen"],
+  "A1-5.10": ["aber", "oder", "denn"],
+};
+
 function text(value) {
   return String(value || "").trim();
 }
 
 function list(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function normalized(value) {
+  return text(value).toLocaleLowerCase("de-DE");
+}
+
+function signature(values) {
+  return list(values).map(normalized).join(" || ");
 }
 
 const a1Slides = teachingSlides.filter(
@@ -62,15 +102,28 @@ test("every A1 slide meets the classroom-content standard", () => {
     }
 
     const searchable = [
+      slide.title,
+      slide.topic,
       slide.objective,
+      ...list(slide.warmupQuestionsDe),
       ...list(slide.keyPhrasesDe),
+      ...list(slide.studentQuestionsDe),
       ...list(slide.teacherNotesEn),
+      ...list(support.grammarFocusEn),
       ...list(support.modelExamplesDe),
       ...list(support.commonMistakesEn),
-    ].map(text).join("\n");
+      ...list(checks).flatMap((item) => [item?.questionDe, item?.answerDe]),
+    ].map(normalized).join("\n");
 
     for (const phrase of GENERIC_PHRASES) {
-      if (searchable.includes(phrase)) problems.push(`${id}: still contains generic template phrase: ${phrase}`);
+      if (searchable.includes(normalized(phrase))) problems.push(`${id}: still contains generic template phrase: ${phrase}`);
+    }
+
+    const signals = TOPIC_SIGNALS[id.toUpperCase()] || [];
+    if (!signals.length) {
+      problems.push(`${id}: no semantic audit signals registered`);
+    } else if (!signals.some((signal) => searchable.includes(normalized(signal)))) {
+      problems.push(`${id}: content does not show a clear signal for its assigned topic (${signals.join(", ")})`);
     }
 
     const questionTexts = list(checks).map((item) => text(item?.questionDe)).filter(Boolean);
@@ -99,4 +152,42 @@ test("A1 lesson support does not silently fall back to the generic A1 template",
   }
 
   assert.deepEqual(failures, [], failures.join("\n"));
+});
+
+test("different A1 lessons do not reuse the same examples, mistakes, or understanding checks", () => {
+  const seen = {
+    examples: new Map(),
+    mistakes: new Map(),
+    checks: new Map(),
+  };
+  const duplicates = [];
+
+  for (const slide of a1Slides) {
+    const id = text(slide.assignmentId);
+    const support = buildTeacherSlideSupport(slide);
+    const checks = getA1GrammarChecks(id, slide);
+    const values = {
+      examples: signature(support.modelExamplesDe),
+      mistakes: signature(support.commonMistakesEn),
+      checks: signature(checks.map((item) => item?.questionDe)),
+    };
+
+    for (const [kind, value] of Object.entries(values)) {
+      if (!value) continue;
+      const previous = seen[kind].get(value);
+      if (previous) duplicates.push(`${id} and ${previous} share identical ${kind}`);
+      else seen[kind].set(value, id);
+    }
+  }
+
+  assert.deepEqual(duplicates, [], duplicates.join("\n"));
+});
+
+test("A1 presenter uses language-focus labels that fit non-grammar lessons too", () => {
+  const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
+  assert.match(presenter, /Sprachfokus/);
+  assert.match(presenter, /Verständnis-Check/);
+  assert.match(presenter, /A1 · Language-first/);
+  assert.doesNotMatch(presenter, /A1 · Grammar-first/);
+  assert.doesNotMatch(presenter, /kicker: "Grammatik"/);
 });
