@@ -13,6 +13,11 @@ import { listClasses } from "./classesService.js";
 import { listStudentsByClass } from "./studentsService.js";
 import { cancelSession } from "./liveClassSessionDirectService.js";
 import { belongsToSelectedClass } from "../utils/liveClassSessionOwnership.js";
+import {
+  deliveryFailureMessage,
+  historyStatusBlocksDuplicate,
+  receiptHasSuccessfulDelivery,
+} from "../utils/communicationDelivery.js";
 
 const ANNOUNCEMENT_WEBHOOK_URL = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_URL || "").trim();
 const ANNOUNCEMENT_WEBHOOK_TOKEN = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN || "").trim();
@@ -189,6 +194,7 @@ async function findRecentDuplicate(fingerprint, windowMs = DUPLICATE_WINDOW_MS) 
     const cutoff = Date.now() - Math.max(0, Number(windowMs) || DUPLICATE_WINDOW_MS);
     const rows = snap.docs
       .map((item) => ({ id: item.id, ...item.data() }))
+      .filter(historyStatusBlocksDuplicate)
       .filter((item) => createdAtMs(item.createdAt) >= cutoff)
       .sort((a, b) => createdAtMs(b.createdAt) - createdAtMs(a.createdAt));
     return rows[0] || null;
@@ -403,7 +409,7 @@ export async function saveAnnouncementRow(input = {}) {
     ...(cancellation ? { liveClass: cancellation } : {}),
     sheet: {
       attempted: Boolean(ANNOUNCEMENT_WEBHOOK_URL),
-      success: !ANNOUNCEMENT_WEBHOOK_URL,
+      success: false,
       message: ANNOUNCEMENT_WEBHOOK_URL ? "Pending" : "Email webhook not configured; saved to communication history only.",
       unverified: false,
     },
@@ -475,6 +481,10 @@ export async function saveAnnouncementRow(input = {}) {
 }
 
 export async function saveAnnouncementBatch({ input = {}, recipients = [], recipientFilter = "all", session = null } = {}) {
+  if (!ANNOUNCEMENT_WEBHOOK_URL) {
+    throw new Error("Targeted email delivery is not configured. No student emails were sent.");
+  }
+
   const unique = new Map();
   recipients.forEach((recipient) => {
     const email = normalizeLower(recipient.email || recipient.contactEmail);
@@ -509,13 +519,25 @@ export async function saveAnnouncementBatch({ input = {}, recipients = [], recip
     skipHistory: true,
   })));
 
-  const successCount = settled.filter((result) => result.status === "fulfilled").length;
+  const successCount = settled.filter((result) => result.status === "fulfilled" && receiptHasSuccessfulDelivery(result.value)).length;
   const failures = settled
-    .map((result, index) => result.status === "rejected" ? {
-      email: targetRecipients[index].email,
-      name: normalize(targetRecipients[index].name),
-      message: String(result.reason?.message || result.reason || "Delivery failed"),
-    } : null)
+    .map((result, index) => {
+      if (result.status === "rejected") {
+        return {
+          email: targetRecipients[index].email,
+          name: normalize(targetRecipients[index].name),
+          message: String(result.reason?.message || result.reason || "Delivery failed"),
+        };
+      }
+      if (!receiptHasSuccessfulDelivery(result.value)) {
+        return {
+          email: targetRecipients[index].email,
+          name: normalize(targetRecipients[index].name),
+          message: deliveryFailureMessage(result.value),
+        };
+      }
+      return null;
+    })
     .filter(Boolean);
   const failureCount = failures.length;
   const status = failureCount === 0 ? "sent" : successCount > 0 ? "partial" : "failed";

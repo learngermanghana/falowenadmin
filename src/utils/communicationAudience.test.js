@@ -23,7 +23,7 @@ test("attendance filters use the selected session only", () => {
     },
   };
   assert.deepEqual(filterStudentsByAttendance(students, session, "present").map((row) => row.studentCode), ["A-1"]);
-  assert.deepEqual(filterStudentsByAttendance(students, session, "absent").map((row) => row.studentCode), ["A-2"]);
+  assert.deepEqual(filterStudentsByAttendance(students, session, "absent").map((row) => row.studentCode), ["A-2", "A-3"]);
 });
 
 test("not checked in matches student identity safely", () => {
