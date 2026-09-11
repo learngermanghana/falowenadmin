@@ -2,6 +2,7 @@ import { useState } from "react";
 import AttendanceConfirmationAutomationPanel from "../components/AttendanceConfirmationAutomationPanel.jsx";
 import AttendanceFailedDeliveryRetryPanel from "../components/AttendanceFailedDeliveryRetryPanel.jsx";
 import CommunicationLiveClassActions from "../components/CommunicationLiveClassActions.jsx";
+import TargetedCommunicationPanel from "../components/TargetedCommunicationPanel.jsx";
 import CommunicationPage from "./CommunicationPage.jsx";
 
 function tabStyle(active) {
@@ -35,6 +36,7 @@ export default function CommunicationHubPage() {
             <CommunicationLiveClassActions />
           </div>
           <CommunicationPage />
+          <TargetedCommunicationPanel />
         </div>
       ) : null}
       {activeTab === "attendance" ? (
