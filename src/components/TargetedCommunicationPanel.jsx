@@ -174,28 +174,45 @@ export default function TargetedCommunicationPanel() {
   }, [refreshHistory]);
 
   useEffect(() => {
+    let cancelled = false;
+
     setResolvedRecipients([]);
     setResolutionNote("");
     setSessionId("");
     setStudents([]);
     setSessions([]);
-    if (!selectedClass) return;
+
+    if (!selectedClass) {
+      setLoadingClass(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const requestedClassId = classIdOf(selectedClass);
+    const requestedClassName = classNameOf(selectedClass);
+    setLoadingClass(true);
 
     (async () => {
-      setLoadingClass(true);
       try {
         const [studentRows, sessionRows] = await Promise.all([
-          listStudentsByClass(classIdOf(selectedClass), { className: classNameOf(selectedClass) }),
+          listStudentsByClass(requestedClassId, { className: requestedClassName }),
           loadClassAttendance(selectedClass),
         ]);
+        if (cancelled) return;
         setStudents(uniqueStudents(studentRows));
         setSessions(sessionRows);
       } catch (error) {
+        if (cancelled) return;
         showError(error?.message || "Could not load the selected class.");
       } finally {
-        setLoadingClass(false);
+        if (!cancelled) setLoadingClass(false);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedClass, showError]);
 
   useEffect(() => {
@@ -333,7 +350,12 @@ export default function TargetedCommunicationPanel() {
           <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
             <label style={fieldStyle}>
               <span>Class *</span>
-              <select style={inputStyle} value={classId} onChange={(event) => setClassId(event.target.value)}>
+              <select
+                style={inputStyle}
+                value={classId}
+                onChange={(event) => setClassId(event.target.value)}
+                disabled={resolving || sending}
+              >
                 <option value="">Select class</option>
                 {classes.map((klass) => (
                   <option key={classIdOf(klass)} value={classIdOf(klass)}>{classNameOf(klass)}</option>
