@@ -1,3 +1,5 @@
+import { A1_TOPIC_TEACHER_SUPPORT } from "./a1TopicTeacherSupport.js";
+
 const LEVEL_DEFAULTS = {
   A1: {
     grammarFocusEn: [
@@ -158,7 +160,7 @@ export function buildTeacherSlideSupport(slide = {}) {
   const level = String(slide.course || "A2").toUpperCase();
   const defaults = LEVEL_DEFAULTS[level] || LEVEL_DEFAULTS.A2;
   const assignmentId = String(slide.assignmentId || "").toUpperCase();
-  const curated = CURATED_OVERRIDES[assignmentId] || {};
+  const curated = CURATED_OVERRIDES[assignmentId] || A1_TOPIC_TEACHER_SUPPORT[assignmentId] || {};
   const direct = slide.teacherSupport || {};
   const topic = cleanTopic(slide);
   const preferCurated = assignmentId === "B2-1.1";
