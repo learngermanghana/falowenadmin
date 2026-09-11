@@ -18,10 +18,15 @@ const ANNOUNCEMENT_WEBHOOK_URL = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOO
 const ANNOUNCEMENT_WEBHOOK_TOKEN = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN || "").trim();
 const ANNOUNCEMENT_WEBHOOK_SHEET_NAME = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME || "").trim();
 const ANNOUNCEMENT_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID || "").trim();
-const SAVE_ANNOUNCEMENTS_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_ANNOUNCEMENT_FIRESTORE || "false").toLowerCase() === "true";
+const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
+const HISTORY_LIMIT_DEFAULT = 30;
 
 function normalize(value) {
   return String(value || "").trim();
+}
+
+function normalizeLower(value) {
+  return normalize(value).toLowerCase().replace(/\s+/g, " ");
 }
 
 function boolToSheetValue(value) {
@@ -136,6 +141,74 @@ function activeCancellationTarget(session = {}) {
     && session.superseded !== true;
 }
 
+function createdAtMs(value) {
+  if (!value) return 0;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  if (typeof value === "object" && Number.isFinite(value.seconds)) return Number(value.seconds) * 1000;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function hashText(value) {
+  const text = String(value || "");
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function recipientKey(input = {}) {
+  if (Array.isArray(input.recipientKeys) && input.recipientKeys.length) {
+    return hashText(input.recipientKeys.map(normalizeLower).filter(Boolean).sort().join("|"));
+  }
+  return normalizeLower(input.email || input.studentId || input.studentCode || "");
+}
+
+export function buildAnnouncementFingerprint(input = {}, row = buildAnnouncementRow(input)) {
+  const parts = [
+    normalizeLower(row.topic),
+    normalizeLower(row.announcement),
+    normalizeLower(row.class),
+    normalizeLower(row.date),
+    normalizeLower(row.link),
+    normalizeLower(row.cert_level),
+    normalizeLower(input.recipientFilter || input.audienceMode || "all"),
+    normalizeLower(input.sessionId || input.classSessionId),
+    recipientKey(input),
+  ];
+  return `ann_${hashText(parts.join("||"))}`;
+}
+
+async function findRecentDuplicate(fingerprint, windowMs = DUPLICATE_WINDOW_MS) {
+  if (!fingerprint) return null;
+  try {
+    const snap = await getDocs(query(collection(db, "announcements"), where("fingerprint", "==", fingerprint)));
+    const cutoff = Date.now() - Math.max(0, Number(windowMs) || DUPLICATE_WINDOW_MS);
+    const rows = snap.docs
+      .map((item) => ({ id: item.id, ...item.data() }))
+      .filter((item) => createdAtMs(item.createdAt) >= cutoff)
+      .sort((a, b) => createdAtMs(b.createdAt) - createdAtMs(a.createdAt));
+    return rows[0] || null;
+  } catch (error) {
+    console.warn("Could not check communication duplicate history; continuing without blocking send.", error);
+    return null;
+  }
+}
+
+async function assertNotRecentDuplicate(input, row) {
+  if (input.skipDuplicateGuard || isClassCancellation(input)) return;
+  const fingerprint = buildAnnouncementFingerprint(input, row);
+  const duplicate = await findRecentDuplicate(fingerprint, input.duplicateWindowMs);
+  if (!duplicate) return;
+  const error = new Error("This exact message was already sent to the same audience recently. Change the message/audience or wait before sending it again.");
+  error.code = "duplicate_communication";
+  error.duplicate = duplicate;
+  throw error;
+}
+
 async function loadClassSessionsForCommunication(klass = {}) {
   const classId = normalize(klass.id || klass.classId);
   const aliases = classAliases(klass);
@@ -200,9 +273,6 @@ async function prepareCommunicationCancellation(input = {}, row = {}) {
     adminId: normalize(input.adminId) || "communication-page",
   });
 
-  // The session + reminder suppression + attendance session status are written by
-  // cancelSession transactionally. Explicitly close an already-open check-in gate
-  // before the student announcement is allowed to continue.
   await setDoc(doc(db, "attendance", classId, "sessions", session.id), {
     classId,
     classSessionId: session.id,
@@ -274,8 +344,48 @@ async function postAnnouncementToWebhookNoCors(payload) {
   });
 }
 
-export async function saveAnnouncementRow(input) {
+async function writeCommunicationHistory(input, row, receipt, extra = {}) {
+  const fingerprint = extra.fingerprint || buildAnnouncementFingerprint(input, row);
+  const status = extra.status || (
+    receipt?.sheet?.success
+      ? receipt.sheet.unverified ? "unverified" : "sent"
+      : "failed"
+  );
+  const recipientCount = Number(extra.recipientCount ?? input.recipientCount ?? (row.email ? 1 : 0)) || 0;
+
+  const payload = {
+    ...row,
+    fingerprint,
+    communicationHistory: true,
+    audienceMode: normalize(extra.audienceMode || input.audienceMode || input.recipientFilter || (row.email ? "individual" : "class")),
+    recipientFilter: normalize(extra.recipientFilter || input.recipientFilter),
+    recipientCount,
+    successCount: Number(extra.successCount ?? (status === "sent" || status === "unverified" ? recipientCount : 0)) || 0,
+    failureCount: Number(extra.failureCount || 0) || 0,
+    deliveryStatus: status,
+    classId: normalize(extra.classId || input.classId),
+    classSessionId: normalize(extra.sessionId || input.sessionId || input.classSessionId),
+    sessionLabel: normalize(extra.sessionLabel || input.sessionLabel),
+    liveClassAction: normalize(extra.liveClassAction || input.liveClassAction),
+    createdAt: new Date().toISOString(),
+  };
+
+  const saved = await addDoc(collection(db, "announcements"), payload);
+  return { id: saved.id, ...payload };
+}
+
+export async function listCommunicationHistory({ limit = HISTORY_LIMIT_DEFAULT } = {}) {
+  const snap = await getDocs(collection(db, "announcements"));
+  return snap.docs
+    .map((item) => ({ id: item.id, ...item.data() }))
+    .sort((a, b) => createdAtMs(b.createdAt) - createdAtMs(a.createdAt))
+    .slice(0, Math.max(1, Number(limit) || HISTORY_LIMIT_DEFAULT));
+}
+
+export async function saveAnnouncementRow(input = {}) {
   const row = buildAnnouncementRow(input);
+  await assertNotRecentDuplicate(input, row);
+
   const cancellation = isClassCancellation(input)
     ? await prepareCommunicationCancellation(input, row)
     : null;
@@ -294,17 +404,13 @@ export async function saveAnnouncementRow(input) {
     sheet: {
       attempted: Boolean(ANNOUNCEMENT_WEBHOOK_URL),
       success: !ANNOUNCEMENT_WEBHOOK_URL,
-      message: ANNOUNCEMENT_WEBHOOK_URL
-        ? "Pending"
-        : "Sheet save skipped (webhook not configured).",
+      message: ANNOUNCEMENT_WEBHOOK_URL ? "Pending" : "Email webhook not configured; saved to communication history only.",
       unverified: false,
     },
     firestore: {
-      attempted: SAVE_ANNOUNCEMENTS_TO_FIRESTORE,
-      success: !SAVE_ANNOUNCEMENTS_TO_FIRESTORE,
-      message: SAVE_ANNOUNCEMENTS_TO_FIRESTORE
-        ? "Pending"
-        : "Firestore mirror skipped (disabled by config).",
+      attempted: !input.skipHistory,
+      success: Boolean(input.skipHistory),
+      message: input.skipHistory ? "Grouped history will be saved by the caller." : "Pending",
     },
   };
 
@@ -337,29 +443,114 @@ export async function saveAnnouncementRow(input) {
     }
   }
 
-  if (SAVE_ANNOUNCEMENTS_TO_FIRESTORE) {
+  if (!input.skipHistory) {
     try {
-      await addDoc(collection(db, "announcements"), {
-        ...row,
-        ...(cancellation ? {
-          liveClassAction: "cancelled",
-          classId: cancellation.classId,
-          classSessionId: cancellation.sessionId,
-        } : {}),
-        createdAt: new Date().toISOString(),
+      const history = await writeCommunicationHistory(input, row, receipt, {
+        classId: cancellation?.classId,
+        sessionId: cancellation?.sessionId,
+        recipientCount: cancellation?.recipientCount ?? input.recipientCount,
+        liveClassAction: cancellation ? "cancelled" : input.liveClassAction,
       });
       receipt.firestore.success = true;
-      receipt.firestore.message = "Saved to Firestore mirror.";
+      receipt.firestore.message = "Saved to communication history.";
+      receipt.history = history;
     } catch (error) {
-      receipt.firestore.message = String(error?.message || "Firestore mirror save failed.");
+      receipt.firestore.success = false;
+      receipt.firestore.message = String(error?.message || "Communication history save failed.");
     }
   }
 
-  if (!receipt.sheet.success && !receipt.firestore.success) {
-    const saveError = new Error(receipt.sheet.message || "Save failed for both Google Sheets and Firestore.");
+  if (ANNOUNCEMENT_WEBHOOK_URL && !receipt.sheet.success) {
+    const saveError = new Error(receipt.sheet.message || "Announcement delivery failed.");
+    saveError.receipt = receipt;
+    throw saveError;
+  }
+  if (!ANNOUNCEMENT_WEBHOOK_URL && !receipt.firestore.success) {
+    const saveError = new Error(receipt.firestore.message || "Communication history save failed.");
     saveError.receipt = receipt;
     throw saveError;
   }
 
   return receipt;
+}
+
+export async function saveAnnouncementBatch({ input = {}, recipients = [], recipientFilter = "all", session = null } = {}) {
+  const unique = new Map();
+  recipients.forEach((recipient) => {
+    const email = normalizeLower(recipient.email || recipient.contactEmail);
+    if (!email || unique.has(email)) return;
+    unique.set(email, { ...recipient, email });
+  });
+  const targetRecipients = [...unique.values()];
+  if (!targetRecipients.length) throw new Error("No students with valid email addresses match this audience.");
+
+  const recipientKeys = targetRecipients.map((recipient) => recipient.email).sort();
+  const groupInput = {
+    ...input,
+    email: "",
+    recipientFilter,
+    audienceMode: recipientFilter,
+    recipientKeys,
+    recipientCount: targetRecipients.length,
+    sessionId: normalize(session?.id || session?.classSessionId || input.sessionId),
+    sessionLabel: normalize(session?.title || session?.sessionLabel || input.sessionLabel),
+  };
+  const groupRow = buildAnnouncementRow(groupInput);
+  await assertNotRecentDuplicate(groupInput, groupRow);
+  const fingerprint = buildAnnouncementFingerprint(groupInput, groupRow);
+
+  const settled = await Promise.allSettled(targetRecipients.map((recipient) => saveAnnouncementRow({
+    ...input,
+    email: recipient.email,
+    studentId: normalize(recipient.id || recipient.studentCode),
+    studentName: normalize(recipient.name || recipient.studentName),
+    deliveryMode: "individual",
+    skipDuplicateGuard: true,
+    skipHistory: true,
+  })));
+
+  const successCount = settled.filter((result) => result.status === "fulfilled").length;
+  const failures = settled
+    .map((result, index) => result.status === "rejected" ? {
+      email: targetRecipients[index].email,
+      name: normalize(targetRecipients[index].name),
+      message: String(result.reason?.message || result.reason || "Delivery failed"),
+    } : null)
+    .filter(Boolean);
+  const failureCount = failures.length;
+  const status = failureCount === 0 ? "sent" : successCount > 0 ? "partial" : "failed";
+
+  let history = null;
+  try {
+    history = await writeCommunicationHistory(groupInput, groupRow, {
+      sheet: { success: successCount > 0, unverified: false },
+    }, {
+      fingerprint,
+      status,
+      recipientFilter,
+      recipientCount: targetRecipients.length,
+      successCount,
+      failureCount,
+      sessionId: groupInput.sessionId,
+      sessionLabel: groupInput.sessionLabel,
+      classId: normalize(input.classId),
+    });
+  } catch (error) {
+    console.warn("Could not save grouped communication history.", error);
+  }
+
+  if (!successCount) {
+    const error = new Error(`Message delivery failed for all ${targetRecipients.length} selected students.`);
+    error.failures = failures;
+    throw error;
+  }
+
+  return {
+    recipientCount: targetRecipients.length,
+    successCount,
+    failureCount,
+    failures,
+    status,
+    history,
+  };
 }
