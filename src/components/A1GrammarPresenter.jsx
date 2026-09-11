@@ -36,8 +36,8 @@ function stageList(slide, topicLabel) {
     {
       id: "rule",
       type: "list",
-      kicker: "Grammatik",
-      title: "Regel verstehen",
+      kicker: "Sprachfokus",
+      title: "Muster und Regel verstehen",
       items: Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [],
     },
     {
@@ -50,8 +50,8 @@ function stageList(slide, topicLabel) {
     {
       id: "grammar-check",
       type: "check",
-      kicker: "Grammatik-Check",
-      title: "Zeig, dass du die Regel verstanden hast",
+      kicker: "Verständnis-Check",
+      title: "Zeig, dass du das Thema verstanden hast",
       items: mainChecks,
     },
     {
@@ -180,12 +180,12 @@ export default function A1GrammarPresenter({
   const atEnd = stageIndex === stages.length - 1 && (!manualCheckMode || itemIndex === stage.items.length - 1);
 
   return (
-    <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 grammar teaching presenter">
+    <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
       <div className="presenter-stage">
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
-            <span className="presenter-lesson-label">A1 · Grammar-first</span>
+            <span className="presenter-lesson-label">A1 · Language-first</span>
           </div>
 
           <div className="presenter-v2-tools">
@@ -220,8 +220,8 @@ export default function A1GrammarPresenter({
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
                 <strong>A1 teaching method</strong>
-                <p>Rule → examples → concept check → error correction → workbook transfer → exit check.</p>
-                <small>The live concept check gives each learner a unique question. Workbook gap-fill and form drills stay in the workbook.</small>
+                <p>Language focus → examples → understanding check → error correction → workbook transfer → exit check.</p>
+                <small>The live understanding check gives each learner a unique question. Workbook gap-fill and form drills stay in the workbook.</small>
               </div>
             </>
           ) : stage.type === "check" ? (
