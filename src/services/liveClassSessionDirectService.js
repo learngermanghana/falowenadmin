@@ -99,6 +99,15 @@ function scheduleStateClassPatch({ health, endDate, adminId }) {
   };
 }
 
+function oneOffSessionClassPatch({ endDate }) {
+  return {
+    endDate,
+    configuredEndDate: endDate,
+    holidayAdjustedEndDate: endDate,
+    sessionDerivedEndDate: endDate,
+  };
+}
+
 function autoOpenedAttendanceReschedulePatch(attendance = {}, sessionPatch = {}) {
   if (attendance.autoOpened !== true || attendance.opened !== true) return {};
   if (
@@ -431,12 +440,15 @@ export async function rescheduleSession(sessionId, payload = {}) {
     proposedSessions.push({ ...session, ...primaryPatch });
   }
 
-  assertTimetableIntegrity({
-    klass,
-    sessions: proposedSessions,
-    requireCurriculum: true,
-    enforceEndDate: false,
-  });
+  if (reschedulePlan.mode === "following") {
+    assertTimetableIntegrity({
+      klass,
+      sessions: proposedSessions,
+      requireCurriculum: true,
+      enforceEndDate: false,
+    });
+  }
+
   const preliminaryHealth = buildClassScheduleHealth({
     klass,
     sessions: proposedSessions,
@@ -450,11 +462,13 @@ export async function rescheduleSession(sessionId, payload = {}) {
     requireCurriculum: true,
     enforceEndDate: true,
   });
-  const classPatch = scheduleStateClassPatch({
-    health,
-    endDate: proposedEndDate,
-    adminId,
-  });
+  const classPatch = reschedulePlan.mode === "following"
+    ? scheduleStateClassPatch({
+      health,
+      endDate: proposedEndDate,
+      adminId,
+    })
+    : oneOffSessionClassPatch({ endDate: proposedEndDate });
   const atomic = await commitSessionChangesAtomically({
     classId,
     sessionChanges,
