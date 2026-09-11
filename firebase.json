@@ -38,6 +38,7 @@
         "node scripts/patchClassReminderConciseLinks.mjs",
         "node scripts/patchClassReminderJoinZoomLabel.mjs",
         "node scripts/patchCheckinStatusMetadataHydration.mjs",
+        "node scripts/patchSessionHealthAutomationConfig.mjs",
         "node scripts/patchLeadClassStartReminderEmails.mjs",
         "node scripts/patchAutoCompleteClassSessions.mjs",
         "node scripts/patchCloudCostOptimizations.mjs",
