@@ -74,8 +74,9 @@ function presenterContext() {
 export default function PresenterClassTools({ slide, classId = "", className = "" }) {
   const [copyState, setCopyState] = useState("");
   const context = useMemo(() => presenterContext(), []);
-  const resolvedClassId = normalize(classId || context.classId);
-  const resolvedClassName = normalize(className || context.className || resolvedClassId);
+  // The permanent Live Classes document ID must win for check-in/attendance links.
+  const resolvedClassId = normalize(context.classId || classId);
+  const resolvedClassName = normalize(className || context.className || classId || resolvedClassId);
   const assignmentId = normalize(context.assignmentId || slide?.assignmentId || slide?.id);
   const sessionLabel = normalize(context.sessionLabel || slide?.title || slide?.topic);
   const workbookUrl = falowenHref(slide?.workbookConnection?.workbookUrl);
@@ -96,7 +97,7 @@ export default function PresenterClassTools({ slide, classId = "", className = "
 
   const attendanceHref = resolvedClassId ? `/attendance/${encodeURIComponent(resolvedClassId)}` : "";
   const studentsHref = resolvedClassId ? adminHref("/live-classes", { classId: resolvedClassId, tab: "students" }) : "/live-classes";
-  const participationHref = resolvedClassId ? adminHref("/class-participation", { classId: resolvedClassId }) : "/class-participation";
+  const participationHref = resolvedClassId ? adminHref("/class-participation", { classId: resolvedClassId, className: resolvedClassName }) : "/class-participation";
   const messageHref = adminHref("/communication", {
     className: resolvedClassName,
     topic: "Teaching Slides",
