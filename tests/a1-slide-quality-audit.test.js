@@ -5,6 +5,7 @@ import fs from "node:fs";
 import { teachingSlides } from "../src/data/teachingSlides.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../src/data/a1GrammarChecks.js";
+import { getA1PresenterUnderstandingChecks } from "../src/data/a1PresenterUnderstandingChecks.js";
 
 const GENERIC_PHRASES = [
   "Ich denke, dass ...",
@@ -80,6 +81,7 @@ test("every A1 slide meets the classroom-content standard", () => {
     const id = text(slide.assignmentId) || text(slide.id) || "unknown";
     const support = buildTeacherSlideSupport(slide);
     const checks = getA1GrammarChecks(id, slide);
+    const presenterChecks = getA1PresenterUnderstandingChecks(id, checks, { slide, support });
 
     const requirements = [
       [text(slide.title).length >= 8, "missing/weak title"],
@@ -94,7 +96,8 @@ test("every A1 slide meets the classroom-content standard", () => {
       [list(support.grammarFocusEn).length >= 2, "needs lesson-specific grammar/language focus"],
       [list(support.modelExamplesDe).length >= 3, "needs at least 3 model examples"],
       [list(support.commonMistakesEn).length >= 3, "needs at least 3 likely mistakes"],
-      [list(checks).length >= 4, "needs at least 4 understanding checks"],
+      [list(checks).length >= 4, "needs at least 4 core understanding checks"],
+      [list(presenterChecks).length >= 11, "needs 10 class understanding questions plus a separate exit check"],
     ];
 
     for (const [ok, reason] of requirements) {
@@ -113,6 +116,7 @@ test("every A1 slide meets the classroom-content standard", () => {
       ...list(support.modelExamplesDe),
       ...list(support.commonMistakesEn),
       ...list(checks).flatMap((item) => [item?.questionDe, item?.answerDe]),
+      ...list(presenterChecks).flatMap((item) => [item?.questionDe, item?.answerDe]),
     ].map(normalized).join("\n");
 
     for (const phrase of GENERIC_PHRASES) {
@@ -126,9 +130,19 @@ test("every A1 slide meets the classroom-content standard", () => {
       problems.push(`${id}: content does not show a clear signal for its assigned topic (${signals.join(", ")})`);
     }
 
-    const questionTexts = list(checks).map((item) => text(item?.questionDe)).filter(Boolean);
-    if (new Set(questionTexts).size !== questionTexts.length) {
-      problems.push(`${id}: understanding checks contain duplicate questions`);
+    const coreQuestionTexts = list(checks).map((item) => text(item?.questionDe)).filter(Boolean);
+    if (new Set(coreQuestionTexts).size !== coreQuestionTexts.length) {
+      problems.push(`${id}: core understanding checks contain duplicate questions`);
+    }
+
+    const classQuestionTexts = list(presenterChecks).slice(0, 10).map((item) => text(item?.questionDe)).filter(Boolean);
+    if (classQuestionTexts.length !== 10 || new Set(classQuestionTexts).size !== 10) {
+      problems.push(`${id}: the first 10 presenter questions must be ten distinct class checks`);
+    }
+
+    const exitQuestion = text(list(presenterChecks).at(-1)?.questionDe);
+    if (!exitQuestion || classQuestionTexts.includes(exitQuestion)) {
+      problems.push(`${id}: exit check must be separate from the ten class questions`);
     }
   }
 
@@ -154,7 +168,7 @@ test("A1 lesson support does not silently fall back to the generic A1 template",
   assert.deepEqual(failures, [], failures.join("\n"));
 });
 
-test("different A1 lessons do not reuse the same examples, mistakes, or understanding checks", () => {
+test("different A1 lessons do not reuse the same examples, mistakes, or core understanding checks", () => {
   const seen = {
     examples: new Map(),
     mistakes: new Map(),
@@ -183,11 +197,13 @@ test("different A1 lessons do not reuse the same examples, mistakes, or understa
   assert.deepEqual(duplicates, [], duplicates.join("\n"));
 });
 
-test("A1 presenter uses language-focus labels that fit non-grammar lessons too", () => {
+test("A1 presenter uses inclusive language-focus labels and always provides a transfer stage", () => {
   const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
   assert.match(presenter, /Sprachfokus/);
   assert.match(presenter, /Verständnis-Check/);
   assert.match(presenter, /A1 · Language-first/);
+  assert.match(presenter, /practicePrompts\.slice\(0, 4\)/);
+  assert.match(presenter, /hasWorkbookPlan \? "Jetzt ins Workbook übertragen" : "Jetzt anwenden"/);
   assert.doesNotMatch(presenter, /A1 · Grammar-first/);
   assert.doesNotMatch(presenter, /kicker: "Grammatik"/);
 });
