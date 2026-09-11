@@ -87,6 +87,7 @@ export default function SessionHealthExceptionsCenter() {
       const nextDashboard = await getCompatibleClassDashboard(nextClassId);
       const nextOperational = await loadSessionOperationalState({
         classId: nextClassId,
+        klass: nextDashboard.klass,
         sessions: nextDashboard.sessions || [],
       });
       setDashboard(nextDashboard);
@@ -118,6 +119,7 @@ export default function SessionHealthExceptionsCenter() {
       attendanceBySessionId: operational.attendanceBySessionId,
       checkins: operational.checkins,
       checkinLoadFailures: operational.checkinLoadFailures,
+      autoOpenRuntime: operational.autoOpenRuntime,
       sessionRepair: dashboard.sessionRepair,
       curriculumRepair: dashboard.curriculumRepair,
       now: new Date(),
