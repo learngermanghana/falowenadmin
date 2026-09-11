@@ -49,10 +49,12 @@ function health(overrides = {}) {
   return buildSessionHealthExceptions({
     klass: overrides.klass || baseClass(),
     sessions: overrides.sessions || [session],
-    attendanceBySessionId: attendanceRecord ? { [attendanceRecord.id || session.id]: attendanceRecord } : {},
+    attendanceBySessionId: overrides.attendanceBySessionId
+      || (attendanceRecord ? { [attendanceRecord.id || session.id]: attendanceRecord } : {}),
     checkins: overrides.checkins || [],
     sessionRepair: overrides.sessionRepair || null,
     curriculumRepair: overrides.curriculumRepair || null,
+    autoOpenRuntime: overrides.autoOpenRuntime || {},
     now: overrides.now || new Date("2026-09-11T08:00:00.000Z"),
   });
 }
@@ -91,6 +93,24 @@ test("cancelled session flags reminder and open check-in leakage", () => {
   const codes = new Set(result.actionRequired.map((issue) => issue.code));
   assert.ok(codes.has("cancelled-reminder-leak"));
   assert.ok(codes.has("cancelled-checkin-open"));
+});
+
+test("cancelled and canceled are treated as the same closed status", () => {
+  const result = health({
+    session: baseSession({
+      status: "cancelled",
+      cancellationReason: "Tutor unavailable",
+      remindersSuppressed: true,
+    }),
+    attendance: attendance({
+      sessionStatus: "canceled",
+      cancellationReason: "Tutor unavailable",
+      remindersSuppressed: true,
+      opened: false,
+    }),
+  });
+
+  assert.equal(result.issues.some((issue) => issue.code === "attendance-status-mismatch"), false);
 });
 
 test("rescheduled session detects stale attendance time", () => {
@@ -199,4 +219,96 @@ test("automatic check-in due before class is action-required when the window did
 
   assert.equal(result.status, "action");
   assert.ok(result.actionRequired.some((issue) => issue.code === "checkin-did-not-open"));
+});
+
+test("missed automatic check-in remains visible after the class starts", () => {
+  const liveSession = baseSession({
+    status: "live",
+    startsAt: "2026-09-11T08:00:00.000Z",
+    endsAt: "2026-09-11T09:30:00.000Z",
+  });
+  const liveAttendance = attendance({
+    sessionStatus: "live",
+    date: "2026-09-11",
+    startsAt: liveSession.startsAt,
+    endsAt: liveSession.endsAt,
+    opened: false,
+  });
+  const result = health({
+    session: liveSession,
+    attendance: liveAttendance,
+    now: new Date("2026-09-11T08:15:00.000Z"),
+  });
+
+  const issue = result.actionRequired.find((item) => item.code === "checkin-did-not-open");
+  assert.ok(issue);
+  assert.match(issue.title, /missed/i);
+  assert.match(issue.detail, /cannot recover/i);
+});
+
+test("global auto-open disablement suppresses worker-failure exceptions", () => {
+  const soonSession = baseSession({
+    startsAt: "2026-09-11T08:20:00.000Z",
+    endsAt: "2026-09-11T09:50:00.000Z",
+  });
+  const soonAttendance = attendance({
+    date: "2026-09-11",
+    startsAt: soonSession.startsAt,
+    endsAt: soonSession.endsAt,
+    opened: false,
+  });
+  const result = health({
+    session: soonSession,
+    attendance: soonAttendance,
+    autoOpenRuntime: { enabled: false, leadMinutes: 30, windowMinutes: 180 },
+    now: new Date("2026-09-11T08:00:00.000Z"),
+  });
+
+  assert.equal(result.issues.some((issue) => issue.code === "checkin-did-not-open"), false);
+});
+
+test("global auto-open enablement is used when the class has no explicit override", () => {
+  const soonSession = baseSession({
+    startsAt: "2026-09-11T08:20:00.000Z",
+    endsAt: "2026-09-11T09:50:00.000Z",
+  });
+  const soonAttendance = attendance({
+    date: "2026-09-11",
+    startsAt: soonSession.startsAt,
+    endsAt: soonSession.endsAt,
+    opened: false,
+  });
+  const result = health({
+    klass: baseClass({ attendanceAutoOpenEnabled: undefined, attendanceAutoOpenLeadMinutes: undefined }),
+    session: soonSession,
+    attendance: soonAttendance,
+    autoOpenRuntime: { enabled: true, leadMinutes: 30, windowMinutes: 180 },
+    now: new Date("2026-09-11T08:00:00.000Z"),
+  });
+
+  assert.ok(result.actionRequired.some((issue) => issue.code === "checkin-did-not-open"));
+});
+
+test("nested timetable overlaps are all detected", () => {
+  const sessions = [
+    baseSession({ id: "session-a", topic: "A", startsAt: "2026-09-15T09:00:00.000Z", endsAt: "2026-09-15T12:00:00.000Z" }),
+    baseSession({ id: "session-b", topic: "B", startsAt: "2026-09-15T10:00:00.000Z", endsAt: "2026-09-15T10:30:00.000Z" }),
+    baseSession({ id: "session-c", topic: "C", startsAt: "2026-09-15T11:00:00.000Z", endsAt: "2026-09-15T11:30:00.000Z" }),
+  ];
+  const attendanceBySessionId = Object.fromEntries(sessions.map((session) => [
+    session.id,
+    attendance({
+      id: session.id,
+      classSessionId: session.id,
+      date: "2026-09-15",
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
+    }),
+  ]));
+
+  const result = health({ sessions, attendanceBySessionId });
+  const overlaps = result.actionRequired.filter((issue) => issue.code === "session-overlap");
+  assert.equal(overlaps.length, 2);
+  assert.ok(overlaps.some((issue) => issue.id === "session-overlap::session-a::session-b"));
+  assert.ok(overlaps.some((issue) => issue.id === "session-overlap::session-a::session-c"));
 });
