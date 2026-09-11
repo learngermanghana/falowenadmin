@@ -1,5 +1,5 @@
 const ACTIVE_SESSION_STATUSES = new Set(["scheduled", "rescheduled", "live"]);
-const CLOSED_SESSION_STATUSES = new Set(["cancelled", "canceled", "completed", "superseded", "deleted"]);
+const CLOSED_SESSION_STATUSES = new Set(["cancelled", "completed", "superseded", "deleted"]);
 const KNOWN_SESSION_STATUSES = new Set([...ACTIVE_SESSION_STATUSES, ...CLOSED_SESSION_STATUSES]);
 const FAILED_DELIVERY_STATUSES = new Set(["failed", "retry_failed", "error"]);
 const REVIEW_DELIVERY_STATUSES = new Set(["skipped", "no_recipients"]);
@@ -10,6 +10,11 @@ function text(value) {
 
 function lower(value) {
   return text(value).toLowerCase();
+}
+
+function canonicalSessionStatus(value) {
+  const status = lower(value);
+  return status === "canceled" ? "cancelled" : status;
 }
 
 function toMillis(value) {
@@ -44,12 +49,12 @@ function sessionAssignmentIds(session = {}) {
 }
 
 function statusFor(session = {}) {
-  return lower(session.status || session.sessionStatus || "scheduled") || "scheduled";
+  return canonicalSessionStatus(session.status || session.sessionStatus || "scheduled") || "scheduled";
 }
 
 function isArchivedClass(klass = {}) {
-  const status = lower(klass.status);
-  return klass.historical === true || ["archived", "graduated", "deleted", "inactive", "cancelled", "canceled"].includes(status);
+  const status = canonicalSessionStatus(klass.status);
+  return klass.historical === true || ["archived", "graduated", "deleted", "inactive", "cancelled"].includes(status);
 }
 
 function normalizedAttendanceMap(attendanceBySessionId = {}) {
@@ -131,7 +136,7 @@ function checkScheduleOverlap(sessions, issues, seen) {
       end: toMillis(session.endsAt || session.endAt),
     }))
     .filter((row) => row.start !== null && row.end !== null && row.end > row.start)
-    .sort((a, b) => a.start - b.start);
+    .sort((a, b) => a.start - b.start || a.end - b.end);
 
   const sameStart = new Map();
   active.forEach((row) => {
@@ -152,10 +157,11 @@ function checkScheduleOverlap(sessions, issues, seen) {
     }
   });
 
-  for (let index = 1; index < active.length; index += 1) {
-    const previous = active[index - 1];
-    const current = active[index];
-    if (current.start < previous.end) {
+  for (let currentIndex = 1; currentIndex < active.length; currentIndex += 1) {
+    const current = active[currentIndex];
+    for (let previousIndex = 0; previousIndex < currentIndex; previousIndex += 1) {
+      const previous = active[previousIndex];
+      if (previous.end <= current.start) continue;
       addIssue(issues, seen, {
         severity: "action",
         code: "session-overlap",
@@ -169,6 +175,22 @@ function checkScheduleOverlap(sessions, issues, seen) {
   }
 }
 
+function autoOpenExpected({ klass = {}, attendance = {}, autoOpenRuntime = {} } = {}) {
+  if (klass.attendanceAutoOpenEnabled === false || autoOpenRuntime.enabled === false) return false;
+  if (autoOpenRuntime.enabled === true || klass.attendanceAutoOpenEnabled === true) return true;
+  return attendance.autoOpened === true || Number.isFinite(Number(attendance.autoOpenLeadMinutes));
+}
+
+function autoOpenLeadMinutes({ klass = {}, attendance = {}, autoOpenRuntime = {} } = {}) {
+  const value = Number(
+    klass.attendanceAutoOpenLeadMinutes
+    ?? autoOpenRuntime.leadMinutes
+    ?? attendance.autoOpenLeadMinutes
+    ?? 30,
+  );
+  return Math.max(1, Math.min(240, Number.isFinite(value) && value > 0 ? value : 30));
+}
+
 export function buildSessionHealthExceptions({
   klass = {},
   sessions = [],
@@ -177,6 +199,7 @@ export function buildSessionHealthExceptions({
   sessionRepair = null,
   curriculumRepair = null,
   checkinLoadFailures = [],
+  autoOpenRuntime = {},
   now = new Date(),
 } = {}) {
   const issues = [];
@@ -340,8 +363,8 @@ export function buildSessionHealthExceptions({
         });
       }
 
-      const attendanceStatus = lower(attendance.sessionStatus || attendance.status || "scheduled") || "scheduled";
-      const cancelledMismatch = [status, attendanceStatus].some((value) => ["cancelled", "canceled"].includes(value))
+      const attendanceStatus = canonicalSessionStatus(attendance.sessionStatus || attendance.status || "scheduled") || "scheduled";
+      const cancelledMismatch = (status === "cancelled" || attendanceStatus === "cancelled")
         && status !== attendanceStatus;
       if (cancelledMismatch) {
         addIssue(issues, seen, {
@@ -401,7 +424,7 @@ export function buildSessionHealthExceptions({
       });
     }
 
-    if (["cancelled", "canceled"].includes(status)) {
+    if (status === "cancelled") {
       if (!text(session.cancellationReason || attendance?.cancellationReason)) {
         addIssue(issues, seen, {
           severity: "review",
@@ -478,18 +501,23 @@ export function buildSessionHealthExceptions({
     if (
       attendance
       && ACTIVE_SESSION_STATUSES.has(status)
-      && klass.attendanceAutoOpenEnabled !== false
       && startMs !== null
       && endMs !== null
+      && autoOpenExpected({ klass, attendance, autoOpenRuntime })
+      && !text(attendance.closedBy)
+      && assignmentIds.length
     ) {
-      const leadMinutes = Math.max(1, Math.min(240, Number(klass.attendanceAutoOpenLeadMinutes ?? attendance.autoOpenLeadMinutes ?? 30) || 30));
+      const leadMinutes = autoOpenLeadMinutes({ klass, attendance, autoOpenRuntime });
       const autoOpenDueAt = startMs - leadMinutes * 60 * 1000;
-      if (nowMs >= autoOpenDueAt && nowMs < startMs && attendance.opened !== true && assignmentIds.length) {
+      if (nowMs >= autoOpenDueAt && nowMs <= endMs && attendance.opened !== true) {
+        const alreadyStarted = nowMs >= startMs;
         addIssue(issues, seen, {
           severity: "action",
           code: "checkin-did-not-open",
-          title: "Automatic check-in did not open",
-          detail: `${text(session.topic) || sessionId} starts within ${leadMinutes} minutes, but its attendance window is not open.`,
+          title: alreadyStarted ? "Automatic check-in missed its opening window" : "Automatic check-in did not open",
+          detail: alreadyStarted
+            ? `${text(session.topic) || sessionId} has already started, but its attendance window never opened automatically. The scheduled worker cannot recover this opening after the start time.`
+            : `${text(session.topic) || sessionId} starts within ${leadMinutes} minutes, but its attendance window is not open.`,
           sessionId,
           action: "Open Attendance now and verify the automatic check-in worker.",
         });
