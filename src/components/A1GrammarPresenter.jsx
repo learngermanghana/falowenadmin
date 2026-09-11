@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
+import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import "./TeachingSlidePresenter.css";
 
@@ -14,7 +15,10 @@ function lessonUrl(value = "") {
 
 function stageList(slide, topicLabel) {
   const support = buildTeacherSlideSupport(slide);
-  const checks = getA1GrammarChecks(slide.assignmentId, slide);
+  const checks = getA1PresenterUnderstandingChecks(
+    slide.assignmentId,
+    getA1GrammarChecks(slide.assignmentId, slide),
+  );
   const mainChecks = checks.slice(0, Math.max(1, checks.length - 1));
   const exitChecks = checks.slice(Math.max(1, checks.length - 1));
   const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
@@ -152,6 +156,7 @@ export default function A1GrammarPresenter({
       if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(tagName)) return;
       if (["ArrowRight", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
+        if (participationCheckMode) return;
         next();
       } else if (["ArrowLeft", "PageUp"].includes(event.key)) {
         event.preventDefault();
@@ -167,7 +172,7 @@ export default function A1GrammarPresenter({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [stageIndex, itemIndex, stage?.id, stages.length, manualCheckMode]);
+  }, [stageIndex, itemIndex, stage?.id, stages.length, manualCheckMode, participationCheckMode]);
 
   if (!stage) return null;
 
@@ -224,16 +229,16 @@ export default function A1GrammarPresenter({
               <div className="presenter-question-counter">
                 {participationCheckMode
                   ? activeCheck
-                    ? `Unique question ${activeCheck.poolPosition} of ${activeCheck.poolSize}`
-                    : "Unique class questions"
+                    ? `Student question ${activeCheck.poolPosition} of ${activeCheck.poolSize} · one question per student`
+                    : "Class understanding check · one question per student"
                   : `Aufgabe ${itemIndex + 1} von ${stage.items.length}`}
               </div>
               <h1>{stage.title}</h1>
               {participationCheckMode && !activeCheck ? (
                 <div className="presenter-model-support">
                   <strong>Pick the first student above</strong>
-                  <p>Falowen will match the question pool to the class roster and assign an unused concept question to each learner in this round.</p>
-                  <small>Record Correct, Needs help, Skip or Absent before moving to the next student.</small>
+                  <p>Falowen assigns a different unused understanding question to each learner. For 10 students, the class can receive 10 questions before a question is reused.</p>
+                  <small>Record Correct, Needs help, Skip or Absent, then click Next student → above to test another learner.</small>
                 </div>
               ) : (
                 <>
@@ -247,7 +252,7 @@ export default function A1GrammarPresenter({
                     <div className="presenter-model-support">
                       <strong>Richtige Antwort / teacher guide</strong>
                       <p>{activeCheck?.answerDe}</p>
-                      {participationCheckMode ? <small>Accept a short correct explanation or a suitable simple German example. This is a teacher-judged participation check, not an automatic grade.</small> : null}
+                      {participationCheckMode ? <small>Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for a different unused question.</small> : null}
                       {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
                     </div>
                   ) : (
@@ -255,7 +260,7 @@ export default function A1GrammarPresenter({
                       <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
                       <p>{stage.exitCheck
                         ? "The student answers first. Reveal only after the answer is complete."
-                        : "Let the selected student answer first. Use Correct or Needs help above only after the response."}</p>
+                        : "Let the selected student answer first. Record Correct or Needs help above, then click Next student → to load a different question for another learner."}</p>
                     </div>
                   )}
                 </>
@@ -293,8 +298,17 @@ export default function A1GrammarPresenter({
             <span>{stageIndex + 1} / {stages.length}</span>
             <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${progress}%` }} /></div>
           </div>
-          <button type="button" onClick={next} disabled={atEnd}>
-            {manualCheckMode && itemIndex < stage.items.length - 1 ? "Nächste Aufgabe →" : "Next →"}
+          <button
+            type="button"
+            onClick={next}
+            disabled={atEnd}
+            title={participationCheckMode ? "This leaves the class understanding check. Use Next student above to test the rest of the class." : ""}
+          >
+            {participationCheckMode
+              ? "Continue lesson →"
+              : manualCheckMode && itemIndex < stage.items.length - 1
+                ? "Nächste Aufgabe →"
+                : "Next →"}
           </button>
           {nextLessonHref ? (
             <a
