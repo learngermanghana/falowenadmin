@@ -26,6 +26,11 @@ function extractWritingBeforeObjectiveAnswers(submissionText = "") {
   const source = String(submissionText || "").trim();
   if (!source) return "";
 
+  const explicitTeil2 = source.match(
+    /(?:^|\n)\s*(?:teil|part)\s*2\b[^\n]*\n([\s\S]*?)(?=\n\s*(?:teil|part)\s*[34]\b|$)/i,
+  );
+  if (explicitTeil2?.[1]?.trim()) return explicitTeil2[1].trim();
+
   const lines = source.split(/\r?\n/);
   let firstObjectiveAnswerLine = -1;
   let consecutiveObjectiveAnswers = 0;
@@ -36,7 +41,7 @@ function extractWritingBeforeObjectiveAnswers(submissionText = "") {
       consecutiveObjectiveAnswers += 1;
       if (consecutiveObjectiveAnswers === 1) firstObjectiveAnswerLine = index;
       if (consecutiveObjectiveAnswers >= 3) break;
-    } else if (line && !/^(?:teil|part)\s*$/i.test(line)) {
+    } else if (line && !/^(?:teil|part)(?:\s*[1-4])?\s*$/i.test(line)) {
       consecutiveObjectiveAnswers = 0;
       firstObjectiveAnswerLine = -1;
     }
@@ -46,19 +51,31 @@ function extractWritingBeforeObjectiveAnswers(submissionText = "") {
 
   return lines
     .slice(0, firstObjectiveAnswerLine)
-    .filter((line) => !/^\s*(?:teil|part)\s*$/i.test(line))
+    .filter((line) => !/^\s*(?:teil|part)(?:\s*[1-4])?\s*$/i.test(line))
     .join("\n")
     .trim();
 }
 
-function looksLikeScorableWriting(text = "") {
+function looksLikeScorableWriting(text = "", level = "") {
   const source = String(text || "").trim();
   const words = source.split(/\s+/).filter(Boolean);
   if (words.length < 30) return false;
+
+  const sentences = (source.match(/[.!?]/g) || []).length;
+  if (sentences < 3) return false;
+
   const greeting = /\b(?:lieber|liebe|hallo|guten tag|sehr geehrte|dear|hello|hi)\b/i.test(source);
   const closing = /\b(?:viele grüße|viele gruesse|liebe grüße|liebe gruesse|mit freundlichen grüßen|mit freundlichen gruessen|regards|sincerely|best wishes)\b/i.test(source);
-  const sentences = (source.match(/[.!?]/g) || []).length;
-  return greeting && closing && sentences >= 3;
+  if (greeting && closing) return true;
+
+  const firstPersonPosition = /\b(?:ich\s+(?:glaube|denke|finde|meine|bin)|meiner\s+meinung\s+nach|ich\s+vertrete\s+die\s+auffassung)\b/i.test(source);
+  const essaySignals = source.match(/\b(?:einerseits|andererseits|zum beispiel|zusammenfassend|abschließend|zunächst|außerdem|ausserdem|allerdings|daher|deshalb|dennoch|trotzdem)\b/gi) || [];
+
+  if (level === "B1") {
+    return firstPersonPosition || essaySignals.length >= 2;
+  }
+
+  return level === "A2" && firstPersonPosition;
 }
 
 export function recoverZeroWritingScore(result = {}, submissionText = "") {
@@ -69,7 +86,7 @@ export function recoverZeroWritingScore(result = {}, submissionText = "") {
   if (Number(rawWritingScore) !== 0) return result;
 
   const writingText = extractWritingBeforeObjectiveAnswers(submissionText);
-  if (!looksLikeScorableWriting(writingText)) return result;
+  if (!looksLikeScorableWriting(writingText, level)) return result;
 
   const recovered = heuristicWritingMarker({ level, partId: "teil2", text: writingText });
   const recoveredWritingScore = numeric(recovered.score, 0);
@@ -87,6 +104,7 @@ export function recoverZeroWritingScore(result = {}, submissionText = "") {
     passed: finalScore >= 60,
     writingScore: recoveredWritingScore,
     writingScorePercent: recoveredWritingScore,
+    maxWritingScore: 100,
     status: "needs_review",
     shouldSendAutomatically: false,
     ai: {
