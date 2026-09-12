@@ -9,6 +9,22 @@ let source = fs.readFileSync(targetPath, "utf8");
 const BEGIN = "// BEGIN ATTENDANCE PARTICIPATION SUMMARY";
 const END = "// END ATTENDANCE PARTICIPATION SUMMARY";
 
+const participationSummaryAlreadyInstalled = (
+  source.includes(BEGIN)
+  && source.includes('function buildEachClassMessage({ student, klass, record, participation = null')
+  && source.includes('function buildWeeklyMessage({ student, klass, records, participation = null')
+  && source.includes("async function loadParticipationForSessions")
+  && source.includes("let participationRecords = [];")
+  && source.includes("summarizeStudentParticipation({")
+  && source.includes("buildParticipationText,")
+  && source.includes("participationRecordMatchesStudent,")
+);
+
+if (participationSummaryAlreadyInstalled) {
+  console.log("Attendance participation summary is already installed; leaving downstream hardening/enrichment intact.");
+  process.exit(0);
+}
+
 const helperBlock = String.raw`${BEGIN}
 const PARTICIPATION_RECORD_COLLECTION = "classParticipationRecords";
 const PARTICIPATION_DETAILS_URL = "https://www.falowen.app/campus/account?tab=participation";
