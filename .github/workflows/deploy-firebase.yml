@@ -19,7 +19,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
 
     env:
       FIREBASE_PROJECT_ID: falowen-examiner-trainer
@@ -162,11 +162,37 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
-      - name: Deploy Falowen API, assignment automation, payment orientation sync, contract worker, and class email workers
+      - name: Deploy Firebase functions in quota-safe batches
         shell: bash
         run: |
-          set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:cleanupExpiredPendingStudents,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:queueAttendanceConfirmationFromSession,functions:falowenadmin:queueAttendanceConfirmationFromCheckin,functions:falowenadmin:queueAttendanceConfirmationFromClassSession,functions:falowenadmin:autoCompleteClassSessions --force --debug 2>&1 | tee firebase-deploy.log
+          set -euo pipefail
+          : > firebase-deploy.log
+
+          deploy_group() {
+            local label="$1"
+            local only="$2"
+            echo "=== Deploying ${label} ===" | tee -a firebase-deploy.log
+            firebase deploy \
+              --project "$FIREBASE_PROJECT_ID" \
+              --only "$only" \
+              --force \
+              --debug 2>&1 | tee -a firebase-deploy.log
+          }
+
+          deploy_group "Falowen API" \
+            "functions:falowenadmin:api"
+
+          deploy_group "assignment marking workers" \
+            "functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob"
+
+          deploy_group "payment and contract workers" \
+            "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:cleanupExpiredPendingStudents"
+
+          deploy_group "class scheduled workers" \
+            "functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:autoCompleteClassSessions"
+
+          deploy_group "attendance event workers" \
+            "functions:falowenadmin:queueAttendanceConfirmationFromSession,functions:falowenadmin:queueAttendanceConfirmationFromCheckin,functions:falowenadmin:queueAttendanceConfirmationFromClassSession"
 
       - name: Upload Firebase failure log
         if: failure()
