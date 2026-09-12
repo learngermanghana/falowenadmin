@@ -7,10 +7,15 @@ import fs from "node:fs";
 const require = createRequire(import.meta.url);
 const root = new URL("../", import.meta.url);
 
-execFileSync(process.execPath, ["scripts/patchAttendanceParticipationSummaryEmail.mjs"], {
-  cwd: root,
-  stdio: "pipe",
-});
+for (const patch of [
+  "scripts/patchAttendanceParticipationSummaryEmail.mjs",
+  "scripts/patchAttendanceParticipationCanonicalIdentity.mjs",
+  "scripts/patchAttendanceNoParticipationEncouragement.mjs",
+  "scripts/patchAttendanceParticipationRecapGoals.mjs",
+  "scripts/patchAttendanceParticipationRecapFailSafe.mjs",
+]) {
+  execFileSync(process.execPath, [patch], { cwd: root, stdio: "pipe" });
+}
 
 delete require.cache[require.resolve("../functions/attendanceConfirmationEmails.js")];
 const { _test } = require("../functions/attendanceConfirmationEmails.js");
@@ -106,12 +111,17 @@ test("weekly participation summary aggregates only the student's matching lesson
   });
 
   assert.deepEqual(summary, {
+    noParticipation: false,
     trackedLessons: 2,
     participatedLessons: 2,
     responses: 3,
     correct: 2,
     needsReview: 1,
     skipped: 1,
+    strongConcepts: [],
+    reviewConcepts: [],
+    reviewRecommendation: "",
+    latestSessionId: "participation-session-2",
   });
 });
 
@@ -131,11 +141,12 @@ test("each-class attendance email includes participation without exposing presen
 
   assert.match(message, /confirmed as Present/);
   assert.match(message, /Class participation:/);
-  assert.match(message, /Recorded responses: 2/);
+  assert.match(message, /Responses: 2/);
   assert.match(message, /Correct: 1/);
   assert.match(message, /Needs review: 1/);
+  assert.match(message, /Next class goal:/);
   assert.match(message, /not a grade and it does not change your attendance status/);
-  assert.match(message, /falowen\.app\/campus\/account\?tab=participation/);
+  assert.match(message, /falowen\.app\/campus\/account\?tab=participation&sessionId=participation-session-1/);
   assert.doesNotMatch(message, /presenter.?absent/i);
 });
 
@@ -157,15 +168,16 @@ test("weekly attendance email includes one aggregated class participation sectio
   });
 
   assert.match(message, /Class participation this week: participation was tracked in 2 lessons/);
-  assert.match(message, /Recorded responses: 3/);
+  assert.match(message, /Responses: 3/);
   assert.match(message, /Correct: 2/);
   assert.match(message, /Needs review: 1/);
   assert.match(message, /Skipped: 1/);
+  assert.match(message, /Next class goal:/);
 });
 
-test("attendance emails remain unchanged when no participation record exists", () => {
-  const participationText = buildParticipationText(null, MODE_EACH_CLASS);
-  assert.equal(participationText, "");
+test("participation lookup failure remains silent instead of inferring non-participation", () => {
+  assert.equal(buildParticipationText(null, MODE_EACH_CLASS), "");
+  assert.equal(buildParticipationText(null, MODE_WEEKLY), "");
 
   const message = buildEachClassMessage({
     student,
@@ -174,13 +186,14 @@ test("attendance emails remain unchanged when no participation record exists", (
   });
   assert.match(message, /confirmed as Absent/);
   assert.doesNotMatch(message, /Class participation:/);
+  assert.doesNotMatch(message, /Next class goal:/);
 });
 
-test("Firebase predeploy always applies the attendance participation summary patch", () => {
+test("Firebase predeploy applies the complete attendance participation patch stack", () => {
   const firebaseConfig = JSON.parse(fs.readFileSync(new URL("../firebase.json", import.meta.url), "utf8"));
   const functionsConfig = firebaseConfig.functions.find((entry) => entry.codebase === "falowenadmin");
   const predeploy = functionsConfig.predeploy.join("\n");
-  assert.match(predeploy, /patchAttendanceConfirmationEventDrivenV2\.mjs[\s\S]*patchAttendanceParticipationSummaryEmail\.mjs/);
+  assert.match(predeploy, /patchAttendanceConfirmationEventDrivenV2\.mjs[\s\S]*patchAttendanceParticipationSummaryEmail\.mjs[\s\S]*patchAttendanceParticipationRecapGoals\.mjs[\s\S]*patchAttendanceParticipationRecapFailSafe\.mjs/);
 });
 
 test("the injected summary code never reads presenterAbsent", () => {
