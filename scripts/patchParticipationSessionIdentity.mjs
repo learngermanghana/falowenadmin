@@ -21,11 +21,66 @@ if (!api.includes(MARKER)) {
 const LIVE_SESSION_COLLECTION = "classSessions";
 
 function lessonSessionId(payload = {}) {
+  const canonicalClassSessionId = clean(payload.classSessionId);
+  if (canonicalClassSessionId) {
+    return stableId("class-session", canonicalClassSessionId);
+  }
   return stableId(
     payload.classRecordId || payload.classId,
-    payload.classSessionId || payload.assignmentId || payload.lessonId,
+    payload.assignmentId || payload.lessonId,
     payload.sessionDate,
   );
+}
+
+async function resolveParticipationSessionStorageId(db, payload = {}) {
+  const preferredSessionId = lessonSessionId(payload);
+  const canonicalClassSessionId = clean(payload.classSessionId);
+  if (!canonicalClassSessionId) return preferredSessionId;
+
+  try {
+    const preferredSnap = await db.collection(SESSION_COLLECTION).doc(preferredSessionId).get();
+    if (preferredSnap.exists) return preferredSessionId;
+  } catch {
+    // Continue with compatibility lookups.
+  }
+
+  try {
+    const snap = await db.collection(SESSION_COLLECTION)
+      .where("classSessionId", "==", canonicalClassSessionId)
+      .limit(4)
+      .get();
+    const existing = snap.docs.find((docSnap) => clean(docSnap.id) === preferredSessionId) || snap.docs[0];
+    if (existing) return clean(existing.id);
+  } catch {
+    // Fall through to deterministic legacy keys.
+  }
+
+  const fallbackIds = [
+    stableId(
+      payload.classRecordId || payload.classId,
+      canonicalClassSessionId,
+      payload.sessionDate,
+    ),
+    stableId(
+      payload.classId,
+      payload.assignmentId || payload.lessonId,
+      payload.requestedSessionDate || payload.sessionDate,
+    ),
+  ];
+
+  const seen = new Set([preferredSessionId]);
+  for (const candidate of fallbackIds) {
+    if (!candidate || seen.has(candidate)) continue;
+    seen.add(candidate);
+    try {
+      const snap = await db.collection(SESSION_COLLECTION).doc(candidate).get();
+      if (snap.exists) return candidate;
+    } catch {
+      // Keep trying the remaining compatibility keys.
+    }
+  }
+
+  return preferredSessionId;
 }
 
 function liveSessionDate(value) {
@@ -174,12 +229,13 @@ async function resolveCanonicalClassSession(db, {
       const classSessionId = clean(resolvedClassSession.classSessionId);
       const sessionDate = clean(resolvedClassSession.sessionDate || requestedSessionDate);
       const normalizedStudents = students.map(normalizeStudent);
-      const sessionId = lessonSessionId({
+      const sessionId = await resolveParticipationSessionStorageId(db, {
         classId,
         classRecordId: resolvedClassRecordId,
         classSessionId,
         assignmentId,
         sessionDate,
+        requestedSessionDate,
       });`,
     "participation save session resolution",
   );
@@ -272,18 +328,22 @@ async function resolveCanonicalClassSession(db, {
       const resolvedClassRecordId = clean(resolvedClassSession.classRecordId || classRecordId);
       const classSessionId = clean(resolvedClassSession.classSessionId);
       const sessionDate = clean(resolvedClassSession.sessionDate || requestedSessionDate);
-      const sessionId = lessonSessionId({
+      let sessionId = await resolveParticipationSessionStorageId(db, {
         classId,
         classRecordId: resolvedClassRecordId,
         classSessionId,
         assignmentId,
         sessionDate,
+        requestedSessionDate,
       });
       let current = await loadSessionPayload(db, sessionId);
-      if (!current.session && sessionDate !== requestedSessionDate) {
+      if (!current.session) {
         const legacySessionId = stableId(classId, assignmentId, requestedSessionDate);
         const legacy = await loadSessionPayload(db, legacySessionId);
-        if (legacy.session) current = legacy;
+        if (legacy.session) {
+          sessionId = legacySessionId;
+          current = legacy;
+        }
       }
       return res.json({
         ok: true,
@@ -303,6 +363,7 @@ async function resolveCanonicalClassSession(db, {
   lessonSessionId,`,
     `  RECORD_COLLECTION,
   lessonSessionId,
+  resolveParticipationSessionStorageId,
   resolveCanonicalClassSession,`,
     "canonical resolver test export",
   );
