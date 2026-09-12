@@ -36,12 +36,16 @@ if (!source.includes(writingPartHelper)) {
   );
 }
 
-source = replaceOnce(
-  source,
-  `  return [...new Set(partIds)].filter((partId) => partId !== "teil2");`,
-  `  return [...new Set(partIds)].filter((partId) => !isReferenceWritingPart(referenceEntry, partId));`,
-  "objective Teil 2 filtering",
-);
+const desiredObjectivePartFilter = `  return [...new Set(partIds)].filter((partId) => !isReferenceWritingPart(referenceEntry, partId));`;
+if (!source.includes(desiredObjectivePartFilter)) {
+  const objectivePartFilterCandidates = [
+    `  return [...new Set(partIds)].filter((partId) => partId !== "teil2");`,
+    `  return [...new Set(partIds)].filter((partId) => partId !== "teil2" || detectPartType({ partId, text: "", referenceEntry }) === "objective");`,
+  ];
+  const currentFilter = objectivePartFilterCandidates.find((candidate) => source.includes(candidate));
+  if (!currentFilter) throw new Error("objective Teil 2 filtering anchor changed; update patchA1DuplicateObjectiveSectionLabels.mjs");
+  source = source.replace(currentFilter, desiredObjectivePartFilter);
+}
 
 const oldSelector = `function selectSubmissionTextForPart(submissionText = "", partId = "main") {
   if (partId === "main" || partId === "unknown") return submissionText;
