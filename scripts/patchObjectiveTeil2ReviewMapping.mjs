@@ -36,7 +36,7 @@ const newObjectivePartFilter = '  return [...new Set(partIds)].filter((partId) =
 
 if (source.includes(oldObjectivePartFilter)) {
   source = source.replace(oldObjectivePartFilter, newObjectivePartFilter);
-} else if (!source.includes(newObjectivePartFilter)) {
+} else if (!source.includes(newObjectivePartFilter) && !source.includes("isReferenceWritingPart(referenceEntry, partId)")) {
   throw new Error("Could not find objective Teil 2 filter patch target in autoMarking.js");
 }
 
@@ -47,3 +47,5 @@ console.log("Patched objective Teil 2 review mapping.");
 await import("./patchA1VocabularyTolerance.mjs");
 // Prefer structured one-box submission payloads whenever the campus provides them.
 await import("./patchStructuredSubmissionPayload.mjs");
+// Recover one unambiguous duplicated section heading and keep genuine A1 objective Teil 2 sections.
+await import("./patchA1DuplicateObjectiveSectionLabels.mjs");
