@@ -3,25 +3,35 @@ name: Attendance Retry Tests
 on:
   pull_request:
     paths:
+      - 'functions/attendanceConfirmationEmails.js'
       - 'functions/attendanceConfirmationRetry.js'
       - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'scripts/patchAttendanceParticipationSummaryEmail.mjs'
       - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
       - 'src/services/attendanceConfirmationRetryService.js'
       - 'tests/attendance-confirmation-email-ui.test.js'
       - 'tests/attendance-confirmation-retry.test.js'
+      - 'tests/attendance-confirmation-emails.test.js'
+      - 'tests/attendance-participation-summary-email.test.js'
+      - 'firebase.json'
       - 'vercel.json'
       - '.github/workflows/attendance-retry-tests.yml'
   push:
     branches: [main]
     paths:
+      - 'functions/attendanceConfirmationEmails.js'
       - 'functions/attendanceConfirmationRetry.js'
       - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'scripts/patchAttendanceParticipationSummaryEmail.mjs'
       - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
       - 'src/services/attendanceConfirmationRetryService.js'
       - 'tests/attendance-confirmation-email-ui.test.js'
       - 'tests/attendance-confirmation-retry.test.js'
+      - 'tests/attendance-confirmation-emails.test.js'
+      - 'tests/attendance-participation-summary-email.test.js'
+      - 'firebase.json'
       - 'vercel.json'
       - '.github/workflows/attendance-retry-tests.yml'
   workflow_dispatch:
@@ -37,15 +47,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Validate protected retry route
+      - name: Validate protected retry route and participation enrichment
         run: |
           node --check functions/attendanceConfirmationRetry.js
           node --check scripts/patchAttendanceConfirmationEmails.mjs
+          node --check scripts/patchAttendanceParticipationSummaryEmail.mjs
           node scripts/patchAttendanceConfirmationEmails.mjs
+          node scripts/patchAttendanceParticipationSummaryEmail.mjs
+          node --check functions/attendanceConfirmationEmails.js
           node --check functions/index.js
           grep -F 'app.post("/attendance-confirmation-emails/retry-failed"' functions/index.js
           grep -F 'await requireAuth(req)' functions/index.js
           grep -F 'retryFailedAttendanceDeliveries' functions/index.js
+          grep -F 'Class participation this week' functions/attendanceConfirmationEmails.js
+          grep -F 'classParticipationRecords' functions/attendanceConfirmationEmails.js
       - name: Validate Vercel retry proxy
         run: |
           node - <<'NODE'
@@ -62,11 +77,12 @@ jobs:
             throw new Error('Attendance retry rewrite must appear before the generic API router rewrite');
           }
           NODE
-      - name: Test retry behavior and UI
+      - name: Test retry, attendance summary, participation summary and UI
         run: >-
           node --test
           tests/attendance-confirmation-retry.test.js
           tests/attendance-confirmation-email-ui.test.js
           tests/attendance-confirmation-emails.test.js
+          tests/attendance-participation-summary-email.test.js
       - name: Build dashboard
         run: npm run build
