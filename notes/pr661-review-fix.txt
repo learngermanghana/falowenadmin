@@ -1,0 +1,1 @@
+Follow-up regression coverage for PR #661 review comments lives in tests/participation-session-reporting.test.js.
