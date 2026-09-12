@@ -172,6 +172,10 @@ jobs:
             local label="$1"
             local only="$2"
             echo "=== Deploying ${label} ===" | tee -a firebase-deploy.log
+            # Every firebase deploy runs the repository predeploy patch chain. Restore tracked
+            # files first so the next batch never re-applies patches to the previous batch's
+            # already-mutated source. Keep untracked auth/log files intact.
+            git reset --hard "$GITHUB_SHA" >> firebase-deploy.log 2>&1
             firebase deploy \
               --project "$FIREBASE_PROJECT_ID" \
               --only "$only" \
