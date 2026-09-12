@@ -77,7 +77,7 @@ const unsafeClassBlock = `function participationRecordBelongsToClass(record = {}
     .some((value) => classValues.has(value));
 }`;
 
-const safeClassBlock = `function participationRecordBelongsToClass(record = {}, klass = {}) {
+const previousSafeClassBlock = `function participationRecordBelongsToClass(record = {}, klass = {}) {
   const recordClassId = comparable(record.classId);
   const classIds = [klass.id, klass.classId, klass.classRecordId]
     .map(comparable)
@@ -94,6 +94,31 @@ const safeClassBlock = `function participationRecordBelongsToClass(record = {}, 
   return Boolean(recordClassName && classNames.includes(recordClassName));
 }`;
 
+const safeClassBlock = `function participationRecordBelongsToClass(record = {}, klass = {}) {
+  const recordClassRecordId = comparable(record.classRecordId);
+  const classRecordIds = [klass.classRecordId, klass.id]
+    .map(comparable)
+    .filter(Boolean);
+
+  if (recordClassRecordId && classRecordIds.length) {
+    return classRecordIds.includes(recordClassRecordId);
+  }
+
+  const recordClassId = comparable(record.classId);
+  const logicalClassIds = [klass.classId, klass.name, klass.className, klass.group, klass.slug]
+    .map(comparable)
+    .filter(Boolean);
+
+  if (recordClassId) {
+    if (classRecordIds.includes(recordClassId)) return true;
+    if (logicalClassIds.includes(recordClassId)) return true;
+    return false;
+  }
+
+  const recordClassName = comparable(record.className);
+  return Boolean(recordClassName && logicalClassIds.includes(recordClassName));
+}`;
+
 function replaceOrConfirm(unsafeBlock, safeBlock, label) {
   if (source.includes(safeBlock)) return;
   if (!source.includes(unsafeBlock)) throw new Error(`Could not harden ${label}.`);
@@ -101,7 +126,16 @@ function replaceOrConfirm(unsafeBlock, safeBlock, label) {
 }
 
 replaceOrConfirm(unsafeStudentBlock, safeStudentBlock, "student participation identity matching");
-replaceOrConfirm(unsafeClassBlock, safeClassBlock, "class participation identity matching");
+
+if (!source.includes(safeClassBlock)) {
+  if (source.includes(previousSafeClassBlock)) {
+    source = source.replace(previousSafeClassBlock, safeClassBlock);
+  } else if (source.includes(unsafeClassBlock)) {
+    source = source.replace(unsafeClassBlock, safeClassBlock);
+  } else {
+    throw new Error("Could not harden class participation identity matching.");
+  }
+}
 
 if (!source.includes("    participationRecordBelongsToClass,")) {
   const anchor = "    participationRecordMatchesStudent,";
@@ -110,4 +144,4 @@ if (!source.includes("    participationRecordBelongsToClass,")) {
 }
 
 fs.writeFileSync(targetPath, source, "utf8");
-console.log("Attendance participation matching now rejects conflicting canonical student and class identities.");
+console.log("Attendance participation matching now rejects conflicting canonical student and class identities while preserving logical class ids for legacy records.");
