@@ -20,6 +20,28 @@ Diana
 4.B
 5.C`;
 
+const B1_OPINION_SUBMISSION = `Teil 2
+Heutzutage ist das Thema regelmäßiger Sport ein sehr wichtiges Thema in unserem Leben.
+Regelmäßiger Sport ist wichtig, weil es die Gesundheit fördert. Einerseits gibt es viele Vorteile. Zum Beispiel verbrennt er überschüssiges Körperfett und erhält die Fitness.
+Andererseits gibt es auch Nachteile. Zum Beispiel kann man Energie verlieren. Es kann Körperschmerzen verursachen. Ich glaube, dass regelmäßige Sporteinheiten die Gesundheit fördern.
+Zusammenfassend kann ich sagen, dass regelmäßige Sporteinheiten der Schlüssel zu einem gesunden Leben sind.
+
+Teil 3
+1) A
+2) B
+3) B
+4) C
+5) B
+6) C
+7) C
+
+Teil 4
+1) B
+2) A
+3) B
+4) B
+5) B`;
+
 test("A2 writing is not allowed to collapse to zero when a complete letter precedes a malformed bare Teil objective boundary", () => {
   const recovered = recoverZeroWritingScore({
     studentName: "Diana Esi Atteh",
@@ -90,4 +112,28 @@ test("a genuine empty A2 writing response is not recovered", () => {
   assert.equal(result.writingScore, 0);
   assert.equal(result.finalScore, 40);
   assert.equal(result.ai?.recoveredZeroWritingScore, undefined);
+});
+
+test("B1 opinion writing with an explicit Teil 2 is not allowed to collapse to zero", () => {
+  const recovered = recoverZeroWritingScore({
+    studentName: "B1 Student",
+    level: "B1",
+    assignmentKey: "B1-3.8",
+    objectiveScore: 92,
+    objectiveCorrect: 11,
+    objectiveTotal: 12,
+    writingScore: 0,
+    writingScorePercent: 0,
+    finalScore: 54,
+    score: 54,
+    status: "marked",
+  }, B1_OPINION_SUBMISSION);
+
+  assert.ok(recovered.writingScore >= 60, `expected a non-zero B1 writing score, got ${recovered.writingScore}`);
+  assert.ok(recovered.finalScore > 54, `final score should recover from the false 54, got ${recovered.finalScore}`);
+  assert.equal(recovered.writingScore, recovered.writingScorePercent);
+  assert.equal(recovered.maxWritingScore, 100);
+  assert.equal(recovered.status, "needs_review");
+  assert.equal(recovered.shouldSendAutomatically, false);
+  assert.equal(recovered.ai.recoveredZeroWritingScore, true);
 });
