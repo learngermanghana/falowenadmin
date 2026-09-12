@@ -11,6 +11,8 @@ for (const patch of [
   "scripts/patchAttendanceParticipationSummaryEmail.mjs",
   "scripts/patchAttendanceParticipationCanonicalIdentity.mjs",
   "scripts/patchAttendanceNoParticipationEncouragement.mjs",
+  "scripts/patchAttendanceParticipationRecapGoals.mjs",
+  "scripts/patchAttendanceParticipationRecapFailSafe.mjs",
 ]) {
   execFileSync(process.execPath, [patch], { cwd: root, stdio: "pipe" });
 }
@@ -58,7 +60,7 @@ const sessionTwo = {
   topic: "Einführung ins Briefeschreiben",
 };
 
-test("a student with no participation gets an encouraging each-class message", () => {
+test("a present student with no participation gets an encouraging each-class message and goal", () => {
   const participation = summarizeStudentParticipation({
     participationRecords: [],
     student,
@@ -77,12 +79,12 @@ test("a student with no participation gets an encouraging each-class message", (
   });
 
   assert.match(message, /no class participation was recorded for you in this lesson/i);
-  assert.match(message, /Try to take part in the next class/i);
   assert.match(message, /Regular participation helps your tutor/i);
+  assert.match(message, /Next class goal: answer at least one question or attempt one class activity/i);
   assert.match(message, /not a grade and it does not change your attendance status/i);
 });
 
-test("weekly email encourages a student when no participation was recorded that week", () => {
+test("weekly email encourages a student only for lessons they attended", () => {
   const participation = summarizeStudentParticipation({
     participationRecords: [],
     student,
@@ -100,11 +102,11 @@ test("weekly email encourages a student when no participation was recorded that 
     participation,
   });
 
-  assert.match(message, /no class participation was recorded for you in the lessons covered by this summary/i);
-  assert.match(message, /answering questions, attempting activities, or responding when called on/i);
+  assert.match(message, /no class participation was recorded for you in the lessons you attended in this summary/i);
+  assert.match(message, /Next class goal: answer at least one question or attempt one class activity/i);
 });
 
-test("a participation lookup failure still produces no participation claim", () => {
+test("a participation lookup failure still produces no participation claim or inferred goal", () => {
   assert.equal(buildParticipationText(null, MODE_EACH_CLASS), "");
   assert.equal(buildParticipationText(null, MODE_WEEKLY), "");
 
@@ -115,9 +117,9 @@ test("a participation lookup failure still produces no participation claim", () 
   assert.match(source, /attendance_participation_lookup_failed[\s\S]*throw error;/);
 });
 
-test("Firebase predeploy applies encouragement after identity hardening", () => {
+test("Firebase predeploy applies encouragement, recap and fail-safe after identity hardening", () => {
   const firebaseConfig = JSON.parse(fs.readFileSync(new URL("../firebase.json", import.meta.url), "utf8"));
   const functionsConfig = firebaseConfig.functions.find((entry) => entry.codebase === "falowenadmin");
   const predeploy = functionsConfig.predeploy.join("\n");
-  assert.match(predeploy, /patchAttendanceParticipationCanonicalIdentity\.mjs[\s\S]*patchAttendanceNoParticipationEncouragement\.mjs/);
+  assert.match(predeploy, /patchAttendanceParticipationCanonicalIdentity\.mjs[\s\S]*patchAttendanceNoParticipationEncouragement\.mjs[\s\S]*patchAttendanceParticipationRecapGoals\.mjs[\s\S]*patchAttendanceParticipationRecapFailSafe\.mjs/);
 });
