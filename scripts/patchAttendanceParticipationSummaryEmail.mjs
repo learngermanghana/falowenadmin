@@ -39,7 +39,10 @@ function participationRecordMatchesStudent(record = {}, student = {}) {
 
 function participationRecordBelongsToClass(record = {}, klass = {}) {
   const classValues = new Set(classIdentityValues(klass));
-  return [record.classId, record.className].map(comparable).filter(Boolean).some((value) => classValues.has(value));
+  return [record.classId, record.className]
+    .map(comparable)
+    .filter(Boolean)
+    .some((value) => classValues.has(value));
 }
 
 function participationRecordMatchesSession(record = {}, session = {}, timezone = ACCRA_TIMEZONE) {
@@ -52,11 +55,15 @@ function participationRecordMatchesSession(record = {}, session = {}, timezone =
 }
 
 async function loadParticipationForSessions(db, klass, sessions = [], timezone = ACCRA_TIMEZONE) {
-  const dates = [...new Set(sessions.map((session) => isoDateInTimezone(sessionStart(session), timezone)).filter(Boolean))];
+  const dates = [...new Set(
+    sessions.map((session) => isoDateInTimezone(sessionStart(session), timezone)).filter(Boolean),
+  )];
   const records = new Map();
   for (const date of dates) {
     try {
-      const snap = await db.collection(PARTICIPATION_RECORD_COLLECTION).where("sessionDate", "==", date).get();
+      const snap = await db.collection(PARTICIPATION_RECORD_COLLECTION)
+        .where("sessionDate", "==", date)
+        .get();
       snap.docs.forEach((docSnap) => {
         const record = { id: docSnap.id, ...docSnap.data() };
         if (!participationRecordBelongsToClass(record, klass)) return;
@@ -89,7 +96,8 @@ function summarizeStudentParticipation({ participationRecords = [], student, ses
   let skipped = 0;
 
   matched.forEach((record, index) => {
-    const key = normalize(record.sessionId) || [normalize(record.assignmentId), normalize(record.sessionDate), index].join("|");
+    const key = normalize(record.sessionId)
+      || [normalize(record.assignmentId), normalize(record.sessionDate), index].join("|");
     lessonKeys.add(key);
     const recordCorrect = Math.max(0, Number(record.correct || 0));
     const recordNeedsReview = Math.max(0, Number(record.needsReview || 0));
@@ -121,14 +129,18 @@ function buildParticipationText(participation, mode) {
   const skipped = Math.max(0, Number(participation.skipped || 0));
   const weekly = mode === MODE_WEEKLY;
   const lead = weekly
-    ? ` Class participation this week: participation was tracked in ${tracked} lesson${tracked === 1 ? "" : "s"}.`
+    ? " Class participation this week: participation was tracked in " + tracked + " lesson" + (tracked === 1 ? "" : "s") + "."
     : " Class participation:";
   const activity = responses > 0
-    ? ` Recorded responses: ${responses}; Correct: ${correct}; Needs review: ${needsReview}; Skipped: ${skipped}.`
+    ? " Recorded responses: " + responses + "; Correct: " + correct + "; Needs review: " + needsReview + "; Skipped: " + skipped + "."
     : skipped > 0
-      ? ` No scored response was recorded; Skipped: ${skipped}.`
+      ? " No scored response was recorded; Skipped: " + skipped + "."
       : " No recorded response was saved for this lesson.";
-  return `${lead}${activity} This participation summary is learning-support feedback only; it is not a grade and it does not change your attendance status. View your detailed participation in Falowen: ${PARTICIPATION_DETAILS_URL}`;
+  return lead
+    + activity
+    + " This participation summary is learning-support feedback only; it is not a grade and it does not change your attendance status."
+    + " View your detailed participation in Falowen: "
+    + PARTICIPATION_DETAILS_URL;
 }
 ${END}`;
 
