@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 
@@ -23,11 +25,17 @@ delete require.cache[require.resolve("../functions/attendanceConfirmationEmails.
 const participationApi = require("../functions/classParticipationApi.js");
 const attendance = require("../functions/attendanceConfirmationEmails.js")._test;
 
+function stableId(...parts) {
+  return crypto.createHash("sha1")
+    .update(parts.map((value) => String(value || "").trim()).join("|"))
+    .digest("hex");
+}
+
 function doc(id, data) {
   return { id, data: () => data, exists: true };
 }
 
-function fakeDb(classSessions = []) {
+function fakeDb(classSessions = [], participationSessions = []) {
   return {
     collection(name) {
       if (name === "classSessions") {
@@ -50,6 +58,34 @@ function fakeDb(classSessions = []) {
                     return {
                       docs: classSessions
                         .filter((row) => row.classId === value)
+                        .map((row) => doc(row.id, row)),
+                    };
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
+      if (name === "classParticipationSessions") {
+        return {
+          doc(id) {
+            return {
+              async get() {
+                const found = participationSessions.find((row) => row.id === id);
+                return found ? doc(found.id, found) : { id, exists: false, data: () => ({}) };
+              },
+            };
+          },
+          where(field, op, value) {
+            assert.equal(op, "==");
+            return {
+              limit() {
+                return {
+                  async get() {
+                    return {
+                      docs: participationSessions
+                        .filter((row) => String(row[field] || "") === String(value || ""))
                         .map((row) => doc(row.id, row)),
                     };
                   },
@@ -105,6 +141,74 @@ test("late marking resolves to the most recent matching scheduled class session"
     classSessionId: "session-sept-11",
     sessionDate: "2026-09-11",
   });
+});
+
+test("canonical participation ID stays stable when the live class session is rescheduled", () => {
+  const before = participationApi.lessonSessionId({
+    classRecordId: "class-doc-1",
+    classSessionId: "live-session-123",
+    assignmentId: "B1-5.4",
+    sessionDate: "2026-09-11",
+  });
+  const after = participationApi.lessonSessionId({
+    classRecordId: "class-doc-1",
+    classSessionId: "live-session-123",
+    assignmentId: "B1-5.4",
+    sessionDate: "2026-09-13",
+  });
+
+  assert.equal(after, before);
+});
+
+test("storage resolver reuses an existing canonical session after its timetable date changes", async () => {
+  const db = fakeDb([], [
+    {
+      id: "old-date-based-storage-id",
+      classSessionId: "live-session-123",
+      classRecordId: "class-doc-1",
+      sessionDate: "2026-09-11",
+    },
+  ]);
+
+  const storageId = await participationApi.resolveParticipationSessionStorageId(db, {
+    classId: "B1 Bonn Klasse",
+    classRecordId: "class-doc-1",
+    classSessionId: "live-session-123",
+    assignmentId: "B1-5.4",
+    sessionDate: "2026-09-13",
+    requestedSessionDate: "2026-09-13",
+  });
+
+  assert.equal(storageId, "old-date-based-storage-id");
+});
+
+test("storage resolver restores the scheduled-day legacy key even when canonical identity exists", async () => {
+  const legacyId = stableId("B1 Bonn Klasse", "B1-5.4", "2026-09-11");
+  const db = fakeDb([], [
+    {
+      id: legacyId,
+      classId: "B1 Bonn Klasse",
+      assignmentId: "B1-5.4",
+      sessionDate: "2026-09-11",
+    },
+  ]);
+
+  const storageId = await participationApi.resolveParticipationSessionStorageId(db, {
+    classId: "B1 Bonn Klasse",
+    classRecordId: "class-doc-1",
+    classSessionId: "live-session-123",
+    assignmentId: "B1-5.4",
+    sessionDate: "2026-09-11",
+    requestedSessionDate: "2026-09-11",
+  });
+
+  assert.equal(storageId, legacyId);
+});
+
+test("current-session fallback always tries the legacy key when canonical state is absent", () => {
+  const source = fs.readFileSync(new URL("../functions/classParticipationApi.js", import.meta.url), "utf8");
+  assert.match(source, /if \(!current\.session\) \{\s+const legacySessionId = stableId\(classId, assignmentId, requestedSessionDate\);/);
+  assert.doesNotMatch(source, /!current\.session && sessionDate !== requestedSessionDate/);
 });
 
 test("attendance participation matching accepts bounded legacy late marking but prefers canonical session identity", () => {
