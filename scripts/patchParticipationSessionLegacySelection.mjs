@@ -4,9 +4,9 @@ const targetPath = new URL("../functions/classParticipationApi.js", import.meta.
 const MARKER = "// PARTICIPATION LEGACY SESSION SELECTION HARDENING";
 
 let source = fs.readFileSync(targetPath, "utf8");
-if (source.includes(MARKER)) {
+const alreadyInstalled = source.includes(MARKER);
+if (alreadyInstalled) {
   console.log("Participation legacy session selection hardening is already installed.");
-  process.exit(0);
 }
 
 const oldBlock = `async function resolveParticipationSessionStorageId(db, payload = {}) {
@@ -106,7 +106,6 @@ async function resolveParticipationSessionStorageId(db, payload = {}) {
   try {
     const snap = await db.collection(SESSION_COLLECTION)
       .where("classSessionId", "==", canonicalClassSessionId)
-      .limit(20)
       .get();
     const candidates = snap.docs
       .map((docSnap) => ({ id: clean(docSnap.id), ...(docSnap.data() || {}) }))
@@ -132,10 +131,12 @@ async function resolveParticipationSessionStorageId(db, payload = {}) {
   return preferredSessionId;
 }`;
 
-if (!source.includes(oldBlock)) {
-  throw new Error("Could not patch deterministic participation legacy-session selection.");
-}
+if (!alreadyInstalled) {
+  if (!source.includes(oldBlock)) {
+    throw new Error("Could not patch deterministic participation legacy-session selection.");
+  }
 
-source = source.replace(oldBlock, newBlock);
-fs.writeFileSync(targetPath, source, "utf8");
-console.log("Participation legacy sessions now prefer exact keys and deterministic newest-state selection.");
+  source = source.replace(oldBlock, newBlock);
+  fs.writeFileSync(targetPath, source, "utf8");
+  console.log("Participation legacy sessions now prefer exact keys and deterministic newest-state selection.");
+}
