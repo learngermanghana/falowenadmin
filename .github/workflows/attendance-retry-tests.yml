@@ -9,6 +9,7 @@ on:
       - 'scripts/patchAttendanceParticipationSummaryEmail.mjs'
       - 'scripts/patchAttendanceParticipationCanonicalIdentity.mjs'
       - 'scripts/patchAttendanceNoParticipationEncouragement.mjs'
+      - 'scripts/patchAttendanceParticipationRecapGoals.mjs'
       - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
       - 'src/services/attendanceConfirmationRetryService.js'
@@ -18,6 +19,7 @@ on:
       - 'tests/attendance-participation-summary-email.test.js'
       - 'tests/attendance-participation-canonical-identity.test.js'
       - 'tests/attendance-no-participation-encouragement.test.js'
+      - 'tests/attendance-participation-recap-goals.test.js'
       - 'firebase.json'
       - 'vercel.json'
       - '.github/workflows/attendance-retry-tests.yml'
@@ -30,6 +32,7 @@ on:
       - 'scripts/patchAttendanceParticipationSummaryEmail.mjs'
       - 'scripts/patchAttendanceParticipationCanonicalIdentity.mjs'
       - 'scripts/patchAttendanceNoParticipationEncouragement.mjs'
+      - 'scripts/patchAttendanceParticipationRecapGoals.mjs'
       - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
       - 'src/services/attendanceConfirmationRetryService.js'
@@ -39,6 +42,7 @@ on:
       - 'tests/attendance-participation-summary-email.test.js'
       - 'tests/attendance-participation-canonical-identity.test.js'
       - 'tests/attendance-no-participation-encouragement.test.js'
+      - 'tests/attendance-participation-recap-goals.test.js'
       - 'firebase.json'
       - 'vercel.json'
       - '.github/workflows/attendance-retry-tests.yml'
@@ -62,10 +66,12 @@ jobs:
           node --check scripts/patchAttendanceParticipationSummaryEmail.mjs
           node --check scripts/patchAttendanceParticipationCanonicalIdentity.mjs
           node --check scripts/patchAttendanceNoParticipationEncouragement.mjs
+          node --check scripts/patchAttendanceParticipationRecapGoals.mjs
           node scripts/patchAttendanceConfirmationEmails.mjs
           node scripts/patchAttendanceParticipationSummaryEmail.mjs
           node scripts/patchAttendanceParticipationCanonicalIdentity.mjs
           node scripts/patchAttendanceNoParticipationEncouragement.mjs
+          node scripts/patchAttendanceParticipationRecapGoals.mjs
           node --check functions/attendanceConfirmationEmails.js
           node --check functions/index.js
           grep -F 'app.post("/attendance-confirmation-emails/retry-failed"' functions/index.js
@@ -78,6 +84,9 @@ jobs:
           grep -F 'if (logicalClassIds.includes(recordClassId)) return true;' functions/attendanceConfirmationEmails.js
           grep -F 'no class participation was recorded for you' functions/attendanceConfirmationEmails.js
           grep -F 'participationLookupAvailable = false' functions/attendanceConfirmationEmails.js
+          grep -F 'studentParticipationEngagement' functions/attendanceConfirmationEmails.js
+          grep -F 'Review next:' functions/attendanceConfirmationEmails.js
+          grep -F 'Next class goal:' functions/attendanceConfirmationEmails.js
       - name: Validate Vercel retry proxy
         run: |
           node - <<'NODE'
@@ -96,12 +105,13 @@ jobs:
           NODE
       - name: Test retry, attendance summary, participation summary and UI
         run: >-
-          node --test
+          node --test --test-concurrency=1
           tests/attendance-confirmation-retry.test.js
           tests/attendance-confirmation-email-ui.test.js
           tests/attendance-confirmation-emails.test.js
           tests/attendance-participation-summary-email.test.js
           tests/attendance-participation-canonical-identity.test.js
           tests/attendance-no-participation-encouragement.test.js
+          tests/attendance-participation-recap-goals.test.js
       - name: Build dashboard
         run: npm run build
