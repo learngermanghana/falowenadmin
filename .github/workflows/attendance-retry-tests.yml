@@ -68,7 +68,8 @@ jobs:
           grep -F 'Class participation this week' functions/attendanceConfirmationEmails.js
           grep -F 'classParticipationRecords' functions/attendanceConfirmationEmails.js
           grep -F 'recordValue !== studentValue' functions/attendanceConfirmationEmails.js
-          grep -F 'if (recordClassId && classIds.length)' functions/attendanceConfirmationEmails.js
+          grep -F 'const recordClassRecordId = comparable(record.classRecordId);' functions/attendanceConfirmationEmails.js
+          grep -F 'if (logicalClassIds.includes(recordClassId)) return true;' functions/attendanceConfirmationEmails.js
       - name: Validate Vercel retry proxy
         run: |
           node - <<'NODE'
