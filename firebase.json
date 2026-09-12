@@ -34,6 +34,7 @@
         "node scripts/patchAttendanceConfirmationEmails.mjs",
         "node scripts/patchAttendanceConfirmationEventDrivenV2.mjs",
         "node scripts/patchAttendanceParticipationSummaryEmail.mjs",
+        "node scripts/patchAttendanceParticipationCanonicalIdentity.mjs",
         "node scripts/patchClassSessionReminderEmails.mjs",
         "node scripts/patchClassReminderDiagnosticBestEffort.mjs",
         "node scripts/patchClassReminderConciseLinks.mjs",
