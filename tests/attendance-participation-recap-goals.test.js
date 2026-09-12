@@ -12,6 +12,7 @@ for (const patch of [
   "scripts/patchAttendanceParticipationCanonicalIdentity.mjs",
   "scripts/patchAttendanceNoParticipationEncouragement.mjs",
   "scripts/patchAttendanceParticipationRecapGoals.mjs",
+  "scripts/patchAttendanceParticipationRecapFailSafe.mjs",
 ]) {
   execFileSync(process.execPath, [patch], { cwd: root, stdio: "pipe" });
 }
@@ -20,7 +21,9 @@ delete require.cache[require.resolve("../functions/attendanceConfirmationEmails.
 const { _test } = require("../functions/attendanceConfirmationEmails.js");
 
 const {
+  MODE_EACH_CLASS,
   buildEachClassMessage,
+  buildParticipationText,
   summarizeStudentParticipation,
   deriveParticipationEngagementState,
 } = _test;
@@ -168,9 +171,16 @@ test("engagement streak increments only for attended classes and resets on absen
   assert.equal(participated.consecutiveNoParticipation, 0);
 });
 
-test("Firebase predeploy applies recap and goals after no-participation safeguards", () => {
+test("participation lookup failure does not create a false goal or non-participation claim", () => {
+  assert.equal(buildParticipationText(null, MODE_EACH_CLASS, {
+    attendanceRecords: [{ session: sessionOne, status: "present" }],
+    streak: 3,
+  }), "");
+});
+
+test("Firebase predeploy applies recap, goals and fail-safe after no-participation safeguards", () => {
   const firebaseConfig = JSON.parse(fs.readFileSync(new URL("../firebase.json", import.meta.url), "utf8"));
   const functionsConfig = firebaseConfig.functions.find((entry) => entry.codebase === "falowenadmin");
   const predeploy = functionsConfig.predeploy.join("\n");
-  assert.match(predeploy, /patchAttendanceNoParticipationEncouragement\.mjs[\s\S]*patchAttendanceParticipationRecapGoals\.mjs/);
+  assert.match(predeploy, /patchAttendanceNoParticipationEncouragement\.mjs[\s\S]*patchAttendanceParticipationRecapGoals\.mjs[\s\S]*patchAttendanceParticipationRecapFailSafe\.mjs/);
 });
