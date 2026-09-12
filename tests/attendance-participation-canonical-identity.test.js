@@ -66,17 +66,43 @@ test("student name is only a fallback when neither side has a canonical identifi
   }), false);
 });
 
-test("canonical class id wins over a shared display name", () => {
+test("canonical class record id wins over a shared display name", () => {
   const klass = {
     id: "class-one",
-    classId: "class-one",
+    classRecordId: "class-one",
     name: "A1 Berlin Klasse",
   };
 
   assert.equal(participationRecordBelongsToClass({
-    classId: "class-one",
+    classRecordId: "class-one",
+    classId: "A1 Berlin Klasse",
     className: "A1 Berlin Klasse",
   }, klass), true);
+
+  assert.equal(participationRecordBelongsToClass({
+    classRecordId: "class-two",
+    classId: "A1 Berlin Klasse",
+    className: "A1 Berlin Klasse",
+  }, klass), false);
+});
+
+test("normally created classes match the logical class id saved by PresenterStudentPicker", () => {
+  const klass = {
+    id: "generated-firestore-id",
+    name: "A1 Berlin Klasse",
+  };
+
+  assert.equal(participationRecordBelongsToClass({
+    classId: "A1 Berlin Klasse",
+    className: "A1 Berlin Klasse",
+  }, klass), true);
+});
+
+test("a different stored class id is rejected even when the display name matches", () => {
+  const klass = {
+    id: "class-one",
+    name: "A1 Berlin Klasse",
+  };
 
   assert.equal(participationRecordBelongsToClass({
     classId: "class-two",
