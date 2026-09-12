@@ -38,6 +38,7 @@
         "node scripts/patchAttendanceNoParticipationEncouragement.mjs",
         "node scripts/patchAttendanceParticipationRecapGoals.mjs",
         "node scripts/patchAttendanceParticipationRecapFailSafe.mjs",
+        "node scripts/patchAttendanceParticipationSessionWindow.mjs",
         "node scripts/patchClassSessionReminderEmails.mjs",
         "node scripts/patchClassReminderDiagnosticBestEffort.mjs",
         "node scripts/patchClassReminderConciseLinks.mjs",
