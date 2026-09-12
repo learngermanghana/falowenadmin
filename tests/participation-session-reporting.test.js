@@ -79,15 +79,17 @@ function fakeDb(classSessions = [], participationSessions = []) {
           },
           where(field, op, value) {
             assert.equal(op, "==");
+            const matchingDocs = () => participationSessions
+              .filter((row) => String(row[field] || "") === String(value || ""))
+              .map((row) => doc(row.id, row));
             return {
-              limit() {
+              async get() {
+                return { docs: matchingDocs() };
+              },
+              limit(limit) {
                 return {
                   async get() {
-                    return {
-                      docs: participationSessions
-                        .filter((row) => String(row[field] || "") === String(value || ""))
-                        .map((row) => doc(row.id, row)),
-                    };
+                    return { docs: matchingDocs().slice(0, limit) };
                   },
                 };
               },
