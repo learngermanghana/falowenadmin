@@ -75,7 +75,7 @@ const repairedSelector = `function repairSequentialPartLabels(parts = [], expect
   return parts.map((part, index) => index === mismatchIndex ? {
     ...part,
     partId: expected[mismatchIndex],
-    title: `${part.title} (recovered as ${expected[mismatchIndex]})`,
+    title: part.title + " (recovered as " + expected[mismatchIndex] + ")",
     confidence: Math.min(Number(part.confidence || 0.9), 0.8),
   } : part);
 }
