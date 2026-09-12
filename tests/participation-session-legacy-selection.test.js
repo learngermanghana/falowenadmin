@@ -41,16 +41,17 @@ function fakeDb(participationSessions = []) {
         where(field, op, value) {
           assert.equal(field, "classSessionId");
           assert.equal(op, "==");
+          const matchingDocs = () => participationSessions
+            .filter((row) => String(row.classSessionId || "") === String(value || ""))
+            .map(doc);
           return {
+            async get() {
+              return { docs: matchingDocs() };
+            },
             limit(limit) {
-              assert.ok(limit >= 4);
               return {
                 async get() {
-                  return {
-                    docs: participationSessions
-                      .filter((row) => String(row.classSessionId || "") === String(value || ""))
-                      .map(doc),
-                  };
+                  return { docs: matchingDocs().slice(0, limit) };
                 },
               };
             },
@@ -157,4 +158,36 @@ test("equal revisions choose the most recently updated legacy state", async () =
   });
 
   assert.equal(resolved, "newer-update");
+});
+
+test("broad legacy lookup considers every matching document before selecting newest state", async () => {
+  const rows = Array.from({ length: 25 }, (_, index) => ({
+    id: `legacy-${String(index + 1).padStart(2, "0")}`,
+    classSessionId: "live-session-many",
+    revision: index < 24 ? index + 1 : 100,
+    updatedAt: `2026-09-${String(Math.min(index + 1, 28)).padStart(2, "0")}T12:00:00.000Z`,
+    sessionDate: "2026-09-01",
+  }));
+  const db = fakeDb(rows);
+
+  const resolved = await participationApi.resolveParticipationSessionStorageId(db, {
+    classId: "B1 Bonn Klasse",
+    classRecordId: "class-doc-1",
+    classSessionId: "live-session-many",
+    assignmentId: "B1-5.9",
+    sessionDate: "2026-10-01",
+    requestedSessionDate: "2026-10-01",
+  });
+
+  assert.equal(resolved, "legacy-25");
+});
+
+test("already-installed legacy selection patch returns control to its importing runner", () => {
+  const output = execFileSync(process.execPath, ["scripts/patchClassParticipationApi.mjs"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+
+  assert.match(output, /Participation legacy session selection hardening is already installed\./);
+  assert.match(output, /Persistent class participation API is registered\./);
 });
