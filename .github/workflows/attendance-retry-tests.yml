@@ -147,5 +147,7 @@ jobs:
           tests/attendance-participation-recap-goals.test.js
           tests/participation-session-reporting.test.js
           tests/participation-session-legacy-selection.test.js
+      - name: Restore clean source before dashboard build
+        run: git checkout -- functions src
       - name: Build dashboard
         run: npm run build
