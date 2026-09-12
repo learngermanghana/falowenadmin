@@ -8,6 +8,11 @@ const basePatch = path.join(root, "scripts", "patchAttendanceParticipationSummar
 const canonicalPatch = path.join(root, "scripts", "patchAttendanceParticipationCanonicalIdentity.mjs");
 let source = fs.readFileSync(targetPath, "utf8");
 
+if (source.includes("// ATTENDANCE PARTICIPATION RECAP + STREAK GOALS")) {
+  console.log("No-participation encouragement is already included in the richer participation recap worker.");
+  process.exit(0);
+}
+
 if (!source.includes("// BEGIN ATTENDANCE PARTICIPATION SUMMARY")) {
   await import(new URL(`file://${basePatch}`));
   source = fs.readFileSync(targetPath, "utf8");
