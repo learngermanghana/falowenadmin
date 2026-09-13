@@ -65,7 +65,7 @@ const stopwordAfter = `  "und", "oder", "zu", "in", "mit", "auf", "am", "im", "d
   "meinem", "meinen", "meiner", "meines", "sein", "seine", "seinen", "seinem", "seiner", "seines",
   "ihr", "ihre", "ihren", "ihrem", "ihrer", "ihres", "unser", "unsere", "unseren", "unserem", "unserer", "unseres",
   "euer", "eure", "euren", "eurem", "eurer", "eures",
-]);
+]);`;
 
 const numberWordsBlock = `
 const NUMBER_WORDS = new Map([
