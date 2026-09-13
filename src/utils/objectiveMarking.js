@@ -8,15 +8,6 @@ const STOPWORDS = new Set([
   "ich", "du", "er", "sie", "es", "wir", "ihr", "ja", "nein", "gern", "gerne", "mag", "mochte", "moechte",
   "nicht", "spiele", "spielen", "kostet", "kosten", "ist", "sind", "bin", "ein", "eine", "der", "die", "das",
   "und", "oder", "zu", "in", "mit", "auf", "am", "im", "den", "dem", "des", "mein", "meine",
-  "meinem", "meinen", "meiner", "meines", "sein", "seine", "seinen", "seinem", "seiner", "seines",
-  "ihr", "ihre", "ihren", "ihrem", "ihrer", "ihres", "unser", "unsere", "unseren", "unserem", "unserer", "unseres",
-  "euer", "eure", "euren", "eurem", "eurer", "eures",
-]);
-
-const NUMBER_WORDS = new Map([
-  ["null", "0"], ["eins", "1"], ["ein", "1"], ["eine", "1"], ["einen", "1"],
-  ["zwei", "2"], ["drei", "3"], ["vier", "4"], ["funf", "5"], ["fuenf", "5"],
-  ["sechs", "6"], ["sieben", "7"], ["acht", "8"], ["neun", "9"], ["zehn", "10"],
 ]);
 
 const VOCABULARY_ALIASES = {
@@ -367,6 +358,9 @@ function parseNumberedEntriesFromChunk(chunk = "") {
     return [{ number: Number(labelled[1]), answer: labelled[2].trim() }];
   }
 
+  // A compact question marker must have punctuation ("1.", "2:") or be
+  // followed by an option letter ("1A", "2 B"). Bare numbers inside an
+  // answer, such as "10 Euro" or "7 Uhr", are answer text, not a new item.
   const compactPattern = /(?:^|\s)(\d{1,3})(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))(.*?)(?=\s+\d{1,3}(?:\s*[)–-]\s*|\s*[.,:](?!\d)\s*|\s+(?=[A-FX](?:\s*[).,:–-]|\s|$)))|$)/g;
   const compactMatches = [...source.matchAll(compactPattern)]
     .map((match) => ({ number: Number(match[1]), answer: cleanParsedAnswer(match[2]) }))
@@ -544,24 +538,12 @@ function buildHardcodedReferenceItems(assignmentId = "") {
   }));
 }
 
-function canonicalSemanticToken(token = "") {
-  const normalized = normalizeAnswer(token);
-  return NUMBER_WORDS.get(normalized) || normalized;
-}
-
 function rootToken(token = "") {
-  const canonical = canonicalSemanticToken(token);
-  if (/^\d+$/.test(canonical)) return canonical;
-  return canonical.replace(/(chen|ern|en|er|em|es|e|n|s)$/i, "");
+  return normalizeAnswer(token).replace(/(chen|ern|en|er|em|es|e|n|s)$/i, "");
 }
 
 function meaningfulRoots(value = "") {
-  return normalizeAnswer(value)
-    .split(/\s+/)
-    .map(canonicalSemanticToken)
-    .filter((token) => token && !STOPWORDS.has(token))
-    .map(rootToken)
-    .filter((token) => token && (/^\d+$/.test(token) || token.length > 1));
+  return normalizeAnswer(value).split(/\s+/).map(rootToken).filter((token) => token && token.length > 1 && !STOPWORDS.has(token));
 }
 
 function editDistance(left = "", right = "") {
@@ -762,6 +744,9 @@ function extractSectionAnswerEntries(text = "") {
   const numberedEntries = extractRestartedNumberingEntries(text);
   if (numberedEntries.length) return numberedEntries;
 
+  // Vocabulary sections are sometimes pasted as unnumbered bilingual pairs.
+  // Keep this deliberately narrow so ordinary prose or writing sections cannot
+  // become positional objective answers merely because they contain lines.
   const pairedEntries = String(text || "")
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -835,52 +820,199 @@ function alignRestartedGroups(referenceItems = [], groups = []) {
     const ordered = [...group].sort((left, right) => left.number - right.number);
     const nextCandidates = [];
     for (const candidate of candidates) {
-      for (let start = candidate.nextStart; start <= referenceItems.length - ordered.length; start += 1) {
+      const lastStart = referenceItems.length - ordered.length;
+      for (let start = candidate.nextStart; start <= lastStart; start += 1) {
         const answers = [...candidate.answers];
-        ordered.forEach((entry, offset) => {
-          answers[start + offset] = entry.answer;
-        });
+        ordered.forEach((entry, index) => { answers[start + index] = entry.answer; });
         nextCandidates.push({ answers, nextStart: start + ordered.length });
       }
     }
-    candidates = nextCandidates;
+    candidates = nextCandidates
+      .map((candidate) => ({ ...candidate, ...scoreFlatCandidate(referenceItems, candidate.answers) }))
+      .sort((left, right) => right.correct - left.correct || left.missing - right.missing)
+      .slice(0, 40);
   }
-  if (!candidates.length) return [];
-  return candidates
-    .map((candidate) => scoreFlatCandidate(referenceItems, candidate.answers))
-    .sort((left, right) => right.correct - left.correct || left.missing - right.missing)[0]?.answers || [];
+  return candidates[0]?.answers || [];
 }
 
-function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", hasMatchingPartSections = false) {
-  if (!referenceItems.length || hasMatchingPartSections) return new Map();
-  const groups = splitIntoAnswerBlocks(submissionText)
+function chooseBestFlatAnswers(referenceItems = [], submissionText = "") {
+  const shouldPreserveTeil1Positions = referenceItems.some((item) => item.preserveFlatPosition === true);
+  if (shouldPreserveTeil1Positions) {
+    const teil1 = splitSubmissionIntoSections(submissionText).find((section) => section.partId === "teil1");
+    const explicitEntries = teil1 ? extractNumberedTextEntries(teil1.text) : [];
+    if (explicitEntries.length) {
+      const fixedAnswers = Array(referenceItems.length).fill("");
+      explicitEntries.forEach((entry) => {
+        if (entry.number >= 1 && entry.number <= referenceItems.length) {
+          fixedAnswers[entry.number - 1] = entry.answer;
+        }
+      });
+      return fixedAnswers;
+    }
+  }
+
+  const candidates = getFlatAnswerCandidateSequences(submissionText);
+  if (!candidates.length) return [];
+  const restartedGroups = splitIntoAnswerBlocks(submissionText)
     .map((block) => extractRestartedNumberingEntries(block))
     .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
-  const alignedAnswers = alignRestartedGroups(referenceItems, groups);
-  if (!alignedAnswers.length) return new Map();
-  return new Map(referenceItems.map((item, index) => [`${item.partId}.${item.questionNumber}`, alignedAnswers[index] || ""]));
+  const aligned = alignRestartedGroups(referenceItems, restartedGroups);
+  if (aligned.length) candidates.push(aligned);
+  return candidates
+    .map((answers) => scoreFlatCandidate(referenceItems, answers))
+    .sort((a, b) => b.correct - a.correct || a.missing - b.missing || b.answers.length - a.answers.length)[0]?.answers || [];
 }
 
-function getStudentAnswerForItem({ item, index, submissionText, sections, vocabularyIndexes, sequentialObjectiveAnswers, sequentialPartAnswers, useSequentialChoices }) {
-  if (item.type === "vocabulary" && item.vocabularyKey) {
-    const vocab = extractVocabularyAnswers(submissionText);
-    if (vocab[item.vocabularyKey]) return vocab[item.vocabularyKey];
-    const numbered = vocabularyIndexes.get(index);
-    if (numbered) return numbered;
+function buildSequentialPartAnswerMap(referenceItems = [], submissionText = "", hasExplicitPartSections = false) {
+  if (hasExplicitPartSections) return new Map();
+  const groups = [];
+  const seen = new Set();
+  for (const item of referenceItems) {
+    if (item.partId === "main") continue;
+    if (!seen.has(item.partId)) {
+      seen.add(item.partId);
+      groups.push({ partId: item.partId, items: [] });
+    }
+    groups[groups.length - 1].items.push(item);
+  }
+  if (!groups.length) return new Map();
+
+  const parsedBlocks = splitIntoAnswerBlocks(submissionText)
+    .map(extractNumberedTextEntries)
+    .filter((entries) => entries.length);
+  const blocksAlignToReferenceParts = parsedBlocks.length === groups.length
+    && groups.every((group, index) => parsedBlocks[index]?.length === group.items.length);
+  const blocks = blocksAlignToReferenceParts
+    ? parsedBlocks
+    : parsedBlocks.filter((entries) => !isLikelyWritingBlock(entries));
+  if (!blocks.length) return new Map();
+  const map = new Map();
+
+  if (blocks.length === 1) {
+    let offset = 0;
+    for (const group of groups) {
+      group.items.forEach((item, index) => {
+        const entry = blocks[0][offset + index];
+        if (entry) map.set(`${item.partId}.${item.questionNumber}`, entry.answer);
+      });
+      offset += group.items.length;
+    }
+    return map;
   }
 
-  const partSection = sections.find((section) => section.partId === item.partId);
-  if (partSection) {
-    const byNumber = extractNumberedTextAnswers(partSection.text)[item.questionNumber];
-    if (byNumber) return byNumber;
+  groups.forEach((group, groupIndex) => {
+    const block = blocks[groupIndex] || [];
+    group.items.forEach((item, index) => {
+      const entry = block[index];
+      if (entry) map.set(`${item.partId}.${item.questionNumber}`, entry.answer);
+    });
+  });
+
+  return map;
+}
+
+function orderedReferencePartGroups(referenceItems = []) {
+  const groups = [];
+  const byPartId = new Map();
+  referenceItems.forEach((item) => {
+    if (item.partId === "main") return;
+    if (!byPartId.has(item.partId)) {
+      const group = { partId: item.partId, items: [] };
+      byPartId.set(item.partId, group);
+      groups.push(group);
+    }
+    byPartId.get(item.partId).items.push(item);
+  });
+  return groups;
+}
+
+function buildMixedPartAnswerMap(referenceItems = [], submissionText = "", sections = [], sectionPartIds = new Set()) {
+  const groups = orderedReferencePartGroups(referenceItems);
+  const map = new Map();
+  const merge = (candidate) => candidate.forEach((value, key) => map.set(key, value));
+  const firstExplicitIndex = groups.findIndex((group) => sectionPartIds.has(group.partId));
+
+  if (firstExplicitIndex > 0) {
+    const leadingItems = groups
+      .slice(0, firstExplicitIndex)
+      .filter((group) => !sectionPartIds.has(group.partId))
+      .flatMap((group) => group.items);
+    merge(buildSequentialPartAnswerMap(
+      leadingItems,
+      leadingUnlabelledSubmissionText(submissionText),
+      false,
+    ));
+  }
+
+  groups.forEach((group, groupIndex) => {
+    if (!sectionPartIds.has(group.partId)) return;
+    const sectionText = sections.find((section) => section.partId === group.partId)?.text;
+    if (sectionText === undefined) return;
+    const entries = extractRestartedNumberingEntries(sectionText);
+    const overflow = entries.slice(group.items.length);
+    if (!overflow.length) return;
+
+    let offset = 0;
+    for (let nextIndex = groupIndex + 1; nextIndex < groups.length && offset < overflow.length; nextIndex += 1) {
+      const nextGroup = groups[nextIndex];
+      if (sectionPartIds.has(nextGroup.partId)) continue;
+      nextGroup.items.forEach((item, itemIndex) => {
+        const entry = overflow[offset + itemIndex];
+        if (entry) map.set(`${item.partId}.${item.questionNumber}`, entry.answer);
+      });
+      offset += nextGroup.items.length;
+    }
+  });
+
+  return map;
+}
+
+function getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections }) {
+  if (item.type === "vocabulary") {
+    const vocabularyPairs = extractVocabularyAnswers(submissionText);
+    if (item.vocabularyKey) {
+      if (vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
+      const numberedVocabularyValues = extractNumberedVocabularyAnswers(submissionText);
+      const keyedVocabularyIndex = Math.max(0, index - 5);
+      return numberedVocabularyValues[keyedVocabularyIndex] || "";
+    }
+    const pairedVocabularyValues = Object.values(vocabularyPairs);
+    const pairedVocabularyIndex = Math.max(0, index - 5);
+    if (pairedVocabularyValues[pairedVocabularyIndex]) return pairedVocabularyValues[pairedVocabularyIndex];
+    const vocabularyValues = extractNumberedVocabularyAnswers(submissionText);
+    const vocabularyIndex = Math.max(0, index - 5);
+    if (vocabularyValues[vocabularyIndex]) return vocabularyValues[vocabularyIndex];
+  }
+
+  if (item.partId === "main") {
+    const flatAnswer = flatAnswers[index] || "";
+    if (item.preserveFlatPosition === true && item.type === "choice" && normalizeAnswer(flatAnswer) === "anzeige") return "";
+    return flatAnswer;
+  }
+
+  const matchingSectionText = sections.find((section) => section.partId === item.partId)?.text;
+  if (matchingSectionText !== undefined) {
+    const matchingSectionAnswers = extractNumberedTextAnswers(matchingSectionText);
+    return matchingSectionAnswers[item.questionNumber] ?? "";
   }
 
   const sequentialPartAnswer = sequentialPartAnswers.get(`${item.partId}.${item.questionNumber}`);
   if (sequentialPartAnswer !== undefined) return sequentialPartAnswer;
+  if (sequentialPartAnswers.size > 0 || hasAnyMatchingPartSections) return "";
 
-  if (useSequentialChoices && item.type === "choice") {
-    const choiceIndex = sequentialObjectiveAnswers[item.choiceIndex];
-    if (choiceIndex) return choiceIndex;
+  const sectionText = submissionText;
+  const numberedAnswers = extractNumberedTextAnswers(sectionText);
+  if (numberedAnswers[item.questionNumber] !== undefined) return numberedAnswers[item.questionNumber];
+
+  if (item.type === "vocabulary") {
+    const vocabularyPairs = extractVocabularyAnswers(submissionText);
+    if (item.vocabularyKey && vocabularyPairs[item.vocabularyKey]) return vocabularyPairs[item.vocabularyKey];
+    const pairedVocabularyValues = Object.values(vocabularyPairs);
+    const pairedVocabularyIndex = Math.max(0, index - 5);
+    if (pairedVocabularyValues[pairedVocabularyIndex]) return pairedVocabularyValues[pairedVocabularyIndex];
+    const vocabularyValues = extractNumberedVocabularyAnswers(submissionText);
+    const vocabularyIndex = Math.max(0, index - sections.length);
+    if (vocabularyValues[vocabularyIndex]) return vocabularyValues[vocabularyIndex];
   }
 
   return extractNumberedTextAnswers(submissionText)[item.questionNumber] || "";
@@ -890,57 +1022,47 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const source = typeof assignmentIdOrReferenceEntry === "object" ? assignmentIdOrReferenceEntry : referenceEntry || findReferenceEntryFromDictionary(assignmentIdOrReferenceEntry);
   const assignmentId = typeof assignmentIdOrReferenceEntry === "string"
     ? assignmentIdOrReferenceEntry
-    : source?.assignmentKey || source?.assignment_id || source?.assignmentId || source?.assignment || "";
-  let referenceItems = buildReferenceItems(source || {});
-  if (!referenceItems.length) referenceItems = buildHardcodedReferenceItems(assignmentId);
-  if (!referenceItems.length) return { correctCount: 0, totalCount: 0, score: 0, details: {} };
+    : assignmentIdOrReferenceEntry?.assignmentKey || assignmentIdOrReferenceEntry?.assignmentId || assignmentIdOrReferenceEntry?.assignment_id || "";
 
-  let choiceIndex = 0;
-  referenceItems = referenceItems.map((item) => item.type === "choice" ? { ...item, choiceIndex: choiceIndex++ } : item);
+  const hardcodedItems = buildHardcodedReferenceItems(assignmentId);
+  const items = buildReferenceItems(source || {});
+  const referenceItems = hardcodedItems.length ? hardcodedItems : items;
+  if (!referenceItems.length) return { correctCount: 0, totalCount: 0, details: {} };
+
   const sections = splitSubmissionIntoSections(submissionText);
-  const multipartReference = new Set(referenceItems.map((item) => item.partId)).size > 1;
+  const partIds = new Set(referenceItems.map((item) => item.partId));
   const flatMainReference = referenceItems.every((item) => item.partId === "main");
-  const hasMatchingPartSections = multipartReference && referenceItems.some((item) => sections.some((section) => section.partId === item.partId));
-  const sequentialObjectiveAnswers = extractChoiceAnswers(submissionText);
-  const choiceCount = referenceItems.filter((item) => item.type === "choice").length;
-  const useSequentialChoices = (flatMainReference || (multipartReference && !hasMatchingPartSections)) && choiceCount > 1 && Object.keys(sequentialObjectiveAnswers).length >= choiceCount;
-  const sequentialChoiceValues = Object.values(sequentialObjectiveAnswers);
-  const sequentialPartAnswers = buildSequentialPartAnswerMap(referenceItems, submissionText, hasMatchingPartSections);
-  const vocabularyValues = extractNumberedVocabularyAnswers(submissionText);
-  const vocabularyIndexes = new Map();
-  referenceItems.forEach((item, index) => {
-    if (item.type === "vocabulary" && vocabularyValues.length) {
-      vocabularyIndexes.set(index, vocabularyValues.shift());
-    }
-  });
+  const referencePartIds = [...partIds].filter((partId) => partId !== "main");
+  const sectionPartIds = new Set(sections.filter((section) => section.partId !== "main").map((section) => section.partId));
+  const hasAnyMatchingPartSections = Boolean(referencePartIds.length) && referencePartIds.some((partId) => sectionPartIds.has(partId));
+  let flatAnswers = flatMainReference ? chooseBestFlatAnswers(referenceItems, submissionText) : [];
+  if (flatMainReference) {
+    const sectionAnswers = sections
+      .filter((section) => section.partId !== "main")
+      .flatMap((section) => extractRestartedNumberingEntries(section.text).sort((a, b) => a.number - b.number).map((entry) => entry.answer));
+    if (scoreFlatCandidate(referenceItems, sectionAnswers).correct > scoreFlatCandidate(referenceItems, flatAnswers).correct) flatAnswers = sectionAnswers;
+  }
+  const sequentialPartAnswers = hasAnyMatchingPartSections
+    ? buildMixedPartAnswerMap(referenceItems, submissionText, sections, sectionPartIds)
+    : buildSequentialPartAnswerMap(referenceItems, submissionText, false);
 
   const details = {};
   let correctCount = 0;
+
   referenceItems.forEach((item, index) => {
-    const student = getStudentAnswerForItem({
-      item,
-      index,
-      submissionText,
-      sections,
-      vocabularyIndexes,
-      sequentialObjectiveAnswers: sequentialChoiceValues,
-      sequentialPartAnswers,
-      useSequentialChoices,
-    });
+    const student = getStudentAnswerForItem({ item, index, submissionText, sections, flatAnswers, sequentialPartAnswers, hasAnyMatchingPartSections });
     const correct = isCorrectAnswer(item, student);
     if (correct) correctCount += 1;
-    const key = multipartReference ? `${item.partId}.${item.questionNumber}` : String(item.questionNumber);
-    details[key] = {
+    const detailKey = item.partId === "main" ? String(item.questionNumber || index + 1) : `${item.partId}.${item.questionNumber || index + 1}`;
+    details[detailKey] = {
       student,
-      expected: item.expectedDisplay || item.expectedRaw || item.expected,
+      expected: item.expected,
+      expectedDisplay: item.expectedDisplay || item.expectedRaw || item.expected,
+      rawExpected: item.expectedRaw,
       correct,
+      partId: item.partId,
     };
   });
 
-  return {
-    correctCount,
-    totalCount: referenceItems.length,
-    score: referenceItems.length ? Math.round((correctCount / referenceItems.length) * 100) : 0,
-    details,
-  };
+  return { correctCount, totalCount: referenceItems.length, details };
 }
