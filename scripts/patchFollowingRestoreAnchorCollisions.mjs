@@ -52,12 +52,9 @@ await import("./patchMissingObjectiveFeedback.mjs");
 const objectiveReviewTarget = new URL("../src/pages/MarkingPage.jsx", import.meta.url);
 let objectiveReviewSource = await readFile(objectiveReviewTarget, "utf8");
 
-const objectiveRowsAnchor = [
-  '  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);',
-  '  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);',
-].join("\n");
+const objectiveRowsAnchor = '  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);';
 const objectiveRowsWithClipboard = [
-  '  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);',
+  objectiveRowsAnchor,
   '  const objectiveReviewClipboardText = useMemo(() => {',
   '    const safeCell = (value) => String(value ?? "—").replace(/\\s+/g, " ").replace(/\\|/g, "\\\\|").trim() || "—";',
   '    const rows = objectiveWrongRows.map((row) => {',
@@ -72,7 +69,6 @@ const objectiveRowsWithClipboard = [
   '      ...rows,',
   '    ].join("\\n");',
   '  }, [objectiveWrongRows]);',
-  '  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);',
 ].join("\n");
 
 if (!objectiveReviewSource.includes("const objectiveReviewClipboardText = useMemo")) {
