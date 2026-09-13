@@ -45,3 +45,98 @@ await import("./patchLiveClassRepairRefresh.mjs");
 
 // Keep omitted deterministic objective answers distinct from answered-but-wrong items.
 await import("./patchMissingObjectiveFeedback.mjs");
+
+// Keep the objective-review table copy/paste-safe. Some browser/clipboard paths flatten
+// adjacent <th> cells into `QuestionStudentCorrectStatus`, which makes pasted review tables
+// look as though the columns are wrong even though the on-screen table is correct.
+const objectiveReviewTarget = new URL("../src/pages/MarkingPage.jsx", import.meta.url);
+let objectiveReviewSource = await readFile(objectiveReviewTarget, "utf8");
+
+const objectiveRowsAnchor = [
+  '  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);',
+  '  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);',
+].join("\n");
+const objectiveRowsWithClipboard = [
+  '  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);',
+  '  const objectiveReviewClipboardText = useMemo(() => {',
+  '    const safeCell = (value) => String(value ?? "—").replace(/\\s+/g, " ").replace(/\\|/g, "\\\\|").trim() || "—";',
+  '    const rows = objectiveWrongRows.map((row) => {',
+  '      const submitted = safeCell(row.student || row.submitted || "—");',
+  '      const expected = safeCell(row.expected || row.rawExpected || "—");',
+  '      const status = String(row.student || row.submitted || "").trim() ? "Wrong" : "Not answered";',
+  '      return `| ${safeCell(row.question)} | ${submitted} | ${expected} | ${status} |`;',
+  '    });',
+  '    return [',
+  '      "| Question | Student | Correct | Status |",',
+  '      "| --- | --- | --- | --- |",',
+  '      ...rows,',
+  '    ].join("\\n");',
+  '  }, [objectiveWrongRows]);',
+  '  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);',
+].join("\n");
+
+if (!objectiveReviewSource.includes("const objectiveReviewClipboardText = useMemo")) {
+  if (!objectiveReviewSource.includes(objectiveRowsAnchor)) {
+    throw new Error("Objective review clipboard formatter anchor changed; update patchFollowingRestoreAnchorCollisions.mjs");
+  }
+  objectiveReviewSource = objectiveReviewSource.replace(objectiveRowsAnchor, objectiveRowsWithClipboard);
+}
+
+const objectiveTitle = '<div style={{ padding: 8, fontSize: 13, fontWeight: 700, color: "#7f1d1d" }}>Objective answers to review</div>';
+const objectiveCopyButton = [
+  objectiveTitle,
+  '<div style={{ padding: "0 8px 8px", display: "flex", justifyContent: "flex-end" }}>',
+  '  <button',
+  '    type="button"',
+  '    onClick={() => { void navigator.clipboard.writeText(objectiveReviewClipboardText); }}',
+  '    style={{ fontSize: 12, padding: "4px 8px", whiteSpace: "nowrap" }}',
+  '  >',
+  '    Copy review',
+  '  </button>',
+  '</div>',
+].join("\n");
+
+if (!objectiveReviewSource.includes("Copy review")) {
+  if (!objectiveReviewSource.includes(objectiveTitle)) {
+    throw new Error("Objective review title anchor changed; update patchFollowingRestoreAnchorCollisions.mjs");
+  }
+  objectiveReviewSource = objectiveReviewSource.replace(objectiveTitle, objectiveCopyButton);
+}
+
+const objectiveReviewMarker = "Objective answers to review";
+const objectiveReviewIndex = objectiveReviewSource.indexOf(objectiveReviewMarker);
+if (objectiveReviewIndex < 0) {
+  throw new Error("Objective review marker missing after clipboard patch");
+}
+
+const objectiveTableBefore = '<table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>';
+const objectiveTableAfter = [
+  '<table',
+  '  style={{ width: "100%", minWidth: 720, tableLayout: "fixed", borderCollapse: "collapse", fontSize: 13 }}',
+  '  onCopy={(event) => {',
+  '    event.preventDefault();',
+  '    event.clipboardData.setData("text/plain", objectiveReviewClipboardText);',
+  '  }}',
+  '>',
+].join("\n");
+
+const objectiveTableIndex = objectiveReviewSource.indexOf(objectiveTableBefore, objectiveReviewIndex);
+if (objectiveTableIndex >= 0) {
+  objectiveReviewSource = `${objectiveReviewSource.slice(0, objectiveTableIndex)}${objectiveTableAfter}${objectiveReviewSource.slice(objectiveTableIndex + objectiveTableBefore.length)}`;
+} else {
+  const objectiveReviewRegion = objectiveReviewSource.slice(objectiveReviewIndex, objectiveReviewIndex + 3500);
+  if (!objectiveReviewRegion.includes('event.clipboardData.setData("text/plain", objectiveReviewClipboardText)')) {
+    throw new Error("Objective review table anchor changed; update patchFollowingRestoreAnchorCollisions.mjs");
+  }
+}
+
+await writeFile(objectiveReviewTarget, objectiveReviewSource);
+
+if (!objectiveReviewSource.includes('"| Question | Student | Correct | Status |"')) {
+  throw new Error("Objective review copy header regression failed");
+}
+if (!objectiveReviewSource.includes('event.clipboardData.setData("text/plain", objectiveReviewClipboardText)')) {
+  throw new Error("Objective review direct-copy regression failed");
+}
+
+console.log("Objective review table now preserves Question, Student, Correct, and Status columns when copied.");
