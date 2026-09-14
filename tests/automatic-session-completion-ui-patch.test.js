@@ -39,13 +39,26 @@ const oldPage = `import {
 const LIVE_CLASS_DASHBOARD_REFRESH_MS = 60_000;
 
 export default function LiveClassesPageV2() {
-  let refreshInFlight = false;
+  useEffect(() => {
+    let active = true;
+    let refreshInFlight = false;
 
-  async function loadDashboard() {
-    const next = await getCompatibleClassDashboard(selectedClassId);
-    setDashboard(next);
-    setMessage(next.curriculumSync?.error || "");
-  }
+    const loadDashboard = async ({ initial = false } = {}) => {
+      if (!active || refreshInFlight) return;
+      refreshInFlight = true;
+      try {
+        const next = await getCompatibleClassDashboard(selectedClassId);
+        if (!active) return;
+        setDashboard(next);
+        setMessage(next.curriculumSync?.error || "");
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
+    void loadDashboard({ initial: true });
+    return () => { active = false; };
+  }, [selectedClassId]);
 
   async function handleSessionAction(session, action) {
     setBusy(true);
