@@ -79,6 +79,7 @@ test("Berlin reschedule uses the same chronological A1 lesson identity shown in 
 test("superseded repair aliases do not consume curriculum positions before mutation enrichment", async () => {
   const berlin = { id: "berlin-superseded", name: "A1 Berlin Klasse", slug: "a1-berlin", levelId: "A1" };
   const berlinRows = [
+    { id: "tutorial", classRecordId: berlin.id, className: berlin.name, startsAt: "2026-09-02T11:00:00Z", endsAt: "2026-09-02T12:00:00Z", assignmentIds: ["A1-TUTORIAL"], status: "completed" },
     { id: "day1", classRecordId: berlin.id, className: berlin.name, startsAt: "2026-09-07T11:00:00Z", endsAt: "2026-09-07T12:00:00Z", assignmentIds: ["A1-0.1"], status: "completed" },
     { id: "day2-alias", classRecordId: berlin.id, className: berlin.name, startsAt: "2026-09-08T10:30:00Z", endsAt: "2026-09-08T11:30:00Z", assignmentIds: ["A1-0.2"], status: "superseded" },
     { id: "day2", classRecordId: berlin.id, className: berlin.name, startsAt: "2026-09-08T11:00:00Z", endsAt: "2026-09-08T12:00:00Z", assignmentIds: ["A1-0.2", "A1-1.1"], status: "completed" },
@@ -88,7 +89,8 @@ test("superseded repair aliases do not consume curriculum positions before mutat
   const queryBerlin = async (field, identifier) => berlinRows.filter((row) => row[field] === identifier);
   const sessions = await loadMutationClassSessions(berlin.id, berlin, queryBerlin);
 
-  assert.deepEqual(sessions.map((session) => session.id), ["day1", "day2", "day3"]);
+  assert.deepEqual(sessions.map((session) => session.id), ["tutorial", "day1", "day2", "day3"]);
+  assert.equal(sessions.find((session) => session.id === "tutorial").curriculumDay, 0);
   assert.equal(sessions.find((session) => session.id === "day1").curriculumDay, 1);
   assert.equal(sessions.find((session) => session.id === "day2").curriculumDay, 2);
   assert.equal(sessions.find((session) => session.id === "day3").curriculumDay, 3);
