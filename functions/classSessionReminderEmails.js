@@ -120,11 +120,10 @@ function topicForSession(session = {}) {
 }
 
 function applyAttendanceSessionMetadata(session = {}, attendanceSession = {}) {
-  const assignmentId = text(
-    attendanceSession.assignmentId || attendanceSession.assignment_id,
-  );
+  const attendanceAssignmentIds = assignmentIds(attendanceSession);
+  const assignmentId = attendanceAssignmentIds[0] || "";
   const topic = text(
-    attendanceSession.topic || attendanceSession.sessionLabel
+    attendanceSession.topic || attendanceSession.title || attendanceSession.sessionLabel
     || attendanceSession.lesson || attendanceSession.lessonTitle,
   );
   if (!assignmentId && !topic) return session;
@@ -133,7 +132,7 @@ function applyAttendanceSessionMetadata(session = {}, attendanceSession = {}) {
     ...session,
     ...(topic ? { topic } : {}),
     ...(assignmentId ? {
-      assignmentIds: [assignmentId],
+      assignmentIds: attendanceAssignmentIds,
       assignments: [],
       assignmentId,
       assignment_id: "",
@@ -582,11 +581,17 @@ async function loadZoomProfile(db, klass) {
 }
 
 async function loadAttendanceSession(db, klass, session) {
-  const classId = text(klass.id || klass.classId || klass.classRecordId);
+  const parentIds = [...new Set([
+    klass.id, klass.classId, klass.classRecordId, klass.name, klass.className,
+  ].map(text).filter(Boolean))];
   const sessionId = text(session.id);
-  if (!classId || !sessionId) return {};
-  const snap = await db.doc(`attendance/${classId}/sessions/${sessionId}`).get();
-  return snap.exists ? { id: snap.id, ...snap.data() } : {};
+  if (!parentIds.length || !sessionId) return {};
+
+  for (const parentId of parentIds) {
+    const snap = await db.doc(`attendance/${parentId}/sessions/${sessionId}`).get();
+    if (snap.exists) return { id: snap.id, ...snap.data() };
+  }
+  return {};
 }
 
 function classReminderEnabled(klass = {}) {
@@ -769,6 +774,7 @@ module.exports = {
     formatTime24,
     isHolidayClosed,
     isSuppressedSession,
+    loadAttendanceSession,
     normalizeLeads,
     officialSessionId,
     processReminder,
