@@ -120,18 +120,21 @@ function topicForSession(session = {}) {
 }
 
 function applyAttendanceSessionMetadata(session = {}, attendanceSession = {}) {
-  const attendanceAssignmentIds = assignmentIds(attendanceSession);
+  const hasCanonicalAssignmentIds = Array.isArray(attendanceSession.assignmentIds);
+  const attendanceAssignmentIds = hasCanonicalAssignmentIds
+    ? [...new Set(attendanceSession.assignmentIds.map(text).filter(Boolean))]
+    : assignmentIds(attendanceSession);
   const assignmentId = attendanceAssignmentIds[0] || "";
   const topic = text(
-    attendanceSession.topic || attendanceSession.title || attendanceSession.sessionLabel
+    attendanceSession.title || attendanceSession.topic || attendanceSession.sessionLabel
     || attendanceSession.lesson || attendanceSession.lessonTitle,
   );
-  if (!assignmentId && !topic) return session;
+  if (!hasCanonicalAssignmentIds && !assignmentId && !topic) return session;
 
   return {
     ...session,
     ...(topic ? { topic } : {}),
-    ...(assignmentId ? {
+    ...(hasCanonicalAssignmentIds || assignmentId ? {
       assignmentIds: attendanceAssignmentIds,
       assignments: [],
       assignmentId,
@@ -587,11 +590,25 @@ async function loadAttendanceSession(db, klass, session) {
   const sessionId = text(session.id);
   if (!parentIds.length || !sessionId) return {};
 
+  let preferred = {};
+  let preferredScore = -1;
   for (const parentId of parentIds) {
     const snap = await db.doc(`attendance/${parentId}/sessions/${sessionId}`).get();
-    if (snap.exists) return { id: snap.id, ...snap.data() };
+    if (!snap.exists) continue;
+
+    const candidate = { id: snap.id, ...snap.data() };
+    // Auto-open creates an alias-only placeholder under the canonical class ID.
+    // Keep probing because a tutor-authored legacy record may be authoritative.
+    const score = (text(candidate.title) ? 4 : 0)
+      + (Array.isArray(candidate.assignmentIds) ? 4 : 0)
+      + (text(candidate.markedBy || candidate.openedBy || candidate.createdBy) ? 2 : 0)
+      + (candidate.autoOpened === true ? 0 : 1);
+    if (score > preferredScore) {
+      preferred = candidate;
+      preferredScore = score;
+    }
   }
-  return {};
+  return preferred;
 }
 
 function classReminderEnabled(klass = {}) {

@@ -38,6 +38,23 @@ test("class reminder preserves grouped attendance assignments and canonical titl
   assert.deepEqual(reminder.assignmentIds(resolved), ["A2-7.18a", "A2-7.18b"]);
 });
 
+test("canonical attendance fields override stale auto-open aliases", () => {
+  const resolved = reminder.applyAttendanceSessionMetadata({
+    id: "session-1",
+    topic: "Timetable lesson",
+    assignmentIds: ["A2-7.19"],
+  }, {
+    title: "Day 18: Die Bank anrufen",
+    assignmentIds: ["A2-7.18a", "A2-7.18b"],
+    topic: "Stale auto-open lesson",
+    assignmentId: "A2-7.19",
+    autoOpened: true,
+  });
+
+  assert.equal(resolved.topic, "Day 18: Die Bank anrufen");
+  assert.deepEqual(reminder.assignmentIds(resolved), ["A2-7.18a", "A2-7.18b"]);
+});
+
 test("class reminder searches legacy attendance parent IDs", async () => {
   const requestedPaths = [];
   const db = {
@@ -62,6 +79,47 @@ test("class reminder searches legacy attendance parent IDs", async () => {
   }, { id: "session-1" });
 
   assert.equal(attendanceSession.title, "Legacy attendance lesson");
+  assert.deepEqual(requestedPaths, [
+    "attendance/canonical-class-id/sessions/session-1",
+    "attendance/A2 Munich Klasse/sessions/session-1",
+  ]);
+});
+
+test("class reminder skips an auto-open placeholder for authoritative legacy attendance", async () => {
+  const requestedPaths = [];
+  const records = {
+    "attendance/canonical-class-id/sessions/session-1": {
+      topic: "Stale auto-open lesson",
+      assignmentId: "A2-7.19",
+      autoOpened: true,
+    },
+    "attendance/A2 Munich Klasse/sessions/session-1": {
+      title: "Day 18: Die Bank anrufen",
+      assignmentIds: ["A2-7.18a", "A2-7.18b"],
+      markedBy: "tutor-1",
+    },
+  };
+  const db = {
+    doc(path) {
+      requestedPaths.push(path);
+      return {
+        async get() {
+          return {
+            exists: Boolean(records[path]),
+            id: "session-1",
+            data: () => records[path],
+          };
+        },
+      };
+    },
+  };
+
+  const attendanceSession = await reminder.loadAttendanceSession(db, {
+    id: "canonical-class-id",
+    name: "A2 Munich Klasse",
+  }, { id: "session-1" });
+
+  assert.equal(attendanceSession.title, "Day 18: Die Bank anrufen");
   assert.deepEqual(requestedPaths, [
     "attendance/canonical-class-id/sessions/session-1",
     "attendance/A2 Munich Klasse/sessions/session-1",
