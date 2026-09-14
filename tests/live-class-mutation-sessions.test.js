@@ -94,5 +94,5 @@ test("superseded repair aliases do not consume curriculum positions before mutat
   assert.equal(sessions.find((session) => session.id === "day1").curriculumDay, 1);
   assert.equal(sessions.find((session) => session.id === "day2").curriculumDay, 2);
   assert.equal(sessions.find((session) => session.id === "day3").curriculumDay, 3);
-  assert.deepEqual(sessions.find((session) => session.id === "day3").assignmentIds, ["A1-1.1-PRACTICE", "A1-1.2"]);
+  assert.deepEqual(sessions.find((session) => session.id === "day3").assignmentIds, ["A1-1.1-practice", "A1-1.2"]);
 });
