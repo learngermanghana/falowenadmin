@@ -216,14 +216,14 @@ export default function CanonicalAttendancePageV3() {
   const checkinQuery = useMemo(() => new URLSearchParams({
     classId: String(klass?.id || ""),
     sessionId: String(selected?.id || ""),
-    date: selectedDate,
+    date: selected ? localDate(selected.startsAt, TIMEZONE) : "",
     sessionLabel,
     assignmentId,
-    startTime,
-    endTime,
+    startTime: localTime(selected?.startsAt, TIMEZONE),
+    endTime: localTime(selected?.endsAt, TIMEZONE),
     expectedStudents: expectedNames.join(", "),
     expectedCount: String(rows.length),
-  }).toString(), [assignmentId, endTime, expectedNames, klass?.id, rows.length, selected?.id, selectedDate, sessionLabel, startTime]);
+  }).toString(), [assignmentId, expectedNames, klass?.id, rows.length, selected, sessionLabel]);
 
   const checkinUrl = checkinQuery ? `${window.location.origin}/checkin?${checkinQuery}` : "";
   const displayUrl = checkinQuery ? `${window.location.origin}/checkin/display?${checkinQuery}` : "";
