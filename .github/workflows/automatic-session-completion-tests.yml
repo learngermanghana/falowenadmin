@@ -46,6 +46,8 @@ jobs:
           grep -F 'export async function undoSessionCompletion' src/services/liveClassServiceBase.js
           grep -F 'Undo completion' src/pages/LiveClassesPageV2.jsx
           grep -F 'Allow auto-complete' src/pages/LiveClassesPageV2.jsx
+          grep -F 'LIVE_CLASS_DASHBOARD_REFRESH_MS = 60_000' src/pages/LiveClassesPageV2.jsx
+          grep -F 'window.addEventListener("focus", refreshWhenVisible)' src/pages/LiveClassesPageV2.jsx
       - name: Test completion eligibility and delay
         run: node --test tests/auto-complete-class-sessions.test.js
       - name: Install dashboard dependencies
