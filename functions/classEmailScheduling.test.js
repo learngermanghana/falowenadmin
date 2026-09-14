@@ -23,6 +23,51 @@ test("class reminder uses today's attendance lesson instead of a stale next chap
   assert.deepEqual(reminder.assignmentIds(resolved), ["A2-7.18"]);
 });
 
+test("class reminder preserves grouped attendance assignments and canonical title", () => {
+  const resolved = reminder.applyAttendanceSessionMetadata({
+    id: "session-1",
+    topic: "Stale lesson",
+    assignmentIds: ["A2-7.19"],
+  }, {
+    title: "Day 18: Die Bank anrufen",
+    assignmentIds: ["A2-7.18a", "A2-7.18b"],
+    assignment_id: "A2-7.18a",
+  });
+
+  assert.equal(resolved.topic, "Day 18: Die Bank anrufen");
+  assert.deepEqual(reminder.assignmentIds(resolved), ["A2-7.18a", "A2-7.18b"]);
+});
+
+test("class reminder searches legacy attendance parent IDs", async () => {
+  const requestedPaths = [];
+  const db = {
+    doc(path) {
+      requestedPaths.push(path);
+      return {
+        async get() {
+          const exists = path === "attendance/A2 Munich Klasse/sessions/session-1";
+          return {
+            exists,
+            id: "session-1",
+            data: () => ({ title: "Legacy attendance lesson" }),
+          };
+        },
+      };
+    },
+  };
+
+  const attendanceSession = await reminder.loadAttendanceSession(db, {
+    id: "canonical-class-id",
+    name: "A2 Munich Klasse",
+  }, { id: "session-1" });
+
+  assert.equal(attendanceSession.title, "Legacy attendance lesson");
+  assert.deepEqual(requestedPaths, [
+    "attendance/canonical-class-id/sessions/session-1",
+    "attendance/A2 Munich Klasse/sessions/session-1",
+  ]);
+});
+
 test("final class reminder catches a session moved inside the normal grace window", () => {
   const now = new Date("2026-08-14T10:00:00.000Z");
   const session = {
