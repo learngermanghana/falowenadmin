@@ -6,8 +6,8 @@ import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "../context/ToastContext.jsx";
 import "./CheckinPage.css";
 
-const ATTENDANCE_TIME_ZONE = "Africa/Lagos";
-const ATTENDANCE_TIME_ZONE_LABEL = "WAT (UTC+01:00)";
+const ATTENDANCE_TIME_ZONE = "Africa/Accra";
+const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
 
 function resolveStatusApiUrl() {
   const checkinUrl = String(import.meta.env.VITE_CHECKIN_API_URL || "").trim();
@@ -71,7 +71,7 @@ function resolveFallbackStartTimestamp(dateValue, startTimeValue) {
   if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
   if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
 
-  const asUtc = Date.UTC(year, month - 1, day, hour - 1, minute, 0, 0);
+  const asUtc = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
   return Number.isFinite(asUtc) ? asUtc : null;
 }
 

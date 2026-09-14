@@ -75,28 +75,37 @@ export function buildLightweightCheckinShareUrl(rawHref = "") {
 function patchAttendancePage() {
   let source = fs.readFileSync(attendancePath, "utf8");
 
-  source = replaceOnce(
-    source,
-    `  const expectedNames = useMemo(() => rows
+  const rosterBlock = `  const expectedNames = useMemo(() => rows
     .map((row) => String(row.name || "").trim())
     .filter(Boolean)
     .slice(0, 15), [rows]);
 
-`,
-    ``,
-    "remove roster names from share payload preparation",
-  );
+`;
+  if (source.includes(rosterBlock)) {
+    source = source.replace(rosterBlock, "");
+  }
 
-  source = replaceOnce(
-    source,
-    `    expectedStudents: expectedNames.join(", "),
-    expectedCount: String(rows.length),
-  }).toString(), [assignmentId, endTime, expectedNames, klass?.id, rows.length, selected?.id, selectedDate, sessionLabel, startTime]);`,
-    `    expectedCount: String(rows.length),
-  }).toString(), [assignmentId, endTime, klass?.id, rows.length, selected?.id, selectedDate, sessionLabel, startTime]);`,
-    "remove roster names from generated check-in URLs",
-  );
+  const blockStartMarker = `  const checkinQuery = useMemo(() => new URLSearchParams({`;
+  const blockEndMarker = `\n\n  const checkinUrl`;
+  const blockStart = source.indexOf(blockStartMarker);
+  const blockEnd = blockStart >= 0 ? source.indexOf(blockEndMarker, blockStart) : -1;
+  if (blockStart < 0 || blockEnd < 0) {
+    throw new Error("Check-in long URL patch anchor missing: generated check-in query block");
+  }
 
+  let checkinBlock = source.slice(blockStart, blockEnd);
+  checkinBlock = checkinBlock.replace(
+    /\n\s*expectedStudents:\s*expectedNames\.join\(", "\),?/,
+    "",
+  );
+  checkinBlock = checkinBlock.replace(/\bexpectedNames,\s*/g, "");
+  checkinBlock = checkinBlock.replace(/,\s*expectedNames\b/g, "");
+
+  if (checkinBlock.includes("expectedStudents") || checkinBlock.includes("expectedNames")) {
+    throw new Error("Check-in long URL patch could not remove roster names from generated check-in URLs");
+  }
+
+  source = `${source.slice(0, blockStart)}${checkinBlock}${source.slice(blockEnd)}`;
   fs.writeFileSync(attendancePath, source, "utf8");
 }
 

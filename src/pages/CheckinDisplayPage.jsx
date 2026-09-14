@@ -6,9 +6,9 @@ import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";
 import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";
 import "./CheckinDisplayPage.css";
 
-const ATTENDANCE_UTC_OFFSET_HOURS = 1;
-const ATTENDANCE_TIME_ZONE = "Africa/Lagos";
-const ATTENDANCE_TIME_ZONE_LABEL = "WAT (UTC+01:00)";
+const ATTENDANCE_UTC_OFFSET_HOURS = 0;
+const ATTENDANCE_TIME_ZONE = "Africa/Accra";
+const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
 const WAITING_PIANO_CHORDS = [
   [130.81, 261.63, 329.63, 392.0],
   [110.0, 220.0, 261.63, 329.63],
