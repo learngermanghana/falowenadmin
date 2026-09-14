@@ -194,9 +194,74 @@ function patchPage() {
     );
   }
 
+  if (!source.includes("LIVE_CLASS_DASHBOARD_REFRESH_MS")) {
+    source = source.replace(
+      "function normalize(value) {",
+      "const LIVE_CLASS_DASHBOARD_REFRESH_MS = 60_000;\n\nfunction normalize(value) {",
+    );
+
+    const dashboardEffectPattern = /  useEffect\(\(\) => \{\n    let active = true;\n    if \(!selectedClassId\) \{\n      setDashboard\(null\);\n      return \(\) => \{ active = false; \};\n    \}\n    setLoading\(true\);\n    getCompatibleClassDashboard\(selectedClassId\)[\s\S]*?\n  \}, \[selectedClassId\]\);/;
+    const dashboardEffect = `  useEffect(() => {
+    let active = true;
+    let refreshInFlight = false;
+
+    if (!selectedClassId) {
+      setDashboard(null);
+      return () => { active = false; };
+    }
+
+    const loadDashboard = async ({ initial = false } = {}) => {
+      if (!active || refreshInFlight) return;
+      refreshInFlight = true;
+      if (initial) setLoading(true);
+      try {
+        const next = await getCompatibleClassDashboard(selectedClassId);
+        if (!active) return;
+        setDashboard(next);
+        if (next.curriculumSync?.error) setMessage(next.curriculumSync.error);
+      } catch (error) {
+        if (!active) return;
+        if (initial) {
+          setDashboard(null);
+          setMessage(error?.message || "Could not load this live class");
+        } else {
+          console.warn("Could not refresh this live class dashboard", error);
+        }
+      } finally {
+        refreshInFlight = false;
+        if (active && initial) setLoading(false);
+      }
+    };
+
+    void loadDashboard({ initial: true });
+    const timer = window.setInterval(() => {
+      if (!document.hidden) void loadDashboard();
+    }, LIVE_CLASS_DASHBOARD_REFRESH_MS);
+    const refreshWhenVisible = () => {
+      if (!document.hidden) void loadDashboard();
+    };
+    window.addEventListener("focus", refreshWhenVisible);
+    window.addEventListener("pageshow", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshWhenVisible);
+      window.removeEventListener("pageshow", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [selectedClassId]);`;
+
+    if (!dashboardEffectPattern.test(source)) {
+      throw new Error("Could not locate the Live Classes dashboard loading effect");
+    }
+    source = source.replace(dashboardEffectPattern, dashboardEffect);
+  }
+
   fs.writeFileSync(pagePath, source, "utf8");
 }
 
 patchService();
 patchPage();
-console.log("Applied automatic completion and Undo controls to Live Classes.");
+console.log("Applied automatic completion, Undo controls and live dashboard refresh to Live Classes.");
