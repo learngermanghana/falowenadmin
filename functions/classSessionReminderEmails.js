@@ -119,6 +119,29 @@ function topicForSession(session = {}) {
   return missing.length ? `${topic} (${missing.join(" + ")})` : topic;
 }
 
+function applyAttendanceSessionMetadata(session = {}, attendanceSession = {}) {
+  const assignmentId = text(
+    attendanceSession.assignmentId || attendanceSession.assignment_id,
+  );
+  const topic = text(
+    attendanceSession.topic || attendanceSession.sessionLabel
+    || attendanceSession.lesson || attendanceSession.lessonTitle,
+  );
+  if (!assignmentId && !topic) return session;
+
+  return {
+    ...session,
+    ...(topic ? { topic } : {}),
+    ...(assignmentId ? {
+      assignmentIds: [assignmentId],
+      assignments: [],
+      assignmentId,
+      assignment_id: "",
+    } : {}),
+    attendanceSessionId: text(attendanceSession.sessionId) || text(session.id),
+  };
+}
+
 function officialSessionId(session = {}) {
   return text(
     session.officialSessionId || session.classSessionId || session.canonicalSessionId || session.id,
@@ -558,17 +581,32 @@ async function loadZoomProfile(db, klass) {
   return snap.exists ? { id: snap.id, ...snap.data() } : {};
 }
 
+async function loadAttendanceSession(db, klass, session) {
+  const classId = text(klass.id || klass.classId || klass.classRecordId);
+  const sessionId = text(session.id);
+  if (!classId || !sessionId) return {};
+  const snap = await db.doc(`attendance/${classId}/sessions/${sessionId}`).get();
+  return snap.exists ? { id: snap.id, ...snap.data() } : {};
+}
+
 function classReminderEnabled(klass = {}) {
   if (klass.classReminderEmailEnabled === false) return false;
   return !["off", "disabled"].includes(comparable(klass.classReminderEmailMode));
 }
 
 async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl, runtimeConfig = {} }) {
-  const { session, leadMin } = due;
+  const { leadMin } = due;
+  let { session } = due;
   const klass = resolveClassForSession(session, classes);
   if (!klass || BLOCKED_CLASS_STATUSES.has(comparable(klass.status)) || !classReminderEnabled(klass)) {
     return { sent: 0, skipped: "inactive_or_missing_class" };
   }
+
+  // The attendance record is what tutors and students use at check-in. A stale
+  // timetable alias can otherwise make the reminder advertise the next lesson
+  // while the check-in page correctly shows today's lesson.
+  const attendanceSession = await loadAttendanceSession(db, klass, session);
+  session = applyAttendanceSessionMetadata(session, attendanceSession);
 
   const holiday = await loadHoliday(db, klass, session);
   if (isHolidayClosed({ holiday, klass, session })) {
@@ -722,6 +760,7 @@ module.exports = {
   runClassSessionReminderEmailJob,
   _test: {
     activeClassRoster,
+    applyAttendanceSessionMetadata,
     assignmentIds,
     buildCheckinUrl,
     buildReminderMessage,

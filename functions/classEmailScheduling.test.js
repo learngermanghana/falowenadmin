@@ -4,6 +4,25 @@ const assert = require("node:assert/strict");
 const reminder = require("./classSessionReminderEmails.js")._test;
 const attendance = require("./attendanceConfirmationEmails.js")._test;
 
+test("class reminder uses today's attendance lesson instead of a stale next chapter", () => {
+  const session = {
+    id: "A2 Munich Klasse_2026-09-14_1900",
+    topic: "7.19. Einkaufen – wo und wie?",
+    assignmentId: "A2-7.19",
+    assignmentIds: ["A2-7.19"],
+  };
+  const attendanceSession = {
+    sessionId: session.id,
+    sessionLabel: "Day 18: Die Bank anrufen",
+    assignmentId: "A2-7.18",
+  };
+
+  const resolved = reminder.applyAttendanceSessionMetadata(session, attendanceSession);
+
+  assert.equal(reminder.topicForSession(resolved), "Day 18: Die Bank anrufen (A2-7.18)");
+  assert.deepEqual(reminder.assignmentIds(resolved), ["A2-7.18"]);
+});
+
 test("final class reminder catches a session moved inside the normal grace window", () => {
   const now = new Date("2026-08-14T10:00:00.000Z");
   const session = {
