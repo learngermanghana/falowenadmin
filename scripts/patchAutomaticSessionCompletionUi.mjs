@@ -10,15 +10,19 @@ function patchService() {
   let source = fs.readFileSync(servicePath, "utf8");
   if (source.includes("export async function undoSessionCompletion")) return;
 
-  const replacement = `export async function markSessionCompleted(sessionId, adminId = "admin") {
+  const replacement = `export async function markSessionCompleted(sessionId, adminId = "admin", classId = "") {
   const sessionRef = doc(db, "classSessions", sessionId);
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
-    const session = { id: sessionSnap.id, ...sessionSnap.data() };
-    const klass = await loadClassRecord(session.classId, transaction);
+    const session = { ...sessionSnap.data(), id: sessionSnap.id };
+    const canonicalClassId = String(classId || session.classRecordId || session.classId || "").trim();
+    if (!canonicalClassId) throw new Error("This session is not linked to a class");
+    const klass = await loadClassRecord(canonicalClassId, transaction);
     const previousStatus = String(session.status || "scheduled").trim().toLowerCase() || "scheduled";
     const patch = {
+      classId: canonicalClassId,
+      classRecordId: canonicalClassId,
       status: "completed",
       completionSource: "manual",
       completionPreviousStatus: previousStatus,
@@ -30,10 +34,10 @@ function patchService() {
       updatedAt: serverTimestamp(),
     };
     transaction.update(sessionRef, patch);
-    transaction.set(attendanceSessionRef(session.classId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
+    transaction.set(attendanceSessionRef(canonicalClassId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
     transaction.set(doc(collection(db, "auditLogs")), {
       type: "classSession.completed",
-      classId: session.classId,
+      classId: canonicalClassId,
       sessionId,
       previousStatus,
       completionSource: "manual",
@@ -43,17 +47,21 @@ function patchService() {
   });
 }
 
-export async function undoSessionCompletion(sessionId, { adminId = "admin", reason = "" } = {}) {
+export async function undoSessionCompletion(sessionId, { adminId = "admin", reason = "", classId = "" } = {}) {
   const sessionRef = doc(db, "classSessions", sessionId);
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
-    const session = { id: sessionSnap.id, ...sessionSnap.data() };
+    const session = { ...sessionSnap.data(), id: sessionSnap.id };
     if (String(session.status || "").trim().toLowerCase() !== "completed") {
       throw new Error("Only a completed session can be undone");
     }
-    const klass = await loadClassRecord(session.classId, transaction);
+    const canonicalClassId = String(classId || session.classRecordId || session.classId || "").trim();
+    if (!canonicalClassId) throw new Error("This session is not linked to a class");
+    const klass = await loadClassRecord(canonicalClassId, transaction);
     const patch = {
+      classId: canonicalClassId,
+      classRecordId: canonicalClassId,
       status: "scheduled",
       completionSource: "completion-undone",
       completionPreviousStatus: String(session.completionPreviousStatus || "scheduled").trim() || "scheduled",
@@ -69,10 +77,10 @@ export async function undoSessionCompletion(sessionId, { adminId = "admin", reas
       updatedAt: serverTimestamp(),
     };
     transaction.update(sessionRef, patch);
-    transaction.set(attendanceSessionRef(session.classId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
+    transaction.set(attendanceSessionRef(canonicalClassId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
     transaction.set(doc(collection(db, "auditLogs")), {
       type: "classSession.completionUndone",
-      classId: session.classId,
+      classId: canonicalClassId,
       sessionId,
       previousCompletionSource: String(session.completionSource || ""),
       reason: patch.completionUndoReason,
@@ -82,27 +90,31 @@ export async function undoSessionCompletion(sessionId, { adminId = "admin", reas
   });
 }
 
-export async function allowAutomaticSessionCompletion(sessionId, adminId = "admin") {
+export async function allowAutomaticSessionCompletion(sessionId, adminId = "admin", classId = "") {
   const sessionRef = doc(db, "classSessions", sessionId);
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
-    const session = { id: sessionSnap.id, ...sessionSnap.data() };
+    const session = { ...sessionSnap.data(), id: sessionSnap.id };
     if (!["scheduled", "live", "rescheduled"].includes(String(session.status || "scheduled").trim().toLowerCase())) {
       throw new Error("Automatic completion can only be enabled for an active session");
     }
-    const klass = await loadClassRecord(session.classId, transaction);
+    const canonicalClassId = String(classId || session.classRecordId || session.classId || "").trim();
+    if (!canonicalClassId) throw new Error("This session is not linked to a class");
+    const klass = await loadClassRecord(canonicalClassId, transaction);
     const patch = {
+      classId: canonicalClassId,
+      classRecordId: canonicalClassId,
       autoCompletionSuppressed: false,
       completionHoldReleasedAt: serverTimestamp(),
       completionHoldReleasedBy: adminId,
       updatedAt: serverTimestamp(),
     };
     transaction.update(sessionRef, patch);
-    transaction.set(attendanceSessionRef(session.classId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
+    transaction.set(attendanceSessionRef(canonicalClassId, sessionId), attendanceMetadata(klass, session, patch), { merge: true });
     transaction.set(doc(collection(db, "auditLogs")), {
       type: "classSession.autoCompletionEnabled",
-      classId: session.classId,
+      classId: canonicalClassId,
       sessionId,
       actorId: adminId,
       createdAt: serverTimestamp(),
@@ -140,6 +152,7 @@ function patchPage() {
     setMessage("");
     try {
       const adminId = user?.uid || user?.email || "admin";
+      const canonicalClassId = dashboard?.klass?.id || selectedClassId || session.classRecordId || session.classId || "";
       let successMessage = "Session updated.";
       if (action === "topic") {
         const topic = window.prompt("Session topic", session.topic || "");
@@ -149,18 +162,18 @@ function patchPage() {
       }
       if (action === "complete") {
         if (!window.confirm("Mark this session completed now? Automatic completion normally happens 30 minutes after the class ends.")) return;
-        await markSessionCompleted(session.id, adminId);
+        await markSessionCompleted(session.id, adminId, canonicalClassId);
         successMessage = "Session marked completed.";
       }
       if (action === "undo-completion") {
         const reason = window.prompt("Why are you undoing this completion?", "The session was marked completed by mistake.");
         if (reason === null) return;
-        await undoSessionCompletion(session.id, { adminId, reason });
+        await undoSessionCompletion(session.id, { adminId, reason, classId: canonicalClassId });
         successMessage = "Completion undone. Automatic completion is paused for this session until you allow it again.";
       }
       if (action === "allow-auto-completion") {
         if (!window.confirm("Allow the automatic worker to complete this session after its end time?")) return;
-        await allowAutomaticSessionCompletion(session.id, adminId);
+        await allowAutomaticSessionCompletion(session.id, adminId, canonicalClassId);
         successMessage = "Automatic completion enabled for this session.";
       }
       await refreshDashboard(selectedClassId);
@@ -218,7 +231,7 @@ function patchPage() {
         const next = await getCompatibleClassDashboard(selectedClassId);
         if (!active) return;
         setDashboard(next);
-        if (next.curriculumSync?.error) setMessage(next.curriculumSync.error);
+        setMessage(next.curriculumSync?.error || "");
       } catch (error) {
         if (!active) return;
         if (initial) {
@@ -257,6 +270,11 @@ function patchPage() {
       throw new Error("Could not locate the Live Classes dashboard loading effect");
     }
     source = source.replace(dashboardEffectPattern, dashboardEffect);
+  } else {
+    source = source.replace(
+      "        if (next.curriculumSync?.error) setMessage(next.curriculumSync.error);",
+      "        setMessage(next.curriculumSync?.error || \"\");",
+    );
   }
 
   fs.writeFileSync(pagePath, source, "utf8");
