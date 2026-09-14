@@ -298,3 +298,41 @@ test("following mode refuses to move completed or live lessons", () => {
     (error) => error?.code === "live-class/locked-following-session" && /completed/.test(error.message),
   );
 });
+
+test("A1 Berlin following move keeps the selected 15 Sept lesson on 16 Sept and advances later sessions", () => {
+  const berlinKlass = {
+    id: "a1-berlin",
+    name: "A1 Berlin Klasse",
+    levelId: "A1",
+    startDate: "2026-09-02",
+    timezone: "Africa/Accra",
+    scheduleRules: [
+      { day: "mon", startTime: "11:00", durationMinutes: 60 },
+      { day: "tue", startTime: "11:00", durationMinutes: 60 },
+      { day: "wed", startTime: "11:00", durationMinutes: 60 },
+    ],
+  };
+  const sessions = [
+    session(4, "2026-09-14T11:00:00.000Z"),
+    session(5, "2026-09-15T11:00:00.000Z"),
+    session(6, "2026-09-16T11:00:00.000Z"),
+    session(7, "2026-09-21T11:00:00.000Z"),
+  ];
+
+  const plan = buildSessionReschedulePlan({
+    klass: berlinKlass,
+    sessions,
+    sessionId: "day-5",
+    targetStartsAt: "2026-09-16T11:00:00.000Z",
+    targetEndsAt: "2026-09-16T12:00:00.000Z",
+    mode: "following",
+  });
+
+  assert.equal(plan.mode, "following");
+  assert.equal(plan.changes[0].session.id, "day-5");
+  assert.equal(plan.changes[0].startsAt, "2026-09-16T11:00:00.000Z");
+  assert.equal(plan.changes[1].session.id, "day-6");
+  assert.equal(plan.changes[1].startsAt, "2026-09-21T11:00:00.000Z");
+  assert.equal(plan.changes[2].session.id, "day-7");
+  assert.equal(plan.changes[2].startsAt, "2026-09-22T11:00:00.000Z");
+});
