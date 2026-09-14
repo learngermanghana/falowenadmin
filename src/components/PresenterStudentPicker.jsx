@@ -560,6 +560,36 @@ export default function PresenterStudentPicker({
     publishQuestion(assignedQuestion);
   }
 
+  function pickNextQuestion() {
+    if (interactionLocked || !current || !hasQuestionMode || !currentQuestion || lastMarked || questionPool.length < 2) return;
+
+    let nextRoundQuestionIds = new Set(roundQuestionIds);
+    let availableQuestions = questionPool.filter(
+      (question) => question.id !== currentQuestion.id && !nextRoundQuestionIds.has(question.id),
+    );
+
+    if (!availableQuestions.length) {
+      nextRoundQuestionIds = new Set([currentQuestion.id]);
+      availableQuestions = questionPool.filter((question) => question.id !== currentQuestion.id);
+    }
+
+    const previousQuestionIds = new Set(
+      (Array.isArray(stats[current.key]?.responses) ? stats[current.key].responses : [])
+        .map((response) => normalize(response?.questionId))
+        .filter(Boolean),
+    );
+    const unseenForStudent = availableQuestions.filter((question) => !previousQuestionIds.has(question.id));
+    const nextQuestion = randomItem(unseenForStudent.length ? unseenForStudent : availableQuestions);
+    if (!nextQuestion) return;
+
+    nextRoundQuestionIds.add(nextQuestion.id);
+    setRoundQuestionIds(nextRoundQuestionIds);
+    setCurrentQuestionId(nextQuestion.id);
+    setShowQuestionAnswer(false);
+    setLastMarked("");
+    publishQuestion(nextQuestion);
+  }
+
   function markCurrent(status) {
     if (!current || lastMarked || interactionLocked) return;
     if (hasQuestionMode && !currentQuestion) return;
@@ -671,6 +701,15 @@ export default function PresenterStudentPicker({
           <div className="presenter-student-actions" role="group" aria-label="Record student response">
             <button type="button" className="is-correct" onClick={() => markCurrent("correct")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Correct</button>
             <button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Needs help</button>
+            <button
+              type="button"
+              className="is-quiet"
+              onClick={pickNextQuestion}
+              disabled={interactionLocked || Boolean(lastMarked) || !hasQuestionMode || !currentQuestion || questionPool.length < 2}
+              title="Show another question for the same student without recording a result."
+            >
+              Next question
+            </button>
             <button type="button" className="is-quiet" onClick={() => markCurrent("skip")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Skip</button>
             <button
               type="button"
@@ -689,7 +728,7 @@ export default function PresenterStudentPicker({
           className="presenter-pick-student"
           onClick={pickStudent}
           disabled={interactionLocked || !eligible.length || mustRecordBeforeNext}
-          title={mustRecordBeforeNext ? "Record Correct, Needs help, Skip or Absent before moving to another student." : ""}
+          title={mustRecordBeforeNext ? "Record Correct, Needs help, Skip or Absent before moving to another student. You can use Next question to change the question without recording a result." : ""}
         >
           {syncState === "restoring" ? "Restoring…" : mustRecordBeforeNext ? "Record result first" : current ? "Next student →" : "Pick student"}
         </button>
