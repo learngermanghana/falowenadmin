@@ -18,6 +18,10 @@ function asDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function classIdForSession(session = {}) {
+  return String(session.classRecordId || session.classId || "").trim();
+}
+
 function sessionEnd(session = {}) {
   const explicit = asDate(session.endsAt || session.endAt);
   if (explicit) return explicit;
@@ -69,7 +73,7 @@ async function completeOneSession({ admin, db, sessionId, now, delayMinutes }) {
     }
 
     const session = { id: sessionSnap.id, ...sessionSnap.data() };
-    const classId = String(session.classId || session.classRecordId || "").trim();
+    const classId = classIdForSession(session);
     if (!classId) {
       result.skipped = "missing_class_id";
       return;
@@ -97,6 +101,8 @@ async function completeOneSession({ admin, db, sessionId, now, delayMinutes }) {
     const previousStatus = normalize(session.status || session.sessionStatus || "scheduled") || "scheduled";
     const nextSequence = Number(session.sequence || 0) + 1;
     const patch = {
+      classId,
+      classRecordId: classId,
       status: "completed",
       completionSource: "automatic",
       completionPreviousStatus: previousStatus,
@@ -193,6 +199,7 @@ module.exports = {
   runAutoCompleteClassSessionsJob,
   _test: {
     asDate,
+    classIdForSession,
     completionDueAt,
     findDueAutoCompletions,
     isCompletionEligible,

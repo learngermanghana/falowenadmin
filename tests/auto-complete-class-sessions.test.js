@@ -28,6 +28,17 @@ test("completes a scheduled session 30 minutes after it ends", () => {
   assert.equal(due[0].session.id, "session-1");
 });
 
+test("prefers the canonical classRecordId on legacy class sessions", () => {
+  assert.equal(_test.classIdForSession(session({
+    classId: "A1 Berlin Klasse",
+    classRecordId: "LnvBRAxp5IjmQZzfM6eY",
+  })), "LnvBRAxp5IjmQZzfM6eY");
+});
+
+test("falls back to classId when classRecordId is unavailable", () => {
+  assert.equal(_test.classIdForSession(session({ classId: "class-1", classRecordId: "" })), "class-1");
+});
+
 test("does not auto-complete cancelled, completed, superseded or held sessions", () => {
   const sessions = [
     session({ id: "cancelled", status: "cancelled" }),
