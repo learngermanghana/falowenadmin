@@ -228,7 +228,10 @@ function buildFollowingTimetableChanges({
     scheduleAnchorSessionNumber: selected.number,
     scheduleAnchorDay: levelId === "A1" ? selected.number - 1 : null,
     scheduleAnchorStartsAt: target.start.toISOString(),
-    scheduleAnchorSource: "live-class-following-reschedule",
+    // The lesson-order builder treats this source as an explicit admin anchor.
+    // Using the same contract prevents a successful following-session move from
+    // snapping back to the old saved weekly slot during official-plan rebuilding.
+    scheduleAnchorSource: "admin-selected-following-restore",
   };
 
   let officialPlan;
