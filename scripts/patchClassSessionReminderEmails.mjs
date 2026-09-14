@@ -83,6 +83,74 @@ if (!workerSource.includes("link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),")) 
   workerSource = workerSource.replace('    link: "",', "    link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),");
 }
 
+const attendanceMetadataHelpers = `function mergeAttendanceReminderMetadata(session = {}, attendanceSession = {}) {
+  const merged = { ...session };
+  const attendanceTopic = text(attendanceSession.sessionLabel || attendanceSession.topic);
+  const attendanceAssignment = text(attendanceSession.assignmentId || attendanceSession.assignment_id);
+  const currentAssignments = assignmentIds(session);
+
+  if (attendanceTopic) {
+    merged.topic = attendanceTopic;
+    merged.sessionLabel = attendanceTopic;
+  }
+
+  if (attendanceAssignment) {
+    const assignmentAlreadyMatches = currentAssignments.some(
+      (assignment) => comparable(assignment) === comparable(attendanceAssignment),
+    );
+    if (!assignmentAlreadyMatches) {
+      merged.assignmentIds = [attendanceAssignment];
+      merged.assignments = [attendanceAssignment];
+      merged.assignmentId = attendanceAssignment;
+      merged.assignment_id = attendanceAssignment;
+    }
+  }
+
+  return merged;
+}
+
+async function hydrateReminderSessionFromAttendance({ db, klass, session = {} } = {}) {
+  const classId = text(klass.id || klass.classId || klass.classRecordId);
+  const sessionId = text(session.id);
+  if (!classId || !sessionId) return session;
+
+  try {
+    const snap = await db.doc(\`attendance/\${classId}/sessions/\${sessionId}\`).get();
+    if (!snap.exists) return session;
+    Object.assign(session, mergeAttendanceReminderMetadata(session, snap.data() || {}));
+  } catch (error) {
+    console.warn("class_reminder_attendance_metadata_lookup_failed", {
+      classId,
+      sessionId,
+      message: error?.message || String(error),
+    });
+  }
+  return session;
+}
+
+`;
+
+if (!workerSource.includes("function mergeAttendanceReminderMetadata")) {
+  const anchor = "async function processReminder({ admin, db, due, classes, students, config, now, fetchImpl, runtimeConfig = {} }) {";
+  if (!workerSource.includes(anchor)) throw new Error("Could not find class reminder process function for attendance metadata sync.");
+  workerSource = workerSource.replace(anchor, `${attendanceMetadataHelpers}${anchor}`);
+}
+
+if (!workerSource.includes("await hydrateReminderSessionFromAttendance({ db, klass, session });")) {
+  const anchor = "  const holiday = await loadHoliday(db, klass, session);";
+  if (!workerSource.includes(anchor)) throw new Error("Could not find class reminder holiday lookup for attendance metadata sync.");
+  workerSource = workerSource.replace(
+    anchor,
+    `  await hydrateReminderSessionFromAttendance({ db, klass, session });\n\n${anchor}`,
+  );
+}
+
+if (!workerSource.includes("    mergeAttendanceReminderMetadata,")) {
+  const anchor = "    isHolidayClosed,";
+  if (!workerSource.includes(anchor)) throw new Error("Could not find class reminder test exports for attendance metadata sync.");
+  workerSource = workerSource.replace(anchor, `${anchor}\n    mergeAttendanceReminderMetadata,`);
+}
+
 const stateHelper = `async function writeClassReminderState({ db, admin, klass, session, leadMin, status, skipReason = "", error = "", recipientCount = null }) {
   if (!klass?.id) return;
   const timestamp = admin.firestore.FieldValue.serverTimestamp();
@@ -187,6 +255,8 @@ const checks = [
   [worker.includes("holidayCalendar"), "Holiday closure lookup is missing."],
   [worker.includes("classReminderSends"), "Class reminder deduplication is missing."],
   [worker.includes("async function writeClassReminderState"), "Server reminder diagnostic writer is missing."],
+  [worker.includes("function mergeAttendanceReminderMetadata"), "Attendance-session reminder metadata merger is missing."],
+  [worker.includes("await hydrateReminderSessionFromAttendance({ db, klass, session });"), "Reminder delivery is not hydrated from attendance-session metadata."],
   [worker.includes('skipReason: "already_sent_or_changed"'), "Reminder reservation skip diagnostics are missing."],
   [worker.includes('skipReason: "no_recipients"'), "Reminder recipient skip diagnostics are missing."],
   [worker.includes("https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09"), "Class reminder Zoom join link is missing."],
@@ -200,4 +270,4 @@ for (const [passed, message] of checks) {
   if (!passed) throw new Error(message);
 }
 
-console.log("Session-topic class reminder scheduler, auto check-in, runtime URL delivery diagnostics and standard Zoom meeting verified.");
+console.log("Session-topic class reminder scheduler, attendance metadata sync, auto check-in, runtime URL delivery diagnostics and standard Zoom meeting verified.");
