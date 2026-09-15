@@ -1,0 +1,71 @@
+name: Session Health Exceptions Tests
+
+on:
+  pull_request:
+    paths:
+      - 'api/router.js'
+      - 'firebase.json'
+      - 'package.json'
+      - 'scripts/patchSessionHealthAutomationConfig.mjs'
+      - 'src/components/SessionHealthExceptionsCenter.jsx'
+      - 'src/pages/LiveClassesPage.js'
+      - 'src/services/sessionHealthExceptionsService.js'
+      - 'src/utils/sessionHealthExceptions.js'
+      - 'tests/session-health-exceptions.test.js'
+      - 'tests/session-health-exceptions-ui.test.js'
+      - 'tests/session-health-operational-service.test.js'
+      - '.github/workflows/session-health-exceptions-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/router.js'
+      - 'firebase.json'
+      - 'package.json'
+      - 'scripts/patchSessionHealthAutomationConfig.mjs'
+      - 'src/components/SessionHealthExceptionsCenter.jsx'
+      - 'src/pages/LiveClassesPage.js'
+      - 'src/services/sessionHealthExceptionsService.js'
+      - 'src/utils/sessionHealthExceptions.js'
+      - 'tests/session-health-exceptions.test.js'
+      - 'tests/session-health-exceptions-ui.test.js'
+      - 'tests/session-health-operational-service.test.js'
+      - '.github/workflows/session-health-exceptions-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate attendance automation runtime config endpoint
+        run: |
+          node --check scripts/patchSessionHealthAutomationConfig.mjs
+          node scripts/patchSessionHealthAutomationConfig.mjs
+          node --check functions/index.js
+          node --check api/router.js
+          grep -F 'app.get("/attendanceAutomationConfig"' functions/index.js
+          grep -F 'autoOpenEnabled: attendance.auto_open_enabled !== false' functions/index.js
+          grep -F '"attendanceAutomationConfig"' api/router.js
+
+      - name: Test Session Health and Exceptions analyzer
+        run: >-
+          node --test
+          tests/session-health-exceptions.test.js
+          tests/session-health-exceptions-ui.test.js
+          tests/session-health-operational-service.test.js
+
+      - name: Build dashboard
+        run: npm run build

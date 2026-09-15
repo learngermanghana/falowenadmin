@@ -68,6 +68,7 @@ jobs:
             scripts/patchClassReminderDiagnosticBestEffort.mjs \
             scripts/patchClassReminderConciseLinks.mjs \
             scripts/patchCheckinStatusMetadataHydration.mjs \
+            scripts/patchSessionHealthAutomationConfig.mjs \
             scripts/patchLeadClassStartReminderEmails.mjs \
             scripts/patchAutoCompleteClassSessions.mjs \
             scripts/patchCloudCostOptimizations.mjs \
@@ -124,6 +125,8 @@ jobs:
           grep -F '/^(tutorial|orientation|complete)$/i' functions/classSessionReminderEmails.js
           grep -F 'checkinMetadataHydrated: true' functions/index.js
           grep -F '.find((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))' functions/index.js
+          grep -F 'app.get("/attendanceAutomationConfig"' functions/index.js
+          grep -F 'autoOpenEnabled: attendance.auto_open_enabled !== false' functions/index.js
           grep -F 'classStartsAt: startsAt.toISOString()' functions/classSessionAutoCheckin.js
           grep -F 'const hydratedAssignmentId' src/pages/CheckinPage.jsx
           grep -F 'getTeachingSlideByAssignmentId(hydratedAssignmentId)' src/pages/CheckinPage.jsx

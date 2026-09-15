@@ -1,21 +1,25 @@
 import React from "react";
 import LiveClassLessonDateRepair from "../components/LiveClassLessonDateRepair.jsx";
 import GhanaDateTimeLocalInjector from "../components/GhanaDateTimeLocalInjector.jsx";
+import SessionHealthExceptionsCenter from "../components/SessionHealthExceptionsCenter.jsx";
 import LiveClassesPageV2 from "./LiveClassesPageV2.jsx";
 
 const TAB_STORAGE_KEY = "falowen-live-classes-primary-tab";
 const TAB_REPAIR = "repair";
+const TAB_HEALTH = "health";
 const TAB_CLASSES = "classes";
 
 function initialTab() {
   if (typeof window === "undefined") return TAB_CLASSES;
   const stored = window.localStorage.getItem(TAB_STORAGE_KEY);
-  return stored === TAB_REPAIR ? TAB_REPAIR : TAB_CLASSES;
+  if (stored === TAB_REPAIR) return TAB_REPAIR;
+  if (stored === TAB_HEALTH) return TAB_HEALTH;
+  return TAB_CLASSES;
 }
 
 function tabButtonStyle(active) {
   return {
-    flex: "1 1 260px",
+    flex: "1 1 240px",
     minHeight: 46,
     borderRadius: 10,
     border: active ? "1px solid #2563eb" : "1px solid #cbd5e1",
@@ -79,6 +83,19 @@ export default function LiveClassesPage() {
           {
             type: "button",
             role: "tab",
+            id: "live-classes-tab-health",
+            "aria-selected": activeTab === TAB_HEALTH,
+            "aria-controls": "live-classes-panel-health",
+            onClick: () => selectTab(TAB_HEALTH),
+            style: tabButtonStyle(activeTab === TAB_HEALTH),
+          },
+          "Health & Exceptions",
+        ),
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            role: "tab",
             id: "live-classes-tab-classes",
             "aria-selected": activeTab === TAB_CLASSES,
             "aria-controls": "live-classes-panel-classes",
@@ -93,7 +110,9 @@ export default function LiveClassesPage() {
         { style: { color: "#64748b" } },
         activeTab === TAB_REPAIR
           ? "Inspect and restore lesson dates from the saved weekly timetable."
-          : "Manage classes, sessions, students, attendance links and related class operations.",
+          : activeTab === TAB_HEALTH
+            ? "Inspect session, attendance, check-in and communication exceptions before they affect students."
+            : "Manage classes, sessions, students, attendance links and related class operations.",
       ),
     ),
     activeTab === TAB_REPAIR
@@ -106,14 +125,24 @@ export default function LiveClassesPage() {
         },
         React.createElement(LiveClassLessonDateRepair),
       )
-      : React.createElement(
-        "div",
-        {
-          id: "live-classes-panel-classes",
-          role: "tabpanel",
-          "aria-labelledby": "live-classes-tab-classes",
-        },
-        React.createElement(LiveClassesPageV2),
-      ),
+      : activeTab === TAB_HEALTH
+        ? React.createElement(
+          "div",
+          {
+            id: "live-classes-panel-health",
+            role: "tabpanel",
+            "aria-labelledby": "live-classes-tab-health",
+          },
+          React.createElement(SessionHealthExceptionsCenter),
+        )
+        : React.createElement(
+          "div",
+          {
+            id: "live-classes-panel-classes",
+            role: "tabpanel",
+            "aria-labelledby": "live-classes-tab-classes",
+          },
+          React.createElement(LiveClassesPageV2),
+        ),
   );
 }
