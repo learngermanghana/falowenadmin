@@ -58,6 +58,57 @@ function languagePointReflection(point, lessonLabel) {
 }
 
 const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  "A1-4.7": [
+    check(
+      "In Teil 3, if you want to make a polite request, how could you start?",
+      "For example: Kannst du mir bitte ...? / Können Sie mir bitte ...?",
+      "The learner should produce a real request opener, not explain the exam format.",
+    ),
+    check(
+      "Someone asks you: ‘Kannst du mir bitte den Stift geben?’ How can you respond positively?",
+      "For example: Ja, gern. / Ja, natürlich. / Klar. / Kein Problem.",
+      "Accept another natural positive A1 reaction.",
+    ),
+    check(
+      "If you do not want to use können, what other simple way can you make a request?",
+      "Use a polite imperative with bitte, for example: Gib mir bitte den Stift. / Geben Sie mir bitte den Stift.",
+      "This checks that learners can request with an imperative as well as können.",
+    ),
+    check(
+      "Make a polite request asking someone to open the window.",
+      "For example: Kannst du bitte das Fenster öffnen? / Öffne bitte das Fenster. / Öffnen Sie bitte das Fenster.",
+    ),
+    check(
+      "Your partner says: ‘Bitte schließen Sie die Tür.’ What could you say before doing it?",
+      "For example: Ja, gern. / Natürlich. / Kein Problem.",
+    ),
+    check(
+      "What word can you add to make a request sound more polite? Give an example.",
+      "Use bitte, for example: Kannst du mir bitte helfen?",
+    ),
+    check(
+      "How is a request with du different from a polite request with Sie? Give one example of each.",
+      "For example: Kannst du mir bitte helfen? and Können Sie mir bitte helfen?",
+    ),
+    check(
+      "You cannot do what your partner requests. How can you refuse politely at A1 level?",
+      "For example: Tut mir leid, das geht leider nicht. / Entschuldigung, ich kann leider nicht.",
+      "Accept a short polite refusal that clearly reacts to the request.",
+    ),
+    check(
+      "Turn this direct command into a polite request: ‘Gib mir das Buch.’",
+      "For example: Gib mir bitte das Buch. / Kannst du mir bitte das Buch geben?",
+    ),
+    check(
+      "In Teil 3, is it enough to understand the request silently? What should you do?",
+      "No. React verbally and appropriately, for example with Ja, gern / Natürlich / Tut mir leid, ... and then respond to the request.",
+    ),
+    check(
+      "Make one complete Teil-3 exchange: ask your partner for something and give a suitable response.",
+      "For example: Kannst du mir bitte den Stift geben? – Ja, natürlich.",
+      "Use this as the final practical check: the learner must produce both the request and the reaction.",
+    ),
+  ],
   "A1-13": [
     check("Why is es often used in German weather sentences?", "German commonly uses the impersonal subject es for weather expressions, for example: Es regnet."),
     check("What is the difference between ‘Es ist kalt’ and ‘Es regnet’?", "Es ist kalt uses sein + an adjective; Es regnet uses a weather verb."),
