@@ -74,23 +74,6 @@ async function readAttendance(db, classId) {
   }
 }
 
-async function readZoom(db, klass = {}) {
-  const profileId = text(klass.zoomProfileId);
-  if (!profileId) return null;
-  try {
-    const snapshot = await db.collection("zoomProfiles").doc(profileId).get();
-    if (!snapshot.exists) return null;
-    const value = snapshot.data() || {};
-    return {
-      url: text(value.url || value.joinUrl || value.joinURL),
-      meetingId: text(value.meetingId || value.meetingID),
-      passcode: text(value.passcode || value.password),
-    };
-  } catch {
-    return null;
-  }
-}
-
 function registerPublicLiveClassApi(app, { db }) {
   app.get("/public-live-class", async (req, res) => {
     res.set("Access-Control-Allow-Origin", "*");
@@ -105,11 +88,10 @@ function registerPublicLiveClassApi(app, { db }) {
       if (!classSnapshot.exists) return res.status(404).json({ ok: false, error: "Class not found" });
       const klass = { id: classSnapshot.id, ...classSnapshot.data() };
 
-      const [byClassId, byRecordId, attendanceById, zoom] = await Promise.all([
+      const [byClassId, byRecordId, attendanceById] = await Promise.all([
         querySessions(db, "classId", classId).catch(() => []),
         querySessions(db, "classRecordId", classId).catch(() => []),
         readAttendance(db, classId),
-        readZoom(db, klass),
       ]);
 
       const merged = new Map();
@@ -145,7 +127,6 @@ function registerPublicLiveClassApi(app, { db }) {
         nextSession,
         latestCompletedSession,
         cancelledSessions: sessions.filter((session) => text(session.status).toLowerCase() === "cancelled"),
-        zoom,
       });
     } catch (error) {
       console.error("public_live_class_failed", error);
