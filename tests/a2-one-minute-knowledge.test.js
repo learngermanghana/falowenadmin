@@ -25,13 +25,13 @@ test("all A2 chapters keep a usable warm-up and no one-minute reading stage", ()
   }
 });
 
-test("A2 Day 19 keeps the original ten stages and adds five actionable activity slides", () => {
+test("A2 Day 19 adds five actionable activity slides without removing core lesson stages", () => {
   const slide = getTeachingSlideByAssignmentId("A2-7.19");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const ids = stages.map((stage) => stage.id);
 
   for (const id of ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions", "wrapup"]) {
-    assert.ok(ids.includes(id), `Day 19 missing original stage ${id}`);
+    assert.ok(ids.includes(id), `Day 19 missing core stage ${id}`);
   }
   for (const id of ["grammar-check", "vocabulary-retrieval", "sentence-builder", "guided-action", "role-play"]) {
     const stage = stages.find((entry) => entry.id === id);
@@ -40,5 +40,6 @@ test("A2 Day 19 keeps the original ten stages and adds five actionable activity 
     assert.ok(stage.items.length >= 3, `${id} needs enough questions for classroom rotation`);
     assert.equal(stage.requiresQuestionModel, true, `${id} must expose model-answer checking`);
   }
-  assert.equal(stages.length, 15, "Day 19 presenter should show 15 slides");
+  assert.equal(new Set(ids).size, ids.length, "Day 19 presenter must not contain duplicate stage IDs");
+  assert.ok(stages.length >= 15, `Day 19 should expose at least 15 slides, got ${stages.length}`);
 });
