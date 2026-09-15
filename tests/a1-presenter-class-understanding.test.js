@@ -40,6 +40,19 @@ test("A1-13 weather gives ten genuinely different class questions plus an exit c
   assert.equal(new Set(pool.map((item) => item.sourceQuestion)).size, 10);
 });
 
+test("A1-4.7 Teil 3 uses practical request-and-response understanding questions", () => {
+  const resolved = resolvedChecksFor("A1-4.7");
+  const questions = resolved.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
+
+  assert.equal(resolved.length, 11);
+  assert.equal(new Set(resolved.map((item) => item.questionDe)).size, 11);
+  assert.match(questions, /make a polite request|Kannst du mir bitte/i);
+  assert.match(questions, /respond positively|Ja, gern|Ja, natürlich/i);
+  assert.match(questions, /do not want to use können|imperative/i);
+  assert.match(questions, /refuse politely|Tut mir leid/i);
+  assert.doesNotMatch(questions, /Was machst du am Wochenende|make a new sentence of your own/i);
+});
+
 test("A1-5.9 Goethe speaking has ten distinct class questions plus one separate exit check", () => {
   const resolved = resolvedChecksFor("A1-5.9");
   const classChecks = resolved.slice(0, -1);
