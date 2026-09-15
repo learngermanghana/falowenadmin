@@ -14,6 +14,7 @@ import { courseDictionary } from "../data/courseDictionary.js";
 import { getCourseSessionGroups } from "../data/courseSessionGroups.js";
 import { selectLatestCompletedSession, selectNextSession } from "../utils/liveClassScheduling.js";
 import { belongsToSelectedClass } from "../utils/liveClassSessionOwnership.js";
+import { buildDisplayedCurriculumPatch } from "../utils/liveClassCurriculumSync.js";
 import {
   assignmentIdsForSession,
   dedupeCompatibleSessionRecords,
@@ -190,17 +191,14 @@ async function repairOneBasedCurriculumDays(classId, klass, storedSessions = [],
   const storedById = new Map(storedSessions.map((session) => [session.id, session]));
   const repairs = enrichedSessions.filter((session) => {
     const stored = storedById.get(session.id);
-    const expectedDay = Number(session.curriculumDay);
-    return stored && Number.isInteger(expectedDay) && expectedDay >= 1
-      && Number(stored.curriculumDay) !== expectedDay;
+    return stored && buildDisplayedCurriculumPatch(stored, session);
   });
   if (!repairs.length) return 0;
 
   const batch = writeBatch(db);
   repairs.forEach((session) => {
     const patch = {
-      curriculumDay: Number(session.curriculumDay),
-      curriculumIndex: Number(session.curriculumIndex),
+      ...buildDisplayedCurriculumPatch(storedById.get(session.id), session),
       updatedAt: serverTimestamp(),
     };
     batch.update(doc(db, "classSessions", session.id), patch);
