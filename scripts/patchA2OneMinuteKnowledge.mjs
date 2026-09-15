@@ -15,9 +15,10 @@ const day19Stages = `    ...(normalizedAssignmentId(slide) === "A2-7.19" ? [
 `;
 
 if (!source.includes('id: "vocabulary-retrieval"')) {
-  const stableAnchor = '  ];\n  if (Array.isArray(slide.grammarCheckQuestions)';
+  const stableAnchor = '    { id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 },\n  ];\n  if (Array.isArray(slide.grammarCheckQuestions)';
   if (!source.includes(stableAnchor)) throw new Error("Day 19 presenter stages array anchor missing");
-  source = source.replace(stableAnchor, `${day19Stages}  ];\n  if (Array.isArray(slide.grammarCheckQuestions)`);
+  const replacement = '    { id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 },\n' + day19Stages + '  ];\n  if (Array.isArray(slide.grammarCheckQuestions)';
+  source = source.replace(stableAnchor, replacement);
 }
 fs.writeFileSync(presenterPath, source);
 
