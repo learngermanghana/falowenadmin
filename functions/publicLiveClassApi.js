@@ -4,6 +4,12 @@ function text(value) {
   return String(value || "").trim();
 }
 
+function optionalInteger(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
 function toDate(value) {
   if (!value) return null;
   if (typeof value?.toDate === "function") return value.toDate();
@@ -27,6 +33,8 @@ function sanitizeSession(row = {}, attendance = null) {
   const canonicalAttendanceIds = attendance ? idsFrom(attendance) : [];
   const assignmentIds = canonicalAttendanceIds.length ? canonicalAttendanceIds : idsFrom(row);
   const topic = text(attendance?.title || attendance?.topic || row.topic || row.title || row.sessionLabel || "Live class");
+  const curriculumDay = optionalInteger(row.curriculumDay ?? attendance?.curriculumDay);
+  const curriculumIndex = optionalInteger(row.curriculumIndex ?? attendance?.curriculumIndex);
   return {
     id: text(row.id || attendance?.id),
     classId: text(row.classId || row.classRecordId || attendance?.classId),
@@ -42,8 +50,8 @@ function sanitizeSession(row = {}, attendance = null) {
     chapterIds: assignmentIds,
     curriculumIds: assignmentIds,
     assignment_id: assignmentIds[0] || "",
-    curriculumDay: Number.isFinite(Number(row.curriculumDay)) ? Number(row.curriculumDay) : null,
-    curriculumIndex: Number.isFinite(Number(row.curriculumIndex)) ? Number(row.curriculumIndex) : null,
+    curriculumDay,
+    curriculumIndex,
     curriculumSource: text(row.curriculumSource || attendance?.curriculumSource),
     curriculumVersion: Number(row.curriculumVersion || attendance?.curriculumVersion || 0),
     cancellationReason: text(row.cancellationReason),
