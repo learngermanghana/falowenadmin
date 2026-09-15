@@ -5,20 +5,21 @@ const dayPath = new URL("../src/data/a2WorkbookAlignedSlidesDays16To20.js", impo
 
 let source = fs.readFileSync(presenterPath, "utf8");
 
-const day19Stages = `    ...(normalizedAssignmentId(slide) === "A2-7.19" ? [
-      { id: "grammar-check", type: "question-reveal", kicker: "Grammatik-Check", title: "Korrigiere den Satz · oder / denn", items: slide.grammarCheckQuestions || [], questionModels: slide.grammarCheckModels || [], requiresQuestionModel: true, suggestedMinutes: 10 },
-      { id: "vocabulary-retrieval", type: "question-reveal", kicker: "Wortschatz", title: "Wortschatz aktivieren", items: slide.vocabularyCheckQuestions || [], questionModels: slide.vocabularyCheckModels || [], requiresQuestionModel: true, suggestedMinutes: 7 },
-      { id: "sentence-builder", type: "question-reveal", kicker: "Satzbau", title: "Baue den richtigen Satz", items: slide.sentenceBuilderQuestions || [], questionModels: slide.sentenceBuilderModels || [], requiresQuestionModel: true, suggestedMinutes: 8 },
-      { id: "guided-action", type: "question-reveal", kicker: "Geführte Übung", title: "Entscheide und begründe", items: slide.guidedActionQuestions || [], questionModels: slide.guidedActionModels || [], requiresQuestionModel: true, suggestedMinutes: 8 },
-      { id: "role-play", type: "question-reveal", kicker: "Rollenspiel", title: "Einkaufen im echten Leben", items: slide.rolePlayQuestions || [], questionModels: slide.rolePlayModels || [], requiresQuestionModel: true, suggestedMinutes: 10 },
-    ] : []),
-`;
+// Day 19 already gets grammar-check from the generic optional grammar-check stage.
+// Add the four remaining actionable stages after that block. This avoids duplicate
+// grammar-check slides and keeps the patch independent of the wrap-up formatting.
+const extraStages = `
+  if (normalizedAssignmentId(slide) === "A2-7.19") stages.push(
+    { id: "vocabulary-retrieval", type: "question-reveal", kicker: "Wortschatz", title: "Wortschatz aktivieren", items: slide.vocabularyCheckQuestions || [], questionModels: slide.vocabularyCheckModels || [], requiresQuestionModel: true, suggestedMinutes: 7 },
+    { id: "sentence-builder", type: "question-reveal", kicker: "Satzbau", title: "Baue den richtigen Satz", items: slide.sentenceBuilderQuestions || [], questionModels: slide.sentenceBuilderModels || [], requiresQuestionModel: true, suggestedMinutes: 8 },
+    { id: "guided-action", type: "question-reveal", kicker: "Geführte Übung", title: "Entscheide und begründe", items: slide.guidedActionQuestions || [], questionModels: slide.guidedActionModels || [], requiresQuestionModel: true, suggestedMinutes: 8 },
+    { id: "role-play", type: "question-reveal", kicker: "Rollenspiel", title: "Einkaufen im echten Leben", items: slide.rolePlayQuestions || [], questionModels: slide.rolePlayModels || [], requiresQuestionModel: true, suggestedMinutes: 10 },
+  );`;
 
 if (!source.includes('id: "vocabulary-retrieval"')) {
-  const stableAnchor = '    { id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 },\n  ];\n  if (Array.isArray(slide.grammarCheckQuestions)';
-  if (!source.includes(stableAnchor)) throw new Error("Day 19 presenter stages array anchor missing");
-  const replacement = '    { id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 },\n' + day19Stages + '  ];\n  if (Array.isArray(slide.grammarCheckQuestions)';
-  source = source.replace(stableAnchor, replacement);
+  const returnAnchor = "  return stages;\n}";
+  if (!source.includes(returnAnchor)) throw new Error("Day 19 presenter return anchor missing");
+  source = source.replace(returnAnchor, `${extraStages}\n  return stages;\n}`);
 }
 fs.writeFileSync(presenterPath, source);
 
@@ -92,4 +93,4 @@ ${anchor}`;
   data = data.replace(anchor, fields);
 }
 fs.writeFileSync(dayPath, data);
-console.log("A2 Day 19 presenter: original stages plus 5 interactive activity slides.");
+console.log("A2 Day 19 presenter: original 10 stages plus 5 interactive activity slides.");
