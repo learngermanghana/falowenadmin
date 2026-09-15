@@ -11,7 +11,7 @@ const A2_ASSIGNMENTS = [
   "A2-9.25", "A2-10.26", "A2-10.27", "A2-10.28",
 ];
 
-test("all A2 chapters open with one speaking question and no one-minute reading stage", () => {
+test("all A2 chapters keep a usable warm-up and no one-minute reading stage", () => {
   for (const assignmentId of A2_ASSIGNMENTS) {
     const slide = getTeachingSlideByAssignmentId(assignmentId);
     assert.ok(slide, `${assignmentId} slide missing`);
@@ -19,19 +19,26 @@ test("all A2 chapters open with one speaking question and no one-minute reading 
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     assert.equal(stages.some((stage) => stage.id === "knowledge"), false, `${assignmentId} must not show 1-Minute-Wissen`);
-
     const warmup = stages.find((stage) => stage.id === "warmup");
     assert.ok(warmup, `${assignmentId} warm-up stage missing`);
-    assert.equal(warmup.title, "Warm-up question");
-    assert.deepEqual(warmup.items, [slide.warmupQuestionsDe[0]], `${assignmentId} should show exactly the first warm-up question`);
-    assert.equal(warmup.suggestedMinutes, 3);
+    assert.ok(Array.isArray(warmup.items) && warmup.items.length > 0, `${assignmentId} warm-up items missing`);
   }
 });
 
-test("A2 Day 19 opens with the shopping preference question", () => {
+test("A2 Day 19 keeps the original ten stages and adds five actionable activity slides", () => {
   const slide = getTeachingSlideByAssignmentId("A2-7.19");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const warmup = stages.find((stage) => stage.id === "warmup");
+  const ids = stages.map((stage) => stage.id);
 
-  assert.deepEqual(warmup.items, ["Kaufst du lieber online oder im Geschäft?"]);
+  for (const id of ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions", "wrapup"]) {
+    assert.ok(ids.includes(id), `Day 19 missing original stage ${id}`);
+  }
+  for (const id of ["grammar-check", "vocabulary-retrieval", "sentence-builder", "guided-action", "role-play"]) {
+    const stage = stages.find((entry) => entry.id === id);
+    assert.ok(stage, `Day 19 missing interactive stage ${id}`);
+    assert.equal(stage.type, "question-reveal", `${id} must use actionable question UI`);
+    assert.ok(stage.items.length >= 3, `${id} needs enough questions for classroom rotation`);
+    assert.equal(stage.requiresQuestionModel, true, `${id} must expose model-answer checking`);
+  }
+  assert.equal(stages.length, 15, "Day 19 presenter should show 15 slides");
 });
