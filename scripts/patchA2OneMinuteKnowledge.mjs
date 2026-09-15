@@ -5,10 +5,6 @@ const dayPath = new URL("../src/data/a2WorkbookAlignedSlidesDays16To20.js", impo
 
 let source = fs.readFileSync(presenterPath, "utf8");
 
-// Keep this patch idempotent and resilient to formatting/title changes in the presenter.
-// Insert Day 19 activities immediately before the existing wrap-up stage so the
-// original presenter stages stay intact and the build does not depend on an exact
-// multi-line wrap-up string.
 const day19Stages = `    ...(normalizedAssignmentId(slide) === "A2-7.19" ? [
       { id: "grammar-check", type: "question-reveal", kicker: "Grammatik-Check", title: "Korrigiere den Satz · oder / denn", items: slide.grammarCheckQuestions || [], questionModels: slide.grammarCheckModels || [], requiresQuestionModel: true, suggestedMinutes: 10 },
       { id: "vocabulary-retrieval", type: "question-reveal", kicker: "Wortschatz", title: "Wortschatz aktivieren", items: slide.vocabularyCheckQuestions || [], questionModels: slide.vocabularyCheckModels || [], requiresQuestionModel: true, suggestedMinutes: 7 },
@@ -19,12 +15,9 @@ const day19Stages = `    ...(normalizedAssignmentId(slide) === "A2-7.19" ? [
 `;
 
 if (!source.includes('id: "vocabulary-retrieval"')) {
-  const wrapupId = '      id: "wrapup",';
-  const idIndex = source.indexOf(wrapupId);
-  if (idIndex < 0) throw new Error("Day 19 presenter wrap-up id missing");
-  const objectStart = source.lastIndexOf("    {", idIndex);
-  if (objectStart < 0) throw new Error("Day 19 presenter wrap-up object start missing");
-  source = source.slice(0, objectStart) + day19Stages + source.slice(objectStart);
+  const stableAnchor = '  ];\n  if (Array.isArray(slide.grammarCheckQuestions)';
+  if (!source.includes(stableAnchor)) throw new Error("Day 19 presenter stages array anchor missing");
+  source = source.replace(stableAnchor, `${day19Stages}  ];\n  if (Array.isArray(slide.grammarCheckQuestions)`);
 }
 fs.writeFileSync(presenterPath, source);
 
