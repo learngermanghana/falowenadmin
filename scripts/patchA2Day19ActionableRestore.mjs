@@ -46,3 +46,7 @@ if (!source.includes('normalizedAssignmentId(slide) === "A2-7.19"')) {
 
 fs.writeFileSync(presenterPath, source);
 console.log("A2 Day 19 actionable extension preserved.");
+
+// The main A2 patch creates the reusable practice bank first. Extend that same bank
+// to Days 1–18 after Day 19 has been restored so all A2 lessons share one presenter.
+await import("./patchA2ActionableDays1To18.mjs");
