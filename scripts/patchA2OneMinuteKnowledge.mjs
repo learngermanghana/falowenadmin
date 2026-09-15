@@ -14,9 +14,11 @@ const extraStages = `
   );`;
 
 if (!source.includes('id: "vocabulary-retrieval"')) {
-  const grammarCheckAnchor = '  if (Array.isArray(slide.grammarCheckQuestions) && slide.grammarCheckQuestions.length) stages.push({ id: "grammar-check", type: "question-reveal", kicker: "Grammatik-Check", title: slide.grammarCheckTitle || "Korrigiere den Satz", items: slide.grammarCheckQuestions, questionModels: Array.isArray(slide.grammarCheckModels) ? slide.grammarCheckModels : [], requiresQuestionModel: true, suggestedMinutes: Number(slide.grammarCheckMinutes || 10) });\n  return stages;';
-  if (!source.includes(grammarCheckAnchor)) throw new Error("Day 19 presenter grammar-check anchor missing");
-  source = source.replace(grammarCheckAnchor, grammarCheckAnchor.replace("\n  return stages;", `${extraStages}\n  return stages;`));
+  const functionStart = source.indexOf("function buildPresenterV2Stages(");
+  if (functionStart < 0) throw new Error("Day 19 Presenter V2 function missing");
+  const returnIndex = source.indexOf("  return stages;", functionStart);
+  if (returnIndex < 0) throw new Error("Day 19 Presenter V2 return missing");
+  source = source.slice(0, returnIndex) + extraStages + "\n" + source.slice(returnIndex);
 }
 fs.writeFileSync(presenterPath, source);
 
