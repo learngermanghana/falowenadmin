@@ -5,9 +5,6 @@ const dayPath = new URL("../src/data/a2WorkbookAlignedSlidesDays16To20.js", impo
 
 let source = fs.readFileSync(presenterPath, "utf8");
 
-// Day 19 already gets grammar-check from the generic optional grammar-check stage.
-// Add the four remaining actionable stages after that block. This avoids duplicate
-// grammar-check slides and keeps the patch independent of the wrap-up formatting.
 const extraStages = `
   if (normalizedAssignmentId(slide) === "A2-7.19") stages.push(
     { id: "vocabulary-retrieval", type: "question-reveal", kicker: "Wortschatz", title: "Wortschatz aktivieren", items: slide.vocabularyCheckQuestions || [], questionModels: slide.vocabularyCheckModels || [], requiresQuestionModel: true, suggestedMinutes: 7 },
@@ -17,9 +14,9 @@ const extraStages = `
   );`;
 
 if (!source.includes('id: "vocabulary-retrieval"')) {
-  const returnAnchor = "  return stages;\n}";
-  if (!source.includes(returnAnchor)) throw new Error("Day 19 presenter return anchor missing");
-  source = source.replace(returnAnchor, `${extraStages}\n  return stages;\n}`);
+  const grammarCheckAnchor = '  if (Array.isArray(slide.grammarCheckQuestions) && slide.grammarCheckQuestions.length) stages.push({ id: "grammar-check", type: "question-reveal", kicker: "Grammatik-Check", title: slide.grammarCheckTitle || "Korrigiere den Satz", items: slide.grammarCheckQuestions, questionModels: Array.isArray(slide.grammarCheckModels) ? slide.grammarCheckModels : [], requiresQuestionModel: true, suggestedMinutes: Number(slide.grammarCheckMinutes || 10) });\n  return stages;';
+  if (!source.includes(grammarCheckAnchor)) throw new Error("Day 19 presenter grammar-check anchor missing");
+  source = source.replace(grammarCheckAnchor, grammarCheckAnchor.replace("\n  return stages;", `${extraStages}\n  return stages;`));
 }
 fs.writeFileSync(presenterPath, source);
 
@@ -93,4 +90,4 @@ ${anchor}`;
   data = data.replace(anchor, fields);
 }
 fs.writeFileSync(dayPath, data);
-console.log("A2 Day 19 presenter: original 10 stages plus 5 interactive activity slides.");
+console.log("A2 Day 19 presenter: core lesson plus five interactive activity slides.");
