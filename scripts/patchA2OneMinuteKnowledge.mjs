@@ -5,118 +5,82 @@ const day19Path = new URL("../src/data/a2WorkbookAlignedSlidesDays16To20.js", im
 
 let source = fs.readFileSync(presenterPath, "utf8");
 
-const bankSource = `
-const A2_ACTIONABLE_PRACTICE = {
-  "A2-7.20": {
+const practiceEntries = `
+  "A2-10.26": {
     grammar: [
-      ["Korrigiere: Ich möchte die Schuhe umtauschen, weil sie sind zu klein.", "Ich möchte die Schuhe umtauschen, weil sie zu klein sind."],
-      ["Korrigiere: Ich reklamiere, denn die Ware kaputt ist.", "Ich reklamiere, denn die Ware ist kaputt."],
-      ["Formuliere höflich: Geben Sie mir mein Geld zurück!", "Könnten Sie mir bitte mein Geld zurückgeben? / Ich hätte gern eine Rückerstattung."],
+      ["Korrigiere: Ich bin nervös, wenn ich habe eine Prüfung.", "Ich bin nervös, wenn ich eine Prüfung habe."],
+      ["Korrigiere: Wenn ich gute Nachrichten bekomme, ich bin froh.", "Wenn ich gute Nachrichten bekomme, bin ich froh."],
+      ["Korrigiere: Wenn ich bin gestresst, höre ich Musik.", "Wenn ich gestresst bin, höre ich Musik."],
     ],
     sentence: [
-      ["weil / die Jacke / zu groß / ist / ich / sie / umtauschen / möchte", "Ich möchte die Jacke umtauschen, weil sie zu groß ist."],
-      ["ich / reklamiere / denn / der Reißverschluss / ist / kaputt", "Ich reklamiere, denn der Reißverschluss ist kaputt."],
-      ["könnten / Sie / mir / bitte / eine neue Ware / schicken", "Könnten Sie mir bitte eine neue Ware schicken?"],
+      ["wenn / ich / eine Prüfung / habe / bin / ich / nervös", "Wenn ich eine Prüfung habe, bin ich nervös."],
+      ["ich / froh / bin / wenn / gute Nachrichten / ich / bekomme", "Ich bin froh, wenn ich gute Nachrichten bekomme."],
+      ["wenn / ich / gestresst / bin / mache / ich / eine Pause", "Wenn ich gestresst bin, mache ich eine Pause."],
     ],
     role: [
-      ["Du hast gestern Kopfhörer gekauft. Sie funktionieren nicht. Reklamiere höflich und bitte um eine Lösung.", "Guten Tag. Ich möchte die Kopfhörer reklamieren, weil sie nicht funktionieren. Könnten Sie sie bitte umtauschen?"],
-      ["Ein Pullover ist zu klein. Erkläre Problem + Grund + gewünschte Lösung.", "Der Pullover ist zu klein. Ich möchte ihn umtauschen, weil er mir nicht passt. Könnte ich bitte eine größere Größe bekommen?"],
-      ["Du hast online bestellt und die falsche Ware bekommen. Telefoniere mit dem Kundenservice.", "Ich habe die falsche Ware bekommen. Könnten Sie mir bitte den richtigen Artikel schicken?"],
+      ["Dein Freund ist vor einer Prüfung sehr nervös. Beschreibe das Gefühl und gib einen Rat mit wenn.", "Wenn du nervös bist, kannst du eine kurze Pause machen und tief atmen."],
+      ["Erzähle von einer Situation, die dich froh oder enttäuscht macht, und sage, wie du reagierst.", "Wenn ich gute Nachrichten bekomme, bin ich froh und rufe meine Familie an."],
+      ["Ein Nachbar hat dir geholfen, als du krank warst. Bedanke dich und biete eine Gegenleistung an.", "Vielen Dank für deine Hilfe. Ich war sehr erleichtert. Wenn du einmal Hilfe brauchst, helfe ich dir gern."],
     ],
   },
-  "A2-8.21": {
+  "A2-10.27": {
     grammar: [
-      ["Korrigiere: Wenn das Wetter gut ist, wir gehen in den Park.", "Wenn das Wetter gut ist, gehen wir in den Park."],
-      ["Korrigiere: Ich weiß nicht, ob meine Freunde haben Zeit.", "Ich weiß nicht, ob meine Freunde Zeit haben."],
-      ["Was passt: wenn, falls oder ob? Ich weiß noch nicht, ___ Anna am Samstag kommt.", "ob"],
+      ["Korrigiere: Ich finde, dass E-Mails sind praktisch.", "Ich finde, dass E-Mails praktisch sind."],
+      ["Korrigiere: Ich glaube, dass soziale Medien haben viele Vorteile.", "Ich glaube, dass soziale Medien viele Vorteile haben."],
+      ["Korrigiere: Mir ist wichtig, dass sind meine Daten sicher.", "Mir ist wichtig, dass meine Daten sicher sind."],
     ],
     sentence: [
-      ["wenn / das Wetter / gut / ist / machen / wir / ein Picknick", "Wenn das Wetter gut ist, machen wir ein Picknick."],
-      ["falls / es / regnet / gehen / wir / ins Kino", "Falls es regnet, gehen wir ins Kino."],
-      ["ich / weiß / nicht / ob / Paul / Zeit / hat", "Ich weiß nicht, ob Paul Zeit hat."],
+      ["ich / finde / dass / Nachrichten / praktisch / sind", "Ich finde, dass Nachrichten praktisch sind."],
+      ["ich / glaube / dass / soziale Medien / nützlich / sein können", "Ich glaube, dass soziale Medien nützlich sein können."],
+      ["mir / wichtig / ist / dass / meine Daten / sicher / sind", "Mir ist wichtig, dass meine Daten sicher sind."],
     ],
     role: [
-      ["Plane Samstag mit einem Freund. Gib einen Plan und eine Alternative für schlechtes Wetter.", "Wenn das Wetter gut ist, gehen wir in den Park. Falls es regnet, gehen wir ins Kino."],
-      ["Du bist noch unsicher, ob dein Freund Zeit hat. Frage indirekt und schlage danach etwas vor.", "Ich möchte wissen, ob du am Samstag Zeit hast. Wenn du Zeit hast, können wir uns treffen."],
-      ["Lade jemanden fürs Wochenende ein und nenne Plan, Treffpunkt und Plan B.", "Wir treffen uns am Samstag am Bahnhof. Wenn das Wetter gut ist, machen wir einen Ausflug; falls es regnet, besuchen wir ein Museum."],
+      ["Erkläre einem Freund deine Meinung zu E-Mails oder Messenger-Nachrichten. Benutze dass.", "Ich finde, dass Messenger-Nachrichten praktisch sind, weil man schnell antworten kann."],
+      ["Diskutiert einen Vorteil und einen Nachteil sozialer Medien.", "Ich glaube, dass soziale Medien hilfreich sind. Ein Nachteil ist, dass man dort viel Zeit verlieren kann."],
+      ["Du möchtest deine persönlichen Daten besser schützen. Erkläre, was dir wichtig ist.", "Mir ist wichtig, dass meine Daten sicher sind. Deshalb teile ich nicht alle persönlichen Informationen online."],
     ],
   },
-  "A2-8.22": {
+  "A2-10.28": {
     grammar: [
-      ["Korrigiere: Am Dienstag ich arbeite bis 17 Uhr.", "Am Dienstag arbeite ich bis 17 Uhr."],
-      ["Korrigiere: Morgen ich treffe meine Freundin.", "Morgen treffe ich meine Freundin."],
-      ["Korrigiere: Um 18 Uhr muss ich gehen zum Deutschkurs.", "Um 18 Uhr muss ich zum Deutschkurs gehen."],
+      ["Korrigiere: Nächstes Jahr ich werde Deutsch weiterlernen.", "Nächstes Jahr werde ich Deutsch weiterlernen."],
+      ["Korrigiere: Ich werde nächstes Jahr nach Deutschland reisen werde.", "Ich werde nächstes Jahr nach Deutschland reisen."],
+      ["Korrigiere: Meine Schwester werden eine Ausbildung machen.", "Meine Schwester wird eine Ausbildung machen."],
     ],
     sentence: [
-      ["am Mittwoch / ich / einen Termin / habe", "Am Mittwoch habe ich einen Termin."],
-      ["morgen / ich / meine Freundin / treffe", "Morgen treffe ich meine Freundin."],
-      ["am Freitag / ich / nicht / kommen / kann", "Am Freitag kann ich nicht kommen."],
+      ["ich / werde / nächstes Jahr / Deutsch / weiterlernen", "Ich werde nächstes Jahr Deutsch weiterlernen."],
+      ["wir / werden / später / eine Reise / machen", "Wir werden später eine Reise machen."],
+      ["sie / wird / in Zukunft / eine Ausbildung / beginnen", "Sie wird in Zukunft eine Ausbildung beginnen."],
     ],
     role: [
-      ["Vergleiche deine Termine mit einem Freund und findet einen freien Abend.", "Am Mittwoch kann ich nicht, aber am Freitag habe ich Zeit. Passt dir Freitagabend?"],
-      ["Lade jemanden zum Mittagessen ein. Nenne Tag, Uhrzeit und Ort.", "Möchtest du am Freitag um 12 Uhr mit mir zu Mittag essen? Wir treffen uns im Café."],
-      ["Erkläre zwei Pflichten und eine freie Zeit in deiner Woche.", "Am Montag muss ich arbeiten und am Dienstag muss ich zum Arzt. Am Freitagabend habe ich Zeit."],
+      ["Sprich über drei Ziele für das nächste Jahr. Benutze Futur I.", "Nächstes Jahr werde ich Deutsch weiterlernen, mehr Sport machen und eine Reise planen."],
+      ["Erzähle einem Freund von deinen beruflichen und persönlichen Zukunftsplänen.", "Ich werde meine beruflichen Fähigkeiten verbessern. Außerdem werde ich mehr Zeit für meine Familie einplanen."],
+      ["Du beendest den A2-Kurs. Erkläre, wie du dein Deutsch weiter verbessern wirst.", "Ich werde jeden Tag Deutsch üben, regelmäßig lesen und mehr auf Deutsch sprechen."],
     ],
   },
-  "A2-9.23": {
-    grammar: [
-      ["Korrigiere: Ich fahre mit der Bus zur Arbeit.", "Ich fahre mit dem Bus zur Arbeit."],
-      ["Korrigiere: Morgens gehe ich zu die Schule.", "Morgens gehe ich zur Schule."],
-      ["Was passt: nach oder zu? Ich fahre ___ Berlin.", "nach Berlin"],
-    ],
-    sentence: [
-      ["ich / mit dem Bus / zur Arbeit / fahre", "Ich fahre mit dem Bus zur Arbeit."],
-      ["sie / mit der Bahn / nach Berlin / fährt", "Sie fährt mit der Bahn nach Berlin."],
-      ["wir / zu Fuß / zur Schule / gehen", "Wir gehen zu Fuß zur Schule."],
-    ],
-    role: [
-      ["Erkläre einem neuen Kollegen deinen Arbeitsweg: Verkehrsmittel, Dauer und Ziel.", "Ich fahre mit dem Bus zur Arbeit. Die Fahrt dauert ungefähr 30 Minuten."],
-      ["Du möchtest umweltfreundlicher fahren. Vergleiche Auto und öffentliche Verkehrsmittel.", "Ich fahre lieber mit der Bahn, weil sie umweltfreundlicher ist."],
-      ["Du willst ein Auto kaufen. Erkläre dem Händler, wofür du es brauchst und stelle zwei Fragen.", "Ich brauche das Auto für meinen Arbeitsweg. Wie viel kostet es? Wie hoch ist der Verbrauch?"],
-    ],
-  },
-  "A2-9.24": {
-    grammar: [
-      ["Korrigiere: Im Sommer fahre ich zu Spanien.", "Im Sommer fahre ich nach Spanien."],
-      ["Korrigiere: Wir fahren nach die Schweiz.", "Wir fahren in die Schweiz."],
-      ["Formuliere einen Urlaubsplan mit möchte: nächstes Jahr / Italien / reisen", "Nächstes Jahr möchte ich nach Italien reisen."],
-    ],
-    sentence: [
-      ["im Sommer / wir / nach Ghana / fliegen", "Im Sommer fliegen wir nach Ghana."],
-      ["ich / möchte / ans Meer / fahren", "Ich möchte ans Meer fahren."],
-      ["wir / werden / in einem Hotel / übernachten", "Wir werden in einem Hotel übernachten."],
-    ],
-    role: [
-      ["Plane einen Urlaub: Reiseziel, Verkehrsmittel, Unterkunft und zwei Aktivitäten.", "Ich möchte nach Italien reisen. Wir fliegen und übernachten in einem Hotel. Dort möchte ich Rom besuchen und italienisch essen."],
-      ["Du planst mit einem Freund. Macht zwei Vorschläge und entscheidet euch für ein Ziel.", "Wollen wir nach Spanien oder in die Schweiz fahren? Ich würde Spanien wählen, weil ich ans Meer möchte."],
-      ["Erkläre, was du vor der Reise organisieren musst.", "Vor der Reise muss ich das Hotel buchen, Tickets kaufen und meinen Koffer packen."],
-    ],
-  },
-  "A2-9.25": {
-    grammar: [
-      ["Korrigiere: Morgens ich stehe um 7 Uhr auf.", "Morgens stehe ich um 7 Uhr auf."],
-      ["Korrigiere: Ich aufstehe jeden Tag um sechs Uhr.", "Ich stehe jeden Tag um sechs Uhr auf."],
-      ["Korrigiere: Danach ich frühstücke.", "Danach frühstücke ich."],
-    ],
-    sentence: [
-      ["morgens / ich / um 7 Uhr / aufstehe", "Morgens stehe ich um 7 Uhr auf."],
-      ["danach / ich / zur Arbeit / fahre", "Danach fahre ich zur Arbeit."],
-      ["abends / ich / fernsehe", "Abends sehe ich fern."],
-    ],
-    role: [
-      ["Beschreibe deinen Morgen von Aufstehen bis Arbeit/Schule mit mindestens drei Schritten.", "Morgens stehe ich um 7 Uhr auf. Dann dusche ich. Danach frühstücke ich und fahre zur Arbeit."],
-      ["Vergleiche deinen Tagesablauf unter der Woche mit dem Wochenende.", "Unter der Woche stehe ich früh auf. Am Wochenende stehe ich später auf und treffe Freunde."],
-      ["Erzähle einem Freund deine Abendroutine und frage anschließend nach seiner Routine.", "Abends koche ich, mache meine Hausaufgaben und sehe fern. Was machst du normalerweise am Abend?"],
-    ],
-  },
-};
 `;
 
+// The reusable bank for Days 20–25 already exists in production source after this
+// prebuild patch. Extend that same bank to Days 26–28 without changing the core slides.
+if (source.includes("const A2_ACTIONABLE_PRACTICE =") && !source.includes('"A2-10.26": {')) {
+  const bankEnd = source.indexOf("\n};", source.indexOf("const A2_ACTIONABLE_PRACTICE ="));
+  if (bankEnd < 0) throw new Error("A2 actionable practice bank end missing");
+  source = source.slice(0, bankEnd) + practiceEntries + source.slice(bankEnd);
+}
+
+// Clean checkouts do not yet contain the generated bank. Recreate the complete bank
+// by reusing the stable Day 20–25 source embedded below, then append Days 26–28.
 if (!source.includes("const A2_ACTIONABLE_PRACTICE =")) {
-  const functionAnchor = "function buildPresenterV2Stages(";
-  const index = source.indexOf(functionAnchor);
-  if (index < 0) throw new Error("A2 actionable practice Presenter V2 function missing");
-  source = source.slice(0, index) + bankSource + "\n" + source.slice(index);
+  const baseEntries = `const A2_ACTIONABLE_PRACTICE = {
+  "A2-7.20": { grammar: [["Korrigiere: Ich möchte die Schuhe umtauschen, weil sie sind zu klein.", "Ich möchte die Schuhe umtauschen, weil sie zu klein sind."], ["Korrigiere: Ich reklamiere, denn die Ware kaputt ist.", "Ich reklamiere, denn die Ware ist kaputt."], ["Formuliere höflich: Geben Sie mir mein Geld zurück!", "Könnten Sie mir bitte mein Geld zurückgeben?"]], sentence: [["weil / die Jacke / zu groß / ist / ich / sie / umtauschen / möchte", "Ich möchte die Jacke umtauschen, weil sie zu groß ist."], ["ich / reklamiere / denn / der Reißverschluss / ist / kaputt", "Ich reklamiere, denn der Reißverschluss ist kaputt."], ["könnten / Sie / mir / bitte / eine neue Ware / schicken", "Könnten Sie mir bitte eine neue Ware schicken?"]], role: [["Du hast Kopfhörer gekauft. Sie funktionieren nicht. Reklamiere höflich.", "Ich möchte die Kopfhörer reklamieren, weil sie nicht funktionieren. Könnten Sie sie bitte umtauschen?"], ["Ein Pullover ist zu klein. Bitte um eine Lösung.", "Ich möchte ihn umtauschen, weil er mir nicht passt."], ["Du hast die falsche Ware bekommen. Telefoniere mit dem Kundenservice.", "Ich habe die falsche Ware bekommen. Könnten Sie mir bitte den richtigen Artikel schicken?"]] },
+  "A2-8.21": { grammar: [["Korrigiere: Wenn das Wetter gut ist, wir gehen in den Park.", "Wenn das Wetter gut ist, gehen wir in den Park."], ["Korrigiere: Ich weiß nicht, ob meine Freunde haben Zeit.", "Ich weiß nicht, ob meine Freunde Zeit haben."], ["Was passt: wenn, falls oder ob? Ich weiß nicht, ___ Anna kommt.", "ob"]], sentence: [["wenn / das Wetter / gut / ist / machen / wir / ein Picknick", "Wenn das Wetter gut ist, machen wir ein Picknick."], ["falls / es / regnet / gehen / wir / ins Kino", "Falls es regnet, gehen wir ins Kino."], ["ich / weiß / nicht / ob / Paul / Zeit / hat", "Ich weiß nicht, ob Paul Zeit hat."]], role: [["Plane Samstag und gib einen Plan B.", "Wenn das Wetter gut ist, gehen wir in den Park. Falls es regnet, gehen wir ins Kino."], ["Frage indirekt, ob dein Freund Zeit hat.", "Ich möchte wissen, ob du am Samstag Zeit hast."], ["Lade jemanden ein und nenne einen Plan B.", "Wenn das Wetter gut ist, machen wir einen Ausflug; falls es regnet, besuchen wir ein Museum."]] },
+  "A2-8.22": { grammar: [["Korrigiere: Am Dienstag ich arbeite bis 17 Uhr.", "Am Dienstag arbeite ich bis 17 Uhr."], ["Korrigiere: Morgen ich treffe meine Freundin.", "Morgen treffe ich meine Freundin."], ["Korrigiere: Um 18 Uhr muss ich gehen zum Deutschkurs.", "Um 18 Uhr muss ich zum Deutschkurs gehen."]], sentence: [["am Mittwoch / ich / einen Termin / habe", "Am Mittwoch habe ich einen Termin."], ["morgen / ich / meine Freundin / treffe", "Morgen treffe ich meine Freundin."], ["am Freitag / ich / nicht / kommen / kann", "Am Freitag kann ich nicht kommen."]], role: [["Findet einen freien Abend.", "Am Freitag habe ich Zeit. Passt dir Freitagabend?"], ["Lade jemanden zum Mittagessen ein.", "Möchtest du am Freitag um 12 Uhr mit mir zu Mittag essen?"], ["Erkläre zwei Pflichten und eine freie Zeit.", "Am Montag muss ich arbeiten. Am Freitagabend habe ich Zeit."]] },
+  "A2-9.23": { grammar: [["Korrigiere: Ich fahre mit der Bus zur Arbeit.", "Ich fahre mit dem Bus zur Arbeit."], ["Korrigiere: Morgens gehe ich zu die Schule.", "Morgens gehe ich zur Schule."], ["Was passt: nach oder zu? Ich fahre ___ Berlin.", "nach Berlin"]], sentence: [["ich / mit dem Bus / zur Arbeit / fahre", "Ich fahre mit dem Bus zur Arbeit."], ["sie / mit der Bahn / nach Berlin / fährt", "Sie fährt mit der Bahn nach Berlin."], ["wir / zu Fuß / zur Schule / gehen", "Wir gehen zu Fuß zur Schule."]], role: [["Erkläre deinen Arbeitsweg.", "Ich fahre mit dem Bus zur Arbeit. Die Fahrt dauert 30 Minuten."], ["Vergleiche Auto und Bahn.", "Ich fahre lieber mit der Bahn, weil sie umweltfreundlicher ist."], ["Stelle einem Autohändler zwei Fragen.", "Wie viel kostet das Auto? Wie hoch ist der Verbrauch?"]] },
+  "A2-9.24": { grammar: [["Korrigiere: Im Sommer fahre ich zu Spanien.", "Im Sommer fahre ich nach Spanien."], ["Korrigiere: Wir fahren nach die Schweiz.", "Wir fahren in die Schweiz."], ["Plane mit möchte: nächstes Jahr / Italien / reisen", "Nächstes Jahr möchte ich nach Italien reisen."]], sentence: [["im Sommer / wir / nach Ghana / fliegen", "Im Sommer fliegen wir nach Ghana."], ["ich / möchte / ans Meer / fahren", "Ich möchte ans Meer fahren."], ["wir / werden / in einem Hotel / übernachten", "Wir werden in einem Hotel übernachten."]], role: [["Plane einen Urlaub.", "Ich möchte nach Italien reisen und in einem Hotel übernachten."], ["Entscheidet euch für ein Reiseziel.", "Ich würde Spanien wählen, weil ich ans Meer möchte."], ["Was musst du vor der Reise organisieren?", "Ich muss das Hotel buchen, Tickets kaufen und meinen Koffer packen."]] },
+  "A2-9.25": { grammar: [["Korrigiere: Morgens ich stehe um 7 Uhr auf.", "Morgens stehe ich um 7 Uhr auf."], ["Korrigiere: Ich aufstehe jeden Tag um sechs Uhr.", "Ich stehe jeden Tag um sechs Uhr auf."], ["Korrigiere: Danach ich frühstücke.", "Danach frühstücke ich."]], sentence: [["morgens / ich / um 7 Uhr / aufstehe", "Morgens stehe ich um 7 Uhr auf."], ["danach / ich / zur Arbeit / fahre", "Danach fahre ich zur Arbeit."], ["abends / ich / fernsehe", "Abends sehe ich fern."]], role: [["Beschreibe deinen Morgen.", "Morgens stehe ich auf. Dann dusche ich. Danach frühstücke ich."], ["Vergleiche Werktag und Wochenende.", "Am Wochenende stehe ich später auf."], ["Erzähle deine Abendroutine.", "Abends koche ich, mache Hausaufgaben und sehe fern."]] },
+${practiceEntries}};`;
+  const functionIndex = source.indexOf("function buildPresenterV2Stages(");
+  if (functionIndex < 0) throw new Error("A2 Presenter V2 function missing");
+  source = source.slice(0, functionIndex) + baseEntries + "\n\n" + source.slice(functionIndex);
 }
 
 const extraStages = `
@@ -133,25 +97,16 @@ const extraStages = `
       { id: "role-play", type: "question-reveal", kicker: "Transfer", title: "Nutze die Sprache im echten Leben", items: actionable.role.map(([question]) => question), questionModels: pairModels(actionable.role), requiresQuestionModel: true, suggestedMinutes: 10 },
     );
   }`;
-
 if (!source.includes("const actionable = A2_ACTIONABLE_PRACTICE")) {
   const functionStart = source.indexOf("function buildPresenterV2Stages(");
-  if (functionStart < 0) throw new Error("A2 Presenter V2 function missing");
   const returnIndex = source.indexOf("  return stages;", functionStart);
-  if (returnIndex < 0) throw new Error("A2 Presenter V2 return missing");
+  if (functionStart < 0 || returnIndex < 0) throw new Error("A2 Presenter V2 return missing");
   source = source.slice(0, returnIndex) + extraStages + "\n" + source.slice(returnIndex);
-}
-
-// Preserve the already-working Day 19 extension. It remains data-backed because it
-// was released first; Days 20–25 use the reusable practice bank above.
-if (!source.includes('id: "vocabulary-retrieval"') || !source.includes('normalizedAssignmentId(slide) === "A2-7.19"')) {
-  // No-op: the current production source already contains the Day 19 extension after
-  // this patch has run once. Keeping this guard prevents a second brittle insertion.
 }
 
 fs.writeFileSync(presenterPath, source);
 
-// Keep Day 19's data patch idempotent for clean Vercel checkouts.
+// Keep the released Day 19 grammar check data available on clean Vercel checkouts.
 let data = fs.readFileSync(day19Path, "utf8");
 const anchor = '    wrapUpTaskDe: "Schreibe 5 Sätze über dein Einkaufsverhalten. Benutze einmal oder und zweimal denn.",';
 const day19Index = data.indexOf('assignmentId: "A2-7.19"');
@@ -169,4 +124,4 @@ ${anchor}`;
   data = data.slice(0, day19AnchorIndex) + fields + data.slice(day19AnchorIndex + anchor.length);
 }
 fs.writeFileSync(day19Path, data);
-console.log("A2 presenter: actionable grammar/topic practice enabled for Days 20–25; Day 19 preserved.");
+console.log("A2 presenter: actionable grammar/topic practice enabled for Days 20–28; Day 19 preserved.");
