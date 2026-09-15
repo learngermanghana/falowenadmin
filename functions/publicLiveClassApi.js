@@ -29,21 +29,45 @@ function idsFrom(row = {}) {
   return [...new Set(values.map(text).filter(Boolean))];
 }
 
+function identifiersFor(classId, klass = {}) {
+  return [...new Set([
+    classId,
+    klass.id,
+    klass.name,
+    klass.classId,
+    klass.className,
+    klass.slug,
+  ].map(text).filter(Boolean))];
+}
+
+function belongsToSelectedClass(session = {}, classId = "", aliases = []) {
+  const acceptedIds = new Set([classId, ...aliases].map(text).filter(Boolean));
+  const classRecordId = text(session.classRecordId);
+  const legacyClassId = text(session.classId);
+
+  // Match Admin's compatibility ownership rule: an explicit canonical owner is
+  // authoritative, while older name/slug identities remain readable only when
+  // no conflicting classRecordId points at another cohort.
+  if (classRecordId) return acceptedIds.has(classRecordId);
+  if (!legacyClassId) return true;
+  return acceptedIds.has(legacyClassId);
+}
+
 function sanitizeSession(row = {}, attendance = null) {
   const canonicalAttendanceIds = attendance ? idsFrom(attendance) : [];
   const assignmentIds = canonicalAttendanceIds.length ? canonicalAttendanceIds : idsFrom(row);
   const topic = text(attendance?.title || attendance?.topic || row.topic || row.title || row.sessionLabel || "Live class");
-  const curriculumDay = optionalInteger(row.curriculumDay ?? attendance?.curriculumDay);
-  const curriculumIndex = optionalInteger(row.curriculumIndex ?? attendance?.curriculumIndex);
+  const curriculumDay = optionalInteger(attendance?.curriculumDay ?? row.curriculumDay);
+  const curriculumIndex = optionalInteger(attendance?.curriculumIndex ?? row.curriculumIndex);
   return {
     id: text(row.id || attendance?.id),
     classId: text(row.classId || row.classRecordId || attendance?.classId),
-    classRecordId: text(row.classRecordId || row.classId || attendance?.classId),
+    classRecordId: text(row.classRecordId || attendance?.classId),
     className: text(row.className || attendance?.className),
-    startsAt: toIso(row.startsAt || row.startAt || row.startDateTime || attendance?.startsAt || attendance?.classStartsAt),
-    endsAt: toIso(row.endsAt || row.endAt || row.endDateTime || attendance?.endsAt || attendance?.classEndsAt),
+    startsAt: toIso(attendance?.startsAt || attendance?.classStartsAt || row.startsAt || row.startAt || row.startDateTime),
+    endsAt: toIso(attendance?.endsAt || attendance?.classEndsAt || row.endsAt || row.endAt || row.endDateTime),
     previousStartsAt: toIso(row.previousStartsAt || row.originalStartsAt),
-    status: text(row.status || attendance?.sessionStatus || "scheduled").toLowerCase(),
+    status: text(attendance?.sessionStatus || row.status || "scheduled").toLowerCase(),
     topic,
     title: topic,
     assignmentIds,
@@ -52,8 +76,8 @@ function sanitizeSession(row = {}, attendance = null) {
     assignment_id: assignmentIds[0] || "",
     curriculumDay,
     curriculumIndex,
-    curriculumSource: text(row.curriculumSource || attendance?.curriculumSource),
-    curriculumVersion: Number(row.curriculumVersion || attendance?.curriculumVersion || 0),
+    curriculumSource: text(attendance?.curriculumSource || row.curriculumSource),
+    curriculumVersion: Number(attendance?.curriculumVersion || row.curriculumVersion || 0),
     cancellationReason: text(row.cancellationReason),
     rescheduleReason: text(row.rescheduleReason),
     rescheduledAt: toIso(row.rescheduledAt),
@@ -68,18 +92,89 @@ function activeForNext(session = {}, nowMs = Date.now()) {
   return Boolean(start && (!end || end >= nowMs));
 }
 
-async function querySessions(db, field, classId) {
-  const snapshot = await db.collection("classSessions").where(field, "==", classId).get();
+async function querySessions(db, field, identifier) {
+  const snapshot = await db.collection("classSessions").where(field, "==", identifier).get();
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
-async function readAttendance(db, classId) {
+async function readAttendanceParent(db, parentId) {
   try {
-    const snapshot = await db.collection("attendance").doc(classId).collection("sessions").get();
-    return new Map(snapshot.docs.map((doc) => [doc.id, { id: doc.id, ...doc.data() }]));
+    const snapshot = await db.collection("attendance").doc(parentId).collection("sessions").get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch {
-    return new Map();
+    return [];
   }
+}
+
+async function loadCompatibleSessions(db, classId, klass = {}) {
+  const aliases = identifiersFor(classId, klass);
+  const lookups = aliases.flatMap((identifier) =>
+    ["classId", "classRecordId", "className"].map((field) => querySessions(db, field, identifier)),
+  );
+  const results = await Promise.allSettled(lookups);
+  const found = new Map();
+  results.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((session) => found.set(session.id, session));
+  });
+
+  return [...found.values()]
+    .filter((session) => session.superseded !== true && text(session.status).toLowerCase() !== "superseded")
+    .filter((session) => belongsToSelectedClass(session, classId, aliases));
+}
+
+async function loadCompatibleAttendance(db, classId, klass = {}) {
+  const aliases = identifiersFor(classId, klass);
+  const results = await Promise.allSettled(aliases.map((identifier) => readAttendanceParent(db, identifier)));
+  const found = new Map();
+
+  // Legacy/name parents are discovery fallbacks. Exact canonical parent wins if
+  // the same session has also been mirrored under classes/{classId} attendance.
+  results.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((session) => {
+      if (!found.has(session.id)) found.set(session.id, session);
+    });
+  });
+  const exact = await readAttendanceParent(db, classId);
+  exact.forEach((session) => found.set(session.id, session));
+  return found;
+}
+
+function sessionPreference(session = {}, classId = "") {
+  let score = 0;
+  if (text(session.classId) === text(classId)) score += 8;
+  if (text(session.classRecordId) === text(classId)) score += 4;
+  if (idsFrom(session).length) score += 2;
+  if (text(session.topic || session.title)) score += 1;
+  if (text(session.status).toLowerCase() === "rescheduled" || session.manualDateOverride === true || session.previousStartsAt) score += 16;
+  return score;
+}
+
+function curriculumIdentity(session = {}) {
+  const ids = idsFrom(session).map((value) => value.toUpperCase()).sort();
+  if (ids.length) return `assign:${ids.join("|")}`;
+  const day = optionalInteger(session.curriculumDay);
+  if (day !== null) return `day:${day}`;
+  const index = optionalInteger(session.curriculumIndex);
+  return index !== null ? `index:${index}` : "unknown";
+}
+
+function dedupeCompatibleSessions(sessions = [], classId = "") {
+  const groups = new Map();
+  sessions.forEach((session) => {
+    const start = toDate(session.startsAt)?.getTime() || 0;
+    const key = start ? `${start}:${curriculumIdentity(session)}` : `id:${session.id}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(session);
+  });
+  return [...groups.values()]
+    .map((group) => [...group].sort((left, right) =>
+      sessionPreference(right, classId) - sessionPreference(left, classId)
+      || text(left.id).localeCompare(text(right.id))
+    )[0])
+    .filter(Boolean)
+    .sort((left, right) => (toDate(left.startsAt)?.getTime() || 0) - (toDate(right.startsAt)?.getTime() || 0));
 }
 
 function registerPublicLiveClassApi(app, { db }) {
@@ -96,16 +191,12 @@ function registerPublicLiveClassApi(app, { db }) {
       if (!classSnapshot.exists) return res.status(404).json({ ok: false, error: "Class not found" });
       const klass = { id: classSnapshot.id, ...classSnapshot.data() };
 
-      const [byClassId, byRecordId, attendanceById] = await Promise.all([
-        querySessions(db, "classId", classId).catch(() => []),
-        querySessions(db, "classRecordId", classId).catch(() => []),
-        readAttendance(db, classId),
+      const [rawSessions, attendanceById] = await Promise.all([
+        loadCompatibleSessions(db, classId, klass),
+        loadCompatibleAttendance(db, classId, klass),
       ]);
 
-      const merged = new Map();
-      [...byClassId, ...byRecordId].forEach((session) => merged.set(session.id, session));
-      const sessions = [...merged.values()]
-        .filter((session) => session.superseded !== true && text(session.status).toLowerCase() !== "superseded")
+      const sessions = dedupeCompatibleSessions(rawSessions, classId)
         .map((session) => sanitizeSession(session, attendanceById.get(session.id)))
         .filter((session) => session.startsAt)
         .sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
@@ -143,4 +234,10 @@ function registerPublicLiveClassApi(app, { db }) {
   });
 }
 
-module.exports = { registerPublicLiveClassApi, sanitizeSession };
+module.exports = {
+  registerPublicLiveClassApi,
+  sanitizeSession,
+  identifiersFor,
+  belongsToSelectedClass,
+  dedupeCompatibleSessions,
+};
