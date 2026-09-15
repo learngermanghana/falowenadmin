@@ -1,3 +1,4 @@
+import "./patchCheckinDisplayServerClock.mjs";
 import fs from "node:fs";
 
 const file = "src/pages/CanonicalAttendancePageV3.jsx";
