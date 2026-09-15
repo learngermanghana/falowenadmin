@@ -23,20 +23,15 @@ fs.writeFileSync(presenterPath, source);
 let data = fs.readFileSync(dayPath, "utf8");
 const anchor = '    wrapUpTaskDe: "Schreibe 5 Sätze über dein Einkaufsverhalten. Benutze einmal oder und zweimal denn.",';
 const day19Index = data.indexOf('assignmentId: "A2-7.19"');
-const day20Index = data.indexOf('assignmentId: "A2-7.20"', day19Index + 1);
-const day19Block = day19Index >= 0 ? data.slice(day19Index, day20Index >= 0 ? day20Index : undefined) : "";
+const day19AnchorIndex = day19Index >= 0 ? data.indexOf(anchor, day19Index) : -1;
+const day19Block = day19Index >= 0 && day19AnchorIndex >= 0 ? data.slice(day19Index, day19AnchorIndex + anchor.length) : "";
 if (!day19Block.includes('vocabularyCheckQuestions: [')) {
-  const anchorIndex = data.indexOf(anchor, day19Index);
-  if (day19Index < 0 || anchorIndex < 0 || (day20Index >= 0 && anchorIndex > day20Index)) throw new Error("Day 19 data anchor missing");
+  if (day19Index < 0 || day19AnchorIndex < 0) throw new Error("Day 19 data anchor missing");
   const fields = `    grammarCheckQuestions: [
       "Ich kaufe die Jacke, denn sie zu billig ist.", "Möchtest du bar denn mit Karte bezahlen?", "Ich kaufe online, denn ist es bequemer.", "Kaufst du das rote Hemd denn das blaue Hemd?", "Ich gehe heute einkaufen oder ich brauche Lebensmittel."
     ],
     grammarCheckModels: [
-      { questionDe: "Ich kaufe die Jacke, denn sie zu billig ist.", modelAnswerDe: "Ich kaufe die Jacke, denn sie ist billig. Nach denn bleibt Subjekt + Verb." },
-      { questionDe: "Möchtest du bar denn mit Karte bezahlen?", modelAnswerDe: "Möchtest du bar oder mit Karte bezahlen? oder verbindet Alternativen." },
-      { questionDe: "Ich kaufe online, denn ist es bequemer.", modelAnswerDe: "Ich kaufe online, denn es ist bequemer. Nach denn steht das Subjekt vor dem Verb." },
-      { questionDe: "Kaufst du das rote Hemd denn das blaue Hemd?", modelAnswerDe: "Kaufst du das rote Hemd oder das blaue Hemd? oder zeigt eine Auswahl." },
-      { questionDe: "Ich gehe heute einkaufen oder ich brauche Lebensmittel.", modelAnswerDe: "Ich gehe heute einkaufen, denn ich brauche Lebensmittel. denn gibt einen Grund." }
+      { questionDe: "Ich kaufe die Jacke, denn sie zu billig ist.", modelAnswerDe: "Ich kaufe die Jacke, denn sie ist billig. Nach denn bleibt Subjekt + Verb." }, { questionDe: "Möchtest du bar denn mit Karte bezahlen?", modelAnswerDe: "Möchtest du bar oder mit Karte bezahlen? oder verbindet Alternativen." }, { questionDe: "Ich kaufe online, denn ist es bequemer.", modelAnswerDe: "Ich kaufe online, denn es ist bequemer. Nach denn steht das Subjekt vor dem Verb." }, { questionDe: "Kaufst du das rote Hemd denn das blaue Hemd?", modelAnswerDe: "Kaufst du das rote Hemd oder das blaue Hemd? oder zeigt eine Auswahl." }, { questionDe: "Ich gehe heute einkaufen oder ich brauche Lebensmittel.", modelAnswerDe: "Ich gehe heute einkaufen, denn ich brauche Lebensmittel. denn gibt einen Grund." }
     ],
     vocabularyCheckQuestions: ["Du bekommst 20 % Preisnachlass. Wie heißt das Wort?", "Du möchtest eine Ware zurückschicken. Wie heißt das Nomen?", "Du kaufst Produkte aus deiner Region. Welches Adjektiv passt?", "Du möchtest beweisen, dass du bezahlt hast. Was brauchst du?", "Du kaufst bewusst weniger Plastik und faire Produkte. Wie heißt dieses Thema?"],
     vocabularyCheckModels: [
@@ -55,7 +50,7 @@ if (!day19Block.includes('vocabularyCheckQuestions: [')) {
       { questionDe: "Du möchtest eine Jacke kaufen. Frage nach zwei Farben, entscheide dich und begründe deine Wahl mit denn.", modelAnswerDe: "Haben Sie die Jacke in Schwarz oder Blau? Ich nehme die blaue Jacke, denn die Farbe gefällt mir besser." }, { questionDe: "Du kaufst Möbel mit einem Freund. Gib zwei Möglichkeiten mit oder und erkläre deine Präferenz mit denn.", modelAnswerDe: "Sollen wir den runden oder den rechteckigen Tisch nehmen? Ich bevorzuge den runden Tisch, denn er passt besser ins Zimmer." }, { questionDe: "Du bist Verkäufer/in. Frage: bar oder mit Karte? Der Kunde antwortet und gibt einen Grund mit denn.", modelAnswerDe: "Möchten Sie bar oder mit Karte bezahlen? – Mit Karte, denn ich habe nicht genug Bargeld dabei." }
     ],
 ${anchor}`;
-  data = data.slice(0, anchorIndex) + fields + data.slice(anchorIndex + anchor.length);
+  data = data.slice(0, day19AnchorIndex) + fields + data.slice(day19AnchorIndex + anchor.length);
 }
 fs.writeFileSync(dayPath, data);
 console.log("A2 Day 19 presenter: core lesson plus five interactive activity slides.");
