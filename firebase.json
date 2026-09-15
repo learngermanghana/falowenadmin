@@ -24,6 +24,7 @@
         "node scripts/patchAutomaticOrientationSync.mjs",
         "node scripts/patchStructuredWritingEvidence.mjs",
         "node scripts/patchSpecificWritingFeedback.mjs",
+        "node scripts/patchPublicLiveClassApi.mjs",
         "node --check functions/index.js",
         "node scripts/patchSheetRowManagementRoutes.mjs",
         "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
