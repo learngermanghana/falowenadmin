@@ -11,12 +11,15 @@ const A2_ASSIGNMENTS = [
   "A2-9.25", "A2-10.26", "A2-10.27", "A2-10.28",
 ];
 
+const ACTIONABLE_DAYS = ["A2-7.19", "A2-7.20", "A2-8.21", "A2-8.22", "A2-9.23", "A2-9.24", "A2-9.25"];
+const CORE_IDS = ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions", "wrapup"];
+const ACTION_IDS = ["grammar-check", "vocabulary-retrieval", "sentence-builder", "guided-action", "role-play"];
+
 test("all A2 chapters keep a usable warm-up and no one-minute reading stage", () => {
   for (const assignmentId of A2_ASSIGNMENTS) {
     const slide = getTeachingSlideByAssignmentId(assignmentId);
     assert.ok(slide, `${assignmentId} slide missing`);
     assert.ok(Array.isArray(slide.warmupQuestionsDe) && slide.warmupQuestionsDe.length > 0, `${assignmentId} warm-up question missing`);
-
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     assert.equal(stages.some((stage) => stage.id === "knowledge"), false, `${assignmentId} must not show 1-Minute-Wissen`);
     const warmup = stages.find((stage) => stage.id === "warmup");
@@ -25,21 +28,20 @@ test("all A2 chapters keep a usable warm-up and no one-minute reading stage", ()
   }
 });
 
-test("A2 Day 19 adds five actionable activity slides without removing core lesson stages", () => {
-  const slide = getTeachingSlideByAssignmentId("A2-7.19");
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const ids = stages.map((stage) => stage.id);
-
-  for (const id of ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions", "wrapup"]) {
-    assert.ok(ids.includes(id), `Day 19 missing core stage ${id}`);
+test("A2 Days 19 to 25 preserve the core lesson and add five actionable classroom stages", () => {
+  for (const assignmentId of ACTIONABLE_DAYS) {
+    const slide = getTeachingSlideByAssignmentId(assignmentId);
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const ids = stages.map((stage) => stage.id);
+    for (const id of CORE_IDS) assert.ok(ids.includes(id), `${assignmentId} missing core stage ${id}`);
+    for (const id of ACTION_IDS) {
+      const stage = stages.find((entry) => entry.id === id);
+      assert.ok(stage, `${assignmentId} missing actionable stage ${id}`);
+      assert.equal(stage.type, "question-reveal", `${assignmentId} ${id} must use question UI`);
+      assert.ok(stage.items.length >= 3, `${assignmentId} ${id} needs at least three questions`);
+      assert.equal(stage.requiresQuestionModel, true, `${assignmentId} ${id} must expose model-answer checking`);
+    }
+    assert.equal(new Set(ids).size, ids.length, `${assignmentId} must not contain duplicate stage IDs`);
+    assert.ok(stages.length >= 15, `${assignmentId} should expose at least 15 slides, got ${stages.length}`);
   }
-  for (const id of ["grammar-check", "vocabulary-retrieval", "sentence-builder", "guided-action", "role-play"]) {
-    const stage = stages.find((entry) => entry.id === id);
-    assert.ok(stage, `Day 19 missing interactive stage ${id}`);
-    assert.equal(stage.type, "question-reveal", `${id} must use actionable question UI`);
-    assert.ok(stage.items.length >= 3, `${id} needs enough questions for classroom rotation`);
-    assert.equal(stage.requiresQuestionModel, true, `${id} must expose model-answer checking`);
-  }
-  assert.equal(new Set(ids).size, ids.length, "Day 19 presenter must not contain duplicate stage IDs");
-  assert.ok(stages.length >= 15, `Day 19 should expose at least 15 slides, got ${stages.length}`);
 });
