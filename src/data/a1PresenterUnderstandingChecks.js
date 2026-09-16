@@ -35,24 +35,24 @@ function learnerPrompt(questionDe, lessonLabel) {
 
 function modelApplication(example, lessonLabel) {
   return check(
-    `Use the pattern in “${clean(example)}” to make a new sentence of your own.`,
-    `Accept a new correct A1 sentence that follows the same target pattern for ${lessonLabel} without simply repeating the model.`,
-    "The learner must transfer the model to new information.",
+    `Change one clear detail in this model and say the full new sentence: “${clean(example)}”`,
+    `Keep the same target pattern for ${lessonLabel}, but change one clear detail such as the person, action, object, food, time or place where appropriate.`,
+    "The learner must say a different complete sentence, not simply repeat the model.",
   );
 }
 
 function mistakeReflection(mistake, lessonLabel) {
   return check(
-    `How would you avoid this common mistake: ${clean(mistake)}`,
-    `The learner should state or demonstrate the correct ${lessonLabel} pattern and give a short corrected example.`,
-    "Accept a correct rule explanation or corrected example.",
+    `Give one correct German example that avoids this mistake: ${clean(mistake)}`,
+    `Accept one short correct example that demonstrates the ${lessonLabel} pattern without the stated error.`,
+    "Ask for a concrete corrected example rather than an abstract explanation.",
   );
 }
 
 function languagePointReflection(point, lessonLabel) {
   return check(
-    `Explain this lesson point in your own words and give a short example: ${clean(point)}`,
-    `Accept a simple explanation plus a correct A1 example that demonstrates the ${lessonLabel} point.`,
+    `Show this lesson point with one short German example: ${clean(point)}`,
+    `Accept one correct A1 example that clearly demonstrates the ${lessonLabel} point.`,
     "Use only when another class question is needed to reach the full-class pool.",
   );
 }
