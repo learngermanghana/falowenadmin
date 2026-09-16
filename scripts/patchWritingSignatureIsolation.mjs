@@ -18,9 +18,9 @@ const signoffBefore = `function isWritingSignoffLine(value = "") {
   if (/^(regards|best wishes|kind regards|sincerely|yours sincerely|thank you)$/i.test(normalized)) return true;
   if (/^ich freue mich (?:im voraus )?auf deine antwort/i.test(normalizedCompare)) return true;
 
-  const words = normalized.replace(/[.,!?;:]+$/g, "").split(/\\s+/).filter(Boolean);
+  const words = normalized.replace(/[.,!?;:]+$/g, "").split(/\s+/).filter(Boolean);
   const hasSentencePunctuation = /[.!?]$/.test(normalized);
-  const hasVerbLikeWord = /\\b(?:ist|bin|bist|sind|seid|war|hat|habe|hast|haben|geht|gehe|gehen|macht|machen|finde|denke|mochte|möchte|kann|können|werde|wird|schreibe|freue|hoffe|mag|liebe|bevorzuge|schmeckt)\\b/i.test(normalized);
+  const hasVerbLikeWord = /\b(?:ist|bin|bist|sind|seid|war|hat|habe|hast|haben|geht|gehe|gehen|macht|machen|finde|denke|mochte|möchte|kann|können|werde|wird|schreibe|freue|hoffe|mag|liebe|bevorzuge|schmeckt)\b/i.test(normalized);
 
   return words.length <= 2 && !hasSentencePunctuation && !hasVerbLikeWord;
 }`;
@@ -46,10 +46,10 @@ const signoffAfter = `function writingEditDistance(left = "", right = "") {
 }
 
 function fuzzyWritingWord(value = "", candidates = [], maximumDistance = 3) {
-  const normalized = normalizeForCompare(value).replace(/\\s+/g, "");
+  const normalized = normalizeForCompare(value).replace(/\s+/g, "");
   if (!normalized) return false;
   return candidates.some((candidate) => {
-    const expected = normalizeForCompare(candidate).replace(/\\s+/g, "");
+    const expected = normalizeForCompare(candidate).replace(/\s+/g, "");
     return normalized === expected || writingEditDistance(normalized, expected) <= maximumDistance;
   });
 }
@@ -59,7 +59,7 @@ function isWritingClosingPhrase(value = "") {
   if (!normalized) return false;
   if (/^(regards|best wishes|kind regards|sincerely|yours sincerely|thank you|bis bald|tschuss|auf wiedersehen)$/i.test(normalized)) return true;
 
-  const words = normalized.split(/\\s+/).filter(Boolean);
+  const words = normalized.split(/\s+/).filter(Boolean);
   const hasGreetingLead = ["viele", "liebe", "herzliche", "beste"].includes(words[0]);
   const hasGreetingWord = words.some((word) => fuzzyWritingWord(word, ["grusse", "gruesse", "gruben", "grube"], 5));
   if (hasGreetingLead && hasGreetingWord) return true;
@@ -71,9 +71,9 @@ function isWritingClosingPhrase(value = "") {
 }
 
 function writingBodyBeforeSignoff(text = "") {
-  const lines = String(text || "").split(/\\r?\\n/);
+  const lines = String(text || "").split(/\r?\n/);
   const closingIndex = lines.findIndex((line) => isWritingClosingPhrase(line));
-  return (closingIndex >= 0 ? lines.slice(0, closingIndex) : lines).join("\\n").trim();
+  return (closingIndex >= 0 ? lines.slice(0, closingIndex) : lines).join("\n").trim();
 }
 
 function isWritingSignoffLine(value = "") {
@@ -84,9 +84,9 @@ function isWritingSignoffLine(value = "") {
   if (isWritingClosingPhrase(normalized)) return true;
   if (/^ich freue mich (?:im voraus )?auf deine antwort/i.test(normalizedCompare)) return true;
 
-  const words = normalized.replace(/[.,!?;:]+$/g, "").split(/\\s+/).filter(Boolean);
+  const words = normalized.replace(/[.,!?;:]+$/g, "").split(/\s+/).filter(Boolean);
   const hasSentencePunctuation = /[.!?]$/.test(normalized);
-  const hasVerbLikeWord = /\\b(?:ist|bin|bist|sind|seid|war|hat|habe|hast|haben|geht|gehe|gehen|macht|machen|finde|denke|mochte|möchte|kann|können|werde|wird|schreibe|freue|hoffe|mag|liebe|bevorzuge|schmeckt)\\b/i.test(normalized);
+  const hasVerbLikeWord = /\b(?:ist|bin|bist|sind|seid|war|hat|habe|hast|haben|geht|gehe|gehen|macht|machen|finde|denke|mochte|möchte|kann|können|werde|wird|schreibe|freue|hoffe|mag|liebe|bevorzuge|schmeckt)\b/i.test(normalized);
 
   return words.length <= 2 && !hasSentencePunctuation && !hasVerbLikeWord;
 }`;
@@ -125,3 +125,5 @@ source = replaceOnce(
 
 fs.writeFileSync(target, source);
 console.log("Writing feedback now treats lines after a recognised sign-off as signature text without truncating normal body sentences.");
+
+await import("./patchB1GroundedFeedback.mjs");
