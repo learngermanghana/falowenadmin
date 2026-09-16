@@ -24,11 +24,13 @@ test("A1-1.2 keeps side-by-side Teil columns separate when copied from a workshe
   const result = computeObjectiveScore("A1-1.2", salaSubmission);
 
   assert.equal(result.totalCount, 14);
-  assert.equal(result.correctCount, 12);
-  assert.deepEqual(wrongQuestions(result), [3, 9]);
+  assert.equal(result.correctCount, 11);
+  assert.deepEqual(wrongQuestions(result), [1, 3, 9]);
 
   assert.equal(result.details[1].student, "heiBt.");
+  assert.equal(result.details[1].correct, false);
   assert.equal(result.details[2].student, "heiBt.");
+  assert.equal(result.details[2].correct, true);
   assert.equal(result.details[3].student, "kommen");
   assert.equal(result.details[4].student, "kommen");
   assert.equal(result.details[5].student, "kommt.");
