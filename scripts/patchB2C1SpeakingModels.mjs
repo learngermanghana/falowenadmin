@@ -116,3 +116,4 @@ if (fs.existsSync(b1RegressionPath)) {
 }
 
 console.log("C1 speaking models and canonical A1 teaching-slide day mapping are patched; B2 uses direct curriculum models.");
+await import("./patchC2CourseStyle.mjs");
