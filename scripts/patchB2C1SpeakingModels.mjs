@@ -114,3 +114,4 @@ if (fs.existsSync(b1RegressionPath)) {
 }
 
 console.log("B2/C1 speaking models and canonical A1 teaching-slide day mapping are patched after curated replacements.");
+await import("./patchB2ExamDomainRedesign.mjs");
