@@ -22,6 +22,80 @@ function lessonUrl(value = "") {
   return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
+function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
+  const question = String(questionDe || "").trim();
+  const answer = String(modelAnswerDe || "").trim();
+  const text = `${question} ${answer}`;
+
+  if (/Während wir wanderten/i.test(question)) {
+    return [
+      "The error is in the main clause, not in the während-clause. während introduces a subordinate clause (Nebensatz), so the conjugated verb is at the end: während wir wanderten.",
+      "Because the während-clause comes first, it occupies position 1 of the whole sentence. After the comma, the main clause begins with the conjugated verb: begann es ..., not es begann ....",
+      "Board pattern: Während + subject + ... + verb, verb + subject + ....",
+      "Correct sentence: Während wir wanderten, begann es zu regnen.",
+      "Meaning: While we were hiking, it began to rain. Then ask the learner to make one new sentence with a während-clause first.",
+    ];
+  }
+
+  if (/Nachdem wir (?:sind )?angekommen/i.test(question)) {
+    return [
+      "In this past narrative, nachdem marks the earlier completed action. Use Plusquamperfekt for that earlier action: angekommen waren.",
+      "The later action stays in Präteritum here: bauten ... auf.",
+      "nachdem introduces a subordinate clause, so the finite auxiliary goes to the end: Nachdem wir angekommen waren, ....",
+      "sind angekommen = have arrived — Perfekt. waren angekommen = had arrived — Plusquamperfekt.",
+      "Correct sentence: Nachdem wir angekommen waren, bauten wir das Zelt auf. Meaning: After we had arrived, we put up the tent.",
+    ];
+  }
+
+  const guide = [];
+
+  if (/\b(weil|obwohl|wenn|während|nachdem|bevor|dass|ob|damit|indem)\b/i.test(text)) {
+    guide.push("This connector introduces a subordinate clause (Nebensatz): the conjugated verb normally goes to the end of that clause.");
+    guide.push("If the subordinate clause comes first, it occupies position 1; the following main clause begins with its conjugated verb before the subject.");
+  }
+
+  if (/\b(deshalb|trotzdem|daher|darum)\b/i.test(text)) {
+    guide.push("deshalb/trotzdem/daher/darum can occupy position 1; the conjugated verb then stays in position 2, before the subject.");
+  }
+
+  if (/um .* zu|um\s+zu|damit/i.test(text)) {
+    guide.push("Use um ... zu when the subject is the same in both actions; use damit when the subjects are different or when a full subordinate clause is needed.");
+  }
+
+  if (/\b(wegen|trotz)\b/i.test(text)) {
+    guide.push("In standard/formal German, wegen and trotz are commonly taught with the genitive. Check the article and noun ending as well as the preposition.");
+  }
+
+  if (/je .* desto|desto/i.test(text)) {
+    guide.push("With je ... desto, the je-clause behaves like a subordinate clause; in the desto-clause, the conjugated verb follows the fronted comparative phrase.");
+  }
+
+  if (/\bwie\b|\bwann\b|\bwoher\b|\bob\b/i.test(question) && /wissen|sagen|fragen|erklären/i.test(text)) {
+    guide.push("In an indirect question, keep the W-word or ob and place the conjugated verb at the end of the embedded clause.");
+  }
+
+  if (/\b(der|die|das|den|dem|deren|dessen)\b/i.test(text) && /wohnung|vermieter|person|partner|jemand|film/i.test(text)) {
+    guide.push("For a relative clause, choose the relative pronoun by gender/number and by its grammatical role inside the relative clause; the finite verb goes to the end.");
+  }
+
+  if (/\b(muss|müssen|kann|können|soll|sollen|darf|dürfen|möchte|wollen|will)\b/i.test(text)) {
+    guide.push("With a modal verb in a main clause, conjugate the modal in position 2 and put the second verb as an infinitive at the end, normally without zu.");
+  }
+
+  if (/könnt|würde|hätte|wäre/i.test(text)) {
+    guide.push("Konjunktiv II forms such as könnten/würden/hätten/wären make requests, suggestions and hypothetical statements more polite or less direct.");
+  }
+
+  if (/\bwie\b/i.test(question) && /ruhiger|persönlicher|schneller|größer|besser|mehr|weniger/i.test(text)) {
+    guide.push("For an unequal comparison, use the comparative + als: größer als, besser als, ruhiger als.");
+  }
+
+  if (answer) guide.push(`Board model: ${answer}`);
+  guide.push("After explaining the correction, ask the learner to make one new sentence with the same rule. This checks understanding instead of memorisation.");
+
+  return [...new Set(guide)].slice(0, 6);
+}
+
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const stages = useMemo(() => buildTeachingPresenterStages(slide, topicLabel), [slide, topicLabel]);
   const presenterV2 = isTeachingPresenterV2Slide(slide);
@@ -131,6 +205,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const activeQuestion = stage.type === "question-reveal" ? stage.items[questionIndex] : "";
   const activeModel = getSpeakingQuestionModel(stage, activeQuestion);
   const directAnswerMode = stage.requiresQuestionModel || Boolean(activeModel);
+  const b1CorrectionGuide = String(slide.course || "").toUpperCase() === "B1" && stage.id === "b1-grammar-check" && activeModel?.modelAnswerDe
+    ? buildB1CorrectionTeacherGuide(activeQuestion, activeModel.modelAnswerDe)
+    : [];
   const timerExpired = presenterV2 && timerRemaining === 0 && !timerRunning;
   const timerPresets = [...new Set([stage.suggestedMinutes, 2, 5, 10].filter(Boolean))];
 
@@ -198,7 +275,19 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <div className="presenter-model-support">
                   <strong>Possible model answer</strong>
                   <p>{activeModel?.modelAnswerDe || "A model answer has not been added for this question yet."}</p>
-                  {activeModel?.modelAnswerDe ? <small>Example only — adapt the details to your own experience.</small> : null}
+                  {b1CorrectionGuide.length ? (
+                    <div style={{ marginTop: "0.85rem", borderTop: "1px solid #cbd5e1", paddingTop: "0.75rem" }}>
+                      <strong>What to explain to students</strong>
+                      <ul style={{ margin: "0.45rem 0 0.65rem", paddingLeft: "1.25rem" }}>
+                        {b1CorrectionGuide.map((item) => <li key={item} style={{ marginBottom: "0.35rem" }}>{item}</li>)}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {activeModel?.modelAnswerDe ? (
+                    <small>{b1CorrectionGuide.length
+                      ? "Teacher guide: explain the rule, point to the corrected word order/form, then ask for one new example."
+                      : "Example only — adapt the details to your own experience."}</small>
+                  ) : null}
                 </div>
               ) : showQuestionSupport && stage.supportItems?.length ? (
                 <div className="presenter-model-support">
