@@ -108,15 +108,21 @@ function enhanceA1Lesson9TopicLanguage(slide) {
   }
   slidesSource = slidesSource.replace(helperAnchor, `${helper}${helperAnchor}`);
 
-  const a1Anchor = `const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);`;
-  const a1Replacement = `const a1Slides = buildLevelSlides("A1")
-  .map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide)
-  .map(enhanceA1Lesson9TopicLanguage);`;
-
-  if (!slidesSource.includes(a1Anchor)) {
-    throw new Error("A1 lesson list anchor missing for A1-9 topic-language patch.");
+  // Earlier prebuild patches may rewrite the internal a1Slides mapping. Add the
+  // A1-9 enhancement after that mapping instead of depending on its exact shape.
+  const generatedA2Anchor = `const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);`;
+  const alignedA1Line = `const topicAlignedA1Slides = a1Slides.map(enhanceA1Lesson9TopicLanguage);`;
+  if (!slidesSource.includes(generatedA2Anchor)) {
+    throw new Error("A1/A2 slide boundary anchor missing for A1-9 topic-language patch.");
   }
-  slidesSource = slidesSource.replace(a1Anchor, a1Replacement);
+  slidesSource = slidesSource.replace(generatedA2Anchor, `${alignedA1Line}\n${generatedA2Anchor}`);
+
+  const exportAnchor = `export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];`;
+  const exportReplacement = `export const teachingSlides = [...topicAlignedA1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];`;
+  if (!slidesSource.includes(exportAnchor)) {
+    throw new Error("Teaching slide export anchor missing for A1-9 topic-language patch.");
+  }
+  slidesSource = slidesSource.replace(exportAnchor, exportReplacement);
 }
 
 fs.writeFileSync(slidesPath, slidesSource);
