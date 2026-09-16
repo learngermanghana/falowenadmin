@@ -38,10 +38,28 @@ if (!source.includes(marker)) {
 
 fs.writeFileSync(slidesPath, source);
 
+const presenterPath = new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url);
+let presenter = fs.readFileSync(presenterPath, "utf8");
+const sentencePromptMarker = "A1_CLEAR_SENTENCE_BUILD_PROMPT";
+if (!presenter.includes(sentencePromptMarker)) {
+  const promptAnchor = `      firstModel ? \`Use this pattern to make a new sentence of your own: “\${firstModel}”\` : "Make one correct sentence with today's target language.",\n      firstModel ? \`Example pattern: \${firstModel}. Accept a new correct sentence with the same structure.\` : "Accept one correct sentence using today's target language.",\n      "The learner must produce new information, not simply repeat the model.",`;
+  const promptReplacement = `      // A1_CLEAR_SENTENCE_BUILD_PROMPT\n      firstModel ? \`Change one clear detail in this model and say the full new sentence: “\${firstModel}”\` : "Make one correct sentence with today's target language.",\n      firstModel ? \`Keep the same grammar pattern as “\${firstModel}”, but change one clear detail such as the person, action, object, time or place.\` : "Accept one correct sentence using today's target language.",\n      "The learner must say a different complete sentence, not simply repeat the model.",`;
+  if (!presenter.includes(promptAnchor)) throw new Error("A1 sentence-building prompt anchor missing.");
+  presenter = presenter.replace(promptAnchor, promptReplacement);
+}
+fs.writeFileSync(presenterPath, presenter);
+
 const finalSource = fs.readFileSync(slidesPath, "utf8");
+const finalPresenter = fs.readFileSync(presenterPath, "utf8");
 if (!finalSource.includes(marker)) throw new Error("A1 topic-specific template marker missing.");
 if (!finalSource.includes('A1_TOPIC_TEACHER_SUPPORT[entry.assignment_id]')) {
   throw new Error("Generated A1 slides are not reading topic-specific teacher support.");
 }
+if (!finalPresenter.includes(sentencePromptMarker)) {
+  throw new Error("A1 sentence-building clarity marker missing.");
+}
+if (finalPresenter.includes("Use this pattern to make a new sentence of your own")) {
+  throw new Error("A1 still contains the vague sentence-building prompt.");
+}
 
-console.log("Generated A1 lessons now use topic-specific examples, notes and practice instead of the generic template.");
+console.log("Generated A1 lessons now use topic-specific examples and clear sentence-building prompts instead of generic template language.");
