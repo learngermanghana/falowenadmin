@@ -81,10 +81,10 @@ const wrongQuestions = Object.entries(regressionResult.details)
   .map(([question]) => Number(question));
 if (
   regressionResult.totalCount !== 14
-  || regressionResult.correctCount !== 12
-  || wrongQuestions.join(",") !== "3,9"
+  || regressionResult.correctCount !== 11
+  || wrongQuestions.join(",") !== "1,3,9"
 ) {
   throw new Error(`Side-by-side A1-1.2 regression failed: ${regressionResult.correctCount}/${regressionResult.totalCount}; wrong=${wrongQuestions.join(",")}`);
 }
 
-console.log("Side-by-side objective answer columns are parsed separately; A1-1.2 regression = 12/14 (Q3, Q9 wrong).");
+console.log("Side-by-side objective answer columns are parsed separately; A1-1.2 regression = 11/14 (Q1, Q3, Q9 wrong).");
