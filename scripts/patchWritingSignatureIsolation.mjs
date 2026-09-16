@@ -3,29 +3,14 @@ import fs from "node:fs";
 const target = new URL("../src/utils/autoMarking.js", import.meta.url);
 let source = fs.readFileSync(target, "utf8");
 
-function replaceOnce(input, before, after, label) {
-  if (input.includes(after)) return input;
-  if (!input.includes(before)) throw new Error(`${label} anchor changed; update patchWritingSignatureIsolation.mjs`);
-  return input.replace(before, after);
-}
+const helperMarker = "function writingEditDistance";
+if (!source.includes(helperMarker)) {
+  const signoffAnchor = 'function isWritingSignoffLine(value = "") {';
+  if (!source.includes(signoffAnchor)) {
+    throw new Error("writing sign-off helper location changed; update patchWritingSignatureIsolation.mjs");
+  }
 
-const signoffBefore = `function isWritingSignoffLine(value = "") {
-  const normalized = String(value || "").trim();
-  if (!normalized) return true;
-
-  const normalizedCompare = normalizeForCompare(normalized);
-  if (/^(viele|liebe|herzliche|beste) (grusse|gruesse|grusse,|gruesse,)|^(mit freundlichen|freundliche) (grussen|gruessen)/i.test(normalizedCompare)) return true;
-  if (/^(regards|best wishes|kind regards|sincerely|yours sincerely|thank you)$/i.test(normalized)) return true;
-  if (/^ich freue mich (?:im voraus )?auf deine antwort/i.test(normalizedCompare)) return true;
-
-  const words = normalized.replace(/[.,!?;:]+$/g, "").split(/\s+/).filter(Boolean);
-  const hasSentencePunctuation = /[.!?]$/.test(normalized);
-  const hasVerbLikeWord = /\b(?:ist|bin|bist|sind|seid|war|hat|habe|hast|haben|geht|gehe|gehen|macht|machen|finde|denke|mochte|möchte|kann|können|werde|wird|schreibe|freue|hoffe|mag|liebe|bevorzuge|schmeckt)\b/i.test(normalized);
-
-  return words.length <= 2 && !hasSentencePunctuation && !hasVerbLikeWord;
-}`;
-
-const signoffAfter = `function writingEditDistance(left = "", right = "") {
+  const helpers = `function writingEditDistance(left = "", right = "") {
   const a = String(left || "");
   const b = String(right || "");
   const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
@@ -46,10 +31,10 @@ const signoffAfter = `function writingEditDistance(left = "", right = "") {
 }
 
 function fuzzyWritingWord(value = "", candidates = [], maximumDistance = 3) {
-  const normalized = normalizeForCompare(value).replace(/\s+/g, "");
+  const normalized = normalizeForCompare(value).replace(/\\s+/g, "");
   if (!normalized) return false;
   return candidates.some((candidate) => {
-    const expected = normalizeForCompare(candidate).replace(/\s+/g, "");
+    const expected = normalizeForCompare(candidate).replace(/\\s+/g, "");
     return normalized === expected || writingEditDistance(normalized, expected) <= maximumDistance;
   });
 }
@@ -59,7 +44,7 @@ function isWritingClosingPhrase(value = "") {
   if (!normalized) return false;
   if (/^(regards|best wishes|kind regards|sincerely|yours sincerely|thank you|bis bald|tschuss|auf wiedersehen)$/i.test(normalized)) return true;
 
-  const words = normalized.split(/\s+/).filter(Boolean);
+  const words = normalized.split(/\\s+/).filter(Boolean);
   const hasGreetingLead = ["viele", "liebe", "herzliche", "beste"].includes(words[0]);
   const hasGreetingWord = words.some((word) => fuzzyWritingWord(word, ["grusse", "gruesse", "gruben", "grube"], 5));
   if (hasGreetingLead && hasGreetingWord) return true;
@@ -71,57 +56,36 @@ function isWritingClosingPhrase(value = "") {
 }
 
 function writingBodyBeforeSignoff(text = "") {
-  const lines = String(text || "").split(/\r?\n/);
+  const lines = String(text || "").split(/\\r?\\n/);
   const closingIndex = lines.findIndex((line) => isWritingClosingPhrase(line));
-  return (closingIndex >= 0 ? lines.slice(0, closingIndex) : lines).join("\n").trim();
+  return (closingIndex >= 0 ? lines.slice(0, closingIndex) : lines).join("\\n").trim();
+}`;
+
+  source = source.replace(signoffAnchor, `${helpers}\n\n${signoffAnchor}`);
 }
 
-function isWritingSignoffLine(value = "") {
-  const normalized = String(value || "").trim();
-  if (!normalized) return true;
-
-  const normalizedCompare = normalizeForCompare(normalized);
-  if (isWritingClosingPhrase(normalized)) return true;
-  if (/^ich freue mich (?:im voraus )?auf deine antwort/i.test(normalizedCompare)) return true;
-
-  const words = normalized.replace(/[.,!?;:]+$/g, "").split(/\s+/).filter(Boolean);
-  const hasSentencePunctuation = /[.!?]$/.test(normalized);
-  const hasVerbLikeWord = /\b(?:ist|bin|bist|sind|seid|war|hat|habe|hast|haben|geht|gehe|gehen|macht|machen|finde|denke|mochte|möchte|kann|können|werde|wird|schreibe|freue|hoffe|mag|liebe|bevorzuge|schmeckt)\b/i.test(normalized);
-
-  return words.length <= 2 && !hasSentencePunctuation && !hasVerbLikeWord;
-}`;
-
-source = replaceOnce(source, signoffBefore, signoffAfter, "writing sign-off helpers");
-
-const expansionBefore = `function findWritingExpansionTarget(text = "") {
-  const sentences = extractWritingSentences(text);
-  const candidates = sentences.filter((sentence) => !isWritingSignoffLine(sentence));
-  if (!candidates.length) return sentences[sentences.length - 1] || text;
-
-  return candidates[candidates.length - 1];
-}`;
-
-const expansionAfter = `function findWritingExpansionTarget(text = "") {
+if (!source.includes("const bodyText = writingBodyBeforeSignoff(text);")) {
+  const expansionPattern = /function findWritingExpansionTarget\(text = ""\) \{[\s\S]*?\n\}/;
+  if (!expansionPattern.test(source)) {
+    throw new Error("writing expansion target location changed; update patchWritingSignatureIsolation.mjs");
+  }
+  source = source.replace(expansionPattern, `function findWritingExpansionTarget(text = "") {
   const bodyText = writingBodyBeforeSignoff(text);
   const sentences = extractWritingSentences(bodyText);
   const candidates = sentences.filter((sentence) => !isWritingSignoffLine(sentence));
   if (!candidates.length) return sentences[sentences.length - 1] || bodyText || text;
 
   return candidates[candidates.length - 1];
-}`;
+}`);
+}
 
-source = replaceOnce(source, expansionBefore, expansionAfter, "writing expansion target");
-
-source = replaceOnce(
-  source,
-  `function findWritingIssues(text = "") {
-  const issues = [];
-  const sourceText = String(text || "");`,
-  `function findWritingIssues(text = "") {
-  const issues = [];
-  const sourceText = writingBodyBeforeSignoff(text);`,
-  "writing issue source",
-);
+if (!source.includes('const sourceText = writingBodyBeforeSignoff(text);')) {
+  const issueSourcePattern = /(function findWritingIssues\(text = ""\) \{\s*\n\s*const issues = \[\];\s*\n\s*)const sourceText = [^;]+;/;
+  if (!issueSourcePattern.test(source)) {
+    throw new Error("writing issue source location changed; update patchWritingSignatureIsolation.mjs");
+  }
+  source = source.replace(issueSourcePattern, '$1const sourceText = writingBodyBeforeSignoff(text);');
+}
 
 fs.writeFileSync(target, source);
 console.log("Writing feedback now treats lines after a recognised sign-off as signature text without truncating normal body sentences.");
