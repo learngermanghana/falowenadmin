@@ -180,3 +180,5 @@ if (!finalPresenter.includes('"one-minute-knowledge",// built from the same gram
 }
 
 console.log("A1 presenter deduplication is enabled across all lessons; Day 5 remains scoped to der/die/das.");
+
+await import("./patchA1Lesson9Clarity.mjs");
