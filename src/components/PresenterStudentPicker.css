@@ -226,8 +226,8 @@
   color: #b91c1c !important;
 }
 
-/* Keep teaching content dominant inside the 16:9 presenter. */
-.presenter-shell .presenter-stage {
+/* Keep teaching content dominant inside the 16:9 presenter when the picker row exists. */
+.presenter-shell .presenter-stage:has(> .presenter-student-picker) {
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 
