@@ -179,9 +179,19 @@ let dictionary = fs.readFileSync(dictionaryPath, "utf8");
 for (const lesson of lessons) {
   const chapter = lesson.assignmentId.split("-")[1];
   const replacement = `    ${JSON.stringify(lesson.assignmentId)}: { assignment_id: ${JSON.stringify(lesson.assignmentId)}, chapter: ${JSON.stringify(chapter)}, de: ${JSON.stringify(lesson.topic)}, en: ${JSON.stringify(lesson.topic)} },`;
-  const pattern = new RegExp(`^\\s*${JSON.stringify(lesson.assignmentId).replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}: \\{ assignment_id: .*,$`, "m");
-  if (pattern.test(dictionary)) dictionary = dictionary.replace(pattern, replacement);
-  else if (!dictionary.includes(`de: ${JSON.stringify(lesson.topic)}`)) throw new Error(`Course dictionary entry missing for ${lesson.assignmentId}`);
+  const lines = dictionary.split("\n");
+  let replaced = false;
+  const nextLines = lines.map((line) => {
+    if (line.includes(`${JSON.stringify(lesson.assignmentId)}: { assignment_id: ${JSON.stringify(lesson.assignmentId)}`)) {
+      replaced = true;
+      return replacement;
+    }
+    return line;
+  });
+  if (!replaced && !dictionary.includes(`de: ${JSON.stringify(lesson.topic)}`)) {
+    throw new Error(`Course dictionary entry missing for ${lesson.assignmentId}`);
+  }
+  dictionary = nextLines.join("\n");
 }
 fs.writeFileSync(dictionaryPath, dictionary);
 
