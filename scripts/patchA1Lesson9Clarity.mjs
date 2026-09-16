@@ -15,8 +15,9 @@ if (!presenterSource.includes(recallMarker)) {
   const day = Number(slide.dayNumber || 0);
   if (day <= 1) return [];
 
-  // A1_LESSON_9_TOPIC_RECALL: A1-9 follows Modalverben and Goethe A1
-  // Sprechen Teil 3. Do not inject later directions/location material here.
+  // A1_LESSON_9_TOPIC_RECALL: recall belongs only near the start of A1-9.
+  // It revisits Modalverben and Goethe A1 Sprechen Teil 3, the lessons directly
+  // before A1-9. The later class challenge must test today's food/negation topic.
   const assignmentId = cleanText(slide.assignmentId).toUpperCase();
   if (assignmentId === "A1-9") {
     return [
@@ -120,8 +121,79 @@ function enhanceA1Lesson9TopicLanguage(slide) {
 
 fs.writeFileSync(slidesPath, slidesSource);
 
+const understandingPath = new URL("../src/data/a1PresenterUnderstandingChecks.js", import.meta.url);
+let understandingSource = fs.readFileSync(understandingPath, "utf8");
+
+const challengeMarker = "A1_LESSON_9_CURRENT_TOPIC_CHALLENGE";
+if (!understandingSource.includes(challengeMarker)) {
+  const anchor = `const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  "A1-4.7": [`;
+  const replacement = `const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  // A1_LESSON_9_CURRENT_TOPIC_CHALLENGE: this pool is used by the later
+  // class challenge. It deliberately excludes recall, directions and locations.
+  "A1-9": [
+    check(
+      "What is the basic difference between kein and nicht?",
+      "Use kein with a noun phrase such as kein Brot / keine Milch / keinen Käse. Use nicht to negate a verb, adjective or the wider statement.",
+    ),
+    check(
+      "Make this sentence negative: ‘Ich esse Käse.’",
+      "For example: Ich esse keinen Käse.",
+    ),
+    check(
+      "Make this sentence negative: ‘Wir haben Milch.’",
+      "Wir haben keine Milch.",
+    ),
+    check(
+      "Make this sentence negative: ‘Die Suppe ist warm.’",
+      "Die Suppe ist nicht warm.",
+    ),
+    check(
+      "Make this sentence negative: ‘Ich koche heute.’",
+      "Ich koche heute nicht.",
+    ),
+    check(
+      "Choose kein or nicht: ‘Ich trinke ___ Kaffee.’ Explain your choice.",
+      "keinen: Ich trinke keinen Kaffee. Kaffee is the noun being negated, and it is masculine accusative here.",
+    ),
+    check(
+      "Choose kein or nicht: ‘Das Essen ist ___ lecker.’ Explain your choice.",
+      "nicht: Das Essen ist nicht lecker. The adjective lecker is being negated.",
+    ),
+    check(
+      "Why do we say ‘keine Milch’ but ‘keinen Käse’?",
+      "kein changes with the noun. Milch is feminine, so keine; Käse is masculine accusative after essen, so keinen.",
+    ),
+    check(
+      "Say one food you do not eat using kein/keine/keinen.",
+      "For example: Ich esse keinen Fisch. / Ich esse keine Wurst. Accept another correct food sentence.",
+    ),
+    check(
+      "Say one food or drink you do not have using kein/keine/keinen.",
+      "For example: Ich habe keinen Kaffee. / Ich habe keine Milch. Accept another correct sentence.",
+    ),
+    check(
+      "Say one sentence with nicht about food or cooking.",
+      "For example: Die Suppe ist nicht heiß. / Ich koche heute nicht.",
+    ),
+    check(
+      "Correct this sentence: ‘Ich esse nicht Käse.’",
+      "In this meaning use kein: Ich esse keinen Käse.",
+    ),
+  ],
+  "A1-4.7": [`;
+
+  if (!understandingSource.includes(anchor)) {
+    throw new Error("A1 understanding override anchor missing for A1-9 challenge patch.");
+  }
+  understandingSource = understandingSource.replace(anchor, replacement);
+}
+
+fs.writeFileSync(understandingPath, understandingSource);
+
 const finalPresenter = fs.readFileSync(presenterPath, "utf8");
 const finalSlides = fs.readFileSync(slidesPath, "utf8");
+const finalUnderstanding = fs.readFileSync(understandingPath, "utf8");
 
 if (!finalPresenter.includes(recallMarker)) {
   throw new Error("A1-9 topic-specific recall patch is missing.");
@@ -135,5 +207,11 @@ if (!finalSlides.includes(slideMarker)) {
 if (!finalSlides.includes('"Ich esse keinen Käse."')) {
   throw new Error("A1-9 food/negation useful language is missing.");
 }
+if (!finalUnderstanding.includes(challengeMarker)) {
+  throw new Error("A1-9 current-topic class challenge is missing.");
+}
+if (/A1_LESSON_9_CURRENT_TOPIC_CHALLENGE[\s\S]{0,5000}(direction|location)/i.test(finalUnderstanding)) {
+  throw new Error("A1-9 class challenge still contains direction/location material.");
+}
 
-console.log("A1-9 now uses food/negation language, relevant prior-topic recall, and clearer participation prompts.");
+console.log("A1-9 recall stays at the start; later class questions test only food and negation, with clearer prompts.");
