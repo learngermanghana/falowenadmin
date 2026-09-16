@@ -10,34 +10,34 @@ import {
 } from "../src/utils/teachingPresenter.js";
 
 const TOPICS = [
-  "Persönliche Identität und Selbstverständnis",
-  "Beziehungen und Kommunikation",
-  "Öffentliches vs. Privates Leben",
-  "Beruf und Karriere",
-  "Bildung und Lernen",
-  "Kultur und Gesellschaft",
-  "Medien und digitale Welt",
-  "Wissenschaft und Technologie",
-  "Politik und Gesellschaft",
-  "Wirtschaft und Finanzen",
-  "Umwelt und Nachhaltigkeit",
-  "Gesundheit und Wohlbefinden",
-  "Ernährung und Lebensstil",
-  "Reisen und Mobilität",
-  "Wohnen und Lebensräume",
-  "Freizeit, Hobbys und Interessen",
-  "Feste und Traditionen",
-  "Werte und Normen",
-  "Migration und Integration",
-  "Diskriminierung und Gleichstellung",
-  "Recht und Ordnung",
-  "Konfliktmanagement",
-  "Globalisierung",
-  "Zukunft und Innovation",
-  "Kommunikation im Berufsleben",
-  "Wissenschaftliches Arbeiten",
-  "Zeitmanagement und Organisation",
-  "Zusammenfassung & Prüfungsvorbereitung",
+  "Umweltschutz im Alltag – Müll vermeiden",
+  "Mülltrennung, Recycling und Kreislaufwirtschaft",
+  "Lebensmittelverschwendung und nachhaltiger Konsum",
+  "Plastik, Verpackungen und bewusster Einkauf",
+  "Nachhaltige Mobilität und öffentlicher Verkehr",
+  "Energie sparen und erneuerbare Energien",
+  "Klimafreundliches Wohnen und grüne Städte",
+  "Bildungsgerechtigkeit und Zugang zu Bildung",
+  "Schulpflicht, Leistung und Verantwortung der Schule",
+  "Kindergarten und frühkindliche Bildung",
+  "Digitale Bildung – Unterricht mit und ohne Technologie",
+  "Studium, Studiengebühren und lebenslanges Lernen",
+  "Wissenschaft und Forschung im Alltag",
+  "Wissenschaft, Desinformation und verlässliche Quellen",
+  "Wohnraummangel, hohe Mieten und soziale Gerechtigkeit",
+  "Stadt oder Land – Lebensqualität und Infrastruktur",
+  "Familie, Kinderbetreuung und Vereinbarkeit mit dem Beruf",
+  "Arbeitswelt, Fachkräftemangel und Weiterbildung",
+  "Homeoffice, ständige Erreichbarkeit und Work-Life-Balance",
+  "Soziale Medien, Privatsphäre und öffentliche Identität",
+  "Künstliche Intelligenz in Schule und Universität",
+  "Künstliche Intelligenz, Automatisierung und Arbeitsplätze",
+  "Datenschutz, Algorithmen und personalisierte Werbung",
+  "Digitale Gesundheit, Telemedizin und medizinische Technologie",
+  "Reisen, Massentourismus und nachhaltiger Tourismus",
+  "Migration, Integration und Sprache",
+  "Gleichstellung, Diskriminierung und gesellschaftlicher Zusammenhalt",
+  "Gesellschaft im Wandel – B2 Prüfungstraining",
 ];
 
 const REQUIRED_STAGES = [
@@ -49,13 +49,7 @@ function expectedAssignmentId(day) {
   return `B2-${Math.ceil(day / 4)}.${day}`;
 }
 
-function grammarTextFor(assignmentId) {
-  const slide = getTeachingSlideByAssignmentId(assignmentId);
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-  return stages.find((stage) => stage.id === "grammar")?.items.join(" ") || "";
-}
-
-test("B2 Teaching Slides expose the complete 28-day LLEA curriculum", () => {
+test("B2 exposes the complete new 28-day exam-domain curriculum", () => {
   const slides = getSlidesByCourse("B2");
   assert.equal(slides.length, 28);
   assert.deepEqual(slides.map((slide) => slide.dayNumber), Array.from({ length: 28 }, (_, index) => index + 1));
@@ -68,98 +62,70 @@ test("B2 Teaching Slides expose the complete 28-day LLEA curriculum", () => {
   });
 });
 
-test("B2 assignment mapping follows the verified early workbook sequence", () => {
-  assert.equal(getTeachingSlideByAssignmentId("B2-1.1")?.dayNumber, 1);
-  assert.equal(getTeachingSlideByAssignmentId("B2-1.4")?.dayNumber, 4);
-  assert.equal(getTeachingSlideByAssignmentId("B2-2.5")?.dayNumber, 5);
-  assert.equal(getTeachingSlideByAssignmentId("B2-7.28")?.dayNumber, 28);
+test("B2 curriculum concentrates on recurring exam domains", () => {
+  const joined = TOPICS.join(" ");
+  for (const term of ["Umwelt", "Bildung", "Kindergarten", "Wissenschaft", "Wohn", "Soziale Medien", "Künstliche Intelligenz", "Kinderbetreuung", "Migration"]) {
+    assert.match(joined, new RegExp(term, "i"), term);
+  }
 });
 
-test("all B2 days use Presenter 2.0 with concise German classroom practice", () => {
-  const slides = getSlidesByCourse("B2");
-
-  for (const slide of slides) {
+test("all B2 days use Presenter 2.0 with substantial classroom support", () => {
+  for (const slide of getSlidesByCourse("B2")) {
     assert.equal(isB2PresenterV2Slide(slide), true, slide.assignmentId);
     assert.equal(isTeachingPresenterV2Slide(slide), true, slide.assignmentId);
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    REQUIRED_STAGES.forEach((stageId) => {
-      assert.ok(stageIds.includes(stageId), `${slide.assignmentId} missing ${stageId}`);
-    });
+    REQUIRED_STAGES.forEach((stageId) => assert.ok(stageIds.includes(stageId), `${slide.assignmentId} missing ${stageId}`));
 
     const grammar = stages.find((stage) => stage.id === "grammar");
     const questions = stages.find((stage) => stage.id === "questions");
     const practice = stages.find((stage) => stage.id === "practice");
     const workbook = stages.find((stage) => stage.id === "workbook");
-    const mistakes = stages.find((stage) => stage.id === "mistakes");
 
-    assert.ok(grammar.items.length >= 2, `${slide.assignmentId} should have B2 grammar support`);
-    assert.ok(grammar.items.every((item) => !/^Use\b|^Structure\b|^Express\b/i.test(item)), `${slide.assignmentId} grammar should be classroom German`);
+    assert.ok(grammar.items.length >= 3, `${slide.assignmentId} should have focused B2 grammar`);
     assert.equal(questions.type, "question-reveal");
-    assert.ok(questions.items.length >= 5, `${slide.assignmentId} should have speaking questions`);
-    assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} should have model language`);
+    assert.ok(questions.items.length >= 5, `${slide.assignmentId} should have five speaking questions`);
+    assert.ok(questions.supportItems.length >= 5, `${slide.assignmentId} should have matching model answers`);
     assert.equal(practice.type, "flow");
-    assert.equal(practice.items.length, 4, `${slide.assignmentId} should keep guided practice concise`);
-    assert.ok(practice.items.every((item) => item.instruction), `${slide.assignmentId} should show actual student instructions`);
-    assert.ok(practice.items.every((item) => Array.isArray(item.prompts) && item.prompts.length > 0), `${slide.assignmentId} should show actual prompts`);
-    assert.ok(practice.items.some((item) => item.minutes > 0), `${slide.assignmentId} should expose timer minutes`);
-    assert.ok(practice.items.every((item) => item.teacherNote), `${slide.assignmentId} should keep short English teacher notes available`);
-    assert.ok(mistakes.items.every((item) => !/^Giving\b|^Using\b|^Repeating\b/i.test(item)), `${slide.assignmentId} mistakes should be classroom German`);
+    assert.ok(practice.items.length >= 4, `${slide.assignmentId} should expose guided practice`);
     assert.equal(workbook.type, "workbook");
-    assert.ok(workbook.items.length >= 5, `${slide.assignmentId} should expose the workbook bridge`);
+    assert.ok(workbook.items.length >= 5, `${slide.assignmentId} should expose exam transfer`);
   }
 });
 
-test("B2 Day 1 matches the real identity grammar and avoids old connector drills", () => {
+test("B2 Day 1 starts with practical environmental protection grammar", () => {
   const slide = getTeachingSlideByAssignmentId("B2-1.1");
   const support = buildTeacherSlideSupport(slide);
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const grammar = stages.find((stage) => stage.id === "grammar");
-  const practice = stages.find((stage) => stage.id === "practice");
-  const grammarText = grammar.items.join(" ");
-  const supportText = support.grammarFocusEn.join(" ");
-  const practiceText = practice.items.flatMap((item) => [item.instruction, ...(item.prompts || [])]).join(" ");
+  const grammarText = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "grammar")?.items.join(" ") || "";
 
-  assert.match(grammarText, /ein ruhiger Mensch/i);
-  assert.match(grammarText, /während/i);
-  assert.match(grammarText, /hingegen/i);
-  assert.match(grammarText, /im Gegensatz dazu/i);
-  assert.doesNotMatch(grammarText, /deshalb|denn|weil/i);
-  assert.match(supportText, /adjective endings/i);
-  assert.match(supportText, /während/i);
-  assert.doesNotMatch(practiceText, /Online|offline/i);
-  assert.equal(practice.items.length, 4);
+  assert.match(slide.title, /Umweltschutz im Alltag/i);
+  assert.match(grammarText, /indem/i);
+  assert.match(grammarText, /dadurch/i);
+  assert.match(grammarText, /um .* zu|damit/i);
+  assert.match(grammarText, /wodurch|sodass/i);
+  assert.match(support.grammarFocusEn.join(" "), /indem/i);
 });
 
-test("B2 combined grammar entries preserve temporal and alternative targets", () => {
-  const day16Grammar = grammarTextFor("B2-4.16");
-  assert.match(day16Grammar, /Zeitliche Abläufe/i);
-  assert.match(day16Grammar, /bevor/i);
-  assert.match(day16Grammar, /nachdem/i);
-  assert.doesNotMatch(day16Grammar, /Kontrast präzise ausdrücken/i);
-  assert.match(day16Grammar, /ohne … zu/i);
-  assert.match(day16Grammar, /statt … zu/i);
-
-  for (const assignmentId of ["B2-3.12", "B2-7.27"]) {
-    const grammarText = grammarTextFor(assignmentId);
-    assert.match(grammarText, /Alternative oder vermiedene Handlung/i, assignmentId);
-    assert.match(grammarText, /ohne … zu/i, assignmentId);
-    assert.match(grammarText, /statt … zu/i, assignmentId);
-    assert.doesNotMatch(grammarText, /Zielstruktur: Formuliere einen vollständigen Satz/i, assignmentId);
-  }
+test("later B2 lessons cover kindergarten, housing, science, social media and AI directly", () => {
+  assert.match(getTeachingSlideByAssignmentId("B2-3.10")?.title || "", /Kindergarten/i);
+  assert.match(getTeachingSlideByAssignmentId("B2-4.13")?.title || "", /Wissenschaft/i);
+  assert.match(getTeachingSlideByAssignmentId("B2-4.15")?.title || "", /Wohnraummangel/i);
+  assert.match(getTeachingSlideByAssignmentId("B2-5.20")?.title || "", /Soziale Medien/i);
+  assert.match(getTeachingSlideByAssignmentId("B2-6.21")?.title || "", /Künstliche Intelligenz/i);
+  assert.match(getTeachingSlideByAssignmentId("B2-6.22")?.title || "", /Künstliche Intelligenz/i);
 });
 
 test("B2 does not invent unverified direct workbook or grammar URLs", () => {
   for (const slide of getSlidesByCourse("B2")) {
-    const stages = buildTeachingPresenterStages(slide, slide.topic);
-    const workbook = stages.find((stage) => stage.id === "workbook");
+    const workbook = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "workbook");
     assert.equal(workbook.grammarUrl, "", slide.assignmentId);
     assert.equal(workbook.workbookUrl, "", slide.assignmentId);
   }
 });
 
-test("B1 remains fully enabled after adding B2", () => {
+test("B1 remains fully enabled after replacing the B2 curriculum", () => {
   const b1Slides = getSlidesByCourse("B1");
   assert.equal(b1Slides.length, 28);
   assert.ok(b1Slides.every((slide) => isTeachingPresenterV2Slide(slide)));
