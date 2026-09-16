@@ -25,12 +25,7 @@ patchFile(new URL("../src/utils/objectiveMarking.js", import.meta.url), (source)
 
   const labelledAnswerAnchor = '  const accepted = rawCandidates.flatMap(splitAlternatives).map(normalizeAnswer).filter(Boolean);';
   const labelledAnswerReplacement = `  const labelledAcceptedAnswers = rawCandidates.flatMap((candidate) => {\n    const text = String(candidate || "").trim();\n    if (!text || /^[A-FX]\\s*[).:-]/i.test(text)) return [];\n\n    const labelled = text.match(/^[^:\\n]{2,100}:\\s*(?:'([^']+)'|"([^"]+)"|“([^”]+)”|„([^“]+)“)\\s*$/);\n    const phrase = [labelled?.[1], labelled?.[2], labelled?.[3], labelled?.[4]].find(Boolean)?.trim();\n    if (!phrase) return [];\n\n    const withoutPoliteLeadIn = phrase\n      .replace(/^\\s*(?:entschuldigung|entschuldigen\\s+sie(?:\\s+bitte)?|bitte)\\s*[,;:!.-]?\\s*/i, "")\n      .trim();\n    return [phrase, withoutPoliteLeadIn].filter(Boolean);\n  });\n  const accepted = [...rawCandidates.flatMap(splitAlternatives), ...labelledAcceptedAnswers]\n    .map(normalizeAnswer)\n    .filter(Boolean);`;
-  source = replaceOnce(
-    source,
-    labelledAnswerAnchor,
-    labelledAnswerReplacement,
-    "objective labelled reference answers",
-  );
+  source = replaceOnce(source, labelledAnswerAnchor, labelledAnswerReplacement, "objective labelled reference answers");
 
   return source;
 });
@@ -76,12 +71,13 @@ patchFile(new URL("../src/utils/naturalMarkingFeedback.js", import.meta.url), (s
     `export function assignmentHasScoredWriting(referenceEntry = {}) {\n  const rawAnswers = referenceEntry.rawAnswers || referenceEntry.answers || {};\n  const answerValues = Object.values(rawAnswers).map((value) => String(value || "").trim().toLowerCase());\n  if (${placeholderExpression}) return true;\n\n  const writingParts = [`,
     "feedback placeholder writing classification",
   );
-  source = replaceOnce(
-    source,
-    '  if (writingParts.includes("teil2")) return true;',
-    '  if (writingParts.includes("teil1") || writingParts.includes("teil2") || writingParts.includes("main")) return true;',
-    "A1 multi-part writing registration",
-  );
+  const currentWritingRegistration = '  if (writingParts.includes("teil2") || writingParts.includes("main")) return true;';
+  const legacyWritingRegistration = '  if (writingParts.includes("teil2")) return true;';
+  const writingRegistration = '  if (writingParts.includes("teil1") || writingParts.includes("teil2") || writingParts.includes("main")) return true;';
+  if (!source.includes(writingRegistration)) {
+    if (source.includes(currentWritingRegistration)) source = source.replace(currentWritingRegistration, writingRegistration);
+    else source = replaceOnce(source, legacyWritingRegistration, writingRegistration, "A1 multi-part writing registration");
+  }
   return source;
 });
 
