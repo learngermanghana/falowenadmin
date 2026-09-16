@@ -7,17 +7,22 @@ const helperAnchor = 'function getFlatAnswerCandidateSequences(submissionText = 
 const helper = `function extractSideBySideAnswerCandidate(text = "") {
   const leftEntries = [];
   const rightEntries = [];
+  let sawWideColumns = false;
 
   for (const rawLine of String(text || "").split(/\\r?\\n/)) {
     const columns = rawLine.match(/^\\s*(.+?\\S)\\s{3,}(\\S.*)$/);
-    if (!columns) continue;
+    const leftText = columns ? columns[1] : rawLine;
 
-    const left = parseNumberedEntriesFromChunk(columns[1].trim());
+    const left = parseNumberedEntriesFromChunk(leftText.trim());
     if (left.length) leftEntries.push(...left);
 
+    if (!columns) continue;
+    sawWideColumns = true;
     const right = parseNumberedEntriesFromChunk(columns[2].trim());
     if (right.length) rightEntries.push(...right);
   }
+
+  if (!sawWideColumns) return [];
 
   const orderedSequentialAnswers = (entries = []) => {
     const byNumber = new Map();
@@ -57,4 +62,29 @@ if (!source.includes("addCandidate(extractSideBySideAnswerCandidate(submissionTe
 }
 
 fs.writeFileSync(target, source);
-console.log("Side-by-side objective answer columns are parsed as separate numbered groups.");
+
+const regressionSubmission = `Teil 1.                              Teil 2
+1)heiBt.                          Hello!Guten morgen,Ich heiBe Sala, Ich komme aus Ghana und
+2)heiBt.                          Ich wohne in Accra.
+3)kommen
+4)kommen
+5)kommt.                       Teil 3
+6)kommt.                      1)A.     2)C.     3)D.    4)B.   5)A
+7)wohne
+8)wohnst
+9)wohnt`;
+
+const { computeObjectiveScore } = await import(`${target.href}?sideBySideObjectiveColumns=1`);
+const regressionResult = computeObjectiveScore("A1-1.2", regressionSubmission);
+const wrongQuestions = Object.entries(regressionResult.details)
+  .filter(([, detail]) => detail.correct === false)
+  .map(([question]) => Number(question));
+if (
+  regressionResult.totalCount !== 14
+  || regressionResult.correctCount !== 12
+  || wrongQuestions.join(",") !== "3,9"
+) {
+  throw new Error(`Side-by-side A1-1.2 regression failed: ${regressionResult.correctCount}/${regressionResult.totalCount}; wrong=${wrongQuestions.join(",")}`);
+}
+
+console.log("Side-by-side objective answer columns are parsed separately; A1-1.2 regression = 12/14 (Q3, Q9 wrong).");
