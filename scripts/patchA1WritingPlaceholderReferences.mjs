@@ -19,6 +19,10 @@ patchFile(new URL("../src/utils/objectiveMarking.js", import.meta.url), (source)
   const replacement = `function isWritingPart(referenceEntry = {}, partId = "main") {\n  const normalizedPartId = normalizePartId(partId);\n  const rawAnswers = referenceEntry.rawAnswers || referenceEntry.answers || {};\n  const answerValues = Object.values(rawAnswers).map((value) => String(value || "").trim().toLowerCase());\n  const writingPlaceholder = ${placeholderExpression};\n  if (normalizedPartId === "main" && writingPlaceholder) return true;`;
   source = replaceOnce(source, anchor, replacement, "objective writing placeholder");
 
+  const buildReferenceAnchor = 'function buildReferenceItems(referenceEntry = {}) {\n  if (!referenceEntry || typeof referenceEntry !== "object") return [];\n  const items = [];';
+  const buildReferenceReplacement = 'function buildReferenceItems(referenceEntry = {}) {\n  if (!referenceEntry || typeof referenceEntry !== "object") return [];\n  // A writing-only assignment must never turn placeholder metadata into an objective question.\n  if (String(referenceEntry.format || "").trim().toLowerCase() === "writing") return [];\n  const declaredReferenceParts = referenceEntry.referenceAnswerParts ?? referenceEntry.reference_answer_parts;\n  const declaredWritingParts = referenceEntry.writingParts ?? referenceEntry.writing_parts;\n  if (Array.isArray(declaredReferenceParts) && declaredReferenceParts.length === 0 && Array.isArray(declaredWritingParts) && declaredWritingParts.length > 0) return [];\n  const items = [];';
+  source = replaceOnce(source, buildReferenceAnchor, buildReferenceReplacement, "writing-only objective exclusion");
+
   const labelledAnswerAnchor = '  const accepted = rawCandidates.flatMap(splitAlternatives).map(normalizeAnswer).filter(Boolean);';
   const labelledAnswerReplacement = `  const labelledAcceptedAnswers = rawCandidates.flatMap((candidate) => {\n    const text = String(candidate || "").trim();\n    if (!text || /^[A-FX]\\s*[).:-]/i.test(text)) return [];\n\n    const labelled = text.match(/^[^:\\n]{2,100}:\\s*(?:'([^']+)'|"([^"]+)"|“([^”]+)”|„([^“]+)“)\\s*$/);\n    const phrase = [labelled?.[1], labelled?.[2], labelled?.[3], labelled?.[4]].find(Boolean)?.trim();\n    if (!phrase) return [];\n\n    const withoutPoliteLeadIn = phrase\n      .replace(/^\\s*(?:entschuldigung|entschuldigen\\s+sie(?:\\s+bitte)?|bitte)\\s*[,;:!.-]?\\s*/i, "")\n      .trim();\n    return [phrase, withoutPoliteLeadIn].filter(Boolean);\n  });\n  const accepted = [...rawCandidates.flatMap(splitAlternatives), ...labelledAcceptedAnswers]\n    .map(normalizeAnswer)\n    .filter(Boolean);`;
   source = replaceOnce(
@@ -40,9 +44,27 @@ patchFile(new URL("../src/utils/answerKeyNormalizer.js", import.meta.url), (sour
   );
   source = replaceOnce(
     source,
+    '  const parts = splitAnswersIntoParts(rawAnswers);\n  const totalAnswers = countPartAnswers(parts);',
+    '  // Placeholder text belongs to the writing manifest; it is not a reference answer.\n  const parts = (format === "writing" && placeholderWriting) ? {} : splitAnswersIntoParts(rawAnswers);\n  const totalAnswers = countPartAnswers(parts);',
+    "answer-key placeholder part exclusion",
+  );
+  source = replaceOnce(
+    source,
     '  const writingParts = explicitWritingParts.length ? explicitWritingParts : (isA2OrB1 ? ["teil2"] : []);',
     '  const writingParts = explicitWritingParts.length ? explicitWritingParts : (placeholderWriting ? ["main"] : (isA2OrB1 ? ["teil2"] : []));',
     "answer-key placeholder writing part",
+  );
+  source = replaceOnce(
+    source,
+    '  const referenceAnswerParts = normalizePartList(\n    sourceEntry.referenceAnswerParts || sourceEntry.reference_answer_parts,\n    Object.keys(parts || {}).filter((partId) => !writingParts.includes(partId) && !excludedParts.includes(partId)),\n  );',
+    '  const declaredReferenceAnswerParts = sourceEntry.referenceAnswerParts ?? sourceEntry.reference_answer_parts;\n  const fallbackReferenceAnswerParts = Object.keys(parts || {}).filter((partId) => !writingParts.includes(partId) && !excludedParts.includes(partId));\n  // An explicit [] means “there are no objective reference parts”; do not replace it with a fallback main part.\n  const referenceAnswerParts = Array.isArray(declaredReferenceAnswerParts)\n    ? normalizePartList(declaredReferenceAnswerParts)\n    : normalizePartList(declaredReferenceAnswerParts, fallbackReferenceAnswerParts);',
+    "explicit empty reference parts",
+  );
+  source = replaceOnce(
+    source,
+    '    .filter((entry) => entry.assignmentKey && entry.totalAnswers > 0);',
+    '    .filter((entry) => entry.assignmentKey && (entry.totalAnswers > 0 || entry.writingParts?.length > 0));',
+    "keep writing-only registry entries",
   );
   return source;
 });
@@ -57,8 +79,8 @@ patchFile(new URL("../src/utils/naturalMarkingFeedback.js", import.meta.url), (s
   source = replaceOnce(
     source,
     '  if (writingParts.includes("teil2")) return true;',
-    '  if (writingParts.includes("teil2") || writingParts.includes("main")) return true;',
-    "main writing registration",
+    '  if (writingParts.includes("teil1") || writingParts.includes("teil2") || writingParts.includes("main")) return true;',
+    "A1 multi-part writing registration",
   );
   return source;
 });
@@ -79,6 +101,22 @@ patchFile(new URL("../src/utils/autoMarking.js", import.meta.url), (source) => {
   return source;
 });
 
+patchFile(new URL("../src/pages/MarkingPage.jsx", import.meta.url), (source) => {
+  source = replaceOnce(
+    source,
+    '      const deterministicAssignmentId = getObjectiveAssignmentId(\n        registryEntry?.assignmentKey,',
+    '      // The checked-in dictionary is the canonical curriculum manifest. If Firestore still has an older\n      // A1 writing record, do not let that stale registry turn the placeholder answer into an objective question.\n      const localWritingOnlyReference = String(referenceEntry?.format || "").trim().toLowerCase() === "writing";\n      if (localWritingOnlyReference) {\n        const localAssignmentKey = getObjectiveAssignmentId(\n          referenceEntry?.assignment_id,\n          referenceEntry?.assignmentId,\n          assignmentIdValue,\n          selectedSubmission?.assignmentKey,\n          selectedSubmission?.assignmentId,\n        );\n        registryEntry = {\n          ...(registryEntry || {}),\n          ...referenceEntry,\n          assignmentKey: localAssignmentKey || registryEntry?.assignmentKey || "",\n          assignmentId: localAssignmentKey || referenceEntry?.assignment_id || referenceEntry?.assignmentId || "",\n          rawAnswers: referenceEntry?.answers || referenceEntry?.rawAnswers || {},\n          answers: referenceEntry?.answers || referenceEntry?.rawAnswers || {},\n          format: "writing",\n          writingParts: referenceEntry?.writingParts || referenceEntry?.expectedParts || ["main"],\n          aiGradedParts: referenceEntry?.aiGradedParts || referenceEntry?.writingParts || referenceEntry?.expectedParts || ["main"],\n          referenceAnswerParts: [],\n        };\n      }\n\n      const deterministicAssignmentId = getObjectiveAssignmentId(\n        registryEntry?.assignmentKey,',
+    "Marking page local writing manifest override",
+  );
+  source = replaceOnce(
+    source,
+    '      const deterministicObjective = computeObjectiveScore(deterministicAssignmentId, submissionText);',
+    '      const deterministicObjective = computeObjectiveScore(localWritingOnlyReference ? registryEntry : deterministicAssignmentId, submissionText);',
+    "Marking page writing-only deterministic score",
+  );
+  return source;
+});
+
 patchFile(new URL("../api/router.js", import.meta.url), (source) => {
   source = replaceOnce(
     source,
@@ -95,4 +133,4 @@ patchFile(new URL("../api/router.js", import.meta.url), (source) => {
   return source;
 });
 
-console.log("Placeholder-only answer keys are treated as AI-graded writing; quoted labelled objective answers also expose their actual answer phrase for matching.");
+console.log("Writing-only answer keys stay writing-only from dictionary normalization through MarkingPage, even when Firestore has stale objective metadata.");
