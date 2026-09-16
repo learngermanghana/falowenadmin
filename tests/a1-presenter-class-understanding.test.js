@@ -76,7 +76,7 @@ test("other A1 lessons also build ten distinct class questions from their own le
   assert.ok(classChecks.some((item) => /Sehr geehrte|formal|message|letter|Schreiben/i.test(`${item.questionDe} ${item.answerDe}`)));
 });
 
-test("A1 presenter makes the full-class question flow explicit and hides student rotation outside it", () => {
+test("A1 presenter keeps class participation available from the first slide and switches to unique questions for the understanding check", () => {
   const presenter = read("src/components/A1GrammarPresenter.jsx");
 
   assert.match(presenter, /getA1PresenterUnderstandingChecks/);
@@ -85,6 +85,9 @@ test("A1 presenter makes the full-class question flow explicit and hides student
   assert.match(presenter, /Next student →/);
   assert.match(presenter, /Continue lesson →/);
   assert.match(presenter, /if \(participationCheckMode\) return;/);
-  assert.match(presenter, /hidden={!participationCheckMode}/);
-  assert.match(presenter, /aria-hidden={!participationCheckMode}/);
+  assert.match(presenter, /className="presenter-participation-dock"/);
+  assert.match(presenter, /aria-label="Class participation controls"/);
+  assert.match(presenter, /questionContext=\{participationCheckMode \? stage\.id : "class-participation"\}/);
+  assert.doesNotMatch(presenter, /hidden={!participationCheckMode}/);
+  assert.doesNotMatch(presenter, /aria-hidden={!participationCheckMode}/);
 });
