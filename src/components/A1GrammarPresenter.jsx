@@ -209,13 +209,13 @@ export default function A1GrammarPresenter({
           </div>
         </header>
 
-        <div hidden={!participationCheckMode} aria-hidden={!participationCheckMode}>
+        <div className="presenter-participation-dock" aria-label="Class participation controls">
           <PresenterStudentPicker
             slide={slide}
             questions={participationCheckMode ? stage.items : []}
-            questionContext={participationCheckMode ? stage.id : ""}
+            questionContext={participationCheckMode ? stage.id : "class-participation"}
             onQuestionChange={setParticipationQuestion}
-            renderQuestionExternally
+            renderQuestionExternally={participationCheckMode}
           />
         </div>
 
@@ -229,7 +229,7 @@ export default function A1GrammarPresenter({
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
                 <strong>A1 teaching method</strong>
                 <p>Language focus → examples → understanding check → error correction → practice/workbook transfer → exit check.</p>
-                <small>The live understanding check gives each learner a unique question. Controlled gap-fill and form drills stay in the workbook when a workbook is linked.</small>
+                <small>The class participation toolbar stays available from the first slide. During the live understanding check, Falowen gives each selected learner a unique lesson question.</small>
               </div>
             </>
           ) : stage.type === "check" ? (
