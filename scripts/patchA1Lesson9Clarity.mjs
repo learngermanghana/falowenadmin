@@ -131,3 +131,5 @@ if (!challengeBlock || /direction|location|route|geradeaus/i.test(challengeBlock
 }
 
 console.log("A1-9: recall is early; the later class challenge tests only food and negation.");
+
+await import("./patchA1TopicSpecificFallback.mjs");
