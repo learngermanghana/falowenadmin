@@ -41,7 +41,7 @@ test("A1 mastery checks test concepts instead of repeating workbook gap-fill dri
   assert.match(A1_GRAMMAR_CHECKS["A1-12.1"][0].questionDe, /concept behind two-way prepositions/i);
 });
 
-test("A1 presenter is routed separately from A2-C1 and does not depend on speaking questions", () => {
+test("A1 presenter uses the language-first classroom flow with retrieval, speaking and workbook transfer", () => {
   const page = fs.readFileSync(new URL("../src/pages/TeachingSlidesPage.jsx", import.meta.url), "utf8");
   const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
 
@@ -50,10 +50,21 @@ test("A1 presenter is routed separately from A2-C1 and does not depend on speaki
   assert.match(page, /<A1GrammarPresenter/);
   assert.match(page, /A1-TUTORIAL/);
 
-  assert.match(presenter, /Regel verstehen/);
-  assert.match(presenter, /Grammatik-Check/);
-  assert.match(presenter, /Typische Fehler erkennen/);
+  assert.match(presenter, /A1_LANGUAGE_FIRST_FLOW_VERSION/);
+  assert.match(presenter, /Remember before we start/);
+  assert.match(presenter, /Say it before we explain it/);
+  assert.match(presenter, /1-minute knowledge/);
+  assert.match(presenter, /Pronunciation focus/);
+  assert.match(presenter, /Muster und Regel verstehen/);
+  assert.match(presenter, /Build the sentence/);
+  assert.match(presenter, /Use it in a short conversation/);
+  assert.match(presenter, /up to 15 different questions/);
+  assert.match(presenter, /Typical mistakes to fix/);
+  assert.match(presenter, /Cumulative A1 checkpoint/);
+  assert.match(presenter, /Before you leave this lesson/);
+  assert.match(presenter, /Now complete the workbook/);
   assert.match(presenter, /Exit Check/);
-  assert.doesNotMatch(presenter, /studentQuestionsDe/);
+  assert.match(presenter, /studentQuestionsDe/);
+  assert.match(presenter, /Start workbook/);
   assert.doesNotMatch(presenter, /requiresQuestionModel/);
 });
