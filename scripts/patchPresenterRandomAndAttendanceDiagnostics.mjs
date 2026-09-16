@@ -59,3 +59,5 @@ if (panelSource.includes(oldDiagnostics)) {
 fs.writeFileSync(panelPath, panelSource, "utf8");
 
 console.log("Presenter picking is truly random per round and attendance diagnostics show real recipient/session counts.");
+
+await import("./patchA1Day2ContactChallenge.mjs");
