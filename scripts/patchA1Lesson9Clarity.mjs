@@ -1,87 +1,65 @@
 import fs from "node:fs";
 
-const presenterPath = new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url);
-let presenterSource = fs.readFileSync(presenterPath, "utf8");
+function patchOnce(source, from, to, label) {
+  if (source.includes(to)) return source;
+  if (!source.includes(from)) throw new Error(`${label} anchor missing.`);
+  return source.replace(from, to);
+}
 
-const recallMarker = "A1_LESSON_9_TOPIC_RECALL";
-if (!presenterSource.includes(recallMarker)) {
-  const anchor = `function buildRetrievalChecks(slide = {}) {
+// 1) Presenter: recall stays early; later application prompts are explicit.
+const presenterPath = new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url);
+let presenter = fs.readFileSync(presenterPath, "utf8");
+
+if (!presenter.includes("A1_LESSON_9_TOPIC_RECALL")) {
+  const from = `function buildRetrievalChecks(slide = {}) {
   const day = Number(slide.dayNumber || 0);
   if (day <= 1) return [];
 
   const bank = [`;
-
-  const replacement = `function buildRetrievalChecks(slide = {}) {
+  const to = `function buildRetrievalChecks(slide = {}) {
   const day = Number(slide.dayNumber || 0);
   if (day <= 1) return [];
 
-  // A1_LESSON_9_TOPIC_RECALL: recall belongs only near the start of A1-9.
-  // It revisits Modalverben and Goethe A1 Sprechen Teil 3, the lessons directly
-  // before A1-9. The later class challenge must test today's food/negation topic.
+  // A1_LESSON_9_TOPIC_RECALL
   const assignmentId = cleanText(slide.assignmentId).toUpperCase();
   if (assignmentId === "A1-9") {
     return [
-      makeCheck(
-        "Make one polite Goethe Teil 3 request with können + bitte.",
-        "For example: Kannst du mir bitte den Stift geben?",
-        "Recall the polite request pattern from the previous Goethe speaking lesson.",
-      ),
-      makeCheck(
-        "Your partner says: ‘Kannst du mir bitte den Stift geben?’ How do you react politely?",
-        "For example: Ja, gern. / Ja, natürlich.",
-        "A short appropriate reaction is enough.",
-      ),
-      makeCheck(
-        "Make one sentence with können, müssen or möchten.",
-        "For example: Ich kann Deutsch sprechen. / Wir müssen heute lernen. / Ich möchte Wasser trinken.",
-        "Recall the modal-verb lesson immediately before the Goethe speaking lesson.",
-      ),
+      makeCheck("Make one polite Goethe Teil 3 request with können + bitte.", "For example: Kannst du mir bitte den Stift geben?", "Recall only; this belongs near the start of the lesson."),
+      makeCheck("Your partner says: ‘Kannst du mir bitte den Stift geben?’ How do you react politely?", "For example: Ja, gern. / Ja, natürlich.", "Recall only."),
+      makeCheck("Make one sentence with können, müssen or möchten.", "For example: Ich kann Deutsch sprechen. / Wir müssen heute lernen. / Ich möchte Wasser trinken.", "Recall the previous modal-verb lesson."),
     ];
   }
 
   const bank = [`;
-
-  if (!presenterSource.includes(anchor)) {
-    throw new Error("A1 lesson 9 retrieval anchor missing. Run patchA1LanguageFirstFlow first.");
-  }
-  presenterSource = presenterSource.replace(anchor, replacement);
+  presenter = patchOnce(presenter, from, to, "A1-9 recall");
 }
 
-const promptMarker = "A1_PHRASE_APPLICATION_CLARITY";
-if (!presenterSource.includes(promptMarker)) {
-  const anchor = `    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => makeCheck(
+if (!presenter.includes("A1_PHRASE_APPLICATION_CLARITY")) {
+  const from = `    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => makeCheck(
       \`Use this language in a new sentence: “\${phrase}”\`,
       \`Accept a new correct sentence that follows the pattern in “\${phrase}”.\`,
       "Do not accept simple repetition when the learner can reasonably personalise the phrase.",
     )),`;
-
-  const replacement = `    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => makeCheck(
+  const to = `    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => makeCheck(
       // A1_PHRASE_APPLICATION_CLARITY
       \`Change one clear detail in this model and say the new complete sentence: “\${phrase}”\`,
-      "Keep the same sentence pattern, but change one clear detail such as the person, action, food/object, time or place.",
-      "The learner should produce a different complete sentence, not simply repeat the model.",
+      "Keep the same pattern, but change one clear detail such as the person, action, food/object, time or place.",
+      "Produce a different complete sentence rather than repeating the model.",
     )),`;
-
-  if (!presenterSource.includes(anchor)) {
-    throw new Error("A1 phrase-application prompt anchor missing.");
-  }
-  presenterSource = presenterSource.replace(anchor, replacement);
+  presenter = patchOnce(presenter, from, to, "A1 phrase application");
 }
+fs.writeFileSync(presenterPath, presenter);
 
-fs.writeFileSync(presenterPath, presenterSource);
-
+// 2) Slide data: A1-9 gets beginner food/negation language instead of generic dass phrases.
 const slidesPath = new URL("../src/data/teachingSlides.js", import.meta.url);
-let slidesSource = fs.readFileSync(slidesPath, "utf8");
+let slides = fs.readFileSync(slidesPath, "utf8");
 
-const slideMarker = "A1_LESSON_9_TOPIC_LANGUAGE";
-if (!slidesSource.includes(slideMarker)) {
-  const helperAnchor = `\nfunction buildLevelSlides(level) {`;
+if (!slides.includes("A1_LESSON_9_TOPIC_LANGUAGE")) {
+  const buildAnchor = `\nfunction buildLevelSlides(level) {`;
   const helper = `
 function enhanceA1Lesson9TopicLanguage(slide) {
   // A1_LESSON_9_TOPIC_LANGUAGE
-  const assignmentId = String(slide.assignmentId || "").trim().toUpperCase();
-  if (assignmentId !== "A1-9") return slide;
-
+  if (String(slide.assignmentId || "").trim().toUpperCase() !== "A1-9") return slide;
   return {
     ...slide,
     objective: "Students talk about food and make simple negative sentences with kein and nicht.",
@@ -94,130 +72,62 @@ function enhanceA1Lesson9TopicLanguage(slide) {
       "Ich koche heute nicht.",
     ],
     teacherNotesEn: [
-      "Keep the useful language at A1 level: short food sentences learners can immediately personalise.",
-      "Contrast kein with a noun and nicht with a verb or adjective using concrete examples before asking for rules.",
+      "Keep the useful language at A1 level and tied to food and negation.",
+      "Contrast kein with nouns and nicht with verbs or adjectives using concrete examples.",
       "Do not introduce opinion clauses with dass in this lesson.",
-      "Use familiar food vocabulary so the grammar, not new vocabulary, remains the main challenge.",
     ],
   };
 }
 `;
+  if (!slides.includes(buildAnchor)) throw new Error("A1-9 slide helper anchor missing.");
+  slides = slides.replace(buildAnchor, `${helper}${buildAnchor}`);
 
-  if (!slidesSource.includes(helperAnchor)) {
-    throw new Error("A1 lesson 9 teaching-slide helper anchor missing.");
-  }
-  slidesSource = slidesSource.replace(helperAnchor, `${helper}${helperAnchor}`);
+  const a2Anchor = `const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);`;
+  if (!slides.includes(a2Anchor)) throw new Error("A1/A2 slide boundary anchor missing.");
+  slides = slides.replace(a2Anchor, `const topicAlignedA1Slides = a1Slides.map(enhanceA1Lesson9TopicLanguage);\n${a2Anchor}`);
 
-  // Earlier prebuild patches may rewrite the internal a1Slides mapping. Add the
-  // A1-9 enhancement after that mapping instead of depending on its exact shape.
-  const generatedA2Anchor = `const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);`;
-  const alignedA1Line = `const topicAlignedA1Slides = a1Slides.map(enhanceA1Lesson9TopicLanguage);`;
-  if (!slidesSource.includes(generatedA2Anchor)) {
-    throw new Error("A1/A2 slide boundary anchor missing for A1-9 topic-language patch.");
-  }
-  slidesSource = slidesSource.replace(generatedA2Anchor, `${alignedA1Line}\n${generatedA2Anchor}`);
-
-  const exportAnchor = `export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];`;
-  const exportReplacement = `export const teachingSlides = [...topicAlignedA1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];`;
-  if (!slidesSource.includes(exportAnchor)) {
-    throw new Error("Teaching slide export anchor missing for A1-9 topic-language patch.");
-  }
-  slidesSource = slidesSource.replace(exportAnchor, exportReplacement);
+  const exportPattern = /export const teachingSlides = \[\.\.\.a1Slides,/;
+  if (!exportPattern.test(slides)) throw new Error("Teaching slide export anchor missing.");
+  slides = slides.replace(exportPattern, "export const teachingSlides = [...topicAlignedA1Slides,");
 }
+fs.writeFileSync(slidesPath, slides);
 
-fs.writeFileSync(slidesPath, slidesSource);
+// 3) Late class challenge: only today's A1-9 knowledge, never recall/directions.
+const checksPath = new URL("../src/data/a1PresenterUnderstandingChecks.js", import.meta.url);
+let checks = fs.readFileSync(checksPath, "utf8");
 
-const understandingPath = new URL("../src/data/a1PresenterUnderstandingChecks.js", import.meta.url);
-let understandingSource = fs.readFileSync(understandingPath, "utf8");
-
-const challengeMarker = "A1_LESSON_9_CURRENT_TOPIC_CHALLENGE";
-if (!understandingSource.includes(challengeMarker)) {
+if (!checks.includes("A1_LESSON_9_CURRENT_TOPIC_CHALLENGE")) {
   const anchor = `const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
   "A1-4.7": [`;
-  const replacement = `const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
-  // A1_LESSON_9_CURRENT_TOPIC_CHALLENGE: this pool is used by the later
-  // class challenge. It deliberately excludes recall, directions and locations.
+  const override = `const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  // A1_LESSON_9_CURRENT_TOPIC_CHALLENGE
   "A1-9": [
-    check(
-      "What is the basic difference between kein and nicht?",
-      "Use kein with a noun phrase such as kein Brot / keine Milch / keinen Käse. Use nicht to negate a verb, adjective or the wider statement.",
-    ),
-    check(
-      "Make this sentence negative: ‘Ich esse Käse.’",
-      "For example: Ich esse keinen Käse.",
-    ),
-    check(
-      "Make this sentence negative: ‘Wir haben Milch.’",
-      "Wir haben keine Milch.",
-    ),
-    check(
-      "Make this sentence negative: ‘Die Suppe ist warm.’",
-      "Die Suppe ist nicht warm.",
-    ),
-    check(
-      "Make this sentence negative: ‘Ich koche heute.’",
-      "Ich koche heute nicht.",
-    ),
-    check(
-      "Choose kein or nicht: ‘Ich trinke ___ Kaffee.’ Explain your choice.",
-      "keinen: Ich trinke keinen Kaffee. Kaffee is the noun being negated, and it is masculine accusative here.",
-    ),
-    check(
-      "Choose kein or nicht: ‘Das Essen ist ___ lecker.’ Explain your choice.",
-      "nicht: Das Essen ist nicht lecker. The adjective lecker is being negated.",
-    ),
-    check(
-      "Why do we say ‘keine Milch’ but ‘keinen Käse’?",
-      "kein changes with the noun. Milch is feminine, so keine; Käse is masculine accusative after essen, so keinen.",
-    ),
-    check(
-      "Say one food you do not eat using kein/keine/keinen.",
-      "For example: Ich esse keinen Fisch. / Ich esse keine Wurst. Accept another correct food sentence.",
-    ),
-    check(
-      "Say one food or drink you do not have using kein/keine/keinen.",
-      "For example: Ich habe keinen Kaffee. / Ich habe keine Milch. Accept another correct sentence.",
-    ),
-    check(
-      "Say one sentence with nicht about food or cooking.",
-      "For example: Die Suppe ist nicht heiß. / Ich koche heute nicht.",
-    ),
-    check(
-      "Correct this sentence: ‘Ich esse nicht Käse.’",
-      "In this meaning use kein: Ich esse keinen Käse.",
-    ),
+    check("What is the basic difference between kein and nicht?", "Use kein with a noun phrase; use nicht for a verb, adjective or the wider statement."),
+    check("Make this sentence negative: ‘Ich esse Käse.’", "Ich esse keinen Käse."),
+    check("Make this sentence negative: ‘Wir haben Milch.’", "Wir haben keine Milch."),
+    check("Make this sentence negative: ‘Die Suppe ist warm.’", "Die Suppe ist nicht warm."),
+    check("Make this sentence negative: ‘Ich koche heute.’", "Ich koche heute nicht."),
+    check("Choose kein or nicht: ‘Ich trinke ___ Kaffee.’", "keinen: Ich trinke keinen Kaffee."),
+    check("Choose kein or nicht: ‘Das Essen ist ___ lecker.’", "nicht: Das Essen ist nicht lecker."),
+    check("Why do we say ‘keine Milch’ but ‘keinen Käse’?", "Milch is feminine; Käse is masculine accusative after essen."),
+    check("Say one food you do not eat using kein/keine/keinen.", "For example: Ich esse keinen Fisch. / Ich esse keine Wurst."),
+    check("Say one food or drink you do not have using kein/keine/keinen.", "For example: Ich habe keinen Kaffee. / Ich habe keine Milch."),
+    check("Say one sentence with nicht about food or cooking.", "For example: Die Suppe ist nicht heiß. / Ich koche heute nicht."),
+    check("Correct this sentence: ‘Ich esse nicht Käse.’", "Ich esse keinen Käse."),
   ],
   "A1-4.7": [`;
-
-  if (!understandingSource.includes(anchor)) {
-    throw new Error("A1 understanding override anchor missing for A1-9 challenge patch.");
-  }
-  understandingSource = understandingSource.replace(anchor, replacement);
+  checks = patchOnce(checks, anchor, override, "A1-9 understanding override");
 }
+fs.writeFileSync(checksPath, checks);
 
-fs.writeFileSync(understandingPath, understandingSource);
-
-const finalPresenter = fs.readFileSync(presenterPath, "utf8");
 const finalSlides = fs.readFileSync(slidesPath, "utf8");
-const finalUnderstanding = fs.readFileSync(understandingPath, "utf8");
-
-if (!finalPresenter.includes(recallMarker)) {
-  throw new Error("A1-9 topic-specific recall patch is missing.");
+const finalChecks = fs.readFileSync(checksPath, "utf8");
+if (!finalSlides.includes("A1_LESSON_9_TOPIC_LANGUAGE") || finalSlides.includes('"Ich denke, dass ..."') && !finalSlides.includes('"Ich esse keinen Käse."')) {
+  throw new Error("A1-9 topic-language validation failed.");
 }
-if (!finalPresenter.includes(promptMarker)) {
-  throw new Error("A1 participation prompt clarity patch is missing.");
-}
-if (!finalSlides.includes(slideMarker)) {
-  throw new Error("A1-9 topic-specific useful language patch is missing.");
-}
-if (!finalSlides.includes('"Ich esse keinen Käse."')) {
-  throw new Error("A1-9 food/negation useful language is missing.");
-}
-if (!finalUnderstanding.includes(challengeMarker)) {
-  throw new Error("A1-9 current-topic class challenge is missing.");
-}
-if (/A1_LESSON_9_CURRENT_TOPIC_CHALLENGE[\s\S]{0,5000}(direction|location)/i.test(finalUnderstanding)) {
-  throw new Error("A1-9 class challenge still contains direction/location material.");
+const challengeBlock = finalChecks.match(/A1_LESSON_9_CURRENT_TOPIC_CHALLENGE[\s\S]*?"A1-4\.7"/)?.[0] || "";
+if (!challengeBlock || /direction|location|route|geradeaus/i.test(challengeBlock)) {
+  throw new Error("A1-9 class challenge contains unrelated material.");
 }
 
-console.log("A1-9 recall stays at the start; later class questions test only food and negation, with clearer prompts.");
+console.log("A1-9: recall is early; the later class challenge tests only food and negation.");
