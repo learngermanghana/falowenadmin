@@ -33,7 +33,9 @@ const generated = [
 }
 
 export function attachAdvancedSpeakingModels({ b2Slides = [], c1Slides = [] } = {}) {
-  attach(b2Slides, B2_SPEAKING_ANSWERS);
+  // B2 now owns its speaking models directly in b2PresenterSlides.js so they always
+  // match the redesigned exam-domain curriculum. Keep generated models for C1 only.
+  void b2Slides;
   attach(c1Slides, C1_SPEAKING_ANSWERS);
 }
 `,
@@ -113,5 +115,4 @@ if (fs.existsSync(b1RegressionPath)) {
   ]);
 }
 
-console.log("B2/C1 speaking models and canonical A1 teaching-slide day mapping are patched after curated replacements.");
-await import("./patchB2ExamDomainRedesign.mjs");
+console.log("C1 speaking models and canonical A1 teaching-slide day mapping are patched; B2 uses direct curriculum models.");
