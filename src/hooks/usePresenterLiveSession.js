@@ -16,6 +16,7 @@ export default function usePresenterLiveSession(slide = {}) {
   const [classContext, setClassContext] = useState(getPresenterClassContext);
   const [liveState, setLiveState] = useState({});
   const [syncState, setSyncState] = useState("waiting");
+  const [hasSnapshot, setHasSnapshot] = useState(false);
   const deviceId = useMemo(() => getPresenterDeviceId(), []);
   const classRecordId = normalize(classContext.classRecordId);
   const sessionDate = presenterLocalDateKey();
@@ -32,6 +33,7 @@ export default function usePresenterLiveSession(slide = {}) {
 
   useEffect(() => {
     setLiveState({});
+    setHasSnapshot(false);
     if (!classRecordId) {
       setSyncState("waiting");
       return undefined;
@@ -41,6 +43,7 @@ export default function usePresenterLiveSession(slide = {}) {
       classRecordId,
       (next) => {
         setLiveState(next || {});
+        setHasSnapshot(true);
         setSyncState("live");
       },
       (error) => {
@@ -79,6 +82,7 @@ export default function usePresenterLiveSession(slide = {}) {
     liveState,
     publish,
     syncState,
+    hasSnapshot,
     isRemoteState,
     isToday,
     sessionDate,
