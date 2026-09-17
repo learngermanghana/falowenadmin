@@ -61,17 +61,20 @@ export default function PresenterSessionTimer({ slide }) {
   const [remaining, setRemaining] = useState(durationSeconds);
   const [running, setRunning] = useState(false);
   const [endAt, setEndAt] = useState(0);
+  const [hydratedKey, setHydratedKey] = useState("");
 
   useEffect(() => {
+    setHydratedKey("");
     if (!durationSeconds) return;
     const restored = readStoredTimer(storageKey, durationSeconds);
     setRemaining(restored.remaining);
     setRunning(restored.running);
     setEndAt(restored.endAt);
+    setHydratedKey(storageKey);
   }, [durationSeconds, storageKey]);
 
   useEffect(() => {
-    if (!durationSeconds || typeof window === "undefined") return;
+    if (!durationSeconds || hydratedKey !== storageKey || typeof window === "undefined") return;
     try {
       window.sessionStorage.setItem(storageKey, JSON.stringify({
         date: localDateKey(),
@@ -82,7 +85,7 @@ export default function PresenterSessionTimer({ slide }) {
     } catch {
       // The timer still works if session storage is unavailable.
     }
-  }, [durationSeconds, storageKey, remaining, running, endAt]);
+  }, [durationSeconds, storageKey, hydratedKey, remaining, running, endAt]);
 
   useEffect(() => {
     if (!running || !endAt) return undefined;
