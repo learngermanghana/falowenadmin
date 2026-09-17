@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { compareExaminerResults } from "../src/utils/markingIntelligence.js";
 import {
   applyQuestionAwareWritingGuard,
   enrichOptionsWithQuestionAwareWritingTask,
@@ -192,4 +193,16 @@ test("Reuben-style complete B1 email is not left in the mid-80s without concrete
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
   assert.equal(result.ai.questionAwareWritingCalibration.applied, true);
   assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
+});
+
+test("a close second examiner at 0.68 confidence does not force tutor review by status alone", () => {
+  const comparison = compareExaminerResults(
+    { finalScore: 96, writingScore: 90, confidence: 0.84, status: "marked" },
+    { finalScore: 95, writingScore: 88, confidence: 0.68, status: "needs_review" },
+  );
+
+  assert.equal(comparison.scoreDelta, 1);
+  assert.equal(comparison.writingScoreDelta, 2);
+  assert.equal(comparison.requiresTutorReview, false);
+  assert.equal(comparison.agreement, "high");
 });
