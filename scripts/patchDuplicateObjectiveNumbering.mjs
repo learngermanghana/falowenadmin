@@ -165,30 +165,17 @@ const autoAnswersAfter = `function parseStudentObjectiveAnswers(submissionText =
   return parseStudentObjectiveAnswerTokens(splitObjectiveAnswerTokens(text), { expectedQuestionCount }).map;
 }`;
 
-const autoMarkerBefore = `function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = "unknown" } = {}) {
-  let studentAnswers = parseStudentObjectiveAnswers(submissionText);
-  const vocabularyAnswers = extractVocabularyAnswers(submissionText);
-  const entries = Array.isArray(referenceAnswers)
-    ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.questionKey || entry.sourceKey || \`Answer\${index + 1}\`, value: entry }))
-    : extractObjectiveEntries(referenceAnswers);
-  const total = entries.length;
-
-  studentAnswers = alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submissionText);`;
-
-const autoMarkerAfter = `function objectiveMarker(referenceAnswers = {}, submissionText = "", { partId = "unknown" } = {}) {
-  const vocabularyAnswers = extractVocabularyAnswers(submissionText);
-  const entries = Array.isArray(referenceAnswers)
-    ? referenceAnswers.map((entry, index) => ({ key: entry.questionNumber || entry.questionKey || entry.sourceKey || \`Answer\${index + 1}\`, value: entry }))
-    : extractObjectiveEntries(referenceAnswers);
-  const total = entries.length;
-  let studentAnswers = parseStudentObjectiveAnswers(submissionText, { expectedQuestionCount: total });
-
-  studentAnswers = alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submissionText);`;
+const autoMarkerBefore = `  let studentAnswers = parseStudentObjectiveAnswers(submissionText);`;
+const autoMarkerAfter = `  let studentAnswers = parseStudentObjectiveAnswers(submissionText, {
+    expectedQuestionCount: Array.isArray(referenceAnswers)
+      ? referenceAnswers.length
+      : extractObjectiveEntries(referenceAnswers).length,
+  });`;
 
 await patchFile(autoMarkingTarget, [
   { before: autoParserBefore, after: autoParserAfter, label: "auto-marking objective token parser" },
   { before: autoAnswersBefore, after: autoAnswersAfter, label: "auto-marking objective answer parser" },
-  { before: autoMarkerBefore, after: autoMarkerAfter, label: "auto-marking objective marker" },
+  { before: autoMarkerBefore, after: autoMarkerAfter, label: "auto-marking objective marker call" },
 ]);
 
 const routerTarget = new URL("../api/router.js", import.meta.url);
