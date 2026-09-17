@@ -40,4 +40,12 @@ function patchPresenter(path, label) {
 patchPresenter(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "General");
 patchPresenter(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "A1");
 
-console.log("Presenter fullscreen now targets the presenter shell and uses the full viewport safely.");
+const cssPath = new URL("../src/components/TeachingSlidePresenter.css", import.meta.url);
+let css = fs.readFileSync(cssPath, "utf8");
+const portraitMarker = "/* Tablet/phone portrait: do not force the presenter into a 16:9 landscape box. */";
+if (!css.includes(portraitMarker)) {
+  css += `\n\n${portraitMarker}\n@media (max-width: 900px) and (orientation: portrait) {\n  .presenter-shell {\n    padding: 0;\n    place-items: stretch;\n  }\n\n  .presenter-stage {\n    width: 100vw;\n    height: 100dvh;\n    min-height: 100dvh;\n    max-height: 100dvh;\n    aspect-ratio: auto;\n    border-radius: 0;\n  }\n\n  .presenter-content {\n    min-height: 0;\n    max-height: 100%;\n    overflow-y: auto;\n  }\n}\n`;
+}
+fs.writeFileSync(cssPath, css, "utf8");
+
+console.log("Presenter fullscreen and portrait viewport layout are safe across desktop, tablet and phone.");
