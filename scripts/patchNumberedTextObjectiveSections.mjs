@@ -23,8 +23,9 @@ replaceAny(
   [
     'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\\b[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
     'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)\\b[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
+    'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*\\(?\\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)(?=\\s|\\)|:|$)\\s*\\)?[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
   ],
-  'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*\\(?\\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)(?=\\s|\\)|:|$)\\s*\\)?[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
+  'const markerRegex = /(?:^|\\n)\\s*((?:teil|part)\\s*\\(?\\s*(?:[1-4]|iv|iii|ii|i|eins|zwei|drei|vier|one|two|three|four)(?=\\s|\\)|[.:;|·•–-]|$)\\s*\\)?[^\\n]*|(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b[^\\n]*)\\s*:?\\s*(?=\\n|$)/gi;',
   "part heading parser",
 );
 
