@@ -5,8 +5,9 @@ function clean(value = "") {
 }
 
 function normalizeAssignmentKey(value = "") {
-  const match = clean(value).toUpperCase().match(/\b(A2|B1)-\d+(?:\.\d+)?\b/);
-  return match?.[0] || clean(value).toUpperCase();
+  const source = clean(value).toUpperCase();
+  const match = source.match(/\b(A2|B1)-\d+(?:\.\d+)?\b/);
+  return match?.[0] || source;
 }
 
 function assignmentKeyFromOptions(options = {}) {
@@ -34,8 +35,7 @@ function writingPartFromSlide(slide = {}) {
 function inferTextType(detail = "") {
   const source = clean(detail).toLowerCase();
   if (/opinion|stellungnahme|argument|advantages?\s*\/\s*disadvantages?|vor-?\s*und\s*nachteile/.test(source)) return "opinion";
-  if (/complaint|beschwerde/.test(source)) return "formal_email";
-  if (/application|bewerbung/.test(source)) return "formal_email";
+  if (/complaint|beschwerde|application|bewerbung/.test(source)) return "formal_email";
   if (/email|e-mail|mail/.test(source)) return "email";
   if (/letter|brief/.test(source)) return "letter";
   if (/message|nachricht/.test(source)) return "message";
@@ -44,8 +44,8 @@ function inferTextType(detail = "") {
 
 function inferRegister(detail = "", slide = {}) {
   const source = `${clean(detail)} ${clean(slide.topic)} ${clean(slide.title)}`.toLowerCase();
-  if (/formal|complaint|beschwerde|application|bewerbung|landlord|vermieter|firma|unternehmen|schule|behörde/.test(source)) return "formal";
-  if (/friend|freund|freundin|family|familie|einladung|invitation/.test(source)) return "informal";
+  if (/formal|complaint|beschwerde|application|bewerbung|landlord|vermieter|behörde|authority|customer service|kundenservice/.test(source)) return "formal";
+  if (/friend|freund|freundin|family|familie|einladung|invitation|birthday|geburtstag/.test(source)) return "informal";
   return "unspecified";
 }
 
@@ -53,12 +53,13 @@ function extractTaskPoints(detail = "") {
   const source = clean(detail);
   if (!source) return [];
   const afterColon = source.includes(":") ? source.slice(source.indexOf(":") + 1) : source;
-  const clauses = afterColon
-    .replace(/\.$/, "")
-    .split(/\s*;\s*|\s*,\s*(?=(?:explain|describe|give|make|propose|ask|mention|discuss|justify|say|tell|write)\b)|\s+and\s+(?=(?:explain|describe|give|make|propose|ask|mention|discuss|justify|say|tell|write)\b)/i)
-    .map(clean)
-    .filter(Boolean);
-  return [...new Set(clauses)].slice(0, 6);
+  return [...new Set(
+    afterColon
+      .replace(/\.$/, "")
+      .split(/\s*;\s*|\s*,\s*(?=(?:explain|describe|give|make|propose|ask|mention|discuss|justify|say|tell|write)\b)|\s+and\s+(?=(?:explain|describe|give|make|propose|ask|mention|discuss|justify|say|tell|write)\b)/i)
+      .map(clean)
+      .filter(Boolean),
+  )].slice(0, 6);
 }
 
 function b1FriendshipTaskPoints() {
@@ -143,13 +144,19 @@ function readStructuredTask(result = {}) {
 
 function b1FriendshipLocalMissing(source = "") {
   const missing = [];
-  const met = /\bkennengelernt\b/i.test(source) && /\b(?:wir|uns|ich|mein(?:e|en|em|er)?\s+(?:freund|freundin))\b/i.test(source);
-  const specificFriendship = /\b(?:mein(?:e|en|em|er)?\s+(?:freund|freundin)|er|sie|ihm|ihr)\b/i.test(source)
-    && /\b(?:besonders|vertraue|unterstützt|hilft|ehrlich|zuverlässig|verständnisvoll|wichtig)\b/i.test(source);
-  const meetingSuggestion = /\b(?:wollen|können|sollen)\s+wir\b[^.!?]{0,90}\btreffen|\bwie\s+wäre\s+es\b[^.!?]{0,90}\btreffen|\bhast\s+du\b[^.!?]{0,70}\bzeit|\blass\s+uns\b[^.!?]{0,70}\btreffen|\btreffen\s+wir\s+uns\b|\bmöchtest\s+du\b[^.!?]{0,70}\btreffen/i.test(source);
-  if (!met) missing.push("Explain how you and the friend met");
-  if (!specificFriendship) missing.push("Explain why this specific friendship is special");
-  if (!meetingSuggestion) missing.push("Make a concrete suggestion for a meeting");
+
+  const hasMeetingStory = /\bkennengelernt\b/i.test(source)
+    && /\b(?:wir|uns|ich|mein(?:e|en|em|er)?\s+(?:best(?:e|en|em|er)?\s+)?(?:freund|freundin))\b/i.test(source);
+
+  const hasSpecificRelationship = /\b(?:mein(?:e|en|em|er)?\s+(?:best(?:e|en|em|er)?\s+)?(?:freund|freundin)|unsere\s+freundschaft|diese\s+freundschaft)\b/i.test(source);
+  const hasPersonalReason = /\b(?:besonders|vertraue|unterstützt|unterstützen|hilft|ehrlich|zuverlässig|verständnisvoll|wichtig)\b/i.test(source);
+  const hasWhySpecial = hasSpecificRelationship && hasPersonalReason;
+
+  const hasMeetingSuggestion = /\b(?:wollen|können|sollen)\s+wir\b[^.!?]{0,90}\btreffen|\bwie\s+wäre\s+es\b[^.!?]{0,90}\btreffen|\bhast\s+du\b[^.!?]{0,70}\bzeit|\blass\s+uns\b[^.!?]{0,70}\btreffen|\btreffen\s+wir\s+uns\b|\bmöchtest\s+du\b[^.!?]{0,70}\btreffen/i.test(source);
+
+  if (!hasMeetingStory) missing.push("Explain how you and the friend met");
+  if (!hasWhySpecial) missing.push("Explain why this specific friendship is special");
+  if (!hasMeetingSuggestion) missing.push("Make a concrete suggestion for a meeting");
   return missing;
 }
 
@@ -162,12 +169,14 @@ function emailBodyLooksLikeOpinionEssay(source = "") {
     /\bin\s+meinem\s+heimatland\b/i,
     /\bvor-?\s*und\s*nachteile\b/i,
   ].filter((pattern) => pattern.test(source)).length;
+
   const directInteraction = [
-    /\b(?:du|dir|dich|dein(?:e|en|em|er)?)\b/i,
-    /\?/.test(source) ? /\?/ : /$a/,
-    /\b(?:wir|uns)\b/i,
-    /\b(?:schreib\s+mir|was\s+meinst\s+du|hast\s+du\s+zeit|wollen\s+wir|können\s+wir)\b/i,
-  ].filter((pattern) => pattern.test(source)).length;
+    /\b(?:du|dir|dich|dein(?:e|en|em|er)?)\b/i.test(source),
+    /\?/.test(source),
+    /\b(?:wir|uns)\b/i.test(source),
+    /\b(?:schreib\s+mir|was\s+meinst\s+du|hast\s+du\s+zeit|wollen\s+wir|können\s+wir)\b/i.test(source),
+  ].filter(Boolean).length;
+
   return essayMarkers >= 2 && directInteraction <= 2;
 }
 
@@ -214,7 +223,9 @@ function updateWritingParts(parts = [], score) {
 
 function recomputeFinal(result = {}, writingScore) {
   const objective = numericPercent(result.objectiveScore);
-  if (objective === null || !Number(result.objectiveTotal || 0)) return numericPercent(result.finalScore ?? result.score) ?? writingScore;
+  if (objective === null || !Number(result.objectiveTotal || 0)) {
+    return numericPercent(result.finalScore ?? result.score) ?? writingScore;
+  }
   const objectiveWeight = Number(result.ai?.deterministicObjectiveWeight);
   const writingWeight = Number(result.ai?.deterministicWritingWeight);
   const ow = Number.isFinite(objectiveWeight) && objectiveWeight > 0 ? objectiveWeight : 0.5;
