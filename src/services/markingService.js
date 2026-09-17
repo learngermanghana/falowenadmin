@@ -7,6 +7,10 @@ import {
   hasLikelyUnlabelledWritingBeforeObjective,
   hasWritingEvidence,
 } from "../utils/markingIntelligence.js";
+import {
+  applyQuestionAwareWritingGuard,
+  enrichOptionsWithQuestionAwareWritingTask,
+} from "../utils/questionAwareWritingMarking.js";
 import * as base from "./markingServiceBase.js";
 import { withResubmissionComparison } from "../utils/resubmissionFeedback.js";
 
@@ -152,12 +156,10 @@ function primaryConfidence(result = {}) {
 function prepareMarkingOptions(options = {}) {
   const originalText = options.submissionText || options.submission?.text || "";
   const preparedText = ensureExplicitWritingLabel(originalText);
-  if (preparedText === originalText) return options;
-
-  return {
+  return enrichOptionsWithQuestionAwareWritingTask({
     ...options,
     submissionText: preparedText,
-  };
+  });
 }
 
 function routeMissedWritingToReview(result = {}, submissionText = "") {
@@ -207,7 +209,11 @@ async function requestSecondExaminer(options = {}) {
     throw new Error(body?.message || "Second examiner request failed");
   }
 
-  return sanitizeMarkingResult(body.result || body);
+  return applyQuestionAwareWritingGuard(
+    sanitizeMarkingResult(body.result || body),
+    options,
+    originalText,
+  );
 }
 
 function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
@@ -309,13 +315,21 @@ export async function markSubmissionWithAI(options = {}) {
   const originalSubmissionText = options.submissionText || options.submission?.text || "";
   const preparedOptions = prepareMarkingOptions(options);
 
-  let primary = sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions));
+  let primary = applyQuestionAwareWritingGuard(
+    sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions)),
+    preparedOptions,
+    originalSubmissionText,
+  );
   if (isBlockedScore(scoreValueFromResult(primary))) {
     console.warn("AI marking returned a zero/invalid score. Retrying once before allowing any save.", {
       score: scoreValueFromResult(primary),
       assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
     });
-    primary = sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions));
+    primary = applyQuestionAwareWritingGuard(
+      sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions)),
+      preparedOptions,
+      originalSubmissionText,
+    );
   }
 
   primary = routeMissedWritingToReview(primary, originalSubmissionText);
