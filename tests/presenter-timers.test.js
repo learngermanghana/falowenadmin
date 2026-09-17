@@ -70,3 +70,47 @@ test("recording a student result stops the answer timer instead of auto-marking 
   assert.match(picker, /if \(hasQuestionMode && !currentQuestion\) return;\s*\n\s*stopResponseTimer\(\);\s*\n\s*const result = recordedResult\(status\)/);
   assert.doesNotMatch(picker, /responseTimedOut[\s\S]{0,120}markCurrent\(/);
 });
+
+test("presenter live sync uses the existing class document and Firestore snapshots", () => {
+  const service = read("src/services/presenterLiveSessionService.js");
+  assert.match(service, /onSnapshot/);
+  assert.match(service, /updateDoc/);
+  assert.match(service, /doc\(db, "classes", id\)/);
+  assert.match(service, /presenterLiveSession\.updatedAt/);
+  assert.match(service, /PRESENTER_LAST_CLASS_RECORD_KEY/);
+  assert.doesNotMatch(service, /liveTeachingSessions/);
+});
+
+test("class timer publishes and consumes shared absolute timer state", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /usePresenterLiveSession/);
+  assert.match(source, /timerEndAt/);
+  assert.match(source, /timerUpdatedAtMs/);
+  assert.match(source, /publishTimerState/);
+  assert.match(source, /computer ↔ iPad live/);
+});
+
+test("student picker synchronizes class, student, question, fair-pick state and response deadline", () => {
+  const picker = read("src/components/PresenterStudentPicker.jsx");
+  assert.match(picker, /setPresenterClassContext/);
+  assert.match(picker, /usePresenterLiveSession/);
+  assert.match(picker, /pickerStudentKey/);
+  assert.match(picker, /pickerQuestionId/);
+  assert.match(picker, /pickerResponseDeadline/);
+  assert.match(picker, /pickerRoundPicked/);
+  assert.match(picker, /pickerRoundQuestionIds/);
+  assert.match(picker, /Computer ↔ iPad live/);
+});
+
+test("A1 and general presenters synchronize their stage position", () => {
+  const a1 = read("src/components/A1GrammarPresenter.jsx");
+  const general = read("src/components/TeachingSlidePresenter.jsx");
+  for (const source of [a1, general]) {
+    assert.match(source, /usePresenterLiveSession/);
+    assert.match(source, /presenterStageUpdatedAtMs/);
+    assert.match(source, /presenterStageIndex/);
+    assert.match(source, /presenterLessonId/);
+  }
+  assert.match(a1, /presenterItemIndex/);
+  assert.match(general, /presenterQuestionIndex/);
+});
