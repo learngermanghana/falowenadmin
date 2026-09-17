@@ -1,4 +1,5 @@
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
+import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
 
 function clean(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -221,17 +222,16 @@ function updateWritingParts(parts = [], score) {
   });
 }
 
-function recomputeFinal(result = {}, writingScore) {
-  const objective = numericPercent(result.objectiveScore);
-  if (objective === null || !Number(result.objectiveTotal || 0)) {
-    return numericPercent(result.finalScore ?? result.score) ?? writingScore;
-  }
-  const objectiveWeight = Number(result.ai?.deterministicObjectiveWeight);
-  const writingWeight = Number(result.ai?.deterministicWritingWeight);
-  const ow = Number.isFinite(objectiveWeight) && objectiveWeight > 0 ? objectiveWeight : 0.5;
-  const ww = Number.isFinite(writingWeight) && writingWeight > 0 ? writingWeight : 0.5;
-  const denominator = ow + ww || 1;
-  return Math.round(((objective * ow) + (writingScore * ww)) / denominator);
+function recomputeOutcome(result = {}, task = {}, writingScore) {
+  return calculateWeightedMarkingOutcome({
+    level: task.level || result.level || result.assignmentKey || "",
+    assignmentId: result.assignmentId,
+    assignmentKey: task.assignmentKey || result.assignmentKey,
+    writingPercent: writingScore,
+    objectiveScore: numericPercent(result.objectiveScore),
+    objectiveDetails: result.objectiveDetails || {},
+    hasWriting: true,
+  });
 }
 
 export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSubmissionText = "") {
@@ -264,7 +264,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   }
 
   const completed = Math.max(0, total - missingTaskPoints.length);
-  const finalScore = recomputeFinal(result, guardedWritingScore);
+  const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
+  const finalScore = weightedOutcome.finalScore;
   const issueText = [
     genreMismatch ? "the body follows an opinion-essay pattern instead of the requested communicative text" : "",
     wrongRegister ? `the register does not match the requested ${task.register} register` : "",
@@ -276,7 +277,10 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ...result,
     score: finalScore,
     finalScore,
-    passed: finalScore >= 60,
+    passed: weightedOutcome.passed,
+    scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,
+    writingMinimumMet: weightedOutcome.writingMinimumMet,
+    markingPolicy: weightedOutcome.policy,
     writingScore: guardedWritingScore,
     writingScorePercent: guardedWritingScore,
     parts: updateWritingParts(result.parts, guardedWritingScore),
