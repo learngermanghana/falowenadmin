@@ -1,9 +1,14 @@
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
+import {
+  detectWritingTextType,
+  extractWritingTaskPoints,
+  inferExpectedWritingTextType,
+  inferWritingRegister,
+  writingTextTypesCompatible,
+} from "./writingTaskSchema.js";
 
-function clean(value = "") {
-  return String(value || "").replace(/\s+/g, " ").trim();
-}
+const clean = (value = "") => String(value || "").replace(/\s+/g, " ").trim();
 
 function normalizeAssignmentKey(value = "") {
   const source = clean(value).toUpperCase();
@@ -30,37 +35,7 @@ function levelFromOptions(options = {}, assignmentKey = "") {
 
 function writingPartFromSlide(slide = {}) {
   const parts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
-  return parts.find((part) => /(?:teil\s*2.*schreiben|schreiben|writing)/i.test(`${part?.label || ""} ${part?.detailEn || ""}`)) || null;
-}
-
-function inferTextType(detail = "") {
-  const source = clean(detail).toLowerCase();
-  if (/opinion|stellungnahme|argument|advantages?\s*\/\s*disadvantages?|vor-?\s*und\s*nachteile/.test(source)) return "opinion";
-  if (/complaint|beschwerde|application|bewerbung/.test(source)) return "formal_email";
-  if (/email|e-mail|mail/.test(source)) return "email";
-  if (/letter|brief/.test(source)) return "letter";
-  if (/message|nachricht/.test(source)) return "message";
-  return "writing";
-}
-
-function inferRegister(detail = "", slide = {}) {
-  const source = `${clean(detail)} ${clean(slide.topic)} ${clean(slide.title)}`.toLowerCase();
-  if (/formal|complaint|beschwerde|application|bewerbung|landlord|vermieter|behörde|authority|customer service|kundenservice/.test(source)) return "formal";
-  if (/friend|freund|freundin|family|familie|einladung|invitation|birthday|geburtstag/.test(source)) return "informal";
-  return "unspecified";
-}
-
-function extractTaskPoints(detail = "") {
-  const source = clean(detail);
-  if (!source) return [];
-  const afterColon = source.includes(":") ? source.slice(source.indexOf(":") + 1) : source;
-  return [...new Set(
-    afterColon
-      .replace(/\.$/, "")
-      .split(/\s*;\s*|\s*,\s*(?=(?:explain|describe|give|make|propose|ask|mention|discuss|justify|say|tell|write)\b)|\s+and\s+(?=(?:explain|describe|give|make|propose|ask|mention|discuss|justify|say|tell|write)\b)/i)
-      .map(clean)
-      .filter(Boolean),
-  )].slice(0, 6);
+  return parts.find((part) => /(?:teil\s*2.*schreiben|schreiben|writing)/i.test(`${part?.label || ""} ${part?.detailEn || ""} ${part?.detailDe || ""}`)) || null;
 }
 
 function b1FriendshipTaskPoints() {
@@ -72,18 +47,21 @@ function b1FriendshipTaskPoints() {
 }
 
 export function resolveQuestionAwareWritingTask(options = {}) {
+  const existing = options.referenceEntry?.questionAwareWritingTask || options.submission?.questionAwareWritingTask;
+  if (existing?.assignmentKey) return existing;
+
   const assignmentKey = assignmentKeyFromOptions(options);
   const level = levelFromOptions(options, assignmentKey);
   if (!assignmentKey || !["A2", "B1"].includes(level)) return null;
 
   const slide = getTeachingSlideByAssignmentId(assignmentKey);
   const writingPart = writingPartFromSlide(slide || {});
-  const taskText = clean(writingPart?.detailEn || "");
+  const taskText = clean(writingPart?.detailDe || writingPart?.detailEn || "");
   if (!taskText) return null;
 
-  const taskPoints = assignmentKey === "B1-1.2" ? b1FriendshipTaskPoints() : extractTaskPoints(taskText);
-  const textType = inferTextType(taskText);
-  const register = inferRegister(taskText, slide || {});
+  const register = inferWritingRegister(taskText, slide || {});
+  const textType = inferExpectedWritingTextType(taskText, slide || {}, register);
+  const taskPoints = assignmentKey === "B1-1.2" ? b1FriendshipTaskPoints() : extractWritingTaskPoints(taskText);
 
   return {
     assignmentKey,
@@ -93,10 +71,11 @@ export function resolveQuestionAwareWritingTask(options = {}) {
     textType,
     register,
     taskPoints,
+    source: "teachingSlides",
     gradingInstruction: [
       `Grade the ${level} writing against this exact assignment task, not merely against the general topic: ${taskText}`,
       "Check every required communicative point separately and return taskCompletion plus missingTaskPoints.",
-      "Check whether the response uses the requested text type and appropriate recipient/register throughout the body.",
+      `Expected text type: ${textType}. Expected register: ${register}.`,
       "A greeting and closing alone do not make an essay-style body a correct email or letter.",
       "Topic relevance, fluent grammar, connectors, length, or vocabulary cannot compensate for missing required task points.",
       "Never award 100% writing when a required task point is missing or the requested text type/register is materially wrong.",
@@ -109,14 +88,8 @@ export function enrichOptionsWithQuestionAwareWritingTask(options = {}) {
   if (!task) return options;
   return {
     ...options,
-    referenceEntry: {
-      ...(options.referenceEntry || {}),
-      questionAwareWritingTask: task,
-    },
-    submission: {
-      ...(options.submission || {}),
-      questionAwareWritingTask: task,
-    },
+    referenceEntry: { ...(options.referenceEntry || {}), questionAwareWritingTask: task },
+    submission: { ...(options.submission || {}), questionAwareWritingTask: task },
   };
 }
 
@@ -145,18 +118,13 @@ function readStructuredTask(result = {}) {
 
 function b1FriendshipLocalMissing(source = "") {
   const missing = [];
-
   const hasMeetingStory = /\bkennengelernt\b/i.test(source)
     && /\b(?:wir|uns|ich|mein(?:e|en|em|er)?\s+(?:best(?:e|en|em|er)?\s+)?(?:freund|freundin))\b/i.test(source);
-
   const hasSpecificRelationship = /\b(?:mein(?:e|en|em|er)?\s+(?:best(?:e|en|em|er)?\s+)?(?:freund|freundin)|unsere\s+freundschaft|diese\s+freundschaft)\b/i.test(source);
   const hasPersonalReason = /\b(?:besonders|vertraue|unterstützt|unterstützen|hilft|ehrlich|zuverlässig|verständnisvoll|wichtig)\b/i.test(source);
-  const hasWhySpecial = hasSpecificRelationship && hasPersonalReason;
-
   const hasMeetingSuggestion = /\b(?:wollen|können|sollen)\s+wir\b[^.!?]{0,90}\btreffen|\bwie\s+wäre\s+es\b[^.!?]{0,90}\btreffen|\bhast\s+du\b[^.!?]{0,70}\bzeit|\blass\s+uns\b[^.!?]{0,70}\btreffen|\btreffen\s+wir\s+uns\b|\bmöchtest\s+du\b[^.!?]{0,70}\btreffen/i.test(source);
-
   if (!hasMeetingStory) missing.push("Explain how you and the friend met");
-  if (!hasWhySpecial) missing.push("Explain why this specific friendship is special");
+  if (!(hasSpecificRelationship && hasPersonalReason)) missing.push("Explain why this specific friendship is special");
   if (!hasMeetingSuggestion) missing.push("Make a concrete suggestion for a meeting");
   return missing;
 }
@@ -170,14 +138,12 @@ function emailBodyLooksLikeOpinionEssay(source = "") {
     /\bin\s+meinem\s+heimatland\b/i,
     /\bvor-?\s*und\s*nachteile\b/i,
   ].filter((pattern) => pattern.test(source)).length;
-
   const directInteraction = [
     /\b(?:du|dir|dich|dein(?:e|en|em|er)?)\b/i.test(source),
     /\?/.test(source),
     /\b(?:wir|uns)\b/i.test(source),
     /\b(?:schreib\s+mir|was\s+meinst\s+du|hast\s+du\s+zeit|wollen\s+wir|können\s+wir)\b/i.test(source),
   ].filter(Boolean).length;
-
   return essayMarkers >= 2 && directInteraction <= 2;
 }
 
@@ -215,9 +181,7 @@ function updateWritingParts(parts = [], score) {
       ...part,
       score,
       writingScore: score,
-      result: part?.result && typeof part.result === "object"
-        ? { ...part.result, score, writingScore: score }
-        : part?.result,
+      result: part?.result && typeof part.result === "object" ? { ...part.result, score, writingScore: score } : part?.result,
     };
   });
 }
@@ -247,8 +211,12 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const structured = readStructuredTask(result);
   const localMissing = task.assignmentKey === "B1-1.2" ? b1FriendshipLocalMissing(source) : [];
   const missingTaskPoints = [...new Set([...structured.missing, ...localMissing])];
-  const total = Math.max(structured.total || 0, task.taskPoints.length || 0, missingTaskPoints.length ? 3 : 0);
-  const genreMismatch = /email|letter|message/.test(task.textType) && emailBodyLooksLikeOpinionEssay(source);
+  const total = Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
+  const detectedTextType = detectWritingTextType(source);
+  const classifierMismatch = detectedTextType.confidence >= 0.72
+    && !writingTextTypesCompatible(task.textType, detectedTextType.detectedType);
+  const legacyEssayMismatch = /email|letter|message|invitation/.test(task.textType) && emailBodyLooksLikeOpinionEssay(source);
+  const genreMismatch = classifierMismatch || legacyEssayMismatch;
   const wrongRegister = registerMismatch(task, source);
 
   let cap = guardCapForMissing(missingTaskPoints.length, total);
@@ -259,15 +227,14 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   if (guardedWritingScore === currentWritingScore && !missingTaskPoints.length && !genreMismatch && !wrongRegister) {
     return {
       ...result,
-      ai: { ...(result.ai || {}), questionAwareWritingTask: task },
+      ai: { ...(result.ai || {}), questionAwareWritingTask: task, detectedWritingTextType: detectedTextType },
     };
   }
 
   const completed = Math.max(0, total - missingTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
-  const finalScore = weightedOutcome.finalScore;
   const issueText = [
-    genreMismatch ? "the body follows an opinion-essay pattern instead of the requested communicative text" : "",
+    genreMismatch ? `detected ${detectedTextType.detectedType} instead of ${task.textType}` : "",
     wrongRegister ? `the register does not match the requested ${task.register} register` : "",
     missingTaskPoints.length ? `missing task points: ${missingTaskPoints.join("; ")}` : "",
   ].filter(Boolean).join("; ");
@@ -275,8 +242,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   return {
     ...result,
-    score: finalScore,
-    finalScore,
+    score: weightedOutcome.finalScore,
+    finalScore: weightedOutcome.finalScore,
     passed: weightedOutcome.passed,
     scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,
     writingMinimumMet: weightedOutcome.writingMinimumMet,
@@ -293,13 +260,15 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ai: {
       ...(result.ai || {}),
       questionAwareWritingTask: task,
+      detectedWritingTextType: detectedTextType,
       questionAwareWritingGuard: {
         applied: true,
         originalWritingScore: currentWritingScore,
         guardedWritingScore,
         genreMismatch,
-        wrongRegister,
+        registerMismatch: wrongRegister,
         missingTaskPoints,
+        detectedWritingTextType: detectedTextType,
       },
     },
   };
