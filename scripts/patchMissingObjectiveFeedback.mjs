@@ -138,3 +138,6 @@ if (/review questions 6 and 7/i.test(regressionFeedback)) {
 }
 
 console.log("Missing objective answers are now labeled as not answered in both tutor feedback and the review table.");
+
+// Apply the final objective-numbering repair after the other objective parsers have settled.
+await import("./patchDuplicateObjectiveNumbering.mjs");
