@@ -15,6 +15,34 @@ test("presenter class timer hard-codes A1 to 60 minutes and A2/B1 to 90 minutes"
   assert.match(source, /Class time is up/);
 });
 
+test("class timer is session-wide for the level and date rather than tied to a lesson page", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /presenterClassTimerStorageKey/);
+  assert.match(source, /class-timer:\$\{localDateKey\(now\)\}:\$\{safeLevel\}/);
+  assert.match(source, /window\.localStorage\.getItem\(key\)/);
+  assert.match(source, /window\.localStorage\.setItem\(storageKey/);
+  assert.doesNotMatch(source, /slide\.assignmentId \|\| slide\.id/);
+  assert.doesNotMatch(source, /sessionStorage/);
+});
+
+test("class timer gives unobtrusive 30, 15, 10, 5 minute and time-up warnings", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /CLASS_WARNING_MINUTES = Object\.freeze\(\[30, 15, 10, 5, 0\]\)/);
+  assert.match(source, /30, 15, 10 and 5 minutes left and at time up/);
+  assert.match(source, /recordCrossedWarnings/);
+  assert.match(source, /warningLabel/);
+  assert.doesNotMatch(source, /window\.alert/);
+});
+
+test("class timer warning sound is optional and persisted", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /SOUND_PREFERENCE_KEY/);
+  assert.match(source, /Sound: \{soundEnabled \? "on" : "off"\}/);
+  assert.match(source, /playWarningTone/);
+  assert.match(source, /window\.localStorage\.setItem\(SOUND_PREFERENCE_KEY/);
+  assert.match(source, /aria-pressed=\{soundEnabled\}/);
+});
+
 test("both A1 and general teaching presenters show the class timer", () => {
   const a1 = read("src/components/A1GrammarPresenter.jsx");
   const general = read("src/components/TeachingSlidePresenter.jsx");
