@@ -10,7 +10,6 @@ import { auth, db } from "../firebase.js";
 import {
   assignmentVersionId,
   normalizeAssignmentId,
-  toPublicAssignmentRecord,
   validateAssignmentRegistryDraft,
 } from "../utils/assignmentRegistry.js";
 import {
@@ -20,15 +19,24 @@ import {
   setCachedAssignmentRegistryEntry,
 } from "../utils/assignmentRegistryCache.js";
 
-export const ASSIGNMENT_REGISTRY_COLLECTIONS = Object.freeze({
-  PRIVATE_CURRENT: "assignmentRegistry",
-  PRIVATE_VERSIONS: "assignmentVersions",
-  PUBLIC_CURRENT: "assignmentPublicRegistry",
-  PUBLIC_VERSIONS: "assignmentPublicVersions",
-});
+// Phase 1 deliberately reuses the existing admin-only answerKeyRegistry collection.
+// This avoids a new Vercel API route and avoids requiring a Firestore-rules deployment
+// before Falowen Admin can use the canonical writing-task registry. The student-safe
+// public projection is added only when falowenexamtrainer is connected in phase 2.
+export const ASSIGNMENT_REGISTRY_HOST_COLLECTION = "answerKeyRegistry";
+const CURRENT_FIELD = "assignmentRegistry";
+const VERSIONS_FIELD = "assignmentRegistryVersions";
 
 export function clearAssignmentRegistryCache(assignmentId = "") {
   clearCachedAssignmentRegistryEntry(assignmentId);
+}
+
+function extractRegistryRecord(docSnap) {
+  if (!docSnap?.exists?.()) return null;
+  const host = docSnap.data() || {};
+  const record = host[CURRENT_FIELD];
+  if (!record || typeof record !== "object") return null;
+  return { id: docSnap.id, ...record };
 }
 
 export async function loadPublishedAssignmentRegistryEntry(assignmentId, { bypassCache = false } = {}) {
@@ -39,16 +47,19 @@ export async function loadPublishedAssignmentRegistryEntry(assignmentId, { bypas
     if (cached) return cached;
   }
 
-  const snap = await getDoc(doc(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PRIVATE_CURRENT, key));
-  const value = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  const snap = await getDoc(doc(db, ASSIGNMENT_REGISTRY_HOST_COLLECTION, key));
+  const value = extractRegistryRecord(snap);
   if (value) setCachedAssignmentRegistryEntry(key, value);
   return value;
 }
 
 export async function loadAssignmentRegistryPreview() {
-  const snap = await getDocs(collection(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PRIVATE_CURRENT));
+  const snap = await getDocs(collection(db, ASSIGNMENT_REGISTRY_HOST_COLLECTION));
   const rows = [];
-  snap.forEach((docSnap) => rows.push({ id: docSnap.id, ...docSnap.data() }));
+  snap.forEach((docSnap) => {
+    const row = extractRegistryRecord(docSnap);
+    if (row) rows.push(row);
+  });
   rows.sort((a, b) => String(a.assignmentId || a.id).localeCompare(String(b.assignmentId || b.id), undefined, { numeric: true }));
   return cacheAssignmentRegistryRows(rows);
 }
@@ -71,16 +82,15 @@ export async function publishAssignmentRegistryDraft(draft = {}) {
   }
 
   const assignmentId = normalizeAssignmentId(draft.assignmentId);
-  const currentPrivateRef = doc(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PRIVATE_CURRENT, assignmentId);
-  const currentPublicRef = doc(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PUBLIC_CURRENT, assignmentId);
+  const hostRef = doc(db, ASSIGNMENT_REGISTRY_HOST_COLLECTION, assignmentId);
 
   const result = await runTransaction(db, async (transaction) => {
-    const currentSnap = await transaction.get(currentPrivateRef);
-    const currentVersion = Number(currentSnap.exists() ? currentSnap.data()?.version : 0) || 0;
+    const hostSnap = await transaction.get(hostRef);
+    const host = hostSnap.exists() ? hostSnap.data() || {} : {};
+    const current = host[CURRENT_FIELD] || null;
+    const currentVersion = Number(current?.version || 0) || 0;
     const version = currentVersion + 1;
     const versionId = assignmentVersionId(assignmentId, version);
-    const privateVersionRef = doc(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PRIVATE_VERSIONS, versionId);
-    const publicVersionRef = doc(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PUBLIC_VERSIONS, versionId);
     const now = serverTimestamp();
 
     const privateRecord = {
@@ -92,17 +102,21 @@ export async function publishAssignmentRegistryDraft(draft = {}) {
       updatedAt: now,
       publishedBy: publishedBy(),
     };
-    const publicRecord = {
-      ...toPublicAssignmentRecord({ ...privateRecord, publishedAt: null }),
-      version,
-      publishedAt: now,
-      updatedAt: now,
-    };
 
-    transaction.set(currentPrivateRef, privateRecord);
-    transaction.set(privateVersionRef, privateRecord);
-    transaction.set(currentPublicRef, publicRecord);
-    transaction.set(publicVersionRef, publicRecord);
+    const existingVersions = host[VERSIONS_FIELD] && typeof host[VERSIONS_FIELD] === "object"
+      ? host[VERSIONS_FIELD]
+      : {};
+
+    transaction.set(hostRef, {
+      assignmentKey: host.assignmentKey || assignmentId,
+      level: host.level || draft.level || "",
+      [CURRENT_FIELD]: privateRecord,
+      [VERSIONS_FIELD]: {
+        ...existingVersions,
+        [versionId]: privateRecord,
+      },
+      assignmentRegistryUpdatedAt: now,
+    }, { merge: true });
 
     return { assignmentId, version, versionId, privateRecord };
   });
