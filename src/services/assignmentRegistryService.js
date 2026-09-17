@@ -13,6 +13,12 @@ import {
   toPublicAssignmentRecord,
   validateAssignmentRegistryDraft,
 } from "../utils/assignmentRegistry.js";
+import {
+  cacheAssignmentRegistryRows,
+  clearCachedAssignmentRegistryEntry,
+  getCachedAssignmentRegistryEntry,
+  setCachedAssignmentRegistryEntry,
+} from "../utils/assignmentRegistryCache.js";
 
 export const ASSIGNMENT_REGISTRY_COLLECTIONS = Object.freeze({
   PRIVATE_CURRENT: "assignmentRegistry",
@@ -21,28 +27,21 @@ export const ASSIGNMENT_REGISTRY_COLLECTIONS = Object.freeze({
   PUBLIC_VERSIONS: "assignmentPublicVersions",
 });
 
-const entryCache = new Map();
-const CACHE_MS = 5 * 60 * 1000;
-
-function cacheEntry(assignmentId, value) {
-  entryCache.set(normalizeAssignmentId(assignmentId), { value, expiresAt: Date.now() + CACHE_MS });
-}
-
 export function clearAssignmentRegistryCache(assignmentId = "") {
-  const key = normalizeAssignmentId(assignmentId);
-  if (key) entryCache.delete(key);
-  else entryCache.clear();
+  clearCachedAssignmentRegistryEntry(assignmentId);
 }
 
 export async function loadPublishedAssignmentRegistryEntry(assignmentId, { bypassCache = false } = {}) {
   const key = normalizeAssignmentId(assignmentId);
   if (!key) return null;
-  const cached = entryCache.get(key);
-  if (!bypassCache && cached?.expiresAt > Date.now()) return cached.value;
+  if (!bypassCache) {
+    const cached = getCachedAssignmentRegistryEntry(key);
+    if (cached) return cached;
+  }
 
   const snap = await getDoc(doc(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PRIVATE_CURRENT, key));
   const value = snap.exists() ? { id: snap.id, ...snap.data() } : null;
-  cacheEntry(key, value);
+  if (value) setCachedAssignmentRegistryEntry(key, value);
   return value;
 }
 
@@ -50,7 +49,12 @@ export async function loadAssignmentRegistryPreview() {
   const snap = await getDocs(collection(db, ASSIGNMENT_REGISTRY_COLLECTIONS.PRIVATE_CURRENT));
   const rows = [];
   snap.forEach((docSnap) => rows.push({ id: docSnap.id, ...docSnap.data() }));
-  return rows.sort((a, b) => String(a.assignmentId || a.id).localeCompare(String(b.assignmentId || b.id), undefined, { numeric: true }));
+  rows.sort((a, b) => String(a.assignmentId || a.id).localeCompare(String(b.assignmentId || b.id), undefined, { numeric: true }));
+  return cacheAssignmentRegistryRows(rows);
+}
+
+export async function warmAssignmentRegistryCache() {
+  return loadAssignmentRegistryPreview();
 }
 
 function publishedBy() {
@@ -100,9 +104,9 @@ export async function publishAssignmentRegistryDraft(draft = {}) {
     transaction.set(currentPublicRef, publicRecord);
     transaction.set(publicVersionRef, publicRecord);
 
-    return { assignmentId, version, versionId };
+    return { assignmentId, version, versionId, privateRecord };
   });
 
-  clearAssignmentRegistryCache(assignmentId);
-  return result;
+  setCachedAssignmentRegistryEntry(assignmentId, result.privateRecord);
+  return { assignmentId: result.assignmentId, version: result.version, versionId: result.versionId };
 }
