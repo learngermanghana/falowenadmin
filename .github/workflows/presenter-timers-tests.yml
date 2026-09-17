@@ -13,9 +13,11 @@ on:
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
       - "scripts/patchPresenterStudentAnswerTime60s.mjs"
       - "scripts/patchPresenterFullscreenViewport.mjs"
+      - "scripts/patchPresenterAuthoritativeTimerSync.mjs"
       - "scripts/patchPresenterConceptLabels.mjs"
       - "tests/presenter-timers.test.js"
       - "tests/presenter-fullscreen-layout.test.js"
+      - "tests/presenter-authoritative-timer-sync.test.js"
       - ".github/workflows/presenter-timers-tests.yml"
   push:
     branches: [main]
@@ -26,9 +28,11 @@ on:
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
       - "scripts/patchPresenterStudentAnswerTime60s.mjs"
       - "scripts/patchPresenterFullscreenViewport.mjs"
+      - "scripts/patchPresenterAuthoritativeTimerSync.mjs"
       - "scripts/patchPresenterConceptLabels.mjs"
       - "tests/presenter-timers.test.js"
       - "tests/presenter-fullscreen-layout.test.js"
+      - "tests/presenter-authoritative-timer-sync.test.js"
       - ".github/workflows/presenter-timers-tests.yml"
 
 jobs:
@@ -48,7 +52,7 @@ jobs:
           node scripts/patchPresenterRandomAndAttendanceDiagnostics.mjs
           node scripts/patchPresenterConceptLabels.mjs
       - name: Run presenter regressions
-        run: node --test tests/presenter-timers.test.js tests/presenter-fullscreen-layout.test.js
+        run: node --test tests/presenter-timers.test.js tests/presenter-fullscreen-layout.test.js tests/presenter-authoritative-timer-sync.test.js
       - name: Prepare waiting-room source for production bundle
         run: node scripts/patchCheckinWaitingRoomPlaylist.mjs
       - name: Build Vite bundle
