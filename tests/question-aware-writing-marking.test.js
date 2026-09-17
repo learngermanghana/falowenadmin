@@ -73,7 +73,7 @@ test("B1-1.2 resolves the actual workbook writing task and its three communicati
   assert.ok(task);
   assert.equal(task.assignmentKey, "B1-1.2");
   assert.equal(task.level, "B1");
-  assert.equal(task.textType, "email");
+  assert.equal(task.textType, "informal_email");
   assert.equal(task.register, "informal");
   assert.deepEqual(task.taskPoints, [
     "Explain how you and the friend met",
@@ -124,6 +124,7 @@ test("generic friendship opinion essay cannot keep a 100% writing score", () => 
   assert.equal(result.taskCompletion.total, 3);
   assert.equal(result.missingTaskPoints.length, 3);
   assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, true);
+  assert.equal(result.ai.detectedWritingTextType.detectedType, "opinion_essay");
   assert.match(result.feedback, /language quality cannot replace task fulfilment/i);
 });
 
@@ -152,4 +153,5 @@ test("a genuine informal email that answers all three points is not capped", () 
   assert.equal(result.finalScore, 97);
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
   assert.equal(result.ai.questionAwareWritingTask.assignmentKey, "B1-1.2");
+  assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
 });
