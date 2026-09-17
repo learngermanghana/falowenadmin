@@ -10,6 +10,7 @@ on:
       - "src/components/TeachingSlidePresenter.jsx"
       - "src/components/A1GrammarPresenter.jsx"
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
+      - "scripts/patchPresenterStudentAnswerTime60s.mjs"
       - "scripts/patchPresenterConceptLabels.mjs"
       - "tests/presenter-timers.test.js"
       - ".github/workflows/presenter-timers-tests.yml"
@@ -19,8 +20,10 @@ on:
       - "src/components/PresenterSessionTimer.jsx"
       - "src/components/PresenterSessionTimer.css"
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
+      - "scripts/patchPresenterStudentAnswerTime60s.mjs"
       - "scripts/patchPresenterConceptLabels.mjs"
       - "tests/presenter-timers.test.js"
+      - ".github/workflows/presenter-timers-tests.yml"
 
 jobs:
   timer-test-and-build:
@@ -40,5 +43,7 @@ jobs:
           node scripts/patchPresenterConceptLabels.mjs
       - name: Run presenter timer regressions
         run: node --test tests/presenter-timers.test.js
+      - name: Prepare waiting-room source for production bundle
+        run: node scripts/patchCheckinWaitingRoomPlaylist.mjs
       - name: Build Vite bundle
         run: npx vite build
