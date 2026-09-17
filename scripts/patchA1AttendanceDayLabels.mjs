@@ -19,7 +19,7 @@ const oldLessonLabel = `function lessonLabel(session, timezone = TIMEZONE) {
     minute: "2-digit",
     hour12: false,
   }).format(date);
-  return `${text} · ${assignmentId ? `${assignmentId} — ` : ""}${topic}`;
+  return \`${"${text} · ${assignmentId ? `${assignmentId} — ` : \"\"}${topic}"}\`;
 }`;
 
 const newLessonLabel = `function attendanceLessonTitle(session, levelId = "") {
@@ -27,10 +27,10 @@ const newLessonLabel = `function attendanceLessonTitle(session, levelId = "") {
   const level = String(levelId || "").trim().toUpperCase();
   if (level === "A1") {
     const explicitDay = Number(session?.curriculumDay);
-    const topicDay = topic.match(/^Day\s+(\d+)\s*:/i);
+    const topicDay = topic.match(/^Day\\s+(\\d+)\\s*:/i);
     const day = Number.isFinite(explicitDay) ? explicitDay : Number(topicDay?.[1]);
-    const title = topic.replace(/^Day\s+\d+\s*:\s*/i, "").trim();
-    if (Number.isFinite(day)) return `Day ${day} — ${title || "Lesson details to be confirmed"}`;
+    const title = topic.replace(/^Day\\s+\\d+\\s*:\\s*/i, "").trim();
+    if (Number.isFinite(day)) return \`Day ${"${day}"} — ${"${title || \"Lesson details to be confirmed\"}"}\`;
   }
   const assignmentId = String(session?.assignmentIds?.[0] || session?.assignment_id || "").trim();
   return [assignmentId, topic].filter(Boolean).join(" — ");
@@ -50,7 +50,7 @@ function lessonLabel(session, timezone = TIMEZONE, levelId = "") {
     minute: "2-digit",
     hour12: false,
   }).format(date);
-  return `${text} · ${lesson}`;
+  return \`${"${text} · ${lesson}"}\`;
 }`;
 
 if (!source.includes("function attendanceLessonTitle(")) {
@@ -65,7 +65,7 @@ if (!source.includes(optionAfter)) {
   source = source.replace(optionBefore, optionAfter);
 }
 
-const headingBefore = `{assignmentId ? `${assignmentId} — ` : ""}{selected.topic || "Lesson details to be confirmed"}`;
+const headingBefore = `{assignmentId ? \`${"${assignmentId} — "}\` : ""}{selected.topic || "Lesson details to be confirmed"}`;
 const headingAfter = `{attendanceLessonTitle(selected, klass?.levelId || klass?.level)}`;
 if (!source.includes(headingAfter)) {
   if (!source.includes(headingBefore)) throw new Error("Attendance lesson heading anchor changed; update patchA1AttendanceDayLabels.mjs");
@@ -81,6 +81,3 @@ if (!source.includes(noteAfter)) {
 
 fs.writeFileSync(file, source);
 console.log("A1 attendance day labels patched.");
-
-// Keep Live Classes completion/reminder safety applied in predev, prebuild and pretest.
-await import("./patchEarlySessionCompletionGuard.mjs");
