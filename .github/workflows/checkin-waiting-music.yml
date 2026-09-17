@@ -1,0 +1,45 @@
+name: Check-in waiting room music
+
+on:
+  pull_request:
+    paths:
+      - 'public/*.mp3'
+      - 'src/data/pianoPlaylist.js'
+      - 'src/utils/pianoAudio.js'
+      - 'src/pages/CheckinDisplayPage.jsx'
+      - 'scripts/patchCheckinWaitingRoomPlaylist.mjs'
+      - 'tests/checkin-waiting-music-playlist.test.js'
+      - 'package.json'
+      - '.github/workflows/checkin-waiting-music.yml'
+  push:
+    paths:
+      - 'public/*.mp3'
+      - 'src/data/pianoPlaylist.js'
+      - 'src/utils/pianoAudio.js'
+      - 'src/pages/CheckinDisplayPage.jsx'
+      - 'scripts/patchCheckinWaitingRoomPlaylist.mjs'
+      - 'tests/checkin-waiting-music-playlist.test.js'
+      - 'package.json'
+      - '.github/workflows/checkin-waiting-music.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply waiting room music patch twice
+        run: |
+          node scripts/patchCheckinWaitingRoomPlaylist.mjs
+          node scripts/patchCheckinWaitingRoomPlaylist.mjs
+      - name: Validate source and playlist
+        run: |
+          node --check scripts/patchCheckinWaitingRoomPlaylist.mjs
+          node --check src/utils/pianoAudio.js
+          node --test tests/checkin-waiting-music-playlist.test.js
+      - name: Build production bundle
+        run: npx vite build
