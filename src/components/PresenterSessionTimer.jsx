@@ -10,6 +10,7 @@ export const SESSION_MINUTES_BY_LEVEL = Object.freeze({
 export const CLASS_WARNING_MINUTES = Object.freeze([30, 15, 10, 5, 0]);
 
 const SOUND_PREFERENCE_KEY = "falowen:presenter:class-timer:sound";
+const LAST_CLASS_KEY = "falowen:presenter:last-class";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -26,6 +27,15 @@ function localDateKey(now = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+function currentPresenterClassId() {
+  if (typeof window === "undefined") return "unassigned";
+  try {
+    return normalize(window.localStorage.getItem(LAST_CLASS_KEY)) || "unassigned";
+  } catch {
+    return "unassigned";
+  }
+}
+
 function formatSessionTime(totalSeconds = 0) {
   const safe = Math.max(0, Math.floor(Number(totalSeconds || 0)));
   const hours = Math.floor(safe / 3600);
@@ -35,9 +45,10 @@ function formatSessionTime(totalSeconds = 0) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function presenterClassTimerStorageKey(level = "", now = new Date()) {
+export function presenterClassTimerStorageKey(level = "", classId = "", now = new Date()) {
   const safeLevel = normalize(level).toUpperCase() || "course";
-  return `falowen:presenter:class-timer:${localDateKey(now)}:${safeLevel}`;
+  const safeClass = encodeURIComponent(normalize(classId) || "unassigned");
+  return `falowen:presenter:class-timer:${localDateKey(now)}:${safeLevel}:${safeClass}`;
 }
 
 function warningSeconds() {
@@ -97,7 +108,8 @@ export default function PresenterSessionTimer({ slide }) {
   const level = normalize(slide?.course).toUpperCase();
   const durationMinutes = presenterSessionMinutes(level);
   const durationSeconds = durationMinutes * 60;
-  const storageKey = useMemo(() => presenterClassTimerStorageKey(level), [level]);
+  const [classId, setClassId] = useState(currentPresenterClassId);
+  const storageKey = useMemo(() => presenterClassTimerStorageKey(level, classId), [level, classId]);
   const [remaining, setRemaining] = useState(durationSeconds);
   const [running, setRunning] = useState(false);
   const [endAt, setEndAt] = useState(0);
@@ -107,6 +119,16 @@ export default function PresenterSessionTimer({ slide }) {
   const [hydratedKey, setHydratedKey] = useState("");
   const previousRemainingRef = useRef(durationSeconds);
   const audioContextRef = useRef(null);
+
+  useEffect(() => {
+    const syncClass = () => {
+      const next = currentPresenterClassId();
+      setClassId((current) => current === next ? current : next);
+    };
+    syncClass();
+    const timer = window.setInterval(syncClass, 500);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     setHydratedKey("");
