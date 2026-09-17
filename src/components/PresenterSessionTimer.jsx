@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import usePresenterLiveSession from "../hooks/usePresenterLiveSession.js";
 import "./PresenterSessionTimer.css";
 
 export const SESSION_MINUTES_BY_LEVEL = Object.freeze({
@@ -108,6 +109,7 @@ export default function PresenterSessionTimer({ slide }) {
   const level = normalize(slide?.course).toUpperCase();
   const durationMinutes = presenterSessionMinutes(level);
   const durationSeconds = durationMinutes * 60;
+  const presenterLive = usePresenterLiveSession(slide);
   const [classId, setClassId] = useState(currentPresenterClassId);
   const storageKey = useMemo(() => presenterClassTimerStorageKey(level, classId), [level, classId]);
   const [remaining, setRemaining] = useState(durationSeconds);
@@ -119,16 +121,13 @@ export default function PresenterSessionTimer({ slide }) {
   const [hydratedKey, setHydratedKey] = useState("");
   const previousRemainingRef = useRef(durationSeconds);
   const audioContextRef = useRef(null);
+  const lastRemoteTimerStampRef = useRef(0);
+  const expiryPublishedRef = useRef(false);
 
   useEffect(() => {
-    const syncClass = () => {
-      const next = currentPresenterClassId();
-      setClassId((current) => current === next ? current : next);
-    };
-    syncClass();
-    const timer = window.setInterval(syncClass, 500);
-    return () => window.clearInterval(timer);
-  }, []);
+    const next = normalize(presenterLive.classContext?.classId) || currentPresenterClassId();
+    setClassId((current) => current === next ? current : next);
+  }, [presenterLive.classContext?.classId]);
 
   useEffect(() => {
     setHydratedKey("");
@@ -140,6 +139,7 @@ export default function PresenterSessionTimer({ slide }) {
     setWarnedMilestones(restored.warned);
     setNotice(restored.remaining <= 0 ? "Class time is up." : "");
     previousRemainingRef.current = restored.remaining;
+    expiryPublishedRef.current = restored.remaining <= 0;
     setHydratedKey(storageKey);
   }, [durationSeconds, storageKey]);
 
@@ -157,6 +157,62 @@ export default function PresenterSessionTimer({ slide }) {
       // The timer still works when browser storage is unavailable.
     }
   }, [durationSeconds, storageKey, hydratedKey, remaining, running, endAt, warnedMilestones]);
+
+  useEffect(() => {
+    const remote = presenterLive.liveState || {};
+    const remoteStamp = Number(remote.timerUpdatedAtMs || 0);
+    if (!presenterLive.hasSnapshot || !presenterLive.isToday || !presenterLive.isRemoteState || !remoteStamp) return;
+    if (normalize(remote.timerLevel).toUpperCase() !== level) return;
+    if (remoteStamp <= lastRemoteTimerStampRef.current) return;
+
+    lastRemoteTimerStampRef.current = remoteStamp;
+    const remoteRunning = Boolean(remote.timerRunning);
+    const remoteEndAt = Math.max(0, Number(remote.timerEndAt || 0));
+    const remoteRemaining = remoteRunning && remoteEndAt
+      ? Math.max(0, Math.ceil((remoteEndAt - Date.now()) / 1000))
+      : Math.max(0, Math.min(durationSeconds, Number(remote.timerRemaining ?? durationSeconds)));
+    const remoteWarned = Array.isArray(remote.timerWarned)
+      ? remote.timerWarned.map(Number).filter(Number.isFinite)
+      : baselineWarnings(remoteRemaining);
+
+    previousRemainingRef.current = remoteRemaining;
+    expiryPublishedRef.current = remoteRemaining <= 0;
+    setRemaining(remoteRemaining);
+    setRunning(remoteRunning && remoteRemaining > 0);
+    setEndAt(remoteRunning && remoteRemaining > 0 ? remoteEndAt : 0);
+    setWarnedMilestones(remoteWarned);
+    setNotice(remoteRemaining <= 0 ? "Class time is up." : "Updated from other device");
+  }, [presenterLive.liveState?.timerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, level, durationSeconds]);
+
+  useEffect(() => {
+    if (!presenterLive.classRecordId || !presenterLive.hasSnapshot || !durationSeconds) return;
+    const remote = presenterLive.liveState || {};
+    const hasRemoteTimer = presenterLive.isToday
+      && normalize(remote.timerLevel).toUpperCase() === level
+      && Number(remote.timerUpdatedAtMs || 0) > 0;
+    if (hasRemoteTimer) return;
+    presenterLive.publish({
+      timerLevel: level,
+      timerDurationSeconds: durationSeconds,
+      timerRunning: running,
+      timerEndAt: Number(endAt || 0),
+      timerRemaining: Number(remaining || 0),
+      timerWarned: warnedMilestones,
+      timerExpired: remaining <= 0,
+      timerUpdatedAtMs: Date.now(),
+    });
+  }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.liveState?.timerUpdatedAtMs, presenterLive.publish, durationSeconds, level, running, endAt, remaining, warnedMilestones]);
+
+  function publishTimerState(patch = {}) {
+    if (!presenterLive.classRecordId) return;
+    presenterLive.publish({
+      timerLevel: level,
+      timerDurationSeconds: durationSeconds,
+      timerWarned: warnedMilestones,
+      timerUpdatedAtMs: Date.now(),
+      ...patch,
+    });
+  }
 
   function ensureAudioContext() {
     if (typeof window === "undefined") return null;
@@ -212,12 +268,21 @@ export default function PresenterSessionTimer({ slide }) {
       if (next <= 0) {
         setRunning(false);
         setEndAt(0);
+        if (!expiryPublishedRef.current) {
+          expiryPublishedRef.current = true;
+          publishTimerState({
+            timerRunning: false,
+            timerEndAt: 0,
+            timerRemaining: 0,
+            timerExpired: true,
+          });
+        }
       }
     };
     tick();
     const timer = window.setInterval(tick, 500);
     return () => window.clearInterval(timer);
-  }, [running, endAt, warnedMilestones, soundEnabled]);
+  }, [running, endAt, warnedMilestones, soundEnabled, presenterLive.classRecordId]);
 
   useEffect(() => () => {
     try {
@@ -235,15 +300,24 @@ export default function PresenterSessionTimer({ slide }) {
   function startOrResume() {
     const restarting = remaining <= 0;
     const seconds = restarting ? durationSeconds : remaining;
+    const nextWarned = restarting ? [] : warnedMilestones;
     if (restarting) {
       setWarnedMilestones([]);
       setNotice("");
     }
+    expiryPublishedRef.current = false;
     previousRemainingRef.current = seconds;
     const nextEndAt = Date.now() + seconds * 1000;
     setRemaining(seconds);
     setEndAt(nextEndAt);
     setRunning(true);
+    publishTimerState({
+      timerRunning: true,
+      timerEndAt: nextEndAt,
+      timerRemaining: seconds,
+      timerWarned: nextWarned,
+      timerExpired: false,
+    });
     if (soundEnabled) ensureAudioContext()?.resume?.().catch?.(() => {});
   }
 
@@ -254,15 +328,29 @@ export default function PresenterSessionTimer({ slide }) {
     setRemaining(next);
     setRunning(false);
     setEndAt(0);
+    publishTimerState({
+      timerRunning: false,
+      timerEndAt: 0,
+      timerRemaining: next,
+      timerExpired: next <= 0,
+    });
   }
 
   function reset() {
     previousRemainingRef.current = durationSeconds;
+    expiryPublishedRef.current = false;
     setRemaining(durationSeconds);
     setRunning(false);
     setEndAt(0);
     setWarnedMilestones([]);
     setNotice("");
+    publishTimerState({
+      timerRunning: false,
+      timerEndAt: 0,
+      timerRemaining: durationSeconds,
+      timerWarned: [],
+      timerExpired: false,
+    });
   }
 
   function toggleSound() {
@@ -276,6 +364,15 @@ export default function PresenterSessionTimer({ slide }) {
     if (next) playWarningTone(10 * 60, true);
   }
 
+  const syncLabel = !presenterLive.classRecordId
+    ? ""
+    : presenterLive.syncState === "live"
+      ? " · computer ↔ iPad live"
+      : presenterLive.syncState === "connecting"
+        ? " · connecting remote"
+        : presenterLive.syncState === "offline"
+          ? " · remote offline"
+          : "";
   const statusText = expired
     ? "Class time is up."
     : notice
@@ -286,7 +383,7 @@ export default function PresenterSessionTimer({ slide }) {
       <div className="presenter-session-timer-copy">
         <span>Class time · {level} · {durationMinutes} min</span>
         <strong>{expired ? "TIME UP" : formatSessionTime(remaining)}</strong>
-        <small>{statusText}</small>
+        <small>{statusText}{syncLabel}</small>
       </div>
       <div className="presenter-session-timer-actions">
         <button type="button" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
