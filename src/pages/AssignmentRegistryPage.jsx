@@ -50,7 +50,7 @@ export default function AssignmentRegistryPage() {
     } catch (error) {
       setPublished([]);
       setRegistryError(error?.code === "permission-denied"
-        ? "Firestore denied assignmentRegistry access. Merge the new assignment-registry rules into the live Firebase rules before publishing. No Vercel API fallback is used."
+        ? "Firestore denied access to the existing Admin answer-key registry. Sign in with an authorised Admin account before publishing."
         : (error?.message || "Could not load assignment registry."));
     } finally {
       setLoading(false);
@@ -86,7 +86,7 @@ export default function AssignmentRegistryPage() {
     setMessage("");
     try {
       const result = await publishAssignmentRegistryDraft(draft);
-      setMessage(`${result.assignmentId} published as version ${result.version}. Public and private snapshots were written together.`);
+      setMessage(`${result.assignmentId} published as Admin version ${result.version}. The canonical task and immutable version snapshot were saved in the existing answer-key registry.`);
       await refreshRegistry();
     } catch (error) {
       setMessage(error?.message || "Publishing failed.");
@@ -101,7 +101,7 @@ export default function AssignmentRegistryPage() {
         <div>
           <h3 style={{ margin: 0 }}>Assignment Registry</h3>
           <p style={{ margin: "5px 0 0", fontSize: 13, color: "#4b5563" }}>
-            Canonical A2/B1 writing tasks. Admin keeps the private marking spec; Falowen will later read only the public task record directly from Firestore.
+            Canonical A2/B1 writing tasks for Admin marking. Phase 1 stays private inside the existing answer-key registry; the student-safe Falowen projection will be added only when we connect the Falowen app.
           </p>
         </div>
         <input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter assignment…" style={fieldStyle()} />
@@ -131,7 +131,7 @@ export default function AssignmentRegistryPage() {
           <div>
             <h3 style={{ margin: 0 }}>{draft.assignmentId} · {draft.title}</h3>
             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}>
-              {selectedPublished ? `Published version ${selectedPublished.version}. Publishing again creates a new immutable version.` : "Not published yet."}
+              {selectedPublished ? `Published Admin version ${selectedPublished.version}. Publishing again creates another immutable snapshot.` : "Not published in the Admin registry yet."}
             </p>
           </div>
           <span style={{ padding: "4px 8px", borderRadius: 999, background: "#f3f4f6", fontSize: 12 }}>{draft.level}</span>
@@ -179,14 +179,14 @@ export default function AssignmentRegistryPage() {
         </label>
 
         <div style={{ padding: 10, borderRadius: 8, background: "#eff6ff", fontSize: 13 }}>
-          Publishing performs one Firestore transaction: current private record, immutable private version, current public record, and immutable public version. It does not call a Vercel API route.
+          Phase 1 writes into the existing admin-only <code>answerKeyRegistry</code> collection in one Firestore transaction. It adds no Vercel API route and requires no new Firestore collection rules. Falowen remains untouched until phase 2.
         </div>
 
         {message ? <div style={{ padding: 10, borderRadius: 8, background: message.includes("published") ? "#ecfdf5" : "#fff7ed", fontSize: 13 }}>{message}</div> : null}
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" disabled={publishing} onClick={publish} style={{ border: 0, borderRadius: 8, padding: "10px 14px", background: "#111827", color: "#fff", fontWeight: 700, cursor: publishing ? "wait" : "pointer" }}>
-            {publishing ? "Publishing…" : selectedPublished ? "Publish new version" : "Publish assignment"}
+            {publishing ? "Publishing…" : selectedPublished ? "Publish new Admin version" : "Publish to Admin registry"}
           </button>
           <button type="button" onClick={() => setDraft(mergePublishedIntoDraft(baseDrafts.find((row) => row.assignmentId === selectedId), publishedById.get(selectedId)))} style={{ border: "1px solid #d1d5db", borderRadius: 8, padding: "10px 14px", background: "#fff", fontWeight: 600, cursor: "pointer" }}>
             Reset editor
