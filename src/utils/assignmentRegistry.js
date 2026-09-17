@@ -1,3 +1,4 @@
+import { getVerifiedAssignmentTask } from "../data/verifiedAssignmentTasks.js";
 import {
   extractWritingTaskPoints,
   inferExpectedWritingTextType,
@@ -6,14 +7,6 @@ import {
 } from "./writingTaskSchema.js";
 
 const clean = (value = "") => String(value || "").replace(/\s+/g, " ").trim();
-
-const TASK_POINT_OVERRIDES = Object.freeze({
-  "B1-1.2": [
-    "Explain how you and the friend met",
-    "Explain why this specific friendship is special",
-    "Make a concrete suggestion for a meeting",
-  ],
-});
 
 export const ASSIGNMENT_REGISTRY_SCHEMA_VERSION = 1;
 
@@ -33,10 +26,44 @@ function taskPointObjects(points = []) {
   })).filter((point) => point.requirement);
 }
 
+function buildVerifiedDraft(slide, assignmentId, level, verified) {
+  const requirements = Array.isArray(verified.taskPoints) ? verified.taskPoints.map(clean).filter(Boolean) : [];
+  const prompt = String(verified.prompt || "").trim();
+
+  return {
+    schemaVersion: ASSIGNMENT_REGISTRY_SCHEMA_VERSION,
+    assignmentId,
+    level,
+    title: clean(verified.title || slide.title || slide.topic || assignmentId),
+    source: {
+      kind: "falowen_student_task",
+      repository: "learngermanghana/falowenexamtrainer",
+      path: clean(verified.sourcePath),
+      blobSha: clean(verified.sourceBlobSha),
+      summary: prompt,
+      workbookUrl: clean(slide.workbookConnection?.workbookUrl || ""),
+    },
+    publicTask: {
+      prompt,
+      promptVerified: true,
+      taskPoints: requirements,
+    },
+    markingSpec: {
+      textType: clean(verified.textType || WRITING_TEXT_TYPES.WRITING),
+      register: clean(verified.register || "unspecified"),
+      recipient: clean(verified.recipient || "unspecified"),
+      taskPoints: taskPointObjects(requirements),
+    },
+  };
+}
+
 export function buildAssignmentRegistryDraftFromSlide(slide = {}) {
   const assignmentId = normalizeAssignmentId(slide.assignmentId);
   const level = clean(slide.course).toUpperCase();
   if (!assignmentId || !["A2", "B1"].includes(level)) return null;
+
+  const verified = getVerifiedAssignmentTask(assignmentId);
+  if (verified) return buildVerifiedDraft(slide, assignmentId, level, verified);
 
   const writingPart = findWritingPart(slide);
   const sourceSummary = clean(writingPart?.detailDe || writingPart?.detailEn || "");
@@ -44,7 +71,7 @@ export function buildAssignmentRegistryDraftFromSlide(slide = {}) {
 
   const register = inferWritingRegister(sourceSummary, slide);
   const textType = inferExpectedWritingTextType(sourceSummary, slide, register);
-  const requirements = TASK_POINT_OVERRIDES[assignmentId] || extractWritingTaskPoints(sourceSummary);
+  const requirements = extractWritingTaskPoints(sourceSummary);
 
   return {
     schemaVersion: ASSIGNMENT_REGISTRY_SCHEMA_VERSION,
@@ -52,7 +79,7 @@ export function buildAssignmentRegistryDraftFromSlide(slide = {}) {
     level,
     title: clean(slide.title || slide.topic || assignmentId),
     source: {
-      kind: "admin_workbook_slide",
+      kind: "admin_workbook_summary",
       slideId: clean(slide.id),
       summary: sourceSummary,
       workbookUrl: clean(slide.workbookConnection?.workbookUrl || ""),

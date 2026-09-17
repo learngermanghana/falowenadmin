@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getTeachingSlideByAssignmentId, teachingSlides } from "../src/data/teachingSlides.js";
+import { VERIFIED_ASSIGNMENT_TASK_COUNT } from "../src/data/verifiedAssignmentTasks.js";
 import {
   assignmentVersionId,
   buildAssignmentRegistryDraftFromSlide,
@@ -12,34 +13,46 @@ import {
 } from "../src/utils/assignmentRegistry.js";
 import { detectWritingTextType, WRITING_TEXT_TYPES } from "../src/utils/writingTaskSchema.js";
 
-test("A2/B1 workbook writing tasks generate canonical registry drafts", () => {
+test("A2/B1 workbook writing tasks generate registry drafts without pretending summaries are verified", () => {
   const drafts = buildAssignmentRegistryDrafts(teachingSlides);
   assert.ok(drafts.length >= 40, `Expected broad A2/B1 coverage, received ${drafts.length}`);
   assert.ok(drafts.every((draft) => ["A2", "B1"].includes(draft.level)));
   assert.ok(drafts.every((draft) => draft.markingSpec?.taskPoints?.length > 0));
+  assert.ok(drafts.some((draft) => draft.publicTask.promptVerified === false));
+  assert.ok(drafts.some((draft) => draft.source?.kind === "falowen_student_task"));
 });
 
-test("B1-1.2 draft carries the communicative task and normalized text type", () => {
-  const slide = getTeachingSlideByAssignmentId("B1-1.2");
-  const draft = buildAssignmentRegistryDraftFromSlide(slide);
-  assert.equal(draft.assignmentId, "B1-1.2");
-  assert.equal(draft.markingSpec.textType, WRITING_TEXT_TYPES.INFORMAL_EMAIL);
-  assert.equal(draft.markingSpec.register, "informal");
-  assert.equal(draft.markingSpec.taskPoints.length, 3);
-  assert.equal(draft.publicTask.promptVerified, false);
-  assert.match(draft.source.summary, /explain how you met/i);
+test("source-traced Falowen tasks arrive pre-verified and summaries do not", () => {
+  assert.ok(VERIFIED_ASSIGNMENT_TASK_COUNT >= 9);
+
+  const b1 = buildAssignmentRegistryDraftFromSlide(getTeachingSlideByAssignmentId("B1-1.2"));
+  assert.equal(b1.assignmentId, "B1-1.2");
+  assert.equal(b1.publicTask.promptVerified, true);
+  assert.equal(b1.source.kind, "falowen_student_task");
+  assert.match(b1.source.path, /B1Day2FreundeFuersLebenWorkbookPage\.js$/);
+  assert.match(b1.publicTask.prompt, /Wie haben Sie sich kennengelernt\?/i);
+  assert.equal(b1.markingSpec.textType, WRITING_TEXT_TYPES.INFORMAL_EMAIL);
+  assert.equal(b1.markingSpec.register, "informal");
+  assert.equal(b1.markingSpec.taskPoints.length, 3);
+
+  const a2 = buildAssignmentRegistryDraftFromSlide(getTeachingSlideByAssignmentId("A2-1.1"));
+  assert.equal(a2.publicTask.promptVerified, true);
+  assert.match(a2.publicTask.prompt, /Arbeit und deine Familie/i);
+  assert.equal(a2.source.kind, "falowen_student_task");
+
+  const fallback = buildAssignmentRegistryDrafts(teachingSlides).find((draft) => !draft.publicTask.promptVerified);
+  assert.ok(fallback, "Expected at least one workbook summary that still needs source verification");
+  assert.equal(fallback.source.kind, "admin_workbook_summary");
+  assert.ok(validateAssignmentRegistryDraft(fallback).some((message) => /verify/i.test(message)));
 });
 
-test("publishing validation requires exact prompt verification", () => {
+test("publishing validation accepts a source-verified exact task", () => {
   const draft = buildAssignmentRegistryDraftFromSlide(getTeachingSlideByAssignmentId("B1-1.2"));
-  assert.ok(validateAssignmentRegistryDraft(draft).some((message) => /verify/i.test(message)));
-  draft.publicTask.promptVerified = true;
   assert.deepEqual(validateAssignmentRegistryDraft(draft), []);
 });
 
-test("public record never exposes private marking specification", () => {
+test("public record never exposes private marking specification or source provenance", () => {
   const draft = buildAssignmentRegistryDraftFromSlide(getTeachingSlideByAssignmentId("B1-1.2"));
-  draft.publicTask.promptVerified = true;
   const record = { ...draft, version: 4, status: "published" };
   const publicRecord = toPublicAssignmentRecord(record);
   assert.equal(publicRecord.version, 4);
@@ -49,7 +62,7 @@ test("public record never exposes private marking specification", () => {
   assert.equal(assignmentVersionId("B1-1.2", 4), "B1-1.2__v4");
 });
 
-test("published private record converts to the task used by the examiner", () => {
+test("published private record converts to the exact task used by the examiner", () => {
   const draft = buildAssignmentRegistryDraftFromSlide(getTeachingSlideByAssignmentId("B1-1.2"));
   const task = toQuestionAwareWritingTask({ ...draft, version: 2 });
   assert.equal(task.assignmentKey, "B1-1.2");
@@ -57,6 +70,7 @@ test("published private record converts to the task used by the examiner", () =>
   assert.equal(task.textType, WRITING_TEXT_TYPES.INFORMAL_EMAIL);
   assert.equal(task.source, "assignmentRegistry");
   assert.equal(task.taskPoints.length, 3);
+  assert.match(task.taskText, /Vorschlag für ein Treffen/i);
 });
 
 test("text type detector does not treat an essay body as an email just because it has a greeting and closing", () => {
