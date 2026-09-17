@@ -68,6 +68,12 @@ Schreib mir bald.
 Liebe Grüße
 Fred`;
 
+const reubenEmail = `Teil 2
+Liebe Ruth,
+ich hoffe, es geht dir gut. Ich schreibe dir, weil ich dir von einem neuen Freund von mir erzählen möchte. Er heißt Mark, ist Arzt und wohnt auch hier in Accra. Wir haben uns vor vier Jahren am Arbeitsplatz kennengelernt. Seitdem sind wir gute Freunde. Unsere Freundschaft ist für mich ganz besonders, weil Mark viele gute Eigenschaften hat. Zum Beispiel ist er ehrlich, geduldig, bescheiden, lustig, klug, hilfsbereit und offen. Er hilft mir in vielen schwierigen Situationen. Ich möchte ihn dir gerne vorstellen. Hast du am nächsten Wochenende Zeit? Wir könnten uns bei mir zu Hause treffen. Passt dir das? Ich freue mich auf deine Antwort.
+Viele Grüße
+Reuben`;
+
 test("B1-1.2 resolves the actual workbook writing task and its three communicative points", () => {
   const task = resolveQuestionAwareWritingTask(assignmentOptions);
   assert.ok(task);
@@ -153,5 +159,37 @@ test("a genuine informal email that answers all three points is not capped", () 
   assert.equal(result.finalScore, 97);
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
   assert.equal(result.ai.questionAwareWritingTask.assignmentKey, "B1-1.2");
+  assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
+});
+
+test("Reuben-style complete B1 email is not left in the mid-80s without concrete corrections", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    ...assignmentOptions,
+    submissionText: reubenEmail,
+  });
+  const result = applyQuestionAwareWritingGuard({
+    level: "B1",
+    assignmentKey: "B1-1.2",
+    objectiveScore: 100,
+    objectiveCorrect: 12,
+    objectiveTotal: 12,
+    writingScore: 85,
+    writingScorePercent: 85,
+    finalScore: 94,
+    score: 94,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    corrections: [],
+    feedback: "Strong task completion with only an extension goal for cohesion.",
+    status: "marked",
+    confidence: 0.82,
+  }, enriched, reubenEmail);
+
+  assert.equal(result.writingScore, 90);
+  assert.equal(result.writingScorePercent, 90);
+  assert.equal(result.finalScore, 96);
+  assert.equal(result.status, "marked");
+  assert.equal(result.ai.questionAwareWritingGuard, undefined);
+  assert.equal(result.ai.questionAwareWritingCalibration.applied, true);
   assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
 });
