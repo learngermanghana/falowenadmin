@@ -1,0 +1,41 @@
+name: Early session completion guard
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/sessionCompletionGuard.js'
+      - 'scripts/patchEarlySessionCompletionGuard.mjs'
+      - 'scripts/patchLiveClassCanonicalSessionIdentity.mjs'
+      - 'tests/early-session-completion-guard.test.js'
+      - '.github/workflows/early-session-completion-guard.yml'
+  push:
+    paths:
+      - 'src/utils/sessionCompletionGuard.js'
+      - 'scripts/patchEarlySessionCompletionGuard.mjs'
+      - 'scripts/patchLiveClassCanonicalSessionIdentity.mjs'
+      - 'tests/early-session-completion-guard.test.js'
+      - '.github/workflows/early-session-completion-guard.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply completion guard twice
+        run: |
+          node scripts/patchEarlySessionCompletionGuard.mjs
+          node scripts/patchEarlySessionCompletionGuard.mjs
+      - name: Validate completion guard
+        run: |
+          node --check scripts/patchEarlySessionCompletionGuard.mjs
+          node --check src/utils/sessionCompletionGuard.js
+          node --test tests/early-session-completion-guard.test.js
+      - name: Prepare waiting-room source for production bundle
+        run: node scripts/patchCheckinWaitingRoomPlaylist.mjs
+      - name: Build production bundle
+        run: npx vite build

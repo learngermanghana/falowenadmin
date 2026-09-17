@@ -65,3 +65,6 @@ patchFile(new URL("../src/services/liveClassServiceBase.js", import.meta.url), (
 ));
 
 console.log("Live Class session changes now prefer canonical class records and Firestore document IDs over legacy stored identity fields.");
+
+// Apply completion/reminder safety after the canonical session source has settled.
+await import("./patchEarlySessionCompletionGuard.mjs");
