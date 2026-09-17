@@ -35,5 +35,7 @@ jobs:
           node --check scripts/patchEarlySessionCompletionGuard.mjs
           node --check src/utils/sessionCompletionGuard.js
           node --test tests/early-session-completion-guard.test.js
+      - name: Prepare waiting-room source for production bundle
+        run: node scripts/patchCheckinWaitingRoomPlaylist.mjs
       - name: Build production bundle
         run: npx vite build
