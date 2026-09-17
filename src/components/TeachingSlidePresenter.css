@@ -208,6 +208,46 @@
   line-height: 1.35;
 }
 
+/* Fullscreen safety: keep the content row bounded and make every line reachable. */
+.presenter-stage {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.presenter-content {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: safe center;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 1rem;
+}
+
+.presenter-shell:fullscreen,
+.presenter-shell:-webkit-full-screen {
+  width: 100vw;
+  height: 100dvh;
+  padding: 0;
+  place-items: stretch;
+}
+
+.presenter-shell:fullscreen .presenter-stage,
+.presenter-shell:-webkit-full-screen .presenter-stage {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+.presenter-shell:fullscreen .presenter-content,
+.presenter-shell:-webkit-full-screen .presenter-content {
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
 @media (max-width: 1100px) {
   .presenter-topbar {
     align-items: flex-start;
