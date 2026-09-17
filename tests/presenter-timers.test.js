@@ -15,10 +15,12 @@ test("presenter class timer hard-codes A1 to 60 minutes and A2/B1 to 90 minutes"
   assert.match(source, /Class time is up/);
 });
 
-test("class timer is session-wide for the level and date rather than tied to a lesson page", () => {
+test("class timer is session-wide for selected class, level and date rather than tied to a lesson page", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   assert.match(source, /presenterClassTimerStorageKey/);
-  assert.match(source, /class-timer:\$\{localDateKey\(now\)\}:\$\{safeLevel\}/);
+  assert.match(source, /LAST_CLASS_KEY = "falowen:presenter:last-class"/);
+  assert.match(source, /class-timer:\$\{localDateKey\(now\)\}:\$\{safeLevel\}:\$\{safeClass\}/);
+  assert.match(source, /currentPresenterClassId/);
   assert.match(source, /window\.localStorage\.getItem\(key\)/);
   assert.match(source, /window\.localStorage\.setItem\(storageKey/);
   assert.doesNotMatch(source, /slide\.assignmentId \|\| slide\.id/);
