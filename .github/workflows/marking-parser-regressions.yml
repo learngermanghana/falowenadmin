@@ -3,19 +3,15 @@ name: Marking parser regressions
 on:
   push:
     paths:
-      - 'scripts/patchSequentialMultipartIsolation.mjs'
-      - 'scripts/patchWritingSignatureIsolation.mjs'
-      - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
-      - 'tests/writing-signature-isolation.test.js'
-      - 'package.json'
+      - 'scripts/patchA1BooleanOptionNormalization.mjs'
+      - 'scripts/patchObjectiveTeil2ReviewMapping.mjs'
+      - 'tests/a1-10-letter-boolean-parser.test.js'
       - '.github/workflows/marking-parser-regressions.yml'
   pull_request:
     paths:
-      - 'scripts/patchSequentialMultipartIsolation.mjs'
-      - 'scripts/patchWritingSignatureIsolation.mjs'
-      - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
-      - 'tests/writing-signature-isolation.test.js'
-      - 'package.json'
+      - 'scripts/patchA1BooleanOptionNormalization.mjs'
+      - 'scripts/patchObjectiveTeil2ReviewMapping.mjs'
+      - 'tests/a1-10-letter-boolean-parser.test.js'
       - '.github/workflows/marking-parser-regressions.yml'
 
 jobs:
@@ -26,26 +22,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply parser patches twice
+      - name: Apply current A1 objective lifecycle twice
         run: |
-          node scripts/patchObjectiveWritingPartDetection.mjs
-          node scripts/patchObjectiveAnswerTimeParsing.mjs
-          node scripts/patchObjectivePromptAnswerParsing.mjs
-          node scripts/patchA1PricePreferenceMarking.mjs
-          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
-          node scripts/patchObjectiveGrammarConsistency.mjs
-          node scripts/patchReorderedObjectiveGroups.mjs
-          node scripts/patchSequentialMultipartIsolation.mjs
-          node scripts/patchWritingSignatureIsolation.mjs
-          node scripts/patchSequentialMultipartIsolation.mjs
-          node scripts/patchWritingSignatureIsolation.mjs
+          node scripts/patchObjectiveTeil2ReviewMapping.mjs
+          node scripts/patchObjectiveTeil2ReviewMapping.mjs
       - name: Validate patched source
         run: |
-          node --check src/utils/objectiveMarking.js
           node --check src/utils/autoMarking.js
-          node --check scripts/patchSequentialMultipartIsolation.mjs
-          node --check scripts/patchWritingSignatureIsolation.mjs
-          grep -F 'if (sequentialPartAnswers.size > 0 || hasAnyMatchingPartSections) return "";' src/utils/objectiveMarking.js
-          grep -F 'const sourceText = writingBodyBeforeSignoff(text);' src/utils/autoMarking.js
-      - name: Run exact regressions
-        run: node --test tests/a1-12.1-unlabelled-block-isolation.test.js tests/writing-signature-isolation.test.js
+          node --check scripts/patchA1BooleanOptionNormalization.mjs
+          grep -F '// A1 BOOLEAN OPTION NORMALIZATION' src/utils/autoMarking.js
+      - name: Run exact A1-10 regression
+        run: node --test tests/a1-10-letter-boolean-parser.test.js
