@@ -1,4 +1,6 @@
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
+import { getCachedAssignmentRegistryEntry } from "./assignmentRegistryCache.js";
+import { toQuestionAwareWritingTask } from "./assignmentRegistry.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
 import {
   detectWritingTextType,
@@ -53,6 +55,9 @@ export function resolveQuestionAwareWritingTask(options = {}) {
   const assignmentKey = assignmentKeyFromOptions(options);
   const level = levelFromOptions(options, assignmentKey);
   if (!assignmentKey || !["A2", "B1"].includes(level)) return null;
+
+  const publishedTask = toQuestionAwareWritingTask(getCachedAssignmentRegistryEntry(assignmentKey) || {});
+  if (publishedTask) return publishedTask;
 
   const slide = getTeachingSlideByAssignmentId(assignmentKey);
   const writingPart = writingPartFromSlide(slide || {});
