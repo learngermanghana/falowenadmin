@@ -2,10 +2,12 @@ import { useState } from "react";
 import MarkingPage from "./MarkingPage.jsx";
 import AIMarkingAuditPage from "./AIMarkingAuditPage.jsx";
 import AnswerKeySyncPage from "./AnswerKeySyncPage.jsx";
+import AssignmentRegistryPage from "./AssignmentRegistryPage.jsx";
 import StudentResultsComparePage from "./StudentResultsComparePage.jsx";
 
 const tabs = [
   { id: "work", label: "Marking", helper: "Use the original detailed marking workspace for manual review, AI support, final score saving, and student feedback." },
+  { id: "assignment-registry", label: "Assignment Registry", helper: "Verify, version and publish the exact writing task plus its private marking specification." },
   { id: "ai-audit", label: "AI Audit", helper: "Review AI marking records and saved audit details before syncing them." },
   { id: "answer-keys", label: "Answer Keys", helper: "Sync and check reference answer keys." },
   { id: "student-results", label: "Student Results", helper: "Compare a selected student’s Firestore results against the score sheet and override the sheet from Firestore." },
@@ -50,6 +52,7 @@ export default function MarkingHubPage() {
       </section>
 
       {activeTab === "work" ? <MarkingPage /> : null}
+      {activeTab === "assignment-registry" ? <AssignmentRegistryPage /> : null}
       {activeTab === "ai-audit" ? <AIMarkingAuditPage /> : null}
       {activeTab === "answer-keys" ? <AnswerKeySyncPage /> : null}
       {activeTab === "student-results" ? <StudentResultsComparePage /> : null}
