@@ -110,10 +110,6 @@ test("generic friendship opinion essay cannot keep a 100% writing score", () => 
     feedback: "Strong work. You completed the required task.",
     status: "needs_review",
     confidence: 0.8,
-    ai: {
-      deterministicObjectiveWeight: 0.5,
-      deterministicWritingWeight: 0.5,
-    },
   }, enriched, opinionEssayInsteadOfEmail);
 
   assert.equal(result.objectiveScore, 100);
@@ -121,7 +117,9 @@ test("generic friendship opinion essay cannot keep a 100% writing score", () => 
   assert.equal(result.objectiveTotal, 12);
   assert.equal(result.writingScore, 55);
   assert.equal(result.writingScorePercent, 55);
-  assert.equal(result.finalScore, 78);
+  assert.equal(result.finalScore, 82);
+  assert.equal(result.markingPolicy, "a2-b1-40-30-30");
+  assert.equal(result.writingMinimumMet, true);
   assert.equal(result.taskCompletion.completed, 0);
   assert.equal(result.taskCompletion.total, 3);
   assert.equal(result.missingTaskPoints.length, 3);
@@ -142,8 +140,8 @@ test("a genuine informal email that answers all three points is not capped", () 
     objectiveTotal: 12,
     writingScore: 92,
     writingScorePercent: 92,
-    finalScore: 96,
-    score: 96,
+    finalScore: 97,
+    score: 97,
     taskCompletion: { completed: 3, total: 3, missing: [] },
     feedback: "Clear and complete informal email.",
     status: "needs_review",
@@ -151,7 +149,7 @@ test("a genuine informal email that answers all three points is not capped", () 
   }, enriched, actualEmail);
 
   assert.equal(result.writingScore, 92);
-  assert.equal(result.finalScore, 96);
+  assert.equal(result.finalScore, 97);
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
   assert.equal(result.ai.questionAwareWritingTask.assignmentKey, "B1-1.2");
 });
