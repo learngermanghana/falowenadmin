@@ -2,12 +2,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 245px;
+  min-width: 285px;
   padding: 8px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: #f8fafc;
   color: #0f172a;
+  transition: background 160ms ease, border-color 160ms ease;
 }
 
 .presenter-session-timer-copy {
@@ -46,9 +47,34 @@
   cursor: pointer;
 }
 
+.presenter-session-timer-actions button[aria-pressed="true"] {
+  border-color: #64748b;
+  background: #e2e8f0;
+  font-weight: 700;
+}
+
+.presenter-session-timer.is-notice {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.presenter-session-timer.is-caution {
+  border-color: #eab308;
+  background: #fefce8;
+}
+
 .presenter-session-timer.is-warning {
   border-color: #f59e0b;
   background: #fffbeb;
+}
+
+.presenter-session-timer.is-critical {
+  border-color: #ea580c;
+  background: #fff7ed;
+}
+
+.presenter-session-timer.is-critical .presenter-session-timer-copy strong {
+  color: #c2410c;
 }
 
 .presenter-session-timer.is-expired {
@@ -56,7 +82,8 @@
   background: #fef2f2;
 }
 
-.presenter-session-timer.is-expired .presenter-session-timer-copy strong {
+.presenter-session-timer.is-expired .presenter-session-timer-copy strong,
+.presenter-session-timer.is-expired .presenter-session-timer-copy small {
   color: #b91c1c;
 }
 
