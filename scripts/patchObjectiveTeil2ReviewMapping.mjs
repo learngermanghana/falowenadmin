@@ -49,3 +49,5 @@ await import("./patchA1VocabularyTolerance.mjs");
 await import("./patchStructuredSubmissionPayload.mjs");
 // Recover one unambiguous duplicated section heading and keep genuine A1 objective Teil 2 sections.
 await import("./patchA1DuplicateObjectiveSectionLabels.mjs");
+// A1 true/false UI choices use A = Wahr/Richtig and B = Falsch.
+await import("./patchA1BooleanOptionNormalization.mjs");
