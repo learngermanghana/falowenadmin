@@ -1,0 +1,68 @@
+.presenter-session-timer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 245px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.presenter-session-timer-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.presenter-session-timer-copy span,
+.presenter-session-timer-copy small {
+  font-size: 11px;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.presenter-session-timer-copy strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 20px;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+}
+
+.presenter-session-timer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.presenter-session-timer-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.presenter-session-timer.is-warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.presenter-session-timer.is-expired {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.presenter-session-timer.is-expired .presenter-session-timer-copy strong {
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .presenter-session-timer {
+    min-width: 0;
+    width: 100%;
+  }
+}
