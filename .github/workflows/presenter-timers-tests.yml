@@ -1,0 +1,44 @@
+name: Presenter timer tests
+
+on:
+  pull_request:
+    paths:
+      - "src/components/PresenterSessionTimer.jsx"
+      - "src/components/PresenterSessionTimer.css"
+      - "src/components/PresenterStudentPicker.jsx"
+      - "src/components/PresenterStudentPicker.css"
+      - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "scripts/patchPresenterSessionAndResponseTimers.mjs"
+      - "scripts/patchPresenterConceptLabels.mjs"
+      - "tests/presenter-timers.test.js"
+      - ".github/workflows/presenter-timers-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/components/PresenterSessionTimer.jsx"
+      - "src/components/PresenterSessionTimer.css"
+      - "scripts/patchPresenterSessionAndResponseTimers.mjs"
+      - "scripts/patchPresenterConceptLabels.mjs"
+      - "tests/presenter-timers.test.js"
+
+jobs:
+  timer-test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply presenter patch chain
+        run: |
+          node scripts/patchPresenterStudentPicker.mjs
+          node scripts/patchPresenterParticipationInsights.mjs
+          node scripts/patchPresenterRandomAndAttendanceDiagnostics.mjs
+          node scripts/patchPresenterConceptLabels.mjs
+      - name: Run presenter timer regressions
+        run: node --test tests/presenter-timers.test.js
+      - name: Build Vite bundle
+        run: npx vite build
