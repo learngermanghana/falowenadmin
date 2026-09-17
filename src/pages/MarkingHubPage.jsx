@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MarkingPage from "./MarkingPage.jsx";
 import AIMarkingAuditPage from "./AIMarkingAuditPage.jsx";
 import AnswerKeySyncPage from "./AnswerKeySyncPage.jsx";
 import AssignmentRegistryPage from "./AssignmentRegistryPage.jsx";
 import StudentResultsComparePage from "./StudentResultsComparePage.jsx";
+import { warmAssignmentRegistryCache } from "../services/assignmentRegistryService.js";
 
 const tabs = [
   { id: "work", label: "Marking", helper: "Use the original detailed marking workspace for manual review, AI support, final score saving, and student feedback." },
@@ -16,6 +17,12 @@ const tabs = [
 export default function MarkingHubPage() {
   const [activeTab, setActiveTab] = useState("work");
   const activeTabMeta = tabs.find((tab) => tab.id === activeTab) || tabs[0];
+
+  useEffect(() => {
+    warmAssignmentRegistryCache().catch((error) => {
+      if (error?.code !== "permission-denied") console.warn("Could not warm assignment registry cache.", error);
+    });
+  }, []);
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
