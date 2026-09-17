@@ -203,6 +203,38 @@ function recomputeOutcome(result = {}, task = {}, writingScore) {
   });
 }
 
+function hasConcreteCorrections(result = {}) {
+  return (Array.isArray(result.corrections) ? result.corrections : []).some((correction) => {
+    if (!correction) return false;
+    if (typeof correction === "string") return clean(correction).length > 0;
+    return clean(correction.from || correction.to || correction.reason).length > 0;
+  });
+}
+
+function calibratedCompleteWritingScore({
+  result = {},
+  task = {},
+  structured = {},
+  localMissing = [],
+  detectedTextType = {},
+  currentWritingScore,
+} = {}) {
+  if (!Number.isFinite(currentWritingScore) || currentWritingScore < 85 || currentWritingScore >= 90) return currentWritingScore;
+  if (hasConcreteCorrections(result)) return currentWritingScore;
+  if (!writingTextTypesCompatible(task.textType, detectedTextType.detectedType)) return currentWritingScore;
+
+  const configuredTotal = Array.isArray(task.taskPoints) ? task.taskPoints.length : 0;
+  const structuredComplete = structured.total > 0
+    && structured.completed === structured.total
+    && (!configuredTotal || structured.total >= configuredTotal);
+  const deterministicFriendshipComplete = task.assignmentKey === "B1-1.2"
+    && configuredTotal === 3
+    && localMissing.length === 0;
+
+  if (!structuredComplete && !deterministicFriendshipComplete) return currentWritingScore;
+  return 90;
+}
+
 export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSubmissionText = "") {
   const task = options.referenceEntry?.questionAwareWritingTask
     || options.submission?.questionAwareWritingTask
@@ -223,18 +255,58 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const legacyEssayMismatch = /email|letter|message|invitation/.test(task.textType) && emailBodyLooksLikeOpinionEssay(source);
   const genreMismatch = classifierMismatch || legacyEssayMismatch;
   const wrongRegister = registerMismatch(task, source);
+  const hasGuardIssue = missingTaskPoints.length > 0 || genreMismatch || wrongRegister;
+
+  if (!hasGuardIssue) {
+    const calibratedWritingScore = calibratedCompleteWritingScore({
+      result,
+      task,
+      structured,
+      localMissing,
+      detectedTextType,
+      currentWritingScore,
+    });
+
+    if (calibratedWritingScore === currentWritingScore) {
+      return {
+        ...result,
+        ai: { ...(result.ai || {}), questionAwareWritingTask: task, detectedWritingTextType: detectedTextType },
+      };
+    }
+
+    const weightedOutcome = recomputeOutcome(result, task, calibratedWritingScore);
+    const completed = structured.completed ?? total;
+    return {
+      ...result,
+      score: weightedOutcome.finalScore,
+      finalScore: weightedOutcome.finalScore,
+      passed: weightedOutcome.passed,
+      scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,
+      writingMinimumMet: weightedOutcome.writingMinimumMet,
+      markingPolicy: weightedOutcome.policy,
+      writingScore: calibratedWritingScore,
+      writingScorePercent: calibratedWritingScore,
+      parts: updateWritingParts(result.parts, calibratedWritingScore),
+      taskCompletion: { completed, total, missing: [] },
+      missingTaskPoints: [],
+      ai: {
+        ...(result.ai || {}),
+        questionAwareWritingTask: task,
+        detectedWritingTextType: detectedTextType,
+        questionAwareWritingCalibration: {
+          applied: true,
+          originalWritingScore: currentWritingScore,
+          calibratedWritingScore,
+          reason: "Complete task, correct text type/register, and no concrete writing correction supported a B1/A2 top-band floor.",
+        },
+      },
+    };
+  }
 
   let cap = guardCapForMissing(missingTaskPoints.length, total);
   if (genreMismatch) cap = Math.min(cap, 65);
   if (wrongRegister) cap = Math.min(cap, 70);
   const guardedWritingScore = Math.min(currentWritingScore, cap);
-
-  if (guardedWritingScore === currentWritingScore && !missingTaskPoints.length && !genreMismatch && !wrongRegister) {
-    return {
-      ...result,
-      ai: { ...(result.ai || {}), questionAwareWritingTask: task, detectedWritingTextType: detectedTextType },
-    };
-  }
 
   const completed = Math.max(0, total - missingTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
