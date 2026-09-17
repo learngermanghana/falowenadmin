@@ -7,7 +7,7 @@ function read(path) {
 }
 
 test("fullscreen presenter keeps long content inside a scrollable bounded grid row", () => {
-  const css = read("src/pages/TeachingSlidesPage.css");
+  const css = read("src/components/TeachingSlidePresenter.css");
   assert.match(css, /\.presenter-stage\s*\{[\s\S]*grid-template-rows:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/);
   assert.match(css, /\.presenter-content\s*\{[\s\S]*min-height:\s*0/);
   assert.match(css, /\.presenter-content\s*\{[\s\S]*overflow-y:\s*auto/);
