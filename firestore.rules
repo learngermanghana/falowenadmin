@@ -22,6 +22,26 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Canonical assignment registry. Private records include marking specs and
+    // remain admin-only. Public records contain only the task students may see.
+    match /assignmentRegistry/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /assignmentVersions/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /assignmentPublicRegistry/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /assignmentPublicVersions/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Writing submissions can be monitored from the admin dashboard.
     match /writingSubmissions/{docId} {
       allow read: if isAdmin();
@@ -62,8 +82,8 @@ service cloud.firestore {
     }
 
     // Do not deploy this file blindly if your live project already has broader
-    // Firestore rules in Firebase Console. Merge these answer-key rules into
-    // your existing rules first so other admin pages do not lose access.
+    // Firestore rules in Firebase Console. Merge these rules into your existing
+    // live rules first so other admin pages do not lose access.
     match /{document=**} {
       allow read, write: if false;
     }
