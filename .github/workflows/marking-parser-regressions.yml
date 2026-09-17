@@ -5,16 +5,22 @@ on:
     paths:
       - 'scripts/patchSequentialMultipartIsolation.mjs'
       - 'scripts/patchWritingSignatureIsolation.mjs'
+      - 'scripts/patchA1BooleanOptionNormalization.mjs'
+      - 'scripts/patchObjectiveTeil2ReviewMapping.mjs'
       - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
       - 'tests/writing-signature-isolation.test.js'
+      - 'tests/a1-10-letter-boolean-parser.test.js'
       - 'package.json'
       - '.github/workflows/marking-parser-regressions.yml'
   pull_request:
     paths:
       - 'scripts/patchSequentialMultipartIsolation.mjs'
       - 'scripts/patchWritingSignatureIsolation.mjs'
+      - 'scripts/patchA1BooleanOptionNormalization.mjs'
+      - 'scripts/patchObjectiveTeil2ReviewMapping.mjs'
       - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
       - 'tests/writing-signature-isolation.test.js'
+      - 'tests/a1-10-letter-boolean-parser.test.js'
       - 'package.json'
       - '.github/workflows/marking-parser-regressions.yml'
 
@@ -34,18 +40,22 @@ jobs:
           node scripts/patchA1PricePreferenceMarking.mjs
           node scripts/patchObjectiveSectionHeadingPunctuation.mjs
           node scripts/patchObjectiveGrammarConsistency.mjs
+          node scripts/patchA1BooleanOptionNormalization.mjs
           node scripts/patchReorderedObjectiveGroups.mjs
           node scripts/patchSequentialMultipartIsolation.mjs
           node scripts/patchWritingSignatureIsolation.mjs
+          node scripts/patchA1BooleanOptionNormalization.mjs
           node scripts/patchSequentialMultipartIsolation.mjs
           node scripts/patchWritingSignatureIsolation.mjs
       - name: Validate patched source
         run: |
           node --check src/utils/objectiveMarking.js
           node --check src/utils/autoMarking.js
+          node --check scripts/patchA1BooleanOptionNormalization.mjs
           node --check scripts/patchSequentialMultipartIsolation.mjs
           node --check scripts/patchWritingSignatureIsolation.mjs
           grep -F 'if (sequentialPartAnswers.size > 0 || hasAnyMatchingPartSections) return "";' src/utils/objectiveMarking.js
           grep -F 'const sourceText = writingBodyBeforeSignoff(text);' src/utils/autoMarking.js
+          grep -F '// A1 BOOLEAN OPTION NORMALIZATION' src/utils/autoMarking.js
       - name: Run exact regressions
-        run: node --test tests/a1-12.1-unlabelled-block-isolation.test.js tests/writing-signature-isolation.test.js
+        run: node --test tests/a1-10-letter-boolean-parser.test.js tests/a1-12.1-unlabelled-block-isolation.test.js tests/writing-signature-isolation.test.js
