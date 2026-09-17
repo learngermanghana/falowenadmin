@@ -54,15 +54,17 @@ test("both A1 and general teaching presenters show the class timer", () => {
   assert.match(general, /<PresenterSessionTimer slide=\{slide\} \/>/);
 });
 
-test("student picker starts a 30-second answer timer automatically and announces timeout", () => {
+test("student picker starts a one-minute answer timer automatically and announces timeout", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
-  assert.match(picker, /DEFAULT_RESPONSE_SECONDS = 30/);
+  assert.match(picker, /DEFAULT_RESPONSE_SECONDS = 60/);
+  assert.match(picker, /RESPONSE_TIME_KEY = "falowen:presenter:response-seconds:v2"/);
   assert.match(picker, /RESPONSE_TIME_PRESETS = \[15, 30, 45, 60\]/);
   assert.match(picker, /startResponseTimer\(\);\s*\n\s*}\s*\n\s*\n\s*function pickNextQuestion/);
   assert.match(picker, /publishQuestion\(nextQuestion\);\s*\n\s*startResponseTimer\(\)/);
   assert.match(picker, /Time's up —/);
   assert.match(picker, /\+15s/);
   assert.match(picker, /Starts automatically when you pick a student or give the same student a new question/);
+  assert.match(picker, /Default: 1 minute/);
 });
 
 test("recording a student result stops the answer timer instead of auto-marking timeout", () => {
