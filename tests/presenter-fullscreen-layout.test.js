@@ -19,3 +19,11 @@ test("presenter with student picker keeps content as minmax zero row", () => {
   const css = read("src/components/PresenterStudentPicker.css");
   assert.match(css, /grid-template-rows:\s*auto\s+auto\s+minmax\(0,\s*1fr\)\s+auto/);
 });
+
+test("tablet and phone portrait presenter fills the available viewport instead of staying 16 by 9", () => {
+  const css = read("src/components/TeachingSlidePresenter.css");
+  assert.match(css, /@media \(max-width:\s*900px\) and \(orientation:\s*portrait\)/);
+  assert.match(css, /@media \(max-width:\s*900px\) and \(orientation:\s*portrait\)[\s\S]*\.presenter-stage\s*\{[\s\S]*height:\s*100dvh/);
+  assert.match(css, /@media \(max-width:\s*900px\) and \(orientation:\s*portrait\)[\s\S]*\.presenter-stage\s*\{[\s\S]*aspect-ratio:\s*auto/);
+  assert.match(css, /@media \(max-width:\s*900px\) and \(orientation:\s*portrait\)[\s\S]*\.presenter-shell\s*\{[\s\S]*place-items:\s*stretch/);
+});
