@@ -1,5 +1,6 @@
 const DEFAULT_SCORE_DELTA_THRESHOLD = 8;
 const DEFAULT_WRITING_DELTA_THRESHOLD = 10;
+const SECOND_EXAMINER_REVIEW_CONFIDENCE = 0.65;
 
 function numericScore(value) {
   const parsed = Number(value);
@@ -17,7 +18,6 @@ function normalizeFeedback(value = "") {
 function readWritingScore(result = {}) {
   const topLevel = numericScore(result.writingScorePercent ?? result.writingScore);
   if (topLevel !== null) return topLevel;
-
   const scores = (Array.isArray(result.parts) ? result.parts : [])
     .filter((part) => part?.partType === "writing" || part?.partId === "teil2")
     .map((part) => numericScore(part?.result?.score ?? part?.result?.writingScore ?? part?.score ?? part?.writingScore))
@@ -66,6 +66,21 @@ export function ensureExplicitWritingLabel(submissionText = "") {
   return `Teil 2 Schreiben\n${text}`;
 }
 
+function hasHardSecondaryReviewSignal(result = {}) {
+  const missingTaskPoints = [
+    ...(Array.isArray(result.missingTaskPoints) ? result.missingTaskPoints : []),
+    ...(Array.isArray(result.taskCompletion?.missing) ? result.taskCompletion.missing : []),
+    ...(Array.isArray(result.taskCompletion?.missingPoints) ? result.taskCompletion.missingPoints : []),
+  ].filter(Boolean);
+
+  return Boolean(
+    result.ai?.questionAwareWritingGuard?.applied
+    || result.ai?.writingScoreMissing
+    || result.ai?.unlabelledWritingDetected
+    || missingTaskPoints.length,
+  );
+}
+
 export function compareExaminerResults(primary = {}, secondary = {}, options = {}) {
   const scoreThreshold = Number(options.scoreDeltaThreshold ?? DEFAULT_SCORE_DELTA_THRESHOLD);
   const writingThreshold = Number(options.writingDeltaThreshold ?? DEFAULT_WRITING_DELTA_THRESHOLD);
@@ -82,10 +97,16 @@ export function compareExaminerResults(primary = {}, secondary = {}, options = {
     : null;
 
   const missingScore = primaryScore === null || secondaryScore === null;
+  const secondaryConfidence = Number.isFinite(Number(secondary.confidence)) ? Number(secondary.confidence) : null;
+  const secondaryRequestedReview = String(secondary.status || "").toLowerCase() === "needs_review";
+  const hardSecondaryReviewSignal = hasHardSecondaryReviewSignal(secondary);
+  const lowConfidenceSecondaryReview = secondaryRequestedReview
+    && (secondaryConfidence === null || secondaryConfidence < SECOND_EXAMINER_REVIEW_CONFIDENCE);
   const requiresTutorReview = missingScore
     || (scoreDelta !== null && scoreDelta > scoreThreshold)
     || (writingScoreDelta !== null && writingScoreDelta > writingThreshold)
-    || String(secondary.status || "").toLowerCase() === "needs_review";
+    || hardSecondaryReviewSignal
+    || lowConfidenceSecondaryReview;
 
   let agreement = "high";
   if (requiresTutorReview) agreement = "low";
@@ -103,7 +124,7 @@ export function compareExaminerResults(primary = {}, secondary = {}, options = {
     writingDeltaThreshold: writingThreshold,
     agreement,
     requiresTutorReview,
-    secondaryConfidence: Number.isFinite(Number(secondary.confidence)) ? Number(secondary.confidence) : null,
+    secondaryConfidence,
     secondaryStatus: secondary.status || "unknown",
     secondaryFeedback: String(secondary.feedback || "").trim(),
     secondaryCorrections: Array.isArray(secondary.corrections) ? secondary.corrections : [],
