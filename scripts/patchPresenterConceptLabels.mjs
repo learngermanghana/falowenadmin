@@ -214,3 +214,4 @@ if (!apiSource.includes(newStudentSafe)) {
 fs.writeFileSync(apiPath, apiSource);
 
 console.log("Presenter concept labels are attached to saved responses and student-safe participation summaries.");
+await import("./patchPresenterSessionAndResponseTimers.mjs");
