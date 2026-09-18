@@ -130,6 +130,14 @@ test("completion route is registered in Falowen Firebase API", () => {
   assert.doesNotMatch(source, /COMPLETION_DOCUMENT_SECRET|completion_document_secret/);
 });
 
+test("Apps Script completion attachment reuses the already-saved Announcement webhook token", () => {
+  const source = read("docs/apps-script/completion-participation-attachment.gs");
+
+  assert.match(source, /getWebhookToken_\(\)/);
+  assert.match(source, /X-Falowen-Announcement-Token/);
+  assert.doesNotMatch(source, /COMPLETION_DOCUMENT_SECRET|completion_document_secret|Save Completion Document Secret/);
+});
+
 test("official-session dedupe prefers canonical completed records", () => {
   const result = _test;
   assert.ok(result.sessionIdentity);
