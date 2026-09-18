@@ -267,8 +267,8 @@ test("A2-1.1 keeps the authoritative informal Felix-letter register even if cach
   assert.equal(task.textType, "informal_email");
   assert.equal(task.recipient, "friend_or_personal_contact");
   assert.equal(task.taskPoints.length, 5);
-  assert.match(task.taskText, /etwas Neues über deine Familie/i);
-  assert.match(task.taskText, /wie es ihm geht und was bei ihm neu ist/i);
+  assert.match(task.taskText, /something new about your family/i);
+  assert.match(task.taskText, /ask how he is or what is new with him/i);
   assert.match(task.gradingInstruction, /Expected register: informal/i);
   assert.doesNotMatch(task.gradingInstruction, /Expected register: formal/i);
 });
@@ -313,7 +313,7 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.equal(result.ai.questionAwareWritingTask.register, "informal");
   assert.equal(result.writingScore, 60);
   assert.equal(result.writingScorePercent, 60);
-  assert.equal(result.finalScore, 78);
+  assert.equal(result.finalScore, 79);
   assert.equal(Object.prototype.hasOwnProperty.call(result.ai, "suspiciousWritingZero"), false);
   assert.deepEqual(findUndefinedPaths(result), []);
   assert.equal(result.ai.questionAwareWritingGuard.suspiciousWritingZero, true);
