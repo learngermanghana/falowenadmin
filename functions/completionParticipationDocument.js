@@ -420,10 +420,17 @@ async function buildCompletionReport({ db, input = {} }) {
 
   const attendance = summarizeAttendance(attendanceRecords);
   const participation = summarizeParticipation(participationRecords);
+  participation.dataAvailable = participation.trackedLessons > 0;
   const level = text(input.level || klass.levelId || klass.level || student.level).toUpperCase();
   const className = text(klass.name || klass.className || input.className || input.class_name);
   const studentName = text(student.name || input.studentName || input.student_name || "Student");
   const studentCode = text(student.studentCode || student.studentcode || student.student_code || input.studentCode || input.student_code);
+  const firstSessionDate = sessions.map(sessionStart).filter(Boolean).sort((a, b) => a - b)[0] || null;
+  const lastSessionDate = sessions.map(sessionEnd).filter(Boolean).sort((a, b) => b - a)[0] || null;
+  const courseStartDate = text(klass.startDate || klass.startsAt || klass.contractStart || "")
+    || (firstSessionDate ? firstSessionDate.toISOString() : "");
+  const courseEndDate = text(klass.endDate || klass.endsAt || klass.graduationDate || klass.contractEnd || "")
+    || (lastSessionDate ? lastSessionDate.toISOString() : completionDate.toISOString());
 
   return {
     documentId: completionDocumentId(student, klass, completionDate.toISOString().slice(0, 10)),
@@ -440,8 +447,8 @@ async function buildCompletionReport({ db, input = {} }) {
       classId: text(klass.id || klass.classId),
       className,
       level,
-      startDate: text(klass.startDate || klass.startsAt || ""),
-      endDate: text(klass.endDate || klass.graduationDate || input.completionDate || input.completion_date || ""),
+      startDate: courseStartDate,
+      endDate: courseEndDate,
     },
     attendance,
     attendanceRecords: attendanceRecords.map((record) => ({
@@ -491,6 +498,10 @@ function pageStream(lines = []) {
   let y = 800;
   lines.forEach((entry) => {
     const item = typeof entry === "string" ? { text: entry } : entry;
+    if (item.raw) {
+      commands.push(item.raw);
+      return;
+    }
     if (item.space) {
       y -= Number(item.space);
       return;
@@ -519,7 +530,7 @@ function buildPdf(pages = []) {
   pages.forEach((pageLines, index) => {
     const pageRef = 5 + index * 2;
     const contentRef = pageRef + 1;
-    const stream = pageStream(pageLines);
+    const stream = typeof pageLines === "string" ? pageLines : pageStream(pageLines);
     const streamLength = latin1Buffer(stream).length;
     objects[pageRef] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentRef} 0 R >>`;
     objects[contentRef] = `<< /Length ${streamLength} >>\nstream\n${stream}\nendstream`;
@@ -541,60 +552,211 @@ function buildPdf(pages = []) {
   return Buffer.concat(chunks);
 }
 
-function buildCompletionPdf(report = {}) {
+const PDF_COLORS = {
+  ink: [0.059, 0.090, 0.165],
+  sub: [0.278, 0.333, 0.412],
+  gold: [0.769, 0.639, 0.337],
+  goldSoft: [0.969, 0.945, 0.867],
+  navy: [0.043, 0.231, 0.467],
+  blueSoft: [0.937, 0.965, 1],
+  rule: [0.796, 0.835, 0.882],
+  pale: [0.973, 0.980, 0.988],
+  white: [1, 1, 1],
+};
+
+function pdfColor(color = PDF_COLORS.ink, operator = "rg") {
+  return `${color.map((part) => Number(part).toFixed(3)).join(" ")} ${operator}`;
+}
+
+function approxTextWidth(value, size = 11) {
+  return text(value).length * Number(size || 11) * 0.51;
+}
+
+function pdfText(value, x, y, size = 11, { bold = false, color = PDF_COLORS.ink } = {}) {
+  return [
+    "BT",
+    pdfColor(color, "rg"),
+    `/${bold ? "F2" : "F1"} ${Number(size)} Tf`,
+    `${Number(x).toFixed(1)} ${Number(y).toFixed(1)} Td`,
+    `(${pdfEscape(value)}) Tj`,
+    "ET",
+  ].join(" ");
+}
+
+function pdfCenteredText(value, y, size = 11, options = {}) {
+  const width = approxTextWidth(value, size);
+  return pdfText(value, Math.max(36, (595 - width) / 2), y, size, options);
+}
+
+function pdfRect(x, y, width, height, {
+  fill = null,
+  stroke = null,
+  lineWidth = 1,
+} = {}) {
+  const commands = ["q"];
+  if (fill) commands.push(pdfColor(fill, "rg"));
+  if (stroke) commands.push(pdfColor(stroke, "RG"), `${Number(lineWidth)} w`);
+  commands.push(`${x} ${y} ${width} ${height} re`);
+  commands.push(fill && stroke ? "B" : fill ? "f" : "S");
+  commands.push("Q");
+  return commands.join(" ");
+}
+
+function pdfLine(x1, y1, x2, y2, { color = PDF_COLORS.rule, lineWidth = 1 } = {}) {
+  return `q ${pdfColor(color, "RG")} ${lineWidth} w ${x1} ${y1} m ${x2} ${y2} l S Q`;
+}
+
+function pdfWrappedText(value, x, y, maxChars, size = 10, {
+  bold = false,
+  color = PDF_COLORS.sub,
+  leading = 13,
+  maxLines = 5,
+} = {}) {
+  return wrapText(value, maxChars)
+    .slice(0, maxLines)
+    .map((line, index) => pdfText(line, x, y - index * leading, size, { bold, color }))
+    .join("\n");
+}
+
+function completionBrandFrame() {
+  return [
+    pdfRect(24, 24, 547, 794, { stroke: PDF_COLORS.gold, lineWidth: 2.8 }),
+    pdfRect(29, 29, 537, 784, { stroke: [0.90, 0.91, 0.93], lineWidth: 0.7 }),
+    pdfCenteredText("FALOWEN", 790, 11, { bold: true, color: PDF_COLORS.gold }),
+    pdfCenteredText("LEARN LANGUAGE EDUCATION ACADEMY", 774, 8.5, { bold: true, color: PDF_COLORS.navy }),
+    "q 0.955 0.960 0.968 rg BT /F2 70 Tf 122 398 Td (FALOWEN) Tj ET Q",
+  ].join("\n");
+}
+
+function statCard(label, value, x, y, width = 150, { accent = PDF_COLORS.navy } = {}) {
+  return [
+    pdfRect(x, y, width, 58, { fill: PDF_COLORS.pale, stroke: PDF_COLORS.rule, lineWidth: 0.8 }),
+    pdfText(label.toUpperCase(), x + 12, y + 38, 8.5, { bold: true, color: PDF_COLORS.sub }),
+    pdfText(String(value), x + 12, y + 15, 18, { bold: true, color: accent }),
+  ].join("\n");
+}
+
+function courseDateLabel(course = {}, completionDate = "") {
+  const start = formatDate(course.startDate);
+  const end = formatDate(course.endDate || completionDate);
+  if (start && end) return `${start} - ${end}`;
+  return start || end || "-";
+}
+
+function brandedFooter(report = {}, { pageLabel = "" } = {}) {
+  const documentId = text(report.documentId || "-");
+  return [
+    pdfLine(68, 133, 243, 133, { color: PDF_COLORS.ink, lineWidth: 1.1 }),
+    pdfText("Felix Asadu", 112, 115, 10.5, { bold: true, color: PDF_COLORS.ink }),
+    pdfText("Director", 132, 100, 9, { color: PDF_COLORS.sub }),
+    pdfText("Issued by Learn Language Education Academy", 332, 124, 8.8, { bold: true, color: PDF_COLORS.ink }),
+    pdfText("Accra, Ghana", 332, 109, 8.8, { color: PDF_COLORS.sub }),
+    pdfText(`Verification ID: ${documentId}`, 332, 94, 8.8, { bold: true, color: PDF_COLORS.navy }),
+    pdfText("Verification: learngermanghana@gmail.com", 332, 79, 8.3, { color: PDF_COLORS.sub }),
+    pdfText(pageLabel, 502, 42, 7.5, { color: PDF_COLORS.sub }),
+  ].join("\n");
+}
+
+function buildAttendancePage(report = {}) {
   const student = report.student || {};
   const course = report.course || {};
   const attendance = report.attendance || {};
+  const courseDates = courseDateLabel(course, report.completionDate);
+  const rate = Number(attendance.attendanceRate || 0);
+
+  return [
+    completionBrandFrame(),
+    pdfCenteredText("Certificate of Attendance", 730, 27, { bold: true, color: PDF_COLORS.ink }),
+    pdfCenteredText("This certifies the recorded live-class attendance for", 704, 10.5, { color: PDF_COLORS.sub }),
+    pdfCenteredText(student.name || "Student", 660, 23, { bold: true, color: PDF_COLORS.navy }),
+    pdfLine(108, 646, 487, 646, { color: PDF_COLORS.rule, lineWidth: 1.4 }),
+    pdfCenteredText(`${course.level || "-"} German Course`, 620, 15, { bold: true, color: PDF_COLORS.ink }),
+    pdfCenteredText(course.className || "-", 598, 10.5, { color: PDF_COLORS.sub }),
+    pdfCenteredText(`Course dates: ${courseDates}`, 579, 9.5, { color: PDF_COLORS.sub }),
+    statCard("Scheduled", attendance.scheduled || 0, 62, 492, 142),
+    statCard("Attended", attendance.attended || 0, 226, 492, 142),
+    statCard("Attendance rate", `${rate}%`, 390, 492, 142, { accent: PDF_COLORS.gold }),
+    statCard("Present", attendance.present || 0, 62, 413, 106),
+    statCard("Late", attendance.late || 0, 183, 413, 106),
+    statCard("Absent", attendance.absent || 0, 304, 413, 106),
+    statCard("Excused", attendance.excused || 0, 425, 413, 106),
+    pdfRect(62, 316, 470, 70, { fill: PDF_COLORS.goldSoft, stroke: [0.90, 0.80, 0.55], lineWidth: 0.8 }),
+    pdfText("ATTENDANCE METHOD", 76, 363, 8.5, { bold: true, color: PDF_COLORS.gold }),
+    pdfWrappedText(
+      "Present and late sessions count as attended. Excused sessions are excluded from the attendance percentage denominator. The record is calculated from Falowen live-class attendance and check-in data.",
+      76, 343, 84, 9.3, { color: PDF_COLORS.ink, leading: 13, maxLines: 3 },
+    ),
+    pdfText(`Student code: ${student.code || "-"}`, 62, 280, 9.2, { color: PDF_COLORS.sub }),
+    pdfText(`Completed: ${formatDate(report.completionDate) || "-"}`, 330, 280, 9.2, { color: PDF_COLORS.sub }),
+    pdfText(`Issued: ${formatDate(report.issuedAt) || "-"}`, 62, 261, 9.2, { color: PDF_COLORS.sub }),
+    brandedFooter(report, { pageLabel: "1 / 2" }),
+  ].join("\n");
+}
+
+function buildParticipationPage(report = {}) {
+  const student = report.student || {};
+  const course = report.course || {};
   const participation = report.participation || {};
-  const attendancePages = [
-    { text: "LEARN LANGUAGE EDUCATION ACADEMY", bold: true, size: 18, after: 4 },
-    { text: "Certificate of Attendance", bold: true, size: 22, after: 12 },
-    { text: "This document certifies the recorded live-class attendance for the course shown below.", size: 11, after: 12 },
-    { text: `Student: ${student.name || "Student"}`, bold: true, size: 13 },
-    { text: `Student code: ${student.code || "-"}` },
-    { text: `Course level: ${course.level || "-"}` },
-    { text: `Class: ${course.className || "-"}` },
-    { text: `Course completion date: ${formatDate(report.completionDate) || "-"}`, after: 14 },
-    { text: "Attendance summary", bold: true, size: 15, after: 4 },
-    { text: `Scheduled teaching sessions: ${attendance.scheduled || 0}` },
-    { text: `Attended: ${attendance.attended || 0}` },
-    { text: `Present: ${attendance.present || 0}` },
-    { text: `Late: ${attendance.late || 0}` },
-    { text: `Absent: ${attendance.absent || 0}` },
-    { text: `Excused: ${attendance.excused || 0}` },
-    { text: `Attendance rate: ${attendance.attendanceRate || 0}%`, bold: true, size: 14, after: 14 },
-    { text: `Document ID: ${report.documentId || "-"}` },
-    { text: `Issued: ${formatDate(report.issuedAt) || "-"}` },
-    { space: 18 },
-    { text: "Attendance is calculated from Falowen live-class attendance records. Present and late sessions count as attended; excused sessions are excluded from the percentage denominator.", size: 9, maxChars: 95 },
+  const courseDates = courseDateLabel(course, report.completionDate);
+  const tracked = Number(participation.trackedLessons || 0);
+  const available = participation.dataAvailable !== false && tracked > 0;
+  const strong = (participation.strongConcepts || []).join(" · ") || "No specific strong concepts recorded.";
+  const review = (participation.reviewConcepts || []).join(" · ") || "No specific review concepts recorded.";
+
+  const body = [
+    completionBrandFrame(),
+    pdfCenteredText("Class Participation Record", 730, 27, { bold: true, color: PDF_COLORS.ink }),
+    pdfCenteredText(student.name || "Student", 696, 16, { bold: true, color: PDF_COLORS.navy }),
+    pdfCenteredText(`${course.level || "-"} · ${course.className || "-"} · ${courseDates}`, 674, 9.5, { color: PDF_COLORS.sub }),
   ];
 
-  const conceptStrong = (participation.strongConcepts || []).join(" · ") || "No specific concepts recorded";
-  const conceptReview = (participation.reviewConcepts || []).join(" · ") || "No specific review concepts recorded";
-  const participationPage = [
-    { text: "LEARN LANGUAGE EDUCATION ACADEMY", bold: true, size: 18, after: 4 },
-    { text: "Class Participation Record", bold: true, size: 22, after: 12 },
-    { text: `Student: ${student.name || "Student"}`, bold: true, size: 13 },
-    { text: `Course: ${course.level || "-"} · ${course.className || "-"}`, after: 14 },
-    { text: "Participation summary", bold: true, size: 15, after: 4 },
-    { text: `Presenter lessons recorded: ${participation.trackedLessons || 0}` },
-    { text: `Lessons participated in: ${participation.participatedLessons || 0}` },
-    { text: `Participation rate: ${participation.participationRate || 0}%`, bold: true, size: 14 },
-    { text: `Recorded turns: ${participation.turns || 0}` },
-    { text: `Correct responses: ${participation.correct || 0}` },
-    { text: `Responses needing review: ${participation.needsReview || 0}` },
-    { text: `Skipped opportunities: ${participation.skipped || 0}`, after: 12 },
-    { text: "Strong concepts", bold: true, size: 13 },
-    { text: conceptStrong, size: 10, maxChars: 90, after: 10 },
-    { text: "Recommended review concepts", bold: true, size: 13 },
-    { text: conceptReview, size: 10, maxChars: 90, after: 16 },
-    { text: "Important note", bold: true, size: 12 },
-    { text: "Class participation is diagnostic learning data from Falowen Teaching Slides. It does not change the student's academic grade or official attendance record.", size: 10, maxChars: 95 },
-    { space: 16 },
-    { text: `Document ID: ${report.documentId || "-"}`, size: 9 },
-  ];
+  if (!available) {
+    body.push(
+      pdfRect(62, 520, 470, 92, { fill: PDF_COLORS.goldSoft, stroke: [0.90, 0.80, 0.55], lineWidth: 0.8 }),
+      pdfText("PARTICIPATION DATA", 78, 581, 9, { bold: true, color: PDF_COLORS.gold }),
+      pdfWrappedText(
+        "Participation data was not sufficiently recorded for this course. No participation percentage is assigned. This does not affect the student's academic result or official attendance.",
+        78, 558, 80, 10, { color: PDF_COLORS.ink, leading: 14, maxLines: 4 },
+      ),
+    );
+  } else {
+    body.push(
+      statCard("Tracked lessons", tracked, 62, 568, 142),
+      statCard("Participated", participation.participatedLessons || 0, 226, 568, 142),
+      statCard("Participation rate", `${participation.participationRate || 0}%`, 390, 568, 142, { accent: PDF_COLORS.gold }),
+      statCard("Recorded turns", participation.turns || 0, 62, 489, 106),
+      statCard("Correct", participation.correct || 0, 183, 489, 106),
+      statCard("Needs review", participation.needsReview || 0, 304, 489, 106),
+      statCard("Skipped", participation.skipped || 0, 425, 489, 106),
+    );
+  }
 
-  return buildPdf([attendancePages, participationPage]);
+  body.push(
+    pdfRect(62, 360, 225, 96, { fill: PDF_COLORS.blueSoft, stroke: [0.75, 0.83, 0.94], lineWidth: 0.8 }),
+    pdfText("STRONG CONCEPTS", 76, 431, 8.5, { bold: true, color: PDF_COLORS.navy }),
+    pdfWrappedText(strong, 76, 408, 37, 9.2, { color: PDF_COLORS.ink, leading: 13, maxLines: 4 }),
+    pdfRect(307, 360, 225, 96, { fill: PDF_COLORS.goldSoft, stroke: [0.90, 0.80, 0.55], lineWidth: 0.8 }),
+    pdfText("RECOMMENDED REVIEW", 321, 431, 8.5, { bold: true, color: PDF_COLORS.gold }),
+    pdfWrappedText(review, 321, 408, 37, 9.2, { color: PDF_COLORS.ink, leading: 13, maxLines: 4 }),
+    pdfRect(62, 270, 470, 66, { fill: PDF_COLORS.pale, stroke: PDF_COLORS.rule, lineWidth: 0.8 }),
+    pdfText("IMPORTANT NOTE", 76, 313, 8.5, { bold: true, color: PDF_COLORS.sub }),
+    pdfWrappedText(
+      "Class participation is diagnostic learning data recorded from Falowen Teaching Slides. It does not change the student's academic grade and it does not replace the official attendance record.",
+      76, 293, 83, 9.2, { color: PDF_COLORS.ink, leading: 12.5, maxLines: 3 },
+    ),
+    pdfText(`Student code: ${student.code || "-"}`, 62, 238, 9.2, { color: PDF_COLORS.sub }),
+    pdfText(`Issued: ${formatDate(report.issuedAt) || "-"}`, 330, 238, 9.2, { color: PDF_COLORS.sub }),
+    brandedFooter(report, { pageLabel: "2 / 2" }),
+  );
+
+  return body.join("\n");
+}
+
+function buildCompletionPdf(report = {}) {
+  return buildPdf([
+    buildAttendancePage(report),
+    buildParticipationPage(report),
+  ]);
 }
 
 function timingSafeEquals(left, right) {
@@ -627,7 +789,22 @@ function resolveAnnouncementWebhookSecret(runtimeConfig = {}, env = process.env)
   );
 }
 
-function registerCompletionDocumentRoute({ app, db, runtimeConfig = {}, env = process.env }) {
+function completionFilename(report = {}) {
+  const safeCode = text(report.student?.code || "student").replace(/[^A-Za-z0-9_-]+/g, "_");
+  const level = text(report.course?.level || "course").replace(/[^A-Za-z0-9_-]+/g, "_");
+  return `${safeCode}_${level}_Attendance_and_Class_Participation.pdf`;
+}
+
+function sendPdfResponse(res, report, pdf, disposition = "attachment") {
+  const filename = completionFilename(report);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `${disposition}; filename="${filename}"`);
+  res.setHeader("X-Falowen-Document-Id", report.documentId);
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(200).send(pdf);
+}
+
+function registerCompletionDocumentRoute({ app, db, runtimeConfig = {}, env = process.env, requireAuth = null }) {
   app.post("/completion/attendance-participation-document", async (req, res) => {
     try {
       const expected = resolveAnnouncementWebhookSecret(runtimeConfig, env);
@@ -638,15 +815,7 @@ function registerCompletionDocumentRoute({ app, db, runtimeConfig = {}, env = pr
 
       const report = await buildCompletionReport({ db, input: req.body || {} });
       const pdf = buildCompletionPdf(report);
-      const safeCode = text(report.student?.code || "student").replace(/[^A-Za-z0-9_-]+/g, "_");
-      const level = text(report.course?.level || "course").replace(/[^A-Za-z0-9_-]+/g, "_");
-      const filename = `${safeCode}_${level}_Attendance_and_Class_Participation.pdf`;
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-      res.setHeader("X-Falowen-Document-Id", report.documentId);
-      res.setHeader("Cache-Control", "no-store");
-      return res.status(200).send(pdf);
+      return sendPdfResponse(res, report, pdf, "attachment");
     } catch (error) {
       const status = Number(error?.status) || 500;
       console.error("completion_participation_document_failed", {
@@ -656,17 +825,48 @@ function registerCompletionDocumentRoute({ app, db, runtimeConfig = {}, env = pr
       return res.status(status).json({ ok: false, error: error?.message || "Could not build completion participation document." });
     }
   });
+
+  if (typeof requireAuth === "function") {
+    app.post("/completion-pack/report", async (req, res) => {
+      try {
+        await requireAuth(req);
+        const report = await buildCompletionReport({ db, input: req.body || {} });
+        return res.json({ ok: true, report });
+      } catch (error) {
+        const unauthorized = /Authorization|Not allowed|token/i.test(String(error?.message || ""));
+        const status = unauthorized ? 401 : Number(error?.status) || 400;
+        return res.status(status).json({ ok: false, error: error?.message || "Could not load completion pack." });
+      }
+    });
+
+    app.post("/completion-pack/pdf", async (req, res) => {
+      try {
+        await requireAuth(req);
+        const report = await buildCompletionReport({ db, input: req.body || {} });
+        const pdf = buildCompletionPdf(report);
+        const disposition = req.body?.download === true ? "attachment" : "inline";
+        return sendPdfResponse(res, report, pdf, disposition);
+      } catch (error) {
+        const unauthorized = /Authorization|Not allowed|token/i.test(String(error?.message || ""));
+        const status = unauthorized ? 401 : Number(error?.status) || 400;
+        return res.status(status).json({ ok: false, error: error?.message || "Could not generate completion PDF." });
+      }
+    });
+  }
 }
 
 module.exports = {
   buildCompletionPdf,
   buildCompletionReport,
+  completionFilename,
   dedupeOfficialSessions,
   registerCompletionDocumentRoute,
   resolveAnnouncementWebhookSecret,
   summarizeAttendance,
   summarizeParticipation,
   _test: {
+    buildAttendancePage,
+    buildParticipationPage,
     buildPdf,
     completionDocumentId,
     isTeachingSession,
