@@ -1,8 +1,10 @@
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
+import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { getCachedAssignmentRegistryEntry } from "./assignmentRegistryCache.js";
 import { toQuestionAwareWritingTask } from "./assignmentRegistry.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
 import { heuristicWritingMarker } from "./autoMarking.js";
+import { evaluateWritingTaskEvidence, missingTaskPointsFromEvidence, taskEvidenceSummary } from "./writingTaskEvidence.js";
 import {
   detectWritingTextType,
   extractWritingTaskPoints,
@@ -13,35 +15,22 @@ import {
 
 const clean = (value = "") => String(value || "").replace(/\s+/g, " ").trim();
 
-const AUTHORITATIVE_WRITING_OVERRIDES = Object.freeze({
-  "A2-1.1": {
-    textType: "informal_email",
-    register: "informal",
-    recipient: "friend_or_personal_contact",
-    taskText: "Schreibe Felix einen kurzen Brief über deine Arbeit und deine Familie. Schreibe, warum du Felix schreibst; erzähle etwas über deine Arbeit oder dein Studium; erzähle etwas Neues über deine Familie; verwende mindestens einen Grund mit weil oder denn; frage Felix am Ende, wie es ihm geht und was bei ihm neu ist.",
-    taskPoints: [
-      "Explain why you are writing to Felix",
-      "Write about your work or studies",
-      "Tell Felix something new about your family",
-      "Use at least one reason with weil or denn",
-      "At the end ask Felix a relevant personal question about how he is or what is new with him",
-    ],
-  },
-});
-
 function applyAuthoritativeWritingOverride(task = {}) {
   const assignmentKey = normalizeAssignmentKey(task.assignmentKey || "");
-  const override = AUTHORITATIVE_WRITING_OVERRIDES[assignmentKey];
-  if (!override) return task;
-  const next = { ...task, ...override };
+  const a2Spec = getA2WritingTaskSpec(assignmentKey);
+  const next = a2Spec
+    ? { ...task, ...a2Spec, level: "A2" }
+    : task;
+  if (!next?.assignmentKey) return next;
   return {
     ...next,
     gradingInstruction: [
       "Grade the " + next.level + " writing against this exact assignment task, not merely against the general topic: " + next.taskText,
-      "Check every required communicative point separately and return taskCompletion plus missingTaskPoints.",
+      "Check every required communicative point separately. Return taskCompletion, missingTaskPoints, and evidence for every task point.",
       "Expected text type: " + next.textType + ". Expected register: " + next.register + ".",
-      "A greeting and closing alone do not make an essay-style body a correct email or letter.",
+      "A greeting, question mark, or closing only counts when it performs the communicative function required by the task.",
       "Topic relevance, fluent grammar, connectors, length, or vocabulary cannot compensate for missing required task points.",
+      "Do not double-penalize the same issue as both genre and register when the student still wrote the requested correspondence genre.",
       "Never award 100% writing when a required task point is missing or the requested text type/register is materially wrong.",
     ].join(" "),
   };
@@ -275,6 +264,54 @@ function hasConcreteCorrections(result = {}) {
   });
 }
 
+function writingDimensions({
+  writingScore,
+  completed,
+  total,
+  wrongRegister,
+  genreMismatch,
+} = {}) {
+  const taskFulfilment = total > 0 ? Math.round((Math.max(0, completed) / total) * 100) : null;
+  return {
+    taskFulfilment,
+    languageControl: numericPercent(writingScore),
+    coherence: numericPercent(writingScore),
+    registerAndTextType: genreMismatch ? 40 : wrongRegister ? 60 : 100,
+  };
+}
+
+function markingContradictions({
+  result = {},
+  task = {},
+  currentWritingScore,
+  completed,
+  total,
+  missingTaskPoints = [],
+  wrongRegister = false,
+} = {}) {
+  const issues = [];
+  const feedbackText = clean([result.feedback, result.improvementSummary].filter(Boolean).join(" ")).toLowerCase();
+  if (currentWritingScore === 0 && completed > 0) {
+    issues.push("Writing score is 0 although at least one required task point is completed.");
+  }
+  if (currentWritingScore >= 95 && missingTaskPoints.length > 0) {
+    issues.push("Writing score is near-perfect although required task points are missing.");
+  }
+  const reportedCompleted = Number(result.taskCompletion?.completed);
+  const reportedTotal = Number(result.taskCompletion?.total);
+  if (Number.isFinite(reportedCompleted) && Number.isFinite(reportedTotal) && reportedTotal > 0
+      && reportedCompleted >= reportedTotal && missingTaskPoints.length > 0) {
+    issues.push("AI taskCompletion reports complete work while canonical task evidence shows missing points.");
+  }
+  if (task.register === "informal" && /(?:maintain|keep|use).{0,30}formal (?:tone|register)|formal tone/.test(feedbackText)) {
+    issues.push("Feedback asks for a formal tone although this assignment requires informal register.");
+  }
+  if (wrongRegister && /register.{0,30}(?:correct|appropriate)|appropriate register/.test(feedbackText)) {
+    issues.push("Feedback describes the register as appropriate although the deterministic register check disagrees.");
+  }
+  return [...new Set(issues)];
+}
+
 function calibratedCompleteWritingScore({
   result = {},
   task = {},
@@ -282,6 +319,7 @@ function calibratedCompleteWritingScore({
   localMissing = [],
   detectedTextType = {},
   currentWritingScore,
+  taskEvidence = [],
 } = {}) {
   if (!Number.isFinite(currentWritingScore) || currentWritingScore < 85 || currentWritingScore >= 90) return currentWritingScore;
   if (hasConcreteCorrections(result)) return currentWritingScore;
@@ -294,8 +332,12 @@ function calibratedCompleteWritingScore({
   const deterministicFriendshipComplete = task.assignmentKey === "B1-1.2"
     && configuredTotal === 3
     && localMissing.length === 0;
+  const deterministicA2Complete = task.level === "A2"
+    && configuredTotal > 0
+    && taskEvidence.length === configuredTotal
+    && taskEvidence.every((item) => item.status === "met");
 
-  if (!structuredComplete && !deterministicFriendshipComplete) return currentWritingScore;
+  if (!structuredComplete && !deterministicFriendshipComplete && !deterministicA2Complete) return currentWritingScore;
   return 90;
 }
 
@@ -310,13 +352,19 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "");
   const structured = readStructuredTask(result);
+  const taskPointEvidence = task.level === "A2" ? evaluateWritingTaskEvidence(task, source) : [];
+  const canonicalA2Missing = task.level === "A2" ? missingTaskPointsFromEvidence(taskPointEvidence) : [];
   const localMissing = task.assignmentKey === "B1-1.2"
     ? b1FriendshipLocalMissing(source)
-    : task.assignmentKey === "A2-1.1"
-      ? a2Day1LocalMissing(source)
-      : [];
-  const missingTaskPoints = [...new Set([...structured.missing, ...localMissing])];
-  const total = Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
+    : canonicalA2Missing;
+  const configuredPointSet = new Set((task.taskPoints || []).map(clean));
+  const structuredMissing = task.level === "A2"
+    ? structured.missing.filter((item) => configuredPointSet.has(clean(item)))
+    : structured.missing;
+  const missingTaskPoints = [...new Set([...structuredMissing, ...localMissing])];
+  const total = task.level === "A2"
+    ? (task.taskPoints?.length || 0)
+    : Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
   const detectedTextType = detectWritingTextType(source);
   const classifierMismatch = detectedTextType.confidence >= 0.72
     && !writingTextTypesCompatible(task.textType, detectedTextType.detectedType);
@@ -345,24 +393,35 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       localMissing,
       detectedTextType,
       currentWritingScore: effectiveWritingScore,
+      taskEvidence: taskPointEvidence,
     });
 
     if (calibratedWritingScore === currentWritingScore && !recoveredSuspiciousZero) {
+      const completed = task.level === "A2" ? total : (structured.completed ?? total);
+      const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
+      const dimensions = writingDimensions({ writingScore: currentWritingScore, completed, total, wrongRegister, genreMismatch });
       return {
         ...result,
-        status: suspiciousZeroWriting ? "needs_review" : result.status,
-        shouldSendAutomatically: suspiciousZeroWriting ? false : result.shouldSendAutomatically,
+        taskCompletion: task.level === "A2" ? { completed, total, missing: [] } : result.taskCompletion,
+        taskPointEvidence,
+        writingDimensions: dimensions,
+        markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+        status: suspiciousZeroWriting || contradictions.length ? "needs_review" : result.status,
+        shouldSendAutomatically: suspiciousZeroWriting || contradictions.length ? false : result.shouldSendAutomatically,
         ai: {
           ...(result.ai || {}),
           questionAwareWritingTask: task,
           detectedWritingTextType: detectedTextType,
           ...(suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
+          ...(contradictions.length ? { markingContradictions: contradictions } : {}),
         },
       };
     }
 
     const weightedOutcome = recomputeOutcome(result, task, calibratedWritingScore);
-    const completed = structured.completed ?? total;
+    const completed = task.level === "A2" ? total : (structured.completed ?? total);
+    const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
+    const dimensions = writingDimensions({ writingScore: calibratedWritingScore, completed, total, wrongRegister, genreMismatch });
     return {
       ...result,
       score: weightedOutcome.finalScore,
@@ -376,10 +435,16 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       parts: updateWritingParts(result.parts, calibratedWritingScore),
       taskCompletion: { completed, total, missing: [] },
       missingTaskPoints: [],
+      taskPointEvidence,
+      writingDimensions: dimensions,
+      markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+      status: contradictions.length ? "needs_review" : result.status,
+      shouldSendAutomatically: contradictions.length ? false : result.shouldSendAutomatically,
       ai: {
         ...(result.ai || {}),
         questionAwareWritingTask: task,
         detectedWritingTextType: detectedTextType,
+        ...(contradictions.length ? { markingContradictions: contradictions } : {}),
         ...(!recoveredSuspiciousZero && suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
         questionAwareWritingCalibration: {
           applied: true,
@@ -396,11 +461,13 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   let cap = guardCapForMissing(missingTaskPoints.length, total);
   if (genreMismatch) cap = Math.min(cap, 65);
-  if (wrongRegister) cap = Math.min(cap, 70);
+  if (wrongRegister) cap = Math.min(cap, missingTaskPoints.length ? 60 : 70);
   const guardedWritingScore = Math.min(effectiveWritingScore, cap);
 
   const completed = Math.max(0, total - missingTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
+  const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints, wrongRegister });
+  const dimensions = writingDimensions({ writingScore: guardedWritingScore, completed, total, wrongRegister, genreMismatch });
   const endingAdvice = task.assignmentKey === "A2-1.1" ? a2Day1EndingAdvice(source) : "";
   const issueText = [
     genreMismatch ? `detected ${detectedTextType.detectedType} instead of ${task.textType}` : "",
@@ -425,6 +492,9 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     parts: updateWritingParts(result.parts, guardedWritingScore),
     taskCompletion: { completed, total, missing: missingTaskPoints },
     missingTaskPoints,
+    taskPointEvidence,
+    writingDimensions: dimensions,
+    markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : "question-aware-v1"),
     feedback: [result.feedback, guardFeedback].filter(Boolean).join(" "),
     improvementSummary: [result.improvementSummary, guardFeedback].filter(Boolean).join(" "),
     status: "needs_review",
@@ -434,6 +504,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       ...(!recoveredSuspiciousZero && suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
       questionAwareWritingTask: task,
       detectedWritingTextType: detectedTextType,
+      ...(contradictions.length ? { markingContradictions: contradictions } : {}),
       questionAwareWritingGuard: {
         applied: true,
         suspiciousWritingZero: suspiciousZeroWriting,
@@ -443,6 +514,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         genreMismatch,
         registerMismatch: wrongRegister,
         missingTaskPoints,
+        taskEvidenceSummary: taskEvidenceSummary(taskPointEvidence),
         ...(endingAdvice ? { endingAdvice } : {}),
         detectedWritingTextType: detectedTextType,
       },
