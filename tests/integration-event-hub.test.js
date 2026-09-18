@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 import {
   destinationForType,
   eventIdFrom,
+  registrationConfig,
   validateCommunicationRows,
+  validateRegistrationRows,
   validateScoreRows,
 } from "../api/integration-hub.js";
 
@@ -19,6 +21,8 @@ test("integration event types route to the correct worker", () => {
   assert.equal(destinationForType("communication.send"), "communication");
   assert.equal(destinationForType("certificate.send"), "communication");
   assert.equal(destinationForType("attendance.summary"), "communication");
+  assert.equal(destinationForType("registration.received"), "registration");
+  assert.equal(destinationForType("enrollment.confirmed"), "registration");
   assert.equal(destinationForType("unknown.event"), "");
 });
 
@@ -46,6 +50,33 @@ test("communication dispatch requires topic and body", () => {
   assert.throws(() => validateCommunicationRows([{ topic: "Class Reminder" }]), /announcement body/i);
 });
 
+test("registration lifecycle dispatch requires a student identity", () => {
+  assert.doesNotThrow(() => validateRegistrationRows([{ student_code: "Adu123" }]));
+  assert.doesNotThrow(() => validateRegistrationRows([{ email: "student@example.com" }]));
+  assert.throws(() => validateRegistrationRows([{ name: "Student" }]), /student code or email/i);
+});
+
+test("registration document worker reuses the Announcement token", () => {
+  const previousUrl = process.env.REGISTRATION_DOCS_WEBHOOK_URL;
+  const previousRegistrationToken = process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN;
+  const previousAnnouncementToken = process.env.ANNOUNCEMENT_WEBHOOK_TOKEN;
+  try {
+    process.env.REGISTRATION_DOCS_WEBHOOK_URL = "https://script.google.com/macros/s/registration/exec";
+    delete process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN;
+    process.env.ANNOUNCEMENT_WEBHOOK_TOKEN = "existing-announcement-secret";
+    const config = registrationConfig();
+    assert.equal(config.url, "https://script.google.com/macros/s/registration/exec");
+    assert.equal(config.token, "existing-announcement-secret");
+  } finally {
+    if (previousUrl === undefined) delete process.env.REGISTRATION_DOCS_WEBHOOK_URL;
+    else process.env.REGISTRATION_DOCS_WEBHOOK_URL = previousUrl;
+    if (previousRegistrationToken === undefined) delete process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN;
+    else process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN = previousRegistrationToken;
+    if (previousAnnouncementToken === undefined) delete process.env.ANNOUNCEMENT_WEBHOOK_TOKEN;
+    else process.env.ANNOUNCEMENT_WEBHOOK_TOKEN = previousAnnouncementToken;
+  }
+});
+
 test("browser services contain no Apps Script secrets or direct webhook URLs", () => {
   const marking = read("src/services/markingServiceBase.js");
   const communication = read("src/services/communicationService.js");
@@ -66,6 +97,7 @@ test("server gateway owns webhook configuration and Admin verification", () => {
 
   assert.match(server, /SCORES_WEBHOOK_TOKEN/);
   assert.match(server, /ANNOUNCEMENT_WEBHOOK_TOKEN/);
+  assert.match(server, /REGISTRATION_DOCS_WEBHOOK_URL/);
   assert.match(server, /verifyFirebaseAdminUser/);
   assert.match(server, /Administrator access is required/);
   assert.match(server, /event_id/);
@@ -83,4 +115,5 @@ test("Communication hub exposes integration event status and retry", () => {
   assert.match(panel, /Retry/);
   assert.match(panel, /Score sheet/);
   assert.match(panel, /Communication worker/);
+  assert.match(panel, /Registration documents/);
 });
