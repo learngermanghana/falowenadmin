@@ -332,12 +332,10 @@ function calibratedCompleteWritingScore({
   const deterministicFriendshipComplete = task.assignmentKey === "B1-1.2"
     && configuredTotal === 3
     && localMissing.length === 0;
-  const deterministicA2Complete = task.level === "A2"
-    && configuredTotal > 0
-    && taskEvidence.length === configuredTotal
-    && taskEvidence.every((item) => item.status === "met");
-
-  if (!structuredComplete && !deterministicFriendshipComplete && !deterministicA2Complete) return currentWritingScore;
+  // Keep the historical B1 top-band calibration, but do not auto-raise A2.
+  // Semantic A2 evidence validates task completion; it does not manufacture a higher language score.
+  if (task.level === "A2") return currentWritingScore;
+  if (!structuredComplete && !deterministicFriendshipComplete) return currentWritingScore;
   return 90;
 }
 
