@@ -6,6 +6,7 @@ on:
       - "src/data/**"
       - "src/utils/teachingPresenter.js"
       - "src/components/A1GrammarPresenter.jsx"
+      - "src/data/a2WorkbookAlignedSlides*.js"
       - "scripts/auditTeachingMaterialQuality.mjs"
       - ".github/workflows/teaching-material-quality-audit.yml"
   push:
@@ -19,7 +20,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  a1-teacher-materials:
+  a1-a2-teacher-materials:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,7 +32,14 @@ jobs:
           node-version: 22
 
       - name: Prepare production teaching slides
-        run: node scripts/patchB2C1SpeakingModels.mjs
+        run: |
+          node scripts/patchB2C1SpeakingModels.mjs
+          node scripts/patchA2OneMinuteKnowledge.mjs
+          node scripts/patchA2Day19ActionableRestore.mjs
 
-      - name: Audit A1 teacher materials
-        run: node scripts/auditTeachingMaterialQuality.mjs
+      - name: Stage 1 · Audit A1 teacher materials
+        run: node scripts/auditTeachingMaterialQuality.mjs --level=A1
+
+      - name: Stage 2 · Audit A2 teacher materials
+        if: always()
+        run: node scripts/auditTeachingMaterialQuality.mjs --level=A2
