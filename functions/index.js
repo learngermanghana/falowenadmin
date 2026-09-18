@@ -12,6 +12,7 @@ const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
+const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 
 setGlobalOptions({ region: "us-central1" });
@@ -2042,6 +2043,8 @@ app.post("/attendance-confirmation-emails/retry-failed", async (req, res) => {
     });
   }
 });
+
+registerCompletionDocumentRoute({ app, db, runtimeConfig });
 
 exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });
 
