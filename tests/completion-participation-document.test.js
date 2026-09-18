@@ -121,7 +121,7 @@ test("completion route is registered in Falowen Firebase API", () => {
   const source = read("functions/completionParticipationDocument.js");
 
   assert.match(indexSource, /registerCompletionDocumentRoute/);
-  assert.match(indexSource, /registerCompletionDocumentRoute\(\{ app, db, runtimeConfig \}\)/);
+  assert.match(indexSource, /registerCompletionDocumentRoute\(\{ app, db, runtimeConfig, requireAuth \}\)/);
   assert.match(source, /\/completion\/attendance-participation-document/);
   assert.match(source, /X-Falowen-Announcement-Token|x-falowen-announcement-token/);
   assert.match(source, /application\/pdf/);
