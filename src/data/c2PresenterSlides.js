@@ -39,19 +39,64 @@ const slug = (value) => String(value || "")
 const objectiveSentence = (lesson) =>
   `Students can ${lesson.objectives.join(", ")}, and transfer the target language into a controlled C2 spoken and written response.`;
 
+function structureHintDe(focus = "") {
+  const value = String(focus || "");
+  if (/Registerwechsel/i.test(value)) return "Der Aussagekern bleibt gleich; Wortwahl, Anrede, Modalität und Grad der Direktheit werden an Adressat und Situation angepasst.";
+  if (/Thema–Rhema|Vorfeld/i.test(value)) return "Das Vorfeld steuert den Fokus, das finite Verb bleibt im Hauptsatz auf Position 2. Bekanntes steht häufig vor Neuem.";
+  if (/Nominalstil|Nominalisierung/i.test(value)) return "Beim Nominalisieren werden Handlungen zu Nomen; logische Rollen müssen durch Genitiv oder passende Präpositionen erhalten bleiben.";
+  if (/Indirekte Rede|Konjunktiv I/i.test(value)) return "Fremdaussagen werden mit Berichtsverb und Konjunktiv I markiert; bei formaler Gleichheit kann Konjunktiv II Distanz sichern.";
+  if (/Subjektive Modal/i.test(value)) return "Für vergangene Vermutungen oder Fremdaussagen: Modalverb + Partizip II + haben/sein, z. B. dürfte gewirkt haben.";
+  if (/Kausalität/i.test(value)) return "resultieren aus zeigt rückwärts auf die Ursache; führen zu / zur Folge haben zeigen vorwärts auf die Folge. Stärke der Formulierung muss zur Evidenz passen.";
+  if (/Funktionsverb|Verb-Nomen/i.test(value)) return "Feste Verbindungen als Einheit lernen: Nomen + typisches Verb + Rektion, z. B. Einfluss nehmen auf, in Betracht ziehen.";
+  if (/Partizipialattribute/i.test(value)) return "Partizipialgruppen stehen vor dem Nomen und tragen Adjektivendungen; bei Überladung besser in einen Relativsatz auflösen.";
+  if (/sich lassen|sein \+ zu|-bar/i.test(value)) return "sich lassen + Infinitiv drückt Möglichkeit aus; sein + zu + Infinitiv meist Notwendigkeit; -bar bildet eine Eigenschaft.";
+  if (/wenngleich|obgleich|ungeachtet|wohingegen/i.test(value)) return "wenngleich/obgleich leiten Nebensätze ein; ungeachtet steht mit Nominalgruppe; wohingegen kontrastiert zwei Aussagen.";
+  if (/Rektion/i.test(value)) return "Verb, Nomen oder Adjektiv bestimmen Präposition und Kasus. Die Rektion wird als feste Einheit gelernt, nicht aus dem Englischen übersetzt.";
+  if (/Komposition|Präfixe|Suffixe/i.test(value)) return "Stamm, Präfix/Suffix und Bedeutungsbeziehung zuerst erkennen; Neubildungen nur verwenden, wenn sie transparent und idiomatisch sind.";
+  if (/Denotation|Konnotation|Metaphorik/i.test(value)) return "Textbeobachtung und Interpretation trennen; Deutungen mit nahelegen, transportieren oder charakterisieren vorsichtig kennzeichnen.";
+  if (/Vergleichs- und Intensivierungs/i.test(value)) return "weitaus / bei weitem verstärken Vergleiche; im Vergleich zu verlangt Dativ; insofern als grenzt den Bewertungsaspekt ein.";
+  if (/Informationsverdichtung/i.test(value)) return "Relativsatz, Partizipialattribut, Nominalisierung oder Apposition hierarchisieren Zusatzinformation; der Hauptaussagekern muss sichtbar bleiben.";
+  if (/sofern|vorausgesetzt/i.test(value)) return "sofern/falls schicken das finite Verb ans Satzende; unter der Voraussetzung, dass verbindet Nominalgruppe und dass-Satz.";
+  if (/Konjunktiv II Vergangenheit/i.test(value)) return "Irreale Vergangenheit: hätte/wäre + Partizip II; Bedingung und Folge müssen beide als nicht eingetreten markiert sein.";
+  if (/insofern|zumal|vielmehr|geschweige/i.test(value)) return "Konnektoren nach Logik wählen: insofern als grenzt ein, zumal verstärkt einen Grund, vielmehr korrigiert, geschweige denn steigert eine Negation.";
+  if (/eben|doch|wohl|ja|eigentlich/i.test(value)) return "Diskurspartikeln stehen meist unbetont im Mittelfeld; ihre Wirkung entsteht aus Kontext und Intonation, nicht aus Wort-für-Wort-Übersetzung.";
+  if (/nachdem|ehe|sobald|währenddessen/i.test(value)) return "Temporale Konnektoren ordnen Vorzeitigkeit, Nachzeitigkeit und Gleichzeitigkeit; Tempus und Konnektor müssen dieselbe Chronologie zeigen.";
+  if (/Hedging|diplomatisch/i.test(value)) return "Vorbehalte mit nur bedingt, erscheint, ließe sich oder insofern formulieren; die Kritik bleibt klar, aber nicht unnötig konfrontativ.";
+  if (/These|Begründung|Beleg|Einwand/i.test(value)) return "Argumentationskette: These → Begründung → Beleg → Einwand → Reaktion/Widerlegung → Schluss. Jeder Satz braucht eine erkennbare Funktion.";
+  if (/belegen|nahelegen|hindeuten/i.test(value)) return "Evidenzgrad abstufen: belegen ist stärker als nahelegen / darauf hindeuten; Kausalität darf nicht aus bloßer Korrelation entstehen.";
+  if (/Satzperioden|Parenthesen|hierarchische/i.test(value)) return "Ein klarer Hauptsatz bildet das Gerüst; Nebensätze und Parenthesen werden nur dort eingebettet, wo ihre Abhängigkeit sofort erkennbar bleibt.";
+  if (/Redundanz|Mehrdeutigkeit|Kohäsion/i.test(value)) return "Schwache Verben und Wiederholungen ersetzen, Pronomenbezüge eindeutig machen und Register über den ganzen Absatz konsistent halten.";
+  if (/Register · Nuance · Evidenz/i.test(value)) return "Struktur immer nach Funktion wählen: Register, Evidenzgrad, Kohäsion und Reformulierung müssen zur Aufgabe und zum Adressaten passen.";
+  return "Die Zielstruktur wird funktional eingesetzt: Bedeutung zuerst festlegen, Form wählen, anschließend Wortstellung, Bezug und Register kontrollieren.";
+}
+
+function mistakeHintDe(focus = "") {
+  const value = String(focus || "");
+  if (/Kausalität|belegen|nahelegen|hindeuten/i.test(value)) return "Korrelation nicht als sichere Ursache formulieren und den Evidenzgrad nicht sprachlich übertreiben.";
+  if (/Indirekte Rede|Subjektive Modal/i.test(value)) return "Fremdaussage, eigene Bewertung und gesicherte Tatsache nicht vermischen.";
+  if (/Rektion/i.test(value)) return "Präposition oder Kasus nicht wörtlich aus einer anderen Sprache übertragen.";
+  if (/Partizipialattribute|Informationsverdichtung|Satzperioden/i.test(value)) return "Informationsdichte nicht mit Qualität verwechseln: Wenn der Bezug unklar wird, Satz entlasten.";
+  if (/Registerwechsel|Hedging|diplomatisch/i.test(value)) return "Register nicht nur über einzelne Höflichkeitswörter bestimmen; Ton und Direktheit müssen im ganzen Text zusammenpassen.";
+  if (/Funktionsverb|Verb-Nomen/i.test(value)) return "Keine frei erfundenen Verb-Nomen-Kombinationen bilden; feste Verbindung als lexikalische Einheit lernen.";
+  if (/Konjunktiv II Vergangenheit/i.test(value)) return "Irreale Bedingung nicht mit einer realen Indikativfolge kombinieren.";
+  if (/sofern|vorausgesetzt/i.test(value)) return "sofern nicht verwenden, wenn eigentlich eine zeitliche und keine konditionale Beziehung gemeint ist.";
+  if (/eben|doch|wohl|ja|eigentlich/i.test(value)) return "Partikeln nicht zufällig in formelle Schriftsprache einsetzen oder Wort für Wort übersetzen.";
+  return "Die komplexe Form nicht nur verwenden, weil sie fortgeschritten klingt; sie muss die beabsichtigte Bedeutung präziser machen.";
+}
+
 function grammarTeachDe(lesson) {
   return [
     `Zielstruktur: ${lesson.grammarFocus}.`,
-    `Wann und warum? ${lesson.when}`,
-    `Struktur und Kontrolle: ${lesson.structure}`,
+    `Wann und warum? ${lesson.objectives.join(" · ")}.`,
+    `Struktur und Kontrolle: ${structureHintDe(lesson.grammarFocus)}`,
   ];
 }
 
 function commonMistakesDe(lesson) {
   return [
-    `Typischer Fehler: ${lesson.mistake}`,
+    `Typischer Fehler: ${mistakeHintDe(lesson.grammarFocus)}`,
     "C2 heißt nicht automatisch länger oder komplizierter: Wähle die Struktur nach Funktion, Bedeutung und Register.",
-    "Formuliere zuerst die Aussage klar; verdichte oder nuanciere sie erst danach.",
+    "Formuliere zuerst die Aussage klar; prüfe nach der Umformung, ob Bedeutung, Bezug und Evidenzgrad erhalten geblieben sind.",
   ];
 }
 
