@@ -8,6 +8,7 @@ import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPo
 import { shouldIncludeInIncomingQueue } from "../utils/markingQueue.js";
 import { buildManualScoreCorrection } from "../utils/manualScoreCorrection.js";
 import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
+import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -23,28 +24,6 @@ const MARKING_ROSTER_CSV_URL = import.meta.env.VITE_MARKING_ROSTER_CSV_URL || DE
 const MARKING_QUEUE_START_DATE = String(import.meta.env.VITE_MARKING_QUEUE_START_DATE || "2026-05-29T00:00:00Z").trim();
 const OBJECTIVE_WEIGHT = 0.5;
 const WRITING_WEIGHT = 0.5;
-
-export function sanitizeFirestoreData(value) {
-  if (value === undefined) return undefined;
-  if (Array.isArray(value)) {
-    return value.map((item) => {
-      const sanitized = sanitizeFirestoreData(item);
-      return sanitized === undefined ? null : sanitized;
-    });
-  }
-  if (value && typeof value === "object") {
-    const prototype = Object.getPrototypeOf(value);
-    const isPlainObject = prototype === Object.prototype || prototype === null;
-    if (!isPlainObject) return value;
-    const sanitized = {};
-    for (const [key, item] of Object.entries(value)) {
-      const next = sanitizeFirestoreData(item);
-      if (next !== undefined) sanitized[key] = next;
-    }
-    return sanitized;
-  }
-  return value;
-}
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -342,8 +321,43 @@ export async function createMarkingJob({ submissionId, submissionPath, assignmen
 export async function saveMarkingResult({ submissionId, submissionPath, result, status = "marked", sentToStudent = false }) {
   const now = new Date().toISOString();
   const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || globalThis.crypto?.randomUUID?.() || `${Date.now()}`);
+  const markingRef = doc(db, "markingResults", safeSubmissionId);
+  const existingSnap = await getDoc(markingRef).catch(() => null);
+  const existing = existingSnap?.exists?.() ? existingSnap.data() : null;
   const pathIdentity = inferSubmissionIdentityFromPath(submissionPath);
   const identity = resolveStudentIdentity(result, pathIdentity.studentCode);
+
+  const priorHistory = Array.isArray(existing?.markingHistory) ? existing.markingHistory : [];
+  const previousVersion = existing?.result?.markingRubricVersion || existing?.markingRubricVersion || "";
+  const currentVersion = result.markingRubricVersion || "";
+  const previousSignature = existing ? JSON.stringify([
+    existing.finalScore ?? existing.result?.finalScore ?? existing.result?.score ?? null,
+    existing.writingScore ?? existing.result?.writingScorePercent ?? existing.result?.writingScore ?? null,
+    existing.feedback || existing.result?.feedback || "",
+    previousVersion,
+    existing.status || "",
+  ]) : "";
+  const currentSignature = JSON.stringify([
+    result.finalScore ?? result.score ?? null,
+    result.writingScorePercent ?? result.writingScore ?? null,
+    result.feedback || "",
+    currentVersion,
+    status,
+  ]);
+  const markingHistory = [...priorHistory];
+  if (existing?.result && previousSignature !== currentSignature) {
+    markingHistory.push(sanitizeFirestoreData({
+      finalScore: existing.finalScore ?? existing.result?.finalScore ?? existing.result?.score ?? null,
+      writingScore: existing.writingScore ?? existing.result?.writingScorePercent ?? existing.result?.writingScore ?? null,
+      feedback: existing.feedback || existing.result?.feedback || "",
+      status: existing.status || "",
+      markingRubricVersion: previousVersion,
+      taskCompletion: existing.taskCompletion ?? existing.result?.taskCompletion ?? null,
+      missingTaskPoints: existing.missingTaskPoints ?? existing.result?.missingTaskPoints ?? [],
+      savedAt: existing.updatedAt || existing.createdAt || "",
+    }));
+  }
+
   const payload = {
     submissionId,
     submissionPath,
@@ -366,6 +380,10 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     writingStrengths: result.writingStrengths ?? [],
     taskCompletion: result.taskCompletion ?? null,
     missingTaskPoints: result.missingTaskPoints ?? [],
+    taskPointEvidence: result.taskPointEvidence ?? [],
+    writingDimensions: result.writingDimensions ?? null,
+    markingRubricVersion: currentVersion,
+    markingHistory: markingHistory.slice(-5),
     nextStep: result.nextStep || result.writingNextStep || "",
     improvementSummary: result.improvementSummary || "",
     markingReason: result.markingReason || result.rawAiReason || result.ai?.reason || "",
@@ -378,8 +396,8 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     updatedAt: now,
   };
 
-  const firestorePayload = sanitizeFirestoreData({ ...payload, createdAt: now });
-  await setDoc(doc(db, "markingResults", safeSubmissionId), firestorePayload, { merge: true });
+  const firestorePayload = sanitizeFirestoreData({ ...payload, createdAt: existing?.createdAt || now });
+  await setDoc(markingRef, firestorePayload, { merge: true });
 
   if (submissionPath) {
     const segments = submissionPath.split("/").filter(Boolean);
@@ -399,6 +417,9 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
       writingStrengths: payload.writingStrengths,
       taskCompletion: payload.taskCompletion,
       missingTaskPoints: payload.missingTaskPoints,
+      taskPointEvidence: payload.taskPointEvidence,
+      writingDimensions: payload.writingDimensions,
+      markingRubricVersion: payload.markingRubricVersion,
       nextStep: payload.nextStep,
       improvementSummary: payload.improvementSummary,
       markingReason: payload.markingReason,
