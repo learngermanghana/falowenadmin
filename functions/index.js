@@ -2052,7 +2052,7 @@ app.post("/attendance-confirmation-emails/retry-failed", async (req, res) => {
   }
 });
 
-registerCompletionDocumentRoute({ app, db, runtimeConfig });
+registerCompletionDocumentRoute({ app, db, runtimeConfig, requireAuth });
 
 exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });
 
