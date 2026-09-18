@@ -6,6 +6,26 @@ on:
       - 'src/utils/finalDeterministicFeedback.js'
       - 'src/services/markingService.js'
       - 'src/utils/questionAwareWritingMarking.js'
+      - 'src/data/a2WritingTaskSpecs.js'
+      - 'src/utils/writingTaskEvidence.js'
+      - 'src/utils/firestoreSanitizer.js'
+      - 'src/services/markingServiceBase.js'
+      - 'src/components/WritingScoreExplanation.jsx'
+      - 'src/components/MarkingHistoryPanel.jsx'
+      - 'src/pages/MarkingPage.jsx'
+      - 'src/pages/MarkingQuickPage.jsx'
+      - 'scripts/patchStructuredWritingEvidence.mjs'
+      - 'tests/firestore-sanitizer.test.js'
+      - 'src/data/a2WritingTaskSpecs.js'
+      - 'src/utils/writingTaskEvidence.js'
+      - 'src/utils/firestoreSanitizer.js'
+      - 'src/services/markingServiceBase.js'
+      - 'src/components/WritingScoreExplanation.jsx'
+      - 'src/components/MarkingHistoryPanel.jsx'
+      - 'src/pages/MarkingPage.jsx'
+      - 'src/pages/MarkingQuickPage.jsx'
+      - 'scripts/patchStructuredWritingEvidence.mjs'
+      - 'tests/firestore-sanitizer.test.js'
       - 'tests/question-aware-writing-marking.test.js'
       - 'src/utils/autoMarking.js'
       - 'src/utils/naturalMarkingFeedback.js'
@@ -38,18 +58,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply shared recovery patch twice
+      - name: Apply marking patches twice
         run: |
           node scripts/patchSharedWritingScoreRecovery.mjs
           node scripts/patchSharedWritingScoreRecovery.mjs
+          node scripts/patchStructuredWritingEvidence.mjs
+          node scripts/patchStructuredWritingEvidence.mjs
       - name: Validate source
         run: |
           node --check src/utils/finalDeterministicFeedback.js
           node --check src/services/markingService.js
           node --check src/utils/questionAwareWritingMarking.js
+          node --check src/data/a2WritingTaskSpecs.js
+          node --check src/utils/writingTaskEvidence.js
+          node --check src/utils/firestoreSanitizer.js
+          node --check src/services/markingServiceBase.js
           node --check scripts/patchSharedWritingScoreRecovery.mjs
+          node --check scripts/patchStructuredWritingEvidence.mjs
           node --check tests/a2-malformed-teil-writing-score.test.js
           grep -F 'maxWritingScore: 100' src/utils/finalDeterministicFeedback.js
           grep -F 'primary = recoverZeroWritingScore(primary, originalSubmissionText);' src/services/markingService.js
       - name: Run A2 writing regressions
-        run: node --test tests/a2-malformed-teil-writing-score.test.js tests/question-aware-writing-marking.test.js
+        run: node --test tests/a2-malformed-teil-writing-score.test.js tests/question-aware-writing-marking.test.js tests/firestore-sanitizer.test.js
