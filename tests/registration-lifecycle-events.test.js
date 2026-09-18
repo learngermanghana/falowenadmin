@@ -63,6 +63,17 @@ test("manual first payment recorded only as a balance decrease confirms enrollme
   );
 });
 
+test("registration docs use the deployed web-app URL without extra runtime configuration", () => {
+  const config = resolveRegistrationDocsConfig({
+    communication: {
+      announcement_webhook_token: "existing-token",
+    },
+  }, {});
+
+  assert.equal(config.url, "https://script.google.com/macros/s/AKfycbxWsVmzNdDMXtUd0CwChFXR_Iy6lbb7oVVt8ao_6_8oYYFI9Te9Y7pD0FgIJTjAozYOQg/exec");
+  assert.equal(config.token, "existing-token");
+});
+
 test("registration docs Firebase config reuses existing Announcement webhook token", () => {
   const config = resolveRegistrationDocsConfig({
     registration_docs: {
