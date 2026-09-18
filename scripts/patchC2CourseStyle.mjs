@@ -56,7 +56,7 @@ update("src/utils/teachingPresenter.js", (source) => {
   next = mustReplace(
     next,
     'const C1_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`));',
-    'const C1_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`));\nconst C2_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C2 ${index + 1}`));',
+    'const C1_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`));\nconst C2_PRESENTER_V2_ASSIGNMENTS = new Set([...Array.from({ length: 28 }, (_, index) => `C2 ${index + 1}`), ...["C2-1.1","C2-1.2","C2-1.3","C2-1.4","C2-1.5","C2-1.6","C2-1.7","C2-2.1","C2-2.2","C2-2.3","C2-2.4","C2-2.5","C2-2.6","C2-2.7","C2-3.1","C2-3.2","C2-3.3","C2-3.4","C2-3.5","C2-4.1","C2-4.2","C2-4.3","C2-4.4","C2-4.5","C2-5.1","C2-5.2","C2-5.3","C2-5.4"]]);',
     "C2 presenter assignment set",
   );
 
@@ -81,7 +81,14 @@ update("src/utils/teachingPresenter.js", (source) => {
     "C2 Presenter 2.0 gate",
   );
 
-  if (!next.includes("C2 precision: Funktionsverbgefüge")) {
+  if (!next.includes('slide.grammarTeachDe')) {
+    const advancedGrammarAnchor = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { if (normalizedAssignmentId(slide) === "B2-1.1")';
+    const advancedGrammarReplacement = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.grammarTeachDe) && slide.grammarTeachDe.length) return slide.grammarTeachDe; if (normalizedAssignmentId(slide) === "B2-1.1")';
+    if (!next.includes(advancedGrammarAnchor)) throw new Error("C2 lesson-specific grammar anchor missing");
+    next = next.replace(advancedGrammarAnchor, advancedGrammarReplacement);
+  }
+
+    if (!next.includes("C2 precision: Funktionsverbgefüge")) {
     const grammarAnchor = '  { pattern: /dass-clause|dass clause/i, de: "dass-Sätze: das konjugierte Verb steht am Ende des Nebensatzes." },\n];';
     const grammarReplacement = '  { pattern: /dass-clause|dass clause/i, de: "dass-Sätze: das konjugierte Verb steht am Ende des Nebensatzes." },\n  // C2 precision: Funktionsverbgefüge, Partizipialattribute, epistemische Abstufung and text cohesion.\n  { pattern: /funktionsverb|zur debatte stehen|in betracht ziehen|abwägung vornehmen|einfluss ausüben/i, de: "Funktionsverbgefüge gezielt verwenden: zur Debatte stehen · in Betracht ziehen · eine Abwägung vornehmen · Einfluss ausüben." },\n  { pattern: /partizipial|participial|expanded particip/i, de: "Erweiterte Partizipialattribute: komplexe Information vor dem Nomen verdichten, ohne den Bezug unklar zu machen." },\n  { pattern: /hedg|epistem|abstuf|dürfte|ließe sich|scheint|keineswegs|nur bedingt/i, de: "Aussagen abstufen: dürfte · ließe sich · scheint · spricht dafür · keineswegs · nur bedingt." },\n  { pattern: /cohesion|coherence|reference chain|paragraph-level/i, de: "Textkohärenz: Bezüge über mehrere Sätze eindeutig halten und Absätze logisch miteinander verzahnen." },\n];';
     if (!next.includes(grammarAnchor)) throw new Error("C2 advanced grammar rule anchor missing");
@@ -90,7 +97,7 @@ update("src/utils/teachingPresenter.js", (source) => {
 
   if (!next.includes('classroomLevel(slide) === "C2"') || !next.includes("C2-Aussagen präzise abstufen")) {
     const mistakesAnchor = 'function buildAdvancedMistakes(slide = {}) { if (normalizedAssignmentId(slide) === "B2-1.1")';
-    const mistakesReplacement = 'function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C2") return ["C2-Aussagen präzise abstufen: keine absolute Behauptung, wenn die Evidenz nur eine Tendenz trägt.", "Prämisse, Beleg und Schlussfolgerung nicht vermischen; benenne ausdrücklich, was belegt und was daraus gefolgert wird.", "Die stärkste Gegenposition formulieren und darauf reagieren, statt ein leichtes Gegenargument zu konstruieren.", "Komplexe Syntax nur einsetzen, wenn Bezüge und Satzrhythmus eindeutig bleiben.", "Nominalstil und Funktionsverbgefüge gezielt einsetzen; Verständlichkeit bleibt wichtiger als Dichte."]; if (normalizedAssignmentId(slide) === "B2-1.1")';
+    const mistakesReplacement = 'function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.commonMistakesDe) && slide.commonMistakesDe.length) return slide.commonMistakesDe; if (classroomLevel(slide) === "C2") return ["C2-Aussagen präzise abstufen: keine absolute Behauptung, wenn die Evidenz nur eine Tendenz trägt.", "Prämisse, Beleg und Schlussfolgerung nicht vermischen; benenne ausdrücklich, was belegt und was daraus gefolgert wird.", "Die stärkste Gegenposition formulieren und darauf reagieren, statt ein leichtes Gegenargument zu konstruieren.", "Komplexe Syntax nur einsetzen, wenn Bezüge und Satzrhythmus eindeutig bleiben.", "Nominalstil und Funktionsverbgefüge gezielt einsetzen; Verständlichkeit bleibt wichtiger als Dichte."]; if (normalizedAssignmentId(slide) === "B2-1.1")';
     if (!next.includes(mistakesAnchor)) throw new Error("C2 mistakes anchor missing");
     next = next.replace(mistakesAnchor, mistakesReplacement);
   }
