@@ -8,6 +8,7 @@ import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPo
 import { shouldIncludeInIncomingQueue } from "../utils/markingQueue.js";
 import { buildManualScoreCorrection } from "../utils/manualScoreCorrection.js";
 import { buildScoreAttemptMetadata, hasSavedScoreForAssignment, shouldSkipExistingScore } from "../utils/scoreAttempts.js";
+import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
@@ -23,28 +24,6 @@ const MARKING_ROSTER_CSV_URL = import.meta.env.VITE_MARKING_ROSTER_CSV_URL || DE
 const MARKING_QUEUE_START_DATE = String(import.meta.env.VITE_MARKING_QUEUE_START_DATE || "2026-05-29T00:00:00Z").trim();
 const OBJECTIVE_WEIGHT = 0.5;
 const WRITING_WEIGHT = 0.5;
-
-export function sanitizeFirestoreData(value) {
-  if (value === undefined) return undefined;
-  if (Array.isArray(value)) {
-    return value.map((item) => {
-      const sanitized = sanitizeFirestoreData(item);
-      return sanitized === undefined ? null : sanitized;
-    });
-  }
-  if (value && typeof value === "object") {
-    const prototype = Object.getPrototypeOf(value);
-    const isPlainObject = prototype === Object.prototype || prototype === null;
-    if (!isPlainObject) return value;
-    const sanitized = {};
-    for (const [key, item] of Object.entries(value)) {
-      const next = sanitizeFirestoreData(item);
-      if (next !== undefined) sanitized[key] = next;
-    }
-    return sanitized;
-  }
-  return value;
-}
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -217,6 +196,10 @@ function normalizeSubmissionDoc(docSnap, fallback = {}) {
     aiConfidence: data.aiConfidence ?? data.confidence ?? null,
     feedbackSentToStudent: Boolean(data.feedbackSentToStudent),
     improvementSummary: normalize(data.improvementSummary || data.resubmissionSummary || ""),
+    markingRubricVersion: normalize(data.markingRubricVersion || ""),
+    markingHistory: Array.isArray(data.markingHistory) ? data.markingHistory : [],
+    taskPointEvidence: Array.isArray(data.taskPointEvidence) ? data.taskPointEvidence : [],
+    writingDimensions: data.writingDimensions && typeof data.writingDimensions === "object" ? data.writingDimensions : null,
     previousSubmissionText: normalize(data.previousSubmissionText || data.previousText || ""),
     isResubmission: Boolean(data.isResubmission || normalizeLower(data.status || data.workflowStatus) === "resubmitted" || Number(data.attempt || data.attemptNumber) > 1),
     attempt: data.attempt ?? data.attemptNumber ?? null,
@@ -342,8 +325,43 @@ export async function createMarkingJob({ submissionId, submissionPath, assignmen
 export async function saveMarkingResult({ submissionId, submissionPath, result, status = "marked", sentToStudent = false }) {
   const now = new Date().toISOString();
   const safeSubmissionId = safeFirestoreId(submissionId || submissionPath || globalThis.crypto?.randomUUID?.() || `${Date.now()}`);
+  const markingRef = doc(db, "markingResults", safeSubmissionId);
+  const existingSnap = await getDoc(markingRef).catch(() => null);
+  const existing = existingSnap?.exists?.() ? existingSnap.data() : null;
   const pathIdentity = inferSubmissionIdentityFromPath(submissionPath);
   const identity = resolveStudentIdentity(result, pathIdentity.studentCode);
+
+  const priorHistory = Array.isArray(existing?.markingHistory) ? existing.markingHistory : [];
+  const previousVersion = existing?.result?.markingRubricVersion || existing?.markingRubricVersion || "";
+  const currentVersion = result.markingRubricVersion || "";
+  const previousSignature = existing ? JSON.stringify([
+    existing.finalScore ?? existing.result?.finalScore ?? existing.result?.score ?? null,
+    existing.writingScore ?? existing.result?.writingScorePercent ?? existing.result?.writingScore ?? null,
+    existing.feedback || existing.result?.feedback || "",
+    previousVersion,
+    existing.status || "",
+  ]) : "";
+  const currentSignature = JSON.stringify([
+    result.finalScore ?? result.score ?? null,
+    result.writingScorePercent ?? result.writingScore ?? null,
+    result.feedback || "",
+    currentVersion,
+    status,
+  ]);
+  const markingHistory = [...priorHistory];
+  if (existing?.result && previousSignature !== currentSignature) {
+    markingHistory.push(sanitizeFirestoreData({
+      finalScore: existing.finalScore ?? existing.result?.finalScore ?? existing.result?.score ?? null,
+      writingScore: existing.writingScore ?? existing.result?.writingScorePercent ?? existing.result?.writingScore ?? null,
+      feedback: existing.feedback || existing.result?.feedback || "",
+      status: existing.status || "",
+      markingRubricVersion: previousVersion,
+      taskCompletion: existing.taskCompletion ?? existing.result?.taskCompletion ?? null,
+      missingTaskPoints: existing.missingTaskPoints ?? existing.result?.missingTaskPoints ?? [],
+      savedAt: existing.updatedAt || existing.createdAt || "",
+    }));
+  }
+
   const payload = {
     submissionId,
     submissionPath,
@@ -366,6 +384,10 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     writingStrengths: result.writingStrengths ?? [],
     taskCompletion: result.taskCompletion ?? null,
     missingTaskPoints: result.missingTaskPoints ?? [],
+    taskPointEvidence: result.taskPointEvidence ?? [],
+    writingDimensions: result.writingDimensions ?? null,
+    markingRubricVersion: currentVersion,
+    markingHistory: markingHistory.slice(-5),
     nextStep: result.nextStep || result.writingNextStep || "",
     improvementSummary: result.improvementSummary || "",
     markingReason: result.markingReason || result.rawAiReason || result.ai?.reason || "",
@@ -378,8 +400,8 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     updatedAt: now,
   };
 
-  const firestorePayload = sanitizeFirestoreData({ ...payload, createdAt: now });
-  await setDoc(doc(db, "markingResults", safeSubmissionId), firestorePayload, { merge: true });
+  const firestorePayload = sanitizeFirestoreData({ ...payload, createdAt: existing?.createdAt || now });
+  await setDoc(markingRef, firestorePayload, { merge: true });
 
   if (submissionPath) {
     const segments = submissionPath.split("/").filter(Boolean);
@@ -399,6 +421,10 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
       writingStrengths: payload.writingStrengths,
       taskCompletion: payload.taskCompletion,
       missingTaskPoints: payload.missingTaskPoints,
+      taskPointEvidence: payload.taskPointEvidence,
+      writingDimensions: payload.writingDimensions,
+      markingRubricVersion: payload.markingRubricVersion,
+      markingHistory: payload.markingHistory,
       nextStep: payload.nextStep,
       improvementSummary: payload.improvementSummary,
       markingReason: payload.markingReason,
@@ -576,6 +602,7 @@ export function normalizeAIMarkingResult(result = {}, payload = {}) {
       : result.writingStrengths ? [String(result.writingStrengths)] : [],
     taskCompletion: result.taskCompletion && typeof result.taskCompletion === "object" ? result.taskCompletion : null,
     missingTaskPoints: Array.isArray(result.missingTaskPoints) ? result.missingTaskPoints : [],
+    taskPointEvidence: Array.isArray(result.taskPointEvidence) ? result.taskPointEvidence : [],
     nextStep: String(result.nextStep || result.writingNextStep || result.improvementTarget || "").trim(),
     writingNextStep: String(result.writingNextStep || result.nextStep || result.improvementTarget || "").trim(),
     writing: result.writing && typeof result.writing === "object" ? result.writing : null,
@@ -655,7 +682,7 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
   const now = new Date().toISOString();
   const identity = resolveStudentIdentity({ ...result, ...submission, raw: submission.raw });
   const safeId = safeFirestoreId(submission.id || submission.path || `${identity.studentCode || "student"}_${result.assignmentKey || "assignment"}_${now}`);
-  await setDoc(doc(db, "aiMarkingAudit", safeId), {
+  await setDoc(doc(db, "aiMarkingAudit", safeId), sanitizeFirestoreData({
     submissionId: submission.id || "",
     submissionPath: submission.path || "",
     ...identity,
@@ -685,9 +712,15 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
     scoreSaveReceipt: receipt,
     sheetSynced: Boolean(receipt?.sheet?.attempted && receipt?.sheet?.success && !receipt?.skippedForReview),
     reviewReason: reason,
+    markingRubricVersion: result.markingRubricVersion || "",
+    taskCompletion: result.taskCompletion ?? null,
+    missingTaskPoints: result.missingTaskPoints || [],
+    taskPointEvidence: result.taskPointEvidence || [],
+    writingDimensions: result.writingDimensions ?? null,
+    result,
     createdAt: now,
     updatedAt: now,
-  }, { merge: true });
+  }), { merge: true });
 }
 
 export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {

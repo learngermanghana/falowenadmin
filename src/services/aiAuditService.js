@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, getDocs, query, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { buildTutorCalibrationEvent } from "../utils/markingIntelligence.js";
+import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
 import { saveScoreRow } from "./markingService.js";
 
 function readTimestamp(value) {
@@ -213,7 +214,7 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
     tutorCalibration,
   };
 
-  await setDoc(auditRef, {
+  await setDoc(auditRef, sanitizeFirestoreData({
     finalScore,
     feedback: cleanedFeedback,
     status: "approved_synced",
@@ -231,11 +232,11 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
     sheetSynced: Boolean(receipt?.sheet?.success && !receipt?.skippedForReview),
     firestoreSynced: Boolean(receipt?.firestore?.success),
     result: updatedResult,
-  }, { merge: true });
+  }), { merge: true });
 
   const submissionRef = docFromPath(audit.submissionPath);
   if (submissionRef) {
-    await setDoc(submissionRef, {
+    await setDoc(submissionRef, sanitizeFirestoreData({
       finalScore,
       aiFeedback: cleanedFeedback,
       markingStatus: "marked",
@@ -244,11 +245,11 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
       markingUpdatedAt: now,
       aiAuditApprovedAt: now,
       tutorCalibration,
-    }, { merge: true });
+    }), { merge: true });
   }
 
   const markingResultId = safeFirestoreId(audit.submissionId || audit.submissionPath || safeAuditId);
-  await setDoc(doc(db, "markingResults", markingResultId), {
+  await setDoc(doc(db, "markingResults", markingResultId), sanitizeFirestoreData({
     submissionId: audit.submissionId || "",
     submissionPath: audit.submissionPath || "",
     result: updatedResult,
@@ -260,7 +261,7 @@ export async function approveAndSyncAIMarkingAudit({ auditId, score, feedback })
     tutorCalibration,
     sentToStudent: false,
     updatedAt: now,
-  }, { merge: true });
+  }), { merge: true });
 
   return receipt;
 }

@@ -13,6 +13,7 @@ import {
 } from "../utils/questionAwareWritingMarking.js";
 import * as base from "./markingServiceBase.js";
 import { withResubmissionComparison } from "../utils/resubmissionFeedback.js";
+import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
 
 export * from "./markingServiceBase.js";
 
@@ -320,7 +321,7 @@ async function syncIntelligenceAudit({ submissionId, submissionPath, result = {}
     patch.manualOverride = Boolean(result.tutorCalibration.manualOverride);
   }
 
-  await setDoc(doc(db, "aiMarkingAudit", safeId), patch, { merge: true });
+  await setDoc(doc(db, "aiMarkingAudit", safeId), sanitizeFirestoreData(patch), { merge: true });
 }
 
 export async function loadSubmissions(options = {}) {

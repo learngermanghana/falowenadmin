@@ -6,6 +6,8 @@ import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { calculateFinalScore } from "../utils/finalScore.js";
 import { useToast } from "../context/ToastContext.jsx";
+import WritingScoreExplanation from "../components/WritingScoreExplanation.jsx";
+import MarkingHistoryPanel from "../components/MarkingHistoryPanel.jsx";
 
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
@@ -1067,7 +1069,8 @@ export default function MarkingPage() {
                 {" · "}Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
                 <SubmissionAttemptLabels submission={selectedSubmission} />
               </div>
-              {selectedSubmission.improvementSummary ? (
+              <MarkingHistoryPanel submission={selectedSubmission} />
+                            {selectedSubmission.improvementSummary ? (
                 <div style={{ marginBottom: 8, padding: 8, borderRadius: 6, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
                   <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Resubmission improvement summary</div>
                   <div style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{selectedSubmission.improvementSummary}</div>
@@ -1175,6 +1178,7 @@ export default function MarkingPage() {
                 <button type="button" onClick={handleSendFeedbackToStudent} disabled={workflowSaving}>Send feedback to student</button>
                 <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving}>Mark as needs tutor review</button>
               </div>
+              <WritingScoreExplanation result={smartMarkingResult} />
             </div>
           ) : null}
           {objectiveMarkingResult.totalCount > 0 ? (
