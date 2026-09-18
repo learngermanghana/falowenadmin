@@ -597,6 +597,7 @@ export function normalizeAIMarkingResult(result = {}, payload = {}) {
       : result.writingStrengths ? [String(result.writingStrengths)] : [],
     taskCompletion: result.taskCompletion && typeof result.taskCompletion === "object" ? result.taskCompletion : null,
     missingTaskPoints: Array.isArray(result.missingTaskPoints) ? result.missingTaskPoints : [],
+    taskPointEvidence: Array.isArray(result.taskPointEvidence) ? result.taskPointEvidence : [],
     nextStep: String(result.nextStep || result.writingNextStep || result.improvementTarget || "").trim(),
     writingNextStep: String(result.writingNextStep || result.nextStep || result.improvementTarget || "").trim(),
     writing: result.writing && typeof result.writing === "object" ? result.writing : null,
