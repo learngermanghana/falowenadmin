@@ -1103,6 +1103,7 @@ export default async function handler(req, res) {
     path.startsWith("holidays/") ||
     path.startsWith("orientation/") ||
     path.startsWith("class-schedule/") ||
+    path.startsWith("completion-pack/") ||
     path.startsWith("students/") ||
     path.startsWith("marking/")
   ) {

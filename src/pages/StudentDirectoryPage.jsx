@@ -3,6 +3,7 @@ import { createStudent, listAllStudents, updateStudentById } from "../services/s
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
+import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
@@ -744,6 +745,12 @@ export default function StudentDirectoryPage() {
                           draft={getDraft(selectedStudent)}
                           onStudentDeleted={handleSupportStudentDeleted}
                           onStudentUpdated={handleSupportStudentUpdated}
+                          pushToast={pushToast}
+                        />
+
+                        <CompletionPackPanel
+                          student={selectedStudent}
+                          draft={getDraft(selectedStudent)}
                           pushToast={pushToast}
                         />
 
