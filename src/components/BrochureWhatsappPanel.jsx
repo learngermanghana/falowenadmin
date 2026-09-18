@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { listClasses } from "../services/classesService.js";
+import { loadShareablePublicClasses } from "../services/publicBrochureClassService.js";
 import {
   BROCHURE_WHATSAPP_MESSAGE,
   buildBrochureWhatsappUrl,
@@ -9,11 +9,10 @@ import {
   formatBrochureFee,
   formatBrochureSchedule,
   normalizeGhanaWhatsappNumber,
-  upcomingBrochureClasses,
 } from "../utils/brochureWhatsapp.js";
 
 function classKey(klass = {}) {
-  return String(klass.classRecordId || klass.id || klass.classId || klass.name || "").trim();
+  return String(klass.id || klass.slug || klass.classId || klass.title || klass.name || "").trim();
 }
 
 export default function BrochureWhatsappPanel({ pushToast }) {
@@ -28,10 +27,10 @@ export default function BrochureWhatsappPanel({ pushToast }) {
     let active = true;
     setLoadingClasses(true);
     setClassError("");
-    listClasses()
+    loadShareablePublicClasses()
       .then((rows) => {
         if (!active) return;
-        setClasses(upcomingBrochureClasses(rows));
+        setClasses(rows);
       })
       .catch((error) => {
         if (!active) return;
@@ -69,7 +68,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
 
   const openWhatsapp = () => {
     if (!selectedClass) {
-      pushToast?.({ type: "error", message: "Select an upcoming class first." });
+      pushToast?.({ type: "error", message: "Select an available class first." });
       return;
     }
     if (!whatsappLink) {
@@ -81,7 +80,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
 
   const copyWhatsappLink = async () => {
     if (!whatsappLink) {
-      pushToast?.({ type: "error", message: selectedClass ? "Enter a valid Ghana WhatsApp number first." : "Select an upcoming class first." });
+      pushToast?.({ type: "error", message: selectedClass ? "Enter a valid Ghana WhatsApp number first." : "Select an available class first." });
       return;
     }
     try {
@@ -94,7 +93,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
 
   const copyBrochureLink = async () => {
     if (!brochureLink) {
-      pushToast?.({ type: "error", message: "Select an upcoming class first." });
+      pushToast?.({ type: "error", message: "Select an available class first." });
       return;
     }
     try {
@@ -112,26 +111,25 @@ export default function BrochureWhatsappPanel({ pushToast }) {
   return (
     <div style={{ maxWidth: 900, display: "grid", gap: 16 }}>
       <div>
-        <h2 style={{ margin: "0 0 6px" }}>Send upcoming class brochure</h2>
+        <h2 style={{ margin: "0 0 6px" }}>Send available class brochure</h2>
         <p style={{ margin: 0, color: "#64748b", lineHeight: 1.55 }}>
-          Select an upcoming class. Falowen automatically builds the public brochure link, current start date,
-          schedule and fee, then prepares the WhatsApp message.
+          Select a class from the same live public catalogue used by Falowen’s brochure pages. Falowen automatically builds that class’s brochure link, start date, schedule and fee, then prepares the WhatsApp message.
         </p>
       </div>
 
       <section style={{ border: "1px solid #dbe3ef", borderRadius: 12, padding: 12, background: "#f8fafc", display: "grid", gap: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <div>
-            <strong>Upcoming classes open for registration</strong>
+            <strong>Classes currently available for registration</strong>
             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Choose the class you discussed with the lead.</div>
           </div>
           {!loadingClasses && !classError && <span style={{ fontSize: 12, color: "#475569" }}>{classes.length} available</span>}
         </div>
 
-        {loadingClasses && <p style={{ margin: 0, color: "#64748b" }}>Loading upcoming classes…</p>}
+        {loadingClasses && <p style={{ margin: 0, color: "#64748b" }}>Loading available classes…</p>}
         {classError && <p style={{ margin: 0, color: "#b91c1c" }}>{classError}</p>}
         {!loadingClasses && !classError && !classes.length && (
-          <p style={{ margin: 0, color: "#64748b" }}>No upcoming class is currently open for registration.</p>
+          <p style={{ margin: 0, color: "#64748b" }}>No public class is currently open for registration.</p>
         )}
 
         {!!classes.length && (
@@ -156,7 +154,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
                     gap: 5,
                   }}
                 >
-                  <span style={{ fontWeight: 800 }}>{klass.name || klass.className || klass.classId || "Upcoming class"}</span>
+                  <span style={{ fontWeight: 800 }}>{klass.title || klass.name || klass.className || klass.classId || "Available class"}</span>
                   <span style={{ fontSize: 13, color: "#475569" }}>
                     Starts {formatBrochureDate(klass.startDate || klass.startsAt)} · {formatBrochureFee(klass)}
                   </span>
@@ -171,7 +169,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       {selectedClass && (
         <section style={{ border: "1px solid #bfdbfe", borderRadius: 12, padding: 12, background: "#eff6ff", display: "grid", gap: 8 }}>
           <div style={{ fontWeight: 800, color: "#1e3a8a" }}>Selected brochure</div>
-          <div style={{ fontWeight: 700 }}>{selectedClass.name || selectedClass.className || selectedClass.classId}</div>
+          <div style={{ fontWeight: 700 }}>{selectedClass.title || selectedClass.name || selectedClass.className || selectedClass.classId}</div>
           <div style={{ fontSize: 13, color: "#334155" }}>
             Start: {formatBrochureDate(selectedClass.startDate || selectedClass.startsAt)} · Fee: {formatBrochureFee(selectedClass)}
           </div>

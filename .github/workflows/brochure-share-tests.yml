@@ -6,6 +6,8 @@ on:
       - 'src/components/BrochureWhatsappPanel.jsx'
       - 'src/utils/brochureWhatsapp.js'
       - 'src/services/classesService.js'
+      - 'src/services/publicBrochureClassService.js'
+      - 'src/services/publicBrochureClassService.js'
       - 'tests/brochure-whatsapp.test.js'
       - '.github/workflows/brochure-share-tests.yml'
   push:

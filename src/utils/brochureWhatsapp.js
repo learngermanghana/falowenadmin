@@ -37,6 +37,7 @@ export function brochureClassSlug(klass = {}) {
   return slugifyBrochureClass(
     klass.slug
     || slugFromClassUrl(klass.classUrl || klass.registrationLink || klass.link)
+    || klass.title
     || klass.name
     || klass.className
     || klass.classId
@@ -165,7 +166,7 @@ export function upcomingBrochureClasses(classes = [], now = new Date()) {
 }
 
 export function buildClassBrochureMessage(klass = {}) {
-  const className = text(klass.name || klass.className || klass.classId || klass.level || "Falowen class");
+  const className = text(klass.title || klass.name || klass.className || klass.classId || klass.level || "Falowen class");
   const brochureUrl = buildClassBrochureUrl(klass);
   const lines = [
     "Thank you for the call.",
