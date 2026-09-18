@@ -1,40 +1,16 @@
 // Falowen completion-pack extension for the bound Announcements + Certificates Apps Script.
-// The full updated script is maintained separately in the bound spreadsheet project.
-// This tracked extension documents the production contract and helper used by that script.
+// Reuses the EXISTING Announcement webhook token already stored by
+// "Falowen Announcements → Setup: Save Webhook Token". No second secret is required.
 
-const COMPLETION_DOCUMENT_SECRET_PROPERTY = "COMPLETION_DOCUMENT_SECRET";
 const COMPLETION_DOCUMENT_URL =
   "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/completion/attendance-participation-document";
 
-function configureCompletionDocumentSecret() {
-  const ui = getUiOrNull_();
-  if (!ui) throw new Error("Open the bound spreadsheet and run this function from the menu.");
-
-  const response = ui.prompt(
-    "Save Completion Document Secret",
-    "Enter the same private secret configured in Falowen as communication.completion_document_secret. Use at least 24 characters.",
-    ui.ButtonSet.OK_CANCEL,
-  );
-  if (response.getSelectedButton() !== ui.Button.OK) return;
-
-  const secret = String(response.getResponseText() || "").trim();
-  if (secret.length < 24) {
-    ui.alert("Use a secret with at least 24 characters.");
-    return;
-  }
-
-  PropertiesService.getScriptProperties().setProperty(COMPLETION_DOCUMENT_SECRET_PROPERTY, secret);
-  ui.alert("Completion document secret saved securely in Script Properties.");
-}
-
 function fetchCompletionParticipationPdf_(student, level, completionDate) {
   const s = student || {};
-  const secret = String(
-    PropertiesService.getScriptProperties().getProperty(COMPLETION_DOCUMENT_SECRET_PROPERTY) || "",
-  ).trim();
+  const secret = String(getWebhookToken_() || "").trim();
 
   if (!secret) {
-    Logger.log("Completion participation PDF skipped: completion document secret is not configured.");
+    Logger.log("Completion participation PDF skipped: existing Announcement webhook token is not configured.");
     return null;
   }
 
@@ -53,7 +29,7 @@ function fetchCompletionParticipationPdf_(student, level, completionDate) {
     const response = UrlFetchApp.fetch(COMPLETION_DOCUMENT_URL, {
       method: "post",
       contentType: "application/json",
-      headers: { "X-Falowen-Completion-Secret": secret },
+      headers: { "X-Falowen-Announcement-Token": secret },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true,
       followRedirects: true,
