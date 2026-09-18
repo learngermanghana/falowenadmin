@@ -2,7 +2,19 @@ import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { getCourseTaskDay } from "../src/data/courseSessionGroups.js";
 
-const LEVEL = "A1";
+const args = new Map(
+  process.argv.slice(2).map((arg) => {
+    const [key, ...rest] = String(arg).split("=");
+    return [key.replace(/^--/, ""), rest.length ? rest.join("=") : true];
+  }),
+);
+
+const LEVEL = String(args.get("level") || "A1").trim().toUpperCase();
+const SUPPORTED_LEVELS = new Set(["A1", "A2"]);
+if (!SUPPORTED_LEVELS.has(LEVEL)) {
+  throw new Error("Teacher-material audit currently supports A1 and A2. Received: " + LEVEL);
+}
+
 const REQUIRED_CORE_STAGES = [
   "intro",
   "warmup",
@@ -16,14 +28,22 @@ const REQUIRED_CORE_STAGES = [
 ];
 
 const normalize = (value = "") => String(value || "").trim();
-const isTutorial = (slide = {}) =>
-  normalize(slide.assignmentId).toUpperCase() === "A1-TUTORIAL";
+const normalizedAssignment = (slide = {}) => normalize(slide.assignmentId).toUpperCase();
+const isTutorial = (slide = {}) => {
+  const id = normalizedAssignment(slide);
+  return id.endsWith("-TUTORIAL") || id.endsWith("-ORIENTATION");
+};
+
+function expectedTeachingDay(slide, index) {
+  if (LEVEL === "A1") return getCourseTaskDay("A1", slide.assignmentId, index);
+  return index + 1;
+}
 
 const slides = getSlidesByCourse(LEVEL);
 const findings = [];
 const rows = [];
 
-for (const slide of slides) {
+for (const [index, slide] of slides.entries()) {
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const stageMap = new Map(stages.map((stage) => [stage.id, stage]));
   const tutorial = isTutorial(slide);
@@ -35,7 +55,7 @@ for (const slide of slides) {
     findings.push({ severity: "error", id: slide.assignmentId, message: "missing lesson objective" });
   }
 
-  const expectedDay = getCourseTaskDay("A1", slide.assignmentId, rows.length);
+  const expectedDay = expectedTeachingDay(slide, index);
   if (Number.isInteger(expectedDay) && Number(slide.dayNumber) !== expectedDay) {
     findings.push({
       severity: "error",
@@ -50,6 +70,7 @@ for (const slide of slides) {
       message: "teacher slide label '" + normalize(slide.day) + "' does not match Day " + expectedDay,
     });
   }
+
   if (!tutorial) {
     for (const stageId of REQUIRED_CORE_STAGES) {
       if (!stageMap.has(stageId)) {
@@ -80,10 +101,14 @@ for (const slide of slides) {
     practice.items.some((item) => Number(item.minutes || 0) > 0) &&
     questions
   );
+
+  // A2 is fully workbook-aligned, so transfer must be explicit. A1 still has
+  // a few legacy presenter-transfer lessons that intentionally use the shared
+  // assignment identity while their workbook bridge is being upgraded.
   const transfer = tutorial || Boolean(
     workbook ||
     slide.workbookConnection ||
-    normalize(slide.assignmentId)
+    (LEVEL === "A1" && normalize(slide.assignmentId))
   );
   const assess = tutorial || Boolean(wrapup && questions);
 
@@ -109,14 +134,14 @@ for (const slide of slides) {
 
   if (!tutorial && !hasExplicitWorkbookBridge) {
     findings.push({
-      severity: "info",
+      severity: LEVEL === "A2" ? "warning" : "info",
       id: slide.assignmentId,
       message: "uses presenter transfer without an explicit workbookConnection block",
     });
   }
   if (!tutorial && !hasDirectTeacherSupport) {
     findings.push({
-      severity: "info",
+      severity: LEVEL === "A2" ? "warning" : "info",
       id: slide.assignmentId,
       message: "uses shared teacher-support fallback rather than lesson-specific teacherSupport",
     });
@@ -141,21 +166,31 @@ const errors = findings.filter((item) => item.severity === "error");
 const warnings = findings.filter((item) => item.severity === "warning");
 const info = findings.filter((item) => item.severity === "info");
 
-console.log("# Falowen A1 teacher-material audit");
+const heading = "# Falowen " + LEVEL + " teacher-material audit";
+console.log(heading);
 console.log("");
 console.log("Rubric: Teach → Check → Produce → Transfer → Assess");
 console.log("");
-console.log("| Day | Assignment | Coverage | Workbook bridge | Lesson-specific support |");
-console.log("| ---: | --- | ---: | :---: | :---: |");
+console.log("| Day | Assignment | Teach | Check | Produce | Transfer | Assess | Coverage | Workbook bridge | Lesson-specific support |");
+console.log("| ---: | --- | :---: | :---: | :---: | :---: | :---: | ---: | :---: | :---: |");
 for (const row of rows) {
   console.log(
     "| " + row.day + " | " + row.assignmentId + " · " + row.title.replaceAll("|", "\\|") +
+    " | " + (row.teach ? "✓" : "—") +
+    " | " + (row.check ? "✓" : "—") +
+    " | " + (row.produce ? "✓" : "—") +
+    " | " + (row.transfer ? "✓" : "—") +
+    " | " + (row.assess ? "✓" : "—") +
     " | " + row.coverage + "/5 | " + (row.workbookBridge ? "✓" : "—") +
     " | " + (row.directSupport ? "✓" : "—") + " |"
   );
 }
 console.log("");
-console.log("Summary: " + slides.length + " A1 slide(s), " + errors.length + " error(s), " + warnings.length + " warning(s), " + info.length + " improvement note(s).");
+console.log(
+  "Summary: " + slides.length + " " + LEVEL + " slide(s), " +
+  errors.length + " error(s), " + warnings.length + " warning(s), " +
+  info.length + " improvement note(s)."
+);
 
 if (errors.length || warnings.length || info.length) {
   console.log("");
@@ -167,19 +202,26 @@ if (errors.length || warnings.length || info.length) {
 
 if (process.env.GITHUB_STEP_SUMMARY) {
   const summary = [
-    "# Falowen A1 teacher-material audit",
+    heading,
     "",
     "Rubric: **Teach → Check → Produce → Transfer → Assess**",
     "",
-    "| Day | Assignment | Coverage | Workbook bridge | Lesson-specific support |",
-    "| ---: | --- | ---: | :---: | :---: |",
+    "| Day | Assignment | Teach | Check | Produce | Transfer | Assess | Coverage | Workbook bridge | Lesson-specific support |",
+    "| ---: | --- | :---: | :---: | :---: | :---: | :---: | ---: | :---: | :---: |",
     ...rows.map((row) =>
       "| " + row.day + " | " + row.assignmentId + " · " + row.title.replaceAll("|", "\\|") +
+      " | " + (row.teach ? "✓" : "—") +
+      " | " + (row.check ? "✓" : "—") +
+      " | " + (row.produce ? "✓" : "—") +
+      " | " + (row.transfer ? "✓" : "—") +
+      " | " + (row.assess ? "✓" : "—") +
       " | " + row.coverage + "/5 | " + (row.workbookBridge ? "✓" : "—") +
       " | " + (row.directSupport ? "✓" : "—") + " |"
     ),
     "",
-    "Summary: **" + slides.length + "** A1 slides · **" + errors.length + "** errors · **" + warnings.length + "** warnings · **" + info.length + "** improvement notes.",
+    "Summary: **" + slides.length + "** " + LEVEL + " slides · **" +
+      errors.length + "** errors · **" + warnings.length + "** warnings · **" +
+      info.length + "** improvement notes.",
     "",
     ...findings.map((item) => "- **" + item.severity.toUpperCase() + " · " + item.id + "** — " + item.message),
     "",
