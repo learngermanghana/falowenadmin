@@ -374,7 +374,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       detectedWritingTextType: detectedTextType,
       questionAwareWritingGuard: {
         applied: true,
-        suspiciousWritingZero,
+        suspiciousWritingZero: suspiciousZeroWriting,
         originalWritingScore: currentWritingScore,
         guardedWritingScore,
         genreMismatch,
