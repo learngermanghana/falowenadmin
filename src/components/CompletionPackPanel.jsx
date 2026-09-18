@@ -49,6 +49,18 @@ export default function CompletionPackPanel({ student, draft = {}, pushToast }) 
     if (typeof pushToast === "function") pushToast({ type, message });
   }, [pushToast]);
 
+  const draftKey = [
+    draft.email,
+    draft.name,
+    draft.studentCode,
+    draft.level,
+    draft.className,
+    student?.email,
+    student?.studentCode,
+    student?.level,
+    student?.className,
+  ].map((item) => String(item ?? "").trim()).join("|");
+
   const refresh = useCallback(async ({ quiet = false } = {}) => {
     if (!student?.id) return;
     if (!quiet) setLoading(true);
@@ -65,7 +77,9 @@ export default function CompletionPackPanel({ student, draft = {}, pushToast }) 
     } finally {
       if (!quiet) setLoading(false);
     }
-  }, [student, draft]);
+  // getDraft() may return a new object on each parent render, so depend on
+  // the student's id and primitive draft values rather than object identity.
+  }, [student?.id, draftKey]);
 
   useEffect(() => {
     refresh();
@@ -83,15 +97,15 @@ export default function CompletionPackPanel({ student, draft = {}, pushToast }) 
   };
 
   const previewPdf = () => runAction("preview", async () => {
-    const popup = window.open("", "_blank", "noopener,noreferrer");
+    const popup = window.open("about:blank", "_blank");
+    if (popup) popup.opener = null;
     const result = await generateCompletionPackPdf(student, draft, { download: false });
     if (popup) {
-      popup.location.href = result.url;
-      window.setTimeout(() => releaseCompletionPackPdf(result), 60_000);
+      popup.location.replace(result.url);
     } else {
       window.open(result.url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => releaseCompletionPackPdf(result), 60_000);
     }
+    window.setTimeout(() => releaseCompletionPackPdf(result), 60_000);
   });
 
   const regeneratePdf = () => runAction("regenerate", async () => {
