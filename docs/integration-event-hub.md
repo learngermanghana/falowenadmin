@@ -62,3 +62,21 @@ The registration-document worker is deliberately separate from the Announcement/
 - Duplicate protection remains authoritative in the Apps Script through `EnrollmentSent`, stable enrollment/agreement references and the send log.
 - Automatic Firebase events are written to `auditLogs` with `integrationEvent: true`, so Communication → System events can show failures and retry them.
 - The registration worker reuses the existing Announcement webhook token. Only the separate Registration Docs web-app URL must be configured.
+
+
+### Firebase runtime configuration
+
+The automatic Firestore lifecycle trigger needs only the Registration Docs web-app URL. It reuses the existing Announcement token from the communication configuration.
+
+```json
+{
+  "communication": {
+    "announcement_webhook_token": "<existing shared token>"
+  },
+  "registration_docs": {
+    "webhook_url": "https://script.google.com/macros/s/<deployment-id>/exec"
+  }
+}
+```
+
+The same Registration Docs URL should also be configured in Vercel as `REGISTRATION_DOCS_WEBHOOK_URL` so failed automatic events can be retried from Communication → System events. `REGISTRATION_DOCS_WEBHOOK_TOKEN` is optional; when absent, the existing `ANNOUNCEMENT_WEBHOOK_TOKEN` is used.
