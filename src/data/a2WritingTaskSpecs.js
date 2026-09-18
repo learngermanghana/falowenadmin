@@ -7,7 +7,7 @@ const rows = [
     "informal_email",
     "informal",
     "friend_or_personal_contact",
-    "Informal letter to Felix about work and family.",
+    "Informal letter to Felix about work and family: explain why you are writing, write about your work or studies, tell Felix something new about your family, use at least one reason with weil or denn, and at the end ask how he is or what is new with him.",
     [
       "Explain why you are writing to Felix",
       "Write about your work or studies",
