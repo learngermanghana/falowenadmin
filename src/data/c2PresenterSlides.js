@@ -37,19 +37,19 @@ const slug = (value) => String(value || "")
   .toLowerCase();
 
 const objectiveSentence = (lesson) =>
-  \`Students can \${lesson.objectives.join(", ")}, and transfer the target language into a controlled C2 spoken and written response.\`;
+  `Students can ${lesson.objectives.join(", ")}, and transfer the target language into a controlled C2 spoken and written response.`;
 
 function grammarTeachDe(lesson) {
   return [
-    \`Zielstruktur: \${lesson.grammarFocus}.\`,
-    \`Wann und warum? \${lesson.when}\`,
-    \`Struktur und Kontrolle: \${lesson.structure}\`,
+    `Zielstruktur: ${lesson.grammarFocus}.`,
+    `Wann und warum? ${lesson.when}`,
+    `Struktur und Kontrolle: ${lesson.structure}`,
   ];
 }
 
 function commonMistakesDe(lesson) {
   return [
-    \`Typischer Fehler: \${lesson.mistake}\`,
+    `Typischer Fehler: ${lesson.mistake}`,
     "C2 heißt nicht automatisch länger oder komplizierter: Wähle die Struktur nach Funktion, Bedeutung und Register.",
     "Formuliere zuerst die Aussage klar; verdichte oder nuanciere sie erst danach.",
   ];
@@ -57,9 +57,9 @@ function commonMistakesDe(lesson) {
 
 function makeSpeakingQuestions(lesson) {
   return [
-    \`Erkläre den Kern von „\${lesson.title}“ in 45–60 Sekunden und benutze mindestens eine thematische Kollokation.\`,
-    \`Zeige an einem eigenen Beispiel, wie „\${lesson.grammarFocus}“ die Bedeutung oder Wirkung einer Aussage verändert.\`,
-    \`Formuliere eine zu einfache oder pauschale Aussage zu „\${lesson.title}“ auf C2-Niveau neu.\`,
+    `Erkläre den Kern von „${lesson.title}“ in 45–60 Sekunden und benutze mindestens eine thematische Kollokation.`,
+    `Zeige an einem eigenen Beispiel, wie „${lesson.grammarFocus}“ die Bedeutung oder Wirkung einer Aussage verändert.`,
+    `Formuliere eine zu einfache oder pauschale Aussage zu „${lesson.title}“ auf C2-Niveau neu.`,
     lesson.production,
     lesson.challenge,
   ];
@@ -68,52 +68,52 @@ function makeSpeakingQuestions(lesson) {
 function makeSpeakingModels(lesson, questions) {
   const [p1, p2, p3] = lesson.phrases;
   return [
-    { questionDe: questions[0], modelAnswerDe: \`Bei „\${lesson.title}“ geht es vor allem um \${lesson.topic}. Dabei lässt sich etwa sagen: \${p1[1]} Entscheidend ist, die Aussage nicht nur inhaltlich, sondern auch sprachlich präzise einzuordnen.\` },
-    { questionDe: questions[1], modelAnswerDe: \`\${p2[1]} Dieses Beispiel zeigt, wie die Zielstruktur „\${lesson.grammarFocus}“ eingesetzt wird, um die Aussage genauer und adressatengerechter zu formulieren.\` },
-    { questionDe: questions[2], modelAnswerDe: \`Eine pauschale Formulierung würde dem Thema nicht gerecht. Präziser wäre: \${p3[1]} Dadurch wird die Aussage differenziert, ohne unnötig kompliziert zu werden.\` },
-    { questionDe: questions[3], modelAnswerDe: \`\${p1[1]} \${p2[1]} Anschließend würde ich die Form noch einmal prüfen: Passt die Zielstruktur zur beabsichtigten Bedeutung und bleibt der Satz beim ersten Lesen verständlich?\` },
-    { questionDe: questions[4], modelAnswerDe: \`In einer C2-Antwort würde ich zunächst die zentrale Position eingrenzen, dann \${p1[0]} und \${p2[0]} sprachlich nutzen, einen Einwand berücksichtigen und am Ende zu einer differenzierten Schlussfolgerung kommen.\` },
+    { questionDe: questions[0], modelAnswerDe: `Bei „${lesson.title}“ geht es vor allem um ${lesson.topic}. Dabei lässt sich etwa sagen: ${p1[1]} Entscheidend ist, die Aussage nicht nur inhaltlich, sondern auch sprachlich präzise einzuordnen.` },
+    { questionDe: questions[1], modelAnswerDe: `${p2[1]} Dieses Beispiel zeigt, wie die Zielstruktur „${lesson.grammarFocus}“ eingesetzt wird, um die Aussage genauer und adressatengerechter zu formulieren.` },
+    { questionDe: questions[2], modelAnswerDe: `Eine pauschale Formulierung würde dem Thema nicht gerecht. Präziser wäre: ${p3[1]} Dadurch wird die Aussage differenziert, ohne unnötig kompliziert zu werden.` },
+    { questionDe: questions[3], modelAnswerDe: `${p1[1]} ${p2[1]} Anschließend würde ich die Form noch einmal prüfen: Passt die Zielstruktur zur beabsichtigten Bedeutung und bleibt der Satz beim ersten Lesen verständlich?` },
+    { questionDe: questions[4], modelAnswerDe: `In einer C2-Antwort würde ich zunächst die zentrale Position eingrenzen, dann ${p1[0]} und ${p2[0]} sprachlich nutzen, einen Einwand berücksichtigen und am Ende zu einer differenzierten Schlussfolgerung kommen.` },
   ];
 }
 
 function makeGrammarChecks(lesson) {
   const [p1, p2, p3] = lesson.phrases;
   const questions = [
-    \`Erkläre die Funktion von „\${lesson.grammarFocus}“ in dieser Lektion und formuliere einen eigenen Beispielsatz.\`,
-    \`Überarbeite eine unpräzise Aussage zum Thema „\${lesson.title}“ mit der heutigen Zielstruktur.\`,
-    \`Prüfe den Satz auf Register, logische Beziehung und sprachliche Präzision: „\${p1[1]}“\`,
+    `Erkläre die Funktion von „${lesson.grammarFocus}“ in dieser Lektion und formuliere einen eigenen Beispielsatz.`,
+    `Überarbeite eine unpräzise Aussage zum Thema „${lesson.title}“ mit der heutigen Zielstruktur.`,
+    `Prüfe den Satz auf Register, logische Beziehung und sprachliche Präzision: „${p1[1]}“`,
   ];
   const answers = [
-    \`Die Struktur dient hier dazu, \${lesson.topic} präzise auszudrücken. Beispiel: \${p1[1]}\`,
-    \`\${p2[1]} Diese Version ist stärker, weil die sprachliche Form die beabsichtigte Beziehung ausdrücklich markiert.\`,
-    \`\${p1[1]} Der Satz ist grundsätzlich passend; auf C2-Niveau sollte zusätzlich geprüft werden, ob Register, Evidenzgrad und Informationsgewicht zum Kontext passen.\`,
+    `Die Struktur dient hier dazu, ${lesson.topic} präzise auszudrücken. Beispiel: ${p1[1]}`,
+    `${p2[1]} Diese Version ist stärker, weil die sprachliche Form die beabsichtigte Beziehung ausdrücklich markiert.`,
+    `${p1[1]} Der Satz ist grundsätzlich passend; auf C2-Niveau sollte zusätzlich geprüft werden, ob Register, Evidenzgrad und Informationsgewicht zum Kontext passen.`,
   ];
   return { questions, models: questions.map((questionDe, index) => ({ questionDe, modelAnswerDe: answers[index] || p3[1] })) };
 }
 
 function makeSlide(lesson, index) {
   const day = index + 1;
-  const assignmentId = \`C2 \${day}\`;
+  const assignmentId = `C2-${lesson.chapter}`;
   const questions = makeSpeakingQuestions(lesson);
   const checks = makeGrammarChecks(lesson);
-  const phrases = lesson.phrases.map(([phrase, example]) => \`\${phrase} — \${example}\`);
+  const phrases = lesson.phrases.map(([phrase, example]) => `${phrase} — ${example}`);
 
   return {
-    id: \`c2-day-\${day}-\${slug(lesson.title)}\`,
+    id: `c2-day-${day}-${slug(lesson.title)}`,
     course: "C2",
-    day: \`Day \${day}\`,
+    day: `Day ${day}`,
     dayNumber: day,
     chapter: lesson.chapter,
     assignmentId,
-    title: \`C2 Day \${day} · \${lesson.title}\`,
-    topic: \`\${lesson.chapter} · \${lesson.topic}\`,
+    title: `C2 Day ${day} · ${lesson.title}`,
+    topic: `${lesson.chapter} · ${lesson.topic}`,
     objective: objectiveSentence(lesson),
     estimatedDuration: "75–90 minutes",
     warmupQuestionsDe: [
-      \`Was bedeutet „\${lesson.title}“ in deinen eigenen Worten?\`,
-      \`Welche sprachliche Schwierigkeit steckt in „\${lesson.grammarFocus}“?\`,
-      \`Welche einfache Aussage zu diesem Thema würdest du auf C2-Niveau präziser formulieren?\`,
-      \`Welche der heutigen Kollokationen kennst du bereits und in welchem Kontext würdest du sie verwenden?\`,
+      `Was bedeutet „${lesson.title}“ in deinen eigenen Worten?`,
+      `Welche sprachliche Schwierigkeit steckt in „${lesson.grammarFocus}“?`,
+      `Welche einfache Aussage zu diesem Thema würdest du auf C2-Niveau präziser formulieren?`,
+      `Welche der heutigen Kollokationen kennst du bereits und in welchem Kontext würdest du sie verwenden?`,
     ],
     keyPhrasesDe: [
       ...phrases,
@@ -126,10 +126,10 @@ function makeSlide(lesson, index) {
     studentQuestionsDe: questions,
     speakingModels: makeSpeakingModels(lesson, questions),
     teacherNotesEn: [
-      \`Teach the same canonical C2 topic and grammar focus as Falowen Course Book: \${lesson.title} — \${lesson.grammarFocus}.\`,
+      `Teach the same canonical C2 topic and grammar focus as Falowen Course Book: ${lesson.title} — ${lesson.grammarFocus}.`,
       lesson.when,
       lesson.structure,
-      \`Use the topic collocations actively; do not let students replace them with generic advanced-sounding vocabulary.\`,
+      `Use the topic collocations actively; do not let students replace them with generic advanced-sounding vocabulary.`,
       "Let the learner finish the full response before correcting; prioritise logic, register and two high-value language points.",
     ],
     interactionFlow: [
@@ -140,22 +140,22 @@ function makeSlide(lesson, index) {
       { phase: "C2 synthesis", detailEn: "15 min: deliver a 90–120 second response with position, evidence/example, counterpoint and synthesis." },
       { phase: "Writing transfer", detailEn: "12 min: plan the canonical Course Book production/challenge without displaying a ready-made full answer first." },
     ],
-    wrapUpTaskDe: \`\${lesson.challenge} Nutze dabei mindestens zwei Kollokationen und die heutige Zielstruktur funktional.\`,
+    wrapUpTaskDe: `${lesson.challenge} Nutze dabei mindestens zwei Kollokationen und die heutige Zielstruktur funktional.`,
     workbookConnection: {
       grammarUrl: null,
       workbookUrl: null,
-      subtitle: \`Aligned with Falowen C2 \${lesson.chapter}: \${lesson.title}\`,
+      subtitle: `Aligned with Falowen C2 ${lesson.chapter}: ${lesson.title}`,
       parts: [
-        { label: "Learn / Grammar", detailEn: \`\${lesson.grammarFocus}: when/why, structure, examples and common mistake.\` },
-        { label: "Kollokationen", detailEn: \`Use the lesson collocations in context: \${lesson.phrases.map(([phrase]) => phrase).join(" · ")}.\` },
+        { label: "Learn / Grammar", detailEn: `${lesson.grammarFocus}: when/why, structure, examples and common mistake.` },
+        { label: "Kollokationen", detailEn: `Use the lesson collocations in context: ${lesson.phrases.map(([phrase]) => phrase).join(" · ")}.` },
         { label: "Sprechen", detailEn: lesson.production },
-        { label: "Write", detailEn: \`Test transfer with the canonical challenge: \${lesson.challenge}\` },
+        { label: "Write", detailEn: `Test transfer with the canonical challenge: ${lesson.challenge}` },
         { label: "Prüfungstransfer", detailEn: "Explain the language choice, reformulate precisely and maintain C2 register under follow-up questioning." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: \`Canonical Falowen C2 lesson \${lesson.chapter}: \${lesson.title}. Topic: \${lesson.topic}. The class teaches the language first, then tests controlled transfer in speaking and writing.\`,
-      grammarFocusEn: [lesson.when, lesson.structure, \`Target structure: \${lesson.grammarFocus}.\`],
+      lessonOverviewEn: `Canonical Falowen C2 lesson ${lesson.chapter}: ${lesson.title}. Topic: ${lesson.topic}. The class teaches the language first, then tests controlled transfer in speaking and writing.`,
+      grammarFocusEn: [lesson.when, lesson.structure, `Target structure: ${lesson.grammarFocus}.`],
       modelExamplesDe: lesson.phrases.map(([, example]) => example),
       commonMistakesEn: [lesson.mistake, "Do not display complexity for its own sake; keep the logical relation and register transparent."],
     },
@@ -169,7 +169,7 @@ function makeSlide(lesson, index) {
 export const c2PresenterSlides = LESSONS.map(makeSlide);
 
 export const c2CourseEntries = LESSONS.map((lesson) => ({
-  assignment_id: \`C2-\${lesson.chapter}\`,
+  assignment_id: `C2-${lesson.chapter}`,
   chapter: lesson.chapter,
   de: lesson.title,
   en: lesson.title,
