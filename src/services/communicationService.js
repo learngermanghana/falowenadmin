@@ -18,7 +18,7 @@ import {
   historyStatusBlocksDuplicate,
   receiptHasSuccessfulDelivery,
 } from "../utils/communicationDelivery.js";
-import { dispatchIntegrationEvent } from "./integrationEventService.js";
+import { dispatchIntegrationEvent, fetchIntegrationHealth } from "./integrationEventService.js";
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 const HISTORY_LIMIT_DEFAULT = 30;
@@ -236,7 +236,8 @@ async function loadClassSessionsForCommunication(klass = {}) {
 }
 
 async function prepareCommunicationCancellation(input = {}, row = {}) {
-  if (!ANNOUNCEMENT_WEBHOOK_URL) {
+  const health = await fetchIntegrationHealth();
+  if (!health?.integrations?.communication?.configured) {
     throw new Error("Class cancellation email delivery is not configured. The Live Classes session was not changed.");
   }
 
