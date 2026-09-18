@@ -94,7 +94,7 @@ export default function IntegrationEventPanel() {
           <div>
             <h2 style={{ margin: 0, fontSize: 20 }}>Integration events</h2>
             <p style={{ margin: "6px 0 0", color: "#475569", maxWidth: 780 }}>
-              Score-sheet and communication requests now pass through one authenticated Falowen gateway. Webhook tokens remain server-side, and each request receives an event ID for tracing and retry.
+              Score-sheet, communication and registration-document requests pass through one authenticated Falowen event system. Webhook tokens remain server-side, and each request receives an event ID for tracing and retry.
             </p>
           </div>
           <button type="button" onClick={refresh} disabled={loading} style={{ padding: "9px 13px", borderRadius: 9, border: "1px solid #94a3b8", background: "#fff", fontWeight: 700 }}>
@@ -105,6 +105,7 @@ export default function IntegrationEventPanel() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, marginTop: 14 }}>
           {healthCard("Score sheet", health?.integrations?.scores)}
           {healthCard("Communication worker", health?.integrations?.communication)}
+          {healthCard("Registration documents", health?.integrations?.registration)}
           <div style={{ border: "1px solid #dbe2ea", borderRadius: 12, padding: 12, background: "#fff" }}>
             <div style={{ fontSize: 12, color: "#64748b" }}>Event store</div>
             <div style={{ fontWeight: 800, marginTop: 4 }}>{health?.eventStore || "Firestore audit log"}</div>
@@ -127,6 +128,7 @@ export default function IntegrationEventPanel() {
               <tr><td colSpan={6} style={{ padding: 16, color: "#64748b" }}>{loading ? "Loading events…" : "No integration events yet."}</td></tr>
             ) : events.map((event) => {
               const destinations = Object.entries(event.destinations || {});
+              const destinationLabel = (name) => name === "registration" ? "Registration documents" : name;
               return (
                 <tr key={event.id}>
                   <td style={{ padding: 10, borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{formatDate(event.createdAt)}</td>
@@ -138,7 +140,7 @@ export default function IntegrationEventPanel() {
                   <td style={{ padding: 10, borderBottom: "1px solid #f1f5f9" }}><span style={statusStyle(event.status)}>{event.status || "unknown"}</span></td>
                   <td style={{ padding: 10, borderBottom: "1px solid #f1f5f9" }}>
                     {destinations.length ? destinations.map(([name, detail]) => (
-                      <div key={name} style={{ fontSize: 12 }}>{name}: {detail?.status || "unknown"}</div>
+                      <div key={name} style={{ fontSize: 12 }}>{destinationLabel(name)}: {detail?.status || "unknown"}</div>
                     )) : "—"}
                   </td>
                   <td style={{ padding: 10, borderBottom: "1px solid #f1f5f9" }}>{event.actor || "—"}</td>

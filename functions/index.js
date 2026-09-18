@@ -6,13 +6,14 @@ const { parseAssignmentChapter } = require("./assignmentChapter.js");
 const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./checkinClassMembership.js");
 const { isStudentOnPublishedRoster } = require("./publishedRosterMembership.js");
 const { onRequest } = require("firebase-functions/v2/https");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
+const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 
 setGlobalOptions({ region: "us-central1" });
@@ -1864,6 +1865,17 @@ async function createAutomaticMarkingJob(event, collectionShape) {
     });
   }
 }
+
+const registrationLifecycleTriggers = createRegistrationLifecycleTriggers({
+  admin,
+  db,
+  onDocumentCreated,
+  onDocumentUpdated,
+  runtimeConfig,
+});
+
+exports.trackStudentRegistrationReceived = registrationLifecycleTriggers.registrationReceived;
+exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed;
 
 exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
   await createAutomaticMarkingJob(event, "flat");

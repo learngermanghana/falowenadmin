@@ -26,6 +26,7 @@
         "node scripts/patchSpecificWritingFeedback.mjs",
         "node scripts/patchPublicLiveClassApi.mjs",
         "node --check functions/index.js",
+        "node --check functions/registrationLifecycleEvents.js",
         "node scripts/patchSheetRowManagementRoutes.mjs",
         "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
         "node scripts/patchLiveClassUpdateScheduleSync.mjs",

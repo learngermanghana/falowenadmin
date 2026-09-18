@@ -86,7 +86,9 @@ jobs:
           node --check functions/autoCompleteClassSessions.js
           node --check functions/attendanceConfirmationEmails.js
           node --check functions/completionParticipationDocument.js
+          node --check functions/registrationLifecycleEvents.js
           node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
+          node --test tests/registration-lifecycle-events.test.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
           node --test tests/pending-student-cleanup.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
@@ -115,6 +117,8 @@ jobs:
           grep -F 'exports.sendLeadClassStartReminderEmails = createLeadClassStartReminderEmailJob' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
+          grep -F 'exports.trackStudentRegistrationReceived = registrationLifecycleTriggers.registrationReceived' functions/index.js
+          grep -F 'exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
           grep -F 'async function loadReminderSessionWindow' functions/classSessionReminderEmails.js
           grep -F 'async function loadStudentsForDueClasses' functions/classSessionReminderEmails.js
