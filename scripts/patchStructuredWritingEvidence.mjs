@@ -72,4 +72,4 @@ clientSource = ensureAfter(
 );
 
 fs.writeFileSync(clientTarget, clientSource);
-console.log("Structured OpenAI writing evidence and task-point proof are preserved from examiner response to tutor review.");
+console.log("Structured OpenAI writing evidence is preserved from examiner response to tutor review, including task-point proof.");
