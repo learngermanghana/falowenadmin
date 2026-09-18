@@ -43,7 +43,12 @@ const RULES = {
   ],
   "B1-1.2": [
     makeRule(/\bkennengelernt\b/i),
-    makeRule(/\b(?:besonders|vertraue|unterst[uü]tzt|hilft|ehrlich|zuverl[aä]ssig|verst[aä]ndnisvoll|wichtig)\b/i),
+    {
+      test: (source) => /\b(?:mein(?:e|en|em|er)?\s+(?:best(?:e|en|em|er)?\s+)?(?:freund|freundin)|unsere\s+freundschaft|diese\s+freundschaft)\b/i.test(source)
+        && /\b(?:besonders|vertraue|unterst[uü]tzt|hilft|ehrlich|zuverl[aä]ssig|verst[aä]ndnisvoll|wichtig)\b/i.test(source),
+      evidence: (source) => sentenceFor(source, /\b(?:mein(?:e|en|em|er)?\s+(?:best(?:e|en|em|er)?\s+)?(?:freund|freundin)|unsere\s+freundschaft|diese\s+freundschaft)\b/i),
+      reason: "The response must explain why this specific friendship is special, not only make a general statement about friendship.",
+    },
     makeRule(/\b(?:wollen|k[oö]nnen|sollen)\s+wir\b[^.!?]{0,90}\btreffen|\bwie\s+w[aä]re\s+es\b[^.!?]{0,90}\btreffen|\bhast\s+du\b[^.!?]{0,70}\bzeit|\blass\s+uns\b[^.!?]{0,70}\btreffen|\btreffen\s+wir\s+uns\b/i),
   ],
   "B1-1.3": [
@@ -193,7 +198,7 @@ const RULES = {
     makeRule(/\b(?:kaputt|defekt|display|bildschirm|kratzer|funktioniert\s+nicht|besch[aä]digt|schaden)\b/i),
     makeRule(/\b(?:zur[uü]ckgeschickt|zur[uü]ckgesendet|paket|retoure|r[uü]cksendung|lieferung|sendungsnummer)\b/i),
     makeRule(/\b(?:ersatz|austausch|reparatur|reparieren|erstattung|geld\s+zur[uü]ck)\b/i),
-    makeRule(/\b(?:schnelle\s+antwort|schnelle\s+l[oö]sung|baldige\s+r[uü]ckmeldung|bitte\s+antworten|w[aä]re\s+ich\s+dankbar)\b/i),
+    makeRule(/\b(?:schnelle\s+(?:antwort|l[oö]sung|r[uü]ckmeldung)|baldige\s+r[uü]ckmeldung|bitte\s+antworten|w[aä]re\s+ich\s+dankbar)\b/i),
   ],
   "B1-9.26": [
     makeCountRule([/\b(?:nach|in|auf)\s+[A-ZÄÖÜ][a-zäöüß]+|\breiseziel|ziel\b/i, /\b(?:zug|bus|auto|flugzeug|flug|bahn|fahrrad|schiff)\b/i], 2),
