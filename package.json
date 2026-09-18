@@ -16,7 +16,7 @@
     "audit:assignment-registry": "node --test tests/assignment-registry.test.js tests/question-aware-writing-marking.test.js",
     "deploy:indexes": "firebase deploy --only firestore:indexes",
     "deploy:falowenadmin": "node scripts/patchPresenterConceptLabels.mjs && node scripts/patchStudentPaymentLinks.mjs && node scripts/patchStudentPaymentHistoryApi.mjs && node scripts/patchStudentPaymentAdminSecurity.mjs && node scripts/patchStudentPaymentContractLifecycle.mjs && node scripts/patchStudentUpgradePaymentDriven.mjs && node scripts/patchStudentProfileUpdateApi.mjs && node scripts/patchStudentPaymentUpdateEmails.mjs && node scripts/patchAutomaticOrientationSync.mjs && node scripts/patchStructuredWritingEvidence.mjs && node scripts/patchCheckinStatusMetadataHydration.mjs && node --check functions/index.js && node scripts/patchCourseReviewRequestEmails.mjs && node scripts/patchAutoCompleteClassSessions.mjs && node scripts/patchStudentLeadDeletionRuntime.mjs && node scripts/patchDuplicateScoreVerification.mjs && firebase deploy --project \"$FIREBASE_PROJECT_ID\" --only functions:falowenadmin --force --debug",
-    "audit:teaching-material:a1": "node scripts/auditTeachingMaterialQuality.mjs"
+    "audit:teaching-material:a1": "node scripts/patchB2C1SpeakingModels.mjs && node scripts/auditTeachingMaterialQuality.mjs"
   },
   "dependencies": {
     "dayjs": "^1.11.19",
