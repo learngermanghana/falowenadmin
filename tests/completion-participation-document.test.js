@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const {
   buildCompletionPdf,
-  resolveCompletionSecret,
+  resolveAnnouncementWebhookSecret,
   summarizeAttendance,
   summarizeParticipation,
   _test,
@@ -97,16 +97,23 @@ test("completion PDF is a two-page PDF containing attendance and participation t
   assert.match(text, /diagnostic learning data/);
 });
 
-test("completion document secret resolves only from server configuration", () => {
+test("completion document reuses the existing announcement webhook secret", () => {
   assert.equal(
-    resolveCompletionSecret({ communication: { completion_document_secret: "config-secret" } }, {}),
-    "config-secret",
+    resolveAnnouncementWebhookSecret({ communication: { announcement_webhook_token: "existing-secret" } }, {}),
+    "existing-secret",
   );
   assert.equal(
-    resolveCompletionSecret({ communication: { completion_document_secret: "config-secret" } }, { COMPLETION_DOCUMENT_SECRET: "env-secret" }),
+    resolveAnnouncementWebhookSecret(
+      { communication: { announcement_webhook_token: "config-secret" } },
+      { ANNOUNCEMENT_WEBHOOK_TOKEN: "env-secret" },
+    ),
     "env-secret",
   );
-  assert.equal(resolveCompletionSecret({}, {}), "");
+  assert.equal(
+    resolveAnnouncementWebhookSecret({ communication: { webhook_token: "legacy-existing-secret" } }, {}),
+    "legacy-existing-secret",
+  );
+  assert.equal(resolveAnnouncementWebhookSecret({}, {}), "");
 });
 
 test("completion route is registered in Falowen Firebase API", () => {
@@ -116,10 +123,11 @@ test("completion route is registered in Falowen Firebase API", () => {
   assert.match(indexSource, /registerCompletionDocumentRoute/);
   assert.match(indexSource, /registerCompletionDocumentRoute\(\{ app, db, runtimeConfig \}\)/);
   assert.match(source, /\/completion\/attendance-participation-document/);
-  assert.match(source, /X-Falowen-Completion-Secret|x-falowen-completion-secret/);
+  assert.match(source, /X-Falowen-Announcement-Token|x-falowen-announcement-token/);
   assert.match(source, /application\/pdf/);
   assert.match(source, /classParticipationRecords/);
   assert.match(source, /attendance/);
+  assert.doesNotMatch(source, /COMPLETION_DOCUMENT_SECRET|completion_document_secret/);
 });
 
 test("official-session dedupe prefers canonical completed records", () => {
