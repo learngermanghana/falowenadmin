@@ -84,6 +84,12 @@ function destinationForType(type = "") {
   const normalized = eventTypeFrom(type);
   if (normalized.startsWith("score.")) return "scores";
   if (
+    normalized.startsWith("registration.")
+    || normalized.startsWith("enrollment.")
+  ) {
+    return "registration";
+  }
+  if (
     normalized.startsWith("communication.")
     || normalized.startsWith("announcement.")
     || normalized.startsWith("certificate.")
@@ -139,6 +145,20 @@ function validateCommunicationRows(rows) {
   });
 }
 
+function validateRegistrationRows(rows) {
+  return rows.map((row) => {
+    const studentCode = String(row.student_code || row.studentCode || row.studentcode || "").trim();
+    const email = String(row.email || row.studentEmail || "").trim();
+    if (!studentCode && !email) {
+      throw Object.assign(
+        new Error("Every registration lifecycle row needs a student code or email."),
+        { statusCode: 400 },
+      );
+    }
+    return row;
+  });
+}
+
 function scoreConfig() {
   return {
     url: envValue("SCORES_WEBHOOK_URL", "VITE_SCORES_WEBHOOK_URL"),
@@ -154,6 +174,17 @@ function communicationConfig() {
     token: envValue("ANNOUNCEMENT_WEBHOOK_TOKEN", "VITE_ANNOUNCEMENT_WEBHOOK_TOKEN"),
     sheetName: envValue("ANNOUNCEMENT_WEBHOOK_SHEET_NAME", "VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME"),
     sheetGid: envValue("ANNOUNCEMENT_WEBHOOK_SHEET_GID", "VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID"),
+  };
+}
+
+function registrationConfig() {
+  return {
+    url: envValue("REGISTRATION_DOCS_WEBHOOK_URL"),
+    token: envValue(
+      "REGISTRATION_DOCS_WEBHOOK_TOKEN",
+      "ANNOUNCEMENT_WEBHOOK_TOKEN",
+      "VITE_ANNOUNCEMENT_WEBHOOK_TOKEN",
+    ),
   };
 }
 
@@ -275,9 +306,44 @@ async function dispatchCommunicationRows({ rows, eventId, user }) {
   };
 }
 
+async function dispatchRegistrationRows({ rows, eventId, user, type }) {
+  const config = registrationConfig();
+  const safeRows = validateRegistrationRows(rows).map((row) => ({
+    ...row,
+    event_id: eventId,
+  }));
+  const payload = {
+    ...(config.token ? { token: config.token } : {}),
+    action: "processRegistrationLifecycleEvent",
+    event_id: eventId,
+    type,
+    source: "falowen-admin",
+    requested_by: user.email,
+    row: safeRows[0],
+    rows: safeRows,
+  };
+
+  const upstream = await postAppsScript(config.url, payload);
+  const result = String(upstream.body?.result || upstream.body?.status || "processed").trim();
+  if (result.toUpperCase() === "PENDING") {
+    throw Object.assign(new Error("Registration document worker is busy. Retry the event."), { statusCode: 409 });
+  }
+
+  return {
+    receipt: upstream.body,
+    destination: {
+      status: "processed",
+      httpStatus: upstream.status,
+      result,
+      acceptedRows: Number(upstream.body.count || safeRows.length),
+    },
+  };
+}
+
 function healthPayload() {
   const scores = scoreConfig();
   const communication = communicationConfig();
+  const registration = registrationConfig();
   return {
     ok: true,
     eventStore: "firestore:auditLogs",
@@ -292,10 +358,16 @@ function healthPayload() {
         urlConfigured: Boolean(communication.url),
         tokenConfigured: Boolean(communication.token),
       },
+      registration: {
+        configured: Boolean(registration.url && registration.token),
+        urlConfigured: Boolean(registration.url),
+        tokenConfigured: Boolean(registration.token),
+      },
     },
     reconciliation: {
       legacyScoreWatcherMayRemainEnabled: true,
       announcementRunnerMayRemainEnabled: true,
+      registrationSheetWatcherMayRemainEnabled: true,
     },
   };
 }
@@ -327,7 +399,9 @@ export default async function integrationHubHandler(req, res) {
     const rows = normalizeRows(body.rows, body.row);
     const dispatched = destination === "scores"
       ? await dispatchScoreRows({ rows, eventId, user })
-      : await dispatchCommunicationRows({ rows, eventId, user });
+      : destination === "registration"
+        ? await dispatchRegistrationRows({ rows, eventId, user, type })
+        : await dispatchCommunicationRows({ rows, eventId, user });
 
     return res.status(200).json({
       ok: true,
@@ -376,12 +450,14 @@ export {
   bearerToken,
   communicationConfig,
   destinationForType,
+  registrationConfig,
   envValue,
   eventIdFrom,
   healthPayload,
   readJsonBody,
   scoreConfig,
   validateCommunicationRows,
+  validateRegistrationRows,
   validateScoreRows,
   verifyFirebaseAdminUser,
   verifiedScoreReceipt,
