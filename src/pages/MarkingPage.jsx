@@ -6,6 +6,7 @@ import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { calculateFinalScore } from "../utils/finalScore.js";
 import { useToast } from "../context/ToastContext.jsx";
+import WritingScoreExplanation from "../components/WritingScoreExplanation.jsx";
 
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
@@ -1175,6 +1176,7 @@ export default function MarkingPage() {
                 <button type="button" onClick={handleSendFeedbackToStudent} disabled={workflowSaving}>Send feedback to student</button>
                 <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving}>Mark as needs tutor review</button>
               </div>
+              <WritingScoreExplanation result={smartMarkingResult} />
             </div>
           ) : null}
           {objectiveMarkingResult.totalCount > 0 ? (
