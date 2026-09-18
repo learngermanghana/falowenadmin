@@ -118,6 +118,16 @@ export function detectWritingTextType(text = "") {
 export function writingTextTypesCompatible(expected = "", detected = "") {
   if (!expected || expected === WRITING_TEXT_TYPES.WRITING || !detected || detected === WRITING_TEXT_TYPES.WRITING) return true;
   if (expected === detected) return true;
+
+  // Formal vs informal is a register difference, not a different correspondence genre.
+  // The question-aware register check handles that penalty separately.
+  const emailLetterFamily = new Set([
+    WRITING_TEXT_TYPES.INFORMAL_EMAIL,
+    WRITING_TEXT_TYPES.FORMAL_EMAIL,
+    WRITING_TEXT_TYPES.FORMAL_LETTER,
+  ]);
+  if (emailLetterFamily.has(expected) && emailLetterFamily.has(detected)) return true;
+
   const formalFamily = new Set([WRITING_TEXT_TYPES.FORMAL_EMAIL, WRITING_TEXT_TYPES.FORMAL_LETTER, WRITING_TEXT_TYPES.COMPLAINT, WRITING_TEXT_TYPES.APPLICATION]);
   if (formalFamily.has(expected) && formalFamily.has(detected)) return true;
   const informalFamily = new Set([WRITING_TEXT_TYPES.INFORMAL_EMAIL, WRITING_TEXT_TYPES.INVITATION, WRITING_TEXT_TYPES.MESSAGE]);
