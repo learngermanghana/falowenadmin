@@ -87,7 +87,7 @@ test("every C2 lesson keeps the text-first Presenter 2.0 teaching standard", () 
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    ["intro","warmup","phrases","grammar","examples","practice","workbook","mistakes","questions","wrapup","grammar-check"]
+    ["intro","warmup","knowledge","phrases","grammar","examples","practice","workbook","mistakes","questions","wrapup","grammar-check"]
       .forEach((stageId) => assert.ok(stageIds.includes(stageId), slide.assignmentId + " missing " + stageId));
 
     const grammar = stages.find((stage) => stage.id === "grammar");
