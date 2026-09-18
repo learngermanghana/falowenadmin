@@ -1,5 +1,6 @@
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
+import { getA1CanonicalTeachingDay } from "../src/data/a1CanonicalTeachingDays.js";
 
 const LEVEL = "A1";
 const REQUIRED_CORE_STAGES = [
@@ -32,6 +33,22 @@ for (const slide of slides) {
   }
   if (!normalize(slide.objective)) {
     findings.push({ severity: "error", id: slide.assignmentId, message: "missing lesson objective" });
+  }
+
+  const expectedDay = getA1CanonicalTeachingDay(slide.assignmentId);
+  if (Number.isInteger(expectedDay) && Number(slide.dayNumber) !== expectedDay) {
+    findings.push({
+      severity: "error",
+      id: slide.assignmentId,
+      message: "teacher slide day " + slide.dayNumber + " does not match canonical Course Book day " + expectedDay,
+    });
+  }
+  if (Number.isInteger(expectedDay) && normalize(slide.day) !== "Day " + expectedDay) {
+    findings.push({
+      severity: "error",
+      id: slide.assignmentId,
+      message: "teacher slide label '" + normalize(slide.day) + "' does not match Day " + expectedDay,
+    });
   }
   if (!tutorial) {
     for (const stageId of REQUIRED_CORE_STAGES) {
