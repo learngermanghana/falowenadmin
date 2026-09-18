@@ -46,32 +46,22 @@ Request body:
 Authentication header:
 
 ```
-X-Falowen-Completion-Secret: <private shared secret>
+X-Falowen-Announcement-Token: <existing announcement webhook token>
 ```
 
 Response: `application/pdf`.
 
 ## Configuration
 
-Set the same private secret in both systems.
+**No new completion-document secret is required.**
 
-Firebase runtime configuration:
+The endpoint reuses the Announcement webhook token Falowen already uses for the working Announcement integration. It resolves the existing server-side `ANNOUNCEMENT_WEBHOOK_TOKEN`, `communication.announcement_webhook_token`, or legacy `communication.webhook_token`.
 
-```json
-{
-  "communication": {
-    "completion_document_secret": "<at least 24 random characters>"
-  }
-}
-```
+The bound Announcement Apps Script already stores the same token in Script Properties as `ANNOUNCEMENT_WEBHOOK_TOKEN` through:
 
-The repository already loads this from `CLOUD_RUNTIME_CONFIG`. In production, update the existing `FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG` GitHub secret with the new communication value.
+`Falowen Announcements → Setup: Save Webhook Token`
 
-In the bound Announcement spreadsheet, run:
-
-`Falowen Announcements → Setup: Save Completion Document Secret`
-
-The Apps Script stores it in Script Properties as `COMPLETION_DOCUMENT_SECRET`.
+The completion PDF helper calls the existing `getWebhookToken_()`, so there is no second setup menu item and no additional Firebase runtime value to create.
 
 ## Failure behavior
 
