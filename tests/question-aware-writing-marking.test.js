@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { compareExaminerResults } from "../src/utils/markingIntelligence.js";
+import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpecs } from "../src/data/a2WritingTaskSpecs.js";
 import {
   applyQuestionAwareWritingGuard,
   enrichOptionsWithQuestionAwareWritingTask,
@@ -310,9 +311,9 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   }, enriched, victoriaA2Day1);
 
   assert.equal(result.ai.questionAwareWritingTask.register, "informal");
-  assert.equal(result.writingScore, 70);
-  assert.equal(result.writingScorePercent, 70);
-  assert.equal(result.finalScore, 83);
+  assert.equal(result.writingScore, 60);
+  assert.equal(result.writingScorePercent, 60);
+  assert.equal(result.finalScore, 78);
   assert.equal(Object.prototype.hasOwnProperty.call(result.ai, "suspiciousWritingZero"), false);
   assert.deepEqual(findUndefinedPaths(result), []);
   assert.equal(result.ai.questionAwareWritingGuard.suspiciousWritingZero, true);
@@ -321,6 +322,11 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
   assert.equal(result.taskCompletion.completed, 3);
   assert.equal(result.taskCompletion.total, 5);
+  assert.equal(result.markingRubricVersion, A2_WRITING_RUBRIC_VERSION);
+  assert.equal(result.taskPointEvidence.length, 5);
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "met", "missing", "met", "missing"]);
+  assert.equal(result.writingDimensions.taskFulfilment, 60);
+  assert.equal(result.writingDimensions.registerAndTextType, 60);
   assert.deepEqual(result.missingTaskPoints, [
     "Tell Felix something new about your family",
     "At the end ask Felix a relevant personal question about how he is or what is new with him",
@@ -334,7 +340,7 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.match(result.feedback, /relevant personal question/i);
   assert.match(result.feedback, /Könnten Sie mir helfen/);
   assert.match(result.feedback, /Ich freue mich auf deine Antwort/);
-  assert.match(result.feedback, /capped at 70%/i);
+  assert.match(result.feedback, /capped at 60%/i);
   assert.doesNotMatch(result.feedback, /requested formal register/i);
 });
 
@@ -380,6 +386,10 @@ test("A2-1.1 accepts a relevant personal final question but does not require the
   assert.equal(result.writingScore, 86);
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
   assert.equal(result.ai.questionAwareWritingTask.taskPoints.length, 5);
+  assert.equal(result.taskCompletion.completed, 5);
+  assert.equal(result.taskCompletion.total, 5);
+  assert.equal(result.taskPointEvidence.every((item) => item.status === "met"), true);
+  assert.equal(result.markingRubricVersion, A2_WRITING_RUBRIC_VERSION);
 });
 
 test("A2-1.1 does not count a generic help question as the required final question to Felix", () => {
@@ -409,4 +419,40 @@ test("A2-1.1 does not count a generic help question as the required final questi
   assert.equal(result.missingTaskPoints.includes("Tell Felix something new about your family"), true);
   assert.equal(result.missingTaskPoints.some((item) => /relevant personal question/i.test(item)), true);
   assert.match(result.feedback, /does not answer the Felix task/i);
+});
+
+
+test("all 28 A2 writing assignments have canonical semantic specs", () => {
+  const specs = getA2WritingTaskSpecs();
+  assert.equal(specs.length, 28);
+  assert.equal(new Set(specs.map((spec) => spec.assignmentKey)).size, 28);
+  for (const spec of specs) {
+    assert.match(spec.assignmentKey, /^A2-\d+\.\d+$/);
+    assert.ok(spec.taskText.length >= 10, spec.assignmentKey + " needs task text");
+    assert.ok(["formal", "informal", "neutral"].includes(spec.register), spec.assignmentKey + " needs register");
+    assert.ok(spec.taskPoints.length >= 3, spec.assignmentKey + " needs communicative points");
+    assert.equal(spec.rubricVersion, A2_WRITING_RUBRIC_VERSION);
+  }
+});
+
+test("canonical A2 spec overrides stale registry metadata beyond Day 1", () => {
+  const task = resolveQuestionAwareWritingTask({
+    referenceEntry: {
+      assignmentKey: "A2-7.20",
+      level: "A2",
+      questionAwareWritingTask: {
+        assignmentKey: "A2-7.20",
+        level: "A2",
+        textType: "informal_email",
+        register: "informal",
+        taskText: "Old generic writing task",
+        taskPoints: ["Write something"],
+      },
+    },
+    submission: { assignmentKey: "A2-7.20", level: "A2" },
+  });
+  assert.equal(task.textType, "complaint");
+  assert.equal(task.register, "formal");
+  assert.equal(task.taskPoints.length, 3);
+  assert.match(task.taskText, /defective|unacceptable product/i);
 });
