@@ -389,8 +389,13 @@ async function buildCompletionReport({ db, input = {} }) {
     throw error;
   }
 
-  const completionDate = asDate(input.completionDate || input.completion_date) || new Date();
-  const sessions = (await loadClassSessions(db, klass)).filter((session) => {
+  const allSessions = await loadClassSessions(db, klass);
+  const lastOfficialSessionEnd = allSessions.map(sessionEnd).filter(Boolean).sort((a, b) => b - a)[0] || null;
+  const completionDate = asDate(input.completionDate || input.completion_date)
+    || asDate(klass.endDate || klass.endsAt || klass.graduationDate || klass.contractEnd)
+    || lastOfficialSessionEnd
+    || new Date();
+  const sessions = allSessions.filter((session) => {
     const start = sessionStart(session);
     return !start || start.getTime() <= completionDate.getTime() + 24 * 60 * 60 * 1000;
   });
