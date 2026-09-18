@@ -80,10 +80,6 @@ function canUseBccFallback(input = {}) {
   return true;
 }
 
-function isLikelyNetworkError(error) {
-  return error instanceof TypeError || /networkerror|failed to fetch/i.test(String(error?.message || ""));
-}
-
 function isClassCancellation(input = {}) {
   const topic = normalize(input.topic).toLowerCase();
   const action = normalize(input.liveClassAction || input.action).toLowerCase();
