@@ -16,6 +16,7 @@ import {
   readPublishedStudentCode,
   readPublishedStudentName,
 } from "./publishedSheetService.js";
+import { dispatchIntegrationEvent } from "./integrationEventService.js";
 
 const DEFAULT_ROSTER_SHEET_CSV_URL = import.meta.env.VITE_STUDENTS_SHEET_CSV_URL || "";
 const MARKING_ROSTER_CSV_URL = import.meta.env.VITE_MARKING_ROSTER_CSV_URL || DEFAULT_ROSTER_SHEET_CSV_URL;
@@ -733,28 +734,7 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
   return { ...result, scoreSaveReceipt: receipt };
 }
 
-const DEFAULT_SCORES_WEBHOOK_URL =
-  "https://script.google.com/macros/s/AKfycbxYrtdvehwxI56zBHDv_1ngJMzNGkPEefT9lgp3KlFczRlSTStcwhQPDzc02jXVjdvJJQ/exec";
-const SCORES_WEBHOOK_URL = import.meta.env.VITE_SCORES_WEBHOOK_URL || DEFAULT_SCORES_WEBHOOK_URL;
-const SCORES_WEBHOOK_TOKEN = String(import.meta.env.VITE_SCORES_WEBHOOK_TOKEN || "Xenomexpress7727/").trim();
-const SCORES_WEBHOOK_SHEET_NAME = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_NAME || "").trim();
-const SCORES_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_GID || "2121051612").trim();
 const SAVE_SCORES_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_SCORE_FIRESTORE || "true").toLowerCase() !== "false";
-
-function isLikelyNetworkError(error) {
-  return error instanceof TypeError || /networkerror|failed to fetch/i.test(String(error?.message || ""));
-}
-
-async function postScoreToWebhook(payload) {
-  const res = await fetch(SCORES_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-  if (!res.ok) throw new Error(await res.text() || "Failed to write score to Google Sheets webhook");
-  const responseBody = await res.json().catch(() => ({}));
-  if (responseBody?.ok === false) throw new Error(responseBody?.error || "Validation failed while saving to sheet");
-}
-
-async function postScoreToWebhookNoCors(payload) {
-  await fetch(SCORES_WEBHOOK_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify(payload) });
-}
 
 function serializeForSheet(value) {
   if (value === null || value === undefined) return "";
@@ -928,40 +908,27 @@ export async function syncFirestoreScoresToSheet(scores = []) {
 
   if (!rows.length) return { rows: [], sheet: { attempted: false, success: true, message: "No selected scores to sync." } };
 
-  const webhookPayload = {
-    ...(SCORES_WEBHOOK_TOKEN ? { token: SCORES_WEBHOOK_TOKEN } : {}),
-    ...(SCORES_WEBHOOK_SHEET_NAME ? { sheet_name: SCORES_WEBHOOK_SHEET_NAME } : {}),
-    ...(SCORES_WEBHOOK_SHEET_GID ? { sheet_gid: SCORES_WEBHOOK_SHEET_GID } : {}),
-    metadata_columns: ["attempt", "status", "is_resubmission", "previous_score", "previous_result", "resubmitted_at"],
-    create_missing_columns: true,
-    rows,
-  };
-
   const receipt = {
     rows,
-    sheet: { attempted: Boolean(SCORES_WEBHOOK_URL), success: !SCORES_WEBHOOK_URL, message: SCORES_WEBHOOK_URL ? "Pending" : "Sheet save skipped (webhook not configured)." },
+    sheet: { attempted: true, success: false, message: "Pending integration dispatch." },
   };
 
-  if (SCORES_WEBHOOK_URL) {
-    try {
-      await postScoreToWebhook(webhookPayload);
-      receipt.sheet.success = true;
-      receipt.sheet.message = `Synced ${rows.length} selected score rows to Google Sheets.`;
-    } catch (error) {
-      if (!isLikelyNetworkError(error)) {
-        receipt.sheet.success = false;
-        receipt.sheet.message = String(error?.message || "Google Sheets bulk sync failed.");
-      } else {
-        try {
-          await postScoreToWebhookNoCors(webhookPayload);
-          receipt.sheet.success = true;
-          receipt.sheet.message = `Bulk sheet request sent via no-cors fallback for ${rows.length} selected score rows.`;
-        } catch (fallbackError) {
-          receipt.sheet.success = false;
-          receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets bulk sync failed.");
-        }
-      }
-    }
+  try {
+    const integration = await dispatchIntegrationEvent({
+      type: "score.upsert",
+      rows,
+      metadata: { source: "firestore_sheet_bulk_override" },
+    });
+    const upstream = integration.receipt || {};
+    const inserted = Number(upstream.inserted || 0);
+    const updated = Number(upstream.updated || 0);
+    const duplicatesRemoved = Number(upstream.duplicatesRemoved || upstream.duplicates_removed || 0);
+    receipt.sheet.success = true;
+    receipt.sheet.integrationEventId = integration.event?.id || "";
+    receipt.sheet.message = `Sheet updated: ${updated} replaced, ${inserted} added, ${duplicatesRemoved} older duplicate${duplicatesRemoved === 1 ? "" : "s"} removed.`;
+  } catch (error) {
+    receipt.sheet.success = false;
+    receipt.sheet.message = String(error?.message || "Google Sheets bulk sync failed.");
   }
 
   if (!receipt.sheet.success) throw new Error(receipt.sheet.message);
@@ -1021,47 +988,32 @@ export async function saveScoreRow({
     : shouldSkipExistingScore(existingScore, row.score, allowDuplicate);
   const sheetDedupeId = forceSheetDedupeId ? dedupeId : (attemptMetadata.is_resubmission ? `${dedupeId}__attempt_${attemptMetadata.attempt}` : dedupeId);
 
-  const webhookPayload = {
-    ...(SCORES_WEBHOOK_TOKEN ? { token: SCORES_WEBHOOK_TOKEN } : {}),
-    ...(SCORES_WEBHOOK_SHEET_NAME ? { sheet_name: SCORES_WEBHOOK_SHEET_NAME } : {}),
-    ...(SCORES_WEBHOOK_SHEET_GID ? { sheet_gid: SCORES_WEBHOOK_SHEET_GID } : {}),
-    dedupe_id: sheetDedupeId,
-    metadata_columns: ["attempt", "status", "is_resubmission", "previous_score", "previous_result", "resubmitted_at"],
-    create_missing_columns: true,
-    row: { ...row, dedupe_id: sheetDedupeId },
-    rows: [{ ...row, dedupe_id: sheetDedupeId }],
-  };
-
+  const sheetRow = { ...row, dedupe_id: sheetDedupeId };
   const receipt = {
     row,
     dedupeId,
     duplicateSkipped,
-    sheet: { attempted: Boolean(SCORES_WEBHOOK_URL), success: !SCORES_WEBHOOK_URL, message: SCORES_WEBHOOK_URL ? "Pending" : "Sheet save skipped (webhook not configured)." },
+    sheet: { attempted: !duplicateSkipped, success: Boolean(duplicateSkipped), message: duplicateSkipped ? "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different." : "Pending integration dispatch." },
     firestore: { attempted: SAVE_SCORES_TO_FIRESTORE, success: !SAVE_SCORES_TO_FIRESTORE, message: SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config)." },
   };
 
-  if (duplicateSkipped) {
-    receipt.sheet.success = true;
-    receipt.sheet.message = "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different.";
-  } else if (SCORES_WEBHOOK_URL) {
+  if (!duplicateSkipped) {
     try {
-      await postScoreToWebhook(webhookPayload);
+      const integration = await dispatchIntegrationEvent({
+        type: "score.upsert",
+        rows: [sheetRow],
+        metadata: {
+          source,
+          studentCode: row.studentCode || row.studentcode || "",
+          assignmentId: row.assignment_id || row.assignmentId || "",
+        },
+      });
       receipt.sheet.success = true;
-      receipt.sheet.message = "Saved to Google Sheets with detailed marking fields.";
+      receipt.sheet.integrationEventId = integration.event?.id || "";
+      receipt.sheet.message = "Saved to Google Sheets through the Falowen integration hub.";
     } catch (error) {
-      if (!isLikelyNetworkError(error)) {
-        receipt.sheet.success = false;
-        receipt.sheet.message = String(error?.message || "Google Sheets save failed.");
-      } else {
-        try {
-          await postScoreToWebhookNoCors(webhookPayload);
-          receipt.sheet.success = true;
-          receipt.sheet.message = "Sheet request sent via no-cors fallback with detailed marking fields.";
-        } catch (fallbackError) {
-          receipt.sheet.success = false;
-          receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
-        }
-      }
+      receipt.sheet.success = false;
+      receipt.sheet.message = String(error?.message || "Google Sheets save failed.");
     }
   }
 
