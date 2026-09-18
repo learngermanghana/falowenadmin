@@ -7,6 +7,7 @@ import {
   resolveQuestionAwareWritingTask,
 } from "../src/utils/questionAwareWritingMarking.js";
 import { B1_WRITING_RUBRIC_VERSION, getB1WritingTaskSpecs } from "../src/data/b1WritingTaskSpecs.js";
+import { evaluateB1WritingTaskEvidence } from "../src/utils/b1WritingTaskEvidence.js";
 
 const completeFriendship = `Teil 2
 Liebe Anna,
@@ -33,6 +34,14 @@ test("all 28 B1 writing assignments have canonical semantic specs", () => {
     assert.ok(["formal", "informal", "neutral"].includes(spec.register), spec.assignmentKey + " needs register");
     assert.ok(spec.taskPoints.length >= 3, spec.assignmentKey + " needs communicative points");
     assert.equal(spec.rubricVersion, B1_WRITING_RUBRIC_VERSION);
+  }
+});
+
+test("every canonical B1 task point has a deterministic evidence rule", () => {
+  for (const spec of getB1WritingTaskSpecs()) {
+    const evidence = evaluateB1WritingTaskEvidence(spec, "");
+    assert.equal(evidence.length, spec.taskPoints.length, spec.assignmentKey + " evidence length");
+    assert.equal(evidence.some((item) => item.status === "review"), false, spec.assignmentKey + " has an unconfigured point");
   }
 });
 
