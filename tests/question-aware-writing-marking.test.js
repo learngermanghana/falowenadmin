@@ -258,7 +258,7 @@ test("A2-1.1 keeps the authoritative informal Felix-letter register even if cach
   assert.doesNotMatch(task.gradingInstruction, /Expected register: formal/i);
 });
 
-test("Victoria A2-1.1 complete letter flags an upstream zero as suspicious instead of treating zero as trustworthy", () => {
+test("Victoria A2-1.1 recovers an impossible zero before applying the informal-register cap", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
     referenceEntry: {
       assignmentKey: "A2-1.1",
@@ -296,11 +296,25 @@ test("Victoria A2-1.1 complete letter flags an upstream zero as suspicious inste
   }, enriched, victoriaA2Day1);
 
   assert.equal(result.ai.questionAwareWritingTask.register, "informal");
-  assert.equal(result.ai.suspiciousWritingZero, true);
+  assert.equal(result.writingScore, 70);
+  assert.equal(result.writingScorePercent, 70);
+  assert.equal(result.finalScore, 83);
+  assert.equal(result.ai.suspiciousWritingZero, undefined);
   assert.equal(result.ai.questionAwareWritingGuard.suspiciousWritingZero, true);
+  assert.equal(result.ai.questionAwareWritingGuard.recoveredWritingScore > 0, true);
+  assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, false);
   assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
   assert.equal(result.status, "needs_review");
   assert.equal(result.shouldSendAutomatically, false);
   assert.match(result.feedback, /requested informal register/i);
+  assert.match(result.feedback, /capped at 70%/i);
   assert.doesNotMatch(result.feedback, /requested formal register/i);
+});
+
+
+test("formal and informal email are the same correspondence genre; register is evaluated separately", async () => {
+  const { writingTextTypesCompatible } = await import("../src/utils/writingTaskSchema.js");
+  assert.equal(writingTextTypesCompatible("informal_email", "formal_email"), true);
+  assert.equal(writingTextTypesCompatible("formal_email", "informal_email"), true);
+  assert.equal(writingTextTypesCompatible("informal_email", "opinion_essay"), false);
 });
