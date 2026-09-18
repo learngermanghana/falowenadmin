@@ -1,5 +1,5 @@
 import { collection, getDocs } from "firebase/firestore";
-import { auth, db } from "../firebase.js";
+import { db } from "../firebase.js";
 import answersDictionary from "../data/answers_dictionary.json";
 import {
   assertScoreUpsertReceipt,
