@@ -56,6 +56,27 @@ test("registration lifecycle dispatch requires a student identity", () => {
   assert.throws(() => validateRegistrationRows([{ name: "Student" }]), /student code or email/i);
 });
 
+test("registration integration hub defaults to the deployed Registration Docs URL", () => {
+  const previousUrl = process.env.REGISTRATION_DOCS_WEBHOOK_URL;
+  const previousRegistrationToken = process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN;
+  const previousAnnouncementToken = process.env.ANNOUNCEMENT_WEBHOOK_TOKEN;
+  try {
+    delete process.env.REGISTRATION_DOCS_WEBHOOK_URL;
+    delete process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN;
+    process.env.ANNOUNCEMENT_WEBHOOK_TOKEN = "existing-announcement-secret";
+    const config = registrationConfig();
+    assert.equal(config.url, "https://script.google.com/macros/s/AKfycbxWsVmzNdDMXtUd0CwChFXR_Iy6lbb7oVVt8ao_6_8oYYFI9Te9Y7pD0FgIJTjAozYOQg/exec");
+    assert.equal(config.token, "existing-announcement-secret");
+  } finally {
+    if (previousUrl === undefined) delete process.env.REGISTRATION_DOCS_WEBHOOK_URL;
+    else process.env.REGISTRATION_DOCS_WEBHOOK_URL = previousUrl;
+    if (previousRegistrationToken === undefined) delete process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN;
+    else process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN = previousRegistrationToken;
+    if (previousAnnouncementToken === undefined) delete process.env.ANNOUNCEMENT_WEBHOOK_TOKEN;
+    else process.env.ANNOUNCEMENT_WEBHOOK_TOKEN = previousAnnouncementToken;
+  }
+});
+
 test("registration document worker reuses the Announcement token", () => {
   const previousUrl = process.env.REGISTRATION_DOCS_WEBHOOK_URL;
   const previousRegistrationToken = process.env.REGISTRATION_DOCS_WEBHOOK_TOKEN;
