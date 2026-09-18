@@ -85,6 +85,8 @@ jobs:
           node --check functions/classSessionAutoCheckin.js
           node --check functions/autoCompleteClassSessions.js
           node --check functions/attendanceConfirmationEmails.js
+          node --check functions/completionParticipationDocument.js
+          node --test tests/completion-participation-document.test.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
           node --test tests/pending-student-cleanup.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
