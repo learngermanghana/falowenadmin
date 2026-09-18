@@ -12,6 +12,32 @@ import {
 
 const clean = (value = "") => String(value || "").replace(/\s+/g, " ").trim();
 
+const AUTHORITATIVE_WRITING_OVERRIDES = Object.freeze({
+  "A2-1.1": {
+    textType: "informal_email",
+    register: "informal",
+    recipient: "friend_or_personal_contact",
+  },
+});
+
+function applyAuthoritativeWritingOverride(task = {}) {
+  const assignmentKey = normalizeAssignmentKey(task.assignmentKey || "");
+  const override = AUTHORITATIVE_WRITING_OVERRIDES[assignmentKey];
+  if (!override) return task;
+  const next = { ...task, ...override };
+  return {
+    ...next,
+    gradingInstruction: [
+      "Grade the " + next.level + " writing against this exact assignment task, not merely against the general topic: " + next.taskText,
+      "Check every required communicative point separately and return taskCompletion plus missingTaskPoints.",
+      "Expected text type: " + next.textType + ". Expected register: " + next.register + ".",
+      "A greeting and closing alone do not make an essay-style body a correct email or letter.",
+      "Topic relevance, fluent grammar, connectors, length, or vocabulary cannot compensate for missing required task points.",
+      "Never award 100% writing when a required task point is missing or the requested text type/register is materially wrong.",
+    ].join(" "),
+  };
+}
+
 function normalizeAssignmentKey(value = "") {
   const source = clean(value).toUpperCase();
   const match = source.match(/\b(A2|B1)-\d+(?:\.\d+)?\b/);
@@ -50,14 +76,14 @@ function b1FriendshipTaskPoints() {
 
 export function resolveQuestionAwareWritingTask(options = {}) {
   const existing = options.referenceEntry?.questionAwareWritingTask || options.submission?.questionAwareWritingTask;
-  if (existing?.assignmentKey) return existing;
+  if (existing?.assignmentKey) return applyAuthoritativeWritingOverride(existing);
 
   const assignmentKey = assignmentKeyFromOptions(options);
   const level = levelFromOptions(options, assignmentKey);
   if (!assignmentKey || !["A2", "B1"].includes(level)) return null;
 
   const publishedTask = toQuestionAwareWritingTask(getCachedAssignmentRegistryEntry(assignmentKey) || {});
-  if (publishedTask) return publishedTask;
+  if (publishedTask) return applyAuthoritativeWritingOverride(publishedTask);
 
   const slide = getTeachingSlideByAssignmentId(assignmentKey);
   const writingPart = writingPartFromSlide(slide || {});
@@ -68,7 +94,7 @@ export function resolveQuestionAwareWritingTask(options = {}) {
   const textType = inferExpectedWritingTextType(taskText, slide || {}, register);
   const taskPoints = assignmentKey === "B1-1.2" ? b1FriendshipTaskPoints() : extractWritingTaskPoints(taskText);
 
-  return {
+  return applyAuthoritativeWritingOverride({
     assignmentKey,
     level,
     title: clean(slide?.title || options.referenceEntry?.title || options.submission?.assignment || assignmentKey),
@@ -85,7 +111,7 @@ export function resolveQuestionAwareWritingTask(options = {}) {
       "Topic relevance, fluent grammar, connectors, length, or vocabulary cannot compensate for missing required task points.",
       "Never award 100% writing when a required task point is missing or the requested text type/register is materially wrong.",
     ].join(" "),
-  };
+  });
 }
 
 export function enrichOptionsWithQuestionAwareWritingTask(options = {}) {
@@ -256,6 +282,11 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const genreMismatch = classifierMismatch || legacyEssayMismatch;
   const wrongRegister = registerMismatch(task, source);
   const hasGuardIssue = missingTaskPoints.length > 0 || genreMismatch || wrongRegister;
+  const wordCount = source.split(/\s+/).filter(Boolean).length;
+  const suspiciousZeroWriting = currentWritingScore === 0
+    && wordCount >= 20
+    && missingTaskPoints.length === 0
+    && !legacyEssayMismatch;
 
   if (!hasGuardIssue) {
     const calibratedWritingScore = calibratedCompleteWritingScore({
@@ -270,7 +301,9 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     if (calibratedWritingScore === currentWritingScore) {
       return {
         ...result,
-        ai: { ...(result.ai || {}), questionAwareWritingTask: task, detectedWritingTextType: detectedTextType },
+        status: suspiciousZeroWriting ? "needs_review" : result.status,
+        shouldSendAutomatically: suspiciousZeroWriting ? false : result.shouldSendAutomatically,
+        ai: { ...(result.ai || {}), questionAwareWritingTask: task, detectedWritingTextType: detectedTextType, suspiciousWritingZero: suspiciousZeroWriting || undefined },
       };
     }
 
@@ -336,10 +369,12 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     shouldSendAutomatically: false,
     ai: {
       ...(result.ai || {}),
+      suspiciousWritingZero: suspiciousZeroWriting || undefined,
       questionAwareWritingTask: task,
       detectedWritingTextType: detectedTextType,
       questionAwareWritingGuard: {
         applied: true,
+        suspiciousWritingZero: suspiciousZeroWriting,
         originalWritingScore: currentWritingScore,
         guardedWritingScore,
         genreMismatch,

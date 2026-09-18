@@ -206,3 +206,101 @@ test("a close second examiner at 0.68 confidence does not force tutor review by 
   assert.equal(comparison.requiresTutorReview, false);
   assert.equal(comparison.agreement, "high");
 });
+
+const victoriaA2Day1 = `Teil 2
+Sehr geehrter Herr Felix,
+Ich schreibe Ihnen, weil ich über meine Arbeiten und Schule sprechen möchte.
+Die Schule ist sehr schön und interessant. Ich habe viele Leute aus meinem Land kennengelernt.
+Ich arbeite bei Cleanwerk, es ist sehr stressig.Könnten Sie mir helfen?
+Viele Grüße
+Victoria
+
+Teil 3
+1. C
+2. B
+3. A
+4. A
+5. B
+6. B
+7. C
+
+Teil 4
+1. B
+2. A
+3. A
+4. B
+5. C`;
+
+test("A2-1.1 keeps the authoritative informal Felix-letter register even if cached registry metadata says formal", () => {
+  const staleFormalTask = {
+    assignmentKey: "A2-1.1",
+    level: "A2",
+    title: "Small Talk",
+    taskText: "Write to Felix about work and family.",
+    textType: "formal_email",
+    register: "formal",
+    recipient: "formal_recipient",
+    taskPoints: ["Explain why you are writing", "Write about work and school/family", "Ask Felix a question"],
+    source: "assignmentRegistry",
+    gradingInstruction: "Expected register: formal.",
+  };
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.1", level: "A2", questionAwareWritingTask: staleFormalTask },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: victoriaA2Day1,
+  });
+
+  const task = enriched.referenceEntry.questionAwareWritingTask;
+  assert.equal(task.register, "informal");
+  assert.equal(task.textType, "informal_email");
+  assert.equal(task.recipient, "friend_or_personal_contact");
+  assert.match(task.gradingInstruction, /Expected register: informal/i);
+  assert.doesNotMatch(task.gradingInstruction, /Expected register: formal/i);
+});
+
+test("Victoria A2-1.1 complete letter flags an upstream zero as suspicious instead of treating zero as trustworthy", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: {
+      assignmentKey: "A2-1.1",
+      level: "A2",
+      questionAwareWritingTask: {
+        assignmentKey: "A2-1.1",
+        level: "A2",
+        title: "Small Talk",
+        taskText: "Informal letter to Felix about work and family.",
+        textType: "formal_email",
+        register: "formal",
+        recipient: "formal_recipient",
+        taskPoints: ["Explain why you are writing", "Write about work and school/family", "Ask Felix a question"],
+      },
+    },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: victoriaA2Day1,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.1",
+    objectiveScore: 92,
+    objectiveCorrect: 11,
+    objectiveTotal: 12,
+    writingScore: 0,
+    writingScorePercent: 0,
+    finalScore: 55,
+    score: 55,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You addressed all 3 task points.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, victoriaA2Day1);
+
+  assert.equal(result.ai.questionAwareWritingTask.register, "informal");
+  assert.equal(result.ai.suspiciousWritingZero, true);
+  assert.equal(result.ai.questionAwareWritingGuard.suspiciousWritingZero, true);
+  assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
+  assert.equal(result.status, "needs_review");
+  assert.equal(result.shouldSendAutomatically, false);
+  assert.match(result.feedback, /requested informal register/i);
+  assert.doesNotMatch(result.feedback, /requested formal register/i);
+});

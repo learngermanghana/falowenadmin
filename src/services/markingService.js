@@ -49,6 +49,23 @@ function scoreValueFromResult(result = {}) {
   return result.finalScore ?? result.score ?? null;
 }
 
+function writingScoreValueFromResult(result = {}) {
+  return normalizePercent(
+    result.writingScorePercent
+      ?? result.writingScore
+      ?? result.writing?.score
+      ?? result.ai?.writingScorePercent
+      ?? result.ai?.writingScore,
+  );
+}
+
+function hasSuspiciousZeroWriting(result = {}) {
+  return Boolean(result.ai?.suspiciousWritingZero)
+    || writingScoreValueFromResult(result) === 0
+      && Number(result.taskCompletion?.completed || 0) > 0
+      && Number(result.taskCompletion?.completed || 0) >= Number(result.taskCompletion?.total || 0);
+}
+
 function isBlockedScore(value) {
   if (value === "" || value === null || value === undefined) return true;
   const numeric = Number(value);
@@ -320,9 +337,10 @@ export async function markSubmissionWithAI(options = {}) {
     preparedOptions,
     originalSubmissionText,
   );
-  if (isBlockedScore(scoreValueFromResult(primary))) {
-    console.warn("AI marking returned a zero/invalid score. Retrying once before allowing any save.", {
+  if (isBlockedScore(scoreValueFromResult(primary)) || hasSuspiciousZeroWriting(primary)) {
+    console.warn("AI marking returned a zero/invalid final or writing score. Retrying once before allowing any save.", {
       score: scoreValueFromResult(primary),
+      writingScore: writingScoreValueFromResult(primary),
       assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
     });
     primary = applyQuestionAwareWritingGuard(
@@ -340,6 +358,22 @@ export async function markSubmissionWithAI(options = {}) {
 
   try {
     const secondary = await requestSecondExaminer(preparedOptions);
+    if (hasSuspiciousZeroWriting(primary) && !hasSuspiciousZeroWriting(secondary) && (writingScoreValueFromResult(secondary) || 0) > 0) {
+      const recovered = mergeSecondExaminer({
+        ...secondary,
+        status: "needs_review",
+        shouldSendAutomatically: false,
+        ai: {
+          ...(secondary.ai || {}),
+          recoveredFromSuspiciousPrimaryWritingZero: true,
+        },
+      }, primary);
+      return withResubmissionComparison({
+        ...recovered,
+        status: "needs_review",
+        shouldSendAutomatically: false,
+      }, options.submission);
+    }
     return withResubmissionComparison(mergeSecondExaminer(primary, secondary), options.submission);
   } catch (error) {
     console.warn("Second examiner unavailable; routing writing submission to tutor review.", {
