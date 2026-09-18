@@ -30,5 +30,8 @@ jobs:
         with:
           node-version: 22
 
+      - name: Prepare production teaching slides
+        run: node scripts/patchB2C1SpeakingModels.mjs
+
       - name: Audit A1 teacher materials
         run: node scripts/auditTeachingMaterialQuality.mjs
