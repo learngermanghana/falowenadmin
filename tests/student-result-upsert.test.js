@@ -115,14 +115,14 @@ test("browser sends result updates only through the authenticated integration hu
   const utilitySource = read("src/utils/studentResultUpsert.js");
 
   assert.match(serviceSource, /dispatchIntegrationEvent/);
-  assert.match(integrationSource, /INTEGRATION_DISPATCH_URL = "\\/api\\/integrations\\/dispatch"/);
-  assert.match(integrationSource, /currentUser\\.getIdToken\\(\\)/);
+  assert.ok(integrationSource.includes('INTEGRATION_DISPATCH_URL = "/api/integrations/dispatch"'));
+  assert.ok(integrationSource.includes("currentUser.getIdToken()"));
   assert.match(integrationSource, /Authorization/);
   assert.match(integrationSource, /Bearer/);
   assert.match(serviceSource, /assertScoreUpsertReceipt/);
   assert.match(serviceSource, /repairAssignmentTitle/);
   assert.match(serviceSource, /answersDictionary/);
-  assert.match(utilitySource, /action:\\s*"upsertScoreRows"/);
+  assert.match(utilitySource, /action:\s*"upsertScoreRows"/);
   assert.match(utilitySource, /isInvalidAssignmentTitle/);
   assert.doesNotMatch(serviceSource, /VITE_SCORES_WEBHOOK_URL/);
   assert.doesNotMatch(serviceSource, /VITE_SCORES_WEBHOOK_TOKEN/);
@@ -134,19 +134,19 @@ test("same-origin score compatibility API is admin-only and keeps webhook settin
   const apiSource = read("api/student-results-sheet-upsert.js");
   const routerSource = read("api/router.js");
 
-  assert.match(apiSource, /accounts:lookup\\?key=/);
-  assert.match(apiSource, /JSON\\.stringify\\(\\{ idToken \\}\\)/);
+  assert.ok(apiSource.includes("accounts:lookup?key="));
+  assert.ok(apiSource.includes("JSON.stringify({ idToken })"));
   assert.match(apiSource, /SCORES_WEBHOOK_URL/);
   assert.match(apiSource, /SCORES_WEBHOOK_TOKEN/);
-  assert.match(apiSource, /adminEmails\\(\\)\\.has\\(email\\)/);
+  assert.ok(apiSource.includes("adminEmails().has(email)"));
   assert.match(apiSource, /Administrator access is required/);
   assert.match(apiSource, /action: "upsertScoreRows"/);
   assert.match(apiSource, /remove_duplicate_rows: true/);
   assert.match(apiSource, /verifiedUpsertReceipt/);
-  assert.match(apiSource, /"Content-Type": "text\\/plain;charset=UTF-8"/);
-  assert.doesNotMatch(apiSource, /req\\.body\\.token|requestBody\\.token/);
+  assert.ok(apiSource.includes('"Content-Type": "text/plain;charset=UTF-8"'));
+  assert.doesNotMatch(apiSource, /req\.body\.token|requestBody\.token/);
   assert.match(routerSource, /studentResultsSheetUpsertHandler/);
-  assert.match(routerSource, /path === "student-results\\/sheet-upsert"/);
+  assert.ok(routerSource.includes('path === "student-results/sheet-upsert"'));
 });
 test("Apps Script updates matches and deletes older duplicate rows", () => {
   const source = read("docs/apps-script/score-results-upsert.gs");
