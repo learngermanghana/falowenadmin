@@ -5,6 +5,11 @@ on:
     paths:
       - 'functions/completionParticipationDocument.js'
       - 'functions/index.js'
+      - 'src/components/CompletionPackPanel.jsx'
+      - 'src/services/completionPackService.js'
+      - 'src/pages/StudentDirectoryPage.jsx'
+      - 'api/router.js'
+      - 'tests/completion-pack-admin-ui.test.js'
       - 'tests/completion-participation-document.test.js'
       - 'docs/completion-attendance-participation.md'
       - '.github/workflows/completion-participation-document-tests.yml'
@@ -14,6 +19,11 @@ on:
     paths:
       - 'functions/completionParticipationDocument.js'
       - 'functions/index.js'
+      - 'src/components/CompletionPackPanel.jsx'
+      - 'src/services/completionPackService.js'
+      - 'src/pages/StudentDirectoryPage.jsx'
+      - 'api/router.js'
+      - 'tests/completion-pack-admin-ui.test.js'
       - 'tests/completion-participation-document.test.js'
       - 'docs/completion-attendance-participation.md'
       - '.github/workflows/completion-participation-document-tests.yml'
@@ -34,4 +44,8 @@ jobs:
           node --check functions/completionParticipationDocument.js
           node --check functions/index.js
       - name: Run completion document regressions
-        run: node --test tests/completion-participation-document.test.js
+        run: node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
+      - name: Install dashboard dependencies
+        run: npm ci
+      - name: Build dashboard
+        run: npx vite build
