@@ -676,7 +676,7 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
   const now = new Date().toISOString();
   const identity = resolveStudentIdentity({ ...result, ...submission, raw: submission.raw });
   const safeId = safeFirestoreId(submission.id || submission.path || `${identity.studentCode || "student"}_${result.assignmentKey || "assignment"}_${now}`);
-  await setDoc(doc(db, "aiMarkingAudit", safeId), {
+  await setDoc(doc(db, "aiMarkingAudit", safeId), sanitizeFirestoreData({
     submissionId: submission.id || "",
     submissionPath: submission.path || "",
     ...identity,
@@ -706,9 +706,15 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
     scoreSaveReceipt: receipt,
     sheetSynced: Boolean(receipt?.sheet?.attempted && receipt?.sheet?.success && !receipt?.skippedForReview),
     reviewReason: reason,
+    markingRubricVersion: result.markingRubricVersion || "",
+    taskCompletion: result.taskCompletion ?? null,
+    missingTaskPoints: result.missingTaskPoints || [],
+    taskPointEvidence: result.taskPointEvidence || [],
+    writingDimensions: result.writingDimensions ?? null,
+    result,
     createdAt: now,
     updatedAt: now,
-  }, { merge: true });
+  }), { merge: true });
 }
 
 export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
