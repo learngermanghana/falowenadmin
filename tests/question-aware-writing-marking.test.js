@@ -164,7 +164,7 @@ test("a genuine informal email that answers all three points is not capped", () 
   assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
 });
 
-test("Reuben-style complete B1 email is not left in the mid-80s without concrete corrections", () => {
+test("Reuben-style complete B1 email keeps its evidence-based language score", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
     ...assignmentOptions,
     submissionText: reubenEmail,
@@ -187,12 +187,12 @@ test("Reuben-style complete B1 email is not left in the mid-80s without concrete
     confidence: 0.82,
   }, enriched, reubenEmail);
 
-  assert.equal(result.writingScore, 90);
-  assert.equal(result.writingScorePercent, 90);
-  assert.equal(result.finalScore, 96);
+  assert.equal(result.writingScore, 85);
+  assert.equal(result.writingScorePercent, 85);
+  assert.equal(result.finalScore, 94);
   assert.equal(result.status, "marked");
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
-  assert.equal(result.ai.questionAwareWritingCalibration.applied, true);
+  assert.equal(result.ai.questionAwareWritingCalibration, undefined);
   assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
 });
 
