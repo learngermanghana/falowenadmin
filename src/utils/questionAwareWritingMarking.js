@@ -18,6 +18,14 @@ const AUTHORITATIVE_WRITING_OVERRIDES = Object.freeze({
     textType: "informal_email",
     register: "informal",
     recipient: "friend_or_personal_contact",
+    taskText: "Schreibe Felix einen kurzen Brief über deine Arbeit und deine Familie. Schreibe, warum du Felix schreibst; erzähle etwas über deine Arbeit oder dein Studium; erzähle etwas Neues über deine Familie; verwende mindestens einen Grund mit weil oder denn; frage Felix am Ende, wie es ihm geht und was bei ihm neu ist.",
+    taskPoints: [
+      "Explain why you are writing to Felix",
+      "Write about your work or studies",
+      "Tell Felix something new about your family",
+      "Use at least one reason with weil or denn",
+      "At the end ask Felix a relevant personal question about how he is or what is new with him",
+    ],
   },
 });
 
@@ -148,6 +156,35 @@ function readStructuredTask(result = {}) {
   };
 }
 
+function a2Day1LocalMissing(source = "") {
+  const missing = [];
+  const hasReasonForWriting = /\bich\s+schreibe\s+(?:dir|ihnen|euch|felix)\b/i.test(source)
+    && /\b(?:weil|denn|nachricht|erzählen|mitteilen|berichten|schreiben\s+möchte|schreiben\s+will)\b/i.test(source);
+  const hasWorkOrStudy = /\b(?:ich\s+arbeite|arbeite\s+bei|meine?\s+arbeit|beruf|job|studier\w*|studium|schule|universit[aä]t|ausbildung)\b/i.test(source);
+  const hasFamilyNews = /\b(?:familie|eltern|mutter|vater|bruder|schwester|geschwister|sohn|tochter|kind(?:er)?|ehemann|ehefrau|hund|katze)\b/i.test(source);
+  const hasReasonConnector = /\b(?:weil|denn)\b/i.test(source);
+
+  const signoffIndex = source.search(/(?:^|\n)\s*(?:viele|liebe|herzliche|beste)\s+gr(?:ü|u)(?:ß|ss)e\b/i);
+  const body = signoffIndex >= 0 ? source.slice(0, signoffIndex) : source;
+  const tail = body.slice(Math.floor(body.length * 0.55));
+  const hasRelevantFinalQuestion = /\bwie\s+geht(?:\s+es|'?s)?\s+(?:dir|ihnen)\b|\bwas\s+(?:ist|gibt(?:\s+es)?)\s+(?:bei\s+(?:dir|ihnen)\s+)?(?:neu|neues)\b|\bund\s+(?:du|sie)\s*\?|\bwas\s+mach(?:st|en)\s+(?:du|sie)\b|\bwie\s+l[aä]uft(?:'s|\s+es)?\s+bei\s+(?:dir|ihnen)\b/i.test(tail);
+
+  if (!hasReasonForWriting) missing.push("Explain why you are writing to Felix");
+  if (!hasWorkOrStudy) missing.push("Write about your work or studies");
+  if (!hasFamilyNews) missing.push("Tell Felix something new about your family");
+  if (!hasReasonConnector) missing.push("Use at least one reason with weil or denn");
+  if (!hasRelevantFinalQuestion) missing.push("At the end ask Felix a relevant personal question about how he is or what is new with him");
+  return missing;
+}
+
+function a2Day1EndingAdvice(source = "") {
+  const genericHelp = source.match(/\bK[oö]nnten\s+Sie\s+mir\s+helfen\s*\?/i);
+  if (genericHelp) {
+    return `“${genericHelp[0]}” is grammatically possible, but it does not answer the Felix task: no help request is explained, and the question is not about how Felix is or what is new with him. Ask a relevant personal question instead, for example “Wie geht es dir? Was ist bei dir neu?” Then close naturally with “Ich freue mich auf deine Antwort.” or “Schreib mir bald.” before “Viele Grüße”.`;
+  }
+  return "";
+}
+
 function b1FriendshipLocalMissing(source = "") {
   const missing = [];
   const hasMeetingStory = /\bkennengelernt\b/i.test(source)
@@ -273,7 +310,11 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "");
   const structured = readStructuredTask(result);
-  const localMissing = task.assignmentKey === "B1-1.2" ? b1FriendshipLocalMissing(source) : [];
+  const localMissing = task.assignmentKey === "B1-1.2"
+    ? b1FriendshipLocalMissing(source)
+    : task.assignmentKey === "A2-1.1"
+      ? a2Day1LocalMissing(source)
+      : [];
   const missingTaskPoints = [...new Set([...structured.missing, ...localMissing])];
   const total = Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
   const detectedTextType = detectWritingTextType(source);
@@ -286,7 +327,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const wordCount = source.split(/\s+/).filter(Boolean).length;
   const suspiciousZeroWriting = currentWritingScore === 0
     && wordCount >= 20
-    && missingTaskPoints.length === 0
+    && Math.max(0, total - missingTaskPoints.length) >= 1
     && !legacyEssayMismatch;
   const localRecoveredWritingScore = suspiciousZeroWriting
     ? numericPercent(heuristicWritingMarker({ level: task.level, partId: "teil2", text: source })?.score)
@@ -355,12 +396,16 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   const completed = Math.max(0, total - missingTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
+  const endingAdvice = task.assignmentKey === "A2-1.1" ? a2Day1EndingAdvice(source) : "";
   const issueText = [
     genreMismatch ? `detected ${detectedTextType.detectedType} instead of ${task.textType}` : "",
     wrongRegister ? `the register does not match the requested ${task.register} register` : "",
     missingTaskPoints.length ? `missing task points: ${missingTaskPoints.join("; ")}` : "",
   ].filter(Boolean).join("; ");
-  const guardFeedback = `Question-aware writing check: ${issueText}. The writing score is capped at ${guardedWritingScore}% because language quality cannot replace task fulfilment.`;
+  const guardFeedback = [
+    `Question-aware writing check: ${issueText}. The writing score is capped at ${guardedWritingScore}% because language quality cannot replace task fulfilment.`,
+    endingAdvice,
+  ].filter(Boolean).join(" ");
 
   return {
     ...result,
@@ -393,6 +438,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         genreMismatch,
         registerMismatch: wrongRegister,
         missingTaskPoints,
+        endingAdvice: endingAdvice || undefined,
         detectedWritingTextType: detectedTextType,
       },
     },
