@@ -604,27 +604,34 @@ function timingSafeEquals(left, right) {
 }
 
 function providedSecret(req) {
-  const explicit = text(req.headers?.["x-falowen-completion-secret"]);
-  if (explicit) return explicit;
+  const announcementToken = text(req.headers?.["x-falowen-announcement-token"]);
+  if (announcementToken) return announcementToken;
+  const legacyCompletionToken = text(req.headers?.["x-falowen-completion-secret"]);
+  if (legacyCompletionToken) return legacyCompletionToken;
   const authorization = text(req.headers?.authorization);
   const bearer = authorization.match(/^Bearer\s+(.+)$/i);
   return bearer ? text(bearer[1]) : "";
 }
 
-function resolveCompletionSecret(runtimeConfig = {}, env = process.env) {
-  const communication = runtimeConfig.communication || {};
+function resolveAnnouncementWebhookSecret(runtimeConfig = {}, env = process.env) {
+  const communication = runtimeConfig.communication
+    || runtimeConfig.announcements
+    || runtimeConfig.announcement
+    || {};
   return text(
-    env.COMPLETION_DOCUMENT_SECRET
-    || communication.completion_document_secret
-    || communication.completionDocumentSecret,
+    env.ANNOUNCEMENT_WEBHOOK_TOKEN
+    || env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN
+    || communication.announcement_webhook_token
+    || communication.webhook_token
+    || attendanceHelpers.resolveWebhookConfig(runtimeConfig, env)?.token,
   );
 }
 
 function registerCompletionDocumentRoute({ app, db, runtimeConfig = {}, env = process.env }) {
   app.post("/completion/attendance-participation-document", async (req, res) => {
     try {
-      const expected = resolveCompletionSecret(runtimeConfig, env);
-      if (!expected) return res.status(503).json({ ok: false, error: "Completion document service is not configured." });
+      const expected = resolveAnnouncementWebhookSecret(runtimeConfig, env);
+      if (!expected) return res.status(503).json({ ok: false, error: "Announcement webhook secret is not configured." });
       if (!timingSafeEquals(providedSecret(req), expected)) {
         return res.status(401).json({ ok: false, error: "Unauthorized" });
       }
@@ -656,7 +663,7 @@ module.exports = {
   buildCompletionReport,
   dedupeOfficialSessions,
   registerCompletionDocumentRoute,
-  resolveCompletionSecret,
+  resolveAnnouncementWebhookSecret,
   summarizeAttendance,
   summarizeParticipation,
   _test: {
