@@ -1,6 +1,12 @@
 import { Buffer } from "node:buffer";
 
 const STAFF_ACCOUNT_EMAIL = "staff@falowen.app";
+const DEFAULT_ADMIN_EMAILS = ["moxflex@gmail.com"];
+
+function adminEmails() {
+  const configured = String(process.env.FALOWEN_ADMIN_EMAILS || process.env.ADMIN_EMAILS || "").trim();
+  return new Set((configured ? configured.split(",") : DEFAULT_ADMIN_EMAILS).map((value) => String(value || "").trim().toLowerCase()).filter(Boolean));
+}
 
 function envValue(...names) {
   for (const name of names) {
@@ -51,6 +57,9 @@ async function verifyFirebaseUser(idToken) {
   if (!email) throw Object.assign(new Error("The signed-in account has no verified email identity."), { statusCode: 403 });
   if (email === STAFF_ACCOUNT_EMAIL) {
     throw Object.assign(new Error("Staff accounts cannot update Student Results."), { statusCode: 403 });
+  }
+  if (!adminEmails().has(email)) {
+    throw Object.assign(new Error("Administrator access is required."), { statusCode: 403 });
   }
 
   return { uid: account.localId, email };
@@ -156,4 +165,4 @@ export default async function studentResultsSheetUpsertHandler(req, res) {
   }
 }
 
-export { bearerToken, validateRows, verifiedUpsertReceipt, verifyFirebaseUser };
+export { adminEmails, bearerToken, validateRows, verifiedUpsertReceipt, verifyFirebaseUser };

@@ -127,12 +127,55 @@ if (!source.includes("Could not reserve the score key safely; no score was poste
     "atomic duplicate reservation",
   );
 
+  const eventHubDispatchMarker = 'const integration = await dispatchIntegrationEvent({';
+  if (source.includes(eventHubDispatchMarker)) {
+    const eventHubDispatchBlock = [
+      '  const sheetRow = { ...row, dedupe_id: sheetDedupeId };',
+      '  const receipt = {',
+      '    row,',
+      '    dedupeId,',
+      '    duplicateSkipped,',
+      '    sheet: { attempted: !duplicateSkipped, success: Boolean(duplicateSkipped), message: duplicateSkipped ? (duplicateBlockReason === "in_progress" ? "Score save blocked because another save for this assignment is still in progress. Wait a moment and try again." : "Duplicate score blocked atomically because this assignment already has the same saved score. Change the score only when the resubmission result is different.") : "Pending integration dispatch." },',
+      '    firestore: { attempted: SAVE_SCORES_TO_FIRESTORE, success: !SAVE_SCORES_TO_FIRESTORE || duplicateSkipped, message: duplicateSkipped ? (duplicateBlockReason === "in_progress" ? "Active Firestore score reservation left unchanged; retry after the current save finishes." : "Existing Firestore score left unchanged for tutor verification.") : (SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config).") },',
+      '  };',
+      '',
+      '  if (!duplicateSkipped) {',
+      '    try {',
+      '      const integration = await dispatchIntegrationEvent({',
+      '        type: "score.upsert",',
+      '        rows: [sheetRow],',
+      '        metadata: {',
+      '          source,',
+      '          studentCode: row.studentCode || row.studentcode || "",',
+      '          assignmentId: row.assignment_id || row.assignmentId || "",',
+      '        },',
+      '      });',
+      '      receipt.sheet.success = true;',
+      '      receipt.sheet.integrationEventId = integration.event?.id || "";',
+      '      receipt.sheet.message = "Saved to Google Sheets through the Falowen integration hub.";',
+      '    } catch (error) {',
+      '      receipt.sheet.success = false;',
+      '      receipt.sheet.message = String(error?.message || "Google Sheets save failed.");',
+      '    }',
+      '  }',
+    ].join("\n");
+
+    source = replacePatternRequired(
+      source,
+      /  const sheetRow = \{ \.\.\.row, dedupe_id: sheetDedupeId \};\n  const receipt = \{[\s\S]*?\n  \}\n\n(?=  if \(SAVE_SCORES_TO_FIRESTORE\) \{)/,
+      eventHubDispatchBlock,
+      "event-hub blocked duplicate receipt",
+    );
+  }
+
+  if (!source.includes(eventHubDispatchMarker)) {
   const legacyBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked; this student already has a saved score for this assignment. Tutor verification is required.";\n  } else if (SCORES_WEBHOOK_URL) {';
   const sameScoreBlockedReceipt = '  if (duplicateSkipped) {\n    receipt.sheet.success = true;\n    receipt.sheet.message = "Duplicate score blocked because this assignment already has the same saved score. Change the score only when the resubmission result is different.";\n  } else if (SCORES_WEBHOOK_URL) {';
   const atomicBlockedReceipt = reasonAwareAtomicBlockedReceipt;
   if (!source.includes(atomicBlockedReceipt)) {
     const receiptAnchor = source.includes(sameScoreBlockedReceipt) ? sameScoreBlockedReceipt : legacyBlockedReceipt;
     source = replaceRequired(source, receiptAnchor, atomicBlockedReceipt, "blocked duplicate receipt");
+  }
   }
 
   const reservedFirestoreWrite = [

@@ -18,11 +18,8 @@ import {
   historyStatusBlocksDuplicate,
   receiptHasSuccessfulDelivery,
 } from "../utils/communicationDelivery.js";
+import { dispatchIntegrationEvent, fetchIntegrationHealth } from "./integrationEventService.js";
 
-const ANNOUNCEMENT_WEBHOOK_URL = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_URL || "").trim();
-const ANNOUNCEMENT_WEBHOOK_TOKEN = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN || "").trim();
-const ANNOUNCEMENT_WEBHOOK_SHEET_NAME = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME || "").trim();
-const ANNOUNCEMENT_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID || "").trim();
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 const HISTORY_LIMIT_DEFAULT = 30;
 
@@ -81,10 +78,6 @@ function canUseBccFallback(input = {}) {
   if (announcement.includes("{student_name}") || announcement.includes("student_name")) return false;
 
   return true;
-}
-
-function isLikelyNetworkError(error) {
-  return error instanceof TypeError || /networkerror|failed to fetch/i.test(String(error?.message || ""));
 }
 
 function isClassCancellation(input = {}) {
@@ -239,7 +232,8 @@ async function loadClassSessionsForCommunication(klass = {}) {
 }
 
 async function prepareCommunicationCancellation(input = {}, row = {}) {
-  if (!ANNOUNCEMENT_WEBHOOK_URL) {
+  const health = await fetchIntegrationHealth();
+  if (!health?.integrations?.communication?.configured) {
     throw new Error("Class cancellation email delivery is not configured. The Live Classes session was not changed.");
   }
 
@@ -322,34 +316,6 @@ export function buildAnnouncementRow(input = {}) {
   };
 }
 
-async function postAnnouncementToWebhook(payload) {
-  const response = await fetch(ANNOUNCEMENT_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(body || "Failed to write announcement to Google Sheets webhook");
-  }
-
-  const responseBody = await response.json().catch(() => ({}));
-  if (responseBody?.ok === false) {
-    throw new Error(responseBody?.error || "Validation failed while saving announcement");
-  }
-  return responseBody;
-}
-
-async function postAnnouncementToWebhookNoCors(payload) {
-  await fetch(ANNOUNCEMENT_WEBHOOK_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "text/plain;charset=UTF-8" },
-    body: JSON.stringify(payload),
-  });
-}
-
 async function writeCommunicationHistory(input, row, receipt, extra = {}) {
   const fingerprint = extra.fingerprint || buildAnnouncementFingerprint(input, row);
   const status = extra.status || (
@@ -396,21 +362,13 @@ export async function saveAnnouncementRow(input = {}) {
     ? await prepareCommunicationCancellation(input, row)
     : null;
 
-  const payload = {
-    ...(ANNOUNCEMENT_WEBHOOK_TOKEN ? { token: ANNOUNCEMENT_WEBHOOK_TOKEN } : {}),
-    ...(ANNOUNCEMENT_WEBHOOK_SHEET_NAME ? { sheet_name: ANNOUNCEMENT_WEBHOOK_SHEET_NAME } : {}),
-    ...(ANNOUNCEMENT_WEBHOOK_SHEET_GID ? { sheet_gid: ANNOUNCEMENT_WEBHOOK_SHEET_GID } : {}),
-    row,
-    rows: [row],
-  };
-
   const receipt = {
     row,
     ...(cancellation ? { liveClass: cancellation } : {}),
     sheet: {
-      attempted: Boolean(ANNOUNCEMENT_WEBHOOK_URL),
+      attempted: true,
       success: false,
-      message: ANNOUNCEMENT_WEBHOOK_URL ? "Pending" : "Email webhook not configured; saved to communication history only.",
+      message: "Pending integration dispatch.",
       unverified: false,
     },
     firestore: {
@@ -420,33 +378,30 @@ export async function saveAnnouncementRow(input = {}) {
     },
   };
 
-  if (ANNOUNCEMENT_WEBHOOK_URL) {
-    try {
-      const responseBody = await postAnnouncementToWebhook(payload);
-      receipt.sheet.success = true;
-      if (cancellation) {
-        const reportedRecipients = Number(responseBody?.recipientCount || responseBody?.recipients || 0);
-        const recipientCount = reportedRecipients > 0 ? reportedRecipients : cancellation.recipientCount;
-        receipt.sheet.message = `Class cancelled successfully. The Live Classes timetable was updated, upcoming reminders were stopped, check-in was closed, and the cancellation email was sent${recipientCount ? ` to ${recipientCount} students` : ""}.`;
-      } else {
-        receipt.sheet.message = "Saved to Google Sheets.";
-      }
-    } catch (error) {
-      if (!isLikelyNetworkError(error)) {
-        receipt.sheet.message = String(error?.message || "Failed to write announcement to Google Sheets webhook");
-      } else {
-        try {
-          await postAnnouncementToWebhookNoCors(payload);
-          receipt.sheet.success = true;
-          receipt.sheet.unverified = true;
-          receipt.sheet.message = cancellation
-            ? "Class cancelled successfully and reminders/check-in were stopped. The cancellation email request was sent, but the browser cannot verify final delivery."
-            : "Sheet request sent via no-cors fallback (delivery cannot be confirmed by browser).";
-        } catch (fallbackError) {
-          receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
-        }
-      }
+  try {
+    const integration = await dispatchIntegrationEvent({
+      type: Boolean(input.attachCertificate) ? "certificate.send" : "communication.send",
+      rows: [row],
+      metadata: {
+        source: "communication",
+        classId: normalize(input.classId),
+        sessionId: normalize(input.sessionId || input.classSessionId),
+        studentId: normalize(input.studentId),
+      },
+    });
+    receipt.sheet.success = true;
+    receipt.sheet.integrationEventId = integration.event?.id || "";
+    const responseBody = integration.receipt || {};
+    if (cancellation) {
+      const reportedRecipients = Number(responseBody?.recipientCount || responseBody?.recipients || 0);
+      const recipientCount = reportedRecipients > 0 ? reportedRecipients : cancellation.recipientCount;
+      receipt.sheet.message = `Class cancelled successfully. The timetable was updated, reminders were stopped, check-in was closed, and the cancellation email request was accepted${recipientCount ? ` for ${recipientCount} students` : ""}.`;
+    } else {
+      receipt.sheet.message = "Communication accepted by the Falowen communication worker.";
     }
+  } catch (error) {
+    receipt.sheet.success = false;
+    receipt.sheet.message = String(error?.message || "Communication delivery failed.");
   }
 
   if (!input.skipHistory) {
@@ -466,13 +421,8 @@ export async function saveAnnouncementRow(input = {}) {
     }
   }
 
-  if (ANNOUNCEMENT_WEBHOOK_URL && !receipt.sheet.success) {
+  if (!receipt.sheet.success) {
     const saveError = new Error(receipt.sheet.message || "Announcement delivery failed.");
-    saveError.receipt = receipt;
-    throw saveError;
-  }
-  if (!ANNOUNCEMENT_WEBHOOK_URL && !receipt.firestore.success) {
-    const saveError = new Error(receipt.firestore.message || "Communication history save failed.");
     saveError.receipt = receipt;
     throw saveError;
   }
@@ -481,10 +431,6 @@ export async function saveAnnouncementRow(input = {}) {
 }
 
 export async function saveAnnouncementBatch({ input = {}, recipients = [], recipientFilter = "all", session = null } = {}) {
-  if (!ANNOUNCEMENT_WEBHOOK_URL) {
-    throw new Error("Targeted email delivery is not configured. No student emails were sent.");
-  }
-
   const unique = new Map();
   recipients.forEach((recipient) => {
     const email = normalizeLower(recipient.email || recipient.contactEmail);

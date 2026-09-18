@@ -1,5 +1,5 @@
 import { collection, getDocs } from "firebase/firestore";
-import { auth, db } from "../firebase.js";
+import { db } from "../firebase.js";
 import answersDictionary from "../data/answers_dictionary.json";
 import {
   assertScoreUpsertReceipt,
@@ -10,10 +10,10 @@ import {
   normalizeStudentCode,
   safeAssignmentTitle,
 } from "../utils/studentResultUpsert.js";
+import { dispatchIntegrationEvent } from "./integrationEventService.js";
 
 const env = import.meta.env || {};
 const SCORES_SHEET_CSV_URL = String(env.VITE_SCORES_SHEET_CSV_URL || "").trim();
-const STUDENT_RESULTS_UPSERT_URL = "/api/student-results/sheet-upsert";
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -154,31 +154,12 @@ export async function loadStudentResultSources(studentCode) {
 }
 
 async function postUpsertPayload(payload) {
-  const currentUser = auth?.currentUser;
-  if (!currentUser) throw new Error("Sign in again before updating Student Results.");
-  const idToken = await currentUser.getIdToken();
-
-  let response;
-  try {
-    response = await fetch(STUDENT_RESULTS_UPSERT_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        action: "upsertScoreRows",
-        mode: "upsert",
-        rows: payload.rows,
-      }),
-    });
-  } catch (error) {
-    throw new Error(`Could not reach the Falowen result-update API: ${error?.message || error}`);
-  }
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body?.error || `Score-sheet update failed (${response.status}).`);
-  return assertScoreUpsertReceipt(body);
+  const integration = await dispatchIntegrationEvent({
+    type: "score.upsert",
+    rows: payload.rows,
+    metadata: { source: "student_results_compare" },
+  });
+  return assertScoreUpsertReceipt(integration.receipt || {});
 }
 
 export async function syncFirestoreScoresToSheet(scores = []) {

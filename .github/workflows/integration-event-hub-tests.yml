@@ -1,0 +1,57 @@
+name: Integration Event Hub Tests
+
+on:
+  pull_request:
+    paths:
+      - 'api/integration-hub.js'
+      - 'api/router.js'
+      - 'api/student-results-sheet-upsert.js'
+      - 'src/services/integrationEventService.js'
+      - 'src/services/markingServiceBase.js'
+      - 'src/services/studentResultsService.js'
+      - 'src/services/communicationService.js'
+      - 'src/components/IntegrationEventPanel.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'tests/integration-event-hub.test.js'
+      - 'tests/student-result-upsert.test.js'
+      - '.github/workflows/integration-event-hub-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/integration-hub.js'
+      - 'api/router.js'
+      - 'api/student-results-sheet-upsert.js'
+      - 'src/services/integrationEventService.js'
+      - 'src/services/markingServiceBase.js'
+      - 'src/services/studentResultsService.js'
+      - 'src/services/communicationService.js'
+      - 'src/components/IntegrationEventPanel.jsx'
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'tests/integration-event-hub.test.js'
+      - 'tests/student-result-upsert.test.js'
+      - '.github/workflows/integration-event-hub-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Check integration modules
+        run: |
+          node --check api/integration-hub.js
+          node --check api/router.js
+          node --check api/student-results-sheet-upsert.js
+          node --check src/services/integrationEventService.js
+          node --check src/services/markingServiceBase.js
+          node --check src/services/studentResultsService.js
+          node --check src/services/communicationService.js
+      - name: Run focused integration tests
+        run: node --test tests/integration-event-hub.test.js tests/student-result-upsert.test.js
+      - name: Build Admin
+        run: npm run build
