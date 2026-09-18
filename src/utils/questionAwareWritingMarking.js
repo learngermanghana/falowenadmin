@@ -2,6 +2,7 @@ import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import { getCachedAssignmentRegistryEntry } from "./assignmentRegistryCache.js";
 import { toQuestionAwareWritingTask } from "./assignmentRegistry.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
+import { heuristicWritingMarker } from "./autoMarking.js";
 import {
   detectWritingTextType,
   extractWritingTaskPoints,
@@ -287,6 +288,13 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     && wordCount >= 20
     && missingTaskPoints.length === 0
     && !legacyEssayMismatch;
+  const localRecoveredWritingScore = suspiciousZeroWriting
+    ? numericPercent(heuristicWritingMarker({ level: task.level, partId: "teil2", text: source })?.score)
+    : null;
+  const effectiveWritingScore = localRecoveredWritingScore && localRecoveredWritingScore > 0
+    ? localRecoveredWritingScore
+    : currentWritingScore;
+  const recoveredSuspiciousZero = suspiciousZeroWriting && effectiveWritingScore > 0;
 
   if (!hasGuardIssue) {
     const calibratedWritingScore = calibratedCompleteWritingScore({
@@ -295,10 +303,10 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       structured,
       localMissing,
       detectedTextType,
-      currentWritingScore,
+      currentWritingScore: effectiveWritingScore,
     });
 
-    if (calibratedWritingScore === currentWritingScore) {
+    if (calibratedWritingScore === currentWritingScore && !recoveredSuspiciousZero) {
       return {
         ...result,
         status: suspiciousZeroWriting ? "needs_review" : result.status,
@@ -326,11 +334,15 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         ...(result.ai || {}),
         questionAwareWritingTask: task,
         detectedWritingTextType: detectedTextType,
+        suspiciousWritingZero: recoveredSuspiciousZero ? undefined : suspiciousZeroWriting || undefined,
         questionAwareWritingCalibration: {
           applied: true,
           originalWritingScore: currentWritingScore,
+          recoveredWritingScore: recoveredSuspiciousZero ? effectiveWritingScore : undefined,
           calibratedWritingScore,
-          reason: "Complete task, correct text type/register, and no concrete writing correction supported a B1/A2 top-band floor.",
+          reason: recoveredSuspiciousZero
+            ? "A substantive task-complete response received an impossible zero, so Falowen recovered a local writing score before applying any calibration."
+            : "Complete task, correct text type/register, and no concrete writing correction supported a B1/A2 top-band floor.",
         },
       },
     };
@@ -339,7 +351,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   let cap = guardCapForMissing(missingTaskPoints.length, total);
   if (genreMismatch) cap = Math.min(cap, 65);
   if (wrongRegister) cap = Math.min(cap, 70);
-  const guardedWritingScore = Math.min(currentWritingScore, cap);
+  const guardedWritingScore = Math.min(effectiveWritingScore, cap);
 
   const completed = Math.max(0, total - missingTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
@@ -369,12 +381,13 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     shouldSendAutomatically: false,
     ai: {
       ...(result.ai || {}),
-      suspiciousWritingZero: suspiciousZeroWriting || undefined,
+      suspiciousWritingZero: recoveredSuspiciousZero ? undefined : suspiciousZeroWriting || undefined,
       questionAwareWritingTask: task,
       detectedWritingTextType: detectedTextType,
       questionAwareWritingGuard: {
         applied: true,
         suspiciousWritingZero: suspiciousZeroWriting,
+        recoveredWritingScore: recoveredSuspiciousZero ? effectiveWritingScore : undefined,
         originalWritingScore: currentWritingScore,
         guardedWritingScore,
         genreMismatch,
