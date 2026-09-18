@@ -1,10 +1,12 @@
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
+import { B1_WRITING_RUBRIC_VERSION, getB1WritingTaskSpec } from "../data/b1WritingTaskSpecs.js";
 import { getCachedAssignmentRegistryEntry } from "./assignmentRegistryCache.js";
 import { toQuestionAwareWritingTask } from "./assignmentRegistry.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
 import { heuristicWritingMarker } from "./autoMarking.js";
 import { evaluateWritingTaskEvidence, missingTaskPointsFromEvidence, taskEvidenceSummary } from "./writingTaskEvidence.js";
+import { evaluateB1WritingTaskEvidence } from "./b1WritingTaskEvidence.js";
 import {
   detectWritingTextType,
   extractWritingTaskPoints,
@@ -18,9 +20,12 @@ const clean = (value = "") => String(value || "").replace(/\s+/g, " ").trim();
 function applyAuthoritativeWritingOverride(task = {}) {
   const assignmentKey = normalizeAssignmentKey(task.assignmentKey || "");
   const a2Spec = getA2WritingTaskSpec(assignmentKey);
+  const b1Spec = getB1WritingTaskSpec(assignmentKey);
   const next = a2Spec
     ? { ...task, ...a2Spec, level: "A2" }
-    : task;
+    : b1Spec
+      ? { ...task, ...b1Spec, level: "B1" }
+      : task;
   if (!next?.assignmentKey) return next;
   return {
     ...next,
@@ -332,9 +337,10 @@ function calibratedCompleteWritingScore({
   const deterministicFriendshipComplete = task.assignmentKey === "B1-1.2"
     && configuredTotal === 3
     && localMissing.length === 0;
-  // Keep the historical B1 top-band calibration, but do not auto-raise A2.
-  // Semantic A2 evidence validates task completion; it does not manufacture a higher language score.
-  if (task.level === "A2") return currentWritingScore;
+  // Semantic A2/B1 evidence validates task completion; it does not manufacture a higher language score.
+  if (task.rubricVersion === A2_WRITING_RUBRIC_VERSION || task.rubricVersion === B1_WRITING_RUBRIC_VERSION) {
+    return currentWritingScore;
+  }
   if (!structuredComplete && !deterministicFriendshipComplete) return currentWritingScore;
   return 90;
 }
@@ -350,17 +356,24 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "");
   const structured = readStructuredTask(result);
-  const taskPointEvidence = task.level === "A2" ? evaluateWritingTaskEvidence(task, source) : [];
-  const canonicalA2Missing = task.level === "A2" ? missingTaskPointsFromEvidence(taskPointEvidence) : [];
-  const localMissing = task.assignmentKey === "B1-1.2"
+  const taskPointEvidence = task.level === "A2"
+    ? evaluateWritingTaskEvidence(task, source)
+    : task.level === "B1" && task.rubricVersion === B1_WRITING_RUBRIC_VERSION
+      ? evaluateB1WritingTaskEvidence(task, source)
+      : [];
+  const canonicalSemanticMissing = taskPointEvidence.length
+    ? missingTaskPointsFromEvidence(taskPointEvidence)
+    : [];
+  const localMissing = task.level === "B1" && task.rubricVersion !== B1_WRITING_RUBRIC_VERSION && task.assignmentKey === "B1-1.2"
     ? b1FriendshipLocalMissing(source)
-    : canonicalA2Missing;
+    : canonicalSemanticMissing;
   const configuredPointSet = new Set((task.taskPoints || []).map(clean));
-  const structuredMissing = task.level === "A2"
+  const structuredMissing = taskPointEvidence.length
     ? structured.missing.filter((item) => configuredPointSet.has(clean(item)))
     : structured.missing;
   const missingTaskPoints = [...new Set([...structuredMissing, ...localMissing])];
-  const total = task.level === "A2"
+  const semanticTask = task.rubricVersion === A2_WRITING_RUBRIC_VERSION || task.rubricVersion === B1_WRITING_RUBRIC_VERSION;
+  const total = semanticTask
     ? (task.taskPoints?.length || 0)
     : Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
   const detectedTextType = detectWritingTextType(source);
@@ -395,15 +408,15 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     });
 
     if (calibratedWritingScore === currentWritingScore && !recoveredSuspiciousZero) {
-      const completed = task.level === "A2" ? total : (structured.completed ?? total);
+      const completed = semanticTask ? total : (structured.completed ?? total);
       const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
       const dimensions = writingDimensions({ writingScore: currentWritingScore, completed, total, wrongRegister, genreMismatch });
       return {
         ...result,
-        taskCompletion: task.level === "A2" ? { completed, total, missing: [] } : result.taskCompletion,
+        taskCompletion: semanticTask ? { completed, total, missing: [] } : result.taskCompletion,
         taskPointEvidence,
         writingDimensions: dimensions,
-        markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+        markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
         status: suspiciousZeroWriting || contradictions.length ? "needs_review" : result.status,
         shouldSendAutomatically: suspiciousZeroWriting || contradictions.length ? false : result.shouldSendAutomatically,
         ai: {
@@ -417,7 +430,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     }
 
     const weightedOutcome = recomputeOutcome(result, task, calibratedWritingScore);
-    const completed = task.level === "A2" ? total : (structured.completed ?? total);
+    const completed = semanticTask ? total : (structured.completed ?? total);
     const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
     const dimensions = writingDimensions({ writingScore: calibratedWritingScore, completed, total, wrongRegister, genreMismatch });
     return {
@@ -435,7 +448,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       missingTaskPoints: [],
       taskPointEvidence,
       writingDimensions: dimensions,
-      markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+      markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
       status: contradictions.length ? "needs_review" : result.status,
       shouldSendAutomatically: contradictions.length ? false : result.shouldSendAutomatically,
       ai: {
@@ -492,7 +505,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     missingTaskPoints,
     taskPointEvidence,
     writingDimensions: dimensions,
-    markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+    markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
     feedback: [result.feedback, guardFeedback].filter(Boolean).join(" "),
     improvementSummary: [result.improvementSummary, guardFeedback].filter(Boolean).join(" "),
     status: "needs_review",
