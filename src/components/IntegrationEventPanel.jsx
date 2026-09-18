@@ -47,7 +47,7 @@ function healthCard(title, health) {
 }
 
 export default function IntegrationEventPanel() {
-  const toast = useToast();
+  const { success: showSuccess, error: showError } = useToast();
   const [health, setHealth] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,11 +63,11 @@ export default function IntegrationEventPanel() {
       setHealth(nextHealth);
       setEvents(nextEvents);
     } catch (error) {
-      toast?.error?.(error?.message || "Could not load integration status.");
+      showError(error?.message || "Could not load integration status.");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [showError]);
 
   useEffect(() => {
     refresh();
@@ -77,10 +77,10 @@ export default function IntegrationEventPanel() {
     setRetrying(event.id);
     try {
       const result = await retryIntegrationEvent(event);
-      toast?.success?.(`Retry processed as ${result.event?.id || "a new event"}.`);
+      showSuccess(`Retry processed as ${result.event?.id || "a new event"}.`);
       await refresh();
     } catch (error) {
-      toast?.error?.(error?.message || "Retry failed.");
+      showError(error?.message || "Retry failed.");
       await refresh();
     } finally {
       setRetrying("");
