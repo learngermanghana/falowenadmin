@@ -21,7 +21,7 @@ const rows = [
     "informal_email",
     "informal",
     "friend_or_personal_contact",
-    "Write an email about a friend for life.",
+    "Write an email about a friend for life: explain how you met, explain why this specific friendship is special, and make a concrete suggestion for a meeting.",
     [
       "Explain how you and the friend met",
       "Explain why this specific friendship is special",
