@@ -23,6 +23,28 @@ const MARKING_QUEUE_START_DATE = String(import.meta.env.VITE_MARKING_QUEUE_START
 const OBJECTIVE_WEIGHT = 0.5;
 const WRITING_WEIGHT = 0.5;
 
+export function sanitizeFirestoreData(value) {
+  if (value === undefined) return undefined;
+  if (Array.isArray(value)) {
+    return value.map((item) => {
+      const sanitized = sanitizeFirestoreData(item);
+      return sanitized === undefined ? null : sanitized;
+    });
+  }
+  if (value && typeof value === "object") {
+    const prototype = Object.getPrototypeOf(value);
+    const isPlainObject = prototype === Object.prototype || prototype === null;
+    if (!isPlainObject) return value;
+    const sanitized = {};
+    for (const [key, item] of Object.entries(value)) {
+      const next = sanitizeFirestoreData(item);
+      if (next !== undefined) sanitized[key] = next;
+    }
+    return sanitized;
+  }
+  return value;
+}
+
 function normalizeHeader(value) {
   return String(value || "")
     .trim()
@@ -355,11 +377,12 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
     updatedAt: now,
   };
 
-  await setDoc(doc(db, "markingResults", safeSubmissionId), { ...payload, createdAt: now }, { merge: true });
+  const firestorePayload = sanitizeFirestoreData({ ...payload, createdAt: now });
+  await setDoc(doc(db, "markingResults", safeSubmissionId), firestorePayload, { merge: true });
 
   if (submissionPath) {
     const segments = submissionPath.split("/").filter(Boolean);
-    await setDoc(doc(db, ...segments), {
+    await setDoc(doc(db, ...segments), sanitizeFirestoreData({
       markingStatus: status,
       finalScore: payload.finalScore,
       objectiveScore: payload.objectiveScore,
@@ -386,7 +409,7 @@ export async function saveMarkingResult({ submissionId, submissionPath, result, 
       aiFeedback: payload.feedback,
       feedbackSentToStudent: sentToStudent,
       markingUpdatedAt: now,
-    }, { merge: true });
+    }), { merge: true });
   }
 }
 
