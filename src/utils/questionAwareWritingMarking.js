@@ -352,7 +352,12 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         ...result,
         status: suspiciousZeroWriting ? "needs_review" : result.status,
         shouldSendAutomatically: suspiciousZeroWriting ? false : result.shouldSendAutomatically,
-        ai: { ...(result.ai || {}), questionAwareWritingTask: task, detectedWritingTextType: detectedTextType, suspiciousWritingZero: suspiciousZeroWriting || undefined },
+        ai: {
+          ...(result.ai || {}),
+          questionAwareWritingTask: task,
+          detectedWritingTextType: detectedTextType,
+          ...(suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
+        },
       };
     }
 
@@ -375,11 +380,11 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         ...(result.ai || {}),
         questionAwareWritingTask: task,
         detectedWritingTextType: detectedTextType,
-        suspiciousWritingZero: recoveredSuspiciousZero ? undefined : suspiciousZeroWriting || undefined,
+        ...(!recoveredSuspiciousZero && suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
         questionAwareWritingCalibration: {
           applied: true,
           originalWritingScore: currentWritingScore,
-          recoveredWritingScore: recoveredSuspiciousZero ? effectiveWritingScore : undefined,
+          ...(recoveredSuspiciousZero ? { recoveredWritingScore: effectiveWritingScore } : {}),
           calibratedWritingScore,
           reason: recoveredSuspiciousZero
             ? "A substantive task-complete response received an impossible zero, so Falowen recovered a local writing score before applying any calibration."
@@ -426,19 +431,19 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     shouldSendAutomatically: false,
     ai: {
       ...(result.ai || {}),
-      suspiciousWritingZero: recoveredSuspiciousZero ? undefined : suspiciousZeroWriting || undefined,
+      ...(!recoveredSuspiciousZero && suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
       questionAwareWritingTask: task,
       detectedWritingTextType: detectedTextType,
       questionAwareWritingGuard: {
         applied: true,
         suspiciousWritingZero: suspiciousZeroWriting,
-        recoveredWritingScore: recoveredSuspiciousZero ? effectiveWritingScore : undefined,
+        ...(recoveredSuspiciousZero ? { recoveredWritingScore: effectiveWritingScore } : {}),
         originalWritingScore: currentWritingScore,
         guardedWritingScore,
         genreMismatch,
         registerMismatch: wrongRegister,
         missingTaskPoints,
-        endingAdvice: endingAdvice || undefined,
+        ...(endingAdvice ? { endingAdvice } : {}),
         detectedWritingTextType: detectedTextType,
       },
     },

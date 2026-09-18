@@ -207,6 +207,17 @@ test("a close second examiner at 0.68 confidence does not force tutor review by 
   assert.equal(comparison.agreement, "high");
 });
 
+function findUndefinedPaths(value, path = "result", seen = new WeakSet()) {
+  if (value === undefined) return [path];
+  if (!value || typeof value !== "object") return [];
+  if (seen.has(value)) return [];
+  seen.add(value);
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => findUndefinedPaths(item, path + "[" + index + "]", seen));
+  }
+  return Object.entries(value).flatMap(([key, item]) => findUndefinedPaths(item, path + "." + key, seen));
+}
+
 const victoriaA2Day1 = `Teil 2
 Sehr geehrter Herr Felix,
 Ich schreibe Ihnen, weil ich über meine Arbeiten und Schule sprechen möchte.
@@ -302,7 +313,8 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.equal(result.writingScore, 70);
   assert.equal(result.writingScorePercent, 70);
   assert.equal(result.finalScore, 83);
-  assert.equal(result.ai.suspiciousWritingZero, undefined);
+  assert.equal(Object.prototype.hasOwnProperty.call(result.ai, "suspiciousWritingZero"), false);
+  assert.deepEqual(findUndefinedPaths(result), []);
   assert.equal(result.ai.questionAwareWritingGuard.suspiciousWritingZero, true);
   assert.equal(result.ai.questionAwareWritingGuard.recoveredWritingScore > 0, true);
   assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, false);
