@@ -3,6 +3,7 @@ import AttendanceConfirmationAutomationPanel from "../components/AttendanceConfi
 import AttendanceFailedDeliveryRetryPanel from "../components/AttendanceFailedDeliveryRetryPanel.jsx";
 import CommunicationLiveClassActions from "../components/CommunicationLiveClassActions.jsx";
 import TargetedCommunicationPanel from "../components/TargetedCommunicationPanel.jsx";
+import IntegrationEventPanel from "../components/IntegrationEventPanel.jsx";
 import CommunicationPage from "./CommunicationPage.jsx";
 
 function tabStyle(active) {
@@ -28,6 +29,9 @@ export default function CommunicationHubPage() {
         <button type="button" style={tabStyle(activeTab === "attendance")} onClick={() => setActiveTab("attendance")}>
           Attendance confirmation emails
         </button>
+        <button type="button" style={tabStyle(activeTab === "integrations")} onClick={() => setActiveTab("integrations")}>
+          System events
+        </button>
       </nav>
 
       {activeTab === "broadcasts" ? (
@@ -45,6 +49,7 @@ export default function CommunicationHubPage() {
           <AttendanceFailedDeliveryRetryPanel />
         </div>
       ) : null}
+      {activeTab === "integrations" ? <IntegrationEventPanel /> : null}
     </div>
   );
 }
