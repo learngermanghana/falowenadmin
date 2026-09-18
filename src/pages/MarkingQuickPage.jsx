@@ -11,6 +11,7 @@ import { createMarkedAssignmentNotification } from "../services/studentNotificat
 import { codeFromScopeKey } from "../utils/studentIdentity.js";
 import { useToast } from "../context/ToastContext.jsx";
 import WritingScoreExplanation from "../components/WritingScoreExplanation.jsx";
+import MarkingHistoryPanel from "../components/MarkingHistoryPanel.jsx";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -447,7 +448,8 @@ export default function MarkingQuickPage() {
               <span>Assignment: <b>{assignmentKey || selectedSubmission.assignment || "Unknown"}</b></span>
               <span>Status: <b>{statusLabel(selectedSubmission.markingStatus)}</b></span>
             </div>
-            <textarea readOnly rows={8} value={selectedSubmission.text || "No submission text available."} />
+<MarkingHistoryPanel submission={selectedSubmission} />
+                        <textarea readOnly rows={8} value={selectedSubmission.text || "No submission text available."} />
           </section>
 
           <section style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, display: "grid", gap: 10 }}>
