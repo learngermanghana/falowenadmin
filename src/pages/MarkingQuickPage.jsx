@@ -10,6 +10,7 @@ import {
 import { createMarkedAssignmentNotification } from "../services/studentNotificationService.js";
 import { codeFromScopeKey } from "../utils/studentIdentity.js";
 import { useToast } from "../context/ToastContext.jsx";
+import WritingScoreExplanation from "../components/WritingScoreExplanation.jsx";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -177,6 +178,8 @@ function ResultAuditPanel({ result }) {
         <strong>Why this score?</strong>
         <p style={{ margin: "5px 0 0", lineHeight: 1.5 }}>{buildMarkingReason(result)}</p>
       </div>
+
+      <WritingScoreExplanation result={result} />
 
       <div style={{ fontSize: 13 }}>
         <b>Detected parts:</b> {detectedPartsSummary(result)}
