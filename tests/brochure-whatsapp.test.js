@@ -18,6 +18,8 @@ import {
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
+const publicService = read("src/services/publicBrochureClassService.js");
+
 test("normalizes common Ghana phone number formats", () => {
   assert.equal(normalizeGhanaWhatsappNumber("024 123 4567"), "233241234567");
   assert.equal(normalizeGhanaWhatsappNumber("+233 24 123 4567"), "233241234567");
@@ -88,19 +90,47 @@ test("formats selected class fee and schedule from class metadata", () => {
 
 test("brochure panel loads real classes and no longer asks staff to attach a PDF", () => {
   const panel = read("src/components/BrochureWhatsappPanel.jsx");
-  const classes = read("src/services/classesService.js");
+  const classes = read("src/services/publicBrochureClassService.js");
 
-  assert.match(panel, /listClasses/);
-  assert.match(panel, /Upcoming classes open for registration/);
+  assert.match(panel, /loadShareablePublicClasses/);
+  assert.match(panel, /Classes currently available for registration/);
   assert.match(panel, /Open brochure/);
   assert.match(panel, /Copy brochure link/);
   assert.match(panel, /No attachment needed/);
   assert.doesNotMatch(panel, /Attach the brochure file/);
 
-  assert.match(classes, /tuitionGhs/);
-  assert.match(classes, /scheduleRules/);
-  assert.match(classes, /registrationOpen/);
-  assert.match(classes, /publicVisible/);
+  assert.match(classes, /www\.falowen\.app\/api\/public\/classes/);
+  assert.match(classes, /publicClassesCatalog/);
+  assert.match(classes, /no-store/);
+});
+
+test("public brochure class service uses the same catalogue as Falowen brochure pages", async () => {
+  const requests = [];
+  const rows = await (async () => {
+    const module = await import("../src/services/publicBrochureClassService.js");
+    return module.loadShareablePublicClasses(async (url) => {
+      requests.push(url);
+      return {
+        ok: true,
+        async json() {
+          return {
+            classes: [
+              { id: "a2", slug: "a2-future", title: "A2 Future", startDate: "2026-11-01" },
+              { id: "a1", slug: "a1-soon", title: "A1 Soon", startDate: "2026-10-01" },
+            ],
+          };
+        },
+      };
+    });
+  })();
+
+  assert.equal(requests.length, 1);
+  assert.match(requests[0], /www\.falowen\.app\/api\/public\/classes/);
+  assert.deepEqual(rows.map((row) => row.slug), ["a1-soon", "a2-future"]);
+});
+
+test("public catalogue service retains the cloud function fallback", () => {
+  assert.match(publicService, /europe-west1-falowen-examiner-trainer\.cloudfunctions\.net\/publicClassesCatalog/);
 });
 
 test("does not build a WhatsApp link without a valid number or message", () => {
