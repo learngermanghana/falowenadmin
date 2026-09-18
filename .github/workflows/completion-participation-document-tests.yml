@@ -48,4 +48,4 @@ jobs:
       - name: Install dashboard dependencies
         run: npm ci
       - name: Build dashboard
-        run: npx vite build
+        run: npm run build
