@@ -254,6 +254,9 @@ test("A2-1.1 keeps the authoritative informal Felix-letter register even if cach
   assert.equal(task.register, "informal");
   assert.equal(task.textType, "informal_email");
   assert.equal(task.recipient, "friend_or_personal_contact");
+  assert.equal(task.taskPoints.length, 5);
+  assert.match(task.taskText, /etwas Neues über deine Familie/i);
+  assert.match(task.taskText, /wie es ihm geht und was bei ihm neu ist/i);
   assert.match(task.gradingInstruction, /Expected register: informal/i);
   assert.doesNotMatch(task.gradingInstruction, /Expected register: formal/i);
 });
@@ -304,9 +307,21 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.equal(result.ai.questionAwareWritingGuard.recoveredWritingScore > 0, true);
   assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, false);
   assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 5);
+  assert.deepEqual(result.missingTaskPoints, [
+    "Tell Felix something new about your family",
+    "At the end ask Felix a relevant personal question about how he is or what is new with him",
+  ]);
+  assert.match(result.ai.questionAwareWritingGuard.endingAdvice, /Könnten Sie mir helfen/);
+  assert.match(result.ai.questionAwareWritingGuard.endingAdvice, /Ich freue mich auf deine Antwort/);
   assert.equal(result.status, "needs_review");
   assert.equal(result.shouldSendAutomatically, false);
   assert.match(result.feedback, /requested informal register/i);
+  assert.match(result.feedback, /something new about your family/i);
+  assert.match(result.feedback, /relevant personal question/i);
+  assert.match(result.feedback, /Könnten Sie mir helfen/);
+  assert.match(result.feedback, /Ich freue mich auf deine Antwort/);
   assert.match(result.feedback, /capped at 70%/i);
   assert.doesNotMatch(result.feedback, /requested formal register/i);
 });
@@ -317,4 +332,69 @@ test("formal and informal email are the same correspondence genre; register is e
   assert.equal(writingTextTypesCompatible("informal_email", "formal_email"), true);
   assert.equal(writingTextTypesCompatible("formal_email", "informal_email"), true);
   assert.equal(writingTextTypesCompatible("informal_email", "opinion_essay"), false);
+});
+
+
+const selasiA2Day1 = `Teil 2
+Lieber Felix,
+Wie geht es dir? Ich hoffe es geht dir gut. Ich schreibe dir, weil ich eine tolle Nachricht habe für dich! Wir haben jetzt einen neuen Hund. Ich bin sehr glücklich.
+Ich arbeite in der IT-Branche, zu Hause natürlich und studiere Deutsch. Mein Vater, meine Mutter und meine Geschwister sind Teil der Familie. Ich habe einen großen Bruder und eine jüngere Schwester, und jetzt haben wir einen schönen Hund.
+Und du? Was machst du gern?
+Viele Grüße,
+Selasi`;
+
+test("A2-1.1 accepts a relevant personal final question but does not require the exact model wording", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.1", level: "A2" },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: selasiA2Day1,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.1",
+    objectiveScore: 92,
+    writingScore: 86,
+    writingScorePercent: 86,
+    finalScore: 90,
+    score: 90,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "Clear and relevant informal letter.",
+    status: "needs_review",
+    confidence: 0.52,
+  }, enriched, selasiA2Day1);
+
+  assert.equal(result.writingScore, 86);
+  assert.equal(result.ai.questionAwareWritingGuard, undefined);
+  assert.equal(result.ai.questionAwareWritingTask.taskPoints.length, 5);
+});
+
+test("A2-1.1 does not count a generic help question as the required final question to Felix", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.1", level: "A2" },
+    submission: { assignmentKey: "A2-1.1", level: "A2" },
+    submissionText: victoriaA2Day1,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.1",
+    objectiveScore: 92,
+    writingScore: 82,
+    writingScorePercent: 82,
+    finalScore: 88,
+    score: 88,
+    taskCompletion: { completed: 5, total: 5, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You addressed all task points.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, victoriaA2Day1);
+
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 5);
+  assert.equal(result.missingTaskPoints.includes("Tell Felix something new about your family"), true);
+  assert.equal(result.missingTaskPoints.some((item) => /relevant personal question/i.test(item)), true);
+  assert.match(result.feedback, /does not answer the Felix task/i);
 });
