@@ -3,6 +3,7 @@ import { Buffer } from "node:buffer";
 
 const DEFAULT_ADMIN_EMAILS = ["moxflex@gmail.com"];
 const MAX_ROWS = 100;
+const DEFAULT_REGISTRATION_DOCS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxWsVmzNdDMXtUd0CwChFXR_Iy6lbb7oVVt8ao_6_8oYYFI9Te9Y7pD0FgIJTjAozYOQg/exec";
 
 function envValue(...names) {
   for (const name of names) {
@@ -179,7 +180,7 @@ function communicationConfig() {
 
 function registrationConfig() {
   return {
-    url: envValue("REGISTRATION_DOCS_WEBHOOK_URL"),
+    url: envValue("REGISTRATION_DOCS_WEBHOOK_URL") || DEFAULT_REGISTRATION_DOCS_WEBHOOK_URL,
     token: envValue(
       "REGISTRATION_DOCS_WEBHOOK_TOKEN",
       "ANNOUNCEMENT_WEBHOOK_TOKEN",

@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 
 const PROCESSING_STALE_MS = 30 * 60 * 1000;
+const DEFAULT_REGISTRATION_DOCS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxWsVmzNdDMXtUd0CwChFXR_Iy6lbb7oVVt8ao_6_8oYYFI9Te9Y7pD0FgIJTjAozYOQg/exec";
 
 function text(value) {
   return String(value || "").trim();
@@ -109,7 +110,8 @@ function resolveRegistrationDocsConfig(runtimeConfig = {}, env = process.env) {
       || registration.webhook_url
       || registration.url
       || communication.registration_docs_webhook_url
-      || communication.registration_webhook_url,
+      || communication.registration_webhook_url
+      || DEFAULT_REGISTRATION_DOCS_WEBHOOK_URL,
     ),
     token: text(
       env.REGISTRATION_DOCS_WEBHOOK_TOKEN
@@ -472,6 +474,7 @@ module.exports = {
   registrationRow,
   resolveRegistrationDocsConfig,
   _test: {
+    DEFAULT_REGISTRATION_DOCS_WEBHOOK_URL,
     eventIdFor,
     paymentAmount,
     balanceAmount,

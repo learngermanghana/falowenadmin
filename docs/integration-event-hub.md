@@ -28,7 +28,7 @@ ANNOUNCEMENT_WEBHOOK_TOKEN
 ANNOUNCEMENT_WEBHOOK_SHEET_NAME
 ANNOUNCEMENT_WEBHOOK_SHEET_GID
 
-REGISTRATION_DOCS_WEBHOOK_URL
+REGISTRATION_DOCS_WEBHOOK_URL  # optional override; default is the deployed Registration Docs web app
 # REGISTRATION_DOCS_WEBHOOK_TOKEN is optional; when omitted the existing
 # ANNOUNCEMENT_WEBHOOK_TOKEN is reused.
 
@@ -74,9 +74,9 @@ The automatic Firestore lifecycle trigger needs only the Registration Docs web-a
     "announcement_webhook_token": "<existing shared token>"
   },
   "registration_docs": {
-    "webhook_url": "https://script.google.com/macros/s/<deployment-id>/exec"
+    "webhook_url": "https://script.google.com/macros/s/AKfycbxWsVmzNdDMXtUd0CwChFXR_Iy6lbb7oVVt8ao_6_8oYYFI9Te9Y7pD0FgIJTjAozYOQg/exec"
   }
 }
 ```
 
-The same Registration Docs URL should also be configured in Vercel as `REGISTRATION_DOCS_WEBHOOK_URL` so failed automatic events can be retried from Communication → System events. `REGISTRATION_DOCS_WEBHOOK_TOKEN` is optional; when absent, the existing `ANNOUNCEMENT_WEBHOOK_TOKEN` is used.
+Falowen now defaults to the deployed Registration Docs web app at `https://script.google.com/macros/s/AKfycbxWsVmzNdDMXtUd0CwChFXR_Iy6lbb7oVVt8ao_6_8oYYFI9Te9Y7pD0FgIJTjAozYOQg/exec` in both Firebase and the Vercel Integration Hub. `REGISTRATION_DOCS_WEBHOOK_URL` remains available only as an override if the Apps Script is redeployed under a different URL. `REGISTRATION_DOCS_WEBHOOK_TOKEN` is optional; when absent, the existing `ANNOUNCEMENT_WEBHOOK_TOKEN` is used.
