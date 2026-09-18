@@ -31,12 +31,11 @@ update("src/data/courseDictionary.js", (source) => {
 
 update("src/data/teachingSlides.js", (source) => {
   let next = source;
-  next = mustReplace(
-    next,
-    'import { c1PresenterSlides } from "./c1PresenterSlides.js";',
-    'import { c1PresenterSlides } from "./c1PresenterSlides.js";\nimport { c2PresenterSlides } from "./c2PresenterSlides.js";',
-    "C2 teachingSlides import",
-  );
+  if (!next.includes('import { c2PresenterSlides } from "./c2PresenterSlides.js";')) {
+    const importAnchor = 'import { c1PresenterSlides } from "./c1PresenterSlides.js";';
+    if (!next.includes(importAnchor)) throw new Error("C2 teachingSlides import anchor missing");
+    next = next.replace(importAnchor, importAnchor + '\nimport { c2PresenterSlides } from "./c2PresenterSlides.js";');
+  }
 
   if (!next.includes("...c2PresenterSlides")) {
     const exportPattern = /export const teachingSlides = \[([^\n]+)\];/;
