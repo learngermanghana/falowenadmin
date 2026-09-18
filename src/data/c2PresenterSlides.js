@@ -1,470 +1,32 @@
-const GRAMMAR = {
-  argumentation: "Structure C2 arguments by separating thesis, premise, evidence, counterargument, concession and synthesis; use einerseits ... andererseits, zwar ... jedoch and darüber hinaus selectively rather than mechanically.",
-  concessive: "Use advanced concessive structures such as obgleich, wenngleich, selbst wenn, ungeachtet dessen and trotz to concede a point without abandoning the main argument.",
-  contrast: "Use precise contrast with während, wohingegen, demgegenüber, hingegen and im Gegensatz dazu, making the compared dimensions explicit.",
-  nominalisation: "Use nominalisation for dense formal style while preserving clarity: regulieren → die Regulierung, teilhaben → die Teilhabe, abwägen → die Abwägung.",
-  passive: "Use passive, modal passive and passive alternatives when processes, norms or consequences are more important than the actor.",
-  reported: "Report sources and contested claims precisely with laut, zufolge, nach Angaben and Konjunktiv I; distinguish reported claims from your own evaluation.",
-  consequence: "Express causal chains and consequences precisely with zumal, insofern, infolgedessen, sodass, weshalb and wodurch.",
-  condition: "Use sofern, vorausgesetzt, dass, selbst wenn, angenommen, dass and Konjunktiv II to formulate conditions, reservations and counterfactual scenarios.",
-  purpose: "Use indem, dadurch dass, um ... zu and damit to distinguish means, mechanisms and intended outcomes.",
-  relative: "Use extended relative clauses, including prepositional and genitive relatives such as auf deren Grundlage, mit denen and für die.",
-  academic: "Distinguish observation, evidence, inference, evaluation and limitation with cohesive academic language and explicit reference.",
-  hedging: "Use modal hedging and epistemic precision: dürfte, ließe sich, scheint, spricht dafür, kaum, keineswegs and nur bedingt.",
-  functional: "Use Funktionsverbgefüge selectively for formal precision: zur Debatte stehen, in Betracht ziehen, eine Abwägung vornehmen, Einfluss ausüben.",
-  participle: "Use expanded participial attributes to compress information: die von Experten vorgeschlagene Reform; die langfristig zu erwartenden Folgen.",
-  coherence: "Create dense but readable cohesion through reference chains, resumptive expressions and paragraph-level connectors instead of repeating the same nouns and conjunctions.",
-};
-
 const LESSONS = [
-  {
-    topic: "Kreislaufwirtschaft und Wegwerfgesellschaft",
-    grammar: ["nominalisation", "consequence", "hedging"],
-    models: [
-      "Die konsequente Vermeidung kurzlebiger Produkte dürfte wirksamer sein als eine ausschließlich auf Recycling ausgerichtete Strategie.",
-      "Die Ausweitung von Reparatur- und Rücknahmesystemen kann den Ressourcenverbrauch senken, wodurch Herstellern zugleich mehr Verantwortung für den gesamten Produktzyklus zukommt.",
-      "Eine pauschale Kritik am Konsum greift jedoch zu kurz, zumal langlebige Alternativen nicht für alle Haushalte gleichermaßen erschwinglich sind.",
-    ],
-    speaking: [
-      "Die zentrale Spannung besteht zwischen individuellem Konsumkomfort und den ökologischen Kosten einer Wegwerfgesellschaft. Eine C2-Analyse sollte deshalb nicht nur Verbraucher, sondern auch Produktdesign, Preise und Herstellerverantwortung berücksichtigen.",
-      "Häufig wird vorausgesetzt, dass bessere Mülltrennung das Grundproblem löst. Diese Annahme ist nur bedingt überzeugend, weil Abfallvermeidung und längere Produktlebenszyklen bereits vor dem Recycling ansetzen.",
-      "Gegen strengere Vorgaben lässt sich einwenden, dass sie Produkte verteuern könnten. Dem steht jedoch gegenüber, dass Reparierbarkeit und Wiederverwendung langfristig Material- und Entsorgungskosten reduzieren können.",
-      "Sinnvoll wäre eine Kombination aus verbindlicher Herstellerverantwortung, Reparaturrechten und transparenten Informationen zur Lebensdauer von Produkten. So würde die Verantwortung nicht einseitig auf Konsumenten verlagert.",
-      "In der Gesamtschau ist Kreislaufwirtschaft dann überzeugend, wenn sie Abfallvermeidung, soziale Bezahlbarkeit und wirtschaftliche Anreize verbindet. Recycling allein dürfte dafür nicht ausreichen.",
-    ],
-  },
-  {
-    topic: "Klimapolitik, Verantwortung und soziale Gerechtigkeit",
-    grammar: ["concessive", "condition", "academic"],
-    models: [
-      "Wenngleich ambitionierte Klimapolitik gesellschaftliche Kosten verursacht, ist entscheidend, wie diese Kosten zwischen Einkommensgruppen verteilt werden.",
-      "Klimaschutzmaßnahmen finden eher Akzeptanz, sofern ihre sozialen Folgen transparent gemacht und gezielt ausgeglichen werden.",
-      "Aus sinkenden Emissionen allein lässt sich noch nicht ableiten, dass eine Maßnahme sozial ausgewogen oder langfristig tragfähig ist.",
-    ],
-    speaking: [
-      "Klimapolitik berührt nicht nur ökologische, sondern auch verteilungspolitische Fragen. Entscheidend ist daher, wer die Kosten trägt und wer von Investitionen, Förderungen und besserer Infrastruktur profitiert.",
-      "Eine problematische Annahme lautet, dass alle Haushalte gleichermaßen auf höhere Energie- oder Mobilitätspreise reagieren können. Tatsächlich unterscheiden sich Einkommen, Wohnort und verfügbare Alternativen erheblich.",
-      "Kritiker verweisen zu Recht auf Belastungen durch Verbote oder Preissteigerungen. Dieses Argument spricht jedoch eher für sozialen Ausgleich und Übergangsfristen als gegen Klimapolitik grundsätzlich.",
-      "Maßnahmen sollten ökologische Wirksamkeit mit gezielten Rückerstattungen, öffentlichem Verkehr und Gebäudeförderung verbinden. Dadurch ließe sich vermeiden, dass Klimaschutz als rein individuelle Pflicht erscheint.",
-      "Eine tragfähige Klimapolitik muss ökologische Ziele, soziale Gerechtigkeit und politische Akzeptanz gleichzeitig berücksichtigen. Gerade diese Abwägung unterscheidet eine differenzierte Position von einer einfachen Pro-oder-Contra-Antwort.",
-    ],
-  },
-  {
-    topic: "Energie- und Mobilitätswende",
-    grammar: ["passive", "contrast", "condition"],
-    models: [
-      "Während der Ausbau erneuerbarer Energien beschleunigt werden muss, dürfen Netzstabilität und Speicherbedarf nicht ausgeblendet werden.",
-      "Der motorisierte Individualverkehr ließe sich deutlich reduzieren, sofern attraktive und verlässliche Alternativen verfügbar wären.",
-      "Investitionen sollten dort priorisiert werden, wo Emissionen vermieden und zugleich Mobilitätschancen verbessert werden können.",
-    ],
-    speaking: [
-      "Die Energie- und Mobilitätswende verbindet technische Infrastruktur mit Verhaltensänderungen. Weder neue Technologien noch individuelle Einschränkungen allein dürften den Übergang bewältigen.",
-      "Oft wird angenommen, dass Menschen freiwillig auf das Auto verzichten, sobald sie über Klimafolgen informiert sind. Diese Annahme unterschätzt Pendelwege, Versorgungslücken und die Bedeutung verlässlicher Alternativen.",
-      "Gegen schnellen Ausbau werden Kosten und technische Grenzen angeführt. Diese Einwände sind relevant, rechtfertigen jedoch eher eine schrittweise Priorisierung als dauerhafte Abhängigkeit von fossilen Strukturen.",
-      "Vorrangig wären stabile Netze, Speicher, öffentlicher Verkehr und sichere Rad- und Fußwege auszubauen. Die konkrete Mischung sollte regionale Bedingungen berücksichtigen.",
-      "Die Wende dürfte gelingen, wenn technische Machbarkeit, soziale Erreichbarkeit und langfristige Planung zusammengeführt werden. Ein einheitliches Modell für alle Regionen wäre dagegen kaum überzeugend.",
-    ],
-  },
-  {
-    topic: "Nachhaltigkeit zwischen Innovation und Verzicht",
-    grammar: ["argumentation", "hedging", "concessive"],
-    models: [
-      "Technologische Innovation kann Ressourcen effizienter nutzen, dürfte aber zusätzliche Nachfrage nicht automatisch verhindern.",
-      "Selbst wenn klimafreundliche Technologien verfügbar sind, bleibt die Frage bestehen, welche Formen des Konsums gesellschaftlich langfristig tragfähig sind.",
-      "Eine reine Verzichtsdebatte greift ebenso zu kurz wie die Annahme, technischer Fortschritt werde sämtliche Zielkonflikte auflösen.",
-    ],
-    speaking: [
-      "Die Debatte wird häufig fälschlich als Gegensatz zwischen Innovation und Verzicht dargestellt. Tatsächlich geht es um die Frage, wo Effizienz genügt und wo absolute Verbrauchsgrenzen diskutiert werden müssen.",
-      "Eine verbreitete Annahme ist, dass effizientere Technik automatisch den Gesamtverbrauch senkt. Rebound-Effekte zeigen jedoch, dass niedrigere Kosten oder höherer Komfort zusätzliche Nutzung begünstigen können.",
-      "Gegen Verzicht wird eingewandt, dass er individuelle Freiheit einschränke und politisch schwer vermittelbar sei. Umgekehrt kann unbegrenzter Konsum ökologische Kosten auf andere Gruppen oder Generationen verlagern.",
-      "Sinnvoll wäre, Innovation durch Standards und Preise so zu gestalten, dass Effizienzgewinne nicht vollständig durch Mehrverbrauch aufgehoben werden. Gleichzeitig sollten Alternativen attraktiv statt nur moralisch gefordert werden.",
-      "In der Gesamtschau erscheint eine Kombination aus Innovation, Infrastruktur und selektiver Begrenzung am plausibelsten. Welche Form angemessen ist, hängt allerdings stark vom jeweiligen Sektor ab.",
-    ],
-  },
-  {
-    topic: "Schulpflicht, Bildungsauftrag und individuelle Freiheit",
-    grammar: ["argumentation", "condition", "relative"],
-    models: [
-      "Schulpflicht lässt sich nicht ausschließlich als Eingriff in die individuelle Freiheit verstehen, da sie zugleich den Zugang zu Bildung und gesellschaftlicher Teilhabe sichern soll.",
-      "Alternative Bildungsformen wären vertretbar, sofern verbindliche Qualitätsstandards und soziale Kontakte gewährleistet würden.",
-      "Eltern, deren pädagogische Vorstellungen von staatlichen Schulen abweichen, benötigen nachvollziehbare Verfahren statt pauschaler Ausnahmen.",
-    ],
-    speaking: [
-      "Die Grundspannung besteht zwischen elterlicher und individueller Freiheit einerseits und dem staatlichen Bildungs- und Schutzauftrag andererseits. Eine überzeugende Position muss beide Seiten ernst nehmen.",
-      "Hinter der Schulpflicht steht die Annahme, dass gemeinsame Bildungsstandards gesellschaftliche Teilhabe fördern. Sie ist plausibel, darf aber nicht mit der Behauptung verwechselt werden, nur eine einzige Schulform könne diese Ziele erreichen.",
-      "Kritiker verweisen auf pädagogische Vielfalt und individuelle Lernbedürfnisse. Dem lässt sich entgegenhalten, dass Kinder unabhängig von den Ressourcen ihrer Eltern Mindestchancen auf Bildung und soziale Erfahrung erhalten sollten.",
-      "Denkbar wären kontrollierte alternative Bildungsformen mit verbindlichen Lernzielen, regelmäßiger Evaluation und Schutzstandards. Damit würde Freiheit erweitert, ohne den Bildungsauftrag vollständig zu privatisieren.",
-      "Schulpflicht ist daher weniger als starre Anwesenheitspflicht denn als Garantie überprüfbarer Bildung zu diskutieren. Wie flexibel diese Garantie ausgestaltet wird, ist eine legitime politische und pädagogische Abwägung.",
-    ],
-  },
-  {
-    topic: "Kindergarten und frühkindliche Bildung",
-    grammar: ["nominalisation", "relative", "hedging"],
-    models: [
-      "Der Ausbau hochwertiger frühkindlicher Bildung kann zur Verringerung späterer Bildungsungleichheiten beitragen, dürfte familiäre Unterschiede jedoch nicht vollständig ausgleichen.",
-      "Einrichtungen, in denen Sprache, Spiel und soziale Interaktion systematisch gefördert werden, schaffen wichtige Entwicklungsräume.",
-      "Die Professionalisierung des Personals ist mindestens ebenso relevant wie die bloße Ausweitung von Betreuungsplätzen.",
-    ],
-    speaking: [
-      "Frühkindliche Bildung erfüllt Betreuungs-, Bildungs- und Integrationsfunktionen zugleich. Deshalb sollte die Debatte nicht auf die Frage reduziert werden, ab welchem Alter Kinder möglichst lange betreut werden.",
-      "Eine häufige Annahme lautet, mehr Betreuungsplätze führten automatisch zu besseren Bildungschancen. Entscheidend sind jedoch Qualität, Personalschlüssel, Sprachförderung und stabile Beziehungen.",
-      "Manche Eltern befürchten eine zu frühe Institutionalisierung. Diese Sorge ist nachvollziehbar, spricht aber eher für flexible Modelle und Qualitätsstandards als gegen frühkindliche Angebote insgesamt.",
-      "Investitionen sollten vorrangig in qualifiziertes Personal, kleinere Gruppen und gezielte Sprach- und Entwicklungsförderung fließen. Zugleich braucht es Wahlmöglichkeiten für Familien.",
-      "Kindergarten kann soziale Ungleichheit mindern, wenn Qualität und Zugang zusammen gedacht werden. Eine reine Platzquote wäre dagegen ein zu grober Erfolgsindikator.",
-    ],
-  },
-  {
-    topic: "Chancengleichheit, Leistung und Selektion im Bildungssystem",
-    grammar: ["concessive", "consequence", "academic"],
-    models: [
-      "Obgleich Leistungsbewertung Orientierung bietet, kann frühe Selektion bestehende soziale Unterschiede verstärken.",
-      "Unterschiedliche Ausgangsbedingungen wirken sich auf schulische Leistungen aus, weshalb Ergebnisse nicht losgelöst vom Lernkontext interpretiert werden sollten.",
-      "Aus statistischen Leistungsunterschieden lässt sich nicht ohne Weiteres auf individuelle Begabung schließen.",
-    ],
-    speaking: [
-      "Chancengleichheit bedeutet nicht, dass alle dieselben Ergebnisse erzielen müssen, sondern dass Herkunft und Einkommen den Bildungsweg möglichst wenig bestimmen. Leistungsprinzip und Ausgleich stehen daher in einem dauerhaften Spannungsverhältnis.",
-      "Problematisch ist die Annahme, Noten spiegelten Leistung völlig objektiv wider. Unterrichtsqualität, familiäre Unterstützung und Erwartungen können Ergebnisse erheblich beeinflussen.",
-      "Gegen zusätzliche Förderung wird mitunter eingewandt, sie verwässere Leistungsstandards. Das überzeugt nur teilweise, denn faire Bedingungen und anspruchsvolle Standards schließen einander nicht aus.",
-      "Sinnvoll wären frühe Förderung, durchlässigere Bildungswege und spätere irreversible Auswahlentscheidungen. Leistungsbewertung sollte durch qualitative Rückmeldung ergänzt werden.",
-      "Ein gerechtes Bildungssystem muss Leistung anerkennen und zugleich systematische Nachteile reduzieren. Die entscheidende Frage ist daher nicht Leistung oder Gleichheit, sondern wie Leistung unter möglichst fairen Bedingungen gemessen wird.",
-    ],
-  },
-  {
-    topic: "Wissenschaftskommunikation, Vertrauen und Evidenz",
-    grammar: ["reported", "academic", "hedging"],
-    models: [
-      "Der Studie zufolge besteht ein statistischer Zusammenhang; daraus folgt jedoch noch kein eindeutiger Kausalnachweis.",
-      "Die vorliegenden Daten sprechen dafür, dass die Maßnahme wirksam sein könnte, wobei die Übertragbarkeit auf andere Gruppen begrenzt bleibt.",
-      "Wissenschaftliches Vertrauen entsteht nicht durch absolute Gewissheit, sondern durch transparente Methoden, überprüfbare Daten und offene Korrektur.",
-    ],
-    speaking: [
-      "Wissenschaftskommunikation muss Unsicherheit erklären, ohne den Eindruck zu erwecken, alle Positionen seien gleich gut belegt. Gerade diese Balance ist für gesellschaftliches Vertrauen zentral.",
-      "Eine problematische Annahme ist, Wissenschaft müsse eindeutige und endgültige Antworten liefern. Forschung arbeitet jedoch mit Wahrscheinlichkeiten, vorläufigen Modellen und revidierbaren Ergebnissen.",
-      "Kritiker weisen darauf hin, dass häufige Korrekturen Vertrauen schwächen können. Umgekehrt ist gerade die Korrigierbarkeit ein Qualitätsmerkmal wissenschaftlicher Verfahren.",
-      "Hilfreich wären transparente Angaben zu Datenlage, Unsicherheit, Interessenkonflikten und Grenzen einer Studie. Medien sollten Befunde nicht stärker formulieren, als die Forschung sie trägt.",
-      "Vertrauen lässt sich langfristig eher durch nachvollziehbare Verfahren als durch Autoritätsbehauptungen sichern. Evidenz sollte verständlich erklärt, aber nicht künstlich vereinfacht werden.",
-    ],
-  },
-  {
-    topic: "Künstliche Intelligenz und menschliche Autonomie",
-    grammar: ["condition", "passive", "hedging"],
-    models: [
-      "Entscheidungen könnten teilweise automatisiert werden, sofern Verantwortlichkeiten und Einspruchsmöglichkeiten eindeutig geregelt wären.",
-      "Je stärker Menschen algorithmischen Empfehlungen folgen, desto wichtiger wird die Frage, ob scheinbare Wahlfreiheit tatsächlich erhalten bleibt.",
-      "KI dürfte menschliche Autonomie nicht allein dadurch einschränken, dass sie Empfehlungen erzeugt, sondern vor allem dann, wenn Alternativen unsichtbar oder schwer zugänglich werden.",
-    ],
-    speaking: [
-      "Die Kernfrage lautet nicht, ob KI Entscheidungen unterstützt, sondern wie viel Urteilskraft Menschen an Systeme delegieren und unter welchen Bedingungen sie widersprechen können.",
-      "Oft wird angenommen, mehr Daten führten automatisch zu besseren Entscheidungen. Daten spiegeln jedoch frühere Strukturen wider und können Verzerrungen reproduzieren.",
-      "Für Automatisierung spricht Effizienz und Konsistenz. Dagegen steht das Risiko, dass Verantwortung diffus wird und Betroffene Entscheidungen kaum nachvollziehen können.",
-      "Erforderlich wären Transparenz, menschliche Überprüfung bei folgenreichen Entscheidungen und wirksame Beschwerdewege. Nicht jede automatisierbare Entscheidung sollte vollständig automatisiert werden.",
-      "KI kann Autonomie erweitern oder begrenzen. Entscheidend ist daher weniger die Technologie selbst als die institutionelle Gestaltung von Kontrolle, Wahlmöglichkeiten und Verantwortung.",
-    ],
-  },
-  {
-    topic: "Algorithmische Öffentlichkeit und soziale Medien",
-    grammar: ["consequence", "contrast", "coherence"],
-    models: [
-      "Während soziale Medien den Zugang zur öffentlichen Debatte erleichtern, strukturieren algorithmische Empfehlungen zugleich, welche Inhalte sichtbar werden.",
-      "Aufmerksamkeit wird nach bestimmten Signalen verteilt, wodurch emotional zugespitzte Inhalte einen systematischen Vorteil erhalten können.",
-      "Demgegenüber wäre zu prüfen, inwiefern Plattformdesign und Nutzerverhalten gemeinsam zur Polarisierung beitragen.",
-    ],
-    speaking: [
-      "Soziale Medien erweitern Öffentlichkeit, privatisieren aber zugleich einen Teil ihrer Regeln. Plattformen entscheiden technisch mit darüber, welche Stimmen Reichweite erhalten.",
-      "Die Annahme, Nutzer sähen lediglich Inhalte, die sie selbst auswählen, ist unvollständig. Empfehlungssysteme ordnen, verstärken und wiederholen Inhalte nach eigenen Optimierungszielen.",
-      "Gegen Regulierung spricht die Sorge vor Eingriffen in Meinungsfreiheit. Andererseits betrifft Transparenz über Empfehlungslogiken nicht notwendigerweise die Zulässigkeit einzelner Meinungen.",
-      "Sinnvoll wären unabhängige Forschung, Transparenzpflichten und mehr Kontrolle über personalisierte Empfehlungen. Auch Medienkompetenz bleibt wichtig, kann strukturelle Plattformanreize jedoch nicht ersetzen.",
-      "Eine demokratische Öffentlichkeit braucht sowohl offene Beteiligung als auch nachvollziehbare Regeln für Reichweite und Moderation. Die Verantwortung liegt daher bei Plattformen, Staat, Medien und Nutzern zugleich.",
-    ],
-  },
-  {
-    topic: "Datenschutz, Personalisierung und digitale Bequemlichkeit",
-    grammar: ["concessive", "relative", "functional"],
-    models: [
-      "Die Einwilligung zur Datenverarbeitung steht häufig nur formal zur Verfügung, weil Nutzer kaum überblicken können, auf welcher Grundlage Profile erstellt werden.",
-      "Personalisierte Dienste bieten zwar Komfort, setzen jedoch eine Datennutzung voraus, deren langfristige Folgen schwer einzuschätzen sind.",
-      "Bei besonders sensiblen Daten sollte eine strengere Abwägung vorgenommen werden, statt Zustimmung als pauschale Legitimation zu behandeln.",
-    ],
-    speaking: [
-      "Die zentrale Spannung besteht zwischen digitalem Komfort und informationeller Selbstbestimmung. Problematisch wird Personalisierung vor allem dann, wenn Nutzer weder Umfang noch Folgen der Datennutzung realistisch einschätzen können.",
-      "Viele Modelle setzen voraus, dass Zustimmung eine informierte freie Entscheidung darstellt. Bei langen Bedingungen, Marktmacht und fehlenden Alternativen ist diese Voraussetzung häufig nur eingeschränkt erfüllt.",
-      "Unternehmen argumentieren, personalisierte Daten verbesserten Dienste und Finanzierung. Das ist plausibel, rechtfertigt aber nicht automatisch unbegrenzte Datensammlung.",
-      "Datensparsame Voreinstellungen, verständliche Optionen und strengere Grenzen für sensible Profile wären sinnvoll. Nutzer sollten Personalisierung ablehnen können, ohne den Grundzugang zu verlieren.",
-      "Datenschutz und Bequemlichkeit sind kein absoluter Gegensatz. Gute Regulierung sollte nützliche Personalisierung ermöglichen, gleichzeitig aber Machtasymmetrien und intransparente Datennutzung begrenzen.",
-    ],
-  },
-  {
-    topic: "Automatisierung, Arbeit und lebenslanges Lernen",
-    grammar: ["consequence", "nominalisation", "condition"],
-    models: [
-      "Die Automatisierung einzelner Tätigkeiten führt nicht zwangsläufig zum Verschwinden ganzer Berufe, verändert jedoch deren Kompetenzprofile erheblich.",
-      "Die kontinuierliche Weiterbildung gewinnt an Bedeutung, sofern technologische Veränderungen schneller verlaufen als traditionelle Ausbildungszyklen.",
-      "Eine Verlagerung der Anpassungskosten ausschließlich auf Beschäftigte würde bestehende Ungleichheiten vermutlich verschärfen.",
-    ],
-    speaking: [
-      "Automatisierung ersetzt eher Aufgabenbündel als Berufe vollständig. Für Beschäftigte entsteht deshalb die Herausforderung, Kompetenzen fortlaufend an veränderte Tätigkeitsprofile anzupassen.",
-      "Eine verbreitete Annahme lautet, jeder könne sich durch Eigeninitiative problemlos weiterbilden. Zeit, Einkommen, Bildungszugang und betriebliche Unterstützung sind jedoch sehr ungleich verteilt.",
-      "Unternehmen betonen Produktivitätsgewinne, während Beschäftigte Arbeitsplatzunsicherheit erleben können. Beide Perspektiven müssen in einer tragfähigen Transformationsstrategie berücksichtigt werden.",
-      "Weiterbildung sollte als gemeinsame Verantwortung von Staat, Unternehmen und Beschäftigten organisiert werden. Lernzeit und finanzielle Unterstützung sind dabei ebenso wichtig wie Kursangebote.",
-      "Technologischer Wandel muss nicht zu massenhafter Verdrängung führen, kann aber Ungleichheiten verstärken, wenn Anpassungschancen ungleich verteilt sind. Entscheidend ist daher die institutionelle Gestaltung des Übergangs.",
-    ],
-  },
-  {
-    topic: "Wohnungskrise, Stadtplanung und soziale Mischung",
-    grammar: ["consequence", "relative", "functional"],
-    models: [
-      "Steigende Boden- und Mietpreise setzen Prozesse in Gang, durch die einkommensschwächere Haushalte aus gut erschlossenen Vierteln verdrängt werden können.",
-      "Quartiere, in denen Wohnen, Arbeit, Versorgung und öffentlicher Verkehr räumlich verbunden sind, können Alltagswege verkürzen.",
-      "Bei Neubauprojekten sollte nicht nur die Zahl der Wohnungen, sondern auch deren langfristige Bezahlbarkeit in Betracht gezogen werden.",
-    ],
-    speaking: [
-      "Wohnungskrisen entstehen aus einem Zusammenspiel von Angebot, Bodenpreisen, Finanzierung, Regulierung und regionaler Nachfrage. Eine einzelne Ursache erklärt daher selten die gesamte Entwicklung.",
-      "Die Annahme, mehr Neubau senke automatisch kurzfristig jede Miete, ist zu einfach. Entscheidend sind Lage, Preissegment, Bodenpolitik und die Geschwindigkeit, mit der Angebot tatsächlich entsteht.",
-      "Gegen Mietregulierung wird mit Investitionshemmnissen argumentiert; gegen reine Marktmodelle mit Verdrängung und fehlender Bezahlbarkeit. Beide Risiken sind real und müssen gegeneinander abgewogen werden.",
-      "Sinnvoll wäre eine Mischung aus schnellerem Wohnungsbau, sozial gebundenem Bestand, besserer Flächennutzung und Verkehrsanbindung. Stadtplanung sollte soziale Mischung ausdrücklich als Ziel berücksichtigen.",
-      "Bezahlbares Wohnen ist nicht nur eine Marktfrage, sondern beeinflusst Teilhabe, Mobilität und soziale Stabilität. Tragfähige Lösungen müssen daher Neubau und Bestandspolitik verbinden.",
-    ],
-  },
-  {
-    topic: "Demografischer Wandel, Generationen und Pflege",
-    grammar: ["consequence", "condition", "participle"],
-    models: [
-      "Die langfristig zu erwartende Alterung der Bevölkerung erhöht den Druck auf Pflege, Renten und Arbeitsmarkt.",
-      "Das System ließe sich stabilisieren, sofern Produktivität, Erwerbsbeteiligung und Zuwanderung gemeinsam berücksichtigt würden.",
-      "Eine ausschließlich zwischen den Generationen geführte Verteilungsdebatte kann verdecken, dass auch innerhalb jeder Altersgruppe erhebliche soziale Unterschiede bestehen.",
-    ],
-    speaking: [
-      "Demografischer Wandel betrifft weit mehr als Renten. Pflege, Wohnformen, Arbeitsmarkt und regionale Infrastruktur müssen sich an eine veränderte Altersstruktur anpassen.",
-      "Oft wird implizit angenommen, jüngere und ältere Generationen hätten jeweils homogene Interessen. Tatsächlich unterscheiden sich Einkommen und Lebenslagen innerhalb der Generationen stark.",
-      "Eine längere Lebensarbeitszeit kann Finanzierung entlasten, ist aber für körperlich belastende Berufe nicht gleichermaßen realistisch. Pauschale Lösungen würden diese Unterschiede ignorieren.",
-      "Erforderlich sind eine Kombination aus Prävention, guter Pflegeinfrastruktur, flexibleren Übergängen in den Ruhestand und einer breiteren Finanzierung. Auch qualifizierte Zuwanderung kann einen Beitrag leisten.",
-      "Eine faire Generationenpolitik sollte Belastungen nicht nur nach Alter verteilen, sondern Leistungsfähigkeit und unterschiedliche Berufsbiografien berücksichtigen. Nur dann bleibt der Ausgleich gesellschaftlich legitim.",
-    ],
-  },
-  {
-    topic: "Migration, Integration und gesellschaftliche Zugehörigkeit",
-    grammar: ["concessive", "relative", "coherence"],
-    models: [
-      "Integration ist kein einseitiger Anpassungsprozess, sondern entsteht in Institutionen, in denen Zugang, Erwartungen und Teilhabe ausgehandelt werden.",
-      "Wenngleich gemeinsame Sprachkenntnisse für viele Lebensbereiche zentral sind, reicht Sprache allein für soziale Zugehörigkeit nicht aus.",
-      "Menschen, deren Qualifikationen nicht anerkannt werden, können trotz hoher Kompetenzen langfristig unter ihren Möglichkeiten beschäftigt bleiben.",
-    ],
-    speaking: [
-      "Gesellschaftliche Zugehörigkeit umfasst rechtliche, wirtschaftliche, sprachliche und soziale Dimensionen. Integration ausschließlich an kultureller Anpassung zu messen, wäre daher zu eng.",
-      "Eine häufige Annahme lautet, erfolgreiche Integration hänge primär von der Motivation Zugewanderter ab. Institutionelle Hürden, Anerkennung von Abschlüssen und Diskriminierung beeinflussen den Prozess ebenfalls.",
-      "Kritiker befürchten, zu viel kulturelle Vielfalt könne gemeinsame Normen schwächen. Andererseits können gemeinsame Regeln bestehen, ohne private Lebensweisen vollständig zu vereinheitlichen.",
-      "Wichtig sind früher Spracherwerb, schneller Arbeitsmarktzugang, transparente Anerkennungsverfahren und lokale Begegnungsräume. Erwartungen sollten klar, aber gegenseitig formuliert werden.",
-      "Integration gelingt eher als wechselseitiger Prozess mit verbindlichen Regeln und realen Teilhabechancen. Symbolische Zugehörigkeitsdebatten allein lösen praktische Barrieren kaum.",
-    ],
-  },
-  {
-    topic: "Gesellschaftlicher Zusammenhalt und Polarisierung",
-    grammar: ["argumentation", "hedging", "contrast"],
-    models: [
-      "Polarisierung dürfte weniger an Meinungsunterschieden an sich liegen als daran, ob politische Gegner als legitime Gesprächspartner anerkannt werden.",
-      "Während kontroverse Debatten demokratisch notwendig sind, kann die moralische Abwertung ganzer Gruppen gemeinsame Problemlösung erschweren.",
-      "Eine pauschale Forderung nach mehr Einigkeit wäre allerdings ebenso problematisch, weil sie berechtigte Konflikte unsichtbar machen könnte.",
-    ],
-    speaking: [
-      "Zusammenhalt bedeutet nicht Konsens in allen Fragen. Entscheidend ist vielmehr, ob Konflikte innerhalb gemeinsam akzeptierter demokratischer und sozialer Regeln ausgetragen werden.",
-      "Die Annahme, starke Meinungsunterschiede seien automatisch Zeichen gesellschaftlichen Zerfalls, greift zu kurz. Offen ausgetragene Konflikte können auch Ausdruck politischer Beteiligung sein.",
-      "Appelle an Höflichkeit allein reichen nicht aus, wenn materielle Ungleichheiten oder institutionelles Misstrauen Konflikte antreiben. Umgekehrt rechtfertigen reale Probleme keine pauschale Feindbildbildung.",
-      "Lokale Beteiligung, transparente Institutionen und Medienkompetenz können Vertrauen stärken. Besonders wichtig ist, Räume für Streit zu schaffen, ohne persönliche Entmenschlichung zu normalisieren.",
-      "Gesellschaftlicher Zusammenhalt zeigt sich gerade im Umgang mit Dissens. Eine robuste Gesellschaft benötigt daher sowohl Konfliktfähigkeit als auch Mindestvertrauen in gemeinsame Verfahren.",
-    ],
-  },
-  {
-    topic: "Wirtschaftswachstum, Wohlstand und Gemeinwohl",
-    grammar: ["academic", "contrast", "hedging"],
-    models: [
-      "Wirtschaftswachstum kann materiellen Wohlstand erhöhen, bildet Lebensqualität jedoch nur unvollständig ab.",
-      "Demgegenüber wäre zu berücksichtigen, dass stagnierende Volkswirtschaften Verteilungskonflikte verschärfen können, sofern Produktivitätsgewinne ausbleiben.",
-      "Ob ein höheres Bruttoinlandsprodukt gesellschaftlichen Fortschritt anzeigt, lässt sich daher nur in Verbindung mit Verteilung, Gesundheit und Umweltbelastung beurteilen.",
-    ],
-    speaking: [
-      "Wachstum ist ein nützlicher, aber begrenzter Indikator. Es sagt wenig darüber aus, wie Einkommen verteilt sind oder welche ökologischen und sozialen Kosten mit Produktion verbunden sind.",
-      "Die Annahme, Wachstum und Gemeinwohl seien identisch, ist ebenso problematisch wie die Vorstellung, Wohlstand könne dauerhaft ohne produktive wirtschaftliche Basis gesichert werden.",
-      "Wachstumskritiker betonen ökologische Grenzen; Befürworter verweisen auf Innovation und Finanzierung öffentlicher Leistungen. Beide Perspektiven haben berechtigte Punkte.",
-      "Politik sollte Wachstum dort fördern, wo es gesellschaftlichen Nutzen schafft, und gleichzeitig Umwelt- und Verteilungsindikatoren stärker berücksichtigen. Die Qualität wirtschaftlicher Aktivität ist zentral.",
-      "Eine C2-Position sollte Wachstum weder zum Selbstzweck erklären noch pauschal ablehnen. Entscheidend ist, welche Formen von Wohlstand gesellschaftlich angestrebt und wie ihre Kosten gemessen werden.",
-    ],
-  },
-  {
-    topic: "Globalisierung, Lieferketten und wirtschaftliche Resilienz",
-    grammar: ["contrast", "consequence", "condition"],
-    models: [
-      "Während globale Lieferketten Spezialisierung und niedrigere Kosten ermöglichen, können starke Abhängigkeiten die Krisenanfälligkeit erhöhen.",
-      "Eine vollständige Rückverlagerung der Produktion wäre weder realistisch noch zwingend effizient, sofern kritische Abhängigkeiten gezielt diversifiziert werden können.",
-      "Versorgungsstörungen können sich entlang komplexer Lieferketten fortpflanzen, wodurch lokale Engpässe internationale Auswirkungen entfalten.",
-    ],
-    speaking: [
-      "Globalisierung erhöht Effizienz, schafft aber auch Abhängigkeiten. Resilienz bedeutet daher nicht Autarkie, sondern die Fähigkeit, Schocks durch Diversifizierung und Reserven aufzufangen.",
-      "Eine problematische Annahme ist, möglichst kurze Lieferketten seien automatisch sicherer. Regionale Konzentration kann ebenfalls Risiken schaffen, etwa bei Naturkatastrophen oder politischen Krisen.",
-      "Für Rückverlagerung sprechen strategische Kontrolle und Versorgungssicherheit; dagegen höhere Kosten und der Verlust internationaler Spezialisierungsvorteile.",
-      "Kritische Güter sollten stärker diversifiziert und transparent überwacht werden. Bei weniger sensiblen Produkten kann internationale Arbeitsteilung weiterhin sinnvoll sein.",
-      "Wirtschaftliche Resilienz erfordert selektive Absicherung statt vollständiger Entglobalisierung. Entscheidend ist, Abhängigkeiten zu kennen und Alternativen aufzubauen, bevor Krisen eintreten.",
-    ],
-  },
-  {
-    topic: "Fachkräftemangel und qualifizierte Zuwanderung",
-    grammar: ["consequence", "purpose", "relative"],
-    models: [
-      "Der Fachkräftemangel lässt sich nicht allein durch Zuwanderung beheben, da auch Ausbildung, Arbeitsbedingungen und Erwerbsbeteiligung entscheidend sind.",
-      "Anerkennungsverfahren sollten vereinfacht werden, damit qualifizierte Personen ihre Kompetenzen schneller einsetzen können.",
-      "Branchen, in denen Personal dauerhaft fehlt, müssen zugleich prüfen, welche Arbeitsbedingungen die Bindung vorhandener Beschäftigter erschweren.",
-    ],
-    speaking: [
-      "Qualifizierte Zuwanderung kann Engpässe reduzieren, ist aber kein Ersatz für Ausbildung und bessere Arbeitsbedingungen. Fachkräftemangel hat je nach Branche unterschiedliche Ursachen.",
-      "Die Annahme, offene Stellen seien ausschließlich Folge einer zu kleinen Erwerbsbevölkerung, greift zu kurz. Löhne, Arbeitszeiten, Anerkennung und regionale Mobilität spielen ebenfalls eine Rolle.",
-      "Kritiker warnen vor Brain Drain in Herkunftsländern. Diese Sorge sollte ernst genommen werden, spricht aber eher für faire Rekrutierung und Ausbildungskooperationen als gegen Mobilität generell.",
-      "Nötig sind schnelle Anerkennung, verlässliche Einwanderungswege, Sprachförderung und attraktive Arbeitsbedingungen. Gleichzeitig sollte in inländische Aus- und Weiterbildung investiert werden.",
-      "Eine nachhaltige Fachkräftestrategie verbindet Zuwanderung mit Qualifizierung und Bindung. Wer nur neue Arbeitskräfte anwirbt, ohne strukturelle Probleme zu beheben, verschiebt das Problem lediglich.",
-    ],
-  },
-  {
-    topic: "Konsum, Werbung und Verhaltenssteuerung",
-    grammar: ["functional", "hedging", "concessive"],
-    models: [
-      "Werbung übt nicht zwangsläufig direkten Zwang aus, kann Entscheidungen jedoch durch Auswahlarchitektur und wiederholte Reize systematisch beeinflussen.",
-      "Selbst wenn Nutzer formal frei entscheiden, kann die Gestaltung digitaler Plattformen bestimmte Verhaltensweisen wahrscheinlicher machen.",
-      "Bei besonders verletzlichen Gruppen wäre eine strengere Regulierung personalisierter Werbung in Betracht zu ziehen.",
-    ],
-    speaking: [
-      "Die Grenze zwischen Information und Verhaltenssteuerung ist besonders bei personalisierter Werbung schwer zu ziehen. Entscheidend ist, wie transparent Einflussmechanismen und wirtschaftliche Interessen sind.",
-      "Eine verbreitete Annahme lautet, informierte Konsumenten seien gegenüber Werbung vollständig autonom. Aufmerksamkeit, Gewohnheiten und gezielte Personalisierung können Entscheidungen dennoch beeinflussen.",
-      "Ein Werbeverbot könnte wirtschaftliche Modelle einschränken und paternalistisch wirken. Andererseits benötigen Kinder oder hochgradig manipulative Designs besonderen Schutz.",
-      "Sinnvoll wären Transparenzpflichten, Grenzen für sensible Profildaten und strengerer Schutz Minderjähriger. Allgemeine Werbung müsste deshalb nicht vollständig untersagt werden.",
-      "Verhaltenssteuerung ist graduell, nicht binär. Regulierung sollte daher vor allem dort ansetzen, wo Intransparenz, asymmetrische Information und besondere Verletzlichkeit zusammenkommen.",
-    ],
-  },
-  {
-    topic: "Reisen, Tourismus und kulturelle Authentizität",
-    grammar: ["concessive", "contrast", "relative"],
-    models: [
-      "Während Tourismus Einkommen und kulturellen Austausch fördern kann, verändert er zugleich Orte, deren Attraktivität gerade auf lokaler Eigenart beruht.",
-      "Wenngleich der Begriff Authentizität problematisch ist, lässt sich beobachten, dass touristische Nachfrage lokale Angebote und Lebenshaltungskosten beeinflusst.",
-      "Reiseformen, bei denen lokale Wertschöpfung und Umweltbelastung berücksichtigt werden, dürften langfristig tragfähiger sein.",
-    ],
-    speaking: [
-      "Tourismus kann kulturelle Begegnung ermöglichen, aber auch lokale Räume in konsumierbare Produkte verwandeln. Authentizität ist dabei kein statischer Zustand, sondern wird ständig neu ausgehandelt.",
-      "Die Annahme, Touristen zerstörten automatisch lokale Kultur, ist ebenso vereinfachend wie die Vorstellung, Tourismus sei immer ein unverfälschter Austausch. Macht- und Einkommensverhältnisse sind entscheidend.",
-      "Beschränkungen können lokale Bewohner schützen, zugleich aber Einkommen gefährden. Deshalb müssen Maßnahmen regional und nach Belastungsgrad differenziert werden.",
-      "Besucherlenkung, lokale Abgaben und Förderung regionaler Anbieter können helfen, Nutzen und Kosten gerechter zu verteilen. Umweltfolgen sollten in Preise und Planung einbezogen werden.",
-      "Nachhaltiger Tourismus bedeutet nicht, Reisen moralisch abzuwerten, sondern ökologische und soziale Kosten sichtbar zu machen. Gute Politik bewahrt sowohl Zugänglichkeit als auch lokale Lebensqualität.",
-    ],
-  },
-  {
-    topic: "Kulturförderung, Kanon und gesellschaftliche Teilhabe",
-    grammar: ["argumentation", "concessive", "participle"],
-    models: [
-      "Die öffentlich finanzierte Kulturförderung wirft die Frage auf, nach welchen Kriterien gesellschaftlich relevante Kunst ausgewählt werden sollte.",
-      "Obgleich ein kultureller Kanon Orientierung bieten kann, darf er historisch marginalisierte Perspektiven nicht dauerhaft ausschließen.",
-      "Die von Institutionen getroffenen Auswahlentscheidungen prägen mit, welche Werke als repräsentativ wahrgenommen werden.",
-    ],
-    speaking: [
-      "Kulturförderung ist nie vollständig neutral, weil Auswahlentscheidungen Sichtbarkeit und Ressourcen verteilen. Dennoch kann öffentliche Förderung kulturelle Angebote ermöglichen, die rein marktwirtschaftlich kaum bestehen würden.",
-      "Die Annahme eines objektiven Kanons ist problematisch. Kanons entstehen historisch und spiegeln institutionelle Macht ebenso wie ästhetische Qualität wider.",
-      "Gegen eine Erweiterung wird gelegentlich mit Qualitätsverlust argumentiert. Vielfalt und Qualitätsanspruch schließen sich jedoch nicht aus, sofern transparente Kriterien gelten.",
-      "Förderentscheidungen sollten fachliche Qualität, Zugänglichkeit und Vielfalt berücksichtigen und regelmäßig überprüft werden. Gleichzeitig braucht Kunst Freiräume jenseits unmittelbarer gesellschaftlicher Nützlichkeit.",
-      "Ein zeitgemäßer Kanon sollte Orientierung bieten, ohne sich als endgültig zu verstehen. Kulturelle Teilhabe wächst, wenn unterschiedliche Erfahrungen sichtbar werden und klassische Werke weiterhin kritisch vermittelt werden.",
-    ],
-  },
-  {
-    topic: "Mehrsprachigkeit, Sprachstandards und Sprachwandel",
-    grammar: ["contrast", "academic", "relative"],
-    models: [
-      "Während Standardsprache überregionale Verständlichkeit erleichtert, erfüllen regionale und soziale Varietäten wichtige Identitätsfunktionen.",
-      "Sprachwandel, der von manchen als Verfall bewertet wird, lässt sich linguistisch häufig als systematische Anpassung an neue Kommunikationsbedingungen beschreiben.",
-      "Normen sind dort besonders relevant, wo institutionelle Verständlichkeit und faire Bewertung gewährleistet werden müssen.",
-    ],
-    speaking: [
-      "Mehrsprachigkeit und Standardsprache verfolgen unterschiedliche Funktionen. Standards sichern Verständlichkeit, während Mehrsprachigkeit kulturelle und kognitive Ressourcen erweitern kann.",
-      "Die Vorstellung, Sprachwandel sei grundsätzlich Sprachverfall, beruht häufig auf normativen Erwartungen. Sprachen haben sich historisch ständig verändert.",
-      "Zu lockere Standards können Bewertung und institutionelle Kommunikation erschweren; zu starre Normen können reale Sprachvielfalt abwerten. Beide Extreme sind problematisch.",
-      "Bildung sollte Standardsprache sicher vermitteln und zugleich Mehrsprachigkeit nicht als Defizit behandeln. Je nach Kontext können unterschiedliche Register gezielt eingeübt werden.",
-      "Sprachkompetenz auf C2-Niveau bedeutet gerade, Register flexibel zu beherrschen. Standardisierung und Vielfalt müssen daher nicht gegeneinander ausgespielt werden.",
-    ],
-  },
-  {
-    topic: "Journalismus, Desinformation und epistemische Verantwortung",
-    grammar: ["reported", "academic", "coherence"],
-    models: [
-      "Nach Angaben unabhängiger Prüfstellen verbreiten sich falsche Behauptungen besonders schnell, wenn sie an bestehende Überzeugungen anschließen.",
-      "Aus der Reichweite einer Meldung lässt sich keineswegs auf ihre Verlässlichkeit schließen; Quelle, Belege und Korrekturpraxis müssen getrennt geprüft werden.",
-      "Journalistische Verantwortung besteht nicht darin, jede Behauptung gleichgewichtig abzubilden, sondern ihre Evidenz transparent einzuordnen.",
-    ],
-    speaking: [
-      "Desinformation ist nicht nur ein Problem falscher Inhalte, sondern auch der Vertrauensordnung, in der Menschen Quellen bewerten. Journalismus trägt deshalb epistemische Verantwortung für Einordnung und Korrektur.",
-      "Die Annahme, Neutralität bedeute, jeder Position gleich viel Raum zu geben, ist fragwürdig. Wenn Evidenz stark asymmetrisch ist, kann künstliche Ausgewogenheit irreführend sein.",
-      "Stärkere Moderation kann Missbrauch begrenzen, birgt aber Risiken für Transparenz und Machtkonzentration. Verfahren müssen deshalb überprüfbar und anfechtbar sein.",
-      "Medien sollten Quellen offenlegen, Unsicherheit kennzeichnen und Korrekturen sichtbar machen. Plattformen könnten Reichweitenmechanismen transparenter gestalten, ohne journalistische Inhalte staatlich vorzuschreiben.",
-      "Glaubwürdigkeit entsteht durch überprüfbare Verfahren, nicht durch Unfehlbarkeit. Eine informierte Öffentlichkeit braucht deshalb sowohl professionellen Journalismus als auch Kompetenzen zur Quellenkritik.",
-    ],
-  },
-  {
-    topic: "Quellenanalyse, Evidenz und Argumentationskritik",
-    grammar: ["academic", "reported", "hedging"],
-    models: [
-      "Die Quelle behauptet einen Zusammenhang, liefert jedoch nur begrenzte Hinweise darauf, dass tatsächlich ein kausaler Mechanismus vorliegt.",
-      "Der Befund dürfte relevant sein, seine Aussagekraft bleibt jedoch aufgrund der kleinen und nicht repräsentativen Stichprobe eingeschränkt.",
-      "Eine überzeugende Analyse trennt ausdrücklich zwischen dem, was die Quelle belegt, dem, was daraus plausibel folgt, und dem, was offenbleibt.",
-    ],
-    speaking: [
-      "Quellenkritik beginnt mit der Frage, welche Behauptung tatsächlich belegt werden soll. Danach sind Datengrundlage, Methode, Vergleichsgruppe und mögliche Alternativerklärungen zu prüfen.",
-      "Ein häufiger Fehlschluss besteht darin, Korrelation als Kausalität zu behandeln oder eine begrenzte Stichprobe auf eine ganze Bevölkerung zu übertragen.",
-      "Auch hochwertige Studien haben Grenzen. Kritik bedeutet deshalb nicht, Ergebnisse pauschal abzulehnen, sondern ihre Reichweite präzise zu bestimmen.",
-      "Beim Arbeiten mit Quellen sollte jede zentrale Aussage mit Evidenzgrad, Unsicherheit und Gegenbefunden verknüpft werden. So bleibt die eigene Argumentation nachvollziehbar.",
-      "C2-Kompetenz zeigt sich darin, Evidenz weder zu überschätzen noch durch übermäßige Skepsis zu entwerten. Entscheidend ist eine abgestufte, methodisch begründete Bewertung.",
-    ],
-  },
-  {
-    topic: "Essay schreiben: Synthese, Differenzierung und Stil",
-    grammar: ["coherence", "functional", "nominalisation"],
-    models: [
-      "Eine überzeugende Einleitung grenzt die Fragestellung ein, ohne die gesamte Argumentation bereits vorwegzunehmen.",
-      "Die Gegenüberstellung unterschiedlicher Positionen sollte in eine Synthese münden, statt lediglich zwei Listen von Vor- und Nachteilen zu erzeugen.",
-      "Durch gezielte Nominalisierung und Funktionsverbgefüge lässt sich ein formeller Stil erreichen, sofern Verständlichkeit und Satzrhythmus erhalten bleiben.",
-    ],
-    speaking: [
-      "Ein C2-Essay benötigt eine klare Leitfrage und eine erkennbare argumentative Bewegung. Die Absätze sollten jeweils eine Funktion für die Gesamtthese erfüllen.",
-      "Ein typischer Fehler ist, Komplexität mit langen Sätzen und abstrakten Nomen zu verwechseln. Stilistische Dichte ist nur dann überzeugend, wenn Bezüge eindeutig bleiben.",
-      "Gegenargumente sollten nicht als Pflichtabschnitt isoliert werden, sondern die eigene Position tatsächlich prüfen und gegebenenfalls nuancieren.",
-      "Vor dem Schreiben lohnt sich eine kurze Struktur aus These, zwei tragenden Argumenten, Gegenperspektive und Synthese. Danach kann die sprachliche Verdichtung erfolgen.",
-      "Ein starker C2-Text zeigt Kontrolle: Er differenziert, ohne unentschlossen zu wirken, und formuliert präzise, ohne unnötig kompliziert zu werden.",
-    ],
-  },
-  {
-    topic: "Formelle Korrespondenz, Beschwerde und institutionelle Stellungnahme",
-    grammar: ["condition", "functional", "coherence"],
-    models: [
-      "Ich wäre Ihnen dankbar, wenn Sie erläutern könnten, auf welcher Grundlage die Änderung vorgenommen wurde und welche Alternativen geprüft worden sind.",
-      "Die derzeitige Regelung führt zu erheblichen Einschränkungen, weshalb ich Sie um eine zeitnahe Überprüfung und einen konkreten Lösungsvorschlag bitte.",
-      "Sollte eine vollständige Rücknahme nicht möglich sein, käme aus meiner Sicht eine Übergangsregelung in Betracht.",
-    ],
-    speaking: [
-      "Formelle Korrespondenz auf C2-Niveau verbindet Klarheit mit institutionell angemessenem Ton. Das Problem muss konkret benannt werden, ohne unnötig aggressiv oder vage zu formulieren.",
-      "Eine problematische Annahme ist, Höflichkeit bedeute sprachliche Unverbindlichkeit. Gerade in Beschwerden sollten Forderung, Begründung und gewünschte Abhilfe eindeutig sein.",
-      "Zu starke Emotionalisierung kann die sachliche Wirkung schwächen; übermäßige Distanz kann hingegen das konkrete Anliegen verschleiern. Registerkontrolle ist daher entscheidend.",
-      "Eine gute Struktur lautet: Anlass, nachvollziehbare Einordnung, konkrete Beeinträchtigung, Erwartung, Kompromissoption und Frist oder nächster Schritt.",
-      "Die überzeugendste formelle Antwort ist präzise genug, um handlungsfähig zu machen, und zugleich diplomatisch genug, um eine Lösung zu erleichtern.",
-    ],
-  },
-  {
-    topic: "Prüfungssimulation: spontane Debatte und schriftliche Synthese",
-    grammar: ["argumentation", "academic", "coherence"],
-    models: [
-      "Eine belastbare Position entsteht, wenn These, Begründung, Beispiel, Gegenargument und Synthese inhaltlich aufeinander aufbauen.",
-      "Unter Zeitdruck ist es sinnvoller, wenige Strukturen sicher und funktional einzusetzen, als möglichst viele komplexe Formen mechanisch unterzubringen.",
-      "Die abschließende Bewertung sollte erkennen lassen, welche Kriterien für das Urteil ausschlaggebend waren und wo Unsicherheit bestehen bleibt.",
-    ],
-    speaking: [
-      "In der Prüfung sollte die erste Minute dazu dienen, die Kernfrage, zwei Kriterien und eine Gegenperspektive zu identifizieren. So entsteht ein roter Faden statt einer Sammlung spontaner Gedanken.",
-      "Ein häufiger Fehler besteht darin, sofort eine starke Position zu formulieren und anschließend nur bestätigende Beispiele zu suchen. Besser ist es, die Gegenposition früh mitzudenken.",
-      "Unter Zeitdruck darf Differenzierung nicht zu Unentschlossenheit führen. Eine klare Schlussposition ist möglich, auch wenn Grenzen und Ausnahmen ausdrücklich genannt werden.",
-      "Für die schriftliche Aufgabe hilft eine knappe Planung: Einleitung, Argument 1 mit Beispiel, Argument 2, Gegenargument mit Reaktion, Synthese und Schluss. Beim Überarbeiten sollten Bezüge und Verbposition priorisiert werden.",
-      "C2-Leistung zeigt sich in kontrollierter Komplexität: präzise Wortwahl, logische Verknüpfung, angemessenes Register und die Fähigkeit, einen Einwand produktiv in die eigene Argumentation einzubauen.",
-    ],
-  },
+  {chapter:"1.1",title:"Sprache, Identität und Gesellschaft",topic:"Sprache als Ausdruck von Zugehörigkeit, Distanz und Identität",grammarFocus:"Registerwechsel: gehoben · neutral · umgangssprachlich",objectives:["dieselbe Aussage adressatengerecht formulieren","Konnotation und soziale Wirkung erklären","unpassendes Register überarbeiten"],phrases:[["Zugehörigkeit vermitteln","Gemeinsame sprachliche Codes können Zugehörigkeit vermitteln."],["sich abgrenzen von + Dat.","Gruppen grenzen sich sprachlich voneinander ab."],["ein Register wählen","Je nach Adressat muss ein angemessenes Register gewählt werden."]],production:"Formuliere dieselbe Meinung informell, neutral und formal-akademisch und erkläre die Registerunterschiede.",challenge:"Diskutiere, ob sprachliche Anpassung soziale Kompetenz, Konformität oder beides ist.",when:"Use register shifts to express the same meaning appropriately for different audiences.",structure:"Keep the core proposition stable; change vocabulary, stance markers and degree of explicitness rather than distorting the message.",mistake:"Do not confuse formal language with unnecessarily long or archaic language."},
+  {chapter:"1.2",title:"Bildung und Wissensvermittlung",topic:"Informationsstruktur und bewusste Schwerpunktsetzung",grammarFocus:"Thema–Rhema · Vorfeld · Informationsgewicht",objectives:["bekannte und neue Information ordnen","das Vorfeld zur Hervorhebung nutzen","Informationsdichte leserfreundlich steuern"],phrases:[["einen Schwerpunkt setzen auf + Akk.","Der Kurs setzt einen Schwerpunkt auf selbstständiges Lernen."],["Wissen vermitteln","Digitale Formate können Wissen flexibel vermitteln."],["eine Kernaussage hervorheben","Das Vorfeld kann eine Kernaussage hervorheben."]],production:"Schreibe vier Sätze zum Thema Bildung und besetze jeweils das Vorfeld anders. Erkläre den Fokus.",challenge:"Soll Bildung Faktenwissen oder selbstständiges Lernen priorisieren? Steuere den Informationsfluss bewusst.",when:"Use information structure to control what the reader processes as known, new or especially important.",structure:"German main clauses keep the finite verb in position two; moving an element into the Vorfeld changes focus, not the verb-second rule.",mistake:"Do not front an element unless the resulting focus matches the intended message."},
+  {chapter:"1.3",title:"Wissenschaft und Erkenntnis",topic:"Akademische Präzision durch Nominal- und Verbalstil",grammarFocus:"Nominalstil ↔ Verbalstil · Informationsverdichtung",objectives:["Nominalisierungen gezielt verwenden","überladene Nominalketten auflösen","wissenschaftliche Aussagen präzise verdichten"],phrases:[["eine These aufstellen","Die Forschenden stellen eine neue These auf."],["eine Annahme widerlegen","Neue Daten widerlegen die ursprüngliche Annahme."],["Erkenntnisse gewinnen","Aus Langzeitstudien lassen sich Erkenntnisse gewinnen."]],production:"Transformiere vier wissenschaftliche Aussagen vom Verbal- in den Nominalstil und wieder zurück.",challenge:"Schreibe einen Forschungsabsatz mit zwei sinnvollen Nominalisierungen, aber ohne überladene Nominalketten.",when:"Use nominal style for compact academic reference and verbal style when actions and agents should remain transparent.",structure:"When nominalising, preserve logical roles with genitives or prepositional complements; when verbalising, restore a clear subject and finite verb.",mistake:"Avoid stacking several abstract nouns when a clear verb would be easier to process."},
+  {chapter:"1.4",title:"Medien und öffentliche Meinung",topic:"Fremdaussagen wiedergeben und epistemische Distanz markieren",grammarFocus:"Indirekte Rede · Konjunktiv I/II · Distanzierung",objectives:["fremde Aussagen kennzeichnen","Konjunktiv I funktional einsetzen","Bericht, Behauptung und Bewertung unterscheiden"],phrases:[["eine Behauptung aufstellen","Der Beitrag stellt eine unbelegte Behauptung auf."],["sich auf eine Quelle berufen","Der Autor beruft sich auf eine umstrittene Studie."],["eine Aussage einordnen","Journalisten sollten strittige Aussagen einordnen."]],production:"Überführe drei direkte Zitate in indirekte Rede und markiere jeweils Quelle und Evidenzstatus.",challenge:"Schreibe eine Medienanalyse, die verifizierte Information, fremde Behauptung und eigene Bewertung strikt trennt.",when:"Use indirect speech to attribute information and mark distance from a source.",structure:"Konjunktiv I normally marks reported propositions; use Konjunktiv II where Konjunktiv-I forms would be ambiguous.",mistake:"Do not present a disputed quotation as an established fact after removing the source marker."},
+  {chapter:"1.5",title:"Politik und demokratische Prozesse",topic:"Quellenbedeutung, Selbstaussage und Wahrscheinlichkeit markieren",grammarFocus:"Subjektive Modalität: sollen · wollen · dürften · müssen",objectives:["berichtete Information und Selbstaussage unterscheiden","Wahrscheinlichkeitsgrade ausdrücken","politische Aussagen vorsichtig paraphrasieren"],phrases:[["Stellung nehmen zu + Dat.","Die Regierung nahm zu den Vorwürfen Stellung."],["einen Vorwurf zurückweisen","Der Minister wies den Vorwurf zurück."],["eine Einschätzung abgeben","Fachleute gaben eine vorsichtige Einschätzung ab."]],production:"Schreibe fünf Nachrichtensätze mit sollen, wollen, dürfte, muss und kann in subjektiver Bedeutung.",challenge:"Analysiere eine politische Aussage nach Selbstaussage, Fremdbericht, Wahrscheinlichkeit und gesicherter Tatsache.",when:"Use subjective modal verbs to distinguish hearsay, self-report and degrees of probability.",structure:"With past reference, combine the modal with Infinitiv Perfekt: soll/will/dürfte + Partizip II + haben/sein.",mistake:"Do not read wollen + Infinitiv Perfekt literally as intention; it can mark what the subject claims about themself."},
+  {chapter:"1.6",title:"Wirtschaft und soziale Ungleichheit",topic:"Ursache, Zusammenhang und Folge präzise unterscheiden",grammarFocus:"Kausalität: bedingen · bewirken · führen zu · resultieren aus · zur Folge haben",objectives:["Korrelation und Kausalität unterscheiden","kausale Verben semantisch korrekt wählen","Zusammenhänge differenziert darstellen"],phrases:[["Ungleichheit verschärfen","Steigende Wohnkosten können Ungleichheiten verschärfen."],["eine Entwicklung begünstigen","Ungleicher Zugang kann Nachteile begünstigen."],["zur Folge haben","Preissteigerungen können Kaufkraftverluste zur Folge haben."]],production:"Beschreibe eine wirtschaftliche Ursache-Folge-Kette mit vier unterschiedlichen Kausalausdrücken.",challenge:"Ist wirtschaftliche Ungleichheit eher individuell oder strukturell bedingt? Vermeide unbelegte absolute Kausalität.",when:"Choose causal language according to the strength of the evidence.",structure:"resultieren aus points back to a cause; führen zu and zur Folge haben point forward to a consequence.",mistake:"Do not turn correlation into proven causation by using verursachen without evidence."},
+  {chapter:"1.7",title:"Arbeit, Leistung und gesellschaftlicher Wandel",topic:"Idiomatisches professionelles Deutsch mit festen Verb-Nomen-Verbindungen",grammarFocus:"Funktionsverbgefüge · nominale Prädikate · idiomatische Verdichtung",objectives:["Funktionsverbgefüge sicher produzieren","natürliche Verdichtung von Bürokratensprache unterscheiden","einfache und nominale Varianten stilistisch vergleichen"],phrases:[["Einfluss nehmen auf + Akk.","Beschäftigte möchten Einfluss auf Entscheidungen nehmen."],["zur Verfügung stellen","Unternehmen sollten Weiterbildung zur Verfügung stellen."],["in Betracht ziehen","Eine Neuverteilung sollte in Betracht gezogen werden."]],production:"Schreibe acht berufliche Sätze mit Funktionsverbgefügen und vereinfache anschließend drei davon wieder.",challenge:"Diskutiere, ob moderne Arbeit mehr Autonomie oder mehr Leistungsdruck schafft.",when:"Use Funktionsverbgefüge when they are idiomatic and useful for formal compression.",structure:"Learn each noun together with its fixed verb and required preposition or case.",mistake:"Avoid literal translations such as Einfluss machen when German requires Einfluss nehmen."},
+  {chapter:"2.1",title:"Technologie und künstliche Intelligenz",topic:"Komplexe technische Zusammenhänge präzise verdichten",grammarFocus:"Partizipialattribute · erweiterte Attribute · Relativsatz-Alternativen",objectives:["Relativsätze gezielt verdichten","lange Partizipialattribute lesbar strukturieren","zwischen Präzision und Überladung unterscheiden"],phrases:[["Entscheidungen automatisieren","Unternehmen automatisieren zunehmend standardisierte Entscheidungen."],["eine Verzerrung aufweisen","Trainingsdaten können systematische Verzerrungen aufweisen."],["Transparenz gewährleisten","Anbieter müssen die Nachvollziehbarkeit automatisierter Prozesse gewährleisten."]],production:"Formuliere vier Relativsätze als Partizipialattribute um und entscheide, welche Variante stilistisch besser ist.",challenge:"Schreibe über algorithmische Entscheidungen und nutze zwei erweiterte Partizipialattribute, ohne die Lesbarkeit zu beeinträchtigen.",when:"Use participial attributes to condense technical information without losing readability.",structure:"The participial group stands before the noun and carries adjective endings; unpack it into a relative clause when it becomes overloaded.",mistake:"Do not pile several long modifiers before one noun if the reader can no longer identify the head noun quickly."},
+  {chapter:"2.2",title:"Datenschutz und digitale Freiheit",topic:"Passiv und Passiversatzformen",grammarFocus:"sich lassen · sein + zu · -bar · man",objectives:["Passivvarianten unterscheiden","Verpflichtung und Möglichkeit markieren","Stil variieren"],phrases:[["Einwilligung einholen","Vor der Verarbeitung ist eine Einwilligung einzuholen."],["Zugriff gewähren auf + Akk.","Nutzern sollte Zugriff auf ihre Daten gewährt werden."],["Vorgaben einhalten","Organisationen haben verbindliche Vorgaben einzuhalten."]],production:"Formuliere sechs Passivsätze mit unterschiedlichen Ersatzformen um.",challenge:"Schreibe über digitale Selbstbestimmung und nutze mindestens drei Passiversatzformen.",when:"Use passive alternatives to distinguish possibility, obligation and impersonal agency.",structure:"sich lassen + Infinitiv expresses possibility; sein + zu + Infinitiv often expresses necessity; -bar forms an adjective.",mistake:"Do not treat all passive substitutes as interchangeable: their modality differs."},
+  {chapter:"2.3",title:"Medizin, Ethik und Verantwortung",topic:"Unsicherheit und Evidenz in medizinisch-ethischen Debatten",grammarFocus:"Subjektive Modalverben: muss · dürfte · könnte · kann · mag + Infinitiv Perfekt",objectives:["Wahrscheinlichkeitsgrade unterscheiden","Evidenz vorsichtig bewerten","Behauptung und Schlussfolgerung sprachlich trennen"],phrases:[["Evidenz berücksichtigen","Eine verantwortungsvolle Entscheidung berücksichtigt die verfügbare Evidenz."],["Risiken abwägen","Ethische Entscheidungen erfordern eine sorgfältige Abwägung verschiedener Risiken."],["auf Daten beruhen","Die Einschätzung sollte auf belastbaren Daten beruhen."]],production:"Formuliere fünf Aussagen mit unterschiedlichen Graden von Möglichkeit und Wahrscheinlichkeit.",challenge:"Schreibe zu einer medizinisch-ethischen Debatte und kennzeichne Evidenz, Unsicherheit und eigene Bewertung klar.",when:"Use subjective modal verbs to grade evidential certainty in medical and ethical claims.",structure:"For past inference use könnte/dürfte/muss + Partizip II + haben/sein.",mistake:"Do not upgrade plausible evidence to certainty with muss unless the inference is genuinely strong."},
+  {chapter:"2.4",title:"Umwelt und Nachhaltigkeit",topic:"Konzessive und adversative Ausdrucksweise",grammarFocus:"wenngleich · obgleich · ungeachtet · wohingegen · bei aller",objectives:["Einwände integrieren","Gegenpositionen präzise formulieren","Register variieren"],phrases:[["Zielkonflikte berücksichtigen","Nachhaltige Planung muss Zielkonflikte berücksichtigen."],["Kosten in Kauf nehmen","Veränderungen können kurzfristige Kosten erfordern."],["Anreize schaffen für + Akk.","Neue Regeln können Anreize für nachhaltige Investitionen schaffen."]],production:"Formuliere fünf obwohl-Sätze mit unterschiedlichen konzessiven Strukturen um.",challenge:"Schreibe zu Nachhaltigkeit und nutze mindestens drei verschiedene Einräumungs- oder Gegensatzstrukturen.",when:"Use concessive and adversative structures to integrate objections while preserving your argument.",structure:"wenngleich/obgleich introduce subordinate clauses; ungeachtet takes a nominal complement; wohingegen contrasts two clauses.",mistake:"Do not use a concessive marker when you actually mean cause or consequence."},
+  {chapter:"2.5",title:"Migration und gesellschaftliche Teilhabe",topic:"Rektion und Präpositionalstil",grammarFocus:"Verb-, Nomen- und Adjektivrektion · Kasuspräzision",objectives:["Rektion sicher anwenden","Präpositionalstil gezielt nutzen","Kasus kontrollieren"],phrases:[["teilhaben an + Dat.","Sprachkenntnisse erleichtern die Teilhabe am gesellschaftlichen Leben."],["Zugang erhalten zu + Dat.","Informationen erleichtern den Zugang zu Bildungsangeboten."],["angewiesen sein auf + Akk.","Viele Menschen sind auf verständliche Informationen angewiesen."]],production:"Schreibe zehn Sätze mit unterschiedlichen Rektionen und markiere jeweils den Kasus.",challenge:"Schreibe über gesellschaftliche Teilhabe und nutze mindestens sechs sichere Rektionen.",when:"Learn verbs, nouns and adjectives together with their required prepositions and cases.",structure:"The case is controlled by the lexical item: teilhaben an + Dat., angewiesen sein auf + Akk., Beitrag zu + Dat.",mistake:"Do not choose a preposition by translating directly from English."},
+  {chapter:"2.6",title:"Kultur und kulturelles Gedächtnis",topic:"Bedeutung durch Wortbildung erschließen und präzise neue Begriffe bilden",grammarFocus:"Komposition · Präfixe · Suffixe · Nominalisierung · Bedeutungsverschiebung",objectives:["komplexe Komposita analysieren","produktive Wortbildungsmuster erkennen","Neubildungen auf Stil und Verständlichkeit prüfen"],phrases:[["Erinnerung bewahren","Museen und Archive helfen, historische Erinnerung zu bewahren."],["Geschichte aufarbeiten","Gesellschaften arbeiten belastende Kapitel ihrer Geschichte auf."],["Deutungshoheit beanspruchen","Keine einzelne Gruppe sollte alleinige Deutungshoheit beanspruchen."]],production:"Analysiere acht komplexe Wörter nach Stamm, Präfix oder Suffix und Bedeutung. Bilde anschließend vier transparente Komposita.",challenge:"Schreibe über Erinnerungskultur und verwende fünf komplexe Wortbildungen, ohne künstlich zu klingen.",when:"Use word formation to decode and create precise terms while keeping them transparent.",structure:"Identify the base, prefix/suffix and semantic relation inside compounds before forming a new word.",mistake:"Avoid artificial compounds that are grammatically possible but not idiomatic or interpretable."},
+  {chapter:"2.7",title:"Literatur und Interpretation",topic:"Bedeutungsnuancen und Perspektivierung",grammarFocus:"Denotation · Konnotation · Metaphorik · semantische Perspektive",objectives:["wörtliche und übertragene Bedeutung trennen","Konnotationen erklären","sprachliche Perspektivierung analysieren"],phrases:[["eine Wirkung entfalten","Die Metapher entfaltet eine zunehmend starke Wirkung."],["eine Lesart nahelegen","Die Wortwahl legt eine bestimmte Lesart nahe."],["eine Bedeutung transportieren","Symbole können zusätzliche Bedeutungen transportieren."]],production:"Beschreibe bei fünf Wörtern Denotation, Konnotation und mögliche Wirkung.",challenge:"Analysiere einen kurzen literarischen Absatz und trenne Textbeobachtung, Interpretation und alternative Lesart.",when:"Separate textual observation from interpretation and mark alternative readings cautiously.",structure:"Use verbs such as nahelegen, transportieren and charakterisieren to connect linguistic evidence with interpretation.",mistake:"Do not present a possible symbolic reading as the only factual meaning of a passage."},
+  {chapter:"3.1",title:"Konsum, Vergleich und Bewertung",topic:"Feine Abstufungen in Vergleichen und Bewertungen",grammarFocus:"Vergleichs- und Intensivierungsstrukturen: weitaus · bei weitem · umso · insofern als",objectives:["Gradunterschiede präzise ausdrücken","Vergleiche argumentativ einbetten","pauschale Steigerungen vermeiden"],phrases:[["einen deutlichen Unterschied aufweisen","Die Modelle weisen deutliche Unterschiede auf."],["im Vergleich zu + Dat.","Im Vergleich zur Vorjahresregelung ist die neue Lösung flexibler."],["bei weitem übertreffen","Die langfristigen Kosten übertreffen den kurzfristigen Nutzen bei weitem."]],production:"Formuliere fünf differenzierte Vergleiche zu Konsum oder Dienstleistungen und variiere die Intensität.",challenge:"Bewerte zwei Konsummodelle, ohne dich auf einfache Komparative wie besser oder schlechter zu beschränken.",when:"Use intensifiers and comparison structures to express degree precisely rather than simply saying besser/schlechter.",structure:"bei weitem and weitaus strengthen a comparison; im Vergleich zu takes Dativ; insofern als introduces the respect in which a judgement applies.",mistake:"Do not intensify every evaluation; choose the degree that the evidence supports."},
+  {chapter:"3.2",title:"Konsum und Werbewirkung",topic:"Komplexe Informationen präzise verdichten",grammarFocus:"Informationsverdichtung: Relativsatz · Partizipialattribut · Nominalisierung · Apposition",objectives:["Information verdichten","Aussagen hierarchisieren","Redundanz überarbeiten"],phrases:[["Informationen bündeln","Eine gute Zusammenfassung bündelt mehrere Informationen."],["einen Sachverhalt präzisieren","Ein Zusatz kann den Sachverhalt präzisieren."],["eine Aussage relativieren","Kontext kann eine allgemeine Aussage relativieren."]],production:"Verdichte drei Satzgruppen zu präzisen C2-Sätzen und löse einen überladenen Satz wieder auf.",challenge:"Schreibe einen analytischen Absatz zur Wirkung moderner Werbung mit mindestens zwei Verdichtungsstrategien.",when:"Condense related information with relative clauses, participial attributes, nominalisation and apposition.",structure:"Keep the main proposition structurally visible and attach secondary information hierarchically.",mistake:"Do not confuse density with quality: an unreadable sentence should be unpacked."},
+  {chapter:"3.3",title:"Bedingungen und Voraussetzungen",topic:"Bedingungen präzise und registergerecht formulieren",grammarFocus:"sofern · falls · vorausgesetzt, dass · unter der Voraussetzung, dass",objectives:["Bedingungen unterscheiden","Voraussetzungen formulieren","wenn-Strukturen variieren"],phrases:[["eine Voraussetzung erfüllen","Alle Voraussetzungen müssen erfüllt sein."],["unter einer Bedingung stehen","Die Teilnahme steht unter einer klaren Bedingung."],["Voraussetzungen nachweisen","Bewerbende müssen die erforderlichen Voraussetzungen nachweisen."]],production:"Formuliere fünf Bedingungen mit unterschiedlichen Strukturen.",challenge:"Schreibe einen differenzierten Absatz mit mindestens drei Konditionalstrukturen.",when:"Use conditional structures to specify whether something is a simple condition, formal prerequisite or hypothetical case.",structure:"sofern/falls send the finite verb to the end; unter der Voraussetzung, dass introduces a noun phrase plus dass-clause.",mistake:"Do not use sofern when the relationship is temporal rather than conditional."},
+  {chapter:"3.4",title:"Freiheit und Verantwortung",topic:"Irreale Vergangenheit, alternative Verläufe und verpasste Möglichkeiten",grammarFocus:"Konjunktiv II Vergangenheit · irreale Bedingungen · hypothetische Folgen",objectives:["alternative Vergangenheiten formulieren","Bedingung und Folge zeitlich korrekt verbinden","Bedauern und Gegenentwürfe differenziert ausdrücken"],phrases:[["eine Chance vertun","Die Institution hat eine wichtige Chance vertan."],["Verantwortung übernehmen für + Akk.","Entscheidungsträger müssen Verantwortung für die Folgen übernehmen."],["Konsequenzen nach sich ziehen","Die Entscheidung zog langfristige Konsequenzen nach sich."]],production:"Formuliere vier alternative Vergangenheitsverläufe mit unterschiedlichen Folgen.",challenge:"Analysiere eine verpasste Entscheidung und unterscheide reale Folgen von hypothetischen Alternativen.",when:"Use Konjunktiv II Vergangenheit for unreal past conditions, missed opportunities and hypothetical consequences.",structure:"Build it with hätte/wäre + Partizip II; modal constructions use hätte + infinitive chain where required.",mistake:"Do not mix a past unreal condition with an indicative consequence if both are hypothetical."},
+  {chapter:"3.5",title:"Globalisierung und Machtverhältnisse",topic:"Argumentative Beziehungen mit komplexen Konnektoren präzisieren",grammarFocus:"insofern · zumal · vielmehr · nicht zuletzt · geschweige denn",objectives:["komplexe logische Beziehungen markieren","Konnektoren semantisch unterscheiden","Argumente elegant präzisieren"],phrases:[["in Abhängigkeit stehen von + Dat.","Viele Märkte stehen in gegenseitiger Abhängigkeit voneinander."],["Einfluss ausüben auf + Akk.","Große Akteure können erheblichen Einfluss auf Regeln ausüben."],["ein Machtgefälle verstärken","Ungleiche Ressourcen können bestehende Machtgefälle verstärken."]],production:"Schreibe sechs Sätze mit komplexen Konnektoren und erkläre ihre Funktion.",challenge:"Verfasse einen differenzierten Absatz über Globalisierung und Macht mit mindestens vier komplexen Konnektoren.",when:"Use complex connectors only when their logical relation is exact.",structure:"insofern als specifies a limited respect; zumal adds a reinforcing reason; vielmehr corrects; geschweige denn strengthens a negative progression.",mistake:"Do not choose advanced connectors merely for difficulty—the semantic relation must fit."},
+  {chapter:"4.1",title:"Diskurspartikeln und Haltung",topic:"Feine Bedeutungsnuancen im Gespräch",grammarFocus:"eben · doch · wohl · ja · schon · eigentlich",objectives:["Partikeln unterscheiden","Haltung sprachlich markieren","gesprochene Sprache natürlich nuancieren"],phrases:[["eine Haltung signalisieren","Partikeln können eine Haltung signalisieren."],["eine Aussage abschwächen","wohl kann eine Aussage vorsichtiger wirken lassen."],["gemeinsames Wissen voraussetzen","Mit ja kann ein Sprecher gemeinsames Wissen als geteilt voraussetzen."]],production:"Schreibe sechs Beispielsätze mit Diskurspartikeln.",challenge:"Erkläre die Wirkung der verwendeten Partikeln und vergleiche Varianten ohne Partikel.",when:"Use discourse particles to signal stance, shared knowledge, concession or probability in natural spoken German.",structure:"Particles usually occupy the Mittelfeld and are typically unstressed; their effect depends strongly on context and intonation.",mistake:"Do not translate particles word-for-word or insert them randomly into formal written prose."},
+  {chapter:"4.2",title:"Idiomatische Verb-Nomen-Verbindungen",topic:"Natürliches C2-Deutsch",grammarFocus:"feste Verb-Nomen-Verbindungen",objectives:["idiomatische Verbindungen produzieren","wörtliche Übersetzungen vermeiden","formelle und direkte Varianten vergleichen"],phrases:[["eine Entscheidung treffen","Wir treffen eine Entscheidung."],["in Erwägung ziehen","Die Leitung zieht mehrere Alternativen in Erwägung."],["eine Maßnahme ergreifen","Die Behörde ergriff eine kurzfristige Maßnahme."]],production:"Formuliere acht Sätze mit festen Verb-Nomen-Verbindungen.",challenge:"Nutze mindestens fünf natürliche Verbindungen in einem zusammenhängenden Absatz.",when:"Treat fixed verb-noun combinations as lexical units.",structure:"Memorise the noun together with its conventional verb, article and any preposition.",mistake:"Avoid productive but non-idiomatic combinations such as eine Entscheidung machen."},
+  {chapter:"4.3",title:"Geschichte und Erinnerungskultur",topic:"Zeitbeziehungen und narrative Ordnung",grammarFocus:"nachdem · ehe · sobald · währenddessen",objectives:["Chronologie präzise darstellen","Vorzeitigkeit und Gleichzeitigkeit unterscheiden","historische Entwicklungen sprachlich ordnen"],phrases:[["eine Entwicklung nachzeichnen","Der Text zeichnet die Entwicklung nach."],["in einen historischen Kontext einordnen","Aussagen werden historisch eingeordnet."],["eine Zäsur markieren","Das Ereignis markierte eine historische Zäsur."]],production:"Ordne vier Ereignisse mit temporalen Strukturen.",challenge:"Schreibe einen kurzen C2-Absatz zur Erinnerungskultur mit klarer Chronologie.",when:"Use temporal connectors to organise historical sequence, anteriority and simultaneity.",structure:"nachdem and ehe introduce subordinate clauses with final verbs; tense choice should make the sequence unambiguous.",mistake:"Do not rely on connector variety while leaving the chronology unclear."},
+  {chapter:"4.4",title:"Internationale Zusammenarbeit und Diplomatie",topic:"Diplomatische Sprache und Abschwächung",grammarFocus:"Hedging · vorsichtige Kritik · diplomatische Formulierungen",objectives:["Kritik abschwächen","Positionen diplomatisch formulieren","Zustimmung und Vorbehalt kombinieren"],phrases:[["Vorbehalte äußern","Mehrere Beteiligte äußerten Vorbehalte."],["eine Position vertreten","Eine Seite vertritt eine klare Position."],["zu einer Einigung gelangen","Die Beteiligten gelangten zu einer Einigung."]],production:"Formuliere fünf direkte Aussagen diplomatisch um.",challenge:"Schreibe eine kurze Stellungnahme mit Zustimmung, Vorbehalt und Kompromissvorschlag.",when:"Use hedging to disagree, criticise and negotiate without unnecessary confrontation.",structure:"Combine stance frames such as lässt sich nur bedingt teilen with concessive or conditional clauses to state limits precisely.",mistake:"Do not weaken a position so much that the actual reservation becomes impossible to identify."},
+  {chapter:"4.5",title:"Gesellschaftliche Kontroversen",topic:"Argumentationslogik",grammarFocus:"These · Begründung · Beleg · Einwand · Widerlegung · Schluss",objectives:["Argumente logisch aufbauen","Einwände integrieren","Schlussfolgerungen absichern"],phrases:[["eine These begründen","Die Autorin begründet ihre These nachvollziehbar."],["einen Einwand entkräften","Ein starker Text entkräftet einen Einwand nachvollziehbar."],["eine Schlussfolgerung ziehen","Aus den Befunden lässt sich eine Schlussfolgerung ziehen."]],production:"Baue ein Argument in sechs logischen Schritten auf.",challenge:"Schreibe eine differenzierte Stellungnahme mit Einwand und Widerlegung.",when:"Build an argument as claim, reason, evidence, objection, response and conclusion.",structure:"Use connectors and reference expressions so each sentence shows its logical role in relation to the previous one.",mistake:"Do not repeat the thesis after an objection; answer, qualify or rebut the objection."},
+  {chapter:"5.1",title:"Forschung, Daten und Statistik",topic:"Evidentialität und vorsichtige Schlussfolgerungen",grammarFocus:"belegen · nahelegen · darauf hindeuten · vermuten lassen · nicht ausschließen",objectives:["Belege und Hinweise unterscheiden","Aussagen nach Evidenzgrad abstufen","Übertreibungen vermeiden"],phrases:[["einen Zusammenhang belegen","Die Daten belegen einen Zusammenhang."],["auf etwas hindeuten","Die Ergebnisse deuten auf einen Trend hin."],["eine Schlussfolgerung nahelegen","Die Befunde legen eine vorsichtige Schlussfolgerung nahe."]],production:"Formuliere fünf Aussagen mit unterschiedlichen Evidenzgraden.",challenge:"Schreibe einen kurzen Forschungsabsatz und trenne Befund, Interpretation und Schlussfolgerung.",when:"Grade statements according to the strength of statistical evidence.",structure:"belegen is stronger than nahelegen or darauf hindeuten; causal wording requires more than a correlation.",mistake:"Do not use beweisen for data that only suggest an association."},
+  {chapter:"5.2",title:"Philosophie und abstraktes Denken",topic:"Komplexe Gedanken klar strukturieren",grammarFocus:"Satzperioden · Einbettung · Parenthesen · hierarchische Satzstruktur",objectives:["lange Sätze kontrollieren","Haupt- und Nebeninformationen hierarchisieren","Komplexität lesbar halten"],phrases:[["eine Annahme voraussetzen","Das Argument setzt eine bestimmte Annahme voraus."],["einen Gedanken entfalten","Der Autor entfaltet den Gedanken schrittweise."],["eine Folgerung ableiten","Aus der Prämisse lässt sich eine Folgerung ableiten."]],production:"Verbinde vier kurze Aussagen zu zwei klar strukturierten Satzperioden.",challenge:"Schreibe einen abstrakten Absatz mit einem komplexen Satz, den man trotzdem beim ersten Lesen versteht.",when:"Use complex sentence periods to represent logical hierarchy, not simply to make sentences longer.",structure:"Keep one clear main-clause spine and embed subordinate information where its logical dependency is visible.",mistake:"Do not stack parenthetical clauses until the reader loses the main proposition."},
+  {chapter:"5.3",title:"Professionelle und akademische Kommunikation",topic:"Stilistische Überarbeitung und Präzision",grammarFocus:"Redundanz · schwache Verben · Mehrdeutigkeit · Register · Kohäsion",objectives:["unnötige Wiederholungen entfernen","schwache Formulierungen präzisieren","Register und Kohäsion verbessern"],phrases:[["eine Formulierung präzisieren","Die Aussage sollte sprachlich präzisiert werden."],["Redundanzen vermeiden","Gute Fachtexte vermeiden unnötige Redundanzen."],["einen Gedankengang strukturieren","Signale helfen, den Gedankengang zu strukturieren."]],production:"Überarbeite sechs schwache Sätze hinsichtlich Präzision, Register und Kohäsion.",challenge:"Redigiere einen kurzen Absatz so, dass er prägnanter, natürlicher und akademisch angemessen wirkt.",when:"Revise academic and professional prose for precision, cohesion, register and economy.",structure:"Replace weak verb-noun padding with precise verbs where possible and make pronoun/reference chains unambiguous.",mistake:"Do not equate academic style with nominalisation, passive voice or length in every sentence."},
+  {chapter:"5.4",title:"C2 Synthese",topic:"Transfer und Gesamtkompetenz",grammarFocus:"Register · Nuance · Evidenz · Kohäsion · Reformulierung",objectives:["C2-Strukturen flexibel kombinieren","Texte adressatengerecht reformulieren","Argumente präzise entwickeln"],phrases:[["Erkenntnisse übertragen auf + Akk.","Erkenntnisse lassen sich auf neue Kontexte übertragen."],["eine Position differenzieren","Eine starke Antwort differenziert ihre Position."],["einen Gedanken prägnant zusammenfassen","Der Gedanke wird prägnant zusammengefasst."]],production:"Reformuliere eine Aussage in neutralem, akademischem und diplomatischem Register.",challenge:"Finale Aufgabe: Verfasse 220 Wörter mit Evidenz, Einwand, Nuance und klarer Schlussfolgerung.",when:"Combine C2 resources flexibly according to task, audience, evidence and communicative purpose.",structure:"Choose register, information structure, connectors and reformulation strategies from function first, then check form.",mistake:"Do not display complexity for its own sake; C2 control means selecting the most appropriate option."},
 ];
 
 const slug = (value) => String(value || "")
@@ -474,110 +36,186 @@ const slug = (value) => String(value || "")
   .replace(/^-+|-+$/g, "")
   .toLowerCase();
 
+const objectiveSentence = (lesson) =>
+  `Students can ${lesson.objectives.join(", ")}, and transfer the target language into a controlled C2 spoken and written response.`;
+
+function structureHintDe(focus = "") {
+  const value = String(focus || "");
+  if (/Registerwechsel/i.test(value)) return "Der Aussagekern bleibt gleich; Wortwahl, Anrede, Modalität und Grad der Direktheit werden an Adressat und Situation angepasst.";
+  if (/Thema–Rhema|Vorfeld/i.test(value)) return "Das Vorfeld steuert den Fokus, das finite Verb bleibt im Hauptsatz auf Position 2. Bekanntes steht häufig vor Neuem.";
+  if (/Nominalstil|Nominalisierung/i.test(value)) return "Beim Nominalisieren werden Handlungen zu Nomen; logische Rollen müssen durch Genitiv oder passende Präpositionen erhalten bleiben.";
+  if (/Indirekte Rede|Konjunktiv I/i.test(value)) return "Fremdaussagen werden mit Berichtsverb und Konjunktiv I markiert; bei formaler Gleichheit kann Konjunktiv II Distanz sichern.";
+  if (/Subjektive Modal/i.test(value)) return "Für vergangene Vermutungen oder Fremdaussagen: Modalverb + Partizip II + haben/sein, z. B. dürfte gewirkt haben.";
+  if (/Kausalität/i.test(value)) return "resultieren aus zeigt rückwärts auf die Ursache; führen zu / zur Folge haben zeigen vorwärts auf die Folge. Stärke der Formulierung muss zur Evidenz passen.";
+  if (/Funktionsverb|Verb-Nomen/i.test(value)) return "Feste Verbindungen als Einheit lernen: Nomen + typisches Verb + Rektion, z. B. Einfluss nehmen auf, in Betracht ziehen.";
+  if (/Partizipialattribute/i.test(value)) return "Partizipialgruppen stehen vor dem Nomen und tragen Adjektivendungen; bei Überladung besser in einen Relativsatz auflösen.";
+  if (/sich lassen|sein \+ zu|-bar/i.test(value)) return "sich lassen + Infinitiv drückt Möglichkeit aus; sein + zu + Infinitiv meist Notwendigkeit; -bar bildet eine Eigenschaft.";
+  if (/wenngleich|obgleich|ungeachtet|wohingegen/i.test(value)) return "wenngleich/obgleich leiten Nebensätze ein; ungeachtet steht mit Nominalgruppe; wohingegen kontrastiert zwei Aussagen.";
+  if (/Rektion/i.test(value)) return "Verb, Nomen oder Adjektiv bestimmen Präposition und Kasus. Die Rektion wird als feste Einheit gelernt, nicht aus dem Englischen übersetzt.";
+  if (/Komposition|Präfixe|Suffixe/i.test(value)) return "Stamm, Präfix/Suffix und Bedeutungsbeziehung zuerst erkennen; Neubildungen nur verwenden, wenn sie transparent und idiomatisch sind.";
+  if (/Denotation|Konnotation|Metaphorik/i.test(value)) return "Textbeobachtung und Interpretation trennen; Deutungen mit nahelegen, transportieren oder charakterisieren vorsichtig kennzeichnen.";
+  if (/Vergleichs- und Intensivierungs/i.test(value)) return "weitaus / bei weitem verstärken Vergleiche; im Vergleich zu verlangt Dativ; insofern als grenzt den Bewertungsaspekt ein.";
+  if (/Informationsverdichtung/i.test(value)) return "Relativsatz, Partizipialattribut, Nominalisierung oder Apposition hierarchisieren Zusatzinformation; der Hauptaussagekern muss sichtbar bleiben.";
+  if (/sofern|vorausgesetzt/i.test(value)) return "sofern/falls schicken das finite Verb ans Satzende; unter der Voraussetzung, dass verbindet Nominalgruppe und dass-Satz.";
+  if (/Konjunktiv II Vergangenheit/i.test(value)) return "Irreale Vergangenheit: hätte/wäre + Partizip II; Bedingung und Folge müssen beide als nicht eingetreten markiert sein.";
+  if (/insofern|zumal|vielmehr|geschweige/i.test(value)) return "Konnektoren nach Logik wählen: insofern als grenzt ein, zumal verstärkt einen Grund, vielmehr korrigiert, geschweige denn steigert eine Negation.";
+  if (/eben|doch|wohl|ja|eigentlich/i.test(value)) return "Diskurspartikeln stehen meist unbetont im Mittelfeld; ihre Wirkung entsteht aus Kontext und Intonation, nicht aus Wort-für-Wort-Übersetzung.";
+  if (/nachdem|ehe|sobald|währenddessen/i.test(value)) return "Temporale Konnektoren ordnen Vorzeitigkeit, Nachzeitigkeit und Gleichzeitigkeit; Tempus und Konnektor müssen dieselbe Chronologie zeigen.";
+  if (/Hedging|diplomatisch/i.test(value)) return "Vorbehalte mit nur bedingt, erscheint, ließe sich oder insofern formulieren; die Kritik bleibt klar, aber nicht unnötig konfrontativ.";
+  if (/These|Begründung|Beleg|Einwand/i.test(value)) return "Argumentationskette: These → Begründung → Beleg → Einwand → Reaktion/Widerlegung → Schluss. Jeder Satz braucht eine erkennbare Funktion.";
+  if (/belegen|nahelegen|hindeuten/i.test(value)) return "Evidenzgrad abstufen: belegen ist stärker als nahelegen / darauf hindeuten; Kausalität darf nicht aus bloßer Korrelation entstehen.";
+  if (/Satzperioden|Parenthesen|hierarchische/i.test(value)) return "Ein klarer Hauptsatz bildet das Gerüst; Nebensätze und Parenthesen werden nur dort eingebettet, wo ihre Abhängigkeit sofort erkennbar bleibt.";
+  if (/Redundanz|Mehrdeutigkeit|Kohäsion/i.test(value)) return "Schwache Verben und Wiederholungen ersetzen, Pronomenbezüge eindeutig machen und Register über den ganzen Absatz konsistent halten.";
+  if (/Register · Nuance · Evidenz/i.test(value)) return "Struktur immer nach Funktion wählen: Register, Evidenzgrad, Kohäsion und Reformulierung müssen zur Aufgabe und zum Adressaten passen.";
+  return "Die Zielstruktur wird funktional eingesetzt: Bedeutung zuerst festlegen, Form wählen, anschließend Wortstellung, Bezug und Register kontrollieren.";
+}
+
+function mistakeHintDe(focus = "") {
+  const value = String(focus || "");
+  if (/Kausalität|belegen|nahelegen|hindeuten/i.test(value)) return "Korrelation nicht als sichere Ursache formulieren und den Evidenzgrad nicht sprachlich übertreiben.";
+  if (/Indirekte Rede|Subjektive Modal/i.test(value)) return "Fremdaussage, eigene Bewertung und gesicherte Tatsache nicht vermischen.";
+  if (/Rektion/i.test(value)) return "Präposition oder Kasus nicht wörtlich aus einer anderen Sprache übertragen.";
+  if (/Partizipialattribute|Informationsverdichtung|Satzperioden/i.test(value)) return "Informationsdichte nicht mit Qualität verwechseln: Wenn der Bezug unklar wird, Satz entlasten.";
+  if (/Registerwechsel|Hedging|diplomatisch/i.test(value)) return "Register nicht nur über einzelne Höflichkeitswörter bestimmen; Ton und Direktheit müssen im ganzen Text zusammenpassen.";
+  if (/Funktionsverb|Verb-Nomen/i.test(value)) return "Keine frei erfundenen Verb-Nomen-Kombinationen bilden; feste Verbindung als lexikalische Einheit lernen.";
+  if (/Konjunktiv II Vergangenheit/i.test(value)) return "Irreale Bedingung nicht mit einer realen Indikativfolge kombinieren.";
+  if (/sofern|vorausgesetzt/i.test(value)) return "sofern nicht verwenden, wenn eigentlich eine zeitliche und keine konditionale Beziehung gemeint ist.";
+  if (/eben|doch|wohl|ja|eigentlich/i.test(value)) return "Partikeln nicht zufällig in formelle Schriftsprache einsetzen oder Wort für Wort übersetzen.";
+  return "Die komplexe Form nicht nur verwenden, weil sie fortgeschritten klingt; sie muss die beabsichtigte Bedeutung präziser machen.";
+}
+
+function grammarTeachDe(lesson) {
+  return [
+    `Zielstruktur: ${lesson.grammarFocus}.`,
+    `Wann und warum? ${lesson.objectives.join(" · ")}.`,
+    `Struktur und Kontrolle: ${structureHintDe(lesson.grammarFocus)}`,
+  ];
+}
+
+function commonMistakesDe(lesson) {
+  return [
+    `Typischer Fehler: ${mistakeHintDe(lesson.grammarFocus)}`,
+    "C2 heißt nicht automatisch länger oder komplizierter: Wähle die Struktur nach Funktion, Bedeutung und Register.",
+    "Formuliere zuerst die Aussage klar; prüfe nach der Umformung, ob Bedeutung, Bezug und Evidenzgrad erhalten geblieben sind.",
+  ];
+}
+
+function makeSpeakingQuestions(lesson) {
+  return [
+    `Erkläre den Kern von „${lesson.title}“ in 45–60 Sekunden und benutze mindestens eine thematische Kollokation.`,
+    `Zeige an einem eigenen Beispiel, wie „${lesson.grammarFocus}“ die Bedeutung oder Wirkung einer Aussage verändert.`,
+    `Formuliere eine zu einfache oder pauschale Aussage zu „${lesson.title}“ auf C2-Niveau neu.`,
+    lesson.production,
+    lesson.challenge,
+  ];
+}
+
+function makeSpeakingModels(lesson, questions) {
+  const [p1, p2, p3] = lesson.phrases;
+  return [
+    { questionDe: questions[0], modelAnswerDe: `Bei „${lesson.title}“ geht es vor allem um ${lesson.topic}. Dabei lässt sich etwa sagen: ${p1[1]} Entscheidend ist, die Aussage nicht nur inhaltlich, sondern auch sprachlich präzise einzuordnen.` },
+    { questionDe: questions[1], modelAnswerDe: `${p2[1]} Dieses Beispiel zeigt, wie die Zielstruktur „${lesson.grammarFocus}“ eingesetzt wird, um die Aussage genauer und adressatengerechter zu formulieren.` },
+    { questionDe: questions[2], modelAnswerDe: `Eine pauschale Formulierung würde dem Thema nicht gerecht. Präziser wäre: ${p3[1]} Dadurch wird die Aussage differenziert, ohne unnötig kompliziert zu werden.` },
+    { questionDe: questions[3], modelAnswerDe: `${p1[1]} ${p2[1]} Anschließend würde ich die Form noch einmal prüfen: Passt die Zielstruktur zur beabsichtigten Bedeutung und bleibt der Satz beim ersten Lesen verständlich?` },
+    { questionDe: questions[4], modelAnswerDe: `In einer C2-Antwort würde ich zunächst die zentrale Position eingrenzen, dann ${p1[0]} und ${p2[0]} sprachlich nutzen, einen Einwand berücksichtigen und am Ende zu einer differenzierten Schlussfolgerung kommen.` },
+  ];
+}
+
+function makeGrammarChecks(lesson) {
+  const [p1, p2, p3] = lesson.phrases;
+  const questions = [
+    `Erkläre die Funktion von „${lesson.grammarFocus}“ in dieser Lektion und formuliere einen eigenen Beispielsatz.`,
+    `Überarbeite eine unpräzise Aussage zum Thema „${lesson.title}“ mit der heutigen Zielstruktur.`,
+    `Prüfe den Satz auf Register, logische Beziehung und sprachliche Präzision: „${p1[1]}“`,
+  ];
+  const answers = [
+    `Die Struktur dient hier dazu, ${lesson.topic} präzise auszudrücken. Beispiel: ${p1[1]}`,
+    `${p2[1]} Diese Version ist stärker, weil die sprachliche Form die beabsichtigte Beziehung ausdrücklich markiert.`,
+    `${p1[1]} Der Satz ist grundsätzlich passend; auf C2-Niveau sollte zusätzlich geprüft werden, ob Register, Evidenzgrad und Informationsgewicht zum Kontext passen.`,
+  ];
+  return { questions, models: questions.map((questionDe, index) => ({ questionDe, modelAnswerDe: answers[index] || p3[1] })) };
+}
+
 function makeSlide(lesson, index) {
   const day = index + 1;
-  const assignmentId = `C2 ${day}`;
-  const topic = lesson.topic;
-  const grammarFocusEn = lesson.grammar.map((key) => GRAMMAR[key]);
-  const studentQuestionsDe = [
-    `Welche grundlegende Spannung oder welches Dilemma steckt hinter „${topic}“?`,
-    `Welche Annahme wird in der öffentlichen Debatte über „${topic}“ häufig vorausgesetzt, und wie belastbar ist sie?`,
-    `Formuliere die stärkste Gegenposition zu deiner ersten Einschätzung und reagiere darauf.`,
-    `Welche konkrete Maßnahme oder institutionelle Lösung wäre sinnvoll, und welchen Zielkonflikt müsste sie berücksichtigen?`,
-    `Nimm in 90–120 Sekunden differenziert Stellung zu „${topic}“ und schließe mit einer Synthese.`,
-  ];
-  const grammarCheckQuestions = [
-    `Formuliere differenzierter und vermeide die absolute Aussage: „${topic} ist eindeutig gut oder schlecht.“`,
-    `Verdichte die Aussage mit einer heutigen Zielstruktur: „Bei ${topic} gibt es mehrere Ursachen und mehrere Folgen.“`,
-    `Formuliere eine Gegenposition und relativiere sie anschließend sprachlich präzise.`,
-  ];
+  const assignmentId = `C2-${lesson.chapter}`;
+  const questions = makeSpeakingQuestions(lesson);
+  const checks = makeGrammarChecks(lesson);
+  const phrases = lesson.phrases.map(([phrase, example]) => `${phrase} — ${example}`);
 
   return {
-    id: `c2-day-${day}-${slug(topic)}`,
+    id: `c2-day-${day}-${slug(lesson.title)}`,
     course: "C2",
     day: `Day ${day}`,
     dayNumber: day,
+    chapter: lesson.chapter,
     assignmentId,
-    title: `C2 Day ${day} · ${topic}`,
-    topic: `${day} ${topic}`,
-    objective: `Students analyse ${topic} at C2 depth, test assumptions and evidence, integrate a credible counterposition, and produce a precise spoken and written synthesis with controlled advanced grammar.`,
+    title: `C2 Day ${day} · ${lesson.title}`,
+    topic: `${lesson.chapter} · ${lesson.topic}`,
+    objective: objectiveSentence(lesson),
     estimatedDuration: "75–90 minutes",
     warmupQuestionsDe: [
-      `Welche verbreitete Behauptung hörst du zum Thema „${topic}“?`,
-      `Welche zwei Werte oder Interessen geraten bei diesem Thema miteinander in Konflikt?`,
-      `Welche Information würdest du benötigen, bevor du eine endgültige Position einnimmst?`,
-      `Wie könnte dieselbe Frage aus einer anderen gesellschaftlichen Perspektive bewertet werden?`,
+      `Was bedeutet „${lesson.title}“ in deinen eigenen Worten?`,
+      `Welche sprachliche Schwierigkeit steckt in „${lesson.grammarFocus}“?`,
+      `Welche einfache Aussage zu diesem Thema würdest du auf C2-Niveau präziser formulieren?`,
+      `Welche der heutigen Kollokationen kennst du bereits und in welchem Kontext würdest du sie verwenden?`,
     ],
     keyPhrasesDe: [
-      "Die Frage lässt sich nur insofern beantworten, als ...",
-      "Dem liegt die Annahme zugrunde, dass ...",
-      "Dafür spricht zunächst ..., demgegenüber ist jedoch zu berücksichtigen, dass ...",
-      "Aus diesem Befund lässt sich nicht ohne Weiteres ableiten, dass ...",
-      "Eine pauschale Bewertung greift zu kurz, zumal ...",
-      "Unter der Voraussetzung, dass ..., ließe sich ...",
-      "In der Gesamtschau erscheint ... überzeugend, wenngleich ...",
-      "Entscheidend ist weniger ..., sondern vielmehr ...",
+      ...phrases,
+      "Eine pauschale Aussage greift zu kurz; präziser wäre ...",
+      "Entscheidend ist, zwischen Aussage, Evidenz und Bewertung zu unterscheiden.",
+      "Die Formulierung ist nur dann überzeugend, wenn Register und Funktion zusammenpassen.",
     ],
-    studentQuestionsDe,
-    speakingModels: studentQuestionsDe.map((questionDe, answerIndex) => ({
-      questionDe,
-      modelAnswerDe: lesson.speaking[answerIndex] || "",
-    })),
+    grammarTeachDe: grammarTeachDe(lesson),
+    commonMistakesDe: commonMistakesDe(lesson),
+    studentQuestionsDe: questions,
+    speakingModels: makeSpeakingModels(lesson, questions),
     teacherNotesEn: [
-      "Do not reward complexity for its own sake. Require precise reference, explicit criteria and controlled sentence structure.",
-      "Push learners to identify one hidden assumption or evidential gap before defending a position.",
-      "Every developed answer should contain a credible counterposition and a response, not a token 'on the other hand' sentence.",
-      "Distinguish source claims, inference and personal evaluation whenever evidence is discussed.",
-      "Finish with a 90–120 second spoken synthesis and a short 220–280 word writing transfer or outline.",
+      `Teach the same canonical C2 topic and grammar focus as Falowen Course Book: ${lesson.title} — ${lesson.grammarFocus}.`,
+      lesson.when,
+      lesson.structure,
+      `Use the topic collocations actively; do not let students replace them with generic advanced-sounding vocabulary.`,
+      "Let the learner finish the full response before correcting; prioritise logic, register and two high-value language points.",
     ],
     interactionFlow: [
-      { phase: "Problem framing", detailEn: "7 min: identify the underlying tension, stakeholders and criteria before taking a position." },
-      { phase: "Language precision", detailEn: "10 min: reformulate broad claims with the lesson's advanced grammar and calibrated certainty." },
-      { phase: "Premise and evidence check", detailEn: "12 min: identify one assumption, one piece of evidence that would matter, and one limitation." },
-      { phase: "Counterposition", detailEn: "12 min: build the strongest opposing case and respond without caricaturing it." },
-      { phase: "Exam response", detailEn: "15 min: deliver a 90–120 second synthesis with thesis, evidence, counterargument and conclusion." },
-      { phase: "Writing transfer", detailEn: "12 min: convert the spoken reasoning into a compact C2 paragraph plan or 220–280 word response." },
+      { phase: "Meaning and topic", detailEn: "7 min: establish the communicative problem and activate the topic collocations before explaining form." },
+      { phase: "Grammar teaching", detailEn: "12 min: teach when/why, structure, examples and the main misuse of today's C2 target." },
+      { phase: "Controlled reformulation", detailEn: "10 min: upgrade simple statements and compare which version is more precise, natural and appropriate." },
+      { phase: "Speaking transfer", detailEn: "15 min: answer topic questions with the target structure and at least two canonical collocations." },
+      { phase: "C2 synthesis", detailEn: "15 min: deliver a 90–120 second response with position, evidence/example, counterpoint and synthesis." },
+      { phase: "Writing transfer", detailEn: "12 min: plan the canonical Course Book production/challenge without displaying a ready-made full answer first." },
     ],
-    wrapUpTaskDe: `Formuliere zu „${topic}“ eine Schlussposition in 5–7 Sätzen: These, Kriterium, Beleg oder Beispiel, Gegenargument, Reaktion und Synthese.`,
+    wrapUpTaskDe: `${lesson.challenge} Nutze dabei mindestens zwei Kollokationen und die heutige Zielstruktur funktional.`,
     workbookConnection: {
       grammarUrl: null,
       workbookUrl: null,
-      subtitle: "C2 classroom bridge. Direct Falowen workbook/grammar routes are intentionally omitted until verified.",
+      subtitle: `Aligned with Falowen C2 ${lesson.chapter}: ${lesson.title}`,
       parts: [
-        { label: "Teil 1 · Analyse", detailEn: "Identify thesis, assumptions, evidence, limitations and the strongest alternative interpretation." },
-        { label: "Teil 2 · Sprechen", detailEn: "Deliver a 90–120 second differentiated response and handle one follow-up challenge without losing the argument thread." },
-        { label: "Teil 3 · Schreiben", detailEn: "Write or outline a C2 position that integrates a counterargument and ends in a genuine synthesis." },
-        { label: "Teil 4 · Wortschatz / Register", detailEn: "Collect precise collocations, formal paraphrases and register-sensitive alternatives instead of isolated difficult words." },
-        { label: "Teil 5 · Grammatik", detailEn: "Apply the lesson's structures to clarify logic, evidence and degree of certainty rather than displaying complexity mechanically." },
+        { label: "Learn / Grammar", detailEn: `${lesson.grammarFocus}: when/why, structure, examples and common mistake.` },
+        { label: "Kollokationen", detailEn: `Use the lesson collocations in context: ${lesson.phrases.map(([phrase]) => phrase).join(" · ")}.` },
+        { label: "Sprechen", detailEn: lesson.production },
+        { label: "Write", detailEn: `Test transfer with the canonical challenge: ${lesson.challenge}` },
+        { label: "Prüfungstransfer", detailEn: "Explain the language choice, reformulate precisely and maintain C2 register under follow-up questioning." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: `C2 seminar-style lesson on ${topic}. Move from problem framing to premise/evidence analysis, test the strongest counterposition, then produce an integrated spoken and written synthesis.`,
-      grammarFocusEn,
-      modelExamplesDe: lesson.models,
-      commonMistakesEn: [
-        "Using long or nominal sentences without a clear logical relation between the clauses.",
-        "Treating a plausible assumption as established evidence or moving from correlation to causation without justification.",
-        "Mentioning a counterargument only to dismiss it immediately instead of formulating its strongest version.",
-        "Sounding artificially absolute at C2 level; claims should be calibrated when evidence is incomplete.",
-        "Using advanced connectors as decoration rather than to mark an actual argumentative relation.",
-      ],
+      lessonOverviewEn: `Canonical Falowen C2 lesson ${lesson.chapter}: ${lesson.title}. Topic: ${lesson.topic}. The class teaches the language first, then tests controlled transfer in speaking and writing.`,
+      grammarFocusEn: [lesson.when, lesson.structure, `Target structure: ${lesson.grammarFocus}.`],
+      modelExamplesDe: lesson.phrases.map(([, example]) => example),
+      commonMistakesEn: [lesson.mistake, "Do not display complexity for its own sake; keep the logical relation and register transparent."],
     },
-    grammarCheckTitle: "C2 Präzisions-Check",
-    grammarCheckQuestions,
-    grammarCheckModels: grammarCheckQuestions.map((questionDe, modelIndex) => ({
-      questionDe,
-      modelAnswerDe: lesson.models[modelIndex] || lesson.models[0] || "",
-    })),
+    grammarCheckTitle: "C2 Grammatik- und Präzisionscheck",
+    grammarCheckQuestions: checks.questions,
+    grammarCheckModels: checks.models,
     grammarCheckMinutes: 10,
   };
 }
 
 export const c2PresenterSlides = LESSONS.map(makeSlide);
 
-export const c2CourseEntries = LESSONS.map((lesson, index) => ({
-  assignment_id: `C2 ${index + 1}`,
-  chapter: String(index + 1),
-  de: lesson.topic,
-  en: lesson.topic,
+export const c2CourseEntries = LESSONS.map((lesson) => ({
+  assignment_id: `C2-${lesson.chapter}`,
+  chapter: lesson.chapter,
+  de: lesson.title,
+  en: lesson.title,
 }));

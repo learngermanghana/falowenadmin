@@ -1,0 +1,45 @@
+name: C2 teaching slides tests
+
+on:
+  pull_request:
+    paths:
+      - "src/data/c2PresenterSlides.js"
+      - "src/utils/teachingPresenter.js"
+      - "scripts/patchC2CourseStyle.mjs"
+      - "scripts/patchB2C1SpeakingModels.mjs"
+      - "tests/c2-presenter-v2-all-days.test.js"
+      - ".github/workflows/c2-presenter-tests.yml"
+      - "package.json"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/data/c2PresenterSlides.js"
+      - "src/utils/teachingPresenter.js"
+      - "scripts/patchC2CourseStyle.mjs"
+      - "scripts/patchB2C1SpeakingModels.mjs"
+      - "tests/c2-presenter-v2-all-days.test.js"
+      - ".github/workflows/c2-presenter-tests.yml"
+      - "package.json"
+
+jobs:
+  c2-test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply presenter patch chain
+        run: node scripts/patchB2C1SpeakingModels.mjs
+      - name: Validate C2 source
+        run: |
+          node --check src/data/c2PresenterSlides.js
+          node --check src/utils/teachingPresenter.js
+          node --check scripts/patchC2CourseStyle.mjs
+      - name: Run C2 28-day regressions
+        run: node --test tests/c2-presenter-v2-all-days.test.js
+      - name: Build production bundle
+        run: npm run build

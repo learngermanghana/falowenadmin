@@ -63,14 +63,22 @@ function patchFile(relativePath, replacements) {
   if (changed) fs.writeFileSync(filePath, content, "utf8");
 }
 
+{
+  const teachingSlidesPath = path.join(root, "src/data/teachingSlides.js");
+  let teachingSlidesSource = fs.readFileSync(teachingSlidesPath, "utf8");
+  const speakingImport = 'import { attachAdvancedSpeakingModels } from "./advancedSpeakingModels.js";';
+  if (!teachingSlidesSource.includes(speakingImport)) {
+    const c1Import = 'import { c1PresenterSlides } from "./c1PresenterSlides.js";';
+    if (!teachingSlidesSource.includes(c1Import)) throw new Error("Advanced speaking-model import anchor missing");
+    teachingSlidesSource = teachingSlidesSource.replace(c1Import, c1Import + "\n" + speakingImport);
+    fs.writeFileSync(teachingSlidesPath, teachingSlidesSource, "utf8");
+  }
+}
+
 patchFile("src/data/teachingSlides.js", [
   {
     from: 'import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";',
     to: 'import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";\nimport { getCourseTaskDay } from "./courseSessionGroups.js";',
-  },
-  {
-    from: 'import { c1PresenterSlides } from "./c1PresenterSlides.js";',
-    to: 'import { c1PresenterSlides } from "./c1PresenterSlides.js";\nimport { attachAdvancedSpeakingModels } from "./advancedSpeakingModels.js";',
   },
   {
     from: "const curatedSlides = [",
@@ -101,7 +109,7 @@ patchFile("src/data/teachingSlides.js", [
 patchFile("src/utils/teachingPresenter.js", [
   {
     from: 'requiresQuestionModel: ["A2", "B1"].includes(String(slide.course || "").toUpperCase()),',
-    to: 'requiresQuestionModel: ["A2", "B1", "B2", "C1"].includes(String(slide.course || "").toUpperCase()),',
+    to: 'requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(String(slide.course || "").toUpperCase()),',
   },
 ]);
 
