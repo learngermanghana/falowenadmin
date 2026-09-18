@@ -1,6 +1,6 @@
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
-import { getA1CanonicalTeachingDay } from "../src/data/a1CanonicalTeachingDays.js";
+import { getCourseTaskDay } from "../src/data/courseSessionGroups.js";
 
 const LEVEL = "A1";
 const REQUIRED_CORE_STAGES = [
@@ -35,7 +35,7 @@ for (const slide of slides) {
     findings.push({ severity: "error", id: slide.assignmentId, message: "missing lesson objective" });
   }
 
-  const expectedDay = getA1CanonicalTeachingDay(slide.assignmentId);
+  const expectedDay = getCourseTaskDay("A1", slide.assignmentId, rows.length);
   if (Number.isInteger(expectedDay) && Number(slide.dayNumber) !== expectedDay) {
     findings.push({
       severity: "error",
