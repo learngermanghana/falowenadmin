@@ -1,0 +1,37 @@
+name: Teaching material quality audit
+
+on:
+  pull_request:
+    paths:
+      - "src/data/**"
+      - "src/utils/teachingPresenter.js"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "scripts/auditTeachingMaterialQuality.mjs"
+      - ".github/workflows/teaching-material-quality-audit.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/data/**"
+      - "src/utils/teachingPresenter.js"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "scripts/auditTeachingMaterialQuality.mjs"
+      - ".github/workflows/teaching-material-quality-audit.yml"
+  workflow_dispatch:
+
+jobs:
+  a1-teacher-materials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare production teaching slides
+        run: node scripts/patchB2C1SpeakingModels.mjs
+
+      - name: Audit A1 teacher materials
+        run: node scripts/auditTeachingMaterialQuality.mjs
