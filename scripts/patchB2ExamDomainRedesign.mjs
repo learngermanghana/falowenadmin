@@ -42,9 +42,9 @@ const entries = topics.map((topic, index) => {
 }).join("\n");
 
 let dictionary = fs.readFileSync(dictionaryPath, "utf8");
-const blockPattern = /  B2: \{[\s\S]*?\n  \},\n  C1: \{/;
+const blockPattern = /  B2: \{[\s\S]*?\n  \},(?=\n  C1:)/;
 if (!blockPattern.test(dictionary)) throw new Error("B2 course dictionary block not found");
-dictionary = dictionary.replace(blockPattern, `  B2: {\n${entries}\n  },\n  C1: {`);
+dictionary = dictionary.replace(blockPattern, `  B2: {\n${entries}\n  },`);
 fs.writeFileSync(dictionaryPath, dictionary);
 
 let support = fs.readFileSync(teacherSupportPath, "utf8");
