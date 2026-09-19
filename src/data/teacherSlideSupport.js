@@ -132,22 +132,7 @@ const CURATED_OVERRIDES = {
       "Using würde gern without the infinitive at the end.",
     ],
   },
-  "B2-1.1": {
-    grammarFocusEn: [
-      "Use adjective endings in noun phrases with ein/eine/einen: ein ruhiger Mensch, eine prägende Erfahrung, einen zuverlässigen Menschen.",
-      "Focus on new B2 contrast expressions: während, hingegen, auf der einen Seite ... auf der anderen Seite, im Gegensatz dazu.",
-    ],
-    modelExamplesDe: [
-      "Ich bin ein eher ruhiger, aber zuverlässiger Mensch.",
-      "Eine prägende Erfahrung hat mich selbstständiger gemacht.",
-      "Während ich im Beruf eher zurückhaltend bin, spreche ich mit Freunden sehr offen.",
-    ],
-    commonMistakesEn: [
-      "Leaving off the adjective ending before a noun: ein ruhiger Mensch, not ein ruhig Mensch.",
-      "Forgetting masculine accusative endings: einen zuverlässigen Menschen.",
-      "Falling back on familiar B1 connectors instead of practising the new B2 contrast expressions.",
-    ],
-  },
+
 };
 
 function cleanTopic(slide = {}) {
@@ -163,7 +148,7 @@ export function buildTeacherSlideSupport(slide = {}) {
   const curated = CURATED_OVERRIDES[assignmentId] || A1_TOPIC_TEACHER_SUPPORT[assignmentId] || {};
   const direct = slide.teacherSupport || {};
   const topic = cleanTopic(slide);
-  const preferCurated = assignmentId === "B2-1.1";
+  const preferCurated = false;
 
   const grammarFocusEn = preferCurated
     ? curated.grammarFocusEn || direct.grammarFocusEn || defaults.grammarFocusEn

@@ -369,3 +369,100 @@
     flex-direction: column;
   }
 }
+
+
+/* topic-foundation-stage */
+.presenter-content-foundation {
+  justify-content: flex-start;
+  padding-top: clamp(1.2rem, 3vw, 2.4rem);
+}
+
+.presenter-foundation {
+  width: min(100%, 1180px);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.presenter-foundation-heading {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.presenter-foundation-heading > span {
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-foundation-heading h1 {
+  margin: 0;
+}
+
+.presenter-foundation-intro {
+  margin: 0;
+  max-width: 1050px;
+  font-size: clamp(1.05rem, 1.8vw, 1.45rem);
+  line-height: 1.55;
+}
+
+.presenter-foundation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 0.75rem;
+}
+
+.presenter-foundation-card {
+  border: 1px solid #dbe4f0;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  background: #fff;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.presenter-foundation-card strong {
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+
+.presenter-foundation-card p {
+  margin: 0;
+  font-size: clamp(0.98rem, 1.45vw, 1.18rem);
+  line-height: 1.45;
+}
+
+.presenter-foundation-card-simple {
+  background: #f8fafc;
+}
+
+.presenter-foundation-card-tension {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.presenter-foundation-card-question {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.presenter-foundation-teacher-note {
+  width: fit-content;
+  max-width: 100%;
+  border-top: 1px solid #dbe4f0;
+  padding-top: 0.55rem;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.presenter-foundation-teacher-note summary {
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.presenter-foundation-teacher-note p {
+  margin: 0.4rem 0 0;
+  max-width: 850px;
+  line-height: 1.45;
+}
