@@ -75,6 +75,11 @@ export function classNameSuggestions(levelId, classes = [], limit = 6) {
     .slice(0, Math.max(1, Number(limit) || 6));
 }
 
+export function resolveClassNameSelection(currentName, suggestions = [], selectionSource = "auto") {
+  if (selectionSource !== "auto") return String(currentName || "");
+  return String(suggestions[0] || "");
+}
+
 export function isClassNameBlocked(name, classes = []) {
   const value = String(name || "").trim();
   if (!value) return false;

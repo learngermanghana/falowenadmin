@@ -4,6 +4,7 @@ import {
   classNameCanBeReused,
   classNameSuggestions,
   isClassNameBlocked,
+  resolveClassNameSelection,
 } from "../src/utils/liveClassNameSuggestions.js";
 
 test("class name suggestions skip names already used by active, upcoming, and graduated classes", () => {
@@ -81,4 +82,33 @@ test("legacy records without a stored slug fall back to backend slugification", 
   ];
 
   assert.equal(isClassNameBlocked("A1 Berlin Klasse", classes), true);
+});
+
+
+test("automatic suggestion follows async class loading but explicit choices stay fixed", () => {
+  const initialSuggestions = classNameSuggestions("A1", [], 3);
+  const initialName = resolveClassNameSelection("", initialSuggestions, "auto");
+  assert.equal(initialName, "A1 Berlin Klasse");
+
+  const loadedClasses = [
+    {
+      name: "A1 Berlin Klasse",
+      slug: "a1-berlin-klasse",
+      status: "active",
+      startDate: "2026-09-01",
+      endDate: "2026-11-01",
+    },
+  ];
+  const loadedSuggestions = classNameSuggestions("A1", loadedClasses, 3);
+  const refreshedAutoName = resolveClassNameSelection(initialName, loadedSuggestions, "auto");
+  assert.equal(refreshedAutoName, "A1 Dortmund Klasse");
+
+  const explicitChoice = "A1 Hamburg Klasse";
+  const afterAnotherClassRefresh = resolveClassNameSelection(explicitChoice, loadedSuggestions, "explicit");
+  assert.equal(afterAnotherClassRefresh, explicitChoice);
+});
+
+test("automatic mode clears a stale generated name when no suggestions remain", () => {
+  assert.equal(resolveClassNameSelection("A1 Berlin Klasse", [], "auto"), "");
+  assert.equal(resolveClassNameSelection("Custom Saturday Group", [], "explicit"), "Custom Saturday Group");
 });
