@@ -5,6 +5,7 @@ import {
   getSpeakingQuestionModel,
   isTeachingPresenterV2Slide,
 } from "../utils/teachingPresenter.js";
+import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -105,9 +106,18 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [showQuestionSupport, setShowQuestionSupport] = useState(false);
   const [timerRemaining, setTimerRemaining] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [timerMode, setTimerMode] = useState("stage");
+  const [rosterCount, setRosterCount] = useState(0);
+  const [warmupQuestionCount, setWarmupQuestionCount] = useState(4);
+  const [warmupMinutes, setWarmupMinutes] = useState(5);
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
+  const availableWarmupQuestions = Array.isArray(stage?.items) ? stage.items.length : 0;
+  const visibleWarmupQuestionCount = warmupPerStudent ? Math.min(warmupQuestionCount, availableWarmupQuestions) : availableWarmupQuestions;
+  const visibleStageItems = warmupPerStudent ? stage.items.slice(0, visibleWarmupQuestionCount) : stage?.items;
+  const largeClassWarmup = warmupPerStudent && rosterCount >= 8;
+  const projectedWarmupMinutes = rosterCount * warmupMinutes;
 
   function goTo(index) {
     setStageIndex(clampPresenterIndex(index, stages.length));
@@ -131,9 +141,39 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     goTo(stageIndex - 1);
   }
 
-  function setTimerMinutes(minutes) {
+  function setTimerMinutes(minutes, mode = "stage") {
     const seconds = Math.max(0, Number(minutes || 0)) * 60;
+    setTimerMode(mode);
     setTimerRemaining(seconds);
+    setTimerRunning(false);
+  }
+
+  function startWarmupPreparation() {
+    if (!warmupPerStudent) return;
+    setTimerMode("prepare");
+    setTimerRemaining(30);
+    setTimerRunning(true);
+  }
+
+  function resetWarmupStudent() {
+    setTimerMode("warmup");
+    setTimerRemaining(Math.max(1, Number(warmupMinutes || 5)) * 60);
+    setTimerRunning(false);
+  }
+
+  function applyCompactWarmup() {
+    setWarmupQuestionCount(2);
+    setWarmupMinutes(3);
+    setTimerMode("warmup");
+    setTimerRemaining(3 * 60);
+    setTimerRunning(false);
+  }
+
+  function restoreStandardWarmup() {
+    setWarmupQuestionCount(4);
+    setWarmupMinutes(5);
+    setTimerMode("warmup");
+    setTimerRemaining(5 * 60);
     setTimerRunning(false);
   }
 
@@ -159,14 +199,26 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setQuestionIndex(0);
     setShowQuestionSupport(false);
     setTimerRunning(false);
+    if (stage?.id === "warmup" && stage?.timingMode === "per-student") {
+      setWarmupQuestionCount(4);
+      setWarmupMinutes(5);
+      setTimerMode("warmup");
+      setTimerRemaining(5 * 60);
+      return;
+    }
+    setTimerMode("stage");
     setTimerRemaining(stage?.suggestedMinutes ? stage.suggestedMinutes * 60 : 0);
-  }, [stage?.id, stage?.suggestedMinutes]);
+  }, [stage?.id, stage?.suggestedMinutes, stage?.timingMode]);
 
   useEffect(() => {
     if (!timerRunning || timerRemaining <= 0) return undefined;
     const timer = window.setInterval(() => {
       setTimerRemaining((current) => {
         if (current <= 1) {
+          if (timerMode === "prepare" && warmupPerStudent) {
+            setTimerMode("warmup");
+            return Math.max(1, Number(warmupMinutes || 5)) * 60;
+          }
           setTimerRunning(false);
           return 0;
         }
@@ -174,7 +226,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [timerRunning, timerRemaining]);
+  }, [timerRunning, timerRemaining, timerMode, warmupPerStudent, warmupMinutes]);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -211,7 +263,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     ? buildB1CorrectionTeacherGuide(activeQuestion, activeModel.modelAnswerDe)
     : [];
   const timerExpired = showPresenterTimer && timerRemaining === 0 && !timerRunning;
-  const timerPresets = [...new Set([stage.suggestedMinutes, 2, 5, 10].filter(Boolean))];
+  const timerPresets = [...new Set([stage.suggestedMinutes, warmupPerStudent ? warmupMinutes : null, 2, 3, 5, 10].filter(Boolean))];
 
   return (
     <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
@@ -232,11 +284,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </label>
 
               <div className={`presenter-timer ${timerExpired ? "presenter-timer-expired" : ""}`}>
+                {warmupPerStudent ? <span className="presenter-timer-mode">{timerMode === "prepare" ? "Prepare · 30 sec" : `Speaking · ${warmupMinutes} min`}</span> : null}
                 <strong>{formatTimer(timerRemaining)}</strong>
+                {warmupPerStudent ? <button type="button" onClick={startWarmupPreparation}>Prepare 30s</button> : null}
                 <button type="button" onClick={() => setTimerRunning((current) => !current)} disabled={timerRemaining <= 0}>
                   {timerRunning ? "Pause" : "Start"}
                 </button>
-                <button type="button" onClick={() => setTimerMinutes(stage.suggestedMinutes || 5)}>{warmupPerStudent ? "Reset for next student" : "Reset"}</button>
+                <button type="button" onClick={() => warmupPerStudent ? resetWarmupStudent() : setTimerMinutes(stage.suggestedMinutes || 5)}>{warmupPerStudent ? "Reset for next student" : "Reset"}</button>
                 <div className="presenter-timer-presets">
                   {timerPresets.map((minutes) => (
                     <button key={minutes} type="button" onClick={() => setTimerMinutes(minutes)}>{minutes}m</button>
@@ -251,6 +305,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <button type="button" onClick={onExit}>Exit presenter</button>
           </div>
         </header>
+
+        <PresenterStudentPicker slide={slide} onRosterCountChange={setRosterCount} />
 
         <main className={`presenter-content presenter-content-${stage.type}`}>
           {stage.type === "intro" ? (
@@ -355,9 +411,38 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </ol>
               ) : stage.type === "list" ? (
                 <>
-                  {stage.timingLabel ? <p className="presenter-duration">{stage.timingLabel}</p> : null}
+                  {stage.timingLabel ? <p className="presenter-duration">{warmupPerStudent ? `${warmupMinutes} min per student · ${visibleWarmupQuestionCount} warm-up question${visibleWarmupQuestionCount === 1 ? "" : "s"}` : stage.timingLabel}</p> : null}
+                  {warmupPerStudent ? (
+                    <div className="presenter-warmup-controls">
+                      <div className="presenter-warmup-question-count" role="group" aria-label="Warm-up questions per student">
+                        <span>Questions per student</span>
+                        {[1, 2, 4].map((count) => (
+                          <button
+                            key={count}
+                            type="button"
+                            className={warmupQuestionCount === count ? "is-active" : ""}
+                            disabled={count > availableWarmupQuestions}
+                            onClick={() => setWarmupQuestionCount(count)}
+                          >
+                            {count}
+                          </button>
+                        ))}
+                      </div>
+                      {largeClassWarmup ? (
+                        <div className="presenter-warmup-warning">
+                          <strong>{rosterCount} students × {warmupMinutes} min = {projectedWarmupMinutes} min</strong>
+                          <span>This could take a large part of the lesson. The teacher remains in control.</span>
+                          {warmupMinutes === 5 || warmupQuestionCount !== 2 ? (
+                            <button type="button" onClick={applyCompactWarmup}>Use 2 questions / 3 min per student</button>
+                          ) : (
+                            <button type="button" onClick={restoreStandardWarmup}>Restore 4 questions / 5 min</button>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <ul className="presenter-list">
-                    {stage.items.map((item) => <li key={item}>{item}</li>)}
+                    {(visibleStageItems || []).map((item) => <li key={item}>{item}</li>)}
                   </ul>
                 </>
               ) : (
