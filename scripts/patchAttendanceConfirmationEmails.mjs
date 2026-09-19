@@ -10,9 +10,10 @@ const retryPath = path.join(repoRoot, "functions", "attendanceConfirmationRetry.
 
 let indexSource = fs.readFileSync(indexPath, "utf8");
 const requireLine = 'const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");';
-const retryRequireLine = 'const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");';
+const retryRequireLine = 'const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");';
 const exportLine = "exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });";
 const retryRouteMarker = 'app.post("/attendance-confirmation-emails/retry-failed"';
+const healthRouteMarker = 'app.get("/attendance-confirmation-emails/health"';
 const retryRouteBlock = `app.post("/attendance-confirmation-emails/retry-failed", async (req, res) => {
   try {
     await requireAuth(req);
@@ -30,6 +31,24 @@ const retryRouteBlock = `app.post("/attendance-confirmation-emails/retry-failed"
 });
 
 `;
+const healthRouteBlock = `app.get("/attendance-confirmation-emails/health", async (req, res) => {
+  try {
+    await requireAuth(req);
+    const classId = String(req.query?.classId || "").trim();
+    if (!classId) return res.status(400).json({ ok: false, error: "Select a class before loading attendance delivery health." });
+    const result = await listAttendanceDeliveryHealth({ db, classId });
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    const unauthorized = /Authorization|Not allowed|token/i.test(String(error?.message || ""));
+    return res.status(unauthorized ? 401 : 400).json({
+      ok: false,
+      error: error?.message || "Could not load attendance delivery health.",
+    });
+  }
+});
+
+`;
+
 
 if (!indexSource.includes(requireLine)) {
   const anchor = 'const { defineSecret } = require("firebase-functions/params");';
@@ -46,6 +65,12 @@ if (!indexSource.includes(retryRouteMarker)) {
   const anchor = indexSource.includes(exportLine) ? exportLine : "exports.api = onRequest({";
   if (!indexSource.includes(anchor)) throw new Error("Attendance retry patch could not find the API export anchor.");
   indexSource = indexSource.replace(anchor, `${retryRouteBlock}${anchor}`);
+}
+
+if (!indexSource.includes(healthRouteMarker)) {
+  const anchor = indexSource.includes(retryRouteMarker) ? retryRouteMarker : (indexSource.includes(exportLine) ? exportLine : "exports.api = onRequest({");
+  if (!indexSource.includes(anchor)) throw new Error("Attendance health patch could not find the API route anchor.");
+  indexSource = indexSource.replace(anchor, `${healthRouteBlock}${anchor}`);
 }
 
 if (!indexSource.includes(exportLine)) {
@@ -125,6 +150,8 @@ const requiredChecks = [
   [patchedIndex.includes(retryRequireLine), "Firebase attendance retry import is missing after patch."],
   [patchedIndex.includes(exportLine), "Firebase attendance scheduler export is missing after patch."],
   [patchedIndex.includes(retryRouteMarker), "Protected failed-attendance retry route is missing after patch."],
+  [patchedIndex.includes(healthRouteMarker), "Protected attendance delivery health route is missing after patch."],
+  [patchedIndex.includes("listAttendanceDeliveryHealth"), "Attendance delivery health handler is missing after patch."],
   [patchedIndex.includes("await requireAuth(req)"), "Failed-attendance retry route is not protected."],
   [patchedWorker.includes("function resolveClassWebhookConfig("), "Class attendance webhook configuration is missing after patch."],
   [patchedWorker.includes("config: classConfig"), "The attendance worker is not using the selected class delivery configuration."],
@@ -140,4 +167,4 @@ for (const [passed, message] of requiredChecks) {
   if (!passed) throw new Error(message);
 }
 
-console.log("Attendance confirmation email scheduler, all-field class identity guard, and protected failed-delivery retry route verified.");
+console.log("Attendance confirmation email scheduler, class identity guard, protected delivery health route, and failed-delivery retry route verified.");
