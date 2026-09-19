@@ -1,8 +1,10 @@
+import { C1_CANONICAL_TITLES } from "./c1CanonicalCurriculum.js";
+
 // Canonical learner-side curriculum identity used by Falowen Admin Presenter.
 // Learner source snapshot: falowenexamtrainer@bafaffbb5fee47a0b9b4effa040dc69cf052f5fa
 // A2/B1/B2 titles come from the learner topic/situation/alignment data.
-// C1 intentionally records the current learner sequence so Admin can surface its known sequence mismatch.
-// C2 mirrors the current learner C2 curriculum, which is already aligned with Admin.
+// C1 comes from the shared canonical learner-aligned C1 manifest.
+// C2 mirrors the current learner C2 curriculum.
 
 const A2_TITLES = [
   "Small Talk",
@@ -97,36 +99,6 @@ const B2_TITLES = [
   "Gesellschaft im Wandel – B2 Prüfungstraining"
 ];
 
-const C1_TITLES = [
-  "Ziele und Lernweg",
-  "Kultur und Identität",
-  "Medien und Informationskompetenz",
-  "Beziehungen und Teamarbeit",
-  "Berufliche Entwicklung",
-  "Gesundheit und Lebensstil",
-  "Reisen und Nachhaltigkeit",
-  "Wohnen und Stadtentwicklung",
-  "Konsum und Werbung",
-  "Integration und Gesellschaft",
-  "Engagement und Ehrenamt",
-  "Freizeit und Kultur",
-  "Mehrsprachigkeit",
-  "Innovation und Zukunft",
-  "Bildung und lebenslanges Lernen",
-  "Technologie im Alltag",
-  "Umweltverantwortung",
-  "Gesellschaftlicher Zusammenhalt",
-  "Arbeitswelt und Automatisierung",
-  "Digitale Gesundheit",
-  "Gesellschaftliche Teilhabe und Integration",
-  "Demokratie und Mitbestimmung",
-  "Work-Life-Balance",
-  "Verkehr und Infrastruktur",
-  "Wissenschaft und Forschungsethik",
-  "Nachhaltiger Konsum",
-  "Digitale Verwaltung",
-  "Demografischer Wandel"
-];
 
 const C2_TITLES = [
   "Kreislaufwirtschaft und Wegwerfgesellschaft",
@@ -163,7 +135,7 @@ const TITLES_BY_LEVEL = Object.freeze({
   A2: A2_TITLES,
   B1: B1_TITLES,
   B2: B2_TITLES,
-  C1: C1_TITLES,
+  C1: C1_CANONICAL_TITLES,
   C2: C2_TITLES,
 });
 
