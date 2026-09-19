@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
+import { c2PresenterSlides } from "../src/data/c2PresenterSlides.js";
 import {
   STRICT_PARITY_LEVELS,
   KNOWN_PARITY_EXCEPTION_LEVELS,
@@ -11,6 +12,10 @@ import {
   getStudentLessonContract,
 } from "../src/data/studentCurriculumParity.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
+
+function paritySlides(level) {
+  return level === "C2" ? c2PresenterSlides : paritySlides(level);
+}
 
 test("A2 through C2 expose 28 canonical learner lesson identities", () => {
   for (const level of ["A2","B1","B2","C1","C2"]) {
@@ -25,7 +30,7 @@ test("A2 through C2 expose 28 canonical learner lesson identities", () => {
 
 test("strict parity levels stay aligned with the learner Course Book", () => {
   for (const level of STRICT_PARITY_LEVELS) {
-    const audit = auditCurriculumParity(getSlidesByCourse(level));
+    const audit = auditCurriculumParity(paritySlides(level));
     assert.equal(audit.length, 28, level + " audit should cover 28 lessons");
     const mismatches = audit.filter((item) => item.status !== "aligned");
     assert.deepEqual(
@@ -46,7 +51,7 @@ test("C1 sequence difference is explicit and cannot masquerade as aligned", () =
 
 test("Presenter intro exposes the learner lesson reference for every A2-C2 lesson", () => {
   for (const level of ["A2","B1","B2","C1","C2"]) {
-    for (const slide of getSlidesByCourse(level)) {
+    for (const slide of paritySlides(level)) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const intro = stages.find((stage) => stage.id === "intro");
       const reference = getCurriculumParityReference(slide);
@@ -60,7 +65,7 @@ test("Presenter intro exposes the learner lesson reference for every A2-C2 lesso
 
 test("Course Book Bridge is the final stage and always returns Grammar, Speak, Write and Workbook/Submit", () => {
   for (const level of ["A2","B1","B2","C1","C2"]) {
-    for (const slide of getSlidesByCourse(level)) {
+    for (const slide of paritySlides(level)) {
       const items = buildCourseBookBridgeItems(slide);
       assert.equal(items.length, 4, slide.assignmentId + " bridge should have four steps");
       assert.deepEqual(items.map((item) => item.label), [
@@ -78,7 +83,7 @@ test("Course Book Bridge is the final stage and always returns Grammar, Speak, W
 });
 
 test("known C1 mismatch is teacher-visible rather than hidden", () => {
-  const slide = getSlidesByCourse("C1")[0];
+  const slide = paritySlides("C1")[0];
   const reference = getCurriculumParityReference(slide);
 
   assert.equal(reference.courseBookLabel, "C1 Day 1");
