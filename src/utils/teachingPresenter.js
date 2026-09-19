@@ -89,7 +89,7 @@ function buildAdvancedPracticeItems(slide = {}, support = {}, flow = [], grammar
   ];
 }
 
-function buildClassicStages(slide = {}, topicLabel = "") { return [
+function buildClassicStages(slide = {}, topicLabel = "") { const studentReference = getCurriculumParityReference(slide); return [
   { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "", studentReference },
   { id: "warmup", type: "list", kicker: "Warm-up", title: "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
   { id: "phrases", type: "list", kicker: "Redemittel", title: "Key phrases", items: Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [] },
