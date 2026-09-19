@@ -5,6 +5,7 @@ import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFro
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { calculateFinalScore } from "../utils/finalScore.js";
+import { calculateWeightedMarkingOutcome } from "../utils/markingScorePolicy.js";
 import { useToast } from "../context/ToastContext.jsx";
 import WritingScoreExplanation from "../components/WritingScoreExplanation.jsx";
 import MarkingHistoryPanel from "../components/MarkingHistoryPanel.jsx";
@@ -108,20 +109,31 @@ function mergeObjectiveScore(result = {}, objectiveResult = {}) {
   const writingPercent = writingScoreToPercent(result.writingScore, getMaxWritingScore(result));
   const hasObjective = Number(objectiveResult.totalCount || 0) > 0;
   const hasWriting = result.writingScore !== null && result.writingScore !== undefined && Number.isFinite(Number(result.writingScore));
-
-  let finalScore;
-  if (hasObjective && hasWriting) {
-    finalScore = Math.round((objectivePercent + writingPercent) / 2);
-  } else if (hasObjective) {
-    finalScore = Math.round(objectivePercent);
-  } else {
-    finalScore = Math.round(writingPercent || Number(result.finalScore ?? result.score ?? 0));
-  }
+  const weightedOutcome = calculateWeightedMarkingOutcome({
+    level: result.level || result.assignmentKey || result.assignmentId || "",
+    assignmentId: result.assignmentId,
+    assignmentKey: result.assignmentKey,
+    writingPercent: hasWriting ? writingPercent : null,
+    objectiveScore: hasObjective ? objectivePercent : null,
+    objectiveDetails: objectiveResult.details || {},
+    hasWriting,
+  });
+  const finalScore = weightedOutcome.finalScore || Math.round(
+    hasObjective && hasWriting
+      ? (objectivePercent + writingPercent) / 2
+      : hasObjective
+        ? objectivePercent
+        : writingPercent || Number(result.finalScore ?? result.score ?? 0),
+  );
 
   return {
     ...result,
     score: finalScore,
     finalScore,
+    passed: weightedOutcome.passed,
+    scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,
+    writingMinimumMet: weightedOutcome.writingMinimumMet,
+    markingPolicy: weightedOutcome.policy,
     objectiveCorrect: objectiveResult.correctCount,
     objectiveTotal: objectiveResult.totalCount,
     objectiveDetails: objectiveResult.details,
@@ -519,7 +531,23 @@ export default function MarkingPage() {
 
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
   const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
-  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);
+  const scoringLevel = smartMarkingResult?.level
+    || selectedStudent?.level
+    || referenceEntry?.level
+    || inferLevel(selectedSubmission?.assignment || referenceEntry?.assignment || assignmentValue);
+  const scoringOptions = {
+    level: scoringLevel,
+    assignmentId: objectiveAssignmentId || assignmentIdValue,
+    assignmentKey: smartMarkingResult?.assignmentKey || selectedSubmission?.assignmentKey || assignmentIdValue,
+    objectiveDetails: objectiveMarkingResult.details || {},
+  };
+  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark, scoringOptions);
+  const manualWeightedOutcome = calculateWeightedMarkingOutcome({
+    ...scoringOptions,
+    writingPercent: schreibenMark === "" ? null : Number(schreibenMark),
+    objectiveScore: objectiveMarkingResult.totalCount ? objectiveScorePercent : null,
+    hasWriting: schreibenMark !== "" && Number.isFinite(Number(schreibenMark)),
+  });
   const finalScore = finalScoreOverride === null || finalScoreOverride === ""
     ? calculatedFinalScore
     : Number(finalScoreOverride);
@@ -825,6 +853,9 @@ export default function MarkingPage() {
           writingScorePercent: currentWritingScore,
           maxWritingScore: 100,
           finalScore: currentScore,
+          scoreBreakdown: smartMarkingResult?.scoreBreakdown || manualWeightedOutcome.scoreBreakdown || null,
+          markingPolicy: smartMarkingResult?.markingPolicy || manualWeightedOutcome.policy,
+          writingMinimumMet: smartMarkingResult?.writingMinimumMet ?? manualWeightedOutcome.writingMinimumMet,
         },
       });
       setSaveReceipt(receipt);
@@ -1172,6 +1203,15 @@ export default function MarkingPage() {
               <div style={{ fontSize: 13 }}>
                 <b>Detected parts:</b> {smartMarkingResult.detectedParts?.map((part) => part.summary || `${part.partId}: ${part.answerCount ?? part.total ?? "—"} ${part.partType || "answers"} found${part.correct !== undefined ? `, ${part.correct} correct, ${part.wrong ?? 0} wrong` : ""}`).join(", ") || "None"}
               </div>
+              {smartMarkingResult.scoreBreakdown?.policy === "a2-b1-40-30-30" ? (
+                <div style={{ fontSize: 13, border: "1px solid #bfdbfe", borderRadius: 6, padding: 8, background: "#fff" }}>
+                  <b>Score formula:</b>{" "}
+                  Teil 2 Schreiben {smartMarkingResult.scoreBreakdown.teil2?.points ?? 0}/40
+                  {" + "}Teil 3 {smartMarkingResult.scoreBreakdown.teil3?.points ?? 0}/30
+                  {" + "}Teil 4 {smartMarkingResult.scoreBreakdown.teil4?.points ?? 0}/30
+                  {" = "}<b>{smartMarkingResult.scoreBreakdown.finalScore ?? smartMarkingResult.finalScore}/100</b>
+                </div>
+              ) : null}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving}>Re-run AI marking</button>
                 <button type="button" onClick={handleApproveAndSend} disabled={workflowSaving}>Approve and send</button>
@@ -1262,7 +1302,9 @@ export default function MarkingPage() {
                 ? `Manual final score override. Calculated score: ${displayedCalculatedFinalScore}.`
                 : schreibenMark === ""
                   ? "Using Objective Percentage only because Schreiben Mark is empty."
-                  : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
+                  : manualWeightedOutcome.scoreBreakdown?.policy === "a2-b1-40-30-30"
+                    ? `A2/B1 weighting: Teil 2 Schreiben ${manualWeightedOutcome.scoreBreakdown.teil2?.points ?? 0}/40 + Teil 3 ${manualWeightedOutcome.scoreBreakdown.teil3?.points ?? 0}/30 + Teil 4 ${manualWeightedOutcome.scoreBreakdown.teil4?.points ?? 0}/30 = ${manualWeightedOutcome.finalScore}/100.`
+                    : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
             </div>
             {finalScoreOverride !== null ? (
               <button type="button" onClick={() => setFinalScoreOverride(null)} style={{ justifySelf: "start" }}>
