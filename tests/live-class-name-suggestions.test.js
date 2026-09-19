@@ -38,3 +38,47 @@ test("records missing dates remain reusable to match createClassCohort restore r
   assert.equal(classNameCanBeReused(incomplete), true);
   assert.equal(classNameSuggestions("B1", [incomplete], 1)[0], "B1 Berlin Klasse");
 });
+
+
+test("availability uses the same slug identity as createClassCohort", () => {
+  const classes = [
+    {
+      name: "A1 Berlin-Klasse",
+      slug: "a1-berlin-klasse",
+      status: "active",
+      startDate: "2026-09-01",
+      endDate: "2026-11-01",
+    },
+  ];
+
+  assert.equal(isClassNameBlocked("A1 Berlin Klasse", classes), true);
+  assert.equal(classNameSuggestions("A1", classes, 1)[0], "A1 Dortmund Klasse");
+});
+
+test("stored backend slug wins over display-text similarity", () => {
+  const classes = [
+    {
+      name: "A1 Berlin Klasse",
+      slug: "legacy-custom-berlin",
+      status: "active",
+      startDate: "2026-09-01",
+      endDate: "2026-11-01",
+    },
+  ];
+
+  assert.equal(isClassNameBlocked("A1 Berlin Klasse", classes), false);
+  assert.equal(classNameSuggestions("A1", classes, 1)[0], "A1 Berlin Klasse");
+});
+
+test("legacy records without a stored slug fall back to backend slugification", () => {
+  const classes = [
+    {
+      name: "A1 Berlin-Klasse",
+      status: "active",
+      startDate: "2026-09-01",
+      endDate: "2026-11-01",
+    },
+  ];
+
+  assert.equal(isClassNameBlocked("A1 Berlin Klasse", classes), true);
+});
