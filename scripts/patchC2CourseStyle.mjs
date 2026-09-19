@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { c2CourseEntries } from "../src/data/c2PresenterSlides.js";
+import { insertC2DictionaryEntries } from "./lib/c2DictionaryPatch.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -19,15 +20,9 @@ function mustReplace(source, from, to, label) {
   return source.replace(from, to);
 }
 
-update("src/data/courseDictionary.js", (source) => {
-  if (source.includes("  C2: {")) return source;
-  const anchor = "};\n\nfunction dictionarySortValue(entry = {}) {";
-  if (!source.includes(anchor)) throw new Error("C2 dictionary insertion anchor missing");
-  const entries = c2CourseEntries
-    .map((entry) => `    ${JSON.stringify(entry.assignment_id)}: { assignment_id: ${JSON.stringify(entry.assignment_id)}, chapter: ${JSON.stringify(entry.chapter)}, de: ${JSON.stringify(entry.de)}, en: ${JSON.stringify(entry.en)} },`)
-    .join("\n");
-  return source.replace(anchor, `  C2: {\n${entries}\n  },\n};\n\nfunction dictionarySortValue(entry = {}) {`);
-});
+update("src/data/courseDictionary.js", (source) =>
+  insertC2DictionaryEntries(source, c2CourseEntries),
+);
 
 update("src/data/teachingSlides.js", (source) => {
   let next = source;
