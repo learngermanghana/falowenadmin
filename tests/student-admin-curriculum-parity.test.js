@@ -41,12 +41,13 @@ test("strict parity levels stay aligned with the learner Course Book", () => {
   }
 });
 
-test("C1 sequence difference is explicit and cannot masquerade as aligned", () => {
-  assert.deepEqual(KNOWN_PARITY_EXCEPTION_LEVELS, ["C1"]);
+test("C1 is now strict parity with no known curriculum exception", () => {
+  assert.deepEqual(KNOWN_PARITY_EXCEPTION_LEVELS, []);
+  assert.ok(STRICT_PARITY_LEVELS.includes("C1"));
+
   const audit = auditCurriculumParity(getSlidesByCourse("C1"));
   assert.equal(audit.length, 28);
-  assert.ok(audit.some((item) => item.status === "known-exception"), "C1 should expose its known learner/admin sequence difference");
-  assert.equal(audit.some((item) => item.status === "mismatch"), false, "C1 should use known-exception, not an unclassified mismatch");
+  assert.deepEqual(audit.filter((item) => item.status !== "aligned"), []);
 });
 
 test("Presenter intro exposes the learner lesson reference for every A2-C2 lesson", () => {
@@ -82,12 +83,12 @@ test("Course Book Bridge is the final stage and always returns Grammar, Speak, W
   }
 });
 
-test("known C1 mismatch is teacher-visible rather than hidden", () => {
+test("C1 intro now reports Student/Admin aligned", () => {
   const slide = paritySlides("C1")[0];
   const reference = getCurriculumParityReference(slide);
 
   assert.equal(reference.courseBookLabel, "C1 Day 1");
   assert.equal(reference.title, "Ziele und Lernweg");
-  assert.equal(reference.status, "known-exception");
-  assert.match(reference.note, /different Admin sequence/i);
+  assert.equal(reference.status, "aligned");
+  assert.equal(reference.statusLabel, "Student/Admin aligned");
 });

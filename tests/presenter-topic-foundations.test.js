@@ -2,42 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
+import { C1_CANONICAL_TITLES, getC1CanonicalLesson } from "../src/data/c1CanonicalCurriculum.js";
 import {
   getPresenterTopicFoundation,
   PRESENTER_FOUNDATION_LEVELS,
 } from "../src/data/presenterTopicFoundations.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
-const C1_TOPIC_SIGNALS = [
-  ["Wissenschaft und Forschung", /wissenschaft|Studie|Forschung/i],
-  ["Kunst und Kultur", /Kunst|Kultur|Theater/i],
-  ["Künstliche Intelligenz und Arbeitswelt", /KI|künstliche Intelligenz|Automatisierung/i],
-  ["Digitalisierung und Datenschutz", /Daten|Datenschutz|digitale Dienste/i],
-  ["Personalisierte Werbung", /Werbung|Werbeprofile|Produktsuchen/i],
-  ["Online- und Offline-Identität", /Identität|online|offline/i],
-  ["Gesellschaftlicher Zusammenhalt", /Zusammenhalt|Vertrauen|Teilhabe/i],
-  ["Mehrsprachigkeit", /Mehrsprachigkeit|Sprachen|Bildungssprache/i],
-  ["Migration und Integration", /Migration|Integration|Zugewandert/i],
-  ["Ehrenamt und gesellschaftlicher Pflichtdienst", /Ehrenamt|Pflichtdienst|Freiwilligkeit/i],
-  ["Demokratie und soziale Medien", /soziale Medien|politisch|Algorithmen/i],
-  ["Bildung und Prüfungsformate", /Prüfung|Prüfungsformate|Bewertung/i],
-  ["Lebenslanges Lernen", /Weiterbildung|lebenslang|Lernen/i],
-  ["Homeoffice und moderne Arbeitsformen", /Homeoffice|hybride Arbeit|Erreichbarkeit/i],
-  ["Fachkräftemangel und berufliche Mobilität", /Fachkräfte|Qualifikationen|Personal/i],
-  ["Bedingungsloses Grundeinkommen", /Grundeinkommen|Sozialleistungen|Finanzierung/i],
-  ["Nachhaltigkeit in der Wirtschaft", /nachhaltig|Wirtschaft|Produktion/i],
-  ["Klimawandel und Verkehr", /Verkehr|Emissionen|Mobilität/i],
-  ["Nachhaltiger Konsum", /Konsum|Produkte|Reparierbarkeit/i],
-  ["Reisen und Nachhaltigkeit", /Reisen|Tourismus|Gäste/i],
-  ["Gesundheit und Impfpflicht", /Impfpflicht|Gesundheit|Impf/i],
-  ["Ernährung und moderner Lebensstil", /Ernährung|Lebensstil|gesund/i],
-  ["Wohnen, Mieten und soziale Gerechtigkeit", /Mieten|Wohnraum|Wohnung/i],
-  ["Zukunftstechnologien und Innovation", /Technologie|Innovation|Pilot/i],
-  ["Globalisierung und internationale Zusammenarbeit", /Globalisierung|international|Lieferketten/i],
-  ["Wissenschaftliches Arbeiten und Quellen", /Quelle|wissenschaftlich|Statistik/i],
-  ["Stellungnahme und formelle Korrespondenz", /Stellungnahme|formell|Korrespondenz|E-Mail/i],
-  ["Prüfungsvorbereitung und spontane Argumentation", /Prüfung|Argumentation|Zeitdruck/i],
-];
 
 const LEVEL_EXPECTATIONS = {
   A2: {
@@ -101,30 +72,31 @@ test("A2 through C2 expose 28 level-appropriate topic foundations", () => {
   }
 });
 
-test("C1 foundations are keyed to the actual 28 Admin lesson topics", () => {
+test("C1 foundations use the same canonical learner topic and thinking profile for all 28 days", () => {
   const slides = getSlidesByCourse("C1");
   assert.equal(slides.length, 28);
   assert.deepEqual(
     slides.map((slide) => String(slide.title).replace(/^C1 Day \d+ · /, "")),
-    C1_TOPIC_SIGNALS.map(([topic]) => topic),
+    C1_CANONICAL_TITLES,
   );
 
-  slides.forEach((slide, index) => {
-    const expectedTopic = C1_TOPIC_SIGNALS[index][0];
-    const signal = C1_TOPIC_SIGNALS[index][1];
+  slides.forEach((slide) => {
+    const canonical = getC1CanonicalLesson(slide.dayNumber);
     const foundation = getPresenterTopicFoundation(slide);
-    const combined = [foundation.intro, foundation.example, foundation.tension, foundation.question].join(" ");
 
-    assert.equal(foundation.title, expectedTopic, slide.assignmentId + " foundation title must match the actual C1 lesson");
-    assert.match(combined, signal, slide.assignmentId + " foundation content does not match " + expectedTopic);
+    assert.equal(foundation.title, canonical.title, slide.assignmentId + " topic drift");
+    assert.equal(foundation.intro, canonical.foundation.intro, slide.assignmentId + " intro drift");
+    assert.equal(foundation.example, canonical.foundation.example, slide.assignmentId + " example drift");
+    assert.equal(foundation.tension, canonical.foundation.tension, slide.assignmentId + " tension drift");
+    assert.equal(foundation.question, canonical.profile.question, slide.assignmentId + " core question drift");
   });
 
   const day1 = getPresenterTopicFoundation(slides[0]);
   const day2 = getPresenterTopicFoundation(slides[1]);
-  assert.match(day1.intro, /Wissenschaftliche Erkenntnisse|Methoden|Daten/);
-  assert.doesNotMatch(day1.intro, /C1-Lernziel|Lernplan/);
-  assert.match(day2.intro, /Kunst und Kultur/);
-  assert.doesNotMatch(day2.intro, /Mehrfachidentität|zwei Sprachen/);
+  assert.equal(day1.title, "Ziele und Lernweg");
+  assert.match(day1.intro, /Lernziele|Lernplan|Etappen/i);
+  assert.equal(day2.title, "Kultur und Identität");
+  assert.match(day2.intro, /Identität|Sprache|Herkunft/i);
 });
 
 test("Presenter 2.0 orders warm-up before foundation and foundation before language work", () => {

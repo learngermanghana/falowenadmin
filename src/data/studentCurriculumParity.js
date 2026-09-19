@@ -1,8 +1,10 @@
+import { C1_CANONICAL_TITLES } from "./c1CanonicalCurriculum.js";
+
 // Canonical learner-side curriculum identity used by Falowen Admin Presenter.
 // Learner source snapshot: falowenexamtrainer@bafaffbb5fee47a0b9b4effa040dc69cf052f5fa
 // A2/B1/B2 titles come from the learner topic/situation/alignment data.
-// C1 intentionally records the current learner sequence so Admin can surface its known sequence mismatch.
-// C2 mirrors the current learner C2 curriculum, which is already aligned with Admin.
+// C1 comes from the shared canonical learner-aligned C1 manifest.
+// C2 mirrors the current learner C2 curriculum.
 
 const A2_TITLES = [
   "Small Talk",
@@ -97,36 +99,6 @@ const B2_TITLES = [
   "Gesellschaft im Wandel – B2 Prüfungstraining"
 ];
 
-const C1_TITLES = [
-  "Ziele und Lernweg",
-  "Kultur und Identität",
-  "Medien und Informationskompetenz",
-  "Beziehungen und Teamarbeit",
-  "Berufliche Entwicklung",
-  "Gesundheit und Lebensstil",
-  "Reisen und Nachhaltigkeit",
-  "Wohnen und Stadtentwicklung",
-  "Konsum und Werbung",
-  "Integration und Gesellschaft",
-  "Engagement und Ehrenamt",
-  "Freizeit und Kultur",
-  "Mehrsprachigkeit",
-  "Innovation und Zukunft",
-  "Bildung und lebenslanges Lernen",
-  "Technologie im Alltag",
-  "Umweltverantwortung",
-  "Gesellschaftlicher Zusammenhalt",
-  "Arbeitswelt und Automatisierung",
-  "Digitale Gesundheit",
-  "Gesellschaftliche Teilhabe und Integration",
-  "Demokratie und Mitbestimmung",
-  "Work-Life-Balance",
-  "Verkehr und Infrastruktur",
-  "Wissenschaft und Forschungsethik",
-  "Nachhaltiger Konsum",
-  "Digitale Verwaltung",
-  "Demografischer Wandel"
-];
 
 const C2_TITLES = [
   "Kreislaufwirtschaft und Wegwerfgesellschaft",
@@ -163,12 +135,12 @@ const TITLES_BY_LEVEL = Object.freeze({
   A2: A2_TITLES,
   B1: B1_TITLES,
   B2: B2_TITLES,
-  C1: C1_TITLES,
+  C1: C1_CANONICAL_TITLES,
   C2: C2_TITLES,
 });
 
-export const STRICT_PARITY_LEVELS = Object.freeze(["A2", "B1", "B2", "C2"]);
-export const KNOWN_PARITY_EXCEPTION_LEVELS = Object.freeze(["C1"]);
+export const STRICT_PARITY_LEVELS = Object.freeze(["A2", "B1", "B2", "C1", "C2"]);
+export const KNOWN_PARITY_EXCEPTION_LEVELS = Object.freeze([]);
 export const STUDENT_CURRICULUM_SOURCE_SHA = "bafaffbb5fee47a0b9b4effa040dc69cf052f5fa";
 
 export const APPROVED_TITLE_ALIASES = Object.freeze({
@@ -243,17 +215,11 @@ export function getCurriculumParityReference(slide = {}) {
     adminTitle: actualTitle,
     strict,
     similarity: score,
-    status: aligned ? "aligned" : strict ? "mismatch" : "known-exception",
-    statusLabel: aligned
-      ? "Student/Admin aligned"
-      : strict
-        ? "Curriculum mismatch"
-        : "Known sequence difference",
+    status: aligned ? "aligned" : "mismatch",
+    statusLabel: aligned ? "Student/Admin aligned" : "Curriculum mismatch",
     note: aligned
       ? "Teacher slides and the learner Course Book point to the same lesson topic."
-      : strict
-        ? "This lesson should be reviewed before class because the Admin topic does not match the learner Course Book."
-        : "C1 currently uses a different Admin sequence. Use the learner reference below when bridging students back to Falowen.",
+      : "This lesson should be reviewed before class because the Admin topic does not match the learner Course Book.",
   };
 }
 

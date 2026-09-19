@@ -15,6 +15,16 @@ const EXPECTED_SOURCE_BLOBS = Object.freeze({
   "web/src/data/c1ContentRefresh.js": "a3fe7b8bcc28d5af9011dad0676e119d6f5d16bb",
   "web/src/data/c2TopicKnowledge.js": "6c39d126a82527566bb38fd14d2744e4beee8a1a",
   "web/src/data/c2ExamStandardContent.js": "10997bdf9974e0dc58cb8bacdbdb45f0fc6e29c9",
+  "web/src/components/C1Day1To6GrammarNotes.js": "2894491bcdd034ee210f7b5d4539421552033767",
+  "web/src/components/C1Day7ReisenGrammarNotes.js": "96fd017458ac225fa86ae377261610e604ba3819",
+  "web/src/components/C1Day8To10GrammarNotes.js": "c3f52c2a9b25df7a1960a412bff0f2f10a517ce8",
+  "web/src/components/C1Day11GrammarNotes.js": "9247d21bde0375b38d93d22be8949dc6a1409806",
+  "web/src/components/C1Day12To14GrammarNotes.js": "501df092d3f692c92dbfe56e3247b29db3cce3d2",
+  "web/src/components/C1Day15To17GrammarNotes.js": "0a447e3929bab4023cda22eba7247663e3c23285",
+  "web/src/components/C1Day18To20GrammarNotes.js": "200d122f143567c8f7e5271d009a5e410d5a7191",
+  "web/src/components/C1Day21To23GrammarNotes.js": "e8b274b6d4df8d332d1536388f6bead68c8e86d2",
+  "web/src/components/C1Day24To26GrammarNotes.js": "4ff2972400888b4a3b7e47a763347eb2cbc400d7",
+  "web/src/components/C1Day27To28GrammarNotes.js": "46458b0b54adab1273b8089885ec7992aca0b7d3",
 });
 
 async function currentBlobSha(path) {

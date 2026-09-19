@@ -21,12 +21,12 @@ function mustReplace(source, from, to, label) {
 
 update("src/data/courseDictionary.js", (source) => {
   if (source.includes("  C2: {")) return source;
-  const anchor = "  },\n};\n\nfunction dictionarySortValue(entry = {}) {";
+  const anchor = "};\n\nfunction dictionarySortValue(entry = {}) {";
   if (!source.includes(anchor)) throw new Error("C2 dictionary insertion anchor missing");
   const entries = c2CourseEntries
     .map((entry) => `    ${JSON.stringify(entry.assignment_id)}: { assignment_id: ${JSON.stringify(entry.assignment_id)}, chapter: ${JSON.stringify(entry.chapter)}, de: ${JSON.stringify(entry.de)}, en: ${JSON.stringify(entry.en)} },`)
     .join("\n");
-  return source.replace(anchor, `  },\n  C2: {\n${entries}\n  },\n};\n\nfunction dictionarySortValue(entry = {}) {`);
+  return source.replace(anchor, `  C2: {\n${entries}\n  },\n};\n\nfunction dictionarySortValue(entry = {}) {`);
 });
 
 update("src/data/teachingSlides.js", (source) => {

@@ -29,6 +29,6 @@ jobs:
         with:
           node-version: 24
       - name: Run curriculum parity contract tests
-        run: node --test tests/student-admin-curriculum-parity.test.js
+        run: node --test tests/student-admin-curriculum-parity.test.js tests/c1-curriculum-reconciliation.test.js
       - name: Check learner-source drift and strict parity
         run: node scripts/auditStudentAdminCurriculumParity.mjs
