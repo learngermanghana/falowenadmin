@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { courseDictionary, getCourseDictionaryEntry } from "../src/data/courseDictionary.js";
+import { C1_CANONICAL_TITLES, C1_CANONICAL_GRAMMAR_TITLES } from "../src/data/c1CanonicalCurriculum.js";
 import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 import {
   buildTeachingPresenterStages,
@@ -14,36 +15,6 @@ const REQUIRED_STAGES = [
   "practice", "workbook", "mistakes", "questions", "wrapup",
 ];
 
-const EXPECTED_TOPICS = [
-  "Wissenschaft und Forschung",
-  "Kunst und Kultur",
-  "Künstliche Intelligenz und Arbeitswelt",
-  "Digitalisierung und Datenschutz",
-  "Personalisierte Werbung",
-  "Online- und Offline-Identität",
-  "Gesellschaftlicher Zusammenhalt",
-  "Mehrsprachigkeit",
-  "Migration und Integration",
-  "Ehrenamt und gesellschaftlicher Pflichtdienst",
-  "Demokratie und soziale Medien",
-  "Bildung und Prüfungsformate",
-  "Lebenslanges Lernen",
-  "Homeoffice und moderne Arbeitsformen",
-  "Fachkräftemangel und berufliche Mobilität",
-  "Bedingungsloses Grundeinkommen",
-  "Nachhaltigkeit in der Wirtschaft",
-  "Klimawandel und Verkehr",
-  "Nachhaltiger Konsum",
-  "Reisen und Nachhaltigkeit",
-  "Gesundheit und Impfpflicht",
-  "Ernährung und moderner Lebensstil",
-  "Wohnen, Mieten und soziale Gerechtigkeit",
-  "Zukunftstechnologien und Innovation",
-  "Globalisierung und internationale Zusammenarbeit",
-  "Wissenschaftliches Arbeiten und Quellen",
-  "Stellungnahme und formelle Korrespondenz",
-  "Prüfungsvorbereitung und spontane Argumentation",
-];
 
 test("C1 Teaching Slides expose a complete 28-day curriculum", () => {
   const slides = getSlidesByCourse("C1");
@@ -54,7 +25,7 @@ test("C1 Teaching Slides expose a complete 28-day curriculum", () => {
   slides.forEach((slide, index) => {
     const assignmentId = `C1 ${index + 1}`;
     assert.equal(slide.assignmentId, assignmentId);
-    assert.match(slide.title, new RegExp(EXPECTED_TOPICS[index].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+    assert.match(slide.title, new RegExp(C1_CANONICAL_TITLES[index].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
     assert.equal(getTeachingSlideByAssignmentId(assignmentId)?.id, slide.id);
     assert.equal(getCourseDictionaryEntry(assignmentId)?.assignment_id, assignmentId);
   });
@@ -108,17 +79,21 @@ test("C1 practice stays student-facing in German while teacher guidance remains 
   assert.match(teacherText, /position|precision|counterargument|correct/i);
 });
 
-test("C1 condition entries preserve both the condition and Konjunktiv II targets", () => {
-  const slide = getTeachingSlideByAssignmentId("C1 3");
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const grammar = stages.find((stage) => stage.id === "grammar");
-  const grammarText = grammar.items.join(" ");
+test("C1 grammar stages match the learner-side grammar target for every day", () => {
+  for (const slide of getSlidesByCourse("C1")) {
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const grammar = stages.find((stage) => stage.id === "grammar");
+    const expected = C1_CANONICAL_GRAMMAR_TITLES[slide.dayNumber - 1];
 
-  assert.match(grammarText, /Bedingungen formulieren/i);
-  assert.match(grammarText, /falls/i);
-  assert.match(grammarText, /sofern/i);
-  assert.match(grammarText, /Konjunktiv II/i);
-  assert.ok(grammar.items.length >= 4, "combined C1 condition entry should not drop one of its targets");
+    assert.ok(expected, slide.assignmentId + " missing canonical grammar title");
+    assert.ok(grammar.items.some((item) => item.includes(expected)), slide.assignmentId + " does not expose learner grammar target");
+    assert.ok(grammar.items.some((item) => /Kontrollpunkt:/i.test(item)), slide.assignmentId + " missing learner grammar control point");
+  }
+
+  const day3 = buildTeachingPresenterStages(getTeachingSlideByAssignmentId("C1 3"), "Medien und Informationskompetenz")
+    .find((stage) => stage.id === "grammar").items.join(" ");
+  assert.match(day3, /Konjunktiv I für indirekte Rede/i);
+  assert.match(day3, /indirekte Rede|Konjunktiv I/i);
 });
 
 test("existing A1, A2, B1 and B2 Presenter 2 courses remain enabled", () => {
