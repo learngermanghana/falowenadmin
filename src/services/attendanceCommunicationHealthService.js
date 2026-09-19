@@ -1,5 +1,4 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase.js";
+import { auth } from "../firebase.js";
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -86,11 +85,23 @@ export async function loadAttendanceDeliveryHealth(classRecordId) {
   const classId = normalize(classRecordId);
   if (!classId) throw new Error("Select a class before loading attendance delivery health.");
 
-  const snap = await getDocs(
-    query(collection(db, "attendanceEmailDeliveries"), where("classId", "==", classId)),
-  );
-  const records = snap.docs
-    .map((docSnap) => normalizeAttendanceDeliveryRecord(docSnap.id, docSnap.data() || {}))
+  const user = auth?.currentUser;
+  if (!user) throw new Error("You must be signed in to load attendance delivery health.");
+  const token = await user.getIdToken();
+  const response = await fetch("/api/attendance-confirmation-emails/health?classId=" + encodeURIComponent(classId), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: "Bearer " + token,
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.ok === false) {
+    throw new Error(String(data?.error || data?.message || "Could not load attendance delivery health."));
+  }
+
+  const records = (Array.isArray(data.records) ? data.records : [])
+    .map((record) => normalizeAttendanceDeliveryRecord(record.id, record))
     .sort((left, right) => recordTime(right) - recordTime(left));
 
   return {
