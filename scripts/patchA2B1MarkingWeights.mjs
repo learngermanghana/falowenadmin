@@ -2,6 +2,23 @@ import fs from "node:fs";
 
 function replaceOnce(source, before, after, label) {
   if (source.includes(after)) return source;
+
+  const alreadyMaterialized = {
+    "MarkingPage combined score": [
+      "const weightedOutcome = calculateWeightedMarkingOutcome({",
+      "const finalScore = weightedOutcome.finalScore",
+    ],
+    "MarkingPage score metadata": [
+      "scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null",
+      "markingPolicy: weightedOutcome.policy",
+    ],
+    "MarkingPage manual preview": [
+      "calculateFinalScore(objectiveScorePercent, schreibenMark, scoringOptions)",
+      "objectiveDetails: objectiveMarkingResult.details || {}",
+    ],
+  }[label];
+  if (alreadyMaterialized?.every((marker) => source.includes(marker))) return source;
+
   if (!source.includes(before)) throw new Error(`${label} anchor changed; update patchA2B1MarkingWeights.mjs`);
   return source.replace(before, after);
 }
