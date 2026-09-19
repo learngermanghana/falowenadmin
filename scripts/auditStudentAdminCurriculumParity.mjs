@@ -1,4 +1,5 @@
 import { teachingSlides } from "../src/data/teachingSlides.js";
+import { c2PresenterSlides } from "../src/data/c2PresenterSlides.js";
 import {
   STRICT_PARITY_LEVELS,
   STUDENT_CURRICULUM_SOURCE_SHA,
@@ -39,7 +40,8 @@ for (const [path, expectedSha] of Object.entries(EXPECTED_SOURCE_BLOBS)) {
   }
 }
 
-const audit = auditCurriculumParity(teachingSlides);
+const paritySlides = [...teachingSlides.filter((slide) => String(slide.course || "").toUpperCase() !== "C2"), ...c2PresenterSlides];
+const audit = auditCurriculumParity(paritySlides);
 const strictMismatches = audit.filter(
   (item) => STRICT_PARITY_LEVELS.includes(item.level) && item.status !== "aligned",
 );
