@@ -167,8 +167,8 @@ const TITLES_BY_LEVEL = Object.freeze({
   C2: C2_TITLES,
 });
 
-export const STRICT_PARITY_LEVELS = Object.freeze(["A2", "B1", "B2", "C2"]);
-export const KNOWN_PARITY_EXCEPTION_LEVELS = Object.freeze(["C1"]);
+export const STRICT_PARITY_LEVELS = Object.freeze(["A2", "B1", "B2", "C1", "C2"]);
+export const KNOWN_PARITY_EXCEPTION_LEVELS = Object.freeze([]);
 export const STUDENT_CURRICULUM_SOURCE_SHA = "bafaffbb5fee47a0b9b4effa040dc69cf052f5fa";
 
 export const APPROVED_TITLE_ALIASES = Object.freeze({
@@ -243,17 +243,11 @@ export function getCurriculumParityReference(slide = {}) {
     adminTitle: actualTitle,
     strict,
     similarity: score,
-    status: aligned ? "aligned" : strict ? "mismatch" : "known-exception",
-    statusLabel: aligned
-      ? "Student/Admin aligned"
-      : strict
-        ? "Curriculum mismatch"
-        : "Known sequence difference",
+    status: aligned ? "aligned" : "mismatch",
+    statusLabel: aligned ? "Student/Admin aligned" : "Curriculum mismatch",
     note: aligned
       ? "Teacher slides and the learner Course Book point to the same lesson topic."
-      : strict
-        ? "This lesson should be reviewed before class because the Admin topic does not match the learner Course Book."
-        : "C1 currently uses a different Admin sequence. Use the learner reference below when bridging students back to Falowen.",
+      : "This lesson should be reviewed before class because the Admin topic does not match the learner Course Book.",
   };
 }
 
