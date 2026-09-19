@@ -30,17 +30,12 @@ test("Attendance overview uses active Live Classes and provides a tracker sub-ta
   assert.doesNotMatch(overview, /Show archived completed classes/);
 });
 
-test("Attendance overview explains and displays automatic email delivery status", async () => {
+test("Attendance overview uses the authoritative communication health panel", async () => {
   const overview = await source(overviewPath);
-  assert.match(overview, /loadAttendanceEmailSettings/);
-  assert.match(overview, /Attendance email:/);
-  assert.match(overview, /The job checks every 15 minutes/);
-  assert.match(overview, /after class ends/);
-  assert.match(overview, /QR check-in window closes/);
-  assert.match(overview, /Last job:/);
-  assert.match(overview, /Last send:/);
-  assert.match(overview, /Last status:/);
-  assert.match(overview, /Open email settings/);
+  assert.match(overview, /AttendanceCommunicationHealthPanel/);
+  assert.match(overview, /classId=\{classRecordKey\(selectedTrackerClass\)\}/);
+  assert.doesNotMatch(overview, /loadAttendanceEmailSettings/);
+  assert.doesNotMatch(overview, /Attendance email:/);
 });
 
 test("attendance session provides BCC backup drafts for starting soon and cancellation", async () => {

@@ -71,16 +71,18 @@ test("scheduled attendance delivery keeps deduplication and individual delivery"
   assert.match(worker, /schedule: "\*\/15 \* \* \* \*"/);
 });
 
-test("Firebase predeploy registers and validates scheduler plus retry route", async () => {
+test("Firebase predeploy registers and validates scheduler plus protected health and retry routes", async () => {
   const patch = await source(patchPath);
   assert.match(patch, /createAttendanceConfirmationEmailJob/);
   assert.match(patch, /sendAttendanceConfirmationEmails/);
   assert.match(patch, /retryFailedAttendanceDeliveries/);
+  assert.match(patch, /listAttendanceDeliveryHealth/);
+  assert.match(patch, /attendance-confirmation-emails\/health/);
   assert.match(patch, /attendance-confirmation-emails\/retry-failed/);
   assert.match(patch, /await requireAuth\(req\)/);
   assert.match(patch, /resolveClassWebhookConfig/);
   assert.match(patch, /config: classConfig/);
   assert.match(patch, /schedule: "\*\/15 \* \* \* \*"/);
   assert.match(patch, /requiredChecks/);
-  assert.match(patch, /protected failed-delivery retry route verified/);
+  assert.match(patch, /protected delivery health route, and failed-delivery retry route verified/);
 });

@@ -176,6 +176,89 @@ async function markRefs(refs, patch) {
   await Promise.all(refs.map((ref) => ref.set(patch, { merge: true })));
 }
 
+function serializedTimestamp(value) {
+  const date = asDate(value);
+  return date ? date.toISOString() : "";
+}
+
+function deliveryHealthRecord(docSnap) {
+  const data = docSnap.data() || {};
+  return {
+    id: docSnap.id,
+    classId: normalize(data.classId),
+    className: normalize(data.className),
+    studentKey: normalize(data.studentKey),
+    studentName: normalize(data.studentName),
+    studentEmail: normalize(data.studentEmail),
+    mode: normalize(data.mode),
+    periodKey: normalize(data.periodKey),
+    status: normalize(data.status).toLowerCase() || "unknown",
+    attemptCount: Number(data.attemptCount || 0),
+    lastError: normalize(data.lastError),
+    dueAt: serializedTimestamp(data.dueAt),
+    createdAt: serializedTimestamp(data.createdAt),
+    processingStartedAt: serializedTimestamp(data.processingStartedAt),
+    sentAt: serializedTimestamp(data.sentAt),
+    failedAt: serializedTimestamp(data.failedAt),
+    retryStartedAt: serializedTimestamp(data.retryStartedAt),
+    retrySentAt: serializedTimestamp(data.retrySentAt),
+    retryFailedAt: serializedTimestamp(data.retryFailedAt),
+    updatedAt: serializedTimestamp(data.updatedAt),
+    upstreamCount: Number(data.upstreamCount || 0),
+  };
+}
+
+function deliveryRecordTime(record = {}) {
+  return asDate(record.updatedAt || record.sentAt || record.failedAt || record.processingStartedAt || record.createdAt)?.getTime() || 0;
+}
+
+function summarizeDeliveryHealthRecords(records = []) {
+  const rows = Array.isArray(records) ? records : [];
+  const sent = rows.filter((row) => row.status === "sent").length;
+  const failed = rows.filter((row) => row.status === "failed").length;
+  const processing = rows.filter((row) => row.status === "processing").length;
+  const unknown = Math.max(0, rows.length - sent - failed - processing);
+  const sorted = [...rows].sort((left, right) => deliveryRecordTime(right) - deliveryRecordTime(left));
+  const latest = sorted[0] || null;
+  const latestFailure = sorted.find((row) => row.status === "failed") || null;
+  const totalAttempts = rows.reduce((sum, row) => sum + Math.max(0, Number(row.attemptCount || 0)), 0);
+
+  return {
+    total: rows.length,
+    sent,
+    failed,
+    processing,
+    unknown,
+    totalAttempts,
+    latest,
+    latestFailure,
+    healthy: rows.length === 0 ? null : failed === 0 && processing === 0,
+  };
+}
+
+async function listAttendanceDeliveryHealth({ db, classId, limit = 100 }) {
+  const id = normalize(classId);
+  if (!id) throw new Error("Select a class before loading attendance delivery health.");
+
+  const classSnap = await db.collection("classes").doc(id).get();
+  if (!classSnap.exists) throw new Error("The selected Live Class record was not found.");
+
+  const deliverySnap = await db.collection("attendanceEmailDeliveries").where("classId", "==", id).get();
+  const allRecords = deliverySnap.docs
+    .map(deliveryHealthRecord)
+    .sort((left, right) => deliveryRecordTime(right) - deliveryRecordTime(left));
+  const boundedLimit = Math.max(1, Math.min(Number(limit) || 100, 500));
+  const records = allRecords.slice(0, boundedLimit);
+
+  return {
+    classId: id,
+    records,
+    summary: summarizeDeliveryHealthRecords(allRecords),
+    recentLimit: boundedLimit,
+    hasMore: allRecords.length > records.length,
+  };
+}
+
 async function retryFailedAttendanceDeliveries({
   admin,
   db,
@@ -274,10 +357,13 @@ async function retryFailedAttendanceDeliveries({
 
 module.exports = {
   retryFailedAttendanceDeliveries,
+  listAttendanceDeliveryHealth,
   _test: {
     resolveClassWebhookConfig,
     resolveWebhookConfig,
     rowForRetry,
     retrySafeCombinedMessage,
+    deliveryHealthRecord,
+    summarizeDeliveryHealthRecords,
   },
 };

@@ -11,7 +11,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
-const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");
+const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
 const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
@@ -2045,6 +2045,28 @@ app.post("/admin/classes/:classId/sessions/:sessionId/cancel", async (req, res) 
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
+app.get("/attendance-confirmation-emails/health", async (req, res) => {
+  try {
+    const user = await requireAuth(req);
+    const email = String(user?.email || "").trim().toLowerCase();
+    const role = String(user?.role || user?.user_role || "").trim().toLowerCase();
+    const adminAllowed = user?.admin === true || role === "admin" || email === "moxflex@gmail.com";
+    if (!adminAllowed) {
+      return res.status(403).json({ ok: false, error: "Admin access required." });
+    }
+    const classId = String(req.query?.classId || "").trim();
+    if (!classId) return res.status(400).json({ ok: false, error: "Select a class before loading attendance delivery health." });
+    const result = await listAttendanceDeliveryHealth({ db, classId });
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    const unauthorized = /Authorization|Not allowed|token/i.test(String(error?.message || ""));
+    return res.status(unauthorized ? 401 : 400).json({
+      ok: false,
+      error: error?.message || "Could not load attendance delivery health.",
+    });
   }
 });
 
