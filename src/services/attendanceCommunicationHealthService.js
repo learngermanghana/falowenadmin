@@ -104,9 +104,20 @@ export async function loadAttendanceDeliveryHealth(classRecordId) {
     .map((record) => normalizeAttendanceDeliveryRecord(record.id, record))
     .sort((left, right) => recordTime(right) - recordTime(left));
 
+  const fallbackSummary = summarizeAttendanceDeliveryHealth(records);
+  const serverSummary = data?.summary && typeof data.summary === "object"
+    ? {
+        ...data.summary,
+        latest: data.summary.latest ? normalizeAttendanceDeliveryRecord(data.summary.latest.id, data.summary.latest) : fallbackSummary.latest,
+        latestFailure: data.summary.latestFailure ? normalizeAttendanceDeliveryRecord(data.summary.latestFailure.id, data.summary.latestFailure) : fallbackSummary.latestFailure,
+      }
+    : null;
+
   return {
     classId,
     records,
-    summary: summarizeAttendanceDeliveryHealth(records),
+    summary: serverSummary || fallbackSummary,
+    recentLimit: Number(data?.recentLimit || records.length || 0),
+    hasMore: Boolean(data?.hasMore),
   };
 }
