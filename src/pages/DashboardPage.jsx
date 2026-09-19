@@ -356,6 +356,13 @@ export default function DashboardPage() {
 
       <section className="quick-actions-grid">
         <ActionCard
+          title="Teacher Lesson Dashboard"
+          body="Open the next canonical class lesson, check roster readiness, attendance and recent work, then launch Presenter Mode."
+          to="/lesson-dashboard"
+          label="Open lesson dashboard"
+          tone="blue"
+        />
+        <ActionCard
           title="Marking workspace"
           body={`${incomingAssignments.length} assignment${incomingAssignments.length === 1 ? "" : "s"} waiting. Opens one page with Mark Work, AI Audit, and Answer Keys tabs.`}
           to="/marking"

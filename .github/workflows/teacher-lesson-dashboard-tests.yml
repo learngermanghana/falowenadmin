@@ -1,0 +1,40 @@
+name: Teacher Lesson Dashboard tests
+
+on:
+  pull_request:
+    paths:
+      - "src/pages/TeacherLessonDashboardPage.jsx"
+      - "src/pages/TeacherLessonDashboardPage.css"
+      - "src/utils/teacherLessonDashboard.js"
+      - "src/App.jsx"
+      - "src/pages/DashboardPage.jsx"
+      - "tests/teacher-lesson-dashboard.test.js"
+      - ".github/workflows/teacher-lesson-dashboard-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/pages/TeacherLessonDashboardPage.jsx"
+      - "src/pages/TeacherLessonDashboardPage.css"
+      - "src/utils/teacherLessonDashboard.js"
+      - "src/App.jsx"
+      - "src/pages/DashboardPage.jsx"
+      - "tests/teacher-lesson-dashboard.test.js"
+      - ".github/workflows/teacher-lesson-dashboard-tests.yml"
+
+jobs:
+  dashboard-test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply presenter patch chain
+        run: node scripts/patchB2C1SpeakingModels.mjs
+      - name: Run Teacher Lesson Dashboard regressions
+        run: node --test tests/teacher-lesson-dashboard.test.js
+      - name: Build production bundle
+        run: npm run build

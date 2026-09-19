@@ -23,6 +23,7 @@ const CommunicationHubPage = lazy(() => import("./pages/CommunicationHubPage.jsx
 const GrammarIssueReportsPage = lazy(() => import("./pages/GrammarIssueReportsPage"));
 const WhatsAppRemindersPage = lazy(() => import("./pages/WhatsAppRemindersPage"));
 const TeachingSlidesPage = lazy(() => import("./pages/TeachingSlidesPage"));
+const TeacherLessonDashboardPage = lazy(() => import("./pages/TeacherLessonDashboardPage.jsx"));
 const ClassParticipationPage = lazy(() => import("./pages/ClassParticipationPage.jsx"));
 const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
@@ -72,6 +73,7 @@ function TopBar() {
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
+                <Link to="/lesson-dashboard" onClick={() => setMenuOpen(false)}>Lesson Dashboard</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-participation" onClick={() => setMenuOpen(false)}>Participation</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
@@ -82,6 +84,7 @@ function TopBar() {
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
+                <Link to="/lesson-dashboard" onClick={() => setMenuOpen(false)}>Lesson Dashboard</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
@@ -194,6 +197,7 @@ export default function App() {
           <Route path="/class-operations" element={<ProtectedRoute><ClassOperationsPage /></ProtectedRoute>} />
           <Route path="/class-archive" element={<ProtectedRoute><ClassArchivePage /></ProtectedRoute>} />
           <Route path="/live-classes" element={<ProtectedRoute><LiveClassesPage /></ProtectedRoute>} />
+          <Route path="/lesson-dashboard" element={<ProtectedRoute><TeacherLessonDashboardPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/course/:courseId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/course/:courseId/:slideId" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/teaching-slides/public/:courseId/print" element={<TeachingSlidesPage publicView />} />
