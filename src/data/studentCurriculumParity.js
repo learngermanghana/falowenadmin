@@ -171,6 +171,12 @@ export const STRICT_PARITY_LEVELS = Object.freeze(["A2", "B1", "B2", "C2"]);
 export const KNOWN_PARITY_EXCEPTION_LEVELS = Object.freeze(["C1"]);
 export const STUDENT_CURRICULUM_SOURCE_SHA = "bafaffbb5fee47a0b9b4effa040dc69cf052f5fa";
 
+export const APPROVED_TITLE_ALIASES = Object.freeze({
+  "A2-DAY-20": ["Typische Reklamationssituationen"],
+  "A2-DAY-23": ["Wie kommst du zur Schule oder zur Arbeit?"],
+});
+
+
 const normalize = (value = "") =>
   String(value || "")
     .toLowerCase()
@@ -225,7 +231,8 @@ export function getCurriculumParityReference(slide = {}) {
   if (!contract) return null;
 
   const actualTitle = String(slide.title || slide.topic || "");
-  const score = topicSimilarity(actualTitle, contract.title);
+  const aliasMatch = (APPROVED_TITLE_ALIASES[contract.canonicalId] || []).some((alias) => topicSimilarity(actualTitle, alias) >= 0.8);
+  const score = aliasMatch ? 1 : topicSimilarity(actualTitle, contract.title);
   const strict = STRICT_PARITY_LEVELS.includes(level);
   const aligned = score >= (strict ? 0.5 : 0.8);
 
