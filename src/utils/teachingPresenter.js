@@ -33,6 +33,14 @@ export function isTeachingPresenterV2Slide(slide = {}) { return isA1PresenterV2S
 export function parsePresenterMinutes(value = "") { const match = String(value || "").match(/(\d+)\s*min/i); return match ? Number(match[1]) : 0; }
 function interactionMinutes(slide = {}, index = 0) { return parsePresenterMinutes(slide.interactionFlow?.[index]?.detailEn || ""); }
 
+const PER_STUDENT_WARMUP_LEVELS = new Set(["A2", "B1", "B2", "C1", "C2"]);
+function warmupSuggestedMinutes(slide = {}) { return PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? 5 : (interactionMinutes(slide, 0) || 5); }
+function warmupTimingLabel(slide = {}, questionCount = 0) {
+  if (!PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide))) return "";
+  const count = Number(questionCount || 0);
+  return `5 min per student${count ? ` · ${count} warm-up question${count === 1 ? "" : "s"}` : ""}`;
+}
+
 const ADVANCED_GRAMMAR_RULES = [
   { pattern: /adjective endings|adjektiv/i, de: "Adjektivendungen vor Nomen sicher verwenden." },
   { pattern: /nominalis/i, de: "Nominalisierung: Verben oder Adjektive in Nomen umformen, um formeller zu formulieren." },
@@ -86,7 +94,7 @@ function buildAdvancedPracticeItems(slide = {}, support = {}, flow = [], grammar
 
 function buildClassicStages(slide = {}, topicLabel = "") { return [
   { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "" },
-  { id: "warmup", type: "list", kicker: "Warm-up", title: "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [] },
+  { id: "warmup", type: "list", kicker: "Warm-up", title: "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
   { id: "phrases", type: "list", kicker: "Redemittel", title: "Key phrases", items: Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [] },
   { id: "questions", type: "numbered-list", kicker: "Sprechen", title: "Student questions", items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [] },
   { id: "wrapup", type: "task", kicker: "Abschluss", title: "Wrap-up task", body: slide.wrapUpTaskDe || "" },
@@ -96,7 +104,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const support = buildTeacherSlideSupport(slide); const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : []; const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : []; const advanced = isAdvancedClassroomSlide(slide); const grammarItems = advanced ? buildAdvancedGrammarItems(slide, support) : (Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []); const practiceItems = advanced ? buildAdvancedPracticeItems(slide, support, flow, grammarItems) : flow.map((item) => ({ title: item.phase, detail: item.detailEn, minutes: parsePresenterMinutes(item.detailEn) })); const mistakeItems = advanced ? buildAdvancedMistakes(slide) : (Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : []);
   const stages = [
     { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "" },
-    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: interactionMinutes(slide, 0) || 5 },
+    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
     { id: "phrases", type: "list", kicker: "Redemittel", title: advanced ? "Redemittel" : "Key phrases", items: Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [] },
     { id: "grammar", type: "list", kicker: "Grammatik", title: advanced ? "Neue Strukturen" : "Grammar focus", items: grammarItems, suggestedMinutes: interactionMinutes(slide, 1) || 10 },
     { id: "examples", type: "list", kicker: "Beispiele", title: advanced ? "Modellsätze" : "Model examples", items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [], suggestedMinutes: interactionMinutes(slide, 2) || 8 },
