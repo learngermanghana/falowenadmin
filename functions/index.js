@@ -2050,7 +2050,13 @@ app.post("/admin/classes/:classId/sessions/:sessionId/cancel", async (req, res) 
 
 app.get("/attendance-confirmation-emails/health", async (req, res) => {
   try {
-    await requireAuth(req);
+    const user = await requireAuth(req);
+    const email = String(user?.email || "").trim().toLowerCase();
+    const role = String(user?.role || user?.user_role || "").trim().toLowerCase();
+    const adminAllowed = user?.admin === true || role === "admin" || email === "moxflex@gmail.com";
+    if (!adminAllowed) {
+      return res.status(403).json({ ok: false, error: "Admin access required." });
+    }
     const classId = String(req.query?.classId || "").trim();
     if (!classId) return res.status(400).json({ ok: false, error: "Select a class before loading attendance delivery health." });
     const result = await listAttendanceDeliveryHealth({ db, classId });
