@@ -269,18 +269,62 @@ function hasConcreteCorrections(result = {}) {
   });
 }
 
+function deterministicLanguageCorrections(source = "") {
+  const corrections = [];
+  const hopeClause = String(source || "").match(/\bIch\s+hoffe\s+es\s+geht\s+dir\s+gut\./i);
+  if (hopeClause?.[0]) {
+    corrections.push({
+      partId: "teil2",
+      from: hopeClause[0],
+      to: hopeClause[0].replace(/\bhoffe\s+/i, "hoffe, "),
+      reason: "Set a comma after „Ich hoffe“ before the following clause.",
+    });
+  }
+
+  const spacedQuestion = String(source || "").match(/\bWie\s+ist\s+dein(?:e)?\s+(?:Chef|Chefin)\s+\?/i);
+  if (spacedQuestion?.[0]) {
+    corrections.push({
+      partId: "teil2",
+      from: spacedQuestion[0],
+      to: spacedQuestion[0].replace(/\s+\?$/, "?"),
+      reason: "Do not put a space before a German question mark.",
+    });
+  }
+
+  return corrections;
+}
+
+function mergeCorrections(existing = [], additions = []) {
+  const rows = [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(additions) ? additions : [])];
+  const seen = new Set();
+  return rows.filter((item) => {
+    const key = typeof item === "string"
+      ? clean(item).toLowerCase()
+      : [item?.partId, item?.from, item?.to, item?.reason].map(clean).join("|").toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function writingDimensions({
-  writingScore,
+  result = {},
   completed,
   total,
   wrongRegister,
   genreMismatch,
 } = {}) {
   const taskFulfilment = total > 0 ? Math.round((Math.max(0, completed) / total) * 100) : null;
+  const existing = result.writingDimensions && typeof result.writingDimensions === "object"
+    ? result.writingDimensions
+    : {};
+  const rubricDimensions = result.rubric?.dimensions && typeof result.rubric.dimensions === "object"
+    ? result.rubric.dimensions
+    : {};
   return {
     taskFulfilment,
-    languageControl: numericPercent(writingScore),
-    coherence: numericPercent(writingScore),
+    languageControl: numericPercent(existing.languageControl ?? rubricDimensions.languageControl ?? result.languageControl),
+    coherence: numericPercent(existing.coherence ?? rubricDimensions.coherence ?? result.coherence),
     registerAndTextType: genreMismatch ? 40 : wrongRegister ? 60 : 100,
   };
 }
@@ -315,6 +359,41 @@ function markingContradictions({
     issues.push("Feedback describes the register as appropriate although the deterministic register check disagrees.");
   }
   return [...new Set(issues)];
+}
+
+function mergeReviewReasons(existing = [], additions = []) {
+  const rows = [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(additions) ? additions : [])]
+    .map((item) => typeof item === "string"
+      ? { code: "marking_review", message: clean(item), source: "marking" }
+      : {
+        code: clean(item?.code || "marking_review"),
+        message: clean(item?.message || item?.reason || ""),
+        source: clean(item?.source || "marking"),
+      })
+    .filter((item) => item.message);
+  const seen = new Set();
+  return rows.filter((item) => {
+    const key = `${item.code}|${item.message}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function contradictionReviewReasons(issues = []) {
+  return (Array.isArray(issues) ? issues : []).map((message) => ({
+    code: /Writing score is 0/i.test(message)
+      ? "writing_zero_with_completed_task"
+      : /near-perfect/i.test(message)
+        ? "writing_score_task_conflict"
+        : /taskCompletion reports complete/i.test(message)
+          ? "task_completion_conflict"
+          : /register|formal tone/i.test(message)
+            ? "register_feedback_conflict"
+            : "marking_contradiction",
+    message,
+    source: "question_aware_writing",
+  }));
 }
 
 function calibratedCompleteWritingScore({
@@ -355,6 +434,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   if (currentWritingScore === null) return result;
 
   const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "");
+  const deterministicCorrections = deterministicLanguageCorrections(source);
   const structured = readStructuredTask(result);
   const taskPointEvidence = task.level === "A2"
     ? evaluateWritingTaskEvidence(task, source)
@@ -409,13 +489,15 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
     if (calibratedWritingScore === currentWritingScore && !recoveredSuspiciousZero) {
       const completed = semanticTask ? total : (structured.completed ?? total);
-      const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
-      const dimensions = writingDimensions({ writingScore: currentWritingScore, completed, total, wrongRegister, genreMismatch });
+      const contradictions = markingContradictions({ result, task, currentWritingScore: effectiveWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
+      const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
       return {
         ...result,
         taskCompletion: semanticTask ? { completed, total, missing: [] } : result.taskCompletion,
         taskPointEvidence,
+        corrections: mergeCorrections(result.corrections, deterministicCorrections),
         writingDimensions: dimensions,
+        reviewReasons: mergeReviewReasons(result.reviewReasons, contradictionReviewReasons(contradictions)),
         markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
         status: suspiciousZeroWriting || contradictions.length ? "needs_review" : result.status,
         shouldSendAutomatically: suspiciousZeroWriting || contradictions.length ? false : result.shouldSendAutomatically,
@@ -431,8 +513,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
     const weightedOutcome = recomputeOutcome(result, task, calibratedWritingScore);
     const completed = semanticTask ? total : (structured.completed ?? total);
-    const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
-    const dimensions = writingDimensions({ writingScore: calibratedWritingScore, completed, total, wrongRegister, genreMismatch });
+    const contradictions = markingContradictions({ result, task, currentWritingScore: effectiveWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
+    const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
     return {
       ...result,
       score: weightedOutcome.finalScore,
@@ -447,7 +529,9 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       taskCompletion: { completed, total, missing: [] },
       missingTaskPoints: [],
       taskPointEvidence,
+      corrections: mergeCorrections(result.corrections, deterministicCorrections),
       writingDimensions: dimensions,
+      reviewReasons: mergeReviewReasons(result.reviewReasons, contradictionReviewReasons(contradictions)),
       markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
       status: contradictions.length ? "needs_review" : result.status,
       shouldSendAutomatically: contradictions.length ? false : result.shouldSendAutomatically,
@@ -477,8 +561,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
 
   const completed = Math.max(0, total - missingTaskPoints.length);
   const weightedOutcome = recomputeOutcome(result, task, guardedWritingScore);
-  const contradictions = markingContradictions({ result, task, currentWritingScore, completed, total, missingTaskPoints, wrongRegister });
-  const dimensions = writingDimensions({ writingScore: guardedWritingScore, completed, total, wrongRegister, genreMismatch });
+  const contradictions = markingContradictions({ result, task, currentWritingScore: guardedWritingScore, completed, total, missingTaskPoints, wrongRegister });
+  const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
   const endingAdvice = task.assignmentKey === "A2-1.1" ? a2Day1EndingAdvice(source) : "";
   const issueText = [
     genreMismatch ? `detected ${detectedTextType.detectedType} instead of ${task.textType}` : "",
@@ -489,6 +573,24 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     `Question-aware writing check: ${issueText}. The writing score is capped at ${guardedWritingScore}% because language quality cannot replace task fulfilment.`,
     endingAdvice,
   ].filter(Boolean).join(" ");
+  const guardReviewReasons = [
+    ...(missingTaskPoints.length ? [{
+      code: "missing_task_points",
+      message: `Required writing points are missing: ${missingTaskPoints.join("; ")}.`,
+      source: "question_aware_writing",
+    }] : []),
+    ...(genreMismatch ? [{
+      code: "writing_text_type_mismatch",
+      message: `Detected ${detectedTextType.detectedType} instead of the required ${task.textType}.`,
+      source: "question_aware_writing",
+    }] : []),
+    ...(wrongRegister ? [{
+      code: "writing_register_mismatch",
+      message: `The writing register does not match the required ${task.register} register.`,
+      source: "question_aware_writing",
+    }] : []),
+    ...contradictionReviewReasons(contradictions),
+  ];
 
   return {
     ...result,
@@ -504,7 +606,9 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     taskCompletion: { completed, total, missing: missingTaskPoints },
     missingTaskPoints,
     taskPointEvidence,
+    corrections: mergeCorrections(result.corrections, deterministicCorrections),
     writingDimensions: dimensions,
+    reviewReasons: mergeReviewReasons(result.reviewReasons, guardReviewReasons),
     markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
     feedback: [result.feedback, guardFeedback].filter(Boolean).join(" "),
     improvementSummary: [result.improvementSummary, guardFeedback].filter(Boolean).join(" "),
