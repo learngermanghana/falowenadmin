@@ -88,7 +88,7 @@ test("every C2 lesson keeps the text-first Presenter 2.0 teaching standard", () 
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    ["intro","warmup","knowledge","phrases","grammar","examples","practice","workbook","mistakes","questions","wrapup","grammar-check"]
+    ["intro","warmup","foundation","phrases","grammar","examples","practice","workbook","mistakes","questions","wrapup","grammar-check"]
       .forEach((stageId) => assert.ok(stageIds.includes(stageId), slide.assignmentId + " missing " + stageId));
 
     const grammar = stages.find((stage) => stage.id === "grammar");
@@ -133,7 +133,7 @@ test("C2 presenter declaration stays idempotent with the build patch hook", asyn
   assert.match(patchSource, /next = next\.replace\(c2DeclarationPattern, ""\)/);
 });
 
-test("all 28 C2 lessons teach topic knowledge before warm-up", () => {
+test("all 28 C2 lessons teach topic foundations after warm-up and before language work", () => {
   const slides = getSlidesByCourse("C2");
   assert.equal(slides.length, 28);
 
@@ -147,32 +147,38 @@ test("all 28 C2 lessons teach topic knowledge before warm-up", () => {
     assert.ok(foundation.example.length > 35, slide.assignmentId + " concrete example is too thin");
     assert.match(foundation.tension, /↔/, slide.assignmentId + " needs an explicit tension");
 
-    assert.match(slide.knowledgeTextDe, /Simple English:/);
-    assert.match(slide.knowledgeTextDe, /Auf Deutsch:/);
-    assert.match(slide.knowledgeTextDe, /Konkretes Beispiel:/);
-    assert.match(slide.knowledgeTextDe, /Kernfrage:/);
-    assert.match(slide.knowledgeTextDe, /Kernspannung:/);
-
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const ids = stages.map((stage) => stage.id);
-    assert.ok(ids.indexOf("knowledge") > -1, slide.assignmentId + " missing knowledge stage");
-    assert.ok(ids.indexOf("knowledge") < ids.indexOf("warmup"), slide.assignmentId + " must teach topic knowledge before warm-up");
+    const topicStage = stages.find((stage) => stage.id === "foundation");
+
+    assert.ok(topicStage, slide.assignmentId + " missing shared foundation stage");
+    assert.equal(topicStage.kicker, "C2 · Kernfrage verstehen");
+    assert.equal(topicStage.simpleEnglish, foundation.en);
+    assert.equal(topicStage.intro, foundation.de);
+    assert.equal(topicStage.example, foundation.example);
+    assert.equal(topicStage.tension, foundation.tension);
+    assert.equal(topicStage.question, foundation.core);
+    assert.ok(ids.indexOf("warmup") < ids.indexOf("foundation"), slide.assignmentId + " warm-up must come first");
+    assert.ok(ids.indexOf("foundation") < ids.indexOf("phrases"), slide.assignmentId + " foundation must precede Redemittel");
+    assert.ok(ids.indexOf("foundation") < ids.indexOf("grammar"), slide.assignmentId + " foundation must precede grammar");
+    assert.equal(ids.includes("knowledge"), false, slide.assignmentId + " legacy knowledge stage must stay removed");
   }
 });
 
-test("C2 Day 1 teaches the circular-economy concept before asking warm-up questions", () => {
+test("C2 Day 1 moves from warm-up into the circular-economy foundation before grammar", () => {
   const slide = getSlidesByCourse("C2")[0];
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const stageIds = stages.map((stage) => stage.id);
-  const knowledge = stages.find((stage) => stage.id === "knowledge");
+  const foundation = stages.find((stage) => stage.id === "foundation");
 
-  assert.ok(stageIds.indexOf("knowledge") < stageIds.indexOf("warmup"), "knowledge must come before the Day 1 warm-up");
-  assert.match(knowledge.body, /Simple English:/);
-  assert.match(knowledge.body, /products and materials in use for as long as possible/i);
-  assert.match(knowledge.body, /Wegwerfgesellschaft: Rohstoffe → Produktion → Kaufen → kurz nutzen → Wegwerfen/);
-  assert.match(knowledge.body, /Smartphone-Beispiel/);
-  assert.match(knowledge.body, /niedriger Preis und Bequemlichkeit/);
-  assert.match(knowledge.body, /Langlebigkeit und Ressourcenschonung/);
+  assert.ok(stageIds.indexOf("warmup") < stageIds.indexOf("foundation"), "warm-up must come before topic foundation");
+  assert.ok(stageIds.indexOf("foundation") < stageIds.indexOf("grammar"), "topic foundation must come before grammar");
+  assert.match(foundation.simpleEnglish, /products and materials in use for as long as possible/i);
+  assert.match(foundation.intro, /Wegwerfgesellschaft: Rohstoffe → Produktion → Kaufen → kurz nutzen → Wegwerfen/);
+  assert.match(foundation.example, /Smartphone-Beispiel/);
+  assert.match(foundation.tension, /niedriger Preis und Bequemlichkeit/);
+  assert.match(foundation.tension, /Langlebigkeit und Ressourcenschonung/);
+  assert.match(foundation.teacherNote, /Do not debate yet/i);
 });
 
 test("high-signal updated C2 domains stay locked to the current learner curriculum", () => {
