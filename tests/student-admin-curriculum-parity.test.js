@@ -14,7 +14,7 @@ import {
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 function paritySlides(level) {
-  return level === "C2" ? c2PresenterSlides : paritySlides(level);
+  return level === "C2" ? c2PresenterSlides : getSlidesByCourse(level);
 }
 
 test("A2 through C2 expose 28 canonical learner lesson identities", () => {
