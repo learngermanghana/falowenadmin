@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ATTENDANCE_EMAIL_MODES,
@@ -100,9 +100,12 @@ export default function AttendanceCommunicationHealthPanel({ classId = "", class
   const [loading, setLoading] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
     if (!classId) return;
+    const requestId = loadSequence.current + 1;
+    loadSequence.current = requestId;
     setLoading(true);
     setLoadError("");
     try {
@@ -110,22 +113,28 @@ export default function AttendanceCommunicationHealthPanel({ classId = "", class
         loadAttendanceEmailSettings(classId),
         loadAttendanceDeliveryHealth(classId),
       ]);
+      if (loadSequence.current !== requestId) return;
       setSettings(nextSettings);
       setHealth(nextHealth);
     } catch (cause) {
+      if (loadSequence.current !== requestId) return;
       setLoadError(cause?.message || "Could not load attendance communication health.");
     } finally {
-      setLoading(false);
+      if (loadSequence.current === requestId) setLoading(false);
     }
   }, [classId]);
 
   useEffect(() => {
+    loadSequence.current += 1;
     setSettings(null);
     setHealth({
       records: [],
       summary: { total: 0, sent: 0, failed: 0, processing: 0, unknown: 0, totalAttempts: 0 },
     });
     load();
+    return () => {
+      loadSequence.current += 1;
+    };
   }, [load]);
 
   const summary = health?.summary || {};
