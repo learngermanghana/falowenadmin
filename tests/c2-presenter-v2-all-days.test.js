@@ -119,6 +119,21 @@ test("every C2 lesson keeps the text-first Presenter 2.0 teaching standard", () 
   }
 });
 
+test("C2 Day 1 teaches the circular-economy concept before asking warm-up questions", () => {
+  const slide = getSlidesByCourse("C2")[0];
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const stageIds = stages.map((stage) => stage.id);
+  const knowledge = stages.find((stage) => stage.id === "knowledge");
+
+  assert.ok(stageIds.indexOf("knowledge") < stageIds.indexOf("warmup"), "knowledge must come before the Day 1 warm-up");
+  assert.match(knowledge.body, /Simple English:/);
+  assert.match(knowledge.body, /products and materials in use for as long as possible/i);
+  assert.match(knowledge.body, /Wegwerfgesellschaft: Rohstoffe → Produktion → Kaufen → kurz nutzen → Wegwerfen/);
+  assert.match(knowledge.body, /Smartphone-Beispiel/);
+  assert.match(knowledge.body, /niedriger Preis und Bequemlichkeit/);
+  assert.match(knowledge.body, /Langlebigkeit und Ressourcenschonung/);
+});
+
 test("high-signal updated C2 domains stay locked to the current learner curriculum", () => {
   const slides = getSlidesByCourse("C2");
   assert.match(slides[0].title, /Kreislaufwirtschaft und Wegwerfgesellschaft/);
