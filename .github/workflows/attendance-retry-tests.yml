@@ -18,6 +18,11 @@ on:
       - 'scripts/patchParticipationSessionLegacySelection.mjs'
       - 'scripts/patchClassParticipationApi.mjs'
       - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
+      - 'src/components/AttendanceCommunicationHealthPanel.jsx'
+      - 'src/components/AttendanceCommunicationHealthPanel.css'
+      - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/services/attendanceCommunicationHealthService.js'
+      - 'tests/attendance-communication-health.test.js'
       - 'src/components/PresenterStudentPicker.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
       - 'src/services/attendanceConfirmationRetryService.js'
@@ -53,6 +58,11 @@ on:
       - 'scripts/patchParticipationSessionLegacySelection.mjs'
       - 'scripts/patchClassParticipationApi.mjs'
       - 'src/components/AttendanceFailedDeliveryRetryPanel.jsx'
+      - 'src/components/AttendanceCommunicationHealthPanel.jsx'
+      - 'src/components/AttendanceCommunicationHealthPanel.css'
+      - 'src/pages/AttendanceOverviewPage.jsx'
+      - 'src/services/attendanceCommunicationHealthService.js'
+      - 'tests/attendance-communication-health.test.js'
       - 'src/components/PresenterStudentPicker.jsx'
       - 'src/pages/CommunicationHubPage.jsx'
       - 'src/services/attendanceConfirmationRetryService.js'
@@ -108,8 +118,10 @@ jobs:
           node --check functions/classParticipationApi.js
           node --check functions/attendanceConfirmationEmails.js
           node --check functions/index.js
+          grep -F 'app.get("/attendance-confirmation-emails/health"' functions/index.js
           grep -F 'app.post("/attendance-confirmation-emails/retry-failed"' functions/index.js
           grep -F 'await requireAuth(req)' functions/index.js
+          grep -F 'listAttendanceDeliveryHealth' functions/index.js
           grep -F 'retryFailedAttendanceDeliveries' functions/index.js
           grep -F 'Class participation this week' functions/attendanceConfirmationEmails.js
           grep -F 'classParticipationRecords' functions/attendanceConfirmationEmails.js
@@ -134,14 +146,20 @@ jobs:
           const fs = require('fs');
           const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
           const retry = (config.rewrites || []).find((item) => item.source === '/api/attendance-confirmation-emails/retry-failed');
+          const health = (config.rewrites || []).find((item) => item.source === '/api/attendance-confirmation-emails/health');
           if (!retry) throw new Error('Attendance retry rewrite is missing');
+          if (!health) throw new Error('Attendance health rewrite is missing');
           if (retry.destination !== 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/retry-failed') {
             throw new Error('Attendance retry rewrite points to the wrong backend');
           }
+          if (health.destination !== 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/health') {
+            throw new Error('Attendance health rewrite points to the wrong backend');
+          }
           const genericIndex = config.rewrites.findIndex((item) => item.source === '/api/(.*)');
           const retryIndex = config.rewrites.findIndex((item) => item.source === '/api/attendance-confirmation-emails/retry-failed');
-          if (retryIndex < 0 || genericIndex < 0 || retryIndex >= genericIndex) {
-            throw new Error('Attendance retry rewrite must appear before the generic API router rewrite');
+          const healthIndex = config.rewrites.findIndex((item) => item.source === '/api/attendance-confirmation-emails/health');
+          if (retryIndex < 0 || healthIndex < 0 || genericIndex < 0 || retryIndex >= genericIndex || healthIndex >= genericIndex) {
+            throw new Error('Attendance health/retry rewrites must appear before the generic API router rewrite');
           }
           NODE
       - name: Test retry, attendance summary, participation summary and UI
@@ -149,6 +167,7 @@ jobs:
           node --test --test-concurrency=1
           tests/attendance-confirmation-retry.test.js
           tests/attendance-confirmation-email-ui.test.js
+          tests/attendance-communication-health.test.js
           tests/attendance-confirmation-emails.test.js
           tests/attendance-participation-summary-email.test.js
           tests/attendance-participation-canonical-identity.test.js
