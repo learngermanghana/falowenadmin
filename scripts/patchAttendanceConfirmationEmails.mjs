@@ -10,6 +10,7 @@ const retryPath = path.join(repoRoot, "functions", "attendanceConfirmationRetry.
 
 let indexSource = fs.readFileSync(indexPath, "utf8");
 const requireLine = 'const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");';
+const legacyRetryRequireLine = 'const { retryFailedAttendanceDeliveries } = require("./attendanceConfirmationRetry.js");';
 const retryRequireLine = 'const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");';
 const exportLine = "exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });";
 const retryRouteMarker = 'app.post("/attendance-confirmation-emails/retry-failed"';
@@ -56,6 +57,9 @@ if (!indexSource.includes(requireLine)) {
   indexSource = indexSource.replace(anchor, `${anchor}\n${requireLine}`);
 }
 
+if (indexSource.includes(legacyRetryRequireLine)) {
+  indexSource = indexSource.replace(legacyRetryRequireLine, retryRequireLine);
+}
 if (!indexSource.includes(retryRequireLine)) {
   if (!indexSource.includes(requireLine)) throw new Error("Attendance confirmation scheduler import is missing before retry import patching.");
   indexSource = indexSource.replace(requireLine, `${requireLine}\n${retryRequireLine}`);
