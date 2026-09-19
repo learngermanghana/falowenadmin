@@ -329,6 +329,46 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
             </>
+          ) : stage.type === "foundation" ? (
+            <section className={`presenter-foundation presenter-foundation-${String(stage.level || "").toLowerCase()}`}>
+              <div className="presenter-foundation-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+              </div>
+              {stage.simpleEnglish ? (
+                <article className="presenter-foundation-card presenter-foundation-card-simple">
+                  <strong>{stage.simpleEnglishLabel || "Simple English"}</strong>
+                  <p>{stage.simpleEnglish}</p>
+                </article>
+              ) : null}
+              {stage.intro ? <p className="presenter-foundation-intro">{stage.intro}</p> : null}
+              <div className="presenter-foundation-grid">
+                {stage.example ? (
+                  <article className="presenter-foundation-card">
+                    <strong>{stage.exampleLabel || "Beispiel"}</strong>
+                    <p>{stage.example}</p>
+                  </article>
+                ) : null}
+                {stage.tension ? (
+                  <article className="presenter-foundation-card presenter-foundation-card-tension">
+                    <strong>{stage.tensionLabel || "Abwägung"}</strong>
+                    <p>{stage.tension}</p>
+                  </article>
+                ) : null}
+                {stage.question ? (
+                  <article className="presenter-foundation-card presenter-foundation-card-question">
+                    <strong>{stage.questionLabel || "Leitfrage"}</strong>
+                    <p>{stage.question}</p>
+                  </article>
+                ) : null}
+              </div>
+              {stage.teacherNote ? (
+                <details className="presenter-foundation-teacher-note">
+                  <summary>Teacher note (EN)</summary>
+                  <p>{stage.teacherNote}</p>
+                </details>
+              ) : null}
+            </section>
           ) : stage.type === "question-reveal" ? (
             <section className="presenter-question-reveal">
               <div className="presenter-question-counter">{advancedClassroom ? "Frage" : "Question"} {questionIndex + 1} {advancedClassroom ? "von" : "of"} {stage.items.length}</div>
