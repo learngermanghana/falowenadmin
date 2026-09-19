@@ -1,3 +1,5 @@
+import { C1_CANONICAL_TITLES } from "./c1CanonicalCurriculum.js";
+
 export const courseDictionary = {
   A1: {
     "A1-Tutorial": { assignment_id: "A1-Tutorial", chapter: "0", de: "Einführung und Orientierung", en: "Orientation and Tutorial" },
@@ -120,36 +122,13 @@ export const courseDictionary = {
     "B2-7.27": { assignment_id: "B2-7.27", chapter: "7.27", de: "Zeitmanagement und Organisation", en: "Zeitmanagement und Organisation" },
     "B2-7.28": { assignment_id: "B2-7.28", chapter: "7.28", de: "Zusammenfassung & Prüfungsvorbereitung", en: "Zusammenfassung & Prüfungsvorbereitung" },
   },
-  C1: {
-    "C1 1": { assignment_id: "C1 1", chapter: "1", de: "Wissenschaft und Forschung", en: "Wissenschaft und Forschung" },
-    "C1 2": { assignment_id: "C1 2", chapter: "2", de: "Kunst und Kultur", en: "Kunst und Kultur" },
-    "C1 3": { assignment_id: "C1 3", chapter: "3", de: "Künstliche Intelligenz und Arbeitswelt", en: "Künstliche Intelligenz und Arbeitswelt" },
-    "C1 4": { assignment_id: "C1 4", chapter: "4", de: "Digitalisierung und Datenschutz", en: "Digitalisierung und Datenschutz" },
-    "C1 5": { assignment_id: "C1 5", chapter: "5", de: "Personalisierte Werbung", en: "Personalisierte Werbung" },
-    "C1 6": { assignment_id: "C1 6", chapter: "6", de: "Online- und Offline-Identität", en: "Online- und Offline-Identität" },
-    "C1 7": { assignment_id: "C1 7", chapter: "7", de: "Gesellschaftlicher Zusammenhalt", en: "Gesellschaftlicher Zusammenhalt" },
-    "C1 8": { assignment_id: "C1 8", chapter: "8", de: "Mehrsprachigkeit", en: "Mehrsprachigkeit" },
-    "C1 9": { assignment_id: "C1 9", chapter: "9", de: "Migration und Integration", en: "Migration und Integration" },
-    "C1 10": { assignment_id: "C1 10", chapter: "10", de: "Ehrenamt und gesellschaftlicher Pflichtdienst", en: "Ehrenamt und gesellschaftlicher Pflichtdienst" },
-    "C1 11": { assignment_id: "C1 11", chapter: "11", de: "Demokratie und soziale Medien", en: "Demokratie und soziale Medien" },
-    "C1 12": { assignment_id: "C1 12", chapter: "12", de: "Bildung und Prüfungsformate", en: "Bildung und Prüfungsformate" },
-    "C1 13": { assignment_id: "C1 13", chapter: "13", de: "Lebenslanges Lernen", en: "Lebenslanges Lernen" },
-    "C1 14": { assignment_id: "C1 14", chapter: "14", de: "Homeoffice und moderne Arbeitsformen", en: "Homeoffice und moderne Arbeitsformen" },
-    "C1 15": { assignment_id: "C1 15", chapter: "15", de: "Fachkräftemangel und berufliche Mobilität", en: "Fachkräftemangel und berufliche Mobilität" },
-    "C1 16": { assignment_id: "C1 16", chapter: "16", de: "Bedingungsloses Grundeinkommen", en: "Bedingungsloses Grundeinkommen" },
-    "C1 17": { assignment_id: "C1 17", chapter: "17", de: "Nachhaltigkeit in der Wirtschaft", en: "Nachhaltigkeit in der Wirtschaft" },
-    "C1 18": { assignment_id: "C1 18", chapter: "18", de: "Klimawandel und Verkehr", en: "Klimawandel und Verkehr" },
-    "C1 19": { assignment_id: "C1 19", chapter: "19", de: "Nachhaltiger Konsum", en: "Nachhaltiger Konsum" },
-    "C1 20": { assignment_id: "C1 20", chapter: "20", de: "Reisen und Nachhaltigkeit", en: "Reisen und Nachhaltigkeit" },
-    "C1 21": { assignment_id: "C1 21", chapter: "21", de: "Gesundheit und Impfpflicht", en: "Gesundheit und Impfpflicht" },
-    "C1 22": { assignment_id: "C1 22", chapter: "22", de: "Ernährung und moderner Lebensstil", en: "Ernährung und moderner Lebensstil" },
-    "C1 23": { assignment_id: "C1 23", chapter: "23", de: "Wohnen, Mieten und soziale Gerechtigkeit", en: "Wohnen, Mieten und soziale Gerechtigkeit" },
-    "C1 24": { assignment_id: "C1 24", chapter: "24", de: "Zukunftstechnologien und Innovation", en: "Zukunftstechnologien und Innovation" },
-    "C1 25": { assignment_id: "C1 25", chapter: "25", de: "Globalisierung und internationale Zusammenarbeit", en: "Globalisierung und internationale Zusammenarbeit" },
-    "C1 26": { assignment_id: "C1 26", chapter: "26", de: "Wissenschaftliches Arbeiten und Quellen", en: "Wissenschaftliches Arbeiten und Quellen" },
-    "C1 27": { assignment_id: "C1 27", chapter: "27", de: "Stellungnahme und formelle Korrespondenz", en: "Stellungnahme und formelle Korrespondenz" },
-    "C1 28": { assignment_id: "C1 28", chapter: "28", de: "Prüfungsvorbereitung und spontane Argumentation", en: "Prüfungsvorbereitung und spontane Argumentation" },
-  },
+  C1: Object.fromEntries(
+    C1_CANONICAL_TITLES.map((title, index) => {
+      const day = index + 1;
+      const assignmentId = `C1 ${day}`;
+      return [assignmentId, { assignment_id: assignmentId, chapter: String(day), de: title, en: title }];
+    }),
+  ),
 };
 
 function dictionarySortValue(entry = {}) {
