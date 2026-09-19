@@ -265,6 +265,7 @@ export default function TeacherLessonDashboardPage() {
               <Link className={quickLinkClass(Boolean(presentUrl))} to={presentUrl || "#"}>Start class</Link>
               <a className="teacher-command-link" href={studentUrl} target="_blank" rel="noreferrer">Open student lesson</a>
               <Link className="teacher-command-link secondary" to={`/attendance/session/${encodeURIComponent(selectedClassId)}`}>Attendance</Link>
+              <Link className="teacher-command-link secondary" to={`/attendance?tab=tracker&classId=${encodeURIComponent(selectedClassId)}`}>Email health</Link>
               <Link className="teacher-command-link secondary" to={`/class-participation?classId=${encodeURIComponent(selectedClassId)}`}>Participation</Link>
               <Link className="teacher-command-link secondary" to="/live-classes">Live Classes</Link>
             </div>
