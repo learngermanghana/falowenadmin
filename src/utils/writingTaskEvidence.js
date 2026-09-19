@@ -34,6 +34,9 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/what you like|what could be better|personal opinion|opinion or preference|friend's opinion|sandra for her opinion|ask alex for his idea/.test(value)) {
     return /\b(?:ich\s+finde|ich\s+mag|mir\s+gef[aä]llt|besser|verbessern|was\s+meinst\s+du|wie\s+findest\s+du|deine\s+meinung|idee|empfiehlst\s+du)\b/i;
   }
+  if (/ask felix a relevant question/.test(value) && String(assignmentKey || "").toUpperCase() === "A2-1.2") {
+    return /\b(?:wie|was|wer|welch\w*)\b[^?]{0,90}\b(?:chef|chefin|boss|vorgesetzt\w*)\b[^?]*\?/i;
+  }
   if (/ask felix a relevant question/.test(value)) return /\?/;
   if (/ask felix about his parents/.test(value)) return /(?:deine|deiner|deinen)\s+eltern[\s\S]{0,60}\?|(?:mutter|vater)[\s\S]{0,60}\?/i;
   if (/weekend activity|concrete activity/.test(value)) return /\b(?:kino|restaurant|spazieren|wandern|schwimmen|fu[ßs]ball|essen|kochen|museum|sport|ausflug|fahren|gehen)\b/i;
