@@ -293,7 +293,20 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <button type="button" onClick={() => warmupPerStudent ? resetWarmupStudent() : setTimerMinutes(stage.suggestedMinutes || 5)}>{warmupPerStudent ? "Reset for next student" : "Reset"}</button>
                 <div className="presenter-timer-presets">
                   {timerPresets.map((minutes) => (
-                    <button key={minutes} type="button" onClick={() => setTimerMinutes(minutes)}>{minutes}m</button>
+                    <button
+                      key={minutes}
+                      type="button"
+                      onClick={() => {
+                        if (warmupPerStudent) {
+                          setWarmupMinutes(minutes);
+                          setTimerMinutes(minutes, "warmup");
+                          return;
+                        }
+                        setTimerMinutes(minutes);
+                      }}
+                    >
+                      {minutes}m
+                    </button>
                   ))}
                 </div>
               </div>
@@ -421,10 +434,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                             key={count}
                             type="button"
                             className={warmupQuestionCount === count ? "is-active" : ""}
-                            disabled={count > availableWarmupQuestions}
                             onClick={() => setWarmupQuestionCount(count)}
                           >
-                            {count}
+                            {count === 4 && availableWarmupQuestions < 4 ? `All (${availableWarmupQuestions})` : count}
                           </button>
                         ))}
                       </div>
