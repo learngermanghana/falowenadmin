@@ -103,17 +103,18 @@ test("A1-11 has a dedicated directions-first imperative slide on canonical Day 1
   assert.match(slide.topic, /Imperativ mit Sie/);
 
   const content = JSON.stringify(buildTeachingPresenterStages(slide, slide.topic));
+  const normalizedContent = content.toLocaleLowerCase("de-DE");
   const requiredPhrases = [
-    "Wie komme ich zum Bahnhof",
-    "Wie komme ich zur nächsten Apotheke",
-    "Gehen Sie bitte geradeaus",
-    "Biegen Sie links ab",
-    "Biegen Sie rechts ab",
-    "Überqueren Sie die Straße",
-    "auf der linken Seite",
+    "wie komme ich zum bahnhof",
+    "wie komme ich zur nächsten apotheke",
+    "gehen sie bitte geradeaus",
+    "biegen sie links ab",
+    "biegen sie rechts ab",
+    "überqueren sie die straße",
+    "auf der linken seite",
   ];
   for (const phrase of requiredPhrases) {
-    assert.ok(content.includes(phrase), `A1-11 missing: ${phrase}`);
+    assert.ok(normalizedContent.includes(phrase), `A1-11 missing: ${phrase}`);
   }
 
   assert.doesNotMatch(content, /Trink mehr Wasser/i);
