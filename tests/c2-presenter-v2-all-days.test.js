@@ -119,6 +119,19 @@ test("every C2 lesson keeps the text-first Presenter 2.0 teaching standard", () 
   }
 });
 
+test("C2 presenter declaration stays idempotent with the build patch hook", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const presenterSource = fs.readFileSync(path.join(process.cwd(), "src/utils/teachingPresenter.js"), "utf8");
+  const patchSource = fs.readFileSync(path.join(process.cwd(), "scripts/patchC2CourseStyle.mjs"), "utf8");
+
+  const declarations = presenterSource.match(/^const C2_PRESENTER_V2_ASSIGNMENTS = .*;$/gm) || [];
+  assert.equal(declarations.length, 1, "teachingPresenter must contain exactly one C2 assignment declaration");
+  assert.match(declarations[0], /Array\.from\(\{ length: 28 \}/);
+  assert.match(patchSource, /const c2DeclarationPattern = \/\^const C2_PRESENTER_V2_ASSIGNMENTS/);
+  assert.match(patchSource, /next = next\.replace\(c2DeclarationPattern, ""\)/);
+});
+
 test("C2 Day 1 teaches the circular-economy concept before asking warm-up questions", () => {
   const slide = getSlidesByCourse("C2")[0];
   const stages = buildTeachingPresenterStages(slide, slide.topic);

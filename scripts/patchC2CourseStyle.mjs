@@ -52,12 +52,19 @@ update("src/data/teachingSlides.js", (source) => {
 update("src/utils/teachingPresenter.js", (source) => {
   let next = source;
 
-  next = mustReplace(
-    next,
-    'const C1_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`));',
-    'const C1_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`));\nconst C2_PRESENTER_V2_ASSIGNMENTS = new Set([...Array.from({ length: 28 }, (_, index) => `C2 ${index + 1}`), ...["C2-1.1","C2-1.2","C2-1.3","C2-1.4","C2-1.5","C2-1.6","C2-1.7","C2-2.1","C2-2.2","C2-2.3","C2-2.4","C2-2.5","C2-2.6","C2-2.7","C2-3.1","C2-3.2","C2-3.3","C2-3.4","C2-3.5","C2-4.1","C2-4.2","C2-4.3","C2-4.4","C2-4.5","C2-5.1","C2-5.2","C2-5.3","C2-5.4"]]);',
-    "C2 presenter assignment set",
-  );
+  {
+    const c1Declaration = 'const C1_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`));';
+    const c2Declaration = 'const C2_PRESENTER_V2_ASSIGNMENTS = new Set([...Array.from({ length: 28 }, (_, index) => `C2 ${index + 1}`), ...["C2-1.1","C2-1.2","C2-1.3","C2-1.4","C2-1.5","C2-1.6","C2-1.7","C2-2.1","C2-2.2","C2-2.3","C2-2.4","C2-2.5","C2-2.6","C2-2.7","C2-3.1","C2-3.2","C2-3.3","C2-3.4","C2-3.5","C2-4.1","C2-4.2","C2-4.3","C2-4.4","C2-4.5","C2-5.1","C2-5.2","C2-5.3","C2-5.4"]]);';
+    const c2DeclarationPattern = /^const C2_PRESENTER_V2_ASSIGNMENTS = .*;$/gm;
+    const existing = next.match(c2DeclarationPattern) || [];
+
+    if (existing.length) {
+      next = next.replace(c2DeclarationPattern, "");
+      next = next.replace(/\n{3,}/g, "\n\n");
+    }
+    if (!next.includes(c1Declaration)) throw new Error("C2 patch anchor missing: C2 presenter assignment set");
+    next = next.replace(c1Declaration, c1Declaration + "\n" + c2Declaration);
+  }
 
   next = mustReplace(
     next,
