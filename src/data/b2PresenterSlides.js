@@ -46,7 +46,7 @@ function makeSlide(definition) {
     `${models[0]} Für die heutige Gesellschaft ist das Thema besonders relevant, weil individuelle Entscheidungen und politische Rahmenbedingungen zusammenwirken.`,
     `${models[1]} Ein Vorteil besteht darin, dass sinnvolle Maßnahmen langfristig Verbesserungen ermöglichen. Gleichzeitig müssen Kosten, Zugang und praktische Schwierigkeiten berücksichtigt werden.`,
     `${models[2]} Entscheidend ist für mich eine Maßnahme, die realistisch umgesetzt werden kann und nicht nur theoretisch gut klingt. Dabei sollten Betroffene früh einbezogen werden.`,
-    `Die konkrete Situation unterscheidet sich je nach Infrastruktur, Einkommen und gesetzlichen Rahmenbedingungen. Deshalb würde ich Deutschland und mein Heimatland nicht pauschal bewerten, sondern einzelne Maßnahmen und ihre Wirkung vergleichen.`,
+    `Bei „${topic}“ unterscheidet sich die konkrete Situation je nach Infrastruktur, Einkommen und gesetzlichen Rahmenbedingungen. Deshalb würde ich Deutschland und mein Heimatland nicht pauschal bewerten, sondern einzelne Maßnahmen und ihre Wirkung vergleichen.`,
     `Ich bin der Auffassung, dass bei „${topic}“ sowohl individuelle Verantwortung als auch verlässliche gesellschaftliche Strukturen nötig sind. Ein konkretes Beispiel sollte zeigen, ob eine Maßnahme im Alltag tatsächlich funktioniert.`,
   ];
 
