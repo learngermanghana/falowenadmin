@@ -40,6 +40,36 @@ test("delivery health summary separates sent, failed and processing records", ()
   assert.equal(summary.healthy, false);
 });
 
+test("backend summary still counts a failure older than the bounded recent page", () => {
+  const records = Array.from({ length: 101 }, (_, index) => ({
+    id: "sent-" + index,
+    data: () => ({
+      classId: "class-1",
+      status: "sent",
+      attemptCount: 1,
+      updatedAt: new Date(Date.UTC(2026, 8, 19, 12, 0, index % 60)),
+    }),
+  }));
+  records.push({
+    id: "old-failure",
+    data: () => ({
+      classId: "class-1",
+      status: "failed",
+      attemptCount: 2,
+      lastError: "Old webhook failure",
+      updatedAt: new Date("2026-09-01T08:00:00.000Z"),
+    }),
+  });
+
+  const normalized = records.map(retryModule._test.deliveryHealthRecord);
+  const summary = retryModule._test.summarizeDeliveryHealthRecords(normalized);
+  assert.equal(summary.total, 102);
+  assert.equal(summary.sent, 101);
+  assert.equal(summary.failed, 1);
+  assert.equal(summary.latestFailure.id, "old-failure");
+});
+
+
 test("backend health serializer exposes delivery state without the email body", () => {
   const record = retryModule._test.deliveryHealthRecord({
     id: "delivery-1",
@@ -78,11 +108,15 @@ test("attendance health is read through the protected Admin API, not direct Fire
   assert.doesNotMatch(service, /attendanceEmailDeliveries/);
 
   assert.match(index, /app\.get\("\/attendance-confirmation-emails\/health"/);
-  assert.match(index, /await requireAuth\(req\)/);
+  assert.match(index, /const user = await requireAuth\(req\)/);
+  assert.match(index, /adminAllowed/);
+  assert.match(index, /email === "moxflex@gmail\.com"/);
+  assert.match(index, /Admin access required/);
   assert.match(index, /listAttendanceDeliveryHealth/);
 
   assert.match(patch, /healthRouteMarker/);
   assert.match(patch, /listAttendanceDeliveryHealth/);
+  assert.match(patch, /Admin access required/);
   assert.match(patch, /Protected attendance delivery health route is missing after patch/);
 });
 
@@ -94,6 +128,8 @@ test("Attendance tracker exposes recipient-level health and failed-only retry", 
   assert.match(panel, /Retry failed only/);
   assert.match(panel, /Records already marked sent are never resent/);
   assert.match(panel, /Last worker status/);
+  assert.match(panel, /loadSequence/);
+  assert.match(panel, /loadSequence\.current !== requestId/);
   assert.match(panel, /Recipient/);
   assert.match(panel, /Reason/);
 });
