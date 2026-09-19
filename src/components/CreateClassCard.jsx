@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClassCohort } from "../services/liveClassService.js";
 import { calculateClassEndDate, validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { nextUnusedScheduleDay, scheduleRulesForEditor } from "../utils/liveClassScheduleRules.js";
-import { classNameSuggestions, isClassNameBlocked } from "../utils/liveClassNameSuggestions.js";
+import { classNameSuggestions, isClassNameBlocked, resolveClassNameSelection } from "../utils/liveClassNameSuggestions.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
@@ -13,6 +13,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [nameSelectionSource, setNameSelectionSource] = useState("auto");
 
   const suggestions = useMemo(
     () => classNameSuggestions(form.levelId, classes, 6),
@@ -24,12 +25,12 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   );
 
   useEffect(() => {
-    if (!suggestions.length) return;
     setForm((current) => {
-      if (current.name.trim()) return current;
-      return { ...current, name: suggestions[0] };
+      const nextName = resolveClassNameSelection(current.name, suggestions, nameSelectionSource);
+      if (current.name === nextName) return current;
+      return { ...current, name: nextName };
     });
-  }, [suggestions]);
+  }, [suggestions, nameSelectionSource]);
 
   const patch = (values, recalculate = false) => setForm((current) => {
     const next = { ...current, ...values };
@@ -50,13 +51,14 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   });
 
   function chooseSuggestion(name) {
+    setNameSelectionSource("explicit");
     patch({ name });
     setMessage("");
   }
 
   function changeLevel(levelId) {
-    const [suggestedName = ""] = classNameSuggestions(levelId, classes, 1);
-    patch({ levelId, name: suggestedName }, true);
+    setNameSelectionSource("auto");
+    patch({ levelId, name: "" }, true);
     setMessage("");
   }
 
@@ -75,6 +77,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       const record = await createClassCohort({ ...form, scheduleRules, historicalMode: false });
       setMessage(`Class created successfully. ${record.generatedSessionCount || 0} sessions generated. Class reminders and weekly attendance emails are enabled; delivery status is available in the reminder diagnostic.`);
       setForm(emptyForm());
+      setNameSelectionSource("auto");
       await onCreated?.(record.id);
     } catch (error) {
       const text = error?.message || "Class creation failed";
@@ -96,7 +99,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         <input
           required
           value={form.name}
-          onChange={(event) => patch({ name: event.target.value })}
+          onChange={(event) => { setNameSelectionSource("explicit"); patch({ name: event.target.value }); }}
           aria-invalid={selectedNameBlocked ? "true" : "false"}
         />
         <small style={{ color: selectedNameBlocked ? "#b91c1c" : "#64748b" }}>
