@@ -16,8 +16,8 @@ teachingSource = replaceOnce(
 );
 teachingSource = replaceOnce(
   teachingSource,
-  '          {presenterV2 ? (',
-  '          <PresenterSessionTimer slide={slide} />\n\n          {presenterV2 ? (',
+  '          {showPresenterTimer ? (',
+  '          <PresenterSessionTimer slide={slide} />\n\n          {showPresenterTimer ? (',
   "TeachingSlidePresenter session timer placement",
 );
 fs.writeFileSync(teachingTarget, teachingSource);

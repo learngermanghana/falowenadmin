@@ -106,6 +106,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [timerRemaining, setTimerRemaining] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const stage = stages[stageIndex] || stages[0];
+  const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
+  const showPresenterTimer = presenterV2 || warmupPerStudent;
 
   function goTo(index) {
     setStageIndex(clampPresenterIndex(index, stages.length));
@@ -208,7 +210,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const b1CorrectionGuide = String(slide.course || "").toUpperCase() === "B1" && stage.id === "b1-grammar-check" && activeModel?.modelAnswerDe
     ? buildB1CorrectionTeacherGuide(activeQuestion, activeModel.modelAnswerDe)
     : [];
-  const timerExpired = presenterV2 && timerRemaining === 0 && !timerRunning;
+  const timerExpired = showPresenterTimer && timerRemaining === 0 && !timerRunning;
   const timerPresets = [...new Set([stage.suggestedMinutes, 2, 5, 10].filter(Boolean))];
 
   return (
@@ -220,7 +222,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <span className="presenter-lesson-label">{slide.course} · {slide.day}</span>
           </div>
 
-          {presenterV2 ? (
+          {showPresenterTimer ? (
             <div className="presenter-v2-tools">
               <label className="presenter-stage-jump">
                 <span>Jump to</span>
@@ -234,7 +236,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <button type="button" onClick={() => setTimerRunning((current) => !current)} disabled={timerRemaining <= 0}>
                   {timerRunning ? "Pause" : "Start"}
                 </button>
-                <button type="button" onClick={() => setTimerMinutes(stage.suggestedMinutes || 5)}>Reset</button>
+                <button type="button" onClick={() => setTimerMinutes(stage.suggestedMinutes || 5)}>{warmupPerStudent ? "Reset for next student" : "Reset"}</button>
                 <div className="presenter-timer-presets">
                   {timerPresets.map((minutes) => (
                     <button key={minutes} type="button" onClick={() => setTimerMinutes(minutes)}>{minutes}m</button>
@@ -352,9 +354,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   {stage.items.map((item) => <li key={item}>{item}</li>)}
                 </ol>
               ) : stage.type === "list" ? (
-                <ul className="presenter-list">
-                  {stage.items.map((item) => <li key={item}>{item}</li>)}
-                </ul>
+                <>
+                  {stage.timingLabel ? <p className="presenter-duration">{stage.timingLabel}</p> : null}
+                  <ul className="presenter-list">
+                    {stage.items.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </>
               ) : (
                 <p className="presenter-task">{stage.body}</p>
               )}

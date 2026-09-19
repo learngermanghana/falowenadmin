@@ -102,7 +102,7 @@ update("src/utils/teachingPresenter.js", (source) => {
   }
 
   if (!next.includes('id: "knowledge"')) {
-    const warmupStage = '    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: interactionMinutes(slide, 0) || 5 },';
+    const warmupStage = '    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },';
     const knowledgeStage = warmupStage + '\n    ...(classroomLevel(slide) === "C2" && slide.knowledgeTextDe ? [{ id: "knowledge", type: "task", kicker: "1-Minuten-Wissen", title: "1-Minuten-Wissen", body: String(slide.knowledgeTextDe), suggestedMinutes: 3 }] : []),';
     if (!next.includes(warmupStage)) throw new Error("C2 one-minute knowledge stage anchor missing");
     next = next.replace(warmupStage, knowledgeStage);
