@@ -208,6 +208,34 @@ function deliveryHealthRecord(docSnap) {
   };
 }
 
+function deliveryRecordTime(record = {}) {
+  return asDate(record.updatedAt || record.sentAt || record.failedAt || record.processingStartedAt || record.createdAt)?.getTime() || 0;
+}
+
+function summarizeDeliveryHealthRecords(records = []) {
+  const rows = Array.isArray(records) ? records : [];
+  const sent = rows.filter((row) => row.status === "sent").length;
+  const failed = rows.filter((row) => row.status === "failed").length;
+  const processing = rows.filter((row) => row.status === "processing").length;
+  const unknown = Math.max(0, rows.length - sent - failed - processing);
+  const sorted = [...rows].sort((left, right) => deliveryRecordTime(right) - deliveryRecordTime(left));
+  const latest = sorted[0] || null;
+  const latestFailure = sorted.find((row) => row.status === "failed") || null;
+  const totalAttempts = rows.reduce((sum, row) => sum + Math.max(0, Number(row.attemptCount || 0)), 0);
+
+  return {
+    total: rows.length,
+    sent,
+    failed,
+    processing,
+    unknown,
+    totalAttempts,
+    latest,
+    latestFailure,
+    healthy: rows.length === 0 ? null : failed === 0 && processing === 0,
+  };
+}
+
 async function listAttendanceDeliveryHealth({ db, classId, limit = 100 }) {
   const id = normalize(classId);
   if (!id) throw new Error("Select a class before loading attendance delivery health.");
@@ -216,16 +244,19 @@ async function listAttendanceDeliveryHealth({ db, classId, limit = 100 }) {
   if (!classSnap.exists) throw new Error("The selected Live Class record was not found.");
 
   const deliverySnap = await db.collection("attendanceEmailDeliveries").where("classId", "==", id).get();
-  const records = deliverySnap.docs
+  const allRecords = deliverySnap.docs
     .map(deliveryHealthRecord)
-    .sort((left, right) => {
-      const leftTime = asDate(left.updatedAt || left.sentAt || left.failedAt || left.processingStartedAt || left.createdAt)?.getTime() || 0;
-      const rightTime = asDate(right.updatedAt || right.sentAt || right.failedAt || right.processingStartedAt || right.createdAt)?.getTime() || 0;
-      return rightTime - leftTime;
-    })
-    .slice(0, Math.max(1, Math.min(Number(limit) || 100, 500)));
+    .sort((left, right) => deliveryRecordTime(right) - deliveryRecordTime(left));
+  const boundedLimit = Math.max(1, Math.min(Number(limit) || 100, 500));
+  const records = allRecords.slice(0, boundedLimit);
 
-  return { classId: id, records };
+  return {
+    classId: id,
+    records,
+    summary: summarizeDeliveryHealthRecords(allRecords),
+    recentLimit: boundedLimit,
+    hasMore: allRecords.length > records.length,
+  };
 }
 
 async function retryFailedAttendanceDeliveries({
@@ -333,5 +364,6 @@ module.exports = {
     rowForRetry,
     retrySafeCombinedMessage,
     deliveryHealthRecord,
+    summarizeDeliveryHealthRecords,
   },
 };
