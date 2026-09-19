@@ -31,7 +31,15 @@ const LESSONS = [
         "eine Wegwerfmentalität überwinden",
         "Bildung und transparente Preise können dazu beitragen, eine Wegwerfmentalität zu überwinden."
       ]
-    ]
+    ],
+    "topicFoundation": {
+      "english": "Circular economy means keeping products and materials in use for as long as possible through durable design, repair, reuse and refurbishment. Recycling comes later. A throwaway society follows the opposite pattern: take resources, make, use briefly and discard.",
+      "german": "Kreislaufwirtschaft bedeutet, Produkte und Rohstoffe möglichst lange im Umlauf zu halten: langlebig produzieren, nutzen, reparieren, wiederverwenden oder aufbereiten und erst am Ende recyceln. Eine Wegwerfgesellschaft funktioniert eher linear: Rohstoffe entnehmen, produzieren, kurz nutzen und wegwerfen.",
+      "linear": "Wegwerfgesellschaft: Rohstoffe → Produktion → Kaufen → kurz nutzen → Wegwerfen.",
+      "circular": "Kreislaufwirtschaft: Rohstoffe → langlebig produzieren → nutzen → reparieren → wiederverwenden/aufbereiten → recyceln.",
+      "example": "Smartphone-Beispiel: Statt ein Gerät bei einem defekten Akku sofort zu ersetzen, wird der Akku ausgetauscht, das Gerät weitergenutzt oder aufbereitet und erst am Ende recycelt.",
+      "tension": "Kernspannung: niedriger Preis und Bequemlichkeit ↔ Langlebigkeit und Ressourcenschonung; unternehmerische Freiheit ↔ verbindliche Umwelt- und Produktregeln."
+    }
   },
   {
     "day": 2,
@@ -1050,7 +1058,9 @@ function makeSlide(lesson) {
       "Welche der drei Kursaussagen findest du am schwierigsten zu beurteilen – und warum?",
       "Welche heutige Kollokation passt zu einem ersten Argument?",
     ],
-    knowledgeTextDe: "1-Minuten-Wissen: " + lesson.topic + " Auf C2-Niveau reicht eine Pro-und-Contra-Liste nicht. Prüfe Annahmen, Bedingungen und Reichweite jeder Aussage und nutze die Grammatik, um genau diese Unterschiede sprachlich sichtbar zu machen.",
+    knowledgeTextDe: lesson.topicFoundation
+      ? "1-Minuten-Wissen: Simple English: " + lesson.topicFoundation.english + " Auf Deutsch: " + lesson.topicFoundation.german + " " + lesson.topicFoundation.linear + " " + lesson.topicFoundation.circular + " " + lesson.topicFoundation.example + " " + lesson.topicFoundation.tension
+      : "1-Minuten-Wissen: " + lesson.topic + " Auf C2-Niveau reicht eine Pro-und-Contra-Liste nicht. Prüfe Annahmen, Bedingungen und Reichweite jeder Aussage und nutze die Grammatik, um genau diese Unterschiede sprachlich sichtbar zu machen.",
     keyPhrasesDe: [
       ...lesson.collocations.map(([phrase, example]) => phrase + " — " + example),
       "Die Frage lässt sich nicht pauschal beantworten, weil ...",
