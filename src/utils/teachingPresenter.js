@@ -18,10 +18,11 @@ const B1_PRESENTER_V2_ASSIGNMENTS = new Set([
 
 const B2_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => { const day = index + 1; return `B2-${Math.ceil(day / 4)}.${day}`; }));
 const C1_PRESENTER_V2_ASSIGNMENTS = new Set(Array.from({ length: 28 }, (_, index) => `C1 ${index + 1}`));
+const C2_PRESENTER_V2_ASSIGNMENTS = new Set(["C2-1.1","C2-1.2","C2-1.3","C2-1.4","C2-1.5","C2-1.6","C2-1.7","C2-2.1","C2-2.2","C2-2.3","C2-2.4","C2-2.5","C2-2.6","C2-2.7","C2-3.1","C2-3.2","C2-3.3","C2-3.4","C2-3.5","C2-4.1","C2-4.2","C2-4.3","C2-4.4","C2-4.5","C2-5.1","C2-5.2","C2-5.3","C2-5.4"]);
 
 function normalizedAssignmentId(slide = {}) { return String(slide.assignmentId || "").trim().toUpperCase(); }
 function classroomLevel(slide = {}) { return String(slide.course || "").trim().toUpperCase(); }
-function isAdvancedClassroomSlide(slide = {}) { return ["B2", "C1"].includes(classroomLevel(slide)); }
+function isAdvancedClassroomSlide(slide = {}) { return ["B2", "C1", "C2"].includes(classroomLevel(slide)); }
 function cleanTopic(slide = {}) { return String(slide.topic || slide.title || "dieses Thema").replace(/^\s*\d+(?:\.\d+)*\s*/, "").trim(); }
 
 export function isA1PresenterV2Slide(slide = {}) { const assignmentId = normalizedAssignmentId(slide); return classroomLevel(slide) === "A1" && assignmentId.startsWith("A1-") && !A1_PRESENTER_V2_EXCLUDED_ASSIGNMENTS.has(assignmentId); }
@@ -29,7 +30,8 @@ export function isA2PresenterV2Slide(slide = {}) { return A2_PRESENTER_V2_ASSIGN
 export function isB1PresenterV2Slide(slide = {}) { return B1_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide)); }
 export function isB2PresenterV2Slide(slide = {}) { return B2_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide)); }
 export function isC1PresenterV2Slide(slide = {}) { return C1_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide)); }
-export function isTeachingPresenterV2Slide(slide = {}) { return isA1PresenterV2Slide(slide) || isA2PresenterV2Slide(slide) || isB1PresenterV2Slide(slide) || isB2PresenterV2Slide(slide) || isC1PresenterV2Slide(slide); }
+export function isC2PresenterV2Slide(slide = {}) { return C2_PRESENTER_V2_ASSIGNMENTS.has(normalizedAssignmentId(slide)); }
+export function isTeachingPresenterV2Slide(slide = {}) { return isA1PresenterV2Slide(slide) || isA2PresenterV2Slide(slide) || isB1PresenterV2Slide(slide) || isB2PresenterV2Slide(slide) || isC1PresenterV2Slide(slide) || isC2PresenterV2Slide(slide); }
 export function parsePresenterMinutes(value = "") { const match = String(value || "").match(/(\d+)\s*min/i); return match ? Number(match[1]) : 0; }
 function interactionMinutes(slide = {}, index = 0) { return parsePresenterMinutes(slide.interactionFlow?.[index]?.detailEn || ""); }
 
