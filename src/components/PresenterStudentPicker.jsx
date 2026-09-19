@@ -200,6 +200,7 @@ export default function PresenterStudentPicker({
   questions = [],
   questionContext = "",
   onQuestionChange,
+  onRosterCountChange,
   renderQuestionExternally = false,
 }) {
   const [classOptions, setClassOptions] = useState([]);
@@ -239,6 +240,10 @@ export default function PresenterStudentPicker({
     [matchingClasses, selectedClassId],
   );
   const roster = useMemo(() => rosterEntries(students), [students]);
+
+  useEffect(() => {
+    onRosterCountChange?.(roster.length);
+  }, [roster.length, onRosterCountChange]);
   const sessionIdentity = `${selectedClassId}|${assignmentId}|${sessionDate}`;
   const hasQuestionMode = Array.isArray(questions) && questions.length > 0;
   const questionSignature = useMemo(

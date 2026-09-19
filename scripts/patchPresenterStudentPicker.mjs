@@ -6,7 +6,7 @@ const presenterPaths = [
     path: new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url),
     signature: "export default function TeachingSlidePresenter({ slide, topicLabel, onExit })",
     nextSignature: "export default function TeachingSlidePresenter({ slide, topicLabel, onExit, nextLessonHref = \"\", nextLessonLabel = \"\" })",
-    fallbackPicker: "<PresenterStudentPicker slide={slide} />",
+    fallbackPicker: "<PresenterStudentPicker slide={slide} onRosterCountChange={setRosterCount} />",
   },
   {
     path: new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url),

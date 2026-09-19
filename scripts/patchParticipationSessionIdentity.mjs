@@ -385,10 +385,8 @@ fs.writeFileSync(servicePath, service, "utf8");
 let presenter = fs.readFileSync(presenterPath, "utf8");
 presenter = replaceOrConfirm(
   presenter,
-  `  const roster = useMemo(() => rosterEntries(students), [students]);
-  const sessionIdentity = \`${"${selectedClassId}|${assignmentId}|${sessionDate}"}\`;`,
-  `  const roster = useMemo(() => rosterEntries(students), [students]);
-  const classRecordId = normalize(selectedClass?.id);
+  `  const sessionIdentity = \`${"${selectedClassId}|${assignmentId}|${sessionDate}"}\`;`,
+  `  const classRecordId = normalize(selectedClass?.id);
   const sessionIdentity = \`${"${selectedClassId}|${assignmentId}|${sessionDate}"}\`;`,
   "presenter canonical class record id",
 );
