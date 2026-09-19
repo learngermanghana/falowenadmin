@@ -64,6 +64,13 @@ jobs:
             scripts/patchStudentDeletionRuntime.mjs \
             scripts/patchAttendanceConfirmationEmails.mjs \
             scripts/patchAttendanceConfirmationEventDrivenV2.mjs \
+            scripts/patchAttendanceParticipationSummaryEmail.mjs \
+            scripts/patchAttendanceParticipationCanonicalIdentity.mjs \
+            scripts/patchAttendanceNoParticipationEncouragement.mjs \
+            scripts/patchAttendanceParticipationRecapGoals.mjs \
+            scripts/patchAttendanceParticipationRecapFailSafe.mjs \
+            scripts/patchAttendanceParticipationSessionWindow.mjs \
+            scripts/patchAttendanceStructuredParticipationEmail.mjs \
             scripts/patchClassSessionReminderEmails.mjs \
             scripts/patchClassReminderDiagnosticBestEffort.mjs \
             scripts/patchClassReminderConciseLinks.mjs \
@@ -85,6 +92,10 @@ jobs:
           node --check functions/classSessionAutoCheckin.js
           node --check functions/autoCompleteClassSessions.js
           node --check functions/attendanceConfirmationEmails.js
+          node --check functions/attendanceConfirmationRetry.js
+          node --test --test-concurrency=1 tests/attendance-confirmation-retry.test.js tests/attendance-participation-summary-email.test.js tests/attendance-structured-participation-delivery.test.js
+          grep -F 'attendance and participation summary' functions/attendanceConfirmationEmails.js
+          grep -F 'await ref.set({ deliveryPayload }, { merge: true })' functions/attendanceConfirmationEmails.js
           node --check functions/completionParticipationDocument.js
           node --check functions/registrationLifecycleEvents.js
           node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
