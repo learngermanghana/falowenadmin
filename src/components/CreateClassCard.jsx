@@ -13,7 +13,6 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [nameWasSuggested, setNameWasSuggested] = useState(true);
 
   const suggestions = useMemo(
     () => classNameSuggestions(form.levelId, classes, 6),
@@ -27,11 +26,10 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   useEffect(() => {
     if (!suggestions.length) return;
     setForm((current) => {
-      if (current.name.trim() && !nameWasSuggested) return current;
-      if (current.name === suggestions[0]) return current;
+      if (current.name.trim()) return current;
       return { ...current, name: suggestions[0] };
     });
-  }, [suggestions, nameWasSuggested]);
+  }, [suggestions]);
 
   const patch = (values, recalculate = false) => setForm((current) => {
     const next = { ...current, ...values };
@@ -52,14 +50,13 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
   });
 
   function chooseSuggestion(name) {
-    setNameWasSuggested(true);
     patch({ name });
     setMessage("");
   }
 
   function changeLevel(levelId) {
-    setNameWasSuggested(true);
-    patch({ levelId }, true);
+    const [suggestedName = ""] = classNameSuggestions(levelId, classes, 1);
+    patch({ levelId, name: suggestedName }, true);
     setMessage("");
   }
 
@@ -78,7 +75,6 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       const record = await createClassCohort({ ...form, scheduleRules, historicalMode: false });
       setMessage(`Class created successfully. ${record.generatedSessionCount || 0} sessions generated. Class reminders and weekly attendance emails are enabled; delivery status is available in the reminder diagnostic.`);
       setForm(emptyForm());
-      setNameWasSuggested(true);
       await onCreated?.(record.id);
     } catch (error) {
       const text = error?.message || "Class creation failed";
@@ -100,10 +96,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
         <input
           required
           value={form.name}
-          onChange={(event) => {
-            setNameWasSuggested(false);
-            patch({ name: event.target.value });
-          }}
+          onChange={(event) => patch({ name: event.target.value })}
           aria-invalid={selectedNameBlocked ? "true" : "false"}
         />
         <small style={{ color: selectedNameBlocked ? "#b91c1c" : "#64748b" }}>
