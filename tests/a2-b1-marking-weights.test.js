@@ -126,3 +126,25 @@ test("manual score calculator uses the same A2/B1 policy while keeping legacy sc
   assert.equal(calculateFinalScore(90, 75, { level: "A2", objectiveDetails }), 84);
   assert.equal(calculateFinalScore(100, 66), 83);
 });
+
+
+test("A2-1.2 example uses 40/30/30 and rounds 76.4 to 76", () => {
+  const objectiveDetails = details({
+    teil3: [true, true, true, true, true, true, true],
+    teil4: [true, true, false, false, false],
+  });
+  const result = calculateWeightedMarkingOutcome({
+    level: "A2",
+    assignmentKey: "A2-1.2",
+    writingPercent: 86,
+    objectiveScore: 75,
+    objectiveDetails,
+    hasWriting: true,
+  });
+
+  assert.equal(result.scoreBreakdown.teil2.points, 34.4);
+  assert.equal(result.scoreBreakdown.teil3.points, 30);
+  assert.equal(result.scoreBreakdown.teil4.points, 12);
+  assert.equal(result.finalScore, 76);
+  assert.equal(result.policy, "a2-b1-40-30-30");
+});
