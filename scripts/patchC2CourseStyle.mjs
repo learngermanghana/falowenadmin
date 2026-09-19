@@ -21,12 +21,26 @@ function mustReplace(source, from, to, label) {
 
 update("src/data/courseDictionary.js", (source) => {
   if (source.includes("  C2: {")) return source;
-  const anchor = "};\n\nfunction dictionarySortValue(entry = {}) {";
-  if (!source.includes(anchor)) throw new Error("C2 dictionary insertion anchor missing");
+
+  // Insert C2 at the top-level dictionary boundary rather than depending on the
+  // syntax of the preceding level. C1 is generated with Object.fromEntries(...),
+  // while other levels are handwritten object literals.
+  const functionAnchor = "\nfunction dictionarySortValue(entry = {}) {";
+  const functionIndex = source.indexOf(functionAnchor);
+  if (functionIndex < 0) throw new Error("C2 dictionary function boundary missing");
+
+  const dictionaryStart = source.indexOf("export const courseDictionary = {");
+  const dictionaryCloseIndex = source.lastIndexOf("\n};", functionIndex);
+  if (dictionaryStart < 0 || dictionaryCloseIndex < dictionaryStart) {
+    throw new Error("C2 dictionary top-level closing boundary missing");
+  }
+
   const entries = c2CourseEntries
     .map((entry) => `    ${JSON.stringify(entry.assignment_id)}: { assignment_id: ${JSON.stringify(entry.assignment_id)}, chapter: ${JSON.stringify(entry.chapter)}, de: ${JSON.stringify(entry.de)}, en: ${JSON.stringify(entry.en)} },`)
     .join("\n");
-  return source.replace(anchor, `  C2: {\n${entries}\n  },\n};\n\nfunction dictionarySortValue(entry = {}) {`);
+  const c2Block = `\n  C2: {\n${entries}\n  },`;
+
+  return source.slice(0, dictionaryCloseIndex) + c2Block + source.slice(dictionaryCloseIndex);
 });
 
 update("src/data/teachingSlides.js", (source) => {
