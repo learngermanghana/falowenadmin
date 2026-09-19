@@ -1,7 +1,8 @@
 import { getC2TopicFoundation } from "./c2TopicFoundations.js";
+import { getC1CanonicalLesson } from "./c1CanonicalCurriculum.js";
 
 // A2/B1/B2 classroom foundations mirror the student Falowen curriculum.
-// C1 is keyed to the current Admin presenter topics because its lesson sequence differs from the learner-side C1 sequence.
+// C1 is resolved from the canonical learner-aligned C1 curriculum manifest.
 // Student source snapshot: bafaffbb5fee47a0b9b4effa040dc69cf052f5fa
 // Keep this file aligned whenever the learner-side A2/B1/B2/C1 foundation copy changes.
 const A2_SITUATIONS = Object.freeze({
@@ -346,178 +347,6 @@ const B2_TOPIC_FOUNDATIONS = Object.freeze({
   27: { intro: "Gleichstellung bedeutet, dass Menschen faire Chancen und Rechte haben sollen. Diskriminierung kann offen auftreten oder durch Verfahren entstehen, die bestimmte Gruppen systematisch benachteiligen. Deshalb braucht es sowohl Regeln als auch praktische Maßnahmen.", example: "Ein Unternehmen prüft Bewerbungen zunächst ohne Foto und Namen, um unbewusste Vorurteile zu reduzieren.", tension: "gleiche Behandlung ↔ gezielte Maßnahmen gegen bestehende Nachteile", question: "Welche Maßnahme kann Diskriminierung im Alltag konkret reduzieren?" },
   28: { intro: "Die B2-Prüfung verlangt, bekannte Themen flexibel miteinander zu verbinden. Entscheidend ist nicht, möglichst kompliziert zu klingen, sondern klare Argumente, passende Beispiele und sichere Strukturen zu verwenden.", example: "Bei einem Thema über KI im Beruf verbindet eine gute Antwort Ursache, Folge, Gegenargument, Beispiel und eine realistische Lösung.", tension: "sprachliche Komplexität ↔ Klarheit und kontrollierte Argumentation", question: "Welche B2-Strukturen kannst du sicher genug einsetzen, ohne den Satz zu verlieren?" },
 });
-const C1_TOPIC_FOUNDATIONS_BY_TOPIC = Object.freeze({
-  "Wissenschaft und Forschung": {
-    intro: "Wissenschaftliche Erkenntnisse entstehen nicht allein durch neue Ideen, sondern durch nachvollziehbare Methoden, überprüfbare Daten und kritische Diskussion. Auf C1-Niveau ist wichtig, zwischen Befund, Interpretation und noch offener Frage zu unterscheiden.",
-    example: "Eine Studie zeigt einen Zusammenhang zwischen zwei Faktoren. Bevor daraus eine Ursache abgeleitet wird, werden Studiendesign, Stichprobe und mögliche Alternativerklärungen geprüft.",
-    tension: "Forschungsfreiheit und Innovation ↔ wissenschaftliche Sorgfalt und gesellschaftliche Verantwortung",
-    question: "Wie lässt sich wissenschaftlicher Fortschritt fördern, ohne Unsicherheit, Qualitätskontrolle und mögliche Folgen zu vernachlässigen?",
-  },
-  "Kunst und Kultur": {
-    intro: "Kunst und Kultur prägen Erinnerung, Identität und öffentliche Debatten. Gleichzeitig stellt sich die Frage, wer Zugang zu kulturellen Angeboten hat, wie sie finanziert werden und wie frei künstlerischer Ausdruck sein sollte.",
-    example: "Ein öffentlich finanziertes Theater zeigt ein kontroverses Stück und erreicht damit neue Zielgruppen, löst aber gleichzeitig eine Debatte über Förderung und gesellschaftliche Verantwortung aus.",
-    tension: "künstlerische Freiheit ↔ öffentliche Förderung, Zugang und gesellschaftliche Verantwortung",
-    question: "Welche Aufgaben sollte Kultur in einer Gesellschaft erfüllen, und wie weit sollte öffentliche Förderung dabei gehen?",
-  },
-  "Künstliche Intelligenz und Arbeitswelt": {
-    intro: "Künstliche Intelligenz verändert vor allem Aufgaben, Entscheidungsprozesse und Kompetenzanforderungen. Produktivitätsgewinne können neue Möglichkeiten schaffen, während gleichzeitig Fragen nach Kontrolle, Qualifizierung und Arbeitsplatzsicherheit entstehen.",
-    example: "Ein Unternehmen automatisiert Routineauswertungen mit KI, während Beschäftigte stärker Beratung, Qualitätskontrolle und komplexe Entscheidungen übernehmen.",
-    tension: "Effizienz und Automatisierung ↔ menschliche Verantwortung, Weiterbildung und Arbeitsplatzsicherheit",
-    question: "Wie sollten Unternehmen und Beschäftigte mit KI umgehen, damit Produktivitätsgewinne nicht auf Kosten von Transparenz und fairen Übergängen entstehen?",
-  },
-  "Digitalisierung und Datenschutz": {
-    intro: "Digitale Dienste können Prozesse beschleunigen und personalisieren, benötigen dafür aber häufig große Mengen personenbezogener Daten. Entscheidend ist, ob Datennutzung transparent, zweckgebunden, sicher und für Nutzer kontrollierbar bleibt.",
-    example: "Eine App vereinfacht Behördengänge, sammelt dabei aber zusätzliche Nutzungsdaten, deren weiterer Verwendungszweck für viele Menschen unklar ist.",
-    tension: "digitale Bequemlichkeit und Effizienz ↔ Datenschutz, Sicherheit und Selbstbestimmung",
-    question: "Wie viel Datennutzung ist vertretbar, wenn digitale Dienste dadurch deutlich bequemer oder effizienter werden?",
-  },
-  "Personalisierte Werbung": {
-    intro: "Personalisierte Werbung nutzt Daten und Verhaltensmuster, um Inhalte gezielt auf einzelne Personen zuzuschneiden. Das kann Angebote relevanter machen, wirft aber Fragen nach Transparenz, Beeinflussung und digitaler Selbstbestimmung auf.",
-    example: "Nach mehreren Produktsuchen sieht eine Person auf verschiedenen Plattformen fast nur noch Werbung für ähnliche Angebote.",
-    tension: "relevantere Werbung und wirtschaftliche Interessen ↔ Privatsphäre, Transparenz und Verbraucherautonomie",
-    question: "Unter welchen Bedingungen kann personalisierte Werbung nützlich sein, ohne Nutzer unangemessen zu beeinflussen?",
-  },
-  "Online- und Offline-Identität": {
-    intro: "Menschen zeigen je nach sozialem Kontext unterschiedliche Seiten ihrer Identität. Online können Profile bewusst gestaltet werden; dadurch entstehen Chancen für Selbstausdruck, aber auch Druck zur Inszenierung und Risiken für Privatsphäre.",
-    example: "Eine Person präsentiert online hauptsächlich berufliche Erfolge, obwohl ihr Alltag wesentlich vielfältiger und auch von Unsicherheiten geprägt ist.",
-    tension: "Selbstdarstellung und soziale Zugehörigkeit ↔ Authentizität, Privatsphäre und Erwartungsdruck",
-    question: "Wie stark darf sich eine Online-Identität von der eigenen Lebensrealität unterscheiden, ohne problematisch zu werden?",
-  },
-  "Gesellschaftlicher Zusammenhalt": {
-    intro: "Gesellschaftlicher Zusammenhalt entsteht durch Vertrauen, faire Teilhabe, gemeinsame Regeln und die Möglichkeit, Konflikte friedlich auszutragen. Unterschiedliche Interessen müssen nicht verschwinden, solange Institutionen und soziale Beziehungen tragfähig bleiben.",
-    example: "Ein Stadtteil schafft gemeinsame Räume und Beteiligungsangebote, damit Menschen mit unterschiedlichen Lebenslagen häufiger miteinander in Kontakt kommen.",
-    tension: "individuelle Freiheit und unterschiedliche Interessen ↔ Solidarität, Vertrauen und gemeinsame Verantwortung",
-    question: "Welche Bedingungen stärken gesellschaftlichen Zusammenhalt, wenn Interessen und Lebenslagen deutlich auseinandergehen?",
-  },
-  "Mehrsprachigkeit": {
-    intro: "Mehrsprachigkeit kann Identität, Bildung und berufliche Chancen erweitern. Gleichzeitig braucht eine Gesellschaft gemeinsame Verständigungsmöglichkeiten und Bildungssysteme, die sprachliche Vielfalt weder romantisieren noch als Defizit behandeln.",
-    example: "Ein Kind nutzt zu Hause zwei Sprachen und lernt in der Schule auf Deutsch; Unterrichtskonzepte können vorhandene Sprachkenntnisse gezielt einbeziehen.",
-    tension: "gemeinsame Verständigung und Bildungssprache ↔ Förderung sprachlicher Vielfalt",
-    question: "Wie kann Mehrsprachigkeit gefördert werden, ohne gemeinsame sprachliche Teilhabe zu erschweren?",
-  },
-  "Migration und Integration": {
-    intro: "Integration betrifft Sprache, Bildung, Arbeit, Anerkennung von Qualifikationen, soziale Kontakte und institutionellen Zugang. Sie ist weder ausschließlich individuelle Anpassung noch allein eine Aufgabe des Staates.",
-    example: "Eine qualifizierte Fachkraft spricht gut Deutsch, kann aber erst nach Anerkennung ihres Abschlusses im erlernten Beruf arbeiten.",
-    tension: "Eigeninitiative der Zugewanderten ↔ institutionelle Offenheit und Unterstützung",
-    question: "Wie sollte Verantwortung für gelingende Integration zwischen Einzelnen, Institutionen und Gesellschaft verteilt werden?",
-  },
-  "Ehrenamt und gesellschaftlicher Pflichtdienst": {
-    intro: "Ehrenamt kann Gemeinschaft stärken und Erfahrungen ermöglichen, beruht aber grundsätzlich auf freiwilligem Engagement. Ein Pflichtdienst verfolgt andere Ziele und greift stärker in persönliche Lebensplanung und Freiheit ein.",
-    example: "Junge Erwachsene könnten ein Jahr in Pflege, Katastrophenschutz oder sozialen Einrichtungen arbeiten, müssten dafür aber Ausbildung oder Berufseinstieg verschieben.",
-    tension: "gesellschaftlicher Nutzen und gemeinschaftliche Verantwortung ↔ Freiwilligkeit und persönliche Autonomie",
-    question: "Welche Aufgaben eignen sich für freiwilliges Engagement, und unter welchen Bedingungen wäre ein gesellschaftlicher Pflichtdienst vertretbar?",
-  },
-  "Demokratie und soziale Medien": {
-    intro: "Soziale Medien erleichtern politische Information und Beteiligung, verändern aber auch Sichtbarkeit, Aufmerksamkeit und Verbreitung von Inhalten. Algorithmen, Desinformation und zugespitzte Kommunikation können öffentliche Debatten beeinflussen.",
-    example: "Ein politischer Beitrag erreicht sehr viele Menschen, weil er starke Reaktionen auslöst, obwohl die zugrunde liegende Behauptung nur unzureichend belegt ist.",
-    tension: "offene Beteiligung und Meinungsfreiheit ↔ verlässliche Information und verantwortliche Moderation",
-    question: "Wie können soziale Medien politische Beteiligung ermöglichen, ohne Desinformation und Polarisierung unnötig zu verstärken?",
-  },
-  "Bildung und Prüfungsformate": {
-    intro: "Prüfungen sollen Leistungen möglichst fair und aussagekräftig erfassen. Unterschiedliche Formate messen jedoch unterschiedliche Kompetenzen und können durch Technik, Zeitdruck oder persönliche Voraussetzungen verschieden wirken.",
-    example: "Eine digitale Prüfung ermöglicht schnelle Auswertung, setzt aber zuverlässige Geräte, Internetzugang und klare Regeln für technische Störungen voraus.",
-    tension: "Effizienz und standardisierte Bewertung ↔ Chancengleichheit und realistische Kompetenzmessung",
-    question: "Welche Prüfungsformate messen Leistung möglichst fair, ohne wichtige Kompetenzen auf ein einziges Format zu reduzieren?",
-  },
-  "Lebenslanges Lernen": {
-    intro: "Berufe und Technologien verändern sich kontinuierlich, weshalb Lernen nicht mit Ausbildung oder Studium endet. Weiterbildung hängt jedoch von Zeit, Geld, Motivation und Unterstützung durch Arbeitgeber oder öffentliche Stellen ab.",
-    example: "Ein Unternehmen führt neue Software ein und stellt Beschäftigten Arbeitszeit sowie finanzierte Schulungen für die Umstellung zur Verfügung.",
-    tension: "Eigenverantwortung für Weiterbildung ↔ Verantwortung von Arbeitgebern und öffentlichen Institutionen",
-    question: "Wie kann lebenslanges Lernen gefördert werden, ohne Weiterbildung ausschließlich zur privaten Aufgabe Einzelner zu machen?",
-  },
-  "Homeoffice und moderne Arbeitsformen": {
-    intro: "Homeoffice und hybride Arbeit können Wege reduzieren und Flexibilität erhöhen. Gleichzeitig verändern sie Zusammenarbeit, Kontrolle, Erreichbarkeit und die Grenze zwischen Beruf und Privatleben.",
-    example: "Eine Mitarbeiterin arbeitet drei Tage von zu Hause, erhält aber auch abends regelmäßig Nachrichten, auf die schnelle Antworten erwartet werden.",
-    tension: "Flexibilität und Autonomie ↔ Zusammenarbeit, Erreichbarkeitsgrenzen und Erholung",
-    question: "Welche Regeln brauchen moderne Arbeitsformen, damit Flexibilität nicht zu dauerhafter Erreichbarkeit oder Isolation führt?",
-  },
-  "Fachkräftemangel und berufliche Mobilität": {
-    intro: "Fachkräftemangel kann durch demografische Entwicklungen, Qualifikationslücken oder unattraktive Arbeitsbedingungen entstehen. Mögliche Antworten reichen von Weiterbildung über bessere Arbeitsbedingungen bis zur Anerkennung ausländischer Qualifikationen.",
-    example: "Ein Krankenhaus findet zu wenige Fachkräfte und kombiniert bessere Arbeitszeiten, zusätzliche Ausbildungsplätze und schnellere Anerkennungsverfahren.",
-    tension: "schnelle Personalgewinnung ↔ nachhaltige Ausbildung, faire Bedingungen und Integration",
-    question: "Welche Maßnahmen sind langfristig geeignet, Fachkräftemangel zu verringern, ohne das Problem nur kurzfristig zu verschieben?",
-  },
-  "Bedingungsloses Grundeinkommen": {
-    intro: "Ein bedingungsloses Grundeinkommen würde regelmäßige Zahlungen ohne individuelle Bedürftigkeitsprüfung vorsehen. Diskutiert werden soziale Sicherheit, Verwaltungsaufwand, Finanzierung, Arbeitsanreize und die Zukunft bestehender Sozialleistungen.",
-    example: "Ein Modell ersetzt einen Teil bisheriger Leistungen durch eine einheitliche Zahlung, müsste aber klären, wie zusätzliche Unterstützungsbedarfe weiterhin berücksichtigt werden.",
-    tension: "einfache soziale Absicherung und individuelle Freiheit ↔ Finanzierung, Zielgenauigkeit und Arbeitsanreize",
-    question: "Welche Probleme könnte ein bedingungsloses Grundeinkommen lösen, und welche neuen Finanzierungs- oder Verteilungsfragen würde es schaffen?",
-  },
-  "Nachhaltigkeit in der Wirtschaft": {
-    intro: "Nachhaltige Wirtschaft verbindet ökologische Ziele mit Produktion, Investitionen, Lieferketten und Wettbewerbsfähigkeit. Veränderungen verursachen häufig kurzfristige Kosten, können aber langfristig Risiken und Ressourcenverbrauch reduzieren.",
-    example: "Ein Hersteller investiert in energieeffiziente Maschinen und reparierbare Produkte, obwohl die Umstellung zunächst höhere Kosten verursacht.",
-    tension: "kurzfristige Wettbewerbsfähigkeit und Investitionskosten ↔ langfristige ökologische und wirtschaftliche Resilienz",
-    question: "Wie können Unternehmen nachhaltiger wirtschaften, ohne ökologische Verantwortung gegen wirtschaftliche Tragfähigkeit auszuspielen?",
-  },
-  "Klimawandel und Verkehr": {
-    intro: "Verkehrspolitik muss Mobilität ermöglichen und gleichzeitig Emissionen, Flächenverbrauch und soziale Zugänglichkeit berücksichtigen. Stadt und Land brauchen dabei oft unterschiedliche Lösungen.",
-    example: "Eine Großstadt baut Bahn- und Radverkehr aus, während eine ländliche Region vor allem zuverlässigere Busverbindungen und Park-and-Ride-Angebote benötigt.",
-    tension: "individuelle Mobilität und Erreichbarkeit ↔ Klimaschutz, Kosten und öffentlicher Raum",
-    question: "Welche Verkehrsmaßnahmen können Emissionen wirksam senken, ohne Mobilität für bestimmte Gruppen unverhältnismäßig einzuschränken?",
-  },
-  "Nachhaltiger Konsum": {
-    intro: "Nachhaltiger Konsum betrifft Lebensdauer, Reparierbarkeit, Ressourcenverbrauch, Herkunft und Preis von Produkten. Verbraucher treffen Entscheidungen, doch Hersteller, Handel und Regulierung bestimmen wesentlich mit, welche Alternativen verfügbar sind.",
-    example: "Ein langlebiges reparierbares Gerät kostet beim Kauf mehr, kann aber über mehrere Jahre weniger Ressourcen verbrauchen als mehrere billige Ersatzgeräte.",
-    tension: "niedrige Preise und Bequemlichkeit ↔ Langlebigkeit, Transparenz und Produzentenverantwortung",
-    question: "Wie kann nachhaltiger Konsum gefördert werden, ohne die Verantwortung ausschließlich auf einzelne Verbraucher zu verlagern?",
-  },
-  "Reisen und Nachhaltigkeit": {
-    intro: "Reisen ermöglicht Erholung, wirtschaftlichen Austausch und kulturelle Begegnung, verursacht aber Emissionen und kann beliebte Orte infrastrukturell oder sozial belasten. Nachhaltigkeit betrifft daher Verkehrsmittel, Aufenthaltsdauer und lokale Auswirkungen.",
-    example: "Eine Region profitiert stark von Gästen, begrenzt aber gleichzeitig Reisebusse und Kurzzeitvermietungen, um Verkehr und Wohnraummangel zu reduzieren.",
-    tension: "Mobilität, Begegnung und Tourismuseinnahmen ↔ Emissionen und lokale Lebensqualität",
-    question: "Wie kann Reisen nachhaltiger werden, ohne Mobilität und wirtschaftliche Chancen unnötig einzuschränken?",
-  },
-  "Gesundheit und Impfpflicht": {
-    intro: "Bei Impfpflichten treffen individuelle Entscheidungsfreiheit, Schutz besonders gefährdeter Personen, wissenschaftliche Evidenz und staatliche Eingriffe aufeinander. Eine sachliche Bewertung muss Wirksamkeit, Risiko, Verhältnismäßigkeit und Alternativen getrennt prüfen.",
-    example: "Bei einer ansteckenden Krankheit wird diskutiert, ob eine Impfpflicht nur für besonders exponierte Berufsgruppen oder für eine größere Bevölkerungsgruppe gelten sollte.",
-    tension: "individuelle Selbstbestimmung ↔ Schutz anderer und öffentliche Gesundheitsziele",
-    question: "Unter welchen Bedingungen wäre eine Impfpflicht verhältnismäßig, und welche weniger eingreifenden Alternativen sollten zuerst geprüft werden?",
-  },
-  "Ernährung und moderner Lebensstil": {
-    intro: "Ernährung wird von persönlichen Gewohnheiten, Zeit, Einkommen, Werbung und verfügbarer Infrastruktur beeinflusst. Gesundheitspolitik kann informieren und Rahmenbedingungen verändern, ohne individuelle Verantwortung vollständig zu ersetzen.",
-    example: "Eine Beschäftigte möchte gesünder essen, hat aber im Schichtdienst wenig Zeit und am Arbeitsplatz hauptsächlich stark verarbeitete Angebote.",
-    tension: "persönliche Verantwortung ↔ soziale, wirtschaftliche und berufliche Rahmenbedingungen",
-    question: "Wie lässt sich gesündere Ernährung fördern, ohne komplexe Lebensbedingungen auf individuelle Disziplin zu reduzieren?",
-  },
-  "Wohnen, Mieten und soziale Gerechtigkeit": {
-    intro: "Wohnungspolitik muss Bezahlbarkeit, Angebot, Eigentumsrechte, Baukosten und Lebensqualität miteinander verbinden. Maßnahmen können kurzfristig entlasten und zugleich langfristige Auswirkungen auf Neubau oder Investitionen haben.",
-    example: "Eine Stadt begrenzt Mieterhöhungen und fördert gleichzeitig Neubau, damit kurzfristiger Schutz nicht zu einem dauerhaft knappen Wohnungsangebot führt.",
-    tension: "bezahlbarer Wohnraum und Mieterschutz ↔ Investitionsanreize und ausreichendes Angebot",
-    question: "Welche Kombination aus Mieterschutz, Neubau und Förderung kann Wohnraum langfristig bezahlbarer machen?",
-  },
-  "Zukunftstechnologien und Innovation": {
-    intro: "Neue Technologien können Produktivität, Medizin oder Alltag stark verändern, während langfristige Nebenwirkungen oft noch unsicher sind. Gute Innovationspolitik verbindet Experimentiermöglichkeiten mit Transparenz, Sicherheitsstandards und lernfähiger Regulierung.",
-    example: "Eine neue Technologie wird zunächst in begrenzten Pilotprojekten eingesetzt, bevor sie nach Auswertung von Nutzen und Risiken breiter zugelassen wird.",
-    tension: "schnelle Innovation und wirtschaftliche Chancen ↔ Vorsorge, Sicherheit und gesellschaftliche Kontrolle",
-    question: "Wie kann Innovation gefördert werden, ohne mögliche Risiken erst zu berücksichtigen, nachdem Schäden bereits entstanden sind?",
-  },
-  "Globalisierung und internationale Zusammenarbeit": {
-    intro: "Globale Arbeitsteilung und internationale Kooperation können Handel, Wissenstransfer und gemeinsame Problemlösungen erleichtern. Gleichzeitig entstehen Abhängigkeiten, Verteilungsfragen und Risiken bei Krisen oder einseitigen Lieferketten.",
-    example: "Ein Unternehmen bezieht wichtige Bauteile aus nur einer Weltregion, weil das günstig ist, wird bei einer Krise aber besonders verwundbar.",
-    tension: "Effizienz, offene Märkte und Zusammenarbeit ↔ Resilienz, faire Standards und strategische Unabhängigkeit",
-    question: "Wie viel internationale Abhängigkeit ist sinnvoll, wenn globale Zusammenarbeit wirtschaftliche Vorteile schafft, aber Krisenrisiken erhöht?",
-  },
-  "Wissenschaftliches Arbeiten und Quellen": {
-    intro: "Wissenschaftliches Arbeiten verlangt nachvollziehbare Quellen, klare Trennung von Befund und Interpretation sowie einen transparenten Umgang mit Unsicherheit. Gute Quellenarbeit bedeutet mehr als das Sammeln vieler Belege.",
-    example: "Eine Autorin nennt nicht nur eine Statistik, sondern prüft Originalquelle, Erhebungsmethode, Erscheinungsdatum und die Grenzen der Aussagekraft.",
-    tension: "verständliche und schnelle Kommunikation ↔ Quellenprüfung, Präzision und wissenschaftliche Nachvollziehbarkeit",
-    question: "Welche Kriterien entscheiden darüber, ob eine Quelle für eine wissenschaftliche Argumentation wirklich belastbar ist?",
-  },
-  "Stellungnahme und formelle Korrespondenz": {
-    intro: "Eine Stellungnahme und eine formelle Nachricht verfolgen unterschiedliche kommunikative Ziele, brauchen aber beide klare Struktur, angemessenes Register und präzise Begründungen. Komplexität ist nur sinnvoll, wenn sie die Aussage verbessert.",
-    example: "In einer Stellungnahme wird ein Gegenargument abgewogen; in einer formellen E-Mail wird dasselbe Problem adressatengerecht beschrieben und mit einer konkreten Bitte verbunden.",
-    tension: "sprachliche Komplexität und formelles Register ↔ Klarheit, Adressatenbezug und Handlungsziel",
-    question: "Wie lässt sich anspruchsvolle C1-Sprache einsetzen, ohne dass Struktur, Höflichkeit oder Verständlichkeit verloren gehen?",
-  },
-  "Prüfungsvorbereitung und spontane Argumentation": {
-    intro: "In einer C1-Prüfung müssen Inhalte unter Zeitdruck strukturiert, sprachlich kontrolliert und flexibel entwickelt werden. Gute spontane Argumentation entsteht nicht durch möglichst viele Ideen, sondern durch klare Kriterien, Begründungen und Beispiele.",
-    example: "Eine Lernende nutzt 30 Sekunden Vorbereitung, notiert Position, Grund, Beispiel und Gegenargument und spricht anschließend 90 Sekunden strukturiert.",
-    tension: "sprachliche Komplexität und Ideenfülle ↔ Klarheit, Kontrolle und Zeitmanagement",
-    question: "Wie kann man unter Prüfungsdruck differenziert argumentieren, ohne Struktur oder sprachliche Kontrolle zu verlieren?",
-  },
-});
-
-
 function dayNumber(slide = {}) {
   const direct = Number(slide.dayNumber);
   if (Number.isFinite(direct) && direct > 0) return direct;
@@ -591,23 +420,22 @@ export function getPresenterTopicFoundation(slide = {}) {
   }
 
   if (level === "C1") {
-    const topic = cleanSlideTitle(slide);
-    const item = C1_TOPIC_FOUNDATIONS_BY_TOPIC[topic];
+    const item = getC1CanonicalLesson(day);
     if (!item) return null;
     return {
       level,
       day,
       kicker: "C1 · Thema verstehen",
-      title: topic,
-      intro: item.intro,
+      title: item.title,
+      intro: item.foundation.intro,
       exampleLabel: "Konkretes Beispiel",
-      example: item.example,
+      example: item.foundation.example,
       tensionLabel: "Zielkonflikt / Perspektiven",
-      tension: item.tension,
+      tension: item.foundation.tension,
       questionLabel: "Leitfrage",
-      question: item.question,
+      question: item.profile.question,
       suggestedMinutes: 6,
-      teacherNote: "Do not debate yet. Establish the concept, affected perspectives and real target conflict first; argumentation follows after grammar.",
+      teacherNote: "Do not debate yet. Establish the learner-side concept, affected perspectives and target conflict first; grammar and argumentation follow afterwards.",
     };
   }
 
