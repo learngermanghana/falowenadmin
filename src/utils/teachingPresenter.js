@@ -111,9 +111,9 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     { id: "mistakes", type: "list", kicker: "Achtung", title: advanced ? "Typische Fehler" : "Common mistakes", items: mistakeItems },
     { id: "questions", type: "question-reveal", kicker: "Sprechen", title: advanced ? "Sprechtraining" : "Speaking questions", items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [], supportItems: [...new Set([...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []), ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [])])].slice(0, 5), questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [], requiresQuestionModel: ["A2", "B1"].includes(String(slide.course || "").toUpperCase()), suggestedMinutes: interactionMinutes(slide, 3) || 10 },
     { id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 },
-    ...(courseBookBridgeItems.length ? [{ id: "coursebook-bridge", type: "bridge", kicker: "Falowen", title: "Course Book Bridge", items: courseBookBridgeItems, studentReference }] : []),
   ];
   if (Array.isArray(slide.grammarCheckQuestions) && slide.grammarCheckQuestions.length) stages.push({ id: "grammar-check", type: "question-reveal", kicker: "Grammatik-Check", title: slide.grammarCheckTitle || "Korrigiere den Satz", items: slide.grammarCheckQuestions, questionModels: Array.isArray(slide.grammarCheckModels) ? slide.grammarCheckModels : [], requiresQuestionModel: true, suggestedMinutes: Number(slide.grammarCheckMinutes || 10) });
+  if (courseBookBridgeItems.length) stages.push({ id: "coursebook-bridge", type: "bridge", kicker: "Falowen", title: "Course Book Bridge", items: courseBookBridgeItems, studentReference });
   return stages;
 }
 
