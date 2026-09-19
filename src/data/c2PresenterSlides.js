@@ -1,3 +1,5 @@
+import { getC2TopicFoundation } from "./c2TopicFoundations.js";
+
 const LESSONS = [
   {
     "day": 1,
@@ -1033,6 +1035,7 @@ function makeGrammarChecks(lesson) {
 
 function makeSlide(lesson) {
   const questions = makeSpeakingQuestions(lesson);
+  const topicFoundation = getC2TopicFoundation(lesson.day);
   const checks = makeGrammarChecks(lesson);
   const writeDescription = lesson.writeType === "opinion"
     ? "Stellungnahme: ungefähr 350 Wörter, alle drei Beiträge berücksichtigen und eine eigene begründete Position entwickeln."
@@ -1058,8 +1061,8 @@ function makeSlide(lesson) {
       "Welche der drei Kursaussagen findest du am schwierigsten zu beurteilen – und warum?",
       "Welche heutige Kollokation passt zu einem ersten Argument?",
     ],
-    knowledgeTextDe: lesson.topicFoundation
-      ? "1-Minuten-Wissen: Simple English: " + lesson.topicFoundation.english + " Auf Deutsch: " + lesson.topicFoundation.german + " " + lesson.topicFoundation.linear + " " + lesson.topicFoundation.circular + " " + lesson.topicFoundation.example + " " + lesson.topicFoundation.tension
+    knowledgeTextDe: topicFoundation
+      ? "1-Minuten-Wissen: Simple English: " + topicFoundation.en + " Auf Deutsch: " + topicFoundation.de + " Konkretes Beispiel: " + topicFoundation.example + " Kernfrage: " + topicFoundation.core + " Kernspannung: " + topicFoundation.tension
       : "1-Minuten-Wissen: " + lesson.topic + " Auf C2-Niveau reicht eine Pro-und-Contra-Liste nicht. Prüfe Annahmen, Bedingungen und Reichweite jeder Aussage und nutze die Grammatik, um genau diese Unterschiede sprachlich sichtbar zu machen.",
     keyPhrasesDe: [
       ...lesson.collocations.map(([phrase, example]) => phrase + " — " + example),
@@ -1073,7 +1076,7 @@ function makeSlide(lesson) {
     speakingModels: makeSpeakingModels(lesson, questions),
     teacherNotesEn: [
       "Runtime source: Falowen C2 standard curriculum, not the older mastery title list.",
-      "Teach the exact current topic, three debate perspectives and grammar focus before moving to production.",
+      "Teach the topic foundation first: simple meaning, concrete example and central tension. Then teach the three debate perspectives and grammar focus.",
       "Keep the speaking task seminar-style: structured presentation, perspective weighing, examples and follow-up questions.",
       "For even days, teach transformation families in Learn but do not reveal the exact Write answers.",
       "Correct after the full response; prioritise logic, register and two high-value language points.",

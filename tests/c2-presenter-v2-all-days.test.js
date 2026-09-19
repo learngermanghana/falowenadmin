@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
+import { getC2TopicFoundation } from "../src/data/c2TopicFoundations.js";
 import {
   buildTeachingPresenterStages,
   getSpeakingQuestionModel,
@@ -130,6 +131,33 @@ test("C2 presenter declaration stays idempotent with the build patch hook", asyn
   assert.match(declarations[0], /Array\.from\(\{ length: 28 \}/);
   assert.match(patchSource, /const c2DeclarationPattern = \/\^const C2_PRESENTER_V2_ASSIGNMENTS/);
   assert.match(patchSource, /next = next\.replace\(c2DeclarationPattern, ""\)/);
+});
+
+test("all 28 C2 lessons teach topic knowledge before warm-up", () => {
+  const slides = getSlidesByCourse("C2");
+  assert.equal(slides.length, 28);
+
+  for (const slide of slides) {
+    const foundation = getC2TopicFoundation(slide.dayNumber);
+    assert.ok(foundation, slide.assignmentId + " missing topic foundation");
+    assert.equal(foundation.chapter, slide.chapter);
+    assert.ok(foundation.core.length > 40, slide.assignmentId + " core question is too thin");
+    assert.ok(foundation.en.length > 60, slide.assignmentId + " English explanation is too thin");
+    assert.ok(foundation.de.length > 60, slide.assignmentId + " German explanation is too thin");
+    assert.ok(foundation.example.length > 35, slide.assignmentId + " concrete example is too thin");
+    assert.match(foundation.tension, /↔/, slide.assignmentId + " needs an explicit tension");
+
+    assert.match(slide.knowledgeTextDe, /Simple English:/);
+    assert.match(slide.knowledgeTextDe, /Auf Deutsch:/);
+    assert.match(slide.knowledgeTextDe, /Konkretes Beispiel:/);
+    assert.match(slide.knowledgeTextDe, /Kernfrage:/);
+    assert.match(slide.knowledgeTextDe, /Kernspannung:/);
+
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const ids = stages.map((stage) => stage.id);
+    assert.ok(ids.indexOf("knowledge") > -1, slide.assignmentId + " missing knowledge stage");
+    assert.ok(ids.indexOf("knowledge") < ids.indexOf("warmup"), slide.assignmentId + " must teach topic knowledge before warm-up");
+  }
 });
 
 test("C2 Day 1 teaches the circular-economy concept before asking warm-up questions", () => {
