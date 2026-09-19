@@ -14,6 +14,7 @@ import {
 import * as base from "./markingServiceBase.js";
 import { withResubmissionComparison } from "../utils/resubmissionFeedback.js";
 import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
+import { dedupeRepeatedFeedback } from "../utils/feedbackPolicy.js";
 
 export * from "./markingServiceBase.js";
 
@@ -144,10 +145,12 @@ function cleanDuplicateWritingScores(feedback = "", result = {}) {
 }
 
 function sanitizeFeedback(feedback = "", result = {}) {
-  return cleanDuplicateWritingScores(cleanLegacyObjectiveTail(stripBoldMarkdown(feedback)), result)
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return dedupeRepeatedFeedback(
+    cleanDuplicateWritingScores(cleanLegacyObjectiveTail(stripBoldMarkdown(feedback)), result)
+      .replace(/[ \t]{2,}/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim(),
+  );
 }
 
 function sanitizeMarkingResult(result = {}) {
@@ -157,6 +160,26 @@ function sanitizeMarkingResult(result = {}) {
     feedback,
     improvementSummary: stripBoldMarkdown(result.improvementSummary || feedback),
   };
+}
+
+function withReviewReason(result = {}, { code, message, source = "marking_service" } = {}) {
+  if (!message) return result;
+  const existing = Array.isArray(result.reviewReasons) ? result.reviewReasons : [];
+  const next = [...existing, { code: code || "marking_review", message, source }];
+  const seen = new Set();
+  return {
+    ...result,
+    reviewReasons: next.filter((item) => {
+      const key = `${item?.code || ""}|${item?.message || item?.reason || item || ""}`.toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }),
+  };
+}
+
+function finalizeMarkingResult(result = {}, submission = {}) {
+  return sanitizeMarkingResult(withResubmissionComparison(result, submission));
 }
 
 function safeFirestoreId(value) {
@@ -187,7 +210,7 @@ function routeMissedWritingToReview(result = {}, submissionText = "") {
   const safeFinalScore = objectiveScore ?? normalizePercent(scoreValueFromResult(result)) ?? 0;
   const warning = "A writing section was detected before the objective parts, but no reliable writing score was returned. The writing score was not treated as zero; tutor review is required.";
 
-  return sanitizeMarkingResult({
+  return sanitizeMarkingResult(withReviewReason({
     ...result,
     score: safeFinalScore,
     finalScore: safeFinalScore,
@@ -202,7 +225,11 @@ function routeMissedWritingToReview(result = {}, submissionText = "") {
       unlabelledWritingDetected: true,
       writingScoreMissing: true,
     },
-  });
+  }, {
+    code: "writing_score_missing",
+    message: warning,
+    source: "writing_detection",
+  }));
 }
 
 async function requestSecondExaminer(options = {}) {
@@ -248,14 +275,18 @@ function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
       requiresTutorReview: true,
       error: String(error?.message || error || "Second examiner unavailable"),
     };
-    return {
+    return withReviewReason({
       ...primary,
       verifiedAiScore: primaryScore,
       status: "needs_review",
       shouldSendAutomatically: false,
       secondExaminer,
       ai: { ...(primary.ai || {}), secondExaminer },
-    };
+    }, {
+      code: "second_examiner_unavailable",
+      message: "The independent second examiner was unavailable, so tutor review is required.",
+      source: "second_examiner",
+    });
   }
 
   const comparison = compareExaminerResults(primary, secondary);
@@ -268,7 +299,7 @@ function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
     status: comparison.requiresTutorReview ? "disagreed" : "agreed",
   };
 
-  return {
+  const merged = {
     ...primary,
     verifiedAiScore: primaryScore,
     confidence: Number(confidence.toFixed(2)),
@@ -277,6 +308,13 @@ function mergeSecondExaminer(primary = {}, secondary = null, error = null) {
     secondExaminer,
     ai: { ...(primary.ai || {}), secondExaminer },
   };
+  return comparison.requiresTutorReview
+    ? withReviewReason(merged, {
+      code: "second_examiner_disagreement",
+      message: `Independent examiners require tutor review (score delta: ${comparison.scoreDelta ?? "unknown"}, writing delta: ${comparison.writingScoreDelta ?? "unknown"}).`,
+      source: "second_examiner",
+    })
+    : merged;
 }
 
 function hasTutorDecisionMarker(result = {}) {
@@ -354,7 +392,7 @@ export async function markSubmissionWithAI(options = {}) {
   primary = routeMissedWritingToReview(primary, originalSubmissionText);
 
   if (isBlockedScore(scoreValueFromResult(primary)) || !hasWritingEvidence(primary)) {
-    return withResubmissionComparison(primary, options.submission);
+    return finalizeMarkingResult(primary, options.submission);
   }
 
   try {
@@ -369,19 +407,23 @@ export async function markSubmissionWithAI(options = {}) {
           recoveredFromSuspiciousPrimaryWritingZero: true,
         },
       }, primary);
-      return withResubmissionComparison({
+      return finalizeMarkingResult(withReviewReason({
         ...recovered,
         status: "needs_review",
         shouldSendAutomatically: false,
-      }, options.submission);
+      }, {
+        code: "writing_zero_recovered_by_second_examiner",
+        message: "The primary examiner returned an impossible zero writing score; the second examiner recovered a usable score, so tutor review is required.",
+        source: "second_examiner",
+      }), options.submission);
     }
-    return withResubmissionComparison(mergeSecondExaminer(primary, secondary), options.submission);
+    return finalizeMarkingResult(mergeSecondExaminer(primary, secondary), options.submission);
   } catch (error) {
     console.warn("Second examiner unavailable; routing writing submission to tutor review.", {
       assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
       message: error?.message || String(error),
     });
-    return withResubmissionComparison(mergeSecondExaminer(primary, null, error), options.submission);
+    return finalizeMarkingResult(mergeSecondExaminer(primary, null, error), options.submission);
   }
 }
 
