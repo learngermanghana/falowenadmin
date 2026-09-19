@@ -121,10 +121,10 @@ export const A1_GRAMMAR_CHECKS = {
     check("How can you make a simple daily-routine sentence more informative?", "Add a time, frequency, food/activity, or place while keeping the verb in the correct position."),
   ],
   "A1-11": [
-    check("What is the purpose of the imperative in German?", "It is used for instructions, requests, commands, and advice."),
-    check("How does the imperative change depending on du, ihr and Sie?", "The form depends on who is being addressed; the polite Sie form keeps Sie and uses the verb first."),
-    check("What makes an imperative sound more polite?", "Words such as bitte and an appropriate polite form or tone."),
-    check("When would you use an imperative in everyday life?", "For directions, classroom instructions, recipes, requests, warnings, or advice."),
+    check("How do you form the polite Sie-imperative for directions?", "Put the verb first, then Sie, then the rest: Gehen Sie geradeaus."),
+    check("What happens to abbiegen in a polite direction?", "It separates: Biegen Sie links ab. / Biegen Sie rechts ab."),
+    check("How can you politely ask for directions to a place?", "For example: Entschuldigung, wo ist der Bahnhof? / Wie komme ich zum Bahnhof? / Wie komme ich zur Apotheke?"),
+    check("Which words help you build a short route?", "Use words such as geradeaus, links, rechts, Kreuzung, Straße, auf der linken/rechten Seite and neben."),
   ],
   "A1-12.1": [
     check("What is the main concept behind two-way prepositions?", "The same preposition can take dative for location and accusative for movement toward a destination."),
