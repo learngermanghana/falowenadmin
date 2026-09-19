@@ -3,6 +3,28 @@ export const AI_FEEDBACK_MAX_WORDS = 60;
 
 export const AI_FEEDBACK_INSTRUCTION = `Write one natural tutor comment for the student. Keep the detailed marking evidence in the structured fields, not in the student-facing feedback. The feedback must be one short paragraph of ${AI_FEEDBACK_MIN_WORDS} to ${AI_FEEDBACK_MAX_WORDS} words. Begin with one genuine strength, mention the strongest section when relevant, identify the exact questions that need review, mention only the most useful writing correction, and give one practical next step. For A2 and B1 writing, do not praise only the greeting, closing, or a single connector such as "weil". Comment on how well the student develops the task, the register/structure, the language range, and one concrete way to improve. Use the deterministic objective result as the source of truth for objective scores and wrong answers. Never replace it with an AI-recount. Do not use headings, bullet points, score-report labels, emojis, markdown, asterisks, or stock openings such as "Good effort". Do not list every correction when the structured marking data already contains them. Sound like a human German tutor: warm, direct, specific, and easy to read.`;
 
+export function dedupeRepeatedFeedback(value = "") {
+  const text = String(value || "").trim();
+  if (!text) return "";
+
+  const paragraphs = text.split(/\n{2,}/).map((item) => item.trim()).filter(Boolean);
+  if (paragraphs.length > 1 && paragraphs.every((item) => item === paragraphs[0])) {
+    return paragraphs[0];
+  }
+
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length >= 12 && words.length % 2 === 0) {
+    const midpoint = words.length / 2;
+    const first = words.slice(0, midpoint).join(" ");
+    const second = words.slice(midpoint).join(" ");
+    if (first.toLocaleLowerCase("de-DE") === second.toLocaleLowerCase("de-DE")) {
+      return first;
+    }
+  }
+
+  return text;
+}
+
 export function limitFeedbackWords(value, maxWords = AI_FEEDBACK_MAX_WORDS) {
   return String(value || "")
     .replace(/\*\*/g, "")
