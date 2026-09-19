@@ -328,6 +328,19 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
+              {stage.studentReference ? (
+                <section className={`presenter-student-reference is-${stage.studentReference.status}`}>
+                  <div>
+                    <span>Student lesson</span>
+                    <strong>{stage.studentReference.courseBookLabel} · {stage.studentReference.title}</strong>
+                  </div>
+                  <div className="presenter-student-reference-status">
+                    <strong>{stage.studentReference.statusLabel}</strong>
+                    <small>{stage.studentReference.canonicalId}</small>
+                  </div>
+                  <p>{stage.studentReference.note}</p>
+                </section>
+              ) : null}
             </>
           ) : stage.type === "foundation" ? (
             <section className={`presenter-foundation presenter-foundation-${String(stage.level || "").toLowerCase()}`}>
@@ -439,6 +452,23 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 ))}
               </div>
             </>
+          ) : stage.type === "bridge" ? (
+            <section className="presenter-coursebook-bridge">
+              <div className="presenter-coursebook-bridge-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                {stage.studentReference ? <p>{stage.studentReference.courseBookLabel} · {stage.studentReference.title}</p> : null}
+              </div>
+              <div className="presenter-coursebook-bridge-grid">
+                {stage.items.map((item) => (
+                  <article key={item.label}>
+                    <strong>{item.label}</strong>
+                    <p>{item.detail}</p>
+                    {item.url ? <a href={lessonUrl(item.url)} target="_blank" rel="noreferrer">Open in Falowen</a> : null}
+                  </article>
+                ))}
+              </div>
+            </section>
           ) : stage.type === "workbook" ? (
             <>
               <h1>{stage.title}</h1>
