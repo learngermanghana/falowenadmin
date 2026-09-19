@@ -466,3 +466,108 @@
   max-width: 850px;
   line-height: 1.45;
 }
+
+
+/* student/admin curriculum parity */
+.presenter-student-reference {
+  margin-top: 1rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  background: #f0fdf4;
+  padding: 0.85rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem 1rem;
+  align-items: start;
+}
+
+.presenter-student-reference > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.presenter-student-reference span {
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #166534;
+}
+
+.presenter-student-reference-status {
+  display: grid;
+  gap: 0.12rem;
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+.presenter-student-reference-status small {
+  color: #64748b;
+}
+
+.presenter-student-reference p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.presenter-student-reference.is-known-exception,
+.presenter-student-reference.is-mismatch {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.presenter-student-reference.is-known-exception span,
+.presenter-student-reference.is-mismatch span {
+  color: #92400e;
+}
+
+.presenter-coursebook-bridge {
+  width: min(100%, 1180px);
+  display: grid;
+  gap: 1rem;
+}
+
+.presenter-coursebook-bridge-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.presenter-coursebook-bridge-heading > span {
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-coursebook-bridge-heading h1,
+.presenter-coursebook-bridge-heading p {
+  margin: 0;
+}
+
+.presenter-coursebook-bridge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 0.8rem;
+}
+
+.presenter-coursebook-bridge-grid article {
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.presenter-coursebook-bridge-grid article p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.presenter-coursebook-bridge-grid article a {
+  width: fit-content;
+  font-weight: 850;
+}

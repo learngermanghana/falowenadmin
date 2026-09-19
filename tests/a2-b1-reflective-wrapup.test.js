@@ -20,7 +20,7 @@ for (const level of ["A2", "B1"]) {
       assert.equal(ids.includes("b1-guided-action"), false, `${slide.assignmentId} still has repeated B1 guided-action stage`);
       assert.equal(ids.includes("b1-role-play"), false, `${slide.assignmentId} still has repeated B1 role-play stage`);
 
-      assert.deepEqual(ids.slice(-2), ["learning-reflection", "learning-exit-ticket"], `${slide.assignmentId} final two stages`);
+      assert.deepEqual(ids.slice(-3), ["learning-reflection", "learning-exit-ticket", "coursebook-bridge"], `${slide.assignmentId} final reflection, exit ticket and Course Book bridge`);
 
       const reflection = stages.find((stage) => stage.id === "learning-reflection");
       assert.equal(reflection.title, "Was hast du heute gelernt?");
