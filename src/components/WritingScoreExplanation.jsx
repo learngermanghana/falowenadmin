@@ -4,11 +4,17 @@ export default function WritingScoreExplanation({ result = null }) {
   const evidence = Array.isArray(result.taskPointEvidence) ? result.taskPointEvidence : [];
   const dimensions = result.writingDimensions && typeof result.writingDimensions === "object" ? result.writingDimensions : null;
   const contradictions = Array.isArray(result.ai?.markingContradictions) ? result.ai.markingContradictions : [];
+  const reviewReasons = Array.isArray(result.reviewReasons) && result.reviewReasons.length
+    ? result.reviewReasons
+    : contradictions.map((message) => ({ code: "marking_contradiction", message, source: "question_aware_writing" }));
+  const corrections = (Array.isArray(result.corrections) ? result.corrections : [])
+    .filter((item) => !item?.partId || String(item.partId).toLowerCase() === "teil2")
+    .slice(0, 3);
   const task = result.ai?.questionAwareWritingTask || null;
   const completion = result.taskCompletion || null;
   const rubricVersion = result.markingRubricVersion || task?.rubricVersion || "";
 
-  if (!evidence.length && !dimensions && !contradictions.length && !rubricVersion) return null;
+  if (!evidence.length && !dimensions && !reviewReasons.length && !corrections.length && !rubricVersion) return null;
 
   const badge = (status) => {
     if (status === "met") return { label: "Met", background: "#f0fdf4", border: "#bbf7d0", color: "#166534" };
@@ -73,10 +79,32 @@ export default function WritingScoreExplanation({ result = null }) {
         </div>
       ) : null}
 
-      {contradictions.length ? (
+      {corrections.length ? (
+        <div style={{ border: "1px solid #dbeafe", background: "#f8fbff", borderRadius: 6, padding: 8, display: "grid", gap: 5, fontSize: 12 }}>
+          <strong>Writing corrections</strong>
+          {corrections.map((correction, index) => {
+            if (typeof correction === "string") return <div key={correction + index}>{correction}</div>;
+            const from = String(correction?.from || "").trim();
+            const to = String(correction?.to || "").trim();
+            const reason = String(correction?.reason || "").trim();
+            return (
+              <div key={`${from}|${to}|${index}`}>
+                {from && to ? <>“{from}” → <b>“{to}”</b></> : (to || from || reason)}
+                {reason && from && to ? <span style={{ color: "#64748b" }}> · {reason}</span> : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {reviewReasons.length ? (
         <div style={{ border: "1px solid #fecaca", background: "#fff7f7", borderRadius: 6, padding: 8, display: "grid", gap: 4, fontSize: 12 }}>
-          <strong>Needs tutor review</strong>
-          {contradictions.map((issue) => <div key={issue}>{issue}</div>)}
+          <strong>Review reasons</strong>
+          {reviewReasons.map((reason, index) => {
+            const message = typeof reason === "string" ? reason : reason?.message || reason?.reason || "";
+            const code = typeof reason === "object" ? reason?.code : "";
+            return <div key={`${code}|${message}|${index}`}>{code ? <code>{code}</code> : null}{code && message ? " · " : ""}{message}</div>;
+          })}
         </div>
       ) : null}
     </section>
