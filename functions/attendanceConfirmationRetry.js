@@ -176,6 +176,58 @@ async function markRefs(refs, patch) {
   await Promise.all(refs.map((ref) => ref.set(patch, { merge: true })));
 }
 
+function serializedTimestamp(value) {
+  const date = asDate(value);
+  return date ? date.toISOString() : "";
+}
+
+function deliveryHealthRecord(docSnap) {
+  const data = docSnap.data() || {};
+  return {
+    id: docSnap.id,
+    classId: normalize(data.classId),
+    className: normalize(data.className),
+    studentKey: normalize(data.studentKey),
+    studentName: normalize(data.studentName),
+    studentEmail: normalize(data.studentEmail),
+    mode: normalize(data.mode),
+    periodKey: normalize(data.periodKey),
+    status: normalize(data.status).toLowerCase() || "unknown",
+    attemptCount: Number(data.attemptCount || 0),
+    lastError: normalize(data.lastError),
+    dueAt: serializedTimestamp(data.dueAt),
+    createdAt: serializedTimestamp(data.createdAt),
+    processingStartedAt: serializedTimestamp(data.processingStartedAt),
+    sentAt: serializedTimestamp(data.sentAt),
+    failedAt: serializedTimestamp(data.failedAt),
+    retryStartedAt: serializedTimestamp(data.retryStartedAt),
+    retrySentAt: serializedTimestamp(data.retrySentAt),
+    retryFailedAt: serializedTimestamp(data.retryFailedAt),
+    updatedAt: serializedTimestamp(data.updatedAt),
+    upstreamCount: Number(data.upstreamCount || 0),
+  };
+}
+
+async function listAttendanceDeliveryHealth({ db, classId, limit = 100 }) {
+  const id = normalize(classId);
+  if (!id) throw new Error("Select a class before loading attendance delivery health.");
+
+  const classSnap = await db.collection("classes").doc(id).get();
+  if (!classSnap.exists) throw new Error("The selected Live Class record was not found.");
+
+  const deliverySnap = await db.collection("attendanceEmailDeliveries").where("classId", "==", id).get();
+  const records = deliverySnap.docs
+    .map(deliveryHealthRecord)
+    .sort((left, right) => {
+      const leftTime = asDate(left.updatedAt || left.sentAt || left.failedAt || left.processingStartedAt || left.createdAt)?.getTime() || 0;
+      const rightTime = asDate(right.updatedAt || right.sentAt || right.failedAt || right.processingStartedAt || right.createdAt)?.getTime() || 0;
+      return rightTime - leftTime;
+    })
+    .slice(0, Math.max(1, Math.min(Number(limit) || 100, 500)));
+
+  return { classId: id, records };
+}
+
 async function retryFailedAttendanceDeliveries({
   admin,
   db,
@@ -274,10 +326,12 @@ async function retryFailedAttendanceDeliveries({
 
 module.exports = {
   retryFailedAttendanceDeliveries,
+  listAttendanceDeliveryHealth,
   _test: {
     resolveClassWebhookConfig,
     resolveWebhookConfig,
     rowForRetry,
     retrySafeCombinedMessage,
+    deliveryHealthRecord,
   },
 };
