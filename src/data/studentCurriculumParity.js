@@ -174,6 +174,8 @@ export const STUDENT_CURRICULUM_SOURCE_SHA = "bafaffbb5fee47a0b9b4effa040dc69cf0
 export const APPROVED_TITLE_ALIASES = Object.freeze({
   "A2-DAY-20": ["Typische Reklamationssituationen"],
   "A2-DAY-23": ["Wie kommst du zur Schule oder zur Arbeit?"],
+  "B1-DAY-01": ["Traumwelten"],
+  "B1-DAY-20": ["Wie wird man"],
 });
 
 
