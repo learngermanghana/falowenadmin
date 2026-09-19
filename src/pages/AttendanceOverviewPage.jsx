@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
+import AttendanceCommunicationHealthPanel from "../components/AttendanceCommunicationHealthPanel.jsx";
 import { listClassCohorts } from "../services/liveClassService.js";
 import {
   ATTENDANCE_EMAIL_MODES,
@@ -321,6 +322,11 @@ export default function AttendanceOverviewPage() {
                 {emailSettingsError ? <div style={{ marginTop: 8, color: "#991b1b" }}>{emailSettingsError}</div> : null}
                 {emailSettings?.lastError ? <div style={{ marginTop: 8, color: "#991b1b" }}>Delivery job error: {emailSettings.lastError}</div> : null}
               </div>
+
+              <AttendanceCommunicationHealthPanel
+                classId={classRecordKey(selectedTrackerClass)}
+                className={selectedTrackerClass.name || selectedTrackerClass.className || selectedTrackerId}
+              />
 
               <ClassAttendanceTracker
                 classId={classRecordKey(selectedTrackerClass)}
