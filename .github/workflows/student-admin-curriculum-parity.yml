@@ -1,0 +1,34 @@
+name: Student Admin curriculum parity
+
+on:
+  pull_request:
+    paths:
+      - "src/data/**"
+      - "src/utils/teachingPresenter.js"
+      - "src/components/TeachingSlidePresenter.*"
+      - "scripts/auditStudentAdminCurriculumParity.mjs"
+      - "tests/student-admin-curriculum-parity.test.js"
+  push:
+    branches: [main]
+    paths:
+      - "src/data/**"
+      - "src/utils/teachingPresenter.js"
+      - "src/components/TeachingSlidePresenter.*"
+      - "scripts/auditStudentAdminCurriculumParity.mjs"
+      - "tests/student-admin-curriculum-parity.test.js"
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run curriculum parity contract tests
+        run: node --test tests/student-admin-curriculum-parity.test.js
+      - name: Check learner-source drift and strict parity
+        run: node scripts/auditStudentAdminCurriculumParity.mjs
