@@ -456,3 +456,66 @@ test("canonical A2 spec overrides stale registry metadata beyond Day 1", () => {
   assert.equal(task.taskPoints.length, 3);
   assert.match(task.taskText, /defective|unacceptable product/i);
 });
+
+
+const vickyA2Day2 = `Teil 2
+Lieber Felix
+
+Wie geht es dir? Ich hoffe es geht dir gut. Ich schreibe dir, weil ich meine Chefin beschreiben möchte. Meine Chefin heißt Frau Stückman. Sie ist 55 Jahre alt. Sie ist klein und hellhäutig. Sie hat kurze schwarze Haare. Sie ist fleißig und freundlich. Sie trägt ein blaues Kleid. Ich finde sie motivierend, weil sie sehr hart arbeitet. Wie ist dein Chef ?
+Viele Grüße
+Vicky
+
+Teil 3
+1. B
+2. B
+3. C
+4. B
+5. B
+6. A
+7. B
+
+Teil 4
+1. B
+2. C
+3. A
+4. A
+5. A`;
+
+test("A2-1.2 recovers a zero writing score without retaining a stale zero contradiction", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.2", level: "A2" },
+    submission: { assignmentKey: "A2-1.2", level: "A2" },
+    submissionText: vickyA2Day2,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.2",
+    objectiveScore: 75,
+    objectiveCorrect: 9,
+    objectiveTotal: 12,
+    writingScore: 0,
+    writingScorePercent: 0,
+    finalScore: 45,
+    score: 45,
+    taskCompletion: { completed: 4, total: 4, missing: [] },
+    missingTaskPoints: [],
+    corrections: [],
+    feedback: "Strong work. You addressed all four task points.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, vickyA2Day2);
+
+  assert.ok(result.writingScore > 0);
+  assert.equal(result.taskCompletion.completed, 4);
+  assert.equal(result.taskCompletion.total, 4);
+  assert.equal(result.taskPointEvidence[3].status, "met");
+  assert.equal(result.taskPointEvidence[3].evidence, "Wie ist dein Chef ?");
+  assert.equal(result.status, "marked");
+  assert.equal((result.ai?.markingContradictions || []).some((item) => /Writing score is 0/i.test(item)), false);
+  assert.equal((result.reviewReasons || []).some((item) => item.code === "writing_zero_with_completed_task"), false);
+  assert.equal(result.writingDimensions.languageControl, null);
+  assert.equal(result.writingDimensions.coherence, null);
+  assert.ok(result.corrections.some((item) => item.from === "Ich hoffe es geht dir gut." && item.to === "Ich hoffe, es geht dir gut."));
+  assert.ok(result.corrections.some((item) => /Wie ist dein Chef\s+\?/.test(item.from) && item.to === "Wie ist dein Chef?"));
+});
