@@ -3,9 +3,9 @@ export const C2_TOPIC_FOUNDATIONS = Object.freeze({
     "day": 1,
     "chapter": "1.1",
     "core": "Wie können Produkte und Rohstoffe länger genutzt und Abfälle reduziert werden, ohne Bezahlbarkeit und wirtschaftliche Interessen völlig zu ignorieren?",
-    "en": "In a circular economy, products and materials stay in use for as long as possible through durable design, repair, reuse and refurbishment. A throwaway society follows a linear pattern: take resources, make, use briefly and discard.",
-    "de": "Kreislaufwirtschaft hält Produkte und Rohstoffe möglichst lange im Umlauf: langlebig produzieren, nutzen, reparieren, wiederverwenden oder aufbereiten und erst am Ende recyceln. Eine Wegwerfgesellschaft funktioniert eher linear.",
-    "example": "Smartphone: Statt ein Gerät bei einem defekten Akku sofort zu ersetzen, wird der Akku ausgetauscht, das Gerät weitergenutzt oder aufbereitet und erst am Ende recycelt.",
+    "en": "A circular economy keeps products and materials in use for as long as possible. In other words, products and materials stay in use through durable design, repair, reuse and refurbishment. A throwaway society follows a linear pattern: take resources, make, use briefly and discard.",
+    "de": "Kreislaufwirtschaft bedeutet, Produkte und Rohstoffe möglichst lange im Umlauf zu halten: langlebig produzieren, nutzen, reparieren, wiederverwenden oder aufbereiten und erst am Ende recyceln. Eine Wegwerfgesellschaft funktioniert linear: Wegwerfgesellschaft: Rohstoffe → Produktion → Kaufen → kurz nutzen → Wegwerfen.",
+    "example": "Smartphone-Beispiel: Statt ein Gerät bei einem defekten Akku sofort zu ersetzen, wird der Akku ausgetauscht, das Gerät weitergenutzt oder aufbereitet und erst am Ende recycelt.",
     "tension": "niedriger Preis und Bequemlichkeit ↔ Langlebigkeit und Ressourcenschonung"
   },
   "2": {
