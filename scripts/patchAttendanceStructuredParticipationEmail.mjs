@@ -83,7 +83,14 @@ function structuredAttendancePayload({ records = [], participation = null, parti
 }
 
 function rendererSafeCombinedMessage(message = "") {
+  // The legacy Announcement Apps Script decides to use the attendance-only
+  // renderer when it sees the exact phrases "attendance summary" or
+  // "attendance report" anywhere in the topic/body. That renderer discards the
+  // participation paragraph. Combined rows already declare email_type=general,
+  // so remove only those legacy trigger phrases while keeping the meaning.
   return normalize(message)
+    .replace(/attendance summary/gi, "attendance and participation summary")
+    .replace(/attendance report/gi, "attendance and participation report")
     .replace(/\. Present:/, ".\\n\\nAttendance\\nPresent:")
     .replace(/\. Attendance rate:/, ".\\nAttendance rate:")
     .replace(/\. Lessons:/, ".\\n\\nLesson record\\n")
@@ -169,6 +176,9 @@ const rowCallReplacement = `      const deliveryPayload = structuredAttendancePa
         periodKey: group.periodKey,
         timezone,
       });
+      // Keep the exact structured payload on the delivery record so a retry
+      // cannot fall back to an attendance-only row.
+      await ref.set({ deliveryPayload }, { merge: true });
       rows.push(rowForDelivery({
         klass,
         student,
