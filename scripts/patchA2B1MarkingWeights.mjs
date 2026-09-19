@@ -207,7 +207,7 @@ router = replaceOnce(
 fs.writeFileSync(routerPath, router);
 
 for (const [path, required] of [
-  [markingPagePath, ["calculateWeightedMarkingOutcome", "writingMinimumMet", "calculateFinalScore(objectiveScorePercent, schreibenMark, {"]],
+  [markingPagePath, ["calculateWeightedMarkingOutcome", "writingMinimumMet", "calculateFinalScore(objectiveScorePercent, schreibenMark, scoringOptions)"]],
   [autoMarkingPath, ["aggregatePartResults(parts = [], level", "passed: aggregate.passed", "objectiveDetails: aggregate.objectiveDetails"]],
   [deterministicPath, ["calculateWeightedMarkingOutcome", "writingMinimumMet: weightedOutcome.writingMinimumMet"]],
   [servicePath, ["deterministicPartWeights", "Teil 2 · Schreiben", "weightedOutcome.passed"]],
