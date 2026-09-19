@@ -88,8 +88,8 @@ update("src/utils/teachingPresenter.js", (source) => {
   );
 
   if (!next.includes('slide.grammarTeachDe')) {
-    const advancedGrammarAnchor = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { if (normalizedAssignmentId(slide) === "B2-1.1")';
-    const advancedGrammarReplacement = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.grammarTeachDe) && slide.grammarTeachDe.length) return slide.grammarTeachDe; if (normalizedAssignmentId(slide) === "B2-1.1")';
+    const advancedGrammarAnchor = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { const source = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];';
+    const advancedGrammarReplacement = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.grammarTeachDe) && slide.grammarTeachDe.length) return slide.grammarTeachDe; const source = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];';
     if (!next.includes(advancedGrammarAnchor)) throw new Error("C2 lesson-specific grammar anchor missing");
     next = next.replace(advancedGrammarAnchor, advancedGrammarReplacement);
   }
@@ -102,8 +102,8 @@ update("src/utils/teachingPresenter.js", (source) => {
   }
 
   if (!next.includes('classroomLevel(slide) === "C2"') || !next.includes("C2-Aussagen präzise abstufen")) {
-    const mistakesAnchor = 'function buildAdvancedMistakes(slide = {}) { if (normalizedAssignmentId(slide) === "B2-1.1")';
-    const mistakesReplacement = 'function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.commonMistakesDe) && slide.commonMistakesDe.length) return slide.commonMistakesDe; if (classroomLevel(slide) === "C2") return ["C2-Aussagen präzise abstufen: keine absolute Behauptung, wenn die Evidenz nur eine Tendenz trägt.", "Prämisse, Beleg und Schlussfolgerung nicht vermischen; benenne ausdrücklich, was belegt und was daraus gefolgert wird.", "Die stärkste Gegenposition formulieren und darauf reagieren, statt ein leichtes Gegenargument zu konstruieren.", "Komplexe Syntax nur einsetzen, wenn Bezüge und Satzrhythmus eindeutig bleiben.", "Nominalstil und Funktionsverbgefüge gezielt einsetzen; Verständlichkeit bleibt wichtiger als Dichte."]; if (normalizedAssignmentId(slide) === "B2-1.1")';
+    const mistakesAnchor = 'function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C1")';
+    const mistakesReplacement = 'function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.commonMistakesDe) && slide.commonMistakesDe.length) return slide.commonMistakesDe; if (classroomLevel(slide) === "C2") return ["C2-Aussagen präzise abstufen: keine absolute Behauptung, wenn die Evidenz nur eine Tendenz trägt.", "Prämisse, Beleg und Schlussfolgerung nicht vermischen; benenne ausdrücklich, was belegt und was daraus gefolgert wird.", "Die stärkste Gegenposition formulieren und darauf reagieren, statt ein leichtes Gegenargument zu konstruieren.", "Komplexe Syntax nur einsetzen, wenn Bezüge und Satzrhythmus eindeutig bleiben.", "Nominalstil und Funktionsverbgefüge gezielt einsetzen; Verständlichkeit bleibt wichtiger als Dichte."]; if (classroomLevel(slide) === "C1")';
     if (!next.includes(mistakesAnchor)) throw new Error("C2 mistakes anchor missing");
     next = next.replace(mistakesAnchor, mistakesReplacement);
   }
