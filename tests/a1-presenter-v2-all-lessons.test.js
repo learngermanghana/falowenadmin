@@ -91,6 +91,36 @@ test("A1 workbook-aligned Day 1-10 lessons retain their real workbook bridge", (
   }
 });
 
+test("A1-11 has a dedicated directions-first imperative slide on canonical Day 17", () => {
+  const slides = getSlidesByCourse("A1");
+  const slide = slides.find((entry) => entry.assignmentId === "A1-11");
+
+  assert.ok(slide, "A1-11 slide missing");
+  assert.equal(slide.id, "a1-11-directions-imperative");
+  assert.equal(slide.dayNumber, 17);
+  assert.equal(slide.day, "Day 17");
+  assert.match(slide.title, /Anweisungen und Wegbeschreibung/);
+  assert.match(slide.topic, /Imperativ mit Sie/);
+
+  const content = JSON.stringify(buildTeachingPresenterStages(slide, slide.topic));
+  const normalizedContent = content.toLocaleLowerCase("de-DE");
+  const requiredPhrases = [
+    "wie komme ich zum bahnhof",
+    "wie komme ich zur nächsten apotheke",
+    "gehen sie bitte geradeaus",
+    "biegen sie links ab",
+    "biegen sie rechts ab",
+    "überqueren sie die straße",
+    "auf der linken seite",
+  ];
+  for (const phrase of requiredPhrases) {
+    assert.ok(normalizedContent.includes(phrase), `A1-11 missing: ${phrase}`);
+  }
+
+  assert.doesNotMatch(content, /Trink mehr Wasser/i);
+  assert.doesNotMatch(content, /Öffnet eure Bücher/i);
+  assert.doesNotMatch(content, /Komm bitte herein/i);
+});
 test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
   const slides = getSlidesByCourse("A1");
   const slide = slides.find((entry) => entry.assignmentId === "A1-5.10");

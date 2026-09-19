@@ -20,7 +20,7 @@ export const courseDictionary = {
     "A1-4.7": { assignment_id: "A1-4.7", chapter: "4.7", de: "Aufbau der Goethe-A1-Sprechprüfung", en: "Goethe A1 Speaking Exam Structure" },
     "A1-9": { assignment_id: "A1-9", chapter: "9", de: "Essen und Verneinung", en: "Food and Negation" },
     "A1-10": { assignment_id: "A1-10", chapter: "10", de: "Essen und Alltag", en: "Food and Daily Life" },
-    "A1-11": { assignment_id: "A1-11", chapter: "11", de: "Anweisungen und der deutsche Imperativ", en: "Instructions and the German Imperative" },
+    "A1-11": { assignment_id: "A1-11", chapter: "11", de: "Anweisungen und Wegbeschreibung – Imperativ mit Sie", en: "Instructions and Directions – Polite Sie Imperative" },
     "A1-12.1": { assignment_id: "A1-12.1", chapter: "12.1", de: "Zwei-Wege-Präpositionen", en: "Two-way Prepositions" },
     "A1-12.2": { assignment_id: "A1-12.2", chapter: "12.2", de: "Berufe und Präpositionen", en: "Professions and Prepositions" },
     "A1-5.9": { assignment_id: "A1-5.9", chapter: "5.9", de: "Goethe A1 Sprechen Training", en: "Goethe A1 Speaking Practice" },

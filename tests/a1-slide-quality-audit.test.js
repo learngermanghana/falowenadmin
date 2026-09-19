@@ -37,7 +37,7 @@ const TOPIC_SIGNALS = {
   "A1-4.7": ["goethe", "sprechen", "teil"],
   "A1-9": ["kein", "nicht", "essen"],
   "A1-10": ["alltag", "frühstück", "gern"],
-  "A1-11": ["imperativ", "bitte", "sie"],
+  "A1-11": ["imperativ", "geradeaus", "abbiegen"],
   "A1-12.1": ["wohin", "dativ", "akkusativ"],
   "A1-12.2": ["beruf", "als", "bei"],
   "A1-5.9": ["sprechen", "frage", "bitte"],

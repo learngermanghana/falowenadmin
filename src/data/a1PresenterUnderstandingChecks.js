@@ -109,6 +109,55 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
       "Use this as the final practical check: the learner must produce both the request and the reaction.",
     ),
   ],
+  "A1-11": [
+    check(
+      "Du suchst den Bahnhof. Wie fragst du höflich nach dem Weg?",
+      "Zum Beispiel: Entschuldigung, wo ist der Bahnhof? / Entschuldigung, wie komme ich zum Bahnhof?",
+    ),
+    check(
+      "Du suchst eine Apotheke. Formuliere eine Frage mit „Wie komme ich ...?“",
+      "Wie komme ich zur nächsten Apotheke?",
+    ),
+    check(
+      "Mach aus „geradeaus gehen“ eine höfliche Anweisung mit Sie.",
+      "Gehen Sie bitte geradeaus.",
+    ),
+    check(
+      "Mach aus „rechts abbiegen“ eine höfliche Anweisung mit Sie.",
+      "Biegen Sie rechts ab.",
+    ),
+    check(
+      "Was ist richtig als Anweisung: „Sie gehen geradeaus“ oder „Gehen Sie geradeaus“? Warum?",
+      "Gehen Sie geradeaus. Beim höflichen Sie-Imperativ steht das Verb zuerst.",
+    ),
+    check(
+      "Warum steht „ab“ am Ende von „Biegen Sie rechts ab“?",
+      "abbiegen ist trennbar. Im Imperativ steht der Verbstamm vorne und ab am Satzende.",
+    ),
+    check(
+      "Gib zwei Anweisungen: zuerst geradeaus, dann links.",
+      "Zum Beispiel: Gehen Sie geradeaus. Biegen Sie dann links ab.",
+    ),
+    check(
+      "Beschreibe, wo die Bäckerei ist: linke Seite + neben dem Supermarkt.",
+      "Die Bäckerei ist auf der linken Seite, direkt neben dem Supermarkt.",
+    ),
+    check(
+      "Dein Partner steht an der Kreuzung. Gib ihm drei kurze Anweisungen.",
+      "Zum Beispiel: Gehen Sie geradeaus. Überqueren Sie die Straße. Biegen Sie dann rechts ab.",
+      "Accept another coherent three-step A1 route using the target direction language.",
+    ),
+    check(
+      "Frage nach dem Bahnhof und antworte danach mit einer kurzen Wegbeschreibung.",
+      "Zum Beispiel: Entschuldigung, wie komme ich zum Bahnhof? – Gehen Sie geradeaus und biegen Sie an der Kreuzung links ab. Der Bahnhof ist auf der rechten Seite.",
+      "The learner should produce both sides of the directions interaction.",
+    ),
+    check(
+      "Exit-Check: Gib eine komplette Mini-Route mit drei Schritten und nenne am Ende, wo das Ziel ist.",
+      "Zum Beispiel: Gehen Sie geradeaus. Biegen Sie links ab. Überqueren Sie die Straße. Die Apotheke ist auf der rechten Seite.",
+      "Use this as the final practical check; the learner should give a coherent route without reading the model phrases.",
+    ),
+  ],
   "A1-13": [
     check("Why is es often used in German weather sentences?", "German commonly uses the impersonal subject es for weather expressions, for example: Es regnet."),
     check("What is the difference between ‘Es ist kalt’ and ‘Es regnet’?", "Es ist kalt uses sein + an adjective; Es regnet uses a weather verb."),

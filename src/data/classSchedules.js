@@ -17,7 +17,7 @@ export const classSchedules = {
     { week: 'Week Six', day: 'Day 14', date: 'Wednesday, 11 March 2026', assignmentId: 'A1-3.6', topic: '3.6. Modal Verbs' },
     { week: 'Week Six', day: 'Day 15', date: 'Monday, 16 March 2026', assignmentId: 'A1-4.7', topic: '4.7. Imperatives' },
     { week: 'Week Six', day: 'Day 16', date: 'Tuesday, 17 March 2026', assignmentId: 'A1-9_10', topic: 'Chapter 9 and 10 - Lesen & Hören' },
-    { week: 'Week Seven', day: 'Day 17', date: 'Wednesday, 18 March 2026', assignmentId: 'A1-11', topic: '11. Instructions and Directions' },
+    { week: 'Week Seven', day: 'Day 17', date: 'Wednesday, 18 March 2026', assignmentId: 'A1-11', topic: '11. Instructions and Directions – Polite Sie Imperative' },
     { week: 'Week Seven', day: 'Day 18', date: 'Monday, 23 March 2026', assignmentId: 'A1-12.1', topic: '12.1. Two-way Prepositions' },
     { week: 'Week Seven', day: 'Day 19', date: 'Tuesday, 24 March 2026', assignmentId: 'A1-5.9', topic: '5.9. Goethe A1 Speaking Practice' },
     { week: 'Week Eight', day: 'Day 20', date: 'Wednesday, 25 March 2026', assignmentId: 'A1-6.10', topic: 'Chapter 6.10 - Schreiben & Sprechen (Intro to letter writing)' },
