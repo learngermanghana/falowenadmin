@@ -4,6 +4,7 @@ import {
   AI_FEEDBACK_INSTRUCTION,
   AI_FEEDBACK_MAX_WORDS,
   AI_FEEDBACK_MIN_WORDS,
+  dedupeRepeatedFeedback,
   limitFeedbackWords,
 } from "../src/utils/feedbackPolicy.js";
 
@@ -32,4 +33,11 @@ test("feedback normalization removes bold markers and caps feedback at 120 words
   assert.equal(words.length, AI_FEEDBACK_MAX_WORDS);
   assert.doesNotMatch(normalized, /\*\*/);
   assert.equal(words.at(-1), "word119");
+});
+
+
+test("feedback normalization collapses an exactly repeated tutor paragraph", () => {
+  const paragraph = "Strong work, Vicky. Teil 3 is excellent. Review Teil 4 questions 3, 4, and 5. You addressed all four writing points. Next time, vary your connectors with außerdem or aber.";
+  assert.equal(dedupeRepeatedFeedback(`${paragraph} ${paragraph}`), paragraph);
+  assert.equal(dedupeRepeatedFeedback(`${paragraph}\n\n${paragraph}`), paragraph);
 });
