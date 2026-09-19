@@ -34,7 +34,13 @@ const retryRouteBlock = `app.post("/attendance-confirmation-emails/retry-failed"
 `;
 const healthRouteBlock = `app.get("/attendance-confirmation-emails/health", async (req, res) => {
   try {
-    await requireAuth(req);
+    const user = await requireAuth(req);
+    const email = String(user?.email || "").trim().toLowerCase();
+    const role = String(user?.role || user?.user_role || "").trim().toLowerCase();
+    const adminAllowed = user?.admin === true || role === "admin" || email === "moxflex@gmail.com";
+    if (!adminAllowed) {
+      return res.status(403).json({ ok: false, error: "Admin access required." });
+    }
     const classId = String(req.query?.classId || "").trim();
     if (!classId) return res.status(400).json({ ok: false, error: "Select a class before loading attendance delivery health." });
     const result = await listAttendanceDeliveryHealth({ db, classId });
@@ -156,6 +162,7 @@ const requiredChecks = [
   [patchedIndex.includes(retryRouteMarker), "Protected failed-attendance retry route is missing after patch."],
   [patchedIndex.includes(healthRouteMarker), "Protected attendance delivery health route is missing after patch."],
   [patchedIndex.includes("listAttendanceDeliveryHealth"), "Attendance delivery health handler is missing after patch."],
+  [patchedIndex.includes('email === "moxflex@gmail.com"') && patchedIndex.includes('Admin access required.'), "Admin-only attendance delivery health guard is missing after patch."],
   [patchedIndex.includes("await requireAuth(req)"), "Failed-attendance retry route is not protected."],
   [patchedWorker.includes("function resolveClassWebhookConfig("), "Class attendance webhook configuration is missing after patch."],
   [patchedWorker.includes("config: classConfig"), "The attendance worker is not using the selected class delivery configuration."],
