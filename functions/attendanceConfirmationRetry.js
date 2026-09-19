@@ -74,27 +74,59 @@ function resolveClassWebhookConfig(klass = {}, fallback = {}) {
   };
 }
 
+function retrySafeCombinedMessage(message = "") {
+  return normalize(message)
+    .replace(/attendance summary/gi, "attendance and participation summary")
+    .replace(/attendance report/gi, "attendance and participation report")
+    .replace(/\. Present:/, ".\n\nAttendance\nPresent:")
+    .replace(/\. Attendance rate:/, ".\nAttendance rate:")
+    .replace(/\. Lessons:/, ".\n\nLesson record\n")
+    .replace(/\. Class participation this week:/, ".\n\nClass participation this week:")
+    .replace(/\. Class participation:/, ".\n\nClass participation:")
+    .replace(/ How attendance works:/, "\n\nHow attendance works:");
+}
+
 function rowForRetry(delivery = {}, klass = {}) {
   const mode = normalize(delivery.mode).toLowerCase();
   const periodKey = normalize(delivery.periodKey);
   const timezone = normalize(klass.timezone) || ACCRA_TIMEZONE;
+  const payload = delivery.deliveryPayload && typeof delivery.deliveryPayload === "object"
+    ? delivery.deliveryPayload
+    : null;
+  const participation = payload?.participation || null;
+  const hasParticipation = Boolean(participation);
+  const subject = mode === "weekly"
+    ? (hasParticipation
+      ? `Weekly Attendance & Participation Summary — ${periodKey}`
+      : `Weekly Attendance Summary — ${periodKey}`)
+    : (hasParticipation ? "Attendance & Participation Confirmed" : "Attendance Confirmed");
+  const detailsUrl = normalize(participation?.detailsUrl);
+
   return {
-    announcement: normalize(delivery.message),
+    announcement: hasParticipation
+      ? retrySafeCombinedMessage(delivery.message)
+      : normalize(delivery.message),
     class: normalize(delivery.className || klass.name || klass.className || klass.classId || klass.id),
     date: isoDateInTimezone(delivery.dueAt || delivery.failedAt || delivery.updatedAt || new Date(), timezone),
-    link: "",
-    topic: mode === "weekly" ? `Weekly Attendance Summary — ${periodKey}` : "Attendance Confirmed",
+    link: detailsUrl,
+    link_label: detailsUrl ? "View class participation" : "",
+    topic: subject,
+    subject,
     email: normalize(delivery.studentEmail),
     attach_certificate: "FALSE",
     cert_level: normalize(klass.levelId || klass.level),
     delivery_mode: "individual",
     allow_bcc_fallback: "FALSE",
-    email_type: "attendance",
+    email_type: hasParticipation ? "general" : "attendance",
     show_progress: "FALSE",
     show_review: "FALSE",
-    show_app_button: "FALSE",
+    show_app_button: hasParticipation ? "TRUE" : "FALSE",
     show_class: "TRUE",
     show_date: "TRUE",
+    attendance_json: payload ? JSON.stringify(payload) : "",
+    participation_json: participation ? JSON.stringify(participation) : "",
+    participation_text: normalize(participation?.text),
+    render_mode: hasParticipation ? "attendance_with_participation" : "attendance",
   };
 }
 
@@ -246,5 +278,6 @@ module.exports = {
     resolveClassWebhookConfig,
     resolveWebhookConfig,
     rowForRetry,
+    retrySafeCombinedMessage,
   },
 };

@@ -121,6 +121,16 @@ test("combined weekly row bypasses the stripping attendance renderer and carries
   assert.equal(JSON.parse(row.attendance_json).participation.correct, 30);
   assert.equal(JSON.parse(row.participation_json).responses, 33);
   assert.match(row.participation_text, /Needs review: 3/);
+  // The bound Announcement Apps Script historically routes any body containing
+  // the exact phrase "attendance summary" through an attendance-only renderer.
+  // Combined rows must avoid that legacy heuristic so participation survives.
+  assert.doesNotMatch(row.announcement, /attendance summary/i);
+  assert.match(row.announcement, /attendance and participation summary/i);
+});
+
+test("combined delivery source stores the structured payload for safe retries", () => {
+  const patch = fs.readFileSync(new URL("../scripts/patchAttendanceStructuredParticipationEmail.mjs", import.meta.url), "utf8");
+  assert.match(patch, /await ref\.set\(\{ deliveryPayload \}, \{ merge: true \}\)/);
 });
 
 test("attendance-only rows keep the dedicated attendance renderer", () => {
