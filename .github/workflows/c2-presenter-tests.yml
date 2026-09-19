@@ -19,8 +19,10 @@ on:
       - "src/data/c2PresenterSlides.js"
       - "src/utils/teachingPresenter.js"
       - "scripts/patchC2CourseStyle.mjs"
+      - "scripts/lib/c2DictionaryPatch.mjs"
       - "scripts/patchB2C1SpeakingModels.mjs"
       - "tests/c2-presenter-v2-all-days.test.js"
+      - "tests/c2-dictionary-patch.test.js"
       - ".github/workflows/c2-presenter-tests.yml"
       - "package.json"
 
