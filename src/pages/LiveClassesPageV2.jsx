@@ -540,7 +540,7 @@ export default function LiveClassesPageV2() {
       </article>
 
       {loading ? <article className="card"><p>Loading selected class…</p></article> : null}
-      {activeTab === "create" ? <CreateClassCard onCreated={handleCreated} onDuplicate={handleDuplicate} /> : null}
+      {activeTab === "create" ? <CreateClassCard classes={classes} onCreated={handleCreated} onDuplicate={handleDuplicate} /> : null}
 
       {!loading && dashboard && activeTab === "overview" ? <article className="card">
         <h2>{dashboard.klass.name || dashboard.klass.className || selectedClassId}</h2>
