@@ -7,6 +7,7 @@ import {
 import { loadAttendanceDeliveryHealth } from "../services/attendanceCommunicationHealthService.js";
 import { retryFailedAttendanceEmails } from "../services/attendanceConfirmationRetryService.js";
 import { useToast } from "../context/ToastContext.jsx";
+import "./AttendanceCommunicationHealthPanel.css";
 
 function normalize(value) {
   return String(value ?? "").trim();
