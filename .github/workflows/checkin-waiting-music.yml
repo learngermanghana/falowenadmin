@@ -7,6 +7,8 @@ on:
       - 'src/data/pianoPlaylist.js'
       - 'src/utils/pianoAudio.js'
       - 'src/pages/CheckinDisplayPage.jsx'
+      - 'src/pages/CheckinDisplayPage.css'
+      - 'src/services/attendanceService.js'
       - 'scripts/patchCheckinWaitingRoomPlaylist.mjs'
       - 'tests/checkin-waiting-music-playlist.test.js'
       - 'package.json'

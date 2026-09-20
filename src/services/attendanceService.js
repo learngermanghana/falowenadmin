@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -204,6 +205,24 @@ export async function listSessionCheckins({ classId, sessionId }) {
 
   const snap = await getDocs(collection(db, "attendance", safeClassId, "sessions", safeSessionId, "checkins"));
   return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+}
+
+export function subscribeSessionCheckins({
+  classId,
+  sessionId,
+  onChange = () => {},
+  onError = () => {},
+} = {}) {
+  const safeClassId = normalizeClassId(classId);
+  const safeSessionId = String(sessionId || "").trim();
+  if (!safeClassId || !safeSessionId) return () => {};
+
+  const ref = collection(db, "attendance", safeClassId, "sessions", safeSessionId, "checkins");
+  return onSnapshot(
+    ref,
+    (snap) => onChange(snap.docs.map((item) => ({ id: item.id, ...item.data() }))),
+    (error) => onError(error),
+  );
 }
 
 function checkinMergeKey(checkin = {}) {

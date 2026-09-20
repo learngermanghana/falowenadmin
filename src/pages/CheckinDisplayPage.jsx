@@ -4,6 +4,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
 import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";
 import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";
+import { subscribeSessionCheckins } from "../services/attendanceService.js";
 import "./CheckinDisplayPage.css";
 
 const ATTENDANCE_UTC_OFFSET_HOURS = 0;
@@ -148,6 +149,18 @@ function scheduleStartChime(context, destination) {
   schedulePianoNote(context, destination, 659.25, startsAt + 0.18, 0.5, 1.25);
 }
 
+function checkinDisplayName(checkin = {}, index = 0) {
+  return String(
+    checkin.name
+    || checkin.studentName
+    || checkin.displayName
+    || checkin.studentCode
+    || checkin.studentId
+    || checkin.id
+    || `Student ${index + 1}`,
+  ).trim();
+}
+
 export default function CheckinDisplayPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
@@ -157,7 +170,6 @@ export default function CheckinDisplayPage() {
   const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
   const startTime = sp.get("startTime") || "";
   const endTime = sp.get("endTime") || "";
-  const expectedStudents = sp.get("expectedStudents") || "";
   const expectedCount = sp.get("expectedCount") || "";
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [musicPlaying, setMusicPlaying] = useState(false);
@@ -168,11 +180,49 @@ export default function CheckinDisplayPage() {
   const musicGainRef = useRef(null);
   const musicTimerRef = useRef(null);
   const musicChordIndexRef = useRef(0);
+  const [checkins, setCheckins] = useState([]);
+  const [attendanceLive, setAttendanceLive] = useState(false);
+  const [attendanceError, setAttendanceError] = useState("");
+  const [showNames, setShowNames] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const classStartStopTimerRef = useRef(null);
+  const autoStoppedMusicRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!classId || !String(sessionId || "").trim()) {
+      setCheckins([]);
+      setAttendanceLive(false);
+      setAttendanceError("");
+      return undefined;
+    }
+
+    setCheckins([]);
+    setAttendanceLive(false);
+    setAttendanceError("");
+
+    return subscribeSessionCheckins({
+      classId,
+      sessionId,
+      onChange: (rows) => {
+        setCheckins(rows);
+        setAttendanceLive(true);
+        setAttendanceError("");
+      },
+      onError: (cause) => {
+        setAttendanceLive(false);
+        setAttendanceError(
+          cause?.code === "permission-denied"
+            ? "Live names are available when this display is opened from a signed-in admin session."
+            : (cause?.message || "Live attendance could not be loaded."),
+        );
+      },
+    });
+  }, [classId, sessionId]);
 
   const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
@@ -206,11 +256,24 @@ export default function CheckinDisplayPage() {
       assignmentId: String(assignmentId || ""),
       startTime: String(startTime || ""),
       endTime: String(endTime || ""),
-      expectedStudents: String(expectedStudents || ""),
       expectedCount: String(expectedCount || ""),
     }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId, startTime, endTime, expectedStudents, expectedCount]);
+  }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId, startTime, endTime, expectedCount]);
+
+  const expectedTotal = useMemo(() => {
+    const parsed = Number.parseInt(String(expectedCount || ""), 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  }, [expectedCount]);
+
+  const checkedInCount = checkins.length;
+  const attendancePercent = expectedTotal
+    ? Math.min(100, Math.round((checkedInCount / expectedTotal) * 100))
+    : 0;
+  const checkedInNames = useMemo(
+    () => checkins.map((row, index) => checkinDisplayName(row, index)).filter(Boolean),
+    [checkins],
+  );
 
   const statusInfo = useMemo(() => {
     const startAt = parseDateTime(dateLabel, startTime);
@@ -237,18 +300,45 @@ export default function CheckinDisplayPage() {
     return {
       kind: "active",
       title: "Class is in progress.",
-      detail: "Please check in now if you haven't submitted yet.",
+      detail: startAt
+        ? `Class started ${formatDuration(nowMs - startAt)} ago. Please check in now if you haven't submitted yet.`
+        : "Please check in now if you haven't submitted yet.",
     };
   }, [dateLabel, nowMs, startTime, endTime]);
 
-  const preClassCountdown = useMemo(() => {
+  const classTiming = useMemo(() => {
     const startAt = parseDateTime(dateLabel, startTime);
-    if (!startAt || nowMs >= startAt) return null;
-    return {
-      remainingLabel: formatDuration(startAt - nowMs),
-      startTimeLabel: formatDisplayTimeLabel(startTime, startAt),
-    };
-  }, [dateLabel, nowMs, startTime]);
+    const endAt = parseDateTime(dateLabel, endTime);
+
+    if (startAt && nowMs < startAt) {
+      return {
+        kind: "before",
+        eyebrow: "Class starts in",
+        value: formatDuration(startAt - nowMs),
+        note: `Starts at ${formatDisplayTimeLabel(startTime, startAt)} ${ATTENDANCE_TIME_ZONE_LABEL}`,
+      };
+    }
+
+    if (startAt && (!endAt || nowMs <= endAt)) {
+      return {
+        kind: "active",
+        eyebrow: "Class started",
+        value: `${formatDuration(nowMs - startAt)} ago`,
+        note: "Check-in remains available for students who have not submitted yet.",
+      };
+    }
+
+    if (endAt && nowMs > endAt) {
+      return {
+        kind: "ended",
+        eyebrow: "Class ended",
+        value: `${formatDuration(nowMs - endAt)} ago`,
+        note: `Ended at ${formatDisplayTimeLabel(endTime, endAt)} ${ATTENDANCE_TIME_ZONE_LABEL}`,
+      };
+    }
+
+    return null;
+  }, [dateLabel, endTime, nowMs, startTime]);
 
   const stopWaitingMusic = useCallback(() => {
     if (musicTimerRef.current) {
@@ -271,6 +361,7 @@ export default function CheckinDisplayPage() {
   const startWaitingMusic = useCallback(async () => {
     if (musicPlaying) return;
     setMusicError("");
+    autoStoppedMusicRef.current = false;
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
@@ -330,10 +421,65 @@ export default function CheckinDisplayPage() {
     masterGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.08);
   }, [musicVolume]);
 
+  useEffect(() => {
+    const context = audioContextRef.current;
+    const masterGain = musicGainRef.current;
+    const startAt = parseDateTime(dateLabel, startTime);
+    if (!musicPlaying || !context || !masterGain || !startAt || context.state === "closed") return;
+
+    const remainingMs = startAt - nowMs;
+    if (remainingMs > 60000) {
+      masterGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.08);
+      return;
+    }
+
+    if (remainingMs > 0) {
+      const fadeFactor = 0.2 + (0.8 * (remainingMs / 60000));
+      masterGain.gain.setTargetAtTime(
+        Math.max(0.05, musicVolume * fadeFactor),
+        context.currentTime,
+        0.35,
+      );
+      return;
+    }
+
+    if (autoStoppedMusicRef.current) return;
+    autoStoppedMusicRef.current = true;
+    scheduleStartChime(context, masterGain);
+    masterGain.gain.setTargetAtTime(Math.max(0.08, musicVolume * 0.45), context.currentTime, 0.08);
+    classStartStopTimerRef.current = window.setTimeout(() => {
+      stopWaitingMusic();
+      classStartStopTimerRef.current = null;
+    }, 1700);
+  }, [dateLabel, musicPlaying, musicVolume, nowMs, startTime, stopWaitingMusic]);
+
+  useEffect(() => () => {
+    if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
+  }, []);
+
   useEffect(() => () => {
     if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
     const context = audioContextRef.current;
     if (context && context.state !== "closed") context.close().catch(() => {});
+  }, []);
+
+  const copyCheckinLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(checkinUrl);
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 1800);
+    } catch {
+      setCopiedLink(false);
+    }
+  }, [checkinUrl]);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch {
+      // Fullscreen can be blocked by browser or device policy; the display still works normally.
+    }
   }, []);
 
   const hasRequiredParams = Boolean(classId && String(sessionId || "").trim());
@@ -341,24 +487,95 @@ export default function CheckinDisplayPage() {
   return (
     <div className="checkin-display-page">
       <div className="checkin-display-card">
-        <h1>Student Self Check-in</h1>
-        <p>Scan the QR code to open the check-in form.</p>
-        <div className="checkin-display-live-clock" role="status" aria-live="polite">
-          Current time: <b>{formatLiveClockLabel(nowMs)}</b> {ATTENDANCE_TIME_ZONE_LABEL}
+        <div className="checkin-display-toolbar">
+          <div className="checkin-display-brand">Falowen Attendance</div>
+          <div className="checkin-display-toolbar-actions">
+            <button type="button" onClick={toggleFullscreen}>Full screen</button>
+            <button type="button" onClick={copyCheckinLink}>{copiedLink ? "Link copied" : "Copy check-in link"}</button>
+            <button type="button" onClick={() => setShowNames((value) => !value)}>
+              {showNames ? "Hide names" : "Show names"}
+            </button>
+          </div>
         </div>
-        {preClassCountdown && (
-          <div className="checkin-display-live-countdown" role="status" aria-live="polite">
-            <div className="checkin-display-live-countdown-title">Class starts in</div>
-            <div className="checkin-display-live-countdown-timer">{preClassCountdown.remainingLabel}</div>
-            <div className="checkin-display-live-countdown-note">
-              Countdown to {preClassCountdown.startTimeLabel} {ATTENDANCE_TIME_ZONE_LABEL}
-            </div>
+
+        <header className="checkin-display-hero">
+          <div>
+            <div className="checkin-display-class-label">{classId || "Class"}</div>
+            <h1>{sessionDisplayLabel || "Student Self Check-in"}</h1>
+            <p>Scan the QR code to record your attendance.</p>
+          </div>
+          <div className="checkin-display-clock">
+            <span>Current time</span>
+            <strong>{formatLiveClockLabel(nowMs)}</strong>
+            <small>{ATTENDANCE_TIME_ZONE_LABEL}</small>
+          </div>
+        </header>
+
+        {classTiming ? (
+          <div className={"checkin-display-timing checkin-display-timing-" + classTiming.kind} role="status" aria-live="polite">
+            <div className="checkin-display-timing-eyebrow">{classTiming.eyebrow}</div>
+            <div className="checkin-display-timing-value">{classTiming.value}</div>
+            <div className="checkin-display-timing-note">{classTiming.note}</div>
+          </div>
+        ) : null}
+
+        {hasRequiredParams ? (
+          <div className="checkin-display-main-grid">
+            <section className="checkin-display-qr-panel">
+              <div className="checkin-display-qr-wrap">
+                <QRCodeCanvas value={checkinUrl} size={320} includeMargin />
+              </div>
+              <div className="checkin-display-scan-copy">Scan to record your attendance</div>
+              <div className="checkin-display-session-mini">
+                <span>{dateLabel || "Today"}</span>
+                <span>{startTime || "--:--"}–{endTime || "--:--"}</span>
+                {assignmentId ? <span>{assignmentId}</span> : null}
+              </div>
+            </section>
+
+            <section className="checkin-display-attendance-panel" aria-live="polite">
+              <div className="checkin-display-attendance-label">Live attendance</div>
+              <div className="checkin-display-attendance-count">
+                {expectedTotal ? checkedInCount + " / " + expectedTotal : checkedInCount}
+              </div>
+              <div className="checkin-display-attendance-copy">
+                {checkedInCount === 1 ? "student checked in" : "students checked in"}
+              </div>
+              {expectedTotal ? (
+                <div className="checkin-display-progress" aria-label={attendancePercent + "% checked in"}>
+                  <span style={{ width: attendancePercent + "%" }} />
+                </div>
+              ) : null}
+              <div className="checkin-display-live-indicator">
+                <span className={attendanceLive ? "is-live" : ""} />
+                {attendanceLive ? "Updating live" : "Waiting for signed-in live data"}
+              </div>
+
+              {showNames ? (
+                <div className="checkin-display-name-list">
+                  <div className="checkin-display-name-title">Checked in</div>
+                  {checkedInNames.length ? checkedInNames.map((name, index) => (
+                    <div className="checkin-display-name-row" key={name + index}>
+                      <span>{name}</span><strong>✓</strong>
+                    </div>
+                  )) : (
+                    <div className="checkin-display-name-empty">
+                      {attendanceLive ? "No student has checked in yet." : "Names are only available to a signed-in admin display."}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="checkin-display-privacy-note">Student names are hidden on the projector by default.</div>
+              )}
+
+              {attendanceError ? <div className="checkin-display-attendance-error">{attendanceError}</div> : null}
+            </section>
+          </div>
+        ) : (
+          <div className="checkin-display-warning">
+            Missing class/session details. Please reopen this display page from the Attendance screen.
           </div>
         )}
-        <div className={`checkin-display-alert checkin-display-alert-${statusInfo.kind}`}>
-          <div className="checkin-display-alert-title">{statusInfo.title}</div>
-          <div>{statusInfo.detail}</div>
-        </div>
 
         <div className={`checkin-display-music ${musicPlaying ? "checkin-display-music-playing" : ""}`}>
           <div className="checkin-display-music-main">
@@ -380,6 +597,7 @@ export default function CheckinDisplayPage() {
               type="button"
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+              disabled={!musicPlaying && (classTiming?.kind === "active" || classTiming?.kind === "ended")}
             >
               {musicPlaying ? "Stop piano" : "Start piano playlist"}
             </button>
@@ -400,29 +618,17 @@ export default function CheckinDisplayPage() {
           {musicError ? <div className="checkin-display-music-error" role="alert">{musicError}</div> : null}
         </div>
 
-        {hasRequiredParams ? (
-          <>
-            <div className="checkin-display-content">
-              <div className="checkin-display-qr-wrap">
-                <QRCodeCanvas value={checkinUrl} size={240} includeMargin />
-              </div>
-              <div className="checkin-display-meta checkin-display-read-first">
-                <div className="checkin-display-read-first-title">Read before check-in</div>
-                <span><b>Class:</b> {classId}</span>
-                <span><b>Date:</b> {dateLabel || "-"}</span>
-                <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>
-                <span><b>Assignment:</b> {assignmentId || "-"}</span>
-                <span><b>Class time:</b> {startTime || "--:--"} to {endTime || "--:--"} {ATTENDANCE_TIME_ZONE_LABEL}</span>
-                <span><b>Expected students:</b> {expectedCount || "-"}</span>
-              </div>
-            </div>
-            <div className="checkin-display-link">{checkinUrl}</div>
-          </>
-        ) : (
-          <div className="checkin-display-warning">
-            Missing class/session details. Please reopen this display page from the Attendance screen.
-          </div>
-        )}
+        <div className={"checkin-display-alert checkin-display-alert-" + statusInfo.kind}>
+          <div className="checkin-display-alert-title">{statusInfo.title}</div>
+          <div>{statusInfo.detail}</div>
+        </div>
+
+        <div className="checkin-display-footer">
+          <span><b>Class:</b> {classId || "-"}</span>
+          <span><b>Date:</b> {dateLabel || "-"}</span>
+          <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>
+          <span><b>Expected:</b> {expectedTotal || "-"}</span>
+        </div>
       </div>
     </div>
   );
