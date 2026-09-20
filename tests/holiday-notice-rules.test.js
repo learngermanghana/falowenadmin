@@ -162,3 +162,17 @@ test("legacy sent summary does not claim historical recipients were delivered", 
   assert.match(holidayPage, /Sent · \$\{count\} recipient/);
   assert.match(holidayPage, /typeof holiday\.noticeAttemptedCount === "number"/);
 });
+
+
+test("holiday class schedule targeting is source-owned for preview and send", () => {
+  const functionsIndex = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
+  const patchScript = fs.readFileSync(path.join(root, "scripts/patchHolidayClassScheduleAwareness.mjs"), "utf8");
+  const holidayPage = fs.readFileSync(path.join(root, "src/pages/HolidayCalendarPage.jsx"), "utf8");
+
+  assert.match(functionsIndex, /async function buildHolidayNoticeTargets\(\{ date, noticeConfig \}\)/);
+  assert.match(functionsIndex, /previewHolidayNoticeForDoc[\s\S]*buildHolidayNoticeTargets/);
+  assert.match(functionsIndex, /sendHolidayNoticeForDoc[\s\S]*buildHolidayNoticeTargets/);
+  assert.doesNotMatch(patchScript, /replaceAll\("const result = await sendHolidayNoticeForDoc/);
+  assert.match(patchScript, /source-owned for both preview and send/);
+  assert.match(holidayPage, /Students affected on this holiday date/);
+});
