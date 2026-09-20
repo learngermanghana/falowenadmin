@@ -1,3 +1,5 @@
+const HOLIDAY_NOTICE_PROTOCOL_VERSION = "holiday-notice-v3";
+
 const VALID_NOTICE_STATUSES = new Set([
   "not_scheduled",
   "scheduled",
@@ -27,6 +29,13 @@ function resolveHolidayNoticeUpdate({ existing = {}, schoolClosed, autoSendNotic
     autoSendNotice: effectiveAutoSendNotice,
     noticeStatus,
   };
+}
+
+function buildHolidayNoticeSubject({ schoolClosed, holidayName, date } = {}) {
+  const prefix = schoolClosed ? "No class notice" : "Holiday update";
+  const name = String(holidayName || "Holiday").trim() || "Holiday";
+  const holidayDate = String(date || "").trim();
+  return holidayDate ? `${prefix}: ${name} (${holidayDate})` : `${prefix}: ${name}`;
 }
 
 function resolveHolidaySendOutcome({ sent = 0, failed = 0, skipped = 0, recipientCount } = {}) {
@@ -62,7 +71,9 @@ function resolveHolidaySendOutcome({ sent = 0, failed = 0, skipped = 0, recipien
 }
 
 module.exports = {
+  HOLIDAY_NOTICE_PROTOCOL_VERSION,
   normalizeNoticeStatus,
   resolveHolidayNoticeUpdate,
+  buildHolidayNoticeSubject,
   resolveHolidaySendOutcome,
 };
