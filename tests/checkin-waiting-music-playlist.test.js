@@ -40,3 +40,29 @@ test("check-in display presents waiting room music and current track", () => {
   assert.doesNotMatch(page, /Extended piano playlist/);
   assert.doesNotMatch(page, /PIANO_BAR_INTERVAL_MS/);
 });
+
+
+test("check-in display is a live classroom attendance screen", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const service = fs.readFileSync(path.join(repoRoot, "src", "services", "attendanceService.js"), "utf8");
+
+  assert.match(page, /subscribeSessionCheckins/);
+  assert.match(page, /checkin-display-attendance-count/);
+  assert.match(page, /QRCodeCanvas value=\{checkinUrl\} size=\{320\}/);
+  assert.match(page, /Student names are hidden on the projector by default/);
+  assert.match(page, /requestFullscreen/);
+  assert.match(page, /Copy check-in link/);
+  assert.doesNotMatch(page, /expectedStudents: String/);
+
+  assert.match(service, /export function subscribeSessionCheckins/);
+  assert.match(service, /onSnapshot\(/);
+});
+
+test("waiting room music fades and stops automatically when class starts", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  assert.match(page, /remainingMs > 60000/);
+  assert.match(page, /fadeFactor/);
+  assert.match(page, /scheduleStartChime\(context, masterGain\)/);
+  assert.match(page, /classStartStopTimerRef/);
+  assert.match(page, /stopWaitingMusic\(\)/);
+});
