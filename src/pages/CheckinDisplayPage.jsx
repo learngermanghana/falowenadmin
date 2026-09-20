@@ -368,6 +368,17 @@ export default function CheckinDisplayPage() {
   }, [assignmentId, classId]);
 
   useEffect(() => {
+    setPresenterTarget((current) => (
+      String(current.sessionKey || "") === String(linkPresenterSessionKey || "")
+        ? current
+        : { classRecordId: "", sessionKey: "" }
+    ));
+    setPresenterLiveState((current) => (
+      String(current.sessionKey || "") === String(linkPresenterSessionKey || "")
+        ? current
+        : {}
+    ));
+
     const today = presenterLocalDateKey();
     if (!classId || !String(sessionId || "").trim() || !linkSessionDate || linkSessionDate !== today) {
       setPresenterTarget({ classRecordId: "", sessionKey: "" });
@@ -392,7 +403,7 @@ export default function CheckinDisplayPage() {
   useEffect(() => {
     const classRecordId = String(presenterTarget.classRecordId || "").trim();
     const sessionKey = String(presenterTarget.sessionKey || "").trim();
-    if (!classRecordId || !sessionKey) {
+    if (!classRecordId || !sessionKey || sessionKey !== String(linkPresenterSessionKey || "")) {
       setPresenterLiveState({});
       setPresenterLiveError("");
       return undefined;
@@ -410,10 +421,13 @@ export default function CheckinDisplayPage() {
       },
       sessionKey,
     );
-  }, [presenterTarget.classRecordId, presenterTarget.sessionKey]);
+  }, [linkPresenterSessionKey, presenterTarget.classRecordId, presenterTarget.sessionKey]);
 
   useEffect(() => {
-    if (String(presenterLiveState.sessionKey || "") !== String(presenterTarget.sessionKey || "")) return;
+    const targetSessionKey = String(presenterTarget.sessionKey || "");
+    const currentSessionKey = String(linkPresenterSessionKey || "");
+    if (!targetSessionKey || targetSessionKey !== currentSessionKey) return;
+    if (String(presenterLiveState.sessionKey || "") !== targetSessionKey) return;
     const sharedStart = Number(presenterLiveState.classStartedAtMs || 0);
     if (!sharedStart) return;
 
@@ -445,6 +459,7 @@ export default function CheckinDisplayPage() {
     presenterLiveState.classEndedAtMs,
     presenterLiveState.sessionKey,
     presenterTarget.sessionKey,
+    linkPresenterSessionKey,
     startDecisionStorageKey,
   ]);
 
@@ -745,35 +760,6 @@ export default function CheckinDisplayPage() {
         sessionKey,
       });
 
-      const existing = await readPresenterLiveSession(classRecordId, sessionKey);
-      const shared = existing?.state || {};
-      const sharedStart = Number(shared.classStartedAtMs || 0);
-      const sharedEnd = Number(shared.classEndedAtMs || 0);
-      const isSameSession = String(shared.sessionKey || "") === sessionKey && sharedStart > 0;
-
-      if (isSameSession) {
-        const timerStamp = Number(shared.timerUpdatedAtMs || 0);
-        const wasChangedAfterStart = timerStamp > sharedStart;
-        setPresenterLiveState(shared);
-        setActualStartedAt(sharedStart);
-        setActualEndedAt(sharedEnd || null);
-        classStartedRef.current = true;
-        writeClassStartDecision(startDecisionStorageKey, {
-          actualStartedAt: sharedStart,
-          actualEndedAt: sharedEnd || null,
-          delayUntil: null,
-        });
-        setSlideSyncStatus({
-          state: sharedEnd || shared.classStatus === "ended" ? "ended-synced" : "synced",
-          message: sharedEnd || shared.classStatus === "ended"
-            ? "This class session is already ended. Shared state was preserved."
-            : wasChangedAfterStart || manual
-              ? "Presenter already has shared timer state. It was preserved."
-              : "This class session was already started on another display. Existing timer state was preserved.",
-        });
-        return;
-      }
-
       const livePatch = {
         sessionDate,
         level,
@@ -797,7 +783,37 @@ export default function CheckinDisplayPage() {
         livePatch.timerUpdatedAtMs = startMs;
       }
 
-      await startPresenterLiveSession(classRecordId, sessionKey, livePatch);
+      const startResult = await startPresenterLiveSession(classRecordId, sessionKey, livePatch);
+      if (!startResult?.ok) {
+        throw new Error(startResult?.reason || "Presenter session could not be started.");
+      }
+
+      if (!startResult.created) {
+        const shared = startResult.state || {};
+        const sharedStart = Number(shared.classStartedAtMs || 0);
+        const sharedEnd = Number(shared.classEndedAtMs || 0);
+        const timerStamp = Number(shared.timerUpdatedAtMs || 0);
+        const wasChangedAfterStart = timerStamp > sharedStart;
+
+        setPresenterLiveState(shared);
+        if (sharedStart > 0) setActualStartedAt(sharedStart);
+        setActualEndedAt(sharedEnd || null);
+        classStartedRef.current = Boolean(sharedStart);
+        writeClassStartDecision(startDecisionStorageKey, {
+          actualStartedAt: sharedStart || startMs,
+          actualEndedAt: sharedEnd || null,
+          delayUntil: null,
+        });
+        setSlideSyncStatus({
+          state: sharedEnd || shared.classStatus === "ended" ? "ended-synced" : "synced",
+          message: sharedEnd || shared.classStatus === "ended"
+            ? "This class session is already ended. Shared state was preserved."
+            : wasChangedAfterStart || manual
+              ? "Presenter already has shared timer state. It was preserved."
+              : "This class session was already started on another display. Existing timer state was preserved.",
+        });
+        return;
+      }
 
       setSlideSyncStatus(
         durationSeconds > 0

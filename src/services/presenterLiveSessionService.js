@@ -1,4 +1,4 @@
-import { doc, getDoc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 
 export const PRESENTER_LAST_CLASS_KEY = "falowen:presenter:last-class";
@@ -199,17 +199,53 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
   if (!id) return { ok: false, reason: "missing-class-record" };
   if (!key) return { ok: false, reason: "missing-session-key" };
 
-  const nowMs = Date.now();
-  await updateDoc(doc(db, "classes", id), {
-    presenterActiveSessionKey: key,
-    presenterActiveSessionUpdatedAt: serverTimestamp(),
-    presenterActiveSessionUpdatedAtMs: nowMs,
-    ...sessionUpdates(key, {
+  const classRef = doc(db, "classes", id);
+  return runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(classRef);
+    if (!snapshot.exists()) {
+      return { ok: false, reason: "missing-class-record" };
+    }
+
+    const data = snapshot.data() || {};
+    const existing = sessionStateFromClassData(data, key);
+    const existingStart = Number(existing.classStartedAtMs || 0);
+    if (existing.sessionKey === key && existingStart > 0) {
+      return {
+        ok: true,
+        created: false,
+        sessionKey: key,
+        state: {
+          ...existing,
+          classRecordId: id,
+        },
+      };
+    }
+
+    const nowMs = Date.now();
+    const sessionPatch = {
       classStatus: "active",
       ...patch,
-    }),
+    };
+    transaction.update(classRef, {
+      presenterActiveSessionKey: key,
+      presenterActiveSessionUpdatedAt: serverTimestamp(),
+      presenterActiveSessionUpdatedAtMs: nowMs,
+      ...sessionUpdates(key, sessionPatch),
+    });
+
+    return {
+      ok: true,
+      created: true,
+      sessionKey: key,
+      state: {
+        ...sessionPatch,
+        sessionKey: key,
+        activeSessionKey: key,
+        isActiveSession: true,
+        classRecordId: id,
+      },
+    };
   });
-  return { ok: true, sessionKey: key };
 }
 
 export async function endPresenterLiveSession(classRecordId, sessionKey, patch = {}) {
