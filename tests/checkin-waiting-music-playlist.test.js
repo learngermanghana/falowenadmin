@@ -133,52 +133,46 @@ test("playlist patch upgrades an already-transformed legacy workspace and stays 
   const legacyTransformedPage = `
 import { pianoPlaylist } from "../data/pianoPlaylist.js";
 import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
-const [currentMusicTrack, setCurrentMusicTrack] = useState(pianoPlaylist[0]?.title || "Waiting room music");
-const musicStartGenerationRef = useRef(0);
-const classStartedRef = useRef(false);
+  const [currentMusicTrack, setCurrentMusicTrack] = useState(pianoPlaylist[0]?.title || "Waiting room music");
+  const musicStartGenerationRef = useRef(0);
+  const classStartedRef = useRef(false);
 
-const stopWaitingMusic = useCallback(() => {
-  const context = audioContextRef.current;
-  audioContextRef.current = null;
-  musicGainRef.current = null;
-  setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+  const stopWaitingMusic = useCallback(() => {
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    musicGainRef.current = null;
+    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
 
-  if (context) stopWaitingMusicPlaylist(context);
-  if (context && context.state !== "closed") {
-    context.close().catch(() => {});
-  }
-  setMusicPlaying(false);
-}, []);
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") {
+      context.close().catch(() => {});
+    }
+    setMusicPlaying(false);
+  }, []);
 
-async function startWaitingMusic() {
-  const startGeneration = musicStartGenerationRef.current + 1;
-  musicStartGenerationRef.current = startGeneration;
-  await startWaitingMusicPlaylist(context, masterGain, {
-    playlist: pianoPlaylist,
-    onTrackChange: (track) => {
-      setCurrentMusicTrack(track?.title || "Waiting room music");
-      setMusicError("");
-    },
-    onError: (message) => setMusicError(message || "Waiting room music could not continue."),
-  });
-  setMusicPlaying(true);
-}
+      await startWaitingMusicPlaylist(context, masterGain, {
+        playlist: pianoPlaylist,
+        onTrackChange: (track) => {
+          setCurrentMusicTrack(track?.title || "Waiting room music");
+          setMusicError("");
+        },
+        onError: (message) => setMusicError(message || "Waiting room music could not continue."),
+      });
+      setMusicPlaying(true);
 
-setMusicError(error?.message || "Waiting room music could not start. Raise the device media volume and try again.");
+      setMusicError(error?.message || "Waiting room music could not start. Raise the device media volume and try again.");
 
-useEffect(() => () => {
-  const context = audioContextRef.current;
-  if (context) stopWaitingMusicPlaylist(context);
-  if (context && context.state !== "closed") context.close().catch(() => {});
-}, []);
+  useEffect(() => () => {
+    const context = audioContextRef.current;
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") context.close().catch(() => {});
+  }, []);
 
-const ui = <>
-  <span aria-hidden="true">♫</span> Waiting room music
-  <span>Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? \`Now playing: \${currentMusicTrack}.\` : ""}</span>
-  <button>{musicPlaying ? "Stop music" : "Start waiting music"}</button>
-  <input aria-label="Waiting room music volume" />
-</>;
-`;
+<span aria-hidden="true">♫</span> Waiting room music
+                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? \`Now playing: \${currentMusicTrack}.\` : ""}
+{musicPlaying ? "Stop music" : "Start waiting music"}
+              aria-label="Waiting room music volume"
+`
 
   const pagePath = path.join(pagesDir, "CheckinDisplayPage.jsx");
   fs.writeFileSync(pagePath, legacyTransformedPage);
