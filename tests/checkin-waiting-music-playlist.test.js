@@ -263,9 +263,16 @@ test("check-in only publishes presenter timer state for today's presenter date",
 });
 
 
-test("supported human-readable attendance dates normalize before presenter date guarding", () => {
+test("supported attendance dates normalize only when the calendar date is valid", () => {
   assert.equal(checkinSessionDateKey("Tuesday, 10 February 2026"), "2026-02-10");
+  assert.equal(checkinSessionDateKey("10 February 2026"), "2026-02-10");
   assert.equal(checkinSessionDateKey("2026-09-20"), "2026-09-20");
+  assert.equal(checkinSessionDateKey("Saturday, 29 February 2020"), "2020-02-29");
+
+  assert.equal(checkinSessionDateKey("Tuesday, 31 February 2026"), null);
+  assert.equal(checkinSessionDateKey("2026-02-31"), null);
+  assert.equal(checkinSessionDateKey("29 February 2026"), null);
+  assert.equal(checkinSessionDateKey("31 April 2026"), null);
   assert.equal(checkinSessionDateKey(""), "");
   assert.equal(checkinSessionDateKey("not-a-real-date"), null);
 });
@@ -286,4 +293,13 @@ test("presenter date guard uses normalized supported labels and only falls back 
   assert.match(page, /const parsedSessionDate = rawSessionDate \? checkinSessionDateKey\(rawSessionDate\) : "";/);
   assert.match(page, /const sessionDate = rawSessionDate\s*\? parsedSessionDate\s*:\s*presenterLocalDateKey\(new Date\(startMs\)\);/);
   assert.match(page, /if \(rawSessionDate && !sessionDate\) \{/);
+});
+
+
+test("check-in date parser does not rely on Date rollover semantics", () => {
+  const util = fs.readFileSync(path.join(repoRoot, "src", "utils", "checkinSessionDate.js"), "utf8");
+  assert.doesNotMatch(util, /new Date\(raw\)/);
+  assert.match(util, /daysInMonth/);
+  assert.match(util, /isLeapYear/);
+  assert.match(util, /validDateParts/);
 });
