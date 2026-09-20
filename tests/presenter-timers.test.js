@@ -6,11 +6,13 @@ function read(path) {
   return fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("presenter class timer hard-codes A1 to 60 minutes and A2/B1 to 90 minutes", () => {
+test("presenter class timer shares A1/A2/B1 duration rules with check-in", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
-  assert.match(source, /A1:\s*60/);
-  assert.match(source, /A2:\s*90/);
-  assert.match(source, /B1:\s*90/);
+  const timing = read("src/utils/presenterSessionTiming.js");
+  assert.match(timing, /A1:\s*60/);
+  assert.match(timing, /A2:\s*90/);
+  assert.match(timing, /B1:\s*90/);
+  assert.match(source, /presenterSessionMinutes/);
   assert.match(source, /Start class/);
   assert.match(source, /Class time is up/);
 });
@@ -115,4 +117,13 @@ test("A1 and general presenters synchronize their stage position", () => {
   }
   assert.match(a1, /presenterItemIndex/);
   assert.match(general, /presenterQuestionIndex/);
+});
+
+
+test("presenter applies synchronized timer snapshots even when check-in used the same browser session", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /if \(!presenterLive\.hasSnapshot \|\| !presenterLive\.isToday \|\| !remoteStamp\) return;/);
+  assert.doesNotMatch(source, /!presenterLive\.isRemoteState \|\| !remoteStamp/);
+  assert.match(source, /remote\.classStartSource === "checkin"/);
+  assert.match(source, /Started from check-in/);
 });
