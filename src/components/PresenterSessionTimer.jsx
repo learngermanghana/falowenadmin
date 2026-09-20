@@ -42,10 +42,11 @@ function formatSessionTime(totalSeconds = 0) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function presenterClassTimerStorageKey(level = "", classId = "", now = new Date()) {
+export function presenterClassTimerStorageKey(level = "", classId = "", now = new Date(), sessionKey = "") {
   const safeLevel = normalize(level).toUpperCase() || "course";
   const safeClass = encodeURIComponent(normalize(classId) || "unassigned");
-  return `falowen:presenter:class-timer:${localDateKey(now)}:${safeLevel}:${safeClass}`;
+  const safeSession = encodeURIComponent(normalize(sessionKey) || "legacy");
+  return `falowen:presenter:class-timer:${localDateKey(now)}:${safeLevel}:${safeClass}:${safeSession}`;
 }
 
 function warningSeconds() {
@@ -107,7 +108,10 @@ export default function PresenterSessionTimer({ slide }) {
   const durationSeconds = durationMinutes * 60;
   const presenterLive = usePresenterLiveSession(slide);
   const [classId, setClassId] = useState(currentPresenterClassId);
-  const storageKey = useMemo(() => presenterClassTimerStorageKey(level, classId), [level, classId]);
+  const storageKey = useMemo(
+    () => presenterClassTimerStorageKey(level, classId, new Date(), presenterLive.sessionKey),
+    [level, classId, presenterLive.sessionKey],
+  );
   const [remaining, setRemaining] = useState(durationSeconds);
   const [running, setRunning] = useState(false);
   const [endAt, setEndAt] = useState(0);
@@ -178,13 +182,15 @@ export default function PresenterSessionTimer({ slide }) {
     setEndAt(remoteRunning && remoteRemaining > 0 ? remoteEndAt : 0);
     setWarnedMilestones(remoteWarned);
     setNotice(
-      remoteRemaining <= 0
-        ? "Class time is up."
-        : presenterLive.isRemoteState
-          ? "Updated from other device"
-          : remote.classStartSource === "checkin"
-            ? "Started from check-in"
-            : "Timer synchronized",
+      remote.classStatus === "ended" || Number(remote.classEndedAtMs || 0) > 0
+        ? "Class ended from check-in"
+        : remoteRemaining <= 0
+          ? "Class time is up."
+          : presenterLive.isRemoteState
+            ? "Updated from other device"
+            : remote.classStartSource === "checkin"
+              ? "Started from check-in"
+              : "Timer synchronized",
     );
   }, [presenterLive.liveState?.timerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, level, durationSeconds]);
 

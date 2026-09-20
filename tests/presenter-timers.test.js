@@ -17,15 +17,15 @@ test("presenter class timer shares A1/A2/B1 duration rules with check-in", () =>
   assert.match(source, /Class time is up/);
 });
 
-test("class timer is session-wide for selected class, level and date rather than tied to a lesson page", () => {
+test("class timer storage is isolated by selected class and presenter session", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   assert.match(source, /presenterClassTimerStorageKey/);
   assert.match(source, /LAST_CLASS_KEY = "falowen:presenter:last-class"/);
-  assert.match(source, /class-timer:\$\{localDateKey\(now\)\}:\$\{safeLevel\}:\$\{safeClass\}/);
-  assert.match(source, /currentPresenterClassId/);
+  assert.match(source, /safeSession/);
+  assert.match(source, /class-timer:\$\{localDateKey\(now\)\}:\$\{safeLevel\}:\$\{safeClass\}:\$\{safeSession\}/);
+  assert.match(source, /presenterLive\.sessionKey/);
   assert.match(source, /window\.localStorage\.getItem\(key\)/);
   assert.match(source, /window\.localStorage\.setItem\(storageKey/);
-  assert.doesNotMatch(source, /slide\.assignmentId \|\| slide\.id/);
   assert.doesNotMatch(source, /sessionStorage/);
 });
 
@@ -75,13 +75,14 @@ test("recording a student result stops the answer timer instead of auto-marking 
   assert.doesNotMatch(picker, /responseTimedOut[\s\S]{0,120}markCurrent\(/);
 });
 
-test("presenter live sync uses the existing class document and Firestore snapshots", () => {
+test("presenter live sync stays on the existing class document but isolates sessions", () => {
   const service = read("src/services/presenterLiveSessionService.js");
   assert.match(service, /onSnapshot/);
   assert.match(service, /updateDoc/);
   assert.match(service, /doc\(db, "classes", id\)/);
-  assert.match(service, /presenterLiveSession\.updatedAt/);
-  assert.match(service, /PRESENTER_LAST_CLASS_RECORD_KEY/);
+  assert.match(service, /presenterSessions\.\$\{key\}/);
+  assert.match(service, /presenterActiveSessionKey/);
+  assert.match(service, /PRESENTER_LAST_SESSION_KEY/);
   assert.doesNotMatch(service, /liveTeachingSessions/);
 });
 
@@ -126,4 +127,19 @@ test("presenter applies synchronized timer snapshots even when check-in used the
   assert.doesNotMatch(source, /!presenterLive\.isRemoteState \|\| !remoteStamp/);
   assert.match(source, /remote\.classStartSource === "checkin"/);
   assert.match(source, /Started from check-in/);
+});
+
+
+test("presenter heartbeat is low-frequency and does not write countdown ticks", () => {
+  const hook = read("src/hooks/usePresenterLiveSession.js");
+  assert.match(hook, /PRESENTER_HEARTBEAT_MS = 90 \* 1000/);
+  assert.match(hook, /presenterHeartbeatAtMs/);
+  assert.match(hook, /window\.setInterval\(heartbeat, PRESENTER_HEARTBEAT_MS\)/);
+  assert.doesNotMatch(hook, /setInterval\([^\n]*1000\)/);
+});
+
+test("presenter timer recognizes check-in class end state", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /remote\.classStatus === "ended"/);
+  assert.match(source, /Class ended from check-in/);
 });

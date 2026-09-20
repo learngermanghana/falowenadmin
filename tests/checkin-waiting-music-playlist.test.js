@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { waitingMusicPlaylist } from "../src/data/pianoPlaylist.js";
 import { checkinSessionDateKey } from "../src/utils/checkinSessionDate.js";
+import { presenterSessionKey } from "../src/utils/presenterSessionIdentity.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -226,7 +227,7 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
 
   assert.match(page, /listClasses\(\)/);
   assert.match(page, /setPresenterClassContext/);
-  assert.match(page, /publishPresenterLiveSession/);
+  assert.match(page, /startPresenterLiveSession/);
   assert.match(page, /classStartedAtMs: startMs/);
   assert.match(page, /classStartSource: "checkin"/);
   assert.match(page, /timerEndAt = startMs \+ \(durationSeconds \* 1000\)/);
@@ -235,7 +236,7 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
   assert.match(page, /Retry slide sync/);
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 
-  assert.match(service, /presenterLiveSession\.updatedAt/);
+  assert.match(service, /presenterSessions\.\$\{key\}/);
   assert.match(timing, /presenterSessionDurationSeconds/);
 });
 
@@ -258,7 +259,7 @@ test("check-in only publishes presenter timer state for today's presenter date",
   assert.match(page, /Presenter sync only runs for today/);
 
   const dateGuardIndex = page.indexOf("if (sessionDate !== currentPresenterDate)");
-  const publishIndex = page.indexOf("await publishPresenterLiveSession");
+  const publishIndex = page.indexOf("await startPresenterLiveSession");
   assert.ok(dateGuardIndex >= 0 && publishIndex > dateGuardIndex, "date guard must run before Firestore presenter publish");
 });
 
@@ -302,4 +303,46 @@ test("check-in date parser does not rely on Date rollover semantics", () => {
   assert.match(util, /daysInMonth/);
   assert.match(util, /isLeapYear/);
   assert.match(util, /validDateParts/);
+});
+
+
+test("presenter session keys are deterministic and Firestore field-path safe", () => {
+  const key = presenterSessionKey({
+    sessionDate: "2026-09-20",
+    sessionId: "14",
+    assignmentId: "A2-7.20",
+  });
+  assert.equal(key, presenterSessionKey({
+    sessionDate: "2026-09-20",
+    sessionId: "14",
+    assignmentId: "A2-7.20",
+  }));
+  assert.match(key, /^[A-Za-z0-9_-]+$/);
+  assert.doesNotMatch(key, /\./);
+});
+
+test("check-in exposes session status and records class end duration", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  assert.match(page, /Presenter connected · timer running/);
+  assert.match(page, />End class<\/button>/);
+  assert.match(page, /endPresenterLiveSession/);
+  assert.match(page, /classDurationSeconds/);
+  assert.match(page, /attendanceCheckedInCountAtEnd/);
+  assert.match(page, /actualEndedAt/);
+});
+
+test("manual slide retry reads shared state before deciding whether to write", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const readIndex = page.indexOf("await readPresenterLiveSession(classRecordId, sessionKey)");
+  const writeIndex = page.indexOf("await startPresenterLiveSession(classRecordId, sessionKey, livePatch)");
+  assert.ok(readIndex >= 0 && writeIndex > readIndex, "manual retry protection must read current shared state before the start write");
+  assert.match(page, /Presenter already has newer timer state\. It was preserved\./);
+});
+
+test("session-scoped presenter state remains inside the existing class document", () => {
+  const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
+  assert.match(service, /presenterSessions\.\$\{key\}/);
+  assert.match(service, /presenterActiveSessionKey/);
+  assert.match(service, /doc\(db, "classes", id\)/);
+  assert.doesNotMatch(service, /collection\(/);
 });

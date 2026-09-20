@@ -230,6 +230,47 @@
   font-weight: 900;
 }
 
+.checkin-display-ended-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.checkin-display-presenter-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.checkin-display-presenter-status > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.checkin-display-presenter-status > span.is-live {
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+}
+
+.checkin-display-teacher-control-actions .checkin-display-end-class {
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+
+.checkin-display-teacher-control-actions .checkin-display-end-class:hover {
+  background: #fef2f2;
+}
+
 .checkin-display-main-grid {
   display: grid;
   grid-template-columns: minmax(360px, 1.1fr) minmax(300px, 0.9fr);
