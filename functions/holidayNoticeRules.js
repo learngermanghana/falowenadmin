@@ -33,12 +33,13 @@ function resolveHolidaySendOutcome({ sent = 0, failed = 0, skipped = 0, recipien
   const sentCount = Number(sent || 0);
   const failedCount = Number(failed || 0);
   const skippedCount = Number(skipped || 0);
-  const recipients = Number(recipientCount ?? sentCount);
+  const attemptedCount = Number(recipientCount ?? (sentCount + failedCount));
 
-  if (recipients === 0) {
+  if (attemptedCount === 0) {
     return {
       status: "no_recipients",
       recipientCount: 0,
+      attemptedCount: 0,
       lastError: "No active recipients found for this audience.",
     };
   }
@@ -46,14 +47,16 @@ function resolveHolidaySendOutcome({ sent = 0, failed = 0, skipped = 0, recipien
   if (failedCount > 0 && sentCount === 0) {
     return {
       status: "failed",
-      recipientCount: recipients,
+      recipientCount: 0,
+      attemptedCount,
       lastError: `Failed: ${failedCount}; skipped: ${skippedCount}`,
     };
   }
 
   return {
     status: "sent",
-    recipientCount: recipients,
+    recipientCount: sentCount,
+    attemptedCount,
     lastError: failedCount > 0 ? `Partial send: ${failedCount} failed; ${sentCount} sent.` : "",
   };
 }
