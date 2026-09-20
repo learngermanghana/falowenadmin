@@ -38,6 +38,8 @@ jobs:
       - run: npm ci
       - name: Test holiday notice rules
         run: node --test tests/holiday-notice-rules.test.js
+      - name: Validate holiday deployment guard
+        run: node scripts/patchHolidayClassScheduleAwareness.mjs
       - name: Validate functions syntax
         run: |
           node --check functions/holidayNoticeRules.js
