@@ -1,3 +1,95 @@
+
+@media (min-width: 701px) and (max-width: 1024px) {
+  main[data-route="/live-classes"] .live-class-session-table-wrap {
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    background: transparent;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table thead {
+    display: none;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody {
+    display: grid;
+    gap: 0.9rem;
+    width: 100%;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody tr {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    gap: 0.7rem;
+    padding: 0.95rem;
+    border: 1px solid #dbe3f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(26, 34, 51, 0.06);
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(140px, 0.35fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    width: 100%;
+    min-width: 0 !important;
+    padding: 0 !important;
+    overflow-wrap: normal !important;
+    word-break: normal;
+    white-space: normal;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+    text-transform: uppercase;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td[data-label="Ghana date and time"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td[data-label="Actions"] > div {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.55rem !important;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td[data-label="Actions"] a,
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td[data-label="Actions"] button {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    white-space: normal;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody tr.live-class-session-change-row {
+    display: block;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody tr.live-class-session-change-row td {
+    display: block;
+  }
+
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody tr.live-class-session-change-row td::before {
+    content: none;
+  }
+}
+
 @media (max-width: 700px) {
   main[data-route="/live-classes"] article.card table {
     display: block;

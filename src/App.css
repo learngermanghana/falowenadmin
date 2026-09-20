@@ -112,6 +112,154 @@
   font-size: 1.1rem;
 }
 
+
+/* Tablet admin navigation ------------------------------------------------ */
+@media (max-width: 1024px) {
+  .topbar-main-row {
+    align-items: flex-start;
+  }
+
+  .topbar-brand {
+    order: 1;
+  }
+
+  .topbar-menu-btn {
+    order: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+  }
+
+  .topbar-links,
+  .topbar-user {
+    display: none;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .topbar-links-open,
+  .topbar-user-open {
+    display: flex;
+  }
+
+  .topbar-links {
+    order: 3;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding-top: 0.35rem;
+  }
+
+  .topbar-user {
+    order: 4;
+    justify-content: space-between;
+  }
+
+  .topbar-email {
+    max-width: 60vw;
+  }
+}
+
+/* Holiday Calendar ------------------------------------------------------ */
+main[data-route="/holiday-calendar"] .holiday-calendar-page {
+  min-width: 0;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-toolbar {
+  flex-wrap: wrap;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-toolbar select,
+main[data-route="/holiday-calendar"] .holiday-calendar-toolbar button {
+  min-height: 42px;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #e4e9f2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table {
+  width: 100%;
+  min-width: 1680px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table th,
+main[data-route="/holiday-calendar"] .holiday-calendar-table td {
+  padding: 0.7rem 0.65rem;
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table th {
+  background: #f5f7fb;
+  color: #34405a;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(1) { min-width: 110px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(2) { min-width: 150px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(3) { min-width: 105px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(4) { min-width: 95px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(5) { min-width: 92px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(6) { min-width: 180px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(7) { min-width: 220px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(8) { min-width: 110px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(9) { min-width: 190px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(10) { min-width: 190px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(11) { min-width: 125px; }
+main[data-route="/holiday-calendar"] .holiday-calendar-table td:nth-child(12) { min-width: 180px; }
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table input {
+  width: 100%;
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table select {
+  max-width: 100%;
+  min-height: 40px;
+}
+
+main[data-route="/holiday-calendar"] .holiday-calendar-table button {
+  min-height: 40px;
+  white-space: normal;
+}
+
+@media (max-width: 1024px) {
+  main.page-shell[data-route="/holiday-calendar"] {
+    width: calc(100% - 1rem);
+    margin-top: 0.65rem;
+  }
+
+  main[data-route="/holiday-calendar"] .holiday-calendar-page h1 {
+    font-size: 1.8rem;
+  }
+
+  main[data-route="/holiday-calendar"] .holiday-calendar-toolbar {
+    align-items: stretch !important;
+  }
+
+  main[data-route="/holiday-calendar"] .holiday-calendar-toolbar button {
+    flex: 1 1 180px;
+  }
+}
+
 /* Live Classes ---------------------------------------------------------- */
 main.page-shell[data-route="/live-classes"] {
   width: min(1320px, calc(100% - 2rem));

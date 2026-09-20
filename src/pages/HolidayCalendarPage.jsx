@@ -157,11 +157,11 @@ export default function HolidayCalendarPage() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container holiday-calendar-page">
       <h1>Holiday Calendar (Ghana)</h1>
       <OperationsCommunicationPanel context="holidays" />
 
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+      <div className="holiday-calendar-toolbar" style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
         <label htmlFor="holiday-year">Year:</label>
         <select id="holiday-year" value={year} onChange={(e) => setYear(Number(e.target.value))}>
           {yearOptions.map((option) => (
@@ -176,8 +176,8 @@ export default function HolidayCalendarPage() {
 
       {status ? <p>{status}</p> : null}
 
-      <div style={{ overflowX: "auto" }}>
-        <table>
+      <div className="holiday-calendar-table-wrap" style={{ overflowX: "auto" }}>
+        <table className="holiday-calendar-table">
           <thead>
             <tr>
               <th>Date</th>
