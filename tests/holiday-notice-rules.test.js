@@ -53,6 +53,7 @@ test("no recipients is a supported notice status", () => {
     {
       status: "no_recipients",
       recipientCount: 0,
+      attemptedCount: 0,
       lastError: "No active recipients found for this audience.",
     },
   );
@@ -61,11 +62,11 @@ test("no recipients is a supported notice status", () => {
 test("failed and partial sends produce useful status details", () => {
   assert.deepEqual(
     resolveHolidaySendOutcome({ sent: 0, failed: 3, skipped: 0, recipientCount: 3 }),
-    { status: "failed", recipientCount: 3, lastError: "Failed: 3; skipped: 0" },
+    { status: "failed", recipientCount: 0, attemptedCount: 3, lastError: "Failed: 3; skipped: 0" },
   );
   assert.deepEqual(
     resolveHolidaySendOutcome({ sent: 4, failed: 1, skipped: 0, recipientCount: 5 }),
-    { status: "sent", recipientCount: 5, lastError: "Partial send: 1 failed; 4 sent." },
+    { status: "sent", recipientCount: 4, attemptedCount: 5, lastError: "Partial send: 1 failed; 4 sent." },
   );
 });
 
@@ -77,4 +78,17 @@ test("manual email subject distinguishes closure from holiday update", () => {
 test("manual payload includes the school-closed state", () => {
   const functionsIndex = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
   assert.match(functionsIndex, /schoolClosed: Boolean\(holiday\.schoolClosed\)/);
+});
+
+
+test("holiday API does not report a sent timestamp when nobody received mail", () => {
+  const functionsIndex = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
+  assert.match(functionsIndex, /const noticeWasSent = status === "sent" && recipientCount > 0/);
+  assert.match(functionsIndex, /noticeSentAt: noticeWasSent \? new Date\(\)\.toISOString\(\) : null/);
+});
+
+test("holiday page treats recipient count as successful deliveries", () => {
+  const holidayPage = fs.readFileSync(path.join(root, "src/pages/HolidayCalendarPage.jsx"), "utf8");
+  assert.match(holidayPage, /<div>Delivered: \{holiday\.noticeRecipientCount\}<\/div>/);
+  assert.match(holidayPage, /noticeSentAt: result\.noticeSentAt \?\? null/);
 });
