@@ -103,3 +103,49 @@ export async function sendHolidayNoticeNow(date, payload = {}) {
 
   return data;
 }
+
+
+export async function previewHolidayNotice(date, payload = {}) {
+  const response = await fetch(`/api/holidays/${date}/notice-preview`, {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const details = data?.details?.error || data?.details?.message || data?.error;
+    throw new Error(String(details || "Failed to preview holiday notice"));
+  }
+
+  return data;
+}
+
+export async function getHolidayNoticeHistory(date, countryCode = "GH") {
+  const query = new URLSearchParams({ countryCode }).toString();
+  const response = await fetch(`/api/holidays/${date}/notice-history?${query}`, {
+    method: "GET",
+    headers: await getAuthHeaders(),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(String(data?.error || "Failed to load holiday notice history"));
+  }
+
+  return Array.isArray(data?.history) ? data.history : [];
+}
+
+export async function getHolidayAppsScriptHealth() {
+  const response = await fetch("/api/holidays/apps-script-health", {
+    method: "GET",
+    headers: await getAuthHeaders(),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(String(data?.error || "Failed to check holiday email service"));
+  }
+
+  return data;
+}
