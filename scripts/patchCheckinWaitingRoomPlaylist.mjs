@@ -86,6 +86,11 @@ replaceOnce(
         },
         onError: (message) => setMusicError(message || "Waiting room music could not continue."),
       });
+      if (musicStartGenerationRef.current !== startGeneration || classStartedRef.current) {
+        stopWaitingMusicPlaylist(context);
+        if (context.state !== "closed") context.close().catch(() => {});
+        return;
+      }
       setMusicPlaying(true);`,
   "real playlist start",
 );
@@ -140,6 +145,8 @@ for (const marker of [
   "Now playing: ${currentMusicTrack}",
   "Stop music",
   "Start waiting music",
+  "musicStartGenerationRef.current !== startGeneration",
+  "classStartedRef.current",
 ]) {
   if (!source.includes(marker)) throw new Error(`Waiting room playlist marker missing: ${marker}`);
 }
