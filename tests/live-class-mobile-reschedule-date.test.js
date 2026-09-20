@@ -10,6 +10,8 @@ import {
 const serviceIndexPath = new URL("../src/services/liveClassService.js", import.meta.url);
 const manualServicePath = new URL("../src/services/liveClassManualRescheduleService.js", import.meta.url);
 const recoveryServicePath = new URL("../src/services/liveClassRescheduleRecoveryService.js", import.meta.url);
+const liveClassesMobileCssPath = new URL("../src/LiveClassesMobile.css", import.meta.url);
+const liveClassesPagePath = new URL("../src/pages/LiveClassesPageV2.jsx", import.meta.url);
 
 const scheduleRules = [
   { day: "thu", startTime: "18:00", durationMinutes: 60 },
@@ -184,4 +186,18 @@ test("manual UI uses schedule protection and records explicit overrides", async 
   assert.match(manualService, /manualDateOverrideAt/);
   assert.match(manualService, /rescheduleSessionDirect/);
   assert.match(recoveryService, /rescheduleSession.*liveClassSessionDirectService\.js/s);
+});
+
+
+test("tablet status reason stays in the status value column", async () => {
+  const [mobileCss, liveClassesPage] = await Promise.all([
+    source(liveClassesMobileCssPath),
+    source(liveClassesPagePath),
+  ]);
+
+  assert.match(liveClassesPage, /data-label="Status"/);
+  assert.match(
+    mobileCss,
+    /td\[data-label="Status"\] > span,[\s\S]*td\[data-label="Status"\] > small \{[\s\S]*grid-column:\s*2;/,
+  );
 });
