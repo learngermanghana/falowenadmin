@@ -297,7 +297,6 @@ export default function CheckinDisplayPage() {
       };
     }
 
-    const startAt = parseDateTime(dateLabel, startTime);
     return {
       kind: "active",
       title: "Class is in progress.",
@@ -598,6 +597,7 @@ export default function CheckinDisplayPage() {
               type="button"
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+              disabled={!musicPlaying && (classTiming?.kind === "active" || classTiming?.kind === "ended")}
             >
               {musicPlaying ? "Stop piano" : "Start piano playlist"}
             </button>
