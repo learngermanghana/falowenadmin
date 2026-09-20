@@ -152,6 +152,13 @@ test("Apps Script deployment workflow is safe and health-visible", () => {
   assert.match(workflow, /HOLIDAY_APPS_SCRIPT_ID/);
   assert.match(workflow, /HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID/);
   assert.match(workflow, /GOOGLE_CLASPRC_JSON/);
-  assert.match(workflow, /Expected exactly one \.gs source file/);
+  assert.match(workflow, /Expected exactly one server-side source file \(\.js or \.gs\)/);
   assert.match(workflow, /clasp update-deployment/);
+});
+
+
+test("legacy sent summary does not claim historical recipients were delivered", () => {
+  const holidayPage = fs.readFileSync(path.join(root, "src/pages/HolidayCalendarPage.jsx"), "utf8");
+  assert.match(holidayPage, /Sent · \$\{count\} recipient/);
+  assert.match(holidayPage, /typeof holiday\.noticeAttemptedCount === "number"/);
 });
