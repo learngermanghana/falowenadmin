@@ -91,3 +91,25 @@ test("music can continue after scheduled time until teacher starts class", () =>
   assert.match(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
   assert.match(page, /masterGain\.gain\.setTargetAtTime\(\s*Math\.max\(0\.05, musicVolume \* 0\.35\)/);
 });
+
+
+test("teacher-confirmed start uses the synchronized display clock", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  assert.match(page, /const startedAt = nowMs;/);
+  assert.doesNotMatch(page, /const startedAt = Date\.now\(\);/);
+});
+
+test("starting class invalidates pending waiting-room audio startup", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
+
+  assert.match(page, /musicStartGenerationRef/);
+  assert.match(page, /classStartedRef/);
+  assert.match(page, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
+  assert.match(page, /classStartedRef\.current = true;/);
+  assert.match(page, /musicStartGenerationRef\.current \+= 1;/);
+  assert.match(page, /if \(!musicPlaying\) \{\s*stopWaitingMusic\(\);\s*return;/);
+
+  assert.match(patch, /musicStartGenerationRef\.current !== startGeneration/);
+  assert.match(patch, /stopWaitingMusicPlaylist\(context\)/);
+});
