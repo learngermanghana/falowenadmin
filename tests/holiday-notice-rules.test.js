@@ -7,8 +7,10 @@ import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const {
+  HOLIDAY_NOTICE_PROTOCOL_VERSION,
   normalizeNoticeStatus,
   resolveHolidayNoticeUpdate,
+  buildHolidayNoticeSubject,
   resolveHolidaySendOutcome,
 } = require("../functions/holidayNoticeRules.js");
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -100,4 +102,56 @@ test("holiday page preserves legacy recipient-count semantics", () => {
     holidayPage,
     /typeof holiday\.noticeAttemptedCount === "number"[\s\S]*<div>Delivered: \{holiday\.noticeRecipientCount\}<\/div>[\s\S]*<div>Recipients: \{holiday\.noticeRecipientCount\}<\/div>/,
   );
+});
+
+
+test("holiday subject helper matches closure mode", () => {
+  assert.equal(
+    buildHolidayNoticeSubject({ schoolClosed: true, holidayName: "Founders' Day", date: "2026-09-21" }),
+    "No class notice: Founders' Day (2026-09-21)",
+  );
+  assert.equal(
+    buildHolidayNoticeSubject({ schoolClosed: false, holidayName: "Founders' Day", date: "2026-09-21" }),
+    "Holiday update: Founders' Day (2026-09-21)",
+  );
+});
+
+test("Apps Script exposes matching preview and health protocol", () => {
+  const appsScript = fs.readFileSync(path.join(root, "apps-script/holiday-calendar-webapp.gs"), "utf8");
+  assert.match(appsScript, new RegExp(`HOLIDAY_NOTICE_PROTOCOL_VERSION = '${HOLIDAY_NOTICE_PROTOCOL_VERSION}'`));
+  assert.match(appsScript, /action === 'health'/);
+  assert.match(appsScript, /action === 'previewHolidayNotice'/);
+  assert.match(appsScript, /recipientCount: recipients\.length/);
+  assert.match(appsScript, /sampleBody:/);
+});
+
+test("holiday API provides preview, history, health and audited sends", () => {
+  const functionsIndex = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
+  assert.match(functionsIndex, /app\.get\("\/holidays\/apps-script-health"/);
+  assert.match(functionsIndex, /app\.post\("\/holidays\/:date\/notice-preview"/);
+  assert.match(functionsIndex, /app\.get\("\/holidays\/:date\/notice-history"/);
+  assert.match(functionsIndex, /\.collection\("noticeHistory"\)\.add/);
+  assert.match(functionsIndex, /triggerType: "manual"/);
+  assert.match(functionsIndex, /triggerType: "automatic"/);
+});
+
+test("Holiday Calendar requires a fresh preview before manual send", () => {
+  const holidayPage = fs.readFileSync(path.join(root, "src/pages/HolidayCalendarPage.jsx"), "utf8");
+  const holidayService = fs.readFileSync(path.join(root, "src/services/holidayCalendarService.js"), "utf8");
+  assert.match(holidayPage, /Preview required to confirm recipients/);
+  assert.match(holidayPage, /preview\.signature !== currentSignature/);
+  assert.match(holidayPage, /View history/);
+  assert.match(holidayPage, /Holiday email service:/);
+  assert.match(holidayService, /notice-preview/);
+  assert.match(holidayService, /notice-history/);
+  assert.match(holidayService, /apps-script-health/);
+});
+
+test("Apps Script deployment workflow is safe and health-visible", () => {
+  const workflow = fs.readFileSync(path.join(root, ".github/workflows/deploy-holiday-apps-script.yml"), "utf8");
+  assert.match(workflow, /HOLIDAY_APPS_SCRIPT_ID/);
+  assert.match(workflow, /HOLIDAY_APPS_SCRIPT_DEPLOYMENT_ID/);
+  assert.match(workflow, /GOOGLE_CLASPRC_JSON/);
+  assert.match(workflow, /Expected exactly one \.gs source file/);
+  assert.match(workflow, /clasp update-deployment/);
 });
