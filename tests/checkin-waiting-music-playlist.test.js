@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { waitingMusicPlaylist } from "../src/data/pianoPlaylist.js";
 
@@ -112,4 +114,85 @@ test("starting class invalidates pending waiting-room audio startup", () => {
 
   assert.match(patch, /musicStartGenerationRef\.current !== startGeneration/);
   assert.match(patch, /stopWaitingMusicPlaylist\(context\)/);
+});
+
+
+test("playlist patch upgrades an already-transformed legacy workspace and stays idempotent", () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "falowen-checkin-patch-"));
+  const scriptsDir = path.join(tempRoot, "scripts");
+  const pagesDir = path.join(tempRoot, "src", "pages");
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.mkdirSync(pagesDir, { recursive: true });
+
+  const patchSource = fs.readFileSync(
+    path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"),
+    "utf8",
+  );
+  fs.writeFileSync(path.join(scriptsDir, "patchCheckinWaitingRoomPlaylist.mjs"), patchSource);
+
+  const legacyTransformedPage = `
+import { pianoPlaylist } from "../data/pianoPlaylist.js";
+import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
+  const [currentMusicTrack, setCurrentMusicTrack] = useState(pianoPlaylist[0]?.title || "Waiting room music");
+  const musicStartGenerationRef = useRef(0);
+  const classStartedRef = useRef(false);
+
+  const stopWaitingMusic = useCallback(() => {
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    musicGainRef.current = null;
+    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") {
+      context.close().catch(() => {});
+    }
+    setMusicPlaying(false);
+  }, []);
+
+      await startWaitingMusicPlaylist(context, masterGain, {
+        playlist: pianoPlaylist,
+        onTrackChange: (track) => {
+          setCurrentMusicTrack(track?.title || "Waiting room music");
+          setMusicError("");
+        },
+        onError: (message) => setMusicError(message || "Waiting room music could not continue."),
+      });
+      setMusicPlaying(true);
+
+      setMusicError(error?.message || "Waiting room music could not start. Raise the device media volume and try again.");
+
+  useEffect(() => () => {
+    const context = audioContextRef.current;
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") context.close().catch(() => {});
+  }, []);
+
+<span aria-hidden="true">♫</span> Waiting room music
+                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? \`Now playing: \${currentMusicTrack}.\` : ""}
+{musicPlaying ? "Stop music" : "Start waiting music"}
+              aria-label="Waiting room music volume"
+`
+
+  const pagePath = path.join(pagesDir, "CheckinDisplayPage.jsx");
+  fs.writeFileSync(pagePath, legacyTransformedPage);
+
+  execFileSync(process.execPath, [path.join(scriptsDir, "patchCheckinWaitingRoomPlaylist.mjs")], {
+    cwd: tempRoot,
+    stdio: "pipe",
+  });
+  const upgradedOnce = fs.readFileSync(pagePath, "utf8");
+
+  assert.match(upgradedOnce, /const stopWaitingMusic = useCallback\(\(\) => \{\s*musicStartGenerationRef\.current \+= 1;/);
+  assert.match(upgradedOnce, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
+  assert.match(upgradedOnce, /stopWaitingMusicPlaylist\(context\)/);
+
+  execFileSync(process.execPath, [path.join(scriptsDir, "patchCheckinWaitingRoomPlaylist.mjs")], {
+    cwd: tempRoot,
+    stdio: "pipe",
+  });
+  const upgradedTwice = fs.readFileSync(pagePath, "utf8");
+  assert.equal(upgradedTwice, upgradedOnce);
+
+  fs.rmSync(tempRoot, { recursive: true, force: true });
 });

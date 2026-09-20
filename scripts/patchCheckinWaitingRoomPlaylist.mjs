@@ -9,6 +9,11 @@ function replaceOnce(before, after, label) {
   source = source.replace(before, after);
 }
 
+function upgradeOnce(before, after) {
+  if (source.includes(after)) return;
+  if (source.includes(before)) source = source.replace(before, after);
+}
+
 replaceOnce(
   'import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";',
   'import { pianoPlaylist } from "../data/pianoPlaylist.js";',
@@ -31,6 +36,34 @@ replaceOnce(
   '  const musicTimerRef = useRef(null);\n  const musicChordIndexRef = useRef(0);\n',
   '',
   "legacy interval refs",
+);
+
+upgradeOnce(
+  `  const stopWaitingMusic = useCallback(() => {
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    musicGainRef.current = null;
+    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") {
+      context.close().catch(() => {});
+    }
+    setMusicPlaying(false);
+  }, []);`,
+  `  const stopWaitingMusic = useCallback(() => {
+    musicStartGenerationRef.current += 1;
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    musicGainRef.current = null;
+    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") {
+      context.close().catch(() => {});
+    }
+    setMusicPlaying(false);
+  }, []);`,
 );
 
 replaceOnce(
@@ -66,6 +99,32 @@ replaceOnce(
     setMusicPlaying(false);
   }, []);`,
   "stop waiting music",
+);
+
+upgradeOnce(
+  `      await startWaitingMusicPlaylist(context, masterGain, {
+        playlist: pianoPlaylist,
+        onTrackChange: (track) => {
+          setCurrentMusicTrack(track?.title || "Waiting room music");
+          setMusicError("");
+        },
+        onError: (message) => setMusicError(message || "Waiting room music could not continue."),
+      });
+      setMusicPlaying(true);`,
+  `      await startWaitingMusicPlaylist(context, masterGain, {
+        playlist: pianoPlaylist,
+        onTrackChange: (track) => {
+          setCurrentMusicTrack(track?.title || "Waiting room music");
+          setMusicError("");
+        },
+        onError: (message) => setMusicError(message || "Waiting room music could not continue."),
+      });
+      if (musicStartGenerationRef.current !== startGeneration || classStartedRef.current) {
+        stopWaitingMusicPlaylist(context);
+        if (context.state !== "closed") context.close().catch(() => {});
+        return;
+      }
+      setMusicPlaying(true);`,
 );
 
 replaceOnce(
