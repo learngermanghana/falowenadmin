@@ -23,6 +23,21 @@ function formatNoticeTimestamp(value) {
   return String(value);
 }
 
+function formatNoticeStatus(holiday) {
+  const status = holiday.noticeStatus || "not_scheduled";
+  if (status === "sent") {
+    const count = Number(holiday.noticeRecipientCount);
+    return Number.isFinite(count) ? `Sent to ${count} student${count === 1 ? "" : "s"}` : "Sent";
+  }
+  if (status === "failed") return "Failed";
+  if (status === "no_recipients") return "No recipients";
+  if (holiday.schoolClosed && holiday.autoSendNotice && status === "scheduled") {
+    return "Scheduled for 7:00 AM";
+  }
+  if (!holiday.schoolClosed) return "Not scheduled — school open";
+  return "Not scheduled";
+}
+
 export default function HolidayCalendarPage() {
   const [year, setYear] = useState(currentYear);
   const [holidays, setHolidays] = useState([]);
@@ -114,7 +129,13 @@ export default function HolidayCalendarPage() {
       const result = await updateHoliday({ date, countryCode: "GH", ...payload });
       setHolidays((prev) => prev.map((item) => (
         item.date === date
-          ? { ...item, ...payload, noticeStatus: result.noticeStatus || item.noticeStatus }
+          ? {
+            ...item,
+            ...payload,
+            schoolClosed: typeof result.schoolClosed === "boolean" ? result.schoolClosed : payload.schoolClosed,
+            autoSendNotice: typeof result.autoSendNotice === "boolean" ? result.autoSendNotice : payload.autoSendNotice,
+            noticeStatus: result.noticeStatus || item.noticeStatus,
+          }
           : item
       )));
       setStatus(`Updated holiday for ${date}.`);
@@ -199,7 +220,7 @@ export default function HolidayCalendarPage() {
               const adminNote = getAdminNote(holiday);
               const studentMessage = holiday.studentMessage || "";
               const noticeAudienceType = holiday.noticeAudienceType === "class" ? "class" : "all_active";
-              const noticeStatus = holiday.noticeStatus || (holiday.autoSendNotice ? "scheduled" : "not_scheduled");
+              const noticeStatus = formatNoticeStatus(holiday);
               return (
                 <tr key={`${holiday.countryCode}_${holiday.date}`}>
                   <td>{holiday.date}</td>
@@ -210,7 +231,10 @@ export default function HolidayCalendarPage() {
                     <button
                       type="button"
                       disabled={updatingDate === holiday.date}
-                      onClick={() => handleUpdate(holiday.date, { schoolClosed: !holiday.schoolClosed })}
+                      onClick={() => handleUpdate(holiday.date, {
+                        schoolClosed: !holiday.schoolClosed,
+                        ...(!holiday.schoolClosed ? {} : { autoSendNotice: false }),
+                      })}
                     >
                       Set {holiday.schoolClosed ? "NO" : "YES"}
                     </button>
@@ -242,14 +266,14 @@ export default function HolidayCalendarPage() {
                   <td>
                     <select
                       value={holiday.autoSendNotice ? "YES" : "NO"}
-                      disabled={updatingDate === holiday.date}
+                      disabled={updatingDate === holiday.date || !holiday.schoolClosed}
                       onChange={(e) => handleUpdate(holiday.date, { autoSendNotice: e.target.value === "YES" })}
                     >
                       <option value="NO">NO</option>
                       <option value="YES">YES</option>
                     </select>
                   </td>
-                  <td>Automatically sends 1 day before holiday at 7:00 AM Ghana time</td>
+                  <td>{holiday.schoolClosed ? "Automatically sends 1 day before holiday at 7:00 AM Ghana time" : "Automatic email is off because school is open."}</td>
                   <td>
                     <select
                       value={noticeAudienceType}
@@ -282,13 +306,17 @@ export default function HolidayCalendarPage() {
                       disabled={sendingDate === holiday.date || updatingDate === holiday.date}
                       onClick={() => handleSendNow(holiday)}
                     >
-                      {sendingDate === holiday.date ? "Sending..." : "Send notice now"}
+                      {sendingDate === holiday.date
+                        ? "Sending..."
+                        : holiday.schoolClosed
+                          ? "Send no-class notice now"
+                          : "Send holiday update now"}
                     </button>
                   </td>
                   <td>
-                    <div>{noticeStatus.replace("_", " ")}</div>
-                    {typeof holiday.noticeRecipientCount === "number" ? (
-                      <div>Sent count: {holiday.noticeRecipientCount}</div>
+                    <div>{noticeStatus}</div>
+                    {holiday.noticeStatus === "sent" && typeof holiday.noticeRecipientCount === "number" ? (
+                      <div>Recipients: {holiday.noticeRecipientCount}</div>
                     ) : null}
                     {holiday.noticeSentAt ? <div>Last sent: {formatNoticeTimestamp(holiday.noticeSentAt)}</div> : null}
                     {holiday.noticeLastError ? <div>Error: {holiday.noticeLastError}</div> : null}

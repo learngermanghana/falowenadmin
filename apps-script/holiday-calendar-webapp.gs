@@ -236,7 +236,9 @@ function sendHolidayNotice_(payload) {
 
   const recipients = loadRecipients_(audienceType, className);
   const fromName = scriptProperty_('FROM_NAME', DEFAULT_FROM_NAME);
-  const subject = `No class notice: ${holidayName} (${date})`;
+  const schoolClosed = payload.schoolClosed === true;
+  const subjectPrefix = schoolClosed ? 'No class notice' : 'Holiday update';
+  const subject = `${subjectPrefix}: ${holidayName} (${date})`;
   let sent = 0;
   let failed = 0;
   let skipped = 0;

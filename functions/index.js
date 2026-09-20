@@ -15,6 +15,11 @@ const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = requir
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
 const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
+const {
+  normalizeNoticeStatus,
+  resolveHolidayNoticeUpdate,
+  resolveHolidaySendOutcome,
+} = require("./holidayNoticeRules.js");
 
 setGlobalOptions({ region: "us-central1" });
 
@@ -746,10 +751,6 @@ function normalizeNoticeAudienceType(value) {
   return value === "class" ? "class" : "all_active";
 }
 
-function normalizeNoticeStatus(value) {
-  return ["not_scheduled", "scheduled", "sent", "failed"].includes(value) ? value : "not_scheduled";
-}
-
 function resolveHolidayName(holiday = {}) {
   return String(holiday.name || holiday.localName || "Holiday").trim() || "Holiday";
 }
@@ -772,6 +773,7 @@ function buildHolidayNoticePayload({ holiday, date, countryCode, noticeConfig, s
     date,
     countryCode,
     holidayName: resolveHolidayName(holiday),
+    schoolClosed: Boolean(holiday.schoolClosed),
     studentMessage: noticeConfig.studentMessage,
     audienceType: noticeConfig.audienceType,
     className: noticeConfig.className,
@@ -810,9 +812,13 @@ async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, not
     const sent = Number(responseJson?.sent || 0);
     const skipped = Number(responseJson?.skipped || 0);
     const failed = Number(responseJson?.failed || 0);
-    const recipientCount = sent;
-    const status = failed > 0 && sent === 0 ? "failed" : "sent";
-    const lastError = status === "failed" ? `Failed: ${failed}; skipped: ${skipped}` : "";
+    const outcome = resolveHolidaySendOutcome({
+      sent,
+      failed,
+      skipped,
+      recipientCount: responseJson?.recipientCount,
+    });
+    const { status, recipientCount, lastError } = outcome;
 
     await docRef.set({
       noticeStatus: status,
@@ -951,37 +957,42 @@ async function updateHolidayHandler(req, res) {
       ? req.body.adminNote
       : (typeof req.body?.notes === "string" ? req.body.notes : "");
     const studentMessage = typeof req.body?.studentMessage === "string" ? req.body.studentMessage : "";
-    const autoSendNotice = req.body?.autoSendNotice === true;
+    const requestedAutoSendNotice = req.body?.autoSendNotice === true;
     const noticeAudienceType = normalizeNoticeAudienceType(req.body?.noticeAudienceType);
     const noticeClassName = noticeAudienceType === "class" ? String(req.body?.noticeClassName || "").trim() : "";
 
     const docRef = db.collection("holidayCalendar").doc(`${countryCode}_${date}`);
     const existingSnap = await docRef.get();
     const existing = existingSnap.exists ? existingSnap.data() : {};
-    const existingStatus = normalizeNoticeStatus(existing?.noticeStatus);
-    const noticeStatus = existingStatus === "sent"
-      ? "sent"
-      : (autoSendNotice ? "scheduled" : "not_scheduled");
+    const noticeRules = resolveHolidayNoticeUpdate({
+      existing,
+      schoolClosed,
+      autoSendNotice: requestedAutoSendNotice,
+    });
 
     const updatePayload = {
       countryCode,
       date,
+      schoolClosed: noticeRules.schoolClosed,
       adminNote,
       studentMessage,
-      autoSendNotice,
+      autoSendNotice: noticeRules.autoSendNotice,
       noticeAudienceType,
       noticeClassName,
-      noticeStatus,
+      noticeStatus: noticeRules.noticeStatus,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    if (typeof schoolClosed === "boolean") {
-      updatePayload.schoolClosed = schoolClosed;
-    }
-
     await docRef.set(updatePayload, { merge: true });
 
-    return res.json({ ok: true, date, countryCode, noticeStatus });
+    return res.json({
+      ok: true,
+      date,
+      countryCode,
+      schoolClosed: noticeRules.schoolClosed,
+      autoSendNotice: noticeRules.autoSendNotice,
+      noticeStatus: noticeRules.noticeStatus,
+    });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
   }
