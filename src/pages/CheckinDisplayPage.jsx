@@ -218,6 +218,8 @@ export default function CheckinDisplayPage() {
   const [actualStartedAt, setActualStartedAt] = useState(null);
   const [delayUntil, setDelayUntil] = useState(null);
   const classStartStopTimerRef = useRef(null);
+  const musicStartGenerationRef = useRef(0);
+  const classStartedRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -283,6 +285,7 @@ export default function CheckinDisplayPage() {
 
   useEffect(() => {
     const saved = readClassStartDecision(startDecisionStorageKey);
+    classStartedRef.current = Boolean(saved.actualStartedAt);
     setActualStartedAt(saved.actualStartedAt);
     setDelayUntil(saved.delayUntil);
   }, [startDecisionStorageKey]);
@@ -392,6 +395,7 @@ export default function CheckinDisplayPage() {
   }, [actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
   const stopWaitingMusic = useCallback(() => {
+    musicStartGenerationRef.current += 1;
     if (musicTimerRef.current) {
       window.clearInterval(musicTimerRef.current);
       musicTimerRef.current = null;
@@ -410,7 +414,9 @@ export default function CheckinDisplayPage() {
   }, []);
 
   const startWaitingMusic = useCallback(async () => {
-    if (musicPlaying) return;
+    if (musicPlaying || classStartedRef.current) return;
+    const startGeneration = musicStartGenerationRef.current + 1;
+    musicStartGenerationRef.current = startGeneration;
     setMusicError("");
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -443,6 +449,11 @@ export default function CheckinDisplayPage() {
       }
       if (context.state !== "running") {
         throw new Error("Audio is blocked by this browser. Raise the device media volume, turn off silent mode, and tap Start again.");
+      }
+
+      if (musicStartGenerationRef.current !== startGeneration || classStartedRef.current) {
+        if (context.state !== "closed") context.close().catch(() => {});
+        return;
       }
 
       const playNextBar = () => {
@@ -513,7 +524,9 @@ export default function CheckinDisplayPage() {
 
   const handleStartClassNow = useCallback(() => {
     if (actualStartedAt) return;
-    const startedAt = Date.now();
+    const startedAt = nowMs;
+    classStartedRef.current = true;
+    musicStartGenerationRef.current += 1;
     setActualStartedAt(startedAt);
     setDelayUntil(null);
     writeClassStartDecision(startDecisionStorageKey, {
@@ -523,7 +536,14 @@ export default function CheckinDisplayPage() {
 
     const context = audioContextRef.current;
     const masterGain = musicGainRef.current;
-    if (!musicPlaying || !context || !masterGain || context.state === "closed") return;
+    if (!context || !masterGain || context.state === "closed") {
+      stopWaitingMusic();
+      return;
+    }
+    if (!musicPlaying) {
+      stopWaitingMusic();
+      return;
+    }
 
     scheduleStartChime(context, masterGain);
     masterGain.gain.setTargetAtTime(
@@ -536,7 +556,7 @@ export default function CheckinDisplayPage() {
       stopWaitingMusic();
       classStartStopTimerRef.current = null;
     }, 1700);
-  }, [actualStartedAt, musicPlaying, musicVolume, startDecisionStorageKey, stopWaitingMusic]);
+  }, [actualStartedAt, musicPlaying, musicVolume, nowMs, startDecisionStorageKey, stopWaitingMusic]);
 
   useEffect(() => () => {
     if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
