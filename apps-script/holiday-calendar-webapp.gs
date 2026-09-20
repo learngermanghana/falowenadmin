@@ -17,6 +17,14 @@
 const DEFAULT_HOLIDAYS_SHEET_NAME = 'Holidays';
 const DEFAULT_STUDENTS_SHEET_NAME = 'Students';
 const DEFAULT_FROM_NAME = 'Learn Language Education Academy';
+const HOLIDAY_NOTICE_PROTOCOL_VERSION = 'holiday-notice-v3';
+const HOLIDAY_NOTICE_CAPABILITIES = [
+  'health',
+  'preview',
+  'recipient_count',
+  'send',
+  'subject_mode',
+];
 
 function doPost(e) {
   try {
@@ -24,7 +32,9 @@ function doPost(e) {
     assertSecret_(payload.secret);
 
     const action = String(payload.action || '').trim();
+    if (action === 'health') return json_({ ok: true, ...holidayNoticeHealth_() });
     if (action === 'syncHolidays') return json_({ ok: true, ...syncHolidays_(payload) });
+    if (action === 'previewHolidayNotice') return json_({ ok: true, ...previewHolidayNotice_(payload) });
     if (action === 'sendHolidayNotice') return json_({ ok: true, ...sendHolidayNotice_(payload) });
 
     return json_({ ok: false, error: `Unknown action: ${action}` });
@@ -224,7 +234,15 @@ function replaceTokens_(text, values) {
   return output;
 }
 
-function sendHolidayNotice_(payload) {
+function holidayNoticeHealth_() {
+  return {
+    version: HOLIDAY_NOTICE_PROTOCOL_VERSION,
+    capabilities: HOLIDAY_NOTICE_CAPABILITIES.slice(),
+    checkedAt: new Date().toISOString(),
+  };
+}
+
+function holidayNoticeConfig_(payload) {
   const audienceType = normalize_(payload.audienceType || 'all_active') === 'class' ? 'class' : 'all_active';
   const className = audienceType === 'class' ? normalize_(payload.className) : '';
   if (audienceType === 'class' && !className) throw new Error('className is required for class audience');
@@ -234,11 +252,57 @@ function sendHolidayNotice_(payload) {
   const studentMessage = normalize_(payload.studentMessage);
   if (!studentMessage) throw new Error('studentMessage is required');
 
-  const recipients = loadRecipients_(audienceType, className);
-  const fromName = scriptProperty_('FROM_NAME', DEFAULT_FROM_NAME);
   const schoolClosed = payload.schoolClosed === true;
   const subjectPrefix = schoolClosed ? 'No class notice' : 'Holiday update';
   const subject = `${subjectPrefix}: ${holidayName} (${date})`;
+
+  return {
+    audienceType,
+    className,
+    holidayName,
+    date,
+    studentMessage,
+    schoolClosed,
+    subject,
+  };
+}
+
+function renderHolidayNoticeBody_(config, recipient) {
+  return replaceTokens_(config.studentMessage, {
+    student_name: recipient.name,
+    name: recipient.name,
+    class_name: recipient.className || config.className,
+    holiday_name: config.holidayName,
+    holiday_date: config.date,
+    date: config.date,
+  });
+}
+
+function previewHolidayNotice_(payload) {
+  const config = holidayNoticeConfig_(payload);
+  const recipients = loadRecipients_(config.audienceType, config.className);
+  const sampleRecipient = {
+    name: 'Student',
+    className: config.className || 'Your class',
+  };
+
+  return {
+    version: HOLIDAY_NOTICE_PROTOCOL_VERSION,
+    capabilities: HOLIDAY_NOTICE_CAPABILITIES.slice(),
+    recipientCount: recipients.length,
+    subject: config.subject,
+    sampleBody: renderHolidayNoticeBody_(config, sampleRecipient),
+    audienceType: config.audienceType,
+    className: config.className,
+    schoolClosed: config.schoolClosed,
+  };
+}
+
+function sendHolidayNotice_(payload) {
+  const config = holidayNoticeConfig_(payload);
+  const recipients = loadRecipients_(config.audienceType, config.className);
+  const fromName = scriptProperty_('FROM_NAME', DEFAULT_FROM_NAME);
+  const subject = config.subject;
   let sent = 0;
   let failed = 0;
   let skipped = 0;
@@ -246,14 +310,7 @@ function sendHolidayNotice_(payload) {
 
   recipients.forEach((recipient) => {
     try {
-      const body = replaceTokens_(studentMessage, {
-        student_name: recipient.name,
-        name: recipient.name,
-        class_name: recipient.className || className,
-        holiday_name: holidayName,
-        holiday_date: date,
-        date,
-      });
+      const body = renderHolidayNoticeBody_(config, recipient);
       GmailApp.sendEmail(recipient.email, subject, body, { name: fromName });
       sent += 1;
     } catch (error) {
@@ -268,9 +325,11 @@ function sendHolidayNotice_(payload) {
     sent,
     skipped,
     failed,
+    version: HOLIDAY_NOTICE_PROTOCOL_VERSION,
+    subject,
     recipientCount: recipients.length,
     errors,
-    audienceType,
-    className,
+    audienceType: config.audienceType,
+    className: config.className,
   };
 }
