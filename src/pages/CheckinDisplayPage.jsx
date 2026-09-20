@@ -320,7 +320,11 @@ export default function CheckinDisplayPage() {
     classStartedRef.current = Boolean(saved.actualStartedAt);
     setActualStartedAt(saved.actualStartedAt);
     setDelayUntil(saved.delayUntil);
-    setSlideSyncStatus({ state: "idle", message: "" });
+    setSlideSyncStatus(
+      saved.actualStartedAt
+        ? { state: "restored", message: "Class start restored. Shared slide timer was not changed." }
+        : { state: "idle", message: "" },
+    );
   }, [startDecisionStorageKey]);
 
   const checkinUrl = useMemo(() => {
@@ -545,6 +549,20 @@ export default function CheckinDisplayPage() {
 
   const syncPresenterStart = useCallback(async (startedAt) => {
     if (!classId || !Number.isFinite(Number(startedAt))) return;
+    const startMs = Number(startedAt);
+    const sessionDate = /^\d{4}-\d{2}-\d{2}$/.test(String(dateLabel || "").trim())
+      ? String(dateLabel).trim()
+      : presenterLocalDateKey(new Date(startMs));
+    const currentPresenterDate = presenterLocalDateKey();
+
+    if (sessionDate !== currentPresenterDate) {
+      setSlideSyncStatus({
+        state: "skipped-date",
+        message: `Slide timer not started because this attendance session is ${sessionDate}; Presenter sync only runs for today (${currentPresenterDate}).`,
+      });
+      return;
+    }
+
     setSlideSyncStatus({ state: "syncing", message: "Starting slide timer…" });
 
     try {
@@ -562,10 +580,6 @@ export default function CheckinDisplayPage() {
 
       const level = inferClassLevel(klass, assignmentId, classId);
       const durationSeconds = presenterSessionDurationSeconds(level);
-      const startMs = Number(startedAt);
-      const sessionDate = /^\d{4}-\d{2}-\d{2}$/.test(String(dateLabel || "").trim())
-        ? String(dateLabel).trim()
-        : presenterLocalDateKey(new Date(startMs));
 
       setPresenterClassContext({
         classId: String(klass?.classId || classId).trim(),
@@ -610,11 +624,6 @@ export default function CheckinDisplayPage() {
       });
     }
   }, [assignmentId, classId, dateLabel, sessionDisplayLabel, sessionId]);
-
-  useEffect(() => {
-    if (!actualStartedAt || slideSyncStatus.state !== "idle") return;
-    void syncPresenterStart(actualStartedAt);
-  }, [actualStartedAt, slideSyncStatus.state, syncPresenterStart]);
 
   const delayClassStart = useCallback((minutes) => {
     if (actualStartedAt) return;
