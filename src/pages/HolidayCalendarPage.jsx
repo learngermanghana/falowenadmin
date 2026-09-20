@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  getHolidayAppsScriptHealth,
+  getHolidayNoticeHistory,
   getUpcomingHolidays,
   importHolidays,
+  previewHolidayNotice,
   sendHolidayNoticeNow,
   syncHolidaysToSheet,
   updateHoliday,
@@ -21,6 +24,15 @@ function formatNoticeTimestamp(value) {
   if (typeof value.toDate === "function") return value.toDate().toLocaleString();
   if (typeof value.seconds === "number") return new Date(value.seconds * 1000).toLocaleString();
   return String(value);
+}
+
+function holidayPreviewSignature(holiday) {
+  return JSON.stringify({
+    schoolClosed: Boolean(holiday.schoolClosed),
+    studentMessage: holiday.studentMessage || "",
+    noticeAudienceType: holiday.noticeAudienceType === "class" ? "class" : "all_active",
+    noticeClassName: holiday.noticeAudienceType === "class" ? (holiday.noticeClassName || "") : "",
+  });
 }
 
 function formatNoticeStatus(holiday) {
@@ -46,6 +58,14 @@ export default function HolidayCalendarPage() {
   const [syncing, setSyncing] = useState(false);
   const [updatingDate, setUpdatingDate] = useState("");
   const [sendingDate, setSendingDate] = useState("");
+  const [previewingDate, setPreviewingDate] = useState("");
+  const [previewByDate, setPreviewByDate] = useState({});
+  const [selectedPreviewDate, setSelectedPreviewDate] = useState("");
+  const [historyByDate, setHistoryByDate] = useState({});
+  const [historyLoadingDate, setHistoryLoadingDate] = useState("");
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState("");
+  const [appsScriptHealth, setAppsScriptHealth] = useState(null);
+  const [healthChecking, setHealthChecking] = useState(false);
   const [classes, setClasses] = useState([]);
 
   const yearOptions = useMemo(() => [currentYear, currentYear + 1], []);
@@ -66,6 +86,30 @@ export default function HolidayCalendarPage() {
   useEffect(() => {
     loadHolidays(year);
   }, [year]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHealthChecking(true);
+    getHolidayAppsScriptHealth()
+      .then((health) => {
+        if (!cancelled) setAppsScriptHealth(health);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setAppsScriptHealth({
+            healthy: false,
+            error: error.message || "Holiday email service health check failed.",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setHealthChecking(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,8 +190,53 @@ export default function HolidayCalendarPage() {
     }
   }
 
+  async function handlePreview(holiday) {
+    const payload = buildHolidayUpdate(holiday);
+    setPreviewingDate(holiday.date);
+    try {
+      const result = await previewHolidayNotice(holiday.date, {
+        countryCode: holiday.countryCode || "GH",
+        ...payload,
+      });
+      const preview = {
+        ...result,
+        signature: holidayPreviewSignature(holiday),
+      };
+      setPreviewByDate((prev) => ({ ...prev, [holiday.date]: preview }));
+      setSelectedPreviewDate(holiday.date);
+      setStatus(`Preview ready for ${holiday.date}. Recipients: ${result.recipientCount || 0}.`);
+    } catch (error) {
+      setStatus(error.message || "Holiday notice preview failed.");
+    } finally {
+      setPreviewingDate("");
+    }
+  }
+
+  async function handleHistory(holiday) {
+    setHistoryLoadingDate(holiday.date);
+    try {
+      const rows = await getHolidayNoticeHistory(holiday.date, holiday.countryCode || "GH");
+      setHistoryByDate((prev) => ({ ...prev, [holiday.date]: rows }));
+      setSelectedHistoryDate(holiday.date);
+    } catch (error) {
+      setStatus(error.message || "Failed to load notice history.");
+    } finally {
+      setHistoryLoadingDate("");
+    }
+  }
+
   async function handleSendNow(holiday) {
     const payload = buildHolidayUpdate(holiday);
+    const preview = previewByDate[holiday.date];
+    const currentSignature = holidayPreviewSignature(holiday);
+    if (!preview || preview.signature !== currentSignature) {
+      setStatus("Preview this exact message and audience before sending.");
+      return;
+    }
+    if (!Number(preview.recipientCount)) {
+      setStatus("No active recipients are available for this notice.");
+      return;
+    }
     setSendingDate(holiday.date);
     try {
       const result = await sendHolidayNoticeNow(holiday.date, {
@@ -171,6 +260,14 @@ export default function HolidayCalendarPage() {
       } else {
         setStatus(`Holiday notice processed for ${holiday.date}. Sent: ${result.noticeRecipientCount || 0}.`);
       }
+      setPreviewByDate((prev) => {
+        const next = { ...prev };
+        delete next[holiday.date];
+        return next;
+      });
+      getHolidayNoticeHistory(holiday.date, holiday.countryCode || "GH")
+        .then((rows) => setHistoryByDate((prev) => ({ ...prev, [holiday.date]: rows })))
+        .catch(() => {});
     } catch (error) {
       setStatus(error.message || "Notice send failed.");
     } finally {
@@ -202,6 +299,53 @@ export default function HolidayCalendarPage() {
 
       {status ? <p>{status}</p> : null}
 
+      <section style={{ marginBottom: 16, padding: 12, border: "1px solid #dbe3f0", borderRadius: 10, background: "#fff" }}>
+        <strong>Holiday email service:</strong>{" "}
+        {healthChecking
+          ? "Checking..."
+          : appsScriptHealth?.healthy
+            ? `Current (${appsScriptHealth.version})`
+            : `Needs attention${appsScriptHealth?.expectedVersion ? ` — expected ${appsScriptHealth.expectedVersion}` : ""}`}
+        {!healthChecking && appsScriptHealth?.error ? <div style={{ marginTop: 6 }}>{appsScriptHealth.error}</div> : null}
+      </section>
+
+      {selectedPreviewDate && previewByDate[selectedPreviewDate] ? (
+        <section style={{ marginBottom: 16, padding: 14, border: "1px solid #cbd5e1", borderRadius: 10, background: "#fff" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+            <strong>Email preview — {selectedPreviewDate}</strong>
+            <button type="button" onClick={() => setSelectedPreviewDate("")}>Close</button>
+          </div>
+          <div style={{ marginTop: 8 }}><strong>Recipients:</strong> {previewByDate[selectedPreviewDate].recipientCount}</div>
+          <div><strong>Subject:</strong> {previewByDate[selectedPreviewDate].subject}</div>
+          <div><strong>Audience:</strong> {previewByDate[selectedPreviewDate].audienceType === "class" ? previewByDate[selectedPreviewDate].className : "All active students"}</div>
+          <div style={{ marginTop: 8 }}><strong>Sample message:</strong></div>
+          <pre style={{ whiteSpace: "pre-wrap", margin: "6px 0 0", fontFamily: "inherit" }}>{previewByDate[selectedPreviewDate].sampleBody}</pre>
+        </section>
+      ) : null}
+
+      {selectedHistoryDate ? (
+        <section style={{ marginBottom: 16, padding: 14, border: "1px solid #cbd5e1", borderRadius: 10, background: "#fff" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+            <strong>Notice history — {selectedHistoryDate}</strong>
+            <button type="button" onClick={() => setSelectedHistoryDate("")}>Close</button>
+          </div>
+          {(historyByDate[selectedHistoryDate] || []).length ? (
+            <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+              {(historyByDate[selectedHistoryDate] || []).map((entry) => (
+                <div key={entry.id} style={{ borderTop: "1px solid #e5e7eb", paddingTop: 8 }}>
+                  <div><strong>{entry.triggerType === "automatic" ? "Automatic" : "Manual"} · {entry.status}</strong></div>
+                  <div>{entry.createdAt ? formatNoticeTimestamp(entry.createdAt) : ""}</div>
+                  <div>{entry.subject || "No subject recorded"}</div>
+                  <div>Delivered: {Number(entry.deliveredCount || 0)} · Attempted: {Number(entry.attemptedCount || 0)} · Failed: {Number(entry.failedCount || 0)}</div>
+                  {entry.actorEmail ? <div>By: {entry.actorEmail}</div> : null}
+                  {entry.lastError ? <div>Error: {entry.lastError}</div> : null}
+                </div>
+              ))}
+            </div>
+          ) : <div style={{ marginTop: 10 }}>No notice history recorded yet.</div>}
+        </section>
+      ) : null}
+
       <div className="holiday-calendar-table-wrap" style={{ overflowX: "auto" }}>
         <table className="holiday-calendar-table">
           <thead>
@@ -226,6 +370,9 @@ export default function HolidayCalendarPage() {
               const studentMessage = holiday.studentMessage || "";
               const noticeAudienceType = holiday.noticeAudienceType === "class" ? "class" : "all_active";
               const noticeStatus = formatNoticeStatus(holiday);
+              const preview = previewByDate[holiday.date];
+              const previewIsCurrent = Boolean(preview && preview.signature === holidayPreviewSignature(holiday));
+              const previewRecipientCount = previewIsCurrent ? Number(preview.recipientCount || 0) : null;
               return (
                 <tr key={`${holiday.countryCode}_${holiday.date}`}>
                   <td>{holiday.date}</td>
@@ -304,19 +451,33 @@ export default function HolidayCalendarPage() {
                         })}
                       </select>
                     ) : null}
+                    <div style={{ marginTop: 6 }}>
+                      {previewIsCurrent
+                        ? `${previewRecipientCount} recipient${previewRecipientCount === 1 ? "" : "s"} confirmed`
+                        : "Preview required to confirm recipients"}
+                    </div>
                   </td>
                   <td>
-                    <button
-                      type="button"
-                      disabled={sendingDate === holiday.date || updatingDate === holiday.date}
-                      onClick={() => handleSendNow(holiday)}
-                    >
+                    <div style={{ display: "grid", gap: 6 }}>
+                      <button
+                        type="button"
+                        disabled={previewingDate === holiday.date || updatingDate === holiday.date || !studentMessage.trim()}
+                        onClick={() => handlePreview(holiday)}
+                      >
+                        {previewingDate === holiday.date ? "Previewing..." : previewIsCurrent ? "Refresh preview" : "Preview email"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={sendingDate === holiday.date || updatingDate === holiday.date || !previewIsCurrent || previewRecipientCount <= 0}
+                        onClick={() => handleSendNow(holiday)}
+                      >
                       {sendingDate === holiday.date
                         ? "Sending..."
                         : holiday.schoolClosed
                           ? "Send no-class notice now"
                           : "Send holiday update now"}
-                    </button>
+                      </button>
+                    </div>
                   </td>
                   <td>
                     <div>{noticeStatus}</div>
@@ -332,6 +493,14 @@ export default function HolidayCalendarPage() {
                     ) : null}
                     {holiday.noticeSentAt ? <div>Last sent: {formatNoticeTimestamp(holiday.noticeSentAt)}</div> : null}
                     {holiday.noticeLastError ? <div>Error: {holiday.noticeLastError}</div> : null}
+                    <button
+                      type="button"
+                      style={{ marginTop: 6 }}
+                      disabled={historyLoadingDate === holiday.date}
+                      onClick={() => handleHistory(holiday)}
+                    >
+                      {historyLoadingDate === holiday.date ? "Loading history..." : "View history"}
+                    </button>
                   </td>
                 </tr>
               );
