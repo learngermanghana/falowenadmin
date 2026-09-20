@@ -470,8 +470,8 @@ export default function LiveClassesPageV2() {
     }
 
     return (
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="live-class-session-table-wrap" style={{ overflowX: "auto" }}>
+        <table className="live-class-sessions-table" style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th>Ghana date and time</th><th>Status</th><th>Topic</th><th>Complete dictionary selection</th><th>Actions</th></tr></thead>
           <tbody>
             {sessions.map((session) => {
@@ -480,14 +480,14 @@ export default function LiveClassesPageV2() {
               const changeLocked = status === "completed";
               return [
                 <tr key={session.id} style={{ borderTop: "1px solid #e5e7eb", verticalAlign: "top" }}>
-                  <td style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
-                  <td style={{ padding: 8 }}>
+                  <td data-label="Ghana date and time" style={{ padding: 8 }}>{formatDateTime(session.startsAt)}<br /><small>to {formatDateTime(session.endsAt)}</small></td>
+                  <td data-label="Status" style={{ padding: 8 }}>
                     <span style={{ ...statusStyle(status), padding: "4px 8px", borderRadius: 999, fontWeight: 700 }}>{status}</span>
                     {status === "cancelled" && session.cancellationReason ? <small style={{ display: "block", marginTop: 6, color: "#991b1b" }}>{session.cancellationReason}</small> : null}
                     {status === "scheduled" && session.rescheduleReason ? <small style={{ display: "block", marginTop: 6, color: "#475569" }}>Moved: {session.rescheduleReason}</small> : null}
                   </td>
-                  <td style={{ padding: 8 }}>{session.topic || "No topic"}</td>
-                  <td style={{ padding: 8, minWidth: 350 }}>
+                  <td data-label="Topic" style={{ padding: 8 }}>{session.topic || "No topic"}</td>
+                  <td data-label="Dictionary selection" style={{ padding: 8, minWidth: 350 }}>
                     <SessionDictionaryPicker
                       entries={dictionaryEntries}
                       assignmentIds={curriculumIds(session)}
@@ -495,7 +495,7 @@ export default function LiveClassesPageV2() {
                       onChange={(nextIds) => saveDictionarySelection(session, nextIds)}
                     />
                   </td>
-                  <td style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <td data-label="Actions" style={{ padding: 8 }}><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Link to={`/attendance/session/${dashboard.klass.id || selectedClassId}?session=${encodeURIComponent(session.id)}`}>Attendance</Link>
                     <button type="button" disabled={busy || contentLocked} onClick={() => handleSessionAction(session, "topic")}>Topic</button>
                     <button type="button" disabled={busy || changeLocked} onClick={() => openSessionChange(session)}>{sessionChange?.sessionId === session.id ? "Changing…" : status === "cancelled" ? "Move / reactivate" : "Change session"}</button>
@@ -503,7 +503,7 @@ export default function LiveClassesPageV2() {
                   </div></td>
                 </tr>,
                 sessionChange?.sessionId === session.id ? (
-                  <tr key={`${session.id}-change`}>
+                  <tr key={`${session.id}-change`} className="live-class-session-change-row">
                     <td colSpan={5} style={{ padding: "0 8px 12px" }}>{renderSessionChangeForm(session)}</td>
                   </tr>
                 ) : null,
