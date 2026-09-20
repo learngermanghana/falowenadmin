@@ -6,7 +6,11 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const { normalizeNoticeStatus, resolveHolidayNoticeUpdate } = require("../functions/holidayNoticeRules.js");
+const {
+  normalizeNoticeStatus,
+  resolveHolidayNoticeUpdate,
+  resolveHolidaySendOutcome,
+} = require("../functions/holidayNoticeRules.js");
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("closed holiday can be scheduled automatically", () => {
@@ -44,6 +48,25 @@ test("sent status remains historical when closure settings change", () => {
 
 test("no recipients is a supported notice status", () => {
   assert.equal(normalizeNoticeStatus("no_recipients"), "no_recipients");
+  assert.deepEqual(
+    resolveHolidaySendOutcome({ sent: 0, failed: 0, skipped: 1, recipientCount: 0 }),
+    {
+      status: "no_recipients",
+      recipientCount: 0,
+      lastError: "No active recipients found for this audience.",
+    },
+  );
+});
+
+test("failed and partial sends produce useful status details", () => {
+  assert.deepEqual(
+    resolveHolidaySendOutcome({ sent: 0, failed: 3, skipped: 0, recipientCount: 3 }),
+    { status: "failed", recipientCount: 3, lastError: "Failed: 3; skipped: 0" },
+  );
+  assert.deepEqual(
+    resolveHolidaySendOutcome({ sent: 4, failed: 1, skipped: 0, recipientCount: 5 }),
+    { status: "sent", recipientCount: 5, lastError: "Partial send: 1 failed; 4 sent." },
+  );
 });
 
 test("manual email subject distinguishes closure from holiday update", () => {
