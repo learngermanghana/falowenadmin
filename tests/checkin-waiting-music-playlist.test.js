@@ -331,12 +331,19 @@ test("check-in exposes session status and records class end duration", () => {
   assert.match(page, /actualEndedAt/);
 });
 
-test("every class-start action reads shared state before deciding whether to write", () => {
+test("initial presenter start is atomic and preserves the transaction winner", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
-  const readIndex = page.indexOf("await readPresenterLiveSession(classRecordId, sessionKey)");
-  const writeIndex = page.indexOf("await startPresenterLiveSession(classRecordId, sessionKey, livePatch)");
-  assert.ok(readIndex >= 0 && writeIndex > readIndex, "shared session must be read before any start write");
-  assert.doesNotMatch(page.slice(Math.max(0, readIndex - 120), readIndex), /if \(manual\)/);
+  const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
+
+  assert.match(service, /runTransaction/);
+  assert.match(service, /const snapshot = await transaction\.get\(classRef\);/);
+  assert.match(service, /if \(existing\.sessionKey === key && existingStart > 0\)/);
+  assert.match(service, /created: false/);
+  assert.match(service, /transaction\.update\(classRef/);
+  assert.doesNotMatch(service, /await updateDoc\(doc\(db, "classes", id\), \{\s*presenterActiveSessionKey/);
+
+  assert.match(page, /const startResult = await startPresenterLiveSession\(classRecordId, sessionKey, livePatch\);/);
+  assert.match(page, /if \(!startResult\.created\)/);
   assert.match(page, /This class session is already ended\. Shared state was preserved\./);
   assert.match(page, /This class session was already started on another display\. Existing timer state was preserved\./);
 });
@@ -370,4 +377,17 @@ test("restored local class end keeps an explicit manual end-sync recovery path",
 test("ended class timing reacts when a shared end arrives later", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   assert.match(page, /\[actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime\]/);
+});
+
+
+test("check-in ignores presenter snapshots from the previous URL session", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /sessionKey !== String\(linkPresenterSessionKey \|\| ""\)/);
+  assert.match(page, /const targetSessionKey = String\(presenterTarget\.sessionKey \|\| ""\);/);
+  assert.match(page, /const currentSessionKey = String\(linkPresenterSessionKey \|\| ""\);/);
+  assert.match(page, /if \(!targetSessionKey \|\| targetSessionKey !== currentSessionKey\) return;/);
+  assert.match(page, /String\(presenterLiveState\.sessionKey \|\| ""\) !== targetSessionKey/);
+  assert.match(page, /setPresenterTarget\(\(current\) =>/);
+  assert.match(page, /setPresenterLiveState\(\(current\) =>/);
 });
