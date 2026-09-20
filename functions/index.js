@@ -1016,100 +1016,102 @@ async function sendHolidayNoticeForDoc({
     studentMessage: noticeConfig.studentMessage,
   };
 
-  try {
-    const targetResults = [];
-    let sent = 0;
-    let skipped = 0;
-    let failed = 0;
-    let attemptedCount = 0;
-    const transportErrors = [];
-    let subject = fallbackSubject;
-    let appsScriptVersion = "";
+  const targetResults = [];
+  let sent = 0;
+  let skipped = 0;
+  let failed = 0;
+  let attemptedCount = 0;
+  const transportErrors = [];
+  let subject = fallbackSubject;
+  let appsScriptVersion = "";
 
-    for (const target of targets) {
-      const payload = buildHolidayNoticePayload({
-        holiday,
-        date,
-        countryCode,
-        noticeConfig: target,
-        syncSecret,
-      });
-      try {
-        const responseJson = await callHolidayNoticeAppsScript(payload);
-        const targetSent = Number(responseJson?.sent || 0);
-        const targetSkipped = Number(responseJson?.skipped || 0);
-        const targetFailed = Number(responseJson?.failed || 0);
-        const targetAttempted = Number(responseJson?.recipientCount ?? (targetSent + targetFailed));
-        sent += targetSent;
-        skipped += targetSkipped;
-        failed += targetFailed;
-        attemptedCount += targetAttempted;
-        subject = String(responseJson?.subject || subject);
-        appsScriptVersion = String(responseJson?.version || appsScriptVersion);
-        targetResults.push({
-          className: target.className || "all_active",
-          audienceType: target.audienceType,
-          sent: targetSent,
-          skipped: targetSkipped,
-          failed: targetFailed,
-          attemptedCount: targetAttempted,
-        });
-      } catch (error) {
-        const message = error?.message || "Holiday notice send failed";
-        transportErrors.push(`${target.className || target.audienceType}: ${message}`);
-        targetResults.push({
-          className: target.className || "all_active",
-          audienceType: target.audienceType,
-          sent: 0,
-          skipped: 0,
-          failed: 0,
-          attemptedCount: 0,
-          error: message,
-        });
-      }
-    }
-
-    let outcome;
-    if (transportErrors.length && sent === 0 && attemptedCount === 0) {
-      outcome = {
-        status: "failed",
-        recipientCount: 0,
-        attemptedCount: 0,
-        lastError: transportErrors.join("; "),
-      };
-    } else {
-      outcome = resolveHolidaySendOutcome({
-        sent,
-        failed,
-        skipped,
-        recipientCount: attemptedCount,
-      });
-      if (transportErrors.length) {
-        outcome.lastError = [outcome.lastError, ...transportErrors].filter(Boolean).join("; ");
-      }
-    }
-
-    const { status, recipientCount, lastError } = outcome;
-    const finalAttemptedCount = Number(outcome.attemptedCount || 0);
-    const noticeWasSent = status === "sent" && recipientCount > 0;
-    const targetClasses = targetResults
-      .filter((item) => item.audienceType === "class" && item.className)
-      .map((item) => item.className);
-    const historyId = await writeHolidayNoticeHistory(docRef, {
-      ...historyBase,
-      status,
-      subject,
-      deliveredCount: recipientCount,
-      attemptedCount: finalAttemptedCount,
-      failedCount: failed,
-      skippedCount: skipped,
-      targetClasses,
-      targetResults,
-      lastError,
-      appsScriptVersion,
-      sentAt: noticeWasSent ? admin.firestore.FieldValue.serverTimestamp() : null,
+  for (const target of targets) {
+    const payload = buildHolidayNoticePayload({
+      holiday,
+      date,
+      countryCode,
+      noticeConfig: target,
+      syncSecret,
     });
+    try {
+      const responseJson = await callHolidayNoticeAppsScript(payload);
+      const targetSent = Number(responseJson?.sent || 0);
+      const targetSkipped = Number(responseJson?.skipped || 0);
+      const targetFailed = Number(responseJson?.failed || 0);
+      const targetAttempted = Number(responseJson?.recipientCount ?? (targetSent + targetFailed));
+      sent += targetSent;
+      skipped += targetSkipped;
+      failed += targetFailed;
+      attemptedCount += targetAttempted;
+      subject = String(responseJson?.subject || subject);
+      appsScriptVersion = String(responseJson?.version || appsScriptVersion);
+      targetResults.push({
+        className: target.className || "all_active",
+        audienceType: target.audienceType,
+        sent: targetSent,
+        skipped: targetSkipped,
+        failed: targetFailed,
+        attemptedCount: targetAttempted,
+      });
+    } catch (error) {
+      const message = error?.message || "Holiday notice send failed";
+      transportErrors.push(`${target.className || target.audienceType}: ${message}`);
+      targetResults.push({
+        className: target.className || "all_active",
+        audienceType: target.audienceType,
+        sent: 0,
+        skipped: 0,
+        failed: 0,
+        attemptedCount: 0,
+        error: message,
+      });
+    }
+  }
 
+  let outcome;
+  if (transportErrors.length && sent === 0 && attemptedCount === 0) {
+    outcome = {
+      status: "failed",
+      recipientCount: 0,
+      attemptedCount: 0,
+      lastError: transportErrors.join("; "),
+    };
+  } else {
+    outcome = resolveHolidaySendOutcome({
+      sent,
+      failed,
+      skipped,
+      recipientCount: attemptedCount,
+    });
+    if (transportErrors.length) {
+      outcome.lastError = [outcome.lastError, ...transportErrors].filter(Boolean).join("; ");
+    }
+  }
+
+  const { status, recipientCount, lastError } = outcome;
+  const finalAttemptedCount = Number(outcome.attemptedCount || 0);
+  const noticeWasSent = status === "sent" && recipientCount > 0;
+  const targetClasses = targetResults
+    .filter((item) => item.audienceType === "class" && item.className)
+    .map((item) => item.className);
+
+  const historyId = await writeHolidayNoticeHistory(docRef, {
+    ...historyBase,
+    status,
+    subject,
+    deliveredCount: recipientCount,
+    attemptedCount: finalAttemptedCount,
+    failedCount: failed,
+    skippedCount: skipped,
+    targetClasses,
+    targetResults,
+    lastError,
+    appsScriptVersion,
+    sentAt: noticeWasSent ? admin.firestore.FieldValue.serverTimestamp() : null,
+  });
+
+  let metadataWarning = "";
+  try {
     await docRef.set({
       noticeStatus: status,
       noticeSentAt: noticeWasSent ? admin.firestore.FieldValue.serverTimestamp() : null,
@@ -1124,53 +1126,32 @@ async function sendHolidayNoticeForDoc({
       noticeLastHistoryId: historyId || null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
-
-    return {
-      ok: status === "sent" || status === "no_recipients",
-      noticeStatus: status,
-      noticeRecipientCount: recipientCount,
-      noticeAttemptedCount: finalAttemptedCount,
-      noticeSentAt: noticeWasSent ? new Date().toISOString() : null,
-      noticeLastError: lastError,
-      noticeHistoryId: historyId,
-      subject,
-      targetClasses,
-      targetResults,
-      appsScriptVersion,
-      upstream: { sent, skipped, failed, recipientCount: finalAttemptedCount, targets: targetResults },
-    };
   } catch (error) {
-    const message = error?.message || "Holiday notice send failed";
-    const historyId = await writeHolidayNoticeHistory(docRef, {
-      ...historyBase,
-      status: "failed",
-      subject: fallbackSubject,
-      deliveredCount: 0,
-      attemptedCount: 0,
-      failedCount: 0,
-      skippedCount: 0,
-      targetClasses: [],
-      targetResults: [],
-      lastError: message,
-      appsScriptVersion: String(error?.details?.version || ""),
-      sentAt: null,
+    metadataWarning = error?.message || "Holiday notice status could not be saved.";
+    console.error("holiday_notice_metadata_write_failed", {
+      holidayId: docRef.id,
+      status,
+      deliveredCount: recipientCount,
+      attemptedCount: finalAttemptedCount,
+      message: metadataWarning,
     });
-    await docRef.set({
-      noticeStatus: "failed",
-      noticeLastError: message,
-      noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
-      noticeLastHistoryId: historyId || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-    error.noticeResult = {
-      ok: false,
-      noticeStatus: "failed",
-      noticeLastError: message,
-      noticeHistoryId: historyId,
-      details: error?.details || null,
-    };
-    throw error;
   }
+
+  return {
+    ok: status === "sent" || status === "no_recipients",
+    noticeStatus: status,
+    noticeRecipientCount: recipientCount,
+    noticeAttemptedCount: finalAttemptedCount,
+    noticeSentAt: noticeWasSent ? new Date().toISOString() : null,
+    noticeLastError: lastError,
+    noticeHistoryId: historyId,
+    noticeMetadataWarning: metadataWarning,
+    subject,
+    targetClasses,
+    targetResults,
+    appsScriptVersion,
+    upstream: { sent, skipped, failed, recipientCount: finalAttemptedCount, targets: targetResults },
+  };
 }
 
 app.get("/holidays/upcoming", async (req, res) => {
