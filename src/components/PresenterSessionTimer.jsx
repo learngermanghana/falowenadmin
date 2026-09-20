@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePresenterLiveSession from "../hooks/usePresenterLiveSession.js";
+import {
+  SESSION_MINUTES_BY_LEVEL,
+  presenterSessionMinutes,
+} from "../utils/presenterSessionTiming.js";
 import "./PresenterSessionTimer.css";
 
-export const SESSION_MINUTES_BY_LEVEL = Object.freeze({
-  A1: 60,
-  A2: 90,
-  B1: 90,
-});
+export { SESSION_MINUTES_BY_LEVEL, presenterSessionMinutes };
 
 export const CLASS_WARNING_MINUTES = Object.freeze([30, 15, 10, 5, 0]);
 
@@ -15,10 +15,6 @@ const LAST_CLASS_KEY = "falowen:presenter:last-class";
 
 function normalize(value) {
   return String(value || "").trim();
-}
-
-export function presenterSessionMinutes(level = "") {
-  return SESSION_MINUTES_BY_LEVEL[normalize(level).toUpperCase()] || 0;
 }
 
 function localDateKey(now = new Date()) {
@@ -161,7 +157,7 @@ export default function PresenterSessionTimer({ slide }) {
   useEffect(() => {
     const remote = presenterLive.liveState || {};
     const remoteStamp = Number(remote.timerUpdatedAtMs || 0);
-    if (!presenterLive.hasSnapshot || !presenterLive.isToday || !presenterLive.isRemoteState || !remoteStamp) return;
+    if (!presenterLive.hasSnapshot || !presenterLive.isToday || !remoteStamp) return;
     if (normalize(remote.timerLevel).toUpperCase() !== level) return;
     if (remoteStamp <= lastRemoteTimerStampRef.current) return;
 
@@ -181,7 +177,15 @@ export default function PresenterSessionTimer({ slide }) {
     setRunning(remoteRunning && remoteRemaining > 0);
     setEndAt(remoteRunning && remoteRemaining > 0 ? remoteEndAt : 0);
     setWarnedMilestones(remoteWarned);
-    setNotice(remoteRemaining <= 0 ? "Class time is up." : "Updated from other device");
+    setNotice(
+      remoteRemaining <= 0
+        ? "Class time is up."
+        : presenterLive.isRemoteState
+          ? "Updated from other device"
+          : remote.classStartSource === "checkin"
+            ? "Started from check-in"
+            : "Timer synchronized",
+    );
   }, [presenterLive.liveState?.timerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, level, durationSeconds]);
 
   useEffect(() => {
