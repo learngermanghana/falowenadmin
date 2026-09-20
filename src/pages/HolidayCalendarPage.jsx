@@ -321,7 +321,7 @@ export default function HolidayCalendarPage() {
           </div>
           <div style={{ marginTop: 8 }}><strong>Recipients:</strong> {previewByDate[selectedPreviewDate].recipientCount}</div>
           <div><strong>Subject:</strong> {previewByDate[selectedPreviewDate].subject}</div>
-          <div><strong>Audience:</strong> {previewByDate[selectedPreviewDate].audienceType === "class" ? previewByDate[selectedPreviewDate].className : "All active students"}</div>
+          <div><strong>Audience:</strong> {previewByDate[selectedPreviewDate].audienceSummary || (previewByDate[selectedPreviewDate].audienceType === "class" ? previewByDate[selectedPreviewDate].className : "Students affected on this holiday date")}</div>
           <div style={{ marginTop: 8 }}><strong>Sample message:</strong></div>
           <pre style={{ whiteSpace: "pre-wrap", margin: "6px 0 0", fontFamily: "inherit" }}>{previewByDate[selectedPreviewDate].sampleBody}</pre>
         </section>
@@ -439,7 +439,7 @@ export default function HolidayCalendarPage() {
                         noticeClassName: e.target.value === "class" ? holiday.noticeClassName : "",
                       })}
                     >
-                      <option value="all_active">All active students</option>
+                      <option value="all_active">Students affected on this holiday date</option>
                       <option value="class">Selected class only</option>
                     </select>
                     {noticeAudienceType === "class" ? (
