@@ -16,8 +16,10 @@ const { registerCompletionDocumentRoute } = require("./completionParticipationDo
 const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 const {
+  HOLIDAY_NOTICE_PROTOCOL_VERSION,
   normalizeNoticeStatus,
   resolveHolidayNoticeUpdate,
+  buildHolidayNoticeSubject,
   resolveHolidaySendOutcome,
 } = require("./holidayNoticeRules.js");
 
@@ -766,10 +768,14 @@ function resolveNoticeConfig(source = {}, fallback = {}) {
   };
 }
 
-function buildHolidayNoticePayload({ holiday, date, countryCode, noticeConfig, syncSecret }) {
+function holidayNoticeSyncSecret() {
+  return String(holidaysSyncSecret.value() || process.env.HOLIDAYS_SYNC_SECRET || "").trim();
+}
+
+function buildHolidayNoticePayload({ holiday, date, countryCode, noticeConfig, syncSecret, action = "sendHolidayNotice" }) {
   return {
     secret: syncSecret,
-    action: "sendHolidayNotice",
+    action,
     date,
     countryCode,
     holidayName: resolveHolidayName(holiday),
@@ -801,11 +807,129 @@ async function callHolidayNoticeAppsScript(payload) {
   return responseJson;
 }
 
-async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, noticeConfig }) {
-  const syncSecret = String(holidaysSyncSecret.value() || process.env.HOLIDAYS_SYNC_SECRET || "").trim();
+function timestampToIso(value) {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (typeof value.toDate === "function") return value.toDate().toISOString();
+  if (typeof value.seconds === "number") return new Date(value.seconds * 1000).toISOString();
+  return null;
+}
+
+async function writeHolidayNoticeHistory(docRef, entry = {}) {
+  try {
+    const historyRef = await docRef.collection("noticeHistory").add({
+      ...entry,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return historyRef.id;
+  } catch (error) {
+    console.error("holiday_notice_history_write_failed", {
+      holidayId: docRef.id,
+      message: error?.message || String(error),
+    });
+    return "";
+  }
+}
+
+async function previewHolidayNoticeForDoc({ holiday, date, countryCode, noticeConfig }) {
+  const syncSecret = holidayNoticeSyncSecret();
+  if (!syncSecret) throw new Error("Missing required env var: HOLIDAYS_SYNC_SECRET");
+
+  const payload = buildHolidayNoticePayload({
+    holiday,
+    date,
+    countryCode,
+    noticeConfig,
+    syncSecret,
+    action: "previewHolidayNotice",
+  });
+  const responseJson = await callHolidayNoticeAppsScript(payload);
+
+  return {
+    ok: true,
+    version: String(responseJson?.version || ""),
+    expectedVersion: HOLIDAY_NOTICE_PROTOCOL_VERSION,
+    recipientCount: Number(responseJson?.recipientCount || 0),
+    subject: String(responseJson?.subject || buildHolidayNoticeSubject({
+      schoolClosed: Boolean(holiday.schoolClosed),
+      holidayName: resolveHolidayName(holiday),
+      date,
+    })),
+    sampleBody: String(responseJson?.sampleBody || noticeConfig.studentMessage || ""),
+    audienceType: normalizeNoticeAudienceType(responseJson?.audienceType || noticeConfig.audienceType),
+    className: String(responseJson?.className || noticeConfig.className || ""),
+    schoolClosed: Boolean(holiday.schoolClosed),
+  };
+}
+
+async function holidayAppsScriptHealth() {
+  const syncSecret = holidayNoticeSyncSecret();
+  if (!syncSecret) {
+    return {
+      healthy: false,
+      expectedVersion: HOLIDAY_NOTICE_PROTOCOL_VERSION,
+      version: "",
+      capabilities: [],
+      error: "Missing required env var: HOLIDAYS_SYNC_SECRET",
+    };
+  }
+
+  try {
+    const responseJson = await callHolidayNoticeAppsScript({
+      secret: syncSecret,
+      action: "health",
+    });
+    const version = String(responseJson?.version || "");
+    return {
+      healthy: version === HOLIDAY_NOTICE_PROTOCOL_VERSION,
+      expectedVersion: HOLIDAY_NOTICE_PROTOCOL_VERSION,
+      version,
+      capabilities: Array.isArray(responseJson?.capabilities) ? responseJson.capabilities : [],
+      checkedAt: responseJson?.checkedAt || new Date().toISOString(),
+      error: version === HOLIDAY_NOTICE_PROTOCOL_VERSION ? "" : "Apps Script version does not match the dashboard.",
+    };
+  } catch (error) {
+    return {
+      healthy: false,
+      expectedVersion: HOLIDAY_NOTICE_PROTOCOL_VERSION,
+      version: "",
+      capabilities: [],
+      checkedAt: new Date().toISOString(),
+      error: error?.message || "Holiday Apps Script health check failed",
+    };
+  }
+}
+
+async function sendHolidayNoticeForDoc({
+  docRef,
+  holiday,
+  date,
+  countryCode,
+  noticeConfig,
+  triggerType = "manual",
+  actor = {},
+}) {
+  const syncSecret = holidayNoticeSyncSecret();
   if (!syncSecret) throw new Error("Missing required env var: HOLIDAYS_SYNC_SECRET");
 
   const payload = buildHolidayNoticePayload({ holiday, date, countryCode, noticeConfig, syncSecret });
+  const fallbackSubject = buildHolidayNoticeSubject({
+    schoolClosed: Boolean(holiday.schoolClosed),
+    holidayName: resolveHolidayName(holiday),
+    date,
+  });
+  const historyBase = {
+    date,
+    countryCode,
+    holidayName: resolveHolidayName(holiday),
+    schoolClosed: Boolean(holiday.schoolClosed),
+    triggerType,
+    actorUid: String(actor.uid || (triggerType === "automatic" ? "system" : "")),
+    actorEmail: String(actor.email || (triggerType === "automatic" ? "system" : "")),
+    audienceType: noticeConfig.audienceType,
+    className: noticeConfig.className,
+    studentMessage: noticeConfig.studentMessage,
+  };
 
   try {
     const responseJson = await callHolidayNoticeAppsScript(payload);
@@ -820,6 +944,19 @@ async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, not
     });
     const { status, recipientCount, attemptedCount, lastError } = outcome;
     const noticeWasSent = status === "sent" && recipientCount > 0;
+    const subject = String(responseJson?.subject || fallbackSubject);
+    const historyId = await writeHolidayNoticeHistory(docRef, {
+      ...historyBase,
+      status,
+      subject,
+      deliveredCount: recipientCount,
+      attemptedCount,
+      failedCount: failed,
+      skippedCount: skipped,
+      lastError,
+      appsScriptVersion: String(responseJson?.version || ""),
+      sentAt: noticeWasSent ? admin.firestore.FieldValue.serverTimestamp() : null,
+    });
 
     await docRef.set({
       noticeStatus: status,
@@ -828,6 +965,7 @@ async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, not
       noticeAttemptedCount: attemptedCount,
       noticeLastError: lastError,
       noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      noticeLastHistoryId: historyId || null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
@@ -838,20 +976,37 @@ async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, not
       noticeAttemptedCount: attemptedCount,
       noticeSentAt: noticeWasSent ? new Date().toISOString() : null,
       noticeLastError: lastError,
+      noticeHistoryId: historyId,
+      subject,
+      appsScriptVersion: String(responseJson?.version || ""),
       upstream: responseJson,
     };
   } catch (error) {
     const message = error?.message || "Holiday notice send failed";
+    const historyId = await writeHolidayNoticeHistory(docRef, {
+      ...historyBase,
+      status: "failed",
+      subject: fallbackSubject,
+      deliveredCount: 0,
+      attemptedCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+      lastError: message,
+      appsScriptVersion: String(error?.details?.version || ""),
+      sentAt: null,
+    });
     await docRef.set({
       noticeStatus: "failed",
       noticeLastError: message,
       noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      noticeLastHistoryId: historyId || null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
     error.noticeResult = {
       ok: false,
       noticeStatus: "failed",
       noticeLastError: message,
+      noticeHistoryId: historyId,
       details: error?.details || null,
     };
     throw error;
