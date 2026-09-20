@@ -818,12 +818,14 @@ async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, not
       skipped,
       recipientCount: responseJson?.recipientCount,
     });
-    const { status, recipientCount, lastError } = outcome;
+    const { status, recipientCount, attemptedCount, lastError } = outcome;
+    const noticeWasSent = status === "sent" && recipientCount > 0;
 
     await docRef.set({
       noticeStatus: status,
-      noticeSentAt: status === "sent" ? admin.firestore.FieldValue.serverTimestamp() : null,
+      noticeSentAt: noticeWasSent ? admin.firestore.FieldValue.serverTimestamp() : null,
       noticeRecipientCount: recipientCount,
+      noticeAttemptedCount: attemptedCount,
       noticeLastError: lastError,
       noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -833,7 +835,8 @@ async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, not
       ok: true,
       noticeStatus: status,
       noticeRecipientCount: recipientCount,
-      noticeSentAt: new Date().toISOString(),
+      noticeAttemptedCount: attemptedCount,
+      noticeSentAt: noticeWasSent ? new Date().toISOString() : null,
       noticeLastError: lastError,
       upstream: responseJson,
     };

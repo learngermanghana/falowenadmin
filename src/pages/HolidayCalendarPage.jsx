@@ -159,13 +159,18 @@ export default function HolidayCalendarPage() {
           ? {
             ...item,
             noticeStatus: result.noticeStatus || "sent",
-            noticeSentAt: result.noticeSentAt || item.noticeSentAt,
-            noticeRecipientCount: result.noticeRecipientCount ?? item.noticeRecipientCount,
+            noticeSentAt: result.noticeSentAt ?? null,
+            noticeRecipientCount: result.noticeRecipientCount ?? 0,
+            noticeAttemptedCount: result.noticeAttemptedCount ?? item.noticeAttemptedCount,
             noticeLastError: result.noticeLastError || "",
           }
           : item
       )));
-      setStatus(`Sent holiday notice for ${holiday.date}. Recipients: ${result.noticeRecipientCount || 0}.`);
+      if (result.noticeStatus === "no_recipients") {
+        setStatus(`No active recipients found for ${holiday.date}; no email was sent.`);
+      } else {
+        setStatus(`Holiday notice processed for ${holiday.date}. Sent: ${result.noticeRecipientCount || 0}.`);
+      }
     } catch (error) {
       setStatus(error.message || "Notice send failed.");
     } finally {
@@ -316,7 +321,10 @@ export default function HolidayCalendarPage() {
                   <td>
                     <div>{noticeStatus}</div>
                     {holiday.noticeStatus === "sent" && typeof holiday.noticeRecipientCount === "number" ? (
-                      <div>Recipients: {holiday.noticeRecipientCount}</div>
+                      <div>Delivered: {holiday.noticeRecipientCount}</div>
+                    ) : null}
+                    {typeof holiday.noticeAttemptedCount === "number" && holiday.noticeAttemptedCount > holiday.noticeRecipientCount ? (
+                      <div>Attempted: {holiday.noticeAttemptedCount}</div>
                     ) : null}
                     {holiday.noticeSentAt ? <div>Last sent: {formatNoticeTimestamp(holiday.noticeSentAt)}</div> : null}
                     {holiday.noticeLastError ? <div>Error: {holiday.noticeLastError}</div> : null}
