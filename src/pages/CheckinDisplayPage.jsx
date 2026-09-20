@@ -4,6 +4,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
 import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";
 import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";
+import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
 import { presenterSessionDurationSeconds } from "../utils/presenterSessionTiming.js";
 import { subscribeSessionCheckins } from "../services/attendanceService.js";
 import { listClasses } from "../services/classesService.js";
@@ -24,49 +25,6 @@ const WAITING_PIANO_CHORDS = [
   [98.0, 196.0, 246.94, 293.66],
 ];
 
-function parseSessionDate(dateValue) {
-  const raw = String(dateValue || "").trim();
-  if (!raw) return null;
-
-  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    return {
-      year: Number.parseInt(isoMatch[1], 10),
-      month: Number.parseInt(isoMatch[2], 10),
-      day: Number.parseInt(isoMatch[3], 10),
-    };
-  }
-
-  const direct = new Date(raw);
-  if (!Number.isNaN(direct.getTime())) {
-    return {
-      year: direct.getFullYear(),
-      month: direct.getMonth() + 1,
-      day: direct.getDate(),
-    };
-  }
-
-  const withoutWeekday = raw.replace(/^[A-Za-z]+,\s*/, "");
-  const fallback = new Date(withoutWeekday);
-  if (!Number.isNaN(fallback.getTime())) {
-    return {
-      year: fallback.getFullYear(),
-      month: fallback.getMonth() + 1,
-      day: fallback.getDate(),
-    };
-  }
-
-  return null;
-}
-
-function sessionDateKeyFromLabel(dateValue) {
-  const raw = String(dateValue || "").trim();
-  if (!raw) return "";
-  const parsed = parseSessionDate(raw);
-  if (!parsed) return null;
-  return `${String(parsed.year).padStart(4, "0")}-${String(parsed.month).padStart(2, "0")}-${String(parsed.day).padStart(2, "0")}`;
-}
-
 function formatDisplayTimeLabel(timeText, fallbackDateTimeMs) {
   if (timeText) return timeText;
   if (Number.isFinite(fallbackDateTimeMs)) {
@@ -80,7 +38,7 @@ function formatDisplayTimeLabel(timeText, fallbackDateTimeMs) {
 }
 
 function parseDateTime(dateValue, timeValue) {
-  const date = parseSessionDate(dateValue);
+  const date = parseCheckinSessionDate(dateValue);
   const time = String(timeValue || "").trim();
   if (!date || !/^\d{2}:\d{2}$/.test(time)) return null;
 
@@ -559,7 +517,7 @@ export default function CheckinDisplayPage() {
     if (!classId || !Number.isFinite(Number(startedAt))) return;
     const startMs = Number(startedAt);
     const rawSessionDate = String(dateLabel || "").trim();
-    const parsedSessionDate = rawSessionDate ? sessionDateKeyFromLabel(rawSessionDate) : "";
+    const parsedSessionDate = rawSessionDate ? checkinSessionDateKey(rawSessionDate) : "";
     const sessionDate = rawSessionDate
       ? parsedSessionDate
       : presenterLocalDateKey(new Date(startMs));
