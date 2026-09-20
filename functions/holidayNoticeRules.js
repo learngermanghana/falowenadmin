@@ -29,7 +29,37 @@ function resolveHolidayNoticeUpdate({ existing = {}, schoolClosed, autoSendNotic
   };
 }
 
+function resolveHolidaySendOutcome({ sent = 0, failed = 0, skipped = 0, recipientCount } = {}) {
+  const sentCount = Number(sent || 0);
+  const failedCount = Number(failed || 0);
+  const skippedCount = Number(skipped || 0);
+  const recipients = Number(recipientCount ?? sentCount);
+
+  if (recipients === 0) {
+    return {
+      status: "no_recipients",
+      recipientCount: 0,
+      lastError: "No active recipients found for this audience.",
+    };
+  }
+
+  if (failedCount > 0 && sentCount === 0) {
+    return {
+      status: "failed",
+      recipientCount: recipients,
+      lastError: `Failed: ${failedCount}; skipped: ${skippedCount}`,
+    };
+  }
+
+  return {
+    status: "sent",
+    recipientCount: recipients,
+    lastError: failedCount > 0 ? `Partial send: ${failedCount} failed; ${sentCount} sent.` : "",
+  };
+}
+
 module.exports = {
   normalizeNoticeStatus,
   resolveHolidayNoticeUpdate,
+  resolveHolidaySendOutcome,
 };
