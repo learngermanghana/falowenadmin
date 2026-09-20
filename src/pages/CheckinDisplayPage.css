@@ -130,6 +130,12 @@
   color: #155e75;
 }
 
+.checkin-display-timing-waiting {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #9a3412;
+}
+
 .checkin-display-timing-ended {
   background: #fef2f2;
   border-color: #fecaca;
@@ -154,6 +160,74 @@
 .checkin-display-timing-note {
   margin-top: 5px;
   font-size: 13px;
+}
+
+.checkin-display-teacher-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 12px 14px;
+}
+
+.checkin-display-teacher-control-copy {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.checkin-display-teacher-control-copy strong {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.checkin-display-teacher-control-copy span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.checkin-display-teacher-control-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.checkin-display-teacher-control-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  padding: 9px 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.checkin-display-teacher-control-actions button:hover {
+  background: #f1f5f9;
+}
+
+.checkin-display-teacher-control-actions .checkin-display-start-now {
+  border-color: #166534;
+  background: #166534;
+  color: #ffffff;
+}
+
+.checkin-display-teacher-control-actions .checkin-display-start-now:hover {
+  background: #14532d;
+}
+
+.checkin-display-started-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .checkin-display-main-grid {
@@ -534,6 +608,19 @@
 
   .checkin-display-main-grid {
     grid-template-columns: 1fr;
+  }
+
+  .checkin-display-teacher-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .checkin-display-teacher-control-actions {
+    justify-content: stretch;
+  }
+
+  .checkin-display-teacher-control-actions button {
+    flex: 1 1 120px;
   }
 
   .checkin-display-music-main {

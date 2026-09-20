@@ -58,11 +58,36 @@ test("check-in display is a live classroom attendance screen", () => {
   assert.match(service, /onSnapshot\(/);
 });
 
-test("waiting room music fades and stops automatically when class starts", () => {
+test("scheduled start is a soft threshold controlled by the teacher", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
-  assert.match(page, /remainingMs > 60000/);
-  assert.match(page, /fadeFactor/);
+
+  assert.match(page, /Start class now/);
+  assert.match(page, /delayClassStart\(5\)/);
+  assert.match(page, /delayClassStart\(10\)/);
+  assert.match(page, /The class begins only when the teacher presses Start class now/);
+  assert.match(page, /musicVolume \* 0\.35/);
+  assert.match(page, /handleStartClassNow/);
   assert.match(page, /scheduleStartChime\(context, masterGain\)/);
   assert.match(page, /classStartStopTimerRef/);
-  assert.match(page, /stopWaitingMusic\(\)/);
+  assert.doesNotMatch(page, /autoStoppedMusicRef/);
+});
+
+test("teacher delay and actual start survive a projector refresh", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /classStartDecisionStorageKey/);
+  assert.match(page, /readClassStartDecision/);
+  assert.match(page, /writeClassStartDecision/);
+  assert.match(page, /window\.localStorage\.setItem/);
+  assert.match(page, /actualStartedAt/);
+  assert.match(page, /delayUntil/);
+});
+
+test("music can continue after scheduled time until teacher starts class", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /Scheduled start time reached/);
+  assert.match(page, /Waiting-room music can continue quietly/);
+  assert.match(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
+  assert.match(page, /masterGain\.gain\.setTargetAtTime\(\s*Math\.max\(0\.05, musicVolume \* 0\.35\)/);
 });
