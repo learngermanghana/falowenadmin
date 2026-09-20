@@ -28,6 +28,7 @@ function formatNoticeTimestamp(value) {
 
 function holidayPreviewSignature(holiday) {
   return JSON.stringify({
+    holidayName: String(holiday.name || holiday.localName || "Holiday").trim() || "Holiday",
     schoolClosed: Boolean(holiday.schoolClosed),
     studentMessage: holiday.studentMessage || "",
     noticeAudienceType: holiday.noticeAudienceType === "class" ? "class" : "all_active",
