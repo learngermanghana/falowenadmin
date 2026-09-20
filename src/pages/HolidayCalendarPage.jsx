@@ -321,7 +321,11 @@ export default function HolidayCalendarPage() {
                   <td>
                     <div>{noticeStatus}</div>
                     {holiday.noticeStatus === "sent" && typeof holiday.noticeRecipientCount === "number" ? (
-                      <div>Delivered: {holiday.noticeRecipientCount}</div>
+                      typeof holiday.noticeAttemptedCount === "number" ? (
+                        <div>Delivered: {holiday.noticeRecipientCount}</div>
+                      ) : (
+                        <div>Recipients: {holiday.noticeRecipientCount}</div>
+                      )
                     ) : null}
                     {typeof holiday.noticeAttemptedCount === "number" && holiday.noticeAttemptedCount > holiday.noticeRecipientCount ? (
                       <div>Attempted: {holiday.noticeAttemptedCount}</div>
