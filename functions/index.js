@@ -15,7 +15,11 @@ const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = requir
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
 const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
-const { normalizeNoticeStatus, resolveHolidayNoticeUpdate } = require("./holidayNoticeRules.js");
+const {
+  normalizeNoticeStatus,
+  resolveHolidayNoticeUpdate,
+  resolveHolidaySendOutcome,
+} = require("./holidayNoticeRules.js");
 
 setGlobalOptions({ region: "us-central1" });
 
@@ -808,13 +812,13 @@ async function sendHolidayNoticeForDoc({ docRef, holiday, date, countryCode, not
     const sent = Number(responseJson?.sent || 0);
     const skipped = Number(responseJson?.skipped || 0);
     const failed = Number(responseJson?.failed || 0);
-    const recipientCount = Number(responseJson?.recipientCount ?? sent);
-    const status = recipientCount === 0
-      ? "no_recipients"
-      : (failed > 0 && sent === 0 ? "failed" : "sent");
-    const lastError = status === "failed"
-      ? `Failed: ${failed}; skipped: ${skipped}`
-      : (status === "no_recipients" ? "No active recipients found for this audience." : (failed > 0 ? `Partial send: ${failed} failed; ${sent} sent.` : ""));
+    const outcome = resolveHolidaySendOutcome({
+      sent,
+      failed,
+      skipped,
+      recipientCount: responseJson?.recipientCount,
+    });
+    const { status, recipientCount, lastError } = outcome;
 
     await docRef.set({
       noticeStatus: status,
