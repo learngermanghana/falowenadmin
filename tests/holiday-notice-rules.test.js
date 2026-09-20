@@ -92,3 +92,12 @@ test("holiday page treats recipient count as successful deliveries", () => {
   assert.match(holidayPage, /<div>Delivered: \{holiday\.noticeRecipientCount\}<\/div>/);
   assert.match(holidayPage, /noticeSentAt: result\.noticeSentAt \?\? null/);
 });
+
+
+test("holiday page preserves legacy recipient-count semantics", () => {
+  const holidayPage = fs.readFileSync(path.join(root, "src/pages/HolidayCalendarPage.jsx"), "utf8");
+  assert.match(
+    holidayPage,
+    /typeof holiday\.noticeAttemptedCount === "number"[\s\S]*<div>Delivered: \{holiday\.noticeRecipientCount\}<\/div>[\s\S]*<div>Recipients: \{holiday\.noticeRecipientCount\}<\/div>/,
+  );
+});
