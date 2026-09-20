@@ -198,3 +198,19 @@ test("metadata persistence failures do not create false holiday delivery failure
   assert.match(sendBlock, /noticeMetadataWarning: metadataWarning/);
   assert.doesNotMatch(sendBlock, /status:\s*"failed",[\s\S]*deliveredCount:\s*0[\s\S]*noticeResult/);
 });
+
+
+test("holiday admin notes auto-fill blank records without overwriting manual notes", () => {
+  const functionsIndex = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
+  const holidayPage = fs.readFileSync(path.join(root, "src/pages/HolidayCalendarPage.jsx"), "utf8");
+
+  assert.match(functionsIndex, /function buildDefaultHolidayAdminNote/);
+  assert.match(functionsIndex, /School closed for/);
+  assert.match(functionsIndex, /School remains open for/);
+  assert.match(functionsIndex, /existing\?\.adminNoteAuto === true \|\| !existingAdminNote\.trim\(\)/);
+  assert.match(functionsIndex, /adminNoteAuto,/);
+  assert.match(holidayPage, /function buildDefaultAdminNote/);
+  assert.match(holidayPage, /function isAutoAdminNote/);
+  assert.match(holidayPage, /adminNoteAuto: false/);
+  assert.match(holidayPage, /adminNoteAuto: !nextAdminNote\.trim\(\)/);
+});
