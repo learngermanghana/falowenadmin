@@ -35,6 +35,7 @@ replaceOnce(
 
 replaceOnce(
   `  const stopWaitingMusic = useCallback(() => {
+    musicStartGenerationRef.current += 1;
     if (musicTimerRef.current) {
       window.clearInterval(musicTimerRef.current);
       musicTimerRef.current = null;
@@ -52,6 +53,7 @@ replaceOnce(
     setMusicPlaying(false);
   }, []);`,
   `  const stopWaitingMusic = useCallback(() => {
+    musicStartGenerationRef.current += 1;
     const context = audioContextRef.current;
     audioContextRef.current = null;
     musicGainRef.current = null;
