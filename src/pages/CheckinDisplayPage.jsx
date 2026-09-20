@@ -583,7 +583,7 @@ export default function CheckinDisplayPage() {
       value: "Waiting for teacher",
       note: "The class begins only when the teacher presses Start class & slides.",
     };
-  }, [actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
+  }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
   const stopWaitingMusic = useCallback(() => {
     musicStartGenerationRef.current += 1;
