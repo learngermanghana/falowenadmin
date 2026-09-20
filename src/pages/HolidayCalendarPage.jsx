@@ -14,8 +14,22 @@ import OperationsCommunicationPanel from "../components/OperationsCommunicationP
 
 const currentYear = new Date().getFullYear();
 
+function buildDefaultAdminNote(holiday) {
+  const name = String(holiday.name || holiday.localName || "Holiday").trim() || "Holiday";
+  const label = holiday.date ? `${name} (${holiday.date})` : name;
+  return holiday.schoolClosed
+    ? `School closed for ${label}.`
+    : `School remains open for ${label}.`;
+}
+
 function getAdminNote(holiday) {
-  return holiday.adminNote ?? holiday.notes ?? "";
+  const stored = holiday.adminNote ?? holiday.notes ?? "";
+  return String(stored).trim() ? stored : buildDefaultAdminNote(holiday);
+}
+
+function isAutoAdminNote(holiday) {
+  const stored = holiday.adminNote ?? holiday.notes ?? "";
+  return holiday.adminNoteAuto === true || !String(stored).trim();
 }
 
 function formatNoticeTimestamp(value) {
@@ -158,9 +172,13 @@ export default function HolidayCalendarPage() {
 
   function buildHolidayUpdate(holiday, fields = {}) {
     const nextHoliday = { ...holiday, ...fields };
+    const adminNoteAuto = fields.adminNoteAuto === false
+      ? false
+      : (fields.adminNoteAuto === true ? true : isAutoAdminNote(nextHoliday));
     return {
       schoolClosed: Boolean(nextHoliday.schoolClosed),
-      adminNote: getAdminNote(nextHoliday),
+      adminNote: adminNoteAuto ? buildDefaultAdminNote(nextHoliday) : getAdminNote(nextHoliday),
+      adminNoteAuto,
       studentMessage: nextHoliday.studentMessage || "",
       autoSendNotice: Boolean(nextHoliday.autoSendNotice),
       noticeAudienceType: nextHoliday.noticeAudienceType === "class" ? "class" : "all_active",
@@ -182,6 +200,8 @@ export default function HolidayCalendarPage() {
             ...item,
             ...payload,
             schoolClosed: typeof result.schoolClosed === "boolean" ? result.schoolClosed : payload.schoolClosed,
+            adminNote: typeof result.adminNote === "string" ? result.adminNote : payload.adminNote,
+            adminNoteAuto: typeof result.adminNoteAuto === "boolean" ? result.adminNoteAuto : payload.adminNoteAuto,
             autoSendNotice: typeof result.autoSendNotice === "boolean" ? result.autoSendNotice : payload.autoSendNotice,
             noticeStatus: result.noticeStatus || item.noticeStatus,
           }
@@ -407,9 +427,18 @@ export default function HolidayCalendarPage() {
                       placeholder="Admin note"
                       onChange={(e) => {
                         const nextAdminNote = e.target.value;
-                        updateLocalHoliday(holiday.date, { adminNote: nextAdminNote });
+                        updateLocalHoliday(holiday.date, {
+                          adminNote: nextAdminNote,
+                          adminNoteAuto: false,
+                        });
                       }}
-                      onBlur={(e) => handleUpdate(holiday.date, { adminNote: e.target.value })}
+                      onBlur={(e) => {
+                        const nextAdminNote = e.target.value;
+                        handleUpdate(holiday.date, {
+                          adminNote: nextAdminNote,
+                          adminNoteAuto: !nextAdminNote.trim(),
+                        });
+                      }}
                     />
                   </td>
                   <td>
