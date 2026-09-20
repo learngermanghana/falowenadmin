@@ -63,10 +63,10 @@ test("check-in display is a live classroom attendance screen", () => {
 test("scheduled start is a soft threshold controlled by the teacher", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
-  assert.match(page, /Start class now/);
+  assert.match(page, /Start class & slides/);
   assert.match(page, /delayClassStart\(5\)/);
   assert.match(page, /delayClassStart\(10\)/);
-  assert.match(page, /The class begins only when the teacher presses Start class now/);
+  assert.match(page, /The class begins only when the teacher presses Start class & slides/);
   assert.match(page, /musicVolume \* 0\.35/);
   assert.match(page, /handleStartClassNow/);
   assert.match(page, /scheduleStartChime\(context, masterGain\)/);
@@ -215,4 +215,25 @@ import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pi
   assert.equal(upgradedTwice, upgradedOnce);
 
   fs.rmSync(tempRoot, { recursive: true, force: true });
+});
+
+
+test("check-in starts the shared presenter timer from the actual synchronized class start", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
+  const timing = fs.readFileSync(path.join(repoRoot, "src", "utils", "presenterSessionTiming.js"), "utf8");
+
+  assert.match(page, /listClasses\(\)/);
+  assert.match(page, /setPresenterClassContext/);
+  assert.match(page, /publishPresenterLiveSession/);
+  assert.match(page, /classStartedAtMs: startMs/);
+  assert.match(page, /classStartSource: "checkin"/);
+  assert.match(page, /timerEndAt = startMs \+ \(durationSeconds \* 1000\)/);
+  assert.match(page, /timerRunning = true/);
+  assert.match(page, /timerUpdatedAtMs = startMs/);
+  assert.match(page, /Retry slide sync/);
+  assert.match(page, /void syncPresenterStart\(actualStartedAt\)/);
+
+  assert.match(service, /presenterLiveSession\.updatedAt/);
+  assert.match(timing, /presenterSessionDurationSeconds/);
 });
