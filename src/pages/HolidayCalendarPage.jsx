@@ -39,7 +39,11 @@ function formatNoticeStatus(holiday) {
   const status = holiday.noticeStatus || "not_scheduled";
   if (status === "sent") {
     const count = Number(holiday.noticeRecipientCount);
-    return Number.isFinite(count) ? `Sent to ${count} student${count === 1 ? "" : "s"}` : "Sent";
+    if (!Number.isFinite(count)) return "Sent";
+    if (typeof holiday.noticeAttemptedCount === "number") {
+      return `Sent to ${count} student${count === 1 ? "" : "s"}`;
+    }
+    return `Sent · ${count} recipient${count === 1 ? "" : "s"} recorded`;
   }
   if (status === "failed") return "Failed";
   if (status === "no_recipients") return "No recipients";
