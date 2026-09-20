@@ -331,12 +331,14 @@ test("check-in exposes session status and records class end duration", () => {
   assert.match(page, /actualEndedAt/);
 });
 
-test("manual slide retry reads shared state before deciding whether to write", () => {
+test("every class-start action reads shared state before deciding whether to write", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   const readIndex = page.indexOf("await readPresenterLiveSession(classRecordId, sessionKey)");
   const writeIndex = page.indexOf("await startPresenterLiveSession(classRecordId, sessionKey, livePatch)");
-  assert.ok(readIndex >= 0 && writeIndex > readIndex, "manual retry protection must read current shared state before the start write");
-  assert.match(page, /Presenter already has newer timer state\. It was preserved\./);
+  assert.ok(readIndex >= 0 && writeIndex > readIndex, "shared session must be read before any start write");
+  assert.doesNotMatch(page.slice(Math.max(0, readIndex - 120), readIndex), /if \(manual\)/);
+  assert.match(page, /This class session is already ended\. Shared state was preserved\./);
+  assert.match(page, /This class session was already started on another display\. Existing timer state was preserved\./);
 });
 
 test("session-scoped presenter state remains inside the existing class document", () => {
@@ -345,4 +347,27 @@ test("session-scoped presenter state remains inside the existing class document"
   assert.match(service, /presenterActiveSessionKey/);
   assert.match(service, /doc\(db, "classes", id\)/);
   assert.doesNotMatch(service, /collection\(/);
+});
+
+
+test("shared end state applies even after this display already knows the class start", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  assert.doesNotMatch(page, /if \(!sharedStart \|\| actualStartedAt\) return;/);
+  assert.match(page, /const endChanged = Boolean\(sharedEnd && Number\(actualEndedAt \|\| 0\) !== sharedEnd\);/);
+  assert.match(page, /if \(endChanged\) setActualEndedAt\(sharedEnd\);/);
+  assert.match(page, /state: "ended-synced"/);
+});
+
+test("restored local class end keeps an explicit manual end-sync recovery path", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  assert.match(page, /state: "ended-restored"/);
+  assert.match(page, /Use Sync end now if the earlier shared end save failed/);
+  assert.match(page, /slideSyncStatus\.state === "ended-restored"/);
+  assert.match(page, />Sync end now<\/button>/);
+  assert.match(page, /state: "ended-synced", message: "Class end was already synchronized\."/);
+});
+
+test("ended class timing reacts when a shared end arrives later", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  assert.match(page, /\[actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime\]/);
 });

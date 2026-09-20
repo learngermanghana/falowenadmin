@@ -298,7 +298,7 @@ export default function CheckinDisplayPage() {
     setDelayUntil(saved.delayUntil);
     setSlideSyncStatus(
       saved.actualEndedAt
-        ? { state: "ended-restored", message: "Completed class restored. Shared Presenter state was not changed." }
+        ? { state: "ended-restored", message: "Completed class restored locally. Use Sync end now if the earlier shared end save failed." }
         : saved.actualStartedAt
           ? { state: "restored", message: "Class start restored. Shared slide timer was not changed. Use Sync slides now only if the earlier sync failed." }
           : { state: "idle", message: "" },
@@ -415,23 +415,31 @@ export default function CheckinDisplayPage() {
   useEffect(() => {
     if (String(presenterLiveState.sessionKey || "") !== String(presenterTarget.sessionKey || "")) return;
     const sharedStart = Number(presenterLiveState.classStartedAtMs || 0);
-    if (!sharedStart || actualStartedAt) return;
+    if (!sharedStart) return;
 
     const sharedEnd = Number(presenterLiveState.classEndedAtMs || 0);
-    setActualStartedAt(sharedStart);
-    setActualEndedAt(sharedEnd || null);
+    const nextStart = actualStartedAt || sharedStart;
+    const nextEnd = sharedEnd || actualEndedAt || null;
+    const startChanged = !actualStartedAt;
+    const endChanged = Boolean(sharedEnd && Number(actualEndedAt || 0) !== sharedEnd);
+
+    if (!startChanged && !endChanged) return;
+
+    if (startChanged) setActualStartedAt(sharedStart);
+    if (endChanged) setActualEndedAt(sharedEnd);
     classStartedRef.current = true;
     writeClassStartDecision(startDecisionStorageKey, {
-      actualStartedAt: sharedStart,
-      actualEndedAt: sharedEnd || null,
+      actualStartedAt: nextStart,
+      actualEndedAt: nextEnd,
       delayUntil: null,
     });
     setSlideSyncStatus(
       sharedEnd
-        ? { state: "ended-restored", message: "Completed class restored from the shared Presenter session." }
+        ? { state: "ended-synced", message: "Completed class synchronized from the shared Presenter session." }
         : { state: "synced", message: "Class start restored from the shared Presenter session." },
     );
   }, [
+    actualEndedAt,
     actualStartedAt,
     presenterLiveState.classStartedAtMs,
     presenterLiveState.classEndedAtMs,
@@ -575,7 +583,7 @@ export default function CheckinDisplayPage() {
       value: "Waiting for teacher",
       note: "The class begins only when the teacher presses Start class & slides.",
     };
-  }, [actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
+  }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
   const stopWaitingMusic = useCallback(() => {
     musicStartGenerationRef.current += 1;
@@ -737,24 +745,33 @@ export default function CheckinDisplayPage() {
         sessionKey,
       });
 
-      if (manual) {
-        const existing = await readPresenterLiveSession(classRecordId, sessionKey);
-        const shared = existing?.state || {};
-        const isSameSession = String(shared.sessionKey || "") === sessionKey
-          && Number(shared.classStartedAtMs || 0) > 0;
+      const existing = await readPresenterLiveSession(classRecordId, sessionKey);
+      const shared = existing?.state || {};
+      const sharedStart = Number(shared.classStartedAtMs || 0);
+      const sharedEnd = Number(shared.classEndedAtMs || 0);
+      const isSameSession = String(shared.sessionKey || "") === sessionKey && sharedStart > 0;
 
-        if (isSameSession) {
-          const timerStamp = Number(shared.timerUpdatedAtMs || 0);
-          const wasChangedAfterStart = timerStamp > startMs;
-          setPresenterLiveState(shared);
-          setSlideSyncStatus({
-            state: "synced",
-            message: wasChangedAfterStart || shared.classStatus === "ended"
-              ? "Presenter already has newer timer state. It was preserved."
-              : "Slides are already synchronized. Existing timer state was preserved.",
-          });
-          return;
-        }
+      if (isSameSession) {
+        const timerStamp = Number(shared.timerUpdatedAtMs || 0);
+        const wasChangedAfterStart = timerStamp > sharedStart;
+        setPresenterLiveState(shared);
+        setActualStartedAt(sharedStart);
+        setActualEndedAt(sharedEnd || null);
+        classStartedRef.current = true;
+        writeClassStartDecision(startDecisionStorageKey, {
+          actualStartedAt: sharedStart,
+          actualEndedAt: sharedEnd || null,
+          delayUntil: null,
+        });
+        setSlideSyncStatus({
+          state: sharedEnd || shared.classStatus === "ended" ? "ended-synced" : "synced",
+          message: sharedEnd || shared.classStatus === "ended"
+            ? "This class session is already ended. Shared state was preserved."
+            : wasChangedAfterStart || manual
+              ? "Presenter already has shared timer state. It was preserved."
+              : "This class session was already started on another display. Existing timer state was preserved.",
+        });
+        return;
       }
 
       const livePatch = {
@@ -794,7 +811,7 @@ export default function CheckinDisplayPage() {
         message: "Class started, but slide timer sync failed. You can retry here or use Start class on the slide.",
       });
     }
-  }, [assignmentId, classId, dateLabel, resolvePresenterClass, sessionDisplayLabel, sessionId]);
+  }, [assignmentId, classId, dateLabel, resolvePresenterClass, sessionDisplayLabel, sessionId, startDecisionStorageKey]);
 
   const delayClassStart = useCallback((minutes) => {
     if (actualStartedAt) return;
@@ -861,7 +878,7 @@ export default function CheckinDisplayPage() {
       if (String(current.sessionKey || "") === sessionKey && current.classStatus === "ended") {
         setPresenterTarget({ classRecordId, sessionKey });
         setPresenterLiveState(current);
-        setSlideSyncStatus({ state: "ended", message: "Class end was already synchronized." });
+        setSlideSyncStatus({ state: "ended-synced", message: "Class end was already synchronized." });
         return;
       }
 
@@ -890,7 +907,7 @@ export default function CheckinDisplayPage() {
       });
 
       setSlideSyncStatus({
-        state: "ended",
+        state: "ended-synced",
         message: `Class ended and ${formatDuration(durationSeconds * 1000)} of teaching time was recorded.`,
       });
     } catch (error) {
@@ -1021,6 +1038,8 @@ export default function CheckinDisplayPage() {
               <div className="checkin-display-ended-badge">Class ended</div>
               {slideSyncStatus.state === "end-error" ? (
                 <button type="button" onClick={() => syncPresenterEnd(actualEndedAt)}>Retry end sync</button>
+              ) : slideSyncStatus.state === "ended-restored" ? (
+                <button type="button" onClick={() => syncPresenterEnd(actualEndedAt)}>Sync end now</button>
               ) : null}
             </div>
           ) : (
