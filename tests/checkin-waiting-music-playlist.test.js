@@ -174,6 +174,26 @@ import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pi
               aria-label="Waiting room music volume"
 `
 
+  const expectedLegacyAnchors = [
+    '  const [currentMusicTrack, setCurrentMusicTrack] = useState(pianoPlaylist[0]?.title || "Waiting room music");',
+    `  const stopWaitingMusic = useCallback(() => {
+    const context = audioContextRef.current;`,
+    `      await startWaitingMusicPlaylist(context, masterGain, {
+        playlist: pianoPlaylist,`,
+    `  useEffect(() => () => {
+    const context = audioContextRef.current;`,
+    '                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? \`Now playing: \${currentMusicTrack}.\` : ""}',
+    '              aria-label="Waiting room music volume"',
+  ];
+
+  for (const expectedAnchor of expectedLegacyAnchors) {
+    assert.equal(
+      legacyTransformedPage.includes(expectedAnchor),
+      true,
+      `Legacy transformed fixture lost exact whitespace-sensitive anchor: ${expectedAnchor}`,
+    );
+  }
+
   const pagePath = path.join(pagesDir, "CheckinDisplayPage.jsx");
   fs.writeFileSync(pagePath, legacyTransformedPage);
 
