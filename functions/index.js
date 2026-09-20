@@ -831,34 +831,117 @@ async function writeHolidayNoticeHistory(docRef, entry = {}) {
   }
 }
 
+function nextHolidayIsoDate(dateIso = "") {
+  const [year, month, day] = String(dateIso || "").split("-").map(Number);
+  if (!year || !month || !day) return "";
+  return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+}
+
+async function classNameForHolidaySession(session = {}) {
+  const direct = String(session.className || session.class || "").trim();
+  if (direct) return direct;
+
+  const classId = String(session.classId || session.classRecordId || "").trim();
+  if (!classId) return "";
+  const snap = await db.collection("classes").doc(classId).get();
+  if (!snap.exists) return classId;
+  const klass = snap.data() || {};
+  return String(klass.name || klass.className || klass.classId || classId).trim();
+}
+
+async function loadHolidayAffectedClassNames(date) {
+  const start = `${date}T00:00:00.000Z`;
+  const end = `${nextHolidayIsoDate(date)}T00:00:00.000Z`;
+  const snapshot = await db
+    .collection("classSessions")
+    .where("startsAt", ">=", start)
+    .where("startsAt", "<", end)
+    .get();
+
+  const classNames = new Set();
+  for (const docSnap of snapshot.docs) {
+    const session = docSnap.data() || {};
+    const status = String(session.status || "scheduled").toLowerCase();
+    if (["cancelled", "canceled"].includes(status)) continue;
+    const className = await classNameForHolidaySession(session);
+    if (className) classNames.add(className);
+  }
+
+  return [...classNames].sort();
+}
+
+async function buildHolidayNoticeTargets({ date, noticeConfig }) {
+  if (noticeConfig.audienceType === "class") {
+    return noticeConfig.className
+      ? [{ ...noticeConfig, audienceType: "class" }]
+      : [];
+  }
+
+  const affectedClassNames = await loadHolidayAffectedClassNames(date);
+  if (!affectedClassNames.length) {
+    return [{ ...noticeConfig, audienceType: "all_active", className: "" }];
+  }
+
+  return affectedClassNames.map((className) => ({
+    ...noticeConfig,
+    audienceType: "class",
+    className,
+  }));
+}
+
 async function previewHolidayNoticeForDoc({ holiday, date, countryCode, noticeConfig }) {
   const syncSecret = holidayNoticeSyncSecret();
   if (!syncSecret) throw new Error("Missing required env var: HOLIDAYS_SYNC_SECRET");
 
-  const payload = buildHolidayNoticePayload({
-    holiday,
-    date,
-    countryCode,
-    noticeConfig,
-    syncSecret,
-    action: "previewHolidayNotice",
-  });
-  const responseJson = await callHolidayNoticeAppsScript(payload);
+  const targets = await buildHolidayNoticeTargets({ date, noticeConfig });
+  if (!targets.length) throw new Error("No holiday notice audience could be resolved.");
+
+  const previews = [];
+  for (const target of targets) {
+    const payload = buildHolidayNoticePayload({
+      holiday,
+      date,
+      countryCode,
+      noticeConfig: target,
+      syncSecret,
+      action: "previewHolidayNotice",
+    });
+    const responseJson = await callHolidayNoticeAppsScript(payload);
+    previews.push({
+      className: target.className || "all_active",
+      audienceType: target.audienceType,
+      recipientCount: Number(responseJson?.recipientCount || 0),
+      subject: String(responseJson?.subject || ""),
+      sampleBody: String(responseJson?.sampleBody || ""),
+      version: String(responseJson?.version || ""),
+    });
+  }
+
+  const recipientCount = previews.reduce((sum, item) => sum + item.recipientCount, 0);
+  const firstPreview = previews[0] || {};
+  const targetClasses = targets
+    .filter((target) => target.audienceType === "class" && target.className)
+    .map((target) => target.className);
 
   return {
     ok: true,
-    version: String(responseJson?.version || ""),
+    version: firstPreview.version || "",
     expectedVersion: HOLIDAY_NOTICE_PROTOCOL_VERSION,
-    recipientCount: Number(responseJson?.recipientCount || 0),
-    subject: String(responseJson?.subject || buildHolidayNoticeSubject({
+    recipientCount,
+    subject: firstPreview.subject || buildHolidayNoticeSubject({
       schoolClosed: Boolean(holiday.schoolClosed),
       holidayName: resolveHolidayName(holiday),
       date,
-    })),
-    sampleBody: String(responseJson?.sampleBody || noticeConfig.studentMessage || ""),
-    audienceType: normalizeNoticeAudienceType(responseJson?.audienceType || noticeConfig.audienceType),
-    className: String(responseJson?.className || noticeConfig.className || ""),
+    }),
+    sampleBody: firstPreview.sampleBody || noticeConfig.studentMessage || "",
+    audienceType: noticeConfig.audienceType,
+    className: noticeConfig.className,
+    targetClasses,
+    audienceSummary: noticeConfig.audienceType === "class"
+      ? noticeConfig.className
+      : (targetClasses.length ? `Classes on holiday date: ${targetClasses.join(", ")}` : "All active students"),
     schoolClosed: Boolean(holiday.schoolClosed),
+    targets: previews,
   };
 }
 
@@ -912,7 +995,9 @@ async function sendHolidayNoticeForDoc({
   const syncSecret = holidayNoticeSyncSecret();
   if (!syncSecret) throw new Error("Missing required env var: HOLIDAYS_SYNC_SECRET");
 
-  const payload = buildHolidayNoticePayload({ holiday, date, countryCode, noticeConfig, syncSecret });
+  const targets = await buildHolidayNoticeTargets({ date, noticeConfig });
+  if (!targets.length) throw new Error("No holiday notice audience could be resolved.");
+
   const fallbackSubject = buildHolidayNoticeSubject({
     schoolClosed: Boolean(holiday.schoolClosed),
     holidayName: resolveHolidayName(holiday),
@@ -932,29 +1017,96 @@ async function sendHolidayNoticeForDoc({
   };
 
   try {
-    const responseJson = await callHolidayNoticeAppsScript(payload);
-    const sent = Number(responseJson?.sent || 0);
-    const skipped = Number(responseJson?.skipped || 0);
-    const failed = Number(responseJson?.failed || 0);
-    const outcome = resolveHolidaySendOutcome({
-      sent,
-      failed,
-      skipped,
-      recipientCount: responseJson?.recipientCount,
-    });
-    const { status, recipientCount, attemptedCount, lastError } = outcome;
+    const targetResults = [];
+    let sent = 0;
+    let skipped = 0;
+    let failed = 0;
+    let attemptedCount = 0;
+    const transportErrors = [];
+    let subject = fallbackSubject;
+    let appsScriptVersion = "";
+
+    for (const target of targets) {
+      const payload = buildHolidayNoticePayload({
+        holiday,
+        date,
+        countryCode,
+        noticeConfig: target,
+        syncSecret,
+      });
+      try {
+        const responseJson = await callHolidayNoticeAppsScript(payload);
+        const targetSent = Number(responseJson?.sent || 0);
+        const targetSkipped = Number(responseJson?.skipped || 0);
+        const targetFailed = Number(responseJson?.failed || 0);
+        const targetAttempted = Number(responseJson?.recipientCount ?? (targetSent + targetFailed));
+        sent += targetSent;
+        skipped += targetSkipped;
+        failed += targetFailed;
+        attemptedCount += targetAttempted;
+        subject = String(responseJson?.subject || subject);
+        appsScriptVersion = String(responseJson?.version || appsScriptVersion);
+        targetResults.push({
+          className: target.className || "all_active",
+          audienceType: target.audienceType,
+          sent: targetSent,
+          skipped: targetSkipped,
+          failed: targetFailed,
+          attemptedCount: targetAttempted,
+        });
+      } catch (error) {
+        const message = error?.message || "Holiday notice send failed";
+        transportErrors.push(`${target.className || target.audienceType}: ${message}`);
+        targetResults.push({
+          className: target.className || "all_active",
+          audienceType: target.audienceType,
+          sent: 0,
+          skipped: 0,
+          failed: 0,
+          attemptedCount: 0,
+          error: message,
+        });
+      }
+    }
+
+    let outcome;
+    if (transportErrors.length && sent === 0 && attemptedCount === 0) {
+      outcome = {
+        status: "failed",
+        recipientCount: 0,
+        attemptedCount: 0,
+        lastError: transportErrors.join("; "),
+      };
+    } else {
+      outcome = resolveHolidaySendOutcome({
+        sent,
+        failed,
+        skipped,
+        recipientCount: attemptedCount,
+      });
+      if (transportErrors.length) {
+        outcome.lastError = [outcome.lastError, ...transportErrors].filter(Boolean).join("; ");
+      }
+    }
+
+    const { status, recipientCount, lastError } = outcome;
+    const finalAttemptedCount = Number(outcome.attemptedCount || 0);
     const noticeWasSent = status === "sent" && recipientCount > 0;
-    const subject = String(responseJson?.subject || fallbackSubject);
+    const targetClasses = targetResults
+      .filter((item) => item.audienceType === "class" && item.className)
+      .map((item) => item.className);
     const historyId = await writeHolidayNoticeHistory(docRef, {
       ...historyBase,
       status,
       subject,
       deliveredCount: recipientCount,
-      attemptedCount,
+      attemptedCount: finalAttemptedCount,
       failedCount: failed,
       skippedCount: skipped,
+      targetClasses,
+      targetResults,
       lastError,
-      appsScriptVersion: String(responseJson?.version || ""),
+      appsScriptVersion,
       sentAt: noticeWasSent ? admin.firestore.FieldValue.serverTimestamp() : null,
     });
 
@@ -962,7 +1114,11 @@ async function sendHolidayNoticeForDoc({
       noticeStatus: status,
       noticeSentAt: noticeWasSent ? admin.firestore.FieldValue.serverTimestamp() : null,
       noticeRecipientCount: recipientCount,
-      noticeAttemptedCount: attemptedCount,
+      noticeAttemptedCount: finalAttemptedCount,
+      noticeSkippedCount: skipped,
+      noticeFailedCount: failed,
+      noticeTargetClasses: targetClasses,
+      noticeTargetResults: targetResults,
       noticeLastError: lastError,
       noticeLastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
       noticeLastHistoryId: historyId || null,
@@ -970,16 +1126,18 @@ async function sendHolidayNoticeForDoc({
     }, { merge: true });
 
     return {
-      ok: true,
+      ok: status === "sent" || status === "no_recipients",
       noticeStatus: status,
       noticeRecipientCount: recipientCount,
-      noticeAttemptedCount: attemptedCount,
+      noticeAttemptedCount: finalAttemptedCount,
       noticeSentAt: noticeWasSent ? new Date().toISOString() : null,
       noticeLastError: lastError,
       noticeHistoryId: historyId,
       subject,
-      appsScriptVersion: String(responseJson?.version || ""),
-      upstream: responseJson,
+      targetClasses,
+      targetResults,
+      appsScriptVersion,
+      upstream: { sent, skipped, failed, recipientCount: finalAttemptedCount, targets: targetResults },
     };
   } catch (error) {
     const message = error?.message || "Holiday notice send failed";
@@ -991,6 +1149,8 @@ async function sendHolidayNoticeForDoc({
       attemptedCount: 0,
       failedCount: 0,
       skippedCount: 0,
+      targetClasses: [],
+      targetResults: [],
       lastError: message,
       appsScriptVersion: String(error?.details?.version || ""),
       sentAt: null,
