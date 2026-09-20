@@ -232,8 +232,31 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
   assert.match(page, /timerRunning = true/);
   assert.match(page, /timerUpdatedAtMs = startMs/);
   assert.match(page, /Retry slide sync/);
-  assert.match(page, /void syncPresenterStart\(actualStartedAt\)/);
+  assert.match(page, /void syncPresenterStart\(startedAt\)/);
 
   assert.match(service, /presenterLiveSession\.updatedAt/);
   assert.match(timing, /presenterSessionDurationSeconds/);
+});
+
+
+test("refreshing a persisted check-in start does not republish or restart the shared slide timer", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /Class start restored\. Shared slide timer was not changed\./);
+  assert.doesNotMatch(page, /if \(!actualStartedAt \|\| slideSyncStatus\.state !== "idle"\) return;/);
+  assert.doesNotMatch(page, /void syncPresenterStart\(actualStartedAt\);\s*\n\s*}\s*,?\s*\[/);
+  assert.match(page, /void syncPresenterStart\(startedAt\)/);
+});
+
+test("check-in only publishes presenter timer state for today's presenter date", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const currentPresenterDate = presenterLocalDateKey\(\);/);
+  assert.match(page, /if \(sessionDate !== currentPresenterDate\) \{/);
+  assert.match(page, /state: "skipped-date"/);
+  assert.match(page, /Presenter sync only runs for today/);
+
+  const dateGuardIndex = page.indexOf("if (sessionDate !== currentPresenterDate)");
+  const publishIndex = page.indexOf("await publishPresenterLiveSession");
+  assert.ok(dateGuardIndex >= 0 && publishIndex > dateGuardIndex, "date guard must run before Firestore presenter publish");
 });
