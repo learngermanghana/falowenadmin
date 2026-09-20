@@ -62,6 +62,11 @@
     font-variant-numeric: tabular-nums;
   }
 
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td[data-label="Status"] > span,
+  main[data-route="/live-classes"] table.live-class-sessions-table tbody td[data-label="Status"] > small {
+    grid-column: 2;
+  }
+
   main[data-route="/live-classes"] table.live-class-sessions-table tbody td[data-label="Actions"] > div {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
