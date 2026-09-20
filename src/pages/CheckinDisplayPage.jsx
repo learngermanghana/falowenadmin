@@ -161,6 +161,36 @@ function checkinDisplayName(checkin = {}, index = 0) {
   ).trim();
 }
 
+function classStartDecisionStorageKey(classId, sessionId, dateLabel) {
+  const safeClassId = String(classId || "").trim();
+  const safeSessionId = String(sessionId || "").trim();
+  const safeDate = String(dateLabel || "").trim();
+  if (!safeClassId || !safeSessionId) return "";
+  return `falowen-class-start:${safeClassId}:${safeSessionId}:${safeDate || "no-date"}`;
+}
+
+function readClassStartDecision(storageKey) {
+  if (!storageKey) return { actualStartedAt: null, delayUntil: null };
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(storageKey) || "null");
+    return {
+      actualStartedAt: Number.isFinite(Number(saved?.actualStartedAt)) ? Number(saved.actualStartedAt) : null,
+      delayUntil: Number.isFinite(Number(saved?.delayUntil)) ? Number(saved.delayUntil) : null,
+    };
+  } catch {
+    return { actualStartedAt: null, delayUntil: null };
+  }
+}
+
+function writeClassStartDecision(storageKey, value) {
+  if (!storageKey) return;
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(value));
+  } catch {
+    // The waiting screen remains usable when browser storage is unavailable.
+  }
+}
+
 export default function CheckinDisplayPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
@@ -185,8 +215,9 @@ export default function CheckinDisplayPage() {
   const [attendanceError, setAttendanceError] = useState("");
   const [showNames, setShowNames] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [actualStartedAt, setActualStartedAt] = useState(null);
+  const [delayUntil, setDelayUntil] = useState(null);
   const classStartStopTimerRef = useRef(null);
-  const autoStoppedMusicRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -245,6 +276,16 @@ export default function CheckinDisplayPage() {
   const sessionDisplayLabel = hasSessionLabelFromUrl
     ? String(sessionLabel).trim()
     : (scheduleInfo?.sessionDisplayLabel || "");
+  const startDecisionStorageKey = useMemo(
+    () => classStartDecisionStorageKey(classId, sessionId, dateLabel),
+    [classId, sessionId, dateLabel],
+  );
+
+  useEffect(() => {
+    const saved = readClassStartDecision(startDecisionStorageKey);
+    setActualStartedAt(saved.actualStartedAt);
+    setDelayUntil(saved.delayUntil);
+  }, [startDecisionStorageKey]);
 
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
@@ -276,69 +317,79 @@ export default function CheckinDisplayPage() {
   );
 
   const statusInfo = useMemo(() => {
-    const startAt = parseDateTime(dateLabel, startTime);
-    const endAt = parseDateTime(dateLabel, endTime);
+    const scheduledStartAt = parseDateTime(dateLabel, startTime);
 
-    if (endAt && nowMs > endAt) {
-      const endLabel = formatDisplayTimeLabel(endTime, endAt);
+    if (actualStartedAt) {
       return {
-        kind: "ended",
-        title: "Class has ended.",
-        detail: `Class ended at ${endLabel} ${ATTENDANCE_TIME_ZONE_LABEL}. If you still haven't checked in, please do it now for late attendance recording.`,
+        kind: "active",
+        title: "Class is in progress.",
+        detail: `Started at ${formatLiveClockLabel(actualStartedAt)}. Students who are still joining can continue to check in.`,
       };
     }
 
-    if (startAt && nowMs < startAt) {
-      const startLabel = formatDisplayTimeLabel(startTime, startAt);
+    if (scheduledStartAt && nowMs < scheduledStartAt) {
+      const startLabel = formatDisplayTimeLabel(startTime, scheduledStartAt);
       return {
         kind: "before",
-        title: `Hello! Class starts at ${startLabel} ${ATTENDANCE_TIME_ZONE_LABEL}.`,
-        detail: "Kindly check in for your attendance to be recorded while you wait for the meeting to start.",
+        title: `Hello! Class is scheduled for ${startLabel} ${ATTENDANCE_TIME_ZONE_LABEL}.`,
+        detail: "Kindly check in while you wait for the teacher to start the class.",
+      };
+    }
+
+    if (scheduledStartAt) {
+      return {
+        kind: "before",
+        title: "Scheduled start time reached.",
+        detail: delayUntil && nowMs < delayUntil
+          ? `The teacher is allowing more joining time. Planned start is in ${formatDuration(delayUntil - nowMs)}.`
+          : "The teacher has not started the class yet. Waiting-room music can continue quietly.",
       };
     }
 
     return {
-      kind: "active",
-      title: "Class is in progress.",
-      detail: startAt
-        ? `Class started ${formatDuration(nowMs - startAt)} ago. Please check in now if you haven't submitted yet.`
-        : "Please check in now if you haven't submitted yet.",
+      kind: "before",
+      title: "Waiting for the teacher.",
+      detail: "Please check in while you wait for the class to begin.",
     };
-  }, [dateLabel, nowMs, startTime, endTime]);
+  }, [actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
   const classTiming = useMemo(() => {
-    const startAt = parseDateTime(dateLabel, startTime);
-    const endAt = parseDateTime(dateLabel, endTime);
+    const scheduledStartAt = parseDateTime(dateLabel, startTime);
 
-    if (startAt && nowMs < startAt) {
-      return {
-        kind: "before",
-        eyebrow: "Class starts in",
-        value: formatDuration(startAt - nowMs),
-        note: `Starts at ${formatDisplayTimeLabel(startTime, startAt)} ${ATTENDANCE_TIME_ZONE_LABEL}`,
-      };
-    }
-
-    if (startAt && (!endAt || nowMs <= endAt)) {
+    if (actualStartedAt) {
       return {
         kind: "active",
         eyebrow: "Class started",
-        value: `${formatDuration(nowMs - startAt)} ago`,
-        note: "Check-in remains available for students who have not submitted yet.",
+        value: `${formatDuration(nowMs - actualStartedAt)} ago`,
+        note: `Actual start: ${formatLiveClockLabel(actualStartedAt)} ${ATTENDANCE_TIME_ZONE_LABEL}`,
       };
     }
 
-    if (endAt && nowMs > endAt) {
+    if (scheduledStartAt && nowMs < scheduledStartAt) {
       return {
-        kind: "ended",
-        eyebrow: "Class ended",
-        value: `${formatDuration(nowMs - endAt)} ago`,
-        note: `Ended at ${formatDisplayTimeLabel(endTime, endAt)} ${ATTENDANCE_TIME_ZONE_LABEL}`,
+        kind: "before",
+        eyebrow: "Scheduled start in",
+        value: formatDuration(scheduledStartAt - nowMs),
+        note: `Scheduled for ${formatDisplayTimeLabel(startTime, scheduledStartAt)} ${ATTENDANCE_TIME_ZONE_LABEL}`,
       };
     }
 
-    return null;
-  }, [dateLabel, endTime, nowMs, startTime]);
+    if (delayUntil && nowMs < delayUntil) {
+      return {
+        kind: "waiting",
+        eyebrow: "Teacher delayed start",
+        value: formatDuration(delayUntil - nowMs),
+        note: "Waiting for remaining students. Music continues quietly until the teacher starts.",
+      };
+    }
+
+    return {
+      kind: "waiting",
+      eyebrow: scheduledStartAt ? "Scheduled start reached" : "Waiting room",
+      value: "Waiting for teacher",
+      note: "The class begins only when the teacher presses Start class now.",
+    };
+  }, [actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
   const stopWaitingMusic = useCallback(() => {
     if (musicTimerRef.current) {
@@ -361,7 +412,6 @@ export default function CheckinDisplayPage() {
   const startWaitingMusic = useCallback(async () => {
     if (musicPlaying) return;
     setMusicError("");
-    autoStoppedMusicRef.current = false;
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
@@ -395,8 +445,6 @@ export default function CheckinDisplayPage() {
         throw new Error("Audio is blocked by this browser. Raise the device media volume, turn off silent mode, and tap Start again.");
       }
 
-      scheduleStartChime(context, masterGain);
-
       const playNextBar = () => {
         if (context.state !== "running") return;
         const bar = pianoPlaylist[musicChordIndexRef.current % pianoPlaylist.length];
@@ -424,17 +472,18 @@ export default function CheckinDisplayPage() {
   useEffect(() => {
     const context = audioContextRef.current;
     const masterGain = musicGainRef.current;
-    const startAt = parseDateTime(dateLabel, startTime);
-    if (!musicPlaying || !context || !masterGain || !startAt || context.state === "closed") return;
+    const scheduledStartAt = parseDateTime(dateLabel, startTime);
+    if (!musicPlaying || !context || !masterGain || !scheduledStartAt || context.state === "closed") return;
+    if (actualStartedAt) return;
 
-    const remainingMs = startAt - nowMs;
+    const remainingMs = scheduledStartAt - nowMs;
     if (remainingMs > 60000) {
       masterGain.gain.setTargetAtTime(musicVolume, context.currentTime, 0.08);
       return;
     }
 
     if (remainingMs > 0) {
-      const fadeFactor = 0.2 + (0.8 * (remainingMs / 60000));
+      const fadeFactor = 0.35 + (0.65 * (remainingMs / 60000));
       masterGain.gain.setTargetAtTime(
         Math.max(0.05, musicVolume * fadeFactor),
         context.currentTime,
@@ -443,15 +492,51 @@ export default function CheckinDisplayPage() {
       return;
     }
 
-    if (autoStoppedMusicRef.current) return;
-    autoStoppedMusicRef.current = true;
+    masterGain.gain.setTargetAtTime(
+      Math.max(0.05, musicVolume * 0.35),
+      context.currentTime,
+      0.35,
+    );
+  }, [actualStartedAt, dateLabel, musicPlaying, musicVolume, nowMs, startTime]);
+
+  const delayClassStart = useCallback((minutes) => {
+    if (actualStartedAt) return;
+    const scheduledStartAt = parseDateTime(dateLabel, startTime) || nowMs;
+    const base = Math.max(nowMs, scheduledStartAt, Number(delayUntil || 0));
+    const nextDelayUntil = base + (Number(minutes) * 60 * 1000);
+    setDelayUntil(nextDelayUntil);
+    writeClassStartDecision(startDecisionStorageKey, {
+      actualStartedAt: null,
+      delayUntil: nextDelayUntil,
+    });
+  }, [actualStartedAt, dateLabel, delayUntil, nowMs, startDecisionStorageKey, startTime]);
+
+  const handleStartClassNow = useCallback(() => {
+    if (actualStartedAt) return;
+    const startedAt = Date.now();
+    setActualStartedAt(startedAt);
+    setDelayUntil(null);
+    writeClassStartDecision(startDecisionStorageKey, {
+      actualStartedAt: startedAt,
+      delayUntil: null,
+    });
+
+    const context = audioContextRef.current;
+    const masterGain = musicGainRef.current;
+    if (!musicPlaying || !context || !masterGain || context.state === "closed") return;
+
     scheduleStartChime(context, masterGain);
-    masterGain.gain.setTargetAtTime(Math.max(0.08, musicVolume * 0.45), context.currentTime, 0.08);
+    masterGain.gain.setTargetAtTime(
+      Math.max(0.08, musicVolume * 0.45),
+      context.currentTime,
+      0.08,
+    );
+    if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
     classStartStopTimerRef.current = window.setTimeout(() => {
       stopWaitingMusic();
       classStartStopTimerRef.current = null;
     }, 1700);
-  }, [dateLabel, musicPlaying, musicVolume, nowMs, startTime, stopWaitingMusic]);
+  }, [actualStartedAt, musicPlaying, musicVolume, startDecisionStorageKey, stopWaitingMusic]);
 
   useEffect(() => () => {
     if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
@@ -518,6 +603,30 @@ export default function CheckinDisplayPage() {
             <div className="checkin-display-timing-note">{classTiming.note}</div>
           </div>
         ) : null}
+
+        <div className="checkin-display-teacher-controls">
+          <div className="checkin-display-teacher-control-copy">
+            <strong>Teacher start control</strong>
+            <span>
+              {actualStartedAt
+                ? `Class started at ${formatLiveClockLabel(actualStartedAt)}.`
+                : delayUntil && nowMs < delayUntil
+                  ? `Waiting another ${formatDuration(delayUntil - nowMs)} · ${checkedInCount}${expectedTotal ? ` / ${expectedTotal}` : ""} checked in.`
+                  : `${checkedInCount}${expectedTotal ? ` / ${expectedTotal}` : ""} checked in. Start when you are ready.`}
+            </span>
+          </div>
+          {!actualStartedAt ? (
+            <div className="checkin-display-teacher-control-actions">
+              <button type="button" className="checkin-display-start-now" onClick={handleStartClassNow}>
+                Start class now
+              </button>
+              <button type="button" onClick={() => delayClassStart(5)}>+5 min</button>
+              <button type="button" onClick={() => delayClassStart(10)}>+10 min</button>
+            </div>
+          ) : (
+            <div className="checkin-display-started-badge">Class started</div>
+          )}
+        </div>
 
         {hasRequiredParams ? (
           <div className="checkin-display-main-grid">
@@ -597,7 +706,7 @@ export default function CheckinDisplayPage() {
               type="button"
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
-              disabled={!musicPlaying && (classTiming?.kind === "active" || classTiming?.kind === "ended")}
+              disabled={!musicPlaying && Boolean(actualStartedAt)}
             >
               {musicPlaying ? "Stop piano" : "Start piano playlist"}
             </button>
