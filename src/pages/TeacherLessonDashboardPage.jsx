@@ -48,15 +48,22 @@ function formatDateTime(value, timezone = "Africa/Accra") {
   if (!value) return "No scheduled time";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "No scheduled time";
-  return date.toLocaleString("en-GB", {
-    timeZone: timezone,
+
+  const options = {
+    timeZone: timezone || "Africa/Accra",
     weekday: "short",
     day: "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  });
+  };
+
+  try {
+    return date.toLocaleString("en-GB", options);
+  } catch {
+    return date.toLocaleString("en-GB", { ...options, timeZone: "Africa/Accra" });
+  }
 }
 
 function scoreLabel(score) {
@@ -130,32 +137,50 @@ export default function TeacherLessonDashboardPage() {
     let active = true;
     setLoadingLesson(true);
     setError("");
+    setSubmissions([]);
+    setAttendanceAnalytics(null);
 
     (async () => {
       try {
         const classRecord = classes.find((row) => row.id === selectedClassId) || {};
         const className = classNameOf(classRecord);
-        const [nextDashboard, nextStudents, nextSubmissions] = await Promise.all([
+
+        // Load only the data required to open the lesson dashboard first.
+        // Readiness is intentionally deferred because loadSubmissions() scans
+        // multiple Firestore collection shapes plus the score index.
+        const [nextDashboard, nextStudents] = await Promise.all([
           getCompatibleClassDashboard(selectedClassId),
           listStudentsByClass(selectedClassId, { className }),
-          loadSubmissions({ includeMarked: true }),
         ]);
         if (!active) return;
 
         setDashboard(nextDashboard);
         setStudents(nextStudents);
-        setSubmissions(nextSubmissions);
+        setLoadingLesson(false);
 
-        const attendanceResult = await loadClassAttendanceAnalytics({
-          classId: selectedClassId,
-          className: classNameOf(nextDashboard.klass || classRecord),
-          sessions: nextDashboard.sessions,
-          students: nextStudents,
-          klass: nextDashboard.klass,
-        }).catch(() => null);
-
+        // Yield once so the core lesson view can paint before the heavier
+        // readiness/attendance work begins.
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
         if (!active) return;
-        setAttendanceAnalytics(attendanceResult?.analytics || null);
+
+        const [submissionsResult, attendanceResult] = await Promise.allSettled([
+          loadSubmissions({ includeMarked: true }),
+          loadClassAttendanceAnalytics({
+            classId: selectedClassId,
+            className: classNameOf(nextDashboard.klass || classRecord),
+            sessions: nextDashboard.sessions,
+            students: nextStudents,
+            klass: nextDashboard.klass,
+          }),
+        ]);
+        if (!active) return;
+
+        setSubmissions(submissionsResult.status === "fulfilled" ? submissionsResult.value : []);
+        setAttendanceAnalytics(
+          attendanceResult.status === "fulfilled"
+            ? attendanceResult.value?.analytics || null
+            : null,
+        );
       } catch (loadError) {
         if (!active) return;
         setDashboard(null);

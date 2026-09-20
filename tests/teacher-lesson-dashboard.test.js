@@ -100,3 +100,18 @@ test("Teacher Lesson Dashboard route and quick actions stay wired", async () => 
   assert.match(page, /Next question/);
   assert.match(page, /Grammar → Speak → Write → Workbook\/Submit/);
 });
+
+
+test("teacher dashboard opens core lesson before expensive readiness scans", async () => {
+  const fs = await import("node:fs/promises");
+  const page = await fs.readFile(new URL("../src/pages/TeacherLessonDashboardPage.jsx", import.meta.url), "utf8");
+
+  const coreLoad = page.indexOf("getCompatibleClassDashboard(selectedClassId)");
+  const coreReady = page.indexOf("setLoadingLesson(false)", coreLoad);
+  const readinessLoad = page.indexOf("loadSubmissions({ includeMarked: true })", coreLoad);
+
+  assert.ok(coreLoad >= 0);
+  assert.ok(coreReady > coreLoad);
+  assert.ok(readinessLoad > coreReady);
+  assert.match(page, /Promise\.allSettled\(\[/);
+});
