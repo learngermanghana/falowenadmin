@@ -6,6 +6,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { waitingMusicPlaylist } from "../src/data/pianoPlaylist.js";
+import { checkinSessionDateKey } from "../src/utils/checkinSessionDate.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -259,4 +260,30 @@ test("check-in only publishes presenter timer state for today's presenter date",
   const dateGuardIndex = page.indexOf("if (sessionDate !== currentPresenterDate)");
   const publishIndex = page.indexOf("await publishPresenterLiveSession");
   assert.ok(dateGuardIndex >= 0 && publishIndex > dateGuardIndex, "date guard must run before Firestore presenter publish");
+});
+
+
+test("supported human-readable attendance dates normalize before presenter date guarding", () => {
+  assert.equal(checkinSessionDateKey("Tuesday, 10 February 2026"), "2026-02-10");
+  assert.equal(checkinSessionDateKey("2026-09-20"), "2026-09-20");
+  assert.equal(checkinSessionDateKey(""), "");
+  assert.equal(checkinSessionDateKey("not-a-real-date"), null);
+});
+
+test("restored class starts keep a manual slide synchronization path without auto-publishing", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /Use Sync slides now only if the earlier sync failed/);
+  assert.match(page, /slideSyncStatus\.state === "restored"/);
+  assert.match(page, />Sync slides now<\/button>/);
+  assert.doesNotMatch(page, /void syncPresenterStart\(actualStartedAt\);\s*\n\s*}\s*,?\s*\[/);
+});
+
+test("presenter date guard uses normalized supported labels and only falls back when the date is absent", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const rawSessionDate = String\(dateLabel \|\| ""\)\.trim\(\);/);
+  assert.match(page, /const parsedSessionDate = rawSessionDate \? checkinSessionDateKey\(rawSessionDate\) : "";/);
+  assert.match(page, /const sessionDate = rawSessionDate\s*\? parsedSessionDate\s*:\s*presenterLocalDateKey\(new Date\(startMs\)\);/);
+  assert.match(page, /if \(rawSessionDate && !sessionDate\) \{/);
 });
