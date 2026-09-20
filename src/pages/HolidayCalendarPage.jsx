@@ -28,6 +28,7 @@ function formatNoticeTimestamp(value) {
 
 function holidayPreviewSignature(holiday) {
   return JSON.stringify({
+    holidayName: String(holiday.name || holiday.localName || "Holiday").trim() || "Holiday",
     schoolClosed: Boolean(holiday.schoolClosed),
     studentMessage: holiday.studentMessage || "",
     noticeAudienceType: holiday.noticeAudienceType === "class" ? "class" : "all_active",
@@ -259,7 +260,11 @@ export default function HolidayCalendarPage() {
           }
           : item
       )));
-      if (result.noticeStatus === "no_recipients") {
+      if (result.noticeMetadataWarning) {
+        setStatus(
+          `Email delivery completed for ${holiday.date}, but status metadata could not be saved: ${result.noticeMetadataWarning}`
+        );
+      } else if (result.noticeStatus === "no_recipients") {
         setStatus(`No active recipients found for ${holiday.date}; no email was sent.`);
       } else {
         setStatus(`Holiday notice processed for ${holiday.date}. Sent: ${result.noticeRecipientCount || 0}.`);

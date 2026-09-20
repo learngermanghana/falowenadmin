@@ -176,3 +176,25 @@ test("holiday class schedule targeting is source-owned for preview and send", ()
   assert.match(patchScript, /source-owned for both preview and send/);
   assert.match(holidayPage, /Students affected on this holiday date/);
 });
+
+
+test("preview signature changes when the holiday name changes", () => {
+  const holidayPage = fs.readFileSync(path.join(root, "src/pages/HolidayCalendarPage.jsx"), "utf8");
+  const signatureStart = holidayPage.indexOf("function holidayPreviewSignature");
+  const signatureEnd = holidayPage.indexOf("function formatNoticeStatus", signatureStart);
+  const signatureBlock = holidayPage.slice(signatureStart, signatureEnd);
+
+  assert.match(signatureBlock, /holidayName:/);
+  assert.match(signatureBlock, /holiday\.name \|\| holiday\.localName \|\| "Holiday"/);
+});
+
+test("metadata persistence failures do not create false holiday delivery failures", () => {
+  const functionsIndex = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
+  const sendStart = functionsIndex.indexOf("async function sendHolidayNoticeForDoc");
+  const sendEnd = functionsIndex.indexOf('app.get("/holidays/upcoming"', sendStart);
+  const sendBlock = functionsIndex.slice(sendStart, sendEnd);
+
+  assert.match(sendBlock, /holiday_notice_metadata_write_failed/);
+  assert.match(sendBlock, /noticeMetadataWarning: metadataWarning/);
+  assert.doesNotMatch(sendBlock, /status:\s*"failed",[\s\S]*deliveredCount:\s*0[\s\S]*noticeResult/);
+});
