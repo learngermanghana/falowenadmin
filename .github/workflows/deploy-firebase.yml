@@ -86,6 +86,7 @@ jobs:
             node "$script"
           done
           node --check functions/index.js
+          node --check functions/holidayNoticeRules.js
           node --check functions/main.js
           node --check functions/pendingStudentCleanup.js
           node --check functions/classSessionReminderEmails.js
@@ -128,6 +129,7 @@ jobs:
           grep -F 'exports.sendLeadClassStartReminderEmails = createLeadClassStartReminderEmailJob' functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
           grep -F 'exports.sendCourseReviewRequestEmails = createCourseReviewRequestEmailJob' functions/index.js
+          grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js
           grep -F 'exports.trackStudentRegistrationReceived = registrationLifecycleTriggers.registrationReceived' functions/index.js
           grep -F 'exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
@@ -210,7 +212,7 @@ jobs:
             "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:cleanupExpiredPendingStudents"
 
           deploy_group "class scheduled workers" \
-            "functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:autoCompleteClassSessions"
+            "functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:autoCompleteClassSessions,functions:falowenadmin:sendDueHolidayNotices"
 
           deploy_group "attendance event workers" \
             "functions:falowenadmin:queueAttendanceConfirmationFromSession,functions:falowenadmin:queueAttendanceConfirmationFromCheckin,functions:falowenadmin:queueAttendanceConfirmationFromClassSession"
