@@ -1159,11 +1159,82 @@ async function updateHolidayHandler(req, res) {
 app.post("/holidays/:date/update", updateHolidayHandler);
 app.patch("/holidays/:date/update", updateHolidayHandler);
 
+app.get("/holidays/apps-script-health", async (req, res) => {
+  try {
+    await requireAuth(req);
+    const health = await holidayAppsScriptHealth();
+    return res.json(health);
+  } catch (e) {
+    return res.status(401).json({ error: e?.message || "Unauthorized" });
+  }
+});
 
+app.post("/holidays/:date/notice-preview", async (req, res) => {
+  try {
+    await requireAuth(req);
+    const date = String(req.params.date || "").trim();
+    const countryCode = String(req.body?.countryCode || "GH").trim().toUpperCase() || "GH";
+    if (!parseHolidayDateInput(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+
+    const docRef = db.collection("holidayCalendar").doc(`${countryCode}_${date}`);
+    const snap = await docRef.get();
+    if (!snap.exists) return res.status(404).json({ error: "Holiday not found" });
+
+    const holiday = snap.data() || {};
+    const noticeConfig = resolveNoticeConfig(req.body || {}, holiday);
+    if (!noticeConfig.studentMessage.trim()) {
+      return res.status(400).json({ error: "studentMessage is required before previewing a holiday notice" });
+    }
+    if (noticeConfig.audienceType === "class" && !noticeConfig.className) {
+      return res.status(400).json({ error: "className is required when audienceType is class" });
+    }
+
+    const preview = await previewHolidayNoticeForDoc({
+      holiday,
+      date,
+      countryCode,
+      noticeConfig,
+    });
+    return res.json(preview);
+  } catch (e) {
+    return res.status(502).json({ error: e?.message || "Holiday notice preview failed", details: e?.details || null });
+  }
+});
+
+app.get("/holidays/:date/notice-history", async (req, res) => {
+  try {
+    await requireAuth(req);
+    const date = String(req.params.date || "").trim();
+    const countryCode = String(req.query?.countryCode || "GH").trim().toUpperCase() || "GH";
+    if (!parseHolidayDateInput(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+
+    const docRef = db.collection("holidayCalendar").doc(`${countryCode}_${date}`);
+    const snap = await docRef.get();
+    if (!snap.exists) return res.status(404).json({ error: "Holiday not found" });
+
+    const historySnap = await docRef
+      .collection("noticeHistory")
+      .orderBy("createdAt", "desc")
+      .limit(20)
+      .get();
+    const history = historySnap.docs.map((historyDoc) => {
+      const row = historyDoc.data() || {};
+      return {
+        id: historyDoc.id,
+        ...row,
+        createdAt: timestampToIso(row.createdAt),
+        sentAt: timestampToIso(row.sentAt),
+      };
+    });
+    return res.json({ history });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || "Failed to load holiday notice history" });
+  }
+});
 
 app.post("/holidays/:date/send-now", async (req, res) => {
   try {
-    await requireAuth(req);
+    const actor = await requireAuth(req);
 
     const date = String(req.params.date || "").trim();
     const countryCode = String(req.body?.countryCode || "GH").trim().toUpperCase() || "GH";
@@ -1196,6 +1267,11 @@ app.post("/holidays/:date/send-now", async (req, res) => {
       date,
       countryCode,
       noticeConfig,
+      triggerType: "manual",
+      actor: {
+        uid: actor.uid,
+        email: actor.email,
+      },
     });
 
     return res.json(result);
@@ -2120,6 +2196,8 @@ exports.sendDueHolidayNotices = onSchedule({
         date,
         countryCode,
         noticeConfig,
+        triggerType: "automatic",
+        actor: { uid: "system", email: "system" },
       });
       console.log(`${logPrefix} sent: ${result.noticeRecipientCount} recipient(s)`);
     } catch (error) {
