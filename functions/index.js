@@ -757,6 +757,15 @@ function resolveHolidayName(holiday = {}) {
   return String(holiday.name || holiday.localName || "Holiday").trim() || "Holiday";
 }
 
+function buildDefaultHolidayAdminNote({ holidayName, date, schoolClosed } = {}) {
+  const name = String(holidayName || "Holiday").trim() || "Holiday";
+  const holidayDate = String(date || "").trim();
+  const label = holidayDate ? `${name} (${holidayDate})` : name;
+  return schoolClosed
+    ? `School closed for ${label}.`
+    : `School remains open for ${label}.`;
+}
+
 function resolveNoticeConfig(source = {}, fallback = {}) {
   const audienceType = normalizeNoticeAudienceType(source.noticeAudienceType || fallback.noticeAudienceType);
   return {
@@ -1211,16 +1220,32 @@ app.post("/holidays/import", async (req, res) => {
       const existingSnap = await docRef.get();
       const existing = existingSnap.exists ? existingSnap.data() : {};
 
+      const importedName = String(holiday?.name || "").trim();
+      const importedLocalName = String(holiday?.localName || "").trim();
+      const effectiveSchoolClosed = typeof existing?.schoolClosed === "boolean" ? existing.schoolClosed : true;
+      const existingAdminNote = typeof existing?.adminNote === "string"
+        ? existing.adminNote
+        : (typeof existing?.notes === "string" ? existing.notes : "");
+      const adminNoteAuto = existing?.adminNoteAuto === true || !existingAdminNote.trim();
+      const adminNote = adminNoteAuto
+        ? buildDefaultHolidayAdminNote({
+          holidayName: importedName || importedLocalName || "Holiday",
+          date,
+          schoolClosed: effectiveSchoolClosed,
+        })
+        : existingAdminNote;
+
       batch.set(
         docRef,
         {
           countryCode,
           date,
-          localName: String(holiday?.localName || "").trim(),
-          name: String(holiday?.name || "").trim(),
+          localName: importedLocalName,
+          name: importedName,
           types: Array.isArray(holiday?.types) ? holiday.types : [],
-          schoolClosed: typeof existing?.schoolClosed === "boolean" ? existing.schoolClosed : true,
-          adminNote: typeof existing?.adminNote === "string" ? existing.adminNote : (typeof existing?.notes === "string" ? existing.notes : ""),
+          schoolClosed: effectiveSchoolClosed,
+          adminNote,
+          adminNoteAuto,
           studentMessage: typeof existing?.studentMessage === "string" ? existing.studentMessage : "",
           autoSendNotice: typeof existing?.autoSendNotice === "boolean" ? existing.autoSendNotice : false,
           noticeAudienceType: normalizeNoticeAudienceType(existing?.noticeAudienceType),
@@ -1252,9 +1277,10 @@ async function updateHolidayHandler(req, res) {
     if (!parseHolidayDateInput(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
 
     const schoolClosed = req.body?.schoolClosed;
-    const adminNote = typeof req.body?.adminNote === "string"
+    const requestedAdminNote = typeof req.body?.adminNote === "string"
       ? req.body.adminNote
       : (typeof req.body?.notes === "string" ? req.body.notes : "");
+    const requestedAdminNoteAuto = req.body?.adminNoteAuto === true;
     const studentMessage = typeof req.body?.studentMessage === "string" ? req.body.studentMessage : "";
     const requestedAutoSendNotice = req.body?.autoSendNotice === true;
     const noticeAudienceType = normalizeNoticeAudienceType(req.body?.noticeAudienceType);
@@ -1268,12 +1294,21 @@ async function updateHolidayHandler(req, res) {
       schoolClosed,
       autoSendNotice: requestedAutoSendNotice,
     });
+    const adminNoteAuto = requestedAdminNoteAuto || !requestedAdminNote.trim();
+    const adminNote = adminNoteAuto
+      ? buildDefaultHolidayAdminNote({
+        holidayName: resolveHolidayName(existing),
+        date,
+        schoolClosed: noticeRules.schoolClosed,
+      })
+      : requestedAdminNote;
 
     const updatePayload = {
       countryCode,
       date,
       schoolClosed: noticeRules.schoolClosed,
       adminNote,
+      adminNoteAuto,
       studentMessage,
       autoSendNotice: noticeRules.autoSendNotice,
       noticeAudienceType,
@@ -1289,6 +1324,8 @@ async function updateHolidayHandler(req, res) {
       date,
       countryCode,
       schoolClosed: noticeRules.schoolClosed,
+      adminNote,
+      adminNoteAuto,
       autoSendNotice: noticeRules.autoSendNotice,
       noticeStatus: noticeRules.noticeStatus,
     });
