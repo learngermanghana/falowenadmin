@@ -59,6 +59,14 @@ function parseSessionDate(dateValue) {
   return null;
 }
 
+function sessionDateKeyFromLabel(dateValue) {
+  const raw = String(dateValue || "").trim();
+  if (!raw) return "";
+  const parsed = parseSessionDate(raw);
+  if (!parsed) return null;
+  return `${String(parsed.year).padStart(4, "0")}-${String(parsed.month).padStart(2, "0")}-${String(parsed.day).padStart(2, "0")}`;
+}
+
 function formatDisplayTimeLabel(timeText, fallbackDateTimeMs) {
   if (timeText) return timeText;
   if (Number.isFinite(fallbackDateTimeMs)) {
@@ -322,7 +330,7 @@ export default function CheckinDisplayPage() {
     setDelayUntil(saved.delayUntil);
     setSlideSyncStatus(
       saved.actualStartedAt
-        ? { state: "restored", message: "Class start restored. Shared slide timer was not changed." }
+        ? { state: "restored", message: "Class start restored. Shared slide timer was not changed. Use Sync slides now only if the earlier sync failed." }
         : { state: "idle", message: "" },
     );
   }, [startDecisionStorageKey]);
@@ -550,10 +558,20 @@ export default function CheckinDisplayPage() {
   const syncPresenterStart = useCallback(async (startedAt) => {
     if (!classId || !Number.isFinite(Number(startedAt))) return;
     const startMs = Number(startedAt);
-    const sessionDate = /^\d{4}-\d{2}-\d{2}$/.test(String(dateLabel || "").trim())
-      ? String(dateLabel).trim()
+    const rawSessionDate = String(dateLabel || "").trim();
+    const parsedSessionDate = rawSessionDate ? sessionDateKeyFromLabel(rawSessionDate) : "";
+    const sessionDate = rawSessionDate
+      ? parsedSessionDate
       : presenterLocalDateKey(new Date(startMs));
     const currentPresenterDate = presenterLocalDateKey();
+
+    if (rawSessionDate && !sessionDate) {
+      setSlideSyncStatus({
+        state: "skipped-date",
+        message: `Slide timer not started because the attendance date "${rawSessionDate}" could not be parsed safely.`,
+      });
+      return;
+    }
 
     if (sessionDate !== currentPresenterDate) {
       setSlideSyncStatus({
@@ -766,6 +784,8 @@ export default function CheckinDisplayPage() {
               </div>
               {slideSyncStatus.state === "error" ? (
                 <button type="button" onClick={() => syncPresenterStart(actualStartedAt)}>Retry slide sync</button>
+              ) : slideSyncStatus.state === "restored" ? (
+                <button type="button" onClick={() => syncPresenterStart(actualStartedAt)}>Sync slides now</button>
               ) : null}
             </div>
           )}
