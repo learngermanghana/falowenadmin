@@ -77,8 +77,8 @@ function readinessTone(row) {
   return "ready";
 }
 
-function lessonDay(slide = {}) {
-  return Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 0);
+function lessonDay(slide = null) {
+  return Number(slide?.dayNumber || String(slide?.day || "").match(/\d+/)?.[0] || 0);
 }
 
 function quickLinkClass(enabled) {
