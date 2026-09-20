@@ -4,7 +4,14 @@ import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
 import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";
 import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";
+import { presenterSessionDurationSeconds } from "../utils/presenterSessionTiming.js";
 import { subscribeSessionCheckins } from "../services/attendanceService.js";
+import { listClasses } from "../services/classesService.js";
+import {
+  presenterLocalDateKey,
+  publishPresenterLiveSession,
+  setPresenterClassContext,
+} from "../services/presenterLiveSessionService.js";
 import "./CheckinDisplayPage.css";
 
 const ATTENDANCE_UTC_OFFSET_HOURS = 0;
@@ -105,6 +112,30 @@ function formatDuration(ms) {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function normalizeClassLookup(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\bklasse\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function inferClassLevel(klass = {}, ...fallbacks) {
+  const candidates = [
+    klass.levelId,
+    klass.level,
+    klass.courseLevel,
+    klass.languageLevel,
+    ...fallbacks,
+  ];
+  for (const candidate of candidates) {
+    const match = String(candidate || "").toUpperCase().match(/\b(A1|A2|B1|B2|C1|C2)\b/);
+    if (match) return match[1];
+  }
+  return "";
 }
 
 function schedulePianoNote(context, destination, frequency, startsAt, velocity = 1, duration = 3.6) {
@@ -217,6 +248,7 @@ export default function CheckinDisplayPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [actualStartedAt, setActualStartedAt] = useState(null);
   const [delayUntil, setDelayUntil] = useState(null);
+  const [slideSyncStatus, setSlideSyncStatus] = useState({ state: "idle", message: "" });
   const classStartStopTimerRef = useRef(null);
   const musicStartGenerationRef = useRef(0);
   const classStartedRef = useRef(false);
@@ -288,6 +320,7 @@ export default function CheckinDisplayPage() {
     classStartedRef.current = Boolean(saved.actualStartedAt);
     setActualStartedAt(saved.actualStartedAt);
     setDelayUntil(saved.delayUntil);
+    setSlideSyncStatus({ state: "idle", message: "" });
   }, [startDecisionStorageKey]);
 
   const checkinUrl = useMemo(() => {
@@ -390,7 +423,7 @@ export default function CheckinDisplayPage() {
       kind: "waiting",
       eyebrow: scheduledStartAt ? "Scheduled start reached" : "Waiting room",
       value: "Waiting for teacher",
-      note: "The class begins only when the teacher presses Start class now.",
+      note: "The class begins only when the teacher presses Start class & slides.",
     };
   }, [actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
@@ -510,6 +543,79 @@ export default function CheckinDisplayPage() {
     );
   }, [actualStartedAt, dateLabel, musicPlaying, musicVolume, nowMs, startTime]);
 
+  const syncPresenterStart = useCallback(async (startedAt) => {
+    if (!classId || !Number.isFinite(Number(startedAt))) return;
+    setSlideSyncStatus({ state: "syncing", message: "Starting slide timer…" });
+
+    try {
+      const classes = await listClasses();
+      const targetKey = normalizeClassLookup(classId);
+      const klass = classes.find((entry) => [
+        entry?.classId,
+        entry?.name,
+        entry?.id,
+        entry?.classRecordId,
+      ].some((value) => normalizeClassLookup(value) === targetKey));
+
+      const classRecordId = String(klass?.classRecordId || klass?.id || "").trim();
+      if (!classRecordId) throw new Error(`Could not find the Firestore class record for ${classId}.`);
+
+      const level = inferClassLevel(klass, assignmentId, classId);
+      const durationSeconds = presenterSessionDurationSeconds(level);
+      const startMs = Number(startedAt);
+      const sessionDate = /^\d{4}-\d{2}-\d{2}$/.test(String(dateLabel || "").trim())
+        ? String(dateLabel).trim()
+        : presenterLocalDateKey(new Date(startMs));
+
+      setPresenterClassContext({
+        classId: String(klass?.classId || classId).trim(),
+        classRecordId,
+      });
+
+      const livePatch = {
+        sessionDate,
+        level,
+        lessonId: String(assignmentId || sessionId || "").trim(),
+        assignmentId: String(assignmentId || "").trim(),
+        classStartedAtMs: startMs,
+        classStartSessionId: String(sessionId || "").trim(),
+        classStartLabel: String(sessionDisplayLabel || "").trim(),
+        classStartSource: "checkin",
+        classStartUpdatedAtMs: startMs,
+      };
+
+      if (durationSeconds > 0) {
+        livePatch.timerLevel = level;
+        livePatch.timerDurationSeconds = durationSeconds;
+        livePatch.timerRunning = true;
+        livePatch.timerEndAt = startMs + (durationSeconds * 1000);
+        livePatch.timerRemaining = durationSeconds;
+        livePatch.timerWarned = [];
+        livePatch.timerExpired = false;
+        livePatch.timerUpdatedAtMs = startMs;
+      }
+
+      await publishPresenterLiveSession(classRecordId, livePatch);
+
+      setSlideSyncStatus(
+        durationSeconds > 0
+          ? { state: "synced", message: "Slides timer started automatically." }
+          : { state: "started-only", message: level ? `Slides notified; no automatic timer preset is configured for ${level}.` : "Slides notified; class level could not be identified for an automatic timer." },
+      );
+    } catch (error) {
+      console.error("check-in presenter start sync failed", error);
+      setSlideSyncStatus({
+        state: "error",
+        message: "Class started, but slide timer sync failed. You can retry here or use Start class on the slide.",
+      });
+    }
+  }, [assignmentId, classId, dateLabel, sessionDisplayLabel, sessionId]);
+
+  useEffect(() => {
+    if (!actualStartedAt || slideSyncStatus.state !== "idle") return;
+    void syncPresenterStart(actualStartedAt);
+  }, [actualStartedAt, slideSyncStatus.state, syncPresenterStart]);
+
   const delayClassStart = useCallback((minutes) => {
     if (actualStartedAt) return;
     const scheduledStartAt = parseDateTime(dateLabel, startTime) || nowMs;
@@ -533,6 +639,7 @@ export default function CheckinDisplayPage() {
       actualStartedAt: startedAt,
       delayUntil: null,
     });
+    void syncPresenterStart(startedAt);
 
     const context = audioContextRef.current;
     const masterGain = musicGainRef.current;
@@ -556,7 +663,7 @@ export default function CheckinDisplayPage() {
       stopWaitingMusic();
       classStartStopTimerRef.current = null;
     }, 1700);
-  }, [actualStartedAt, musicPlaying, musicVolume, nowMs, startDecisionStorageKey, stopWaitingMusic]);
+  }, [actualStartedAt, musicPlaying, musicVolume, nowMs, startDecisionStorageKey, stopWaitingMusic, syncPresenterStart]);
 
   useEffect(() => () => {
     if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
@@ -629,7 +736,7 @@ export default function CheckinDisplayPage() {
             <strong>Teacher start control</strong>
             <span>
               {actualStartedAt
-                ? `Class started at ${formatLiveClockLabel(actualStartedAt)}.`
+                ? `Class started at ${formatLiveClockLabel(actualStartedAt)}. ${slideSyncStatus.message || "Synchronizing slide timer…"}`
                 : delayUntil && nowMs < delayUntil
                   ? `Waiting another ${formatDuration(delayUntil - nowMs)} · ${checkedInCount}${expectedTotal ? ` / ${expectedTotal}` : ""} checked in.`
                   : `${checkedInCount}${expectedTotal ? ` / ${expectedTotal}` : ""} checked in. Start when you are ready.`}
@@ -638,13 +745,20 @@ export default function CheckinDisplayPage() {
           {!actualStartedAt ? (
             <div className="checkin-display-teacher-control-actions">
               <button type="button" className="checkin-display-start-now" onClick={handleStartClassNow}>
-                Start class now
+                Start class & slides
               </button>
               <button type="button" onClick={() => delayClassStart(5)}>+5 min</button>
               <button type="button" onClick={() => delayClassStart(10)}>+10 min</button>
             </div>
           ) : (
-            <div className="checkin-display-started-badge">Class started</div>
+            <div className="checkin-display-teacher-control-actions">
+              <div className="checkin-display-started-badge">
+                {slideSyncStatus.state === "syncing" ? "Starting slides…" : "Class started"}
+              </div>
+              {slideSyncStatus.state === "error" ? (
+                <button type="button" onClick={() => syncPresenterStart(actualStartedAt)}>Retry slide sync</button>
+              ) : null}
+            </div>
           )}
         </div>
 
