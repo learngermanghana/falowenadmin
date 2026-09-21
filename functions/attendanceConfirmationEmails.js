@@ -145,7 +145,7 @@ function isActiveStudent(student = {}) {
   const role = comparable(student.role);
   if (role && role !== "student") return false;
   const status = comparable(student.status || student.studentStatus || student.enrollmentStatus);
-  return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "deleted", "blocked", "suspended"].includes(status);
+  return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "deleted", "blocked", "suspended", "trial_expired"].includes(status);
 }
 
 function studentBelongsToClass(student = {}, klass = {}) {
