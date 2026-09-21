@@ -170,8 +170,8 @@ export default function TargetedCommunicationPanel({ embedded = false, showHisto
         setClasses([]);
       }
     })();
-    refreshHistory();
-  }, [refreshHistory]);
+    if (showHistory) refreshHistory();
+  }, [refreshHistory, showHistory]);
 
   useEffect(() => {
     let cancelled = false;
@@ -316,10 +316,13 @@ export default function TargetedCommunicationPanel({ embedded = false, showHisto
         showSuccess(`Message sent to ${result.successCount} students.`);
       }
       setResolvedRecipients([]);
-      await refreshHistory();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("falowen:communication-sent"));
+      }
+      if (showHistory) await refreshHistory();
     } catch (error) {
       showError(error?.message || "Targeted message failed.");
-      await refreshHistory();
+      if (showHistory) await refreshHistory();
     } finally {
       setSending(false);
     }
