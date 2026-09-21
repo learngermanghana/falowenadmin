@@ -36,3 +36,23 @@ test("legacy send engines can render inside the unified composer", () => {
   assert.match(targeted, /TargetedCommunicationPanel\(\{ embedded = false, showHistory = true \}\)/);
   assert.match(targeted, /\{showHistory \? \(/);
 });
+
+
+test("shared communication history refreshes after failed persisted send attempts", () => {
+  const broadcast = read("src/pages/CommunicationPage.jsx");
+  const targeted = read("src/components/TargetedCommunicationPanel.jsx");
+
+  assert.match(broadcast, /let historyMayHaveChanged = false/);
+  assert.match(broadcast, /historyMayHaveChanged = true;[\s\S]*saveAnnouncementRow/);
+  assert.match(
+    broadcast,
+    /finally \{[\s\S]*historyMayHaveChanged[\s\S]*falowen:communication-sent/,
+  );
+
+  assert.match(targeted, /let historyMayHaveChanged = false/);
+  assert.match(targeted, /historyMayHaveChanged = true;[\s\S]*saveAnnouncementBatch/);
+  assert.match(
+    targeted,
+    /finally \{[\s\S]*historyMayHaveChanged[\s\S]*falowen:communication-sent/,
+  );
+});
