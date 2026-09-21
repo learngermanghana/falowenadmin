@@ -386,7 +386,6 @@ async function reactivateTrialStudentAfterPayment({
   }
 
   const activeStatus = lower(student.paymentStatus || student.payment_status) === "paid"
-    || balanceAmount(student) <= 0
     ? "Paid"
     : "Active";
   const deleteValue = admin.firestore.FieldValue.delete();
