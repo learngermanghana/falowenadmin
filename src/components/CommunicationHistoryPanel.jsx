@@ -46,6 +46,10 @@ export default function CommunicationHistoryPanel() {
 
   useEffect(() => {
     refresh();
+    if (typeof window === "undefined") return undefined;
+    const handleSent = () => refresh();
+    window.addEventListener("falowen:communication-sent", handleSent);
+    return () => window.removeEventListener("falowen:communication-sent", handleSent);
   }, [refresh]);
 
   return (
