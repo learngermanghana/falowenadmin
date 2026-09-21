@@ -10,6 +10,7 @@ const {
   hasQualifyingPayment,
   isExpiredPendingStudent,
   pendingStartedAtMillis,
+  resolveLifecycleWebhookConfig,
   syncTrialStatusToSheet,
 } = require("../functions/pendingStudentCleanup.js");
 
@@ -126,4 +127,38 @@ test("trial expiry sync posts the retained status to the Apps Script webhook", a
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("trial lifecycle reuses the existing Announcement webhook configuration", () => {
+  assert.deepEqual(
+    resolveLifecycleWebhookConfig({
+      communication: {
+        announcement_webhook_url: "https://script.google.com/macros/s/existing/exec",
+        announcement_webhook_token: "existing-announcement-token",
+      },
+    }, {}),
+    {
+      url: "https://script.google.com/macros/s/existing/exec",
+      token: "existing-announcement-token",
+    },
+  );
+});
+
+test("Announcement webhook environment variables override runtime config", () => {
+  assert.deepEqual(
+    resolveLifecycleWebhookConfig({
+      communication: {
+        announcement_webhook_url: "https://runtime.example/exec",
+        announcement_webhook_token: "runtime-token",
+      },
+    }, {
+      ANNOUNCEMENT_WEBHOOK_URL: "https://env.example/exec",
+      ANNOUNCEMENT_WEBHOOK_TOKEN: "env-token",
+    }),
+    {
+      url: "https://env.example/exec",
+      token: "env-token",
+    },
+  );
 });
