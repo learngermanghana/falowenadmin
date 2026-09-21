@@ -125,7 +125,7 @@ async function loadClassAttendance(klass) {
   });
 }
 
-export default function TargetedCommunicationPanel() {
+export default function TargetedCommunicationPanel({ embedded = false, showHistory = true }) {
   const { success: showSuccess, error: showError, info: showInfo } = useToast();
   const [classes, setClasses] = useState([]);
   const [classId, setClassId] = useState("");
@@ -326,14 +326,16 @@ export default function TargetedCommunicationPanel() {
   }
 
   return (
-    <section style={{ padding: "0 16px 16px", maxWidth: 1000, display: "grid", gap: 16 }}>
-      <div style={{ border: "1px solid #dbe3ef", borderRadius: 12, padding: 16, display: "grid", gap: 14 }}>
-        <div>
-          <h3 style={{ margin: "0 0 4px" }}>Targeted class follow-up</h3>
-          <p style={{ margin: 0, color: "#64748b" }}>
-            Send only to the students who match a class condition. Preview the recipients before anything is sent.
-          </p>
-        </div>
+    <section style={{ padding: embedded ? 0 : "0 16px 16px", maxWidth: embedded ? "100%" : 1000, display: "grid", gap: 16 }}>
+      <div style={{ border: embedded ? "0" : "1px solid #dbe3ef", borderRadius: 12, padding: embedded ? 0 : 16, display: "grid", gap: 14 }}>
+        {!embedded ? (
+          <div>
+            <h3 style={{ margin: "0 0 4px" }}>Students matching a condition</h3>
+            <p style={{ margin: 0, color: "#64748b" }}>
+              Send only to students who match attendance, check-in, assignment, or payment conditions.
+            </p>
+          </div>
+        ) : null}
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {TEMPLATES.map((template) => (
@@ -422,7 +424,8 @@ export default function TargetedCommunicationPanel() {
         </form>
       </div>
 
-      <div style={{ border: "1px solid #dbe3ef", borderRadius: 12, padding: 16, display: "grid", gap: 12 }}>
+      {showHistory ? (
+        <div style={{ border: "1px solid #dbe3ef", borderRadius: 12, padding: 16, display: "grid", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <div>
             <h3 style={{ margin: "0 0 4px" }}>Communication history</h3>
@@ -467,6 +470,7 @@ export default function TargetedCommunicationPanel() {
           </table>
         </div>
       </div>
+      ) : null}
     </section>
   );
 }
