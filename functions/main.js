@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const {
   runExpiredPendingStudentCleanup,
+  resolveLifecycleWebhookConfig,
 } = require("./pendingStudentCleanup.js");
 const { runClassSessionReminderEmailJob } = require("./classSessionReminderEmails.js");
 
@@ -19,14 +20,16 @@ function parseRuntimeConfig() {
 }
 
 async function cleanupExpiredPendingStudentsNow() {
+  const runtimeConfig = parseRuntimeConfig();
+  const communication = resolveLifecycleWebhookConfig(runtimeConfig, process.env);
   return runExpiredPendingStudentCleanup({
     admin,
     db,
     now: Date.now(),
-    // Google Sheet cleanup is optional and only runs at the final purge.
-    // Day-7 trial blocking never depends on the sheet webhook.
-    appsScriptUrl: String(process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim(),
-    syncSecret: String(process.env.STUDENT_DELETE_SYNC_SECRET || "").trim(),
+    // Reuse the same Announcement Apps Script URL/token already configured for
+    // class reminders, attendance, registration docs, completion docs, etc.
+    appsScriptUrl: communication.url,
+    syncSecret: communication.token,
   });
 }
 

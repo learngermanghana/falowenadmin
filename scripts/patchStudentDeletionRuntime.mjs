@@ -149,11 +149,33 @@ replaceRequired(
   `  const appsScriptUrl = String(studentDeleteAppsScriptUrlSecret.value() || process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim();
   const syncSecret = String(studentDeleteSyncSecret.value() || process.env.STUDENT_DELETE_SYNC_SECRET || "").trim();
 `,
-  `  const studentDeleteConfig = runtimeConfig.student_delete || runtimeConfig.studentDelete || {};
-  const appsScriptUrl = String(studentDeleteConfig.apps_script_url || studentDeleteConfig.appsScriptUrl || process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim();
-  const syncSecret = String(studentDeleteConfig.sync_secret || studentDeleteConfig.syncSecret || process.env.STUDENT_DELETE_SYNC_SECRET || "").trim();
+  `  const communication = runtimeConfig.communication || runtimeConfig.announcements || runtimeConfig.announcement || {};
+  const appsScriptUrl = String(
+    process.env.ANNOUNCEMENT_WEBHOOK_URL ||
+    process.env.VITE_ANNOUNCEMENT_WEBHOOK_URL ||
+    communication.announcement_webhook_url ||
+    communication.webhook_url ||
+    ""
+  ).trim();
+  const syncSecret = String(
+    process.env.ANNOUNCEMENT_WEBHOOK_TOKEN ||
+    process.env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN ||
+    communication.announcement_webhook_token ||
+    communication.webhook_token ||
+    ""
+  ).trim();
 `,
-  "optional Google Sheets deletion configuration",
+  "existing Announcement webhook configuration",
+);
+
+replaceRequired(
+  `      secret: syncSecret,
+      action: "deleteStudentAccount",
+`,
+  `      token: syncSecret,
+      action: "deleteStudentAccount",
+`,
+  "Announcement webhook token payload",
 );
 
 replaceRequired(

@@ -18,3 +18,10 @@ Only after the 30-day recovery window ends is an unpaid `trial_expired` student 
 A student never enters the trial-expiry lifecycle when a paid, partially paid, or successful payment status exists or when any known paid-amount field is greater than zero.
 
 Class-session, attendance-confirmation, and course-review email workers treat `trial_expired` as inactive so the retained record does not continue to receive normal student communications. The class-session reminder worker runs the trial lifecycle before resolving recipients.
+
+
+## Existing communication connection
+
+Trial lifecycle sheet updates reuse the existing Falowen Announcement integration. No separate student-delete URL or secret is required for the scheduled trial lifecycle.
+
+The Firebase worker resolves the existing `ANNOUNCEMENT_WEBHOOK_URL` / `ANNOUNCEMENT_WEBHOOK_TOKEN`, or the equivalent `communication.announcement_webhook_url` / `communication.announcement_webhook_token` runtime settings. The same Apps Script webhook handles the Day-7 `trial_expired` sync and the final Day-37 sheet purge.
