@@ -370,6 +370,49 @@ function balanceAmount(student = {}) {
   );
 }
 
+function isTrialExpiredStudent(student = {}) {
+  return lower(student.status || student.studentStatus || student.enrollmentStatus) === "trial_expired";
+}
+
+async function reactivateTrialStudentAfterPayment({
+  db,
+  admin,
+  studentId,
+  student = {},
+  transition = {},
+} = {}) {
+  if (!transition.confirmed || !isTrialExpiredStudent(student) || !studentId) {
+    return { reactivated: false, student };
+  }
+
+  const activeStatus = lower(student.paymentStatus || student.payment_status) === "paid"
+    ? "Paid"
+    : "Active";
+  const deleteValue = admin.firestore.FieldValue.delete();
+  const update = {
+    status: activeStatus,
+    trialStatus: "converted",
+    trialConvertedAt: admin.firestore.FieldValue.serverTimestamp(),
+    trialPurgeAt: deleteValue,
+    trial_purge_at: deleteValue,
+    trialAccessBlockedAt: deleteValue,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  await db.collection("students").doc(studentId).set(update, { merge: true });
+  return {
+    reactivated: true,
+    student: {
+      ...student,
+      status: activeStatus,
+      trialStatus: "converted",
+      trialPurgeAt: undefined,
+      trial_purge_at: undefined,
+      trialAccessBlockedAt: undefined,
+    },
+  };
+}
+
 function firstPaymentTransition(before = {}, after = {}) {
   const beforePaid = paymentAmount(before);
   const afterPaid = paymentAmount(after);
@@ -447,19 +490,29 @@ function createRegistrationLifecycleTriggers({
       return { processed: false, reason: "not_first_payment" };
     }
 
+    const reactivation = await reactivateTrialStudentAfterPayment({
+      db,
+      admin,
+      studentId,
+      student: after,
+      transition,
+    });
+    const lifecycleStudent = reactivation.student || after;
+
     const result = await processLifecycleEvent({
       db,
       admin,
       runtimeConfig,
       type: "enrollment.confirmed",
       kind: "enrollment",
-      student: after,
+      student: lifecycleStudent,
       studentId,
     });
     console.log("registration_lifecycle_payment_confirmed", {
       ...result,
       paymentSource: transition.source,
       amount: transition.amount,
+      trialReactivated: reactivation.reactivated,
     });
     return result;
   });
@@ -472,12 +525,14 @@ module.exports = {
   firstPaymentTransition,
   processLifecycleEvent,
   registrationRow,
+  reactivateTrialStudentAfterPayment,
   resolveRegistrationDocsConfig,
   _test: {
     DEFAULT_REGISTRATION_DOCS_WEBHOOK_URL,
     eventIdFor,
     paymentAmount,
     balanceAmount,
+    isTrialExpiredStudent,
     postRegistrationLifecycleEvent,
     stateId,
   },

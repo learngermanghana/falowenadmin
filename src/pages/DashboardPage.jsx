@@ -74,7 +74,7 @@ function isPaidStudent(student) {
 
 function isActiveStudent(student) {
   const status = normalize(student.status || student.paymentStatus);
-  return !["inactive", "suspended", "cancelled", "canceled", "withdrawn"].some((token) => status.includes(token));
+  return !["inactive", "suspended", "cancelled", "canceled", "withdrawn", "trial_expired"].some((token) => status.includes(token));
 }
 
 function studentBalance(student) {

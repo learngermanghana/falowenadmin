@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const {
   TRIAL_DURATION_MS,
+  TRIAL_RETENTION_MS,
   expiredPendingReason,
   hasQualifyingPayment,
   isExpiredPendingStudent,
@@ -31,9 +32,27 @@ test("pending student remains eligible during the seven-day trial", () => {
   assert.equal(isExpiredPendingStudent(student, NOW), false);
 });
 
-test("unpaid pending student expires at seven days", () => {
+test("unpaid pending student is blocked at seven days but not purged", () => {
   const student = pendingStudent();
-  assert.equal(expiredPendingReason(student, NOW), "expired");
+  assert.equal(expiredPendingReason(student, NOW), "needs_block");
+  assert.equal(isExpiredPendingStudent(student, NOW), false);
+});
+
+test("trial-expired student stays recoverable during the 30-day retention window", () => {
+  const student = pendingStudent({
+    status: "trial_expired",
+    createdAt: new Date(NOW - TRIAL_DURATION_MS - 15 * 24 * 60 * 60 * 1000),
+  });
+  assert.equal(expiredPendingReason(student, NOW), "retention_window");
+  assert.equal(isExpiredPendingStudent(student, NOW), false);
+});
+
+test("trial-expired student is purge-eligible after seven days plus 30-day retention", () => {
+  const student = pendingStudent({
+    status: "trial_expired",
+    createdAt: new Date(NOW - TRIAL_DURATION_MS - TRIAL_RETENTION_MS),
+  });
+  assert.equal(expiredPendingReason(student, NOW), "purge_due");
   assert.equal(isExpiredPendingStudent(student, NOW), true);
 });
 

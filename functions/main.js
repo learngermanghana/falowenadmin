@@ -23,9 +23,8 @@ async function cleanupExpiredPendingStudentsNow() {
     admin,
     db,
     now: Date.now(),
-    // Google Sheet cleanup is optional. The production Firebase project does
-    // not currently have the student-delete webhook secrets configured, so
-    // account/data deletion must never depend on them.
+    // Google Sheet cleanup is optional and only runs at the final purge.
+    // Day-7 trial blocking never depends on the sheet webhook.
     appsScriptUrl: String(process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim(),
     syncSecret: String(process.env.STUDENT_DELETE_SYNC_SECRET || "").trim(),
   });
@@ -40,27 +39,30 @@ module.exports.cleanupExpiredPendingStudents = onSchedule({
   memory: "256MiB",
 }, async () => {
   const result = await cleanupExpiredPendingStudentsNow();
-  console.log("expired_pending_student_cleanup", {
+  console.log("pending_student_trial_lifecycle", {
     checked: result.checked,
     candidates: result.candidates,
-    deleted: result.deleted,
+    blocked: result.blocked,
+    purged: result.purged,
   });
   return result;
 });
 
-// Replace the original reminder export with a cleanup-first version. Pending
-// students keep receiving reminders during their valid 7-day window, but once
-// that window expires they are deleted before the reminder job reads students.
+// Replace the original reminder export with a lifecycle-first version. Pending
+// students keep receiving reminders during the valid 7-day trial; once it ends
+// they are marked trial_expired before recipients are resolved, and final data
+// deletion happens only after the 30-day recovery window.
 module.exports.sendClassSessionReminderEmails = onSchedule({
   schedule: "*/5 * * * *",
   timeZone: "Africa/Accra",
   retryCount: 1,
 }, async () => {
   const cleanup = await cleanupExpiredPendingStudentsNow();
-  console.log("class_reminder_pre_cleanup", {
+  console.log("class_reminder_pre_trial_lifecycle", {
     checked: cleanup.checked,
     candidates: cleanup.candidates,
-    deleted: cleanup.deleted,
+    blocked: cleanup.blocked,
+    purged: cleanup.purged,
   });
   return runClassSessionReminderEmailJob({
     admin,

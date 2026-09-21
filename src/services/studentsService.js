@@ -35,7 +35,7 @@ function settleWithin(promise, fallback = []) {
 function isActiveStudent(row = {}) {
   const status = normalize(row.status || row.studentStatus || row.enrollmentStatus).toLowerCase();
   if (!status) return true;
-  return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled"].includes(status);
+  return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "trial_expired"].includes(status);
 }
 
 function studentIdentityKeys(student = {}) {

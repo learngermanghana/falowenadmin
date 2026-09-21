@@ -204,7 +204,7 @@ function isStudentStatusAllowed(student = {}) {
   const status = normalizeText(student.status);
   if (!status) return true;
 
-  if (["inactive", "suspended", "blocked", "deleted", "archived"].includes(status)) {
+  if (["inactive", "suspended", "blocked", "deleted", "archived", "trial_expired"].includes(status)) {
     return false;
   }
 

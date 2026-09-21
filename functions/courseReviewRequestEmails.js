@@ -7,7 +7,7 @@ const PROCESSING_STALE_MS = 30 * 60 * 1000;
 const FALLBACK_GOOGLE_REVIEW_URL = "https://www.google.com/maps/place/Learn+Language+Education+Academy+(Former+%22Learn+German+Ghana%22)/data=!4m2!3m1!1s0x0:0xbd2e1fb7eabd20da?sa=X&ved=1t:2428&ictx=111";
 const BLOCKED_CLASS_STATUSES = new Set(["deleted", "cancelled", "canceled"]);
 const BLOCKED_STUDENT_STATUSES = new Set([
-  "inactive", "withdrawn", "removed", "cancelled", "canceled", "deleted", "blocked", "suspended",
+  "inactive", "withdrawn", "removed", "cancelled", "canceled", "deleted", "blocked", "suspended", "trial_expired",
 ]);
 const FINAL_BLOCKED_STATUSES = new Set(["cancelled", "canceled", "deleted", "superseded"]);
 
