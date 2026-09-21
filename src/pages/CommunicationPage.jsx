@@ -488,6 +488,7 @@ export default function CommunicationPage({ embedded = false }) {
   async function onSubmit(event) {
     event.preventDefault();
     setSaving(true);
+    let historyMayHaveChanged = false;
 
     try {
       const submissionForm = {
@@ -500,6 +501,7 @@ export default function CommunicationPage({ embedded = false }) {
         const targetClasses = getAvailableClassesForLevel(classes, selectedLevel);
         if (!targetClasses.length) throw new Error(`No available ${selectedLevel} classes were found.`);
 
+        historyMayHaveChanged = true;
         const receipts = await Promise.all(targetClasses.map((klass) => saveAnnouncementRow({
           ...submissionForm,
           className: classSelectValue(klass),
@@ -509,6 +511,7 @@ export default function CommunicationPage({ embedded = false }) {
         const savedCount = receipts.filter((receipt) => receipt?.sheet?.success || receipt?.firestore?.success).length;
         toast.success(`Broadcast saved for ${savedCount} ${selectedLevel} class(es).`);
       } else {
+        historyMayHaveChanged = true;
         const receipt = await saveAnnouncementRow(submissionForm);
 
         if (receipt?.sheet?.success && receipt?.sheet?.unverified) {
@@ -516,10 +519,6 @@ export default function CommunicationPage({ embedded = false }) {
         } else if (receipt?.sheet?.success || receipt?.firestore?.success) {
           toast.success(receipt?.sheet?.message || receipt?.firestore?.message || "Broadcast saved successfully.");
         }
-      }
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("falowen:communication-sent"));
       }
 
       setForm((current) => ({
@@ -537,6 +536,9 @@ export default function CommunicationPage({ embedded = false }) {
     } catch (error) {
       toast.error(error?.message || "Failed to save broadcast.");
     } finally {
+      if (historyMayHaveChanged && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("falowen:communication-sent"));
+      }
       setSaving(false);
     }
   }
