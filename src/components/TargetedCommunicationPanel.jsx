@@ -296,7 +296,9 @@ export default function TargetedCommunicationPanel({ embedded = false, showHisto
     event.preventDefault();
     if (!selectedClass || !resolvedRecipients.length || !announcement.trim()) return;
     setSending(true);
+    let historyMayHaveChanged = false;
     try {
+      historyMayHaveChanged = true;
       const result = await saveAnnouncementBatch({
         input: {
           announcement,
@@ -316,14 +318,13 @@ export default function TargetedCommunicationPanel({ embedded = false, showHisto
         showSuccess(`Message sent to ${result.successCount} students.`);
       }
       setResolvedRecipients([]);
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("falowen:communication-sent"));
-      }
-      if (showHistory) await refreshHistory();
     } catch (error) {
       showError(error?.message || "Targeted message failed.");
-      if (showHistory) await refreshHistory();
     } finally {
+      if (historyMayHaveChanged && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("falowen:communication-sent"));
+      }
+      if (historyMayHaveChanged && showHistory) await refreshHistory();
       setSending(false);
     }
   }
