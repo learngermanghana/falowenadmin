@@ -518,6 +518,10 @@ export default function CommunicationPage({ embedded = false }) {
         }
       }
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("falowen:communication-sent"));
+      }
+
       setForm((current) => ({
         ...current,
         announcement: "",
