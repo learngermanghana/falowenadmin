@@ -10,6 +10,7 @@ const {
   hasQualifyingPayment,
   isExpiredPendingStudent,
   pendingStartedAtMillis,
+  syncTrialStatusToSheet,
 } = require("../functions/pendingStudentCleanup.js");
 
 const NOW = Date.UTC(2026, 8, 8, 12, 0, 0);
@@ -91,4 +92,38 @@ test("only pending enrollment status can be deleted by this cleanup", () => {
   assert.equal(isExpiredPendingStudent(pendingStudent({ status: "active" }), NOW), false);
   assert.equal(isExpiredPendingStudent(pendingStudent({ status: "inactive" }), NOW), false);
   assert.equal(isExpiredPendingStudent(pendingStudent({ status: "Paid" }), NOW), false);
+});
+
+
+test("trial expiry sync posts the retained status to the Apps Script webhook", async () => {
+  const originalFetch = globalThis.fetch;
+  let captured = null;
+  globalThis.fetch = async (url, options) => {
+    captured = { url, options };
+    return {
+      ok: true,
+      json: async () => ({ ok: true, updatedStudents: 1 }),
+    };
+  };
+
+  try {
+    const result = await syncTrialStatusToSheet({
+      appsScriptUrl: "https://script.google.com/macros/s/test/exec",
+      syncSecret: "private-secret",
+      studentId: "student-1",
+      studentCode: "ABC123",
+      email: "student@example.com",
+      trialExpiredAt: "2026-09-21T12:00:00.000Z",
+      trialPurgeAt: "2026-10-21T12:00:00.000Z",
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(captured.url, "https://script.google.com/macros/s/test/exec");
+    const body = JSON.parse(captured.options.body);
+    assert.equal(body.action, "syncStudentTrialStatus");
+    assert.equal(body.studentCode, "ABC123");
+    assert.equal(body.secret, "private-secret");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
