@@ -1,4 +1,5 @@
 const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+const TRIAL_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const DEFAULT_BATCH_LIMIT = 50;
 
 function text(value) {
@@ -80,21 +81,87 @@ function hasQualifyingPayment(student = {}) {
   return amounts.some((value) => money(value) > 0);
 }
 
+function trialExpiredAtMillis(student = {}) {
+  const explicit = [
+    student.trialExpiredAt,
+    student.trialEnd,
+    student.trialEndsAt,
+    student.trial_end,
+  ];
+  for (const value of explicit) {
+    const millis = toMillis(value);
+    if (millis > 0) return millis;
+  }
+  const startedAt = pendingStartedAtMillis(student);
+  return startedAt > 0 ? startedAt + TRIAL_DURATION_MS : 0;
+}
+
+function trialPurgeAtMillis(student = {}) {
+  const explicit = [
+    student.trialPurgeAt,
+    student.trial_purge_at,
+    student.purgeAt,
+  ];
+  for (const value of explicit) {
+    const millis = toMillis(value);
+    if (millis > 0) return millis;
+  }
+  const expiredAt = trialExpiredAtMillis(student);
+  return expiredAt > 0 ? expiredAt + TRIAL_RETENTION_MS : 0;
+}
+
 function expiredPendingReason(student = {}, now = Date.now()) {
   const role = comparable(student.role);
   if (role && role !== "student") return "not_student";
-  if (studentStatus(student) !== "pending") return "not_pending";
   if (hasQualifyingPayment(student)) return "has_payment";
+
+  const status = studentStatus(student);
+  if (!["pending", "trial_expired"].includes(status)) return "not_pending";
 
   const startedAt = pendingStartedAtMillis(student);
   if (!startedAt) return "missing_start_date";
   if (startedAt > now) return "future_start_date";
-  if (now - startedAt < TRIAL_DURATION_MS) return "trial_active";
-  return "expired";
+
+  const expiredAt = trialExpiredAtMillis(student);
+  const purgeAt = trialPurgeAtMillis(student);
+  if (!expiredAt || !purgeAt) return "missing_start_date";
+  if (now < expiredAt) return "trial_active";
+  if (now < purgeAt) return status === "trial_expired" ? "retention_window" : "needs_block";
+  return "purge_due";
 }
 
 function isExpiredPendingStudent(student = {}, now = Date.now()) {
-  return expiredPendingReason(student, now) === "expired";
+  return expiredPendingReason(student, now) === "purge_due";
+}
+
+async function blockExpiredTrialStudent({ admin, docSnap, now = Date.now() }) {
+  const latestSnap = await docSnap.ref.get();
+  if (!latestSnap.exists) return { skipped: "already_deleted" };
+
+  const student = { id: latestSnap.id, ...(latestSnap.data() || {}) };
+  const reason = expiredPendingReason(student, now);
+  if (reason !== "needs_block") return { skipped: reason };
+
+  const expiredAt = trialExpiredAtMillis(student);
+  const purgeAt = trialPurgeAtMillis(student);
+  const timestamp = admin.firestore.Timestamp;
+
+  await latestSnap.ref.set({
+    status: "trial_expired",
+    trialStatus: "expired",
+    trialExpiredAt: timestamp.fromMillis(expiredAt),
+    trialPurgeAt: timestamp.fromMillis(purgeAt),
+    trialAccessBlockedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  return {
+    blocked: true,
+    studentId: latestSnap.id,
+    studentCode: text(student.studentCode || student.studentcode || student.uid || latestSnap.id),
+    trialExpiredAt: new Date(expiredAt).toISOString(),
+    trialPurgeAt: new Date(purgeAt).toISOString(),
+  };
 }
 
 function uniqueNonEmpty(values = []) {
@@ -220,7 +287,7 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
   if (!latestSnap.exists) return { skipped: "already_deleted" };
   const student = { id: latestSnap.id, ...(latestSnap.data() || {}) };
   const reason = expiredPendingReason(student, now);
-  if (reason !== "expired") return { skipped: reason };
+  if (reason !== "purge_due") return { skipped: reason };
 
   const studentId = text(latestSnap.id);
   const studentCode = text(student.studentCode || student.studentcode || student.uid || studentId);
@@ -275,25 +342,48 @@ async function runExpiredPendingStudentCleanup({
   batchLimit = DEFAULT_BATCH_LIMIT,
 } = {}) {
   const snap = await db.collection("students").get();
-  const candidates = snap.docs
-    .filter((docSnap) => isExpiredPendingStudent({ id: docSnap.id, ...(docSnap.data() || {}) }, now))
+  const actions = snap.docs
+    .map((docSnap) => ({
+      docSnap,
+      reason: expiredPendingReason({ id: docSnap.id, ...(docSnap.data() || {}) }, now),
+    }))
+    .filter((item) => item.reason === "needs_block" || item.reason === "purge_due")
     .slice(0, Math.max(1, Number(batchLimit) || DEFAULT_BATCH_LIMIT));
 
   const results = [];
-  for (const docSnap of candidates) {
+  for (const item of actions) {
     try {
-      results.push(await deleteExpiredPendingStudent({ admin, db, docSnap, now, appsScriptUrl, syncSecret }));
+      if (item.reason === "needs_block") {
+        results.push(await blockExpiredTrialStudent({ admin, docSnap: item.docSnap, now }));
+      } else {
+        results.push(await deleteExpiredPendingStudent({
+          admin, db, docSnap: item.docSnap, now, appsScriptUrl, syncSecret,
+        }));
+      }
     } catch (error) {
-      console.error("expired_pending_student_delete_failed", {
-        studentId: docSnap.id,
+      console.error("pending_student_trial_lifecycle_failed", {
+        studentId: item.docSnap.id,
+        action: item.reason,
         message: error?.message || String(error),
       });
-      results.push({ studentId: docSnap.id, error: error?.message || String(error) });
+      results.push({
+        studentId: item.docSnap.id,
+        action: item.reason,
+        error: error?.message || String(error),
+      });
     }
   }
 
+  const blocked = results.filter((result) => result?.blocked === true).length;
   const deleted = results.filter((result) => result?.deleted === true).length;
-  return { checked: snap.size, candidates: candidates.length, deleted, results };
+  return {
+    checked: snap.size,
+    candidates: actions.length,
+    blocked,
+    purged: deleted,
+    deleted,
+    results,
+  };
 }
 
 function createExpiredPendingStudentCleanupJob({
@@ -320,10 +410,11 @@ function createExpiredPendingStudentCleanupJob({
       appsScriptUrl,
       syncSecret: resolvedSyncSecret,
     });
-    console.log("expired_pending_student_cleanup", {
+    console.log("pending_student_trial_lifecycle", {
       checked: result.checked,
       candidates: result.candidates,
-      deleted: result.deleted,
+      blocked: result.blocked,
+      purged: result.purged,
     });
     return result;
   });
@@ -331,10 +422,14 @@ function createExpiredPendingStudentCleanupJob({
 
 module.exports = {
   TRIAL_DURATION_MS,
+  TRIAL_RETENTION_MS,
   pendingStartedAtMillis,
+  trialExpiredAtMillis,
+  trialPurgeAtMillis,
   hasQualifyingPayment,
   expiredPendingReason,
   isExpiredPendingStudent,
+  blockExpiredTrialStudent,
   deleteExpiredPendingStudent,
   runExpiredPendingStudentCleanup,
   createExpiredPendingStudentCleanupJob,
