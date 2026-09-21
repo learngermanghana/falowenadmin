@@ -98,6 +98,9 @@ test("automatic lifecycle events use stable event IDs and the shared System Even
   assert.match(source, /integrationEvent: true/);
   assert.match(source, /registration\.received/);
   assert.match(source, /enrollment\.confirmed/);
+  assert.match(source, /reactivateTrialStudentAfterPayment/);
+  assert.match(source, /trialStatus: "converted"/);
+  assert.match(source, /trialPurgeAt: deleteValue/);
   assert.match(index, /trackStudentRegistrationReceived/);
   assert.match(index, /sendEnrollmentConfirmationDocuments/);
 });
