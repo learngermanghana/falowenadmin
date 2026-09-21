@@ -1,0 +1,40 @@
+name: Communication Hub Tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/pages/CommunicationMessagesPage.jsx'
+      - 'src/pages/CommunicationPage.jsx'
+      - 'src/components/TargetedCommunicationPanel.jsx'
+      - 'src/components/CommunicationHistoryPanel.jsx'
+      - 'tests/communication-hub-simplification.test.js'
+      - '.github/workflows/communication-hub-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/pages/CommunicationHubPage.jsx'
+      - 'src/pages/CommunicationMessagesPage.jsx'
+      - 'src/pages/CommunicationPage.jsx'
+      - 'src/components/TargetedCommunicationPanel.jsx'
+      - 'src/components/CommunicationHistoryPanel.jsx'
+      - 'tests/communication-hub-simplification.test.js'
+      - '.github/workflows/communication-hub-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Test simplified communication hub
+        run: node --test tests/communication-hub-simplification.test.js
+      - name: Build dashboard
+        run: npm run build
