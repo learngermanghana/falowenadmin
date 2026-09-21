@@ -172,6 +172,25 @@ async function blockExpiredTrialStudent({
   const expiredAt = trialExpiredAtMillis(student);
   const purgeAt = trialPurgeAtMillis(student);
   const timestamp = admin.firestore.Timestamp;
+  const studentCode = text(student.studentCode || student.studentcode || student.uid || latestSnap.id);
+  const email = lower(student.email);
+  const trialExpiredAt = new Date(expiredAt).toISOString();
+  const trialPurgeAt = new Date(purgeAt).toISOString();
+
+  // Sync the existing Google Sheet communication source first. If that call
+  // fails, leave Firestore pending so the next scheduled run can retry.
+  const sheet = await syncTrialStatusToSheet({
+    appsScriptUrl,
+    syncSecret,
+    studentId: latestSnap.id,
+    studentCode,
+    email,
+    trialExpiredAt,
+    trialPurgeAt,
+  });
+  if (sheet.attempted && !sheet.success) {
+    throw new Error(sheet.message || "Google Sheet trial status sync failed.");
+  }
 
   await latestSnap.ref.set({
     status: "trial_expired",
@@ -181,24 +200,6 @@ async function blockExpiredTrialStudent({
     trialAccessBlockedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   }, { merge: true });
-
-  const studentCode = text(student.studentCode || student.studentcode || student.uid || latestSnap.id);
-  const email = lower(student.email);
-  const trialExpiredAt = new Date(expiredAt).toISOString();
-  const trialPurgeAt = new Date(purgeAt).toISOString();
-  const sheet = await syncTrialStatusToSheet({
-    appsScriptUrl,
-    syncSecret,
-    studentId: latestSnap.id,
-    studentCode,
-    email,
-    trialExpiredAt,
-    trialPurgeAt,
-  }).catch((error) => ({
-    attempted: true,
-    success: false,
-    message: error?.message || String(error),
-  }));
 
   return {
     blocked: true,
@@ -210,7 +211,6 @@ async function blockExpiredTrialStudent({
     sheet,
   };
 }
-
 function uniqueNonEmpty(values = []) {
   return [...new Set(values.map(text).filter(Boolean))];
 }
@@ -379,6 +379,20 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
   const allValues = uniqueNonEmpty([...studentDocIds, ...codeValues, ...emailValues]);
   const summary = { deleted: 0, collections: {}, attendanceSessionMapsUpdated: 0, authUsersDeleted: [] };
 
+  // Delete the sheet rows first. If Apps Script is temporarily unavailable,
+  // keep the Firestore student so this purge remains retryable.
+  const sheet = await deleteStudentRowsFromSheet({
+    appsScriptUrl,
+    syncSecret,
+    studentId,
+    studentCode,
+    email,
+    student,
+  });
+  if (sheet.attempted && !sheet.success) {
+    throw new Error(sheet.message || "Google Sheet cleanup failed.");
+  }
+
   for (const docId of studentDocIds) {
     const ref = db.collection("students").doc(docId);
     const snap = await ref.get();
@@ -402,18 +416,8 @@ async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(
   await removeStudentFromAttendanceMaps({ admin, db, identifierValues: allValues, summary });
   summary.authUsersDeleted = await deleteAuthUserIfPresent({ admin, uid: student.uid || studentId, email });
 
-  const sheet = await deleteStudentRowsFromSheet({
-    appsScriptUrl,
-    syncSecret,
-    studentId,
-    studentCode,
-    email,
-    student,
-  }).catch((error) => ({ attempted: true, success: false, message: error?.message || String(error) }));
-
   return { deleted: true, studentId, studentCode, email, firestore: summary, sheet };
 }
-
 async function runExpiredPendingStudentCleanup({
   admin,
   db,
