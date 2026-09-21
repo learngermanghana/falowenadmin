@@ -1,15 +1,20 @@
-# Pending student cleanup
+# Pending student trial retention
 
-Falowen keeps unpaid trial students with `status: pending` for seven days from a stored registration/trial start timestamp.
+Falowen gives unpaid trial students with `status: pending` seven days of access from a trustworthy registration/trial start timestamp.
 
-After seven full days, a student is eligible for automatic account deletion only when all of the following are true:
+At the end of seven full days, the account is **blocked, not deleted**. The lifecycle worker changes the student to `status: trial_expired` and stores:
 
-- role is student (or unset)
-- status is exactly `pending`
-- there is no paid, partially paid, or successful payment status
-- all known paid-amount fields remain zero
-- a trustworthy registration/trial start timestamp exists and is at least seven days old
+- `trialExpiredAt`
+- `trialPurgeAt` (30 days after trial expiry)
+- `trialAccessBlockedAt`
+- `trialStatus: expired`
 
-Deletion removes the Firestore student record, related learning records, attendance/check-in references, and the Firebase Authentication user. Google Sheet cleanup is optional and must not block core account deletion.
+The student record, learning data, scores, submissions, attendance history, and Firebase Authentication account are retained during that 30-day recovery window.
 
-The class-session reminder worker runs this cleanup before resolving recipients, so an expired pending student cannot receive another live-class reminder while awaiting the scheduled cleanup cycle.
+If the student makes a first qualifying payment during retention, Falowen keeps the same Firestore document / StudentCode, reactivates the account, clears the purge/block fields, and records `trialStatus: converted` plus `trialConvertedAt`.
+
+Only after the 30-day recovery window ends is an unpaid `trial_expired` student eligible for permanent purge. The purge removes the Firestore student record, related learning records, attendance/check-in references, and Firebase Authentication user. Optional Google Sheet cleanup runs only at this final purge stage and must not block core deletion.
+
+A student never enters the trial-expiry lifecycle when a paid, partially paid, or successful payment status exists or when any known paid-amount field is greater than zero.
+
+Class-session, attendance-confirmation, and course-review email workers treat `trial_expired` as inactive so the retained record does not continue to receive normal student communications. The class-session reminder worker runs the trial lifecycle before resolving recipients.
