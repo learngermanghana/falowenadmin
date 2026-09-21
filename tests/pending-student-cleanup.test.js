@@ -123,7 +123,7 @@ test("trial expiry sync posts the retained status to the Apps Script webhook", a
     const body = JSON.parse(captured.options.body);
     assert.equal(body.action, "syncStudentTrialStatus");
     assert.equal(body.studentCode, "ABC123");
-    assert.equal(body.secret, "private-secret");
+    assert.equal(body.token, "private-secret");
   } finally {
     globalThis.fetch = originalFetch;
   }
