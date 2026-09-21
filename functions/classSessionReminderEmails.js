@@ -284,7 +284,7 @@ function isActiveStudent(student = {}) {
   const status = comparable(student.status || student.studentStatus || student.enrollmentStatus);
   return ![
     "inactive", "archived", "withdrawn", "removed", "cancelled",
-    "canceled", "deleted", "blocked", "suspended",
+    "canceled", "deleted", "blocked", "suspended", "trial_expired",
   ].includes(status);
 }
 
