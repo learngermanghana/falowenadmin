@@ -64,7 +64,7 @@ export function buildClassReminderDiagnostic({
     const status = normalize(student.status || student.studentStatus || student.enrollmentStatus).toLowerCase();
     const role = normalize(student.role).toLowerCase();
     if (role && role !== "student") return false;
-    return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "deleted", "blocked", "suspended"].includes(status);
+    return !["inactive", "archived", "withdrawn", "removed", "cancelled", "canceled", "deleted", "blocked", "suspended", "trial_expired"].includes(status);
   });
 
   return {
