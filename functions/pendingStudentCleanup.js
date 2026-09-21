@@ -312,7 +312,7 @@ async function deleteStudentRowsFromSheet({ appsScriptUrl = "", syncSecret = "",
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      secret: text(syncSecret),
+      token: text(syncSecret),
       action: "deleteStudentAccount",
       studentId,
       studentCode,
@@ -345,7 +345,7 @@ async function syncTrialStatusToSheet({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      secret: text(syncSecret),
+      token: text(syncSecret),
       action: "syncStudentTrialStatus",
       studentId,
       studentCode,
