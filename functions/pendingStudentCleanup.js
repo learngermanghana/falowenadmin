@@ -134,7 +134,13 @@ function isExpiredPendingStudent(student = {}, now = Date.now()) {
   return expiredPendingReason(student, now) === "purge_due";
 }
 
-async function blockExpiredTrialStudent({ admin, docSnap, now = Date.now() }) {
+async function blockExpiredTrialStudent({
+  admin,
+  docSnap,
+  now = Date.now(),
+  appsScriptUrl = "",
+  syncSecret = "",
+}) {
   const latestSnap = await docSnap.ref.get();
   if (!latestSnap.exists) return { skipped: "already_deleted" };
 
@@ -155,12 +161,32 @@ async function blockExpiredTrialStudent({ admin, docSnap, now = Date.now() }) {
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   }, { merge: true });
 
+  const studentCode = text(student.studentCode || student.studentcode || student.uid || latestSnap.id);
+  const email = lower(student.email);
+  const trialExpiredAt = new Date(expiredAt).toISOString();
+  const trialPurgeAt = new Date(purgeAt).toISOString();
+  const sheet = await syncTrialStatusToSheet({
+    appsScriptUrl,
+    syncSecret,
+    studentId: latestSnap.id,
+    studentCode,
+    email,
+    trialExpiredAt,
+    trialPurgeAt,
+  }).catch((error) => ({
+    attempted: true,
+    success: false,
+    message: error?.message || String(error),
+  }));
+
   return {
     blocked: true,
     studentId: latestSnap.id,
-    studentCode: text(student.studentCode || student.studentcode || student.uid || latestSnap.id),
-    trialExpiredAt: new Date(expiredAt).toISOString(),
-    trialPurgeAt: new Date(purgeAt).toISOString(),
+    studentCode,
+    email,
+    trialExpiredAt,
+    trialPurgeAt,
+    sheet,
   };
 }
 
@@ -282,6 +308,40 @@ async function deleteStudentRowsFromSheet({ appsScriptUrl = "", syncSecret = "",
   };
 }
 
+async function syncTrialStatusToSheet({
+  appsScriptUrl = "",
+  syncSecret = "",
+  studentId,
+  studentCode,
+  email,
+  trialExpiredAt,
+  trialPurgeAt,
+}) {
+  if (!text(appsScriptUrl) || !text(syncSecret)) {
+    return { attempted: false, success: true, message: "Student lifecycle Google Sheets webhook is not configured." };
+  }
+  const response = await fetch(text(appsScriptUrl), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      secret: text(syncSecret),
+      action: "syncStudentTrialStatus",
+      studentId,
+      studentCode,
+      email,
+      trialExpiredAt,
+      trialPurgeAt,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  return {
+    attempted: true,
+    success: response.ok && data?.ok !== false,
+    message: data?.message || (response.ok ? "Google Sheet trial status updated." : "Google Sheet trial status sync failed."),
+    details: data,
+  };
+}
+
 async function deleteExpiredPendingStudent({ admin, db, docSnap, now = Date.now(), appsScriptUrl = "", syncSecret = "" }) {
   const latestSnap = await docSnap.ref.get();
   if (!latestSnap.exists) return { skipped: "already_deleted" };
@@ -354,7 +414,13 @@ async function runExpiredPendingStudentCleanup({
   for (const item of actions) {
     try {
       if (item.reason === "needs_block") {
-        results.push(await blockExpiredTrialStudent({ admin, docSnap: item.docSnap, now }));
+        results.push(await blockExpiredTrialStudent({
+          admin,
+          docSnap: item.docSnap,
+          now,
+          appsScriptUrl,
+          syncSecret,
+        }));
       } else {
         results.push(await deleteExpiredPendingStudent({
           admin, db, docSnap: item.docSnap, now, appsScriptUrl, syncSecret,
@@ -430,6 +496,7 @@ module.exports = {
   expiredPendingReason,
   isExpiredPendingStudent,
   blockExpiredTrialStudent,
+  syncTrialStatusToSheet,
   deleteExpiredPendingStudent,
   runExpiredPendingStudentCleanup,
   createExpiredPendingStudentCleanupJob,
