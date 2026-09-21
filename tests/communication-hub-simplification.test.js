@@ -56,3 +56,20 @@ test("shared communication history refreshes after failed persisted send attempt
     /finally \{[\s\S]*historyMayHaveChanged[\s\S]*falowen:communication-sent/,
   );
 });
+
+
+test("level broadcasts wait for every class attempt before refreshing shared history", () => {
+  const broadcast = read("src/pages/CommunicationPage.jsx");
+  const submitStart = broadcast.indexOf("async function onSubmit");
+  const submitEnd = broadcast.indexOf("return (", submitStart);
+  const submitBlock = broadcast.slice(submitStart, submitEnd);
+
+  assert.match(submitBlock, /Promise\.allSettled\(targetClasses\.map/);
+  assert.doesNotMatch(submitBlock, /Promise\.all\(targetClasses\.map/);
+  assert.match(submitBlock, /failedSettlements = settlements\.filter/);
+  assert.match(submitBlock, /finally \{[\s\S]*falowen:communication-sent/);
+  assert.ok(
+    submitBlock.indexOf("Promise.allSettled") < submitBlock.indexOf("falowen:communication-sent"),
+    "history refresh event must happen only after all level sends settle",
+  );
+});
