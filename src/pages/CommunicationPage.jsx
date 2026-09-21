@@ -502,13 +502,25 @@ export default function CommunicationPage({ embedded = false }) {
         if (!targetClasses.length) throw new Error(`No available ${selectedLevel} classes were found.`);
 
         historyMayHaveChanged = true;
-        const receipts = await Promise.all(targetClasses.map((klass) => saveAnnouncementRow({
+        const settlements = await Promise.allSettled(targetClasses.map((klass) => saveAnnouncementRow({
           ...submissionForm,
           className: classSelectValue(klass),
           certLevel: submissionForm.certLevel || selectedLevel,
         })));
 
+        const receipts = settlements
+          .filter((result) => result.status === "fulfilled")
+          .map((result) => result.value);
+        const failedSettlements = settlements.filter((result) => result.status === "rejected");
         const savedCount = receipts.filter((receipt) => receipt?.sheet?.success || receipt?.firestore?.success).length;
+
+        if (failedSettlements.length) {
+          const firstFailure = failedSettlements[0]?.reason?.message || "One or more class broadcasts failed.";
+          throw new Error(
+            `Broadcast saved for ${savedCount} ${selectedLevel} class(es); ${failedSettlements.length} failed. ${firstFailure}`
+          );
+        }
+
         toast.success(`Broadcast saved for ${savedCount} ${selectedLevel} class(es).`);
       } else {
         historyMayHaveChanged = true;
