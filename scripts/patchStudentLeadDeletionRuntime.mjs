@@ -10,8 +10,19 @@ if (!source.includes('app.post("/student-leads/delete"')) {
   }
 
   const leadDeletionRuntime = `async function deleteLeadRowFromSheet({ leadId, email, phone, lead }) {
-  const appsScriptUrl = String(studentDeleteAppsScriptUrlSecret.value() || process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim();
-  const syncSecret = String(studentDeleteSyncSecret.value() || process.env.STUDENT_DELETE_SYNC_SECRET || "").trim();
+  const studentDeleteConfig = runtimeConfig.student_delete || runtimeConfig.studentDelete || {};
+  const appsScriptUrl = String(
+    studentDeleteConfig.apps_script_url ||
+    studentDeleteConfig.appsScriptUrl ||
+    process.env.STUDENT_DELETE_APPS_SCRIPT_URL ||
+    ""
+  ).trim();
+  const syncSecret = String(
+    studentDeleteConfig.sync_secret ||
+    studentDeleteConfig.syncSecret ||
+    process.env.STUDENT_DELETE_SYNC_SECRET ||
+    ""
+  ).trim();
   if (!appsScriptUrl || !syncSecret) {
     return { attempted: false, success: false, message: "Lead deletion Google Sheets webhook is not configured." };
   }
