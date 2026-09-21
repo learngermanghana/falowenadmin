@@ -10,6 +10,27 @@ function comparable(value) {
   return text(value).toLowerCase().replace(/\s+/g, " ");
 }
 
+function resolveLifecycleWebhookConfig(runtimeConfig = {}, env = process.env) {
+  const communication = runtimeConfig.communication
+    || runtimeConfig.announcements
+    || runtimeConfig.announcement
+    || {};
+  return {
+    url: text(
+      env.ANNOUNCEMENT_WEBHOOK_URL
+      || env.VITE_ANNOUNCEMENT_WEBHOOK_URL
+      || communication.announcement_webhook_url
+      || communication.webhook_url,
+    ),
+    token: text(
+      env.ANNOUNCEMENT_WEBHOOK_TOKEN
+      || env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN
+      || communication.announcement_webhook_token
+      || communication.webhook_token,
+    ),
+  };
+}
+
 function money(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   const parsed = Number(String(value == null ? "" : value).replace(/[^0-9.-]+/g, ""));
@@ -285,7 +306,7 @@ async function deleteAuthUserIfPresent({ admin, uid, email }) {
 
 async function deleteStudentRowsFromSheet({ appsScriptUrl = "", syncSecret = "", studentId, studentCode, email, student }) {
   if (!text(appsScriptUrl) || !text(syncSecret)) {
-    return { attempted: false, success: true, message: "Student delete Google Sheets webhook is not configured." };
+    return { attempted: false, success: true, message: "Falowen Announcement webhook is not configured." };
   }
   const response = await fetch(text(appsScriptUrl), {
     method: "POST",
@@ -318,7 +339,7 @@ async function syncTrialStatusToSheet({
   trialPurgeAt,
 }) {
   if (!text(appsScriptUrl) || !text(syncSecret)) {
-    return { attempted: false, success: true, message: "Student lifecycle Google Sheets webhook is not configured." };
+    return { attempted: false, success: true, message: "Falowen Announcement webhook is not configured." };
   }
   const response = await fetch(text(appsScriptUrl), {
     method: "POST",
@@ -456,25 +477,22 @@ function createExpiredPendingStudentCleanupJob({
   admin,
   db,
   onSchedule,
-  appsScriptUrlSecret,
-  syncSecret,
+  runtimeConfig = {},
+  env = process.env,
 } = {}) {
-  const secrets = [appsScriptUrlSecret, syncSecret].filter(Boolean);
   return onSchedule({
     schedule: "*/5 * * * *",
     timeZone: "Africa/Accra",
     retryCount: 1,
     memory: "256MiB",
-    secrets,
   }, async () => {
-    const appsScriptUrl = text(appsScriptUrlSecret?.value?.() || process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "");
-    const resolvedSyncSecret = text(syncSecret?.value?.() || process.env.STUDENT_DELETE_SYNC_SECRET || "");
+    const communication = resolveLifecycleWebhookConfig(runtimeConfig, env);
     const result = await runExpiredPendingStudentCleanup({
       admin,
       db,
       now: Date.now(),
-      appsScriptUrl,
-      syncSecret: resolvedSyncSecret,
+      appsScriptUrl: communication.url,
+      syncSecret: communication.token,
     });
     console.log("pending_student_trial_lifecycle", {
       checked: result.checked,
@@ -489,6 +507,7 @@ function createExpiredPendingStudentCleanupJob({
 module.exports = {
   TRIAL_DURATION_MS,
   TRIAL_RETENTION_MS,
+  resolveLifecycleWebhookConfig,
   pendingStartedAtMillis,
   trialExpiredAtMillis,
   trialPurgeAtMillis,
