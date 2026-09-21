@@ -2,9 +2,8 @@ import { useState } from "react";
 import AttendanceConfirmationAutomationPanel from "../components/AttendanceConfirmationAutomationPanel.jsx";
 import AttendanceFailedDeliveryRetryPanel from "../components/AttendanceFailedDeliveryRetryPanel.jsx";
 import CommunicationLiveClassActions from "../components/CommunicationLiveClassActions.jsx";
-import TargetedCommunicationPanel from "../components/TargetedCommunicationPanel.jsx";
 import IntegrationEventPanel from "../components/IntegrationEventPanel.jsx";
-import CommunicationPage from "./CommunicationPage.jsx";
+import CommunicationMessagesPage from "./CommunicationMessagesPage.jsx";
 
 function tabStyle(active) {
   return {
@@ -18,37 +17,53 @@ function tabStyle(active) {
 }
 
 export default function CommunicationHubPage() {
-  const [activeTab, setActiveTab] = useState("broadcasts");
+  const [activeTab, setActiveTab] = useState("messages");
+  const [messageMode, setMessageMode] = useState("send");
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
       <nav style={{ padding: "16px 16px 0", display: "flex", gap: 8, flexWrap: "wrap" }} aria-label="Communication sections">
-        <button type="button" style={tabStyle(activeTab === "broadcasts")} onClick={() => setActiveTab("broadcasts")}>
-          Broadcasts
+        <button type="button" style={tabStyle(activeTab === "messages")} onClick={() => setActiveTab("messages")}>
+          Messages
         </button>
         <button type="button" style={tabStyle(activeTab === "attendance")} onClick={() => setActiveTab("attendance")}>
-          Attendance confirmation emails
+          Email Automations
         </button>
         <button type="button" style={tabStyle(activeTab === "integrations")} onClick={() => setActiveTab("integrations")}>
-          System events
+          System Health
         </button>
       </nav>
 
-      {activeTab === "broadcasts" ? (
-        <div style={{ display: "grid", gap: 14 }}>
-          <div style={{ padding: "0 16px", maxWidth: 900 }}>
-            <CommunicationLiveClassActions />
-          </div>
-          <CommunicationPage />
-          <TargetedCommunicationPanel />
+      {activeTab === "messages" ? (
+        <div style={{ padding: "0 16px 16px", maxWidth: 1040, display: "grid", gap: 14 }}>
+          <section style={{ border: "1px solid #dbe3ef", borderRadius: 12, padding: 14, background: "#fff" }}>
+            <div style={{ marginBottom: 12 }}>
+              <h2 style={{ margin: "0 0 4px" }}>Communication</h2>
+              <p style={{ margin: 0, color: "#64748b" }}>
+                Choose whether you want to send a message or change a live class. Only one workflow is shown at a time.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" style={tabStyle(messageMode === "send")} onClick={() => setMessageMode("send")}>
+                Send message
+              </button>
+              <button type="button" style={tabStyle(messageMode === "class-change")} onClick={() => setMessageMode("class-change")}>
+                Class change
+              </button>
+            </div>
+          </section>
+
+          {messageMode === "send" ? <CommunicationMessagesPage /> : <CommunicationLiveClassActions />}
         </div>
       ) : null}
+
       {activeTab === "attendance" ? (
         <div style={{ padding: "0 16px 16px", maxWidth: 1000, display: "grid", gap: 14 }}>
           <AttendanceConfirmationAutomationPanel />
           <AttendanceFailedDeliveryRetryPanel />
         </div>
       ) : null}
+
       {activeTab === "integrations" ? <IntegrationEventPanel /> : null}
     </div>
   );

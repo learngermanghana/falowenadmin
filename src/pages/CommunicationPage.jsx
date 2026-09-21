@@ -303,7 +303,7 @@ function uniqueStudents(students = []) {
 const fieldStyle = { display: "grid", gap: 6 };
 const inputStyle = { padding: 10, borderRadius: 8, border: "1px solid #d0d7de" };
 
-export default function CommunicationPage() {
+export default function CommunicationPage({ embedded = false }) {
   const toast = useToast();
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
@@ -518,6 +518,10 @@ export default function CommunicationPage() {
         }
       }
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("falowen:communication-sent"));
+      }
+
       setForm((current) => ({
         ...current,
         announcement: "",
@@ -538,13 +542,15 @@ export default function CommunicationPage() {
   }
 
   return (
-    <div style={{ padding: 16, display: "grid", gap: 16, maxWidth: 860 }}>
-      <div>
-        <h2 style={{ marginBottom: 6 }}>Communication</h2>
-        <p style={{ marginTop: 0, opacity: 0.8 }}>
-          Save tutor broadcasts in-app and auto-send each entry to your announcement sheet.
-        </p>
-      </div>
+    <div style={{ padding: embedded ? 0 : 16, display: "grid", gap: 16, maxWidth: embedded ? "100%" : 860 }}>
+      {!embedded ? (
+        <div>
+          <h2 style={{ marginBottom: 6 }}>Communication</h2>
+          <p style={{ marginTop: 0, opacity: 0.8 }}>
+            Send a message to everyone, a level, one class, or one student.
+          </p>
+        </div>
+      ) : null}
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {[...QUICK_TEMPLATES, UPCOMING_CLASS_PROMO].map((template) => (

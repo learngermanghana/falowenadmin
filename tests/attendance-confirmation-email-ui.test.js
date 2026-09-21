@@ -20,10 +20,10 @@ test("Communication uses the attendance confirmation hub", async () => {
   const [app, hub] = await Promise.all([source(appPath), source(hubPath)]);
   assert.match(app, /CommunicationHubPage/);
   assert.match(app, /path="\/communication"/);
-  assert.match(hub, /Attendance confirmation emails/);
+  assert.match(hub, />\s*Email Automations\s*</);
   assert.match(hub, /AttendanceConfirmationAutomationPanel/);
   assert.match(hub, /AttendanceFailedDeliveryRetryPanel/);
-  assert.match(hub, /CommunicationPage/);
+  assert.match(hub, /CommunicationMessagesPage/);
 });
 
 test("attendance automation UI exposes modes, recovery and job status", async () => {
