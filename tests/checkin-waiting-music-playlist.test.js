@@ -370,9 +370,10 @@ test("initial presenter start is atomic and preserves the transaction winner", (
   assert.match(service, /const snapshot = await transaction\.get\(classRef\);/);
   assert.match(service, /if \(existing\.sessionKey === key && existingStart > 0\)/);
   assert.match(service, /const wasActive = normalize\(data\.presenterActiveSessionKey\) === key/);
-  assert.match(service, /reactivated: !wasActive/);
-  assert.match(service, /activeSessionKey: key/);
-  assert.match(service, /isActiveSession: true/);
+  assert.match(service, /const sessionEnded = existing\.classStatus === "ended" \|\| Number\(existing\.classEndedAtMs \|\| 0\) > 0/);
+  assert.match(service, /const shouldReactivate = !wasActive && !sessionEnded/);
+  assert.match(service, /reactivated: shouldReactivate/);
+  assert.match(service, /shouldReactivate \? \{ activeSessionKey: key, isActiveSession: true \} : \{\}/);
   assert.match(service, /created: false/);
   assert.match(service, /transaction\.update\(classRef/);
   assert.doesNotMatch(service, /await updateDoc\(doc\(db, "classes", id\), \{\s*presenterActiveSessionKey/);
