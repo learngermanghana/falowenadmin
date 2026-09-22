@@ -65,6 +65,26 @@ async function findClassForOperationalSync(student = {}) {
   return null;
 }
 
+function operationalOrientationMoney(value) {
+  if (value === null || value === undefined || value === "") return 0;
+  const parsed = Number(String(value).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function operationalHasQualifyingPayment(student = {}) {
+  const paymentStatus = String(student.paymentStatus || student.payment_status || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+  const status = String(student.status || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+  if (["paid", "partial", "partially paid", "part paid"].includes(paymentStatus)) return true;
+  if (status === "paid") return true;
+  return [
+    student.paid,
+    student.paidAmount,
+    student.amountPaid,
+    student.amount_paid,
+    student.initialPaymentAmount,
+  ].some((value) => operationalOrientationMoney(value) > 0);
+}
+
 async function syncStudentToOrientationSheet(docSnap, options = {}) {
   const student = docSnap.data() || {};
   if (student.orientationSheetAutoSyncStatus === "sent" || student.orientationSheetAutoSyncedAt) return { status: "already_sent" };
@@ -74,7 +94,7 @@ async function syncStudentToOrientationSheet(docSnap, options = {}) {
     return { status: "skipped", reason: `student status is ${lifecycleStatus}` };
   }
 
-  if (!hasQualifyingPayment(student)) {
+  if (!operationalHasQualifyingPayment(student)) {
     if (options.writeStatus !== false) {
       await docSnap.ref.set({
         orientationSheetAutoSyncStatus: "skipped",
