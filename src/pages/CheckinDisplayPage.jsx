@@ -85,6 +85,24 @@ function formatDuration(ms) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function sessionDurationSeconds(startTime, endTime) {
+  const start = String(startTime || "").trim();
+  const end = String(endTime || "").trim();
+  if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) return 0;
+  const [startHour, startMinute] = start.split(":").map(Number);
+  const [endHour, endMinute] = end.split(":").map(Number);
+  if (
+    !Number.isInteger(startHour) || !Number.isInteger(startMinute)
+    || !Number.isInteger(endHour) || !Number.isInteger(endMinute)
+    || startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23
+    || startMinute < 0 || startMinute > 59 || endMinute < 0 || endMinute > 59
+  ) return 0;
+  const startMinutes = (startHour * 60) + startMinute;
+  let endMinutes = (endHour * 60) + endMinute;
+  if (endMinutes <= startMinutes) endMinutes += 24 * 60;
+  return Math.max(0, (endMinutes - startMinutes) * 60);
+}
+
 function normalizeClassLookup(value) {
   return String(value || "")
     .trim()
@@ -747,7 +765,8 @@ export default function CheckinDisplayPage() {
 
     try {
       const { klass, classRecordId, level } = await resolvePresenterClass();
-      const durationSeconds = presenterSessionDurationSeconds(level);
+      const attendanceDurationSeconds = sessionDurationSeconds(startTime, endTime);
+      const durationSeconds = attendanceDurationSeconds || presenterSessionDurationSeconds(level);
       const sessionKey = presenterSessionKey({
         sessionDate,
         sessionId,
@@ -849,9 +868,11 @@ export default function CheckinDisplayPage() {
             ? "This class session is already ended. Shared state was preserved."
             : canRepairSharedTimer
               ? `Slides timer corrected to the ${durationSeconds / 60}-minute ${level} class duration.`
-              : wasChangedAfterStart || manual
-                ? "Presenter already has shared timer state. It was preserved."
-                : "This class session was already started on another display. Existing timer state was preserved.",
+              : startResult.reactivated
+                ? "Presenter session reconnected to the active slides. Existing timer state was preserved."
+                : wasChangedAfterStart || manual
+                  ? "Presenter already has shared timer state. It was preserved."
+                  : "This class session was already started on another display. Existing timer state was preserved.",
         });
         return;
       }
@@ -868,7 +889,7 @@ export default function CheckinDisplayPage() {
         message: "Class started, but slide timer sync failed. You can retry here or use Start class on the slide.",
       });
     }
-  }, [assignmentId, classId, dateLabel, resolvePresenterClass, sessionDisplayLabel, sessionId, startDecisionStorageKey]);
+  }, [assignmentId, classId, dateLabel, endTime, resolvePresenterClass, sessionDisplayLabel, sessionId, startDecisionStorageKey, startTime]);
 
   const delayClassStart = useCallback((minutes) => {
     if (actualStartedAt) return;
