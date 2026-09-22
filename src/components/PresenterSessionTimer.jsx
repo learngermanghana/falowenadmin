@@ -113,9 +113,11 @@ function visualWarningClass(remaining) {
 
 export default function PresenterSessionTimer({ slide }) {
   const level = normalize(slide?.course).toUpperCase();
-  const durationMinutes = presenterSessionMinutes(level);
-  const durationSeconds = durationMinutes * 60;
   const presenterLive = usePresenterLiveSession(slide);
+  const configuredDurationMinutes = presenterSessionMinutes(level);
+  const sharedDurationSeconds = Math.max(0, Number(presenterLive.liveState?.timerDurationSeconds || 0));
+  const durationSeconds = (configuredDurationMinutes * 60) || sharedDurationSeconds;
+  const durationMinutes = durationSeconds / 60;
   const [classId, setClassId] = useState(currentPresenterClassId);
   const storageKey = useMemo(
     () => presenterClassTimerStorageKey(level, classId, new Date(), presenterLive.sessionKey),
