@@ -6,13 +6,15 @@ function read(path) {
   return fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("presenter class timer shares A1/A2/B1 duration rules with check-in", () => {
+test("presenter class timer shares A1/A2/B1 presets and accepts a shared attendance duration for other levels", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   const timing = read("src/utils/presenterSessionTiming.js");
   assert.match(timing, /A1:\s*60/);
   assert.match(timing, /A2:\s*90/);
   assert.match(timing, /B1:\s*90/);
-  assert.match(source, /presenterSessionMinutes/);
+  assert.match(source, /configuredDurationMinutes/);
+  assert.match(source, /presenterLive\.liveState\?\.timerDurationSeconds/);
+  assert.match(source, /\(configuredDurationMinutes \* 60\) \|\| sharedDurationSeconds/);
   assert.match(source, /Start class/);
   assert.match(source, /Class time is up/);
 });

@@ -210,12 +210,24 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
     const existing = sessionStateFromClassData(data, key);
     const existingStart = Number(existing.classStartedAtMs || 0);
     if (existing.sessionKey === key && existingStart > 0) {
+      const nowMs = Date.now();
+      const wasActive = normalize(data.presenterActiveSessionKey) === key;
+      if (!wasActive) {
+        transaction.update(classRef, {
+          presenterActiveSessionKey: key,
+          presenterActiveSessionUpdatedAt: serverTimestamp(),
+          presenterActiveSessionUpdatedAtMs: nowMs,
+        });
+      }
       return {
         ok: true,
         created: false,
+        reactivated: !wasActive,
         sessionKey: key,
         state: {
           ...existing,
+          activeSessionKey: key,
+          isActiveSession: true,
           classRecordId: id,
         },
       };
