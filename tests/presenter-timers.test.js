@@ -100,15 +100,18 @@ test("class timer publishes and consumes shared absolute timer state", () => {
 });
 
 
-test("presenter never displays a shared countdown longer than the configured class duration", () => {
+test("attendance-owned timer is consumed as authoritative shared state", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
-  assert.match(source, /const maximumEndAt = nowMs \+ \(durationSeconds \* 1000\)/);
+  assert.match(source, /const attendanceControlsTimer = presenterLive\.isToday/);
+  assert.match(source, /liveState\.classStartSource === "checkin"/);
+  assert.match(source, /sessionTimingAuthority \|\| "attendance"/);
+  assert.match(source, /const remoteEndAt = remoteRunning/);
+  assert.match(source, /rawRemoteEndAt \|\| derivedCheckinEndAt/);
   assert.match(source, /Math\.min\(durationSeconds, Math\.ceil\(\(remoteEndAt - nowMs\) \/ 1000\)\)/);
-  assert.match(source, /durationMismatch && checkinEndAt/);
-  assert.match(source, /checkinStartedAtMs \+ \(durationSeconds \* 1000\)/);
-  assert.match(source, /const timerNeedsRepair = remoteRunning/);
-  assert.match(source, /timerDurationSeconds: durationSeconds/);
-  assert.match(source, /void presenterLive\.publish/);
+  assert.match(source, /if \(attendanceControlsTimer\) return;/);
+  assert.match(source, /Managed by Attendance/);
+  assert.doesNotMatch(source, /const timerNeedsRepair = remoteRunning/);
+  assert.doesNotMatch(source, /durationMismatch && checkinEndAt/);
 });
 
 test("student picker synchronizes class, student, question, fair-pick state and response deadline", () => {
@@ -142,7 +145,7 @@ test("presenter applies synchronized timer snapshots even when check-in used the
   assert.match(source, /if \(!presenterLive\.hasSnapshot \|\| !presenterLive\.isToday \|\| !remoteStamp\) return;/);
   assert.doesNotMatch(source, /!presenterLive\.isRemoteState \|\| !remoteStamp/);
   assert.match(source, /remote\.classStartSource === "checkin"/);
-  assert.match(source, /Started from check-in/);
+  assert.match(source, /Running from Attendance/);
 });
 
 
@@ -158,4 +161,13 @@ test("presenter timer recognizes check-in class end state", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   assert.match(source, /remote\.classStatus === "ended"/);
   assert.match(source, /Class ended from check-in/);
+});
+
+
+test("manual presenter timer uses explicit waiting running and paused lifecycle states", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /classLifecycleStatus: "running"/);
+  assert.match(source, /classLifecycleStatus: "paused"/);
+  assert.match(source, /classLifecycleStatus: "waiting"/);
+  assert.match(source, /if \(attendanceControlsTimer \|\| !running\) return;/);
 });

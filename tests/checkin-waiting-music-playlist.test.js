@@ -266,18 +266,22 @@ test("check-in repairs an already-running shared timer that exceeds the level du
   assert.match(page, /const sharedTimerDuration = Math\.max\(0, Number\(shared\.timerDurationSeconds \|\| 0\)\)/);
   assert.match(page, /const timerDurationMismatch = durationSeconds > 0/);
   assert.match(page, /const timerRemainingTooLong = sharedTimerEndAt > 0/);
+  assert.match(page, /const timerNeverInitialized = shared\.classStartSource === "checkin"/);
   assert.match(page, /const canRepairSharedTimer = !sharedEnd/);
+  assert.match(page, /timerNeverInitialized/);
   assert.match(page, /await publishPresenterLiveSession\(classRecordId, repairedPatch, sessionKey\)/);
   assert.match(page, /Slides timer corrected to the \$\{durationSeconds \/ 60\}-minute \$\{level\} class duration/);
 });
 
 
-test("refreshing a persisted check-in start does not republish or restart the shared slide timer", () => {
+test("refreshing a persisted check-in start reconnects shared slides without changing the original start", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
-  assert.match(page, /Class start restored\. Shared slide timer was not changed\./);
-  assert.doesNotMatch(page, /if \(!actualStartedAt \|\| slideSyncStatus\.state !== "idle"\) return;/);
-  assert.doesNotMatch(page, /void syncPresenterStart\(actualStartedAt\);\s*\n\s*}\s*,?\s*\[/);
+  assert.match(page, /Class start restored\. Reconnecting the shared slide timer automatically/);
+  assert.match(page, /autoPresenterRecoveryRef/);
+  assert.match(page, /void syncPresenterStart\(actualStartedAt, \{ recovery: true \}\)/);
+  assert.match(page, /document\.addEventListener\("visibilitychange", recoverAfterWake\)/);
+  assert.match(page, /window\.addEventListener\("online", recoverOnline\)/);
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 });
 
@@ -309,13 +313,13 @@ test("supported attendance dates normalize only when the calendar date is valid"
   assert.equal(checkinSessionDateKey("not-a-real-date"), null);
 });
 
-test("restored class starts keep a manual slide synchronization path without auto-publishing", () => {
+test("restored class starts recover automatically and keep manual retry only for errors", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
-  assert.match(page, /Use Sync slides now only if the earlier sync failed/);
-  assert.match(page, /slideSyncStatus\.state === "restored"/);
-  assert.match(page, />Sync slides now<\/button>/);
-  assert.doesNotMatch(page, /void syncPresenterStart\(actualStartedAt\);\s*\n\s*}\s*,?\s*\[/);
+  assert.match(page, /\["restored", "error"\]\.includes\(slideSyncStatus\.state\)/);
+  assert.match(page, /sharedTimerMissing/);
+  assert.match(page, /Retry slide sync/);
+  assert.doesNotMatch(page, />Sync slides now<\/button>/);
 });
 
 test("presenter date guard uses normalized supported labels and only falls back when the date is absent", () => {
@@ -369,9 +373,11 @@ test("initial presenter start is atomic and preserves the transaction winner", (
   assert.match(service, /runTransaction/);
   assert.match(service, /const snapshot = await transaction\.get\(classRef\);/);
   assert.match(service, /if \(existing\.sessionKey === key && existingStart > 0\)/);
-  assert.match(service, /const wasActive = normalize\(data\.presenterActiveSessionKey\) === key/);
-  assert.match(service, /const sessionEnded = existing\.classStatus === "ended" \|\| Number\(existing\.classEndedAtMs \|\| 0\) > 0/);
-  assert.match(service, /const shouldReactivate = !wasActive && !sessionEnded/);
+  assert.match(service, /const activeSessionKey = normalize\(data\.presenterActiveSessionKey\)/);
+  assert.match(service, /const wasActive = activeSessionKey === key/);
+  assert.match(service, /const sessionEnded = existing\.classLifecycleStatus === "ended"/);
+  assert.match(service, /blockedByNewerActiveSession/);
+  assert.match(service, /const shouldReactivate = !wasActive && !sessionEnded && !blockedByNewerActiveSession/);
   assert.match(service, /reactivated: shouldReactivate/);
   assert.match(service, /shouldReactivate \? \{ activeSessionKey: key, isActiveSession: true \} : \{\}/);
   assert.match(service, /created: false/);
@@ -426,4 +432,19 @@ test("check-in ignores presenter snapshots from the previous URL session", () =>
   assert.match(page, /String\(presenterLiveState\.sessionKey \|\| ""\) !== targetSessionKey/);
   assert.match(page, /setPresenterTarget\(\(current\) =>/);
   assert.match(page, /setPresenterLiveState\(\(current\) =>/);
+});
+
+
+test("attendance owns session timing and stale tabs cannot replace a newer active class", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
+
+  assert.match(page, /sessionTimingAuthority: "attendance"/);
+  assert.match(page, /classLifecycleStatus: "running"/);
+  assert.match(page, /classLifecycleStatus: "ended"/);
+  assert.match(page, /state: "stale-blocked"/);
+  assert.match(service, /blockedByNewerActiveSession/);
+  assert.match(service, /reason: "newer-active-session"/);
+  assert.match(service, /classLifecycleStatus: "running"/);
+  assert.match(service, /classLifecycleStatus: "ended"/);
 });
