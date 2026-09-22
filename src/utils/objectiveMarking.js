@@ -1088,7 +1088,7 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const referenceItems = hardcodedItems.length ? hardcodedItems : items;
   if (!referenceItems.length) return { correctCount: 0, totalCount: 0, details: {} };
 
-  const sections = splitSubmissionIntoSections(submissionText);
+  const sections = normalizeA2718LegacySections(assignmentId, splitSubmissionIntoSections(submissionText));
   const partIds = new Set(referenceItems.map((item) => item.partId));
   const flatMainReference = referenceItems.every((item) => item.partId === "main");
   const referencePartIds = [...partIds].filter((partId) => partId !== "main");
