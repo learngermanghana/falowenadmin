@@ -190,6 +190,103 @@ function patchFunctions() {
   }
 });
 
+app.post("/payments/restore-paid-contract", async (req, res) => {
+  try {
+    const user = await requirePaymentAdmin(req);
+    const studentId = String(req.body?.studentId || "").trim();
+    if (!studentId) return res.status(400).json({ ok: false, error: "studentId is required" });
+
+    const studentRef = db.collection(STUDENTS_COLLECTION).doc(studentId);
+    let responseUpdate = null;
+    await db.runTransaction(async (transaction) => {
+      const snap = await transaction.get(studentRef);
+      if (!snap.exists) { const error = new Error("Student not found"); error.statusCode = 404; throw error; }
+
+      const student = snap.data() || {};
+      const upgradeStatus = String(student.upgradeStatus || "").trim().toLowerCase();
+      if (!["pending", "expired"].includes(upgradeStatus)) {
+        const error = new Error("Only a partial or expired unfinished upgrade can be returned to the paid contract.");
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const remainingUpgradeBalance = roundMoney(student.upgradeBalanceDue);
+      if (remainingUpgradeBalance <= 0) {
+        const error = new Error("This upgrade has no outstanding balance and cannot be downgraded.");
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const paidLevel = normalizeContractLevel(
+        student.paidLevel || student.upgradePreviousLevel || student.upgradeFromLevel,
+      );
+      if (!paidLevel) {
+        const error = new Error("Falowen cannot identify the student's previous paid level.");
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const previousBalance = roundMoney(student.upgradePreviousBalanceDue);
+      const previousPaymentStatus = String(
+        student.upgradePreviousPaymentStatus || (previousBalance <= 0 ? "Paid" : "Partially Paid"),
+      );
+      const previousStatus = String(
+        student.upgradePreviousStatus || (previousBalance <= 0 ? "Paid" : "Active"),
+      );
+      const previousClassName = String(student.upgradePreviousClassName || "").trim();
+      const update = {
+        level: paidLevel,
+        paidLevel,
+        balanceDue: previousBalance,
+        balance: previousBalance,
+        paymentStatus: previousPaymentStatus,
+        status: previousStatus,
+        upgradeStatus: "expired",
+        upgradeExpiredAt: admin.firestore.FieldValue.serverTimestamp(),
+        upgradeRestoredAt: admin.firestore.FieldValue.serverTimestamp(),
+        upgradeRestoredBy: user.uid,
+        paymentReminderLevel: admin.firestore.FieldValue.delete(),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (String(student.upgradeTargetClassName || "").trim()) {
+        update.className = previousClassName || admin.firestore.FieldValue.delete();
+      }
+
+      transaction.set(studentRef, update, { merge: true });
+      transaction.set(db.collection("auditLogs").doc(), {
+        type: "studentUpgrade.restoredPaidContract",
+        studentId,
+        fromLevel: student.level || student.upgradeToLevel || "",
+        restoredLevel: paidLevel,
+        targetLevel: student.upgradeToLevel || "",
+        remainingBalance: remainingUpgradeBalance,
+        upgradeId: student.upgradeId || "",
+        contractEnd: student.contractEnd || "",
+        actorId: user.uid,
+        reason: "admin_manual_restore",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      responseUpdate = {
+        level: paidLevel,
+        paidLevel,
+        balanceDue: previousBalance,
+        balance: previousBalance,
+        paymentStatus: previousPaymentStatus,
+        status: previousStatus,
+        upgradeStatus: "expired",
+        paymentReminderLevel: "",
+        ...(String(student.upgradeTargetClassName || "").trim() ? { className: previousClassName } : {}),
+      };
+    });
+
+    return res.json({ ok: true, studentUpdate: responseUpdate });
+  } catch (error) {
+    return res.status(error?.statusCode || 500).json({ ok: false, error: error?.message || "Could not restore the paid contract" });
+  }
+});
+
 `;
   content = replaceBetween(content, routeStart, routeEnd, routeReplacement, "start-upgrade route");
 
