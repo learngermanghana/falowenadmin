@@ -1526,8 +1526,7 @@
         "Answer10": "C) Auf der Baustelle oder am Flughafen",
         "Answer11": "C) Die Kündigung schriftlich und mit Frist einreichen",
         "Answer12": "C) In der Volkshochschule"
-      },
-      "teil4": {}
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1wKcE29sav7yHsSc9SSOwrbmtq15MF33LbVAeDaz4CAw/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1wKcE29sav7yHsSc9SSOwrbmtq15MF33LbVAeDaz4CAw/edit",
@@ -1623,10 +1622,10 @@
   "A2 6.16 Wohlbefinden und Entspannung": {
     "answers": {
       "teil3": {
-        "Answer1": "C) Anzeige D",
-        "Answer2": "B) Anzeige A",
-        "Answer3": "B) Anzeige E",
-        "Answer4": "C) Anzeige F",
+        "Answer1": "C) Anzeige C",
+        "Answer2": "B) Anzeige B",
+        "Answer3": "E) Anzeige E",
+        "Answer4": "F) Anzeige F",
         "Answer5": "A) Anzeige A"
       },
       "teil4": {
@@ -2110,8 +2109,7 @@
         "Answer3": "A) Müsli oder Toast mit Marmelade",
         "Answer4": "A) Sie macht Hausaufgaben.",
         "Answer5": "A) Sie bereitet ihre Sachen für den nächsten Tag vor."
-      },
-      "teil4": {}
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1nOtlOXVblDt1RQ8JOLpBBLQfjmnxJ9YF6ylhZo4u6kY/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1nOtlOXVblDt1RQ8JOLpBBLQfjmnxJ9YF6ylhZo4u6kY/edit",
@@ -2220,9 +2218,6 @@
       "teil3",
       "teil4"
     ],
-    "excludedParts": [
-      "teil4"
-    ],
     "writingParts": [
       "teil2"
     ],
@@ -2277,9 +2272,6 @@
     "expectedParts": [
       "teil2",
       "teil3",
-      "teil4"
-    ],
-    "excludedParts": [
       "teil4"
     ],
     "writingParts": [
