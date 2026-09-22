@@ -14,10 +14,22 @@ test("warm-up has a 30-second preparation mode that rolls into speaking", () => 
   assert.match(presenter, /Prepare 30s/);
 });
 
-test("teacher can choose one, two, or four warm-up questions", () => {
-  assert.match(presenter, /\[1, 2, 4\]\.map/);
+test("teacher can choose one through four warm-up questions", () => {
+  assert.match(presenter, /\[1, 2, 3, 4\]\.map/);
   assert.match(presenter, /setWarmupQuestionCount\(count\)/);
+  assert.match(presenter, /aria-pressed=\{warmupQuestionCount === count\}/);
+  assert.match(presenter, /Show \$\{count\} warm-up question/);
   assert.match(presenter, /stage\.items\.slice\(0, visibleWarmupQuestionCount\)/);
+});
+
+test("warm-up question count controls are projector-visible", () => {
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  assert.match(css, /\.presenter-warmup-question-count button \{/);
+  assert.match(css, /min-width: 2\.6rem/);
+  assert.match(css, /border: 2px solid #64748b/);
+  assert.match(css, /font-size: 1rem/);
+  assert.match(css, /font-weight: 900/);
+  assert.match(css, /button\.is-active \{[\s\S]*background: #1d4ed8;[\s\S]*color: #fff/);
 });
 
 test("large rosters only suggest a shorter warm-up", () => {

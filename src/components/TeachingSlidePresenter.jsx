@@ -499,11 +499,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <div className="presenter-warmup-controls">
                       <div className="presenter-warmup-question-count" role="group" aria-label="Warm-up questions per student">
                         <span>Questions per student</span>
-                        {[1, 2, 4].map((count) => (
+                        {[1, 2, 3, 4].map((count) => (
                           <button
                             key={count}
                             type="button"
                             className={warmupQuestionCount === count ? "is-active" : ""}
+                            aria-pressed={warmupQuestionCount === count}
+                            aria-label={`Show ${count} warm-up question${count === 1 ? "" : "s"} per student`}
                             onClick={() => setWarmupQuestionCount(count)}
                           >
                             {count === 4 && availableWarmupQuestions < 4 ? `All (${availableWarmupQuestions})` : count}
