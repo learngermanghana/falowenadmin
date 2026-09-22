@@ -83,7 +83,7 @@ pickerSource = replaceOnce(
   [
     '  // presenter-response-deadline-clock-v2',
     '  useEffect(() => {',
-    '    if (!responseDeadline || lastMarked) return undefined;',
+    '    if (!responseTimerEnabled || !responseDeadline || lastMarked) return undefined;',
     '    let frameId = 0;',
     '    let fallbackTimer = 0;',
     '    let lastPaintAt = 0;',
@@ -137,7 +137,7 @@ pickerSource = replaceOnce(
     '      document.removeEventListener("visibilitychange", resync);',
     '      window.removeEventListener("focus", resync);',
     '    };',
-    '  }, [responseDeadline, lastMarked]);',
+    '  }, [responseDeadline, lastMarked, responseTimerEnabled]);',
     '',
     '  useEffect(() => {',
     '    if (!currentKey) {',
@@ -146,6 +146,13 @@ pickerSource = replaceOnce(
     '      setResponseTimedOut(false);',
     '    }',
     '  }, [currentKey]);',
+    '',
+    '  useEffect(() => {',
+    '    if (responseTimerEnabled) return;',
+    '    setResponseRemaining(0);',
+    '    setResponseDeadline(0);',
+    '    setResponseTimedOut(false);',
+    '  }, [responseTimerEnabled]);',
     '',
     '  useEffect(() => {',
     '    if (!selectedClassId) return;',
@@ -159,6 +166,12 @@ pickerSource = replaceOnce(
   '  function pickStudent() {',
   [
     '  function startResponseTimer(seconds = responseSeconds) {',
+    '    if (!responseTimerEnabled) {',
+    '      setResponseRemaining(0);',
+    '      setResponseDeadline(0);',
+    '      setResponseTimedOut(false);',
+    '      return;',
+    '    }',
     '    const safeSeconds = Math.max(1, Number(seconds || DEFAULT_RESPONSE_SECONDS));',
     '    setResponseRemaining(safeSeconds);',
     '    setResponseDeadline(Date.now() + safeSeconds * 1000);',
@@ -171,6 +184,7 @@ pickerSource = replaceOnce(
     '  }',
     '',
     '  function extendResponseTimer(seconds = 15) {',
+    '    if (!responseTimerEnabled) return;',
     '    const added = Math.max(1, Number(seconds || 15));',
     '    const base = Math.max(0, Number(responseRemaining || 0));',
     '    const next = base + added;',
@@ -226,7 +240,7 @@ pickerSource = replaceOnce(
 );
 
 const responseTimerUi = [
-  '        {current ? (',
+  '        {current && responseTimerEnabled ? (',
   '          <div className={`presenter-response-timer ${responseTimedOut ? "is-expired" : responseRemaining <= 10 && !lastMarked ? "is-warning" : ""}`} aria-live={responseTimedOut ? "assertive" : "polite"}>',
   '            <span>{responseTimedOut ? `Time\'s up — ${current.name}` : lastMarked ? "Response recorded" : "Answer time"}</span>',
   '            <strong>{lastMarked ? "RECORDED" : responseTimedOut ? "TIME UP" : formatResponseTime(responseRemaining)}</strong>',
@@ -247,8 +261,9 @@ pickerSource = replaceOnce(
 const settingsAnchor = '            <small>Cloud sync lets you continue the same lesson on another signed-in device. “Absent” only removes a learner from this presenter rotation and never changes official attendance or grades.</small>';
 const settingsBlock = [
   settingsAnchor,
-  '            <div className="presenter-response-time-settings">',
-  '              <strong>Student answer time</strong>',
+  '            {responseTimerEnabled ? (',
+  '              <div className="presenter-response-time-settings">',
+  '                <strong>Student answer time</strong>',
   '              <div role="group" aria-label="Student answer time presets">',
   '                {RESPONSE_TIME_PRESETS.map((seconds) => (',
   '                  <button',
@@ -261,8 +276,9 @@ const settingsBlock = [
   '                  </button>',
   '                ))}',
   '              </div>',
-  '              <small>Starts automatically when you pick a student or give the same student a new question. Default: 30 seconds.</small>',
-  '            </div>',
+  '                <small>Starts automatically when you pick a student or give the same student a new question. Default: 30 seconds.</small>',
+  '              </div>',
+  '            ) : null}',
 ].join("\n");
 pickerSource = replaceOnce(pickerSource, settingsAnchor, settingsBlock, "student response timer settings");
 fs.writeFileSync(pickerTarget, pickerSource);

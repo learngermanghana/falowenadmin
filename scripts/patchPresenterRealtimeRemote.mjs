@@ -228,7 +228,9 @@ const remotePickerEffects = `  useEffect(() => {
     const remoteQuestionId = normalize(remote.pickerQuestionId);
     const remoteLastMarked = normalize(remote.pickerLastMarked);
     const remoteDeadline = Math.max(0, Number(remote.pickerResponseDeadline || 0));
-    const remoteTimedOut = Boolean(remote.pickerResponseTimedOut) || (remoteDeadline > 0 && remoteDeadline <= Date.now());
+    const effectiveRemoteDeadline = responseTimerEnabled ? remoteDeadline : 0;
+    const remoteTimedOut = responseTimerEnabled
+      && (Boolean(remote.pickerResponseTimedOut) || (remoteDeadline > 0 && remoteDeadline <= Date.now()));
     const remoteResponseSeconds = RESPONSE_TIME_PRESETS.includes(Number(remote.pickerResponseSeconds))
       ? Number(remote.pickerResponseSeconds)
       : responseSeconds;
@@ -240,7 +242,7 @@ const remotePickerEffects = `  useEffect(() => {
       remoteQuestionId,
       Boolean(remote.pickerShowAnswer),
       remoteLastMarked,
-      remoteDeadline,
+      effectiveRemoteDeadline,
       remoteTimedOut,
       remoteResponseSeconds,
       [...remoteRoundPicked].sort(),
@@ -255,8 +257,8 @@ const remotePickerEffects = `  useEffect(() => {
     setShowQuestionAnswer(Boolean(remote.pickerShowAnswer));
     setLastMarked(remoteLastMarked);
     setResponseSeconds(remoteResponseSeconds);
-    setResponseDeadline(remoteTimedOut ? 0 : remoteDeadline);
-    setResponseRemaining(remoteTimedOut ? 0 : Math.max(0, Math.ceil((remoteDeadline - Date.now()) / 1000)));
+    setResponseDeadline(remoteTimedOut ? 0 : effectiveRemoteDeadline);
+    setResponseRemaining(remoteTimedOut ? 0 : Math.max(0, Math.ceil((effectiveRemoteDeadline - Date.now()) / 1000)));
     setResponseTimedOut(remoteTimedOut);
     setRoundPicked(new Set(remoteRoundPicked));
     setRoundQuestionIds(new Set(remoteRoundQuestionIds));
@@ -289,20 +291,22 @@ const remotePickerEffects = `  useEffect(() => {
     } else {
       onQuestionChange?.(null);
     }
-  }, [presenterLive.liveState?.pickerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, presenterLive.deviceId, assignmentId, questionPool, onQuestionChange, responseSeconds]);
+  }, [presenterLive.liveState?.pickerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, presenterLive.deviceId, assignmentId, questionPool, onQuestionChange, responseSeconds, responseTimerEnabled]);
 
   useEffect(() => {
     if (!presenterLive.classRecordId || !presenterLive.hasSnapshot || !assignmentId) return undefined;
     const roundPickedValues = [...roundPicked].sort();
     const roundQuestionValues = [...roundQuestionIds].sort();
     const absentValues = [...absentKeys].sort();
+    const sharedResponseDeadline = responseTimerEnabled ? Number(responseDeadline || 0) : 0;
+    const sharedResponseTimedOut = responseTimerEnabled && Boolean(responseTimedOut);
     const signature = JSON.stringify([
       currentKey,
       currentQuestionId,
       showQuestionAnswer,
       lastMarked,
-      responseDeadline,
-      responseTimedOut,
+      sharedResponseDeadline,
+      sharedResponseTimedOut,
       responseSeconds,
       roundPickedValues,
       roundQuestionValues,
@@ -323,8 +327,8 @@ const remotePickerEffects = `  useEffect(() => {
         pickerQuestionId: currentQuestionId,
         pickerShowAnswer: showQuestionAnswer,
         pickerLastMarked: lastMarked,
-        pickerResponseDeadline: Number(responseDeadline || 0),
-        pickerResponseTimedOut: Boolean(responseTimedOut),
+        pickerResponseDeadline: sharedResponseDeadline,
+        pickerResponseTimedOut: sharedResponseTimedOut,
         pickerResponseSeconds: responseSeconds,
         pickerRoundPicked: roundPickedValues,
         pickerRoundQuestionIds: roundQuestionValues,
@@ -341,7 +345,7 @@ const remotePickerEffects = `  useEffect(() => {
       });
     }, 70);
     return () => window.clearTimeout(timer);
-  }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.publish, presenterLive.deviceId, assignmentId, currentKey, currentQuestionId, showQuestionAnswer, lastMarked, responseDeadline, responseTimedOut, responseSeconds, roundPicked, roundQuestionIds, absentKeys, stats, roster]);
+  }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.publish, presenterLive.deviceId, assignmentId, currentKey, currentQuestionId, showQuestionAnswer, lastMarked, responseDeadline, responseTimedOut, responseSeconds, responseTimerEnabled, roundPicked, roundQuestionIds, absentKeys, stats, roster]);
 
 `;
 
