@@ -249,6 +249,8 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
   assert.match(page, /timerEndAt = startMs \+ \(durationSeconds \* 1000\)/);
   assert.match(page, /timerRunning = true/);
   assert.match(page, /timerUpdatedAtMs = startMs/);
+  assert.match(page, /sessionDurationSeconds\(startTime, endTime\)/);
+  assert.match(page, /attendanceDurationSeconds \|\| presenterSessionDurationSeconds\(level\)/);
   assert.match(page, /Retry slide sync/);
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 
@@ -367,6 +369,10 @@ test("initial presenter start is atomic and preserves the transaction winner", (
   assert.match(service, /runTransaction/);
   assert.match(service, /const snapshot = await transaction\.get\(classRef\);/);
   assert.match(service, /if \(existing\.sessionKey === key && existingStart > 0\)/);
+  assert.match(service, /const wasActive = normalize\(data\.presenterActiveSessionKey\) === key/);
+  assert.match(service, /reactivated: !wasActive/);
+  assert.match(service, /activeSessionKey: key/);
+  assert.match(service, /isActiveSession: true/);
   assert.match(service, /created: false/);
   assert.match(service, /transaction\.update\(classRef/);
   assert.doesNotMatch(service, /await updateDoc\(doc\(db, "classes", id\), \{\s*presenterActiveSessionKey/);
