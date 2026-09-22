@@ -92,9 +92,9 @@ Sarah
 
 Teil 3
 C
-A
 B
-C
+E
+F
 A
 
 Teil 4
@@ -107,16 +107,16 @@ A`;
   const result = computeObjectiveScore("A2-6.16", submission);
 
   assert.equal(result.totalCount, 10);
-  assert.equal(result.correctCount, 9);
+  assert.equal(result.correctCount, 10);
   assert.deepEqual(
     [1, 2, 3, 4, 5].map((question) => result.details[`teil3.${question}`].student),
-    ["C", "A", "B", "C", "A"],
+    ["C", "B", "E", "F", "A"],
   );
   assert.deepEqual(
     [1, 2, 3, 4, 5].map((question) => result.details[`teil4.${question}`].student),
     ["B", "C", "A", "B", "A"],
   );
   assert.equal(Object.values(result.details).filter((detail) => detail.student).length, 10);
-  assert.equal(result.details["teil3.1"].correct, false);
-  assert.equal(Object.entries(result.details).filter(([, detail]) => detail.correct).length, 9);
+  assert.equal(result.details["teil3.1"].correct, true);
+  assert.equal(Object.entries(result.details).filter(([, detail]) => detail.correct).length, 10);
 });
