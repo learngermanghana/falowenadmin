@@ -212,7 +212,9 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
     if (existing.sessionKey === key && existingStart > 0) {
       const nowMs = Date.now();
       const wasActive = normalize(data.presenterActiveSessionKey) === key;
-      if (!wasActive) {
+      const sessionEnded = existing.classStatus === "ended" || Number(existing.classEndedAtMs || 0) > 0;
+      const shouldReactivate = !wasActive && !sessionEnded;
+      if (shouldReactivate) {
         transaction.update(classRef, {
           presenterActiveSessionKey: key,
           presenterActiveSessionUpdatedAt: serverTimestamp(),
@@ -222,12 +224,11 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
       return {
         ok: true,
         created: false,
-        reactivated: !wasActive,
+        reactivated: shouldReactivate,
         sessionKey: key,
         state: {
           ...existing,
-          activeSessionKey: key,
-          isActiveSession: true,
+          ...(shouldReactivate ? { activeSessionKey: key, isActiveSession: true } : {}),
           classRecordId: id,
         },
       };

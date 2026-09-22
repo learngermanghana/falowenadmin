@@ -14,7 +14,9 @@ test("presenter class timer shares A1/A2/B1 presets and accepts a shared attenda
   assert.match(timing, /B1:\s*90/);
   assert.match(source, /configuredDurationMinutes/);
   assert.match(source, /presenterLive\.liveState\?\.timerDurationSeconds/);
-  assert.match(source, /\(configuredDurationMinutes \* 60\) \|\| sharedDurationSeconds/);
+  assert.match(source, /sharedTimerLevel === level/);
+  assert.match(source, /Number\.isFinite\(rawSharedDurationSeconds\)/);
+  assert.match(source, /sharedDurationSeconds \|\| \(configuredDurationMinutes \* 60\)/);
   assert.match(source, /Start class/);
   assert.match(source, /Class time is up/);
 });

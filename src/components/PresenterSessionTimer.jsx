@@ -115,8 +115,15 @@ export default function PresenterSessionTimer({ slide }) {
   const level = normalize(slide?.course).toUpperCase();
   const presenterLive = usePresenterLiveSession(slide);
   const configuredDurationMinutes = presenterSessionMinutes(level);
-  const sharedDurationSeconds = Math.max(0, Number(presenterLive.liveState?.timerDurationSeconds || 0));
-  const durationSeconds = (configuredDurationMinutes * 60) || sharedDurationSeconds;
+  const rawSharedDurationSeconds = Number(presenterLive.liveState?.timerDurationSeconds || 0);
+  const sharedTimerLevel = normalize(presenterLive.liveState?.timerLevel).toUpperCase();
+  const sharedDurationSeconds = presenterLive.isToday
+    && sharedTimerLevel === level
+    && Number.isFinite(rawSharedDurationSeconds)
+    && rawSharedDurationSeconds > 0
+    ? rawSharedDurationSeconds
+    : 0;
+  const durationSeconds = sharedDurationSeconds || (configuredDurationMinutes * 60);
   const durationMinutes = durationSeconds / 60;
   const [classId, setClassId] = useState(currentPresenterClassId);
   const storageKey = useMemo(
