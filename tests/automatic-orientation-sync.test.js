@@ -211,6 +211,20 @@ test("a duplicate payment event skips when the current student already has the s
   assert.equal(fetchCount, 0);
 });
 
+test("operational orientation sync rejects unpaid students and removes deleted students", () => {
+  const snippet = read("scripts/snippets/operationalSheetAutoSyncJobs.js.txt");
+  const workflow = read(".github/workflows/deploy-firebase.yml");
+
+  assert.match(snippet, /operationalHasQualifyingPayment/);
+  assert.match(snippet, /payment_required/);
+  assert.match(snippet, /trial_expired/);
+  assert.match(snippet, /exports\.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted/);
+  assert.match(snippet, /action: "removeOrientationRow"/);
+  assert.match(workflow, /functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet/);
+  assert.match(workflow, /functions:falowenadmin:autoSyncNewStudentToOrientationSheet/);
+  assert.match(workflow, /functions:falowenadmin:syncPendingOperationalSheets/);
+});
+
 test("deployment patch listens only to paid payment-document updates", () => {
   const patch = read("scripts/patchAutomaticOrientationSync.mjs");
   const packageJson = read("package.json");
