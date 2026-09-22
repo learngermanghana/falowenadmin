@@ -285,13 +285,17 @@ test("refreshing a persisted check-in start reconnects shared slides without cha
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 });
 
-test("valid restored presenter snapshots leave reconnecting state and report active, ended, or stale", () => {
+test("restored presenter snapshots synchronize directly only when active or ended and let inactive sessions reach the transaction", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
   assert.match(page, /const sharedIsActive = Boolean\(presenterLiveState\.isActiveSession\)/);
-  assert.match(page, /state: "synced", message: "Slides are synchronized with the active Presenter session\."/);
-  assert.match(page, /state: "ended-synced", message: "Completed class synchronized from the shared Presenter session\."/);
-  assert.match(page, /state: "stale-blocked", message: "This attendance session is no longer the active Presenter session, so it was not allowed to take control\."/);
+  assert.match(page, /if \(sharedEnded\) \{/);
+  assert.match(page, /state: "ended-synced"/);
+  assert.match(page, /if \(sharedIsActive\) \{/);
+  assert.match(page, /state: "synced"/);
+  assert.match(page, /Let the transaction decide/);
+  assert.match(page, /void syncPresenterStart\(actualStartedAt, \{ recovery: true \}\)/);
+  assert.doesNotMatch(page, /sharedIsActive[\s\S]{0,500}state: "stale-blocked"/);
 });
 
 test("check-in only publishes presenter timer state for today's presenter date", () => {
