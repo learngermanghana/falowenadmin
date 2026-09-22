@@ -15,6 +15,7 @@ Falowen keeps a student's already-paid contract separate from the next-level pay
 - Additional partial payments reduce `upgradeBalanceDue` but do not restart or extend the one-month grace period.
 - If the remaining balance becomes zero during the grace month, the upgrade becomes fully paid immediately and 6 months are added to the contract.
 - If the balance is still outstanding when `upgradeGraceEnd` is reached, Falowen restores the previous paid level and previous payment-status fields while keeping the original paid contract end date unchanged.
+- Admins can also use **Return to Paid Contract** for a pending or legacy-expired partial upgrade. This restores the paid level/class/payment state immediately but preserves `upgradeBalanceDue`, payment history, and upgrade audit fields.
 - An expired upgrade remains auditable. Later partial payments reduce the recorded upgrade balance but do not grant another grace month. Full payment can still complete the upgrade.
 
 ## Upgrade statuses
@@ -30,6 +31,7 @@ Paystack webhooks remain the primary source of successful-payment updates. Falow
 
 - the Student Directory checks pending payments while the student page is open;
 - admins can manually run **Recheck pending Paystack payments**;
+- admins can manually use **Return to Paid Contract** when temporary access must be withdrawn or a legacy record did not restore correctly;
 - the scheduled `maintainStudentPaymentContracts` job runs every 30 minutes, reconciles recent pending references, expires stale unpaid checkout links, and processes expired partial-payment grace periods.
 
 The payment reference remains idempotent: once a `payments/{reference}` document is marked `paid`, the same reference cannot be credited twice.
@@ -56,5 +58,7 @@ The student document may contain:
 - `upgradePreviousStatus`
 - `upgradeTargetClassName`
 - `paymentReminderLevel`
+- `upgradeRestoredAt`
+- `upgradeRestoredBy`
 
 Do not delete completed or expired upgrade fields merely to clean the student record; they provide useful operational history. Payment history remains authoritative in the `payments` collection.
