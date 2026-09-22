@@ -65,9 +65,45 @@ async function findClassForOperationalSync(student = {}) {
   return null;
 }
 
+function operationalOrientationMoney(value) {
+  if (value === null || value === undefined || value === "") return 0;
+  const parsed = Number(String(value).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function operationalHasQualifyingPayment(student = {}) {
+  const paymentStatus = String(student.paymentStatus || student.payment_status || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+  const status = String(student.status || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+  if (["paid", "partial", "partially paid", "part paid"].includes(paymentStatus)) return true;
+  if (status === "paid") return true;
+  return [
+    student.paid,
+    student.paidAmount,
+    student.amountPaid,
+    student.amount_paid,
+    student.initialPaymentAmount,
+  ].some((value) => operationalOrientationMoney(value) > 0);
+}
+
 async function syncStudentToOrientationSheet(docSnap, options = {}) {
   const student = docSnap.data() || {};
   if (student.orientationSheetAutoSyncStatus === "sent" || student.orientationSheetAutoSyncedAt) return { status: "already_sent" };
+
+  const lifecycleStatus = String(student.status || "").trim().toLowerCase();
+  if (["trial_expired", "blocked", "archived", "purged", "deleted", "inactive"].includes(lifecycleStatus)) {
+    return { status: "skipped", reason: `student status is ${lifecycleStatus}` };
+  }
+
+  if (!operationalHasQualifyingPayment(student)) {
+    if (options.writeStatus !== false) {
+      await docSnap.ref.set({
+        orientationSheetAutoSyncStatus: "skipped",
+        orientationSheetAutoSyncLastError: "payment_required",
+        orientationSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    return { status: "skipped", reason: "payment_required" };
+  }
 
   const appsScriptUrl = String(orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || "").trim();
   const syncSecret = String(orientationSyncSecret.value() || process.env.ORIENTATION_SYNC_SECRET || "").trim();
@@ -226,6 +262,43 @@ exports.autoSyncNewStudentToOrientationSheet = onDocumentCreated({
   if (!event.data) return;
   const result = await syncStudentToOrientationSheet(event.data);
   console.log("autoSyncNewStudentToOrientationSheet", event.params.studentId, result);
+});
+
+exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted({
+  document: "students/{studentId}",
+  secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
+}, async (event) => {
+  if (!event.data) return { skipped: true, reason: "missing_deleted_snapshot" };
+
+  const student = event.data.data() || {};
+  const appsScriptUrl = String(orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || "").trim();
+  const syncSecret = String(orientationSyncSecret.value() || process.env.ORIENTATION_SYNC_SECRET || "").trim();
+  if (!appsScriptUrl || !syncSecret) return { skipped: true, reason: "orientation sheet secrets missing" };
+
+  const studentCode = String(student.studentCode || student.studentcode || student.code || event.params.studentId || "").trim();
+  const email = String(student.email || student.emailAddress || student.contactEmail || "").trim();
+
+  const upstreamResponse = await fetch(appsScriptUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "removeOrientationRow",
+      secret: syncSecret,
+      studentCode,
+      email,
+      source: "student_deleted",
+    }),
+  });
+
+  const responseJson = await upstreamResponse.json().catch(() => ({}));
+  if (!upstreamResponse.ok || responseJson?.ok === false) {
+    const reason = responseJson?.error || `Orientation sheet removal returned ${upstreamResponse.status}`;
+    console.error("autoRemoveDeletedStudentFromOrientationSheet", event.params.studentId, reason);
+    return { status: "failed", reason };
+  }
+
+  console.log("autoRemoveDeletedStudentFromOrientationSheet", event.params.studentId, responseJson);
+  return { status: "removed", ...responseJson };
 });
 
 exports.autoSyncNewLiveClassToScheduleSheet = onDocumentCreated({

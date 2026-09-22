@@ -7,16 +7,22 @@ const functionsPath = path.join(root, "functions/index.js");
 let content = fs.readFileSync(functionsPath, "utf8");
 
 const firestoreImport = 'const { onDocumentCreated } = require("firebase-functions/v2/firestore");';
-const expandedFirestoreImport = 'const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");';
+const updatedFirestoreImport = 'const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");';
+const expandedFirestoreImport = 'const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require("firebase-functions/v2/firestore");';
 if (content.includes(firestoreImport)) {
   content = content.replace(firestoreImport, expandedFirestoreImport);
+} else if (content.includes(updatedFirestoreImport)) {
+  content = content.replace(updatedFirestoreImport, expandedFirestoreImport);
 } else if (!content.includes(expandedFirestoreImport)) {
   throw new Error("Automatic orientation sync patch could not find the Firestore trigger import.");
 }
 
-const helperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
+const legacyHelperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
+const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment } = require("./orientationAutoSync");\n';
 const helperAnchor = 'const { defineSecret } = require("firebase-functions/params");\n';
-if (!content.includes(helperRequire)) {
+if (content.includes(legacyHelperRequire)) {
+  content = content.replace(legacyHelperRequire, helperRequire);
+} else if (!content.includes(helperRequire)) {
   if (!content.includes(helperAnchor)) {
     throw new Error("Automatic orientation sync patch could not find the Firebase params import.");
   }

@@ -26,8 +26,15 @@ function hasQualifyingPayment(student = {}) {
     return true;
   }
 
-  return [student.paid, student.paidAmount, student.initialPaymentAmount]
-    .some((value) => money(value) > 0);
+  if (comparable(student.status) === "paid") return true;
+
+  return [
+    student.paid,
+    student.paidAmount,
+    student.amountPaid,
+    student.amount_paid,
+    student.initialPaymentAmount,
+  ].some((value) => money(value) > 0);
 }
 
 function paymentFingerprint(student = {}) {
