@@ -820,7 +820,7 @@ function extractSectionAnswerEntries(text = "") {
 }
 
 function getFlatAnswerCandidateSequences(submissionText = "") {
-  const sections = normalizeA2718LegacySections(assignmentId, splitSubmissionIntoSections(submissionText));
+  const sections = splitSubmissionIntoSections(submissionText);
   const sectionGroups = sections
     .map((section) => extractSectionAnswerEntries(section.text))
     .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
