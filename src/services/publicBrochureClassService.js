@@ -1,6 +1,5 @@
 const PUBLIC_CLASS_ENDPOINTS = [
-  "https://www.falowen.app/api/public/classes",
-  "https://europe-west1-falowen-examiner-trainer.cloudfunctions.net/publicClassesCatalog",
+  "/api/public/classes",
 ];
 
 async function fetchJson(url, fetchImpl = fetch) {
@@ -8,8 +7,7 @@ async function fetchJson(url, fetchImpl = fetch) {
   const response = await fetchImpl(`${url}${separator}fresh=${Date.now()}`, {
     cache: "no-store",
     headers: {
-      "cache-control": "no-cache",
-      pragma: "no-cache",
+      accept: "application/json",
     },
   });
   if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
