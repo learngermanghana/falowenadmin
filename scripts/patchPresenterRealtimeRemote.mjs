@@ -211,9 +211,15 @@ const remotePickerEffects = `  useEffect(() => {
     const remote = presenterLive.liveState || {};
     const remoteStamp = Number(remote.pickerUpdatedAtMs || 0);
     const remotePickerWriter = normalize(remote.pickerUpdatedByDeviceId);
-    const pickerStateIsRemote = remotePickerWriter
+    const remotePickerWriterStamp = Number(remote.pickerUpdatedByAtMs || 0);
+    const pickerWriterMatchesUpdate = Boolean(
+      remotePickerWriter
+      && remotePickerWriterStamp > 0
+      && remotePickerWriterStamp === remoteStamp
+    );
+    const pickerStateIsRemote = pickerWriterMatchesUpdate
       ? remotePickerWriter !== presenterLive.deviceId
-      : presenterLive.isRemoteState;
+      : normalize(remote.updatedBy) !== presenterLive.deviceId;
     if (!presenterLive.hasSnapshot || !presenterLive.isToday || !pickerStateIsRemote || !remoteStamp) return;
     if (normalize(remote.pickerAssignmentId) !== assignmentId) return;
     if (remoteStamp <= lastRemotePickerStampRef.current) return;
@@ -307,9 +313,11 @@ const remotePickerEffects = `  useEffect(() => {
     const currentRow = currentKey ? stats[currentKey] || {} : {};
     const currentEntry = roster.find((entry) => entry.key === currentKey) || null;
     const timer = window.setTimeout(() => {
+      const pickerUpdatedAtMs = Date.now();
       presenterLive.publish({
         pickerAssignmentId: assignmentId,
         pickerUpdatedByDeviceId: presenterLive.deviceId,
+        pickerUpdatedByAtMs: pickerUpdatedAtMs,
         pickerStudentKey: currentKey,
         pickerStudentName: currentEntry?.name || "",
         pickerQuestionId: currentQuestionId,
@@ -329,7 +337,7 @@ const remotePickerEffects = `  useEffect(() => {
           needsHelp: Number(currentRow.needsHelp || currentRow.needsReview || 0),
           skipped: Number(currentRow.skipped || 0),
         } : null,
-        pickerUpdatedAtMs: Date.now(),
+        pickerUpdatedAtMs,
       });
     }, 70);
     return () => window.clearTimeout(timer);
