@@ -624,21 +624,21 @@ Lieber Thomas,
 Kumasi gefällt mir besser als Accra. Pizza schmeckt mir besser als Hamburger.
 
 Teil 3 (Lesen)
-1.b 2.b 3.c 4.c 5.b 6.a 7.b
+1.b 2.b 3.b 4.a
 
 Teil 4 (Horen)
-1.C
-2.B
-3.C
+1.B
+2.C
+3.B
 4.A
-5.A
+5.B
   `);
 
-  assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 8);
-  assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 4);
-  assert.equal(result.details["teil3.7"].correct, true);
-  assert.equal(result.details["teil4.1"].student, "C");
+  assert.equal(result.totalCount, 9);
+  assert.equal(result.correctCount, 9);
+  assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
+  assert.equal(result.details["teil3.4"].correct, true);
+  assert.equal(result.details["teil4.1"].student, "B");
 });
 
 test("A1-6 maps restarted numbered choice sections after vocabulary answers", () => {
