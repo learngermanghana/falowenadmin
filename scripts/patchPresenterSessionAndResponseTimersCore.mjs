@@ -81,19 +81,62 @@ pickerSource = replaceOnce(
   pickerSource,
   '  useEffect(() => {\n    if (!selectedClassId) return;\n    safeStorageSet(',
   [
+    '  // presenter-response-deadline-clock-v2',
     '  useEffect(() => {',
     '    if (!responseDeadline || lastMarked) return undefined;',
-    '    const tick = () => {',
+    '    let frameId = 0;',
+    '    let fallbackTimer = 0;',
+    '    let lastPaintAt = 0;',
+    '    let disposed = false;',
+    '',
+    '    const applyDeadline = () => {',
+    '      if (disposed) return false;',
     '      const next = Math.max(0, Math.ceil((responseDeadline - Date.now()) / 1000));',
-    '      setResponseRemaining(next);',
+    '      setResponseRemaining((current) => current === next ? current : next);',
     '      if (next <= 0) {',
     '        setResponseDeadline(0);',
     '        setResponseTimedOut(true);',
+    '        return false;',
     '      }',
+    '      return true;',
     '    };',
-    '    tick();',
-    '    const timer = window.setInterval(tick, 250);',
-    '    return () => window.clearInterval(timer);',
+    '',
+    '    const scheduleFallback = () => {',
+    '      fallbackTimer = window.setTimeout(() => {',
+    '        if (!applyDeadline()) return;',
+    '        scheduleFallback();',
+    '      }, 250);',
+    '    };',
+    '',
+    '    const animate = (timestamp) => {',
+    '      if (disposed) return;',
+    '      if (timestamp - lastPaintAt >= 200) {',
+    '        lastPaintAt = timestamp;',
+    '        if (!applyDeadline()) return;',
+    '      }',
+    '      frameId = window.requestAnimationFrame(animate);',
+    '    };',
+    '',
+    '    const resync = () => {',
+    '      if (document.visibilityState && document.visibilityState !== "visible") return;',
+    '      applyDeadline();',
+    '    };',
+    '',
+    '    applyDeadline();',
+    '    if (typeof window.requestAnimationFrame === "function") {',
+    '      frameId = window.requestAnimationFrame(animate);',
+    '    } else {',
+    '      scheduleFallback();',
+    '    }',
+    '    document.addEventListener("visibilitychange", resync);',
+    '    window.addEventListener("focus", resync);',
+    '    return () => {',
+    '      disposed = true;',
+    '      if (frameId) window.cancelAnimationFrame?.(frameId);',
+    '      if (fallbackTimer) window.clearTimeout(fallbackTimer);',
+    '      document.removeEventListener("visibilitychange", resync);',
+    '      window.removeEventListener("focus", resync);',
+    '    };',
     '  }, [responseDeadline, lastMarked]);',
     '',
     '  useEffect(() => {',
@@ -299,6 +342,46 @@ if (!pickerCss.includes(".presenter-response-timer")) {
   border-color: #0f172a;
   font-weight: 700;
   background: #e2e8f0;
+}
+`;
+}
+
+const noOverlapMarker = "/* presenter-student-actions-no-overlap */";
+if (!pickerCss.includes(noOverlapMarker)) {
+  pickerCss += `
+${noOverlapMarker}
+.presenter-student-toolbar {
+  flex-wrap: wrap;
+}
+
+.presenter-response-timer {
+  flex: 0 0 130px;
+}
+
+.presenter-student-actions {
+  flex: 1 1 430px;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.presenter-student-actions button {
+  flex: 0 0 auto;
+}
+
+.presenter-pick-student {
+  flex: 0 0 auto;
+  margin-left: 0;
+}
+
+@media (max-width: 900px) {
+  .presenter-response-timer,
+  .presenter-student-actions {
+    flex-basis: 100%;
+  }
+
+  .presenter-pick-student {
+    margin-left: 0;
+  }
 }
 `;
 }
