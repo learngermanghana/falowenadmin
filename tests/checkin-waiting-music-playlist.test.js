@@ -241,6 +241,19 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
 });
 
 
+test("check-in repairs an already-running shared timer that exceeds the level duration", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /publishPresenterLiveSession/);
+  assert.match(page, /const sharedTimerDuration = Math\.max\(0, Number\(shared\.timerDurationSeconds \|\| 0\)\)/);
+  assert.match(page, /const timerDurationMismatch = durationSeconds > 0/);
+  assert.match(page, /const timerRemainingTooLong = sharedTimerEndAt > 0/);
+  assert.match(page, /const canRepairSharedTimer = !sharedEnd/);
+  assert.match(page, /await publishPresenterLiveSession\(classRecordId, repairedPatch, sessionKey\)/);
+  assert.match(page, /Slides timer corrected to the \$\{durationSeconds \/ 60\}-minute \$\{level\} class duration/);
+});
+
+
 test("refreshing a persisted check-in start does not republish or restart the shared slide timer", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
