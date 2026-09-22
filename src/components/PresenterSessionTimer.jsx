@@ -167,19 +167,63 @@ export default function PresenterSessionTimer({ slide }) {
 
     lastRemoteTimerStampRef.current = remoteStamp;
     const remoteRunning = Boolean(remote.timerRunning);
-    const remoteEndAt = Math.max(0, Number(remote.timerEndAt || 0));
+    const nowMs = Date.now();
+    const rawRemoteEndAt = Math.max(0, Number(remote.timerEndAt || 0));
+    const remoteDurationSeconds = Math.max(0, Number(remote.timerDurationSeconds || 0));
+    const checkinStartedAtMs = remote.classStartSource === "checkin"
+      ? Math.max(0, Number(remote.classStartedAtMs || 0))
+      : 0;
+    const durationMismatch = remoteDurationSeconds > 0 && Math.abs(remoteDurationSeconds - durationSeconds) > 1;
+    const untouchedCheckinTimer = checkinStartedAtMs > 0
+      && Number(remote.timerUpdatedAtMs || 0) <= checkinStartedAtMs + 1000;
+    const checkinEndAt = checkinStartedAtMs > 0
+      ? checkinStartedAtMs + (durationSeconds * 1000)
+      : 0;
+    const maximumEndAt = nowMs + (durationSeconds * 1000);
+    const remoteEndAt = remoteRunning
+      ? Math.max(
+        0,
+        Math.min(
+          durationMismatch && checkinEndAt
+            ? checkinEndAt
+            : untouchedCheckinTimer && checkinEndAt
+              ? checkinEndAt
+              : rawRemoteEndAt,
+          maximumEndAt,
+        ),
+      )
+      : 0;
     const remoteRemaining = remoteRunning && remoteEndAt
-      ? Math.max(0, Math.ceil((remoteEndAt - Date.now()) / 1000))
+      ? Math.max(0, Math.min(durationSeconds, Math.ceil((remoteEndAt - nowMs) / 1000)))
       : Math.max(0, Math.min(durationSeconds, Number(remote.timerRemaining ?? durationSeconds)));
     const remoteWarned = Array.isArray(remote.timerWarned)
       ? remote.timerWarned.map(Number).filter(Number.isFinite)
       : baselineWarnings(remoteRemaining);
+    const timerNeedsRepair = remoteRunning
+      && remoteEndAt > 0
+      && (
+        durationMismatch
+        || rawRemoteEndAt !== remoteEndAt
+        || Number(remote.timerRemaining || 0) > durationSeconds
+      );
 
     previousRemainingRef.current = remoteRemaining;
     expiryPublishedRef.current = remoteRemaining <= 0;
     setRemaining(remoteRemaining);
     setRunning(remoteRunning && remoteRemaining > 0);
     setEndAt(remoteRunning && remoteRemaining > 0 ? remoteEndAt : 0);
+    if (timerNeedsRepair) {
+      void presenterLive.publish({
+        timerLevel: level,
+        timerDurationSeconds: durationSeconds,
+        timerRunning: remoteRemaining > 0,
+        timerEndAt: remoteRemaining > 0 ? remoteEndAt : 0,
+        timerRemaining: remoteRemaining,
+        timerWarned: remoteWarned,
+        timerExpired: remoteRemaining <= 0,
+        timerUpdatedAtMs: nowMs,
+      });
+    }
     setWarnedMilestones(remoteWarned);
     setNotice(
       remote.classStatus === "ended" || Number(remote.classEndedAtMs || 0) > 0
@@ -192,7 +236,7 @@ export default function PresenterSessionTimer({ slide }) {
               ? "Started from check-in"
               : "Timer synchronized",
     );
-  }, [presenterLive.liveState?.timerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, level, durationSeconds]);
+  }, [presenterLive.liveState?.timerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, presenterLive.publish, level, durationSeconds]);
 
   useEffect(() => {
     if (!presenterLive.classRecordId || !presenterLive.hasSnapshot || !durationSeconds) return;
