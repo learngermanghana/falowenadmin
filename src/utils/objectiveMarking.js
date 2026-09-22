@@ -445,6 +445,65 @@ function extractNumberedTextAnswers(text = "") {
   return Object.fromEntries(extractNumberedTextEntries(text).map((entry) => [entry.number, entry.answer]));
 }
 
+const A2_7_18_LEGACY_ADVERT_OPTION_MAPS = [
+  { A: "A", B: "B", C: "D", D: "F" },
+  { A: "E", B: "F", C: "C", D: "B" },
+  { A: "B", B: "A", C: "D", D: "E" },
+  { A: "C", B: "A", C: "D", D: "B" },
+  { A: "C", B: "E", C: "A", D: "B" },
+];
+
+function remapLegacyA2718Choice(answer = "", optionMap = {}) {
+  const letter = extractOptionLetter(answer);
+  if (!letter) return answer;
+  return optionMap[letter] || answer;
+}
+
+function hasSequentialNumbers(entries = [], count = 0) {
+  return entries.length === count && entries.every((entry, index) => entry.number === index + 1);
+}
+
+function serializeNumberedEntries(entries = []) {
+  return entries.map((entry, index) => `${index + 1}. ${entry.answer}`).join("\n");
+}
+
+function normalizeA2718LegacySections(assignmentId = "", sections = []) {
+  if (normalizeAssignmentId(assignmentId) !== "A2-7.18") return sections;
+
+  const teil3 = sections.find((section) => section.partId === "teil3");
+  const teil4 = sections.find((section) => section.partId === "teil4");
+  if (!teil3 || !teil4) return sections;
+
+  const legacyTeil3 = extractRestartedNumberingEntries(teil3.text).sort((a, b) => a.number - b.number);
+  const legacyTeil4 = extractRestartedNumberingEntries(teil4.text).sort((a, b) => a.number - b.number);
+  if (!hasSequentialNumbers(legacyTeil3, 7) || !hasSequentialNumbers(legacyTeil4, 3)) return sections;
+
+  const canonicalTeil3 = legacyTeil3.slice(0, 5).map((entry, index) => ({
+    number: index + 1,
+    answer: remapLegacyA2718Choice(entry.answer, A2_7_18_LEGACY_ADVERT_OPTION_MAPS[index]),
+  }));
+
+  const legacyFinalListeningAnswer = remapLegacyA2718Choice(
+    legacyTeil4[2].answer,
+    { A: "A", B: "D", C: "C", D: "D" },
+  );
+
+  const canonicalTeil4 = [
+    { number: 1, answer: legacyTeil3[5].answer },
+    { number: 2, answer: legacyTeil3[6].answer },
+    { number: 3, answer: legacyTeil4[0].answer },
+    { number: 4, answer: legacyTeil4[1].answer },
+    { number: 5, answer: legacyFinalListeningAnswer },
+  ];
+
+  return sections.map((section) => {
+    if (section.partId === "teil3") return { ...section, text: serializeNumberedEntries(canonicalTeil3) };
+    if (section.partId === "teil4") return { ...section, text: serializeNumberedEntries(canonicalTeil4) };
+    return section;
+  });
+}
+
+
 export function extractChoiceAnswers(text = "") {
   const answers = {};
   extractNumberedTextEntries(text).forEach((entry) => {
@@ -761,7 +820,7 @@ function extractSectionAnswerEntries(text = "") {
 }
 
 function getFlatAnswerCandidateSequences(submissionText = "") {
-  const sections = splitSubmissionIntoSections(submissionText);
+  const sections = normalizeA2718LegacySections(assignmentId, splitSubmissionIntoSections(submissionText));
   const sectionGroups = sections
     .map((section) => extractSectionAnswerEntries(section.text))
     .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
