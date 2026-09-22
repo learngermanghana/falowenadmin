@@ -45,6 +45,18 @@ export async function startStudentUpgrade({ studentId, targetLevel, tuitionFee, 
   return parseResponse(response);
 }
 
+export async function restoreStudentPaidContract(studentId) {
+  const normalizedId = String(studentId || "").trim();
+  if (!normalizedId) throw new Error("Student ID is required.");
+
+  const response = await fetch("/api/payments/restore-paid-contract", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ studentId: normalizedId }),
+  });
+  return parseResponse(response);
+}
+
 export async function reconcileStudentPayments(studentId) {
   const normalizedId = String(studentId || "").trim();
   if (!normalizedId) return { ok: true, checked: 0, applied: 0 };

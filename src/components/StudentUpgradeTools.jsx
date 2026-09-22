@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createStudentPaymentLink } from "../services/studentPaymentService.js";
-import { reconcileStudentPayments, startStudentUpgrade } from "../services/studentContractService.js";
+import { reconcileStudentPayments, restoreStudentPaidContract, startStudentUpgrade } from "../services/studentContractService.js";
 import { parseMoneyValue } from "../utils/paystackCharges.js";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
@@ -87,6 +87,12 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
   const unfinishedUpgrade = ["awaiting_payment", "pending", "expired"].includes(upgradeStatus);
   const canStartUpgrade = Boolean(studentId && suggestedTarget && !unfinishedUpgrade);
   const canGenerateUpgradePayment = Boolean(studentId && unfinishedUpgrade && remainingUpgradeBalance > 0);
+  const canRestorePaidContract = Boolean(
+    studentId
+    && paidLevel
+    && ["pending", "expired"].includes(upgradeStatus)
+    && (upgradeStatus === "pending" || visibleLevel !== paidLevel),
+  );
   const phone = resolvePhone(student, draft);
   const normalizedPhone = normalizePhoneForWhatsapp(phone);
   const numericPaymentAmount = parseMoneyValue(paymentAmount);
@@ -198,6 +204,32 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
     window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
+  const restorePaidContract = async () => {
+    if (!canRestorePaidContract) return;
+    const target = paidLevel || student?.upgradeFromLevel || "the previous paid level";
+    const temporary = effectiveTarget || visibleLevel || "the temporary upgrade";
+    const confirmed = window.confirm(
+      `Return this student from ${temporary} to the paid ${target} contract? The remaining ${formatGhs(remainingUpgradeBalance)} upgrade balance will stay on the account and payment history will not be deleted.`,
+    );
+    if (!confirmed) return;
+
+    setBusy("restore");
+    try {
+      const response = await restoreStudentPaidContract(studentId);
+      if (response?.studentUpdate && typeof onStudentUpdated === "function") {
+        onStudentUpdated(studentId, response.studentUpdate);
+      }
+      pushToast?.({
+        type: "success",
+        message: `Student returned to the paid ${target} contract. The unfinished ${temporary} balance remains payable.`,
+      });
+    } catch (error) {
+      pushToast?.({ type: "error", message: error?.message || "Could not restore the paid contract." });
+    } finally {
+      setBusy("");
+    }
+  };
+
   const reconcileNow = async () => {
     setBusy("reconcile");
     try {
@@ -227,6 +259,7 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
         <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: 10 }}>
           <strong>Paid contract</strong>
           <div style={{ fontSize: 13, color: "#64748b" }}>Paid level: {paidLevel || "—"}</div>
+          <div style={{ fontSize: 13, color: "#64748b" }}>Current access: {visibleLevel || "—"}</div>
           <div style={{ fontSize: 13, color: "#64748b" }}>Ends: {formatDate(student?.contractEnd || draft.contractEnd)}</div>
         </div>
         <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: 10 }}>
@@ -292,6 +325,11 @@ export default function StudentUpgradeTools({ student, draft = {}, onStudentUpda
         <button type="button" onClick={reconcileNow} disabled={busy === "reconcile"}>
           {busy === "reconcile" ? "Checking Paystack..." : "Recheck pending Paystack payments"}
         </button>
+        {canRestorePaidContract && (
+          <button type="button" onClick={restorePaidContract} disabled={busy === "restore"}>
+            {busy === "restore" ? "Restoring paid contract..." : `Return to paid ${paidLevel} contract`}
+          </button>
+        )}
         <span style={{ fontSize: 12, color: "#64748b" }}>Use this only when a Paystack payment has succeeded but the student record has not updated.</span>
       </div>
 
