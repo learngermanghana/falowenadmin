@@ -211,9 +211,27 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
     const existingStart = Number(existing.classStartedAtMs || 0);
     if (existing.sessionKey === key && existingStart > 0) {
       const nowMs = Date.now();
-      const wasActive = normalize(data.presenterActiveSessionKey) === key;
-      const sessionEnded = existing.classStatus === "ended" || Number(existing.classEndedAtMs || 0) > 0;
-      const shouldReactivate = !wasActive && !sessionEnded;
+      const activeSessionKey = normalize(data.presenterActiveSessionKey);
+      const wasActive = activeSessionKey === key;
+      const sessionEnded = existing.classLifecycleStatus === "ended"
+        || existing.classStatus === "ended"
+        || Number(existing.classEndedAtMs || 0) > 0;
+      const activeSession = activeSessionKey && activeSessionKey !== key
+        ? sessionStateFromClassData(data, activeSessionKey)
+        : {};
+      const activeSessionEnded = activeSession.classLifecycleStatus === "ended"
+        || activeSession.classStatus === "ended"
+        || Number(activeSession.classEndedAtMs || 0) > 0;
+      const activeSessionStart = Number(activeSession.classStartedAtMs || 0);
+      const blockedByNewerActiveSession = Boolean(
+        !wasActive
+        && !sessionEnded
+        && activeSessionKey
+        && activeSessionKey !== key
+        && !activeSessionEnded
+        && activeSessionStart >= existingStart
+      );
+      const shouldReactivate = !wasActive && !sessionEnded && !blockedByNewerActiveSession;
       if (shouldReactivate) {
         transaction.update(classRef, {
           presenterActiveSessionKey: key,
@@ -225,6 +243,8 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
         ok: true,
         created: false,
         reactivated: shouldReactivate,
+        stale: blockedByNewerActiveSession,
+        blockedBySessionKey: blockedByNewerActiveSession ? activeSessionKey : "",
         sessionKey: key,
         state: {
           ...existing,
@@ -234,10 +254,31 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
       };
     }
 
+    const requestedStart = Number(patch.classStartedAtMs || 0);
+    const activeSessionKey = normalize(data.presenterActiveSessionKey);
+    if (activeSessionKey && activeSessionKey !== key && requestedStart > 0) {
+      const activeSession = sessionStateFromClassData(data, activeSessionKey);
+      const activeSessionEnded = activeSession.classLifecycleStatus === "ended"
+        || activeSession.classStatus === "ended"
+        || Number(activeSession.classEndedAtMs || 0) > 0;
+      const activeSessionStart = Number(activeSession.classStartedAtMs || 0);
+      if (!activeSessionEnded && activeSessionStart > 0 && activeSessionStart >= requestedStart) {
+        return {
+          ok: false,
+          reason: "newer-active-session",
+          activeSessionKey,
+          activeSessionStart,
+        };
+      }
+    }
+
     const nowMs = Date.now();
     const sessionPatch = {
-      classStatus: "active",
       ...patch,
+      classStatus: "active",
+      classLifecycleStatus: "running",
+      sessionTimingAuthority: normalize(patch.sessionTimingAuthority)
+        || (patch.classStartSource === "checkin" ? "attendance" : "presenter"),
     };
     transaction.update(classRef, {
       presenterActiveSessionKey: key,
@@ -273,8 +314,9 @@ export async function endPresenterLiveSession(classRecordId, sessionKey, patch =
     presenterLastCompletedAt: serverTimestamp(),
     presenterLastCompletedAtMs: endedAtMs,
     ...sessionUpdates(key, {
-      classStatus: "ended",
       ...patch,
+      classStatus: "ended",
+      classLifecycleStatus: "ended",
     }),
   });
   return { ok: true, sessionKey: key };
