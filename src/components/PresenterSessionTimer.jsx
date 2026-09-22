@@ -125,6 +125,11 @@ export default function PresenterSessionTimer({ slide }) {
     : 0;
   const durationSeconds = sharedDurationSeconds || (configuredDurationMinutes * 60);
   const durationMinutes = durationSeconds / 60;
+  const liveState = presenterLive.liveState || {};
+  const attendanceControlsTimer = presenterLive.isToday
+    && liveState.classStartSource === "checkin"
+    && Number(liveState.classStartedAtMs || 0) > 0
+    && normalize(liveState.sessionTimingAuthority || "attendance") === "attendance";
   const [classId, setClassId] = useState(currentPresenterClassId);
   const storageKey = useMemo(
     () => presenterClassTimerStorageKey(level, classId, new Date(), presenterLive.sessionKey),
@@ -184,80 +189,51 @@ export default function PresenterSessionTimer({ slide }) {
     if (remoteStamp <= lastRemoteTimerStampRef.current) return;
 
     lastRemoteTimerStampRef.current = remoteStamp;
-    const remoteRunning = Boolean(remote.timerRunning);
+    const remoteEnded = remote.classLifecycleStatus === "ended"
+      || remote.classStatus === "ended"
+      || Number(remote.classEndedAtMs || 0) > 0;
+    const remoteRunning = !remoteEnded && Boolean(remote.timerRunning);
     const nowMs = Date.now();
     const rawRemoteEndAt = Math.max(0, Number(remote.timerEndAt || 0));
     const remoteDurationSeconds = Math.max(0, Number(remote.timerDurationSeconds || 0));
     const checkinStartedAtMs = remote.classStartSource === "checkin"
       ? Math.max(0, Number(remote.classStartedAtMs || 0))
       : 0;
-    const durationMismatch = remoteDurationSeconds > 0 && Math.abs(remoteDurationSeconds - durationSeconds) > 1;
-    const untouchedCheckinTimer = checkinStartedAtMs > 0
-      && Number(remote.timerUpdatedAtMs || 0) <= checkinStartedAtMs + 1000;
-    const checkinEndAt = checkinStartedAtMs > 0
-      ? checkinStartedAtMs + (durationSeconds * 1000)
+    const derivedCheckinEndAt = checkinStartedAtMs > 0 && remoteDurationSeconds > 0
+      ? checkinStartedAtMs + (remoteDurationSeconds * 1000)
       : 0;
-    const maximumEndAt = nowMs + (durationSeconds * 1000);
     const remoteEndAt = remoteRunning
-      ? Math.max(
-        0,
-        Math.min(
-          durationMismatch && checkinEndAt
-            ? checkinEndAt
-            : untouchedCheckinTimer && checkinEndAt
-              ? checkinEndAt
-              : rawRemoteEndAt,
-          maximumEndAt,
-        ),
-      )
+      ? (rawRemoteEndAt || derivedCheckinEndAt)
       : 0;
     const remoteRemaining = remoteRunning && remoteEndAt
       ? Math.max(0, Math.min(durationSeconds, Math.ceil((remoteEndAt - nowMs) / 1000)))
-      : Math.max(0, Math.min(durationSeconds, Number(remote.timerRemaining ?? durationSeconds)));
+      : Math.max(0, Math.min(durationSeconds, Number(remote.timerRemaining ?? remoteDurationSeconds ?? durationSeconds)));
     const remoteWarned = Array.isArray(remote.timerWarned)
       ? remote.timerWarned.map(Number).filter(Number.isFinite)
       : baselineWarnings(remoteRemaining);
-    const timerNeedsRepair = remoteRunning
-      && remoteEndAt > 0
-      && (
-        durationMismatch
-        || rawRemoteEndAt !== remoteEndAt
-        || Number(remote.timerRemaining || 0) > durationSeconds
-      );
 
     previousRemainingRef.current = remoteRemaining;
     expiryPublishedRef.current = remoteRemaining <= 0;
     setRemaining(remoteRemaining);
     setRunning(remoteRunning && remoteRemaining > 0);
     setEndAt(remoteRunning && remoteRemaining > 0 ? remoteEndAt : 0);
-    if (timerNeedsRepair) {
-      void presenterLive.publish({
-        timerLevel: level,
-        timerDurationSeconds: durationSeconds,
-        timerRunning: remoteRemaining > 0,
-        timerEndAt: remoteRemaining > 0 ? remoteEndAt : 0,
-        timerRemaining: remoteRemaining,
-        timerWarned: remoteWarned,
-        timerExpired: remoteRemaining <= 0,
-        timerUpdatedAtMs: nowMs,
-      });
-    }
     setWarnedMilestones(remoteWarned);
     setNotice(
-      remote.classStatus === "ended" || Number(remote.classEndedAtMs || 0) > 0
+      remoteEnded
         ? "Class ended from check-in"
         : remoteRemaining <= 0
           ? "Class time is up."
-          : presenterLive.isRemoteState
-            ? "Updated from other device"
-            : remote.classStartSource === "checkin"
-              ? "Started from check-in"
+          : remote.classStartSource === "checkin"
+            ? "Running from Attendance"
+            : presenterLive.isRemoteState
+              ? "Updated from other device"
               : "Timer synchronized",
     );
   }, [presenterLive.liveState?.timerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, presenterLive.publish, level, durationSeconds]);
 
   useEffect(() => {
     if (!presenterLive.classRecordId || !presenterLive.hasSnapshot || !durationSeconds) return;
+    if (attendanceControlsTimer) return;
     const remote = presenterLive.liveState || {};
     const hasRemoteTimer = presenterLive.isToday
       && normalize(remote.timerLevel).toUpperCase() === level
@@ -273,10 +249,10 @@ export default function PresenterSessionTimer({ slide }) {
       timerExpired: remaining <= 0,
       timerUpdatedAtMs: Date.now(),
     });
-  }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.liveState?.timerUpdatedAtMs, presenterLive.publish, durationSeconds, level, running, endAt, remaining, warnedMilestones]);
+  }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.liveState?.timerUpdatedAtMs, presenterLive.publish, attendanceControlsTimer, durationSeconds, level, running, endAt, remaining, warnedMilestones]);
 
   function publishTimerState(patch = {}) {
-    if (!presenterLive.classRecordId) return;
+    if (!presenterLive.classRecordId || attendanceControlsTimer) return;
     presenterLive.publish({
       timerLevel: level,
       timerDurationSeconds: durationSeconds,
@@ -342,7 +318,7 @@ export default function PresenterSessionTimer({ slide }) {
         setEndAt(0);
         if (!expiryPublishedRef.current) {
           expiryPublishedRef.current = true;
-          publishTimerState({
+          if (!attendanceControlsTimer) publishTimerState({
             timerRunning: false,
             timerEndAt: 0,
             timerRemaining: 0,
@@ -354,7 +330,7 @@ export default function PresenterSessionTimer({ slide }) {
     tick();
     const timer = window.setInterval(tick, 500);
     return () => window.clearInterval(timer);
-  }, [running, endAt, warnedMilestones, soundEnabled, presenterLive.classRecordId]);
+  }, [running, endAt, warnedMilestones, soundEnabled, presenterLive.classRecordId, attendanceControlsTimer]);
 
   useEffect(() => () => {
     try {
@@ -370,6 +346,7 @@ export default function PresenterSessionTimer({ slide }) {
   const warningClass = visualWarningClass(remaining);
 
   function startOrResume() {
+    if (attendanceControlsTimer) return;
     const restarting = remaining <= 0;
     const seconds = restarting ? durationSeconds : remaining;
     const nextWarned = restarting ? [] : warnedMilestones;
@@ -384,6 +361,7 @@ export default function PresenterSessionTimer({ slide }) {
     setEndAt(nextEndAt);
     setRunning(true);
     publishTimerState({
+      classLifecycleStatus: "running",
       timerRunning: true,
       timerEndAt: nextEndAt,
       timerRemaining: seconds,
@@ -394,13 +372,14 @@ export default function PresenterSessionTimer({ slide }) {
   }
 
   function pause() {
-    if (!running) return;
+    if (attendanceControlsTimer || !running) return;
     const next = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
     previousRemainingRef.current = next;
     setRemaining(next);
     setRunning(false);
     setEndAt(0);
     publishTimerState({
+      classLifecycleStatus: "paused",
       timerRunning: false,
       timerEndAt: 0,
       timerRemaining: next,
@@ -409,6 +388,7 @@ export default function PresenterSessionTimer({ slide }) {
   }
 
   function reset() {
+    if (attendanceControlsTimer) return;
     previousRemainingRef.current = durationSeconds;
     expiryPublishedRef.current = false;
     setRemaining(durationSeconds);
@@ -417,6 +397,7 @@ export default function PresenterSessionTimer({ slide }) {
     setWarnedMilestones([]);
     setNotice("");
     publishTimerState({
+      classLifecycleStatus: "waiting",
       timerRunning: false,
       timerEndAt: 0,
       timerRemaining: durationSeconds,
@@ -445,10 +426,12 @@ export default function PresenterSessionTimer({ slide }) {
         : presenterLive.syncState === "offline"
           ? " · remote offline"
           : "";
-  const statusText = expired
-    ? "Class time is up."
-    : notice
-      || (running ? "Time remaining" : remaining < durationSeconds ? "Paused" : "Ready to start");
+  const statusText = attendanceControlsTimer
+    ? (expired ? "Class time is up." : notice || (running ? "Running from Attendance" : "Attendance timer stopped"))
+    : expired
+      ? "Class time is up."
+      : notice
+        || (running ? "Time remaining" : remaining < durationSeconds ? "Paused" : "Ready to start");
 
   return (
     <div className={`presenter-session-timer ${warningClass}`} aria-live="polite">
@@ -458,8 +441,14 @@ export default function PresenterSessionTimer({ slide }) {
         <small>{statusText}{syncLabel}</small>
       </div>
       <div className="presenter-session-timer-actions">
-        <button type="button" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
-        <button type="button" onClick={reset}>Reset</button>
+        {attendanceControlsTimer ? (
+          <span>Managed by Attendance</span>
+        ) : (
+          <>
+            <button type="button" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
+            <button type="button" onClick={reset}>Reset</button>
+          </>
+        )}
         <button type="button" onClick={toggleSound} aria-pressed={soundEnabled} title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up.">
           Sound: {soundEnabled ? "on" : "off"}
         </button>
