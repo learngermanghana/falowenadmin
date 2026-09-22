@@ -13,6 +13,11 @@ const FALOWEN_FUNCTION_BASE_URL =
   process.env.FALOWEN_FUNCTION_BASE_URL ||
   "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api";
 
+const PUBLIC_CLASS_CATALOG_ENDPOINTS = [
+  process.env.FALOWEN_PUBLIC_CLASSES_URL || "https://www.falowen.app/api/public/classes",
+  process.env.FALOWEN_PUBLIC_CLASSES_FUNCTION_URL || "https://europe-west1-falowen-examiner-trainer.cloudfunctions.net/publicClassesCatalog",
+];
+
 const ANSWER_KEY_MANIFEST_URL =
   process.env.FALOWEN_ANSWER_KEY_MANIFEST_URL ||
   "https://raw.githubusercontent.com/learngermanghana/falowenadmin/main/src/data/answers_dictionary.json";
@@ -997,6 +1002,54 @@ function mergeDeterministicMarkingResponse(originalBody, deterministicResult) {
   return { ...(originalBody || {}), ...deterministicResult };
 }
 
+async function proxyPublicClasses(req, res) {
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    res.setHeader("Allow", "GET, HEAD");
+    return res.status(405).json({ status: "error", message: "Method Not Allowed" });
+  }
+
+  const failures = [];
+  for (const endpoint of PUBLIC_CLASS_CATALOG_ENDPOINTS) {
+    try {
+      const target = new URL(endpoint);
+      target.searchParams.set("fresh", String(Date.now()));
+
+      const response = await fetch(target.toString(), {
+        method: "GET",
+        headers: { accept: "application/json" },
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        failures.push(`${endpoint} returned HTTP ${response.status}`);
+        continue;
+      }
+
+      const payload = await response.json();
+      if (!Array.isArray(payload?.classes)) {
+        failures.push(`${endpoint} did not return a classes array`);
+        continue;
+      }
+
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      if (req.method === "HEAD") return res.status(200).end();
+      return res.status(200).json(payload);
+    } catch (error) {
+      failures.push(error?.message || String(error));
+    }
+  }
+
+  console.error("Public classes proxy failed:", failures.join(" | "));
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(502).json({
+    status: "error",
+    message: "Public class catalogue is unavailable.",
+    upstreamErrors: failures,
+  });
+}
+
 async function proxyToFalowenFunction(req, res, path, url) {
   try {
     const target = new URL(`${FALOWEN_FUNCTION_BASE_URL.replace(/\/+$/, "")}/${path}`);
@@ -1088,6 +1141,8 @@ export default async function handler(req, res) {
   if (!path || path === "health") {
     return res.status(200).json({ ok: true, status: "ok", service: "falowenadmin-api-router" });
   }
+
+  if (path === "public/classes") return proxyPublicClasses(req, res);
 
   if (path === "social-metrics") return socialMetricsHandler(req, res);
 
