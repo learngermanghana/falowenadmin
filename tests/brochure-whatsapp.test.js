@@ -99,8 +99,9 @@ test("brochure panel loads real classes and no longer asks staff to attach a PDF
   assert.match(panel, /No attachment needed/);
   assert.doesNotMatch(panel, /Attach the brochure file/);
 
-  assert.match(classes, /www\.falowen\.app\/api\/public\/classes/);
-  assert.match(classes, /publicClassesCatalog/);
+  assert.match(classes, /\/api\/public\/classes/);
+  assert.doesNotMatch(classes, /https:\/\/www\.falowen\.app\/api\/public\/classes/);
+  assert.doesNotMatch(classes, /cloudfunctions\.net\/publicClassesCatalog/);
   assert.match(classes, /no-store/);
 });
 
@@ -125,12 +126,22 @@ test("public brochure class service uses the same catalogue as Falowen brochure 
   })();
 
   assert.equal(requests.length, 1);
-  assert.match(requests[0], /www\.falowen\.app\/api\/public\/classes/);
+  assert.match(requests[0], /^\/api\/public\/classes\?fresh=/);
   assert.deepEqual(rows.map((row) => row.slug), ["a1-soon", "a2-future"]);
 });
 
-test("public catalogue service retains the cloud function fallback", () => {
-  assert.match(publicService, /europe-west1-falowen-examiner-trainer\.cloudfunctions\.net\/publicClassesCatalog/);
+test("admin router owns the upstream public catalogue fallback", () => {
+  const router = read("api/router.js");
+  assert.match(router, /path === "public\/classes"/);
+  assert.match(router, /www\.falowen\.app\/api\/public\/classes/);
+  assert.match(router, /europe-west1-falowen-examiner-trainer\.cloudfunctions\.net\/publicClassesCatalog/);
+  assert.match(router, /proxyPublicClasses/);
+});
+
+test("browser catalogue request stays same-origin and avoids CORS preflight headers", () => {
+  assert.match(publicService, /"\/api\/public\/classes"/);
+  assert.doesNotMatch(publicService, /"cache-control": "no-cache"/);
+  assert.doesNotMatch(publicService, /pragma: "no-cache"/);
 });
 
 test("does not build a WhatsApp link without a valid number or message", () => {
