@@ -221,7 +221,8 @@ import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pi
   const upgradedOnce = fs.readFileSync(pagePath, "utf8");
 
   assert.match(upgradedOnce, /const stopWaitingMusic = useCallback\(\(\) => \{\s*musicStartGenerationRef\.current \+= 1;/);
-  assert.match(upgradedOnce, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
+  assert.match(upgradedOnce, /musicStartGenerationRef\.current !== startGeneration/);
+  assert.doesNotMatch(upgradedOnce, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
   assert.match(upgradedOnce, /stopWaitingMusicPlaylist\(context\)/);
 
   execFileSync(process.execPath, [path.join(scriptsDir, "patchCheckinWaitingRoomPlaylist.mjs")], {
