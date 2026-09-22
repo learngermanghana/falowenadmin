@@ -81,9 +81,18 @@ function readStoredTimer(key, durationSeconds) {
       return { remaining: durationSeconds, running: false, endAt: 0, warned: [] };
     }
     if (saved.running && Number(saved.endAt) > 0) {
-      const remaining = Math.max(0, Math.ceil((Number(saved.endAt) - Date.now()) / 1000));
+      const nowMs = Date.now();
+      const remaining = Math.max(
+        0,
+        Math.min(durationSeconds, Math.ceil((Number(saved.endAt) - nowMs) / 1000)),
+      );
       const warned = Array.isArray(saved.warned) ? saved.warned.map(Number).filter(Number.isFinite) : baselineWarnings(remaining);
-      return { remaining, running: remaining > 0, endAt: remaining > 0 ? Number(saved.endAt) : 0, warned };
+      return {
+        remaining,
+        running: remaining > 0,
+        endAt: remaining > 0 ? Math.min(Number(saved.endAt), nowMs + (durationSeconds * 1000)) : 0,
+        warned,
+      };
     }
     const remaining = Math.max(0, Math.min(durationSeconds, Number(saved.remaining ?? durationSeconds)));
     const warned = Array.isArray(saved.warned) ? saved.warned.map(Number).filter(Number.isFinite) : baselineWarnings(remaining);
