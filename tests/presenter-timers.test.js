@@ -73,6 +73,34 @@ test("student picker starts a one-minute answer timer automatically and announce
   assert.match(picker, /Default: 1 minute/);
 });
 
+test("student answer timer uses an absolute deadline clock and recovers after browser throttling", () => {
+  const picker = read("src/components/PresenterStudentPicker.jsx");
+  assert.match(picker, /presenter-response-deadline-clock-v2/);
+  assert.match(picker, /window\.requestAnimationFrame\(animate\)/);
+  assert.match(picker, /document\.addEventListener\("visibilitychange", resync\)/);
+  assert.match(picker, /window\.addEventListener\("focus", resync\)/);
+  assert.match(picker, /Math\.ceil\(\(responseDeadline - Date\.now\(\)\) \/ 1000\)/);
+  assert.doesNotMatch(picker, /window\.setInterval\(tick, 250\)/);
+});
+
+test("picker sync uses picker-specific writer identity instead of generic heartbeat writer", () => {
+  const picker = read("src/components/PresenterStudentPicker.jsx");
+  assert.match(picker, /pickerUpdatedByDeviceId/);
+  assert.match(picker, /remotePickerWriter !== presenterLive\.deviceId/);
+  assert.match(picker, /pickerStateIsRemote/);
+});
+
+test("presenter response actions wrap so Absent remains visible before Next student", () => {
+  const picker = read("src/components/PresenterStudentPicker.jsx");
+  const css = read("src/components/PresenterStudentPicker.css");
+  const absentIndex = picker.indexOf(">\n              Absent\n");
+  const nextStudentIndex = picker.indexOf('current ? "Next student →"');
+  assert.ok(absentIndex >= 0 && nextStudentIndex > absentIndex, "Absent must remain before Next student in the toolbar");
+  assert.match(css, /presenter-student-actions-no-overlap/);
+  assert.match(css, /\.presenter-student-actions \{[\s\S]*flex: 1 1 430px;[\s\S]*flex-wrap: wrap;/);
+  assert.match(css, /\.presenter-pick-student \{[\s\S]*margin-left: 0;/);
+});
+
 test("recording a student result stops the answer timer instead of auto-marking timeout", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
   assert.match(picker, /if \(hasQuestionMode && !currentQuestion\) return;\s*\n\s*stopResponseTimer\(\);\s*\n\s*const result = recordedResult\(status\)/);
