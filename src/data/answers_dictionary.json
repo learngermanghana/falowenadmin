@@ -1762,15 +1762,15 @@
   "A2 7.18 Die Bank Anrufen": {
     "answers": {
       "teil3": {
-        "Answer1": "B. Sparkasse",
-        "Answer2": "B. ING-DiBa",
-        "Answer3": "A. Sparkasse",
-        "Answer4": "C. Volksbank",
-        "Answer5": "A. Commerzbank"
+        "Answer1": "B) Sparkasse",
+        "Answer2": "F) ING-DiBa",
+        "Answer3": "B) Sparkasse",
+        "Answer4": "D) Volksbank",
+        "Answer5": "C) Commerzbank"
       },
       "teil4": {
         "Answer1": "B) Reisepass, Meldebescheinigung, Einkommensnachweis",
-        "Answer7": "B) Eine Stunde",
+        "Answer2": "B) Eine Stunde",
         "Answer3": "B) Drei",
         "Answer4": "A) Basiskonto",
         "Answer5": "D) Die Formulare vor dem Termin online ausfüllen"
