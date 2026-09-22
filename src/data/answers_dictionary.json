@@ -1535,8 +1535,7 @@
     "assignment_id": "A2-5.14",
     "expectedParts": [
       "teil2",
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "writingParts": [
       "teil2"
@@ -1545,8 +1544,7 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -1558,12 +1556,6 @@
       },
       "teil3": {
         "label": "teil3",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil4": {
-        "label": "teil4",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
@@ -2127,8 +2119,7 @@
     "assignment_id": "A2-9.25",
     "expectedParts": [
       "teil2",
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "writingParts": [
       "teil2"
@@ -2137,8 +2128,7 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -2150,12 +2140,6 @@
       },
       "teil3": {
         "label": "teil3",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil4": {
-        "label": "teil4",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
@@ -2233,7 +2217,8 @@
     "assignment_id": "A2-10.27",
     "expectedParts": [
       "teil2",
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "excludedParts": [
       "teil4"
@@ -2245,7 +2230,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -2257,6 +2243,12 @@
       },
       "teil3": {
         "label": "teil3",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil4": {
+        "label": "teil4",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
@@ -2284,7 +2276,8 @@
     "assignment_id": "A2-10.28",
     "expectedParts": [
       "teil2",
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "excludedParts": [
       "teil4"
@@ -2296,7 +2289,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -2308,6 +2302,12 @@
       },
       "teil3": {
         "label": "teil3",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil4": {
+        "label": "teil4",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
