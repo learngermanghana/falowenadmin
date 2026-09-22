@@ -210,7 +210,11 @@ picker = replaceOnce(
 const remotePickerEffects = `  useEffect(() => {
     const remote = presenterLive.liveState || {};
     const remoteStamp = Number(remote.pickerUpdatedAtMs || 0);
-    if (!presenterLive.hasSnapshot || !presenterLive.isToday || !presenterLive.isRemoteState || !remoteStamp) return;
+    const remotePickerWriter = normalize(remote.pickerUpdatedByDeviceId);
+    const pickerStateIsRemote = remotePickerWriter
+      ? remotePickerWriter !== presenterLive.deviceId
+      : presenterLive.isRemoteState;
+    if (!presenterLive.hasSnapshot || !presenterLive.isToday || !pickerStateIsRemote || !remoteStamp) return;
     if (normalize(remote.pickerAssignmentId) !== assignmentId) return;
     if (remoteStamp <= lastRemotePickerStampRef.current) return;
 
@@ -279,7 +283,7 @@ const remotePickerEffects = `  useEffect(() => {
     } else {
       onQuestionChange?.(null);
     }
-  }, [presenterLive.liveState?.pickerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, assignmentId, questionPool, onQuestionChange, responseSeconds]);
+  }, [presenterLive.liveState?.pickerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, presenterLive.deviceId, assignmentId, questionPool, onQuestionChange, responseSeconds]);
 
   useEffect(() => {
     if (!presenterLive.classRecordId || !presenterLive.hasSnapshot || !assignmentId) return undefined;
@@ -305,6 +309,7 @@ const remotePickerEffects = `  useEffect(() => {
     const timer = window.setTimeout(() => {
       presenterLive.publish({
         pickerAssignmentId: assignmentId,
+        pickerUpdatedByDeviceId: presenterLive.deviceId,
         pickerStudentKey: currentKey,
         pickerStudentName: currentEntry?.name || "",
         pickerQuestionId: currentQuestionId,
@@ -328,7 +333,7 @@ const remotePickerEffects = `  useEffect(() => {
       });
     }, 70);
     return () => window.clearTimeout(timer);
-  }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.publish, assignmentId, currentKey, currentQuestionId, showQuestionAnswer, lastMarked, responseDeadline, responseTimedOut, responseSeconds, roundPicked, roundQuestionIds, absentKeys, stats, roster]);
+  }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.publish, presenterLive.deviceId, assignmentId, currentKey, currentQuestionId, showQuestionAnswer, lastMarked, responseDeadline, responseTimedOut, responseSeconds, roundPicked, roundQuestionIds, absentKeys, stats, roster]);
 
 `;
 
