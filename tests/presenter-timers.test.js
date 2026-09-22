@@ -95,6 +95,18 @@ test("class timer publishes and consumes shared absolute timer state", () => {
   assert.match(source, /computer ↔ iPad live/);
 });
 
+
+test("presenter never displays a shared countdown longer than the configured class duration", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /const maximumEndAt = nowMs \+ \(durationSeconds \* 1000\)/);
+  assert.match(source, /Math\.min\(durationSeconds, Math\.ceil\(\(remoteEndAt - nowMs\) \/ 1000\)\)/);
+  assert.match(source, /durationMismatch && checkinEndAt/);
+  assert.match(source, /checkinStartedAtMs \+ \(durationSeconds \* 1000\)/);
+  assert.match(source, /const timerNeedsRepair = remoteRunning/);
+  assert.match(source, /timerDurationSeconds: durationSeconds/);
+  assert.match(source, /void presenterLive\.publish/);
+});
+
 test("student picker synchronizes class, student, question, fair-pick state and response deadline", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
   assert.match(picker, /setPresenterClassContext/);

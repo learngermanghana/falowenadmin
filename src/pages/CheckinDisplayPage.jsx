@@ -12,6 +12,7 @@ import { listClasses } from "../services/classesService.js";
 import {
   endPresenterLiveSession,
   presenterLocalDateKey,
+  publishPresenterLiveSession,
   readPresenterLiveSession,
   setPresenterClassContext,
   startPresenterLiveSession,
@@ -789,11 +790,49 @@ export default function CheckinDisplayPage() {
       }
 
       if (!startResult.created) {
-        const shared = startResult.state || {};
+        let shared = startResult.state || {};
         const sharedStart = Number(shared.classStartedAtMs || 0);
         const sharedEnd = Number(shared.classEndedAtMs || 0);
         const timerStamp = Number(shared.timerUpdatedAtMs || 0);
         const wasChangedAfterStart = timerStamp > sharedStart;
+        const sharedTimerDuration = Math.max(0, Number(shared.timerDurationSeconds || 0));
+        const sharedTimerEndAt = Math.max(0, Number(shared.timerEndAt || 0));
+        const expectedTimerEndAt = sharedStart > 0 && durationSeconds > 0
+          ? sharedStart + (durationSeconds * 1000)
+          : 0;
+        const timerRemainingTooLong = sharedTimerEndAt > 0
+          && sharedTimerEndAt - Date.now() > (durationSeconds * 1000) + 1000;
+        const timerDurationMismatch = durationSeconds > 0
+          && sharedTimerDuration > 0
+          && Math.abs(sharedTimerDuration - durationSeconds) > 1;
+        const canRepairSharedTimer = !sharedEnd
+          && shared.classStatus !== "ended"
+          && sharedStart > 0
+          && durationSeconds > 0
+          && Boolean(shared.timerRunning)
+          && (timerDurationMismatch || timerRemainingTooLong);
+
+        if (canRepairSharedTimer) {
+          const repairedEndAt = timerDurationMismatch && shared.classStartSource === "checkin"
+            ? expectedTimerEndAt
+            : Math.min(sharedTimerEndAt || expectedTimerEndAt, Date.now() + (durationSeconds * 1000));
+          const repairedRemaining = Math.max(
+            0,
+            Math.min(durationSeconds, Math.ceil((repairedEndAt - Date.now()) / 1000)),
+          );
+          const repairedPatch = {
+            timerLevel: level,
+            timerDurationSeconds: durationSeconds,
+            timerRunning: repairedRemaining > 0,
+            timerEndAt: repairedRemaining > 0 ? repairedEndAt : 0,
+            timerRemaining: repairedRemaining,
+            timerWarned: Array.isArray(shared.timerWarned) ? shared.timerWarned : [],
+            timerExpired: repairedRemaining <= 0,
+            timerUpdatedAtMs: Date.now(),
+          };
+          await publishPresenterLiveSession(classRecordId, repairedPatch, sessionKey);
+          shared = { ...shared, ...repairedPatch };
+        }
 
         setPresenterLiveState(shared);
         if (sharedStart > 0) setActualStartedAt(sharedStart);
@@ -808,9 +847,11 @@ export default function CheckinDisplayPage() {
           state: sharedEnd || shared.classStatus === "ended" ? "ended-synced" : "synced",
           message: sharedEnd || shared.classStatus === "ended"
             ? "This class session is already ended. Shared state was preserved."
-            : wasChangedAfterStart || manual
-              ? "Presenter already has shared timer state. It was preserved."
-              : "This class session was already started on another display. Existing timer state was preserved.",
+            : canRepairSharedTimer
+              ? `Slides timer corrected to the ${durationSeconds / 60}-minute ${level} class duration.`
+              : wasChangedAfterStart || manual
+                ? "Presenter already has shared timer state. It was preserved."
+                : "This class session was already started on another display. Existing timer state was preserved.",
         });
         return;
       }
