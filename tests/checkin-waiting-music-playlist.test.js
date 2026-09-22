@@ -285,6 +285,15 @@ test("refreshing a persisted check-in start reconnects shared slides without cha
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 });
 
+test("valid restored presenter snapshots leave reconnecting state and report active, ended, or stale", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const sharedIsActive = Boolean\(presenterLiveState\.isActiveSession\)/);
+  assert.match(page, /state: "synced", message: "Slides are synchronized with the active Presenter session\."/);
+  assert.match(page, /state: "ended-synced", message: "Completed class synchronized from the shared Presenter session\."/);
+  assert.match(page, /state: "stale-blocked", message: "This attendance session is no longer the active Presenter session, so it was not allowed to take control\."/);
+});
+
 test("check-in only publishes presenter timer state for today's presenter date", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
