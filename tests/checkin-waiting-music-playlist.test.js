@@ -92,7 +92,8 @@ test("music can continue after scheduled time until teacher starts class", () =>
 
   assert.match(page, /Scheduled start time reached/);
   assert.match(page, /Waiting-room music can continue quietly/);
-  assert.match(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
+  assert.doesNotMatch(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
+  assert.match(page, /onClick=\{musicPlaying \? stopWaitingMusic : startWaitingMusic\}/);
   assert.match(page, /masterGain\.gain\.setTargetAtTime\(\s*Math\.max\(0\.05, musicVolume \* 0\.35\)/);
 });
 
@@ -103,13 +104,27 @@ test("teacher-confirmed start uses the synchronized display clock", () => {
   assert.doesNotMatch(page, /const startedAt = Date\.now\(\);/);
 });
 
+
+
+test("music can be started manually after class has started or ended", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
+
+  assert.match(page, /const startWaitingMusic = useCallback\(async \(\) => \{\s*if \(musicPlaying\) return;/);
+  assert.doesNotMatch(page, /if \(musicPlaying \|\| classStartedRef\.current\) return;/);
+  assert.doesNotMatch(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
+  assert.match(patch, /'    if \(musicPlaying \|\| classStartedRef\.current\) return;',\s*'    if \(musicPlaying\) return;'/);
+  assert.match(patch, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
+});
+
 test("starting class invalidates pending waiting-room audio startup", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
 
   assert.match(page, /musicStartGenerationRef/);
   assert.match(page, /classStartedRef/);
-  assert.match(page, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
+  assert.match(page, /musicStartGenerationRef\.current !== startGeneration/);
+  assert.doesNotMatch(page, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
   assert.match(page, /classStartedRef\.current = true;/);
   assert.match(page, /musicStartGenerationRef\.current \+= 1;/);
   assert.match(page, /if \(!musicPlaying\) \{\s*stopWaitingMusic\(\);\s*return;/);
