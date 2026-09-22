@@ -943,21 +943,33 @@ export default function CheckinDisplayPage() {
       && Number(presenterLiveState.timerEndAt || 0) <= 0;
 
     if (sharedMatches && !sharedTimerMissing) {
-      autoPresenterRecoveryRef.current = recoveryKey;
       const sharedEnded = presenterLiveState.classLifecycleStatus === "ended"
         || presenterLiveState.classStatus === "ended"
         || Number(presenterLiveState.classEndedAtMs || 0) > 0;
       const sharedIsActive = Boolean(presenterLiveState.isActiveSession)
         || String(presenterLiveState.activeSessionKey || "") === String(linkPresenterSessionKey || "");
 
-      setSlideSyncStatus(
-        sharedEnded
-          ? { state: "ended-synced", message: "Completed class synchronized from the shared Presenter session." }
-          : sharedIsActive
-            ? { state: "synced", message: "Slides are synchronized with the active Presenter session." }
-            : { state: "stale-blocked", message: "This attendance session is no longer the active Presenter session, so it was not allowed to take control." },
-      );
-      return;
+      if (sharedEnded) {
+        autoPresenterRecoveryRef.current = recoveryKey;
+        setSlideSyncStatus({
+          state: "ended-synced",
+          message: "Completed class synchronized from the shared Presenter session.",
+        });
+        return;
+      }
+
+      if (sharedIsActive) {
+        autoPresenterRecoveryRef.current = recoveryKey;
+        setSlideSyncStatus({
+          state: "synced",
+          message: "Slides are synchronized with the active Presenter session.",
+        });
+        return;
+      }
+
+      // A matching non-ended session may only be inactive because the active pointer
+      // is empty or still points at an older/ended session. Let the transaction decide
+      // whether this session can be safely reactivated or is genuinely stale.
     }
     if (autoPresenterRecoveryRef.current === recoveryKey) return;
 

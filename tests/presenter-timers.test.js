@@ -83,11 +83,16 @@ test("student answer timer uses an absolute deadline clock and recovers after br
   assert.doesNotMatch(picker, /window\.setInterval\(tick, 250\)/);
 });
 
-test("picker sync uses picker-specific writer identity instead of generic heartbeat writer", () => {
+test("picker sync couples writer identity to the picker update and falls back for legacy clients", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
   assert.match(picker, /pickerUpdatedByDeviceId/);
-  assert.match(picker, /remotePickerWriter !== presenterLive\.deviceId/);
-  assert.match(picker, /pickerStateIsRemote/);
+  assert.match(picker, /pickerUpdatedByAtMs/);
+  assert.match(picker, /remotePickerWriterStamp === remoteStamp/);
+  assert.match(picker, /const pickerWriterMatchesUpdate = Boolean/);
+  assert.match(picker, /pickerWriterMatchesUpdate\s*\? remotePickerWriter !== presenterLive\.deviceId\s*:\s*normalize\(remote\.updatedBy\) !== presenterLive\.deviceId/);
+  assert.match(picker, /const pickerUpdatedAtMs = Date\.now\(\)/);
+  assert.match(picker, /pickerUpdatedByAtMs: pickerUpdatedAtMs/);
+  assert.match(picker, /pickerUpdatedAtMs,/);
 });
 
 test("presenter response actions wrap so Absent remains visible before Next student", () => {
