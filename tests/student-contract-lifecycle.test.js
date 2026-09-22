@@ -60,6 +60,9 @@ test("payment lifecycle still wires reconciliation, downgrade, and six-month com
   const paymentEmails = read("functions/studentPaymentUpdateEmails.js");
 
   assert.match(functionsSource, /app\.post\("\/payments\/reconcile-student\/:studentId"/);
+  assert.match(functionsSource, /app\.post\("\/payments\/restore-paid-contract"/);
+  assert.match(functionsSource, /studentUpgrade\.restoredPaidContract/);
+  assert.match(functionsSource, /remainingBalance: remainingUpgradeBalance/);
   assert.match(functionsSource, /exports\.maintainStudentPaymentContracts = onSchedule/);
   assert.match(functionsSource, /upgradeStatus: "expired"/);
   assert.match(functionsSource, /upgradeStatus: "completed"/);
@@ -86,7 +89,10 @@ test("upgrade UI explains partial versus full payment behavior", () => {
   assert.match(component, /full payment.*add 6 months/i);
   assert.match(component, /purpose: "level_upgrade"/);
   assert.match(component, /Recheck pending Paystack payments/);
+  assert.match(component, /Return to paid .* contract/);
+  assert.match(component, /Current access:/);
   assert.match(service, /\/api\/payments\/start-upgrade/);
+  assert.match(service, /\/api\/payments\/restore-paid-contract/);
   assert.match(service, /\/api\/payments\/reconcile-student/);
   assert.match(paymentService, /\/api\/payments\/create-link/);
   assert.match(packageJson, /patchStudentUpgradePaymentDriven\.mjs/);
