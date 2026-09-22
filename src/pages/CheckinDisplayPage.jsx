@@ -621,7 +621,7 @@ export default function CheckinDisplayPage() {
   }, []);
 
   const startWaitingMusic = useCallback(async () => {
-    if (musicPlaying || classStartedRef.current) return;
+    if (musicPlaying) return;
     const startGeneration = musicStartGenerationRef.current + 1;
     musicStartGenerationRef.current = startGeneration;
     setMusicError("");
@@ -658,7 +658,7 @@ export default function CheckinDisplayPage() {
         throw new Error("Audio is blocked by this browser. Raise the device media volume, turn off silent mode, and tap Start again.");
       }
 
-      if (musicStartGenerationRef.current !== startGeneration || classStartedRef.current) {
+      if (musicStartGenerationRef.current !== startGeneration) {
         if (context.state !== "closed") context.close().catch(() => {});
         return;
       }
@@ -1192,7 +1192,6 @@ export default function CheckinDisplayPage() {
               type="button"
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
-              disabled={!musicPlaying && Boolean(actualStartedAt)}
             >
               {musicPlaying ? "Stop piano" : "Start piano playlist"}
             </button>

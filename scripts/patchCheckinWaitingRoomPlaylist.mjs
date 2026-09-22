@@ -39,6 +39,16 @@ replaceOnce(
 );
 
 upgradeOnce(
+  '    if (musicPlaying || classStartedRef.current) return;',
+  '    if (musicPlaying) return;',
+);
+
+upgradeOnce(
+  '              disabled={!musicPlaying && Boolean(actualStartedAt)}\n',
+  '',
+);
+
+upgradeOnce(
   `  const stopWaitingMusic = useCallback(() => {
     const context = audioContextRef.current;
     audioContextRef.current = null;
@@ -119,7 +129,7 @@ upgradeOnce(
         },
         onError: (message) => setMusicError(message || "Waiting room music could not continue."),
       });
-      if (musicStartGenerationRef.current !== startGeneration || classStartedRef.current) {
+      if (musicStartGenerationRef.current !== startGeneration) {
         stopWaitingMusicPlaylist(context);
         if (context.state !== "closed") context.close().catch(() => {});
         return;
@@ -147,7 +157,7 @@ replaceOnce(
         },
         onError: (message) => setMusicError(message || "Waiting room music could not continue."),
       });
-      if (musicStartGenerationRef.current !== startGeneration || classStartedRef.current) {
+      if (musicStartGenerationRef.current !== startGeneration) {
         stopWaitingMusicPlaylist(context);
         if (context.state !== "closed") context.close().catch(() => {});
         return;
@@ -207,7 +217,6 @@ for (const marker of [
   "Stop music",
   "Start waiting music",
   "musicStartGenerationRef.current !== startGeneration",
-  "classStartedRef.current",
 ]) {
   if (!source.includes(marker)) throw new Error(`Waiting room playlist marker missing: ${marker}`);
 }
