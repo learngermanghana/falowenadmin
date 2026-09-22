@@ -202,6 +202,7 @@ export default function PresenterStudentPicker({
   onQuestionChange,
   onRosterCountChange,
   renderQuestionExternally = false,
+  responseTimerEnabled = true,
 }) {
   const [classOptions, setClassOptions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState(() => safeStorageGet(LAST_CLASS_KEY));

@@ -45,3 +45,9 @@ test("student picker reports the selected class roster size", () => {
   assert.match(picker, /onRosterCountChange\?\.\(roster\.length\)/);
   assert.match(presenter, /onRosterCountChange=\{setRosterCount\}/);
 });
+
+
+test("per-student warm-up uses the speaking timer instead of the short answer timer", () => {
+  assert.match(presenter, /responseTimerEnabled=\{!warmupPerStudent\}/);
+  assert.match(picker, /responseTimerEnabled = true/);
+});

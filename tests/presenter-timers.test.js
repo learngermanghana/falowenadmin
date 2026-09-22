@@ -204,3 +204,16 @@ test("manual presenter timer uses explicit waiting running and paused lifecycle 
   assert.match(source, /classLifecycleStatus: "waiting"/);
   assert.match(source, /if \(attendanceControlsTimer \|\| !running\) return;/);
 });
+
+
+test("per-student warm-up suspends and hides the picker answer timer", () => {
+  const presenter = read("src/components/TeachingSlidePresenter.jsx");
+  const picker = read("src/components/PresenterStudentPicker.jsx");
+  assert.match(presenter, /responseTimerEnabled=\{!warmupPerStudent\}/);
+  assert.match(picker, /if \(!responseTimerEnabled \|\| !responseDeadline \|\| lastMarked\) return undefined/);
+  assert.match(picker, /if \(!responseTimerEnabled\) \{[\s\S]*setResponseDeadline\(0\)[\s\S]*return;/);
+  assert.match(picker, /current && responseTimerEnabled \? \(/);
+  assert.match(picker, /effectiveRemoteDeadline = responseTimerEnabled \? remoteDeadline : 0/);
+  assert.match(picker, /pickerResponseDeadline: sharedResponseDeadline/);
+  assert.match(picker, /pickerResponseTimedOut: sharedResponseTimedOut/);
+});

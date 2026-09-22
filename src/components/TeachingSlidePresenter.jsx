@@ -319,7 +319,11 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           </div>
         </header>
 
-        <PresenterStudentPicker slide={slide} onRosterCountChange={setRosterCount} />
+        <PresenterStudentPicker
+          slide={slide}
+          onRosterCountChange={setRosterCount}
+          responseTimerEnabled={!warmupPerStudent}
+        />
 
         <main className={`presenter-content presenter-content-${stage.type}`}>
           {stage.type === "intro" ? (
