@@ -38,6 +38,106 @@ export function parsePresenterMinutes(value = "") { const match = String(value |
 function interactionMinutes(slide = {}, index = 0) { return parsePresenterMinutes(slide.interactionFlow?.[index]?.detailEn || ""); }
 
 const PER_STUDENT_WARMUP_LEVELS = new Set(["A2", "B1", "B2", "C1", "C2"]);
+const WARMUP_SUPPORT_LEVELS = new Set(["A2", "B1"]);
+const WARMUP_STOPWORDS = new Set([
+  "aber", "alle", "alles", "auch", "auf", "aus", "bei", "bist", "dann", "das", "dass", "dein", "deine",
+  "dem", "den", "der", "des", "die", "dies", "diese", "diesem", "diesen", "dieser", "dieses", "dir", "doch",
+  "du", "ein", "eine", "einem", "einen", "einer", "eines", "er", "es", "für", "gegen", "gibt", "haben", "hast",
+  "hat", "ich", "ihm", "ihn", "ihnen", "ihr", "ihre", "im", "in", "ist", "kann", "kannst", "können", "man",
+  "mein", "meine", "mit", "nach", "nicht", "noch", "oder", "ohne", "schon", "sein", "seine", "sich", "sie", "sind",
+  "über", "um", "und", "uns", "unter", "vom", "von", "vor", "war", "was", "werden", "wie", "wir", "wo", "zu", "zum",
+  "zur",
+]);
+
+function warmupDifficulty(index = 0, total = 0) {
+  if (index === 0) return "Easy";
+  if (index >= Math.max(2, total - 1)) return "Challenge";
+  return "Extend";
+}
+
+function warmupCue(question = "") {
+  const text = String(question || "");
+  const cues = [
+    { pattern: /\bwie oft\b/i, value: "Wie oft" },
+    { pattern: /\bmit wem\b/i, value: "Mit wem" },
+    { pattern: /\bwarum\b/i, value: "Warum" },
+    { pattern: /\bwann\b/i, value: "Wann" },
+    { pattern: /\bwo(?:hin|her)?\b/i, value: (text.match(/\bwo(?:hin|her)?\b/i) || [""])[0] },
+    { pattern: /\bwelche[nrms]?\s+(?:vorteile|nachteile|probleme|gründe|erfahrungen|eigenschaften)\b/i, value: (text.match(/\bwelche[nrms]?\s+(?:vorteile|nachteile|probleme|gründe|erfahrungen|eigenschaften)\b/i) || [""])[0] },
+    { pattern: /\bwürdest\b/i, value: "würdest" },
+    { pattern: /\bmöchtest\b/i, value: "möchtest" },
+  ];
+  return cues.find(({ pattern }) => pattern.test(text))?.value || "";
+}
+
+function warmupKeywords(question = "") {
+  const text = String(question || "").trim();
+  if (!text) return [];
+  const cue = warmupCue(text);
+  const originalTokens = text.match(/[A-Za-zÄÖÜäöüß]+/g) || [];
+  const content = originalTokens.filter((token, index) => {
+    const normalized = token.toLocaleLowerCase("de-DE");
+    if (normalized.length < 5 || WARMUP_STOPWORDS.has(normalized)) return false;
+    if (cue && cue.toLocaleLowerCase("de-DE").includes(normalized)) return false;
+    if (index === 0 && /^(welche[nrms]?|welches|welcher)$/i.test(token)) return false;
+    return true;
+  });
+  return [...new Set([cue, ...content].filter(Boolean))].slice(0, 3);
+}
+
+function warmupHintEn(question = "") {
+  const text = String(question || "");
+  if (/\bwarum\b/i.test(text)) return "Give a clear reason, not only a short answer.";
+  if (/\bwie oft\b/i.test(text)) return "Say how often it happens and add one detail.";
+  if (/\bwann\b|\buhr\b|\btag\b|\bwochenende\b/i.test(text)) return "Give a concrete time or day.";
+  if (/\bwo(?:hin|her)?\b|\bort\b|\bland\b|\bstadt\b/i.test(text)) return "Name a place and add one useful detail.";
+  if (/vorteil|nachteil|problem/i.test(text)) return "Name one point and explain why it matters.";
+  if (/\bwürdest\b|\bmöchtest\b|\blieber\b/i.test(text)) return "State your choice, then explain your reason.";
+  if (/vergangen|letztes|früher|gestern|erfahrung/i.test(text)) return "Use a past-time expression and one concrete detail.";
+  return "Answer in a full sentence and add one concrete detail.";
+}
+
+function warmupAnswerStarterDe(question = "") {
+  const text = String(question || "");
+  if (/\bwarum\b/i.test(text)) return "Für mich ..., weil ...";
+  if (/\bwie oft\b/i.test(text)) return "Ich ... einmal / zweimal / oft ...";
+  if (/\bwann\b/i.test(text)) return "Am ... / Um ...";
+  if (/\bwohin\b/i.test(text)) return "Ich fahre / gehe nach ...";
+  if (/\bwoher\b/i.test(text)) return "Ich komme aus ...";
+  if (/\bwo\b/i.test(text)) return "In ... / Dort ...";
+  if (/vorteil/i.test(text) && /nachteil/i.test(text)) return "Ein Vorteil ist ...; ein Nachteil ist ...";
+  if (/vorteil/i.test(text)) return "Ein Vorteil ist ...";
+  if (/nachteil|problem/i.test(text)) return "Ein Nachteil / Problem ist ...";
+  if (/\bwürdest\b/i.test(text)) return "Ich würde ..., weil ...";
+  if (/\bmöchtest\b/i.test(text)) return "Ich möchte ..., weil ...";
+  if (/\bwelche[nrms]?\b/i.test(text)) return "Für mich ist / sind ...";
+  if (/\bwie\b/i.test(text)) return "Ich ... / Für mich ...";
+  return "Ich denke, dass ... / Für mich ...";
+}
+
+function warmupFollowUpDe(question = "") {
+  const text = String(question || "");
+  if (/\bwarum\b/i.test(text)) return "Kannst du ein konkretes Beispiel nennen?";
+  if (/\bwie oft\b/i.test(text)) return "Seit wann machst du das?";
+  if (/\bwann\b/i.test(text)) return "Warum passt diese Zeit für dich?";
+  if (/\bwo(?:hin|her)?\b|\bort\b|\bland\b|\bstadt\b/i.test(text)) return "Warum gerade dort?";
+  if (/vorteil|nachteil|problem/i.test(text)) return "Welcher Punkt ist für dich am wichtigsten?";
+  if (/\bwürdest\b|\bmöchtest\b|\blieber\b/i.test(text)) return "Was ist der wichtigste Grund dafür?";
+  return "Warum? Kannst du ein Beispiel nennen?";
+}
+
+function buildWarmupQuestionSupport(slide = {}) {
+  if (!WARMUP_SUPPORT_LEVELS.has(classroomLevel(slide))) return [];
+  const questions = Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [];
+  return questions.map((question, index) => ({
+    keywords: warmupKeywords(question),
+    hintEn: warmupHintEn(question),
+    answerStarterDe: warmupAnswerStarterDe(question),
+    followUpDe: warmupFollowUpDe(question),
+    difficulty: warmupDifficulty(index, questions.length),
+  }));
+}
+
 function warmupSuggestedMinutes(slide = {}) { return PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? 5 : (interactionMinutes(slide, 0) || 5); }
 function warmupTimingLabel(slide = {}, questionCount = 0) {
   if (!PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide))) return "";
@@ -139,7 +239,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const vocabularyItems = vocabularyStage ? buildVocabularyItems(slide, support) : [];
   const stages = [
     { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "", studentReference },
-    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
+    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], questionSupport: buildWarmupQuestionSupport(slide), suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
     ...(topicFoundation ? [{ id: "foundation", type: "foundation", ...topicFoundation }] : []),
     {
       id: "phrases",
