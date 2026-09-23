@@ -510,6 +510,26 @@
   background: #5b21b6;
 }
 
+.checkin-display-music-skip-button {
+  flex: 0 0 auto;
+  border: 1px solid #8b5cf6;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #5b21b6;
+  padding: 9px 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checkin-display-music-skip-button:hover {
+  background: #f5f3ff;
+}
+
+.checkin-display-music-skip-button:focus-visible {
+  outline: 3px solid rgba(139, 92, 246, 0.35);
+  outline-offset: 2px;
+}
+
 .checkin-display-music-button:disabled {
   opacity: 0.48;
   cursor: not-allowed;
@@ -673,7 +693,8 @@
     flex-basis: calc(100% - 55px);
   }
 
-  .checkin-display-music-button {
+  .checkin-display-music-button,
+  .checkin-display-music-skip-button {
     width: 100%;
   }
 }
