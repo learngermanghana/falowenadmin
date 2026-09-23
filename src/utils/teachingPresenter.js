@@ -82,7 +82,11 @@ function warmupKeywords(question = "") {
     if (index === 0 && /^(welche[nrms]?|welches|welcher)$/i.test(token)) return false;
     return true;
   });
-  return [...new Set([cue, ...content].filter(Boolean))].slice(0, 3);
+  const selected = [...new Set([cue, ...content].filter(Boolean))].slice(0, 3);
+  if (selected.length) return selected;
+
+  const fallback = originalTokens.find((token) => token.length >= 4) || originalTokens[0] || "";
+  return fallback ? [fallback] : [];
 }
 
 function warmupHintEn(question = "") {
