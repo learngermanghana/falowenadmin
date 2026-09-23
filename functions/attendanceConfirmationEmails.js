@@ -193,6 +193,22 @@ function findCheckin(checkins = [], student = {}) {
 }
 
 function attendanceStatus({ session, attendance = {}, checkins = [], student, lateMinutes = DEFAULT_LATE_MINUTES }) {
+  // A tutor's saved register is the official override. Read it before the
+  // student's self check-in so a manual Present/Late/Excused/Absent correction
+  // is reflected in weekly reports instead of being overwritten by QR timing.
+  const manual = findManualEntry(attendance.students || {}, student);
+  if (manual) {
+    const explicit = comparable(manual.status || manual.attendanceStatus);
+    if (explicit === "excused") return { status: "excused", method: "manual", checkedAt: null };
+    if (explicit === "late") return { status: "late", method: "manual", checkedAt: null };
+    if (manual.present === true || ["present", "attended"].includes(explicit)) {
+      return { status: "present", method: "manual", checkedAt: null };
+    }
+    if (manual.present === false || explicit === "absent") {
+      return { status: "absent", method: "manual", checkedAt: null };
+    }
+  }
+
   const checkin = findCheckin(checkins, student);
   const start = sessionStart(session);
   if (checkin) {
@@ -203,16 +219,6 @@ function attendanceStatus({ session, attendance = {}, checkins = [], student, la
       method: normalize(checkin.method || "qr") || "qr",
       checkedAt,
     };
-  }
-
-  const manual = findManualEntry(attendance.students || {}, student);
-  if (manual) {
-    const explicit = comparable(manual.status || manual.attendanceStatus);
-    if (explicit === "excused") return { status: "excused", method: "manual", checkedAt: null };
-    if (explicit === "late") return { status: "late", method: "manual", checkedAt: null };
-    if (manual.present === true || ["present", "attended"].includes(explicit)) {
-      return { status: "present", method: "manual", checkedAt: null };
-    }
   }
 
   return { status: "absent", method: "none", checkedAt: null };
@@ -391,25 +397,50 @@ async function loadSessionsForClass(db, klass) {
 }
 
 async function loadAttendanceForSession(db, klass, session) {
-  const parentIds = [...new Set([klass.id, klass.classId, klass.classRecordId, klass.name, klass.className].map(normalize).filter(Boolean))];
-  let attendance = {};
-  let attendanceRef = null;
+  const parentIds = [...new Set([
+    klass.id,
+    klass.classId,
+    klass.classRecordId,
+    klass.name,
+    klass.className,
+    session.classId,
+    session.classRecordId,
+    session.className,
+  ].map(normalize).filter(Boolean))];
+  const canonicalParentId = normalize(klass.id || klass.classRecordId || klass.classId || klass.name);
+  const attendanceDocs = [];
+  const checkins = [];
+
+  // Manual registers and student check-ins have historically been written
+  // under different class aliases. Read every supported parent instead of
+  // stopping at the first attendance document.
   for (const parentId of parentIds) {
     const ref = db.collection("attendance").doc(parentId).collection("sessions").doc(session.id);
     const snap = await ref.get();
-    if (snap.exists) {
-      attendance = snap.data() || {};
-      attendanceRef = ref;
-      break;
-    }
+    if (snap.exists) attendanceDocs.push({ parentId, data: snap.data() || {} });
+
+    const checkinSnap = await ref.collection("checkins").get();
+    checkinSnap.docs.forEach((docSnap) => {
+      checkins.push({ id: docSnap.id, ...docSnap.data() });
+    });
   }
-  if (!attendanceRef) {
-    attendanceRef = db.collection("attendance").doc(normalize(klass.id || klass.classId || klass.name)).collection("sessions").doc(session.id);
-  }
-  const checkinSnap = await attendanceRef.collection("checkins").get();
+
+  const canonical = attendanceDocs.find((item) => item.parentId === canonicalParentId);
+  const withManualStudents = attendanceDocs.find((item) => Object.keys(item.data?.students || {}).length > 0);
+  const selected = (canonical && Object.keys(canonical.data?.students || {}).length > 0)
+    ? canonical
+    : withManualStudents || canonical || attendanceDocs[0] || { data: {} };
+
+  // Prefer the earliest matching check-in when duplicate alias paths exist.
+  checkins.sort((left, right) => {
+    const leftAt = asDate(left.checkedInAt || left.submittedAt || left.createdAt || left.updatedAt)?.getTime() || Number.MAX_SAFE_INTEGER;
+    const rightAt = asDate(right.checkedInAt || right.submittedAt || right.createdAt || right.updatedAt)?.getTime() || Number.MAX_SAFE_INTEGER;
+    return leftAt - rightAt;
+  });
+
   return {
-    attendance,
-    checkins: checkinSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
+    attendance: selected.data || {},
+    checkins,
   };
 }
 
@@ -745,6 +776,7 @@ module.exports = {
     deliveryId,
     groupDueSessions,
     modeForClass,
+    loadAttendanceForSession,
     resolveWebhookConfig,
     resolveClassWebhookConfig,
     studentBelongsToClass,
