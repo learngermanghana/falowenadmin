@@ -182,7 +182,7 @@ function classTransferSortValue(item = {}) {
 }
 
 function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [] }) {
-  if (!app?.patch || !db?.collection || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
+  if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
   }
 
