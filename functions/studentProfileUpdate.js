@@ -4,7 +4,6 @@ const EDITABLE_STUDENT_FIELDS = new Set([
   "phone",
   "studentCode",
   "level",
-  "className",
   "program",
   "location",
   "status",
