@@ -114,10 +114,17 @@ function normalizeClassLookup(value) {
 
 function inferClassLevel(klass = {}, ...fallbacks) {
   const candidates = [
+    klass.resolvedLevelId,
     klass.levelId,
     klass.level,
+    klass.classLevel,
+    klass.programLevel,
     klass.courseLevel,
     klass.languageLevel,
+    klass.name,
+    klass.className,
+    klass.title,
+    klass.slug,
     ...fallbacks,
   ];
   for (const candidate of candidates) {
