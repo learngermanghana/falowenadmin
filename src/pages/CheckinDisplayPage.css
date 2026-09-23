@@ -751,3 +751,231 @@
     width: 340px !important;
   }
 }
+
+
+/* Keep the projector/check-in view inside typical laptop-height screens. */
+@media (min-width: 851px) and (max-height: 820px) {
+  .checkin-display-page {
+    padding: 6px;
+  }
+
+  .checkin-display-card {
+    width: min(1240px, 100%);
+    min-height: calc(100vh - 12px);
+    padding: 10px 14px;
+    gap: 8px;
+    border-radius: 16px;
+  }
+
+  .checkin-display-toolbar-actions button {
+    padding: 6px 9px;
+  }
+
+  .checkin-display-hero {
+    gap: 12px;
+  }
+
+  .checkin-display-hero h1 {
+    font-size: clamp(24px, 3vw, 34px);
+  }
+
+  .checkin-display-hero p {
+    margin-top: 4px;
+    font-size: 14px;
+  }
+
+  .checkin-display-class-label {
+    margin-bottom: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .checkin-display-clock {
+    min-width: 160px;
+    padding: 7px 10px;
+  }
+
+  .checkin-display-clock strong {
+    font-size: 22px;
+  }
+
+  .checkin-display-timing {
+    padding: 7px 12px;
+  }
+
+  .checkin-display-timing-value {
+    font-size: clamp(32px, 4vw, 44px);
+  }
+
+  .checkin-display-timing-note {
+    margin-top: 3px;
+    font-size: 11px;
+  }
+
+  .checkin-display-teacher-controls {
+    padding: 8px 10px;
+  }
+
+  .checkin-display-teacher-control-actions button {
+    padding: 7px 10px;
+  }
+
+  .checkin-display-main-grid {
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .checkin-display-qr-panel,
+  .checkin-display-attendance-panel {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .checkin-display-qr-wrap {
+    padding: 5px;
+    border-radius: 13px;
+  }
+
+  .checkin-display-qr-wrap canvas {
+    width: min(220px, 30vh) !important;
+  }
+
+  .checkin-display-scan-copy {
+    margin-top: 5px;
+    font-size: 15px;
+  }
+
+  .checkin-display-session-mini {
+    margin-top: 5px;
+    font-size: 10px;
+  }
+
+  .checkin-display-attendance-count {
+    font-size: clamp(46px, 6vw, 64px);
+  }
+
+  .checkin-display-attendance-copy {
+    margin-top: 3px;
+    font-size: 14px;
+  }
+
+  .checkin-display-progress {
+    height: 9px;
+    margin-top: 8px;
+  }
+
+  .checkin-display-live-indicator {
+    margin-top: 6px;
+  }
+
+  .checkin-display-privacy-note,
+  .checkin-display-name-empty {
+    margin-top: 7px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .checkin-display-name-list {
+    margin-top: 7px;
+    padding-top: 6px;
+    gap: 4px;
+    max-height: 105px;
+  }
+
+  .checkin-display-name-row {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  .checkin-display-music {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .checkin-display-music-main {
+    gap: 9px;
+  }
+
+  .checkin-display-music-title {
+    font-size: 13px;
+  }
+
+  .checkin-display-music-note {
+    margin-top: 1px;
+    font-size: 10px;
+  }
+
+  .checkin-display-music-button,
+  .checkin-display-music-skip-button {
+    padding: 7px 10px;
+  }
+
+  .checkin-display-music-volume {
+    margin-top: 5px;
+    gap: 7px;
+  }
+
+  .checkin-display-alert {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .checkin-display-footer {
+    font-size: 10px;
+  }
+}
+
+@media (min-width: 851px) and (max-height: 700px) {
+  .checkin-display-card {
+    padding: 7px 10px;
+    gap: 6px;
+  }
+
+  .checkin-display-toolbar {
+    min-height: 0;
+  }
+
+  .checkin-display-hero h1 {
+    font-size: 26px;
+  }
+
+  .checkin-display-hero p,
+  .checkin-display-timing-note,
+  .checkin-display-teacher-control-copy span {
+    display: none;
+  }
+
+  .checkin-display-timing-value {
+    font-size: 34px;
+  }
+
+  .checkin-display-qr-wrap canvas {
+    width: min(185px, 27vh) !important;
+  }
+
+  .checkin-display-scan-copy {
+    font-size: 13px;
+  }
+
+  .checkin-display-session-mini {
+    display: none;
+  }
+
+  .checkin-display-attendance-count {
+    font-size: 48px;
+  }
+
+  .checkin-display-name-list {
+    max-height: 80px;
+  }
+
+  .checkin-display-music-note {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .checkin-display-footer {
+    display: none;
+  }
+}
