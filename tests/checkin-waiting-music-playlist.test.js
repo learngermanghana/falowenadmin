@@ -16,9 +16,20 @@ function publicPathFromSrc(src) {
   return path.join(repoRoot, "public", decodeURIComponent(String(src || "").replace(/^\//, "")));
 }
 
-test("waiting room playlist points only to real public audio files", () => {
-  assert.ok(waitingMusicPlaylist.length >= 1);
+test("waiting room playlist includes every public MP3 and points only to real files", () => {
+  const publicMp3Files = fs.readdirSync(path.join(repoRoot, "public"))
+    .filter((name) => /\.mp3$/i.test(name))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  assert.ok(publicMp3Files.length >= 1);
+  assert.equal(waitingMusicPlaylist.length, publicMp3Files.length);
   assert.ok(waitingMusicPlaylist.some((track) => /Saxophone/i.test(track.title)));
+
+  const configuredFiles = waitingMusicPlaylist
+    .map((track) => path.basename(decodeURIComponent(track.src)))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  assert.deepEqual(configuredFiles, publicMp3Files);
 
   for (const track of waitingMusicPlaylist) {
     assert.match(track.src, /^\/.+\.mp3$/i);
