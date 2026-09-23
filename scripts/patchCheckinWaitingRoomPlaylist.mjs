@@ -22,8 +22,13 @@ replaceOnce(
 
 replaceOnce(
   'import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";',
-  'import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
+  'import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
   "audio helper import",
+);
+
+upgradeOnce(
+  'import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
+  'import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
 );
 
 replaceOnce(
@@ -109,6 +114,47 @@ replaceOnce(
     setMusicPlaying(false);
   }, []);`,
   "stop waiting music",
+);
+
+upgradeOnce(
+  `  const stopWaitingMusic = useCallback(() => {
+    musicStartGenerationRef.current += 1;
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    musicGainRef.current = null;
+    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") {
+      context.close().catch(() => {});
+    }
+    setMusicPlaying(false);
+  }, []);`,
+  `  const stopWaitingMusic = useCallback(() => {
+    musicStartGenerationRef.current += 1;
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    musicGainRef.current = null;
+    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+
+    if (context) stopWaitingMusicPlaylist(context);
+    if (context && context.state !== "closed") {
+      context.close().catch(() => {});
+    }
+    setMusicPlaying(false);
+  }, []);
+
+  const skipWaitingMusic = useCallback(async () => {
+    const context = audioContextRef.current;
+    if (!musicPlaying || pianoPlaylist.length <= 1 || !context || context.state === "closed") return;
+
+    try {
+      setMusicError("");
+      await skipWaitingMusicPlaylist(context);
+    } catch (error) {
+      setMusicError(error?.message || "The next waiting room track could not start.");
+    }
+  }, [musicPlaying]);`,
 );
 
 upgradeOnce(
@@ -204,6 +250,29 @@ replaceOnce(
   "music button copy",
 );
 
+upgradeOnce(
+  `            <button
+              type="button"
+              className="checkin-display-music-button"
+              onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+            >`,
+  `            {musicPlaying && pianoPlaylist.length > 1 ? (
+              <button
+                type="button"
+                className="checkin-display-music-skip-button"
+                onClick={skipWaitingMusic}
+                aria-label="Skip to next waiting room track"
+              >
+                Skip
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="checkin-display-music-button"
+              onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+            >`,
+);
+
 replaceOnce(
   '              aria-label="Piano music volume"',
   '              aria-label="Waiting room music volume"',
@@ -216,6 +285,7 @@ for (const marker of [
   "Now playing: ${currentMusicTrack}",
   "Stop music",
   "Start waiting music",
+  "skipWaitingMusicPlaylist(context)",
   "musicStartGenerationRef.current !== startGeneration",
 ]) {
   if (!source.includes(marker)) throw new Error(`Waiting room playlist marker missing: ${marker}`);
