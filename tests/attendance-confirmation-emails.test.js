@@ -15,6 +15,7 @@ const {
   buildWeeklyMessage,
   deliveryId,
   groupDueSessions,
+  loadAttendanceForSession,
   modeForClass,
   resolveWebhookConfig,
   studentBelongsToClass,
@@ -87,6 +88,97 @@ test("manual attendance and excused statuses are preserved", () => {
     student,
   });
   assert.equal(excused.status, "excused");
+});
+
+test("manual tutor Present overrides a late self check-in in the official report", () => {
+  const status = attendanceStatus({
+    session,
+    attendance: { students: { Felix123: { present: true, name: "Felix Asadu" } } },
+    checkins: [{ uid: "uid-1", checkedInAt: "2026-07-14T18:20:00.000Z", method: "qr" }],
+    student,
+    lateMinutes: 15,
+  });
+
+  assert.equal(status.status, "present");
+  assert.equal(status.method, "manual");
+});
+
+test("weekly worker combines manual attendance with check-ins stored under a class alias", async () => {
+  const attendanceDocs = {
+    "class-1": {
+      students: {
+        Felix123: { present: true, name: "Felix Asadu", email: "felix@example.com" },
+      },
+      markedBy: "teacher-1",
+    },
+    "A1 Munich Klasse": {
+      openTo: "2026-07-14T19:15:00.000Z",
+    },
+  };
+  const checkinsByParent = {
+    "A1 Munich Klasse": [
+      { id: "checkin-1", uid: "uid-1", checkedInAt: "2026-07-14T18:20:00.000Z", method: "qr" },
+    ],
+  };
+
+  const db = {
+    collection(name) {
+      assert.equal(name, "attendance");
+      return {
+        doc(parentId) {
+          return {
+            collection(childName) {
+              assert.equal(childName, "sessions");
+              return {
+                doc(sessionId) {
+                  assert.equal(sessionId, "session-1");
+                  return {
+                    async get() {
+                      const data = attendanceDocs[parentId];
+                      return {
+                        exists: Boolean(data),
+                        data: () => data || {},
+                      };
+                    },
+                    collection(grandchild) {
+                      assert.equal(grandchild, "checkins");
+                      return {
+                        async get() {
+                          return {
+                            docs: (checkinsByParent[parentId] || []).map((row) => ({
+                              id: row.id,
+                              data: () => {
+                                const { id, ...data } = row;
+                                return data;
+                              },
+                            })),
+                          };
+                        },
+                      };
+                    },
+                  };
+                },
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const loaded = await loadAttendanceForSession(db, klass, session);
+  assert.equal(loaded.attendance.students.Felix123.present, true);
+  assert.equal(loaded.checkins.length, 1);
+
+  const status = attendanceStatus({
+    session,
+    attendance: loaded.attendance,
+    checkins: loaded.checkins,
+    student,
+    lateMinutes: 15,
+  });
+  assert.equal(status.status, "present");
+  assert.equal(status.method, "manual");
 });
 
 test("weekly grouping waits for the final session of a week", () => {
