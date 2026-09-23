@@ -17,6 +17,7 @@ on:
       - 'scripts/patchAttendanceStructuredParticipationEmail.mjs'
       - 'firebase.json'
       - '.github/workflows/deploy-attendance-confirmation-worker.yml'
+      - 'deploy-triggers/attendance-confirmation-worker.txt'
   workflow_dispatch:
 
 concurrency:
