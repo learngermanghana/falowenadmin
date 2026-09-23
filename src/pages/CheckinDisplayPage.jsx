@@ -776,7 +776,9 @@ export default function CheckinDisplayPage() {
       const { klass, classRecordId, level } = await resolvePresenterClass();
       const configuredLevelDurationSeconds = presenterSessionDurationSeconds(level);
       const attendanceDurationSeconds = sessionDurationSeconds(startTime, endTime);
-      const durationSeconds = configuredLevelDurationSeconds || attendanceDurationSeconds;
+      const durationSeconds = attendanceDurationSeconds > 0 && configuredLevelDurationSeconds > 0
+        ? Math.min(attendanceDurationSeconds, configuredLevelDurationSeconds)
+        : attendanceDurationSeconds || configuredLevelDurationSeconds;
       const sessionKey = presenterSessionKey({
         sessionDate,
         sessionId,
