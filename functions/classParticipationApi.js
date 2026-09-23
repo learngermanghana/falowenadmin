@@ -191,6 +191,89 @@ function studentSafeParticipationRecord(row = {}) {
   };
 }
 
+async function queryStudentDirectory(db, field, value, limit = 5) {
+  const normalized = clean(value);
+  if (!normalized) return [];
+  const snapshot = await db.collection("students")
+    .where(field, "==", normalized)
+    .limit(limit)
+    .get();
+  return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+}
+
+async function findAuthenticatedStudent(db, user = {}) {
+  const uid = clean(user.uid);
+  const email = lower(user.email);
+
+  if (uid) {
+    const direct = await db.collection("students").doc(uid).get();
+    if (direct.exists) return { id: direct.id, ...direct.data() };
+  }
+
+  const probes = [
+    ["uid", uid],
+    ["firebaseUid", uid],
+    ["firebaseUID", uid],
+    ["authUid", uid],
+    ["emailNormalized", email],
+    ["email", clean(user.email)],
+    ["email", email],
+  ];
+  for (const [field, value] of probes) {
+    if (!clean(value)) continue;
+    const rows = await queryStudentDirectory(db, field, value);
+    if (rows.length) return rows[0];
+  }
+  return null;
+}
+
+function participationIdentityProbes(user = {}, student = {}) {
+  const uidValues = [...new Set([
+    user.uid,
+    student.uid,
+    student.firebaseUid,
+    student.firebaseUID,
+    student.authUid,
+  ].map(clean).filter(Boolean))];
+
+  const emailValues = [...new Set([
+    user.email,
+    student.email,
+    student.studentEmail,
+    student.emailAddress,
+  ].map(lower).filter(Boolean))];
+
+  const codeValues = [...new Set([
+    student.studentCode,
+    student.studentcode,
+    student.student_code,
+    student.code,
+    student.id,
+  ].map(lower).filter(Boolean))];
+
+  return { uidValues, emailValues, codeValues };
+}
+
+async function loadStudentParticipationForUser(db, user = {}) {
+  const student = await findAuthenticatedStudent(db, user);
+  const probes = participationIdentityProbes(user, student || {});
+  const rows = [];
+
+  for (const uid of probes.uidValues) {
+    rows.push(...await queryRecords(db, "studentUid", uid, 100));
+  }
+  for (const email of probes.emailValues) {
+    rows.push(...await queryRecords(db, "studentEmailNormalized", email, 100));
+  }
+  for (const code of probes.codeValues) {
+    rows.push(...await queryRecords(db, "studentCode", code, 100));
+  }
+
+  return [...new Map(rows.map((row) => [row.id, row])).values()]
+    .sort((a, b) => String(b.sessionDate || b.updatedAt || "").localeCompare(String(a.sessionDate || a.updatedAt || "")))
+    .map(studentSafeParticipationRecord);
+}
+
 function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEmails = [] }) {
   if (!app?.post || !app?.get || !db?.collection || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Class participation route dependencies are incomplete");
@@ -372,15 +455,8 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
   app.get("/class-participation/me", async (req, res) => {
     try {
       const user = await requireAnyFirebaseUser(req, admin);
-      const uid = clean(user.uid);
-      const email = lower(user.email);
-      const rows = [];
-      if (uid) rows.push(...await queryRecords(db, "studentUid", uid, 100));
-      if (email) rows.push(...await queryRecords(db, "studentEmailNormalized", email, 100));
-      const unique = [...new Map(rows.map((row) => [row.id, row])).values()]
-        .sort((a, b) => String(b.sessionDate || b.updatedAt || "").localeCompare(String(a.sessionDate || a.updatedAt || "")))
-        .map(studentSafeParticipationRecord);
-      return res.json({ ok: true, participation: unique });
+      const participation = await loadStudentParticipationForUser(db, user);
+      return res.json({ ok: true, participation });
     } catch (error) {
       return res.status(statusFor(error)).json({ ok: false, error: error?.message || "Could not load your participation" });
     }
@@ -394,5 +470,7 @@ module.exports = {
   normalizeQuestionResponse,
   normalizeStudent,
   studentSafeParticipationRecord,
+  participationIdentityProbes,
+  loadStudentParticipationForUser,
   registerClassParticipationRoutes,
 };
