@@ -213,11 +213,29 @@ jobs:
           deploy_group "payment and contract workers" \
             "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:autoSyncNewStudentToOrientationSheet,functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet,functions:falowenadmin:syncPendingOperationalSheets,functions:falowenadmin:cleanupExpiredPendingStudents"
 
-          deploy_group "class scheduled workers" \
-            "functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:autoCompleteClassSessions,functions:falowenadmin:sendDueHolidayNotices"
+          # Cloud Run CPU quota is tight in us-central1. Deploy the attendance
+          # worker first, then the other scheduled/event workers one at a time
+          # so concurrent revision rollouts do not exhaust regional CPU quota.
+          deploy_group "attendance confirmation worker" \
+            "functions:falowenadmin:sendAttendanceConfirmationEmails"
 
-          deploy_group "attendance event workers" \
-            "functions:falowenadmin:queueAttendanceConfirmationFromSession,functions:falowenadmin:queueAttendanceConfirmationFromCheckin,functions:falowenadmin:queueAttendanceConfirmationFromClassSession"
+          deploy_group "class reminder worker" \
+            "functions:falowenadmin:sendClassSessionReminderEmails"
+
+          deploy_group "automatic class completion worker" \
+            "functions:falowenadmin:autoCompleteClassSessions"
+
+          deploy_group "holiday notice worker" \
+            "functions:falowenadmin:sendDueHolidayNotices"
+
+          deploy_group "attendance session event worker" \
+            "functions:falowenadmin:queueAttendanceConfirmationFromSession"
+
+          deploy_group "attendance check-in event worker" \
+            "functions:falowenadmin:queueAttendanceConfirmationFromCheckin"
+
+          deploy_group "class-session attendance event worker" \
+            "functions:falowenadmin:queueAttendanceConfirmationFromClassSession"
 
       - name: Upload Firebase failure log
         if: failure()
