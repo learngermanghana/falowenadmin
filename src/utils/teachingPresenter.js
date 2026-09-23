@@ -100,10 +100,7 @@ function buildVocabularyItems(slide = {}, support = {}) {
         .filter((word) => word.length >= 5);
       return keywords.some((word) => example.toLocaleLowerCase("de-DE").includes(word));
     });
-    const fallbackExample = examples.find((example) => (
-      !usedExamples.has(example) && example.toLocaleLowerCase("de-DE") !== comparableTerm
-    ));
-    const example = preferredExample || fallbackExample || "";
+    const example = preferredExample || "";
 
     if (example) usedExamples.add(example);
     return { term, example, number: index + 1 };
