@@ -57,7 +57,7 @@ test("warm-up keyword highlighting matches whole words instead of prefixes", () 
 
   assert.equal(segments.map((segment) => segment.text).join(""), question);
   assert.deepEqual(highlighted, ["Wo", "lieber"]);
-  assert.equal(highlighted.includes("Wo" /* from the prefix of wohnst */) && highlighted.length > 2, false);
+  assert.equal(highlighted.filter((item) => item === "Wo").length, 1, "Wo should highlight only the standalone question word");
 });
 
 test("Erfahrung comparisons do not receive a past-event hint", () => {
