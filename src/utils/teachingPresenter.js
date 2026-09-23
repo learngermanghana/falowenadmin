@@ -89,6 +89,15 @@ function warmupKeywords(question = "") {
   return fallback ? [fallback] : [];
 }
 
+function isWarmupComparisonQuestion(question = "") {
+  const text = String(question || "");
+  if (/\b(?:vergleichen|vergleich|unterschiede?|gegenüber)\b/i.test(text)) return true;
+
+  const hasComparator = /\b(?:wichtiger|wichtigeres|besser|schlechter|größer|kleiner)\b/i.test(text);
+  const hasExplicitAlternative = /\b(?:als|oder)\b/i.test(text);
+  return hasComparator && hasExplicitAlternative;
+}
+
 function warmupHintEn(question = "") {
   const text = String(question || "");
   if (/\bwarum\b/i.test(text)) return "Give a clear reason, not only a short answer.";
@@ -97,7 +106,8 @@ function warmupHintEn(question = "") {
   if (/\bwo(?:hin|her)?\b|\bort\b|\bland\b|\bstadt\b/i.test(text)) return "Name a place and add one useful detail.";
   if (/vorteil|nachteil|problem/i.test(text)) return "Name one point and explain why it matters.";
   if (/\bwürdest\b|\bmöchtest\b|\blieber\b/i.test(text)) return "State your choice, then explain your reason.";
-  if (/\b(?:wichtiger|wichtigeres|besser|schlechter|größer|kleiner)\b/i.test(text)) return "Compare both sides and explain your choice.";
+  if (isWarmupComparisonQuestion(text)) return "Compare both sides and explain your choice.";
+  if (/\bwie\s+(?:kann|könnte|sollte)\s+(?:man|ich|du|wir)\b|\bwie\s+lässt\s+sich\b/i.test(text)) return "Name a practical method and explain how it helps.";
   if (/\b(?:gestern|früher|damals|letztes?|letzten|letzte|vergangene[nrms]?)\b/i.test(text)) return "Use a past-time expression and one concrete detail.";
   return "Answer in a full sentence and add one concrete detail.";
 }
