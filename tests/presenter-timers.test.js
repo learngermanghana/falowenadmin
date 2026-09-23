@@ -26,6 +26,20 @@ test("presenter class timer caps oversized shared durations but honors shorter s
   assert.match(source, /Class time is up/);
 });
 
+test("presenter timer infers A1/A2/B1 from assignment identity when slide.course is missing", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  const timing = read("src/utils/presenterSessionTiming.js");
+  const hook = read("src/hooks/usePresenterLiveSession.js");
+
+  assert.match(timing, /export function inferPresenterLevel/);
+  assert.match(timing, /A1\|A2\|B1\|B2\|C1\|C2/);
+  assert.match(source, /inferPresenterLevel\(/);
+  assert.match(source, /slide\?\.assignmentId/);
+  assert.match(source, /presenterLive\.liveState\?\.timerLevel/);
+  assert.match(hook, /inferPresenterLevel\(/);
+  assert.match(hook, /slide\?\.assignmentId/);
+});
+
 test("class timer storage is isolated by selected class and presenter session", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   assert.match(source, /presenterClassTimerStorageKey/);
