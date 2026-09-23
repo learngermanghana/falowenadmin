@@ -269,6 +269,21 @@ import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pi
 });
 
 
+test("check-in infers class level from class names and fits short laptop screens", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const css = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.css"), "utf8");
+
+  assert.match(page, /klass\.resolvedLevelId/);
+  assert.match(page, /klass\.classLevel/);
+  assert.match(page, /klass\.name/);
+  assert.match(page, /klass\.className/);
+  assert.match(page, /klass\.slug/);
+  assert.match(css, /@media \(min-width: 851px\) and \(max-height: 820px\)/);
+  assert.match(css, /width: min\(220px, 30vh\) !important/);
+  assert.match(css, /@media \(min-width: 851px\) and \(max-height: 700px\)/);
+  assert.match(css, /width: min\(185px, 27vh\) !important/);
+});
+
 test("check-in starts the shared presenter timer from the actual synchronized class start", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
