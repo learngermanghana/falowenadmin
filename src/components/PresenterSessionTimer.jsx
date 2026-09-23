@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import usePresenterLiveSession from "../hooks/usePresenterLiveSession.js";
 import {
   SESSION_MINUTES_BY_LEVEL,
+  inferPresenterLevel,
   presenterSessionMinutes,
 } from "../utils/presenterSessionTiming.js";
 import "./PresenterSessionTimer.css";
@@ -112,8 +113,17 @@ function visualWarningClass(remaining) {
 }
 
 export default function PresenterSessionTimer({ slide }) {
-  const level = normalize(slide?.course).toUpperCase();
   const presenterLive = usePresenterLiveSession(slide);
+  const level = inferPresenterLevel(
+    slide?.course,
+    slide?.levelId,
+    slide?.assignmentId,
+    slide?.id,
+    slide?.title,
+    slide?.topic,
+    presenterLive.liveState?.timerLevel,
+    presenterLive.liveState?.level,
+  );
   const configuredDurationMinutes = presenterSessionMinutes(level);
   const configuredDurationSeconds = configuredDurationMinutes * 60;
   const rawSharedDurationSeconds = Number(presenterLive.liveState?.timerDurationSeconds || 0);
