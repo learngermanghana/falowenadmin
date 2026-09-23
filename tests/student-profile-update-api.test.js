@@ -56,8 +56,9 @@ test("student profile editor authorization is mandatory", () => {
 test("ordinary authenticated users cannot update another student", async () => {
   let routeHandler;
   let writes = 0;
-  const app = { patch: (_path, handler) => { routeHandler = handler; } };
+  const app = { patch: (_path, handler) => { routeHandler = handler; }, post: () => {}, get: () => {} };
   const db = {
+    batch: () => ({}),
     collection: () => ({
       doc: () => ({
         update: async () => { writes += 1; },
@@ -90,11 +91,14 @@ test("authorized staff route atomically updates level and className", async () =
       routePath = path;
       routeHandler = handler;
     },
+    post() {},
+    get() {},
   };
   const studentRef = {
     update: async (payload) => writes.push(payload),
   };
   const db = {
+    batch: () => ({}),
     collection(name) {
       assert.equal(name, "students");
       return {
@@ -158,8 +162,9 @@ test("authorized staff route atomically updates level and className", async () =
 test("atomic update does not recreate a concurrently deleted student", async () => {
   let routeHandler;
   let updateCalls = 0;
-  const app = { patch: (_path, handler) => { routeHandler = handler; } };
+  const app = { patch: (_path, handler) => { routeHandler = handler; }, post: () => {}, get: () => {} };
   const db = {
+    batch: () => ({}),
     collection: () => ({
       doc: () => ({
         update: async () => {
