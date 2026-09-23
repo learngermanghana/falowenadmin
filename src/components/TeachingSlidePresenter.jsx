@@ -386,6 +386,29 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </details>
               ) : null}
             </section>
+          ) : stage.type === "vocabulary" ? (
+            <section className="presenter-vocabulary">
+              <div className="presenter-vocabulary-heading">
+                <h1>{stage.title}</h1>
+                <p>Learn the words first, then use them immediately in the lesson.</p>
+              </div>
+              <div className="presenter-vocabulary-grid">
+                {stage.items.map((item, index) => (
+                  <article key={`${item.term}-${index}`} className="presenter-vocabulary-card">
+                    <span className="presenter-vocabulary-number">{item.number || index + 1}</span>
+                    <div>
+                      <strong>{item.term}</strong>
+                      {item.example ? (
+                        <p><span>Beispiel:</span> {item.example}</p>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+              {stage.instruction ? (
+                <p className="presenter-vocabulary-task"><strong>Sprich:</strong> {stage.instruction}</p>
+              ) : null}
+            </section>
           ) : stage.type === "question-reveal" ? (
             <section className="presenter-question-reveal">
               <div className="presenter-question-counter">{advancedClassroom ? "Frage" : "Question"} {questionIndex + 1} {advancedClassroom ? "von" : "of"} {stage.items.length}</div>

@@ -73,6 +73,43 @@ function buildAdvancedGrammarItems(slide = {}, support = {}) { const source = Ar
 function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C1") return ["Komplexe Strukturen nur verwenden, wenn Wortstellung und Bezug eindeutig bleiben.", "Abstrakte Aussagen immer mit Beispiel, Folge oder betroffener Gruppe konkretisieren.", "Ein Gegenargument nicht nur nennen, sondern anschließend darauf reagieren."]; return ["Nicht nur Ideen aufzählen: Aussage → Grund → Beispiel.", "Bei Nebensätzen auf die Verbendstellung achten.", "Nicht denselben Konnektor ständig wiederholen; die neue Zielstruktur bewusst variieren."]; }
 function teacherNoteFromFlow(flow = [], index = 0, fallback = "") { return String(flow[index]?.detailEn || fallback).trim(); }
 
+const VOCABULARY_STAGE_LEVELS = new Set(["A2", "B1"]);
+const VOCABULARY_LIMITS = Object.freeze({ A2: 7, B1: 9 });
+
+function buildVocabularyItems(slide = {}, support = {}) {
+  const level = classroomLevel(slide);
+  const phrases = [...new Set(
+    (Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [])
+      .map((item) => String(item || "").trim())
+      .filter(Boolean),
+  )].slice(0, VOCABULARY_LIMITS[level] || 7);
+  const examples = [...new Set(
+    (Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [])
+      .map((item) => String(item || "").trim())
+      .filter(Boolean),
+  )];
+  const usedExamples = new Set();
+
+  return phrases.map((term, index) => {
+    const comparableTerm = term.toLocaleLowerCase("de-DE");
+    const preferredExample = examples.find((example) => {
+      if (usedExamples.has(example) || example.toLocaleLowerCase("de-DE") === comparableTerm) return false;
+      const keywords = comparableTerm
+        .replace(/[.…?!,:;()/"']/g, " ")
+        .split(/\s+/)
+        .filter((word) => word.length >= 5);
+      return keywords.some((word) => example.toLocaleLowerCase("de-DE").includes(word));
+    });
+    const fallbackExample = examples.find((example) => (
+      !usedExamples.has(example) && example.toLocaleLowerCase("de-DE") !== comparableTerm
+    ));
+    const example = preferredExample || fallbackExample || "";
+
+    if (example) usedExamples.add(example);
+    return { term, example, number: index + 1 };
+  });
+}
+
 function buildAdvancedPracticeItems(slide = {}, support = {}, flow = [], grammarItems = []) {
   const level = classroomLevel(slide); const topic = cleanTopic(slide); const questions = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []; const models = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []; const firstQuestion = questions[0] || `Welche Bedeutung hat „${topic}“?`; const argumentQuestion = questions[1] || firstQuestion; const counterQuestion = questions[2] || argumentQuestion; const finalQuestion = questions[questions.length - 1] || firstQuestion;
   if (level === "C1") return [
@@ -99,11 +136,23 @@ function buildClassicStages(slide = {}, topicLabel = "") { const studentReferenc
 
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const support = buildTeacherSlideSupport(slide); const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : []; const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : []; const advanced = isAdvancedClassroomSlide(slide); const grammarItems = advanced ? buildAdvancedGrammarItems(slide, support) : (Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []); const practiceItems = advanced ? buildAdvancedPracticeItems(slide, support, flow, grammarItems) : flow.map((item) => ({ title: item.phase, detail: item.detailEn, minutes: parsePresenterMinutes(item.detailEn) })); const mistakeItems = advanced ? buildAdvancedMistakes(slide) : (Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : []); const topicFoundation = getPresenterTopicFoundation(slide); const studentReference = getCurriculumParityReference(slide);
+  const level = classroomLevel(slide);
+  const vocabularyStage = VOCABULARY_STAGE_LEVELS.has(level);
+  const phraseItems = Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [];
+  const vocabularyItems = vocabularyStage ? buildVocabularyItems(slide, support) : [];
   const stages = [
     { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "", studentReference },
     { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
     ...(topicFoundation ? [{ id: "foundation", type: "foundation", ...topicFoundation }] : []),
-    { id: "phrases", type: "list", kicker: "Redemittel", title: advanced ? "Redemittel" : "Key phrases", items: Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [] },
+    {
+      id: "phrases",
+      type: vocabularyStage ? "vocabulary" : "list",
+      kicker: vocabularyStage ? "Wortschatz" : "Redemittel",
+      title: vocabularyStage ? "Wortschatz für heute" : (advanced ? "Redemittel" : "Key phrases"),
+      items: vocabularyStage ? vocabularyItems : phraseItems,
+      instruction: vocabularyStage ? "Verwende mindestens zwei Wörter oder Ausdrücke in eigenen Sätzen." : "",
+      suggestedMinutes: vocabularyStage ? 5 : 0,
+    },
     { id: "grammar", type: "list", kicker: "Grammatik", title: advanced ? "Neue Strukturen" : "Grammar focus", items: grammarItems, suggestedMinutes: interactionMinutes(slide, 1) || 10 },
     { id: "examples", type: "list", kicker: "Beispiele", title: advanced ? "Modellsätze" : "Model examples", items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [], suggestedMinutes: interactionMinutes(slide, 2) || 8 },
     { id: "practice", type: "flow", kicker: "Übung", title: advanced ? "Geführte Übung" : "Guided practice", items: practiceItems },
