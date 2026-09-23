@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { inferPresenterLevel } from "../utils/presenterSessionTiming.js";
 import {
   getPresenterClassContext,
   getPresenterDeviceId,
@@ -23,7 +24,14 @@ export default function usePresenterLiveSession(slide = {}) {
   const deviceId = useMemo(() => getPresenterDeviceId(), []);
   const classRecordId = normalize(classContext.classRecordId);
   const sessionDate = presenterLocalDateKey();
-  const level = normalize(slide?.course).toUpperCase();
+  const level = inferPresenterLevel(
+    slide?.course,
+    slide?.levelId,
+    slide?.assignmentId,
+    slide?.id,
+    slide?.title,
+    slide?.topic,
+  );
   const lessonId = normalize(slide?.id || slide?.assignmentId);
   const assignmentId = normalize(slide?.assignmentId || slide?.id);
   const sessionKey = normalize(liveState?.sessionKey || classContext.sessionKey);
