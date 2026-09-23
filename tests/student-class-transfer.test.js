@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import fs from "node:fs";
 
 import {
   transferStudentClass,
@@ -263,4 +264,17 @@ test("browser can load class transfer history", async () => {
   assert.equal(calls[0].url, "/api/students/student%20one/class-transfers");
   assert.equal(calls[0].options.headers.Authorization, "Bearer token");
   assert.equal(rows.length, 1);
+});
+
+
+test("student directory exposes Transfer class and stops treating className as a normal editable field", () => {
+  const directory = fs.readFileSync(new URL("../src/pages/StudentDirectoryPage.jsx", import.meta.url), "utf8");
+  const panel = fs.readFileSync(new URL("../src/components/StudentClassTransferPanel.jsx", import.meta.url), "utf8");
+
+  assert.match(directory, /StudentClassTransferPanel/);
+  assert.match(directory, /Use <strong>Transfer class<\/strong>/);
+  assert.doesNotMatch(directory, /"level",\s*"className",\s*"program"/);
+  assert.match(panel, /Historical attendance, class participation and scores remain attached to the original class and lesson/);
+  assert.match(panel, /Class history/);
+  assert.match(panel, /Previous attendance and participation were preserved/);
 });
