@@ -1,0 +1,87 @@
+name: Deploy Attendance Confirmation Worker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/attendanceConfirmationEmails.js'
+      - 'scripts/patchAttendanceConfirmationEmails.mjs'
+      - 'scripts/patchAttendanceConfirmationEventDrivenV2.mjs'
+      - 'scripts/patchAttendanceParticipationSummaryEmail.mjs'
+      - 'scripts/patchAttendanceParticipationCanonicalIdentity.mjs'
+      - 'scripts/patchAttendanceNoParticipationEncouragement.mjs'
+      - 'scripts/patchAttendanceParticipationRecapGoals.mjs'
+      - 'scripts/patchAttendanceParticipationRecapFailSafe.mjs'
+      - 'scripts/patchAttendanceParticipationSessionWindow.mjs'
+      - 'scripts/patchAttendanceStructuredParticipationEmail.mjs'
+      - 'firebase.json'
+      - '.github/workflows/deploy-attendance-confirmation-worker.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: falowenadmin-attendance-confirmation-worker-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      FIREBASE_PROJECT_ID: falowen-examiner-trainer
+      GOOGLE_CLOUD_PROJECT: falowen-examiner-trainer
+      GCLOUD_PROJECT: falowen-examiner-trainer
+      CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Validate attendance worker source
+        run: |
+          node --check functions/attendanceConfirmationEmails.js
+          node --check scripts/patchAttendanceConfirmationEmails.mjs
+          node --check scripts/patchAttendanceParticipationSummaryEmail.mjs
+          node --check scripts/patchAttendanceParticipationCanonicalIdentity.mjs
+          node --check scripts/patchAttendanceParticipationSessionWindow.mjs
+          node --check scripts/patchAttendanceStructuredParticipationEmail.mjs
+
+      - name: Install functions dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+
+      - name: Deploy attendance confirmation worker only
+        shell: bash
+        run: |
+          set -o pipefail
+          firebase deploy \
+            --project "$FIREBASE_PROJECT_ID" \
+            --only functions:falowenadmin:sendAttendanceConfirmationEmails \
+            --force \
+            --debug 2>&1 | tee firebase-attendance-confirmation-deploy.log
+
+      - name: Upload Firebase failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-attendance-confirmation-deploy-log-${{ github.sha }}
+          path: |
+            firebase-attendance-confirmation-deploy.log
+            firebase-debug.log
+          if-no-files-found: warn
+          retention-days: 3
