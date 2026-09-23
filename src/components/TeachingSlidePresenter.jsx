@@ -24,13 +24,7 @@ function lessonUrl(value = "") {
 }
 
 function escapeRegExp(value = "") {
-  return String(value || "").replace(/[-/\\^$*+?.()|[\]{}]/g, "\\function lessonUrl(value = "") {
-  if (!value) return "";
-  if (/^https?:\/\//i.test(value)) return value;
-  return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
-}
-
-function buildB1CorrectionTeacherGuide");
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, (match) => "\\" + match);
 }
 
 function renderWarmupQuestion(question = "", keywords = []) {
@@ -49,7 +43,6 @@ function renderWarmupQuestion(question = "", keywords = []) {
       : part;
   });
 }
-
 function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
   const question = String(questionDe || "").trim();
   const answer = String(modelAnswerDe || "").trim();
