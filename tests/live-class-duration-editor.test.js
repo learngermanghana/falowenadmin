@@ -31,11 +31,13 @@ test("live class duration inputs can be cleared before typing a replacement", ()
   assert.doesNotMatch(editor, /value=\{Number\(rule\.durationMinutes \|\| 120\)\}/);
 });
 
-test("attendance and presenter prefer level duration over a wider attendance window", () => {
+test("attendance and presenter cap oversized durations while preserving shorter scheduled sessions", () => {
   const checkin = read("src/pages/CheckinDisplayPage.jsx");
   const presenter = read("src/components/PresenterSessionTimer.jsx");
 
   assert.match(checkin, /const configuredLevelDurationSeconds = presenterSessionDurationSeconds\(level\)/);
-  assert.match(checkin, /const durationSeconds = configuredLevelDurationSeconds \|\| attendanceDurationSeconds/);
-  assert.match(presenter, /const durationSeconds = configuredDurationSeconds \|\| sharedDurationSeconds/);
+  assert.match(checkin, /Math\.min\(attendanceDurationSeconds, configuredLevelDurationSeconds\)/);
+  assert.match(checkin, /attendanceDurationSeconds \|\| configuredLevelDurationSeconds/);
+  assert.match(presenter, /Math\.min\(configuredDurationSeconds, sharedDurationSeconds\)/);
+  assert.match(presenter, /sharedDurationSeconds \|\| configuredDurationSeconds/);
 });
