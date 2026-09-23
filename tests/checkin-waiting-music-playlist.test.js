@@ -277,7 +277,8 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
   assert.match(page, /timerRunning = true/);
   assert.match(page, /timerUpdatedAtMs = startMs/);
   assert.match(page, /sessionDurationSeconds\(startTime, endTime\)/);
-  assert.match(page, /attendanceDurationSeconds \|\| presenterSessionDurationSeconds\(level\)/);
+  assert.match(page, /const configuredLevelDurationSeconds = presenterSessionDurationSeconds\(level\)/);
+  assert.match(page, /configuredLevelDurationSeconds \|\| attendanceDurationSeconds/);
   assert.match(page, /Retry slide sync/);
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 
