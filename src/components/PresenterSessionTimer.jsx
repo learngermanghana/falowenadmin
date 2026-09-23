@@ -124,10 +124,11 @@ export default function PresenterSessionTimer({ slide }) {
     && rawSharedDurationSeconds > 0
     ? rawSharedDurationSeconds
     : 0;
-  // A1/A2/B1 have academy-defined class lengths. A shared attendance window
-  // must not turn a 90-minute A2/B1 class into 120 minutes.
-  // Other levels can still inherit the attendance-provided duration.
-  const durationSeconds = configuredDurationSeconds || sharedDurationSeconds;
+  // Academy presets cap oversized shared durations, but deliberately shorter
+  // live-class sessions (for example a 45-minute A1 class) remain shorter.
+  const durationSeconds = configuredDurationSeconds > 0 && sharedDurationSeconds > 0
+    ? Math.min(configuredDurationSeconds, sharedDurationSeconds)
+    : sharedDurationSeconds || configuredDurationSeconds;
   const durationMinutes = durationSeconds / 60;
   const liveState = presenterLive.liveState || {};
   const attendanceControlsTimer = presenterLive.isToday
