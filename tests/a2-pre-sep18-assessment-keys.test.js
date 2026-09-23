@@ -19,6 +19,8 @@ const expectedShapes = {
   "A2-6.16": [5, 5],
   "A2-7.18": [5, 5],
   "A2-7.20": [5, 5],
+  "A2-9.23": [5, 0],
+  "A2-9.24": [5, 0],
   "A2-9.25": [5, 0],
   "A2-10.26": [5, 0],
   "A2-10.27": [7, 4],
@@ -32,6 +34,21 @@ test("restored A2 grading keys keep the pre-September-18 assessment shapes", () 
     assert.equal(Object.keys(entry.answers?.teil3 || {}).length, teil3Count, `${assignmentId} Teil 3`);
     assert.equal(Object.keys(entry.answers?.teil4 || {}).length, teil4Count, `${assignmentId} Teil 4`);
   }
+});
+
+
+test("A2-9.24 stable Anzeige codes score the restored matching task correctly", () => {
+  const result = computeObjectiveScore("A2-9.24", `
+Teil 3
+1. F
+2. C
+3. X
+4. B
+5. A
+  `);
+
+  assert.equal(result.correctCount, 5);
+  assert.equal(result.totalCount, 5);
 });
 
 test("A2-7.18 canonical 5+5 A-F advert-code submission scores 10/10", () => {
