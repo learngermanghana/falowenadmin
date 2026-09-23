@@ -25,6 +25,16 @@ export function stopWaitingMusicPlaylist(context) {
   cleanupPlayer(context);
 }
 
+export async function skipWaitingMusicPlaylist(context) {
+  if (!context) return null;
+  const player = players.get(context);
+  if (!player || player.stopped || typeof player.playTrack !== "function") return null;
+  if (player.tracks.length <= 1) return player.tracks[0] || null;
+
+  await player.playTrack(player.index + 1);
+  return player.tracks[player.index] || null;
+}
+
 export async function startWaitingMusicPlaylist(
   context,
   destination,
@@ -56,6 +66,7 @@ export async function startWaitingMusicPlaylist(
     handleEnded: null,
     handleError: null,
     handleContextState: null,
+    playTrack: null,
   };
 
   const playTrack = async (nextIndex) => {
@@ -68,6 +79,8 @@ export async function startWaitingMusicPlaylist(
     await audio.play();
     player.failedTracks = 0;
   };
+
+  player.playTrack = playTrack;
 
   player.handleEnded = () => {
     playTrack(player.index + 1).catch((error) => {

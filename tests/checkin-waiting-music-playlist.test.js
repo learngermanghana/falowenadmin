@@ -16,9 +16,20 @@ function publicPathFromSrc(src) {
   return path.join(repoRoot, "public", decodeURIComponent(String(src || "").replace(/^\//, "")));
 }
 
-test("waiting room playlist points only to real public audio files", () => {
-  assert.ok(waitingMusicPlaylist.length >= 1);
+test("waiting room playlist includes every public MP3 and points only to real files", () => {
+  const publicMp3Files = fs.readdirSync(path.join(repoRoot, "public"))
+    .filter((name) => /\.mp3$/i.test(name))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  assert.ok(publicMp3Files.length >= 1);
+  assert.equal(waitingMusicPlaylist.length, publicMp3Files.length);
   assert.ok(waitingMusicPlaylist.some((track) => /Saxophone/i.test(track.title)));
+
+  const configuredFiles = waitingMusicPlaylist
+    .map((track) => path.basename(decodeURIComponent(track.src)))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  assert.deepEqual(configuredFiles, publicMp3Files);
 
   for (const track of waitingMusicPlaylist) {
     assert.match(track.src, /^\/.+\.mp3$/i);
@@ -33,6 +44,22 @@ test("waiting room audio advances on ended instead of replaying a hard-coded sou
   assert.match(source, /playTrack\(player\.index \+ 1\)/);
   assert.doesNotMatch(source, /WAITING_MUSIC_SRC/);
   assert.doesNotMatch(source, /audio\.loop\s*=\s*true/);
+});
+
+test("waiting room music can skip to the next configured track", () => {
+  const audio = fs.readFileSync(path.join(repoRoot, "src", "utils", "pianoAudio.js"), "utf8");
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
+
+  assert.match(audio, /export async function skipWaitingMusicPlaylist/);
+  assert.match(audio, /await player\.playTrack\(player\.index \+ 1\)/);
+  assert.match(page, /const skipWaitingMusic = useCallback/);
+  assert.match(page, /pianoPlaylist\.length > 1/);
+  assert.match(page, /disabled=\{!musicPlaying\}/);
+  assert.match(page, /Start waiting music before skipping tracks/);
+  assert.match(page, />\s*Skip\s*<\/button>/);
+  assert.match(patch, /skipWaitingMusicPlaylist/);
+  assert.match(patch, /checkin-display-music-skip-button/);
 });
 
 test("check-in display presents waiting room music and current track", () => {
