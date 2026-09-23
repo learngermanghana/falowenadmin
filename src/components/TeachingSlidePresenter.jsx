@@ -23,6 +23,26 @@ function lessonUrl(value = "") {
   return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
+function escapeRegExp(value = "") {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, (match) => "\\" + match);
+}
+
+function renderWarmupQuestion(question = "", keywords = []) {
+  const terms = [...new Set(
+    (Array.isArray(keywords) ? keywords : [])
+      .map((item) => String(item || "").trim())
+      .filter(Boolean),
+  )].sort((a, b) => b.length - a.length);
+  if (!terms.length) return question;
+
+  const pattern = new RegExp("(" + terms.map(escapeRegExp).join("|") + ")", "gi");
+  return String(question || "").split(pattern).map((part, index) => {
+    const highlighted = terms.some((term) => term.toLocaleLowerCase("de-DE") === part.toLocaleLowerCase("de-DE"));
+    return highlighted
+      ? <mark className="presenter-warmup-keyword" key={part + "-" + index}>{part}</mark>
+      : part;
+  });
+}
 function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
   const question = String(questionDe || "").trim();
   const answer = String(modelAnswerDe || "").trim();
@@ -110,6 +130,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [rosterCount, setRosterCount] = useState(0);
   const [warmupQuestionCount, setWarmupQuestionCount] = useState(4);
   const [warmupMinutes, setWarmupMinutes] = useState(5);
+  const [warmupSupportOpen, setWarmupSupportOpen] = useState({});
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -118,6 +139,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const visibleStageItems = warmupPerStudent ? stage.items.slice(0, visibleWarmupQuestionCount) : stage?.items;
   const largeClassWarmup = warmupPerStudent && rosterCount >= 8;
   const projectedWarmupMinutes = rosterCount * warmupMinutes;
+  const enhancedWarmup = warmupPerStudent && Array.isArray(stage?.questionSupport) && stage.questionSupport.length > 0;
+
+  function toggleWarmupSupport(questionIndexValue, supportType) {
+    const key = questionIndexValue + ":" + supportType;
+    setWarmupSupportOpen((current) => ({ ...current, [key]: !current[key] }));
+  }
 
   function goTo(index) {
     setStageIndex(clampPresenterIndex(index, stages.length));
@@ -159,6 +186,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setTimerMode("warmup");
     setTimerRemaining(Math.max(1, Number(warmupMinutes || 5)) * 60);
     setTimerRunning(false);
+    setWarmupSupportOpen({});
   }
 
   function applyCompactWarmup() {
@@ -198,6 +226,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   useEffect(() => {
     setQuestionIndex(0);
     setShowQuestionSupport(false);
+    setWarmupSupportOpen({});
     setTimerRunning(false);
     if (stage?.id === "warmup" && stage?.timingMode === "per-student") {
       setWarmupQuestionCount(4);
@@ -552,9 +581,71 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       ) : null}
                     </div>
                   ) : null}
-                  <ul className="presenter-list">
-                    {(visibleStageItems || []).map((item) => <li key={item}>{item}</li>)}
-                  </ul>
+                  {enhancedWarmup ? (
+                    <ol className="presenter-warmup-question-list">
+                      {(visibleStageItems || []).map((item, itemIndex) => {
+                        const support = stage.questionSupport?.[itemIndex] || {};
+                        const hintOpen = Boolean(warmupSupportOpen[itemIndex + ":hint"]);
+                        const starterOpen = Boolean(warmupSupportOpen[itemIndex + ":starter"]);
+                        const followUpOpen = Boolean(warmupSupportOpen[itemIndex + ":followup"]);
+                        const difficultyClass = String(support.difficulty || "Extend").toLowerCase();
+
+                        return (
+                          <li key={item} className="presenter-warmup-question-card">
+                            <div className="presenter-warmup-question-heading">
+                              <span className={"presenter-warmup-difficulty is-" + difficultyClass}>{support.difficulty || "Extend"}</span>
+                              <p>{renderWarmupQuestion(item, support.keywords)}</p>
+                            </div>
+                            <div className="presenter-warmup-support-actions">
+                              <button
+                                type="button"
+                                aria-expanded={hintOpen}
+                                onClick={() => toggleWarmupSupport(itemIndex, "hint")}
+                              >
+                                {hintOpen ? "Hide hint" : "Hint"}
+                              </button>
+                              <button
+                                type="button"
+                                aria-expanded={starterOpen}
+                                onClick={() => toggleWarmupSupport(itemIndex, "starter")}
+                              >
+                                {starterOpen ? "Hide starter" : "Answer starter"}
+                              </button>
+                              <button
+                                type="button"
+                                aria-expanded={followUpOpen}
+                                onClick={() => toggleWarmupSupport(itemIndex, "followup")}
+                              >
+                                {followUpOpen ? "Hide follow-up" : "Follow-up"}
+                              </button>
+                            </div>
+                            {hintOpen ? (
+                              <div className="presenter-warmup-support-line">
+                                <strong>Hint (EN)</strong>
+                                <span>{support.hintEn}</span>
+                              </div>
+                            ) : null}
+                            {starterOpen ? (
+                              <div className="presenter-warmup-support-line">
+                                <strong>Start</strong>
+                                <span>{support.answerStarterDe}</span>
+                              </div>
+                            ) : null}
+                            {followUpOpen ? (
+                              <div className="presenter-warmup-support-line">
+                                <strong>Follow-up</strong>
+                                <span>{support.followUpDe}</span>
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  ) : (
+                    <ul className="presenter-list">
+                      {(visibleStageItems || []).map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  )}
                 </>
               ) : (
                 <p className="presenter-task">{stage.body}</p>
