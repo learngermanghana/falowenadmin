@@ -84,6 +84,15 @@ test("method questions with besser are not treated as comparisons", () => {
   assert.doesNotMatch(hint, /Compare both sides/i);
 });
 
+test("wide presenter layouts fit the standard four warm-up questions in a two-column grid", () => {
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+
+  assert.match(css, /@media \(min-width: 1050px\)/);
+  assert.match(css, /\.presenter-warmup-question-list\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(css, /@media \(min-width: 1050px\) and \(max-height: 900px\)/);
+  assert.match(css, /\.presenter-warmup-question-card:only-child/);
+});
+
 test("presenter renders highlighted keywords with optional hint, starter and follow-up", () => {
   const source = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
   const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
