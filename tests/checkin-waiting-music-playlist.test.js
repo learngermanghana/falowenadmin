@@ -35,6 +35,21 @@ test("waiting room audio advances on ended instead of replaying a hard-coded sou
   assert.doesNotMatch(source, /audio\.loop\s*=\s*true/);
 });
 
+test("waiting room music can skip to the next configured track", () => {
+  const audio = fs.readFileSync(path.join(repoRoot, "src", "utils", "pianoAudio.js"), "utf8");
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
+
+  assert.match(audio, /export async function skipWaitingMusicPlaylist/);
+  assert.match(audio, /await player\.playTrack\(player\.index \+ 1\)/);
+  assert.match(page, /const skipWaitingMusic = useCallback/);
+  assert.match(page, /pianoPlaylist\.length > 1/);
+  assert.match(page, /aria-label="Skip to next waiting room track"/);
+  assert.match(page, />\s*Skip\s*<\/button>/);
+  assert.match(patch, /skipWaitingMusicPlaylist/);
+  assert.match(patch, /checkin-display-music-skip-button/);
+});
+
 test("check-in display presents waiting room music and current track", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   assert.match(page, /Waiting room music/);
