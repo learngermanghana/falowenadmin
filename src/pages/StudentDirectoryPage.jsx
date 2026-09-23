@@ -5,6 +5,7 @@ import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
+import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 
@@ -14,7 +15,6 @@ const editableFields = [
   "phone",
   "studentCode",
   "level",
-  "className",
   "program",
   "location",
   "status",
@@ -487,6 +487,17 @@ export default function StudentDirectoryPage() {
     });
   };
 
+  const handleStudentTransferred = (studentId, payload = {}) => {
+    setStudents((prev) => prev.map((record) => (
+      record.id === studentId ? { ...record, ...payload } : record
+    )));
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[studentId];
+      return next;
+    });
+  };
+
   const updateCreateDraftField = (field, value) => {
     setCreateDraft((prev) => {
       const next = { ...prev, [field]: value };
@@ -708,7 +719,7 @@ export default function StudentDirectoryPage() {
                       <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12 }}>
                         <h2 style={{ marginTop: 0, marginBottom: 8 }}>{selectedStudent.name || "Student details"}</h2>
                         <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.75 }}>
-                          Edit this student profile and save changes.
+                          Edit this student profile and save changes. Use <strong>Transfer class</strong> below for class changes so attendance and participation history stay intact.
                         </p>
 
                         <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
@@ -739,6 +750,14 @@ export default function StudentDirectoryPage() {
                             {savingId === selectedStudent.id ? "Saving..." : "Save student"}
                           </button>
                         </div>
+
+                        <StudentClassTransferPanel
+                          key={selectedStudent.id}
+                          student={selectedStudent}
+                          classes={classes}
+                          onTransferred={handleStudentTransferred}
+                          pushToast={pushToast}
+                        />
 
                         <StudentSupportTools
                           student={selectedStudent}
