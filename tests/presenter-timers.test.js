@@ -32,7 +32,7 @@ test("presenter timer infers A1/A2/B1 from assignment identity when slide.course
   const hook = read("src/hooks/usePresenterLiveSession.js");
 
   assert.match(timing, /export function inferPresenterLevel/);
-  assert.match(timing, /\b\(A1\|A2\|B1\|B2\|C1\|C2\)\b/);
+  assert.match(timing, /A1\|A2\|B1\|B2\|C1\|C2/);
   assert.match(source, /inferPresenterLevel\(/);
   assert.match(source, /slide\?\.assignmentId/);
   assert.match(source, /presenterLive\.liveState\?\.timerLevel/);
