@@ -59,7 +59,7 @@ export default function StudentClassTransferPanel({
         const id = clean(klass.id || klass.classRecordId || klass.classId);
         const name = classLabel(klass).toLowerCase();
         if (!id) return false;
-        if (id === currentId || (currentName && name === currentName)) return false;
+        if (id === currentId || (!currentId && currentName && name === currentName)) return false;
         return !["archived", "graduated", "inactive"].includes(clean(klass.status).toLowerCase());
       })
       .sort((a, b) => classLabel(a).localeCompare(classLabel(b)));
