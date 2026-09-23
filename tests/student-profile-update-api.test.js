@@ -28,7 +28,7 @@ function createResponse() {
   };
 }
 
-test("student profile sanitizer keeps level and className but blocks privileged fields", () => {
+test("student profile sanitizer keeps ordinary profile fields but forces class changes through transfer workflow", () => {
   const updates = sanitizeStudentProfileUpdates({
     level: " A2 ",
     className: " Accra Evening ",
@@ -40,7 +40,6 @@ test("student profile sanitizer keeps level and className but blocks privileged 
 
   assert.deepEqual(updates, {
     level: "A2",
-    className: "Accra Evening",
     program: "German",
   });
 });
@@ -56,8 +55,9 @@ test("student profile editor authorization is mandatory", () => {
 test("ordinary authenticated users cannot update another student", async () => {
   let routeHandler;
   let writes = 0;
-  const app = { patch: (_path, handler) => { routeHandler = handler; } };
+  const app = { patch: (_path, handler) => { routeHandler = handler; }, post: () => {}, get: () => {} };
   const db = {
+    batch: () => ({}),
     collection: () => ({
       doc: () => ({
         update: async () => { writes += 1; },
@@ -80,7 +80,7 @@ test("ordinary authenticated users cannot update another student", async () => {
   assert.equal(writes, 0);
 });
 
-test("authorized staff route atomically updates level and className", async () => {
+test("authorized staff route atomically updates ordinary student profile fields", async () => {
   let routePath = "";
   let routeHandler = null;
   const writes = [];
@@ -90,11 +90,14 @@ test("authorized staff route atomically updates level and className", async () =
       routePath = path;
       routeHandler = handler;
     },
+    post() {},
+    get() {},
   };
   const studentRef = {
     update: async (payload) => writes.push(payload),
   };
   const db = {
+    batch: () => ({}),
     collection(name) {
       assert.equal(name, "students");
       return {
@@ -133,6 +136,7 @@ test("authorized staff route atomically updates level and className", async () =
     body: {
       updates: {
         level: "B1",
+        program: "German",
         className: "B1 Berlin",
         role: "admin",
       },
@@ -144,12 +148,12 @@ test("authorized staff route atomically updates level and className", async () =
   assert.deepEqual(response.body, {
     ok: true,
     studentId: "student-1",
-    updates: { level: "B1", className: "B1 Berlin" },
+    updates: { level: "B1", program: "German" },
   });
   assert.equal(writes.length, 1);
   assert.deepEqual(writes[0], {
     level: "B1",
-    className: "B1 Berlin",
+    program: "German",
     updatedAt: "SERVER_TIMESTAMP",
     updatedBy: "teacher@example.com",
   });
@@ -158,8 +162,9 @@ test("authorized staff route atomically updates level and className", async () =
 test("atomic update does not recreate a concurrently deleted student", async () => {
   let routeHandler;
   let updateCalls = 0;
-  const app = { patch: (_path, handler) => { routeHandler = handler; } };
+  const app = { patch: (_path, handler) => { routeHandler = handler; }, post: () => {}, get: () => {} };
   const db = {
+    batch: () => ({}),
     collection: () => ({
       doc: () => ({
         update: async () => {
@@ -191,7 +196,7 @@ test("browser student update uses authenticated same-origin PATCH", async () => 
   const calls = [];
   const result = await updateStudentByIdThroughApi("student/one", {
     level: "A2",
-    className: "A2 Stuttgart",
+    program: "German",
   }, {
     headersLoader: async () => ({
       "Content-Type": "application/json",
@@ -206,7 +211,7 @@ test("browser student update uses authenticated same-origin PATCH", async () => 
         text: async () => JSON.stringify({
           ok: true,
           studentId: "student/one",
-          updates: { level: "A2", className: "A2 Stuttgart" },
+          updates: { level: "A2", program: "German" },
         }),
       };
     },
@@ -217,7 +222,7 @@ test("browser student update uses authenticated same-origin PATCH", async () => 
   assert.equal(calls[0].options.method, "PATCH");
   assert.equal(calls[0].options.headers.Authorization, "Bearer firebase-token");
   assert.deepEqual(JSON.parse(calls[0].options.body), {
-    updates: { level: "A2", className: "A2 Stuttgart" },
+    updates: { level: "A2", program: "German" },
   });
   assert.equal(result.ok, true);
 });

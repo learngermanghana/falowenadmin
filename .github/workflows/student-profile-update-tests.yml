@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'src/services/studentsService.js'
+      - 'src/components/StudentClassTransferPanel.jsx'
+      - 'src/pages/StudentDirectoryPage.jsx'
+      - 'tests/student-class-transfer.test.js'
+      - 'tests/student-class-transfer-roster.test.js'
       - 'functions/studentProfileUpdate.js'
       - 'scripts/patchStudentProfileUpdateApi.mjs'
       - 'tests/student-profile-update-api.test.js'
@@ -18,6 +22,10 @@ on:
       - main
     paths:
       - 'src/services/studentsService.js'
+      - 'src/components/StudentClassTransferPanel.jsx'
+      - 'src/pages/StudentDirectoryPage.jsx'
+      - 'tests/student-class-transfer.test.js'
+      - 'tests/student-class-transfer-roster.test.js'
       - 'functions/studentProfileUpdate.js'
       - 'scripts/patchStudentProfileUpdateApi.mjs'
       - 'tests/student-profile-update-api.test.js'
@@ -56,5 +64,9 @@ jobs:
           grep -F 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net' vite.config.js
       - name: Test staff-only atomic profile updates
         run: node --test tests/student-profile-update-api.test.js
+      - name: Test history-preserving class transfers
+        run: node --test tests/student-class-transfer.test.js
+      - name: Test current-class roster precedence
+        run: node --test tests/student-class-transfer-roster.test.js
       - name: Preserve existing student service helpers
         run: node --test tests/students-service-admin.test.js

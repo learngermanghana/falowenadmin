@@ -19,6 +19,7 @@ const {
   modeForClass,
   resolveWebhookConfig,
   studentBelongsToClass,
+  studentBelongsToClassAt,
   weekKey,
 } = _test;
 
@@ -57,6 +58,58 @@ test("student membership accepts matching class name or class record id", () => 
   assert.equal(studentBelongsToClass(student, klass), true);
   assert.equal(studentBelongsToClass({ ...student, className: "A2 Berlin Klasse" }, klass), false);
   assert.equal(studentBelongsToClass({ ...student, className: "", classRecordId: "class-1" }, klass), true);
+});
+
+test("class transfer history keeps weekly attendance with the class active on each session date", () => {
+  const transferred = {
+    ...student,
+    classId: "new-class",
+    classRecordId: "new-class",
+    className: "A1 Dortmund Klasse",
+    classTransfers: [{
+      id: "transfer-1",
+      effectiveDate: "2026-09-23",
+      fromClassId: "class-1",
+      fromClassName: "A1 Munich Klasse",
+      toClassId: "new-class",
+      toClassName: "A1 Dortmund Klasse",
+    }],
+  };
+  const oldClass = { ...klass, id: "class-1", name: "A1 Munich Klasse" };
+  const newClass = { ...klass, id: "new-class", name: "A1 Dortmund Klasse" };
+
+  assert.equal(studentBelongsToClassAt(transferred, oldClass, "2026-09-22T18:00:00.000Z"), true);
+  assert.equal(studentBelongsToClassAt(transferred, oldClass, "2026-09-23T18:00:00.000Z"), false);
+  assert.equal(studentBelongsToClassAt(transferred, newClass, "2026-09-22T18:00:00.000Z"), false);
+  assert.equal(studentBelongsToClassAt(transferred, newClass, "2026-09-23T18:00:00.000Z"), true);
+});
+
+test("multiple class transfers reconstruct historical membership without rewriting old attendance", () => {
+  const transferred = {
+    ...student,
+    classId: "class-3",
+    className: "A1 Hamburg Klasse",
+    classTransfers: [
+      {
+        effectiveDate: "2026-09-10",
+        fromClassId: "class-1",
+        fromClassName: "A1 Munich Klasse",
+        toClassId: "class-2",
+        toClassName: "A1 Dortmund Klasse",
+      },
+      {
+        effectiveDate: "2026-09-20",
+        fromClassId: "class-2",
+        fromClassName: "A1 Dortmund Klasse",
+        toClassId: "class-3",
+        toClassName: "A1 Hamburg Klasse",
+      },
+    ],
+  };
+
+  assert.equal(studentBelongsToClassAt(transferred, { id: "class-1", name: "A1 Munich Klasse" }, "2026-09-09"), true);
+  assert.equal(studentBelongsToClassAt(transferred, { id: "class-2", name: "A1 Dortmund Klasse" }, "2026-09-15"), true);
+  assert.equal(studentBelongsToClassAt(transferred, { id: "class-3", name: "A1 Hamburg Klasse" }, "2026-09-21"), true);
 });
 
 test("QR check-ins more than the late threshold after class start are Late", () => {

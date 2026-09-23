@@ -178,10 +178,23 @@ export async function listStudentsByClassWithDeps(
   ]);
 
   const rosterRows = exactResults.flat();
-  rosterRows.push(...allStudents.filter((student) =>
+  const authoritativeStudents = allStudents.filter((student) =>
     studentClassValues(student).some((value) => comparableIdentifiers.has(value)),
-  ));
-  rosterRows.push(...publishedResults.flat());
+  );
+  rosterRows.push(...authoritativeStudents);
+
+  const firestoreByIdentity = new Map();
+  allStudents.forEach((student) => {
+    studentIdentityKeys(student).forEach((key) => firestoreByIdentity.set(key, student));
+  });
+  const publishedRows = publishedResults.flat().filter((student) => {
+    const firestoreStudent = studentIdentityKeys(student)
+      .map((key) => firestoreByIdentity.get(key))
+      .find(Boolean);
+    if (!firestoreStudent) return true;
+    return studentClassValues(firestoreStudent).some((value) => comparableIdentifiers.has(value));
+  });
+  rosterRows.push(...publishedRows);
 
   return uniqueStudents(rosterRows)
     .filter((row) => row.name && isActiveStudent(row))
@@ -242,6 +255,60 @@ export async function updateStudentByIdThroughApi(
 
 export async function updateStudentById(studentId, payload) {
   return updateStudentByIdThroughApi(studentId, payload);
+}
+
+export function parseStudentClassTransferResponse(response = {}, responseText = "") {
+  return parseStudentProfileUpdateResponse(response, responseText);
+}
+
+export async function transferStudentClass(
+  studentId,
+  {
+    targetClassRecordId,
+    effectiveDate,
+    reason = "",
+  } = {},
+  {
+    fetchImpl = globalThis.fetch,
+    headersLoader = authHeaders,
+  } = {},
+) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) throw new Error("Student ID is required");
+  if (!normalize(targetClassRecordId)) throw new Error("Select the new class");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalize(effectiveDate))) throw new Error("Choose a valid effective date");
+  if (typeof fetchImpl !== "function") throw new Error("Student transfer transport is unavailable");
+
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}/transfer-class`, {
+    method: "POST",
+    headers: await headersLoader(),
+    body: JSON.stringify({
+      targetClassRecordId: normalize(targetClassRecordId),
+      effectiveDate: normalize(effectiveDate),
+      reason: normalize(reason),
+    }),
+  });
+  const responseText = await response.text();
+  return parseStudentClassTransferResponse(response, responseText);
+}
+
+export async function listStudentClassTransfers(
+  studentId,
+  {
+    fetchImpl = globalThis.fetch,
+    headersLoader = authHeaders,
+  } = {},
+) {
+  const normalizedId = normalize(studentId);
+  if (!normalizedId) return [];
+  if (typeof fetchImpl !== "function") throw new Error("Student transfer history transport is unavailable");
+
+  const response = await fetchImpl(`/api/students/${encodeURIComponent(normalizedId)}/class-transfers`, {
+    headers: await headersLoader(),
+  });
+  const responseText = await response.text();
+  const data = parseStudentClassTransferResponse(response, responseText);
+  return Array.isArray(data?.transfers) ? data.transfers : [];
 }
 
 async function authHeaders() {

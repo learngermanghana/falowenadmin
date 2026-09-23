@@ -4,7 +4,6 @@ const EDITABLE_STUDENT_FIELDS = new Set([
   "phone",
   "studentCode",
   "level",
-  "className",
   "program",
   "location",
   "status",
@@ -88,8 +87,101 @@ function statusCodeForError(error) {
   return 500;
 }
 
+function validIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function normalizeClassTransferRequest(body = {}) {
+  const targetClassRecordId = cleanStudentId(
+    body.targetClassRecordId || body.toClassRecordId || body.targetClassId || body.toClassId,
+  );
+  const effectiveDate = cleanStudentId(body.effectiveDate || body.transferDate || todayIso());
+  const reason = cleanStudentId(body.reason || body.note || "Class switch");
+  if (!targetClassRecordId) {
+    const error = new Error("Select the class the student is moving to");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (!validIsoDate(effectiveDate)) {
+    const error = new Error("Effective date must be YYYY-MM-DD");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (effectiveDate > todayIso()) {
+    const error = new Error("Future-dated class transfers are not supported yet");
+    error.statusCode = 400;
+    throw error;
+  }
+  return { targetClassRecordId, effectiveDate, reason };
+}
+
+function studentClassIdentity(student = {}) {
+  return {
+    classRecordId: cleanStudentId(student.classRecordId || student.classId || student.assignedClassId),
+    classId: cleanStudentId(student.classId || student.classRecordId || student.assignedClassId),
+    className: cleanStudentId(student.className || student.class || student.groupName || student.cohortName),
+    level: cleanStudentId(student.level || student.levelId),
+  };
+}
+
+function targetClassIdentity(classDoc = {}, classRecordId = "") {
+  const data = classDoc?.data ? classDoc.data() || {} : classDoc || {};
+  const id = cleanStudentId(classDoc?.id || classRecordId);
+  return {
+    classRecordId: id,
+    classId: id,
+    className: cleanStudentId(data.name || data.className || data.classId || id),
+    level: cleanStudentId(data.levelId || data.level || data.courseLevel || data.languageLevel).toUpperCase(),
+  };
+}
+
+function buildStudentClassTransferPatch({ target = {}, previous = {}, effectiveDate = "", transferSummary = {}, admin }) {
+  const timestamp = admin.firestore.FieldValue.serverTimestamp();
+  const arrayUnion = admin.firestore.FieldValue.arrayUnion;
+  const targetName = cleanStudentId(target.className || target.classId || target.classRecordId);
+  const targetId = cleanStudentId(target.classRecordId || target.classId);
+  const patch = {
+    classId: targetId,
+    classRecordId: targetId,
+    assignedClassId: targetId,
+    className: targetName,
+    class: targetName,
+    group: targetName,
+    groupId: targetId,
+    groupName: targetName,
+    cohort: targetName,
+    cohortId: targetId,
+    cohortName: targetName,
+    previousClassId: cleanStudentId(previous.classRecordId || previous.classId),
+    previousClassName: cleanStudentId(previous.className),
+    classTransferEffectiveDate: effectiveDate,
+    lastClassTransferAt: timestamp,
+    updatedAt: timestamp,
+  };
+  if (target.level) {
+    patch.level = target.level;
+    patch.levelId = target.level;
+  }
+  if (typeof arrayUnion === "function") {
+    patch.classTransfers = arrayUnion(transferSummary);
+  }
+  return patch;
+}
+
+function classTransferSortValue(item = {}) {
+  return [
+    cleanStudentId(item.effectiveDate),
+    cleanStudentId(item.createdAtIso),
+    cleanStudentId(item.id),
+  ].join("|");
+}
+
 function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [] }) {
-  if (!app?.patch || !db?.collection || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
+  if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
   }
 
@@ -121,6 +213,132 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       });
     }
   });
+
+  app.post("/students/:studentId/transfer-class", async (req, res) => {
+    try {
+      const user = await requireAuth(req);
+      assertStudentProfileEditor(user, staffEmails);
+
+      const studentId = cleanStudentId(req.params?.studentId);
+      if (!studentId) return res.status(400).json({ ok: false, error: "Student ID is required" });
+
+      const { targetClassRecordId, effectiveDate, reason } = normalizeClassTransferRequest(req.body || {});
+      const studentRef = db.collection("students").doc(studentId);
+      const targetRef = db.collection("classes").doc(targetClassRecordId);
+      const [studentSnap, targetSnap] = await Promise.all([studentRef.get(), targetRef.get()]);
+      if (!studentSnap.exists) return res.status(404).json({ ok: false, error: "Student not found" });
+      if (!targetSnap.exists) return res.status(404).json({ ok: false, error: "Target class not found" });
+
+      const student = { id: studentSnap.id, ...studentSnap.data() };
+      const previous = studentClassIdentity(student);
+      const target = targetClassIdentity(targetSnap, targetClassRecordId);
+      if (
+        (previous.classRecordId && previous.classRecordId === target.classRecordId)
+        || (!previous.classRecordId && previous.className && previous.className === target.className)
+      ) {
+        return res.status(400).json({ ok: false, error: "Student is already in that class" });
+      }
+
+      const actor = cleanStudentId(user?.email || user?.uid || "staff");
+      const createdAtIso = new Date().toISOString();
+      const transferRef = db.collection("studentClassTransfers").doc();
+      const transferSummary = {
+        id: transferRef.id,
+        effectiveDate,
+        fromClassId: previous.classRecordId || previous.classId,
+        fromClassName: previous.className,
+        fromLevel: previous.level,
+        toClassId: target.classRecordId,
+        toClassName: target.className,
+        toLevel: target.level,
+        reason,
+        createdAtIso,
+      };
+      const transferRecord = {
+        ...transferSummary,
+        studentId,
+        studentCode: cleanStudentId(student.studentCode || student.studentcode),
+        studentName: cleanStudentId(student.name || student.displayName),
+        studentEmail: normalizeEmail(student.email),
+        actor,
+        historicalAttendancePreserved: true,
+        historicalParticipationPreserved: true,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      const studentPatch = buildStudentClassTransferPatch({
+        target,
+        previous,
+        effectiveDate,
+        transferSummary,
+        admin,
+      });
+      studentPatch.updatedBy = actor;
+
+      const batch = db.batch();
+      batch.update(studentRef, studentPatch);
+      batch.set(transferRef, transferRecord);
+      batch.set(db.collection("auditLogs").doc(), {
+        type: "student.class_transferred",
+        studentId,
+        studentCode: transferRecord.studentCode,
+        fromClassId: transferSummary.fromClassId,
+        fromClassName: transferSummary.fromClassName,
+        toClassId: transferSummary.toClassId,
+        toClassName: transferSummary.toClassName,
+        effectiveDate,
+        reason,
+        actorId: actor,
+        historicalAttendancePreserved: true,
+        historicalParticipationPreserved: true,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      await batch.commit();
+
+      return res.json({
+        ok: true,
+        studentId,
+        transfer: transferSummary,
+        student: {
+          classId: target.classRecordId,
+          classRecordId: target.classRecordId,
+          assignedClassId: target.classRecordId,
+          className: target.className,
+          level: target.level || previous.level,
+          levelId: target.level || previous.level,
+          classTransferEffectiveDate: effectiveDate,
+          previousClassId: transferSummary.fromClassId,
+          previousClassName: transferSummary.fromClassName,
+          classTransfers: [...(Array.isArray(student.classTransfers) ? student.classTransfers : []), transferSummary]
+            .sort((a, b) => classTransferSortValue(a).localeCompare(classTransferSortValue(b))),
+        },
+      });
+    } catch (error) {
+      return res.status(statusCodeForError(error)).json({
+        ok: false,
+        error: isMissingStudentError(error) ? "Student or class not found" : error?.message || "Class transfer failed",
+      });
+    }
+  });
+
+  app.get("/students/:studentId/class-transfers", async (req, res) => {
+    try {
+      const user = await requireAuth(req);
+      assertStudentProfileEditor(user, staffEmails);
+      const studentId = cleanStudentId(req.params?.studentId);
+      if (!studentId) return res.status(400).json({ ok: false, error: "Student ID is required" });
+
+      const snap = await db.collection("studentClassTransfers").where("studentId", "==", studentId).limit(100).get();
+      const transfers = snap.docs
+        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+        .sort((a, b) => classTransferSortValue(b).localeCompare(classTransferSortValue(a)));
+      return res.json({ ok: true, studentId, transfers });
+    } catch (error) {
+      return res.status(statusCodeForError(error)).json({
+        ok: false,
+        error: error?.message || "Could not load class transfer history",
+      });
+    }
+  });
 }
 
 module.exports = {
@@ -131,5 +349,10 @@ module.exports = {
   isStudentProfileEditor,
   assertStudentProfileEditor,
   isMissingStudentError,
+  validIsoDate,
+  normalizeClassTransferRequest,
+  studentClassIdentity,
+  targetClassIdentity,
+  buildStudentClassTransferPatch,
   registerStudentProfileUpdateRoute,
 };
