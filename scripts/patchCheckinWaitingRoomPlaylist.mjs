@@ -314,12 +314,14 @@ upgradeOnce(
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
             >`,
-  `            {musicPlaying && pianoPlaylist.length > 1 ? (
+  `            {pianoPlaylist.length > 1 ? (
               <button
                 type="button"
                 className="checkin-display-music-skip-button"
                 onClick={skipWaitingMusic}
-                aria-label="Skip to next waiting room track"
+                disabled={!musicPlaying}
+                aria-label={musicPlaying ? "Skip to next waiting room track" : "Start waiting music before skipping tracks"}
+                title={musicPlaying ? "Skip to next track" : "Start the music to enable skip"}
               >
                 Skip
               </button>
