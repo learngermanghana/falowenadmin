@@ -137,6 +137,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [rosterCount, setRosterCount] = useState(0);
   const [warmupQuestionCount, setWarmupQuestionCount] = useState(4);
   const [warmupMinutes, setWarmupMinutes] = useState(5);
+  const [warmupSupportOpen, setWarmupSupportOpen] = useState({});
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -145,6 +146,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const visibleStageItems = warmupPerStudent ? stage.items.slice(0, visibleWarmupQuestionCount) : stage?.items;
   const largeClassWarmup = warmupPerStudent && rosterCount >= 8;
   const projectedWarmupMinutes = rosterCount * warmupMinutes;
+  const enhancedWarmup = warmupPerStudent && Array.isArray(stage?.questionSupport) && stage.questionSupport.length > 0;
+
+  function toggleWarmupSupport(questionIndexValue, supportType) {
+    const key = questionIndexValue + ":" + supportType;
+    setWarmupSupportOpen((current) => ({ ...current, [key]: !current[key] }));
+  }
 
   function goTo(index) {
     setStageIndex(clampPresenterIndex(index, stages.length));
@@ -186,6 +193,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setTimerMode("warmup");
     setTimerRemaining(Math.max(1, Number(warmupMinutes || 5)) * 60);
     setTimerRunning(false);
+    setWarmupSupportOpen({});
   }
 
   function applyCompactWarmup() {
@@ -225,6 +233,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   useEffect(() => {
     setQuestionIndex(0);
     setShowQuestionSupport(false);
+    setWarmupSupportOpen({});
     setTimerRunning(false);
     if (stage?.id === "warmup" && stage?.timingMode === "per-student") {
       setWarmupQuestionCount(4);
