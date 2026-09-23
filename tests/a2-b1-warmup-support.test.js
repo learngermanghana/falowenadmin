@@ -93,6 +93,68 @@ test("wide presenter layouts fit the standard four warm-up questions in a two-co
   assert.match(css, /\.presenter-warmup-question-card:only-child/);
 });
 
+test("every A2/B1 warm-up follow-up asks for an example and is question-aware", () => {
+  for (const level of ["A2", "B1"]) {
+    for (const slide of getSlidesByCourse(level)) {
+      const warmup = buildTeachingPresenterStages(slide, slide.topic)
+        .find((stage) => stage.id === "warmup");
+
+      warmup.questionSupport.forEach((support, index) => {
+        assert.match(
+          support.followUpDe,
+          /^Nenne ein Beispiel:/,
+          `${slide.assignmentId} warm-up ${index + 1} must ask for an example`,
+        );
+        assert.notEqual(
+          support.followUpDe,
+          "Warum? Kannst du ein Beispiel nennen?",
+          `${slide.assignmentId} warm-up ${index + 1} still uses the old generic follow-up`,
+        );
+        assert.notEqual(
+          support.followUpDe,
+          "Kannst du ein konkretes Beispiel nennen?",
+          `${slide.assignmentId} warm-up ${index + 1} still uses the old generic why follow-up`,
+        );
+      });
+    }
+  }
+});
+
+test("A2 Day 22 follow-ups are tailored to the actual warm-up question", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-8.22");
+  const warmup = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "warmup");
+  const byQuestion = new Map(warmup.items.map((question, index) => [
+    question,
+    warmup.questionSupport[index]?.followUpDe || "",
+  ]));
+
+  assert.match(byQuestion.get("Was machst du am Montag?") || "", /Montag/i);
+  assert.match(byQuestion.get("Wann hast du diese Woche Deutschkurs?") || "", /Deutschkurs/i);
+  assert.match(byQuestion.get("An welchem Tag kannst du Freunde treffen?") || "", /Freunde/i);
+});
+
+test("B1 follow-ups stay tied to the comparison or method in the question", () => {
+  const comparisonSlide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-6.20");
+  const comparison = buildTeachingPresenterStages(comparisonSlide, comparisonSlide.topic)
+    .find((stage) => stage.id === "warmup");
+  const comparisonIndex = comparison.items.indexOf("Was ist wichtiger: Ausbildung oder Erfahrung?");
+  const comparisonFollowUp = comparison.questionSupport[comparisonIndex]?.followUpDe || "";
+
+  assert.match(comparisonFollowUp, /^Nenne ein Beispiel:/);
+  assert.match(comparisonFollowUp, /Ausbildung|Erfahrung/);
+
+  const methodSlide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-5.15");
+  const method = buildTeachingPresenterStages(methodSlide, methodSlide.topic)
+    .find((stage) => stage.id === "warmup");
+  const methodIndex = method.items.indexOf("Wie kann man Arbeit und Privatleben besser trennen?");
+  const methodFollowUp = method.questionSupport[methodIndex]?.followUpDe || "";
+
+  assert.match(methodFollowUp, /^Nenne ein Beispiel:/);
+  assert.match(methodFollowUp, /Arbeit|Privatleben/);
+  assert.match(methodFollowUp, /konkreten Situation|umsetzen/i);
+});
+
 test("presenter renders highlighted keywords with optional hint, starter and follow-up", () => {
   const source = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
   const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
