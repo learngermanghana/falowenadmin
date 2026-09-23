@@ -10,10 +10,16 @@ import {
 import { defaultTuitionForLevel, updateClassCohort } from "../services/classCohortUpdateService.js";
 import { deleteClassCohort } from "../services/classDeletionService.js";
 import { rebuildClassSessionsFromSchedule } from "../services/liveClassService.js";
+import { presenterSessionMinutes } from "../utils/presenterSessionTiming.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
-const DEFAULT_RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
+const defaultDurationMinutes = (levelId = "") => presenterSessionMinutes(levelId) || 120;
+const makeDefaultRule = (levelId = "A1", day = "Sat") => ({
+  day,
+  startTime: "09:00",
+  durationMinutes: defaultDurationMinutes(levelId),
+});
 const dayLabel = (value) => String(value || "").slice(0, 3).toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 
 function initialForm(klass = {}) {
@@ -26,7 +32,7 @@ function initialForm(klass = {}) {
     tuitionGhs: Number(klass.tuitionGhs || defaultTuitionForLevel(levelId || "A1")),
     publicVisible: klass.publicVisible !== false, registrationOpen: klass.registrationOpen !== false,
     tutorId: klass.tutorId || "", zoomProfileId: klass.zoomProfileId || "",
-    scheduleRules: normalizedRules.length ? normalizedRules : [{ ...DEFAULT_RULE }],
+    scheduleRules: normalizedRules.length ? normalizedRules : [makeDefaultRule(levelId || "A1")],
   };
 }
 
@@ -42,6 +48,12 @@ function validateForm(form = {}) {
   if (!LEVELS.includes(form.levelId)) return "Select the correct level.";
   if (!form.startDate || !form.endDate || form.endDate < form.startDate) return "Enter valid start and end dates.";
   if (!validateIanaTimezone(form.timezone)) return "Enter a valid timezone such as Africa/Accra.";
+  const invalidDuration = form.scheduleRules.some((rule) => {
+    const raw = String(rule.durationMinutes ?? "").trim();
+    const value = Number(raw);
+    return !raw || !Number.isFinite(value) || value < 30;
+  });
+  if (invalidDuration) return "Enter a valid class duration of at least 30 minutes.";
   if (!scheduleRulesForEditor(form.scheduleRules).length) return "Add at least one weekly teaching time.";
   return "";
 }
@@ -64,7 +76,7 @@ export default function ClassEditorCard({ klass, onSaved }) {
       setMessage("All seven weekdays already have a teaching time. A class can have only one session per date.");
       return current;
     }
-    return { ...current, scheduleRules: [...current.scheduleRules, { ...DEFAULT_RULE, day: dayLabel(nextDay) }] };
+    return { ...current, scheduleRules: [...current.scheduleRules, makeDefaultRule(current.levelId, dayLabel(nextDay))] };
   });
 
   async function saveClassSettings({ notifyParent = true } = {}) {
@@ -163,7 +175,16 @@ export default function ClassEditorCard({ klass, onSaved }) {
     {form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       <select value={String(rule.day || "Sat").slice(0, 3)} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select>
       <input type="time" value={rule.startTime || "09:00"} onChange={(event) => patchRule(index, { startTime: event.target.value })} />
-      <input type="number" min="30" step="15" value={Number(rule.durationMinutes || 120)} onChange={(event) => patchRule(index, { durationMinutes: Number(event.target.value) })} />
+      <input
+        type="number"
+        min="30"
+        step="15"
+        aria-label="Class duration in minutes"
+        value={rule.durationMinutes ?? ""}
+        onChange={(event) => patchRule(index, {
+          durationMinutes: event.target.value === "" ? "" : Number(event.target.value),
+        })}
+      />
       <button type="button" disabled={form.scheduleRules.length === 1} onClick={() => removeRule(index)}>Remove</button>
     </div>)}
     <button type="button" onClick={addRule}>Add another weekday</button>
