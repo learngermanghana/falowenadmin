@@ -6,7 +6,7 @@ function read(path) {
   return fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("presenter class timer shares A1/A2/B1 presets and accepts a shared attendance duration for other levels", () => {
+test("presenter class timer keeps A1/A2/B1 presets authoritative and accepts a shared attendance duration for other levels", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   const timing = read("src/utils/presenterSessionTiming.js");
   assert.match(timing, /A1:\s*60/);
@@ -16,7 +16,10 @@ test("presenter class timer shares A1/A2/B1 presets and accepts a shared attenda
   assert.match(source, /presenterLive\.liveState\?\.timerDurationSeconds/);
   assert.match(source, /sharedTimerLevel === level/);
   assert.match(source, /Number\.isFinite\(rawSharedDurationSeconds\)/);
-  assert.match(source, /sharedDurationSeconds \|\| \(configuredDurationMinutes \* 60\)/);
+  assert.match(source, /const configuredDurationSeconds = configuredDurationMinutes \* 60/);
+  assert.match(source, /const durationSeconds = configuredDurationSeconds \|\| sharedDurationSeconds/);
+  assert.match(source, /checkinStartedAtMs > 0 && configuredDurationSeconds > 0/);
+  assert.match(source, /checkinStartedAtMs \+ \(durationSeconds \* 1000\)/);
   assert.match(source, /Start class/);
   assert.match(source, /Class time is up/);
 });
