@@ -521,8 +521,13 @@
   cursor: pointer;
 }
 
-.checkin-display-music-skip-button:hover {
+.checkin-display-music-skip-button:hover:not(:disabled) {
   background: #f5f3ff;
+}
+
+.checkin-display-music-skip-button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
 }
 
 .checkin-display-music-skip-button:focus-visible {
