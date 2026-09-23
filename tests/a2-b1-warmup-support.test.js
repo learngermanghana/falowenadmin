@@ -72,6 +72,18 @@ test("Erfahrung comparisons do not receive a past-event hint", () => {
   assert.doesNotMatch(hint, /past-time/i);
 });
 
+test("method questions with besser are not treated as comparisons", () => {
+  const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-5.15");
+  const warmup = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "warmup");
+  const questionIndex = warmup.items.indexOf("Wie kann man Arbeit und Privatleben besser trennen?");
+  const hint = warmup.questionSupport[questionIndex]?.hintEn || "";
+
+  assert.ok(questionIndex >= 0);
+  assert.match(hint, /practical method/i);
+  assert.doesNotMatch(hint, /Compare both sides/i);
+});
+
 test("presenter renders highlighted keywords with optional hint, starter and follow-up", () => {
   const source = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
   const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
