@@ -165,8 +165,14 @@ test("playlist patch upgrades an already-transformed legacy workspace and stays 
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "falowen-checkin-patch-"));
   const scriptsDir = path.join(tempRoot, "scripts");
   const pagesDir = path.join(tempRoot, "src", "pages");
+  const dataDir = path.join(tempRoot, "src", "data");
   fs.mkdirSync(scriptsDir, { recursive: true });
   fs.mkdirSync(pagesDir, { recursive: true });
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dataDir, "pianoPlaylist.js"),
+    'export const waitingMusicPlaylist = Object.freeze([{ id: "fixture", title: "Fixture", src: "/fixture.mp3" }]);\nexport const pianoPlaylist = waitingMusicPlaylist;\nexport const pianoPieces = [];\n',
+  );
 
   const patchSource = fs.readFileSync(
     path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"),
@@ -277,7 +283,8 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
   assert.match(page, /timerRunning = true/);
   assert.match(page, /timerUpdatedAtMs = startMs/);
   assert.match(page, /sessionDurationSeconds\(startTime, endTime\)/);
-  assert.match(page, /attendanceDurationSeconds \|\| presenterSessionDurationSeconds\(level\)/);
+  assert.match(page, /const configuredLevelDurationSeconds = presenterSessionDurationSeconds\(level\)/);
+  assert.match(page, /configuredLevelDurationSeconds \|\| attendanceDurationSeconds/);
   assert.match(page, /Retry slide sync/);
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 

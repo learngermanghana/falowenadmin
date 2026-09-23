@@ -115,6 +115,7 @@ export default function PresenterSessionTimer({ slide }) {
   const level = normalize(slide?.course).toUpperCase();
   const presenterLive = usePresenterLiveSession(slide);
   const configuredDurationMinutes = presenterSessionMinutes(level);
+  const configuredDurationSeconds = configuredDurationMinutes * 60;
   const rawSharedDurationSeconds = Number(presenterLive.liveState?.timerDurationSeconds || 0);
   const sharedTimerLevel = normalize(presenterLive.liveState?.timerLevel).toUpperCase();
   const sharedDurationSeconds = presenterLive.isToday
@@ -123,7 +124,10 @@ export default function PresenterSessionTimer({ slide }) {
     && rawSharedDurationSeconds > 0
     ? rawSharedDurationSeconds
     : 0;
-  const durationSeconds = sharedDurationSeconds || (configuredDurationMinutes * 60);
+  // A1/A2/B1 have academy-defined class lengths. A shared attendance window
+  // must not turn a 90-minute A2/B1 class into 120 minutes.
+  // Other levels can still inherit the attendance-provided duration.
+  const durationSeconds = configuredDurationSeconds || sharedDurationSeconds;
   const durationMinutes = durationSeconds / 60;
   const liveState = presenterLive.liveState || {};
   const attendanceControlsTimer = presenterLive.isToday
@@ -199,11 +203,13 @@ export default function PresenterSessionTimer({ slide }) {
     const checkinStartedAtMs = remote.classStartSource === "checkin"
       ? Math.max(0, Number(remote.classStartedAtMs || 0))
       : 0;
-    const derivedCheckinEndAt = checkinStartedAtMs > 0 && remoteDurationSeconds > 0
-      ? checkinStartedAtMs + (remoteDurationSeconds * 1000)
+    const derivedCheckinEndAt = checkinStartedAtMs > 0 && durationSeconds > 0
+      ? checkinStartedAtMs + (durationSeconds * 1000)
       : 0;
     const remoteEndAt = remoteRunning
-      ? (rawRemoteEndAt || derivedCheckinEndAt)
+      ? (checkinStartedAtMs > 0 && configuredDurationSeconds > 0
+        ? derivedCheckinEndAt
+        : (rawRemoteEndAt || derivedCheckinEndAt))
       : 0;
     const remoteRemaining = remoteRunning && remoteEndAt
       ? Math.max(0, Math.min(durationSeconds, Math.ceil((remoteEndAt - nowMs) / 1000)))

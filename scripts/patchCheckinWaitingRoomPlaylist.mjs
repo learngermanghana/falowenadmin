@@ -31,14 +31,12 @@ function publicTrackSrc(fileName) {
     .replace(/%20/g, "%20");
 }
 
-const publicMp3Files = fs.readdirSync(publicDir, { withFileTypes: true })
-  .filter((entry) => entry.isFile() && /\.mp3$/i.test(entry.name))
-  .map((entry) => entry.name)
-  .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-
-if (!publicMp3Files.length) {
-  throw new Error("No waiting-room .mp3 files found in public/.");
-}
+const publicMp3Files = fs.existsSync(publicDir)
+  ? fs.readdirSync(publicDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && /\.mp3$/i.test(entry.name))
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+  : [];
 
 const generatedPlaylist = publicMp3Files.map((fileName, index) => ({
   id: waitingTrackId(fileName) + "-" + (index + 1),
@@ -46,17 +44,21 @@ const generatedPlaylist = publicMp3Files.map((fileName, index) => ({
   src: publicTrackSrc(fileName),
 }));
 
-fs.writeFileSync(
-  playlistTarget,
-  `// Generated from every .mp3 file in /public by scripts/patchCheckinWaitingRoomPlaylist.mjs.
+if (generatedPlaylist.length) {
+  fs.writeFileSync(
+    playlistTarget,
+    `// Generated from every .mp3 file in /public by scripts/patchCheckinWaitingRoomPlaylist.mjs.
 // Upload a new .mp3 to /public and the next build/dev/test run will add it automatically.
 export const waitingMusicPlaylist = Object.freeze(${JSON.stringify(generatedPlaylist, null, 2)});
 
 export const pianoPlaylist = waitingMusicPlaylist;
 export const pianoPieces = waitingMusicPlaylist.map((track) => [track.title, [], []]);
 `,
-  "utf8",
-);
+    "utf8",
+  );
+} else if (!fs.existsSync(playlistTarget)) {
+  throw new Error("No waiting-room .mp3 files found in public/ and no existing playlist is available.");
+}
 
 const pageTarget = new URL("../src/pages/CheckinDisplayPage.jsx", import.meta.url);
 let source = fs.readFileSync(pageTarget, "utf8");
@@ -78,16 +80,18 @@ replaceOnce(
   "playlist import",
 );
 
-replaceOnce(
-  'import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";',
-  'import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
-  "audio helper import",
-);
+if (!source.includes('import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";')) {
+  replaceOnce(
+    'import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";',
+    'import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
+    "audio helper import",
+  );
 
-upgradeOnce(
-  'import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
-  'import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
-);
+  upgradeOnce(
+    'import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
+    'import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";',
+  );
+}
 
 replaceOnce(
   '  const [currentPianoPiece, setCurrentPianoPiece] = useState(pianoPieces[0][0]);',
@@ -352,4 +356,8 @@ for (const marker of [
 }
 
 fs.writeFileSync(pageTarget, source, "utf8");
-console.log(`Check-in display now plays ${generatedPlaylist.length} public waiting-room track(s) sequentially.`);
+console.log(
+  generatedPlaylist.length
+    ? `Check-in display now plays ${generatedPlaylist.length} public waiting-room track(s) sequentially.`
+    : "Check-in waiting-room playlist patch applied using the existing configured playlist.",
+);

@@ -3,10 +3,16 @@ import { createClassCohort } from "../services/liveClassService.js";
 import { calculateClassEndDate, validateIanaTimezone } from "../utils/liveClassScheduling.js";
 import { nextUnusedScheduleDay, scheduleRulesForEditor } from "../utils/liveClassScheduleRules.js";
 import { classNameSuggestions, isClassNameBlocked, resolveClassNameSelection } from "../utils/liveClassNameSuggestions.js";
+import { presenterSessionMinutes } from "../utils/presenterSessionTiming.js";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const RULE = { day: "Sat", startTime: "09:00", durationMinutes: 120 };
-const emptyForm = () => ({ name: "", levelId: "A1", tutorId: "", startDate: "", endDate: "", timezone: "Africa/Accra", status: "upcoming", zoomProfileId: "", scheduleRules: [{ ...RULE }] });
+const defaultDurationMinutes = (levelId = "") => presenterSessionMinutes(levelId) || 120;
+const makeRule = (levelId = "A1", day = "Sat") => ({
+  day,
+  startTime: "09:00",
+  durationMinutes: defaultDurationMinutes(levelId),
+});
+const emptyForm = () => ({ name: "", levelId: "A1", tutorId: "", startDate: "", endDate: "", timezone: "Africa/Accra", status: "upcoming", zoomProfileId: "", scheduleRules: [makeRule("A1")] });
 const dayLabel = (value) => String(value || "").slice(0, 3).toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
 
 export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }) {
@@ -47,7 +53,7 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       setMessage("All seven weekdays already have a teaching time. A class can have only one session per date.");
       return current;
     }
-    return { ...current, scheduleRules: [...current.scheduleRules, { ...RULE, day: dayLabel(nextDay) }] };
+    return { ...current, scheduleRules: [...current.scheduleRules, makeRule(current.levelId, dayLabel(nextDay))] };
   });
 
   function chooseSuggestion(name) {
@@ -58,7 +64,17 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
 
   function changeLevel(levelId) {
     setNameSelectionSource("auto");
-    patch({ levelId, name: "" }, true);
+    setForm((current) => {
+      const durationMinutes = defaultDurationMinutes(levelId);
+      const next = {
+        ...current,
+        levelId,
+        name: "",
+        scheduleRules: current.scheduleRules.map((rule) => ({ ...rule, durationMinutes })),
+      };
+      const endDate = calculateClassEndDate({ ...next, scheduleRules: scheduleRulesForEditor(next.scheduleRules) });
+      return endDate ? { ...next, endDate } : next;
+    });
     setMessage("");
   }
 
@@ -69,6 +85,12 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
     if (selectedNameBlocked) return setMessage("This class name is already used by an existing class. Choose one of the available suggestions.");
     if (!form.startDate || !form.endDate || form.endDate < form.startDate) return setMessage("Enter valid start and end dates.");
     if (!validateIanaTimezone(form.timezone)) return setMessage("Enter a valid timezone such as Africa/Accra.");
+    const invalidDuration = form.scheduleRules.some((rule) => {
+      const raw = String(rule.durationMinutes ?? "").trim();
+      const value = Number(raw);
+      return !raw || !Number.isFinite(value) || value < 30;
+    });
+    if (invalidDuration) return setMessage("Enter a valid class duration of at least 30 minutes.");
     const scheduleRules = scheduleRulesForEditor(form.scheduleRules);
     if (!scheduleRules.length) return setMessage("Add at least one weekly teaching time.");
 
@@ -143,7 +165,16 @@ export default function CreateClassCard({ onCreated, onDuplicate, classes = [] }
       <small style={{ color: "#92400e" }}>No unused dictionary name is available for {form.levelId}. You can enter a custom class name.</small>
     )}
 
-    <strong>Weekly teaching times</strong><p style={{ margin: 0, fontSize: 13 }}>Use one teaching time per weekday. This prevents two curriculum sessions from being created on the same date.</p>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input type="number" min="30" step="15" value={rule.durationMinutes} onChange={(event) => patchRule(index, { durationMinutes: Number(event.target.value) })} /><button type="button" disabled={form.scheduleRules.length === 1} onClick={() => removeRule(index)}>Remove</button></div>)}
+    <strong>Weekly teaching times</strong><p style={{ margin: 0, fontSize: 13 }}>Use one teaching time per weekday. This prevents two curriculum sessions from being created on the same date.</p>{form.scheduleRules.map((rule, index) => <div key={`${index}-${rule.day}`} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><select value={rule.day} onChange={(event) => patchRule(index, { day: event.target.value })}>{DAYS.map((day) => <option key={day} disabled={form.scheduleRules.some((item, itemIndex) => itemIndex !== index && String(item.day).slice(0, 3).toLowerCase() === day.toLowerCase())}>{day}</option>)}</select><input type="time" value={rule.startTime} onChange={(event) => patchRule(index, { startTime: event.target.value })} /><input
+  type="number"
+  min="30"
+  step="15"
+  aria-label="Class duration in minutes"
+  value={rule.durationMinutes ?? ""}
+  onChange={(event) => patchRule(index, {
+    durationMinutes: event.target.value === "" ? "" : Number(event.target.value),
+  })}
+/><button type="button" disabled={form.scheduleRules.length === 1} onClick={() => removeRule(index)}>Remove</button></div>)}
     <button type="button" onClick={addRule}>Add another weekday</button>{message ? <div>{message}</div> : null}<button type="submit" disabled={busy || selectedNameBlocked}>{busy ? "Creating…" : "Create class and generate sessions"}</button>
   </form></article>;
 }
