@@ -5,6 +5,7 @@ import {
   getSpeakingQuestionModel,
   isTeachingPresenterV2Slide,
 } from "../utils/teachingPresenter.js";
+import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import "./TeachingSlidePresenter.css";
 
@@ -23,25 +24,12 @@ function lessonUrl(value = "") {
   return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
-function escapeRegExp(value = "") {
-  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, (match) => "\\" + match);
-}
-
 function renderWarmupQuestion(question = "", keywords = []) {
-  const terms = [...new Set(
-    (Array.isArray(keywords) ? keywords : [])
-      .map((item) => String(item || "").trim())
-      .filter(Boolean),
-  )].sort((a, b) => b.length - a.length);
-  if (!terms.length) return question;
-
-  const pattern = new RegExp("(" + terms.map(escapeRegExp).join("|") + ")", "gi");
-  return String(question || "").split(pattern).map((part, index) => {
-    const highlighted = terms.some((term) => term.toLocaleLowerCase("de-DE") === part.toLocaleLowerCase("de-DE"));
-    return highlighted
-      ? <mark className="presenter-warmup-keyword" key={part + "-" + index}>{part}</mark>
-      : part;
-  });
+  return splitWarmupQuestionSegments(question, keywords).map((segment, index) => (
+    segment.highlighted
+      ? <mark className="presenter-warmup-keyword" key={segment.text + "-" + index}>{segment.text}</mark>
+      : segment.text
+  ));
 }
 function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
   const question = String(questionDe || "").trim();

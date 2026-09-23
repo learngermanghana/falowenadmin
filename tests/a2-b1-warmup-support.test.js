@@ -4,6 +4,7 @@ import fs from "node:fs";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
+import { splitWarmupQuestionSegments } from "../src/utils/warmupText.js";
 
 for (const level of ["A2", "B1"]) {
   test(level + " warm-up questions expose keyword and optional support", () => {
@@ -38,8 +39,8 @@ for (const level of ["A2", "B1"]) {
   });
 }
 
-test("advanced B2/C1/C2 warm-ups keep the existing simple list behavior", () => {
-  for (const level of ["B2", "C1", "C2"]) {
+test("advanced B2/C1 warm-ups exposed by teachingSlides keep the existing simple list behavior", () => {
+  for (const level of ["B2", "C1"]) {
     const slide = getSlidesByCourse(level)[0];
     const warmup = buildTeachingPresenterStages(slide, slide.topic)
       .find((stage) => stage.id === "warmup");
@@ -47,6 +48,28 @@ test("advanced B2/C1/C2 warm-ups keep the existing simple list behavior", () => 
     assert.ok(warmup);
     assert.deepEqual(warmup.questionSupport || [], [], level + " should not get A2/B1 support controls");
   }
+});
+
+test("warm-up keyword highlighting matches whole words instead of prefixes", () => {
+  const question = "Wo wohnst du lieber: in der Stadt oder auf dem Land?";
+  const segments = splitWarmupQuestionSegments(question, ["Wo", "lieber"]);
+  const highlighted = segments.filter((segment) => segment.highlighted).map((segment) => segment.text);
+
+  assert.equal(segments.map((segment) => segment.text).join(""), question);
+  assert.deepEqual(highlighted, ["Wo", "lieber"]);
+  assert.equal(highlighted.filter((item) => item === "Wo").length, 1, "Wo should highlight only the standalone question word");
+});
+
+test("Erfahrung comparisons do not receive a past-event hint", () => {
+  const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-6.20");
+  const warmup = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "warmup");
+  const questionIndex = warmup.items.indexOf("Was ist wichtiger: Ausbildung oder Erfahrung?");
+  const hint = warmup.questionSupport[questionIndex]?.hintEn || "";
+
+  assert.ok(questionIndex >= 0);
+  assert.match(hint, /Compare both sides/i);
+  assert.doesNotMatch(hint, /past-time/i);
 });
 
 test("presenter renders highlighted keywords with optional hint, starter and follow-up", () => {

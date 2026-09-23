@@ -97,7 +97,8 @@ function warmupHintEn(question = "") {
   if (/\bwo(?:hin|her)?\b|\bort\b|\bland\b|\bstadt\b/i.test(text)) return "Name a place and add one useful detail.";
   if (/vorteil|nachteil|problem/i.test(text)) return "Name one point and explain why it matters.";
   if (/\bwürdest\b|\bmöchtest\b|\blieber\b/i.test(text)) return "State your choice, then explain your reason.";
-  if (/vergangen|letztes|früher|gestern|erfahrung/i.test(text)) return "Use a past-time expression and one concrete detail.";
+  if (/\b(?:wichtiger|wichtigeres|besser|schlechter|größer|kleiner)\b/i.test(text)) return "Compare both sides and explain your choice.";
+  if (/\b(?:gestern|früher|damals|letztes?|letzten|letzte|vergangene[nrms]?)\b/i.test(text)) return "Use a past-time expression and one concrete detail.";
   return "Answer in a full sentence and add one concrete detail.";
 }
 
