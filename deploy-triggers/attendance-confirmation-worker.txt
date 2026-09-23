@@ -1,0 +1,1 @@
+Deploy weekly attendance worker with manual-attendance and participation lookup fixes.
