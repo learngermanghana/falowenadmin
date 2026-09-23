@@ -588,9 +588,71 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       ) : null}
                     </div>
                   ) : null}
-                  <ul className="presenter-list">
-                    {(visibleStageItems || []).map((item) => <li key={item}>{item}</li>)}
-                  </ul>
+                  {enhancedWarmup ? (
+                    <ol className="presenter-warmup-question-list">
+                      {(visibleStageItems || []).map((item, itemIndex) => {
+                        const support = stage.questionSupport?.[itemIndex] || {};
+                        const hintOpen = Boolean(warmupSupportOpen[itemIndex + ":hint"]);
+                        const starterOpen = Boolean(warmupSupportOpen[itemIndex + ":starter"]);
+                        const followUpOpen = Boolean(warmupSupportOpen[itemIndex + ":followup"]);
+                        const difficultyClass = String(support.difficulty || "Extend").toLowerCase();
+
+                        return (
+                          <li key={item} className="presenter-warmup-question-card">
+                            <div className="presenter-warmup-question-heading">
+                              <span className={"presenter-warmup-difficulty is-" + difficultyClass}>{support.difficulty || "Extend"}</span>
+                              <p>{renderWarmupQuestion(item, support.keywords)}</p>
+                            </div>
+                            <div className="presenter-warmup-support-actions">
+                              <button
+                                type="button"
+                                aria-expanded={hintOpen}
+                                onClick={() => toggleWarmupSupport(itemIndex, "hint")}
+                              >
+                                {hintOpen ? "Hide hint" : "Hint"}
+                              </button>
+                              <button
+                                type="button"
+                                aria-expanded={starterOpen}
+                                onClick={() => toggleWarmupSupport(itemIndex, "starter")}
+                              >
+                                {starterOpen ? "Hide starter" : "Answer starter"}
+                              </button>
+                              <button
+                                type="button"
+                                aria-expanded={followUpOpen}
+                                onClick={() => toggleWarmupSupport(itemIndex, "followup")}
+                              >
+                                {followUpOpen ? "Hide follow-up" : "Follow-up"}
+                              </button>
+                            </div>
+                            {hintOpen ? (
+                              <div className="presenter-warmup-support-line">
+                                <strong>Hint (EN)</strong>
+                                <span>{support.hintEn}</span>
+                              </div>
+                            ) : null}
+                            {starterOpen ? (
+                              <div className="presenter-warmup-support-line">
+                                <strong>Start</strong>
+                                <span>{support.answerStarterDe}</span>
+                              </div>
+                            ) : null}
+                            {followUpOpen ? (
+                              <div className="presenter-warmup-support-line">
+                                <strong>Follow-up</strong>
+                                <span>{support.followUpDe}</span>
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  ) : (
+                    <ul className="presenter-list">
+                      {(visibleStageItems || []).map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  )}
                 </>
               ) : (
                 <p className="presenter-task">{stage.body}</p>
