@@ -234,8 +234,8 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       const previous = studentClassIdentity(student);
       const target = targetClassIdentity(targetSnap, targetClassRecordId);
       if (
-        previous.classRecordId === target.classRecordId
-        || (previous.className && previous.className === target.className)
+        (previous.classRecordId && previous.classRecordId === target.classRecordId)
+        || (!previous.classRecordId && previous.className && previous.className === target.className)
       ) {
         return res.status(400).json({ ok: false, error: "Student is already in that class" });
       }
