@@ -1,4 +1,62 @@
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const publicDir = path.join(repoRoot, "public");
+const playlistTarget = path.join(repoRoot, "src", "data", "pianoPlaylist.js");
+
+function waitingTrackTitle(fileName) {
+  return String(fileName || "")
+    .replace(/\.mp3$/i, "")
+    .replace(/\(\d+\)\s*$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function waitingTrackId(fileName) {
+  const base = waitingTrackTitle(fileName)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return base || "waiting-track";
+}
+
+function publicTrackSrc(fileName) {
+  return "/" + encodeURIComponent(fileName)
+    .replace(/%2F/gi, "/")
+    .replace(/%20/g, "%20");
+}
+
+const publicMp3Files = fs.readdirSync(publicDir, { withFileTypes: true })
+  .filter((entry) => entry.isFile() && /\.mp3$/i.test(entry.name))
+  .map((entry) => entry.name)
+  .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+if (!publicMp3Files.length) {
+  throw new Error("No waiting-room .mp3 files found in public/.");
+}
+
+const generatedPlaylist = publicMp3Files.map((fileName, index) => ({
+  id: waitingTrackId(fileName) + "-" + (index + 1),
+  title: waitingTrackTitle(fileName),
+  src: publicTrackSrc(fileName),
+}));
+
+fs.writeFileSync(
+  playlistTarget,
+  `// Generated from every .mp3 file in /public by scripts/patchCheckinWaitingRoomPlaylist.mjs.
+// Upload a new .mp3 to /public and the next build/dev/test run will add it automatically.
+export const waitingMusicPlaylist = Object.freeze(${JSON.stringify(generatedPlaylist, null, 2)});
+
+export const pianoPlaylist = waitingMusicPlaylist;
+export const pianoPieces = waitingMusicPlaylist.map((track) => [track.title, [], []]);
+`,
+  "utf8",
+);
 
 const pageTarget = new URL("../src/pages/CheckinDisplayPage.jsx", import.meta.url);
 let source = fs.readFileSync(pageTarget, "utf8");
@@ -292,4 +350,4 @@ for (const marker of [
 }
 
 fs.writeFileSync(pageTarget, source, "utf8");
-console.log("Check-in display now plays the configured waiting room playlist sequentially.");
+console.log(`Check-in display now plays ${generatedPlaylist.length} public waiting-room track(s) sequentially.`);
