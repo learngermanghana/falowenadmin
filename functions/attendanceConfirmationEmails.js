@@ -152,6 +152,36 @@ function studentBelongsToClass(student = {}, klass = {}) {
   const classValues = new Set(classIdentityValues(klass));
   return studentClassValues(student).some((value) => classValues.has(value));
 }
+function transferClassValues(transfer = {}, side = "to") {
+  const prefix = side === "from" ? "from" : "to";
+  return [
+    transfer[`${prefix}ClassId`],
+    transfer[`${prefix}ClassRecordId`],
+    transfer[`${prefix}ClassName`],
+  ].map(comparable).filter(Boolean);
+}
+
+function studentBelongsToClassAt(student = {}, klass = {}, when = null) {
+  const transfers = (Array.isArray(student.classTransfers) ? student.classTransfers : [])
+    .filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(normalize(item?.effectiveDate)))
+    .sort((a, b) => normalize(a.effectiveDate).localeCompare(normalize(b.effectiveDate)));
+
+  if (!transfers.length || !when) return studentBelongsToClass(student, klass);
+
+  const date = asDate(when);
+  if (!date) return studentBelongsToClass(student, klass);
+  const dateIso = date.toISOString().slice(0, 10);
+  const classValues = new Set(classIdentityValues(klass));
+
+  let membershipValues = transferClassValues(transfers[0], "from");
+  for (const transfer of transfers) {
+    if (normalize(transfer.effectiveDate) > dateIso) break;
+    membershipValues = transferClassValues(transfer, "to");
+  }
+
+  if (!membershipValues.length) return studentBelongsToClass(student, klass);
+  return membershipValues.some((value) => classValues.has(value));
+}
 
 function studentIdentityValues(student = {}) {
   return [
@@ -503,7 +533,11 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
     60,
   );
   const groups = groupDueSessions({ sessions, mode, now, timezone, lookbackDays });
-  const students = allStudents.filter((student) => isActiveStudent(student) && studentBelongsToClass(student, klass) && normalize(student.email));
+  const students = allStudents.filter((student) => (
+    isActiveStudent(student)
+    && normalize(student.email)
+    && sessions.some((session) => studentBelongsToClassAt(student, klass, sessionStart(session)))
+  ));
 
   await classRef.set({
     attendanceConfirmationEmailLastRunAt: timestamp,
@@ -543,13 +577,19 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
 
     const rows = [];
     const deliveryRefs = [];
-    for (const student of students) {
+    const groupStudents = students.filter((student) => (
+      group.sessions.some((session) => studentBelongsToClassAt(student, klass, sessionStart(session)))
+    ));
+    for (const student of groupStudents) {
       const studentKey = studentDeliveryKey(student);
       if (!studentKey) continue;
-      const records = sessionData.map(({ session, attendance, checkins }) => ({
-        session,
-        ...attendanceStatus({ session, attendance, checkins, student, lateMinutes }),
-      }));
+      const records = sessionData
+        .filter(({ session }) => studentBelongsToClassAt(student, klass, sessionStart(session)))
+        .map(({ session, attendance, checkins }) => ({
+          session,
+          ...attendanceStatus({ session, attendance, checkins, student, lateMinutes }),
+        }));
+      if (!records.length) continue;
       const message = mode === MODE_WEEKLY
         ? buildWeeklyMessage({ student, klass, records, replyNote, timezone })
         : buildEachClassMessage({ student, klass, record: records[0], replyNote, timezone });
@@ -780,6 +820,7 @@ module.exports = {
     resolveWebhookConfig,
     resolveClassWebhookConfig,
     studentBelongsToClass,
+    studentBelongsToClassAt,
     weekKey,
   },
 };
