@@ -30,6 +30,42 @@ for (const level of ["A2", "B1"]) {
   });
 }
 
+test("unrelated model sentences are not attached to vocabulary terms", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-4.10");
+  const vocabulary = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "phrases");
+
+  const introTerm = vocabulary.items.find((item) => item.term === "Heute spreche ich über ...");
+  const pastTerm = vocabulary.items.find((item) => item.term.startsWith("Letztes Jahr war ich"));
+
+  assert.ok(introTerm);
+  assert.equal(introTerm.example, "", "generic presentation phrase should not borrow an unrelated travel example");
+  assert.ok(pastTerm?.example, "past-tense vocabulary should keep a genuinely matching model example");
+  assert.match(pastTerm.example, /Letztes Jahr|hatten/i);
+});
+
+test("every attached vocabulary example shares a meaningful keyword with its term", () => {
+  for (const level of ["A2", "B1"]) {
+    for (const slide of getSlidesByCourse(level)) {
+      const vocabulary = buildTeachingPresenterStages(slide, slide.topic)
+        .find((stage) => stage.id === "phrases");
+
+      for (const item of vocabulary.items.filter((entry) => entry.example)) {
+        const keywords = item.term
+          .toLocaleLowerCase("de-DE")
+          .replace(/[.…?!,:;()/"']/g, " ")
+          .split(/\s+/)
+          .filter((word) => word.length >= 5);
+
+        assert.ok(
+          keywords.some((word) => item.example.toLocaleLowerCase("de-DE").includes(word)),
+          `${slide.assignmentId} attached unrelated example "${item.example}" to "${item.term}"`,
+        );
+      }
+    }
+  }
+});
+
 test("the vocabulary change does not add an extra presenter stage", () => {
   for (const level of ["A2", "B1"]) {
     for (const slide of getSlidesByCourse(level)) {
