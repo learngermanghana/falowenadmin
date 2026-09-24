@@ -1,4 +1,5 @@
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
+import { A1_WRITING_RUBRIC_VERSION, getA1WritingTaskSpec } from "../data/a1WritingTaskSpecs.js";
 import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { B1_WRITING_RUBRIC_VERSION, getB1WritingTaskSpec } from "../data/b1WritingTaskSpecs.js";
 import { getCachedAssignmentRegistryEntry } from "./assignmentRegistryCache.js";
@@ -6,6 +7,7 @@ import { toQuestionAwareWritingTask } from "./assignmentRegistry.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
 import { heuristicWritingMarker } from "./autoMarking.js";
 import { evaluateWritingTaskEvidence, missingTaskPointsFromEvidence, taskEvidenceSummary } from "./writingTaskEvidence.js";
+import { evaluateA1WritingTaskEvidence } from "./a1WritingTaskEvidence.js";
 import { evaluateB1WritingTaskEvidence } from "./b1WritingTaskEvidence.js";
 import {
   detectWritingTextType,
@@ -19,14 +21,22 @@ const clean = (value = "") => String(value || "").replace(/\s+/g, " ").trim();
 
 function applyAuthoritativeWritingOverride(task = {}) {
   const assignmentKey = normalizeAssignmentKey(task.assignmentKey || "");
+  const a1Spec = getA1WritingTaskSpec(assignmentKey);
   const a2Spec = getA2WritingTaskSpec(assignmentKey);
   const b1Spec = getB1WritingTaskSpec(assignmentKey);
-  const next = a2Spec
-    ? { ...task, ...a2Spec, level: "A2" }
-    : b1Spec
-      ? { ...task, ...b1Spec, level: "B1" }
-      : task;
+  const next = a1Spec
+    ? { ...task, ...a1Spec, level: "A1" }
+    : a2Spec
+      ? { ...task, ...a2Spec, level: "A2" }
+      : b1Spec
+        ? { ...task, ...b1Spec, level: "B1" }
+        : task;
   if (!next?.assignmentKey) return next;
+
+  const a1Guidance = next.level === "A1"
+    ? "At A1, reward simple correct task-appropriate German. Do not require advanced connectors, complex sentence structures, or vocabulary the task does not teach. Keep corrections and suggested model phrases short, simple, and tied to the task vocabulary."
+    : "";
+
   return {
     ...next,
     gradingInstruction: [
@@ -37,19 +47,22 @@ function applyAuthoritativeWritingOverride(task = {}) {
       "Topic relevance, fluent grammar, connectors, length, or vocabulary cannot compensate for missing required task points.",
       "Do not double-penalize the same issue as both genre and register when the student still wrote the requested correspondence genre.",
       "Never award 100% writing when a required task point is missing or the requested text type/register is materially wrong.",
-    ].join(" "),
+      a1Guidance,
+    ].filter(Boolean).join(" "),
   };
 }
 
 function normalizeAssignmentKey(value = "") {
   const source = clean(value).toUpperCase();
-  const match = source.match(/\b(A2|B1)-\d+(?:\.\d+)?\b/);
+  const match = source.match(/\b(A1|A2|B1)-\d+(?:\.\d+)?\b/);
   return match?.[0] || source;
 }
 
 function assignmentKeyFromOptions(options = {}) {
   return normalizeAssignmentKey(
     options.referenceEntry?.assignmentKey
+      || options.referenceEntry?.assignmentId
+      || options.referenceEntry?.assignment_id
       || options.submission?.assignmentKey
       || options.submission?.assignmentId
       || options.assignmentKey
@@ -60,7 +73,7 @@ function assignmentKeyFromOptions(options = {}) {
 
 function levelFromOptions(options = {}, assignmentKey = "") {
   const explicit = clean(options.referenceEntry?.level || options.submission?.level || options.level).toUpperCase();
-  const match = explicit.match(/\b(A2|B1)\b/) || assignmentKey.match(/^(A2|B1)-/);
+  const match = explicit.match(/\b(A1|A2|B1)\b/) || assignmentKey.match(/^(A1|A2|B1)-/);
   return match?.[1] || "";
 }
 
@@ -83,7 +96,10 @@ export function resolveQuestionAwareWritingTask(options = {}) {
 
   const assignmentKey = assignmentKeyFromOptions(options);
   const level = levelFromOptions(options, assignmentKey);
-  if (!assignmentKey || !["A2", "B1"].includes(level)) return null;
+  if (!assignmentKey || !["A1", "A2", "B1"].includes(level)) return null;
+
+  const a1Spec = getA1WritingTaskSpec(assignmentKey);
+  if (a1Spec) return applyAuthoritativeWritingOverride({ assignmentKey, level, ...a1Spec, source: "a1WritingTaskSpecs" });
 
   const publishedTask = toQuestionAwareWritingTask(getCachedAssignmentRegistryEntry(assignmentKey) || {});
   if (publishedTask) return applyAuthoritativeWritingOverride(publishedTask);
@@ -120,18 +136,102 @@ export function resolveQuestionAwareWritingTask(options = {}) {
 export function enrichOptionsWithQuestionAwareWritingTask(options = {}) {
   const task = resolveQuestionAwareWritingTask(options);
   if (!task) return options;
+
+  const referenceEntry = { ...(options.referenceEntry || {}) };
+  if (task.level === "A1") {
+    const taskParts = Array.isArray(task.partIds)
+      ? [...new Set(task.partIds.map((value) => String(value || "").trim().toLowerCase()).filter(Boolean))]
+      : [];
+    const existingExpectedParts = Array.isArray(referenceEntry.expectedParts)
+      ? referenceEntry.expectedParts
+      : Array.isArray(referenceEntry.expected_parts)
+        ? referenceEntry.expected_parts
+        : [];
+    const existingWritingParts = Array.isArray(referenceEntry.writingParts)
+      ? referenceEntry.writingParts
+      : Array.isArray(referenceEntry.writing_parts)
+        ? referenceEntry.writing_parts
+        : [];
+    const existingAiParts = Array.isArray(referenceEntry.aiGradedParts)
+      ? referenceEntry.aiGradedParts
+      : Array.isArray(referenceEntry.ai_graded_parts)
+        ? referenceEntry.ai_graded_parts
+        : [];
+    const partGrading = { ...(referenceEntry.partGrading || referenceEntry.part_grading || {}) };
+
+    taskParts.forEach((partId) => {
+      const existing = partGrading[partId] || {};
+      partGrading[partId] = {
+        ...existing,
+        label: existing.label || `${partId} Schreiben`,
+        hasReferenceAnswers: false,
+        gradingMode: "ai_written_response",
+        instruction: existing.instruction || task.gradingInstruction || task.taskText,
+      };
+    });
+
+    referenceEntry.expectedParts = [...new Set([...existingExpectedParts, ...taskParts])];
+    referenceEntry.writingParts = [...new Set([...existingWritingParts, ...taskParts])];
+    referenceEntry.aiGradedParts = [...new Set([...existingAiParts, ...taskParts])];
+    referenceEntry.partGrading = partGrading;
+  }
+
+  referenceEntry.questionAwareWritingTask = task;
   return {
     ...options,
-    referenceEntry: { ...(options.referenceEntry || {}), questionAwareWritingTask: task },
+    referenceEntry,
     submission: { ...(options.submission || {}), questionAwareWritingTask: task },
   };
 }
 
-function writingText(submissionText = "") {
-  let source = String(submissionText || "").trim();
-  const laterPart = source.search(/(?:^|\n)\s*(?:teil\s*[34]|lesen|reading|h[oö]ren|hoeren|listening)\b/i);
-  if (laterPart >= 0) source = source.slice(0, laterPart);
-  return source.replace(/^\s*teil\s*2\b[^\n]*[:·]?\s*/i, "").trim();
+function normalizedPartId(value = "") {
+  const match = String(value || "").trim().toLowerCase().match(/(?:teil|tiel|part)?\s*([1-4])\b/);
+  return match ? `teil${match[1]}` : "";
+}
+
+function extractSubmissionPart(submissionText = "", partId = "") {
+  const source = String(submissionText || "").replace(/\r/g, "");
+  const normalized = normalizedPartId(partId);
+  const number = normalized.match(/([1-4])$/)?.[1];
+  if (!number) return "";
+
+  const marker = new RegExp(`(?:^|\\n)\\s*(?:teil|tiel|part)\\s*${number}\\b[^\\n]*\\n?`, "i");
+  const start = source.search(marker);
+  if (start < 0) return "";
+
+  const fromStart = source.slice(start);
+  const heading = fromStart.match(marker)?.[0] || "";
+  const bodyStart = start + heading.length;
+  const tail = source.slice(bodyStart);
+  const next = tail.search(/(?:^|\n)\s*(?:teil|tiel|part)\s*[1-4]\b[^\n]*/i);
+  return (next >= 0 ? tail.slice(0, next) : tail).trim();
+}
+
+function writingPartIds(task = {}) {
+  const ids = Array.isArray(task.partIds) ? task.partIds : [];
+  return [...new Set(ids.map(normalizedPartId).filter(Boolean))];
+}
+
+function primaryWritingPartId(task = {}) {
+  return writingPartIds(task)[0] || "teil2";
+}
+
+function writingText(submissionText = "", task = {}) {
+  const source = String(submissionText || "").trim();
+  const declaredParts = writingPartIds(task);
+  if (declaredParts.length) {
+    const extracted = declaredParts
+      .map((partId) => ({ partId, text: extractSubmissionPart(source, partId) }))
+      .filter((item) => item.text);
+    if (extracted.length) {
+      return extracted.map((item) => `${item.partId}\n${item.text}`).join("\n\n");
+    }
+  }
+
+  let fallback = source;
+  const laterPart = fallback.search(/(?:^|\n)\s*(?:teil\s*[34]|lesen|reading|h[oö]ren|hoeren|listening)\b/i);
+  if (laterPart >= 0) fallback = fallback.slice(0, laterPart);
+  return fallback.replace(/^\s*teil\s*2\b[^\n]*[:·]?\s*/i, "").trim();
 }
 
 function readStructuredTask(result = {}) {
@@ -235,11 +335,14 @@ function guardCapForMissing(missingCount, total) {
   return 85;
 }
 
-function updateWritingParts(parts = [], score) {
+function updateWritingParts(parts = [], score, task = {}) {
   if (!Array.isArray(parts)) return parts;
+  const declared = new Set(writingPartIds(task));
+  const multiPartWriting = declared.size > 1;
   return parts.map((part) => {
-    const isWriting = part?.partType === "writing" || String(part?.partId || "").toLowerCase() === "teil2";
-    if (!isWriting) return part;
+    const partId = normalizedPartId(part?.partId || "");
+    const isWriting = part?.partType === "writing" || declared.has(partId) || (!declared.size && partId === "teil2");
+    if (!isWriting || multiPartWriting) return part;
     return {
       ...part,
       score,
@@ -269,12 +372,12 @@ function hasConcreteCorrections(result = {}) {
   });
 }
 
-function deterministicLanguageCorrections(source = "") {
+function deterministicLanguageCorrections(source = "", partId = "teil2") {
   const corrections = [];
   const hopeClause = String(source || "").match(/\bIch\s+hoffe\s+es\s+geht\s+dir\s+gut\./i);
   if (hopeClause?.[0]) {
     corrections.push({
-      partId: "teil2",
+      partId,
       from: hopeClause[0],
       to: hopeClause[0].replace(/\bhoffe\s+/i, "hoffe, "),
       reason: "Set a comma after „Ich hoffe“ before the following clause.",
@@ -284,7 +387,7 @@ function deterministicLanguageCorrections(source = "") {
   const spacedQuestion = String(source || "").match(/\bWie\s+ist\s+dein(?:e)?\s+(?:Chef|Chefin)\s+\?/i);
   if (spacedQuestion?.[0]) {
     corrections.push({
-      partId: "teil2",
+      partId,
       from: spacedQuestion[0],
       to: spacedQuestion[0].replace(/\s+\?$/, "?"),
       reason: "Do not put a space before a German question mark.",
@@ -416,8 +519,8 @@ function calibratedCompleteWritingScore({
   const deterministicFriendshipComplete = task.assignmentKey === "B1-1.2"
     && configuredTotal === 3
     && localMissing.length === 0;
-  // Semantic A2/B1 evidence validates task completion; it does not manufacture a higher language score.
-  if (task.rubricVersion === A2_WRITING_RUBRIC_VERSION || task.rubricVersion === B1_WRITING_RUBRIC_VERSION) {
+  // Semantic A1/A2/B1 evidence validates task completion; it does not manufacture a higher language score.
+  if ([A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion)) {
     return currentWritingScore;
   }
   if (!structuredComplete && !deterministicFriendshipComplete) return currentWritingScore;
@@ -428,19 +531,21 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
   const task = options.referenceEntry?.questionAwareWritingTask
     || options.submission?.questionAwareWritingTask
     || resolveQuestionAwareWritingTask(options);
-  if (!task || !["A2", "B1"].includes(task.level)) return result;
+  if (!task || !["A1", "A2", "B1"].includes(task.level)) return result;
 
   const currentWritingScore = numericPercent(result.writingScorePercent ?? result.writingScore);
   if (currentWritingScore === null) return result;
 
-  const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "");
-  const deterministicCorrections = deterministicLanguageCorrections(source);
+  const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "", task);
+  const deterministicCorrections = deterministicLanguageCorrections(source, primaryWritingPartId(task));
   const structured = readStructuredTask(result);
-  const taskPointEvidence = task.level === "A2"
-    ? evaluateWritingTaskEvidence(task, source)
-    : task.level === "B1" && task.rubricVersion === B1_WRITING_RUBRIC_VERSION
-      ? evaluateB1WritingTaskEvidence(task, source)
-      : [];
+  const taskPointEvidence = task.level === "A1" && task.rubricVersion === A1_WRITING_RUBRIC_VERSION
+    ? evaluateA1WritingTaskEvidence(task, source)
+    : task.level === "A2"
+      ? evaluateWritingTaskEvidence(task, source)
+      : task.level === "B1" && task.rubricVersion === B1_WRITING_RUBRIC_VERSION
+        ? evaluateB1WritingTaskEvidence(task, source)
+        : [];
   const canonicalSemanticMissing = taskPointEvidence.length
     ? missingTaskPointsFromEvidence(taskPointEvidence)
     : [];
@@ -452,7 +557,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ? structured.missing.filter((item) => configuredPointSet.has(clean(item)))
     : structured.missing;
   const missingTaskPoints = [...new Set([...structuredMissing, ...localMissing])];
-  const semanticTask = task.rubricVersion === A2_WRITING_RUBRIC_VERSION || task.rubricVersion === B1_WRITING_RUBRIC_VERSION;
+  const semanticTask = [A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion);
   const total = semanticTask
     ? (task.taskPoints?.length || 0)
     : Math.max(structured.total || 0, task.taskPoints?.length || 0, missingTaskPoints.length ? 3 : 0);
@@ -469,7 +574,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     && Math.max(0, total - missingTaskPoints.length) >= 1
     && !legacyEssayMismatch;
   const localRecoveredWritingScore = suspiciousZeroWriting
-    ? numericPercent(heuristicWritingMarker({ level: task.level, partId: "teil2", text: source })?.score)
+    ? numericPercent(heuristicWritingMarker({ level: task.level, partId: primaryWritingPartId(task), text: source })?.score)
     : null;
   const effectiveWritingScore = localRecoveredWritingScore && localRecoveredWritingScore > 0
     ? localRecoveredWritingScore
@@ -498,7 +603,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         corrections: mergeCorrections(result.corrections, deterministicCorrections),
         writingDimensions: dimensions,
         reviewReasons: mergeReviewReasons(result.reviewReasons, contradictionReviewReasons(contradictions)),
-        markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+        markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
         status: suspiciousZeroWriting || contradictions.length ? "needs_review" : result.status,
         shouldSendAutomatically: suspiciousZeroWriting || contradictions.length ? false : result.shouldSendAutomatically,
         ai: {
@@ -525,14 +630,14 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       markingPolicy: weightedOutcome.policy,
       writingScore: calibratedWritingScore,
       writingScorePercent: calibratedWritingScore,
-      parts: updateWritingParts(result.parts, calibratedWritingScore),
+      parts: updateWritingParts(result.parts, calibratedWritingScore, task),
       taskCompletion: { completed, total, missing: [] },
       missingTaskPoints: [],
       taskPointEvidence,
       corrections: mergeCorrections(result.corrections, deterministicCorrections),
       writingDimensions: dimensions,
       reviewReasons: mergeReviewReasons(result.reviewReasons, contradictionReviewReasons(contradictions)),
-      markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+      markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
       status: contradictions.length ? "needs_review" : result.status,
       shouldSendAutomatically: contradictions.length ? false : result.shouldSendAutomatically,
       ai: {
@@ -548,7 +653,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
           calibratedWritingScore,
           reason: recoveredSuspiciousZero
             ? "A substantive task-complete response received an impossible zero, so Falowen recovered a local writing score before applying any calibration."
-            : "Complete task, correct text type/register, and no concrete writing correction supported a B1/A2 top-band floor.",
+            : "Question-aware task completion confirmed the response without replacing the examiner's language score.",
         },
       },
     };
@@ -602,14 +707,14 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     markingPolicy: weightedOutcome.policy,
     writingScore: guardedWritingScore,
     writingScorePercent: guardedWritingScore,
-    parts: updateWritingParts(result.parts, guardedWritingScore),
+    parts: updateWritingParts(result.parts, guardedWritingScore, task),
     taskCompletion: { completed, total, missing: missingTaskPoints },
     missingTaskPoints,
     taskPointEvidence,
     corrections: mergeCorrections(result.corrections, deterministicCorrections),
     writingDimensions: dimensions,
     reviewReasons: mergeReviewReasons(result.reviewReasons, guardReviewReasons),
-    markingRubricVersion: task.rubricVersion || (task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
+    markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
     feedback: [result.feedback, guardFeedback].filter(Boolean).join(" "),
     improvementSummary: [result.improvementSummary, guardFeedback].filter(Boolean).join(" "),
     status: "needs_review",
