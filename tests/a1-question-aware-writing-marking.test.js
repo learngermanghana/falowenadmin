@@ -215,13 +215,18 @@ Ama`;
   assert.equal(guarded.finalScore, 90);
 });
 
-test("A1 answer manifest registers the real writing sections without changing objective references", () => {
+test("legacy flat A1 objective manifests stay unchanged while canonical tasks declare Schreiben", () => {
   for (const id of ["A1-1.1", "A1-1.2", "A1-14.1"]) {
     const entry = referenceEntry(id);
-    assert.deepEqual(entry.writingParts, ["teil2"], id);
-    assert.deepEqual(entry.aiGradedParts, ["teil2"], id);
+    const task = resolveQuestionAwareWritingTask({
+      referenceEntry: entry,
+      submission: { assignmentId: id, level: "A1" },
+    });
+    assert.equal(entry.format, "objective", id);
+    assert.deepEqual(entry.expectedParts, ["main"], id);
     assert.deepEqual(entry.referenceAnswerParts, ["main"], id);
-    assert.deepEqual(entry.expectedParts, ["main", "teil2"], id);
-    assert.equal(entry.partGrading?.teil2?.gradingMode, "ai_written_response", id);
+    assert.equal(entry.writingParts, undefined, id);
+    assert.deepEqual(task.partIds, ["teil2"], id);
+    assert.equal(task.rubricVersion, A1_WRITING_RUBRIC_VERSION, id);
   }
 });
