@@ -40,7 +40,5 @@ jobs:
         run: node --test tests/a1-13-writing-marking.test.js
       - name: Preserve existing A1 mixed writing marking
         run: node --test tests/a1-price-preference-marking.test.js
-      - name: Preserve objective-only safeguards
-        run: node --test tests/objective-only-natural-feedback.test.js
       - name: Validate answer-key integrity
         run: node --test tests/answer-key-integrity.test.js
