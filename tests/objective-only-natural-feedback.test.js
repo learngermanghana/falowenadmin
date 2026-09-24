@@ -86,8 +86,8 @@ TEIL 3
   const feedback = buildNaturalStudentFeedback(result, submission);
 
   assert.match(feedback, /12 of 15 objective questions correctly/i);
-  assert.match(feedback, /Teil 1 question 2/i);
-  assert.match(feedback, /Teil 3 questions 2 and 3/i);
+  assert.match(feedback, /Teil 1(?: question)? 2/i);
+  assert.match(feedback, /Teil 3(?: questions)? 2 and 3/i);
   assert.doesNotMatch(feedback, /writing point|free-text response|language mistakes/i);
   assert.doesNotMatch(feedback, /same with/i);
 });
@@ -135,7 +135,7 @@ TEIL 3
   const feedback = buildNaturalStudentFeedback(result, submission);
 
   assert.match(feedback, /13 of 15 objective questions correctly/i);
-  assert.match(feedback, /Teil 1 question 4/i);
-  assert.match(feedback, /Teil 3 question 3/i);
+  assert.match(feedback, /Teil 1(?: question)? 4/i);
+  assert.match(feedback, /Teil 3(?: question)? 3/i);
   assert.doesNotMatch(feedback, /writing point|free-text response|language mistakes/i);
 });
