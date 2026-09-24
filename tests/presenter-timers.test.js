@@ -157,8 +157,10 @@ test("attendance-owned timer is consumed as authoritative shared state", () => {
   assert.match(source, /const attendanceControlsTimer = presenterLive\.isToday/);
   assert.match(source, /liveState\.classStartSource === "checkin"/);
   assert.match(source, /sessionTimingAuthority \|\| "attendance"/);
-  assert.match(source, /const remoteEndAt = remoteRunning/);
+  assert.match(source, /const candidateRemoteEndAt = remoteRunning/);
   assert.match(source, /rawRemoteEndAt \|\| derivedCheckinEndAt/);
+  assert.match(source, /const maximumAllowedEndAt/);
+  assert.match(source, /Math\.min\(candidateRemoteEndAt, maximumAllowedEndAt\)/);
   assert.match(source, /Math\.min\(durationSeconds, Math\.ceil\(\(remoteEndAt - nowMs\) \/ 1000\)\)/);
   assert.match(source, /if \(attendanceControlsTimer\) return;/);
   assert.match(source, /Managed by Attendance/);
