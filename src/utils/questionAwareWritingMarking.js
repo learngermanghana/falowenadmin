@@ -136,9 +136,50 @@ export function resolveQuestionAwareWritingTask(options = {}) {
 export function enrichOptionsWithQuestionAwareWritingTask(options = {}) {
   const task = resolveQuestionAwareWritingTask(options);
   if (!task) return options;
+
+  const referenceEntry = { ...(options.referenceEntry || {}) };
+  if (task.level === "A1") {
+    const taskParts = Array.isArray(task.partIds)
+      ? [...new Set(task.partIds.map((value) => String(value || "").trim().toLowerCase()).filter(Boolean))]
+      : [];
+    const existingExpectedParts = Array.isArray(referenceEntry.expectedParts)
+      ? referenceEntry.expectedParts
+      : Array.isArray(referenceEntry.expected_parts)
+        ? referenceEntry.expected_parts
+        : [];
+    const existingWritingParts = Array.isArray(referenceEntry.writingParts)
+      ? referenceEntry.writingParts
+      : Array.isArray(referenceEntry.writing_parts)
+        ? referenceEntry.writing_parts
+        : [];
+    const existingAiParts = Array.isArray(referenceEntry.aiGradedParts)
+      ? referenceEntry.aiGradedParts
+      : Array.isArray(referenceEntry.ai_graded_parts)
+        ? referenceEntry.ai_graded_parts
+        : [];
+    const partGrading = { ...(referenceEntry.partGrading || referenceEntry.part_grading || {}) };
+
+    taskParts.forEach((partId) => {
+      const existing = partGrading[partId] || {};
+      partGrading[partId] = {
+        ...existing,
+        label: existing.label || `${partId} Schreiben`,
+        hasReferenceAnswers: false,
+        gradingMode: "ai_written_response",
+        instruction: existing.instruction || task.gradingInstruction || task.taskText,
+      };
+    });
+
+    referenceEntry.expectedParts = [...new Set([...existingExpectedParts, ...taskParts])];
+    referenceEntry.writingParts = [...new Set([...existingWritingParts, ...taskParts])];
+    referenceEntry.aiGradedParts = [...new Set([...existingAiParts, ...taskParts])];
+    referenceEntry.partGrading = partGrading;
+  }
+
+  referenceEntry.questionAwareWritingTask = task;
   return {
     ...options,
-    referenceEntry: { ...(options.referenceEntry || {}), questionAwareWritingTask: task },
+    referenceEntry,
     submission: { ...(options.submission || {}), questionAwareWritingTask: task },
   };
 }
