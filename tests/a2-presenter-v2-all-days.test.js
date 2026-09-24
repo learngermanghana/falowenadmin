@@ -19,7 +19,7 @@ const ASSIGNMENT_IDS = [
 
 const REQUIRED_STAGES = [
   "intro", "warmup", "phrases", "grammar", "examples",
-  "practice", "workbook", "mistakes", "questions", "wrapup",
+  "practice", "workbook", "mistakes", "questions",
 ];
 
 test("A2 Teaching Slides expose the complete 28-day workbook-aligned course", () => {
@@ -53,6 +53,7 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     REQUIRED_STAGES.forEach((stageId) => {
       assert.ok(stageIds.includes(stageId), `${slide.assignmentId} missing ${stageId}`);
     });
+    assert.equal(stageIds.includes("wrapup"), false, `${slide.assignmentId} should not show the redundant mini-presentation slide`);
 
     const practice = stages.find((stage) => stage.id === "practice");
     const workbook = stages.find((stage) => stage.id === "workbook");

@@ -38,27 +38,34 @@ for (const level of ["A2", "B1"]) {
     }
   });
 
-  test(`${level} wrap-up keeps the lesson task but presents it as connected speech`, () => {
+  test(`${level} removes the redundant mini-presentation page from every lesson`, () => {
     for (const slide of getSlidesByCourse(level)) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
-      const wrapup = stages.find((stage) => stage.id === "wrapup");
-      assert.ok(wrapup, `${slide.assignmentId} missing wrap-up`);
-      assert.equal(wrapup.title, "Mini-Präsentation");
-      assert.match(wrapup.body, /Heute möchte ich über das Thema/);
-      assert.match(wrapup.body, /Zusammenfassend/);
+      const ids = stages.map((stage) => stage.id);
+      const renderedText = stages.map((stage) => [
+        stage.title,
+        stage.body,
+        ...(Array.isArray(stage.items) ? stage.items : []),
+      ].filter(Boolean).join(" ")).join(" ");
 
-      const original = String(slide.wrapUpTaskDe || "").trim();
-      if (original) assert.ok(wrapup.body.includes(original), `${slide.assignmentId} lost lesson-specific wrap-up task`);
+      assert.equal(ids.includes("wrapup"), false, `${slide.assignmentId} still has a wrap-up page`);
+      assert.doesNotMatch(renderedText, /Mini-Präsentation/);
+      assert.doesNotMatch(renderedText, /Heute möchte ich über das Thema/);
     }
   });
 }
 
-test("A2 person-description wrap-up preserves the grammar target inside presentation form", () => {
-  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-1.2");
+test("A2 Day 4 no longer renders the meeting mini-presentation prompt", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.4");
   assert.ok(slide);
-  const wrapup = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "wrapup");
-  assert.match(wrapup.body, /Heute möchte ich über das Thema/);
-  assert.match(wrapup.body, /reale Person/i);
-  assert.match(wrapup.body, /ein\/eine\/einen|ein.*Adjektiv.*Nomen/i);
-  assert.match(wrapup.body, /weil/i);
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const renderedText = stages.map((stage) => [
+    stage.title,
+    stage.body,
+    ...(Array.isArray(stage.items) ? stage.items : []),
+  ].filter(Boolean).join(" ")).join(" ");
+
+  assert.doesNotMatch(renderedText, /Plane ein Treffen in 4–5 Sätzen/);
+  assert.doesNotMatch(renderedText, /Heute möchte ich über das Thema/);
+  assert.equal(stages.some((stage) => stage.id === "wrapup"), false);
 });
