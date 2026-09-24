@@ -221,7 +221,7 @@ function writingCorrection(result = {}) {
 }
 
 function writingTip(submissionText = "", result = {}) {
-  if (result.hasRegisteredWriting === false) return "";
+  if (result.hasRegisteredWriting !== true) return "";
 
   const text = String(submissionText || "");
   if (looksLikeObjectiveAnswerList(text)) return "";
@@ -283,6 +283,7 @@ export function enforceRegisteredWritingScore(result = {}, referenceEntry = {}) 
     writingScore: null,
     writingScorePercent: null,
     maxWritingScore: null,
+    hasRegisteredWriting: false,
     status: "marked",
     shouldSendAutomatically: false,
     ai: {
