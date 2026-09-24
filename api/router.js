@@ -100,6 +100,23 @@ function normalizeExpectedParts(value, parts = {}) {
   return fromParts.length ? fromParts : ["main"];
 }
 
+function declaredWritingPartIds(referenceEntry = {}) {
+  const declared = [
+    ...(Array.isArray(referenceEntry.writingParts) ? referenceEntry.writingParts : []),
+    ...(Array.isArray(referenceEntry.writing_parts) ? referenceEntry.writing_parts : []),
+    ...(Array.isArray(referenceEntry.aiGradedParts) ? referenceEntry.aiGradedParts : []),
+    ...(Array.isArray(referenceEntry.ai_graded_parts) ? referenceEntry.ai_graded_parts : []),
+    ...Object.entries(referenceEntry.partGrading || referenceEntry.part_grading || {})
+      .filter(([, grading]) => /(?:ai[_ -]?written[_ -]?response|writing|schreiben)/i.test(String(grading?.gradingMode || grading?.mode || "")))
+      .map(([partId]) => partId),
+  ];
+  return [...new Set(declared.map(normalizeExpectedPartId).filter(Boolean))];
+}
+
+function primaryWritingPartId(referenceEntry = {}) {
+  return declaredWritingPartIds(referenceEntry)[0] || "teil2";
+}
+
 function inferQuestionNumber(key = "", fallbackIndex = 0, value = "") {
   const fromValue = String(value || "").match(/(?:frage|answer|antwort|aufgabe|task|exercise|nr\.?|q)\s*(\d{1,3})\b/i);
   if (fromValue?.[1]) return fromValue[1];
@@ -823,6 +840,7 @@ function hasWritingPart(result = {}) {
 }
 
 function isFlatObjectiveOnly(referenceEntry = {}) {
+  if (declaredWritingPartIds(referenceEntry).length) return false;
   const normalized = normalizeReferenceEntry(referenceEntry);
   const partIds = Object.keys(normalized.parts || {});
   return String(referenceEntry.format || "").toLowerCase() === "objective" && partIds.length === 1 && partIds[0] === "main";
@@ -831,6 +849,7 @@ function isFlatObjectiveOnly(referenceEntry = {}) {
 function shouldMarkWriting(payload = {}) {
   const referenceEntry = payload.referenceEntry || {};
   const submissionText = payload.submissionText || payload.submission?.text || "";
+  if (declaredWritingPartIds(referenceEntry).length) return true;
   if (isFlatObjectiveOnly(referenceEntry)) return false;
   return /(teil\s*2|part\s*2|schreiben|writing)/i.test(submissionText);
 }
@@ -961,7 +980,12 @@ function buildDeterministicObjectiveResult(payload = {}, existingResult = {}) {
     level: referenceEntry.level || payload.level || existingResult.level || "UNKNOWN",
     assignmentKey: referenceEntry.assignmentKey || payload.assignmentKey || existingResult.assignmentKey || "",
     detectedParts: [
-      ...(hasWriting ? [{ partId: "teil2", partType: "writing", answerCount: 1, summary: "teil2: writing answer marked" }] : []),
+      ...(hasWriting ? [{
+        partId: primaryWritingPartId(referenceEntry),
+        partType: "writing",
+        answerCount: 1,
+        summary: `${primaryWritingPartId(referenceEntry)}: writing answer marked`,
+      }] : []),
       ...deterministicObjective.detectedParts,
     ],
     expectedParts: referenceEntry.expectedParts || existingResult.expectedParts || [],
