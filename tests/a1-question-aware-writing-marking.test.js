@@ -53,17 +53,23 @@ test("A1 letter writing is limited to 12.3, 13 and 14.1", () => {
   }
 });
 
-test("A1 has six canonical question-aware tutor-marked writing tasks", () => {
+test("A1 question-aware writing only covers the real writing tasks", () => {
   const specs = getA1WritingTaskSpecs();
-  assert.equal(specs.length, 6);
-  assert.equal(new Set(specs.map((spec) => spec.assignmentKey)).size, 6);
-  for (const key of ["A1-1.1", "A1-1.2", "A1-3", "A1-12.3", "A1-13", "A1-14.1"]) {
+  assert.equal(specs.length, 4);
+  assert.deepEqual(
+    specs.map((spec) => spec.assignmentKey),
+    ["A1-3", "A1-12.3", "A1-13", "A1-14.1"],
+  );
+  for (const key of ["A1-3", "A1-12.3", "A1-13", "A1-14.1"]) {
     const spec = getA1WritingTaskSpec(key);
     assert.ok(spec, key);
     assert.equal(spec.level, "A1");
     assert.equal(spec.rubricVersion, A1_WRITING_RUBRIC_VERSION);
     assert.ok(spec.taskPoints.length >= 3);
   }
+  assert.equal(getA1WritingTaskSpec("A1-1.1"), null);
+  assert.equal(getA1WritingTaskSpec("A1-1.2"), null);
+  assert.equal(getA1WritingTaskSpec("A1-12.2"), null);
 });
 
 test("raw A1 dictionary IDs resolve the exact question and A1-simple grading instruction", () => {
@@ -230,25 +236,36 @@ Ama`;
   assert.equal(guarded.finalScore, 90);
 });
 
-test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only at marking time", () => {
-  for (const id of ["A1-1.1", "A1-1.2", "A1-14.1"]) {
+test("objective-only A1 days never gain runtime writing metadata", () => {
+  for (const id of ["A1-1.1", "A1-1.2", "A1-12.2"]) {
     const entry = referenceEntry(id);
-    assert.equal(entry.format, "objective", id);
-    assert.deepEqual(entry.expectedParts, ["main"], id);
-    assert.deepEqual(entry.referenceAnswerParts, ["main"], id);
-    assert.equal(entry.writingParts, undefined, id);
-
     const enriched = enrichOptionsWithQuestionAwareWritingTask({
       referenceEntry: entry,
       submission: { assignmentId: id, level: "A1" },
     });
-    const task = enriched.referenceEntry.questionAwareWritingTask;
-    assert.deepEqual(task.partIds, ["teil2"], id);
-    assert.equal(task.rubricVersion, A1_WRITING_RUBRIC_VERSION, id);
-    assert.deepEqual(enriched.referenceEntry.expectedParts, ["main", "teil2"], id);
-    assert.deepEqual(enriched.referenceEntry.writingParts, ["teil2"], id);
-    assert.deepEqual(enriched.referenceEntry.aiGradedParts, ["teil2"], id);
-    assert.equal(enriched.referenceEntry.partGrading?.teil2?.gradingMode, "ai_written_response", id);
-    assert.deepEqual(enriched.referenceEntry.referenceAnswerParts, ["main"], id);
+    assert.deepEqual(enriched.referenceEntry || entry, entry, id);
+    assert.equal(enriched.referenceEntry?.questionAwareWritingTask, undefined, id);
+    assert.equal(enriched.referenceEntry?.writingParts, undefined, id);
   }
+});
+
+test("A1-14.1 gains its real letter-writing metadata only at marking time", () => {
+  const entry = referenceEntry("A1-14.1");
+  assert.equal(entry.format, "objective");
+  assert.deepEqual(entry.expectedParts, ["main"]);
+  assert.deepEqual(entry.referenceAnswerParts, ["main"]);
+  assert.equal(entry.writingParts, undefined);
+
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: entry,
+    submission: { assignmentId: "A1-14.1", level: "A1" },
+  });
+  const task = enriched.referenceEntry.questionAwareWritingTask;
+  assert.deepEqual(task.partIds, ["teil2"]);
+  assert.equal(task.letterWriting, true);
+  assert.deepEqual(enriched.referenceEntry.expectedParts, ["main", "teil2"]);
+  assert.deepEqual(enriched.referenceEntry.writingParts, ["teil2"]);
+  assert.deepEqual(enriched.referenceEntry.aiGradedParts, ["teil2"]);
+  assert.equal(enriched.referenceEntry.partGrading?.teil2?.gradingMode, "ai_written_response");
+  assert.deepEqual(enriched.referenceEntry.referenceAnswerParts, ["main"]);
 });
