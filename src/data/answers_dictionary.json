@@ -76,7 +76,8 @@
     "format": "objective",
     "assignment_id": "A1-1.1",
     "expectedParts": [
-      "main"
+      "main",
+      "teil2"
     ],
     "answerLayout": "flat",
     "referenceAnswerParts": [
@@ -84,12 +85,24 @@
     ],
     "partGrading": {
       "main": {
-        "label": "main",
+        "label": "Objective work",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+      },
+      "teil2": {
+        "label": "Teil 2 Schreiben",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Teil 2 is an A1 self-introduction. Grade the exact workbook task: the student should use simple A1 sentences to include a greeting, their name, where they come from, where they live, and a farewell. Grade task completion plus understandable sentence structure, basic verb forms, word order, spelling and capitalization. Reward simple correct A1 German; do not require advanced connectors or vocabulary."
       }
-    }
+    },
+    "writingParts": [
+      "teil2"
+    ],
+    "aiGradedParts": [
+      "teil2"
+    ]
   },
   "A1 Numbers and Addresses 2": {
     "answers": {
@@ -149,7 +162,8 @@
     "format": "objective",
     "assignment_id": "A1-1.2",
     "expectedParts": [
-      "main"
+      "main",
+      "teil2"
     ],
     "answerLayout": "flat",
     "referenceAnswerParts": [
@@ -157,13 +171,25 @@
     ],
     "partGrading": {
       "main": {
-        "label": "main",
+        "label": "Objective work",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+      },
+      "teil2": {
+        "label": "Teil 2 Schreiben",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Teil 2 is an A1 self-introduction paragraph. Grade the exact workbook task: include a greeting, the student's name, where they come from, and where they live. Grade task completion plus understandable sentence structure, basic present-tense verb forms, word order, spelling and capitalization. Reward simple correct A1 German; do not require advanced connectors or vocabulary."
       }
     },
-    "answerMatchingMode": "subject_verb"
+    "answerMatchingMode": "subject_verb",
+    "writingParts": [
+      "teil2"
+    ],
+    "aiGradedParts": [
+      "teil2"
+    ]
   },
   "A1 Countries and Languages 4": {
     "answers": {
@@ -669,13 +695,13 @@
         "label": "informal letter",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Grade the student's informal letter using the A1 writing rubric."
+        "instruction": "Teil 1 is an A1 informal birthday message to a friend. Required points: say why you are writing, congratulate the friend, ask whether there is a party, ask whether your family can come, and use an appropriate informal greeting and closing with the student's name. Grade the exact task using simple A1 expectations."
       },
       "teil2": {
         "label": "formal letter",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Grade the student's formal letter using the A1 writing rubric."
+        "instruction": "Teil 2 is an A1 formal email to a language school. Required points: say why you are writing, ask when the course begins, ask how much it costs, ask whether online payment is possible, and use an appropriate formal greeting and formal closing with the student's name. Grade the exact task using simple A1 expectations."
       }
     }
   },
@@ -745,7 +771,8 @@
     "format": "objective",
     "assignment_id": "A1-14.1",
     "expectedParts": [
-      "main"
+      "main",
+      "teil2"
     ],
     "answerLayout": "flat",
     "referenceAnswerParts": [
@@ -753,12 +780,24 @@
     ],
     "partGrading": {
       "main": {
-        "label": "main",
+        "label": "Teil 1 + Teil 3 objective work",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+      },
+      "teil2": {
+        "label": "Teil 2 Schreiben",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Teil 2 is an A1 informal email to Felix. He invited the student to his birthday, but the student cannot attend. Required communicative points: explain why they are writing or say they cannot attend, give one health-related reason connected to the lesson (for example 'Ich bin krank.' or a simple pain/illness sentence), and ask for another date or suggest another meeting. Grade task completion, informal email form, basic grammar, word order, spelling and capitalization. Keep corrections and model phrases simple A1 and task-appropriate."
       }
-    }
+    },
+    "writingParts": [
+      "teil2"
+    ],
+    "aiGradedParts": [
+      "teil2"
+    ]
   },
   "A2 1.1 Small Talk": {
     "answers": {
@@ -3963,7 +4002,7 @@
         "label": "Teil 2 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. Grade it with AI using A1 task completion, understandable sentences, basic verb forms, spelling, capitalization, plural forms, vocabulary, and clarity. Do not mark it wrong because there is no fixed reference answer."
+        "instruction": "Teil 2 is the A1 family-writing task. The student writes one short connected text about their family. The workbook gives family members, names/ages, jobs, hobbies and where the family lives as support ideas; do not require every support idea as a separate compulsory point. Grade whether the response is genuinely about the student's family, includes concrete family details, and is understandable A1 German. Also assess basic verb forms, spelling, capitalization, plural forms, vocabulary and clarity. Reward simple correct A1 sentences."
       }
     },
     "writingParts": [
