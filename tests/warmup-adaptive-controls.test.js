@@ -63,3 +63,31 @@ test("per-student warm-up uses the speaking timer instead of the short answer ti
   assert.match(presenter, /responseTimerEnabled=\{!warmupPerStudent\}/);
   assert.match(picker, /responseTimerEnabled = true/);
 });
+
+
+test("teacher can tick warm-up questions as the student answers them", () => {
+  assert.match(presenter, /const \[warmupAnswered, setWarmupAnswered\] = useState\(\{\}\)/);
+  assert.match(presenter, /function toggleWarmupAnswered\(questionIndexValue\)/);
+  assert.match(presenter, /type="checkbox"/);
+  assert.match(presenter, /checked=\{Boolean\(warmupAnswered\[itemIndex\]\)\}/);
+  assert.match(presenter, /Mark warm-up question \$\{itemIndex \+ 1\} as answered/);
+  assert.match(presenter, /Tick when answered/);
+  assert.match(presenter, /Answered/);
+});
+
+test("warm-up checklist shows coverage and clears for the next student", () => {
+  assert.match(presenter, /visibleWarmupAnsweredCount/);
+  assert.match(presenter, /visibleWarmupMissedCount/);
+  assert.match(presenter, /Covered \{visibleWarmupAnsweredCount\}\/\{visibleWarmupQuestionCount\}/);
+  assert.match(presenter, /still to answer/);
+  assert.match(presenter, /all covered/);
+  assert.match(presenter, /function resetWarmupStudent\(\)[\s\S]*setWarmupAnswered\(\{\}\)/);
+});
+
+test("answered warm-up questions are clearly visible on the projector", () => {
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  assert.match(css, /\.presenter-warmup-question-card\.is-answered/);
+  assert.match(css, /\.presenter-warmup-answer-check/);
+  assert.match(css, /\.presenter-warmup-answer-check input/);
+  assert.match(css, /\.presenter-warmup-coverage/);
+});
