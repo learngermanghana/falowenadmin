@@ -13,7 +13,6 @@ on:
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
       - 'scripts/patchA1WritingPlaceholderReferences.mjs'
       - 'scripts/patchA1PricePreferenceMarking.mjs'
-      - 'scripts/patchObjectiveOnlyNaturalFeedback.mjs'
       - 'scripts/patchObjectiveSectionHeadingPunctuation.mjs'
       - 'scripts/patchObjectiveGrammarConsistency.mjs'
       - 'scripts/patchInlineObjectiveSectionAnswers.mjs'
@@ -24,7 +23,6 @@ on:
       - 'tests/objective-punctuated-section-headings.test.js'
       - 'tests/objective-question-form-choice.test.js'
       - 'tests/objective-time-answer-parsing.test.js'
-      - 'tests/objective-only-natural-feedback.test.js'
       - 'tests/objective-inline-part-headings.test.js'
       - 'package.json'
       - '.github/workflows/objective-time-answer-tests.yml'
@@ -71,7 +69,6 @@ jobs:
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
           node scripts/patchA1PricePreferenceMarking.mjs
-          node scripts/patchObjectiveOnlyNaturalFeedback.mjs
           node scripts/patchObjectiveSectionHeadingPunctuation.mjs
           node scripts/patchObjectiveGrammarConsistency.mjs
           node scripts/patchInlineObjectiveSectionAnswers.mjs
@@ -80,7 +77,6 @@ jobs:
           node scripts/patchObjectiveAnswerTimeParsing.mjs
           node scripts/patchObjectivePromptAnswerParsing.mjs
           node scripts/patchA1PricePreferenceMarking.mjs
-          node scripts/patchObjectiveOnlyNaturalFeedback.mjs
           node scripts/patchObjectiveSectionHeadingPunctuation.mjs
           node scripts/patchObjectiveGrammarConsistency.mjs
           node scripts/patchInlineObjectiveSectionAnswers.mjs
@@ -127,5 +123,3 @@ jobs:
         run: node --test tests/objective-inline-part-headings.test.js
       - name: Test multipart feedback labels
         run: node --test --test-name-pattern="labels each group" tests/objective-time-answer-parsing.test.js
-      - name: Test objective-only writing feedback guard
-        run: node --test tests/objective-only-natural-feedback.test.js
