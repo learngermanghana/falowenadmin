@@ -52,6 +52,13 @@ test("A1-13 explicitly registers Teil 3 as AI-scored Schreiben", () => {
   assert.equal(assignmentHasScoredWriting(referenceEntry), true);
 });
 
+test("objective-only A1 assignments remain objective-only", () => {
+  const referenceEntry = Object.values(answersDictionary)
+    .find((entry) => String(entry?.assignment_id || "").toUpperCase() === "A1-0.1");
+  assert.ok(referenceEntry, "A1-0.1 reference entry must exist");
+  assert.equal(assignmentHasScoredWriting(referenceEntry), false);
+});
+
 test("A1-13 routes Teil 3 to the writing marker instead of objective marking", () => {
   const referenceEntry = a113Reference();
   const calls = [];
