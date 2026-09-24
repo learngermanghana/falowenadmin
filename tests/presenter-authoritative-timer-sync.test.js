@@ -18,3 +18,26 @@ test("class timer accepts newest shared timer even when unrelated presenter stat
   assert.match(source, /remoteEndAt - nowMs/);
   assert.match(source, /Math\.min\(durationSeconds/);
 });
+
+
+test("presenter subscribes to the attendance-selected session instead of a stale active session", () => {
+  const hook = read("src/hooks/usePresenterLiveSession.js");
+  assert.match(hook, /const requestedSessionKey = normalize\(classContext\.sessionKey\)/);
+  assert.match(hook, /subscribePresenterLiveSession\([\s\S]*requestedSessionKey,[\s\S]*\);/);
+  assert.match(hook, /\[classRecordId, requestedSessionKey\]/);
+});
+
+test("attendance-owned countdown can never display longer than the configured class duration", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  assert.match(source, /lastRemoteTimerStampRef\.current = 0/);
+  assert.match(source, /const maximumAllowedEndAt/);
+  assert.match(source, /Math\.min\(candidateRemoteEndAt, maximumAllowedEndAt\)/);
+  assert.match(source, /Math\.min\(durationSeconds, Math\.ceil\(\(endAt - Date\.now\(\)\) \/ 1000\)\)/);
+});
+
+test("attendance reconnect repairs stale duration even if the old shared timer is not running", () => {
+  const source = read("src/pages/CheckinDisplayPage.jsx");
+  assert.match(source, /shared\.classStartSource === "checkin"[\s\S]*timerDurationMismatch \|\| timerRemainingTooLong/);
+  assert.match(source, /sharedIsActive && presenterLiveState\.classStartSource !== "checkin"/);
+  assert.match(source, /Attendance-owned sessions are revalidated against the level duration/);
+});
