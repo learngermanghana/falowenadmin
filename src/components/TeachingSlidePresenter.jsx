@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildTeachingPresenterStages,
   clampPresenterIndex,
@@ -10,6 +10,7 @@ import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
+const WARMUP_PREPARATION_MINUTES = 5;
 
 function formatTimer(totalSeconds = 0) {
   const safeSeconds = Math.max(0, Number(totalSeconds || 0));
@@ -119,6 +120,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [warmupQuestionCount, setWarmupQuestionCount] = useState(4);
   const [warmupMinutes, setWarmupMinutes] = useState(5);
   const [warmupSupportOpen, setWarmupSupportOpen] = useState({});
+  const warmupAudioContextRef = useRef(null);
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -163,10 +165,42 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setTimerRunning(false);
   }
 
+  function ensureWarmupAudioContext() {
+    if (typeof window === "undefined") return null;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    if (!warmupAudioContextRef.current) warmupAudioContextRef.current = new AudioContextClass();
+    const context = warmupAudioContextRef.current;
+    if (context.state === "suspended") context.resume().catch(() => {});
+    return context;
+  }
+
+  function playWarmupTransitionBeep() {
+    try {
+      const context = ensureWarmupAudioContext();
+      if (!context) return;
+      [660, 820, 980].forEach((frequency, index) => {
+        const start = context.currentTime + (index * 0.2);
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.045, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(start);
+        oscillator.stop(start + 0.16);
+      });
+    } catch {
+      // The visual Presentation state still appears when browser audio is blocked.
+    }
+  }
+
   function startWarmupPreparation() {
     if (!warmupPerStudent) return;
+    ensureWarmupAudioContext();
     setTimerMode("prepare");
-    setTimerRemaining(30);
+    setTimerRemaining(WARMUP_PREPARATION_MINUTES * 60);
     setTimerRunning(true);
   }
 
