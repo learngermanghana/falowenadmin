@@ -24,6 +24,7 @@ const REQUIRED_CORE_STAGES = [
   "practice",
   "mistakes",
   "questions",
+  ...(LEVEL === "A1" ? ["wrapup"] : []),
 ];
 
 const normalize = (value = "") => String(value || "").trim();
