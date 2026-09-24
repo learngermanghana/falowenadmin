@@ -76,8 +76,7 @@
     "format": "objective",
     "assignment_id": "A1-1.1",
     "expectedParts": [
-      "main",
-      "teil2"
+      "main"
     ],
     "answerLayout": "flat",
     "referenceAnswerParts": [
@@ -85,24 +84,12 @@
     ],
     "partGrading": {
       "main": {
-        "label": "Objective work",
+        "label": "main",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
-      },
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is an A1 self-introduction. Grade the exact workbook task: the student should use simple A1 sentences to include a greeting, their name, where they come from, where they live, and a farewell. Grade task completion plus understandable sentence structure, basic verb forms, word order, spelling and capitalization. Reward simple correct A1 German; do not require advanced connectors or vocabulary."
       }
-    },
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ]
+    }
   },
   "A1 Numbers and Addresses 2": {
     "answers": {
@@ -162,8 +149,7 @@
     "format": "objective",
     "assignment_id": "A1-1.2",
     "expectedParts": [
-      "main",
-      "teil2"
+      "main"
     ],
     "answerLayout": "flat",
     "referenceAnswerParts": [
@@ -171,25 +157,13 @@
     ],
     "partGrading": {
       "main": {
-        "label": "Objective work",
+        "label": "main",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
-      },
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is an A1 self-introduction paragraph. Grade the exact workbook task: include a greeting, the student's name, where they come from, and where they live. Grade task completion plus understandable sentence structure, basic present-tense verb forms, word order, spelling and capitalization. Reward simple correct A1 German; do not require advanced connectors or vocabulary."
       }
     },
-    "answerMatchingMode": "subject_verb",
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ]
+    "answerMatchingMode": "subject_verb"
   },
   "A1 Countries and Languages 4": {
     "answers": {
@@ -771,8 +745,7 @@
     "format": "objective",
     "assignment_id": "A1-14.1",
     "expectedParts": [
-      "main",
-      "teil2"
+      "main"
     ],
     "answerLayout": "flat",
     "referenceAnswerParts": [
@@ -780,24 +753,12 @@
     ],
     "partGrading": {
       "main": {
-        "label": "Teil 1 + Teil 3 objective work",
+        "label": "main",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
-      },
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is an A1 informal email to Felix. He invited the student to his birthday, but the student cannot attend. Required communicative points: explain why they are writing or say they cannot attend, give one health-related reason connected to the lesson (for example 'Ich bin krank.' or a simple pain/illness sentence), and ask for another date or suggest another meeting. Grade task completion, informal email form, basic grammar, word order, spelling and capitalization. Keep corrections and model phrases simple A1 and task-appropriate."
       }
-    },
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ]
+    }
   },
   "A2 1.1 Small Talk": {
     "answers": {
