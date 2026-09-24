@@ -266,18 +266,30 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     const timer = window.setInterval(() => {
       setTimerRemaining((current) => {
         if (current <= 1) {
-          if (timerMode === "prepare" && warmupPerStudent) {
-            setTimerMode("warmup");
-            return Math.max(1, Number(warmupMinutes || 5)) * 60;
-          }
-          setTimerRunning(false);
+          if (timerMode !== "prepare") setTimerRunning(false);
           return 0;
         }
         return current - 1;
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [timerRunning, timerRemaining, timerMode, warmupPerStudent, warmupMinutes]);
+  }, [timerRunning, timerRemaining, timerMode]);
+
+  useEffect(() => {
+    if (!warmupPerStudent || timerMode !== "prepare" || !timerRunning || timerRemaining !== 0) return;
+    playWarmupTransitionBeep();
+    setTimerMode("warmup");
+    setTimerRemaining(Math.max(1, Number(warmupMinutes || 5)) * 60);
+    setTimerRunning(false);
+  }, [timerMode, timerRemaining, timerRunning, warmupPerStudent, warmupMinutes]);
+
+  useEffect(() => () => {
+    try {
+      warmupAudioContextRef.current?.close?.();
+    } catch {
+      // Nothing to clean up when browser audio is unavailable.
+    }
+  }, []);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -335,9 +347,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </label>
 
               <div className={`presenter-timer ${timerExpired ? "presenter-timer-expired" : ""}`}>
-                {warmupPerStudent ? <span className="presenter-timer-mode">{timerMode === "prepare" ? "Prepare · 30 sec" : `Speaking · ${warmupMinutes} min`}</span> : null}
+                {warmupPerStudent ? <span className="presenter-timer-mode">{timerMode === "prepare" ? `Class preparation · ${WARMUP_PREPARATION_MINUTES} min` : `Presentation · ${warmupMinutes} min`}</span> : null}
                 <strong>{formatTimer(timerRemaining)}</strong>
-                {warmupPerStudent ? <button type="button" onClick={startWarmupPreparation}>Prepare 30s</button> : null}
+                {warmupPerStudent ? <button type="button" onClick={startWarmupPreparation}>Prepare class {WARMUP_PREPARATION_MINUTES}m</button> : null}
                 <button type="button" onClick={() => setTimerRunning((current) => !current)} disabled={timerRemaining <= 0}>
                   {timerRunning ? "Pause" : "Start"}
                 </button>
