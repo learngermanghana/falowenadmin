@@ -27,9 +27,16 @@ const newDetectPartType = `function detectPartType({ partId, text, referenceEntr
 
 if (source.includes(oldDetectPartType)) {
   source = source.replace(oldDetectPartType, newDetectPartType);
-} else if (!source.includes("Assignment metadata must win over the legacy convention")) {
+} else if (
+  !source.includes("Assignment metadata must win over the legacy convention")
+  && !source.includes("const declaredWritingParts = [")
+) {
   throw new Error("Could not find detectPartType patch target in autoMarking.js");
 }
+// Newer source routes parts from writingParts/aiGradedParts/partGrading first.
+// Do not replace that manifest-aware implementation with the older
+// format === "objective" shortcut, because mixed A1 workbooks can have
+// objective Teil 1/2 and Schreiben in Teil 3.
 
 const oldObjectivePartFilter = '  return [...new Set(partIds)].filter((partId) => partId !== "teil2");';
 const newObjectivePartFilter = '  return [...new Set(partIds)].filter((partId) => partId !== "teil2" || detectPartType({ partId, text: "", referenceEntry }) === "objective");';
