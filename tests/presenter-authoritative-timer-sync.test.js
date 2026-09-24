@@ -23,8 +23,10 @@ test("class timer accepts newest shared timer even when unrelated presenter stat
 test("presenter subscribes to the attendance-selected session instead of a stale active session", () => {
   const hook = read("src/hooks/usePresenterLiveSession.js");
   assert.match(hook, /const requestedSessionKey = normalize\(classContext\.sessionKey\)/);
-  assert.match(hook, /subscribePresenterLiveSession\([\s\S]*requestedSessionKey,[\s\S]*\);/);
-  assert.match(hook, /\[classRecordId, requestedSessionKey\]/);
+  assert.match(hook, /requestedSessionKey\.startsWith\(\`\$\{sessionDate\}__\`\)/);
+  assert.match(hook, /const subscriptionSessionKey/);
+  assert.match(hook, /subscribePresenterLiveSession\([\s\S]*subscriptionSessionKey,[\s\S]*\);/);
+  assert.match(hook, /\[classRecordId, subscriptionSessionKey\]/);
 });
 
 test("attendance-owned countdown can never display longer than the configured class duration", () => {
