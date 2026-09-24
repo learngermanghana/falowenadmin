@@ -73,29 +73,6 @@ function countFamilyDetailTypes(source = "") {
   return patterns.reduce((count, pattern) => count + (pattern.test(source) ? 1 : 0), 0);
 }
 
-function evaluateA11(taskPoints, source) {
-  const g = greeting(source, false);
-  const c = closing(source, false);
-  const rules = [
-    row(taskPoints[0], g.met, g.evidence),
-    row(taskPoints[1], /\b(?:ich\s+heiße|mein\s+name\s+ist)\b/i.test(source), sentenceFor(source, /\b(?:ich\s+heiße|mein\s+name\s+ist)\b/i)),
-    row(taskPoints[2], /\bich\s+komme\s+aus\b/i.test(source), sentenceFor(source, /\bich\s+komme\s+aus\b/i)),
-    row(taskPoints[3], /\bich\s+wohne\s+in\b/i.test(source), sentenceFor(source, /\bich\s+wohne\s+in\b/i)),
-    row(taskPoints[4], c.met, c.evidence),
-  ];
-  return rules;
-}
-
-function evaluateA112(taskPoints, source) {
-  const g = greeting(source, false);
-  return [
-    row(taskPoints[0], g.met, g.evidence),
-    row(taskPoints[1], /\b(?:ich\s+heiße|mein\s+name\s+ist)\b/i.test(source), sentenceFor(source, /\b(?:ich\s+heiße|mein\s+name\s+ist)\b/i)),
-    row(taskPoints[2], /\bich\s+komme\s+aus\b/i.test(source), sentenceFor(source, /\bich\s+komme\s+aus\b/i)),
-    row(taskPoints[3], /\bich\s+wohne\s+in\b/i.test(source), sentenceFor(source, /\bich\s+wohne\s+in\b/i)),
-  ];
-}
-
 function evaluateA13(taskPoints, source) {
   const familyPattern = /\b(?:familie|mutter|vater|eltern|bruder|schwester|geschwister|sohn|tochter|kind(?:er)?|ehemann|ehefrau|oma|opa|großmutter|großvater|tante|onkel|cousin|cousine)\b/i;
   const memberPattern = /\b(?:mutter|vater|eltern|bruder|schwester|geschwister|sohn|tochter|kind(?:er)?|ehemann|ehefrau|oma|opa|großmutter|großvater|tante|onkel|cousin|cousine)\b/i;
@@ -169,8 +146,6 @@ export function evaluateA1WritingTaskEvidence(task = {}, source = "") {
   const taskPoints = Array.isArray(task.taskPoints) ? task.taskPoints : [];
   const assignmentKey = String(task.assignmentKey || "").trim().toUpperCase();
 
-  if (assignmentKey === "A1-1.1") return evaluateA11(taskPoints, source);
-  if (assignmentKey === "A1-1.2") return evaluateA112(taskPoints, source);
   if (assignmentKey === "A1-3") return evaluateA13(taskPoints, source);
   if (assignmentKey === "A1-12.3") return evaluateA1123(taskPoints, source);
   if (assignmentKey === "A1-13") return evaluateA113(taskPoints, source);
