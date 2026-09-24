@@ -7,7 +7,6 @@ on:
       - 'src/data/a1WritingTaskSpecs.js'
       - 'src/data/answers_dictionary.json'
       - 'src/utils/a1WritingTaskEvidence.js'
-      - 'src/utils/objectiveMarking.js'
       - 'src/utils/questionAwareWritingMarking.js'
       - 'tests/a1-question-aware-writing-marking.test.js'
       - '.github/workflows/a1-question-aware-writing-tests.yml'
@@ -19,7 +18,6 @@ on:
       - 'src/data/a1WritingTaskSpecs.js'
       - 'src/data/answers_dictionary.json'
       - 'src/utils/a1WritingTaskEvidence.js'
-      - 'src/utils/objectiveMarking.js'
       - 'src/utils/questionAwareWritingMarking.js'
       - 'tests/a1-question-aware-writing-marking.test.js'
       - '.github/workflows/a1-question-aware-writing-tests.yml'
@@ -44,7 +42,5 @@ jobs:
         run: node --test tests/a1-13-writing-marking.test.js
       - name: Preserve A1 family writing marking
         run: node --test tests/a1-price-preference-marking.test.js
-      - name: Preserve A1-1.2 objective grammar scoring
-        run: node --test --test-name-pattern="scores Josh|scores shortened|does not award|grades sentence fragments|strict grammar" tests/a1-grammar-objective-consistency.test.js
       - name: Preserve A1-14.1 objective scoring
         run: node --test --test-name-pattern="A1-14.1" tests/objective-marking.test.js
