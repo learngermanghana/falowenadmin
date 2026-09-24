@@ -170,6 +170,12 @@ function detectPartType({ partId, text, referenceEntry = {} } = {}) {
     : [];
   if (declaredObjectiveParts.includes(normalizedPartId)) return "objective";
 
+  // Once the manifest explicitly declares a writing part, do not let the
+  // legacy A2/B1 convention ("Teil 2 = Schreiben") reclassify sibling parts.
+  // This is required for A1 mixed assignments such as A1-13 where Teil 2 is
+  // objective and Teil 3 is Schreiben.
+  if (declaredWritingParts.length && format === "objective") return "objective";
+
   if (partId === "teil2") return "writing";
   if (["teil3", "teil4"].includes(partId)) return "objective";
   if (looksLikeWritingTask(text)) return "writing";
