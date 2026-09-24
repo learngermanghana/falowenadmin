@@ -37,12 +37,14 @@ const scoreFieldsBefore = [
   '    writingScore: null,',
   '    writingScorePercent: null,',
   '    maxWritingScore: null,',
+  '    hasRegisteredWriting: false,',
   '    status: "marked",',
 ].join("\n");
 const scoreFieldsAfter = [
   '    writingScore: null,',
   '    writingScorePercent: null,',
   '    maxWritingScore: null,',
+  '    hasRegisteredWriting: false,',
   '    taskCompletion: null,',
   '    missingTaskPoints: [],',
   '    omittedTaskPoints: [],',
