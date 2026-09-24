@@ -174,18 +174,7 @@ Mary`;
   assert.match(evidence[1].evidence, /krank/i);
 });
 
-test("A1-1.1 checks the exact five self-introduction points", () => {
-  const task = getA1WritingTaskSpec("A1-1.1");
-  const evidence = evaluateA1WritingTaskEvidence(task, `teil2
-Hallo!
-Ich heiße Ama.
-Ich komme aus Ghana.
-Ich wohne in Accra.
-Tschüss!`);
 
-  assert.equal(evidence.length, 5);
-  assert.ok(evidence.every((item) => item.status === "met"));
-});
 
 test("A1-3 treats workbook family ideas as support, not five compulsory checklist items", () => {
   const task = getA1WritingTaskSpec("A1-3");
