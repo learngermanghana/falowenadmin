@@ -24,7 +24,6 @@ const REQUIRED_CORE_STAGES = [
   "practice",
   "mistakes",
   "questions",
-  "wrapup",
 ];
 
 const normalize = (value = "") => String(value || "").trim();
@@ -82,6 +81,7 @@ for (const [index, slide] of slides.entries()) {
   const grammar = stageMap.get("grammar");
   const examples = stageMap.get("examples");
   const practice = stageMap.get("practice");
+  const warmup = stageMap.get("warmup");
   const questions = stageMap.get("questions");
   const mistakes = stageMap.get("mistakes");
   const wrapup = stageMap.get("wrapup");
@@ -93,7 +93,7 @@ for (const [index, slide] of slides.entries()) {
     Array.isArray(questions.supportItems) &&
     questions.supportItems.length >= 3 &&
     mistakes &&
-    wrapup
+    (LEVEL === "A2" ? warmup : wrapup)
   );
   const produce = tutorial || Boolean(
     practice &&
@@ -110,7 +110,14 @@ for (const [index, slide] of slides.entries()) {
     slide.workbookConnection ||
     (LEVEL === "A1" && normalize(slide.assignmentId))
   );
-  const assess = tutorial || Boolean(wrapup && questions);
+  // A2 deliberately removes the duplicate mini-presentation wrap-up page.
+  // Its warm-up plus question-reveal speaking checks already provide the
+  // learner production/assessment evidence that the old page duplicated.
+  const assess = tutorial || Boolean(
+    LEVEL === "A2"
+      ? warmup && Array.isArray(warmup.items) && warmup.items.length > 0 && questions
+      : wrapup && questions
+  );
 
   const coverage = [teach, check, produce, transfer, assess].filter(Boolean).length;
 
