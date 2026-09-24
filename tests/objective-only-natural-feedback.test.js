@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildNaturalStudentFeedback } from "../src/utils/naturalMarkingFeedback.js";
+import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
+import {
+  assignmentHasScoredWriting,
+  buildNaturalStudentFeedback,
+  enforceRegisteredWritingScore,
+} from "../src/utils/naturalMarkingFeedback.js";
 
 test("A1-0.1 objective-only test does not get generic free-text writing feedback", () => {
   const result = {
@@ -93,16 +98,21 @@ TEIL 3
 });
 
 test("A1-12.2 objective-only feedback never adds a writing point from sentence-style objective answers", () => {
-  const result = {
+  const referenceEntry = Object.values(answersDictionary)
+    .find((entry) => String(entry?.assignment_id || "").toUpperCase() === "A1-12.2");
+  assert.ok(referenceEntry);
+  assert.equal(referenceEntry.format, "objective");
+  assert.equal(assignmentHasScoredWriting(referenceEntry), false);
+
+  const result = enforceRegisteredWritingScore({
     studentName: "Adu Yaw Andrews",
     assignmentKey: "A1-12.2",
     level: "A1",
     objectiveScore: 86.67,
     objectiveCorrect: 13,
     objectiveTotal: 15,
-    hasRegisteredWriting: false,
-    writingScore: null,
-    writingScorePercent: null,
+    writingScore: 74,
+    writingScorePercent: 74,
     wrongAnswers: [
       { partId: "teil1", question: 4, student: "Er arbeitet von 7:30 Uhr bis 17:00 Uhr.", expected: "Um 7:30 Uhr" },
       { partId: "teil3", question: 3, student: "C", expected: "A" },
@@ -110,7 +120,13 @@ test("A1-12.2 objective-only feedback never adds a writing point from sentence-s
     corrections: [
       { partId: "teil1", from: "Er arbeitet von 7:30 Uhr bis 17:00 Uhr.", to: "Um 7:30 Uhr" },
     ],
-  };
+    aiDetailedFeedback: "Also check this writing point: write Um 7:30 Uhr.",
+  }, referenceEntry);
+
+  assert.equal(result.hasRegisteredWriting, false);
+  assert.equal(result.writingScore, null);
+  assert.equal(result.writingScorePercent, null);
+
   const submission = `TEIL 1
 1. Er wohnt in Berlin.
 2. Mit seiner Frau und seinen drei Kindern.
@@ -137,5 +153,5 @@ TEIL 3
   assert.match(feedback, /13 of 15 objective questions correctly/i);
   assert.match(feedback, /Teil 1(?: question)? 4/i);
   assert.match(feedback, /Teil 3(?: question)? 3/i);
-  assert.doesNotMatch(feedback, /writing point|free-text response|language mistakes/i);
+  assert.doesNotMatch(feedback, /writing point|free-text response|language mistakes|letter|email/i);
 });
