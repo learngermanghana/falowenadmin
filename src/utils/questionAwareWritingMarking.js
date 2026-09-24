@@ -531,7 +531,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     && Math.max(0, total - missingTaskPoints.length) >= 1
     && !legacyEssayMismatch;
   const localRecoveredWritingScore = suspiciousZeroWriting
-    ? numericPercent(heuristicWritingMarker({ level: task.level, partId, text: source })?.score)
+    ? numericPercent(heuristicWritingMarker({ level: task.level, partId: primaryWritingPartId(task), text: source })?.score)
     : null;
   const effectiveWritingScore = localRecoveredWritingScore && localRecoveredWritingScore > 0
     ? localRecoveredWritingScore
