@@ -44,6 +44,8 @@ export default function usePresenterLiveSession(slide = {}) {
     });
   }), []);
 
+  const requestedSessionKey = normalize(classContext.sessionKey);
+
   useEffect(() => {
     setLiveState({});
     setHasSnapshot(false);
@@ -63,8 +65,9 @@ export default function usePresenterLiveSession(slide = {}) {
         console.error("presenter live-session subscription failed", error);
         setSyncState("offline");
       },
+      requestedSessionKey,
     );
-  }, [classRecordId]);
+  }, [classRecordId, requestedSessionKey]);
 
   useEffect(() => {
     const nextSessionKey = normalize(liveState?.sessionKey);
