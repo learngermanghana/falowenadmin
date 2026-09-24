@@ -7,8 +7,12 @@ on:
       - 'src/data/a1WritingTaskSpecs.js'
       - 'src/data/answers_dictionary.json'
       - 'src/utils/a1WritingTaskEvidence.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'scripts/patchObjectiveOnlyNaturalFeedback.mjs'
       - 'src/utils/questionAwareWritingMarking.js'
       - 'tests/a1-question-aware-writing-marking.test.js'
+      - 'tests/objective-only-natural-feedback.test.js'
       - '.github/workflows/a1-question-aware-writing-tests.yml'
   push:
     branches:
@@ -18,8 +22,12 @@ on:
       - 'src/data/a1WritingTaskSpecs.js'
       - 'src/data/answers_dictionary.json'
       - 'src/utils/a1WritingTaskEvidence.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'src/utils/essayFeedbackEvidence.js'
+      - 'scripts/patchObjectiveOnlyNaturalFeedback.mjs'
       - 'src/utils/questionAwareWritingMarking.js'
       - 'tests/a1-question-aware-writing-marking.test.js'
+      - 'tests/objective-only-natural-feedback.test.js'
       - '.github/workflows/a1-question-aware-writing-tests.yml'
 
 jobs:
@@ -38,6 +46,14 @@ jobs:
           node --check src/utils/questionAwareWritingMarking.js
       - name: Run A1 question-aware writing regressions
         run: node --test tests/a1-question-aware-writing-marking.test.js
+      - name: Apply objective-only feedback guard twice
+        run: |
+          node scripts/patchObjectiveOnlyNaturalFeedback.mjs
+          node scripts/patchObjectiveOnlyNaturalFeedback.mjs
+          node --check src/utils/naturalMarkingFeedback.js
+          node --check src/utils/essayFeedbackEvidence.js
+      - name: Block false A1 writing feedback
+        run: node --test tests/objective-only-natural-feedback.test.js
       - name: Preserve A1-13 mixed marking
         run: node --test tests/a1-13-writing-marking.test.js
       - name: Preserve A1 family writing marking
