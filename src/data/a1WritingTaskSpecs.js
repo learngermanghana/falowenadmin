@@ -5,35 +5,6 @@ const A1_LETTER_WRITING_SET = new Set(A1_LETTER_WRITING_ASSIGNMENTS);
 
 const rows = [
   [
-    "A1-1.1",
-    "Personalpronomen und Verbkonjugation",
-    "writing",
-    "unspecified",
-    ["teil2"],
-    "Write a short self-introduction. Use simple A1 sentences. Include your name, where you come from and where you live. Use at least one greeting and one farewell.",
-    [
-      "Begin with a greeting",
-      "State your name",
-      "Say where you come from",
-      "Say where you live",
-      "End with a farewell"
-    ]
-  ],
-  [
-    "A1-1.2",
-    "Präsens und sich vorstellen",
-    "writing",
-    "unspecified",
-    ["teil2"],
-    "Write a short paragraph introducing yourself. Include a greeting, your name, where you come from and where you live.",
-    [
-      "Include a greeting",
-      "State your name",
-      "Say where you come from",
-      "Say where you live"
-    ]
-  ],
-  [
     "A1-3",
     "Über die Familie schreiben",
     "writing",
