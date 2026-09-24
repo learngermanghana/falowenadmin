@@ -10,6 +10,7 @@ import {
 import { evaluateA1WritingTaskEvidence } from "../src/utils/a1WritingTaskEvidence.js";
 import {
   applyQuestionAwareWritingGuard,
+  enrichOptionsWithQuestionAwareWritingTask,
   resolveQuestionAwareWritingTask,
 } from "../src/utils/questionAwareWritingMarking.js";
 
@@ -215,18 +216,25 @@ Ama`;
   assert.equal(guarded.finalScore, 90);
 });
 
-test("legacy flat A1 objective manifests stay unchanged while canonical tasks declare Schreiben", () => {
+test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only at marking time", () => {
   for (const id of ["A1-1.1", "A1-1.2", "A1-14.1"]) {
     const entry = referenceEntry(id);
-    const task = resolveQuestionAwareWritingTask({
-      referenceEntry: entry,
-      submission: { assignmentId: id, level: "A1" },
-    });
     assert.equal(entry.format, "objective", id);
     assert.deepEqual(entry.expectedParts, ["main"], id);
     assert.deepEqual(entry.referenceAnswerParts, ["main"], id);
     assert.equal(entry.writingParts, undefined, id);
+
+    const enriched = enrichOptionsWithQuestionAwareWritingTask({
+      referenceEntry: entry,
+      submission: { assignmentId: id, level: "A1" },
+    });
+    const task = enriched.referenceEntry.questionAwareWritingTask;
     assert.deepEqual(task.partIds, ["teil2"], id);
     assert.equal(task.rubricVersion, A1_WRITING_RUBRIC_VERSION, id);
+    assert.deepEqual(enriched.referenceEntry.expectedParts, ["main", "teil2"], id);
+    assert.deepEqual(enriched.referenceEntry.writingParts, ["teil2"], id);
+    assert.deepEqual(enriched.referenceEntry.aiGradedParts, ["teil2"], id);
+    assert.equal(enriched.referenceEntry.partGrading?.teil2?.gradingMode, "ai_written_response", id);
+    assert.deepEqual(enriched.referenceEntry.referenceAnswerParts, ["main"], id);
   }
 });
