@@ -71,9 +71,13 @@ patchFile(new URL("../src/utils/naturalMarkingFeedback.js", import.meta.url), (s
     `export function assignmentHasScoredWriting(referenceEntry = {}) {\n  const rawAnswers = referenceEntry.rawAnswers || referenceEntry.answers || {};\n  const answerValues = Object.values(rawAnswers).map((value) => String(value || "").trim().toLowerCase());\n  if (${placeholderExpression}) return true;\n\n  const writingParts = [`,
     "feedback placeholder writing classification",
   );
+  const genericWritingRegistration = '  if (writingParts.length) return true;';
   const currentWritingRegistration = '  if (writingParts.includes("teil2") || writingParts.includes("main")) return true;';
   const legacyWritingRegistration = '  if (writingParts.includes("teil2")) return true;';
   const writingRegistration = '  if (writingParts.includes("teil1") || writingParts.includes("teil2") || writingParts.includes("main")) return true;';
+  // Newer marking code accepts any manifest-declared writing part (including A1 Teil 3).
+  // Treat that generic form as already patched instead of forcing the historical Teil 1/2/main list.
+  if (source.includes(genericWritingRegistration)) return source;
   if (!source.includes(writingRegistration)) {
     if (source.includes(currentWritingRegistration)) source = source.replace(currentWritingRegistration, writingRegistration);
     else source = replaceOnce(source, legacyWritingRegistration, writingRegistration, "A1 multi-part writing registration");
