@@ -1,5 +1,8 @@
 export const A1_WRITING_RUBRIC_VERSION = "a1-semantic-2026-09-24-v1";
 
+export const A1_LETTER_WRITING_ASSIGNMENTS = Object.freeze(["A1-12.3", "A1-13", "A1-14.1"]);
+const A1_LETTER_WRITING_SET = new Set(A1_LETTER_WRITING_ASSIGNMENTS);
+
 const rows = [
   [
     "A1-1.1",
@@ -102,6 +105,7 @@ const specs = rows.map(([assignmentKey, title, textType, register, partIds, task
   taskText,
   taskPoints,
   rubricVersion: A1_WRITING_RUBRIC_VERSION,
+  letterWriting: A1_LETTER_WRITING_SET.has(assignmentKey),
 }));
 
 const byKey = new Map(specs.map((spec) => [spec.assignmentKey, spec]));
@@ -112,4 +116,8 @@ export function getA1WritingTaskSpec(assignmentKey = "") {
 
 export function getA1WritingTaskSpecs() {
   return [...specs];
+}
+
+export function isA1LetterWritingAssignment(assignmentKey = "") {
+  return A1_LETTER_WRITING_SET.has(String(assignmentKey || "").trim().toUpperCase());
 }

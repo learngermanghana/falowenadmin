@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 
 import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
 import {
+  A1_LETTER_WRITING_ASSIGNMENTS,
   A1_WRITING_RUBRIC_VERSION,
   getA1WritingTaskSpec,
   getA1WritingTaskSpecs,
+  isA1LetterWritingAssignment,
 } from "../src/data/a1WritingTaskSpecs.js";
 import { evaluateA1WritingTaskEvidence } from "../src/utils/a1WritingTaskEvidence.js";
 import {
@@ -38,6 +40,18 @@ function baseResult(writingScore = 80, objectiveScore = 100) {
     parts: [],
   };
 }
+
+test("A1 letter writing is limited to 12.3, 13 and 14.1", () => {
+  assert.deepEqual(A1_LETTER_WRITING_ASSIGNMENTS, ["A1-12.3", "A1-13", "A1-14.1"]);
+  for (const key of ["A1-12.3", "A1-13", "A1-14.1"]) {
+    assert.equal(isA1LetterWritingAssignment(key), true, key);
+    assert.equal(getA1WritingTaskSpec(key)?.letterWriting, true, key);
+  }
+  for (const key of ["A1-1.1", "A1-1.2", "A1-3", "A1-12.1", "A1-12.2"]) {
+    assert.equal(isA1LetterWritingAssignment(key), false, key);
+    if (getA1WritingTaskSpec(key)) assert.equal(getA1WritingTaskSpec(key)?.letterWriting, false, key);
+  }
+});
 
 test("A1 has six canonical question-aware tutor-marked writing tasks", () => {
   const specs = getA1WritingTaskSpecs();

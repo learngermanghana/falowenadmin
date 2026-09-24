@@ -40,3 +40,102 @@ test("registered writing can still receive the generic proofreading tip", () => 
   const feedback = buildNaturalStudentFeedback(result, submission);
   assert.match(feedback, /free-text response/i);
 });
+
+
+test("A1-12.1 objective-only feedback never adds a writing point from stale AI corrections", () => {
+  const result = {
+    studentName: "Adu Yaw Andrews",
+    assignmentKey: "A1-12.1",
+    level: "A1",
+    objectiveScore: 80,
+    objectiveCorrect: 12,
+    objectiveTotal: 15,
+    hasRegisteredWriting: false,
+    writingScore: null,
+    writingScorePercent: null,
+    wrongAnswers: [
+      { partId: "teil1", question: 2, student: "C", expected: "A" },
+      { partId: "teil3", question: 2, student: "Falsch", expected: "A" },
+      { partId: "teil3", question: 3, student: "Falsch", expected: "A" },
+    ],
+    corrections: [
+      { partId: "teil1", from: "same witht is", to: "same with this" },
+    ],
+  };
+  const submission = `TEIL 1
+1. B
+2. C
+3. B
+4. C
+5. C
+
+TEIL 2
+1. Falsch
+2. Falsch
+3. Falsch
+4. Falsch
+5. Falsch
+
+TEIL 3
+1. Richtig
+2. Falsch
+3. Falsch
+4. Richtig
+5. Richtig`;
+
+  const feedback = buildNaturalStudentFeedback(result, submission);
+
+  assert.match(feedback, /12 of 15 objective questions correctly/i);
+  assert.match(feedback, /Teil 1(?: question)? 2/i);
+  assert.match(feedback, /Teil 3(?: questions)? 2 and 3/i);
+  assert.doesNotMatch(feedback, /writing point|free-text response|language mistakes/i);
+  assert.doesNotMatch(feedback, /same with/i);
+});
+
+test("A1-12.2 objective-only feedback never adds a writing point from sentence-style objective answers", () => {
+  const result = {
+    studentName: "Adu Yaw Andrews",
+    assignmentKey: "A1-12.2",
+    level: "A1",
+    objectiveScore: 86.67,
+    objectiveCorrect: 13,
+    objectiveTotal: 15,
+    hasRegisteredWriting: false,
+    writingScore: null,
+    writingScorePercent: null,
+    wrongAnswers: [
+      { partId: "teil1", question: 4, student: "Er arbeitet von 7:30 Uhr bis 17:00 Uhr.", expected: "Um 7:30 Uhr" },
+      { partId: "teil3", question: 3, student: "C", expected: "A" },
+    ],
+    corrections: [
+      { partId: "teil1", from: "Er arbeitet von 7:30 Uhr bis 17:00 Uhr.", to: "Um 7:30 Uhr" },
+    ],
+  };
+  const submission = `TEIL 1
+1. Er wohnt in Berlin.
+2. Mit seiner Frau und seinen drei Kindern.
+3. Er fährt mit seinem Auto zur arbeit.
+4. Er arbeitet von 7:30 Uhr bis 17:00 Uhr.
+5. A
+
+TEIL 2
+1. B
+2. B
+3. B
+4. B
+5. D
+
+TEIL 3
+1. B
+2. B
+3. C
+4. C
+5. C`;
+
+  const feedback = buildNaturalStudentFeedback(result, submission);
+
+  assert.match(feedback, /13 of 15 objective questions correctly/i);
+  assert.match(feedback, /Teil 1(?: question)? 4/i);
+  assert.match(feedback, /Teil 3(?: question)? 3/i);
+  assert.doesNotMatch(feedback, /writing point|free-text response|language mistakes/i);
+});

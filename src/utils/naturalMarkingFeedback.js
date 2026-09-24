@@ -221,6 +221,8 @@ function writingCorrection(result = {}) {
 }
 
 function writingTip(submissionText = "", result = {}) {
+  if (result.hasRegisteredWriting === false) return "";
+
   const text = String(submissionText || "");
   if (looksLikeObjectiveAnswerList(text)) return "";
 
