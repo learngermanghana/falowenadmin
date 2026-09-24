@@ -5,13 +5,25 @@ import fs from "node:fs";
 const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
 const picker = fs.readFileSync(new URL("../src/components/PresenterStudentPicker.jsx", import.meta.url), "utf8");
 
-test("warm-up has a 30-second preparation mode that rolls into speaking", () => {
+test("warm-up gives the whole class five minutes to prepare before presentations", () => {
+  assert.match(presenter, /WARMUP_PREPARATION_MINUTES = 5/);
   assert.match(presenter, /function startWarmupPreparation\(\)/);
   assert.match(presenter, /setTimerMode\("prepare"\)/);
-  assert.match(presenter, /setTimerRemaining\(30\)/);
-  assert.match(presenter, /timerMode === "prepare"/);
+  assert.match(presenter, /setTimerRemaining\(WARMUP_PREPARATION_MINUTES \* 60\)/);
+  assert.match(presenter, /Class preparation ·/);
+  assert.match(presenter, /Prepare class \{WARMUP_PREPARATION_MINUTES\}m/);
+  assert.match(presenter, /Presentation · \$\{warmupMinutes\} min/);
+});
+
+test("five-minute preparation ends with a beep and a ready presentation timer", () => {
+  assert.match(presenter, /function playWarmupTransitionBeep\(\)/);
+  assert.match(presenter, /\[660, 820, 980\]/);
+  assert.match(presenter, /timerMode !== "prepare"/);
+  assert.match(presenter, /timerRemaining !== 0/);
+  assert.match(presenter, /playWarmupTransitionBeep\(\)/);
   assert.match(presenter, /setTimerMode\("warmup"\)/);
-  assert.match(presenter, /Prepare 30s/);
+  assert.match(presenter, /setTimerRemaining\(Math\.max\(1, Number\(warmupMinutes \|\| 5\)\) \* 60\)/);
+  assert.match(presenter, /setTimerRunning\(false\)/);
 });
 
 test("teacher can choose one through four warm-up questions", () => {
