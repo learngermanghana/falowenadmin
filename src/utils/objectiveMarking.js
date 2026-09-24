@@ -1096,10 +1096,26 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const hasAnyMatchingPartSections = Boolean(referencePartIds.length) && referencePartIds.some((partId) => sectionPartIds.has(partId));
   let flatAnswers = flatMainReference ? chooseBestFlatAnswers(referenceItems, submissionText) : [];
   if (flatMainReference) {
+    const declaredWritingPartIds = new Set([
+      ...(Array.isArray(source?.writingParts) ? source.writingParts : []),
+      ...(Array.isArray(source?.writing_parts) ? source.writing_parts : []),
+      ...(Array.isArray(source?.aiGradedParts) ? source.aiGradedParts : []),
+      ...(Array.isArray(source?.ai_graded_parts) ? source.ai_graded_parts : []),
+    ].map(normalizePartId).filter((partId) => partId !== "main"));
+
     const sectionAnswers = sections
-      .filter((section) => section.partId !== "main")
+      .filter((section) => section.partId !== "main" && !declaredWritingPartIds.has(normalizePartId(section.partId)))
       .flatMap((section) => extractRestartedNumberingEntries(section.text).sort((a, b) => a.number - b.number).map((entry) => entry.answer));
-    if (scoreFlatCandidate(referenceItems, sectionAnswers).correct > scoreFlatCandidate(referenceItems, flatAnswers).correct) flatAnswers = sectionAnswers;
+
+    // When the workbook explicitly declares a separate writing part, its labelled
+    // objective sections are authoritative. Do not let a prose Schreiben block
+    // shift flat Answer1..N positions merely because an accidental alignment
+    // produces a numerically higher score.
+    if (declaredWritingPartIds.size && sectionAnswers.length >= referenceItems.length) {
+      flatAnswers = sectionAnswers.slice(0, referenceItems.length);
+    } else if (scoreFlatCandidate(referenceItems, sectionAnswers).correct > scoreFlatCandidate(referenceItems, flatAnswers).correct) {
+      flatAnswers = sectionAnswers;
+    }
   }
   const sequentialPartAnswers = hasAnyMatchingPartSections
     ? buildMixedPartAnswerMap(referenceItems, submissionText, sections, sectionPartIds)
