@@ -61,6 +61,8 @@ function normalizeAssignmentKey(value = "") {
 function assignmentKeyFromOptions(options = {}) {
   return normalizeAssignmentKey(
     options.referenceEntry?.assignmentKey
+      || options.referenceEntry?.assignmentId
+      || options.referenceEntry?.assignment_id
       || options.submission?.assignmentKey
       || options.submission?.assignmentId
       || options.assignmentKey
