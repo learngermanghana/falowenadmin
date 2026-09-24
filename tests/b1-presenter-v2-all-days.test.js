@@ -17,7 +17,6 @@ const REQUIRED_STAGES = [
   "workbook",
   "mistakes",
   "questions",
-  "wrapup",
 ];
 
 test("all 28 B1 lessons use Presenter 2.0", () => {
@@ -33,6 +32,7 @@ test("all 28 B1 lessons use Presenter 2.0", () => {
     REQUIRED_STAGES.forEach((stageId) => {
       assert.ok(stageIds.includes(stageId), `${slide.assignmentId} missing ${stageId}`);
     });
+    assert.equal(stageIds.includes("wrapup"), false, `${slide.assignmentId} should not show the redundant mini-presentation slide`);
 
     const questions = stages.find((stage) => stage.id === "questions");
     assert.equal(questions?.type, "question-reveal", `${slide.assignmentId} should reveal one question at a time`);
