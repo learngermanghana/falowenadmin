@@ -144,7 +144,7 @@ function evaluateA1123(taskPoints, source) {
 }
 
 function evaluateA113(taskPoints, source) {
-  const reason = /\b(?:hochzeit|einladung)\b[\s\S]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\bich\s+schreibe\s+dir\b[\s\S]{0,120}\bhochzeit\b/i;
+  const reason = /\b(?:hochzeit|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bhochzeit\b[^.!?]{0,60}\bkommen\b|\bich\s+schreibe\s+dir\b[^.!?]{0,120}\bhochzeit\b/i;
   const weather = /\b(?:sturm|schnee|schneit|regen|regnet|unwetter|eis|gl[aä]tte|wetter)\b/i;
   const suggestion = /\b(?:treffen|anderes\s+mal|n[aä]chste\s+woche|neuer?\s+termin|wann\s+k[oö]nnen\s+wir)\b/i;
   return [
@@ -155,7 +155,7 @@ function evaluateA113(taskPoints, source) {
 }
 
 function evaluateA1141(taskPoints, source) {
-  const reason = /\b(?:geburtstag|einladung)\b[\s\S]{0,120}\b(?:nicht\s+kommen|nicht\s+teilnehmen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\bich\s+schreibe\s+dir\b[\s\S]{0,120}\bgeburtstag\b/i;
+  const reason = /\b(?:geburtstag|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|nicht\s+teilnehmen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bgeburtstag\b[^.!?]{0,60}\b(?:kommen|teilnehmen)\b|\bich\s+schreibe\s+dir\b[^.!?]{0,120}\bgeburtstag\b/i;
   const health = /\b(?:krank|fieber|husten|erk[aä]ltet|schmerzen?|weh|kopfschmerzen?|halsschmerzen?|bauchschmerzen?|arzt|grippe)\b/i;
   const otherTime = /\b(?:ander(?:er|es)\s+termin|anderes\s+mal|n[aä]chste\s+woche|treffen|wann\s+k[oö]nnen\s+wir|k[oö]nnen\s+wir\s+uns)\b/i;
   return [
