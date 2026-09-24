@@ -149,6 +149,27 @@ function looksLikeWritingTask(text = "") {
 
 function detectPartType({ partId, text, referenceEntry = {} } = {}) {
   const format = String(referenceEntry?.format || "").toLowerCase();
+  const normalizedPartId = findPartId(partId) !== "unknown" ? findPartId(partId) : String(partId || "").trim().toLowerCase();
+  const declaredWritingParts = [
+    ...(Array.isArray(referenceEntry.writingParts) ? referenceEntry.writingParts : []),
+    ...(Array.isArray(referenceEntry.aiGradedParts) ? referenceEntry.aiGradedParts : []),
+    ...Object.entries(referenceEntry.partGrading || {})
+      .filter(([, grading]) => /(?:ai[_ -]?written[_ -]?response|writing|schreiben)/i.test(String(grading?.gradingMode || grading?.mode || "")))
+      .map(([candidatePartId]) => candidatePartId),
+  ].map((value) => {
+    const inferred = findPartId(value);
+    return inferred !== "unknown" ? inferred : String(value || "").trim().toLowerCase();
+  });
+  if (declaredWritingParts.includes(normalizedPartId)) return "writing";
+
+  const declaredObjectiveParts = Array.isArray(referenceEntry.referenceAnswerParts)
+    ? referenceEntry.referenceAnswerParts.map((value) => {
+        const inferred = findPartId(value);
+        return inferred !== "unknown" ? inferred : String(value || "").trim().toLowerCase();
+      })
+    : [];
+  if (declaredObjectiveParts.includes(normalizedPartId)) return "objective";
+
   if (partId === "teil2") return "writing";
   if (["teil3", "teil4"].includes(partId)) return "objective";
   if (looksLikeWritingTask(text)) return "writing";
