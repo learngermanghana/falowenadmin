@@ -101,6 +101,10 @@ export function resolveQuestionAwareWritingTask(options = {}) {
   const a1Spec = getA1WritingTaskSpec(assignmentKey);
   if (a1Spec) return applyAuthoritativeWritingOverride({ assignmentKey, level, ...a1Spec, source: "a1WritingTaskSpecs" });
 
+  // A1 writing scope is explicit. Do not infer extra A1 writing from teaching slides
+  // or generic registry text: only canonical A1 writing tasks may enter this path.
+  if (level === "A1") return null;
+
   const publishedTask = toQuestionAwareWritingTask(getCachedAssignmentRegistryEntry(assignmentKey) || {});
   if (publishedTask) return applyAuthoritativeWritingOverride(publishedTask);
 
