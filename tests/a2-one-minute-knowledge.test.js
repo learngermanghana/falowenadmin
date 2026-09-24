@@ -12,7 +12,7 @@ const A2_ASSIGNMENTS = [
 ];
 
 const ACTIONABLE_DAYS = ["A2-7.19", "A2-7.20", "A2-8.21", "A2-8.22", "A2-9.23", "A2-9.24", "A2-9.25"];
-const CORE_IDS = ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions", "wrapup"];
+const CORE_IDS = ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions"];
 const ACTION_IDS = ["grammar-check", "vocabulary-retrieval", "sentence-builder", "guided-action", "role-play"];
 
 test("all A2 chapters keep a usable warm-up and no one-minute reading stage", () => {
@@ -34,6 +34,7 @@ test("A2 Days 19 to 25 preserve the core lesson and add five actionable classroo
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const ids = stages.map((stage) => stage.id);
     for (const id of CORE_IDS) assert.ok(ids.includes(id), `${assignmentId} missing core stage ${id}`);
+    assert.equal(ids.includes("wrapup"), false, `${assignmentId} should not show the redundant mini-presentation slide`);
     for (const id of ACTION_IDS) {
       const stage = stages.find((entry) => entry.id === id);
       assert.ok(stage, `${assignmentId} missing actionable stage ${id}`);
