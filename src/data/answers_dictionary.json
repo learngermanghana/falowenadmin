@@ -695,7 +695,14 @@
     "format": "objective",
     "assignment_id": "A1-13",
     "expectedParts": [
-      "main"
+      "main",
+      "teil3"
+    ],
+    "writingParts": [
+      "teil3"
+    ],
+    "aiGradedParts": [
+      "teil3"
     ],
     "answerLayout": "flat",
     "referenceAnswerParts": [
@@ -703,10 +710,16 @@
     ],
     "partGrading": {
       "main": {
-        "label": "main",
+        "label": "Teil 1 + Teil 2 objective work",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+        "instruction": "Grade the nine objective answers against the direct Answer1, Answer2, etc. keys."
+      },
+      "teil3": {
+        "label": "Teil 3 Schreiben",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Teil 3 is an A1 informal email to Bina. She invited the student to her wedding, but the student cannot attend. Required communicative points: (1) explain why they are writing / say that they cannot come to the wedding, (2) give one concrete weather reason such as strong rain, a storm or snow, and (3) make a suggestion, for example meeting next week. Grade the student's actual email using the A1 writing rubric: task completion, appropriate informal greeting and closing, understandable sentence structure, basic verb forms, word order, vocabulary, spelling and capitalization. Do not give full writing credit merely because the three content points are present; language accuracy and email form must affect the writing score. There is no fixed reference answer."
       }
     }
   },

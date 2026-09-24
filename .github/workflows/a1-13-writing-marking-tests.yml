@@ -1,0 +1,44 @@
+name: A1-13 Writing Marking Tests
+
+on:
+  pull_request:
+    paths:
+      - 'api/router.js'
+      - 'functions/index.js'
+      - 'src/data/answers_dictionary.json'
+      - 'src/utils/autoMarking.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'tests/a1-13-writing-marking.test.js'
+      - '.github/workflows/a1-13-writing-marking-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/router.js'
+      - 'functions/index.js'
+      - 'src/data/answers_dictionary.json'
+      - 'src/utils/autoMarking.js'
+      - 'src/utils/naturalMarkingFeedback.js'
+      - 'tests/a1-13-writing-marking.test.js'
+      - '.github/workflows/a1-13-writing-marking-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate changed marking source
+        run: |
+          node --check api/router.js
+          node --check functions/index.js
+          node --check src/utils/autoMarking.js
+          node --check src/utils/naturalMarkingFeedback.js
+      - name: Test A1-13 mixed objective and Schreiben marking
+        run: node --test tests/a1-13-writing-marking.test.js
+      - name: Preserve existing A1 mixed writing marking
+        run: node --test tests/a1-price-preference-marking.test.js
+      - name: Validate answer-key integrity
+        run: node --test tests/answer-key-integrity.test.js

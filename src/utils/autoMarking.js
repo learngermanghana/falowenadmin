@@ -149,6 +149,33 @@ function looksLikeWritingTask(text = "") {
 
 function detectPartType({ partId, text, referenceEntry = {} } = {}) {
   const format = String(referenceEntry?.format || "").toLowerCase();
+  const normalizedPartId = findPartId(partId) !== "unknown" ? findPartId(partId) : String(partId || "").trim().toLowerCase();
+  const declaredWritingParts = [
+    ...(Array.isArray(referenceEntry.writingParts) ? referenceEntry.writingParts : []),
+    ...(Array.isArray(referenceEntry.aiGradedParts) ? referenceEntry.aiGradedParts : []),
+    ...Object.entries(referenceEntry.partGrading || {})
+      .filter(([, grading]) => /(?:ai[_ -]?written[_ -]?response|writing|schreiben)/i.test(String(grading?.gradingMode || grading?.mode || "")))
+      .map(([candidatePartId]) => candidatePartId),
+  ].map((value) => {
+    const inferred = findPartId(value);
+    return inferred !== "unknown" ? inferred : String(value || "").trim().toLowerCase();
+  });
+  if (declaredWritingParts.includes(normalizedPartId)) return "writing";
+
+  const declaredObjectiveParts = Array.isArray(referenceEntry.referenceAnswerParts)
+    ? referenceEntry.referenceAnswerParts.map((value) => {
+        const inferred = findPartId(value);
+        return inferred !== "unknown" ? inferred : String(value || "").trim().toLowerCase();
+      })
+    : [];
+  if (declaredObjectiveParts.includes(normalizedPartId)) return "objective";
+
+  // Once the manifest explicitly declares a writing part, do not let the
+  // legacy A2/B1 convention ("Teil 2 = Schreiben") reclassify sibling parts.
+  // This is required for A1 mixed assignments such as A1-13 where Teil 2 is
+  // objective and Teil 3 is Schreiben.
+  if (declaredWritingParts.length && format === "objective") return "objective";
+
   if (partId === "teil2") return "writing";
   if (["teil3", "teil4"].includes(partId)) return "objective";
   if (looksLikeWritingTask(text)) return "writing";
