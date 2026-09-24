@@ -872,7 +872,11 @@ export default function CheckinDisplayPage() {
           && durationSeconds > 0
           && (
             timerNeverInitialized
-            || (Boolean(shared.timerRunning) && (timerDurationMismatch || timerRemainingTooLong))
+            || (
+              shared.classStartSource === "checkin"
+              && (timerDurationMismatch || timerRemainingTooLong)
+            )
+            || (Boolean(shared.timerRunning) && timerRemainingTooLong)
           );
 
         if (canRepairSharedTimer) {
@@ -968,7 +972,7 @@ export default function CheckinDisplayPage() {
         return;
       }
 
-      if (sharedIsActive) {
+      if (sharedIsActive && presenterLiveState.classStartSource !== "checkin") {
         autoPresenterRecoveryRef.current = recoveryKey;
         setSlideSyncStatus({
           state: "synced",
@@ -976,6 +980,10 @@ export default function CheckinDisplayPage() {
         });
         return;
       }
+
+      // Attendance-owned sessions are revalidated against the level duration on
+      // restore/reconnect so an older 120-minute timer cannot survive in an A2/B1
+      // class that is configured for 90 minutes.
 
       // A matching non-ended session may only be inactive because the active pointer
       // is empty or still points at an older/ended session. Let the transaction decide

@@ -169,6 +169,7 @@ export default function PresenterSessionTimer({ slide }) {
 
   useEffect(() => {
     setHydratedKey("");
+    lastRemoteTimerStampRef.current = 0;
     if (!durationSeconds) return;
     const restored = readStoredTimer(storageKey, durationSeconds);
     setRemaining(restored.remaining);
@@ -217,11 +218,17 @@ export default function PresenterSessionTimer({ slide }) {
     const derivedCheckinEndAt = checkinStartedAtMs > 0 && durationSeconds > 0
       ? checkinStartedAtMs + (durationSeconds * 1000)
       : 0;
-    const remoteEndAt = remoteRunning
+    const candidateRemoteEndAt = remoteRunning
       ? (checkinStartedAtMs > 0 && configuredDurationSeconds > 0
         ? derivedCheckinEndAt
         : (rawRemoteEndAt || derivedCheckinEndAt))
       : 0;
+    const maximumAllowedEndAt = checkinStartedAtMs > 0 && durationSeconds > 0
+      ? checkinStartedAtMs + (durationSeconds * 1000)
+      : nowMs + (durationSeconds * 1000);
+    const remoteEndAt = candidateRemoteEndAt > 0 && durationSeconds > 0
+      ? Math.min(candidateRemoteEndAt, maximumAllowedEndAt)
+      : candidateRemoteEndAt;
     const remoteRemaining = remoteRunning && remoteEndAt
       ? Math.max(0, Math.min(durationSeconds, Math.ceil((remoteEndAt - nowMs) / 1000)))
       : Math.max(0, Math.min(durationSeconds, Number(remote.timerRemaining ?? remoteDurationSeconds ?? durationSeconds)));
@@ -325,7 +332,7 @@ export default function PresenterSessionTimer({ slide }) {
   useEffect(() => {
     if (!running || !endAt) return undefined;
     const tick = () => {
-      const next = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      const next = Math.max(0, Math.min(durationSeconds, Math.ceil((endAt - Date.now()) / 1000)));
       const previous = previousRemainingRef.current;
       recordCrossedWarnings(previous, next);
       previousRemainingRef.current = next;
@@ -347,7 +354,7 @@ export default function PresenterSessionTimer({ slide }) {
     tick();
     const timer = window.setInterval(tick, 500);
     return () => window.clearInterval(timer);
-  }, [running, endAt, warnedMilestones, soundEnabled, presenterLive.classRecordId, attendanceControlsTimer]);
+  }, [running, endAt, durationSeconds, warnedMilestones, soundEnabled, presenterLive.classRecordId, attendanceControlsTimer]);
 
   useEffect(() => () => {
     try {
@@ -390,7 +397,7 @@ export default function PresenterSessionTimer({ slide }) {
 
   function pause() {
     if (attendanceControlsTimer || !running) return;
-    const next = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    const next = Math.max(0, Math.min(durationSeconds, Math.ceil((endAt - Date.now()) / 1000)));
     previousRemainingRef.current = next;
     setRemaining(next);
     setRunning(false);
