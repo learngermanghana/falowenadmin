@@ -146,7 +146,7 @@ test("a meaningful non-empty writing correction can activate essay feedback", ()
     studentName: "Kwame",
     level: "B1",
     assignmentKey: "B1-7.2",
-    hasRegisteredWriting: false,
+    hasRegisteredWriting: true,
     writingScore: null,
     corrections: [{
       from: "obwohl es ist teuer",
