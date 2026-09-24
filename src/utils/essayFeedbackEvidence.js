@@ -197,6 +197,7 @@ function meaningfulStructuredWritingEvidence(result = {}, submission = "") {
 }
 
 function hasWritingEvidence(result = {}, submission = "") {
+  if (result.hasRegisteredWriting === false) return false;
   return result.hasRegisteredWriting === true
     || result.registeredWritingPart === true
     || writingScoreOf(result) !== null
