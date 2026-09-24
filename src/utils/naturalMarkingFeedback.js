@@ -249,12 +249,12 @@ export function assignmentHasScoredWriting(referenceEntry = {}) {
   const writingParts = [
     ...(Array.isArray(referenceEntry.writingParts) ? referenceEntry.writingParts : []),
     ...(Array.isArray(referenceEntry.aiGradedParts) ? referenceEntry.aiGradedParts : []),
-  ].map(normalizePartId);
-  if (writingParts.includes("teil2") || writingParts.includes("main")) return true;
+  ].map(normalizePartId).filter(Boolean);
+  if (writingParts.length) return true;
 
-  const grading = Object.entries(referenceEntry.partGrading || {})
-    .find(([partId]) => normalizePartId(partId) === "teil2")?.[1] || null;
-  if (String(grading?.gradingMode || "").toLowerCase() === "ai_written_response") return true;
+  const hasDeclaredWritingGrading = Object.values(referenceEntry.partGrading || {})
+    .some((grading) => String(grading?.gradingMode || "").trim().toLowerCase() === "ai_written_response");
+  if (hasDeclaredWritingGrading) return true;
 
   const assignmentKey = String(referenceEntry.assignmentKey || referenceEntry.assignmentId || referenceEntry.assignment_id || "").trim().toUpperCase();
   const level = String(referenceEntry.level || "").trim().toUpperCase();
