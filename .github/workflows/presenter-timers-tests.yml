@@ -7,6 +7,8 @@ on:
       - "src/components/PresenterSessionTimer.css"
       - "src/hooks/usePresenterLiveSession.js"
       - "src/pages/CheckinDisplayPage.jsx"
+      - "package.json"
+      - "tests/attendance-presenter-launch.test.js"
       - "src/hooks/usePresenterLiveSession.js"
       - "src/pages/CheckinDisplayPage.jsx"
       - "src/components/PresenterStudentPicker.jsx"
@@ -24,6 +26,7 @@ on:
       - "tests/presenter-timers.test.js"
       - "tests/presenter-fullscreen-layout.test.js"
       - "tests/presenter-authoritative-timer-sync.test.js"
+      - "tests/attendance-presenter-launch.test.js"
       - ".github/workflows/presenter-timers-tests.yml"
   push:
     branches: [main]
@@ -60,7 +63,7 @@ jobs:
           node scripts/patchPresenterRandomAndAttendanceDiagnostics.mjs
           node scripts/patchPresenterConceptLabels.mjs
       - name: Run presenter regressions
-        run: node --test tests/presenter-timers.test.js tests/presenter-fullscreen-layout.test.js tests/presenter-authoritative-timer-sync.test.js
+        run: node --test tests/presenter-timers.test.js tests/presenter-fullscreen-layout.test.js tests/presenter-authoritative-timer-sync.test.js tests/attendance-presenter-launch.test.js
       - name: Prepare waiting-room source for production bundle
         run: node scripts/patchCheckinWaitingRoomPlaylist.mjs
       - name: Build Vite bundle
