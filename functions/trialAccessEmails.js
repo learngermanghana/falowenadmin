@@ -188,11 +188,13 @@ function buildTrialAccessMessage({ student = {}, stage = "welcome" } = {}) {
   const lessonUrl = day1LessonUrl(student);
 
   if (stage === "welcome") {
-    return [
+    const lines = [
       `Hello ${name},`,
       "",
       "Your 7-day Falowen free trial is now active. You can start learning immediately even if you have not paid yet.",
-      expiredAt ? `Your free access runs until ${formatDate(expiredAt)}.` : "",
+    ];
+    if (expiredAt) lines.push(`Your free access runs until ${formatDate(expiredAt)}.`);
+    lines.push(
       "",
       "Start with your Day 1 lesson:",
       lessonUrl,
@@ -204,7 +206,8 @@ function buildTrialAccessMessage({ student = {}, stage = "welcome" } = {}) {
       "",
       "Best regards,",
       "Learn Language Education Academy (Falowen)",
-    ].filter((line) => line !== "").join("\n");
+    );
+    return lines.join("\n");
   }
 
   if (stage === "day3") {
@@ -243,20 +246,25 @@ function buildTrialAccessMessage({ student = {}, stage = "welcome" } = {}) {
     ].join("\n");
   }
 
-  return [
+  const lines = [
     `Hello ${name},`,
     "",
     "Your 7-day Falowen free trial has ended, so learning access is now paused.",
     "Your account, scores and learning progress are being kept for 30 days after the trial ends.",
     "If you register/pay during this recovery period, Falowen can reactivate the same account and keep your progress.",
-    purgeAt ? `If no qualifying payment is received by ${formatDate(purgeAt)}, the unpaid trial account becomes eligible for permanent deletion.` : "",
+  ];
+  if (purgeAt) {
+    lines.push(`If no qualifying payment is received by ${formatDate(purgeAt)}, the unpaid trial account becomes eligible for permanent deletion.`);
+  }
+  lines.push(
     "",
     "Open your Falowen account to register/pay:",
     ACCOUNT_URL,
     "",
     "Best regards,",
     "Learn Language Education Academy (Falowen)",
-  ].filter((line) => line !== "").join("\n");
+  );
+  return lines.join("\n");
 }
 
 function rowForTrialAccessEmail({ student = {}, stage = "welcome", now = new Date() } = {}) {
@@ -403,9 +411,9 @@ async function runTrialAccessEmailJob({
   now = new Date(),
   fetchImpl = fetch,
 } = {}) {
-  const snapshot = await db.collection("students")
-    .where("status", "in", ["pending", "trial_expired"])
-    .get();
+  // Match the cleanup worker's tolerant status handling, including older
+  // records that may use studentStatus/enrollmentStatus or different casing.
+  const snapshot = await db.collection("students").get();
 
   const results = [];
   for (const docSnap of snapshot.docs) {
