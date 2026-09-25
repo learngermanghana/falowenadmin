@@ -469,11 +469,11 @@ export default function PresenterSessionTimer({ slide }) {
           <span>Managed by Attendance</span>
         ) : (
           <>
-            <button type="button" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
+            <button type="button" className="presenter-session-start" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
             <button type="button" onClick={reset}>Reset</button>
           </>
         )}
-        <button type="button" onClick={toggleSound} aria-pressed={soundEnabled} title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up.">
+        <button type="button" className="presenter-session-sound" onClick={toggleSound} aria-pressed={soundEnabled} title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up.">
           Sound: {soundEnabled ? "on" : "off"}
         </button>
       </div>
