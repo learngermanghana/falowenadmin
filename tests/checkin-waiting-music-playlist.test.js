@@ -336,7 +336,8 @@ test("refreshing a persisted check-in start reconnects shared slides without cha
   assert.match(page, /void syncPresenterStart\(actualStartedAt, \{ recovery: true \}\)/);
   assert.match(page, /document\.addEventListener\("visibilitychange", recoverAfterWake\)/);
   assert.match(page, /window\.addEventListener\("online", recoverOnline\)/);
-  assert.match(page, /await syncPresenterStart\(startedAt\)/);\n  assert.match(page, /navigate\(presenterLaunchPath\)/);
+  assert.match(page, /await syncPresenterStart\(startedAt\)/);
+  assert.match(page, /navigate\(presenterLaunchPath\)/);
 });
 
 test("restored presenter snapshots revalidate attendance timers while preserving non-attendance active sessions", () => {
