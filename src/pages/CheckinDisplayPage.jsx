@@ -1160,7 +1160,8 @@ export default function CheckinDisplayPage() {
     });
     setSlideSyncStatus({ state: "ending", message: "Ending class and saving actual duration…" });
     void syncPresenterEnd(endedAt);
-  }, [actualEndedAt, actualStartedAt, nowMs, startDecisionStorageKey, syncPresenterEnd]);
+    void startWaitingMusic();
+  }, [actualEndedAt, actualStartedAt, nowMs, startDecisionStorageKey, startWaitingMusic, syncPresenterEnd]);
 
   useEffect(() => () => {
     if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
