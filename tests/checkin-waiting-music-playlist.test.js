@@ -89,6 +89,17 @@ test("check-in display is a live classroom attendance screen", () => {
   assert.match(service, /onSnapshot\(/);
 });
 
+test("ending class automatically restarts the attendance music", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
+
+  assert.match(
+    page,
+    /const handleEndClass = useCallback\(\(\) => \{[\s\S]*?void syncPresenterEnd\(endedAt\);\s*void startWaitingMusic\(\);[\s\S]*?\}, \[actualEndedAt, actualStartedAt, nowMs, startDecisionStorageKey, startWaitingMusic, syncPresenterEnd\]\);/,
+  );
+  assert.match(patch, /void startWaitingMusic\(\);/);
+});
+
 test("scheduled start is a soft threshold controlled by the teacher", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
