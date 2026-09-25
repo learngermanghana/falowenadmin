@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { TRIAL_DURATION_MS, TRIAL_RETENTION_MS } = require("../functions/pendingStudentCleanup.js");
-const { _test } = require("../functions/trialAccessEmails.js");
+const { createTrialAccessWelcomeEmailTrigger, _test } = require("../functions/trialAccessEmails.js");
 
 const {
   ACCOUNT_URL,
@@ -33,6 +33,117 @@ function student(overrides = {}) {
     ...overrides,
   };
 }
+
+test("trial welcome trigger observes student writes and sends when an update becomes eligible", async () => {
+  let registered = null;
+  const sendWrites = [];
+  const sendRef = {
+    async set(payload) {
+      sendWrites.push(payload);
+    },
+  };
+  const db = {
+    collection(name) {
+      assert.equal(name, "trialAccessEmailSends");
+      return {
+        doc() {
+          return sendRef;
+        },
+      };
+    },
+    async runTransaction(work) {
+      return work({
+        async get() {
+          return { exists: false, data: () => ({}) };
+        },
+        set() {},
+      });
+    },
+  };
+  const admin = {
+    firestore: {
+      FieldValue: {
+        serverTimestamp() {
+          return new Date();
+        },
+      },
+    },
+  };
+
+  const trigger = createTrialAccessWelcomeEmailTrigger({
+    db,
+    admin,
+    runtimeConfig: {
+      communication: {
+        announcement_webhook_url: "https://script.google.com/macros/s/existing/exec",
+        announcement_webhook_token: "shared-secret",
+        announcement_sheet_name: "Announcements",
+      },
+    },
+    fetchImpl: async (url, options) => {
+      assert.equal(url, "https://script.google.com/macros/s/existing/exec");
+      const payload = JSON.parse(options.body);
+      assert.equal(payload.token, "shared-secret");
+      assert.equal(payload.rows.length, 1);
+      assert.equal(payload.rows[0].email_type, "trial_access_welcome");
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return { ok: true, count: 1 };
+        },
+      };
+    },
+    onDocumentWritten(options, handler) {
+      registered = { options, handler };
+      return "registered";
+    },
+  });
+
+  assert.equal(trigger, "registered");
+  assert.equal(registered.options.document, "students/{studentId}");
+  assert.equal(registered.options.retry, true);
+
+  const result = await registered.handler({
+    params: { studentId: "DorothyQuayson843" },
+    data: {
+      after: {
+        exists: true,
+        id: "DorothyQuayson843",
+        data: () => student({
+          name: "Dorothy Quayson",
+          email: "dorothy@example.com",
+          status: "pending",
+          createdAt: new Date(),
+        }),
+      },
+    },
+  });
+
+  assert.equal(result.sent, true);
+  assert.equal(result.stage, "welcome");
+  assert.equal(result.email, "dorothy@example.com");
+  assert.equal(sendWrites.at(-1).status, "sent");
+});
+
+test("trial welcome write trigger ignores student deletions", async () => {
+  let handler = null;
+  createTrialAccessWelcomeEmailTrigger({
+    db: {},
+    admin: {},
+    onDocumentWritten(options, callback) {
+      handler = callback;
+      return callback;
+    },
+  });
+
+  const result = await handler({
+    params: { studentId: "deleted-student" },
+    data: { after: { exists: false } },
+  });
+
+  assert.deepEqual(result, { sent: false, reason: "student_deleted" });
+});
 
 test("trial email stages follow signup, day 3, day 6 and expiry", () => {
   assert.equal(trialEmailStage(student(), NOW), "welcome");
