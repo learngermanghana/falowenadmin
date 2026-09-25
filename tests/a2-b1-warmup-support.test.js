@@ -116,6 +116,48 @@ test("every A2/B1 warm-up follow-up is a real conversational question", () => {
   }
 });
 
+test("A2 stays concrete while B1 follow-ups demand more reasoning", () => {
+  const a2FrequencySlide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-6.15");
+  const a2Frequency = buildTeachingPresenterStages(a2FrequencySlide, a2FrequencySlide.topic)
+    .find((stage) => stage.id === "warmup");
+  const a2FrequencyIndex = a2Frequency.items.indexOf("Wie oft trainierst du?");
+
+  assert.equal(
+    a2Frequency.questionSupport[a2FrequencyIndex]?.followUpDe,
+    "An welchem Tag machst du das normalerweise?",
+  );
+
+  const b1FrequencySlide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-3.7");
+  const b1Frequency = buildTeachingPresenterStages(b1FrequencySlide, b1FrequencySlide.topic)
+    .find((stage) => stage.id === "warmup");
+  const b1FrequencyIndex = b1Frequency.items.indexOf("Wie oft isst du Fast Food?");
+
+  assert.equal(
+    b1Frequency.questionSupport[b1FrequencyIndex]?.followUpDe,
+    "Warum passt diese Häufigkeit zu deinem Alltag?",
+  );
+
+  const a2ChoiceSlide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-7.19");
+  const a2Choice = buildTeachingPresenterStages(a2ChoiceSlide, a2ChoiceSlide.topic)
+    .find((stage) => stage.id === "warmup");
+  const a2ChoiceIndex = a2Choice.items.indexOf("Kaufst du lieber online oder im Geschäft?");
+
+  assert.equal(
+    a2Choice.questionSupport[a2ChoiceIndex]?.followUpDe,
+    "Wann entscheidest du dich normalerweise dafür?",
+  );
+
+  const b1ChoiceSlide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-5.14");
+  const b1Choice = buildTeachingPresenterStages(b1ChoiceSlide, b1ChoiceSlide.topic)
+    .find((stage) => stage.id === "warmup");
+  const b1ChoiceIndex = b1Choice.items.indexOf("Lernst du lieber online oder im Klassenzimmer?");
+
+  assert.equal(
+    b1Choice.questionSupport[b1ChoiceIndex]?.followUpDe,
+    "Unter welchen Bedingungen würdest du die andere Option wählen?",
+  );
+});
+
 test("A2 Day 5 uses natural follow-up questions instead of example prompts", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.5");
   const warmup = buildTeachingPresenterStages(slide, slide.topic)

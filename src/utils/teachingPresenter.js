@@ -130,7 +130,7 @@ function warmupAnswerStarterDe(question = "") {
   return "Ich denke, dass ... / Für mich ...";
 }
 
-const WARMUP_FOLLOWUP_OVERRIDES = new Map([
+const A2_WARMUP_FOLLOWUP_OVERRIDES = new Map([
   ["was machst du gern am wochenende?", "Mit wem verbringst du dein Wochenende am liebsten?"],
   ["wann stehst du am wochenende auf?", "Was machst du direkt nach dem Aufstehen?"],
   ["siehst du abends oft fern?", "Was siehst du abends am liebsten im Fernsehen?"],
@@ -139,6 +139,9 @@ const WARMUP_FOLLOWUP_OVERRIDES = new Map([
   ["wann hast du diese woche deutschkurs?", "Was machst du vor oder nach dem Deutschkurs?"],
   ["an welchem tag kannst du freunde treffen?", "Was möchtest du mit deinen Freunden an diesem Tag machen?"],
   ["was musst du diese woche unbedingt erledigen?", "Wann willst du diese Aufgabe erledigen?"],
+]);
+
+const B1_WARMUP_FOLLOWUP_OVERRIDES = new Map([
   ["was ist wichtiger: ausbildung oder erfahrung?", "Wann ist praktische Erfahrung wichtiger als eine Ausbildung?"],
   ["wie kann man arbeit und privatleben besser trennen?", "Welche feste Regel hilft dir, nach der Arbeit wirklich abzuschalten?"],
 ]);
@@ -150,23 +153,22 @@ function normalizeWarmupQuestion(question = "") {
     .replace(/\s+/g, " ");
 }
 
-function warmupFollowUpDe(question = "") {
+function warmupFollowUpA2(question = "") {
   const text = String(question || "").trim();
-  const normalized = normalizeWarmupQuestion(text);
-  const override = WARMUP_FOLLOWUP_OVERRIDES.get(normalized);
+  const override = A2_WARMUP_FOLLOWUP_OVERRIDES.get(normalizeWarmupQuestion(text));
   if (override) return override;
 
   if (/\b(?:schon einmal|zuletzt|letzte[nrms]?|vergangene[nrms]?|früher|damals)\b/i.test(text)
       || /\b(?:hast|bist|warst)\s+du\b/i.test(text) && /\b(?:gemacht|gesehen|erlebt|gereist|gegangen|gewesen|zurückgebracht)\b/i.test(text)) {
-    return "Was ist dabei genau passiert, und wie hast du reagiert?";
+    return "Mit wem warst du dabei, und was hast du dort gemacht?";
   }
 
   if (/\bwie oft\b/i.test(text)) {
-    return "An welchen Tagen oder zu welcher Uhrzeit machst du das normalerweise?";
+    return "An welchem Tag machst du das normalerweise?";
   }
 
   if (/\bwie lange\b/i.test(text)) {
-    return "Was machst du während dieser Zeit normalerweise?";
+    return "Wann beginnt oder endet das normalerweise?";
   }
 
   if (/\bwann\b|\bwelchem tag\b|\bwelcher tag\b/i.test(text)) {
@@ -174,43 +176,43 @@ function warmupFollowUpDe(question = "") {
   }
 
   if (/\bwohin\b/i.test(text)) {
-    return "Was möchtest du dort machen, wenn du angekommen bist?";
+    return "Mit wem möchtest du dorthin gehen oder fahren?";
   }
 
   if (/\bwoher\b/i.test(text)) {
-    return "Was vermisst du an diesem Ort am meisten?";
+    return "Wen kennst du noch von dort?";
   }
 
   if (/\bwo\b|\bwelcher ort\b|\bwelchen ort\b/i.test(text)) {
-    return "Was gefällt dir an diesem Ort besonders?";
+    return "Mit wem bist du dort normalerweise?";
   }
 
   if (/\bwarum\b/i.test(text)) {
-    return "Was ist für dich der wichtigste Grund dafür?";
+    return "Wann merkst du das besonders?";
   }
 
   if (/\bwelche rolle\b/i.test(text)) {
-    return "Welcher dieser Punkte beeinflusst deine Entscheidung am stärksten?";
+    return "Welcher Punkt ist für dich persönlich am wichtigsten?";
   }
 
   if (/\b(?:vorteil|nachteil|problem|schwierigkeit|herausforderung)\b/i.test(text)) {
-    return "Wann merkt man diesen Punkt im Alltag besonders deutlich?";
+    return "Wann merkst du diesen Punkt in deinem Alltag?";
   }
 
   if (/\b(?:möchtest|würdest|willst|soll)\b/i.test(text)) {
-    return "Was wäre dein erster Schritt, um das wirklich umzusetzen?";
+    return "Wann möchtest du damit anfangen?";
   }
 
   if (/\bwie\s+(?:kann|könnte|sollte)\s+(?:man|ich|du|wir)\b|\bwas\s+(?:tust|machst)\s+du,?\s+um\b|\bwas\s+hilft\b|\bstrategie\b/i.test(text)) {
-    return "Welche konkrete Methode würdest du selbst zuerst ausprobieren?";
+    return "Was davon machst du selbst schon?";
   }
 
   if (isWarmupComparisonQuestion(text) || /\blieber\b|\boder\b/i.test(text)) {
-    return "In welcher Situation würdest du dich anders entscheiden als heute?";
+    return "Wann entscheidest du dich normalerweise dafür?";
   }
 
   if (/\bwelche[nrms]?\b|\bwelches\b|\bwelcher\b|\bwelchen\b/i.test(text)) {
-    return "Welcher Punkt davon ist für dich persönlich am wichtigsten und warum?";
+    return "Welcher Punkt passt am besten zu deinem eigenen Alltag?";
   }
 
   if (/^was\s+(?:machst|tust|kaufst|sagst|kontrollierst|brauchst)\b/i.test(text)) {
@@ -218,18 +220,105 @@ function warmupFollowUpDe(question = "") {
   }
 
   if (/^was\s+ist\b/i.test(text)) {
-    return "Woran merkst du das in deinem eigenen Alltag?";
+    return "Wie ist das bei dir persönlich?";
   }
 
   if (/^wie\b/i.test(text)) {
-    return "Was ist dabei für dich am einfachsten oder am schwierigsten?";
+    return "Wie machst du das selbst im Alltag?";
   }
 
   if (/^(?:ist|sind|hast|kannst|kaufst|bezahlst|benutzt|lernst|arbeitest|gehst|siehst|empfiehlst)\b/i.test(text)) {
-    return "Was ist der wichtigste Grund für deine Antwort?";
+    return "Wann ist das bei dir normalerweise so?";
   }
 
-  return "Was kannst du dazu aus deiner eigenen Erfahrung erzählen?";
+  return "Wie ist das bei dir persönlich im Alltag?";
+}
+
+function warmupFollowUpB1(question = "") {
+  const text = String(question || "").trim();
+  const override = B1_WARMUP_FOLLOWUP_OVERRIDES.get(normalizeWarmupQuestion(text));
+  if (override) return override;
+
+  if (/\b(?:schon einmal|zuletzt|letzte[nrms]?|vergangene[nrms]?|früher|damals)\b/i.test(text)
+      || /\b(?:hast|bist|warst)\s+du\b/i.test(text) && /\b(?:gemacht|gesehen|erlebt|gereist|gegangen|gewesen|zurückgebracht)\b/i.test(text)) {
+    return "Was hast du aus dieser Erfahrung gelernt, und was würdest du heute anders machen?";
+  }
+
+  if (/\bwie oft\b/i.test(text)) {
+    return "Warum passt diese Häufigkeit zu deinem Alltag?";
+  }
+
+  if (/\bwie lange\b/i.test(text)) {
+    return "Welche Auswirkung hat diese Dauer auf deinen Alltag?";
+  }
+
+  if (/\bwann\b|\bwelchem tag\b|\bwelcher tag\b/i.test(text)) {
+    return "Warum ist gerade dieser Zeitpunkt für dich sinnvoll?";
+  }
+
+  if (/\bwohin\b/i.test(text)) {
+    return "Welche Vorteile hat dieses Ziel im Vergleich zu einer Alternative?";
+  }
+
+  if (/\bwoher\b/i.test(text)) {
+    return "Inwiefern hat dieser Ort deine Sichtweise geprägt?";
+  }
+
+  if (/\bwo\b|\bwelcher ort\b|\bwelchen ort\b/i.test(text)) {
+    return "Welche Vor- und Nachteile hat dieser Ort für dich?";
+  }
+
+  if (/\bwarum\b/i.test(text)) {
+    return "Welcher Gegenpunkt könnte trotzdem gegen deine Begründung sprechen?";
+  }
+
+  if (/\bwelche rolle\b/i.test(text)) {
+    return "Welcher Faktor wiegt bei deiner Entscheidung am stärksten und warum?";
+  }
+
+  if (/\b(?:vorteil|nachteil|problem|schwierigkeit|herausforderung)\b/i.test(text)) {
+    return "Welche Folge hat dieser Punkt für die Entscheidung oder den Alltag?";
+  }
+
+  if (/\b(?:möchtest|würdest|willst|soll)\b/i.test(text)) {
+    return "Welche Voraussetzung müsste erfüllt sein, damit du das wirklich umsetzt?";
+  }
+
+  if (/\bwie\s+(?:kann|könnte|sollte)\s+(?:man|ich|du|wir)\b|\bwas\s+(?:tust|machst)\s+du,?\s+um\b|\bwas\s+hilft\b|\bstrategie\b/i.test(text)) {
+    return "Warum wäre diese Methode wirksamer als eine mögliche Alternative?";
+  }
+
+  if (isWarmupComparisonQuestion(text) || /\blieber\b|\boder\b/i.test(text)) {
+    return "Unter welchen Bedingungen würdest du die andere Option wählen?";
+  }
+
+  if (/\bwelche[nrms]?\b|\bwelches\b|\bwelcher\b|\bwelchen\b/i.test(text)) {
+    return "Welcher Punkt hat langfristig die größte Bedeutung, und warum?";
+  }
+
+  if (/^was\s+(?:machst|tust|kaufst|sagst|kontrollierst|brauchst)\b/i.test(text)) {
+    return "Warum ist diese Lösung für dich sinnvoll, und welche Alternative gäbe es?";
+  }
+
+  if (/^was\s+ist\b/i.test(text)) {
+    return "Welche konkrete Folge hat das für deinen Alltag oder deine Entscheidung?";
+  }
+
+  if (/^wie\b/i.test(text)) {
+    return "Welche Schwierigkeit könnte dabei entstehen, und wie würdest du damit umgehen?";
+  }
+
+  if (/^(?:ist|sind|hast|kannst|kaufst|bezahlst|benutzt|lernst|arbeitest|gehst|siehst|empfiehlst)\b/i.test(text)) {
+    return "Welche Gründe sprechen dafür, und welcher Einwand wäre möglich?";
+  }
+
+  return "Welche Begründung oder Folge ist für deine Antwort am wichtigsten?";
+}
+
+function warmupFollowUpDe(question = "", level = "") {
+  return String(level || "").toUpperCase() === "B1"
+    ? warmupFollowUpB1(question)
+    : warmupFollowUpA2(question);
 }
 
 function buildWarmupQuestionSupport(slide = {}) {
@@ -239,7 +328,7 @@ function buildWarmupQuestionSupport(slide = {}) {
     keywords: warmupKeywords(question),
     hintEn: warmupHintEn(question),
     answerStarterDe: warmupAnswerStarterDe(question),
-    followUpDe: warmupFollowUpDe(question),
+    followUpDe: warmupFollowUpDe(question, classroomLevel(slide)),
     difficulty: warmupDifficulty(index, questions.length),
   }));
 }
