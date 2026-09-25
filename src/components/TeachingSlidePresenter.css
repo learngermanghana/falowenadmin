@@ -1,9 +1,20 @@
+.presenter-topbar > * {
+  min-width: 0;
+}
+
 .presenter-v2-tools {
   display: flex;
   align-items: center;
+  flex: 1 1 520px;
   gap: 0.8rem;
   flex-wrap: wrap;
+  min-width: 0;
   margin-left: auto;
+}
+
+.presenter-top-actions {
+  flex: 0 0 auto;
+  align-self: flex-start;
 }
 
 .presenter-stage-jump {
