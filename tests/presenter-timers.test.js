@@ -79,6 +79,20 @@ test("both A1 and general teaching presenters show the class timer", () => {
   assert.match(general, /<PresenterSessionTimer slide=\{slide\} \/>/);
 });
 
+test("Start class stays visually primary and sound controls cannot crowd it out", () => {
+  const timer = read("src/components/PresenterSessionTimer.jsx");
+  const timerCss = read("src/components/PresenterSessionTimer.css");
+  const presenterCss = read("src/components/TeachingSlidePresenter.css");
+
+  assert.match(timer, /className="presenter-session-start"/);
+  assert.match(timer, /className="presenter-session-sound"/);
+  assert.match(timerCss, /\.presenter-session-timer\s*\{[\s\S]*flex-wrap:\s*wrap/);
+  assert.match(timerCss, /\.presenter-session-timer-actions\s*\{[\s\S]*flex-wrap:\s*wrap/);
+  assert.match(timerCss, /\.presenter-session-timer-actions \.presenter-session-start\s*\{[\s\S]*background:\s*#1d4ed8/);
+  assert.match(timerCss, /@media \(max-width: 1100px\)[\s\S]*\.presenter-session-timer\s*\{[\s\S]*flex-basis:\s*100%/);
+  assert.match(presenterCss, /\.presenter-topbar > \*\s*\{\s*min-width:\s*0/);
+});
+
 test("student picker starts a one-minute answer timer automatically and announces timeout", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
   assert.match(picker, /DEFAULT_RESPONSE_SECONDS = 60/);
