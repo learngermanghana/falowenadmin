@@ -64,11 +64,11 @@ test("Presenter intro exposes the learner lesson reference for every A2-C2 lesso
   }
 });
 
-test("Course Book Bridge is the final stage and always returns Grammar, Speak, Write and Workbook/Submit", () => {
+test("Lesson summary is the final stage and keeps the Course Book next steps", () => {
   for (const level of ["A2","B1","B2","C1","C2"]) {
     for (const slide of paritySlides(level)) {
       const items = buildCourseBookBridgeItems(slide);
-      assert.equal(items.length, 4, slide.assignmentId + " bridge should have four steps");
+      assert.equal(items.length, 4, slide.assignmentId + " Course Book steps should stay available");
       assert.deepEqual(items.map((item) => item.label), [
         "1. Grammar",
         "2. Speak",
@@ -77,10 +77,25 @@ test("Course Book Bridge is the final stage and always returns Grammar, Speak, W
       ]);
 
       const stages = buildTeachingPresenterStages(slide, slide.topic);
-      assert.equal(stages.at(-1)?.id, "coursebook-bridge", slide.assignmentId + " should finish with Course Book Bridge");
-      assert.equal(stages.at(-1)?.items.length, 4);
+      const summary = stages.at(-1);
+      assert.equal(summary?.id, "lesson-summary", slide.assignmentId + " should finish with Lesson summary");
+      assert.equal(summary?.type, "summary");
+      assert.match(summary?.subtitle || "", /You should now be able to/i);
+      assert.ok(Array.isArray(summary?.items) && summary.items.length >= 2);
+      assert.deepEqual(summary?.nextSteps?.map((item) => item.label), items.map((item) => item.label));
     }
   }
+});
+
+test("A2 Day 5 summary tells students what they can do after the lesson", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.5");
+  const summary = buildTeachingPresenterStages(slide, slide.topic).at(-1);
+
+  assert.equal(summary?.id, "lesson-summary");
+  assert.match(summary?.items?.[0]?.detail || "", /^You can describe free time/i);
+  assert.match(summary?.items?.[0]?.detail || "", /separable verbs/i);
+  assert.ok(summary?.items?.some((item) => item.label === "Speaking"));
+  assert.ok(summary?.items?.some((item) => item.label === "Self-check"));
 });
 
 test("C1 intro now reports Student/Admin aligned", () => {
