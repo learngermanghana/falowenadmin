@@ -130,98 +130,102 @@ function warmupAnswerStarterDe(question = "") {
   return "Ich denke, dass ... / Für mich ...";
 }
 
-const WARMUP_FOLLOWUP_GENERIC_NOUNS = new Set([
-  "tag", "tage", "woche", "wochenende", "morgen", "abend", "uhrzeit", "zeit",
-  "alltag", "situation", "situationen", "beispiel", "beispiele", "frage", "fragen",
+const WARMUP_FOLLOWUP_OVERRIDES = new Map([
+  ["was machst du gern am wochenende?", "Mit wem verbringst du dein Wochenende am liebsten?"],
+  ["wann stehst du am wochenende auf?", "Was machst du direkt nach dem Aufstehen?"],
+  ["siehst du abends oft fern?", "Was siehst du abends am liebsten im Fernsehen?"],
+  ["gehst du manchmal mit freunden aus?", "Wohin gehst du mit deinen Freunden am liebsten?"],
+  ["was ist wichtiger: ausbildung oder erfahrung?", "Wann ist praktische Erfahrung wichtiger als eine Ausbildung?"],
+  ["wie kann man arbeit und privatleben besser trennen?", "Welche feste Regel hilft dir, nach der Arbeit wirklich abzuschalten?"],
 ]);
 
-const WARMUP_FOLLOWUP_GENERIC_WORDS = new Set([
-  "warum", "wann", "wo", "wohin", "woher", "welche", "welcher", "welches", "welchem",
-  "welchen", "wie", "wichtig", "wichtiger", "besser", "schlechter", "lieber", "möchtest",
-  "würdest", "machst", "machen", "gemacht", "hast", "kannst", "können", "findest", "finde",
-  "brauchst", "braucht", "benutzt", "nutzt", "sollte", "soll", "gibt", "geht", "gehst",
-]);
-
-function warmupFollowUpTopic(question = "") {
-  const text = String(question || "").trim();
-  const tokens = text.match(/[A-Za-zÄÖÜäöüß]+/g) || [];
-  const capitalized = [...new Set(tokens.filter((token, index) => {
-    const normalized = token.toLocaleLowerCase("de-DE");
-    return index > 0
-      && token.length >= 4
-      && /^[A-ZÄÖÜ]/.test(token)
-      && !WARMUP_STOPWORDS.has(normalized)
-      && !WARMUP_FOLLOWUP_GENERIC_WORDS.has(normalized);
-  }))];
-
-  const specificNouns = capitalized.filter(
-    (token) => !WARMUP_FOLLOWUP_GENERIC_NOUNS.has(token.toLocaleLowerCase("de-DE")),
-  );
-  const chosenNouns = specificNouns.length ? specificNouns : capitalized;
-  if (chosenNouns.length) return chosenNouns.slice(0, 2).join(" und ");
-
-  const content = warmupKeywords(text).filter((token) => {
-    const normalized = token.toLocaleLowerCase("de-DE");
-    return !WARMUP_FOLLOWUP_GENERIC_WORDS.has(normalized)
-      && !WARMUP_FOLLOWUP_GENERIC_NOUNS.has(normalized);
-  });
-  return content.slice(0, 2).join(" und ");
+function normalizeWarmupQuestion(question = "") {
+  return String(question || "")
+    .trim()
+    .toLocaleLowerCase("de-DE")
+    .replace(/\s+/g, " ");
 }
 
 function warmupFollowUpDe(question = "") {
   const text = String(question || "").trim();
-  const topic = warmupFollowUpTopic(text);
-  const topicLabel = topic ? `„${topic}“` : "deiner Antwort";
+  const normalized = normalizeWarmupQuestion(text);
+  const override = WARMUP_FOLLOWUP_OVERRIDES.get(normalized);
+  if (override) return override;
+
+  if (/\b(?:schon einmal|zuletzt|letzte[nrms]?|vergangene[nrms]?|früher|damals)\b/i.test(text)
+      || /\b(?:hast|bist|warst)\s+du\b/i.test(text) && /\b(?:gemacht|gesehen|erlebt|gereist|gegangen|gewesen|zurückgebracht)\b/i.test(text)) {
+    return "Was ist dabei genau passiert, und wie hast du reagiert?";
+  }
 
   if (/\bwie oft\b/i.test(text)) {
-    return `Nenne ein Beispiel: Wann hast du ${topicLabel} zuletzt konkret erlebt oder gemacht?`;
+    return "An welchen Tagen oder zu welcher Uhrzeit machst du das normalerweise?";
   }
-  if (/\b(?:gestern|früher|damals|letztes?|letzten|letzte|vergangene[nrms]?|schon einmal|zuletzt)\b/i.test(text)) {
-    return `Nenne ein Beispiel: Wann ist ${topicLabel} konkret passiert und was genau ist passiert?`;
+
+  if (/\bwie lange\b/i.test(text)) {
+    return "Was machst du während dieser Zeit normalerweise?";
   }
-  if (isWarmupComparisonQuestion(text) || /\b(?:lieber|oder)\b/i.test(text)) {
-    return `Nenne ein Beispiel: In welcher konkreten Situation zeigt sich deine Wahl bei ${topicLabel}?`;
+
+  if (/\bwann\b|\bwelchem tag\b|\bwelcher tag\b/i.test(text)) {
+    return "Was machst du direkt davor oder danach?";
   }
-  if (/vorteil|nachteil|problem|schwierigkeit|herausforderung/i.test(text)) {
-    return `Nenne ein Beispiel: In welcher konkreten Situation merkt man diesen Punkt bei ${topicLabel}?`;
+
+  if (/\bwohin\b/i.test(text)) {
+    return "Was möchtest du dort machen, wenn du angekommen bist?";
   }
-  if (/\bwie\s+(?:kann|könnte|sollte)\s+(?:man|ich|du|wir)\b|\bwas\s+(?:tust|machst)\s+du,?\s+um\b|\bwas\s+hilft\b|\bstrategie\b/i.test(text)) {
-    return `Nenne ein Beispiel: Wie würdest du ${topicLabel} in einer konkreten Situation umsetzen?`;
+
+  if (/\bwoher\b/i.test(text)) {
+    return "Was vermisst du an diesem Ort am meisten?";
   }
-  if (/\bwann\b|\buhrzeit\b|\bwelchem tag\b|\bwelcher tag\b/i.test(text)) {
-    return `Nenne ein Beispiel: Was machst du an diesem Tag oder zu dieser Zeit bei ${topicLabel} genau?`;
+
+  if (/\bwo\b|\bwelcher ort\b|\bwelchen ort\b/i.test(text)) {
+    return "Was gefällt dir an diesem Ort besonders?";
   }
-  if (/\bwo(?:hin|her)?\b|\bort\b|\bland\b|\bstadt\b|\bwohnung\b|\bwohnort\b/i.test(text)) {
-    return `Nenne ein Beispiel: Was passiert an diesem Ort bei ${topicLabel} konkret?`;
-  }
+
   if (/\bwarum\b/i.test(text)) {
-    return `Nenne ein Beispiel: Welche konkrete Situation zeigt deinen Grund bei ${topicLabel}?`;
+    return "Was ist für dich der wichtigste Grund dafür?";
   }
-  if (/\bwürdest\b|\bmöchtest\b/i.test(text)) {
-    return `Nenne ein Beispiel: In welcher konkreten Situation würdest du dich bei ${topicLabel} so entscheiden?`;
+
+  if (/\bwelche rolle\b/i.test(text)) {
+    return "Welcher dieser Punkte beeinflusst deine Entscheidung am stärksten?";
   }
-  if (/freund|familie|person|beziehung|team|kolleg|partner|gruppe/i.test(text)) {
-    return `Nenne ein Beispiel: Welche konkrete Person oder Situation meinst du bei ${topicLabel}?`;
+
+  if (/\b(?:vorteil|nachteil|problem|schwierigkeit|herausforderung)\b/i.test(text)) {
+    return "Wann merkt man diesen Punkt im Alltag besonders deutlich?";
   }
-  if (/beruf|arbeit|job|ausbildung|praktikum|vorstellungsgespräch|firma|karriere/i.test(text)) {
-    return `Nenne ein Beispiel: Welche konkrete Arbeits- oder Berufssituation passt zu ${topicLabel}?`;
+
+  if (/\b(?:möchtest|würdest|willst|soll)\b/i.test(text)) {
+    return "Was wäre dein erster Schritt, um das wirklich umzusetzen?";
   }
-  if (/urlaub|reise|verkehrsmittel|weg|unterkunft|touris/i.test(text)) {
-    return `Nenne ein Beispiel: Welche konkrete Reise oder Strecke passt zu ${topicLabel}?`;
+
+  if (/\bwie\s+(?:kann|könnte|sollte)\s+(?:man|ich|du|wir)\b|\bwas\s+(?:tust|machst)\s+du,?\s+um\b|\bwas\s+hilft\b|\bstrategie\b/i.test(text)) {
+    return "Welche konkrete Methode würdest du selbst zuerst ausprobieren?";
   }
-  if (/gesund|stress|prüfung|apotheke|symptom|wohlbefinden|arzt/i.test(text)) {
-    return `Nenne ein Beispiel: In welcher konkreten Situation spielt ${topicLabel} für dich eine Rolle?`;
+
+  if (isWarmupComparisonQuestion(text) || /\blieber\b|\boder\b/i.test(text)) {
+    return "In welcher Situation würdest du dich anders entscheiden als heute?";
   }
-  if (/kauf|produkt|bank|reklamation|umtausch|online-shop|bezahl|einkauf/i.test(text)) {
-    return `Nenne ein Beispiel: Welche konkrete Kauf-, Bank- oder Reklamationssituation passt zu ${topicLabel}?`;
+
+  if (/\bwelche[nrms]?\b|\bwelches\b|\bwelcher\b|\bwelchen\b/i.test(text)) {
+    return "Welcher Punkt davon ist für dich persönlich am wichtigsten und warum?";
   }
-  if (/digital|smartphone|app|online|soziale medien|datenschutz|nachricht/i.test(text)) {
-    return `Nenne ein Beispiel: Welche konkrete digitale Situation passt zu ${topicLabel}?`;
+
+  if (/^was\s+(?:machst|tust|kaufst|sagst|kontrollierst|brauchst)\b/i.test(text)) {
+    return "Wann machst du das normalerweise, und mit wem?";
   }
-  if (/nachhalt|umwelt|klima|energie|co₂/i.test(text)) {
-    return `Nenne ein Beispiel: Welche konkrete Handlung zeigt ${topicLabel} in deinem Alltag?`;
+
+  if (/^was\s+ist\b/i.test(text)) {
+    return "Woran merkst du das in deinem eigenen Alltag?";
   }
-  return `Nenne ein Beispiel zu ${topicLabel}: Was genau meinst du damit?`;
+
+  if (/^wie\b/i.test(text)) {
+    return "Was ist dabei für dich am einfachsten oder am schwierigsten?";
+  }
+
+  if (/^(?:ist|sind|hast|kannst|kaufst|bezahlst|benutzt|lernst|arbeitest|gehst|siehst|empfiehlst)\b/i.test(text)) {
+    return "Was ist der wichtigste Grund für deine Antwort?";
+  }
+
+  return "Was kannst du dazu aus deiner eigenen Erfahrung erzählen?";
 }
 
 function buildWarmupQuestionSupport(slide = {}) {
