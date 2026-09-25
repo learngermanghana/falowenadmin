@@ -20,11 +20,13 @@ on:
     paths:
       - 'functions/index.js'
       - 'functions/registrationLifecycleEvents.js'
+      - 'functions/trialAccessEmails.js'
       - 'api/integration-hub.js'
       - 'src/components/IntegrationEventPanel.jsx'
       - 'docs/apps-script/registration-lifecycle-webhook.gs'
       - 'docs/integration-event-hub.md'
       - 'tests/registration-lifecycle-events.test.js'
+      - 'tests/trial-access-emails.test.js'
       - 'tests/integration-event-hub.test.js'
       - '.github/workflows/registration-lifecycle-events.yml'
 
