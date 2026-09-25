@@ -85,24 +85,122 @@ function operationalHasQualifyingPayment(student = {}) {
   ].some((value) => operationalOrientationMoney(value) > 0);
 }
 
+const OPERATIONAL_TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+function operationalOrientationStatus(value) {
+  return String(value || "").trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+}
+
+function operationalOrientationMillis(value) {
+  if (!value) return 0;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? 0 : value.getTime();
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function operationalTrialStartedAtMillis(student = {}) {
+  const candidates = [
+    student.trialStartedAt,
+    student.trialStartAt,
+    student.trialStart,
+    student.trial_started_at,
+    student.registrationDate,
+    student.registration_date,
+    student.registeredAt,
+    student.registered_at,
+    student.signupAt,
+    student.signupDate,
+    student.joined_at,
+    student.joinedAt,
+    student.enrollDate,
+    student.enrollmentDate,
+    student.createdAt,
+    student.created_at,
+  ];
+  for (const value of candidates) {
+    const millis = operationalOrientationMillis(value);
+    if (millis > 0) return millis;
+  }
+  return 0;
+}
+
+function operationalTrialExpiredAtMillis(student = {}) {
+  const explicit = [
+    student.trialExpiredAt,
+    student.trialEnd,
+    student.trialEndsAt,
+    student.trial_end,
+  ];
+  for (const value of explicit) {
+    const millis = operationalOrientationMillis(value);
+    if (millis > 0) return millis;
+  }
+  const startedAt = operationalTrialStartedAtMillis(student);
+  return startedAt > 0 ? startedAt + OPERATIONAL_TRIAL_DURATION_MS : 0;
+}
+
+function operationalHasActiveTrial(student = {}, now = Date.now()) {
+  if (operationalHasQualifyingPayment(student)) return false;
+
+  const status = operationalOrientationStatus(
+    student.status || student.studentStatus || student.enrollmentStatus,
+  );
+  const trialStatus = operationalOrientationStatus(student.trialStatus || student.trial_status);
+  const blockedStatuses = new Set([
+    "trial expired", "blocked", "archived", "purged", "deleted", "inactive",
+    "expired", "withdrawn", "removed", "suspended",
+  ]);
+  const blockedTrialStatuses = new Set(["expired", "trial expired", "purged", "deleted"]);
+
+  if (blockedStatuses.has(status) || blockedTrialStatuses.has(trialStatus)) return false;
+  if (status && !["pending", "trial active", "active"].includes(status)) return false;
+  if (trialStatus && !["active", "trial active", "pending"].includes(trialStatus)) return false;
+
+  const startedAt = operationalTrialStartedAtMillis(student);
+  const expiredAt = operationalTrialExpiredAtMillis(student);
+  return startedAt > 0 && startedAt <= now && expiredAt > now;
+}
+
+function operationalOrientationEligibility(student = {}, now = Date.now()) {
+  const status = operationalOrientationStatus(
+    student.status || student.studentStatus || student.enrollmentStatus,
+  );
+  const trialStatus = operationalOrientationStatus(student.trialStatus || student.trial_status);
+  const blockedStatuses = new Set([
+    "trial expired", "blocked", "archived", "purged", "deleted", "inactive",
+    "expired", "withdrawn", "removed", "suspended",
+  ]);
+  const blockedTrialStatuses = new Set(["expired", "trial expired", "purged", "deleted"]);
+
+  if (blockedStatuses.has(status) || blockedTrialStatuses.has(trialStatus)) {
+    return { eligible: false, reason: status || trialStatus || "inactive" };
+  }
+  if (operationalHasQualifyingPayment(student)) {
+    return { eligible: true, reason: "paid" };
+  }
+  if (operationalHasActiveTrial(student, now)) {
+    return { eligible: true, reason: "trial_active" };
+  }
+  return { eligible: false, reason: "payment_or_active_trial_required" };
+}
+
 async function syncStudentToOrientationSheet(docSnap, options = {}) {
   const student = docSnap.data() || {};
   if (student.orientationSheetAutoSyncStatus === "sent" || student.orientationSheetAutoSyncedAt) return { status: "already_sent" };
 
-  const lifecycleStatus = String(student.status || "").trim().toLowerCase();
-  if (["trial_expired", "blocked", "archived", "purged", "deleted", "inactive"].includes(lifecycleStatus)) {
-    return { status: "skipped", reason: `student status is ${lifecycleStatus}` };
-  }
-
-  if (!operationalHasQualifyingPayment(student)) {
+  const eligibility = operationalOrientationEligibility(student);
+  if (!eligibility.eligible) {
     if (options.writeStatus !== false) {
       await docSnap.ref.set({
         orientationSheetAutoSyncStatus: "skipped",
-        orientationSheetAutoSyncLastError: "payment_required",
+        orientationSheetAutoSyncLastError: eligibility.reason,
         orientationSheetAutoSyncCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
     }
-    return { status: "skipped", reason: "payment_required" };
+    return { status: "skipped", reason: eligibility.reason };
   }
 
   const appsScriptUrl = String(orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || "").trim();
@@ -264,18 +362,12 @@ exports.autoSyncNewStudentToOrientationSheet = onDocumentCreated({
   console.log("autoSyncNewStudentToOrientationSheet", event.params.studentId, result);
 });
 
-exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted({
-  document: "students/{studentId}",
-  secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
-}, async (event) => {
-  if (!event.data) return { skipped: true, reason: "missing_deleted_snapshot" };
-
-  const student = event.data.data() || {};
+async function removeStudentFromOrientationSheet(student = {}, studentId = "", source = "") {
   const appsScriptUrl = String(orientationAppsScriptUrlSecret.value() || process.env.ORIENTATION_APPS_SCRIPT_URL || "").trim();
   const syncSecret = String(orientationSyncSecret.value() || process.env.ORIENTATION_SYNC_SECRET || "").trim();
   if (!appsScriptUrl || !syncSecret) return { skipped: true, reason: "orientation sheet secrets missing" };
 
-  const studentCode = String(student.studentCode || student.studentcode || student.code || event.params.studentId || "").trim();
+  const studentCode = String(student.studentCode || student.studentcode || student.code || studentId || "").trim();
   const email = String(student.email || student.emailAddress || student.contactEmail || "").trim();
 
   const upstreamResponse = await fetch(appsScriptUrl, {
@@ -286,19 +378,62 @@ exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted({
       secret: syncSecret,
       studentCode,
       email,
-      source: "student_deleted",
+      source,
     }),
   });
 
   const responseJson = await upstreamResponse.json().catch(() => ({}));
   if (!upstreamResponse.ok || responseJson?.ok === false) {
     const reason = responseJson?.error || `Orientation sheet removal returned ${upstreamResponse.status}`;
-    console.error("autoRemoveDeletedStudentFromOrientationSheet", event.params.studentId, reason);
     return { status: "failed", reason };
   }
-
-  console.log("autoRemoveDeletedStudentFromOrientationSheet", event.params.studentId, responseJson);
   return { status: "removed", ...responseJson };
+}
+
+exports.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated({
+  document: "students/{studentId}",
+  secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
+}, async (event) => {
+  const before = event.data?.before?.data?.() || {};
+  const after = event.data?.after?.data?.() || {};
+  const beforeEligibility = operationalOrientationEligibility(before);
+  const afterEligibility = operationalOrientationEligibility(after);
+
+  const hadOrientationRow = Boolean(
+    after.orientationSheetAutoSyncedAt
+    || after.orientationSheetAutoSyncStatus === "sent"
+    || before.orientationSheetAutoSyncedAt
+    || before.orientationSheetAutoSyncStatus === "sent"
+  );
+  if (afterEligibility.eligible || (!beforeEligibility.eligible && !hadOrientationRow)) {
+    return { skipped: true, reason: afterEligibility.reason || "still_eligible" };
+  }
+
+  const result = await removeStudentFromOrientationSheet(
+    after,
+    event.params.studentId,
+    `student_became_ineligible:${afterEligibility.reason}`,
+  );
+  console.log("autoRemoveIneligibleStudentFromOrientationSheet", event.params.studentId, result);
+  if (result.status === "failed") throw new Error(result.reason);
+  return result;
+});
+
+exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted({
+  document: "students/{studentId}",
+  secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret],
+}, async (event) => {
+  if (!event.data) return { skipped: true, reason: "missing_deleted_snapshot" };
+
+  const student = event.data.data() || {};
+  const result = await removeStudentFromOrientationSheet(
+    student,
+    event.params.studentId,
+    "student_deleted",
+  );
+  console.log("autoRemoveDeletedStudentFromOrientationSheet", event.params.studentId, result);
+  if (result.status === "failed") throw new Error(result.reason);
+  return result;
 });
 
 exports.autoSyncNewLiveClassToScheduleSheet = onDocumentCreated({

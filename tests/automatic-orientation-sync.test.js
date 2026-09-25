@@ -211,15 +211,19 @@ test("a duplicate payment event skips when the current student already has the s
   assert.equal(fetchCount, 0);
 });
 
-test("operational orientation sync rejects unpaid students and removes deleted students", () => {
+test("operational orientation sync accepts active trials and removes them when eligibility ends", () => {
   const snippet = read("scripts/snippets/operationalSheetAutoSyncJobs.js.txt");
   const workflow = read(".github/workflows/deploy-firebase.yml");
 
   assert.match(snippet, /operationalHasQualifyingPayment/);
-  assert.match(snippet, /payment_required/);
-  assert.match(snippet, /trial_expired/);
+  assert.match(snippet, /operationalHasActiveTrial/);
+  assert.match(snippet, /payment_or_active_trial_required/);
+  assert.match(snippet, /student\.trialStartedAt/);
+  assert.match(snippet, /student\.joined_at/);
+  assert.match(snippet, /exports\.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated/);
   assert.match(snippet, /exports\.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted/);
   assert.match(snippet, /action: "removeOrientationRow"/);
+  assert.match(workflow, /functions:falowenadmin:autoRemoveIneligibleStudentFromOrientationSheet/);
   assert.match(workflow, /functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet/);
   assert.match(workflow, /functions:falowenadmin:autoSyncNewStudentToOrientationSheet/);
   assert.match(workflow, /functions:falowenadmin:syncPendingOperationalSheets/);

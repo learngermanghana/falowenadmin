@@ -77,6 +77,25 @@ test("positive paid amount protects student even if payment status has not synce
   assert.equal(isExpiredPendingStudent(student, NOW), false);
 });
 
+test("legacy joined_at timestamp is accepted as the seven-day trial clock", () => {
+  const student = pendingStudent({
+    createdAt: null,
+    trialStartedAt: null,
+    joined_at: new Date(NOW - TRIAL_DURATION_MS + 60_000).toISOString(),
+  });
+  assert.equal(pendingStartedAtMillis(student), NOW - TRIAL_DURATION_MS + 60_000);
+  assert.equal(expiredPendingReason(student, NOW), "trial_active");
+});
+
+test("legacy joined_at trial expires after seven days when unpaid", () => {
+  const student = pendingStudent({
+    createdAt: null,
+    trialStartedAt: null,
+    joined_at: new Date(NOW - TRIAL_DURATION_MS).toISOString(),
+  });
+  assert.equal(expiredPendingReason(student, NOW), "needs_block");
+});
+
 test("missing registration date is skipped rather than guessed", () => {
   const student = pendingStudent({
     createdAt: null,
