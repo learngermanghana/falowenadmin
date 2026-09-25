@@ -466,7 +466,14 @@ export default function PresenterSessionTimer({ slide }) {
       </div>
       <div className="presenter-session-timer-actions">
         {attendanceControlsTimer ? (
-          <span>Managed by Attendance</span>
+          <button
+            type="button"
+            className="presenter-session-start is-attendance-active"
+            disabled
+            title="The class timer was started from Attendance."
+          >
+            {expired ? "Class ended" : "Class started"}
+          </button>
         ) : (
           <>
             <button type="button" className="presenter-session-start" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
