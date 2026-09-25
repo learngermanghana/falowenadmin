@@ -45,24 +45,26 @@ fs.writeFileSync(a1Target, a1Source);
 const pickerTarget = new URL("../src/components/PresenterStudentPicker.jsx", import.meta.url);
 let pickerSource = fs.readFileSync(pickerTarget, "utf8");
 
-pickerSource = replaceOnce(
-  pickerSource,
-  'const LAST_CLASS_KEY = "falowen:presenter:last-class";',
-  [
+if (!pickerSource.includes("RESPONSE_TIME_KEY")) {
+  pickerSource = replaceOnce(
+    pickerSource,
     'const LAST_CLASS_KEY = "falowen:presenter:last-class";',
-    'const RESPONSE_TIME_KEY = "falowen:presenter:response-seconds";',
-    'const DEFAULT_RESPONSE_SECONDS = 30;',
-    'const RESPONSE_TIME_PRESETS = [15, 30, 45, 60];',
-    '',
-    'function formatResponseTime(totalSeconds = 0) {',
-    '  const safe = Math.max(0, Math.floor(Number(totalSeconds || 0)));',
-    '  const minutes = Math.floor(safe / 60);',
-    '  const seconds = safe % 60;',
-    '  return `${minutes}:${String(seconds).padStart(2, "0")}`;',
-    '}',
-  ].join("\n"),
-  "student response timer constants",
-);
+    [
+      'const LAST_CLASS_KEY = "falowen:presenter:last-class";',
+      'const RESPONSE_TIME_KEY = "falowen:presenter:response-seconds";',
+      'const DEFAULT_RESPONSE_SECONDS = 30;',
+      'const RESPONSE_TIME_PRESETS = [15, 30, 45, 60];',
+      '',
+      'function formatResponseTime(totalSeconds = 0) {',
+      '  const safe = Math.max(0, Math.floor(Number(totalSeconds || 0)));',
+      '  const minutes = Math.floor(safe / 60);',
+      '  const seconds = safe % 60;',
+      '  return `${minutes}:${String(seconds).padStart(2, "0")}`;',
+      '}',
+    ].join("\n"),
+    "student response timer constants",
+  );
+}
 
 pickerSource = replaceOnce(
   pickerSource,
@@ -262,29 +264,31 @@ pickerSource = replaceOnce(
   "student response timer display",
 );
 
-const settingsAnchor = '            <small>Cloud sync lets you continue the same lesson on another signed-in device. “Absent” only removes a learner from this presenter rotation and never changes official attendance or grades.</small>';
-const settingsBlock = [
-  settingsAnchor,
-  '            {responseTimerEnabled ? (',
-  '              <div className="presenter-response-time-settings">',
-  '                <strong>Student answer time</strong>',
-  '              <div role="group" aria-label="Student answer time presets">',
-  '                {RESPONSE_TIME_PRESETS.map((seconds) => (',
-  '                  <button',
-  '                    key={seconds}',
-  '                    type="button"',
-  '                    className={responseSeconds === seconds ? "is-selected" : ""}',
-  '                    onClick={() => chooseResponseSeconds(seconds)}',
-  '                  >',
-  '                    {seconds}s',
-  '                  </button>',
-  '                ))}',
-  '              </div>',
-  '                <small>Starts automatically when you pick a student or give the same student a new question. Default: 30 seconds.</small>',
-  '              </div>',
-  '            ) : null}',
-].join("\n");
-pickerSource = replaceOnce(pickerSource, settingsAnchor, settingsBlock, "student response timer settings");
+if (!pickerSource.includes('className="presenter-response-time-settings"')) {
+  const settingsAnchor = '            <small>Cloud sync lets you continue the same lesson on another signed-in device. “Absent” only removes a learner from this presenter rotation and never changes official attendance or grades.</small>';
+  const settingsBlock = [
+    settingsAnchor,
+    '            {responseTimerEnabled ? (',
+    '              <div className="presenter-response-time-settings">',
+    '                <strong>Student answer time</strong>',
+    '              <div role="group" aria-label="Student answer time presets">',
+    '                {RESPONSE_TIME_PRESETS.map((seconds) => (',
+    '                  <button',
+    '                    key={seconds}',
+    '                    type="button"',
+    '                    className={responseSeconds === seconds ? "is-selected" : ""}',
+    '                    onClick={() => chooseResponseSeconds(seconds)}',
+    '                  >',
+    '                    {seconds}s',
+    '                  </button>',
+    '                ))}',
+    '              </div>',
+    '                <small>Starts automatically when you pick a student or give the same student a new question. Default: 30 seconds.</small>',
+    '              </div>',
+    '            ) : null}',
+  ].join("\n");
+  pickerSource = replaceOnce(pickerSource, settingsAnchor, settingsBlock, "student response timer settings");
+}
 fs.writeFileSync(pickerTarget, pickerSource);
 
 const pickerCssTarget = new URL("../src/components/PresenterStudentPicker.css", import.meta.url);
