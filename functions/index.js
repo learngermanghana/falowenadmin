@@ -13,7 +13,7 @@ const { defineSecret } = require("firebase-functions/params");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
-const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
+const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");\nconst { createTrialAccessWelcomeEmailTrigger, createTrialAccessReminderEmailJob } = require("./trialAccessEmails.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 const {
   HOLIDAY_NOTICE_PROTOCOL_VERSION,
@@ -2300,6 +2300,20 @@ const registrationLifecycleTriggers = createRegistrationLifecycleTriggers({
 
 exports.trackStudentRegistrationReceived = registrationLifecycleTriggers.registrationReceived;
 exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed;
+
+exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger({
+  admin,
+  db,
+  onDocumentCreated,
+  runtimeConfig,
+});
+
+exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob({
+  admin,
+  db,
+  onSchedule,
+  runtimeConfig,
+});
 
 exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
   await createAutomaticMarkingJob(event, "flat");
