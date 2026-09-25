@@ -8,12 +8,14 @@ function replaceOnce(source, before, after, label) {
 
 const teachingTarget = new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url);
 let teachingSource = fs.readFileSync(teachingTarget, "utf8");
-teachingSource = replaceOnce(
-  teachingSource,
-  'import "./TeachingSlidePresenter.css";',
-  'import PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
-  "TeachingSlidePresenter session timer import",
-);
+if (!teachingSource.includes('import PresenterSessionTimer from "./PresenterSessionTimer.jsx";')) {
+  teachingSource = replaceOnce(
+    teachingSource,
+    'import "./TeachingSlidePresenter.css";',
+    'import PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
+    "TeachingSlidePresenter session timer import",
+  );
+}
 teachingSource = replaceOnce(
   teachingSource,
   '          {showPresenterTimer ? (',
@@ -24,12 +26,14 @@ fs.writeFileSync(teachingTarget, teachingSource);
 
 const a1Target = new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url);
 let a1Source = fs.readFileSync(a1Target, "utf8");
-a1Source = replaceOnce(
-  a1Source,
-  'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";\nimport "./TeachingSlidePresenter.css";',
-  'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";\nimport PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
-  "A1 presenter session timer import",
-);
+if (!a1Source.includes('import PresenterSessionTimer from "./PresenterSessionTimer.jsx";')) {
+  a1Source = replaceOnce(
+    a1Source,
+    'import "./TeachingSlidePresenter.css";',
+    'import PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
+    "A1 presenter session timer import",
+  );
+}
 a1Source = replaceOnce(
   a1Source,
   '          <div className="presenter-v2-tools">',
