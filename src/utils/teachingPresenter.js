@@ -329,6 +329,43 @@ function buildAdvancedPracticeItems(slide = {}, support = {}, flow = [], grammar
   ];
 }
 
+function lessonSummaryObjective(slide = {}) {
+  const raw = String(slide.objective || "").trim();
+  if (!raw) return `You can work confidently with the lesson topic “${cleanTopic(slide)}”.`;
+
+  const withoutLearner = raw
+    .replace(/^students?\s+can\s+/i, "")
+    .replace(/^learners?\s+can\s+/i, "")
+    .replace(/^students?\s+/i, "")
+    .replace(/^learners?\s+/i, "");
+  if (!withoutLearner) return `You can work confidently with the lesson topic “${cleanTopic(slide)}”.`;
+  return `You can ${withoutLearner.charAt(0).toLowerCase()}${withoutLearner.slice(1)}`;
+}
+
+function buildLessonSummaryItems(slide = {}) {
+  const support = buildTeacherSlideSupport(slide);
+  const topic = cleanTopic(slide);
+  const grammar = (Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [])
+    .map((item) => String(item || "").trim())
+    .find(Boolean);
+  const speakingQuestions = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [];
+  const items = [
+    { label: "Main goal", detail: lessonSummaryObjective(slide) },
+  ];
+
+  if (grammar) {
+    items.push({ label: "Language", detail: `You can use today’s target grammar accurately: ${grammar}` });
+  }
+  if (speakingQuestions.length) {
+    items.push({ label: "Speaking", detail: `You can talk about “${topic}”, answer lesson questions and add useful reasons or details.` });
+  }
+  if (slide.wrapUpTaskDe) {
+    items.push({ label: "Self-check", detail: String(slide.wrapUpTaskDe).trim() });
+  }
+
+  return items.slice(0, 4);
+}
+
 function buildClassicStages(slide = {}, topicLabel = "") { const studentReference = getCurriculumParityReference(slide); return [
   { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "", studentReference },
   { id: "warmup", type: "list", kicker: "Warm-up", title: "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
@@ -369,5 +406,5 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
 }
 
 export function getSpeakingQuestionModel(stage = {}, question = "") { return stage.questionModels?.find((item) => item.questionDe === question) || null; }
-export function buildTeachingPresenterStages(slide = {}, topicLabel = "") { const presenterV2 = isTeachingPresenterV2Slide(slide); const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel); const filtered = stages.filter((stage) => { if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective); if (stage.type === "task") return Boolean(stage.body); if (stage.type === "foundation") return Boolean(stage.intro || stage.example || stage.tension || stage.question || stage.simpleEnglish); if (stage.type === "bridge") return Array.isArray(stage.items) && stage.items.length > 0; return Array.isArray(stage.items) && stage.items.length > 0; }); if (presenterV2) { const items = buildCourseBookBridgeItems(slide); const studentReference = getCurriculumParityReference(slide); if (items.length) filtered.push({ id: "coursebook-bridge", type: "bridge", kicker: "Falowen", title: "Course Book Bridge", items, studentReference }); } return filtered; }
+export function buildTeachingPresenterStages(slide = {}, topicLabel = "") { const presenterV2 = isTeachingPresenterV2Slide(slide); const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel); const filtered = stages.filter((stage) => { if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective); if (stage.type === "task") return Boolean(stage.body); if (stage.type === "foundation") return Boolean(stage.intro || stage.example || stage.tension || stage.question || stage.simpleEnglish); return Array.isArray(stage.items) && stage.items.length > 0; }); if (presenterV2) { const nextSteps = buildCourseBookBridgeItems(slide); const studentReference = getCurriculumParityReference(slide); const summaryItems = buildLessonSummaryItems(slide); if (summaryItems.length) filtered.push({ id: "lesson-summary", type: "summary", kicker: "Abschluss", title: "Lesson summary", subtitle: "You should now be able to…", items: summaryItems, nextSteps, studentReference }); } return filtered; }
 export function clampPresenterIndex(index, stageCount) { const lastIndex = Math.max(0, Number(stageCount || 0) - 1); return Math.min(lastIndex, Math.max(0, Number(index || 0))); }

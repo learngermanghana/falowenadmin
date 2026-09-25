@@ -1,9 +1,24 @@
+.presenter-topbar {
+  flex-wrap: wrap;
+}
+
+.presenter-topbar > * {
+  min-width: 0;
+}
+
 .presenter-v2-tools {
   display: flex;
   align-items: center;
+  flex: 1 1 520px;
   gap: 0.8rem;
   flex-wrap: wrap;
+  min-width: 0;
   margin-left: auto;
+}
+
+.presenter-top-actions {
+  flex: 0 0 auto;
+  align-self: flex-start;
 }
 
 .presenter-stage-jump {
@@ -941,6 +956,109 @@
 
 @media (max-width: 700px) {
   .presenter-vocabulary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* final-lesson-summary */
+.presenter-content-summary {
+  justify-content: flex-start;
+  padding-top: clamp(1.1rem, 2.4vw, 2rem);
+}
+
+.presenter-lesson-summary {
+  width: min(100%, 1180px);
+  display: grid;
+  gap: 1rem;
+}
+
+.presenter-lesson-summary-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.presenter-lesson-summary-heading > span {
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-lesson-summary-heading h1,
+.presenter-lesson-summary-heading p {
+  margin: 0;
+}
+
+.presenter-lesson-summary-heading p {
+  color: #475569;
+  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  font-weight: 750;
+}
+
+.presenter-lesson-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.presenter-lesson-summary-grid article {
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.presenter-lesson-summary-grid article strong {
+  color: #1d4ed8;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.presenter-lesson-summary-grid article p {
+  margin: 0;
+  font-size: clamp(0.98rem, 1.35vw, 1.15rem);
+  line-height: 1.45;
+}
+
+.presenter-lesson-summary-next {
+  display: grid;
+  gap: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.8rem;
+}
+
+.presenter-lesson-summary-next > strong {
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.presenter-lesson-summary-next > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.presenter-lesson-summary-next a,
+.presenter-lesson-summary-next span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .presenter-lesson-summary-grid {
     grid-template-columns: 1fr;
   }
 }

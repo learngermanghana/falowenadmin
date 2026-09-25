@@ -3,6 +3,7 @@ import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -193,6 +194,8 @@ export default function A1GrammarPresenter({
             <span className="presenter-kicker">{stage.kicker}</span>
             <span className="presenter-lesson-label">A1 · Language-first</span>
           </div>
+
+          <PresenterSessionTimer slide={slide} />
 
           <div className="presenter-v2-tools">
             <label className="presenter-stage-jump">
