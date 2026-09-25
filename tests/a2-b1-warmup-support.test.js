@@ -93,31 +93,54 @@ test("wide presenter layouts fit the standard four warm-up questions in a two-co
   assert.match(css, /\.presenter-warmup-question-card:only-child/);
 });
 
-test("every A2/B1 warm-up follow-up asks for an example and is question-aware", () => {
+test("every A2/B1 warm-up follow-up is a real conversational question", () => {
   for (const level of ["A2", "B1"]) {
     for (const slide of getSlidesByCourse(level)) {
       const warmup = buildTeachingPresenterStages(slide, slide.topic)
         .find((stage) => stage.id === "warmup");
 
       warmup.questionSupport.forEach((support, index) => {
-        assert.match(
-          support.followUpDe,
-          /^Nenne ein Beispiel:/,
-          `${slide.assignmentId} warm-up ${index + 1} must ask for an example`,
+        const followUp = String(support.followUpDe || "").trim();
+        assert.ok(followUp.endsWith("?"), `${slide.assignmentId} warm-up ${index + 1} must end as a question`);
+        assert.doesNotMatch(
+          followUp,
+          /Nenne ein Beispiel|Was genau meinst du damit|Kannst du ein (?:konkretes )?Beispiel nennen/i,
+          `${slide.assignmentId} warm-up ${index + 1} still uses a generic example prompt`,
         );
-        assert.notEqual(
-          support.followUpDe,
-          "Warum? Kannst du ein Beispiel nennen?",
-          `${slide.assignmentId} warm-up ${index + 1} still uses the old generic follow-up`,
-        );
-        assert.notEqual(
-          support.followUpDe,
-          "Kannst du ein konkretes Beispiel nennen?",
-          `${slide.assignmentId} warm-up ${index + 1} still uses the old generic why follow-up`,
+        assert.ok(
+          followUp.split(/\s+/).length >= 5,
+          `${slide.assignmentId} warm-up ${index + 1} follow-up is too generic`,
         );
       });
     }
   }
+});
+
+test("A2 Day 5 uses natural follow-up questions instead of example prompts", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.5");
+  const warmup = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "warmup");
+  const byQuestion = new Map(warmup.items.map((question, index) => [
+    question,
+    warmup.questionSupport[index]?.followUpDe || "",
+  ]));
+
+  assert.equal(
+    byQuestion.get("Was machst du gern am Wochenende?"),
+    "Mit wem verbringst du dein Wochenende am liebsten?",
+  );
+  assert.equal(
+    byQuestion.get("Wann stehst du am Wochenende auf?"),
+    "Was machst du direkt nach dem Aufstehen?",
+  );
+  assert.equal(
+    byQuestion.get("Siehst du abends oft fern?"),
+    "Was siehst du abends am liebsten im Fernsehen?",
+  );
+  assert.equal(
+    byQuestion.get("Gehst du manchmal mit Freunden aus?"),
+    "Wohin gehst du mit deinen Freunden am liebsten?",
+  );
 });
 
 test("A2 Day 22 follow-ups are tailored to the actual warm-up question", () => {
@@ -141,8 +164,10 @@ test("B1 follow-ups stay tied to the comparison or method in the question", () =
   const comparisonIndex = comparison.items.indexOf("Was ist wichtiger: Ausbildung oder Erfahrung?");
   const comparisonFollowUp = comparison.questionSupport[comparisonIndex]?.followUpDe || "";
 
-  assert.match(comparisonFollowUp, /^Nenne ein Beispiel:/);
-  assert.match(comparisonFollowUp, /Ausbildung|Erfahrung/);
+  assert.equal(
+    comparisonFollowUp,
+    "Wann ist praktische Erfahrung wichtiger als eine Ausbildung?",
+  );
 
   const methodSlide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-5.15");
   const method = buildTeachingPresenterStages(methodSlide, methodSlide.topic)
@@ -150,9 +175,10 @@ test("B1 follow-ups stay tied to the comparison or method in the question", () =
   const methodIndex = method.items.indexOf("Wie kann man Arbeit und Privatleben besser trennen?");
   const methodFollowUp = method.questionSupport[methodIndex]?.followUpDe || "";
 
-  assert.match(methodFollowUp, /^Nenne ein Beispiel:/);
-  assert.match(methodFollowUp, /Arbeit|Privatleben/);
-  assert.match(methodFollowUp, /konkreten Situation|umsetzen/i);
+  assert.equal(
+    methodFollowUp,
+    "Welche feste Regel hilft dir, nach der Arbeit wirklich abzuschalten?",
+  );
 });
 
 test("presenter renders highlighted keywords with optional hint, starter and follow-up", () => {
