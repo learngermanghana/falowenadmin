@@ -13,7 +13,8 @@ const { defineSecret } = require("firebase-functions/params");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
-const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");\nconst { createTrialAccessWelcomeEmailTrigger, createTrialAccessReminderEmailJob } = require("./trialAccessEmails.js");
+const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
+const { createTrialAccessWelcomeEmailTrigger, createTrialAccessReminderEmailJob } = require("./trialAccessEmails.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 const {
   HOLIDAY_NOTICE_PROTOCOL_VERSION,
@@ -1750,7 +1751,9 @@ function buildMarkingPrompt(payload = {}) {
     "When a submission contains both objective and writing work, integrate both naturally in one response and match the emphasis to the result. If both sections are perfect, enthusiastically praise the student. If the objective section is strong but writing needs work, praise the objective understanding before prioritizing specific writing improvements. If the writing is strong but the objective section needs work, praise the writing before directing the student to the exact missed objectives. State the supplied objective result accurately and never invent errors or corrections.",
     `Return JSON only. The feedback field must be ${AI_FEEDBACK_MIN_WORDS} to ${AI_FEEDBACK_MAX_WORDS} words, plain text only, with no Markdown, bold markers, or asterisks. Use the available space for specific, actionable guidance rather than filler. Include score/finalScore 0-100, status marked or needs_review, confidence 0-1, detectedParts, parts, objective totals, writingScore, writingScorePercent, writingStrengths, taskCompletion, missingTaskPoints, taskPointEvidence, corrections, nextStep, and improvementSummary.`,
     `Payload: ${JSON.stringify(payload)}`,
-  ].join("\n\n");
+  ].join("
+
+");
 }
 
 async function callOpenAiForMarking(payload = {}) {
@@ -2432,13 +2435,16 @@ app.get("/calendar/class/:classId.ics", async (req, res) => {
     const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Falowen//Live Classes//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
     for (const session of sessions) {
       const uid = session.uid || `falowen-class-${classId}-${session.id}@falowen.com`;
-      lines.push("BEGIN:VEVENT", `UID:${uid}`, `SEQUENCE:${Number(session.sequence || 0)}`, `DTSTAMP:${toIcsDate(new Date())}`, `DTSTART:${toIcsDate(session.startsAt)}`, `DTEND:${toIcsDate(session.endsAt || session.startsAt)}`, `SUMMARY:${String(session.topic || klass.name || "Falowen live class").replace(/\n/g, " ")}`);
+      lines.push("BEGIN:VEVENT", `UID:${uid}`, `SEQUENCE:${Number(session.sequence || 0)}`, `DTSTAMP:${toIcsDate(new Date())}`, `DTSTART:${toIcsDate(session.startsAt)}`, `DTEND:${toIcsDate(session.endsAt || session.startsAt)}`, `SUMMARY:${String(session.topic || klass.name || "Falowen live class").replace(/
+/g, " ")}`);
       if (session.status === "cancelled") lines.push("STATUS:CANCELLED");
       lines.push("END:VEVENT");
     }
     lines.push("END:VCALENDAR");
     res.set("Content-Type", "text/calendar; charset=utf-8");
-    res.send(`${lines.join("\r\n")}\r\n`);
+    res.send(`${lines.join("\r
+")}\r
+`);
   } catch (e) {
     res.status(500).json({ error: e?.message || "Server error" });
   }
