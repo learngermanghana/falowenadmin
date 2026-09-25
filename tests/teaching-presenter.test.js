@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages, clampPresenterIndex } from "../src/utils/teachingPresenter.js";
 import { normalizeStudentPracticeItems } from "../src/utils/studentSlidePractice.js";
 
@@ -78,4 +79,19 @@ test("presenter navigation index is clamped to available stages", () => {
   assert.equal(clampPresenterIndex(-2, 5), 0);
   assert.equal(clampPresenterIndex(2, 5), 2);
   assert.equal(clampPresenterIndex(12, 5), 4);
+});
+
+
+test("A2 Presenter finishes with a lesson summary instead of Course Book Bridge", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.5");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const summary = stages.at(-1);
+
+  assert.equal(summary?.id, "lesson-summary");
+  assert.equal(summary?.type, "summary");
+  assert.match(summary?.subtitle || "", /You should now be able to/i);
+  assert.match(summary?.items?.[0]?.detail || "", /^You can describe free time/i);
+  assert.ok(summary?.nextSteps?.some((item) => item.label === "1. Grammar"));
+  assert.ok(summary?.nextSteps?.some((item) => item.label === "4. Workbook / Submit"));
+  assert.equal(stages.some((stage) => stage.id === "coursebook-bridge"), false);
 });
