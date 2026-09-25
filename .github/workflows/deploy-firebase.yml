@@ -114,6 +114,8 @@ jobs:
           grep -F 'exports.maintainStudentPaymentContracts = onSchedule' functions/index.js
           grep -F 'exports.autoSyncPaidStudentOrientation = onDocumentUpdated' functions/index.js
           grep -F 'exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted' functions/index.js
+          grep -F 'exports.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated' functions/index.js
+          grep -F 'payment_or_active_trial_required' functions/index.js
           grep -F 'payment_required' functions/index.js
           grep -F 'document: "payments/{reference}"' functions/index.js
           grep -F 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET")' functions/index.js
@@ -214,7 +216,7 @@ jobs:
             "functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob"
 
           deploy_group "payment and contract workers" \
-            "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:autoSyncNewStudentToOrientationSheet,functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet,functions:falowenadmin:syncPendingOperationalSheets,functions:falowenadmin:cleanupExpiredPendingStudents"
+            "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:autoSyncNewStudentToOrientationSheet,functions:falowenadmin:autoRemoveIneligibleStudentFromOrientationSheet,functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet,functions:falowenadmin:syncPendingOperationalSheets,functions:falowenadmin:cleanupExpiredPendingStudents"
 
           deploy_group "trial access email workers" \
             "functions:falowenadmin:sendTrialAccessWelcomeEmail,functions:falowenadmin:sendTrialAccessReminderEmails"
