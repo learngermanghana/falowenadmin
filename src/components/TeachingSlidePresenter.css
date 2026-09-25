@@ -1,3 +1,7 @@
+.presenter-topbar {
+  flex-wrap: wrap;
+}
+
 .presenter-topbar > * {
   min-width: 0;
 }
