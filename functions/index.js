@@ -7,6 +7,7 @@ const { buildCanonicalClassKeys, studentMatchesCanonicalClass } = require("./che
 const { isStudentOnPublishedRoster } = require("./publishedRosterMembership.js");
 const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onDocumentWritten: onTrialStudentDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
@@ -2305,7 +2306,7 @@ exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enro
 exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger({
   admin,
   db,
-  onDocumentCreated,
+  onDocumentWritten: onTrialStudentDocumentWritten,
   runtimeConfig,
 });
 

@@ -443,18 +443,24 @@ async function runTrialAccessEmailJob({
 function createTrialAccessWelcomeEmailTrigger({
   db,
   admin,
-  onDocumentCreated,
+  onDocumentWritten,
   runtimeConfig = {},
+  fetchImpl = fetch,
 } = {}) {
-  if (typeof onDocumentCreated !== "function") {
-    throw new Error("Trial welcome Firestore trigger is unavailable.");
+  if (typeof onDocumentWritten !== "function") {
+    throw new Error("Trial welcome Firestore write trigger is unavailable.");
   }
-  return onDocumentCreated({
+  return onDocumentWritten({
     document: "students/{studentId}",
     retry: true,
   }, async (event) => {
-    const student = event?.data?.data?.() || {};
-    const studentId = text(event?.params?.studentId || event?.data?.id);
+    const afterSnap = event?.data?.after;
+    if (!afterSnap?.exists) {
+      return { sent: false, reason: "student_deleted" };
+    }
+
+    const student = afterSnap.data?.() || {};
+    const studentId = text(event?.params?.studentId || afterSnap.id);
     const result = await processTrialAccessEmail({
       db,
       admin,
@@ -463,8 +469,17 @@ function createTrialAccessWelcomeEmailTrigger({
       studentId,
       requestedStage: "welcome",
       now: new Date(),
+      fetchImpl,
     });
     console.log("trial_access_welcome_email", result);
+
+    // Delivery failures are recorded by processTrialAccessEmail. Throwing here
+    // also lets Eventarc retry the same write immediately instead of waiting for
+    // the hourly reminder job to recover it.
+    if (!result.sent && result.reason === "delivery_failed") {
+      throw new Error(result.error || "Trial welcome email delivery failed.");
+    }
+
     return result;
   });
 }
