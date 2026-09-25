@@ -99,8 +99,9 @@ jobs:
           grep -F 'await ref.set({ deliveryPayload }, { merge: true })' functions/attendanceConfirmationEmails.js
           node --check functions/completionParticipationDocument.js
           node --check functions/registrationLifecycleEvents.js
+          node --check functions/trialAccessEmails.js
           node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
-          node --test tests/registration-lifecycle-events.test.js
+          node --test tests/registration-lifecycle-events.test.js tests/trial-access-emails.test.js tests/brochure-whatsapp.test.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
           node --test tests/pending-student-cleanup.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
@@ -134,6 +135,8 @@ jobs:
           grep -F 'exports.sendDueHolidayNotices = onSchedule' functions/index.js
           grep -F 'exports.trackStudentRegistrationReceived = registrationLifecycleTriggers.registrationReceived' functions/index.js
           grep -F 'exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed' functions/index.js
+          grep -F 'exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger' functions/index.js
+          grep -F 'exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob' functions/index.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
           grep -F 'async function loadReminderSessionWindow' functions/classSessionReminderEmails.js
           grep -F 'async function loadStudentsForDueClasses' functions/classSessionReminderEmails.js
@@ -210,8 +213,8 @@ jobs:
           deploy_group "assignment marking workers" \
             "functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob"
 
-          deploy_group "payment and contract workers" \
-            "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:autoSyncNewStudentToOrientationSheet,functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet,functions:falowenadmin:syncPendingOperationalSheets,functions:falowenadmin:cleanupExpiredPendingStudents"
+          deploy_group "payment, trial and contract workers" \
+            "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:autoSyncNewStudentToOrientationSheet,functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet,functions:falowenadmin:syncPendingOperationalSheets,functions:falowenadmin:cleanupExpiredPendingStudents,functions:falowenadmin:sendTrialAccessWelcomeEmail,functions:falowenadmin:sendTrialAccessReminderEmails"
 
           # Cloud Run CPU quota is tight in us-central1. Deploy the attendance
           # worker first, then the other scheduled/event workers one at a time
