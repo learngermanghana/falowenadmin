@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
+import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";
 import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
@@ -221,11 +222,20 @@ function writeClassStartDecision(storageKey, value) {
 
 export default function CheckinDisplayPage() {
   const [sp] = useSearchParams();
+  const navigate = useNavigate();
   const classId = sp.get("classId") || sp.get("className") || "";
   const sessionId = sp.get("sessionId") || sp.get("session") || "";
   const date = sp.get("date") || "";
   const sessionLabel = sp.get("sessionLabel") || sp.get("lesson") || "";
   const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
+  const presenterSlide = useMemo(
+    () => getTeachingSlideByAssignmentId(assignmentId),
+    [assignmentId],
+  );
+  const presenterLaunchPath = useMemo(() => {
+    if (!presenterSlide?.course || !presenterSlide?.id) return "";
+    return `/teaching-slides/course/${encodeURIComponent(presenterSlide.course)}/${encodeURIComponent(presenterSlide.id)}?present=1`;
+  }, [presenterSlide]);
   const startTime = sp.get("startTime") || "";
   const endTime = sp.get("endTime") || "";
   const expectedCount = sp.get("expectedCount") || "";
@@ -1046,7 +1056,7 @@ export default function CheckinDisplayPage() {
     });
   }, [actualStartedAt, dateLabel, delayUntil, nowMs, startDecisionStorageKey, startTime]);
 
-  const handleStartClassNow = useCallback(() => {
+  const handleStartClassNow = useCallback(async () => {
     if (actualStartedAt) return;
     const startedAt = nowMs;
     classStartedRef.current = true;
@@ -1059,31 +1069,44 @@ export default function CheckinDisplayPage() {
       actualEndedAt: null,
       delayUntil: null,
     });
-    void syncPresenterStart(startedAt);
 
     const context = audioContextRef.current;
     const masterGain = musicGainRef.current;
-    if (!context || !masterGain || context.state === "closed") {
-      stopWaitingMusic();
-      return;
+    if (context && masterGain && context.state !== "closed" && musicPlaying) {
+      scheduleStartChime(context, masterGain);
+      masterGain.gain.setTargetAtTime(
+        Math.max(0.08, musicVolume * 0.45),
+        context.currentTime,
+        0.08,
+      );
     }
-    if (!musicPlaying) {
-      stopWaitingMusic();
+
+    await syncPresenterStart(startedAt);
+    stopWaitingMusic();
+
+    if (presenterLaunchPath) {
+      navigate(presenterLaunchPath);
       return;
     }
 
-    scheduleStartChime(context, masterGain);
-    masterGain.gain.setTargetAtTime(
-      Math.max(0.08, musicVolume * 0.45),
-      context.currentTime,
-      0.08,
-    );
-    if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
-    classStartStopTimerRef.current = window.setTimeout(() => {
-      stopWaitingMusic();
-      classStartStopTimerRef.current = null;
-    }, 1700);
-  }, [actualStartedAt, musicPlaying, musicVolume, nowMs, startDecisionStorageKey, stopWaitingMusic, syncPresenterStart]);
+    setSlideSyncStatus((current) => ({
+      state: current.state === "error" ? current.state : "missing-slide",
+      message: current.state === "error"
+        ? current.message
+        : `Class started, but no teaching slide matches assignment ${assignmentId || "(missing assignment ID)"}.`,
+    }));
+  }, [
+    actualStartedAt,
+    assignmentId,
+    musicPlaying,
+    musicVolume,
+    navigate,
+    nowMs,
+    presenterLaunchPath,
+    startDecisionStorageKey,
+    stopWaitingMusic,
+    syncPresenterStart,
+  ]);
 
   const syncPresenterEnd = useCallback(async (endedAt) => {
     if (!actualStartedAt || !Number.isFinite(Number(endedAt))) return;

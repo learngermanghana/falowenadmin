@@ -7,6 +7,7 @@ import {
 } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -350,6 +351,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <span className="presenter-kicker">{stage.kicker}</span>
             <span className="presenter-lesson-label">{slide.course} · {slide.day}</span>
           </div>
+
+          <PresenterSessionTimer slide={slide} />
 
           {showPresenterTimer ? (
             <div className="presenter-v2-tools">
