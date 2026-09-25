@@ -460,22 +460,30 @@ export default function PresenterSessionTimer({ slide }) {
   return (
     <div className={`presenter-session-timer ${warningClass}`} aria-live="polite">
       <div className="presenter-session-timer-copy">
-        <span>Class time · {level} · {durationMinutes} min</span>
+        <div className="presenter-session-timer-heading">
+          <span>Class time · {level} · {durationMinutes} min</span>
+          <button
+            type="button"
+            className="presenter-session-sound-toggle"
+            onClick={toggleSound}
+            aria-pressed={soundEnabled}
+            title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up."
+          >
+            Sound {soundEnabled ? "on" : "off"}
+          </button>
+        </div>
         <strong>{expired ? "TIME UP" : formatSessionTime(remaining)}</strong>
         <small>{statusText}{syncLabel}</small>
       </div>
       <div className="presenter-session-timer-actions">
         {attendanceControlsTimer ? (
-          <span>Managed by Attendance</span>
+          <span className="presenter-session-managed-badge">Managed by Attendance</span>
         ) : (
           <>
             <button type="button" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
             <button type="button" onClick={reset}>Reset</button>
           </>
         )}
-        <button type="button" onClick={toggleSound} aria-pressed={soundEnabled} title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up.">
-          Sound: {soundEnabled ? "on" : "off"}
-        </button>
       </div>
     </div>
   );
