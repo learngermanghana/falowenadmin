@@ -63,6 +63,10 @@ function pendingStartedAtMillis(student = {}) {
     student.registered_at,
     student.signupAt,
     student.signupDate,
+    student.joined_at,
+    student.joinedAt,
+    student.enrollDate,
+    student.enrollmentDate,
     student.createdAt,
     student.created_at,
   ];
