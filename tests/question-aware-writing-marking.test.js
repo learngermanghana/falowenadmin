@@ -266,9 +266,11 @@ test("A2-1.1 keeps the authoritative informal Felix-letter register even if cach
   assert.equal(task.register, "informal");
   assert.equal(task.textType, "informal_email");
   assert.equal(task.recipient, "friend_or_personal_contact");
-  assert.equal(task.taskPoints.length, 5);
-  assert.match(task.taskText, /something new about your family/i);
-  assert.match(task.taskText, /ask how he is or what is new with him/i);
+  assert.equal(task.taskPoints.length, 3);
+  assert.equal(task.taskPointsDe.length, 3);
+  assert.match(task.taskText, /Arbeit oder Ihrem Studium/i);
+  assert.match(task.taskText, /Familie/i);
+  assert.match(task.taskText, /allen drei Punkten/i);
   assert.match(task.gradingInstruction, /Expected register: informal/i);
   assert.doesNotMatch(task.gradingInstruction, /Expected register: formal/i);
 });
@@ -320,15 +322,15 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.equal(result.ai.questionAwareWritingGuard.recoveredWritingScore > 0, true);
   assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, false);
   assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
-  assert.equal(result.taskCompletion.completed, 3);
-  assert.equal(result.taskCompletion.total, 5);
+  assert.equal(result.taskCompletion.completed, 1);
+  assert.equal(result.taskCompletion.total, 3);
   assert.equal(result.markingRubricVersion, A2_WRITING_RUBRIC_VERSION);
-  assert.equal(result.taskPointEvidence.length, 5);
-  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "met", "missing", "met", "missing"]);
-  assert.equal(result.writingDimensions.taskFulfilment, 60);
+  assert.equal(result.taskPointEvidence.length, 3);
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "missing", "missing"]);
+  assert.equal(result.writingDimensions.taskFulfilment, 33);
   assert.equal(result.writingDimensions.registerAndTextType, 60);
   assert.deepEqual(result.missingTaskPoints, [
-    "Tell Felix something new about your family",
+    "Write about your work or studies and your family",
     "At the end ask Felix a relevant personal question about how he is or what is new with him",
   ]);
   assert.match(result.ai.questionAwareWritingGuard.endingAdvice, /Könnten Sie mir helfen/);
@@ -336,7 +338,7 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.equal(result.status, "needs_review");
   assert.equal(result.shouldSendAutomatically, false);
   assert.match(result.feedback, /requested informal register/i);
-  assert.match(result.feedback, /something new about your family/i);
+  assert.match(result.feedback, /work or studies and your family/i);
   assert.match(result.feedback, /relevant personal question/i);
   assert.match(result.feedback, /Könnten Sie mir helfen/);
   assert.match(result.feedback, /Ich freue mich auf deine Antwort/);
@@ -385,9 +387,9 @@ test("A2-1.1 accepts a relevant personal final question but does not require the
 
   assert.equal(result.writingScore, 86);
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
-  assert.equal(result.ai.questionAwareWritingTask.taskPoints.length, 5);
-  assert.equal(result.taskCompletion.completed, 5);
-  assert.equal(result.taskCompletion.total, 5);
+  assert.equal(result.ai.questionAwareWritingTask.taskPoints.length, 3);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
   assert.equal(result.taskPointEvidence.every((item) => item.status === "met"), true);
   assert.equal(result.markingRubricVersion, A2_WRITING_RUBRIC_VERSION);
 });
@@ -407,16 +409,16 @@ test("A2-1.1 does not count a generic help question as the required final questi
     writingScorePercent: 82,
     finalScore: 88,
     score: 88,
-    taskCompletion: { completed: 5, total: 5, missing: [] },
+    taskCompletion: { completed: 3, total: 3, missing: [] },
     missingTaskPoints: [],
     feedback: "You addressed all task points.",
     status: "marked",
     confidence: 0.8,
   }, enriched, victoriaA2Day1);
 
-  assert.equal(result.taskCompletion.completed, 3);
-  assert.equal(result.taskCompletion.total, 5);
-  assert.equal(result.missingTaskPoints.includes("Tell Felix something new about your family"), true);
+  assert.equal(result.taskCompletion.completed, 1);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.equal(result.missingTaskPoints.includes("Write about your work or studies and your family"), true);
   assert.equal(result.missingTaskPoints.some((item) => /relevant personal question/i.test(item)), true);
   assert.match(result.feedback, /does not answer the Felix task/i);
 });
@@ -430,9 +432,25 @@ test("all 28 A2 writing assignments have canonical semantic specs", () => {
     assert.match(spec.assignmentKey, /^A2-\d+\.\d+$/);
     assert.ok(spec.taskText.length >= 10, spec.assignmentKey + " needs task text");
     assert.ok(["formal", "informal", "neutral"].includes(spec.register), spec.assignmentKey + " needs register");
-    assert.ok(spec.taskPoints.length >= 3, spec.assignmentKey + " needs communicative points");
+    assert.equal(spec.taskPoints.length, 3, spec.assignmentKey + " must have exactly three communicative points");
+    assert.equal(spec.taskPointsDe.length, 3, spec.assignmentKey + " must expose exactly three Goethe bullets");
+    assert.match(spec.taskText, /allen drei Punkten/i, spec.assignmentKey + " needs Goethe-style prompt wording");
     assert.equal(spec.rubricVersion, A2_WRITING_RUBRIC_VERSION);
   }
+});
+
+test("A2 Day 22 and Day 23 use the current workbook questions", () => {
+  const day22 = getA2WritingTaskSpecs().find((spec) => spec.assignmentKey === "A2-8.22");
+  const day23 = getA2WritingTaskSpecs().find((spec) => spec.assignmentKey === "A2-9.23");
+
+  assert.deepEqual(day22.taskPointsDe, [
+    "Nennen Sie mindestens drei Termine oder Aktivitäten in Ihrer Woche.",
+    "Schreiben Sie, wann Sie Zeit haben.",
+    "Schlagen Sie ein Treffen mit einem konkreten Termin vor.",
+  ]);
+  assert.match(day23.taskText, /Weg zur Schule oder zur Arbeit/i);
+  assert.match(day23.taskPointsDe.join(" "), /Verkehrsmittel/i);
+  assert.doesNotMatch(day23.taskText, /Autohaus|Autohändler/i);
 });
 
 test("canonical A2 spec overrides stale registry metadata beyond Day 1", () => {
@@ -454,7 +472,7 @@ test("canonical A2 spec overrides stale registry metadata beyond Day 1", () => {
   assert.equal(task.textType, "complaint");
   assert.equal(task.register, "formal");
   assert.equal(task.taskPoints.length, 3);
-  assert.match(task.taskText, /defective|unacceptable product/i);
+  assert.match(task.taskText, /defekt|nicht wie bestellt/i);
 });
 
 
@@ -498,19 +516,20 @@ test("A2-1.2 recovers a zero writing score without retaining a stale zero contra
     writingScorePercent: 0,
     finalScore: 45,
     score: 45,
-    taskCompletion: { completed: 4, total: 4, missing: [] },
+    taskCompletion: { completed: 3, total: 3, missing: [] },
     missingTaskPoints: [],
     corrections: [],
-    feedback: "Strong work. You addressed all four task points.",
+    feedback: "Strong work. You addressed all three task points.",
     status: "marked",
     confidence: 0.8,
   }, enriched, vickyA2Day2);
 
   assert.ok(result.writingScore > 0);
-  assert.equal(result.taskCompletion.completed, 4);
-  assert.equal(result.taskCompletion.total, 4);
-  assert.equal(result.taskPointEvidence[3].status, "met");
-  assert.equal(result.taskPointEvidence[3].evidence, "Wie ist dein Chef ?");
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.equal(result.taskPointEvidence.length, 3);
+  assert.equal(result.taskPointEvidence[2].status, "met");
+  assert.match(result.taskPointEvidence[2].evidence, /Wie ist dein Chef/i);
   assert.equal(result.status, "marked");
   assert.equal((result.ai?.markingContradictions || []).some((item) => /Writing score is 0/i.test(item)), false);
   assert.equal((result.reviewReasons || []).some((item) => item.code === "writing_zero_with_completed_task"), false);
