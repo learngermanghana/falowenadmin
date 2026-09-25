@@ -1,398 +1,130 @@
-export const A2_WRITING_RUBRIC_VERSION = "a2-semantic-2026-09-18-v1";
+export const A2_WRITING_RUBRIC_VERSION = "a2-semantic-2026-09-25-v2";
 
 const rows = [
-  [
-    "A2-1.1",
-    "Small Talk",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal letter to Felix about work and family: explain why you are writing, write about your work or studies, tell Felix something new about your family, use at least one reason with weil or denn, and at the end ask how he is or what is new with him.",
-    [
-      "Explain why you are writing to Felix",
-      "Write about your work or studies",
-      "Tell Felix something new about your family",
-      "Use at least one reason with weil or denn",
-      "At the end ask Felix a relevant personal question about how he is or what is new with him"
-    ]
-  ],
-  [
-    "A2-1.2",
-    "Personen beschreiben",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal letter to Felix about your boss.",
-    [
-      "Describe the boss's appearance",
-      "Describe personality or behaviour at work",
-      "Say what you like or what could be better",
-      "Ask Felix a relevant question"
-    ]
-  ],
-  [
-    "A2-1.3",
-    "Dinge und Personen vergleichen",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Letter to Felix comparing your mother and father.",
-    [
-      "Compare your mother and father's appearance",
-      "Compare their character",
-      "Give your personal opinion",
-      "Ask Felix about his parents"
-    ]
-  ],
-  [
-    "A2-2.4",
-    "Wo möchten wir uns treffen?",
-    "formal_email",
-    "formal",
-    "formal_recipient",
-    "Formal invitation to Herr Felix Asadu for a weekend.",
-    [
-      "Explain why you are writing or inviting him",
-      "Suggest a weekend activity",
-      "Ask when he has time and where to meet",
-      "Ask whether he can bring something"
-    ]
-  ],
-  [
-    "A2-2.5",
-    "Freizeit planen",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal email to Alex about weekend plans.",
-    [
-      "Say you want to do something together",
-      "Ask whether Alex is free at the weekend",
-      "Ask Alex for his idea or opinion",
-      "Propose a concrete activity"
-    ]
-  ],
-  [
-    "A2-3.6",
-    "Mein Zimmer",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal email after moving.",
-    [
-      "Explain that you moved or why you are writing",
-      "Describe your room and important furniture",
-      "Say what you especially like",
-      "Explain why you like it"
-    ]
-  ],
-  [
-    "A2-3.7",
-    "Eine Wohnung suchen",
-    "formal_email",
-    "formal",
-    "landlord",
-    "Formal email to a landlord about renting an apartment.",
-    [
-      "Ask whether an apartment is available",
-      "State important criteria such as size, location or price",
-      "Ask about rental conditions",
-      "Ask for a viewing"
-    ]
-  ],
-  [
-    "A2-3.8",
-    "Restaurant reservieren",
-    "formal_email",
-    "formal",
-    "business",
-    "Formal email to reserve a restaurant table.",
-    [
-      "Ask for a free table",
-      "Give date, time and number of people",
-      "Ask about the menu",
-      "Ask about prices"
-    ]
-  ],
-  [
-    "A2-4.9",
-    "Urlaub",
-    "formal_email",
-    "formal",
-    "business",
-    "Formal hotel reservation email.",
-    [
-      "Ask for a free room",
-      "Give stay details such as dates, people or room type",
-      "Ask about the price",
-      "Ask about additional services"
-    ]
-  ],
-  [
-    "A2-4.10",
-    "Tourismus und traditionelle Feste",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal invitation to a festival.",
-    [
-      "Explain the event",
-      "Explain why it is special",
-      "Invite the friend and give date/place",
-      "Explain what the friend should bring or can expect"
-    ]
-  ],
-  [
-    "A2-4.11",
-    "Verkehrsmittel vergleichen",
-    "formal_email",
-    "formal",
-    "business",
-    "Formal email to a car-rental company.",
-    [
-      "Ask whether a car is available for the weekend",
-      "Ask which documents are required",
-      "Ask about the price",
-      "Ask about insurance"
-    ]
-  ],
-  [
-    "A2-5.12",
-    "Mein Traumberuf",
-    "formal_email",
-    "formal",
-    "employer",
-    "Formal job inquiry email.",
-    [
-      "Ask whether there are open positions",
-      "Describe relevant skills or abilities",
-      "Ask about working hours",
-      "Ask about salary"
-    ]
-  ],
-  [
-    "A2-5.13",
-    "Ein Vorstellungsgespräch",
-    "application",
-    "formal",
-    "employer",
-    "Formal CityMall job application.",
-    [
-      "Explain that you are applying for the job",
-      "Present relevant experience",
-      "Present strengths or skills",
-      "Ask about working hours, duties or training opportunities"
-    ]
-  ],
-  [
-    "A2-5.14",
-    "Beruf und Karriere",
-    "formal_email",
-    "formal",
-    "professional_contact",
-    "Formal letter about a career seminar.",
-    [
-      "Thank the colleague",
-      "Show interest in the seminar",
-      "Ask about the seminar content",
-      "Ask about dates or schedule",
-      "Ask about costs"
-    ]
-  ],
-  [
-    "A2-6.15",
-    "Mein Lieblingssport",
-    "formal_email",
-    "formal",
-    "business",
-    "Email to a sports club or fitness studio.",
-    [
-      "Ask whether a course place is available",
-      "Describe your experience or motivation",
-      "Ask about training times",
-      "Ask about costs"
-    ]
-  ],
-  [
-    "A2-6.16",
-    "Wohlbefinden und Entspannung",
-    "formal_email",
-    "formal",
-    "professional_contact",
-    "Email or letter to a doctor.",
-    [
-      "Ask for an appointment",
-      "Ask about costs or insurance coverage",
-      "Ask about possible examinations or treatments"
-    ]
-  ],
-  [
-    "A2-6.17",
-    "In die Apotheke gehen",
-    "formal_email",
-    "formal",
-    "business",
-    "Email or letter to a pharmacy about medication.",
-    [
-      "Explain why you need the medication",
-      "Ask about costs or insurance",
-      "Ask about dosage or side effects"
-    ]
-  ],
-  [
-    "A2-7.18",
-    "Die Bank anrufen",
-    "formal_email",
-    "formal",
-    "business",
-    "Formal letter to a bank about a blocked card.",
-    [
-      "Ask whether the blocked card can be unblocked",
-      "Ask which documents or information are needed",
-      "Ask how long the process will take"
-    ]
-  ],
-  [
-    "A2-7.19",
-    "Einkaufen: wo und wie?",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal invitation to shop for furniture.",
-    [
-      "Invite the friend to shop and explain why",
-      "Suggest when and where to meet",
-      "Ask for the friend's opinion"
-    ]
-  ],
-  [
-    "A2-7.20",
-    "Reklamationssituationen",
-    "complaint",
-    "formal",
-    "business",
-    "Formal complaint about a defective or unacceptable product.",
-    [
-      "Explain why you are writing or complaining",
-      "Describe the exact product problem",
-      "Request exchange, repair or refund"
-    ]
-  ],
-  [
-    "A2-8.21",
-    "Ein Wochenende planen",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal invitation to a shared weekend.",
-    [
-      "Describe the weekend plans and why they are special",
-      "Give date, place, meeting point or duration",
-      "Explain what the friend should bring or can expect"
-    ]
-  ],
-  [
-    "A2-8.22",
-    "Die Woche planen",
-    "invitation",
-    "neutral",
-    "personal_or_professional_contact",
-    "Lunch invitation.",
-    [
-      "Explain why you are inviting the person",
-      "State date, time and place",
-      "Explain what the person should bring or can expect"
-    ]
-  ],
-  [
-    "A2-9.23",
-    "Zur Schule oder Arbeit fahren",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal email to a friend about going to a car dealer.",
-    [
-      "Explain why you need a car",
-      "Suggest when and where to meet",
-      "Ask for the friend's opinion or recommended model"
-    ]
-  ],
-  [
-    "A2-9.24",
-    "Einen Urlaub planen",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal email to Sandra about planning a vacation together.",
-    [
-      "Invite Sandra to plan a vacation and explain why",
-      "Suggest when and where to meet",
-      "Ask Sandra for her opinion"
-    ]
-  ],
-  [
-    "A2-9.25",
-    "Tagesablauf",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal email about your daily routine.",
-    [
-      "Describe your morning and work or school day",
-      "Explain what you do in the evening",
-      "Ask about the friend's daily routine"
-    ]
-  ],
-  [
-    "A2-10.26",
-    "Gefühle in verschiedenen Situationen",
-    "informal_email",
-    "neutral",
-    "neighbour",
-    "Thank-you letter to a neighbour who helped while you were ill.",
-    [
-      "Thank the neighbour warmly",
-      "Explain how the help benefited you",
-      "Offer to return the favour or give something back"
-    ]
-  ],
-  [
-    "A2-10.27",
-    "Digitale Kommunikation",
-    "formal_email",
-    "formal",
-    "business",
-    "Customer-service email after losing a phone.",
-    [
-      "Explain why you need a new phone",
-      "Ask for a suitable model recommendation",
-      "Ask about ordering",
-      "Ask about delivery"
-    ]
-  ],
-  [
-    "A2-10.28",
-    "Über die Zukunft sprechen",
-    "informal_email",
-    "informal",
-    "friend_or_personal_contact",
-    "Informal email to a friend about future plans.",
-    [
-      "Describe future career, study or training plans",
-      "Explain another important future goal",
-      "Ask the friend about their future plans"
-    ]
-  ]
+  ["A2-1.1", "Small Talk", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie schreiben eine E-Mail an Ihren Freund Felix. Sie möchten ihm von Ihrer Arbeit oder Ihrem Studium und von Ihrer Familie erzählen.",
+    ["Schreiben Sie, warum Sie Felix schreiben.", "Erzählen Sie von Ihrer Arbeit oder Ihrem Studium und von Ihrer Familie.", "Fragen Sie Felix, wie es ihm geht und was bei ihm neu ist."],
+    ["Explain why you are writing to Felix", "Write about your work or studies and your family", "At the end ask Felix a relevant personal question about how he is or what is new with him"]],
+  ["A2-1.2", "Personen beschreiben", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie schreiben eine E-Mail an Ihren Freund Felix und möchten Ihren Chef oder Ihre Chefin beschreiben.",
+    ["Beschreiben Sie das Aussehen Ihres Chefs oder Ihrer Chefin.", "Beschreiben Sie die Persönlichkeit und das Verhalten bei der Arbeit.", "Sagen Sie, was Ihnen gefällt oder was besser sein könnte, und fragen Sie Felix nach seinem Chef oder seiner Chefin."],
+    ["Describe the boss's appearance", "Describe personality or behaviour at work", "Say what you like or what could be better and ask Felix a relevant question about the boss"]],
+  ["A2-1.3", "Dinge und Personen vergleichen", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie schreiben eine E-Mail an Ihren Freund Felix und möchten Ihre Mutter und Ihren Vater vergleichen.",
+    ["Vergleichen Sie das Aussehen Ihrer Mutter und Ihres Vaters.", "Vergleichen Sie ihren Charakter.", "Sagen Sie, was Sie an beiden besonders mögen, und fragen Sie Felix nach seinen Eltern."],
+    ["Compare your mother and father's appearance", "Compare their character", "Give your personal opinion and ask Felix about his parents"]],
+  ["A2-2.4", "Wo möchten wir uns treffen?", "formal_email", "formal", "formal_recipient",
+    "Sie möchten Herrn Felix Asadu zu einem gemeinsamen Wochenende einladen. Schreiben Sie ihm eine E-Mail.",
+    ["Erklären Sie, warum Sie ihn einladen, und schlagen Sie eine Aktivität vor.", "Fragen Sie, wann er Zeit hat und wo Sie sich treffen können.", "Fragen Sie, ob er etwas für das Essen oder die Aktivität mitbringen kann."],
+    ["Explain why you are inviting him and suggest a weekend activity", "Ask when he has time and where to meet", "Ask whether he can bring something"]],
+  ["A2-2.5", "Freizeit planen", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten mit Ihrem Freund Alex am Wochenende etwas unternehmen. Schreiben Sie Alex eine E-Mail.",
+    ["Sagen Sie, dass Sie am Wochenende Zeit haben und etwas zusammen machen möchten.", "Fragen Sie, ob Alex am Wochenende frei ist und wann er Zeit hat.", "Schlagen Sie eine konkrete Aktivität vor und fragen Sie, was Alex davon hält."],
+    ["Say you want to do something together at the weekend", "Ask whether Alex is free at the weekend and when he has time", "Propose a concrete activity and ask Alex for his idea or opinion"]],
+  ["A2-3.6", "Mein Zimmer", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie sind vor Kurzem umgezogen und möchten einer Freundin oder einem Freund von Ihrem neuen Zimmer erzählen. Schreiben Sie eine E-Mail.",
+    ["Schreiben Sie, warum Sie schreiben oder dass Sie umgezogen sind.", "Beschreiben Sie Ihr Zimmer und die wichtigsten Möbel.", "Sagen Sie, was Ihnen an Ihrem Zimmer besonders gefällt, und erklären Sie warum."],
+    ["Explain that you moved or why you are writing", "Describe your room and important furniture", "Say what you especially like and explain why you like it"]],
+  ["A2-3.7", "Eine Wohnung suchen", "formal_email", "formal", "landlord",
+    "Sie möchten eine Wohnung in einer bestimmten Stadt mieten. Schreiben Sie eine E-Mail an den Vermieter.",
+    ["Fragen Sie nach einer verfügbaren Wohnung.", "Nennen Sie wichtige Kriterien, zum Beispiel Größe, Lage oder Preis.", "Fragen Sie nach den Mietbedingungen und nach einem Besichtigungstermin."],
+    ["Ask whether an apartment is available", "State important criteria such as size, location or price", "Ask about rental conditions and a viewing"]],
+  ["A2-3.8", "Restaurant reservieren", "formal_email", "formal", "business",
+    "Sie möchten einen Tisch in einem Restaurant reservieren. Schreiben Sie eine E-Mail an das Restaurant.",
+    ["Fragen Sie nach einem freien Tisch.", "Nennen Sie Datum, Uhrzeit und Anzahl der Personen.", "Fragen Sie nach dem Menü und den Preisen."],
+    ["Ask for a free table", "Give date, time and number of people", "Ask about the menu and prices"]],
+  ["A2-4.9", "Urlaub", "formal_email", "formal", "business",
+    "Sie planen einen Urlaub und möchten eine Unterkunft reservieren. Schreiben Sie eine E-Mail an ein Hotel.",
+    ["Fragen Sie nach einem freien Zimmer.", "Nennen Sie wichtige Reisedaten, zum Beispiel Datum, Anzahl der Personen oder Zimmerart.", "Fragen Sie nach dem Preis und nach zusätzlichen Leistungen, zum Beispiel Frühstück oder WLAN."],
+    ["Ask for a free room", "Give stay details such as dates, people or room type", "Ask about the price and additional services"]],
+  ["A2-4.10", "Tourismus und traditionelle Feste", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten einen Freund oder eine Freundin zu einem Fest einladen. Schreiben Sie eine E-Mail.",
+    ["Erzählen Sie von dem Fest und erklären Sie, warum es besonders ist.", "Laden Sie die Person ein und nennen Sie Datum und Ort.", "Erklären Sie, was die Person mitbringen sollte oder was sie dort erwarten kann."],
+    ["Explain the event and why it is special", "Invite the friend and give date and place", "Explain what the friend should bring or can expect"]],
+  ["A2-4.11", "Verkehrsmittel vergleichen", "formal_email", "formal", "business",
+    "Sie sind in Deutschland und möchten für das Wochenende ein Auto mieten. Schreiben Sie eine E-Mail an eine Autovermietung.",
+    ["Fragen Sie, ob für das Wochenende noch ein Auto verfügbar ist.", "Fragen Sie, welche Dokumente benötigt werden.", "Fragen Sie nach dem Preis und ob eine Versicherung enthalten ist."],
+    ["Ask whether a car is available for the weekend", "Ask which documents are required", "Ask about the price and insurance"]],
+  ["A2-5.12", "Mein Traumberuf", "formal_email", "formal", "employer",
+    "Sie sind in Deutschland und möchten sich um eine Arbeitsstelle bewerben. Schreiben Sie eine E-Mail an ein Unternehmen.",
+    ["Fragen Sie, ob es noch offene Stellen gibt.", "Beschreiben Sie Ihre Fähigkeiten und Fertigkeiten für die Stelle.", "Fragen Sie nach den Arbeitszeiten und dem Gehalt."],
+    ["Ask whether there are open positions", "Describe relevant skills or abilities", "Ask about working hours and salary"]],
+  ["A2-5.13", "Ein Vorstellungsgespräch", "application", "formal", "employer",
+    "Sie möchten sich bei CityMall um eine Stelle als Verkäufer/in oder Kundenservice-Mitarbeiter/in bewerben. Schreiben Sie eine formelle E-Mail.",
+    ["Erklären Sie, warum Sie sich um die Stelle bewerben.", "Beschreiben Sie Ihre Erfahrungen und Stärken.", "Fragen Sie nach den Arbeitszeiten, den Aufgaben oder den Weiterbildungsmöglichkeiten."],
+    ["Explain that you are applying for the job", "Present relevant experience and strengths or skills", "Ask about working hours, duties or training opportunities"]],
+  ["A2-5.14", "Beruf und Karriere", "formal_email", "formal", "professional_contact",
+    "Ihr Kollege hat Ihnen ein berufliches Seminar vorgeschlagen, das Ihre Karriere fördern könnte. Schreiben Sie ihm eine formelle E-Mail.",
+    ["Bedanken Sie sich für den Vorschlag und sagen Sie, dass Sie interessiert sind.", "Fragen Sie nach dem Inhalt und den Terminen des Seminars.", "Fragen Sie nach den Kosten."],
+    ["Thank the colleague and show interest in the seminar", "Ask about the seminar content and dates or schedule", "Ask about the seminar costs"]],
+  ["A2-6.15", "Mein Lieblingssport", "formal_email", "formal", "business",
+    "Sie sind in Deutschland und möchten sich für einen Sportkurs anmelden. Schreiben Sie eine E-Mail an einen Sportverein oder ein Fitnessstudio.",
+    ["Fragen Sie, ob es noch freie Plätze gibt.", "Beschreiben Sie Ihre Erfahrung oder Motivation.", "Fragen Sie nach den Trainingszeiten und den Kosten."],
+    ["Ask whether a course place is available", "Describe your experience or motivation", "Ask about training times and costs"]],
+  ["A2-6.16", "Wohlbefinden und Entspannung", "formal_email", "formal", "professional_contact",
+    "Sie möchten wegen Ihrer Gesundheit einen Arzt kontaktieren. Schreiben Sie eine E-Mail.",
+    ["Fragen Sie nach einem Termin.", "Fragen Sie nach den Kosten oder ob Ihre Versicherung die Behandlung bezahlt.", "Fragen Sie nach möglichen Untersuchungen oder Behandlungen."],
+    ["Ask for an appointment", "Ask about costs or insurance coverage", "Ask about possible examinations or treatments"]],
+  ["A2-6.17", "In die Apotheke gehen", "formal_email", "formal", "business",
+    "Sie möchten ein bestimmtes Medikament kaufen. Schreiben Sie eine E-Mail an eine Apotheke.",
+    ["Erklären Sie kurz, warum Sie das Medikament benötigen.", "Fragen Sie nach den Kosten und ob die Versicherung das Medikament übernimmt.", "Fragen Sie nach der richtigen Dosierung oder möglichen Nebenwirkungen."],
+    ["Explain why you need the medication", "Ask about costs or insurance", "Ask about dosage or side effects"]],
+  ["A2-7.18", "Die Bank anrufen", "formal_email", "formal", "business",
+    "Sie sind in Ghana und Ihre Bankkarte wurde gesperrt. Schreiben Sie eine E-Mail an Ihre Bank.",
+    ["Fragen Sie, ob Ihre Karte entsperrt werden kann.", "Fragen Sie, welche Dokumente oder Informationen benötigt werden.", "Fragen Sie, wie lange der Vorgang dauern wird."],
+    ["Ask whether the blocked card can be unblocked", "Ask which documents or information are needed", "Ask how long the process will take"]],
+  ["A2-7.19", "Einkaufen: wo und wie?", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten mit einem Freund oder einer Freundin Möbel für Ihre neue Wohnung einkaufen. Schreiben Sie eine E-Mail.",
+    ["Laden Sie die Person zum Einkaufen ein und erklären Sie den Grund.", "Schlagen Sie vor, wann und wo Sie sich treffen können.", "Fragen Sie nach der Meinung der Person."],
+    ["Invite the friend to shop and explain why", "Suggest when and where to meet", "Ask for the friend's opinion"]],
+  ["A2-7.20", "Reklamationssituationen", "complaint", "formal", "business",
+    "Sie haben ein Produkt gekauft, aber es ist defekt oder nicht wie bestellt. Schreiben Sie eine formelle Reklamation.",
+    ["Erklären Sie, was Sie gekauft haben und warum Sie schreiben.", "Beschreiben Sie das Problem genau.", "Bitten Sie höflich um Umtausch, Reparatur oder Rückerstattung."],
+    ["Explain why you are writing or complaining and what you bought", "Describe the exact product problem", "Request exchange, repair or refund"]],
+  ["A2-8.21", "Ein Wochenende planen", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten einen Freund oder eine Freundin zu einem gemeinsamen Wochenende einladen. Schreiben Sie eine E-Mail.",
+    ["Beschreiben Sie Ihre Wochenendpläne und erklären Sie, warum sie besonders sind.", "Nennen Sie wichtige Details, zum Beispiel Datum, Ort, Treffpunkt oder Dauer.", "Erklären Sie, was die Person mitbringen sollte oder was sie erwarten kann."],
+    ["Describe the weekend plans and why they are special", "Give date, place, meeting point or duration", "Explain what the friend should bring or can expect"]],
+  ["A2-8.22", "Die Woche planen", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten einem Freund oder einer Freundin von Ihrer kommenden Woche erzählen und ein Treffen planen. Schreiben Sie eine E-Mail.",
+    ["Nennen Sie mindestens drei Termine oder Aktivitäten in Ihrer Woche.", "Schreiben Sie, wann Sie Zeit haben.", "Schlagen Sie ein Treffen mit einem konkreten Termin vor."],
+    ["Name at least three appointments or activities in your coming week", "Explain when you have free time", "Suggest when and where to meet"]],
+  ["A2-9.23", "Zur Schule oder Arbeit fahren", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie schreiben einem Freund oder einer Freundin über Ihren Weg zur Schule oder zur Arbeit.",
+    ["Beschreiben Sie, welche Verkehrsmittel Sie benutzen.", "Schreiben Sie, wie lange der Weg dauert, und nennen Sie einen Vor- oder Nachteil.", "Fragen Sie, wie die andere Person zur Schule oder zur Arbeit kommt."],
+    ["Describe the transport you use for school or work", "State how long the journey takes and one advantage or disadvantage", "Ask the friend how they travel to school or work"]],
+  ["A2-9.24", "Einen Urlaub planen", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten zusammen mit Sandra einen Urlaub planen. Schreiben Sie ihr eine E-Mail.",
+    ["Laden Sie Sandra zur gemeinsamen Urlaubsplanung ein.", "Schlagen Sie einen Termin und einen Treffpunkt für die Planung vor.", "Fragen Sie nach ihrer Meinung zu Reiseziel, Transport oder Unterkunft."],
+    ["Invite Sandra to plan a vacation", "Suggest when and where to meet", "Ask Sandra for her opinion about destination, transport or accommodation"]],
+  ["A2-9.25", "Tagesablauf", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten einem Freund oder einer Freundin von Ihrem Tagesablauf erzählen. Schreiben Sie eine E-Mail.",
+    ["Beschreiben Sie Ihren Morgen und Ihren Arbeits- oder Schultag.", "Erklären Sie, was Sie am Abend machen.", "Fragen Sie nach dem Tagesablauf der anderen Person."],
+    ["Describe your morning and work or school day", "Explain what you do in the evening", "Ask about the friend's daily routine"]],
+  ["A2-10.26", "Gefühle in verschiedenen Situationen", "informal_email", "neutral", "neighbour",
+    "Ihr Nachbar oder Ihre Nachbarin hat Ihnen geholfen, als Sie krank waren. Schreiben Sie eine kurze Dankesnachricht.",
+    ["Bedanken Sie sich für die Hilfe.", "Erklären Sie, wie Ihnen die Hilfe geholfen hat oder wie Sie sich dadurch gefühlt haben.", "Bieten Sie an, sich zu revanchieren."],
+    ["Thank the neighbour warmly", "Explain how the help benefited you or how it made you feel", "Offer to return the favour or give something back"]],
+  ["A2-10.27", "Digitale Kommunikation", "formal_email", "formal", "business",
+    "Sie haben Ihr Handy verloren und möchten ein neues bestellen. Schreiben Sie eine E-Mail an den Kundenservice.",
+    ["Erklären Sie, warum Sie ein neues Handy benötigen.", "Fragen Sie nach einer Empfehlung für ein passendes Modell.", "Fragen Sie nach der Bestellung und der Lieferung."],
+    ["Explain why you need a new phone", "Ask for a suitable model recommendation", "Ask about ordering and delivery"]],
+  ["A2-10.28", "Über die Zukunft sprechen", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten einem Freund oder einer Freundin von Ihren Zukunftsplänen erzählen. Schreiben Sie eine E-Mail.",
+    ["Beschreiben Sie Ihre beruflichen, schulischen oder Ausbildungsziele.", "Nennen Sie einen weiteren persönlichen Wunsch für die Zukunft.", "Fragen Sie nach den Zukunftsplänen der anderen Person."],
+    ["Describe future career, study or training plans", "Explain another important future goal", "Ask the friend about their future plans"]],
 ];
 
-const specs = rows.map(([assignmentKey, title, textType, register, recipient, taskText, taskPoints]) => Object.freeze({
+const specs = rows.map(([assignmentKey, title, textType, register, recipient, situationDe, taskPointsDe, taskPoints]) => Object.freeze({
   assignmentKey,
   title,
   textType,
   register,
   recipient,
-  taskText,
-  taskPoints,
+  taskText: [situationDe, "Schreiben Sie zu allen drei Punkten:", ...taskPointsDe.map((point) => "• " + point)].join(" "),
+  taskSituationDe: situationDe,
+  taskPointsDe: Object.freeze([...taskPointsDe]),
+  taskPoints: Object.freeze([...taskPoints]),
   rubricVersion: A2_WRITING_RUBRIC_VERSION,
 }));
 

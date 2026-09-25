@@ -9,16 +9,108 @@ function sentences(source = "") {
 }
 
 function test(pattern, value = "") {
-  return pattern ? pattern.test(String(value || "")) : false;
+  const source = String(value || "");
+  if (Array.isArray(pattern)) return pattern.length > 0 && pattern.every((item) => test(item, source));
+  if (typeof pattern === "function") return Boolean(pattern(source));
+  return pattern ? pattern.test(source) : false;
 }
 
 function firstEvidence(source = "", pattern) {
   const list = sentences(source);
+  if (Array.isArray(pattern)) {
+    return [...new Set(pattern.map((item) => firstEvidence(source, item)).filter(Boolean))].join(" | ");
+  }
+  if (typeof pattern === "function") {
+    return test(pattern, source) ? list.slice(0, 2).join(" | ") : "";
+  }
   return list.find((sentence) => test(pattern, sentence)) || "";
 }
 
 function ruleForPoint(label = "", assignmentKey = "") {
   const value = clean(label).toLowerCase();
+
+  if (/work or studies and your family/.test(value)) return [
+    /\b(?:arbeite|arbeit|beruf|job|firma|branche|studier\w*|studium|schule|universit[aä]t|ausbildung)\b/i,
+    /\b(?:familie|eltern|mutter|vater|bruder|schwester|geschwister|sohn|tochter|kind(?:er)?|ehemann|ehefrau|partner|partnerin|hund|katze|baby)\b/i,
+  ];
+  if (/what you like or what could be better and ask felix.*boss/.test(value)) return [
+    /\b(?:ich\s+finde|ich\s+mag|mir\s+gef[aä]llt|besser|verbessern)\b/i,
+    /\b(?:wie|was|wer|welch\w*)\b[^?]{0,90}\b(?:chef|chefin|boss|vorgesetzt\w*)\b[^?]*\?/i,
+  ];
+  if (/personal opinion and ask felix about his parents/.test(value)) return [
+    /\b(?:ich\s+finde|ich\s+mag|mir\s+gef[aä]llt|besonders)\b/i,
+    /(?:deine|deiner|deinen)\s+eltern[\s\S]{0,60}\?|(?:mutter|vater)[\s\S]{0,60}\?/i,
+  ];
+  if (/why you are inviting him and suggest a weekend activity/.test(value)) return [
+    /\b(?:einladen|einladung|ich\s+schreibe|ich\s+m[oö]chte)\b/i,
+    /\b(?:kino|restaurant|spazieren|wandern|schwimmen|fu[ßs]ball|essen|kochen|museum|sport|ausflug|fahren|gehen|veranstaltung|fest)\b/i,
+  ];
+  if (/concrete activity and ask alex.*(?:idea|opinion)/.test(value)) return [
+    /\b(?:kino|restaurant|spazieren|wandern|schwimmen|fu[ßs]ball|essen|kochen|museum|sport|ausflug|fahren|gehen)\b/i,
+    /\b(?:was\s+meinst\s+du|wie\s+findest\s+du|deine\s+meinung|was\s+m[oö]chtest\s+du|idee)\b/i,
+  ];
+  if (/especially like and explain why/.test(value)) return [
+    /\b(?:gef[aä]llt\s+mir|ich\s+mag|am\s+besten|besonders)\b/i,
+    /\b(?:weil|denn)\b/i,
+  ];
+  if (/rental conditions and a viewing/.test(value)) return [
+    /\b(?:mietbedingungen|kaution|nebenkosten|mietvertrag|vertrag)\b/i,
+    /\b(?:besichtigen|besichtigung)\b/i,
+  ];
+  if (/menu and prices/.test(value)) return [
+    /\b(?:men[uü]|speisekarte|gerichte)\b/i,
+    /\b(?:preis|preise|kosten|wie\s+viel)\b/i,
+  ];
+  if (/price and additional services/.test(value)) return [
+    /\b(?:preis|preise|kosten|wie\s+viel)\b/i,
+    /\b(?:fr[uü]hst[uü]ck|internet|wlan|parkplatz|service|leistungen)\b/i,
+  ];
+  if (/event and why it is special/.test(value)) return [
+    /\b(?:fest|festival|feier|veranstaltung|tradition)\b/i,
+    /\b(?:weil|denn|besonders|interessant|wichtig|traditionell)\b/i,
+  ];
+  if (/price and insurance/.test(value)) return [
+    /\b(?:preis|preise|kosten|wie\s+viel)\b/i,
+    /\b(?:versicherung|versichert)\b/i,
+  ];
+  if (/working hours and salary/.test(value)) return [
+    /\b(?:arbeitszeit|arbeitszeiten|wann|uhrzeit|stunden)\b/i,
+    /\b(?:gehalt|lohn|verdienst)\b/i,
+  ];
+  if (/experience and strengths or skills/.test(value)) return [
+    /\b(?:erfahrung|gearbeitet|praktikum|beruf|jahre?)\b/i,
+    /\b(?:kann|kenntnisse|f[aä]higkeiten|kompetenz|st[aä]rke|zuverl[aä]ssig|freundlich|teamf[aä]hig|flexibel)\b/i,
+  ];
+  if (/seminar content and dates or schedule/.test(value)) return [
+    /\b(?:inhalt|themen|programm)\b/i,
+    /\b(?:termin|termine|datum|wann|uhrzeit|tage)\b/i,
+  ];
+  if (/training times and costs/.test(value)) return [
+    /\b(?:trainingszeit|training|wann|uhrzeit|tage|stunden)\b/i,
+    /\b(?:preis|preise|kosten|wie\s+viel|geb[uü]hr|beitrag)\b/i,
+  ];
+  if (/writing or complaining and what you bought/.test(value)) return [
+    /\b(?:beschwerde|reklamation|reklamieren|ich\s+schreibe|problem)\b/i,
+    /\b(?:produkt|ware|artikel|bestellung|handy|telefon|schuhe|jacke|hose|ger[aä]t|computer|laptop|m[oö]bel)\b/i,
+  ];
+  if (/ordering and delivery/.test(value)) return [
+    /\b(?:bestellen|bestellung|online\s+bestellen|kaufen)\b/i,
+    /\b(?:lieferung|liefern|versand|wie\s+lange)\b/i,
+  ];
+  if (/appointments or activities in your coming week/.test(value)) return (source) => {
+    const matches = String(source || "").match(/\b(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|termin|arzt|arbeit|schule|kurs|training|sport|einkaufen|besuch|treffen|um\s+\d{1,2}(?::\d{2})?\s*uhr)\b/gi) || [];
+    return matches.length >= 3;
+  };
+  if (/when you have free time/.test(value)) return /\b(?:frei|zeit\s+habe|zeit\s+haben|habe\s+zeit|haben\s+zeit)\b/i;
+  if (/transport you use for school or work/.test(value)) return [
+    /\b(?:bus|bahn|u-?bahn|s-?bahn|zug|auto|fahrrad|rad|motorrad|stra[ßs]enbahn|tram|zu\s+fu[ßs]|verkehrsmittel)\b/i,
+    /\b(?:schule|arbeit|arbeitsplatz|universit[aä]t|uni|b[uü]ro)\b/i,
+  ];
+  if (/how long the journey takes and one advantage or disadvantage/.test(value)) return [
+    /\b(?:minute|minuten|stunde|stunden|wie\s+lange|dauert|brauche|braucht)\b/i,
+    /\b(?:vorteil|nachteil|schnell|langsam|bequem|billig|teuer|praktisch|stressig|weil|denn)\b/i,
+  ];
+  if (/ask the friend how they travel to school or work/.test(value)) return /\b(?:wie|womit)\b[^?]{0,100}\b(?:schule|arbeit|arbeitsplatz|universit[aä]t|uni)\b[^?]*\?/i;
 
   if (/relevant personal question.*how he is|what is new/.test(value)) {
     return /(?:wie\s+geht(?:\s+es|'?s)?\s+(?:dir|ihnen)|was\s+(?:ist|gibt(?:\s+es)?)\s+(?:bei\s+(?:dir|ihnen)\s+)?(?:neu|neues)|und\s+(?:du|sie)\s*\?|was\s+mach(?:st|en)\s+(?:du|sie)|wie\s+l[aä]uft(?:'s|\s+es)?\s+bei\s+(?:dir|ihnen))/i;
