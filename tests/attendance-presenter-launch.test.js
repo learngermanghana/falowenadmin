@@ -49,13 +49,24 @@ test("both presenter implementations mount the shared Attendance class timer", (
   }
 });
 
-test("production, dev and test lifecycle apply the full presenter live-session patch bundle", () => {
+test("production, dev and test lifecycle reach the full presenter live-session patch bundle", () => {
   const packageJson = JSON.parse(read("package.json"));
+  const conceptPatch = read("scripts/patchPresenterConceptLabels.mjs");
   for (const scriptName of ["prebuild", "predev", "pretest"]) {
     assert.match(
       packageJson.scripts[scriptName] || "",
-      /node scripts\/patchPresenterSessionAndResponseTimers\.mjs/,
-      `${scriptName} must install presenter timer and realtime sync before running`,
+      /node scripts\/patchPresenterConceptLabels\.mjs/,
+      `${scriptName} must run the presenter concept/live-session patch chain`,
     );
   }
+  assert.match(
+    conceptPatch,
+    /await import\("\.\/patchPresenterSessionAndResponseTimers\.mjs"\)/,
+  );
+});
+
+test("the presenter response-timer patch is safe to apply repeatedly", () => {
+  const core = read("scripts/patchPresenterSessionAndResponseTimersCore.mjs");
+  assert.match(core, /if \(!pickerSource\.includes\("RESPONSE_TIME_KEY"\)\)/);
+  assert.match(core, /if \(!pickerSource\.includes\('className="presenter-response-time-settings"'\)\)/);
 });
