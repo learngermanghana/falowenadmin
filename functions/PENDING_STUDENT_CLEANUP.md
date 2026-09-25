@@ -19,6 +19,17 @@ A student never enters the trial-expiry lifecycle when a paid, partially paid, o
 
 Class-session, attendance-confirmation, and course-review email workers treat `trial_expired` as inactive so the retained record does not continue to receive normal student communications. The class-session reminder worker runs the trial lifecycle before resolving recipients.
 
+## Trial onboarding emails
+
+Unpaid trial students receive a deduplicated onboarding sequence through the existing Falowen Announcement webhook:
+
+- signup / Day 0: trial welcome with direct Day 1 lesson link
+- Day 3: learning reminder while trial access is still active
+- Day 6: trial-ending-tomorrow reminder
+- Day 7: access-paused notice explaining the 30-day recovery window and the later permanent purge
+
+A qualifying payment stops future trial reminder emails. The Day-7 notice does not claim the account was deleted; it explains that access is paused and progress is retained during recovery.
+
 
 ## Existing communication connection
 

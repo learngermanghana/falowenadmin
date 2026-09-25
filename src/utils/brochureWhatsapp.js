@@ -1,9 +1,13 @@
 export const FALOWEN_CLASSES_BASE_URL = "https://www.falowen.app/classes/";
+export const FALOWEN_REGISTRATION_URL = "https://www.falowen.app/signup";
 
 export const BROCHURE_WHATSAPP_MESSAGE = `Thank you for the call. Here are the current Falowen class options.
 
-View upcoming classes and registration details:
+View upcoming classes and brochures:
 ${FALOWEN_CLASSES_BASE_URL}
+
+Register now:
+${FALOWEN_REGISTRATION_URL}
 
 If you have any further questions or need assistance with registration, simply reply to this message.`;
 
@@ -177,10 +181,13 @@ export function buildClassBrochureMessage(klass = {}) {
     `*Schedule:* ${formatBrochureSchedule(klass)}`,
     `*Course fee:* ${formatBrochureFee(klass)}`,
     "",
-    "*Open the class brochure and registration page:*",
+    "*View the class brochure:*",
     brochureUrl,
     "",
-    "The page contains the current class details and registration options. No PDF attachment is needed.",
+    "*Register now:*",
+    FALOWEN_REGISTRATION_URL,
+    "",
+    "You can review the class details first or go straight to registration. No PDF attachment is needed.",
     "",
     "If you have any questions, simply reply to this message.",
   ];

@@ -27,6 +27,7 @@
         "node scripts/patchPublicLiveClassApi.mjs",
         "node --check functions/index.js",
         "node --check functions/registrationLifecycleEvents.js",
+        "node --check functions/trialAccessEmails.js",
         "node scripts/patchSheetRowManagementRoutes.mjs",
         "node scripts/patchOperationalSheetAutoSyncJobs.mjs",
         "node scripts/patchLiveClassUpdateScheduleSync.mjs",

@@ -5,11 +5,13 @@ on:
     paths:
       - 'functions/index.js'
       - 'functions/registrationLifecycleEvents.js'
+      - 'functions/trialAccessEmails.js'
       - 'api/integration-hub.js'
       - 'src/components/IntegrationEventPanel.jsx'
       - 'docs/apps-script/registration-lifecycle-webhook.gs'
       - 'docs/integration-event-hub.md'
       - 'tests/registration-lifecycle-events.test.js'
+      - 'tests/trial-access-emails.test.js'
       - 'tests/integration-event-hub.test.js'
       - '.github/workflows/registration-lifecycle-events.yml'
   push:
@@ -18,11 +20,13 @@ on:
     paths:
       - 'functions/index.js'
       - 'functions/registrationLifecycleEvents.js'
+      - 'functions/trialAccessEmails.js'
       - 'api/integration-hub.js'
       - 'src/components/IntegrationEventPanel.jsx'
       - 'docs/apps-script/registration-lifecycle-webhook.gs'
       - 'docs/integration-event-hub.md'
       - 'tests/registration-lifecycle-events.test.js'
+      - 'tests/trial-access-emails.test.js'
       - 'tests/integration-event-hub.test.js'
       - '.github/workflows/registration-lifecycle-events.yml'
 
@@ -38,10 +42,11 @@ jobs:
       - name: Check registration lifecycle modules
         run: |
           node --check functions/registrationLifecycleEvents.js
+          node --check functions/trialAccessEmails.js
           node --check functions/index.js
           node --check api/integration-hub.js
       - name: Run lifecycle regressions
-        run: node --test tests/registration-lifecycle-events.test.js tests/integration-event-hub.test.js
+        run: node --test tests/registration-lifecycle-events.test.js tests/trial-access-emails.test.js tests/integration-event-hub.test.js
       - name: Install dashboard dependencies
         run: npm ci
       - name: Build Admin
