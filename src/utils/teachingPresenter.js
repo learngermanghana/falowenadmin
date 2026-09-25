@@ -135,6 +135,10 @@ const WARMUP_FOLLOWUP_OVERRIDES = new Map([
   ["wann stehst du am wochenende auf?", "Was machst du direkt nach dem Aufstehen?"],
   ["siehst du abends oft fern?", "Was siehst du abends am liebsten im Fernsehen?"],
   ["gehst du manchmal mit freunden aus?", "Wohin gehst du mit deinen Freunden am liebsten?"],
+  ["was machst du am montag?", "Was steht am Montag noch auf deinem Plan?"],
+  ["wann hast du diese woche deutschkurs?", "Was machst du vor oder nach dem Deutschkurs?"],
+  ["an welchem tag kannst du freunde treffen?", "Was möchtest du mit deinen Freunden an diesem Tag machen?"],
+  ["was musst du diese woche unbedingt erledigen?", "Wann willst du diese Aufgabe erledigen?"],
   ["was ist wichtiger: ausbildung oder erfahrung?", "Wann ist praktische Erfahrung wichtiger als eine Ausbildung?"],
   ["wie kann man arbeit und privatleben besser trennen?", "Welche feste Regel hilft dir, nach der Arbeit wirklich abzuschalten?"],
 ]);
