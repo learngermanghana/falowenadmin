@@ -229,6 +229,19 @@ import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pi
     if (context && context.state !== "closed") context.close().catch(() => {});
   }, []);
 
+  const handleEndClass = useCallback(() => {
+    if (!actualStartedAt || actualEndedAt) return;
+    const endedAt = nowMs;
+    setActualEndedAt(endedAt);
+    writeClassStartDecision(startDecisionStorageKey, {
+      actualStartedAt,
+      actualEndedAt: endedAt,
+      delayUntil: null,
+    });
+    setSlideSyncStatus({ state: "ending", message: "Ending class and saving actual duration…" });
+    void syncPresenterEnd(endedAt);
+  }, [actualEndedAt, actualStartedAt, nowMs, startDecisionStorageKey, syncPresenterEnd]);
+
 <span aria-hidden="true">♫</span> Waiting room music
                 Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? \`Now playing: \${currentMusicTrack}.\` : ""}
 {musicPlaying ? "Stop music" : "Start waiting music"}
@@ -243,6 +256,8 @@ import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pi
         playlist: pianoPlaylist,`,
     `  useEffect(() => () => {
     const context = audioContextRef.current;`,
+    `  const handleEndClass = useCallback(() => {
+    if (!actualStartedAt || actualEndedAt) return;`,
     '                Relaxing instrumental tracks play in sequence and loop while students wait. {musicPlaying ? \`Now playing: \${currentMusicTrack}.\` : ""}',
     '              aria-label="Waiting room music volume"',
   ];
@@ -268,6 +283,8 @@ import { startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pi
   assert.match(upgradedOnce, /musicStartGenerationRef\.current !== startGeneration/);
   assert.doesNotMatch(upgradedOnce, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
   assert.match(upgradedOnce, /stopWaitingMusicPlaylist\(context\)/);
+  assert.match(upgradedOnce, /void startWaitingMusic\(\);/);
+  assert.match(upgradedOnce, /startDecisionStorageKey, startWaitingMusic, syncPresenterEnd/);
 
   execFileSync(process.execPath, [path.join(scriptsDir, "patchCheckinWaitingRoomPlaylist.mjs")], {
     cwd: tempRoot,
