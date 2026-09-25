@@ -34,7 +34,7 @@ function student(overrides = {}) {
   };
 }
 
-test("trial welcome trigger observes student writes and sends when an update becomes eligible", async () => {
+test("trial welcome trigger sends from the initial trial-eligible student create", async () => {
   let registered = null;
   const sendWrites = [];
   const sendRef = {
@@ -94,7 +94,7 @@ test("trial welcome trigger observes student writes and sends when an update bec
         },
       };
     },
-    onDocumentWritten(options, handler) {
+    onDocumentCreated(options, handler) {
       registered = { options, handler };
       return "registered";
     },
@@ -107,16 +107,15 @@ test("trial welcome trigger observes student writes and sends when an update bec
   const result = await registered.handler({
     params: { studentId: "DorothyQuayson843" },
     data: {
-      after: {
-        exists: true,
-        id: "DorothyQuayson843",
-        data: () => student({
-          name: "Dorothy Quayson",
-          email: "dorothy@example.com",
-          status: "pending",
-          createdAt: new Date(),
-        }),
-      },
+      id: "DorothyQuayson843",
+      data: () => student({
+        name: "Dorothy Quayson",
+        email: "dorothy@example.com",
+        status: "pending",
+        trialStatus: "active",
+        trialStartedAt: new Date(),
+        createdAt: undefined,
+      }),
     },
   });
 
@@ -126,23 +125,11 @@ test("trial welcome trigger observes student writes and sends when an update bec
   assert.equal(sendWrites.at(-1).status, "sent");
 });
 
-test("trial welcome write trigger ignores student deletions", async () => {
-  let handler = null;
-  createTrialAccessWelcomeEmailTrigger({
-    db: {},
-    admin: {},
-    onDocumentWritten(options, callback) {
-      handler = callback;
-      return callback;
-    },
-  });
-
-  const result = await handler({
-    params: { studentId: "deleted-student" },
-    data: { after: { exists: false } },
-  });
-
-  assert.deepEqual(result, { sent: false, reason: "student_deleted" });
+test("trial email stage accepts trialStartedAt as the signup clock", () => {
+  assert.equal(
+    trialEmailStage(student({ createdAt: undefined, trialStartedAt: new Date(NOW) }), NOW),
+    "welcome",
+  );
 });
 
 test("trial email stages follow signup, day 3, day 6 and expiry", () => {
