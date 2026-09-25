@@ -154,7 +154,9 @@ test("starting class invalidates pending waiting-room audio startup", () => {
   assert.doesNotMatch(page, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
   assert.match(page, /classStartedRef\.current = true;/);
   assert.match(page, /musicStartGenerationRef\.current \+= 1;/);
-  assert.match(page, /if \(!musicPlaying\) \{\s*stopWaitingMusic\(\);\s*return;/);
+  assert.doesNotMatch(page, /if \(!musicPlaying\) \{\s*stopWaitingMusic\(\);\s*return;/);
+  assert.match(page, /await syncPresenterStart\(startedAt\)/);
+  assert.match(page, /stopWaitingMusic\(\);\s*\n\s*if \(presenterLaunchPath\)/);
 
   assert.match(patch, /musicStartGenerationRef\.current !== startGeneration/);
   assert.match(patch, /stopWaitingMusicPlaylist\(context\)/);
@@ -334,7 +336,7 @@ test("refreshing a persisted check-in start reconnects shared slides without cha
   assert.match(page, /void syncPresenterStart\(actualStartedAt, \{ recovery: true \}\)/);
   assert.match(page, /document\.addEventListener\("visibilitychange", recoverAfterWake\)/);
   assert.match(page, /window\.addEventListener\("online", recoverOnline\)/);
-  assert.match(page, /void syncPresenterStart\(startedAt\)/);
+  assert.match(page, /await syncPresenterStart\(startedAt\)/);\n  assert.match(page, /navigate\(presenterLaunchPath\)/);
 });
 
 test("restored presenter snapshots revalidate attendance timers while preserving non-attendance active sessions", () => {
