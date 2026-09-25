@@ -280,6 +280,34 @@ replaceOnce(
   "start error copy",
 );
 
+upgradeOnce(
+  `  const handleEndClass = useCallback(() => {
+    if (!actualStartedAt || actualEndedAt) return;
+    const endedAt = nowMs;
+    setActualEndedAt(endedAt);
+    writeClassStartDecision(startDecisionStorageKey, {
+      actualStartedAt,
+      actualEndedAt: endedAt,
+      delayUntil: null,
+    });
+    setSlideSyncStatus({ state: "ending", message: "Ending class and saving actual duration…" });
+    void syncPresenterEnd(endedAt);
+  }, [actualEndedAt, actualStartedAt, nowMs, startDecisionStorageKey, syncPresenterEnd]);`,
+  `  const handleEndClass = useCallback(() => {
+    if (!actualStartedAt || actualEndedAt) return;
+    const endedAt = nowMs;
+    setActualEndedAt(endedAt);
+    writeClassStartDecision(startDecisionStorageKey, {
+      actualStartedAt,
+      actualEndedAt: endedAt,
+      delayUntil: null,
+    });
+    setSlideSyncStatus({ state: "ending", message: "Ending class and saving actual duration…" });
+    void syncPresenterEnd(endedAt);
+    void startWaitingMusic();
+  }, [actualEndedAt, actualStartedAt, nowMs, startDecisionStorageKey, startWaitingMusic, syncPresenterEnd]);`,
+);
+
 replaceOnce(
   `  useEffect(() => () => {
     if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
@@ -351,6 +379,7 @@ for (const marker of [
   "Start waiting music",
   "skipWaitingMusicPlaylist(context)",
   "musicStartGenerationRef.current !== startGeneration",
+  "void startWaitingMusic();",
 ]) {
   if (!source.includes(marker)) throw new Error(`Waiting room playlist marker missing: ${marker}`);
 }
