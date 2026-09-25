@@ -72,6 +72,14 @@
   background: #1e40af;
 }
 
+.presenter-session-timer-actions .presenter-session-start.is-attendance-active:disabled {
+  opacity: 1;
+  cursor: default;
+  border-color: #15803d;
+  background: #15803d;
+  color: #fff;
+}
+
 .presenter-session-timer-actions .presenter-session-sound {
   white-space: nowrap;
 }
