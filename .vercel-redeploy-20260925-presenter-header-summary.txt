@@ -1,0 +1,1 @@
+Force a fresh production deployment after PR #808 so admin.falowen.app serves the Presenter header, Attendance timer status, and final lesson summary fixes.
