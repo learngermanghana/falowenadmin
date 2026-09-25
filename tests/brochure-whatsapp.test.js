@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   BROCHURE_WHATSAPP_MESSAGE,
+  FALOWEN_REGISTRATION_URL,
   buildBrochureWhatsappUrl,
   buildClassBrochureMessage,
   buildClassBrochureUrl,
@@ -60,7 +61,19 @@ test("selected class message includes current class context and no attachment re
   assert.match(message, /GHS 2,800/);
   assert.match(message, /Monday 18:00/);
   assert.match(message, /class=a1-dortmund-klasse&open=1/);
+  assert.match(message, /Register now/);
+  assert.match(message, /https:\/\/www\.falowen\.app\/signup/);
   assert.match(message, /No PDF attachment is needed/);
+});
+
+
+
+test("generic brochure message includes both catalogue and direct registration links", () => {
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /View upcoming classes and brochures/);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /Register now/);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/classes\//);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/signup/);
+  assert.equal(FALOWEN_REGISTRATION_URL, "https://www.falowen.app/signup");
 });
 
 test("upcoming brochure classes include only open future classes and sort soonest first", () => {
