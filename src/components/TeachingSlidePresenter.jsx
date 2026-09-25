@@ -559,6 +559,34 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 ))}
               </div>
             </>
+          ) : stage.type === "summary" ? (
+            <section className="presenter-lesson-summary">
+              <div className="presenter-lesson-summary-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                {stage.subtitle ? <p>{stage.subtitle}</p> : null}
+              </div>
+              <div className="presenter-lesson-summary-grid">
+                {stage.items.map((item) => (
+                  <article key={item.label}>
+                    <strong>{item.label}</strong>
+                    <p>{item.detail}</p>
+                  </article>
+                ))}
+              </div>
+              {Array.isArray(stage.nextSteps) && stage.nextSteps.length ? (
+                <div className="presenter-lesson-summary-next">
+                  <strong>Continue in Falowen</strong>
+                  <div>
+                    {stage.nextSteps.map((item) => (
+                      item.url
+                        ? <a key={item.label} href={lessonUrl(item.url)} target="_blank" rel="noreferrer">{item.label}</a>
+                        : <span key={item.label}>{item.label}</span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </section>
           ) : stage.type === "bridge" ? (
             <section className="presenter-coursebook-bridge">
               <div className="presenter-coursebook-bridge-heading">
