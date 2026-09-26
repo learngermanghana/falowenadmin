@@ -112,7 +112,8 @@ test("all B2 days use the stable teaching spine without the old drill stack or w
 
     assert.equal(vocabulary.type, "vocabulary");
     assert.equal(vocabulary.kicker, "Kollokationen & Redemittel");
-    assert.ok(vocabulary.items.length >= 8, slide.assignmentId + " should expose collocations and argument language");
+    assert.equal(vocabulary.items.length, 10, slide.assignmentId + " should render all four collocations and all six argumentation phrases");
+    assert.ok(vocabulary.items.some((item) => item.term === "Zusammenfassend bin ich der Auffassung, dass ..."), slide.assignmentId + " should preserve the final conclusion phrase");
     const lessonCollocations = getB2TopicCollocations(slide.dayNumber);
     assert.ok(
       lessonCollocations.some((term) => vocabulary.items.some((item) => item.term === term)),
@@ -179,6 +180,43 @@ test("B2 focus tasks use the actual foundation trade-off and examples", () => {
 
   assert.equal(focus7.title, "Mini-Fallstudie");
   assert.match(JSON.stringify(focus7), /Stadt|Bäume|Gebäude|Rad/i);
+});
+
+test("B2 information-gap lessons keep Role A and Role B private until selectively revealed", () => {
+  for (const assignmentId of ["B2-1.4", "B2-3.12", "B2-5.20", "B2-7.28"]) {
+    const slide = getTeachingSlideByAssignmentId(assignmentId);
+    const focus = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "focus");
+    const item = focus.items[0];
+
+    assert.equal(focus.title, "Informationslücke", assignmentId);
+    assert.equal(item.roleCards.length, 2, assignmentId + " should have two private role cards");
+    assert.deepEqual(item.roleCards.map((card) => card.id), ["A", "B"]);
+    assert.match(item.roleCards[0].title, /nur für Person A/i);
+    assert.match(item.roleCards[1].title, /nur für Person B/i);
+    assert.ok(item.roleCards[0].content);
+    assert.ok(item.roleCards[1].content);
+    assert.ok(item.roleCards[0].task);
+    assert.ok(item.roleCards[1].task);
+
+    const sharedPrompts = item.prompts.join(" ");
+    assert.doesNotMatch(sharedPrompts, /Rolle A kennt das Problem/i);
+    assert.doesNotMatch(sharedPrompts, /Rolle B kennt ein konkretes Beispiel/i);
+    assert.match(sharedPrompts, /fehlenden Informationen nur durch Fragen/i);
+  }
+});
+
+test("Presenter selectively reveals only one B2 private role card at a time", () => {
+  const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+
+  assert.match(presenter, /const \[revealedFlowRole, setRevealedFlowRole\] = useState\("")/);
+  assert.match(presenter, /Array\.isArray\(item\.roleCards\)/);
+  assert.match(presenter, /revealedFlowRole === card\.id/);
+  assert.match(presenter, /current === card\.id \? "" : card\.id/);
+  assert.match(presenter, /Only show one card at a time\. The other partner should look away\./);
+  assert.match(presenter, /setRevealedFlowRole\("");\s*setStageIndex/);
+  assert.match(css, /\.presenter-role-gap-card/);
+  assert.match(css, /\.presenter-role-gap-actions button\.is-active/);
 });
 
 test("B2 Day 1 keeps practical environmental grammar with concise English clarification", () => {
