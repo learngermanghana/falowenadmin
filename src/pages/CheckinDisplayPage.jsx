@@ -29,6 +29,8 @@ const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
 const START_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
 const START_HANDSHAKE_MAX_ATTEMPTS = START_HANDSHAKE_RETRY_DELAYS_MS.length + 1;
 const SMART_LOBBY_ROTATION_MS = 14000;
+const SMART_HANDOFF_MIN_VISIBLE_MS = 3000;
+const SMART_HANDOFF_CONNECTED_VISIBLE_MS = 1200;
 const WAITING_PIANO_CHORDS = [
   [130.81, 261.63, 329.63, 392.0],
   [110.0, 220.0, 261.63, 329.63],
@@ -283,10 +285,15 @@ export default function CheckinDisplayPage() {
   const [waitingClassLevel, setWaitingClassLevel] = useState(() => inferClassLevel({}, assignmentId, classId));
   const [smartLobbyIndex, setSmartLobbyIndex] = useState(0);
   const [smartLobbyPaused, setSmartLobbyPaused] = useState(false);
+  const [classStartHandoff, setClassStartHandoff] = useState({ phase: "idle", message: "" });
   const classStartStopTimerRef = useRef(null);
   const musicStartGenerationRef = useRef(0);
   const classStartedRef = useRef(false);
   const autoPresenterRecoveryRef = useRef("");
+  const presenterWindowRef = useRef(null);
+  const handoffStartedAtRef = useRef(0);
+  const handoffPhaseTimerRef = useRef(null);
+  const handoffFocusTimerRef = useRef(null);
 
   useEffect(() => {
     const immediateLevel = inferClassLevel({}, assignmentId, classId);
@@ -315,7 +322,7 @@ export default function CheckinDisplayPage() {
     return () => {
       cancelled = true;
     };
-  }, [assignmentId, classId]);
+  }, [classId, effectiveAssignmentId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -376,8 +383,9 @@ export default function CheckinDisplayPage() {
   const sessionDisplayLabel = hasSessionLabelFromUrl
     ? String(sessionLabel).trim()
     : (scheduleInfo?.sessionDisplayLabel || "");
+  const effectiveAssignmentId = String(assignmentId || scheduleInfo?.assignmentId || "").trim();
   const waitingWarmupTeaser = useMemo(() => {
-    const directAssignmentId = String(assignmentId || scheduleInfo?.assignmentId || "").trim();
+    const directAssignmentId = effectiveAssignmentId;
     let slide = directAssignmentId ? getTeachingSlideByAssignmentId(directAssignmentId) : null;
 
     if (!slide) {
@@ -410,6 +418,8 @@ export default function CheckinDisplayPage() {
 
     return {
       assignmentId: String(slide.assignmentId || "").trim(),
+      course: String(slide.course || waitingClassLevel || "").trim().toUpperCase(),
+      slideId: String(slide.id || "").trim(),
       question,
       keywords: Array.isArray(support.keywords) ? support.keywords : [],
       topic,
@@ -417,14 +427,21 @@ export default function CheckinDisplayPage() {
       outcomes,
     };
   }, [
-    assignmentId,
     classId,
+    effectiveAssignmentId,
     scheduleInfo?.assignmentId,
     scheduleInfo?.dayNumber,
     sessionDisplayLabel,
     sessionLabel,
     waitingClassLevel,
   ]);
+
+  const presenterLessonUrl = useMemo(() => {
+    const course = String(waitingWarmupTeaser?.course || waitingClassLevel || "").trim().toUpperCase();
+    const slideId = String(waitingWarmupTeaser?.slideId || "").trim();
+    if (!course || !slideId) return "";
+    return `/teaching-slides/course/${encodeURIComponent(course)}/${encodeURIComponent(slideId)}?present=1`;
+  }, [waitingClassLevel, waitingWarmupTeaser?.course, waitingWarmupTeaser?.slideId]);
 
   const startDecisionStorageKey = useMemo(
     () => classStartDecisionStorageKey(classId, sessionId, dateLabel),
@@ -454,13 +471,13 @@ export default function CheckinDisplayPage() {
       sessionId: String(sessionId || ""),
       date: dateLabel,
       sessionLabel: sessionDisplayLabel,
-      assignmentId: String(assignmentId || ""),
+      assignmentId: effectiveAssignmentId,
       startTime: String(startTime || ""),
       endTime: String(endTime || ""),
       expectedCount: String(expectedCount || ""),
     }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId, startTime, endTime, expectedCount]);
+  }, [classId, sessionId, dateLabel, sessionDisplayLabel, effectiveAssignmentId, startTime, endTime, expectedCount]);
 
   const expectedTotal = useMemo(() => {
     const parsed = Number.parseInt(String(expectedCount || ""), 10);
@@ -477,19 +494,48 @@ export default function CheckinDisplayPage() {
   );
 
   const smartLobbySlides = useMemo(() => {
-    const slides = [{ id: "checkin", label: "Check in" }];
-    if (waitingWarmupTeaser?.topic || waitingWarmupTeaser?.objective) {
-      slides.push({ id: "lesson", label: "Today’s lesson" });
-    }
-    if (Array.isArray(waitingWarmupTeaser?.outcomes) && waitingWarmupTeaser.outcomes.length) {
-      slides.push({ id: "outcomes", label: "What you’ll learn" });
-    }
-    if (waitingWarmupTeaser?.question) {
-      slides.push({ id: "warmup", label: "Get ready" });
-    }
-    slides.push({ id: "starting", label: "Starting soon" });
-    return slides;
-  }, [waitingWarmupTeaser]);
+    const available = {
+      checkin: { id: "checkin", label: "Check in" },
+      lesson: waitingWarmupTeaser?.topic || waitingWarmupTeaser?.objective
+        ? { id: "lesson", label: "Today’s lesson" }
+        : null,
+      outcomes: Array.isArray(waitingWarmupTeaser?.outcomes) && waitingWarmupTeaser.outcomes.length
+        ? { id: "outcomes", label: "What you’ll learn" }
+        : null,
+      warmup: waitingWarmupTeaser?.question
+        ? { id: "warmup", label: "Get ready" }
+        : null,
+      starting: { id: "starting", label: "Starting soon" },
+    };
+
+    const scheduledStartAt = parseDateTime(dateLabel, startTime);
+    const nearStart = Boolean(scheduledStartAt && (scheduledStartAt - nowMs) <= 2 * 60 * 1000);
+    const attendanceRatio = expectedTotal > 0 ? checkedInCount / expectedTotal : null;
+    const lowAttendance = attendanceRatio !== null && attendanceRatio < 0.6;
+    const highAttendance = attendanceRatio !== null && attendanceRatio >= 0.75;
+
+    const sequence = nearStart
+      ? ["starting", "warmup", "starting", "checkin", "lesson", "starting", "outcomes"]
+      : lowAttendance
+        ? ["checkin", "lesson", "checkin", "outcomes", "checkin", "warmup", "starting"]
+        : highAttendance
+          ? ["lesson", "outcomes", "warmup", "starting", "checkin"]
+          : ["checkin", "lesson", "outcomes", "warmup", "starting"];
+
+    return sequence
+      .map((id, index) => {
+        const slide = available[id];
+        return slide ? { ...slide, sequenceKey: `${id}-${index}` } : null;
+      })
+      .filter(Boolean);
+  }, [
+    checkedInCount,
+    dateLabel,
+    expectedTotal,
+    nowMs,
+    startTime,
+    waitingWarmupTeaser,
+  ]);
 
   const activeSmartLobbySlide = smartLobbySlides[
     Math.min(Math.max(0, smartLobbyIndex), Math.max(0, smartLobbySlides.length - 1))
@@ -512,7 +558,7 @@ export default function CheckinDisplayPage() {
   useEffect(() => {
     setSmartLobbyIndex(0);
     setSmartLobbyPaused(false);
-  }, [classId, sessionId, assignmentId]);
+  }, [classId, sessionId, effectiveAssignmentId]);
 
   useEffect(() => {
     if (actualStartedAt || smartLobbyPaused || smartLobbySlides.length <= 1) return undefined;
@@ -537,9 +583,9 @@ export default function CheckinDisplayPage() {
     () => presenterSessionKey({
       sessionDate: linkSessionDate || "",
       sessionId,
-      assignmentId,
+      assignmentId: effectiveAssignmentId,
     }),
-    [assignmentId, linkSessionDate, sessionId],
+    [effectiveAssignmentId, linkSessionDate, sessionId],
   );
 
   const resolvePresenterClass = useCallback(async () => {
@@ -556,7 +602,7 @@ export default function CheckinDisplayPage() {
     return {
       klass,
       classRecordId,
-      level: inferClassLevel(klass, assignmentId, classId),
+      level: inferClassLevel(klass, effectiveAssignmentId, classId),
     };
   }, [assignmentId, classId]);
 
@@ -918,7 +964,7 @@ export default function CheckinDisplayPage() {
       const sessionKey = presenterSessionKey({
         sessionDate,
         sessionId,
-        assignmentId,
+        assignmentId: effectiveAssignmentId,
       });
       const requestId = attendanceStartRequestId(sessionKey, startMs);
       const requestAttempt = Math.max(1, Number(handshakeAttempt || 1));
@@ -934,8 +980,8 @@ export default function CheckinDisplayPage() {
       const livePatch = {
         sessionDate,
         level,
-        lessonId: String(assignmentId || sessionId || "").trim(),
-        assignmentId: String(assignmentId || "").trim(),
+        lessonId: String(effectiveAssignmentId || sessionId || "").trim(),
+        assignmentId: effectiveAssignmentId,
         classStartedAtMs: startMs,
         classStartSessionId: String(sessionId || "").trim(),
         classStartLabel: String(sessionDisplayLabel || "").trim(),
@@ -1088,7 +1134,7 @@ export default function CheckinDisplayPage() {
         message: "Class started, but slide timer sync failed. You can retry here or use Start class on the slide.",
       });
     }
-  }, [assignmentId, classId, dateLabel, endTime, resolvePresenterClass, sessionDisplayLabel, sessionId, startDecisionStorageKey, startTime]);
+  }, [classId, dateLabel, effectiveAssignmentId, endTime, resolvePresenterClass, sessionDisplayLabel, sessionId, startDecisionStorageKey, startTime]);
 
   useEffect(() => {
     if (!actualStartedAt || actualEndedAt) return;
@@ -1240,6 +1286,46 @@ export default function CheckinDisplayPage() {
     };
   }, [actualEndedAt, actualStartedAt, syncPresenterStart]);
 
+  const openPresenterWindow = useCallback((focus = false) => {
+    if (!presenterLessonUrl) return null;
+    try {
+      const popup = window.open(presenterLessonUrl, "falowen-presenter");
+      if (popup) {
+        presenterWindowRef.current = popup;
+        if (focus) popup.focus?.();
+        else window.setTimeout(() => window.focus?.(), 60);
+      }
+      return popup;
+    } catch {
+      return null;
+    }
+  }, [presenterLessonUrl]);
+
+  const retrySmartHandoff = useCallback(() => {
+    if (!actualStartedAt) return;
+    setClassStartHandoff({
+      phase: "connecting",
+      message: "Retrying Presenter connection…",
+    });
+    openPresenterWindow(false);
+    void syncPresenterStart(actualStartedAt, {
+      manual: true,
+      handshakeAttempt: Math.max(1, Number(presenterLiveState.attendanceStartAttempt || 0) + 1),
+    });
+  }, [
+    actualStartedAt,
+    openPresenterWindow,
+    presenterLiveState.attendanceStartAttempt,
+    syncPresenterStart,
+  ]);
+
+  const openSlidesManually = useCallback(() => {
+    const popup = openPresenterWindow(true);
+    if (!popup && presenterLessonUrl) {
+      window.location.assign(presenterLessonUrl);
+    }
+  }, [openPresenterWindow, presenterLessonUrl]);
+
   const delayClassStart = useCallback((minutes) => {
     if (actualStartedAt) return;
     const scheduledStartAt = parseDateTime(dateLabel, startTime) || nowMs;
@@ -1256,6 +1342,27 @@ export default function CheckinDisplayPage() {
   const handleStartClassNow = useCallback(() => {
     if (actualStartedAt) return;
     const startedAt = nowMs;
+    handoffStartedAtRef.current = Date.now();
+    if (handoffPhaseTimerRef.current) window.clearTimeout(handoffPhaseTimerRef.current);
+    if (handoffFocusTimerRef.current) window.clearTimeout(handoffFocusTimerRef.current);
+
+    setClassStartHandoff({
+      phase: "starting",
+      message: "Class starting…",
+    });
+
+    // Open Presenter inside the click gesture so popup blockers do not break the handoff.
+    openPresenterWindow(false);
+
+    handoffPhaseTimerRef.current = window.setTimeout(() => {
+      setClassStartHandoff((current) => (
+        current.phase === "starting"
+          ? { phase: "connecting", message: "Connecting slides…" }
+          : current
+      ));
+      handoffPhaseTimerRef.current = null;
+    }, SMART_HANDOFF_MIN_VISIBLE_MS);
+
     classStartedRef.current = true;
     musicStartGenerationRef.current += 1;
     setActualStartedAt(startedAt);
@@ -1270,27 +1377,97 @@ export default function CheckinDisplayPage() {
 
     const context = audioContextRef.current;
     const masterGain = musicGainRef.current;
-    if (!context || !masterGain || context.state === "closed") {
-      stopWaitingMusic();
-      return;
-    }
-    if (!musicPlaying) {
+    if (!context || !masterGain || context.state === "closed" || !musicPlaying) {
       stopWaitingMusic();
       return;
     }
 
     scheduleStartChime(context, masterGain);
+    const fadeStartsAt = context.currentTime + 0.55;
     masterGain.gain.setTargetAtTime(
-      Math.max(0.08, musicVolume * 0.45),
-      context.currentTime,
-      0.08,
+      Math.max(0.04, musicVolume * 0.28),
+      fadeStartsAt,
+      0.35,
     );
+    masterGain.gain.setTargetAtTime(
+      0.0001,
+      fadeStartsAt + 0.45,
+      0.55,
+    );
+
     if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
     classStartStopTimerRef.current = window.setTimeout(() => {
       stopWaitingMusic();
       classStartStopTimerRef.current = null;
-    }, 1700);
-  }, [actualStartedAt, musicPlaying, musicVolume, nowMs, startDecisionStorageKey, stopWaitingMusic, syncPresenterStart]);
+    }, SMART_HANDOFF_MIN_VISIBLE_MS);
+  }, [
+    actualStartedAt,
+    musicPlaying,
+    musicVolume,
+    nowMs,
+    openPresenterWindow,
+    startDecisionStorageKey,
+    stopWaitingMusic,
+    syncPresenterStart,
+  ]);
+
+  useEffect(() => {
+    if (!actualStartedAt || actualEndedAt) return undefined;
+    if (!["starting", "connecting"].includes(classStartHandoff.phase)) return undefined;
+
+    const requestId = attendanceStartRequestId(linkPresenterSessionKey, actualStartedAt);
+    const acknowledged = presenterStartAcknowledged(presenterLiveState, requestId);
+    const timerRunning = Boolean(presenterLiveState.timerRunning)
+      && Number(presenterLiveState.timerEndAt || 0) > nowMs;
+
+    if (acknowledged) {
+      const minimumDelay = Math.max(
+        0,
+        Number(handoffStartedAtRef.current || 0) + SMART_HANDOFF_MIN_VISIBLE_MS - Date.now(),
+      );
+      const connectedTimer = window.setTimeout(() => {
+        setClassStartHandoff({
+          phase: "connected",
+          message: timerRunning
+            ? "Slides connected · Timer started"
+            : "Slides connected · Class start confirmed",
+        });
+
+        if (handoffFocusTimerRef.current) window.clearTimeout(handoffFocusTimerRef.current);
+        handoffFocusTimerRef.current = window.setTimeout(() => {
+          try {
+            presenterWindowRef.current?.focus?.();
+          } catch {
+            // The manual open action remains available if the browser blocks focus.
+          }
+          setClassStartHandoff({ phase: "complete", message: "" });
+          handoffFocusTimerRef.current = null;
+        }, SMART_HANDOFF_CONNECTED_VISIBLE_MS);
+      }, minimumDelay);
+      return () => window.clearTimeout(connectedTimer);
+    }
+
+    if (["error", "unresponsive", "stale-blocked", "skipped-date"].includes(slideSyncStatus.state)) {
+      setClassStartHandoff({
+        phase: "failed",
+        message: slideSyncStatus.message || "Presenter did not confirm the class start.",
+      });
+    }
+
+    return undefined;
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    classStartHandoff.phase,
+    linkPresenterSessionKey,
+    nowMs,
+    presenterLiveState.presenterStartAckAtMs,
+    presenterLiveState.presenterStartAckRequestId,
+    presenterLiveState.timerEndAt,
+    presenterLiveState.timerRunning,
+    slideSyncStatus.message,
+    slideSyncStatus.state,
+  ]);
 
   const syncPresenterEnd = useCallback(async (endedAt) => {
     if (!actualStartedAt || !Number.isFinite(Number(endedAt))) return;
@@ -1298,7 +1475,7 @@ export default function CheckinDisplayPage() {
     try {
       const { klass, classRecordId } = await resolvePresenterClass();
       const sessionDate = linkSessionDate || presenterLocalDateKey(new Date(actualStartedAt));
-      const sessionKey = presenterSessionKey({ sessionDate, sessionId, assignmentId });
+      const sessionKey = presenterSessionKey({ sessionDate, sessionId, assignmentId: effectiveAssignmentId });
       const shared = await readPresenterLiveSession(classRecordId, sessionKey);
       const current = shared?.state || {};
 
@@ -1348,8 +1525,8 @@ export default function CheckinDisplayPage() {
     }
   }, [
     actualStartedAt,
-    assignmentId,
     checkedInCount,
+    effectiveAssignmentId,
     classId,
     linkSessionDate,
     resolvePresenterClass,
@@ -1371,6 +1548,11 @@ export default function CheckinDisplayPage() {
 
   useEffect(() => () => {
     if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
+  }, []);
+
+  useEffect(() => () => {
+    if (handoffPhaseTimerRef.current) window.clearTimeout(handoffPhaseTimerRef.current);
+    if (handoffFocusTimerRef.current) window.clearTimeout(handoffFocusTimerRef.current);
   }, []);
 
   useEffect(() => () => {
@@ -1476,16 +1658,8 @@ export default function CheckinDisplayPage() {
               <div className="checkin-display-started-badge">
                 {slideSyncStatus.state === "syncing" ? "Starting slides…" : slideSyncStatus.state === "acknowledged" ? "Slides connected" : slideSyncStatus.state === "unresponsive" ? "Slides not responding" : "Class started"}
               </div>
-              {["error", "unresponsive"].includes(slideSyncStatus.state) ? (
-                <button
-                  type="button"
-                  onClick={() => syncPresenterStart(actualStartedAt, {
-                    manual: true,
-                    handshakeAttempt: Math.max(1, Number(presenterLiveState.attendanceStartAttempt || 0) + 1),
-                  })}
-                >
-                  Resend to slides
-                </button>
+              {["error", "unresponsive"].includes(slideSyncStatus.state) && classStartHandoff.phase === "complete" ? (
+                <button type="button" onClick={retrySmartHandoff}>Retry slide sync</button>
               ) : null}
               <button type="button" className="checkin-display-end-class" onClick={handleEndClass}>End class</button>
             </div>
@@ -1493,7 +1667,41 @@ export default function CheckinDisplayPage() {
         </div>
 
         {hasRequiredParams ? (
-          !actualStartedAt && activeSmartLobbySlide ? (
+          actualStartedAt && !actualEndedAt && ["starting", "connecting", "connected", "failed"].includes(classStartHandoff.phase) ? (
+            <section className={"checkin-display-smart-handoff is-" + classStartHandoff.phase} role="status" aria-live="polite">
+              <div className="checkin-display-handoff-visual" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="checkin-display-handoff-copy">
+                <span className="checkin-display-handoff-eyebrow">
+                  {classStartHandoff.phase === "failed" ? "Presenter needs attention" : "Smart Start Handoff"}
+                </span>
+                <h2>
+                  {classStartHandoff.phase === "starting"
+                    ? "Class starting…"
+                    : classStartHandoff.phase === "connecting"
+                      ? "Connecting slides…"
+                      : classStartHandoff.phase === "connected"
+                        ? "Slides connected · Timer started"
+                        : "Slides did not confirm"}
+                </h2>
+                <p>{classStartHandoff.message || slideSyncStatus.message}</p>
+                {classStartHandoff.phase === "connected" ? (
+                  <div className="checkin-display-handoff-success">✓ Presenter confirmed this exact Attendance start.</div>
+                ) : null}
+                {classStartHandoff.phase === "failed" ? (
+                  <div className="checkin-display-handoff-actions">
+                    <button type="button" onClick={retrySmartHandoff}>Retry connection</button>
+                    <button type="button" className="is-primary" onClick={openSlidesManually} disabled={!presenterLessonUrl}>
+                      Open slides manually
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          ) : !actualStartedAt && activeSmartLobbySlide ? (
             <section className="checkin-display-smart-lobby" aria-label="Smart class lobby">
               <div className="checkin-display-lobby-topline">
                 <div>
@@ -1509,7 +1717,7 @@ export default function CheckinDisplayPage() {
                 </div>
               </div>
 
-              <div className="checkin-display-lobby-stage" key={activeSmartLobbySlide.id}>
+              <div className="checkin-display-lobby-stage" key={activeSmartLobbySlide.sequenceKey || activeSmartLobbySlide.id}>
                 {activeSmartLobbySlide.id === "checkin" ? (
                   <div className="checkin-display-lobby-checkin">
                     <div className="checkin-display-lobby-qr">
@@ -1618,7 +1826,7 @@ export default function CheckinDisplayPage() {
                 <div className="checkin-display-lobby-dots" aria-label="Lobby slide position">
                   {smartLobbySlides.map((slide, index) => (
                     <button
-                      key={slide.id}
+                      key={slide.sequenceKey || slide.id + "-" + index}
                       type="button"
                       className={index === smartLobbyIndex ? "is-active" : ""}
                       aria-label={"Show " + slide.label}
@@ -1628,7 +1836,7 @@ export default function CheckinDisplayPage() {
                   ))}
                 </div>
                 <span>
-                  {smartLobbyPaused ? "Rotation paused" : "Auto-changing every 14 seconds"} · {smartLobbyIndex + 1}/{smartLobbySlides.length}
+                  {smartLobbyPaused ? "Rotation paused" : "Adaptive rotation · every 14 seconds"} · {smartLobbyIndex + 1}/{smartLobbySlides.length}
                 </span>
               </div>
             </section>
