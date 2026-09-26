@@ -202,3 +202,21 @@ test("high-signal updated C2 domains stay locked to the current learner curricul
   assert.match(slides[22].title, /Internationale Zusammenarbeit und Diplomatie/);
   assert.match(slides[27].title, /C2 Prüfungssimulation: Stellungnahme, Umformung und Synthese/);
 });
+
+
+test("C2 rotates seven level-appropriate weekly challenge mechanics", () => {
+  const titlesByWeek = new Map();
+  for (const slide of getSlidesByCourse("C2")) {
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const challenge = stages.find((stage) => stage.id === "weekly-challenge");
+    const week = Math.ceil(slide.dayNumber / 4);
+    assert.ok(challenge, slide.assignmentId + " missing weekly challenge");
+    if (titlesByWeek.has(week)) {
+      assert.equal(challenge.title, titlesByWeek.get(week), slide.assignmentId + " should keep one mechanic identity within its week");
+    } else {
+      titlesByWeek.set(week, challenge.title);
+    }
+  }
+  assert.equal(titlesByWeek.size, 7);
+  assert.equal(new Set(titlesByWeek.values()).size, 7, "C2 should use seven distinct weekly mechanics");
+});
