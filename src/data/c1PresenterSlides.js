@@ -113,7 +113,7 @@ function makeSlide(day) {
       { phase: "Timed speaking", detailEn: "12 min: 60–90 second learner-aligned answers, partner follow-up and targeted correction." },
       { phase: "Writing bridge", detailEn: "10 min: convert the oral argument into a structured C1 paragraph or response." },
     ],
-    wrapUpTaskDe: `Formuliere eine 60–90 Sekunden lange Stellungnahme zu „${topic}“. Nutze die heutige Grammatik „${lesson.grammarTitle}“, nenne ein Beispiel und reagiere auf ein Gegenargument.`,
+    wrapUpTaskDe: `Selbstcheck: Ist deine Position zu „${topic}“ klar? Hast du ein konkretes Beispiel, ein Gegenargument mit Reaktion und die Zielgrammatik „${lesson.grammarTitle}“ kontrolliert verwendet?`,
     workbookConnection: {
       grammarUrl: null,
       workbookUrl: null,
