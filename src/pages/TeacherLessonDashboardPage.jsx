@@ -7,6 +7,8 @@ import { loadSubmissions } from "../services/markingService.js";
 import { loadClassAttendanceAnalytics } from "../services/attendanceAnalyticsService.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { getCurriculumParityReference } from "../data/studentCurriculumParity.js";
+import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
+import { presenterLocalDateKey, setPresenterClassContext } from "../services/presenterLiveSessionService.js";
 import {
   buildTeacherRosterReadiness,
   grammarTargetForSlide,
@@ -221,12 +223,28 @@ export default function TeacherLessonDashboardPage() {
   const day = lessonDay(slide);
   const slideUrl = slide ? `/teaching-slides/course/${encodeURIComponent(course)}/${encodeURIComponent(slide.id)}` : "";
   const presentUrl = slideUrl ? `${slideUrl}?present=1` : "";
+  const startClassUrl = slideUrl ? `${slideUrl}?present=1&autostart=1` : "";
   const studentUrl = learnerLessonUrl(slide);
   const timezone = dashboard?.klass?.timezone || "Africa/Accra";
   const grammarTarget = grammarTargetForSlide(slide);
   const writingFocus = writingFocusForSlide(slide);
   const speakingQuestions = Array.isArray(slide?.studentQuestionsDe) ? slide.studentQuestionsDe.slice(0, 5) : [];
   const warmupQuestions = Array.isArray(slide?.warmupQuestionsDe) ? slide.warmupQuestionsDe : [];
+
+  const preparePresenterStart = () => {
+    if (!slide || !selectedClassId) return;
+    const classRecordId = normalize(selectedClass?.id || selectedClassId);
+    const classId = normalize(selectedClass?.classId || selectedClass?.id || selectedClassId);
+    const rawSessionId = normalize(session?.id || session?.sessionId || session?.sessionKey || `day-${day}`);
+    const startsAt = session?.startsAt ? new Date(session.startsAt) : new Date();
+    const sessionDate = Number.isNaN(startsAt.getTime()) ? presenterLocalDateKey() : presenterLocalDateKey(startsAt);
+    const sessionKey = presenterSessionKey({
+      sessionDate,
+      sessionId: rawSessionId,
+      assignmentId: normalize(slide.assignmentId || slide.id),
+    });
+    setPresenterClassContext({ classId, classRecordId, sessionKey });
+  };
 
   const chooseClass = (event) => {
     const value = event.target.value;
@@ -287,7 +305,7 @@ export default function TeacherLessonDashboardPage() {
 
             <div className="teacher-command-actions">
               <Link className={quickLinkClass(Boolean(slideUrl))} to={slideUrl || "#"}>Open slides</Link>
-              <Link className={quickLinkClass(Boolean(presentUrl))} to={presentUrl || "#"}>Start class</Link>
+              <Link className={quickLinkClass(Boolean(startClassUrl))} to={startClassUrl || "#"} onClick={preparePresenterStart}>Start class</Link>
               <a className="teacher-command-link" href={studentUrl} target="_blank" rel="noreferrer">Open student lesson</a>
               <Link className="teacher-command-link secondary" to={`/attendance/session/${encodeURIComponent(selectedClassId)}`}>Attendance</Link>
               <Link className="teacher-command-link secondary" to={`/attendance?tab=tracker&classId=${encodeURIComponent(selectedClassId)}`}>Email health</Link>
