@@ -30,42 +30,26 @@ if (!source.includes('new URLSearchParams(window.location.search).get("tab") ===
 }
 
 if (!source.includes('setActiveTab("leads")')) {
-  replaceOnce(
-    `          <button
-            type="button"
-            onClick={() => setActiveTab("add")}
-            style={{
-              border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",
-              background: activeTab === "add" ? "#eff6ff" : "#fff",
-              color: "#1a2233",
-            }}
-          >
-            Add Student
-          </button>`,
-    `          <button
-            type="button"
-            onClick={() => setActiveTab("add")}
-            style={{
-              border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",
-              background: activeTab === "add" ? "#eff6ff" : "#fff",
-              color: "#1a2233",
-            }}
-          >
-            Add Student
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("leads")}
-            style={{
-              border: activeTab === "leads" ? "1px solid #2563eb" : "1px solid #d1d5db",
-              background: activeTab === "leads" ? "#eff6ff" : "#fff",
-              color: "#1a2233",
-            }}
-          >
-            Student Leads
-          </button>`,
-    "Student Leads tab button",
-  );
+  const addButtonEnd = `              Add Student
+            </button>`;
+  const leadsButton = `
+            <button
+              type="button"
+              onClick={() => setActiveTab("leads")}
+              style={{
+                border: activeTab === "leads" ? "1px solid #2563eb" : "1px solid #d1d5db",
+                background: activeTab === "leads" ? "#eff6ff" : "#fff",
+                color: "#1a2233",
+              }}
+            >
+              Student Leads
+            </button>`;
+
+  if (!source.includes(addButtonEnd)) {
+    throw new Error("Could not patch StudentDirectoryPage: Student Leads tab button");
+  }
+  source = source.replace(addButtonEnd, `${addButtonEnd}${leadsButton}`);
+  changed = true;
 }
 
 if (!source.includes('activeTab === "leads" && <StudentLeadsPanel />')) {

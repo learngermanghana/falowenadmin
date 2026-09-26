@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
@@ -6,8 +7,10 @@ import StudentSupportTools from "../components/StudentSupportTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
+import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
+import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
 
 const editableFields = [
   "name",
@@ -322,8 +325,17 @@ function whatsappUrl(phone, message) {
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 }
 
+const DIRECTORY_VIEWS = new Set(["all", "trials", "attention", "archived"]);
+
+function normalizeDirectoryView(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return DIRECTORY_VIEWS.has(normalized) ? normalized : "all";
+}
+
 export default function StudentDirectoryPage() {
   const { pushToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const directoryView = normalizeDirectoryView(searchParams.get("view"));
   const [activeTab, setActiveTab] = useState("directory");
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -354,11 +366,31 @@ export default function StudentDirectoryPage() {
     })();
   }, []);
 
+  const attentionSummary = useMemo(() => summarizeStudentAttention(students), [students]);
+  const attentionStudentIds = useMemo(
+    () => new Set(attentionSummary.rows.map(({ student }) => student.id)),
+    [attentionSummary.rows],
+  );
+
+  const viewStudents = useMemo(() => {
+    if (directoryView === "trials") return students.filter(isTrialOrUnpaidStudent);
+    if (directoryView === "attention") return sortStudentsByAttention(students).map(({ student }) => student);
+    if (directoryView === "archived") return students.filter(isArchivedStudent);
+    return students.filter((student) => !isArchivedStudent(student));
+  }, [directoryView, students]);
+
+  const directoryCounts = useMemo(() => ({
+    all: students.filter((student) => !isArchivedStudent(student)).length,
+    trials: students.filter(isTrialOrUnpaidStudent).length,
+    attention: attentionSummary.total,
+    archived: students.filter(isArchivedStudent).length,
+  }), [attentionSummary.total, students]);
+
   const filteredStudents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return students;
+    if (!normalizedQuery) return viewStudents;
 
-    return students.filter((student) => {
+    return viewStudents.filter((student) => {
       const haystack = [
         student.name,
         student.email,
@@ -374,7 +406,16 @@ export default function StudentDirectoryPage() {
 
       return haystack.includes(normalizedQuery);
     });
-  }, [students, query]);
+  }, [viewStudents, query]);
+
+  const selectDirectoryView = (view) => {
+    const nextView = normalizeDirectoryView(view);
+    const next = new URLSearchParams(searchParams);
+    if (nextView === "all") next.delete("view");
+    else next.set("view", nextView);
+    setSearchParams(next, { replace: true });
+    setActiveTab("directory");
+  };
 
   useEffect(() => {
     if (filteredStudents.length === 0) {
@@ -546,7 +587,7 @@ export default function StudentDirectoryPage() {
       setStudents(records);
       setCreateDraft(addStudentDefaultDraft);
       setSelectedStudentId(studentId);
-      setActiveTab("directory");
+      selectDirectoryView("all");
       pushToast({ type: "success", message: `Created ${name}.` });
     } catch (err) {
       pushToast({ type: "error", message: err?.message || "Failed to create student" });
@@ -583,40 +624,55 @@ export default function StudentDirectoryPage() {
         <p style={{ margin: "0 0 12px", opacity: 0.8 }}>
           Search for a student, call them directly, edit records, and generate WhatsApp follow-up messages.
         </p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <button
-            type="button"
-            onClick={() => setActiveTab("directory")}
-            style={{
-              border: activeTab === "directory" ? "1px solid #2563eb" : "1px solid #d1d5db",
-              background: activeTab === "directory" ? "#eff6ff" : "#fff",
-              color: "#1a2233",
-            }}
-          >
-            Student Directory
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("add")}
-            style={{
-              border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",
-              background: activeTab === "add" ? "#eff6ff" : "#fff",
-              color: "#1a2233",
-            }}
-          >
-            Add Student
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("brochure")}
-            style={{
-              border: activeTab === "brochure" ? "1px solid #2563eb" : "1px solid #d1d5db",
-              background: activeTab === "brochure" ? "#eff6ff" : "#fff",
-              color: "#1a2233",
-            }}
-          >
-            Send Brochure
-          </button>
+        <div style={{ display: "grid", gap: 9, marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }} role="tablist" aria-label="Student directory views">
+            {[
+              ["all", "All students"],
+              ["trials", "Trials & unpaid"],
+              ["attention", "Needs attention"],
+              ["archived", "Archived"],
+            ].map(([view, label]) => (
+              <button
+                key={view}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "directory" && directoryView === view}
+                onClick={() => selectDirectoryView(view)}
+                style={{
+                  border: activeTab === "directory" && directoryView === view ? "1px solid #2563eb" : "1px solid #d1d5db",
+                  background: activeTab === "directory" && directoryView === view ? "#eff6ff" : "#fff",
+                  color: "#1a2233",
+                  fontWeight: 700,
+                }}
+              >
+                {label} ({directoryCounts[view]})
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab("add")}
+              style={{
+                border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",
+                background: activeTab === "add" ? "#eff6ff" : "#fff",
+                color: "#1a2233",
+              }}
+            >
+              Add Student
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("brochure")}
+              style={{
+                border: activeTab === "brochure" ? "1px solid #2563eb" : "1px solid #d1d5db",
+                background: activeTab === "brochure" ? "#eff6ff" : "#fff",
+                color: "#1a2233",
+              }}
+            >
+              Send Brochure
+            </button>
+          </div>
         </div>
 
         {activeTab === "directory" && (
@@ -645,7 +701,12 @@ export default function StudentDirectoryPage() {
             {!loading && !error && (
               <>
                 <p style={{ marginTop: 0 }}>
-                  Showing <strong>{filteredStudents.length}</strong> of <strong>{students.length}</strong> student records.
+                  Showing <strong>{filteredStudents.length}</strong> student record{filteredStudents.length === 1 ? "" : "s"} in <strong>{
+                    directoryView === "attention" ? "Needs attention" :
+                    directoryView === "trials" ? "Trials & unpaid" :
+                    directoryView === "archived" ? "Archived" : "All students"
+                  }</strong>.
+                  {directoryView === "attention" ? " This queue is calculated from data already loaded in Admin; opening it creates no new intervention write." : ""}
                 </p>
 
                 {filteredStudents.length === 0 && <p>No students found for this search.</p>}
@@ -657,6 +718,9 @@ export default function StudentDirectoryPage() {
                         const isSelected = student.id === selectedStudentId;
                         const phone = resolveStudentPhone(student, getDraft(student));
                         const phoneCallUrl = callUrl(phone);
+                        const learningStatus = attentionStudentIds.has(student.id)
+                          ? resolveStudentLearningStatus(student)
+                          : null;
                         return (
                           <div
                             key={student.id}
@@ -685,7 +749,24 @@ export default function StudentDirectoryPage() {
                               <div style={{ fontWeight: 600 }}>{student.name || "Unnamed"}</div>
                               <div style={{ fontSize: 12, opacity: 0.8 }}>{student.studentCode || "No student code"}</div>
                               <div style={{ fontSize: 12, opacity: 0.75 }}>{student.className || "No class"}</div>
-                              {phone && <div style={{ fontSize: 12, opacity: 0.75 }}>{phone}</div>}
+                              {learningStatus?.primaryReason ? (
+                                <div
+                                  style={{
+                                    marginTop: 5,
+                                    width: "fit-content",
+                                    borderRadius: 999,
+                                    padding: "3px 7px",
+                                    fontSize: 11,
+                                    fontWeight: 800,
+                                    background: "#fff7ed",
+                                    color: "#c2410c",
+                                    border: "1px solid #fdba74",
+                                  }}
+                                >
+                                  {learningStatus.primaryReason.label}
+                                </div>
+                              ) : null}
+                              {phone && <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>{phone}</div>}
                             </button>
                             {phoneCallUrl && (
                               <a
@@ -721,6 +802,8 @@ export default function StudentDirectoryPage() {
                         <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.75 }}>
                           Edit this student profile and save changes. Use <strong>Transfer class</strong> below for class changes so attendance and participation history stay intact.
                         </p>
+
+                        <StudentLearningStatusPanel student={selectedStudent} />
 
                         <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
                           {editableFields.map((field) => {
