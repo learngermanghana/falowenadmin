@@ -478,7 +478,8 @@ test("restored local class end keeps an explicit manual end-sync recovery path",
   assert.match(page, /Use Sync end now if the earlier shared end save failed/);
   assert.match(page, /slideSyncStatus\.state === "ended-restored"/);
   assert.match(page, />Sync end now<\/button>/);
-  assert.match(page, /state: "ended-synced", message: "Class end was already synchronized\."/);
+  assert.match(page, /state: "ended-acknowledged"/);
+  assert.match(page, /Class end restored · waiting for Presenter acknowledgement|Class ended from Presenter · shared end state synchronized/);
 });
 
 test("ended class timing reacts when a shared end arrives later", () => {
