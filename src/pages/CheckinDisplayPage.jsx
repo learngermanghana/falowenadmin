@@ -28,6 +28,7 @@ const ATTENDANCE_TIME_ZONE = "Africa/Accra";
 const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
 const START_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
 const START_HANDSHAKE_MAX_ATTEMPTS = START_HANDSHAKE_RETRY_DELAYS_MS.length + 1;
+const SMART_LOBBY_ROTATION_MS = 14000;
 const WAITING_PIANO_CHORDS = [
   [130.81, 261.63, 329.63, 392.0],
   [110.0, 220.0, 261.63, 329.63],
@@ -280,6 +281,8 @@ export default function CheckinDisplayPage() {
   const [presenterLiveState, setPresenterLiveState] = useState({});
   const [presenterLiveError, setPresenterLiveError] = useState("");
   const [waitingClassLevel, setWaitingClassLevel] = useState(() => inferClassLevel({}, assignmentId, classId));
+  const [smartLobbyIndex, setSmartLobbyIndex] = useState(0);
+  const [smartLobbyPaused, setSmartLobbyPaused] = useState(false);
   const classStartStopTimerRef = useRef(null);
   const musicStartGenerationRef = useRef(0);
   const classStartedRef = useRef(false);
@@ -387,21 +390,31 @@ export default function CheckinDisplayPage() {
     }
 
     if (!slide) return null;
-    const warmupStage = buildTeachingPresenterStages(slide, slide.topic)
-      .find((stage) => stage.id === "warmup");
+    const presenterStages = buildTeachingPresenterStages(slide, slide.topic);
+    const warmupStage = presenterStages.find((stage) => stage.id === "warmup");
+    const summaryStage = presenterStages.find((stage) => stage.id === "lesson-summary");
     const question = String(warmupStage?.items?.[0] || "").trim();
-    if (!question) return null;
-
     const support = warmupStage?.questionSupport?.[0] || {};
     const topic = String(slide.topic || slide.title || "")
       .replace(/^\s*\d+(?:\.\d+)*\s*/, "")
       .replace(/^[A-C]\d\s+Day\s+\d+\s*·\s*/i, "")
       .trim();
+    const outcomes = (Array.isArray(summaryStage?.items) ? summaryStage.items : [])
+      .filter((item) => String(item?.label || "") !== "Self-check")
+      .map((item) => ({
+        label: String(item?.label || "").trim(),
+        detail: String(item?.detail || "").trim(),
+      }))
+      .filter((item) => item.detail)
+      .slice(0, 3);
 
     return {
+      assignmentId: String(slide.assignmentId || "").trim(),
       question,
       keywords: Array.isArray(support.keywords) ? support.keywords : [],
       topic,
+      objective: String(slide.objective || "").trim(),
+      outcomes,
     };
   }, [
     assignmentId,
@@ -462,6 +475,57 @@ export default function CheckinDisplayPage() {
     () => checkins.map((row, index) => checkinDisplayName(row, index)).filter(Boolean),
     [checkins],
   );
+
+  const smartLobbySlides = useMemo(() => {
+    const slides = [{ id: "checkin", label: "Check in" }];
+    if (waitingWarmupTeaser?.topic || waitingWarmupTeaser?.objective) {
+      slides.push({ id: "lesson", label: "Today’s lesson" });
+    }
+    if (Array.isArray(waitingWarmupTeaser?.outcomes) && waitingWarmupTeaser.outcomes.length) {
+      slides.push({ id: "outcomes", label: "What you’ll learn" });
+    }
+    if (waitingWarmupTeaser?.question) {
+      slides.push({ id: "warmup", label: "Get ready" });
+    }
+    slides.push({ id: "starting", label: "Starting soon" });
+    return slides;
+  }, [waitingWarmupTeaser]);
+
+  const activeSmartLobbySlide = smartLobbySlides[
+    Math.min(Math.max(0, smartLobbyIndex), Math.max(0, smartLobbySlides.length - 1))
+  ] || smartLobbySlides[0];
+
+  const showPreviousLobbySlide = useCallback(() => {
+    setSmartLobbyIndex((current) => {
+      const total = Math.max(1, smartLobbySlides.length);
+      return (current - 1 + total) % total;
+    });
+  }, [smartLobbySlides.length]);
+
+  const showNextLobbySlide = useCallback(() => {
+    setSmartLobbyIndex((current) => {
+      const total = Math.max(1, smartLobbySlides.length);
+      return (current + 1) % total;
+    });
+  }, [smartLobbySlides.length]);
+
+  useEffect(() => {
+    setSmartLobbyIndex(0);
+    setSmartLobbyPaused(false);
+  }, [classId, sessionId, assignmentId]);
+
+  useEffect(() => {
+    if (actualStartedAt || smartLobbyPaused || smartLobbySlides.length <= 1) return undefined;
+    const rotation = window.setInterval(() => {
+      setSmartLobbyIndex((current) => (current + 1) % smartLobbySlides.length);
+    }, SMART_LOBBY_ROTATION_MS);
+    return () => window.clearInterval(rotation);
+  }, [actualStartedAt, smartLobbyPaused, smartLobbySlides.length]);
+
+  useEffect(() => {
+    if (smartLobbyIndex < smartLobbySlides.length) return;
+    setSmartLobbyIndex(0);
+  }, [smartLobbyIndex, smartLobbySlides.length]);
 
   const linkSessionDate = useMemo(() => {
     const raw = String(dateLabel || "").trim();
@@ -1428,74 +1492,199 @@ export default function CheckinDisplayPage() {
           )}
         </div>
 
-        {!actualStartedAt && waitingWarmupTeaser ? (
-          <section className="checkin-display-warmup-teaser" aria-label="Warm-up preview">
-            <div className="checkin-display-warmup-teaser-copy">
-              <div className="checkin-display-warmup-teaser-eyebrow">Get ready · Warm-up preview</div>
-              {waitingWarmupTeaser.topic ? (
-                <div className="checkin-display-warmup-teaser-topic">{waitingWarmupTeaser.topic}</div>
-              ) : null}
-              <p>{renderWaitingWarmupQuestion(waitingWarmupTeaser.question, waitingWarmupTeaser.keywords)}</p>
-            </div>
-            <div className="checkin-display-warmup-teaser-note">
-              <strong>Think about your answer.</strong>
-              <span>You will answer after class starts. The 5-minute warm-up timer is not running yet.</span>
-            </div>
-          </section>
-        ) : null}
-
         {hasRequiredParams ? (
-          <div className="checkin-display-main-grid">
-            <section className="checkin-display-qr-panel">
-              <div className="checkin-display-qr-wrap">
-                <QRCodeCanvas value={checkinUrl} size={320} includeMargin />
+          !actualStartedAt && activeSmartLobbySlide ? (
+            <section className="checkin-display-smart-lobby" aria-label="Smart class lobby">
+              <div className="checkin-display-lobby-topline">
+                <div>
+                  <span className="checkin-display-lobby-kicker">Smart Class Lobby</span>
+                  <strong>{activeSmartLobbySlide.label}</strong>
+                </div>
+                <div className="checkin-display-lobby-controls" role="group" aria-label="Lobby slideshow controls">
+                  <button type="button" onClick={showPreviousLobbySlide}>Previous</button>
+                  <button type="button" onClick={() => setSmartLobbyPaused((value) => !value)}>
+                    {smartLobbyPaused ? "Resume rotation" : "Pause rotation"}
+                  </button>
+                  <button type="button" onClick={showNextLobbySlide}>Next</button>
+                </div>
               </div>
-              <div className="checkin-display-scan-copy">Scan to record your attendance</div>
-              <div className="checkin-display-session-mini">
-                <span>{dateLabel || "Today"}</span>
-                <span>{startTime || "--:--"}–{endTime || "--:--"}</span>
-                {assignmentId ? <span>{assignmentId}</span> : null}
+
+              <div className="checkin-display-lobby-stage" key={activeSmartLobbySlide.id}>
+                {activeSmartLobbySlide.id === "checkin" ? (
+                  <div className="checkin-display-lobby-checkin">
+                    <div className="checkin-display-lobby-qr">
+                      <QRCodeCanvas value={checkinUrl} size={280} includeMargin />
+                    </div>
+                    <div className="checkin-display-lobby-checkin-copy">
+                      <span className="checkin-display-lobby-eyebrow">First step</span>
+                      <h2>Check in for class</h2>
+                      <p>Scan the QR code to record your attendance while you wait.</p>
+                      <div className="checkin-display-lobby-count">
+                        <strong>{expectedTotal ? checkedInCount + " / " + expectedTotal : checkedInCount}</strong>
+                        <span>{checkedInCount === 1 ? "student checked in" : "students checked in"}</span>
+                      </div>
+                      {expectedTotal ? (
+                        <div className="checkin-display-progress" aria-label={attendancePercent + "% checked in"}>
+                          <span style={{ width: attendancePercent + "%" }} />
+                        </div>
+                      ) : null}
+                      {showNames && checkedInNames.length ? (
+                        <div className="checkin-display-lobby-name-strip">
+                          {checkedInNames.slice(0, 6).map((name, index) => (
+                            <span key={name + index}>{name} ✓</span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : activeSmartLobbySlide.id === "lesson" ? (
+                  <div className="checkin-display-lobby-content">
+                    <span className="checkin-display-lobby-eyebrow">Today’s lesson</span>
+                    <h2>{waitingWarmupTeaser?.topic || sessionDisplayLabel || "Today’s lesson"}</h2>
+                    {waitingWarmupTeaser?.objective ? (
+                      <p className="checkin-display-lobby-objective">{waitingWarmupTeaser.objective}</p>
+                    ) : null}
+                    <div className="checkin-display-lobby-meta">
+                      {waitingClassLevel ? <span>{waitingClassLevel}</span> : null}
+                      {waitingWarmupTeaser?.assignmentId ? <span>{waitingWarmupTeaser.assignmentId}</span> : null}
+                      <span>{startTime || "--:--"}–{endTime || "--:--"}</span>
+                    </div>
+                  </div>
+                ) : activeSmartLobbySlide.id === "outcomes" ? (
+                  <div className="checkin-display-lobby-content">
+                    <span className="checkin-display-lobby-eyebrow">By the end of class</span>
+                    <h2>You should be able to…</h2>
+                    <div className="checkin-display-lobby-outcomes">
+                      {(waitingWarmupTeaser?.outcomes || []).map((item, index) => (
+                        <div className="checkin-display-lobby-outcome" key={(item.label || "outcome") + index}>
+                          <span>{index + 1}</span>
+                          <div>
+                            {item.label ? <strong>{item.label}</strong> : null}
+                            <p>{item.detail}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : activeSmartLobbySlide.id === "warmup" ? (
+                  <div className="checkin-display-lobby-content checkin-display-lobby-warmup">
+                    <span className="checkin-display-lobby-eyebrow">Get ready · Warm-up preview</span>
+                    {waitingWarmupTeaser?.topic ? (
+                      <div className="checkin-display-lobby-topic">{waitingWarmupTeaser.topic}</div>
+                    ) : null}
+                    <h2>{renderWaitingWarmupQuestion(
+                      waitingWarmupTeaser?.question || "",
+                      waitingWarmupTeaser?.keywords || [],
+                    )}</h2>
+                    <div className="checkin-display-lobby-think-note">
+                      <strong>Think about your answer.</strong>
+                      <span>You will answer after class starts. The 5-minute warm-up timer is not running yet.</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="checkin-display-lobby-content checkin-display-lobby-starting">
+                    <span className="checkin-display-lobby-eyebrow">Starting soon</span>
+                    <h2>{classTiming?.kind === "before" ? classTiming.value : "Teacher will start shortly"}</h2>
+                    <p>{classTiming?.kind === "before" ? classTiming.note : "Stay ready — class begins when the teacher presses Start class & slides."}</p>
+                    <div className="checkin-display-lobby-status-grid">
+                      <div>
+                        <span>Checked in</span>
+                        <strong>{expectedTotal ? checkedInCount + " / " + expectedTotal : checkedInCount}</strong>
+                      </div>
+                      <div>
+                        <span>Current time</span>
+                        <strong>{formatLiveClockLabel(nowMs)}</strong>
+                      </div>
+                      <div>
+                        <span>Scheduled</span>
+                        <strong>{startTime || "Soon"}</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeSmartLobbySlide.id !== "checkin" ? (
+                  <div className="checkin-display-lobby-mini-checkin">
+                    <QRCodeCanvas value={checkinUrl} size={112} includeMargin />
+                    <div>
+                      <strong>Still need to check in?</strong>
+                      <span>Scan anytime.</span>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="checkin-display-lobby-footer">
+                <div className="checkin-display-lobby-dots" aria-label="Lobby slide position">
+                  {smartLobbySlides.map((slide, index) => (
+                    <button
+                      key={slide.id}
+                      type="button"
+                      className={index === smartLobbyIndex ? "is-active" : ""}
+                      aria-label={"Show " + slide.label}
+                      aria-current={index === smartLobbyIndex ? "true" : undefined}
+                      onClick={() => setSmartLobbyIndex(index)}
+                    />
+                  ))}
+                </div>
+                <span>
+                  {smartLobbyPaused ? "Rotation paused" : "Auto-changing every 14 seconds"} · {smartLobbyIndex + 1}/{smartLobbySlides.length}
+                </span>
               </div>
             </section>
-
-            <section className="checkin-display-attendance-panel" aria-live="polite">
-              <div className="checkin-display-attendance-label">Live attendance</div>
-              <div className="checkin-display-attendance-count">
-                {expectedTotal ? checkedInCount + " / " + expectedTotal : checkedInCount}
-              </div>
-              <div className="checkin-display-attendance-copy">
-                {checkedInCount === 1 ? "student checked in" : "students checked in"}
-              </div>
-              {expectedTotal ? (
-                <div className="checkin-display-progress" aria-label={attendancePercent + "% checked in"}>
-                  <span style={{ width: attendancePercent + "%" }} />
+          ) : (
+            <div className="checkin-display-main-grid">
+              <section className="checkin-display-qr-panel">
+                <div className="checkin-display-qr-wrap">
+                  <QRCodeCanvas value={checkinUrl} size={320} includeMargin />
                 </div>
-              ) : null}
-              <div className="checkin-display-live-indicator">
-                <span className={attendanceLive ? "is-live" : ""} />
-                {attendanceLive ? "Updating live" : "Waiting for signed-in live data"}
-              </div>
-
-              {showNames ? (
-                <div className="checkin-display-name-list">
-                  <div className="checkin-display-name-title">Checked in</div>
-                  {checkedInNames.length ? checkedInNames.map((name, index) => (
-                    <div className="checkin-display-name-row" key={name + index}>
-                      <span>{name}</span><strong>✓</strong>
-                    </div>
-                  )) : (
-                    <div className="checkin-display-name-empty">
-                      {attendanceLive ? "No student has checked in yet." : "Names are only available to a signed-in admin display."}
-                    </div>
-                  )}
+                <div className="checkin-display-scan-copy">Scan to record your attendance</div>
+                <div className="checkin-display-session-mini">
+                  <span>{dateLabel || "Today"}</span>
+                  <span>{startTime || "--:--"}–{endTime || "--:--"}</span>
+                  {assignmentId ? <span>{assignmentId}</span> : null}
                 </div>
-              ) : (
-                <div className="checkin-display-privacy-note">Student names are hidden on the projector by default.</div>
-              )}
+              </section>
 
-              {attendanceError ? <div className="checkin-display-attendance-error">{attendanceError}</div> : null}
-            </section>
-          </div>
+              <section className="checkin-display-attendance-panel" aria-live="polite">
+                <div className="checkin-display-attendance-label">Live attendance</div>
+                <div className="checkin-display-attendance-count">
+                  {expectedTotal ? checkedInCount + " / " + expectedTotal : checkedInCount}
+                </div>
+                <div className="checkin-display-attendance-copy">
+                  {checkedInCount === 1 ? "student checked in" : "students checked in"}
+                </div>
+                {expectedTotal ? (
+                  <div className="checkin-display-progress" aria-label={attendancePercent + "% checked in"}>
+                    <span style={{ width: attendancePercent + "%" }} />
+                  </div>
+                ) : null}
+                <div className="checkin-display-live-indicator">
+                  <span className={attendanceLive ? "is-live" : ""} />
+                  {attendanceLive ? "Updating live" : "Waiting for signed-in live data"}
+                </div>
+
+                {showNames ? (
+                  <div className="checkin-display-name-list">
+                    <div className="checkin-display-name-title">Checked in</div>
+                    {checkedInNames.length ? checkedInNames.map((name, index) => (
+                      <div className="checkin-display-name-row" key={name + index}>
+                        <span>{name}</span><strong>✓</strong>
+                      </div>
+                    )) : (
+                      <div className="checkin-display-name-empty">
+                        {attendanceLive ? "No student has checked in yet." : "Names are only available to a signed-in admin display."}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="checkin-display-privacy-note">Student names are hidden on the projector by default.</div>
+                )}
+
+                {attendanceError ? <div className="checkin-display-attendance-error">{attendanceError}</div> : null}
+              </section>
+            </div>
+          )
         ) : (
           <div className="checkin-display-warning">
             Missing class/session details. Please reopen this display page from the Attendance screen.
