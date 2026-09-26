@@ -154,6 +154,12 @@ export default function PresenterSessionTimer({ slide }) {
     && !Boolean(liveState.timerExpired)
     && !Boolean(liveState.timerRunning)
     && Number(liveState.timerEndAt || 0) <= 0;
+  const attendanceStartRequestId = normalize(liveState.attendanceStartRequestId);
+  const presenterStartAckMatches = Boolean(
+    attendanceStartRequestId
+    && normalize(liveState.presenterStartAckRequestId) === attendanceStartRequestId
+    && Number(liveState.presenterStartAckAtMs || 0) > 0
+  );
   const agendaAutoStartRequested = typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("autostart") === "1";
   const [classId, setClassId] = useState(currentPresenterClassId);
@@ -166,6 +172,7 @@ export default function PresenterSessionTimer({ slide }) {
   const [endAt, setEndAt] = useState(0);
   const [warnedMilestones, setWarnedMilestones] = useState([]);
   const [notice, setNotice] = useState("");
+  const [attendanceRepairState, setAttendanceRepairState] = useState("idle");
   const [soundEnabled, setSoundEnabled] = useState(readSoundPreference);
   const [hydratedKey, setHydratedKey] = useState("");
   const previousRemainingRef = useRef(durationSeconds);
@@ -174,6 +181,7 @@ export default function PresenterSessionTimer({ slide }) {
   const expiryPublishedRef = useRef(false);
   const agendaAutoStartHandledRef = useRef(false);
   const manualAttendanceRepairRef = useRef(false);
+  const autoAttendanceRepairKeyRef = useRef("");
 
   useEffect(() => {
     const next = normalize(presenterLive.classContext?.classId) || currentPresenterClassId();
@@ -369,6 +377,84 @@ export default function PresenterSessionTimer({ slide }) {
     return () => window.clearInterval(timer);
   }, [running, endAt, durationSeconds, warnedMilestones, soundEnabled, presenterLive.classRecordId, attendanceControlsTimer]);
 
+  useEffect(() => {
+    if (!attendanceTimerNeedsManualStart || !durationSeconds || !presenterLive.classRecordId) {
+      if (!attendanceTimerNeedsManualStart && attendanceRepairState === "repairing") {
+        setAttendanceRepairState("repaired");
+      }
+      return undefined;
+    }
+
+    const repairKey = `${presenterLive.sessionKey}:${attendanceStartRequestId || Number(liveState.classStartedAtMs || 0)}`;
+    if (!repairKey || autoAttendanceRepairKeyRef.current === repairKey) return undefined;
+    autoAttendanceRepairKeyRef.current = repairKey;
+    setAttendanceRepairState("repairing");
+
+    const repairTimer = window.setTimeout(async () => {
+      const nowMs = Date.now();
+      const classStartedAtMs = Math.max(0, Number(liveState.classStartedAtMs || 0));
+      const targetEndAt = classStartedAtMs > 0
+        ? classStartedAtMs + (durationSeconds * 1000)
+        : nowMs + (durationSeconds * 1000);
+      const repairedRemaining = Math.max(0, Math.min(durationSeconds, Math.ceil((targetEndAt - nowMs) / 1000)));
+      const result = await presenterLive.publish({
+        classLifecycleStatus: "running",
+        sessionTimingAuthority: "attendance",
+        timerLevel: level,
+        timerDurationSeconds: durationSeconds,
+        timerRunning: repairedRemaining > 0,
+        timerEndAt: repairedRemaining > 0 ? targetEndAt : 0,
+        timerRemaining: repairedRemaining,
+        timerWarned: baselineWarnings(repairedRemaining),
+        timerExpired: repairedRemaining <= 0,
+        timerRepairSource: "presenter-auto-repair",
+        timerUpdatedAtMs: nowMs,
+      });
+      if (!result?.ok) {
+        setAttendanceRepairState("failed");
+        autoAttendanceRepairKeyRef.current = "";
+      }
+    }, 750);
+
+    return () => window.clearTimeout(repairTimer);
+  }, [
+    attendanceRepairState,
+    attendanceStartRequestId,
+    attendanceTimerNeedsManualStart,
+    durationSeconds,
+    level,
+    liveState.classStartedAtMs,
+    presenterLive.classRecordId,
+    presenterLive.publish,
+    presenterLive.sessionKey,
+  ]);
+
+  useEffect(() => {
+    if (!attendanceControlsTimer || attendanceSessionEnded || !attendanceStartRequestId) return;
+    if (presenterStartAckMatches) return;
+    const timerReady = Boolean(liveState.timerRunning) && Number(liveState.timerEndAt || 0) > Date.now();
+    const timerFinished = Boolean(liveState.timerExpired);
+    if (!timerReady && !timerFinished) return;
+
+    presenterLive.publish({
+      presenterStartAckRequestId: attendanceStartRequestId,
+      presenterStartAckAtMs: Date.now(),
+      presenterStartAckDeviceId: presenterLive.deviceId,
+      presenterStartAckStatus: timerReady ? "timer-running" : "time-up",
+      presenterStartAckTimerEndAt: timerReady ? Number(liveState.timerEndAt || 0) : 0,
+    });
+  }, [
+    attendanceControlsTimer,
+    attendanceSessionEnded,
+    attendanceStartRequestId,
+    liveState.timerEndAt,
+    liveState.timerExpired,
+    liveState.timerRunning,
+    presenterLive.deviceId,
+    presenterLive.publish,
+    presenterStartAckMatches,
+  ]);
+
   useEffect(() => () => {
     try {
       audioContextRef.current?.close?.();
@@ -474,6 +560,7 @@ export default function PresenterSessionTimer({ slide }) {
 
   async function startAttendanceTimerManually() {
     if (!attendanceTimerNeedsManualStart || !durationSeconds) return;
+    setAttendanceRepairState("manual");
     const nowMs = Date.now();
     const classStartedAtMs = Math.max(0, Number(liveState.classStartedAtMs || 0));
     const targetEndAt = classStartedAtMs > 0
@@ -544,6 +631,18 @@ export default function PresenterSessionTimer({ slide }) {
     if (next) playWarningTone(10 * 60, true);
   }
 
+  const attendanceHandshakeLabel = !attendanceControlsTimer
+    ? ""
+    : presenterStartAckMatches
+      ? " · Attendance connected · timer synced"
+      : attendanceRepairState === "repairing"
+        ? " · Attendance connected · repairing timer"
+        : attendanceTimerNeedsManualStart
+          ? " · Attendance connected · timer needs attention"
+          : attendanceStartRequestId
+            ? " · Attendance connected · acknowledging start"
+            : " · Attendance connected";
+
   const syncLabel = !presenterLive.classRecordId
     ? ""
     : presenterLive.syncState === "live"
@@ -569,11 +668,11 @@ export default function PresenterSessionTimer({ slide }) {
       <div className="presenter-session-timer-copy">
         <span>Class time · {level} · {durationMinutes} min</span>
         <strong>{expired ? "TIME UP" : formatSessionTime(remaining)}</strong>
-        <small>{statusText}{syncLabel}</small>
+        <small>{statusText}{attendanceHandshakeLabel}{syncLabel}</small>
       </div>
       <div className="presenter-session-timer-actions">
         {attendanceControlsTimer ? (
-          attendanceTimerNeedsManualStart ? (
+          attendanceTimerNeedsManualStart && attendanceRepairState === "failed" ? (
             <button
               type="button"
               className="presenter-session-start is-attendance-repair"
@@ -582,6 +681,15 @@ export default function PresenterSessionTimer({ slide }) {
             >
               Start timer manually
             </button>
+          ) : attendanceTimerNeedsManualStart && attendanceRepairState === "repairing" ? (
+            <button
+              type="button"
+              className="presenter-session-start is-attendance-active"
+              disabled
+              title="Presenter is rebuilding the missing timer from the original Attendance class start."
+            >
+              Repairing timer…
+            </button>
           ) : (
             <button
               type="button"
@@ -589,7 +697,7 @@ export default function PresenterSessionTimer({ slide }) {
               disabled
               title="The class timer was started from Attendance."
             >
-              {expired ? "Class ended" : "Class started"}
+              {expired ? "Class ended" : presenterStartAckMatches ? "Attendance synced" : "Class started"}
             </button>
           )
         ) : (
