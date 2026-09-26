@@ -166,7 +166,7 @@ test("messages stay specific to the selected intervention", () => {
 
   assert.match(message, /needs improvement/i);
   assert.match(message, /52%/);
-  assert.match(message, /Review & retry|review the tutor feedback/i);
+  assert.match(message, /review the feedback/i);
   assert.match(rowForNudge({ student: student(), nudge, now: NOW }).email_type, /learning_nudge_needs-improvement/);
 });
 
