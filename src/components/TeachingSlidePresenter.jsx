@@ -426,6 +426,34 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </section>
               ) : null}
             </>
+          ) : stage.type === "b2-grammar" ? (
+            <section className="presenter-b2-grammar">
+              <div className="presenter-b2-grammar-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                <p>German first. Use the short English note only to confirm the logical function of the structure.</p>
+              </div>
+              <div className="presenter-b2-grammar-rules">
+                {stage.items.map((item, index) => (
+                  <article key={item + index}>
+                    <span>{index + 1}</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+              {stage.supportEn ? (
+                <aside className="presenter-b2-grammar-support">
+                  <strong>Brief English support</strong>
+                  <p>{stage.supportEn}</p>
+                </aside>
+              ) : null}
+              {stage.attentionEn ? (
+                <aside className="presenter-b2-grammar-attention">
+                  <strong>Watch out</strong>
+                  <p>{stage.attentionEn}</p>
+                </aside>
+              ) : null}
+            </section>
           ) : stage.type === "c1-grammar" ? (
             <section className="presenter-c1-grammar">
               <div className="presenter-c1-grammar-heading">

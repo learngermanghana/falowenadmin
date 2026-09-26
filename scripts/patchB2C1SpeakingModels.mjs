@@ -126,18 +126,30 @@ if (fs.existsSync(b1RegressionPath)) {
 {
   const presenterPath = path.join(root, "src/utils/teachingPresenter.js");
   const presenterSource = fs.readFileSync(presenterPath, "utf8");
-  const requiredC1Markers = [
+  const requiredPresenterMarkers = [
+    'if (level === "B2") {',
+    'function buildB2FocusedTask',
+    'type: "b2-grammar"',
+    'title: "Sprechen · entwickeln, vergleichen und reagieren"',
     'if (level === "C1") {',
     'id: "focus"',
     'type: "c1-grammar"',
     'title: "Sprechen · argumentieren und reagieren"',
     'title: "Schreibbrücke · Argument in Absatzform"',
-    'if (level !== "B2") return null;',
   ];
-  for (const marker of requiredC1Markers) {
+  for (const marker of requiredPresenterMarkers) {
     if (!presenterSource.includes(marker)) {
-      throw new Error("C1 argumentation teaching spine marker missing: " + marker);
+      throw new Error("B2/C1 teaching-spine marker missing: " + marker);
     }
+  }
+
+  const weeklyChallengeStart = presenterSource.indexOf("function buildAdvancedWeeklyChallenge");
+  const weeklyChallengeEnd = presenterSource.indexOf("function buildClassicStages", weeklyChallengeStart);
+  const weeklyChallengeBlock = weeklyChallengeStart >= 0 && weeklyChallengeEnd > weeklyChallengeStart
+    ? presenterSource.slice(weeklyChallengeStart, weeklyChallengeEnd)
+    : "";
+  if (!weeklyChallengeBlock.includes("return null;")) {
+    throw new Error("Legacy B2 weekly challenge must remain disabled.");
   }
 }
 

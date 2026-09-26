@@ -414,148 +414,7 @@ function buildLessonSummaryItems(slide = {}) {
   return items.slice(0, 4);
 }
 
-function buildAdvancedWeeklyChallenge(slide = {}) {
-  const level = classroomLevel(slide);
-  if (level !== "B2") return null;
-
-  const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
-  const week = Math.min(7, Math.max(1, Math.ceil(day / 4)));
-  const topic = cleanTopic(slide);
-  const questions = (Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []).filter(Boolean);
-  const phrases = (Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).filter(Boolean);
-  const q1 = questions[0] || `Welche Bedeutung hat „${topic}“?`;
-  const q2 = questions[1] || `Welche unterschiedlichen Perspektiven gibt es bei „${topic}“?`;
-  const q3 = questions[2] || `Welche Lösung oder Schlussfolgerung ist bei „${topic}“ überzeugend?`;
-  const phrasePrompt = phrases[0]
-    ? `Nutze, wenn es sinnvoll ist: „${phrases[0]}“`
-    : "Nutze ein präzises Redemittel aus der heutigen Lektion.";
-
-  const plans = {
-    B2: {
-      1: ["Woche 1 · Abwägen & begründen", [
-        { title: "Position", instruction: q1, prompts: ["Formuliere eine klare Position mit Grund.", "Ergänze ein konkretes Beispiel."], minutes: 2 },
-        { title: "Gegenpunkt", instruction: q2, prompts: ["Nenne einen realistischen Gegenpunkt.", phrasePrompt], minutes: 2 },
-        { title: "Abwägen", instruction: "Entscheide danach, welcher Punkt stärker wiegt.", prompts: ["Begründe deine Entscheidung in einem vollständigen B2-Satz."], minutes: 2 },
-      ]],
-      2: ["Woche 2 · Gespräch weiterentwickeln", [
-        { title: "Beitrag", instruction: q1, prompts: ["Position → Grund → Beispiel."], minutes: 2 },
-        { title: "Anknüpfen", instruction: "Reagiere zuerst auf den vorigen Beitrag und füge dann eine neue Idee hinzu.", prompts: [phrasePrompt], minutes: 2 },
-        { title: "Nachfrage", instruction: q2, prompts: ["Stelle eine spontane Rückfrage und reagiere auf die Antwort."], minutes: 2 },
-      ]],
-      3: ["Woche 3 · Problemlösung unter Bedingungen", [
-        { title: "Problem", instruction: q1, prompts: ["Wer ist betroffen?", "Was ist die konkrete Schwierigkeit?"], minutes: 2 },
-        { title: "Lösung", instruction: q3, prompts: ["Schlage eine realistische Maßnahme vor.", "Nenne eine Bedingung für ihren Erfolg."], minutes: 2 },
-        { title: "Nebenwirkung", instruction: "Prüfe eine mögliche negative Folge deiner Lösung.", prompts: [phrasePrompt], minutes: 2 },
-      ]],
-      4: ["Woche 4 · Interview & kritische Rückfrage", [
-        { title: "Interview", instruction: q1, prompts: ["Höre bis zum Ende zu."], minutes: 2 },
-        { title: "Neue Rückfrage", instruction: "Stelle eine kritische Rückfrage, die nicht auf der Folie steht.", prompts: ["Frage nach Folge, Bedingung, Beispiel oder Alternative."], minutes: 2 },
-        { title: "Rollenwechsel", instruction: q2, prompts: ["Reagiere auf die vorige Antwort und tauscht danach die Rollen.", phrasePrompt], minutes: 3 },
-      ]],
-      5: ["Woche 5 · Aussage reparieren", [
-        { title: "Unklar", instruction: "Formuliere eine zu allgemeine Aussage zum Thema präziser.", prompts: ["Ergänze Ursache, Folge oder Bedingung."], minutes: 2 },
-        { title: "Missverständnis", instruction: q2, prompts: ["Dein Partner versteht dich anders: erkläre die Idee neu, ohne denselben Satz zu wiederholen."], minutes: 2 },
-        { title: "Prüfen", instruction: "Fasse kurz zusammen, worauf ihr euch einigen könnt.", prompts: [phrasePrompt], minutes: 2 },
-      ]],
-      6: ["Woche 6 · 3-Minuten-Prüfungsantwort", [
-        { title: "Planen", instruction: q1, prompts: ["Position → zwei Gründe → Beispiel → Gegenpunkt."], minutes: 1 },
-        { title: "Sprechen", instruction: "Sprich bis zu 3 Minuten strukturiert und ohne abzulesen.", prompts: [phrasePrompt], minutes: 3 },
-        { title: "Spontane Reaktion", instruction: "Ein Partner widerspricht oder fragt kritisch nach.", prompts: ["Antworte direkt und begründe deine Reaktion."], minutes: 2 },
-      ]],
-      7: ["Woche 7 · Überraschungsmission", [
-        { title: "Karte A", instruction: q1, prompts: ["Antworte ohne vorbereiteten Text."], minutes: 2 },
-        { title: "Karte B", instruction: q2, prompts: ["Wechsle die Perspektive und nenne ein Gegenargument.", phrasePrompt], minutes: 2 },
-        { title: "Karte C", instruction: q3, prompts: ["Übertrage die Idee auf eine neue reale Situation."], minutes: 2 },
-      ]],
-    },
-    C1: {
-      1: ["Woche 1 · Position differenzieren", [
-        { title: "These", instruction: q1, prompts: ["Formuliere eine klare, aber nicht absolute Position."], minutes: 2 },
-        { title: "Kriterien", instruction: q2, prompts: ["Nenne zwei Kriterien, nach denen du die Frage bewertest.", phrasePrompt], minutes: 2 },
-        { title: "Einschränkung", instruction: "Formuliere eine Bedingung, unter der deine Position nicht gilt.", prompts: ["Nutze eine präzise Einschränkung."], minutes: 2 },
-      ]],
-      2: ["Woche 2 · Argument weiterentwickeln", [
-        { title: "Anknüpfen", instruction: q1, prompts: ["Greife einen Gedanken des Partners auf, bevor du deinen eigenen entwickelst."], minutes: 2 },
-        { title: "Vertiefen", instruction: q2, prompts: ["Ergänze Ursache, Folge und konkretes Beispiel.", phrasePrompt], minutes: 2 },
-        { title: "Reaktion", instruction: "Antworte auf einen Einwand, ohne die Gegenposition zu vereinfachen.", prompts: ["Zeige Zustimmung, Einschränkung oder begründeten Widerspruch."], minutes: 2 },
-      ]],
-      3: ["Woche 3 · Fallanalyse", [
-        { title: "Fall", instruction: `Übertrage „${topic}“ auf einen konkreten Fall.`, prompts: ["Wer ist betroffen?", "Welche Interessen geraten in Konflikt?"], minutes: 2 },
-        { title: "Analyse", instruction: q2, prompts: ["Ordne Ursachen, Folgen und Verantwortlichkeiten.", phrasePrompt], minutes: 2 },
-        { title: "Entscheidung", instruction: q3, prompts: ["Formuliere eine Lösung und nenne ihre wichtigste Grenze."], minutes: 2 },
-      ]],
-      4: ["Woche 4 · Interview & Prämissen prüfen", [
-        { title: "Interview", instruction: q1, prompts: ["Höre auf die Begründung, nicht nur auf die Position."], minutes: 2 },
-        { title: "Prämisse", instruction: "Stelle eine Rückfrage zur Annahme hinter der Antwort.", prompts: ["Frage z. B.: Wovon hängt das ab? Was setzt diese Aussage voraus?"], minutes: 2 },
-        { title: "Rollenwechsel", instruction: q2, prompts: ["Reagiere auf die Prüfung deiner eigenen Annahme.", phrasePrompt], minutes: 3 },
-      ]],
-      5: ["Woche 5 · Register & Präzision reparieren", [
-        { title: "Zu pauschal", instruction: "Formuliere eine pauschale Aussage differenzierter.", prompts: ["Verwende Abstufung, Bedingung oder Konzession."], minutes: 2 },
-        { title: "Register", instruction: q2, prompts: ["Formuliere dieselbe Idee einmal neutral und einmal formell.", phrasePrompt], minutes: 2 },
-        { title: "Kohärenz", instruction: "Verbinde zwei Aussagen logisch, ohne nur und oder aber zu verwenden.", prompts: ["Mache die beabsichtigte Beziehung eindeutig."], minutes: 2 },
-      ]],
-      6: ["Woche 6 · 3-Minuten-Verteidigung", [
-        { title: "Position", instruction: q1, prompts: ["Plane These → Begründung → Beispiel → Gegenargument → Reaktion."], minutes: 1 },
-        { title: "Verteidigen", instruction: "Sprich bis zu 3 Minuten und verteidige deine Position differenziert.", prompts: [phrasePrompt], minutes: 3 },
-        { title: "Kritische Frage", instruction: "Beantworte eine nicht vorbereitete kritische Rückfrage.", prompts: ["Reagiere präzise statt nur die Ausgangsposition zu wiederholen."], minutes: 2 },
-      ]],
-      7: ["Woche 7 · Transfer-Synthese", [
-        { title: "Perspektive 1", instruction: q1, prompts: ["Formuliere die stärkste Position dafür."], minutes: 2 },
-        { title: "Perspektive 2", instruction: q2, prompts: ["Formuliere die stärkste Gegenposition.", phrasePrompt], minutes: 2 },
-        { title: "Synthese", instruction: q3, prompts: ["Entwickle eine eigene Position, die beide Perspektiven sichtbar verarbeitet."], minutes: 2 },
-      ]],
-    },
-    C2: {
-      1: ["Woche 1 · Kriteriengeleitete Bewertung", [
-        { title: "Problemkern", instruction: q1, prompts: ["Benenne die zentrale Spannung, bevor du bewertest."], minutes: 2 },
-        { title: "Kriterien", instruction: q2, prompts: ["Lege zwei oder drei explizite Bewertungskriterien fest.", phrasePrompt], minutes: 2 },
-        { title: "Nuance", instruction: "Formuliere ein Urteil mit klarer Reichweite und Einschränkung.", prompts: ["Vermeide absolute Aussagen ohne entsprechende Evidenz."], minutes: 2 },
-      ]],
-      2: ["Woche 2 · Steelman & Replik", [
-        { title: "Steelman", instruction: q1, prompts: ["Formuliere die stärkste plausible Gegenposition zu deiner eigenen Sicht."], minutes: 2 },
-        { title: "Replik", instruction: q2, prompts: ["Antworte auf diese starke Gegenposition, ohne sie zu verzerren.", phrasePrompt], minutes: 2 },
-        { title: "Restproblem", instruction: "Nenne den Punkt, den deine Replik nicht vollständig löst.", prompts: ["Markiere bewusst die verbleibende Unsicherheit."], minutes: 2 },
-      ]],
-      3: ["Woche 3 · Evidenz-Audit", [
-        { title: "Behauptung", instruction: q1, prompts: ["Trenne Behauptung, Annahme und Bewertung."], minutes: 2 },
-        { title: "Evidenz", instruction: q2, prompts: ["Welche Evidenz wäre nötig, um die Aussage zu stützen oder zu widerlegen?", phrasePrompt], minutes: 2 },
-        { title: "Schlussfolgerung", instruction: q3, prompts: ["Formuliere nur die Schlussfolgerung, die aus der verfügbaren Evidenz tatsächlich folgt."], minutes: 2 },
-      ]],
-      4: ["Woche 4 · Sokratisches Interview", [
-        { title: "Position", instruction: q1, prompts: ["Antworte zunächst vollständig."], minutes: 2 },
-        { title: "Prüffrage", instruction: "Der Partner prüft eine Annahme, Definition oder Konsequenz, die nicht auf der Folie steht.", prompts: ["Keine Wiederholung der Ausgangsfrage."], minutes: 2 },
-        { title: "Revision", instruction: q2, prompts: ["Passe deine Position an, wenn die Rückfrage eine echte Schwäche zeigt.", phrasePrompt], minutes: 3 },
-      ]],
-      5: ["Woche 5 · Nuance & Register-Reparatur", [
-        { title: "Zu absolut", instruction: "Schwäche eine überzogene Behauptung so ab, dass ihre Evidenzlage korrekt wiedergegeben wird.", prompts: ["Nutze epistemische Abstufung."], minutes: 2 },
-        { title: "Registerwechsel", instruction: q2, prompts: ["Formuliere dieselbe Position für ein Gespräch und für einen formellen Diskussionsbeitrag.", phrasePrompt], minutes: 2 },
-        { title: "Kohärenz", instruction: "Repariere einen unklaren logischen Übergang zwischen zwei Aussagen.", prompts: ["Benenne die beabsichtigte Beziehung explizit."], minutes: 2 },
-      ]],
-      6: ["Woche 6 · C2-Synthese unter Zeitdruck", [
-        { title: "Plan", instruction: q1, prompts: ["Problemkern → Kriterien → Evidenz → Gegenposition → Synthese."], minutes: 1 },
-        { title: "Synthese", instruction: "Sprich bis zu 3 Minuten ohne abzulesen und halte Register sowie logische Beziehungen stabil.", prompts: [phrasePrompt], minutes: 3 },
-        { title: "Revision", instruction: "Reagiere auf eine kritische Rückfrage und revidiere einen Teil deiner Position, falls nötig.", prompts: ["Zeige, was bestehen bleibt und was du einschränkst."], minutes: 2 },
-      ]],
-      7: ["Woche 7 · Unvorbereitete Transferdebatte", [
-        { title: "Transfer", instruction: q1, prompts: ["Übertrage die Argumentationslogik auf einen neuen Kontext."], minutes: 2 },
-        { title: "Perspektivwechsel", instruction: q2, prompts: ["Vertrete kurz eine Position, die nicht deiner eigenen entspricht.", phrasePrompt], minutes: 2 },
-        { title: "Synthese", instruction: q3, prompts: ["Formuliere abschließend eine differenzierte eigene Position mit Grenze oder Bedingung."], minutes: 2 },
-      ]],
-    },
-  };
-
-  const selected = plans[level]?.[week];
-  if (!selected) return null;
-  const [title, items] = selected;
-  return {
-    id: "weekly-challenge",
-    type: "flow",
-    kicker: `Woche ${week} · Challenge`,
-    title,
-    items,
-    suggestedMinutes: items.reduce((total, item) => total + Number(item.minutes || 0), 0),
-  };
-}
+function buildAdvancedWeeklyChallenge() { return null; }
 
 function buildClassicStages(slide = {}, topicLabel = "") { const studentReference = getCurriculumParityReference(slide); return [
   { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "", studentReference },
@@ -682,6 +541,139 @@ function buildC2WritingBridge(slide = {}) {
       "Welche Register- oder Bedeutungsverschiebung musst du am Ende kontrollieren?",
     ],
     minutes: 8,
+  };
+}
+
+function b2GrammarSupportEn(grammarItems = []) {
+  const text = (Array.isArray(grammarItems) ? grammarItems : []).join(" ");
+  if (/indem|dadurch, dass|um \.\.\. zu|damit|wodurch|sodass/i.test(text)) return "Distinguish method, purpose and consequence. Choose the connector that matches the logical relationship, then check verb position.";
+  if (/Passiv|Modalpassiv/i.test(text)) return "Use passive when the process or requirement matters more than the actor. Keep the modal verb and participle structure complete.";
+  if (/Nominalisierung/i.test(text)) return "Nominalisation can make formal B2 arguments more compact, but the meaning and actor should remain clear.";
+  if (/je \.\.\. desto/i.test(text)) return "Use je … desto to connect two changing factors. The je-clause is subordinate; the desto-clause keeps normal main-clause verb position.";
+  if (/obwohl|trotz|zwar \.\.\. jedoch|dennoch/i.test(text)) return "Use concession to acknowledge a counterpoint without abandoning your main argument. Check whether you need a clause or a noun phrase.";
+  if (/Relativsätze/i.test(text)) return "Relative clauses add precise information. With a preposition, place the preposition before the relative pronoun and use the required case.";
+  if (/Konjunktiv II/i.test(text)) return "Use Konjunktiv II for hypothetical proposals, cautious recommendations and unreal conditions, not just to sound more formal.";
+  if (/laut|zufolge|nach Angaben|indirekte Rede/i.test(text)) return "Separate source information from your own position. Mark who says what before you evaluate the claim.";
+  if (/während|wohingegen/i.test(text)) return "Use contrast connectors when two sides are genuinely being compared. Make the comparison criterion clear.";
+  if (/falls|sofern/i.test(text)) return "Use falls/sofern for conditions. The condition should state what must be true before the result or recommendation follows.";
+  return "Use the target structure to make cause, contrast, condition, purpose or consequence clearer. Accuracy matters more than complexity.";
+}
+
+function b2GrammarAttentionEn(grammarItems = []) {
+  const text = (Array.isArray(grammarItems) ? grammarItems : []).join(" ");
+  if (/Relativsätze/i.test(text)) return "Watch the case after the preposition in relative clauses.";
+  if (/Passiv|Modalpassiv/i.test(text)) return "Do not use passive automatically when the actor is important for responsibility.";
+  if (/je \.\.\. desto/i.test(text)) return "Keep both halves complete; do not mix je … desto with a normal comparative sentence.";
+  if (/obwohl|trotz|zwar \.\.\. jedoch/i.test(text)) return "Do not combine connectors mechanically; choose one structure and keep its word order correct.";
+  return "Check connector meaning and verb position before adding another advanced structure.";
+}
+
+function buildB2FocusedTask(slide = {}, foundation = null) {
+  const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
+  const topic = cleanTopic(slide);
+  const foundationData = foundation || getPresenterTopicFoundation(slide) || {};
+  const tension = String(foundationData.tension || "");
+  const question = String(foundationData.question || slide.studentQuestionsDe?.[4] || `Welche Position vertrittst du zu „${topic}“?`);
+  const intro = String(foundationData.intro || "");
+  const example = String(foundationData.example || "");
+  const grammar = Array.isArray(slide.teacherSupport?.grammarFocusEn)
+    ? slide.teacherSupport.grammarFocusEn.filter(Boolean)
+    : [];
+  const [left, right] = tension.split("↔").map((part) => part.trim());
+  const modelItems = (Array.isArray(slide.speakingModels) ? slide.speakingModels : [])
+    .map((item) => item?.modelAnswerDe)
+    .filter(Boolean)
+    .slice(0, 2);
+  const mechanic = ((day - 1) % 8) + 1;
+
+  const variants = {
+    1: {
+      title: "Kriterienvergleich",
+      instruction: "Vergleiche zwei Möglichkeiten nach denselben Kriterien und entscheide erst danach.",
+      prompts: [
+        `Seite A: ${left || "erste Möglichkeit"}`,
+        `Seite B: ${right || "zweite Möglichkeit"}`,
+        "Lege zwei Kriterien fest, z. B. Kosten, Wirkung, Zugang oder Umsetzbarkeit.",
+        "Formuliere am Ende eine begründete Entscheidung mit einer Einschränkung.",
+      ],
+    },
+    2: {
+      title: "Problem → Ursache → Lösung",
+      instruction: "Ordne das Thema als Problemkette und schlage eine realistische Lösung vor.",
+      prompts: [
+        `Ausgangslage: ${intro}`,
+        "Was ist das konkrete Problem?",
+        "Welche Ursache ist besonders wichtig?",
+        `Welche Lösung wäre realistisch? Beziehe die Leitfrage ein: ${question}`,
+      ],
+    },
+    3: {
+      title: "Zwei Positionen vergleichen",
+      instruction: "Formuliere zwei plausible Positionen und vergleiche ihre stärksten Argumente.",
+      prompts: [
+        `Position A: ${left || "stärker individuelle Verantwortung"}`,
+        `Position B: ${right || "stärker gesellschaftliche Verantwortung"}`,
+        "Welches Argument ist auf jeder Seite am stärksten?",
+        "Wo liegt ein sinnvoller Kompromiss oder eine klare Grenze?",
+      ],
+    },
+    4: {
+      title: "Informationslücke",
+      instruction: "Arbeitet mit zwei Rollen. Jede Rolle bringt andere Informationen ein; die Lösung entsteht erst durch Austausch.",
+      prompts: [
+        `Rolle A kennt das Problem: ${intro}`,
+        `Rolle B kennt ein konkretes Beispiel: ${example || "Nutze ein eigenes konkretes Beispiel."}`,
+        "A fragt nach einer praktikablen Maßnahme; B fragt nach einem möglichen Nachteil.",
+        "Einigt euch auf eine Lösung und begründet sie gemeinsam.",
+      ],
+    },
+    5: {
+      title: "Empfehlung mit Bedingungen",
+      instruction: "Formuliere eine Empfehlung, aber nenne klar, unter welchen Bedingungen sie sinnvoll ist.",
+      prompts: [
+        `Leitfrage: ${question}`,
+        `Zielkonflikt: ${tension || "Nutzen ↔ Aufwand"}`,
+        "Formuliere eine Hauptempfehlung.",
+        "Ergänze mindestens eine Bedingung mit falls, sofern oder wenn.",
+      ],
+    },
+    6: {
+      title: "Aussage reparieren",
+      instruction: "Mache eine zu allgemeine Aussage präziser, differenzierter und grammatisch stärker.",
+      prompts: [
+        `Schwache Aussage: „Bei ${topic} gibt es viele Vorteile und Nachteile.“`,
+        "Ersetze die allgemeine Formulierung durch einen konkreten Vorteil und einen konkreten Nachteil.",
+        grammar[0] ? `Nutze diese Zielstruktur: ${grammar[0]}` : "Nutze eine passende B2-Struktur.",
+        "Ergänze ein Beispiel oder eine Bedingung.",
+      ],
+    },
+    7: {
+      title: "Mini-Fallstudie",
+      instruction: "Analysiere einen konkreten Fall und leite daraus eine begründete Maßnahme ab.",
+      prompts: [
+        `Fall: ${example || intro}`,
+        "Wer ist direkt betroffen?",
+        "Welcher Zielkonflikt oder welches praktische Problem entsteht?",
+        `Welche Maßnahme würdest du empfehlen? ${question}`,
+      ],
+    },
+    8: {
+      title: "Diskussionsreaktion",
+      instruction: "Reagiere auf eine Position, bevor du deine eigene weiterentwickelst.",
+      prompts: [
+        `Aussage: ${question}`,
+        "Beginne mit Zustimmung, Einschränkung oder Widerspruch.",
+        "Nenne einen Grund und ein konkretes Beispiel.",
+        "Schließe mit einer realistischen Alternative oder Konsequenz.",
+      ],
+    },
+  };
+
+  const selected = variants[mechanic];
+  return {
+    ...selected,
+    modelItems,
+    minutes: 9,
   };
 }
 
@@ -1043,6 +1035,81 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         ...speakingStage,
         title: "Sprechen · anwenden und begründen",
         suggestedMinutes: 15,
+      },
+      workbookStage,
+    ];
+  }
+
+  if (level === "B2") {
+    const focusTask = buildB2FocusedTask(slide, topicFoundation);
+    const grammarSupportEn = b2GrammarSupportEn(grammarItems);
+    const grammarAttentionEn = b2GrammarAttentionEn(grammarItems);
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
+        title: slide.title || "Lesson",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "",
+        studentReference,
+      },
+      {
+        id: "warmup",
+        type: "list",
+        kicker: "Warm-up",
+        title: "Warm-up · Thema aktivieren",
+        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
+        questionSupport: buildWarmupQuestionSupport(slide),
+        suggestedMinutes: 5,
+        timingMode: "per-student",
+        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+      },
+      ...(topicFoundation ? [{
+        id: "foundation",
+        type: "foundation",
+        ...topicFoundation,
+      }] : []),
+      {
+        id: "phrases",
+        type: "vocabulary",
+        kicker: "Kollokationen & Redemittel",
+        title: "Sprache für das Thema",
+        items: vocabularyItems,
+        instruction: "Nutze mindestens zwei thematische Kollokationen und ein passendes Verknüpfungsmittel in deiner späteren Antwort.",
+        suggestedMinutes: 6,
+      },
+      {
+        id: "grammar",
+        type: "b2-grammar",
+        kicker: "Grammatik im Kontext",
+        title: "Logische Beziehung klar ausdrücken",
+        items: grammarItems,
+        supportEn: grammarSupportEn,
+        attentionEn: grammarAttentionEn,
+        suggestedMinutes: 9,
+      },
+      {
+        id: "examples",
+        type: "list",
+        kicker: "Modellsätze",
+        title: "So klingt es auf B2",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+        suggestedMinutes: 6,
+      },
+      {
+        id: "focus",
+        type: "flow",
+        kicker: "B2-Fokusaufgabe",
+        title: focusTask.title,
+        items: [focusTask],
+        suggestedMinutes: focusTask.minutes,
+      },
+      {
+        ...speakingStage,
+        title: "Sprechen · entwickeln, vergleichen und reagieren",
+        suggestedMinutes: 16,
       },
       workbookStage,
     ];

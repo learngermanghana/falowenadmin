@@ -1,3 +1,5 @@
+import { getB2TopicCollocations } from "./b2PresenterLanguage.js";
+
 const assignmentIdForDay = (day) => `B2-${Math.ceil(day / 4)}.${day}`;
 
 const B2_LESSONS = [
@@ -66,6 +68,7 @@ function makeSlide(definition) {
       `Welche Veränderung würdest du dir bei diesem Thema wünschen?`,
     ],
     keyPhrasesDe: [
+      ...getB2TopicCollocations(day),
       "Bei der Beurteilung dieses Themas sollte man berücksichtigen, dass ...",
       "Einerseits ... , andererseits ...",
       "Ein wesentlicher Vorteil / Nachteil besteht darin, dass ...",
@@ -88,7 +91,7 @@ function makeSlide(definition) {
       { phase: "Speaking rehearsal", detailEn: "14 min: 90-second response followed by one challenging follow-up question." },
       { phase: "Exam transfer", detailEn: "8 min: convert the same ideas into a short writing plan or formal response." },
     ],
-    wrapUpTaskDe: `Formuliere 5–6 Sätze zum Thema „${topic}“. Nutze mindestens zwei B2-Strukturen, ein konkretes Beispiel und einen klaren Schluss.`,
+    wrapUpTaskDe: `Selbstcheck: Ist deine Position zu „${topic}“ klar? Hast du mindestens eine B2-Struktur korrekt verwendet, ein konkretes Beispiel genannt und auf einen Einwand oder Vergleich reagiert?`,
     workbookConnection: {
       grammarUrl: null,
       workbookUrl: "",
