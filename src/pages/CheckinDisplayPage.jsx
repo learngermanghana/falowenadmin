@@ -850,6 +850,57 @@ export default function CheckinDisplayPage() {
     };
   }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
+  const statusInfo = useMemo(() => {
+    if (actualEndedAt) {
+      return {
+        kind: "ended",
+        title: "Class complete",
+        detail: slideSyncStatus.message || "The class has ended.",
+      };
+    }
+
+    if (actualStartedAt) {
+      return {
+        kind: "active",
+        title: "Class in progress",
+        detail: slideSyncStatus.message || presenterStatusText || "Attendance and Presenter are active.",
+      };
+    }
+
+    if (attendanceError) {
+      return {
+        kind: "before",
+        title: "Attendance connection issue",
+        detail: attendanceError,
+      };
+    }
+
+    if (!attendanceLive) {
+      return {
+        kind: "before",
+        title: "Connecting live attendance",
+        detail: "Check-in counts will be verified after the live attendance connection is ready.",
+      };
+    }
+
+    return {
+      kind: "before",
+      title: "Waiting room ready",
+      detail: expectedTotal
+        ? `${checkedInCount} / ${expectedTotal} students checked in.`
+        : `${checkedInCount} ${checkedInCount === 1 ? "student" : "students"} checked in.`,
+    };
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    attendanceError,
+    attendanceLive,
+    checkedInCount,
+    expectedTotal,
+    presenterStatusText,
+    slideSyncStatus.message,
+  ]);
+
   const stopWaitingMusic = useCallback(() => {
     musicStartGenerationRef.current += 1;
     if (musicTimerRef.current) {
