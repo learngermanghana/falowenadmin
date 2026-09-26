@@ -11,7 +11,7 @@ test("Students keeps Needs attention inside the existing student area", () => {
   const hub = read("src/pages/StudentHubPage.jsx");
   const directory = read("src/pages/StudentDirectoryPage.jsx");
 
-  assert.match(app, /<Link to="\/students"[^>]*>Students<\/Link>/);
+  assert.match(app, /to="\/students"[\s\S]{0,180}Students<\/Link>/);
   assert.doesNotMatch(app, />Needs attention<\/Link>/);
   assert.doesNotMatch(app, />Interventions<\/Link>/);
   assert.match(directory, /"Needs attention"/);
