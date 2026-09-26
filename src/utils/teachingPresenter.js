@@ -321,7 +321,7 @@ function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C1")
 function teacherNoteFromFlow(flow = [], index = 0, fallback = "") { return String(flow[index]?.detailEn || fallback).trim(); }
 
 const VOCABULARY_STAGE_LEVELS = new Set(["A2", "B1", "B2", "C1", "C2"]);
-const VOCABULARY_LIMITS = Object.freeze({ A2: 7, B1: 9, B2: 9, C1: 10, C2: 10 });
+const VOCABULARY_LIMITS = Object.freeze({ A2: 7, B1: 9, B2: 10, C1: 10, C2: 10 });
 
 function vocabularyInstruction(level = "") {
   if (level === "B2") return "Verwende mindestens zwei Ausdrücke in einer begründeten Antwort und verbinde sie mit einem konkreten Beispiel.";
@@ -619,12 +619,24 @@ function buildB2FocusedTask(slide = {}, foundation = null) {
     },
     4: {
       title: "Informationslücke",
-      instruction: "Arbeitet mit zwei Rollen. Jede Rolle bringt andere Informationen ein; die Lösung entsteht erst durch Austausch.",
+      instruction: "Arbeitet mit zwei Rollen. Zeige immer nur eine Rollenkarte. Die andere Person schaut weg, bis ihre Karte geöffnet wird.",
+      roleCards: [
+        {
+          id: "A",
+          title: "Rolle A · nur für Person A",
+          content: `Du kennst das Problem: ${intro}`,
+          task: "Frage Person B nach einem konkreten Beispiel und anschließend nach einer praktikablen Maßnahme.",
+        },
+        {
+          id: "B",
+          title: "Rolle B · nur für Person B",
+          content: `Du kennst ein konkretes Beispiel: ${example || "Nutze ein eigenes konkretes Beispiel zum Thema."}`,
+          task: "Frage Person A nach dem Hauptproblem und nenne anschließend einen möglichen Nachteil der vorgeschlagenen Maßnahme.",
+        },
+      ],
       prompts: [
-        `Rolle A kennt das Problem: ${intro}`,
-        `Rolle B kennt ein konkretes Beispiel: ${example || "Nutze ein eigenes konkretes Beispiel."}`,
-        "A fragt nach einer praktikablen Maßnahme; B fragt nach einem möglichen Nachteil.",
-        "Einigt euch auf eine Lösung und begründet sie gemeinsam.",
+        "Tauscht die fehlenden Informationen nur durch Fragen aus.",
+        "Einigt euch danach auf eine Lösung und begründet sie gemeinsam.",
       ],
     },
     5: {

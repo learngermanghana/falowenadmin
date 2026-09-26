@@ -122,6 +122,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [warmupMinutes, setWarmupMinutes] = useState(5);
   const [warmupSupportOpen, setWarmupSupportOpen] = useState({});
   const [warmupAnswered, setWarmupAnswered] = useState({});
+  const [revealedFlowRole, setRevealedFlowRole] = useState("");
   const warmupAudioContextRef = useRef(null);
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
@@ -150,6 +151,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   function goTo(index) {
+    setRevealedFlowRole("");
     setStageIndex(clampPresenterIndex(index, stages.length));
   }
 
@@ -628,6 +630,33 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <div className="presenter-flow-card-main">
                       <strong>{item.title}</strong>
                       {item.instruction ? <p className="presenter-practice-instruction">{item.instruction}</p> : <p>{item.detail}</p>}
+                      {Array.isArray(item.roleCards) && item.roleCards.length ? (
+                        <div className="presenter-role-gap">
+                          <div className="presenter-role-gap-actions" role="group" aria-label="Private role cards">
+                            {item.roleCards.map((card) => (
+                              <button
+                                key={card.id}
+                                type="button"
+                                className={revealedFlowRole === card.id ? "is-active" : ""}
+                                onClick={() => setRevealedFlowRole((current) => current === card.id ? "" : card.id)}
+                              >
+                                {revealedFlowRole === card.id ? `Hide Role ${card.id}` : `Show Role ${card.id}`}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="presenter-role-gap-note">Only show one card at a time. The other partner should look away.</p>
+                          {item.roleCards.map((card) => (
+                            revealedFlowRole === card.id ? (
+                              <article className="presenter-role-gap-card" key={card.id}>
+                                <span>Private card</span>
+                                <strong>{card.title}</strong>
+                                <p>{card.content}</p>
+                                {card.task ? <p className="presenter-role-gap-task">{card.task}</p> : null}
+                              </article>
+                            ) : null
+                          ))}
+                        </div>
+                      ) : null}
                       {Array.isArray(item.prompts) && item.prompts.length ? (
                         <ol className="presenter-practice-prompts">
                           {item.prompts.map((prompt) => <li key={prompt}>{prompt}</li>)}

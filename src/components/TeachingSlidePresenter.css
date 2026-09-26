@@ -146,6 +146,67 @@
   margin-top: 0.25rem;
 }
 
+.presenter-role-gap {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.presenter-role-gap-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.presenter-role-gap-actions button {
+  font-weight: 850;
+}
+
+.presenter-role-gap-actions button.is-active {
+  border-color: #2563eb;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.presenter-role-gap-note {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem !important;
+  font-weight: 700;
+}
+
+.presenter-role-gap-card {
+  border: 2px solid #2563eb;
+  border-radius: 14px;
+  background: #eff6ff;
+  padding: 0.85rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.presenter-role-gap-card > span {
+  color: #1d4ed8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.presenter-role-gap-card > strong {
+  color: #172554;
+}
+
+.presenter-role-gap-card p {
+  margin: 0;
+}
+
+.presenter-role-gap-task {
+  border-top: 1px solid #bfdbfe;
+  padding-top: 0.45rem;
+  color: #1e3a8a;
+  font-weight: 750;
+}
+
 .presenter-practice-details {
   margin-top: 0.55rem;
   border-top: 1px solid #dbe4f0;
