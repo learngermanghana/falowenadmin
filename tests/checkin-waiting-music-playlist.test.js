@@ -513,3 +513,31 @@ test("attendance owns session timing and stale tabs cannot replace a newer activ
   assert.match(service, /classLifecycleStatus: "running"/);
   assert.match(service, /classLifecycleStatus: "ended"/);
 });
+
+
+test("attendance start waits for Presenter acknowledgement and retries automatically", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /START_HANDSHAKE_RETRY_DELAYS_MS = Object\.freeze\(\[2000, 5000, 10000\]\)/);
+  assert.match(page, /START_HANDSHAKE_MAX_ATTEMPTS = START_HANDSHAKE_RETRY_DELAYS_MS\.length \+ 1/);
+  assert.match(page, /attendanceStartRequestId/);
+  assert.match(page, /attendanceStartRequestedAtMs: requestSentAtMs/);
+  assert.match(page, /attendanceStartAttempt: requestAttempt/);
+  assert.match(page, /presenterStartAckRequestId/);
+  assert.match(page, /state: "awaiting-ack"/);
+  assert.match(page, /state: "acknowledged"/);
+  assert.match(page, /state: "unresponsive"/);
+  assert.match(page, /window\.setTimeout\(\(\) => \{[\s\S]*handshakeAttempt: sharedAttempt \+ 1/);
+  assert.match(page, /Slides connected · timer synced/);
+  assert.match(page, /Slides not responding · start sent/);
+  assert.match(page, />\s*Resend to slides\s*<\/button>/);
+});
+
+test("attendance never reports Slides synchronized before acknowledgement", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /Class start sent to Slides · waiting for acknowledgement/);
+  assert.match(page, /Slides acknowledged the class start · timer synchronized/);
+  assert.match(page, /presenterStartAcknowledged\(presenterLiveState, requestId\)/);
+  assert.match(page, /restoredAcknowledged/);
+});
