@@ -144,7 +144,7 @@ if (fs.existsSync(b1RegressionPath)) {
   }
 
   const weeklyChallengeStart = presenterSource.indexOf("function buildAdvancedWeeklyChallenge");
-  const weeklyChallengeEnd = presenterSource.indexOf("function lessonSummaryObjective", weeklyChallengeStart);
+  const weeklyChallengeEnd = presenterSource.indexOf("function buildClassicStages", weeklyChallengeStart);
   const weeklyChallengeBlock = weeklyChallengeStart >= 0 && weeklyChallengeEnd > weeklyChallengeStart
     ? presenterSource.slice(weeklyChallengeStart, weeklyChallengeEnd)
     : "";
