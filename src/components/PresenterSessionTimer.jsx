@@ -151,6 +151,7 @@ export default function PresenterSessionTimer({ slide }) {
     || Number(liveState.classEndedAtMs || 0) > 0;
   const attendanceTimerNeedsManualStart = attendanceControlsTimer
     && !attendanceSessionEnded
+    && !Boolean(liveState.timerExpired)
     && !Boolean(liveState.timerRunning)
     && Number(liveState.timerEndAt || 0) <= 0;
   const agendaAutoStartRequested = typeof window !== "undefined"
