@@ -27,4 +27,13 @@ test("Firebase predeploy regenerates all scheduled Falowen Admin handlers after 
   for (const command of requiredSchedulerPatches) {
     assert.ok(predeploy.includes(command), `Missing Firebase predeploy scheduler patch: ${command}`);
   }
+
+  assert.ok(
+    predeploy.includes("node --check functions/studentLearningInterventionEmails.js"),
+    "Missing learning-nudge scheduler syntax validation",
+  );
+  assert.ok(
+    predeploy.includes("node --check functions/main.js"),
+    "Missing functions/main.js syntax validation",
+  );
 });
