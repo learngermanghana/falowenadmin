@@ -493,10 +493,14 @@ export default function CheckinDisplayPage() {
       actualEndedAt: nextEnd,
       delayUntil: null,
     });
+    const restoredRequestId = attendanceStartRequestId(linkPresenterSessionKey, nextStart);
+    const restoredAcknowledged = presenterStartAcknowledged(presenterLiveState, restoredRequestId);
     setSlideSyncStatus(
       sharedEnd
         ? { state: "ended-synced", message: "Completed class synchronized from the shared Presenter session." }
-        : { state: "synced", message: "Class start restored from the shared Presenter session." },
+        : restoredAcknowledged
+          ? { state: "acknowledged", message: "Class start restored · Slides acknowledgement confirmed." }
+          : { state: "awaiting-ack", message: "Class start restored · waiting for Slides acknowledgement…" },
     );
   }, [
     actualEndedAt,
@@ -1298,7 +1302,7 @@ export default function CheckinDisplayPage() {
             </span>
             {actualStartedAt ? (
               <div className="checkin-display-presenter-status" role="status" aria-live="polite">
-                <span className={presenterStatus.startsWith("Presenter connected") ? "is-live" : ""} />
+                <span className={presenterStatus.startsWith("Slides connected") ? "is-live" : ""} />
                 {presenterStatus}
               </div>
             ) : null}
