@@ -504,3 +504,5 @@
     font-size: 3.2rem;
   }
 }
+
+.action-card-amber a { background: linear-gradient(135deg, #d97706, #b45309); }
