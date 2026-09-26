@@ -10,6 +10,7 @@ import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { listAllStudents } from "../services/studentsService";
 import { useAuth } from "../context/AuthContext";
 import { summarizeLeadNotifications } from "../services/leadNotificationService.js";
+import { summarizeStudentAttention } from "../utils/studentAttention.js";
 import { fetchStudentLeads } from "../services/studentLeadService.js";
 import "./DashboardPage.css";
 
@@ -317,6 +318,11 @@ export default function DashboardPage() {
     [studentLeads, user],
   );
 
+  const learningAttention = useMemo(
+    () => summarizeStudentAttention(students),
+    [students],
+  );
+
   const balancePreview = useMemo(
     () => analytics.studentsWithBalance
       .slice()
@@ -389,6 +395,17 @@ export default function DashboardPage() {
           to="/students"
           label="Open students"
           tone="emerald"
+        />
+        <ActionCard
+          title="Learning attention"
+          body={
+            learningAttention.total
+              ? `${learningAttention.total} student${learningAttention.total === 1 ? "" : "s"} need attention · ${learningAttention.inactive} inactive · ${learningAttention.needsImprovement} need correction · ${learningAttention.waitingForTutor} waiting for tutor.`
+              : "No supported learning-risk signals are currently present in the loaded student records."
+          }
+          to="/students?view=attention"
+          label="View students"
+          tone="amber"
         />
       </section>
 
