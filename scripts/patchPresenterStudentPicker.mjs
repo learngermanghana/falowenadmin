@@ -1,4 +1,5 @@
 import "./patchClassParticipationApi.mjs";
+import "./patchPresenterSessionAndResponseTimers.mjs";
 import fs from "node:fs";
 
 const presenterPaths = [
