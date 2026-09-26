@@ -150,15 +150,25 @@ const audioFunctions = [
   "      if (!context) return;",
   "      const oscillator = context.createOscillator();",
   "      const gain = context.createGain();",
+  "      const startedAt = context.currentTime;",
+  "      const alertDurationSeconds = 5;",
   "      oscillator.type = \"sine\";",
-  "      oscillator.frequency.setValueAtTime(880, context.currentTime);",
-  "      gain.gain.setValueAtTime(0.0001, context.currentTime);",
-  "      gain.gain.exponentialRampToValueAtTime(0.28, context.currentTime + 0.015);",
-  "      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.35);",
+  "      oscillator.frequency.setValueAtTime(880, startedAt);",
+  "      gain.gain.setValueAtTime(0.0001, startedAt);",
+  "      for (let offset = 0; offset < alertDurationSeconds; offset += 0.75) {",
+  "        const pulseStart = startedAt + offset;",
+  "        const pulsePeak = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.04);",
+  "        const pulseHold = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.34);",
+  "        const pulseEnd = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.55);",
+  "        gain.gain.setValueAtTime(0.0001, pulseStart);",
+  "        gain.gain.exponentialRampToValueAtTime(0.28, pulsePeak);",
+  "        gain.gain.setValueAtTime(0.28, pulseHold);",
+  "        gain.gain.exponentialRampToValueAtTime(0.0001, pulseEnd);",
+  "      }",
   "      oscillator.connect(gain);",
   "      gain.connect(context.destination);",
-  "      oscillator.start(context.currentTime);",
-  "      oscillator.stop(context.currentTime + 0.36);",
+  "      oscillator.start(startedAt);",
+  "      oscillator.stop(startedAt + alertDurationSeconds);",
   "    } catch {",
   "      // Browser audio policy can block sound; the TIME UP state still appears.",
   "    }",
@@ -207,7 +217,7 @@ replaceRequired(
 
 replaceRequired(
   "Default: 30 seconds.",
-  "A2 defaults to 2 minutes. B1 defaults to 3 minutes. A1 remains 1 minute. A beep sounds when time ends.",
+  "A2 defaults to 2 minutes. B1 defaults to 3 minutes. A1 remains 1 minute. A 5-second alert sounds when time ends.",
   "settings help text",
 );
 
@@ -232,4 +242,4 @@ if (!source.includes("RESPONSE_TIME_PRESETS = [60, 120, 180]")) {
 }
 
 fs.writeFileSync(pickerTarget, source, "utf8");
-console.log("Presenter speaking timer now defaults to A2 2 minutes, B1 3 minutes, with a timeout beep.");
+console.log("Presenter speaking timer now defaults to A2 2 minutes, B1 3 minutes, with a 5-second timeout alert.");
