@@ -397,10 +397,12 @@
 }
 
 .presenter-warmup-keyword {
-  border-radius: 0.35rem;
-  background: #fef3c7;
-  color: inherit;
-  padding: 0.02em 0.12em;
+  border-radius: 0.38rem;
+  background: #facc15;
+  color: #422006;
+  padding: 0.03em 0.18em;
+  font-weight: 900;
+  box-shadow: inset 0 -2px 0 #ca8a04, 0 0 0 1px rgba(146, 64, 14, 0.16);
 }
 
 .presenter-warmup-difficulty {

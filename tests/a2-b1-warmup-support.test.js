@@ -192,5 +192,9 @@ test("presenter renders highlighted keywords with optional hint, starter and fol
   assert.match(source, /presenter-warmup-difficulty/);
   assert.match(css, /\.presenter-warmup-question-card/);
   assert.match(css, /\.presenter-warmup-keyword/);
+  assert.match(css, /background:\s*#facc15/);
+  assert.match(css, /color:\s*#422006/);
+  assert.match(css, /font-weight:\s*900/);
+  assert.match(css, /box-shadow:\s*inset 0 -2px 0 #ca8a04/);
   assert.match(css, /\.presenter-warmup-support-actions/);
 });
