@@ -128,7 +128,12 @@ test("all B2 days use the stable teaching spine without the old drill stack or w
     assert.equal(focus.type, "flow");
     assert.equal(focus.items.length, 1, slide.assignmentId + " should use one focused task");
     assert.ok(focus.items[0].instruction);
-    assert.ok(focus.items[0].prompts.length >= 4);
+    if (Array.isArray(focus.items[0].roleCards) && focus.items[0].roleCards.length) {
+      assert.equal(focus.items[0].roleCards.length, 2);
+      assert.ok(focus.items[0].prompts.length >= 2, slide.assignmentId + " information gap should keep only shared exchange prompts visible");
+    } else {
+      assert.ok(focus.items[0].prompts.length >= 4);
+    }
     assert.equal(focus.items[0].minutes, 9);
 
     assert.equal(questions.type, "question-reveal");
