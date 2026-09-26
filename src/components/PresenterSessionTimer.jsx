@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePresenterLiveSession from "../hooks/usePresenterLiveSession.js";
+import { startPresenterLiveSession } from "../services/presenterLiveSessionService.js";
 import {
   SESSION_MINUTES_BY_LEVEL,
   inferPresenterLevel,
@@ -145,6 +146,15 @@ export default function PresenterSessionTimer({ slide }) {
     && liveState.classStartSource === "checkin"
     && Number(liveState.classStartedAtMs || 0) > 0
     && normalize(liveState.sessionTimingAuthority || "attendance") === "attendance";
+  const attendanceSessionEnded = liveState.classLifecycleStatus === "ended"
+    || liveState.classStatus === "ended"
+    || Number(liveState.classEndedAtMs || 0) > 0;
+  const attendanceTimerNeedsManualStart = attendanceControlsTimer
+    && !attendanceSessionEnded
+    && !Boolean(liveState.timerRunning)
+    && Number(liveState.timerEndAt || 0) <= 0;
+  const agendaAutoStartRequested = typeof window !== "undefined"
+    && new URLSearchParams(window.location.search).get("autostart") === "1";
   const [classId, setClassId] = useState(currentPresenterClassId);
   const storageKey = useMemo(
     () => presenterClassTimerStorageKey(level, classId, new Date(), presenterLive.sessionKey),
@@ -161,6 +171,8 @@ export default function PresenterSessionTimer({ slide }) {
   const audioContextRef = useRef(null);
   const lastRemoteTimerStampRef = useRef(0);
   const expiryPublishedRef = useRef(false);
+  const agendaAutoStartHandledRef = useRef(false);
+  const manualAttendanceRepairRef = useRef(false);
 
   useEffect(() => {
     const next = normalize(presenterLive.classContext?.classId) || currentPresenterClassId();
@@ -369,6 +381,81 @@ export default function PresenterSessionTimer({ slide }) {
   const expired = remaining <= 0;
   const warningClass = visualWarningClass(remaining);
 
+  async function startTimerSession(seconds, nextEndAt, nextWarned = warnedMilestones, { source = "presenter" } = {}) {
+    const nowMs = Date.now();
+    const safeSeconds = Math.max(0, Math.min(durationSeconds, Number(seconds || 0)));
+    if (safeSeconds <= 0) {
+      setRemaining(0);
+      setRunning(false);
+      setEndAt(0);
+      setNotice("Class time is up.");
+      return;
+    }
+
+    expiryPublishedRef.current = false;
+    previousRemainingRef.current = safeSeconds;
+    setRemaining(safeSeconds);
+    setEndAt(nextEndAt);
+    setRunning(true);
+    if (source === "attendance-repair") setNotice("Timer started manually from the slide.");
+
+    const patch = {
+      classLifecycleStatus: "running",
+      timerLevel: level,
+      timerDurationSeconds: durationSeconds,
+      timerRunning: true,
+      timerEndAt: nextEndAt,
+      timerRemaining: safeSeconds,
+      timerWarned: nextWarned,
+      timerExpired: false,
+      timerUpdatedAtMs: nowMs,
+    };
+
+    if (source === "attendance-repair") {
+      manualAttendanceRepairRef.current = true;
+      await presenterLive.publish({
+        ...patch,
+        sessionTimingAuthority: "attendance",
+        timerRepairSource: "presenter-manual-fallback",
+      });
+      return;
+    }
+
+    const remoteStartedAt = Number(liveState.classStartedAtMs || 0);
+    if (presenterLive.classRecordId && presenterLive.sessionKey && remoteStartedAt <= 0) {
+      const startResult = await startPresenterLiveSession(
+        presenterLive.classRecordId,
+        presenterLive.sessionKey,
+        {
+          sessionDate: presenterLive.sessionDate,
+          level,
+          lessonId: normalize(slide?.id || slide?.assignmentId),
+          assignmentId: normalize(slide?.assignmentId || slide?.id),
+          classStartedAtMs: nowMs,
+          classStartSource: "presenter",
+          classStartUpdatedAtMs: nowMs,
+          sessionTimingAuthority: "presenter",
+          ...patch,
+        },
+      );
+      if (startResult?.ok) return;
+    }
+
+    publishTimerState(patch);
+  }
+
+  async function startAttendanceTimerManually() {
+    if (!attendanceTimerNeedsManualStart || !durationSeconds) return;
+    const nowMs = Date.now();
+    const classStartedAtMs = Math.max(0, Number(liveState.classStartedAtMs || 0));
+    const targetEndAt = classStartedAtMs > 0
+      ? classStartedAtMs + (durationSeconds * 1000)
+      : nowMs + (durationSeconds * 1000);
+    const seconds = Math.max(0, Math.min(durationSeconds, Math.ceil((targetEndAt - nowMs) / 1000)));
+    await startTimerSession(seconds, targetEndAt, baselineWarnings(seconds), { source: "attendance-repair" });
+    if (soundEnabled) ensureAudioContext()?.resume?.().catch?.(() => {});
+  }
+
   function startOrResume() {
     if (attendanceControlsTimer) return;
     const restarting = remaining <= 0;
@@ -378,22 +465,37 @@ export default function PresenterSessionTimer({ slide }) {
       setWarnedMilestones([]);
       setNotice("");
     }
-    expiryPublishedRef.current = false;
-    previousRemainingRef.current = seconds;
     const nextEndAt = Date.now() + seconds * 1000;
-    setRemaining(seconds);
-    setEndAt(nextEndAt);
-    setRunning(true);
-    publishTimerState({
-      classLifecycleStatus: "running",
-      timerRunning: true,
-      timerEndAt: nextEndAt,
-      timerRemaining: seconds,
-      timerWarned: nextWarned,
-      timerExpired: false,
-    });
+    void startTimerSession(seconds, nextEndAt, nextWarned);
     if (soundEnabled) ensureAudioContext()?.resume?.().catch?.(() => {});
   }
+
+  useEffect(() => {
+    if (!agendaAutoStartRequested || agendaAutoStartHandledRef.current || !durationSeconds) return;
+    if (hydratedKey !== storageKey) return;
+    if (attendanceControlsTimer) {
+      agendaAutoStartHandledRef.current = true;
+      return;
+    }
+    if (presenterLive.classRecordId && !presenterLive.hasSnapshot) return;
+    agendaAutoStartHandledRef.current = true;
+    startOrResume();
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("autostart");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      // Autostart is already guarded in-memory if URL cleanup is unavailable.
+    }
+  }, [
+    agendaAutoStartRequested,
+    attendanceControlsTimer,
+    durationSeconds,
+    hydratedKey,
+    presenterLive.classRecordId,
+    presenterLive.hasSnapshot,
+    storageKey,
+  ]);
 
   function pause() {
     if (attendanceControlsTimer || !running) return;
@@ -451,7 +553,11 @@ export default function PresenterSessionTimer({ slide }) {
           ? " · remote offline"
           : "";
   const statusText = attendanceControlsTimer
-    ? (expired ? "Class time is up." : notice || (running ? "Running from Attendance" : "Attendance timer stopped"))
+    ? (expired
+      ? "Class time is up."
+      : attendanceTimerNeedsManualStart
+        ? "Attendance marked the class started, but the timer is not running."
+        : notice || (running ? "Running from Attendance" : "Attendance timer stopped"))
     : expired
       ? "Class time is up."
       : notice
@@ -466,14 +572,25 @@ export default function PresenterSessionTimer({ slide }) {
       </div>
       <div className="presenter-session-timer-actions">
         {attendanceControlsTimer ? (
-          <button
-            type="button"
-            className="presenter-session-start is-attendance-active"
-            disabled
-            title="The class timer was started from Attendance."
-          >
-            {expired ? "Class ended" : "Class started"}
-          </button>
+          attendanceTimerNeedsManualStart ? (
+            <button
+              type="button"
+              className="presenter-session-start is-attendance-repair"
+              onClick={startAttendanceTimerManually}
+              title="Attendance marked the class started, but its timer did not start. Start the timer from this slide using the original class start time."
+            >
+              Start timer manually
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="presenter-session-start is-attendance-active"
+              disabled
+              title="The class timer was started from Attendance."
+            >
+              {expired ? "Class ended" : "Class started"}
+            </button>
+          )
         ) : (
           <>
             <button type="button" className="presenter-session-start" onClick={running ? pause : startOrResume}>{running ? "Pause" : expired ? "Restart" : remaining === durationSeconds ? "Start class" : "Resume"}</button>
