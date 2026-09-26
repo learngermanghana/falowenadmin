@@ -353,3 +353,33 @@ test("Presenter self-repairs a missing Attendance timer before showing manual fa
   assert.match(source, /Repairing timer…/);
   assert.match(source, /Start timer manually/);
 });
+
+
+test("Presenter acknowledges Attendance end only after the shared class is ended", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+
+  assert.match(source, /const attendanceEndRequestId = normalize\(liveState\.attendanceEndRequestId\)/);
+  assert.match(source, /presenterEndAckMatches/);
+  assert.match(source, /if \(!attendanceControlsTimer \|\| !attendanceSessionEnded \|\| !attendanceEndRequestId\) return/);
+  assert.match(source, /presenterEndAckRequestId: attendanceEndRequestId/);
+  assert.match(source, /presenterEndAckAtMs: Date\.now\(\)/);
+  assert.match(source, /presenterEndAckDeviceId: presenterLive\.deviceId/);
+  assert.match(source, /presenterEndAckStatus: "ended"/);
+  assert.match(source, /presenterEndAckDurationSeconds/);
+});
+
+test("Presenter can end the shared class session without a new backend service", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  const service = read("src/services/presenterLiveSessionService.js");
+  const css = read("src/components/PresenterSessionTimer.css");
+
+  assert.match(source, /endPresenterLiveSession/);
+  assert.match(source, /async function endClassFromPresenter/);
+  assert.match(source, /presenterEndRequestId:/);
+  assert.match(source, /presenterEndSource: "presenter"/);
+  assert.match(source, /className="presenter-session-end"/);
+  assert.match(source, />\s*End class\s*<\/button>/);
+  assert.match(service, /export async function endPresenterLiveSession/);
+  assert.doesNotMatch(service, /collection\([^\n]*liveTeachingSessions/);
+  assert.match(css, /\.presenter-session-timer-actions \.presenter-session-end/);
+});
