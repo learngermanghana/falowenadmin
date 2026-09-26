@@ -676,6 +676,80 @@
   padding-top: clamp(1.2rem, 3vw, 2.4rem);
 }
 
+.presenter-b1-grammar {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.presenter-b1-grammar-heading {
+  display: grid;
+  gap: 5px;
+}
+
+.presenter-b1-grammar-heading > span {
+  color: #6d28d9;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.presenter-b1-grammar-heading h1 {
+  margin: 0;
+}
+
+.presenter-b1-grammar-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.presenter-b1-grammar-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.presenter-b1-grammar-card {
+  border: 1px solid #ddd6fe;
+  border-radius: 16px;
+  background: #faf5ff;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.presenter-b1-grammar-card > strong {
+  color: #5b21b6;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.presenter-b1-grammar-card p {
+  margin: 0;
+  color: #1e293b;
+  font-size: clamp(16px, 1.55vw, 21px);
+  line-height: 1.4;
+  font-weight: 650;
+}
+
+.presenter-b1-grammar-card small {
+  border-top: 1px solid #ddd6fe;
+  padding-top: 8px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 850px) {
+  .presenter-b1-grammar-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .presenter-knowledge {
   display: grid;
   gap: 18px;
