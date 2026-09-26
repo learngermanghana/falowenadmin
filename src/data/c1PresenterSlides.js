@@ -1,4 +1,5 @@
 import { getC1CanonicalLesson } from "./c1CanonicalCurriculum.js";
+import { getC1TopicCollocations } from "./c1PresenterLanguage.js";
 
 const slug = (value) => String(value || "")
   .toLowerCase()
@@ -84,6 +85,7 @@ function makeSlide(day) {
       ...lesson.profile.angles.slice(0, 3).map((angle) => `Welche Rolle spielt ${sentenceCase(angle)} bei diesem Thema?`),
     ].slice(0, 4),
     keyPhrasesDe: [
+      ...getC1TopicCollocations(day),
       "Bei der Beurteilung dieser Frage sollte berücksichtigt werden, dass ...",
       "Einerseits ..., andererseits ...",
       "Zwar ..., jedoch ...",
@@ -141,6 +143,12 @@ function makeSlide(day) {
       grammarTitle: lesson.grammarTitle,
       coreQuestion: lesson.profile.question,
       tension: lesson.foundation.tension,
+      aim: lesson.profile.aim,
+      angles: [...lesson.profile.angles],
+      points: [...lesson.profile.points],
+      mistake: lesson.profile.mistake,
+      foundationIntro: lesson.foundation.intro,
+      foundationExample: lesson.foundation.example,
     },
   };
 }
