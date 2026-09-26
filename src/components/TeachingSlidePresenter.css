@@ -676,6 +676,104 @@
   padding-top: clamp(1.2rem, 3vw, 2.4rem);
 }
 
+.presenter-b2-grammar {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.presenter-b2-grammar-heading {
+  display: grid;
+  gap: 5px;
+}
+
+.presenter-b2-grammar-heading > span {
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.presenter-b2-grammar-heading h1 {
+  margin: 0;
+}
+
+.presenter-b2-grammar-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.presenter-b2-grammar-rules {
+  display: grid;
+  gap: 9px;
+}
+
+.presenter-b2-grammar-rules article {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+  padding: 11px 13px;
+}
+
+.presenter-b2-grammar-rules article > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.presenter-b2-grammar-rules article p {
+  margin: 2px 0 0;
+  color: #1e3a8a;
+  font-size: clamp(16px, 1.45vw, 20px);
+  line-height: 1.4;
+  font-weight: 650;
+}
+
+.presenter-b2-grammar-support,
+.presenter-b2-grammar-attention {
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.presenter-b2-grammar-support {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.presenter-b2-grammar-attention {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+}
+
+.presenter-b2-grammar-support strong,
+.presenter-b2-grammar-attention strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-b2-grammar-support p,
+.presenter-b2-grammar-attention p {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .presenter-c1-grammar {
   display: grid;
   gap: 14px;
