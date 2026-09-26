@@ -383,7 +383,7 @@ test("restored class starts recover automatically and keep manual resend for fai
 
   assert.match(page, /\["restored", "error"\]\.includes\(slideSyncStatus\.state\)/);
   assert.match(page, /sharedTimerMissing/);
-  assert.match(page, /Retry slide sync/);
+  assert.match(page, /Resend to slides/);
   assert.doesNotMatch(page, />Sync slides now<\/button>/);
 });
 
