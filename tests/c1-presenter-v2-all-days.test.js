@@ -12,7 +12,7 @@ import {
 
 const REQUIRED_STAGES = [
   "intro", "warmup", "phrases", "grammar", "examples",
-  "practice", "workbook", "mistakes", "questions", "wrapup",
+  "practice", "workbook", "mistakes", "questions", "weekly-challenge", "lesson-summary",
 ];
 
 
@@ -47,8 +47,16 @@ test("all C1 days use Presenter 2.0 with concise German classroom practice", () 
     const workbook = stages.find((stage) => stage.id === "workbook");
     const questions = stages.find((stage) => stage.id === "questions");
     const mistakes = stages.find((stage) => stage.id === "mistakes");
+    const warmup = stages.find((stage) => stage.id === "warmup");
+    const vocabulary = stages.find((stage) => stage.id === "phrases");
+    const weeklyChallenge = stages.find((stage) => stage.id === "weekly-challenge");
 
     assert.ok(grammar.items.length >= 2, `${slide.assignmentId} missing C1 grammar`);
+    assert.equal(warmup.questionSupport.length, warmup.items.length, `${slide.assignmentId} should use enhanced warm-up cards`);
+    assert.equal(vocabulary.type, "vocabulary");
+    assert.ok(vocabulary.items.length >= 6, `${slide.assignmentId} should use vocabulary cards`);
+    assert.ok(weeklyChallenge.items.length >= 3, `${slide.assignmentId} should have a weekly challenge`);
+    assert.equal(stages.some((stage) => stage.id === "wrapup"), false, `${slide.assignmentId} should not duplicate the final summary with a wrap-up page`);
     assert.ok(grammar.items.every((item) => !/^Use\b|^Structure\b|^Express\b|^Separate\b|^Distinguish\b/i.test(item)), `${slide.assignmentId} grammar should be classroom German`);
     assert.equal(practice.type, "flow");
     assert.equal(practice.items.length, 4, `${slide.assignmentId} should keep guided practice concise`);
