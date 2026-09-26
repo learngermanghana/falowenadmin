@@ -635,7 +635,9 @@ function buildB2FocusedTask(slide = {}, foundation = null) {
         },
       ],
       prompts: [
+        "Beginnt mit einer Frage und lest die Rollenkarte nicht laut vor.",
         "Tauscht die fehlenden Informationen nur durch Fragen aus.",
+        "Prüft gemeinsam, welche Maßnahme praktikabel ist und welcher mögliche Nachteil berücksichtigt werden muss.",
         "Einigt euch danach auf eine Lösung und begründet sie gemeinsam.",
       ],
     },
