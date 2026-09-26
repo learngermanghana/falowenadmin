@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePresenterLiveSession from "../hooks/usePresenterLiveSession.js";
-import { startPresenterLiveSession } from "../services/presenterLiveSessionService.js";
+import { endPresenterLiveSession, startPresenterLiveSession } from "../services/presenterLiveSessionService.js";
 import {
   SESSION_MINUTES_BY_LEVEL,
   inferPresenterLevel,
@@ -159,6 +159,12 @@ export default function PresenterSessionTimer({ slide }) {
     attendanceStartRequestId
     && normalize(liveState.presenterStartAckRequestId) === attendanceStartRequestId
     && Number(liveState.presenterStartAckAtMs || 0) > 0
+  );
+  const attendanceEndRequestId = normalize(liveState.attendanceEndRequestId);
+  const presenterEndAckMatches = Boolean(
+    attendanceEndRequestId
+    && normalize(liveState.presenterEndAckRequestId) === attendanceEndRequestId
+    && Number(liveState.presenterEndAckAtMs || 0) > 0
   );
   const agendaAutoStartRequested = typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("autostart") === "1";
@@ -629,6 +635,41 @@ export default function PresenterSessionTimer({ slide }) {
     });
   }
 
+  async function endClassFromPresenter() {
+    if (!presenterLive.classRecordId || !presenterLive.sessionKey || attendanceSessionEnded) return;
+    if (typeof window !== "undefined" && !window.confirm("End this class now? Attendance and Presenter will both receive the shared end state.")) return;
+
+    const endedAtMs = Date.now();
+    const startedAtMs = Math.max(0, Number(liveState.classStartedAtMs || 0));
+    const duration = startedAtMs > 0
+      ? Math.max(0, Math.round((endedAtMs - startedAtMs) / 1000))
+      : Math.max(0, durationSeconds - Number(remaining || 0));
+    const requestId = `presenter-end:${presenterLive.sessionKey}:${endedAtMs}`;
+
+    setRunning(false);
+    setEndAt(0);
+    setNotice("Ending class…");
+
+    const result = await endPresenterLiveSession(
+      presenterLive.classRecordId,
+      presenterLive.sessionKey,
+      {
+        classEndedAtMs: endedAtMs,
+        classDurationSeconds: duration,
+        presenterEndRequestId: requestId,
+        presenterEndRequestedAtMs: endedAtMs,
+        presenterEndDeviceId: presenterLive.deviceId,
+        presenterEndSource: "presenter",
+        timerRunning: false,
+        timerEndAt: 0,
+        timerRemaining: Math.max(0, Number(remaining || 0)),
+        timerUpdatedAtMs: endedAtMs,
+      },
+    );
+
+    setNotice(result?.ok ? "Class ended from Presenter" : "Class end could not be synchronized.");
+  }
+
   function toggleSound() {
     const next = !soundEnabled;
     setSoundEnabled(next);
@@ -640,10 +681,19 @@ export default function PresenterSessionTimer({ slide }) {
     if (next) playWarningTone(10 * 60, true);
   }
 
+  const canEndClass = Boolean(
+    presenterLive.classRecordId
+    && presenterLive.sessionKey
+    && !attendanceSessionEnded
+    && (Number(liveState.classStartedAtMs || 0) > 0 || running)
+  );
+
   const attendanceHandshakeLabel = !attendanceControlsTimer
     ? ""
     : presenterStartAckMatches
-      ? " · Attendance connected · timer synced"
+      ? presenterEndAckMatches
+        ? " · Attendance end confirmed"
+        : " · Attendance connected · timer synced"
       : attendanceRepairState === "repairing"
         ? " · Attendance connected · repairing timer"
         : attendanceTimerNeedsManualStart
@@ -706,7 +756,7 @@ export default function PresenterSessionTimer({ slide }) {
               disabled
               title="The class timer was started from Attendance."
             >
-              {expired ? "Class ended" : presenterStartAckMatches ? "Attendance synced" : "Class started"}
+              {attendanceSessionEnded ? "Class ended" : expired ? "Time up" : presenterStartAckMatches ? "Attendance synced" : "Class started"}
             </button>
           )
         ) : (
@@ -715,6 +765,16 @@ export default function PresenterSessionTimer({ slide }) {
             <button type="button" onClick={reset}>Reset</button>
           </>
         )}
+        {canEndClass ? (
+          <button
+            type="button"
+            className="presenter-session-end"
+            onClick={endClassFromPresenter}
+            title="End this shared class session from Presenter."
+          >
+            End class
+          </button>
+        ) : null}
         <button type="button" className="presenter-session-sound" onClick={toggleSound} aria-pressed={soundEnabled} title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up.">
           Sound: {soundEnabled ? "on" : "off"}
         </button>
