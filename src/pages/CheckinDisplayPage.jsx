@@ -340,7 +340,7 @@ export default function CheckinDisplayPage() {
     return () => {
       cancelled = true;
     };
-  }, [classId, assignmentId]);
+  // Keep this effect independent of effectiveAssignmentId, which is declared later in render.\n  }, [classId, assignmentId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
