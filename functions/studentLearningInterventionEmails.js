@@ -199,10 +199,8 @@ function resolveAutomatedNudge(student = {}, now = new Date()) {
   );
 
   const level = studentLevel(student);
-  const resumeUrl = absoluteFalowenUrl(
-    firstText(student.lastRoute, student.resumeRoute, student.currentLessonRoute),
-    DEFAULT_CAMPUS_URL,
-  );
+  const resumeRoute = firstText(student.lastRoute, student.resumeRoute, student.currentLessonRoute);
+  const resumeUrl = absoluteFalowenUrl(resumeRoute, DEFAULT_CAMPUS_URL);
 
   const candidates = [];
 
@@ -211,7 +209,7 @@ function resolveAutomatedNudge(student = {}, now = new Date()) {
       reason: "needs-improvement",
       priority: RULES["needs-improvement"].priority,
       cooldownDays: RULES["needs-improvement"].cooldownDays,
-      actionUrl: resumeUrl || DEFAULT_RESULTS_URL,
+      actionUrl: resumeRoute ? absoluteFalowenUrl(resumeRoute) : DEFAULT_RESULTS_URL,
       buttonLabel: "Review & retry",
       topic: "Your Falowen work needs a correction",
       detail: latestScore !== null ? `Your latest score is ${Math.round(latestScore)}%.` : "",
@@ -454,12 +452,62 @@ function snapshotRows(snapshot) {
   return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() || {}) }));
 }
 
-function stateByStudentId(snapshot) {
-  const map = new Map();
-  snapshotRows(snapshot).forEach((state) => {
-    if (text(state.studentId)) map.set(text(state.studentId), state);
-  });
-  return map;
+async function readAllStudents({ admin, db, pageSize = 500 } = {}) {
+  const collectionRef = db.collection("students");
+  const documentIdField = admin?.firestore?.FieldPath?.documentId
+    ? admin.firestore.FieldPath.documentId()
+    : "__name__";
+
+  const rows = [];
+  let pages = 0;
+  let cursor = null;
+
+  while (true) {
+    let query = collectionRef.orderBy(documentIdField);
+    if (cursor) query = query.startAfter(cursor);
+    query = query.limit(pageSize);
+
+    const snapshot = await query.get();
+    pages += 1;
+    rows.push(...snapshotRows(snapshot));
+
+    if (!snapshot.size || snapshot.size < pageSize) break;
+    cursor = snapshot.docs[snapshot.docs.length - 1];
+  }
+
+  return { rows, pages };
+}
+
+async function selectDueCandidates({
+  db,
+  candidates = [],
+  maxSends = DEFAULT_MAX_SENDS,
+  now = new Date(),
+  stateBatchSize = 50,
+} = {}) {
+  const due = [];
+  let stateReads = 0;
+
+  for (let offset = 0; offset < candidates.length && due.length < maxSends; offset += stateBatchSize) {
+    const chunk = candidates.slice(offset, offset + stateBatchSize);
+    const snapshots = await Promise.all(
+      chunk.map(({ student }) =>
+        db.collection("studentLearningInterventionStates")
+          .doc(stateDocId(student.id))
+          .get()),
+    );
+    stateReads += snapshots.length;
+
+    for (let index = 0; index < chunk.length && due.length < maxSends; index += 1) {
+      const snapshot = snapshots[index];
+      const state = snapshot?.exists ? snapshot.data() || {} : {};
+      if (cooldownAllowsSend(state, chunk[index].nudge, now)) {
+        due.push(chunk[index]);
+      }
+    }
+  }
+
+  return { due, stateReads };
 }
 
 async function markSuccessfulSends({ admin, db, sends = [], now = new Date() }) {
@@ -501,19 +549,12 @@ async function runStudentLearningNudgeJob({
     return { enabled: false, checked: 0, eligible: 0, due: 0, sent: 0, writes: 0, results: [] };
   }
 
-  const [studentSnapshot, stateSnapshot] = await Promise.all([
-    db.collection("students").limit(1000).get(),
-    db.collection("studentLearningInterventionStates").limit(1000).get(),
-  ]);
-
-  const states = stateByStudentId(stateSnapshot);
+  const studentScan = await readAllStudents({ admin, db });
   const candidates = [];
 
-  for (const student of snapshotRows(studentSnapshot)) {
+  for (const student of studentScan.rows) {
     const nudge = resolveAutomatedNudge(student, now);
     if (!nudge) continue;
-    const state = states.get(text(student.id)) || {};
-    if (!cooldownAllowsSend(state, nudge, now)) continue;
     candidates.push({ student, nudge });
   }
 
@@ -521,12 +562,20 @@ async function runStudentLearningNudgeJob({
     Number(right.nudge.priority || 0) - Number(left.nudge.priority || 0)
     || studentName(left.student).localeCompare(studentName(right.student)));
 
-  const due = candidates.slice(0, config.maxSends);
+  const selected = await selectDueCandidates({
+    db,
+    candidates,
+    maxSends: config.maxSends,
+    now,
+  });
+  const due = selected.due;
+
   if (!due.length) {
     return {
       enabled: true,
-      checked: studentSnapshot.size,
-      stateReads: stateSnapshot.size,
+      checked: studentScan.rows.length,
+      studentPages: studentScan.pages,
+      stateReads: selected.stateReads,
       eligible: candidates.length,
       due: 0,
       sent: 0,
@@ -541,8 +590,9 @@ async function runStudentLearningNudgeJob({
 
   return {
     enabled: true,
-    checked: studentSnapshot.size,
-    stateReads: stateSnapshot.size,
+    checked: studentScan.rows.length,
+    studentPages: studentScan.pages,
+    stateReads: selected.stateReads,
     eligible: candidates.length,
     due: due.length,
     sent: rows.length,
@@ -601,5 +651,7 @@ module.exports = {
     rowForNudge,
     stateDocId,
     studentIsEligible,
+    readAllStudents,
+    selectDueCandidates,
   },
 };
