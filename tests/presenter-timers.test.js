@@ -106,8 +106,11 @@ test("student speaking timer is level-aware and beeps when time ends", () => {
   assert.match(picker, /function playResponseTimeoutBeep\(\)/);
   assert.match(picker, /responseTimeoutBeepedRef/);
   assert.match(picker, /createOscillator\(\)/);
+  assert.match(picker, /const alertDurationSeconds = 5/);
+  assert.match(picker, /offset \+= 0\.75/);
+  assert.match(picker, /oscillator\.stop\(startedAt \+ alertDurationSeconds\)/);
   assert.match(picker, /playResponseTimeoutBeep\(\);\s*\n\s*setResponseDeadline\(0\)/);
-  assert.match(picker, /A2 defaults to 2 minutes\. B1 defaults to 3 minutes/);
+  assert.match(picker, /A2 defaults to 2 minutes\. B1 defaults to 3 minutes\. A1 remains 1 minute\. A 5-second alert sounds when time ends/);
   assert.match(picker, /Time's up —/);
   assert.match(picker, /\+15s/);
 });
