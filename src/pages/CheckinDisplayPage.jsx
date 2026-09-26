@@ -23,6 +23,8 @@ import "./CheckinDisplayPage.css";
 const ATTENDANCE_UTC_OFFSET_HOURS = 0;
 const ATTENDANCE_TIME_ZONE = "Africa/Accra";
 const ATTENDANCE_TIME_ZONE_LABEL = "Ghana time (UTC+00:00)";
+const START_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
+const START_HANDSHAKE_MAX_ATTEMPTS = START_HANDSHAKE_RETRY_DELAYS_MS.length + 1;
 const WAITING_PIANO_CHORDS = [
   [130.81, 261.63, 329.63, 392.0],
   [110.0, 220.0, 261.63, 329.63],
@@ -194,6 +196,22 @@ function classStartDecisionStorageKey(classId, sessionId, dateLabel) {
   const safeDate = String(dateLabel || "").trim();
   if (!safeClassId || !safeSessionId) return "";
   return `falowen-class-start:${safeClassId}:${safeSessionId}:${safeDate || "no-date"}`;
+}
+
+function attendanceStartRequestId(sessionKey, startedAt) {
+  const key = String(sessionKey || "").trim();
+  const start = Math.floor(Number(startedAt || 0));
+  if (!key || !Number.isFinite(start) || start <= 0) return "";
+  return `attendance-start:${key}:${start}`;
+}
+
+function presenterStartAcknowledged(state = {}, requestId = "") {
+  const wanted = String(requestId || "").trim();
+  return Boolean(
+    wanted
+    && String(state.presenterStartAckRequestId || "").trim() === wanted
+    && Number(state.presenterStartAckAtMs || 0) > 0
+  );
 }
 
 function readClassStartDecision(storageKey) {
@@ -475,10 +493,14 @@ export default function CheckinDisplayPage() {
       actualEndedAt: nextEnd,
       delayUntil: null,
     });
+    const restoredRequestId = attendanceStartRequestId(linkPresenterSessionKey, nextStart);
+    const restoredAcknowledged = presenterStartAcknowledged(presenterLiveState, restoredRequestId);
     setSlideSyncStatus(
       sharedEnd
         ? { state: "ended-synced", message: "Completed class synchronized from the shared Presenter session." }
-        : { state: "synced", message: "Class start restored from the shared Presenter session." },
+        : restoredAcknowledged
+          ? { state: "acknowledged", message: "Class start restored · Slides acknowledgement confirmed." }
+          : { state: "awaiting-ack", message: "Class start restored · waiting for Slides acknowledgement…" },
     );
   }, [
     actualEndedAt,
@@ -500,86 +522,46 @@ export default function CheckinDisplayPage() {
     if (!sessionMatches) {
       return presenterTarget.classRecordId
         ? "Checking shared Presenter session…"
-        : "Presenter session is not connected yet.";
+        : "Resolving Presenter connection…";
     }
 
-    const endedAt = Number(state.classEndedAtMs || 0);
-    if (state.classStatus === "ended" || endedAt > 0) {
+    const sharedEnded = state.classLifecycleStatus === "ended"
+      || state.classStatus === "ended"
+      || Number(state.classEndedAtMs || 0) > 0;
+    if (sharedEnded) {
       const seconds = Number(state.classDurationSeconds || 0);
       return `Presenter session ended${seconds > 0 ? ` · ${formatDuration(seconds * 1000)} taught` : ""}.`;
     }
 
-    const heartbeatAt = Number(state.presenterHeartbeatAtMs || 0);
-    const heartbeatFresh = heartbeatAt > 0 && nowMs - heartbeatAt <= 3 * 60 * 1000;
+    const requestId = attendanceStartRequestId(linkPresenterSessionKey, actualStartedAt);
+    const acknowledged = presenterStartAcknowledged(state, requestId);
+    const attempt = Math.max(1, Number(state.attendanceStartAttempt || 1));
     const timerRunning = Boolean(state.timerRunning);
     const timerEndAt = Number(state.timerEndAt || 0);
     const remainingMs = timerRunning && timerEndAt > 0 ? Math.max(0, timerEndAt - nowMs) : 0;
 
-    if (heartbeatFresh) {
+    if (acknowledged) {
+      const ackAgeMs = Math.max(0, nowMs - Number(state.presenterStartAckAtMs || nowMs));
       if (timerRunning && timerEndAt > 0) {
-        return `Presenter connected · timer running · ${formatDuration(remainingMs)} left.`;
+        return `Slides connected · timer synced · ${formatDuration(remainingMs)} left · acknowledged ${Math.max(0, Math.floor(ackAgeMs / 1000))}s ago.`;
       }
-      return "Presenter connected · shared timer is paused or waiting.";
+      return "Slides connected · class start acknowledged.";
     }
 
-    if (Number(state.classStartedAtMs || 0) > 0) {
-      return "Slides synchronized · waiting for a recent Presenter heartbeat.";
+    if (attempt >= START_HANDSHAKE_MAX_ATTEMPTS) {
+      return `Slides not responding · start sent ${attempt} times · Attendance start remains recorded.`;
     }
 
-    return "Shared Presenter session is ready.";
+    return `Start sent to Slides · awaiting acknowledgement · attempt ${attempt}/${START_HANDSHAKE_MAX_ATTEMPTS}.`;
   }, [
     actualStartedAt,
+    linkPresenterSessionKey,
     nowMs,
     presenterLiveError,
     presenterLiveState,
     presenterTarget.classRecordId,
     presenterTarget.sessionKey,
   ]);
-
-  const statusInfo = useMemo(() => {
-    const scheduledStartAt = parseDateTime(dateLabel, startTime);
-
-    if (actualStartedAt && actualEndedAt) {
-      return {
-        kind: "ended",
-        title: "Class has ended.",
-        detail: `Started at ${formatLiveClockLabel(actualStartedAt)} and ended at ${formatLiveClockLabel(actualEndedAt)}. Actual teaching time: ${formatDuration(actualEndedAt - actualStartedAt)}.`,
-      };
-    }
-
-    if (actualStartedAt) {
-      return {
-        kind: "active",
-        title: "Class is in progress.",
-        detail: `Started at ${formatLiveClockLabel(actualStartedAt)}. Students who are still joining can continue to check in.`,
-      };
-    }
-
-    if (scheduledStartAt && nowMs < scheduledStartAt) {
-      const startLabel = formatDisplayTimeLabel(startTime, scheduledStartAt);
-      return {
-        kind: "before",
-        title: `Hello! Class is scheduled for ${startLabel} ${ATTENDANCE_TIME_ZONE_LABEL}.`,
-        detail: "Kindly check in while you wait for the teacher to start the class.",
-      };
-    }
-
-    if (scheduledStartAt) {
-      return {
-        kind: "before",
-        title: "Scheduled start time reached.",
-        detail: delayUntil && nowMs < delayUntil
-          ? `The teacher is allowing more joining time. Planned start is in ${formatDuration(delayUntil - nowMs)}.`
-          : "The teacher has not started the class yet. Waiting-room music can continue quietly.",
-      };
-    }
-
-    return {
-      kind: "before",
-      title: "Waiting for the teacher.",
-      detail: "Please check in while you wait for the class to begin.",
-    };
-  }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
 
   const classTiming = useMemo(() => {
     const scheduledStartAt = parseDateTime(dateLabel, startTime);
@@ -744,7 +726,7 @@ export default function CheckinDisplayPage() {
     );
   }, [actualStartedAt, dateLabel, musicPlaying, musicVolume, nowMs, startTime]);
 
-  const syncPresenterStart = useCallback(async (startedAt, { manual = false, recovery = false } = {}) => {
+  const syncPresenterStart = useCallback(async (startedAt, { manual = false, recovery = false, handshakeAttempt = 1 } = {}) => {
     if (!classId || !Number.isFinite(Number(startedAt))) return;
     const startMs = Number(startedAt);
     const rawSessionDate = String(dateLabel || "").trim();
@@ -791,6 +773,9 @@ export default function CheckinDisplayPage() {
         sessionId,
         assignmentId,
       });
+      const requestId = attendanceStartRequestId(sessionKey, startMs);
+      const requestAttempt = Math.max(1, Number(handshakeAttempt || 1));
+      const requestSentAtMs = Date.now();
 
       setPresenterTarget({ classRecordId, sessionKey });
       setPresenterClassContext({
@@ -811,6 +796,9 @@ export default function CheckinDisplayPage() {
         classStartUpdatedAtMs: startMs,
         classLifecycleStatus: "running",
         sessionTimingAuthority: "attendance",
+        attendanceStartRequestId: requestId,
+        attendanceStartRequestedAtMs: requestSentAtMs,
+        attendanceStartAttempt: requestAttempt,
       };
 
       if (durationSeconds > 0) {
@@ -835,6 +823,12 @@ export default function CheckinDisplayPage() {
         }
         throw new Error(startResult?.reason || "Presenter session could not be started.");
       }
+
+      await publishPresenterLiveSession(classRecordId, {
+        attendanceStartRequestId: requestId,
+        attendanceStartRequestedAtMs: requestSentAtMs,
+        attendanceStartAttempt: requestAttempt,
+      }, sessionKey);
 
       if (!startResult.created) {
         if (startResult.stale) {
@@ -913,26 +907,31 @@ export default function CheckinDisplayPage() {
           actualEndedAt: sharedEnd || null,
           delayUntil: null,
         });
+        const startAcknowledged = presenterStartAcknowledged(shared, requestId);
         setSlideSyncStatus({
-          state: sharedEnd || shared.classStatus === "ended" ? "ended-synced" : "synced",
+          state: sharedEnd || shared.classStatus === "ended"
+            ? "ended-synced"
+            : startAcknowledged ? "acknowledged" : "awaiting-ack",
           message: sharedEnd || shared.classStatus === "ended"
             ? "This class session is already ended. Shared state was preserved."
-            : timerNeverInitialized
-              ? "Slides timer recovered automatically from the original class start."
-              : canRepairSharedTimer
-                ? `Slides timer corrected to the ${durationSeconds / 60}-minute ${level} class duration.`
-                : startResult.reactivated
-                ? "Presenter session reconnected to the active slides. Existing timer state was preserved."
-                : wasChangedAfterStart || manual
-                  ? "Presenter already has shared timer state. It was preserved."
-                  : "This class session was already started on another display. Existing timer state was preserved.",
+            : startAcknowledged
+              ? "Slides acknowledged the class start · timer synchronized."
+              : timerNeverInitialized
+                ? "Timer state repaired · waiting for Slides acknowledgement…"
+                : canRepairSharedTimer
+                  ? `Timer corrected to the ${durationSeconds / 60}-minute ${level} class duration · waiting for Slides acknowledgement…`
+                  : startResult.reactivated
+                    ? "Start resent to the active slides · waiting for acknowledgement…"
+                    : wasChangedAfterStart || manual || recovery
+                      ? "Start resent to Slides · waiting for acknowledgement…"
+                      : "Class start sent to Slides · waiting for acknowledgement…",
         });
         return;
       }
 
       setSlideSyncStatus(
         durationSeconds > 0
-          ? { state: "synced", message: "Slides timer started automatically." }
+          ? { state: "awaiting-ack", message: `Class start sent to Slides · waiting for acknowledgement (attempt ${requestAttempt}/${START_HANDSHAKE_MAX_ATTEMPTS})…` }
           : { state: "started-only", message: level ? `Slides notified; no automatic timer preset is configured for ${level}.` : "Slides notified; class level could not be identified for an automatic timer." },
       );
     } catch (error) {
@@ -943,6 +942,67 @@ export default function CheckinDisplayPage() {
       });
     }
   }, [assignmentId, classId, dateLabel, endTime, resolvePresenterClass, sessionDisplayLabel, sessionId, startDecisionStorageKey, startTime]);
+
+  useEffect(() => {
+    if (!actualStartedAt || actualEndedAt) return;
+    const requestId = attendanceStartRequestId(linkPresenterSessionKey, actualStartedAt);
+    if (!requestId || String(presenterLiveState.sessionKey || "") !== String(linkPresenterSessionKey || "")) return;
+    if (!presenterStartAcknowledged(presenterLiveState, requestId)) return;
+
+    const timerRunning = Boolean(presenterLiveState.timerRunning) && Number(presenterLiveState.timerEndAt || 0) > nowMs;
+    setSlideSyncStatus({
+      state: "acknowledged",
+      message: timerRunning
+        ? "Slides acknowledged the class start · timer synchronized."
+        : "Slides acknowledged the class start.",
+    });
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    linkPresenterSessionKey,
+    nowMs,
+    presenterLiveState.presenterStartAckAtMs,
+    presenterLiveState.presenterStartAckRequestId,
+    presenterLiveState.sessionKey,
+    presenterLiveState.timerEndAt,
+    presenterLiveState.timerRunning,
+  ]);
+
+  useEffect(() => {
+    if (!actualStartedAt || actualEndedAt) return undefined;
+    const requestId = attendanceStartRequestId(linkPresenterSessionKey, actualStartedAt);
+    if (!requestId || presenterStartAcknowledged(presenterLiveState, requestId)) return undefined;
+
+    const sharedAttempt = Math.max(1, Number(presenterLiveState.attendanceStartAttempt || 1));
+    if (sharedAttempt >= START_HANDSHAKE_MAX_ATTEMPTS) {
+      if (slideSyncStatus.state !== "error") {
+        setSlideSyncStatus({
+          state: "unresponsive",
+          message: `Slides have not acknowledged after ${START_HANDSHAKE_MAX_ATTEMPTS} attempts. The Attendance start is safe; open Presenter or resend from here.`,
+        });
+      }
+      return undefined;
+    }
+
+    const delayMs = START_HANDSHAKE_RETRY_DELAYS_MS[Math.max(0, sharedAttempt - 1)] || 10000;
+    const retryTimer = window.setTimeout(() => {
+      if (presenterStartAcknowledged(presenterLiveState, requestId)) return;
+      void syncPresenterStart(actualStartedAt, {
+        recovery: true,
+        handshakeAttempt: sharedAttempt + 1,
+      });
+    }, delayMs);
+    return () => window.clearTimeout(retryTimer);
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    linkPresenterSessionKey,
+    presenterLiveState.attendanceStartAttempt,
+    presenterLiveState.presenterStartAckAtMs,
+    presenterLiveState.presenterStartAckRequestId,
+    slideSyncStatus.state,
+    syncPresenterStart,
+  ]);
 
   useEffect(() => {
     if (!actualStartedAt || actualEndedAt) return;
@@ -1242,7 +1302,7 @@ export default function CheckinDisplayPage() {
             </span>
             {actualStartedAt ? (
               <div className="checkin-display-presenter-status" role="status" aria-live="polite">
-                <span className={presenterStatus.startsWith("Presenter connected") ? "is-live" : ""} />
+                <span className={presenterStatus.startsWith("Slides connected") ? "is-live" : ""} />
                 {presenterStatus}
               </div>
             ) : null}
@@ -1267,10 +1327,18 @@ export default function CheckinDisplayPage() {
           ) : (
             <div className="checkin-display-teacher-control-actions">
               <div className="checkin-display-started-badge">
-                {slideSyncStatus.state === "syncing" ? "Starting slides…" : "Class started"}
+                {slideSyncStatus.state === "syncing" ? "Starting slides…" : slideSyncStatus.state === "acknowledged" ? "Slides connected" : slideSyncStatus.state === "unresponsive" ? "Slides not responding" : "Class started"}
               </div>
-              {slideSyncStatus.state === "error" ? (
-                <button type="button" onClick={() => syncPresenterStart(actualStartedAt, { manual: true })}>Retry slide sync</button>
+              {["error", "unresponsive"].includes(slideSyncStatus.state) ? (
+                <button
+                  type="button"
+                  onClick={() => syncPresenterStart(actualStartedAt, {
+                    manual: true,
+                    handshakeAttempt: Math.max(1, Number(presenterLiveState.attendanceStartAttempt || 0) + 1),
+                  })}
+                >
+                  Resend to slides
+                </button>
               ) : null}
               <button type="button" className="checkin-display-end-class" onClick={handleEndClass}>End class</button>
             </div>

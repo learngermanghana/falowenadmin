@@ -117,8 +117,8 @@ test("teacher delay and actual start survive a projector refresh", () => {
 test("music can continue after scheduled time until teacher starts class", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
-  assert.match(page, /Scheduled start time reached/);
-  assert.match(page, /Waiting-room music can continue quietly/);
+  assert.match(page, /Scheduled start reached/);
+  assert.match(page, /The class begins only when the teacher presses Start class & slides/);
   assert.doesNotMatch(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
   assert.match(page, /onClick=\{musicPlaying \? stopWaitingMusic : startWaitingMusic\}/);
   assert.match(page, /masterGain\.gain\.setTargetAtTime\(\s*Math\.max\(0\.05, musicVolume \* 0\.35\)/);
@@ -302,7 +302,7 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
   assert.match(page, /attendanceDurationSeconds > 0 && configuredLevelDurationSeconds > 0/);
   assert.match(page, /Math\.min\(attendanceDurationSeconds, configuredLevelDurationSeconds\)/);
   assert.match(page, /attendanceDurationSeconds \|\| configuredLevelDurationSeconds/);
-  assert.match(page, /Retry slide sync/);
+  assert.match(page, /Resend to slides/);
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 
   assert.match(service, /presenterSessions\.\$\{key\}/);
@@ -321,7 +321,7 @@ test("check-in repairs an already-running shared timer that exceeds the level du
   assert.match(page, /const canRepairSharedTimer = !sharedEnd/);
   assert.match(page, /timerNeverInitialized/);
   assert.match(page, /await publishPresenterLiveSession\(classRecordId, repairedPatch, sessionKey\)/);
-  assert.match(page, /Slides timer corrected to the \$\{durationSeconds \/ 60\}-minute \$\{level\} class duration/);
+  assert.match(page, /Timer corrected to the \$\{durationSeconds \/ 60\}-minute \$\{level\} class duration · waiting for Slides acknowledgement/);
 });
 
 
@@ -378,12 +378,12 @@ test("supported attendance dates normalize only when the calendar date is valid"
   assert.equal(checkinSessionDateKey("not-a-real-date"), null);
 });
 
-test("restored class starts recover automatically and keep manual retry only for errors", () => {
+test("restored class starts recover automatically and keep manual resend for failed acknowledgement", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
   assert.match(page, /\["restored", "error"\]\.includes\(slideSyncStatus\.state\)/);
   assert.match(page, /sharedTimerMissing/);
-  assert.match(page, /Retry slide sync/);
+  assert.match(page, /Resend to slides/);
   assert.doesNotMatch(page, />Sync slides now<\/button>/);
 });
 
@@ -423,7 +423,7 @@ test("presenter session keys are deterministic and Firestore field-path safe", (
 
 test("check-in exposes session status and records class end duration", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
-  assert.match(page, /Presenter connected · timer running/);
+  assert.match(page, /Slides connected · timer synced/);
   assert.match(page, />End class<\/button>/);
   assert.match(page, /endPresenterLiveSession/);
   assert.match(page, /classDurationSeconds/);
@@ -452,7 +452,7 @@ test("initial presenter start is atomic and preserves the transaction winner", (
   assert.match(page, /const startResult = await startPresenterLiveSession\(classRecordId, sessionKey, livePatch\);/);
   assert.match(page, /if \(!startResult\.created\)/);
   assert.match(page, /This class session is already ended\. Shared state was preserved\./);
-  assert.match(page, /This class session was already started on another display\. Existing timer state was preserved\./);
+  assert.match(page, /Class start sent to Slides · waiting for acknowledgement/);
 });
 
 test("session-scoped presenter state remains inside the existing class document", () => {
@@ -512,4 +512,32 @@ test("attendance owns session timing and stale tabs cannot replace a newer activ
   assert.match(service, /reason: "newer-active-session"/);
   assert.match(service, /classLifecycleStatus: "running"/);
   assert.match(service, /classLifecycleStatus: "ended"/);
+});
+
+
+test("attendance start waits for Presenter acknowledgement and retries automatically", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /START_HANDSHAKE_RETRY_DELAYS_MS = Object\.freeze\(\[2000, 5000, 10000\]\)/);
+  assert.match(page, /START_HANDSHAKE_MAX_ATTEMPTS = START_HANDSHAKE_RETRY_DELAYS_MS\.length \+ 1/);
+  assert.match(page, /attendanceStartRequestId/);
+  assert.match(page, /attendanceStartRequestedAtMs: requestSentAtMs/);
+  assert.match(page, /attendanceStartAttempt: requestAttempt/);
+  assert.match(page, /presenterStartAckRequestId/);
+  assert.match(page, /state: "awaiting-ack"/);
+  assert.match(page, /state: "acknowledged"/);
+  assert.match(page, /state: "unresponsive"/);
+  assert.match(page, /window\.setTimeout\(\(\) => \{[\s\S]*handshakeAttempt: sharedAttempt \+ 1/);
+  assert.match(page, /Slides connected · timer synced/);
+  assert.match(page, /Slides not responding · start sent/);
+  assert.match(page, />\s*Resend to slides\s*<\/button>/);
+});
+
+test("attendance never reports Slides synchronized before acknowledgement", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /Class start sent to Slides · waiting for acknowledgement/);
+  assert.match(page, /Slides acknowledged the class start · timer synchronized/);
+  assert.match(page, /presenterStartAcknowledged\(presenterLiveState, requestId\)/);
+  assert.match(page, /restoredAcknowledged/);
 });
