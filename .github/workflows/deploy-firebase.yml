@@ -139,6 +139,7 @@ jobs:
           grep -F 'exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed' functions/index.js
           grep -F 'exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger' functions/index.js
           grep -F 'exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob' functions/index.js
+          grep -F 'module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob' functions/main.js
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
           grep -F 'async function loadReminderSessionWindow' functions/classSessionReminderEmails.js
           grep -F 'async function loadStudentsForDueClasses' functions/classSessionReminderEmails.js
@@ -220,6 +221,9 @@ jobs:
 
           deploy_group "trial access email workers" \
             "functions:falowenadmin:sendTrialAccessWelcomeEmail,functions:falowenadmin:sendTrialAccessReminderEmails"
+
+          deploy_group "student learning nudge worker" \
+            "functions:falowenadmin:sendStudentLearningNudges"
 
           # Cloud Run CPU quota is tight in us-central1. Deploy the attendance
           # worker first, then the other scheduled/event workers one at a time
