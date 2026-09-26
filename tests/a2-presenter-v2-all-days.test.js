@@ -18,8 +18,8 @@ const ASSIGNMENT_IDS = [
 ];
 
 const REQUIRED_STAGES = [
-  "intro", "warmup", "phrases", "grammar", "examples",
-  "practice", "workbook", "mistakes", "questions",
+  "intro", "warmup", "knowledge", "phrases", "grammar", "examples",
+  "practice", "questions", "workbook", "lesson-summary",
 ];
 
 test("A2 Teaching Slides expose the complete 28-day workbook-aligned course", () => {
@@ -60,11 +60,12 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     const questions = stages.find((stage) => stage.id === "questions");
 
     assert.equal(practice.type, "flow");
-    assert.ok(practice.items.length >= 4, `${slide.assignmentId} should have guided phases`);
-    assert.ok(practice.items.some((item) => item.minutes > 0), `${slide.assignmentId} should expose timer minutes`);
+    assert.equal(practice.items.length, 1, `${slide.assignmentId} should have one focused practice activity`);
+    assert.ok(practice.items[0].minutes > 0, `${slide.assignmentId} should expose focused-practice timing`);
     assert.equal(workbook.type, "workbook");
     assert.ok(workbook.items.length >= 4, `${slide.assignmentId} should expose workbook sections`);
     assert.match(workbook.workbookUrl, /^\/campus\/course\//, `${slide.assignmentId} workbook route`);
+    assert.ok(stageIds.indexOf("questions") < stageIds.indexOf("workbook"), `${slide.assignmentId} production should come before workbook bridge`);
     assert.equal(questions.type, "question-reveal");
     assert.ok(questions.items.length >= 4, `${slide.assignmentId} should have speaking questions`);
     assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} should reveal model support`);

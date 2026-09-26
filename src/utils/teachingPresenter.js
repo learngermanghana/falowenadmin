@@ -1,4 +1,5 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
+import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { buildCourseBookBridgeItems, getCurriculumParityReference } from "../data/studentCurriculumParity.js";
 
@@ -564,14 +565,133 @@ function buildClassicStages(slide = {}, topicLabel = "") { const studentReferenc
 ]; }
 
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
-  const support = buildTeacherSlideSupport(slide); const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : []; const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : []; const advanced = isAdvancedClassroomSlide(slide); const grammarItems = advanced ? buildAdvancedGrammarItems(slide, support) : (Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []); const practiceItems = advanced ? buildAdvancedPracticeItems(slide, support, flow, grammarItems) : flow.map((item) => ({ title: item.phase, detail: item.detailEn, minutes: parsePresenterMinutes(item.detailEn) })); const mistakeItems = advanced ? buildAdvancedMistakes(slide) : (Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : []); const topicFoundation = getPresenterTopicFoundation(slide); const studentReference = getCurriculumParityReference(slide);
+  const support = buildTeacherSlideSupport(slide);
+  const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
+  const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
+  const advanced = isAdvancedClassroomSlide(slide);
+  const grammarItems = advanced
+    ? buildAdvancedGrammarItems(slide, support)
+    : (Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []);
+  const practiceItems = advanced
+    ? buildAdvancedPracticeItems(slide, support, flow, grammarItems)
+    : flow.map((item) => ({
+        title: item.phase,
+        detail: item.detailEn,
+        minutes: parsePresenterMinutes(item.detailEn),
+      }));
+  const mistakeItems = advanced
+    ? buildAdvancedMistakes(slide)
+    : (Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : []);
+  const topicFoundation = getPresenterTopicFoundation(slide);
+  const studentReference = getCurriculumParityReference(slide);
   const level = classroomLevel(slide);
   const vocabularyStage = VOCABULARY_STAGE_LEVELS.has(level);
   const phraseItems = Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [];
   const vocabularyItems = vocabularyStage ? buildVocabularyItems(slide, support) : [];
+  const speakingStage = {
+    id: "questions",
+    type: "question-reveal",
+    kicker: "Sprechen",
+    title: advanced ? "Sprechtraining" : "Speaking questions",
+    items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [],
+    supportItems: [...new Set([
+      ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []),
+      ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []),
+    ])].slice(0, 5),
+    questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [],
+    requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level),
+    suggestedMinutes: interactionMinutes(slide, 3) || 10,
+  };
+  const workbookStage = {
+    id: "workbook",
+    type: "workbook",
+    kicker: "Workbook",
+    title: advanced ? "Workbook-Verbindung" : "Workbook connection",
+    items: workbookParts.map((part) => ({ label: part.label, detail: part.detailEn })),
+    grammarUrl: slide.workbookConnection?.grammarUrl || "",
+    workbookUrl: slide.workbookConnection?.workbookUrl || "",
+    suggestedMinutes: interactionMinutes(slide, Math.max(0, flow.length - 1)) || 7,
+  };
+
+  if (level === "A2") {
+    const knowledge = getA2PresenterKnowledge(normalizedAssignmentId(slide));
+    const focusedPractice = getA2FocusedPractice(normalizedAssignmentId(slide));
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
+        title: slide.title || "Lesson",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "",
+        studentReference,
+      },
+      {
+        id: "warmup",
+        type: "list",
+        kicker: "Warm-up",
+        title: "Warm-up",
+        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
+        questionSupport: buildWarmupQuestionSupport(slide),
+        suggestedMinutes: warmupSuggestedMinutes(slide),
+        timingMode: PER_STUDENT_WARMUP_LEVELS.has(level) ? "per-student" : "",
+        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+      },
+      ...(knowledge ? [{
+        id: "knowledge",
+        type: "knowledge",
+        kicker: "Wissensimpuls",
+        title: knowledge.title,
+        textDe: knowledge.textDe,
+        items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
+        instruction: "Lies zuerst für die Bedeutung. Beantworte danach die drei kurzen Checks.",
+        suggestedMinutes: 5,
+      }] : []),
+      {
+        id: "phrases",
+        type: vocabularyStage ? "vocabulary" : "list",
+        kicker: vocabularyStage ? "Wortschatz" : "Redemittel",
+        title: vocabularyStage ? "Wortschatz für heute" : "Key phrases",
+        items: vocabularyStage ? vocabularyItems : phraseItems,
+        instruction: vocabularyStage ? vocabularyInstruction(level) : "",
+        suggestedMinutes: vocabularyStage ? 5 : 0,
+      },
+      {
+        id: "grammar",
+        type: "list",
+        kicker: "Grammatik",
+        title: "Grammatik · Muster verstehen",
+        items: grammarItems,
+        suggestedMinutes: interactionMinutes(slide, 1) || 10,
+      },
+      {
+        id: "examples",
+        type: "list",
+        kicker: "Beispiele",
+        title: "Modellsätze",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+        suggestedMinutes: interactionMinutes(slide, 2) || 7,
+      },
+      ...(focusedPractice ? [{
+        id: "practice",
+        type: "flow",
+        kicker: "Fokusübung",
+        title: focusedPractice.title,
+        items: [{
+          ...focusedPractice,
+          minutes: Number(focusedPractice.minutes || 6),
+        }],
+        suggestedMinutes: Number(focusedPractice.minutes || 6),
+      }] : []),
+      speakingStage,
+      workbookStage,
+    ];
+  }
+
   const stages = [
     { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "", studentReference },
-    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], questionSupport: buildWarmupQuestionSupport(slide), suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
+    { id: "warmup", type: "list", kicker: "Warm-up", title: advanced ? "Einstieg" : "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], questionSupport: buildWarmupQuestionSupport(slide), suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(level) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
     ...(topicFoundation ? [{ id: "foundation", type: "foundation", ...topicFoundation }] : []),
     {
       id: "phrases",
@@ -585,17 +705,56 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     { id: "grammar", type: "list", kicker: "Grammatik", title: advanced ? "Neue Strukturen" : "Grammar focus", items: grammarItems, suggestedMinutes: interactionMinutes(slide, 1) || 10 },
     { id: "examples", type: "list", kicker: "Beispiele", title: advanced ? "Modellsätze" : "Model examples", items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [], suggestedMinutes: interactionMinutes(slide, 2) || 8 },
     { id: "practice", type: "flow", kicker: "Übung", title: advanced ? "Geführte Übung" : "Guided practice", items: practiceItems },
-    { id: "workbook", type: "workbook", kicker: "Workbook", title: advanced ? "Workbook-Verbindung" : "Workbook connection", items: workbookParts.map((part) => ({ label: part.label, detail: part.detailEn })), grammarUrl: slide.workbookConnection?.grammarUrl || "", workbookUrl: slide.workbookConnection?.workbookUrl || "", suggestedMinutes: interactionMinutes(slide, Math.max(0, flow.length - 1)) || 7 },
+    workbookStage,
     { id: "mistakes", type: "list", kicker: "Achtung", title: advanced ? "Typische Fehler" : "Common mistakes", items: mistakeItems },
-    { id: "questions", type: "question-reveal", kicker: "Sprechen", title: advanced ? "Sprechtraining" : "Speaking questions", items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [], supportItems: [...new Set([...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []), ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [])])].slice(0, 5), questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [], requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(String(slide.course || "").toUpperCase()), suggestedMinutes: interactionMinutes(slide, 3) || 10 },
+    speakingStage,
     ...(!["A2", "B1", "B2", "C1", "C2"].includes(level) ? [{ id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 }] : []),
   ];
-  if (Array.isArray(slide.grammarCheckQuestions) && slide.grammarCheckQuestions.length) stages.push({ id: "grammar-check", type: "question-reveal", kicker: "Grammatik-Check", title: slide.grammarCheckTitle || "Korrigiere den Satz", items: slide.grammarCheckQuestions, questionModels: Array.isArray(slide.grammarCheckModels) ? slide.grammarCheckModels : [], requiresQuestionModel: true, suggestedMinutes: Number(slide.grammarCheckMinutes || 10) });
+  if (Array.isArray(slide.grammarCheckQuestions) && slide.grammarCheckQuestions.length) {
+    stages.push({
+      id: "grammar-check",
+      type: "question-reveal",
+      kicker: "Grammatik-Check",
+      title: slide.grammarCheckTitle || "Korrigiere den Satz",
+      items: slide.grammarCheckQuestions,
+      questionModels: Array.isArray(slide.grammarCheckModels) ? slide.grammarCheckModels : [],
+      requiresQuestionModel: true,
+      suggestedMinutes: Number(slide.grammarCheckMinutes || 10),
+    });
+  }
   const advancedWeeklyChallenge = buildAdvancedWeeklyChallenge(slide);
   if (advancedWeeklyChallenge) stages.push(advancedWeeklyChallenge);
   return stages;
 }
 
 export function getSpeakingQuestionModel(stage = {}, question = "") { return stage.questionModels?.find((item) => item.questionDe === question) || null; }
-export function buildTeachingPresenterStages(slide = {}, topicLabel = "") { const presenterV2 = isTeachingPresenterV2Slide(slide); const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel); const filtered = stages.filter((stage) => { if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective); if (stage.type === "task") return Boolean(stage.body); if (stage.type === "foundation") return Boolean(stage.intro || stage.example || stage.tension || stage.question || stage.simpleEnglish); return Array.isArray(stage.items) && stage.items.length > 0; }); if (presenterV2) { const nextSteps = buildCourseBookBridgeItems(slide); const studentReference = getCurriculumParityReference(slide); const summaryItems = buildLessonSummaryItems(slide); if (summaryItems.length) filtered.push({ id: "lesson-summary", type: "summary", kicker: "Abschluss", title: "Lesson summary", subtitle: "You should now be able to…", items: summaryItems, nextSteps, studentReference }); } return filtered; }
+export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
+  const presenterV2 = isTeachingPresenterV2Slide(slide);
+  const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel);
+  const filtered = stages.filter((stage) => {
+    if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
+    if (stage.type === "task") return Boolean(stage.body);
+    if (stage.type === "foundation") return Boolean(stage.intro || stage.example || stage.tension || stage.question || stage.simpleEnglish);
+    if (stage.type === "knowledge") return Boolean(stage.textDe) && Array.isArray(stage.items) && stage.items.length > 0;
+    return Array.isArray(stage.items) && stage.items.length > 0;
+  });
+  if (presenterV2) {
+    const nextSteps = buildCourseBookBridgeItems(slide);
+    const studentReference = getCurriculumParityReference(slide);
+    const summaryItems = buildLessonSummaryItems(slide);
+    if (summaryItems.length) {
+      filtered.push({
+        id: "lesson-summary",
+        type: "summary",
+        kicker: "Abschluss",
+        title: "Lesson summary",
+        subtitle: "You should now be able to…",
+        items: summaryItems,
+        nextSteps,
+        studentReference,
+      });
+    }
+  }
+  return filtered;
+}
 export function clampPresenterIndex(index, stageCount) { const lastIndex = Math.max(0, Number(stageCount || 0) - 1); return Math.min(lastIndex, Math.max(0, Number(index || 0))); }

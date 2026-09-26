@@ -26,10 +26,10 @@ test("presenter builds student-facing lesson stages without teacher notes", () =
   assert.equal(stages[0].topic, "1.1 Small Talk");
 });
 
-test("student practice preserves detail-based A1 A2 B1 Presenter 2 exercises", () => {
+test("student practice preserves detail-based B1 Presenter 2 exercises", () => {
   const stages = buildTeachingPresenterStages({
-    assignmentId: "A2-1.1",
-    course: "A2",
+    assignmentId: "B1-1.1",
+    course: "B1",
     day: "Day 1",
     title: "Small Talk",
     topic: "Small Talk",

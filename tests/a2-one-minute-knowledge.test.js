@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
+import { A2_PRESENTER_KNOWLEDGE_ASSIGNMENTS, getA2PresenterKnowledge } from "../src/data/a2PresenterKnowledge.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 const A2_ASSIGNMENTS = [
@@ -11,38 +12,103 @@ const A2_ASSIGNMENTS = [
   "A2-9.25", "A2-10.26", "A2-10.27", "A2-10.28",
 ];
 
-const ACTIONABLE_DAYS = ["A2-7.19", "A2-7.20", "A2-8.21", "A2-8.22", "A2-9.23", "A2-9.24", "A2-9.25"];
-const CORE_IDS = ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions"];
-const ACTION_IDS = ["grammar-check", "vocabulary-retrieval", "sentence-builder", "guided-action", "role-play"];
+const TEACHING_SPINE = [
+  "intro",
+  "warmup",
+  "knowledge",
+  "phrases",
+  "grammar",
+  "examples",
+  "practice",
+  "questions",
+  "workbook",
+  "lesson-summary",
+];
 
-test("all A2 chapters keep a usable warm-up and no one-minute reading stage", () => {
+test("all 28 A2 lessons have a lesson-specific Wissensimpuls and one focused activity", () => {
+  assert.deepEqual([...A2_PRESENTER_KNOWLEDGE_ASSIGNMENTS].sort(), [...A2_ASSIGNMENTS].sort());
+
   for (const assignmentId of A2_ASSIGNMENTS) {
-    const slide = getTeachingSlideByAssignmentId(assignmentId);
-    assert.ok(slide, `${assignmentId} slide missing`);
-    assert.ok(Array.isArray(slide.warmupQuestionsDe) && slide.warmupQuestionsDe.length > 0, `${assignmentId} warm-up question missing`);
-    const stages = buildTeachingPresenterStages(slide, slide.topic);
-    assert.equal(stages.some((stage) => stage.id === "knowledge"), false, `${assignmentId} must not show 1-Minute-Wissen`);
-    const warmup = stages.find((stage) => stage.id === "warmup");
-    assert.ok(warmup, `${assignmentId} warm-up stage missing`);
-    assert.ok(Array.isArray(warmup.items) && warmup.items.length > 0, `${assignmentId} warm-up items missing`);
+    const knowledge = getA2PresenterKnowledge(assignmentId);
+    assert.ok(knowledge, `${assignmentId} knowledge missing`);
+    assert.ok(knowledge.title?.length >= 8, `${assignmentId} knowledge title too short`);
+    assert.ok(knowledge.textDe?.split(/\s+/).length >= 45, `${assignmentId} knowledge text is too thin`);
+    assert.equal(knowledge.checks?.length, 3, `${assignmentId} should have exactly three short knowledge checks`);
+    assert.ok(knowledge.activity?.title, `${assignmentId} focused activity title missing`);
+    assert.ok(knowledge.activity?.instruction, `${assignmentId} focused activity instruction missing`);
+    assert.ok(knowledge.activity?.prompts?.length >= 2, `${assignmentId} focused activity prompts missing`);
   }
 });
 
-test("A2 Days 19 to 25 preserve the core lesson and add five actionable classroom stages", () => {
-  for (const assignmentId of ACTIONABLE_DAYS) {
+test("A2 Presenter uses the stable teaching spine and removes repetitive ending drills", () => {
+  for (const assignmentId of A2_ASSIGNMENTS) {
     const slide = getTeachingSlideByAssignmentId(assignmentId);
+    assert.ok(slide, `${assignmentId} slide missing`);
+
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const ids = stages.map((stage) => stage.id);
-    for (const id of CORE_IDS) assert.ok(ids.includes(id), `${assignmentId} missing core stage ${id}`);
-    assert.equal(ids.includes("wrapup"), false, `${assignmentId} should not show the redundant mini-presentation slide`);
-    for (const id of ACTION_IDS) {
-      const stage = stages.find((entry) => entry.id === id);
-      assert.ok(stage, `${assignmentId} missing actionable stage ${id}`);
-      assert.equal(stage.type, "question-reveal", `${assignmentId} ${id} must use question UI`);
-      assert.ok(stage.items.length >= 3, `${assignmentId} ${id} needs at least three questions`);
-      assert.equal(stage.requiresQuestionModel, true, `${assignmentId} ${id} must expose model-answer checking`);
+
+    assert.deepEqual(ids, TEACHING_SPINE, `${assignmentId} should use the A2 teaching spine`);
+
+    const knowledge = stages.find((stage) => stage.id === "knowledge");
+    const grammar = stages.find((stage) => stage.id === "grammar");
+    const practice = stages.find((stage) => stage.id === "practice");
+    const questions = stages.find((stage) => stage.id === "questions");
+    const workbook = stages.find((stage) => stage.id === "workbook");
+
+    assert.equal(knowledge.type, "knowledge");
+    assert.ok(knowledge.textDe?.length > 100, `${assignmentId} knowledge text missing`);
+    assert.equal(knowledge.items.length, 3, `${assignmentId} knowledge checks missing`);
+
+    assert.equal(grammar.type, "list");
+    assert.ok(grammar.items.length >= 3, `${assignmentId} grammar must remain visible`);
+
+    assert.equal(practice.type, "flow");
+    assert.equal(practice.items.length, 1, `${assignmentId} should have one focused practice, not a repeated drill stack`);
+    assert.ok(practice.items[0].prompts?.length >= 2, `${assignmentId} focused practice should be actionable`);
+
+    assert.equal(questions.type, "question-reveal");
+    assert.ok(questions.items.length >= 4, `${assignmentId} speaking production missing`);
+
+    assert.equal(workbook.type, "workbook");
+    assert.ok(workbook.items.length >= 4, `${assignmentId} workbook bridge missing`);
+
+    for (const removed of [
+      "mistakes",
+      "grammar-check",
+      "vocabulary-retrieval",
+      "sentence-builder",
+      "guided-action",
+      "role-play",
+      "weekly-challenge",
+      "wrapup",
+    ]) {
+      assert.equal(ids.includes(removed), false, `${assignmentId} still exposes repetitive stage ${removed}`);
     }
-    assert.equal(new Set(ids).size, ids.length, `${assignmentId} must not contain duplicate stage IDs`);
-    assert.ok(stages.length >= 15, `${assignmentId} should expose at least 15 slides, got ${stages.length}`);
   }
+});
+
+test("A2 Day 6 restores knowledge and grammar before the room-movement activity", () => {
+  const slide = getTeachingSlideByAssignmentId("A2-3.6");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const ids = stages.map((stage) => stage.id);
+  const knowledge = stages.find((stage) => stage.id === "knowledge");
+  const grammar = stages.find((stage) => stage.id === "grammar");
+  const practice = stages.find((stage) => stage.id === "practice");
+
+  assert.match(knowledge.textDe, /Wo\?/);
+  assert.match(knowledge.textDe, /Wohin\?/);
+  assert.match(knowledge.textDe, /Dativ/);
+  assert.match(knowledge.textDe, /Akkusativ/);
+
+  assert.ok(grammar.items.some((item) => /Wo\?/i.test(item)));
+  assert.ok(grammar.items.some((item) => /Wohin\?/i.test(item)));
+  assert.ok(grammar.items.some((item) => /Wechselpräposition/i.test(item)));
+
+  assert.match(practice.title, /Bewege die Möbel/);
+  assert.ok(practice.items[0].modelItems.some((item) => /neben das Fenster/i.test(item)));
+  assert.ok(ids.indexOf("knowledge") < ids.indexOf("grammar"));
+  assert.ok(ids.indexOf("grammar") < ids.indexOf("practice"));
+  assert.ok(ids.indexOf("practice") < ids.indexOf("questions"));
+  assert.ok(ids.indexOf("questions") < ids.indexOf("workbook"));
 });

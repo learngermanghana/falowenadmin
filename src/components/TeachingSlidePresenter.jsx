@@ -426,6 +426,23 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </section>
               ) : null}
             </>
+          ) : stage.type === "knowledge" ? (
+            <section className="presenter-knowledge">
+              <div className="presenter-knowledge-heading">
+                <span>{stage.kicker || "Wissensimpuls"}</span>
+                <h1>{stage.title}</h1>
+                {stage.instruction ? <p>{stage.instruction}</p> : null}
+              </div>
+              <article className="presenter-knowledge-text">
+                <p>{stage.textDe}</p>
+              </article>
+              <div className="presenter-knowledge-checks">
+                <strong>Kurz prüfen</strong>
+                <ol>
+                  {stage.items.map((item) => <li key={item}>{item}</li>)}
+                </ol>
+              </div>
+            </section>
           ) : stage.type === "foundation" ? (
             <section className={`presenter-foundation presenter-foundation-${String(stage.level || "").toLowerCase()}`}>
               <div className="presenter-foundation-heading">

@@ -15,17 +15,9 @@ if (!SUPPORTED_LEVELS.has(LEVEL)) {
   throw new Error("Teacher-material audit currently supports A1 and A2. Received: " + LEVEL);
 }
 
-const REQUIRED_CORE_STAGES = [
-  "intro",
-  "warmup",
-  "phrases",
-  "grammar",
-  "examples",
-  "practice",
-  "mistakes",
-  "questions",
-  ...(LEVEL === "A1" ? ["wrapup"] : []),
-];
+const REQUIRED_CORE_STAGES = LEVEL === "A2"
+  ? ["intro", "warmup", "knowledge", "phrases", "grammar", "examples", "practice", "questions", "workbook", "lesson-summary"]
+  : ["intro", "warmup", "phrases", "grammar", "examples", "practice", "mistakes", "questions", "wrapup"];
 
 const normalize = (value = "") => String(value || "").trim();
 const normalizedAssignment = (slide = {}) => normalize(slide.assignmentId).toUpperCase();
@@ -85,6 +77,7 @@ for (const [index, slide] of slides.entries()) {
   const warmup = stageMap.get("warmup");
   const questions = stageMap.get("questions");
   const mistakes = stageMap.get("mistakes");
+  const knowledge = stageMap.get("knowledge");
   const wrapup = stageMap.get("wrapup");
   const workbook = stageMap.get("workbook");
 
@@ -93,8 +86,9 @@ for (const [index, slide] of slides.entries()) {
     questions &&
     Array.isArray(questions.supportItems) &&
     questions.supportItems.length >= 3 &&
-    mistakes &&
-    (LEVEL === "A2" ? warmup : wrapup)
+    (LEVEL === "A2"
+      ? knowledge && Array.isArray(knowledge.items) && knowledge.items.length === 3 && warmup
+      : mistakes && wrapup)
   );
   const produce = tutorial || Boolean(
     practice &&
@@ -111,12 +105,11 @@ for (const [index, slide] of slides.entries()) {
     slide.workbookConnection ||
     (LEVEL === "A1" && normalize(slide.assignmentId))
   );
-  // A2 deliberately removes the duplicate mini-presentation wrap-up page.
-  // Its warm-up plus question-reveal speaking checks already provide the
-  // learner production/assessment evidence that the old page duplicated.
+  // A2 uses three knowledge checks plus workbook-aligned speaking production
+  // instead of a duplicate mini-presentation or a separate mistakes page.
   const assess = tutorial || Boolean(
     LEVEL === "A2"
-      ? warmup && Array.isArray(warmup.items) && warmup.items.length > 0 && questions
+      ? knowledge && Array.isArray(knowledge.items) && knowledge.items.length === 3 && questions
       : wrapup && questions
   );
 
