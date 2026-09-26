@@ -111,3 +111,21 @@ test("existing A1, A2, B1 and B2 Presenter 2 courses remain enabled", () => {
     assert.ok(slides.every((slide) => isTeachingPresenterV2Slide(slide)), course);
   }
 });
+
+
+test("C1 rotates seven level-appropriate weekly challenge mechanics", () => {
+  const titlesByWeek = new Map();
+  for (const slide of getSlidesByCourse("C1")) {
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const challenge = stages.find((stage) => stage.id === "weekly-challenge");
+    const week = Math.ceil(slide.dayNumber / 4);
+    assert.ok(challenge, slide.assignmentId + " missing weekly challenge");
+    if (titlesByWeek.has(week)) {
+      assert.equal(challenge.title, titlesByWeek.get(week), slide.assignmentId + " should keep one mechanic identity within its week");
+    } else {
+      titlesByWeek.set(week, challenge.title);
+    }
+  }
+  assert.equal(titlesByWeek.size, 7);
+  assert.equal(new Set(titlesByWeek.values()).size, 7, "C1 should use seven distinct weekly mechanics");
+});
