@@ -478,7 +478,8 @@ test("restored local class end keeps an explicit manual end-sync recovery path",
   assert.match(page, /Use Sync end now if the earlier shared end save failed/);
   assert.match(page, /slideSyncStatus\.state === "ended-restored"/);
   assert.match(page, />Sync end now<\/button>/);
-  assert.match(page, /state: "ended-synced", message: "Class end was already synchronized\."/);
+  assert.match(page, /state: "ended-acknowledged"/);
+  assert.match(page, /Class end restored · waiting for Presenter acknowledgement|Class ended from Presenter · shared end state synchronized/);
 });
 
 test("ended class timing reacts when a shared end arrives later", () => {
@@ -694,4 +695,62 @@ test("Attendance and Presenter use the resolved lesson assignment for the same s
   assert.match(page, /assignmentId: effectiveAssignmentId/);
   assert.match(page, /lessonId: String\(effectiveAssignmentId \|\| sessionId \|\| ""\)\.trim\(\)/);
   assert.match(page, /presenterSessionKey\(\{ sessionDate, sessionId, assignmentId: effectiveAssignmentId \}\)/);
+});
+
+
+test("Smart Class Lobby preserves pending and failed live-attendance state instead of presenting a false zero", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const css = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.css"), "utf8");
+
+  assert.match(page, /const attendanceConnectionState = attendanceError \? "error" : attendanceLive \? "live" : "connecting"/);
+  assert.match(page, /const attendanceCountLabel = attendanceLive/);
+  assert.match(page, /expectedTotal \? "— \/ " \+ expectedTotal : "—"/);
+  assert.match(page, /Live attendance disconnected/);
+  assert.match(page, /Connecting live attendance…/);
+  assert.match(page, /Live attendance connected/);
+  assert.match(page, /className=\{"checkin-display-lobby-live-state is-" \+ attendanceConnectionState\}/);
+  assert.match(page, /\{attendanceError \? <small>\{attendanceError\}<\/small> : null\}/);
+  assert.match(page, /\{attendanceCountLabel\}<\/strong>/);
+  assert.match(page, /waiting for verified live attendance/);
+
+  assert.match(css, /\.checkin-display-lobby-live-state\.is-live/);
+  assert.match(css, /\.checkin-display-lobby-live-state\.is-error/);
+});
+
+test("Smart End saves class completion and waits for exact Presenter end acknowledgement", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /END_HANDSHAKE_RETRY_DELAYS_MS = Object\.freeze\(\[2000, 5000, 10000\]\)/);
+  assert.match(page, /END_HANDSHAKE_MAX_ATTEMPTS = END_HANDSHAKE_RETRY_DELAYS_MS\.length \+ 1/);
+  assert.match(page, /function attendanceEndRequestId/);
+  assert.match(page, /function presenterEndAcknowledged/);
+  assert.match(page, /attendanceEndRequestId: requestId/);
+  assert.match(page, /attendanceEndRequestedAtMs: requestSentAtMs/);
+  assert.match(page, /attendanceEndAttempt: requestAttempt/);
+  assert.match(page, /attendanceLiveAtEnd: Boolean\(attendanceLive\)/);
+  assert.match(page, /attendanceCheckedInCountAtEnd: attendanceLive \? checkedInCount : null/);
+  assert.match(page, /state: "end-awaiting-ack"/);
+  assert.match(page, /state: "ended-acknowledged"/);
+  assert.match(page, /Presenter acknowledged the class end · final session synchronized/);
+  assert.match(page, /END_HANDSHAKE_RETRY_DELAYS_MS\[Math\.max\(0, sharedAttempt - 1\)\]/);
+  assert.match(page, /state: "end-unresponsive"/);
+  assert.match(page, /Retry end sync/);
+});
+
+test("Smart End shows class outcomes, duration, next lesson and restarts lobby music from the End click", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const css = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.css"), "utf8");
+
+  assert.match(page, /className=\{"checkin-display-smart-end/);
+  assert.match(page, /Teaching time/);
+  assert.match(page, /Students should now be able to…/);
+  assert.match(page, /waitingWarmupTeaser\.outcomes\.map/);
+  assert.match(page, /Next up/);
+  assert.match(page, /nextLesson/);
+  assert.match(page, /getSlidesByCourse\(course\)\.find/);
+  assert.match(page, /if \(!musicPlaying\) void startWaitingMusic\(\)/);
+
+  assert.match(css, /\.checkin-display-smart-end\s*\{/);
+  assert.match(css, /\.checkin-display-smart-end\.is-confirmed/);
+  assert.match(css, /\.checkin-display-smart-end\.is-failed/);
 });
