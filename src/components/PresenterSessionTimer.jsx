@@ -376,6 +376,33 @@ export default function PresenterSessionTimer({ slide }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (!agendaAutoStartRequested || agendaAutoStartHandledRef.current || !durationSeconds) return;
+    if (hydratedKey !== storageKey) return;
+    if (attendanceControlsTimer) {
+      agendaAutoStartHandledRef.current = true;
+      return;
+    }
+    if (presenterLive.classRecordId && !presenterLive.hasSnapshot) return;
+    agendaAutoStartHandledRef.current = true;
+    startOrResume();
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("autostart");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      // Autostart is already guarded in-memory if URL cleanup is unavailable.
+    }
+  }, [
+    agendaAutoStartRequested,
+    attendanceControlsTimer,
+    durationSeconds,
+    hydratedKey,
+    presenterLive.classRecordId,
+    presenterLive.hasSnapshot,
+    storageKey,
+  ]);
+
   if (!durationSeconds) return null;
 
   const expired = remaining <= 0;
@@ -469,33 +496,6 @@ export default function PresenterSessionTimer({ slide }) {
     void startTimerSession(seconds, nextEndAt, nextWarned);
     if (soundEnabled) ensureAudioContext()?.resume?.().catch?.(() => {});
   }
-
-  useEffect(() => {
-    if (!agendaAutoStartRequested || agendaAutoStartHandledRef.current || !durationSeconds) return;
-    if (hydratedKey !== storageKey) return;
-    if (attendanceControlsTimer) {
-      agendaAutoStartHandledRef.current = true;
-      return;
-    }
-    if (presenterLive.classRecordId && !presenterLive.hasSnapshot) return;
-    agendaAutoStartHandledRef.current = true;
-    startOrResume();
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("autostart");
-      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-    } catch {
-      // Autostart is already guarded in-memory if URL cleanup is unavailable.
-    }
-  }, [
-    agendaAutoStartRequested,
-    attendanceControlsTimer,
-    durationSeconds,
-    hydratedKey,
-    presenterLive.classRecordId,
-    presenterLive.hasSnapshot,
-    storageKey,
-  ]);
 
   function pause() {
     if (attendanceControlsTimer || !running) return;
