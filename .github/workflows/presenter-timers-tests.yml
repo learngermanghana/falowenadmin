@@ -7,6 +7,7 @@ on:
       - "src/components/PresenterSessionTimer.css"
       - "src/hooks/usePresenterLiveSession.js"
       - "src/pages/CheckinDisplayPage.jsx"
+      - "src/pages/TeacherLessonDashboardPage.jsx"
       - "src/hooks/usePresenterLiveSession.js"
       - "src/pages/CheckinDisplayPage.jsx"
       - "src/components/PresenterStudentPicker.jsx"

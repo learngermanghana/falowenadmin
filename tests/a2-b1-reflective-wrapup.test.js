@@ -4,68 +4,78 @@ import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
+const OLD_REPETITIVE_IDS = new Set([
+  "grammar-check",
+  "vocabulary-retrieval",
+  "sentence-builder",
+  "guided-action",
+  "role-play",
+  "b1-grammar-check",
+  "b1-vocabulary-retrieval",
+  "b1-sentence-builder",
+  "b1-guided-action",
+  "b1-role-play",
+  "learning-reflection",
+  "learning-exit-ticket",
+]);
+
 for (const level of ["A2", "B1"]) {
-  test(`${level} final presenter stages use reflection instead of repeated topic questions`, () => {
+  test(`${level} uses one weekly challenge mechanic before the final lesson summary`, () => {
     const slides = getSlidesByCourse(level);
     assert.equal(slides.length, 28);
 
+    const titlesByWeek = new Map();
     for (const slide of slides) {
       const stages = buildTeachingPresenterStages(slide, slide.topic);
       const ids = stages.map((stage) => stage.id);
+      const challenge = stages.find((stage) => stage.id === "weekly-challenge");
 
-      assert.ok(ids.includes("learning-reflection"), `${slide.assignmentId} missing learning reflection`);
-      assert.ok(ids.includes("learning-exit-ticket"), `${slide.assignmentId} missing exit reflection`);
-      assert.equal(ids.includes("guided-action"), false, `${slide.assignmentId} still has repeated guided-action stage`);
-      assert.equal(ids.includes("role-play"), false, `${slide.assignmentId} still has repeated role-play stage`);
-      assert.equal(ids.includes("b1-guided-action"), false, `${slide.assignmentId} still has repeated B1 guided-action stage`);
-      assert.equal(ids.includes("b1-role-play"), false, `${slide.assignmentId} still has repeated B1 role-play stage`);
+      assert.ok(challenge, `${slide.assignmentId} missing weekly challenge`);
+      assert.equal(challenge.type, "flow");
+      assert.ok(challenge.items.length >= 3, `${slide.assignmentId} should expose a multi-step weekly challenge`);
+      assert.deepEqual(ids.slice(-2), ["weekly-challenge", "lesson-summary"], `${slide.assignmentId} should end with weekly challenge then summary`);
 
-      assert.deepEqual(ids.slice(-3), ["learning-reflection", "learning-exit-ticket", "lesson-summary"], `${slide.assignmentId} final reflection, exit ticket and lesson summary`);
-
-      const reflection = stages.find((stage) => stage.id === "learning-reflection");
-      assert.equal(reflection.title, "Was hast du heute gelernt?");
-      assert.ok(reflection.items.some((item) => /Welche Grammatik hast du heute gelernt/i.test(item)), slide.assignmentId);
-      assert.ok(reflection.items.some((item) => /eigenen Satz/i.test(item)), slide.assignmentId);
-
-      const exit = stages.find((stage) => stage.id === "learning-exit-ticket");
-      assert.equal(exit.title, "Was nimmst du mit?");
-      assert.ok(exit.items.some((item) => /besser als vorher/i.test(item)), slide.assignmentId);
-
-      const repeatedQuestions = new Set((slide.studentQuestionsDe || []).map((item) => String(item).trim()));
-      for (const item of [...reflection.items, ...exit.items]) {
-        assert.equal(repeatedQuestions.has(String(item).trim()), false, `${slide.assignmentId} repeats a student question`);
+      for (const oldId of OLD_REPETITIVE_IDS) {
+        assert.equal(ids.includes(oldId), false, `${slide.assignmentId} still exposes repetitive ending ${oldId}`);
       }
-    }
-  });
 
-  test(`${level} removes the redundant mini-presentation page from every lesson`, () => {
-    for (const slide of getSlidesByCourse(level)) {
-      const stages = buildTeachingPresenterStages(slide, slide.topic);
-      const ids = stages.map((stage) => stage.id);
-      const renderedText = stages.map((stage) => [
-        stage.title,
-        stage.body,
-        ...(Array.isArray(stage.items) ? stage.items : []),
-      ].filter(Boolean).join(" ")).join(" ");
+      const week = Math.ceil(slide.dayNumber / 4);
+      const existing = titlesByWeek.get(week);
+      if (existing) assert.equal(challenge.title, existing, `${slide.assignmentId} should use the same mechanic identity within week ${week}`);
+      else titlesByWeek.set(week, challenge.title);
 
-      assert.equal(ids.includes("wrapup"), false, `${slide.assignmentId} still has a wrap-up page`);
-      assert.doesNotMatch(renderedText, /Mini-Präsentation/);
-      assert.doesNotMatch(renderedText, /Heute möchte ich über das Thema/);
+      const challengeText = JSON.stringify(challenge);
+      assert.doesNotMatch(challengeText, /Finde und korrigiere den Fehler/i);
+      assert.doesNotMatch(challengeText, /Baue einen stärkeren B1-Satz/i);
     }
+
+    assert.equal(titlesByWeek.size, 7);
+    assert.equal(new Set(titlesByWeek.values()).size, 7, `${level} should expose seven distinct weekly mechanics`);
   });
 }
 
-test("A2 Day 4 no longer renders the meeting mini-presentation prompt", () => {
-  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-2.4");
+test("A2 week 6 uses the new two-minute fluency mechanic", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.dayNumber === 21);
+  const challenge = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "weekly-challenge");
+  assert.match(challenge.title, /2-Minuten-Challenge/);
+  assert.ok(challenge.items.some((item) => item.minutes === 2 && /2 Minuten/i.test(item.instruction)));
+});
+
+test("B1 week 6 uses the new three-minute position mechanic", () => {
+  const slide = getSlidesByCourse("B1").find((item) => item.dayNumber === 21);
+  const challenge = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "weekly-challenge");
+  assert.match(challenge.title, /3-Minuten-Position/);
+  assert.ok(challenge.items.some((item) => item.minutes === 3 && /3 Minuten/i.test(item.instruction)));
+});
+
+test("B1 Day 15 ends with Interview and spontaneous follow-up, not the old predictable drill", () => {
+  const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-5.15");
   assert.ok(slide);
   const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const renderedText = stages.map((stage) => [
-    stage.title,
-    stage.body,
-    ...(Array.isArray(stage.items) ? stage.items : []),
-  ].filter(Boolean).join(" ")).join(" ");
+  const challenge = stages.find((stage) => stage.id === "weekly-challenge");
 
-  assert.doesNotMatch(renderedText, /Plane ein Treffen in 4–5 Sätzen/);
-  assert.doesNotMatch(renderedText, /Heute möchte ich über das Thema/);
-  assert.equal(stages.some((stage) => stage.id === "wrapup"), false);
+  assert.match(challenge.title, /Interview & Rückfrage/);
+  assert.ok(challenge.items.some((item) => /Spontane Rückfrage/i.test(item.title)));
+  assert.match(JSON.stringify(challenge), /nicht auf der Folie steht/i);
+  assert.deepEqual(stages.map((stage) => stage.id).slice(-2), ["weekly-challenge", "lesson-summary"]);
 });

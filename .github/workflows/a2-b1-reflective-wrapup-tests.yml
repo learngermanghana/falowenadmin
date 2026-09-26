@@ -1,4 +1,4 @@
-name: A2 B1 reflective wrap-up tests
+name: A2 B1 weekly challenge tests
 
 on:
   pull_request:
@@ -47,11 +47,11 @@ jobs:
           node scripts/patchB1ActionablePractice.mjs
           node scripts/patchA2B1ReflectiveWrapup.mjs
           node scripts/patchA2B1ReflectiveWrapup.mjs
-      - name: Validate reflective wrap-up source
+      - name: Validate weekly challenge source
         run: |
           node --check scripts/patchA2B1ReflectiveWrapup.mjs
           node --check src/utils/teachingPresenter.js
-      - name: Run A2 B1 reflective wrap-up regressions
+      - name: Run A2 B1 weekly challenge regressions
         run: node --test tests/a2-b1-reflective-wrapup.test.js
       - name: Build production bundle
         run: npm run build

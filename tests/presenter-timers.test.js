@@ -290,3 +290,35 @@ test("per-student warm-up suspends and hides the picker answer timer", () => {
   assert.match(picker, /pickerResponseDeadline: sharedResponseDeadline/);
   assert.match(picker, /pickerResponseTimedOut: sharedResponseTimedOut/);
 });
+
+
+test("slide offers a manual timer fallback when Attendance marks class started but timer sync failed", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  const css = read("src/components/PresenterSessionTimer.css");
+
+  assert.match(source, /const attendanceTimerNeedsManualStart = attendanceControlsTimer/);
+  assert.match(source, /!Boolean\(liveState\.timerExpired\)/);
+  assert.match(source, /!Boolean\(liveState\.timerRunning\)/);
+  assert.match(source, /Start timer manually/);
+  assert.match(source, /startAttendanceTimerManually/);
+  assert.match(source, /classStartedAtMs \+ \(durationSeconds \* 1000\)/);
+  assert.match(source, /timerRepairSource: "presenter-manual-fallback"/);
+  assert.match(source, /sessionTimingAuthority: "attendance"/);
+  assert.match(source, /Attendance marked the class started, but the timer is not running/);
+  assert.match(css, /is-attendance-repair/);
+});
+
+test("Agenda Start class opens Presenter and starts the class timer in one click", () => {
+  const dashboard = read("src/pages/TeacherLessonDashboardPage.jsx");
+  const timer = read("src/components/PresenterSessionTimer.jsx");
+
+  assert.match(dashboard, /startClassUrl = slideUrl \? `\$\{slideUrl\}\?present=1&autostart=1`/);
+  assert.match(dashboard, /onClick=\{preparePresenterStart\}>Start class<\/Link>/);
+  assert.match(dashboard, /setPresenterClassContext\(\{ classId, classRecordId, sessionKey \}\)/);
+  assert.match(dashboard, /presenterSessionKey\(/);
+  assert.match(timer, /new URLSearchParams\(window\.location\.search\)\.get\("autostart"\) === "1"/);
+  assert.match(timer, /agendaAutoStartHandledRef/);
+  assert.match(timer, /startPresenterLiveSession\(/);
+  assert.match(timer, /classStartSource: "presenter"/);
+  assert.match(timer, /url\.searchParams\.delete\("autostart"\)/);
+});
