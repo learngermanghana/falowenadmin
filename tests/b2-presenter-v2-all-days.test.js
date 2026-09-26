@@ -209,7 +209,7 @@ test("Presenter selectively reveals only one B2 private role card at a time", ()
   const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
   const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
 
-  assert.match(presenter, /const \[revealedFlowRole, setRevealedFlowRole\] = useState\("")/);
+  assert.match(presenter, /const \[revealedFlowRole, setRevealedFlowRole\] = useState\(""\)/);
   assert.match(presenter, /Array\.isArray\(item\.roleCards\)/);
   assert.match(presenter, /revealedFlowRole === card\.id/);
   assert.match(presenter, /current === card\.id \? "" : card\.id/);
