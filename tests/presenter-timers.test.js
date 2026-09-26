@@ -112,9 +112,28 @@ test("student speaking timer is level-aware and beeps when time ends", () => {
   assert.match(picker, /\+15s/);
 });
 
-test("normal presenter build chain applies speaking timer patches", () => {
+test("normal presenter build chain applies speaking timer and feedback patches", () => {
   const patch = read("scripts/patchPresenterStudentPicker.mjs");
   assert.match(patch, /patchPresenterSessionAndResponseTimers\.mjs/);
+  assert.match(patch, /patchPresenterSpeakingFeedback\.mjs/);
+});
+
+test("A2 and B1 use Speak to Feedback to Next student with a live rubric", () => {
+  const picker = read("src/components/PresenterStudentPicker.jsx");
+  const css = read("src/components/PresenterStudentPicker.css");
+  assert.match(picker, /structuredSpeakingFlow = course === "A2" \|\| course === "B1"/);
+  assert.match(picker, /SPEAKING_RUBRIC_ITEMS/);
+  assert.match(picker, /Language clear/);
+  assert.match(picker, /Grammar controlled/);
+  assert.match(picker, /Task completed/);
+  assert.match(picker, /setSpeakingPhase\("feedback"\)/);
+  assert.match(picker, /setSpeakingFeedbackReason\("time"\)/);
+  assert.match(picker, /Finish speaking → feedback/);
+  assert.match(picker, /Give \+15s/);
+  assert.match(picker, /structuredSpeakingFlow && speakingPhase === "speaking"/);
+  assert.match(picker, /Then record Correct or Needs help below/);
+  assert.match(css, /presenter-structured-speaking-feedback/);
+  assert.match(css, /\.presenter-speaking-rubric button\.is-observed/);
 });
 
 test("student answer timer uses an absolute deadline clock and recovers after browser throttling", () => {
