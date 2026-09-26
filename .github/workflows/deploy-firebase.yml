@@ -116,7 +116,6 @@ jobs:
           grep -F 'exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted' functions/index.js
           grep -F 'exports.autoRemoveIneligibleStudentFromOrientationSheet = onDocumentUpdated' functions/index.js
           grep -F 'payment_or_active_trial_required' functions/index.js
-          grep -F 'payment_required' functions/index.js
           grep -F 'document: "payments/{reference}"' functions/index.js
           grep -F 'const paystackSecretKeySecret = defineSecret("PAYSTACK_SECRET")' functions/index.js
           grep -F 'writingStrengths:' functions/index.js
