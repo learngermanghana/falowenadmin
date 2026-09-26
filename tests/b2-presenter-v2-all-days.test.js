@@ -42,7 +42,7 @@ const TOPICS = [
 
 const REQUIRED_STAGES = [
   "intro", "warmup", "phrases", "grammar", "examples",
-  "practice", "workbook", "mistakes", "questions", "wrapup",
+  "practice", "workbook", "mistakes", "questions", "weekly-challenge", "lesson-summary",
 ];
 
 function expectedAssignmentId(day) {
@@ -82,8 +82,16 @@ test("all B2 days use Presenter 2.0 with substantial classroom support", () => {
     const questions = stages.find((stage) => stage.id === "questions");
     const practice = stages.find((stage) => stage.id === "practice");
     const workbook = stages.find((stage) => stage.id === "workbook");
+    const warmup = stages.find((stage) => stage.id === "warmup");
+    const vocabulary = stages.find((stage) => stage.id === "phrases");
+    const weeklyChallenge = stages.find((stage) => stage.id === "weekly-challenge");
 
     assert.ok(grammar.items.length >= 3, `${slide.assignmentId} should have focused B2 grammar`);
+    assert.equal(warmup.questionSupport.length, warmup.items.length, `${slide.assignmentId} should use enhanced warm-up cards`);
+    assert.equal(vocabulary.type, "vocabulary");
+    assert.ok(vocabulary.items.length >= 6, `${slide.assignmentId} should use vocabulary cards`);
+    assert.ok(weeklyChallenge.items.length >= 3, `${slide.assignmentId} should have a weekly challenge`);
+    assert.equal(stages.some((stage) => stage.id === "wrapup"), false, `${slide.assignmentId} should finish through challenge + summary rather than a duplicate wrap-up`);
     assert.equal(questions.type, "question-reveal");
     assert.ok(questions.items.length >= 5, `${slide.assignmentId} should have five speaking questions`);
     assert.ok(questions.supportItems.length >= 5, `${slide.assignmentId} should have matching model answers`);
