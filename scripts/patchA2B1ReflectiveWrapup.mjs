@@ -33,7 +33,7 @@ source = source.replace(legacyWrapupMutation, "");
 const weeklyChallengeBlock = [
   '  // a2-b1-weekly-challenge:start',
   '  const weeklyLevel = classroomLevel(slide);',
-  '  if (["A2", "B1"].includes(weeklyLevel)) {',
+  '  if (weeklyLevel === "B1") {',
   '    const repetitiveEndStageIds = new Set([',
   '      "grammar-check", "vocabulary-retrieval", "sentence-builder", "guided-action", "role-play",',
   '      "b1-grammar-check", "b1-vocabulary-retrieval", "b1-sentence-builder", "b1-guided-action", "b1-role-play",',
@@ -188,4 +188,4 @@ if (source.includes('id: "learning-reflection"') || source.includes('id: "learni
 }
 
 fs.writeFileSync(presenterPath, source);
-console.log("A2/B1 presenter: repeated end drills replaced by seven weekly challenge mechanics.");
+console.log("B1 presenter: weekly challenge mechanics preserved; A2 now uses its dedicated teaching spine.");
