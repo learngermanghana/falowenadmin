@@ -263,6 +263,89 @@ function advancedWarmupFollowUpDe(question = "", level = "") {
     if (/\bwarum\b/i.test(text)) return "Welche plausible Gegenposition könnte deine Begründung relativieren?";
     return "Unter welcher Bedingung würdest du deine Position ändern oder stärker einschränken?";
   }
+  if (level === "C1") {
+    const focusTask = buildC1FocusedTask(slide);
+    const writingBridge = buildC1WritingBridge(slide);
+    const grammarSupportEn = c1GrammarSupportEn(slide.canonicalLearnerLesson?.grammarTitle || "");
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
+        title: slide.title || "Lesson",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "",
+        studentReference,
+      },
+      {
+        id: "warmup",
+        type: "list",
+        kicker: "Warm-up",
+        title: "Warm-up · Thema aktivieren",
+        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
+        questionSupport: buildWarmupQuestionSupport(slide),
+        suggestedMinutes: 5,
+        timingMode: "per-student",
+        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+      },
+      ...(topicFoundation ? [{
+        id: "foundation",
+        type: "foundation",
+        ...topicFoundation,
+      }] : []),
+      {
+        id: "phrases",
+        type: "vocabulary",
+        kicker: "Kollokationen & Argumentationssprache",
+        title: "Präzise Sprache für das Thema",
+        items: vocabularyItems,
+        instruction: "Nutze mindestens zwei thematische Kollokationen und ein Argumentationsmittel später in deiner Antwort.",
+        suggestedMinutes: 6,
+      },
+      {
+        id: "grammar",
+        type: "c1-grammar",
+        kicker: "Grammatik im Kontext",
+        title: "Struktur kontrollieren · Funktion verstehen",
+        items: grammarItems,
+        supportEn: grammarSupportEn,
+        attentionDe: String(slide.canonicalLearnerLesson?.mistake || ""),
+        suggestedMinutes: 10,
+      },
+      {
+        id: "examples",
+        type: "list",
+        kicker: "Modellsätze",
+        title: "So klingt kontrolliertes C1",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+        suggestedMinutes: 6,
+      },
+      {
+        id: "focus",
+        type: "flow",
+        kicker: "C1-Fokusaufgabe",
+        title: focusTask.title,
+        items: [focusTask],
+        suggestedMinutes: focusTask.minutes,
+      },
+      {
+        ...speakingStage,
+        title: "Sprechen · argumentieren und reagieren",
+        suggestedMinutes: 16,
+      },
+      {
+        id: "writing",
+        type: "flow",
+        kicker: "Schreiben",
+        title: writingBridge.title,
+        items: [writingBridge],
+        suggestedMinutes: writingBridge.minutes,
+      },
+      workbookStage,
+    ];
+  }
+
   if (level === "C2") {
     if (isWarmupComparisonQuestion(text) || /\boder\b/i.test(text)) return "Nach welchen Kriterien ist dieser Vergleich tragfähig, und wo stößt er an seine Grenzen?";
     if (/\bwie\s+(?:kann|könnte|sollte)\b|\bmaßnahme|lösung|strategie\b/i.test(text)) return "Unter welchen Bedingungen wäre diese Maßnahme nur bedingt wirksam oder sogar kontraproduktiv?";
@@ -416,7 +499,7 @@ function buildLessonSummaryItems(slide = {}) {
 
 function buildAdvancedWeeklyChallenge(slide = {}) {
   const level = classroomLevel(slide);
-  if (!["B2", "C1", "C2"].includes(level)) return null;
+  if (level !== "B2") return null;
 
   const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
   const week = Math.min(7, Math.max(1, Math.ceil(day / 4)));
@@ -680,6 +763,151 @@ function buildC2WritingBridge(slide = {}) {
       "Welche Zielstruktur passt zur heutigen Grammatik?",
       "Welche Kasus-, Rektion- oder Wortstellungsstelle ist fehleranfällig?",
       "Welche Register- oder Bedeutungsverschiebung musst du am Ende kontrollieren?",
+    ],
+    minutes: 8,
+  };
+}
+
+function c1GrammarSupportEn(grammarTitle = "") {
+  const title = String(grammarTitle || "");
+  if (/Relativsätze mit Präposition/i.test(title)) return "Keep the preposition before the relative pronoun and use the case required by that preposition.";
+  if (/Partizip I und Partizip II|Partizipialattribute/i.test(title)) return "Participial attributes behave like adjectives: keep the reference clear and give the participle the correct adjective ending.";
+  if (/Konjunktiv I|indirekte Rede/i.test(title)) return "Use Konjunktiv I to report someone else's statement with distance; it does not make the statement true.";
+  if (/konditionale|Voraussetzung/i.test(title)) return "Separate condition from purpose: falls/sofern/vorausgesetzt, dass express a condition; damit/um ... zu express purpose.";
+  if (/kausale|konsekutive|Ursache|Folge/i.test(title)) return "Make the logical relation explicit: cause, consequence and concession are not interchangeable.";
+  if (/konzessive|adversative|Abwägung|Vergleich/i.test(title)) return "Use contrast structures to show the exact relationship between two positions, not just to add another idea.";
+  if (/Nominalisierung|Nominalstil|Präpositionalstil/i.test(title)) return "Nominal style can make formal writing denser, but avoid chains of nouns that hide who does what.";
+  if (/Passiv|Modalpassiv|Zustandspassiv/i.test(title)) return "Choose passive when the process or result matters more than the actor; name the actor when responsibility is important.";
+  if (/Zukunft|Futur|Hypothesen/i.test(title)) return "Distinguish a future plan from a prediction or hypothesis and use modal language to show uncertainty.";
+  if (/wissenschaftlich|Quellenbezug|vorsichtige Bewertung/i.test(title)) return "Separate source, evidence, interpretation and your own evaluation; qualify claims that the evidence cannot fully support.";
+  if (/Adjektivdeklination/i.test(title)) return "The adjective ending depends on article, case, gender and number; check the whole noun phrase, not the adjective in isolation.";
+  if (/formelle Sprache|Register/i.test(title)) return "Match register to purpose and audience; formal language should be precise, not unnecessarily complicated.";
+  return "Use the target structure because it makes the logical relationship clearer, not simply because it sounds more advanced.";
+}
+
+function buildC1FocusedTask(slide = {}) {
+  const meta = slide.canonicalLearnerLesson || {};
+  const day = Math.max(1, Number(meta.day || slide.dayNumber || 1));
+  const title = String(meta.title || cleanTopic(slide));
+  const question = String(meta.coreQuestion || slide.studentQuestionsDe?.[4] || `Welche Position vertrittst du zu „${title}“?`);
+  const tension = String(meta.tension || "");
+  const angles = Array.isArray(meta.angles) ? meta.angles.filter(Boolean) : [];
+  const points = Array.isArray(meta.points) ? meta.points.filter(Boolean) : [];
+  const intro = String(meta.foundationIntro || "");
+  const example = String(meta.foundationExample || "");
+  const grammarTitle = String(meta.grammarTitle || "");
+  const speakingModels = (Array.isArray(slide.speakingModels) ? slide.speakingModels : [])
+    .map((item) => item?.modelAnswerDe)
+    .filter(Boolean)
+    .slice(0, 2);
+  const [left, right] = tension.split("↔").map((part) => part.trim());
+  const mechanic = ((day - 1) % 8) + 1;
+
+  const variants = {
+    1: {
+      title: "Position + Begründung",
+      instruction: "Formuliere eine klare Position und begründe sie mit einem Kriterium, einem Beispiel und einer Einschränkung.",
+      prompts: [
+        question,
+        angles[0] ? `Berücksichtige: ${angles[0]}` : "Lege ein klares Bewertungskriterium fest.",
+        example ? `Nutze oder bewerte dieses Beispiel: ${example}` : "Ergänze ein konkretes Beispiel.",
+        `Verwende die Zielgrammatik gezielt: ${grammarTitle}`,
+      ],
+    },
+    2: {
+      title: "Perspektiven vergleichen",
+      instruction: "Vergleiche zwei Perspektiven nach demselben Kriterium und zeige anschließend, welche unter welcher Bedingung stärker wiegt.",
+      prompts: [
+        `Perspektive A: ${angles[0] || left || "individuelle Interessen"}`,
+        `Perspektive B: ${angles[1] || right || "gesellschaftliche Interessen"}`,
+        angles[2] ? `Zusätzlicher Faktor: ${angles[2]}` : "Nenne einen zusätzlichen Faktor.",
+        "Nutze mindestens eine präzise adversative oder konzessive Verknüpfung.",
+      ],
+    },
+    3: {
+      title: "Paraphrasieren ohne Bedeutungsverlust",
+      instruction: "Formuliere die Kernaussage in eigenen Worten. Kürze, aber erhalte Ursache, Einschränkung und zentrale Aussage.",
+      prompts: [
+        `Ausgangstext: ${intro}`,
+        "Schreibe oder sage die Aussage in höchstens zwei Sätzen neu.",
+        "Markiere anschließend, welche Information auf keinen Fall verloren gehen durfte.",
+        `Baue, wenn sinnvoll, die heutige Zielstruktur ein: ${grammarTitle}`,
+      ],
+    },
+    4: {
+      title: "Registerwechsel",
+      instruction: "Überführe eine direkte Alltagssaussage in sachliches C1-Deutsch und erkläre zwei sprachliche Änderungen.",
+      prompts: [
+        `Alltagssatz: „Ich finde, ${title} ist ein wichtiges Thema und man sollte einfach etwas dagegen tun.“`,
+        "Formuliere eine neutrale, formelle Version.",
+        "Erkläre, wie du Bewertung, Präzision oder Verantwortlichkeit sprachlich verändert hast.",
+        meta.mistake ? `Kontrolliere besonders: ${meta.mistake}` : "Kontrolliere Register und Satzbezüge.",
+      ],
+    },
+    5: {
+      title: "Kurz zusammenfassen & einordnen",
+      instruction: "Fasse die Information knapp zusammen und trenne anschließend Inhalt von deiner eigenen Einordnung.",
+      prompts: [
+        `Kurzquelle: ${intro} ${example}`,
+        "Fasse die Quelle in zwei Sätzen zusammen, ohne sie zu kommentieren.",
+        "Ergänze danach genau einen Satz mit deiner Einordnung.",
+        "Kennzeichne sprachlich klar, wo Zusammenfassung endet und Bewertung beginnt.",
+      ],
+    },
+    6: {
+      title: "Gegenargument ernst nehmen",
+      instruction: "Formuliere die stärkste plausible Gegenposition und reagiere darauf, ohne sie abzuwerten oder zu vereinfachen.",
+      prompts: [
+        points[0] || question,
+        `Gegenperspektive: ${angles[1] || right || "Welche Einwände könnte eine andere Gruppe haben?"}`,
+        "Antworte zuerst mit einer teilweisen Anerkennung, dann mit deiner begründeten Einschränkung.",
+        `Nutze die Zielgrammatik: ${grammarTitle}`,
+      ],
+    },
+    7: {
+      title: "Mediation · für ein anderes Publikum",
+      instruction: "Vermittle denselben Inhalt für eine Person, die das Thema nicht kennt. Vereinfache die Form, aber nicht die Bedeutung.",
+      prompts: [
+        `Ausgangsinformation: ${intro}`,
+        "Erkläre das Problem in drei klaren Sätzen für einen neuen Kollegen oder Kursteilnehmer.",
+        example ? `Baue dieses Beispiel verständlich ein: ${example}` : "Baue ein konkretes Beispiel ein.",
+        "Nenne anschließend einen Begriff, den du bewusst vereinfacht oder umformuliert hast.",
+      ],
+    },
+    8: {
+      title: "Strukturierte Mini-Debatte",
+      instruction: "Führe eine kurze Debatte mit Eröffnung, Gegenposition, Reaktion und Schluss.",
+      prompts: [
+        `Leitfrage: ${question}`,
+        `Seite A: ${left || angles[0] || "erste Perspektive"}`,
+        `Seite B: ${right || angles[1] || "zweite Perspektive"}`,
+        "Schluss: Formuliere eine Position, die den stärksten Einwand sichtbar berücksichtigt.",
+      ],
+    },
+  };
+
+  const selected = variants[mechanic];
+  return {
+    ...selected,
+    modelItems: speakingModels,
+    minutes: 10,
+  };
+}
+
+function buildC1WritingBridge(slide = {}) {
+  const meta = slide.canonicalLearnerLesson || {};
+  const question = String(meta.coreQuestion || slide.studentQuestionsDe?.[4] || cleanTopic(slide));
+  const grammarTitle = String(meta.grammarTitle || "");
+  return {
+    title: "Schreibbrücke · Argument in Absatzform",
+    instruction: "Übertrage die mündliche Argumentation in einen klaren C1-Absatz. Schreibe die eigentliche Workbook-Aufgabe anschließend im Falowen-Kurs.",
+    prompts: [
+      `Leitfrage: ${question}`,
+      "1. These oder klare Hauptaussage",
+      "2. Begründung + konkretes Beispiel",
+      "3. Gegenargument + Reaktion",
+      `4. Zielgrammatik kontrolliert einsetzen: ${grammarTitle}`,
+      "5. Mit einer differenzierten Schlussfolgerung schließen",
     ],
     minutes: 8,
   };
