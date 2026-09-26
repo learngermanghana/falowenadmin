@@ -154,7 +154,7 @@ test("starting class invalidates pending waiting-room audio startup", () => {
   assert.doesNotMatch(page, /musicStartGenerationRef\.current !== startGeneration \|\| classStartedRef\.current/);
   assert.match(page, /classStartedRef\.current = true;/);
   assert.match(page, /musicStartGenerationRef\.current \+= 1;/);
-  assert.match(page, /if \(!musicPlaying\) \{\s*stopWaitingMusic\(\);\s*return;/);
+  assert.match(page, /if \(!context \|\| !masterGain \|\| context\.state === "closed" \|\| !musicPlaying\) \{\s*stopWaitingMusic\(\);\s*return;/);
 
   assert.match(patch, /musicStartGenerationRef\.current !== startGeneration/);
   assert.match(patch, /stopWaitingMusicPlaylist\(context\)/);
@@ -383,7 +383,7 @@ test("restored class starts recover automatically and keep manual retry for fail
 
   assert.match(page, /\["restored", "error"\]\.includes\(slideSyncStatus\.state\)/);
   assert.match(page, /sharedTimerMissing/);
-  assert.match(page, /Resend to slides/);
+  assert.match(page, /Retry slide sync|Retry connection/);
   assert.doesNotMatch(page, />Sync slides now<\/button>/);
 });
 
