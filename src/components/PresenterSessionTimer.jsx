@@ -412,7 +412,6 @@ export default function PresenterSessionTimer({ slide }) {
       });
       if (!result?.ok) {
         setAttendanceRepairState("failed");
-        autoAttendanceRepairKeyRef.current = "";
       }
     }, 750);
 
@@ -428,6 +427,14 @@ export default function PresenterSessionTimer({ slide }) {
     presenterLive.publish,
     presenterLive.sessionKey,
   ]);
+
+  useEffect(() => {
+    if (attendanceRepairState !== "repairing" || !attendanceTimerNeedsManualStart) return undefined;
+    const verifyTimer = window.setTimeout(() => {
+      setAttendanceRepairState((current) => current === "repairing" ? "failed" : current);
+    }, 4000);
+    return () => window.clearTimeout(verifyTimer);
+  }, [attendanceRepairState, attendanceTimerNeedsManualStart]);
 
   useEffect(() => {
     if (!attendanceControlsTimer || attendanceSessionEnded || !attendanceStartRequestId) return;
@@ -447,6 +454,8 @@ export default function PresenterSessionTimer({ slide }) {
     attendanceControlsTimer,
     attendanceSessionEnded,
     attendanceStartRequestId,
+    liveState.attendanceStartAttempt,
+    liveState.attendanceStartRequestedAtMs,
     liveState.timerEndAt,
     liveState.timerExpired,
     liveState.timerRunning,
