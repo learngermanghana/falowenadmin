@@ -123,5 +123,23 @@ if (fs.existsSync(b1RegressionPath)) {
   ]);
 }
 
+{
+  const presenterPath = path.join(root, "src/utils/teachingPresenter.js");
+  const presenterSource = fs.readFileSync(presenterPath, "utf8");
+  const requiredC1Markers = [
+    'if (level === "C1") {',
+    'id: "focus"',
+    'type: "c1-grammar"',
+    'title: "Sprechen · argumentieren und reagieren"',
+    'title: "Schreibbrücke · Argument in Absatzform"',
+    'if (level !== "B2") return null;',
+  ];
+  for (const marker of requiredC1Markers) {
+    if (!presenterSource.includes(marker)) {
+      throw new Error("C1 argumentation teaching spine marker missing: " + marker);
+    }
+  }
+}
+
 console.log("Canonical A1 teaching-slide day mapping is patched; B2/C1 keep direct curriculum speaking models.");
 await import("./patchC2CourseStyle.mjs");
