@@ -80,6 +80,18 @@
   color: #fff;
 }
 
+.presenter-session-timer-actions .presenter-session-start.is-attendance-repair {
+  border-color: #b45309;
+  background: #b45309;
+  color: #fff;
+}
+
+.presenter-session-timer-actions .presenter-session-start.is-attendance-repair:hover,
+.presenter-session-timer-actions .presenter-session-start.is-attendance-repair:focus-visible {
+  border-color: #92400e;
+  background: #92400e;
+}
+
 .presenter-session-timer-actions .presenter-session-sound {
   white-space: nowrap;
 }
