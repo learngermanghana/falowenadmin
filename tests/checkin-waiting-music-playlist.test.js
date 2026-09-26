@@ -543,32 +543,84 @@ test("attendance never reports Slides synchronized before acknowledgement", () =
 });
 
 
-test("waiting Attendance shows one real lesson warm-up teaser without starting the warm-up timer", () => {
+
+test("waiting Attendance rotates a Smart Class Lobby with lesson-derived content", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const css = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.css"), "utf8");
+
+  assert.match(page, /SMART_LOBBY_ROTATION_MS = 14000/);
+  assert.match(page, /const smartLobbySlides = useMemo/);
+  assert.match(page, /id: "checkin", label: "Check in"/);
+  assert.match(page, /id: "lesson", label: "Today’s lesson"/);
+  assert.match(page, /id: "outcomes", label: "What you’ll learn"/);
+  assert.match(page, /id: "warmup", label: "Get ready"/);
+  assert.match(page, /id: "starting", label: "Starting soon"/);
+  assert.match(page, /window\.setInterval\(\(\) => \{/);
+  assert.match(page, /SMART_LOBBY_ROTATION_MS/);
+  assert.match(page, /actualStartedAt \|\| smartLobbyPaused/);
+  assert.match(page, /Pause rotation/);
+  assert.match(page, /Resume rotation/);
+  assert.match(page, />Previous<\/button>/);
+  assert.match(page, />Next<\/button>/);
+  assert.match(page, /Auto-changing every 14 seconds/);
+
+  assert.match(page, /const presenterStages = buildTeachingPresenterStages/);
+  assert.match(page, /find\(\(stage\) => stage\.id === "lesson-summary"\)/);
+  assert.match(page, /filter\(\(item\) => String\(item\?\.label \|\| ""\) !== "Self-check"\)/);
+  assert.match(page, /slice\(0, 3\)/);
+  assert.match(page, /By the end of class/);
+  assert.match(page, /You should be able to…/);
+
+  assert.match(css, /\.checkin-display-smart-lobby\s*\{/);
+  assert.match(css, /@keyframes checkin-lobby-enter/);
+  assert.match(css, /\.checkin-display-lobby-dots button\.is-active/);
+});
+
+test("Smart Class Lobby keeps check-in available on every waiting slide", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /activeSmartLobbySlide\.id === "checkin"/);
+  assert.match(page, /QRCodeCanvas value=\{checkinUrl\} size=\{280\}/);
+  assert.match(page, /activeSmartLobbySlide\.id !== "checkin"/);
+  assert.match(page, /QRCodeCanvas value=\{checkinUrl\} size=\{112\}/);
+  assert.match(page, /Still need to check in\?/);
+  assert.match(page, /Scan anytime\./);
+  assert.match(page, /checkedInCount \+ " \/ " \+ expectedTotal/);
+});
+
+test("Smart Class Lobby warm-up remains preview-only and never starts the five-minute timer", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   const css = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.css"), "utf8");
 
   assert.match(page, /getTeachingSlideByAssignmentId/);
   assert.match(page, /getSlidesByCourse/);
-  assert.match(page, /buildTeachingPresenterStages/);
   assert.match(page, /find\(\(stage\) => stage\.id === "warmup"\)/);
   assert.match(page, /warmupStage\?\.items\?\.\[0\]/);
-  assert.match(page, /!actualStartedAt && waitingWarmupTeaser/);
   assert.match(page, /Get ready · Warm-up preview/);
   assert.match(page, /Think about your answer\./);
   assert.match(page, /You will answer after class starts\. The 5-minute warm-up timer is not running yet\./);
   assert.match(page, /renderWaitingWarmupQuestion/);
   assert.match(page, /splitWarmupQuestionSegments/);
   assert.match(page, /listClasses\(\)[\s\S]*setWaitingClassLevel/);
-
-  assert.match(css, /\.checkin-display-warmup-teaser\s*\{/);
   assert.match(css, /\.checkin-display-warmup-keyword\s*\{[\s\S]*background:\s*#facc15/);
 
-  const teaserStart = page.indexOf('className="checkin-display-warmup-teaser"');
-  const startButton = page.indexOf("Start class & slides");
-  assert.ok(teaserStart > 0 && startButton > 0, "waiting teaser and teacher start control should both exist");
+  const lobbyStart = page.indexOf('className="checkin-display-smart-lobby"');
+  const musicStart = page.indexOf("checkin-display-music", lobbyStart);
+  assert.ok(lobbyStart > 0 && musicStart > lobbyStart, "Smart Lobby should render before waiting-room music");
+
   assert.doesNotMatch(
-    page.slice(Math.max(0, teaserStart - 1200), teaserStart + 1800),
+    page.slice(Math.max(0, lobbyStart - 1500), musicStart),
     /setWarmup|warmupDeadline|WARMUP_PREPARATION_MINUTES|startWarmup/i,
-    "waiting teaser must remain preview-only and must not own the Presenter warm-up timer",
+    "Attendance lobby must preview the question without owning the Presenter warm-up timer",
   );
+});
+
+test("Smart Class Lobby disappears immediately after the teacher starts class", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /!actualStartedAt && activeSmartLobbySlide/);
+  assert.match(page, /if \(actualStartedAt \|\| smartLobbyPaused \|\| smartLobbySlides\.length <= 1\) return undefined/);
+  assert.match(page, /Start class & slides/);
+  assert.match(page, /setActualStartedAt\(startedAt\)/);
+  assert.match(page, /checkin-display-main-grid/);
 });
