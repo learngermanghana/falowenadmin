@@ -360,7 +360,7 @@ test("Presenter acknowledges Attendance end only after the shared class is ended
 
   assert.match(source, /const attendanceEndRequestId = normalize\(liveState\.attendanceEndRequestId\)/);
   assert.match(source, /presenterEndAckMatches/);
-  assert.match(source, /if \(!attendanceControlsTimer \|\| !attendanceSessionEnded \|\| !attendanceEndRequestId\) return/);
+  assert.match(source, /if \(!attendanceControlsTimer \|\| !attendanceSessionEnded \|\| !attendanceEndRequestId\) return(?: undefined)?;/);
   assert.match(source, /presenterEndAckRequestId: attendanceEndRequestId/);
   assert.match(source, /presenterEndAckAtMs: Date\.now\(\)/);
   assert.match(source, /presenterEndAckDeviceId: presenterLive\.deviceId/);
