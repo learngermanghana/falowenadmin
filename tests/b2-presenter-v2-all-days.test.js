@@ -138,3 +138,21 @@ test("B1 remains fully enabled after replacing the B2 curriculum", () => {
   assert.equal(b1Slides.length, 28);
   assert.ok(b1Slides.every((slide) => isTeachingPresenterV2Slide(slide)));
 });
+
+
+test("B2 rotates seven level-appropriate weekly challenge mechanics", () => {
+  const titlesByWeek = new Map();
+  for (const slide of getSlidesByCourse("B2")) {
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const challenge = stages.find((stage) => stage.id === "weekly-challenge");
+    const week = Math.ceil(slide.dayNumber / 4);
+    assert.ok(challenge, slide.assignmentId + " missing weekly challenge");
+    if (titlesByWeek.has(week)) {
+      assert.equal(challenge.title, titlesByWeek.get(week), slide.assignmentId + " should keep one mechanic identity within its week");
+    } else {
+      titlesByWeek.set(week, challenge.title);
+    }
+  }
+  assert.equal(titlesByWeek.size, 7);
+  assert.equal(new Set(titlesByWeek.values()).size, 7, "B2 should use seven distinct weekly mechanics");
+});
