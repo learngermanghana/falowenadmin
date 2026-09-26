@@ -109,7 +109,7 @@ patchFile("src/data/teachingSlides.js", [
 patchFile("src/utils/teachingPresenter.js", [
   {
     from: 'requiresQuestionModel: ["A2", "B1"].includes(String(slide.course || "").toUpperCase()),',
-    to: 'requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(String(slide.course || "").toUpperCase()),',
+    to: 'requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level),',
   },
 ]);
 
