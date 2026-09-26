@@ -236,8 +236,7 @@ export default function TeacherLessonDashboardPage() {
     const classRecordId = normalize(selectedClass?.id || selectedClassId);
     const classId = normalize(selectedClass?.classId || selectedClass?.id || selectedClassId);
     const rawSessionId = normalize(session?.id || session?.sessionId || session?.sessionKey || `day-${day}`);
-    const startsAt = session?.startsAt ? new Date(session.startsAt) : new Date();
-    const sessionDate = Number.isNaN(startsAt.getTime()) ? presenterLocalDateKey() : presenterLocalDateKey(startsAt);
+    const sessionDate = presenterLocalDateKey();
     const sessionKey = presenterSessionKey({
       sessionDate,
       sessionId: rawSessionId,
