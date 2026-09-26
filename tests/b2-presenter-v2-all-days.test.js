@@ -214,7 +214,7 @@ test("Presenter selectively reveals only one B2 private role card at a time", ()
   assert.match(presenter, /revealedFlowRole === card\.id/);
   assert.match(presenter, /current === card\.id \? "" : card\.id/);
   assert.match(presenter, /Only show one card at a time\. The other partner should look away\./);
-  assert.match(presenter, /setRevealedFlowRole\("");\s*setStageIndex/);
+  assert.match(presenter, /setRevealedFlowRole\(""\);\s*setStageIndex/);
   assert.match(css, /\.presenter-role-gap-card/);
   assert.match(css, /\.presenter-role-gap-actions button\.is-active/);
 });
