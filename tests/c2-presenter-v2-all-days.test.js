@@ -41,6 +41,20 @@ const EXPECTED = [
   ["5.4","C2 Prüfungssimulation: Stellungnahme, Umformung und Synthese","Register, Nuance, Evidenz, Kohäsion und Reformulierung"],
 ];
 
+const SPINE = [
+  "intro",
+  "warmup",
+  "foundation",
+  "phrases",
+  "grammar",
+  "examples",
+  "analysis",
+  "questions",
+  "writing",
+  "workbook",
+  "lesson-summary",
+];
+
 test("C2 Admin slides match the current Falowen runtime curriculum day 1–28", () => {
   const slides = getSlidesByCourse("C2");
   assert.equal(slides.length, 28);
@@ -51,85 +65,146 @@ test("C2 Admin slides match the current Falowen runtime curriculum day 1–28", 
 
   slides.forEach((slide, index) => {
     assert.equal(slide.grammarTeachDe[0], "Zielstruktur: " + EXPECTED[index][2] + ".");
-    assert.equal(slide.runtimePerspectivesDe.length, 3, slide.assignmentId + " must carry the three current Falowen debate statements");
-    assert.ok(["opinion","reformulation"].includes(slide.writeType), slide.assignmentId + " must carry current Write mode");
+    assert.equal(slide.runtimePerspectivesDe.length, 3);
+    assert.ok(["opinion","reformulation"].includes(slide.writeType));
   });
 });
 
-test("C2 uses the current Falowen odd/even Write standard", () => {
-  const slides = getSlidesByCourse("C2");
-  for (const slide of slides) {
+test("C2 keeps the current odd/even Write standard", () => {
+  for (const slide of getSlidesByCourse("C2")) {
     const expected = slide.dayNumber % 2 ? "opinion" : "reformulation";
     assert.equal(slide.writeType, expected, slide.assignmentId + " wrong Write mode");
-    const writeBridge = slide.workbookConnection.parts.find((item) => item.label === "Write");
-    assert.ok(writeBridge?.detailEn, slide.assignmentId + " missing Write bridge");
+
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const writing = stages.find((stage) => stage.id === "writing");
+    assert.equal(writing.type, "flow");
+    assert.equal(writing.items.length, 1);
+
     if (expected === "opinion") {
-      assert.match(writeBridge.detailEn, /Stellungnahme|350 Wörter/i);
-      assert.equal(slide.wrapUpTaskDe.includes(slide.canonicalWritingPromptDe), true);
+      assert.match(writing.title, /Stellungnahme/i);
+      assert.match(JSON.stringify(writing), /These \+ zwei Bewertungskriterien/);
+      assert.match(JSON.stringify(writing), /Stärkstes Gegenargument/);
     } else {
-      assert.match(writeBridge.detailEn, /Umformung|Vorgabewort/i);
-      assert.match(slide.wrapUpTaskDe, /Umformungsaufgabe|Transformationsfamilien/i);
+      assert.match(writing.title, /Umformung/i);
+      assert.match(JSON.stringify(writing), /Bedeutung muss unverändert bleiben/i);
+      assert.match(JSON.stringify(writing), /Register- oder Bedeutungsverschiebung/i);
     }
   }
 });
 
-test("every C2 lesson keeps the text-first Presenter 2.0 teaching standard", () => {
-  const slides = getSlidesByCourse("C2");
-  for (const slide of slides) {
+test("all 28 C2 lessons use the analytical teaching spine without duplicate challenge pages", () => {
+  for (const slide of getSlidesByCourse("C2")) {
     assert.equal(isC2PresenterV2Slide(slide), true, slide.assignmentId);
     assert.equal(isTeachingPresenterV2Slide(slide), true, slide.assignmentId);
-    assert.ok(slide.knowledgeTextDe.startsWith("1-Minuten-Wissen:"), slide.assignmentId + " missing one-minute knowledge text");
-    assert.ok(slide.warmupQuestionsDe.length >= 4, slide.assignmentId + " needs four warm-up prompts");
-    assert.ok(slide.keyPhrasesDe.length >= 6, slide.assignmentId + " needs topic language");
-    assert.ok(slide.grammarTeachDe.length >= 4, slide.assignmentId + " needs grammar principle and current models");
-    assert.ok(slide.commonMistakesDe.length >= 3, slide.assignmentId + " needs concrete common mistakes");
-    assert.equal(slide.studentQuestionsDe.length, 5, slide.assignmentId + " needs five speaking prompts");
-    assert.equal(slide.speakingModels.length, 5, slide.assignmentId + " needs five speaking models");
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
-    const stageIds = stages.map((stage) => stage.id);
-    ["intro","warmup","foundation","phrases","grammar","examples","practice","workbook","mistakes","questions","grammar-check","weekly-challenge","lesson-summary"]
-      .forEach((stageId) => assert.ok(stageIds.includes(stageId), slide.assignmentId + " missing " + stageId));
+    const ids = stages.map((stage) => stage.id);
+    assert.deepEqual(ids, SPINE, slide.assignmentId + " should use the C2 analytical spine");
 
     const grammar = stages.find((stage) => stage.id === "grammar");
-    assert.deepEqual(grammar.items, slide.grammarTeachDe, slide.assignmentId + " must teach the runtime grammar rather than a generic fallback");
+    assert.deepEqual(grammar.items, slide.grammarTeachDe, slide.assignmentId + " must preserve runtime grammar");
 
     const examples = stages.find((stage) => stage.id === "examples");
-    assert.equal(examples.items.length, 2, slide.assignmentId + " should expose the two current Falowen grammar models");
+    assert.equal(examples.items.length, 2, slide.assignmentId + " should preserve the two grammar models");
 
-    const practice = stages.find((stage) => stage.id === "practice");
-    assert.equal(practice.items.length, 5, slide.assignmentId + " needs five C2 practice phases");
-    assert.ok(practice.items.every((item) => Number(item.minutes || 0) > 0), slide.assignmentId + " practice needs timing");
+    const analysis = stages.find((stage) => stage.id === "analysis");
+    assert.equal(analysis.type, "flow");
+    assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
+    assert.ok(analysis.items[0].prompts.length >= 4);
+    assert.equal(analysis.items[0].minutes, 12);
 
-    const workbook = stages.find((stage) => stage.id === "workbook");
-    assert.equal(workbook.items.length, 5, slide.assignmentId + " workbook bridge should cover current Learn, collocations, speaking and Write mode");
-
-    const mistakes = stages.find((stage) => stage.id === "mistakes");
-    assert.deepEqual(mistakes.items, slide.commonMistakesDe, slide.assignmentId + " should use lesson-specific mistakes");
-
-    const warmup = stages.find((stage) => stage.id === "warmup");
     const vocabulary = stages.find((stage) => stage.id === "phrases");
+    assert.equal(vocabulary.type, "vocabulary");
+    assert.equal(vocabulary.kicker, "Kollokationen & Register");
+    assert.ok(vocabulary.items.length >= 6);
+    assert.match(vocabulary.instruction, /nicht dekorativ/i);
+
     const questions = stages.find((stage) => stage.id === "questions");
     assert.equal(questions.requiresQuestionModel, true);
+    assert.equal(questions.items.length, 5);
     questions.items.forEach((question) => {
       assert.ok(getSpeakingQuestionModel(questions, question)?.modelAnswerDe, slide.assignmentId + " missing speaking model");
     });
 
-    assert.equal(warmup.questionSupport.length, warmup.items.length, slide.assignmentId + " should use enhanced warm-up cards");
-    assert.equal(vocabulary.type, "vocabulary");
-    assert.ok(vocabulary.items.length >= 6, slide.assignmentId + " should use vocabulary cards");
-    assert.equal(stages.some((stage) => stage.id === "wrapup"), false, slide.assignmentId + " should not duplicate the final lesson summary");
+    const workbook = stages.find((stage) => stage.id === "workbook");
+    assert.equal(workbook.items.length, 5);
 
-    const grammarCheck = stages.find((stage) => stage.id === "grammar-check");
-    assert.equal(grammarCheck.items.length, 3);
-    assert.equal(grammarCheck.questionModels.length, 3);
-    assert.equal(grammarCheck.requiresQuestionModel, true);
-
-    const weeklyChallenge = stages.find((stage) => stage.id === "weekly-challenge");
-    assert.ok(weeklyChallenge.items.length >= 3, slide.assignmentId + " should have an advanced weekly challenge");
-    assert.ok(stageIds.indexOf("grammar-check") < stageIds.indexOf("weekly-challenge"), slide.assignmentId + " grammar check should feed the weekly challenge");
-    assert.deepEqual(stageIds.slice(-2), ["weekly-challenge", "lesson-summary"], slide.assignmentId + " should finish with challenge then summary");
+    for (const removed of ["practice", "mistakes", "grammar-check", "weekly-challenge", "wrapup"]) {
+      assert.equal(ids.includes(removed), false, slide.assignmentId + " still exposes duplicate stage " + removed);
+    }
   }
+});
+
+test("C2 rotates seven analytical mechanics across the 28 lessons", () => {
+  const expectedTitles = [
+    "Kriterienmatrix",
+    "Evidenz-Audit",
+    "Präzisions- und Registerlabor",
+    "Quellen- und Distanzcheck",
+    "Stärkste Gegenposition",
+    "Kausalitäts- und Folgenkarte",
+    "Synthese ohne Gleichmacherei",
+  ];
+
+  const slides = getSlidesByCourse("C2");
+  const firstCycle = slides.slice(0, 7).map((slide) =>
+    buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "analysis")?.title
+  );
+  assert.deepEqual(firstCycle, expectedTitles);
+
+  for (const slide of slides) {
+    const expected = expectedTitles[(slide.dayNumber - 1) % 7];
+    const analysis = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "analysis");
+    assert.equal(analysis.title, expected, slide.assignmentId);
+  }
+});
+
+test("all 28 C2 lessons keep the Kernfrage foundation after warm-up and before language work", () => {
+  for (const slide of getSlidesByCourse("C2")) {
+    const foundation = getC2TopicFoundation(slide.dayNumber);
+    assert.ok(foundation, slide.assignmentId + " missing topic foundation");
+    assert.equal(foundation.chapter, slide.chapter);
+    assert.ok(foundation.core.length > 40);
+    assert.ok(foundation.en.length > 60);
+    assert.ok(foundation.de.length > 60);
+    assert.ok(foundation.example.length > 35);
+    assert.match(foundation.tension, /↔/);
+
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const ids = stages.map((stage) => stage.id);
+    const topicStage = stages.find((stage) => stage.id === "foundation");
+
+    assert.equal(topicStage.kicker, "C2 · Kernfrage verstehen");
+    assert.equal(topicStage.simpleEnglish, foundation.en);
+    assert.equal(topicStage.intro, foundation.de);
+    assert.equal(topicStage.example, foundation.example);
+    assert.equal(topicStage.tension, foundation.tension);
+    assert.equal(topicStage.question, foundation.core);
+    assert.ok(ids.indexOf("warmup") < ids.indexOf("foundation"));
+    assert.ok(ids.indexOf("foundation") < ids.indexOf("phrases"));
+    assert.ok(ids.indexOf("foundation") < ids.indexOf("grammar"));
+  }
+});
+
+test("C2 Day 1 preserves the circular-economy teaching logic without another end challenge", () => {
+  const slide = getSlidesByCourse("C2")[0];
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const foundation = stages.find((stage) => stage.id === "foundation");
+  const analysis = stages.find((stage) => stage.id === "analysis");
+  const writing = stages.find((stage) => stage.id === "writing");
+
+  assert.match(foundation.simpleEnglish, /products and materials in use for as long as possible/i);
+  assert.match(foundation.intro, /Wegwerfgesellschaft: Rohstoffe → Produktion → Kaufen → kurz nutzen → Wegwerfen/);
+  assert.match(foundation.example, /Smartphone-Beispiel/);
+  assert.match(foundation.tension, /niedriger Preis und Bequemlichkeit/);
+  assert.match(foundation.tension, /Langlebigkeit und Ressourcenschonung/);
+
+  assert.equal(analysis.title, "Kriterienmatrix");
+  assert.match(JSON.stringify(analysis), /Verbraucher tragen die größte Verantwortung/);
+  assert.match(JSON.stringify(analysis), /verbindlichen Regeln/);
+  assert.match(writing.title, /Stellungnahme planen/);
+  assert.match(JSON.stringify(writing), /alle drei Perspektiven/i);
+  assert.equal(stages.some((stage) => stage.id === "weekly-challenge"), false);
 });
 
 test("C2 presenter declaration stays idempotent with the build patch hook", async () => {
@@ -139,58 +214,10 @@ test("C2 presenter declaration stays idempotent with the build patch hook", asyn
   const patchSource = fs.readFileSync(path.join(process.cwd(), "scripts/patchC2CourseStyle.mjs"), "utf8");
 
   const declarations = presenterSource.match(/^const C2_PRESENTER_V2_ASSIGNMENTS = .*;$/gm) || [];
-  assert.equal(declarations.length, 1, "teachingPresenter must contain exactly one C2 assignment declaration");
+  assert.equal(declarations.length, 1);
   assert.match(declarations[0], /Array\.from\(\{ length: 28 \}/);
   assert.match(patchSource, /const c2DeclarationPattern = \/\^const C2_PRESENTER_V2_ASSIGNMENTS/);
   assert.match(patchSource, /next = next\.replace\(c2DeclarationPattern, ""\)/);
-});
-
-test("all 28 C2 lessons teach topic foundations after warm-up and before language work", () => {
-  const slides = getSlidesByCourse("C2");
-  assert.equal(slides.length, 28);
-
-  for (const slide of slides) {
-    const foundation = getC2TopicFoundation(slide.dayNumber);
-    assert.ok(foundation, slide.assignmentId + " missing topic foundation");
-    assert.equal(foundation.chapter, slide.chapter);
-    assert.ok(foundation.core.length > 40, slide.assignmentId + " core question is too thin");
-    assert.ok(foundation.en.length > 60, slide.assignmentId + " English explanation is too thin");
-    assert.ok(foundation.de.length > 60, slide.assignmentId + " German explanation is too thin");
-    assert.ok(foundation.example.length > 35, slide.assignmentId + " concrete example is too thin");
-    assert.match(foundation.tension, /↔/, slide.assignmentId + " needs an explicit tension");
-
-    const stages = buildTeachingPresenterStages(slide, slide.topic);
-    const ids = stages.map((stage) => stage.id);
-    const topicStage = stages.find((stage) => stage.id === "foundation");
-
-    assert.ok(topicStage, slide.assignmentId + " missing shared foundation stage");
-    assert.equal(topicStage.kicker, "C2 · Kernfrage verstehen");
-    assert.equal(topicStage.simpleEnglish, foundation.en);
-    assert.equal(topicStage.intro, foundation.de);
-    assert.equal(topicStage.example, foundation.example);
-    assert.equal(topicStage.tension, foundation.tension);
-    assert.equal(topicStage.question, foundation.core);
-    assert.ok(ids.indexOf("warmup") < ids.indexOf("foundation"), slide.assignmentId + " warm-up must come first");
-    assert.ok(ids.indexOf("foundation") < ids.indexOf("phrases"), slide.assignmentId + " foundation must precede Redemittel");
-    assert.ok(ids.indexOf("foundation") < ids.indexOf("grammar"), slide.assignmentId + " foundation must precede grammar");
-    assert.equal(ids.includes("knowledge"), false, slide.assignmentId + " legacy knowledge stage must stay removed");
-  }
-});
-
-test("C2 Day 1 moves from warm-up into the circular-economy foundation before grammar", () => {
-  const slide = getSlidesByCourse("C2")[0];
-  const stages = buildTeachingPresenterStages(slide, slide.topic);
-  const stageIds = stages.map((stage) => stage.id);
-  const foundation = stages.find((stage) => stage.id === "foundation");
-
-  assert.ok(stageIds.indexOf("warmup") < stageIds.indexOf("foundation"), "warm-up must come before topic foundation");
-  assert.ok(stageIds.indexOf("foundation") < stageIds.indexOf("grammar"), "topic foundation must come before grammar");
-  assert.match(foundation.simpleEnglish, /products and materials in use for as long as possible/i);
-  assert.match(foundation.intro, /Wegwerfgesellschaft: Rohstoffe → Produktion → Kaufen → kurz nutzen → Wegwerfen/);
-  assert.match(foundation.example, /Smartphone-Beispiel/);
-  assert.match(foundation.tension, /niedriger Preis und Bequemlichkeit/);
-  assert.match(foundation.tension, /Langlebigkeit und Ressourcenschonung/);
-  assert.match(foundation.teacherNote, /Do not debate yet/i);
 });
 
 test("high-signal updated C2 domains stay locked to the current learner curriculum", () => {
@@ -201,22 +228,4 @@ test("high-signal updated C2 domains stay locked to the current learner curricul
   assert.match(slides[21].title, /Reisen, Tourismus und kulturelle Begegnung/);
   assert.match(slides[22].title, /Internationale Zusammenarbeit und Diplomatie/);
   assert.match(slides[27].title, /C2 Prüfungssimulation: Stellungnahme, Umformung und Synthese/);
-});
-
-
-test("C2 rotates seven level-appropriate weekly challenge mechanics", () => {
-  const titlesByWeek = new Map();
-  for (const slide of getSlidesByCourse("C2")) {
-    const stages = buildTeachingPresenterStages(slide, slide.topic);
-    const challenge = stages.find((stage) => stage.id === "weekly-challenge");
-    const week = Math.ceil(slide.dayNumber / 4);
-    assert.ok(challenge, slide.assignmentId + " missing weekly challenge");
-    if (titlesByWeek.has(week)) {
-      assert.equal(challenge.title, titlesByWeek.get(week), slide.assignmentId + " should keep one mechanic identity within its week");
-    } else {
-      titlesByWeek.set(week, challenge.title);
-    }
-  }
-  assert.equal(titlesByWeek.size, 7);
-  assert.equal(new Set(titlesByWeek.values()).size, 7, "C2 should use seven distinct weekly mechanics");
 });
