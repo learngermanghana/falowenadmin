@@ -26,35 +26,17 @@ test("presenter builds student-facing lesson stages without teacher notes", () =
   assert.equal(stages[0].topic, "1.1 Small Talk");
 });
 
-test("student practice preserves detail-based B1 Presenter 2 exercises", () => {
-  const stages = buildTeachingPresenterStages({
-    assignmentId: "B1-1.1",
-    course: "B1",
-    day: "Day 1",
-    title: "Small Talk",
-    topic: "Small Talk",
-    objective: "Speak confidently.",
-    estimatedDuration: "45 minutes",
-    warmupQuestionsDe: ["Wie geht's?"],
-    keyPhrasesDe: ["Wie geht's?"],
-    studentQuestionsDe: ["Woher kommst du?", "Was machst du gern?"],
-    teacherNotesEn: [],
-    interactionFlow: [
-      { phase: "Mini-Dialog", detailEn: "5 min: Build a short dialogue with a partner." },
-      { phase: "Swap roles", detailEn: "4 min: Repeat the dialogue with new information." },
-    ],
-    wrapUpTaskDe: "Schreibe einen Satz.",
-  }, "1.1 Small Talk");
-
+test("B1 Presenter uses one lesson-specific focused task instead of the legacy interaction-flow stack", () => {
+  const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-1.1");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
   const practice = stages.find((stage) => stage.id === "practice");
   const normalized = normalizeStudentPracticeItems(practice?.items);
 
-  assert.equal(normalized.length, 2);
-  assert.equal(normalized[0].title, "Mini-Dialog");
-  assert.equal(normalized[0].instruction, "5 min: Build a short dialogue with a partner.");
-  assert.equal(normalized[0].minutes, 5);
-  assert.deepEqual(normalized[0].prompts, []);
-  assert.equal(normalized[1].instruction, "4 min: Repeat the dialogue with new information.");
+  assert.equal(normalized.length, 1);
+  assert.match(normalized[0].title, /Zeitlinie/i);
+  assert.ok(normalized[0].prompts.length >= 2);
+  assert.ok(normalized[0].modelItems.length >= 2);
+  assert.equal(normalized[0].minutes, 7);
 });
 
 test("student practice keeps richer B2 C1 prompts and model support", () => {
