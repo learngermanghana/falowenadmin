@@ -587,7 +587,7 @@ export default function StudentDirectoryPage() {
       setStudents(records);
       setCreateDraft(addStudentDefaultDraft);
       setSelectedStudentId(studentId);
-      setActiveTab("directory");
+      selectDirectoryView("all");
       pushToast({ type: "success", message: `Created ${name}.` });
     } catch (err) {
       pushToast({ type: "error", message: err?.message || "Failed to create student" });
