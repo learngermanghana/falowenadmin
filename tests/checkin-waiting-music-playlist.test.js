@@ -541,3 +541,34 @@ test("attendance never reports Slides synchronized before acknowledgement", () =
   assert.match(page, /presenterStartAcknowledged\(presenterLiveState, requestId\)/);
   assert.match(page, /restoredAcknowledged/);
 });
+
+
+test("waiting Attendance shows one real lesson warm-up teaser without starting the warm-up timer", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const css = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.css"), "utf8");
+
+  assert.match(page, /getTeachingSlideByAssignmentId/);
+  assert.match(page, /getSlidesByCourse/);
+  assert.match(page, /buildTeachingPresenterStages/);
+  assert.match(page, /find\(\(stage\) => stage\.id === "warmup"\)/);
+  assert.match(page, /warmupStage\?\.items\?\.\[0\]/);
+  assert.match(page, /!actualStartedAt && waitingWarmupTeaser/);
+  assert.match(page, /Get ready · Warm-up preview/);
+  assert.match(page, /Think about your answer\./);
+  assert.match(page, /You will answer after class starts\. The 5-minute warm-up timer is not running yet\./);
+  assert.match(page, /renderWaitingWarmupQuestion/);
+  assert.match(page, /splitWarmupQuestionSegments/);
+  assert.match(page, /listClasses\(\)[\s\S]*setWaitingClassLevel/);
+
+  assert.match(css, /\.checkin-display-warmup-teaser\s*\{/);
+  assert.match(css, /\.checkin-display-warmup-keyword\s*\{[\s\S]*background:\s*#facc15/);
+
+  const teaserStart = page.indexOf('className="checkin-display-warmup-teaser"');
+  const startButton = page.indexOf("Start class & slides");
+  assert.ok(teaserStart > 0 && startButton > 0, "waiting teaser and teacher start control should both exist");
+  assert.doesNotMatch(
+    page.slice(Math.max(0, teaserStart - 1200), teaserStart + 1800),
+    /setWarmup|warmupDeadline|WARMUP_PREPARATION_MINUTES|startWarmup/i,
+    "waiting teaser must remain preview-only and must not own the Presenter warm-up timer",
+  );
+});
