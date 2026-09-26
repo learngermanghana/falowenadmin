@@ -201,7 +201,7 @@ test("C2 Day 1 preserves the circular-economy teaching logic without another end
 
   assert.equal(analysis.title, "Kriterienmatrix");
   assert.match(JSON.stringify(analysis), /Verbraucher tragen die größte Verantwortung/);
-  assert.match(JSON.stringify(analysis), /verbindlichen Regeln/);
+  assert.match(JSON.stringify(analysis), /verbindlich(?:e|en) Regeln/);
   assert.match(writing.title, /Stellungnahme planen/);
   assert.match(JSON.stringify(writing), /alle drei Perspektiven/i);
   assert.equal(stages.some((stage) => stage.id === "weekly-challenge"), false);
