@@ -202,6 +202,7 @@ test("B2 information-gap lessons keep Role A and Role B private until selectivel
     assert.ok(item.roleCards[1].content);
     assert.ok(item.roleCards[0].task);
     assert.ok(item.roleCards[1].task);
+    assert.equal(item.prompts.length, 4, assignmentId + " should keep the four shared prompt steps");
 
     const sharedPrompts = item.prompts.join(" ");
     assert.doesNotMatch(sharedPrompts, /Rolle A kennt das Problem/i);
