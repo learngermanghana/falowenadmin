@@ -416,7 +416,7 @@ function buildLessonSummaryItems(slide = {}) {
 
 function buildAdvancedWeeklyChallenge(slide = {}) {
   const level = classroomLevel(slide);
-  if (level !== "B2") return null;
+  return null;
 
   const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
   const week = Math.min(7, Math.max(1, Math.ceil(day / 4)));
@@ -682,6 +682,139 @@ function buildC2WritingBridge(slide = {}) {
       "Welche Register- oder Bedeutungsverschiebung musst du am Ende kontrollieren?",
     ],
     minutes: 8,
+  };
+}
+
+function b2GrammarSupportEn(grammarItems = []) {
+  const text = (Array.isArray(grammarItems) ? grammarItems : []).join(" ");
+  if (/indem|dadurch, dass|um \.\.\. zu|damit|wodurch|sodass/i.test(text)) return "Distinguish method, purpose and consequence. Choose the connector that matches the logical relationship, then check verb position.";
+  if (/Passiv|Modalpassiv/i.test(text)) return "Use passive when the process or requirement matters more than the actor. Keep the modal verb and participle structure complete.";
+  if (/Nominalisierung/i.test(text)) return "Nominalisation can make formal B2 arguments more compact, but the meaning and actor should remain clear.";
+  if (/je \.\.\. desto/i.test(text)) return "Use je … desto to connect two changing factors. The je-clause is subordinate; the desto-clause keeps normal main-clause verb position.";
+  if (/obwohl|trotz|zwar \.\.\. jedoch|dennoch/i.test(text)) return "Use concession to acknowledge a counterpoint without abandoning your main argument. Check whether you need a clause or a noun phrase.";
+  if (/Relativsätze/i.test(text)) return "Relative clauses add precise information. With a preposition, place the preposition before the relative pronoun and use the required case.";
+  if (/Konjunktiv II/i.test(text)) return "Use Konjunktiv II for hypothetical proposals, cautious recommendations and unreal conditions, not just to sound more formal.";
+  if (/laut|zufolge|nach Angaben|indirekte Rede/i.test(text)) return "Separate source information from your own position. Mark who says what before you evaluate the claim.";
+  if (/während|wohingegen/i.test(text)) return "Use contrast connectors when two sides are genuinely being compared. Make the comparison criterion clear.";
+  if (/falls|sofern/i.test(text)) return "Use falls/sofern for conditions. The condition should state what must be true before the result or recommendation follows.";
+  return "Use the target structure to make cause, contrast, condition, purpose or consequence clearer. Accuracy matters more than complexity.";
+}
+
+function b2GrammarAttentionEn(grammarItems = []) {
+  const text = (Array.isArray(grammarItems) ? grammarItems : []).join(" ");
+  if (/Relativsätze/i.test(text)) return "Watch the case after the preposition in relative clauses.";
+  if (/Passiv|Modalpassiv/i.test(text)) return "Do not use passive automatically when the actor is important for responsibility.";
+  if (/je \.\.\. desto/i.test(text)) return "Keep both halves complete; do not mix je … desto with a normal comparative sentence.";
+  if (/obwohl|trotz|zwar \.\.\. jedoch/i.test(text)) return "Do not combine connectors mechanically; choose one structure and keep its word order correct.";
+  return "Check connector meaning and verb position before adding another advanced structure.";
+}
+
+function buildB2FocusedTask(slide = {}, foundation = null) {
+  const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
+  const topic = cleanTopic(slide);
+  const foundationData = foundation || getPresenterTopicFoundation(slide) || {};
+  const tension = String(foundationData.tension || "");
+  const question = String(foundationData.question || slide.studentQuestionsDe?.[4] || `Welche Position vertrittst du zu „${topic}“?`);
+  const intro = String(foundationData.intro || "");
+  const example = String(foundationData.example || "");
+  const grammar = Array.isArray(slide.teacherSupport?.grammarFocusEn)
+    ? slide.teacherSupport.grammarFocusEn.filter(Boolean)
+    : [];
+  const [left, right] = tension.split("↔").map((part) => part.trim());
+  const modelItems = (Array.isArray(slide.speakingModels) ? slide.speakingModels : [])
+    .map((item) => item?.modelAnswerDe)
+    .filter(Boolean)
+    .slice(0, 2);
+  const mechanic = ((day - 1) % 8) + 1;
+
+  const variants = {
+    1: {
+      title: "Kriterienvergleich",
+      instruction: "Vergleiche zwei Möglichkeiten nach denselben Kriterien und entscheide erst danach.",
+      prompts: [
+        `Seite A: ${left || "erste Möglichkeit"}`,
+        `Seite B: ${right || "zweite Möglichkeit"}`,
+        "Lege zwei Kriterien fest, z. B. Kosten, Wirkung, Zugang oder Umsetzbarkeit.",
+        "Formuliere am Ende eine begründete Entscheidung mit einer Einschränkung.",
+      ],
+    },
+    2: {
+      title: "Problem → Ursache → Lösung",
+      instruction: "Ordne das Thema als Problemkette und schlage eine realistische Lösung vor.",
+      prompts: [
+        `Ausgangslage: ${intro}`,
+        "Was ist das konkrete Problem?",
+        "Welche Ursache ist besonders wichtig?",
+        `Welche Lösung wäre realistisch? Beziehe die Leitfrage ein: ${question}`,
+      ],
+    },
+    3: {
+      title: "Zwei Positionen vergleichen",
+      instruction: "Formuliere zwei plausible Positionen und vergleiche ihre stärksten Argumente.",
+      prompts: [
+        `Position A: ${left || "stärker individuelle Verantwortung"}`,
+        `Position B: ${right || "stärker gesellschaftliche Verantwortung"}`,
+        "Welches Argument ist auf jeder Seite am stärksten?",
+        "Wo liegt ein sinnvoller Kompromiss oder eine klare Grenze?",
+      ],
+    },
+    4: {
+      title: "Informationslücke",
+      instruction: "Arbeitet mit zwei Rollen. Jede Rolle bringt andere Informationen ein; die Lösung entsteht erst durch Austausch.",
+      prompts: [
+        `Rolle A kennt das Problem: ${intro}`,
+        `Rolle B kennt ein konkretes Beispiel: ${example || "Nutze ein eigenes konkretes Beispiel."}`,
+        "A fragt nach einer praktikablen Maßnahme; B fragt nach einem möglichen Nachteil.",
+        "Einigt euch auf eine Lösung und begründet sie gemeinsam.",
+      ],
+    },
+    5: {
+      title: "Empfehlung mit Bedingungen",
+      instruction: "Formuliere eine Empfehlung, aber nenne klar, unter welchen Bedingungen sie sinnvoll ist.",
+      prompts: [
+        `Leitfrage: ${question}`,
+        `Zielkonflikt: ${tension || "Nutzen ↔ Aufwand"}`,
+        "Formuliere eine Hauptempfehlung.",
+        "Ergänze mindestens eine Bedingung mit falls, sofern oder wenn.",
+      ],
+    },
+    6: {
+      title: "Aussage reparieren",
+      instruction: "Mache eine zu allgemeine Aussage präziser, differenzierter und grammatisch stärker.",
+      prompts: [
+        `Schwache Aussage: „Bei ${topic} gibt es viele Vorteile und Nachteile.“`,
+        "Ersetze die allgemeine Formulierung durch einen konkreten Vorteil und einen konkreten Nachteil.",
+        grammar[0] ? `Nutze diese Zielstruktur: ${grammar[0]}` : "Nutze eine passende B2-Struktur.",
+        "Ergänze ein Beispiel oder eine Bedingung.",
+      ],
+    },
+    7: {
+      title: "Mini-Fallstudie",
+      instruction: "Analysiere einen konkreten Fall und leite daraus eine begründete Maßnahme ab.",
+      prompts: [
+        `Fall: ${example || intro}`,
+        "Wer ist direkt betroffen?",
+        "Welcher Zielkonflikt oder welches praktische Problem entsteht?",
+        `Welche Maßnahme würdest du empfehlen? ${question}`,
+      ],
+    },
+    8: {
+      title: "Diskussionsreaktion",
+      instruction: "Reagiere auf eine Position, bevor du deine eigene weiterentwickelst.",
+      prompts: [
+        `Aussage: ${question}`,
+        "Beginne mit Zustimmung, Einschränkung oder Widerspruch.",
+        "Nenne einen Grund und ein konkretes Beispiel.",
+        "Schließe mit einer realistischen Alternative oder Konsequenz.",
+      ],
+    },
+  };
+
+  const selected = variants[mechanic];
+  return {
+    ...selected,
+    modelItems,
+    minutes: 9,
   };
 }
 
@@ -1043,6 +1176,81 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         ...speakingStage,
         title: "Sprechen · anwenden und begründen",
         suggestedMinutes: 15,
+      },
+      workbookStage,
+    ];
+  }
+
+  if (level === "B2") {
+    const focusTask = buildB2FocusedTask(slide, topicFoundation);
+    const grammarSupportEn = b2GrammarSupportEn(grammarItems);
+    const grammarAttentionEn = b2GrammarAttentionEn(grammarItems);
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
+        title: slide.title || "Lesson",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "",
+        studentReference,
+      },
+      {
+        id: "warmup",
+        type: "list",
+        kicker: "Warm-up",
+        title: "Warm-up · Thema aktivieren",
+        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
+        questionSupport: buildWarmupQuestionSupport(slide),
+        suggestedMinutes: 5,
+        timingMode: "per-student",
+        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+      },
+      ...(topicFoundation ? [{
+        id: "foundation",
+        type: "foundation",
+        ...topicFoundation,
+      }] : []),
+      {
+        id: "phrases",
+        type: "vocabulary",
+        kicker: "Kollokationen & Redemittel",
+        title: "Sprache für das Thema",
+        items: vocabularyItems,
+        instruction: "Nutze mindestens zwei thematische Kollokationen und ein passendes Verknüpfungsmittel in deiner späteren Antwort.",
+        suggestedMinutes: 6,
+      },
+      {
+        id: "grammar",
+        type: "b2-grammar",
+        kicker: "Grammatik im Kontext",
+        title: "Logische Beziehung klar ausdrücken",
+        items: grammarItems,
+        supportEn: grammarSupportEn,
+        attentionEn: grammarAttentionEn,
+        suggestedMinutes: 9,
+      },
+      {
+        id: "examples",
+        type: "list",
+        kicker: "Modellsätze",
+        title: "So klingt es auf B2",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+        suggestedMinutes: 6,
+      },
+      {
+        id: "focus",
+        type: "flow",
+        kicker: "B2-Fokusaufgabe",
+        title: focusTask.title,
+        items: [focusTask],
+        suggestedMinutes: focusTask.minutes,
+      },
+      {
+        ...speakingStage,
+        title: "Sprechen · entwickeln, vergleichen und reagieren",
+        suggestedMinutes: 16,
       },
       workbookStage,
     ];
