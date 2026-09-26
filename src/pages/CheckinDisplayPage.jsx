@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
+import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
+import { buildTeachingPresenterStages } from "../utils/teachingPresenter.js";
+import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import { pianoPieces, pianoPlaylist } from "../data/pianoPlaylist.js";
 import { PIANO_BAR_INTERVAL_MS, schedulePianoBar } from "../utils/pianoAudio.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
@@ -136,6 +139,14 @@ function inferClassLevel(klass = {}, ...fallbacks) {
   return "";
 }
 
+function renderWaitingWarmupQuestion(question = "", keywords = []) {
+  return splitWarmupQuestionSegments(question, keywords).map((segment, index) => (
+    segment.highlighted
+      ? <mark className="checkin-display-warmup-keyword" key={segment.text + "-" + index}>{segment.text}</mark>
+      : segment.text
+  ));
+}
+
 function schedulePianoNote(context, destination, frequency, startsAt, velocity = 1, duration = 3.6) {
   const noteGain = context.createGain();
   const toneFilter = context.createBiquadFilter();
@@ -268,10 +279,40 @@ export default function CheckinDisplayPage() {
   const [presenterTarget, setPresenterTarget] = useState({ classRecordId: "", sessionKey: "" });
   const [presenterLiveState, setPresenterLiveState] = useState({});
   const [presenterLiveError, setPresenterLiveError] = useState("");
+  const [waitingClassLevel, setWaitingClassLevel] = useState(() => inferClassLevel({}, assignmentId, classId));
   const classStartStopTimerRef = useRef(null);
   const musicStartGenerationRef = useRef(0);
   const classStartedRef = useRef(false);
   const autoPresenterRecoveryRef = useRef("");
+
+  useEffect(() => {
+    const immediateLevel = inferClassLevel({}, assignmentId, classId);
+    if (immediateLevel) {
+      setWaitingClassLevel(immediateLevel);
+      return undefined;
+    }
+
+    let cancelled = false;
+    listClasses()
+      .then((classes) => {
+        if (cancelled) return;
+        const targetKey = normalizeClassLookup(classId);
+        const klass = classes.find((entry) => [
+          entry?.classId,
+          entry?.name,
+          entry?.id,
+          entry?.classRecordId,
+        ].some((value) => normalizeClassLookup(value) === targetKey));
+        if (!cancelled) setWaitingClassLevel(inferClassLevel(klass, assignmentId, classId));
+      })
+      .catch(() => {
+        if (!cancelled) setWaitingClassLevel("");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assignmentId, classId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -321,6 +362,8 @@ export default function CheckinDisplayPage() {
     return {
       dateLabel: item.date || String(date || ""),
       sessionDisplayLabel: `${item.day || ""} - ${item.topic || ""}`.trim().replace(/^\s*-\s*/, ""),
+      assignmentId: String(item.assignmentId || "").trim(),
+      dayNumber: Number(String(item.day || "").match(/\d+/)?.[0] || 0),
     };
   }, [classId, sessionId, date]);
 
@@ -330,6 +373,46 @@ export default function CheckinDisplayPage() {
   const sessionDisplayLabel = hasSessionLabelFromUrl
     ? String(sessionLabel).trim()
     : (scheduleInfo?.sessionDisplayLabel || "");
+  const waitingWarmupTeaser = useMemo(() => {
+    const directAssignmentId = String(assignmentId || scheduleInfo?.assignmentId || "").trim();
+    let slide = directAssignmentId ? getTeachingSlideByAssignmentId(directAssignmentId) : null;
+
+    if (!slide) {
+      const level = String(waitingClassLevel || inferClassLevel({}, assignmentId, classId)).toUpperCase();
+      const dayFromLabel = Number(String(sessionDisplayLabel || sessionLabel || "").match(/\bDay\s*(\d+)\b/i)?.[1] || 0);
+      const dayNumber = Number(scheduleInfo?.dayNumber || dayFromLabel || 0);
+      if (level && dayNumber > 0) {
+        slide = getSlidesByCourse(level).find((item) => Number(item.dayNumber || 0) === dayNumber) || null;
+      }
+    }
+
+    if (!slide) return null;
+    const warmupStage = buildTeachingPresenterStages(slide, slide.topic)
+      .find((stage) => stage.id === "warmup");
+    const question = String(warmupStage?.items?.[0] || "").trim();
+    if (!question) return null;
+
+    const support = warmupStage?.questionSupport?.[0] || {};
+    const topic = String(slide.topic || slide.title || "")
+      .replace(/^\s*\d+(?:\.\d+)*\s*/, "")
+      .replace(/^[A-C]\d\s+Day\s+\d+\s*·\s*/i, "")
+      .trim();
+
+    return {
+      question,
+      keywords: Array.isArray(support.keywords) ? support.keywords : [],
+      topic,
+    };
+  }, [
+    assignmentId,
+    classId,
+    scheduleInfo?.assignmentId,
+    scheduleInfo?.dayNumber,
+    sessionDisplayLabel,
+    sessionLabel,
+    waitingClassLevel,
+  ]);
+
   const startDecisionStorageKey = useMemo(
     () => classStartDecisionStorageKey(classId, sessionId, dateLabel),
     [classId, sessionId, dateLabel],
@@ -1344,6 +1427,22 @@ export default function CheckinDisplayPage() {
             </div>
           )}
         </div>
+
+        {!actualStartedAt && waitingWarmupTeaser ? (
+          <section className="checkin-display-warmup-teaser" aria-label="Warm-up preview">
+            <div className="checkin-display-warmup-teaser-copy">
+              <div className="checkin-display-warmup-teaser-eyebrow">Get ready · Warm-up preview</div>
+              {waitingWarmupTeaser.topic ? (
+                <div className="checkin-display-warmup-teaser-topic">{waitingWarmupTeaser.topic}</div>
+              ) : null}
+              <p>{renderWaitingWarmupQuestion(waitingWarmupTeaser.question, waitingWarmupTeaser.keywords)}</p>
+            </div>
+            <div className="checkin-display-warmup-teaser-note">
+              <strong>Think about your answer.</strong>
+              <span>You will answer after class starts. The 5-minute warm-up timer is not running yet.</span>
+            </div>
+          </section>
+        ) : null}
 
         {hasRequiredParams ? (
           <div className="checkin-display-main-grid">
