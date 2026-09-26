@@ -31,6 +31,8 @@ const START_HANDSHAKE_MAX_ATTEMPTS = START_HANDSHAKE_RETRY_DELAYS_MS.length + 1;
 const SMART_LOBBY_ROTATION_MS = 14000;
 const SMART_HANDOFF_MIN_VISIBLE_MS = 3000;
 const SMART_HANDOFF_CONNECTED_VISIBLE_MS = 1200;
+const END_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
+const END_HANDSHAKE_MAX_ATTEMPTS = END_HANDSHAKE_RETRY_DELAYS_MS.length + 1;
 const WAITING_PIANO_CHORDS = [
   [130.81, 261.63, 329.63, 392.0],
   [110.0, 220.0, 261.63, 329.63],
@@ -228,6 +230,22 @@ function presenterStartAcknowledged(state = {}, requestId = "") {
   );
 }
 
+function attendanceEndRequestId(sessionKey, endedAt) {
+  const key = String(sessionKey || "").trim();
+  const end = Math.floor(Number(endedAt || 0));
+  if (!key || !Number.isFinite(end) || end <= 0) return "";
+  return `attendance-end:${key}:${end}`;
+}
+
+function presenterEndAcknowledged(state = {}, requestId = "") {
+  const wanted = String(requestId || "").trim();
+  return Boolean(
+    wanted
+    && String(state.presenterEndAckRequestId || "").trim() === wanted
+    && Number(state.presenterEndAckAtMs || 0) > 0
+  );
+}
+
 function readClassStartDecision(storageKey) {
   if (!storageKey) return { actualStartedAt: null, actualEndedAt: null, delayUntil: null };
   try {
@@ -415,11 +433,21 @@ export default function CheckinDisplayPage() {
       }))
       .filter((item) => item.detail)
       .slice(0, 3);
+    const dayNumber = Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 0);
+    const course = String(slide.course || waitingClassLevel || "").trim().toUpperCase();
+    const nextLesson = course && dayNumber > 0
+      ? getSlidesByCourse(course).find((item) => Number(item.dayNumber || 0) === dayNumber + 1)
+      : null;
 
     return {
       assignmentId: String(slide.assignmentId || "").trim(),
-      course: String(slide.course || waitingClassLevel || "").trim().toUpperCase(),
+      course,
       slideId: String(slide.id || "").trim(),
+      dayNumber,
+      nextLesson: nextLesson ? {
+        assignmentId: String(nextLesson.assignmentId || "").trim(),
+        title: String(nextLesson.topic || nextLesson.title || "").replace(/^\s*\d+(?:\.\d+)*\s*/, "").trim(),
+      } : null,
       question,
       keywords: Array.isArray(support.keywords) ? support.keywords : [],
       topic,
@@ -488,6 +516,17 @@ export default function CheckinDisplayPage() {
   const attendancePercent = expectedTotal
     ? Math.min(100, Math.round((checkedInCount / expectedTotal) * 100))
     : 0;
+  const attendanceConnectionState = attendanceError ? "error" : attendanceLive ? "live" : "connecting";
+  const attendanceCountLabel = attendanceLive
+    ? (expectedTotal ? checkedInCount + " / " + expectedTotal : String(checkedInCount))
+    : checkedInCount > 0
+      ? (expectedTotal ? checkedInCount + " / " + expectedTotal + " last known" : checkedInCount + " last known")
+      : (expectedTotal ? "— / " + expectedTotal : "—");
+  const attendanceConnectionLabel = attendanceError
+    ? "Live attendance disconnected"
+    : attendanceLive
+      ? "Live attendance connected"
+      : "Connecting live attendance…";
   const checkedInNames = useMemo(
     () => checkins.map((row, index) => checkinDisplayName(row, index)).filter(Boolean),
     [checkins],
@@ -688,9 +727,17 @@ export default function CheckinDisplayPage() {
     });
     const restoredRequestId = attendanceStartRequestId(linkPresenterSessionKey, nextStart);
     const restoredAcknowledged = presenterStartAcknowledged(presenterLiveState, restoredRequestId);
+    const restoredEndRequestId = sharedEnd ? attendanceEndRequestId(linkPresenterSessionKey, sharedEnd) : "";
+    const restoredEndAcknowledged = sharedEnd
+      ? presenterEndAcknowledged(presenterLiveState, restoredEndRequestId)
+      : false;
     setSlideSyncStatus(
       sharedEnd
-        ? { state: "ended-synced", message: "Completed class synchronized from the shared Presenter session." }
+        ? restoredEndAcknowledged
+          ? { state: "ended-acknowledged", message: "Presenter acknowledged the class end · final session synchronized." }
+          : presenterLiveState.attendanceEndRequestId
+            ? { state: "end-awaiting-ack", message: "Class end restored · waiting for Presenter acknowledgement…" }
+            : { state: "ended-synced", message: "Class ended from Presenter · shared end state synchronized." }
         : restoredAcknowledged
           ? { state: "acknowledged", message: "Class start restored · Slides acknowledgement confirmed." }
           : { state: "awaiting-ack", message: "Class start restored · waiting for Slides acknowledgement…" },
@@ -1469,7 +1516,7 @@ export default function CheckinDisplayPage() {
     slideSyncStatus.state,
   ]);
 
-  const syncPresenterEnd = useCallback(async (endedAt) => {
+  const syncPresenterEnd = useCallback(async (endedAt, { recovery = false, handshakeAttempt = 1 } = {}) => {
     if (!actualStartedAt || !Number.isFinite(Number(endedAt))) return;
 
     try {
@@ -1478,20 +1525,17 @@ export default function CheckinDisplayPage() {
       const sessionKey = presenterSessionKey({ sessionDate, sessionId, assignmentId: effectiveAssignmentId });
       const shared = await readPresenterLiveSession(classRecordId, sessionKey);
       const current = shared?.state || {};
-
-      if (String(current.sessionKey || "") === sessionKey && current.classStatus === "ended") {
-        setPresenterTarget({ classRecordId, sessionKey });
-        setPresenterLiveState(current);
-        setSlideSyncStatus({ state: "ended-synced", message: "Class end was already synchronized." });
-        return;
-      }
-
-      const durationSeconds = Math.max(0, Math.round((Number(endedAt) - Number(actualStartedAt)) / 1000));
+      const currentEndedAt = Math.max(0, Number(current.classEndedAtMs || 0));
+      const canonicalEndedAt = currentEndedAt || Number(endedAt);
+      const durationSeconds = Math.max(0, Math.round((canonicalEndedAt - Number(actualStartedAt)) / 1000));
       const timerRunning = Boolean(current.timerRunning);
       const timerEndAt = Number(current.timerEndAt || 0);
       const timerRemaining = timerRunning && timerEndAt > 0
-        ? Math.max(0, Math.ceil((timerEndAt - Number(endedAt)) / 1000))
+        ? Math.max(0, Math.ceil((timerEndAt - canonicalEndedAt) / 1000))
         : Math.max(0, Number(current.timerRemaining || 0));
+      const requestId = attendanceEndRequestId(sessionKey, canonicalEndedAt);
+      const requestAttempt = Math.max(1, Number(handshakeAttempt || 1));
+      const requestSentAtMs = Date.now();
 
       setPresenterTarget({ classRecordId, sessionKey });
       setPresenterClassContext({
@@ -1500,21 +1544,31 @@ export default function CheckinDisplayPage() {
         sessionKey,
       });
 
-      await endPresenterLiveSession(classRecordId, sessionKey, {
-        classEndedAtMs: Number(endedAt),
+      const endResult = await endPresenterLiveSession(classRecordId, sessionKey, {
+        classEndedAtMs: canonicalEndedAt,
         classDurationSeconds: durationSeconds,
         classLifecycleStatus: "ended",
         sessionTimingAuthority: "attendance",
-        attendanceCheckedInCountAtEnd: checkedInCount,
+        attendanceCheckedInCountAtEnd: attendanceLive ? checkedInCount : null,
+        attendanceLiveAtEnd: Boolean(attendanceLive),
+        attendanceEndRequestId: requestId,
+        attendanceEndRequestedAtMs: requestSentAtMs,
+        attendanceEndAttempt: requestAttempt,
+        attendanceEndSource: recovery ? "attendance-retry" : "attendance",
         timerRunning: false,
         timerEndAt: 0,
         timerRemaining,
-        timerUpdatedAtMs: Number(endedAt),
+        timerUpdatedAtMs: canonicalEndedAt,
       });
 
+      if (!endResult?.ok) throw new Error(endResult?.reason || "Presenter end state could not be saved.");
+
+      setActualEndedAt(canonicalEndedAt);
       setSlideSyncStatus({
-        state: "ended-synced",
-        message: `Class ended and ${formatDuration(durationSeconds * 1000)} of teaching time was recorded.`,
+        state: presenterEndAcknowledged(current, requestId) ? "ended-acknowledged" : "end-awaiting-ack",
+        message: presenterEndAcknowledged(current, requestId)
+          ? "Presenter acknowledged the class end · final session synchronized."
+          : `Class end saved · waiting for Presenter acknowledgement (attempt ${requestAttempt}/${END_HANDSHAKE_MAX_ATTEMPTS})…`,
       });
     } catch (error) {
       console.error("check-in presenter end sync failed", error);
@@ -1525,9 +1579,10 @@ export default function CheckinDisplayPage() {
     }
   }, [
     actualStartedAt,
+    attendanceLive,
     checkedInCount,
-    effectiveAssignmentId,
     classId,
+    effectiveAssignmentId,
     linkSessionDate,
     resolvePresenterClass,
     sessionId,
@@ -1542,9 +1597,76 @@ export default function CheckinDisplayPage() {
       actualEndedAt: endedAt,
       delayUntil: null,
     });
-    setSlideSyncStatus({ state: "ending", message: "Ending class and saving actual duration…" });
-    void syncPresenterEnd(endedAt);
-  }, [actualEndedAt, actualStartedAt, nowMs, startDecisionStorageKey, syncPresenterEnd]);
+    setSlideSyncStatus({
+      state: "ending",
+      message: "Class complete · saving the shared end state…",
+    });
+    void syncPresenterEnd(endedAt, { handshakeAttempt: 1 });
+    if (!musicPlaying) void startWaitingMusic();
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    musicPlaying,
+    nowMs,
+    startDecisionStorageKey,
+    startWaitingMusic,
+    syncPresenterEnd,
+  ]);
+
+  useEffect(() => {
+    if (!actualStartedAt || !actualEndedAt) return;
+    const requestId = attendanceEndRequestId(linkPresenterSessionKey, actualEndedAt);
+    if (!requestId || String(presenterLiveState.sessionKey || "") !== String(linkPresenterSessionKey || "")) return;
+    if (!presenterEndAcknowledged(presenterLiveState, requestId)) return;
+
+    setSlideSyncStatus({
+      state: "ended-acknowledged",
+      message: "Presenter acknowledged the class end · final session synchronized.",
+    });
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    linkPresenterSessionKey,
+    presenterLiveState.presenterEndAckAtMs,
+    presenterLiveState.presenterEndAckRequestId,
+    presenterLiveState.sessionKey,
+  ]);
+
+  useEffect(() => {
+    if (!actualStartedAt || !actualEndedAt) return undefined;
+    if (!["end-awaiting-ack", "ending"].includes(slideSyncStatus.state)) return undefined;
+
+    const requestId = attendanceEndRequestId(linkPresenterSessionKey, actualEndedAt);
+    if (!requestId || presenterEndAcknowledged(presenterLiveState, requestId)) return undefined;
+
+    const sharedAttempt = Math.max(1, Number(presenterLiveState.attendanceEndAttempt || 1));
+    if (sharedAttempt >= END_HANDSHAKE_MAX_ATTEMPTS) {
+      setSlideSyncStatus({
+        state: "end-unresponsive",
+        message: `Presenter did not acknowledge the class end after ${END_HANDSHAKE_MAX_ATTEMPTS} attempts. The class end is saved; retry when Presenter is available.`,
+      });
+      return undefined;
+    }
+
+    const delayMs = END_HANDSHAKE_RETRY_DELAYS_MS[Math.max(0, sharedAttempt - 1)] || 10000;
+    const retryTimer = window.setTimeout(() => {
+      if (presenterEndAcknowledged(presenterLiveState, requestId)) return;
+      void syncPresenterEnd(actualEndedAt, {
+        recovery: true,
+        handshakeAttempt: sharedAttempt + 1,
+      });
+    }, delayMs);
+    return () => window.clearTimeout(retryTimer);
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    linkPresenterSessionKey,
+    presenterLiveState.attendanceEndAttempt,
+    presenterLiveState.presenterEndAckAtMs,
+    presenterLiveState.presenterEndAckRequestId,
+    slideSyncStatus.state,
+    syncPresenterEnd,
+  ]);
 
   useEffect(() => () => {
     if (classStartStopTimerRef.current) window.clearTimeout(classStartStopTimerRef.current);
@@ -1647,10 +1769,10 @@ export default function CheckinDisplayPage() {
           ) : actualEndedAt ? (
             <div className="checkin-display-teacher-control-actions">
               <div className="checkin-display-ended-badge">Class ended</div>
-              {slideSyncStatus.state === "end-error" ? (
-                <button type="button" onClick={() => syncPresenterEnd(actualEndedAt)}>Retry end sync</button>
+              {["end-error", "end-unresponsive"].includes(slideSyncStatus.state) ? (
+                <button type="button" onClick={() => syncPresenterEnd(actualEndedAt, { recovery: true, handshakeAttempt: Math.max(1, Number(presenterLiveState.attendanceEndAttempt || 0) + 1) })}>Retry end sync</button>
               ) : slideSyncStatus.state === "ended-restored" ? (
-                <button type="button" onClick={() => syncPresenterEnd(actualEndedAt)}>Sync end now</button>
+                <button type="button" onClick={() => syncPresenterEnd(actualEndedAt, { recovery: true })}>Sync end now</button>
               ) : null}
             </div>
           ) : (
@@ -1667,7 +1789,78 @@ export default function CheckinDisplayPage() {
         </div>
 
         {hasRequiredParams ? (
-          actualStartedAt && !actualEndedAt && ["starting", "connecting", "connected", "failed"].includes(classStartHandoff.phase) ? (
+          actualEndedAt ? (
+            <section className={"checkin-display-smart-end " + (
+              ["end-unresponsive", "end-error"].includes(slideSyncStatus.state)
+                ? "is-failed"
+                : slideSyncStatus.state === "ended-acknowledged"
+                  ? "is-confirmed"
+                  : ""
+            )} role="status" aria-live="polite">
+              <div className="checkin-display-smart-end-heading">
+                <span>Class complete</span>
+                <h2>{slideSyncStatus.state === "ended-acknowledged" ? "Class ended · Presenter confirmed" : "Class complete"}</h2>
+                <p>{slideSyncStatus.message || "Finalizing the shared Presenter session…"}</p>
+              </div>
+
+              <div className="checkin-display-smart-end-stats">
+                <article>
+                  <span>Teaching time</span>
+                  <strong>{actualStartedAt ? formatDuration(actualEndedAt - actualStartedAt) : "—"}</strong>
+                </article>
+                <article>
+                  <span>Checked in</span>
+                  <strong>{attendanceCountLabel}</strong>
+                  <small>{attendanceLive ? "Verified live" : attendanceError ? "Live attendance unavailable" : "Live attendance reconnecting"}</small>
+                </article>
+                <article>
+                  <span>End sync</span>
+                  <strong>{slideSyncStatus.state === "ended-acknowledged" ? "Confirmed" : ["end-unresponsive", "end-error"].includes(slideSyncStatus.state) ? "Needs attention" : "Synchronizing…"}</strong>
+                </article>
+              </div>
+
+              {waitingWarmupTeaser?.outcomes?.length ? (
+                <div className="checkin-display-smart-end-outcomes">
+                  <span className="checkin-display-smart-end-label">Students should now be able to…</span>
+                  {waitingWarmupTeaser.outcomes.map((item, index) => (
+                    <div key={(item.label || "outcome") + index}>
+                      <span>{index + 1}</span>
+                      <p>{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="checkin-display-smart-end-next">
+                <div>
+                  <span className="checkin-display-smart-end-label">Next up</span>
+                  {waitingWarmupTeaser?.nextLesson ? (
+                    <>
+                      <strong>{waitingWarmupTeaser.nextLesson.assignmentId || "Next lesson"}</strong>
+                      <p>{waitingWarmupTeaser.nextLesson.title}</p>
+                    </>
+                  ) : (
+                    <p>This is the final mapped lesson in the current course sequence.</p>
+                  )}
+                </div>
+                <div className="checkin-display-smart-end-actions">
+                  {["end-unresponsive", "end-error"].includes(slideSyncStatus.state) ? (
+                    <button type="button" onClick={() => syncPresenterEnd(actualEndedAt, {
+                      recovery: true,
+                      handshakeAttempt: Math.max(1, Number(presenterLiveState.attendanceEndAttempt || 0) + 1),
+                    })}>
+                      Retry end sync
+                    </button>
+                  ) : null}
+                  {!musicPlaying ? (
+                    <button type="button" onClick={startWaitingMusic}>Start lobby music</button>
+                  ) : (
+                    <span>♫ Lobby music playing</span>
+                  )}
+                </div>
+              </div>
+            </section>
+          ) : actualStartedAt && ["starting", "connecting", "connected", "failed"].includes(classStartHandoff.phase) ? (
             <section className={"checkin-display-smart-handoff is-" + classStartHandoff.phase} role="status" aria-live="polite">
               <div className="checkin-display-handoff-visual" aria-hidden="true">
                 <span />
@@ -1708,6 +1901,13 @@ export default function CheckinDisplayPage() {
                   <span className="checkin-display-lobby-kicker">Smart Class Lobby</span>
                   <strong>{activeSmartLobbySlide.label}</strong>
                 </div>
+                <div className={"checkin-display-lobby-live-state is-" + attendanceConnectionState} role="status" aria-live="polite">
+                  <span />
+                  <div>
+                    <strong>{attendanceConnectionLabel}</strong>
+                    {attendanceError ? <small>{attendanceError}</small> : null}
+                  </div>
+                </div>
                 <div className="checkin-display-lobby-controls" role="group" aria-label="Lobby slideshow controls">
                   <button type="button" onClick={showPreviousLobbySlide}>Previous</button>
                   <button type="button" onClick={() => setSmartLobbyPaused((value) => !value)}>
@@ -1728,8 +1928,8 @@ export default function CheckinDisplayPage() {
                       <h2>Check in for class</h2>
                       <p>Scan the QR code to record your attendance while you wait.</p>
                       <div className="checkin-display-lobby-count">
-                        <strong>{expectedTotal ? checkedInCount + " / " + expectedTotal : checkedInCount}</strong>
-                        <span>{checkedInCount === 1 ? "student checked in" : "students checked in"}</span>
+                        <strong>{attendanceCountLabel}</strong>
+                        <span>{attendanceLive ? (checkedInCount === 1 ? "student checked in" : "students checked in") : "waiting for verified live attendance"}</span>
                       </div>
                       {expectedTotal ? (
                         <div className="checkin-display-progress" aria-label={attendancePercent + "% checked in"}>
@@ -1797,7 +1997,7 @@ export default function CheckinDisplayPage() {
                     <div className="checkin-display-lobby-status-grid">
                       <div>
                         <span>Checked in</span>
-                        <strong>{expectedTotal ? checkedInCount + " / " + expectedTotal : checkedInCount}</strong>
+                        <strong>{attendanceCountLabel}</strong>
                       </div>
                       <div>
                         <span>Current time</span>
