@@ -179,6 +179,7 @@ export default function PresenterSessionTimer({ slide }) {
   const [warnedMilestones, setWarnedMilestones] = useState([]);
   const [notice, setNotice] = useState("");
   const [attendanceRepairState, setAttendanceRepairState] = useState("idle");
+  const [presenterEndSyncState, setPresenterEndSyncState] = useState("idle");
   const [soundEnabled, setSoundEnabled] = useState(readSoundPreference);
   const [hydratedKey, setHydratedKey] = useState("");
   const previousRemainingRef = useRef(durationSeconds);
@@ -188,6 +189,7 @@ export default function PresenterSessionTimer({ slide }) {
   const agendaAutoStartHandledRef = useRef(false);
   const manualAttendanceRepairRef = useRef(false);
   const autoAttendanceRepairKeyRef = useRef("");
+  const pendingPresenterEndRef = useRef(null);
 
   useEffect(() => {
     const next = normalize(presenterLive.classContext?.classId) || currentPresenterClassId();
@@ -658,6 +660,33 @@ export default function PresenterSessionTimer({ slide }) {
     });
   }
 
+  async function writePresenterEnd(payload, { retry = false } = {}) {
+    if (!payload || !presenterLive.classRecordId || !presenterLive.sessionKey) return false;
+
+    setPresenterEndSyncState("saving");
+    setNotice(retry ? "Retrying class end sync…" : "Ending class…");
+
+    try {
+      const result = await endPresenterLiveSession(
+        presenterLive.classRecordId,
+        presenterLive.sessionKey,
+        payload,
+      );
+      if (!result?.ok) throw new Error(result?.reason || "Presenter end state could not be saved.");
+
+      pendingPresenterEndRef.current = null;
+      setPresenterEndSyncState("synced");
+      setNotice("Class ended from Presenter");
+      return true;
+    } catch (error) {
+      console.error("presenter end sync failed", error);
+      pendingPresenterEndRef.current = payload;
+      setPresenterEndSyncState("failed");
+      setNotice("Class end could not be synchronized. Retry end sync.");
+      return false;
+    }
+  }
+
   async function endClassFromPresenter() {
     if (!presenterLive.classRecordId || !presenterLive.sessionKey || attendanceSessionEnded) return;
     if (typeof window !== "undefined" && !window.confirm("End this class now? Attendance and Presenter will both receive the shared end state.")) return;
@@ -668,29 +697,29 @@ export default function PresenterSessionTimer({ slide }) {
       ? Math.max(0, Math.round((endedAtMs - startedAtMs) / 1000))
       : Math.max(0, durationSeconds - Number(remaining || 0));
     const requestId = `presenter-end:${presenterLive.sessionKey}:${endedAtMs}`;
+    const payload = {
+      classEndedAtMs: endedAtMs,
+      classDurationSeconds: duration,
+      presenterEndRequestId: requestId,
+      presenterEndRequestedAtMs: endedAtMs,
+      presenterEndDeviceId: presenterLive.deviceId,
+      presenterEndSource: "presenter",
+      timerRunning: false,
+      timerEndAt: 0,
+      timerRemaining: Math.max(0, Number(remaining || 0)),
+      timerUpdatedAtMs: endedAtMs,
+    };
 
+    pendingPresenterEndRef.current = payload;
     setRunning(false);
     setEndAt(0);
-    setNotice("Ending class…");
+    await writePresenterEnd(payload);
+  }
 
-    const result = await endPresenterLiveSession(
-      presenterLive.classRecordId,
-      presenterLive.sessionKey,
-      {
-        classEndedAtMs: endedAtMs,
-        classDurationSeconds: duration,
-        presenterEndRequestId: requestId,
-        presenterEndRequestedAtMs: endedAtMs,
-        presenterEndDeviceId: presenterLive.deviceId,
-        presenterEndSource: "presenter",
-        timerRunning: false,
-        timerEndAt: 0,
-        timerRemaining: Math.max(0, Number(remaining || 0)),
-        timerUpdatedAtMs: endedAtMs,
-      },
-    );
-
-    setNotice(result?.ok ? "Class ended from Presenter" : "Class end could not be synchronized.");
+  async function retryPresenterEndSync() {
+    const payload = pendingPresenterEndRef.current;
+    if (!payload || presenterEndSyncState === "saving") return;
+    await writePresenterEnd(payload, { retry: true });
   }
 
   function toggleSound() {
@@ -788,7 +817,25 @@ export default function PresenterSessionTimer({ slide }) {
             <button type="button" onClick={reset}>Reset</button>
           </>
         )}
-        {canEndClass ? (
+        {presenterEndSyncState === "failed" ? (
+          <button
+            type="button"
+            className="presenter-session-end is-retry"
+            onClick={retryPresenterEndSync}
+            title="Retry saving the same class end time to the shared Presenter session."
+          >
+            Retry end sync
+          </button>
+        ) : presenterEndSyncState === "saving" ? (
+          <button
+            type="button"
+            className="presenter-session-end"
+            disabled
+            title="Saving the shared class end state."
+          >
+            Ending class…
+          </button>
+        ) : canEndClass ? (
           <button
             type="button"
             className="presenter-session-end"

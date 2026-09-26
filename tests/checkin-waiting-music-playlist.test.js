@@ -754,3 +754,18 @@ test("Smart End shows class outcomes, duration, next lesson and restarts lobby m
   assert.match(css, /\.checkin-display-smart-end\.is-confirmed/);
   assert.match(css, /\.checkin-display-smart-end\.is-failed/);
 });
+
+
+test("CheckinDisplay defines statusInfo before rendering the shared status alert", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const statusInfo = useMemo\(\(\) => \{/);
+  assert.match(page, /title: "Attendance connection issue"/);
+  assert.match(page, /title: "Connecting live attendance"/);
+  assert.match(page, /title: "Class in progress"/);
+  assert.match(page, /title: "Class complete"/);
+
+  const definitionIndex = page.indexOf("const statusInfo = useMemo");
+  const renderIndex = page.indexOf("statusInfo.kind");
+  assert.ok(definitionIndex > 0 && renderIndex > definitionIndex, "statusInfo must be defined before the render uses it");
+});

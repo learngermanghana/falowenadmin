@@ -383,3 +383,21 @@ test("Presenter can end the shared class session without a new backend service",
   assert.doesNotMatch(service, /collection\([^\n]*liveTeachingSessions/);
   assert.match(css, /\.presenter-session-timer-actions \.presenter-session-end/);
 });
+
+
+test("Presenter end write failures become retryable instead of leaving Ending class stuck", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+
+  assert.match(source, /const \[presenterEndSyncState, setPresenterEndSyncState\] = useState\("idle"\)/);
+  assert.match(source, /const pendingPresenterEndRef = useRef\(null\)/);
+  assert.match(source, /async function writePresenterEnd\(payload, \{ retry = false \} = \{\}\)/);
+  assert.match(source, /try \{[\s\S]*await endPresenterLiveSession\(/);
+  assert.match(source, /catch \(error\) \{[\s\S]*presenter end sync failed/);
+  assert.match(source, /pendingPresenterEndRef\.current = payload/);
+  assert.match(source, /setPresenterEndSyncState\("failed"\)/);
+  assert.match(source, /Class end could not be synchronized\. Retry end sync\./);
+  assert.match(source, /async function retryPresenterEndSync\(\)/);
+  assert.match(source, /await writePresenterEnd\(payload, \{ retry: true \}\)/);
+  assert.match(source, />\s*Retry end sync\s*<\/button>/);
+  assert.match(source, />\s*Ending class…\s*<\/button>/);
+});
