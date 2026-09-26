@@ -1,5 +1,6 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
+import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { buildCourseBookBridgeItems, getCurriculumParityReference } from "../data/studentCurriculumParity.js";
 
@@ -564,6 +565,16 @@ function buildClassicStages(slide = {}, topicLabel = "") { const studentReferenc
   { id: "wrapup", type: "task", kicker: "Abschluss", title: "Wrap-up task", body: slide.wrapUpTaskDe || "" },
 ]; }
 
+function buildB1GrammarSupportItems(support = {}) {
+  const rules = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];
+  const mistakes = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
+  return rules.slice(0, 4).map((supportEn, index) => ({
+    label: `Rule ${index + 1}`,
+    supportEn: String(supportEn || "").trim(),
+    attentionEn: String(mistakes[index] || "").trim(),
+  })).filter((item) => item.supportEn);
+}
+
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const support = buildTeacherSlideSupport(slide);
   const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
@@ -685,6 +696,89 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         suggestedMinutes: Number(focusedPractice.minutes || 6),
       }] : []),
       speakingStage,
+      workbookStage,
+    ];
+  }
+
+  if (level === "B1") {
+    const knowledge = getB1PresenterKnowledge(normalizedAssignmentId(slide));
+    const focusedPractice = getB1FocusedPractice(normalizedAssignmentId(slide));
+    const b1GrammarItems = buildB1GrammarSupportItems(support);
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
+        title: slide.title || "Lesson",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "",
+        studentReference,
+      },
+      {
+        id: "warmup",
+        type: "list",
+        kicker: "Warm-up",
+        title: "Warm-up",
+        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
+        questionSupport: buildWarmupQuestionSupport(slide),
+        suggestedMinutes: warmupSuggestedMinutes(slide),
+        timingMode: PER_STUDENT_WARMUP_LEVELS.has(level) ? "per-student" : "",
+        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+      },
+      ...(knowledge ? [{
+        id: "knowledge",
+        type: "knowledge",
+        kicker: "Wissensimpuls",
+        title: knowledge.title,
+        textDe: knowledge.textDe,
+        items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
+        instruction: "Lies für die Hauptidee. Beantworte danach zwei Textfragen und eine Denkfrage.",
+        suggestedMinutes: 6,
+      }] : []),
+      {
+        id: "phrases",
+        type: vocabularyStage ? "vocabulary" : "list",
+        kicker: "Wortschatz",
+        title: "Kollokationen & Redemittel",
+        items: vocabularyStage ? vocabularyItems : phraseItems,
+        instruction: vocabularyStage
+          ? "Achte auf feste Wortverbindungen und nutze mindestens eine davon später in deiner Antwort."
+          : "",
+        suggestedMinutes: 5,
+      },
+      {
+        id: "grammar",
+        type: "b1-grammar",
+        kicker: "Grammatik im Kontext",
+        title: "Regel verstehen · auf Deutsch anwenden",
+        items: b1GrammarItems,
+        suggestedMinutes: interactionMinutes(slide, 1) || 10,
+      },
+      {
+        id: "examples",
+        type: "list",
+        kicker: "Modellsätze",
+        title: "So klingt es auf B1",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+        suggestedMinutes: interactionMinutes(slide, 2) || 7,
+      },
+      ...(focusedPractice ? [{
+        id: "practice",
+        type: "flow",
+        kicker: "Fokusaufgabe",
+        title: focusedPractice.title,
+        items: [{
+          ...focusedPractice,
+          minutes: Number(focusedPractice.minutes || 7),
+        }],
+        suggestedMinutes: Number(focusedPractice.minutes || 7),
+      }] : []),
+      {
+        ...speakingStage,
+        title: "Sprechen · anwenden und begründen",
+        suggestedMinutes: 15,
+      },
       workbookStage,
     ];
   }

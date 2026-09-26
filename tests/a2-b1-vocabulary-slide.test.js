@@ -16,8 +16,14 @@ for (const level of ["A2", "B1"]) {
       assert.ok(vocabulary, `${slide.assignmentId} vocabulary stage missing`);
       assert.equal(vocabulary.type, "vocabulary", `${slide.assignmentId} should use vocabulary renderer`);
       assert.equal(vocabulary.kicker, "Wortschatz");
-      assert.equal(vocabulary.title, "Wortschatz für heute");
-      assert.match(vocabulary.instruction, /mindestens zwei/i);
+      if (level === "B1") {
+        assert.equal(vocabulary.title, "Kollokationen & Redemittel");
+        assert.match(vocabulary.instruction, /feste Wortverbindungen/i);
+        assert.match(vocabulary.instruction, /mindestens eine/i);
+      } else {
+        assert.equal(vocabulary.title, "Wortschatz für heute");
+        assert.match(vocabulary.instruction, /mindestens zwei/i);
+      }
       assert.ok(vocabulary.items.length >= 4, `${slide.assignmentId} needs useful vocabulary`);
 
       vocabulary.items.forEach((item, index) => {

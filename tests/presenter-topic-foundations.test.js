@@ -99,17 +99,31 @@ test("C1 foundations use the same canonical learner topic and thinking profile f
   assert.match(day2.intro, /Identität|Sprache|Herkunft/i);
 });
 
-test("Presenter 2.0 orders warm-up before foundation and foundation before language work", () => {
-  for (const level of PRESENTER_FOUNDATION_LEVELS) {
+test("Presenter 2.0 uses knowledge input for A2/B1 and the shared foundation for B2-C2", () => {
+  for (const level of ["A2", "B1"]) {
     for (const slide of getSlidesByCourse(level)) {
-      const stages = buildTeachingPresenterStages(slide, slide.topic);
-      const ids = stages.map((stage) => stage.id);
+      const ids = buildTeachingPresenterStages(slide, slide.topic).map((stage) => stage.id);
+      const warmup = ids.indexOf("warmup");
+      const knowledge = ids.indexOf("knowledge");
+      const phrases = ids.indexOf("phrases");
+      const grammar = ids.indexOf("grammar");
+
+      assert.ok(warmup > -1, slide.assignmentId + " warm-up missing");
+      assert.ok(knowledge > warmup, slide.assignmentId + " Wissensimpuls should follow warm-up");
+      assert.ok(phrases > knowledge, slide.assignmentId + " vocabulary should follow Wissensimpuls");
+      assert.ok(grammar > knowledge, slide.assignmentId + " grammar should follow Wissensimpuls");
+      assert.equal(ids.includes("foundation"), false, slide.assignmentId + " should not duplicate the Wissensimpuls with another foundation page");
+    }
+  }
+
+  for (const level of ["B2", "C1", "C2"]) {
+    for (const slide of getSlidesByCourse(level)) {
+      const ids = buildTeachingPresenterStages(slide, slide.topic).map((stage) => stage.id);
       const warmup = ids.indexOf("warmup");
       const foundation = ids.indexOf("foundation");
       const phrases = ids.indexOf("phrases");
       const grammar = ids.indexOf("grammar");
 
-      assert.ok(warmup > -1, slide.assignmentId + " warm-up missing");
       assert.ok(foundation > warmup, slide.assignmentId + " foundation should follow warm-up");
       assert.ok(phrases > foundation, slide.assignmentId + " Redemittel should follow foundation");
       assert.ok(grammar > foundation, slide.assignmentId + " grammar should follow foundation");

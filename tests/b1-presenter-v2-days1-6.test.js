@@ -19,7 +19,7 @@ test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
 
-    ["intro", "warmup", "phrases", "grammar", "examples", "practice", "workbook", "mistakes", "questions"]
+    ["intro", "warmup", "knowledge", "phrases", "grammar", "examples", "practice", "questions", "workbook", "lesson-summary"]
       .forEach((stageId) => assert.ok(stageIds.includes(stageId), `${slide.assignmentId} missing ${stageId}`));
     assert.equal(stageIds.includes("wrapup"), false, `${slide.assignmentId} should not show the redundant mini-presentation slide`);
 
@@ -29,7 +29,8 @@ test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
     assert.ok(questionStage.supportItems.length >= 1);
 
     const practiceStage = stages.find((stage) => stage.id === "practice");
-    assert.ok(practiceStage.items.some((item) => item.minutes > 0));
+    assert.equal(practiceStage.items.length, 1);
+    assert.ok(practiceStage.items[0].minutes > 0);
   });
 });
 

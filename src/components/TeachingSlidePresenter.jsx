@@ -426,6 +426,25 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </section>
               ) : null}
             </>
+          ) : stage.type === "b1-grammar" ? (
+            <section className="presenter-b1-grammar">
+              <div className="presenter-b1-grammar-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                <p>Short English support for the rule. Keep the German examples as the main language.</p>
+              </div>
+              <div className="presenter-b1-grammar-grid">
+                {stage.items.map((item, index) => (
+                  <article key={(item.label || "rule") + index} className="presenter-b1-grammar-card">
+                    <strong>{item.label || `Rule ${index + 1}`}</strong>
+                    <p>{item.supportEn}</p>
+                    {item.attentionEn ? (
+                      <small><b>Watch out:</b> {item.attentionEn}</small>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            </section>
           ) : stage.type === "knowledge" ? (
             <section className="presenter-knowledge">
               <div className="presenter-knowledge-heading">
