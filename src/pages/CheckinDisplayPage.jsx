@@ -340,7 +340,7 @@ export default function CheckinDisplayPage() {
     return () => {
       cancelled = true;
     };
-  }, [classId, effectiveAssignmentId]);
+  }, [classId, assignmentId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
