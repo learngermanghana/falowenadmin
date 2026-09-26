@@ -112,10 +112,16 @@ test("student speaking timer is level-aware and beeps when time ends", () => {
   assert.match(picker, /\+15s/);
 });
 
-test("normal presenter build chain applies speaking timer and feedback patches", () => {
-  const patch = read("scripts/patchPresenterStudentPicker.mjs");
-  assert.match(patch, /patchPresenterSessionAndResponseTimers\.mjs/);
-  assert.match(patch, /patchPresenterSpeakingFeedback\.mjs/);
+test("normal presenter build chain applies speaking feedback after timer patches", () => {
+  const pickerPatch = read("scripts/patchPresenterStudentPicker.mjs");
+  const timerPatch = read("scripts/patchPresenterSessionAndResponseTimers.mjs");
+  assert.match(pickerPatch, /patchPresenterSessionAndResponseTimers\.mjs/);
+  assert.match(timerPatch, /patchPresenterStudentAnswerTime60s\.mjs/);
+  assert.match(timerPatch, /patchPresenterSpeakingFeedback\.mjs/);
+  assert.ok(
+    timerPatch.indexOf("patchPresenterSpeakingFeedback.mjs") > timerPatch.indexOf("patchPresenterStudentAnswerTime60s.mjs"),
+    "Speaking feedback must run after the level-aware timer patch.",
+  );
 });
 
 test("A2 and B1 use Speak to Feedback to Next student with a live rubric", () => {
