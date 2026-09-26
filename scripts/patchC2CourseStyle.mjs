@@ -82,7 +82,7 @@ update("src/utils/teachingPresenter.js", (source) => {
     "C2 Presenter 2.0 gate",
   );
 
-  if (!next.includes('slide.grammarTeachDe')) {
+  if (!next.includes('classroomLevel(slide) === "C2" && Array.isArray(slide.grammarTeachDe)')) {
     const advancedGrammarAnchor = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { const source = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];';
     const advancedGrammarReplacement = 'function buildAdvancedGrammarItems(slide = {}, support = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.grammarTeachDe) && slide.grammarTeachDe.length) return slide.grammarTeachDe; const source = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];';
     if (!next.includes(advancedGrammarAnchor)) throw new Error("C2 lesson-specific grammar anchor missing");
@@ -109,7 +109,7 @@ update("src/utils/teachingPresenter.js", (source) => {
     throw new Error("C2 shared topic foundation stage is missing from teachingPresenter");
   }
 
-  if (!next.includes('if (level === "C2") return [')) {
+  if (!next.includes('id: "analysis"') && !next.includes('if (level === "C2") return [')) {
     const practiceAnchor = '  if (level === "C1") return [';
     const practiceReplacement = `  if (level === "C2") return [
     { title: "1. Problemkern", instruction: firstQuestion, prompts: ["Formuliere zuerst die zugrunde liegende Spannung und nenne zwei Bewertungskriterien."], modelItems: models.slice(0, 1), teacherNote: teacherNoteFromFlow(flow, 0, "Frame the dilemma before allowing a final position."), minutes: interactionMinutes(slide, 0) || 7 },

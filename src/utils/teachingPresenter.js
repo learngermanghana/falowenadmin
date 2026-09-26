@@ -316,7 +316,7 @@ const ADVANCED_GRAMMAR_RULES = [
   { pattern: /dass-clause|dass clause/i, de: "dass-Sätze: das konjugierte Verb steht am Ende des Nebensatzes." },
 ];
 function advancedGrammarItemsDe(value = "") { const text = String(value || "").trim(); const matches = ADVANCED_GRAMMAR_RULES.filter(({ pattern }) => pattern.test(text)).map(({ de }) => de); return matches.length ? [...new Set(matches)] : ["Zielstruktur: Formuliere einen vollständigen Satz mit der neuen Struktur dieser Lektion."]; }
-function buildAdvancedGrammarItems(slide = {}, support = {}) { const source = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []; if (["B2", "C1"].includes(classroomLevel(slide)) && source.length) return source; return [...new Set(source.flatMap(advancedGrammarItemsDe))]; }
+function buildAdvancedGrammarItems(slide = {}, support = {}) { if (classroomLevel(slide) === "C2" && Array.isArray(slide.grammarTeachDe) && slide.grammarTeachDe.length) return slide.grammarTeachDe; const source = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []; if (["B2", "C1"].includes(classroomLevel(slide)) && source.length) return source; return [...new Set(source.flatMap(advancedGrammarItemsDe))]; }
 function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C1") return ["Komplexe Strukturen nur verwenden, wenn Wortstellung und Bezug eindeutig bleiben.", "Abstrakte Aussagen immer mit Beispiel, Folge oder betroffener Gruppe konkretisieren.", "Ein Gegenargument nicht nur nennen, sondern anschließend darauf reagieren."]; return ["Nicht nur Ideen aufzählen: Aussage → Grund → Beispiel.", "Bei Nebensätzen auf die Verbendstellung achten.", "Nicht denselben Konnektor ständig wiederholen; die neue Zielstruktur bewusst variieren."]; }
 function teacherNoteFromFlow(flow = [], index = 0, fallback = "") { return String(flow[index]?.detailEn || fallback).trim(); }
 
@@ -565,6 +565,126 @@ function buildClassicStages(slide = {}, topicLabel = "") { const studentReferenc
   { id: "wrapup", type: "task", kicker: "Abschluss", title: "Wrap-up task", body: slide.wrapUpTaskDe || "" },
 ]; }
 
+function buildC2AnalyticalTask(slide = {}) {
+  const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
+  const perspectives = Array.isArray(slide.runtimePerspectivesDe) ? slide.runtimePerspectivesDe.filter(Boolean) : [];
+  const grammar = Array.isArray(slide.grammarTeachDe) ? slide.grammarTeachDe.filter(Boolean) : [];
+  const topic = cleanTopic(slide);
+  const first = perspectives[0] || `Formuliere eine belastbare Position zu „${topic}“.`;
+  const second = perspectives[1] || "Formuliere eine plausible Gegenposition.";
+  const third = perspectives[2] || "Formuliere eine dritte Perspektive oder Einschränkung.";
+  const modelItems = (Array.isArray(slide.speakingModels) ? slide.speakingModels : [])
+    .map((item) => item?.modelAnswerDe)
+    .filter(Boolean)
+    .slice(0, 2);
+  const mechanic = ((day - 1) % 7) + 1;
+
+  const variants = {
+    1: {
+      title: "Kriterienmatrix",
+      instruction: "Bewerte drei Positionen nach klaren Kriterien, bevor du dich festlegst.",
+      prompts: [
+        `Position A: ${first}`,
+        `Position B: ${second}`,
+        `Position C: ${third}`,
+        "Lege zwei Bewertungskriterien fest und zeige, welche Position unter welcher Bedingung stärker wird.",
+      ],
+    },
+    2: {
+      title: "Evidenz-Audit",
+      instruction: "Trenne Behauptung, notwendige Evidenz und zulässige Schlussfolgerung.",
+      prompts: [
+        `Prüfe diese Aussage: ${first}`,
+        "Welche Daten oder Beobachtungen würden die Aussage stützen?",
+        "Welche Evidenz würde sie relativieren?",
+        "Formuliere anschließend eine abgestufte Schlussfolgerung.",
+      ],
+    },
+    3: {
+      title: "Präzisions- und Registerlabor",
+      instruction: "Formuliere dieselbe Kernaussage einmal neutral, einmal akademisch verdichtet und einmal vorsichtig-diplomatisch.",
+      prompts: [
+        `Ausgangsaussage: ${first}`,
+        ...grammar.slice(0, 2).map((item) => `Zielstruktur: ${item}`),
+        "Erkläre, welche Version für eine Stellungnahme am überzeugendsten ist und warum.",
+      ],
+    },
+    4: {
+      title: "Quellen- und Distanzcheck",
+      instruction: "Ordne Aussage, Quelle und Evidenzstatus sprachlich sauber voneinander.",
+      prompts: [
+        `Fremdaussage: ${first}`,
+        "Formuliere sie als berichtete Aussage, ohne sie als Tatsache zu übernehmen.",
+        `Setze anschließend einen begründeten Gegenpunkt: ${second}`,
+        "Markiere abschließend, was belegt, plausibel oder noch offen ist.",
+      ],
+    },
+    5: {
+      title: "Stärkste Gegenposition",
+      instruction: "Formuliere die Gegenposition so stark wie möglich und antworte darauf, ohne sie zu verzerren.",
+      prompts: [
+        `Ausgangsthese: ${first}`,
+        `Stärkste Gegenposition: ${second}`,
+        "Welche Annahme ist in beiden Positionen unterschiedlich?",
+        "Formuliere eine Synthese mit Bedingung oder Grenze.",
+      ],
+    },
+    6: {
+      title: "Kausalitäts- und Folgenkarte",
+      instruction: "Baue eine belastbare Kette aus Ursache, Mechanismus, Folge und Einschränkung.",
+      prompts: [
+        `Thema: ${topic}`,
+        `Ausgangspunkt: ${first}`,
+        "Welche Verbindung ist wirklich kausal, welche nur plausibel oder korrelativ?",
+        "Formuliere die Schlussfolgerung so, dass sie nicht mehr behauptet als die Evidenz trägt.",
+      ],
+    },
+    7: {
+      title: "Synthese ohne Gleichmacherei",
+      instruction: "Verbinde mehrere Perspektiven, ohne ihre Unterschiede zu verwischen.",
+      prompts: [
+        `Perspektive 1: ${first}`,
+        `Perspektive 2: ${second}`,
+        `Perspektive 3: ${third}`,
+        "Formuliere eine Synthese: Was bleibt bestehen, was wird eingeschränkt, und welche Bedingung entscheidet?",
+      ],
+    },
+  };
+
+  const selected = variants[mechanic];
+  return { ...selected, modelItems, minutes: 12 };
+}
+
+function buildC2WritingBridge(slide = {}) {
+  const opinion = String(slide.writeType || "").toLowerCase() === "opinion";
+  const prompt = String(slide.canonicalWritingPromptDe || slide.wrapUpTaskDe || "").trim();
+  if (opinion) {
+    return {
+      title: "Write-Transfer · Stellungnahme planen",
+      instruction: "Plane nur die Argumentationsarchitektur; schreibe die Prüfungsantwort erst im Write-Bereich.",
+      prompts: [
+        prompt,
+        "1. These + zwei Bewertungskriterien",
+        "2. Alle drei Perspektiven einordnen",
+        "3. Stärkstes Gegenargument beantworten",
+        "4. Differenzierte Synthese mit Bedingung oder Grenze",
+      ],
+      minutes: 8,
+    };
+  }
+  return {
+    title: "Write-Transfer · Umformung vorbereiten",
+    instruction: "Plane die Transformation, ohne die fünf Prüfungsitems vorwegzunehmen.",
+    prompts: [
+      "Welche Bedeutung muss unverändert bleiben?",
+      "Welche Zielstruktur passt zur heutigen Grammatik?",
+      "Welche Kasus-, Rektion- oder Wortstellungsstelle ist fehleranfällig?",
+      "Welche Register- oder Bedeutungsverschiebung musst du am Ende kontrollieren?",
+    ],
+    minutes: 8,
+  };
+}
+
 function buildB1GrammarSupportItems(support = {}) {
   const rules = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];
   const mistakes = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
@@ -778,6 +898,86 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         ...speakingStage,
         title: "Sprechen · anwenden und begründen",
         suggestedMinutes: 15,
+      },
+      workbookStage,
+    ];
+  }
+
+  if (level === "C2") {
+    const analyticalTask = buildC2AnalyticalTask(slide);
+    const writingBridge = buildC2WritingBridge(slide);
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
+        title: slide.title || "Lesson",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "",
+        studentReference,
+      },
+      {
+        id: "warmup",
+        type: "list",
+        kicker: "Warm-up",
+        title: "Warm-up · Position aktivieren",
+        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
+        questionSupport: buildWarmupQuestionSupport(slide),
+        suggestedMinutes: 5,
+        timingMode: "per-student",
+        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+      },
+      ...(topicFoundation ? [{
+        id: "foundation",
+        type: "foundation",
+        ...topicFoundation,
+      }] : []),
+      {
+        id: "phrases",
+        type: "vocabulary",
+        kicker: "Kollokationen & Register",
+        title: "Präzise Sprache für heute",
+        items: vocabularyItems,
+        instruction: "Nutze Kollokationen nicht dekorativ: wähle sie dort, wo sie die Argumentation präziser machen.",
+        suggestedMinutes: 6,
+      },
+      {
+        id: "grammar",
+        type: "list",
+        kicker: "C2-Grammatik",
+        title: "Struktur nach Funktion wählen",
+        items: grammarItems,
+        suggestedMinutes: 10,
+      },
+      {
+        id: "examples",
+        type: "list",
+        kicker: "Modellsätze",
+        title: "Nuance, Evidenz und Register",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+        suggestedMinutes: 6,
+      },
+      {
+        id: "analysis",
+        type: "flow",
+        kicker: "Analytische Fokusaufgabe",
+        title: analyticalTask.title,
+        items: [analyticalTask],
+        suggestedMinutes: analyticalTask.minutes,
+      },
+      {
+        ...speakingStage,
+        title: "Seminargespräch · abwägen und synthetisieren",
+        suggestedMinutes: 18,
+      },
+      {
+        id: "writing",
+        type: "flow",
+        kicker: "Schreiben",
+        title: writingBridge.title,
+        items: [writingBridge],
+        suggestedMinutes: writingBridge.minutes,
       },
       workbookStage,
     ];
