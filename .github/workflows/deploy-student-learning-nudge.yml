@@ -1,0 +1,62 @@
+name: Deploy Student Learning Nudge Worker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "functions/studentLearningInterventionEmails.js"
+      - "functions/main.js"
+      - ".github/workflows/deploy-student-learning-nudge.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: falowenadmin-student-learning-nudge-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FIREBASE_PROJECT_ID: falowen-examiner-trainer
+      GOOGLE_CLOUD_PROJECT: falowen-examiner-trainer
+      GCLOUD_PROJECT: falowen-examiner-trainer
+      CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Validate learning nudge worker
+        run: |
+          node --check functions/studentLearningInterventionEmails.js
+          node --check functions/main.js
+          node --test tests/student-learning-intervention-emails.test.js
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+
+      - name: Deploy only student learning nudge worker
+        run: |
+          firebase deploy \
+            --project "$FIREBASE_PROJECT_ID" \
+            --only "functions:falowenadmin:sendStudentLearningNudges" \
+            --force \
+            --debug
