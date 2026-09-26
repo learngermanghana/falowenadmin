@@ -45,7 +45,7 @@ const B1_KNOWLEDGE = {
   },
   "B1-2.5": {
     title: "Eine Besichtigung ist auch ein Informationsgespräch",
-    textDe: "Bei einem Besichtigungstermin geht es nicht nur darum, eine Wohnung anzusehen. Interessenten müssen wichtige Informationen klären: Nebenkosten, Kaution, Einzugstermin, Hausordnung oder mögliche Reparaturen. Direkte Fragen können unhöflich wirken, besonders gegenüber einer unbekannten Person. Indirekte Fragen und Konjunktiv-II-Formen machen das Gespräch höflicher, ohne unklar zu werden.",
+    textDe: "Bei einem Besichtigungstermin geht es nicht nur darum, eine Wohnung anzusehen. Interessenten müssen wichtige Informationen klären: Nebenkosten, Kaution, Einzugstermin, Hausordnung oder mögliche Reparaturen. Direkte Fragen können unhöflich wirken, besonders gegenüber einer unbekannten Person. Indirekte Fragen und Konjunktiv-II-Formen machen das Gespräch höflicher, ohne unklar zu werden. Gleichzeitig sollte man konkrete Antworten notieren, damit verschiedene Wohnungen später sachlich miteinander verglichen werden können.",
     checks: ["Welche Informationen sollte man bei einer Besichtigung klären?", "Warum sind indirekte Fragen nützlich?", "Welche grammatische Form macht Fragen höflicher?"],
     activity: {
       title: "Direkt → professionell",
@@ -210,7 +210,7 @@ const B1_KNOWLEDGE = {
   },
   "B1-6.20": {
     title: "Qualifikationen unterscheiden sich je nach Beruf",
-    textDe: "Nicht jeder Beruf verlangt denselben Ausbildungsweg. Manche Tätigkeiten setzen ein Studium voraus, andere eine berufliche Ausbildung oder praktische Zertifikate. Zusätzlich können Sprachkenntnisse, Berufserfahrung oder rechtliche Anerkennungen wichtig sein. Wer einen Beruf recherchiert, sollte deshalb zwischen Muss-Voraussetzungen und hilfreichen Zusatzqualifikationen unterscheiden. So lässt sich besser planen, welche Schritte wirklich notwendig sind.",
+    textDe: "Nicht jeder Beruf verlangt denselben Ausbildungsweg. Manche Tätigkeiten setzen ein Studium voraus, andere eine berufliche Ausbildung oder praktische Zertifikate. Zusätzlich können Sprachkenntnisse, Berufserfahrung oder rechtliche Anerkennungen wichtig sein. Wer einen Beruf recherchiert, sollte deshalb zwischen Muss-Voraussetzungen und hilfreichen Zusatzqualifikationen unterscheiden. Auch der Ort kann eine Rolle spielen, weil berufliche Regeln nicht überall gleich sind. So lässt sich besser planen, welche Schritte wirklich notwendig sind und welche nur zusätzliche Chancen schaffen.",
     checks: ["Welche verschiedenen Ausbildungswege nennt der Text?", "Welche zusätzlichen Voraussetzungen können wichtig sein?", "Warum muss man Pflicht und Zusatzqualifikation unterscheiden?"],
     activity: {
       title: "Muss, kann, hilfreich",
@@ -265,7 +265,7 @@ const B1_KNOWLEDGE = {
   },
   "B1-8.25": {
     title: "Beim Onlinekauf sind Information und Dokumentation wichtig",
-    textDe: "Onlinekäufe sind bequem, aber Käufer können ein Produkt vor dem Kauf nicht direkt prüfen. Deshalb sind Produktbeschreibung, Lieferbedingungen, Rückgaberegeln und sichere Zahlungswege wichtig. Wenn etwas beschädigt oder falsch geliefert wird, helfen Bestellnummer, Fotos und schriftliche Kommunikation. Eine Reklamation sollte sachlich erklären, was passiert ist und welche Lösung erwartet wird, zum Beispiel Ersatz oder Rückerstattung.",
+    textDe: "Onlinekäufe sind bequem, aber Käufer können ein Produkt vor dem Kauf nicht direkt prüfen. Deshalb sind Produktbeschreibung, Lieferbedingungen, Rückgaberegeln und sichere Zahlungswege wichtig. Wenn etwas beschädigt oder falsch geliefert wird, helfen Bestellnummer, Fotos und schriftliche Kommunikation. Eine Reklamation sollte sachlich erklären, was passiert ist und welche Lösung erwartet wird, zum Beispiel Ersatz oder Rückerstattung. Wer Belege aufbewahrt und Fristen prüft, kann sein Anliegen außerdem klarer dokumentieren.",
     checks: ["Welche Informationen sollte man vor dem Kauf prüfen?", "Welche Belege helfen bei einer Reklamation?", "Was muss eine sachliche Reklamation enthalten?"],
     activity: {
       title: "Verbraucherfall lösen",
@@ -298,7 +298,7 @@ const B1_KNOWLEDGE = {
   },
   "B1-10.28": {
     title: "Klimafreundliches Leben braucht persönliche und politische Rahmenbedingungen",
-    textDe: "Menschen können im Alltag klimafreundlicher handeln, doch nicht jede Entscheidung liegt allein bei ihnen. Öffentliche Verkehrsmittel, sichere Radwege, Energiepreise und verfügbare Produkte beeinflussen, welche Optionen realistisch sind. Persönliche Verantwortung und gute Rahmenbedingungen ergänzen sich deshalb. Eine faire Diskussion sollte fragen, was Einzelne verändern können und welche Maßnahmen Unternehmen, Städte oder Politik ermöglichen müssen.",
+    textDe: "Menschen können im Alltag klimafreundlicher handeln, doch nicht jede Entscheidung liegt allein bei ihnen. Öffentliche Verkehrsmittel, sichere Radwege, Energiepreise und verfügbare Produkte beeinflussen, welche Optionen realistisch sind. Persönliche Verantwortung und gute Rahmenbedingungen ergänzen sich deshalb. Eine faire Diskussion sollte fragen, was Einzelne verändern können und welche Maßnahmen Unternehmen, Städte oder Politik ermöglichen müssen. Besonders wirksam werden Veränderungen häufig dann, wenn klimafreundliche Optionen nicht nur vorhanden, sondern auch bezahlbar und praktisch sind.",
     checks: ["Welche Rahmenbedingungen nennt der Text?", "Warum liegt nicht jede Entscheidung nur beim Einzelnen?", "Welche zwei Verantwortungsebenen müssen zusammen gedacht werden?"],
     activity: {
       title: "Maßnahmen nach Verantwortung ordnen",
