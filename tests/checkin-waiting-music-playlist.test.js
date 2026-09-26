@@ -302,7 +302,7 @@ test("check-in starts the shared presenter timer from the actual synchronized cl
   assert.match(page, /attendanceDurationSeconds > 0 && configuredLevelDurationSeconds > 0/);
   assert.match(page, /Math\.min\(attendanceDurationSeconds, configuredLevelDurationSeconds\)/);
   assert.match(page, /attendanceDurationSeconds \|\| configuredLevelDurationSeconds/);
-  assert.match(page, /Resend to slides/);
+  assert.match(page, /Retry slide sync|Retry connection/);
   assert.match(page, /void syncPresenterStart\(startedAt\)/);
 
   assert.match(service, /presenterSessions\.\$\{key\}/);
@@ -378,7 +378,7 @@ test("supported attendance dates normalize only when the calendar date is valid"
   assert.equal(checkinSessionDateKey("not-a-real-date"), null);
 });
 
-test("restored class starts recover automatically and keep manual resend for failed acknowledgement", () => {
+test("restored class starts recover automatically and keep manual retry for failed acknowledgement", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
   assert.match(page, /\["restored", "error"\]\.includes\(slideSyncStatus\.state\)/);
@@ -530,7 +530,7 @@ test("attendance start waits for Presenter acknowledgement and retries automatic
   assert.match(page, /window\.setTimeout\(\(\) => \{[\s\S]*handshakeAttempt: sharedAttempt \+ 1/);
   assert.match(page, /Slides connected · timer synced/);
   assert.match(page, /Slides not responding · start sent/);
-  assert.match(page, />\s*Resend to slides\s*<\/button>/);
+  assert.match(page, /Retry connection|Retry slide sync/);
 });
 
 test("attendance never reports Slides synchronized before acknowledgement", () => {
@@ -562,7 +562,7 @@ test("waiting Attendance rotates a Smart Class Lobby with lesson-derived content
   assert.match(page, /Resume rotation/);
   assert.match(page, />Previous<\/button>/);
   assert.match(page, />Next<\/button>/);
-  assert.match(page, /Auto-changing every 14 seconds/);
+  assert.match(page, /Adaptive rotation · every 14 seconds/);
 
   assert.match(page, /const presenterStages = buildTeachingPresenterStages/);
   assert.match(page, /find\(\(stage\) => stage\.id === "lesson-summary"\)/);
@@ -623,4 +623,75 @@ test("Smart Class Lobby disappears immediately after the teacher starts class", 
   assert.match(page, /Start class & slides/);
   assert.match(page, /setActualStartedAt\(startedAt\)/);
   assert.match(page, /checkin-display-main-grid/);
+});
+
+
+test("Smart Class Lobby adapts its rotation to attendance and proximity to start", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const nearStart = Boolean\(scheduledStartAt && \(scheduledStartAt - nowMs\) <= 2 \* 60 \* 1000\)/);
+  assert.match(page, /const lowAttendance = attendanceRatio !== null && attendanceRatio < 0\.6/);
+  assert.match(page, /const highAttendance = attendanceRatio !== null && attendanceRatio >= 0\.75/);
+  assert.match(page, /\["starting", "warmup", "starting", "checkin", "lesson", "starting", "outcomes"\]/);
+  assert.match(page, /\["checkin", "lesson", "checkin", "outcomes", "checkin", "warmup", "starting"\]/);
+  assert.match(page, /\["lesson", "outcomes", "warmup", "starting", "checkin"\]/);
+  assert.match(page, /sequenceKey:/);
+});
+
+test("Start class uses a visible Smart Start handoff and opens Presenter within the click gesture", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const css = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.css"), "utf8");
+
+  assert.match(page, /SMART_HANDOFF_MIN_VISIBLE_MS = 3000/);
+  assert.match(page, /SMART_HANDOFF_CONNECTED_VISIBLE_MS = 1200/);
+  assert.match(page, /const presenterLessonUrl = useMemo/);
+  assert.match(page, /\?present=1/);
+  assert.match(page, /const openPresenterWindow = useCallback/);
+  assert.match(page, /window\.open\(presenterLessonUrl, "falowen-presenter"\)/);
+
+  const handler = page.slice(
+    page.indexOf("const handleStartClassNow"),
+    page.indexOf("const syncPresenterEnd"),
+  );
+  assert.ok(handler.indexOf("openPresenterWindow(false)") < handler.indexOf("void syncPresenterStart(startedAt)"), "Presenter should open during the teacher click before async sync");
+  assert.match(handler, /phase: "starting"/);
+  assert.match(handler, /Class starting…/);
+  assert.match(handler, /phase: "connecting"/);
+  assert.match(handler, /Connecting slides…/);
+  assert.match(handler, /setTargetAtTime\(\s*0\.0001/);
+
+  assert.match(css, /\.checkin-display-smart-handoff\s*\{/);
+  assert.match(css, /\.checkin-display-smart-handoff\.is-connected/);
+  assert.match(css, /\.checkin-display-smart-handoff\.is-failed/);
+});
+
+test("Smart Start only reports success after Presenter acknowledges the exact Attendance request", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const requestId = attendanceStartRequestId\(linkPresenterSessionKey, actualStartedAt\)/);
+  assert.match(page, /const acknowledged = presenterStartAcknowledged\(presenterLiveState, requestId\)/);
+  assert.match(page, /Slides connected · Timer started/);
+  assert.match(page, /Presenter confirmed this exact Attendance start/);
+  assert.match(page, /presenterWindowRef\.current\?\.focus/);
+  assert.match(page, /SMART_HANDOFF_CONNECTED_VISIBLE_MS/);
+});
+
+test("Smart Start exposes recovery actions when Presenter does not acknowledge", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /\["error", "unresponsive", "stale-blocked", "skipped-date"\]\.includes\(slideSyncStatus\.state\)/);
+  assert.match(page, /phase: "failed"/);
+  assert.match(page, /Retrying Presenter connection…/);
+  assert.match(page, />Retry connection<\/button>/);
+  assert.match(page, />\s*Open slides manually\s*<\/button>/);
+  assert.match(page, /window\.location\.assign\(presenterLessonUrl\)/);
+});
+
+test("Attendance and Presenter use the resolved lesson assignment for the same session key", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const effectiveAssignmentId = String\(assignmentId \|\| scheduleInfo\?\.assignmentId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /assignmentId: effectiveAssignmentId/);
+  assert.match(page, /lessonId: String\(effectiveAssignmentId \|\| sessionId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /presenterSessionKey\(\{ sessionDate, sessionId, assignmentId: effectiveAssignmentId \}\)/);
 });
