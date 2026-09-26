@@ -263,89 +263,6 @@ function advancedWarmupFollowUpDe(question = "", level = "") {
     if (/\bwarum\b/i.test(text)) return "Welche plausible Gegenposition könnte deine Begründung relativieren?";
     return "Unter welcher Bedingung würdest du deine Position ändern oder stärker einschränken?";
   }
-  if (level === "C1") {
-    const focusTask = buildC1FocusedTask(slide);
-    const writingBridge = buildC1WritingBridge(slide);
-    const grammarSupportEn = c1GrammarSupportEn(slide.canonicalLearnerLesson?.grammarTitle || "");
-    return [
-      {
-        id: "intro",
-        type: "intro",
-        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
-        title: slide.title || "Lesson",
-        topic: topicLabel || slide.topic || "",
-        objective: slide.objective || "",
-        duration: slide.estimatedDuration || "",
-        studentReference,
-      },
-      {
-        id: "warmup",
-        type: "list",
-        kicker: "Warm-up",
-        title: "Warm-up · Thema aktivieren",
-        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
-        questionSupport: buildWarmupQuestionSupport(slide),
-        suggestedMinutes: 5,
-        timingMode: "per-student",
-        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
-      },
-      ...(topicFoundation ? [{
-        id: "foundation",
-        type: "foundation",
-        ...topicFoundation,
-      }] : []),
-      {
-        id: "phrases",
-        type: "vocabulary",
-        kicker: "Kollokationen & Argumentationssprache",
-        title: "Präzise Sprache für das Thema",
-        items: vocabularyItems,
-        instruction: "Nutze mindestens zwei thematische Kollokationen und ein Argumentationsmittel später in deiner Antwort.",
-        suggestedMinutes: 6,
-      },
-      {
-        id: "grammar",
-        type: "c1-grammar",
-        kicker: "Grammatik im Kontext",
-        title: "Struktur kontrollieren · Funktion verstehen",
-        items: grammarItems,
-        supportEn: grammarSupportEn,
-        attentionDe: String(slide.canonicalLearnerLesson?.mistake || ""),
-        suggestedMinutes: 10,
-      },
-      {
-        id: "examples",
-        type: "list",
-        kicker: "Modellsätze",
-        title: "So klingt kontrolliertes C1",
-        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
-        suggestedMinutes: 6,
-      },
-      {
-        id: "focus",
-        type: "flow",
-        kicker: "C1-Fokusaufgabe",
-        title: focusTask.title,
-        items: [focusTask],
-        suggestedMinutes: focusTask.minutes,
-      },
-      {
-        ...speakingStage,
-        title: "Sprechen · argumentieren und reagieren",
-        suggestedMinutes: 16,
-      },
-      {
-        id: "writing",
-        type: "flow",
-        kicker: "Schreiben",
-        title: writingBridge.title,
-        items: [writingBridge],
-        suggestedMinutes: writingBridge.minutes,
-      },
-      workbookStage,
-    ];
-  }
-
   if (level === "C2") {
     if (isWarmupComparisonQuestion(text) || /\boder\b/i.test(text)) return "Nach welchen Kriterien ist dieser Vergleich tragfähig, und wo stößt er an seine Grenzen?";
     if (/\bwie\s+(?:kann|könnte|sollte)\b|\bmaßnahme|lösung|strategie\b/i.test(text)) return "Unter welchen Bedingungen wäre diese Maßnahme nur bedingt wirksam oder sogar kontraproduktiv?";
@@ -1126,6 +1043,89 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         ...speakingStage,
         title: "Sprechen · anwenden und begründen",
         suggestedMinutes: 15,
+      },
+      workbookStage,
+    ];
+  }
+
+  if (level === "C1") {
+    const focusTask = buildC1FocusedTask(slide);
+    const writingBridge = buildC1WritingBridge(slide);
+    const grammarSupportEn = c1GrammarSupportEn(slide.canonicalLearnerLesson?.grammarTitle || "");
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(),
+        title: slide.title || "Lesson",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "",
+        studentReference,
+      },
+      {
+        id: "warmup",
+        type: "list",
+        kicker: "Warm-up",
+        title: "Warm-up · Thema aktivieren",
+        items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
+        questionSupport: buildWarmupQuestionSupport(slide),
+        suggestedMinutes: 5,
+        timingMode: "per-student",
+        timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
+      },
+      ...(topicFoundation ? [{
+        id: "foundation",
+        type: "foundation",
+        ...topicFoundation,
+      }] : []),
+      {
+        id: "phrases",
+        type: "vocabulary",
+        kicker: "Kollokationen & Argumentationssprache",
+        title: "Präzise Sprache für das Thema",
+        items: vocabularyItems,
+        instruction: "Nutze mindestens zwei thematische Kollokationen und ein Argumentationsmittel später in deiner Antwort.",
+        suggestedMinutes: 6,
+      },
+      {
+        id: "grammar",
+        type: "c1-grammar",
+        kicker: "Grammatik im Kontext",
+        title: "Struktur kontrollieren · Funktion verstehen",
+        items: grammarItems,
+        supportEn: grammarSupportEn,
+        attentionDe: String(slide.canonicalLearnerLesson?.mistake || ""),
+        suggestedMinutes: 10,
+      },
+      {
+        id: "examples",
+        type: "list",
+        kicker: "Modellsätze",
+        title: "So klingt kontrolliertes C1",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+        suggestedMinutes: 6,
+      },
+      {
+        id: "focus",
+        type: "flow",
+        kicker: "C1-Fokusaufgabe",
+        title: focusTask.title,
+        items: [focusTask],
+        suggestedMinutes: focusTask.minutes,
+      },
+      {
+        ...speakingStage,
+        title: "Sprechen · argumentieren und reagieren",
+        suggestedMinutes: 16,
+      },
+      {
+        id: "writing",
+        type: "flow",
+        kicker: "Schreiben",
+        title: writingBridge.title,
+        items: [writingBridge],
+        suggestedMinutes: writingBridge.minutes,
       },
       workbookStage,
     ];
