@@ -487,9 +487,13 @@ async function selectDueCandidates({
 } = {}) {
   const due = [];
   let stateReads = 0;
+  const effectiveBatchSize = Math.min(
+    Math.max(1, Number(stateBatchSize) || 1),
+    Math.max(1, Number(maxSends) || 1),
+  );
 
-  for (let offset = 0; offset < candidates.length && due.length < maxSends; offset += stateBatchSize) {
-    const chunk = candidates.slice(offset, offset + stateBatchSize);
+  for (let offset = 0; offset < candidates.length && due.length < maxSends; offset += effectiveBatchSize) {
+    const chunk = candidates.slice(offset, offset + effectiveBatchSize);
     const snapshots = await Promise.all(
       chunk.map(({ student }) =>
         db.collection("studentLearningInterventionStates")
