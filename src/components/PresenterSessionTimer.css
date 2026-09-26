@@ -96,6 +96,21 @@
   white-space: nowrap;
 }
 
+.presenter-session-timer-actions .presenter-session-end {
+  border-color: #b91c1c;
+  color: #b91c1c;
+  background: #ffffff;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.presenter-session-timer-actions .presenter-session-end:hover,
+.presenter-session-timer-actions .presenter-session-end:focus-visible {
+  border-color: #991b1b;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
 .presenter-session-timer.is-notice {
   border-color: #94a3b8;
   background: #f8fafc;
