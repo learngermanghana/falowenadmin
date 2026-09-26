@@ -93,17 +93,28 @@ test("Start class stays visually primary and sound controls cannot crowd it out"
   assert.match(presenterCss, /\.presenter-topbar > \*\s*\{\s*min-width:\s*0/);
 });
 
-test("student picker starts a one-minute answer timer automatically and announces timeout", () => {
+test("student speaking timer is level-aware and beeps when time ends", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
   assert.match(picker, /DEFAULT_RESPONSE_SECONDS = 60/);
-  assert.match(picker, /RESPONSE_TIME_KEY = "falowen:presenter:response-seconds:v2"/);
-  assert.match(picker, /RESPONSE_TIME_PRESETS = \[15, 30, 45, 60\]/);
+  assert.match(picker, /RESPONSE_TIME_KEY = "falowen:presenter:response-seconds:v3"/);
+  assert.match(picker, /RESPONSE_TIME_PRESETS = \[60, 120, 180\]/);
+  assert.match(picker, /if \(level === "A2"\) return 120/);
+  assert.match(picker, /if \(level === "B1"\) return 180/);
+  assert.match(picker, /responseTimeStorageKey\(slide\?\.course\)/);
   assert.match(picker, /startResponseTimer\(\);\s*\n\s*}\s*\n\s*\n\s*function pickNextQuestion/);
   assert.match(picker, /publishQuestion\(nextQuestion\);\s*\n\s*startResponseTimer\(\)/);
+  assert.match(picker, /function playResponseTimeoutBeep\(\)/);
+  assert.match(picker, /responseTimeoutBeepedRef/);
+  assert.match(picker, /createOscillator\(\)/);
+  assert.match(picker, /playResponseTimeoutBeep\(\);\s*\n\s*setResponseDeadline\(0\)/);
+  assert.match(picker, /A2 defaults to 2 minutes\. B1 defaults to 3 minutes/);
   assert.match(picker, /Time's up —/);
   assert.match(picker, /\+15s/);
-  assert.match(picker, /Starts automatically when you pick a student or give the same student a new question/);
-  assert.match(picker, /Default: 1 minute/);
+});
+
+test("normal presenter build chain applies speaking timer patches", () => {
+  const patch = read("scripts/patchPresenterStudentPicker.mjs");
+  assert.match(patch, /patchPresenterSessionAndResponseTimers\.mjs/);
 });
 
 test("student answer timer uses an absolute deadline clock and recovers after browser throttling", () => {
