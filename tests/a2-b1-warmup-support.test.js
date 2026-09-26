@@ -39,15 +39,30 @@ for (const level of ["A2", "B1"]) {
   });
 }
 
-test("advanced B2/C1 warm-ups exposed by teachingSlides keep the existing simple list behavior", () => {
-  for (const level of ["B2", "C1"]) {
+test("B2, C1 and C2 warm-ups use the same enhanced card structure with level-appropriate support", () => {
+  for (const level of ["B2", "C1", "C2"]) {
     const slide = getSlidesByCourse(level)[0];
     const warmup = buildTeachingPresenterStages(slide, slide.topic)
       .find((stage) => stage.id === "warmup");
 
     assert.ok(warmup);
-    assert.deepEqual(warmup.questionSupport || [], [], level + " should not get A2/B1 support controls");
+    assert.equal(warmup.questionSupport.length, warmup.items.length, level + " support count");
+    warmup.questionSupport.forEach((support) => {
+      assert.ok(support.keywords.length >= 1 && support.keywords.length <= 3, level + " keywords");
+      assert.ok(String(support.hintEn || "").trim(), level + " English hint");
+      assert.ok(String(support.answerStarterDe || "").trim(), level + " German starter");
+      assert.ok(String(support.followUpDe || "").trim().endsWith("?"), level + " follow-up");
+    });
   }
+
+  const b2 = buildTeachingPresenterStages(getSlidesByCourse("B2")[0]).find((stage) => stage.id === "warmup");
+  const c1 = buildTeachingPresenterStages(getSlidesByCourse("C1")[0]).find((stage) => stage.id === "warmup");
+  const c2 = buildTeachingPresenterStages(getSlidesByCourse("C2")[0]).find((stage) => stage.id === "warmup");
+
+  assert.match(b2.questionSupport[0].answerStarterDe, /Aus meiner Sicht/);
+  assert.match(c1.questionSupport[0].answerStarterDe, /Bei der Beurteilung/);
+  assert.match(c2.questionSupport[0].answerStarterDe, /Grundsätzlich spricht dafür/);
+  assert.match(c2.questionSupport[0].hintEn, /underlying tension|evaluation criteria/i);
 });
 
 test("warm-up keyword highlighting matches whole words instead of prefixes", () => {

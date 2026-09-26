@@ -127,10 +127,10 @@ test("normal presenter build chain applies speaking feedback after timer patches
   );
 });
 
-test("A2 and B1 use Speak to Feedback to Next student with a live rubric", () => {
+test("A2 through C2 use Speak to Feedback to Next student with a live rubric", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
   const css = read("src/components/PresenterStudentPicker.css");
-  assert.match(picker, /structuredSpeakingFlow = course === "A2" \|\| course === "B1"/);
+  assert.match(picker, /structuredSpeakingFlow = \["A2", "B1", "B2", "C1", "C2"\]\.includes\(course\)/);
   assert.match(picker, /SPEAKING_RUBRIC_ITEMS/);
   assert.match(picker, /Language clear/);
   assert.match(picker, /Grammar controlled/);

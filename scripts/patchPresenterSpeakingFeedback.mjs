@@ -43,9 +43,9 @@ replaceRequired(stateAnchor, stateReplacement, "speaking flow state");
 const courseAnchor = '  const course = normalize(slide?.course).toUpperCase();';
 const courseReplacement = [
   courseAnchor,
-  '  const structuredSpeakingFlow = course === "A2" || course === "B1";',
+  '  const structuredSpeakingFlow = ["A2", "B1", "B2", "C1", "C2"].includes(course);',
 ].join("\n");
-replaceRequired(courseAnchor, courseReplacement, "A2/B1 speaking flow gate");
+replaceRequired(courseAnchor, courseReplacement, "A2-C2 speaking flow gate");
 
 const timeoutAnchor = [
   "        playResponseTimeoutBeep();",
@@ -432,4 +432,4 @@ ${cssMarker}
 
 fs.writeFileSync(cssTarget, css, "utf8");
 
-console.log("A2/B1 presenter now uses Speak → Feedback → Next student with a live three-point teacher rubric.");
+console.log("A2-C2 presenter now uses Speak → Feedback → Next student with a live three-point teacher rubric.");

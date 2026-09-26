@@ -88,7 +88,7 @@ test("every C2 lesson keeps the text-first Presenter 2.0 teaching standard", () 
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    ["intro","warmup","foundation","phrases","grammar","examples","practice","workbook","mistakes","questions","wrapup","grammar-check"]
+    ["intro","warmup","foundation","phrases","grammar","examples","practice","workbook","mistakes","questions","grammar-check","weekly-challenge","lesson-summary"]
       .forEach((stageId) => assert.ok(stageIds.includes(stageId), slide.assignmentId + " missing " + stageId));
 
     const grammar = stages.find((stage) => stage.id === "grammar");
@@ -107,16 +107,28 @@ test("every C2 lesson keeps the text-first Presenter 2.0 teaching standard", () 
     const mistakes = stages.find((stage) => stage.id === "mistakes");
     assert.deepEqual(mistakes.items, slide.commonMistakesDe, slide.assignmentId + " should use lesson-specific mistakes");
 
+    const warmup = stages.find((stage) => stage.id === "warmup");
+    const vocabulary = stages.find((stage) => stage.id === "phrases");
     const questions = stages.find((stage) => stage.id === "questions");
     assert.equal(questions.requiresQuestionModel, true);
     questions.items.forEach((question) => {
       assert.ok(getSpeakingQuestionModel(questions, question)?.modelAnswerDe, slide.assignmentId + " missing speaking model");
     });
 
+    assert.equal(warmup.questionSupport.length, warmup.items.length, slide.assignmentId + " should use enhanced warm-up cards");
+    assert.equal(vocabulary.type, "vocabulary");
+    assert.ok(vocabulary.items.length >= 6, slide.assignmentId + " should use vocabulary cards");
+    assert.equal(stages.some((stage) => stage.id === "wrapup"), false, slide.assignmentId + " should not duplicate the final lesson summary");
+
     const grammarCheck = stages.find((stage) => stage.id === "grammar-check");
     assert.equal(grammarCheck.items.length, 3);
     assert.equal(grammarCheck.questionModels.length, 3);
     assert.equal(grammarCheck.requiresQuestionModel, true);
+
+    const weeklyChallenge = stages.find((stage) => stage.id === "weekly-challenge");
+    assert.ok(weeklyChallenge.items.length >= 3, slide.assignmentId + " should have an advanced weekly challenge");
+    assert.ok(stageIds.indexOf("grammar-check") < stageIds.indexOf("weekly-challenge"), slide.assignmentId + " grammar check should feed the weekly challenge");
+    assert.deepEqual(stageIds.slice(-2), ["weekly-challenge", "lesson-summary"], slide.assignmentId + " should finish with challenge then summary");
   }
 });
 
@@ -189,4 +201,22 @@ test("high-signal updated C2 domains stay locked to the current learner curricul
   assert.match(slides[21].title, /Reisen, Tourismus und kulturelle Begegnung/);
   assert.match(slides[22].title, /Internationale Zusammenarbeit und Diplomatie/);
   assert.match(slides[27].title, /C2 Prüfungssimulation: Stellungnahme, Umformung und Synthese/);
+});
+
+
+test("C2 rotates seven level-appropriate weekly challenge mechanics", () => {
+  const titlesByWeek = new Map();
+  for (const slide of getSlidesByCourse("C2")) {
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const challenge = stages.find((stage) => stage.id === "weekly-challenge");
+    const week = Math.ceil(slide.dayNumber / 4);
+    assert.ok(challenge, slide.assignmentId + " missing weekly challenge");
+    if (titlesByWeek.has(week)) {
+      assert.equal(challenge.title, titlesByWeek.get(week), slide.assignmentId + " should keep one mechanic identity within its week");
+    } else {
+      titlesByWeek.set(week, challenge.title);
+    }
+  }
+  assert.equal(titlesByWeek.size, 7);
+  assert.equal(new Set(titlesByWeek.values()).size, 7, "C2 should use seven distinct weekly mechanics");
 });

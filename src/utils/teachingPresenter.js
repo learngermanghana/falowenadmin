@@ -38,7 +38,7 @@ export function parsePresenterMinutes(value = "") { const match = String(value |
 function interactionMinutes(slide = {}, index = 0) { return parsePresenterMinutes(slide.interactionFlow?.[index]?.detailEn || ""); }
 
 const PER_STUDENT_WARMUP_LEVELS = new Set(["A2", "B1", "B2", "C1", "C2"]);
-const WARMUP_SUPPORT_LEVELS = new Set(["A2", "B1"]);
+const WARMUP_SUPPORT_LEVELS = new Set(["A2", "B1", "B2", "C1", "C2"]);
 const WARMUP_STOPWORDS = new Set([
   "aber", "alle", "alles", "auch", "auf", "aus", "bei", "bist", "dann", "das", "dass", "dein", "deine",
   "dem", "den", "der", "des", "die", "dies", "diese", "diesem", "diesen", "dieser", "dieses", "dir", "doch",
@@ -232,14 +232,53 @@ function warmupFollowUpDe(question = "") {
   return "Was kannst du dazu aus deiner eigenen Erfahrung erzählen?";
 }
 
+function advancedWarmupHintEn(question = "", level = "") {
+  const base = warmupHintEn(question);
+  if (level === "B2") return `${base} Extend the answer with a reason, a concrete example and one useful contrast or consequence.`;
+  if (level === "C1") return `${base} Weigh at least two relevant factors and make the logical relation between them explicit.`;
+  if (level === "C2") return `${base} Identify the underlying tension, state your evaluation criteria and qualify the claim where the evidence is limited.`;
+  return base;
+}
+
+function advancedWarmupStarterDe(level = "", question = "") {
+  if (level === "B2") return "Aus meiner Sicht ..., weil ... Ein konkretes Beispiel dafür ist ...";
+  if (level === "C1") return "Bei der Beurteilung dieser Frage sollte berücksichtigt werden, dass ... Einerseits ...; andererseits ...";
+  if (level === "C2") return "Grundsätzlich spricht dafür, dass ...; zugleich ist einzuräumen, dass ... Entscheidend ist dabei, ob ...";
+  return warmupAnswerStarterDe(question);
+}
+
+function advancedWarmupFollowUpDe(question = "", level = "") {
+  const text = String(question || "");
+  if (level === "B2") {
+    if (isWarmupComparisonQuestion(text) || /\boder\b/i.test(text)) return "Nach welchem konkreten Kriterium würdest du beide Möglichkeiten vergleichen?";
+    if (/\bwie\s+(?:kann|könnte|sollte)\b|\bmaßnahme|lösung|strategie\b/i.test(text)) return "Welche Schwierigkeit könnte bei dieser Lösung in der Praxis entstehen?";
+    if (/\bwarum\b/i.test(text)) return "Welches Gegenargument müsste man bei deiner Begründung trotzdem berücksichtigen?";
+    return "Welche konkrete Folge hätte dieser Punkt für Menschen im Alltag?";
+  }
+  if (level === "C1") {
+    if (isWarmupComparisonQuestion(text) || /\boder\b/i.test(text)) return "Welches Bewertungskriterium ist für deinen Vergleich entscheidend, und warum?";
+    if (/\bwie\s+(?:kann|könnte|sollte)\b|\bmaßnahme|lösung|strategie\b/i.test(text)) return "Unter welcher Voraussetzung wäre diese Lösung tatsächlich überzeugend?";
+    if (/\bwarum\b/i.test(text)) return "Welche plausible Gegenposition könnte deine Begründung relativieren?";
+    return "Unter welcher Bedingung würdest du deine Position ändern oder stärker einschränken?";
+  }
+  if (level === "C2") {
+    if (isWarmupComparisonQuestion(text) || /\boder\b/i.test(text)) return "Nach welchen Kriterien ist dieser Vergleich tragfähig, und wo stößt er an seine Grenzen?";
+    if (/\bwie\s+(?:kann|könnte|sollte)\b|\bmaßnahme|lösung|strategie\b/i.test(text)) return "Unter welchen Bedingungen wäre diese Maßnahme nur bedingt wirksam oder sogar kontraproduktiv?";
+    if (/\bwarum\b/i.test(text)) return "Welche Annahme liegt deiner Begründung zugrunde, und wie belastbar ist sie?";
+    return "Welche Evidenz würde deine Bewertung stützen, und welche Evidenz würde sie relativieren?";
+  }
+  return warmupFollowUpDe(question);
+}
+
 function buildWarmupQuestionSupport(slide = {}) {
-  if (!WARMUP_SUPPORT_LEVELS.has(classroomLevel(slide))) return [];
+  const level = classroomLevel(slide);
+  if (!WARMUP_SUPPORT_LEVELS.has(level)) return [];
   const questions = Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [];
   return questions.map((question, index) => ({
     keywords: warmupKeywords(question),
-    hintEn: warmupHintEn(question),
-    answerStarterDe: warmupAnswerStarterDe(question),
-    followUpDe: warmupFollowUpDe(question),
+    hintEn: ["B2", "C1", "C2"].includes(level) ? advancedWarmupHintEn(question, level) : warmupHintEn(question),
+    answerStarterDe: ["B2", "C1", "C2"].includes(level) ? advancedWarmupStarterDe(level, question) : warmupAnswerStarterDe(question),
+    followUpDe: ["B2", "C1", "C2"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question),
     difficulty: warmupDifficulty(index, questions.length),
   }));
 }
@@ -279,8 +318,15 @@ function buildAdvancedGrammarItems(slide = {}, support = {}) { const source = Ar
 function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C1") return ["Komplexe Strukturen nur verwenden, wenn Wortstellung und Bezug eindeutig bleiben.", "Abstrakte Aussagen immer mit Beispiel, Folge oder betroffener Gruppe konkretisieren.", "Ein Gegenargument nicht nur nennen, sondern anschließend darauf reagieren."]; return ["Nicht nur Ideen aufzählen: Aussage → Grund → Beispiel.", "Bei Nebensätzen auf die Verbendstellung achten.", "Nicht denselben Konnektor ständig wiederholen; die neue Zielstruktur bewusst variieren."]; }
 function teacherNoteFromFlow(flow = [], index = 0, fallback = "") { return String(flow[index]?.detailEn || fallback).trim(); }
 
-const VOCABULARY_STAGE_LEVELS = new Set(["A2", "B1"]);
-const VOCABULARY_LIMITS = Object.freeze({ A2: 7, B1: 9 });
+const VOCABULARY_STAGE_LEVELS = new Set(["A2", "B1", "B2", "C1", "C2"]);
+const VOCABULARY_LIMITS = Object.freeze({ A2: 7, B1: 9, B2: 9, C1: 10, C2: 10 });
+
+function vocabularyInstruction(level = "") {
+  if (level === "B2") return "Verwende mindestens zwei Ausdrücke in einer begründeten Antwort und verbinde sie mit einem konkreten Beispiel.";
+  if (level === "C1") return "Verwende mindestens drei Ausdrücke präzise und achte auf Register, Kollokation und logische Verknüpfung.";
+  if (level === "C2") return "Verwende mindestens drei Ausdrücke idiomatisch und präzise; baue sie nur dort ein, wo sie Argumentation und Register tatsächlich verbessern.";
+  return "Verwende mindestens zwei Wörter oder Ausdrücke in eigenen Sätzen.";
+}
 
 function buildVocabularyItems(slide = {}, support = {}) {
   const level = classroomLevel(slide);
@@ -366,6 +412,149 @@ function buildLessonSummaryItems(slide = {}) {
   return items.slice(0, 4);
 }
 
+function buildAdvancedWeeklyChallenge(slide = {}) {
+  const level = classroomLevel(slide);
+  if (!["B2", "C1", "C2"].includes(level)) return null;
+
+  const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
+  const week = Math.min(7, Math.max(1, Math.ceil(day / 4)));
+  const topic = cleanTopic(slide);
+  const questions = (Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []).filter(Boolean);
+  const phrases = (Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).filter(Boolean);
+  const q1 = questions[0] || `Welche Bedeutung hat „${topic}“?`;
+  const q2 = questions[1] || `Welche unterschiedlichen Perspektiven gibt es bei „${topic}“?`;
+  const q3 = questions[2] || `Welche Lösung oder Schlussfolgerung ist bei „${topic}“ überzeugend?`;
+  const phrasePrompt = phrases[0]
+    ? `Nutze, wenn es sinnvoll ist: „${phrases[0]}“`
+    : "Nutze ein präzises Redemittel aus der heutigen Lektion.";
+
+  const plans = {
+    B2: {
+      1: ["Woche 1 · Abwägen & begründen", [
+        { title: "Position", instruction: q1, prompts: ["Formuliere eine klare Position mit Grund.", "Ergänze ein konkretes Beispiel."], minutes: 2 },
+        { title: "Gegenpunkt", instruction: q2, prompts: ["Nenne einen realistischen Gegenpunkt.", phrasePrompt], minutes: 2 },
+        { title: "Abwägen", instruction: "Entscheide danach, welcher Punkt stärker wiegt.", prompts: ["Begründe deine Entscheidung in einem vollständigen B2-Satz."], minutes: 2 },
+      ]],
+      2: ["Woche 2 · Gespräch weiterentwickeln", [
+        { title: "Beitrag", instruction: q1, prompts: ["Position → Grund → Beispiel."], minutes: 2 },
+        { title: "Anknüpfen", instruction: "Reagiere zuerst auf den vorigen Beitrag und füge dann eine neue Idee hinzu.", prompts: [phrasePrompt], minutes: 2 },
+        { title: "Nachfrage", instruction: q2, prompts: ["Stelle eine spontane Rückfrage und reagiere auf die Antwort."], minutes: 2 },
+      ]],
+      3: ["Woche 3 · Problemlösung unter Bedingungen", [
+        { title: "Problem", instruction: q1, prompts: ["Wer ist betroffen?", "Was ist die konkrete Schwierigkeit?"], minutes: 2 },
+        { title: "Lösung", instruction: q3, prompts: ["Schlage eine realistische Maßnahme vor.", "Nenne eine Bedingung für ihren Erfolg."], minutes: 2 },
+        { title: "Nebenwirkung", instruction: "Prüfe eine mögliche negative Folge deiner Lösung.", prompts: [phrasePrompt], minutes: 2 },
+      ]],
+      4: ["Woche 4 · Interview & kritische Rückfrage", [
+        { title: "Interview", instruction: q1, prompts: ["Höre bis zum Ende zu."], minutes: 2 },
+        { title: "Neue Rückfrage", instruction: "Stelle eine kritische Rückfrage, die nicht auf der Folie steht.", prompts: ["Frage nach Folge, Bedingung, Beispiel oder Alternative."], minutes: 2 },
+        { title: "Rollenwechsel", instruction: q2, prompts: ["Reagiere auf die vorige Antwort und tauscht danach die Rollen.", phrasePrompt], minutes: 3 },
+      ]],
+      5: ["Woche 5 · Aussage reparieren", [
+        { title: "Unklar", instruction: "Formuliere eine zu allgemeine Aussage zum Thema präziser.", prompts: ["Ergänze Ursache, Folge oder Bedingung."], minutes: 2 },
+        { title: "Missverständnis", instruction: q2, prompts: ["Dein Partner versteht dich anders: erkläre die Idee neu, ohne denselben Satz zu wiederholen."], minutes: 2 },
+        { title: "Prüfen", instruction: "Fasse kurz zusammen, worauf ihr euch einigen könnt.", prompts: [phrasePrompt], minutes: 2 },
+      ]],
+      6: ["Woche 6 · 3-Minuten-Prüfungsantwort", [
+        { title: "Planen", instruction: q1, prompts: ["Position → zwei Gründe → Beispiel → Gegenpunkt."], minutes: 1 },
+        { title: "Sprechen", instruction: "Sprich bis zu 3 Minuten strukturiert und ohne abzulesen.", prompts: [phrasePrompt], minutes: 3 },
+        { title: "Spontane Reaktion", instruction: "Ein Partner widerspricht oder fragt kritisch nach.", prompts: ["Antworte direkt und begründe deine Reaktion."], minutes: 2 },
+      ]],
+      7: ["Woche 7 · Überraschungsmission", [
+        { title: "Karte A", instruction: q1, prompts: ["Antworte ohne vorbereiteten Text."], minutes: 2 },
+        { title: "Karte B", instruction: q2, prompts: ["Wechsle die Perspektive und nenne ein Gegenargument.", phrasePrompt], minutes: 2 },
+        { title: "Karte C", instruction: q3, prompts: ["Übertrage die Idee auf eine neue reale Situation."], minutes: 2 },
+      ]],
+    },
+    C1: {
+      1: ["Woche 1 · Position differenzieren", [
+        { title: "These", instruction: q1, prompts: ["Formuliere eine klare, aber nicht absolute Position."], minutes: 2 },
+        { title: "Kriterien", instruction: q2, prompts: ["Nenne zwei Kriterien, nach denen du die Frage bewertest.", phrasePrompt], minutes: 2 },
+        { title: "Einschränkung", instruction: "Formuliere eine Bedingung, unter der deine Position nicht gilt.", prompts: ["Nutze eine präzise Einschränkung."], minutes: 2 },
+      ]],
+      2: ["Woche 2 · Argument weiterentwickeln", [
+        { title: "Anknüpfen", instruction: q1, prompts: ["Greife einen Gedanken des Partners auf, bevor du deinen eigenen entwickelst."], minutes: 2 },
+        { title: "Vertiefen", instruction: q2, prompts: ["Ergänze Ursache, Folge und konkretes Beispiel.", phrasePrompt], minutes: 2 },
+        { title: "Reaktion", instruction: "Antworte auf einen Einwand, ohne die Gegenposition zu vereinfachen.", prompts: ["Zeige Zustimmung, Einschränkung oder begründeten Widerspruch."], minutes: 2 },
+      ]],
+      3: ["Woche 3 · Fallanalyse", [
+        { title: "Fall", instruction: `Übertrage „${topic}“ auf einen konkreten Fall.`, prompts: ["Wer ist betroffen?", "Welche Interessen geraten in Konflikt?"], minutes: 2 },
+        { title: "Analyse", instruction: q2, prompts: ["Ordne Ursachen, Folgen und Verantwortlichkeiten.", phrasePrompt], minutes: 2 },
+        { title: "Entscheidung", instruction: q3, prompts: ["Formuliere eine Lösung und nenne ihre wichtigste Grenze."], minutes: 2 },
+      ]],
+      4: ["Woche 4 · Interview & Prämissen prüfen", [
+        { title: "Interview", instruction: q1, prompts: ["Höre auf die Begründung, nicht nur auf die Position."], minutes: 2 },
+        { title: "Prämisse", instruction: "Stelle eine Rückfrage zur Annahme hinter der Antwort.", prompts: ["Frage z. B.: Wovon hängt das ab? Was setzt diese Aussage voraus?"], minutes: 2 },
+        { title: "Rollenwechsel", instruction: q2, prompts: ["Reagiere auf die Prüfung deiner eigenen Annahme.", phrasePrompt], minutes: 3 },
+      ]],
+      5: ["Woche 5 · Register & Präzision reparieren", [
+        { title: "Zu pauschal", instruction: "Formuliere eine pauschale Aussage differenzierter.", prompts: ["Verwende Abstufung, Bedingung oder Konzession."], minutes: 2 },
+        { title: "Register", instruction: q2, prompts: ["Formuliere dieselbe Idee einmal neutral und einmal formell.", phrasePrompt], minutes: 2 },
+        { title: "Kohärenz", instruction: "Verbinde zwei Aussagen logisch, ohne nur und oder aber zu verwenden.", prompts: ["Mache die beabsichtigte Beziehung eindeutig."], minutes: 2 },
+      ]],
+      6: ["Woche 6 · 3-Minuten-Verteidigung", [
+        { title: "Position", instruction: q1, prompts: ["Plane These → Begründung → Beispiel → Gegenargument → Reaktion."], minutes: 1 },
+        { title: "Verteidigen", instruction: "Sprich bis zu 3 Minuten und verteidige deine Position differenziert.", prompts: [phrasePrompt], minutes: 3 },
+        { title: "Kritische Frage", instruction: "Beantworte eine nicht vorbereitete kritische Rückfrage.", prompts: ["Reagiere präzise statt nur die Ausgangsposition zu wiederholen."], minutes: 2 },
+      ]],
+      7: ["Woche 7 · Transfer-Synthese", [
+        { title: "Perspektive 1", instruction: q1, prompts: ["Formuliere die stärkste Position dafür."], minutes: 2 },
+        { title: "Perspektive 2", instruction: q2, prompts: ["Formuliere die stärkste Gegenposition.", phrasePrompt], minutes: 2 },
+        { title: "Synthese", instruction: q3, prompts: ["Entwickle eine eigene Position, die beide Perspektiven sichtbar verarbeitet."], minutes: 2 },
+      ]],
+    },
+    C2: {
+      1: ["Woche 1 · Kriteriengeleitete Bewertung", [
+        { title: "Problemkern", instruction: q1, prompts: ["Benenne die zentrale Spannung, bevor du bewertest."], minutes: 2 },
+        { title: "Kriterien", instruction: q2, prompts: ["Lege zwei oder drei explizite Bewertungskriterien fest.", phrasePrompt], minutes: 2 },
+        { title: "Nuance", instruction: "Formuliere ein Urteil mit klarer Reichweite und Einschränkung.", prompts: ["Vermeide absolute Aussagen ohne entsprechende Evidenz."], minutes: 2 },
+      ]],
+      2: ["Woche 2 · Steelman & Replik", [
+        { title: "Steelman", instruction: q1, prompts: ["Formuliere die stärkste plausible Gegenposition zu deiner eigenen Sicht."], minutes: 2 },
+        { title: "Replik", instruction: q2, prompts: ["Antworte auf diese starke Gegenposition, ohne sie zu verzerren.", phrasePrompt], minutes: 2 },
+        { title: "Restproblem", instruction: "Nenne den Punkt, den deine Replik nicht vollständig löst.", prompts: ["Markiere bewusst die verbleibende Unsicherheit."], minutes: 2 },
+      ]],
+      3: ["Woche 3 · Evidenz-Audit", [
+        { title: "Behauptung", instruction: q1, prompts: ["Trenne Behauptung, Annahme und Bewertung."], minutes: 2 },
+        { title: "Evidenz", instruction: q2, prompts: ["Welche Evidenz wäre nötig, um die Aussage zu stützen oder zu widerlegen?", phrasePrompt], minutes: 2 },
+        { title: "Schlussfolgerung", instruction: q3, prompts: ["Formuliere nur die Schlussfolgerung, die aus der verfügbaren Evidenz tatsächlich folgt."], minutes: 2 },
+      ]],
+      4: ["Woche 4 · Sokratisches Interview", [
+        { title: "Position", instruction: q1, prompts: ["Antworte zunächst vollständig."], minutes: 2 },
+        { title: "Prüffrage", instruction: "Der Partner prüft eine Annahme, Definition oder Konsequenz, die nicht auf der Folie steht.", prompts: ["Keine Wiederholung der Ausgangsfrage."], minutes: 2 },
+        { title: "Revision", instruction: q2, prompts: ["Passe deine Position an, wenn die Rückfrage eine echte Schwäche zeigt.", phrasePrompt], minutes: 3 },
+      ]],
+      5: ["Woche 5 · Nuance & Register-Reparatur", [
+        { title: "Zu absolut", instruction: "Schwäche eine überzogene Behauptung so ab, dass ihre Evidenzlage korrekt wiedergegeben wird.", prompts: ["Nutze epistemische Abstufung."], minutes: 2 },
+        { title: "Registerwechsel", instruction: q2, prompts: ["Formuliere dieselbe Position für ein Gespräch und für einen formellen Diskussionsbeitrag.", phrasePrompt], minutes: 2 },
+        { title: "Kohärenz", instruction: "Repariere einen unklaren logischen Übergang zwischen zwei Aussagen.", prompts: ["Benenne die beabsichtigte Beziehung explizit."], minutes: 2 },
+      ]],
+      6: ["Woche 6 · C2-Synthese unter Zeitdruck", [
+        { title: "Plan", instruction: q1, prompts: ["Problemkern → Kriterien → Evidenz → Gegenposition → Synthese."], minutes: 1 },
+        { title: "Synthese", instruction: "Sprich bis zu 3 Minuten ohne abzulesen und halte Register sowie logische Beziehungen stabil.", prompts: [phrasePrompt], minutes: 3 },
+        { title: "Revision", instruction: "Reagiere auf eine kritische Rückfrage und revidiere einen Teil deiner Position, falls nötig.", prompts: ["Zeige, was bestehen bleibt und was du einschränkst."], minutes: 2 },
+      ]],
+      7: ["Woche 7 · Unvorbereitete Transferdebatte", [
+        { title: "Transfer", instruction: q1, prompts: ["Übertrage die Argumentationslogik auf einen neuen Kontext."], minutes: 2 },
+        { title: "Perspektivwechsel", instruction: q2, prompts: ["Vertrete kurz eine Position, die nicht deiner eigenen entspricht.", phrasePrompt], minutes: 2 },
+        { title: "Synthese", instruction: q3, prompts: ["Formuliere abschließend eine differenzierte eigene Position mit Grenze oder Bedingung."], minutes: 2 },
+      ]],
+    },
+  };
+
+  const selected = plans[level]?.[week];
+  if (!selected) return null;
+  const [title, items] = selected;
+  return {
+    id: "weekly-challenge",
+    type: "flow",
+    kicker: `Woche ${week} · Challenge`,
+    title,
+    items,
+    suggestedMinutes: items.reduce((total, item) => total + Number(item.minutes || 0), 0),
+  };
+}
+
 function buildClassicStages(slide = {}, topicLabel = "") { const studentReference = getCurriculumParityReference(slide); return [
   { id: "intro", type: "intro", kicker: `${slide.course || ""}${slide.day ? ` · ${slide.day}` : ""}`.trim(), title: slide.title || "Lesson", topic: topicLabel || slide.topic || "", objective: slide.objective || "", duration: slide.estimatedDuration || "", studentReference },
   { id: "warmup", type: "list", kicker: "Warm-up", title: "Warm-up", items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [], suggestedMinutes: warmupSuggestedMinutes(slide), timingMode: PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? "per-student" : "", timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length) },
@@ -390,7 +579,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       kicker: vocabularyStage ? "Wortschatz" : "Redemittel",
       title: vocabularyStage ? "Wortschatz für heute" : (advanced ? "Redemittel" : "Key phrases"),
       items: vocabularyStage ? vocabularyItems : phraseItems,
-      instruction: vocabularyStage ? "Verwende mindestens zwei Wörter oder Ausdrücke in eigenen Sätzen." : "",
+      instruction: vocabularyStage ? vocabularyInstruction(level) : "",
       suggestedMinutes: vocabularyStage ? 5 : 0,
     },
     { id: "grammar", type: "list", kicker: "Grammatik", title: advanced ? "Neue Strukturen" : "Grammar focus", items: grammarItems, suggestedMinutes: interactionMinutes(slide, 1) || 10 },
@@ -398,10 +587,12 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     { id: "practice", type: "flow", kicker: "Übung", title: advanced ? "Geführte Übung" : "Guided practice", items: practiceItems },
     { id: "workbook", type: "workbook", kicker: "Workbook", title: advanced ? "Workbook-Verbindung" : "Workbook connection", items: workbookParts.map((part) => ({ label: part.label, detail: part.detailEn })), grammarUrl: slide.workbookConnection?.grammarUrl || "", workbookUrl: slide.workbookConnection?.workbookUrl || "", suggestedMinutes: interactionMinutes(slide, Math.max(0, flow.length - 1)) || 7 },
     { id: "mistakes", type: "list", kicker: "Achtung", title: advanced ? "Typische Fehler" : "Common mistakes", items: mistakeItems },
-    { id: "questions", type: "question-reveal", kicker: "Sprechen", title: advanced ? "Sprechtraining" : "Speaking questions", items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [], supportItems: [...new Set([...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []), ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [])])].slice(0, 5), questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [], requiresQuestionModel: ["A2", "B1"].includes(String(slide.course || "").toUpperCase()), suggestedMinutes: interactionMinutes(slide, 3) || 10 },
-    ...(!["A2", "B1"].includes(level) ? [{ id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 }] : []),
+    { id: "questions", type: "question-reveal", kicker: "Sprechen", title: advanced ? "Sprechtraining" : "Speaking questions", items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [], supportItems: [...new Set([...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []), ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : [])])].slice(0, 5), questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [], requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(String(slide.course || "").toUpperCase()), suggestedMinutes: interactionMinutes(slide, 3) || 10 },
+    ...(!["A2", "B1", "B2", "C1", "C2"].includes(level) ? [{ id: "wrapup", type: "task", kicker: "Abschluss", title: advanced ? "Abschlussaufgabe" : "Wrap-up task", body: slide.wrapUpTaskDe || "", suggestedMinutes: 5 }] : []),
   ];
   if (Array.isArray(slide.grammarCheckQuestions) && slide.grammarCheckQuestions.length) stages.push({ id: "grammar-check", type: "question-reveal", kicker: "Grammatik-Check", title: slide.grammarCheckTitle || "Korrigiere den Satz", items: slide.grammarCheckQuestions, questionModels: Array.isArray(slide.grammarCheckModels) ? slide.grammarCheckModels : [], requiresQuestionModel: true, suggestedMinutes: Number(slide.grammarCheckMinutes || 10) });
+  const advancedWeeklyChallenge = buildAdvancedWeeklyChallenge(slide);
+  if (advancedWeeklyChallenge) stages.push(advancedWeeklyChallenge);
   return stages;
 }
 
