@@ -322,3 +322,31 @@ test("Agenda Start class opens Presenter and starts the class timer in one click
   assert.match(timer, /classStartSource: "presenter"/);
   assert.match(timer, /url\.searchParams\.delete\("autostart"\)/);
 });
+
+
+test("Presenter acknowledges Attendance start only after timer state is usable", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+
+  assert.match(source, /const attendanceStartRequestId = normalize\(liveState\.attendanceStartRequestId\)/);
+  assert.match(source, /presenterStartAckMatches/);
+  assert.match(source, /const timerReady = Boolean\(liveState\.timerRunning\)/);
+  assert.match(source, /presenterStartAckRequestId: attendanceStartRequestId/);
+  assert.match(source, /presenterStartAckAtMs: Date\.now\(\)/);
+  assert.match(source, /presenterStartAckDeviceId: presenterLive\.deviceId/);
+  assert.match(source, /presenterStartAckStatus: timerReady \? "timer-running" : "time-up"/);
+  assert.match(source, /liveState\.attendanceStartAttempt/);
+  assert.match(source, /Attendance connected · timer synced/);
+});
+
+test("Presenter self-repairs a missing Attendance timer before showing manual fallback", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+
+  assert.match(source, /timerRepairSource: "presenter-auto-repair"/);
+  assert.match(source, /classStartedAtMs \+ \(durationSeconds \* 1000\)/);
+  assert.match(source, /setAttendanceRepairState\("repairing"\)/);
+  assert.match(source, /setAttendanceRepairState\("failed"\)/);
+  assert.match(source, /4000/);
+  assert.match(source, /attendanceTimerNeedsManualStart && attendanceRepairState === "failed"/);
+  assert.match(source, /Repairing timer…/);
+  assert.match(source, /Start timer manually/);
+});
