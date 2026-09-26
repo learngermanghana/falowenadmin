@@ -443,6 +443,29 @@ export default function PresenterSessionTimer({ slide }) {
   }, [attendanceRepairState, attendanceTimerNeedsManualStart]);
 
   useEffect(() => {
+    if (!attendanceControlsTimer || !attendanceSessionEnded || !attendanceEndRequestId) return;
+    if (presenterEndAckMatches) return;
+
+    presenterLive.publish({
+      presenterEndAckRequestId: attendanceEndRequestId,
+      presenterEndAckAtMs: Date.now(),
+      presenterEndAckDeviceId: presenterLive.deviceId,
+      presenterEndAckStatus: "ended",
+      presenterEndAckDurationSeconds: Math.max(0, Number(liveState.classDurationSeconds || 0)),
+    });
+  }, [
+    attendanceControlsTimer,
+    attendanceEndRequestId,
+    attendanceSessionEnded,
+    liveState.attendanceEndAttempt,
+    liveState.attendanceEndRequestedAtMs,
+    liveState.classDurationSeconds,
+    presenterEndAckMatches,
+    presenterLive.deviceId,
+    presenterLive.publish,
+  ]);
+
+  useEffect(() => {
     if (!attendanceControlsTimer || attendanceSessionEnded || !attendanceStartRequestId) return;
     if (presenterStartAckMatches) return;
     const timerReady = Boolean(liveState.timerRunning) && Number(liveState.timerEndAt || 0) > Date.now();
