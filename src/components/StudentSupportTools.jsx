@@ -84,7 +84,21 @@ function buildPaymentReminderMessage(student, draft = {}) {
   const className = resolveStudentClass(student, draft);
   const balance = displayValue(draft.balanceDue, student?.balanceDue, student?.balance, student?.outstandingBalance, student?.amountDue);
   const balanceText = parseMoney(balance) > 0 ? formatGhs(balance) : "your outstanding balance";
-  return `Hello ${name}, this is a reminder from Learn Language Education Academy / Falowen. Your ${className} record shows a balance of ${balanceText}. Kindly make payment early so your learning can continue smoothly. Please update us after payment. Thank you.`;
+  const contractEnd = displayValue(draft.contractEnd, student?.contractEnd);
+  const contractDate = formatDate(contractEnd);
+  const paymentLink = displayValue(
+    student?.paymentLink,
+    student?.paystackPaymentLink,
+    student?.checkoutUrl,
+    student?.paymentUrl,
+  );
+  const accessText = contractEnd
+    ? `If the balance is still unpaid, your Falowen access is scheduled to stop on ${contractDate}.`
+    : "Please make payment early so your Falowen access can continue without interruption.";
+  const paymentText = paymentLink
+    ? `You can pay here: ${paymentLink}`
+    : "Please contact us if you need a payment link.";
+  return `Hello ${name}, this is a payment reminder from Learn Language Education Academy / Falowen. Your ${className} outstanding balance is ${balanceText}. ${accessText} ${paymentText} Please update us after payment. Thank you.`;
 }
 
 function buildReviewRequestMessage(student) {
