@@ -140,7 +140,7 @@ test("A2 through C2 use Speak to Feedback to Next student with a live rubric", (
   assert.match(picker, /Finish speaking → feedback/);
   assert.match(picker, /Give \+15s/);
   assert.match(picker, /structuredSpeakingFlow && speakingPhase === "speaking"/);
-  assert.match(picker, /Then record Correct or Needs help below/);
+  assert.match(picker, /Then record Correct or Needs review below/);
   assert.match(css, /presenter-structured-speaking-feedback/);
   assert.match(css, /\.presenter-speaking-rubric button\.is-observed/);
 });
