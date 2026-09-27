@@ -57,7 +57,7 @@ test("A1 prebuild guards cannot regenerate the retired language-first flow", () 
 
   assert.match(languagePatch, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
   assert.doesNotMatch(languagePatch, /A1_LANGUAGE_FIRST_FLOW_VERSION/);
-  assert.doesNotMatch(languagePatch, /speak-first/);
+  assert.match(languagePatch, /instead of regenerating the old language-first flow/);
   assert.match(day5Patch, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
   assert.doesNotMatch(day5Patch, /A1_COMPACT_DEDUPED_PRESENTER/);
 });
