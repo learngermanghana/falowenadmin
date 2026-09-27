@@ -7,6 +7,7 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
+const A1_GRAMMAR_CHECK_FLOW_VERSION = 3;
 
 function lessonUrl(value = "") {
   if (!value) return "";
@@ -17,9 +18,10 @@ function lessonUrl(value = "") {
 function stageList(slide, topicLabel) {
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const support = buildTeacherSlideSupport(slide);
+  const grammarChecks = getA1GrammarChecks(slide.assignmentId, slide);
   const checks = getA1PresenterUnderstandingChecks(
     slide.assignmentId,
-    getA1GrammarChecks(slide.assignmentId, slide),
+    grammarChecks,
     { slide, support },
   );
   const mainChecks = checks.slice(0, Math.max(1, checks.length - 1));
@@ -109,49 +111,71 @@ function stageList(slide, topicLabel) {
     ].filter((stage) => stage.type === "intro" || (Array.isArray(stage.items) && stage.items.length > 0));
   }
 
+  const quickChecks = grammarChecks.slice(0, 2);
+  const correctionChecks = mainChecks
+    .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
+    .slice(0, 2);
+  const modelExamples = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [];
+  const sentenceBuildChecks = modelExamples.slice(0, 2).map((example, index) => ({
+    questionDe: index === 0
+      ? `Change one detail but keep the grammar correct: “${example}”`
+      : `Make a new sentence with the same grammar pattern: “${example}”`,
+    answerDe: `Accept a new A1 sentence that keeps the same target grammar as: ${example}`,
+    noteEn: "Check the grammar pattern first; vocabulary can stay simple.",
+  }));
+  const mistakeItems = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
+
   return [
     {
       id: "intro",
       type: "intro",
       kicker: `${slide.course || "A1"}${slide.day ? ` · ${slide.day}` : ""}`,
-      title: slide.title || "A1 lesson",
+      title: slide.title || "A1 grammar check",
       topic: topicLabel || slide.topic || "",
       objective: slide.objective || "",
       duration: slide.estimatedDuration || "",
+      grammarDiagnostic: true,
     },
     {
-      id: "rule",
-      type: "list",
-      kicker: "Sprachfokus",
-      title: "Muster und Regel verstehen",
-      items: Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [],
-    },
-    {
-      id: "examples",
-      type: "list",
-      kicker: "Beispiele",
-      title: "Beispiele analysieren",
-      items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
+      id: "quick-check",
+      type: "check",
+      kicker: "Quick check",
+      title: "Do you remember the grammar rule?",
+      items: quickChecks,
     },
     {
       id: "grammar-check",
       type: "check",
-      kicker: "Verständnis-Check",
-      title: "Zeig, dass du das Thema verstanden hast",
+      kicker: "Class grammar check",
+      title: "One grammar question per student",
       items: mainChecks,
+    },
+    {
+      id: "mistake-fix",
+      type: "check",
+      kicker: "Wrong → Correct",
+      title: "Fix the grammar mistake",
+      items: correctionChecks,
     },
     {
       id: "mistakes",
       type: "list",
-      kicker: "Fehlerkorrektur",
-      title: "Typische Fehler erkennen",
-      items: Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [],
+      kicker: "Teacher scan",
+      title: "Common mistakes to watch",
+      items: mistakeItems,
+    },
+    {
+      id: "sentence-build",
+      type: "check",
+      kicker: "Build one sentence",
+      title: "Use the grammar correctly",
+      items: sentenceBuildChecks,
     },
     {
       id: "workbook",
       type: "workbook",
       kicker: "Transfer",
-      title: hasWorkbookPlan ? "Jetzt ins Workbook übertragen" : "Jetzt anwenden",
+      title: hasWorkbookPlan ? "Now practise it in Falowen" : "Now apply it",
       items: transferItems,
       grammarUrl: slide.workbookConnection?.grammarUrl || "",
       workbookUrl: slide.workbookConnection?.workbookUrl || "",
@@ -159,8 +183,8 @@ function stageList(slide, topicLabel) {
     {
       id: "exit-check",
       type: "check",
-      kicker: "Abschluss",
-      title: "Exit Check · ohne Hilfe beantworten",
+      kicker: "Exit check",
+      title: "One fresh grammar check · no help",
       items: exitChecks,
       exitCheck: true,
     },
@@ -309,13 +333,13 @@ export default function A1GrammarPresenter({
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
-                <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 teaching method"}</strong>
+                <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 grammar-check method"}</strong>
                 <p>{stage.examReadiness
                   ? "Warm-up diagnosis → exam map → Teil 1 → live Teil 2/3 prompts → mini mock exam → readiness decision → fresh exit prompt."
-                  : "Language focus → examples → understanding check → error correction → practice/workbook transfer → exit check."}</p>
+                  : "Grammar notes first → quick rule check → one grammar question per student → fix mistakes → build one sentence → workbook transfer → exit check."}</p>
                 <small>{stage.examReadiness
                   ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
-                  : "The class participation toolbar stays available from the first slide. During the live understanding check, Falowen gives each selected learner a unique lesson question."}</small>
+                  : "Use the grammar page to teach. Presenter should not reteach the lesson: it checks whether each learner can recognize, correct and apply the grammar. Record only Correct or Needs review."}</small>
               </div>
             </>
           ) : stage.type === "check" ? (
@@ -332,7 +356,7 @@ export default function A1GrammarPresenter({
                 <div className="presenter-model-support">
                   <strong>Pick the first student above</strong>
                   <p>Falowen assigns a different unused understanding question to each learner. For 10 students, the class receives 10 distinct lesson questions before any generated extension is needed.</p>
-                  <small>Record Correct, Needs help, Skip or Absent, then click Next student → above to test another learner.</small>
+                  <small>Record Correct, Needs review, Skip or Absent, then click Next student → above to test another learner.</small>
                 </div>
               ) : (
                 <>
@@ -354,7 +378,7 @@ export default function A1GrammarPresenter({
                       <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
                       <p>{stage.exitCheck
                         ? "The student answers first. Reveal only after the answer is complete."
-                        : "Let the selected student answer first. Record Correct or Needs help above, then click Next student → to load another distinct question."}</p>
+                        : "Let the selected student answer first. Record Correct or Needs review above, then click Next student → to load another distinct question."}</p>
                     </div>
                   )}
                 </>
