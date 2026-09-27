@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { B1_PRESENTER_KNOWLEDGE_ASSIGNMENTS, getB1PresenterKnowledge } from "../src/data/b1PresenterKnowledge.js";
+import { getSpeakingDifficultySelection } from "../src/data/presenterSpeakingDifficulty.js";
 import {
   buildTeachingPresenterStages,
   isB1PresenterV2Slide,
@@ -57,9 +58,11 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
     assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
     assert.equal(questions.questionModels.length, 3, `${slide.assignmentId} should preserve models for the three selected questions`);
     assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
-    assert.equal(questions.items[0], slide.studentQuestionsDe[0]);
-    assert.equal(questions.items[1], slide.studentQuestionsDe[2]);
-    assert.equal(questions.items[2], slide.studentQuestionsDe.at(-1));
+    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
+    assert.ok(difficulty, `${slide.assignmentId} needs an explicit difficulty map`);
+    assert.equal(questions.difficultySource, "curated");
+    assert.deepEqual(questions.difficultyIndexes, difficulty.indexes);
+    assert.deepEqual(questions.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
 
     const workbook = stages.find((stage) => stage.id === "workbook");
     assert.equal(workbook.type, "workbook");
