@@ -657,6 +657,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       return {
         ...result,
         taskCompletion: semanticTask ? { completed, total, missing: [] } : result.taskCompletion,
+        ...(semanticTask ? { missingTaskPoints: [] } : {}),
         taskPointEvidence,
         corrections: mergeCorrections(result.corrections, deterministicCorrections),
         writingDimensions: dimensions,
