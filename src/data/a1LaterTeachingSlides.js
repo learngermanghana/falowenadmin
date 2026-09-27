@@ -100,7 +100,7 @@ export const a1LaterTeachingSlides = [
     title: "A1 Day 19 · Goethe A1 Sprechen · Prüfungsbereitschaft",
     topic: "5.9 Goethe A1 Speaking Readiness",
     objective: "Students demonstrate readiness for the Goethe A1 speaking exam by completing Teil 1 self-introduction, Teil 2 question-and-answer cards, and Teil 3 request-and-reaction cards with limited teacher support.",
-    estimatedDuration: "90 minutes",
+    estimatedDuration: "60 minutes",
     warmupQuestionsDe: [
       "Wie heißt du und woher kommst du?",
       "Wo wohnst du?",
