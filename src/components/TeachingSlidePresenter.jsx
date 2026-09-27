@@ -354,6 +354,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
         const paginatableTypes = new Set([
           "knowledge",
           "vocabulary",
+          "grammar-check",
           "b1-grammar",
           "b2-grammar",
           "c1-grammar",
@@ -536,6 +537,18 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               <button type="button" onClick={() => setContentPage((page) => Math.min(contentPageCount - 1, page + 1))} disabled={contentPage >= contentPageCount - 1}>Next</button>
             </div>
           ) : null}
+          {!focusMode && stage.teacherPurpose ? (
+            <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
+              <div>
+                <strong>Student</strong>
+                <span>{stage.teacherPurpose.student}</span>
+              </div>
+              <div>
+                <strong>Teacher</strong>
+                <span>{stage.teacherPurpose.teacher}</span>
+              </div>
+            </aside>
+          ) : null}
           {stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>
@@ -556,6 +569,33 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </section>
               ) : null}
             </>
+          ) : stage.type === "grammar-check" ? (
+            <section className="presenter-grammar-check">
+              <div className="presenter-grammar-check-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                {stage.instruction ? <p>{stage.instruction}</p> : null}
+              </div>
+              <div className="presenter-grammar-check-grid">
+                {presenterItems.map((item, index) => (
+                  <article key={item.id || index} className="presenter-grammar-check-card">
+                    <span className="presenter-grammar-check-label">{item.label || String(index + 1)}</span>
+                    <p className="presenter-grammar-check-prompt">{item.prompt}</p>
+                    {item.example ? <blockquote>{item.example}</blockquote> : null}
+                    {item.answer ? (
+                      <details>
+                        <summary>Teacher answer anzeigen</summary>
+                        <div className="presenter-grammar-check-answer">
+                          <strong>{item.answerLabel || "Teacher key"}</strong>
+                          <p>{item.answer}</p>
+                          {item.note ? <small>{item.note}</small> : null}
+                        </div>
+                      </details>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            </section>
           ) : stage.type === "b2-grammar" ? (
             <section className="presenter-b2-grammar">
               <div className="presenter-b2-grammar-heading">
