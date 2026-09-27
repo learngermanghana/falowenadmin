@@ -585,16 +585,49 @@ function escapeRegExp(value = "") {
 
 function pruneResolvedTaskClaims(value = "", taskPointEvidence = []) {
   let text = String(value || "");
-  const resolved = (Array.isArray(taskPointEvidence) ? taskPointEvidence : [])
+  const evidence = Array.isArray(taskPointEvidence) ? taskPointEvidence : [];
+  const resolved = evidence
     .filter((item) => clean(item?.status).toLowerCase() === "met")
     .map((item) => clean(item?.label))
     .filter(Boolean);
+  const unresolved = evidence
+    .filter((item) => clean(item?.status).toLowerCase() !== "met")
+    .map((item) => clean(item?.label))
+    .filter(Boolean);
 
+  if (!resolved.length) return text.trim();
+
+  const normalizedResolved = new Set(resolved.map((label) => label.toLowerCase()));
+
+  // Rewrite canonical missing-point lists as a unit so removing one item cannot
+  // strip the prefix and leave later resolved labels dangling as prose.
+  text = text.replace(
+    /Required writing points? (?:are|is) missing:\s*([^.!?\n]*)([.!?]?)/gi,
+    (match, list, punctuation) => {
+      const remaining = String(list || "")
+        .split(/\s*;\s*/)
+        .map((item) => clean(item))
+        .filter(Boolean)
+        .filter((item) => !normalizedResolved.has(item.toLowerCase()));
+
+      if (!remaining.length) return " ";
+      return `Required writing points are missing: ${remaining.join("; ")}${punctuation || "."}`;
+    },
+  );
+
+  // Free-form stale claims are removed only when they refer exclusively to a
+  // resolved point. Sentences that also mention a genuinely missing point stay.
+  const unresolvedPatterns = unresolved.map((label) => new RegExp(escapeRegExp(label), "i"));
   for (const label of resolved) {
-    const escaped = escapeRegExp(label);
-    text = text
-      .replace(new RegExp("(?:^|\\s)(?:Required writing points? (?:are|is) missing:?\\s*)" + escaped + "[.;!?]?", "gi"), " ")
-      .replace(new RegExp("[^.!?\\n]*(?:missing|not addressed|did not address|not covered)[^.!?\\n]*" + escaped + "[^.!?\\n]*[.!?]?", "gi"), " ");
+    const resolvedPattern = new RegExp(escapeRegExp(label), "i");
+    text = text.replace(
+      /[^.!?\n]*(?:missing|not addressed|did not address|not covered)[^.!?\n]*[.!?]?/gi,
+      (sentence) => {
+        if (!resolvedPattern.test(sentence)) return sentence;
+        if (unresolvedPatterns.some((pattern) => pattern.test(sentence))) return sentence;
+        return " ";
+      },
+    );
   }
 
   return text.replace(/\s{2,}/g, " ").trim();
@@ -709,6 +742,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ? localRecoveredWritingScore
     : currentWritingScore;
   const recoveredSuspiciousZero = suspiciousZeroWriting && effectiveWritingScore > 0;
+  const prunedFeedback = pruneResolvedTaskClaims(result.feedback, taskPointEvidence);
+  const prunedImprovementSummary = pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence);
 
   if (!hasGuardIssue) {
     const calibratedWritingScore = calibratedCompleteWritingScore({
@@ -733,8 +768,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         corrections: mergeCorrections(result.corrections, deterministicCorrections),
         writingDimensions: dimensions,
         reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
-        feedback: pruneResolvedTaskClaims(result.feedback, taskPointEvidence),
-        improvementSummary: pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence),
+        feedback: prunedFeedback,
+        improvementSummary: prunedImprovementSummary,
         markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
         status: suspiciousZeroWriting || contradictions.length ? "needs_review" : result.status,
         shouldSendAutomatically: suspiciousZeroWriting || contradictions.length ? false : result.shouldSendAutomatically,
@@ -769,8 +804,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       corrections: mergeCorrections(result.corrections, deterministicCorrections),
       writingDimensions: dimensions,
       reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
-      feedback: pruneResolvedTaskClaims(result.feedback, taskPointEvidence),
-      improvementSummary: pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence),
+      feedback: prunedFeedback,
+      improvementSummary: prunedImprovementSummary,
       markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
       status: contradictions.length ? "needs_review" : result.status,
       shouldSendAutomatically: contradictions.length ? false : result.shouldSendAutomatically,
@@ -849,8 +884,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     writingDimensions: dimensions,
     reviewReasons: mergeReviewReasons(baseReviewReasons, guardReviewReasons),
     markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
-    feedback: [result.feedback, guardFeedback].filter(Boolean).join(" "),
-    improvementSummary: [result.improvementSummary, guardFeedback].filter(Boolean).join(" "),
+    feedback: [prunedFeedback, guardFeedback].filter(Boolean).join(" "),
+    improvementSummary: [prunedImprovementSummary, guardFeedback].filter(Boolean).join(" "),
     status: "needs_review",
     shouldSendAutomatically: false,
     ai: {
