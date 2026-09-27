@@ -374,13 +374,13 @@ function hasConcreteCorrections(result = {}) {
 
 function deterministicLanguageCorrections(source = "", partId = "teil2", task = {}) {
   const corrections = [];
-  const hopeClause = String(source || "").match(/\bIch\s+hoffe\s+es\s+geht\s+dir\s+gut\./i);
+  const hopeClause = String(source || "").match(/\bIch\s+hoffe\s+es\s+geht\s+dir\s+gut[.?]/i);
   if (hopeClause?.[0]) {
     corrections.push({
       partId,
       from: hopeClause[0],
-      to: hopeClause[0].replace(/\bhoffe\s+/i, "hoffe, "),
-      reason: "Set a comma after „Ich hoffe“ before the following clause.",
+      to: hopeClause[0].replace(/\bhoffe\s+/i, "hoffe, ").replace(/\?$/, "."),
+      reason: "Set a comma after „Ich hoffe“ before the following clause; this is a statement, not a question.",
     });
   }
 
