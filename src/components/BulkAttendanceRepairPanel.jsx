@@ -12,7 +12,8 @@ import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityS
 import {
   buildBulkPresentRepair,
   isBulkRepairEligibleSession,
-} from "../utils/bulkAttendanceRepair.js";\nimport "./BulkAttendanceRepairPanel.css";
+} from "../utils/bulkAttendanceRepair.js";
+import "./BulkAttendanceRepairPanel.css";
 
 const TIMEZONE = "Africa/Accra";
 
