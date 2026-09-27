@@ -4,9 +4,21 @@ import react from '@vitejs/plugin-react'
 const falowenApiProxyTarget = process.env.VITE_FALOWEN_API_PROXY_TARGET
   || 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net'
 
+const falowenAdminBuildSha = process.env.VERCEL_GIT_COMMIT_SHA
+  || process.env.GITHUB_SHA
+  || process.env.COMMIT_SHA
+  || 'dev'
+const falowenAdminBuildEnv = process.env.VERCEL_ENV
+  || process.env.NODE_ENV
+  || 'local'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_FALOWEN_BUILD_SHA': JSON.stringify(falowenAdminBuildSha),
+    'import.meta.env.VITE_FALOWEN_BUILD_ENV': JSON.stringify(falowenAdminBuildEnv),
+  },
   server: {
     proxy: {
       '/api': {
