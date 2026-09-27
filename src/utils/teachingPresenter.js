@@ -846,6 +846,68 @@ function buildB1GrammarSupportItems(support = {}) {
   })).filter((item) => item.supportEn);
 }
 
+function cleanCorrectionFragment(value = "") {
+  return String(value || "")
+    .trim()
+    .replace(/^[“"'‘’]+|[”"'‘’]+$/g, "")
+    .replace(/[.;]\s*$/g, "")
+    .trim();
+}
+
+function extractMistakeForm(value = "") {
+  const text = cleanCorrectionFragment(value)
+    .replace(/^(using|saying|writing|keeping|putting|placing|choosing|forming|adding)\s+/i, "")
+    .trim();
+  const colon = text.lastIndexOf(":");
+  return cleanCorrectionFragment(colon >= 0 ? text.slice(colon + 1) : text);
+}
+
+function buildCorrectionMistakes(items = [], grammarRules = []) {
+  return (Array.isArray(items) ? items : [])
+    .map((item, index) => {
+      if (item && typeof item === "object") {
+        const wrong = cleanCorrectionFragment(item.wrong || item.incorrect || item.before);
+        const correct = cleanCorrectionFragment(item.correct || item.corrected || item.after);
+        const why = String(item.why || item.explanation || item.note || "").trim();
+        if (!wrong && !correct && !why) return null;
+        return {
+          id: String(item.id || `mistake-${index + 1}`),
+          wrong: wrong || why,
+          correct: correct || String(grammarRules[index] || "").trim() || why,
+          why: why || String(grammarRules[index] || "").trim(),
+        };
+      }
+
+      const raw = String(item || "").trim();
+      if (!raw) return null;
+
+      let wrong = "";
+      let correct = "";
+      const insteadIndex = raw.toLocaleLowerCase("en").indexOf(" instead of ");
+      const arrowMatch = raw.match(/\s(?:→|->)\s/);
+
+      if (insteadIndex >= 0) {
+        const left = raw.slice(0, insteadIndex);
+        const right = raw.slice(insteadIndex + " instead of ".length);
+        wrong = extractMistakeForm(left);
+        correct = cleanCorrectionFragment(right);
+      } else if (arrowMatch?.index != null) {
+        const splitIndex = arrowMatch.index;
+        wrong = extractMistakeForm(raw.slice(0, splitIndex));
+        correct = cleanCorrectionFragment(raw.slice(splitIndex + arrowMatch[0].length));
+      }
+
+      const pairedRule = String(grammarRules[index] || "").trim();
+      return {
+        id: `mistake-${index + 1}`,
+        wrong: wrong || raw,
+        correct: correct || pairedRule || raw,
+        why: raw,
+      };
+    })
+    .filter(Boolean);
+}
+
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const support = buildTeacherSlideSupport(slide);
   const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
@@ -966,6 +1028,14 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 6),
       }] : []),
+      {
+        id: "mistakes",
+        type: "correction-list",
+        kicker: "Fehlerkorrektur",
+        title: "Common mistakes · Wrong → Correct → Why",
+        items: buildCorrectionMistakes(mistakeItems),
+        suggestedMinutes: 6,
+      },
       speakingStage,
       workbookStage,
     ];
@@ -1045,6 +1115,14 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 7),
       }] : []),
+      {
+        id: "mistakes",
+        type: "correction-list",
+        kicker: "Fehlerkorrektur",
+        title: "Common mistakes · Wrong → Correct → Why",
+        items: buildCorrectionMistakes(mistakeItems),
+        suggestedMinutes: 7,
+      },
       {
         ...speakingStage,
         title: "Sprechen · anwenden und begründen",

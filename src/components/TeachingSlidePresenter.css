@@ -1486,3 +1486,340 @@
   margin-top: 0;
   padding-bottom: 1rem;
 }
+
+
+/* Adaptive presenter layout system */
+.presenter-content {
+  --presenter-gap: 0.9rem;
+  --presenter-card-pad: 0.9rem;
+  --presenter-body-scale: 1;
+}
+
+.presenter-fit-compact {
+  --presenter-gap: 0.62rem;
+  --presenter-card-pad: 0.7rem;
+  --presenter-body-scale: 0.94;
+  padding-top: clamp(1rem, 2.3vw, 2rem);
+  padding-bottom: clamp(1rem, 2.3vw, 2rem);
+}
+
+.presenter-fit-tight {
+  --presenter-gap: 0.45rem;
+  --presenter-card-pad: 0.58rem;
+  --presenter-body-scale: 0.88;
+  padding-top: clamp(0.75rem, 1.8vw, 1.45rem);
+  padding-bottom: clamp(0.75rem, 1.8vw, 1.45rem);
+}
+
+.presenter-fit-compact h1 {
+  font-size: clamp(1.8rem, 4.2vw, 4rem);
+  margin-bottom: clamp(0.7rem, 1.8vw, 1.3rem);
+}
+
+.presenter-fit-tight h1 {
+  font-size: clamp(1.6rem, 3.7vw, 3.35rem);
+  margin-bottom: clamp(0.55rem, 1.3vw, 1rem);
+}
+
+.presenter-fit-compact p,
+.presenter-fit-compact li {
+  line-height: 1.28;
+}
+
+.presenter-fit-tight p,
+.presenter-fit-tight li {
+  line-height: 1.2;
+}
+
+.presenter-content-pager {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.55rem auto;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.08);
+}
+
+.presenter-content-pager span {
+  min-width: 2.5rem;
+  text-align: center;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.presenter-content-pager button {
+  border: 0;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.32rem 0.55rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-content-pager button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Knowledge: text first, checks second, no vertical centering. */
+.presenter-content-knowledge,
+.presenter-stage-knowledge {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-knowledge {
+  display: grid;
+  gap: var(--presenter-gap);
+  align-content: start;
+}
+
+.presenter-knowledge-heading h1 {
+  margin: 0.15rem 0 0;
+}
+
+.presenter-knowledge-text,
+.presenter-knowledge-checks {
+  padding: var(--presenter-card-pad);
+}
+
+/* Grammar: preserve heading, then paginate dense rule sets when needed. */
+.presenter-content-b1-grammar,
+.presenter-content-b2-grammar,
+.presenter-content-c1-grammar,
+.presenter-stage-grammar {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-b1-grammar,
+.presenter-b2-grammar,
+.presenter-c1-grammar {
+  gap: var(--presenter-gap);
+}
+
+.presenter-b1-grammar-card,
+.presenter-b2-grammar-rules article,
+.presenter-c1-grammar-rules article {
+  padding: var(--presenter-card-pad);
+}
+
+/* Vocabulary: cards stay balanced and shrink before any scrolling is needed. */
+.presenter-content-vocabulary,
+.presenter-stage-phrases {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-vocabulary {
+  display: grid;
+  gap: var(--presenter-gap);
+  align-content: start;
+}
+
+.presenter-vocabulary-grid {
+  gap: var(--presenter-gap);
+}
+
+.presenter-vocabulary-card {
+  padding: var(--presenter-card-pad);
+}
+
+.presenter-fit-tight .presenter-vocabulary-card p,
+.presenter-fit-tight .presenter-vocabulary-task {
+  font-size: 0.88em;
+}
+
+/* Practice/focus: use the whole width and keep cards compact. */
+.presenter-content-flow,
+.presenter-stage-practice,
+.presenter-stage-focus {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-flow-grid {
+  gap: var(--presenter-gap);
+}
+
+.presenter-flow-card {
+  padding: var(--presenter-card-pad);
+}
+
+/* Speaking is deliberately one question at a time. */
+.presenter-content-question-reveal,
+.presenter-stage-questions {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-question-reveal {
+  display: grid;
+  align-content: start;
+  gap: var(--presenter-gap);
+}
+
+.presenter-question-reveal h1 {
+  margin-bottom: 0.4rem;
+}
+
+.presenter-fit-tight .presenter-question {
+  font-size: clamp(1.45rem, 3.2vw, 3rem);
+}
+
+/* Workbook bridge: links/actions remain visible below the task list. */
+.presenter-content-workbook,
+.presenter-stage-workbook,
+.presenter-content-bridge {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-workbook-list,
+.presenter-coursebook-bridge-grid {
+  gap: var(--presenter-gap);
+}
+
+.presenter-workbook-list article,
+.presenter-coursebook-bridge-grid article {
+  padding: var(--presenter-card-pad);
+}
+
+/* Summary: protect heading and keep outcome cards readable. */
+.presenter-content-summary {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-lesson-summary {
+  display: grid;
+  gap: var(--presenter-gap);
+  align-content: start;
+}
+
+.presenter-lesson-summary-heading h1 {
+  margin: 0.15rem 0 0;
+}
+
+.presenter-lesson-summary-grid {
+  gap: var(--presenter-gap);
+}
+
+/* A2/B1 correction teaching cards */
+.presenter-content-correction-list,
+.presenter-stage-mistakes {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.presenter-corrections {
+  display: grid;
+  gap: var(--presenter-gap);
+  align-content: start;
+}
+
+.presenter-corrections-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.presenter-corrections-heading > span {
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.presenter-corrections-heading h1 {
+  margin: 0;
+}
+
+.presenter-corrections-grid {
+  display: grid;
+  gap: var(--presenter-gap);
+}
+
+.presenter-correction-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.presenter-correction-line {
+  min-width: 0;
+  padding: var(--presenter-card-pad);
+}
+
+.presenter-correction-line + .presenter-correction-line {
+  border-left: 1px solid #e2e8f0;
+}
+
+.presenter-correction-line strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.presenter-correction-line p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.9rem, 1.25vw, 1.08rem);
+}
+
+.presenter-correction-line.is-wrong {
+  background: #fff7f7;
+}
+
+.presenter-correction-line.is-wrong strong {
+  color: #b91c1c;
+}
+
+.presenter-correction-line.is-correct {
+  background: #f0fdf4;
+}
+
+.presenter-correction-line.is-correct strong {
+  color: #15803d;
+}
+
+.presenter-correction-line.is-why {
+  background: #f8fafc;
+}
+
+.presenter-correction-line.is-why strong {
+  color: #475569;
+}
+
+@media (max-width: 760px) {
+  .presenter-correction-card {
+    grid-template-columns: 1fr;
+  }
+
+  .presenter-correction-line + .presenter-correction-line {
+    border-left: 0;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .presenter-content-pager {
+    align-self: stretch;
+    justify-content: center;
+    margin-left: 0;
+  }
+}

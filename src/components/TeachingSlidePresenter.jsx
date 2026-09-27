@@ -124,6 +124,11 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [warmupAnswered, setWarmupAnswered] = useState({});
   const [revealedFlowRole, setRevealedFlowRole] = useState("");
   const warmupAudioContextRef = useRef(null);
+  const contentRef = useRef(null);
+  const lastContentSizeRef = useRef({ width: 0, height: 0 });
+  const [fitMode, setFitMode] = useState("normal");
+  const [contentPage, setContentPage] = useState(0);
+  const [contentPageSize, setContentPageSize] = useState(0);
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -137,6 +142,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     ? Array.from({ length: visibleWarmupQuestionCount }, (_, index) => Boolean(warmupAnswered[index])).filter(Boolean).length
     : 0;
   const visibleWarmupMissedCount = Math.max(0, visibleWarmupQuestionCount - visibleWarmupAnsweredCount);
+
+  const pageableItems = Array.isArray(stage?.items) ? stage.items : [];
+  const contentPageCount = contentPageSize > 0 ? Math.ceil(pageableItems.length / contentPageSize) : 1;
+  const presenterItems = contentPageSize > 0
+    ? pageableItems.slice(contentPage * contentPageSize, (contentPage + 1) * contentPageSize)
+    : pageableItems;
 
   function toggleWarmupSupport(questionIndexValue, supportType) {
     const key = questionIndexValue + ":" + supportType;
@@ -267,6 +278,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setWarmupSupportOpen({});
     setWarmupAnswered({});
     setTimerRunning(false);
+    setFitMode("normal");
+    setContentPage(0);
+    setContentPageSize(0);
     if (stage?.id === "warmup" && stage?.timingMode === "per-student") {
       setWarmupQuestionCount(4);
       setWarmupMinutes(5);
@@ -277,6 +291,68 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setTimerMode("stage");
     setTimerRemaining(stage?.suggestedMinutes ? stage.suggestedMinutes * 60 : 0);
   }, [stage?.id, stage?.suggestedMinutes, stage?.timingMode]);
+
+  useEffect(() => {
+    const node = contentRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return undefined;
+
+    let frame = 0;
+    const measure = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const currentSize = { width: node.clientWidth, height: node.clientHeight };
+        const previousSize = lastContentSizeRef.current;
+        const viewportGrew = currentSize.width > previousSize.width + 8
+          || currentSize.height > previousSize.height + 8;
+        lastContentSizeRef.current = currentSize;
+
+        if (viewportGrew && (fitMode !== "normal" || contentPageSize > 0)) {
+          setFitMode("normal");
+          setContentPageSize(0);
+          setContentPage(0);
+          return;
+        }
+
+        const overflow = node.scrollHeight > node.clientHeight + 6;
+        if (!overflow) return;
+
+        if (fitMode === "normal") {
+          setFitMode("compact");
+          return;
+        }
+        if (fitMode === "compact") {
+          setFitMode("tight");
+          return;
+        }
+
+        const paginatableTypes = new Set([
+          "knowledge",
+          "vocabulary",
+          "b1-grammar",
+          "b2-grammar",
+          "c1-grammar",
+          "correction-list",
+          "flow",
+          "workbook",
+        ]);
+        const canPaginate = paginatableTypes.has(stage?.type)
+          && Array.isArray(stage?.items)
+          && stage.items.length > 1;
+        if (fitMode === "tight" && canPaginate && contentPageSize === 0) {
+          setContentPageSize(Math.max(1, Math.ceil(stage.items.length / 2)));
+          setContentPage(0);
+        }
+      });
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    measure();
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [stage?.id, stage?.type, stage?.items, fitMode, contentPageSize, contentPage]);
 
   useEffect(() => {
     if (!timerRunning || timerRemaining <= 0) return undefined;
@@ -407,7 +483,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           responseTimerEnabled={!warmupPerStudent}
         />
 
-        <main className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode}`}>
+          {contentPageCount > 1 ? (
+            <div className="presenter-content-pager" aria-label="Slide content pages">
+              <span>{contentPage + 1}/{contentPageCount}</span>
+              <button type="button" onClick={() => setContentPage((page) => Math.max(0, page - 1))} disabled={contentPage === 0}>Previous</button>
+              <button type="button" onClick={() => setContentPage((page) => Math.min(contentPageCount - 1, page + 1))} disabled={contentPage >= contentPageCount - 1}>Next</button>
+            </div>
+          ) : null}
           {stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>
@@ -436,7 +519,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>German first. Use the short English note only to confirm the logical function of the structure.</p>
               </div>
               <div className="presenter-b2-grammar-rules">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={item + index}>
                     <span>{index + 1}</span>
                     <p>{item}</p>
@@ -464,7 +547,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>Deutsch bleibt die Hauptsprache. Die englische Notiz klärt nur die Funktion der schwierigen Struktur.</p>
               </div>
               <div className="presenter-c1-grammar-rules">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={item + index}>
                     <span>{index + 1}</span>
                     <p>{item}</p>
@@ -492,7 +575,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>Short English support for the rule. Keep the German examples as the main language.</p>
               </div>
               <div className="presenter-b1-grammar-grid">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={(item.label || "rule") + index} className="presenter-b1-grammar-card">
                     <strong>{item.label || `Rule ${index + 1}`}</strong>
                     <p>{item.supportEn}</p>
@@ -516,7 +599,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               <div className="presenter-knowledge-checks">
                 <strong>Kurz prüfen</strong>
                 <ol>
-                  {stage.items.map((item) => <li key={item}>{item}</li>)}
+                  {presenterItems.map((item) => <li key={item}>{item}</li>)}
                 </ol>
               </div>
             </section>
@@ -567,7 +650,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>Learn the words first, then use them immediately in the lesson.</p>
               </div>
               <div className="presenter-vocabulary-grid">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={`${item.term}-${index}`} className="presenter-vocabulary-card">
                     <span className="presenter-vocabulary-number">{item.number || index + 1}</span>
                     <div>
@@ -621,11 +704,36 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </div>
               ) : null}
             </section>
+          ) : stage.type === "correction-list" ? (
+            <section className="presenter-corrections">
+              <div className="presenter-corrections-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+              </div>
+              <div className="presenter-corrections-grid">
+                {presenterItems.map((item, index) => (
+                  <article key={item.id || index} className="presenter-correction-card">
+                    <div className="presenter-correction-line is-wrong">
+                      <strong>Wrong</strong>
+                      <p>{item.wrong}</p>
+                    </div>
+                    <div className="presenter-correction-line is-correct">
+                      <strong>Correct</strong>
+                      <p>{item.correct}</p>
+                    </div>
+                    <div className="presenter-correction-line is-why">
+                      <strong>Why</strong>
+                      <p>{item.why}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
           ) : stage.type === "flow" ? (
             <>
               <h1>{stage.title}</h1>
               <div className="presenter-flow-grid">
-                {stage.items.map((item, itemIndex) => (
+                {presenterItems.map((item, itemIndex) => (
                   <article key={`${item.title}-${item.detail || item.instruction || itemIndex}`} className="presenter-flow-card">
                     <div className="presenter-flow-card-main">
                       <strong>{item.title}</strong>
@@ -729,7 +837,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <>
               <h1>{stage.title}</h1>
               <div className="presenter-workbook-list">
-                {stage.items.map((item) => (
+                {presenterItems.map((item) => (
                   <article key={`${item.label}-${item.detail}`}>
                     <strong>{item.label}</strong>
                     <p>{item.detail}</p>

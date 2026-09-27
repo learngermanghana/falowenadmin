@@ -16,6 +16,7 @@ const REQUIRED_STAGES = [
   "grammar",
   "examples",
   "practice",
+  "mistakes",
   "questions",
   "workbook",
   "lesson-summary",
@@ -50,6 +51,11 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
     assert.equal(practice.items.length, 1, `${slide.assignmentId} should use one focused task rather than a drill stack`);
     assert.ok(practice.items[0].prompts?.length >= 2, `${slide.assignmentId} focused task needs actionable prompts`);
 
+    const mistakes = stages.find((stage) => stage.id === "mistakes");
+    assert.equal(mistakes.type, "correction-list");
+    assert.ok(mistakes.items.length >= 3, `${slide.assignmentId} should expose correction cards`);
+    assert.ok(mistakes.items.every((item) => item.wrong && item.correct && item.why), `${slide.assignmentId} correction cards must include Wrong, Correct and Why`);
+
     const questions = stages.find((stage) => stage.id === "questions");
     assert.equal(questions.type, "question-reveal");
     assert.equal(questions.items.length, 5, `${slide.assignmentId} should preserve the five speaking questions`);
@@ -61,7 +67,6 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
     assert.ok(workbook.workbookUrl, `${slide.assignmentId} should expose the workbook URL`);
 
     for (const removed of [
-      "mistakes",
       "b1-grammar-check",
       "b1-vocabulary-retrieval",
       "b1-sentence-builder",
