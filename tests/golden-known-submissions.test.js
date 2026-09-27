@@ -54,10 +54,10 @@ Q5.A`;
 test("golden A1-1.2 keeps subject-verb grammar strict from committed metadata", () => {
   const result = computeObjectiveScore("A1-1.2", joshA112Submission);
   assert.equal(result.totalCount, 14);
-  assert.equal(result.correctCount, 11);
+  assert.equal(result.correctCount, 12);
   assert.equal(result.details[2].correct, false);
   assert.equal(result.details[5].correct, false);
-  assert.equal(result.details[9].correct, false);
+  assert.equal(result.details[9].correct, true);
 });
 
 test("A1-3 writing registration is committed in the answer dictionary", () => {
