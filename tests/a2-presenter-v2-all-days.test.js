@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
+import { getSpeakingDifficultySelection } from "../src/data/presenterSpeakingDifficulty.js";
 import {
   buildTeachingPresenterStages,
   isA2PresenterV2Slide,
@@ -83,9 +84,11 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
     assert.equal(questions.questionModels.length, 3, `${slide.assignmentId} should keep a model for each selected question`);
     assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} should reveal model support`);
-    assert.equal(questions.items[0], slide.studentQuestionsDe[0], `${slide.assignmentId} easy question should be first`);
-    assert.equal(questions.items[1], slide.studentQuestionsDe[2], `${slide.assignmentId} neutral question should be the middle question`);
-    assert.equal(questions.items[2], slide.studentQuestionsDe.at(-1), `${slide.assignmentId} difficult question should be the final question`);
+    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
+    assert.ok(difficulty, `${slide.assignmentId} needs an explicit difficulty map`);
+    assert.equal(questions.difficultySource, "curated");
+    assert.deepEqual(questions.difficultyIndexes, difficulty.indexes);
+    assert.deepEqual(questions.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
   }
 });
 
