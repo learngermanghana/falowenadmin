@@ -312,7 +312,8 @@ export default function CheckinDisplayPage() {
   const handoffStartedAtRef = useRef(0);
   const handoffPhaseTimerRef = useRef(null);
   const handoffFocusTimerRef = useRef(null);
-\n  const scheduleInfo = useMemo(() => {
+
+  const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
     if (!Number.isInteger(sessionIndex)) return null;
 
