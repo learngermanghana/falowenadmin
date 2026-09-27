@@ -1,7 +1,7 @@
 import { C1_CANONICAL_TITLES } from "./c1CanonicalCurriculum.js";
 
 // Canonical learner-side curriculum identity used by Falowen Admin Presenter.
-// Learner source snapshot: falowenexamtrainer@bafaffbb5fee47a0b9b4effa040dc69cf052f5fa
+// Learner source snapshot: falowenexamtrainer@3cf869444ad03e88cc7a1dcfac10413ca11517aa
 // A2/B1/B2 titles come from the learner topic/situation/alignment data.
 // C1 comes from the shared canonical learner-aligned C1 manifest.
 // C2 mirrors the current learner C2 curriculum.
@@ -141,7 +141,7 @@ const TITLES_BY_LEVEL = Object.freeze({
 
 export const STRICT_PARITY_LEVELS = Object.freeze(["A2", "B1", "B2", "C1", "C2"]);
 export const KNOWN_PARITY_EXCEPTION_LEVELS = Object.freeze([]);
-export const STUDENT_CURRICULUM_SOURCE_SHA = "bafaffbb5fee47a0b9b4effa040dc69cf052f5fa";
+export const STUDENT_CURRICULUM_SOURCE_SHA = "3cf869444ad03e88cc7a1dcfac10413ca11517aa";
 
 export const APPROVED_TITLE_ALIASES = Object.freeze({
   "A2-DAY-20": ["Typische Reklamationssituationen"],

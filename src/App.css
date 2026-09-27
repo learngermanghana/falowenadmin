@@ -31,6 +31,22 @@
   white-space: nowrap;
 }
 
+.topbar-build-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid #d7deeb;
+  border-radius: 999px;
+  background: #f7f9fc;
+  color: #5a667d;
+  padding: 0.15rem 0.48rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .topbar-links,
 .topbar-user {
   display: flex;
@@ -119,7 +135,8 @@
     align-items: flex-start;
   }
 
-  .topbar-brand {
+  .topbar-brand,
+  .topbar-build-badge {
     order: 1;
   }
 
@@ -464,6 +481,11 @@ main[data-route="/live-classes"] article.card > div > button {
 
   .topbar-email {
     max-width: 60vw;
+  }
+
+  .topbar-build-badge {
+    font-size: 0.62rem;
+    padding-inline: 0.4rem;
   }
 
   .toast-viewport {
