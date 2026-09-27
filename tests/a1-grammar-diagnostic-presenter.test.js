@@ -65,3 +65,18 @@ test("A1 prebuild guards cannot regenerate the retired language-first flow", () 
   assert.doesNotMatch(lesson9Patch, /function buildRetrievalChecks\(slide = \{\}\)/);
   assert.match(lesson9Patch, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
 });
+
+
+test("A1 Presenter exposes teacher-purpose guidance and a full-canvas Focus view", () => {
+  const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
+  const css = fs.readFileSync("src/components/TeachingSlidePresenter.css", "utf8");
+
+  assert.match(source, /function a1TeacherPurpose/);
+  assert.match(source, /aria-label="Teacher purpose"/);
+  assert.match(source, /!focusMode && teacherPurpose/);
+  assert.match(source, />Focus view</);
+  assert.match(source, /presenter-focus-dock/);
+  assert.match(source, /aria-label="Exit focus view"/);
+  assert.match(source, /presenter-stage \$\{focusMode \? "is-focus-mode" : ""\}/);
+  assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-participation-dock/);
+});
