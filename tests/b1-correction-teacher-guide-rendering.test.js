@@ -8,27 +8,31 @@ import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js"
 const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
 const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
 
-test("B1 grammar renders concise English support instead of a separate correction drill page", () => {
-  assert.match(presenter, /stage\.type === "b1-grammar"/);
-  assert.match(presenter, /Short English support for the rule/);
-  assert.match(presenter, /Watch out:/);
-  assert.match(css, /\.presenter-b1-grammar-grid/);
-  assert.match(css, /\.presenter-b1-grammar-card/);
+test("B1 grammar renders one three-step diagnostic instead of reteaching the rule", () => {
+  assert.match(presenter, /stage\.type === "grammar-check"/);
+  assert.match(presenter, /Teacher answer anzeigen/);
+  assert.match(css, /\.presenter-grammar-check-grid/);
+  assert.match(css, /\.presenter-grammar-check-card/);
 });
 
 test("B1 Day 12 grammar still explains temporal narration in English support", () => {
   const slide = getSlidesByCourse("B1").find((item) => item.assignmentId === "B1-4.12");
-  const grammar = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "grammar");
-  const support = grammar.items.map((item) => item.supportEn + " " + item.attentionEn).join(" ");
+  const grammar = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "grammar-check");
+  const support = grammar.items.map((item) => [item.answer, item.note].filter(Boolean).join(" ")).join(" ");
 
   assert.match(support, /Perfekt|Präteritum/i);
   assert.match(support, /nachdem|als|temporal|sequence/i);
-  assert.equal(grammar.type, "b1-grammar");
+  assert.equal(grammar.type, "grammar-check");
+  assert.equal(grammar.items.length, 3);
 });
 
-test("B1 no longer exposes the old b1-grammar-check stage", () => {
+test("B1 no longer exposes the retired teaching and correction stages", () => {
   for (const slide of getSlidesByCourse("B1")) {
     const ids = buildTeachingPresenterStages(slide, slide.topic).map((stage) => stage.id);
     assert.equal(ids.includes("b1-grammar-check"), false, slide.assignmentId);
+    assert.equal(ids.includes("grammar"), false, slide.assignmentId);
+    assert.equal(ids.includes("examples"), false, slide.assignmentId);
+    assert.equal(ids.includes("mistakes"), false, slide.assignmentId);
+    assert.equal(ids.includes("grammar-check"), true, slide.assignmentId);
   }
 });
