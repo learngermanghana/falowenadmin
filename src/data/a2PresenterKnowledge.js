@@ -236,7 +236,7 @@ const A2_KNOWLEDGE = {
     checks: ["Was trägt man zuerst in den Kalender ein?", "Welche Zeitform ist für feste nahe Zukunftspläne häufig?", "Warum sollte man nicht jede Stunde verplanen?"],
     activity: {
       title: "Entdecke die Wortstellung",
-      instruction: "Vergleicht die Sätze und formuliert die Regel für ein Zeitwort am Satzanfang.",
+      instruction: "Vergleicht die Sätze. Was passiert mit dem Verb, wenn die Zeitangabe am Anfang steht?",
       prompts: ["Ich arbeite am Dienstag bis 17 Uhr.", "Am Dienstag arbeite ich bis 17 Uhr.", "Morgen treffe ich meine Freundin."],
       modelItems: ["Das konjugierte Verb bleibt auf Position 2.", "Nach der Zeitangabe kommt deshalb oft direkt das Verb."],
     },

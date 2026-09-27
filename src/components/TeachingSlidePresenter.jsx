@@ -129,6 +129,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [fitMode, setFitMode] = useState("normal");
   const [contentPage, setContentPage] = useState(0);
   const [contentPageSize, setContentPageSize] = useState(0);
+  const [focusMode, setFocusMode] = useState(false);
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -164,6 +165,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   function goTo(index) {
     setRevealedFlowRole("");
     setStageIndex(clampPresenterIndex(index, stages.length));
+  }
+
+  function toggleFocusMode() {
+    setFocusMode((current) => !current);
+    setFitMode("normal");
+    setContentPageSize(0);
+    setContentPage(0);
   }
 
   function next() {
@@ -423,7 +431,22 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   return (
     <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
-      <div className="presenter-stage">
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
+        {focusMode ? (
+          <div className="presenter-focus-dock" aria-label="Focus mode controls">
+            <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0} aria-label="Previous slide">←</button>
+            <span>{stageIndex + 1}/{stages.length}</span>
+            <button type="button" className="presenter-focus-mark" onClick={toggleFocusMode}>Show marking</button>
+            <button
+              type="button"
+              onClick={next}
+              disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}
+              aria-label="Next slide"
+            >
+              →
+            </button>
+          </div>
+        ) : null}
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
@@ -473,6 +496,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
           <div className="presenter-top-actions">
             <button type="button" onClick={enterFullscreen}>Fullscreen</button>
+            <button type="button" onClick={toggleFocusMode}>Focus view</button>
             <button type="button" onClick={onExit}>Exit presenter</button>
           </div>
         </header>

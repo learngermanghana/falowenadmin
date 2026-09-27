@@ -1823,3 +1823,89 @@
     margin-left: 0;
   }
 }
+
+
+/* Focus view: give the projected lesson almost the full 16:9 canvas.
+   Teacher/session state stays mounted; only the chrome is visually hidden. */
+.presenter-stage.is-focus-mode {
+  position: relative;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.presenter-stage.is-focus-mode > .presenter-topbar,
+.presenter-stage.is-focus-mode > .presenter-student-picker,
+.presenter-stage.is-focus-mode > .presenter-footer {
+  display: none;
+}
+
+.presenter-stage.is-focus-mode > .presenter-content {
+  grid-row: 1;
+  min-height: 0;
+  height: 100%;
+  padding: clamp(1.4rem, 4vw, 4rem) clamp(2rem, 6vw, 6rem);
+}
+
+.presenter-focus-dock {
+  position: absolute;
+  z-index: 40;
+  right: clamp(0.55rem, 1.4vw, 1rem);
+  bottom: clamp(0.55rem, 1.4vw, 1rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.94);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.presenter-focus-dock span {
+  min-width: 2.8rem;
+  color: #475569;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.presenter-focus-dock button {
+  min-width: 34px;
+  min-height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.35rem 0.55rem;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-focus-dock button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.presenter-focus-dock .presenter-focus-mark {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding-inline: 0.75rem;
+}
+
+@media (max-width: 700px) {
+  .presenter-stage.is-focus-mode > .presenter-content {
+    padding: 1rem 1.15rem 3.8rem;
+  }
+
+  .presenter-focus-dock {
+    right: 0.45rem;
+    bottom: 0.45rem;
+  }
+
+  .presenter-focus-dock .presenter-focus-mark {
+    font-size: 0.7rem;
+  }
+}
