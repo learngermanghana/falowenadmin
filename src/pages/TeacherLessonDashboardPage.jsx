@@ -228,7 +228,15 @@ export default function TeacherLessonDashboardPage() {
   const timezone = dashboard?.klass?.timezone || "Africa/Accra";
   const grammarTarget = grammarTargetForSlide(slide);
   const writingFocus = writingFocusForSlide(slide);
-  const speakingQuestions = Array.isArray(slide?.studentQuestionsDe) ? slide.studentQuestionsDe.slice(0, 5) : [];
+  const sourceSpeakingQuestions = Array.isArray(slide?.studentQuestionsDe) ? slide.studentQuestionsDe : [];
+  const speakingQuestions = ["A2", "B1"].includes(course) && sourceSpeakingQuestions.length
+    ? [...new Set([
+        sourceSpeakingQuestions[0],
+        sourceSpeakingQuestions[Math.floor((sourceSpeakingQuestions.length - 1) / 2)],
+        sourceSpeakingQuestions.at(-1),
+      ].filter(Boolean))]
+    : sourceSpeakingQuestions.slice(0, 5);
+  const speakingQuestionLevels = ["Easy", "Neutral", "Difficult"];
   const warmupQuestions = Array.isArray(slide?.warmupQuestionsDe) ? slide.warmupQuestionsDe : [];
 
   const preparePresenterStart = () => {
@@ -368,7 +376,12 @@ export default function TeacherLessonDashboardPage() {
               </div>
               {speakingQuestions.length ? (
                 <ol>
-                  {speakingQuestions.map((question) => <li key={question}>{question}</li>)}
+                  {speakingQuestions.map((question, index) => (
+                    <li key={question}>
+                      {["A2", "B1"].includes(course) ? <strong>{speakingQuestionLevels[index]} · </strong> : null}
+                      {question}
+                    </li>
+                  ))}
                 </ol>
               ) : <p>No separate speaking prompts are attached to this lesson.</p>}
             </article>
