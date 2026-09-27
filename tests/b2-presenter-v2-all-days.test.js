@@ -44,7 +44,7 @@ const TOPICS = [
 ];
 
 const REQUIRED_STAGES = [
-  "intro", "warmup", "foundation", "phrases", "grammar", "examples",
+  "intro", "warmup", "foundation", "phrases", "grammar",
   "focus", "questions", "workbook", "lesson-summary",
 ];
 
@@ -112,8 +112,7 @@ test("all B2 days use the stable teaching spine without the old drill stack or w
 
     assert.equal(vocabulary.type, "vocabulary");
     assert.equal(vocabulary.kicker, "Kollokationen & Redemittel");
-    assert.equal(vocabulary.items.length, 10, slide.assignmentId + " should render all four collocations and all six argumentation phrases");
-    assert.ok(vocabulary.items.some((item) => item.term === "Zusammenfassend bin ich der Auffassung, dass ..."), slide.assignmentId + " should preserve the final conclusion phrase");
+    assert.equal(vocabulary.items.length, 6, slide.assignmentId + " should keep a compact advanced-language set");
     const lessonCollocations = getB2TopicCollocations(slide.dayNumber);
     assert.ok(
       lessonCollocations.some((term) => vocabulary.items.some((item) => item.term === term)),
@@ -132,16 +131,16 @@ test("all B2 days use the stable teaching spine without the old drill stack or w
       assert.equal(focus.items[0].roleCards.length, 2);
       assert.ok(focus.items[0].prompts.length >= 2, slide.assignmentId + " information gap should keep only shared exchange prompts visible");
     } else {
-      assert.ok(focus.items[0].prompts.length >= 4);
+      assert.ok(focus.items[0].prompts.length >= 2 && focus.items[0].prompts.length <= 3);
     }
-    assert.equal(focus.items[0].minutes, 9);
+    assert.equal(focus.items[0].minutes, 11);
 
     assert.equal(questions.type, "question-reveal");
-    assert.equal(questions.items.length, 5);
-    assert.equal(questions.questionModels.length, 5);
-    questions.items.forEach((question) => {
-      assert.ok(getSpeakingQuestionModel(questions, question)?.modelAnswerDe, slide.assignmentId + " missing speaking model");
-    });
+    assert.equal(questions.items.length, 1);
+    assert.equal(questions.questionModels.length, 1);
+    assert.match(questions.title, /eine Frage vertiefen/i);
+    assert.match(questions.instruction, /Hauptpunkt|optional/i);
+    assert.ok(getSpeakingQuestionModel(questions, questions.items[0])?.modelAnswerDe, slide.assignmentId + " missing speaking model");
 
     assert.equal(workbook.type, "workbook");
     assert.ok(workbook.items.length >= 5);
@@ -202,7 +201,7 @@ test("B2 information-gap lessons keep Role A and Role B private until selectivel
     assert.ok(item.roleCards[1].content);
     assert.ok(item.roleCards[0].task);
     assert.ok(item.roleCards[1].task);
-    assert.equal(item.prompts.length, 4, assignmentId + " should keep the four shared prompt steps");
+    assert.equal(item.prompts.length, 3, assignmentId + " should keep only three shared prompt steps");
 
     const sharedPrompts = item.prompts.join(" ");
     assert.doesNotMatch(sharedPrompts, /Rolle A kennt das Problem/i);
