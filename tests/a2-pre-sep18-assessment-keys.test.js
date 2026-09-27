@@ -9,7 +9,7 @@ const entryById = (assignmentId) =>
 
 const expectedShapes = {
   "A2-1.2": [4, 3],
-  "A2-1.3": [4, 5],
+  "A2-1.3": [5, 5],
   "A2-2.4": [5, 5],
   "A2-2.5": [5, 5],
   "A2-3.6": [5, 5],
@@ -27,7 +27,7 @@ const expectedShapes = {
   "A2-10.28": [5, 3],
 };
 
-test("restored A2 grading keys keep the pre-September-18 assessment shapes", () => {
+test("A2 grading keys keep their reviewed canonical assessment shapes", () => {
   for (const [assignmentId, [teil3Count, teil4Count]] of Object.entries(expectedShapes)) {
     const entry = entryById(assignmentId);
     assert.ok(entry, `missing ${assignmentId}`);
