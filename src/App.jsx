@@ -129,9 +129,7 @@ function TopBar() {
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
-                <Link to="/lesson-dashboard" onClick={() => setMenuOpen(false)}>Lesson Dashboard</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
-                <Link to="/class-participation" onClick={() => setMenuOpen(false)}>Participation</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
               </>
             ) : (
@@ -140,7 +138,6 @@ function TopBar() {
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
-                <Link to="/lesson-dashboard" onClick={() => setMenuOpen(false)}>Lesson Dashboard</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
@@ -149,7 +146,6 @@ function TopBar() {
                 <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
-                <Link to="/class-participation" onClick={() => setMenuOpen(false)}>Participation</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
               </>
             )}
