@@ -58,8 +58,12 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
 
     const questions = stages.find((stage) => stage.id === "questions");
     assert.equal(questions.type, "question-reveal");
-    assert.equal(questions.items.length, 5, `${slide.assignmentId} should preserve the five speaking questions`);
-    assert.equal(questions.questionModels.length, 5, `${slide.assignmentId} should preserve speaking models`);
+    assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
+    assert.equal(questions.questionModels.length, 3, `${slide.assignmentId} should preserve models for the three selected questions`);
+    assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
+    assert.equal(questions.items[0], slide.studentQuestionsDe[0]);
+    assert.equal(questions.items[1], slide.studentQuestionsDe[2]);
+    assert.equal(questions.items[2], slide.studentQuestionsDe.at(-1));
 
     const workbook = stages.find((stage) => stage.id === "workbook");
     assert.equal(workbook.type, "workbook");
