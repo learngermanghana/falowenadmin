@@ -125,6 +125,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [revealedFlowRole, setRevealedFlowRole] = useState("");
   const warmupAudioContextRef = useRef(null);
   const contentRef = useRef(null);
+  const lastContentSizeRef = useRef({ width: 0, height: 0 });
   const [fitMode, setFitMode] = useState("normal");
   const [contentPage, setContentPage] = useState(0);
   const [contentPageSize, setContentPageSize] = useState(0);
@@ -299,6 +300,19 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     const measure = () => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
+        const currentSize = { width: node.clientWidth, height: node.clientHeight };
+        const previousSize = lastContentSizeRef.current;
+        const viewportGrew = currentSize.width > previousSize.width + 8
+          || currentSize.height > previousSize.height + 8;
+        lastContentSizeRef.current = currentSize;
+
+        if (viewportGrew && (fitMode !== "normal" || contentPageSize > 0)) {
+          setFitMode("normal");
+          setContentPageSize(0);
+          setContentPage(0);
+          return;
+        }
+
         const overflow = node.scrollHeight > node.clientHeight + 6;
         if (!overflow) return;
 
@@ -311,7 +325,17 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           return;
         }
 
-        const canPaginate = !["intro", "question-reveal", "summary"].includes(stage?.type)
+        const paginatableTypes = new Set([
+          "knowledge",
+          "vocabulary",
+          "b1-grammar",
+          "b2-grammar",
+          "c1-grammar",
+          "correction-list",
+          "flow",
+          "workbook",
+        ]);
+        const canPaginate = paginatableTypes.has(stage?.type)
           && Array.isArray(stage?.items)
           && stage.items.length > 1;
         if (fitMode === "tight" && canPaginate && contentPageSize === 0) {
