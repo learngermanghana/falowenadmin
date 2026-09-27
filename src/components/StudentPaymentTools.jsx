@@ -43,6 +43,31 @@ function timestampMillis(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function addOneCalendarMonthMs(value) {
+  const millis = timestampMillis(value);
+  if (!millis) return 0;
+  const source = new Date(millis);
+  const end = new Date(millis);
+  end.setUTCMonth(end.getUTCMonth() + 1);
+  if (end.getUTCDate() !== source.getUTCDate()) end.setUTCDate(0);
+  return end.getTime();
+}
+
+function hasPaymentAccessMismatch(student = {}) {
+  const status = String(student.paymentStatus || "").trim().toLowerCase();
+  if (!["partial", "partially paid", "partially_paid"].includes(status)) return false;
+  const paid = parseMoneyValue(student.paid ?? student.paidAmount ?? student.initialPaymentAmount);
+  const balance = parseMoneyValue(student.balanceDue ?? student.balance);
+  if (paid <= 0 || balance <= 0) return false;
+
+  const paymentDate = student.lastPaymentAt || student.trialConvertedAt || student.contractStart;
+  const expectedEndMs = addOneCalendarMonthMs(paymentDate);
+  if (!expectedEndMs || expectedEndMs <= Date.now()) return false;
+
+  const contractEndMs = timestampMillis(student.contractEnd);
+  return !contractEndMs || contractEndMs + 60 * 1000 < expectedEndMs;
+}
+
 function formatPaymentDate(value) {
   const millis = timestampMillis(value);
   if (!millis) return "Pending";
@@ -129,6 +154,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
   const checkoutAmount = useMemo(() => calculatePaystackGrossAmount(numericAmount), [numericAmount]);
   const processingShare = useMemo(() => calculatePaystackCharge(numericAmount), [numericAmount]);
   const phone = resolvePhone(student, draft);
+  const paymentAccessMismatch = hasPaymentAccessMismatch({ ...student, ...draft });
 
   const generateLink = async () => {
     if (!studentId) {
@@ -187,6 +213,15 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
 
   return (
     <section style={{ marginTop: 18, border: "1px solid #bbf7d0", borderRadius: 14, padding: 14, background: "linear-gradient(135deg, #f0fdf4, #ffffff)", display: "grid", gap: 12 }}>
+      {paymentAccessMismatch ? (
+        <div style={{ padding: 10, borderRadius: 10, border: "1px solid #f59e0b", background: "#fffbeb", color: "#92400e" }}>
+          <strong>Payment/access mismatch</strong>
+          <div style={{ marginTop: 3, fontSize: 13 }}>
+            A partial payment is confirmed, but the student's one-month paid-access dates do not match the payment. The automatic reconciliation job will repair this record.
+          </div>
+        </div>
+      ) : null}
+
       <div>
         <h3 style={{ margin: "0 0 4px" }}>Student payment link</h3>
         <p style={{ margin: 0, color: "#64748b" }}>
