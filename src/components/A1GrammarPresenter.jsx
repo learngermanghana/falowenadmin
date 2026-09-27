@@ -18,10 +18,15 @@ function lessonUrl(value = "") {
 function a1TeacherPurpose(stage = {}) {
   const id = String(stage?.id || "");
 
-  if (id === "intro") return {
-    student: "Lernziel und Ablauf verstehen.",
-    teacher: "Kurz orientieren; die Grammatik wird auf der Falowen-Grammatikseite erklärt.",
-  };
+  if (id === "intro") return stage.examReadiness
+    ? {
+        student: "Ablauf und Ziel der A1-Sprechprüfung verstehen.",
+        teacher: "Kurz orientieren: Heute wird Prüfungsbereitschaft geprüft; Grammatik nur korrigieren, wenn sie die Sprechaufgabe blockiert.",
+      }
+    : {
+        student: "Lernziel und Ablauf verstehen.",
+        teacher: "Kurz orientieren; die Grammatik wird auf der Falowen-Grammatikseite erklärt.",
+      };
   if (id === "quick-check") return {
     student: "Die eben gelernte Regel kurz erinnern.",
     teacher: "Nur prüfen, nicht neu erklären. Bei Unsicherheit Needs review markieren.",
@@ -30,7 +35,9 @@ function a1TeacherPurpose(stage = {}) {
     student: stage.examReadiness
       ? "Einen Prüfungs-Prompt selbstständig beantworten."
       : "Eine Grammatikfrage selbstständig beantworten.",
-    teacher: "Erst vollständig antworten lassen; danach Correct oder Needs review markieren.",
+    teacher: stage.examReadiness
+      ? "Die Prüfungsantwort vollständig hören; danach Aufgaben­erfüllung, Verständlichkeit und Selbstständigkeit als Correct oder Needs review markieren."
+      : "Erst vollständig antworten lassen; danach Correct oder Needs review markieren.",
   };
   if (id === "mistake-fix") return {
     student: "Einen typischen Grammatikfehler korrigieren.",
@@ -48,10 +55,15 @@ function a1TeacherPurpose(stage = {}) {
     student: id === "mock" ? "Die Prüfungsteile möglichst ohne Hilfe durchführen." : "Die Grammatik in Falowen weiter üben.",
     teacher: id === "mock" ? "Hilfen reduzieren und Prüfungsbereitschaft beobachten." : "Zur passenden Falowen-Aufgabe wechseln.",
   };
-  if (id === "exit-check") return {
-    student: "Eine frische Aufgabe ohne Hilfe lösen.",
-    teacher: "Nicht vorsagen; damit entscheiden, ob die Grammatik sitzt.",
-  };
+  if (id === "exit-check") return stage.examReadiness
+    ? {
+        student: "Einen frischen Prüfungs-Prompt ohne Hilfe beantworten.",
+        teacher: "Nicht vorsagen; prüfen, ob der Student selbstständig und verständlich auf den Prüfungs-Prompt reagiert.",
+      }
+    : {
+        student: "Eine frische Aufgabe ohne Hilfe lösen.",
+        teacher: "Nicht vorsagen; damit entscheiden, ob die Grammatik sitzt.",
+      };
   if (id === "exam-map") return {
     student: "Die drei Teile der A1-Sprechprüfung verstehen.",
     teacher: "Nur das Format klären; noch keine lange Sprachproduktion verlangen.",
@@ -164,7 +176,9 @@ function stageList(slide, topicLabel) {
         items: exitChecks,
         exitCheck: true,
       },
-    ].filter((stage) => stage.type === "intro" || (Array.isArray(stage.items) && stage.items.length > 0));
+    ]
+      .filter((stage) => stage.type === "intro" || (Array.isArray(stage.items) && stage.items.length > 0))
+      .map((stage) => ({ ...stage, examReadiness: true }));
   }
 
   const quickChecks = grammarChecks.slice(0, 2);
@@ -423,15 +437,21 @@ export default function A1GrammarPresenter({
                 {participationCheckMode
                   ? activeCheck
                     ? `Student question ${activeCheck.poolPosition} of ${activeCheck.poolSize} · one question per student`
-                    : "Class understanding check · one question per student"
+                    : stage.examReadiness
+                      ? "Exam-readiness live check · one prompt per student"
+                      : "Class understanding check · one question per student"
                   : `Aufgabe ${itemIndex + 1} von ${stage.items.length}`}
               </div>
               <h1>{stage.title}</h1>
               {participationCheckMode && !activeCheck ? (
                 <div className="presenter-model-support">
                   <strong>Pick the first student above</strong>
-                  <p>Falowen assigns a different unused understanding question to each learner. For 10 students, the class receives 10 distinct lesson questions before any generated extension is needed.</p>
-                  <small>Record Correct, Needs review, Skip or Absent, then click Next student → above to test another learner.</small>
+                  <p>{stage.examReadiness
+                    ? "Falowen assigns a different unused speaking-exam prompt to each learner. Let the student respond independently before you evaluate."
+                    : "Falowen assigns a different unused understanding question to each learner. For 10 students, the class receives 10 distinct lesson questions before any generated extension is needed."}</p>
+                  <small>{stage.examReadiness
+                    ? "Record Correct, Needs review, Skip or Absent based on task fulfilment, understandable A1 language and independent reaction; then click Next student →."
+                    : "Record Correct, Needs review, Skip or Absent, then click Next student → above to test another learner."}</small>
                 </div>
               ) : (
                 <>
@@ -445,15 +465,23 @@ export default function A1GrammarPresenter({
                     <div className="presenter-model-support">
                       <strong>Richtige Antwort / teacher guide</strong>
                       <p>{activeCheck?.answerDe}</p>
-                      {participationCheckMode ? <small>Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for another distinct question.</small> : null}
+                      {participationCheckMode ? (
+                        <small>{stage.examReadiness
+                          ? "Use the model only as a reference. Accept any understandable A1 response that fulfils the speaking task; then record the result and use Next student →."
+                          : "Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for another distinct question."}</small>
+                      ) : null}
                       {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
                     </div>
                   ) : (
                     <div className="presenter-model-support" style={{ opacity: 0.8 }}>
                       <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
                       <p>{stage.exitCheck
-                        ? "The student answers first. Reveal only after the answer is complete."
-                        : "Let the selected student answer first. Record Correct or Needs review above, then click Next student → to check another learner."}</p>
+                        ? (stage.examReadiness
+                          ? "The student responds to the fresh exam prompt first. Do not help; reveal only after the response is complete."
+                          : "The student answers first. Reveal only after the answer is complete.")
+                        : (stage.examReadiness
+                          ? "Let the selected student complete the speaking-exam response first. Judge task fulfilment and clarity, then record Correct or Needs review."
+                          : "Let the selected student answer first. Record Correct or Needs review above, then click Next student → to check another learner.")}</p>
                     </div>
                   )}
                 </>
@@ -504,7 +532,11 @@ export default function A1GrammarPresenter({
             type="button"
             onClick={next}
             disabled={atEnd}
-            title={participationCheckMode ? "This leaves the class understanding check. Use Next student above to test the rest of the class." : ""}
+            title={participationCheckMode
+              ? (stage.examReadiness
+                ? "This leaves the exam-readiness live check. Use Next student above to test the rest of the class."
+                : "This leaves the class understanding check. Use Next student above to test the rest of the class.")
+              : ""}
           >
             {participationCheckMode
               ? "Continue lesson →"
