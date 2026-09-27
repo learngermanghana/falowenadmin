@@ -7,6 +7,10 @@ import { useToast } from "./context/ToastContext";
 import "./App.css";
 import "./LiveClassesMobile.css";
 
+const ADMIN_BUILD_SHA = String(import.meta.env.VITE_FALOWEN_BUILD_SHA || "dev");
+const ADMIN_BUILD_ENV = String(import.meta.env.VITE_FALOWEN_BUILD_ENV || "local");
+const ADMIN_BUILD_LABEL = ADMIN_BUILD_SHA === "dev" ? "dev" : ADMIN_BUILD_SHA.slice(0, 8);
+
 const LeadHomepageNotification = lazy(() => import("./components/LeadHomepageNotification.jsx"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AttendanceOverviewPage = lazy(() => import("./pages/AttendanceOverviewPage"));
@@ -67,6 +71,13 @@ function TopBar() {
           <Link to={isStaff ? "/students" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
             Falowen Dashboard
           </Link>
+          <span
+            className="topbar-build-badge"
+            title={`Falowen Admin build ${ADMIN_BUILD_SHA} · ${ADMIN_BUILD_ENV}`}
+            aria-label={`Falowen Admin build ${ADMIN_BUILD_LABEL}`}
+          >
+            Admin · {ADMIN_BUILD_LABEL}
+          </span>
 
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
