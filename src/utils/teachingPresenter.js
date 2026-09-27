@@ -1037,6 +1037,132 @@ function buildCorrectionMistakes(items = [], grammarRules = []) {
     .filter(Boolean);
 }
 
+function buildA2B1GrammarCheckStage(support = {}, level = "") {
+  const rules = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn.filter(Boolean) : [];
+  const models = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.filter(Boolean) : [];
+  const mistakes = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn.filter(Boolean) : [];
+  const corrections = buildCorrectionMistakes(mistakes, rules);
+  const explicitCorrection = corrections.find((item) => (
+    item?.wrong
+    && item?.correct
+    && item.wrong !== item.correct
+    && item.wrong !== item.why
+    && item.correct !== item.why
+  ));
+
+  const firstModel = models[0] || "";
+  const secondModel = models[1] || firstModel;
+  const thirdModel = models[2] || secondModel || firstModel;
+  const firstRule = rules[0] || "Check the target grammar from the lesson.";
+  const secondRule = rules[1] || firstRule;
+
+  const items = [
+    {
+      id: "recognise-rule",
+      label: "1 · Regel erkennen",
+      prompt: "Welche Grammatikregel aus der heutigen Stunde wird hier benutzt?",
+      example: firstModel,
+      answerLabel: "Teacher key",
+      answer: firstRule,
+    },
+    explicitCorrection ? {
+      id: "fix-error",
+      label: "2 · Fehler korrigieren",
+      prompt: "Korrigiere die Form oder den Satz.",
+      example: explicitCorrection.wrong,
+      answerLabel: "Korrektur",
+      answer: explicitCorrection.correct,
+      note: explicitCorrection.why,
+    } : {
+      id: "explain-form",
+      label: "2 · Form prüfen",
+      prompt: "Warum ist dieser Satz grammatisch korrekt?",
+      example: secondModel,
+      answerLabel: "Teacher key",
+      answer: secondRule,
+    },
+    {
+      id: "build-sentence",
+      label: "3 · Satz bilden",
+      prompt: "Bilde einen neuen Satz mit derselben Grammatikstruktur.",
+      example: thirdModel,
+      answerLabel: "Teacher key",
+      answer: `Offene Antwort. Prüfe dieselbe Zielgrammatik wie im Referenzsatz: ${thirdModel}`,
+      note: "Andere korrekte Sätze sind möglich. Prüfe zuerst die Zielgrammatik, nicht die Kreativität.",
+    },
+  ].filter((item) => item.example || item.answer);
+
+  return {
+    id: "grammar-check",
+    type: "grammar-check",
+    kicker: "Grammatik-Check",
+    title: "Grammatik verstanden?",
+    instruction: "Die Grammatik wurde bereits erklärt. Jetzt nur kurz prüfen: erkennen → korrigieren/erklären → anwenden.",
+    items,
+    suggestedMinutes: level === "B1" ? 7 : 6,
+  };
+}
+
+function buildPresenterTeacherPurpose(stage = {}, level = "") {
+  const id = String(stage?.id || "");
+  const type = String(stage?.type || "");
+
+  if (id === "intro") return {
+    student: "Lernziel und Thema verstehen.",
+    teacher: "Rahmen setzen; noch keine neue Erklärung beginnen.",
+  };
+  if (id === "warmup") return {
+    student: "Vorwissen aktivieren und kurz antworten.",
+    teacher: "Vorbereitung geben, zuhören und nur gezielt korrigieren.",
+  };
+  if (id === "knowledge") return {
+    student: "Kurz lesen und die Verständnisfragen mündlich beantworten.",
+    teacher: "Erst antworten lassen; nur kuratierte Antworten als Schlüssel nutzen.",
+  };
+  if (id === "phrases") return {
+    student: "Schlüsselwortschatz erkennen und passend auswählen.",
+    teacher: "Wörter zuerst abrufen lassen; Lösung erst danach zeigen.",
+  };
+  if (id === "grammar-check") return {
+    student: "Die bereits gelernte Grammatik erkennen, prüfen und einmal anwenden.",
+    teacher: "Nicht neu unterrichten. Diagnostisch prüfen und nur Correct oder Needs review markieren.",
+  };
+  if (["practice", "focus", "analysis"].includes(id)) return {
+    student: "Eine zentrale Aufgabe konzentriert bearbeiten.",
+    teacher: "Denkzeit geben und nur den wichtigsten sprachlichen Punkt korrigieren.",
+  };
+  if (id === "questions") return {
+    student: level === "B2" || level === "C1" || level === "C2"
+      ? "Eine Kernfrage vertieft beantworten."
+      : "Die Grammatik in einer kurzen Antwort anwenden.",
+    teacher: "Antwort zuerst vollständig hören; danach gezielt rückmelden.",
+  };
+  if (id === "writing") return {
+    student: "Nur die Schreibidee oder Struktur vorbereiten.",
+    teacher: "Nicht die komplette Prüfungsantwort auf der Folie schreiben lassen.",
+  };
+  if (id === "workbook") return {
+    student: "Die Unterrichtsidee in die Falowen-Aufgabe übertragen.",
+    teacher: "Zum passenden Workbook wechseln; die Folie ist nur die Brücke.",
+  };
+  if (id === "lesson-summary") return {
+    student: "Die wichtigsten Lernpunkte sichern.",
+    teacher: "Kurz prüfen, was sitzt und was als Needs review weitergeführt wird.",
+  };
+  if (type === "foundation") return {
+    student: "Den Problemkern und die Leitfrage verstehen.",
+    teacher: "Kontext geben, aber die spätere Position nicht vorwegnehmen.",
+  };
+  if (type.includes("grammar")) return {
+    student: "Die Funktion der Zielstruktur verstehen.",
+    teacher: "Nur die Kernfunktion sichern; Details nicht erneut vollständig unterrichten.",
+  };
+  return {
+    student: "Die Aufgabe bearbeiten.",
+    teacher: "Auf das Lernziel fokussieren und unnötige Zusatzaufgaben vermeiden.",
+  };
+}
+
 function buildProgressiveSpeakingStage(speakingStage = {}, level = "") {
   const questions = Array.isArray(speakingStage.items) ? speakingStage.items.filter(Boolean) : [];
   if (!questions.length) return speakingStage;
@@ -1185,22 +1311,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         instruction: vocabularyStage ? vocabularyInstruction(level) : "",
         suggestedMinutes: vocabularyStage ? 5 : 0,
       },
-      {
-        id: "grammar",
-        type: "list",
-        kicker: "Grammatik",
-        title: "Grammatik · Muster verstehen",
-        items: grammarItems,
-        suggestedMinutes: interactionMinutes(slide, 1) || 10,
-      },
-      {
-        id: "examples",
-        type: "list",
-        kicker: "Beispiele",
-        title: "Modellsätze",
-        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
-        suggestedMinutes: interactionMinutes(slide, 2) || 7,
-      },
+      buildA2B1GrammarCheckStage(support, level),
       ...(focusedPractice ? [{
         id: "practice",
         type: "flow",
@@ -1212,14 +1323,6 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 6),
       }] : []),
-      {
-        id: "mistakes",
-        type: "correction-list",
-        kicker: "Fehlerkorrektur",
-        title: "Common mistakes · Wrong → Correct → Why",
-        items: buildCorrectionMistakes(mistakeItems),
-        suggestedMinutes: 6,
-      },
       buildProgressiveSpeakingStage(speakingStage, level),
       workbookStage,
     ];
@@ -1274,22 +1377,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
           : "",
         suggestedMinutes: 5,
       },
-      {
-        id: "grammar",
-        type: "b1-grammar",
-        kicker: "Grammatik im Kontext",
-        title: "Regel verstehen · auf Deutsch anwenden",
-        items: b1GrammarItems,
-        suggestedMinutes: interactionMinutes(slide, 1) || 10,
-      },
-      {
-        id: "examples",
-        type: "list",
-        kicker: "Modellsätze",
-        title: "So klingt es auf B1",
-        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
-        suggestedMinutes: interactionMinutes(slide, 2) || 7,
-      },
+      buildA2B1GrammarCheckStage(support, level),
       ...(focusedPractice ? [{
         id: "practice",
         type: "flow",
@@ -1301,14 +1389,6 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 7),
       }] : []),
-      {
-        id: "mistakes",
-        type: "correction-list",
-        kicker: "Fehlerkorrektur",
-        title: "Common mistakes · Wrong → Correct → Why",
-        items: buildCorrectionMistakes(mistakeItems),
-        suggestedMinutes: 7,
-      },
       buildProgressiveSpeakingStage(speakingStage, level),
       workbookStage,
     ];
@@ -1588,6 +1668,10 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       });
     }
   }
-  return filtered;
+  const level = classroomLevel(slide);
+  return filtered.map((stage) => ({
+    ...stage,
+    teacherPurpose: stage.teacherPurpose || buildPresenterTeacherPurpose(stage, level),
+  }));
 }
 export function clampPresenterIndex(index, stageCount) { const lastIndex = Math.max(0, Number(stageCount || 0) - 1); return Math.min(lastIndex, Math.max(0, Number(index || 0))); }

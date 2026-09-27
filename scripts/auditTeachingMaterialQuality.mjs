@@ -16,7 +16,7 @@ if (!SUPPORTED_LEVELS.has(LEVEL)) {
 }
 
 const REQUIRED_CORE_STAGES = LEVEL === "A2"
-  ? ["intro", "warmup", "knowledge", "phrases", "grammar", "examples", "practice", "questions", "workbook", "lesson-summary"]
+  ? ["intro", "warmup", "knowledge", "phrases", "grammar-check", "practice", "questions", "workbook", "lesson-summary"]
   : ["intro", "warmup", "phrases", "grammar", "examples", "practice", "mistakes", "questions", "wrapup"];
 
 const normalize = (value = "") => String(value || "").trim();
@@ -72,6 +72,7 @@ for (const [index, slide] of slides.entries()) {
   }
 
   const grammar = stageMap.get("grammar");
+  const grammarCheck = stageMap.get("grammar-check");
   const examples = stageMap.get("examples");
   const practice = stageMap.get("practice");
   const warmup = stageMap.get("warmup");
@@ -81,7 +82,11 @@ for (const [index, slide] of slides.entries()) {
   const wrapup = stageMap.get("wrapup");
   const workbook = stageMap.get("workbook");
 
-  const teach = tutorial || Boolean(grammar && examples);
+  const teach = tutorial || Boolean(
+    LEVEL === "A2"
+      ? grammarCheck && Array.isArray(grammarCheck.items) && grammarCheck.items.length === 3
+      : grammar && examples
+  );
   const check = tutorial || Boolean(
     questions &&
     Array.isArray(questions.supportItems) &&

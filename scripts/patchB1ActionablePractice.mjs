@@ -10,7 +10,8 @@ for (const marker of [
   "getB1PresenterKnowledge",
   "getB1FocusedPractice",
   'if (level === "B1")',
-  'type: "b1-grammar"',
+  'id: "grammar-check"',
+  'type: "grammar-check"',
   'title: "Kollokationen & Redemittel"',
 ]) {
   if (!presenter.includes(marker)) throw new Error(`B1 teaching-spine marker missing: ${marker}`);
@@ -25,4 +26,4 @@ if (assignments.length !== 28) {
   throw new Error(`B1 knowledge bank must contain 28 lessons; found ${assignments.length}`);
 }
 
-console.log("B1 teaching spine verified: knowledge + concise grammar support + one focused task + speaking + workbook.");
+console.log("B1 teaching spine verified: knowledge + short grammar diagnostic + one focused task + speaking + workbook.");
