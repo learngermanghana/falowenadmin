@@ -1,7 +1,10 @@
 export const SESSION_MINUTES_BY_LEVEL = Object.freeze({
-  A1: 60,
+  A1: 90,
   A2: 90,
   B1: 90,
+  B2: 90,
+  C1: 90,
+  C2: 90,
 });
 
 function normalize(value) {

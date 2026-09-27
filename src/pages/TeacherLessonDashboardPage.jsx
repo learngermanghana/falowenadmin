@@ -6,6 +6,7 @@ import { listStudentsByClass } from "../services/studentsService.js";
 import { loadSubmissions } from "../services/markingService.js";
 import { loadClassAttendanceAnalytics } from "../services/attendanceAnalyticsService.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
+import { getSpeakingDifficultySelection, SPEAKING_DIFFICULTY_LEVELS } from "../data/presenterSpeakingDifficulty.js";
 import { getCurriculumParityReference } from "../data/studentCurriculumParity.js";
 import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
 import { presenterLocalDateKey, setPresenterClassContext } from "../services/presenterLiveSessionService.js";
@@ -229,14 +230,13 @@ export default function TeacherLessonDashboardPage() {
   const grammarTarget = grammarTargetForSlide(slide);
   const writingFocus = writingFocusForSlide(slide);
   const sourceSpeakingQuestions = Array.isArray(slide?.studentQuestionsDe) ? slide.studentQuestionsDe : [];
-  const speakingQuestions = ["A2", "B1"].includes(course) && sourceSpeakingQuestions.length
-    ? [...new Set([
-        sourceSpeakingQuestions[0],
-        sourceSpeakingQuestions[Math.floor((sourceSpeakingQuestions.length - 1) / 2)],
-        sourceSpeakingQuestions.at(-1),
-      ].filter(Boolean))]
+  const curatedSpeakingDifficulty = ["A2", "B1"].includes(course)
+    ? getSpeakingDifficultySelection(slide?.assignmentId)
+    : null;
+  const speakingQuestions = curatedSpeakingDifficulty
+    ? curatedSpeakingDifficulty.indexes.map((index) => sourceSpeakingQuestions[index]).filter(Boolean)
     : sourceSpeakingQuestions.slice(0, 5);
-  const speakingQuestionLevels = ["Easy", "Neutral", "Difficult"];
+  const speakingQuestionLevels = curatedSpeakingDifficulty?.labels || SPEAKING_DIFFICULTY_LEVELS;
   const warmupQuestions = Array.isArray(slide?.warmupQuestionsDe) ? slide.warmupQuestionsDe : [];
 
   const preparePresenterStart = () => {

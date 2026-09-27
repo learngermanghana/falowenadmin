@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
+import { getSpeakingDifficultySelection } from "../src/data/presenterSpeakingDifficulty.js";
 import { buildTeachingPresenterStages, getSpeakingQuestionModel } from "../src/utils/teachingPresenter.js";
 
 test("all 140 B1 source speaking questions keep complete models while Presenter selects three levels", () => {
@@ -21,13 +22,13 @@ test("all 140 B1 source speaking questions keep complete models while Presenter 
     }
 
     const stage = buildTeachingPresenterStages(slide).find((item) => item.id === "questions");
+    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
+    assert.ok(difficulty, `${slide.assignmentId} needs curated speaking difficulty`);
     assert.equal(stage.requiresQuestionModel, true);
     assert.deepEqual(stage.questionLevels, ["Easy", "Neutral", "Difficult"]);
-    assert.deepEqual(stage.items, [
-      slide.studentQuestionsDe[0],
-      slide.studentQuestionsDe[2],
-      slide.studentQuestionsDe[4],
-    ]);
+    assert.equal(stage.difficultySource, "curated");
+    assert.deepEqual(stage.difficultyIndexes, difficulty.indexes);
+    assert.deepEqual(stage.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
     assert.equal(stage.questionModels.length, 3);
     assert.deepEqual(stage.questionModels.map((item) => item.questionDe), stage.items);
 

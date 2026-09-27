@@ -113,7 +113,7 @@ function visualWarningClass(remaining) {
   return "";
 }
 
-export default function PresenterSessionTimer({ slide }) {
+export default function PresenterSessionTimer({ slide, stage = null }) {
   const presenterLive = usePresenterLiveSession(slide);
   const level = inferPresenterLevel(
     slide?.course,
@@ -763,6 +763,17 @@ export default function PresenterSessionTimer({ slide }) {
         : presenterLive.syncState === "offline"
           ? " · remote offline"
           : "";
+  const elapsedSeconds = Math.max(0, durationSeconds - Number(remaining || 0));
+  const usedMinutes = Math.min(Math.round(durationMinutes), Math.floor(elapsedSeconds / 60));
+  const remainingMinutes = Math.max(0, Math.ceil(Number(remaining || 0) / 60));
+  const lessonProgressPercent = durationSeconds > 0
+    ? Math.max(0, Math.min(100, (elapsedSeconds / durationSeconds) * 100))
+    : 0;
+  const stageGuideMinutes = Math.max(
+    0,
+    Number(stage?.suggestedMinutes || stage?.items?.[0]?.minutes || 0),
+  );
+
   const statusText = attendanceControlsTimer
     ? (expired
       ? "Class time is up."
@@ -779,6 +790,23 @@ export default function PresenterSessionTimer({ slide }) {
       <div className="presenter-session-timer-copy">
         <span>Class time · {level} · {durationMinutes} min</span>
         <strong>{expired ? "TIME UP" : formatSessionTime(remaining)}</strong>
+        <div className="presenter-session-budget" aria-label="Lesson time budget">
+          <div className="presenter-session-budget-copy">
+            <span>{usedMinutes} / {Math.round(durationMinutes)} min used</span>
+            <span>· {remainingMinutes} min remaining</span>
+            {stageGuideMinutes > 0 ? <span>· Stage guide {stageGuideMinutes} min</span> : null}
+          </div>
+          <div
+            className="presenter-session-budget-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={Math.round(lessonProgressPercent)}
+            aria-label="Lesson time used"
+          >
+            <div className="presenter-session-budget-bar" style={{ width: `${lessonProgressPercent}%` }} />
+          </div>
+        </div>
         <small>{statusText}{attendanceHandshakeLabel}{syncLabel}</small>
       </div>
       <div className="presenter-session-timer-actions">

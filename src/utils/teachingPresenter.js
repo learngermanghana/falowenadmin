@@ -2,6 +2,7 @@ import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
+import { getSpeakingDifficultySelection } from "../data/presenterSpeakingDifficulty.js";
 import { buildCourseBookBridgeItems, getCurriculumParityReference } from "../data/studentCurriculumParity.js";
 
 const A1_PRESENTER_V2_EXCLUDED_ASSIGNMENTS = new Set(["A1-TUTORIAL"]);
@@ -1163,25 +1164,23 @@ function buildPresenterTeacherPurpose(stage = {}, level = "") {
   };
 }
 
-function buildProgressiveSpeakingStage(speakingStage = {}, level = "") {
+function buildProgressiveSpeakingStage(slide = {}, speakingStage = {}, level = "") {
   const questions = Array.isArray(speakingStage.items) ? speakingStage.items.filter(Boolean) : [];
   if (!questions.length) return speakingStage;
 
-  const lastIndex = questions.length - 1;
-  const requestedIndexes = [0, Math.floor(lastIndex / 2), lastIndex];
-  const indexes = [...new Set(requestedIndexes)].slice(0, 3);
-  while (indexes.length < Math.min(3, questions.length)) {
-    const nextIndex = indexes.length;
-    if (!indexes.includes(nextIndex)) indexes.push(nextIndex);
-    else break;
-  }
+  const curated = getSpeakingDifficultySelection(normalizedAssignmentId(slide));
+  const fallbackIndexes = [0, Math.floor((questions.length - 1) / 2), questions.length - 1];
+  const indexes = (curated?.indexes || fallbackIndexes)
+    .map(Number)
+    .filter((index, position, values) => Number.isInteger(index) && index >= 0 && index < questions.length && values.indexOf(index) === position)
+    .slice(0, 3);
 
   const questionModels = Array.isArray(speakingStage.questionModels) ? speakingStage.questionModels : [];
   const selectedQuestions = indexes.map((index) => questions[index]).filter(Boolean);
   const selectedModels = selectedQuestions
     .map((question) => questionModels.find((item) => item?.questionDe === question))
     .filter(Boolean);
-  const labels = ["Easy", "Neutral", "Difficult"].slice(0, selectedQuestions.length);
+  const labels = (curated?.labels || ["Easy", "Neutral", "Difficult"]).slice(0, selectedQuestions.length);
 
   return {
     ...speakingStage,
@@ -1190,6 +1189,8 @@ function buildProgressiveSpeakingStage(speakingStage = {}, level = "") {
     items: selectedQuestions,
     questionModels: selectedModels,
     questionLevels: labels,
+    difficultySource: curated ? "curated" : "fallback",
+    difficultyIndexes: indexes,
     suggestedMinutes: level === "B1" ? 10 : 9,
   };
 }
@@ -1323,7 +1324,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 6),
       }] : []),
-      buildProgressiveSpeakingStage(speakingStage, level),
+      buildProgressiveSpeakingStage(slide, speakingStage, level),
       workbookStage,
     ];
   }
@@ -1389,7 +1390,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 7),
       }] : []),
-      buildProgressiveSpeakingStage(speakingStage, level),
+      buildProgressiveSpeakingStage(slide, speakingStage, level),
       workbookStage,
     ];
   }
