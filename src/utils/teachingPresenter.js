@@ -321,7 +321,7 @@ function buildAdvancedMistakes(slide = {}) { if (classroomLevel(slide) === "C1")
 function teacherNoteFromFlow(flow = [], index = 0, fallback = "") { return String(flow[index]?.detailEn || fallback).trim(); }
 
 const VOCABULARY_STAGE_LEVELS = new Set(["A2", "B1", "B2", "C1", "C2"]);
-const VOCABULARY_LIMITS = Object.freeze({ A2: 7, B1: 9, B2: 10, C1: 10, C2: 10 });
+const VOCABULARY_LIMITS = Object.freeze({ A2: 7, B1: 9, B2: 6, C1: 6, C2: 6 });
 
 function vocabularyInstruction(level = "") {
   if (level === "B2") return "Verwende mindestens zwei Ausdrücke in einer begründeten Antwort und verbinde sie mit einem konkreten Beispiel.";
@@ -582,12 +582,12 @@ function buildC2AnalyticalTask(slide = {}) {
       ],
     },
     3: {
-      title: "Präzisions- und Registerlabor",
-      instruction: "Formuliere dieselbe Kernaussage einmal neutral, einmal akademisch verdichtet und einmal vorsichtig-diplomatisch.",
+      title: "Registerwahl · eine Formulierung vertiefen",
+      instruction: "Wähle ein Register und formuliere die Kernaussage nur einmal neu.",
       prompts: [
         `Ausgangsaussage: ${first}`,
-        ...grammar.slice(0, 2).map((item) => `Zielstruktur: ${item}`),
-        "Erkläre, welche Version für eine Stellungnahme am überzeugendsten ist und warum.",
+        "Wähle: neutral · akademisch verdichtet · vorsichtig-diplomatisch.",
+        grammar[0] ? `Formuliere eine Version und begründe kurz deine Wahl. Zielstruktur: ${grammar[0]}` : "Formuliere eine Version und begründe kurz deine Wahl.",
       ],
     },
     4: {
@@ -633,7 +633,12 @@ function buildC2AnalyticalTask(slide = {}) {
   };
 
   const selected = variants[mechanic];
-  return { ...selected, modelItems, minutes: 12 };
+  return {
+    ...selected,
+    prompts: Array.isArray(selected.prompts) ? selected.prompts.slice(0, 3) : [],
+    modelItems,
+    minutes: 14,
+  };
 }
 
 function buildC2WritingBridge(slide = {}) {
@@ -641,28 +646,25 @@ function buildC2WritingBridge(slide = {}) {
   const prompt = String(slide.canonicalWritingPromptDe || slide.wrapUpTaskDe || "").trim();
   if (opinion) {
     return {
-      title: "Write-Transfer · Stellungnahme planen",
-      instruction: "Plane nur die Argumentationsarchitektur; schreibe die Prüfungsantwort erst im Write-Bereich.",
+      title: "Write-Transfer · Position vorbereiten",
+      instruction: "Wähle eine Position und notiere zwei Stichpunkte. Die vollständige Stellungnahme schreibst du erst im Write-Bereich.",
       prompts: [
         prompt,
-        "1. These + zwei Bewertungskriterien",
-        "2. Alle drei Perspektiven einordnen",
-        "3. Stärkstes Gegenargument beantworten",
-        "4. Differenzierte Synthese mit Bedingung oder Grenze",
+        "Wähle eine Position: Vorrang · stärkere gesellschaftliche Orientierung · ausgewogene Verbindung.",
+        "Notiere zwei Gründe. Optional: Welches Gegenargument musst du später berücksichtigen?",
       ],
-      minutes: 8,
+      minutes: 6,
     };
   }
   return {
     title: "Write-Transfer · Umformung vorbereiten",
-    instruction: "Plane die Transformation, ohne die fünf Prüfungsitems vorwegzunehmen.",
+    instruction: "Plane nur die Kernentscheidung; die vollständige Umformung machst du im Write-Bereich.",
     prompts: [
-      "Welche Bedeutung muss unverändert bleiben?",
-      "Welche Zielstruktur passt zur heutigen Grammatik?",
-      "Welche Kasus-, Rektion- oder Wortstellungsstelle ist fehleranfällig?",
-      "Welche Register- oder Bedeutungsverschiebung musst du am Ende kontrollieren?",
+      "Welche Bedeutung muss unbedingt erhalten bleiben?",
+      "Wähle eine Zielstruktur aus der heutigen Grammatik.",
+      "Optional: Welche eine Stelle musst du beim Umformen besonders kontrollieren?",
     ],
-    minutes: 8,
+    minutes: 6,
   };
 }
 
@@ -808,8 +810,9 @@ function buildB2FocusedTask(slide = {}, foundation = null) {
   const selected = variants[mechanic];
   return {
     ...selected,
+    prompts: Array.isArray(selected.prompts) ? selected.prompts.slice(0, 3) : [],
     modelItems,
-    minutes: 9,
+    minutes: 11,
   };
 }
 
@@ -934,27 +937,24 @@ function buildC1FocusedTask(slide = {}) {
   const selected = variants[mechanic];
   return {
     ...selected,
+    prompts: Array.isArray(selected.prompts) ? selected.prompts.slice(0, 3) : [],
     modelItems: speakingModels,
-    minutes: 10,
+    minutes: 12,
   };
 }
 
 function buildC1WritingBridge(slide = {}) {
   const meta = slide.canonicalLearnerLesson || {};
   const question = String(meta.coreQuestion || slide.studentQuestionsDe?.[4] || cleanTopic(slide));
-  const grammarTitle = String(meta.grammarTitle || "");
   return {
-    title: "Schreibbrücke · Argument in Absatzform",
-    instruction: "Übertrage die mündliche Argumentation in einen klaren C1-Absatz. Schreibe die eigentliche Workbook-Aufgabe anschließend im Falowen-Kurs.",
+    title: "Schreibbrücke · Position vorbereiten",
+    instruction: "Plane nur eine klare Position. Den vollständigen Absatz schreibst du anschließend im Write-Bereich.",
     prompts: [
       `Leitfrage: ${question}`,
-      "1. These oder klare Hauptaussage",
-      "2. Begründung + konkretes Beispiel",
-      "3. Gegenargument + Reaktion",
-      `4. Zielgrammatik kontrolliert einsetzen: ${grammarTitle}`,
-      "5. Mit einer differenzierten Schlussfolgerung schließen",
+      "Wähle deine Position und notiere zwei tragende Stichpunkte.",
+      "Optional: Welches Gegenargument solltest du später berücksichtigen?",
     ],
-    minutes: 8,
+    minutes: 6,
   };
 }
 
@@ -1035,6 +1035,28 @@ function buildCorrectionMistakes(items = [], grammarRules = []) {
       };
     })
     .filter(Boolean);
+}
+
+function buildAdvancedDiscussionStage(slide = {}, speakingStage = {}, level = "") {
+  const questions = Array.isArray(speakingStage.items) ? speakingStage.items.filter(Boolean) : [];
+  const centralQuestion = questions.length ? questions[questions.length - 1] : "";
+  const matchingModel = (Array.isArray(speakingStage.questionModels) ? speakingStage.questionModels : [])
+    .find((item) => item?.questionDe === centralQuestion);
+  const instructionByLevel = {
+    B2: "Nimm Stellung und begründe einen Hauptpunkt. Ein Gegenpunkt ist optional.",
+    C1: "Nimm Stellung und verbinde höchstens zwei Perspektiven. Du musst die These nicht neu formulieren.",
+    C2: "Nimm differenziert Stellung und verbinde höchstens zwei Perspektiven. Du musst die These nicht reformulieren.",
+  };
+
+  return {
+    ...speakingStage,
+    title: level === "C2" ? "Seminargespräch · eine Frage vertiefen" : "Diskussion · eine Frage vertiefen",
+    instruction: instructionByLevel[level] || "",
+    items: centralQuestion ? [centralQuestion] : [],
+    questionModels: matchingModel ? [matchingModel] : [],
+    supportItems: Array.isArray(speakingStage.supportItems) ? speakingStage.supportItems.slice(0, 3) : [],
+    suggestedMinutes: level === "B2" ? 10 : 12,
+  };
 }
 
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
@@ -1314,15 +1336,8 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: grammarItems,
         supportEn: grammarSupportEn,
         attentionEn: grammarAttentionEn,
+        modelItems: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 2) : [],
         suggestedMinutes: 9,
-      },
-      {
-        id: "examples",
-        type: "list",
-        kicker: "Modellsätze",
-        title: "So klingt es auf B2",
-        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
-        suggestedMinutes: 6,
       },
       {
         id: "focus",
@@ -1332,11 +1347,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: [focusTask],
         suggestedMinutes: focusTask.minutes,
       },
-      {
-        ...speakingStage,
-        title: "Sprechen · entwickeln, vergleichen und reagieren",
-        suggestedMinutes: 16,
-      },
+      buildAdvancedDiscussionStage(slide, speakingStage, level),
       workbookStage,
     ];
   }
@@ -1390,15 +1401,8 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: grammarItems,
         supportEn: grammarSupportEn,
         attentionDe: String(slide.canonicalLearnerLesson?.mistake || ""),
+        modelItems: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 2) : [],
         suggestedMinutes: 10,
-      },
-      {
-        id: "examples",
-        type: "list",
-        kicker: "Modellsätze",
-        title: "So klingt kontrolliertes C1",
-        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
-        suggestedMinutes: 6,
       },
       {
         id: "focus",
@@ -1408,11 +1412,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: [focusTask],
         suggestedMinutes: focusTask.minutes,
       },
-      {
-        ...speakingStage,
-        title: "Sprechen · argumentieren und reagieren",
-        suggestedMinutes: 16,
-      },
+      buildAdvancedDiscussionStage(slide, speakingStage, level),
       {
         id: "writing",
         type: "flow",
@@ -1467,19 +1467,12 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       },
       {
         id: "grammar",
-        type: "list",
+        type: "c2-grammar",
         kicker: "C2-Grammatik",
         title: "Struktur nach Funktion wählen",
         items: grammarItems,
+        modelItems: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 2) : [],
         suggestedMinutes: 10,
-      },
-      {
-        id: "examples",
-        type: "list",
-        kicker: "Modellsätze",
-        title: "Nuance, Evidenz und Register",
-        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [],
-        suggestedMinutes: 6,
       },
       {
         id: "analysis",
@@ -1489,11 +1482,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: [analyticalTask],
         suggestedMinutes: analyticalTask.minutes,
       },
-      {
-        ...speakingStage,
-        title: "Seminargespräch · abwägen und synthetisieren",
-        suggestedMinutes: 18,
-      },
+      buildAdvancedDiscussionStage(slide, speakingStage, level),
       {
         id: "writing",
         type: "flow",
