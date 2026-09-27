@@ -7,6 +7,8 @@ on:
       - "src/pages/TeacherLessonDashboardPage.css"
       - "src/utils/teacherLessonDashboard.js"
       - "src/App.jsx"
+      - "src/App.css"
+      - "vite.config.js"
       - "src/pages/DashboardPage.jsx"
       - "tests/teacher-lesson-dashboard.test.js"
       - ".github/workflows/teacher-lesson-dashboard-tests.yml"
