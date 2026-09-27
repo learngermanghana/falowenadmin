@@ -295,7 +295,7 @@ export default function A1GrammarPresenter({
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
-            <span className="presenter-lesson-label">{stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Language-first"}</span>
+            <span className="presenter-lesson-label">{stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check"}</span>
           </div>
 
           <PresenterSessionTimer slide={slide} />
@@ -378,7 +378,7 @@ export default function A1GrammarPresenter({
                       <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
                       <p>{stage.exitCheck
                         ? "The student answers first. Reveal only after the answer is complete."
-                        : "Let the selected student answer first. Record Correct or Needs review above, then click Next student → to load another distinct question."}</p>
+                        : "Let the selected student answer first. Record Correct or Needs review above, then click Next student → to check another learner."}</p>
                     </div>
                   )}
                 </>
