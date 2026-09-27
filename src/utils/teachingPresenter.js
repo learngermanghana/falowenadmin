@@ -399,7 +399,7 @@ const VOCABULARY_CLOZE_RULES = [
 ];
 
 function buildVocabularyGapItems(items = []) {
-  const results = [];
+  const candidates = [];
 
   for (const item of Array.isArray(items) ? items : []) {
     const term = String(item?.term || "").trim();
@@ -409,7 +409,6 @@ function buildVocabularyGapItems(items = []) {
     const selectedRule = VOCABULARY_CLOZE_RULES.find((rule) => rule.pattern.test(term));
     if (!selectedRule) continue;
 
-    // Run the RegExp again because .test() may mutate lastIndex on a future global rule.
     const termMatch = term.match(selectedRule.pattern);
     if (!termMatch?.[0]) continue;
 
@@ -418,19 +417,28 @@ function buildVocabularyGapItems(items = []) {
     const source = exampleMatch?.[0] ? example : term;
     const sentence = source.replace(exampleMatch?.[0] || termMatch[0], "______");
 
-    if (!sentence.includes("______") || !selectedRule.clue) continue;
-
-    results.push({
-      sentence,
-      answer,
-      clue: selectedRule.clue,
-      term,
-    });
-
-    if (results.length >= 4) break;
+    if (!sentence.includes("______")) continue;
+    candidates.push({ sentence, answer, term });
   }
 
-  return results;
+  const uniqueAnswers = [...new Set(candidates.map((item) => item.answer).filter(Boolean))];
+  if (uniqueAnswers.length < 3) return [];
+
+  return candidates.slice(0, 4).map((item, index) => {
+    const distractors = uniqueAnswers.filter((answer) => answer !== item.answer).slice(0, 2);
+    if (distractors.length < 2) return null;
+
+    const baseOptions = [item.answer, ...distractors];
+    const rotation = index % 3;
+    const options = [...baseOptions.slice(rotation), ...baseOptions.slice(0, rotation)];
+
+    return {
+      sentence: item.sentence,
+      answer: item.answer,
+      options,
+      term: item.term,
+    };
+  }).filter(Boolean);
 }
 
 function buildVocabularyItems(slide = {}, support = {}) {
