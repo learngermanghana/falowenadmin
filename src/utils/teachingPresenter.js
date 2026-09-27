@@ -1086,8 +1086,8 @@ function buildA2B1GrammarCheckStage(support = {}, level = "") {
       label: "3 · Satz bilden",
       prompt: "Bilde einen neuen Satz mit derselben Grammatikstruktur.",
       example: thirdModel,
-      answerLabel: "Referenzmuster",
-      answer: thirdModel,
+      answerLabel: "Teacher key",
+      answer: `Offene Antwort. Prüfe dieselbe Zielgrammatik wie im Referenzsatz: ${thirdModel}`,
       note: "Andere korrekte Sätze sind möglich. Prüfe zuerst die Zielgrammatik, nicht die Kreativität.",
     },
   ].filter((item) => item.example || item.answer);
