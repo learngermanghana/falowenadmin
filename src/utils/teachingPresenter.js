@@ -399,46 +399,57 @@ const VOCABULARY_CLOZE_RULES = [
 ];
 
 function buildVocabularyGapItems(items = []) {
-  const candidates = [];
+  const sourceItems = (Array.isArray(items) ? items : [])
+    .map((item) => ({
+      term: String(item?.term || "").trim(),
+      example: String(item?.example || "").trim(),
+    }))
+    .filter((item) => item.term);
 
-  for (const item of Array.isArray(items) ? items : []) {
-    const term = String(item?.term || "").trim();
-    const example = String(item?.example || "").trim();
-    if (!term) continue;
+  const uniqueTerms = [...new Set(sourceItems.map((item) => item.term))];
+  if (uniqueTerms.length < 3) return [];
 
-    const selectedRule = VOCABULARY_CLOZE_RULES.find((rule) => rule.pattern.test(term));
-    if (!selectedRule) continue;
+  const challenges = [];
+  for (const item of sourceItems) {
+    const selectedRule = VOCABULARY_CLOZE_RULES.find((rule) => rule.pattern.test(item.term));
+    const termMatch = selectedRule ? item.term.match(selectedRule.pattern) : null;
+    const exampleMatch = selectedRule && item.example ? item.example.match(selectedRule.pattern) : null;
 
-    const termMatch = term.match(selectedRule.pattern);
-    if (!termMatch?.[0]) continue;
+    let sentence = "";
+    let mode = "match";
 
-    const exampleMatch = example ? example.match(selectedRule.pattern) : null;
-    const answer = exampleMatch?.[0] || termMatch[0];
-    const source = exampleMatch?.[0] ? example : term;
-    const sentence = source.replace(exampleMatch?.[0] || termMatch[0], "______");
+    if (exampleMatch?.[0]) {
+      sentence = item.example.replace(exampleMatch[0], "______");
+      mode = "cloze";
+    } else if (item.example) {
+      sentence = item.example;
+      mode = "match";
+    } else if (termMatch?.[0] && item.term !== termMatch[0]) {
+      sentence = item.term.replace(termMatch[0], "______");
+      mode = "cloze";
+    } else {
+      continue;
+    }
 
-    if (!sentence.includes("______")) continue;
-    candidates.push({ sentence, answer, term });
-  }
+    const distractors = uniqueTerms.filter((term) => term !== item.term).slice(0, 2);
+    if (distractors.length < 2) continue;
 
-  const uniqueAnswers = [...new Set(candidates.map((item) => item.answer).filter(Boolean))];
-  if (uniqueAnswers.length < 3) return [];
-
-  return candidates.slice(0, 4).map((item, index) => {
-    const distractors = uniqueAnswers.filter((answer) => answer !== item.answer).slice(0, 2);
-    if (distractors.length < 2) return null;
-
-    const baseOptions = [item.answer, ...distractors];
-    const rotation = index % 3;
+    const baseOptions = [item.term, ...distractors];
+    const rotation = challenges.length % 3;
     const options = [...baseOptions.slice(rotation), ...baseOptions.slice(0, rotation)];
 
-    return {
-      sentence: item.sentence,
-      answer: item.answer,
+    challenges.push({
+      sentence,
+      answer: item.term,
       options,
       term: item.term,
-    };
-  }).filter(Boolean);
+      mode,
+    });
+
+    if (challenges.length >= 4) break;
+  }
+
+  return challenges;
 }
 
 function buildVocabularyItems(slide = {}, support = {}) {
