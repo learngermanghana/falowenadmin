@@ -117,14 +117,19 @@ test("all 28 A1 lessons are topic-specific and class challenges do not reuse rec
   assert.deepEqual(problems, [], `A1 presenter topic-integrity problems:\n${problems.join("\n")}`);
 });
 
-test("A1 presenter keeps recall before the current-topic class challenge", () => {
+test("A1 presenter checks the rule before the per-student grammar challenge", () => {
   const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
-  const recallIndex = presenter.indexOf('id: "recall"');
+  const quickIndex = presenter.indexOf('id: "quick-check"');
   const challengeIndex = presenter.indexOf('id: "grammar-check"');
-  assert.ok(recallIndex >= 0, "A1 recall stage is missing");
-  assert.ok(challengeIndex > recallIndex, "A1 class challenge must come after recall");
-  assert.match(presenter, /items:\s*retrievalChecks/);
-  assert.match(presenter, /items:\s*classChecks/);
-  assert.match(presenter, /kicker:\s*"Grammatik-Check"/);
-  assert.match(presenter, /title:\s*"Class challenge/);
+  const correctionIndex = presenter.indexOf('id: "mistake-fix"');
+  const sentenceIndex = presenter.indexOf('id: "sentence-build"');
+
+  assert.ok(quickIndex >= 0, "A1 quick grammar check is missing");
+  assert.ok(challengeIndex > quickIndex, "A1 per-student grammar challenge must follow the quick check");
+  assert.ok(correctionIndex > challengeIndex, "A1 correction check must follow the class challenge");
+  assert.ok(sentenceIndex > correctionIndex, "A1 controlled sentence build must follow correction");
+  assert.match(presenter, /items:\s*quickChecks/);
+  assert.match(presenter, /items:\s*mainChecks/);
+  assert.match(presenter, /kicker:\s*"Class grammar check"/);
+  assert.match(presenter, /title:\s*"One grammar question per student"/);
 });
