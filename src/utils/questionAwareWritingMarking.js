@@ -615,6 +615,16 @@ function pruneResolvedTaskClaims(value = "", taskPointEvidence = []) {
     },
   );
 
+  // Remove a bare task-point sentence left behind by older list-pruning logic,
+  // for example "Compare their character." after the missing-list prefix vanished.
+  text = text
+    .split(/(?<=[.!?])\\s+/)
+    .filter((sentence) => {
+      const normalizedSentence = clean(sentence).replace(/[.!?]+$/, "").toLowerCase();
+      return !normalizedResolved.has(normalizedSentence);
+    })
+    .join(" ");
+
   // Free-form stale claims are removed only when they refer exclusively to a
   // resolved point. Sentences that also mention a genuinely missing point stay.
   const unresolvedPatterns = unresolved.map((label) => new RegExp(escapeRegExp(label), "i"));
