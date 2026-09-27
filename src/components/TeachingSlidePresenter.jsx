@@ -131,6 +131,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [contentPageSize, setContentPageSize] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
   const [knowledgeAnswersOpen, setKnowledgeAnswersOpen] = useState({});
+  const [vocabChallengeMode, setVocabChallengeMode] = useState(false);
+  const [vocabChallengeIndex, setVocabChallengeIndex] = useState(0);
+  const [showVocabAnswer, setShowVocabAnswer] = useState(false);
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -151,6 +154,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     ? pageableItems.slice(contentPage * contentPageSize, (contentPage + 1) * contentPageSize)
     : pageableItems;
   const presenterItemOffset = contentPageSize > 0 ? contentPage * contentPageSize : 0;
+  const vocabChallenges = Array.isArray(stage?.challengeItems) ? stage.challengeItems : [];
+  const activeVocabChallenge = vocabChallenges[vocabChallengeIndex] || vocabChallenges[0] || null;
 
   function toggleWarmupSupport(questionIndexValue, supportType) {
     const key = questionIndexValue + ":" + supportType;
@@ -299,6 +304,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setContentPage(0);
     setContentPageSize(0);
     setKnowledgeAnswersOpen({});
+    setVocabChallengeMode(false);
+    setVocabChallengeIndex(0);
+    setShowVocabAnswer(false);
     if (stage?.id === "warmup" && stage?.timingMode === "per-student") {
       setWarmupQuestionCount(4);
       setWarmupMinutes(5);
@@ -705,26 +713,100 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             </section>
           ) : stage.type === "vocabulary" ? (
             <section className="presenter-vocabulary">
-              <div className="presenter-vocabulary-heading">
-                <h1>{stage.title}</h1>
-                <p>Learn the words first, then use them immediately in the lesson.</p>
-              </div>
-              <div className="presenter-vocabulary-grid">
-                {presenterItems.map((item, index) => (
-                  <article key={`${item.term}-${index}`} className="presenter-vocabulary-card">
-                    <span className="presenter-vocabulary-number">{item.number || index + 1}</span>
-                    <div>
-                      <strong>{item.term}</strong>
-                      {item.example ? (
-                        <p><span>Beispiel:</span> {item.example}</p>
+              {!vocabChallengeMode ? (
+                <>
+                  <div className="presenter-vocabulary-heading">
+                    <h1>{stage.title}</h1>
+                    <p>Wörter zuerst sehen, dann direkt im Satz erkennen.</p>
+                  </div>
+                  <div className="presenter-vocabulary-grid">
+                    {presenterItems.map((item, index) => (
+                      <article key={`${item.term}-${index}`} className="presenter-vocabulary-card">
+                        <span className="presenter-vocabulary-number">{item.number || index + 1}</span>
+                        <div>
+                          <strong>{item.term}</strong>
+                          {item.example ? (
+                            <p><span>Beispiel:</span> {item.example}</p>
+                          ) : null}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  {stage.instruction ? (
+                    <p className="presenter-vocabulary-task"><strong>Sprich:</strong> {stage.instruction}</p>
+                  ) : null}
+                  {vocabChallenges.length ? (
+                    <button
+                      type="button"
+                      className="presenter-vocabulary-challenge-start"
+                      onClick={() => {
+                        setVocabChallengeMode(true);
+                        setVocabChallengeIndex(0);
+                        setShowVocabAnswer(false);
+                      }}
+                    >
+                      Welches Wort passt? starten
+                    </button>
+                  ) : null}
+                </>
+              ) : (
+                <div className="presenter-vocabulary-challenge">
+                  <div className="presenter-vocabulary-challenge-heading">
+                    <span>Wortschatz-Check · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
+                    <h1>Welches Wort passt?</h1>
+                    <p>Lest den Satz und den Tipp. Nennt das fehlende Wort.</p>
+                  </div>
+                  {activeVocabChallenge ? (
+                    <article className="presenter-vocabulary-cloze-card">
+                      <p className="presenter-vocabulary-cloze-sentence">{activeVocabChallenge.sentence}</p>
+                      <div className="presenter-vocabulary-clue">
+                        <strong>Tipp · Synonym/Bedeutung</strong>
+                        <span>{activeVocabChallenge.clue}</span>
+                      </div>
+                      {showVocabAnswer ? (
+                        <div className="presenter-vocabulary-answer">
+                          <strong>Antwort</strong>
+                          <span>{activeVocabChallenge.answer}</span>
+                        </div>
                       ) : null}
-                    </div>
-                  </article>
-                ))}
-              </div>
-              {stage.instruction ? (
-                <p className="presenter-vocabulary-task"><strong>Sprich:</strong> {stage.instruction}</p>
-              ) : null}
+                    </article>
+                  ) : null}
+                  <div className="presenter-vocabulary-challenge-actions">
+                    <button
+                      type="button"
+                      onClick={() => setVocabChallengeMode(false)}
+                    >
+                      Wortliste
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowVocabAnswer((current) => !current)}
+                    >
+                      {showVocabAnswer ? "Antwort ausblenden" : "Antwort anzeigen"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVocabChallengeIndex((current) => Math.max(0, current - 1));
+                        setShowVocabAnswer(false);
+                      }}
+                      disabled={vocabChallengeIndex === 0}
+                    >
+                      ←
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVocabChallengeIndex((current) => Math.min(vocabChallenges.length - 1, current + 1));
+                        setShowVocabAnswer(false);
+                      }}
+                      disabled={vocabChallengeIndex >= vocabChallenges.length - 1}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
           ) : stage.type === "question-reveal" ? (
             <section className="presenter-question-reveal">
