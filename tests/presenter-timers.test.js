@@ -9,9 +9,9 @@ function read(path) {
 test("presenter class timer caps oversized shared durations but honors shorter scheduled sessions", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   const timing = read("src/utils/presenterSessionTiming.js");
-  assert.match(timing, /A1:\s*60/);
-  assert.match(timing, /A2:\s*90/);
-  assert.match(timing, /B1:\s*90/);
+  for (const level of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
+    assert.match(timing, new RegExp(`${level}:\\s*90`));
+  }
   assert.match(source, /configuredDurationMinutes/);
   assert.match(source, /presenterLive\.liveState\?\.timerDurationSeconds/);
   assert.match(source, /sharedTimerLevel === level/);
@@ -74,9 +74,9 @@ test("both A1 and general teaching presenters show the class timer", () => {
   const a1 = read("src/components/A1GrammarPresenter.jsx");
   const general = read("src/components/TeachingSlidePresenter.jsx");
   assert.match(a1, /PresenterSessionTimer/);
-  assert.match(a1, /<PresenterSessionTimer slide=\{slide\} \/>/);
+  assert.match(a1, /<PresenterSessionTimer slide=\{slide\} stage=\{stage\} \/>/);
   assert.match(general, /PresenterSessionTimer/);
-  assert.match(general, /<PresenterSessionTimer slide=\{slide\} \/>/);
+  assert.match(general, /<PresenterSessionTimer slide=\{slide\} stage=\{stage\} \/>/);
 });
 
 test("Start class stays visually primary and sound controls cannot crowd it out", () => {
@@ -404,4 +404,20 @@ test("Presenter end write failures become retryable instead of leaving Ending cl
   assert.match(source, /await writePresenterEnd\(payload, \{ retry: true \}\)/);
   assert.match(source, />\s*Retry end sync\s*<\/button>/);
   assert.match(source, />\s*Ending class…\s*<\/button>/);
+});
+
+
+test("Presenter shows a non-blocking 90-minute lesson budget with stage guidance", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  const css = read("src/components/PresenterSessionTimer.css");
+
+  assert.match(source, /const elapsedSeconds = Math\.max\(0, durationSeconds - Number\(remaining \|\| 0\)\)/);
+  assert.match(source, /min used/);
+  assert.match(source, /min remaining/);
+  assert.match(source, /Stage guide \{stageGuideMinutes\} min/);
+  assert.match(source, /role="progressbar"/);
+  assert.match(source, /aria-label="Lesson time used"/);
+  assert.match(css, /\.presenter-session-budget/);
+  assert.match(css, /\.presenter-session-budget-track/);
+  assert.match(css, /\.presenter-session-budget-bar/);
 });
