@@ -9,6 +9,9 @@ on:
       - "src/App.jsx"
       - "src/App.css"
       - "vite.config.js"
+      - "api/router.js"
+      - ".github/workflows/production-release.yml"
+      - "tests/production-release-guard.test.js"
       - "src/pages/DashboardPage.jsx"
       - "tests/teacher-lesson-dashboard.test.js"
       - ".github/workflows/teacher-lesson-dashboard-tests.yml"
@@ -22,6 +25,9 @@ on:
       - "src/App.jsx"
       - "src/App.css"
       - "vite.config.js"
+      - "api/router.js"
+      - ".github/workflows/production-release.yml"
+      - "tests/production-release-guard.test.js"
       - "src/pages/DashboardPage.jsx"
       - "tests/teacher-lesson-dashboard.test.js"
       - ".github/workflows/teacher-lesson-dashboard-tests.yml"
@@ -39,6 +45,6 @@ jobs:
       - name: Apply presenter patch chain
         run: node scripts/patchB2C1SpeakingModels.mjs
       - name: Run Teacher Lesson Dashboard regressions
-        run: node --test tests/teacher-lesson-dashboard.test.js
+        run: node --test tests/teacher-lesson-dashboard.test.js tests/production-release-guard.test.js
       - name: Build production bundle
         run: npm run build
