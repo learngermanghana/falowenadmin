@@ -495,7 +495,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>German first. Use the short English note only to confirm the logical function of the structure.</p>
               </div>
               <div className="presenter-b2-grammar-rules">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={item + index}>
                     <span>{index + 1}</span>
                     <p>{item}</p>
@@ -551,7 +551,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>Short English support for the rule. Keep the German examples as the main language.</p>
               </div>
               <div className="presenter-b1-grammar-grid">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={(item.label || "rule") + index} className="presenter-b1-grammar-card">
                     <strong>{item.label || `Rule ${index + 1}`}</strong>
                     <p>{item.supportEn}</p>
@@ -626,7 +626,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>Learn the words first, then use them immediately in the lesson.</p>
               </div>
               <div className="presenter-vocabulary-grid">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={`${item.term}-${index}`} className="presenter-vocabulary-card">
                     <span className="presenter-vocabulary-number">{item.number || index + 1}</span>
                     <div>
@@ -709,7 +709,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <>
               <h1>{stage.title}</h1>
               <div className="presenter-flow-grid">
-                {stage.items.map((item, itemIndex) => (
+                {presenterItems.map((item, itemIndex) => (
                   <article key={`${item.title}-${item.detail || item.instruction || itemIndex}`} className="presenter-flow-card">
                     <div className="presenter-flow-card-main">
                       <strong>{item.title}</strong>
@@ -813,7 +813,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <>
               <h1>{stage.title}</h1>
               <div className="presenter-workbook-list">
-                {stage.items.map((item) => (
+                {presenterItems.map((item) => (
                   <article key={`${item.label}-${item.detail}`}>
                     <strong>{item.label}</strong>
                     <p>{item.detail}</p>
