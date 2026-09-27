@@ -80,3 +80,18 @@ test("A1 Presenter exposes teacher-purpose guidance and a full-canvas Focus view
   assert.match(source, /presenter-stage \$\{focusMode \? "is-focus-mode" : ""\}/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-participation-dock/);
 });
+
+
+test("A1-5.9 propagates exam-readiness context to every stage and cue", () => {
+  const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
+
+  assert.match(source, /\.map\(\(stage\) => \(\{ \.\.\.stage, examReadiness: true \}\)\)/);
+  assert.match(source, /Ablauf und Ziel der A1-Sprechprüfung verstehen/);
+  assert.match(source, /Einen Prüfungs-Prompt selbstständig beantworten/);
+  assert.match(source, /Einen frischen Prüfungs-Prompt ohne Hilfe beantworten/);
+  assert.match(source, /Exam-readiness live check · one prompt per student/);
+  assert.match(source, /speaking-exam prompt to each learner/);
+  assert.match(source, /Use the model only as a reference/);
+  assert.match(source, /This leaves the exam-readiness live check/);
+  assert.match(source, /stage\.examReadiness \? "A1 · Exam-readiness" : "A1 · Grammar check"/);
+});
