@@ -20,6 +20,7 @@ const TEACHING_SPINE = [
   "grammar",
   "examples",
   "practice",
+  "mistakes",
   "questions",
   "workbook",
   "lesson-summary",
@@ -53,6 +54,7 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     const knowledge = stages.find((stage) => stage.id === "knowledge");
     const grammar = stages.find((stage) => stage.id === "grammar");
     const practice = stages.find((stage) => stage.id === "practice");
+    const mistakes = stages.find((stage) => stage.id === "mistakes");
     const questions = stages.find((stage) => stage.id === "questions");
     const workbook = stages.find((stage) => stage.id === "workbook");
 
@@ -67,6 +69,10 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     assert.equal(practice.items.length, 1, `${assignmentId} should have one focused practice, not a repeated drill stack`);
     assert.ok(practice.items[0].prompts?.length >= 2, `${assignmentId} focused practice should be actionable`);
 
+    assert.equal(mistakes.type, "correction-list");
+    assert.ok(mistakes.items.length >= 3, `${assignmentId} correction cards missing`);
+    assert.ok(mistakes.items.every((item) => item.wrong && item.correct && item.why), `${assignmentId} correction cards must include Wrong, Correct and Why`);
+
     assert.equal(questions.type, "question-reveal");
     assert.ok(questions.items.length >= 4, `${assignmentId} speaking production missing`);
 
@@ -74,7 +80,6 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     assert.ok(workbook.items.length >= 4, `${assignmentId} workbook bridge missing`);
 
     for (const removed of [
-      "mistakes",
       "grammar-check",
       "vocabulary-retrieval",
       "sentence-builder",
