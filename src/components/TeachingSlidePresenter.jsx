@@ -523,7 +523,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>Deutsch bleibt die Hauptsprache. Die englische Notiz klärt nur die Funktion der schwierigen Struktur.</p>
               </div>
               <div className="presenter-c1-grammar-rules">
-                {stage.items.map((item, index) => (
+                {presenterItems.map((item, index) => (
                   <article key={item + index}>
                     <span>{index + 1}</span>
                     <p>{item}</p>
