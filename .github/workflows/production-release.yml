@@ -73,6 +73,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
 
       - name: Wait for Vercel Git deployment
         id: vercel
@@ -157,6 +160,10 @@ jobs:
           ref: main
           fetch-depth: 2
           token: ${{ github.token }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
 
       - name: Inspect latest main Vercel status
         id: status
