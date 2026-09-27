@@ -130,6 +130,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [contentPage, setContentPage] = useState(0);
   const [contentPageSize, setContentPageSize] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
+  const [knowledgeAnswersOpen, setKnowledgeAnswersOpen] = useState({});
   const stage = stages[stageIndex] || stages[0];
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -149,6 +150,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const presenterItems = contentPageSize > 0
     ? pageableItems.slice(contentPage * contentPageSize, (contentPage + 1) * contentPageSize)
     : pageableItems;
+  const presenterItemOffset = contentPageSize > 0 ? contentPage * contentPageSize : 0;
 
   function toggleWarmupSupport(questionIndexValue, supportType) {
     const key = questionIndexValue + ":" + supportType;
@@ -157,6 +159,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   function toggleWarmupAnswered(questionIndexValue) {
     setWarmupAnswered((current) => ({
+      ...current,
+      [questionIndexValue]: !current[questionIndexValue],
+    }));
+  }
+
+  function toggleKnowledgeAnswer(questionIndexValue) {
+    setKnowledgeAnswersOpen((current) => ({
       ...current,
       [questionIndexValue]: !current[questionIndexValue],
     }));
@@ -289,6 +298,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setFitMode("normal");
     setContentPage(0);
     setContentPageSize(0);
+    setKnowledgeAnswersOpen({});
     if (stage?.id === "warmup" && stage?.timingMode === "per-student") {
       setWarmupQuestionCount(4);
       setWarmupMinutes(5);
@@ -621,9 +631,35 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <p>{stage.textDe}</p>
               </article>
               <div className="presenter-knowledge-checks">
-                <strong>Kurz prüfen</strong>
+                <strong>Kurz prüfen · mündlich</strong>
                 <ol>
-                  {presenterItems.map((item) => <li key={item}>{item}</li>)}
+                  {presenterItems.map((item, index) => {
+                    const questionIndexValue = presenterItemOffset + index;
+                    const answer = stage.answerItems?.[questionIndexValue] || "";
+                    const answerOpen = Boolean(knowledgeAnswersOpen[questionIndexValue]);
+                    return (
+                      <li key={item} className="presenter-knowledge-check">
+                        <div className="presenter-knowledge-question-row">
+                          <span>{item}</span>
+                          {answer ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleKnowledgeAnswer(questionIndexValue)}
+                              aria-expanded={answerOpen}
+                            >
+                              {answerOpen ? "Antwort ausblenden" : "Antwort anzeigen"}
+                            </button>
+                          ) : null}
+                        </div>
+                        {answerOpen && answer ? (
+                          <div className="presenter-knowledge-answer">
+                            <strong>Antwort</strong>
+                            <span>{answer}</span>
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ol>
               </div>
             </section>
