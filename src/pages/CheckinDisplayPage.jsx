@@ -865,7 +865,7 @@ export default function CheckinDisplayPage() {
       return {
         kind: "active",
         title: "Class in progress",
-        detail: slideSyncStatus.message || presenterStatusText || "Attendance and Presenter are active.",
+        detail: slideSyncStatus.message || presenterStatus || "Attendance and Presenter are active.",
       };
     }
 
@@ -899,7 +899,7 @@ export default function CheckinDisplayPage() {
     attendanceLive,
     checkedInCount,
     expectedTotal,
-    presenterStatusText,
+    presenterStatus,
     slideSyncStatus.message,
   ]);
 
