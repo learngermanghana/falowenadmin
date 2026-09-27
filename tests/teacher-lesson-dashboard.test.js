@@ -84,7 +84,7 @@ test("roster readiness combines previous/current submissions, latest score and a
   });
 });
 
-test("Teacher Lesson Dashboard route and quick actions stay wired", async () => {
+test("Teacher Lesson Dashboard stays available by route but is hidden from normal Admin navigation", async () => {
   const fs = await import("node:fs/promises");
   const [app, dashboard, page] = await Promise.all([
     fs.readFile(new URL("../src/App.jsx", import.meta.url), "utf8"),
@@ -93,7 +93,9 @@ test("Teacher Lesson Dashboard route and quick actions stay wired", async () => 
   ]);
 
   assert.match(app, /path="\/lesson-dashboard"/);
-  assert.match(dashboard, /Teacher Lesson Dashboard/);
+  assert.doesNotMatch(app, />Lesson Dashboard<\/Link>/);
+  assert.doesNotMatch(app, />Participation<\/Link>/);
+  assert.doesNotMatch(dashboard, /Teacher Lesson Dashboard/);
   assert.match(page, /Open student lesson/);
   assert.match(page, /Start class/);
   assert.match(page, /Fair Pick/);
