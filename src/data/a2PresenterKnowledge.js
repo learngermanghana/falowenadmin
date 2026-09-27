@@ -237,12 +237,12 @@ const A2_KNOWLEDGE = {
     answers: ["Feste Termine.", "Das Präsens.", "Damit man flexibel bleibt, wenn sich etwas ändert."],
     activity: {
       title: "Welches Wort passt?",
-      instruction: "Lest den Satz und den Tipp. Welches Wort aus dem heutigen Wortschatz passt in die Lücke?",
+      instruction: "Wählt aus drei Wörtern. Welches Wort passt in die Lücke?",
       prompts: [
-        "Viele Menschen tragen zuerst feste ______ in einen Kalender ein. Tipp: Verabredungen oder geplante Zeiten.",
-        "Mit können zeigt man die ______. Tipp: Man hat Zeit oder ist frei.",
-        "Mit müssen zeigt man eine ______. Tipp: Etwas, das man machen muss.",
-        "Man sollte nicht jede Stunde ______. Tipp: komplett planen.",
+        "Viele Menschen tragen zuerst feste ______ in einen Kalender ein. Wählt: Termine · Pflicht · Verfügbarkeit",
+        "Mit können zeigt man die ______. Wählt: Pflicht · Verfügbarkeit · Termine",
+        "Mit müssen zeigt man eine ______. Wählt: Verfügbarkeit · Pflicht · Termine",
+        "Man sollte nicht jede Stunde ______. Wählt: verplanen · schützen · reduzieren",
       ],
       modelItems: ["Termine", "Verfügbarkeit", "Pflicht", "verplanen"],
     },
