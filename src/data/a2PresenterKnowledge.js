@@ -236,10 +236,15 @@ const A2_KNOWLEDGE = {
     checks: ["Was trägt man zuerst in den Kalender ein?", "Welche Zeitform ist für feste nahe Zukunftspläne häufig?", "Warum sollte man nicht jede Stunde verplanen?"],
     answers: ["Feste Termine.", "Das Präsens.", "Damit man flexibel bleibt, wenn sich etwas ändert."],
     activity: {
-      title: "Entdecke die Wortstellung",
-      instruction: "Vergleicht die Sätze. Was passiert mit dem Verb, wenn die Zeitangabe am Anfang steht?",
-      prompts: ["Ich arbeite am Dienstag bis 17 Uhr.", "Am Dienstag arbeite ich bis 17 Uhr.", "Morgen treffe ich meine Freundin."],
-      modelItems: ["Das konjugierte Verb bleibt auf Position 2.", "Nach der Zeitangabe kommt deshalb oft direkt das Verb."],
+      title: "Welches Wort passt?",
+      instruction: "Lest den Satz und den Tipp. Welches Wort aus dem heutigen Wortschatz passt in die Lücke?",
+      prompts: [
+        "Viele Menschen tragen zuerst feste ______ in einen Kalender ein. Tipp: Verabredungen oder geplante Zeiten.",
+        "Mit können zeigt man die ______. Tipp: Man hat Zeit oder ist frei.",
+        "Mit müssen zeigt man eine ______. Tipp: Etwas, das man machen muss.",
+        "Man sollte nicht jede Stunde ______. Tipp: komplett planen.",
+      ],
+      modelItems: ["Termine", "Verfügbarkeit", "Pflicht", "verplanen"],
     },
   },
   "A2-9.23": {
