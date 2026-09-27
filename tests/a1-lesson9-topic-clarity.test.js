@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
 import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 import { getA1GrammarChecks } from "../src/data/a1GrammarChecks.js";
@@ -32,4 +33,18 @@ test("A1-9 class challenge tests current food and negation knowledge only", () =
   assert.match(questions, /Käse|Milch|Kaffee|Suppe|Essen|food/i);
   assert.doesNotMatch(questions, /direction|location|route|Weg|geradeaus/i);
   assert.doesNotMatch(questions, /Goethe Teil 3|können \+ bitte/i);
+});
+
+
+test("A1-9 patch remains order-independent after earlier A1 override patches", () => {
+  const patch = fs.readFileSync("scripts/patchA1Lesson9Clarity.mjs", "utf8");
+  const day2 = fs.readFileSync("scripts/patchA1Day2ContactChallenge.mjs", "utf8");
+
+  assert.match(day2, /const anchor = "const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \\{\\n"/);
+  assert.match(patch, /const anchor = \`const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \\{/);
+  assert.doesNotMatch(
+    patch,
+    /const anchor = \`const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \\{[\\s\\S]{0,80}"A1-4\\.7"/,
+    "Lesson 9 insertion must not assume A1-4.7 is still the first override",
+  );
 });

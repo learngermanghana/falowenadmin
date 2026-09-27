@@ -61,7 +61,7 @@ let checks = fs.readFileSync(checksPath, "utf8");
 
 if (!checks.includes("A1_LESSON_9_CURRENT_TOPIC_CHALLENGE")) {
   const anchor = `const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
-  "A1-4.7": [`;
+`;
   const override = `const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
   // A1_LESSON_9_CURRENT_TOPIC_CHALLENGE
   "A1-9": [
@@ -78,7 +78,7 @@ if (!checks.includes("A1_LESSON_9_CURRENT_TOPIC_CHALLENGE")) {
     check("Say one sentence with nicht about food or cooking.", "For example: Die Suppe ist nicht heiß. / Ich koche heute nicht."),
     check("Correct this sentence: ‘Ich esse nicht Käse.’", "Ich esse keinen Käse."),
   ],
-  "A1-4.7": [`;
+`;
   checks = patchOnce(checks, anchor, override, "A1-9 understanding override");
 }
 fs.writeFileSync(checksPath, checks);
