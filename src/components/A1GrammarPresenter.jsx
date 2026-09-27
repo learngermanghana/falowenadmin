@@ -289,7 +289,6 @@ export default function A1GrammarPresenter({
       ? stage.items[itemIndex]
       : null;
   const activeExamPerformance = Boolean(stage?.examReadiness && activeCheck?.responseMode === "performance");
-  const activeExamKnowledge = Boolean(stage?.examReadiness && activeCheck?.responseMode === "knowledge");
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
 
   function resetQuestionState() {
