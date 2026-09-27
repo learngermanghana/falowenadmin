@@ -88,12 +88,16 @@ test("A1-5.9 propagates exam-readiness context and distinguishes performance fro
   const slide = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-5.9");
   const checks = getA1GrammarChecks("A1-5.9", slide);
   const modes = new Set(checks.map((item) => item.responseMode));
-  const pool = buildA1PresenterQuestionPool(checks.slice(0, -1), 10, "a1-5.9-test");
+  const pool = buildA1PresenterQuestionPool(checks.slice(0, -1), 15, "a1-5.9-test");
 
   assert.equal(slide.estimatedDuration, "60 minutes");
   assert.deepEqual([...modes].sort(), ["knowledge", "performance"]);
   assert.ok(pool.some((item) => item.responseMode === "knowledge"));
   assert.ok(pool.some((item) => item.responseMode === "performance"));
+  assert.ok(
+    pool.filter((item) => item.responseMode === "performance").every((item) => !/Teach this rule|give one simple German example/i.test(item.questionDe)),
+    "generated performance prompts must remain speaking tasks",
+  );
   assert.match(source, /\.map\(\(stage\) => \(\{ \.\.\.stage, examReadiness: true \}\)\)/);
   assert.match(source, /Readiness-Check selbstständig bearbeiten/);
   assert.match(source, /Performance-Prompts/);
