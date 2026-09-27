@@ -13,6 +13,7 @@ test("CheckinDisplay initializes effectiveAssignmentId before any effect can cap
     declaration < firstEffect,
     "effectiveAssignmentId must be initialized before the first effect to avoid temporal-dead-zone runtime failures",
   );
+  assert.doesNotMatch(page, /\\n\s+const scheduleInfo/);
 });
 
 test("Bulk attendance panel imports and uses its scoped layout stylesheet", () => {
