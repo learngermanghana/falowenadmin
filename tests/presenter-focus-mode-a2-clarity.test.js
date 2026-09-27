@@ -19,7 +19,7 @@ test("presenter focus view hides teacher chrome but keeps compact navigation", (
   assert.match(css, /\.presenter-focus-dock/);
 });
 
-test("A2 knowledge tells learners exactly how to use the text and Day 22 discovery is A2-clear", () => {
+test("A2 knowledge tells learners how to use the text and Day 22 uses vocabulary gap guessing", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-8.22");
   assert.ok(slide, "A2-8.22 slide missing");
 
@@ -31,12 +31,17 @@ test("A2 knowledge tells learners exactly how to use the text and Day 22 discove
   );
 
   const knowledge = getA2PresenterKnowledge("A2-8.22");
+  assert.equal(knowledge.activity.title, "Welches Wort passt?");
   assert.equal(
     knowledge.activity.instruction,
-    "Vergleicht die Sätze. Was passiert mit dem Verb, wenn die Zeitangabe am Anfang steht?",
+    "Lest den Satz und den Tipp. Welches Wort aus dem heutigen Wortschatz passt in die Lücke?",
   );
+  assert.equal(knowledge.activity.prompts.length, 4);
+  assert.ok(knowledge.activity.prompts.every((item) => item.includes("______") && item.includes("Tipp:")));
   assert.deepEqual(knowledge.activity.modelItems, [
-    "Das konjugierte Verb bleibt auf Position 2.",
-    "Nach der Zeitangabe kommt deshalb oft direkt das Verb.",
+    "Termine",
+    "Verfügbarkeit",
+    "Pflicht",
+    "verplanen",
   ]);
 });
