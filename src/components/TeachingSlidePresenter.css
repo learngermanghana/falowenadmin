@@ -1834,6 +1834,7 @@
 
 .presenter-stage.is-focus-mode > .presenter-topbar,
 .presenter-stage.is-focus-mode > .presenter-student-picker,
+.presenter-stage.is-focus-mode > .presenter-participation-dock,
 .presenter-stage.is-focus-mode > .presenter-footer {
   display: none;
 }
