@@ -24,6 +24,7 @@ function normalizeQuestion(question = {}, index = 0) {
     answerDe: clean(question.answerDe || question.answer || question.modelAnswer),
     noteEn: clean(question.noteEn || question.note || ""),
     conceptLabel: clean(question.conceptLabel) || presenterConceptLabel(questionText),
+    responseMode: clean(question.responseMode || "knowledge"),
   };
 }
 
@@ -60,6 +61,7 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
         noteEn: base.noteEn,
         sourceQuestion: base.questionDe,
         conceptLabel: base.conceptLabel,
+        responseMode: base.responseMode,
         sourceIndex,
         variantIndex,
       });
