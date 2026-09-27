@@ -11,7 +11,8 @@ const requiredPresenterMarkers = [
   'getA2FocusedPractice',
   'id: "knowledge"',
   'type: "knowledge"',
-  'title: "Grammatik · Muster verstehen"',
+  'id: "grammar-check"',
+  'type: "grammar-check"',
   'id: "practice"',
   'id: "questions"',
   'id: "workbook"',
@@ -30,4 +31,4 @@ if (assignments.length !== 28) {
   throw new Error(`A2 knowledge bank must contain 28 lessons; found ${assignments.length}`);
 }
 
-console.log("A2 presenter teaching spine verified: Wissensimpuls + grammar + one focused practice + speaking + workbook.");
+console.log("A2 presenter teaching spine verified: Wissensimpuls + short grammar diagnostic + one focused practice + speaking + workbook.");
