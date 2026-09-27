@@ -374,7 +374,7 @@ export default function A1GrammarPresenter({
             <span className="presenter-lesson-label">{stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check"}</span>
           </div>
 
-          <PresenterSessionTimer slide={slide} />
+          <PresenterSessionTimer slide={slide} stage={stage} />
 
           <div className="presenter-v2-tools">
             <label className="presenter-stage-jump">
