@@ -47,6 +47,21 @@
   white-space: nowrap;
 }
 
+.topbar-deployment-warning {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid #f3b4b4;
+  border-radius: 999px;
+  background: #fff4f4;
+  color: #9b1c1c;
+  padding: 0.15rem 0.48rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .topbar-links,
 .topbar-user {
   display: flex;
@@ -136,7 +151,8 @@
   }
 
   .topbar-brand,
-  .topbar-build-badge {
+  .topbar-build-badge,
+  .topbar-deployment-warning {
     order: 1;
   }
 
@@ -483,7 +499,8 @@ main[data-route="/live-classes"] article.card > div > button {
     max-width: 60vw;
   }
 
-  .topbar-build-badge {
+  .topbar-build-badge,
+  .topbar-deployment-warning {
     font-size: 0.62rem;
     padding-inline: 0.4rem;
   }
