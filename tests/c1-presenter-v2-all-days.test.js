@@ -13,7 +13,7 @@ import {
 } from "../src/utils/teachingPresenter.js";
 
 const REQUIRED_STAGES = [
-  "intro", "warmup", "foundation", "phrases", "grammar", "examples",
+  "intro", "warmup", "foundation", "phrases", "grammar",
   "focus", "questions", "writing", "workbook", "lesson-summary",
 ];
 
@@ -71,7 +71,7 @@ test("all C1 days use the stable argumentation teaching spine", () => {
 
     assert.equal(vocabulary.type, "vocabulary");
     assert.equal(vocabulary.kicker, "Kollokationen & Argumentationssprache");
-    assert.ok(vocabulary.items.length >= 7);
+    assert.equal(vocabulary.items.length, 6);
     const lessonCollocations = getC1TopicCollocations(slide.dayNumber);
     assert.ok(
       lessonCollocations.some((term) => vocabulary.items.some((item) => item.term === term)),
@@ -88,21 +88,21 @@ test("all C1 days use the stable argumentation teaching spine", () => {
     assert.equal(focus.type, "flow");
     assert.equal(focus.items.length, 1, slide.assignmentId + " should have one C1 focus task");
     assert.ok(focus.items[0].instruction);
-    assert.ok(focus.items[0].prompts.length >= 4);
-    assert.equal(focus.items[0].minutes, 10);
+    assert.ok(focus.items[0].prompts.length >= 2 && focus.items[0].prompts.length <= 3);
+    assert.equal(focus.items[0].minutes, 12);
 
     assert.equal(questions.type, "question-reveal");
-    assert.equal(questions.items.length, 5);
-    assert.equal(questions.questionModels.length, 5);
-    questions.items.forEach((question) => {
-      assert.ok(getSpeakingQuestionModel(questions, question)?.modelAnswerDe);
-    });
+    assert.equal(questions.items.length, 1);
+    assert.equal(questions.questionModels.length, 1);
+    assert.match(questions.instruction, /höchstens zwei Perspektiven/i);
+    assert.ok(getSpeakingQuestionModel(questions, questions.items[0])?.modelAnswerDe);
 
     assert.equal(writing.type, "flow");
     assert.equal(writing.items.length, 1);
-    assert.match(writing.title, /Schreibbrücke/i);
-    assert.match(JSON.stringify(writing), /Gegenargument \+ Reaktion/);
-    assert.match(JSON.stringify(writing), /Zielgrammatik kontrolliert einsetzen/);
+    assert.match(writing.title, /Position vorbereiten/i);
+    assert.match(JSON.stringify(writing), /zwei tragende Stichpunkte/i);
+    assert.match(JSON.stringify(writing), /Optional: Welches Gegenargument/i);
+    assert.equal(writing.items[0].prompts.length, 3);
 
     assert.equal(workbook.type, "workbook");
     assert.ok(workbook.items.length >= 5);
