@@ -1,4 +1,4 @@
-function check(questionDe, answerDe, noteEn = "", responseMode = "knowledge") {
+function check(questionDe, answerDe, noteEn = "", responseMode = "concept") {
   return { questionDe, answerDe, noteEn, responseMode };
 }
 
