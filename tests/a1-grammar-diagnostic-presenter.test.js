@@ -54,10 +54,14 @@ test("A1 class-check pools stay grammar-focused and large enough for a class", (
 test("A1 prebuild guards cannot regenerate the retired language-first flow", () => {
   const languagePatch = fs.readFileSync("scripts/patchA1LanguageFirstFlow.mjs", "utf8");
   const day5Patch = fs.readFileSync("scripts/patchA1Day5ScopeAndFlow.mjs", "utf8");
+  const lesson9Patch = fs.readFileSync("scripts/patchA1Lesson9Clarity.mjs", "utf8");
 
   assert.match(languagePatch, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
   assert.doesNotMatch(languagePatch, /A1_LANGUAGE_FIRST_FLOW_VERSION/);
-  assert.match(languagePatch, /instead of regenerating the old language-first flow/);
+  assert.match(languagePatch, /source\.includes\('id: "speak-first"'\)/);
+  assert.doesNotMatch(languagePatch, /\{\s*id: "speak-first",\s*type:/);
   assert.match(day5Patch, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
   assert.doesNotMatch(day5Patch, /A1_COMPACT_DEDUPED_PRESENTER/);
+  assert.doesNotMatch(lesson9Patch, /function buildRetrievalChecks\(slide = \{\}\)/);
+  assert.match(lesson9Patch, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
 });
