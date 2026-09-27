@@ -2131,3 +2131,32 @@
     flex: 1 1 auto;
   }
 }
+
+
+.presenter-vocabulary-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.presenter-vocabulary-options span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.7rem 0.8rem;
+  text-align: center;
+  font-size: clamp(0.95rem, 1.45vw, 1.18rem);
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+@media (max-width: 760px) {
+  .presenter-vocabulary-options {
+    grid-template-columns: 1fr;
+  }
+}
