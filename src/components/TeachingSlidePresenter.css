@@ -2275,3 +2275,160 @@
   text-transform: uppercase;
   vertical-align: middle;
 }
+
+
+/* Quiet teacher-only guidance in normal view. Focus view omits this block entirely. */
+.presenter-teacher-purpose {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.presenter-teacher-purpose div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: baseline;
+}
+
+.presenter-teacher-purpose strong {
+  color: #0f172a;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.presenter-grammar-check {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.presenter-grammar-check-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.presenter-grammar-check-heading > span {
+  color: #1d4ed8;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.presenter-grammar-check-heading h1,
+.presenter-grammar-check-heading p {
+  margin: 0;
+}
+
+.presenter-grammar-check-heading p {
+  max-width: 900px;
+  color: #64748b;
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  line-height: 1.4;
+}
+
+.presenter-grammar-check-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.presenter-grammar-check-card {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  min-width: 0;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+  padding: 0.9rem;
+}
+
+.presenter-grammar-check-label {
+  color: #1d4ed8;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.presenter-grammar-check-prompt {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.presenter-grammar-check-card blockquote {
+  margin: 0;
+  border-left: 3px solid #60a5fa;
+  background: #fff;
+  padding: 0.7rem 0.8rem;
+  color: #1e3a8a;
+  font-size: clamp(1rem, 1.55vw, 1.3rem);
+  line-height: 1.35;
+  font-weight: 750;
+}
+
+.presenter-grammar-check-card details {
+  border-top: 1px solid #bfdbfe;
+  padding-top: 0.55rem;
+}
+
+.presenter-grammar-check-card summary {
+  cursor: pointer;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.presenter-grammar-check-answer {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  border-radius: 9px;
+  background: #fff;
+  padding: 0.65rem 0.7rem;
+  color: #334155;
+}
+
+.presenter-grammar-check-answer p,
+.presenter-grammar-check-answer small {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.presenter-fit-compact .presenter-teacher-purpose,
+.presenter-fit-tight .presenter-teacher-purpose {
+  margin-bottom: 0.45rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.presenter-fit-tight .presenter-grammar-check-grid {
+  gap: 0.5rem;
+}
+
+.presenter-fit-tight .presenter-grammar-check-card {
+  padding: 0.65rem;
+}
+
+@media (max-width: 900px) {
+  .presenter-teacher-purpose {
+    grid-template-columns: 1fr;
+  }
+
+  .presenter-grammar-check-grid {
+    grid-template-columns: 1fr;
+  }
+}
