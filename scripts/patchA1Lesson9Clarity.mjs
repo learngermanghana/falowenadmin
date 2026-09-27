@@ -6,49 +6,12 @@ function patchOnce(source, from, to, label) {
   return source.replace(from, to);
 }
 
-// 1) Presenter: recall stays early; later application prompts are explicit.
+// 1) Presenter: normal A1 is grammar-diagnostic; lesson 9 topic specificity is handled in the check/data sources.
 const presenterPath = new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url);
-let presenter = fs.readFileSync(presenterPath, "utf8");
-
-if (!presenter.includes("A1_LESSON_9_TOPIC_RECALL")) {
-  const from = `function buildRetrievalChecks(slide = {}) {
-  const day = Number(slide.dayNumber || 0);
-  if (day <= 1) return [];
-
-  const bank = [`;
-  const to = `function buildRetrievalChecks(slide = {}) {
-  const day = Number(slide.dayNumber || 0);
-  if (day <= 1) return [];
-
-  // A1_LESSON_9_TOPIC_RECALL
-  const assignmentId = cleanText(slide.assignmentId).toUpperCase();
-  if (assignmentId === "A1-9") {
-    return [
-      makeCheck("Make one polite Goethe Teil 3 request with können + bitte.", "For example: Kannst du mir bitte den Stift geben?", "Recall only; this belongs near the start of the lesson."),
-      makeCheck("Your partner says: ‘Kannst du mir bitte den Stift geben?’ How do you react politely?", "For example: Ja, gern. / Ja, natürlich.", "Recall only."),
-      makeCheck("Make one sentence with können, müssen or möchten.", "For example: Ich kann Deutsch sprechen. / Wir müssen heute lernen. / Ich möchte Wasser trinken.", "Recall the previous modal-verb lesson."),
-    ];
-  }
-
-  const bank = [`;
-  presenter = patchOnce(presenter, from, to, "A1-9 recall");
+const presenter = fs.readFileSync(presenterPath, "utf8");
+if (!presenter.includes("const A1_GRAMMAR_CHECK_FLOW_VERSION = 3;")) {
+  throw new Error("A1-9 requires the grammar-diagnostic presenter flow.");
 }
-
-if (!presenter.includes("A1_PHRASE_APPLICATION_CLARITY")) {
-  const from = `    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => makeCheck(
-      \`Use this language in a new sentence: “\${phrase}”\`,
-      \`Accept a new correct sentence that follows the pattern in “\${phrase}”.\`,
-      "Do not accept simple repetition when the learner can reasonably personalise the phrase.",
-    )),`;
-  const to = `    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => makeCheck(
-      // A1_PHRASE_APPLICATION_CLARITY
-      \`Change one clear detail in this model and say the new complete sentence: “\${phrase}”\`,
-      "Keep the same pattern, but change one clear detail such as the person, action, food/object, time or place.",
-      "Produce a different complete sentence rather than repeating the model.",
-    )),`;
-  presenter = patchOnce(presenter, from, to, "A1 phrase application");
-}
-fs.writeFileSync(presenterPath, presenter);
 
 // 2) Slide data: A1-9 gets beginner food/negation language instead of generic dass phrases.
 const slidesPath = new URL("../src/data/teachingSlides.js", import.meta.url);
@@ -130,6 +93,6 @@ if (!challengeBlock || /direction|location|route|geradeaus/i.test(challengeBlock
   throw new Error("A1-9 class challenge contains unrelated material.");
 }
 
-console.log("A1-9: recall is early; the later class challenge tests only food and negation.");
+console.log("A1-9: the class grammar challenge stays focused on food and negation.");
 
 await import("./patchA1TopicSpecificFallback.mjs");

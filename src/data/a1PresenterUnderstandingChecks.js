@@ -29,7 +29,7 @@ function learnerPrompt(questionDe, lessonLabel) {
   return check(
     questionDe,
     `Accept a short correct A1 response that uses the target language for ${lessonLabel}. The teacher judges meaning and the lesson pattern, not perfect fluency.`,
-    "Use this as an application question, not an automatic grade.",
+    "Use this only when a grammar-focused application prompt is needed; do not turn it into a speaking-performance task.",
   );
 }
 
@@ -111,51 +111,49 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
   ],
   "A1-11": [
     check(
-      "Du suchst den Bahnhof. Wie fragst du höflich nach dem Weg?",
-      "Zum Beispiel: Entschuldigung, wo ist der Bahnhof? / Entschuldigung, wie komme ich zum Bahnhof?",
+      "What is the word-order rule for the polite Sie-imperative?",
+      "Verb first + Sie + the rest, for example: Gehen Sie geradeaus.",
     ),
     check(
-      "Du suchst eine Apotheke. Formuliere eine Frage mit „Wie komme ich ...?“",
-      "Wie komme ich zur nächsten Apotheke?",
+      "Correct the grammar: ‘Sie gehen geradeaus.’ when it is meant as an instruction.",
+      "Gehen Sie geradeaus. In the polite imperative, the verb comes first.",
     ),
     check(
-      "Mach aus „geradeaus gehen“ eine höfliche Anweisung mit Sie.",
-      "Gehen Sie bitte geradeaus.",
+      "Why is ‘Biegen Sie rechts ab’ correct but ‘Biegen Sie rechts’ incomplete?",
+      "abbiegen is separable, so the prefix ab goes to the end.",
     ),
     check(
-      "Mach aus „rechts abbiegen“ eine höfliche Anweisung mit Sie.",
-      "Biegen Sie rechts ab.",
+      "Build the polite Sie-imperative from ‘links abbiegen’.",
+      "Biegen Sie links ab.",
     ),
     check(
-      "Was ist richtig als Anweisung: „Sie gehen geradeaus“ oder „Gehen Sie geradeaus“? Warum?",
-      "Gehen Sie geradeaus. Beim höflichen Sie-Imperativ steht das Verb zuerst.",
+      "Build the polite Sie-imperative from ‘die Straße überqueren’.",
+      "Überqueren Sie die Straße.",
     ),
     check(
-      "Warum steht „ab“ am Ende von „Biegen Sie rechts ab“?",
-      "abbiegen ist trennbar. Im Imperativ steht der Verbstamm vorne und ab am Satzende.",
+      "Where does bitte normally go in a polite direction such as ‘Gehen Sie ... geradeaus’?",
+      "A natural A1 form is: Gehen Sie bitte geradeaus.",
     ),
     check(
-      "Gib zwei Anweisungen: zuerst geradeaus, dann links.",
-      "Zum Beispiel: Gehen Sie geradeaus. Biegen Sie dann links ab.",
+      "What grammar difference do you see between ‘Sie gehen geradeaus’ and ‘Gehen Sie geradeaus’?",
+      "The first is a statement; the second is the polite Sie-imperative with the verb first.",
     ),
     check(
-      "Beschreibe, wo die Bäckerei ist: linke Seite + neben dem Supermarkt.",
-      "Die Bäckerei ist auf der linken Seite, direkt neben dem Supermarkt.",
+      "Choose the correct contraction: ‘Wie komme ich ___ Bahnhof?’ and explain it.",
+      "zum Bahnhof, because zu + dem = zum and Bahnhof is masculine.",
     ),
     check(
-      "Dein Partner steht an der Kreuzung. Gib ihm drei kurze Anweisungen.",
-      "Zum Beispiel: Gehen Sie geradeaus. Überqueren Sie die Straße. Biegen Sie dann rechts ab.",
-      "Accept another coherent three-step A1 route using the target direction language.",
+      "Choose the correct contraction: ‘Wie komme ich ___ Apotheke?’ and explain it.",
+      "zur Apotheke, because zu + der = zur and Apotheke is feminine.",
     ),
     check(
-      "Frage nach dem Bahnhof und antworte danach mit einer kurzen Wegbeschreibung.",
-      "Zum Beispiel: Entschuldigung, wie komme ich zum Bahnhof? – Gehen Sie geradeaus und biegen Sie an der Kreuzung links ab. Der Bahnhof ist auf der rechten Seite.",
-      "The learner should produce both sides of the directions interaction.",
+      "Correct the grammar: ‘Biegen Sie an der Kreuzung links.’",
+      "Biegen Sie an der Kreuzung links ab.",
     ),
     check(
-      "Exit-Check: Gib eine komplette Mini-Route mit drei Schritten und nenne am Ende, wo das Ziel ist.",
-      "Zum Beispiel: Gehen Sie geradeaus. Biegen Sie links ab. Überqueren Sie die Straße. Die Apotheke ist auf der rechten Seite.",
-      "Use this as the final practical check; the learner should give a coherent route without reading the model phrases.",
+      "Exit-Check: give one correct polite Sie-imperative with a separable verb.",
+      "For example: Biegen Sie rechts ab.",
+      "Use this as a grammar exit check, not a route-speaking performance task.",
     ),
   ],
   "A1-13": [
@@ -187,12 +185,13 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
     : learnerPrompt(clean(slide.wrapUpTaskDe) || `Give one correct example for ${lessonLabel}.`, lessonLabel);
   const conceptChecks = fallback.length > 1 ? fallback.slice(0, -1) : fallback;
 
+  // A1 Presenter is a grammar diagnostic. The grammar page does the teaching;
+  // these live checks verify rule recognition, correction and controlled transfer.
+  // Do not dilute the pool with warm-up/speaking prompts.
   const applicationChecks = [
     ...conceptChecks,
-    ...(Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []).map((question) => learnerPrompt(question, lessonLabel)),
-    ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).map((example) => modelApplication(example, lessonLabel)),
     ...(Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : []).map((mistake) => mistakeReflection(mistake, lessonLabel)),
-    ...(Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : []).map((question) => learnerPrompt(question, lessonLabel)),
+    ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).map((example) => modelApplication(example, lessonLabel)),
     ...(Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []).map((point) => languagePointReflection(point, lessonLabel)),
     ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => modelApplication(phrase, lessonLabel)),
   ];
