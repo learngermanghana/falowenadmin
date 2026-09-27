@@ -5,7 +5,6 @@ import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 const OLD_REPETITIVE_IDS = new Set([
-  "grammar-check",
   "vocabulary-retrieval",
   "sentence-builder",
   "guided-action",
@@ -31,6 +30,8 @@ for (const level of ["A2", "B1"]) {
       const ids = stages.map((stage) => stage.id);
 
       assert.deepEqual(ids.slice(-3), ["questions", "workbook", "lesson-summary"], `${slide.assignmentId} should finish with production, workbook and summary`);
+      assert.equal(ids.filter((id) => id === "grammar-check").length, 1, `${slide.assignmentId} should contain one compact grammar diagnostic`);
+      assert.ok(ids.indexOf("grammar-check") < ids.indexOf("practice"), `${slide.assignmentId} grammar diagnostic should happen before practice`);
 
       for (const oldId of OLD_REPETITIVE_IDS) {
         assert.equal(ids.includes(oldId), false, `${slide.assignmentId} still exposes repetitive ending ${oldId}`);
