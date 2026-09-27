@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage";
@@ -50,6 +50,39 @@ function TopBar() {
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deploymentStatus, setDeploymentStatus] = useState(null);
+
+  useEffect(() => {
+    if (!user) {
+      setDeploymentStatus(null);
+      return undefined;
+    }
+
+    let active = true;
+    let timerId = null;
+
+    const refreshDeploymentStatus = async () => {
+      try {
+        const response = await fetch("/api/deployment-status", {
+          headers: { accept: "application/json" },
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (active) setDeploymentStatus(payload);
+      } catch {
+        // Build badge remains usable when the freshness endpoint is unavailable.
+      }
+    };
+
+    refreshDeploymentStatus();
+    timerId = window.setInterval(refreshDeploymentStatus, 5 * 60 * 1000);
+
+    return () => {
+      active = false;
+      if (timerId) window.clearInterval(timerId);
+    };
+  }, [user]);
 
   if (!user || location.pathname === "/checkin/display") return null;
 
@@ -78,6 +111,18 @@ function TopBar() {
           >
             Admin · {ADMIN_BUILD_LABEL}
           </span>
+          {deploymentStatus?.status === "behind" || deploymentStatus?.status === "diverged" ? (
+            <span
+              className="topbar-deployment-warning"
+              title={`${deploymentStatus.message || "Production is behind main."} Deployed: ${String(deploymentStatus.deployedSha || "").slice(0, 8)} · Main: ${String(deploymentStatus.mainSha || "").slice(0, 8)}`}
+              role="status"
+              aria-live="polite"
+            >
+              {Number.isFinite(Number(deploymentStatus.behindBy)) && Number(deploymentStatus.behindBy) > 0
+                ? `Production ${deploymentStatus.behindBy} commit${Number(deploymentStatus.behindBy) === 1 ? "" : "s"} behind`
+                : "Production behind main"}
+            </span>
+          ) : null}
 
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
