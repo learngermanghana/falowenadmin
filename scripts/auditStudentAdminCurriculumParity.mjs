@@ -7,12 +7,15 @@ import {
 } from "../src/data/studentCurriculumParity.js";
 
 const LEARNER_REPO = "learngermanghana/falowenexamtrainer";
+// Reviewed against falowenexamtrainer@3cf869444ad03e88cc7a1dcfac10413ca11517aa:
+ // B2 drift is the intentional grammar-label normalization and C1 drift is the
+ // canonical title/grammar reconciliation already mirrored by Admin strict parity.
 const EXPECTED_SOURCE_BLOBS = Object.freeze({
   "web/src/components/A2SituationIntroduction.jsx": "139e4f113d2a072cd199d2c958ecdb0d4d5f4446",
   "web/src/components/B1TopicIntroduction.js": "4ada05e34ef79a7749bf1aa1b4993f2ee3e20d48",
-  "web/src/data/b2LessonContentAlignment.js": "fc35074feb098f36dc89dce9c001badf28a7a384",
+  "web/src/data/b2LessonContentAlignment.js": "b4d5aa85272b2668f071bc5581f336900647de36",
   "web/src/components/C1TopicIntroduction.jsx": "c2c221a6c850c8ad1f689827d417d62e8910c664",
-  "web/src/data/c1ContentRefresh.js": "a3fe7b8bcc28d5af9011dad0676e119d6f5d16bb",
+  "web/src/data/c1ContentRefresh.js": "d090f0d4a32d08d56bc9a166090cf588ca068ad1",
   "web/src/data/c2TopicKnowledge.js": "6c39d126a82527566bb38fd14d2744e4beee8a1a",
   "web/src/data/c2ExamStandardContent.js": "10997bdf9974e0dc58cb8bacdbdb45f0fc6e29c9",
   "web/src/components/C1Day1To6GrammarNotes.js": "2894491bcdd034ee210f7b5d4539421552033767",
