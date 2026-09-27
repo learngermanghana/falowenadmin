@@ -120,9 +120,9 @@ test("all 28 A1 lessons are topic-specific and class challenges do not reuse rec
 test("A1 presenter checks the rule before the per-student grammar challenge", () => {
   const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
   const quickIndex = presenter.indexOf('id: "quick-check"');
-  const challengeIndex = presenter.indexOf('id: "grammar-check"');
-  const correctionIndex = presenter.indexOf('id: "mistake-fix"');
-  const sentenceIndex = presenter.indexOf('id: "sentence-build"');
+  const challengeIndex = presenter.indexOf('id: "grammar-check"', quickIndex);
+  const correctionIndex = presenter.indexOf('id: "mistake-fix"', challengeIndex);
+  const sentenceIndex = presenter.indexOf('id: "sentence-build"', correctionIndex);
 
   assert.ok(quickIndex >= 0, "A1 quick grammar check is missing");
   assert.ok(challengeIndex > quickIndex, "A1 per-student grammar challenge must follow the quick check");
