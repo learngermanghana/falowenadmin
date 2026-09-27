@@ -631,3 +631,90 @@ test("A2-1.3 deterministic evidence overrides a stale AI claim that character co
   assert.equal(comparison.writingScoreDelta, 2);
   assert.equal(comparison.requiresTutorReview, false);
 });
+
+test("A2-1.3 prunes a resolved character claim even when appearance is still genuinely missing", () => {
+  const appearanceMissingSubmission = `Teil 2
+Lieber Felix,
+ich schreibe dir, weil ich meine Mutter und meinen Vater vergleichen möchte.
+Beide sind freundlich und verantwortlich. Mein Vater ist sportlicher als meine Mutter, weil er im Fitnessstudio arbeitet.
+Meine Mutter ist empathischer als mein Vater, weil sie im Kindergarten arbeitet.
+Ich mag beide besonders, weil sie zuverlässig sind. Und du? Was magst du besonders an deinen Eltern?
+Viele Grüße
+Leonard`;
+
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: appearanceMissingSubmission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 82,
+    writingScorePercent: 82,
+    finalScore: 89,
+    score: 89,
+    taskCompletion: {
+      completed: 1,
+      total: 3,
+      missing: [
+        "Compare your mother and father's appearance",
+        "Compare their character",
+      ],
+    },
+    missingTaskPoints: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+    ],
+    feedback: "Required writing points are missing: Compare your mother and father's appearance; Compare their character.",
+    improvementSummary: "Compare their character. The appearance comparison is not addressed.",
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, appearanceMissingSubmission);
+
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["missing", "met", "met"]);
+  assert.deepEqual(result.missingTaskPoints, ["Compare your mother and father's appearance"]);
+  assert.match(result.feedback, /Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.feedback, /Compare their character/i);
+  assert.doesNotMatch(result.improvementSummary, /Compare their character/i);
+  assert.match(result.feedback, /missing task points: Compare your mother and father's appearance/i);
+});
+
+test("A2-1.3 removes every resolved item from a semicolon missing-point list", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: leonardA2Day3Submission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 78,
+    writingScorePercent: 78,
+    finalScore: 87,
+    score: 87,
+    taskCompletion: { completed: 1, total: 3, missing: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+    ] },
+    missingTaskPoints: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+    ],
+    feedback: "Required writing points are missing: Compare your mother and father's appearance; Compare their character.",
+    improvementSummary: "Required writing points are missing: Compare your mother and father's appearance; Compare their character.",
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, leonardA2Day3Submission);
+
+  assert.deepEqual(result.missingTaskPoints, []);
+  assert.doesNotMatch(result.feedback, /Required writing points are missing/i);
+  assert.doesNotMatch(result.feedback, /Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.feedback, /Compare their character/i);
+  assert.doesNotMatch(result.improvementSummary, /Compare your mother and father's appearance|Compare their character/i);
+});
+
