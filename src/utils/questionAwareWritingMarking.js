@@ -600,7 +600,7 @@ function pruneResolvedTaskClaims(value = "", taskPointEvidence = []) {
   return text.replace(/\s{2,}/g, " ").trim();
 }
 
-function contradictionReviewReasons(issues = []) {");\n}\n\nfunction pruneResolvedTaskClaims(value = "", taskPointEvidence = []) {\n  let text = String(value || "");\n  const resolved = (Array.isArray(taskPointEvidence) ? taskPointEvidence : [])\n    .filter((item) => clean(item?.status).toLowerCase() === "met")\n    .map((item) => clean(item?.label))\n    .filter(Boolean);\n\n  for (const label of resolved) {\n    const escaped = escapeRegExp(label);\n    text = text\n      .replace(new RegExp("(?:^|\\\\s)(?:Required writing points? (?:are|is) missing:?\\\\s*)" + escaped + "[.;!?]?", "gi"), " ")\n      .replace(new RegExp("[^.!?\\\\n]*(?:missing|not addressed|did not address|not covered)[^.!?\\\\n]*" + escaped + "[^.!?\\\\n]*[.!?]?", "gi"), " ");\n  }\n\n  return text.replace(/\\s{2,}/g, " ").trim();\n}\nfunction contradictionReviewReasons(issues = []) {
+function contradictionReviewReasons(issues = []) {
   return (Array.isArray(issues) ? issues : []).map((message) => ({
     code: /Writing score is 0/i.test(message)
       ? "writing_zero_with_completed_task"
