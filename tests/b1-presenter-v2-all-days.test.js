@@ -13,10 +13,8 @@ const REQUIRED_STAGES = [
   "warmup",
   "knowledge",
   "phrases",
-  "grammar",
-  "examples",
+  "grammar-check",
   "practice",
-  "mistakes",
   "questions",
   "workbook",
   "lesson-summary",
@@ -41,20 +39,18 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
     assert.equal(knowledge.items.length, 3, `${slide.assignmentId} should have three knowledge checks`);
     assert.ok(knowledge.textDe.split(/\s+/).length >= 55, `${slide.assignmentId} knowledge brief is too thin`);
 
-    const grammar = stages.find((stage) => stage.id === "grammar");
-    assert.equal(grammar.type, "b1-grammar");
-    assert.ok(grammar.items.length >= 3, `${slide.assignmentId} should keep visible grammar support`);
-    assert.ok(grammar.items.every((item) => item.supportEn), `${slide.assignmentId} grammar needs concise English support`);
+    const grammar = stages.find((stage) => stage.id === "grammar-check");
+    assert.equal(grammar.type, "grammar-check");
+    assert.equal(grammar.items.length, 3, `${slide.assignmentId} should use three short grammar diagnostics`);
+    assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${slide.assignmentId} grammar diagnostics need teacher keys`);
 
     const practice = stages.find((stage) => stage.id === "practice");
     assert.equal(practice.type, "flow");
     assert.equal(practice.items.length, 1, `${slide.assignmentId} should use one focused task rather than a drill stack`);
     assert.ok(practice.items[0].prompts?.length >= 2, `${slide.assignmentId} focused task needs actionable prompts`);
 
-    const mistakes = stages.find((stage) => stage.id === "mistakes");
-    assert.equal(mistakes.type, "correction-list");
-    assert.ok(mistakes.items.length >= 3, `${slide.assignmentId} should expose correction cards`);
-    assert.ok(mistakes.items.every((item) => item.wrong && item.correct && item.why), `${slide.assignmentId} correction cards must include Wrong, Correct and Why`);
+    assert.equal(stageIds.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
+    assert.equal(stageIds.includes("mistakes"), false, `${slide.assignmentId} should fold correction into the grammar diagnostic`);
 
     const questions = stages.find((stage) => stage.id === "questions");
     assert.equal(questions.type, "question-reveal");
@@ -91,9 +87,9 @@ test("full B1 rollout preserves lessons without a direct grammar URL", () => {
 
   for (const slide of withoutDirectGrammar) {
     const stages = buildTeachingPresenterStages(slide, slide.topic);
-    const grammar = stages.find((stage) => stage.id === "grammar");
+    const grammar = stages.find((stage) => stage.id === "grammar-check");
     const workbook = stages.find((stage) => stage.id === "workbook");
-    assert.ok(grammar?.items?.length > 0, `${slide.assignmentId} should still show teacher grammar focus`);
+    assert.equal(grammar?.items?.length, 3, `${slide.assignmentId} should still expose grammar diagnostics`);
     assert.equal(workbook?.grammarUrl, "", `${slide.assignmentId} should not invent a grammar link`);
     assert.ok(workbook?.workbookUrl, `${slide.assignmentId} should keep the workbook link`);
   }
