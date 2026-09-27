@@ -667,6 +667,9 @@ function isStudentFacingTaskClaim(sentence = "", taskPointEvidence = []) {
   if (/question-aware writing check|writing score is capped|language quality cannot replace task fulfilment/.test(normalized)) {
     return true;
   }
+  if (/\b(?:you (?:covered|completed|addressed) all (?:\d+|three|required)?\s*(?:task\s+)?points?|all (?:task\s+)?points? (?:are )?(?:complete|completed|covered|addressed)|you covered:|still missing:|next step: add)\b/.test(normalized)) {
+    return true;
+  }
   if (/\b(?:required (?:writing )?task|required writing points?|task points?|task completion|task fulfilment)\b/.test(normalized)) {
     return true;
   }
@@ -740,6 +743,167 @@ function buildCanonicalStudentFormatFeedback(task = {}, { genreMismatch = false,
 function buildCanonicalStudentImprovement(missingTaskPoints = []) {
   const missing = [...new Set((Array.isArray(missingTaskPoints) ? missingTaskPoints : []).map(clean).filter(Boolean))];
   return missing.length ? `Next step: add ${missing.join("; ")}.` : "";
+}
+
+
+export function enforceA2B1WritingConsistency(result = {}, {
+  task = {},
+  taskPointEvidence = [],
+  genreMismatch = false,
+  wrongRegister = false,
+  detectedTextType = {},
+} = {}) {
+  if (!["A2", "B1"].includes(task.level)) return result;
+
+  const evidence = Array.isArray(taskPointEvidence) ? taskPointEvidence : [];
+  if (!evidence.length) return result;
+
+  const canonicalMissing = [...new Set(missingTaskPointsFromEvidence(evidence).map(clean).filter(Boolean))];
+  const total = Math.max(
+    Array.isArray(task.taskPoints) ? task.taskPoints.length : 0,
+    evidence.length,
+  );
+  const completed = Math.max(0, total - canonicalMissing.length);
+  const hasConsistencyIssue = canonicalMissing.length > 0 || genreMismatch || wrongRegister;
+
+  let cap = guardCapForMissing(canonicalMissing.length, total);
+  if (genreMismatch) cap = Math.min(cap, 65);
+  if (wrongRegister) cap = Math.min(cap, canonicalMissing.length ? 60 : 70);
+
+  const currentWritingScore = numericPercent(result.writingScorePercent ?? result.writingScore);
+  const consistentWritingScore = currentWritingScore === null
+    ? currentWritingScore
+    : hasConsistencyIssue
+      ? Math.min(currentWritingScore, cap)
+      : currentWritingScore;
+
+  const repairs = [];
+  const reportedMissing = (Array.isArray(result.missingTaskPoints) ? result.missingTaskPoints : []).map(clean).filter(Boolean);
+  const reportedTaskCompletion = result.taskCompletion && typeof result.taskCompletion === "object"
+    ? result.taskCompletion
+    : {};
+
+  if (Number(reportedTaskCompletion.completed) !== completed
+      || Number(reportedTaskCompletion.total) !== total
+      || JSON.stringify((reportedTaskCompletion.missing || []).map(clean)) !== JSON.stringify(canonicalMissing)) {
+    repairs.push("task_completion");
+  }
+  if (JSON.stringify(reportedMissing) !== JSON.stringify(canonicalMissing)) {
+    repairs.push("missing_task_points");
+  }
+  if (currentWritingScore !== null && consistentWritingScore !== currentWritingScore) {
+    repairs.push("writing_score_cap");
+  }
+
+  const languageFeedback = sanitizeStudentWritingFeedback(
+    pruneResolvedTaskClaims(result.feedback, evidence),
+    evidence,
+  );
+  const languageImprovement = sanitizeStudentWritingFeedback(
+    pruneResolvedTaskClaims(result.improvementSummary, evidence),
+    evidence,
+  );
+  const canonicalFormatFeedback = buildCanonicalStudentFormatFeedback(task, { genreMismatch, wrongRegister });
+  const feedback = joinStudentFeedback([
+    languageFeedback,
+    buildCanonicalStudentTaskFeedback(evidence, canonicalMissing, total),
+    canonicalFormatFeedback,
+  ]);
+  const improvementSummary = joinStudentFeedback([
+    languageImprovement,
+    buildCanonicalStudentImprovement(canonicalMissing),
+    canonicalFormatFeedback,
+  ]);
+
+  if (clean(result.feedback) !== clean(feedback)) repairs.push("feedback");
+  if (clean(result.improvementSummary) !== clean(improvementSummary)) repairs.push("improvement_summary");
+
+  const baseReviewReasons = pruneResolvedWritingReviewReasons(result.reviewReasons, {
+    missingTaskPoints: canonicalMissing,
+    genreMismatch,
+    wrongRegister,
+  });
+  const canonicalReviewReasons = [
+    ...(canonicalMissing.length ? [{
+      code: "missing_task_points",
+      message: `Required writing points are missing: ${canonicalMissing.join("; ")}.`,
+      source: "question_aware_writing",
+    }] : []),
+    ...(genreMismatch ? [{
+      code: "writing_text_type_mismatch",
+      message: `Detected ${detectedTextType.detectedType || "another text type"} instead of the required ${task.textType}.`,
+      source: "question_aware_writing",
+    }] : []),
+    ...(wrongRegister ? [{
+      code: "writing_register_mismatch",
+      message: `The writing register does not match the required ${task.register} register.`,
+      source: "question_aware_writing",
+    }] : []),
+  ];
+
+  let next = {
+    ...result,
+    taskCompletion: { completed, total, missing: canonicalMissing },
+    missingTaskPoints: canonicalMissing,
+    taskPointEvidence: evidence,
+    feedback,
+    improvementSummary,
+    reviewReasons: mergeReviewReasons(baseReviewReasons, canonicalReviewReasons),
+    writingDimensions: writingDimensions({
+      result,
+      completed,
+      total,
+      wrongRegister,
+      genreMismatch,
+    }),
+    ...(hasConsistencyIssue ? {
+      status: "needs_review",
+      shouldSendAutomatically: false,
+    } : {}),
+  };
+
+  if (currentWritingScore !== null && consistentWritingScore !== currentWritingScore) {
+    const weightedOutcome = recomputeOutcome(next, task, consistentWritingScore);
+    next = {
+      ...next,
+      score: weightedOutcome.finalScore,
+      finalScore: weightedOutcome.finalScore,
+      passed: weightedOutcome.passed,
+      scoreBreakdown: weightedOutcome.scoreBreakdown || next.scoreBreakdown || null,
+      writingMinimumMet: weightedOutcome.writingMinimumMet,
+      markingPolicy: weightedOutcome.policy,
+      writingScore: consistentWritingScore,
+      writingScorePercent: consistentWritingScore,
+      parts: updateWritingParts(next.parts, consistentWritingScore, task),
+    };
+  }
+
+  const existingGuard = next.ai?.questionAwareWritingGuard;
+  return {
+    ...next,
+    ai: {
+      ...(next.ai || {}),
+      ...(existingGuard ? {
+        questionAwareWritingGuard: {
+          ...existingGuard,
+          guardedWritingScore: consistentWritingScore,
+          genreMismatch,
+          registerMismatch: wrongRegister,
+          missingTaskPoints: canonicalMissing,
+          taskEvidenceSummary: taskEvidenceSummary(evidence),
+        },
+      } : {}),
+      questionAwareWritingConsistency: {
+        checked: true,
+        authority: "taskPointEvidence",
+        completed,
+        total,
+        missingTaskPoints: canonicalMissing,
+        scoreCap: hasConsistencyIssue ? cap : null,
+        repairs: [...new Set(repairs)],
+      },
+    },
+  };
 }
 
 function contradictionReviewReasons(issues = []) {
@@ -822,7 +986,10 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       return evidenceStatusByLabel.get(label) !== "met";
     })
     : structured.missing;
-  const missingTaskPoints = [...new Set([...structuredMissing, ...localMissing])];
+  const evidenceAuthoritative = ["A2", "B1"].includes(task.level) && taskPointEvidence.length > 0;
+  const missingTaskPoints = evidenceAuthoritative
+    ? [...new Set(canonicalSemanticMissing)]
+    : [...new Set([...structuredMissing, ...localMissing])];
   const semanticTask = [A1_WRITING_RUBRIC_VERSION, A2_WRITING_RUBRIC_VERSION, B1_WRITING_RUBRIC_VERSION].includes(task.rubricVersion);
   const total = semanticTask
     ? (task.taskPoints?.length || 0)
@@ -867,6 +1034,13 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     buildCanonicalStudentImprovement(missingTaskPoints),
     canonicalFormatFeedback,
   ]);
+  const finalizeWritingResult = (nextResult) => enforceA2B1WritingConsistency(nextResult, {
+    task,
+    taskPointEvidence,
+    genreMismatch,
+    wrongRegister,
+    detectedTextType,
+  });
 
   if (!hasGuardIssue) {
     const calibratedWritingScore = calibratedCompleteWritingScore({
@@ -883,7 +1057,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       const completed = semanticTask ? total : (structured.completed ?? total);
       const contradictions = markingContradictions({ result, task, currentWritingScore: effectiveWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
       const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
-      return {
+      return finalizeWritingResult({
         ...result,
         taskCompletion: semanticTask ? { completed, total, missing: [] } : result.taskCompletion,
         ...(semanticTask ? { missingTaskPoints: [] } : {}),
@@ -903,14 +1077,14 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
           ...(suspiciousZeroWriting ? { suspiciousWritingZero: true } : {}),
           ...(contradictions.length ? { markingContradictions: contradictions } : {}),
         },
-      };
+      });
     }
 
     const weightedOutcome = recomputeOutcome(result, task, calibratedWritingScore);
     const completed = semanticTask ? total : (structured.completed ?? total);
     const contradictions = markingContradictions({ result, task, currentWritingScore: effectiveWritingScore, completed, total, missingTaskPoints: [], wrongRegister });
     const dimensions = writingDimensions({ result, completed, total, wrongRegister, genreMismatch });
-    return {
+    return finalizeWritingResult({
       ...result,
       score: weightedOutcome.finalScore,
       finalScore: weightedOutcome.finalScore,
@@ -948,7 +1122,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
             : "Question-aware task completion confirmed the response without replacing the examiner's language score.",
         },
       },
-    };
+    });
   }
 
   let cap = guardCapForMissing(missingTaskPoints.length, total);
@@ -980,7 +1154,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     ...contradictionReviewReasons(contradictions),
   ];
 
-  return {
+  return finalizeWritingResult({
     ...result,
     score: weightedOutcome.finalScore,
     finalScore: weightedOutcome.finalScore,
@@ -1022,5 +1196,5 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         detectedWritingTextType: detectedTextType,
       },
     },
-  };
+  });
 }

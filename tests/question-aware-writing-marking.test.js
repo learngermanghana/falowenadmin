@@ -6,6 +6,7 @@ import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpecs } from "../src/data/a2WritingTaskSpecs.js";
 import {
   applyQuestionAwareWritingGuard,
+  enforceA2B1WritingConsistency,
   enrichOptionsWithQuestionAwareWritingTask,
   resolveQuestionAwareWritingTask,
 } from "../src/utils/questionAwareWritingMarking.js";
@@ -165,6 +166,9 @@ test("a genuine informal email that answers all three points is not capped", () 
   assert.equal(result.ai.questionAwareWritingGuard, undefined);
   assert.equal(result.ai.questionAwareWritingTask.assignmentKey, "B1-1.2");
   assert.equal(result.ai.detectedWritingTextType.detectedType, "informal_email");
+  assert.equal(result.ai.questionAwareWritingConsistency.checked, true);
+  assert.equal(result.ai.questionAwareWritingConsistency.authority, "taskPointEvidence");
+  assert.deepEqual(result.ai.questionAwareWritingConsistency.missingTaskPoints, []);
 });
 
 test("Reuben-style complete B1 email keeps its evidence-based language score", () => {
@@ -727,6 +731,68 @@ Leonard`;
   assert.doesNotMatch(result.improvementSummary, /addressed all task points/i);
   assert.equal(result.ai.questionAwareWritingGuard.missingTaskPoints[0], "Compare your mother and father's appearance");
   assert.equal(result.ai.questionAwareWritingGuard.guardedWritingScore, 80);
+});
+
+test("A2/B1 final consistency gate repairs stale completion, feedback, and score before save", () => {
+  const task = {
+    assignmentKey: "A2-1.3",
+    level: "A2",
+    textType: "informal_email",
+    register: "informal",
+    taskPoints: [
+      "Compare your mother and father's appearance",
+      "Compare their character",
+      "Give your personal opinion and ask Felix about his parents",
+    ],
+  };
+  const evidence = [
+    { label: task.taskPoints[0], status: "missing", evidence: "" },
+    { label: task.taskPoints[1], status: "met", evidence: "Beide sind freundlich." },
+    { label: task.taskPoints[2], status: "met", evidence: "Ich mag beide ... Und du?" },
+  ];
+
+  const result = enforceA2B1WritingConsistency({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 96,
+    writingScorePercent: 96,
+    finalScore: 98,
+    score: 98,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You completed all three points. You clearly compared their appearance. Good word order.",
+    improvementSummary: "All points are complete. Keep improving adjective endings.",
+    status: "marked",
+    shouldSendAutomatically: true,
+  }, {
+    task,
+    taskPointEvidence: evidence,
+    genreMismatch: false,
+    wrongRegister: false,
+    detectedTextType: { detectedType: "informal_email", confidence: 0.95 },
+  });
+
+  assert.deepEqual(result.taskCompletion, {
+    completed: 2,
+    total: 3,
+    missing: ["Compare your mother and father's appearance"],
+  });
+  assert.deepEqual(result.missingTaskPoints, ["Compare your mother and father's appearance"]);
+  assert.equal(result.writingScore, 80);
+  assert.equal(result.writingScorePercent, 80);
+  assert.equal(result.status, "needs_review");
+  assert.equal(result.shouldSendAutomatically, false);
+  assert.match(result.feedback, /Still missing: Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.feedback, /completed all three points|clearly compared their appearance/i);
+  assert.match(result.feedback, /Good word order/i);
+  assert.match(result.improvementSummary, /Next step: add Compare your mother and father's appearance/i);
+  assert.equal(result.ai.questionAwareWritingConsistency.checked, true);
+  assert.equal(result.ai.questionAwareWritingConsistency.authority, "taskPointEvidence");
+  assert.equal(result.ai.questionAwareWritingConsistency.scoreCap, 80);
+  assert.ok(result.ai.questionAwareWritingConsistency.repairs.includes("task_completion"));
+  assert.ok(result.ai.questionAwareWritingConsistency.repairs.includes("writing_score_cap"));
+  assert.ok(result.ai.questionAwareWritingConsistency.repairs.includes("feedback"));
 });
 
 test("A2-1.3 removes every resolved item from a semicolon missing-point list", () => {
