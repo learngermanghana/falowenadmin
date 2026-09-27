@@ -475,7 +475,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <span className="presenter-lesson-label">{slide.course} · {slide.day}</span>
           </div>
 
-          <PresenterSessionTimer slide={slide} />
+          <PresenterSessionTimer slide={slide} stage={stage} />
 
           {showPresenterTimer ? (
             <div className="presenter-v2-tools">
