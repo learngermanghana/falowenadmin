@@ -15,6 +15,62 @@ function lessonUrl(value = "") {
   return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
+function a1TeacherPurpose(stage = {}) {
+  const id = String(stage?.id || "");
+
+  if (id === "intro") return {
+    student: "Lernziel und Ablauf verstehen.",
+    teacher: "Kurz orientieren; die Grammatik wird auf der Falowen-Grammatikseite erklärt.",
+  };
+  if (id === "quick-check") return {
+    student: "Die eben gelernte Regel kurz erinnern.",
+    teacher: "Nur prüfen, nicht neu erklären. Bei Unsicherheit Needs review markieren.",
+  };
+  if (id === "grammar-check") return {
+    student: stage.examReadiness
+      ? "Einen Prüfungs-Prompt selbstständig beantworten."
+      : "Eine Grammatikfrage selbstständig beantworten.",
+    teacher: "Erst vollständig antworten lassen; danach Correct oder Needs review markieren.",
+  };
+  if (id === "mistake-fix") return {
+    student: "Einen typischen Grammatikfehler korrigieren.",
+    teacher: "Nur die Zielregel korrigieren; keine neue Nebenregel hinzufügen.",
+  };
+  if (id === "mistakes") return {
+    student: "Typische Fehler erkennen.",
+    teacher: "Kurz scannen und nur Fehler hervorheben, die in der Klasse tatsächlich auftreten.",
+  };
+  if (id === "sentence-build") return {
+    student: "Einen eigenen einfachen Satz mit der Zielgrammatik bilden.",
+    teacher: "Grammatik vor Wortschatz bewerten; ein einfacher korrekter Satz reicht.",
+  };
+  if (id === "workbook" || id === "mock") return {
+    student: id === "mock" ? "Die Prüfungsteile möglichst ohne Hilfe durchführen." : "Die Grammatik in Falowen weiter üben.",
+    teacher: id === "mock" ? "Hilfen reduzieren und Prüfungsbereitschaft beobachten." : "Zur passenden Falowen-Aufgabe wechseln.",
+  };
+  if (id === "exit-check") return {
+    student: "Eine frische Aufgabe ohne Hilfe lösen.",
+    teacher: "Nicht vorsagen; damit entscheiden, ob die Grammatik sitzt.",
+  };
+  if (id === "exam-map") return {
+    student: "Die drei Teile der A1-Sprechprüfung verstehen.",
+    teacher: "Nur das Format klären; noch keine lange Sprachproduktion verlangen.",
+  };
+  if (id === "teil-1" || id === "teil-3") return {
+    student: "Das Prüfungsformat an einem kurzen Beispiel sehen.",
+    teacher: "Ein Modell zeigen und danach sofort zur Anwendung wechseln.",
+  };
+  if (id === "readiness") return {
+    student: "Verstehen, was für die Prüfung schon sicher sein muss.",
+    teacher: "Anhand der Kriterien entscheiden, was noch Needs review ist.",
+  };
+  return {
+    student: "Die aktuelle Aufgabe bearbeiten.",
+    teacher: "Auf das eine Lernziel der Folie fokussieren.",
+  };
+}
+
+
 function stageList(slide, topicLabel) {
   const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const support = buildTeacherSlideSupport(slide);
@@ -206,7 +262,9 @@ export default function A1GrammarPresenter({
   const [itemIndex, setItemIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [participationQuestion, setParticipationQuestion] = useState(null);
+  const [focusMode, setFocusMode] = useState(false);
   const stage = stages[stageIndex] || stages[0];
+  const teacherPurpose = a1TeacherPurpose(stage);
 
   const checkMode = stage?.type === "check";
   const participationCheckMode = stage?.id === "grammar-check";
@@ -256,6 +314,10 @@ export default function A1GrammarPresenter({
     }
   }
 
+  function toggleFocusMode() {
+    setFocusMode((current) => !current);
+  }
+
   useEffect(() => {
     setShowAnswer(false);
   }, [participationQuestion?.id]);
@@ -291,7 +353,7 @@ export default function A1GrammarPresenter({
 
   return (
     <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
-      <div className="presenter-stage">
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
@@ -311,6 +373,7 @@ export default function A1GrammarPresenter({
 
           <div className="presenter-top-actions">
             <button type="button" onClick={enterFullscreen}>Fullscreen</button>
+            <button type="button" onClick={toggleFocusMode}>Focus view</button>
             <button type="button" onClick={onExit}>Exit presenter</button>
           </div>
         </header>
@@ -326,6 +389,18 @@ export default function A1GrammarPresenter({
         </div>
 
         <main className={`presenter-content presenter-content-${stage.type}`}>
+          {!focusMode && teacherPurpose ? (
+            <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
+              <div>
+                <strong>Student</strong>
+                <span>{teacherPurpose.student}</span>
+              </div>
+              <div>
+                <strong>Teacher</strong>
+                <span>{teacherPurpose.teacher}</span>
+              </div>
+            </aside>
+          ) : null}
           {stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>
@@ -409,6 +484,15 @@ export default function A1GrammarPresenter({
             </>
           )}
         </main>
+
+        {focusMode ? (
+          <div className="presenter-focus-dock" aria-label="Focus mode controls">
+            <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
+            <span>{stageIndex + 1}/{stages.length}</span>
+            <button type="button" onClick={toggleFocusMode} aria-label="Exit focus view">×</button>
+            <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">→</button>
+          </div>
+        ) : null}
 
         <footer className="presenter-footer">
           <button type="button" onClick={previous} disabled={atStart}>← Previous</button>
