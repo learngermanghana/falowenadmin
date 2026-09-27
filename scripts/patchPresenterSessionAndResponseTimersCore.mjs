@@ -17,7 +17,7 @@ teachingSource = replaceOnce(
 teachingSource = replaceOnce(
   teachingSource,
   '          {showPresenterTimer ? (',
-  '          <PresenterSessionTimer slide={slide} />\n\n          {showPresenterTimer ? (',
+  '          <PresenterSessionTimer slide={slide} stage={stage} />\n\n          {showPresenterTimer ? (',
   "TeachingSlidePresenter session timer placement",
 );
 fs.writeFileSync(teachingTarget, teachingSource);
@@ -33,7 +33,7 @@ a1Source = replaceOnce(
 a1Source = replaceOnce(
   a1Source,
   '          <div className="presenter-v2-tools">',
-  '          <PresenterSessionTimer slide={slide} />\n\n          <div className="presenter-v2-tools">',
+  '          <PresenterSessionTimer slide={slide} stage={stage} />\n\n          <div className="presenter-v2-tools">',
   "A1 presenter session timer placement",
 );
 fs.writeFileSync(a1Target, a1Source);
