@@ -398,54 +398,38 @@ const VOCABULARY_CLOZE_RULES = [
   { pattern: /\bMaßnahme(?:n)?\b/i, clue: "konkrete Handlung zur Lösung eines Problems" },
 ];
 
-const VOCABULARY_CLOZE_STOPWORDS = new Set([
-  "aber", "alle", "also", "auch", "auf", "aus", "bei", "bis", "das", "dass", "dem", "den", "der", "die",
-  "ein", "eine", "einen", "einer", "eines", "für", "hat", "haben", "ich", "ist", "kann", "man", "mit",
-  "nach", "nicht", "oder", "sich", "sind", "und", "von", "vor", "wenn", "wie", "wir", "wird", "zu", "zum", "zur",
-]);
-
-function buildVocabularyGapItems(items = [], level = "") {
+function buildVocabularyGapItems(items = []) {
   const results = [];
+
   for (const item of Array.isArray(items) ? items : []) {
-    const sources = [item?.example, item?.term].map((value) => String(value || "").trim()).filter(Boolean);
-    let challenge = null;
+    const term = String(item?.term || "").trim();
+    const example = String(item?.example || "").trim();
+    if (!term) continue;
 
-    for (const source of sources) {
-      for (const rule of VOCABULARY_CLOZE_RULES) {
-        const match = source.match(rule.pattern);
-        if (!match) continue;
-        challenge = {
-          sentence: source.replace(match[0], "______"),
-          answer: match[0],
-          clue: rule.clue,
-          term: String(item?.term || "").trim(),
-        };
-        break;
-      }
-      if (challenge) break;
-    }
+    const selectedRule = VOCABULARY_CLOZE_RULES.find((rule) => rule.pattern.test(term));
+    if (!selectedRule) continue;
 
-    if (!challenge) {
-      const source = sources[0] || "";
-      const candidates = source
-        .match(/[A-Za-zÄÖÜäöüß]{5,}/g)
-        ?.filter((word) => !VOCABULARY_CLOZE_STOPWORDS.has(word.toLocaleLowerCase("de"))) || [];
-      const target = candidates.sort((a, b) => b.length - a.length)[0];
-      if (target) {
-        challenge = {
-          sentence: source.replace(target, "______"),
-          answer: target,
-          clue: level === "A2"
-            ? "kurze Bedeutung aus dem heutigen Thema"
-            : "Synonym oder kurze Bedeutung aus dem heutigen Kontext",
-          term: String(item?.term || "").trim(),
-        };
-      }
-    }
+    // Run the RegExp again because .test() may mutate lastIndex on a future global rule.
+    const termMatch = term.match(selectedRule.pattern);
+    if (!termMatch?.[0]) continue;
 
-    if (challenge) results.push(challenge);
+    const exampleMatch = example ? example.match(selectedRule.pattern) : null;
+    const answer = exampleMatch?.[0] || termMatch[0];
+    const source = exampleMatch?.[0] ? example : term;
+    const sentence = source.replace(exampleMatch?.[0] || termMatch[0], "______");
+
+    if (!sentence.includes("______") || !selectedRule.clue) continue;
+
+    results.push({
+      sentence,
+      answer,
+      clue: selectedRule.clue,
+      term,
+    });
+
     if (results.length >= 4) break;
   }
+
   return results;
 }
 
@@ -982,54 +966,10 @@ function extractMistakeForm(value = "") {
 }
 
 
-const KNOWLEDGE_ANSWER_STOPWORDS = new Set([
-  "aber", "alle", "als", "auch", "auf", "aus", "bei", "das", "dass", "dem", "den", "der", "die",
-  "ein", "eine", "einen", "einer", "eines", "für", "hat", "haben", "ist", "kann", "können", "man",
-  "mit", "nach", "nicht", "oder", "sich", "sind", "und", "von", "vor", "wann", "warum", "was",
-  "welche", "welcher", "welches", "wenn", "wie", "wird", "wo", "zu", "zum", "zur",
-]);
-
-function knowledgeTokens(value = "") {
-  return String(value || "")
-    .toLocaleLowerCase("de")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .match(/[a-zäöüß]{3,}/g) || [];
-}
-
-function extractKnowledgeAnswer(question = "", textDe = "") {
-  const sentences = String(textDe || "")
-    .match(/[^.!?]+[.!?]?/g)
-    ?.map((sentence) => sentence.trim())
-    .filter(Boolean) || [];
-  if (!sentences.length) return String(textDe || "").trim();
-
-  const keywords = knowledgeTokens(question)
-    .filter((token) => !KNOWLEDGE_ANSWER_STOPWORDS.has(token));
-  if (!keywords.length) return sentences[0];
-
-  let bestSentence = sentences[0];
-  let bestScore = -1;
-  for (const sentence of sentences) {
-    const sentenceTokens = new Set(knowledgeTokens(sentence));
-    const score = keywords.reduce((total, token) => (
-      total + (sentenceTokens.has(token) ? 2 : [...sentenceTokens].some((candidate) => candidate.startsWith(token) || token.startsWith(candidate)) ? 1 : 0)
-    ), 0);
-    if (score > bestScore) {
-      bestScore = score;
-      bestSentence = sentence;
-    }
-  }
-  return bestSentence;
-}
-
 function buildKnowledgeAnswerItems(knowledge = {}) {
   const checks = Array.isArray(knowledge.checks) ? knowledge.checks : [];
   const explicit = Array.isArray(knowledge.answers) ? knowledge.answers : [];
-  return checks.map((question, index) => {
-    const stored = String(explicit[index] || "").trim();
-    return stored || extractKnowledgeAnswer(question, knowledge.textDe);
-  });
+  return checks.map((_, index) => String(explicit[index] || "").trim());
 }
 
 function buildCorrectionMistakes(items = [], grammarRules = []) {
