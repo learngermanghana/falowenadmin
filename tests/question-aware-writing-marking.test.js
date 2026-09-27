@@ -597,7 +597,7 @@ test("A2-1.3 deterministic evidence overrides a stale AI claim that character co
       message: "Required writing points are missing: Compare their character.",
       source: "question_aware_writing",
     }],
-    feedback: "The response compares the parents and gives relevant examples.",
+    feedback: "The response compares the parents and gives relevant examples. Required writing points are missing: Compare their character.",
     corrections: [],
     status: "needs_review",
     confidence: 0.8,
@@ -610,6 +610,8 @@ test("A2-1.3 deterministic evidence overrides a stale AI claim that character co
   assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "met", "met"]);
   assert.match(result.taskPointEvidence[1].evidence, /freundlich|verantwortlich/i);
   assert.equal((result.reviewReasons || []).some((item) => item.code === "missing_task_points"), false);
+  assert.doesNotMatch(result.feedback, /missing:\s*Compare their character|missing.*Compare their character/i);
+  assert.match(result.feedback, /compares the parents and gives relevant examples/i);
   assert.equal(result.ai?.questionAwareWritingGuard, undefined);
   assert.equal(result.writingScore, 78);
   assert.equal(result.writingScorePercent, 78);
@@ -617,6 +619,9 @@ test("A2-1.3 deterministic evidence overrides a stale AI claim that character co
   assert.ok(result.corrections.some((item) => item.from === "meine Vater" && item.to === "mein Vater"));
   assert.ok(result.corrections.some((item) => item.from === "in der Kindergarten" && item.to === "im Kindergarten"));
   assert.ok(result.corrections.some((item) => /Was mögen Sie besonders über deinen Eltern/i.test(item.from) && item.to === "Was magst du besonders an deinen Eltern?"));
+  assert.ok(result.corrections.some((item) => /Ich hoffe es geht dir gut\?/i.test(item.from) && /Ich hoffe, es geht dir gut\./i.test(item.to)));
+  assert.ok(result.corrections.some((item) => /weil,/i.test(item.from) && /weil\s+(?:ich|er|sie)/i.test(item.to)));
+  assert.ok(result.corrections.some((item) => /zuverlassig/i.test(item.from) && item.to === "zuverlässig"));
 
   const comparison = compareExaminerResults(
     { finalScore: 90, writingScore: 80, confidence: 0.84, status: "marked" },
