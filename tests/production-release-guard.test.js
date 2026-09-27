@@ -21,9 +21,16 @@ test("production release workflow gates, verifies and retries Vercel production"
 
   assert.match(workflow, /branches: \[main\]/);
   assert.match(workflow, /release-gate:/);
+  assert.match(workflow, /release-gate:[\s\S]*github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /verify-production:[\s\S]*github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /compare\/\$TARGET_SHA\.\.\.\$deployed/);
+  assert.match(workflow, /relation" = "ahead"/);
+  assert.match(workflow, /newer descendant/);
+  assert.match(workflow, /patchPresenterStudentPicker\.mjs/);
+  assert.match(workflow, /patchPresenterRandomAndAttendanceDiagnostics\.mjs/);
   assert.match(workflow, /npm run build/);
   assert.match(workflow, /Wait for Vercel Git deployment/);
-  assert.match(workflow, /Verify production serves this exact main SHA/);
+  assert.match(workflow, /Verify production contains this main commit/);
   assert.match(workflow, /scheduled-rate-limit-retry:/);
   assert.match(workflow, /rate limited/);
   assert.match(workflow, /\.vercel-production-retry\.txt/);
