@@ -3,7 +3,7 @@ import { getC1CanonicalLesson } from "./c1CanonicalCurriculum.js";
 
 // A2/B1/B2 classroom foundations mirror the student Falowen curriculum.
 // C1 is resolved from the canonical learner-aligned C1 curriculum manifest.
-// Student source snapshot: bafaffbb5fee47a0b9b4effa040dc69cf052f5fa
+// Student source snapshot: 3cf869444ad03e88cc7a1dcfac10413ca11517aa
 // Keep this file aligned whenever the learner-side A2/B1/B2/C1 foundation copy changes.
 const A2_SITUATIONS = Object.freeze({
   1: {
@@ -465,4 +465,4 @@ export function getPresenterTopicFoundation(slide = {}) {
 }
 
 export const PRESENTER_FOUNDATION_LEVELS = Object.freeze(["A2", "B1", "B2", "C1", "C2"]);
-export const PRESENTER_FOUNDATION_SOURCE_SHA = "bafaffbb5fee47a0b9b4effa040dc69cf052f5fa";
+export const PRESENTER_FOUNDATION_SOURCE_SHA = "3cf869444ad03e88cc7a1dcfac10413ca11517aa";
