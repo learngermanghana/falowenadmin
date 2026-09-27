@@ -9,7 +9,8 @@ function read(path) {
 test("presenter class timer caps oversized shared durations but honors shorter scheduled sessions", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   const timing = read("src/utils/presenterSessionTiming.js");
-  for (const level of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
+  assert.match(timing, /A1:\s*60/);
+  for (const level of ["A2", "B1", "B2", "C1", "C2"]) {
     assert.match(timing, new RegExp(`${level}:\\s*90`));
   }
   assert.match(source, /configuredDurationMinutes/);
