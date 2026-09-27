@@ -1909,3 +1909,225 @@
     font-size: 0.7rem;
   }
 }
+
+
+/* Wissensimpuls: keep the reading text readable without crowding the oral checks. */
+.presenter-content-knowledge .presenter-knowledge-heading h1 {
+  font-size: clamp(1.8rem, 3.2vw, 3.2rem);
+  line-height: 1.08;
+  margin-bottom: 0;
+}
+
+.presenter-content-knowledge .presenter-knowledge-text {
+  padding: clamp(0.85rem, 1.8vw, 1.2rem) clamp(1rem, 2vw, 1.4rem);
+}
+
+.presenter-content-knowledge .presenter-knowledge-text p {
+  font-size: clamp(1.05rem, 1.75vw, 1.55rem);
+  line-height: 1.42;
+  font-weight: 620;
+}
+
+.presenter-knowledge-checks ol {
+  list-style-position: outside;
+}
+
+.presenter-knowledge-check {
+  padding-right: 0.15rem;
+}
+
+.presenter-knowledge-question-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.presenter-knowledge-question-row > span {
+  min-width: 0;
+}
+
+.presenter-knowledge-question-row button {
+  flex: 0 0 auto;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.38rem 0.58rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.presenter-knowledge-answer {
+  display: flex;
+  gap: 0.45rem;
+  align-items: baseline;
+  margin-top: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 9px;
+  background: #f0fdf4;
+  color: #14532d;
+  font-size: clamp(0.88rem, 1.15vw, 1rem);
+  line-height: 1.35;
+}
+
+.presenter-knowledge-answer strong {
+  color: #166534;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.presenter-stage.is-focus-mode .presenter-content-knowledge {
+  padding-bottom: clamp(3.4rem, 5vw, 4.5rem);
+}
+
+@media (max-width: 760px) {
+  .presenter-knowledge-question-row {
+    grid-template-columns: 1fr;
+  }
+
+  .presenter-knowledge-question-row button {
+    width: fit-content;
+  }
+}
+
+
+/* Vocabulary cloze mode shared by A2, B1, B2, C1 and C2. */
+.presenter-vocabulary-challenge-start {
+  width: fit-content;
+  border: 1px solid #2563eb;
+  border-radius: 10px;
+  background: #1d4ed8;
+  color: #fff;
+  padding: 0.6rem 0.85rem;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-vocabulary-challenge {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.presenter-vocabulary-challenge-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.presenter-vocabulary-challenge-heading > span {
+  color: #1d4ed8;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.presenter-vocabulary-challenge-heading h1 {
+  margin: 0;
+}
+
+.presenter-vocabulary-challenge-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: clamp(0.95rem, 1.35vw, 1.15rem);
+}
+
+.presenter-vocabulary-cloze-card {
+  display: grid;
+  gap: 0.9rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  background: #eff6ff;
+  padding: clamp(1rem, 2.2vw, 1.5rem);
+}
+
+.presenter-vocabulary-cloze-sentence {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.45rem, 3vw, 2.65rem);
+  line-height: 1.28;
+  font-weight: 800;
+}
+
+.presenter-vocabulary-clue,
+.presenter-vocabulary-answer {
+  display: grid;
+  gap: 0.2rem;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+}
+
+.presenter-vocabulary-clue {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.presenter-vocabulary-answer {
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  color: #14532d;
+}
+
+.presenter-vocabulary-clue strong,
+.presenter-vocabulary-answer strong {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-vocabulary-clue span,
+.presenter-vocabulary-answer span {
+  font-size: clamp(0.95rem, 1.3vw, 1.12rem);
+  line-height: 1.35;
+  font-weight: 750;
+}
+
+.presenter-vocabulary-challenge-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.presenter-vocabulary-challenge-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.48rem 0.68rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-vocabulary-challenge-actions button:nth-child(2) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.presenter-vocabulary-challenge-actions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.presenter-fit-tight .presenter-vocabulary-cloze-sentence {
+  font-size: clamp(1.25rem, 2.55vw, 2.2rem);
+}
+
+@media (max-width: 760px) {
+  .presenter-vocabulary-challenge-actions button {
+    flex: 1 1 auto;
+  }
+}
