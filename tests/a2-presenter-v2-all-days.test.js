@@ -18,7 +18,7 @@ const ASSIGNMENT_IDS = [
 ];
 
 const REQUIRED_STAGES = [
-  "intro", "warmup", "knowledge", "phrases", "grammar", "examples",
+  "intro", "warmup", "knowledge", "phrases", "grammar-check",
   "practice", "questions", "workbook", "lesson-summary",
 ];
 
@@ -55,9 +55,21 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     });
     assert.equal(stageIds.includes("wrapup"), false, `${slide.assignmentId} should not show the redundant mini-presentation slide`);
 
+    const grammarCheck = stages.find((stage) => stage.id === "grammar-check");
     const practice = stages.find((stage) => stage.id === "practice");
     const workbook = stages.find((stage) => stage.id === "workbook");
     const questions = stages.find((stage) => stage.id === "questions");
+
+    assert.equal(grammarCheck.type, "grammar-check");
+    assert.equal(grammarCheck.items.length, 3, `${slide.assignmentId} should use three short grammar diagnostics`);
+    assert.deepEqual(
+      grammarCheck.items.map((item) => item.id),
+      ["recognise-rule", grammarCheck.items[1].id, "build-sentence"],
+    );
+    assert.ok(grammarCheck.items.every((item) => item.prompt && item.answer), `${slide.assignmentId} grammar checks need teacher keys`);
+    assert.equal(stageIds.includes("grammar"), false, `${slide.assignmentId} should not reteach grammar in a separate slide`);
+    assert.equal(stageIds.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
+    assert.equal(stageIds.includes("mistakes"), false, `${slide.assignmentId} should fold correction into the grammar check`);
 
     assert.equal(practice.type, "flow");
     assert.equal(practice.items.length, 1, `${slide.assignmentId} should have one focused practice activity`);
