@@ -91,12 +91,27 @@ test("A1-5.9 propagates exam-readiness context and distinguishes performance fro
   const pool = buildA1PresenterQuestionPool(checks.slice(0, -1), 15, "a1-5.9-test");
 
   assert.equal(slide.estimatedDuration, "60 minutes");
+  const phaseMinutes = slide.interactionFlow.map((item) => Number(String(item.detailEn).match(/(\d+)\s*min/i)?.[1] || 0));
+  assert.deepEqual(phaseMinutes, [5, 5, 10, 10, 10, 15, 5]);
+  assert.equal(phaseMinutes.reduce((sum, value) => sum + value, 0), 60, "A1-5.9 phase plan must fit the 60-minute class");
   assert.deepEqual([...modes].sort(), ["knowledge", "performance"]);
   assert.ok(pool.some((item) => item.responseMode === "knowledge"));
   assert.ok(pool.some((item) => item.responseMode === "performance"));
   assert.ok(
     pool.filter((item) => item.responseMode === "performance").every((item) => !/Teach this rule|give one simple German example/i.test(item.questionDe)),
     "generated performance prompts must remain speaking tasks",
+  );
+
+  const largePool = buildA1PresenterQuestionPool(checks.slice(0, -1), 22, "a1-5.9-large-class");
+  const knowledgeItems = largePool.filter((item) => item.responseMode === "knowledge");
+  assert.ok(knowledgeItems.length >= 3, "large classes should include generated knowledge checks");
+  assert.ok(
+    knowledgeItems.every((item) => !/give one simple German example|teach this rule|explain why/i.test(item.questionDe)),
+    "knowledge variants must not request content that the factual Teacher Guide does not validate",
+  );
+  assert.ok(
+    knowledgeItems.every((item) => checks.some((check) => check.questionDe === item.sourceQuestion && check.answerDe === item.answerDe)),
+    "generated knowledge checks must retain the original factual guide",
   );
   assert.match(source, /\.map\(\(stage\) => \(\{ \.\.\.stage, examReadiness: true \}\)\)/);
   assert.match(source, /Readiness-Check selbstständig bearbeiten/);

@@ -18,6 +18,13 @@ const PERFORMANCE_VARIANTS = [
   (question) => `Do this speaking task without copying the previous student's wording: ${question}`,
 ];
 
+const KNOWLEDGE_VARIANTS = [
+  (question) => question,
+  (question) => `Answer this readiness question without looking at the notes: ${question}`,
+  (question) => `Give the correct exam strategy or factual answer: ${question}`,
+  (question) => `Answer the same readiness question briefly and accurately: ${question}`,
+];
+
 const clean = (value) => String(value ?? "").trim();
 const MIN_A1_PRESENTER_QUESTIONS = 10;
 const MAX_A1_PRESENTER_QUESTIONS = 150;
@@ -31,7 +38,7 @@ function normalizeQuestion(question = {}, index = 0) {
     answerDe: clean(question.answerDe || question.answer || question.modelAnswer),
     noteEn: clean(question.noteEn || question.note || ""),
     conceptLabel: clean(question.conceptLabel) || presenterConceptLabel(questionText),
-    responseMode: clean(question.responseMode || "knowledge"),
+    responseMode: clean(question.responseMode || "concept"),
   };
 }
 
@@ -57,7 +64,11 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
   while (pool.length < requested) {
     for (let sourceIndex = 0; sourceIndex < normalized.length && pool.length < requested; sourceIndex += 1) {
       const base = normalized[sourceIndex];
-      const variants = base.responseMode === "performance" ? PERFORMANCE_VARIANTS : VARIANTS;
+      const variants = base.responseMode === "performance"
+        ? PERFORMANCE_VARIANTS
+        : base.responseMode === "knowledge"
+          ? KNOWLEDGE_VARIANTS
+          : VARIANTS;
       const variantIndex = cycle % variants.length;
       const round = Math.floor(cycle / variants.length);
       const rendered = variants[variantIndex](base.questionDe);
