@@ -846,6 +846,35 @@ function buildB1GrammarSupportItems(support = {}) {
   })).filter((item) => item.supportEn);
 }
 
+function buildCorrectionMistakes(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .map((item, index) => {
+      const raw = String(item || "").trim();
+      if (!raw) return null;
+
+      const insteadMatch = raw.match(/^(.*?)\s+instead of\s+(.*?)(?:[.!]|$)/i);
+      const arrowMatch = raw.match(/^(.*?)\s*(?:→|->)\s*(.*?)(?:[.!]|$)/);
+      let wrong = "";
+      let correct = "";
+
+      if (insteadMatch) {
+        wrong = insteadMatch[1].replace(/^(using|saying|writing)\s+/i, "").trim();
+        correct = insteadMatch[2].trim();
+      } else if (arrowMatch) {
+        wrong = arrowMatch[1].trim();
+        correct = arrowMatch[2].trim();
+      }
+
+      return {
+        id: `mistake-${index + 1}`,
+        wrong: wrong || "Check the incorrect form in the example.",
+        correct: correct || "Use the corrected target form from today’s lesson.",
+        why: raw,
+      };
+    })
+    .filter(Boolean);
+}
+
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const support = buildTeacherSlideSupport(slide);
   const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
@@ -966,6 +995,14 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 6),
       }] : []),
+      {
+        id: "mistakes",
+        type: "correction-list",
+        kicker: "Fehlerkorrektur",
+        title: "Common mistakes · Wrong → Correct → Why",
+        items: buildCorrectionMistakes(mistakeItems),
+        suggestedMinutes: 6,
+      },
       speakingStage,
       workbookStage,
     ];
@@ -1045,6 +1082,14 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }],
         suggestedMinutes: Number(focusedPractice.minutes || 7),
       }] : []),
+      {
+        id: "mistakes",
+        type: "correction-list",
+        kicker: "Fehlerkorrektur",
+        title: "Common mistakes · Wrong → Correct → Why",
+        items: buildCorrectionMistakes(mistakeItems),
+        suggestedMinutes: 7,
+      },
       {
         ...speakingStage,
         title: "Sprechen · anwenden und begründen",
