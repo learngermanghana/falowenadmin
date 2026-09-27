@@ -862,6 +862,57 @@ function extractMistakeForm(value = "") {
   return cleanCorrectionFragment(colon >= 0 ? text.slice(colon + 1) : text);
 }
 
+
+const KNOWLEDGE_ANSWER_STOPWORDS = new Set([
+  "aber", "alle", "als", "auch", "auf", "aus", "bei", "das", "dass", "dem", "den", "der", "die",
+  "ein", "eine", "einen", "einer", "eines", "für", "hat", "haben", "ist", "kann", "können", "man",
+  "mit", "nach", "nicht", "oder", "sich", "sind", "und", "von", "vor", "wann", "warum", "was",
+  "welche", "welcher", "welches", "wenn", "wie", "wird", "wo", "zu", "zum", "zur",
+]);
+
+function knowledgeTokens(value = "") {
+  return String(value || "")
+    .toLocaleLowerCase("de")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .match(/[a-zäöüß]{3,}/g) || [];
+}
+
+function extractKnowledgeAnswer(question = "", textDe = "") {
+  const sentences = String(textDe || "")
+    .match(/[^.!?]+[.!?]?/g)
+    ?.map((sentence) => sentence.trim())
+    .filter(Boolean) || [];
+  if (!sentences.length) return String(textDe || "").trim();
+
+  const keywords = knowledgeTokens(question)
+    .filter((token) => !KNOWLEDGE_ANSWER_STOPWORDS.has(token));
+  if (!keywords.length) return sentences[0];
+
+  let bestSentence = sentences[0];
+  let bestScore = -1;
+  for (const sentence of sentences) {
+    const sentenceTokens = new Set(knowledgeTokens(sentence));
+    const score = keywords.reduce((total, token) => (
+      total + (sentenceTokens.has(token) ? 2 : [...sentenceTokens].some((candidate) => candidate.startsWith(token) || token.startsWith(candidate)) ? 1 : 0)
+    ), 0);
+    if (score > bestScore) {
+      bestScore = score;
+      bestSentence = sentence;
+    }
+  }
+  return bestSentence;
+}
+
+function buildKnowledgeAnswerItems(knowledge = {}) {
+  const checks = Array.isArray(knowledge.checks) ? knowledge.checks : [];
+  const explicit = Array.isArray(knowledge.answers) ? knowledge.answers : [];
+  return checks.map((question, index) => {
+    const stored = String(explicit[index] || "").trim();
+    return stored || extractKnowledgeAnswer(question, knowledge.textDe);
+  });
+}
+
 function buildCorrectionMistakes(items = [], grammarRules = []) {
   return (Array.isArray(items) ? items : [])
     .map((item, index) => {
@@ -989,6 +1040,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         title: knowledge.title,
         textDe: knowledge.textDe,
         items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
+        answerItems: buildKnowledgeAnswerItems(knowledge),
         instruction: "Lest den kurzen Text 1 Minute. Beantwortet danach die Fragen mündlich.",
         suggestedMinutes: 5,
       }] : []),
@@ -1074,6 +1126,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         title: knowledge.title,
         textDe: knowledge.textDe,
         items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
+        answerItems: buildKnowledgeAnswerItems(knowledge),
         instruction: "Lies für die Hauptidee. Beantworte danach zwei Textfragen und eine Denkfrage.",
         suggestedMinutes: 6,
       }] : []),
