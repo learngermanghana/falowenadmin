@@ -989,7 +989,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         title: knowledge.title,
         textDe: knowledge.textDe,
         items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
-        instruction: "Lies zuerst für die Bedeutung. Beantworte danach die drei kurzen Checks.",
+        instruction: "Lest den kurzen Text 1 Minute. Beantwortet danach die Fragen mündlich.",
         suggestedMinutes: 5,
       }] : []),
       {
