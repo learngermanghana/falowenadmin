@@ -330,6 +330,125 @@ function vocabularyInstruction(level = "") {
   return "Verwende mindestens zwei Wörter oder Ausdrücke in eigenen Sätzen.";
 }
 
+
+const VOCABULARY_CLOZE_RULES = [
+  { pattern: /\bTermine?n?\b/i, clue: "Verabredungen oder feste Zeiten" },
+  { pattern: /\bplan(?:en|t|e|st)?\b/i, clue: "organisieren oder vorbereiten" },
+  { pattern: /\bVerfügbarkeit\b/i, clue: "freie Zeit oder Möglichkeit" },
+  { pattern: /\bPflicht\b/i, clue: "etwas, das man machen muss" },
+  { pattern: /\bverplan(?:en|t|e|st)?\b/i, clue: "die Zeit komplett im Voraus einteilen" },
+  { pattern: /\bflexibel\b/i, clue: "anpassungsfähig" },
+  { pattern: /\bsinnvoll\b/i, clue: "vernünftig oder nützlich" },
+  { pattern: /\bwichtig\b/i, clue: "bedeutend" },
+  { pattern: /\bschwierig\b/i, clue: "nicht einfach" },
+  { pattern: /\bMöglichkeit(?:en)?\b/i, clue: "Option oder Chance" },
+  { pattern: /\bVorteil(?:e)?\b/i, clue: "positive Seite" },
+  { pattern: /\bNachteil(?:e)?\b/i, clue: "negative Seite" },
+  { pattern: /\bProblem(?:e)?\b/i, clue: "Schwierigkeit" },
+  { pattern: /\bLösung(?:en)?\b/i, clue: "Antwort auf ein Problem" },
+  { pattern: /\bverbesser(?:n|t|e|st)?\b/i, clue: "besser machen" },
+  { pattern: /\breduzier(?:en|t|e|st)?\b/i, clue: "verringern" },
+  { pattern: /\berhöh(?:en|t|e|st)?\b/i, clue: "steigern" },
+  { pattern: /\bschütz(?:en|t|e|st)?\b/i, clue: "bewahren" },
+  { pattern: /\bvermeid(?:en|et|e|est)?\b/i, clue: "verhindern oder nicht tun" },
+  { pattern: /\bunterstütz(?:en|t|e|st)?\b/i, clue: "helfen oder fördern" },
+  { pattern: /\bVerantwortung\b/i, clue: "Zuständigkeit oder Pflicht" },
+  { pattern: /\bnachhaltig(?:e|en|er|es)?\b/i, clue: "langfristig umweltfreundlich" },
+  { pattern: /\beffizient(?:e|en|er|es)?\b/i, clue: "wirksam mit wenig Aufwand" },
+  { pattern: /\bwirksam(?:e|en|er|es)?\b/i, clue: "effektiv" },
+  { pattern: /\bbeurteil(?:en|t|e|st)?\b/i, clue: "bewerten" },
+  { pattern: /\bbewert(?:en|et|e|est)?\b/i, clue: "einschätzen oder beurteilen" },
+  { pattern: /\bberücksichtig(?:en|t|e|st)?\b/i, clue: "beachten" },
+  { pattern: /\bermöglich(?:en|t|e|st)?\b/i, clue: "möglich machen" },
+  { pattern: /\berforderlich\b/i, clue: "notwendig" },
+  { pattern: /\bausreichend\b/i, clue: "genug" },
+  { pattern: /\bwesentlich\b/i, clue: "zentral oder sehr wichtig" },
+  { pattern: /\berheblich\b/i, clue: "deutlich oder beträchtlich" },
+  { pattern: /\bzunehmend\b/i, clue: "immer mehr" },
+  { pattern: /\blangfristig\b/i, clue: "auf lange Sicht" },
+  { pattern: /\bkurzfristig\b/i, clue: "für kurze Zeit" },
+  { pattern: /\bgrundsätzlich\b/i, clue: "im Prinzip" },
+  { pattern: /\bbedingt\b/i, clue: "nur teilweise oder unter Bedingungen" },
+  { pattern: /\bkritisch\b/i, clue: "skeptisch oder problematisch" },
+  { pattern: /\bdennoch\b/i, clue: "trotzdem" },
+  { pattern: /\bhingegen\b/i, clue: "dagegen oder im Gegensatz dazu" },
+  { pattern: /\bvermutlich\b/i, clue: "wahrscheinlich" },
+  { pattern: /\bfolglich\b/i, clue: "deshalb" },
+  { pattern: /\bsofern\b/i, clue: "wenn oder vorausgesetzt, dass" },
+  { pattern: /\bKernaussage(?:n)?\b/i, clue: "wichtigste Aussage" },
+  { pattern: /\bSpannung(?:en)?\b/i, clue: "Konflikt oder Gegensatz" },
+  { pattern: /\bRessourcenschonung\b/i, clue: "sparsamer Umgang mit Rohstoffen" },
+  { pattern: /\bReparierbarkeit\b/i, clue: "Möglichkeit, etwas zu reparieren" },
+  { pattern: /\bWiederverwendung\b/i, clue: "noch einmal benutzen" },
+  { pattern: /\bWegwerfmentalität\b/i, clue: "Dinge schnell wegwerfen statt lange nutzen" },
+  { pattern: /\bSuffizienz\b/i, clue: "mit weniger Ressourcen auskommen" },
+  { pattern: /\bRohstoffverbrauch\b/i, clue: "Nutzung von natürlichen Materialien" },
+  { pattern: /\bAnreiz(?:e)?\b/i, clue: "Motivation oder Vorteil, der zu etwas bewegt" },
+  { pattern: /\bLanglebigkeit\b/i, clue: "lange Nutzungsdauer" },
+  { pattern: /\bpräzise\b/i, clue: "genau" },
+  { pattern: /\bdifferenziert(?:e|en|er|es)?\b/i, clue: "mit mehreren Seiten genau betrachtet" },
+  { pattern: /\bplausibel\b/i, clue: "nachvollziehbar oder glaubwürdig" },
+  { pattern: /\bEvidenz\b/i, clue: "Belege oder Nachweise" },
+  { pattern: /\bAnnahme(?:n)?\b/i, clue: "Voraussetzung, die man zunächst für wahr hält" },
+  { pattern: /\brelativier(?:en|t|e|st)?\b/i, clue: "einschränken oder weniger absolut machen" },
+  { pattern: /\bkontraproduktiv\b/i, clue: "mit einer Wirkung entgegen dem eigentlichen Ziel" },
+  { pattern: /\bAbwägung(?:en)?\b/i, clue: "Vergleich von Vor- und Nachteilen" },
+  { pattern: /\bZusammenhang(?:e|änge)?\b/i, clue: "Verbindung oder Beziehung" },
+  { pattern: /\bAuswirkung(?:en)?\b/i, clue: "Folgen" },
+  { pattern: /\bMaßnahme(?:n)?\b/i, clue: "konkrete Handlung zur Lösung eines Problems" },
+];
+
+const VOCABULARY_CLOZE_STOPWORDS = new Set([
+  "aber", "alle", "also", "auch", "auf", "aus", "bei", "bis", "das", "dass", "dem", "den", "der", "die",
+  "ein", "eine", "einen", "einer", "eines", "für", "hat", "haben", "ich", "ist", "kann", "man", "mit",
+  "nach", "nicht", "oder", "sich", "sind", "und", "von", "vor", "wenn", "wie", "wir", "wird", "zu", "zum", "zur",
+]);
+
+function buildVocabularyGapItems(items = [], level = "") {
+  const results = [];
+  for (const item of Array.isArray(items) ? items : []) {
+    const sources = [item?.example, item?.term].map((value) => String(value || "").trim()).filter(Boolean);
+    let challenge = null;
+
+    for (const source of sources) {
+      for (const rule of VOCABULARY_CLOZE_RULES) {
+        const match = source.match(rule.pattern);
+        if (!match) continue;
+        challenge = {
+          sentence: source.replace(match[0], "______"),
+          answer: match[0],
+          clue: rule.clue,
+          term: String(item?.term || "").trim(),
+        };
+        break;
+      }
+      if (challenge) break;
+    }
+
+    if (!challenge) {
+      const source = sources[0] || "";
+      const candidates = source
+        .match(/[A-Za-zÄÖÜäöüß]{5,}/g)
+        ?.filter((word) => !VOCABULARY_CLOZE_STOPWORDS.has(word.toLocaleLowerCase("de"))) || [];
+      const target = candidates.sort((a, b) => b.length - a.length)[0];
+      if (target) {
+        challenge = {
+          sentence: source.replace(target, "______"),
+          answer: target,
+          clue: level === "A2"
+            ? "kurze Bedeutung aus dem heutigen Thema"
+            : "Synonym oder kurze Bedeutung aus dem heutigen Kontext",
+          term: String(item?.term || "").trim(),
+        };
+      }
+    }
+
+    if (challenge) results.push(challenge);
+    if (results.length >= 4) break;
+  }
+  return results;
+}
+
 function buildVocabularyItems(slide = {}, support = {}) {
   const level = classroomLevel(slide);
   const phrases = [...new Set(
@@ -1050,6 +1169,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: vocabularyStage ? "Wortschatz" : "Redemittel",
         title: vocabularyStage ? "Wortschatz für heute" : "Key phrases",
         items: vocabularyStage ? vocabularyItems : phraseItems,
+        challengeItems: vocabularyStage ? buildVocabularyGapItems(vocabularyItems, level) : [],
         instruction: vocabularyStage ? vocabularyInstruction(level) : "",
         suggestedMinutes: vocabularyStage ? 5 : 0,
       },
@@ -1136,6 +1256,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Wortschatz",
         title: "Kollokationen & Redemittel",
         items: vocabularyStage ? vocabularyItems : phraseItems,
+        challengeItems: vocabularyStage ? buildVocabularyGapItems(vocabularyItems, level) : [],
         instruction: vocabularyStage
           ? "Achte auf feste Wortverbindungen und nutze mindestens eine davon später in deiner Antwort."
           : "",
@@ -1222,6 +1343,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Kollokationen & Redemittel",
         title: "Sprache für das Thema",
         items: vocabularyItems,
+        challengeItems: buildVocabularyGapItems(vocabularyItems, level),
         instruction: "Nutze mindestens zwei thematische Kollokationen und ein passendes Verknüpfungsmittel in deiner späteren Antwort.",
         suggestedMinutes: 6,
       },
@@ -1297,6 +1419,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Kollokationen & Argumentationssprache",
         title: "Präzise Sprache für das Thema",
         items: vocabularyItems,
+        challengeItems: buildVocabularyGapItems(vocabularyItems, level),
         instruction: "Nutze mindestens zwei thematische Kollokationen und ein Argumentationsmittel später in deiner Antwort.",
         suggestedMinutes: 6,
       },
@@ -1379,6 +1502,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Kollokationen & Register",
         title: "Präzise Sprache für heute",
         items: vocabularyItems,
+        challengeItems: buildVocabularyGapItems(vocabularyItems, level),
         instruction: "Nutze Kollokationen nicht dekorativ: wähle sie dort, wo sie die Argumentation präziser machen.",
         suggestedMinutes: 6,
       },
