@@ -34,6 +34,9 @@ on:
     paths:
       - "src/components/PresenterSessionTimer.jsx"
       - "src/components/PresenterSessionTimer.css"
+      - "src/utils/presenterSessionTiming.js"
+      - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/A1GrammarPresenter.jsx"
       - "src/components/TeachingSlidePresenter.css"
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
       - "scripts/patchPresenterSessionAndResponseTimersCore.mjs"
@@ -44,6 +47,7 @@ on:
       - "scripts/patchPresenterAuthoritativeTimerSync.mjs"
       - "scripts/patchPresenterConceptLabels.mjs"
       - "tests/presenter-timers.test.js"
+      - "tests/live-class-duration-editor.test.js"
       - "tests/presenter-fullscreen-layout.test.js"
       - "tests/presenter-authoritative-timer-sync.test.js"
       - ".github/workflows/presenter-timers-tests.yml"
