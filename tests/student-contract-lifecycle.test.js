@@ -53,6 +53,17 @@ test("payment-driven upgrade rules start grace only after a partial payment", ()
   assert.match(accounting, /paymentReminderLevel: targetLevel/);
 });
 
+test("confirmed partial tuition payment converts trial and grants one month of access", () => {
+  const patch = read("scripts/patchStudentPaymentContractLifecycle.mjs");
+
+  assert.match(patch, /grantPartialAccess = nextBalance > 0 && !hasActiveContract/);
+  assert.match(patch, /status: nextBalance <= 0 \? "Paid" : "Active"/);
+  assert.match(patch, /trialStatus: "converted"/);
+  assert.match(patch, /trialConvertedAt: paymentTimestamp/);
+  assert.match(patch, /computeExtendedContractEnd\("", paidAtDate, 1\)/);
+  assert.match(patch, /contractTermMonths = "1"/);
+});
+
 test("payment lifecycle still wires reconciliation, downgrade, and six-month completion", () => {
   const functionsSource = read("functions/index.js");
   const directory = read("src/pages/StudentDirectoryPage.jsx");
