@@ -20,12 +20,14 @@ test("A2-C2 vocabulary challenges only use real target words and three visible c
 
       for (const item of vocabulary.challengeItems || []) {
         challengeCounts[level] += 1;
-        assert.match(item.sentence, /______/);
+        assert.ok(String(item.sentence || "").trim(), `${slide.assignmentId} challenge prompt missing`);
         assert.ok(String(item.answer || "").trim(), `${slide.assignmentId} challenge answer missing`);
         assert.equal(item.options.length, 3, `${slide.assignmentId} challenge must have exactly three options`);
         assert.ok(item.options.includes(item.answer), `${slide.assignmentId} options must include the answer`);
         assert.ok(new Set(item.options).size === 3, `${slide.assignmentId} options must be unique`);
+        assert.equal(item.answer, item.term, `${slide.assignmentId} answer must be the vocabulary item itself`);
         assert.equal(item.clue, undefined, `${slide.assignmentId} should not use a generic clue fallback`);
+        assert.ok(["cloze", "match"].includes(item.mode), `${slide.assignmentId} challenge mode must be safe`);
       }
     }
   }
@@ -40,7 +42,7 @@ test("Presenter exposes one shared A2-C2 vocabulary challenge interaction", () =
 
   assert.match(presenter, /Welches Wort passt\? starten/);
   assert.match(presenter, /Drei Wortschatzoptionen/);
-  assert.match(presenter, /Wählt das Wort, das am besten in den Satz passt/);
+  assert.match(presenter, /Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt/);
   assert.match(presenter, /Antwort anzeigen/);
   assert.doesNotMatch(presenter, /Tipp · Synonym\/Bedeutung/);
   assert.match(presenter, /presenter-vocabulary-cloze-card/);
