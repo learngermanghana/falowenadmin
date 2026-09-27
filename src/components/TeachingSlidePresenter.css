@@ -1464,3 +1464,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Keep the Common mistakes heading reachable even when the list is taller than the slide. */
+.presenter-stage-mistakes {
+  justify-content: flex-start;
+  align-items: stretch;
+  padding-top: clamp(1.1rem, 2.8vw, 2.4rem);
+}
+
+.presenter-stage-mistakes > h1 {
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding-top: 0.15rem;
+  line-height: 1.08;
+  overflow: visible;
+}
+
+.presenter-stage-mistakes .presenter-list {
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding-bottom: 1rem;
+}

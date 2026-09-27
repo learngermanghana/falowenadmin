@@ -407,7 +407,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           responseTimerEnabled={!warmupPerStudent}
         />
 
-        <main className={`presenter-content presenter-content-${stage.type}`}>
+        <main className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id}`}>
           {stage.type === "intro" ? (
             <>
               <h1>{stage.title}</h1>

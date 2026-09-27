@@ -228,34 +228,34 @@ export default function BulkAttendanceRepairPanel() {
   if (isStaff) return null;
 
   return (
-    <article className="card" style={{ maxWidth: 1000, margin: "0 auto 16px", border: "2px solid #dbeafe" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "start" }}>
+    <article className="card bulk-attendance-repair">
+      <div className="bulk-attendance-header">
         <div>
           <h2 style={{ margin: 0 }}>Admin bulk attendance repair</h2>
           <p style={{ margin: "6px 0 0", maxWidth: 760 }}>
             Use this when students were in class but could not check in. Select multiple students and multiple class days, then mark the whole selection present at once. Cancelled lessons cannot be changed here.
           </p>
         </div>
-        <strong style={{ fontSize: 12, padding: "6px 9px", borderRadius: 999, background: "#eff6ff" }}>ADMIN ONLY</strong>
+        <strong className="bulk-attendance-admin-badge">ADMIN ONLY</strong>
       </div>
 
       {loading ? <p>Loading repair options…</p> : <>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginTop: 16 }}>
-          <section>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="bulk-attendance-columns">
+          <section className="bulk-attendance-column">
+            <div className="bulk-attendance-section-heading">
               <strong>1. Choose class days</strong>
               <span style={{ fontSize: 12 }}>{selectedSessionIds.length} selected</span>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
+            <div className="bulk-attendance-toolbar">
               <button type="button" onClick={selectPastSessions}>Select past &amp; today</button>
               <button type="button" onClick={() => setSelectedSessionIds(eligibleSessions.map((session) => session.id))}>Select all active days</button>
               <button type="button" onClick={() => setSelectedSessionIds([])}>Clear</button>
             </div>
-            <div style={{ maxHeight: 300, overflowY: "auto", display: "grid", gap: 6, paddingRight: 4 }}>
+            <div className="bulk-attendance-list">
               {sessions.map((session) => {
                 const eligible = isBulkRepairEligibleSession(session);
                 return (
-                  <label key={session.id} style={{ display: "flex", gap: 8, alignItems: "start", padding: 8, border: "1px solid #e5e7eb", borderRadius: 8, opacity: eligible ? 1 : 0.55 }}>
+                  <label key={session.id} className={`bulk-attendance-row ${eligible ? "" : "is-disabled"}`}>
                     <input
                       type="checkbox"
                       checked={eligible && selectedSessionSet.has(session.id)}
@@ -272,19 +272,19 @@ export default function BulkAttendanceRepairPanel() {
             </div>
           </section>
 
-          <section>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <section className="bulk-attendance-column">
+            <div className="bulk-attendance-section-heading">
               <strong>2. Choose students</strong>
               <span style={{ fontSize: 12 }}>{selectedStudentCodes.length} selected</span>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
+            <div className="bulk-attendance-toolbar">
               <button type="button" onClick={() => setSelectedStudentCodes(studentRows.map((student) => student.code))}>Select all students</button>
               <button type="button" onClick={selectAbsentStudents}>Select absent in chosen days</button>
               <button type="button" onClick={() => setSelectedStudentCodes([])}>Clear</button>
             </div>
-            <div style={{ maxHeight: 300, overflowY: "auto", display: "grid", gap: 6, paddingRight: 4 }}>
+            <div className="bulk-attendance-list">
               {studentRows.map((student) => (
-                <label key={student.code} style={{ display: "flex", gap: 8, alignItems: "center", padding: 8, border: "1px solid #e5e7eb", borderRadius: 8 }}>
+                <label key={student.code} className="bulk-attendance-row">
                   <input
                     type="checkbox"
                     checked={selectedStudentSet.has(student.code)}
@@ -297,8 +297,8 @@ export default function BulkAttendanceRepairPanel() {
           </section>
         </div>
 
-        <div style={{ marginTop: 16, padding: 12, borderRadius: 8, background: "#f8fafc", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <div style={{ flex: "1 1 320px" }}>
+        <div className="bulk-attendance-actionbar">
+          <div className="bulk-attendance-actioncopy">
             <strong>Ready to repair: {repairPreview.changedRecords} record(s)</strong>
             <div style={{ fontSize: 12, opacity: 0.75, marginTop: 3 }}>
               Already-present records stay present. Only selected absent records on selected non-cancelled days are changed.
@@ -308,7 +308,7 @@ export default function BulkAttendanceRepairPanel() {
             type="button"
             disabled={saving || !selectedSessionIds.length || !selectedStudentCodes.length || !repairPreview.changedRecords}
             onClick={applyBulkPresent}
-            style={{ fontWeight: 700 }}
+            className="bulk-attendance-primary-action"
           >
             {saving ? "Saving bulk attendance…" : "Mark selected PRESENT"}
           </button>
