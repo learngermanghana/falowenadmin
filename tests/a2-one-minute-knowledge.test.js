@@ -17,10 +17,8 @@ const TEACHING_SPINE = [
   "warmup",
   "knowledge",
   "phrases",
-  "grammar",
-  "examples",
+  "grammar-check",
   "practice",
-  "mistakes",
   "questions",
   "workbook",
   "lesson-summary",
@@ -52,9 +50,8 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     assert.deepEqual(ids, TEACHING_SPINE, `${assignmentId} should use the A2 teaching spine`);
 
     const knowledge = stages.find((stage) => stage.id === "knowledge");
-    const grammar = stages.find((stage) => stage.id === "grammar");
+    const grammar = stages.find((stage) => stage.id === "grammar-check");
     const practice = stages.find((stage) => stage.id === "practice");
-    const mistakes = stages.find((stage) => stage.id === "mistakes");
     const questions = stages.find((stage) => stage.id === "questions");
     const workbook = stages.find((stage) => stage.id === "workbook");
 
@@ -62,25 +59,24 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     assert.ok(knowledge.textDe?.length > 100, `${assignmentId} knowledge text missing`);
     assert.equal(knowledge.items.length, 3, `${assignmentId} knowledge checks missing`);
 
-    assert.equal(grammar.type, "list");
-    assert.ok(grammar.items.length >= 3, `${assignmentId} grammar must remain visible`);
+    assert.equal(grammar.type, "grammar-check");
+    assert.equal(grammar.items.length, 3, `${assignmentId} grammar should be checked in three short steps`);
+    assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${assignmentId} grammar checks need teacher keys`);
 
     assert.equal(practice.type, "flow");
     assert.equal(practice.items.length, 1, `${assignmentId} should have one focused practice, not a repeated drill stack`);
     assert.ok(practice.items[0].prompts?.length >= 2, `${assignmentId} focused practice should be actionable`);
 
-    assert.equal(mistakes.type, "correction-list");
-    assert.ok(mistakes.items.length >= 3, `${assignmentId} correction cards missing`);
-    assert.ok(mistakes.items.every((item) => item.wrong && item.correct && item.why), `${assignmentId} correction cards must include Wrong, Correct and Why`);
-
     assert.equal(questions.type, "question-reveal");
-    assert.ok(questions.items.length >= 4, `${assignmentId} speaking production missing`);
+    assert.equal(questions.items.length, 3, `${assignmentId} speaking production should use Easy, Neutral and Difficult`);
 
     assert.equal(workbook.type, "workbook");
     assert.ok(workbook.items.length >= 4, `${assignmentId} workbook bridge missing`);
 
     for (const removed of [
-      "grammar-check",
+      "grammar",
+      "examples",
+      "mistakes",
       "vocabulary-retrieval",
       "sentence-builder",
       "guided-action",
@@ -98,7 +94,7 @@ test("A2 Day 6 restores knowledge and grammar before the room-movement activity"
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const ids = stages.map((stage) => stage.id);
   const knowledge = stages.find((stage) => stage.id === "knowledge");
-  const grammar = stages.find((stage) => stage.id === "grammar");
+  const grammar = stages.find((stage) => stage.id === "grammar-check");
   const practice = stages.find((stage) => stage.id === "practice");
 
   assert.match(knowledge.textDe, /Wo\?/);
@@ -106,14 +102,17 @@ test("A2 Day 6 restores knowledge and grammar before the room-movement activity"
   assert.match(knowledge.textDe, /Dativ/);
   assert.match(knowledge.textDe, /Akkusativ/);
 
-  assert.ok(grammar.items.some((item) => /Wo\?/i.test(item)));
-  assert.ok(grammar.items.some((item) => /Wohin\?/i.test(item)));
-  assert.ok(grammar.items.some((item) => /Wechselpräposition/i.test(item)));
+  const grammarText = grammar.items
+    .map((item) => [item.prompt, item.example, item.answer, item.note].filter(Boolean).join(" "))
+    .join(" ");
+  assert.match(grammarText, /Wo\?/i);
+  assert.match(grammarText, /Wohin\?/i);
+  assert.match(grammarText, /Wechselpräposition|Dativ|Akkusativ/i);
 
   assert.match(practice.title, /Bewege die Möbel/);
   assert.ok(practice.items[0].modelItems.some((item) => /neben das Fenster/i.test(item)));
-  assert.ok(ids.indexOf("knowledge") < ids.indexOf("grammar"));
-  assert.ok(ids.indexOf("grammar") < ids.indexOf("practice"));
+  assert.ok(ids.indexOf("knowledge") < ids.indexOf("grammar-check"));
+  assert.ok(ids.indexOf("grammar-check") < ids.indexOf("practice"));
   assert.ok(ids.indexOf("practice") < ids.indexOf("questions"));
   assert.ok(ids.indexOf("questions") < ids.indexOf("workbook"));
 });
