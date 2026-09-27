@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { compareExaminerResults } from "../src/utils/markingIntelligence.js";
+import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpecs } from "../src/data/a2WritingTaskSpecs.js";
 import {
   applyQuestionAwareWritingGuard,
@@ -537,4 +538,91 @@ test("A2-1.2 recovers a zero writing score without retaining a stale zero contra
   assert.equal(result.writingDimensions.coherence, null);
   assert.ok(result.corrections.some((item) => item.from === "Ich hoffe es geht dir gut." && item.to === "Ich hoffe, es geht dir gut."));
   assert.ok(result.corrections.some((item) => /Wie ist dein Chef\s+\?/.test(item.from) && item.to === "Wie ist dein Chef?"));
+});
+
+
+const leonardA2Day3Submission = `Teil 2
+Lieber Felix, ich hoffe es geht dir gut? Ich schreibe dir weil, ich meine Mutter und meinen Vater vergleichen möchte. Zuerst, ist mein Vater größer als meine Mutter. Er hat braune Augen genauso wie meine Mutter. Zweitens, hat meine Mutter längere Haare als mein Vater. Außerdem, beide sind freundlich und verantwortlich. Mein Vater ist sportlicher als meine Mutter weil, er im Fitnessstudio arbeitet. Sie ist auch empathischer als meine Vater weil, sie in der Kindergarten arbeitet. Zum schluss, ich mag meine Eltern weil, beide zuverlassig sind. Und du? Was mögen Sie besonders über deinen Eltern?
+
+Teil 3
+1. A
+2. B
+3. B
+4. B
+5. B
+
+Teil 4
+1. B
+2. C
+3. B
+4. A
+5. B`;
+
+test("A2-1.3 uses the live 5+5 objective key and scores Leonard's objective answers 10/10", () => {
+  const result = computeObjectiveScore("A2-1.3", leonardA2Day3Submission);
+
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 10);
+  assert.deepEqual(Object.entries(result.details).filter(([, detail]) => !detail.correct), []);
+  assert.equal(result.details["teil3.1"].expected, "A");
+  assert.equal(result.details["teil3.4"].expected, "B");
+  assert.equal(result.details["teil4.4"].expected, "A");
+});
+
+test("A2-1.3 deterministic evidence overrides a stale AI claim that character comparison is missing", () => {
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: leonardA2Day3Submission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    objectiveCorrect: 10,
+    objectiveTotal: 10,
+    writingScore: 78,
+    writingScorePercent: 78,
+    finalScore: 87,
+    score: 87,
+    taskCompletion: {
+      completed: 2,
+      total: 3,
+      missing: ["Compare their character"],
+    },
+    missingTaskPoints: ["Compare their character"],
+    reviewReasons: [{
+      code: "missing_task_points",
+      message: "Required writing points are missing: Compare their character.",
+      source: "question_aware_writing",
+    }],
+    feedback: "The response compares the parents and gives relevant examples.",
+    corrections: [],
+    status: "needs_review",
+    confidence: 0.8,
+  }, enriched, leonardA2Day3Submission);
+
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.deepEqual(result.taskCompletion.missing, []);
+  assert.deepEqual(result.missingTaskPoints || [], []);
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "met", "met"]);
+  assert.match(result.taskPointEvidence[1].evidence, /freundlich|verantwortlich/i);
+  assert.equal((result.reviewReasons || []).some((item) => item.code === "missing_task_points"), false);
+  assert.equal(result.ai?.questionAwareWritingGuard, undefined);
+  assert.equal(result.writingScore, 78);
+  assert.equal(result.writingScorePercent, 78);
+
+  assert.ok(result.corrections.some((item) => item.from === "meine Vater" && item.to === "mein Vater"));
+  assert.ok(result.corrections.some((item) => item.from === "in der Kindergarten" && item.to === "im Kindergarten"));
+  assert.ok(result.corrections.some((item) => /Was mögen Sie besonders über deinen Eltern/i.test(item.from) && item.to === "Was magst du besonders an deinen Eltern?"));
+
+  const comparison = compareExaminerResults(
+    { finalScore: 90, writingScore: 80, confidence: 0.84, status: "marked" },
+    { ...result, finalScore: 87, writingScore: 78, confidence: 0.8, status: "needs_review" },
+  );
+  assert.equal(comparison.scoreDelta, 3);
+  assert.equal(comparison.writingScoreDelta, 2);
+  assert.equal(comparison.requiresTutorReview, false);
 });
