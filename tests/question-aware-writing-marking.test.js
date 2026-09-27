@@ -134,7 +134,9 @@ test("generic friendship opinion essay cannot keep a 100% writing score", () => 
   assert.equal(result.missingTaskPoints.length, 3);
   assert.equal(result.ai.questionAwareWritingGuard.genreMismatch, true);
   assert.equal(result.ai.detectedWritingTextType.detectedType, "opinion_essay");
-  assert.match(result.feedback, /language quality cannot replace task fulfilment/i);
+  assert.match(result.feedback, /Still missing:/i);
+  assert.match(result.feedback, /required informal email format/i);
+  assert.doesNotMatch(result.feedback, /Question-aware writing check|writing score is capped|language quality cannot replace task fulfilment/i);
 });
 
 test("a genuine informal email that answers all three points is not capped", () => {
@@ -343,7 +345,7 @@ test("Victoria A2-1.1 recovers an impossible zero before applying the informal-r
   assert.match(result.feedback, /relevant personal question/i);
   assert.match(result.feedback, /Könnten Sie mir helfen/);
   assert.match(result.feedback, /Ich freue mich auf deine Antwort/);
-  assert.match(result.feedback, /capped at 60%/i);
+  assert.doesNotMatch(result.feedback, /Question-aware writing check|capped at 60%|language quality cannot replace task fulfilment/i);
   assert.doesNotMatch(result.feedback, /requested formal register/i);
 });
 
@@ -679,7 +681,51 @@ Leonard`;
   assert.match(result.feedback, /Compare your mother and father's appearance/i);
   assert.doesNotMatch(result.feedback, /Compare their character/i);
   assert.doesNotMatch(result.improvementSummary, /Compare their character/i);
-  assert.match(result.feedback, /missing task points: Compare your mother and father's appearance/i);
+  assert.match(result.feedback, /Still missing: Compare your mother and father's appearance/i);
+});
+
+test("A2-1.3 replaces stale praise for a missing point with canonical student feedback", () => {
+  const appearanceMissingSubmission = `Teil 2
+Lieber Felix,
+ich schreibe dir, weil ich meine Mutter und meinen Vater vergleichen möchte.
+Beide sind freundlich und verantwortlich. Mein Vater ist sportlicher als meine Mutter, weil er im Fitnessstudio arbeitet.
+Meine Mutter ist empathischer als mein Vater, weil sie im Kindergarten arbeitet.
+Ich mag beide besonders, weil sie zuverlässig sind. Und du? Was magst du besonders an deinen Eltern?
+Viele Grüße
+Leonard`;
+
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry: { assignmentKey: "A2-1.3", level: "A2" },
+    submission: { assignmentKey: "A2-1.3", level: "A2" },
+    submissionText: appearanceMissingSubmission,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-1.3",
+    objectiveScore: 100,
+    writingScore: 82,
+    writingScorePercent: 82,
+    finalScore: 89,
+    score: 89,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    missingTaskPoints: [],
+    feedback: "You clearly compared their appearance. Good use of weil in your explanation. Question-aware writing check: all task points complete.",
+    improvementSummary: "You addressed all task points. Keep working on word order.",
+    status: "marked",
+    confidence: 0.8,
+  }, enriched, appearanceMissingSubmission);
+
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["missing", "met", "met"]);
+  assert.deepEqual(result.missingTaskPoints, ["Compare your mother and father's appearance"]);
+  assert.match(result.feedback, /Good use of weil/i);
+  assert.match(result.feedback, /Still missing: Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.feedback, /clearly compared their appearance/i);
+  assert.doesNotMatch(result.feedback, /Question-aware writing check|writing score is capped|all task points complete/i);
+  assert.match(result.improvementSummary, /Next step: add Compare your mother and father's appearance/i);
+  assert.doesNotMatch(result.improvementSummary, /addressed all task points/i);
+  assert.equal(result.ai.questionAwareWritingGuard.missingTaskPoints[0], "Compare your mother and father's appearance");
+  assert.equal(result.ai.questionAwareWritingGuard.guardedWritingScore, 80);
 });
 
 test("A2-1.3 removes every resolved item from a semicolon missing-point list", () => {
