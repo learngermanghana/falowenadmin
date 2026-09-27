@@ -12,7 +12,7 @@ import { getCompatibleClassDashboard } from "../services/liveClassCompatibilityS
 import {
   buildBulkPresentRepair,
   isBulkRepairEligibleSession,
-} from "../utils/bulkAttendanceRepair.js";
+} from "../utils/bulkAttendanceRepair.js";\nimport "./BulkAttendanceRepairPanel.css";
 
 const TIMEZONE = "Africa/Accra";
 
@@ -231,8 +231,8 @@ export default function BulkAttendanceRepairPanel() {
     <article className="card bulk-attendance-repair">
       <div className="bulk-attendance-header">
         <div>
-          <h2 style={{ margin: 0 }}>Admin bulk attendance repair</h2>
-          <p style={{ margin: "6px 0 0", maxWidth: 760 }}>
+          <h2>Admin bulk attendance repair</h2>
+          <p>
             Use this when students were in class but could not check in. Select multiple students and multiple class days, then mark the whole selection present at once. Cancelled lessons cannot be changed here.
           </p>
         </div>
@@ -244,7 +244,7 @@ export default function BulkAttendanceRepairPanel() {
           <section className="bulk-attendance-column">
             <div className="bulk-attendance-section-heading">
               <strong>1. Choose class days</strong>
-              <span style={{ fontSize: 12 }}>{selectedSessionIds.length} selected</span>
+              <span>{selectedSessionIds.length} selected</span>
             </div>
             <div className="bulk-attendance-toolbar">
               <button type="button" onClick={selectPastSessions}>Select past &amp; today</button>
@@ -275,7 +275,7 @@ export default function BulkAttendanceRepairPanel() {
           <section className="bulk-attendance-column">
             <div className="bulk-attendance-section-heading">
               <strong>2. Choose students</strong>
-              <span style={{ fontSize: 12 }}>{selectedStudentCodes.length} selected</span>
+              <span>{selectedStudentCodes.length} selected</span>
             </div>
             <div className="bulk-attendance-toolbar">
               <button type="button" onClick={() => setSelectedStudentCodes(studentRows.map((student) => student.code))}>Select all students</button>
@@ -290,7 +290,7 @@ export default function BulkAttendanceRepairPanel() {
                     checked={selectedStudentSet.has(student.code)}
                     onChange={() => toggleStudent(student.code)}
                   />
-                  <span style={{ fontSize: 13 }}><strong>{student.name || student.code}</strong><span style={{ display: "block", opacity: 0.7 }}>{student.code}</span></span>
+                  <span className="bulk-attendance-row-copy"><strong>{student.name || student.code}</strong><small>{student.code}</small></span>
                 </label>
               ))}
             </div>
@@ -300,7 +300,7 @@ export default function BulkAttendanceRepairPanel() {
         <div className="bulk-attendance-actionbar">
           <div className="bulk-attendance-actioncopy">
             <strong>Ready to repair: {repairPreview.changedRecords} record(s)</strong>
-            <div style={{ fontSize: 12, opacity: 0.75, marginTop: 3 }}>
+            <div className="bulk-attendance-actionnote">
               Already-present records stay present. Only selected absent records on selected non-cancelled days are changed.
             </div>
           </div>
