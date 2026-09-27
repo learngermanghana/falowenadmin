@@ -40,11 +40,11 @@ test("A1-9 patch remains order-independent after earlier A1 override patches", (
   const patch = fs.readFileSync("scripts/patchA1Lesson9Clarity.mjs", "utf8");
   const day2 = fs.readFileSync("scripts/patchA1Day2ContactChallenge.mjs", "utf8");
 
-  assert.match(day2, /const anchor = "const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \\{\\n"/);
-  assert.match(patch, /const anchor = \`const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \\{/);
+  assert.match(day2, /const anchor = "const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \{\\n"/);
+  assert.match(patch, /const anchor = \`const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \{/);
   assert.doesNotMatch(
     patch,
-    /const anchor = \`const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \\{[\\s\\S]{0,80}"A1-4\\.7"/,
+    /const anchor = \`const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \{[\\s\\S]{0,80}"A1-4\\.7"/,
     "Lesson 9 insertion must not assume A1-4.7 is still the first override",
   );
 });
