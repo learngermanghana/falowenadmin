@@ -21,6 +21,7 @@ test("Bulk attendance panel imports and uses its scoped layout stylesheet", () =
   const css = fs.readFileSync("src/components/BulkAttendanceRepairPanel.css", "utf8");
 
   assert.match(panel, /import "\.\/BulkAttendanceRepairPanel\.css";/);
+  assert.doesNotMatch(panel, /\\nimport "\.\/BulkAttendanceRepairPanel\.css"/);
   assert.match(panel, /bulk-attendance-row-copy/);
   assert.match(panel, /bulk-attendance-actionnote/);
   assert.match(css, /\.bulk-attendance-repair \.bulk-attendance-toolbar button/);
