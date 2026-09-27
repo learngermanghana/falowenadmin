@@ -338,3 +338,22 @@
     font-size: 0.72rem;
   }
 }
+
+
+.presenter-student-secondary-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.presenter-student-secondary-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 750;
+}

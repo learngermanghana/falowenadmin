@@ -261,7 +261,7 @@ const speakingPanel = [
   "                </div>",
   '                <div className="presenter-speaking-flow-actions">',
   '                  {speakingFeedbackReason === "time" ? <button type="button" onClick={() => continueSpeaking(15)}>Give +15s</button> : null}',
-  "                  <small>Then record Correct or Needs help below.</small>",
+  "                  <small>Then record Correct or Needs review below.</small>",
   "                </div>",
   "              </div>",
   '            ) : speakingPhase === "done" ? (',
@@ -281,9 +281,9 @@ replaceRequired(
   "hold Correct until feedback phase",
 );
 replaceRequired(
-  '<button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Needs help</button>',
-  '<button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion) || (structuredSpeakingFlow && speakingPhase === "speaking")}>Needs help</button>',
-  "hold Needs help until feedback phase",
+  '<button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Needs review</button>',
+  '<button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion) || (structuredSpeakingFlow && speakingPhase === "speaking")}>Needs review</button>',
+  "hold Needs review until feedback phase",
 );
 
 fs.writeFileSync(pickerTarget, source, "utf8");

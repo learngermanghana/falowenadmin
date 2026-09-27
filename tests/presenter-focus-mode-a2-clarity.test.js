@@ -11,7 +11,7 @@ test("presenter focus view hides teacher chrome but keeps compact navigation", (
 
   assert.match(presenter, /const \[focusMode, setFocusMode\] = useState\(false\)/);
   assert.match(presenter, /Focus view/);
-  assert.match(presenter, /Show marking/);
+  assert.doesNotMatch(presenter, /Show marking/);\n  assert.match(presenter, /aria-label="Exit focus view"/);
   assert.match(presenter, /presenter-focus-dock/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-topbar/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-student-picker/);
@@ -34,10 +34,10 @@ test("A2 knowledge tells learners how to use the text and Day 22 uses vocabulary
   assert.equal(knowledge.activity.title, "Welches Wort passt?");
   assert.equal(
     knowledge.activity.instruction,
-    "Lest den Satz und den Tipp. Welches Wort aus dem heutigen Wortschatz passt in die Lücke?",
+    "Wählt aus drei Wörtern. Welches Wort passt in die Lücke?",
   );
   assert.equal(knowledge.activity.prompts.length, 4);
-  assert.ok(knowledge.activity.prompts.every((item) => item.includes("______") && item.includes("Tipp:")));
+  assert.ok(knowledge.activity.prompts.every((item) => item.includes("______") && item.includes("Wählt:")));
   assert.deepEqual(knowledge.activity.modelItems, [
     "Termine",
     "Verfügbarkeit",

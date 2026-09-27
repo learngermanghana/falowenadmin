@@ -140,7 +140,7 @@ test("A2 through C2 use Speak to Feedback to Next student with a live rubric", (
   assert.match(picker, /Finish speaking → feedback/);
   assert.match(picker, /Give \+15s/);
   assert.match(picker, /structuredSpeakingFlow && speakingPhase === "speaking"/);
-  assert.match(picker, /Then record Correct or Needs help below/);
+  assert.match(picker, /Then record Correct or Needs review below/);
   assert.match(css, /presenter-structured-speaking-feedback/);
   assert.match(css, /\.presenter-speaking-rubric button\.is-observed/);
 });
@@ -167,15 +167,19 @@ test("picker sync couples writer identity to the picker update and falls back fo
   assert.match(picker, /pickerUpdatedAtMs,/);
 });
 
-test("presenter response actions wrap so Absent remains visible before Next student", () => {
+test("presenter keeps quick marking simple and tucks secondary actions into details", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
-  const css = read("src/components/PresenterStudentPicker.css");
-  const absentIndex = picker.indexOf(">\n              Absent\n");
-  const nextStudentIndex = picker.indexOf('current ? "Next student →"');
-  assert.ok(absentIndex >= 0 && nextStudentIndex > absentIndex, "Absent must remain before Next student in the toolbar");
-  assert.match(css, /presenter-student-actions-no-overlap/);
-  assert.match(css, /\.presenter-student-actions \{[\s\S]*flex: 1 1 430px;[\s\S]*flex-wrap: wrap;/);
-  assert.match(css, /\.presenter-pick-student \{[\s\S]*margin-left: 0;/);
+  const toolbarStart = picker.indexOf('<div className="presenter-student-actions"');
+  const toolbarEnd = picker.indexOf("</div>", toolbarStart);
+  const toolbar = picker.slice(toolbarStart, toolbarEnd);
+
+  assert.match(toolbar, />Correct</);
+  assert.match(toolbar, />Needs review</);
+  assert.doesNotMatch(toolbar, />\s*Skip\s*</);
+  assert.doesNotMatch(toolbar, />\s*Absent\s*</);
+  assert.match(picker, /presenter-student-secondary-actions/);
+  assert.match(picker, />\s*Skip\s*</);
+  assert.match(picker, />\s*Presenter absent\s*</);
 });
 
 test("recording a student result stops the answer timer instead of auto-marking timeout", () => {

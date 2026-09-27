@@ -706,26 +706,7 @@ export default function PresenterStudentPicker({
         {current ? (
           <div className="presenter-student-actions" role="group" aria-label="Record student response">
             <button type="button" className="is-correct" onClick={() => markCurrent("correct")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Correct</button>
-            <button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Needs help</button>
-            <button
-              type="button"
-              className="is-quiet"
-              onClick={pickNextQuestion}
-              disabled={interactionLocked || Boolean(lastMarked) || !hasQuestionMode || !currentQuestion || questionPool.length < 2}
-              title="Show another question for the same student without recording a result."
-            >
-              Next question
-            </button>
-            <button type="button" className="is-quiet" onClick={() => markCurrent("skip")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Skip</button>
-            <button
-              type="button"
-              className="is-quiet"
-              title="Removes this learner from the presenter rotation only; official attendance is unchanged."
-              onClick={() => markCurrent("absent")}
-              disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}
-            >
-              Absent
-            </button>
+            <button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Needs review</button>
           </div>
         ) : null}
 
@@ -734,7 +715,7 @@ export default function PresenterStudentPicker({
           className="presenter-pick-student"
           onClick={pickStudent}
           disabled={interactionLocked || !eligible.length || mustRecordBeforeNext}
-          title={mustRecordBeforeNext ? "Record Correct, Needs help, Skip or Absent before moving to another student. You can use Next question to change the question without recording a result." : ""}
+          title={mustRecordBeforeNext ? "Record Correct or Needs review before moving to another student." : ""}
         >
           {syncState === "restoring" ? "Restoring…" : mustRecordBeforeNext ? "Record result first" : current ? "Next student →" : "Pick student"}
         </button>
@@ -746,6 +727,31 @@ export default function PresenterStudentPicker({
             <p>Participated {participatedKeys.size}/{eligible.length} · Correct {correctCount} · Needs review {helpCount} · Presenter absent {absentKeys.size}</p>
             {hasQuestionMode ? <p>Unique questions {questionPool.length} · {availableQuestionCount} still unused in this round.</p> : null}
             <small>Cloud sync lets you continue the same lesson on another signed-in device. “Absent” only removes a learner from this presenter rotation and never changes official attendance or grades.</small>
+            {current ? (
+              <div className="presenter-student-secondary-actions">
+                <button
+                  type="button"
+                  onClick={pickNextQuestion}
+                  disabled={interactionLocked || Boolean(lastMarked) || !hasQuestionMode || !currentQuestion || questionPool.length < 2}
+                >
+                  Next question
+                </button>
+                <button
+                  type="button"
+                  onClick={() => markCurrent("skip")}
+                  disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
+                  onClick={() => markCurrent("absent")}
+                  disabled={interactionLocked || Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}
+                >
+                  Presenter absent
+                </button>
+              </div>
+            ) : null}
             {absentStudents.length ? (
               <div className="presenter-absent-list">
                 <strong>Presenter absent</strong>

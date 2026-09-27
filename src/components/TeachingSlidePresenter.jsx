@@ -454,7 +454,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           <div className="presenter-focus-dock" aria-label="Focus mode controls">
             <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" className="presenter-focus-mark" onClick={toggleFocusMode}>Show marking</button>
+            <button type="button" onClick={toggleFocusMode} aria-label="Exit focus view">×</button>
             <button
               type="button"
               onClick={next}
@@ -754,14 +754,15 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   <div className="presenter-vocabulary-challenge-heading">
                     <span>Wortschatz-Check · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
                     <h1>Welches Wort passt?</h1>
-                    <p>Lest den Satz und den Tipp. Nennt das fehlende Wort.</p>
+                    <p>Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt.</p>
                   </div>
                   {activeVocabChallenge ? (
                     <article className="presenter-vocabulary-cloze-card">
                       <p className="presenter-vocabulary-cloze-sentence">{activeVocabChallenge.sentence}</p>
-                      <div className="presenter-vocabulary-clue">
-                        <strong>Tipp · Synonym/Bedeutung</strong>
-                        <span>{activeVocabChallenge.clue}</span>
+                      <div className="presenter-vocabulary-options" role="list" aria-label="Drei Wortschatzoptionen">
+                        {(activeVocabChallenge.options || []).map((option) => (
+                          <span key={option} role="listitem">{option}</span>
+                        ))}
                       </div>
                       {showVocabAnswer ? (
                         <div className="presenter-vocabulary-answer">
