@@ -1,5 +1,5 @@
 // Canonical C1 curriculum mirrored from the learner app.
-// Source: falowenexamtrainer@bafaffbb5fee47a0b9b4effa040dc69cf052f5fa
+// Source: falowenexamtrainer@3cf869444ad03e88cc7a1dcfac10413ca11517aa
 // Topics/foundations: C1TopicIntroduction.jsx
 // Speaking/writing thinking profile: c1ContentRefresh.js
 // Grammar labels: live C1 Day 1–28 grammar-note components.
@@ -404,7 +404,7 @@ export const C1_CANONICAL_FOUNDATIONS = Object.freeze({
     tension: "finanzielle Tragfähigkeit ↔ soziale Absicherung und faire Belastung zwischen Generationen",
   },
 });
-export const C1_CANONICAL_SOURCE_SHA = "bafaffbb5fee47a0b9b4effa040dc69cf052f5fa";
+export const C1_CANONICAL_SOURCE_SHA = "3cf869444ad03e88cc7a1dcfac10413ca11517aa";
 
 export function getC1CanonicalLesson(day) {
   const numericDay = Number(day);
