@@ -43,7 +43,7 @@ jobs:
         run: node --test tests/production-release-guard.test.js tests/teacher-lesson-dashboard.test.js
 
   release-gate:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
         run: npm run build
 
   verify-production:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: release-gate
     runs-on: ubuntu-latest
     steps:
@@ -130,8 +130,9 @@ jobs:
           npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
           npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
-      - name: Verify production serves this exact main SHA
+      - name: Verify production contains this main commit
         env:
+          GH_TOKEN: ${{ github.token }}
           TARGET_SHA: ${{ github.sha }}
         shell: bash
         run: |
@@ -142,18 +143,34 @@ jobs:
             main="$(printf '%s' "$body" | jq -r '.mainSha // empty' 2>/dev/null || true)"
             status="$(printf '%s' "$body" | jq -r '.status // empty' 2>/dev/null || true)"
             echo "Production status: ${status:-unavailable} · deployed=${deployed:-unknown} · main=${main:-unknown}"
-            if [ "$status" = "current" ] && [ "$deployed" = "$TARGET_SHA" ]; then
-              {
-                echo "### Production verified"
-                echo ""
-                echo "admin.falowen.app is serving exact main SHA `$TARGET_SHA`."
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
+
+            if [ "$status" = "current" ] && [ -n "$deployed" ]; then
+              if [ "$deployed" = "$TARGET_SHA" ]; then
+                {
+                  echo "### Production verified"
+                  echo ""
+                  echo "admin.falowen.app is serving exact target SHA `$TARGET_SHA`."
+                } >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+
+              compare="$(curl -fsS                 -H "Authorization: Bearer $GH_TOKEN"                 -H "Accept: application/vnd.github+json"                 "https://api.github.com/repos/$GITHUB_REPOSITORY/compare/$TARGET_SHA...$deployed" 2>/dev/null || true)"
+              relation="$(printf '%s' "$compare" | jq -r '.status // empty' 2>/dev/null || true)"
+              ahead_by="$(printf '%s' "$compare" | jq -r '.ahead_by // 0' 2>/dev/null || echo 0)"
+
+              if [ "$relation" = "ahead" ] && [ "$ahead_by" -gt 0 ]; then
+                {
+                  echo "### Production verified"
+                  echo ""
+                  echo "admin.falowen.app is serving newer descendant `$deployed`, which already contains target `$TARGET_SHA`."
+                } >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
             fi
             sleep 20
           done
 
-          echo "::error::Production did not reach exact main SHA $TARGET_SHA. Check the Vercel status above; rate-limited commits are retried by the hourly scheduled job after the cooldown."
+          echo "::error::Production did not reach target $TARGET_SHA or a newer descendant. Check the Vercel status above; rate-limited commits are retried by the hourly scheduled job after the cooldown."
           exit 1
 
   scheduled-rate-limit-retry:
@@ -254,6 +271,7 @@ jobs:
       - name: Verify scheduled retry deployment
         if: steps.cli_retry.outputs.attempted == 'true' || steps.retry_commit.outputs.sha != ''
         env:
+          GH_TOKEN: ${{ github.token }}
           EXPECTED_SHA: ${{ steps.retry_commit.outputs.sha || steps.status.outputs.sha }}
         shell: bash
         run: |
@@ -262,11 +280,21 @@ jobs:
             body="$(curl -fsS "$PRODUCTION_URL/api/deployment-status" 2>/dev/null || true)"
             deployed="$(printf '%s' "$body" | jq -r '.deployedSha // empty' 2>/dev/null || true)"
             status="$(printf '%s' "$body" | jq -r '.status // empty' 2>/dev/null || true)"
-            if [ "$status" = "current" ] && [ "$deployed" = "$EXPECTED_SHA" ]; then
-              echo "Production retry succeeded for `$EXPECTED_SHA`." >> "$GITHUB_STEP_SUMMARY"
-              exit 0
+            if [ "$status" = "current" ] && [ -n "$deployed" ]; then
+              if [ "$deployed" = "$EXPECTED_SHA" ]; then
+                echo "Production retry succeeded for `$EXPECTED_SHA`." >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+
+              compare="$(curl -fsS                 -H "Authorization: Bearer $GH_TOKEN"                 -H "Accept: application/vnd.github+json"                 "https://api.github.com/repos/$GITHUB_REPOSITORY/compare/$EXPECTED_SHA...$deployed" 2>/dev/null || true)"
+              relation="$(printf '%s' "$compare" | jq -r '.status // empty' 2>/dev/null || true)"
+              ahead_by="$(printf '%s' "$compare" | jq -r '.ahead_by // 0' 2>/dev/null || echo 0)"
+              if [ "$relation" = "ahead" ] && [ "$ahead_by" -gt 0 ]; then
+                echo "Production retry target `$EXPECTED_SHA` is already included in newer production `$deployed`." >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
             fi
             sleep 20
           done
-          echo "::error::Scheduled production retry did not become current."
+          echo "::error::Scheduled production retry did not become current at the expected commit or a newer descendant."
           exit 1
