@@ -408,7 +408,7 @@ test("Presenter end write failures become retryable instead of leaving Ending cl
 });
 
 
-test("Presenter shows a non-blocking 90-minute lesson budget with stage guidance", () => {
+test("Presenter shows a non-blocking level-aware lesson budget with stage guidance", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   const css = read("src/components/PresenterSessionTimer.css");
 
