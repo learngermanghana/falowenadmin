@@ -10,7 +10,8 @@ test("live class creation defaults A1/A2/B1 to academy class durations", () => {
   const create = read("src/components/CreateClassCard.jsx");
   const timing = read("src/utils/presenterSessionTiming.js");
 
-  for (const level of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
+  assert.match(timing, /A1:\s*60/);
+  for (const level of ["A2", "B1", "B2", "C1", "C2"]) {
     assert.match(timing, new RegExp(`${level}:\\s*90`));
   }
   assert.match(create, /presenterSessionMinutes\(levelId\) \|\| 120/);
