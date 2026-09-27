@@ -2160,3 +2160,101 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Advanced B2-C2: fewer slides, with models folded into the grammar page. */
+.presenter-advanced-models {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.55rem 0.7rem;
+}
+
+.presenter-advanced-models summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 850;
+  color: #334155;
+}
+
+.presenter-advanced-models ul {
+  margin: 0.55rem 0 0;
+  padding-left: 1.2rem;
+  color: #334155;
+  font-size: clamp(0.88rem, 1.15vw, 1rem);
+  line-height: 1.4;
+}
+
+.presenter-c2-grammar {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.presenter-c2-grammar-heading {
+  display: grid;
+  gap: 5px;
+}
+
+.presenter-c2-grammar-heading > span {
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.presenter-c2-grammar-heading h1,
+.presenter-c2-grammar-heading p {
+  margin: 0;
+}
+
+.presenter-c2-grammar-heading p {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.presenter-c2-grammar-rules {
+  display: grid;
+  gap: 9px;
+}
+
+.presenter-c2-grammar-rules article {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  background: #f5f3ff;
+  padding: 11px 13px;
+}
+
+.presenter-c2-grammar-rules article > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.presenter-c2-grammar-rules article p {
+  margin: 2px 0 0;
+  color: #4c1d95;
+  font-size: clamp(16px, 1.45vw, 20px);
+  line-height: 1.4;
+  font-weight: 650;
+}
+
+.presenter-question-instruction {
+  max-width: 900px;
+  margin: 0.2rem 0 0.7rem;
+  color: #475569;
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  line-height: 1.4;
+  font-weight: 700;
+}
