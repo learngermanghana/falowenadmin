@@ -3,31 +3,51 @@ import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages, getSpeakingQuestionModel } from "../src/utils/teachingPresenter.js";
 
-test("all 141 A2 speaking questions have complete, distinct, question-keyed answers", () => {
+test("all 141 A2 source speaking questions keep models while Presenter selects three levels", () => {
   const slides = getSlidesByCourse("A2");
   assert.equal(slides.length, 28);
   assert.deepEqual(slides.map(s => s.dayNumber), Array.from({length: 28}, (_, i) => i + 1));
   const answers = new Set();
+
   for (const slide of slides) {
-    const stage = buildTeachingPresenterStages(slide).find(s => s.id === "questions");
-    assert.equal(stage.requiresQuestionModel, true);
-    assert.equal(stage.questionModels.length, slide.dayNumber === 1 ? 6 : 5);
-    assert.deepEqual(stage.questionModels.map(m => m.questionDe), stage.items);
-    for (const question of stage.items) {
-      const model = getSpeakingQuestionModel(stage, question);
-      assert.ok(model.modelAnswerDe.length > 50, `${slide.assignmentId}: ${question}`);
+    const expectedSourceCount = slide.dayNumber === 1 ? 6 : 5;
+    assert.equal(slide.studentQuestionsDe.length, expectedSourceCount);
+    assert.equal(slide.speakingModels.length, expectedSourceCount);
+    assert.deepEqual(slide.speakingModels.map(m => m.questionDe), slide.studentQuestionsDe);
+
+    for (const model of slide.speakingModels) {
+      assert.ok(model.modelAnswerDe.length > 50, `${slide.assignmentId}: ${model.questionDe}`);
       assert.doesNotMatch(model.modelAnswerDe, /\.\.\.|…/);
-      assert.ok(!stage.supportItems.includes(model.modelAnswerDe));
       assert.ok(!answers.has(model.modelAnswerDe), "No repeated template answers");
       answers.add(model.modelAnswerDe);
     }
+
+    const stage = buildTeachingPresenterStages(slide).find(s => s.id === "questions");
+    const middleIndex = Math.floor((slide.studentQuestionsDe.length - 1) / 2);
+    assert.equal(stage.requiresQuestionModel, true);
+    assert.deepEqual(stage.questionLevels, ["Easy", "Neutral", "Difficult"]);
+    assert.deepEqual(stage.items, [
+      slide.studentQuestionsDe[0],
+      slide.studentQuestionsDe[middleIndex],
+      slide.studentQuestionsDe.at(-1),
+    ]);
+    assert.equal(stage.questionModels.length, 3);
+    assert.deepEqual(stage.questionModels.map(m => m.questionDe), stage.items);
+
+    for (const question of stage.items) {
+      const model = getSpeakingQuestionModel(stage, question);
+      assert.ok(model.modelAnswerDe.length > 50, `${slide.assignmentId}: ${question}`);
+      assert.ok(!stage.supportItems.includes(model.modelAnswerDe));
+    }
+
     const reordered = {...stage, questionModels: [...stage.questionModels].reverse()};
-    for (const index of [0, 4, 1, 3, 2, 0]) {
+    for (const index of [0, 2, 1, 0]) {
       assert.deepEqual(getSpeakingQuestionModel(reordered, stage.items[index]), stage.questionModels[index]);
     }
     assert.equal(getSpeakingQuestionModel(stage, "A new question"), null);
     assert.equal(getSpeakingQuestionModel({...stage, questionModels: []}, stage.items[0]), null);
   }
+
   assert.equal(answers.size, 141);
 });
 
