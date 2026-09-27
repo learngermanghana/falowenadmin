@@ -374,13 +374,13 @@ function hasConcreteCorrections(result = {}) {
 
 function deterministicLanguageCorrections(source = "", partId = "teil2", task = {}) {
   const corrections = [];
-  const hopeClause = String(source || "").match(/\bIch\s+hoffe\s+es\s+geht\s+dir\s+gut\./i);
+  const hopeClause = String(source || "").match(/\bIch\s+hoffe\s+es\s+geht\s+dir\s+gut[.?]/i);
   if (hopeClause?.[0]) {
     corrections.push({
       partId,
       from: hopeClause[0],
-      to: hopeClause[0].replace(/\bhoffe\s+/i, "hoffe, "),
-      reason: "Set a comma after „Ich hoffe“ before the following clause.",
+      to: hopeClause[0].replace(/\bhoffe\s+/i, "hoffe, ").replace(/\?$/, "."),
+      reason: "Set a comma after „Ich hoffe“ before the following clause; this is a statement, not a question.",
     });
   }
 
@@ -422,6 +422,56 @@ function deterministicLanguageCorrections(source = "", partId = "teil2", task = 
         from: mixedParentQuestion[0],
         to: "Was magst du besonders an deinen Eltern?",
         reason: "Keep the informal du register with Felix and use an + Dativ for what someone likes about a person.",
+      });
+    }
+
+    const commaAfterWeil = String(source || "").match(/\bweil\s*,\s*(ich|er|sie|wir|du)\b/i);
+    if (commaAfterWeil?.[0]) {
+      corrections.push({
+        partId,
+        from: commaAfterWeil[0],
+        to: commaAfterWeil[0].replace(/weil\s*,\s*/i, "weil "),
+        reason: "Do not put the comma after weil; the comma belongs before the weil-clause.",
+      });
+    }
+
+    const missingCommaBeforeWeil = String(source || "").match(/\b(?:dir|Mutter|Vater|Eltern)\s+weil\b/i);
+    if (missingCommaBeforeWeil?.[0]) {
+      corrections.push({
+        partId,
+        from: missingCommaBeforeWeil[0],
+        to: missingCommaBeforeWeil[0].replace(/\s+weil\b/i, ", weil"),
+        reason: "Put a comma before the subordinate clause with weil.",
+      });
+    }
+
+    const adverbComma = String(source || "").match(/\b(?:Zuerst|Zweitens|Außerdem)\s*,\s*/i);
+    if (adverbComma?.[0]) {
+      corrections.push({
+        partId,
+        from: adverbComma[0].trim(),
+        to: adverbComma[0].replace(/,\s*$/, " ").trimEnd(),
+        reason: "Do not place a comma after this sentence adverb.",
+      });
+    }
+
+    const bothAre = String(source || "").match(/\bAußerdem\s*,?\s*beide\s+sind\b/i);
+    if (bothAre?.[0]) {
+      corrections.push({
+        partId,
+        from: bothAre[0],
+        to: "Außerdem sind beide",
+        reason: "Use normal verb-second word order: Außerdem sind beide ...",
+      });
+    }
+
+    const reliableTypo = String(source || "").match(/\bzuverlassig\b/i);
+    if (reliableTypo?.[0]) {
+      corrections.push({
+        partId,
+        from: reliableTypo[0],
+        to: "zuverlässig",
+        reason: "Correct the spelling of zuverlässig.",
       });
     }
   }
@@ -527,6 +577,27 @@ function pruneResolvedWritingReviewReasons(existing = [], {
     if (!wrongRegister && code === "writing_register_mismatch") return false;
     return true;
   });
+}
+
+function escapeRegExp(value = "") {
+  return String(value || "").replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&");
+}
+
+function pruneResolvedTaskClaims(value = "", taskPointEvidence = []) {
+  let text = String(value || "");
+  const resolved = (Array.isArray(taskPointEvidence) ? taskPointEvidence : [])
+    .filter((item) => clean(item?.status).toLowerCase() === "met")
+    .map((item) => clean(item?.label))
+    .filter(Boolean);
+
+  for (const label of resolved) {
+    const escaped = escapeRegExp(label);
+    text = text
+      .replace(new RegExp("(?:^|\\s)(?:Required writing points? (?:are|is) missing:?\\s*)" + escaped + "[.;!?]?", "gi"), " ")
+      .replace(new RegExp("[^.!?\\n]*(?:missing|not addressed|did not address|not covered)[^.!?\\n]*" + escaped + "[^.!?\\n]*[.!?]?", "gi"), " ");
+  }
+
+  return text.replace(/\s{2,}/g, " ").trim();
 }
 
 function contradictionReviewReasons(issues = []) {
@@ -662,6 +733,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         corrections: mergeCorrections(result.corrections, deterministicCorrections),
         writingDimensions: dimensions,
         reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
+        feedback: pruneResolvedTaskClaims(result.feedback, taskPointEvidence),
+        improvementSummary: pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence),
         markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
         status: suspiciousZeroWriting || contradictions.length ? "needs_review" : result.status,
         shouldSendAutomatically: suspiciousZeroWriting || contradictions.length ? false : result.shouldSendAutomatically,
@@ -696,6 +769,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       corrections: mergeCorrections(result.corrections, deterministicCorrections),
       writingDimensions: dimensions,
       reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
+      feedback: pruneResolvedTaskClaims(result.feedback, taskPointEvidence),
+      improvementSummary: pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence),
       markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
       status: contradictions.length ? "needs_review" : result.status,
       shouldSendAutomatically: contradictions.length ? false : result.shouldSendAutomatically,
