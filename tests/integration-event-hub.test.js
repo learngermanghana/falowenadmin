@@ -130,7 +130,7 @@ test("server gateway owns webhook configuration and Admin verification", () => {
 test("Communication hub exposes integration event status and retry", () => {
   const hub = read("src/pages/CommunicationHubPage.jsx");
   const panel = read("src/components/IntegrationEventPanel.jsx");
-  assert.match(hub, /System events/);
+  assert.match(hub, /System Health/);
   assert.match(hub, /IntegrationEventPanel/);
   assert.match(panel, /Integration events/);
   assert.match(panel, /Retry/);
