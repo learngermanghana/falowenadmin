@@ -43,3 +43,10 @@ test("attendance reconnect repairs stale duration even if the old shared timer i
   assert.match(source, /sharedIsActive && presenterLiveState\.classStartSource !== "checkin"/);
   assert.match(source, /Attendance-owned sessions are revalidated against the level duration/);
 });
+
+test("attendance status uses the defined presenter status value", () => {
+  const source = read("src/pages/CheckinDisplayPage.jsx");
+  assert.match(source, /const presenterStatus = useMemo/);
+  assert.match(source, /detail: slideSyncStatus\.message \|\| presenterStatus \|\|/);
+  assert.doesNotMatch(source, /presenterStatusText/);
+});
