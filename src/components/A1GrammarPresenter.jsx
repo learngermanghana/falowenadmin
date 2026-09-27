@@ -15,6 +15,7 @@ function lessonUrl(value = "") {
 }
 
 function stageList(slide, topicLabel) {
+  const isSpeakingReadiness = String(slide?.assignmentId || "").trim().toUpperCase() === "A1-5.9";
   const support = buildTeacherSlideSupport(slide);
   const checks = getA1PresenterUnderstandingChecks(
     slide.assignmentId,
@@ -29,6 +30,84 @@ function stageList(slide, topicLabel) {
   const transferItems = hasWorkbookPlan
     ? workbookParts.map((part) => ({ label: part.label, detail: part.detailEn }))
     : practicePrompts.slice(0, 4).map((question, index) => ({ label: `Übung ${index + 1}`, detail: question }));
+
+  if (isSpeakingReadiness) {
+    const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
+    return [
+      {
+        id: "intro",
+        type: "intro",
+        kicker: "A1 · Day 19",
+        title: slide.title || "Goethe A1 Speaking Readiness",
+        topic: topicLabel || slide.topic || "",
+        objective: slide.objective || "",
+        duration: slide.estimatedDuration || "90 minutes",
+        examReadiness: true,
+      },
+      {
+        id: "exam-map",
+        type: "list",
+        kicker: "Prüfungsformat",
+        title: "Die drei Teile der A1-Sprechprüfung",
+        items: [
+          "Teil 1 · Sich vorstellen: Name, Alter, Land, Wohnort, Sprachen, Beruf/Studium und Hobby; danach Buchstabieren und Zahlen.",
+          "Teil 2 · Fragen stellen und antworten: Aus einem Thema oder Schlüsselwort eine passende Frage machen und die Partnerfrage beantworten.",
+          "Teil 3 · Bitten formulieren und reagieren: Eine höfliche Bitte machen und natürlich auf die Bitte des Partners reagieren.",
+        ],
+      },
+      {
+        id: "teil-1",
+        type: "list",
+        kicker: "Teil 1",
+        title: "Sich vorstellen · 30–45 Sekunden",
+        items: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 1) : [],
+      },
+      {
+        id: "grammar-check",
+        type: "check",
+        kicker: "Teil 1–3 · Live-Check",
+        title: "Prüfungsbereitschaft · ein Prompt pro Student",
+        items: mainChecks,
+      },
+      {
+        id: "teil-3",
+        type: "list",
+        kicker: "Teil 3",
+        title: "Bitten und reagieren",
+        items: (Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).slice(4, 6),
+      },
+      {
+        id: "mock",
+        type: "workbook",
+        kicker: "Mini-Prüfung",
+        title: "Teil 1 → Teil 2 → Teil 3 · ohne Hilfe",
+        items: flow.slice(2, 6).map((item) => ({ label: item.phase, detail: item.detailEn })),
+        workbookUrl: slide.workbookConnection?.workbookUrl || "",
+      },
+      {
+        id: "readiness",
+        type: "list",
+        kicker: "Readiness",
+        title: "Ist der Student prüfungsbereit?",
+        items: [
+          "Aufgabe erfüllt: beantwortet bzw. formuliert genau das, was verlangt wird.",
+          "Fragebildung: W-Frage oder Ja/Nein-Frage ist verständlich und korrekt genug.",
+          "Antwortrelevanz: antwortet auf die tatsächliche Frage, nicht auf ein auswendig gelerntes Thema.",
+          "Tempo: reagiert ohne lange Pause und kann nach einem kleinen Fehler weiterreden.",
+          "Verständlichkeit: Aussprache und Satzbau sind für A1 klar genug.",
+          "Interaktion: hört zu, bittet höflich und reagiert passend auf den Partner.",
+        ],
+      },
+      {
+        id: "exit-check",
+        type: "check",
+        kicker: "Abschluss",
+        title: "Fresh Prompt · ohne Hilfe",
+        items: exitChecks,
+        exitCheck: true,
+      },
+    ].filter((stage) => stage.type === "intro" || (Array.isArray(stage.items) && stage.items.length > 0));
+  }
 
   return [
     {
@@ -192,7 +271,7 @@ export default function A1GrammarPresenter({
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
-            <span className="presenter-lesson-label">A1 · Language-first</span>
+            <span className="presenter-lesson-label">{stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Language-first"}</span>
           </div>
 
           <PresenterSessionTimer slide={slide} />
@@ -230,9 +309,13 @@ export default function A1GrammarPresenter({
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
-                <strong>A1 teaching method</strong>
-                <p>Language focus → examples → understanding check → error correction → practice/workbook transfer → exit check.</p>
-                <small>The class participation toolbar stays available from the first slide. During the live understanding check, Falowen gives each selected learner a unique lesson question.</small>
+                <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 teaching method"}</strong>
+                <p>{stage.examReadiness
+                  ? "Warm-up diagnosis → exam map → Teil 1 → live Teil 2/3 prompts → mini mock exam → readiness decision → fresh exit prompt."
+                  : "Language focus → examples → understanding check → error correction → practice/workbook transfer → exit check."}</p>
+                <small>{stage.examReadiness
+                  ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
+                  : "The class participation toolbar stays available from the first slide. During the live understanding check, Falowen gives each selected learner a unique lesson question."}</small>
               </div>
             </>
           ) : stage.type === "check" ? (
