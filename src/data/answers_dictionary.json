@@ -878,17 +878,18 @@
   "A2 1.3 Dinge und Personen vergleichen": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Max",
-        "Answer2": "B) Max",
-        "Answer3": "B) Max ist älter als Anna.",
-        "Answer4": "A) Beide sind freundlich."
+        "Answer1": "A) Sprachschule A",
+        "Answer2": "B) In Sprachschule B",
+        "Answer3": "B) Sprachschule B",
+        "Answer4": "B) Sprachschule B",
+        "Answer5": "B) Dienstag und Donnerstag"
       },
       "teil4": {
-        "Answer1": "B) Julia ist 26 Jahre alt",
-        "Answer2": "C) Julia arbeitet als Architektin",
-        "Answer3": "B) Tobias lebt in Frankfurt",
-        "Answer4": "A) Tobias möchte ein eigenes Restaurant eröffnen",
-        "Answer5": "B) Julia und Tobias kochen am Wochenende oft mit Sophie"
+        "Answer1": "B) 26 Jahre",
+        "Answer2": "C) Architektin",
+        "Answer3": "B) Frankfurt",
+        "Answer4": "A) Ein Restaurant eröffnen",
+        "Answer5": "B) Gemeinsam kochen"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1ftIKdxbCKTlcDJUj7uHNWZu-dRfH_Tuja0FzTgS_97M/gviz/tq?tqx=out:html&sheet=Key",

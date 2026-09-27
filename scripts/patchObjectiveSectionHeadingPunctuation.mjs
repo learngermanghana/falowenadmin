@@ -8,9 +8,15 @@ const markerAfter = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|part)[ \\t]
 const markerWithCommonTypo = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|tiel|part)[ \\t]*([1-4])|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*(?=\\n|$)/gi;';
 const markerWithInlineAnswers = '  const markerRegex = /(?:^|\\n)[ \\t]*((?:teil|tiel|part)[ \\t]*([1-4])(?:[ \\t]*(?:[.:;|·•–-][ \\t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \\t]*(?:\\([^\\n)]*\\))?[ \\t]*[.:;]?[ \\t]*/gi;';
 
+const usesSharedSubmissionParser = source.includes('import { parseSubmissionSections } from "./submissionSections.js";')
+  && source.includes("const splitSubmissionIntoSections = parseSubmissionSections;");
+
 if (source.includes(markerBefore)) {
   source = source.replace(markerBefore, markerAfter);
-} else if (!source.includes(markerAfter) && !source.includes(markerWithCommonTypo) && !source.includes(markerWithInlineAnswers)) {
+} else if (!source.includes(markerAfter)
+    && !source.includes(markerWithCommonTypo)
+    && !source.includes(markerWithInlineAnswers)
+    && !usesSharedSubmissionParser) {
   throw new Error("objective section-heading parser changed; update patchObjectiveSectionHeadingPunctuation.mjs");
 }
 
