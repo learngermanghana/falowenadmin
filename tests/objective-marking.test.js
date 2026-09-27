@@ -617,14 +617,14 @@ ich möchte ein Auto mieten.
   assert.equal(result.details["teil4.4"].correct, true);
 });
 
-test("A2-1.3 recognizes parenthesized part labels and compact same-line choices", () => {
+test("A2-1.3 recognizes parenthesized part labels and current 5+5 choices", () => {
   const result = computeObjectiveScore("A2-1.3", `
 Teil 2
 Lieber Thomas,
 Kumasi gefällt mir besser als Accra. Pizza schmeckt mir besser als Hamburger.
 
 Teil 3 (Lesen)
-1.b 2.b 3.b 4.a
+1.a 2.b 3.b 4.b 5.b
 
 Teil 4 (Horen)
 1.B
@@ -634,10 +634,11 @@ Teil 4 (Horen)
 5.B
   `);
 
-  assert.equal(result.totalCount, 9);
-  assert.equal(result.correctCount, 9);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 10);
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
-  assert.equal(result.details["teil3.4"].correct, true);
+  assert.equal(result.details["teil3.1"].expected, "A");
+  assert.equal(result.details["teil3.5"].expected, "B");
   assert.equal(result.details["teil4.1"].student, "B");
 });
 
