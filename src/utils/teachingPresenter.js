@@ -1037,6 +1037,37 @@ function buildCorrectionMistakes(items = [], grammarRules = []) {
     .filter(Boolean);
 }
 
+function buildProgressiveSpeakingStage(speakingStage = {}, level = "") {
+  const questions = Array.isArray(speakingStage.items) ? speakingStage.items.filter(Boolean) : [];
+  if (!questions.length) return speakingStage;
+
+  const lastIndex = questions.length - 1;
+  const requestedIndexes = [0, Math.floor(lastIndex / 2), lastIndex];
+  const indexes = [...new Set(requestedIndexes)].slice(0, 3);
+  while (indexes.length < Math.min(3, questions.length)) {
+    const nextIndex = indexes.length;
+    if (!indexes.includes(nextIndex)) indexes.push(nextIndex);
+    else break;
+  }
+
+  const questionModels = Array.isArray(speakingStage.questionModels) ? speakingStage.questionModels : [];
+  const selectedQuestions = indexes.map((index) => questions[index]).filter(Boolean);
+  const selectedModels = selectedQuestions
+    .map((question) => questionModels.find((item) => item?.questionDe === question))
+    .filter(Boolean);
+  const labels = ["Easy", "Neutral", "Difficult"].slice(0, selectedQuestions.length);
+
+  return {
+    ...speakingStage,
+    title: level === "B1" ? "Sprechen · 3 Stufen" : "Sprechen · 3 Fragen",
+    instruction: "Nach Warm-up und Grammatik: eine leichte, eine neutrale und eine schwierigere Frage.",
+    items: selectedQuestions,
+    questionModels: selectedModels,
+    questionLevels: labels,
+    suggestedMinutes: level === "B1" ? 10 : 9,
+  };
+}
+
 function buildAdvancedDiscussionStage(slide = {}, speakingStage = {}, level = "") {
   const questions = Array.isArray(speakingStage.items) ? speakingStage.items.filter(Boolean) : [];
   const centralQuestion = questions.length ? questions[questions.length - 1] : "";
@@ -1189,7 +1220,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: buildCorrectionMistakes(mistakeItems),
         suggestedMinutes: 6,
       },
-      speakingStage,
+      buildProgressiveSpeakingStage(speakingStage, level),
       workbookStage,
     ];
   }
@@ -1278,11 +1309,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: buildCorrectionMistakes(mistakeItems),
         suggestedMinutes: 7,
       },
-      {
-        ...speakingStage,
-        title: "Sprechen · anwenden und begründen",
-        suggestedMinutes: 15,
-      },
+      buildProgressiveSpeakingStage(speakingStage, level),
       workbookStage,
     ];
   }

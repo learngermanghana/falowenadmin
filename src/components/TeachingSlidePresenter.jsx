@@ -439,6 +439,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
   const activeQuestion = stage.type === "question-reveal" ? stage.items[questionIndex] : "";
+  const activeQuestionLevel = stage.type === "question-reveal" && Array.isArray(stage.questionLevels)
+    ? String(stage.questionLevels[questionIndex] || "")
+    : "";
   const activeModel = getSpeakingQuestionModel(stage, activeQuestion);
   const directAnswerMode = stage.requiresQuestionModel || Boolean(activeModel);
   const b1CorrectionGuide = String(slide.course || "").toUpperCase() === "B1" && stage.id === "b1-grammar-check" && activeModel?.modelAnswerDe
@@ -845,7 +848,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             </section>
           ) : stage.type === "question-reveal" ? (
             <section className="presenter-question-reveal">
-              <div className="presenter-question-counter">{advancedClassroom ? "Frage" : "Question"} {questionIndex + 1} {advancedClassroom ? "von" : "of"} {stage.items.length}</div>
+              <div className="presenter-question-counter">
+                {advancedClassroom ? "Frage" : "Question"} {questionIndex + 1} {advancedClassroom ? "von" : "of"} {stage.items.length}
+                {activeQuestionLevel ? <span className="presenter-question-level">{activeQuestionLevel}</span> : null}
+              </div>
               <h1>{stage.title}</h1>
               {stage.instruction ? <p className="presenter-question-instruction">{stage.instruction}</p> : null}
               <p className="presenter-question">{activeQuestion}</p>
