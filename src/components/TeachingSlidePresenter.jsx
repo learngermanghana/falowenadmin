@@ -754,7 +754,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   <div className="presenter-vocabulary-challenge-heading">
                     <span>Wortschatz-Check · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
                     <h1>Welches Wort passt?</h1>
-                    <p>Wählt das Wort, das am besten in den Satz passt.</p>
+                    <p>Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt.</p>
                   </div>
                   {activeVocabChallenge ? (
                     <article className="presenter-vocabulary-cloze-card">
