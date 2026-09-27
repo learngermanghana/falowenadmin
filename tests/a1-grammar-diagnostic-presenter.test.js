@@ -5,6 +5,7 @@ import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../src/data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../src/data/a1PresenterUnderstandingChecks.js";
+import { buildA1PresenterQuestionPool } from "../src/utils/a1PresenterQuestionPool.js";
 
 test("normal A1 Presenter is a grammar diagnostic, while A1-5.9 keeps exam readiness", () => {
   const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
@@ -82,16 +83,25 @@ test("A1 Presenter exposes teacher-purpose guidance and a full-canvas Focus view
 });
 
 
-test("A1-5.9 propagates exam-readiness context to every stage and cue", () => {
+test("A1-5.9 propagates exam-readiness context and distinguishes performance from knowledge checks", () => {
   const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
+  const slide = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-5.9");
+  const checks = getA1GrammarChecks("A1-5.9", slide);
+  const modes = new Set(checks.map((item) => item.responseMode));
+  const pool = buildA1PresenterQuestionPool(checks.slice(0, -1), 10, "a1-5.9-test");
 
+  assert.equal(slide.estimatedDuration, "60 minutes");
+  assert.deepEqual([...modes].sort(), ["knowledge", "performance"]);
+  assert.ok(pool.some((item) => item.responseMode === "knowledge"));
+  assert.ok(pool.some((item) => item.responseMode === "performance"));
   assert.match(source, /\.map\(\(stage\) => \(\{ \.\.\.stage, examReadiness: true \}\)\)/);
-  assert.match(source, /Ablauf und Ziel der A1-Sprechprüfung verstehen/);
-  assert.match(source, /Einen Prüfungs-Prompt selbstständig beantworten/);
-  assert.match(source, /Einen frischen Prüfungs-Prompt ohne Hilfe beantworten/);
-  assert.match(source, /Exam-readiness live check · one prompt per student/);
-  assert.match(source, /speaking-exam prompt to each learner/);
-  assert.match(source, /Use the model only as a reference/);
+  assert.match(source, /Readiness-Check selbstständig bearbeiten/);
+  assert.match(source, /Performance-Prompts/);
+  assert.match(source, /Wissensfragen/);
+  assert.match(source, /Exam-readiness live check · one mixed check per student/);
+  assert.match(source, /Performance check/);
+  assert.match(source, /Knowledge check/);
+  assert.match(source, /Do not mark an unrelated answer Correct/);
   assert.match(source, /This leaves the exam-readiness live check/);
   assert.match(source, /stage\.examReadiness \? "A1 · Exam-readiness" : "A1 · Grammar check"/);
 });
