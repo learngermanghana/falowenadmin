@@ -11,6 +11,13 @@ const VARIANTS = [
   (question) => `How would you explain this idea to a beginner? ${question}`,
 ];
 
+const PERFORMANCE_VARIANTS = [
+  (question) => question,
+  (question) => `Complete this speaking task independently: ${question}`,
+  (question) => `Complete the same exam task with your own wording: ${question}`,
+  (question) => `Do this speaking task without copying the previous student's wording: ${question}`,
+];
+
 const clean = (value) => String(value ?? "").trim();
 const MIN_A1_PRESENTER_QUESTIONS = 10;
 const MAX_A1_PRESENTER_QUESTIONS = 150;
@@ -24,6 +31,7 @@ function normalizeQuestion(question = {}, index = 0) {
     answerDe: clean(question.answerDe || question.answer || question.modelAnswer),
     noteEn: clean(question.noteEn || question.note || ""),
     conceptLabel: clean(question.conceptLabel) || presenterConceptLabel(questionText),
+    responseMode: clean(question.responseMode || "knowledge"),
   };
 }
 
@@ -49,9 +57,10 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
   while (pool.length < requested) {
     for (let sourceIndex = 0; sourceIndex < normalized.length && pool.length < requested; sourceIndex += 1) {
       const base = normalized[sourceIndex];
-      const variantIndex = cycle % VARIANTS.length;
-      const round = Math.floor(cycle / VARIANTS.length);
-      const rendered = VARIANTS[variantIndex](base.questionDe);
+      const variants = base.responseMode === "performance" ? PERFORMANCE_VARIANTS : VARIANTS;
+      const variantIndex = cycle % variants.length;
+      const round = Math.floor(cycle / variants.length);
+      const rendered = variants[variantIndex](base.questionDe);
       const questionDe = round > 0 ? `Follow-up ${round + 1}: ${rendered}` : rendered;
       pool.push({
         id: `${clean(seedPrefix) || "a1"}-q${sourceIndex + 1}-v${cycle + 1}`,
@@ -60,6 +69,7 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
         noteEn: base.noteEn,
         sourceQuestion: base.questionDe,
         conceptLabel: base.conceptLabel,
+        responseMode: base.responseMode,
         sourceIndex,
         variantIndex,
       });

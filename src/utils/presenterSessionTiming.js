@@ -1,5 +1,5 @@
 export const SESSION_MINUTES_BY_LEVEL = Object.freeze({
-  A1: 90,
+  A1: 60,
   A2: 90,
   B1: 90,
   B2: 90,

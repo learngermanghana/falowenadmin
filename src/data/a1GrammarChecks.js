@@ -1,5 +1,5 @@
-function check(questionDe, answerDe, noteEn = "") {
-  return { questionDe, answerDe, noteEn };
+function check(questionDe, answerDe, noteEn = "", responseMode = "knowledge") {
+  return { questionDe, answerDe, noteEn, responseMode };
 }
 
 // A1 Presenter Mode is deliberately concept-first. The workbook already contains
@@ -139,17 +139,17 @@ export const A1_GRAMMAR_CHECKS = {
     check("What does zur Arbeit express?", "Movement or direction to work; zur is a contraction of zu der."),
   ],
   "A1-5.9": [
-    check("Teil 1: Introduce yourself with seven key points.", "Name, age, country, place of residence, languages, profession/study and hobby."),
-    check("Teil 1: What should you do if the examiner asks you to spell your surname?", "Spell it clearly, letter by letter, without adding a long explanation."),
-    check("Teil 2 · Wochenende: Make a suitable question.", "For example: Was machst du am Wochenende?"),
-    check("Teil 2 · Familie: Make a suitable question.", "For example: Hast du Geschwister? / Wie viele Geschwister hast du?"),
-    check("Teil 2 · Wohnort: Make a suitable question.", "For example: Wo wohnst du?"),
-    check("Teil 2 · Getränke: Make a suitable yes/no question.", "For example: Trinkst du gern Kaffee?"),
-    check("Teil 2: How should you answer your partner?", "Answer the question that was actually asked with one short complete sentence."),
-    check("Teil 3 · Stift: Make a polite request.", "For example: Können Sie mir bitte einen Stift geben?"),
-    check("Teil 3 · Fenster: Make a polite request.", "For example: Können Sie bitte das Fenster öffnen?"),
-    check("Teil 3: React naturally to a partner's request.", "For example: Ja, gern. / Ja, natürlich. / Kein Problem. / Tut mir leid."),
-    check("Final readiness: What should you do after a small mistake?", "Continue with simple German instead of stopping for a long time."),
+    check("Teil 1: Introduce yourself with seven key points.", "Name, age, country, place of residence, languages, profession/study and hobby.", "", "performance"),
+    check("Teil 1: What should you do if the examiner asks you to spell your surname?", "Spell it clearly, letter by letter, without adding a long explanation.", "", "knowledge"),
+    check("Teil 2 · Wochenende: Make a suitable question.", "For example: Was machst du am Wochenende?", "", "performance"),
+    check("Teil 2 · Familie: Make a suitable question.", "For example: Hast du Geschwister? / Wie viele Geschwister hast du?", "", "performance"),
+    check("Teil 2 · Wohnort: Make a suitable question.", "For example: Wo wohnst du?", "", "performance"),
+    check("Teil 2 · Getränke: Make a suitable yes/no question.", "For example: Trinkst du gern Kaffee?", "", "performance"),
+    check("Teil 2: How should you answer your partner?", "Answer the question that was actually asked with one short complete sentence.", "", "knowledge"),
+    check("Teil 3 · Stift: Make a polite request.", "For example: Können Sie mir bitte einen Stift geben?", "", "performance"),
+    check("Teil 3 · Fenster: Make a polite request.", "For example: Können Sie bitte das Fenster öffnen?", "", "performance"),
+    check("Teil 3: React naturally to a partner's request.", "For example: Ja, gern. / Ja, natürlich. / Kein Problem. / Tut mir leid.", "", "performance"),
+    check("Final readiness: What should you do after a small mistake?", "Continue with simple German instead of stopping for a long time.", "", "knowledge"),
   ],
   "A1-12.3": [
     check("What is the difference between a formal and an informal German message?", "They use different greetings, pronouns, tone, and closing formulas."),

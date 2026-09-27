@@ -33,10 +33,10 @@ function a1TeacherPurpose(stage = {}) {
   };
   if (id === "grammar-check") return {
     student: stage.examReadiness
-      ? "Einen Prüfungs-Prompt selbstständig beantworten."
+      ? "Einen Readiness-Check selbstständig bearbeiten: sprechen oder Prüfungswissen anwenden."
       : "Eine Grammatikfrage selbstständig beantworten.",
     teacher: stage.examReadiness
-      ? "Die Prüfungsantwort vollständig hören; danach Aufgaben­erfüllung, Verständlichkeit und Selbstständigkeit als Correct oder Needs review markieren."
+      ? "Bei Performance-Prompts Aufgaben­erfüllung und Verständlichkeit bewerten; bei Wissensfragen die Antwort mit dem Teacher Guide abgleichen."
       : "Erst vollständig antworten lassen; danach Correct oder Needs review markieren.",
   };
   if (id === "mistake-fix") return {
@@ -57,8 +57,8 @@ function a1TeacherPurpose(stage = {}) {
   };
   if (id === "exit-check") return stage.examReadiness
     ? {
-        student: "Einen frischen Prüfungs-Prompt ohne Hilfe beantworten.",
-        teacher: "Nicht vorsagen; prüfen, ob der Student selbstständig und verständlich auf den Prüfungs-Prompt reagiert.",
+        student: "Einen frischen Readiness-Check ohne Hilfe beantworten.",
+        teacher: "Nicht vorsagen; je nach Aufgabentyp entweder die konkrete Antwort oder die selbstständige Sprechleistung prüfen.",
       }
     : {
         student: "Eine frische Aufgabe ohne Hilfe lösen.",
@@ -111,7 +111,7 @@ function stageList(slide, topicLabel) {
         title: slide.title || "Goethe A1 Speaking Readiness",
         topic: topicLabel || slide.topic || "",
         objective: slide.objective || "",
-        duration: slide.estimatedDuration || "90 minutes",
+        duration: slide.estimatedDuration || "60 minutes",
         examReadiness: true,
       },
       {
@@ -136,7 +136,7 @@ function stageList(slide, topicLabel) {
         id: "grammar-check",
         type: "check",
         kicker: "Teil 1–3 · Live-Check",
-        title: "Prüfungsbereitschaft · ein Prompt pro Student",
+        title: "Prüfungsbereitschaft · ein Check pro Student",
         items: mainChecks,
       },
       {
@@ -288,6 +288,7 @@ export default function A1GrammarPresenter({
     : checkMode
       ? stage.items[itemIndex]
       : null;
+  const activeExamPerformance = Boolean(stage?.examReadiness && activeCheck?.responseMode === "performance");
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
 
   function resetQuestionState() {
@@ -424,7 +425,7 @@ export default function A1GrammarPresenter({
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
                 <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 grammar-check method"}</strong>
                 <p>{stage.examReadiness
-                  ? "Warm-up diagnosis → exam map → Teil 1 → live Teil 2/3 prompts → mini mock exam → readiness decision → fresh exit prompt."
+                  ? "Warm-up diagnosis → exam map → Teil 1 → live performance/knowledge checks → mini mock exam → readiness decision → fresh exit check."
                   : "Grammar notes first → quick rule check → one grammar question per student → fix mistakes → build one sentence → workbook transfer → exit check."}</p>
                 <small>{stage.examReadiness
                   ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
@@ -436,9 +437,11 @@ export default function A1GrammarPresenter({
               <div className="presenter-question-counter">
                 {participationCheckMode
                   ? activeCheck
-                    ? `Student question ${activeCheck.poolPosition} of ${activeCheck.poolSize} · one question per student`
+                    ? stage.examReadiness
+                      ? `${activeExamPerformance ? "Performance" : "Knowledge"} check ${activeCheck.poolPosition} of ${activeCheck.poolSize} · one check per student`
+                      : `Student question ${activeCheck.poolPosition} of ${activeCheck.poolSize} · one question per student`
                     : stage.examReadiness
-                      ? "Exam-readiness live check · one prompt per student"
+                      ? "Exam-readiness live check · one mixed check per student"
                       : "Class understanding check · one question per student"
                   : `Aufgabe ${itemIndex + 1} von ${stage.items.length}`}
               </div>
@@ -447,10 +450,10 @@ export default function A1GrammarPresenter({
                 <div className="presenter-model-support">
                   <strong>Pick the first student above</strong>
                   <p>{stage.examReadiness
-                    ? "Falowen assigns a different unused speaking-exam prompt to each learner. Let the student respond independently before you evaluate."
+                    ? "Falowen assigns a different unused readiness check to each learner. Some checks require an A1 speaking performance; others check exam strategy or factual readiness knowledge."
                     : "Falowen assigns a different unused understanding question to each learner. For 10 students, the class receives 10 distinct lesson questions before any generated extension is needed."}</p>
                   <small>{stage.examReadiness
-                    ? "Record Correct, Needs review, Skip or Absent based on task fulfilment, understandable A1 language and independent reaction; then click Next student →."
+                    ? "Follow the selected check type: Performance = judge task fulfilment and understandable A1 language. Knowledge = compare the response with the supplied factual Teacher Guide."
                     : "Record Correct, Needs review, Skip or Absent, then click Next student → above to test another learner."}</small>
                 </div>
               ) : (
@@ -467,7 +470,9 @@ export default function A1GrammarPresenter({
                       <p>{activeCheck?.answerDe}</p>
                       {participationCheckMode ? (
                         <small>{stage.examReadiness
-                          ? "Use the model only as a reference. Accept any understandable A1 response that fulfils the speaking task; then record the result and use Next student →."
+                          ? activeExamPerformance
+                            ? "Performance check: use the model only as a reference. Accept another understandable A1 response that fulfils the speaking task."
+                            : "Knowledge check: compare the student's answer with this Teacher Guide. Do not mark an unrelated answer Correct just because the German is understandable."
                           : "Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for another distinct question."}</small>
                       ) : null}
                       {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
@@ -477,10 +482,14 @@ export default function A1GrammarPresenter({
                       <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
                       <p>{stage.exitCheck
                         ? (stage.examReadiness
-                          ? "The student responds to the fresh exam prompt first. Do not help; reveal only after the response is complete."
+                          ? activeExamPerformance
+                            ? "The student completes the fresh performance prompt first. Do not help; judge task fulfilment before revealing the guide."
+                            : "The student answers the factual readiness question first. Do not help; compare the answer with the Teacher Guide before marking."
                           : "The student answers first. Reveal only after the answer is complete.")
                         : (stage.examReadiness
-                          ? "Let the selected student complete the speaking-exam response first. Judge task fulfilment and clarity, then record Correct or Needs review."
+                          ? activeExamPerformance
+                            ? "Let the selected student complete the speaking performance first. Judge task fulfilment and clarity, then record Correct or Needs review."
+                            : "This is a knowledge/strategy check. Listen to the answer, then compare it with the Teacher Guide before recording Correct or Needs review."
                           : "Let the selected student answer first. Record Correct or Needs review above, then click Next student → to check another learner.")}</p>
                     </div>
                   )}
