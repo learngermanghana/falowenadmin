@@ -130,12 +130,12 @@ if (fs.existsSync(b1RegressionPath)) {
     'if (level === "B2") {',
     'function buildB2FocusedTask',
     'type: "b2-grammar"',
-    'title: "Sprechen · entwickeln, vergleichen und reagieren"',
+    'function buildAdvancedDiscussionStage',
+    'title: level === "C2" ? "Seminargespräch · eine Frage vertiefen" : "Diskussion · eine Frage vertiefen"',
     'if (level === "C1") {',
     'id: "focus"',
     'type: "c1-grammar"',
-    'title: "Sprechen · argumentieren und reagieren"',
-    'title: "Schreibbrücke · Argument in Absatzform"',
+    'title: "Schreibbrücke · Position vorbereiten"',
   ];
   for (const marker of requiredPresenterMarkers) {
     if (!presenterSource.includes(marker)) {
