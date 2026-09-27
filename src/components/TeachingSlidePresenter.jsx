@@ -580,6 +580,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   <p>{stage.attentionEn}</p>
                 </aside>
               ) : null}
+              {Array.isArray(stage.modelItems) && stage.modelItems.length ? (
+                <details className="presenter-advanced-models">
+                  <summary>2 Modellsätze anzeigen</summary>
+                  <ul>{stage.modelItems.map((item) => <li key={item}>{item}</li>)}</ul>
+                </details>
+              ) : null}
             </section>
           ) : stage.type === "c1-grammar" ? (
             <section className="presenter-c1-grammar">
@@ -607,6 +613,34 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   <strong>Achtung</strong>
                   <p>{stage.attentionDe}</p>
                 </aside>
+              ) : null}
+              {Array.isArray(stage.modelItems) && stage.modelItems.length ? (
+                <details className="presenter-advanced-models">
+                  <summary>2 Modellsätze anzeigen</summary>
+                  <ul>{stage.modelItems.map((item) => <li key={item}>{item}</li>)}</ul>
+                </details>
+              ) : null}
+            </section>
+          ) : stage.type === "c2-grammar" ? (
+            <section className="presenter-c2-grammar">
+              <div className="presenter-c2-grammar-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                <p>Nur die Kernfunktion sichern. Die Modellsätze sind bei Bedarf aufklappbar.</p>
+              </div>
+              <div className="presenter-c2-grammar-rules">
+                {presenterItems.map((item, index) => (
+                  <article key={item + index}>
+                    <span>{index + 1}</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+              {Array.isArray(stage.modelItems) && stage.modelItems.length ? (
+                <details className="presenter-advanced-models">
+                  <summary>2 Modellsätze anzeigen</summary>
+                  <ul>{stage.modelItems.map((item) => <li key={item}>{item}</li>)}</ul>
+                </details>
               ) : null}
             </section>
           ) : stage.type === "b1-grammar" ? (
@@ -813,6 +847,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <section className="presenter-question-reveal">
               <div className="presenter-question-counter">{advancedClassroom ? "Frage" : "Question"} {questionIndex + 1} {advancedClassroom ? "von" : "of"} {stage.items.length}</div>
               <h1>{stage.title}</h1>
+              {stage.instruction ? <p className="presenter-question-instruction">{stage.instruction}</p> : null}
               <p className="presenter-question">{activeQuestion}</p>
               <div className="presenter-question-actions">
                 <button type="button" onClick={() => setShowQuestionSupport((current) => !current)}>

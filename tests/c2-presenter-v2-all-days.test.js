@@ -47,7 +47,6 @@ const SPINE = [
   "foundation",
   "phrases",
   "grammar",
-  "examples",
   "analysis",
   "questions",
   "writing",
@@ -81,13 +80,15 @@ test("C2 keeps the current odd/even Write standard", () => {
     assert.equal(writing.items.length, 1);
 
     if (expected === "opinion") {
-      assert.match(writing.title, /Stellungnahme/i);
-      assert.match(JSON.stringify(writing), /These \+ zwei Bewertungskriterien/);
-      assert.match(JSON.stringify(writing), /Stärkstes Gegenargument/);
+      assert.match(writing.title, /Position vorbereiten/i);
+      assert.match(JSON.stringify(writing), /zwei Gründe/i);
+      assert.match(JSON.stringify(writing), /Optional: Welches Gegenargument/i);
+      assert.equal(writing.items[0].prompts.length, 3);
     } else {
       assert.match(writing.title, /Umformung/i);
-      assert.match(JSON.stringify(writing), /Bedeutung muss unverändert bleiben/i);
-      assert.match(JSON.stringify(writing), /Register- oder Bedeutungsverschiebung/i);
+      assert.match(JSON.stringify(writing), /Bedeutung muss unbedingt erhalten bleiben/i);
+      assert.match(JSON.stringify(writing), /eine Stelle.*besonders kontrollieren/i);
+      assert.equal(writing.items[0].prompts.length, 3);
     }
   }
 });
@@ -104,27 +105,29 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     const grammar = stages.find((stage) => stage.id === "grammar");
     assert.deepEqual(grammar.items, slide.grammarTeachDe, slide.assignmentId + " must preserve runtime grammar");
 
-    const examples = stages.find((stage) => stage.id === "examples");
-    assert.equal(examples.items.length, 2, slide.assignmentId + " should preserve the two grammar models");
+    assert.equal(grammar.type, "c2-grammar");
+    assert.equal(grammar.modelItems.length, 2, slide.assignmentId + " should fold the two models into grammar");
 
     const analysis = stages.find((stage) => stage.id === "analysis");
     assert.equal(analysis.type, "flow");
     assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
-    assert.ok(analysis.items[0].prompts.length >= 4);
-    assert.equal(analysis.items[0].minutes, 12);
+    assert.ok(analysis.items[0].prompts.length >= 2 && analysis.items[0].prompts.length <= 3);
+    assert.equal(analysis.items[0].minutes, 14);
 
     const vocabulary = stages.find((stage) => stage.id === "phrases");
     assert.equal(vocabulary.type, "vocabulary");
     assert.equal(vocabulary.kicker, "Kollokationen & Register");
-    assert.ok(vocabulary.items.length >= 6);
+    assert.equal(vocabulary.items.length, 6);
     assert.match(vocabulary.instruction, /nicht dekorativ/i);
 
     const questions = stages.find((stage) => stage.id === "questions");
     assert.equal(questions.requiresQuestionModel, true);
-    assert.equal(questions.items.length, 5);
-    questions.items.forEach((question) => {
-      assert.ok(getSpeakingQuestionModel(questions, question)?.modelAnswerDe, slide.assignmentId + " missing speaking model");
-    });
+    assert.equal(questions.items.length, 1);
+    assert.equal(questions.questionModels.length, 1);
+    assert.match(questions.title, /eine Frage vertiefen/i);
+    assert.match(questions.instruction, /höchstens zwei Perspektiven/i);
+    assert.match(questions.instruction, /nicht reformulieren/i);
+    assert.ok(getSpeakingQuestionModel(questions, questions.items[0])?.modelAnswerDe, slide.assignmentId + " missing speaking model");
 
     const workbook = stages.find((stage) => stage.id === "workbook");
     assert.equal(workbook.items.length, 5);
@@ -139,7 +142,7 @@ test("C2 rotates seven analytical mechanics across the 28 lessons", () => {
   const expectedTitles = [
     "Kriterienmatrix",
     "Evidenz-Audit",
-    "Präzisions- und Registerlabor",
+    "Registerwahl · eine Formulierung vertiefen",
     "Quellen- und Distanzcheck",
     "Stärkste Gegenposition",
     "Kausalitäts- und Folgenkarte",
@@ -202,8 +205,9 @@ test("C2 Day 1 preserves the circular-economy teaching logic without another end
   assert.equal(analysis.title, "Kriterienmatrix");
   assert.match(JSON.stringify(analysis), /Verbraucher tragen die größte Verantwortung/);
   assert.match(JSON.stringify(analysis), /verbindlich(?:e|en) Regeln/);
-  assert.match(writing.title, /Stellungnahme planen/);
-  assert.match(JSON.stringify(writing), /alle drei Perspektiven/i);
+  assert.match(writing.title, /Position vorbereiten/);
+  assert.match(JSON.stringify(writing), /zwei Gründe/i);
+  assert.doesNotMatch(JSON.stringify(writing), /alle drei Perspektiven/i);
   assert.equal(stages.some((stage) => stage.id === "weekly-challenge"), false);
 });
 
