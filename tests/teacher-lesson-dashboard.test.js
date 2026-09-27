@@ -115,3 +115,20 @@ test("teacher dashboard opens core lesson before expensive readiness scans", asy
   assert.ok(readinessLoad > coreReady);
   assert.match(page, /Promise\.allSettled\(\[/);
 });
+
+
+test("Admin top bar exposes the deployed commit badge", async () => {
+  const fs = await import("node:fs/promises");
+  const [app, vite, css] = await Promise.all([
+    fs.readFile(new URL("../src/App.jsx", import.meta.url), "utf8"),
+    fs.readFile(new URL("../vite.config.js", import.meta.url), "utf8"),
+    fs.readFile(new URL("../src/App.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(vite, /VERCEL_GIT_COMMIT_SHA/);
+  assert.match(vite, /VITE_FALOWEN_BUILD_SHA/);
+  assert.match(app, /ADMIN_BUILD_LABEL/);
+  assert.match(app, /Admin · \{ADMIN_BUILD_LABEL\}/);
+  assert.match(app, /Falowen Admin build/);
+  assert.match(css, /\.topbar-build-badge/);
+});
