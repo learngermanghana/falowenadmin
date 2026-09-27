@@ -313,6 +313,31 @@ export default function CheckinDisplayPage() {
   const handoffPhaseTimerRef = useRef(null);
   const handoffFocusTimerRef = useRef(null);
 
+  const scheduleInfo = useMemo(() => {
+    const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
+    if (!Number.isInteger(sessionIndex)) return null;
+
+    const schedule = getClassSchedule(classId);
+    const zeroBasedIndex = sessionIndex > 0 ? sessionIndex - 1 : sessionIndex;
+    const item = schedule[zeroBasedIndex] || schedule[sessionIndex];
+    if (!item) return null;
+
+    return {
+      dateLabel: item.date || String(date || ""),
+      sessionDisplayLabel: `${item.day || ""} - ${item.topic || ""}`.trim().replace(/^\s*-\s*/, ""),
+      assignmentId: String(item.assignmentId || "").trim(),
+      dayNumber: Number(String(item.day || "").match(/\d+/)?.[0] || 0),
+    };
+  }, [classId, sessionId, date]);
+
+  const hasDateFromUrl = Boolean(String(date || "").trim());
+  const hasSessionLabelFromUrl = Boolean(String(sessionLabel || "").trim());
+  const dateLabel = hasDateFromUrl ? String(date).trim() : (scheduleInfo?.dateLabel || "");
+  const sessionDisplayLabel = hasSessionLabelFromUrl
+    ? String(sessionLabel).trim()
+    : (scheduleInfo?.sessionDisplayLabel || "");
+  const effectiveAssignmentId = String(assignmentId || scheduleInfo?.assignmentId || "").trim();
+
   useEffect(() => {
     const immediateLevel = inferClassLevel({}, assignmentId, classId);
     if (immediateLevel) {
@@ -379,30 +404,6 @@ export default function CheckinDisplayPage() {
     });
   }, [classId, sessionId]);
 
-  const scheduleInfo = useMemo(() => {
-    const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
-    if (!Number.isInteger(sessionIndex)) return null;
-
-    const schedule = getClassSchedule(classId);
-    const zeroBasedIndex = sessionIndex > 0 ? sessionIndex - 1 : sessionIndex;
-    const item = schedule[zeroBasedIndex] || schedule[sessionIndex];
-    if (!item) return null;
-
-    return {
-      dateLabel: item.date || String(date || ""),
-      sessionDisplayLabel: `${item.day || ""} - ${item.topic || ""}`.trim().replace(/^\s*-\s*/, ""),
-      assignmentId: String(item.assignmentId || "").trim(),
-      dayNumber: Number(String(item.day || "").match(/\d+/)?.[0] || 0),
-    };
-  }, [classId, sessionId, date]);
-
-  const hasDateFromUrl = Boolean(String(date || "").trim());
-  const hasSessionLabelFromUrl = Boolean(String(sessionLabel || "").trim());
-  const dateLabel = hasDateFromUrl ? String(date).trim() : (scheduleInfo?.dateLabel || "");
-  const sessionDisplayLabel = hasSessionLabelFromUrl
-    ? String(sessionLabel).trim()
-    : (scheduleInfo?.sessionDisplayLabel || "");
-  const effectiveAssignmentId = String(assignmentId || scheduleInfo?.assignmentId || "").trim();
   const waitingWarmupTeaser = useMemo(() => {
     const directAssignmentId = effectiveAssignmentId;
     let slide = directAssignmentId ? getTeachingSlideByAssignmentId(directAssignmentId) : null;
