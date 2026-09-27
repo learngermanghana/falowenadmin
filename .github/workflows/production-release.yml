@@ -52,13 +52,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Apply presenter patch chain
-        run: |
-          node scripts/patchB2C1SpeakingModels.mjs
-          node scripts/patchPresenterStudentPicker.mjs
-          node scripts/patchPresenterParticipationInsights.mjs
-          node scripts/patchPresenterRandomAndAttendanceDiagnostics.mjs
-          node scripts/patchPresenterConceptLabels.mjs
+      - name: Prepare production source exactly once
+        run: npm run prebuild
       - name: Run release-critical regressions
         run: >
           node --test
@@ -69,8 +64,8 @@ jobs:
           tests/teaching-presenter.test.js
       - name: Check learner-source parity
         run: node scripts/auditStudentAdminCurriculumParity.mjs
-      - name: Build production bundle
-        run: npm run build
+      - name: Build production bundle without rerunning prebuild
+        run: npx vite build
 
   verify-production:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
