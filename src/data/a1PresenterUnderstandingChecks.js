@@ -29,7 +29,7 @@ function learnerPrompt(questionDe, lessonLabel) {
   return check(
     questionDe,
     `Accept a short correct A1 response that uses the target language for ${lessonLabel}. The teacher judges meaning and the lesson pattern, not perfect fluency.`,
-    "Use this as an application question, not an automatic grade.",
+    "Use this only when a grammar-focused application prompt is needed; do not turn it into a speaking-performance task.",
   );
 }
 
@@ -187,12 +187,13 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
     : learnerPrompt(clean(slide.wrapUpTaskDe) || `Give one correct example for ${lessonLabel}.`, lessonLabel);
   const conceptChecks = fallback.length > 1 ? fallback.slice(0, -1) : fallback;
 
+  // A1 Presenter is a grammar diagnostic. The grammar page does the teaching;
+  // these live checks verify rule recognition, correction and controlled transfer.
+  // Do not dilute the pool with warm-up/speaking prompts.
   const applicationChecks = [
     ...conceptChecks,
-    ...(Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []).map((question) => learnerPrompt(question, lessonLabel)),
-    ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).map((example) => modelApplication(example, lessonLabel)),
     ...(Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : []).map((mistake) => mistakeReflection(mistake, lessonLabel)),
-    ...(Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : []).map((question) => learnerPrompt(question, lessonLabel)),
+    ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).map((example) => modelApplication(example, lessonLabel)),
     ...(Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []).map((point) => languagePointReflection(point, lessonLabel)),
     ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => modelApplication(phrase, lessonLabel)),
   ];
