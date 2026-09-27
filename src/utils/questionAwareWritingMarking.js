@@ -424,6 +424,56 @@ function deterministicLanguageCorrections(source = "", partId = "teil2", task = 
         reason: "Keep the informal du register with Felix and use an + Dativ for what someone likes about a person.",
       });
     }
+
+    const commaAfterWeil = String(source || "").match(/\bweil\s*,\s*(ich|er|sie|wir|du)\b/i);
+    if (commaAfterWeil?.[0]) {
+      corrections.push({
+        partId,
+        from: commaAfterWeil[0],
+        to: commaAfterWeil[0].replace(/weil\s*,\s*/i, "weil "),
+        reason: "Do not put the comma after weil; the comma belongs before the weil-clause.",
+      });
+    }
+
+    const missingCommaBeforeWeil = String(source || "").match(/\b(?:dir|Mutter|Vater|Eltern)\s+weil\b/i);
+    if (missingCommaBeforeWeil?.[0]) {
+      corrections.push({
+        partId,
+        from: missingCommaBeforeWeil[0],
+        to: missingCommaBeforeWeil[0].replace(/\s+weil\b/i, ", weil"),
+        reason: "Put a comma before the subordinate clause with weil.",
+      });
+    }
+
+    const adverbComma = String(source || "").match(/\b(?:Zuerst|Zweitens|Außerdem)\s*,\s*/i);
+    if (adverbComma?.[0]) {
+      corrections.push({
+        partId,
+        from: adverbComma[0].trim(),
+        to: adverbComma[0].replace(/,\s*$/, " ").trimEnd(),
+        reason: "Do not place a comma after this sentence adverb.",
+      });
+    }
+
+    const bothAre = String(source || "").match(/\bAußerdem\s*,?\s*beide\s+sind\b/i);
+    if (bothAre?.[0]) {
+      corrections.push({
+        partId,
+        from: bothAre[0],
+        to: "Außerdem sind beide",
+        reason: "Use normal verb-second word order: Außerdem sind beide ...",
+      });
+    }
+
+    const reliableTypo = String(source || "").match(/\bzuverlassig\b/i);
+    if (reliableTypo?.[0]) {
+      corrections.push({
+        partId,
+        from: reliableTypo[0],
+        to: "zuverlässig",
+        reason: "Correct the spelling of zuverlässig.",
+      });
+    }
   }
 
   return corrections;
@@ -529,7 +579,7 @@ function pruneResolvedWritingReviewReasons(existing = [], {
   });
 }
 
-function contradictionReviewReasons(issues = []) {
+function escapeRegExp(value = "") {\n  return String(value || "").replace(/[.*+?^$\\{\\}()|[\\]\\\\]/g, "\\function contradictionReviewReasons(issues = []) {");\n}\n\nfunction pruneResolvedTaskClaims(value = "", taskPointEvidence = []) {\n  let text = String(value || "");\n  const resolved = (Array.isArray(taskPointEvidence) ? taskPointEvidence : [])\n    .filter((item) => clean(item?.status).toLowerCase() === "met")\n    .map((item) => clean(item?.label))\n    .filter(Boolean);\n\n  for (const label of resolved) {\n    const escaped = escapeRegExp(label);\n    text = text\n      .replace(new RegExp("(?:^|\\\\s)(?:Required writing points? (?:are|is) missing:?\\\\s*)" + escaped + "[.;!?]?", "gi"), " ")\n      .replace(new RegExp("[^.!?\\\\n]*(?:missing|not addressed|did not address|not covered)[^.!?\\\\n]*" + escaped + "[^.!?\\\\n]*[.!?]?", "gi"), " ");\n  }\n\n  return text.replace(/\\s{2,}/g, " ").trim();\n}\nfunction contradictionReviewReasons(issues = []) {
   return (Array.isArray(issues) ? issues : []).map((message) => ({
     code: /Writing score is 0/i.test(message)
       ? "writing_zero_with_completed_task"
@@ -662,6 +712,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
         corrections: mergeCorrections(result.corrections, deterministicCorrections),
         writingDimensions: dimensions,
         reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
+        feedback: pruneResolvedTaskClaims(result.feedback, taskPointEvidence),
+        improvementSummary: pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence),
         markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
         status: suspiciousZeroWriting || contradictions.length ? "needs_review" : result.status,
         shouldSendAutomatically: suspiciousZeroWriting || contradictions.length ? false : result.shouldSendAutomatically,
@@ -696,6 +748,8 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       corrections: mergeCorrections(result.corrections, deterministicCorrections),
       writingDimensions: dimensions,
       reviewReasons: mergeReviewReasons(baseReviewReasons, contradictionReviewReasons(contradictions)),
+      feedback: pruneResolvedTaskClaims(result.feedback, taskPointEvidence),
+      improvementSummary: pruneResolvedTaskClaims(result.improvementSummary, taskPointEvidence),
       markingRubricVersion: task.rubricVersion || (task.level === "A1" ? A1_WRITING_RUBRIC_VERSION : task.level === "A2" ? A2_WRITING_RUBRIC_VERSION : task.level === "B1" ? B1_WRITING_RUBRIC_VERSION : "question-aware-v1"),
       status: contradictions.length ? "needs_review" : result.status,
       shouldSendAutomatically: contradictions.length ? false : result.shouldSendAutomatically,
