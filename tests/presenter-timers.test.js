@@ -346,6 +346,16 @@ test("Presenter acknowledges Attendance start only after timer state is usable",
   assert.match(source, /Attendance connected · timer synced/);
 });
 
+test("Presenter ignores ended state from a stale or different lesson session", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+
+  assert.match(source, /const currentLessonIds = \[slide\?\.assignmentId, slide\?\.id\]/);
+  assert.match(source, /const liveLessonIds = \[liveState\.assignmentId, liveState\.lessonId\]/);
+  assert.match(source, /const liveSessionMatchesCurrentLesson = currentLessonIds\.length > 0/);
+  assert.match(source, /const attendanceSessionEnded = presenterLive\.isToday\s*&& liveSessionMatchesCurrentLesson/);
+  assert.match(source, /const attendanceControlsTimer = presenterLive\.isToday\s*&& liveSessionMatchesCurrentLesson/);
+});
+
 test("Presenter shows the shared class-ended screen even while presentation chrome is hidden", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   const css = read("src/components/PresenterSessionTimer.css");
