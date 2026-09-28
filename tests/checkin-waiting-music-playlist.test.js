@@ -663,7 +663,13 @@ test("Start class uses a visible Smart Start handoff and opens Presenter within 
   assert.match(page, /SMART_HANDOFF_MIN_VISIBLE_MS = 3000/);
   assert.match(page, /SMART_HANDOFF_CONNECTED_VISIBLE_MS = 1200/);
   assert.match(page, /const presenterLessonUrl = useMemo/);
-  assert.match(page, /\?present=1/);
+  assert.match(page, /const query = new URLSearchParams/);
+  assert.match(page, /present: "1"/);
+  assert.match(page, /classId: String\(classId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /classRecordId: String\(presenterTarget\.classRecordId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /sessionId: String\(sessionId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /assignmentId: String\(effectiveAssignmentId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /sessionKey: String\(linkPresenterSessionKey \|\| ""\)\.trim\(\)/);
   assert.match(page, /const openPresenterWindow = useCallback/);
   assert.match(page, /window\.open\(presenterLessonUrl, "falowen-presenter"\)/);
 
@@ -700,6 +706,15 @@ test("explicit upcoming Presenter session does not inherit a legacy ended state"
   const explicitIndex = service.indexOf("if (explicitSessionKey)");
   const legacyIndex = service.indexOf("const legacy = data.presenterLiveSession");
   assert.ok(explicitIndex > 0 && legacyIndex > explicitIndex, "explicit session guard must run before legacy fallback");
+});
+
+test("Attendance opens Presenter with the exact current class-session identity", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /presenterSessionKey\(\{[\s\S]*sessionDate: linkSessionDate[\s\S]*sessionId,[\s\S]*assignmentId: effectiveAssignmentId/);
+  assert.match(page, /sessionKey: String\(linkPresenterSessionKey \|\| ""\)\.trim\(\)/);
+  assert.match(page, /classRecordId: String\(presenterTarget\.classRecordId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /window\.open\(presenterLessonUrl, "falowen-presenter"\)/);
 });
 
 test("Smart Start only reports success after Presenter acknowledges the exact Attendance request", () => {

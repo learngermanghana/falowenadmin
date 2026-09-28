@@ -11,13 +11,51 @@ import {
 } from "../services/presenterLiveSessionService.js";
 
 const PRESENTER_HEARTBEAT_MS = 90 * 1000;
+const EMPTY_URL_IDENTITY = Object.freeze({ classId: "", classRecordId: "", sessionId: "", assignmentId: "", sessionKey: "" });
 
 function normalize(value) {
   return String(value || "").trim();
 }
 
+function presenterUrlIdentity() {
+  if (typeof window === "undefined") {
+    return EMPTY_URL_IDENTITY;
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    classId: normalize(params.get("classId")),
+    classRecordId: normalize(params.get("classRecordId")),
+    sessionId: normalize(params.get("sessionId")),
+    assignmentId: normalize(params.get("assignmentId")),
+    sessionKey: normalize(params.get("sessionKey")),
+  };
+}
+
+function mergePresenterContext(base = {}, urlIdentity = {}) {
+  const baseClassId = normalize(base.classId);
+  const urlClassId = normalize(urlIdentity.classId);
+  const sameClass = !urlClassId || !baseClassId || urlClassId === baseClassId;
+
+  return {
+    classId: urlClassId || baseClassId,
+    classRecordId: normalize(urlIdentity.classRecordId)
+      || (sameClass ? normalize(base.classRecordId) : ""),
+    sessionKey: normalize(urlIdentity.sessionKey) || normalize(base.sessionKey),
+  };
+}
+
 export default function usePresenterLiveSession(slide = {}) {
-  const [classContext, setClassContext] = useState(getPresenterClassContext);
+  const rawUrlIdentity = useMemo(presenterUrlIdentity, []);
+  const slideIds = [
+    normalize(slide?.assignmentId).toLowerCase(),
+    normalize(slide?.id).toLowerCase(),
+  ].filter(Boolean);
+  const urlAssignmentId = normalize(rawUrlIdentity.assignmentId).toLowerCase();
+  const urlIdentityMatchesSlide = !urlAssignmentId || slideIds.includes(urlAssignmentId);
+  const urlIdentity = urlIdentityMatchesSlide ? rawUrlIdentity : EMPTY_URL_IDENTITY;
+  const [classContext, setClassContext] = useState(
+    () => mergePresenterContext(getPresenterClassContext(), urlIdentity),
+  );
   const [liveState, setLiveState] = useState({});
   const [syncState, setSyncState] = useState("waiting");
   const [hasSnapshot, setHasSnapshot] = useState(false);
@@ -36,15 +74,19 @@ export default function usePresenterLiveSession(slide = {}) {
   const assignmentId = normalize(slide?.assignmentId || slide?.id);
   const sessionKey = normalize(liveState?.sessionKey || classContext.sessionKey);
 
-  useEffect(() => subscribePresenterClassContext((next) => {
-    setClassContext({
-      classId: normalize(next?.classId),
-      classRecordId: normalize(next?.classRecordId),
-      sessionKey: normalize(next?.sessionKey),
-    });
-  }), []);
+  useEffect(() => {
+    if (!normalize(urlIdentity.sessionKey)) return undefined;
+    const next = mergePresenterContext(getPresenterClassContext(), urlIdentity);
+    setPresenterClassContext(next);
+    setClassContext(next);
+    return undefined;
+  }, [urlIdentity]);
 
-  const requestedSessionKey = normalize(classContext.sessionKey);
+  useEffect(() => subscribePresenterClassContext((next) => {
+    setClassContext(mergePresenterContext(next, urlIdentity));
+  }), [urlIdentity]);
+
+  const requestedSessionKey = normalize(urlIdentity.sessionKey || classContext.sessionKey);
   const subscriptionSessionKey = requestedSessionKey.startsWith(`${sessionDate}__`)
     ? requestedSessionKey
     : "";
@@ -75,16 +117,27 @@ export default function usePresenterLiveSession(slide = {}) {
   useEffect(() => {
     const nextSessionKey = normalize(liveState?.sessionKey);
     if (!nextSessionKey || nextSessionKey === normalize(classContext.sessionKey)) return;
+    if (normalize(urlIdentity.sessionKey) && nextSessionKey !== normalize(urlIdentity.sessionKey)) return;
     setPresenterClassContext({
-      classId: classContext.classId,
-      classRecordId,
+      classId: normalize(urlIdentity.classId || classContext.classId),
+      classRecordId: normalize(urlIdentity.classRecordId || classRecordId),
       sessionKey: nextSessionKey,
     });
-  }, [liveState?.sessionKey, classContext.classId, classContext.sessionKey, classRecordId]);
+  }, [
+    liveState?.sessionKey,
+    classContext.classId,
+    classContext.sessionKey,
+    classRecordId,
+    urlIdentity.classId,
+    urlIdentity.classRecordId,
+    urlIdentity.sessionKey,
+  ]);
 
   const publish = useCallback(async (patch = {}) => {
     if (!classRecordId) return { ok: false, reason: "missing-class-record" };
-    const targetSessionKey = normalize(liveState?.sessionKey || classContext.sessionKey);
+    const targetSessionKey = normalize(
+      urlIdentity.sessionKey || liveState?.sessionKey || classContext.sessionKey,
+    );
     try {
       const result = await publishPresenterLiveSession(classRecordId, {
         sessionDate,
@@ -108,6 +161,7 @@ export default function usePresenterLiveSession(slide = {}) {
     level,
     lessonId,
     assignmentId,
+    urlIdentity.sessionKey,
   ]);
 
   const isRemoteState = Boolean(liveState?.updatedBy && liveState.updatedBy !== deviceId);
