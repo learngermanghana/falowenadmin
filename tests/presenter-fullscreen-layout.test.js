@@ -32,6 +32,9 @@ test("tablet and phone portrait presenter fills the available viewport instead o
 test("presenter fullscreen wiring keeps one A1 dock and synchronizes browser exits", () => {
   const a1 = read("src/components/A1GrammarPresenter.jsx");
   const shared = read("src/components/TeachingSlidePresenter.jsx");
+  const css = read("src/components/TeachingSlidePresenter.css");
+  assert.match(css, /\.presenter-shell\.is-presentation-mode/);
+  assert.doesNotMatch(css, /:has\(\.presenter-stage\.is-focus-mode\)/);
 
   assert.match(a1, /useEffect, useMemo, useRef, useState/);
   assert.doesNotMatch(a1, /toggleFocusMode/);
@@ -43,4 +46,8 @@ test("presenter fullscreen wiring keeps one A1 dock and synchronizes browser exi
   assert.match(shared, /addEventListener\("fullscreenchange", handleFullscreenChange\)/);
   assert.match(a1, /aria-label="Restore presenter controls"/);
   assert.match(shared, /aria-label="Restore presenter controls"/);
+  assert.match(a1, /presenter-shell \$\{focusMode \? "is-presentation-mode" : ""\}/);
+  assert.match(shared, /presenter-shell \$\{focusMode \? "is-presentation-mode" : ""\}/);
+  assert.match(a1, />Restore controls<\/button>/);
+  assert.match(shared, />Restore controls<\/button>/);
 });
