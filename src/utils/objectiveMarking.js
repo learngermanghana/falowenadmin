@@ -453,6 +453,39 @@ const A2_7_18_LEGACY_ADVERT_OPTION_MAPS = [
   { A: "C", B: "E", C: "A", D: "B" },
 ];
 
+const A2_7_18_LEGACY_REFERENCE_ENTRY = {
+  answers: {
+    teil3: {
+      Answer1: "B) Sparkasse",
+      Answer2: "F) ING-DiBa",
+      Answer3: "B) Sparkasse",
+      Answer4: "D) Volksbank",
+      Answer5: "C) Commerzbank",
+    },
+    teil4: {
+      Answer1: "B) Reisepass, Meldebescheinigung, Einkommensnachweis",
+      Answer2: "B) Eine Stunde",
+      Answer3: "B) Drei",
+      Answer4: "A) Basiskonto",
+      Answer5: "D) Die Formulare vor dem Termin online ausfüllen",
+    },
+  },
+  expectedParts: ["teil2", "teil3", "teil4"],
+  writingParts: ["teil2"],
+  aiGradedParts: ["teil2"],
+  referenceAnswerParts: ["teil3", "teil4"],
+};
+
+function isA2718LegacySubmission(assignmentId = "", sections = []) {
+  if (normalizeAssignmentId(assignmentId) !== "A2-7.18") return false;
+  const teil3 = sections.find((section) => section.partId === "teil3");
+  const teil4 = sections.find((section) => section.partId === "teil4");
+  if (!teil3 || !teil4) return false;
+  const legacyTeil3 = extractRestartedNumberingEntries(teil3.text).sort((a, b) => a.number - b.number);
+  const legacyTeil4 = extractRestartedNumberingEntries(teil4.text).sort((a, b) => a.number - b.number);
+  return hasSequentialNumbers(legacyTeil3, 7) && hasSequentialNumbers(legacyTeil4, 3);
+}
+
 function remapLegacyA2718Choice(answer = "", optionMap = {}) {
   const letter = extractOptionLetter(answer);
   if (!letter) return answer;
@@ -1083,12 +1116,14 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
     ? assignmentIdOrReferenceEntry
     : assignmentIdOrReferenceEntry?.assignmentKey || assignmentIdOrReferenceEntry?.assignmentId || assignmentIdOrReferenceEntry?.assignment_id || "";
 
+  const rawSections = splitSubmissionIntoSections(submissionText);
+  const legacyA2718 = isA2718LegacySubmission(assignmentId, rawSections);
   const hardcodedItems = buildHardcodedReferenceItems(assignmentId);
-  const items = buildReferenceItems(source || {});
+  const items = buildReferenceItems(legacyA2718 ? A2_7_18_LEGACY_REFERENCE_ENTRY : (source || {}));
   const referenceItems = hardcodedItems.length ? hardcodedItems : items;
   if (!referenceItems.length) return { correctCount: 0, totalCount: 0, details: {} };
 
-  const sections = normalizeA2718LegacySections(assignmentId, splitSubmissionIntoSections(submissionText));
+  const sections = normalizeA2718LegacySections(assignmentId, rawSections);
   const partIds = new Set(referenceItems.map((item) => item.partId));
   const flatMainReference = referenceItems.every((item) => item.partId === "main");
   const referencePartIds = [...partIds].filter((partId) => partId !== "main");
