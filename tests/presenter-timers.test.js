@@ -346,14 +346,24 @@ test("Presenter acknowledges Attendance start only after timer state is usable",
   assert.match(source, /Attendance connected · timer synced/);
 });
 
-test("Presenter ignores ended state from a stale or different lesson session", () => {
+test("Presenter ignores ended state unless lesson, class and curriculum day all match", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
 
   assert.match(source, /const currentLessonIds = \[slide\?\.assignmentId, slide\?\.id\]/);
   assert.match(source, /const liveLessonIds = \[liveState\.assignmentId, liveState\.lessonId\]/);
   assert.match(source, /const liveSessionMatchesCurrentLesson = currentLessonIds\.length > 0/);
-  assert.match(source, /const attendanceSessionEnded = presenterLive\.isToday\s*&& liveSessionMatchesCurrentLesson/);
-  assert.match(source, /const attendanceControlsTimer = presenterLive\.isToday\s*&& liveSessionMatchesCurrentLesson/);
+  assert.match(source, /const currentClassId = normalize\(presenterLive\.expectedClassId/);
+  assert.match(source, /const liveClassId = normalize\(liveState\.classId\)/);
+  assert.match(source, /const currentCurriculumDay = Number/);
+  assert.match(source, /const liveCurriculumDay = Number\(liveState\.curriculumDay \|\| 0\)/);
+  assert.match(source, /const liveSessionMatchesCurrentClassDay = liveSessionMatchesCurrentLesson/);
+  assert.match(source, /&& liveSessionMatchesCurrentClass/);
+  assert.match(source, /&& liveSessionMatchesCurrentDay/);
+  assert.match(source, /const attendanceSessionEnded = presenterLive\.isToday\s*&& liveSessionMatchesCurrentClassDay/);
+  assert.match(source, /const attendanceControlsTimer = presenterLive\.isToday\s*&& liveSessionMatchesCurrentClassDay/);
+  assert.match(source, /if \(!liveSessionMatchesCurrentClassDay\) return/);
+  assert.match(source, /classId: normalize\(presenterLive\.expectedClassId/);
+  assert.match(source, /curriculumDay: Number/);
 });
 
 test("Presenter shows the shared class-ended screen even while presentation chrome is hidden", () => {
