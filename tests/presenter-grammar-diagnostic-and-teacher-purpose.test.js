@@ -40,7 +40,7 @@ test("every A2-C2 Presenter stage has a student action and teacher action cue", 
   }
 });
 
-test("teacher-purpose guidance is normal-view only and Focus view stays clean", () => {
+test("teacher-purpose guidance is normal-view only and presentation view stays clean", () => {
   const presenter = fs.readFileSync("src/components/TeachingSlidePresenter.jsx", "utf8");
   const css = fs.readFileSync("src/components/TeachingSlidePresenter.css", "utf8");
 
@@ -48,7 +48,7 @@ test("teacher-purpose guidance is normal-view only and Focus view stays clean", 
   assert.match(presenter, /aria-label="Teacher purpose"/);
   assert.match(presenter, /stage\.teacherPurpose\.student/);
   assert.match(presenter, /stage\.teacherPurpose\.teacher/);
-  assert.match(presenter, /Focus view/);
+  assert.match(presenter, /Present full screen/);
   assert.match(presenter, /presenter-focus-dock/);
   assert.match(css, /\.presenter-teacher-purpose/);
   assert.match(css, /\.presenter-grammar-check-grid/);
