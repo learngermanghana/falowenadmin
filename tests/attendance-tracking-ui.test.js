@@ -17,6 +17,9 @@ async function source(path) {
 test("Attendance overview uses active Live Classes and provides a tracker sub-tab", async () => {
   const overview = await source(overviewPath);
   assert.match(overview, /listClassCohorts/);
+  assert.match(overview, /listClassSessions/);
+  assert.match(overview, /Weekly timetable:/);
+  assert.match(overview, /Loading next class/);
   assert.match(overview, /isActiveLiveClass/);
   assert.match(overview, /Active classes/);
   assert.match(overview, /Attendance tracker/);

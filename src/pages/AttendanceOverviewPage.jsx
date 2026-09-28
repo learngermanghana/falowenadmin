@@ -3,7 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import OperationsCommunicationPanel from "../components/OperationsCommunicationPanel";
 import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
 import AttendanceCommunicationHealthPanel from "../components/AttendanceCommunicationHealthPanel.jsx";
-import { listClassCohorts } from "../services/liveClassService.js";
+import { listClassCohorts, listClassSessions } from "../services/liveClassService.js";
+import { classTimingSummary, weeklyTimetableLabels } from "../utils/attendanceClassTiming.js";
 
 const GHANA_TIMEZONE = "Africa/Accra";
 const TERMINAL_CLASS_STATUSES = new Set([
@@ -79,10 +80,20 @@ function tabButtonStyle(active) {
   };
 }
 
-function ActiveClassCard({ klass, onOpenTracker }) {
+const TIMING_TONES = {
+  live: { background: "#fee2e2", color: "#991b1b" },
+  today: { background: "#dbeafe", color: "#1d4ed8" },
+  tomorrow: { background: "#fef3c7", color: "#92400e" },
+  next: { background: "#dcfce7", color: "#166534" },
+  muted: { background: "#e2e8f0", color: "#475569" },
+};
+
+function ActiveClassCard({ klass, sessions, onOpenTracker }) {
   const classId = classRecordKey(klass);
-  const status = normalizeStatus(klass.status) || "active";
   const sessionCount = Number(klass.generatedSessionCount || klass.sessionCount || 0);
+  const timetable = weeklyTimetableLabels(klass);
+  const timing = Array.isArray(sessions) ? classTimingSummary(klass, sessions) : null;
+  const timingTone = TIMING_TONES[timing?.tone] || TIMING_TONES.muted;
 
   return (
     <article style={{ border: "1px solid #dbe3ee", borderRadius: 12, padding: 14, background: "#fff" }}>
@@ -91,14 +102,15 @@ function ActiveClassCard({ klass, onOpenTracker }) {
           <h3 style={{ margin: 0 }}>{klass.name || klass.className || classId}</h3>
           <small style={{ color: "#64748b" }}>{classId}</small>
         </div>
-        <span style={{ padding: "4px 9px", borderRadius: 999, background: "#dcfce7", color: "#166534", fontWeight: 800, fontSize: 12 }}>
-          {status.replace(/[_-]+/g, " ")}
+        <span style={{ padding: "4px 9px", borderRadius: 999, ...timingTone, fontWeight: 800, fontSize: 12 }}>
+          {timing?.label || (sessions === null ? "Schedule unavailable" : "Loading next class…")}
         </span>
       </div>
 
       <div style={{ display: "grid", gap: 4, marginTop: 10, fontSize: 13 }}>
         <span><strong>Course dates:</strong> {formatDate(klass.startDate)} → {formatDate(klass.endDate)}</span>
         <span><strong>Level:</strong> {klass.levelId || klass.level || "Not set"}</span>
+        {timetable.length ? <span><strong>Weekly timetable:</strong> {timetable.join(" · ")}</span> : null}
         {sessionCount > 0 ? <span><strong>Generated sessions:</strong> {sessionCount}</span> : null}
       </div>
 
@@ -122,6 +134,7 @@ export default function AttendanceOverviewPage() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionsByClass, setSessionsByClass] = useState({});
   const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") === "tracker" ? "tracker" : "classes");
   const [selectedTrackerId, setSelectedTrackerId] = useState(() => searchParams.get("classId") || "");
 
@@ -151,6 +164,33 @@ export default function AttendanceOverviewPage() {
     () => classes.filter(isActiveLiveClass),
     [classes],
   );
+
+  useEffect(() => {
+    let active = true;
+    if (!activeClasses.length) {
+      return () => { active = false; };
+    }
+
+    Promise.allSettled(activeClasses.map(async (klass) => {
+      const classId = classRecordKey(klass);
+      return [classId, await listClassSessions(classId)];
+    })).then((results) => {
+      if (!active) return;
+      setSessionsByClass(Object.fromEntries(results.map((result, index) => [
+        classRecordKey(activeClasses[index]),
+        result.status === "fulfilled" ? result.value[1] : null,
+      ])));
+    });
+
+    return () => { active = false; };
+  }, [activeClasses]);
+
+  const orderedActiveClasses = useMemo(() => [...activeClasses].sort((left, right) => {
+    const leftTiming = classTimingSummary(left, sessionsByClass[classRecordKey(left)] || []);
+    const rightTiming = classTimingSummary(right, sessionsByClass[classRecordKey(right)] || []);
+    return leftTiming.sortTime - rightTiming.sortTime
+      || normalize(left.name || left.className).localeCompare(normalize(right.name || right.className));
+  }), [activeClasses, sessionsByClass]);
 
   useEffect(() => {
     if (!activeClasses.length) {
@@ -214,8 +254,13 @@ export default function AttendanceOverviewPage() {
             <p>No active classes were found in Live Classes.</p>
           ) : (
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-              {activeClasses.map((klass) => (
-                <ActiveClassCard key={classRecordKey(klass)} klass={klass} onOpenTracker={openTracker} />
+              {orderedActiveClasses.map((klass) => (
+                <ActiveClassCard
+                  key={classRecordKey(klass)}
+                  klass={klass}
+                  sessions={sessionsByClass[classRecordKey(klass)]}
+                  onOpenTracker={openTracker}
+                />
               ))}
             </div>
           )}
