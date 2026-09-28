@@ -55,7 +55,7 @@ test("waiting room music can skip to the next configured track", () => {
   assert.match(audio, /await player\.playTrack\(player\.index \+ 1\)/);
   assert.match(page, /const skipWaitingMusic = useCallback/);
   assert.match(page, /pianoPlaylist\.length > 1/);
-  assert.match(page, /disabled=\{!musicPlaying\}/);
+  assert.match(page, /disabled=\{!musicPlaying \|\| musicStarting\}/);
   assert.match(page, /Start waiting music before skipping tracks/);
   assert.match(page, />\s*Skip\s*<\/button>/);
   assert.match(patch, /skipWaitingMusicPlaylist/);
@@ -70,6 +70,7 @@ test("check-in display presents waiting room music and current track", () => {
   assert.match(page, /Start waiting music/);
   assert.doesNotMatch(page, /Extended piano playlist/);
   assert.doesNotMatch(page, /PIANO_BAR_INTERVAL_MS/);
+  assert.match(page, /if \(!AudioContextClass\) \{\s*musicStartInFlightRef\.current = false;\s*setMusicStarting\(false\);/);
 });
 
 
@@ -127,8 +128,8 @@ test("music can continue after scheduled time until teacher starts class", () =>
 
 test("teacher-confirmed start uses the synchronized display clock", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
-  assert.match(page, /const startedAt = nowMs;/);
-  assert.doesNotMatch(page, /const startedAt = Date\.now\(\);/);
+  assert.match(page, /const startedAt = Date\.now\(\);/);
+  assert.doesNotMatch(page, /const startedAt = nowMs;/);
 });
 
 
@@ -137,7 +138,7 @@ test("music can be started manually after class has started or ended", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
 
-  assert.match(page, /const startWaitingMusic = useCallback\(async \(\) => \{\s*if \(musicPlaying\) return;/);
+  assert.match(page, /const startWaitingMusic = useCallback\(async \(\) => \{\s*if \(musicPlaying \|\| musicStartInFlightRef\.current\) return;/);
   assert.doesNotMatch(page, /if \(musicPlaying \|\| classStartedRef\.current\) return;/);
   assert.doesNotMatch(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
   assert.match(patch, /'    if \(musicPlaying \|\| classStartedRef\.current\) return;',\s*'    if \(musicPlaying\) return;'/);
@@ -436,6 +437,10 @@ test("initial presenter start is atomic and preserves the transaction winner", (
   const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
 
   assert.match(service, /runTransaction/);
+  assert.match(service, /const presenterStartRequests = new Map\(\)/);
+  assert.match(service, /if \(pending\) return pending/);
+  assert.match(service, /TRANSACTION_RETRY_DELAYS_MS/);
+  assert.match(service, /code === "failed-precondition" \|\| code === "aborted"/);
   assert.match(service, /const snapshot = await transaction\.get\(classRef\);/);
   assert.match(service, /if \(existing\.sessionKey === key && existingStart > 0\)/);
   assert.match(service, /const activeSessionKey = normalize\(data\.presenterActiveSessionKey\)/);
@@ -749,6 +754,13 @@ test("Smart End shows class outcomes, duration, next lesson and restarts lobby m
   assert.match(page, /nextLesson/);
   assert.match(page, /getSlidesByCourse\(course\)\.find/);
   assert.match(page, /if \(!musicPlaying\) void startWaitingMusic\(\)/);
+  const endHandler = page.slice(page.indexOf("const handleEndClass"), page.indexOf("useEffect", page.indexOf("const handleEndClass")));
+  assert.ok(
+    endHandler.indexOf("void startWaitingMusic()") < endHandler.indexOf("void syncPresenterEnd"),
+    "Lobby music must start inside the End class click gesture before the async handshake",
+  );
+  assert.match(page, /musicStartInFlightRef/);
+  assert.match(page, /Starting lobby music…/);
 
   assert.match(css, /\.checkin-display-smart-end\s*\{/);
   assert.match(css, /\.checkin-display-smart-end\.is-confirmed/);
