@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
@@ -345,6 +345,15 @@ export default function A1GrammarPresenter({
   }, [participationQuestion?.id]);
 
   useEffect(() => {
+    function handleFullscreenChange() {
+      if (!document.fullscreenElement) setFocusMode(false);
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
     function onKeyDown(event) {
       const tagName = event.target?.tagName;
       if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(tagName)) return;
@@ -374,13 +383,13 @@ export default function A1GrammarPresenter({
   const atEnd = stageIndex === stages.length - 1 && (!manualCheckMode || itemIndex === stage.items.length - 1);
 
   return (
-    <div ref={presenterShellRef} className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
+    <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
         {focusMode ? (
           <div className="presenter-focus-dock" aria-label="Presentation controls">
             <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" onClick={exitPresentationView} aria-label="Restore presenter controls">×</button>
+            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore controls</button>
             <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">→</button>
           </div>
         ) : null}
@@ -535,15 +544,6 @@ export default function A1GrammarPresenter({
             </>
           )}
         </main>
-
-        {focusMode ? (
-          <div className="presenter-focus-dock" aria-label="Focus mode controls">
-            <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
-            <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" onClick={toggleFocusMode} aria-label="Exit focus view">×</button>
-            <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">→</button>
-          </div>
-        ) : null}
 
         <footer className="presenter-footer">
           <button type="button" onClick={previous} disabled={atStart}>← Previous</button>

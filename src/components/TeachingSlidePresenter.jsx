@@ -305,6 +305,19 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   useEffect(() => {
+    function handleFullscreenChange() {
+      if (document.fullscreenElement) return;
+      setFocusMode(false);
+      setFitMode("normal");
+      setContentPageSize(0);
+      setContentPage(0);
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
     setQuestionIndex(0);
     setShowQuestionSupport(false);
     setWarmupSupportOpen({});
@@ -462,13 +475,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const timerPresets = [...new Set([stage.suggestedMinutes, warmupPerStudent ? warmupMinutes : null, 2, 3, 5, 10].filter(Boolean))];
 
   return (
-    <div ref={presenterShellRef} className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
+    <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
         {focusMode ? (
           <div className="presenter-focus-dock" aria-label="Focus mode controls">
             <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" onClick={exitPresentationView} aria-label="Restore presenter controls">×</button>
+            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore controls</button>
             <button
               type="button"
               onClick={next}

@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-test("Focus view remains full-canvas with only compact navigation", () => {
+test("Presentation view remains full-canvas with only compact navigation", () => {
   const presenter = fs.readFileSync("src/components/TeachingSlidePresenter.jsx", "utf8");
   const css = fs.readFileSync("src/components/TeachingSlidePresenter.css", "utf8");
 
-  assert.match(presenter, /Focus view/);
-  assert.match(presenter, /aria-label="Exit focus view"/);
+  assert.match(presenter, /Presentation view/);
+  assert.match(presenter, /aria-label="Restore presenter controls"/);
   assert.doesNotMatch(presenter, />Show marking</);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-topbar/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-student-picker/);

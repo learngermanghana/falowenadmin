@@ -1,5 +1,6 @@
 import { courseDictionary } from "./courseDictionary.js";
 import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";
+import { getCourseTaskDay } from "./courseSessionGroups.js";
 import { a1WorkbookAlignedSlidesDays1To5 } from "./a1WorkbookAlignedSlidesDays1To5.js";
 import { a1WorkbookAlignedSlidesDays6To10 } from "./a1WorkbookAlignedSlidesDays6To10.js";
 import { a1LaterTeachingSlides } from "./a1LaterTeachingSlides.js";
@@ -14,6 +15,7 @@ import { b1WorkbookAlignedSlidesDays11To20 } from "./b1WorkbookAlignedSlidesDays
 import { b1WorkbookAlignedSlidesDays21To28 } from "./b1WorkbookAlignedSlidesDays21To28.js";
 import { b2PresenterSlides } from "./b2PresenterSlides.js";
 import { c1PresenterSlides } from "./c1PresenterSlides.js";
+import { c2PresenterSlides } from "./c2PresenterSlides.js";
 
 const curatedSlides = [
   {
@@ -266,7 +268,39 @@ function enhanceA1Day2PronounSlide(slide) {
 
 function buildLevelSlides(level) {
   const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));
-  return entries.map((entry, index) => createTemplateSlide(level, entry, index + 1));
+  return entries.map((entry, index) => {
+    const lessonNumber = String(level || "").toUpperCase() === "A1"
+      ? getCourseTaskDay("A1", entry.assignment_id, index)
+      : index + 1;
+    return createTemplateSlide(level, entry, lessonNumber);
+  });
+}
+
+function normalizeA1SlideDay(slide, fallbackIndex = 0) {
+  const assignmentId = String(slide?.assignmentId || "").trim();
+  if (!assignmentId) return slide;
+
+  const dayNumber = getCourseTaskDay("A1", assignmentId, fallbackIndex);
+  const normalizedAssignmentId = assignmentId.toUpperCase();
+  if (normalizedAssignmentId === "A1-TUTORIAL") {
+    return {
+      ...slide,
+      day: `Day ${dayNumber}`,
+      dayNumber,
+    };
+  }
+
+  const titleBody = String(slide.title || "")
+    .replace(/^A1\s+(?:Day|Lesson)\s+\d+\s*·\s*/i, "")
+    .replace(/^A1\s*·\s*/i, "")
+    .trim();
+
+  return {
+    ...slide,
+    day: `Day ${dayNumber}`,
+    dayNumber,
+    title: titleBody ? `A1 Day ${dayNumber} · ${titleBody}` : slide.title,
+  };
 }
 
 const upgradedA1WorkbookAlignedSlidesDays1To5 = a1WorkbookAlignedSlidesDays1To5.map(enhanceA1Day2PronounSlide);
@@ -289,11 +323,13 @@ const curatedSlidesByAssignment = Object.fromEntries(
   ].map((slide) => [slide.assignmentId, slide]),
 );
 
-const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
+const a1Slides = buildLevelSlides("A1").map((slide, index) =>
+  normalizeA1SlideDay(curatedSlidesByAssignment[slide.assignmentId] || slide, index),
+);
 const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 const b1Slides = buildLevelSlides("B1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 
-export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides];
+export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides, ...c2PresenterSlides];
 
 export function getTeachingSlideById(id) {
   return teachingSlides.find((slide) => slide.id === id) || null;

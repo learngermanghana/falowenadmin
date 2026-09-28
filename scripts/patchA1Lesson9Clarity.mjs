@@ -88,7 +88,7 @@ const finalChecks = fs.readFileSync(checksPath, "utf8");
 if (!finalSlides.includes("A1_LESSON_9_TOPIC_LANGUAGE") || finalSlides.includes('"Ich denke, dass ..."') && !finalSlides.includes('"Ich esse keinen Käse."')) {
   throw new Error("A1-9 topic-language validation failed.");
 }
-const challengeBlock = finalChecks.match(/A1_LESSON_9_CURRENT_TOPIC_CHALLENGE[\s\S]*?"A1-4\.7"/)?.[0] || "";
+const challengeBlock = finalChecks.match(/A1_LESSON_9_CURRENT_TOPIC_CHALLENGE[\s\S]*?(?=\n\s*"A1-4"\s*:)/)?.[0] || "";
 if (!challengeBlock || /direction|location|route|geradeaus/i.test(challengeBlock)) {
   throw new Error("A1-9 class challenge contains unrelated material.");
 }

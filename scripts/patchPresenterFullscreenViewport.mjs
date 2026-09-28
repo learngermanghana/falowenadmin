@@ -25,13 +25,24 @@ function patchPresenter(path, label) {
     source = source.replace(oldFullscreen, newFullscreen);
   }
 
+  const presentationShell = label === "A1"
+    ? '<div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">'
+    : '<div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">';
+  const refShell = label === "A1"
+    ? '<div ref={presenterShellRef} className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">'
+    : '<div ref={presenterShellRef} className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">';
   const oldShell = label === "A1"
     ? '<div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">'
     : '<div className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">';
-  const newShell = oldShell.replace('<div ', '<div ref={presenterShellRef} ');
-  if (!source.includes(newShell)) {
-    if (!source.includes(oldShell)) throw new Error(`${label} presenter fullscreen shell anchor changed`);
-    source = source.replace(oldShell, newShell);
+
+  if (!source.includes(presentationShell)) {
+    if (source.includes(refShell)) {
+      source = source.replace(refShell, presentationShell);
+    } else if (source.includes(oldShell)) {
+      source = source.replace(oldShell, presentationShell);
+    } else {
+      throw new Error(`${label} presenter fullscreen shell anchor changed`);
+    }
   }
 
   fs.writeFileSync(path, source, "utf8");

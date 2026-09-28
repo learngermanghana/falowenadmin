@@ -102,7 +102,7 @@ patchFile("src/data/teachingSlides.js", [
   },
   {
     from: 'const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);',
-    to: 'const a1Slides = buildLevelSlides("A1").map((slide, index) => {\n  const resolved = curatedSlidesByAssignment[slide.assignmentId] || slide;\n  const dayNumber = getCourseTaskDay("A1", resolved.assignmentId, index);\n  const titleBody = String(resolved.title || "")\n    .replace(/^A1\\s+(?:Lesson|Day)\\s+\\d+\\s*·\\s*/i, "")\n    .replace(/^A1\\s*·\\s*/i, "")\n    .trim();\n  return {\n    ...resolved,\n    day: `Day ${dayNumber}`,\n    dayNumber,\n    title: titleBody ? `A1 Day ${dayNumber} · ${titleBody}` : `A1 Day ${dayNumber}`,\n  };\n});',
+    to: 'const a1Slides = buildLevelSlides("A1").map((slide, index) =>\n  normalizeA1SlideDay(curatedSlidesByAssignment[slide.assignmentId] || slide, index),\n);',
   },
 ]);
 
