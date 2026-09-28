@@ -11,7 +11,15 @@ import {
 } from "../services/presenterLiveSessionService.js";
 
 const PRESENTER_HEARTBEAT_MS = 90 * 1000;
-const EMPTY_URL_IDENTITY = Object.freeze({ classId: "", classRecordId: "", sessionId: "", assignmentId: "", sessionKey: "" });
+const EMPTY_URL_IDENTITY = Object.freeze({
+  classId: "",
+  classRecordId: "",
+  sessionId: "",
+  assignmentId: "",
+  curriculumDay: 0,
+  sessionDate: "",
+  sessionKey: "",
+});
 
 function normalize(value) {
   return String(value || "").trim();
@@ -27,6 +35,8 @@ function presenterUrlIdentity() {
     classRecordId: normalize(params.get("classRecordId")),
     sessionId: normalize(params.get("sessionId")),
     assignmentId: normalize(params.get("assignmentId")),
+    curriculumDay: Number(params.get("curriculumDay") || 0),
+    sessionDate: normalize(params.get("sessionDate")),
     sessionKey: normalize(params.get("sessionKey")),
   };
 }
@@ -72,6 +82,14 @@ export default function usePresenterLiveSession(slide = {}) {
   );
   const lessonId = normalize(slide?.id || slide?.assignmentId);
   const assignmentId = normalize(slide?.assignmentId || slide?.id);
+  const curriculumDay = Number(
+    slide?.dayNumber
+      || String(slide?.day || "").match(/\d+/)?.[0]
+      || urlIdentity.curriculumDay
+      || 0,
+  );
+  const expectedClassId = normalize(urlIdentity.classId || classContext.classId);
+  const expectedSessionDate = normalize(urlIdentity.sessionDate || sessionDate);
   const sessionKey = normalize(liveState?.sessionKey || classContext.sessionKey);
 
   useEffect(() => {
@@ -140,7 +158,9 @@ export default function usePresenterLiveSession(slide = {}) {
     );
     try {
       const result = await publishPresenterLiveSession(classRecordId, {
-        sessionDate,
+        sessionDate: expectedSessionDate,
+        classId: expectedClassId,
+        curriculumDay,
         level,
         lessonId,
         assignmentId,
@@ -161,11 +181,14 @@ export default function usePresenterLiveSession(slide = {}) {
     level,
     lessonId,
     assignmentId,
+    curriculumDay,
+    expectedClassId,
+    expectedSessionDate,
     urlIdentity.sessionKey,
   ]);
 
   const isRemoteState = Boolean(liveState?.updatedBy && liveState.updatedBy !== deviceId);
-  const isToday = normalize(liveState?.sessionDate) === sessionDate;
+  const isToday = normalize(liveState?.sessionDate) === expectedSessionDate;
 
   useEffect(() => {
     if (!classRecordId || !sessionKey || !hasSnapshot || !isToday || liveState?.classStatus === "ended") return undefined;
@@ -193,7 +216,10 @@ export default function usePresenterLiveSession(slide = {}) {
     syncState,
     hasSnapshot,
     isRemoteState,
+    expectedClassId,
+    expectedCurriculumDay: curriculumDay,
+    expectedSessionDate,
     isToday,
-    sessionDate,
+    sessionDate: expectedSessionDate,
   };
 }

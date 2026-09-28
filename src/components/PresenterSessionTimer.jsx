@@ -151,13 +151,35 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     .filter(Boolean);
   const liveSessionMatchesCurrentLesson = currentLessonIds.length > 0
     && liveLessonIds.some((value) => currentLessonIds.includes(value));
+  const currentClassId = normalize(presenterLive.expectedClassId || presenterLive.classContext?.classId).toLowerCase();
+  const liveClassId = normalize(liveState.classId).toLowerCase();
+  const currentCurriculumDay = Number(
+    presenterLive.expectedCurriculumDay
+      || slide?.dayNumber
+      || String(slide?.day || "").match(/\d+/)?.[0]
+      || 0,
+  );
+  const liveCurriculumDay = Number(liveState.curriculumDay || 0);
+  const liveSessionMatchesCurrentClass = Boolean(
+    currentClassId
+      && liveClassId
+      && currentClassId === liveClassId
+  );
+  const liveSessionMatchesCurrentDay = Boolean(
+    currentCurriculumDay > 0
+      && liveCurriculumDay > 0
+      && currentCurriculumDay === liveCurriculumDay
+  );
+  const liveSessionMatchesCurrentClassDay = liveSessionMatchesCurrentLesson
+    && liveSessionMatchesCurrentClass
+    && liveSessionMatchesCurrentDay;
   const attendanceControlsTimer = presenterLive.isToday
-    && liveSessionMatchesCurrentLesson
+    && liveSessionMatchesCurrentClassDay
     && liveState.classStartSource === "checkin"
     && Number(liveState.classStartedAtMs || 0) > 0
     && normalize(liveState.sessionTimingAuthority || "attendance") === "attendance";
   const attendanceSessionEnded = presenterLive.isToday
-    && liveSessionMatchesCurrentLesson
+    && liveSessionMatchesCurrentClassDay
     && (
       liveState.classLifecycleStatus === "ended"
       || liveState.classStatus === "ended"
@@ -248,6 +270,7 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     const remote = presenterLive.liveState || {};
     const remoteStamp = Number(remote.timerUpdatedAtMs || 0);
     if (!presenterLive.hasSnapshot || !presenterLive.isToday || !remoteStamp) return;
+    if (!liveSessionMatchesCurrentClassDay) return;
     if (normalize(remote.timerLevel).toUpperCase() !== level) return;
     if (remoteStamp <= lastRemoteTimerStampRef.current) return;
 
@@ -600,6 +623,13 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
         presenterLive.sessionKey,
         {
           sessionDate: presenterLive.sessionDate,
+          classId: normalize(presenterLive.expectedClassId || presenterLive.classContext?.classId),
+          curriculumDay: Number(
+            presenterLive.expectedCurriculumDay
+              || slide?.dayNumber
+              || String(slide?.day || "").match(/\d+/)?.[0]
+              || 0,
+          ),
           level,
           lessonId: normalize(slide?.id || slide?.assignmentId),
           assignmentId: normalize(slide?.assignmentId || slide?.id),
