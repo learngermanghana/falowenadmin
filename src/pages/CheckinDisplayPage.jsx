@@ -466,13 +466,6 @@ export default function CheckinDisplayPage() {
     waitingClassLevel,
   ]);
 
-  const presenterLessonUrl = useMemo(() => {
-    const course = String(waitingWarmupTeaser?.course || waitingClassLevel || "").trim().toUpperCase();
-    const slideId = String(waitingWarmupTeaser?.slideId || "").trim();
-    if (!course || !slideId) return "";
-    return `/teaching-slides/course/${encodeURIComponent(course)}/${encodeURIComponent(slideId)}?present=1`;
-  }, [waitingClassLevel, waitingWarmupTeaser?.course, waitingWarmupTeaser?.slideId]);
-
   const startDecisionStorageKey = useMemo(
     () => classStartDecisionStorageKey(classId, sessionId, dateLabel),
     [classId, sessionId, dateLabel],
@@ -628,6 +621,32 @@ export default function CheckinDisplayPage() {
     }),
     [effectiveAssignmentId, linkSessionDate, sessionId],
   );
+
+
+  const presenterLessonUrl = useMemo(() => {
+    const course = String(waitingWarmupTeaser?.course || waitingClassLevel || "").trim().toUpperCase();
+    const slideId = String(waitingWarmupTeaser?.slideId || "").trim();
+    if (!course || !slideId) return "";
+
+    const query = new URLSearchParams({
+      present: "1",
+      classId: String(classId || "").trim(),
+      classRecordId: String(presenterTarget.classRecordId || "").trim(),
+      sessionId: String(sessionId || "").trim(),
+      assignmentId: String(effectiveAssignmentId || "").trim(),
+      sessionKey: String(linkPresenterSessionKey || "").trim(),
+    });
+    return `/teaching-slides/course/${encodeURIComponent(course)}/${encodeURIComponent(slideId)}?${query.toString()}`;
+  }, [
+    classId,
+    effectiveAssignmentId,
+    linkPresenterSessionKey,
+    presenterTarget.classRecordId,
+    sessionId,
+    waitingClassLevel,
+    waitingWarmupTeaser?.course,
+    waitingWarmupTeaser?.slideId,
+  ]);
 
   const resolvePresenterClass = useCallback(async () => {
     const classes = await listClasses();
