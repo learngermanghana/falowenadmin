@@ -51,14 +51,14 @@ Teil 3
   assert.equal(result.totalCount, 5);
 });
 
-test("A2-7.18 canonical 5+5 A-F advert-code submission scores 10/10", () => {
+test("A2-7.18 current 5+5 Lesen and Hören submission scores 10/10", () => {
   const result = computeObjectiveScore("A2-7.18", `
 Teil 3
-1. B
-2. F
+1. A
+2. B
 3. B
-4. D
-5. C
+4. C
+5. B
 
 Teil 4
 1. B
@@ -71,6 +71,8 @@ Teil 4
   assert.equal(result.correctCount, 10);
   assert.equal(result.totalCount, 10);
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
+  assert.equal(result.details["teil3.1"].expectedDisplay, "A) Donnerstag um 14:00 Uhr");
+  assert.equal(result.details["teil3.4"].expectedDisplay, "C) 45 Minuten");
 });
 
 test("A2-7.18 accidental September 7+3 submission is remapped to the original 5+5 key", () => {
