@@ -99,7 +99,8 @@ function cleanPatch(patch = {}) {
 
 function sessionStateFromClassData(data = {}, requestedSessionKey = "") {
   const activeSessionKey = normalize(data.presenterActiveSessionKey);
-  const sessionKey = normalize(requestedSessionKey) || activeSessionKey;
+  const explicitSessionKey = normalize(requestedSessionKey);
+  const sessionKey = explicitSessionKey || activeSessionKey;
   const sessions = data.presenterSessions && typeof data.presenterSessions === "object"
     ? data.presenterSessions
     : {};
@@ -113,6 +114,15 @@ function sessionStateFromClassData(data = {}, requestedSessionKey = "") {
       sessionKey,
       activeSessionKey,
       isActiveSession: Boolean(activeSessionKey && sessionKey === activeSessionKey),
+    };
+  }
+
+  if (explicitSessionKey) {
+    return {
+      sessionKey: explicitSessionKey,
+      activeSessionKey,
+      isActiveSession: false,
+      sessionPendingStart: true,
     };
   }
 
