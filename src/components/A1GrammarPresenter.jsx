@@ -383,13 +383,13 @@ export default function A1GrammarPresenter({
   const atEnd = stageIndex === stages.length - 1 && (!manualCheckMode || itemIndex === stage.items.length - 1);
 
   return (
-    <div ref={presenterShellRef} className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
+    <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
         {focusMode ? (
           <div className="presenter-focus-dock" aria-label="Presentation controls">
             <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" onClick={exitPresentationView} aria-label="Restore presenter controls">×</button>
+            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore controls</button>
             <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">→</button>
           </div>
         ) : null}
