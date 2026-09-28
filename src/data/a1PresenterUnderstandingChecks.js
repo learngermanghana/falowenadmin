@@ -58,6 +58,56 @@ function languagePointReflection(point, lessonLabel) {
 }
 
 const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  "A1-4": [
+    check(
+      "Change the subject to er: ‘Ich komme aus Frankreich.’",
+      "Er kommt aus Frankreich.",
+      "Check subject-verb agreement: ich komme → er kommt.",
+    ),
+    check(
+      "Change the subject to sie: ‘Ich spreche Französisch.’",
+      "Sie spricht Französisch.",
+      "Here sie means one woman: ich spreche → sie spricht.",
+    ),
+    check(
+      "What does wo ask about: a location, an origin, or a destination?",
+      "A location.",
+    ),
+    check(
+      "What does woher ask about: where someone is, where someone comes from, or where someone is going?",
+      "Where someone comes from: the origin.",
+    ),
+    check(
+      "What does wohin ask about: location, origin, or destination?",
+      "A destination: where someone is going.",
+    ),
+    check(
+      "Which question asks for someone’s country of origin: ‘Wo kommst du?’, ‘Woher kommst du?’ or ‘Wohin kommst du?’",
+      "Woher kommst du?",
+    ),
+    check(
+      "Complete the sentence: ‘Ich komme ___ Ghana.’",
+      "Ich komme aus Ghana.",
+    ),
+    check(
+      "Complete the sentence: ‘Ich fahre ___ Deutschland.’",
+      "Ich fahre nach Deutschland.",
+    ),
+    check(
+      "Complete the sentence: ‘Ich fahre ___ Schweiz.’",
+      "Ich fahre in die Schweiz.",
+    ),
+    check(
+      "Correct the sentence: ‘Er sprechen Deutsch.’",
+      "Er spricht Deutsch.",
+      "The verb must agree with er.",
+    ),
+    check(
+      "Exit-Check: What is the difference between ‘Ich komme aus Deutschland’ and ‘Ich fahre nach Deutschland’?",
+      "Ich komme aus Deutschland gives origin. Ich fahre nach Deutschland gives a destination.",
+      "The learner should distinguish origin from destination without help.",
+    ),
+  ],
   "A1-4.7": [
     check(
       "In Teil 3, if you want to make a polite request, how could you start?",
