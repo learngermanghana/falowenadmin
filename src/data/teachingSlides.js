@@ -1,4 +1,5 @@
 import { courseDictionary } from "./courseDictionary.js";
+import { enhanceA1GenericLessonSlide } from "./a1GenericLessonUpgrades.js";
 import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";
 import { getCourseTaskDay } from "./courseSessionGroups.js";
 import { a1WorkbookAlignedSlidesDays1To5 } from "./a1WorkbookAlignedSlidesDays1To5.js";
@@ -277,6 +278,7 @@ function buildLevelSlides(level) {
 }
 
 function normalizeA1SlideDay(slide, fallbackIndex = 0) {
+  slide = enhanceA1GenericLessonSlide(slide);
   const assignmentId = String(slide?.assignmentId || "").trim();
   if (!assignmentId) return slide;
 
