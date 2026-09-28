@@ -15,6 +15,13 @@ function lessonUrl(value = "") {
   return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
+function formatFocusTime(totalSeconds = 0) {
+  const safe = Math.max(0, Math.floor(Number(totalSeconds || 0)));
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 function a1TeacherPurpose(stage = {}) {
   const id = String(stage?.id || "");
 
@@ -278,6 +285,12 @@ export default function A1GrammarPresenter({
   const [showAnswer, setShowAnswer] = useState(false);
   const [participationQuestion, setParticipationQuestion] = useState(null);
   const [focusMode, setFocusMode] = useState(false);
+  const [classTimeState, setClassTimeState] = useState({
+    remainingSeconds: 0,
+    durationSeconds: 0,
+    running: false,
+    expired: false,
+  });
   const stage = stages[stageIndex] || stages[0];
   const teacherPurpose = a1TeacherPurpose(stage);
 
@@ -385,6 +398,12 @@ export default function A1GrammarPresenter({
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
+        {focusMode && classTimeState.durationSeconds > 0 ? (
+          <div className={`presenter-focus-time ${classTimeState.expired ? "is-expired" : ""}`} aria-label="Class time remaining">
+            <strong>{formatFocusTime(classTimeState.remainingSeconds)}</strong>
+            <span>{classTimeState.expired ? "Time up" : "left"}</span>
+          </div>
+        ) : null}
         {focusMode ? (
           <div className="presenter-focus-dock" aria-label="Presentation controls">
             <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
@@ -402,6 +421,7 @@ export default function A1GrammarPresenter({
           <PresenterSessionTimer
             slide={slide}
             stage={stage}
+            onTimeStateChange={setClassTimeState}
             toolbarActions={(
               <>
                 <button type="button" className="presenter-session-present" onClick={presentFullscreen}>Present full screen</button>

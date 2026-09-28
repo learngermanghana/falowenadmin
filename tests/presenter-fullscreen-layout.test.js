@@ -68,7 +68,7 @@ test("desktop presenter keeps fullscreen and exit actions in the timer row and c
     assert.doesNotMatch(source, /className="presenter-top-actions"/);
   }
 
-  assert.match(timer, /PresenterSessionTimer\(\{ slide, stage = null, toolbarActions = null \}\)/);
+  assert.match(timer, /PresenterSessionTimer\(\{ slide, stage = null, toolbarActions = null, onTimeStateChange = null \}\)/);
   assert.match(timer, /Sound: \{soundEnabled \? "on" : "off"\}[\s\S]*\{toolbarActions\}/);
   assert.match(timerCss, /compact-presenter-session-toolbar/);
   assert.match(timerCss, /@media \(min-width: 1251px\)[\s\S]*\.presenter-session-timer-actions\s*\{[\s\S]*flex-wrap:\s*nowrap/);
@@ -77,4 +77,28 @@ test("desktop presenter keeps fullscreen and exit actions in the timer row and c
   assert.match(pickerCss, /compact-presenter-participation-toolbar/);
   assert.match(pickerCss, /@media \(min-width: 1351px\)[\s\S]*\.presenter-student-picker\s*\{[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\) auto/);
   assert.match(pickerCss, /\.presenter-stage > \.presenter-topbar\s*\{[\s\S]*min-height:\s*52px/);
+});
+
+
+test("Focus Mode shows the live class remaining time without timer settings", () => {
+  const a1 = read("src/components/A1GrammarPresenter.jsx");
+  const shared = read("src/components/TeachingSlidePresenter.jsx");
+  const timer = read("src/components/PresenterSessionTimer.jsx");
+  const css = read("src/components/TeachingSlidePresenter.css");
+
+  assert.match(timer, /onTimeStateChange = null/);
+  assert.match(timer, /onTimeStateChange\(\{[\s\S]*remainingSeconds:[\s\S]*durationSeconds:[\s\S]*running:[\s\S]*expired,/);
+
+  for (const source of [a1, shared]) {
+    assert.match(source, /const \[classTimeState, setClassTimeState\] = useState/);
+    assert.match(source, /onTimeStateChange=\{setClassTimeState\}/);
+    assert.match(source, /aria-label="Class time remaining"/);
+    assert.match(source, /classTimeState\.remainingSeconds/);
+    assert.match(source, /classTimeState\.expired \? "Time up" : "left"/);
+  }
+
+  assert.match(css, /Focus Mode live class countdown/);
+  assert.match(css, /\.presenter-focus-time\s*\{[\s\S]*position:\s*absolute/);
+  assert.match(css, /\.presenter-focus-time\s*\{[\s\S]*top:/);
+  assert.match(css, /\.presenter-focus-time\s*\{[\s\S]*right:/);
 });
