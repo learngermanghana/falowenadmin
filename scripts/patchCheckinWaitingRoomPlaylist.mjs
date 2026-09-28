@@ -143,40 +143,42 @@ upgradeOnce(
   }, []);`,
 );
 
-replaceOnce(
-  `  const stopWaitingMusic = useCallback(() => {
-    musicStartGenerationRef.current += 1;
-    if (musicTimerRef.current) {
-      window.clearInterval(musicTimerRef.current);
-      musicTimerRef.current = null;
-    }
-
-    const context = audioContextRef.current;
-    audioContextRef.current = null;
-    musicGainRef.current = null;
-    musicChordIndexRef.current = 0;
-    setCurrentPianoPiece(pianoPieces[0][0]);
-
-    if (context && context.state !== "closed") {
-      context.close().catch(() => {});
-    }
-    setMusicPlaying(false);
-  }, []);`,
-  `  const stopWaitingMusic = useCallback(() => {
-    musicStartGenerationRef.current += 1;
-    const context = audioContextRef.current;
-    audioContextRef.current = null;
-    musicGainRef.current = null;
-    setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
-
-    if (context) stopWaitingMusicPlaylist(context);
-    if (context && context.state !== "closed") {
-      context.close().catch(() => {});
-    }
-    setMusicPlaying(false);
-  }, []);`,
-  "stop waiting music",
-);
+if (!source.includes("musicStartInFlightRef.current = false;")) {
+  replaceOnce(
+    `  const stopWaitingMusic = useCallback(() => {
+      musicStartGenerationRef.current += 1;
+      if (musicTimerRef.current) {
+        window.clearInterval(musicTimerRef.current);
+        musicTimerRef.current = null;
+      }
+  
+      const context = audioContextRef.current;
+      audioContextRef.current = null;
+      musicGainRef.current = null;
+      musicChordIndexRef.current = 0;
+      setCurrentPianoPiece(pianoPieces[0][0]);
+  
+      if (context && context.state !== "closed") {
+        context.close().catch(() => {});
+      }
+      setMusicPlaying(false);
+    }, []);`,
+    `  const stopWaitingMusic = useCallback(() => {
+      musicStartGenerationRef.current += 1;
+      const context = audioContextRef.current;
+      audioContextRef.current = null;
+      musicGainRef.current = null;
+      setCurrentMusicTrack(pianoPlaylist[0]?.title || "Waiting room music");
+  
+      if (context) stopWaitingMusicPlaylist(context);
+      if (context && context.state !== "closed") {
+        context.close().catch(() => {});
+      }
+      setMusicPlaying(false);
+    }, []);`,
+    "stop waiting music",
+  );
+}
 
 upgradeOnce(
   `  const stopWaitingMusic = useCallback(() => {
@@ -245,34 +247,36 @@ upgradeOnce(
       setMusicPlaying(true);`,
 );
 
-replaceOnce(
-  `      const playNextBar = () => {
-        if (context.state !== "running") return;
-        const bar = pianoPlaylist[musicChordIndexRef.current % pianoPlaylist.length];
-        musicChordIndexRef.current += 1;
-        setCurrentPianoPiece(bar.title);
-        schedulePianoBar(context, masterGain, bar);
-      };
-
-      playNextBar();
-      musicTimerRef.current = window.setInterval(playNextBar, PIANO_BAR_INTERVAL_MS);
-      setMusicPlaying(true);`,
-  `      await startWaitingMusicPlaylist(context, masterGain, {
-        playlist: pianoPlaylist,
-        onTrackChange: (track) => {
-          setCurrentMusicTrack(track?.title || "Waiting room music");
-          setMusicError("");
-        },
-        onError: (message) => setMusicError(message || "Waiting room music could not continue."),
-      });
-      if (musicStartGenerationRef.current !== startGeneration) {
-        stopWaitingMusicPlaylist(context);
-        if (context.state !== "closed") context.close().catch(() => {});
-        return;
-      }
-      setMusicPlaying(true);`,
-  "real playlist start",
-);
+if (!source.includes("musicStartInFlightRef.current = true;")) {
+  replaceOnce(
+    `      const playNextBar = () => {
+          if (context.state !== "running") return;
+          const bar = pianoPlaylist[musicChordIndexRef.current % pianoPlaylist.length];
+          musicChordIndexRef.current += 1;
+          setCurrentPianoPiece(bar.title);
+          schedulePianoBar(context, masterGain, bar);
+        };
+  
+        playNextBar();
+        musicTimerRef.current = window.setInterval(playNextBar, PIANO_BAR_INTERVAL_MS);
+        setMusicPlaying(true);`,
+    `      await startWaitingMusicPlaylist(context, masterGain, {
+          playlist: pianoPlaylist,
+          onTrackChange: (track) => {
+            setCurrentMusicTrack(track?.title || "Waiting room music");
+            setMusicError("");
+          },
+          onError: (message) => setMusicError(message || "Waiting room music could not continue."),
+        });
+        if (musicStartGenerationRef.current !== startGeneration) {
+          stopWaitingMusicPlaylist(context);
+          if (context.state !== "closed") context.close().catch(() => {});
+          return;
+        }
+        setMusicPlaying(true);`,
+    "real playlist start",
+  );
+}
 
 replaceOnce(
   '      setMusicError(error?.message || "Piano music could not start. Raise the device media volume and try again.");',
@@ -306,11 +310,13 @@ replaceOnce(
   "music description",
 );
 
-replaceOnce(
-  '{musicPlaying ? "Stop piano" : "Start piano playlist"}',
-  '{musicPlaying ? "Stop music" : "Start waiting music"}',
-  "music button copy",
-);
+if (!source.includes('musicStarting ? "Starting music…" : "Start waiting music"')) {
+  replaceOnce(
+    '{musicPlaying ? "Stop piano" : "Start piano playlist"}',
+    '{musicPlaying ? "Stop music" : "Start waiting music"}',
+    "music button copy",
+  );
+}
 
 upgradeOnce(
   `            <button
@@ -351,6 +357,8 @@ for (const marker of [
   "Start waiting music",
   "skipWaitingMusicPlaylist(context)",
   "musicStartGenerationRef.current !== startGeneration",
+  "musicStartInFlightRef.current",
+  "setMusicStarting",
 ]) {
   if (!source.includes(marker)) throw new Error(`Waiting room playlist marker missing: ${marker}`);
 }
