@@ -309,6 +309,7 @@ export default function CheckinDisplayPage() {
   const classStartedRef = useRef(false);
   const autoPresenterRecoveryRef = useRef("");
   const presenterWindowRef = useRef(null);
+  const preclassPresenterPrimeRef = useRef("");
   const handoffStartedAtRef = useRef(0);
   const handoffPhaseTimerRef = useRef(null);
   const handoffFocusTimerRef = useRef(null);
@@ -613,6 +614,11 @@ export default function CheckinDisplayPage() {
     return checkinSessionDateKey(raw);
   }, [dateLabel]);
 
+  const scheduledStartAtMs = useMemo(
+    () => parseDateTime(dateLabel, startTime),
+    [dateLabel, startTime],
+  );
+
   const linkPresenterSessionKey = useMemo(
     () => presenterSessionKey({
       sessionDate: linkSessionDate || "",
@@ -745,14 +751,108 @@ export default function CheckinDisplayPage() {
   }, [linkPresenterSessionKey, presenterTarget.classRecordId, presenterTarget.sessionKey]);
 
   useEffect(() => {
+    const classRecordId = String(presenterTarget.classRecordId || "").trim();
+    const sessionKey = String(presenterTarget.sessionKey || "").trim();
+    if (
+      actualStartedAt
+      || actualEndedAt
+      || !classRecordId
+      || !sessionKey
+      || sessionKey !== String(linkPresenterSessionKey || "")
+      || !Number.isFinite(scheduledStartAtMs)
+      || nowMs >= scheduledStartAtMs
+    ) {
+      return;
+    }
+
+    const state = presenterLiveState || {};
+    if (String(state.sessionKey || "") !== sessionKey) return;
+
+    const staleEnded = Boolean(
+      state.classLifecycleStatus === "ended"
+      || state.classStatus === "ended"
+      || Number(state.classEndedAtMs || 0) > 0
+      || String(state.attendanceEndRequestId || "").trim()
+      || String(state.presenterEndRequestId || "").trim()
+    );
+    if (!staleEnded) return;
+
+    const primeKey = `${classRecordId}:${sessionKey}:${scheduledStartAtMs}`;
+    if (preclassPresenterPrimeRef.current === primeKey) return;
+    preclassPresenterPrimeRef.current = primeKey;
+
+    publishPresenterLiveSession(classRecordId, {
+      sessionDate: linkSessionDate,
+      classId: String(classId || "").trim(),
+      curriculumDay: presenterCurriculumDay,
+      assignmentId: effectiveAssignmentId,
+      lessonId: effectiveAssignmentId,
+      classStatus: "waiting",
+      classLifecycleStatus: "waiting",
+      sessionTimingAuthority: "attendance",
+      classStartSource: "checkin",
+      classStartedAtMs: 0,
+      classEndedAtMs: 0,
+      classDurationSeconds: 0,
+      attendanceStartRequestId: "",
+      attendanceStartRequestedAtMs: 0,
+      attendanceStartAttempt: 0,
+      attendanceEndRequestId: "",
+      attendanceEndRequestedAtMs: 0,
+      attendanceEndAttempt: 0,
+      attendanceEndSource: "",
+      presenterStartAckRequestId: "",
+      presenterStartAckAtMs: 0,
+      presenterEndAckRequestId: "",
+      presenterEndAckAtMs: 0,
+      presenterEndRequestId: "",
+      presenterEndRequestedAtMs: 0,
+      presenterEndSource: "",
+      timerRunning: false,
+      timerEndAt: 0,
+      timerExpired: false,
+      timerUpdatedAtMs: Date.now(),
+    }, sessionKey).catch((error) => {
+      console.error("pre-class Presenter state reset failed", error);
+      preclassPresenterPrimeRef.current = "";
+    });
+  }, [
+    actualEndedAt,
+    actualStartedAt,
+    classId,
+    effectiveAssignmentId,
+    linkPresenterSessionKey,
+    linkSessionDate,
+    nowMs,
+    presenterCurriculumDay,
+    presenterLiveState,
+    presenterTarget.classRecordId,
+    presenterTarget.sessionKey,
+    scheduledStartAtMs,
+  ]);
+
+  useEffect(() => {
     const targetSessionKey = String(presenterTarget.sessionKey || "");
     const currentSessionKey = String(linkPresenterSessionKey || "");
     if (!targetSessionKey || targetSessionKey !== currentSessionKey) return;
     if (String(presenterLiveState.sessionKey || "") !== targetSessionKey) return;
+    const remoteLooksEnded = Boolean(
+      presenterLiveState.classLifecycleStatus === "ended"
+      || presenterLiveState.classStatus === "ended"
+      || Number(presenterLiveState.classEndedAtMs || 0) > 0
+    );
+    const waitingBeforeScheduledStart = !actualStartedAt
+      && Number.isFinite(scheduledStartAtMs)
+      && nowMs < scheduledStartAtMs;
+    if (waitingBeforeScheduledStart && remoteLooksEnded) return;
+
     const sharedStart = Number(presenterLiveState.classStartedAtMs || 0);
     if (!sharedStart) return;
 
-    const sharedEnd = Number(presenterLiveState.classEndedAtMs || 0);
+    const sharedAttendanceEndRequestId = String(presenterLiveState.attendanceEndRequestId || "").trim();
+    const sharedEnd = sharedAttendanceEndRequestId
+      ? Number(presenterLiveState.classEndedAtMs || 0)
+      : 0;
     const nextStart = actualStartedAt || sharedStart;
     const nextEnd = sharedEnd || actualEndedAt || null;
     const startChanged = !actualStartedAt;
@@ -790,9 +890,14 @@ export default function CheckinDisplayPage() {
     actualStartedAt,
     presenterLiveState.classStartedAtMs,
     presenterLiveState.classEndedAtMs,
+    presenterLiveState.classLifecycleStatus,
+    presenterLiveState.classStatus,
+    presenterLiveState.attendanceEndRequestId,
     presenterLiveState.sessionKey,
     presenterTarget.sessionKey,
     linkPresenterSessionKey,
+    nowMs,
+    scheduledStartAtMs,
     startDecisionStorageKey,
   ]);
 
@@ -808,9 +913,12 @@ export default function CheckinDisplayPage() {
         : "Resolving Presenter connection…";
     }
 
-    const sharedEnded = state.classLifecycleStatus === "ended"
-      || state.classStatus === "ended"
-      || Number(state.classEndedAtMs || 0) > 0;
+    const sharedEnded = Boolean(String(state.attendanceEndRequestId || "").trim())
+      && (
+        state.classLifecycleStatus === "ended"
+        || state.classStatus === "ended"
+        || Number(state.classEndedAtMs || 0) > 0
+      );
     if (sharedEnded) {
       const seconds = Number(state.classDurationSeconds || 0);
       return `Presenter session ended${seconds > 0 ? ` · ${formatDuration(seconds * 1000)} taught` : ""}.`;
