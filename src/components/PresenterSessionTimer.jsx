@@ -173,6 +173,8 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
   const liveSessionMatchesCurrentClassDay = liveSessionMatchesCurrentLesson
     && liveSessionMatchesCurrentClass
     && liveSessionMatchesCurrentDay;
+  const attendanceStartRequestId = normalize(liveState.attendanceStartRequestId);
+  const attendanceEndRequestId = normalize(liveState.attendanceEndRequestId);
   const attendanceControlsTimer = presenterLive.isToday
     && liveSessionMatchesCurrentClassDay
     && liveState.classStartSource === "checkin"
@@ -180,6 +182,8 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     && normalize(liveState.sessionTimingAuthority || "attendance") === "attendance";
   const attendanceSessionEnded = presenterLive.isToday
     && liveSessionMatchesCurrentClassDay
+    && Boolean(attendanceEndRequestId)
+    && normalize(liveState.sessionTimingAuthority || "attendance") === "attendance"
     && (
       liveState.classLifecycleStatus === "ended"
       || liveState.classStatus === "ended"
@@ -190,21 +194,16 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     && !Boolean(liveState.timerExpired)
     && !Boolean(liveState.timerRunning)
     && Number(liveState.timerEndAt || 0) <= 0;
-  const attendanceStartRequestId = normalize(liveState.attendanceStartRequestId);
   const presenterStartAckMatches = Boolean(
     attendanceStartRequestId
     && normalize(liveState.presenterStartAckRequestId) === attendanceStartRequestId
     && Number(liveState.presenterStartAckAtMs || 0) > 0
   );
-  const attendanceEndRequestId = normalize(liveState.attendanceEndRequestId);
   const presenterEndAckMatches = Boolean(
     attendanceEndRequestId
     && normalize(liveState.presenterEndAckRequestId) === attendanceEndRequestId
     && Number(liveState.presenterEndAckAtMs || 0) > 0
   );
-  const presenterEndRequestId = normalize(liveState.presenterEndRequestId);
-  const presenterOriginatedEnd = normalize(liveState.presenterEndSource) === "presenter"
-    || Boolean(presenterEndRequestId && !attendanceEndRequestId);
   const attendanceOriginatedEnd = Boolean(attendanceEndRequestId);
   const agendaAutoStartRequested = typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("autostart") === "1";
@@ -222,6 +221,7 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
   const [presenterEndSyncState, setPresenterEndSyncState] = useState("idle");
   const [soundEnabled, setSoundEnabled] = useState(readSoundPreference);
   const [hydratedKey, setHydratedKey] = useState("");
+  const [endedScreenDismissed, setEndedScreenDismissed] = useState(false);
   const previousRemainingRef = useRef(durationSeconds);
   const audioContextRef = useRef(null);
   const lastRemoteTimerStampRef = useRef(0);
@@ -235,6 +235,14 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     const next = normalize(presenterLive.classContext?.classId) || currentPresenterClassId();
     setClassId((current) => current === next ? current : next);
   }, [presenterLive.classContext?.classId]);
+
+  useEffect(() => {
+    setEndedScreenDismissed(false);
+  }, [presenterLive.sessionKey]);
+
+  useEffect(() => {
+    if (!attendanceSessionEnded) setEndedScreenDismissed(false);
+  }, [attendanceSessionEnded]);
 
   useEffect(() => {
     setHydratedKey("");
@@ -781,7 +789,7 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     if (next) playWarningTone(10 * 60, true);
   }
 
-  const canEndClass = Boolean(
+  const canReturnToAttendanceForEnd = Boolean(
     presenterLive.classRecordId
     && presenterLive.sessionKey
     && !attendanceSessionEnded
@@ -833,26 +841,52 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
       : notice
         || (running ? "Time remaining" : remaining < durationSeconds ? "Paused" : "Ready to start");
 
-  const classEndedScreen = attendanceSessionEnded && typeof document !== "undefined"
+  const attendanceClassId = normalize(
+    presenterLive.expectedClassId || presenterLive.classContext?.classId || classId,
+  );
+  const attendanceReturnUrl = attendanceClassId
+    ? `/attendance/session/${encodeURIComponent(attendanceClassId)}`
+    : "/attendance";
+
+  function returnToAttendance() {
+    if (typeof window === "undefined") return;
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.focus();
+        return;
+      }
+    } catch {
+      // Cross-window access can be blocked; use the canonical Attendance route below.
+    }
+    window.location.assign(attendanceReturnUrl);
+  }
+
+  function closePresenter() {
+    if (typeof window === "undefined") return;
+    window.close();
+    window.setTimeout(() => {
+      if (!window.closed) window.location.assign(attendanceReturnUrl);
+    }, 160);
+  }
+
+  const classEndedScreen = attendanceSessionEnded && !endedScreenDismissed && typeof document !== "undefined"
     ? createPortal(
-      <div className="presenter-class-ended-screen" role="status" aria-live="assertive">
-        <img src="/class_has_ended_banner.png" alt="Class has ended" />
-        <div>
-          <span>Class complete</span>
-          <h1>Class has ended</h1>
+      <div className="presenter-class-ended-screen" role="dialog" aria-modal="true" aria-labelledby="presenter-class-ended-title">
+        <section className="presenter-class-ended-panel">
+          <span className="presenter-class-ended-eyebrow">Class complete</span>
+          <h1 id="presenter-class-ended-title">Class has ended</h1>
           <p>
-            {attendanceOriginatedEnd
-              ? "The class end was received from Attendance. You can now close this presenter."
-              : presenterOriginatedEnd
-                ? "The class was ended from Presenter and the shared class state is synchronized."
-                : "The shared class session has ended. You can now close this presenter."}
+            Attendance ended this exact class session. The Presenter will not use an older or different session to show this screen.
           </p>
-          <strong>
-            {attendanceOriginatedEnd
-              ? (presenterEndAckMatches ? "Attendance and Slides synchronized" : "Confirming with Attendance…")
-              : "Attendance and Slides synchronized"}
-          </strong>
-        </div>
+          <div className="presenter-class-ended-sync" role="status" aria-live="polite">
+            <strong>{presenterEndAckMatches ? "Attendance and slides synchronized" : "Confirming with Attendance…"}</strong>
+          </div>
+          <div className="presenter-class-ended-actions">
+            <button type="button" className="is-primary" onClick={closePresenter}>Close presenter</button>
+            <button type="button" onClick={returnToAttendance}>Return to Attendance</button>
+            <button type="button" onClick={() => setEndedScreenDismissed(true)}>Back to slides</button>
+          </div>
+        </section>
       </div>,
       document.body,
     )
@@ -920,32 +954,14 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
             <button type="button" onClick={reset}>Reset</button>
           </>
         )}
-        {presenterEndSyncState === "failed" ? (
-          <button
-            type="button"
-            className="presenter-session-end is-retry"
-            onClick={retryPresenterEndSync}
-            title="Retry saving the same class end time to the shared Presenter session."
-          >
-            Retry end sync
-          </button>
-        ) : presenterEndSyncState === "saving" ? (
+        {canReturnToAttendanceForEnd ? (
           <button
             type="button"
             className="presenter-session-end"
-            disabled
-            title="Saving the shared class end state."
+            onClick={returnToAttendance}
+            title="Attendance is the authority for ending the class."
           >
-            Ending class…
-          </button>
-        ) : canEndClass ? (
-          <button
-            type="button"
-            className="presenter-session-end"
-            onClick={endClassFromPresenter}
-            title="End this shared class session from Presenter."
-          >
-            End class
+            End in Attendance
           </button>
         ) : null}
         <button type="button" className="presenter-session-sound" onClick={toggleSound} aria-pressed={soundEnabled} title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up.">
