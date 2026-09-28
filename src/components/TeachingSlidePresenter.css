@@ -2433,3 +2433,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Presentation fallback: fill the dynamic viewport even when the browser blocks native fullscreen. */
+.presenter-shell:has(.presenter-stage.is-focus-mode) {
+  padding: 0;
+  place-items: stretch;
+}
+
+.presenter-shell:has(.presenter-stage.is-focus-mode) .presenter-stage {
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
