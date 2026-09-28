@@ -305,6 +305,19 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   useEffect(() => {
+    function handleFullscreenChange() {
+      if (document.fullscreenElement) return;
+      setFocusMode(false);
+      setFitMode("normal");
+      setContentPageSize(0);
+      setContentPage(0);
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
     setQuestionIndex(0);
     setShowQuestionSupport(false);
     setWarmupSupportOpen({});
