@@ -11,6 +11,7 @@ import {
 } from "../services/presenterLiveSessionService.js";
 
 const PRESENTER_HEARTBEAT_MS = 90 * 1000;
+const EMPTY_URL_IDENTITY = Object.freeze({ classId: "", classRecordId: "", sessionId: "", assignmentId: "", sessionKey: "" });
 
 function normalize(value) {
   return String(value || "").trim();
@@ -18,7 +19,7 @@ function normalize(value) {
 
 function presenterUrlIdentity() {
   if (typeof window === "undefined") {
-    return { classId: "", classRecordId: "", sessionId: "", assignmentId: "", sessionKey: "" };
+    return EMPTY_URL_IDENTITY;
   }
   const params = new URLSearchParams(window.location.search);
   return {
@@ -51,9 +52,7 @@ export default function usePresenterLiveSession(slide = {}) {
   ].filter(Boolean);
   const urlAssignmentId = normalize(rawUrlIdentity.assignmentId).toLowerCase();
   const urlIdentityMatchesSlide = !urlAssignmentId || slideIds.includes(urlAssignmentId);
-  const urlIdentity = urlIdentityMatchesSlide
-    ? rawUrlIdentity
-    : { classId: "", classRecordId: "", sessionId: "", assignmentId: "", sessionKey: "" };
+  const urlIdentity = urlIdentityMatchesSlide ? rawUrlIdentity : EMPTY_URL_IDENTITY;
   const [classContext, setClassContext] = useState(
     () => mergePresenterContext(getPresenterClassContext(), urlIdentity),
   );
