@@ -2620,8 +2620,12 @@
 }
 
 @media (max-width: 700px) {
+  .presenter-stage.is-focus-mode > .presenter-content {
+    padding-top: 6.9rem;
+  }
+
   .presenter-focus-time {
-    top: 0.45rem;
+    top: 3.45rem;
     right: 0.45rem;
     min-width: auto;
     padding: 0.36rem 0.58rem;
