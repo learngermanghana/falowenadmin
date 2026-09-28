@@ -28,6 +28,25 @@ function firstEvidence(source = "", pattern) {
 
 function ruleForPoint(label = "", assignmentKey = "") {
   const value = clean(label).toLowerCase();
+  const normalizedAssignmentKey = String(assignmentKey || "").trim().toUpperCase();
+
+  if (normalizedAssignmentKey === "A2-7.19") {
+    if (/invite the friend to shop and explain why/.test(value)) {
+      return [
+        /\b(?:einladen|mitkommen|zusammen|gemeinsam)\b/i,
+        /\b(?:m[oö]bel(?:kaufen)?|einkaufen|einkaufszentrum|neue\s+wohnung|wohnung)\b/i,
+      ];
+    }
+    if (/suggest when and where to meet/.test(value)) {
+      return [
+        /\b(?:am\s+(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)|am\s+\d|um\s+\d{1,2}(?::\d{2})?\s*(?:uhr)?|morgen|heute|wochenende)\b/i,
+        /\b(?:vor|bei|in|am)\s+(?:dem|der|den|einem|einer)?\s*[A-ZÄÖÜa-zäöüß][\wÄÖÜäöüß-]*|\b(?:einkaufszentrum|treffpunkt|bahnhof|restaurant|caf[eé]|markt|accra|kumasi)\b/i,
+      ];
+    }
+    if (/ask for the friend's opinion/.test(value)) {
+      return /\b(?:was\s+denkst\s+du|was\s+meinst\s+du|wie\s+findest\s+du|was\s+h[aä]ltst\s+du|deine\s+meinung)\b[^?]*\?/i;
+    }
+  }
 
   if (/work or studies and your family/.test(value)) return [
     /\b(?:arbeite|arbeit|beruf|job|firma|branche|studier\w*|studium|schule|universit[aä]t|ausbildung)\b/i,
@@ -124,7 +143,7 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/appearance/.test(value)) return /\b(?:gro[ßs]|klein|haare?|augen|brille|tr[aä]gt|kleidung|blond|schwarz|braun|schlank|sportlich|j[uü]nger|[aä]lter)\b/i;
   if (/personality|behaviour|character/.test(value)) return /\b(?:freundlich|ruhig|geduldig|nett|streng|hilfsbereit|zuverl[aä]ssig|fair|lustig|offen|charakter|verhalten)\b/i;
   if (/what you like|what could be better|personal opinion|opinion or preference|friend's opinion|sandra for her opinion|ask alex for his idea/.test(value)) {
-    return /\b(?:ich\s+finde|ich\s+mag|mir\s+gef[aä]llt|besser|verbessern|was\s+meinst\s+du|wie\s+findest\s+du|deine\s+meinung|idee|empfiehlst\s+du)\b/i;
+    return /\b(?:ich\s+finde|ich\s+mag|mir\s+gef[aä]llt|besser|verbessern|was\s+denkst\s+du|was\s+meinst\s+du|wie\s+findest\s+du|was\s+h[aä]ltst\s+du|deine\s+meinung|idee|empfiehlst\s+du)\b/i;
   }
   if (/ask felix a relevant question/.test(value) && String(assignmentKey || "").toUpperCase() === "A2-1.2") {
     return /\b(?:wie|was|wer|welch\w*)\b[^?]{0,90}\b(?:chef|chefin|boss|vorgesetzt\w*)\b[^?]*\?/i;
