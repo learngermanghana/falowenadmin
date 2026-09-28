@@ -143,13 +143,26 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     : sharedDurationSeconds || configuredDurationSeconds;
   const durationMinutes = durationSeconds / 60;
   const liveState = presenterLive.liveState || {};
+  const currentLessonIds = [slide?.assignmentId, slide?.id]
+    .map((value) => normalize(value).toLowerCase())
+    .filter(Boolean);
+  const liveLessonIds = [liveState.assignmentId, liveState.lessonId]
+    .map((value) => normalize(value).toLowerCase())
+    .filter(Boolean);
+  const liveSessionMatchesCurrentLesson = currentLessonIds.length > 0
+    && liveLessonIds.some((value) => currentLessonIds.includes(value));
   const attendanceControlsTimer = presenterLive.isToday
+    && liveSessionMatchesCurrentLesson
     && liveState.classStartSource === "checkin"
     && Number(liveState.classStartedAtMs || 0) > 0
     && normalize(liveState.sessionTimingAuthority || "attendance") === "attendance";
-  const attendanceSessionEnded = liveState.classLifecycleStatus === "ended"
-    || liveState.classStatus === "ended"
-    || Number(liveState.classEndedAtMs || 0) > 0;
+  const attendanceSessionEnded = presenterLive.isToday
+    && liveSessionMatchesCurrentLesson
+    && (
+      liveState.classLifecycleStatus === "ended"
+      || liveState.classStatus === "ended"
+      || Number(liveState.classEndedAtMs || 0) > 0
+    );
   const attendanceTimerNeedsManualStart = attendanceControlsTimer
     && !attendanceSessionEnded
     && !Boolean(liveState.timerExpired)
