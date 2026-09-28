@@ -622,6 +622,18 @@ export default function CheckinDisplayPage() {
     [effectiveAssignmentId, linkSessionDate, sessionId],
   );
 
+  const presenterCurriculumDay = useMemo(() => {
+    const fromSlide = Number(waitingWarmupTeaser?.dayNumber || 0);
+    if (fromSlide > 0) return fromSlide;
+    const fromSchedule = Number(scheduleInfo?.dayNumber || 0);
+    if (fromSchedule > 0) return fromSchedule;
+    return Number(String(sessionDisplayLabel || sessionLabel || "").match(/\bDay\s*(\d+)\b/i)?.[1] || 0);
+  }, [
+    scheduleInfo?.dayNumber,
+    sessionDisplayLabel,
+    sessionLabel,
+    waitingWarmupTeaser?.dayNumber,
+  ]);
 
   const presenterLessonUrl = useMemo(() => {
     const course = String(waitingWarmupTeaser?.course || waitingClassLevel || "").trim().toUpperCase();
@@ -634,6 +646,8 @@ export default function CheckinDisplayPage() {
       classRecordId: String(presenterTarget.classRecordId || "").trim(),
       sessionId: String(sessionId || "").trim(),
       assignmentId: String(effectiveAssignmentId || "").trim(),
+      curriculumDay: String(presenterCurriculumDay || "").trim(),
+      sessionDate: String(linkSessionDate || "").trim(),
       sessionKey: String(linkPresenterSessionKey || "").trim(),
     });
     return `/teaching-slides/course/${encodeURIComponent(course)}/${encodeURIComponent(slideId)}?${query.toString()}`;
@@ -641,6 +655,8 @@ export default function CheckinDisplayPage() {
     classId,
     effectiveAssignmentId,
     linkPresenterSessionKey,
+    linkSessionDate,
+    presenterCurriculumDay,
     presenterTarget.classRecordId,
     sessionId,
     waitingClassLevel,
@@ -1127,6 +1143,8 @@ export default function CheckinDisplayPage() {
 
       const livePatch = {
         sessionDate,
+        classId: String(klass?.classId || classId).trim(),
+        curriculumDay: presenterCurriculumDay,
         level,
         lessonId: String(effectiveAssignmentId || sessionId || "").trim(),
         assignmentId: effectiveAssignmentId,
