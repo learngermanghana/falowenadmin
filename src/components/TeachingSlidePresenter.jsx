@@ -109,6 +109,7 @@ function buildB1CorrectionTeacherGuide(questionDe = "", modelAnswerDe = "") {
 
 export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const stages = useMemo(() => buildTeachingPresenterStages(slide, topicLabel), [slide, topicLabel]);
+  const presenterShellRef = useRef(null);
   const presenterV2 = isTeachingPresenterV2Slide(slide);
   const advancedClassroom = ["B2", "C1"].includes(String(slide.course || "").toUpperCase());
   const [stageIndex, setStageIndex] = useState(0);
@@ -181,11 +182,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setStageIndex(clampPresenterIndex(index, stages.length));
   }
 
-  function toggleFocusMode() {
-    setFocusMode((current) => !current);
+  async function exitPresentationView() {
+    setFocusMode(false);
     setFitMode("normal");
     setContentPageSize(0);
     setContentPage(0);
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen?.();
+    } catch {
+      // Restoring presenter controls must still work when fullscreen exit is blocked.
+    }
   }
 
   function next() {
@@ -286,11 +292,15 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setShowQuestionSupport(false);
   }
 
-  async function enterFullscreen() {
+  async function presentFullscreen() {
+    setFocusMode(true);
+    setFitMode("normal");
+    setContentPageSize(0);
+    setContentPage(0);
     try {
-      if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.();
+      if (!document.fullscreenElement) await presenterShellRef.current?.requestFullscreen?.();
     } catch {
-      // Fullscreen can be blocked by the browser; presenter mode still works without it.
+      // Presentation view still fills the dynamic viewport when native fullscreen is blocked.
     }
   }
 
@@ -452,13 +462,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const timerPresets = [...new Set([stage.suggestedMinutes, warmupPerStudent ? warmupMinutes : null, 2, 3, 5, 10].filter(Boolean))];
 
   return (
-    <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
+    <div ref={presenterShellRef} className="presenter-shell" role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
         {focusMode ? (
           <div className="presenter-focus-dock" aria-label="Focus mode controls">
             <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" onClick={toggleFocusMode} aria-label="Exit focus view">×</button>
+            <button type="button" onClick={exitPresentationView} aria-label="Restore presenter controls">×</button>
             <button
               type="button"
               onClick={next}
@@ -517,8 +527,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           ) : null}
 
           <div className="presenter-top-actions">
-            <button type="button" onClick={enterFullscreen}>Fullscreen</button>
-            <button type="button" onClick={toggleFocusMode}>Focus view</button>
+            <button type="button" onClick={presentFullscreen}>Present full screen</button>
             <button type="button" onClick={onExit}>Exit presenter</button>
           </div>
         </header>
