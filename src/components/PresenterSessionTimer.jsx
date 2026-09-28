@@ -114,7 +114,7 @@ function visualWarningClass(remaining) {
   return "";
 }
 
-export default function PresenterSessionTimer({ slide, stage = null }) {
+export default function PresenterSessionTimer({ slide, stage = null, toolbarActions = null }) {
   const presenterLive = usePresenterLiveSession(slide);
   const level = inferPresenterLevel(
     slide?.course,
@@ -967,6 +967,7 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
         <button type="button" className="presenter-session-sound" onClick={toggleSound} aria-pressed={soundEnabled} title="Optional short sound at 30, 15, 10 and 5 minutes left and at time up.">
           Sound: {soundEnabled ? "on" : "off"}
         </button>
+        {toolbarActions}
       </div>
       </div>
     </>
