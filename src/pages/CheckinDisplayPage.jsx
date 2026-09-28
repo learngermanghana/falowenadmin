@@ -668,8 +668,14 @@ export default function CheckinDisplayPage() {
 
     let cancelled = false;
     resolvePresenterClass()
-      .then(({ classRecordId }) => {
-        if (!cancelled) setPresenterTarget({ classRecordId, sessionKey: linkPresenterSessionKey });
+      .then(({ klass, classRecordId }) => {
+        if (cancelled) return;
+        setPresenterTarget({ classRecordId, sessionKey: linkPresenterSessionKey });
+        setPresenterClassContext({
+          classId: String(klass?.classId || classId).trim(),
+          classRecordId,
+          sessionKey: linkPresenterSessionKey,
+        });
       })
       .catch(() => {
         if (!cancelled) setPresenterTarget({ classRecordId: "", sessionKey: "" });
