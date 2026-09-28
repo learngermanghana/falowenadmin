@@ -1,3 +1,53 @@
+.presenter-class-ended-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: clamp(1rem, 3vh, 2rem);
+  padding: clamp(1.5rem, 5vw, 5rem);
+  overflow: auto;
+  background: linear-gradient(145deg, #eff6ff 0%, #ffffff 55%, #eef2ff 100%);
+  color: #0f172a;
+  text-align: center;
+}
+
+.presenter-class-ended-screen img {
+  width: min(760px, 82vw);
+  max-height: 50vh;
+  object-fit: contain;
+}
+
+.presenter-class-ended-screen div {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: center;
+}
+
+.presenter-class-ended-screen span,
+.presenter-class-ended-screen strong {
+  color: #1d4ed8;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.presenter-class-ended-screen h1,
+.presenter-class-ended-screen p {
+  margin: 0;
+}
+
+.presenter-class-ended-screen h1 {
+  font-size: clamp(2.2rem, 7vw, 5.5rem);
+}
+
+.presenter-class-ended-screen p {
+  max-width: 720px;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  line-height: 1.5;
+}
+
 .presenter-session-timer {
   display: flex;
   align-items: center;

@@ -6,6 +6,8 @@ export const PRESENTER_LAST_CLASS_RECORD_KEY = "falowen:presenter:last-class-rec
 export const PRESENTER_LAST_SESSION_KEY = "falowen:presenter:last-session";
 export const PRESENTER_CLASS_CONTEXT_EVENT = "falowen:presenter:class-context";
 const PRESENTER_DEVICE_KEY = "falowen:presenter:device-id";
+const presenterStartRequests = new Map();
+const TRANSACTION_RETRY_DELAYS_MS = [120, 300, 700];
 
 function normalize(value) {
   return String(value || "").trim();
@@ -199,8 +201,28 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
   if (!id) return { ok: false, reason: "missing-class-record" };
   if (!key) return { ok: false, reason: "missing-session-key" };
 
+  const requestKey = `${id}:${key}`;
+  const pending = presenterStartRequests.get(requestKey);
+  if (pending) return pending;
+
+  const request = startPresenterLiveSessionTransaction(id, key, patch)
+    .finally(() => presenterStartRequests.delete(requestKey));
+  presenterStartRequests.set(requestKey, request);
+  return request;
+}
+
+function isRetryablePresenterTransactionError(error) {
+  const code = normalize(error?.code).toLowerCase();
+  return code === "failed-precondition" || code === "aborted";
+}
+
+function waitForRetry(delayMs) {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+async function startPresenterLiveSessionTransaction(id, key, patch) {
   const classRef = doc(db, "classes", id);
-  return runTransaction(db, async (transaction) => {
+  const runStartTransaction = () => runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(classRef);
     if (!snapshot.exists()) {
       return { ok: false, reason: "missing-class-record" };
@@ -300,6 +322,16 @@ export async function startPresenterLiveSession(classRecordId, sessionKey, patch
       },
     };
   });
+
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await runStartTransaction();
+    } catch (error) {
+      const delayMs = TRANSACTION_RETRY_DELAYS_MS[attempt];
+      if (!isRetryablePresenterTransactionError(error) || delayMs === undefined) throw error;
+      await waitForRetry(delayMs);
+    }
+  }
 }
 
 export async function endPresenterLiveSession(classRecordId, sessionKey, patch = {}) {

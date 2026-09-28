@@ -346,6 +346,18 @@ test("Presenter acknowledges Attendance start only after timer state is usable",
   assert.match(source, /Attendance connected · timer synced/);
 });
 
+test("Presenter shows the shared class-ended screen even while presentation chrome is hidden", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+  const css = read("src/components/PresenterSessionTimer.css");
+
+  assert.match(source, /createPortal/);
+  assert.match(source, /attendanceSessionEnded && typeof document !== "undefined"/);
+  assert.match(source, /class_has_ended_banner\.png/);
+  assert.match(source, /Attendance and Slides synchronized/);
+  assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*position:\s*fixed/);
+  assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*z-index:\s*10000/);
+});
+
 test("Presenter self-repairs a missing Attendance timer before showing manual fallback", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
 
