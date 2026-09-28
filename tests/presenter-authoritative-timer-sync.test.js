@@ -19,14 +19,24 @@ test("class timer accepts newest shared timer even when unrelated presenter stat
   assert.match(source, /Math\.min\(durationSeconds/);
 });
 
-
 test("presenter subscribes to the attendance-selected session instead of a stale active session", () => {
   const hook = read("src/hooks/usePresenterLiveSession.js");
-  assert.match(hook, /const requestedSessionKey = normalize\(classContext\.sessionKey\)/);
-  assert.match(hook, /requestedSessionKey\.startsWith\(\`\$\{sessionDate\}__\`\)/);
+  assert.match(hook, /function presenterUrlIdentity\(\)/);
+  assert.match(hook, /params\.get\("sessionKey"\)/);
+  assert.match(hook, /const requestedSessionKey = normalize\(urlIdentity\.sessionKey \|\| classContext\.sessionKey\)/);
+  assert.match(hook, /requestedSessionKey\.startsWith/);
   assert.match(hook, /const subscriptionSessionKey/);
   assert.match(hook, /subscribePresenterLiveSession\([\s\S]*subscriptionSessionKey,[\s\S]*\);/);
   assert.match(hook, /\[classRecordId, subscriptionSessionKey\]/);
+});
+
+test("Presenter URL session identity overrides stale local storage context", () => {
+  const hook = read("src/hooks/usePresenterLiveSession.js");
+  assert.match(hook, /mergePresenterContext\(getPresenterClassContext\(\), urlIdentity\)/);
+  assert.match(hook, /sessionKey: normalize\(urlIdentity\.sessionKey\) \|\| normalize\(base\.sessionKey\)/);
+  assert.match(hook, /const targetSessionKey = normalize\([\s\S]*urlIdentity\.sessionKey \|\| liveState\?\.sessionKey \|\| classContext\.sessionKey/);
+  assert.match(hook, /if \(normalize\(urlIdentity\.sessionKey\) && nextSessionKey !== normalize\(urlIdentity\.sessionKey\)\) return/);
+  assert.match(hook, /urlIdentityMatchesSlide/);
 });
 
 test("attendance-owned countdown can never display longer than the configured class duration", () => {
