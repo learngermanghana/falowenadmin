@@ -10,8 +10,9 @@ test("presenter focus view hides teacher chrome but keeps compact navigation", (
   const css = fs.readFileSync("src/components/TeachingSlidePresenter.css", "utf8");
 
   assert.match(presenter, /const \[focusMode, setFocusMode\] = useState\(false\)/);
-  assert.match(presenter, /Focus view/);
-  assert.doesNotMatch(presenter, /Show marking/);\n  assert.match(presenter, /aria-label="Exit focus view"/);
+  assert.match(presenter, /Present full screen/);
+  assert.doesNotMatch(presenter, /Show marking/);
+  assert.match(presenter, /aria-label="Restore presenter controls"/);
   assert.match(presenter, /presenter-focus-dock/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-topbar/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-student-picker/);
