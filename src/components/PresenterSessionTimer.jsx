@@ -623,6 +623,13 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
         presenterLive.sessionKey,
         {
           sessionDate: presenterLive.sessionDate,
+          classId: normalize(presenterLive.expectedClassId || presenterLive.classContext?.classId),
+          curriculumDay: Number(
+            presenterLive.expectedCurriculumDay
+              || slide?.dayNumber
+              || String(slide?.day || "").match(/\d+/)?.[0]
+              || 0,
+          ),
           level,
           lessonId: normalize(slide?.id || slide?.assignmentId),
           assignmentId: normalize(slide?.assignmentId || slide?.id),
