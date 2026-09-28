@@ -32,3 +32,32 @@ test("all 13 formerly generic A1 lessons now contain lesson-specific classroom c
     }
   }
 });
+
+
+test("all upgraded A1 interaction flows sum to a complete 60-minute lesson", () => {
+  const slides = new Map(getSlidesByCourse("A1").map((slide) => [slide.assignmentId, slide]));
+
+  for (const assignmentId of A1_GENERIC_LESSON_UPGRADE_IDS) {
+    const slide = slides.get(assignmentId);
+    const phaseMinutes = (slide.interactionFlow || []).map((item) => {
+      const match = String(item?.detailEn || "").match(/^(\d+)\s*min:/i);
+      return match ? Number(match[1]) : 0;
+    });
+
+    assert.equal(
+      phaseMinutes.reduce((sum, value) => sum + value, 0),
+      60,
+      `${assignmentId} should provide a complete 60-minute plan`,
+    );
+  }
+});
+
+test("A1-8 timetable question requires schedule interpretation instead of repeating the answer", () => {
+  const slide = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-8");
+  const question = slide.studentQuestionsDe?.[0] || "";
+
+  assert.match(question, /Fahrplan/);
+  assert.match(question, /Abfahrt 18:45/);
+  assert.match(question, /Wann fährt der Zug ab\?/);
+  assert.doesNotMatch(question, /^Wann fährt ein Zug um 18:45 Uhr\?/);
+});
