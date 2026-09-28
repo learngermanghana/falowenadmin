@@ -52,12 +52,16 @@ test("all upgraded A1 interaction flows sum to a complete 60-minute lesson", () 
   }
 });
 
-test("A1-8 timetable question requires schedule interpretation instead of repeating the answer", () => {
+test("A1-8 timetable question requires an actual lookup across multiple entries", () => {
   const slide = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-8");
   const question = slide.studentQuestionsDe?.[0] || "";
 
-  assert.match(question, /Fahrplan/);
-  assert.match(question, /Abfahrt 18:45/);
-  assert.match(question, /Wann fährt der Zug ab\?/);
+  assert.match(question, /RE 2/);
+  assert.match(question, /RE 4/);
+  assert.match(question, /RE 8/);
+  assert.match(question, /17:20/);
+  assert.match(question, /18:45/);
+  assert.match(question, /20:10/);
+  assert.match(question, /Wann fährt der RE 4 ab\?/);
   assert.doesNotMatch(question, /^Wann fährt ein Zug um 18:45 Uhr\?/);
 });
