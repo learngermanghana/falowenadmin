@@ -2481,3 +2481,64 @@
     overflow-y: auto;
   }
 }
+
+
+/* compact-presenter-chrome */
+@media (min-width: 1251px) {
+  .presenter-topbar {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .presenter-topbar > div:first-child {
+    flex: 0 0 auto;
+  }
+
+  .presenter-v2-tools {
+    flex: 0 1 225px;
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+    margin-left: 0;
+  }
+
+  .presenter-stage-jump {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+  }
+
+  .presenter-stage-jump select {
+    width: min(190px, 18vw);
+    max-width: 190px;
+    padding: 0.34rem 0.45rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 1250px) {
+  .presenter-topbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .presenter-v2-tools {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+.presenter-teacher-purpose {
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.7rem;
+  line-height: 1.25;
+}
+
+.presenter-teacher-purpose strong {
+  font-size: 0.64rem;
+}
