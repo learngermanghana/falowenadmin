@@ -28,6 +28,6 @@ test("quick participation marking exposes only Correct and Needs review", () => 
   assert.doesNotMatch(toolbar, />Absent</);
 
   assert.match(picker, /presenter-student-secondary-actions/);
-  assert.match(picker, />\\s*Skip\\s*</);
-  assert.match(picker, />\\s*Presenter absent\\s*</);
+  assert.match(picker, />\s*Skip\s*</);
+  assert.match(picker, />\s*Presenter absent\s*</);
 });
