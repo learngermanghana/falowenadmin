@@ -27,3 +27,20 @@ test("tablet and phone portrait presenter fills the available viewport instead o
   assert.match(css, /@media \(max-width:\s*900px\) and \(orientation:\s*portrait\)[\s\S]*\.presenter-stage\s*\{[\s\S]*aspect-ratio:\s*auto/);
   assert.match(css, /@media \(max-width:\s*900px\) and \(orientation:\s*portrait\)[\s\S]*\.presenter-shell\s*\{[\s\S]*place-items:\s*stretch/);
 });
+
+
+test("presenter fullscreen wiring keeps one A1 dock and synchronizes browser exits", () => {
+  const a1 = read("src/components/A1GrammarPresenter.jsx");
+  const shared = read("src/components/TeachingSlidePresenter.jsx");
+
+  assert.match(a1, /useEffect, useMemo, useRef, useState/);
+  assert.doesNotMatch(a1, /toggleFocusMode/);
+  assert.equal((a1.match(/presenter-focus-dock/g) || []).length, 1);
+  assert.match(a1, /presenterShellRef\.current\?\.requestFullscreen/);
+  assert.match(shared, /presenterShellRef\.current\?\.requestFullscreen/);
+
+  assert.match(a1, /addEventListener\("fullscreenchange", handleFullscreenChange\)/);
+  assert.match(shared, /addEventListener\("fullscreenchange", handleFullscreenChange\)/);
+  assert.match(a1, /aria-label="Restore presenter controls"/);
+  assert.match(shared, /aria-label="Restore presenter controls"/);
+});
