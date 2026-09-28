@@ -51,3 +51,30 @@ test("presenter fullscreen wiring keeps one A1 dock and synchronizes browser exi
   assert.match(a1, />Restore controls<\/button>/);
   assert.match(shared, />Restore controls<\/button>/);
 });
+
+
+test("desktop presenter keeps fullscreen and exit actions in the timer row and compacts participation chrome", () => {
+  const a1 = read("src/components/A1GrammarPresenter.jsx");
+  const shared = read("src/components/TeachingSlidePresenter.jsx");
+  const timer = read("src/components/PresenterSessionTimer.jsx");
+  const timerCss = read("src/components/PresenterSessionTimer.css");
+  const presenterCss = read("src/components/TeachingSlidePresenter.css");
+  const pickerCss = read("src/components/PresenterStudentPicker.css");
+
+  for (const source of [a1, shared]) {
+    assert.match(source, /toolbarActions=\{\(/);
+    assert.match(source, /className="presenter-session-present"[^>]*>Present full screen<\/button>/);
+    assert.match(source, /className="presenter-session-exit"[^>]*>Exit presenter<\/button>/);
+    assert.doesNotMatch(source, /className="presenter-top-actions"/);
+  }
+
+  assert.match(timer, /PresenterSessionTimer\(\{ slide, stage = null, toolbarActions = null \}\)/);
+  assert.match(timer, /Sound: \{soundEnabled \? "on" : "off"\}[\s\S]*\{toolbarActions\}/);
+  assert.match(timerCss, /compact-presenter-session-toolbar/);
+  assert.match(timerCss, /@media \(min-width: 1251px\)[\s\S]*\.presenter-session-timer-actions\s*\{[\s\S]*flex-wrap:\s*nowrap/);
+  assert.match(presenterCss, /compact-presenter-chrome/);
+  assert.match(presenterCss, /@media \(min-width: 1251px\)[\s\S]*\.presenter-topbar\s*\{[\s\S]*flex-wrap:\s*nowrap/);
+  assert.match(pickerCss, /compact-presenter-participation-toolbar/);
+  assert.match(pickerCss, /@media \(min-width: 1351px\)[\s\S]*\.presenter-student-picker\s*\{[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\) auto/);
+  assert.match(pickerCss, /\.presenter-stage > \.presenter-topbar\s*\{[\s\S]*min-height:\s*52px/);
+});
