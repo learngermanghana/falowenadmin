@@ -1833,17 +1833,20 @@
 }
 
 .presenter-stage.is-focus-mode > .presenter-topbar,
-.presenter-stage.is-focus-mode > .presenter-student-picker,
-.presenter-stage.is-focus-mode > .presenter-participation-dock,
 .presenter-stage.is-focus-mode > .presenter-footer {
   display: none;
+}
+
+.presenter-stage.is-focus-mode > .presenter-student-picker,
+.presenter-stage.is-focus-mode > .presenter-participation-dock {
+  display: block;
 }
 
 .presenter-stage.is-focus-mode > .presenter-content {
   grid-row: 1;
   min-height: 0;
   height: 100%;
-  padding: clamp(1.4rem, 4vw, 4rem) clamp(2rem, 6vw, 6rem);
+  padding: clamp(4.8rem, 8vw, 6.2rem) clamp(2rem, 6vw, 6rem) clamp(1.4rem, 4vw, 4rem);
 }
 
 .presenter-focus-dock {
@@ -2541,4 +2544,37 @@
 
 .presenter-teacher-purpose strong {
   font-size: 0.64rem;
+}
+
+
+/* Focus mode keeps only the live participation actions needed while teaching. */
+.presenter-stage.is-focus-mode > .presenter-participation-dock,
+.presenter-stage.is-focus-mode > .presenter-student-picker {
+  position: absolute;
+  z-index: 42;
+  top: clamp(0.55rem, 1.4vw, 1rem);
+  left: clamp(0.55rem, 1.4vw, 1rem);
+  width: auto;
+  max-width: min(760px, calc(100% - 1.1rem));
+}
+
+.presenter-stage.is-focus-mode > .presenter-participation-dock {
+  pointer-events: none;
+}
+
+.presenter-stage.is-focus-mode > .presenter-participation-dock > .presenter-student-picker {
+  pointer-events: auto;
+}
+
+@media (max-width: 700px) {
+  .presenter-stage.is-focus-mode > .presenter-content {
+    padding: 5.6rem 1.15rem 3.8rem;
+  }
+
+  .presenter-stage.is-focus-mode > .presenter-participation-dock,
+  .presenter-stage.is-focus-mode > .presenter-student-picker {
+    top: 0.45rem;
+    left: 0.45rem;
+    max-width: calc(100% - 0.9rem);
+  }
 }

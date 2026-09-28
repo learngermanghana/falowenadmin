@@ -459,3 +459,89 @@
     text-overflow: ellipsis;
   }
 }
+
+
+/* Minimal participation toolbar inside Focus Mode. */
+.presenter-stage.is-focus-mode .presenter-student-picker {
+  width: auto;
+  border: 1px solid rgba(148, 163, 184, 0.72);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.95);
+  padding: 0.34rem 0.42rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
+  backdrop-filter: blur(8px);
+}
+
+.presenter-stage.is-focus-mode .presenter-student-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: nowrap;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-class-select,
+.presenter-stage.is-focus-mode .presenter-end-summary,
+.presenter-stage.is-focus-mode .presenter-student-more,
+.presenter-stage.is-focus-mode .presenter-student-status-line,
+.presenter-stage.is-focus-mode .presenter-student-question-card,
+.presenter-stage.is-focus-mode .presenter-student-current-stats {
+  display: none !important;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current {
+  flex: 0 1 180px;
+  min-width: 110px;
+  max-width: 180px;
+  padding: 0.22rem 0.42rem;
+  border-color: transparent;
+  background: transparent;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current.is-active {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current span {
+  font-size: 0.58rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-current strong {
+  font-size: 0.8rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-actions button,
+.presenter-stage.is-focus-mode .presenter-pick-student {
+  min-height: 32px;
+  padding: 0.38rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  box-shadow: none;
+}
+
+.presenter-stage.is-focus-mode .presenter-pick-student {
+  margin-left: 0;
+}
+
+@media (max-width: 700px) {
+  .presenter-stage.is-focus-mode .presenter-student-picker {
+    max-width: calc(100vw - 0.9rem);
+    overflow-x: auto;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-current {
+    flex-basis: 130px;
+    min-width: 95px;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-actions button,
+  .presenter-stage.is-focus-mode .presenter-pick-student {
+    font-size: 0.66rem;
+    padding: 0.34rem 0.48rem;
+  }
+}

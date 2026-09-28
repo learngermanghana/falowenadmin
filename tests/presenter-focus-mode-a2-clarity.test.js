@@ -5,9 +5,11 @@ import { getA2PresenterKnowledge } from "../src/data/a2PresenterKnowledge.js";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
-test("presenter focus view hides teacher chrome but keeps compact navigation", () => {
+test("presenter focus view hides teacher chrome but keeps compact navigation and participation controls", () => {
   const presenter = fs.readFileSync("src/components/TeachingSlidePresenter.jsx", "utf8");
   const css = fs.readFileSync("src/components/TeachingSlidePresenter.css", "utf8");
+  const pickerCss = fs.readFileSync("src/components/PresenterStudentPicker.css", "utf8");
+  const picker = fs.readFileSync("src/components/PresenterStudentPicker.jsx", "utf8");
 
   assert.match(presenter, /const \[focusMode, setFocusMode\] = useState\(false\)/);
   assert.match(presenter, /Present full screen/);
@@ -15,8 +17,18 @@ test("presenter focus view hides teacher chrome but keeps compact navigation", (
   assert.match(presenter, /aria-label="Restore presenter controls"/);
   assert.match(presenter, /presenter-focus-dock/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-topbar/);
-  assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-student-picker/);
   assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-footer/);
+  assert.match(css, /\.presenter-stage\.is-focus-mode > \.presenter-student-picker,[\s\S]*\.presenter-stage\.is-focus-mode > \.presenter-participation-dock\s*\{[\s\S]*display:\s*block/);
+  assert.match(css, /Focus mode keeps only the live participation actions needed while teaching/);
+  assert.match(css, /top:\s*clamp\(0\.55rem/);
+  assert.match(css, /left:\s*clamp\(0\.55rem/);
+  assert.match(picker, />Correct<\/button>/);
+  assert.match(picker, />Needs review<\/button>/);
+  assert.match(picker, /current \? "Next student →" : "Pick student"/);
+  assert.match(pickerCss, /Minimal participation toolbar inside Focus Mode/);
+  assert.match(pickerCss, /\.presenter-stage\.is-focus-mode \.presenter-student-class-select,[\s\S]*display:\s*none !important/);
+  assert.match(pickerCss, /\.presenter-stage\.is-focus-mode \.presenter-student-actions/);
+  assert.match(pickerCss, /\.presenter-stage\.is-focus-mode \.presenter-pick-student/);
   assert.match(css, /\.presenter-focus-dock/);
 });
 
