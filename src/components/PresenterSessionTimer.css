@@ -323,3 +323,61 @@
 .presenter-session-timer.is-expired .presenter-session-budget-bar {
   opacity: 0.8;
 }
+
+
+/* compact-presenter-session-toolbar */
+@media (min-width: 1251px) {
+  .presenter-session-timer {
+    flex: 1 1 760px;
+    flex-wrap: nowrap;
+    max-width: none;
+    gap: 8px;
+    padding: 6px 8px;
+  }
+
+  .presenter-session-timer-copy {
+    flex: 0 1 300px;
+  }
+
+  .presenter-session-timer-actions {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .presenter-session-timer-actions button {
+    padding: 5px 7px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+}
+
+.presenter-session-timer-actions .presenter-session-present {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.presenter-session-timer-actions .presenter-session-present:hover,
+.presenter-session-timer-actions .presenter-session-present:focus-visible {
+  border-color: #1e40af;
+  background: #1e40af;
+}
+
+.presenter-session-timer-actions .presenter-session-exit {
+  border-color: #94a3b8;
+  color: #334155;
+  background: #fff;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 1250px) {
+  .presenter-session-timer {
+    flex-basis: 100%;
+    width: 100%;
+    max-width: none;
+  }
+}

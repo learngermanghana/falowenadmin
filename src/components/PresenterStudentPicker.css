@@ -357,3 +357,105 @@
   font-size: 0.74rem;
   font-weight: 750;
 }
+
+
+/* compact-presenter-participation-toolbar */
+.presenter-student-picker {
+  padding: 0.34rem 0.75rem 0.3rem;
+}
+
+.presenter-student-toolbar {
+  gap: 0.4rem;
+}
+
+.presenter-student-class-select {
+  flex-basis: 165px;
+}
+
+.presenter-student-class-select select {
+  padding: 0.32rem 0.45rem;
+  font-size: 0.74rem;
+}
+
+.presenter-student-current {
+  flex-basis: min(190px, 17vw);
+  min-width: 135px;
+  padding: 0.24rem 0.45rem;
+}
+
+.presenter-student-current strong {
+  font-size: 0.9rem;
+}
+
+.presenter-student-actions {
+  gap: 0.25rem;
+}
+
+.presenter-student-actions button,
+.presenter-pick-student,
+.presenter-student-more summary,
+.presenter-student-more-panel button {
+  padding: 0.36rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+.presenter-end-summary > summary {
+  padding: 0.36rem 0.5rem !important;
+  font-size: 0.72rem !important;
+}
+
+.presenter-student-status-line {
+  min-height: 15px;
+  gap: 0.45rem;
+  padding-top: 0.16rem;
+  font-size: 0.64rem;
+  line-height: 1.15;
+}
+
+.presenter-stage > .presenter-topbar {
+  min-height: 52px;
+  padding: 0.42rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.presenter-stage > .presenter-footer {
+  min-height: 50px;
+  padding: 0.45rem 0.75rem;
+}
+
+.presenter-shell .presenter-content {
+  padding: clamp(0.85rem, 2.6vw, 2.35rem) clamp(1.5rem, 4.5vw, 4.25rem);
+}
+
+@media (min-width: 1351px) {
+  .presenter-student-picker {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.25rem 0.7rem;
+  }
+
+  .presenter-student-toolbar {
+    min-width: 0;
+  }
+
+  .presenter-student-status-line {
+    justify-self: end;
+    max-width: min(760px, 48vw);
+    padding-top: 0;
+    white-space: nowrap;
+  }
+
+  .presenter-student-question-card,
+  .presenter-student-error {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1350px) {
+  .presenter-student-status-line {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
