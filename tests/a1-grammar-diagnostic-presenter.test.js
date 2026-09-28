@@ -24,6 +24,14 @@ test("normal A1 Presenter is a grammar diagnostic, while A1-5.9 keeps exam readi
   assert.match(source, /A1-5\.9/);
   assert.match(source, /A1 speaking readiness method/);
   assert.match(source, /Die drei Teile der A1-Sprechprüfung/);
+  assert.match(source, /Is the student ready for the exam\?/);
+  assert.match(source, /Task completion: answers or forms exactly what the task asks for/);
+  assert.match(source, /Question formation: forms a clear W-question or yes\/no question/);
+  assert.match(source, /Answer relevance: answers the actual question/);
+  assert.match(source, /Fluency: responds without a long pause/);
+  assert.match(source, /Clarity: pronunciation and sentence structure are clear enough for A1/);
+  assert.match(source, /Interaction: listens, makes polite requests, and responds appropriately/);
+  assert.doesNotMatch(source, /Ist der Student prüfungsbereit\?/);
 });
 
 test("A1 class-check pools stay grammar-focused and large enough for a class", () => {
