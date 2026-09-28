@@ -353,6 +353,10 @@ test("Presenter shows the shared class-ended screen even while presentation chro
   assert.match(source, /createPortal/);
   assert.match(source, /attendanceSessionEnded && typeof document !== "undefined"/);
   assert.match(source, /class_has_ended_banner\.png/);
+  assert.match(source, /attendanceOriginatedEnd/);
+  assert.match(source, /presenterOriginatedEnd/);
+  assert.match(source, /The class end was received from Attendance/);
+  assert.match(source, /The class was ended from Presenter and the shared class state is synchronized/);
   assert.match(source, /Attendance and Slides synchronized/);
   assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*position:\s*fixed/);
   assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*z-index:\s*10000/);

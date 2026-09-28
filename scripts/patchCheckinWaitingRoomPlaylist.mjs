@@ -143,7 +143,7 @@ upgradeOnce(
   }, []);`,
 );
 
-replaceOnce(
+upgradeOnce(
   `  const stopWaitingMusic = useCallback(() => {
     musicStartGenerationRef.current += 1;
     if (musicTimerRef.current) {
@@ -245,7 +245,7 @@ upgradeOnce(
       setMusicPlaying(true);`,
 );
 
-replaceOnce(
+upgradeOnce(
   `      const playNextBar = () => {
         if (context.state !== "running") return;
         const bar = pianoPlaylist[musicChordIndexRef.current % pianoPlaylist.length];
@@ -306,7 +306,7 @@ replaceOnce(
   "music description",
 );
 
-replaceOnce(
+upgradeOnce(
   '{musicPlaying ? "Stop piano" : "Start piano playlist"}',
   '{musicPlaying ? "Stop music" : "Start waiting music"}',
   "music button copy",

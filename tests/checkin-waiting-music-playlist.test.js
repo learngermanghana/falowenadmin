@@ -55,7 +55,7 @@ test("waiting room music can skip to the next configured track", () => {
   assert.match(audio, /await player\.playTrack\(player\.index \+ 1\)/);
   assert.match(page, /const skipWaitingMusic = useCallback/);
   assert.match(page, /pianoPlaylist\.length > 1/);
-  assert.match(page, /disabled=\{!musicPlaying\}/);
+  assert.match(page, /disabled=\{!musicPlaying \|\| musicStarting\}/);
   assert.match(page, /Start waiting music before skipping tracks/);
   assert.match(page, />\s*Skip\s*<\/button>/);
   assert.match(patch, /skipWaitingMusicPlaylist/);
@@ -137,11 +137,24 @@ test("music can be started manually after class has started or ended", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
   const patch = fs.readFileSync(path.join(repoRoot, "scripts", "patchCheckinWaitingRoomPlaylist.mjs"), "utf8");
 
-  assert.match(page, /const startWaitingMusic = useCallback\(async \(\) => \{\s*if \(musicPlaying\) return;/);
+  assert.match(page, /const startWaitingMusic = useCallback\(async \(\) => \{\s*if \(musicPlaying \|\| musicStartInFlightRef\.current\) return;/);
   assert.doesNotMatch(page, /if \(musicPlaying \|\| classStartedRef\.current\) return;/);
   assert.doesNotMatch(page, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
   assert.match(patch, /'    if \(musicPlaying \|\| classStartedRef\.current\) return;',\s*'    if \(musicPlaying\) return;'/);
   assert.match(patch, /disabled=\{!musicPlaying && Boolean\(actualStartedAt\)\}/);
+});
+
+test("unsupported audio leaves the waiting-room start control usable", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  const capabilityCheck = page.indexOf("const AudioContextClass = window.AudioContext || window.webkitAudioContext");
+  const startingFlag = page.indexOf("musicStartInFlightRef.current = true", capabilityCheck);
+  const unsupportedBranch = page.slice(capabilityCheck, startingFlag);
+
+  assert.ok(capabilityCheck >= 0 && startingFlag > capabilityCheck, "Audio capability must be checked before locking the start control");
+  assert.match(unsupportedBranch, /if \(!AudioContextClass\)/);
+  assert.match(unsupportedBranch, /musicStartInFlightRef\.current = false/);
+  assert.match(unsupportedBranch, /setMusicStarting\(false\)/);
 });
 
 test("starting class invalidates pending waiting-room audio startup", () => {

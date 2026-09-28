@@ -281,6 +281,7 @@ export default function CheckinDisplayPage() {
   const expectedCount = sp.get("expectedCount") || "";
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [musicStarting, setMusicStarting] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.5);
   const [musicError, setMusicError] = useState("");
   const [currentMusicTrack, setCurrentMusicTrack] = useState(pianoPlaylist[0]?.title || "Waiting room music");
@@ -304,6 +305,7 @@ export default function CheckinDisplayPage() {
   const [classStartHandoff, setClassStartHandoff] = useState({ phase: "idle", message: "" });
   const classStartStopTimerRef = useRef(null);
   const musicStartGenerationRef = useRef(0);
+  const musicStartInFlightRef = useRef(false);
   const classStartedRef = useRef(false);
   const autoPresenterRecoveryRef = useRef("");
   const presenterWindowRef = useRef(null);
@@ -903,6 +905,7 @@ export default function CheckinDisplayPage() {
 
   const stopWaitingMusic = useCallback(() => {
     musicStartGenerationRef.current += 1;
+    musicStartInFlightRef.current = false;
     const context = audioContextRef.current;
     audioContextRef.current = null;
     musicGainRef.current = null;
@@ -913,11 +916,12 @@ export default function CheckinDisplayPage() {
       context.close().catch(() => {});
     }
     setMusicPlaying(false);
+    setMusicStarting(false);
   }, []);
 
   const skipWaitingMusic = useCallback(async () => {
     const context = audioContextRef.current;
-    if (!musicPlaying || pianoPlaylist.length <= 1 || !context || context.state === "closed") return;
+    if (!musicPlaying || musicStarting || pianoPlaylist.length <= 1 || !context || context.state === "closed") return;
 
     try {
       setMusicError("");
@@ -925,19 +929,24 @@ export default function CheckinDisplayPage() {
     } catch (error) {
       setMusicError(error?.message || "The next waiting room track could not start.");
     }
-  }, [musicPlaying]);
+  }, [musicPlaying, musicStarting]);
 
   const startWaitingMusic = useCallback(async () => {
-    if (musicPlaying) return;
-    const startGeneration = musicStartGenerationRef.current + 1;
-    musicStartGenerationRef.current = startGeneration;
-    setMusicError("");
+    if (musicPlaying || musicStartInFlightRef.current) return;
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
+      musicStartInFlightRef.current = false;
+      setMusicStarting(false);
       setMusicError("This browser does not support background audio.");
       return;
     }
+
+    musicStartInFlightRef.current = true;
+    setMusicStarting(true);
+    const startGeneration = musicStartGenerationRef.current + 1;
+    musicStartGenerationRef.current = startGeneration;
+    setMusicError("");
 
     try {
       const context = new AudioContextClass();
@@ -967,6 +976,8 @@ export default function CheckinDisplayPage() {
 
       if (musicStartGenerationRef.current !== startGeneration) {
         if (context.state !== "closed") context.close().catch(() => {});
+        musicStartInFlightRef.current = false;
+        setMusicStarting(false);
         return;
       }
 
@@ -981,8 +992,12 @@ export default function CheckinDisplayPage() {
       if (musicStartGenerationRef.current !== startGeneration) {
         stopWaitingMusicPlaylist(context);
         if (context.state !== "closed") context.close().catch(() => {});
+        musicStartInFlightRef.current = false;
+        setMusicStarting(false);
         return;
       }
+      musicStartInFlightRef.current = false;
+      setMusicStarting(false);
       setMusicPlaying(true);
     } catch (error) {
       stopWaitingMusic();
@@ -1661,8 +1676,10 @@ export default function CheckinDisplayPage() {
       state: "ending",
       message: "Class complete · saving the shared end state…",
     });
-    void syncPresenterEnd(endedAt, { handshakeAttempt: 1 });
+    // Start audio directly inside the End class click gesture so browsers do not
+    // treat playback as an async autoplay request after the end-sync handshake.
     if (!musicPlaying) void startWaitingMusic();
+    void syncPresenterEnd(endedAt, { handshakeAttempt: 1 });
   }, [
     actualEndedAt,
     actualStartedAt,
@@ -1912,7 +1929,7 @@ export default function CheckinDisplayPage() {
                     </button>
                   ) : null}
                   {!musicPlaying ? (
-                    <button type="button" onClick={startWaitingMusic}>Start lobby music</button>
+                    <button type="button" onClick={startWaitingMusic} disabled={musicStarting}>{musicStarting ? "Starting lobby music…" : "Start lobby music"}</button>
                   ) : (
                     <span>♫ Lobby music playing</span>
                   )}
@@ -2179,7 +2196,7 @@ export default function CheckinDisplayPage() {
                 type="button"
                 className="checkin-display-music-skip-button"
                 onClick={skipWaitingMusic}
-                disabled={!musicPlaying}
+                disabled={!musicPlaying || musicStarting}
                 aria-label={musicPlaying ? "Skip to next waiting room track" : "Start waiting music before skipping tracks"}
                 title={musicPlaying ? "Skip to next track" : "Start the music to enable skip"}
               >
@@ -2190,8 +2207,9 @@ export default function CheckinDisplayPage() {
               type="button"
               className="checkin-display-music-button"
               onClick={musicPlaying ? stopWaitingMusic : startWaitingMusic}
+              disabled={musicStarting}
             >
-              {musicPlaying ? "Stop music" : "Start waiting music"}
+              {musicPlaying ? "Stop music" : musicStarting ? "Starting music…" : "Start waiting music"}
             </button>
           </div>
           <label className="checkin-display-music-volume">
