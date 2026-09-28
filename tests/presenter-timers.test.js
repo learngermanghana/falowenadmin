@@ -415,38 +415,29 @@ test("Presenter acknowledges Attendance end only after the shared class is ended
   assert.match(source, /presenterEndAckDurationSeconds/);
 });
 
-test("Presenter can end the shared class session without a new backend service", () => {
+test("Presenter routes class ending back to Attendance instead of ending the shared session itself", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
-  const service = read("src/services/presenterLiveSessionService.js");
   const css = read("src/components/PresenterSessionTimer.css");
 
-  assert.match(source, /endPresenterLiveSession/);
-  assert.match(source, /async function endClassFromPresenter/);
-  assert.match(source, /presenterEndRequestId:/);
-  assert.match(source, /presenterEndSource: "presenter"/);
-  assert.match(source, /className="presenter-session-end"/);
-  assert.match(source, />\s*End class\s*<\/button>/);
-  assert.match(service, /export async function endPresenterLiveSession/);
-  assert.doesNotMatch(service, /collection\([^\n]*liveTeachingSessions/);
+  assert.match(source, /const canReturnToAttendanceForEnd = Boolean/);
+  assert.match(source, /function returnToAttendance\(\)/);
+  assert.match(source, /Attendance is the authority for ending the class/);
+  assert.match(source, />\s*End in Attendance\s*<\/button>/);
+  assert.doesNotMatch(source, />\s*End class\s*<\/button>/);
   assert.match(css, /\.presenter-session-timer-actions \.presenter-session-end/);
 });
 
 
-test("Presenter end write failures become retryable instead of leaving Ending class stuck", () => {
+test("Presenter completion controls recover when the browser refuses window.close", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
 
-  assert.match(source, /const \[presenterEndSyncState, setPresenterEndSyncState\] = useState\("idle"\)/);
-  assert.match(source, /const pendingPresenterEndRef = useRef\(null\)/);
-  assert.match(source, /async function writePresenterEnd\(payload, \{ retry = false \} = \{\}\)/);
-  assert.match(source, /try \{[\s\S]*await endPresenterLiveSession\(/);
-  assert.match(source, /catch \(error\) \{[\s\S]*presenter end sync failed/);
-  assert.match(source, /pendingPresenterEndRef\.current = payload/);
-  assert.match(source, /setPresenterEndSyncState\("failed"\)/);
-  assert.match(source, /Class end could not be synchronized\. Retry end sync\./);
-  assert.match(source, /async function retryPresenterEndSync\(\)/);
-  assert.match(source, /await writePresenterEnd\(payload, \{ retry: true \}\)/);
-  assert.match(source, />\s*Retry end sync\s*<\/button>/);
-  assert.match(source, />\s*Ending class…\s*<\/button>/);
+  assert.match(source, /function closePresenter\(\)/);
+  assert.match(source, /window\.close\(\)/);
+  assert.match(source, /window\.setTimeout\(\(\) => \{/);
+  assert.match(source, /if \(!window\.closed\) window\.location\.assign\(attendanceReturnUrl\)/);
+  assert.match(source, /function returnToAttendance\(\)/);
+  assert.match(source, /window\.opener && !window\.opener\.closed/);
+  assert.match(source, /window\.location\.assign\(attendanceReturnUrl\)/);
 });
 
 
