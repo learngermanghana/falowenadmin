@@ -114,7 +114,7 @@ function visualWarningClass(remaining) {
   return "";
 }
 
-export default function PresenterSessionTimer({ slide, stage = null, toolbarActions = null }) {
+export default function PresenterSessionTimer({ slide, stage = null, toolbarActions = null, onTimeStateChange = null }) {
   const presenterLive = usePresenterLiveSession(slide);
   const level = inferPresenterLevel(
     slide?.course,
@@ -583,6 +583,16 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
 
   const expired = remaining <= 0;
   const warningClass = visualWarningClass(remaining);
+
+  useEffect(() => {
+    if (typeof onTimeStateChange !== "function") return;
+    onTimeStateChange({
+      remainingSeconds: Math.max(0, Number(remaining || 0)),
+      durationSeconds: Math.max(0, Number(durationSeconds || 0)),
+      running: Boolean(running),
+      expired,
+    });
+  }, [durationSeconds, expired, onTimeStateChange, remaining, running]);
 
   async function startTimerSession(seconds, nextEndAt, nextWarned = warnedMilestones, { source = "presenter" } = {}) {
     const nowMs = Date.now();
