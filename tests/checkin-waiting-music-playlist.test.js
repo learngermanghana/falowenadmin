@@ -683,6 +683,25 @@ test("Start class uses a visible Smart Start handoff and opens Presenter within 
   assert.match(css, /\.checkin-display-smart-handoff\.is-failed/);
 });
 
+
+test("pre-class lobby primes Presenter with the exact upcoming session identity", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /resolvePresenterClass\(\)\s*\.then\(\(\{ klass, classRecordId \}\) => \{/);
+  assert.match(page, /setPresenterTarget\(\{ classRecordId, sessionKey: linkPresenterSessionKey \}\)/);
+  assert.match(page, /setPresenterClassContext\(\{\s*classId: String\(klass\?\.classId \|\| classId\)\.trim\(\),\s*classRecordId,\s*sessionKey: linkPresenterSessionKey,/);
+});
+
+test("explicit upcoming Presenter session does not inherit a legacy ended state", () => {
+  const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
+
+  assert.match(service, /const explicitSessionKey = normalize\(requestedSessionKey\)/);
+  assert.match(service, /if \(explicitSessionKey\) \{\s*return \{\s*sessionKey: explicitSessionKey,\s*activeSessionKey,\s*isActiveSession: false,\s*sessionPendingStart: true,/);
+  const explicitIndex = service.indexOf("if (explicitSessionKey)");
+  const legacyIndex = service.indexOf("const legacy = data.presenterLiveSession");
+  assert.ok(explicitIndex > 0 && legacyIndex > explicitIndex, "explicit session guard must run before legacy fallback");
+});
+
 test("Smart Start only reports success after Presenter acknowledges the exact Attendance request", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
 
