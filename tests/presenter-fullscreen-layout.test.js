@@ -68,7 +68,7 @@ test("desktop presenter keeps fullscreen and exit actions in the timer row and c
     assert.doesNotMatch(source, /className="presenter-top-actions"/);
   }
 
-  assert.match(timer, /PresenterSessionTimer\(\{ slide, stage = null, toolbarActions = null \}\)/);
+  assert.match(timer, /PresenterSessionTimer\(\{ slide, stage = null, toolbarActions = null, onTimeStateChange = null \}\)/);
   assert.match(timer, /Sound: \{soundEnabled \? "on" : "off"\}[\s\S]*\{toolbarActions\}/);
   assert.match(timerCss, /compact-presenter-session-toolbar/);
   assert.match(timerCss, /@media \(min-width: 1251px\)[\s\S]*\.presenter-session-timer-actions\s*\{[\s\S]*flex-wrap:\s*nowrap/);
