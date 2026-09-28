@@ -131,6 +131,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [contentPage, setContentPage] = useState(0);
   const [contentPageSize, setContentPageSize] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
+  const [classTimeState, setClassTimeState] = useState({
+    remainingSeconds: 0,
+    durationSeconds: 0,
+    running: false,
+    expired: false,
+  });
   const [knowledgeAnswersOpen, setKnowledgeAnswersOpen] = useState({});
   const [vocabChallengeMode, setVocabChallengeMode] = useState(false);
   const [vocabChallengeIndex, setVocabChallengeIndex] = useState(0);
@@ -477,6 +483,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
+        {focusMode && classTimeState.durationSeconds > 0 ? (
+          <div className={`presenter-focus-time ${classTimeState.expired ? "is-expired" : ""}`} aria-label="Class time remaining">
+            <strong>{formatTimer(classTimeState.remainingSeconds)}</strong>
+            <span>{classTimeState.expired ? "Time up" : "left"}</span>
+          </div>
+        ) : null}
         {focusMode ? (
           <div className="presenter-focus-dock" aria-label="Focus mode controls">
             <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0} aria-label="Previous slide">←</button>
@@ -501,6 +513,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           <PresenterSessionTimer
             slide={slide}
             stage={stage}
+            onTimeStateChange={setClassTimeState}
             toolbarActions={(
               <>
                 <button type="button" className="presenter-session-present" onClick={presentFullscreen}>Present full screen</button>
