@@ -127,8 +127,8 @@ test("music can continue after scheduled time until teacher starts class", () =>
 
 test("teacher-confirmed start uses the synchronized display clock", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
-  assert.match(page, /const startedAt = nowMs;/);
-  assert.doesNotMatch(page, /const startedAt = Date\.now\(\);/);
+  assert.match(page, /const startedAt = Date\.now\(\);/);
+  assert.doesNotMatch(page, /const startedAt = nowMs;/);
 });
 
 
@@ -436,6 +436,10 @@ test("initial presenter start is atomic and preserves the transaction winner", (
   const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
 
   assert.match(service, /runTransaction/);
+  assert.match(service, /const presenterStartRequests = new Map\(\)/);
+  assert.match(service, /if \(pending\) return pending/);
+  assert.match(service, /TRANSACTION_RETRY_DELAYS_MS/);
+  assert.match(service, /code === "failed-precondition" \|\| code === "aborted"/);
   assert.match(service, /const snapshot = await transaction\.get\(classRef\);/);
   assert.match(service, /if \(existing\.sessionKey === key && existingStart > 0\)/);
   assert.match(service, /const activeSessionKey = normalize\(data\.presenterActiveSessionKey\)/);

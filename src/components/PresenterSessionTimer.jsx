@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import usePresenterLiveSession from "../hooks/usePresenterLiveSession.js";
 import { endPresenterLiveSession, startPresenterLiveSession } from "../services/presenterLiveSessionService.js";
 import {
@@ -785,8 +786,25 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
       : notice
         || (running ? "Time remaining" : remaining < durationSeconds ? "Paused" : "Ready to start");
 
+  const classEndedScreen = attendanceSessionEnded && typeof document !== "undefined"
+    ? createPortal(
+      <div className="presenter-class-ended-screen" role="status" aria-live="assertive">
+        <img src="/class_has_ended_banner.png" alt="Class has ended" />
+        <div>
+          <span>Class complete</span>
+          <h1>Class has ended</h1>
+          <p>The class end was received from Attendance. You can now close this presenter.</p>
+          <strong>{presenterEndAckMatches ? "Attendance and Slides synchronized" : "Confirming with Attendance…"}</strong>
+        </div>
+      </div>,
+      document.body,
+    )
+    : null;
+
   return (
-    <div className={`presenter-session-timer ${warningClass}`} aria-live="polite">
+    <>
+      {classEndedScreen}
+      <div className={`presenter-session-timer ${warningClass}`} aria-live="polite">
       <div className="presenter-session-timer-copy">
         <span>Class time · {level} · {durationMinutes} min</span>
         <strong>{expired ? "TIME UP" : formatSessionTime(remaining)}</strong>
@@ -877,6 +895,7 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
           Sound: {soundEnabled ? "on" : "off"}
         </button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

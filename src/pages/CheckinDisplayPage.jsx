@@ -1449,7 +1449,7 @@ export default function CheckinDisplayPage() {
 
   const handleStartClassNow = useCallback(() => {
     if (actualStartedAt) return;
-    const startedAt = nowMs;
+    const startedAt = Date.now();
     handoffStartedAtRef.current = Date.now();
     if (handoffPhaseTimerRef.current) window.clearTimeout(handoffPhaseTimerRef.current);
     if (handoffFocusTimerRef.current) window.clearTimeout(handoffFocusTimerRef.current);
@@ -1512,7 +1512,6 @@ export default function CheckinDisplayPage() {
     actualStartedAt,
     musicPlaying,
     musicVolume,
-    nowMs,
     openPresenterWindow,
     startDecisionStorageKey,
     stopWaitingMusic,
@@ -1651,7 +1650,7 @@ export default function CheckinDisplayPage() {
 
   const handleEndClass = useCallback(() => {
     if (!actualStartedAt || actualEndedAt) return;
-    const endedAt = nowMs;
+    const endedAt = Date.now();
     setActualEndedAt(endedAt);
     writeClassStartDecision(startDecisionStorageKey, {
       actualStartedAt,
@@ -1668,7 +1667,6 @@ export default function CheckinDisplayPage() {
     actualEndedAt,
     actualStartedAt,
     musicPlaying,
-    nowMs,
     startDecisionStorageKey,
     startWaitingMusic,
     syncPresenterEnd,
