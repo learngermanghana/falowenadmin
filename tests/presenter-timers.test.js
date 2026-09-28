@@ -381,7 +381,7 @@ test("Presenter completion screen is Attendance-authoritative and always offers 
   assert.match(source, /window\.close\(\)/);
   assert.match(source, /window\.opener\.focus\(\)/);
   assert.match(source, /setEndedScreenDismissed\(true\)/);
-  assert.match(source, />End in Attendance</);
+  assert.match(source, />\s*End in Attendance\s*</);
   assert.doesNotMatch(source, />\s*End class\s*</);
   assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*position:\s*fixed/);
   assert.match(css, /\.presenter-class-ended-panel\s*\{/);
