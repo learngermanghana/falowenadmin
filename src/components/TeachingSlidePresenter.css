@@ -2457,3 +2457,27 @@
   font-size: 0.82rem;
   white-space: nowrap;
 }
+
+
+/* Tablet/phone portrait: do not force the presenter into a 16:9 landscape box. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .presenter-shell {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .presenter-stage {
+    width: 100vw;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+
+  .presenter-content {
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+}
