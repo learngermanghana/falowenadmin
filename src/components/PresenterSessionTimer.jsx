@@ -167,6 +167,10 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
     && normalize(liveState.presenterEndAckRequestId) === attendanceEndRequestId
     && Number(liveState.presenterEndAckAtMs || 0) > 0
   );
+  const presenterEndRequestId = normalize(liveState.presenterEndRequestId);
+  const presenterOriginatedEnd = normalize(liveState.presenterEndSource) === "presenter"
+    || Boolean(presenterEndRequestId && !attendanceEndRequestId);
+  const attendanceOriginatedEnd = Boolean(attendanceEndRequestId);
   const agendaAutoStartRequested = typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("autostart") === "1";
   const [classId, setClassId] = useState(currentPresenterClassId);
@@ -793,8 +797,18 @@ export default function PresenterSessionTimer({ slide, stage = null }) {
         <div>
           <span>Class complete</span>
           <h1>Class has ended</h1>
-          <p>The class end was received from Attendance. You can now close this presenter.</p>
-          <strong>{presenterEndAckMatches ? "Attendance and Slides synchronized" : "Confirming with Attendance…"}</strong>
+          <p>
+            {attendanceOriginatedEnd
+              ? "The class end was received from Attendance. You can now close this presenter."
+              : presenterOriginatedEnd
+                ? "The class was ended from Presenter and the shared class state is synchronized."
+                : "The shared class session has ended. You can now close this presenter."}
+          </p>
+          <strong>
+            {attendanceOriginatedEnd
+              ? (presenterEndAckMatches ? "Attendance and Slides synchronized" : "Confirming with Attendance…")
+              : "Attendance and Slides synchronized"}
+          </strong>
         </div>
       </div>,
       document.body,
