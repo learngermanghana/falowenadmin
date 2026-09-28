@@ -45,6 +45,20 @@ test("builds a direct public brochure URL for the selected class", () => {
   );
 });
 
+test("selected class message uses the student name when provided", () => {
+  const message = buildClassBrochureMessage({
+    name: "A1 Dortmund Klasse",
+    startDate: "2026-10-01",
+  }, "Ama Mensah");
+
+  assert.match(message, /^Hello Ama Mensah, thank you for the call\./);
+});
+
+test("selected class message keeps the existing greeting when no student name is provided", () => {
+  const message = buildClassBrochureMessage({ name: "A1 Dortmund Klasse" });
+  assert.match(message, /^Thank you for the call\./);
+});
+
 test("selected class message includes current class context and no attachment requirement", () => {
   const message = buildClassBrochureMessage({
     name: "A1 Dortmund Klasse",
@@ -107,6 +121,8 @@ test("brochure panel loads real classes and no longer asks staff to attach a PDF
 
   assert.match(panel, /loadShareablePublicClasses/);
   assert.match(panel, /Classes currently available for registration/);
+  assert.match(panel, /Student name/);
+  assert.match(panel, /buildClassBrochureMessage\(selectedClass, value\)/);
   assert.match(panel, /Open brochure/);
   assert.match(panel, /Copy brochure link/);
   assert.match(panel, /No attachment needed/);

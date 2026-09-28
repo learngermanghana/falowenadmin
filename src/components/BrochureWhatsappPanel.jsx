@@ -16,6 +16,7 @@ function classKey(klass = {}) {
 }
 
 export default function BrochureWhatsappPanel({ pushToast }) {
+  const [studentName, setStudentName] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState(BROCHURE_WHATSAPP_MESSAGE);
   const [classes, setClasses] = useState([]);
@@ -63,7 +64,14 @@ export default function BrochureWhatsappPanel({ pushToast }) {
 
   const selectClass = (klass) => {
     setSelectedClassKey(classKey(klass));
-    setMessage(buildClassBrochureMessage(klass));
+    setMessage(buildClassBrochureMessage(klass, studentName));
+  };
+
+  const updateStudentName = (value) => {
+    setStudentName(value);
+    if (selectedClass) {
+      setMessage(buildClassBrochureMessage(selectedClass, value));
+    }
   };
 
   const openWhatsapp = () => {
@@ -105,7 +113,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
   };
 
   const resetMessage = () => {
-    setMessage(selectedClass ? buildClassBrochureMessage(selectedClass) : BROCHURE_WHATSAPP_MESSAGE);
+    setMessage(selectedClass ? buildClassBrochureMessage(selectedClass, studentName) : BROCHURE_WHATSAPP_MESSAGE);
   };
 
   return (
@@ -188,6 +196,21 @@ export default function BrochureWhatsappPanel({ pushToast }) {
           </div>
         </section>
       )}
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <span style={{ fontWeight: 700 }}>Student name <span style={{ fontWeight: 500, color: "#64748b" }}>(optional)</span></span>
+        <input
+          type="text"
+          autoComplete="name"
+          value={studentName}
+          onChange={(event) => updateStudentName(event.target.value)}
+          placeholder="e.g. Ama Mensah"
+          style={{ width: "100%", padding: "11px 12px", borderRadius: 8, border: "1px solid #cbd5e1" }}
+        />
+        <small style={{ color: "#64748b" }}>
+          When provided, the WhatsApp message starts with the student’s name.
+        </small>
+      </label>
 
       <label style={{ display: "grid", gap: 6 }}>
         <span style={{ fontWeight: 700 }}>Client WhatsApp number</span>

@@ -169,11 +169,12 @@ export function upcomingBrochureClasses(classes = [], now = new Date()) {
     });
 }
 
-export function buildClassBrochureMessage(klass = {}) {
+export function buildClassBrochureMessage(klass = {}, studentName = "") {
   const className = text(klass.title || klass.name || klass.className || klass.classId || klass.level || "Falowen class");
   const brochureUrl = buildClassBrochureUrl(klass);
+  const name = text(studentName);
   const lines = [
-    "Thank you for the call.",
+    name ? `Hello ${name}, thank you for the call.` : "Thank you for the call.",
     "",
     `Here is the brochure for *${className}*.`,
     "",
