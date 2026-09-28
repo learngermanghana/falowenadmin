@@ -714,6 +714,10 @@ test("Attendance opens Presenter with the exact current class-session identity",
   assert.match(page, /presenterSessionKey\(\{[\s\S]*sessionDate: linkSessionDate[\s\S]*sessionId,[\s\S]*assignmentId: effectiveAssignmentId/);
   assert.match(page, /sessionKey: String\(linkPresenterSessionKey \|\| ""\)\.trim\(\)/);
   assert.match(page, /classRecordId: String\(presenterTarget\.classRecordId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /curriculumDay: String\(presenterCurriculumDay \|\| ""\)\.trim\(\)/);
+  assert.match(page, /sessionDate: String\(linkSessionDate \|\| ""\)\.trim\(\)/);
+  assert.match(page, /classId: String\(klass\?\.classId \|\| classId\)\.trim\(\)/);
+  assert.match(page, /curriculumDay: presenterCurriculumDay/);
   assert.match(page, /window\.open\(presenterLessonUrl, "falowen-presenter"\)/);
 });
 
