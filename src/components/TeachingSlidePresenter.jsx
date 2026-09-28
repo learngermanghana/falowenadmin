@@ -498,7 +498,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <span className="presenter-lesson-label">{slide.course} · {slide.day}</span>
           </div>
 
-          <PresenterSessionTimer slide={slide} stage={stage} />
+          <PresenterSessionTimer
+            slide={slide}
+            stage={stage}
+            toolbarActions={(
+              <>
+                <button type="button" className="presenter-session-present" onClick={presentFullscreen}>Present full screen</button>
+                <button type="button" className="presenter-session-exit" onClick={onExit}>Exit presenter</button>
+              </>
+            )}
+          />
 
           {showPresenterTimer ? (
             <div className="presenter-v2-tools">
@@ -539,10 +548,6 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             </div>
           ) : null}
 
-          <div className="presenter-top-actions">
-            <button type="button" onClick={presentFullscreen}>Present full screen</button>
-            <button type="button" onClick={onExit}>Exit presenter</button>
-          </div>
         </header>
 
         <PresenterStudentPicker
