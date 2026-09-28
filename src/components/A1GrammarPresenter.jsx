@@ -399,7 +399,16 @@ export default function A1GrammarPresenter({
             <span className="presenter-lesson-label">{stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check"}</span>
           </div>
 
-          <PresenterSessionTimer slide={slide} stage={stage} />
+          <PresenterSessionTimer
+            slide={slide}
+            stage={stage}
+            toolbarActions={(
+              <>
+                <button type="button" className="presenter-session-present" onClick={presentFullscreen}>Present full screen</button>
+                <button type="button" className="presenter-session-exit" onClick={onExit}>Exit presenter</button>
+              </>
+            )}
+          />
 
           <div className="presenter-v2-tools">
             <label className="presenter-stage-jump">
@@ -410,10 +419,6 @@ export default function A1GrammarPresenter({
             </label>
           </div>
 
-          <div className="presenter-top-actions">
-            <button type="button" onClick={presentFullscreen}>Present full screen</button>
-            <button type="button" onClick={onExit}>Exit presenter</button>
-          </div>
         </header>
 
         <div className="presenter-participation-dock" aria-label="Class participation controls">
