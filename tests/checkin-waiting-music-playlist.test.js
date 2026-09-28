@@ -698,6 +698,32 @@ test("pre-class lobby primes Presenter with the exact upcoming session identity"
   assert.match(page, /setPresenterClassContext\(\{\s*classId: String\(klass\?\.classId \|\| classId\)\.trim\(\),\s*classRecordId,\s*sessionKey: linkPresenterSessionKey,/);
 });
 
+test("Starting-soon Attendance clears stale end markers for the exact upcoming session", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const preclassPresenterPrimeRef = useRef\(""/);
+  assert.match(page, /nowMs >= scheduledStartAtMs/);
+  assert.match(page, /const staleEnded = Boolean/);
+  assert.match(page, /state\.classLifecycleStatus === "ended"/);
+  assert.match(page, /state\.attendanceEndRequestId/);
+  assert.match(page, /publishPresenterLiveSession\(classRecordId, \{/);
+  assert.match(page, /classStatus: "waiting"/);
+  assert.match(page, /classLifecycleStatus: "waiting"/);
+  assert.match(page, /classStartedAtMs: 0/);
+  assert.match(page, /classEndedAtMs: 0/);
+  assert.match(page, /attendanceEndRequestId: ""/);
+  assert.match(page, /presenterEndRequestId: ""/);
+  assert.match(page, /timerRunning: false/);
+});
+
+test("Attendance does not restore a Presenter-only end as the class end", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+
+  assert.match(page, /const sharedAttendanceEndRequestId = String\(presenterLiveState\.attendanceEndRequestId \|\| ""\)\.trim\(\)/);
+  assert.match(page, /const sharedEnd = sharedAttendanceEndRequestId/);
+  assert.match(page, /const sharedEnded = Boolean\(String\(state\.attendanceEndRequestId \|\| ""\)\.trim\(\)/);
+});
+
 test("explicit upcoming Presenter session does not inherit a legacy ended state", () => {
   const service = fs.readFileSync(path.join(repoRoot, "src", "services", "presenterLiveSessionService.js"), "utf8");
 
