@@ -346,7 +346,7 @@ test("Presenter acknowledges Attendance start only after timer state is usable",
   assert.match(source, /Attendance connected · timer synced/);
 });
 
-test("Presenter ignores ended state unless lesson, class and curriculum day all match", () => {
+test("Presenter ignores ended state unless Attendance ended the exact lesson, class and curriculum day", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
 
   assert.match(source, /const currentLessonIds = \[slide\?\.assignmentId, slide\?\.id\]/);
@@ -359,27 +359,33 @@ test("Presenter ignores ended state unless lesson, class and curriculum day all 
   assert.match(source, /const liveSessionMatchesCurrentClassDay = liveSessionMatchesCurrentLesson/);
   assert.match(source, /&& liveSessionMatchesCurrentClass/);
   assert.match(source, /&& liveSessionMatchesCurrentDay/);
-  assert.match(source, /const attendanceSessionEnded = presenterLive\.isToday\s*&& liveSessionMatchesCurrentClassDay/);
+  assert.match(source, /const attendanceSessionEnded = presenterLive\.isToday\s*&& liveSessionMatchesCurrentClassDay\s*&& Boolean\(attendanceEndRequestId\)/);
   assert.match(source, /const attendanceControlsTimer = presenterLive\.isToday\s*&& liveSessionMatchesCurrentClassDay/);
   assert.match(source, /if \(!liveSessionMatchesCurrentClassDay\) return/);
   assert.match(source, /classId: normalize\(presenterLive\.expectedClassId/);
   assert.match(source, /curriculumDay: Number/);
 });
 
-test("Presenter shows the shared class-ended screen even while presentation chrome is hidden", () => {
+test("Presenter completion screen is Attendance-authoritative and always offers a way out", () => {
   const source = read("src/components/PresenterSessionTimer.jsx");
   const css = read("src/components/PresenterSessionTimer.css");
 
   assert.match(source, /createPortal/);
-  assert.match(source, /attendanceSessionEnded && typeof document !== "undefined"/);
-  assert.match(source, /class_has_ended_banner\.png/);
-  assert.match(source, /attendanceOriginatedEnd/);
-  assert.match(source, /presenterOriginatedEnd/);
-  assert.match(source, /The class end was received from Attendance/);
-  assert.match(source, /The class was ended from Presenter and the shared class state is synchronized/);
-  assert.match(source, /Attendance and Slides synchronized/);
+  assert.match(source, /attendanceSessionEnded && !endedScreenDismissed && typeof document !== "undefined"/);
+  assert.match(source, /Boolean\(attendanceEndRequestId\)/);
+  assert.doesNotMatch(source, /class_has_ended_banner\.png/);
+  assert.match(source, /Attendance ended this exact class session/);
+  assert.match(source, />Close presenter</);
+  assert.match(source, />Return to Attendance</);
+  assert.match(source, />Back to slides</);
+  assert.match(source, /window\.close\(\)/);
+  assert.match(source, /window\.opener\.focus\(\)/);
+  assert.match(source, /setEndedScreenDismissed\(true\)/);
+  assert.match(source, />End in Attendance</);
+  assert.doesNotMatch(source, />\s*End class\s*</);
   assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*position:\s*fixed/);
-  assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*z-index:\s*10000/);
+  assert.match(css, /\.presenter-class-ended-panel\s*\{/);
+  assert.match(css, /\.presenter-class-ended-actions\s*\{/);
 });
 
 test("Presenter self-repairs a missing Attendance timer before showing manual fallback", () => {
