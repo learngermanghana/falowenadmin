@@ -52,6 +52,23 @@ test("A1 class-check pools stay grammar-focused and large enough for a class", (
   }
 });
 
+test("A1 Day 8 uses direct knowledge checks instead of abstract mistake-reflection prompts", () => {
+  const slide = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-4");
+  const support = buildTeacherSlideSupport(slide);
+  const checks = getA1PresenterUnderstandingChecks(
+    "A1-4",
+    getA1GrammarChecks("A1-4", slide),
+    { slide, support },
+  );
+
+  assert.equal(checks.length, 11);
+  assert.ok(checks.some((item) => item.questionDe === "Complete the sentence: ‘Ich fahre ___ Schweiz.’"));
+  assert.ok(checks.some((item) => item.questionDe === "Correct the sentence: ‘Er sprechen Deutsch.’"));
+  assert.ok(checks.some((item) => item.answerDe === "Sie spricht Französisch."));
+  assert.ok(checks.some((item) => /origin from destination/i.test(item.noteEn || "")));
+  assert.ok(checks.every((item) => !/Give one correct German example that avoids this mistake/i.test(item.questionDe)));
+});
+
 test("A1 prebuild guards cannot regenerate the retired language-first flow", () => {
   const languagePatch = fs.readFileSync("scripts/patchA1LanguageFirstFlow.mjs", "utf8");
   const day5Patch = fs.readFileSync("scripts/patchA1Day5ScopeAndFlow.mjs", "utf8");
