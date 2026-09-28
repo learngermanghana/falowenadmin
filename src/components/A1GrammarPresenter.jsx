@@ -272,6 +272,7 @@ export default function A1GrammarPresenter({
   nextLessonLabel = "",
 }) {
   const stages = useMemo(() => stageList(slide, topicLabel), [slide, topicLabel]);
+  const presenterShellRef = useRef(null);
   const [stageIndex, setStageIndex] = useState(0);
   const [itemIndex, setItemIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -321,16 +322,22 @@ export default function A1GrammarPresenter({
     goTo(stageIndex - 1);
   }
 
-  async function enterFullscreen() {
+  async function presentFullscreen() {
+    setFocusMode(true);
     try {
-      if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.();
+      if (!document.fullscreenElement) await presenterShellRef.current?.requestFullscreen?.();
     } catch {
-      // Presenter remains usable when fullscreen is blocked.
+      // Presentation view still fills the dynamic viewport when native fullscreen is blocked.
     }
   }
 
-  function toggleFocusMode() {
-    setFocusMode((current) => !current);
+  async function exitPresentationView() {
+    setFocusMode(false);
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen?.();
+    } catch {
+      // Restoring presenter controls must still work when fullscreen exit is blocked.
+    }
   }
 
   useEffect(() => {
@@ -367,8 +374,16 @@ export default function A1GrammarPresenter({
   const atEnd = stageIndex === stages.length - 1 && (!manualCheckMode || itemIndex === stage.items.length - 1);
 
   return (
-    <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
+    <div ref={presenterShellRef} className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
+        {focusMode ? (
+          <div className="presenter-focus-dock" aria-label="Presentation controls">
+            <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
+            <span>{stageIndex + 1}/{stages.length}</span>
+            <button type="button" onClick={exitPresentationView} aria-label="Restore presenter controls">×</button>
+            <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">→</button>
+          </div>
+        ) : null}
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
@@ -387,8 +402,7 @@ export default function A1GrammarPresenter({
           </div>
 
           <div className="presenter-top-actions">
-            <button type="button" onClick={enterFullscreen}>Fullscreen</button>
-            <button type="button" onClick={toggleFocusMode}>Focus view</button>
+            <button type="button" onClick={presentFullscreen}>Present full screen</button>
             <button type="button" onClick={onExit}>Exit presenter</button>
           </div>
         </header>
