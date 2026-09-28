@@ -67,7 +67,7 @@ const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
     objective: "Students can read formal 24-hour times, say basic dates and combine am with weekdays or dates and um with exact clock times.",
     warmupQuestionsDe: ["Welcher Tag ist heute?", "Wann ist dein Geburtstag?", "Wie sagst du 18:45 Uhr?"],
     keyPhrasesDe: ["Der Zug fährt um 18:45 Uhr ab.", "Der Termin ist am Montag.", "Mein Geburtstag ist am fünften Mai.", "Der Kurs beginnt am 12. September um 17 Uhr.", "Heute ist der dritte Oktober."],
-    studentQuestionsDe: ["Lies den Fahrplan: Zug RE 4 · Abfahrt 18:45. Wann fährt der Zug ab?", "An welchem Tag hast du Deutsch?", "Wann ist dein Geburtstag?", "Wie sagst du den 12. September mit am?"],
+    studentQuestionsDe: ["Lies den Fahrplan: RE 2 · 17:20 · Gleis 3 | RE 4 · 18:45 · Gleis 5 | RE 8 · 20:10 · Gleis 2. Wann fährt der RE 4 ab?", "An welchem Tag hast du Deutsch?", "Wann ist dein Geburtstag?", "Wie sagst du den 12. September mit am?"],
     teacherNotesEn: ["Keep written schedule time and conversational time distinct but connected.", "Contrast am for day/date with um for exact clock time.", "Model ordinal date forms clearly before students personalise them."],
     interactionFlow: [
       { phase: "Schedule reading", detailEn: "6 min: read four 24-hour timetable entries aloud." },
