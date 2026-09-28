@@ -1754,11 +1754,11 @@
   "A2 7.18 Die Bank Anrufen": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Sparkasse",
-        "Answer2": "F) ING-DiBa",
-        "Answer3": "B) Sparkasse",
-        "Answer4": "D) Volksbank",
-        "Answer5": "C) Commerzbank"
+        "Answer1": "A) Donnerstag um 14:00 Uhr",
+        "Answer2": "B) Am Marktplatz 8",
+        "Answer3": "B) Einen Reisepass",
+        "Answer4": "C) 45 Minuten",
+        "Answer5": "B) Die Formulare vorher online ausfüllen"
       },
       "teil4": {
         "Answer1": "B) Reisepass, Meldebescheinigung, Einkommensnachweis",
