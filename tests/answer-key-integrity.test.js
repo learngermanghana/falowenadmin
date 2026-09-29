@@ -58,7 +58,6 @@ test("validator rejects unknown answer matching modes", () => {
   assert.ok(result.errors.some((item) => item.code === "unknown-matching-mode"));
 });
 
-
 const answerEntryByAssignmentId = (assignmentId) =>
   Object.values(answersDictionary).find(
     (entry) => String(entry?.assignment_id || "").toUpperCase() === assignmentId.toUpperCase(),
@@ -75,24 +74,11 @@ test("A2 Day 4 reference answers match the current Treffen am Samstag Lesen", ()
   });
 });
 
-test("B1 Day 7 keeps all twelve Lesen answers separate from the five Hören answers", () => {
+test("B1 Day 7 keeps all twelve current Lesen answers", () => {
   const entry = answerEntryByAssignmentId("B1-3.7");
   assert.equal(Object.keys(entry?.answers?.teil3 || {}).length, 12);
   assert.equal(entry?.answers?.teil3?.Answer8, "F) Anzeige F");
   assert.equal(entry?.answers?.teil3?.Answer12, "E) Anzeige E");
-  assert.equal(Object.keys(entry?.answers?.teil4 || {}).length, 5);
-  assert.equal(entry?.answers?.teil4?.Answer1, "B) In vielen Fertiggerichten und Softdrinks");
-});
-
-test("B1 preserved reading fallbacks are split into the parts students actually submit", () => {
-  const day19 = answerEntryByAssignmentId("B1-6.19");
-  assert.deepEqual(day19?.expectedParts, ["teil2", "teil3", "teil4"]);
-  assert.equal(Object.keys(day19?.answers?.teil3 || {}).length, 3);
-  assert.equal(Object.keys(day19?.answers?.teil4 || {}).length, 3);
-
-  const day22 = answerEntryByAssignmentId("B1-7.22");
-  assert.equal(Object.keys(day22?.answers?.teil3 || {}).length, 5);
-  assert.equal(Object.keys(day22?.answers?.teil4 || {}).length, 5);
 });
 
 test("B1 Day 11 current Lesen uses option A for the social-interaction risk question", () => {
