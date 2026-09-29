@@ -40,6 +40,7 @@ const LiveClassesPage = lazy(() => import("./pages/LiveClassesPage"));
 const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage"));
 const GoetheExamConfigPage = lazy(() => import("./pages/GoetheExamConfigPage.jsx"));
 const StudentResultsComparePage = lazy(() => import("./pages/StudentResultsComparePage.jsx"));
+const VisitorGuidePage = lazy(() => import("./pages/VisitorGuidePage.jsx"));
 
 function RouteFallback() {
   return <div className="route-loading" role="status" aria-live="polite">Loading…</div>;
@@ -131,6 +132,7 @@ function TopBar() {
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
+                <Link to="/visitor-guide" onClick={() => setMenuOpen(false)}>Visitor Guide</Link>
               </>
             ) : (
               <>
@@ -139,6 +141,7 @@ function TopBar() {
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
+                <Link to="/visitor-guide" onClick={() => setMenuOpen(false)}>Visitor Guide</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
                 <Link to="/marking" onClick={() => setMenuOpen(false)}>Marking</Link>
@@ -241,6 +244,7 @@ export default function App() {
           <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
           <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><Navigate to="/students?tab=activity" replace /></ProtectedRoute>} />
           <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
+          <Route path="/visitor-guide" element={<ProtectedRoute><VisitorGuidePage /></ProtectedRoute>} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/quality-check" element={<Navigate to="/" replace />} />
