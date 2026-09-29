@@ -285,7 +285,7 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
       "Do feminine die, neuter das and plural die change in the accusative?",
       "Fill in the articles: ___ Mann sieht ___ Hund. Why are they different?",
       "For der Hund, give the definite article in nominative and accusative.",
-      "Make a short sentence with a masculine object. Identify its nominative and accusative parts.",
+      "Make a short sentence with a masculine object. Use sehen or kaufen. Identify its nominative and accusative parts.",
     ],
     teacherNotesEn: [
       "Teach role before table: identify who does the action (Nominativ) and what receives the action (Akkusativ).",
