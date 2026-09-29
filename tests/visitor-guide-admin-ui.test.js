@@ -72,6 +72,11 @@ test("visitor guide generates a public link instead of requiring a PDF", () => {
   assert.match(page, /Advanced teaching slides/);
   assert.match(page, /Six months of Falowen access/);
   assert.match(page, /FalowenExperiencePreview/);
+  assert.match(page, /\/visitor-guide\/falowen-dashboard\.webp/);
+  assert.match(page, /\/visitor-guide\/falowen-course-book\.webp/);
+  assert.match(page, /\/visitor-guide\/falowen-results\.webp/);
+  assert.match(page, /\/visitor-guide\/falowen-exam-room\.webp/);
+  assert.match(page, /real Falowen student-interface screenshots/i);
   assert.match(page, /Register \/ choose payment/);
   assert.match(page, /Start 7-day trial/);
   assert.match(page, /The visitor does not need an Admin login/);
@@ -83,7 +88,18 @@ test("visitor guide generates a public link instead of requiring a PDF", () => {
   assert.match(css, /visitor-guide-page-public/);
   assert.match(css, /visitor-guide-presenter-controls/);
   assert.match(css, /visitor-guide-screen-grid/);
+  assert.match(css, /visitor-guide-screen-card img/);
+  assert.match(css, /visitor-guide-screen-caption/);
   assert.match(css, /visitor-guide-value-grid/);
   assert.match(css, /visitor-guide-saved-grid/);
   assert.match(css, /@media print/);
+
+  for (const asset of [
+    "public/visitor-guide/falowen-dashboard.webp",
+    "public/visitor-guide/falowen-course-book.webp",
+    "public/visitor-guide/falowen-results.webp",
+    "public/visitor-guide/falowen-exam-room.webp",
+  ]) {
+    assert.equal(fs.existsSync(path.join(root, asset)), true, `Missing Visitor Guide asset: ${asset}`);
+  }
 });
