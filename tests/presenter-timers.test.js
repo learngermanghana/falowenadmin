@@ -373,12 +373,29 @@ test("Presenter completion screen is Attendance-authoritative and always offers 
   assert.match(source, />Back to slides</);
   assert.match(source, /window\.close\(\)/);
   assert.match(source, /window\.opener\.focus\(\)/);
-  assert.match(source, /setEndedScreenDismissed\(true\)/);
+  assert.match(source, /onClick=\{dismissEndedScreen\}/);
   assert.match(source, />\s*End in Attendance\s*</);
   assert.doesNotMatch(source, />\s*End class\s*</);
   assert.match(css, /\.presenter-class-ended-screen\s*\{[\s\S]*position:\s*fixed/);
   assert.match(css, /\.presenter-class-ended-panel\s*\{/);
   assert.match(css, /\.presenter-class-ended-actions\s*\{/);
+});
+
+test("ended-session dismissal survives presenter remounts without leaking to a new class session", () => {
+  const source = read("src/components/PresenterSessionTimer.jsx");
+
+  assert.match(source, /ENDED_SCREEN_DISMISSAL_PREFIX/);
+  assert.match(source, /endedScreenDismissalKey\(/);
+  assert.match(source, /window\.localStorage\.getItem\(key\) === "1"/);
+  assert.match(source, /window\.localStorage\.setItem\(endedScreenKey, "1"\)/);
+  assert.doesNotMatch(source, /setEndedScreenDismissed\(false\)/);
+});
+
+test("timer patch does not add a second class timer to modern presenter toolbars", () => {
+  const patch = read("scripts/patchPresenterSessionAndResponseTimersCore.mjs");
+
+  assert.match(patch, /if \(!\/<PresenterSessionTimer\\b\/\.test\(teachingSource\)\)/);
+  assert.match(patch, /if \(!\/<PresenterSessionTimer\\b\/\.test\(a1Source\)\)/);
 });
 
 test("Presenter self-repairs a missing Attendance timer before showing manual fallback", () => {
