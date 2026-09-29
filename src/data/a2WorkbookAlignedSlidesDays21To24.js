@@ -313,7 +313,7 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
     assignmentId: "A2-9.24",
     title: "A2 Day 24 · Einen Urlaub planen",
     topic: "9.24 Einen Urlaub planen",
-    objective: "Students plan a vacation using correct destination prepositions and useful plan forms with möchte/werden, organize destination, transport, accommodation, activities and preparation, and connect that plan to the Sandra writing task while keeping the reading/listening assessment split clear.",
+    objective: "Students plan a vacation and connect ideas with weil for reasons, wenn/falls for conditions and um ... zu for purpose, then organize destination, transport, accommodation, activities and preparation and connect that plan to the Sandra writing task.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Wohin möchtest du gern reisen?",
@@ -322,10 +322,10 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "Was ist bei einer Urlaubsplanung besonders wichtig?",
     ],
     keyPhrasesDe: [
-      "Im Sommer fahre ich nach Deutschland.",
-      "Wir fahren in die Schweiz.",
-      "Ich möchte ans Meer fahren.",
-      "Nächstes Jahr werde ich meine Familie besuchen.",
+      "Ich möchte nach Hamburg reisen, weil ich den Hafen sehen möchte.",
+      "Wenn das Wetter gut ist, gehe ich an den Strand.",
+      "Falls es regnet, besuche ich ein Museum.",
+      "Ich buche früh, um Geld zu sparen.",
       "Ich fahre mit ...",
       "Ich übernachte im Hotel / Hostel / in einer Ferienwohnung.",
       "Ich wähle dieses Ziel, weil ...",
@@ -333,9 +333,9 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
     studentQuestionsDe: [
       "Wohin möchtest du reisen und warum?",
       "Wie lange möchtest du bleiben?",
-      "Welches Verkehrsmittel und welche Unterkunft wählst du?",
-      "Welche Aktivitäten planst du?",
-      "Was musst du vor der Reise organisieren oder einpacken?",
+      "Was machst du, wenn das Wetter im Urlaub gut ist?",
+      "Was machst du, falls dein erster Plan nicht funktioniert?",
+      "Was organisierst du vor der Reise, um die Reise einfacher zu machen?",
     ],
     speakingModels: [
       {
@@ -347,38 +347,61 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
         "modelAnswerDe": "Ich möchte eine Woche bleiben. So habe ich genug Zeit für meine Freundin und die Stadt."
       },
       {
-        "questionDe": "Welches Verkehrsmittel und welche Unterkunft wählst du?",
-        "modelAnswerDe": "Ich möchte mit dem Zug nach Hamburg fahren. Dort möchte ich in einem kleinen Hotel in der Nähe des Bahnhofs übernachten."
+        "questionDe": "Was machst du, wenn das Wetter im Urlaub gut ist?",
+        "modelAnswerDe": "Wenn das Wetter gut ist, gehe ich an den Strand und mache einen langen Spaziergang."
       },
       {
-        "questionDe": "Welche Aktivitäten planst du?",
-        "modelAnswerDe": "Ich möchte den Hafen besuchen und durch die Stadt spazieren. An einem Tag möchte ich mit meiner Freundin in ein Museum gehen."
+        "questionDe": "Was machst du, falls dein erster Plan nicht funktioniert?",
+        "modelAnswerDe": "Falls mein erster Plan nicht funktioniert, suche ich eine andere Aktivität oder ändere den Reisetag."
       },
       {
-        "questionDe": "Was musst du vor der Reise organisieren oder einpacken?",
-        "modelAnswerDe": "Ich muss die Fahrkarte und das Hotel buchen. Außerdem packe ich meinen Ausweis, Kleidung und ein Ladegerät ein."
+        "questionDe": "Was organisierst du vor der Reise, um die Reise einfacher zu machen?",
+        "modelAnswerDe": "Ich buche das Hotel und die Fahrkarte früh, um Geld zu sparen und weniger Stress zu haben."
       }
     ],
+    grammarCheckItems: [
+      {
+        id: "recognise-rule",
+        label: "1 · Grund mit weil",
+        prompt: "Du möchtest im Sommer nach Hamburg reisen. Warum? Antworte mit weil.",
+        answer: "Ich möchte im Sommer nach Hamburg reisen, weil ich den Hafen sehen möchte.",
+        note: "Teacher focus: Nach weil steht das konjugierte Verb am Ende des Nebensatzes.",
+      },
+      {
+        id: "fix-error",
+        label: "2 · Bedingung mit wenn / falls",
+        prompt: "Im Urlaub kann das Wetter schlecht sein. Was machst du, wenn oder falls es regnet?",
+        answer: "Wenn es regnet, besuche ich ein Museum. / Falls es regnet, bleibe ich im Hotel.",
+        note: "Teacher focus: wenn/falls + Nebensatz; das konjugierte Verb steht am Ende.",
+      },
+      {
+        id: "build-sentence",
+        label: "3 · Zweck mit um ... zu",
+        prompt: "Du buchst das Hotel früh. Warum? Formuliere den Zweck mit um ... zu.",
+        answer: "Ich buche das Hotel früh, um Geld zu sparen.",
+        note: "Teacher focus: um ... zu + Infinitiv; das Subjekt bleibt in beiden Handlungen gleich.",
+      },
+    ],
     teacherNotesEn: [
-      "Teach the actual Day 24 destination system: nach for cities/countries without an article, in + Akkusativ for destinations such as in die Schweiz, and an + Akkusativ for water destinations such as ans Meer.",
-      "Use möchte + infinitive for intentions and reinforce infinitive-final structure; the grammar page also introduces werden as a useful future-plan form.",
+      "Teach the actual Day 24 grammar through vacation planning: weil gives a reason, wenn/falls introduce a condition, and um ... zu expresses purpose.",
+      "After weil, wenn and falls, the conjugated verb goes to the end of the subordinate clause. Use um ... zu when the subject of the main action and the purpose is the same.",
       "Follow the workbook speaking branches: destination/timeframe, budget, transport, accommodation, activities and luggage/preparation. There is no speaking assignment submission for Teil 1.",
       "Bridge to the exact Sandra email: invite her to plan a trip together and explain why, propose when/where to meet, and ask for her opinion.",
       "Treat Teil 3 Lesen as a separate restaurant/celebration advertisement-matching task and Teil 4 Hören as Goethe video self-check, rather than pretending either directly tests vacation planning.",
     ],
     interactionFlow: [
       { phase: "Destination choice", detailEn: "6 min: students choose destination, time, duration and one reason." },
-      { phase: "Preposition map", detailEn: "9 min: contrast nach Berlin/Deutschland, in die Schweiz and ans Meer with quick sentence transformations." },
+      { phase: "Connector map", detailEn: "9 min: build one vacation sentence each with weil, wenn/falls and um ... zu; keep the subordinate-clause verb position visible." },
       { phase: "Travel-plan build", detailEn: "10 min: add transport, accommodation, activity, budget and preparation to the chosen destination." },
       { phase: "Sandra email", detailEn: "10 min: turn the travel plan into the three required writing bullets and ask for Sandra's opinion." },
       { phase: "Workbook bridge", detailEn: "6 min: explain that the restaurant/celebration Lesen and Goethe Hören are separate assessment practice." },
     ],
-    wrapUpTaskDe: "Plane einen Urlaub in 5 Sätzen: Reiseziel, Verkehrsmittel, Unterkunft, Aktivität und Grund. Benutze die passende Zielpräposition und mindestens einmal möchte.",
+    wrapUpTaskDe: "Plane einen Urlaub in 5 Sätzen. Benutze einmal weil, einmal wenn oder falls und einmal um ... zu.",
     workbookConnection: {
       grammarUrl: "/campus/course/einen-urlaub-planen-9-24-final-a2-grammar-notes",
       workbookUrl: "/campus/course/a2-day-24-einen-urlaub-planen-workbook",
       parts: [
-        { label: "Grammar", detailEn: "Vacation destinations: nach for cities/countries without an article, in + Akkusativ for destinations such as in die Schweiz, and an + Akkusativ for water destinations such as ans Meer. Use möchte + infinitive for plans; werden is also introduced as a future-plan form." },
+        { label: "Grammar", detailEn: "Vacation planning through connectors: weil for reasons, wenn/falls for conditions, and um ... zu for purpose. After weil, wenn and falls the conjugated verb goes to the end; um ... zu keeps the infinitive with zu at the end." },
         { label: "Teil 1 · Sprechen", detailEn: "Group practice only, with no speaking submission: plan destination/timeframe, budget, transport, accommodation, activities and luggage/preparation, then present the plan clearly." },
         { label: "Teil 2 · Schreiben", detailEn: "Email to Sandra: invite her to plan a vacation together and explain the reason, suggest when and where to meet to plan it, and ask for her opinion about your idea." },
         { label: "Teil 3 · Lesen", detailEn: "Separate comprehension topic: match celebration/eating needs to advertisements, including a wedding celebration, business meal, birthday wine, catering at home and a children's birthday with cake." },
@@ -386,24 +409,24 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 24 is a final practical travel-planning lesson. Students combine destination grammar with the vocabulary needed to plan a realistic trip and then use the plan as content for the Sandra email. The reading and listening are separate exam-style tasks, so the teacher should label the topic split clearly.",
+      lessonOverviewEn: "Day 24 is a practical travel-planning lesson. Students use weil, wenn/falls and um ... zu to explain reasons, conditions and purposes inside a realistic vacation plan, then use the plan as content for the Sandra email. The reading and listening are separate exam-style tasks.",
       grammarFocusEn: [
-        "Use nach for cities and countries without an article: nach Berlin, nach Deutschland.",
-        "Use in + Akkusativ with relevant countries that have an article: in die Schweiz.",
-        "Use an + Akkusativ for destinations such as the sea; an das contracts to ans: ans Meer.",
-        "With möchte, keep the infinitive at the end: Ich möchte im Hotel übernachten. The grammar page also uses werden for future plans: Nächstes Jahr werde ich meine Familie besuchen.",
+        "Use weil to give a reason. In the weil-clause, the conjugated verb goes to the end: Ich fahre nach Hamburg, weil ich den Hafen sehen möchte.",
+        "Use wenn for a condition or a situation that is expected/repeated. The conjugated verb goes to the end: Wenn das Wetter gut ist, gehe ich an den Strand.",
+        "Use falls for a possible or less certain condition. The conjugated verb goes to the end: Falls es regnet, besuche ich ein Museum.",
+        "Use um ... zu to express purpose when the subject is the same: Ich buche früh, um Geld zu sparen.",
       ],
       modelExamplesDe: [
-        "Im Sommer möchte ich nach Deutschland fahren.",
-        "Meine Freundin möchte in die Schweiz reisen.",
-        "Wir möchten ans Meer fahren und dort eine Woche bleiben.",
-        "Nächstes Jahr werde ich meine Familie besuchen und in einem Hotel übernachten.",
+        "Ich möchte nach Hamburg reisen, weil ich den Hafen sehen möchte.",
+        "Wenn das Wetter gut ist, gehe ich an den Strand.",
+        "Falls es regnet, besuche ich ein Museum.",
+        "Ich buche das Hotel früh, um Geld zu sparen.",
       ],
       commonMistakesEn: [
-        "Using nach with a destination that requires an article, such as nach Schweiz instead of in die Schweiz.",
-        "Missing the contraction ans in the common phrase ans Meer.",
-        "Placing the infinitive directly after möchte instead of keeping the sentence structure clear with the infinitive at the end.",
-        "Presenting the restaurant/celebration reading as vacation-planning comprehension instead of a separate assessment topic.",
+        "Keeping normal main-clause word order after weil, wenn or falls instead of moving the conjugated verb to the end.",
+        "Using falls as if the condition is certain; falls is especially useful when the condition is only possible.",
+        "Forgetting zu in the purpose structure or writing the infinitive in the wrong place: um Geld sparen instead of um Geld zu sparen.",
+        "Using um ... zu when the two clauses have different subjects; for Day 24, keep the same subject in both actions.",
       ],
     },
   },

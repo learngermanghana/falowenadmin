@@ -969,136 +969,90 @@ function buildB1GrammarSupportItems(support = {}) {
   })).filter((item) => item.supportEn);
 }
 
-function cleanCorrectionFragment(value = "") {
-  return String(value || "")
-    .trim()
-    .replace(/^[“"'‘’]+|[”"'‘’]+$/g, "")
-    .replace(/[.;]\s*$/g, "")
-    .trim();
-}
-
-function extractMistakeForm(value = "") {
-  const text = cleanCorrectionFragment(value)
-    .replace(/^(using|saying|writing|keeping|putting|placing|choosing|forming|adding)\s+/i, "")
-    .trim();
-  const colon = text.lastIndexOf(":");
-  return cleanCorrectionFragment(colon >= 0 ? text.slice(colon + 1) : text);
-}
-
-
 function buildKnowledgeAnswerItems(knowledge = {}) {
   const checks = Array.isArray(knowledge.checks) ? knowledge.checks : [];
   const explicit = Array.isArray(knowledge.answers) ? knowledge.answers : [];
   return checks.map((_, index) => String(explicit[index] || "").trim());
 }
 
-function buildCorrectionMistakes(items = [], grammarRules = []) {
-  return (Array.isArray(items) ? items : [])
-    .map((item, index) => {
-      if (item && typeof item === "object") {
-        const wrong = cleanCorrectionFragment(item.wrong || item.incorrect || item.before);
-        const correct = cleanCorrectionFragment(item.correct || item.corrected || item.after);
-        const why = String(item.why || item.explanation || item.note || "").trim();
-        if (!wrong && !correct && !why) return null;
-        return {
-          id: String(item.id || `mistake-${index + 1}`),
-          wrong: wrong || why,
-          correct: correct || String(grammarRules[index] || "").trim() || why,
-          why: why || String(grammarRules[index] || "").trim(),
-        };
-      }
+function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
+  const curatedItems = Array.isArray(slide.grammarCheckItems)
+    ? slide.grammarCheckItems.filter((item) => item?.prompt && item?.answer).slice(0, 3)
+    : [];
+  if (curatedItems.length === 3) {
+    return {
+      id: "grammar-check",
+      type: "grammar-check",
+      kicker: "Grammatik-Check",
+      title: "Grammatik im Thema anwenden",
+      instruction: "Die Grammatik wurde bereits erklärt. Stelle die Fragen direkt im heutigen Thema. Der Schüler antwortet in 1–2 Sätzen; prüfe die Zielgrammatik in der Antwort, statt nach dem Regelnamen zu fragen.",
+      items: curatedItems.map((item, index) => ({
+        id: item.id || ["recognise-rule", "fix-error", "build-sentence"][index],
+        label: item.label || `${index + 1} · Im Thema anwenden`,
+        prompt: item.prompt,
+        example: item.example || "",
+        answerLabel: item.answerLabel || "Musterantwort",
+        answer: item.answer,
+        note: item.note || "",
+      })),
+      suggestedMinutes: level === "B1" ? 7 : 6,
+    };
+  }
 
-      const raw = String(item || "").trim();
-      if (!raw) return null;
-
-      let wrong = "";
-      let correct = "";
-      const insteadIndex = raw.toLocaleLowerCase("en").indexOf(" instead of ");
-      const arrowMatch = raw.match(/\s(?:→|->)\s/);
-
-      if (insteadIndex >= 0) {
-        const left = raw.slice(0, insteadIndex);
-        const right = raw.slice(insteadIndex + " instead of ".length);
-        wrong = extractMistakeForm(left);
-        correct = cleanCorrectionFragment(right);
-      } else if (arrowMatch?.index != null) {
-        const splitIndex = arrowMatch.index;
-        wrong = extractMistakeForm(raw.slice(0, splitIndex));
-        correct = cleanCorrectionFragment(raw.slice(splitIndex + arrowMatch[0].length));
-      }
-
-      const pairedRule = String(grammarRules[index] || "").trim();
-      return {
-        id: `mistake-${index + 1}`,
-        wrong: wrong || raw,
-        correct: correct || pairedRule || raw,
-        why: raw,
-      };
-    })
-    .filter(Boolean);
-}
-
-function buildA2B1GrammarCheckStage(support = {}, level = "") {
   const rules = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn.filter(Boolean) : [];
   const models = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.filter(Boolean) : [];
-  const mistakes = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn.filter(Boolean) : [];
-  const corrections = buildCorrectionMistakes(mistakes, rules);
-  const explicitCorrection = corrections.find((item) => (
-    item?.wrong
-    && item?.correct
-    && item.wrong !== item.correct
-    && item.wrong !== item.why
-    && item.correct !== item.why
-  ));
+  const questions = Array.isArray(slide.studentQuestionsDe)
+    ? slide.studentQuestionsDe.map((item) => String(item || "").trim()).filter(Boolean)
+    : [];
+  const questionModels = Array.isArray(slide.speakingModels) ? slide.speakingModels : [];
 
-  const firstModel = models[0] || "";
-  const secondModel = models[1] || firstModel;
-  const thirdModel = models[2] || secondModel || firstModel;
-  const firstRule = rules[0] || "Check the target grammar from the lesson.";
-  const secondRule = rules[1] || firstRule;
+  const preferredIndexes = questions.length <= 3
+    ? questions.map((_, index) => index)
+    : [0, Math.floor((questions.length - 1) / 2), questions.length - 1];
+  const selectedIndexes = [...new Set(preferredIndexes)].slice(0, 3);
+  while (selectedIndexes.length < Math.min(3, questions.length)) {
+    const nextIndex = selectedIndexes.length;
+    if (!selectedIndexes.includes(nextIndex)) selectedIndexes.push(nextIndex);
+    else break;
+  }
 
-  const items = [
-    {
-      id: "recognise-rule",
-      label: "1 · Regel erkennen",
-      prompt: "Welche Grammatikregel aus der heutigen Stunde wird hier benutzt?",
-      example: firstModel,
-      answerLabel: "Teacher key",
-      answer: firstRule,
-    },
-    explicitCorrection ? {
-      id: "fix-error",
-      label: "2 · Fehler korrigieren",
-      prompt: "Korrigiere die Form oder den Satz.",
-      example: explicitCorrection.wrong,
-      answerLabel: "Korrektur",
-      answer: explicitCorrection.correct,
-      note: explicitCorrection.why,
-    } : {
-      id: "explain-form",
-      label: "2 · Form prüfen",
-      prompt: "Warum ist dieser Satz grammatisch korrekt?",
-      example: secondModel,
-      answerLabel: "Teacher key",
-      answer: secondRule,
-    },
-    {
-      id: "build-sentence",
-      label: "3 · Satz bilden",
-      prompt: "Bilde einen neuen Satz mit derselben Grammatikstruktur.",
-      example: thirdModel,
-      answerLabel: "Teacher key",
-      answer: `Offene Antwort. Prüfe dieselbe Zielgrammatik wie im Referenzsatz: ${thirdModel}`,
-      note: "Andere korrekte Sätze sind möglich. Prüfe zuerst die Zielgrammatik, nicht die Kreativität.",
-    },
-  ].filter((item) => item.example || item.answer);
+  const fallbackPrompts = [
+    `Antworte in 1–2 Sätzen zum heutigen Thema „${cleanTopic(slide)}“.`,
+    "Führe die Situation mit einem passenden zweiten Gedanken weiter.",
+    "Formuliere eine eigene passende Antwort und benutze die Grammatik der Stunde.",
+  ];
+  const labels = [
+    "1 · Im Thema anwenden",
+    "2 · Situation weiterführen",
+    "3 · Selbstständig formulieren",
+  ];
+  const stableIds = ["recognise-rule", "fix-error", "build-sentence"];
+
+  const items = Array.from({ length: 3 }, (_, index) => {
+    const questionIndex = selectedIndexes[index];
+    const prompt = questionIndex != null ? questions[questionIndex] : fallbackPrompts[index];
+    const matchingModel = questionModels.find((item) => (
+      String(item?.questionDe || "").trim() === String(prompt || "").trim()
+    ));
+    const modelAnswer = String(matchingModel?.modelAnswerDe || models[questionIndex] || models[index] || models[0] || "").trim();
+    const teacherFocus = String(rules[questionIndex] || rules[index] || rules[0] || "").trim();
+
+    return {
+      id: stableIds[index],
+      label: labels[index],
+      prompt,
+      answerLabel: "Musterantwort",
+      answer: modelAnswer || "Offene Antwort. Prüfe, ob die Zielgrammatik der Stunde korrekt im Kontext benutzt wird.",
+      note: teacherFocus ? `Teacher focus: ${teacherFocus}` : "Prüfe nur die Zielgrammatik der heutigen Stunde.",
+    };
+  });
 
   return {
     id: "grammar-check",
     type: "grammar-check",
     kicker: "Grammatik-Check",
-    title: "Grammatik verstanden?",
-    instruction: "Die Grammatik wurde bereits erklärt. Jetzt nur kurz prüfen: erkennen → korrigieren/erklären → anwenden.",
+    title: "Grammatik im Thema anwenden",
+    instruction: "Die Grammatik wurde bereits erklärt. Stelle die Fragen direkt im heutigen Thema. Der Schüler antwortet in 1–2 Sätzen; prüfe die Zielgrammatik in der Antwort, statt nach dem Regelnamen zu fragen.",
     items,
     suggestedMinutes: level === "B1" ? 7 : 6,
   };
@@ -1125,8 +1079,8 @@ function buildPresenterTeacherPurpose(stage = {}, level = "") {
     teacher: "Wörter zuerst abrufen lassen; Lösung erst danach zeigen.",
   };
   if (id === "grammar-check") return {
-    student: "Die bereits gelernte Grammatik erkennen, prüfen und einmal anwenden.",
-    teacher: "Nicht neu unterrichten. Diagnostisch prüfen und nur Correct oder Needs review markieren.",
+    student: "Die bereits gelernte Grammatik in echten Fragen zum heutigen Thema anwenden.",
+    teacher: "Nicht neu unterrichten. Frage direkt stellen, Antwort vollständig hören und nur die Zielgrammatik prüfen; dann Correct oder Needs review markieren.",
   };
   if (["practice", "focus", "analysis"].includes(id)) return {
     student: "Eine zentrale Aufgabe konzentriert bearbeiten.",
@@ -1312,7 +1266,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         instruction: vocabularyStage ? vocabularyInstruction(level) : "",
         suggestedMinutes: vocabularyStage ? 5 : 0,
       },
-      buildA2B1GrammarCheckStage(support, level),
+      buildA2B1GrammarCheckStage(slide, support, level),
       ...(focusedPractice ? [{
         id: "practice",
         type: "flow",
@@ -1378,7 +1332,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
           : "",
         suggestedMinutes: 5,
       },
-      buildA2B1GrammarCheckStage(support, level),
+      buildA2B1GrammarCheckStage(slide, support, level),
       ...(focusedPractice ? [{
         id: "practice",
         type: "flow",

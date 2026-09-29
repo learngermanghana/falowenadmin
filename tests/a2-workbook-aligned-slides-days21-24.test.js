@@ -26,7 +26,7 @@ const EXPECTED = {
   "A2-9.24": {
     grammarRoute: "/campus/course/einen-urlaub-planen-9-24-final-a2-grammar-notes",
     workbookRoute: "/campus/course/a2-day-24-einen-urlaub-planen-workbook",
-    supportTerms: ["nach", "in + Akkusativ", "ans Meer", "möchte", "werden"],
+    supportTerms: ["weil", "wenn", "falls", "um ... zu", "verb"],
   },
 };
 

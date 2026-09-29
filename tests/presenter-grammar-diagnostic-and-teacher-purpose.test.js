@@ -21,11 +21,46 @@ test("A2 and B1 use one compact grammar diagnostic instead of reteaching grammar
         `${slide.assignmentId} should keep the recognise-check-apply progression`,
       );
       assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${slide.assignmentId} needs teacher answer keys`);
+      assert.doesNotMatch(grammar.instruction, /erkennen\s*→\s*korrigieren/i, `${slide.assignmentId} should not use the old rule-name diagnostic flow`);
+      const curatedPrompts = new Set((slide.grammarCheckItems || []).map((item) => String(item?.prompt || "").trim()).filter(Boolean));
+      const topicalQuestions = new Set((slide.studentQuestionsDe || []).map((item) => String(item || "").trim()).filter(Boolean));
+      const expectedPrompts = curatedPrompts.size >= 3 ? curatedPrompts : topicalQuestions;
+      if (expectedPrompts.size >= 3) {
+        assert.ok(
+          grammar.items.every((item) => expectedPrompts.has(String(item.prompt || "").trim())),
+          `${slide.assignmentId} grammar checks should use lesson-specific context instead of generic rule-name prompts`,
+        );
+      }
+      assert.ok(
+        grammar.items.every((item) => !/Welche Grammatikregel aus der heutigen Stunde|Korrigiere die Form oder den Satz/i.test(item.prompt)),
+        `${slide.assignmentId} still exposes a generic grammar-system prompt`,
+      );
       assert.equal(ids.includes("grammar"), false, `${slide.assignmentId} should not keep the old grammar teaching slide`);
       assert.equal(ids.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
       assert.equal(ids.includes("mistakes"), false, `${slide.assignmentId} should not keep a separate mistakes slide`);
     }
   }
+});
+
+test("A2 Day 24 checks Urlaub grammar through a real travel plan", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-9.24");
+  const grammar = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "grammar-check");
+
+  assert.equal(grammar.title, "Grammatik im Thema anwenden");
+  assert.deepEqual(
+    grammar.items.map((item) => item.prompt),
+    [
+      "Du möchtest im Sommer nach Hamburg reisen. Warum? Antworte mit weil.",
+      "Im Urlaub kann das Wetter schlecht sein. Was machst du, wenn oder falls es regnet?",
+      "Du buchst das Hotel früh. Warum? Formuliere den Zweck mit um ... zu.",
+    ],
+  );
+  assert.ok(grammar.items.every((item) => item.answerLabel === "Musterantwort"));
+  assert.doesNotMatch(grammar.items.map((item) => item.prompt).join(" "), /nach Schweiz|Welche Grammatikregel/i);
+  assert.match(grammar.items[0].prompt, /weil/i);
+  assert.match(grammar.items[1].prompt, /wenn|falls/i);
+  assert.match(grammar.items[2].prompt, /um \.\.\. zu/i);
 });
 
 test("every A2-C2 Presenter stage has a student action and teacher action cue", () => {
