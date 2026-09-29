@@ -9,7 +9,7 @@ function replaceOnce(input, before, after, label) {
   return input.replace(before, after);
 }
 
-const firestoreTriggerPattern = /const \\{ ([^}]+) \\} = require\\("firebase-functions\\/v2\\/firestore"\\);/;
+const firestoreTriggerPattern = /const \{ ([^}]+) \} = require\("firebase-functions\/v2\/firestore"\);/;
 const firestoreMatch = source.match(firestoreTriggerPattern);
 if (!firestoreMatch) throw new Error("Firestore trigger import anchor changed; update patchStudentPaymentUpdateEmails.mjs");
 const firestoreTriggers = [...new Set(
