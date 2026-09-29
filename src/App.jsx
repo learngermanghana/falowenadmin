@@ -32,6 +32,7 @@ const ClassParticipationPage = lazy(() => import("./pages/ClassParticipationPage
 const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
+const TimedAssignmentAttemptsPage = lazy(() => import("./pages/TimedAssignmentAttemptsPage.jsx"));
 const OrientationPage = lazy(() => import("./pages/OrientationSetupTabsPage.jsx"));
 const ClassScheduleSetupPage = lazy(() => import("./pages/ClassScheduleSetupPage"));
 const ClassOperationsPage = lazy(() => import("./pages/ClassOperationsPage"));
@@ -129,6 +130,7 @@ function TopBar() {
             {isStaff ? (
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
+                <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Timed Attempts</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
@@ -138,6 +140,7 @@ function TopBar() {
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
+                <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Timed Attempts</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
@@ -247,6 +250,7 @@ export default function App() {
           <Route path="/visitor-guide" element={<ProtectedRoute><VisitorGuidePage /></ProtectedRoute>} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
+          <Route path="/timed-attempts" element={<ProtectedRoute><TimedAssignmentAttemptsPage /></ProtectedRoute>} />
           <Route path="/quality-check" element={<Navigate to="/" replace />} />
           <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
           <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
