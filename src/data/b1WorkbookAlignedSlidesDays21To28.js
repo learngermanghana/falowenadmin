@@ -162,28 +162,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       "The intended deep grammar is verified in Falowen source: dass clauses, relative clauses and reciprocal expressions miteinander/füreinander/voneinander/aufeinander, plus weil/wenn/obwohl.",
       "The current Day 22 student lesson does not expose that deep grammar through a direct grammar route, so do not provide a broken grammar link from the teacher guide.",
       "The workbook comprehension topics are unrelated to relationships: Berlin and Bewerbung. Keep them separate from the production lesson.",
-      "Important grading split: the marking contract stores Berlin questions 1–5 plus Bewerbung questions 1–2 under teil3 (seven answers total), then Bewerbung questions 3–5 under teil4 (three answers). Follow the marking contract rather than the workbook's visually simpler 5+5 split.",
+      "Reading split: Teil 3 is the five-question Berlin text and Teil 4 is the five-question Bewerbung text. The answer key now follows the workbook's visible 5+5 structure.",
     ],
     interactionFlow: [
       { phase: "Value ranking", detailEn: "7 min: rank Vertrauen, Ehrlichkeit, Kommunikation, Unterstützung and Zukunftspläne." },
       { phase: "Grammar frames", detailEn: "10 min: build Mir ist wichtig, dass … and Partner, der/die … relative clauses." },
       { phase: "Reciprocal language", detailEn: "8 min: practise miteinander, füreinander, voneinander and aufeinander in relationship contexts." },
       { phase: "Online-dating argument", detailEn: "12 min: prepare one advantage, one risk, comparison with face-to-face contact and conclusion." },
-      { phase: "Marking bridge", detailEn: "8 min: explain the unusual Berlin/Bewerbung answer split before students submit." },
+      { phase: "Marking bridge", detailEn: "8 min: remind students to submit the five Berlin answers under Teil 3 and the five Bewerbung answers under Teil 4." },
     ],
     wrapUpTaskDe: "Nenne drei wichtige Werte in einer Beziehung. Nutze einen dass-Satz, einen Relativsatz und einen Ausdruck mit -einander.",
     workbookConnection: workbookConnection(22, [
       { label: "Grammar", detailEn: "No direct grammar route is currently exposed. Teach expectations with dass, people with relative clauses, reciprocal behavior with miteinander/füreinander/voneinander/aufeinander, and reasons/conditions with weil, wenn and obwohl." },
       { label: "Teil 1 · Sprechen", detailEn: "Explain what matters in a relationship: communication, trust, shared interests, respect/support and future plans. Build a fictional profile and justify priorities. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write 80–100 words responding to Maria about online dating: agreement/disagreement, advantages, risks, comparison with meeting in person, example and conclusion." },
-      { label: "Teil 3 · Lesen", detailEn: "MARKING CONTRACT SPLIT: submit seven answers under Teil 3—Berlin questions 1–5, then Bewerbung questions 1–2. The workbook visually shows two five-question readings, but the grader stores the first two Bewerbung answers in teil3." },
-      { label: "Teil 4 · Lesen", detailEn: "Submit only the remaining three Bewerbung answers (workbook questions 3–5) under Teil 4. The grading contract expects teil4 and stores exactly three reference answers there." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored reading: Berlin. Submit all five Berlin multiple-choice answers under Teil 3." },
+      { label: "Teil 4 · Lesen", detailEn: "Scored second reading: Bewerbung. Submit all five Bewerbung multiple-choice answers under Teil 4." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 22 uses an unusual grading split: Teil 3 = Berlin 1–5 + Bewerbung 1–2; Teil 4 = Bewerbung 3–5. Follow the marking contract when submitting.",
+      subtitle: "Day 22 has two scored readings: Teil 3 = five Berlin answers; Teil 4 = five Bewerbung answers.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 22 is a relationship-values production lesson with two unrelated reading assignments and an operational answer split that must be explained before submission.",
+      lessonOverviewEn: "Day 22 is a relationship-values production lesson with two unrelated scored reading assignments: Berlin in Teil 3 and Bewerbung in Teil 4.",
       grammarFocusEn: [
         "dass clauses express expectations and send the conjugated verb to the end.",
         "Relative clauses describe an ideal partner: der/die/das agrees with the antecedent and the verb comes last.",
@@ -200,7 +200,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "Using a main-clause verb position inside dass or relative clauses.",
         "Using sich instead of a clearer reciprocal -einander form when mutual action is intended.",
         "Treating Berlin or Bewerbung as relationship-topic texts; they are separate comprehension assignments.",
-        "Submitting all five Bewerbung answers under Teil 4; the current marking contract stores the first two under Teil 3 and only the last three under Teil 4.",
+        "Mixing the two reading answer sets; Berlin belongs in Teil 3 and Bewerbung belongs in Teil 4.",
       ],
     },
   },
@@ -359,7 +359,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 24 has no day-specific deep grammar page. The workbook Grammar tab supplies general B1 advantage/disadvantage/opinion training; build the lesson language from the workbook's own dass/weil/um … zu/sollten/einerseits … andererseits frames.",
       "Teil 3 is Eleni's environmental-awareness/recycling text, not a shopping case study.",
-      "The workbook displays seven Richtig/Falsch statements, but the current marking contract contains only five reference answers. Students can complete all seven for practice; do not promise that statements 6–7 are reference-scored by the current key.",
+      "The workbook displays seven Richtig/Falsch statements, and all seven now have matching reference answers.",
       "The old Day 24 listening video is removed in the rendered workbook. Teil 4 is not submitted and the marking contract excludes teil4.",
     ],
     interactionFlow: [
@@ -367,21 +367,21 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { phase: "Purpose and reason", detailEn: "9 min: connect sustainable actions with weil/dass and um … zu." },
       { phase: "Measure comparison", detailEn: "12 min: compare Secondhand, regional products, low packaging and reduced meat consumption." },
       { phase: "Workbook writing bridge", detailEn: "9 min: outline the response to Paul with a counterargument and concrete examples." },
-      { phase: "Marking note", detailEn: "5 min: explain the five-reference-answer grading limitation for the seven-statement reading." },
+      { phase: "Marking note", detailEn: "5 min: preview the seven Richtig/Falsch statements and remind students that all seven are scored." },
     ],
     wrapUpTaskDe: "Nenne eine nachhaltige Maßnahme, einen Vorteil und einen Nachteil. Begründe deine Meinung mit weil und formuliere ein Ziel mit um … zu.",
     workbookConnection: workbookConnection(24, [
       { label: "Grammar", detailEn: "No separate deep grammar page. Use the workbook Grammar tab's B1 argument training plus lesson frames with dass/weil, um … zu, sollten and einerseits … andererseits." },
       { label: "Teil 1 · Sprechen", detailEn: "Discuss sustainable consumption across shopping, recycling, energy, transport, business responsibility and individual action; compare measures and choose one important action. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write an opinion responding to Paul on whether sustainable consumption matters; include benefits, difficulties, concrete examples and a clear conclusion." },
-      { label: "Teil 3 · Lesen", detailEn: "Read Eleni's text about environmental education, Sperrmüll, second-hand furniture, Altkleider, glass recycling and hazardous-waste collection. Workbook shows seven Richtig/Falsch statements; current marking contract has five reference answers only." },
+      { label: "Teil 3 · Lesen", detailEn: "Read Eleni's text about environmental education, Sperrmüll, second-hand furniture, Altkleider, glass recycling and hazardous-waste collection. All seven Richtig/Falsch statements are reference-scored." },
       { label: "Teil 4 · Hören", detailEn: "SELF-CHECK/UNSCORED ONLY. The old listening link is removed from the rendered workbook; no live Hören medium is currently available. The marking contract excludes teil4, so do not submit it." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 24 has no direct deep-grammar page. Teil 4 is excluded; the current reading key also contains only five reference answers although the workbook shows seven statements.",
+      subtitle: "Day 24 has no direct deep-grammar page. Teil 3 has seven aligned reading answers; Teil 4 remains excluded.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 24 develops B1 sustainability arguments and requires teachers to distinguish the seven-item workbook reading from the five-answer grading key currently stored in admin.",
+      lessonOverviewEn: "Day 24 develops B1 sustainability arguments and includes a fully aligned seven-statement reading.",
       grammarFocusEn: [
         "Use dass and weil clauses for opinion and reason with verb-final order.",
         "um … zu expresses purpose when the subject is the same.",
@@ -397,7 +397,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       commonMistakesEn: [
         "Keeping main-clause order after weil or dass.",
         "Using um … zu when the two clauses have different subjects.",
-        "Claiming all seven reading statements are covered by the current reference key; only five reference answers are stored.",
+        "Skipping statements 6–7; all seven current reading statements are now reference-scored.",
         "Trying to play the removed Day 24 listening link or submitting Teil 4 despite its exclusion.",
       ],
     },
@@ -557,7 +557,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 26 has no day-specific deep grammar page. Use the workbook's functional conditionals with wenn/falls, Konjunktiv II with würden/könnten and advice with sollten.",
       "The informal letter asks for destination/transport, one concrete problem and how it was solved; use past narration naturally rather than turning it into a formal complaint.",
-      "Teil 3 is the separate ‘Urlaubsland Deutschland’ reading. The workbook shows seven questions, but the current grading key has six reference answers and its sequence omits the current workbook's second mountain question.",
+      "Teil 3 is the separate ‘Urlaubsland Deutschland’ reading with seven questions, and all seven current questions now have matching reference answers.",
       "The old Day 26 listening link is removed and the marking contract excludes teil4; do not submit Hören.",
     ],
     interactionFlow: [
@@ -565,21 +565,21 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { phase: "Conditional practice", detailEn: "10 min: build wenn/falls clauses with würden, könnten and sollten." },
       { phase: "Service language", detailEn: "8 min: practise asking for help, rebooking, refund and emergency information politely." },
       { phase: "Travel plan", detailEn: "11 min: pairs plan destination, transport, two risks and responses." },
-      { phase: "Workbook bridge", detailEn: "8 min: outline the Max/Lisa letter and explain the six-answer-key limitation in the seven-question reading." },
+      { phase: "Workbook bridge", detailEn: "8 min: outline the Max/Lisa letter and preview the seven-question ‘Urlaubsland Deutschland’ reading." },
     ],
     wrapUpTaskDe: "Beschreibe ein Reiseproblem und zwei Lösungen. Nutze einmal wenn oder falls, einmal könnten/würden und einmal sollten.",
     workbookConnection: workbookConnection(26, [
       { label: "Grammar", detailEn: "No separate deep grammar page. Functional focus from the workbook: wenn/falls conditions, würden/könnten for hypothetical solutions, sollten for advice, dass for priorities and weil for reasons." },
       { label: "Teil 1 · Sprechen", detailEn: "Plan a trip and discuss possible delays, lost luggage, hotel/reservation issues, missing documents, illness and practical solutions. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Informal letter to Max/Lisa about a trip: destination and transport, what went wrong, how you solved it and how the trip ended." },
-      { label: "Teil 3 · Lesen", detailEn: "Read ‘Urlaubsland Deutschland’. Workbook currently shows seven questions, but the grading contract stores six reference answers; the current workbook's question 2 about a Bavarian mountain is not represented in that key. Complete it for practice, but do not promise seven reference-scored answers." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored seven-question reading ‘Urlaubsland Deutschland’. All seven current workbook questions have matching reference answers." },
       { label: "Teil 4 · Hören", detailEn: "SELF-CHECK/UNSCORED ONLY. The old listening link is removed and the marking contract excludes teil4. Do not submit Hören." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 26 has no direct deep grammar page. Teil 4 is excluded, and the current reading key contains six reference answers for a seven-question workbook task.",
+      subtitle: "Day 26 has no direct deep grammar page. Teil 3 has seven aligned reading answers; Teil 4 remains excluded.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 26 teaches conditional problem solving for travel and requires care with a current six-key/seven-question reading mismatch.",
+      lessonOverviewEn: "Day 26 teaches conditional problem solving for travel and includes a fully aligned seven-question reading.",
       grammarFocusEn: [
         "wenn and falls introduce conditions with verb-final order.",
         "würden and könnten express hypothetical or polite solutions.",
@@ -596,7 +596,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
         "Using main-clause word order after wenn/falls.",
         "Using würden plus a conjugated verb instead of würden + infinitive.",
         "Writing the Max/Lisa task in formal Sie-register.",
-        "Claiming the current seven-question reading has seven reference answers; the grading key stores only six and does not represent workbook question 2.",
+        "Skipping one of the seven ‘Urlaubsland Deutschland’ questions; all seven are now reference-scored.",
       ],
     },
   },

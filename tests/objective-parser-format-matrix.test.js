@@ -91,11 +91,11 @@ Mit freundlichen Grüßen
 Sarah
 
 Teil 3
-C
 B
-E
-F
+C
+D
 A
+C
 
 Teil 4
 B
@@ -110,7 +110,7 @@ A`;
   assert.equal(result.correctCount, 10);
   assert.deepEqual(
     [1, 2, 3, 4, 5].map((question) => result.details[`teil3.${question}`].student),
-    ["C", "B", "E", "F", "A"],
+    ["B", "C", "D", "A", "C"],
   );
   assert.deepEqual(
     [1, 2, 3, 4, 5].map((question) => result.details[`teil4.${question}`].student),

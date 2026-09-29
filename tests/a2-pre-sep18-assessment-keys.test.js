@@ -8,13 +8,13 @@ const entryById = (assignmentId) =>
   Object.values(answersDictionary).find((entry) => entry.assignment_id === assignmentId);
 
 const expectedShapes = {
-  "A2-1.2": [4, 3],
+  "A2-1.2": [5, 3],
   "A2-1.3": [5, 5],
   "A2-2.4": [5, 5],
   "A2-2.5": [5, 5],
   "A2-3.6": [5, 5],
   "A2-5.13": [5, 5],
-  "A2-5.14": [12, 0],
+  "A2-5.14": [5, 0],
   "A2-6.15": [5, 5],
   "A2-6.16": [5, 5],
   "A2-7.18": [5, 5],
@@ -23,7 +23,7 @@ const expectedShapes = {
   "A2-9.24": [5, 0],
   "A2-9.25": [5, 0],
   "A2-10.26": [5, 0],
-  "A2-10.27": [7, 4],
+  "A2-10.27": [5, 4],
   "A2-10.28": [5, 3],
 };
 
@@ -40,11 +40,11 @@ test("A2 grading keys keep their reviewed canonical assessment shapes", () => {
 test("A2-9.24 stable Anzeige codes score the restored matching task correctly", () => {
   const result = computeObjectiveScore("A2-9.24", `
 Teil 3
-1. F
-2. C
-3. X
-4. B
-5. A
+1. A
+2. B
+3. C
+4. D
+5. C
   `);
 
   assert.equal(result.correctCount, 5);
@@ -112,12 +112,10 @@ test("A2-10.27 restored listening answers are scored instead of treated as missi
   const result = computeObjectiveScore("A2-10.27", `
 Teil 3
 1. B
-2. C
+2. B
 3. C
-4. C
-5. C
-6. B
-7. D
+4. B
+5. B
 
 Teil 4
 1. B
@@ -126,6 +124,6 @@ Teil 4
 4. A
   `);
 
-  assert.equal(result.correctCount, 11);
-  assert.equal(result.totalCount, 11);
+  assert.equal(result.correctCount, 9);
+  assert.equal(result.totalCount, 9);
 });

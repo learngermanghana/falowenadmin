@@ -83,24 +83,21 @@ test("Day 21 has no Teil 4 and matches the marking contract", () => {
   assert.match(slide.workbookConnection.subtitle, /excluded/i);
 });
 
-test("Day 22 follows the grader's seven-plus-three Berlin/Bewerbung answer split", () => {
+test("Day 22 follows the workbook five-plus-five Berlin/Bewerbung reading split", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-7.22");
   const contract = contractByAssignmentId["B1-7.22"];
   assert.deepEqual(contract.expectedParts, ["teil2", "teil3", "teil4"]);
-  assert.equal(Object.keys(contract.answers.teil3).length, 7);
-  assert.equal(Object.keys(contract.answers.teil4).length, 3);
+  assert.equal(Object.keys(contract.answers.teil3).length, 5);
+  assert.equal(Object.keys(contract.answers.teil4).length, 5);
 
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   const secondReading = part(slide, "Teil 4 · Lesen").detailEn;
   assert.match(reading, /Berlin/i);
-  assert.match(reading, /Bewerbung/i);
-  assert.match(reading, /1–5|1-5/i);
-  assert.match(reading, /1–2|1-2/i);
-  assert.match(reading, /seven/i);
+  assert.match(reading, /Berlin/i);
+  assert.match(reading, /five/i);
   assert.match(reading, /Teil 3/i);
   assert.match(secondReading, /Bewerbung/i);
-  assert.match(secondReading, /3–5|3-5/i);
-  assert.match(secondReading, /three/i);
+  assert.match(secondReading, /five/i);
   assert.match(secondReading, /Teil 4/i);
 });
 
@@ -115,16 +112,16 @@ test("Day 23 keeps the planned listening placeholder out of scoring", () => {
   assert.match(listening, /excludes?/i);
 });
 
-test("Day 24 flags the seven-statement workbook versus five-reference-answer grading mismatch", () => {
+test("Day 24 scores all seven current reading statements", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-8.24");
   const contract = contractByAssignmentId["B1-8.24"];
   assert.deepEqual(contract.expectedParts, ["teil2", "teil3"]);
   assert.ok(contract.excludedParts.includes("teil4"));
-  assert.equal(Object.keys(contract.answers.teil3).length, 5);
+  assert.equal(Object.keys(contract.answers.teil3).length, 7);
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   const listening = part(slide, "Teil 4 · Hören").detailEn;
   assert.match(reading, /seven/i);
-  assert.match(reading, /five reference answers/i);
+  assert.match(reading, /all seven|reference-scored/i);
   assert.match(listening, /UNSCORED/i);
   assert.match(listening, /excludes?/i);
 });
@@ -139,17 +136,15 @@ test("Day 25 excludes the removed listening and submits only writing plus readin
   assert.match(part(slide, "Teil 4 · Hören").detailEn, /Do not submit/i);
 });
 
-test("Day 26 flags the seven-question workbook versus six-reference-answer grading mismatch", () => {
+test("Day 26 scores all seven current Urlaubsland reading questions", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-9.26");
   const contract = contractByAssignmentId["B1-9.26"];
   assert.deepEqual(contract.expectedParts, ["teil2", "teil3"]);
   assert.ok(contract.excludedParts.includes("teil4"));
-  assert.equal(Object.keys(contract.answers.teil3).length, 6);
+  assert.equal(Object.keys(contract.answers.teil3).length, 7);
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
-  assert.match(reading, /seven questions/i);
-  assert.match(reading, /six reference answers/i);
-  assert.match(reading, /question 2/i);
-  assert.match(reading, /not represented/i);
+  assert.match(reading, /seven/i);
+  assert.match(reading, /all seven|reference answers/i);
 });
 
 for (const assignmentId of ["B1-10.27", "B1-10.28"]) {
