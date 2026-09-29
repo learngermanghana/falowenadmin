@@ -208,43 +208,38 @@ function FalowenExperiencePreview() {
   const screens = [
     {
       title: "Dashboard",
-      detail: "Next lesson, latest result, attendance and progress in one place.",
-      items: ["Next lesson", "Latest result", "Attendance", "Study progress"],
+      detail: "Attendance, class participation, next recommendations and missed work are visible from the student dashboard.",
+      image: "/visitor-guide/falowen-dashboard.webp",
+      alt: "Falowen student dashboard showing home metrics, attendance, participation, recommendations and missed items.",
     },
     {
       title: "Course Book",
-      detail: "The lesson journey is organised by skill and learning objective.",
-      items: ["Grammar", "Vocabulary", "Listening", "Writing & speaking"],
+      detail: "Learners follow their level, completion, next lesson, mastery and lesson list from the Course Book.",
+      image: "/visitor-guide/falowen-course-book.webp",
+      alt: "Falowen A1 Course Book showing course completion, next lesson, mastery and lesson navigation.",
     },
     {
       title: "Results",
-      detail: "Students can see feedback, corrections and what to review next.",
-      items: ["Score", "Tutor feedback", "Corrections", "Review answers"],
+      detail: "Results history can be searched and filtered so learners can review marks, feedback and weak points.",
+      image: "/visitor-guide/falowen-results.webp",
+      alt: "Falowen Results history interface with search, level filter and minimum score filter.",
     },
     {
       title: "Exam Room",
-      detail: "Exam-style practice brings the core German skills together.",
-      items: ["Reading", "Listening", "Writing", "Speaking"],
+      detail: "Campus connects directly to the Exams Room for speaking, writing, listening, reading and exam readiness.",
+      image: "/visitor-guide/falowen-exam-room.webp",
+      alt: "Falowen Campus and Exams Room cards showing daily learning and exam practice areas.",
     },
   ];
 
   return (
-    <div className="visitor-guide-screen-grid" aria-label="Falowen interface previews">
+    <div className="visitor-guide-screen-grid" aria-label="Real Falowen student interface screenshots">
       {screens.map((screen) => (
         <article key={screen.title} className="visitor-guide-screen-card">
-          <div className="visitor-guide-screen-browser">
-            <span />
-            <span />
-            <span />
-            <strong>falowen.app</strong>
-          </div>
-          <div className="visitor-guide-screen-content">
-            <small>Interface preview</small>
+          <img src={screen.image} alt={screen.alt} loading="lazy" />
+          <div className="visitor-guide-screen-caption">
             <h3>{screen.title}</h3>
             <p>{screen.detail}</p>
-            <div>
-              {screen.items.map((item) => <span key={item}>{item}</span>)}
-            </div>
           </div>
         </article>
       ))}
@@ -846,7 +841,7 @@ export default function VisitorGuidePage({ publicView = false }) {
         <GuidePage {...guidePageProps(6)} eyebrow="Platform" title="See how the Falowen learning experience is organised">
           <FalowenExperiencePreview />
           <p className="visitor-guide-note">
-            These interface previews show the main student areas. The live account adapts to the learner’s level, class and completed work.
+            These are real Falowen student-interface screenshots. The live account adapts to the learner’s level, class and completed work.
           </p>
         </GuidePage>
 
