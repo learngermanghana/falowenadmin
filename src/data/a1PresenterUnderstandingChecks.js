@@ -269,14 +269,14 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
       "Check the simple informal imperative and the pronoun mir.",
     ),
     check(
-      "Ordne die Wörter: geht · wie · dir · es",
-      "Wie geht es dir?",
-      "Check the fixed A1 question pattern Wie geht es dir?",
+      "Ordne die Wörter: Grüße · viele · liebe",
+      "Viele liebe Grüße.",
+      "Check a common informal A1 letter closing.",
     ),
     check(
-      "Exit-Check: Ordne die Wörter: Grüße · viele · liebe",
-      "Viele liebe Grüße.",
-      "Use this as the final independent check for a common informal letter closing.",
+      "Exit-Check: Ordne die Wörter: dir · danke · ich",
+      "Ich danke dir.",
+      "Use this as the final independent A1 word-order check.",
     ),
   ],
   "A1-13": [
