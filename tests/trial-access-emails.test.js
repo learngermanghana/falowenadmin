@@ -249,6 +249,7 @@ test("scheduled trial worker recovers a missing Day-0 welcome", async () => {
       const payload = JSON.parse(options.body);
       assert.equal(payload.rows[0].email, "recover@example.com");
       assert.equal(payload.rows[0].email_type, "trial_access_welcome");
+      assert.deepEqual(payload.row, payload.rows[0]);
       return {
         ok: true,
         status: 200,
@@ -356,4 +357,20 @@ test("trial emails reuse the shared Announcement webhook configuration", () => {
   assert.equal(config.url, "https://script.google.com/macros/s/existing/exec");
   assert.equal(config.token, "shared-secret");
   assert.equal(config.sheetName, "Announcements");
+});
+
+test("trial-specific webhook settings cannot override the shared Announcement webhook", () => {
+  const config = resolveTrialEmailConfig({
+    communication: {
+      announcement_webhook_url: "https://script.google.com/macros/s/announcement/exec",
+      announcement_webhook_token: "announcement-secret",
+    },
+    trial_emails: {
+      webhook_url: "https://example.invalid/trial-only",
+      webhook_token: "trial-only-secret",
+    },
+  }, {});
+
+  assert.equal(config.url, "https://script.google.com/macros/s/announcement/exec");
+  assert.equal(config.token, "announcement-secret");
 });

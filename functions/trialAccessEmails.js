@@ -105,45 +105,29 @@ function resolveTrialEmailConfig(runtimeConfig = {}, env = process.env) {
     || runtimeConfig.announcements
     || runtimeConfig.announcement
     || {};
-  const trial = runtimeConfig.trial_emails
-    || runtimeConfig.trialEmails
-    || runtimeConfig.trial
-    || {};
 
   return {
     url: text(
-      env.TRIAL_ACCESS_EMAIL_WEBHOOK_URL
-      || env.ANNOUNCEMENT_WEBHOOK_URL
+      env.ANNOUNCEMENT_WEBHOOK_URL
       || env.VITE_ANNOUNCEMENT_WEBHOOK_URL
-      || trial.webhook_url
-      || trial.url
-      || communication.trial_access_webhook_url
       || communication.announcement_webhook_url
       || communication.webhook_url,
     ),
     token: text(
-      env.TRIAL_ACCESS_EMAIL_WEBHOOK_TOKEN
-      || env.ANNOUNCEMENT_WEBHOOK_TOKEN
+      env.ANNOUNCEMENT_WEBHOOK_TOKEN
       || env.VITE_ANNOUNCEMENT_WEBHOOK_TOKEN
-      || trial.webhook_token
-      || trial.token
-      || communication.trial_access_webhook_token
       || communication.announcement_webhook_token
       || communication.webhook_token,
     ),
     sheetName: text(
-      env.TRIAL_ACCESS_EMAIL_SHEET_NAME
-      || env.ANNOUNCEMENT_WEBHOOK_SHEET_NAME
+      env.ANNOUNCEMENT_WEBHOOK_SHEET_NAME
       || env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME
-      || trial.sheet_name
       || communication.announcement_sheet_name
       || communication.sheet_name,
     ),
     sheetGid: text(
-      env.TRIAL_ACCESS_EMAIL_SHEET_GID
-      || env.ANNOUNCEMENT_WEBHOOK_SHEET_GID
+      env.ANNOUNCEMENT_WEBHOOK_SHEET_GID
       || env.VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID
-      || trial.sheet_gid
       || communication.announcement_sheet_gid
       || communication.sheet_gid,
     ),
@@ -350,6 +334,7 @@ async function postTrialAccessRow(config, row, fetchImpl = fetch) {
       ...(config.token ? { token: config.token } : {}),
       ...(config.sheetName ? { sheet_name: config.sheetName } : {}),
       ...(config.sheetGid ? { sheet_gid: config.sheetGid } : {}),
+      row,
       rows: [row],
     }),
   });
