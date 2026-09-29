@@ -970,6 +970,29 @@ function buildB1GrammarSupportItems(support = {}) {
 }
 
 function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
+  const curatedItems = Array.isArray(slide.grammarCheckItems)
+    ? slide.grammarCheckItems.filter((item) => item?.prompt && item?.answer).slice(0, 3)
+    : [];
+  if (curatedItems.length === 3) {
+    return {
+      id: "grammar-check",
+      type: "grammar-check",
+      kicker: "Grammatik-Check",
+      title: "Grammatik im Thema anwenden",
+      instruction: "Die Grammatik wurde bereits erklärt. Stelle die Fragen direkt im heutigen Thema. Der Schüler antwortet in 1–2 Sätzen; prüfe die Zielgrammatik in der Antwort, statt nach dem Regelnamen zu fragen.",
+      items: curatedItems.map((item, index) => ({
+        id: item.id || ["recognise-rule", "fix-error", "build-sentence"][index],
+        label: item.label || `${index + 1} · Im Thema anwenden`,
+        prompt: item.prompt,
+        example: item.example || "",
+        answerLabel: item.answerLabel || "Musterantwort",
+        answer: item.answer,
+        note: item.note || "",
+      })),
+      suggestedMinutes: level === "B1" ? 7 : 6,
+    };
+  }
+
   const rules = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn.filter(Boolean) : [];
   const models = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.filter(Boolean) : [];
   const questions = Array.isArray(slide.studentQuestionsDe)
