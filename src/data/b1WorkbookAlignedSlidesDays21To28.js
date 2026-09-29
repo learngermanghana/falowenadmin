@@ -359,7 +359,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Day 24 has no day-specific deep grammar page. The workbook Grammar tab supplies general B1 advantage/disadvantage/opinion training; build the lesson language from the workbook's own dass/weil/um … zu/sollten/einerseits … andererseits frames.",
       "Teil 3 is Eleni's environmental-awareness/recycling text, not a shopping case study.",
-      "The workbook displays seven Richtig/Falsch statements, but the current marking contract contains only five reference answers. Students can complete all seven for practice; do not promise that statements 6–7 are reference-scored by the current key.",
+      "The workbook displays seven Richtig/Falsch statements, and all seven now have matching reference answers.",
       "The old Day 24 listening video is removed in the rendered workbook. Teil 4 is not submitted and the marking contract excludes teil4.",
     ],
     interactionFlow: [
@@ -367,21 +367,21 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { phase: "Purpose and reason", detailEn: "9 min: connect sustainable actions with weil/dass and um … zu." },
       { phase: "Measure comparison", detailEn: "12 min: compare Secondhand, regional products, low packaging and reduced meat consumption." },
       { phase: "Workbook writing bridge", detailEn: "9 min: outline the response to Paul with a counterargument and concrete examples." },
-      { phase: "Marking note", detailEn: "5 min: explain the five-reference-answer grading limitation for the seven-statement reading." },
+      { phase: "Marking note", detailEn: "5 min: preview the seven Richtig/Falsch statements and remind students that all seven are scored." },
     ],
     wrapUpTaskDe: "Nenne eine nachhaltige Maßnahme, einen Vorteil und einen Nachteil. Begründe deine Meinung mit weil und formuliere ein Ziel mit um … zu.",
     workbookConnection: workbookConnection(24, [
       { label: "Grammar", detailEn: "No separate deep grammar page. Use the workbook Grammar tab's B1 argument training plus lesson frames with dass/weil, um … zu, sollten and einerseits … andererseits." },
       { label: "Teil 1 · Sprechen", detailEn: "Discuss sustainable consumption across shopping, recycling, energy, transport, business responsibility and individual action; compare measures and choose one important action. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write an opinion responding to Paul on whether sustainable consumption matters; include benefits, difficulties, concrete examples and a clear conclusion." },
-      { label: "Teil 3 · Lesen", detailEn: "Read Eleni's text about environmental education, Sperrmüll, second-hand furniture, Altkleider, glass recycling and hazardous-waste collection. Workbook shows seven Richtig/Falsch statements; current marking contract has five reference answers only." },
+      { label: "Teil 3 · Lesen", detailEn: "Read Eleni's text about environmental education, Sperrmüll, second-hand furniture, Altkleider, glass recycling and hazardous-waste collection. All seven Richtig/Falsch statements are reference-scored." },
       { label: "Teil 4 · Hören", detailEn: "SELF-CHECK/UNSCORED ONLY. The old listening link is removed from the rendered workbook; no live Hören medium is currently available. The marking contract excludes teil4, so do not submit it." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 24 has no direct deep-grammar page. Teil 4 is excluded; the current reading key also contains only five reference answers although the workbook shows seven statements.",
+      subtitle: "Day 24 has no direct deep-grammar page. Teil 3 has seven aligned reading answers; Teil 4 remains excluded.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 24 develops B1 sustainability arguments and requires teachers to distinguish the seven-item workbook reading from the five-answer grading key currently stored in admin.",
+      lessonOverviewEn: "Day 24 develops B1 sustainability arguments and includes a fully aligned seven-statement reading.",
       grammarFocusEn: [
         "Use dass and weil clauses for opinion and reason with verb-final order.",
         "um … zu expresses purpose when the subject is the same.",
@@ -397,7 +397,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       commonMistakesEn: [
         "Keeping main-clause order after weil or dass.",
         "Using um … zu when the two clauses have different subjects.",
-        "Claiming all seven reading statements are covered by the current reference key; only five reference answers are stored.",
+        "Skipping statements 6–7; all seven current reading statements are now reference-scored.",
         "Trying to play the removed Day 24 listening link or submitting Teil 4 despite its exclusion.",
       ],
     },
