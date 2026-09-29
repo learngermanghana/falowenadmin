@@ -75,13 +75,11 @@ Hallo Anna,
 ich komme heute später, weil ich arbeiten muss.
 
 Teil 3:
-1. C
+1. A
 2. B
-3. A
+3. C
 4. B
-5. B
-6. B
-7. C
+5. C
 
 Teil 4:
 1. B
@@ -91,7 +89,7 @@ Teil 4:
 5. C
 `);
 
-  assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 12);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 10);
   assert.equal(Object.values(result.details).filter((detail) => detail.partId === "teil2").length, 0);
 });
