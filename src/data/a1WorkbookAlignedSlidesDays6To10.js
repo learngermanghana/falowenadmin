@@ -288,6 +288,7 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
       "Fill in the articles: ___ Mann sieht ___ Hund. Why are they different?",
       "For der Hund, give the definite article in nominative and accusative.",
       "Make a short sentence with a masculine object. Use sehen or kaufen. Identify its nominative and accusative parts.",
+      "Give one short example each with sein, werden, haben and sehen. Which examples have a nominative complement, and which have an accusative object?",
     ],
     teacherNotesEn: [
       "Teach role before table: identify who does the action (Nominativ) and what receives the action (Akkusativ).",
