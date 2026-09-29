@@ -14,6 +14,7 @@ test("Falowen Admin exposes the Visitor Guide navigation and route", () => {
   assert.match(app, /path="\/visitor-guide"/);
   assert.match(app, /path="\/visitor-guide\/public"/);
   assert.match(app, /<VisitorGuidePage publicView \/>/);
+  assert.match(app, /location\.pathname === "\/visitor-guide\/public"/);
   assert.match(app, /VisitorGuidePage/);
 });
 
@@ -55,6 +56,20 @@ test("visitor guide generates a public link instead of requiring a PDF", () => {
   assert.match(page, /\/visitor-guide\/public/);
   assert.match(page, /Copy visitor link/);
   assert.match(page, /Open visitor guide/);
+  assert.match(page, /Start Presentation/);
+  assert.match(page, /PRESENTATION_TOTAL = 10/);
+  assert.match(page, /ArrowRight/);
+  assert.match(page, /Escape/);
+  assert.match(page, /Saved visitor guides/);
+  assert.match(page, /Trial started/);
+  assert.match(page, /Registered/);
+  assert.match(page, /Send on WhatsApp/);
+  assert.match(page, /Hybrid learning/);
+  assert.match(page, /Advanced teaching slides/);
+  assert.match(page, /Six months of Falowen access/);
+  assert.match(page, /FalowenExperiencePreview/);
+  assert.match(page, /Register \/ choose payment/);
+  assert.match(page, /Start 7-day trial/);
   assert.match(page, /The visitor does not need an Admin login/);
   assert.match(page, /Visit notes stay inside Admin and are not included in the public link/);
   assert.doesNotMatch(page, /params\.set\("notes"/);
@@ -62,5 +77,9 @@ test("visitor guide generates a public link instead of requiring a PDF", () => {
 
   assert.match(css, /visitor-guide-public-bar/);
   assert.match(css, /visitor-guide-page-public/);
+  assert.match(css, /visitor-guide-presenter-controls/);
+  assert.match(css, /visitor-guide-screen-grid/);
+  assert.match(css, /visitor-guide-value-grid/);
+  assert.match(css, /visitor-guide-saved-grid/);
   assert.match(css, /@media print/);
 });
