@@ -76,8 +76,6 @@ const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
 const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");
 const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIPT_URL");
 const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");
-const announcementWebhookUrlSecret = defineSecret("ANNOUNCEMENT_WEBHOOK_URL");
-const announcementWebhookTokenSecret = defineSecret("ANNOUNCEMENT_WEBHOOK_TOKEN");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -2309,10 +2307,6 @@ exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger({
   db,
   onDocumentWritten,
   runtimeConfig,
-  webhookSecrets: {
-    webhookUrl: announcementWebhookUrlSecret,
-    webhookToken: announcementWebhookTokenSecret,
-  },
 });
 
 exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob({
@@ -2320,10 +2314,6 @@ exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob({
   db,
   onSchedule,
   runtimeConfig,
-  webhookSecrets: {
-    webhookUrl: announcementWebhookUrlSecret,
-    webhookToken: announcementWebhookTokenSecret,
-  },
 });
 
 exports.createFlatSubmissionMarkingJob = onDocumentCreated("submissions/{submissionId}", async (event) => {
