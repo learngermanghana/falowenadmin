@@ -17,7 +17,6 @@ const {
   buildTrialAccessMessage,
   day1LessonUrl,
   resolveTrialEmailConfig,
-  resolveTrialEmailRuntimeConfig,
   rowForTrialAccessEmail,
   trialEmailEligibility,
   trialEmailStage,
@@ -42,8 +41,6 @@ function student(overrides = {}) {
 
 test("trial welcome trigger sends when a student write becomes trial-eligible", async () => {
   let registered = null;
-  const webhookUrlSecret = { value: () => "https://script.google.com/macros/s/existing/exec" };
-  const webhookTokenSecret = { value: () => "shared-secret" };
   const sendWrites = [];
   const sendRef = {
     async set(payload) {
@@ -88,10 +85,6 @@ test("trial welcome trigger sends when a student write becomes trial-eligible", 
         announcement_sheet_name: "Announcements",
       },
     },
-    webhookSecrets: {
-      webhookUrl: webhookUrlSecret,
-      webhookToken: webhookTokenSecret,
-    },
     fetchImpl: async (url, options) => {
       assert.equal(url, "https://script.google.com/macros/s/existing/exec");
       const payload = JSON.parse(options.body);
@@ -115,7 +108,6 @@ test("trial welcome trigger sends when a student write becomes trial-eligible", 
   assert.equal(trigger, "registered");
   assert.equal(registered.options.document, "students/{studentId}");
   assert.equal(registered.options.retry, true);
-  assert.deepEqual(registered.options.secrets, [webhookUrlSecret, webhookTokenSecret]);
 
   const result = await registered.handler({
     params: { studentId: "DorothyQuayson843" },
@@ -367,12 +359,18 @@ test("trial emails reuse the shared Announcement webhook configuration", () => {
   assert.equal(config.sheetName, "Announcements");
 });
 
-test("deployed Secret Manager values override unavailable legacy runtime config", () => {
-  const config = resolveTrialEmailRuntimeConfig({}, {
-    webhookUrl: { value: () => "https://script.google.com/macros/s/production/exec" },
-    webhookToken: { value: () => "production-secret" },
-  });
+test("trial-specific webhook settings cannot override the shared Announcement webhook", () => {
+  const config = resolveTrialEmailConfig({
+    communication: {
+      announcement_webhook_url: "https://script.google.com/macros/s/announcement/exec",
+      announcement_webhook_token: "announcement-secret",
+    },
+    trial_emails: {
+      webhook_url: "https://example.invalid/trial-only",
+      webhook_token: "trial-only-secret",
+    },
+  }, {});
 
-  assert.equal(config.url, "https://script.google.com/macros/s/production/exec");
-  assert.equal(config.token, "production-secret");
+  assert.equal(config.url, "https://script.google.com/macros/s/announcement/exec");
+  assert.equal(config.token, "announcement-secret");
 });
