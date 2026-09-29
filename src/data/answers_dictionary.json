@@ -2669,11 +2669,16 @@
         "Answer12": "E) Anzeige E"
       },
       "teil4": {
-        "Answer1": "B) In vielen Fertiggerichten und Softdrinks",
-        "Answer2": "B) Er gibt uns kurzzeitig Energie",
-        "Answer3": "A) Man fühlt sich energielos und müde",
-        "Answer4": "A) Erhöhtes Risiko für Übergewicht und Diabetes Typ 2",
-        "Answer5": "B) Den Zuckerkonsum zu reduzieren und mehr frische Lebensmittel zu essen"
+        "Answer1": "F) Veranstaltung uber gesunde Ernahrung und Zuckerreduktion",
+        "Answer2": "B) Werbung fur ein neues Diat – Programm",
+        "Answer3": "C) Angebot fur zuckerfreie SuBigkeiten",
+        "Answer4": "D) Eroffnung eines neuen Restuarants mit gesunden Gerichten",
+        "Answer5": "E) Rabbatt auf Schokolade im Onlne-Shop",
+        "Answer6": "B) In vielen Fertiggerichten und Softdrinks",
+        "Answer7": "B) Er gibt uns Kurzzeitig Energie",
+        "Answer8": "A) Man fuhlt sich energielos und mude",
+        "Answer9": "A) Erhohtes Risiko fur Ubergewicht und Diabetes Typ 2",
+        "Answer10": "B) Den Zuckerkonsum zu reduzieren und mehr frische Lebensmittel zu essen"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1COQA_nlpRTk-FTLD5fL3HkWoVAvUh0XVrpc4TLE3i-w/gviz/tq?tqx=out:html&sheet=Key",
@@ -3384,11 +3389,7 @@
         "Answer2": "A) ein ganzes Dorf von modernen Energien leben kann.",
         "Answer3": "C) muss die Bevölkerung dafür sein."
       },
-      "teil4": {
-        "Answer1": "B) es ein neues Tourismus-Angebot gibt.",
-        "Answer2": "B) muss man nicht sportlich sein.",
-        "Answer3": "C) mehr Velo-Touristen in die Region kommen."
-      }
+      "teil4": {}
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/edit",
@@ -3396,7 +3397,9 @@
     "assignment_id": "B1-6.19",
     "expectedParts": [
       "teil2",
-      "teil3",
+      "teil3"
+    ],
+    "excludedParts": [
       "teil4"
     ],
     "writingParts": [
@@ -3406,8 +3409,7 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3422,12 +3424,6 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil4": {
-        "label": "Teil 4 Lesen",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Teil 4 is the preserved second reading task for this lesson. Grade it against the reference answers in answers."
       }
     }
   },
@@ -3536,11 +3532,9 @@
         "Answer5": "C) Stadtrundfahrten"
       },
       "teil4": {
-        "Answer1": "D) im Supermarkt",
-        "Answer2": "B) Name, Alter, Wohnort",
-        "Answer3": "D) Zeugnisse und Anschreiben",
-        "Answer4": "A) Man lernt den Arbeitgeber kennen.",
-        "Answer5": "C) Man kann sich bei der nächsten offenen Stelle bewerben."
+        "Answer1": "D) Zeugnisse und Anschreiben",
+        "Answer2": "A) Man lernt den Arbeitgeber kennen.",
+        "Answer3": "C) Man kann sich bei der nächsten offenen Stelle bewerben."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/gviz/tq?tqx=out:html&sheet=Key",
