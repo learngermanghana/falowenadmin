@@ -79,9 +79,9 @@ test("A1-12.3 uses ten short jumbled-word letter-writing checks plus one exit ch
     const words = item.questionDe.split(":").slice(1).join(":").split("·").map((word) => word.trim()).filter(Boolean);
     return words.length <= 5;
   }));
-  assert.match(classChecks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n"), /Geburtstag|Einladung|Party|Samstag|zurück/i);
+  assert.match(classChecks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n"), /Geburtstag|Einladung|Party|Samstag|Grüße/i);
   assert.match(exitCheck.questionDe, /^Exit-Check: Ordne die Wörter:/);
-  assert.equal(exitCheck.answerDe, "Viele liebe Grüße.");
+  assert.equal(exitCheck.answerDe, "Ich danke dir.");
 });
 
 test("A1 presenter keeps class participation available from the first slide and switches to unique questions for the understanding check", () => {
