@@ -146,7 +146,7 @@ const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
   "A1-12.3": {
     objective: "Students can structure a short A1 formal or informal message with an appropriate greeting, complete task points, a suitable closing and clear simple sentences.",
     warmupQuestionsDe: ["Wie beginnt eine Nachricht an einen Freund?", "Wie beginnt eine formelle Nachricht?", "Welche Informationen musst du in einer Aufgabe unbedingt beantworten?"],
-    keyPhrasesDe: ["Liebe Anna, ...", "Sehr geehrte Damen und Herren, ...", "Ich schreibe dir, weil ...", "Ich schreibe Ihnen wegen ...", "Mit freundlichen Grüßen"],
+    keyPhrasesDe: ["Liebe Anna, ...", "Sehr geehrte Damen und Herren, ...", "Ich schreibe dir, weil ...", "Ich schreibe Ihnen, weil ...", "Mit freundlichen Grüßen"],
     studentQuestionsDe: ["Welche Anrede passt zu einem Freund?", "Welche Anrede passt zu einer Firma?", "Wie fragst du höflich nach einer Uhrzeit?", "Welche Grußformel passt zu einer formellen Nachricht?"],
     teacherNotesEn: ["Keep the writing structure visible: greeting, reason, task points, closing, name.", "Do not mix du/dein with Sie/Ihr inside one message.", "Train task completion explicitly: students should tick every required bullet before finishing."],
     interactionFlow: [

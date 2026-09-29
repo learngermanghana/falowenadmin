@@ -212,7 +212,7 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
     ],
     modelExamplesDe: [
       "Liebe Anna, vielen Dank für deine Einladung.",
-      "Sehr geehrte Damen und Herren, ich schreibe Ihnen wegen meines Termins.",
+      "Sehr geehrte Damen und Herren, ich schreibe Ihnen, weil …",
       "Kannst du mir bitte die Uhrzeit sagen?",
       "Mit freundlichen Grüßen\nFelix Asadu",
     ],

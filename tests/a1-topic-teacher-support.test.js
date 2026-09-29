@@ -66,6 +66,20 @@ test("A1-13 Weather support is actually about weather", () => {
   assert.ok(support.grammarFocusEn.some((item) => /weather|Wetter|regnet|Grad|temperature/i.test(item)));
 });
 
+test("A1-12.3 keeps the formal weil prompt open and at A1 level", () => {
+  const support = buildTeacherSlideSupport({
+    course: "A1",
+    assignmentId: "A1-12.3",
+    title: "A1 · Briefeschreiben",
+    topic: "Formelle und informelle Nachrichten",
+  });
+
+  const formalPrompt = support.modelExamplesDe.find((item) => item.startsWith("Sehr geehrte Damen und Herren"));
+
+  assert.equal(formalPrompt, "Sehr geehrte Damen und Herren, ich schreibe Ihnen, weil …");
+  assert.doesNotMatch(support.modelExamplesDe.join("\n"), /\bwegen\b/i);
+});
+
 test("slide-specific teacherSupport still wins over the later-A1 fallback bank", () => {
   const support = buildTeacherSlideSupport({
     course: "A1",
