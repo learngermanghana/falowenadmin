@@ -48,8 +48,8 @@ test("presenter fullscreen wiring keeps one A1 dock and synchronizes browser exi
   assert.match(shared, /aria-label="Restore presenter controls"/);
   assert.match(a1, /presenter-shell \$\{focusMode \? "is-presentation-mode" : ""\}/);
   assert.match(shared, /presenter-shell \$\{focusMode \? "is-presentation-mode" : ""\}/);
-  assert.match(a1, />Restore controls<\/button>/);
-  assert.match(shared, />Restore controls<\/button>/);
+  assert.match(a1, />Restore<\/button>/);
+  assert.match(shared, />Restore<\/button>/);
 });
 
 
