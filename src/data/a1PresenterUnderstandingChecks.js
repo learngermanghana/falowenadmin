@@ -72,6 +72,7 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Fill in the articles: ‘___ Mann sieht ___ Hund.’ Why are they different?", "Der Mann sieht den Hund. Der Mann performs the action; den Hund receives it."),
     check("For ‘der Hund’, give the definite article in nominative and accusative.", "Nominative der Hund; accusative den Hund."),
     check("Make a short sentence with a masculine object. Use sehen or kaufen. Identify its nominative and accusative parts.", "For example: Der Mann sieht den Hund. Der Mann is nominative; den Hund is accusative. Also accept a correct sentence with kaufen.", "The object must be masculine and use den or einen."),
+    check("Give one short example each with sein, werden, haben and sehen. Which examples have a nominative complement, and which have an accusative object?", "Sein: Er ist ein Lehrer. Werden: Er wird ein Lehrer. Ein Lehrer is nominative in both. Haben: Ich habe einen Hund. Sehen: Ich sehe den Hund. Einen Hund and den Hund are accusative objects.", "Keep the examples simple; sein and werden link to a nominative noun, while haben and sehen take a direct object in these examples."),
   ],
   "A1-4": [
     check(
