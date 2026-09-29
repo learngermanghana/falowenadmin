@@ -23,10 +23,11 @@ test("visitor guide keeps the approved school and team credentials", () => {
   assert.match(profile, /German A1–C2/);
 
   assert.match(profile, /Felix Asadu/);
-  assert.match(profile, /International Management/);
-  assert.match(profile, /studied in German/);
+  assert.match(profile, /International Management at IUB in Germany/);
+  assert.match(profile, /Goethe-Institut B2 German certificate/);
   assert.match(profile, /TEFL certificate in Teaching English as a Foreign Language/);
-  assert.match(profile, /Falowen and Sedifex/);
+  assert.match(profile, /Founder & Software Developer, Falowen/);
+  assert.doesNotMatch(profile, /Sedifex/);
 
   assert.match(profile, /Catherine Agbleze Etornam/);
   assert.match(profile, /University of Ghana/);
