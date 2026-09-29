@@ -969,6 +969,12 @@ function buildB1GrammarSupportItems(support = {}) {
   })).filter((item) => item.supportEn);
 }
 
+function buildKnowledgeAnswerItems(knowledge = {}) {
+  const checks = Array.isArray(knowledge.checks) ? knowledge.checks : [];
+  const explicit = Array.isArray(knowledge.answers) ? knowledge.answers : [];
+  return checks.map((_, index) => String(explicit[index] || "").trim());
+}
+
 function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
   const curatedItems = Array.isArray(slide.grammarCheckItems)
     ? slide.grammarCheckItems.filter((item) => item?.prompt && item?.answer).slice(0, 3)
