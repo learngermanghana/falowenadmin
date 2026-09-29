@@ -284,6 +284,9 @@ export default function A1GrammarPresenter({
   const [itemIndex, setItemIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [participationQuestion, setParticipationQuestion] = useState(null);
+  const contentRef = useRef(null);
+  const lastContentSizeRef = useRef({ width: 0, height: 0 });
+  const [fitMode, setFitMode] = useState("normal");
   const [focusMode, setFocusMode] = useState(false);
   const [classTimeState, setClassTimeState] = useState({
     remainingSeconds: 0,
@@ -336,6 +339,7 @@ export default function A1GrammarPresenter({
   }
 
   async function presentFullscreen() {
+    setFitMode("normal");
     setFocusMode(true);
     try {
       if (!document.fullscreenElement) await presenterShellRef.current?.requestFullscreen?.();
@@ -345,6 +349,7 @@ export default function A1GrammarPresenter({
   }
 
   async function exitPresentationView() {
+    setFitMode("normal");
     setFocusMode(false);
     try {
       if (document.fullscreenElement) await document.exitFullscreen?.();
@@ -365,6 +370,44 @@ export default function A1GrammarPresenter({
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
+
+  useEffect(() => {
+    const node = contentRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return undefined;
+
+    let frame = 0;
+    const measure = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const currentSize = { width: node.clientWidth, height: node.clientHeight };
+        const previousSize = lastContentSizeRef.current;
+        const viewportGrew = currentSize.width > previousSize.width + 8
+          || currentSize.height > previousSize.height + 8;
+        lastContentSizeRef.current = currentSize;
+
+        if (viewportGrew && fitMode !== "normal") {
+          setFitMode("normal");
+          return;
+        }
+
+        const overflow = node.scrollHeight > node.clientHeight + 6;
+        if (!overflow) return;
+        if (fitMode === "normal") {
+          setFitMode("compact");
+          return;
+        }
+        if (fitMode === "compact") setFitMode("tight");
+      });
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    measure();
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [stage?.id, stage?.type, stage?.title, stage?.items, fitMode, focusMode]);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -397,7 +440,7 @@ export default function A1GrammarPresenter({
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode && classTimeState.durationSeconds > 0 ? (
           <div className={`presenter-focus-time ${classTimeState.expired ? "is-expired" : ""}`} aria-label="Class time remaining">
             <strong>{formatFocusTime(classTimeState.remainingSeconds)}</strong>
@@ -408,7 +451,7 @@ export default function A1GrammarPresenter({
           <div className="presenter-focus-dock" aria-label="Presentation controls">
             <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore controls</button>
+            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore</button>
             <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">→</button>
           </div>
         ) : null}
@@ -451,7 +494,7 @@ export default function A1GrammarPresenter({
           />
         </div>
 
-        <main className={`presenter-content presenter-content-${stage.type}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-fit-${fitMode}`}>
           {!focusMode && teacherPurpose ? (
             <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
               <div>
@@ -526,7 +569,7 @@ export default function A1GrammarPresenter({
                       {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
                     </div>
                   ) : (
-                    <div className="presenter-model-support" style={{ opacity: 0.8 }}>
+                    <div className="presenter-model-support presenter-teacher-instruction" style={{ opacity: 0.8 }}>
                       <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
                       <p>{stage.exitCheck
                         ? (stage.examReadiness

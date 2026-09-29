@@ -482,7 +482,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""}`}>
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode && classTimeState.durationSeconds > 0 ? (
           <div className={`presenter-focus-time ${classTimeState.expired ? "is-expired" : ""}`} aria-label="Class time remaining">
             <strong>{formatTimer(classTimeState.remainingSeconds)}</strong>
@@ -493,7 +493,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           <div className="presenter-focus-dock" aria-label="Focus mode controls">
             <button type="button" onClick={previous} disabled={stageIndex === 0 && questionIndex === 0} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
-            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore controls</button>
+            <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore</button>
             <button
               type="button"
               onClick={next}
