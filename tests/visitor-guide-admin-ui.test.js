@@ -48,6 +48,9 @@ test("visitor guide generates a public link instead of requiring a PDF", () => {
   assert.match(page, /How Falowen supports the student/);
   assert.match(page, /What happens during the course/);
   assert.match(page, /Learning continues after the final class/);
+  assert.match(page, /Hybrid learning:/);
+  assert.match(page, /Advanced teaching slides:/);
+  assert.match(page, /Six months of Falowen access:/);
   assert.match(page, /buildVisitorGuideShareUrl/);
   assert.match(page, /\/visitor-guide\/public/);
   assert.match(page, /Copy visitor link/);
