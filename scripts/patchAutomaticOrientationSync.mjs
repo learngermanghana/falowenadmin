@@ -6,7 +6,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const functionsPath = path.join(root, "functions/index.js");
 let content = fs.readFileSync(functionsPath, "utf8");
 
-const firestoreTriggerPattern = /const \\{ ([^}]+) \\} = require\\("firebase-functions\\/v2\\/firestore"\\);/;
+const firestoreTriggerPattern = /const \{ ([^}]+) \} = require\("firebase-functions\/v2\/firestore"\);/;
 const firestoreMatch = content.match(firestoreTriggerPattern);
 if (!firestoreMatch) {
   throw new Error("Automatic orientation sync patch could not find the Firestore trigger import.");
