@@ -259,14 +259,15 @@ const A2_KNOWLEDGE = {
     },
   },
   "A2-9.24": {
-    title: "Reiseziele haben unterschiedliche Präpositionen",
-    textDe: "Bei Reisezielen hängt die Präposition davon ab, wie der Ortsname gebraucht wird. Vor vielen Städten und Ländern ohne Artikel steht nach: nach Italien, nach Accra. Länder mit Artikel brauchen oft in + Akkusativ: in die Schweiz, in die Türkei. Für Meer, See oder bestimmte Orte benutzt man häufig an oder in. Eine Reiseplanung verbindet Ziel, Transport, Unterkunft, Aktivitäten und Vorbereitung.",
-    checks: ["Wann benutzt man oft nach?", "Warum heißt es in die Schweiz?", "Welche fünf Teile kann eine Reiseplanung enthalten?"],
+    title: "Urlaubspläne mit Grund, Bedingung und Zweck",
+    textDe: "Beim Planen eines Urlaubs reicht es nicht nur zu sagen, wohin man fährt. Mit weil erklärt man einen Grund: „Ich fahre nach Hamburg, weil ich den Hafen sehen möchte.“ Mit wenn beschreibt man eine Bedingung oder typische Situation: „Wenn das Wetter gut ist, gehe ich an den Strand.“ Falls passt gut zu einer möglichen, unsicheren Bedingung: „Falls es regnet, besuche ich ein Museum.“ Mit um ... zu nennt man einen Zweck: „Ich buche früh, um Geld zu sparen.“ Nach weil, wenn und falls steht das konjugierte Verb im Nebensatz am Ende.",
+    checks: ["Wo steht das konjugierte Verb nach weil, wenn und falls?", "Wann passt falls besser als wenn?", "Wann benutzt man um ... zu?"],
+    answers: ["Am Ende des Nebensatzes.", "Wenn die Bedingung nur möglich oder unsicher ist.", "Wenn man den Zweck einer Handlung nennt und das Subjekt gleich bleibt."],
     activity: {
-      title: "Sortiere die Reiseziele",
-      instruction: "Ordnet die Ziele zu nach, in oder an.",
-      prompts: ["Berlin", "die Schweiz", "das Meer"],
-      modelItems: ["nach Berlin", "in die Schweiz", "ans Meer"],
+      title: "Urlaubsplan verbinden",
+      instruction: "Verbindet die Ideen mit weil, wenn/falls oder um ... zu.",
+      prompts: ["Ich fahre nach Hamburg. Ich möchte den Hafen sehen.", "Es regnet. Ich besuche ein Museum.", "Ich buche früh. Ich möchte Geld sparen."],
+      modelItems: ["Ich fahre nach Hamburg, weil ich den Hafen sehen möchte.", "Wenn es regnet, besuche ich ein Museum. / Falls es regnet, besuche ich ein Museum.", "Ich buche früh, um Geld zu sparen."],
     },
   },
   "A2-9.25": {
