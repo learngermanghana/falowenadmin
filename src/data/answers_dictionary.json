@@ -3389,7 +3389,11 @@
         "Answer2": "A) ein ganzes Dorf von modernen Energien leben kann.",
         "Answer3": "C) muss die Bevölkerung dafür sein."
       },
-      "teil4": {}
+      "teil4": {
+        "Answer1": "B) es ein neues Tourismus-Angebot gibt.",
+        "Answer2": "B) muss man nicht sportlich sein.",
+        "Answer3": "C) mehr Velo-Touristen in die Region kommen."
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1jIci1aX6N68DhttbtTg1yLF2ighuNIyYNTtSLz_OEjc/edit",
@@ -3397,9 +3401,7 @@
     "assignment_id": "B1-6.19",
     "expectedParts": [
       "teil2",
-      "teil3"
-    ],
-    "excludedParts": [
+      "teil3",
       "teil4"
     ],
     "writingParts": [
@@ -3409,7 +3411,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3424,6 +3427,12 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil4": {
+        "label": "Teil 4 Lesen",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Teil 4 is the preserved second reading task for this lesson. Grade it against the reference answers in answers."
       }
     }
   },
@@ -3532,9 +3541,11 @@
         "Answer5": "C) Stadtrundfahrten"
       },
       "teil4": {
-        "Answer1": "D) Zeugnisse und Anschreiben",
-        "Answer2": "A) Man lernt den Arbeitgeber kennen.",
-        "Answer3": "C) Man kann sich bei der nächsten offenen Stelle bewerben."
+        "Answer1": "D) im Supermarkt",
+        "Answer2": "B) Name, Alter, Wohnort",
+        "Answer3": "D) Zeugnisse und Anschreiben",
+        "Answer4": "A) Man lernt den Arbeitgeber kennen.",
+        "Answer5": "C) Man kann sich bei der nächsten offenen Stelle bewerben."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/gviz/tq?tqx=out:html&sheet=Key",
