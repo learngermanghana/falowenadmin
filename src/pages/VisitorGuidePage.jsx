@@ -15,6 +15,7 @@ const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const DEFAULT_SIGNUP_URL = "https://www.falowen.app/signup";
 const PRESENTATION_TOTAL = 10;
 const SAVED_GUIDES_KEY = "falowenVisitorGuides.v1";
+const DRAFT_GUIDE_KEY = "falowenVisitorGuideDraft.v1";
 const GUIDE_STATUSES = ["Interested", "Trial started", "Registered", "Not proceeding"];
 
 function classKey(klass = {}) {
@@ -109,6 +110,21 @@ function writeSavedGuides(guides) {
   window.localStorage.setItem(SAVED_GUIDES_KEY, JSON.stringify(guides));
 }
 
+function readDraftGuide() {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(DRAFT_GUIDE_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeDraftGuide(guide) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(DRAFT_GUIDE_KEY, JSON.stringify(guide));
+}
+
 function readVisitorGuideLinkContext() {
   if (typeof window === "undefined") return {};
   const params = new URLSearchParams(window.location.search);
@@ -124,6 +140,18 @@ function readVisitorGuideLinkContext() {
     level: LEVELS.includes(level) ? level : "",
     learningPreference: LEARNING_PREFERENCES.includes(mode) ? mode : "",
     purpose: VISITOR_PURPOSES.includes(purpose) ? purpose : "",
+    programmeSnapshot: {
+      title: params.get("programme") || "",
+      fee: params.get("fee") || "",
+      start: params.get("start") || "",
+      end: params.get("end") || "",
+      meetings: params.get("meetings") || "",
+      venue: params.get("venue") || "",
+      mode: params.get("programmeMode") || "",
+      duration: params.get("duration") || "",
+      access: params.get("access") || "",
+      brochureUrl: params.get("brochure") || "",
+    },
   };
 }
 
@@ -137,6 +165,7 @@ export function buildVisitorGuideShareUrl({
   level,
   learningPreference,
   purpose,
+  programmeSnapshot = {},
 }) {
   const baseOrigin = origin || (typeof window !== "undefined" ? window.location.origin : "https://admin.falowen.app");
   const url = new URL("/visitor-guide/public", baseOrigin);
@@ -149,6 +178,16 @@ export function buildVisitorGuideShareUrl({
     level,
     mode: learningPreference,
     purpose,
+    programme: programmeSnapshot.title,
+    fee: programmeSnapshot.fee,
+    start: programmeSnapshot.start,
+    end: programmeSnapshot.end,
+    meetings: programmeSnapshot.meetings,
+    venue: programmeSnapshot.venue,
+    programmeMode: programmeSnapshot.mode,
+    duration: programmeSnapshot.duration,
+    access: programmeSnapshot.access,
+    brochure: programmeSnapshot.brochureUrl,
   };
   Object.entries(values).forEach(([key, value]) => {
     const clean = String(value || "").trim();
@@ -242,24 +281,30 @@ export default function VisitorGuidePage({ publicView = false }) {
     () => publicView ? readVisitorGuideLinkContext() : {},
     [publicView],
   );
+  const draftContext = useMemo(
+    () => publicView ? {} : readDraftGuide(),
+    [publicView],
+  );
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [classError, setClassError] = useState("");
-  const [visitorName, setVisitorName] = useState(linkContext.visitorName || "");
-  const [visitDate, setVisitDate] = useState(linkContext.visitDate || todayInputValue());
-  const [presenter, setPresenter] = useState(linkContext.presenter || profile.founder.name);
-  const [assistant, setAssistant] = useState(linkContext.assistant || profile.assistant.name);
-  const [selectedClassKey, setSelectedClassKey] = useState(linkContext.selectedClassKey || "");
-  const [level, setLevel] = useState(linkContext.level || "A1");
-  const [learningPreference, setLearningPreference] = useState(linkContext.learningPreference || "Hybrid");
-  const [purpose, setPurpose] = useState(linkContext.purpose || "General enquiry");
-  const [notes, setNotes] = useState("");
+  const [visitorName, setVisitorName] = useState(linkContext.visitorName || draftContext.visitorName || "");
+  const [visitDate, setVisitDate] = useState(linkContext.visitDate || draftContext.visitDate || todayInputValue());
+  const [presenter, setPresenter] = useState(linkContext.presenter || draftContext.presenter || profile.founder.name);
+  const [assistant, setAssistant] = useState(linkContext.assistant || draftContext.assistant || profile.assistant.name);
+  const [selectedClassKey, setSelectedClassKey] = useState(linkContext.selectedClassKey || draftContext.selectedClassKey || "");
+  const [level, setLevel] = useState(linkContext.level || draftContext.level || "A1");
+  const [learningPreference, setLearningPreference] = useState(linkContext.learningPreference || draftContext.learningPreference || "Hybrid");
+  const [purpose, setPurpose] = useState(linkContext.purpose || draftContext.purpose || "General enquiry");
+  const [notes, setNotes] = useState(publicView ? "" : (draftContext.notes || ""));
   const [copyState, setCopyState] = useState("");
   const [presenterMode, setPresenterMode] = useState(false);
   const [presenterPage, setPresenterPage] = useState(1);
   const [savedGuides, setSavedGuides] = useState(() => publicView ? [] : readSavedGuides());
   const [activeSavedId, setActiveSavedId] = useState("");
-  const [guideStatus, setGuideStatus] = useState("Interested");
+  const [guideStatus, setGuideStatus] = useState(
+    publicView || !GUIDE_STATUSES.includes(draftContext.status) ? "Interested" : draftContext.status,
+  );
 
   useEffect(() => {
     let active = true;
@@ -326,7 +371,53 @@ export default function VisitorGuidePage({ publicView = false }) {
     }
   }, [selectedClass]);
 
+  useEffect(() => {
+    if (publicView) return;
+    writeDraftGuide({
+      visitorName,
+      visitDate,
+      presenter,
+      assistant,
+      selectedClassKey,
+      level,
+      learningPreference,
+      purpose,
+      notes,
+      status: guideStatus,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [
+    publicView,
+    visitorName,
+    visitDate,
+    presenter,
+    assistant,
+    selectedClassKey,
+    level,
+    learningPreference,
+    purpose,
+    notes,
+    guideStatus,
+  ]);
+
   const programme = useMemo(() => {
+    const snapshot = publicView ? linkContext.programmeSnapshot : null;
+    if (snapshot?.title) {
+      return {
+        title: snapshot.title,
+        level,
+        fee: snapshot.fee || "Fee to be confirmed",
+        start: snapshot.start || "To be confirmed",
+        end: snapshot.end || "To be confirmed",
+        meetings: snapshot.meetings || "Schedule to be confirmed",
+        venue: snapshot.venue || "To be confirmed",
+        mode: snapshot.mode || learningPreference,
+        duration: snapshot.duration || "Approximately 10 weeks",
+        access: snapshot.access || "6 months of Falowen access with full payment",
+        brochureUrl: snapshot.brochureUrl || DEFAULT_SIGNUP_URL,
+      };
+    }
+
     const title = selectedClass ? classTitle(selectedClass) : `${level} German Programme`;
     const fee = selectedClass ? formatBrochureFee(selectedClass) : level === "A1" ? "GHS 2,800" : "GHS 3,000";
     const brochureUrl = selectedClass ? buildClassBrochureUrl(selectedClass) : DEFAULT_SIGNUP_URL;
@@ -343,7 +434,7 @@ export default function VisitorGuidePage({ publicView = false }) {
       access: "6 months of Falowen access with full payment",
       brochureUrl,
     };
-  }, [selectedClass, level, learningPreference]);
+  }, [selectedClass, level, learningPreference, publicView, linkContext.programmeSnapshot]);
 
   const preparedFor = visitorName.trim() || "Prospective student / family";
   const visitorNotes = notes.trim();
@@ -358,8 +449,9 @@ export default function VisitorGuidePage({ publicView = false }) {
       level,
       learningPreference,
       purpose,
+      programmeSnapshot: programme,
     }),
-    [visitorName, visitDate, presenter, assistant, selectedClassKey, level, learningPreference, purpose],
+    [visitorName, visitDate, presenter, assistant, selectedClassKey, level, learningPreference, purpose, programme],
   );
 
   const registrationUrl = useMemo(
@@ -561,7 +653,7 @@ export default function VisitorGuidePage({ publicView = false }) {
             <span>Generated visitor link</span>
             <input value={shareUrl} readOnly aria-label="Generated visitor guide link" />
           </label>
-          <p>Visit notes stay inside Admin and are not included in the public link.</p>
+          <p>Visit notes are kept privately in this Admin browser and are never included in the public visitor link.</p>
           <div className="visitor-guide-config-actions">
             <button type="button" onClick={copyShareLink}>Copy visitor link</button>
             <button type="button" onClick={startPresentation}>Start Presentation</button>
