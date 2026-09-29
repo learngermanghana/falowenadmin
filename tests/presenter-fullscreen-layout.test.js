@@ -105,3 +105,33 @@ test("Focus Mode shows the live class remaining time without timer settings", ()
   assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.presenter-focus-time\s*\{[\s\S]*top:\s*3\.45rem/);
   assert.doesNotMatch(css, /@media \(max-width: 700px\)[\s\S]*\.presenter-focus-time\s*\{[\s\S]*top:\s*0\.45rem/);
 });
+
+
+test("global Focus Mode teaching canvas reserves controls and prioritizes student-facing content", () => {
+  const a1 = read("src/components/A1GrammarPresenter.jsx");
+  const shared = read("src/components/TeachingSlidePresenter.jsx");
+  const css = read("src/components/TeachingSlidePresenter.css");
+
+  for (const source of [a1, shared]) {
+    assert.match(source, /presenter-title-long/);
+    assert.match(source, />Restore<\/button>/);
+  }
+
+  assert.match(a1, /ref=\{contentRef\}/);
+  assert.match(a1, /presenter-fit-\$\{fitMode\}/);
+  assert.match(a1, /ResizeObserver/);
+  assert.match(a1, /node\.scrollHeight > node\.clientHeight \+ 6/);
+  assert.match(a1, /setFitMode\("compact"\)/);
+  assert.match(a1, /setFitMode\("tight"\)/);
+  assert.match(a1, /presenter-teacher-instruction/);
+
+  assert.match(css, /global-focus-teaching-canvas/);
+  assert.match(css, /--focus-safe-top:/);
+  assert.match(css, /--focus-safe-bottom:/);
+  assert.match(css, /width:\s*min\(1180px, 100%\)/);
+  assert.match(css, /\.presenter-stage\.is-focus-mode\.presenter-title-long[\s\S]*font-size:/);
+  assert.match(css, /\.presenter-stage\.is-focus-mode \.presenter-teacher-instruction,[\s\S]*display:\s*none !important/);
+  assert.match(css, /\.presenter-stage\.is-focus-mode \.presenter-model-support small[\s\S]*display:\s*none !important/);
+  assert.match(css, /\.presenter-stage\.is-focus-mode \.presenter-question-reveal[\s\S]*justify-items:\s*center/);
+  assert.match(css, /\.presenter-focus-dock \.presenter-restore-control[\s\S]*font-size:\s*0\.68rem/);
+});
