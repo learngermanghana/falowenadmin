@@ -2631,3 +2631,187 @@
     padding: 0.36rem 0.58rem;
   }
 }
+
+
+/* global-focus-teaching-canvas */
+.presenter-stage.is-focus-mode {
+  --focus-safe-top: clamp(5.2rem, 9vh, 6.4rem);
+  --focus-safe-bottom: clamp(3.8rem, 7vh, 4.8rem);
+}
+
+.presenter-stage.is-focus-mode > .presenter-content {
+  box-sizing: border-box;
+  width: min(1180px, 100%);
+  max-width: 1180px;
+  margin-inline: auto;
+  padding:
+    var(--focus-safe-top)
+    clamp(1.4rem, 5vw, 4.5rem)
+    var(--focus-safe-bottom);
+  align-content: center;
+  justify-content: center;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.presenter-stage.is-focus-mode .presenter-content > h1,
+.presenter-stage.is-focus-mode .presenter-question-reveal > h1,
+.presenter-stage.is-focus-mode .presenter-knowledge-heading h1,
+.presenter-stage.is-focus-mode .presenter-lesson-summary-heading h1,
+.presenter-stage.is-focus-mode .presenter-corrections-heading h1 {
+  max-width: 18ch;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: clamp(2rem, 5vw, 4.4rem);
+  line-height: 1.02;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.presenter-stage.is-focus-mode.presenter-title-medium .presenter-content h1 {
+  font-size: clamp(1.9rem, 4.4vw, 3.8rem);
+}
+
+.presenter-stage.is-focus-mode.presenter-title-long .presenter-content h1 {
+  max-width: 24ch;
+  font-size: clamp(1.7rem, 3.8vw, 3.25rem);
+  line-height: 1.06;
+}
+
+.presenter-stage.is-focus-mode .presenter-question-reveal {
+  width: min(1080px, 100%);
+  margin: auto;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.presenter-stage.is-focus-mode .presenter-question {
+  max-width: 24ch;
+  margin-inline: auto;
+  font-size: clamp(2rem, 4.5vw, 4.35rem);
+  line-height: 1.12;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.presenter-stage.is-focus-mode .presenter-question-counter {
+  margin-bottom: 0.15rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-stage.is-focus-mode .presenter-question-actions {
+  justify-content: center;
+  margin-top: 0.55rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-teacher-note,
+.presenter-stage.is-focus-mode .presenter-practice-details,
+.presenter-stage.is-focus-mode .presenter-role-gap-note,
+.presenter-stage.is-focus-mode .presenter-teacher-instruction,
+.presenter-stage.is-focus-mode .presenter-model-support small {
+  display: none !important;
+}
+
+.presenter-stage.is-focus-mode .presenter-model-support {
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+.presenter-stage.is-focus-mode .presenter-content-intro,
+.presenter-stage.is-focus-mode .presenter-content-question-reveal,
+.presenter-stage.is-focus-mode .presenter-stage-questions,
+.presenter-stage.is-focus-mode .presenter-stage-focus {
+  align-content: center;
+  justify-content: center;
+}
+
+.presenter-stage.is-focus-mode .presenter-content-knowledge,
+.presenter-stage.is-focus-mode .presenter-content-vocabulary,
+.presenter-stage.is-focus-mode .presenter-content-flow,
+.presenter-stage.is-focus-mode .presenter-content-workbook,
+.presenter-stage.is-focus-mode .presenter-content-summary,
+.presenter-stage.is-focus-mode .presenter-content-correction-list,
+.presenter-stage.is-focus-mode .presenter-content-b1-grammar,
+.presenter-stage.is-focus-mode .presenter-content-b2-grammar,
+.presenter-stage.is-focus-mode .presenter-content-c1-grammar {
+  align-content: start;
+  justify-content: flex-start;
+}
+
+.presenter-stage.is-focus-mode .presenter-fit-compact {
+  --presenter-gap: 0.55rem;
+  --presenter-card-pad: 0.66rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-fit-tight {
+  --presenter-gap: 0.38rem;
+  --presenter-card-pad: 0.52rem;
+}
+
+.presenter-stage.is-focus-mode .presenter-fit-compact h1 {
+  font-size: clamp(1.65rem, 3.8vw, 3.35rem);
+}
+
+.presenter-stage.is-focus-mode .presenter-fit-tight h1 {
+  font-size: clamp(1.45rem, 3.25vw, 2.8rem);
+}
+
+.presenter-stage.is-focus-mode .presenter-content-pager {
+  position: absolute;
+  top: auto;
+  right: clamp(0.55rem, 1.4vw, 1rem);
+  bottom: calc(var(--focus-safe-bottom) + 0.15rem);
+  margin: 0;
+}
+
+.presenter-focus-dock {
+  gap: 0.2rem;
+  padding: 0.22rem;
+}
+
+.presenter-focus-dock span {
+  min-width: 2.25rem;
+  font-size: 0.68rem;
+}
+
+.presenter-focus-dock button {
+  min-width: 30px;
+  min-height: 29px;
+  padding: 0.28rem 0.42rem;
+  font-size: 0.68rem;
+}
+
+.presenter-focus-dock .presenter-restore-control {
+  min-width: auto;
+  padding-inline: 0.55rem;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 700px) {
+  .presenter-stage.is-focus-mode {
+    --focus-safe-top: 7.2rem;
+    --focus-safe-bottom: 3.5rem;
+  }
+
+  .presenter-stage.is-focus-mode > .presenter-content {
+    width: 100%;
+    padding:
+      var(--focus-safe-top)
+      1rem
+      var(--focus-safe-bottom);
+  }
+
+  .presenter-stage.is-focus-mode .presenter-content > h1,
+  .presenter-stage.is-focus-mode .presenter-question-reveal > h1 {
+    max-width: 22ch;
+    font-size: clamp(1.7rem, 8vw, 2.65rem);
+  }
+
+  .presenter-stage.is-focus-mode .presenter-question {
+    max-width: 22ch;
+    font-size: clamp(1.65rem, 7.5vw, 2.55rem);
+  }
+}
