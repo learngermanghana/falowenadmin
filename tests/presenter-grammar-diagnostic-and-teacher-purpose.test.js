@@ -49,13 +49,16 @@ test("A2 Day 24 checks Urlaub grammar through a real travel plan", () => {
   assert.deepEqual(
     grammar.items.map((item) => item.prompt),
     [
-      "Wohin möchtest du reisen und warum?",
-      "Welches Verkehrsmittel und welche Unterkunft wählst du?",
-      "Was musst du vor der Reise organisieren oder einpacken?",
+      "Du möchtest im Sommer nach Hamburg reisen. Warum? Antworte mit weil.",
+      "Im Urlaub kann das Wetter schlecht sein. Was machst du, wenn oder falls es regnet?",
+      "Du buchst das Hotel früh. Warum? Formuliere den Zweck mit um ... zu.",
     ],
   );
   assert.ok(grammar.items.every((item) => item.answerLabel === "Musterantwort"));
   assert.doesNotMatch(grammar.items.map((item) => item.prompt).join(" "), /nach Schweiz|Welche Grammatikregel/i);
+  assert.match(grammar.items[0].prompt, /weil/i);
+  assert.match(grammar.items[1].prompt, /wenn|falls/i);
+  assert.match(grammar.items[2].prompt, /um \.\.\. zu/i);
 });
 
 test("every A2-C2 Presenter stage has a student action and teacher action cue", () => {
