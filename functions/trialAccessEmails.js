@@ -36,6 +36,20 @@ function studentTrialStatus(student = {}) {
 const TRIAL_ELIGIBLE_STATUSES = new Set(["pending", "trial active", "active", "trial expired"]);
 const EXPIRED_TRIAL_STATUSES = new Set(["expired", "trial expired"]);
 
+function trialEmailDeliveryMode(runtimeConfig = {}, env = process.env) {
+  const trialConfig = runtimeConfig.trial_emails || runtimeConfig.trialEmails || {};
+  return lower(
+    env.TRIAL_EMAIL_DELIVERY_MODE
+    || trialConfig.delivery_mode
+    || trialConfig.deliveryMode
+    || "apps_script_native",
+  ).replace(/[\s-]+/g, "_");
+}
+
+function firebaseTrialEmailDeliveryEnabled(runtimeConfig = {}, env = process.env) {
+  return trialEmailDeliveryMode(runtimeConfig, env) === "firebase";
+}
+
 function studentRole(student = {}) {
   return lower(student.role);
 }
@@ -397,6 +411,9 @@ async function processTrialAccessEmail({
   now = new Date(),
   fetchImpl = fetch,
 } = {}) {
+  if (!firebaseTrialEmailDeliveryEnabled(runtimeConfig)) {
+    return { sent: false, reason: "apps_script_native" };
+  }
   const nowDate = asDate(now) || new Date();
   const stage = trialEmailStage(student, nowDate.getTime());
   if (!stage) return { sent: false, reason: "not_due" };
@@ -477,6 +494,20 @@ async function runTrialAccessEmailJob({
   now = new Date(),
   fetchImpl = fetch,
 } = {}) {
+  if (!firebaseTrialEmailDeliveryEnabled(runtimeConfig)) {
+    return {
+      disabled: true,
+      deliveryMode: trialEmailDeliveryMode(runtimeConfig),
+      checked: 0,
+      candidates: 0,
+      due: 0,
+      sent: 0,
+      skipped: 0,
+      skipReasons: {},
+      results: [],
+    };
+  }
+
   // Scan all students so this scheduled worker can recover a missed Day-0
   // trigger. Eligibility remains strict: unpaid trial students only.
   const snapshot = await db.collection("students").get();
@@ -631,6 +662,8 @@ module.exports = {
     day1LessonUrl,
     formatDate,
     resolveTrialEmailConfig,
+    trialEmailDeliveryMode,
+    firebaseTrialEmailDeliveryEnabled,
     rowForTrialAccessEmail,
     stageActionUrl,
     stageButtonLabel,
