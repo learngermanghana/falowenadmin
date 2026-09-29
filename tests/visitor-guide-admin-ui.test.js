@@ -46,13 +46,17 @@ test("visitor guide generates a public link instead of requiring a PDF", () => {
   assert.match(page, /Academic assistant/);
   assert.match(page, /Selected class/);
   assert.match(page, /Course end/);
-  assert.match(page, /How Falowen supports the student/);
+  assert.match(page, /See how the Falowen learning experience is organised/);
   assert.match(page, /What happens during the course/);
   assert.match(page, /Learning continues after the final class/);
   assert.match(page, /Hybrid learning:/);
   assert.match(page, /Advanced teaching slides:/);
   assert.match(page, /Six months of Falowen access:/);
   assert.match(page, /buildVisitorGuideShareUrl/);
+  assert.match(page, /programmeSnapshot/);
+  assert.match(page, /params\.get\("programme"\)/);
+  assert.match(page, /DRAFT_GUIDE_KEY/);
+  assert.match(page, /writeDraftGuide/);
   assert.match(page, /\/visitor-guide\/public/);
   assert.match(page, /Copy visitor link/);
   assert.match(page, /Open visitor guide/);
@@ -71,7 +75,7 @@ test("visitor guide generates a public link instead of requiring a PDF", () => {
   assert.match(page, /Register \/ choose payment/);
   assert.match(page, /Start 7-day trial/);
   assert.match(page, /The visitor does not need an Admin login/);
-  assert.match(page, /Visit notes stay inside Admin and are not included in the public link/);
+  assert.match(page, /Visit notes are kept privately in this Admin browser and are never included in the public visitor link/);
   assert.doesNotMatch(page, /params\.set\("notes"/);
   assert.match(page, /QRCodeSVG/);
 
