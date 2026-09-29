@@ -9,11 +9,18 @@ function replaceOnce(input, before, after, label) {
   return input.replace(before, after);
 }
 
-source = replaceOnce(
-  source,
-  'const { onDocumentCreated } = require("firebase-functions/v2/firestore");',
-  'const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");',
-  "Firestore trigger import",
+const firestoreTriggerPattern = /const \\{ ([^}]+) \\} = require\\("firebase-functions\\/v2\\/firestore"\\);/;
+const firestoreMatch = source.match(firestoreTriggerPattern);
+if (!firestoreMatch) throw new Error("Firestore trigger import anchor changed; update patchStudentPaymentUpdateEmails.mjs");
+const firestoreTriggers = [...new Set(
+  firestoreMatch[1].split(",").map((value) => value.trim()).filter(Boolean),
+)];
+for (const trigger of ["onDocumentCreated", "onDocumentUpdated"]) {
+  if (!firestoreTriggers.includes(trigger)) firestoreTriggers.push(trigger);
+}
+source = source.replace(
+  firestoreTriggerPattern,
+  'const { ' + firestoreTriggers.join(", ") + ' } = require("firebase-functions/v2/firestore");',
 );
 
 source = replaceOnce(
