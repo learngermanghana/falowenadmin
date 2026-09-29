@@ -32,12 +32,14 @@ const EXPECTED_SOURCE_BLOBS = Object.freeze({
 
 async function currentBlobSha(path) {
   const url = `https://api.github.com/repos/${LEARNER_REPO}/contents/${path}?ref=main`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "falowenadmin-curriculum-parity-audit",
-    },
-  });
+  const token = String(process.env.GITHUB_TOKEN || "").trim();
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "falowenadmin-curriculum-parity-audit",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(url, { headers });
   if (!response.ok) {
     throw new Error(`Unable to inspect learner source ${path}: HTTP ${response.status}`);
   }
