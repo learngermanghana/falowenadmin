@@ -57,3 +57,48 @@ test("validator rejects unknown answer matching modes", () => {
   });
   assert.ok(result.errors.some((item) => item.code === "unknown-matching-mode"));
 });
+
+
+const answerEntryByAssignmentId = (assignmentId) =>
+  Object.values(answersDictionary).find(
+    (entry) => String(entry?.assignment_id || "").toUpperCase() === assignmentId.toUpperCase(),
+  );
+
+test("A2 Day 4 reference answers match the current Treffen am Samstag Lesen", () => {
+  const entry = answerEntryByAssignmentId("A2-2.4");
+  assert.deepEqual(entry?.answers?.teil3, {
+    Answer1: "A) Im Stadtpark",
+    Answer2: "C) Es soll regnen.",
+    Answer3: "B) Neben der U-Bahn-Station Rathaus",
+    Answer4: "C) Um 15:30 Uhr",
+    Answer5: "B) Er reserviert einen Tisch.",
+  });
+});
+
+test("B1 Day 7 keeps all twelve Lesen answers separate from the five Hören answers", () => {
+  const entry = answerEntryByAssignmentId("B1-3.7");
+  assert.equal(Object.keys(entry?.answers?.teil3 || {}).length, 12);
+  assert.equal(entry?.answers?.teil3?.Answer8, "F) Anzeige F");
+  assert.equal(entry?.answers?.teil3?.Answer12, "E) Anzeige E");
+  assert.equal(Object.keys(entry?.answers?.teil4 || {}).length, 5);
+  assert.equal(entry?.answers?.teil4?.Answer1, "B) In vielen Fertiggerichten und Softdrinks");
+});
+
+test("B1 preserved reading fallbacks are split into the parts students actually submit", () => {
+  const day19 = answerEntryByAssignmentId("B1-6.19");
+  assert.deepEqual(day19?.expectedParts, ["teil2", "teil3", "teil4"]);
+  assert.equal(Object.keys(day19?.answers?.teil3 || {}).length, 3);
+  assert.equal(Object.keys(day19?.answers?.teil4 || {}).length, 3);
+
+  const day22 = answerEntryByAssignmentId("B1-7.22");
+  assert.equal(Object.keys(day22?.answers?.teil3 || {}).length, 5);
+  assert.equal(Object.keys(day22?.answers?.teil4 || {}).length, 5);
+});
+
+test("B1 Day 11 current Lesen uses option A for the social-interaction risk question", () => {
+  const entry = answerEntryByAssignmentId("B1-4.11");
+  assert.equal(
+    entry?.answers?.teil3?.Answer5,
+    "A) Verlust echter sozialer Interaktion und Bewegung",
+  );
+});
