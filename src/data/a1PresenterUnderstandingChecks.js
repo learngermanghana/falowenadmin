@@ -58,6 +58,19 @@ function languagePointReflection(point, lessonLabel) {
 }
 
 const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  "A1-5": [
+    check("What is a definite article? Give one German example.", "A definite article refers to a specific noun; for example, der Hund, die Lampe or das Buch."),
+    check("What are the nominative definite articles for masculine, feminine, neuter and plural nouns?", "Masculine der, feminine die, neuter das and plural die."),
+    check("How can you identify the nominative in a sentence?", "Find who or what performs the action. Ask: Who or what does the action?"),
+    check("In ‘Der Mann kauft einen Apfel’, who is doing the action and what case is it?", "Der Mann is doing the action, so it is nominative."),
+    check("How can you identify the accusative in a simple sentence?", "Find the direct object: who or what receives the action. Ask Wen? or Was? after the verb."),
+    check("In ‘Der Mann kauft einen Apfel’, what is being bought and what case is it?", "Einen Apfel is being bought, so it is accusative."),
+    check("What happens to masculine der in the accusative?", "Der changes to den: der Hund → den Hund."),
+    check("Do feminine die, neuter das and plural die change in the accusative?", "No. They remain die, das and die."),
+    check("Fill in the articles: ‘___ Mann sieht ___ Hund.’ Why are they different?", "Der Mann sieht den Hund. Der Mann performs the action; den Hund receives it."),
+    check("For ‘der Hund’, give the definite article in nominative and accusative.", "Nominative der Hund; accusative den Hund."),
+    check("Make a short sentence with a masculine object. Use sehen or kaufen. Identify its nominative and accusative parts.", "For example: Der Mann sieht den Hund. Der Mann is nominative; den Hund is accusative. Also accept a correct sentence with kaufen.", "The object must be masculine and use den or einen."),
+  ],
   "A1-4": [
     check(
       "Change the subject to er: ‘Ich komme aus Frankreich.’",
