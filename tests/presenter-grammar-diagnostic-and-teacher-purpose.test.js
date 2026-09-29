@@ -21,11 +21,41 @@ test("A2 and B1 use one compact grammar diagnostic instead of reteaching grammar
         `${slide.assignmentId} should keep the recognise-check-apply progression`,
       );
       assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${slide.assignmentId} needs teacher answer keys`);
+      assert.doesNotMatch(grammar.instruction, /erkennen\s*→\s*korrigieren/i, `${slide.assignmentId} should not use the old rule-name diagnostic flow`);
+      const topicalQuestions = new Set((slide.studentQuestionsDe || []).map((item) => String(item || "").trim()).filter(Boolean));
+      if (topicalQuestions.size >= 3) {
+        assert.ok(
+          grammar.items.every((item) => topicalQuestions.has(String(item.prompt || "").trim())),
+          `${slide.assignmentId} grammar checks should use the lesson topic instead of generic rule-name prompts`,
+        );
+      }
+      assert.ok(
+        grammar.items.every((item) => !/Welche Grammatikregel aus der heutigen Stunde|Korrigiere die Form oder den Satz/i.test(item.prompt)),
+        `${slide.assignmentId} still exposes a generic grammar-system prompt`,
+      );
       assert.equal(ids.includes("grammar"), false, `${slide.assignmentId} should not keep the old grammar teaching slide`);
       assert.equal(ids.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
       assert.equal(ids.includes("mistakes"), false, `${slide.assignmentId} should not keep a separate mistakes slide`);
     }
   }
+});
+
+test("A2 Day 24 checks Urlaub grammar through a real travel plan", () => {
+  const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-9.24");
+  const grammar = buildTeachingPresenterStages(slide, slide.topic)
+    .find((stage) => stage.id === "grammar-check");
+
+  assert.equal(grammar.title, "Grammatik im Thema anwenden");
+  assert.deepEqual(
+    grammar.items.map((item) => item.prompt),
+    [
+      "Wohin möchtest du reisen und warum?",
+      "Welches Verkehrsmittel und welche Unterkunft wählst du?",
+      "Was musst du vor der Reise organisieren oder einpacken?",
+    ],
+  );
+  assert.ok(grammar.items.every((item) => item.answerLabel === "Musterantwort"));
+  assert.doesNotMatch(grammar.items.map((item) => item.prompt).join(" "), /nach Schweiz|Welche Grammatikregel/i);
 });
 
 test("every A2-C2 Presenter stage has a student action and teacher action cue", () => {
