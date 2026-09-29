@@ -66,14 +66,22 @@ test("A1-5.9 Goethe speaking has ten distinct class questions plus one separate 
   assert.ok(classChecks.some((item) => /frage|sprechen|bitte|partner|W-question|yes\/no/i.test(`${item.questionDe} ${item.answerDe}`)));
 });
 
-test("other A1 lessons also build ten distinct class questions from their own lesson material", () => {
+test("A1-12.3 uses ten short jumbled-word letter-writing checks plus one exit check", () => {
   const resolved = resolvedChecksFor("A1-12.3");
   const classChecks = resolved.slice(0, -1);
+  const exitCheck = resolved.at(-1);
 
   assert.equal(classChecks.length, 10);
   assert.equal(resolved.length, 11);
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
-  assert.ok(classChecks.some((item) => /Sehr geehrte|formal|message|letter|Schreiben/i.test(`${item.questionDe} ${item.answerDe}`)));
+  assert.ok(classChecks.every((item) => item.questionDe.startsWith("Ordne die Wörter:")));
+  assert.ok(classChecks.every((item) => {
+    const words = item.questionDe.split(":").slice(1).join(":").split("·").map((word) => word.trim()).filter(Boolean);
+    return words.length <= 5;
+  }));
+  assert.match(classChecks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n"), /Geburtstag|Einladung|Party|Samstag|zurück/i);
+  assert.match(exitCheck.questionDe, /^Exit-Check: Ordne die Wörter:/);
+  assert.equal(exitCheck.answerDe, "Viele liebe Grüße.");
 });
 
 test("A1 presenter keeps class participation available from the first slide and switches to unique questions for the understanding check", () => {
