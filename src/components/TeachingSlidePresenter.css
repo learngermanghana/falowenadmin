@@ -286,8 +286,24 @@
 
 /* Fullscreen safety: keep the content row bounded and make every line reachable. */
 .presenter-stage {
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* Header, participation controls, lesson content and footer need separate rows. */
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   min-height: 0;
+}
+
+.presenter-stage:not(.is-focus-mode) > .presenter-participation-dock {
+  min-height: 0;
+  max-height: min(28vh, 210px);
+  overflow-y: auto;
+}
+
+.presenter-stage:not(.is-focus-mode) > .presenter-content {
+  grid-row: 3;
+  min-height: 0;
+}
+
+.presenter-stage:not(.is-focus-mode) > .presenter-footer {
+  grid-row: 4;
 }
 
 .presenter-content {
