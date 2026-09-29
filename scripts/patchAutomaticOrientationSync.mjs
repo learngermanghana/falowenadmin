@@ -6,16 +6,21 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const functionsPath = path.join(root, "functions/index.js");
 let content = fs.readFileSync(functionsPath, "utf8");
 
-const firestoreImport = 'const { onDocumentCreated } = require("firebase-functions/v2/firestore");';
-const updatedFirestoreImport = 'const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");';
-const expandedFirestoreImport = 'const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require("firebase-functions/v2/firestore");';
-if (content.includes(firestoreImport)) {
-  content = content.replace(firestoreImport, expandedFirestoreImport);
-} else if (content.includes(updatedFirestoreImport)) {
-  content = content.replace(updatedFirestoreImport, expandedFirestoreImport);
-} else if (!content.includes(expandedFirestoreImport)) {
+const firestoreTriggerPattern = /const \{ ([^}]+) \} = require\("firebase-functions\/v2\/firestore"\);/;
+const firestoreMatch = content.match(firestoreTriggerPattern);
+if (!firestoreMatch) {
   throw new Error("Automatic orientation sync patch could not find the Firestore trigger import.");
 }
+const firestoreTriggers = [...new Set(
+  firestoreMatch[1].split(",").map((value) => value.trim()).filter(Boolean),
+)];
+for (const trigger of ["onDocumentCreated", "onDocumentUpdated", "onDocumentDeleted"]) {
+  if (!firestoreTriggers.includes(trigger)) firestoreTriggers.push(trigger);
+}
+content = content.replace(
+  firestoreTriggerPattern,
+  'const { ' + firestoreTriggers.join(", ") + ' } = require("firebase-functions/v2/firestore");',
+);
 
 const legacyHelperRequire = 'const { createOrientationAutoSyncHandler } = require("./orientationAutoSync");\n';
 const helperRequire = 'const { createOrientationAutoSyncHandler, hasQualifyingPayment } = require("./orientationAutoSync");\n';

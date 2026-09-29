@@ -7,7 +7,7 @@ function text(value) {
 }
 
 function comparable(value) {
-  return text(value).toLowerCase().replace(/\s+/g, " ");
+  return text(value).toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 }
 
 function resolveLifecycleWebhookConfig(runtimeConfig = {}, env = process.env) {
@@ -141,7 +141,14 @@ function expiredPendingReason(student = {}, now = Date.now()) {
   if (hasQualifyingPayment(student)) return "has_payment";
 
   const status = studentStatus(student);
-  if (!["pending", "trial_expired"].includes(status)) return "not_pending";
+  const trialStatus = comparable(student.trialStatus || student.trial_status);
+  if (["converted", "paid"].includes(trialStatus)) return "has_payment";
+
+  let effectiveStatus = status;
+  if (["expired", "trial expired"].includes(trialStatus)) effectiveStatus = "trial expired";
+  else if (!effectiveStatus && ["pending", "trial active", "active"].includes(trialStatus)) effectiveStatus = trialStatus;
+
+  if (!["pending", "trial active", "active", "trial expired"].includes(effectiveStatus)) return "not_pending";
 
   const startedAt = pendingStartedAtMillis(student);
   if (!startedAt) return "missing_start_date";
@@ -151,7 +158,7 @@ function expiredPendingReason(student = {}, now = Date.now()) {
   const purgeAt = trialPurgeAtMillis(student);
   if (!expiredAt || !purgeAt) return "missing_start_date";
   if (now < expiredAt) return "trial_active";
-  if (now < purgeAt) return status === "trial_expired" ? "retention_window" : "needs_block";
+  if (now < purgeAt) return effectiveStatus === "trial expired" ? "retention_window" : "needs_block";
   return "purge_due";
 }
 

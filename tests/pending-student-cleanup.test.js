@@ -108,8 +108,16 @@ test("missing registration date is skipped rather than guessed", () => {
   assert.equal(isExpiredPendingStudent(student, NOW), false);
 });
 
-test("only pending enrollment status can be deleted by this cleanup", () => {
-  assert.equal(isExpiredPendingStudent(pendingStudent({ status: "active" }), NOW), false);
+test("trial_active and active unpaid statuses remain in the trial lifecycle", () => {
+  assert.equal(expiredPendingReason(pendingStudent({ status: "trial_active" }), NOW), "needs_block");
+  assert.equal(expiredPendingReason(pendingStudent({ status: "active" }), NOW), "needs_block");
+  assert.equal(isExpiredPendingStudent(pendingStudent({
+    status: "trial_active",
+    createdAt: new Date(NOW - TRIAL_DURATION_MS - TRIAL_RETENTION_MS),
+  }), NOW), true);
+});
+
+test("inactive and paid enrollment statuses remain outside unpaid trial cleanup", () => {
   assert.equal(isExpiredPendingStudent(pendingStudent({ status: "inactive" }), NOW), false);
   assert.equal(isExpiredPendingStudent(pendingStudent({ status: "Paid" }), NOW), false);
 });

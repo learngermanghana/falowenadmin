@@ -4,7 +4,11 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { TRIAL_DURATION_MS, TRIAL_RETENTION_MS } = require("../functions/pendingStudentCleanup.js");
-const { createTrialAccessWelcomeEmailTrigger, _test } = require("../functions/trialAccessEmails.js");
+const {
+  createTrialAccessWelcomeEmailTrigger,
+  runTrialAccessEmailJob,
+  _test,
+} = require("../functions/trialAccessEmails.js");
 
 const {
   ACCOUNT_URL,
@@ -14,6 +18,7 @@ const {
   day1LessonUrl,
   resolveTrialEmailConfig,
   rowForTrialAccessEmail,
+  trialEmailEligibility,
   trialEmailStage,
 } = _test;
 
@@ -34,7 +39,7 @@ function student(overrides = {}) {
   };
 }
 
-test("trial welcome trigger sends from the initial trial-eligible student create", async () => {
+test("trial welcome trigger sends when a student write becomes trial-eligible", async () => {
   let registered = null;
   const sendWrites = [];
   const sendRef = {
@@ -94,7 +99,7 @@ test("trial welcome trigger sends from the initial trial-eligible student create
         },
       };
     },
-    onDocumentCreated(options, handler) {
+    onDocumentWritten(options, handler) {
       registered = { options, handler };
       return "registered";
     },
@@ -107,15 +112,18 @@ test("trial welcome trigger sends from the initial trial-eligible student create
   const result = await registered.handler({
     params: { studentId: "DorothyQuayson843" },
     data: {
-      id: "DorothyQuayson843",
-      data: () => student({
-        name: "Dorothy Quayson",
-        email: "dorothy@example.com",
-        status: "pending",
-        trialStatus: "active",
-        trialStartedAt: new Date(),
-        createdAt: undefined,
-      }),
+      after: {
+        id: "DorothyQuayson843",
+        exists: true,
+        data: () => student({
+          name: "Dorothy Quayson",
+          email: "dorothy@example.com",
+          status: "trial_active",
+          trialStatus: "active",
+          trialStartedAt: new Date(),
+          createdAt: undefined,
+        }),
+      },
     },
   });
 
@@ -137,6 +145,126 @@ test("trial email stages follow signup, day 3, day 6 and expiry", () => {
   assert.equal(trialEmailStage(student({ createdAt: new Date(NOW - 3 * DAY_MS) }), NOW), "day3");
   assert.equal(trialEmailStage(student({ createdAt: new Date(NOW - 6 * DAY_MS) }), NOW), "day6");
   assert.equal(trialEmailStage(student({ createdAt: new Date(NOW - TRIAL_DURATION_MS) }), NOW), "expired");
+});
+
+test("trial_active and active unpaid students stay in the trial email lifecycle", () => {
+  assert.equal(
+    trialEmailStage(student({ status: "trial_active", createdAt: new Date(NOW - 3 * DAY_MS) }), NOW),
+    "day3",
+  );
+  assert.equal(
+    trialEmailStage(student({ status: "active", createdAt: new Date(NOW - 6 * DAY_MS) }), NOW),
+    "day6",
+  );
+});
+
+test("enrollDate can recover a missed Day-0 welcome when createdAt is absent", () => {
+  assert.equal(
+    trialEmailStage(student({
+      status: "trial_active",
+      createdAt: undefined,
+      enrollDate: new Date(NOW).toISOString(),
+    }), NOW),
+    "welcome",
+  );
+});
+
+test("trial eligibility exposes a concrete skip reason for diagnostics", () => {
+  assert.deepEqual(
+    trialEmailEligibility(student({
+      status: "trial_active",
+      createdAt: undefined,
+      trialStartedAt: undefined,
+      enrollDate: undefined,
+      registrationDate: undefined,
+    }), NOW).reason,
+    "missing_start_date",
+  );
+});
+
+test("scheduled trial worker recovers a missing Day-0 welcome", async () => {
+  const sendWrites = [];
+  const sendRef = {
+    async set(payload) {
+      sendWrites.push(payload);
+    },
+  };
+  const trialStudent = student({
+    status: "trial_active",
+    trialStatus: "active",
+    createdAt: undefined,
+    enrollDate: new Date(NOW).toISOString(),
+    email: "recover@example.com",
+  });
+  const db = {
+    collection(name) {
+      if (name === "students") {
+        return {
+          async get() {
+            return {
+              size: 1,
+              docs: [{ id: "recover-1", data: () => trialStudent }],
+            };
+          },
+        };
+      }
+      if (name === "trialAccessEmailSends") {
+        return { doc: () => sendRef };
+      }
+      if (name === "trialAccessEmailDiagnostics") {
+        return { doc: () => ({ async set() {} }) };
+      }
+      throw new Error(`Unexpected collection ${name}`);
+    },
+    async runTransaction(work) {
+      return work({
+        async get() {
+          return { exists: false, data: () => ({}) };
+        },
+        set() {},
+      });
+    },
+  };
+  const admin = {
+    firestore: {
+      FieldValue: {
+        serverTimestamp() {
+          return new Date();
+        },
+      },
+    },
+  };
+
+  const result = await runTrialAccessEmailJob({
+    db,
+    admin,
+    now: new Date(NOW),
+    runtimeConfig: {
+      communication: {
+        announcement_webhook_url: "https://script.google.com/macros/s/existing/exec",
+        announcement_webhook_token: "shared-secret",
+      },
+    },
+    fetchImpl: async (_url, options) => {
+      const payload = JSON.parse(options.body);
+      assert.equal(payload.rows[0].email, "recover@example.com");
+      assert.equal(payload.rows[0].email_type, "trial_access_welcome");
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return { ok: true, count: 1 };
+        },
+      };
+    },
+  });
+
+  assert.equal(result.checked, 1);
+  assert.equal(result.candidates, 1);
+  assert.equal(result.due, 1);
+  assert.equal(result.sent, 1);
+  assert.equal(result.skipped, 0);
+  assert.equal(sendWrites.at(-1).status, "sent");
 });
 
 test("trial-expired students get the expiry email during retention", () => {

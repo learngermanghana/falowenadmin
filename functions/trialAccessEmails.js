@@ -21,9 +21,20 @@ function lower(value) {
   return text(value).toLowerCase();
 }
 
-function studentStatus(student = {}) {
-  return lower(student.status || student.studentStatus || student.enrollmentStatus);
+function normalizedStatus(value) {
+  return lower(value).replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 }
+
+function studentStatus(student = {}) {
+  return normalizedStatus(student.status || student.studentStatus || student.enrollmentStatus);
+}
+
+function studentTrialStatus(student = {}) {
+  return normalizedStatus(student.trialStatus || student.trial_status);
+}
+
+const TRIAL_ELIGIBLE_STATUSES = new Set(["pending", "trial active", "active", "trial expired"]);
+const EXPIRED_TRIAL_STATUSES = new Set(["expired", "trial expired"]);
 
 function studentRole(student = {}) {
   return lower(student.role);
@@ -139,28 +150,68 @@ function resolveTrialEmailConfig(runtimeConfig = {}, env = process.env) {
   };
 }
 
-function trialEmailStage(student = {}, now = Date.now()) {
+function trialEmailEligibility(student = {}, now = Date.now()) {
   const role = studentRole(student);
-  if (role && role !== "student") return "";
-  if (hasQualifyingPayment(student)) return "";
-  if (!studentEmail(student)) return "";
+  if (role && role !== "student") return { stage: "", reason: "not_student" };
+  if (hasQualifyingPayment(student)) return { stage: "", reason: "has_payment" };
+  if (!studentEmail(student)) return { stage: "", reason: "missing_email" };
 
   const status = studentStatus(student);
-  if (!["pending", "trial_expired"].includes(status)) return "";
+  const trialStatus = studentTrialStatus(student);
+  if (["converted", "paid"].includes(trialStatus)) {
+    return { stage: "", reason: "trial_converted", status, trialStatus };
+  }
+
+  let effectiveStatus = status;
+  if (EXPIRED_TRIAL_STATUSES.has(trialStatus)) effectiveStatus = "trial expired";
+  else if (!effectiveStatus && TRIAL_ELIGIBLE_STATUSES.has(trialStatus)) effectiveStatus = trialStatus;
+
+  if (!TRIAL_ELIGIBLE_STATUSES.has(effectiveStatus)) {
+    return {
+      stage: "",
+      reason: effectiveStatus ? `status_${effectiveStatus.replace(/\s+/g, "_")}` : "missing_status",
+      status: effectiveStatus,
+      trialStatus,
+    };
+  }
 
   const startedAt = pendingStartedAtMillis(student);
-  if (!startedAt || startedAt > now) return "";
+  if (!startedAt) {
+    return { stage: "", reason: "missing_start_date", status: effectiveStatus, trialStatus };
+  }
+  if (startedAt > now) {
+    return { stage: "", reason: "future_start_date", status: effectiveStatus, trialStatus };
+  }
 
   const purgeAt = trialPurgeAtMillis(student);
-  if (purgeAt && now >= purgeAt) return "";
+  if (purgeAt && now >= purgeAt) {
+    return { stage: "", reason: "purge_due", status: effectiveStatus, trialStatus };
+  }
 
   const expiredAt = trialExpiredAtMillis(student) || (startedAt + TRIAL_DURATION_MS);
-  if (status === "trial_expired" || now >= expiredAt) return "expired";
+  if (effectiveStatus === "trial expired" || now >= expiredAt) {
+    return { stage: "expired", reason: "due", status: effectiveStatus, trialStatus };
+  }
 
   const elapsed = now - startedAt;
-  if (elapsed >= 6 * DAY_MS) return "day6";
-  if (elapsed >= 3 * DAY_MS) return "day3";
-  return "welcome";
+  if (elapsed >= 6 * DAY_MS) return { stage: "day6", reason: "due", status: effectiveStatus, trialStatus };
+  if (elapsed >= 3 * DAY_MS) return { stage: "day3", reason: "due", status: effectiveStatus, trialStatus };
+  return { stage: "welcome", reason: "due", status: effectiveStatus, trialStatus };
+}
+
+function trialEmailStage(student = {}, now = Date.now()) {
+  return trialEmailEligibility(student, now).stage;
+}
+
+function shouldRecordTrialDiagnostic(student = {}) {
+  const role = studentRole(student);
+  if (role && role !== "student") return false;
+  if (hasQualifyingPayment(student)) return false;
+  const status = studentStatus(student);
+  const trialStatus = studentTrialStatus(student);
+  return TRIAL_ELIGIBLE_STATUSES.has(status)
+    || TRIAL_ELIGIBLE_STATUSES.has(trialStatus)
+    || EXPIRED_TRIAL_STATUSES.has(trialStatus);
 }
 
 function stageTopic(stage) {
@@ -404,6 +455,36 @@ async function processTrialAccessEmail({
   }
 }
 
+async function writeTrialEmailDiagnostic({
+  db,
+  admin,
+  studentId,
+  student = {},
+  eligibility = {},
+  result = {},
+} = {}) {
+  if (!text(studentId) || !db?.collection) return false;
+  try {
+    await db.collection("trialAccessEmailDiagnostics").doc(text(studentId)).set({
+      studentId: text(studentId),
+      studentEmail: studentEmail(student),
+      studentStatus: studentStatus(student),
+      trialStatus: studentTrialStatus(student),
+      dueStage: text(eligibility.stage || result.stage),
+      reason: text(result.reason || eligibility.reason || "not_due"),
+      deliveryError: text(result.error),
+      lastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.warn("trial_access_email_diagnostic_write_failed", {
+      studentId: text(studentId),
+      message: error?.message || String(error),
+    });
+    return false;
+  }
+}
+
 async function runTrialAccessEmailJob({
   db,
   admin,
@@ -411,31 +492,76 @@ async function runTrialAccessEmailJob({
   now = new Date(),
   fetchImpl = fetch,
 } = {}) {
-  // Match the cleanup worker's tolerant status handling, including older
-  // records that may use studentStatus/enrollmentStatus or different casing.
+  // Scan all students so this scheduled worker can recover a missed Day-0
+  // trigger. Eligibility remains strict: unpaid trial students only.
   const snapshot = await db.collection("students").get();
+  const nowDate = asDate(now) || new Date();
 
   const results = [];
+  const skipped = [];
   for (const docSnap of snapshot.docs) {
     const student = { id: docSnap.id, ...(docSnap.data() || {}) };
-    const stage = trialEmailStage(student, (asDate(now) || new Date()).getTime());
-    if (!stage) continue;
-    results.push(await processTrialAccessEmail({
+    const eligibility = trialEmailEligibility(student, nowDate.getTime());
+
+    if (!eligibility.stage) {
+      if (shouldRecordTrialDiagnostic(student)) {
+        const skippedResult = {
+          studentId: docSnap.id,
+          email: studentEmail(student),
+          sent: false,
+          stage: "",
+          reason: eligibility.reason,
+        };
+        skipped.push(skippedResult);
+        await writeTrialEmailDiagnostic({
+          db,
+          admin,
+          studentId: docSnap.id,
+          student,
+          eligibility,
+          result: skippedResult,
+        });
+      }
+      continue;
+    }
+
+    const result = await processTrialAccessEmail({
       db,
       admin,
       runtimeConfig,
       student,
       studentId: docSnap.id,
-      requestedStage: stage,
-      now,
+      requestedStage: eligibility.stage,
+      now: nowDate,
       fetchImpl,
-    }));
+    });
+    const enriched = { studentId: docSnap.id, ...result };
+    results.push(enriched);
+
+    if (!result.sent && !["already_sent", "processing"].includes(result.reason)) {
+      await writeTrialEmailDiagnostic({
+        db,
+        admin,
+        studentId: docSnap.id,
+        student,
+        eligibility,
+        result,
+      });
+    }
   }
+
+  const skipReasons = skipped.reduce((counts, item) => {
+    counts[item.reason] = (counts[item.reason] || 0) + 1;
+    return counts;
+  }, {});
 
   return {
     checked: snapshot.size,
+    candidates: results.length + skipped.length,
     due: results.length,
     sent: results.filter((result) => result.sent).length,
+    skipped: skipped.length,
+    skipReasons,
     results,
   };
 }
@@ -443,19 +569,22 @@ async function runTrialAccessEmailJob({
 function createTrialAccessWelcomeEmailTrigger({
   db,
   admin,
-  onDocumentCreated,
+  onDocumentWritten,
   runtimeConfig = {},
   fetchImpl = fetch,
 } = {}) {
-  if (typeof onDocumentCreated !== "function") {
-    throw new Error("Trial welcome Firestore create trigger is unavailable.");
+  if (typeof onDocumentWritten !== "function") {
+    throw new Error("Trial welcome Firestore write trigger is unavailable.");
   }
-  return onDocumentCreated({
+  return onDocumentWritten({
     document: "students/{studentId}",
     retry: true,
   }, async (event) => {
-    const student = event?.data?.data?.() || {};
-    const studentId = text(event?.params?.studentId || event?.data?.id);
+    const afterSnap = event?.data?.after;
+    if (!afterSnap?.exists) return { sent: false, reason: "student_deleted" };
+
+    const student = afterSnap.data?.() || {};
+    const studentId = text(event?.params?.studentId || afterSnap.id);
     const result = await processTrialAccessEmail({
       db,
       admin,
@@ -494,8 +623,11 @@ function createTrialAccessReminderEmailJob({
     const result = await runTrialAccessEmailJob({ db, admin, runtimeConfig, now: new Date() });
     console.log("trial_access_email_job", {
       checked: result.checked,
+      candidates: result.candidates,
       due: result.due,
       sent: result.sent,
+      skipped: result.skipped,
+      skipReasons: result.skipReasons,
     });
     return result;
   });
@@ -519,6 +651,7 @@ module.exports = {
     stageButtonLabel,
     stageTopic,
     studentLevel,
+    trialEmailEligibility,
     trialEmailStage,
   },
 };
