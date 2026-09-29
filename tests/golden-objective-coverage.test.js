@@ -59,9 +59,6 @@ test("every objective assignment key accepts multipart-aware canonical perfect s
           expectedTotal: baseline.totalCount,
           actualTotal: result.totalCount,
           correctCount: result.correctCount,
-          incorrectDetails: Object.fromEntries(
-            Object.entries(result.details || {}).filter(([, detail]) => !detail.correct),
-          ),
         });
       }
     }
