@@ -82,6 +82,98 @@
   grid-column: 1 / -1;
 }
 
+.visitor-guide-link-box {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+  padding: 14px;
+}
+
+.visitor-guide-link-box label {
+  display: grid;
+  gap: 6px;
+}
+
+.visitor-guide-link-box label > span {
+  color: #1e3a8a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.visitor-guide-link-box input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1px solid #93c5fd;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px 11px;
+  font: inherit;
+}
+
+.visitor-guide-link-box p,
+.visitor-guide-link-box small {
+  color: #475569;
+  line-height: 1.45;
+}
+
+.visitor-guide-public-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 12px 14px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.visitor-guide-public-bar > div {
+  display: grid;
+  gap: 2px;
+}
+
+.visitor-guide-public-bar > div > span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.visitor-guide-public-bar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.visitor-guide-public-bar nav a {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.visitor-guide-page-public .visitor-guide-print {
+  scroll-behavior: smooth;
+}
+
+.visitor-guide-page-public .visitor-guide-sheet {
+  scroll-margin-top: 88px;
+}
+
 .visitor-guide-config-actions {
   display: flex;
   gap: 10px;
@@ -476,6 +568,12 @@
 }
 
 @media (max-width: 760px) {
+  .visitor-guide-public-bar {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .visitor-guide-form-grid,
   .visitor-guide-trust-row,
   .visitor-guide-cover-details,
@@ -514,7 +612,8 @@
   .topbar,
   .toast-viewport,
   .visitor-guide-config,
-  .visitor-guide-preview-label {
+  .visitor-guide-preview-label,
+  .visitor-guide-public-bar {
     display: none !important;
   }
 
