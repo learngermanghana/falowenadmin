@@ -15,6 +15,7 @@ export const CLASS_WARNING_MINUTES = Object.freeze([30, 15, 10, 5, 0]);
 
 const SOUND_PREFERENCE_KEY = "falowen:presenter:class-timer:sound";
 const LAST_CLASS_KEY = "falowen:presenter:last-class";
+const ENDED_SCREEN_DISMISSAL_PREFIX = "falowen:presenter:ended-screen-dismissed";
 
 function normalize(value) {
   return String(value || "").trim();
@@ -69,6 +70,20 @@ function readSoundPreference() {
   if (typeof window === "undefined") return false;
   try {
     return window.localStorage.getItem(SOUND_PREFERENCE_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+function endedScreenDismissalKey(classRecordId = "", sessionKey = "", endRequestId = "") {
+  const identity = [classRecordId, sessionKey, endRequestId].map((value) => encodeURIComponent(normalize(value)));
+  return identity.every(Boolean) ? `${ENDED_SCREEN_DISMISSAL_PREFIX}:${identity.join(":")}` : "";
+}
+
+function readEndedScreenDismissal(key) {
+  if (!key || typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(key) === "1";
   } catch {
     return false;
   }
@@ -221,7 +236,12 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
   const [presenterEndSyncState, setPresenterEndSyncState] = useState("idle");
   const [soundEnabled, setSoundEnabled] = useState(readSoundPreference);
   const [hydratedKey, setHydratedKey] = useState("");
-  const [endedScreenDismissed, setEndedScreenDismissed] = useState(false);
+  const endedScreenKey = endedScreenDismissalKey(
+    presenterLive.classRecordId,
+    presenterLive.sessionKey,
+    attendanceEndRequestId,
+  );
+  const [dismissedEndedScreenKey, setDismissedEndedScreenKey] = useState("");
   const previousRemainingRef = useRef(durationSeconds);
   const audioContextRef = useRef(null);
   const lastRemoteTimerStampRef = useRef(0);
@@ -236,13 +256,20 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
     setClassId((current) => current === next ? current : next);
   }, [presenterLive.classContext?.classId]);
 
-  useEffect(() => {
-    setEndedScreenDismissed(false);
-  }, [presenterLive.sessionKey]);
+  const endedScreenDismissed = Boolean(
+    endedScreenKey
+      && (dismissedEndedScreenKey === endedScreenKey || readEndedScreenDismissal(endedScreenKey)),
+  );
 
-  useEffect(() => {
-    if (!attendanceSessionEnded) setEndedScreenDismissed(false);
-  }, [attendanceSessionEnded]);
+  function dismissEndedScreen() {
+    if (!endedScreenKey) return;
+    setDismissedEndedScreenKey(endedScreenKey);
+    try {
+      window.localStorage.setItem(endedScreenKey, "1");
+    } catch {
+      // The in-memory dismissal still prevents this ended session from blocking the slides.
+    }
+  }
 
   useEffect(() => {
     setHydratedKey("");
@@ -894,7 +921,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
           <div className="presenter-class-ended-actions">
             <button type="button" className="is-primary" onClick={closePresenter}>Close presenter</button>
             <button type="button" onClick={returnToAttendance}>Return to Attendance</button>
-            <button type="button" onClick={() => setEndedScreenDismissed(true)}>Back to slides</button>
+            <button type="button" onClick={dismissEndedScreen}>Back to slides</button>
           </div>
         </section>
       </div>,

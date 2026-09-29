@@ -14,12 +14,14 @@ teachingSource = replaceOnce(
   'import PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
   "TeachingSlidePresenter session timer import",
 );
-teachingSource = replaceOnce(
-  teachingSource,
-  '          {showPresenterTimer ? (',
-  '          <PresenterSessionTimer slide={slide} stage={stage} />\n\n          {showPresenterTimer ? (',
-  "TeachingSlidePresenter session timer placement",
-);
+if (!/<PresenterSessionTimer\b/.test(teachingSource)) {
+  teachingSource = replaceOnce(
+    teachingSource,
+    '          {showPresenterTimer ? (',
+    '          <PresenterSessionTimer slide={slide} stage={stage} />\n\n          {showPresenterTimer ? (',
+    "TeachingSlidePresenter session timer placement",
+  );
+}
 fs.writeFileSync(teachingTarget, teachingSource);
 
 const a1Target = new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url);
@@ -30,12 +32,14 @@ a1Source = replaceOnce(
   'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";\nimport PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
   "A1 presenter session timer import",
 );
-a1Source = replaceOnce(
-  a1Source,
-  '          <div className="presenter-v2-tools">',
-  '          <PresenterSessionTimer slide={slide} stage={stage} />\n\n          <div className="presenter-v2-tools">',
-  "A1 presenter session timer placement",
-);
+if (!/<PresenterSessionTimer\b/.test(a1Source)) {
+  a1Source = replaceOnce(
+    a1Source,
+    '          <div className="presenter-v2-tools">',
+    '          <PresenterSessionTimer slide={slide} stage={stage} />\n\n          <div className="presenter-v2-tools">',
+    "A1 presenter session timer placement",
+  );
+}
 fs.writeFileSync(a1Target, a1Source);
 
 const pickerTarget = new URL("../src/components/PresenterStudentPicker.jsx", import.meta.url);
