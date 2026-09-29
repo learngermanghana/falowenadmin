@@ -63,6 +63,54 @@ function printableDate(value) {
   return value ? formatBrochureDate(value) : formatBrochureDate(todayInputValue());
 }
 
+function readVisitorGuideLinkContext() {
+  if (typeof window === "undefined") return {};
+  const params = new URLSearchParams(window.location.search);
+  const level = String(params.get("level") || "").toUpperCase();
+  const mode = params.get("mode") || "";
+  const purpose = params.get("purpose") || "";
+  return {
+    visitorName: params.get("name") || "",
+    visitDate: params.get("date") || "",
+    presenter: params.get("presenter") || "",
+    assistant: params.get("assistant") || "",
+    selectedClassKey: params.get("class") || "",
+    level: LEVELS.includes(level) ? level : "",
+    learningPreference: LEARNING_PREFERENCES.includes(mode) ? mode : "",
+    purpose: VISITOR_PURPOSES.includes(purpose) ? purpose : "",
+  };
+}
+
+export function buildVisitorGuideShareUrl({
+  origin,
+  visitorName,
+  visitDate,
+  presenter,
+  assistant,
+  selectedClassKey,
+  level,
+  learningPreference,
+  purpose,
+}) {
+  const baseOrigin = origin || (typeof window !== "undefined" ? window.location.origin : "https://admin.falowen.app");
+  const url = new URL("/visitor-guide/public", baseOrigin);
+  const values = {
+    name: visitorName,
+    date: visitDate,
+    presenter,
+    assistant,
+    class: selectedClassKey,
+    level,
+    mode: learningPreference,
+    purpose,
+  };
+  Object.entries(values).forEach(([key, value]) => {
+    const clean = String(value || "").trim();
+    if (clean) url.searchParams.set(key, clean);
+  });
+  return url.toString();
+}
+
 function CredentialList({ items }) {
   return (
     <div className="visitor-guide-credential-list">
@@ -73,7 +121,7 @@ function CredentialList({ items }) {
 
 function GuidePage({ number, eyebrow, title, children, className = "" }) {
   return (
-    <section className={`visitor-guide-sheet ${className}`}>
+    <section id={`visitor-guide-page-${number}`} className={`visitor-guide-sheet ${className}`}>
       <div className="visitor-guide-sheet-top">
         <span>{eyebrow}</span>
         <span>Visitor Guide · {number}</span>
@@ -88,20 +136,25 @@ function GuidePage({ number, eyebrow, title, children, className = "" }) {
   );
 }
 
-export default function VisitorGuidePage() {
+export default function VisitorGuidePage({ publicView = false }) {
   const profile = VISITOR_GUIDE_PROFILE;
+  const linkContext = useMemo(
+    () => publicView ? readVisitorGuideLinkContext() : {},
+    [publicView],
+  );
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [classError, setClassError] = useState("");
-  const [visitorName, setVisitorName] = useState("");
-  const [visitDate, setVisitDate] = useState(todayInputValue());
-  const [presenter, setPresenter] = useState(profile.founder.name);
-  const [assistant, setAssistant] = useState(profile.assistant.name);
-  const [selectedClassKey, setSelectedClassKey] = useState("");
-  const [level, setLevel] = useState("A1");
-  const [learningPreference, setLearningPreference] = useState("Hybrid");
-  const [purpose, setPurpose] = useState("General enquiry");
+  const [visitorName, setVisitorName] = useState(linkContext.visitorName || "");
+  const [visitDate, setVisitDate] = useState(linkContext.visitDate || todayInputValue());
+  const [presenter, setPresenter] = useState(linkContext.presenter || profile.founder.name);
+  const [assistant, setAssistant] = useState(linkContext.assistant || profile.assistant.name);
+  const [selectedClassKey, setSelectedClassKey] = useState(linkContext.selectedClassKey || "");
+  const [level, setLevel] = useState(linkContext.level || "A1");
+  const [learningPreference, setLearningPreference] = useState(linkContext.learningPreference || "Hybrid");
+  const [purpose, setPurpose] = useState(linkContext.purpose || "General enquiry");
   const [notes, setNotes] = useState("");
+  const [copyState, setCopyState] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -161,25 +214,53 @@ export default function VisitorGuidePage() {
 
   const preparedFor = visitorName.trim() || "Prospective student / family";
   const visitorNotes = notes.trim();
+  const shareUrl = useMemo(
+    () => buildVisitorGuideShareUrl({
+      origin: typeof window !== "undefined" ? window.location.origin : "https://admin.falowen.app",
+      visitorName,
+      visitDate,
+      presenter,
+      assistant,
+      selectedClassKey,
+      level,
+      learningPreference,
+      purpose,
+    }),
+    [visitorName, visitDate, presenter, assistant, selectedClassKey, level, learningPreference, purpose],
+  );
 
-  const printGuide = () => {
-    const previousTitle = document.title;
-    document.title = `Falowen Visitor Guide - ${preparedFor} - ${programme.level}`;
-    window.print();
-    window.setTimeout(() => {
-      document.title = previousTitle;
-    }, 500);
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopyState("Visitor link copied.");
+    } catch {
+      setCopyState("Could not copy automatically. Open the link and copy it from the address bar.");
+    }
   };
 
   return (
-    <div className="visitor-guide-page">
+    <div className={`visitor-guide-page ${publicView ? "visitor-guide-page-public" : ""}`}>
+      {publicView ? (
+        <section className="visitor-guide-public-bar">
+          <div>
+            <p className="visitor-guide-kicker">Falowen · Visitor Guide</p>
+            <strong>Prepared for {preparedFor}</strong>
+            <span>{programme.title} · {printableDate(visitDate)}</span>
+          </div>
+          <nav aria-label="Visitor guide sections">
+            {[1,2,3,4,5,6,7,8,9].map((page) => (
+              <a key={page} href={`#visitor-guide-page-${page}`}>{page}</a>
+            ))}
+          </nav>
+        </section>
+      ) : (
       <section className="visitor-guide-config">
         <div>
           <p className="visitor-guide-kicker">Admissions · Visitor Guide</p>
           <h1>Create a personalised school visit guide</h1>
           <p>
-            Prepare a client-facing walkthrough of the school, the selected course, Falowen and the support team.
-            Use <strong>Print / Save PDF</strong> to create the PDF after reviewing the preview.
+            Prepare a client-facing walkthrough, then generate one public visitor link you can open on a tablet,
+            send on WhatsApp, or share after the meeting. The visitor does not need an Admin login.
           </p>
         </div>
 
@@ -250,13 +331,23 @@ export default function VisitorGuidePage() {
           </label>
         </div>
 
-        <div className="visitor-guide-config-actions">
-          <button type="button" onClick={printGuide}>Print / Save PDF</button>
-          <a href={programme.brochureUrl} target="_blank" rel="noreferrer">Open selected class brochure</a>
+        <div className="visitor-guide-link-box">
+          <label>
+            <span>Generated visitor link</span>
+            <input value={shareUrl} readOnly aria-label="Generated visitor guide link" />
+          </label>
+          <p>Visit notes stay inside Admin and are not included in the public link.</p>
+          <div className="visitor-guide-config-actions">
+            <button type="button" onClick={copyShareLink}>Copy visitor link</button>
+            <a href={shareUrl} target="_blank" rel="noreferrer">Open visitor guide</a>
+            <a href={programme.brochureUrl} target="_blank" rel="noreferrer">Open class brochure</a>
+          </div>
+          {copyState ? <small role="status">{copyState}</small> : null}
         </div>
       </section>
+      )}
 
-      <div className="visitor-guide-preview-label">PDF preview</div>
+      {!publicView ? <div className="visitor-guide-preview-label">Shareable guide preview</div> : null}
 
       <div className="visitor-guide-print" id="visitor-guide-print">
         <GuidePage number="1" eyebrow="Welcome" title={profile.school.name} className="visitor-guide-cover">
