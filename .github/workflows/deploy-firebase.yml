@@ -100,6 +100,8 @@ jobs:
           node --check functions/completionParticipationDocument.js
           node --check functions/registrationLifecycleEvents.js
           node --check functions/trialAccessEmails.js
+          node --check scripts/writeFirebaseRuntimeEnv.mjs
+          node --test tests/firebase-runtime-env.test.js
           node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
           node --test tests/registration-lifecycle-events.test.js tests/trial-access-emails.test.js tests/brochure-whatsapp.test.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
@@ -187,6 +189,12 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+
+      - name: Prepare Firebase runtime config
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/writeFirebaseRuntimeEnv.mjs functions/.env
 
       - name: Deploy Firebase functions in quota-safe batches
         shell: bash
