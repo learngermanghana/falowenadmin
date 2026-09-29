@@ -812,3 +812,27 @@ test("A1-0.2 aligns a second 1-5 answer group without a Teil heading", () => {
   assert.equal(result.details[12].student.toLowerCase(), "tis");
   assert.equal(result.details[12].correct, true);
 });
+
+test("hyphenated apartment numbers are not parsed as new question numbers", () => {
+  const result = computeObjectiveScore("A2-3.6", `
+Teil 3
+1. A
+2. B
+3. C
+4. B
+5. C
+
+Teil 4
+1. A) Die 2-Zimmer-Wohnung
+2. A) Die 2-Zimmer-Wohnung
+3. B) 200 Euro pro Monat
+4. B) Die 3-Zimmer-Wohnung
+5. B) Die 3-Zimmer-Wohnung
+  `);
+
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 10);
+  assert.equal(result.details["teil4.1"].student, "A) Die 2-Zimmer-Wohnung");
+  assert.equal(result.details["teil4.2"].student, "A) Die 2-Zimmer-Wohnung");
+});
+
