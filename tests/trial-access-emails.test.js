@@ -20,6 +20,8 @@ const {
   rowForTrialAccessEmail,
   trialEmailEligibility,
   trialEmailStage,
+  trialEmailDeliveryMode,
+  firebaseTrialEmailDeliveryEnabled,
 } = _test;
 
 const NOW = Date.UTC(2026, 8, 25, 8, 0, 0);
@@ -79,6 +81,7 @@ test("trial welcome trigger sends when a student write becomes trial-eligible", 
     db,
     admin,
     runtimeConfig: {
+      trial_emails: { delivery_mode: "firebase" },
       communication: {
         announcement_webhook_url: "https://script.google.com/macros/s/existing/exec",
         announcement_webhook_token: "shared-secret",
@@ -240,6 +243,7 @@ test("scheduled trial worker recovers a missing Day-0 welcome", async () => {
     admin,
     now: new Date(NOW),
     runtimeConfig: {
+      trial_emails: { delivery_mode: "firebase" },
       communication: {
         announcement_webhook_url: "https://script.google.com/macros/s/existing/exec",
         announcement_webhook_token: "shared-secret",
@@ -373,4 +377,24 @@ test("trial-specific webhook settings cannot override the shared Announcement we
 
   assert.equal(config.url, "https://script.google.com/macros/s/announcement/exec");
   assert.equal(config.token, "announcement-secret");
+});
+
+test("Announcement Apps Script is the default owner of trial email delivery", async () => {
+  assert.equal(trialEmailDeliveryMode({}, {}), "apps_script_native");
+  assert.equal(firebaseTrialEmailDeliveryEnabled({}, {}), false);
+
+  const result = await runTrialAccessEmailJob({
+    db: {
+      collection() {
+        throw new Error("native mode must not scan Firestore students");
+      },
+    },
+    admin: {},
+    runtimeConfig: {},
+  });
+
+  assert.equal(result.disabled, true);
+  assert.equal(result.deliveryMode, "apps_script_native");
+  assert.equal(result.checked, 0);
+  assert.equal(result.sent, 0);
 });
