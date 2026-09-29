@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 
-const COLLECTION = "timedAssignmentAttempts";
+const COLLECTION = "submissionLocks";
 
 const toMillis = (value) => {
   if (!value) return 0;
@@ -44,6 +44,7 @@ export default function TimedAssignmentAttemptsPage() {
       (snapshot) => {
         const rows = snapshot.docs
           .map((entry) => ({ id: entry.id, ...entry.data() }))
+          .filter((entry) => entry.timerRecord === true || String(entry.id || "").startsWith("timed__"))
           .sort((a, b) => (toMillis(b.startedAt) || Number(b.clientStartedAt) || 0) - (toMillis(a.startedAt) || Number(a.clientStartedAt) || 0));
         setAttempts(rows);
         setLoading(false);
@@ -96,7 +97,7 @@ export default function TimedAssignmentAttemptsPage() {
         </p>
         <h1 style={{ margin: "6px 0 4px" }}>Timed assignment attempts</h1>
         <p style={{ margin: 0, color: "#475569", lineHeight: 1.6 }}>
-          Each Firestore record represents one timed attempt. Students cannot restart an expired or submitted attempt themselves. Use Reset only when you intentionally want to grant another try.
+          Each timed record is stored alongside the existing submission locks, without affecting normal assignment submission locks. Students cannot restart an expired or submitted attempt themselves. Use Reset only when you intentionally want to grant another try.
         </p>
       </section>
 
