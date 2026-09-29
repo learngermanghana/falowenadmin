@@ -188,29 +188,6 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
 
-      - name: Publish trial email runtime secrets
-        shell: bash
-        run: |
-          set -euo pipefail
-          node <<'NODE'
-          const fs = require("node:fs");
-          const config = JSON.parse(process.env.CLOUD_RUNTIME_CONFIG || "{}");
-          const communication = config.communication || config.announcements || config.announcement || {};
-          const trial = config.trial_emails || config.trialEmails || config.trial || {};
-          const url = trial.webhook_url || trial.url || communication.trial_access_webhook_url
-            || communication.announcement_webhook_url || communication.webhook_url || "";
-          const token = trial.webhook_token || trial.token || communication.trial_access_webhook_token
-            || communication.announcement_webhook_token || communication.webhook_token || "";
-          if (!url || !token) throw new Error("Trial Announcement webhook URL/token are missing from FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG");
-          fs.writeFileSync("/tmp/announcement-webhook-url", String(url));
-          fs.writeFileSync("/tmp/announcement-webhook-token", String(token));
-          NODE
-          firebase functions:secrets:set ANNOUNCEMENT_WEBHOOK_URL \
-            --project "$FIREBASE_PROJECT_ID" --data-file /tmp/announcement-webhook-url
-          firebase functions:secrets:set ANNOUNCEMENT_WEBHOOK_TOKEN \
-            --project "$FIREBASE_PROJECT_ID" --data-file /tmp/announcement-webhook-token
-          rm -f /tmp/announcement-webhook-url /tmp/announcement-webhook-token
-
       - name: Deploy Firebase functions in quota-safe batches
         shell: bash
         run: |
