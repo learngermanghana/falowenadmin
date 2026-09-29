@@ -4,6 +4,7 @@ import { VISITOR_GUIDE_PROFILE, VISITOR_PURPOSES, LEARNING_PREFERENCES } from ".
 import { loadShareablePublicClasses } from "../services/publicBrochureClassService.js";
 import {
   buildClassBrochureUrl,
+  brochureClassSlug,
   formatBrochureDate,
   formatBrochureFee,
   formatBrochureSchedule,
@@ -12,6 +13,9 @@ import "./VisitorGuidePage.css";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const DEFAULT_SIGNUP_URL = "https://www.falowen.app/signup";
+const PRESENTATION_TOTAL = 10;
+const SAVED_GUIDES_KEY = "falowenVisitorGuides.v1";
+const GUIDE_STATUSES = ["Interested", "Trial started", "Registered", "Not proceeding"];
 
 function classKey(klass = {}) {
   return String(klass.id || klass.slug || klass.classId || klass.title || klass.name || "").trim();
@@ -61,6 +65,48 @@ function todayInputValue() {
 
 function printableDate(value) {
   return value ? formatBrochureDate(value) : formatBrochureDate(todayInputValue());
+}
+
+function buildRegistrationUrl(selectedClass, level) {
+  const url = new URL(DEFAULT_SIGNUP_URL);
+  const slug = selectedClass ? brochureClassSlug(selectedClass) : "";
+  if (slug) {
+    url.searchParams.set("class", slug);
+  } else if (level) {
+    url.searchParams.set("level", level);
+    if (["A1", "A2", "B1"].includes(level)) url.searchParams.set("enquiry", "1");
+  }
+  return url.toString();
+}
+
+function buildWhatsappShareUrl({ preparedFor, programmeTitle, shareUrl }) {
+  const greeting = preparedFor && preparedFor !== "Prospective student / family"
+    ? `Hello ${preparedFor},`
+    : "Hello,";
+  const message = [
+    greeting,
+    "",
+    `Here is your personalised Falowen Visitor Guide for ${programmeTitle}.`,
+    shareUrl,
+    "",
+    "You can review the school, your programme, how Falowen works and the next steps from this link.",
+  ].join("\n");
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
+function readSavedGuides() {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(SAVED_GUIDES_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedGuides(guides) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SAVED_GUIDES_KEY, JSON.stringify(guides));
 }
 
 function readVisitorGuideLinkContext() {
@@ -119,9 +165,63 @@ function CredentialList({ items }) {
   );
 }
 
-function GuidePage({ number, eyebrow, title, children, className = "" }) {
+function FalowenExperiencePreview() {
+  const screens = [
+    {
+      title: "Dashboard",
+      detail: "Next lesson, latest result, attendance and progress in one place.",
+      items: ["Next lesson", "Latest result", "Attendance", "Study progress"],
+    },
+    {
+      title: "Course Book",
+      detail: "The lesson journey is organised by skill and learning objective.",
+      items: ["Grammar", "Vocabulary", "Listening", "Writing & speaking"],
+    },
+    {
+      title: "Results",
+      detail: "Students can see feedback, corrections and what to review next.",
+      items: ["Score", "Tutor feedback", "Corrections", "Review answers"],
+    },
+    {
+      title: "Exam Room",
+      detail: "Exam-style practice brings the core German skills together.",
+      items: ["Reading", "Listening", "Writing", "Speaking"],
+    },
+  ];
+
   return (
-    <section id={`visitor-guide-page-${number}`} className={`visitor-guide-sheet ${className}`}>
+    <div className="visitor-guide-screen-grid" aria-label="Falowen interface previews">
+      {screens.map((screen) => (
+        <article key={screen.title} className="visitor-guide-screen-card">
+          <div className="visitor-guide-screen-browser">
+            <span />
+            <span />
+            <span />
+            <strong>falowen.app</strong>
+          </div>
+          <div className="visitor-guide-screen-content">
+            <small>Interface preview</small>
+            <h3>{screen.title}</h3>
+            <p>{screen.detail}</p>
+            <div>
+              {screen.items.map((item) => <span key={item}>{item}</span>)}
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function GuidePage({ number, eyebrow, title, children, className = "", presenterMode = false, presenterPage = 1 }) {
+  const presenterHidden = presenterMode && Number(number) !== presenterPage;
+  return (
+    <section
+      id={`visitor-guide-page-${number}`}
+      className={`visitor-guide-sheet ${className}`}
+      hidden={presenterHidden}
+      data-guide-page={number}
+    >
       <div className="visitor-guide-sheet-top">
         <span>{eyebrow}</span>
         <span>Visitor Guide · {number}</span>
@@ -155,6 +255,11 @@ export default function VisitorGuidePage({ publicView = false }) {
   const [purpose, setPurpose] = useState(linkContext.purpose || "General enquiry");
   const [notes, setNotes] = useState("");
   const [copyState, setCopyState] = useState("");
+  const [presenterMode, setPresenterMode] = useState(false);
+  const [presenterPage, setPresenterPage] = useState(1);
+  const [savedGuides, setSavedGuides] = useState(() => publicView ? [] : readSavedGuides());
+  const [activeSavedId, setActiveSavedId] = useState("");
+  const [guideStatus, setGuideStatus] = useState("Interested");
 
   useEffect(() => {
     let active = true;
@@ -176,6 +281,34 @@ export default function VisitorGuidePage({ publicView = false }) {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!presenterMode) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+        event.preventDefault();
+        setPresenterPage((page) => Math.min(PRESENTATION_TOTAL, page + 1));
+      } else if (["ArrowLeft", "PageUp"].includes(event.key)) {
+        event.preventDefault();
+        setPresenterPage((page) => Math.max(1, page - 1));
+      } else if (event.key === "Home") {
+        setPresenterPage(1);
+      } else if (event.key === "End") {
+        setPresenterPage(PRESENTATION_TOTAL);
+      } else if (event.key === "Escape") {
+        setPresenterMode(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [presenterMode]);
 
   const selectedClass = useMemo(
     () => classes.find((klass) => classKey(klass) === selectedClassKey) || null,
@@ -229,6 +362,88 @@ export default function VisitorGuidePage({ publicView = false }) {
     [visitorName, visitDate, presenter, assistant, selectedClassKey, level, learningPreference, purpose],
   );
 
+  const registrationUrl = useMemo(
+    () => buildRegistrationUrl(selectedClass, programme.level),
+    [selectedClass, programme.level],
+  );
+  const whatsappShareUrl = useMemo(
+    () => buildWhatsappShareUrl({ preparedFor, programmeTitle: programme.title, shareUrl }),
+    [preparedFor, programme.title, shareUrl],
+  );
+
+  const guidePageProps = (number) => ({
+    number,
+    presenterMode,
+    presenterPage,
+  });
+
+  const startPresentation = () => {
+    setPresenterPage(1);
+    setPresenterMode(true);
+  };
+
+  const saveGuide = () => {
+    if (publicView) return;
+    const now = new Date().toISOString();
+    const id = activeSavedId || `visitor-${Date.now()}`;
+    const snapshot = {
+      id,
+      visitorName: visitorName.trim(),
+      visitDate,
+      presenter: presenter.trim(),
+      assistant: assistant.trim(),
+      selectedClassKey,
+      selectedClassTitle: programme.title,
+      level: programme.level,
+      learningPreference,
+      purpose,
+      notes: notes.trim(),
+      status: guideStatus,
+      shareUrl,
+      savedAt: now,
+    };
+    const next = activeSavedId
+      ? savedGuides.map((item) => item.id === id ? snapshot : item)
+      : [snapshot, ...savedGuides];
+    setSavedGuides(next);
+    writeSavedGuides(next);
+    setActiveSavedId(id);
+    setCopyState(activeSavedId ? "Saved visitor guide updated." : "Visitor guide saved on this Admin browser.");
+  };
+
+  const loadSavedGuide = (saved) => {
+    setActiveSavedId(saved.id);
+    setVisitorName(saved.visitorName || "");
+    setVisitDate(saved.visitDate || todayInputValue());
+    setPresenter(saved.presenter || profile.founder.name);
+    setAssistant(saved.assistant || profile.assistant.name);
+    setSelectedClassKey(saved.selectedClassKey || "");
+    setLevel(saved.level || "A1");
+    setLearningPreference(saved.learningPreference || "Hybrid");
+    setPurpose(saved.purpose || "General enquiry");
+    setNotes(saved.notes || "");
+    setGuideStatus(GUIDE_STATUSES.includes(saved.status) ? saved.status : "Interested");
+    setCopyState(`Loaded ${saved.visitorName || saved.selectedClassTitle || "saved visitor guide"}.`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const updateSavedStatus = (id, status) => {
+    const next = savedGuides.map((item) => item.id === id ? { ...item, status } : item);
+    setSavedGuides(next);
+    writeSavedGuides(next);
+    if (id === activeSavedId) setGuideStatus(status);
+  };
+
+  const deleteSavedGuide = (id) => {
+    const next = savedGuides.filter((item) => item.id !== id);
+    setSavedGuides(next);
+    writeSavedGuides(next);
+    if (id === activeSavedId) {
+      setActiveSavedId("");
+      setGuideStatus("Interested");
+    }
+  };
+
   const copyShareLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -239,7 +454,7 @@ export default function VisitorGuidePage({ publicView = false }) {
   };
 
   return (
-    <div className={`visitor-guide-page ${publicView ? "visitor-guide-page-public" : ""}`}>
+    <div className={`visitor-guide-page ${publicView ? "visitor-guide-page-public" : ""} ${presenterMode ? "visitor-guide-presenting" : ""}`}>
       {publicView ? (
         <section className="visitor-guide-public-bar">
           <div>
@@ -247,11 +462,14 @@ export default function VisitorGuidePage({ publicView = false }) {
             <strong>Prepared for {preparedFor}</strong>
             <span>{programme.title} · {printableDate(visitDate)}</span>
           </div>
-          <nav aria-label="Visitor guide sections">
-            {[1,2,3,4,5,6,7,8,9].map((page) => (
-              <a key={page} href={`#visitor-guide-page-${page}`}>{page}</a>
-            ))}
-          </nav>
+          <div className="visitor-guide-public-actions">
+            <nav aria-label="Visitor guide sections">
+              {Array.from({ length: PRESENTATION_TOTAL }, (_, index) => index + 1).map((page) => (
+                <a key={page} href={`#visitor-guide-page-${page}`}>{page}</a>
+              ))}
+            </nav>
+            <button type="button" onClick={startPresentation}>Start Presentation</button>
+          </div>
         </section>
       ) : (
       <section className="visitor-guide-config">
@@ -325,6 +543,13 @@ export default function VisitorGuidePage({ publicView = false }) {
             </select>
           </label>
 
+          <label>
+            <span>Admissions status</span>
+            <select value={guideStatus} onChange={(event) => setGuideStatus(event.target.value)}>
+              {GUIDE_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+
           <label className="visitor-guide-notes-field">
             <span>Visit notes <small>(optional)</small></span>
             <textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Important goals, questions or next steps discussed during the visit." />
@@ -339,7 +564,10 @@ export default function VisitorGuidePage({ publicView = false }) {
           <p>Visit notes stay inside Admin and are not included in the public link.</p>
           <div className="visitor-guide-config-actions">
             <button type="button" onClick={copyShareLink}>Copy visitor link</button>
+            <button type="button" onClick={startPresentation}>Start Presentation</button>
+            <button type="button" onClick={saveGuide}>{activeSavedId ? "Update saved guide" : "Save visitor guide"}</button>
             <a href={shareUrl} target="_blank" rel="noreferrer">Open visitor guide</a>
+            <a href={whatsappShareUrl} target="_blank" rel="noreferrer">Send on WhatsApp</a>
             <a href={programme.brochureUrl} target="_blank" rel="noreferrer">Open class brochure</a>
           </div>
           {copyState ? <small role="status">{copyState}</small> : null}
@@ -347,10 +575,56 @@ export default function VisitorGuidePage({ publicView = false }) {
       </section>
       )}
 
+      {!publicView && savedGuides.length ? (
+        <section className="visitor-guide-saved">
+          <div className="visitor-guide-saved-header">
+            <div>
+              <p className="visitor-guide-kicker">Admissions follow-up</p>
+              <h2>Saved visitor guides</h2>
+            </div>
+            <span>{savedGuides.length} saved on this browser</span>
+          </div>
+          <div className="visitor-guide-saved-grid">
+            {savedGuides.map((saved) => (
+              <article key={saved.id}>
+                <div>
+                  <strong>{saved.visitorName || "Unnamed visitor"}</strong>
+                  <span>{saved.selectedClassTitle || saved.level || "German programme"} · {printableDate(saved.visitDate)}</span>
+                </div>
+                <select
+                  value={saved.status || "Interested"}
+                  onChange={(event) => updateSavedStatus(saved.id, event.target.value)}
+                  aria-label={`Admissions status for ${saved.visitorName || "visitor"}`}
+                >
+                  {GUIDE_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+                <div className="visitor-guide-saved-actions">
+                  <button type="button" onClick={() => loadSavedGuide(saved)}>Open in Admin</button>
+                  <a href={saved.shareUrl} target="_blank" rel="noreferrer">Open client link</a>
+                  <button type="button" className="visitor-guide-danger-button" onClick={() => deleteSavedGuide(saved.id)}>Delete</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {!publicView ? <div className="visitor-guide-preview-label">Shareable guide preview</div> : null}
 
-      <div className="visitor-guide-print" id="visitor-guide-print">
-        <GuidePage number="1" eyebrow="Welcome" title={profile.school.name} className="visitor-guide-cover">
+      {presenterMode ? (
+        <div className="visitor-guide-presenter-controls" role="toolbar" aria-label="Visitor Guide presentation controls">
+          <button type="button" onClick={() => setPresenterMode(false)}>Exit</button>
+          <button type="button" onClick={() => setPresenterPage((page) => Math.max(1, page - 1))} disabled={presenterPage === 1}>Previous</button>
+          <span>{presenterPage} / {PRESENTATION_TOTAL}</span>
+          <div className="visitor-guide-presenter-progress" aria-hidden="true">
+            <span style={{ width: `${(presenterPage / PRESENTATION_TOTAL) * 100}%` }} />
+          </div>
+          <button type="button" onClick={() => setPresenterPage((page) => Math.min(PRESENTATION_TOTAL, page + 1))} disabled={presenterPage === PRESENTATION_TOTAL}>Next</button>
+        </div>
+      ) : null}
+
+      <div className={`visitor-guide-print ${presenterMode ? "visitor-guide-print-presenting" : ""}`} id="visitor-guide-print">
+        <GuidePage {...guidePageProps(1)} eyebrow="Welcome" title={profile.school.name} className="visitor-guide-cover">
           <div className="visitor-guide-cover-mark">FALOWEN</div>
           <p className="visitor-guide-lede">
             A personalised introduction to the school, your selected programme and the learning system that supports you.
@@ -370,7 +644,7 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
         </GuidePage>
 
-        <GuidePage number="2" eyebrow="About us" title="The school behind Falowen">
+        <GuidePage {...guidePageProps(2)} eyebrow="About us" title="The school behind Falowen">
           <p className="visitor-guide-lede">{profile.school.summary}</p>
           <div className="visitor-guide-big-stats">
             <div><span>Established</span><strong>{profile.school.establishedYear}</strong></div>
@@ -398,7 +672,25 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
         </GuidePage>
 
-        <GuidePage number="3" eyebrow="People" title="Meet the team supporting your learning">
+        <GuidePage {...guidePageProps(3)} eyebrow="Why LLEA + Falowen" title="A hybrid learning system built around the student">
+          <div className="visitor-guide-value-grid">
+            {[
+              ["Hybrid learning", "Learn in person, join online, and use recorded lectures where available."],
+              ["Advanced teaching slides", "Structured teaching presentations keep each lesson focused and consistent."],
+              ["Six months of Falowen access", "Full-payment students can keep learning and revising beyond the final class."],
+              ["High exam pass rate", "The academy has maintained a high pass rate across German-language examinations."],
+              ["Tutor-marked work", "Selected writing and assignments receive teacher feedback, not only automated scoring."],
+              ["Progress tracking", "Attendance, results and learning progress are visible in one connected system."],
+            ].map(([title, detail]) => (
+              <article key={title}>
+                <strong>{title}</strong>
+                <p>{detail}</p>
+              </article>
+            ))}
+          </div>
+        </GuidePage>
+
+        <GuidePage {...guidePageProps(4)} eyebrow="People" title="Meet the team supporting your learning">
           <div className="visitor-guide-team-grid">
             <article className="visitor-guide-person-card">
               <span className="visitor-guide-role">Founder & Director</span>
@@ -416,7 +708,19 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
         </GuidePage>
 
-        <GuidePage number="4" eyebrow="Your programme" title={programme.title}>
+        <GuidePage {...guidePageProps(5)} eyebrow="Your programme" title={programme.title}>
+          <div className="visitor-guide-programme-hero">
+            <div>
+              <span>Your selected programme</span>
+              <strong>{programme.title}</strong>
+              <small>{programme.mode}</small>
+            </div>
+            <div>
+              <span>Course fee</span>
+              <strong>{programme.fee}</strong>
+              <small>{programme.access}</small>
+            </div>
+          </div>
           <div className="visitor-guide-programme-grid">
             <div><span>Level</span><strong>{programme.level}</strong></div>
             <div><span>Course fee</span><strong>{programme.fee}</strong></div>
@@ -428,30 +732,33 @@ export default function VisitorGuidePage({ publicView = false }) {
             <div><span>Learning mode</span><strong>{programme.mode}</strong></div>
             <div><span>Falowen access</span><strong>{programme.access}</strong></div>
           </div>
+          <div className="visitor-guide-registration-steps">
+            {[
+              ["1", "Register", "Choose the class and create the student account."],
+              ["2", "Activate access", "Start the 7-day trial or choose a payment option."],
+              ["3", "Orientation", "Learn how classes, assignments and Falowen work."],
+              ["4", "Begin learning", "Join the class and continue practice inside Falowen."],
+            ].map(([step, title, detail]) => (
+              <article key={step}>
+                <span>{step}</span>
+                <div><strong>{title}</strong><p>{detail}</p></div>
+              </article>
+            ))}
+          </div>
           <p className="visitor-guide-note">
             Your exact timetable and class arrangements are confirmed during registration. The selected public class information
             above is loaded from Falowen when available.
           </p>
         </GuidePage>
 
-        <GuidePage number="5" eyebrow="Platform" title="How Falowen supports the student">
-          <div className="visitor-guide-flow">
-            {[
-              ["Campus", "See your course, next lesson, attendance and latest results."],
-              ["Course Book", "Move through grammar, vocabulary, reading, listening, writing and speaking."],
-              ["Assignments", "Complete tutor-marked and automatically checked learning tasks."],
-              ["Results", "Review scores, corrections and areas that need more work."],
-              ["Exam Room", "Practise exam-style tasks and prepare for the next examination step."],
-            ].map(([name, detail], index) => (
-              <div key={name}>
-                <span>{index + 1}</span>
-                <article><h3>{name}</h3><p>{detail}</p></article>
-              </div>
-            ))}
-          </div>
+        <GuidePage {...guidePageProps(6)} eyebrow="Platform" title="See how the Falowen learning experience is organised">
+          <FalowenExperiencePreview />
+          <p className="visitor-guide-note">
+            These interface previews show the main student areas. The live account adapts to the learner’s level, class and completed work.
+          </p>
         </GuidePage>
 
-        <GuidePage number="6" eyebrow="Learning journey" title="What happens during the course">
+        <GuidePage {...guidePageProps(7)} eyebrow="Learning journey" title="What happens during the course">
           <div className="visitor-guide-timeline">
             {[
               ["Registration", "Create the student account, choose the class and activate access."],
@@ -469,7 +776,7 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
         </GuidePage>
 
-        <GuidePage number="7" eyebrow="Support" title="The student is supported by people and technology">
+        <GuidePage {...guidePageProps(8)} eyebrow="Support" title="The student is supported by people and technology">
           <div className="visitor-guide-support-grid">
             <article><h3>Teacher / Director</h3><p>Academic direction, live instruction, explanations and course standards.</p></article>
             <article><h3>Academic Assistant</h3><p>Enquiries, onboarding, student guidance and day-to-day support.</p></article>
@@ -481,7 +788,7 @@ export default function VisitorGuidePage({ publicView = false }) {
           </p>
         </GuidePage>
 
-        <GuidePage number="8" eyebrow="After the course" title="Learning continues after the final class">
+        <GuidePage {...guidePageProps(9)} eyebrow="After the course" title="Learning continues after the final class">
           <div className="visitor-guide-after-flow">
             <strong>Course complete</strong><span>→</span>
             <strong>Revision access</strong><span>→</span>
@@ -506,7 +813,7 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
         </GuidePage>
 
-        <GuidePage number="9" eyebrow="Next step" title="Your next step with Falowen">
+        <GuidePage {...guidePageProps(10)} eyebrow="Next step" title="Your next step with Falowen">
           <div className="visitor-guide-final-grid">
             <div>
               <p className="visitor-guide-lede">You explored:</p>
@@ -532,7 +839,12 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
           <div className="visitor-guide-final-callout">
             <strong>Ready to continue?</strong>
-            <span>Register, start your trial, or speak with the LLEA team about the programme that fits your goals.</span>
+            <span>Choose the next step that fits you. The Falowen signup flow starts with the 7-day trial option selected by default.</span>
+            <div className="visitor-guide-final-actions">
+              <a href={registrationUrl} target="_blank" rel="noreferrer">Register / choose payment</a>
+              <a href={registrationUrl} target="_blank" rel="noreferrer">Start 7-day trial</a>
+              <a href={whatsappShareUrl} target="_blank" rel="noreferrer">WhatsApp the LLEA team</a>
+            </div>
           </div>
         </GuidePage>
       </div>
