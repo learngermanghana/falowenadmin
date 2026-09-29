@@ -85,7 +85,7 @@ function TopBar() {
     };
   }, [user]);
 
-  if (!user || location.pathname === "/checkin/display") return null;
+  if (!user || location.pathname === "/checkin/display" || location.pathname === "/visitor-guide/public") return null;
 
   return (
     <header className="topbar">
