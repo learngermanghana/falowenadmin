@@ -347,16 +347,16 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
         "modelAnswerDe": "Ich möchte eine Woche bleiben. So habe ich genug Zeit für meine Freundin und die Stadt."
       },
       {
-        "questionDe": "Welches Verkehrsmittel und welche Unterkunft wählst du?",
-        "modelAnswerDe": "Ich möchte mit dem Zug nach Hamburg fahren. Dort möchte ich in einem kleinen Hotel in der Nähe des Bahnhofs übernachten."
+        "questionDe": "Was machst du, wenn das Wetter im Urlaub gut ist?",
+        "modelAnswerDe": "Wenn das Wetter gut ist, gehe ich an den Strand und mache einen langen Spaziergang."
       },
       {
-        "questionDe": "Welche Aktivitäten planst du?",
-        "modelAnswerDe": "Ich möchte den Hafen besuchen und durch die Stadt spazieren. An einem Tag möchte ich mit meiner Freundin in ein Museum gehen."
+        "questionDe": "Was machst du, falls dein erster Plan nicht funktioniert?",
+        "modelAnswerDe": "Falls mein erster Plan nicht funktioniert, suche ich eine andere Aktivität oder ändere den Reisetag."
       },
       {
-        "questionDe": "Was musst du vor der Reise organisieren oder einpacken?",
-        "modelAnswerDe": "Ich muss die Fahrkarte und das Hotel buchen. Außerdem packe ich meinen Ausweis, Kleidung und ein Ladegerät ein."
+        "questionDe": "Was organisierst du vor der Reise, um die Reise einfacher zu machen?",
+        "modelAnswerDe": "Ich buche das Hotel und die Fahrkarte früh, um Geld zu sparen und weniger Stress zu haben."
       }
     ],
     grammarCheckItems: [
