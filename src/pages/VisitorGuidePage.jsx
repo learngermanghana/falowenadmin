@@ -379,13 +379,13 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
           <div className="visitor-guide-two-column">
             <article>
-              <h3>What students receive</h3>
+              <h3>What your learning package includes</h3>
               <ul>
-                <li>Structured German lessons and course books</li>
-                <li>Live, online and digital learning options</li>
-                <li>Tutor-marked writing and selected assignments</li>
-                <li>Attendance, scores and progress tracking</li>
-                <li>Exam-style reading, listening, writing and speaking practice</li>
+                <li><strong>Hybrid learning:</strong> attend in person, join online, or use recorded lectures where available.</li>
+                <li><strong>Advanced teaching slides:</strong> structured lesson presentations designed for the selected German level.</li>
+                <li><strong>Six months of Falowen access:</strong> full-payment students keep access for continued study, revision and exam preparation.</li>
+                <li><strong>Tutor support:</strong> selected assignments, writing feedback and academic guidance throughout the course.</li>
+                <li><strong>Progress visibility:</strong> attendance, results and learning progress are organised in one system.</li>
               </ul>
             </article>
             <article>
