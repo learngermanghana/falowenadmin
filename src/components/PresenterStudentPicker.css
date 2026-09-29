@@ -545,3 +545,41 @@
     padding: 0.34rem 0.48rem;
   }
 }
+
+
+/* quick-skip-absent-actions */
+.presenter-student-actions .is-skip {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.presenter-student-actions .is-absent {
+  border-color: #fbbf24;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.presenter-stage.is-focus-mode .presenter-student-actions .is-skip,
+.presenter-stage.is-focus-mode .presenter-student-actions .is-absent {
+  display: inline-flex;
+}
+
+@media (max-width: 700px) {
+  .presenter-stage.is-focus-mode .presenter-student-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-current {
+    flex: 1 1 105px;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-student-actions {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+  }
+
+  .presenter-stage.is-focus-mode .presenter-pick-student {
+    flex: 0 0 auto;
+  }
+}

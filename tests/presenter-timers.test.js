@@ -128,22 +128,15 @@ test("normal presenter build chain applies speaking feedback after timer patches
   );
 });
 
-test("A2 through C2 use Speak to Feedback to Next student with a live rubric", () => {
+test("speaking turns use simple participation marking without the old three-box rubric", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
+  const patch = read("scripts/patchPresenterSpeakingFeedback.mjs");
   const css = read("src/components/PresenterStudentPicker.css");
-  assert.match(picker, /structuredSpeakingFlow = \["A2", "B1", "B2", "C1", "C2"\]\.includes\(course\)/);
-  assert.match(picker, /SPEAKING_RUBRIC_ITEMS/);
-  assert.match(picker, /Language clear/);
-  assert.match(picker, /Grammar controlled/);
-  assert.match(picker, /Task completed/);
-  assert.match(picker, /setSpeakingPhase\("feedback"\)/);
-  assert.match(picker, /setSpeakingFeedbackReason\("time"\)/);
-  assert.match(picker, /Finish speaking → feedback/);
-  assert.match(picker, /Give \+15s/);
-  assert.match(picker, /structuredSpeakingFlow && speakingPhase === "speaking"/);
-  assert.match(picker, /Then record Correct or Needs review below/);
-  assert.match(css, /presenter-structured-speaking-feedback/);
-  assert.match(css, /\.presenter-speaking-rubric button\.is-observed/);
+
+  assert.doesNotMatch(picker, /SPEAKING_RUBRIC_ITEMS|Language clear|Grammar controlled|Task completed|presenter-speaking-rubric/);
+  assert.doesNotMatch(css, /presenter-structured-speaking-feedback|\.presenter-speaking-rubric/);
+  assert.match(patch, /Presenter speaking marking stays simple/);
+  assert.match(patch, /Correct \/ Needs review \/ Skip \/ Absent/);
 });
 
 test("student answer timer uses an absolute deadline clock and recovers after browser throttling", () => {
@@ -168,7 +161,7 @@ test("picker sync couples writer identity to the picker update and falls back fo
   assert.match(picker, /pickerUpdatedAtMs,/);
 });
 
-test("presenter keeps quick marking simple and tucks secondary actions into details", () => {
+test("presenter keeps Correct, Needs review, Skip and Absent in the quick toolbar", () => {
   const picker = read("src/components/PresenterStudentPicker.jsx");
   const toolbarStart = picker.indexOf('<div className="presenter-student-actions"');
   const toolbarEnd = picker.indexOf("</div>", toolbarStart);
@@ -176,11 +169,11 @@ test("presenter keeps quick marking simple and tucks secondary actions into deta
 
   assert.match(toolbar, />Correct</);
   assert.match(toolbar, />Needs review</);
-  assert.doesNotMatch(toolbar, />\s*Skip\s*</);
-  assert.doesNotMatch(toolbar, />\s*Absent\s*</);
+  assert.match(toolbar, />Skip</);
+  assert.match(toolbar, />Absent</);
+  assert.doesNotMatch(toolbar, /Language clear|Grammar controlled|Task completed/);
   assert.match(picker, /presenter-student-secondary-actions/);
-  assert.match(picker, />\s*Skip\s*</);
-  assert.match(picker, />\s*Presenter absent\s*</);
+  assert.doesNotMatch(picker, />\s*Presenter absent\s*<\/button>/);
 });
 
 test("recording a student result stops the answer timer instead of auto-marking timeout", () => {
@@ -293,7 +286,7 @@ test("per-student warm-up suspends and hides the picker answer timer", () => {
   assert.match(presenter, /responseTimerEnabled=\{!warmupPerStudent\}/);
   assert.match(picker, /if \(!responseTimerEnabled \|\| !responseDeadline \|\| lastMarked\) return undefined/);
   assert.match(picker, /if \(!responseTimerEnabled\) \{[\s\S]*setResponseDeadline\(0\)[\s\S]*return;/);
-  assert.match(picker, /current && responseTimerEnabled && \(!structuredSpeakingFlow \|\| speakingPhase === "speaking"\) \? \(/);
+  assert.match(picker, /current && responseTimerEnabled \? \(/);
   assert.match(picker, /effectiveRemoteDeadline = responseTimerEnabled \? remoteDeadline : 0/);
   assert.match(picker, /pickerResponseDeadline: sharedResponseDeadline/);
   assert.match(picker, /pickerResponseTimedOut: sharedResponseTimedOut/);
