@@ -31,4 +31,6 @@ jobs:
       - name: Run curriculum parity contract tests
         run: node --test tests/student-admin-curriculum-parity.test.js tests/c1-curriculum-reconciliation.test.js
       - name: Check learner-source drift and strict parity
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/auditStudentAdminCurriculumParity.mjs
