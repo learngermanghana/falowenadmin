@@ -222,6 +222,63 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
       "Use this as a grammar exit check, not a route-speaking performance task.",
     ),
   ],
+  "A1-12.3": [
+    check(
+      "Ordne die Wörter: Geburtstag · wann · dein · ist",
+      "Wann ist dein Geburtstag?",
+      "The learner must rearrange the words into one correct A1 question.",
+    ),
+    check(
+      "Ordne die Wörter: für · danke · die · Einladung",
+      "Danke für die Einladung.",
+      "Accept the correct word order only; do not give the sentence before the learner answers.",
+    ),
+    check(
+      "Ordne die Wörter: komme · ich · gern",
+      "Ich komme gern.",
+      "Check that the subject comes before the conjugated verb in this simple statement.",
+    ),
+    check(
+      "Ordne die Wörter: leider · nicht · kann · ich",
+      "Leider kann ich nicht.",
+      "Check verb-second word order after Leider.",
+    ),
+    check(
+      "Ordne die Wörter: Party · ist · wo · die",
+      "Wo ist die Party?",
+      "Check W-question order: question word + verb + subject.",
+    ),
+    check(
+      "Ordne die Wörter: beginnt · wann · die · Party",
+      "Wann beginnt die Party?",
+      "Check W-question order and the conjugated verb beginnt.",
+    ),
+    check(
+      "Ordne die Wörter: Kuchen · ich · bringe · mit",
+      "Ich bringe Kuchen mit.",
+      "Check the separable verb mitbringen: bringe in position 2 and mit at the end.",
+    ),
+    check(
+      "Ordne die Wörter: am · komme · Samstag · ich",
+      "Ich komme am Samstag.",
+      "Check a simple letter sentence with the time phrase am Samstag.",
+    ),
+    check(
+      "Ordne die Wörter: mir · bitte · schreib · zurück",
+      "Bitte schreib mir zurück.",
+      "Check the simple informal imperative and the pronoun mir.",
+    ),
+    check(
+      "Ordne die Wörter: geht · wie · dir · es",
+      "Wie geht es dir?",
+      "Check the fixed A1 question pattern Wie geht es dir?",
+    ),
+    check(
+      "Exit-Check: Ordne die Wörter: Grüße · viele · liebe",
+      "Viele liebe Grüße.",
+      "Use this as the final independent check for a common informal letter closing.",
+    ),
+  ],
   "A1-13": [
     check("Why is es often used in German weather sentences?", "German commonly uses the impersonal subject es for weather expressions, for example: Es regnet."),
     check("What is the difference between ‘Es ist kalt’ and ‘Es regnet’?", "Es ist kalt uses sein + an adjective; Es regnet uses a weather verb."),
