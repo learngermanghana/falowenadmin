@@ -12,6 +12,8 @@ test("Falowen Admin exposes the Visitor Guide navigation and route", () => {
   const app = read("src/App.jsx");
   assert.match(app, /to="\/visitor-guide"[^>]*>Visitor Guide<\/Link>/);
   assert.match(app, /path="\/visitor-guide"/);
+  assert.match(app, /path="\/visitor-guide\/public"/);
+  assert.match(app, /<VisitorGuidePage publicView \/>/);
   assert.match(app, /VisitorGuidePage/);
 });
 
@@ -35,7 +37,7 @@ test("visitor guide keeps the approved school and team credentials", () => {
   assert.match(profile, /Goethe A2 German certificate/);
 });
 
-test("visitor guide creates a personalised print-to-PDF walkthrough", () => {
+test("visitor guide generates a public link instead of requiring a PDF", () => {
   const page = read("src/pages/VisitorGuidePage.jsx");
   const css = read("src/pages/VisitorGuidePage.css");
 
@@ -46,11 +48,16 @@ test("visitor guide creates a personalised print-to-PDF walkthrough", () => {
   assert.match(page, /How Falowen supports the student/);
   assert.match(page, /What happens during the course/);
   assert.match(page, /Learning continues after the final class/);
-  assert.match(page, /Print \/ Save PDF/);
-  assert.match(page, /window\.print\(\)/);
+  assert.match(page, /buildVisitorGuideShareUrl/);
+  assert.match(page, /\/visitor-guide\/public/);
+  assert.match(page, /Copy visitor link/);
+  assert.match(page, /Open visitor guide/);
+  assert.match(page, /The visitor does not need an Admin login/);
+  assert.match(page, /Visit notes stay inside Admin and are not included in the public link/);
+  assert.doesNotMatch(page, /params\.set\("notes"/);
   assert.match(page, /QRCodeSVG/);
 
+  assert.match(css, /visitor-guide-public-bar/);
+  assert.match(css, /visitor-guide-page-public/);
   assert.match(css, /@media print/);
-  assert.match(css, /size: A4 portrait/);
-  assert.match(css, /page-break-after: always/);
 });
