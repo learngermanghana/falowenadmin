@@ -150,6 +150,20 @@ function resolveTrialEmailConfig(runtimeConfig = {}, env = process.env) {
   };
 }
 
+function secretValue(secret) {
+  if (!secret) return "";
+  return text(typeof secret.value === "function" ? secret.value() : secret);
+}
+
+function resolveTrialEmailRuntimeConfig(runtimeConfig = {}, secrets = {}) {
+  const config = resolveTrialEmailConfig(runtimeConfig);
+  return {
+    ...config,
+    url: secretValue(secrets.webhookUrl) || config.url,
+    token: secretValue(secrets.webhookToken) || config.token,
+  };
+}
+
 function trialEmailEligibility(student = {}, now = Date.now()) {
   const role = studentRole(student);
   if (role && role !== "student") return { stage: "", reason: "not_student" };
@@ -350,6 +364,9 @@ async function postTrialAccessRow(config, row, fetchImpl = fetch) {
       ...(config.token ? { token: config.token } : {}),
       ...(config.sheetName ? { sheet_name: config.sheetName } : {}),
       ...(config.sheetGid ? { sheet_gid: config.sheetGid } : {}),
+      // Older Announcement deployments consume `row`; newer deployments
+      // consume `rows`. Send both, as the established payment-email path does.
+      row,
       rows: [row],
     }),
   });
@@ -406,6 +423,7 @@ async function processTrialAccessEmail({
   db,
   admin,
   runtimeConfig = {},
+  webhookSecrets = {},
   student = {},
   studentId = "",
   requestedStage = "",
@@ -430,7 +448,7 @@ async function processTrialAccessEmail({
   if (!reservation.reserved) return { sent: false, reason: reservation.reason, stage };
 
   const row = rowForTrialAccessEmail({ student, stage, now: nowDate });
-  const config = resolveTrialEmailConfig(runtimeConfig);
+  const config = resolveTrialEmailRuntimeConfig(runtimeConfig, webhookSecrets);
   const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
   try {
@@ -471,7 +489,7 @@ async function writeTrialEmailDiagnostic({
       studentStatus: studentStatus(student),
       trialStatus: studentTrialStatus(student),
       dueStage: text(eligibility.stage || result.stage),
-      reason: text(result.reason || eligibility.reason || "not_due"),
+      reason: text(result.sent ? "sent" : (result.reason || eligibility.reason || "not_due")),
       deliveryError: text(result.error),
       lastCheckedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
@@ -489,6 +507,7 @@ async function runTrialAccessEmailJob({
   db,
   admin,
   runtimeConfig = {},
+  webhookSecrets = {},
   now = new Date(),
   fetchImpl = fetch,
 } = {}) {
@@ -529,6 +548,7 @@ async function runTrialAccessEmailJob({
       db,
       admin,
       runtimeConfig,
+      webhookSecrets,
       student,
       studentId: docSnap.id,
       requestedStage: eligibility.stage,
@@ -538,20 +558,23 @@ async function runTrialAccessEmailJob({
     const enriched = { studentId: docSnap.id, ...result };
     results.push(enriched);
 
-    if (!result.sent && !["already_sent", "processing"].includes(result.reason)) {
-      await writeTrialEmailDiagnostic({
-        db,
-        admin,
-        studentId: docSnap.id,
-        student,
-        eligibility,
-        result,
-      });
-    }
+    await writeTrialEmailDiagnostic({
+      db,
+      admin,
+      studentId: docSnap.id,
+      student,
+      eligibility,
+      result,
+    });
   }
 
   const skipReasons = skipped.reduce((counts, item) => {
     counts[item.reason] = (counts[item.reason] || 0) + 1;
+    return counts;
+  }, {});
+  const resultReasons = results.reduce((counts, item) => {
+    const reason = item.sent ? "sent" : (item.reason || "unknown");
+    counts[reason] = (counts[reason] || 0) + 1;
     return counts;
   }, {});
 
@@ -562,6 +585,7 @@ async function runTrialAccessEmailJob({
     sent: results.filter((result) => result.sent).length,
     skipped: skipped.length,
     skipReasons,
+    resultReasons,
     results,
   };
 }
@@ -571,6 +595,7 @@ function createTrialAccessWelcomeEmailTrigger({
   admin,
   onDocumentWritten,
   runtimeConfig = {},
+  webhookSecrets = {},
   fetchImpl = fetch,
 } = {}) {
   if (typeof onDocumentWritten !== "function") {
@@ -579,6 +604,9 @@ function createTrialAccessWelcomeEmailTrigger({
   return onDocumentWritten({
     document: "students/{studentId}",
     retry: true,
+    ...(webhookSecrets.webhookUrl && webhookSecrets.webhookToken
+      ? { secrets: [webhookSecrets.webhookUrl, webhookSecrets.webhookToken] }
+      : {}),
   }, async (event) => {
     const afterSnap = event?.data?.after;
     if (!afterSnap?.exists) return { sent: false, reason: "student_deleted" };
@@ -589,6 +617,7 @@ function createTrialAccessWelcomeEmailTrigger({
       db,
       admin,
       runtimeConfig,
+      webhookSecrets,
       student,
       studentId,
       requestedStage: "welcome",
@@ -610,6 +639,7 @@ function createTrialAccessReminderEmailJob({
   admin,
   onSchedule,
   runtimeConfig = {},
+  webhookSecrets = {},
 } = {}) {
   if (typeof onSchedule !== "function") {
     throw new Error("Trial access scheduler is unavailable.");
@@ -619,8 +649,11 @@ function createTrialAccessReminderEmailJob({
     timeZone: TZ,
     retryCount: 1,
     memory: "256MiB",
+    ...(webhookSecrets.webhookUrl && webhookSecrets.webhookToken
+      ? { secrets: [webhookSecrets.webhookUrl, webhookSecrets.webhookToken] }
+      : {}),
   }, async () => {
-    const result = await runTrialAccessEmailJob({ db, admin, runtimeConfig, now: new Date() });
+    const result = await runTrialAccessEmailJob({ db, admin, runtimeConfig, webhookSecrets, now: new Date() });
     console.log("trial_access_email_job", {
       checked: result.checked,
       candidates: result.candidates,
@@ -628,6 +661,7 @@ function createTrialAccessReminderEmailJob({
       sent: result.sent,
       skipped: result.skipped,
       skipReasons: result.skipReasons,
+      resultReasons: result.resultReasons,
     });
     return result;
   });
@@ -646,6 +680,7 @@ module.exports = {
     day1LessonUrl,
     formatDate,
     resolveTrialEmailConfig,
+    resolveTrialEmailRuntimeConfig,
     rowForTrialAccessEmail,
     stageActionUrl,
     stageButtonLabel,

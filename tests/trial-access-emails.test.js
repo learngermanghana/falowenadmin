@@ -17,6 +17,7 @@ const {
   buildTrialAccessMessage,
   day1LessonUrl,
   resolveTrialEmailConfig,
+  resolveTrialEmailRuntimeConfig,
   rowForTrialAccessEmail,
   trialEmailEligibility,
   trialEmailStage,
@@ -41,6 +42,8 @@ function student(overrides = {}) {
 
 test("trial welcome trigger sends when a student write becomes trial-eligible", async () => {
   let registered = null;
+  const webhookUrlSecret = { value: () => "https://script.google.com/macros/s/existing/exec" };
+  const webhookTokenSecret = { value: () => "shared-secret" };
   const sendWrites = [];
   const sendRef = {
     async set(payload) {
@@ -85,6 +88,10 @@ test("trial welcome trigger sends when a student write becomes trial-eligible", 
         announcement_sheet_name: "Announcements",
       },
     },
+    webhookSecrets: {
+      webhookUrl: webhookUrlSecret,
+      webhookToken: webhookTokenSecret,
+    },
     fetchImpl: async (url, options) => {
       assert.equal(url, "https://script.google.com/macros/s/existing/exec");
       const payload = JSON.parse(options.body);
@@ -108,6 +115,7 @@ test("trial welcome trigger sends when a student write becomes trial-eligible", 
   assert.equal(trigger, "registered");
   assert.equal(registered.options.document, "students/{studentId}");
   assert.equal(registered.options.retry, true);
+  assert.deepEqual(registered.options.secrets, [webhookUrlSecret, webhookTokenSecret]);
 
   const result = await registered.handler({
     params: { studentId: "DorothyQuayson843" },
@@ -249,6 +257,7 @@ test("scheduled trial worker recovers a missing Day-0 welcome", async () => {
       const payload = JSON.parse(options.body);
       assert.equal(payload.rows[0].email, "recover@example.com");
       assert.equal(payload.rows[0].email_type, "trial_access_welcome");
+      assert.deepEqual(payload.row, payload.rows[0]);
       return {
         ok: true,
         status: 200,
@@ -356,4 +365,14 @@ test("trial emails reuse the shared Announcement webhook configuration", () => {
   assert.equal(config.url, "https://script.google.com/macros/s/existing/exec");
   assert.equal(config.token, "shared-secret");
   assert.equal(config.sheetName, "Announcements");
+});
+
+test("deployed Secret Manager values override unavailable legacy runtime config", () => {
+  const config = resolveTrialEmailRuntimeConfig({}, {
+    webhookUrl: { value: () => "https://script.google.com/macros/s/production/exec" },
+    webhookToken: { value: () => "production-secret" },
+  });
+
+  assert.equal(config.url, "https://script.google.com/macros/s/production/exec");
+  assert.equal(config.token, "production-secret");
 });
