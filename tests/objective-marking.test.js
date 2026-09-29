@@ -335,13 +335,11 @@ Hallo Anna,
 ich komme heute später, weil ich arbeiten muss. Viele Grüße
 
 Teil 3:
-1. C
+1. A
 2. B
-3. A
+3. C
 4. B
-5. B
-6. B
-7. C
+5. C
 
 Teil 4:
 1. B
@@ -351,21 +349,19 @@ Teil 4:
 5. C
   `);
 
-  assert.equal(result.correctCount, 12);
-  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 10);
+  assert.equal(result.totalCount, 10);
   assert.equal(Object.values(result.details).filter((detail) => detail.partId === "teil2").length, 0);
 });
 
 test("dynamic multipart answer keys catch wrong answers in the right part", () => {
   const result = computeObjectiveScore("A2-1.1", `
 Teil 3:
-1. C
+1. A
 2. B
-3. A
+3. C
 4. B
-5. B
-6. B
-7. C
+5. C
 
 Teil 4:
 1. A
@@ -375,8 +371,8 @@ Teil 4:
 5. C
   `);
 
-  assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 11);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 9);
   assert.equal(result.details["teil4.1"].student, "A");
   assert.equal(result.details["teil4.1"].expected, "B");
   assert.equal(result.details["teil4.1"].correct, false);
@@ -589,18 +585,16 @@ ${"\u00a0"}Ich sehe den Tisch.
 test("A2-4.11 choices keep explicit option letters before F-leading German answer text", () => {
   const result = computeObjectiveScore("A2-4.11", `
 LESEN
-1. B
-2. B
-3. A
+1. C
+2. A
+3. B
 4. B
-5. B
-6. A
-7. B
+5. C
 
 HÖREN
 1. B
 2. B
-3. B
+3. C
 4. C
 5. B
 
@@ -609,8 +603,8 @@ Sehr geehrte Damen und Herren,
 ich möchte ein Auto mieten.
   `);
 
-  assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 12);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 10);
   assert.equal(result.details["teil3.4"].expected, "B");
   assert.equal(result.details["teil3.4"].correct, true);
   assert.equal(result.details["teil4.4"].expected, "C");
