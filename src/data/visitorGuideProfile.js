@@ -12,14 +12,14 @@ export const VISITOR_GUIDE_PROFILE = {
   founder: {
     name: "Felix Asadu",
     role: "Founder & Director",
-    secondaryRole: "Founder & Software Developer, Falowen and Sedifex",
+    secondaryRole: "Founder & Software Developer, Falowen",
     bio:
-      "Felix founded Learn Language Education Academy in 2022. He holds a degree in International Management, studied in German, and holds a TEFL certificate in Teaching English as a Foreign Language. He is also the software developer behind Falowen and Sedifex, combining language education, technology and structured student learning.",
+      "Felix founded Learn Language Education Academy in 2022. He studied International Management at IUB in Germany and holds a Goethe-Institut B2 German certificate. He also holds a TEFL certificate in Teaching English as a Foreign Language. As the software developer behind Falowen, he combines language education, technology and structured student learning.",
     credentials: [
-      "International Management graduate",
-      "Studied in German",
+      "International Management · IUB, Germany",
+      "Goethe-Institut B2 German",
       "TEFL certified",
-      "Software Developer",
+      "Software Developer · Falowen",
     ],
   },
   assistant: {
