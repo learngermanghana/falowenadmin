@@ -22,11 +22,13 @@ test("A2 and B1 use one compact grammar diagnostic instead of reteaching grammar
       );
       assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${slide.assignmentId} needs teacher answer keys`);
       assert.doesNotMatch(grammar.instruction, /erkennen\s*→\s*korrigieren/i, `${slide.assignmentId} should not use the old rule-name diagnostic flow`);
+      const curatedPrompts = new Set((slide.grammarCheckItems || []).map((item) => String(item?.prompt || "").trim()).filter(Boolean));
       const topicalQuestions = new Set((slide.studentQuestionsDe || []).map((item) => String(item || "").trim()).filter(Boolean));
-      if (topicalQuestions.size >= 3) {
+      const expectedPrompts = curatedPrompts.size >= 3 ? curatedPrompts : topicalQuestions;
+      if (expectedPrompts.size >= 3) {
         assert.ok(
-          grammar.items.every((item) => topicalQuestions.has(String(item.prompt || "").trim())),
-          `${slide.assignmentId} grammar checks should use the lesson topic instead of generic rule-name prompts`,
+          grammar.items.every((item) => expectedPrompts.has(String(item.prompt || "").trim())),
+          `${slide.assignmentId} grammar checks should use lesson-specific context instead of generic rule-name prompts`,
         );
       }
       assert.ok(
