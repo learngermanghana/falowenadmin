@@ -304,6 +304,7 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Give one other simple health reason that could fit the letter.", "For example: Ich bin krank. / Ich habe Kopfschmerzen. / Mein Bauch tut weh.", "Accept another clear A1 health problem."),
     check("Which closing fits this informal message?", "For example: Liebe Grüße, followed by the student's name."),
     check("Exit-Check: Give the three body ideas for the Day 14.1 letter in the correct order.", "First say that you cannot come, then give a concrete health reason, then suggest another meeting.", "The learner should connect the health lesson to the writing task without help."),
+  ],
 };
 
 export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks = [], context = {}) {
