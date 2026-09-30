@@ -25,6 +25,17 @@ function resolvedChecksFor(assignmentId) {
   );
 }
 
+test("A1-13 core quick checks stay on weather and time grammar", () => {
+  const coreChecks = getA1GrammarChecks("A1-13");
+  const combined = coreChecks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
+
+  assert.doesNotMatch(combined, /How many content points|What are the three Day 13 content points/i);
+  assert.match(combined, /Es regnet/);
+  assert.match(combined, /im Sommer|seasons and months/i);
+  assert.match(combined, /am Montag|days/i);
+  assert.match(combined, /16 Uhr|new day and time/i);
+});
+
 test("A1-13 understanding slides check weather grammar, cancellation and sentence building", () => {
   const checks = getA1PresenterUnderstandingChecks("A1-13", getA1GrammarChecks("A1-13"));
   const classChecks = checks.slice(0, -1);
