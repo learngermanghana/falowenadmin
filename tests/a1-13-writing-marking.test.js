@@ -53,20 +53,21 @@ test("A1-13 explicitly registers Teil 3 as AI-scored Schreiben", () => {
   assert.equal(assignmentHasScoredWriting(referenceEntry), true);
 });
 
-test("A1-13 is explicitly the second letter-writing step after A1-12.3", () => {
+test("A1-13 is the second letter-writing step with exactly three content points", () => {
   const spec = getA1WritingTaskSpec("A1-13");
   const referenceEntry = a113Reference();
 
   assert.ok(spec);
   assert.equal(spec.letterWriting, true);
-  assert.match(spec.taskText, /Follow-up to A1-12\.3/i);
-  assert.equal(spec.taskPoints.length, 5);
-  assert.ok(spec.taskPoints.some((point) => /informal greeting/i.test(point)));
+  assert.match(spec.taskText, /Second A1 letter-writing step after A1-12\.3/i);
+  assert.equal(spec.taskPoints.length, 3);
+  assert.ok(spec.taskPoints.some((point) => /cannot come/i.test(point)));
   assert.ok(spec.taskPoints.some((point) => /weather reason/i.test(point)));
   assert.ok(spec.taskPoints.some((point) => /suggestion/i.test(point)));
-  assert.ok(spec.taskPoints.some((point) => /closing/i.test(point)));
-  assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /second A1 letter-writing step after A1-12\.3/i);
-  assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /weather description alone is not enough/i);
+  assert.ok(spec.taskPoints.every((point) => !/greeting|closing|name/i.test(point)));
+  assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /exactly three content points/i);
+  assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /do not count them as extra task points/i);
+  assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /neutral weather description alone is not enough/i);
 });
 
 test("objective-only A1 assignments remain objective-only", () => {
