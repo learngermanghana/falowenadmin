@@ -128,7 +128,7 @@ test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
   assert.equal(slide.id, "a1-5-10");
   assert.equal(slide.dayNumber, 24);
   assert.equal(slide.day, "Day 24");
-  assert.match(slide.title, /^A1 Day 24 · Konjunktionen und grundlegender Satzbau$/);
+  assert.match(slide.title, /^A1 Day 24 · Gründe mit weil und nützliche Redemittel$/);
   assert.equal(slides.find((entry) => entry.dayNumber === 24)?.assignmentId, "A1-5.10");
   assert.equal(slide.workbookConnection?.grammarUrl, "/campus/course/conjunctions-5-10");
   assert.equal(slide.workbookConnection?.workbookUrl, "");
@@ -141,9 +141,16 @@ test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
   assert.ok(workbook.items.length >= 4);
 
   const classroomContent = JSON.stringify(stages);
-  for (const conjunction of ["und", "aber", "oder", "denn"]) {
-    assert.match(classroomContent, new RegExp(`\\b${conjunction}\\b`, "i"), `A1-5.10 missing ${conjunction}`);
-  }
+  assert.match(classroomContent, /weil/i);
+  assert.match(classroomContent, /Termin absagen|Termin vereinbaren/i);
+  assert.match(classroomContent, /Kurs anmelden|Deutschkurs anmelden/i);
+  assert.match(classroomContent, /Wie viel kostet der Kurs/i);
+  assert.match(classroomContent, /mehr Informationen über den Kurs/i);
+  assert.match(classroomContent, /Herzlichen Glückwunsch/i);
+
+  const productivePhrases = JSON.stringify(slide.keyPhrasesDe || []);
+  assert.doesNotMatch(productivePhrases, /deshalb/i, "deshalb should be introduced productively at A2");
+  assert.doesNotMatch(productivePhrases, /\bdenn\b/i, "denn should remain recognition-only at A1");
 });
 
 test("later A1 generic lessons do not invent workbook links", () => {
