@@ -254,7 +254,7 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Is ‘Lieber Felix’ one of the three content points?", "No. It is required informal letter form, not a content point."),
     check("Are ‘Liebe Grüße’ and your name extra task points?", "No. They are letter form, not extra content bullets."),
     check("Does ‘Ich habe einen Arm’ satisfy the health-reason point?", "No. It only names a body part; it does not describe a health problem."),
-    check("Does ‘Ich bin krank’ count as a simple A1 health reason?", "Yes. A clear simple health problem is enough at A1."),
+    check("Do ‘Ich bin krank’ or ‘Ich habe Kopfschmerzen’ count as simple A1 health reasons?", "Yes. A clear simple health problem such as being sick or having Kopfschmerzen is enough at A1."),
     check("You say you cannot come and give a health reason, but you do not suggest another meeting. How many content points are complete?", "Two of the three."),
     check("You give a health problem and another meeting, but never say that you cannot attend the birthday. What is missing?", "Content point 1: say that you cannot come to the birthday."),
     check("Must you use a weil-sentence to explain the health reason?", "No. Two short A1 sentences are acceptable, for example: Leider kann ich nicht kommen. Ich habe Fieber."),
