@@ -1,12 +1,33 @@
 export const FALOWEN_CLASSES_BASE_URL = "https://www.falowen.app/classes/";
 export const FALOWEN_REGISTRATION_URL = "https://www.falowen.app/signup";
-export const FALOWEN_VISITOR_GUIDE_URL = "https://admin.falowen.app/visitor-guide";
+export const FALOWEN_VISITOR_GUIDE_URL = "https://www.falowen.app/visitor-guide";
 
-export function buildVisitorGuideUrl(klass = {}, baseUrl = FALOWEN_VISITOR_GUIDE_URL) {
+export function createBrochureEngagementRef() {
+  const random = globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 18)
+    : Math.random().toString(36).slice(2, 14);
+  return `lead_${Date.now().toString(36)}_${random}`;
+}
+
+function addAdmissionsContext(url, { slug = "", engagementRef = "", source = "brochure-message" } = {}) {
+  if (slug) url.searchParams.set("class", slug);
+  if (engagementRef) url.searchParams.set("ref", engagementRef);
+  if (source) url.searchParams.set("source", source);
+  return url;
+}
+
+export function buildVisitorGuideUrl(klass = {}, baseUrl = FALOWEN_VISITOR_GUIDE_URL, engagementRef = "") {
   const slug = brochureClassSlug(klass);
-  if (!slug) return baseUrl;
   const url = new URL(baseUrl);
-  url.searchParams.set("class", slug);
+  addAdmissionsContext(url, { slug, engagementRef });
+  return url.toString();
+}
+
+export function buildRegistrationUrl(klass = {}, engagementRef = "") {
+  const slug = brochureClassSlug(klass);
+  const url = new URL(FALOWEN_REGISTRATION_URL);
+  url.searchParams.set("program", "german");
+  addAdmissionsContext(url, { slug, engagementRef });
   return url.toString();
 }
 
@@ -61,11 +82,11 @@ export function brochureClassSlug(klass = {}) {
   );
 }
 
-export function buildClassBrochureUrl(klass = {}, baseUrl = FALOWEN_CLASSES_BASE_URL) {
+export function buildClassBrochureUrl(klass = {}, baseUrl = FALOWEN_CLASSES_BASE_URL, engagementRef = "") {
   const slug = brochureClassSlug(klass);
   if (!slug) return "";
   const url = new URL(baseUrl);
-  url.searchParams.set("class", slug);
+  addAdmissionsContext(url, { slug, engagementRef });
   url.searchParams.set("open", "1");
   return url.toString();
 }
@@ -181,14 +202,16 @@ export function upcomingBrochureClasses(classes = [], now = new Date()) {
     });
 }
 
-export function buildClassBrochureMessage(klass = {}, studentName = "") {
+export function buildClassBrochureMessage(klass = {}, studentName = "", engagementRef = "") {
   const className = text(klass.title || klass.name || klass.className || klass.classId || klass.level || "Falowen class");
-  const brochureUrl = buildClassBrochureUrl(klass);
+  const brochureUrl = buildClassBrochureUrl(klass, FALOWEN_CLASSES_BASE_URL, engagementRef);
+  const visitorGuideUrl = buildVisitorGuideUrl(klass, FALOWEN_VISITOR_GUIDE_URL, engagementRef);
+  const registrationUrl = buildRegistrationUrl(klass, engagementRef);
   const name = text(studentName);
   const lines = [
     name ? `Hello ${name}, thank you for the call.` : "Thank you for the call.",
     "",
-    `Here is the brochure for *${className}*.`,
+    `Here are the details for *${className}*.`,
     "",
     `*Start date:* ${formatBrochureDate(klass.startDate || klass.startsAt)}`,
     `*Schedule:* ${formatBrochureSchedule(klass)}`,
@@ -198,12 +221,10 @@ export function buildClassBrochureMessage(klass = {}, studentName = "") {
     brochureUrl,
     "",
     "*About the school & how Falowen works:*",
-    buildVisitorGuideUrl(klass),
+    visitorGuideUrl,
     "",
     "*Register now:*",
-    FALOWEN_REGISTRATION_URL,
-    "",
-    "You can review the class details first or go straight to registration.",
+    registrationUrl,
     "",
     "If you have any questions, simply reply to this message.",
   ];
