@@ -89,7 +89,7 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
   }
 });
 
-test("A2 Day 6 restores knowledge and grammar before the room-movement activity", () => {
+test("A2 Day 6 checks position versus movement before article transformation", () => {
   const slide = getTeachingSlideByAssignmentId("A2-3.6");
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const ids = stages.map((stage) => stage.id);
@@ -109,8 +109,13 @@ test("A2 Day 6 restores knowledge and grammar before the room-movement activity"
   assert.match(grammarText, /Wohin\?/i);
   assert.match(grammarText, /Wechselpräposition|Dativ|Akkusativ/i);
 
-  assert.match(practice.title, /Bewege die Möbel/);
-  assert.ok(practice.items[0].modelItems.some((item) => /neben das Fenster/i.test(item)));
+  assert.match(practice.title, /Position.*Bewegung/i);
+  assert.match(practice.items[0].instruction, /Position oder Bewegung/i);
+  assert.ok(practice.items[0].prompts.some((item) => /Welcher Kasus/i.test(item)));
+  assert.ok(practice.items[0].prompts.some((item) => /Was passiert mit dem Artikel/i.test(item)));
+  assert.ok(practice.items[0].modelItems.some((item) => /Position.*Wo\?.*Dativ.*neben dem Fenster/i.test(item)));
+  assert.ok(practice.items[0].modelItems.some((item) => /Bewegung.*Wohin\?.*Akkusativ.*neben das Fenster/i.test(item)));
+  assert.ok(practice.items[0].modelItems.some((item) => /dem → den/i.test(item)));
   assert.ok(ids.indexOf("knowledge") < ids.indexOf("grammar-check"));
   assert.ok(ids.indexOf("grammar-check") < ids.indexOf("practice"));
   assert.ok(ids.indexOf("practice") < ids.indexOf("questions"));
