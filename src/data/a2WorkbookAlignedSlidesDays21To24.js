@@ -387,14 +387,14 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "After weil, wenn and falls, the conjugated verb goes to the end of the subordinate clause. Use um ... zu when the subject of the main action and the purpose is the same.",
       "Follow the workbook speaking branches: destination/timeframe, budget, transport, accommodation, activities and luggage/preparation. There is no speaking assignment submission for Teil 1.",
       "Bridge to the exact Sandra email: invite her to plan a trip together and explain why, propose when/where to meet, and ask for her opinion.",
-      "Treat Teil 3 Lesen as a separate restaurant/celebration advertisement-matching task and Teil 4 Hören as Goethe video self-check, rather than pretending either directly tests vacation planning.",
+      "Treat Teil 3 Lesen as a separate restaurant/celebration advertisement-matching task. Teil 4 Hören now uses the protected Falowen recording with five transcript-based questions about the vacation plan.",
     ],
     interactionFlow: [
       { phase: "Destination choice", detailEn: "6 min: students choose destination, time, duration and one reason." },
       { phase: "Connector map", detailEn: "9 min: build one vacation sentence each with weil, wenn/falls and um ... zu; keep the subordinate-clause verb position visible." },
       { phase: "Travel-plan build", detailEn: "10 min: add transport, accommodation, activity, budget and preparation to the chosen destination." },
       { phase: "Sandra email", detailEn: "10 min: turn the travel plan into the three required writing bullets and ask for Sandra's opinion." },
-      { phase: "Workbook bridge", detailEn: "6 min: explain that the restaurant/celebration Lesen and Goethe Hören are separate assessment practice." },
+      { phase: "Workbook bridge", detailEn: "6 min: explain that the restaurant/celebration Lesen is separate comprehension, then bridge into the five-question protected Hören task." },
     ],
     wrapUpTaskDe: "Plane einen Urlaub in 5 Sätzen. Benutze einmal weil, einmal wenn oder falls und einmal um ... zu.",
     workbookConnection: {
@@ -405,7 +405,7 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
         { label: "Teil 1 · Sprechen", detailEn: "Group practice only, with no speaking submission: plan destination/timeframe, budget, transport, accommodation, activities and luggage/preparation, then present the plan clearly." },
         { label: "Teil 2 · Schreiben", detailEn: "Email to Sandra: invite her to plan a vacation together and explain the reason, suggest when and where to meet to plan it, and ask for her opinion about your idea." },
         { label: "Teil 3 · Lesen", detailEn: "Separate comprehension topic: match celebration/eating needs to advertisements, including a wedding celebration, business meal, birthday wine, catering at home and a children's birthday with cake." },
-        { label: "Teil 4 · Hören", detailEn: "Goethe listening self-check via YouTube. Learners correct their own answers with the video; it is not a normal teacher-scored in-app listening task." },
+        { label: "Teil 4 · Hören", detailEn: "Protected Falowen Hören task: five graded questions based on the vacation-planning recording, covering destination, hotel, transport, activities and final preparation." },
       ],
     },
     teacherSupport: {
