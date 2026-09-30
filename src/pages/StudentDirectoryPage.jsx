@@ -35,7 +35,7 @@ const dateFields = new Set(["contractStart", "contractEnd"]);
 
 const fieldLabels = {
   name: "Name",
-  email: "Email",
+  email: "Contact email",
   phone: "Phone",
   studentCode: "Student code",
   level: "Level",
@@ -500,14 +500,25 @@ export default function StudentDirectoryPage() {
 
     setSavingId(student.id);
     try {
-      await updateStudentById(student.id, payload);
-      setStudents((prev) => prev.map((record) => (record.id === student.id ? { ...record, ...payload } : record)));
+      const result = await updateStudentById(student.id, payload);
+      const appliedUpdates = { ...payload, ...(result?.updates || {}) };
+      setStudents((prev) => prev.map((record) => (record.id === student.id ? { ...record, ...appliedUpdates } : record)));
       setDrafts((prev) => {
         const next = { ...prev };
         delete next[student.id];
         return next;
       });
-      pushToast({ type: "success", message: `Saved ${student.name || student.id}.` });
+      if (Object.prototype.hasOwnProperty.call(payload, "email")) {
+        const signInEmail = String(result?.authIdentity?.email || "").trim();
+        pushToast({
+          type: "success",
+          message: signInEmail
+            ? `Saved contact email. Falowen sign-in remains linked to ${signInEmail} and the student's Firebase UID.`
+            : "Saved contact email. Falowen sign-in remains linked to the student's existing Firebase UID.",
+        });
+      } else {
+        pushToast({ type: "success", message: `Saved ${student.name || student.id}.` });
+      }
     } catch (err) {
       pushToast({ type: "error", message: err?.message || "Failed to save student" });
     } finally {
@@ -831,6 +842,14 @@ export default function StudentDirectoryPage() {
                                   style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
                                   disabled={isSaving}
                                 />
+                                {field === "email" ? (
+                                  <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.45 }}>
+                                    Contact email can change without moving the account. Login, progress, scores and class history stay attached to the Firebase UID.
+                                    {selectedStudent.authEmail && selectedStudent.authEmail !== draft.email
+                                      ? ` Current sign-in email: ${selectedStudent.authEmail}.`
+                                      : ""}
+                                  </span>
+                                ) : null}
                               </label>
                             );
                           })}

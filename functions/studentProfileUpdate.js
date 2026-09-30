@@ -180,6 +180,45 @@ function classTransferSortValue(item = {}) {
   ].join("|");
 }
 
+function providerIdsForAuthUser(userRecord = {}) {
+  return Array.from(new Set(
+    (Array.isArray(userRecord.providerData) ? userRecord.providerData : [])
+      .map((entry) => cleanStudentId(entry?.providerId))
+      .filter(Boolean),
+  ));
+}
+
+async function resolveStudentAuthIdentity({ studentRef, admin }) {
+  if (!studentRef?.get) return null;
+
+  const snapshot = await studentRef.get();
+  if (!snapshot?.exists) return null;
+
+  const student = snapshot.data ? snapshot.data() || {} : {};
+  const uid = cleanStudentId(student.uid || student.authUid || student.firebaseUid);
+  let email = normalizeEmail(student.authEmail || student.loginEmail);
+  let providers = [];
+
+  if (uid && typeof admin?.auth === "function") {
+    try {
+      const authUser = await admin.auth().getUser(uid);
+      email = normalizeEmail(authUser?.email) || email;
+      providers = providerIdsForAuthUser(authUser);
+    } catch (error) {
+      const code = String(error?.code || "").trim().toLowerCase();
+      if (!["auth/user-not-found", "user-not-found"].includes(code)) {
+        throw error;
+      }
+    }
+  }
+
+  return {
+    uid,
+    email,
+    providers,
+  };
+}
+
 function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [] }) {
   if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
@@ -199,13 +238,27 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       }
 
       const studentRef = db.collection("students").doc(studentId);
+      const emailWasEdited = Object.prototype.hasOwnProperty.call(updates, "email");
+      const authIdentity = emailWasEdited
+        ? await resolveStudentAuthIdentity({ studentRef, admin })
+        : null;
+      const identityPatch = authIdentity?.email
+        ? { authEmail: authIdentity.email }
+        : {};
+
       await studentRef.update({
         ...updates,
+        ...identityPatch,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: String(user?.email || user?.uid || "").trim(),
       });
 
-      return res.json({ ok: true, studentId, updates });
+      return res.json({
+        ok: true,
+        studentId,
+        updates: { ...updates, ...identityPatch },
+        ...(emailWasEdited ? { authIdentity } : {}),
+      });
     } catch (error) {
       return res.status(statusCodeForError(error)).json({
         ok: false,
@@ -354,5 +407,7 @@ module.exports = {
   studentClassIdentity,
   targetClassIdentity,
   buildStudentClassTransferPatch,
+  providerIdsForAuthUser,
+  resolveStudentAuthIdentity,
   registerStudentProfileUpdateRoute,
 };

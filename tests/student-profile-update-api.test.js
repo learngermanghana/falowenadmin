@@ -233,3 +233,83 @@ test("student update response explains an undeployed endpoint", () => {
     /Student update endpoint is not deployed yet/,
   );
 });
+
+
+test("editing contact email preserves Firebase authentication identity", async () => {
+  let routeHandler;
+  const writes = [];
+  const authLookups = [];
+  const app = {
+    patch: (_path, handler) => { routeHandler = handler; },
+    post() {},
+    get() {},
+  };
+  const studentRef = {
+    async get() {
+      return {
+        exists: true,
+        data: () => ({
+          uid: "firebase-user-1",
+          email: "old-contact@example.com",
+        }),
+      };
+    },
+    async update(payload) {
+      writes.push(payload);
+    },
+  };
+  const db = {
+    batch: () => ({}),
+    collection(name) {
+      assert.equal(name, "students");
+      return {
+        doc(id) {
+          assert.equal(id, "student-1");
+          return studentRef;
+        },
+      };
+    },
+  };
+  const admin = {
+    auth() {
+      return {
+        async getUser(uid) {
+          authLookups.push(uid);
+          return {
+            uid,
+            email: "original-login@example.com",
+            providerData: [{ providerId: "google.com" }],
+          };
+        },
+      };
+    },
+    firestore: {
+      FieldValue: {
+        serverTimestamp: () => "SERVER_TIMESTAMP",
+      },
+    },
+  };
+
+  registerStudentProfileUpdateRoute({
+    app,
+    db,
+    admin,
+    requireAuth: async () => ({ uid: "staff", email: "staff@falowen.app" }),
+  });
+
+  const response = createResponse();
+  await routeHandler({
+    params: { studentId: "student-1" },
+    body: { updates: { email: "new-contact@example.com" } },
+  }, response);
+
+  assert.deepEqual(authLookups, ["firebase-user-1"]);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.authIdentity.uid, "firebase-user-1");
+  assert.equal(response.body.authIdentity.email, "original-login@example.com");
+  assert.deepEqual(response.body.authIdentity.providers, ["google.com"]);
+  assert.equal(response.body.updates.email, "new-contact@example.com");
+  assert.equal(response.body.updates.authEmail, "original-login@example.com");
+  assert.equal(writes[0].email, "new-contact@example.com");
+  assert.equal(writes[0].authEmail, "original-login@example.com");
+});
