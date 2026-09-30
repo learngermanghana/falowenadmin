@@ -288,9 +288,28 @@ const A2_KNOWLEDGE = {
     checks: ["Welche Wörter helfen bei der Reihenfolge?", "Wo steht die Vorsilbe bei einem trennbaren Verb?", "Was passiert mit dem Verb nach einer Zeitangabe am Satzanfang?"],
     activity: {
       title: "Informationslücke · Tagesablauf",
-      instruction: "Partner A kennt Morgen und Abend, Partner B Mittag und Nachmittag. Baut gemeinsam einen ganzen Tagesablauf.",
-      prompts: ["Benutzt mindestens zwei Zeitangaben.", "Benutzt ein trennbares Verb.", "Verbindet die Informationen mit dann oder danach."],
-      modelItems: ["Morgens stehe ich um 7 Uhr auf.", "Danach fahre ich zur Arbeit.", "Abends sehe ich fern."],
+      instruction: "Ihr rekonstruiert gemeinsam Annas ganzen Tag. Partner A kennt ihren stressigen Morgen und freien Abend. Partner B kennt ihre Mittagspause und ihren vollen Nachmittag. Fragt euch nach den fehlenden Zeiten und Aktivitäten.",
+      roleCards: [
+        {
+          id: "A",
+          title: "Rolle A · Annas Morgen und Abend",
+          content: "Morgen: 06:30 aufstehen · 07:15 mit dem Bus zur Arbeit fahren · 08:00–12:00 arbeiten. Abend: ab 18:30 frei · zu Hause kochen · gegen 22:30 schlafen.",
+          task: "Erzähl Partner B nur Morgen und Abend. Frage: Was macht Anna mittags und am Nachmittag?"
+        },
+        {
+          id: "B",
+          title: "Rolle B · Annas Mittag und Nachmittag",
+          content: "Mittag: 12:30 Mittagspause · 13:00 weiterarbeiten. Nachmittag: 16:30 Feierabend · 17:00 ins Fitnessstudio gehen · bis 18:15 trainieren.",
+          task: "Erzähl Partner A nur Mittag und Nachmittag. Frage: Was macht Anna morgens und abends?"
+        }
+      ],
+      prompts: [
+        "Ordnet Annas Tag von 06:30 bis 22:30.",
+        "Benutzt mindestens zwei Zeitangaben.",
+        "Benutzt mindestens ein trennbares Verb, zum Beispiel aufstehen oder weiterarbeiten.",
+        "Verbindet die Informationen mit dann oder danach."
+      ],
+      modelItems: ["Um 6:30 Uhr steht Anna auf.", "Danach fährt sie zur Arbeit.", "Um 16:30 Uhr hat sie Feierabend.", "Abends ist sie ab 18:30 Uhr frei."],
     },
   },
   "A2-10.26": {
