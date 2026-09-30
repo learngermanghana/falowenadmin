@@ -164,10 +164,10 @@ export const A1_GRAMMAR_CHECKS = {
     check("What should a complete Day 13 informal email contain?", "An informal greeting, a sentence saying you cannot come, one concrete weather reason, a suggestion for another meeting, an informal closing and your name."),
   ],
   "A1-14.1": [
-    check("What is the difference between ‘Ich habe Kopfschmerzen’ and ‘Mein Kopf tut weh’?", "Both describe pain; one uses haben + pain noun and the other uses the body part + tut weh."),
-    check("What does weh tun express?", "That a body part hurts."),
-    check("Why are body-part articles useful to learn with the nouns?", "Gender affects articles and case forms used in health sentences."),
-    check("What information is most useful in a simple A1 health conversation?", "Where it hurts, what symptoms you have, how long you have had them, and what help you need."),
+    check("How does Day 14.1 continue the letter-writing sequence from A1-12.3 and A1-13?", "It keeps the same informal message structure but changes the reason: Day 14.1 uses a health problem as the reason for not attending."),
+    check("What is the difference between ‘Ich habe Kopfschmerzen’ and ‘Mein Kopf tut weh’?", "Both describe pain; one uses haben + symptom noun and the other uses the body part + tut weh."),
+    check("How can a health sentence become the reason in the letter?", "Connect it to the cancellation with simple A1 sentences, for example: Leider kann ich nicht kommen. Ich habe Fieber."),
+    check("What should a complete Day 14.1 informal email contain?", "An informal greeting, a sentence saying you cannot come to the birthday, one concrete health reason, a suggestion for another meeting, an informal closing and your name."),
   ],
   "A1-14.2": [
     check("What is the basic difference between dative and accusative objects?", "Accusative often marks the direct object; dative often marks the recipient or the object required by certain verbs."),
