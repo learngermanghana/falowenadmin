@@ -53,18 +53,14 @@ const rows = [
     "writing",
     "unspecified",
     ["teil1", "teil2"],
-    "Complete both A1 letters. Teil 1 is an informal birthday message to a friend: say why you are writing, congratulate the friend, ask whether there is a party, and ask whether your family can come. Teil 2 is a formal email to a language school: say why you are writing, ask when the course begins, ask how much it costs, and ask whether you can pay online. Each letter must use the appropriate greeting and closing.",
+    "Complete both A1 letters. Each letter has exactly three content points. Teil 1 is an informal birthday message to a friend: congratulate the friend, ask whether there is a party, and ask whether your family can come. Teil 2 is a formal email to a language school: ask when the course begins, ask how much it costs, and ask whether you can pay online. Greeting, closing and name are required letter form, but they are not extra task points.",
     [
-      "Teil 1: Say why you are writing",
       "Teil 1: Congratulate the friend on the birthday",
       "Teil 1: Ask whether there is a party",
       "Teil 1: Ask whether your family can come",
-      "Teil 1: Use an informal greeting and informal closing with your name",
-      "Teil 2: Say why you are writing to the language school",
       "Teil 2: Ask when the course begins",
       "Teil 2: Ask how much the course costs",
-      "Teil 2: Ask whether you can pay online",
-      "Teil 2: Use a formal greeting and formal closing with your name"
+      "Teil 2: Ask whether you can pay online"
     ]
   ],
   [
@@ -73,10 +69,10 @@ const rows = [
     "informal_email",
     "informal",
     ["teil3"],
-    "Schreiben Sie eine E-Mail an Bina. Sie hat Sie zur Hochzeit eingeladen, aber Sie können nicht kommen. Explain why you are writing, give a concrete weather reason, and make a suggestion.",
+    "Second A1 letter-writing step after A1-12.3. Schreiben Sie eine kurze informelle E-Mail an Bina. Sie hat Sie zur Hochzeit eingeladen, aber Sie können nicht kommen. Write to exactly three content points: say that you cannot come, give one concrete weather reason, and suggest another meeting. Use an appropriate informal greeting, closing and your name, but do not treat these as extra task points.",
     [
-      "Explain why you are writing or say that you cannot come to the wedding",
-      "Give one concrete weather reason for not coming",
+      "Say that you cannot come to the wedding",
+      "Give one concrete weather reason that explains why you cannot come",
       "Make a concrete suggestion for another meeting"
     ]
   ],
@@ -86,10 +82,10 @@ const rows = [
     "informal_email",
     "informal",
     ["teil2"],
-    "Schreiben Sie eine E-Mail an Felix. Er hat Sie zum Geburtstag eingeladen, aber Sie können nicht teilnehmen. Explain why you are writing, give a health-related reason, and ask for another time to meet.",
+    "Third A1 letter-writing step after A1-12.3 and A1-13. Schreiben Sie eine kurze informelle E-Mail an Felix. Er hat Sie zum Geburtstag eingeladen, aber Sie können nicht teilnehmen. Write to exactly three content points: say that you cannot come, give one concrete health reason, and ask for or suggest another time to meet. Use an appropriate informal greeting, closing and your name, but do not treat these as extra task points.",
     [
-      "Explain why you are writing or say that you cannot attend the birthday",
-      "Give one health-related reason for not attending",
+      "Say that you cannot come to the birthday",
+      "Give one concrete health reason for not attending",
       "Ask for another date or suggest another meeting"
     ]
   ]

@@ -66,6 +66,24 @@ test("A1 has six canonical question-aware tutor-marked writing tasks", () => {
   }
 });
 
+test("A1 letter-writing prompts expose exactly three content points per email", () => {
+  const intro = getA1WritingTaskSpec("A1-12.3");
+  const weather = getA1WritingTaskSpec("A1-13");
+  const health = getA1WritingTaskSpec("A1-14.1");
+
+  assert.equal(intro.taskPoints.length, 6, "A1-12.3 has two letters with three content points each");
+  assert.equal(intro.taskPoints.filter((point) => point.startsWith("Teil 1:")).length, 3);
+  assert.equal(intro.taskPoints.filter((point) => point.startsWith("Teil 2:")).length, 3);
+  assert.equal(weather.taskPoints.length, 3);
+  assert.equal(health.taskPoints.length, 3);
+
+  const allContentPoints = [...intro.taskPoints, ...weather.taskPoints, ...health.taskPoints].join("\n");
+  assert.doesNotMatch(allContentPoints, /greeting|closing|name/i);
+  assert.match(intro.taskText, /exactly three content points/i);
+  assert.match(weather.taskText, /exactly three content points/i);
+  assert.match(health.taskText, /exactly three content points/i);
+});
+
 test("raw A1 dictionary IDs resolve the exact question and A1-simple grading instruction", () => {
   const task = resolveQuestionAwareWritingTask({
     referenceEntry: referenceEntry("A1-13"),
@@ -153,7 +171,7 @@ Ama`;
   assert.equal(guarded.taskCompletion.total, 3);
 });
 
-test("A1-14.1 accepts simple learned health language such as Ich bin krank", () => {
+test("A1-14.1 is the third letter-writing step and accepts simple learned health language such as Ich bin krank", () => {
   const task = getA1WritingTaskSpec("A1-14.1");
   const source = `teil2
 Lieber Felix,
@@ -163,9 +181,25 @@ Viele Grüße
 Mary`;
   const evidence = evaluateA1WritingTaskEvidence(task, source);
 
+  assert.match(task.taskText, /Third A1 letter-writing step after A1-12\.3 and A1-13/i);
+  assert.equal(task.taskPoints.length, 3);
   assert.equal(evidence.length, 3);
-  assert.ok(evidence.every((item) => item.status === "met"));
+  assert.ok(evidence.every((item) => item.status === "met"), JSON.stringify(evidence, null, 2));
   assert.match(evidence[1].evidence, /krank/i);
+});
+
+test("A1-14.1 does not accept a non-health excuse for the health writing point", () => {
+  const task = getA1WritingTaskSpec("A1-14.1");
+  const evidence = evaluateA1WritingTaskEvidence(task, `teil2
+Lieber Felix,
+ich kann leider nicht zu deinem Geburtstag kommen. Mein Bus fährt nicht.
+Können wir uns nächste Woche treffen?
+Liebe Grüße
+Ama`);
+
+  assert.equal(evidence.length, 3);
+  assert.equal(evidence[1].status, "missing");
+  assert.match(evidence[1].label, /health reason/i);
 });
 
 test("A1-1.1 checks the exact five self-introduction points", () => {
@@ -208,7 +242,7 @@ Mit freundlichen Grüßen
 Ama Mensah`;
 
   const evidence = evaluateA1WritingTaskEvidence(task, source);
-  assert.equal(evidence.length, 10);
+  assert.equal(evidence.length, 6);
   assert.ok(evidence.every((item) => item.status === "met"), JSON.stringify(evidence, null, 2));
 });
 

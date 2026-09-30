@@ -25,19 +25,47 @@ function resolvedChecksFor(assignmentId) {
   );
 }
 
-test("A1-13 weather gives ten genuinely different class questions plus an exit check", () => {
+test("A1-13 understanding slides test the exact three weather-letter content points", () => {
   const checks = getA1PresenterUnderstandingChecks("A1-13", getA1GrammarChecks("A1-13"));
   const classChecks = checks.slice(0, -1);
   const exitChecks = checks.slice(-1);
+  const combined = checks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
 
   assert.equal(classChecks.length, 10);
   assert.equal(exitChecks.length, 1);
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
   assert.ok(classChecks.every((item) => String(item.answerDe || "").trim()));
+  assert.match(combined, /exactly three|three Day 13 content points/i);
+  assert.match(combined, /cannot come.*weather reason.*another meeting/i);
+  assert.match(combined, /greeting.*not.*content|letter form/i);
+  assert.match(combined, /what is missing|Content point 3/i);
+  assert.match(combined, /Bus fährt nicht|attendance is not possible/i);
+  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
+  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
 
   const pool = buildA1PresenterQuestionPool(classChecks, 10, "A1-13-grammar-check");
   assert.equal(pool.length, 10);
   assert.equal(new Set(pool.map((item) => item.sourceQuestion)).size, 10);
+});
+
+test("A1-14.1 understanding slides test the exact three health-letter content points", () => {
+  const checks = getA1PresenterUnderstandingChecks("A1-14.1", getA1GrammarChecks("A1-14.1"));
+  const classChecks = checks.slice(0, -1);
+  const exitCheck = checks.at(-1);
+  const combined = checks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
+
+  assert.equal(classChecks.length, 10);
+  assert.equal(checks.length, 11);
+  assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
+  assert.match(combined, /exactly three|three Day 14\.1 content points/i);
+  assert.match(combined, /cannot come.*health reason.*another meeting/i);
+  assert.match(combined, /greeting.*not.*content|letter form/i);
+  assert.match(combined, /Ich bin krank|health problem/i);
+  assert.match(combined, /what is missing|Content point 3/i);
+  assert.match(combined, /einen Arm|does not describe a health problem/i);
+  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
+  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
+  assert.match(exitCheck.questionDe, /^Exit-Check:/);
 });
 
 test("A1-4.7 Teil 3 uses practical request-and-response understanding questions", () => {
@@ -66,22 +94,23 @@ test("A1-5.9 Goethe speaking has ten distinct class questions plus one separate 
   assert.ok(classChecks.some((item) => /frage|sprechen|bitte|partner|W-question|yes\/no/i.test(`${item.questionDe} ${item.answerDe}`)));
 });
 
-test("A1-12.3 uses ten short jumbled-word letter-writing checks plus one exit check", () => {
+test("A1-12.3 understanding slides teach exactly three content points and separate letter form", () => {
   const resolved = resolvedChecksFor("A1-12.3");
   const classChecks = resolved.slice(0, -1);
   const exitCheck = resolved.at(-1);
+  const combined = resolved.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
 
   assert.equal(classChecks.length, 10);
   assert.equal(resolved.length, 11);
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
-  assert.ok(classChecks.every((item) => item.questionDe.startsWith("Ordne die Wörter:")));
-  assert.ok(classChecks.every((item) => {
-    const words = item.questionDe.split(":").slice(1).join(":").split("·").map((word) => word.trim()).filter(Boolean);
-    return words.length <= 5;
-  }));
-  assert.match(classChecks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n"), /Geburtstag|Einladung|Party|Samstag|Grüße/i);
-  assert.match(exitCheck.questionDe, /^Exit-Check: Ordne die Wörter:/);
-  assert.equal(exitCheck.answerDe, "Ich danke dir.");
+  assert.match(combined, /exactly three|three content points/i);
+  assert.match(combined, /greeting.*not.*content|letter form/i);
+  assert.match(combined, /birthday.*three content points|Congratulate.*party.*family/i);
+  assert.match(combined, /language-school|course begins|how much.*costs|pay online/i);
+  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
+  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
+  assert.match(exitCheck.questionDe, /^Exit-Check:/);
+  assert.match(exitCheck.answerDe, /exactly three content points/i);
 });
 
 test("A1 presenter keeps class participation available from the first slide and switches to unique questions for the understanding check", () => {

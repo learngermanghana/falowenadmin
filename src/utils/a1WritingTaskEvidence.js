@@ -112,56 +112,44 @@ function evaluateA13(taskPoints, source) {
 function evaluateA1123(taskPoints, source) {
   const informal = partText(source, "teil1");
   const formal = partText(source, "teil2");
-  const informalGreeting = greeting(informal, false);
-  const informalClosing = closing(informal, false);
-  const formalGreeting = greeting(formal, true);
-  const formalClosing = closing(formal, true);
-  const informalName = nameLine(informal);
-  const formalName = nameLine(formal);
 
-  const iReason = /\b(?:ich\s+schreibe|ich\s+m[oö]chte)\b/i;
   const congratulations = /\b(?:alles\s+gute|herzlichen\s+gl[uü]ckwunsch|gratuliere|gratulieren)\b/i;
   const party = /\b(?:feier|party)\b[^?]{0,60}\?|\bgibt\s+es\s+(?:eine\s+)?(?:feier|party)\b/i;
   const familyCome = /\b(?:familie)\b[^?]{0,80}\b(?:mitkommen|kommen)\b|\bkann\s+meine\s+familie\s+mitkommen\b/i;
 
-  const fReason = /\b(?:ich\s+schreibe\s+ihnen|ich\s+m[oö]chte\s+mich|deutschkurs|sprachschule)\b/i;
   const starts = /\bwann\s+beginnt\s+(?:der\s+)?kurs\b/i;
   const costs = /\bwie\s+viel\s+kostet\s+(?:der\s+)?kurs\b/i;
   const online = /\b(?:kann|darf)\s+ich\s+online\s+bezahlen\b|\bonline\s+bezahlen\b/i;
 
   return [
-    row(taskPoints[0], iReason.test(informal), sentenceFor(informal, iReason)),
-    row(taskPoints[1], congratulations.test(informal), sentenceFor(informal, congratulations)),
-    row(taskPoints[2], party.test(informal), sentenceFor(informal, party)),
-    row(taskPoints[3], familyCome.test(informal), sentenceFor(informal, familyCome)),
-    row(taskPoints[4], informalGreeting.met && informalClosing.met && Boolean(informalName), [informalGreeting.evidence, informalClosing.evidence, informalName].filter(Boolean).join(" | ")),
-    row(taskPoints[5], fReason.test(formal), sentenceFor(formal, fReason)),
-    row(taskPoints[6], starts.test(formal), sentenceFor(formal, starts)),
-    row(taskPoints[7], costs.test(formal), sentenceFor(formal, costs)),
-    row(taskPoints[8], online.test(formal), sentenceFor(formal, online)),
-    row(taskPoints[9], formalGreeting.met && formalClosing.met && Boolean(formalName), [formalGreeting.evidence, formalClosing.evidence, formalName].filter(Boolean).join(" | ")),
+    row(taskPoints[0], congratulations.test(informal), sentenceFor(informal, congratulations)),
+    row(taskPoints[1], party.test(informal), sentenceFor(informal, party)),
+    row(taskPoints[2], familyCome.test(informal), sentenceFor(informal, familyCome)),
+    row(taskPoints[3], starts.test(formal), sentenceFor(formal, starts)),
+    row(taskPoints[4], costs.test(formal), sentenceFor(formal, costs)),
+    row(taskPoints[5], online.test(formal), sentenceFor(formal, online)),
   ];
 }
-
 function evaluateA113(taskPoints, source) {
-  const reason = /\b(?:hochzeit|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bhochzeit\b[^.!?]{0,60}\bkommen\b|\bich\s+schreibe\s+dir\b[^.!?]{0,120}\bhochzeit\b/i;
-  const weather = /\b(?:sturm|schnee|schneit|regen|regnet|unwetter|eis|gl[aä]tte|wetter)\b/i;
-  const suggestion = /\b(?:treffen|anderes\s+mal|n[aä]chste\s+woche|neuer?\s+termin|wann\s+k[oö]nnen\s+wir)\b/i;
+  const writing = partText(source, "teil3") || String(source || "");
+  const cannotAttend = /\b(?:hochzeit|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bhochzeit\b[^.!?]{0,60}\bkommen\b/i;
+  const weatherReason = /\b(?:sturm|unwetter|gl[aä]tte|eis|schnee|schneit|stark(?:er|en|e)?\s+regen|regnet\s+(?:sehr\s+)?stark|schlechtes?\s+wetter)\b/i;
+  const suggestion = /\b(?:treffen|anderes\s+mal|n[aä]chste\s+woche|neuer?\s+termin|wann\s+k[oö]nnen\s+wir|k[oö]nnen\s+wir\s+uns)\b/i;
   return [
-    row(taskPoints[0], reason.test(source), sentenceFor(source, reason)),
-    row(taskPoints[1], weather.test(source), sentenceFor(source, weather)),
-    row(taskPoints[2], suggestion.test(source), sentenceFor(source, suggestion)),
+    row(taskPoints[0], cannotAttend.test(writing), sentenceFor(writing, cannotAttend)),
+    row(taskPoints[1], weatherReason.test(writing), sentenceFor(writing, weatherReason), "The message needs a concrete bad-weather reason for missing the wedding, not only a neutral weather description."),
+    row(taskPoints[2], suggestion.test(writing), sentenceFor(writing, suggestion)),
   ];
 }
-
 function evaluateA1141(taskPoints, source) {
-  const reason = /\b(?:geburtstag|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|nicht\s+teilnehmen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bgeburtstag\b[^.!?]{0,60}\b(?:kommen|teilnehmen)\b|\bich\s+schreibe\s+dir\b[^.!?]{0,120}\bgeburtstag\b/i;
-  const health = /\b(?:krank|fieber|husten|erk[aä]ltet|schmerzen?|weh|kopfschmerzen?|halsschmerzen?|bauchschmerzen?|arzt|grippe)\b/i;
+  const writing = partText(source, "teil2") || String(source || "");
+  const cannotAttend = /\b(?:geburtstag|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|nicht\s+teilnehmen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bgeburtstag\b[^.!?]{0,60}\b(?:kommen|teilnehmen)\b/i;
+  const healthReason = /\b(?:krank|fieber|husten|erk[aä]ltet|schmerzen?|weh|kopfschmerzen?|halsschmerzen?|bauchschmerzen?|arzt|grippe)\b/i;
   const otherTime = /\b(?:ander(?:er|es)\s+termin|anderes\s+mal|n[aä]chste\s+woche|treffen|wann\s+k[oö]nnen\s+wir|k[oö]nnen\s+wir\s+uns)\b/i;
   return [
-    row(taskPoints[0], reason.test(source), sentenceFor(source, reason)),
-    row(taskPoints[1], health.test(source), sentenceFor(source, health)),
-    row(taskPoints[2], otherTime.test(source), sentenceFor(source, otherTime)),
+    row(taskPoints[0], cannotAttend.test(writing), sentenceFor(writing, cannotAttend)),
+    row(taskPoints[1], healthReason.test(writing), sentenceFor(writing, healthReason), "The message needs a concrete health problem as the reason for missing the birthday."),
+    row(taskPoints[2], otherTime.test(writing), sentenceFor(writing, otherTime)),
   ];
 }
 
