@@ -45,7 +45,7 @@ test("builds a direct public brochure URL for the selected class", () => {
   });
   assert.equal(
     url,
-    "https://www.falowen.app/classes/?class=a1-dortmund-klasse&open=1",
+    "https://www.falowen.app/classes/?class=a1-dortmund-klasse&source=brochure-message&open=1",
   );
 });
 
