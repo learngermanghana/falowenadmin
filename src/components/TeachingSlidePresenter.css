@@ -2831,3 +2831,225 @@
     font-size: clamp(1.65rem, 7.5vw, 2.55rem);
   }
 }
+
+
+/* a2-b1-weekly-practice-variation */
+.presenter-practice-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.presenter-practice-heading h1 {
+  margin-bottom: 0.2rem;
+}
+
+.presenter-practice-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: clamp(0.82rem, 1.15vw, 1rem);
+  font-weight: 750;
+}
+
+.presenter-practice-variant-badge {
+  flex: 0 0 auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.42rem 0.72rem;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.presenter-flow-grid.is-sentence-jumble .presenter-flow-card {
+  border-style: dashed;
+  background: #fffdf4;
+}
+
+.presenter-jumble-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+}
+
+.presenter-jumble-card {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px dashed #d97706;
+  border-radius: 12px;
+  background: #fffbeb;
+  padding: 0.72rem 0.8rem;
+}
+
+.presenter-jumble-label {
+  color: #92400e;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.presenter-jumble-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.presenter-jumble-words > span {
+  border: 1px solid #f59e0b;
+  border-radius: 9px;
+  background: #fff;
+  padding: 0.42rem 0.58rem;
+  color: #422006;
+  font-size: clamp(0.92rem, 1.25vw, 1.08rem);
+  font-weight: 850;
+}
+
+.presenter-flow-grid.is-sorting-match .presenter-practice-prompts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  padding-left: 0;
+  list-style: none;
+  counter-reset: sort-card;
+}
+
+.presenter-flow-grid.is-sorting-match .presenter-practice-prompts li {
+  counter-increment: sort-card;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.65rem 0.72rem;
+}
+
+.presenter-flow-grid.is-sorting-match .presenter-practice-prompts li::before {
+  content: counter(sort-card);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  margin-right: 0.45rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.presenter-flow-grid.is-information-gap .presenter-flow-card {
+  border-width: 2px;
+  background: #f8fbff;
+}
+
+.presenter-flow-grid.is-information-gap .presenter-role-gap-actions {
+  justify-content: center;
+}
+
+.presenter-flow-grid.is-error-detective .presenter-practice-prompts {
+  padding-left: 0;
+  list-style: none;
+}
+
+.presenter-flow-grid.is-error-detective .presenter-practice-prompts li {
+  border-left: 4px solid #dc2626;
+  border-radius: 8px;
+  background: #fff7f7;
+  padding: 0.55rem 0.7rem;
+}
+
+.presenter-flow-grid.is-error-detective .presenter-practice-prompts li::before {
+  content: "Find the error";
+  display: block;
+  margin-bottom: 0.2rem;
+  color: #991b1b;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.presenter-flow-grid.is-transformation .presenter-practice-prompts {
+  padding-left: 0;
+  list-style: none;
+}
+
+.presenter-flow-grid.is-transformation .presenter-practice-prompts li {
+  position: relative;
+  border: 1px solid #c4b5fd;
+  border-radius: 10px;
+  background: #faf5ff;
+  padding: 0.62rem 0.72rem 0.62rem 2.25rem;
+}
+
+.presenter-flow-grid.is-transformation .presenter-practice-prompts li::before {
+  content: "→";
+  position: absolute;
+  left: 0.75rem;
+  top: 0.55rem;
+  color: #7c3aed;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.presenter-flow-grid.is-scenario-task .presenter-practice-prompts,
+.presenter-flow-grid.is-decision-task .presenter-practice-prompts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.presenter-flow-grid.is-scenario-task .presenter-practice-prompts li,
+.presenter-flow-grid.is-decision-task .presenter-practice-prompts li {
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  padding: 0.65rem 0.72rem;
+}
+
+.presenter-flow-grid.is-decision-task .presenter-practice-prompts li {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.presenter-flow-grid.is-exam-challenge .presenter-flow-card {
+  border: 2px solid #334155;
+  background: #f8fafc;
+}
+
+.presenter-flow-grid.is-exam-challenge .presenter-practice-instruction::before {
+  content: "Exam mode · ";
+  color: #0f172a;
+  font-weight: 950;
+}
+
+.presenter-flow-grid.is-quick-check .presenter-practice-prompts {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.presenter-flow-grid.is-quick-check .presenter-practice-prompts li {
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  background: #fffbeb;
+  padding: 0.48rem 0.72rem;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .presenter-flow-grid.is-sorting-match .presenter-practice-prompts,
+  .presenter-flow-grid.is-scenario-task .presenter-practice-prompts,
+  .presenter-flow-grid.is-decision-task .presenter-practice-prompts {
+    grid-template-columns: 1fr;
+  }
+
+  .presenter-practice-variant-badge {
+    width: 100%;
+    text-align: center;
+  }
+}

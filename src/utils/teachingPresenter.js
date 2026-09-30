@@ -1118,6 +1118,160 @@ function buildPresenterTeacherPurpose(stage = {}, level = "") {
   };
 }
 
+const A2_B1_WEEKLY_PRACTICE_PROFILES = Object.freeze({
+  1: Object.freeze({ variant: "sentence-jumble", family: "Jumbled sentences & sorting", label: "Satzbau · Wörter ordnen" }),
+  2: Object.freeze({ variant: "sorting-match", family: "Jumbled sentences & sorting", label: "Ordnen & zuordnen" }),
+  3: Object.freeze({ variant: "information-gap", family: "Information gaps & matching", label: "Informationslücke" }),
+  4: Object.freeze({ variant: "sorting-match", family: "Information gaps & matching", label: "Matching & Reihenfolge" }),
+  5: Object.freeze({ variant: "error-detective", family: "Error detective & transformation", label: "Fehlerdetektiv" }),
+  6: Object.freeze({ variant: "transformation", family: "Error detective & transformation", label: "Satz-Transformation" }),
+  7: Object.freeze({ variant: "scenario-task", family: "Scenarios & decisions", label: "Szenario" }),
+  8: Object.freeze({ variant: "decision-task", family: "Scenarios & decisions", label: "Entscheidung" }),
+  9: Object.freeze({ variant: "exam-challenge", family: "Exam-style challenge", label: "Prüfungsnah" }),
+  10: Object.freeze({ variant: "exam-challenge", family: "Exam-style challenge", label: "Prüfungsnah · Transfer" }),
+});
+
+function a2B1PresenterWeek(slide = {}) {
+  const assignmentId = normalizedAssignmentId(slide);
+  const match = assignmentId.match(/^(?:A2|B1)-(\d+)\./);
+  if (match) return Math.min(10, Math.max(1, Number(match[1]) || 1));
+  const day = Number(slide.dayNumber || slide.day || 1);
+  return Math.min(10, Math.max(1, Math.ceil(day / 3)));
+}
+
+function explicitA2B1PracticeVariant(focusedPractice = {}) {
+  const title = String(focusedPractice?.title || "").trim();
+  if (/informationslücke/i.test(title)) return "information-gap";
+  if (/fehlerdetektiv|aussage reparieren/i.test(title)) return "error-detective";
+  if (/sortier|ordnen|ordnet|reihenfolge|rekonstruier|priorisier|zuordnen|zeitlinie|argumentkette|wirkungskette/i.test(title)) return "sorting-match";
+  if (/mini-fallstudie|verbraucherfall|situation.*gefühl|problem.*ursache/i.test(title)) return "scenario-task";
+  if (/entscheidung|regel bewerten|zwei profile|lebensform für|werte in einer situation/i.test(title)) return "decision-task";
+  if (/antwort verstärken|antwort-upgrade|mach es höflicher|direkt.*professionell|verbinde mit|beschreibung verbessern|urlaubsplan verbinden/i.test(title)) return "transformation";
+  if (/mini-wissensquiz|welches wort passt|finde das muster|behauptung prüfen|tipp, pflicht oder möglichkeit/i.test(title)) return "quick-check";
+  return "";
+}
+
+function practiceVariantLabel(variant = "", fallback = "") {
+  const labels = {
+    "sentence-jumble": "Satzbau · Wörter ordnen",
+    "sorting-match": "Ordnen & zuordnen",
+    "information-gap": "Informationslücke",
+    "error-detective": "Fehlerdetektiv",
+    transformation: "Satz-Transformation",
+    "scenario-task": "Szenario",
+    "decision-task": "Entscheidung",
+    "exam-challenge": "Prüfungsnahe Aufgabe",
+    "quick-check": "Schnellcheck",
+  };
+  return labels[variant] || fallback || "Fokusaufgabe";
+}
+
+function buildSentenceJumbles(focusedPractice = {}, support = {}, level = "A2") {
+  const candidates = [
+    ...(Array.isArray(focusedPractice?.modelItems) ? focusedPractice.modelItems : []),
+    ...(Array.isArray(support?.modelExamplesDe) ? support.modelExamplesDe : []),
+  ];
+  const maxWords = level === "B1" ? 12 : 10;
+  const seen = new Set();
+  const rows = [];
+
+  for (const raw of candidates) {
+    const answer = String(raw || "").trim().replace(/\s+/g, " ");
+    if (!answer || seen.has(answer)) continue;
+    seen.add(answer);
+    const words = answer
+      .replace(/[.!?]+$/g, "")
+      .split(/\s+/)
+      .map((word) => word.trim())
+      .filter(Boolean);
+    if (words.length < 4 || words.length > maxWords) continue;
+
+    const shift = Math.max(1, Math.min(words.length - 1, Math.floor(words.length / 3)));
+    const scrambledWords = [...words.slice(shift), ...words.slice(0, shift)];
+    if (scrambledWords.join(" ") === words.join(" ")) continue;
+
+    rows.push({
+      id: `jumble-${rows.length + 1}`,
+      words: scrambledWords,
+      answer,
+    });
+    if (rows.length >= 2) break;
+  }
+
+  return rows;
+}
+
+function buildInformationGapRoleCards(focusedPractice = {}) {
+  if (Array.isArray(focusedPractice?.roleCards) && focusedPractice.roleCards.length) return focusedPractice.roleCards;
+  const prompts = Array.isArray(focusedPractice?.prompts) ? focusedPractice.prompts.filter(Boolean) : [];
+  if (prompts.length < 2) return [];
+
+  const explicitA = prompts.find((prompt) => /^A\s*:/i.test(String(prompt)));
+  const explicitB = prompts.find((prompt) => /^B\s*:/i.test(String(prompt)));
+  const first = explicitA || prompts[0];
+  const second = explicitB || prompts[1];
+
+  return [
+    {
+      id: "A",
+      title: "Rolle A · nur für Person A",
+      content: String(first).replace(/^A\s*:\s*/i, ""),
+      task: "Frage Person B nach der fehlenden Information. Verrate deine Karte nicht vollständig.",
+    },
+    {
+      id: "B",
+      title: "Rolle B · nur für Person B",
+      content: String(second).replace(/^B\s*:\s*/i, ""),
+      task: "Frage Person A nach der fehlenden Information. Verrate deine Karte nicht vollständig.",
+    },
+  ];
+}
+
+export function getA2B1PracticeVariant(slide = {}, focusedPractice = {}) {
+  const weekNumber = a2B1PresenterWeek(slide);
+  const profile = A2_B1_WEEKLY_PRACTICE_PROFILES[weekNumber] || A2_B1_WEEKLY_PRACTICE_PROFILES[1];
+  const explicitVariant = explicitA2B1PracticeVariant(focusedPractice);
+  const variant = explicitVariant || profile.variant;
+  return {
+    variant,
+    weekNumber,
+    weekFamily: profile.family,
+    variantLabel: practiceVariantLabel(variant, profile.label),
+    source: explicitVariant ? "lesson-override" : "weekly-profile",
+  };
+}
+
+function buildA2B1FocusedPracticeStage(slide = {}, focusedPractice = null, support = {}, level = "A2") {
+  if (!focusedPractice) return null;
+  const profile = getA2B1PracticeVariant(slide, focusedPractice);
+  const defaultMinutes = level === "B1" ? 7 : 6;
+  const item = {
+    ...focusedPractice,
+    minutes: Number(focusedPractice.minutes || defaultMinutes),
+  };
+
+  if (profile.variant === "sentence-jumble") {
+    item.jumbles = buildSentenceJumbles(focusedPractice, support, level);
+  }
+  if (profile.variant === "information-gap") {
+    item.roleCards = buildInformationGapRoleCards(focusedPractice);
+  }
+
+  return {
+    id: "practice",
+    type: "flow",
+    variant: profile.variant,
+    variantLabel: profile.variantLabel,
+    variantSource: profile.source,
+    weekNumber: profile.weekNumber,
+    weekFamily: profile.weekFamily,
+    kicker: level === "B1" ? "Fokusaufgabe" : "Fokusübung",
+    title: focusedPractice.title,
+    items: [item],
+    suggestedMinutes: Number(focusedPractice.minutes || defaultMinutes),
+  };
+}
+
 function buildProgressiveSpeakingStage(slide = {}, speakingStage = {}, level = "") {
   const questions = Array.isArray(speakingStage.items) ? speakingStage.items.filter(Boolean) : [];
   if (!questions.length) return speakingStage;
@@ -1267,17 +1421,10 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         suggestedMinutes: vocabularyStage ? 5 : 0,
       },
       buildA2B1GrammarCheckStage(slide, support, level),
-      ...(focusedPractice ? [{
-        id: "practice",
-        type: "flow",
-        kicker: "Fokusübung",
-        title: focusedPractice.title,
-        items: [{
-          ...focusedPractice,
-          minutes: Number(focusedPractice.minutes || 6),
-        }],
-        suggestedMinutes: Number(focusedPractice.minutes || 6),
-      }] : []),
+      ...(() => {
+        const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
+        return practiceStage ? [practiceStage] : [];
+      })(),
       buildProgressiveSpeakingStage(slide, speakingStage, level),
       workbookStage,
     ];
@@ -1333,17 +1480,10 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         suggestedMinutes: 5,
       },
       buildA2B1GrammarCheckStage(slide, support, level),
-      ...(focusedPractice ? [{
-        id: "practice",
-        type: "flow",
-        kicker: "Fokusaufgabe",
-        title: focusedPractice.title,
-        items: [{
-          ...focusedPractice,
-          minutes: Number(focusedPractice.minutes || 7),
-        }],
-        suggestedMinutes: Number(focusedPractice.minutes || 7),
-      }] : []),
+      ...(() => {
+        const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
+        return practiceStage ? [practiceStage] : [];
+      })(),
       buildProgressiveSpeakingStage(slide, speakingStage, level),
       workbookStage,
     ];

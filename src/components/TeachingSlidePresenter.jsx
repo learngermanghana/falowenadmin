@@ -995,13 +995,37 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             </section>
           ) : stage.type === "flow" ? (
             <>
-              <h1>{stage.title}</h1>
-              <div className="presenter-flow-grid">
+              <div className="presenter-practice-heading">
+                <div>
+                  <h1>{stage.title}</h1>
+                  {stage.weekFamily ? <p>{`Week ${stage.weekNumber} · ${stage.weekFamily}`}</p> : null}
+                </div>
+                {stage.variantLabel ? <span className={`presenter-practice-variant-badge is-${stage.variant || "standard"}`}>{stage.variantLabel}</span> : null}
+              </div>
+              <div className={`presenter-flow-grid ${stage.variant ? `is-${stage.variant}` : ""}`}>
                 {presenterItems.map((item, itemIndex) => (
-                  <article key={`${item.title}-${item.detail || item.instruction || itemIndex}`} className="presenter-flow-card">
+                  <article key={`${item.title}-${item.detail || item.instruction || itemIndex}`} className={`presenter-flow-card ${stage.variant ? `is-${stage.variant}` : ""}`}>
                     <div className="presenter-flow-card-main">
                       <strong>{item.title}</strong>
                       {item.instruction ? <p className="presenter-practice-instruction">{item.instruction}</p> : <p>{item.detail}</p>}
+                      {Array.isArray(item.jumbles) && item.jumbles.length ? (
+                        <div className="presenter-jumble-list">
+                          {item.jumbles.map((jumble, jumbleIndex) => (
+                            <article className="presenter-jumble-card" key={jumble.id || jumbleIndex}>
+                              <span className="presenter-jumble-label">Satz {jumbleIndex + 1} · ordne die Wörter</span>
+                              <div className="presenter-jumble-words">
+                                {jumble.words.map((word, wordIndex) => (
+                                  <span key={`${word}-${wordIndex}`}>{word}</span>
+                                ))}
+                              </div>
+                              <details className="presenter-practice-details">
+                                <summary>Lösung anzeigen</summary>
+                                <p>{jumble.answer}</p>
+                              </details>
+                            </article>
+                          ))}
+                        </div>
+                      ) : null}
                       {Array.isArray(item.roleCards) && item.roleCards.length ? (
                         <div className="presenter-role-gap">
                           <div className="presenter-role-gap-actions" role="group" aria-label="Private role cards">
