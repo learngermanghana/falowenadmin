@@ -2,6 +2,14 @@ export const FALOWEN_CLASSES_BASE_URL = "https://www.falowen.app/classes/";
 export const FALOWEN_REGISTRATION_URL = "https://www.falowen.app/signup";
 export const FALOWEN_VISITOR_GUIDE_URL = "https://admin.falowen.app/visitor-guide";
 
+export function buildVisitorGuideUrl(klass = {}, baseUrl = FALOWEN_VISITOR_GUIDE_URL) {
+  const slug = brochureClassSlug(klass);
+  if (!slug) return baseUrl;
+  const url = new URL(baseUrl);
+  url.searchParams.set("class", slug);
+  return url.toString();
+}
+
 export const BROCHURE_WHATSAPP_MESSAGE = `Thank you for the call. Here are the current Falowen class options.
 
 View upcoming classes and brochures:
@@ -190,7 +198,7 @@ export function buildClassBrochureMessage(klass = {}, studentName = "") {
     brochureUrl,
     "",
     "*About the school & how Falowen works:*",
-    FALOWEN_VISITOR_GUIDE_URL,
+    buildVisitorGuideUrl(klass),
     "",
     "*Register now:*",
     FALOWEN_REGISTRATION_URL,
