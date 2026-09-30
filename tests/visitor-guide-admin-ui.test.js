@@ -8,11 +8,11 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
-test("Falowen Admin exposes the Visitor Guide navigation and route", () => {
+test("Falowen exposes a public Visitor Guide and keeps the editor protected", () => {
   const app = read("src/App.jsx");
-  assert.match(app, /to="\/visitor-guide"[^>]*>Visitor Guide<\/Link>/);
-  assert.match(app, /path="\/visitor-guide"/);
-  assert.match(app, /VisitorGuidePage/);
+  assert.match(app, /to="\/visitor-guide\/edit"[^>]*>Visitor Guide<\/Link>/);
+  assert.match(app, /path="\/visitor-guide"[^>]*element={<VisitorGuidePage publicView \/>}/);
+  assert.match(app, /path="\/visitor-guide\/edit"[^>]*ProtectedRoute/);
 });
 
 test("visitor guide keeps the approved school and team credentials", () => {
@@ -39,6 +39,7 @@ test("visitor guide creates a personalised print-to-PDF walkthrough", () => {
   const page = read("src/pages/VisitorGuidePage.jsx");
   const css = read("src/pages/VisitorGuidePage.css");
 
+  assert.match(page, /publicView = false/);
   assert.match(page, /Visitor \/ client name/);
   assert.match(page, /Academic assistant/);
   assert.match(page, /Selected class/);
