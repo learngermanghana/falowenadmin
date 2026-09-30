@@ -40,6 +40,8 @@ test("visitor guide creates a personalised print-to-PDF walkthrough", () => {
   const css = read("src/pages/VisitorGuidePage.css");
 
   assert.match(page, /publicView = false/);
+  assert.match(page, /requestedPublicClassSlug/);
+  assert.match(page, /brochureClassSlug\(klass\) === requestedPublicClassSlug/);
   assert.match(page, /Visitor \/ client name/);
   assert.match(page, /Academic assistant/);
   assert.match(page, /Selected class/);
