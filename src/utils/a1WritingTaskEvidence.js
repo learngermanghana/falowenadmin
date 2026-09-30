@@ -144,24 +144,36 @@ function evaluateA1123(taskPoints, source) {
 }
 
 function evaluateA113(taskPoints, source) {
-  const reason = /\b(?:hochzeit|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bhochzeit\b[^.!?]{0,60}\bkommen\b|\bich\s+schreibe\s+dir\b[^.!?]{0,120}\bhochzeit\b/i;
-  const weather = /\b(?:sturm|schnee|schneit|regen|regnet|unwetter|eis|gl[aä]tte|wetter)\b/i;
-  const suggestion = /\b(?:treffen|anderes\s+mal|n[aä]chste\s+woche|neuer?\s+termin|wann\s+k[oö]nnen\s+wir)\b/i;
+  const writing = partText(source, "teil3") || String(source || "");
+  const g = greeting(writing, false);
+  const c = closing(writing, false);
+  const name = nameLine(writing);
+  const cannotAttend = /\b(?:hochzeit|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bhochzeit\b[^.!?]{0,60}\bkommen\b/i;
+  const weatherReason = /\b(?:sturm|unwetter|gl[aä]tte|eis|schnee|schneit|starker?\s+regen|stark\w*\s+regnet|regnet\s+(?:sehr\s+)?stark|schlechtes?\s+wetter)\b/i;
+  const suggestion = /\b(?:treffen|anderes\s+mal|n[aä]chste\s+woche|neuer?\s+termin|wann\s+k[oö]nnen\s+wir|k[oö]nnen\s+wir\s+uns)\b/i;
   return [
-    row(taskPoints[0], reason.test(source), sentenceFor(source, reason)),
-    row(taskPoints[1], weather.test(source), sentenceFor(source, weather)),
-    row(taskPoints[2], suggestion.test(source), sentenceFor(source, suggestion)),
+    row(taskPoints[0], g.met, g.evidence),
+    row(taskPoints[1], cannotAttend.test(writing), sentenceFor(writing, cannotAttend)),
+    row(taskPoints[2], weatherReason.test(writing), sentenceFor(writing, weatherReason), "The message needs a concrete bad-weather reason for missing the wedding, not only a neutral weather description."),
+    row(taskPoints[3], suggestion.test(writing), sentenceFor(writing, suggestion)),
+    row(taskPoints[4], c.met && Boolean(name), [c.evidence, name].filter(Boolean).join(" | ")),
   ];
 }
 
 function evaluateA1141(taskPoints, source) {
-  const reason = /\b(?:geburtstag|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|nicht\s+teilnehmen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bgeburtstag\b[^.!?]{0,60}\b(?:kommen|teilnehmen)\b|\bich\s+schreibe\s+dir\b[^.!?]{0,120}\bgeburtstag\b/i;
-  const health = /\b(?:krank|fieber|husten|erk[aä]ltet|schmerzen?|weh|kopfschmerzen?|halsschmerzen?|bauchschmerzen?|arzt|grippe)\b/i;
+  const writing = partText(source, "teil2") || String(source || "");
+  const g = greeting(writing, false);
+  const c = closing(writing, false);
+  const name = nameLine(writing);
+  const cannotAttend = /\b(?:geburtstag|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|nicht\s+teilnehmen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bgeburtstag\b[^.!?]{0,60}\b(?:kommen|teilnehmen)\b/i;
+  const healthReason = /\b(?:krank|fieber|husten|erk[aä]ltet|schmerzen?|weh|kopfschmerzen?|halsschmerzen?|bauchschmerzen?|arzt|grippe)\b/i;
   const otherTime = /\b(?:ander(?:er|es)\s+termin|anderes\s+mal|n[aä]chste\s+woche|treffen|wann\s+k[oö]nnen\s+wir|k[oö]nnen\s+wir\s+uns)\b/i;
   return [
-    row(taskPoints[0], reason.test(source), sentenceFor(source, reason)),
-    row(taskPoints[1], health.test(source), sentenceFor(source, health)),
-    row(taskPoints[2], otherTime.test(source), sentenceFor(source, otherTime)),
+    row(taskPoints[0], g.met, g.evidence),
+    row(taskPoints[1], cannotAttend.test(writing), sentenceFor(writing, cannotAttend)),
+    row(taskPoints[2], healthReason.test(writing), sentenceFor(writing, healthReason), "The message needs a concrete health problem as the reason for missing the birthday."),
+    row(taskPoints[3], otherTime.test(writing), sentenceFor(writing, otherTime)),
+    row(taskPoints[4], c.met && Boolean(name), [c.evidence, name].filter(Boolean).join(" | ")),
   ];
 }
 
