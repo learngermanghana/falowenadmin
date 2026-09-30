@@ -134,3 +134,75 @@ export function getA2B1AdminLessonProfileForSlide(slide = {}) {
     slide.assignmentId || slide.assignmentKey || "",
   );
 }
+
+
+const canonicalPart4Detail = (part4) => {
+  if (!part4?.visible) return "";
+  if (part4.submitRequired) {
+    return part4.contentType === "reading"
+      ? "Canonical workbook contract: Teil 4 is a graded reading section. Students complete it and submit it as Teil 4."
+      : "Canonical workbook contract: Teil 4 · Hören is graded. Students complete the live Falowen listening task and submit their answers as Teil 4.";
+  }
+  return "Canonical workbook contract: Teil 4 · Hören is self-check practice only. Students complete it independently and do not submit Teil 4.";
+};
+
+export function applyA2B1AdminLessonProfileToSlide(slide = {}) {
+  const profile = getA2B1AdminLessonProfileForSlide(slide);
+  if (!profile) return slide;
+
+  const connection = slide.workbookConnection || null;
+  const part4 = profile.sections.part4;
+  const sourceParts = Array.isArray(connection?.parts) ? connection.parts : [];
+  const parts = sourceParts
+    .filter((part) => {
+      const label = String(part?.label || "");
+      if (/Teil\s*2/i.test(label) && !profile.sections.writing.visible) return false;
+      if (/Teil\s*4/i.test(label) && !part4.visible) return false;
+      return true;
+    })
+    .map((part) => {
+      const label = String(part?.label || "");
+      if (!/Teil\s*4/i.test(label) || !part4.visible) return part;
+      return {
+        ...part,
+        label: `Teil 4 · ${part4.label}`,
+        detailEn: canonicalPart4Detail(part4),
+      };
+    });
+
+  const submitted = profile.teacherContract.submission || "no written submission";
+  const subtitle = [
+    `Canonical workbook contract: submit ${submitted}.`,
+    profile.sections.writing.visible ? null : "Teil 2 · Schreiben is not required.",
+    !part4.visible
+      ? "There is no Teil 4."
+      : part4.submitRequired
+        ? `Teil 4 · ${part4.label} is submitted.`
+        : `Teil 4 · ${part4.label} is self-check only and is not submitted.`,
+  ].filter(Boolean).join(" ");
+
+  const statusNote = `Canonical workbook contract (v${profile.version}): ${profile.teacherContract.writing}; ${profile.teacherContract.part4}. This contract overrides older section-status notes.`;
+  const teacherNotesEn = [
+    statusNote,
+    ...(Array.isArray(slide.teacherNotesEn) ? slide.teacherNotesEn : []).filter((note) => {
+      const value = String(note || "");
+      if (!profile.sections.writing.visible && /Teil\s*2|Schreiben|writing|email|letter/i.test(value)) return false;
+      if (/Teil\s*4|Hören|listening|scor|contract|self-check|no live/i.test(value)) return false;
+      return true;
+    }),
+  ];
+
+  return {
+    ...slide,
+    adminLessonProfileVersion: profile.version,
+    requiredSubmissionParts: profile.requiredSubmissionParts.map((part) => part.partId),
+    teacherNotesEn,
+    workbookConnection: connection
+      ? {
+          ...connection,
+          subtitle,
+          parts,
+        }
+      : connection,
+  };
+}
