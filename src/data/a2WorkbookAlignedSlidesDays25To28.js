@@ -414,9 +414,9 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
 export function getA2WorkbookAlignedSlideDay25To28(assignmentId) {
   const normalized = String(assignmentId || "").trim().toUpperCase();
   if (!normalized) return null;
-  return (
+  const slide =
     a2WorkbookAlignedSlidesDays25To28.find(
-      (slide) => String(slide.assignmentId || "").trim().toUpperCase() === normalized,
-    ) || null
-  );
+      (entry) => String(entry.assignmentId || "").trim().toUpperCase() === normalized,
+    ) || null;
+  return slide ? applyA2B1AdminLessonProfileToSlide(slide) : null;
 }
