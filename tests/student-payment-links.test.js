@@ -22,6 +22,10 @@ test("student payment patch exposes the admin UI and production API route", () =
   assert.match(vercel, /cloudfunctions\.net\/api\/payments\/\$1/);
   assert.doesNotMatch(component, /collection\(db,\s*"payments"\)/);
   assert.match(component, /listStudentPayments/);
+  assert.match(component, /reconcileStudentPayments/);
+  assert.match(component, /reference\.startsWith\("FAL-"\)/);
+  assert.match(component, /status \|\| ""\).*toLowerCase\(\) === "pending"/);
+  assert.match(component, /lastCheckedAt < 10000/);
 });
 
 test("payment backend requires admin access, reuses the existing Paystack secret, and verifies webhooks", () => {
@@ -81,4 +85,17 @@ test("checkout gross can exceed tuition credit without changing the tuition amou
 
   assert.ok(checkoutAmount >= tuitionCredit);
   assert.equal(tuitionCredit, 1500);
+});
+
+
+test("Firebase deploy isolates payment reconciliation from operational sheet workers", () => {
+  const workflow = read(".github/workflows/deploy-firebase.yml");
+
+  assert.match(workflow, /deploy_group "payment reconciler"[\s\S]*maintainStudentPaymentContracts/);
+  assert.doesNotMatch(
+    workflow,
+    /deploy_group "payment reconciler"[\s\S]{0,500}autoSyncNewStudentToOrientationSheet/,
+  );
+  assert.match(workflow, /deploy_group "operational sheet sync"[\s\S]*syncPendingOperationalSheets/);
+  assert.match(workflow, /deploy_group "new student orientation sync"[\s\S]*autoSyncNewStudentToOrientationSheet/);
 });
