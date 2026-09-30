@@ -176,10 +176,10 @@ export const A1_GRAMMAR_CHECKS = {
     check("What happens to masculine der in dative and accusative?", "der becomes dem in dative and den in accusative."),
   ],
   "A1-5.10": [
-    check("What is the purpose of a conjunction?", "It connects words, phrases, or clauses and shows the relationship between ideas."),
-    check("What relationship does aber express?", "A contrast."),
-    check("What relationship does oder express?", "A choice or alternative."),
-    check("What happens to normal main-clause word order after und, aber, oder and denn?", "The following main clause normally keeps verb-second word order."),
+    check("What happens to the conjugated verb in a weil-clause?", "It goes to the end of the weil-clause."),
+    check("Which familiar A1 connectors should you recognise even if you do not force them into your writing?", "und, aber, oder and denn."),
+    check("How can you politely ask for more information about a course?", "Können Sie mir bitte mehr Informationen über den Kurs geben?"),
+    check("How can you ask to arrange another appointment?", "Können wir einen anderen Termin vereinbaren?"),
   ],
 };
 

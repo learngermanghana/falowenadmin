@@ -30,7 +30,7 @@ export const courseDictionary = {
     "A1-13": { assignment_id: "A1-13", chapter: "13", de: "Wetter", en: "Weather" },
     "A1-14.1": { assignment_id: "A1-14.1", chapter: "14.1", de: "Gesundheit und Körperteile", en: "Health and Body Parts" },
     "A1-14.2": { assignment_id: "A1-14.2", chapter: "14.2", de: "Dativ und Akkusativ Verben", en: "Dative and Accusative Verbs" },
-    "A1-5.10": { assignment_id: "A1-5.10", chapter: "5.10", de: "Konjunktionen und grundlegender Satzbau", en: "Conjunctions and Basic Sentence Structure" },
+    "A1-5.10": { assignment_id: "A1-5.10", chapter: "5.10", de: "Gründe mit weil und nützliche Redemittel", en: "Reasons with weil and Useful A1 Phrases" },
   },
   A2: {
     "A2-1.1": { assignment_id: "A2-1.1", chapter: "1.1", de: "Small Talk", en: "Small Talk" },

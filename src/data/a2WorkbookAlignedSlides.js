@@ -60,6 +60,7 @@ export const a2WorkbookAlignedSlides = [
     ],
     teacherNotesEn: [
       "Mirror the workbook speaking map: Familie → Sprachen → Beruf/Studium → Hobbys. Students should learn a route for thinking, not memorize one long text.",
+      "Progression note: A1 now uses weil as the main productive reason connector. A2 Day 1 is where deshalb becomes a productive target for expressing results.",
       "Before teaching connector word order, establish meaning first: weil/denn give a reason; deshalb gives a result.",
       "Model one complete 45–60 second introduction, then rebuild it branch by branch with the class.",
       "After the introduction, practise short follow-up questions, polite repair phrases and a natural closing so the lesson remains real small talk.",
