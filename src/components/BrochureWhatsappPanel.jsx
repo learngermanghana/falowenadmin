@@ -254,7 +254,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       </div>
 
       <p style={{ margin: 0, padding: 12, borderRadius: 8, background: "#ecfdf5", color: "#166534" }}>
-        <strong>No attachment needed:</strong> the selected class’s public Falowen brochure page is included in the message automatically.
+        The selected class brochure and the school background guide are included in the message automatically.
       </p>
     </div>
   );

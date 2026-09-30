@@ -7,9 +7,11 @@ import { fileURLToPath } from "node:url";
 import {
   BROCHURE_WHATSAPP_MESSAGE,
   FALOWEN_REGISTRATION_URL,
+  FALOWEN_VISITOR_GUIDE_URL,
   buildBrochureWhatsappUrl,
   buildClassBrochureMessage,
   buildClassBrochureUrl,
+  buildVisitorGuideUrl,
   formatBrochureFee,
   formatBrochureSchedule,
   normalizeGhanaWhatsappNumber,
@@ -45,6 +47,14 @@ test("builds a direct public brochure URL for the selected class", () => {
   );
 });
 
+test("builds a class-aware visitor guide URL", () => {
+  assert.equal(
+    buildVisitorGuideUrl({ name: "A1 Hamburg Klasse" }),
+    "https://admin.falowen.app/visitor-guide?class=a1-hamburg-klasse",
+  );
+  assert.equal(buildVisitorGuideUrl({}), FALOWEN_VISITOR_GUIDE_URL);
+});
+
 test("selected class message uses the student name when provided", () => {
   const message = buildClassBrochureMessage({
     name: "A1 Dortmund Klasse",
@@ -59,7 +69,7 @@ test("selected class message keeps the existing greeting when no student name is
   assert.match(message, /^Thank you for the call\./);
 });
 
-test("selected class message includes current class context and no attachment requirement", () => {
+test("selected class message includes current class context and school background link", () => {
   const message = buildClassBrochureMessage({
     name: "A1 Dortmund Klasse",
     startDate: "2026-10-01",
@@ -75,19 +85,24 @@ test("selected class message includes current class context and no attachment re
   assert.match(message, /GHS 2,800/);
   assert.match(message, /Monday 18:00/);
   assert.match(message, /class=a1-dortmund-klasse&open=1/);
+  assert.match(message, /About the school & how Falowen works/);
+  assert.match(message, /https:\/\/admin\.falowen\.app\/visitor-guide\?class=a1-dortmund-klasse/);
   assert.match(message, /Register now/);
   assert.match(message, /https:\/\/www\.falowen\.app\/signup/);
-  assert.match(message, /No PDF attachment is needed/);
+  assert.doesNotMatch(message, /PDF attachment|attachment is needed/i);
 });
 
 
 
 test("generic brochure message includes both catalogue and direct registration links", () => {
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /View upcoming classes and brochures/);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /About the school & how Falowen works/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /Register now/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/classes\//);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/admin\.falowen\.app\/visitor-guide/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/signup/);
   assert.equal(FALOWEN_REGISTRATION_URL, "https://www.falowen.app/signup");
+  assert.equal(FALOWEN_VISITOR_GUIDE_URL, "https://admin.falowen.app/visitor-guide");
 });
 
 test("upcoming brochure classes include only open future classes and sort soonest first", () => {
@@ -115,7 +130,7 @@ test("formats selected class fee and schedule from class metadata", () => {
   );
 });
 
-test("brochure panel loads real classes and no longer asks staff to attach a PDF", () => {
+test("brochure panel loads real classes and includes school background automatically", () => {
   const panel = read("src/components/BrochureWhatsappPanel.jsx");
   const classes = read("src/services/publicBrochureClassService.js");
 
@@ -125,8 +140,8 @@ test("brochure panel loads real classes and no longer asks staff to attach a PDF
   assert.match(panel, /buildClassBrochureMessage\(selectedClass, value\)/);
   assert.match(panel, /Open brochure/);
   assert.match(panel, /Copy brochure link/);
-  assert.match(panel, /No attachment needed/);
-  assert.doesNotMatch(panel, /Attach the brochure file/);
+  assert.match(panel, /school background guide are included in the message automatically/);
+  assert.doesNotMatch(panel, /No attachment needed|Attach the brochure file|PDF attachment/i);
 
   assert.match(classes, /\/api\/public\/classes/);
   assert.doesNotMatch(classes, /https:\/\/www\.falowen\.app\/api\/public\/classes/);
