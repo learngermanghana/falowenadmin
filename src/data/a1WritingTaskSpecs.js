@@ -88,11 +88,13 @@ const rows = [
     "informal_email",
     "informal",
     ["teil2"],
-    "Schreiben Sie eine E-Mail an Felix. Er hat Sie zum Geburtstag eingeladen, aber Sie können nicht teilnehmen. Explain why you are writing, give a health-related reason, and ask for another time to meet.",
+    "Third A1 letter-writing step after A1-12.3 and A1-13: Schreiben Sie eine kurze informelle E-Mail an Felix. Er hat Sie zum Geburtstag eingeladen, aber Sie können nicht teilnehmen. Use the familiar letter structure: greeting, say that you cannot come, give a concrete health reason, suggest another meeting, then close the message with your name.",
     [
-      "Explain why you are writing or say that you cannot attend the birthday",
-      "Give one health-related reason for not attending",
-      "Ask for another date or suggest another meeting"
+      "Use an appropriate informal greeting",
+      "Say that you cannot come to the birthday",
+      "Give one concrete health reason for not attending",
+      "Ask for another date or suggest another meeting",
+      "Use an appropriate informal closing and include your name"
     ]
   ]
 ];
