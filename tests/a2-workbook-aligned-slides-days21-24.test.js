@@ -71,13 +71,18 @@ test("A2 days 21-24 teacher support matches the grammar actually taught in Falow
   }
 });
 
-test("Days 21-24 identify Teil 4 as Goethe listening self-check rather than normal in-app Hören", () => {
-  for (const assignmentId of Object.keys(EXPECTED)) {
+test("Days 21-23 keep Goethe self-check listening while Day 24 uses protected graded Hören", () => {
+  for (const assignmentId of ["A2-8.21", "A2-8.22", "A2-9.23"]) {
     const slide = getA2WorkbookAlignedSlideDay21To24(assignmentId);
     const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
     assert.match(listening.detailEn, /Goethe/i);
     assert.match(listening.detailEn, /self-check|check their own|correct their own/i);
   }
+
+  const day24 = getA2WorkbookAlignedSlideDay21To24("A2-9.24");
+  const day24Listening = day24.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
+  assert.match(day24Listening.detailEn, /Protected Falowen/i);
+  assert.match(day24Listening.detailEn, /five graded questions/i);
 });
 
 test("Day 21 keeps the Stefan Berger reading separate from weekend-condition grammar", () => {
