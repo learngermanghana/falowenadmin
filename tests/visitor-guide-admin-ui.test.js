@@ -8,10 +8,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
-test("Falowen exposes a public Visitor Guide and keeps the editor protected", () => {
+test("Falowen Admin redirects public Visitor Guide traffic and keeps the editor protected", () => {
   const app = read("src/App.jsx");
   assert.match(app, /to="\/visitor-guide\/edit"[^>]*>Visitor Guide<\/Link>/);
-  assert.match(app, /path="\/visitor-guide"[^>]*element={<VisitorGuidePage publicView \/>}/);
+  assert.match(app, /function PublicVisitorGuideRedirect/);
+  assert.match(app, /https:\/\/www\.falowen\.app\/visitor-guide/);
+  assert.match(app, /path="\/visitor-guide"[^>]*PublicVisitorGuideRedirect/);
   assert.match(app, /path="\/visitor-guide\/edit"[^>]*ProtectedRoute/);
 });
 
