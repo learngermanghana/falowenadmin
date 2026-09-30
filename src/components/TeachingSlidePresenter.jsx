@@ -1040,7 +1040,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                               </button>
                             ))}
                           </div>
-                          <p className="presenter-role-gap-note">Only show one card at a time. The other partner should look away.</p>
+                          <div className="presenter-role-gap-teacher-flow">
+                            <strong>Teacher flow</strong>
+                            <ol>
+                              <li>Choose two students: Partner A and Partner B.</li>
+                              <li>Show Role A only. Partner B looks away. Then hide it.</li>
+                              <li>Show Role B only. Partner A looks away. Then hide it.</li>
+                              <li>Close both cards. The partners ask each other for the missing information and complete the shared task from memory.</li>
+                              <li>Listen for the language targets listed below; do not let either student read the other role card.</li>
+                            </ol>
+                          </div>
                           {item.roleCards.map((card) => (
                             revealedFlowRole === card.id ? (
                               <article className="presenter-role-gap-card" key={card.id}>
