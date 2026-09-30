@@ -982,11 +982,11 @@
   "A2 2.5 Was machst du in deiner Freizeit": {
     "answers": {
       "teil3": {
-        "Answer1": "C) Fahrradtour",
-        "Answer2": "B) Im Raum 5",
-        "Answer3": "C) Der Kochkurs",
-        "Answer4": "C) Für Fahrradtour und Kochkurs",
-        "Answer5": "A) 5 Euro"
+        "Answer1": "C) Angebot C",
+        "Answer2": "B) Angebot B",
+        "Answer3": "C) Angebot C",
+        "Answer4": "C) Angebot C",
+        "Answer5": "A) Angebot A"
       },
       "teil4": {
         "Answer1": "A) Tee trinken und lesen",
