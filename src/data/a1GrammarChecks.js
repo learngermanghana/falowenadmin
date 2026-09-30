@@ -1,3 +1,6 @@
+const A1_DAY13_GRAMMAR_CHECK_REVISION = "2026-09-30-weather-time-only";
+void A1_DAY13_GRAMMAR_CHECK_REVISION;
+
 function check(questionDe, answerDe, noteEn = "", responseMode = "concept") {
   return { questionDe, answerDe, noteEn, responseMode };
 }
