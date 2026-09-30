@@ -227,7 +227,7 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
       "Use impersonal es in common weather expressions: Es regnet. Es ist windig.",
       "Distinguish sein + adjective from a weather verb: Es ist kalt versus Es schneit.",
       "Use Grad correctly for temperatures: Es sind 30 Grad.",
-      "Reuse the A1-12.3 message structure: informal greeting, reason for writing, required task points, closing and name.",
+      "Day 13 has exactly three content points: cannot attend, concrete weather reason, and another-meeting suggestion. Greeting, closing and name are checked separately as letter form.",
       "Turn weather into a communicative reason, not just a description: name the weather and show its consequence for the plan.",
     ],
     modelExamplesDe: [
@@ -249,7 +249,7 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
     grammarFocusEn: [
       "Use haben + symptom noun for common complaints: Ich habe Kopfschmerzen.",
       "Use body part + tut/tun weh to say where it hurts.",
-      "Reuse the informal message structure from A1-12.3 and A1-13: greeting, cannot attend, reason, suggestion, closing and name.",
+      "Day 14.1 has exactly three content points: cannot attend, concrete health reason, and another-meeting suggestion. Greeting, closing and name are checked separately as letter form.",
       "Use the health language as the reason for the cancellation, for example: Leider kann ich nicht kommen. Ich habe Fieber.",
     ],
     modelExamplesDe: [
