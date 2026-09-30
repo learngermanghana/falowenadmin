@@ -5,6 +5,7 @@ import answersDictionary from "../src/data/answers_dictionary.json" with { type:
 import { autoMarkSubmission } from "../src/utils/autoMarking.js";
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 import { assignmentHasScoredWriting, enforceRegisteredWritingScore } from "../src/utils/naturalMarkingFeedback.js";
+import { getA1WritingTaskSpec } from "../src/data/a1WritingTaskSpecs.js";
 
 const MOMODOU_SUBMISSION = `TEIL 1
 1. A
@@ -50,6 +51,22 @@ test("A1-13 explicitly registers Teil 3 as AI-scored Schreiben", () => {
   assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /weather reason/i);
   assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /suggestion/i);
   assert.equal(assignmentHasScoredWriting(referenceEntry), true);
+});
+
+test("A1-13 is explicitly the second letter-writing step after A1-12.3", () => {
+  const spec = getA1WritingTaskSpec("A1-13");
+  const referenceEntry = a113Reference();
+
+  assert.ok(spec);
+  assert.equal(spec.letterWriting, true);
+  assert.match(spec.taskText, /Follow-up to A1-12\.3/i);
+  assert.equal(spec.taskPoints.length, 5);
+  assert.ok(spec.taskPoints.some((point) => /informal greeting/i.test(point)));
+  assert.ok(spec.taskPoints.some((point) => /weather reason/i.test(point)));
+  assert.ok(spec.taskPoints.some((point) => /suggestion/i.test(point)));
+  assert.ok(spec.taskPoints.some((point) => /closing/i.test(point)));
+  assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /second A1 letter-writing step after A1-12\.3/i);
+  assert.match(referenceEntry.partGrading?.teil3?.instruction || "", /weather description alone is not enough/i);
 });
 
 test("objective-only A1 assignments remain objective-only", () => {
