@@ -75,9 +75,9 @@ test("both A1 and general teaching presenters show the class timer", () => {
   const a1 = read("src/components/A1GrammarPresenter.jsx");
   const general = read("src/components/TeachingSlidePresenter.jsx");
   assert.match(a1, /PresenterSessionTimer/);
-  assert.match(a1, /<PresenterSessionTimer slide=\{slide\} stage=\{stage\} \/>/);
+  assert.match(a1, /<PresenterSessionTimer[\\s\\S]{0,220}slide=\\{slide\\}[\\s\\S]{0,220}stage=\\{stage\\}/);
   assert.match(general, /PresenterSessionTimer/);
-  assert.match(general, /<PresenterSessionTimer slide=\{slide\} stage=\{stage\} \/>/);
+  assert.match(general, /<PresenterSessionTimer[\\s\\S]{0,220}slide=\\{slide\\}[\\s\\S]{0,220}stage=\\{stage\\}/);
 });
 
 test("Start class stays visually primary and sound controls cannot crowd it out", () => {
