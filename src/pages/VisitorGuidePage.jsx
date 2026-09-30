@@ -88,7 +88,7 @@ function GuidePage({ number, eyebrow, title, children, className = "" }) {
   );
 }
 
-export default function VisitorGuidePage() {
+export default function VisitorGuidePage({ publicView = false }) {
   const profile = VISITOR_GUIDE_PROFILE;
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
@@ -173,7 +173,7 @@ export default function VisitorGuidePage() {
 
   return (
     <div className="visitor-guide-page">
-      <section className="visitor-guide-config">
+      {!publicView ? <section className="visitor-guide-config">
         <div>
           <p className="visitor-guide-kicker">Admissions · Visitor Guide</p>
           <h1>Create a personalised school visit guide</h1>
@@ -254,9 +254,9 @@ export default function VisitorGuidePage() {
           <button type="button" onClick={printGuide}>Print / Save PDF</button>
           <a href={programme.brochureUrl} target="_blank" rel="noreferrer">Open selected class brochure</a>
         </div>
-      </section>
+      </section> : null}
 
-      <div className="visitor-guide-preview-label">PDF preview</div>
+      {!publicView ? <div className="visitor-guide-preview-label">PDF preview</div> : null}
 
       <div className="visitor-guide-print" id="visitor-guide-print">
         <GuidePage number="1" eyebrow="Welcome" title={profile.school.name} className="visitor-guide-cover">
