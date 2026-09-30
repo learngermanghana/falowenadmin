@@ -12,6 +12,8 @@ import {
   buildClassBrochureMessage,
   buildClassBrochureUrl,
   buildVisitorGuideUrl,
+  buildRegistrationUrl,
+  createBrochureEngagementRef,
   formatBrochureFee,
   formatBrochureSchedule,
   normalizeGhanaWhatsappNumber,
@@ -47,12 +49,18 @@ test("builds a direct public brochure URL for the selected class", () => {
   );
 });
 
-test("builds a class-aware visitor guide URL", () => {
+test("builds class-aware public admissions URLs", () => {
+  const ref = "lead_test_12345678";
   assert.equal(
-    buildVisitorGuideUrl({ name: "A1 Hamburg Klasse" }),
-    "https://admin.falowen.app/visitor-guide?class=a1-hamburg-klasse",
+    buildVisitorGuideUrl({ name: "A1 Hamburg Klasse" }, undefined, ref),
+    "https://www.falowen.app/visitor-guide?class=a1-hamburg-klasse&ref=lead_test_12345678&source=brochure-message",
+  );
+  assert.equal(
+    buildRegistrationUrl({ name: "A1 Hamburg Klasse" }, ref),
+    "https://www.falowen.app/signup?program=german&class=a1-hamburg-klasse&ref=lead_test_12345678&source=brochure-message",
   );
   assert.equal(buildVisitorGuideUrl({}), FALOWEN_VISITOR_GUIDE_URL);
+  assert.match(createBrochureEngagementRef(), /^lead_[a-z0-9]+_[a-z0-9]+$/i);
 });
 
 test("selected class message uses the student name when provided", () => {
@@ -78,17 +86,18 @@ test("selected class message includes current class context and school backgroun
       { day: "Mon", startTime: "18:00" },
       { day: "Wed", startTime: "18:00" },
     ],
-  });
+  }, "", "lead_test_12345678");
 
   assert.match(message, /A1 Dortmund Klasse/);
   assert.match(message, /1 October 2026/);
   assert.match(message, /GHS 2,800/);
   assert.match(message, /Monday 18:00/);
-  assert.match(message, /class=a1-dortmund-klasse&open=1/);
+  assert.match(message, /class=a1-dortmund-klasse/);
+  assert.match(message, /ref=lead_test_12345678/);
   assert.match(message, /About the school & how Falowen works/);
-  assert.match(message, /https:\/\/admin\.falowen\.app\/visitor-guide\?class=a1-dortmund-klasse/);
+  assert.match(message, /https:\/\/www\.falowen\.app\/visitor-guide\?class=a1-dortmund-klasse/);
   assert.match(message, /Register now/);
-  assert.match(message, /https:\/\/www\.falowen\.app\/signup/);
+  assert.match(message, /https:\/\/www\.falowen\.app\/signup\?program=german&class=a1-dortmund-klasse/);
   assert.doesNotMatch(message, /PDF attachment|attachment is needed/i);
 });
 
@@ -99,10 +108,10 @@ test("generic brochure message includes both catalogue and direct registration l
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /About the school & how Falowen works/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /Register now/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/classes\//);
-  assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/admin\.falowen\.app\/visitor-guide/);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/visitor-guide/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/signup/);
   assert.equal(FALOWEN_REGISTRATION_URL, "https://www.falowen.app/signup");
-  assert.equal(FALOWEN_VISITOR_GUIDE_URL, "https://admin.falowen.app/visitor-guide");
+  assert.equal(FALOWEN_VISITOR_GUIDE_URL, "https://www.falowen.app/visitor-guide");
 });
 
 test("upcoming brochure classes include only open future classes and sort soonest first", () => {
@@ -137,10 +146,14 @@ test("brochure panel loads real classes and includes school background automatic
   assert.match(panel, /loadShareablePublicClasses/);
   assert.match(panel, /Classes currently available for registration/);
   assert.match(panel, /Student name/);
-  assert.match(panel, /buildClassBrochureMessage\(selectedClass, value\)/);
+  assert.match(panel, /buildClassBrochureMessage\(selectedClass, value, engagementRef\)/);
   assert.match(panel, /Open brochure/);
   assert.match(panel, /Copy brochure link/);
-  assert.match(panel, /school background guide are included in the message automatically/);
+  assert.match(panel, /Client engagement/);
+  assert.match(panel, /brochure_open/);
+  assert.match(panel, /visitor_guide_open/);
+  assert.match(panel, /registration_click/);
+  assert.match(panel, /public school background guide and registration link are added automatically/);
   assert.doesNotMatch(panel, /No attachment needed|Attach the brochure file|PDF attachment/i);
 
   assert.match(classes, /\/api\/public\/classes/);
