@@ -45,6 +45,22 @@ test("A1-13 connects weather to the second letter-writing step with ten class qu
   assert.equal(new Set(pool.map((item) => item.sourceQuestion)).size, 10);
 });
 
+test("A1-14.1 connects health to the third letter-writing step with ten class questions plus an exit check", () => {
+  const checks = getA1PresenterUnderstandingChecks("A1-14.1", getA1GrammarChecks("A1-14.1"));
+  const classChecks = checks.slice(0, -1);
+  const exitCheck = checks.at(-1);
+  const combined = checks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
+
+  assert.equal(classChecks.length, 10);
+  assert.equal(checks.length, 11);
+  assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
+  assert.match(combined, /third letter-writing step|12\.3 and 13/i);
+  assert.match(combined, /health reason|Fieber|Kopfschmerzen|krank/i);
+  assert.match(combined, /another meeting|nächste Woche|treffen/i);
+  assert.match(combined, /Lieber Felix|Liebe Grüße|informal/i);
+  assert.match(exitCheck.questionDe, /^Exit-Check:/);
+});
+
 test("A1-4.7 Teil 3 uses practical request-and-response understanding questions", () => {
   const resolved = resolvedChecksFor("A1-4.7");
   const questions = resolved.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
