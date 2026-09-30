@@ -12,7 +12,7 @@ Falowen Admin can generate a Paystack checkout link from the Student Directory a
 6. Paystack sends `charge.success` to the webhook.
 7. Falowen verifies the `x-paystack-signature` HMAC-SHA512 signature and validates the reference, amount, and GHS currency.
 8. A Firestore transaction marks the payment paid and updates `paid`, `balanceDue`, `balance`, `paymentStatus`, and last-payment fields on the student.
-9. The Student Directory keeps the existing student record realtime listener and refreshes payment history through an authenticated backend endpoint every few seconds, so the admin view updates without a manual page refresh.
+9. The Student Directory keeps the student record realtime listener, refreshes payment history every few seconds, and directly verifies any pending Falowen Paystack reference as a self-healing fallback when the webhook has not applied it yet.
 
 ## Important accounting rule
 
@@ -58,5 +58,6 @@ The admin UI does not read the `payments` collection directly. Payment history i
 - Webhook signature is verified before processing.
 - Currency and amount must match the generated payment record.
 - A paid reference cannot be applied twice.
+- Pending Falowen references are rechecked from the open Student Directory and by the scheduled payment reconciler, so a missed webhook does not leave a paid student pending.
 - Student updates and payment updates happen in the same Firestore transaction.
 - Payment history remains in the `payments` collection for audit.
