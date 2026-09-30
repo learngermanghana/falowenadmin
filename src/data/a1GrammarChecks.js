@@ -154,8 +154,8 @@ export const A1_GRAMMAR_CHECKS = {
   "A1-12.3": [
     check("What is the difference between a formal and an informal German message?", "They use different greetings, pronouns, tone, and closing formulas."),
     check("When do you use Sehr geehrte Damen und Herren?", "In a formal message when you do not know the recipient's name."),
-    check("What are the basic parts of a short A1 message or letter?", "Greeting, reason/message, required information or questions, closing, and name."),
-    check("Why is it important to answer every bullet point in a writing task?", "Each point is part of the task and missing one can reduce the score."),
+    check("What are the basic parts of these A1 writing tasks?", "Greeting, exactly three content points, closing, and name."),
+    check("How many content points must you answer in each A1 letter task?", "Exactly three. Greeting, closing and name are letter form, not extra content points."),
   ],
   "A1-13": [
     check("How does Day 13 build on the letter-writing lesson from A1-12.3?", "It keeps the same message structure but adds weather language as the reason for not being able to attend."),
