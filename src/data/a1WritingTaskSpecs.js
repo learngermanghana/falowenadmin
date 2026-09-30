@@ -73,11 +73,13 @@ const rows = [
     "informal_email",
     "informal",
     ["teil3"],
-    "Schreiben Sie eine E-Mail an Bina. Sie hat Sie zur Hochzeit eingeladen, aber Sie können nicht kommen. Explain why you are writing, give a concrete weather reason, and make a suggestion.",
+    "Follow-up to A1-12.3: Schreiben Sie eine kurze informelle E-Mail an Bina. Sie hat Sie zur Hochzeit eingeladen, aber Sie können nicht kommen. Use the letter structure from the previous chapter: greeting, say that you cannot come, give a concrete weather reason, make a suggestion for another meeting, then close the message with your name.",
     [
-      "Explain why you are writing or say that you cannot come to the wedding",
-      "Give one concrete weather reason for not coming",
-      "Make a concrete suggestion for another meeting"
+      "Use an appropriate informal greeting",
+      "Say that you cannot come to the wedding",
+      "Give one concrete weather reason that explains why you cannot come",
+      "Make a concrete suggestion for another meeting",
+      "Use an appropriate informal closing and include your name"
     ]
   ],
   [
