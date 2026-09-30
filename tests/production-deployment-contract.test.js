@@ -19,9 +19,9 @@ test("admin build identity is uncached and main is the only automatic Git deploy
 });
 
 test("admin production health workflow checks the live commit SHA", () => {
-  const workflow = fs.readFileSync(".github/workflows/production-health.yml", "utf8");
-  assert.match(workflow, /branches:\s*\n\s*- main/);
-  assert.match(workflow, /npm run build/);
-  assert.match(workflow, /checkProductionIdentity\.mjs/);
-  assert.match(workflow, /EXPECTED_SHA/);
+  const workflow = fs.readFileSync(".github/workflows/production-release.yml", "utf8");
+  assert.match(workflow, /branches: \[main\]/);
+  assert.match(workflow, /npm run gate:production/);
+  assert.match(workflow, /vercel@latest deploy --prebuilt --prod/);
+  assert.match(workflow, /api\/deployment-status/);
 });
