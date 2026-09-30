@@ -25,15 +25,20 @@ function resolvedChecksFor(assignmentId) {
   );
 }
 
-test("A1-13 weather gives ten genuinely different class questions plus an exit check", () => {
+test("A1-13 connects weather to the second letter-writing step with ten class questions plus an exit check", () => {
   const checks = getA1PresenterUnderstandingChecks("A1-13", getA1GrammarChecks("A1-13"));
   const classChecks = checks.slice(0, -1);
   const exitChecks = checks.slice(-1);
+  const combined = checks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
 
   assert.equal(classChecks.length, 10);
   assert.equal(exitChecks.length, 1);
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
   assert.ok(classChecks.every((item) => String(item.answerDe || "").trim()));
+  assert.match(combined, /12\.3|letter-writing lesson/i);
+  assert.match(combined, /weather.*reason|reason.*weather|prevents attendance|cannot come/i);
+  assert.match(combined, /suggestion|another meeting|Sonntag/i);
+  assert.match(combined, /Liebe Bina|Liebe Grüße|informal/i);
 
   const pool = buildA1PresenterQuestionPool(classChecks, 10, "A1-13-grammar-check");
   assert.equal(pool.length, 10);
