@@ -75,6 +75,7 @@ test("payment lifecycle still wires reconciliation, downgrade, and six-month com
   assert.match(functionsSource, /studentUpgrade\.restoredPaidContract/);
   assert.match(functionsSource, /remainingBalance: remainingUpgradeBalance/);
   assert.match(functionsSource, /exports\.maintainStudentPaymentContracts = onSchedule/);
+  assert.match(read("scripts/patchStudentPaymentContractLifecycle.mjs"), /schedule: "\*\/5 \* \* \* \*"/);
   assert.match(functionsSource, /upgradeStatus: "expired"/);
   assert.match(functionsSource, /upgradeStatus: "completed"/);
   assert.match(functionsSource, /contractTermMonths: String\(CONTRACT_TERM_MONTHS\)/);
