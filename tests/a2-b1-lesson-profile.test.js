@@ -54,3 +54,23 @@ test("presenter renders the canonical workbook contract", () => {
   assert.match(source, /teacherContract\.submission/);
   assert.match(source, /teacherContract\.part4/);
 });
+
+
+test("answer dictionary submission contracts match the canonical A2/B1 lesson profiles", () => {
+  const dictionary = JSON.parse(fs.readFileSync("src/data/answers_dictionary.json", "utf8"));
+  const entries = Object.values(dictionary).filter((entry) => /^(A2|B1)-/.test(String(entry?.assignment_id || "")));
+
+  for (const entry of entries) {
+    const level = entry.assignment_id.startsWith("A2-") ? "A2" : "B1";
+    const profile = getA2B1AdminLessonProfile(level, 0, entry.assignment_id);
+    if (!profile) continue;
+    assert.deepEqual(
+      entry.expectedParts || [],
+      profile.requiredSubmissionParts.map((part) => part.partId),
+      `${entry.assignment_id} expectedParts must match the lesson profile`,
+    );
+    if (!profile.sections.part4.submitRequired) {
+      assert.ok((entry.excludedParts || []).includes("teil4") || !entry.answers?.teil4, `${entry.assignment_id} should exclude self-check/unavailable Teil 4`);
+    }
+  }
+});
