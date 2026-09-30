@@ -158,10 +158,10 @@ export const A1_GRAMMAR_CHECKS = {
     check("What should you check before submitting the letter?", "All three content points are answered, the register is correct, and the greeting, closing and name are present."),
   ],
   "A1-13": [
-    check("How many content points does the Day 13 email have?", "Exactly three."),
-    check("What are the three Day 13 content points?", "Say you cannot come to the wedding, give one concrete weather reason, and suggest another meeting."),
-    check("What is the difference between a weather description and a weather reason?", "A description only says what the weather is like. A reason explains why that weather prevents you from attending."),
-    check("What is letter form and not an extra content point in Day 13?", "The informal greeting, closing and name."),
+    check("Which sentence is correct: ‘Es regnet’ or ‘Es ist regnet’?", "Es regnet. The weather verb regnen already carries the verb meaning, so do not add ist."),
+    check("Which preposition do you use with seasons and months? Give one example.", "Use im: im Sommer, im Winter, im Januar, im Juli."),
+    check("Which preposition do you use with days? Give one example.", "Use am: am Montag, am Samstag."),
+    check("How can you suggest a new day and time after cancelling?", "For example: Können wir uns am Montag um 16 Uhr treffen?"),
   ],
   "A1-14.1": [
     check("How many content points does the Day 14.1 email have?", "Exactly three."),
