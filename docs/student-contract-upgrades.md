@@ -32,7 +32,7 @@ Paystack webhooks remain the primary source of successful-payment updates. Falow
 - the Student Directory checks pending payments while the student page is open;
 - admins can manually run **Recheck pending Paystack payments**;
 - admins can manually use **Return to Paid Contract** when temporary access must be withdrawn or a legacy record did not restore correctly;
-- the scheduled `maintainStudentPaymentContracts` job runs every 30 minutes, reconciles recent pending references, expires stale unpaid checkout links, and processes expired partial-payment grace periods.
+- the scheduled `maintainStudentPaymentContracts` job runs every 10 minutes, reconciles recent pending references, expires stale unpaid checkout links, and processes expired partial-payment grace periods.
 
 The payment reference remains idempotent: once a `payments/{reference}` document is marked `paid`, the same reference cannot be credited twice.
 

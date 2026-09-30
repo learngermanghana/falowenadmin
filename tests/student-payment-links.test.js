@@ -55,6 +55,18 @@ test("payment backend requires admin access, reuses the existing Paystack secret
   assert.match(functionsSource, /checkoutAmount/);
 });
 
+test("ordinary student payment links expose webhook fallback reconciliation", () => {
+  const component = read("src/components/StudentPaymentTools.jsx");
+  const lifecyclePatch = read("scripts/patchStudentPaymentContractLifecycle.mjs");
+
+  assert.match(component, /reconcileStudentPayments/);
+  assert.match(component, /Recheck Paystack payment/);
+  assert.match(component, /90 \* 1000/);
+  assert.match(component, /automatic Paystack reconciliation/i);
+  assert.match(lifecyclePatch, /schedule: "\*\/10 \* \* \* \*"/);
+  assert.match(lifecyclePatch, /reconcilePaymentReference/);
+});
+
 test("payment setup guides consistently use the production PAYSTACK_SECRET name", () => {
   const primaryGuide = read("docs/student-payment-links.md");
   const deploymentGuide = read("docs/student-payments.md");

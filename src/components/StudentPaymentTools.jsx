@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { createStudentPaymentLink, listStudentPayments } from "../services/studentPaymentService.js";
+import { reconcileStudentPayments } from "../services/studentContractService.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue } from "../utils/paystackCharges.js";
 
 function displayValue(...values) {
@@ -95,6 +96,8 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
   const [generating, setGenerating] = useState(false);
   const [generatedPayment, setGeneratedPayment] = useState(null);
   const [payments, setPayments] = useState([]);
+  const [reconciling, setReconciling] = useState(false);
+  const autoReconciledReferencesRef = useRef(new Set());
   const onStudentUpdatedRef = useRef(onStudentUpdated);
 
   const studentId = String(student?.id || student?.studentCode || "").trim();
@@ -107,6 +110,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
     setAmount(String(resolveDefaultAmount(student, draft) || ""));
     setPaymentEmail(displayValue(draft.email, student?.email));
     setGeneratedPayment(null);
+    autoReconciledReferencesRef.current = new Set();
   }, [studentId]);
 
   useEffect(() => {
@@ -149,6 +153,58 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
       window.clearInterval(timer);
     };
   }, [studentId]);
+
+  const refreshPaymentHistory = async () => {
+    if (!studentId) return [];
+    const rows = await listStudentPayments(studentId);
+    setPayments(rows);
+    return rows;
+  };
+
+  const reconcilePendingPayments = async ({ silent = false } = {}) => {
+    if (!studentId || reconciling) return { ok: true, checked: 0, applied: 0 };
+    setReconciling(true);
+    try {
+      const result = await reconcileStudentPayments(studentId);
+      await refreshPaymentHistory().catch(() => []);
+      const applied = Number(result?.applied || 0);
+      if (!silent || applied > 0) {
+        pushToast?.({
+          type: applied > 0 ? "success" : "info",
+          message: applied > 0
+            ? `${applied} successful Paystack payment(s) applied. Firestore and sheet sync can now continue.`
+            : "No new successful Paystack payment was waiting to be applied.",
+        });
+      }
+      return result;
+    } catch (error) {
+      if (!silent) pushToast?.({ type: "error", message: error?.message || "Could not verify pending Paystack payments." });
+      throw error;
+    } finally {
+      setReconciling(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!studentId || reconciling) return;
+    const eligible = payments.filter((payment) => {
+      if (String(payment?.status || "").trim().toLowerCase() !== "pending") return false;
+      const reference = String(payment?.reference || payment?.id || "").trim();
+      if (!reference || autoReconciledReferencesRef.current.has(reference)) return false;
+      const createdAtMs = timestampMillis(payment?.createdAt);
+      return createdAtMs > 0 && Date.now() - createdAtMs >= 90 * 1000;
+    });
+    if (!eligible.length) return;
+
+    eligible.forEach((payment) => {
+      const reference = String(payment?.reference || payment?.id || "").trim();
+      if (reference) autoReconciledReferencesRef.current.add(reference);
+    });
+
+    reconcilePendingPayments({ silent: true }).catch((error) => {
+      console.warn("Automatic Paystack reconciliation failed.", error);
+    });
+  }, [studentId, payments, reconciling]);
 
   const numericAmount = parseMoneyValue(amount);
   const checkoutAmount = useMemo(() => calculatePaystackGrossAmount(numericAmount), [numericAmount]);
@@ -257,6 +313,14 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
         <button type="button" onClick={generateLink} disabled={generating || numericAmount <= 0}>
           {generating ? "Generating..." : "Generate payment link"}
         </button>
+        <button
+          type="button"
+          onClick={() => reconcilePendingPayments()}
+          disabled={reconciling || !studentId}
+          style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}
+        >
+          {reconciling ? "Checking Paystack..." : "Recheck Paystack payment"}
+        </button>
         {generatedPayment?.authorizationUrl && (
           <>
             <button type="button" onClick={sendWhatsapp}>Send on WhatsApp</button>
@@ -274,6 +338,9 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
       )}
 
       <div>
+        <div style={{ marginBottom: 8, padding: 9, borderRadius: 9, background: "#f8fafc", border: "1px solid #e2e8f0", fontSize: 12, color: "#475569" }}>
+          Falowen uses the Paystack webhook first. If that callback is missed, pending links are also verified automatically after 90 seconds while this student page is open, or you can use <strong>Recheck Paystack payment</strong> above.
+        </div>
         <h4 style={{ margin: "4px 0 8px" }}>Payment history</h4>
         {payments.length === 0 ? (
           <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>No generated Paystack payments yet.</p>
