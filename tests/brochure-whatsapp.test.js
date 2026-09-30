@@ -11,6 +11,7 @@ import {
   buildBrochureWhatsappUrl,
   buildClassBrochureMessage,
   buildClassBrochureUrl,
+  buildVisitorGuideUrl,
   formatBrochureFee,
   formatBrochureSchedule,
   normalizeGhanaWhatsappNumber,
@@ -46,6 +47,14 @@ test("builds a direct public brochure URL for the selected class", () => {
   );
 });
 
+test("builds a class-aware visitor guide URL", () => {
+  assert.equal(
+    buildVisitorGuideUrl({ name: "A1 Hamburg Klasse" }),
+    "https://admin.falowen.app/visitor-guide?class=a1-hamburg-klasse",
+  );
+  assert.equal(buildVisitorGuideUrl({}), FALOWEN_VISITOR_GUIDE_URL);
+});
+
 test("selected class message uses the student name when provided", () => {
   const message = buildClassBrochureMessage({
     name: "A1 Dortmund Klasse",
@@ -77,7 +86,7 @@ test("selected class message includes current class context and school backgroun
   assert.match(message, /Monday 18:00/);
   assert.match(message, /class=a1-dortmund-klasse&open=1/);
   assert.match(message, /About the school & how Falowen works/);
-  assert.match(message, /https:\/\/admin\.falowen\.app\/visitor-guide/);
+  assert.match(message, /https:\/\/admin\.falowen\.app\/visitor-guide\?class=a1-dortmund-klasse/);
   assert.match(message, /Register now/);
   assert.match(message, /https:\/\/www\.falowen\.app\/signup/);
   assert.doesNotMatch(message, /PDF attachment|attachment is needed/i);
