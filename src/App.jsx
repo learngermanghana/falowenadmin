@@ -201,6 +201,16 @@ function CurrentAttendanceRoute() {
   return <CanonicalAttendancePage />;
 }
 
+function PublicVisitorGuideRedirect() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.location.replace(`https://www.falowen.app/visitor-guide${location.search || ""}`);
+  }, [location.search]);
+
+  return <div className="route-loading" role="status">Opening the public Falowen school guide…</div>;
+}
+
 export default function App() {
   const location = useLocation();
   const isFullscreenRoute = location.pathname === "/checkin/display";
@@ -247,7 +257,7 @@ export default function App() {
           <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
           <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><Navigate to="/students?tab=activity" replace /></ProtectedRoute>} />
           <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
-          <Route path="/visitor-guide" element={<VisitorGuidePage publicView />} />
+          <Route path="/visitor-guide" element={<PublicVisitorGuideRedirect />} />
           <Route path="/visitor-guide/edit" element={<ProtectedRoute><VisitorGuidePage /></ProtectedRoute>} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
