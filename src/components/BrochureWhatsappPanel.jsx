@@ -5,14 +5,34 @@ import {
   buildBrochureWhatsappUrl,
   buildClassBrochureMessage,
   buildClassBrochureUrl,
+  buildVisitorGuideUrl,
+  createBrochureEngagementRef,
   formatBrochureDate,
   formatBrochureFee,
   formatBrochureSchedule,
   normalizeGhanaWhatsappNumber,
 } from "../utils/brochureWhatsapp.js";
 
+const ENGAGEMENT_STATUS_URL = "https://www.falowen.app/api/public/admissions-engagement";
+
 function classKey(klass = {}) {
   return String(klass.id || klass.slug || klass.classId || klass.title || klass.name || "").trim();
+}
+
+function statusCard(label, active, positiveLabel) {
+  return (
+    <div style={{
+      border: "1px solid #dbe3ef",
+      borderRadius: 10,
+      background: active ? "#ecfdf5" : "#fff",
+      padding: "9px 10px",
+      display: "grid",
+      gap: 3,
+    }}>
+      <span style={{ fontSize: 11, color: "#64748b", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</span>
+      <strong style={{ color: active ? "#166534" : "#475569" }}>{active ? positiveLabel : "Not yet"}</strong>
+    </div>
+  );
 }
 
 export default function BrochureWhatsappPanel({ pushToast }) {
@@ -23,6 +43,9 @@ export default function BrochureWhatsappPanel({ pushToast }) {
   const [selectedClassKey, setSelectedClassKey] = useState("");
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [classError, setClassError] = useState("");
+  const [engagementRef, setEngagementRef] = useState("");
+  const [engagementStatus, setEngagementStatus] = useState(null);
+  const [engagementError, setEngagementError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -52,8 +75,13 @@ export default function BrochureWhatsappPanel({ pushToast }) {
   );
 
   const brochureLink = useMemo(
-    () => selectedClass ? buildClassBrochureUrl(selectedClass) : "",
-    [selectedClass],
+    () => selectedClass ? buildClassBrochureUrl(selectedClass, undefined, engagementRef) : "",
+    [selectedClass, engagementRef],
+  );
+
+  const visitorGuideLink = useMemo(
+    () => selectedClass ? buildVisitorGuideUrl(selectedClass, undefined, engagementRef) : "",
+    [selectedClass, engagementRef],
   );
 
   const normalizedPhone = useMemo(() => normalizeGhanaWhatsappNumber(phone), [phone]);
@@ -62,15 +90,51 @@ export default function BrochureWhatsappPanel({ pushToast }) {
     [phone, message, selectedClass],
   );
 
+  const refreshEngagementStatus = async (ref = engagementRef) => {
+    if (!ref) return;
+    try {
+      const response = await fetch(`${ENGAGEMENT_STATUS_URL}?ref=${encodeURIComponent(ref)}`, { cache: "no-store" });
+      if (!response.ok) throw new Error("Status endpoint unavailable");
+      const payload = await response.json();
+      setEngagementStatus(payload);
+      setEngagementError("");
+    } catch (_error) {
+      setEngagementError("Engagement status is not available yet.");
+    }
+  };
+
+  useEffect(() => {
+    if (!engagementRef) {
+      setEngagementStatus(null);
+      setEngagementError("");
+      return undefined;
+    }
+    let active = true;
+    const refresh = async () => {
+      if (!active) return;
+      await refreshEngagementStatus(engagementRef);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [engagementRef]);
+
   const selectClass = (klass) => {
+    const ref = createBrochureEngagementRef();
     setSelectedClassKey(classKey(klass));
-    setMessage(buildClassBrochureMessage(klass, studentName));
+    setEngagementRef(ref);
+    setEngagementStatus(null);
+    setEngagementError("");
+    setMessage(buildClassBrochureMessage(klass, studentName, ref));
   };
 
   const updateStudentName = (value) => {
     setStudentName(value);
     if (selectedClass) {
-      setMessage(buildClassBrochureMessage(selectedClass, value));
+      setMessage(buildClassBrochureMessage(selectedClass, value, engagementRef));
     }
   };
 
@@ -113,7 +177,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
   };
 
   const resetMessage = () => {
-    setMessage(selectedClass ? buildClassBrochureMessage(selectedClass, studentName) : BROCHURE_WHATSAPP_MESSAGE);
+    setMessage(selectedClass ? buildClassBrochureMessage(selectedClass, studentName, engagementRef) : BROCHURE_WHATSAPP_MESSAGE);
   };
 
   return (
@@ -121,7 +185,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       <div>
         <h2 style={{ margin: "0 0 6px" }}>Send available class brochure</h2>
         <p style={{ margin: 0, color: "#64748b", lineHeight: 1.55 }}>
-          Select a class from the same live public catalogue used by Falowen’s brochure pages. Falowen automatically builds that class’s brochure link, start date, schedule and fee, then prepares the WhatsApp message.
+          Select a class, add the student name if needed, then send one concise WhatsApp message with the class brochure, school background guide and registration link.
         </p>
       </div>
 
@@ -175,26 +239,50 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       </section>
 
       {selectedClass && (
-        <section style={{ border: "1px solid #bfdbfe", borderRadius: 12, padding: 12, background: "#eff6ff", display: "grid", gap: 8 }}>
-          <div style={{ fontWeight: 800, color: "#1e3a8a" }}>Selected brochure</div>
-          <div style={{ fontWeight: 700 }}>{selectedClass.title || selectedClass.name || selectedClass.className || selectedClass.classId}</div>
-          <div style={{ fontSize: 13, color: "#334155" }}>
-            Start: {formatBrochureDate(selectedClass.startDate || selectedClass.startsAt)} · Fee: {formatBrochureFee(selectedClass)}
-          </div>
-          <div style={{ fontSize: 13, color: "#334155" }}>{formatBrochureSchedule(selectedClass)}</div>
-          <input
-            value={brochureLink}
-            readOnly
-            aria-label="Public class brochure link"
-            style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #93c5fd", background: "#fff" }}
-          />
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => window.open(brochureLink, "_blank", "noopener,noreferrer")}>Open brochure</button>
-            <button type="button" onClick={copyBrochureLink} style={{ background: "#fff", color: "#1a2233", border: "1px solid #93c5fd" }}>
-              Copy brochure link
-            </button>
-          </div>
-        </section>
+        <>
+          <section style={{ border: "1px solid #bfdbfe", borderRadius: 12, padding: 12, background: "#eff6ff", display: "grid", gap: 8 }}>
+            <div style={{ fontWeight: 800, color: "#1e3a8a" }}>Selected admissions links</div>
+            <div style={{ fontWeight: 700 }}>{selectedClass.title || selectedClass.name || selectedClass.className || selectedClass.classId}</div>
+            <div style={{ fontSize: 13, color: "#334155" }}>
+              Start: {formatBrochureDate(selectedClass.startDate || selectedClass.startsAt)} · Fee: {formatBrochureFee(selectedClass)}
+            </div>
+            <div style={{ fontSize: 13, color: "#334155" }}>{formatBrochureSchedule(selectedClass)}</div>
+            <input
+              value={brochureLink}
+              readOnly
+              aria-label="Public class brochure link"
+              style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #93c5fd", background: "#fff" }}
+            />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => window.open(brochureLink, "_blank", "noopener,noreferrer")}>Open brochure</button>
+              <button type="button" onClick={() => window.open(visitorGuideLink, "_blank", "noopener,noreferrer")} style={{ background: "#fff", color: "#1a2233", border: "1px solid #93c5fd" }}>
+                Open school guide
+              </button>
+              <button type="button" onClick={copyBrochureLink} style={{ background: "#fff", color: "#1a2233", border: "1px solid #93c5fd" }}>
+                Copy brochure link
+              </button>
+            </div>
+          </section>
+
+          <section style={{ border: "1px solid #dbe3ef", borderRadius: 12, padding: 12, background: "#fff", display: "grid", gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <div>
+                <strong>Client engagement</strong>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>This reference contains no student name or phone number.</div>
+              </div>
+              <button type="button" onClick={() => refreshEngagementStatus()} style={{ background: "#fff", color: "#1a2233", border: "1px solid #cbd5e1" }}>
+                Refresh status
+              </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+              {statusCard("Brochure", Boolean(engagementStatus?.status?.brochure_open?.seen), "Opened")}
+              {statusCard("School guide", Boolean(engagementStatus?.status?.visitor_guide_open?.seen), "Opened")}
+              {statusCard("Registration", Boolean(engagementStatus?.status?.registration_click?.seen), "Clicked")}
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b", overflowWrap: "anywhere" }}>Enquiry reference: {engagementRef}</div>
+            {engagementError && <div style={{ fontSize: 12, color: "#92400e" }}>{engagementError}</div>}
+          </section>
+        </>
       )}
 
       <label style={{ display: "grid", gap: 6 }}>
@@ -254,7 +342,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       </div>
 
       <p style={{ margin: 0, padding: 12, borderRadius: 8, background: "#ecfdf5", color: "#166534" }}>
-        The selected class brochure and the school background guide are included in the message automatically.
+        The class brochure, public school background guide and registration link are added automatically.
       </p>
     </div>
   );
