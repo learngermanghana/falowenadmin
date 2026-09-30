@@ -40,7 +40,8 @@ test("A1-13 understanding slides test the exact three weather-letter content poi
   assert.match(combined, /greeting.*not.*content|letter form/i);
   assert.match(combined, /two of the three|what is missing/i);
   assert.match(combined, /weil-sentence|two short A1 sentences/i);
-  assert.doesNotMatch(combined, /Ordne die Wörter:/i);
+  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
+  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
 
   const pool = buildA1PresenterQuestionPool(classChecks, 10, "A1-13-grammar-check");
   assert.equal(pool.length, 10);
@@ -62,7 +63,8 @@ test("A1-14.1 understanding slides test the exact three health-letter content po
   assert.match(combined, /Ich bin krank|health problem/i);
   assert.match(combined, /two of the three|what is missing/i);
   assert.match(combined, /weil-sentence|two short A1 sentences/i);
-  assert.doesNotMatch(combined, /Ordne die Wörter:/i);
+  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
+  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
 });
 
@@ -106,7 +108,8 @@ test("A1-12.3 understanding slides teach exactly three content points and separa
   assert.match(combined, /birthday.*three content points|Congratulate.*party.*family/i);
   assert.match(combined, /language-school|course begins|how much.*costs|pay online/i);
   assert.match(combined, /do not invent a fourth|not.*fourth/i);
-  assert.doesNotMatch(combined, /Ordne die Wörter:/i);
+  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
+  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
   assert.match(exitCheck.answerDe, /exactly three content points/i);
 });
