@@ -249,18 +249,22 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
     grammarFocusEn: [
       "Use haben + symptom noun for common complaints: Ich habe Kopfschmerzen.",
       "Use body part + tut/tun weh to say where it hurts.",
-      "Combine the symptom with simple duration or help language when needed.",
+      "Reuse the informal message structure from A1-12.3 and A1-13: greeting, cannot attend, reason, suggestion, closing and name.",
+      "Use the health language as the reason for the cancellation, for example: Leider kann ich nicht kommen. Ich habe Fieber.",
     ],
     modelExamplesDe: [
-      "Ich habe Kopfschmerzen.",
-      "Mein Rücken tut weh.",
-      "Meine Beine tun weh.",
-      "Ich habe seit gestern Bauchschmerzen.",
+      "Lieber Felix, danke für deine Einladung.",
+      "Leider kann ich nicht zu deinem Geburtstag kommen.",
+      "Ich bin krank. Ich habe Fieber und Kopfschmerzen.",
+      "Können wir uns nächste Woche treffen?",
+      "Liebe Grüße\nMary",
     ],
     commonMistakesEn: [
       "Using ist weh instead of tut weh.",
       "Using tut with a plural body part instead of tun.",
-      "Mixing the haben + symptom pattern with the body-part + weh tun pattern.",
+      "Naming a symptom without connecting it to the message about not being able to attend.",
+      "Forgetting the suggestion for another meeting after the health reason.",
+      "Forgetting the informal greeting, closing or name even though this is the third letter-writing task.",
     ],
   },
   "A1-14.2": {
