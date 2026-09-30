@@ -3,6 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { VISITOR_GUIDE_PROFILE, VISITOR_PURPOSES, LEARNING_PREFERENCES } from "../data/visitorGuideProfile.js";
 import { loadShareablePublicClasses } from "../services/publicBrochureClassService.js";
 import {
+  brochureClassSlug,
   buildClassBrochureUrl,
   formatBrochureDate,
   formatBrochureFee,
@@ -102,6 +103,10 @@ export default function VisitorGuidePage({ publicView = false }) {
   const [learningPreference, setLearningPreference] = useState("Hybrid");
   const [purpose, setPurpose] = useState("General enquiry");
   const [notes, setNotes] = useState("");
+  const requestedPublicClassSlug = useMemo(() => {
+    if (!publicView || typeof window === "undefined") return "";
+    return String(new URLSearchParams(window.location.search).get("class") || "").trim();
+  }, [publicView]);
 
   useEffect(() => {
     let active = true;
@@ -123,6 +128,14 @@ export default function VisitorGuidePage({ publicView = false }) {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!publicView || !requestedPublicClassSlug || !classes.length) return;
+    const matchingClass = classes.find(
+      (klass) => brochureClassSlug(klass) === requestedPublicClassSlug,
+    );
+    if (matchingClass) setSelectedClassKey(classKey(matchingClass));
+  }, [classes, publicView, requestedPublicClassSlug]);
 
   const selectedClass = useMemo(
     () => classes.find((klass) => classKey(klass) === selectedClassKey) || null,
