@@ -292,6 +292,18 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Which closing fits this informal message to Bina?", "For example: Liebe Grüße, followed by the student's name."),
     check("Exit-Check: Give the three body ideas for the Day 13 letter in the correct order.", "First say that you cannot come, then give a concrete weather reason, then suggest another meeting.", "The learner should connect the weather lesson to the writing task without help."),
   ],
+  "A1-14.1": [
+    check("Day 14.1 is the third letter-writing step. What message structure are we reusing from 12.3 and 13?", "Greeting, say you cannot attend, give the reason, suggest another meeting, closing and name."),
+    check("The message is to Felix personally. Which greeting fits?", "For example: Lieber Felix,"),
+    check("What is the difference between ‘Ich habe Kopfschmerzen’ and ‘Mein Kopf tut weh’?", "Ich habe Kopfschmerzen uses haben + symptom noun; Mein Kopf tut weh uses body part + tut weh."),
+    check("Correct the sentence: ‘Mein Kopf ist weh.’", "Mein Kopf tut weh."),
+    check("Turn this health fact into a simple reason in the letter: ‘Ich habe Fieber.’", "For example: Leider kann ich nicht kommen. Ich habe Fieber.", "Do not require a weil-clause; two short A1 sentences are enough."),
+    check("Is ‘Ich habe einen Arm’ a useful health reason for missing the birthday?", "No. It names a body part but does not describe a health problem."),
+    check("Complete the plural pattern: ‘Meine Beine ___ weh.’", "Meine Beine tun weh."),
+    check("After the health reason, what should the letter do next?", "Suggest another meeting, for example: Können wir uns nächste Woche treffen?"),
+    check("Give one other simple health reason that could fit the letter.", "For example: Ich bin krank. / Ich habe Kopfschmerzen. / Mein Bauch tut weh.", "Accept another clear A1 health problem."),
+    check("Which closing fits this informal message?", "For example: Liebe Grüße, followed by the student's name."),
+    check("Exit-Check: Give the three body ideas for the Day 14.1 letter in the correct order.", "First say that you cannot come, then give a concrete health reason, then suggest another meeting.", "The learner should connect the health lesson to the writing task without help."),
 };
 
 export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks = [], context = {}) {
