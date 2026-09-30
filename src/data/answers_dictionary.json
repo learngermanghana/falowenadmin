@@ -2691,8 +2691,7 @@
     "assignment_id": "B1-3.9",
     "expectedParts": [
       "teil2",
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "writingParts": [
       "teil2"
@@ -2701,8 +2700,7 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -2717,14 +2715,11 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil4": {
-        "label": "teil4",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
       }
-    }
+    },
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 4.10 Digitale Auszeit und Selbstfürsorge": {
     "answers": {
@@ -2750,14 +2745,12 @@
     "format": "objective",
     "assignment_id": "B1-4.10",
     "expectedParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "writingParts": [],
     "aiGradedParts": [],
     "referenceAnswerParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -2766,14 +2759,11 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil4": {
-        "label": "teil4",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
       }
-    }
+    },
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 4.11 Teamspiele und Kooperative Aktivitäten": {
     "answers": {
@@ -3617,8 +3607,7 @@
     "assignment_id": "B1-10.27",
     "expectedParts": [
       "teil2",
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "writingParts": [
       "teil2"
@@ -3627,8 +3616,7 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3643,14 +3631,11 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil4": {
-        "label": "teil4",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
       }
-    }
+    },
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "B1 10.28 Klimafreundlich leben": {
     "answers": {
@@ -3677,8 +3662,7 @@
     "assignment_id": "B1-10.28",
     "expectedParts": [
       "teil2",
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "writingParts": [
       "teil2"
@@ -3687,8 +3671,7 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3",
-      "teil4"
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3703,14 +3686,11 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil4": {
-        "label": "teil4",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
       }
-    }
+    },
+    "excludedParts": [
+      "teil4"
+    ]
   },
   "A1 Asking About Prices 3": {
     "answers": {
