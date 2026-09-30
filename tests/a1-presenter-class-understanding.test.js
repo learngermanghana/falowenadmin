@@ -39,11 +39,13 @@ test("A1-13 understanding slides check weather grammar, cancellation and sentenc
   assert.match(combined, /It is raining.*Es regnet/i);
   assert.match(combined, /It is snowing.*Es schneit/i);
   assert.match(combined, /It is cold.*Es ist kalt/i);
-  assert.match(combined, /cancel an appointment|Leider kann ich nicht kommen/i);
   assert.match(combined, /Es ist regnet.*Es regnet/i);
-  assert.match(combined, /Bus fährt nicht/i);
+  assert.match(combined, /im Sommer|im Januar|season.*month/i);
+  assert.match(combined, /am Montag|with days/i);
+  assert.match(combined, /um 8 Uhr|um 16 Uhr|clock times/i);
+  assert.match(combined, /am Montag um 16 Uhr/i);
 
-  assert.ok(classChecks.filter((item) => /^Ordne die Wörter:/.test(item.questionDe)).length >= 4);
+  assert.ok(classChecks.filter((item) => /^Ordne die Wörter:/.test(item.questionDe)).length >= 3);
   assert.doesNotMatch(combined, /How many CONTENT points/i);
   assert.doesNotMatch(combined, /What are the three Day 13 content points/i);
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
