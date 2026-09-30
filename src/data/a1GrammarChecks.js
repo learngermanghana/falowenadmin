@@ -158,10 +158,10 @@ export const A1_GRAMMAR_CHECKS = {
     check("Why is it important to answer every bullet point in a writing task?", "Each point is part of the task and missing one can reduce the score."),
   ],
   "A1-13": [
-    check("Why is es often used in German weather sentences?", "German commonly uses the impersonal subject es for weather expressions."),
-    check("What is the difference between ‘Es ist kalt’ and ‘Es regnet’?", "The first uses sein + adjective; the second uses a weather verb."),
-    check("How do you express temperature in German?", "Use Grad with a number, for example: Es sind 30 Grad."),
-    check("What kinds of words help describe weather beyond hot and cold?", "Weather verbs and adjectives such as regnen, schneien, sonnig, windig and bewölkt."),
+    check("How does Day 13 build on the letter-writing lesson from A1-12.3?", "It keeps the same message structure but adds weather language as the reason for not being able to attend."),
+    check("What is the difference between a weather description and a weather reason in the letter?", "A description only states the weather. A reason also shows why that weather stops the plan, for example: Es regnet sehr stark, und mein Bus fährt nicht."),
+    check("Which two basic weather patterns do you need for the letter?", "Use es ist + adjective, such as Es ist windig, and es + weather verb, such as Es regnet."),
+    check("What should a complete Day 13 informal email contain?", "An informal greeting, a sentence saying you cannot come, one concrete weather reason, a suggestion for another meeting, an informal closing and your name."),
   ],
   "A1-14.1": [
     check("What is the difference between ‘Ich habe Kopfschmerzen’ and ‘Mein Kopf tut weh’?", "Both describe pain; one uses haben + pain noun and the other uses the body part + tut weh."),
