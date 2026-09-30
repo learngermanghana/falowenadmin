@@ -215,8 +215,26 @@ jobs:
           deploy_group "assignment marking workers" \
             "functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob"
 
-          deploy_group "payment and contract workers" \
-            "functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:autoSyncNewStudentToOrientationSheet,functions:falowenadmin:autoRemoveIneligibleStudentFromOrientationSheet,functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet,functions:falowenadmin:syncPendingOperationalSheets,functions:falowenadmin:cleanupExpiredPendingStudents"
+          # Payment recovery is business-critical and must not be blocked by a
+          # Cloud Run quota failure in an unrelated sheet/orientation worker.
+          deploy_group "payment reconciler" \
+            "functions:falowenadmin:maintainStudentPaymentContracts"
+
+          # Deploy operational sheet/orientation workers sequentially. Deploying
+          # these together has exhausted the us-central1 Cloud Run CPU quota and
+          # left payment-related backend revisions only partially rolled out.
+          deploy_group "paid student orientation sync" \
+            "functions:falowenadmin:autoSyncPaidStudentOrientation"
+          deploy_group "new student orientation sync" \
+            "functions:falowenadmin:autoSyncNewStudentToOrientationSheet"
+          deploy_group "orientation eligibility cleanup" \
+            "functions:falowenadmin:autoRemoveIneligibleStudentFromOrientationSheet"
+          deploy_group "orientation deleted-student cleanup" \
+            "functions:falowenadmin:autoRemoveDeletedStudentFromOrientationSheet"
+          deploy_group "operational sheet sync" \
+            "functions:falowenadmin:syncPendingOperationalSheets"
+          deploy_group "trial retention cleanup" \
+            "functions:falowenadmin:cleanupExpiredPendingStudents"
 
           deploy_group "trial access email workers" \
             "functions:falowenadmin:sendTrialAccessWelcomeEmail,functions:falowenadmin:sendTrialAccessReminderEmails"
