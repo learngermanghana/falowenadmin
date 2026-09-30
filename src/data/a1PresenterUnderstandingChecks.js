@@ -224,7 +224,7 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
   ],
   "A1-12.3": [
     check("How many CONTENT points must you answer in each A1-12.3 letter?", "Exactly three content points."),
-    check("Is the greeting one of the three content points?", "No. The greeting is required letter form, but it is not one of the three content points."),
+    check("Is ‘Liebe Anna’ one of the three content points?", "No. ‘Liebe Anna’ is the informal greeting. It is required letter form, but it is not one of the three content points."),
     check("For the birthday message, what are the three content points?", "Congratulate the friend, ask whether there is a party, and ask whether your family can come."),
     check("For the language-school email, what are the three content points?", "Ask when the course begins, ask how much it costs, and ask whether you can pay online."),
     check("Ordne die Wörter: Geburtstag · alles · Gute · zum", "Alles Gute zum Geburtstag.", "Build one sentence that can answer the birthday-congratulation point."),
