@@ -128,9 +128,50 @@ export function deterministicWrongAnswers(objectiveResult = {}) {
     }));
 }
 
+function reconcileWritingOnlyFeedback(result = {}, submissionText = "") {
+  const originalFeedback = String(result.feedback || result.improvementSummary || "").trim();
+  const writingParts = Array.isArray(result.detectedParts)
+    ? result.detectedParts.filter((part) => String(part?.partType || "").toLowerCase() === "writing")
+    : [];
+
+  const cleaned = recoverZeroWritingScore({
+    ...result,
+    objectiveScore: null,
+    objectiveCorrect: 0,
+    objectiveTotal: 0,
+    objectiveDetails: {},
+    wrongAnswers: [],
+    detectedParts: writingParts,
+    aiOriginalFeedback: result.aiOriginalFeedback ?? originalFeedback,
+    aiDetailedFeedback: result.aiDetailedFeedback || originalFeedback,
+    ai: {
+      ...(result.ai || {}),
+      objectiveScore: null,
+      objectiveCorrect: 0,
+      objectiveTotal: 0,
+      objectiveDetails: {},
+      wrongAnswers: [],
+      finalDeterministicFeedbackReconciled: true,
+      writingOnlyObjectiveArtifactsRemoved: true,
+    },
+  }, submissionText);
+
+  const feedback = buildNaturalStudentFeedback({
+    ...cleaned,
+    feedback: "",
+    improvementSummary: "",
+  }, submissionText);
+
+  return {
+    ...cleaned,
+    feedback: feedback || cleaned.feedback,
+    improvementSummary: feedback || cleaned.improvementSummary,
+  };
+}
+
 export function reconcileFinalDeterministicFeedback(result = {}, objectiveResult = {}, submissionText = "") {
   const objectiveTotal = numeric(objectiveResult.totalCount, 0);
-  if (objectiveTotal <= 0) return recoverZeroWritingScore(result, submissionText);
+  if (objectiveTotal <= 0) return reconcileWritingOnlyFeedback(result, submissionText);
 
   const objectiveCorrect = Math.max(0, Math.min(objectiveTotal, numeric(objectiveResult.correctCount, 0)));
   const objectiveScore = (objectiveCorrect / objectiveTotal) * 100;
