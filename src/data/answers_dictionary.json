@@ -2295,28 +2295,17 @@
     "format": "objective",
     "assignment_id": "B1-1.2",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -2473,28 +2462,17 @@
     "format": "objective",
     "assignment_id": "B1-2.5",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -2603,28 +2581,17 @@
     "format": "objective",
     "assignment_id": "B1-3.7",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -2783,28 +2750,17 @@
     "format": "objective",
     "assignment_id": "B1-4.10",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -2843,28 +2799,17 @@
     "format": "objective",
     "assignment_id": "B1-4.11",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -3083,28 +3028,17 @@
     "format": "objective",
     "assignment_id": "B1-5.15",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -3203,28 +3137,17 @@
     "format": "objective",
     "assignment_id": "B1-5.17",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -3317,28 +3240,17 @@
     "format": "objective",
     "assignment_id": "B1-6.19",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -3470,28 +3382,17 @@
     "format": "objective",
     "assignment_id": "B1-7.22",
     "expectedParts": [
-      "teil2",
       "teil3",
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3",
       "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
@@ -3622,29 +3523,18 @@
     "format": "objective",
     "assignment_id": "B1-8.25",
     "expectedParts": [
-      "teil2",
       "teil3"
     ],
     "excludedParts": [
       "teil4"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
-      "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is a Schreiben/writing part. There is no fixed reference answer in the answer key. Do not mark the student wrong or give 0 because reference answers are missing. Grade with AI using the writing prompt, CEFR level, task completion, grammar, vocabulary, structure, and clarity."
-      },
       "teil3": {
         "label": "teil3",
         "hasReferenceAnswers": true,
