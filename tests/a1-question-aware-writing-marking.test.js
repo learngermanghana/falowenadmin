@@ -74,7 +74,7 @@ test("raw A1 dictionary IDs resolve the exact question and A1-simple grading ins
 
   assert.equal(task.assignmentKey, "A1-13");
   assert.deepEqual(task.partIds, ["teil3"]);
-  assert.equal(task.taskPoints.length, 3);
+  assert.equal(task.taskPoints.length, 5);
   assert.match(task.taskText, /Bina/i);
   assert.match(task.taskText, /weather/i);
   assert.match(task.gradingInstruction, /simple correct task-appropriate German/i);
@@ -114,8 +114,8 @@ Momodou`;
   assert.equal(guarded.writingScore, 80);
   assert.equal(guarded.finalScore, 90);
   assert.deepEqual(guarded.missingTaskPoints || [], []);
-  assert.equal(guarded.taskCompletion.completed, 3);
-  assert.equal(guarded.taskCompletion.total, 3);
+  assert.equal(guarded.taskCompletion.completed, 5);
+  assert.equal(guarded.taskCompletion.total, 5);
   assert.ok(guarded.taskPointEvidence.every((item) => item.status === "met"));
   assert.equal(guarded.markingRubricVersion, A1_WRITING_RUBRIC_VERSION);
 });
@@ -149,11 +149,11 @@ Ama`;
 
   assert.equal(guarded.writingScore, 80);
   assert.ok(guarded.missingTaskPoints.some((point) => /weather reason/i.test(point)));
-  assert.equal(guarded.taskCompletion.completed, 2);
-  assert.equal(guarded.taskCompletion.total, 3);
+  assert.equal(guarded.taskCompletion.completed, 4);
+  assert.equal(guarded.taskCompletion.total, 5);
 });
 
-test("A1-14.1 accepts simple learned health language such as Ich bin krank", () => {
+test("A1-14.1 is the third letter-writing step and accepts simple learned health language such as Ich bin krank", () => {
   const task = getA1WritingTaskSpec("A1-14.1");
   const source = `teil2
 Lieber Felix,
@@ -163,9 +163,25 @@ Viele Grüße
 Mary`;
   const evidence = evaluateA1WritingTaskEvidence(task, source);
 
-  assert.equal(evidence.length, 3);
-  assert.ok(evidence.every((item) => item.status === "met"));
-  assert.match(evidence[1].evidence, /krank/i);
+  assert.match(task.taskText, /Third A1 letter-writing step after A1-12\.3 and A1-13/i);
+  assert.equal(task.taskPoints.length, 5);
+  assert.equal(evidence.length, 5);
+  assert.ok(evidence.every((item) => item.status === "met"), JSON.stringify(evidence, null, 2));
+  assert.match(evidence[2].evidence, /krank/i);
+});
+
+test("A1-14.1 does not accept a non-health excuse for the health writing point", () => {
+  const task = getA1WritingTaskSpec("A1-14.1");
+  const evidence = evaluateA1WritingTaskEvidence(task, `teil2
+Lieber Felix,
+ich kann leider nicht zu deinem Geburtstag kommen. Mein Bus fährt nicht.
+Können wir uns nächste Woche treffen?
+Liebe Grüße
+Ama`);
+
+  assert.equal(evidence.length, 5);
+  assert.equal(evidence[2].status, "missing");
+  assert.match(evidence[2].label, /health reason/i);
 });
 
 test("A1-1.1 checks the exact five self-introduction points", () => {
