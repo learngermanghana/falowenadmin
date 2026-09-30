@@ -1,3 +1,4 @@
+import { applyA2B1AdminLessonProfileToSlide } from "./a2B1LessonProfile.js";
 export const a2WorkbookAlignedSlidesDays25To28 = [
   {
     id: "a2-day-25-tagesablauf",
