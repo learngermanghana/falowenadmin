@@ -6,6 +6,7 @@ import {
   isTeachingPresenterV2Slide,
 } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
+import { getA2B1AdminLessonProfileForSlide } from "../data/a2B1LessonProfile.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
@@ -112,6 +113,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const presenterShellRef = useRef(null);
   const presenterV2 = isTeachingPresenterV2Slide(slide);
   const advancedClassroom = ["B2", "C1"].includes(String(slide.course || "").toUpperCase());
+  const lessonContract = useMemo(() => getA2B1AdminLessonProfileForSlide(slide), [slide]);
   const [stageIndex, setStageIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showQuestionSupport, setShowQuestionSupport] = useState(false);
@@ -606,6 +608,20 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <small>{stage.studentReference.canonicalId}</small>
                   </div>
                   <p>{stage.studentReference.note}</p>
+                </section>
+              ) : null}
+              {lessonContract ? (
+                <section className="presenter-workbook-contract" aria-label="Workbook lesson contract">
+                  <div className="presenter-workbook-contract-heading">
+                    <span>Workbook contract</span>
+                    <strong>{lessonContract.assignmentKey}</strong>
+                  </div>
+                  <div className="presenter-workbook-contract-grid">
+                    <p><b>Submit</b><span>{lessonContract.teacherContract.submission}</span></p>
+                    <p><b>Sprechen</b><span>{lessonContract.teacherContract.speaking}</span></p>
+                    <p><b>Schreiben</b><span>{lessonContract.teacherContract.writing}</span></p>
+                    <p><b>Teil 4</b><span>{lessonContract.teacherContract.part4}</span></p>
+                  </div>
                 </section>
               ) : null}
             </>

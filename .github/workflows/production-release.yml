@@ -11,6 +11,14 @@ on:
       - "vite.config.js"
       - "vercel.json"
       - "tests/production-release-guard.test.js"
+      - "src/data/a2B1LessonProfile.js"
+      - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/TeachingSlidePresenter.css"
+      - "tests/a2-b1-lesson-profile.test.js"
+      - "tests/production-deployment-contract.test.js"
+      - "scripts/writeBuildIdentity.mjs"
+      - "scripts/checkProductionIdentity.mjs"
+      - "package.json"
   push:
     branches: [main]
   schedule:
@@ -62,10 +70,21 @@ jobs:
           tests/student-admin-curriculum-parity.test.js
           tests/presenter-timers.test.js
           tests/teaching-presenter.test.js
+          tests/a2-b1-lesson-profile.test.js
+          tests/production-deployment-contract.test.js
       - name: Check learner-source parity
         run: node scripts/auditStudentAdminCurriculumParity.mjs
+      - name: Run production contract gate
+        run: npm run gate:production
+      - name: Stamp exact deployment SHA
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: npm run generate:build-identity
       - name: Build production bundle without rerunning prebuild
         run: npx vite build
+      - name: Show generated build identity
+        run: cat public/__falowen-admin-build.json
 
   verify-production:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
