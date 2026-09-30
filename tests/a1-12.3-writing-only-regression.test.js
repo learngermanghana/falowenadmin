@@ -6,6 +6,7 @@ import answersDictionary from "../src/data/answers_dictionary.json" with { type:
 import { normalizeAnswerKeyEntry } from "../src/utils/answerKeyNormalizer.js";
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
+import { reconcileFinalDeterministicFeedback } from "../src/utils/finalDeterministicFeedback.js";
 
 const rawReference = {
   assignment_id: "A1-12.3",
@@ -151,4 +152,51 @@ test("real A1-12.3 dictionary plus Momodou submission cannot become one fake obj
   const markingPageSource = fs.readFileSync(new URL("../src/pages/MarkingPage.jsx", import.meta.url), "utf8");
   assert.match(markingPageSource, /localWritingOnlyReference/);
   assert.match(markingPageSource, /referenceAnswerParts:\s*\[\]/);
+});
+
+
+test("A1-12.3 removes AI-invented objective feedback after deterministic writing-only reconciliation", () => {
+  const objective = computeObjectiveScore("A1-12.3", marySubmissionText);
+  assert.equal(objective.totalCount, 0);
+
+  const result = reconcileFinalDeterministicFeedback({
+    studentName: "Nanayaa Peprah",
+    level: "A1",
+    assignmentKey: "A1-12.3",
+    finalScore: 80,
+    score: 80,
+    writingScore: 80,
+    writingScorePercent: 80,
+    objectiveScore: 0,
+    objectiveCorrect: 0,
+    objectiveTotal: 1,
+    objectiveDetails: {
+      "1": { correct: false, question: "1", student: "", expected: "Read comment for answers" },
+    },
+    wrongAnswers: [{ question: "1", student: "", expected: "Read comment for answers" }],
+    taskCompletion: { completed: 6, total: 6, missing: [] },
+    writingStrengths: [
+      "The birthday message asks whether there is a party and whether the family can come.",
+      "The formal email asks when the course begins, the price and whether online payment is possible.",
+    ],
+    nextStep: "Check small punctuation and spacing details before submitting.",
+    detectedParts: [
+      { partId: "teil1", partType: "writing" },
+      { partId: "teil2", partType: "writing" },
+      { partId: "main", partType: "objective", total: 1, correct: 0, wrong: 1 },
+    ],
+    feedback: "Strong work, Nanayaa Peprah. 0 of 1 objective answers are correct. question 1 was not answered. You addressed all 6 task points.",
+    improvementSummary: "Focus on ensuring that all objective answers are provided correctly in future submissions.",
+  }, objective, marySubmissionText);
+
+  assert.equal(result.objectiveTotal, 0);
+  assert.equal(result.objectiveCorrect, 0);
+  assert.equal(result.objectiveScore, null);
+  assert.deepEqual(result.objectiveDetails, {});
+  assert.deepEqual(result.wrongAnswers, []);
+  assert.equal(result.detectedParts.filter((part) => part.partType === "objective").length, 0);
+  assert.doesNotMatch(result.feedback, /0 of 1|objective answers?|question 1.*not answered/i);
+  assert.match(result.feedback, /6 task points|birthday|course/i);
+  assert.equal(result.writingScore, 80);
+  assert.equal(result.finalScore, 80);
 });
