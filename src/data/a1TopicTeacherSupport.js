@@ -207,8 +207,8 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
   "A1-12.3": {
     grammarFocusEn: [
       "Separate formal and informal greetings, pronouns and closing formulas.",
-      "Answer every bullet point in the task with short relevant information.",
-      "Keep the message structure clear: greeting, reason, required information/questions, closing and name.",
+      "Answer exactly three content bullet points in each writing task with short relevant information.",
+      "Keep letter form separate from task content: greeting + three content points + closing + name.",
     ],
     modelExamplesDe: [
       "Liebe Anna, vielen Dank für deine Einladung.",
