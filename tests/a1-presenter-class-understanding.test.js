@@ -25,23 +25,28 @@ function resolvedChecksFor(assignmentId) {
   );
 }
 
-test("A1-13 understanding slides test the exact three weather-letter content points", () => {
+test("A1-13 understanding slides check weather grammar, cancellation and sentence building", () => {
   const checks = getA1PresenterUnderstandingChecks("A1-13", getA1GrammarChecks("A1-13"));
   const classChecks = checks.slice(0, -1);
-  const exitChecks = checks.slice(-1);
+  const exitCheck = checks.at(-1);
   const combined = checks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
 
   assert.equal(classChecks.length, 10);
-  assert.equal(exitChecks.length, 1);
+  assert.equal(checks.length, 11);
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
   assert.ok(classChecks.every((item) => String(item.answerDe || "").trim()));
-  assert.match(combined, /exactly three|three Day 13 content points/i);
-  assert.match(combined, /cannot come.*weather reason.*another meeting/i);
-  assert.match(combined, /greeting.*not.*content|letter form/i);
-  assert.match(combined, /what is missing|Content point 3/i);
-  assert.match(combined, /Bus fährt nicht|attendance is not possible/i);
-  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
-  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
+
+  assert.match(combined, /It is raining.*Es regnet/i);
+  assert.match(combined, /It is snowing.*Es schneit/i);
+  assert.match(combined, /It is cold.*Es ist kalt/i);
+  assert.match(combined, /cancel an appointment|Leider kann ich nicht kommen/i);
+  assert.match(combined, /Es ist regnet.*Es regnet/i);
+  assert.match(combined, /Bus fährt nicht/i);
+
+  assert.ok(classChecks.filter((item) => /^Ordne die Wörter:/.test(item.questionDe)).length >= 4);
+  assert.doesNotMatch(combined, /How many CONTENT points/i);
+  assert.doesNotMatch(combined, /What are the three Day 13 content points/i);
+  assert.match(exitCheck.questionDe, /^Exit-Check:/);
 
   const pool = buildA1PresenterQuestionPool(classChecks, 10, "A1-13-grammar-check");
   assert.equal(pool.length, 10);
