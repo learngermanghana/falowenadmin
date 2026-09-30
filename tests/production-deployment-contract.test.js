@@ -1,0 +1,27 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+
+test("admin production build runs the gate and stamps the deployed SHA", () => {
+  const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+  assert.match(pkg.scripts.build, /gate:production/);
+  assert.match(pkg.scripts.build, /generate:build-identity/);
+  assert.match(pkg.scripts["generate:build-identity"], /writeBuildIdentity\.mjs/);
+});
+
+test("admin build identity is uncached and main is the only automatic Git deployment", () => {
+  const config = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
+  const identity = config.headers.find((entry) => entry.source === "/__falowen-admin-build.json");
+  assert.ok(identity);
+  assert.ok(identity.headers.some((header) => header.key === "Cache-Control" && /no-store/.test(header.value)));
+  assert.equal(config.git.deploymentEnabled.main, true);
+  assert.equal(config.git.deploymentEnabled["*"], false);
+});
+
+test("admin production health workflow checks the live commit SHA", () => {
+  const workflow = fs.readFileSync(".github/workflows/production-health.yml", "utf8");
+  assert.match(workflow, /branches:\s*\n\s*- main/);
+  assert.match(workflow, /npm run build/);
+  assert.match(workflow, /checkProductionIdentity\.mjs/);
+  assert.match(workflow, /EXPECTED_SHA/);
+});
