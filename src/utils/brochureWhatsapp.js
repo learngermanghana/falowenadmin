@@ -18,6 +18,7 @@ function addAdmissionsContext(url, { slug = "", engagementRef = "", source = "br
 
 export function buildVisitorGuideUrl(klass = {}, baseUrl = FALOWEN_VISITOR_GUIDE_URL, engagementRef = "") {
   const slug = brochureClassSlug(klass);
+  if (!slug && !engagementRef) return baseUrl;
   const url = new URL(baseUrl);
   addAdmissionsContext(url, { slug, engagementRef });
   return url.toString();
