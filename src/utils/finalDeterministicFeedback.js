@@ -130,12 +130,20 @@ export function deterministicWrongAnswers(objectiveResult = {}) {
 
 function reconcileWritingOnlyFeedback(result = {}, submissionText = "") {
   const originalFeedback = String(result.feedback || result.improvementSummary || "").trim();
+  const writingScore = numeric(result.writingScorePercent ?? result.writingScore, NaN);
   const writingParts = Array.isArray(result.detectedParts)
     ? result.detectedParts.filter((part) => String(part?.partType || "").toLowerCase() === "writing")
     : [];
 
   const cleaned = recoverZeroWritingScore({
     ...result,
+    ...(Number.isFinite(writingScore)
+      ? {
+          score: writingScore,
+          finalScore: writingScore,
+          passed: writingScore >= 60,
+        }
+      : {}),
     objectiveScore: null,
     objectiveCorrect: 0,
     objectiveTotal: 0,
