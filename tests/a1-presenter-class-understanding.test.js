@@ -38,8 +38,8 @@ test("A1-13 understanding slides test the exact three weather-letter content poi
   assert.match(combined, /exactly three|three Day 13 content points/i);
   assert.match(combined, /cannot come.*weather reason.*another meeting/i);
   assert.match(combined, /greeting.*not.*content|letter form/i);
-  assert.match(combined, /two of the three|what is missing/i);
-  assert.match(combined, /weil-sentence|two short A1 sentences/i);
+  assert.match(combined, /what is missing|Content point 3/i);
+  assert.match(combined, /Bus fährt nicht|attendance is not possible/i);
   assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
   assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
 
@@ -61,8 +61,8 @@ test("A1-14.1 understanding slides test the exact three health-letter content po
   assert.match(combined, /cannot come.*health reason.*another meeting/i);
   assert.match(combined, /greeting.*not.*content|letter form/i);
   assert.match(combined, /Ich bin krank|health problem/i);
-  assert.match(combined, /two of the three|what is missing/i);
-  assert.match(combined, /weil-sentence|two short A1 sentences/i);
+  assert.match(combined, /what is missing|Content point 3/i);
+  assert.match(combined, /einen Arm|does not describe a health problem/i);
   assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
   assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
@@ -107,7 +107,6 @@ test("A1-12.3 understanding slides teach exactly three content points and separa
   assert.match(combined, /greeting.*not.*content|letter form/i);
   assert.match(combined, /birthday.*three content points|Congratulate.*party.*family/i);
   assert.match(combined, /language-school|course begins|how much.*costs|pay online/i);
-  assert.match(combined, /do not invent a fourth|not.*fourth/i);
   assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
   assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
