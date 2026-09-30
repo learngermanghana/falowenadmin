@@ -2143,7 +2143,13 @@
         "Answer4": "B) Seine Schwester hat eine Prüfung bestanden.",
         "Answer5": "B) Musik"
       },
-      "teil4": {}
+      "teil4": {
+        "Answer1": "B) Weil sie immer wieder an die Aufgaben denkt",
+        "Answer2": "C) Glücklich und erleichtert",
+        "Answer3": "A) Weil er die neue Stelle nicht bekommen hat",
+        "Answer4": "C) Seine Freundin",
+        "Answer5": "B) Eine Überraschungsparty"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1SQsUUW6_A3X-SGbOsyMZuOgm6Qo7gGsnqY9pbNxYgmY/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1SQsUUW6_A3X-SGbOsyMZuOgm6Qo7gGsnqY9pbNxYgmY/edit",
@@ -2151,11 +2157,10 @@
     "assignment_id": "A2-10.26",
     "expectedParts": [
       "teil2",
-      "teil3"
-    ],
-    "excludedParts": [
+      "teil3",
       "teil4"
     ],
+    "excludedParts": [],
     "writingParts": [
       "teil2"
     ],
@@ -2163,7 +2168,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -2175,6 +2181,12 @@
       },
       "teil3": {
         "label": "teil3",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil4": {
+        "label": "teil4",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
@@ -2191,10 +2203,11 @@
         "Answer5": "B) Die Nachricht speichern und eine verantwortliche Person informieren."
       },
       "teil4": {
-        "Answer1": "B) Ihr Handy",
-        "Answer2": "B) Auf www.jumiagh.com",
-        "Answer3": "B) Nach Modell-Empfehlung sowie Bestellung und Lieferung",
-        "Answer4": "A) Gute Kamera und lange Akkulaufzeit"
+        "Answer1": "A) Weil ihre Schwester in Österreich lebt",
+        "Answer2": "B) Sie machen eine Videokonferenz",
+        "Answer3": "B) Weil er am Abend nicht ständig auf sein Handy schauen möchte",
+        "Answer4": "B) Weil ihr Datenschutz wichtiger geworden ist",
+        "Answer5": "C) Missverständnisse können leichter entstehen"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1CDLU1BEBm-xCS0BEdXunjSN8CHol1UMuxlF_QDSGNc8/gviz/tq?tqx=out:html&sheet=Key",
