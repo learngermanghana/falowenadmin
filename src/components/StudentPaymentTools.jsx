@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { createStudentPaymentLink, listStudentPayments } from "../services/studentPaymentService.js";
+import { reconcileStudentPayments } from "../services/studentContractService.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue } from "../utils/paystackCharges.js";
 
 function displayValue(...values) {
@@ -96,6 +97,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
   const [generatedPayment, setGeneratedPayment] = useState(null);
   const [payments, setPayments] = useState([]);
   const onStudentUpdatedRef = useRef(onStudentUpdated);
+  const paymentReconcileRef = useRef({ studentId: "", lastCheckedAt: 0, inFlight: false });
 
   const studentId = String(student?.id || student?.studentCode || "").trim();
 
@@ -107,6 +109,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
     setAmount(String(resolveDefaultAmount(student, draft) || ""));
     setPaymentEmail(displayValue(draft.email, student?.email));
     setGeneratedPayment(null);
+    paymentReconcileRef.current = { studentId, lastCheckedAt: 0, inFlight: false };
   }, [studentId]);
 
   useEffect(() => {
@@ -133,10 +136,41 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
     }
 
     let active = true;
+
+    const reconcilePending = async (rows = []) => {
+      const hasPendingFalowenPayment = rows.some((payment) => {
+        const reference = String(payment?.reference || payment?.id || "").trim();
+        return reference.startsWith("FAL-") && String(payment?.status || "").trim().toLowerCase() === "pending";
+      });
+      if (!hasPendingFalowenPayment) return;
+
+      const state = paymentReconcileRef.current;
+      const now = Date.now();
+      if (state.studentId !== studentId) {
+        paymentReconcileRef.current = { studentId, lastCheckedAt: 0, inFlight: false };
+      }
+      const current = paymentReconcileRef.current;
+      if (current.inFlight || now - current.lastCheckedAt < 10000) return;
+
+      current.inFlight = true;
+      current.lastCheckedAt = now;
+      try {
+        const result = await reconcileStudentPayments(studentId);
+        if (!active || Number(result?.applied || 0) <= 0) return;
+        const refreshed = await listStudentPayments(studentId);
+        if (active) setPayments(refreshed);
+      } catch (error) {
+        console.warn("Could not verify pending Paystack payment.", error);
+      } finally {
+        paymentReconcileRef.current.inFlight = false;
+      }
+    };
+
     const loadHistory = async () => {
       try {
         const rows = await listStudentPayments(studentId);
         if (active) setPayments(rows);
+        await reconcilePending(rows);
       } catch (error) {
         console.warn("Could not refresh student payment history.", error);
       }
