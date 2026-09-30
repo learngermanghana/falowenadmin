@@ -45,7 +45,7 @@ const TOPIC_SIGNALS = {
   "A1-13": ["wetter", "regnet", "grad"],
   "A1-14.1": ["kopfschmerz", "weh", "körper"],
   "A1-14.2": ["dativ", "akkusativ", "helfen"],
-  "A1-5.10": ["aber", "oder", "denn"],
+  "A1-5.10": ["weil", "termin", "kurs"],
 };
 
 function text(value) {
