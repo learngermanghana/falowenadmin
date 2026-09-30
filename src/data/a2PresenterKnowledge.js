@@ -55,14 +55,26 @@ const A2_KNOWLEDGE = {
     },
   },
   "A2-3.6": {
-    title: "Wo? und Wohin? verändern den Kasus",
-    textDe: "In einem Raum kann man beschreiben, wo Möbel stehen und wohin man sie bewegt. Bei einer festen Position fragt man Wo? und benutzt mit Wechselpräpositionen den Dativ: „Der Tisch steht an der Wand.“ Bei einer Bewegung zu einem neuen Ziel fragt man Wohin? und benutzt den Akkusativ: „Ich stelle den Tisch an die Wand.“ Die Präposition bleibt gleich; die Bedeutung entscheidet über den Kasus.",
-    checks: ["Welche Frage benutzt man bei einer festen Position?", "Welche Frage zeigt Bewegung zu einem Ziel?", "Finde im Text ein Dativ- und ein Akkusativbeispiel."],
+    title: "Position oder Bewegung? Dann den Kasus wählen",
+    textDe: "Bei Wechselpräpositionen entscheidet zuerst die Bedeutung. Ist etwas schon an einem Ort, ist es eine Position: Man fragt Wo? und benutzt den Dativ, zum Beispiel „Das Sofa steht neben dem Fenster.“ Bewegt man etwas zu einem neuen Ziel, ist es Bewegung: Man fragt Wohin? und benutzt den Akkusativ, zum Beispiel „Ich stelle das Sofa neben das Fenster.“ Die Präposition bleibt gleich. Entscheidend ist, ob der Artikel im Dativ oder Akkusativ stehen muss.",
+    checks: [
+      "Wenn ein Möbelstück schon an einem Ort ist: Position oder Bewegung? Welche Frage passt und welcher Kasus?",
+      "Wenn du ein Möbelstück zu einem neuen Ziel bewegst: Welche Frage passt und welcher Kasus?",
+      "Was bleibt gleich, und was kann sich ändern, wenn aus einer Position eine Bewegung wird?",
+    ],
     activity: {
-      title: "Bewege die Möbel",
-      instruction: "Verwandle jede Position in eine Bewegung. Die Präposition bleibt, aber der Kasus verändert sich.",
-      prompts: ["Das Sofa steht neben dem Fenster.", "Die Bücher liegen auf dem Tisch.", "Der Schrank steht an der Wand."],
-      modelItems: ["Ich stelle das Sofa neben das Fenster.", "Ich lege die Bücher auf den Tisch.", "Ich stelle den Schrank an die Wand."],
+      title: "Position → Bewegung: Was ändert sich?",
+      instruction: "Entscheide zuerst Position oder Bewegung. Sage dann Wo? oder Wohin?, nenne den Kasus und ändere erst danach den Artikel.",
+      prompts: [
+        "Das Sofa steht neben dem Fenster. Ist das Position oder Bewegung? Welche Frage passt: Wo? oder Wohin? Welcher Kasus?",
+        "Jetzt Bewegung: Ich stelle das Sofa ___ Fenster. Welche Frage passt? Welcher Kasus? Was passiert mit dem Artikel?",
+        "Die Bücher liegen auf dem Tisch. Wenn ich sie bewege: Ich lege die Bücher ___ Tisch. Was ändert sich?",
+      ],
+      modelItems: [
+        "Position → Wo? → Dativ → neben dem Fenster.",
+        "Bewegung → Wohin? → Akkusativ → neben das Fenster. dem → das.",
+        "Position: auf dem Tisch. Bewegung: auf den Tisch. dem → den.",
+      ],
     },
   },
   "A2-3.7": {
