@@ -235,6 +235,7 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Ordne die Wörter: online · ich · kann · bezahlen", "Kann ich online bezahlen?", "Build the online-payment question."),
     check("Exit-Check: What is the A1 letter structure?", "Greeting + exactly three content points + closing + name.", "The learner must separate content points from letter form."),
   ],
+  // A1-13 presenter checks are weather/time application only; do not restore content-point recall here.
   "A1-13": [
     check("How do you say ‘It is raining’ in German?", "Es regnet.", "Check the weather verb directly."),
     check("How do you say ‘It is snowing’ in German?", "Es schneit.", "Check the second core weather verb."),
