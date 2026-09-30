@@ -175,6 +175,25 @@
   font-weight: 700;
 }
 
+.presenter-role-gap-teacher-flow {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0.7rem 0.85rem;
+  color: #334155;
+  font-size: 0.86rem;
+}
+
+.presenter-role-gap-teacher-flow strong {
+  color: #0f172a;
+}
+
+.presenter-role-gap-teacher-flow ol {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+  line-height: 1.45;
+}
+
 .presenter-role-gap-card {
   border: 2px solid #2563eb;
   border-radius: 14px;
