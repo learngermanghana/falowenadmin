@@ -1,9 +1,11 @@
-import fs from "fs";
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
 
 test("information-gap presenter shows a clear teacher flow", () => {
   const presenter = fs.readFileSync("src/components/TeachingSlidePresenter.jsx", "utf8");
-  expect(presenter).toMatch(/Teacher flow/);
-  expect(presenter).toMatch(/Choose two students: Partner A and Partner B/);
-  expect(presenter).toMatch(/Close both cards/);
-  expect(presenter).toMatch(/do not let either student read the other role card/);
+  assert.match(presenter, /Teacher flow/);
+  assert.match(presenter, /Choose two students: Partner A and Partner B/);
+  assert.match(presenter, /Close both cards/);
+  assert.match(presenter, /do not let either student read the other role card/);
 });
