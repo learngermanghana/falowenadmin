@@ -24,7 +24,7 @@ const expectedShapes = {
   "A2-9.25": [5, 0],
   "A2-10.26": [5, 0],
   "A2-10.27": [5, 4],
-  "A2-10.28": [5, 3],
+  "A2-10.28": [5, 5],
 };
 
 test("A2 grading keys keep their reviewed canonical assessment shapes", () => {
@@ -106,6 +106,29 @@ Teil 4
   assert.equal(result.details["teil4.3"].student, "B");
   assert.equal(result.details["teil4.4"].student, "A");
   assert.equal(result.details["teil4.5"].student, "D");
+});
+
+test("A2-10.28 scores the new five-question Zukunftspläne listening key", () => {
+  const result = computeObjectiveScore("A2-10.28", `
+Teil 3
+1. A
+2. B
+3. C
+4. B
+5. B
+
+Teil 4
+1. B
+2. C
+3. A
+4. C
+5. A
+  `);
+
+  assert.equal(result.correctCount, 10);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.details["teil4.1"].expected, "B");
+  assert.equal(result.details["teil4.5"].expected, "A");
 });
 
 test("A2-10.27 restored listening answers are scored instead of treated as missing", () => {
