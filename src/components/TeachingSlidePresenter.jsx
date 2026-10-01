@@ -779,7 +779,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               <div className="presenter-c2-grammar-heading">
                 <span>{stage.kicker}</span>
                 <h1>{stage.title}</h1>
-                <p>Nur die Kernfunktion sichern. Die Modellsätze sind bei Bedarf aufklappbar.</p>
+                <p><strong>Was ist hier zu tun?</strong> Regel kurz verstehen, dann die Struktur selbst anwenden und die sprachliche Wirkung begründen.</p>
               </div>
               <div className="presenter-c2-grammar-rules">
                 {presenterItems.map((item, index) => (
@@ -789,9 +789,29 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   </article>
                 ))}
               </div>
+              {stage.application ? (
+                <article className="presenter-c2-grammar-application">
+                  <span>AUFTRAG</span>
+                  <h2>{stage.application.title || "Jetzt anwenden"}</h2>
+                  <p>{stage.application.instruction}</p>
+                  {stage.application.prompt ? (
+                    <blockquote>{stage.application.prompt}</blockquote>
+                  ) : null}
+                  <p><strong>Student:</strong> {stage.application.task}</p>
+                  {stage.application.teacherHint ? (
+                    <p><strong>Lehrerfokus:</strong> {stage.application.teacherHint}</p>
+                  ) : null}
+                  {stage.application.answer ? (
+                    <details className="presenter-advanced-models">
+                      <summary>Mögliche Lösung anzeigen</summary>
+                      <p>{stage.application.answer}</p>
+                    </details>
+                  ) : null}
+                </article>
+              ) : null}
               {Array.isArray(stage.modelItems) && stage.modelItems.length ? (
                 <details className="presenter-advanced-models">
-                  <summary>2 Modellsätze anzeigen</summary>
+                  <summary>Weitere Modellsätze anzeigen</summary>
                   <ul>{stage.modelItems.map((item) => <li key={item}>{item}</li>)}</ul>
                 </details>
               ) : null}
@@ -982,15 +1002,21 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               ) : (
                 <div className="presenter-vocabulary-challenge">
                   <div className="presenter-vocabulary-challenge-heading">
-                    <span>{["A2", "B1"].includes(presenterLevel) ? "Redemittel-Check" : "Wortschatz-Check"} · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
+                    <span>{presenterLevel === "C2"
+                      ? "Präzisions- & Registercheck"
+                      : (["A2", "B1"].includes(presenterLevel) ? "Redemittel-Check" : "Wortschatz-Check")} · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
                     <h1>{presenterLevel === "A2"
                       ? "Welche Formulierung passt?"
-                      : (presenterLevel === "B1" ? "Welche Formulierung passt zur Funktion?" : "Welches Wort passt?")}</h1>
+                      : (presenterLevel === "B1"
+                        ? "Welche Formulierung passt zur Funktion?"
+                        : (presenterLevel === "C2" ? "Welche Kollokation ist hier am präzisesten?" : "Welches Wort passt?"))}</h1>
                     <p>{presenterLevel === "A2"
                       ? "Lies die Situation. Der Schüler wählt die passende Formulierung und ergänzt sie danach mündlich."
                       : (presenterLevel === "B1"
                         ? "Lies die kommunikative Funktion. Der Schüler wählt das passende Redemittel, begründet die Wahl und bildet danach einen eigenen Satz."
-                        : "Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt.")}</p>
+                        : (presenterLevel === "C2"
+                          ? "Lies den Satz mit der Lücke. Der Student wählt die präziseste Kollokation und begründet kurz, warum sie in diesem Register passt."
+                          : "Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt."))}</p>
                   </div>
                   {activeVocabChallenge ? (
                     <article className="presenter-vocabulary-cloze-card">
