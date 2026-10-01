@@ -44,9 +44,9 @@ function classMeetingLabel(klass = {}) {
   return formatBrochureSchedule(klass);
 }
 
-function classVenueLabel(klass = {}) {
+function classVenueLabel(klass = {}, fallback = "In person / online") {
   if (klass.availability === "always" || klass.isSelfLearning) return "Online";
-  return String(klass.location || klass.venue || klass.city || "In person / online").trim();
+  return String(klass.location || klass.venue || fallback).trim();
 }
 
 function classModeLabel(klass = {}, fallback = "Hybrid") {
@@ -155,7 +155,8 @@ export default function VisitorGuidePage({ publicView = false }) {
 
   const programme = useMemo(() => {
     const title = selectedClass ? classTitle(selectedClass) : `${level} German Programme`;
-    const fee = selectedClass ? formatBrochureFee(selectedClass) : level === "A1" ? "GHS 2,800" : "GHS 3,000";
+    const fallbackFee = Number(profile.school.tuitionGhsByLevel?.[level] || 3000);
+    const fee = selectedClass ? formatBrochureFee(selectedClass) : `GHS ${fallbackFee.toLocaleString("en-GH")}`;
     const brochureUrl = selectedClass ? buildClassBrochureUrl(selectedClass) : DEFAULT_SIGNUP_URL;
     return {
       title,
@@ -164,7 +165,11 @@ export default function VisitorGuidePage({ publicView = false }) {
       start: selectedClass ? classStartLabel(selectedClass) : "To be confirmed",
       end: selectedClass ? classEndLabel(selectedClass) : "Approximately 10 weeks after the course starts",
       meetings: selectedClass ? classMeetingLabel(selectedClass) : "Schedule to be confirmed",
-      venue: selectedClass ? classVenueLabel(selectedClass) : learningPreference === "Online" || learningPreference === "Self-learning" ? "Online" : "LLEA / Online",
+      venue: selectedClass
+        ? classVenueLabel(selectedClass, `${profile.school.locationLabel} / Online`)
+        : learningPreference === "Online" || learningPreference === "Self-learning"
+          ? "Online"
+          : `${profile.school.locationLabel} / Online`,
       mode: selectedClass ? classModeLabel(selectedClass, learningPreference) : learningPreference,
       duration: selectedClass?.availability === "always" || selectedClass?.isSelfLearning ? "Flexible" : "Approximately 10 weeks",
       access: "6 months of Falowen access with full payment",
@@ -352,7 +357,8 @@ export default function VisitorGuidePage({ publicView = false }) {
           </div>
           <p className="visitor-guide-note">
             Your exact timetable and class arrangements are confirmed during registration. The selected public class information
-            above is loaded from Falowen when available.
+            above is loaded from Falowen when available. For in-person classes, use the exact LLEA location:{" "}
+            <a href={profile.school.mapsUrl} target="_blank" rel="noreferrer">Open in Google Maps</a>.
           </p>
         </GuidePage>
 
