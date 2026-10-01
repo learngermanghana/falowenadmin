@@ -1254,7 +1254,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                         <div className="presenter-warmup-warning">
                           <strong>{rosterCount} students × {warmupMinutes} min = {projectedWarmupMinutes} min</strong>
                           <span>This could take a large part of the lesson. The teacher remains in control.</span>
-                          {warmupMinutes === defaultWarmupPresentationMinutes || warmupQuestionCount !== 2 ? (
+                          {warmupQuestionCount !== 2 ? (
                             <button type="button" onClick={applyCompactWarmup}>Use 2 questions / 3 min per student</button>
                           ) : (
                             <button type="button" onClick={restoreStandardWarmup}>
