@@ -2672,6 +2672,105 @@
 }
 
 
+/* Focus Mode active stage timer: stays visible in native/fallback fullscreen. */
+.presenter-focus-stage-timer {
+  position: absolute;
+  z-index: 44;
+  top: clamp(0.55rem, 1.4vw, 1rem);
+  right: clamp(0.55rem, 1.4vw, 1rem);
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0.28rem 0.55rem;
+  min-width: 188px;
+  max-width: min(360px, calc(100% - 1.1rem));
+  border: 1px solid rgba(147, 197, 253, 0.9);
+  border-radius: 14px;
+  background: rgba(239, 246, 255, 0.97);
+  color: #1e3a8a;
+  padding: 0.48rem 0.58rem;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.presenter-focus-stage-timer > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.presenter-focus-stage-timer > strong {
+  justify-self: end;
+  font-size: 1.05rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.presenter-focus-stage-timer > div {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.28rem;
+  flex-wrap: wrap;
+}
+
+.presenter-focus-stage-timer button {
+  min-height: 28px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1e3a8a;
+  padding: 0.25rem 0.48rem;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-focus-stage-timer button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.presenter-focus-stage-timer.is-expired {
+  border-color: rgba(252, 165, 165, 0.95);
+  background: rgba(254, 242, 242, 0.98);
+  color: #b91c1c;
+}
+
+.presenter-stage.is-focus-mode.presenter-has-focus-stage-timer > .presenter-focus-time {
+  top: clamp(4.55rem, 8vw, 5rem);
+}
+
+@media (max-width: 700px) {
+  .presenter-focus-stage-timer {
+    top: 0.45rem;
+    right: 0.45rem;
+    min-width: 164px;
+    max-width: calc(100% - 0.9rem);
+    padding: 0.4rem 0.48rem;
+  }
+
+  .presenter-focus-stage-timer > strong {
+    font-size: 0.96rem;
+  }
+
+  .presenter-focus-stage-timer button {
+    font-size: 0.62rem;
+  }
+
+  .presenter-stage.is-focus-mode.presenter-has-focus-stage-timer > .presenter-focus-time {
+    top: 4.8rem;
+    right: 0.45rem;
+  }
+}
+
+
 /* Focus Mode live class countdown. */
 .presenter-focus-time {
   position: absolute;
