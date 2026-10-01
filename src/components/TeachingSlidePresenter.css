@@ -3228,3 +3228,121 @@
     text-align: center;
   }
 }
+
+
+/* presenter-reading-mode */
+.presenter-reading-mode-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 0.65rem 0.75rem;
+}
+
+.presenter-reading-mode-controls button {
+  border: 1px solid #2563eb;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #fff;
+  padding: 0.48rem 0.75rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-reading-mode-controls button.is-secondary {
+  border-color: #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+
+.presenter-reading-mode-controls span {
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.presenter-reading-current {
+  display: grid;
+  gap: 0.75rem;
+  border: 2px solid #2563eb;
+  border-radius: 18px;
+  background: #eff6ff;
+  padding: clamp(1rem, 2vw, 1.35rem);
+}
+
+.presenter-reading-current-roles {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.presenter-reading-current-roles span {
+  border-radius: 999px;
+  background: #fff;
+  color: #1e3a8a;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.presenter-reading-current > strong {
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.presenter-reading-current > p {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  line-height: 1.5;
+  font-weight: 680;
+}
+
+.presenter-reading-current > aside {
+  border-top: 1px solid #bfdbfe;
+  padding-top: 0.65rem;
+  color: #1e3a8a;
+  font-size: clamp(0.95rem, 1.35vw, 1.15rem);
+  line-height: 1.4;
+}
+
+.presenter-reading-current details {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.presenter-reading-current details summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.presenter-reading-current details p {
+  margin: 0.5rem 0 0;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.presenter-stage.is-focus-mode .presenter-content-knowledge .presenter-reading-mode-controls {
+  display: none;
+}
+
+.presenter-stage.is-focus-mode .presenter-reading-current > p {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+@media (max-width: 700px) {
+  .presenter-reading-current-roles {
+    display: grid;
+  }
+
+  .presenter-reading-current > p {
+    font-size: 1.2rem;
+  }
+}

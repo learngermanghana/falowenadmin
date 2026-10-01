@@ -15,6 +15,7 @@ on:
       - "src/components/PresenterStudentPicker.css"
       - "src/components/TeachingSlidePresenter.jsx"
       - "src/components/TeachingSlidePresenter.css"
+      - "src/utils/presenterReadingShare.js"
       - "src/components/A1GrammarPresenter.jsx"
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
       - "scripts/patchPresenterSessionAndResponseTimersCore.mjs"
@@ -28,6 +29,8 @@ on:
       - "tests/live-class-duration-editor.test.js"
       - "tests/presenter-fullscreen-layout.test.js"
       - "tests/presenter-authoritative-timer-sync.test.js"
+      - "tests/presenter-reading-share.test.js"
+      - "tests/presenter-reading-mode-wiring.test.js"
       - ".github/workflows/presenter-timers-tests.yml"
   push:
     branches: [main]
@@ -38,6 +41,9 @@ on:
       - "src/components/TeachingSlidePresenter.jsx"
       - "src/components/A1GrammarPresenter.jsx"
       - "src/components/TeachingSlidePresenter.css"
+      - "src/components/PresenterStudentPicker.jsx"
+      - "src/components/PresenterStudentPicker.css"
+      - "src/utils/presenterReadingShare.js"
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
       - "scripts/patchPresenterSessionAndResponseTimersCore.mjs"
       - "scripts/patchPresenterRealtimeRemote.mjs"
@@ -50,6 +56,8 @@ on:
       - "tests/live-class-duration-editor.test.js"
       - "tests/presenter-fullscreen-layout.test.js"
       - "tests/presenter-authoritative-timer-sync.test.js"
+      - "tests/presenter-reading-share.test.js"
+      - "tests/presenter-reading-mode-wiring.test.js"
       - ".github/workflows/presenter-timers-tests.yml"
 
 jobs:
@@ -69,7 +77,7 @@ jobs:
           node scripts/patchPresenterRandomAndAttendanceDiagnostics.mjs
           node scripts/patchPresenterConceptLabels.mjs
       - name: Run presenter regressions
-        run: node --test tests/presenter-timers.test.js tests/live-class-duration-editor.test.js tests/presenter-fullscreen-layout.test.js tests/presenter-authoritative-timer-sync.test.js
+        run: node --test tests/presenter-timers.test.js tests/live-class-duration-editor.test.js tests/presenter-fullscreen-layout.test.js tests/presenter-authoritative-timer-sync.test.js tests/presenter-reading-share.test.js tests/presenter-reading-mode-wiring.test.js
       - name: Prepare waiting-room source for production bundle
         run: node scripts/patchCheckinWaitingRoomPlaylist.mjs
       - name: Build Vite bundle

@@ -150,8 +150,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [vocabChallengeMode, setVocabChallengeMode] = useState(false);
   const [vocabChallengeIndex, setVocabChallengeIndex] = useState(0);
   const [showVocabAnswer, setShowVocabAnswer] = useState(false);
+  const [readingModeActive, setReadingModeActive] = useState(false);
+  const [readingPhase, setReadingPhase] = useState("idle");
+  const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
   const stage = stages[stageIndex] || stages[0];
   const presenterLevel = String(slide.course || "").trim().toUpperCase();
+  const readingEligible = ["A2", "B1"].includes(presenterLevel)
+    && stage?.type === "knowledge"
+    && Boolean(String(stage?.textDe || "").trim());
+  const readingSilentSeconds = presenterLevel === "B1" ? 90 : 60;
+  const readingSilentLabel = presenterLevel === "B1" ? "1 min 30 sec" : "1 min";
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const warmupPreparationMinutes = warmupPreparationMinutesForLevel(presenterLevel);
   const defaultWarmupPresentationMinutes = warmupPerStudent
@@ -276,6 +284,41 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setTimerRunning((current) => !current);
   }
 
+  function startReadingMode() {
+    if (!readingEligible) return;
+    ensureWarmupAudioContext();
+    setReadingModeActive(true);
+    setReadingPhase("silent");
+    setActiveReadingAssignment(null);
+    setTimerMode("reading-silent");
+    setTimerRemaining(readingSilentSeconds);
+    setTimerRunning(true);
+  }
+
+  function stopReadingMode() {
+    setReadingModeActive(false);
+    setReadingPhase("idle");
+    setActiveReadingAssignment(null);
+    setTimerRunning(false);
+    setTimerMode("stage");
+    setTimerRemaining(stage?.suggestedMinutes ? stage.suggestedMinutes * 60 : 0);
+  }
+
+  function resetPresenterTimer() {
+    if (readingModeActive && timerMode === "reading-silent") {
+      setReadingPhase("silent");
+      setActiveReadingAssignment(null);
+      setTimerRemaining(readingSilentSeconds);
+      setTimerRunning(false);
+      return;
+    }
+    if (warmupPerStudent) {
+      resetWarmupStudent();
+      return;
+    }
+    setTimerMinutes(stage.suggestedMinutes || 5);
+  }
+
   function startWarmupPreparation() {
     if (!warmupPerStudent) return;
     ensureWarmupAudioContext();
@@ -356,6 +399,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setVocabChallengeMode(false);
     setVocabChallengeIndex(0);
     setShowVocabAnswer(false);
+    setReadingModeActive(false);
+    setReadingPhase("idle");
+    setActiveReadingAssignment(null);
     if (stage?.id === "warmup" && stage?.timingMode === "per-student") {
       setWarmupQuestionCount(4);
       setWarmupMinutes(defaultWarmupPresentationMinutes);
@@ -449,9 +495,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
       return;
     }
 
+    if (readingModeActive && timerMode === "reading-silent") {
+      setReadingPhase("share");
+      setTimerRunning(false);
+      return;
+    }
+
     setTimerRunning(false);
   }, [
     defaultWarmupPresentationMinutes,
+    readingModeActive,
     showPresenterTimer,
     timerMode,
     timerRemaining,
@@ -517,9 +570,11 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             aria-label="Active stage timer"
           >
             <span>
-              {warmupPerStudent
-                ? (timerMode === "prepare" ? "Preparation" : "Presentation")
-                : (stage?.title || "Stage")}
+              {timerMode === "reading-silent"
+                ? "Silent reading"
+                : warmupPerStudent
+                  ? (timerMode === "prepare" ? "Preparation" : "Presentation")
+                  : (stage?.title || "Stage")}
             </span>
             <strong>{formatTimer(timerRemaining)}</strong>
             <div>
@@ -533,9 +588,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </button>
               <button
                 type="button"
-                onClick={() => warmupPerStudent
-                  ? resetWarmupStudent()
-                  : setTimerMinutes(stage.suggestedMinutes || 5)}
+                onClick={resetPresenterTimer}
               >
                 Reset
               </button>
@@ -591,13 +644,19 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </label>
 
               <div className={`presenter-timer ${timerExpired ? "presenter-timer-expired" : ""}`}>
-                {warmupPerStudent ? <span className="presenter-timer-mode">{timerMode === "prepare" ? `Class preparation · ${warmupPreparationMinutes} min` : `Presentation · ${warmupMinutes} min`}</span> : null}
+                {timerMode === "reading-silent" ? (
+                  <span className="presenter-timer-mode">Silent reading · {readingSilentLabel}</span>
+                ) : warmupPerStudent ? (
+                  <span className="presenter-timer-mode">{timerMode === "prepare" ? `Class preparation · ${warmupPreparationMinutes} min` : `Presentation · ${warmupMinutes} min`}</span>
+                ) : null}
                 <strong>{formatTimer(timerRemaining)}</strong>
                 {warmupPerStudent ? <button type="button" onClick={startWarmupPreparation}>Prepare class {warmupPreparationMinutes}m</button> : null}
                 <button type="button" onClick={togglePresenterTimer} disabled={timerRemaining <= 0}>
                   {timerRunning ? "Pause" : "Start"}
                 </button>
-                <button type="button" onClick={() => warmupPerStudent ? resetWarmupStudent() : setTimerMinutes(stage.suggestedMinutes || 5)}>{warmupPerStudent ? "Reset for next student" : "Reset"}</button>
+                <button type="button" onClick={resetPresenterTimer}>
+                  {warmupPerStudent ? "Reset for next student" : "Reset"}
+                </button>
                 <div className="presenter-timer-presets">
                   {timerPresets.map((minutes) => (
                     <button
@@ -626,6 +685,15 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           slide={slide}
           onRosterCountChange={setRosterCount}
           responseTimerEnabled={!warmupPerStudent}
+          readingShare={readingEligible ? {
+            active: readingModeActive,
+            phase: readingPhase,
+            text: stage.textDe,
+            level: presenterLevel,
+            stageId: stage.id,
+            signature: `${slide.assignmentId || slide.id || "lesson"}:${stage.id}`,
+          } : null}
+          onReadingAssignmentChange={setActiveReadingAssignment}
         />
 
         <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode}`}>
@@ -825,9 +893,49 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <h1>{stage.title}</h1>
                 {stage.instruction ? <p>{stage.instruction}</p> : null}
               </div>
-              <article className="presenter-knowledge-text">
-                <p>{stage.textDe}</p>
-              </article>
+              {readingEligible ? (
+                <div className="presenter-reading-mode-controls">
+                  <button type="button" onClick={startReadingMode}>
+                    {readingModeActive ? `Restart silent reading · ${readingSilentLabel}` : `Start reading mode · ${readingSilentLabel} silent`}
+                  </button>
+                  {readingModeActive ? (
+                    <button type="button" className="is-secondary" onClick={stopReadingMode}>End reading mode</button>
+                  ) : null}
+                  <span>
+                    Silent read → fair reader chunks → different listener check.
+                  </span>
+                </div>
+              ) : null}
+
+              {readingModeActive && readingPhase === "share" ? (
+                activeReadingAssignment ? (
+                  <article className="presenter-reading-current">
+                    <div className="presenter-reading-current-roles">
+                      <span><b>Reader</b> {activeReadingAssignment.reader?.name}</span>
+                      {activeReadingAssignment.listener ? (
+                        <span><b>Listener check</b> {activeReadingAssignment.listener.name}</span>
+                      ) : null}
+                    </div>
+                    <strong>{activeReadingAssignment.chunk?.label}</strong>
+                    <p>{activeReadingAssignment.chunk?.text}</p>
+                    {activeReadingAssignment.listener ? (
+                      <aside>
+                        <b>After the reader:</b> {activeReadingAssignment.listenerQuestion}
+                      </aside>
+                    ) : null}
+                    <details>
+                      <summary>Show full text</summary>
+                      <p>{stage.textDe}</p>
+                    </details>
+                  </article>
+                ) : (
+                  <article className="presenter-knowledge-text"><p>Preparing fair reading assignments…</p></article>
+                )
+              ) : (
+                <article className="presenter-knowledge-text">
+                  <p>{stage.textDe}</p>
+                </article>
+              )}
               <div className="presenter-knowledge-checks">
                 <strong>Kurz prüfen · mündlich</strong>
                 <ol>
