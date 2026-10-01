@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { loadShareablePublicClasses } from "../services/publicBrochureClassService.js";
 import {
   BROCHURE_WHATSAPP_MESSAGE,
+  FALOWEN_LOCATION_LABEL,
+  FALOWEN_MAPS_URL,
   buildBrochureWhatsappUrl,
   buildClassBrochureMessage,
   buildClassBrochureUrl,
@@ -247,6 +249,9 @@ export default function BrochureWhatsappPanel({ pushToast }) {
               Start: {formatBrochureDate(selectedClass.startDate || selectedClass.startsAt)} · Fee: {formatBrochureFee(selectedClass)}
             </div>
             <div style={{ fontSize: 13, color: "#334155" }}>{formatBrochureSchedule(selectedClass)}</div>
+            <div style={{ fontSize: 13, color: "#334155" }}>
+              <strong>Location:</strong> {FALOWEN_LOCATION_LABEL}
+            </div>
             <input
               value={brochureLink}
               readOnly
@@ -257,6 +262,9 @@ export default function BrochureWhatsappPanel({ pushToast }) {
               <button type="button" onClick={() => window.open(brochureLink, "_blank", "noopener,noreferrer")}>Open brochure</button>
               <button type="button" onClick={() => window.open(visitorGuideLink, "_blank", "noopener,noreferrer")} style={{ background: "#fff", color: "#1a2233", border: "1px solid #93c5fd" }}>
                 Open school guide
+              </button>
+              <button type="button" onClick={() => window.open(FALOWEN_MAPS_URL, "_blank", "noopener,noreferrer")} style={{ background: "#fff", color: "#1a2233", border: "1px solid #93c5fd" }}>
+                Open Google Maps
               </button>
               <button type="button" onClick={copyBrochureLink} style={{ background: "#fff", color: "#1a2233", border: "1px solid #93c5fd" }}>
                 Copy brochure link
@@ -342,7 +350,7 @@ export default function BrochureWhatsappPanel({ pushToast }) {
       </div>
 
       <p style={{ margin: 0, padding: 12, borderRadius: 8, background: "#ecfdf5", color: "#166534" }}>
-        The class brochure, public school background guide and registration link are added automatically.
+        The class brochure, school guide, location, Google Maps and registration link are added automatically.
       </p>
     </div>
   );
