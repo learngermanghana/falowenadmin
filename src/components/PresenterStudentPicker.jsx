@@ -580,6 +580,8 @@ export default function PresenterStudentPicker({
       return;
     }
 
+    const currentReadingHistory = readReadingHistory(selectedClassId);
+    setReadingHistory(currentReadingHistory);
     const chunks = buildReadingChunks(
       readingText,
       readingShare?.level || course,
@@ -589,7 +591,7 @@ export default function PresenterStudentPicker({
       chunks,
       roster: eligible,
       stats,
-      history: readingHistory,
+      history: currentReadingHistory,
       level: readingShare?.level || course,
     });
     setReadingAssignments(assignments);
