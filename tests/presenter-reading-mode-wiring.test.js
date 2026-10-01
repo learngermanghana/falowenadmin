@@ -7,19 +7,18 @@ const picker = fs.readFileSync(new URL("../src/components/PresenterStudentPicker
 const presenterCss = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
 const pickerCss = fs.readFileSync(new URL("../src/components/PresenterStudentPicker.css", import.meta.url), "utf8");
 
-test("A2 and B1 knowledge slides expose an intelligent reading mode", () => {
+test("A2 and B1 knowledge slides expose an intelligent reading mode with the shared Activity timer", () => {
   assert.match(presenter, /const readingEligible = \["A2", "B1"\]\.includes/);
-  assert.match(presenter, /const readingSilentSeconds = presenterLevel === "B1" \? 90 : 60/);
   assert.match(presenter, /function startReadingMode\(\)/);
-  assert.match(presenter, /setTimerMode\("reading-silent"\)/);
-  assert.match(presenter, /Silent read → fair reader chunks → different listener check/);
-  assert.match(presenter, /Restart silent reading/);
+  assert.match(presenter, /function shareReadingNow\(\)/);
+  assert.match(presenter, /Use the Activity timer for silent reading, then share the text when you are ready/);
+  assert.match(presenter, /Share reading/);
+  assert.doesNotMatch(presenter, /reading-silent/);
 });
 
-test("silent reading alarm transitions into shared reading assignments", () => {
-  assert.match(presenter, /readingModeActive && timerMode === "reading-silent"/);
-  assert.match(presenter, /setReadingPhase\("share"\)/);
-  assert.match(presenter, /timerMode === "reading-silent"[\s\S]*"Silent reading"/);
+test("reading phase changes only when the teacher chooses to share the text", () => {
+  assert.match(presenter, /function shareReadingNow\(\)[\s\S]*setReadingPhase\("share"\)/);
+  assert.doesNotMatch(presenter, /timerRemaining !== 0[\s\S]*setReadingPhase\("share"\)/);
 });
 
 test("presenter shows the current reader, chunk and a different listener check", () => {
