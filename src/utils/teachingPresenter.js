@@ -409,7 +409,28 @@ const VOCABULARY_CLOZE_RULES = [
   { pattern: /\bMaßnahme(?:n)?\b/i, clue: "konkrete Handlung zur Lösung eines Problems" },
 ];
 
-function buildVocabularyGapItems(items = []) {
+function a2VocabularySituation(term = "") {
+  const phrase = String(term || "").trim();
+  const lower = phrase.toLocaleLowerCase("de-DE");
+
+  if (lower.includes("nervös") && lower.includes("weil")) {
+    return "Du möchtest erklären, warum viele Schüler nervös sind.";
+  }
+  if (lower.includes("weil")) return "Du möchtest einen Grund nennen.";
+  if (lower.includes("ich denke") || lower.includes("ich glaube") || lower.includes("dass")) {
+    return "Du möchtest deine Meinung oder einen Gedanken ausdrücken.";
+  }
+  if (lower.startsWith("wenn") || lower.includes("wenn man")) {
+    return "Du möchtest eine Situation oder Bedingung beschreiben.";
+  }
+  if (lower.includes("um ") && lower.includes(" zu")) return "Du möchtest einen Zweck nennen.";
+  if (lower.includes("damit")) return "Du möchtest einen Zweck oder ein Ziel ausdrücken.";
+  if (lower.includes("sollte")) return "Du möchtest einen Rat oder eine Empfehlung geben.";
+  if (lower.includes("wichtig")) return "Du möchtest sagen, was wichtig ist.";
+  return "Du möchtest eine passende Formulierung für diese Aussage wählen.";
+}
+
+function buildVocabularyGapItems(items = [], level = "") {
   const sourceItems = (Array.isArray(items) ? items : [])
     .map((item) => ({
       term: String(item?.term || "").trim(),
@@ -448,13 +469,17 @@ function buildVocabularyGapItems(items = []) {
     const baseOptions = [item.term, ...distractors];
     const rotation = challenges.length % 3;
     const options = [...baseOptions.slice(rotation), ...baseOptions.slice(0, rotation)];
+    const isA2 = String(level || "").toUpperCase() === "A2";
 
     challenges.push({
-      sentence,
+      sentence: isA2 && mode === "match" ? a2VocabularySituation(item.term) : sentence,
+      promptLabel: isA2 && mode === "match" ? "Situation" : "",
       answer: item.term,
       options,
       term: item.term,
-      mode,
+      mode: isA2 && mode === "match" ? "situation" : mode,
+      modelExample: isA2 && item.example ? item.example : "",
+      followUp: isA2 ? "Ergänze die Formulierung jetzt mündlich mit einer eigenen Idee." : "",
     });
 
     if (challenges.length >= 4) break;
