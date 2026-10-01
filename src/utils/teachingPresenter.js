@@ -286,11 +286,18 @@ function buildWarmupQuestionSupport(slide = {}) {
   }));
 }
 
-function warmupSuggestedMinutes(slide = {}) { return PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide)) ? 5 : (interactionMinutes(slide, 0) || 5); }
+function warmupPresentationMinutes(slide = {}) {
+  const level = classroomLevel(slide);
+  if (level === "A2") return 3;
+  if (level === "B1") return 5;
+  return PER_STUDENT_WARMUP_LEVELS.has(level) ? 5 : (interactionMinutes(slide, 0) || 5);
+}
+function warmupSuggestedMinutes(slide = {}) { return warmupPresentationMinutes(slide); }
 function warmupTimingLabel(slide = {}, questionCount = 0) {
   if (!PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide))) return "";
   const count = Number(questionCount || 0);
-  return `5 min per student${count ? ` · ${count} warm-up question${count === 1 ? "" : "s"}` : ""}`;
+  const minutes = warmupPresentationMinutes(slide);
+  return `${minutes} min per student${count ? ` · ${count} warm-up question${count === 1 ? "" : "s"}` : ""}`;
 }
 
 const ADVANCED_GRAMMAR_RULES = [
