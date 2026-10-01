@@ -409,7 +409,46 @@ const VOCABULARY_CLOZE_RULES = [
   { pattern: /\bMaßnahme(?:n)?\b/i, clue: "konkrete Handlung zur Lösung eines Problems" },
 ];
 
-function buildVocabularyGapItems(items = []) {
+function a2VocabularySituation(term = "") {
+  const phrase = String(term || "").trim();
+  const lower = phrase.toLocaleLowerCase("de-DE");
+
+  if (lower.includes("nervös") && lower.includes("weil")) {
+    return "Du möchtest erklären, warum viele Schüler nervös sind.";
+  }
+  if (lower.includes("weil")) return "Du möchtest einen Grund nennen.";
+  if (lower.includes("ich denke") || lower.includes("ich glaube") || lower.includes("dass")) {
+    return "Du möchtest deine Meinung oder einen Gedanken ausdrücken.";
+  }
+  if (lower.startsWith("wenn") || lower.includes("wenn man")) {
+    return "Du möchtest eine Situation oder Bedingung beschreiben.";
+  }
+  if (lower.includes("um ") && lower.includes(" zu")) return "Du möchtest einen Zweck nennen.";
+  if (lower.includes("damit")) return "Du möchtest einen Zweck oder ein Ziel ausdrücken.";
+  if (lower.includes("sollte")) return "Du möchtest einen Rat oder eine Empfehlung geben.";
+  if (lower.includes("wichtig")) return "Du möchtest sagen, was wichtig ist.";
+  return "Du möchtest eine passende Formulierung für diese Aussage wählen.";
+}
+
+function b1VocabularyFunction(term = "") {
+  const phrase = String(term || "").trim();
+  const lower = phrase.toLocaleLowerCase("de-DE");
+
+  if (lower.includes("weil")) return "Du möchtest eine Ursache oder Begründung erklären.";
+  if (lower.includes("ich denke") || lower.includes("ich glaube") || lower.includes("ich finde") || lower.includes("dass")) {
+    return "Du möchtest eine Meinung oder einen Gedanken ausdrücken.";
+  }
+  if (lower.startsWith("wenn") || lower.includes("wenn man")) {
+    return "Du möchtest eine Bedingung oder typische Situation beschreiben.";
+  }
+  if (lower.includes("sollte")) return "Du möchtest einen konkreten Rat geben.";
+  if (lower.includes("wichtig") && lower.includes(" zu")) return "Du möchtest sagen, was wichtig oder sinnvoll ist.";
+  if (lower.includes("um ") && lower.includes(" zu")) return "Du möchtest den Zweck deiner Handlung nennen.";
+  if (lower.includes("damit")) return "Du möchtest ein Ziel ausdrücken und einen vollständigen Nebensatz verwenden.";
+  return "Du möchtest die kommunikative Funktion dieser Aussage passend ausdrücken.";
+}
+
+function buildVocabularyGapItems(items = [], level = "") {
   const sourceItems = (Array.isArray(items) ? items : [])
     .map((item) => ({
       term: String(item?.term || "").trim(),
@@ -428,8 +467,18 @@ function buildVocabularyGapItems(items = []) {
 
     let sentence = "";
     let mode = "match";
+    const normalizedLevel = String(level || "").toUpperCase();
+    const isA2 = normalizedLevel === "A2";
+    const isB1 = normalizedLevel === "B1";
 
-    if (exampleMatch?.[0]) {
+    if (isB1) {
+      sentence = b1VocabularyFunction(item.term);
+      mode = "function";
+    } else if (normalizedLevel === "C2" && item.example && item.example.toLocaleLowerCase("de-DE").includes(item.term.toLocaleLowerCase("de-DE"))) {
+      const start = item.example.toLocaleLowerCase("de-DE").indexOf(item.term.toLocaleLowerCase("de-DE"));
+      sentence = item.example.slice(0, start) + "______" + item.example.slice(start + item.term.length);
+      mode = "precision-cloze";
+    } else if (exampleMatch?.[0]) {
       sentence = item.example.replace(exampleMatch[0], "______");
       mode = "cloze";
     } else if (item.example) {
@@ -450,11 +499,16 @@ function buildVocabularyGapItems(items = []) {
     const options = [...baseOptions.slice(rotation), ...baseOptions.slice(0, rotation)];
 
     challenges.push({
-      sentence,
+      sentence: isA2 && mode === "match" ? a2VocabularySituation(item.term) : sentence,
+      promptLabel: isA2 && mode === "match" ? "Situation" : (isB1 ? "Funktion" : ""),
       answer: item.term,
       options,
       term: item.term,
-      mode,
+      mode: isA2 && mode === "match" ? "situation" : mode,
+      modelExample: (isA2 || isB1) && item.example ? item.example : "",
+      followUp: isA2
+        ? "Ergänze die Formulierung jetzt mündlich mit einer eigenen Idee."
+        : (isB1 ? "Begründe kurz deine Wahl und bilde danach einen eigenen Satz mit dieser Formulierung." : ""),
     });
 
     if (challenges.length >= 4) break;
@@ -477,7 +531,10 @@ function buildVocabularyItems(slide = {}, support = {}) {
   )];
   const usedExamples = new Set();
 
-  return phrases.map((term, index) => {
+  return phrases.map((rawTerm, index) => {
+    const c2Parts = level === "C2" ? rawTerm.split(/\s+—\s+/, 2) : [rawTerm];
+    const term = String(c2Parts[0] || rawTerm).trim();
+    const embeddedExample = String(c2Parts[1] || "").trim();
     const comparableTerm = term.toLocaleLowerCase("de-DE");
     const preferredExample = examples.find((example) => {
       if (usedExamples.has(example) || example.toLocaleLowerCase("de-DE") === comparableTerm) return false;
@@ -487,7 +544,7 @@ function buildVocabularyItems(slide = {}, support = {}) {
         .filter((word) => word.length >= 5);
       return keywords.some((word) => example.toLocaleLowerCase("de-DE").includes(word));
     });
-    const example = preferredExample || "";
+    const example = embeddedExample || preferredExample || "";
 
     if (example) usedExamples.add(example);
     return { term, example, number: index + 1 };
@@ -556,6 +613,60 @@ function buildClassicStages(slide = {}, topicLabel = "") { const studentReferenc
   { id: "questions", type: "numbered-list", kicker: "Sprechen", title: "Student questions", items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [] },
   { id: "wrapup", type: "task", kicker: "Abschluss", title: "Wrap-up task", body: slide.wrapUpTaskDe || "" },
 ]; }
+
+function buildC2GrammarApplication(slide = {}, grammarItems = [], modelItems = []) {
+  const focus = String(grammarItems[0] || "").replace(/^Zielstruktur:\s*/i, "").replace(/\.$/, "").trim();
+  const rules = grammarItems.slice(1);
+  const models = Array.isArray(modelItems) ? modelItems.filter(Boolean) : [];
+  const text = [focus, ...rules].join(" ");
+
+  if (/Nominalstil|Verbalstil/i.test(text)) {
+    const verbal = rules.find((item) => /^Verbal:/i.test(String(item))) || "Verbal: Forschende prüfen die Ergebnisse erneut.";
+    const nominal = rules.find((item) => /^Nominal:/i.test(String(item))) || models.find((item) => /Überprüfung/i.test(String(item))) || "";
+    return {
+      title: "Jetzt anwenden",
+      instruction: "Der Student macht aus dem Verbalstil einen passenden Nominalstil und erklärt danach den Unterschied.",
+      prompt: verbal.replace(/^Verbal:\s*/i, ""),
+      task: "Formuliere diesen Satz im Nominalstil. Danach: Wann ist der Verbalstil besser?",
+      answer: nominal.replace(/^Nominal:\s*/i, ""),
+      teacherHint: "Erwartung: Nominalstil verdichtet den Prozess; Verbalstil ist besser, wenn Akteur und Handlung sichtbar bleiben sollen.",
+    };
+  }
+
+  if (/Thema|Rhema|Vorfeld/i.test(text)) {
+    const source = rules.find((item) => /^Neutral:/i.test(String(item))) || rules[1] || "";
+    const target = rules.find((item) => /^Fokus:/i.test(String(item))) || models[0] || "";
+    return {
+      title: "Jetzt anwenden",
+      instruction: "Der Student verändert nur den Informationsfokus, nicht die Grundbedeutung.",
+      prompt: source.replace(/^Neutral:\s*/i, ""),
+      task: "Formuliere den Satz so um, dass die wichtigste Information im Vordergrund steht. Erkläre kurz, was jetzt fokussiert wird.",
+      answer: target.replace(/^Fokus:\s*/i, ""),
+      teacherHint: "Nicht komplizierter machen. Entscheidend ist, welche Information zuerst bzw. besonders hervorgehoben wird.",
+    };
+  }
+
+  if (/Konjunktiv|indirekte Rede/i.test(text)) {
+    return {
+      title: "Jetzt anwenden",
+      instruction: "Der Student markiert eine fremde Aussage sprachlich als fremd, statt sie als eigene Tatsache zu übernehmen.",
+      prompt: models[0] || rules[1] || "Die Quelle sagt: Die Ergebnisse sind eindeutig.",
+      task: "Formuliere die Aussage als indirekte Rede. Sage danach, warum diese Form hier sinnvoll ist.",
+      answer: models[0] || "",
+      teacherHint: "Erwartung: Quelle und eigene Position bleiben getrennt; der Evidenzstatus wird nicht künstlich verstärkt.",
+    };
+  }
+
+  const source = models[0] || rules[1] || rules[0] || "";
+  return {
+    title: "Jetzt anwenden",
+    instruction: "Der Student benutzt die Zielstruktur aktiv, statt die Regel nur vorzulesen.",
+    prompt: source,
+    task: `Bilde einen neuen Satz zum heutigen Thema mit der Zielstruktur „${focus || "heutige Struktur"}“. Erkläre anschließend in einem Satz, welche Funktion die Struktur erfüllt.`,
+    answer: models[1] || models[0] || "",
+    teacherHint: "Bewerte zuerst Funktion und Bedeutung, danach Form. C2 bedeutet nicht: möglichst kompliziert, sondern präzise und kontrolliert.",
+  };
+}
 
 function buildC2AnalyticalTask(slide = {}) {
   const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
@@ -1681,9 +1792,14 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         id: "grammar",
         type: "c2-grammar",
         kicker: "C2-Grammatik",
-        title: "Struktur nach Funktion wählen",
+        title: "Verstehen → anwenden → begründen",
         items: grammarItems,
         modelItems: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 2) : [],
+        application: buildC2GrammarApplication(
+          slide,
+          grammarItems,
+          Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 2) : [],
+        ),
         suggestedMinutes: 10,
       },
       {
