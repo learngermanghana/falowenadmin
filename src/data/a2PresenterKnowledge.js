@@ -82,10 +82,41 @@ const A2_KNOWLEDGE = {
     textDe: "Bei einer Wohnung sind nicht nur Zimmerzahl und Lage wichtig. In Anzeigen stehen oft Kaltmiete, Nebenkosten, Warmmiete und Kaution. Die Warmmiete enthält normalerweise die Kaltmiete plus bestimmte Nebenkosten, aber nicht automatisch alle persönlichen Kosten. Vor einer Besichtigung sollte man deshalb wichtige Bedingungen prüfen und konkrete Fragen vorbereiten.",
     checks: ["Welche Kostenbegriffe nennt der Text?", "Warum sollte man vor der Besichtigung Fragen vorbereiten?", "Welche Miete ist normalerweise höher: Kaltmiete oder Warmmiete?"],
     activity: {
-      title: "Mini-Anzeigencheck",
-      instruction: "Lest die Angaben und entscheidet, welche zwei Informationen noch fehlen.",
-      prompts: ["2 Zimmer · 650 € Kaltmiete", "ruhige Lage · Balkon", "Besichtigung am Freitag"],
-      modelItems: ["Zum Beispiel: Wie hoch sind die Nebenkosten?", "Wie hoch ist die Kaution?", "Ab wann ist die Wohnung frei?"],
+      title: "Wohnungsanzeige vervollständigen",
+      instruction: "Partner A und Partner B haben unterschiedliche Informationen über dieselbe Wohnung. Merkt euch eure Informationen. Danach werden beide Karten geschlossen. Fragt euren Partner und ergänzt gemeinsam die vollständige Wohnungsanzeige.",
+      roleCards: [
+        {
+          id: "A",
+          title: "Rolle A · nur für Person A",
+          content: "2 Zimmer · 650 € Kaltmiete · ruhige Lage · 3. Stock · frei ab 1. November",
+          task: "Merke dir deine Informationen. Frage Partner B nach den Angaben, die dir fehlen."
+        },
+        {
+          id: "B",
+          title: "Rolle B · nur für Person B",
+          content: "Balkon · Küche vorhanden · Haustiere erlaubt · Besichtigung am Freitag um 17 Uhr · 10 Minuten zur U-Bahn",
+          task: "Merke dir deine Informationen. Frage Partner A nach den Angaben, die dir fehlen."
+        }
+      ],
+      prompts: [
+        "Wie viele Zimmer hat die Wohnung?",
+        "Wie hoch ist die Kaltmiete?",
+        "Wie ist die Lage und in welchem Stock liegt die Wohnung?",
+        "Ab wann ist die Wohnung frei?",
+        "Hat die Wohnung einen Balkon und eine Küche?",
+        "Sind Haustiere erlaubt?",
+        "Wann ist die Besichtigung?",
+        "Wie weit ist es zur U-Bahn?"
+      ],
+      modelItems: [
+        "Die Wohnung hat zwei Zimmer und kostet 650 € Kaltmiete.",
+        "Sie liegt in ruhiger Lage im 3. Stock.",
+        "Die Wohnung ist ab 1. November frei.",
+        "Sie hat einen Balkon und eine Küche.",
+        "Haustiere sind erlaubt.",
+        "Die Besichtigung ist am Freitag um 17 Uhr.",
+        "Zur U-Bahn sind es ungefähr zehn Minuten."
+      ],
     },
   },
   "A2-3.8": {
