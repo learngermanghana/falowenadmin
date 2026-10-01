@@ -252,16 +252,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
       const context = ensureWarmupAudioContext();
       if (!context) return;
       [
-        { frequency: 880, startOffset: 0, duration: 0.28 },
-        { frequency: 880, startOffset: 0.38, duration: 0.28 },
-        { frequency: 880, startOffset: 0.76, duration: 0.28 },
-        { frequency: 1040, startOffset: 1.14, duration: 1.55 },
-      ].forEach(({ frequency, startOffset, duration }, index) => {
+        { frequency: 880, startOffset: 0, duration: 0.32, gain: 0.1 },
+        { frequency: 880, startOffset: 0.42, duration: 0.32, gain: 0.1 },
+        { frequency: 880, startOffset: 0.84, duration: 0.32, gain: 0.1 },
+        { frequency: 1040, startOffset: 1.28, duration: 2.2, gain: 0.16 },
+      ].forEach(({ frequency, startOffset, duration, gain: gainLevel }) => {
         const start = context.currentTime + startOffset;
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(index === 3 ? 0.11 : 0.075, start);
+        gain.gain.setValueAtTime(gainLevel, start);
         gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
         oscillator.connect(gain);
         gain.connect(context.destination);
