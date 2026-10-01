@@ -19,7 +19,8 @@ test("A2 and B1 use one reusable Activity timer with 7, 5 and 2 minute presets",
 
 test("the shared Activity timer alarms at zero without changing its purpose automatically", () => {
   assert.match(presenter, /function playPresenterTimerAlarm\(\)/);
-  assert.match(presenter, /\[880, 660, 880, 660, 1040\]/);
+  assert.match(presenter, /duration: 1\.1/);
+  assert.match(presenter, /index === 3 \? 0\.075 : 0\.06/);
   assert.match(presenter, /if \(!showPresenterTimer \|\| !timerRunning \|\| timerRemaining !== 0\) return/);
   assert.match(presenter, /playPresenterTimerAlarm\(\)/);
   assert.match(presenter, /setTimerRunning\(false\)/);
@@ -104,4 +105,16 @@ test("fullscreen presentation keeps the same Activity timer visible and controll
   assert.match(css, /\.presenter-focus-stage-timer\s*\{/);
   assert.match(css, /right:\s*clamp\(8\.6rem, 11vw, 10\.5rem\)/);
   assert.match(css, /\.presenter-timer-presets button\.is-active/);
+});
+
+
+test("A2/B1 fullscreen warm-up shows a simple bottom countdown with short changing cues", () => {
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  assert.match(presenter, /focusMode && warmupPerStudent && a2B1ActivityTimer/);
+  assert.match(presenter, /aria-label="Warm-up time remaining"/);
+  assert.match(presenter, /Answer clearly/);
+  assert.match(presenter, /Add one detail/);
+  assert.match(presenter, /Finish your sentence/);
+  assert.match(css, /\.presenter-warmup-bottom-timer\s*\{/);
+  assert.match(css, /bottom:\s*clamp\(0\.55rem, 1\.4vw, 1rem\)/);
 });
