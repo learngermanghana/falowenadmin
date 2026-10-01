@@ -105,7 +105,9 @@ test("Focus Mode shows the live class remaining time without timer settings", ()
   assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.presenter-focus-time\s*\{[\s\S]*top:\s*3\.45rem/);
   assert.match(shared, /presenter-focus-stage-timer/);
   assert.match(shared, /presenter-has-focus-stage-timer/);
-  assert.match(css, /\.presenter-stage\.is-focus-mode\.presenter-has-focus-stage-timer > \.presenter-focus-time\s*\{[\s\S]*top:\s*clamp\(4\.55rem/);
+  assert.match(css, /\.presenter-focus-stage-timer\s*\{[\s\S]*right:\s*clamp\(8\.6rem, 11vw, 10\.5rem\)/);
+  assert.match(css, /\.presenter-focus-time\s*\{[\s\S]*right:\s*clamp\(0\.55rem, 1\.4vw, 1rem\)/);
+  assert.doesNotMatch(css, /presenter-has-focus-stage-timer > \.presenter-focus-time\s*\{[\s\S]*top:\s*clamp\(4\.55rem/);
   assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.presenter-stage\.is-focus-mode\.presenter-has-focus-stage-timer > \.presenter-focus-time\s*\{[\s\S]*top:\s*4\.8rem/);
 });
 
