@@ -982,11 +982,15 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               ) : (
                 <div className="presenter-vocabulary-challenge">
                   <div className="presenter-vocabulary-challenge-heading">
-                    <span>{presenterLevel === "A2" ? "Redemittel-Check" : "Wortschatz-Check"} · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
-                    <h1>{presenterLevel === "A2" ? "Welche Formulierung passt?" : "Welches Wort passt?"}</h1>
+                    <span>{["A2", "B1"].includes(presenterLevel) ? "Redemittel-Check" : "Wortschatz-Check"} · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
+                    <h1>{presenterLevel === "A2"
+                      ? "Welche Formulierung passt?"
+                      : (presenterLevel === "B1" ? "Welche Formulierung passt zur Funktion?" : "Welches Wort passt?")}</h1>
                     <p>{presenterLevel === "A2"
                       ? "Lies die Situation. Der Schüler wählt die passende Formulierung und ergänzt sie danach mündlich."
-                      : "Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt."}</p>
+                      : (presenterLevel === "B1"
+                        ? "Lies die kommunikative Funktion. Der Schüler wählt das passende Redemittel, begründet die Wahl und bildet danach einen eigenen Satz."
+                        : "Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt.")}</p>
                   </div>
                   {activeVocabChallenge ? (
                     <article className="presenter-vocabulary-cloze-card">
@@ -997,7 +1001,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       <div className="presenter-vocabulary-options" role="list" aria-label="Drei Wortschatzoptionen">
                         {(activeVocabChallenge.options || []).map((option, optionIndex) => (
                           <span key={option} role="listitem">
-                            {presenterLevel === "A2" ? `${String.fromCharCode(65 + optionIndex)}. ${option}` : option}
+                            {["A2", "B1"].includes(presenterLevel) ? `${String.fromCharCode(65 + optionIndex)}. ${option}` : option}
                           </span>
                         ))}
                       </div>
