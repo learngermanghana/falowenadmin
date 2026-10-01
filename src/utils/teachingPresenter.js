@@ -296,6 +296,10 @@ function warmupSuggestedMinutes(slide = {}) { return warmupPresentationMinutes(s
 function warmupTimingLabel(slide = {}, questionCount = 0) {
   if (!PER_STUDENT_WARMUP_LEVELS.has(classroomLevel(slide))) return "";
   const count = Number(questionCount || 0);
+  const level = classroomLevel(slide);
+  if (["A2", "B1"].includes(level)) {
+    return `Teacher-paced${count ? ` · ${count} warm-up question${count === 1 ? "" : "s"}` : ""} · use Activity timer`;
+  }
   const minutes = warmupPresentationMinutes(slide);
   return `${minutes} min per student${count ? ` · ${count} warm-up question${count === 1 ? "" : "s"}` : ""}`;
 }
