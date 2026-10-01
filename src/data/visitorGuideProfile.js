@@ -6,6 +6,9 @@ export const VISITOR_GUIDE_PROFILE = {
     examPerformance: "High exam pass rate",
     examScope: "Across German-language examinations",
     levels: "German A1–C2",
+    locationLabel: "Awoshie, Accra, Ghana",
+    mapsUrl: "https://maps.app.goo.gl/CPYX7uCj9YSELc1Q9",
+    tuitionGhsByLevel: { A1: 3000, A2: 3000, B1: 3000, B2: 3000, C1: 3000, C2: 3000 },
     summary:
       "Learn Language Education Academy combines structured German teaching with Falowen, our digital learning platform. Students receive guided lessons, tutor-marked assignments, progress tracking and preparation for German-language examinations.",
   },
