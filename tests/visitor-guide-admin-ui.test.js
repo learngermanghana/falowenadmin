@@ -23,6 +23,8 @@ test("visitor guide keeps the approved school and team credentials", () => {
   assert.match(profile, /establishedYear: 2022/);
   assert.match(profile, /High exam pass rate/);
   assert.match(profile, /German A1–C2/);
+  assert.match(profile, /A1: 3000/);
+  assert.match(profile, /CPYX7uCj9YSELc1Q9/);
 
   assert.match(profile, /Felix Asadu/);
   assert.match(profile, /International Management at IUB in Germany/);
@@ -54,6 +56,8 @@ test("visitor guide creates a personalised print-to-PDF walkthrough", () => {
   assert.match(page, /Print \/ Save PDF/);
   assert.match(page, /window\.print\(\)/);
   assert.match(page, /QRCodeSVG/);
+  assert.doesNotMatch(page, /GHS 2,800/);
+  assert.match(page, /Open in Google Maps/);
 
   assert.match(css, /@media print/);
   assert.match(css, /size: A4 portrait/);
