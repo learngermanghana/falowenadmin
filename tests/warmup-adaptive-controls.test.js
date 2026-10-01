@@ -17,12 +17,16 @@ test("A2 and B1 use one reusable Activity timer with 7, 5 and 2 minute presets",
   assert.doesNotMatch(presenter, /Presentation · \$\{warmupMinutes\}/);
 });
 
-test("the shared Activity timer alarms at zero without changing its purpose automatically", () => {
+test("the shared Activity timer alarms at zero and A2/B1 warm-up advances automatically", () => {
   assert.match(presenter, /function playPresenterTimerAlarm\(\)/);
   assert.match(presenter, /duration: 1\.1/);
   assert.match(presenter, /index === 3 \? 0\.075 : 0\.06/);
-  assert.match(presenter, /if \(!showPresenterTimer \|\| !timerRunning \|\| timerRemaining !== 0\) return/);
+  assert.match(presenter, /if \(!showPresenterTimer \|\| !timerRunning \|\| timerRemaining !== 0\) return undefined/);
   assert.match(presenter, /playPresenterTimerAlarm\(\)/);
+  assert.match(presenter, /warmupPerStudent && a2B1ActivityTimer/);
+  assert.match(presenter, /window\.setTimeout\(\(\) => \{/);
+  assert.match(presenter, /clampPresenterIndex\(current \+ 1, stages\.length\)/);
+  assert.match(presenter, /\}, 2200\)/);
   assert.match(presenter, /setTimerRunning\(false\)/);
   assert.doesNotMatch(presenter, /timerMode === "prepare"/);
   assert.doesNotMatch(presenter, /timerMode === "reading-silent"/);
@@ -115,6 +119,7 @@ test("A2/B1 fullscreen warm-up shows a simple bottom countdown with short changi
   assert.match(presenter, /Answer clearly/);
   assert.match(presenter, /Add one detail/);
   assert.match(presenter, /Finish your sentence/);
+  assert.match(presenter, /Time up · moving on/);
   assert.match(css, /\.presenter-warmup-bottom-timer\s*\{/);
   assert.match(css, /bottom:\s*clamp\(0\.55rem, 1\.4vw, 1rem\)/);
 });
