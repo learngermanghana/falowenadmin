@@ -452,14 +452,27 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }, [timerRunning, timerRemaining]);
 
   useEffect(() => {
-    if (!showPresenterTimer || !timerRunning || timerRemaining !== 0) return;
+    if (!showPresenterTimer || !timerRunning || timerRemaining !== 0) return undefined;
     playPresenterTimerAlarm();
 
+    if (warmupPerStudent && a2B1ActivityTimer) {
+      const advanceTimer = window.setTimeout(() => {
+        setTimerRunning(false);
+        setRevealedFlowRole("");
+        setStageIndex((current) => clampPresenterIndex(current + 1, stages.length));
+      }, 2200);
+      return () => window.clearTimeout(advanceTimer);
+    }
+
     setTimerRunning(false);
+    return undefined;
   }, [
     showPresenterTimer,
     timerRemaining,
     timerRunning,
+    warmupPerStudent,
+    a2B1ActivityTimer,
+    stages.length,
   ]);
 
   useEffect(() => () => {
@@ -514,7 +527,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
   const warmupTimerRatio = timerRemaining / warmupTimerTotalSeconds;
   const warmupBottomCue = timerRemaining <= 0
-    ? "Time up · finish your sentence"
+    ? "Time up · moving on"
     : !timerRunning
       ? "Ready"
       : warmupTimerRatio > 0.45
