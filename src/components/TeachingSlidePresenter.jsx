@@ -945,13 +945,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                               onClick={() => toggleKnowledgeAnswer(questionIndexValue)}
                               aria-expanded={answerOpen}
                             >
-                              {answerOpen ? "Antwort ausblenden" : "Antwort anzeigen"}
+                              {answerOpen ? "Lehrerantwort ausblenden" : "Lehrerantwort anzeigen"}
                             </button>
                           ) : null}
                         </div>
                         {answerOpen && answer ? (
                           <div className="presenter-knowledge-answer">
-                            <strong>Antwort</strong>
+                            <strong>Lehrerantwort</strong>
                             <span>{answer}</span>
                           </div>
                         ) : null}
