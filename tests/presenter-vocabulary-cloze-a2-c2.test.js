@@ -50,7 +50,7 @@ test("Presenter exposes one shared A2-C2 vocabulary challenge interaction", () =
   assert.match(css, /\.presenter-vocabulary-challenge-actions/);
 });
 
-test("Wissensimpuls teacher answers are shown only when explicitly curated", () => {
+test("every A2 and B1 Wissensimpuls check has a teacher cross-check answer", () => {
   for (const level of ["A2", "B1"]) {
     for (const slide of getSlidesByCourse(level)) {
       const knowledge = buildTeachingPresenterStages(slide, slide.topic)
@@ -63,17 +63,16 @@ test("Wissensimpuls teacher answers are shown only when explicitly curated", () 
         `${slide.assignmentId} knowledge answer slots must match checks`,
       );
       assert.ok(
-        knowledge.answerItems.every((answer) => typeof answer === "string"),
-        `${slide.assignmentId} knowledge answers must be explicit strings`,
+        knowledge.answerItems.every((answer) => typeof answer === "string" && answer.trim().length > 0),
+        `${slide.assignmentId} knowledge checks need teacher cross-check answers`,
       );
     }
   }
 
-  const a2Day11 = buildTeachingPresenterStages(
-    getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-1.1"),
-  ).find((stage) => stage.id === "knowledge");
-  assert.ok(a2Day11, "A2-1.1 knowledge stage missing");
-  assert.ok(a2Day11.answerItems.every((answer) => answer === ""), "A2-1.1 must not show inferred teacher answers");
+  const presenter = fs.readFileSync("src/components/TeachingSlidePresenter.jsx", "utf8");
+  assert.match(presenter, /Lehrerantwort anzeigen/);
+  assert.match(presenter, /Lehrerantwort ausblenden/);
+  assert.match(presenter, /<strong>Lehrerantwort<\/strong>/);
 });
 test("A2 Day 22 keeps concise explicit teacher answers", () => {
   const slide = getSlidesByCourse("A2").find((item) => item.assignmentId === "A2-8.22");
