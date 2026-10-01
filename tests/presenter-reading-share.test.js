@@ -28,9 +28,14 @@ test("B1 reading uses slightly longer chunks and never cuts a sentence", () => {
   );
 
   assert.equal(chunks.length, 2);
-  assert.match(chunks[0].text, /flexibel\.$/u);
-  assert.match(chunks[0].text, /Homeoffice/u);
-  assert.match(chunks[1].text, /Bürotage können sinnvoll sein\.$/u);
+  assert.equal(
+    chunks[0].text,
+    "Viele Menschen arbeiten heute flexibel. Homeoffice spart oft Zeit. Gleichzeitig fehlt manchmal der direkte Kontakt.",
+  );
+  assert.equal(
+    chunks[1].text,
+    "Teams brauchen deshalb klare Regeln. Regelmäßige Gespräche helfen. Auch gemeinsame Bürotage können sinnvoll sein.",
+  );
 });
 
 test("reading chunks never exceed the available reader count", () => {
