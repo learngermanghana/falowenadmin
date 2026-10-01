@@ -430,6 +430,24 @@ function a2VocabularySituation(term = "") {
   return "Du möchtest eine passende Formulierung für diese Aussage wählen.";
 }
 
+function b1VocabularyFunction(term = "") {
+  const phrase = String(term || "").trim();
+  const lower = phrase.toLocaleLowerCase("de-DE");
+
+  if (lower.includes("weil")) return "Du möchtest eine Ursache oder Begründung erklären.";
+  if (lower.includes("ich denke") || lower.includes("ich glaube") || lower.includes("ich finde") || lower.includes("dass")) {
+    return "Du möchtest eine Meinung oder einen Gedanken ausdrücken.";
+  }
+  if (lower.startsWith("wenn") || lower.includes("wenn man")) {
+    return "Du möchtest eine Bedingung oder typische Situation beschreiben.";
+  }
+  if (lower.includes("sollte")) return "Du möchtest einen konkreten Rat geben.";
+  if (lower.includes("wichtig") && lower.includes(" zu")) return "Du möchtest sagen, was wichtig oder sinnvoll ist.";
+  if (lower.includes("um ") && lower.includes(" zu")) return "Du möchtest den Zweck deiner Handlung nennen.";
+  if (lower.includes("damit")) return "Du möchtest ein Ziel ausdrücken und einen vollständigen Nebensatz verwenden.";
+  return "Du möchtest die kommunikative Funktion dieser Aussage passend ausdrücken.";
+}
+
 function buildVocabularyGapItems(items = [], level = "") {
   const sourceItems = (Array.isArray(items) ? items : [])
     .map((item) => ({
@@ -449,8 +467,14 @@ function buildVocabularyGapItems(items = [], level = "") {
 
     let sentence = "";
     let mode = "match";
+    const normalizedLevel = String(level || "").toUpperCase();
+    const isA2 = normalizedLevel === "A2";
+    const isB1 = normalizedLevel === "B1";
 
-    if (exampleMatch?.[0]) {
+    if (isB1) {
+      sentence = b1VocabularyFunction(item.term);
+      mode = "function";
+    } else if (exampleMatch?.[0]) {
       sentence = item.example.replace(exampleMatch[0], "______");
       mode = "cloze";
     } else if (item.example) {
@@ -469,17 +493,18 @@ function buildVocabularyGapItems(items = [], level = "") {
     const baseOptions = [item.term, ...distractors];
     const rotation = challenges.length % 3;
     const options = [...baseOptions.slice(rotation), ...baseOptions.slice(0, rotation)];
-    const isA2 = String(level || "").toUpperCase() === "A2";
 
     challenges.push({
       sentence: isA2 && mode === "match" ? a2VocabularySituation(item.term) : sentence,
-      promptLabel: isA2 && mode === "match" ? "Situation" : "",
+      promptLabel: isA2 && mode === "match" ? "Situation" : (isB1 ? "Funktion" : ""),
       answer: item.term,
       options,
       term: item.term,
       mode: isA2 && mode === "match" ? "situation" : mode,
-      modelExample: isA2 && item.example ? item.example : "",
-      followUp: isA2 ? "Ergänze die Formulierung jetzt mündlich mit einer eigenen Idee." : "",
+      modelExample: (isA2 || isB1) && item.example ? item.example : "",
+      followUp: isA2
+        ? "Ergänze die Formulierung jetzt mündlich mit einer eigenen Idee."
+        : (isB1 ? "Begründe kurz deine Wahl und bilde danach einen eigenen Satz mit dieser Formulierung." : ""),
     });
 
     if (challenges.length >= 4) break;
