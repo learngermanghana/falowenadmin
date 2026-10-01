@@ -3349,3 +3349,74 @@
     font-size: 1.2rem;
   }
 }
+
+
+/* A2/B1 warm-up: simple projector-visible time strip in focus mode. */
+.presenter-warmup-bottom-timer {
+  position: absolute;
+  z-index: 45;
+  left: 50%;
+  bottom: clamp(0.55rem, 1.4vw, 1rem);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-width: 360px;
+  max-width: min(560px, calc(100% - 22rem));
+  border: 1px solid rgba(147, 197, 253, 0.9);
+  border-radius: 999px;
+  background: rgba(239, 246, 255, 0.97);
+  color: #1e3a8a;
+  padding: 0.46rem 0.8rem;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.presenter-warmup-bottom-timer span {
+  font-size: 0.72rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.presenter-warmup-bottom-timer span:first-child {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-warmup-bottom-timer strong {
+  font-size: 1.05rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.presenter-warmup-bottom-timer.is-ending {
+  border-color: #f59e0b;
+  background: rgba(255, 251, 235, 0.98);
+  color: #92400e;
+}
+
+.presenter-warmup-bottom-timer.is-expired {
+  border-color: #fca5a5;
+  background: rgba(254, 242, 242, 0.98);
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .presenter-warmup-bottom-timer {
+    bottom: 3.4rem;
+    min-width: 0;
+    width: auto;
+    max-width: calc(100% - 1rem);
+    padding: 0.4rem 0.65rem;
+  }
+
+  .presenter-warmup-bottom-timer span {
+    font-size: 0.66rem;
+  }
+
+  .presenter-warmup-bottom-timer strong {
+    font-size: 0.96rem;
+  }
+}
