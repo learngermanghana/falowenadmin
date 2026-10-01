@@ -1090,10 +1090,69 @@ function buildB1GrammarSupportItems(support = {}) {
   })).filter((item) => item.supportEn);
 }
 
+const KNOWLEDGE_REFERENCE_STOPWORDS = new Set([
+  "aber", "alle", "auch", "aus", "bei", "beim", "das", "dass", "dem", "den", "der", "des",
+  "die", "drei", "eine", "einen", "einer", "eines", "ein", "für", "hat", "haben", "hier",
+  "ist", "kann", "man", "mit", "muss", "nach", "nicht", "oder", "sind", "soll", "text",
+  "und", "vom", "von", "warum", "was", "welche", "welcher", "welches", "wenn", "wie", "wird",
+  "wo", "zwei", "zum", "zur", "vier", "nenne", "nennt", "laut", "passt", "braucht",
+]);
+
+function knowledgeReferenceTokens(value = "") {
+  return String(value || "")
+    .toLocaleLowerCase("de")
+    .replace(/[^a-zäöüß0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 4 && !KNOWLEDGE_REFERENCE_STOPWORDS.has(item));
+}
+
+function buildKnowledgeReferenceAnswer(question = "", textDe = "") {
+  const text = String(textDe || "").trim();
+  if (!text) return "Im Wissensimpuls steht keine Referenzantwort.";
+
+  const sentences = text
+    .split(/(?<=[.!?])\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (sentences.length <= 1) return text;
+
+  const keywords = knowledgeReferenceTokens(question);
+  const scored = sentences.map((sentence, index) => {
+    const normalized = sentence.toLocaleLowerCase("de");
+    const score = keywords.reduce((total, keyword) => {
+      if (normalized.includes(keyword)) return total + 3;
+      const stem = keyword.slice(0, Math.min(6, keyword.length));
+      return stem.length >= 4 && normalized.includes(stem) ? total + 1 : total;
+    }, 0);
+    return { sentence, index, score };
+  }).sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const best = scored[0];
+  const listQuestion = /\b(welche|nenne|nennt|zwei|drei|vier|bereiche|faktoren|informationen|wörter|formen|gründe|maßnahmen|teile|kriterien)\b/i.test(question);
+  const selected = new Set([best.index]);
+
+  if (listQuestion) {
+    const nextIndex = best.index < sentences.length - 1 ? best.index + 1 : best.index - 1;
+    if (nextIndex >= 0) selected.add(nextIndex);
+  } else {
+    const second = scored[1];
+    if (second && second.score > 0 && second.score >= Math.max(2, best.score * 0.65)) selected.add(second.index);
+  }
+
+  return [...selected]
+    .sort((a, b) => a - b)
+    .map((index) => sentences[index])
+    .join(" ");
+}
+
 function buildKnowledgeAnswerItems(knowledge = {}) {
   const checks = Array.isArray(knowledge.checks) ? knowledge.checks : [];
   const explicit = Array.isArray(knowledge.answers) ? knowledge.answers : [];
-  return checks.map((_, index) => String(explicit[index] || "").trim());
+  return checks.map((question, index) => {
+    const curated = String(explicit[index] || "").trim();
+    return curated || buildKnowledgeReferenceAnswer(question, knowledge.textDe);
+  });
 }
 
 function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
