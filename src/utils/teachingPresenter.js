@@ -288,8 +288,7 @@ function buildWarmupQuestionSupport(slide = {}) {
 
 function warmupPresentationMinutes(slide = {}) {
   const level = classroomLevel(slide);
-  if (level === "A2") return 3;
-  if (level === "B1") return 5;
+  if (["A2", "B1"].includes(level)) return 5;
   return PER_STUDENT_WARMUP_LEVELS.has(level) ? 5 : (interactionMinutes(slide, 0) || 5);
 }
 function warmupSuggestedMinutes(slide = {}) { return warmupPresentationMinutes(slide); }
