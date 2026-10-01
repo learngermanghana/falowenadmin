@@ -218,7 +218,7 @@ test("unique legacy A2 class name resolves to the authoritative Day 8 session", 
       attendanceSessionId: "attendance-a2-day-8",
       startsAt,
       status: "scheduled",
-      topic: "Day 8: Rezepte und Essen",
+      topic: "Day 8: Im Restaurant – bestellen und reagieren",
       assignmentId: "A2-3.8",
     },
   ];
@@ -232,7 +232,7 @@ test("unique legacy A2 class name resolves to the authoritative Day 8 session", 
 
   assert.equal(due.length, 1);
   assert.equal(due[0].session.id, "official-a2-3-8");
-  assert.equal(reminder.topicForSession(due[0].session), "Day 8: Rezepte und Essen (A2-3.8)");
+  assert.equal(reminder.topicForSession(due[0].session), "Day 8: Im Restaurant – bestellen und reagieren (A2-3.8)");
 });
 
 test("canonical B1 class session beats the next-lesson name-only alias", () => {
