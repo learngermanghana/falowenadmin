@@ -6,6 +6,11 @@ import {
   saveClassParticipationSession,
 } from "../services/classParticipationService.js";
 import { buildA1PresenterQuestionPool, resultLabel } from "../utils/a1PresenterQuestionPool.js";
+import {
+  buildFairReadingAssignments,
+  buildReadingChunks,
+  incrementReadingHistory,
+} from "../utils/presenterReadingShare.js";
 import "./PresenterStudentPicker.css";
 
 const LAST_CLASS_KEY = "falowen:presenter:last-class";
@@ -78,6 +83,32 @@ function classMatchesCourse(entry = {}, course = "") {
 function participationStorageKey(slide = {}, classId = "") {
   const lesson = normalize(slide.assignmentId || slide.id || `${slide.course || "course"}-${slide.day || "lesson"}`);
   return `falowen:presenter:participation:${lesson}:${classId}`;
+}
+
+function readingHistoryStorageKey(classId = "") {
+  return `falowen:presenter:reading-history:${normalize(classId).toLowerCase()}`;
+}
+
+function readReadingHistory(classId = "") {
+  if (!classId) return { reader: {}, listener: {} };
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(readingHistoryStorageKey(classId)) || "{}");
+    return {
+      reader: parsed?.reader && typeof parsed.reader === "object" ? parsed.reader : {},
+      listener: parsed?.listener && typeof parsed.listener === "object" ? parsed.listener : {},
+    };
+  } catch {
+    return { reader: {}, listener: {} };
+  }
+}
+
+function writeReadingHistory(classId = "", history = {}) {
+  if (!classId) return;
+  try {
+    window.localStorage.setItem(readingHistoryStorageKey(classId), JSON.stringify(history));
+  } catch {
+    // Reading rotation remains usable for the current session when storage is unavailable.
+  }
 }
 
 function readParticipation(key) {
@@ -203,6 +234,8 @@ export default function PresenterStudentPicker({
   onRosterCountChange,
   renderQuestionExternally = false,
   responseTimerEnabled = true,
+  readingShare = null,
+  onReadingAssignmentChange,
 }) {
   const [classOptions, setClassOptions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState(() => safeStorageGet(LAST_CLASS_KEY));
@@ -224,6 +257,10 @@ export default function PresenterStudentPicker({
   const [hydratedIdentity, setHydratedIdentity] = useState("");
   const [dirtyVersion, setDirtyVersion] = useState(0);
   const [savedVersion, setSavedVersion] = useState(0);
+  const [readingAssignments, setReadingAssignments] = useState([]);
+  const [readingAssignmentIndex, setReadingAssignmentIndex] = useState(0);
+  const [readingCompletedIds, setReadingCompletedIds] = useState(() => new Set());
+  const [readingHistory, setReadingHistory] = useState({ reader: {}, listener: {} });
   const saveSequence = useRef(0);
   const restoreSequence = useRef(0);
   const absenceOverrides = useRef(new Map());
@@ -514,6 +551,91 @@ export default function PresenterStudentPicker({
   const helpCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.needsHelp || row?.needsReview || 0), 0);
   const availableQuestionCount = Math.max(0, questionPool.length - roundQuestionIds.size);
   const interactionLocked = loadingStudents || syncState === "restoring" || hydratedIdentity !== sessionIdentity;
+  const readingEnabled = Boolean(readingShare?.active && ["A2", "B1"].includes(String(readingShare?.level || course).toUpperCase()));
+  const readingPhase = String(readingShare?.phase || "idle");
+  const readingText = normalize(readingShare?.text);
+  const readingSignature = [
+    selectedClassId,
+    assignmentId,
+    normalize(readingShare?.signature || readingShare?.stageId || "reading"),
+    readingText,
+  ].join("|");
+  const activeReadingAssignment = readingAssignments[readingAssignmentIndex] || null;
+
+  useEffect(() => {
+    setReadingHistory(readReadingHistory(selectedClassId));
+  }, [selectedClassId]);
+
+  useEffect(() => {
+    if (!readingEnabled) {
+      setReadingAssignments([]);
+      setReadingAssignmentIndex(0);
+      setReadingCompletedIds(new Set());
+      onReadingAssignmentChange?.(null);
+      return;
+    }
+
+    if (readingPhase !== "share" || !readingText || interactionLocked || !eligible.length) {
+      if (readingPhase !== "share") onReadingAssignmentChange?.(null);
+      return;
+    }
+
+    const chunks = buildReadingChunks(
+      readingText,
+      readingShare?.level || course,
+      Math.max(1, eligible.length),
+    );
+    const assignments = buildFairReadingAssignments({
+      chunks,
+      roster: eligible,
+      stats,
+      history: readingHistory,
+      level: readingShare?.level || course,
+    });
+    setReadingAssignments(assignments);
+    setReadingAssignmentIndex(0);
+    setReadingCompletedIds(new Set());
+    onReadingAssignmentChange?.(assignments[0] || null);
+  }, [
+    readingEnabled,
+    readingPhase,
+    readingSignature,
+    interactionLocked,
+    eligible.length,
+  ]);
+
+  useEffect(() => {
+    if (!readingEnabled || readingPhase !== "share") return;
+    onReadingAssignmentChange?.(activeReadingAssignment || null);
+  }, [
+    activeReadingAssignment?.id,
+    readingEnabled,
+    readingPhase,
+    onReadingAssignmentChange,
+  ]);
+
+  function completeReadingSection() {
+    if (!activeReadingAssignment) return;
+    const nextCompleted = new Set(readingCompletedIds);
+    nextCompleted.add(activeReadingAssignment.id);
+    setReadingCompletedIds(nextCompleted);
+
+    const nextHistory = incrementReadingHistory(readingHistory, activeReadingAssignment);
+    setReadingHistory(nextHistory);
+    writeReadingHistory(selectedClassId, nextHistory);
+
+    const nextIndex = Math.min(readingAssignments.length - 1, readingAssignmentIndex + 1);
+    setReadingAssignmentIndex(nextIndex);
+    onReadingAssignmentChange?.(readingAssignments[nextIndex] || activeReadingAssignment);
+  }
+
+  function previousReadingSection() {
+    setReadingAssignmentIndex((current) => Math.max(0, current - 1));
+  }
+
+  function nextReadingSection() {
+    setReadingAssignmentIndex((current) => Math.min(readingAssignments.length - 1, current + 1));
+  }
 
   function publishQuestion(question) {
     if (!question) {
@@ -756,6 +878,54 @@ export default function PresenterStudentPicker({
           </div>
         </details>
       </div>
+
+      {readingEnabled ? (
+        <section
+          className={`presenter-reading-share is-${readingPhase}`}
+          aria-label="Shared reading assignments"
+        >
+          {readingPhase === "silent" ? (
+            <div className="presenter-reading-share-silent">
+              <strong>Silent reading</strong>
+              <span>Everyone reads the whole text first. Reader assignments appear when the timer ends.</span>
+            </div>
+          ) : readingPhase === "share" ? (
+            activeReadingAssignment ? (
+              <>
+                <div className="presenter-reading-share-heading">
+                  <span>
+                    Reading {readingAssignmentIndex + 1}/{readingAssignments.length}
+                  </span>
+                  <strong>{activeReadingAssignment.reader?.name || "Reader"}</strong>
+                  {activeReadingAssignment.listener ? (
+                    <small>Listener check: {activeReadingAssignment.listener.name}</small>
+                  ) : null}
+                </div>
+                <div className="presenter-reading-share-actions">
+                  <button type="button" onClick={previousReadingSection} disabled={readingAssignmentIndex === 0}>←</button>
+                  <button
+                    type="button"
+                    className="is-complete"
+                    onClick={completeReadingSection}
+                    disabled={readingCompletedIds.has(activeReadingAssignment.id)}
+                  >
+                    {readingCompletedIds.has(activeReadingAssignment.id) ? "Completed" : "Complete & next"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextReadingSection}
+                    disabled={readingAssignmentIndex >= readingAssignments.length - 1}
+                  >
+                    →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <span>Loading fair reading assignments…</span>
+            )
+          ) : null}
+        </section>
+      ) : null}
 
       {hasQuestionMode && !renderQuestionExternally ? (
         <div className="presenter-student-question-card">
