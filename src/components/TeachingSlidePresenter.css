@@ -2677,13 +2677,13 @@
   position: absolute;
   z-index: 44;
   top: clamp(0.55rem, 1.4vw, 1rem);
-  right: clamp(0.55rem, 1.4vw, 1rem);
+  right: clamp(8.6rem, 11vw, 10.5rem);
   display: grid;
   grid-template-columns: auto auto;
   align-items: center;
   gap: 0.28rem 0.55rem;
-  min-width: 188px;
-  max-width: min(360px, calc(100% - 1.1rem));
+  min-width: 250px;
+  max-width: min(430px, calc(100% - 11rem));
   border: 1px solid rgba(147, 197, 253, 0.9);
   border-radius: 14px;
   background: rgba(239, 246, 255, 0.97);
@@ -2732,6 +2732,13 @@
   cursor: pointer;
 }
 
+.presenter-focus-stage-timer button.is-active,
+.presenter-timer-presets button.is-active {
+  border-color: #2563eb;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .presenter-focus-stage-timer button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -2743,15 +2750,11 @@
   color: #b91c1c;
 }
 
-.presenter-stage.is-focus-mode.presenter-has-focus-stage-timer > .presenter-focus-time {
-  top: clamp(4.55rem, 8vw, 5rem);
-}
-
 @media (max-width: 700px) {
   .presenter-focus-stage-timer {
     top: 0.45rem;
     right: 0.45rem;
-    min-width: 164px;
+    min-width: 220px;
     max-width: calc(100% - 0.9rem);
     padding: 0.4rem 0.48rem;
   }
