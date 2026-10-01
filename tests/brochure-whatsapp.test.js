@@ -8,6 +8,8 @@ import {
   BROCHURE_WHATSAPP_MESSAGE,
   FALOWEN_REGISTRATION_URL,
   FALOWEN_VISITOR_GUIDE_URL,
+  FALOWEN_LOCATION_LABEL,
+  FALOWEN_MAPS_URL,
   buildBrochureWhatsappUrl,
   buildClassBrochureMessage,
   buildClassBrochureUrl,
@@ -96,6 +98,9 @@ test("selected class message includes current class context and school backgroun
   assert.match(message, /ref=lead_test_12345678/);
   assert.match(message, /About the school & how Falowen works/);
   assert.match(message, /https:\/\/www\.falowen\.app\/visitor-guide\?class=a1-dortmund-klasse/);
+  assert.match(message, /\*Location:\* Awoshie, Accra/);
+  assert.match(message, /\*Google Maps:\*/);
+  assert.match(message, /https:\/\/maps\.app\.goo\.gl\/CPYX7uCj9YSELc1Q9/);
   assert.match(message, /Register now/);
   assert.match(message, /https:\/\/www\.falowen\.app\/signup\?program=german&class=a1-dortmund-klasse/);
   assert.doesNotMatch(message, /PDF attachment|attachment is needed/i);
@@ -106,12 +111,17 @@ test("selected class message includes current class context and school backgroun
 test("generic brochure message includes both catalogue and direct registration links", () => {
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /View upcoming classes and brochures/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /About the school & how Falowen works/);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /Location:\nAwoshie, Accra/);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /Google Maps:/);
+  assert.match(BROCHURE_WHATSAPP_MESSAGE, /CPYX7uCj9YSELc1Q9/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /Register now/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/classes\//);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/visitor-guide/);
   assert.match(BROCHURE_WHATSAPP_MESSAGE, /https:\/\/www\.falowen\.app\/signup/);
   assert.equal(FALOWEN_REGISTRATION_URL, "https://www.falowen.app/signup");
   assert.equal(FALOWEN_VISITOR_GUIDE_URL, "https://www.falowen.app/visitor-guide");
+  assert.equal(FALOWEN_LOCATION_LABEL, "Awoshie, Accra");
+  assert.equal(FALOWEN_MAPS_URL, "https://maps.app.goo.gl/CPYX7uCj9YSELc1Q9");
 });
 
 test("upcoming brochure classes include only open future classes and sort soonest first", () => {
@@ -153,7 +163,7 @@ test("brochure panel loads real classes and includes school background automatic
   assert.match(panel, /brochure_open/);
   assert.match(panel, /visitor_guide_open/);
   assert.match(panel, /registration_click/);
-  assert.match(panel, /public school background guide and registration link are added automatically/);
+  assert.match(panel, /school guide, location, Google Maps and registration link are added automatically/);
   assert.doesNotMatch(panel, /No attachment needed|Attach the brochure file|PDF attachment/i);
 
   assert.match(classes, /\/api\/public\/classes/);
