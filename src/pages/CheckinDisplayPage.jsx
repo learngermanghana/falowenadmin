@@ -445,6 +445,7 @@ export default function CheckinDisplayPage() {
     return {
       assignmentId: String(slide.assignmentId || "").trim(),
       course,
+      preparationMinutes: ["A2", "B1"].includes(course) ? 7 : 5,
       slideId: String(slide.id || "").trim(),
       dayNumber,
       nextLesson: nextLesson ? {
@@ -2213,7 +2214,9 @@ export default function CheckinDisplayPage() {
                     )}</h2>
                     <div className="checkin-display-lobby-think-note">
                       <strong>Think about your answer.</strong>
-                      <span>You will answer after class starts. The 5-minute warm-up timer is not running yet.</span>
+                      <span>
+                        You will answer after class starts. The {waitingWarmupTeaser?.preparationMinutes || 5}-minute preparation timer is not running yet.
+                      </span>
                     </div>
                   </div>
                 ) : (
