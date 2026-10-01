@@ -616,8 +616,8 @@ test("Smart Class Lobby warm-up remains preview-only and never starts the five-m
   assert.match(page, /warmupStage\?\.items\?\.\[0\]/);
   assert.match(page, /Get ready · Warm-up preview/);
   assert.match(page, /Think about your answer\./);
-  assert.match(page, /preparationMinutes: \["A2", "B1"\]\.includes\(course\) \? 7 : 5/);
-  assert.match(page, /The \{waitingWarmupTeaser\?\.preparationMinutes \|\| 5\}-minute preparation timer is not running yet\./);
+  assert.doesNotMatch(page, /preparationMinutes:/);
+  assert.match(page, /Your teacher will set the Activity timer during class\./);
   assert.match(page, /renderWaitingWarmupQuestion/);
   assert.match(page, /splitWarmupQuestionSegments/);
   assert.match(page, /listClasses\(\)[\s\S]*setWaitingClassLevel/);
