@@ -982,22 +982,33 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               ) : (
                 <div className="presenter-vocabulary-challenge">
                   <div className="presenter-vocabulary-challenge-heading">
-                    <span>Wortschatz-Check · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
-                    <h1>Welches Wort passt?</h1>
-                    <p>Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt.</p>
+                    <span>{presenterLevel === "A2" ? "Redemittel-Check" : "Wortschatz-Check"} · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
+                    <h1>{presenterLevel === "A2" ? "Welche Formulierung passt?" : "Welches Wort passt?"}</h1>
+                    <p>{presenterLevel === "A2"
+                      ? "Lies die Situation. Der Schüler wählt die passende Formulierung und ergänzt sie danach mündlich."
+                      : "Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt."}</p>
                   </div>
                   {activeVocabChallenge ? (
                     <article className="presenter-vocabulary-cloze-card">
+                      {activeVocabChallenge.promptLabel ? (
+                        <strong className="presenter-vocabulary-prompt-label">{activeVocabChallenge.promptLabel}</strong>
+                      ) : null}
                       <p className="presenter-vocabulary-cloze-sentence">{activeVocabChallenge.sentence}</p>
                       <div className="presenter-vocabulary-options" role="list" aria-label="Drei Wortschatzoptionen">
-                        {(activeVocabChallenge.options || []).map((option) => (
-                          <span key={option} role="listitem">{option}</span>
+                        {(activeVocabChallenge.options || []).map((option, optionIndex) => (
+                          <span key={option} role="listitem">
+                            {presenterLevel === "A2" ? `${String.fromCharCode(65 + optionIndex)}. ${option}` : option}
+                          </span>
                         ))}
                       </div>
                       {showVocabAnswer ? (
                         <div className="presenter-vocabulary-answer">
-                          <strong>Antwort</strong>
+                          <strong>Passende Formulierung</strong>
                           <span>{activeVocabChallenge.answer}</span>
+                          {activeVocabChallenge.followUp ? <p>{activeVocabChallenge.followUp}</p> : null}
+                          {activeVocabChallenge.modelExample ? (
+                            <small>Beispiel danach: {activeVocabChallenge.modelExample}</small>
+                          ) : null}
                         </div>
                       ) : null}
                     </article>
