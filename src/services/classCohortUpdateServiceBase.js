@@ -16,7 +16,7 @@ import {
 } from "../utils/liveClassScheduling.js";
 import { courseDictionary, getUnifiedTopicLabel } from "../data/courseDictionary.js";
 
-const TUITION = { A1: 2800, A2: 3000, B1: 3000, B2: 3000, C1: 3000 };
+const TUITION = { A1: 3000, A2: 3000, B1: 3000, B2: 3000, C1: 3000 };
 const DAY = { sun: "Sun", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat" };
 const CURRICULUM_SOURCE = "courseDictionary";
 const CURRICULUM_VERSION = 1;
