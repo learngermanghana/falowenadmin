@@ -1,6 +1,10 @@
+import { VISITOR_GUIDE_PROFILE } from "../data/visitorGuideProfile.js";
+
 export const FALOWEN_CLASSES_BASE_URL = "https://www.falowen.app/classes/";
 export const FALOWEN_REGISTRATION_URL = "https://www.falowen.app/signup";
 export const FALOWEN_VISITOR_GUIDE_URL = "https://www.falowen.app/visitor-guide";
+export const FALOWEN_LOCATION_LABEL = String(VISITOR_GUIDE_PROFILE.school.locationLabel || "").replace(/,\s*Ghana$/i, "");
+export const FALOWEN_MAPS_URL = VISITOR_GUIDE_PROFILE.school.mapsUrl;
 
 export function createBrochureEngagementRef() {
   const random = globalThis.crypto?.randomUUID
@@ -39,6 +43,11 @@ ${FALOWEN_CLASSES_BASE_URL}
 
 About the school & how Falowen works:
 ${FALOWEN_VISITOR_GUIDE_URL}
+
+Location:
+${FALOWEN_LOCATION_LABEL}
+Google Maps:
+${FALOWEN_MAPS_URL}
 
 Register now:
 ${FALOWEN_REGISTRATION_URL}
@@ -223,6 +232,10 @@ export function buildClassBrochureMessage(klass = {}, studentName = "", engageme
     "",
     "*About the school & how Falowen works:*",
     visitorGuideUrl,
+    "",
+    `*Location:* ${FALOWEN_LOCATION_LABEL}`,
+    "*Google Maps:*",
+    FALOWEN_MAPS_URL,
     "",
     "*Register now:*",
     registrationUrl,
