@@ -42,9 +42,9 @@ const A2_SITUATIONS = Object.freeze({
     example: "Du suchst: „Ich brauche eine Wohnung, die zwei Zimmer und einen Balkon hat.“",
   },
   8: {
-    title: "Rezepte und Essen",
-    intro: "Bei einem Rezept erklärst du Schritte in einer klaren Reihenfolge. Du sagst, was jemand tun soll und welche Zutaten gebraucht werden.",
-    example: "Du erklärst: „Schneide zuerst die Tomaten und gib dann das Salz dazu.“",
+    title: "Im Restaurant – bestellen und reagieren",
+    intro: "Im Restaurant bestellst du höflich, fragst nach Gerichten oder Empfehlungen und reagierst klar, wenn etwas nicht stimmt. Am Ende bittest du um die Rechnung.",
+    example: "Du sagst: „Ich hätte gern die Gemüsesuppe. Könnte ich bitte auch ein Wasser bekommen?“",
   },
   9: {
     title: "Urlaub und Erlebnisse",

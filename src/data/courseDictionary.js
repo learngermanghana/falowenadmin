@@ -40,7 +40,7 @@ export const courseDictionary = {
     "A2-2.5": { assignment_id: "A2-2.5", chapter: "2.5", de: "Was machst du in deiner Freizeit?", en: "What Do You Do in Your Free Time?" },
     "A2-3.6": { assignment_id: "A2-3.6", chapter: "3.6", de: "Möbel und Räume kennenlernen", en: "Furniture and Rooms" },
     "A2-3.7": { assignment_id: "A2-3.7", chapter: "3.7", de: "Eine Wohnung suchen", en: "Looking for an Apartment" },
-    "A2-3.8": { assignment_id: "A2-3.8", chapter: "3.8", de: "Rezepte und Essen", en: "Recipes and Food" },
+    "A2-3.8": { assignment_id: "A2-3.8", chapter: "3.8", de: "Im Restaurant – bestellen und reagieren", en: "At the Restaurant – Ordering and Responding" },
     "A2-4.9": { assignment_id: "A2-4.9", chapter: "4.9", de: "Urlaub", en: "Vacation" },
     "A2-4.10": { assignment_id: "A2-4.10", chapter: "4.10", de: "Tourismus und traditionelle Feste", en: "Tourism and Traditional Festivals" },
     "A2-4.11": { assignment_id: "A2-4.11", chapter: "4.11", de: "Verkehrsmittel vergleichen", en: "Comparing Transportation" },

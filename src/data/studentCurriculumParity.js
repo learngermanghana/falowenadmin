@@ -14,7 +14,7 @@ const A2_TITLES = [
   "Freizeit",
   "Möbel und Räume",
   "Eine Wohnung suchen",
-  "Rezepte und Essen",
+  "Im Restaurant – bestellen und reagieren",
   "Urlaub und Erlebnisse",
   "Tourismus und traditionelle Feste",
   "Verkehrsmittel vergleichen",
