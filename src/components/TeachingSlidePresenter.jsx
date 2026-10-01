@@ -251,17 +251,22 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     try {
       const context = ensureWarmupAudioContext();
       if (!context) return;
-      [880, 660, 880, 660, 1040].forEach((frequency, index) => {
-        const start = context.currentTime + (index * 0.32);
+      [
+        { frequency: 880, startOffset: 0, duration: 0.22 },
+        { frequency: 880, startOffset: 0.32, duration: 0.22 },
+        { frequency: 880, startOffset: 0.64, duration: 0.22 },
+        { frequency: 1040, startOffset: 0.96, duration: 1.1 },
+      ].forEach(({ frequency, startOffset, duration }, index) => {
+        const start = context.currentTime + startOffset;
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(0.055, start);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.24);
+        gain.gain.setValueAtTime(index === 3 ? 0.075 : 0.06, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
         oscillator.connect(gain);
         gain.connect(context.destination);
         oscillator.start(start);
-        oscillator.stop(start + 0.25);
+        oscillator.stop(start + duration + 0.02);
       });
     } catch {
       // The visual timer still reaches Time up when browser audio is blocked.
@@ -506,6 +511,17 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const timerPresets = a2B1ActivityTimer
     ? A2_B1_ACTIVITY_TIMER_PRESETS
     : [...new Set([stage.suggestedMinutes, 2, 3, 5, 10].filter(Boolean))];
+  const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
+  const warmupTimerRatio = timerRemaining / warmupTimerTotalSeconds;
+  const warmupBottomCue = timerRemaining <= 0
+    ? "Time up · finish your sentence"
+    : !timerRunning
+      ? "Ready"
+      : warmupTimerRatio > 0.45
+        ? "Answer clearly"
+        : timerRemaining > 20
+          ? "Add one detail"
+          : "Finish your sentence";
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
@@ -540,6 +556,17 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           <div className={`presenter-focus-time ${classTimeState.expired ? "is-expired" : ""}`} aria-label="Class time remaining">
             <strong>{formatTimer(classTimeState.remainingSeconds)}</strong>
             <span>{classTimeState.expired ? "Time up" : "left"}</span>
+          </div>
+        ) : null}
+        {focusMode && warmupPerStudent && a2B1ActivityTimer ? (
+          <div
+            className={`presenter-warmup-bottom-timer ${timerRemaining <= 20 && timerRunning ? "is-ending" : ""} ${timerExpired ? "is-expired" : ""}`}
+            aria-live="polite"
+            aria-label="Warm-up time remaining"
+          >
+            <span>Warm-up</span>
+            <strong>{formatTimer(timerRemaining)}</strong>
+            <span>{warmupBottomCue}</span>
           </div>
         ) : null}
         {focusMode ? (
