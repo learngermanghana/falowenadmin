@@ -24,23 +24,26 @@ function slideFor(course, assignmentId) {
   };
 }
 
-test("A2 through C2 use five minutes per student for warm-up", () => {
+test("A2 uses 3 minutes and B1 uses 5 minutes per student for warm-up presentation", () => {
   const cases = [
-    ["A2", "A2-1.1"],
-    ["B1", "B1-1.1"],
-    ["B2", "B2-1.1"],
-    ["C1", "C1 1"],
-    ["C2", "C2 1"],
+    ["A2", "A2-1.1", 3],
+    ["B1", "B1-1.1", 5],
+    ["B2", "B2-1.1", 5],
+    ["C1", "C1 1", 5],
+    ["C2", "C2 1", 5],
   ];
 
-  for (const [course, assignmentId] of cases) {
+  for (const [course, assignmentId, expectedMinutes] of cases) {
     const stages = buildTeachingPresenterStages(slideFor(course, assignmentId), "Warm-up timing");
     const warmup = stages.find((stage) => stage.id === "warmup");
 
     assert.ok(warmup, course + " warm-up stage missing");
-    assert.equal(warmup.suggestedMinutes, 5, course + " should use a five-minute warm-up timer");
+    assert.equal(warmup.suggestedMinutes, expectedMinutes, course + " warm-up presentation time");
     assert.equal(warmup.timingMode, "per-student", course + " should mark warm-up timing as per student");
-    assert.equal(warmup.timingLabel, "5 min per student · 4 warm-up questions");
+    assert.equal(
+      warmup.timingLabel,
+      `${expectedMinutes} min per student · 4 warm-up questions`,
+    );
   }
 });
 
