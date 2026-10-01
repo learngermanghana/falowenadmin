@@ -252,16 +252,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
       const context = ensureWarmupAudioContext();
       if (!context) return;
       [
-        { frequency: 880, startOffset: 0, duration: 0.22 },
-        { frequency: 880, startOffset: 0.32, duration: 0.22 },
-        { frequency: 880, startOffset: 0.64, duration: 0.22 },
-        { frequency: 1040, startOffset: 0.96, duration: 1.1 },
+        { frequency: 880, startOffset: 0, duration: 0.28 },
+        { frequency: 880, startOffset: 0.38, duration: 0.28 },
+        { frequency: 880, startOffset: 0.76, duration: 0.28 },
+        { frequency: 1040, startOffset: 1.14, duration: 1.55 },
       ].forEach(({ frequency, startOffset, duration }, index) => {
         const start = context.currentTime + startOffset;
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(index === 3 ? 0.075 : 0.06, start);
+        gain.gain.setValueAtTime(index === 3 ? 0.11 : 0.075, start);
         gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
         oscillator.connect(gain);
         gain.connect(context.destination);
@@ -460,7 +460,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
         setTimerRunning(false);
         setRevealedFlowRole("");
         setStageIndex((current) => clampPresenterIndex(current + 1, stages.length));
-      }, 2200);
+      }, 3000);
       return () => window.clearTimeout(advanceTimer);
     }
 
@@ -535,6 +535,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
         : timerRemaining > 20
           ? "Add one detail"
           : "Finish your sentence";
+  const warmupBottomProgress = visibleWarmupQuestionCount
+    ? `${visibleWarmupAnsweredCount}/${visibleWarmupQuestionCount} answered`
+    : "";
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
@@ -577,9 +580,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             aria-live="polite"
             aria-label="Warm-up time remaining"
           >
-            <span>Warm-up</span>
+            <span className="presenter-warmup-bottom-label">Warm-up</span>
             <strong>{formatTimer(timerRemaining)}</strong>
-            <span>{warmupBottomCue}</span>
+            <span className="presenter-warmup-bottom-cue">{warmupBottomCue}</span>
+            <span className="presenter-warmup-bottom-progress">{warmupBottomProgress}</span>
           </div>
         ) : null}
         {focusMode ? (
