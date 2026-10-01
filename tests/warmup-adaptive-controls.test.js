@@ -5,27 +5,26 @@ import fs from "node:fs";
 const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
 const picker = fs.readFileSync(new URL("../src/components/PresenterStudentPicker.jsx", import.meta.url), "utf8");
 
-test("A2 and B1 warm-up gives the whole class seven minutes to prepare", () => {
-  assert.match(presenter, /A2_B1_WARMUP_PREPARATION_MINUTES = 7/);
-  assert.match(presenter, /warmupPreparationMinutesForLevel/);
-  assert.match(presenter, /\["A2", "B1"\]\.includes/);
-  assert.match(presenter, /function startWarmupPreparation\(\)/);
-  assert.match(presenter, /setTimerMode\("prepare"\)/);
-  assert.match(presenter, /setTimerRemaining\(warmupPreparationMinutes \* 60\)/);
-  assert.match(presenter, /Class preparation · \$\{warmupPreparationMinutes\} min/);
-  assert.match(presenter, /Prepare class \{warmupPreparationMinutes\}m/);
-  assert.match(presenter, /Presentation · \$\{warmupMinutes\} min/);
+test("A2 and B1 use one reusable Activity timer with 7, 5 and 2 minute presets", () => {
+  assert.match(presenter, /A2_B1_ACTIVITY_TIMER_PRESETS = \[7, 5, 2\]/);
+  assert.match(presenter, /DEFAULT_ACTIVITY_TIMER_MINUTES = 5/);
+  assert.match(presenter, /const \[activityTimerMinutes, setActivityTimerMinutes\]/);
+  assert.match(presenter, /Activity timer/);
+  assert.match(presenter, /aria-label="Activity timer duration"/);
+  assert.match(presenter, /setTimerMinutes\(minutes, a2B1ActivityTimer \? "activity" : "stage"\)/);
+  assert.doesNotMatch(presenter, /Prepare class/);
+  assert.doesNotMatch(presenter, /Class preparation ·/);
+  assert.doesNotMatch(presenter, /Presentation · \$\{warmupMinutes\}/);
 });
 
-test("preparation and presentation timers end with an audible alarm", () => {
+test("the shared Activity timer alarms at zero without changing its purpose automatically", () => {
   assert.match(presenter, /function playPresenterTimerAlarm\(\)/);
   assert.match(presenter, /\[880, 660, 880, 660, 1040\]/);
   assert.match(presenter, /if \(!showPresenterTimer \|\| !timerRunning \|\| timerRemaining !== 0\) return/);
   assert.match(presenter, /playPresenterTimerAlarm\(\)/);
-  assert.match(presenter, /timerMode === "prepare"/);
-  assert.match(presenter, /setTimerMode\("warmup"\)/);
-  assert.match(presenter, /defaultWarmupPresentationMinutes/);
   assert.match(presenter, /setTimerRunning\(false\)/);
+  assert.doesNotMatch(presenter, /timerMode === "prepare"/);
+  assert.doesNotMatch(presenter, /timerMode === "reading-silent"/);
 });
 
 test("teacher can choose one through four warm-up questions", () => {
@@ -46,12 +45,12 @@ test("warm-up question count controls are projector-visible", () => {
   assert.match(css, /button\.is-active \{[\s\S]*background: #1d4ed8;[\s\S]*color: #fff/);
 });
 
-test("large rosters only suggest a shorter warm-up", () => {
+test("large rosters keep question-count advice separate from the Activity timer", () => {
   assert.match(presenter, /rosterCount >= 8/);
-  assert.match(presenter, /students × \{warmupMinutes\} min/);
-  assert.match(presenter, /Use 2 questions \/ 3 min per student/);
-  assert.match(presenter, /Restore 4 questions \/ \{defaultWarmupPresentationMinutes\} min/);
-  assert.match(presenter, /The teacher remains in control/);
+  assert.match(presenter, /Use fewer questions if needed and choose 7, 5 or 2 minutes on the Activity timer/);
+  assert.match(presenter, /Use 2 questions/);
+  assert.match(presenter, /Restore 4 questions/);
+  assert.doesNotMatch(presenter, /students × \{warmupMinutes\} min/);
 });
 
 test("student picker reports the selected class roster size", () => {
@@ -95,14 +94,14 @@ test("answered warm-up questions are clearly visible on the projector", () => {
 });
 
 
-test("fullscreen presentation keeps the active warm-up timer visible and controllable", () => {
+test("fullscreen presentation keeps the same Activity timer visible and controllable", () => {
   const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
   assert.match(presenter, /presenter-focus-stage-timer/);
   assert.match(presenter, /aria-label="Active stage timer"/);
-  assert.match(presenter, /Prep \{warmupPreparationMinutes\}m/);
+  assert.match(presenter, /A2_B1_ACTIVITY_TIMER_PRESETS/);
   assert.match(presenter, /onClick=\{togglePresenterTimer\}/);
-  assert.match(presenter, /presenter-has-focus-stage-timer/);
+  assert.match(presenter, /activityTimerMinutes === minutes/);
   assert.match(css, /\.presenter-focus-stage-timer\s*\{/);
-  assert.match(css, /position:\s*absolute/);
-  assert.match(css, /z-index:\s*44/);
+  assert.match(css, /right:\s*clamp\(8\.6rem, 11vw, 10\.5rem\)/);
+  assert.match(css, /\.presenter-timer-presets button\.is-active/);
 });
