@@ -23,40 +23,9 @@ const VOCABULARY_ALIASES = {
   stomach: ["stomach", "belly"],
 };
 
-const HARDCODED_REFERENCE_ANSWERS = {
-  "A1-14.1": {
-    1: "A",
-    2: "B",
-    3: "B",
-    4: "A",
-    5: "A",
-    6: "kopf",
-    7: "arm",
-    8: "bein",
-    9: "auge",
-    10: "nase",
-    11: "ohr",
-    12: "mund",
-    13: "hand",
-    14: "fuss",
-    15: "bauch",
-  },
-};
+const HARDCODED_REFERENCE_ANSWERS = {};
 
-const HARDCODED_VOCABULARY_KEYS = {
-  "A1-14.1": {
-    6: "head",
-    7: "arm",
-    8: "leg",
-    9: "eye",
-    10: "nose",
-    11: "ear",
-    12: "mouth",
-    13: "hand",
-    14: "foot",
-    15: "stomach",
-  },
-};
+const HARDCODED_VOCABULARY_KEYS = {};
 
 export function normalizeAnswer(text = "") {
   return String(text)
