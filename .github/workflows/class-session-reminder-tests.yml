@@ -77,7 +77,7 @@ jobs:
           node --check functions/classSessionReminderEmails.js
           node --check functions/classSessionAutoCheckin.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
-          grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
+          grep -F 'schedule: "*/5 10-20 * * 1-5"' functions/classSessionReminderEmails.js
           grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
           grep -F 'https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09' functions/classSessionReminderEmails.js
           grep -F 'checkin_link: checkinUrl' functions/classSessionReminderEmails.js
