@@ -132,7 +132,7 @@ function evaluateA1123(taskPoints, source) {
 }
 function evaluateA113(taskPoints, source) {
   const writing = partText(source, "teil3") || String(source || "");
-  const cannotAttend = /\b(?:hochzeit|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bhochzeit\b[^.!?]{0,60}\bkommen\b/i;
+  const cannotAttend = /\b(?:hochzeit|einladung)\b[^.!?]{0,120}\b(?:nicht\s+kommen|leider\s+nicht|kann\s+ich\s+nicht|ich\s+kann\s+leider\s+nicht)\b|\b(?:ich\s+kann\s+leider\s+nicht|leider\s+kann\s+ich\s+nicht|ich\s+kann\s+nicht)\b[^.!?]{0,120}\bhochzeit\b[^.!?]{0,60}\bkommen\b|\b(?:leider\s+)?nicht\b[^.!?]{0,80}\bhochzeit\b[^.!?]{0,60}\bkommen\b/i;
   const weatherReason = /\b(?:sturm|unwetter|gl[aä]tte|eis|schnee|schneit|stark(?:er|en|e)?\s+regen|regn(?:et|en)\s+(?:sehr\s+)?stark|schlechtes?\s+wetter)\b/i;
   const suggestion = /\b(?:treffen|anderes\s+mal|n[aä]chste\s+woche|neuer?\s+termin|wann\s+k[oö]nnen\s+wir|k[oö]nnen\s+wir\s+uns)\b/i;
   return [
