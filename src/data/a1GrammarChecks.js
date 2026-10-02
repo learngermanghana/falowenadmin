@@ -191,9 +191,7 @@ export function getA1GrammarChecks(assignmentId, slide = {}) {
   if (Array.isArray(direct) && direct.length) return direct;
 
   const support = slide.teacherSupport || {};
-  const grammar = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];
   const models = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [];
-  const mistakes = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
 
   const directQuestions = [
     ...(Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
