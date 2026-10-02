@@ -956,10 +956,43 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     || resolveQuestionAwareWritingTask(options);
   if (!task || !["A1", "A2", "B1"].includes(task.level)) return result;
 
-  const currentWritingScore = numericPercent(result.writingScorePercent ?? result.writingScore);
-  if (currentWritingScore === null) return result;
-
   const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "", task);
+  let currentWritingScore = numericPercent(result.writingScorePercent ?? result.writingScore);
+
+  if (currentWritingScore === null && source.split(/\s+/).filter(Boolean).length >= 5) {
+    const recovered = numericPercent(
+      heuristicWritingMarker({
+        level: task.level,
+        partId: primaryWritingPartId(task),
+        text: source,
+      })?.score,
+    );
+
+    if (recovered !== null && recovered > 0) {
+      const weightedOutcome = recomputeOutcome(result, task, recovered);
+      return applyQuestionAwareWritingGuard({
+        ...result,
+        score: weightedOutcome.finalScore,
+        finalScore: weightedOutcome.finalScore,
+        passed: weightedOutcome.passed,
+        scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,
+        writingMinimumMet: weightedOutcome.writingMinimumMet,
+        markingPolicy: weightedOutcome.policy,
+        writingScore: recovered,
+        writingScorePercent: recovered,
+        status: "needs_review",
+        shouldSendAutomatically: false,
+        ai: {
+          ...(result.ai || {}),
+          recoveredMissingWritingScore: true,
+          recoveredWritingScore: recovered,
+          recoveredWritingScoreSource: "local-writing-evidence",
+        },
+      }, options, rawSubmissionText);
+    }
+  }
+
+  if (currentWritingScore === null) return result;
   const deterministicCorrections = deterministicLanguageCorrections(source, primaryWritingPartId(task), task);
   const structured = readStructuredTask(result);
   const taskPointEvidence = task.level === "A1" && task.rubricVersion === A1_WRITING_RUBRIC_VERSION
