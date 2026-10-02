@@ -1,4 +1,5 @@
 name: Deploy Falowen Admin Firebase
+# Scheduler cadences are cost-optimized; deploy current main configuration.
 
 on:
   push:
