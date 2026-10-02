@@ -104,6 +104,10 @@ export default function CheckinPage() {
     [phoneNumber],
   );
 
+  const resolvedDate = String(date || checkinStatus?.date || scheduleInfo?.dateLabel || "").trim();
+  const resolvedAssignmentId = String(assignmentId || checkinStatus?.assignmentId || "").trim();
+  const resolvedStartTime = String(startTime || checkinStatus?.startTime || "").trim();
+
   const classDisplayName = useMemo(
     () => String(checkinStatus?.className || fallbackClassName(sessionId)).trim(),
     [checkinStatus?.className, sessionId],
@@ -120,7 +124,7 @@ export default function CheckinPage() {
     [checkinStatus?.sessionLabel, sessionLabel, scheduleInfo?.sessionDisplayLabel],
   );
 
-  const dateLabel = String(date || scheduleInfo?.dateLabel || "").trim();
+  const dateLabel = resolvedDate;
 
   const fieldErrors = useMemo(() => {
     const errors = {};
@@ -197,7 +201,10 @@ export default function CheckinPage() {
 
   const preClassCountdown = useMemo(() => {
     const status = String(checkinStatus?.status || "");
-    const startMs = Number(checkinStatus?.openFrom || 0) || resolveFallbackStartTimestamp(date, startTime);
+    const startMs =
+      Number(checkinStatus?.startsAt || 0) ||
+      resolveFallbackStartTimestamp(resolvedDate, resolvedStartTime) ||
+      Number(checkinStatus?.openFrom || 0);
     if (!startMs || (checkinStatus && status !== "scheduled")) return null;
     const remainingMs = startMs - serverTimeMs;
     if (remainingMs <= 0) return null;
@@ -205,7 +212,7 @@ export default function CheckinPage() {
       remainingLabel: formatDuration(remainingMs),
       startLabel: formatClock(startMs),
     };
-  }, [checkinStatus, date, startTime, serverTimeMs]);
+  }, [checkinStatus, resolvedDate, resolvedStartTime, serverTimeMs]);
 
   const statusSummary = useMemo(() => {
     const status = String(checkinStatus?.status || "");
@@ -287,11 +294,11 @@ export default function CheckinPage() {
         body: JSON.stringify({
           classId,
           sessionId,
-          date,
+          date: resolvedDate,
           email: trimmedEmail,
           phoneNumber: trimmedPhone,
           sessionLabel: lessonDisplayName,
-          assignmentId,
+          assignmentId: resolvedAssignmentId,
         }),
       });
       const data = await res.json().catch(() => ({}));
