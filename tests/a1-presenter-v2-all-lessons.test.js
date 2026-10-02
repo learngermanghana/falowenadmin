@@ -128,7 +128,7 @@ test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
   assert.equal(slide.id, "a1-5-10");
   assert.equal(slide.dayNumber, 24);
   assert.equal(slide.day, "Day 24");
-  assert.match(slide.title, /^A1 Day 24 · Gründe mit weil und nützliche Redemittel$/);
+  assert.match(slide.title, /^A1 Day 24 · Weil & nützliche A1-Redemittel$/);
   assert.equal(slides.find((entry) => entry.dayNumber === 24)?.assignmentId, "A1-5.10");
   assert.equal(slide.workbookConnection?.grammarUrl, "/campus/course/conjunctions-5-10");
   assert.equal(slide.workbookConnection?.workbookUrl, "");
@@ -141,12 +141,20 @@ test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
   assert.ok(workbook.items.length >= 4);
 
   const classroomContent = JSON.stringify(stages);
-  assert.match(classroomContent, /weil/i);
-  assert.match(classroomContent, /Termin absagen|Termin vereinbaren/i);
-  assert.match(classroomContent, /Kurs anmelden|Deutschkurs anmelden/i);
-  assert.match(classroomContent, /Wie viel kostet der Kurs/i);
-  assert.match(classroomContent, /mehr Informationen über den Kurs/i);
-  assert.match(classroomContent, /Herzlichen Glückwunsch/i);
+  assert.match(classroomContent, /Learn/);
+  assert.match(classroomContent, /Choose/);
+  assert.match(classroomContent, /Build/);
+  assert.match(classroomContent, /Match/);
+  assert.match(classroomContent, /Formal oder informell/);
+  assert.match(classroomContent, /Repair/);
+  assert.match(classroomContent, /Apply/);
+  assert.match(classroomContent, /Recognise/);
+  assert.match(classroomContent, /Final transfer/);
+  assert.match(classroomContent, /weil ich krank bin/i);
+  assert.match(classroomContent, /weil ich arbeiten muss/i);
+  assert.match(classroomContent, /Können wir uns am Mittwoch treffen/i);
+  assert.match(classroomContent, /Ich schreibe Ihnen, weil ich mehr Informationen/i);
+  assert.match(classroomContent, /und, aber, oder and denn|und, aber, oder und denn/i);
 
   const productivePhrases = JSON.stringify(slide.keyPhrasesDe || []);
   assert.doesNotMatch(productivePhrases, /deshalb/i, "deshalb should be introduced productively at A2");
