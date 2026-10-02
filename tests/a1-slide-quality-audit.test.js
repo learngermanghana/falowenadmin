@@ -15,6 +15,16 @@ const GENERIC_PHRASES = [
   "Model one full exchange before pair speaking.",
   "Use short correction slots after each speaking phase.",
   "Students can communicate about",
+  "Give one correct German example that avoids this mistake:",
+  "Show this lesson point with one short German example:",
+  "Explain this in your own words:",
+  "Teach this rule to a classmate",
+  "Give the rule first, then one simple example:",
+  "How would you explain this idea to a beginner?",
+  "What is the main grammar or language concept in today's lesson?",
+  "What is one important rule or common mistake to remember?",
+  "Can you give one simple example that shows you understand the rule?",
+  "Change one clear detail in this model and say the full new sentence:",
 ];
 
 const TOPIC_SIGNALS = {
