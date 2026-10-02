@@ -20,8 +20,9 @@ test("A1 presenter grows the pool to match larger class rosters", () => {
   assert.equal(buildA1PresenterQuestionPool(BASE, 20, "A1-3.5").length, 20);
 });
 
-test("expanded A1 questions remain unique in one pool", () => {
+test("expanded A1 questions keep unique evidence IDs without generic rewrites", () => {
   const pool = buildA1PresenterQuestionPool(BASE, 20, "A1-3.5");
   assert.equal(new Set(pool.map((question) => question.id)).size, 20);
-  assert.equal(new Set(pool.map((question) => question.questionDe)).size, 20);
+  assert.ok(pool.every((question) => BASE.some((base) => base.questionDe === question.questionDe)));
+  assert.ok(pool.every((question) => !/Explain this in your own words|Teach this rule|Give the rule first|How would you explain this idea/i.test(question.questionDe)));
 });
