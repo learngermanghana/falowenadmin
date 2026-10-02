@@ -136,3 +136,37 @@ test("A1-1.3 Day 5 remains interactive self-practice rather than tutor-marked wo
   assert.ok(part(slide, "Teil 3 · Personal Information"));
   assert.ok(part(slide, "Teil 4 · Mini Dialogue / W-Fragen"));
 });
+
+
+test("A1 Day 2 pronoun slide stays on pronouns and basic conjugation", () => {
+  const slide = getTeachingSlideByAssignmentId("A1-1.1");
+  const searchable = [
+    slide.objective,
+    ...(slide.warmupQuestionsDe || []),
+    ...(slide.studentQuestionsDe || []),
+    ...(slide.keyPhrasesDe || []),
+    ...(slide.teacherNotesEn || []),
+    ...(slide.interactionFlow || []).map((item) => item.detailEn),
+    slide.wrapUpTaskDe,
+  ].join(" ");
+
+  assert.match(searchable, /Ich lernen|Ich lerne/);
+  assert.match(searchable, /du.*-st|-st.*du/i);
+  assert.match(searchable, /er\/sie\/es.*-t|-t.*er\/sie\/es/i);
+  assert.match(searchable, /ich lerne/);
+  assert.match(searchable, /du lernst/);
+  assert.match(searchable, /er\/sie\/es lernt/);
+  assert.doesNotMatch(searchable, /Stell dich|self-introduction|Wie heißt du|Woher kommst du|Wo wohnst du/i);
+});
+
+test("A1 alphabet slide checks the actual alphabet knowledge taught in the Course Book", () => {
+  const slide = getTeachingSlideByAssignmentId("A1-0.2");
+  const questions = (slide.studentQuestionsDe || []).join(" ");
+
+  assert.match(questions, /Wie viele Buchstaben/);
+  assert.match(questions, /Warum sind Ä, Ö und Ü wichtig/);
+  assert.match(questions, /Buchstaben V/);
+  assert.match(questions, /Buchstaben W/);
+  assert.match(questions, /Buchstaben I/);
+  assert.match(questions, /Buchstaben A/);
+});
