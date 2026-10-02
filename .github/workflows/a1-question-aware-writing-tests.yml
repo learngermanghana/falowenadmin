@@ -42,5 +42,7 @@ jobs:
         run: node --test tests/a1-13-writing-marking.test.js
       - name: Preserve A1 family writing marking
         run: node --test tests/a1-price-preference-marking.test.js
-      - name: Preserve A1-14.1 objective scoring
-        run: node --test --test-name-pattern="computes A1-14\\.1 objective score from choices|computes A1-14\\.1 objective score from the Reuben|computes partial A1-14\\.1" tests/objective-marking.test.js
+      - name: Preserve A1-14.1 reading and listening scoring
+        run: node --test --test-name-pattern="computes A1-14\\.1 objective score from reading|A1-14\\.1 reports wrong listening" tests/objective-marking.test.js
+      - name: Preserve A1-14.1 multipart parsing
+        run: node --test tests/a1-14.1-parser-alignment.test.js
