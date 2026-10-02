@@ -3436,3 +3436,55 @@
     font-size: 1rem;
   }
 }
+
+
+.presenter-warmup-coaching-card {
+  margin: 0.9rem auto 0;
+  width: min(900px, 100%);
+  min-height: 5.6rem;
+  border: 2px solid #bfdbfe;
+  border-radius: 1.2rem;
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "label text"
+    "label note";
+  align-items: center;
+  gap: 0.15rem 1rem;
+  padding: 0.85rem 1.1rem;
+  box-shadow: 0 12px 28px rgba(30, 64, 175, 0.08);
+}
+.presenter-warmup-coaching-card > span {
+  grid-area: label;
+  min-width: 6.6rem;
+  text-align: center;
+  padding: 0.7rem 0.8rem;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+.presenter-warmup-coaching-card > strong {
+  grid-area: text;
+  font-size: clamp(1.05rem, 1.6vw, 1.45rem);
+  line-height: 1.25;
+  color: #0f172a;
+}
+.presenter-warmup-coaching-card > small {
+  grid-area: note;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.presenter-warmup-coaching-card.is-running {
+  border-color: #93c5fd;
+}
+.presenter-warmup-coaching-card.is-expired {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+.presenter-warmup-coaching-card.is-expired > span {
+  background: #b45309;
+}
