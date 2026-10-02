@@ -142,14 +142,14 @@ const A2_KNOWLEDGE = {
     },
   },
   "A2-4.10": {
-    title: "Vergangenheit klingt nicht immer gleich",
-    textDe: "Im Deutschen können Perfekt und Präteritum über Vergangenes sprechen. Im Alltag ist das Perfekt sehr häufig, aber einige Präteritumformen hört und liest man ständig, besonders war und hatte. Auch ging, kam, fuhr, sah und fand sind wichtig. Für A2 ist nicht nötig, jedes starke Verb aktiv zu beherrschen. Wichtiger ist, häufige Formen zu erkennen und einige sicher zu benutzen.",
-    checks: ["Welche zwei Präteritumformen sind besonders wichtig?", "Muss man auf A2 jedes starke Verb aktiv können?", "Nenne eine weitere Form aus dem Text."],
+    title: "Eine Stadt entdecken und über Erlebnisse sprechen",
+    textDe: "Wenn du eine Stadt oder ein neues Viertel entdeckst, erzählst du am besten in einer klaren Reihenfolge: Wo warst du? Was hast du zuerst gesehen oder besucht? Wohin bist du danach gegangen? Im Alltag benutzt man für viele abgeschlossene Handlungen das Perfekt. Einige Präteritumformen hört und liest man aber sehr oft, besonders war und hatte. Auch ging, kam, fuhr, sah und fand sind für kurze Erzählungen nützlich. Auf A2 musst du nicht jedes starke Verb aktiv können; wichtig ist, häufige Formen zu erkennen und einige sicher zu benutzen.",
+    checks: ["Welche drei Informationen helfen, einen Entdeckungstag klar zu erzählen?", "Welche zwei Präteritumformen sind besonders wichtig?", "Musst du auf A2 jedes starke Verb aktiv können?"],
     activity: {
-      title: "Sortiere die Vergangenheit",
-      instruction: "Ordnet die Aussagen: Perfekt oder Präteritum.",
-      prompts: ["Ich war letztes Jahr in Berlin.", "Wir haben ein Museum besucht.", "Danach ging ich essen."],
-      modelItems: ["Präteritum → war", "Perfekt → haben ... besucht", "Präteritum → ging"],
+      title: "Entdeckungstag in der Stadt",
+      instruction: "Ordnet die Sätze nach Zeitform und bringt sie anschließend in eine sinnvolle Reihenfolge für einen kleinen Stadttag.",
+      prompts: ["Ich war am Samstag in der Altstadt.", "Wir haben zuerst einen Markt besucht.", "Danach gingen wir in ein kleines Café."],
+      modelItems: ["Präteritum → war", "Perfekt → haben ... besucht", "Präteritum → gingen"],
     },
   },
   "A2-4.11": {
