@@ -68,7 +68,7 @@ for (const { path, signature, nextSignature, fallbackPicker } of presenterPaths)
 const pagePath = new URL("../src/pages/TeachingSlidesPage.jsx", import.meta.url);
 let pageSource = fs.readFileSync(pagePath, "utf8");
 
-if (!pageSource.includes("const nextLessonHref = next ?") && !pageSource.includes("const nextA1BlockHref = nextA1Block")) {
+if (!pageSource.includes("const nextLessonHref = next")) {
   const navigationAnchor = "  const { previous, next } = getSlideNavigation(slide.id, courseId);";
   if (!pageSource.includes(navigationAnchor)) {
     throw new Error("Teaching Slides next lesson navigation anchor missing.");
