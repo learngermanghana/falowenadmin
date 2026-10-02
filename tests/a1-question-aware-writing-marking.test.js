@@ -335,7 +335,7 @@ Andrews`);
 });
 
 test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only at marking time", () => {
-  for (const id of ["A1-1.1", "A1-1.2", "A1-14.1"]) {
+  for (const id of ["A1-1.1", "A1-1.2"]) {
     const entry = referenceEntry(id);
     assert.equal(entry.format, "objective", id);
     assert.deepEqual(entry.expectedParts, ["main"], id);
@@ -355,4 +355,14 @@ test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only 
     assert.equal(enriched.referenceEntry.partGrading?.teil2?.gradingMode, "ai_written_response", id);
     assert.deepEqual(enriched.referenceEntry.referenceAnswerParts, ["main"], id);
   }
+});
+
+test("A1-14.1 now commits its reading, writing and listening parts directly", () => {
+  const entry = referenceEntry("A1-14.1");
+  assert.deepEqual(entry.expectedParts, ["teil1", "teil2", "teil3"]);
+  assert.deepEqual(entry.referenceAnswerParts, ["teil1", "teil3"]);
+  assert.deepEqual(entry.writingParts, ["teil2"]);
+  assert.deepEqual(entry.aiGradedParts, ["teil2"]);
+  assert.equal(entry.partGrading?.teil2?.gradingMode, "ai_written_response");
+  assert.equal(entry.partGrading?.teil3?.gradingMode, "answer_key");
 });
