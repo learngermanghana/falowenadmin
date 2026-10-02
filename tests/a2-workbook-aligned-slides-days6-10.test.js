@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -6,6 +7,7 @@ import {
 } from "../src/data/a2WorkbookAlignedSlidesDays6To10.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
 import { getA2PresenterKnowledge } from "../src/data/a2PresenterKnowledge.js";
+import { getCanonicalTeachingSlideId, getTeachingSlideById } from "../src/data/teachingSlides.js";
 
 const EXPECTED = {
   "A2-3.6": {
@@ -113,4 +115,22 @@ test("Day 10 Wissensimpuls and focused practice stay inside the city-exploring s
     "Wir haben zuerst einen Markt besucht.",
     "Danach gingen wir in ein kleines Café.",
   ]);
+});
+
+test("old A2 Day 10 tourism Presenter URL redirects to the new city-exploring slide id", () => {
+  assert.equal(
+    getCanonicalTeachingSlideId("a2-day-10-tourismus-feste"),
+    "a2-day-10-stadt-entdecken",
+  );
+
+  const slide = getTeachingSlideById("a2-day-10-tourismus-feste");
+  assert.ok(slide);
+  assert.equal(slide.id, "a2-day-10-stadt-entdecken");
+  assert.equal(slide.assignmentId, "A2-4.10");
+  assert.match(slide.title, /Eine Stadt entdecken und etwas erleben/i);
+
+  const page = fs.readFileSync(new URL("../src/pages/TeachingSlidesPage.jsx", import.meta.url), "utf8");
+  assert.match(page, /getCanonicalTeachingSlideId/);
+  assert.match(page, /<Navigate/);
+  assert.match(page, /\$\{location\.search\}/);
 });
