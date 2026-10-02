@@ -1105,25 +1105,30 @@
 }
 
 .presenter-knowledge-inline-sentence {
-  border-radius: 4px;
-  cursor: pointer;
-  outline: none;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
+  border-radius: 3px;
+  transition: background-color 120ms ease;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
-.presenter-knowledge-inline-sentence:hover {
-  background: rgba(250, 204, 21, 0.16);
-}
-
-.presenter-knowledge-inline-sentence:focus-visible {
-  box-shadow: 0 0 0 2px #93c5fd;
-}
-
 .presenter-knowledge-inline-sentence.is-active {
   background: #fef3c7;
-  box-shadow: 0 0 0 2px #f59e0b;
+}
+
+.presenter-knowledge-inline-number {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.presenter-knowledge-inline-number:hover,
+.presenter-knowledge-inline-number:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
 }
 
 .presenter-knowledge-checks-reveal {
