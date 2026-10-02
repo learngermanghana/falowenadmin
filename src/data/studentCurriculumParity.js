@@ -16,7 +16,7 @@ const A2_TITLES = [
   "Eine Wohnung suchen",
   "Im Restaurant – bestellen und reagieren",
   "Urlaub und Erlebnisse",
-  "Tourismus und traditionelle Feste",
+  "Eine Stadt entdecken und etwas erleben",
   "Verkehrsmittel vergleichen",
   "Mein Traumberuf",
   "Vorstellungsgespräch",
