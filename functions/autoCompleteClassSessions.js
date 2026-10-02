@@ -188,7 +188,7 @@ async function runAutoCompleteClassSessionsJob({
 
 function createAutoCompleteClassSessionsJob({ admin, db, onSchedule }) {
   return onSchedule({
-    schedule: "*/5 * * * *",
+    schedule: "*/15 * * * *",
     timeZone: "Africa/Accra",
     retryCount: 1,
   }, async () => runAutoCompleteClassSessionsJob({ admin, db }));

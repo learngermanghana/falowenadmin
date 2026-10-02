@@ -183,7 +183,7 @@ jobs:
           node --check functions/attendanceConfirmationEmails.js
           grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
           grep -F 'config: classConfig' functions/attendanceConfirmationEmails.js
-          grep -F 'schedule: "*/15 * * * *"' functions/attendanceConfirmationEmails.js
+          grep -F 'schedule: "*/30 * * * *"' functions/attendanceConfirmationEmails.js
 
       - name: Test mobile reschedule date handling
         run: node --test tests/live-class-mobile-reschedule-date.test.js

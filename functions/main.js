@@ -44,7 +44,7 @@ module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob({
 });
 
 module.exports.cleanupExpiredPendingStudents = onSchedule({
-  schedule: "*/5 * * * *",
+  schedule: "0 * * * *",
   timeZone: "Africa/Accra",
   retryCount: 1,
   memory: "256MiB",
@@ -59,22 +59,14 @@ module.exports.cleanupExpiredPendingStudents = onSchedule({
   return result;
 });
 
-// Replace the original reminder export with a lifecycle-first version. Pending
-// students keep receiving reminders during the valid 7-day trial; once it ends
-// they are marked trial_expired before recipients are resolved, and final data
-// deletion happens only after the 30-day recovery window.
+// Keep class reminders on their five-minute cadence, but do not run the full
+// pending-student lifecycle cleanup on every reminder tick. The dedicated
+// cleanup job handles expiry and recovery-window deletion hourly.
 module.exports.sendClassSessionReminderEmails = onSchedule({
   schedule: "*/5 * * * *",
   timeZone: "Africa/Accra",
   retryCount: 1,
 }, async () => {
-  const cleanup = await cleanupExpiredPendingStudentsNow();
-  console.log("class_reminder_pre_trial_lifecycle", {
-    checked: cleanup.checked,
-    candidates: cleanup.candidates,
-    blocked: cleanup.blocked,
-    purged: cleanup.purged,
-  });
   return runClassSessionReminderEmailJob({
     admin,
     db,

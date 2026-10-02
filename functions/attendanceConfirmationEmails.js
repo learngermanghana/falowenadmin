@@ -795,7 +795,7 @@ async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}
 
 function createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig = {} }) {
   return onSchedule({
-    schedule: "*/15 * * * *",
+    schedule: "*/30 * * * *",
     timeZone: ACCRA_TIMEZONE,
     retryCount: 1,
   }, async () => runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig }));

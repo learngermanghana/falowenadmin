@@ -169,7 +169,7 @@ const requiredChecks = [
   [patchedWorker.includes(classIdentityRequire), "Attendance worker is missing canonical class identity validation."],
   [patchedWorker.includes('if (!acceptClassNameSessionMatch(session, klass)) return;'), "Attendance worker still accepts conflicting session identity matches."],
   [!patchedWorker.includes('field === "className" && !acceptClassNameSessionMatch(session, klass)'), "Attendance worker still guards only className query results."],
-  [patchedWorker.includes('schedule: "*/15 * * * *"'), "The 15-minute attendance scheduler is missing after patch."],
+  [patchedWorker.includes('schedule: "*/30 * * * *"'), "The 30-minute attendance scheduler is missing after patch."],
   [retrySource.includes('status: "failed"'), "The failed-delivery retry worker is missing failure-state protection."],
   [retrySource.includes('status: "sent"'), "The failed-delivery retry worker is missing success-state updates."],
 ];

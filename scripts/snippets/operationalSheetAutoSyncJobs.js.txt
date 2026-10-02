@@ -446,7 +446,7 @@ exports.autoSyncNewLiveClassToScheduleSheet = onDocumentCreated({
 });
 
 exports.syncPendingOperationalSheets = onSchedule({
-  schedule: "every 60 minutes",
+  schedule: "every 6 hours",
   timeZone: "Africa/Accra",
   secrets: [orientationAppsScriptUrlSecret, orientationSyncSecret, classScheduleAppsScriptUrlSecret, classScheduleSyncSecret],
 }, async () => {

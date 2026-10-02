@@ -304,9 +304,9 @@ async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}
 function createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig = {} }) {
   // The scheduler is now only a tiny due-queue dispatcher. Attendance/session
   // Firestore events create the queue records, so this no longer scans every
-  // class and every student every 15 minutes.
+  // class and every student every 30 minutes.
   return onSchedule({
-    schedule: "*/15 * * * *",
+    schedule: "*/30 * * * *",
     timeZone: ACCRA_TIMEZONE,
     retryCount: 1,
   }, async () => runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig }));
@@ -365,7 +365,7 @@ const checks = [
   [finalIndex.includes("exports.queueAttendanceConfirmationFromSession = onDocumentWritten"), "Attendance session event trigger is missing."],
   [finalIndex.includes("exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten"), "Attendance check-in event trigger is missing."],
   [finalIndex.includes("exports.queueAttendanceConfirmationFromClassSession = onDocumentWritten"), "Class-session completion event trigger is missing."],
-  [finalWorker.includes('schedule: "*/15 * * * *"'), "Attendance due-queue dispatcher schedule is missing."],
+  [finalWorker.includes('schedule: "*/30 * * * *"'), "Attendance due-queue dispatcher schedule is missing."],
 ];
 for (const [passed, message] of checks) {
   if (!passed) throw new Error(message);
