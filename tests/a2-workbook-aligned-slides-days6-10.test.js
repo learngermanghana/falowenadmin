@@ -5,6 +5,7 @@ import {
   getA2WorkbookAlignedSlideDay6To10,
 } from "../src/data/a2WorkbookAlignedSlidesDays6To10.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
+import { getA2PresenterKnowledge } from "../src/data/a2PresenterKnowledge.js";
 
 const EXPECTED = {
   "A2-3.6": {
@@ -96,4 +97,20 @@ test("Day 10 keeps the workbook on the friendly city-exploring theme", () => {
   assert.match(writing.detailEn, /friend/i);
   assert.match(reading.detailEn, /city-festival programme/i);
   assert.match(listening.detailEn, /Oktoberfest as one city experience/i);
+});
+
+test("Day 10 Wissensimpuls and focused practice stay inside the city-exploring story", () => {
+  const knowledge = getA2PresenterKnowledge("A2-4.10");
+
+  assert.ok(knowledge);
+  assert.match(knowledge.title, /Eine Stadt entdecken/i);
+  assert.match(knowledge.textDe, /Stadt oder ein neues Viertel/i);
+  assert.match(knowledge.textDe, /war und hatte/i);
+  assert.equal(knowledge.activity.title, "Entdeckungstag in der Stadt");
+  assert.match(knowledge.activity.instruction, /Stadttag/i);
+  assert.deepEqual(knowledge.activity.prompts, [
+    "Ich war am Samstag in der Altstadt.",
+    "Wir haben zuerst einen Markt besucht.",
+    "Danach gingen wir in ein kleines Café.",
+  ]);
 });
