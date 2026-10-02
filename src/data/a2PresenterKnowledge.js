@@ -120,14 +120,14 @@ const A2_KNOWLEDGE = {
     },
   },
   "A2-3.8": {
-    title: "Rezepte brauchen Reihenfolge",
-    textDe: "Ein Rezept muss so klar sein, dass eine andere Person die Schritte in der richtigen Reihenfolge ausführen kann. Deshalb helfen Wörter wie zuerst, dann, danach und zum Schluss. Für direkte Anweisungen benutzt man oft den Imperativ. Die Form hängt davon ab, ob man du, ihr oder Sie anspricht. Zutaten und Mengen sind wichtig, aber ohne klare Reihenfolge bleibt ein Rezept schwer verständlich.",
-    checks: ["Welche vier Wörter ordnen Kochschritte?", "Warum ist die Reihenfolge wichtig?", "Welche drei Anredeformen nennt der Text?"],
+    title: "Essen im Restaurant richtig einordnen",
+    textDe: "Auf einer Speisekarte findest du verschiedene Gruppen: Vorspeisen, Hauptgerichte, Beilagen, Getränke und Desserts. Wenn du etwas bestellst oder nachfragst, hilft es, zuerst zu erkennen, um welche Art von Essen oder Getränk es geht. So kannst du gezielter fragen, eine Empfehlung verstehen und auf ein Problem reagieren.",
+    checks: ["Welche fünf Gruppen nennt der Text?", "Warum hilft es, Speisen und Getränke zuerst einzuordnen?", "Wann brauchst du diese Information im Restaurant?"],
     activity: {
       title: "Finde das Muster",
-      instruction: "Ordnet die drei Kochanweisungen nach Anrede: du, ihr oder Sie.",
-      prompts: ["Schneide die Zwiebel klein.", "Schneidet die Tomaten.", "Schneiden Sie bitte das Brot."],
-      modelItems: ["du → Schneide ...", "ihr → Schneidet ...", "Sie → Schneiden Sie ..."],
+      instruction: "Ordnet die sechs Beispiele zu: Gericht, Getränk oder Beilage.",
+      prompts: ["Gemüsesuppe", "Mineralwasser", "Kartoffeln", "Salat", "Apfelsaft", "Reis"],
+      modelItems: ["Gericht → Gemüsesuppe / Salat", "Getränk → Mineralwasser / Apfelsaft", "Beilage → Kartoffeln / Reis"],
     },
   },
   "A2-4.9": {
