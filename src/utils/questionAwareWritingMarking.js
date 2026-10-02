@@ -992,7 +992,26 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     }
   }
 
-  if (currentWritingScore === null) return result;
+  if (currentWritingScore === null) {
+    const warning = "A writing section is required for this assignment, but no reliable writing score was available. Tutor review is required before a final score can be saved.";
+    return {
+      ...result,
+      score: null,
+      finalScore: null,
+      passed: false,
+      status: "needs_review",
+      shouldSendAutomatically: false,
+      reviewReasons: mergeReviewReasons(result.reviewReasons, [{
+        code: "writing_score_missing",
+        message: warning,
+        source: "question_aware_writing",
+      }]),
+      ai: {
+        ...(result.ai || {}),
+        writingScoreMissing: true,
+      },
+    };
+  }
   const deterministicCorrections = deterministicLanguageCorrections(source, primaryWritingPartId(task), task);
   const structured = readStructuredTask(result);
   const taskPointEvidence = task.level === "A1" && task.rubricVersion === A1_WRITING_RUBRIC_VERSION
