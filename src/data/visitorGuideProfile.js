@@ -17,9 +17,9 @@ export const VISITOR_GUIDE_PROFILE = {
     role: "Founder & Director",
     secondaryRole: "Founder & Software Developer, Falowen",
     bio:
-      "Felix founded Learn Language Education Academy in 2022. He studied International Management at IUB in Germany and holds a Goethe-Institut B2 German certificate. He also holds a TEFL certificate in Teaching English as a Foreign Language. As the software developer behind Falowen, he combines language education, technology and structured student learning.",
+      "Felix founded Learn Language Education Academy in 2022. He studied International Management at IUBH in Germany and holds a Goethe-Institut B2 German certificate. He also holds a TEFL certificate in Teaching English as a Foreign Language. As the software developer behind Falowen, he combines language education, technology and structured student learning.",
     credentials: [
-      "International Management · IUB, Germany",
+      "International Management · IUBH, Germany",
       "Goethe-Institut B2 German",
       "TEFL certified",
       "Software Developer · Falowen",
