@@ -264,6 +264,76 @@ Ama`;
   assert.equal(guarded.finalScore, 90);
 });
 
+test("A1-13 recovers a missing writing score instead of falling back to objective-only 100", () => {
+  const submission = `TEIL 1
+1. A
+2. B
+3. A
+4. A
+5. B
+6. B
+
+TEIL 2
+1. A
+2. B
+3. B
+
+TEIL 3
+Hallo, David
+
+Ich schreibe dir, weil es regnet und ich kann nicht zu deiner Geburstagsfeier kommen.
+Bielleicht können wir uns möchste Woche treffen.
+Es regnen sehr stark.
+
+Liebe Grüße.
+
+Andrews`;
+
+  const guarded = applyQuestionAwareWritingGuard(
+    {
+      assignmentKey: "A1-13",
+      level: "A1",
+      objectiveScore: 100,
+      objectiveCorrect: 9,
+      objectiveTotal: 9,
+      score: 100,
+      finalScore: 100,
+      writingScore: null,
+      writingScorePercent: null,
+      status: "marked",
+      shouldSendAutomatically: true,
+      corrections: [],
+      parts: [],
+    },
+    { referenceEntry: referenceEntry("A1-13"), submission: { assignmentId: "A1-13", level: "A1" } },
+    submission,
+  );
+
+  assert.ok(Number(guarded.writingScore) > 0);
+  assert.ok(guarded.finalScore < 100);
+  assert.equal(guarded.taskCompletion.completed, 2);
+  assert.equal(guarded.taskCompletion.total, 3);
+  assert.equal(guarded.missingTaskPoints.length, 1);
+  assert.match(guarded.missingTaskPoints[0], /wedding/i);
+  assert.equal(guarded.status, "needs_review");
+  assert.equal(guarded.shouldSendAutomatically, false);
+  assert.equal(guarded.ai?.recoveredMissingWritingScore, true);
+});
+
+test("A1-13 counts intended heavy rain as task evidence even when the verb form is wrong", () => {
+  const task = getA1WritingTaskSpec("A1-13");
+  const evidence = evaluateA1WritingTaskEvidence(task, `Teil 3
+Hallo David,
+ich kann nicht zu deiner Geburtstagsfeier kommen.
+Es regnen sehr stark.
+Vielleicht können wir uns nächste Woche treffen.
+Liebe Grüße
+Andrews`);
+
+  assert.equal(evidence[1].status, "met");
+  assert.match(evidence[1].evidence, /regnen sehr stark/i);
+});
+
 test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only at marking time", () => {
   for (const id of ["A1-1.1", "A1-1.2", "A1-14.1"]) {
     const entry = referenceEntry(id);
