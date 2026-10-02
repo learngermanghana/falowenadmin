@@ -136,6 +136,19 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Ein Zug fährt um 14:45 Uhr. Ist das vor oder nach 15 Uhr?", "Vor 15 Uhr."),
     check("Exit-Check: Sage einen Termin mit Tag, Datum und Uhrzeit.", "Accept a correct A1 example using am for the day/date and um for the time, for example: am Montag, am fünften Mai, um 18 Uhr."),
   ],
+  "A1-3.6": [
+    check("Was bedeutet können?", "Können bedeutet ability: etwas ist möglich / jemand hat die Fähigkeit."),
+    check("Bilde einen Satz mit können.", "Zum Beispiel: Ich kann Deutsch sprechen."),
+    check("Was bedeutet müssen?", "Müssen bedeutet necessity or obligation."),
+    check("Bilde einen Satz mit müssen.", "Zum Beispiel: Ich muss heute lernen."),
+    check("Was bedeutet möchten?", "Möchten drückt einen höflichen Wunsch aus."),
+    check("Bilde einen Satz mit möchten.", "Zum Beispiel: Ich möchte einen Tee trinken."),
+    check("Wo steht das konjugierte Modalverb in einem einfachen Hauptsatz?", "Normalerweise auf Position 2: Ich kann heute kommen."),
+    check("Wo steht der zweite Verbteil nach können, müssen oder möchten?", "Der Infinitiv steht am Satzende: Ich kann Deutsch sprechen."),
+    check("Korrigiere: „Ich kann spreche Deutsch.“", "Ich kann Deutsch sprechen."),
+    check("Ergänze: „Wir ___ heute arbeiten.“ Benutze müssen.", "Wir müssen heute arbeiten."),
+    check("Exit-Check: Bilde einen neuen Satz mit können, müssen oder möchten und einem Infinitiv am Ende.", "Accept one correct A1 sentence with a conjugated modal verb and a final infinitive."),
+  ],
   "A1-4.7": [
     check(
       "In Teil 3, if you want to make a polite request, how could you start?",
