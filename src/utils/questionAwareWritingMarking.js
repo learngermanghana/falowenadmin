@@ -321,6 +321,7 @@ function registerMismatch(task = {}, source = "") {
 }
 
 function numericPercent(value) {
+  if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
   return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : null;
 }
@@ -956,10 +957,62 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     || resolveQuestionAwareWritingTask(options);
   if (!task || !["A1", "A2", "B1"].includes(task.level)) return result;
 
-  const currentWritingScore = numericPercent(result.writingScorePercent ?? result.writingScore);
-  if (currentWritingScore === null) return result;
-
   const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "", task);
+  let currentWritingScore = numericPercent(result.writingScorePercent ?? result.writingScore);
+
+  if (currentWritingScore === null && source.split(/\s+/).filter(Boolean).length >= 5) {
+    const recovered = numericPercent(
+      heuristicWritingMarker({
+        level: task.level,
+        partId: primaryWritingPartId(task),
+        text: source,
+      })?.score,
+    );
+
+    if (recovered !== null && recovered > 0) {
+      const weightedOutcome = recomputeOutcome(result, task, recovered);
+      return applyQuestionAwareWritingGuard({
+        ...result,
+        score: weightedOutcome.finalScore,
+        finalScore: weightedOutcome.finalScore,
+        passed: weightedOutcome.passed,
+        scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,
+        writingMinimumMet: weightedOutcome.writingMinimumMet,
+        markingPolicy: weightedOutcome.policy,
+        writingScore: recovered,
+        writingScorePercent: recovered,
+        status: "needs_review",
+        shouldSendAutomatically: false,
+        ai: {
+          ...(result.ai || {}),
+          recoveredMissingWritingScore: true,
+          recoveredWritingScore: recovered,
+          recoveredWritingScoreSource: "local-writing-evidence",
+        },
+      }, options, rawSubmissionText);
+    }
+  }
+
+  if (currentWritingScore === null) {
+    const warning = "A writing section is required for this assignment, but no reliable writing score was available. Tutor review is required before a final score can be saved.";
+    return {
+      ...result,
+      score: null,
+      finalScore: null,
+      passed: false,
+      status: "needs_review",
+      shouldSendAutomatically: false,
+      reviewReasons: mergeReviewReasons(result.reviewReasons, [{
+        code: "writing_score_missing",
+        message: warning,
+        source: "question_aware_writing",
+      }]),
+      ai: {
+        ...(result.ai || {}),
+        writingScoreMissing: true,
+      },
+    };
+  }
   const deterministicCorrections = deterministicLanguageCorrections(source, primaryWritingPartId(task), task);
   const structured = readStructuredTask(result);
   const taskPointEvidence = task.level === "A1" && task.rubricVersion === A1_WRITING_RUBRIC_VERSION
