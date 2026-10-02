@@ -771,7 +771,7 @@ async function runClassSessionReminderEmailJob({
 
 function createClassSessionReminderEmailJob({ admin, db, onSchedule, runtimeConfig = {} }) {
   return onSchedule({
-    schedule: "*/5 * * * *",
+    schedule: "*/5 10-20 * * 1-5",
     timeZone: TZ,
     retryCount: 1,
   }, async () => runClassSessionReminderEmailJob({ admin, db, runtimeConfig }));
