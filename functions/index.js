@@ -149,6 +149,25 @@ function normalizeText(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+async function publicCheckinClassName(classId) {
+  const normalizedId = String(classId || "").trim();
+  if (!normalizedId) return "";
+  try {
+    const snap = await db.collection("classes").doc(normalizedId).get();
+    if (!snap.exists) return normalizedId;
+    const klass = snap.data() || {};
+    return String(klass.name || klass.className || klass.title || klass.classId || normalizedId).trim();
+  } catch {
+    return normalizedId;
+  }
+}
+
+function maskPhone(value) {
+  const digits = normalizePhoneKey(value);
+  if (!digits) return "";
+  return digits.length <= 4 ? digits : `••• ${digits.slice(-4)}`;
+}
+
 function normalizePhone(value) {
   return String(value || "").replace(/\D+/g, "");
 }
@@ -455,11 +474,15 @@ app.post("/checkin", async (req, res) => {
     }
 
     const candidateDocs = uniqueStudentDocs([...emailCandidates, ...phoneCandidates]);
-    if (!candidateDocs.length) return res.status(404).json({ error: "Student not found" });
+    if (!candidateDocs.length) {
+      return res.status(404).json({
+        error: "We could not match these details to a student record. Check the email and phone number you used when registering.",
+      });
+    }
 
     const candidatesWithStoredPhone = candidateDocs.filter((candidate) => normalizePhoneKey(resolveStudentPhone(candidate.data())));
     if (!candidatesWithStoredPhone.length) {
-      return res.status(400).json({ error: "Student phone is missing in records" });
+      return res.status(400).json({ error: "Your student record does not have a phone number yet. Please ask the school to update your student details." });
     }
 
     const identityMatchedDocs = candidatesWithStoredPhone.filter((candidate) => {
@@ -469,7 +492,7 @@ app.post("/checkin", async (req, res) => {
       return Boolean(normalizedEmail && normalizedPhone && candidateEmail === normalizedEmail && candidatePhone === normalizedPhone);
     });
     if (!identityMatchedDocs.length) {
-      return res.status(400).json({ error: "Email and phone number do not match student records" });
+      return res.status(400).json({ error: "The email and phone number do not match the same student record. Use the details you registered with." });
     }
 
     const studentRoleDocs = identityMatchedDocs.filter((candidate) => isStudentRoleAllowed(candidate.data()));
@@ -502,7 +525,9 @@ app.post("/checkin", async (req, res) => {
       }
     }
 
-    if (!studentDoc) return res.status(400).json({ error: "Student not in this class" });
+    if (!studentDoc) {
+      return res.status(400).json({ error: "These student details are valid, but this student is not enrolled in this class." });
+    }
 
     const st = studentDoc.data();
     const storedPhone = normalizePhoneKey(resolveStudentPhone(st));
@@ -525,6 +550,10 @@ app.post("/checkin", async (req, res) => {
         savedSessionId: sessionRef.id,
         requestedSessionId: sessionId,
         maskedEmail: maskEmail(rawEmail),
+        maskedPhone: maskPhone(resolveStudentPhone(st)),
+        studentName: String(st.name || st.firstName || "Student").trim(),
+        className: await publicCheckinClassName(classId),
+        sessionLabel: metadata.sessionLabel,
         submittedAt: Date.now(),
       });
     }
@@ -565,6 +594,10 @@ app.post("/checkin", async (req, res) => {
       requestedSessionId: sessionId,
       usedFallbackSession: sessionLookup.usedFallback,
       maskedEmail: maskEmail(rawEmail),
+      maskedPhone: maskPhone(resolveStudentPhone(st)),
+      studentName: String(st.name || st.firstName || "Student").trim(),
+      className: await publicCheckinClassName(classId),
+      sessionLabel: metadata.sessionLabel,
       submittedAt: Date.now(),
     });
   } catch (e) {
@@ -606,6 +639,7 @@ app.get("/checkinStatus", async (req, res) => {
       else status = "open";
     }
 
+    const className = await publicCheckinClassName(classId);
     return res.json({
       ok: true,
       status,
@@ -613,6 +647,9 @@ app.get("/checkinStatus", async (req, res) => {
       openFrom,
       openTo,
       serverTime: now,
+      className,
+      sessionLabel: String(session.sessionLabel || session.topic || "").trim(),
+      assignmentId: String(session.assignmentId || "").trim(),
     });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
