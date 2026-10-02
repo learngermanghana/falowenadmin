@@ -267,9 +267,62 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
     interactionFlow: [
       { phase: "Restaurant phrases", detailEn: "8 min: practise menu, ordering, recommendation, problem and payment phrases as short chunks." },
       { phase: "Choice by situation", detailEn: "8 min: give a restaurant situation; students choose the appropriate phrase and complete it." },
-      { phase: "Teacher model", detailEn: "6 min: model one short guest–waiter exchange from greeting to ordering." },
-      { phase: "Role-play", detailEn: "15 min: pairs perform greeting → menu → order → question → small problem → bill; then switch roles." },
+      { phase: "Information gap", detailEn: "10 min: Partner A and Partner B receive different restaurant-menu information and must ask each other for the missing details." },
+      { phase: "Progressive role-play", detailEn: "15 min: Round 1 order food and drink; Round 2 ask a restaurant question; Round 3 solve a wrong-order problem politely." },
       { phase: "Workbook bridge", detailEn: "5 min: remind students that Teil 3 Lesen and Teil 4 Hören remain the existing food/recipe exercises." },
+    ],
+    presenterFocusedPractice: {
+      title: "Informationslücke · Restaurant-Menü",
+      instruction: "Partner A und Partner B haben unterschiedliche Informationen. Fragt euch gegenseitig nach den fehlenden Preisen, Zutaten und Optionen. Zeigt eure Karte nicht.",
+      minutes: 10,
+      roleCards: [
+        {
+          id: "A",
+          title: "Rolle A · Gast A",
+          content: "Du siehst: Gemüsesuppe 6 €, Hähnchen mit Reis 13 €, Mineralwasser 3 €. Dir fehlen: Preis des Salats, ob der Salat vegetarisch ist und welches Dessert es gibt.",
+          task: "Frage Partner B nach den drei fehlenden Informationen. Benutze mindestens einmal: „Wie viel kostet ...?“, „Ist ... vegetarisch?“ oder „Was gibt es als Dessert?“",
+        },
+        {
+          id: "B",
+          title: "Rolle B · Gast B",
+          content: "Du siehst: Salat 8 € und vegetarisch, Apfelkuchen 5 €, Orangensaft 4 €. Dir fehlen: Preis der Gemüsesuppe, Preis des Mineralwassers und welche Beilage beim Hähnchen dabei ist.",
+          task: "Frage Partner A nach den drei fehlenden Informationen. Benutze mindestens einmal: „Wie viel kostet ...?“ oder „Welche Beilage gibt es zu ...?“",
+        },
+      ],
+      prompts: [
+        "Findet gemeinsam alle fehlenden Informationen.",
+        "Stellt vollständige Fragen statt nur einzelne Wörter zu nennen.",
+        "Bestätigt am Ende: Was würdet ihr bestellen?",
+      ],
+      modelItems: [
+        "Wie viel kostet der Salat?",
+        "Ist der Salat vegetarisch?",
+        "Welche Beilage gibt es zum Hähnchen?",
+        "Was gibt es als Dessert?",
+      ],
+    },
+    presenterSpeakingRounds: [
+      {
+        title: "Runde 1 · Bestellen",
+        instruction: "Du bist Gast. Bestelle ein Essen und ein Getränk höflich.",
+        prompts: ["Begrüßung", "Essen bestellen", "Getränk bestellen"],
+        modelItems: ["Guten Abend. Ich hätte gern die Gemüsesuppe und ein Mineralwasser, bitte."],
+        minutes: 4,
+      },
+      {
+        title: "Runde 2 · Nachfragen",
+        instruction: "Stelle mindestens eine echte Frage zum Essen oder zur Empfehlung.",
+        prompts: ["Nach einer Empfehlung fragen", "Nach vegetarischer Option oder Zutat fragen"],
+        modelItems: ["Was empfehlen Sie heute?", "Haben Sie auch etwas Vegetarisches?"],
+        minutes: 4,
+      },
+      {
+        title: "Runde 3 · Problem lösen",
+        instruction: "Etwas an deiner Bestellung stimmt nicht. Erkläre das Problem höflich und bitte um eine Lösung.",
+        prompts: ["Problem nennen", "gewünschte Korrektur sagen", "höflich bleiben"],
+        modelItems: ["Entschuldigung, ich habe Wasser ohne Kohlensäure bestellt. Könnten Sie das bitte austauschen?"],
+        minutes: 5,
+      },
     ],
     wrapUpTaskDe: "Spielt zu zweit eine kurze Restaurantszene. Bestelle ein Gericht und ein Getränk, stelle eine Frage, löse ein kleines Problem höflich und bitte am Ende um die Rechnung.",
     workbookConnection: {

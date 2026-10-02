@@ -1563,7 +1563,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
 
   if (level === "A2") {
     const knowledge = getA2PresenterKnowledge(normalizedAssignmentId(slide));
-    const focusedPractice = getA2FocusedPractice(normalizedAssignmentId(slide));
+    const focusedPractice = slide.presenterFocusedPractice || getA2FocusedPractice(normalizedAssignmentId(slide));
     return [
       {
         id: "intro",
@@ -1612,7 +1612,20 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
         return practiceStage ? [practiceStage] : [];
       })(),
-      buildProgressiveSpeakingStage(slide, speakingStage, level),
+      Array.isArray(slide.presenterSpeakingRounds) && slide.presenterSpeakingRounds.length
+        ? {
+            id: "questions",
+            type: "flow",
+            kicker: "Sprechen",
+            title: "Restaurant-Rollenspiel · 3 Runden",
+            variant: "scenario-task",
+            variantLabel: "Progressives Rollenspiel",
+            weekNumber: a2B1PresenterWeek(slide),
+            weekFamily: "Scenarios & decisions",
+            items: slide.presenterSpeakingRounds,
+            suggestedMinutes: slide.presenterSpeakingRounds.reduce((sum, item) => sum + Number(item?.minutes || 0), 0) || 13,
+          }
+        : buildProgressiveSpeakingStage(slide, speakingStage, level),
       workbookStage,
     ];
   }
