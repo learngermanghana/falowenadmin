@@ -927,14 +927,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     ) : null}
                     <details>
                       <summary>Show full text</summary>
-                      <ol className="presenter-knowledge-sentences is-compact">
+                      <p className="presenter-knowledge-numbered-text is-compact">
                         {numberedKnowledgeSentences.map(({ number, text }) => (
-                          <li key={`${number}-${text}`}>
-                            <span className="presenter-knowledge-sentence-number">{number}</span>
-                            <span>{text}</span>
-                          </li>
+                          <span key={`${number}-${text}`} className="presenter-knowledge-inline-sentence">
+                            <strong>{number}.</strong> {text}
+                          </span>
                         ))}
-                      </ol>
+                      </p>
                     </details>
                   </article>
                 ) : (
@@ -942,14 +941,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 )
               ) : (
                 <article className="presenter-knowledge-text">
-                  <ol className="presenter-knowledge-sentences" aria-label="Numbered Wissensimpuls sentences">
+                  <p className="presenter-knowledge-numbered-text" aria-label="Numbered Wissensimpuls sentences">
                     {numberedKnowledgeSentences.map(({ number, text }) => (
-                      <li key={`${number}-${text}`}>
-                        <span className="presenter-knowledge-sentence-number">{number}</span>
-                        <span>{text}</span>
-                      </li>
+                      <span key={`${number}-${text}`} className="presenter-knowledge-inline-sentence">
+                        <strong>{number}.</strong> {text}
+                      </span>
                     ))}
-                  </ol>
+                  </p>
                 </article>
               )}
               <div className="presenter-knowledge-checks">
