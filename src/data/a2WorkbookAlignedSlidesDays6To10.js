@@ -461,104 +461,104 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
     },
   },
   {
-    id: "a2-day-10-tourismus-feste",
+    id: "a2-day-10-stadt-entdecken",
     course: "A2",
     day: "Day 10",
     dayNumber: 10,
     assignmentId: "A2-4.10",
-    title: "A2 Day 10 · Tourismus und traditionelle Feste",
-    topic: "4.10 Tourismus und traditionelle Feste",
-    objective: "Students present a festival or destination clearly, recognize and use high-frequency Präteritum forms, and prepare the festival invitation and Oktoberfest listening while treating the Grundrechte reading as a separate comprehension topic.",
+    title: "A2 Day 10 · Eine Stadt entdecken und etwas erleben",
+    topic: "4.10 Eine Stadt entdecken und etwas erleben",
+    objective: "Students plan a friendly day exploring a city, talk about places and activities, use high-frequency Präteritum forms for past experiences, and connect the writing, reading and listening tasks to real city experiences.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
-      "Welches traditionelle Fest gibt es in deinem Heimatland?",
-      "Warum ist dieses Fest besonders?",
-      "Welche Orte besuchen Touristen in deinem Land gern?",
-      "Welche Vorteile und Probleme kann Tourismus bringen?",
+      "Welche Stadt oder welches Viertel würdest du gern besser kennenlernen?",
+      "Was entdeckst du in einer neuen Stadt zuerst: einen Markt, einen Park oder ein Café?",
+      "Erkundest du neue Orte lieber allein oder mit Freunden?",
+      "Welchen Ort in deiner Stadt würdest du einem Freund empfehlen?",
     ],
     keyPhrasesDe: [
-      "Heute spreche ich über ...",
-      "Das Fest findet in ... statt.",
+      "Ich möchte ... entdecken.",
+      "Zuerst könnten wir ...",
+      "Danach gehen wir ...",
       "Dort gibt es ...",
-      "Viele Besucher kommen, weil ...",
-      "Letztes Jahr war ich ... / Wir hatten ...",
-      "Am ersten Tag besuchte ich ... / Danach ging ich ...",
-      "Trotzdem empfehle ich ..., weil ...",
+      "Letztes Mal war ich ... / Wir hatten ...",
+      "Ich besuchte ... / Danach ging ich ...",
+      "Ich empfehle ..., weil ...",
     ],
     studentQuestionsDe: [
-      "Welches Fest oder welchen Ort möchtest du vorstellen?",
-      "Was kann man dort sehen, essen oder machen?",
-      "Welche Vorteile oder Probleme gibt es für Touristen?",
+      "Welche Stadt oder welchen neuen Ort möchtest du entdecken?",
+      "Welche zwei Orte oder Aktivitäten würdest du für einen entspannten Tag wählen?",
+      "Wo könnt ihr etwas essen oder trinken?",
       "Erzähle zwei Dinge in der Vergangenheit mit war/hatte oder einer weiteren Präteritumform.",
-      "Wie würdest du einen Freund zu diesem Fest einladen?",
+      "Wie würdest du einen Freund zu diesem Entdeckungstag einladen?",
     ],
     speakingModels: [
       {
-        "questionDe": "Welches Fest oder welchen Ort möchtest du vorstellen?",
-        "modelAnswerDe": "Ich möchte ein Musikfest in meiner Stadt vorstellen. Dort spielen verschiedene Bands, und viele Familien kommen zusammen."
+        questionDe: "Welche Stadt oder welchen neuen Ort möchtest du entdecken?",
+        modelAnswerDe: "Ich möchte die Altstadt von Köln besser kennenlernen, weil ich dort noch nicht viel gesehen habe."
       },
       {
-        "questionDe": "Was kann man dort sehen, essen oder machen?",
-        "modelAnswerDe": "Man kann dort Musik hören und tanzen. An kleinen Ständen kann man Reisgerichte und Snacks kaufen."
+        questionDe: "Welche zwei Orte oder Aktivitäten würdest du wählen?",
+        modelAnswerDe: "Zuerst würde ich über den Markt gehen. Danach könnten wir am Fluss spazieren und ein paar Fotos machen."
       },
       {
-        "questionDe": "Welche Vorteile oder Probleme gibt es für Touristen?",
-        "modelAnswerDe": "Touristen können lokale Musik kennenlernen und neue Gerichte probieren. Es ist aber manchmal sehr laut, und die Straßen sind voll."
+        questionDe: "Wo könnt ihr etwas essen oder trinken?",
+        modelAnswerDe: "Am Nachmittag könnten wir in ein kleines Café gehen. Ich würde gern einen Kuchen probieren und dort kurz entspannen."
       },
       {
-        "questionDe": "Erzähle zwei Dinge in der Vergangenheit mit war/hatte oder einer weiteren Präteritumform.",
-        "modelAnswerDe": "Letztes Jahr war ich mit meiner Schwester auf dem Fest. Wir hatten viel Spaß und blieben bis zum Abend."
+        questionDe: "Erzähle zwei Dinge in der Vergangenheit mit war/hatte oder einer weiteren Präteritumform.",
+        modelAnswerDe: "Letztes Jahr war ich in München. Wir hatten viel Zeit, besuchten die Altstadt und gingen später in ein Restaurant."
       },
       {
-        "questionDe": "Wie würdest du einen Freund zu diesem Fest einladen?",
-        "modelAnswerDe": "Hallo Alex, möchtest du am Samstag mit mir zum Musikfest gehen? Wir können uns um 16 Uhr vor dem Eingang treffen."
+        questionDe: "Wie würdest du einen Freund zu diesem Entdeckungstag einladen?",
+        modelAnswerDe: "Hallo Alex, möchtest du am Samstag mit mir die Altstadt entdecken? Wir können uns um 11 Uhr am Bahnhof treffen."
       }
     ],
     teacherNotesEn: [
-      "Follow the workbook presentation route: Ort → Fest/Tradition → Aktivitäten → Vorteil/Nachteil → eigene Meinung.",
+      "Keep the lesson friendly and everyday: city exploring with a friend, not a formal tourism presentation.",
       "Teach Präteritum as one conjugated past form and contrast it with Perfekt. At A2, prioritize war and hatte, then recognition/use of common forms such as ging, kam, fuhr, sah and fand.",
-      "Use the chapter topic for examples: Letztes Jahr war ich in München. Wir hatten viel Zeit. Am Samstag besuchte ich den Weihnachtsmarkt.",
-      "Bridge to the informal invitation: explain the festival and why it is special → invite with date/place → say what to bring or expect.",
-      "Flag the workbook’s Teil 3 Lesen as a separate Grundrechte/gesellschaftliches Leben comprehension text. Teil 4 Hören returns to the chapter theme with Oktoberfest details.",
+      "Use city-exploring examples: Letztes Jahr war ich in München. Wir hatten viel Zeit. Am Samstag besuchte ich die Altstadt. Danach ging ich in ein Café.",
+      "Bridge to the informal email: name the place → suggest two activities → give a day and meeting point → ask what the friend prefers.",
+      "Teil 3 Lesen is a city-festival programme and Teil 4 Hören is an Oktoberfest example; both now sit naturally inside the broader theme of things you can discover and experience in a city.",
     ],
     interactionFlow: [
-      { phase: "Festival model", detailEn: "7 min: teacher gives a short presentation using Ort → Tradition → Aktivitäten → benefit/problem → opinion." },
+      { phase: "Friendly city plan", detailEn: "7 min: teacher models a simple day plan using Ort → erster Stopp → Essen/Café → Aktivität → Tipp." },
       { phase: "Perfekt vs Präteritum", detailEn: "9 min: compare paired examples and identify the one-conjugated-verb pattern of Präteritum." },
-      { phase: "High-frequency past forms", detailEn: "8 min: practise war, hatte, ging, kam, fuhr, sah and fand in travel/festival sentences." },
-      { phase: "Student mini-presentation", detailEn: "10 min: students present one festival or destination and include at least two past-tense sentences." },
-      { phase: "Workbook bridge", detailEn: "7 min: plan the invitation letter and preview Oktoberfest listening categories: place, duration, food, clothing and activities." },
+      { phase: "High-frequency past forms", detailEn: "8 min: practise war, hatte, ging, kam, fuhr, sah and fand in short city-exploring sentences." },
+      { phase: "Student mini-presentation", detailEn: "10 min: students plan a relaxed city day and include at least two past-tense sentences from a previous experience." },
+      { phase: "Workbook bridge", detailEn: "7 min: plan the friendly invitation email, then preview the city-festival Lesen and Oktoberfest Hören categories." },
     ],
-    wrapUpTaskDe: "Sprich 5–6 Sätze über ein Fest oder eine Reise. Benutze war oder hatte und mindestens eine weitere Präteritumform. Beende mit einer Empfehlung und einem Grund.",
+    wrapUpTaskDe: "Sprich 5–6 Sätze über einen Tag in einer Stadt oder an einem neuen Ort. Benutze war oder hatte und mindestens eine weitere Präteritumform. Beende mit einer Empfehlung und einem Grund.",
     workbookConnection: {
       grammarUrl: "/campus/course/praeteritum-tourismus-und-traditionelle-feste-4-10-grammar-notes",
       workbookUrl: "/campus/course/a2-day-10-tourismus-und-traditionelle-feste-workbook",
       parts: [
         { label: "Grammar", detailEn: "Präteritum: one conjugated past-tense verb; regular verbs often use -te, strong verbs have changed stems, and A2 prioritizes war/hatte plus common forms such as ging, kam, fuhr, sah and fand." },
-        { label: "Teil 1 · Sprechen", detailEn: "Present one concrete festival or destination through Ort → Fest/Tradition → Aktivitäten → Vorteil/Nachteil → eigene Meinung." },
-        { label: "Teil 2 · Schreiben", detailEn: "Informal invitation to a festival: explain the event and why it is special, invite with date/place, and explain what the friend should bring or can expect." },
-        { label: "Teil 3 · Lesen", detailEn: "Separate comprehension topic: Grundgesetz, rights and duties, elections, integration councils, religious freedom and social life in Germany." },
-        { label: "Teil 4 · Hören", detailEn: "Oktoberfest: identify city, duration, traditional food, clothing and additional activities/rides." },
+        { label: "Teil 1 · Sprechen", detailEn: "Plan a friendly city-exploring day through Ort → erster Stopp → Essen/Café → Aktivität → Tipp." },
+        { label: "Teil 2 · Schreiben", detailEn: "Informal email to a friend: say which place you want to discover, suggest two activities or places, give a concrete day and meeting point, and ask what the friend prefers." },
+        { label: "Teil 3 · Lesen", detailEn: "Read a Sunday city-festival programme and find times, activities, location, entry information and the bad-weather alternative." },
+        { label: "Teil 4 · Hören", detailEn: "Oktoberfest as one city experience: identify city, duration, food, clothing and additional activities/rides." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 10 combines a tourism/festival speaking lesson with the next past-tense contrast. Students present one concrete festival or destination, then use high-frequency Präteritum forms in short past narratives. The invitation and Oktoberfest listening fit the chapter directly; the Grundrechte reading should be introduced clearly as a separate comprehension task.",
+      lessonOverviewEn: "Day 10 is now a friendly city-exploring lesson. Students plan what to see and do with a friend, then use high-frequency Präteritum forms to describe previous city experiences. The city-festival reading and Oktoberfest listening remain useful examples inside the broader idea of discovering what a city offers.",
       grammarFocusEn: [
         "Präteritum usually uses one conjugated verb form: Ich war, ich hatte, ich ging, ich besuchte. Contrast this with Perfekt’s auxiliary + participle structure.",
-        "Regular verbs commonly add -te plus endings: feiern → feierte, besuchen → besuchte; verbs such as arbeiten add an extra e: arbeitete.",
+        "Regular verbs commonly add -te plus endings: entdecken → entdeckte, besuchen → besuchte; verbs such as arbeiten add an extra e: arbeitete.",
         "Strong verbs have their own forms: gehen → ging, fahren → fuhr, sehen → sah, kommen → kam, finden → fand.",
         "Prioritize sein and haben for active A2 use: war/warst/waren and hatte/hattest/hatten. Students mainly need to recognize many other strong forms.",
       ],
       modelExamplesDe: [
         "Letztes Jahr war ich in München, und wir hatten viel Zeit.",
-        "Am Samstag besuchte ich einen Weihnachtsmarkt.",
-        "Danach ging ich mit Freunden essen.",
-        "Ich fand das Fest sehr interessant und empfehle es, weil die Atmosphäre besonders war.",
+        "Am Samstag besuchte ich die Altstadt.",
+        "Danach ging ich mit Freunden in ein kleines Café.",
+        "Ich fand den Markt sehr interessant und empfehle ihn, weil die Atmosphäre freundlich war.",
       ],
       commonMistakesEn: [
         "Mixing Perfekt and Präteritum forms inside one verb phrase: ich habe ging or ich bin fuhr.",
         "Using Partizip II as if it were Präteritum: gegangen instead of ging, gefahren instead of fuhr.",
         "Overloading A2 learners with every strong verb instead of prioritizing war, hatte and a small recognition set.",
-        "Presenting the Grundrechte reading as if it were about tourism or traditional festivals.",
+        "Turning the speaking task into a formal tourism report instead of a simple, friendly plan for exploring a place.",
       ],
     },
   },
