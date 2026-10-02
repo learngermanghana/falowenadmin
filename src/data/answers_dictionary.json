@@ -681,22 +681,37 @@
   },
   "A1 Weather 13": {
     "answers": {
-      "Answer1": "A",
-      "Answer2": "B",
-      "Answer3": "A",
-      "Answer4": "A",
-      "Answer5": "B",
-      "Answer6": "B",
-      "Answer7": "A",
-      "Answer8": "B",
-      "Answer9": "B"
+      "teil1": {
+        "Answer1": "A) Anzeige A",
+        "Answer2": "B) Anzeige B",
+        "Answer3": "A) Anzeige A",
+        "Answer4": "A) Anzeige A",
+        "Answer5": "B) Anzeige B",
+        "Answer6": "B) Anzeige B"
+      },
+      "teil2": {
+        "Answer1": "A) Mallorca",
+        "Answer2": "B) Toronto",
+        "Answer3": "B) WG/Apartments"
+      },
+      "teil4": {
+        "Answer1": "B) Es ist kalt und es regnet.",
+        "Answer2": "A) Es ist sonnig und warm.",
+        "Answer3": "B) 20 Grad",
+        "Answer4": "A) Dienstag um 15:30 Uhr",
+        "Answer5": "B) Mittwoch um 10:00 Uhr",
+        "Answer6": "C) Donnerstag um 19:00 Uhr"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/gviz/tq?tqx=out:html&sheet=Key",
+    "sheet_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/edit",
     "format": "objective",
     "assignment_id": "A1-13",
     "expectedParts": [
-      "main",
-      "teil3"
+      "teil1",
+      "teil2",
+      "teil3",
+      "teil4"
     ],
     "writingParts": [
       "teil3"
@@ -704,59 +719,95 @@
     "aiGradedParts": [
       "teil3"
     ],
-    "answerLayout": "flat",
     "referenceAnswerParts": [
-      "main"
+      "teil1",
+      "teil2",
+      "teil4"
     ],
+    "answerLayout": "multipart",
     "partGrading": {
-      "main": {
-        "label": "Teil 1 + Teil 2 objective work",
+      "teil1": {
+        "label": "Teil 1 Anzeigen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Grade the nine objective answers against the direct Answer1, Answer2, etc. keys."
+        "instruction": "Grade the six advertisement questions against the reference answers."
+      },
+      "teil2": {
+        "label": "Teil 2 Nachricht",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade the three message questions against the reference answers."
       },
       "teil3": {
         "label": "Teil 3 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
         "instruction": "Teil 3 is the second A1 letter-writing step after A1-12.3. It is an informal email to Bina, who invited the student to her wedding, but the student cannot attend. It has exactly three content points: (1) say that they cannot come, (2) give one concrete weather reason that explains why attendance is impossible, and (3) make a concrete suggestion for another meeting. Also grade the informal greeting, closing and student's name as letter form, but do not count them as extra task points. Grade the student's actual email using simple A1 expectations for task completion, email form, understandable sentence structure, basic verb forms, word order, vocabulary, spelling and capitalization. A neutral weather description alone is not enough if it does not function as the reason for missing the event. There is no fixed reference answer."
+      },
+      "teil4": {
+        "label": "Teil 4 Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade the six listening questions against the reference answers."
       }
     }
   },
   "A1 Health and Body Parts 14.1": {
     "answers": {
-      "Answer1": "Frage 1: Anzeige A",
-      "Answer2": "Frage 2: Anzeige B",
-      "Answer3": "Frage 3: Anzeige B",
-      "Answer4": "Frage 4: Anzeige A",
-      "Answer5": "Frage 5: Anzeige A",
-      "Answer6": "a. Head – Kopf",
-      "Answer7": "b. Arm – Arm",
-      "Answer8": "c. Leg – Bein",
-      "Answer9": "d. Eye – Auge",
-      "Answer10": "e. Nose – Nase",
-      "Answer11": "f. Ear – Ohr",
-      "Answer12": "g. Mouth – Mund",
-      "Answer13": "h. Hand – Hand",
-      "Answer14": "i. Foot – Fuß",
-      "Answer15": "j. Stomach / Belly – Bauch"
+      "teil1": {
+        "Answer1": "A) Anzeige A",
+        "Answer2": "B) Anzeige B",
+        "Answer3": "B) Anzeige B",
+        "Answer4": "A) Anzeige A",
+        "Answer5": "A) Anzeige A"
+      },
+      "teil3": {
+        "Answer1": "A) Fieber, Kopfschmerzen und Halsschmerzen",
+        "Answer2": "B) Zu Hause bleiben und viel Tee trinken",
+        "Answer3": "A) Am Freitag um 9:30 Uhr",
+        "Answer4": "A) Bahnhofstraße 12",
+        "Answer5": "B) Seine Versichertenkarte",
+        "Answer6": "A) Die Praxis anrufen"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/gviz/tq?tqx=out:html&sheet=Key",
+    "sheet_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/edit",
     "format": "objective",
     "assignment_id": "A1-14.1",
     "expectedParts": [
-      "main"
+      "teil1",
+      "teil2",
+      "teil3"
     ],
-    "answerLayout": "flat",
+    "writingParts": [
+      "teil2"
+    ],
+    "aiGradedParts": [
+      "teil2"
+    ],
     "referenceAnswerParts": [
-      "main"
+      "teil1",
+      "teil3"
     ],
+    "answerLayout": "multipart",
     "partGrading": {
-      "main": {
-        "label": "main",
+      "teil1": {
+        "label": "Teil 1 Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+        "instruction": "Grade the five health-service advertisement questions against the reference answers."
+      },
+      "teil2": {
+        "label": "Teil 2 Schreiben",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Teil 2 is the third A1 letter-writing step after A1-12.3 and A1-13. It is an informal email to Felix, who invited the student to a birthday, but the student cannot attend. Grade exactly three content points: (1) say that they cannot come, (2) give one concrete health reason, and (3) ask for or suggest another time to meet. Greeting, closing and the student's name are required letter form but are not extra content points. Use simple A1 expectations for task completion, email form, understandable sentence structure, basic verb forms, word order, vocabulary, spelling and capitalization. There is no fixed reference answer."
+      },
+      "teil3": {
+        "label": "Teil 3 Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade the six doctor-practice listening questions against the reference answers."
       }
     }
   },

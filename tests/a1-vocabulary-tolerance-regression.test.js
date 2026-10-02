@@ -49,46 +49,33 @@ Teil 3
   assert.equal(result.wrongAnswers.length, 0);
 });
 
-test("A1-14.1 accepts one-character spelling slips in otherwise correct body-part vocabulary", () => {
+test("A1-14.1 scores the new listening choices and ignores the health letter", () => {
   const referenceEntry = entryByAssignmentId("A1-14.1");
   assert.ok(referenceEntry);
 
   const submissionText = `Teil 1
-Frage 1
-1.Anzeige A
+1. A
+2. B
+3. B
+4. A
+5. A
 
-Frage 2
-2.Anzeige B
-
-Frage 3
-2.Anzeige B
-
-Frage 4
-1.Anzeige A
-
-Frage 5
-1.Anzeige A
-
-Teil 2 schreiben
+Teil 2
 Lieber Felix,
-danke für deine Einladung,ich kann leider nicht zu deinem Geburtstag kommen,veil ich krank bin.Mein Kopt tut sehr weh.kömmen wir uns nächste woche sehen?
+ich kann leider nicht kommen, weil ich krank bin. Können wir uns nächste Woche treffen?
 Liebe Grüße,
 Mary
 
 Teil 3
-A.Head-der Kopt
-B.Arm-der Arm
-C.leg-das Bein
-D.Eye-das Auge
-E.Nose-die Nase
-F.Ear-das Ohr
-G.mouth-der Mund
-H.hand -die hand
-I. foot-der fuß
-J.stomach/Belly-der Bauch`;
+1. A
+2. B
+3. A
+4. A
+5. B
+6. A`;
 
   const result = checkDeterministicObjectiveAnswers({ referenceEntry, submissionText });
-  assert.equal(result.objectiveCorrect, 15);
-  assert.equal(result.objectiveTotal, 15);
+  assert.equal(result.objectiveCorrect, 11);
+  assert.equal(result.objectiveTotal, 11);
   assert.equal(result.wrongAnswers.length, 0);
 });
