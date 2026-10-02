@@ -52,9 +52,9 @@ const A2_SITUATIONS = Object.freeze({
     example: "Du erzählst: „Letztes Jahr bin ich nach Berlin gefahren und habe viele Museen besucht.“",
   },
   10: {
-    title: "Tourismus und traditionelle Feste",
-    intro: "Bei diesem Thema erzählst du über frühere Erlebnisse, Feste oder Traditionen. Wichtig ist, was passiert ist und wie du die Situation erlebt hast.",
-    example: "Du erzählst: „Als Kind ging ich jedes Jahr mit meiner Familie zu diesem Fest.“",
+    title: "Eine Stadt entdecken und etwas erleben",
+    intro: "Bei diesem Thema entdeckst du eine Stadt oder einen neuen Ort mit einer Freundin oder einem Freund. Du sprichst über interessante Plätze, kleine Aktivitäten, Essen oder Cafés und erzählst auch kurz, was du dort erlebt hast.",
+    example: "Du erzählst: „Letzten Samstag war ich in der Altstadt. Wir besuchten einen Markt und gingen danach in ein kleines Café.“",
   },
   11: {
     title: "Verkehrsmittel vergleichen",
