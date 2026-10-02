@@ -941,19 +941,17 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                           <span
                             key={`${number}-${text}`}
                             className={`presenter-knowledge-inline-sentence${activeKnowledgeSentence === number ? " is-active" : ""}`}
-                            role="button"
-                            tabIndex={0}
-                            aria-pressed={activeKnowledgeSentence === number}
-                            onClick={() => selectKnowledgeSentence(number)}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                selectKnowledgeSentence(number);
-                              }
-                            }}
-                          >
-                            <strong>{number}.</strong> {text}
-                          </span>
+                      >
+                            <button
+                              type="button"
+                              className="presenter-knowledge-inline-number"
+                              aria-pressed={activeKnowledgeSentence === number}
+                              aria-label={`Highlight sentence ${number}`}
+                              onClick={() => selectKnowledgeSentence(number)}
+                            >
+                              {number}.
+                            </button>{" "}{text}
+                      </span>
                         ))}
                       </p>
                     </details>
@@ -968,18 +966,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       <span
                         key={`${number}-${text}`}
                         className={`presenter-knowledge-inline-sentence${activeKnowledgeSentence === number ? " is-active" : ""}`}
-                        role="button"
-                        tabIndex={0}
-                        aria-pressed={activeKnowledgeSentence === number}
-                        onClick={() => selectKnowledgeSentence(number)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            selectKnowledgeSentence(number);
-                          }
-                        }}
                       >
-                        <strong>{number}.</strong> {text}
+                        <button
+                          type="button"
+                          className="presenter-knowledge-inline-number"
+                          aria-pressed={activeKnowledgeSentence === number}
+                          aria-label={`Highlight sentence ${number}`}
+                          onClick={() => selectKnowledgeSentence(number)}
+                        >
+                          {number}.
+                        </button>{" "}{text}
                       </span>
                     ))}
                   </p>
