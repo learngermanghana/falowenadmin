@@ -159,8 +159,8 @@ jobs:
           grep -F 'checkinMetadataHydrated: true' functions/index.js
           grep -F '.find((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))' functions/index.js
           grep -F 'classStartsAt: startsAt.toISOString()' functions/classSessionAutoCheckin.js
-          grep -F 'const hydratedAssignmentId' src/pages/CheckinPage.jsx
-          grep -F 'getTeachingSlideByAssignmentId(hydratedAssignmentId)' src/pages/CheckinPage.jsx
+          grep -F 'const resolvedAssignmentId' src/pages/CheckinPage.jsx
+          grep -F 'Teacher presentation slides are not shared from the attendance page.' src/pages/CheckinPage.jsx
           grep -F 'schedule: "*/30 * * * *"' functions/attendanceConfirmationEmails.js
           grep -F 'async function queueAttendanceConfirmationEvent' functions/attendanceConfirmationEmails.js
           grep -F '.where("nextRunAt", "<=",' functions/attendanceConfirmationEmails.js

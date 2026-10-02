@@ -43,12 +43,36 @@ test("automatic attendance opening persists class metadata for future status rea
   assert.match(autoCheckinSource, /endTime: formatTime24\(sessionEnd\(session\)/);
 });
 
-test("CheckinPage uses hydrated metadata for display, slides, countdown and submission", () => {
-  assert.match(pageSource, /const hydratedAssignmentId/);
-  assert.match(pageSource, /getTeachingSlideByAssignmentId\(hydratedAssignmentId\)/);
-  assert.match(pageSource, /date: hydratedDate/);
-  assert.match(pageSource, /sessionLabel: hydratedSessionLabel/);
-  assert.match(pageSource, /assignmentId: hydratedAssignmentId/);
+test("CheckinPage uses hydrated metadata without exposing teacher slides or internal attendance IDs", () => {
+  assert.match(pageSource, /const resolvedDate/);
+  assert.match(pageSource, /const resolvedAssignmentId/);
+  assert.match(pageSource, /checkinStatus\?\.className/);
+  assert.match(pageSource, /checkinStatus\?\.sessionLabel/);
   assert.match(pageSource, /checkinStatus\?\.startsAt/);
-  assert.match(pageSource, /\{hydratedAssignmentId \|\| "-"\}/);
+  assert.match(pageSource, /date: resolvedDate/);
+  assert.match(pageSource, /assignmentId: resolvedAssignmentId/);
+  assert.doesNotMatch(pageSource, /getTeachingSlideByAssignmentId/);
+  assert.doesNotMatch(pageSource, /Download this teaching slide/);
+  assert.doesNotMatch(pageSource, /Assignment ID:/);
+  assert.doesNotMatch(pageSource, /Saved to:/);
+  assert.doesNotMatch(pageSource, /Normalized student number/);
+  assert.doesNotMatch(pageSource, /Saved under session ID/);
+});
+
+
+test("student check-in explains verified roster matching and supports browser autofill", () => {
+  assert.match(pageSource, /verify both details against the class roster/i);
+  assert.match(pageSource, /autoComplete="email"/);
+  assert.match(pageSource, /autoComplete="tel"/);
+  assert.match(pageSource, /Ghana local and \+233 formats are accepted/);
+  assert.match(pageSource, /Attendance recorded/);
+  assert.match(pageSource, /Not me/);
+});
+
+test("check-in API returns student-friendly identity and class confirmation metadata", () => {
+  assert.match(apiSource, /maskedPhone:/);
+  assert.match(apiSource, /studentName:/);
+  assert.match(apiSource, /className:/);
+  assert.match(apiSource, /not enrolled in this class/i);
+  assert.match(apiSource, /do not match the same student record/i);
 });

@@ -140,12 +140,15 @@ if (!apiSource.includes("checkinMetadataHydrated: true")) {
       checkinMetadataHydrated: true,
     };
 
+    const className = await publicCheckinClassName(classId);
+
     if (!sessionSnap.exists) {
       return res.json({
         ok: true,
         status: "not_opened",
         opened: false,
         serverTime: admin.firestore.Timestamp.now().toMillis(),
+        className,
         ...metadata,
       });
     }
@@ -169,6 +172,7 @@ if (!apiSource.includes("checkinMetadataHydrated: true")) {
       openFrom,
       openTo,
       serverTime: now,
+      className,
       ...metadata,
     });
   } catch (e) {
@@ -243,145 +247,34 @@ if (!autoSource.includes("classStartsAt: startsAt.toISOString()")) {
 fs.writeFileSync(autoCheckinPath, autoSource, "utf8");
 
 let pageSource = fs.readFileSync(pagePath, "utf8");
-if (!pageSource.includes("const hydratedAssignmentId")) {
-  pageSource = replaceOnce(
-    pageSource,
-    `  const [checkinStatus, setCheckinStatus] = useState(null);
-  const [serverTimeMs, setServerTimeMs] = useState(() => Date.now());
-
-  const expectedStudents = useMemo(() => parseExpectedNames(expectedStudentsRaw), [expectedStudentsRaw]);`,
-    `  const [checkinStatus, setCheckinStatus] = useState(null);
-  const [serverTimeMs, setServerTimeMs] = useState(() => Date.now());
-
-  const hydratedDate = String(date || checkinStatus?.date || dateLabel || "").trim();
-  const hydratedSessionLabel = String(
-    sessionLabel || checkinStatus?.sessionLabel || checkinStatus?.topic || sessionDisplayLabel || "",
-  ).trim();
-  const hydratedAssignmentId = String(assignmentId || checkinStatus?.assignmentId || "").trim();
-  const hydratedStartTime = String(startTime || checkinStatus?.startTime || "").trim();
-  const hydratedEndTime = String(endTime || checkinStatus?.endTime || "").trim();
-
-  const expectedStudents = useMemo(() => parseExpectedNames(expectedStudentsRaw), [expectedStudentsRaw]);`,
-    "hydrated check-in metadata values",
-  );
+if (pageSource.includes('className="checkin-student-header"')) {
+  const cleanPageRequired = [
+    "const resolvedDate",
+    "const resolvedAssignmentId",
+    "checkinStatus?.className",
+    "checkinStatus?.sessionLabel",
+    "checkinStatus?.startsAt",
+    "date: resolvedDate",
+    "assignmentId: resolvedAssignmentId",
+    "Teacher presentation slides are not shared from the attendance page.",
+  ];
+  cleanPageRequired.forEach((marker) => {
+    if (!pageSource.includes(marker)) throw new Error(`Clean student check-in marker missing: ${marker}`);
+  });
+  const forbiddenStudentUi = [
+    "getTeachingSlideByAssignmentId",
+    "Download this teaching slide",
+    "Assignment ID:",
+    "Saved to:",
+    "Normalized student number",
+    "Saved under session ID",
+  ];
+  forbiddenStudentUi.forEach((marker) => {
+    if (pageSource.includes(marker)) throw new Error(`Student check-in still exposes admin/teacher UI: ${marker}`);
+  });
+} else {
+  throw new Error("Check-in page must use the clean verified-student experience.");
 }
-
-pageSource = replaceOnce(
-  pageSource,
-  `  const matchingSlide = useMemo(() => getTeachingSlideByAssignmentId(assignmentId), [assignmentId]);`,
-  `  const matchingSlide = useMemo(() => getTeachingSlideByAssignmentId(hydratedAssignmentId), [hydratedAssignmentId]);`,
-  "assignment-specific slide hydration",
-);
-
-pageSource = replaceOnce(
-  pageSource,
-  `    if (startTime || endTime) return \`${"${startTime || \"--:--\"} to ${endTime || \"--:--\"} ${ATTENDANCE_TIME_ZONE_LABEL}"}\`;
-    return "-";
-  }, [checkinStatus, startTime, endTime]);`,
-  `    if (hydratedStartTime || hydratedEndTime) return \`${"${hydratedStartTime || \"--:--\"} to ${hydratedEndTime || \"--:--\"} ${ATTENDANCE_TIME_ZONE_LABEL}"}\`;
-    return "-";
-  }, [checkinStatus, hydratedStartTime, hydratedEndTime]);`,
-  "attendance window fallback metadata",
-);
-
-pageSource = replaceOnce(
-  pageSource,
-  `    const startLabel = formatStartTimeLabel(startTime, checkinStatus);
-    return \`Hello! Class starts at ${"${startLabel}"}. Kindly check in for your attendance to be recorded while you wait for the meeting to start.\`;
-  }, [startTime, checkinStatus]);`,
-  `    const startLabel = formatStartTimeLabel(hydratedStartTime, checkinStatus);
-    return \`Hello! Class starts at ${"${startLabel}"}. Kindly check in for your attendance to be recorded while you wait for the meeting to start.\`;
-  }, [hydratedStartTime, checkinStatus]);`,
-  "personalized start metadata",
-);
-
-pageSource = replaceOnce(
-  pageSource,
-  `    const endLabel = formatEndTimeLabel(endTime, checkinStatus);
-    return \`Class ended at ${"${endLabel}"}. If you still have not checked in, submit now so your attendance can still be recorded.\`;
-  }, [endTime, checkinStatus]);`,
-  `    const endLabel = formatEndTimeLabel(hydratedEndTime, checkinStatus);
-    return \`Class ended at ${"${endLabel}"}. If you still have not checked in, submit now so your attendance can still be recorded.\`;
-  }, [hydratedEndTime, checkinStatus]);`,
-  "personalized end metadata",
-);
-
-pageSource = replaceOnce(
-  pageSource,
-  `    const serverScheduledStart = Number(checkinStatus?.openFrom || 0) || null;
-    const fallbackStart = resolveFallbackStartTimestamp(date, startTime);
-    const startMs = serverScheduledStart || fallbackStart;`,
-  `    const serverClassStart = Number(checkinStatus?.startsAt || 0) || null;
-    const serverScheduledStart = Number(checkinStatus?.openFrom || 0) || null;
-    const fallbackStart = resolveFallbackStartTimestamp(hydratedDate, hydratedStartTime);
-    const startMs = serverClassStart || fallbackStart || serverScheduledStart;`,
-  "class countdown metadata",
-);
-pageSource = replaceOnce(
-  pageSource,
-  `  }, [checkinStatus, serverTimeMs, date, startTime]);`,
-  `  }, [checkinStatus, serverTimeMs, hydratedDate, hydratedStartTime]);`,
-  "class countdown dependencies",
-);
-
-pageSource = replaceOnce(
-  pageSource,
-  `        body: JSON.stringify({
-          classId,
-          sessionId,
-          date,
-          email: trimmedEmail,
-          phoneNumber: trimmedPhone,
-          sessionLabel: sessionLabel || sessionDisplayLabel,
-          assignmentId,
-        }),`,
-  `        body: JSON.stringify({
-          classId,
-          sessionId,
-          date: hydratedDate,
-          email: trimmedEmail,
-          phoneNumber: trimmedPhone,
-          sessionLabel: hydratedSessionLabel,
-          assignmentId: hydratedAssignmentId,
-        }),`,
-  "hydrated check-in submission payload",
-);
-pageSource = replaceOnce(
-  pageSource,
-  `        sessionDisplayLabel: sessionLabel || sessionDisplayLabel,`,
-  `        sessionDisplayLabel: hydratedSessionLabel,`,
-  "hydrated local confirmation label",
-);
-pageSource = replaceOnce(
-  pageSource,
-  `<div>You will be working on <b>{sessionDisplayLabel || "today's lesson"}</b>.</div>`,
-  `<div>You will be working on <b>{hydratedSessionLabel || "today's lesson"}</b>.</div>`,
-  "hydrated lesson display",
-);
-pageSource = replaceOnce(
-  pageSource,
-  `<div><b>Date:</b> {dateLabel || "-"}</div>\n          <div><b>Session:</b> {sessionDisplayLabel || "-"}</div>\n          <div><b>Assignment ID:</b> {assignmentId || "-"}</div>`,
-  `<div><b>Date:</b> {hydratedDate || "-"}</div>\n          <div><b>Session:</b> {hydratedSessionLabel || "-"}</div>\n          <div><b>Assignment ID:</b> {hydratedAssignmentId || "-"}</div>`,
-  "hydrated metadata display",
-);
-pageSource = replaceOnce(
-  pageSource,
-  `<div>Session: {sessionDisplayLabel || "-"}</div>`,
-  `<div>Session: {hydratedSessionLabel || "-"}</div>`,
-  "hydrated success session display",
-);
-
-const pageRequired = [
-  "const hydratedAssignmentId",
-  "getTeachingSlideByAssignmentId(hydratedAssignmentId)",
-  "date: hydratedDate",
-  "sessionLabel: hydratedSessionLabel",
-  "assignmentId: hydratedAssignmentId",
-  "checkinStatus?.startsAt",
-];
-pageRequired.forEach((marker) => {
-  if (!pageSource.includes(marker)) throw new Error(`Check-in page hydration marker missing: ${marker}`);
-});
 fs.writeFileSync(pagePath, pageSource, "utf8");
 
 const apiRequired = [
