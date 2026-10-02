@@ -205,129 +205,60 @@ TEIL 3
   assert.equal(result.details[6].correct, true);
 });
 
-test("computes A1-14.1 objective score from choices and vocabulary pairs", () => {
+test("computes A1-14.1 objective score from reading and listening choices", () => {
   const result = computeObjectiveScore("A1-14.1", `
-    1. A Anzeige A
-    2. B Anzeige B
-    3. B
-    4. A
-    5. A
-    Head – Kopf
-    Arm – Arm
-    Leg – Bein
-    Eye – Auge
-    Nose – Nase
-    Ear – Ohr
-    Mouth – Mund
-    Hand – Hand
-    Foot – Fuß
-    Belly – Bauch
-  `);
+Teil 1
+1. A
+2. B
+3. B
+4. A
+5. A
 
-  assert.equal(result.correctCount, 15);
-  assert.equal(result.totalCount, 15);
-});
-
-test("accepts German articles in A1-14.1 body-part vocabulary answers", () => {
-  const result = computeObjectiveScore("A1-14.1", `
-Frage 1.
-1. Anzeige A
-
-Frage 2
-2. Anzeige B
-
-Frage 3.
-2. Anzeige B
-
-Frage 4
-1. Anzeige B
-
-Frage 5
-1. Anzeige A
-
-Head - Der Kopf
-Arm - Der Arm
-Leg - Das Bein
-Eye - Das Auge
-Nose - Die Nase
-Ear - Das Ohr
-Mouth - Der Mund
-Hand - Die Hand
-Foot - Der Fuß
-Stomach/Belly - Der Bauch
-  `);
-
-  assert.equal(result.correctCount, 14);
-  assert.equal(result.totalCount, 15);
-  assert.equal(result.details[4].correct, false);
-  assert.ok(Object.entries(result.details).filter(([question]) => Number(question) >= 6).every(([, detail]) => detail.correct));
-});
-
-test("computes A1-14.1 objective score from the Reuben numbered German-only sample", () => {
-  const result = computeObjectiveScore("A1-14.1", `
-Teil 1:
-1. A  Anzeige A
-2. B  Anzeige B
-3. B  Anzeige B
-4. A  Anzeige A
-5. A  Anzeige A
-
-Teil 2:
+Teil 2
 Lieber Felix,
-ich hoffe, es geht dir gut. Ich schreibe dir wegen deiner Einladung zu deinem Geburtstag. Vielen Dank für die Einladung, aber leider kann ich nicht kommen. Ich bin krank und habe Halsschmerzen. Es tut mir leid, dass ich nicht kommen kann. Können wir uns ein anderes Mal treffen und zusammen feiern? Ich freue mich auf deine Antwort.
-Viele Grüße
-Reuben
+ich kann leider nicht kommen, weil ich krank bin.
+Können wir uns nächste Woche treffen?
+Liebe Grüße
 
-Teil 3:
-1. Kopf
-2. Arm
-3. Bein
-4. Auge
-5. Nase
-6. Ohr
-7. Mund
-8 Hand
-9. Fuss
-10. Bauch
+Teil 3
+1. A
+2. B
+3. A
+4. A
+5. B
+6. A
   `);
 
-  assert.equal(result.correctCount, 15);
-  assert.equal(result.totalCount, 15);
+  assert.equal(result.correctCount, 11);
+  assert.equal(result.totalCount, 11);
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
+  assert.equal(Object.values(result.details).some((detail) => detail.partId === "teil2"), false);
 });
 
-test("computes partial A1-14.1 objective score for real typo/wrong-answer variants", () => {
+test("A1-14.1 reports wrong listening answers under Teil 3", () => {
   const result = computeObjectiveScore("A1-14.1", `
-Teil 1:
-1.Anzeige A
-2.Anzeige B
-Frage 3.
-2.Anzeige B
-Frage 4.
-Anzeige A
-Frage 5.
-2.Anzeige B
+Teil 1
+1. A
+2. B
+3. B
+4. A
+5. A
 
-Teil 3:
-Head-kopf
-Arm -Arm.
-Leg - Beine.
-Eye-Auge.
-Nose-Nase.
-Ear- Ohr.
-Mouth-Mund.
-Hand-Hand.
-Foot-Fuß.
-Stomach /Belly -Magen
+Teil 3
+1. B
+2. B
+3. A
+4. A
+5. B
+6. C
   `);
 
-  assert.equal(result.totalCount, 15);
-  assert.equal(result.correctCount, 12);
-  assert.equal(result.details[5].correct, false);
-  assert.equal(result.details[8].correct, false);
-  assert.equal(result.details[15].correct, false);
+  assert.equal(result.totalCount, 11);
+  assert.equal(result.correctCount, 9);
+  assert.equal(result.details["teil3.1"].correct, false);
+  assert.equal(result.details["teil3.6"].correct, false);
+  assert.equal(result.details["teil3.2"].correct, true);
 });
-
 test("loads dynamic multipart answer keys from answers_dictionary by assignment id", () => {
   const result = computeObjectiveScore("A2-1.1", `
 Teil 2:
