@@ -427,7 +427,14 @@ function a2VocabularySituation(term = "") {
   if (lower.includes("damit")) return "Du möchtest einen Zweck oder ein Ziel ausdrücken.";
   if (lower.includes("sollte")) return "Du möchtest einen Rat oder eine Empfehlung geben.";
   if (lower.includes("wichtig")) return "Du möchtest sagen, was wichtig ist.";
-  return "Du möchtest eine passende Formulierung für diese Aussage wählen.";
+  if (lower.includes("speisekarte")) return "Du bist im Restaurant und möchtest höflich um die Speisekarte bitten. Welche Formulierung passt?";
+  if (lower.includes("hätte gern")) return "Du möchtest höflich ein bestimmtes Essen oder Getränk bestellen. Welche Formulierung passt?";
+  if (lower.startsWith("ich nehme")) return "Du hast dich entschieden und sagst dem Service, welches Gericht du wählst. Welche Formulierung passt?";
+  if (lower.includes("empfehlen sie")) return "Du möchtest das Servicepersonal nach einer Empfehlung fragen. Welche Formulierung passt?";
+  if (lower.includes("vegetar")) return "Du möchtest fragen, ob es eine vegetarische Option gibt. Welche Formulierung passt?";
+  if (lower.includes("ich habe") && lower.includes("bestellt")) return "Du hast etwas anderes bekommen als bestellt und möchtest das höflich erklären. Welche Formulierung passt?";
+  if (lower.includes("zahlen")) return "Du bist fertig und möchtest höflich um die Rechnung bitten. Welche Formulierung passt?";
+  return "Lies die konkrete Situation und wähle die Formulierung, die kommunikativ dazu passt.";
 }
 
 function b1VocabularyFunction(term = "") {
