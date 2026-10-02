@@ -333,8 +333,18 @@ const b1Slides = buildLevelSlides("B1").map((slide) => curatedSlidesByAssignment
 
 export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides, ...b2PresenterSlides, ...c1PresenterSlides, ...c2PresenterSlides];
 
+export const teachingSlideIdAliases = Object.freeze({
+  "a2-day-10-tourismus-feste": "a2-day-10-stadt-entdecken",
+});
+
+export function getCanonicalTeachingSlideId(id = "") {
+  const normalized = String(id || "").trim();
+  return teachingSlideIdAliases[normalized] || normalized;
+}
+
 export function getTeachingSlideById(id) {
-  return teachingSlides.find((slide) => slide.id === id) || null;
+  const canonicalId = getCanonicalTeachingSlideId(id);
+  return teachingSlides.find((slide) => slide.id === canonicalId) || null;
 }
 
 export function getTeachingSlideByAssignmentId(assignmentId) {
