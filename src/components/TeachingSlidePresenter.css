@@ -1104,6 +1104,45 @@
   font-weight: 900;
 }
 
+.presenter-knowledge-inline-sentence {
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.presenter-knowledge-inline-sentence:hover {
+  background: rgba(250, 204, 21, 0.16);
+}
+
+.presenter-knowledge-inline-sentence:focus-visible {
+  box-shadow: 0 0 0 2px #93c5fd;
+}
+
+.presenter-knowledge-inline-sentence.is-active {
+  background: #fef3c7;
+  box-shadow: 0 0 0 2px #f59e0b;
+}
+
+.presenter-knowledge-checks-reveal {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: #1d4ed8;
+  padding: 2px 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-knowledge-checks-reveal:hover,
+.presenter-knowledge-checks-reveal:focus-visible {
+  text-decoration: underline;
+}
+
 .presenter-knowledge-numbered-text.is-compact {
   margin-top: 10px;
   color: #0f172a;
