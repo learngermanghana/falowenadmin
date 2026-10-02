@@ -1086,6 +1086,56 @@
   font-weight: 650;
 }
 
+.presenter-knowledge-sentences {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.presenter-knowledge-sentences li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  color: #0f172a;
+  font-size: clamp(18px, 2vw, 27px);
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.presenter-knowledge-sentence-number {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.presenter-knowledge-sentences.is-compact {
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.presenter-knowledge-sentences.is-compact li {
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.presenter-knowledge-sentences.is-compact .presenter-knowledge-sentence-number {
+  min-width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
 .presenter-knowledge-checks {
   border-top: 1px solid #cbd5e1;
   padding-top: 14px;
