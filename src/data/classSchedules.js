@@ -37,7 +37,7 @@ export const classSchedules = {
     { week: 'Woche 3', day: 'Day 7', date: 'Tuesday, 24 February 2026', topic: '3.7. Eine Wohnung suchen (Übung)' },
     { week: 'Woche 3', day: 'Day 8', date: 'Wednesday, 25 February 2026', topic: '3.8. Im Restaurant – bestellen und reagieren (Exercise)' },
     { week: 'Woche 4', day: 'Day 9', date: 'Monday, 02 March 2026', topic: '4.9. Urlaub' },
-    { week: 'Woche 4', day: 'Day 10', date: 'Tuesday, 03 March 2026', topic: '4.10. Tourismus und Traditionelle Feste' },
+    { week: 'Woche 4', day: 'Day 10', date: 'Tuesday, 03 March 2026', topic: '4.10. Eine Stadt entdecken und etwas erleben' },
     { week: 'Woche 4', day: 'Day 11', date: 'Wednesday, 04 March 2026', topic: '4.11. Unterwegs: Verkehrsmittel vergleichen' },
     { week: 'Woche 5', day: 'Day 12', date: 'Monday, 09 March 2026', topic: '5.12. Mein Traumberuf (Exercise)' },
     { week: 'Woche 5', day: 'Day 13', date: 'Tuesday, 10 March 2026', topic: '5.13. Ein Vorstellungsgesprach (Exercise)' },
