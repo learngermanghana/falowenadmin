@@ -35,7 +35,9 @@ test("Wissensimpuls renders as one continuous paragraph, not a numbered list", (
   const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
 
   assert.match(presenter, /<p className="presenter-knowledge-numbered-text"/);
-  assert.match(presenter, /<strong>\{number\}\.<\/strong> \{text\}/);
+  assert.match(presenter, /className="presenter-knowledge-inline-number"/);
+  assert.ok(presenter.includes('aria-label={`Highlight sentence ${number}`}'));
+  assert.match(presenter, /\{number\}\.\s*<\/button>\{\" \"\}\{text\}/);
   assert.doesNotMatch(presenter, /<ol className="presenter-knowledge-sentences"/);
   assert.doesNotMatch(presenter, /presenter-knowledge-sentence-number/);
 });
@@ -46,7 +48,7 @@ test("Wissensimpuls keeps the page light while supporting sentence focus and del
 
   assert.match(presenter, /activeKnowledgeSentence/);
   assert.match(presenter, /className="presenter-knowledge-inline-number"/);
-  assert.match(presenter, /aria-label={`Highlight sentence ${number}`}/);
+  assert.ok(presenter.includes('aria-label={`Highlight sentence ${number}`}'));
   assert.match(presenter, /Kurz prüfen anzeigen/);
   assert.match(presenter, /!knowledgeChecksVisible/);
   assert.doesNotMatch(presenter, /role="button"\s+tabIndex=\{0\}\s+aria-pressed/);
