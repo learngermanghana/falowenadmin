@@ -6,6 +6,7 @@ import {
   isTeachingPresenterV2Slide,
 } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
+import { numberedPresenterSentences } from "../utils/presenterSentenceNumbering.js";
 import { getA2B1AdminLessonProfileForSlide } from "../data/a2B1LessonProfile.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
@@ -152,6 +153,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const readingEligible = ["A2", "B1"].includes(presenterLevel)
     && stage?.type === "knowledge"
     && Boolean(String(stage?.textDe || "").trim());
+  const numberedKnowledgeSentences = useMemo(
+    () => numberedPresenterSentences(stage?.textDe || ""),
+    [stage?.textDe],
+  );
   const a2B1ActivityTimer = ["A2", "B1"].includes(presenterLevel);
   const warmupPerStudent = stage?.id === "warmup" && stage?.timingMode === "per-student";
   const showPresenterTimer = presenterV2 || warmupPerStudent;
@@ -922,7 +927,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     ) : null}
                     <details>
                       <summary>Show full text</summary>
-                      <p>{stage.textDe}</p>
+                      <ol className="presenter-knowledge-sentences is-compact">
+                        {numberedKnowledgeSentences.map(({ number, text }) => (
+                          <li key={`${number}-${text}`}>
+                            <span className="presenter-knowledge-sentence-number">{number}</span>
+                            <span>{text}</span>
+                          </li>
+                        ))}
+                      </ol>
                     </details>
                   </article>
                 ) : (
@@ -930,7 +942,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 )
               ) : (
                 <article className="presenter-knowledge-text">
-                  <p>{stage.textDe}</p>
+                  <ol className="presenter-knowledge-sentences" aria-label="Numbered Wissensimpuls sentences">
+                    {numberedKnowledgeSentences.map(({ number, text }) => (
+                      <li key={`${number}-${text}`}>
+                        <span className="presenter-knowledge-sentence-number">{number}</span>
+                        <span>{text}</span>
+                      </li>
+                    ))}
+                  </ol>
                 </article>
               )}
               <div className="presenter-knowledge-checks">

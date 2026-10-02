@@ -123,6 +123,19 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
       "The learner should distinguish origin from destination without help.",
     ),
   ],
+  "A1-8": [
+    check("Lies die Uhrzeit 18:30 auf Deutsch.", "Achtzehn Uhr dreißig."),
+    check("7 Uhr abends ist welche Uhrzeit im 24-Stunden-System?", "19:00 Uhr."),
+    check("Welche Uhrzeit ist 08:15?", "Acht Uhr fünfzehn."),
+    check("Welche Präposition benutzt du vor einem Wochentag?", "am, zum Beispiel: am Montag."),
+    check("Welche Präposition benutzt du vor einer Uhrzeit?", "um, zum Beispiel: um 18 Uhr."),
+    check("Ergänze: Der Kurs ist ___ Montag ___ 18 Uhr.", "am Montag um 18 Uhr."),
+    check("Wie sagst du den 5. Mai mit am?", "am fünften Mai."),
+    check("Was bedeutet das Datum 03.10.2026?", "Der dritte Oktober 2026."),
+    check("Was ist der Unterschied zwischen „am Montag“ und „um 18 Uhr“?", "am nennt den Tag; um nennt die Uhrzeit."),
+    check("Ein Zug fährt um 14:45 Uhr. Ist das vor oder nach 15 Uhr?", "Vor 15 Uhr."),
+    check("Exit-Check: Sage einen Termin mit Tag, Datum und Uhrzeit.", "Accept a correct A1 example using am for the day/date and um for the time, for example: am Montag, am fünften Mai, um 18 Uhr."),
+  ],
   "A1-4.7": [
     check(
       "In Teil 3, if you want to make a polite request, how could you start?",
