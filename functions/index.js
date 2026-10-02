@@ -24,7 +24,7 @@ const {
   resolveHolidaySendOutcome,
 } = require("./holidayNoticeRules.js");
 
-setGlobalOptions({ region: "us-central1" });
+setGlobalOptions({ region: "us-central1", minInstances: 0, maxInstances: 2 });
 
 admin.initializeApp();
 const db = admin.firestore();
