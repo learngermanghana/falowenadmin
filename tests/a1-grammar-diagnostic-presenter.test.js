@@ -60,6 +60,24 @@ test("A1 class-check pools use clear learner-understanding questions and stay la
   }
 });
 
+test("all A1 class questions avoid generic meta-prompts", () => {
+  const forbidden = /Give one correct German example that avoids this mistake|Show this lesson point with one short German example|Explain this in your own words|Teach this rule to a classmate|Give the rule first|How would you explain this idea to a beginner|What is the main grammar or language concept|What is one important rule or common mistake|Can you give one simple example that shows you understand the rule|Change one clear detail in this model/i;
+
+  for (const slide of getSlidesByCourse("A1")) {
+    if (String(slide.assignmentId || "").toUpperCase() === "A1-5.9") continue;
+    const support = buildTeacherSlideSupport(slide);
+    const checks = getA1PresenterUnderstandingChecks(
+      slide.assignmentId,
+      getA1GrammarChecks(slide.assignmentId, slide),
+      { slide, support },
+    );
+    assert.ok(
+      checks.every((item) => !forbidden.test(String(item.questionDe || ""))),
+      `${slide.assignmentId} contains a generic learner prompt`,
+    );
+  }
+});
+
 test("A1 Day 8 uses direct knowledge checks instead of abstract mistake-reflection prompts", () => {
   const slide = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-4");
   const support = buildTeacherSlideSupport(slide);
