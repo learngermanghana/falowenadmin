@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
@@ -29,3 +30,13 @@ test("sentence numbering follows the text length automatically", () => {
 test("empty Wissensimpuls text produces no reading numbers", () => {
   assert.deepEqual(numberedPresenterSentences("   "), []);
 });
+
+test("Wissensimpuls renders as one continuous paragraph, not a numbered list", () => {
+  const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+
+  assert.match(presenter, /<p className="presenter-knowledge-numbered-text"/);
+  assert.match(presenter, /<strong>\{number\}\.<\/strong> \{text\}/);
+  assert.doesNotMatch(presenter, /<ol className="presenter-knowledge-sentences"/);
+  assert.doesNotMatch(presenter, /presenter-knowledge-sentence-number/);
+});
+
