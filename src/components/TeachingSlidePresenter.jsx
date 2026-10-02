@@ -142,6 +142,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     expired: false,
   });
   const [knowledgeAnswersOpen, setKnowledgeAnswersOpen] = useState({});
+  const [activeKnowledgeSentence, setActiveKnowledgeSentence] = useState(0);
+  const [knowledgeChecksVisible, setKnowledgeChecksVisible] = useState(false);
   const [vocabChallengeMode, setVocabChallengeMode] = useState(false);
   const [vocabChallengeIndex, setVocabChallengeIndex] = useState(0);
   const [showVocabAnswer, setShowVocabAnswer] = useState(false);
@@ -304,6 +306,11 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setReadingModeActive(false);
     setReadingPhase("idle");
     setActiveReadingAssignment(null);
+    setKnowledgeChecksVisible(true);
+  }
+
+  function selectKnowledgeSentence(number) {
+    setActiveKnowledgeSentence((current) => current === number ? 0 : number);
   }
 
   function resetPresenterTimer() {
@@ -371,6 +378,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setContentPage(0);
     setContentPageSize(0);
     setKnowledgeAnswersOpen({});
+    setActiveKnowledgeSentence(0);
+    setKnowledgeChecksVisible(false);
     setVocabChallengeMode(false);
     setVocabChallengeIndex(0);
     setShowVocabAnswer(false);
@@ -929,9 +938,20 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       <summary>Show full text</summary>
                       <p className="presenter-knowledge-numbered-text is-compact">
                         {numberedKnowledgeSentences.map(({ number, text }) => (
-                          <span key={`${number}-${text}`} className="presenter-knowledge-inline-sentence">
-                            <strong>{number}.</strong> {text}
-                          </span>
+                          <span
+                            key={`${number}-${text}`}
+                            className={`presenter-knowledge-inline-sentence${activeKnowledgeSentence === number ? " is-active" : ""}`}
+                      >
+                            <button
+                              type="button"
+                              className="presenter-knowledge-inline-number"
+                              aria-pressed={activeKnowledgeSentence === number}
+                              aria-label={`Highlight sentence ${number}`}
+                              onClick={() => selectKnowledgeSentence(number)}
+                            >
+                              {number}.
+                            </button>{" "}{text}
+                      </span>
                         ))}
                       </p>
                     </details>
@@ -943,13 +963,33 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <article className="presenter-knowledge-text">
                   <p className="presenter-knowledge-numbered-text" aria-label="Numbered Wissensimpuls sentences">
                     {numberedKnowledgeSentences.map(({ number, text }) => (
-                      <span key={`${number}-${text}`} className="presenter-knowledge-inline-sentence">
-                        <strong>{number}.</strong> {text}
+                      <span
+                        key={`${number}-${text}`}
+                        className={`presenter-knowledge-inline-sentence${activeKnowledgeSentence === number ? " is-active" : ""}`}
+                      >
+                        <button
+                          type="button"
+                          className="presenter-knowledge-inline-number"
+                          aria-pressed={activeKnowledgeSentence === number}
+                          aria-label={`Highlight sentence ${number}`}
+                          onClick={() => selectKnowledgeSentence(number)}
+                        >
+                          {number}.
+                        </button>{" "}{text}
                       </span>
                     ))}
                   </p>
                 </article>
               )}
+              {!knowledgeChecksVisible ? (
+                <button
+                  type="button"
+                  className="presenter-knowledge-checks-reveal"
+                  onClick={() => setKnowledgeChecksVisible(true)}
+                >
+                  Kurz prüfen anzeigen
+                </button>
+              ) : (
               <div className="presenter-knowledge-checks">
                 <strong>Kurz prüfen · mündlich</strong>
                 <ol>
@@ -982,6 +1022,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   })}
                 </ol>
               </div>
+              )}
             </section>
           ) : stage.type === "foundation" ? (
             <section className={`presenter-foundation presenter-foundation-${String(stage.level || "").toLowerCase()}`}>

@@ -58,3 +58,18 @@ test("Admin top bar warns when production is behind main", () => {
   assert.match(app, /Production \$\{deploymentStatus\.behindBy\} commit/);
   assert.match(css, /\.topbar-deployment-warning/);
 });
+
+test("Presenter prebuild always defines nextLessonHref before passing it to standard slides", () => {
+  const page = read("src/pages/TeachingSlidesPage.jsx");
+  const patch = read("scripts/patchPresenterStudentPicker.mjs");
+
+  assert.match(page, /const nextLessonHref = next/);
+  assert.match(page, /<TeachingSlidePresenter[\s\S]{0,260}nextLessonHref=\{nextLessonHref\}/);
+  assert.match(page, /nextLessonLabel=\{nextLessonLabel\}/);
+  assert.match(patch, /if \(!pageSource\.includes\("const nextLessonHref = next"\)\)/);
+  assert.doesNotMatch(
+    patch,
+    /const nextLessonHref = next \?"\) && !pageSource\.includes\("const nextA1BlockHref = nextA1Block"/,
+  );
+});
+

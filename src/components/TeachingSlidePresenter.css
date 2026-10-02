@@ -1104,6 +1104,50 @@
   font-weight: 900;
 }
 
+.presenter-knowledge-inline-sentence {
+  border-radius: 3px;
+  transition: background-color 120ms ease;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.presenter-knowledge-inline-sentence.is-active {
+  background: #fef3c7;
+}
+
+.presenter-knowledge-inline-number {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.presenter-knowledge-inline-number:hover,
+.presenter-knowledge-inline-number:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.presenter-knowledge-checks-reveal {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: #1d4ed8;
+  padding: 2px 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-knowledge-checks-reveal:hover,
+.presenter-knowledge-checks-reveal:focus-visible {
+  text-decoration: underline;
+}
+
 .presenter-knowledge-numbered-text.is-compact {
   margin-top: 10px;
   color: #0f172a;

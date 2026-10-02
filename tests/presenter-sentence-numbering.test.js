@@ -35,8 +35,25 @@ test("Wissensimpuls renders as one continuous paragraph, not a numbered list", (
   const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
 
   assert.match(presenter, /<p className="presenter-knowledge-numbered-text"/);
-  assert.match(presenter, /<strong>\{number\}\.<\/strong> \{text\}/);
+  assert.match(presenter, /className="presenter-knowledge-inline-number"/);
+  assert.ok(presenter.includes('aria-label={`Highlight sentence ${number}`}'));
+  assert.match(presenter, /\{number\}\.\s*<\/button>\{\" \"\}\{text\}/);
   assert.doesNotMatch(presenter, /<ol className="presenter-knowledge-sentences"/);
   assert.doesNotMatch(presenter, /presenter-knowledge-sentence-number/);
+});
+
+test("Wissensimpuls keeps the page light while supporting sentence focus and delayed checks", () => {
+  const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+
+  assert.match(presenter, /activeKnowledgeSentence/);
+  assert.match(presenter, /className="presenter-knowledge-inline-number"/);
+  assert.ok(presenter.includes('aria-label={`Highlight sentence ${number}`}'));
+  assert.match(presenter, /Kurz prüfen anzeigen/);
+  assert.match(presenter, /!knowledgeChecksVisible/);
+  assert.doesNotMatch(presenter, /role="button"\s+tabIndex=\{0\}\s+aria-pressed/);
+  assert.match(css, /\.presenter-knowledge-inline-sentence\.is-active\s*\{\s*background: #fef3c7;/);
+  assert.match(css, /\.presenter-knowledge-checks-reveal/);
+  assert.doesNotMatch(css, /\.presenter-knowledge-inline-sentence\.is-active[\s\S]{0,120}box-shadow/);
 });
 

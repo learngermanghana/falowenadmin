@@ -101,6 +101,10 @@ function SlideDetail({ slide, courseId }) {
   const [handoutMode, setHandoutMode] = useState(false);
   const [presenterMode, setPresenterMode] = useState(() => new URLSearchParams(window.location.search).get("present") === "1");
   const { previous, next } = getSlideNavigation(slide.id, courseId);
+  const nextLessonHref = next
+    ? `/teaching-slides/course/${encodeURIComponent(courseId)}/${encodeURIComponent(next.id)}?present=1`
+    : "";
+  const nextLessonLabel = next ? getUnifiedTopicLabel(next.assignmentId, next.topic || next.day || "") : "";
   const topicLabel = getUnifiedTopicLabel(slide.assignmentId, slide.topic);
   const a1GrammarLesson = String(slide.course || "").trim().toUpperCase() === "A1"
     && String(slide.assignmentId || "").trim().toUpperCase() !== "A1-TUTORIAL";
@@ -130,7 +134,7 @@ function SlideDetail({ slide, courseId }) {
         />
       );
     }
-    return <TeachingSlidePresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;
+    return <TeachingSlidePresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} nextLessonHref={nextLessonHref} nextLessonLabel={nextLessonLabel} />;
   }
 
   return (
