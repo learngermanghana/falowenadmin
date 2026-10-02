@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import TeachingSlidePresenter from "../components/TeachingSlidePresenter.jsx";
 import A1GrammarPresenter from "../components/A1GrammarPresenter.jsx";
 import TeacherLessonBlocks from "../components/TeacherLessonBlocks.jsx";
 import StudentCourseSlides from "../components/StudentCourseSlides.jsx";
 import {
   getAvailableSlideCourses,
+  getCanonicalTeachingSlideId,
   getSlideNavigation,
   getSlidesByCourse,
   getTeachingSlideById,
@@ -331,6 +332,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
 
 export default function TeachingSlidesPage({ publicView = false }) {
   const { slideId, courseId, legacySlideId } = useParams();
+  const location = useLocation();
   if (publicView && courseId) return <StudentCourseSlides courseId={courseId} />;
 
   if (publicView) {
@@ -346,7 +348,19 @@ export default function TeachingSlidesPage({ publicView = false }) {
   if (courseId && slideId === "print") return <SlidePrintPack courseId={courseId} />;
   if (courseId && !slideId) return <CourseSlidesIndex courseId={courseId} />;
 
-  const resolvedSlide = getTeachingSlideById(slideId || legacySlideId);
+  const requestedSlideId = slideId || legacySlideId || "";
+  const canonicalSlideId = getCanonicalTeachingSlideId(requestedSlideId);
+  if (requestedSlideId && canonicalSlideId !== requestedSlideId) {
+    const targetCourseId = courseId || "A2";
+    return (
+      <Navigate
+        replace
+        to={`/teaching-slides/course/${encodeURIComponent(targetCourseId)}/${encodeURIComponent(canonicalSlideId)}${location.search}`}
+      />
+    );
+  }
+
+  const resolvedSlide = getTeachingSlideById(canonicalSlideId);
   if (!resolvedSlide) {
     return (
       <section className="slides-index">
