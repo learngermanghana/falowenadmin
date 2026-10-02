@@ -92,8 +92,8 @@ jobs:
           grep -F '/^(tutorial|orientation|complete)$/i' functions/classSessionReminderEmails.js
           grep -F 'checkinMetadataHydrated: true' functions/index.js
           grep -F 'classStartsAt: startsAt.toISOString()' functions/classSessionAutoCheckin.js
-          grep -F 'const hydratedAssignmentId' src/pages/CheckinPage.jsx
-          grep -F 'getTeachingSlideByAssignmentId(hydratedAssignmentId)' src/pages/CheckinPage.jsx
+          grep -F 'const resolvedAssignmentId' src/pages/CheckinPage.jsx
+          grep -F 'Teacher presentation slides are not shared from the attendance page.' src/pages/CheckinPage.jsx
       - name: Test session reminders and automatic attendance opening
         run: >-
           node --test
