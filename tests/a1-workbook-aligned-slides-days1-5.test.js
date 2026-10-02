@@ -170,3 +170,26 @@ test("A1 alphabet slide checks the actual alphabet knowledge taught in the Cours
   assert.match(questions, /Buchstaben I/);
   assert.match(questions, /Buchstaben A/);
 });
+
+
+test("A1 Day 2 tests all subject-pronoun verb endings and sie/Sie", () => {
+  const slide = getTeachingSlideByAssignmentId("A1-1.1");
+  const searchable = [
+    ...(slide.keyPhrasesDe || []),
+    ...(slide.studentQuestionsDe || []),
+    ...(slide.teacherNotesEn || []),
+    ...(slide.teacherSupport?.grammarFocusEn || []),
+    ...(slide.teacherSupport?.modelExamplesDe || []),
+  ].join(" ");
+
+  assert.match(searchable, /ich.*-e/i);
+  assert.match(searchable, /du.*-st/i);
+  assert.match(searchable, /er\s*\/\s*sie\s*\/\s*es.*-t/i);
+  assert.match(searchable, /wir.*-en/i);
+  assert.match(searchable, /ihr.*-t/i);
+  assert.match(searchable, /sie\s*\/\s*Sie.*-en/i);
+  assert.match(searchable, /sie und Sie|sie versus Sie|sie from Sie/i);
+  assert.match(searchable, /Wir lernt|Wir lernen/);
+  assert.match(searchable, /Ihr lernen|Ihr lernt/);
+  assert.doesNotMatch(searchable, /Wie heißt du|Woher kommst du|Stell dich/i);
+});

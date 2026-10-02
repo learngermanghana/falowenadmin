@@ -21,10 +21,14 @@ export const A1_GRAMMAR_CHECKS = {
     check("Wie spricht man V und W auf Deutsch aus?", "V heißt Vau; W heißt We."),
   ],
   "A1-1.1": [
-    check("Korrigiere: „Ich lernen Deutsch.“", "Ich lerne Deutsch. Bei ich endet ein regelmäßiges Verb normalerweise auf -e."),
-    check("Korrigiere: „Du lernen Deutsch.“", "Du lernst Deutsch. Bei du endet ein regelmäßiges Verb normalerweise auf -st."),
-    check("Korrigiere: „Er lernen Deutsch.“", "Er lernt Deutsch. Bei er/sie/es endet ein regelmäßiges Verb normalerweise auf -t."),
-    check("Konjugiere wohnen mit ich, du und er/sie.", "ich wohne · du wohnst · er/sie wohnt."),
+    check("Welche Endung hat ein regelmäßiges Verb bei ich?", "-e."),
+    check("Welche Endung hat ein regelmäßiges Verb bei du?", "-st."),
+    check("Welche Endung hat ein regelmäßiges Verb bei er/sie/es?", "-t."),
+    check("Welche Endung hat ein regelmäßiges Verb bei wir?", "-en."),
+    check("Welche Endung hat ein regelmäßiges Verb bei ihr?", "-t."),
+    check("Welche Endung hat ein regelmäßiges Verb bei sie im Plural und bei Sie?", "-en."),
+    check("Wie unterscheidest du sie und Sie?", "sie klein kann singular oder plural sein; Sie groß ist die höfliche Anrede."),
+    check("Konjugiere lernen vollständig.", "ich lerne · du lernst · er/sie/es lernt · wir lernen · ihr lernt · sie/Sie lernen."),
   ],
   "A1-1.1-PRACTICE": [
     check("What is the concept behind W-Wörter in German?", "W-Wörter ask for specific information. Examples include wer, was, wo, woher, wohin, wann, wie and warum."),
