@@ -84,10 +84,16 @@ test("Day 9 identifies Kultur und Freizeit as a separate reading-comprehension t
   assert.match(reading.detailEn, /Kultur und Freizeit/i);
 });
 
-test("Day 10 identifies Grundrechte as separate from the tourism and festival lesson", () => {
+test("Day 10 keeps the workbook on the friendly city-exploring theme", () => {
   const slide = getA2WorkbookAlignedSlideDay6To10("A2-4.10");
+  const speaking = slide.workbookConnection.parts.find((part) => part.label === "Teil 1 · Sprechen");
+  const writing = slide.workbookConnection.parts.find((part) => part.label === "Teil 2 · Schreiben");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
-  assert.match(reading.detailEn, /separate comprehension topic/i);
-  assert.match(reading.detailEn, /Grundgesetz|rights and duties/i);
-  assert.match(slide.teacherNotesEn.join(" "), /separate Grundrechte/i);
+  const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
+
+  assert.match(slide.title, /Eine Stadt entdecken und etwas erleben/i);
+  assert.match(speaking.detailEn, /friendly city-exploring day/i);
+  assert.match(writing.detailEn, /friend/i);
+  assert.match(reading.detailEn, /city-festival programme/i);
+  assert.match(listening.detailEn, /Oktoberfest as one city experience/i);
 });

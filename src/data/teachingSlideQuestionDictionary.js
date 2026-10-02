@@ -145,15 +145,15 @@ export const teachingSlideQuestionDictionary = {
   },
   "A2-4.10": {
     warmupQuestionsDe: [
-      "Welches Fest in deinem Land feierst du am liebsten?",
-      "Was zeigt man Touristen in deiner Region zuerst?",
-      "Reist du lieber zu bekannten Orten oder zu Geheimtipps?",
+      "Welche Stadt oder welches Viertel würdest du gern besser kennenlernen?",
+      "Was entdeckst du in einer neuen Stadt zuerst: einen Markt, einen Park oder ein Café?",
+      "Erkundest du neue Orte lieber allein oder mit Freunden?",
     ],
     studentQuestionsDe: [
-      "Erzähl von einem traditionellen Fest und seinem Ablauf.",
-      "Wie kann deine Stadt für Touristen attraktiver werden?",
-      "Welche Regeln sollten Touristen bei Festen respektieren?",
-      "Plane einen Tagesausflug für Gäste aus dem Ausland.",
+      "Plane einen entspannten Tag in einer Stadt mit einem Freund oder einer Freundin.",
+      "Welche zwei Orte würdest du zuerst besuchen und warum?",
+      "Erzähl von einem Ort, den du einmal zufällig entdeckt hast.",
+      "Welche Empfehlung würdest du jemandem geben, der deine Stadt zum ersten Mal besucht?",
     ],
   },
   "A2-4.11": {
