@@ -291,56 +291,61 @@ test("objective auto-mark catches partial correctness", () => {
   assert.match(result.feedback, /1\/2/);
 });
 
-test("A1 14.1 deterministic checker extracts Anzeige and body-part vocabulary answers", () => {
+test("A1 14.1 deterministic checker scores reading plus listening and excludes Schreiben", () => {
   const referenceEntry = {
     assignmentKey: "A1-14.1",
     level: "A1",
     format: "objective",
+    expectedParts: ["teil1", "teil2", "teil3"],
+    writingParts: ["teil2"],
+    referenceAnswerParts: ["teil1", "teil3"],
     answers: {
-      Answer1: "Frage 1: Anzeige A",
-      Answer2: "Frage 2: Anzeige B",
-      Answer3: "Frage 3: Anzeige B",
-      Answer4: "Frage 4: Anzeige A",
-      Answer5: "Frage 5: Anzeige A",
-      Answer6: "a. Head – Kopf",
-      Answer7: "b. Arm – Arm",
-      Answer8: "c. Leg – Bein",
-      Answer9: "d. Eye – Auge",
-      Answer10: "e. Nose – Nase",
-      Answer11: "f. Ear – Ohr",
-      Answer12: "g. Mouth – Mund",
-      Answer13: "h. Hand – Hand",
-      Answer14: "i. Foot – Fuß",
-      Answer15: "j. Stomach / Belly – Bauch",
+      teil1: {
+        Answer1: "A) Anzeige A",
+        Answer2: "B) Anzeige B",
+        Answer3: "B) Anzeige B",
+        Answer4: "A) Anzeige A",
+        Answer5: "A) Anzeige A",
+      },
+      teil3: {
+        Answer1: "A) Fieber, Kopfschmerzen und Halsschmerzen",
+        Answer2: "B) Zu Hause bleiben und viel Tee trinken",
+        Answer3: "A) Am Freitag um 9:30 Uhr",
+        Answer4: "A) Bahnhofstraße 12",
+        Answer5: "B) Seine Versichertenkarte",
+        Answer6: "A) Die Praxis anrufen",
+      },
     },
   };
 
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry,
-    submissionText: `1 Anzeige A
-2.Anzeige B
-3 Anzeige B
-4 Anzeige A
-5 Anzeige B
-Head - Kopf
-Arm - Arm
-Leg - Beine
-Eye - Auge
-Nose - Nase
-Ear - Ohr
-Mouth - Mund
-Hand - Hand
-Foot - fuss
-Stomach - Magen`,
+    submissionText: `Teil 1
+1. A
+2. B
+3. B
+4. A
+5. B
+
+Teil 2
+Lieber Felix,
+ich bin krank und kann leider nicht kommen.
+Liebe Grüße
+
+Teil 3
+1. A
+2. B
+3. A
+4. A
+5. B
+6. C`,
   });
 
-  assert.equal(result.objectiveCorrect, 12);
-  assert.equal(result.objectiveTotal, 15);
-  assert.equal(result.objectiveScore, 80);
-  assert.equal(result.wrongAnswers.length, 3);
-  assert.deepEqual(result.detectedParts[0], { partId: "main", partType: "objective", correct: 12, total: 15 });
+  assert.equal(result.objectiveCorrect, 9);
+  assert.equal(result.objectiveTotal, 11);
+  assert.equal(result.wrongAnswers.length, 2);
+  assert.deepEqual(result.wrongAnswers.map(({ partId, question }) => `${partId}.${question}`), ["teil1.5", "teil3.6"]);
 });
-
 test("smart router splits A2 submission and routes Schreiben to writing, Lesen/Hören to objective keys", () => {
   const result = autoMarkSubmission({
     referenceEntry: {
