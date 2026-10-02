@@ -15,6 +15,16 @@ function replaceOnce(source, before, after, label) {
 function patchCheckinPage() {
   let source = fs.readFileSync(checkinPath, "utf8");
 
+  if (source.includes('className="checkin-student-header"')) {
+    if (source.includes("expectedStudents")) {
+      throw new Error("Clean student check-in must not carry student-name roster data.");
+    }
+    if (source.includes("QRCodeCanvas") || source.includes("selfCheckinQr")) {
+      throw new Error("Clean student check-in must not regenerate a second QR code.");
+    }
+    return;
+  }
+
   source = replaceOnce(
     source,
     `function parseExpectedNames(raw) {
