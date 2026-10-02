@@ -406,16 +406,26 @@ export default function CheckinDisplayPage() {
   }, [classId, sessionId]);
 
   const waitingWarmupTeaser = useMemo(() => {
+    const level = String(waitingClassLevel || inferClassLevel({}, assignmentId, classId)).toUpperCase();
+    const dayFromLabel = Number(String(sessionDisplayLabel || sessionLabel || "").match(/\bDay\s*(\d+)\b/i)?.[1] || 0);
+    const attendanceDayNumber = Number(scheduleInfo?.dayNumber || dayFromLabel || 0);
     const directAssignmentId = effectiveAssignmentId;
-    let slide = directAssignmentId ? getTeachingSlideByAssignmentId(directAssignmentId) : null;
 
-    if (!slide) {
-      const level = String(waitingClassLevel || inferClassLevel({}, assignmentId, classId)).toUpperCase();
-      const dayFromLabel = Number(String(sessionDisplayLabel || sessionLabel || "").match(/\bDay\s*(\d+)\b/i)?.[1] || 0);
-      const dayNumber = Number(scheduleInfo?.dayNumber || dayFromLabel || 0);
-      if (level && dayNumber > 0) {
-        slide = getSlidesByCourse(level).find((item) => Number(item.dayNumber || 0) === dayNumber) || null;
-      }
+    // Attendance owns the A1 class day. A day can contain multiple lesson blocks
+    // (for example Day 2: Alphabet + Pronouns/Conjugation), so launch the first
+    // block for that attendance day and keep the remaining blocks inside Presenter.
+    let slide = level === "A1" && attendanceDayNumber > 0
+      ? getSlidesByCourse("A1").find((item) => Number(item.dayNumber || 0) === attendanceDayNumber) || null
+      : directAssignmentId
+        ? getTeachingSlideByAssignmentId(directAssignmentId)
+        : null;
+
+    if (!slide && level && attendanceDayNumber > 0) {
+      slide = getSlidesByCourse(level).find((item) => Number(item.dayNumber || 0) === attendanceDayNumber) || null;
+    }
+
+    if (!slide && directAssignmentId) {
+      slide = getTeachingSlideByAssignmentId(directAssignmentId);
     }
 
     if (!slide) return null;
