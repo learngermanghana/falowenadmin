@@ -3,69 +3,38 @@ import assert from "node:assert/strict";
 
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 
-const vickySubmission = `
+const submission = `
 Teil 1
-Frage 1 Anzeige B
-Frage 2 Anzeige B
-Frage 3 Anzeige A
-Frage 4 Anzeige A
-Frage 5 Anzeige
+1. A
+2. B
+3. B
+4. A
+5. A
 
 Teil 2
-
-Leiber Felix
-
-Wie geht's dir? Ich schreibe, weil ich nicht an der Geburtstagsfeier teilnehmen kann. Ich bin krank. Ich habe kopfschmerzen Könnten wir einen anderen Termin vereinbaren?
-
-Ich freue mich auf deine Antwort
-
+Lieber Felix,
+ich kann leider nicht zu deinem Geburtstag kommen, weil ich krank bin und Kopfschmerzen habe.
+Können wir uns nächste Woche treffen?
 Liebe Grüße
 Vicky
 
 Teil 3
-Head - die köpfe
-Arm- der Arm
-Leg die Beine
-Eye -die Augen
-Nose -die Nase
-Ear -das Ohr
-Mouth -der Mund
-Hand - die Hände
-Foot - der Fuß
-Stomach - der Baunch
+1. A
+2. B
+3. A
+4. A
+5. B
+6. A
 `;
 
-test("A1-14.1 preserves explicit choice positions and semantic body-part labels", () => {
-  const result = computeObjectiveScore("A1-14.1", vickySubmission);
+test("A1-14.1 scores reading and new doctor-practice listening while excluding Schreiben", () => {
+  const result = computeObjectiveScore("A1-14.1", submission);
 
-  assert.equal(result.totalCount, 15);
-  assert.equal(result.correctCount, 7);
-
-  assert.equal(result.details[1].student, "Anzeige B");
-  assert.equal(result.details[1].correct, false);
-  assert.equal(result.details[2].student, "Anzeige B");
-  assert.equal(result.details[2].correct, true);
-  assert.equal(result.details[3].student, "Anzeige A");
-  assert.equal(result.details[3].correct, false);
-  assert.equal(result.details[4].student, "Anzeige A");
-  assert.equal(result.details[4].correct, true);
-  assert.equal(result.details[5].student, "");
-
-  assert.equal(result.details[6].student, "die kopfe");
-  assert.equal(result.details[7].student, "der arm");
-  assert.equal(result.details[7].correct, true);
-  assert.equal(result.details[8].student, "die beine");
-  assert.equal(result.details[9].student, "die augen");
-  assert.equal(result.details[10].student, "die nase");
-  assert.equal(result.details[10].correct, true);
-  assert.equal(result.details[11].student, "das ohr");
-  assert.equal(result.details[11].correct, true);
-  assert.equal(result.details[12].student, "der mund");
-  assert.equal(result.details[12].correct, true);
-  assert.equal(result.details[13].student, "die hande");
-  assert.equal(result.details[13].correct, false);
-  assert.equal(result.details[14].student, "der fuss");
-  assert.equal(result.details[14].correct, true);
-  assert.equal(result.details[15].student, "der baunch");
-  assert.equal(result.details[15].correct, false);
+  assert.equal(result.totalCount, 11);
+  assert.equal(result.correctCount, 11);
+  assert.equal(result.details["teil1.1"].student, "A");
+  assert.equal(result.details["teil1.5"].correct, true);
+  assert.equal(result.details["teil3.1"].student, "A");
+  assert.equal(result.details["teil3.6"].student, "A");
+  assert.equal(Object.values(result.details).some((detail) => detail.partId === "teil2"), false);
 });
