@@ -304,7 +304,7 @@ async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}
 function createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig = {} }) {
   // The scheduler is now only a tiny due-queue dispatcher. Attendance/session
   // Firestore events create the queue records, so this no longer scans every
-  // class and every student every 15 minutes.
+  // class and every student every 30 minutes.
   return onSchedule({
     schedule: "*/30 * * * *",
     timeZone: ACCRA_TIMEZONE,
