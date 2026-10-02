@@ -24,26 +24,26 @@ TEIL 3
 
 Liebe Bina,
 
-ich hoffe, es geht dir gut? Vielen Dank für die Einladung zu deiner Hochzeit. Ich schreibe dir, weil ich leider nicht zu deiner Hochzeit kommen kann. Es kann keine Flüge buchen, weil es einen starken Sturm mit viel Schnee geben wird. Vielleicht können wir uns nächste Woche treffen? Ich wünsche euch einen wunderschönen Tag!momodou`;
+ich hoffe, es geht dir gut? Vielen Dank für die Einladung zu deiner Hochzeit. Ich schreibe dir, weil ich leider nicht zu deiner Hochzeit kommen kann. Es kann keine Flüge buchen, weil es einen starken Sturm mit viel Schnee geben wird. Vielleicht können wir uns nächste Woche treffen? Ich wünsche euch einen wunderschönen Tag!momodou\n\nTEIL 4\n1. B\n2. A\n3. B\n4. A\n5. B\n6. C`;
 
 function a113Reference() {
   return Object.values(answersDictionary).find((entry) => String(entry?.assignment_id || "").toUpperCase() === "A1-13");
 }
 
-test("A1-13 keeps the nine objective answers deterministic", () => {
+test("A1-13 keeps all fifteen objective answers deterministic", () => {
   const referenceEntry = a113Reference();
   assert.ok(referenceEntry, "A1-13 reference entry must exist");
 
   const result = computeObjectiveScore(referenceEntry, MOMODOU_SUBMISSION);
-  assert.equal(result.correctCount, 9);
-  assert.equal(result.totalCount, 9);
+  assert.equal(result.correctCount, 15);
+  assert.equal(result.totalCount, 15);
 });
 
 test("A1-13 explicitly registers Teil 3 as AI-scored Schreiben", () => {
   const referenceEntry = a113Reference();
 
-  assert.deepEqual(referenceEntry.expectedParts, ["main", "teil3"]);
-  assert.deepEqual(referenceEntry.referenceAnswerParts, ["main"]);
+  assert.deepEqual(referenceEntry.expectedParts, ["teil1", "teil2", "teil3", "teil4"]);
+  assert.deepEqual(referenceEntry.referenceAnswerParts, ["teil1", "teil2", "teil4"]);
   assert.deepEqual(referenceEntry.writingParts, ["teil3"]);
   assert.deepEqual(referenceEntry.aiGradedParts, ["teil3"]);
   assert.equal(referenceEntry.partGrading?.teil3?.gradingMode, "ai_written_response");
@@ -110,8 +110,8 @@ test("registered Teil 3 writing score is not erased by objective-only safeguards
   const referenceEntry = a113Reference();
   const result = enforceRegisteredWritingScore({
     objectiveScore: 100,
-    objectiveCorrect: 9,
-    objectiveTotal: 9,
+    objectiveCorrect: 15,
+    objectiveTotal: 15,
     writingScore: 74,
     writingScorePercent: 74,
     finalScore: 87,
