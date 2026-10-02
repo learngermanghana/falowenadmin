@@ -103,10 +103,31 @@ function SlideDetail({ slide, courseId }) {
   const topicLabel = getUnifiedTopicLabel(slide.assignmentId, slide.topic);
   const a1GrammarLesson = String(slide.course || "").trim().toUpperCase() === "A1"
     && String(slide.assignmentId || "").trim().toUpperCase() !== "A1-TUTORIAL";
+  const a1DayBlocks = a1GrammarLesson
+    ? getSlidesByCourse(courseId)
+        .filter((item) => Number(item.dayNumber || 0) === Number(slide.dayNumber || 0))
+    : [];
+  const a1BlockIndex = a1DayBlocks.findIndex((item) => item.id === slide.id);
+  const nextA1Block = a1BlockIndex >= 0 ? a1DayBlocks[a1BlockIndex + 1] || null : null;
+  const presenterQuery = new URLSearchParams(window.location.search);
+  presenterQuery.set("present", "1");
+  const nextA1BlockHref = nextA1Block
+    ? `/teaching-slides/course/${encodeURIComponent(courseId)}/${encodeURIComponent(nextA1Block.id)}?${presenterQuery.toString()}`
+    : "";
 
   if (presenterMode) {
     if (a1GrammarLesson) {
-      return <A1GrammarPresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;
+      return (
+        <A1GrammarPresenter
+          slide={slide}
+          topicLabel={topicLabel}
+          onExit={() => setPresenterMode(false)}
+          nextLessonHref={nextA1BlockHref}
+          nextLessonLabel={nextA1Block ? getUnifiedTopicLabel(nextA1Block.assignmentId, nextA1Block.topic) : ""}
+          lessonBlockPosition={a1BlockIndex >= 0 ? a1BlockIndex + 1 : 1}
+          lessonBlockTotal={Math.max(1, a1DayBlocks.length)}
+        />
+      );
     }
     return <TeachingSlidePresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;
   }
