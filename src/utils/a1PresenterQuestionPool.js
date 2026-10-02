@@ -67,9 +67,8 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
           ? KNOWLEDGE_VARIANTS
           : VARIANTS;
       const variantIndex = cycle % variants.length;
-      const round = Math.floor(cycle / variants.length);
       const rendered = variants[variantIndex](base.questionDe);
-      const questionDe = round > 0 ? `Follow-up ${round + 1}: ${rendered}` : rendered;
+      const questionDe = rendered;
       pool.push({
         id: `${clean(seedPrefix) || "a1"}-q${sourceIndex + 1}-v${cycle + 1}`,
         questionDe,
