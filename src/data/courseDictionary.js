@@ -42,7 +42,7 @@ export const courseDictionary = {
     "A2-3.7": { assignment_id: "A2-3.7", chapter: "3.7", de: "Eine Wohnung suchen", en: "Looking for an Apartment" },
     "A2-3.8": { assignment_id: "A2-3.8", chapter: "3.8", de: "Im Restaurant – bestellen und reagieren", en: "At the Restaurant – Ordering and Responding" },
     "A2-4.9": { assignment_id: "A2-4.9", chapter: "4.9", de: "Urlaub", en: "Vacation" },
-    "A2-4.10": { assignment_id: "A2-4.10", chapter: "4.10", de: "Tourismus und traditionelle Feste", en: "Tourism and Traditional Festivals" },
+    "A2-4.10": { assignment_id: "A2-4.10", chapter: "4.10", de: "Eine Stadt entdecken und etwas erleben", en: "Exploring a City and Enjoying the Day" },
     "A2-4.11": { assignment_id: "A2-4.11", chapter: "4.11", de: "Verkehrsmittel vergleichen", en: "Comparing Transportation" },
     "A2-5.12": { assignment_id: "A2-5.12", chapter: "5.12", de: "Mein Traumberuf", en: "My Dream Job" },
     "A2-5.13": { assignment_id: "A2-5.13", chapter: "5.13", de: "Ein Vorstellungsgespräch", en: "A Job Interview" },
