@@ -41,23 +41,28 @@ function modelApplication(example, lessonLabel) {
   );
 }
 
-function mistakeReflection(mistake, lessonLabel) {
+function directUnderstandingPrompt(questionDe, lessonLabel) {
   return check(
-    `Give one correct German example that avoids this mistake: ${clean(mistake)}`,
-    `Accept one short correct example that demonstrates the ${lessonLabel} pattern without the stated error.`,
-    "Ask for a concrete corrected example rather than an abstract explanation.",
-  );
-}
-
-function languagePointReflection(point, lessonLabel) {
-  return check(
-    `Show this lesson point with one short German example: ${clean(point)}`,
-    `Accept one correct A1 example that clearly demonstrates the ${lessonLabel} point.`,
-    "Use only when another class question is needed to reach the full-class pool.",
+    clean(questionDe),
+    `Accept a short correct A1 answer that shows the learner understands ${lessonLabel}.`,
+    "Keep the question concrete and learner-facing. Do not ask the learner to analyse a teacher-note mistake.",
   );
 }
 
 const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
+  "A1-0.2": [
+    check("Wie viele Buchstaben hat das deutsche Standardalphabet?", "26 Buchstaben."),
+    check("Welche vier zusätzlichen Zeichen benutzt man im Deutschen?", "Ä, Ö, Ü und ß."),
+    check("Wie heißt ß?", "Eszett oder scharfes S."),
+    check("Wie heißt Ä?", "A-Umlaut."),
+    check("Wie heißt Ö?", "O-Umlaut."),
+    check("Wie heißt Ü?", "U-Umlaut."),
+    check("Wie buchstabierst du deinen Vornamen?", "Accept the learner's correctly spelled first name."),
+    check("Wie buchstabierst du deinen Nachnamen?", "Accept the learner's correctly spelled surname."),
+    check("Buchstabiere „Wasser“.", "W-A-S-S-E-R."),
+    check("Welcher Buchstabe kommt nach J?", "K."),
+    check("Exit-Check: Nenne Ä, Ö, Ü und ß und buchstabiere ein deutsches Wort.", "The learner names the four additional characters and spells one short German word correctly."),
+  ],
   "A1-5": [
     check("What is a definite article? Give one German example.", "A definite article refers to a specific noun; for example, der Hund, die Lampe or das Buch."),
     check("What are the nominative definite articles for masculine, feminine, neuter and plural nouns?", "Masculine der, feminine die, neuter das and plural die."),
@@ -278,14 +283,13 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
     : learnerPrompt(clean(slide.wrapUpTaskDe) || `Give one correct example for ${lessonLabel}.`, lessonLabel);
   const conceptChecks = fallback.length > 1 ? fallback.slice(0, -1) : fallback;
 
-  // A1 Presenter is a grammar diagnostic. The grammar page does the teaching;
-  // these live checks verify rule recognition, correction and controlled transfer.
-  // Do not dilute the pool with warm-up/speaking prompts.
+  // A1 live checks should ask what learners understand and can use.
+  // Teacher-only mistake notes must never become learner-facing questions.
   const applicationChecks = [
     ...conceptChecks,
-    ...(Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : []).map((mistake) => mistakeReflection(mistake, lessonLabel)),
+    ...(Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []).map((question) => directUnderstandingPrompt(question, lessonLabel)),
+    ...(Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : []).map((question) => directUnderstandingPrompt(question, lessonLabel)),
     ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).map((example) => modelApplication(example, lessonLabel)),
-    ...(Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : []).map((point) => languagePointReflection(point, lessonLabel)),
     ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => modelApplication(phrase, lessonLabel)),
   ];
 

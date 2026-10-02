@@ -277,6 +277,8 @@ export default function A1GrammarPresenter({
   onExit,
   nextLessonHref = "",
   nextLessonLabel = "",
+  lessonBlockPosition = 1,
+  lessonBlockTotal = 1,
 }) {
   const stages = useMemo(() => stageList(slide, topicLabel), [slide, topicLabel]);
   const presenterShellRef = useRef(null);
@@ -458,7 +460,10 @@ export default function A1GrammarPresenter({
         <header className="presenter-topbar">
           <div>
             <span className="presenter-kicker">{stage.kicker}</span>
-            <span className="presenter-lesson-label">{stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check"}</span>
+            <span className="presenter-lesson-label">
+              {stage.examReadiness ? "A1 · Exam-readiness" : "A1 · Grammar check"}
+              {lessonBlockTotal > 1 ? ` · Day ${slide.dayNumber} · Block ${lessonBlockPosition}/${lessonBlockTotal}` : ""}
+            </span>
           </div>
 
           <PresenterSessionTimer

@@ -68,7 +68,7 @@ for (const { path, signature, nextSignature, fallbackPicker } of presenterPaths)
 const pagePath = new URL("../src/pages/TeachingSlidesPage.jsx", import.meta.url);
 let pageSource = fs.readFileSync(pagePath, "utf8");
 
-if (!pageSource.includes("const nextLessonHref = next ?")) {
+if (!pageSource.includes("const nextLessonHref = next ?") && !pageSource.includes("const nextA1BlockHref = nextA1Block")) {
   const navigationAnchor = "  const { previous, next } = getSlideNavigation(slide.id, courseId);";
   if (!pageSource.includes(navigationAnchor)) {
     throw new Error("Teaching Slides next lesson navigation anchor missing.");
@@ -81,7 +81,7 @@ if (!pageSource.includes("const nextLessonHref = next ?")) {
 
 const a1Call = "      return <A1GrammarPresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;";
 const a1CallUpdated = "      return <A1GrammarPresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} nextLessonHref={nextLessonHref} nextLessonLabel={nextLessonLabel} />;";
-if (!pageSource.includes(a1CallUpdated)) {
+if (!pageSource.includes(a1CallUpdated) && !pageSource.includes("nextLessonHref={nextA1BlockHref}")) {
   if (!pageSource.includes(a1Call)) throw new Error("A1 presenter next lesson call anchor missing.");
   pageSource = pageSource.replace(a1Call, a1CallUpdated);
 }

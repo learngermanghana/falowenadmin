@@ -851,3 +851,22 @@ test("CheckinDisplay defines statusInfo before rendering the shared status alert
   const renderIndex = page.indexOf("statusInfo.kind");
   assert.ok(definitionIndex > 0 && renderIndex > definitionIndex, "statusInfo must be defined before the render uses it");
 });
+
+
+test("A1 Attendance launches Presenter by curriculum day so multi-block days stay in one class session", () => {
+  const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
+  const teachingPage = fs.readFileSync(path.join(repoRoot, "src", "pages", "TeachingSlidesPage.jsx"), "utf8");
+  const presenter = fs.readFileSync(path.join(repoRoot, "src", "components", "A1GrammarPresenter.jsx"), "utf8");
+
+  assert.match(page, /Attendance owns the A1 class day/);
+  assert.match(page, /level === "A1" && attendanceDayNumber > 0/);
+  assert.match(page, /getSlidesByCourse\("A1"\)\.find\(\(item\) => Number\(item\.dayNumber \|\| 0\) === attendanceDayNumber\)/);
+
+  assert.match(teachingPage, /const a1DayBlocks = a1GrammarLesson/);
+  assert.match(teachingPage, /Number\(item\.dayNumber \|\| 0\) === Number\(slide\.dayNumber \|\| 0\)/);
+  assert.match(teachingPage, /nextLessonHref=\{nextA1BlockHref\}/);
+  assert.match(teachingPage, /lessonBlockTotal=\{Math\.max\(1, a1DayBlocks\.length\)\}/);
+
+  assert.match(presenter, /Day \$\{slide\.dayNumber\} · Block \$\{lessonBlockPosition\}\/\$\{lessonBlockTotal\}/);
+  assert.match(presenter, /className="presenter-next-lesson"/);
+});

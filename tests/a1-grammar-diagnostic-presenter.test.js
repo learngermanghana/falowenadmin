@@ -34,7 +34,7 @@ test("normal A1 Presenter is a grammar diagnostic, while A1-5.9 keeps exam readi
   assert.doesNotMatch(source, /Ist der Student prüfungsbereit\?/);
 });
 
-test("A1 class-check pools stay grammar-focused and large enough for a class", () => {
+test("A1 class-check pools use clear learner-understanding questions and stay large enough for a class", () => {
   const slides = getSlidesByCourse("A1");
   assert.ok(slides.length > 0, "A1 slides missing");
 
@@ -49,19 +49,14 @@ test("A1 class-check pools stay grammar-focused and large enough for a class", (
     );
 
     assert.ok(checks.length >= 11, `${slide.assignmentId} needs 10 class checks plus one exit check`);
-
-    const prompts = checks.map((item) => String(item.questionDe || "").trim());
-    for (const warmup of slide.warmupQuestionsDe || []) {
-      assert.ok(!prompts.includes(String(warmup || "").trim()), `${slide.assignmentId} should not reuse warm-up speaking questions`);
-    }
-    // A1-5 is a curated grammar-only presenter lesson: its studentQuestionsDe bank
-    // intentionally mirrors the direct case-diagnostic questions and is not rendered
-    // as a separate speaking stage when the workbook plan is present.
-    if (String(slide.assignmentId || "").toUpperCase() !== "A1-5") {
-      for (const speaking of slide.studentQuestionsDe || []) {
-        assert.ok(!prompts.includes(String(speaking || "").trim()), `${slide.assignmentId} should not reuse speaking prompts as grammar checks`);
-      }
-    }
+    assert.ok(
+      checks.every((item) => !/Give one correct German example that avoids this mistake/i.test(item.questionDe)),
+      `${slide.assignmentId} must not expose teacher mistake notes as learner questions`,
+    );
+    assert.ok(
+      checks.every((item) => !/Show this lesson point with one short German example/i.test(item.questionDe)),
+      `${slide.assignmentId} must use direct learner questions instead of abstract lesson-point reflections`,
+    );
   }
 });
 
@@ -153,4 +148,22 @@ test("A1-5.9 propagates exam-readiness context and distinguishes performance fro
   assert.match(source, /Do not mark an unrelated answer Correct/);
   assert.match(source, /This leaves the exam-readiness live check/);
   assert.match(source, /stage\.examReadiness \? "A1 · Exam-readiness" : "A1 · Grammar check"/);
+});
+
+
+test("A1 alphabet presenter asks concrete understanding questions", () => {
+  const slide = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-0.2");
+  const support = buildTeacherSlideSupport(slide);
+  const checks = getA1PresenterUnderstandingChecks(
+    "A1-0.2",
+    getA1GrammarChecks("A1-0.2", slide),
+    { slide, support },
+  );
+
+  assert.equal(checks.length, 11);
+  assert.ok(checks.some((item) => item.questionDe === "Wie viele Buchstaben hat das deutsche Standardalphabet?"));
+  assert.ok(checks.some((item) => item.questionDe === "Welche vier zusätzlichen Zeichen benutzt man im Deutschen?"));
+  assert.ok(checks.some((item) => item.questionDe === "Wie buchstabierst du deinen Nachnamen?"));
+  assert.ok(checks.some((item) => item.questionDe === "Buchstabiere „Wasser“."));
+  assert.ok(checks.every((item) => !/30 standard alphabet letters/i.test(item.questionDe)));
 });
