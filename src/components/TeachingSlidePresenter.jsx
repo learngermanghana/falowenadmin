@@ -251,23 +251,27 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     try {
       const context = ensureWarmupAudioContext();
       if (!context) return;
-      [
-        { frequency: 880, startOffset: 0, duration: 0.32, gain: 0.1 },
-        { frequency: 880, startOffset: 0.42, duration: 0.32, gain: 0.1 },
-        { frequency: 880, startOffset: 0.84, duration: 0.32, gain: 0.1 },
-        { frequency: 1040, startOffset: 1.28, duration: 2.2, gain: 0.16 },
-      ].forEach(({ frequency, startOffset, duration, gain: gainLevel }) => {
-        const start = context.currentTime + startOffset;
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(gainLevel, start);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
-        oscillator.connect(gain);
-        gain.connect(context.destination);
-        oscillator.start(start);
-        oscillator.stop(start + duration + 0.02);
-      });
+      const startedAt = context.currentTime;
+      const alertDurationSeconds = 6;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(920, startedAt);
+      gain.gain.setValueAtTime(0.0001, startedAt);
+      for (let offset = 0; offset < alertDurationSeconds; offset += 0.72) {
+        const pulseStart = startedAt + offset;
+        const pulsePeak = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.05);
+        const pulseHold = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.34);
+        const pulseEnd = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.56);
+        gain.gain.setValueAtTime(0.0001, pulseStart);
+        gain.gain.exponentialRampToValueAtTime(0.24, pulsePeak);
+        gain.gain.setValueAtTime(0.24, pulseHold);
+        gain.gain.exponentialRampToValueAtTime(0.0001, pulseEnd);
+      }
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(startedAt);
+      oscillator.stop(startedAt + alertDurationSeconds);
     } catch {
       // The visual timer still reaches Time up when browser audio is blocked.
     }
@@ -455,15 +459,6 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     if (!showPresenterTimer || !timerRunning || timerRemaining !== 0) return undefined;
     playPresenterTimerAlarm();
 
-    if (warmupPerStudent && a2B1ActivityTimer) {
-      const advanceTimer = window.setTimeout(() => {
-        setTimerRunning(false);
-        setRevealedFlowRole("");
-        setStageIndex((current) => clampPresenterIndex(current + 1, stages.length));
-      }, 3000);
-      return () => window.clearTimeout(advanceTimer);
-    }
-
     setTimerRunning(false);
     return undefined;
   }, [
@@ -526,15 +521,21 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     : [...new Set([stage.suggestedMinutes, 2, 3, 5, 10].filter(Boolean))];
   const warmupTimerTotalSeconds = Math.max(1, activityTimerMinutes * 60);
   const warmupTimerRatio = timerRemaining / warmupTimerTotalSeconds;
+  const warmupCoachingPrompts = [
+    { label: "Think", text: "Decide your main answer before you speak." },
+    { label: "Build", text: "Turn it into one complete German sentence." },
+    { label: "Add detail", text: "Give one reason, example or extra detail." },
+    { label: "Check", text: "Check word order and the polite form." },
+    { label: "Say it", text: "Answer clearly and naturally." },
+  ];
+  const warmupElapsedSeconds = Math.max(0, warmupTimerTotalSeconds - timerRemaining);
+  const warmupCoachingIndex = Math.floor(warmupElapsedSeconds / 8) % warmupCoachingPrompts.length;
+  const warmupCoachingPrompt = warmupCoachingPrompts[warmupCoachingIndex];
   const warmupBottomCue = timerRemaining <= 0
-    ? "Time up · moving on"
+    ? "Time up · finish this turn"
     : !timerRunning
       ? "Ready"
-      : warmupTimerRatio > 0.45
-        ? "Answer clearly"
-        : timerRemaining > 20
-          ? "Add one detail"
-          : "Finish your sentence";
+      : warmupCoachingPrompt.label;
   const warmupBottomProgress = visibleWarmupQuestionCount
     ? `${visibleWarmupAnsweredCount}/${visibleWarmupQuestionCount} answered`
     : "";
@@ -1389,6 +1390,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     </div>
                   ) : null}
                   {enhancedWarmup ? (
+                    <>
                     <ol className="presenter-warmup-question-list">
                       {(visibleStageItems || []).map((item, itemIndex) => {
                         const support = stage.questionSupport?.[itemIndex] || {};
@@ -1457,6 +1459,18 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                         );
                       })}
                     </ol>
+                    {warmupPerStudent && a2B1ActivityTimer ? (
+                      <section
+                        className={`presenter-warmup-coaching-card ${timerRunning ? "is-running" : ""} ${timerExpired ? "is-expired" : ""}`}
+                        aria-live="polite"
+                        aria-label="Warm-up coaching prompt"
+                      >
+                        <span>{timerExpired ? "Time" : warmupCoachingPrompt.label}</span>
+                        <strong>{timerExpired ? "Finish the answer you are giving." : warmupCoachingPrompt.text}</strong>
+                        <small>{timerRunning ? "This prompt changes automatically while the Activity timer runs." : "Start the Activity timer to rotate speaking prompts."}</small>
+                      </section>
+                    ) : null}
+                    </>
                   ) : (
                     <ul className="presenter-list">
                       {(visibleStageItems || []).map((item) => <li key={item}>{item}</li>)}
