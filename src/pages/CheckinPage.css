@@ -5,36 +5,75 @@
 }
 
 .checkin-card {
-  max-width: 720px;
+  max-width: 620px;
   margin: 0 auto;
   background: #fff;
   border: 1px solid #dde7ff;
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-  padding: 20px;
+  padding: 22px;
+  display: grid;
+  gap: 14px;
 }
 
-.checkin-card h2 {
-  margin: 0 0 8px;
+.checkin-student-header {
+  display: grid;
+  gap: 6px;
 }
 
-.checkin-subtitle {
-  margin: 0 0 16px;
+.checkin-student-header h2,
+.checkin-student-header p {
+  margin: 0;
+}
+
+.checkin-student-header p {
   color: #475569;
+  line-height: 1.55;
 }
 
-.checkin-live-clock {
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #dbeafe;
-  background: #f8fbff;
-  color: #1e3a8a;
-  font-size: 14px;
+.checkin-eyebrow {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.checkin-lesson-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.checkin-lesson-summary > div {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 11px;
+  display: grid;
+  gap: 4px;
+  background: #f8fafc;
+}
+
+.checkin-lesson-summary span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.checkin-lesson-summary strong {
+  color: #0f172a;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .checkin-live-countdown {
-  margin: 0 0 12px;
   border: 1px solid #c7d2fe;
   background: #eef2ff;
   border-radius: 12px;
@@ -61,31 +100,9 @@
   font-size: 12px;
 }
 
-.checkin-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 8px 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 14px;
-  font-size: 13px;
-}
-
-.checkin-warning {
-  padding: 10px;
-  border: 1px solid #fecaca;
-  background: #fff1f2;
-  color: #9f1239;
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-
 .checkin-status {
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  padding: 11px 12px;
+  border-radius: 10px;
   border: 1px solid;
 }
 
@@ -101,30 +118,82 @@
   color: #92400e;
 }
 
-.checkin-status-closed {
+.checkin-status-closed,
+.checkin-status-ended {
   border-color: #fecaca;
   background: #fff1f2;
   color: #9f1239;
 }
 
-.checkin-status-ended {
-  border-color: #fda4af;
-  background: #ffe4e6;
-  color: #9f1239;
-}
-
 .checkin-status-label {
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .checkin-status-detail {
   font-size: 12px;
-  margin-top: 2px;
+  margin-top: 3px;
+  line-height: 1.45;
+}
+
+.checkin-warning {
+  padding: 10px;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+  border-radius: 10px;
+}
+
+.checkin-returning-student {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+}
+
+.checkin-returning-student > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.checkin-returning-student span {
+  color: #64748b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.checkin-returning-student button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  padding: 7px 10px;
+  font-weight: 700;
 }
 
 .checkin-form {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid #dbeafe;
+  background: #fbfdff;
+  border-radius: 14px;
+}
+
+.checkin-form-intro {
+  display: grid;
+  gap: 3px;
+}
+
+.checkin-form-intro span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .checkin-field {
@@ -136,94 +205,94 @@
 }
 
 .checkin-form input {
+  min-height: 46px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-  padding: 12px;
+  padding: 11px 12px;
+  font-size: 16px;
+}
+
+.checkin-form input:focus {
+  outline: 3px solid rgba(37, 99, 235, 0.16);
+  border-color: #2563eb;
 }
 
 .checkin-form input[aria-invalid="true"] {
   border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
-.checkin-form input:disabled {
-  background: #f8fafc;
-  color: #64748b;
+.checkin-form button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 10px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  padding: 11px 14px;
+}
+
+.checkin-form button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
 }
 
 .checkin-help {
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 .checkin-inline-error {
   color: #a00000;
   font-size: 12px;
-}
-
-.checkin-share {
-  margin-top: 18px;
-  border-top: 1px dashed #dbe4ff;
-  padding-top: 16px;
+  line-height: 1.4;
 }
 
 .checkin-success-card {
   border: 1px solid #86efac;
   background: #f0fdf4;
-  border-radius: 10px;
+  border-radius: 14px;
   color: #14532d;
-  padding: 10px;
-  margin-bottom: 12px;
-  display: grid;
-  gap: 2px;
-}
-
-.checkin-share-box {
-  margin-top: 10px;
-  display: inline-flex;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px;
-  background: #fff;
-}
-
-
-.checkin-info-block {
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #dbeafe;
-  background: #eff6ff;
-  color: #1e3a8a;
-  margin-bottom: 12px;
-  display: grid;
-  gap: 4px;
-  font-size: 14px;
-}
-
-.checkin-info-title {
-  font-weight: 700;
-}
-
-.checkin-expected {
-  padding: 10px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  border-radius: 10px;
-  margin-bottom: 12px;
-}
-
-.checkin-slide-download {
-  padding: 12px;
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  border-radius: 10px;
-  margin-bottom: 12px;
+  padding: 16px;
   display: grid;
   gap: 6px;
 }
 
-.checkin-slide-download a {
-  color: #1d4ed8;
-  font-weight: 600;
-  text-decoration: underline;
+.checkin-success-title {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.checkin-success-card small {
+  color: #166534;
+}
+
+.checkin-privacy-note {
+  margin: 0;
+  padding-top: 4px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .checkin-page {
+    padding: 12px;
+  }
+
+  .checkin-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .checkin-lesson-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .checkin-returning-student {
+    align-items: flex-start;
+  }
 }
