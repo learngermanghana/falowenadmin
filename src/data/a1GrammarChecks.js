@@ -5,9 +5,8 @@ function check(questionDe, answerDe, noteEn = "", responseMode = "concept") {
   return { questionDe, answerDe, noteEn, responseMode };
 }
 
-// A1 Presenter Mode is deliberately concept-first. The workbook already contains
-// controlled gap-fill and form drills, so the live/after-class check asks learners
-// to explain the new idea, identify the rule, and give a simple example.
+// A1 Presenter Mode uses concrete learner-facing questions. Avoid abstract
+// meta-prompts about explaining rules, common mistakes or "giving an example".
 export const A1_GRAMMAR_CHECKS = {
   "A1-0.1": [
     check("What is the difference between du and Sie when speaking to someone?", "du is informal; Sie is formal and polite."),
@@ -192,14 +191,20 @@ export function getA1GrammarChecks(assignmentId, slide = {}) {
   if (Array.isArray(direct) && direct.length) return direct;
 
   const support = slide.teacherSupport || {};
-  const grammar = Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [];
   const models = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [];
-  const mistakes = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
 
-  return [
-    check("What is the main grammar or language concept in today's lesson?", grammar[0] || "Explain the main rule in your own words."),
-    check("When do we use this concept in German?", models[0] || slide.keyPhrasesDe?.[0] || "Explain when the structure is useful."),
-    check("What is one important rule or common mistake to remember?", mistakes[0] || "Explain one rule that helps you use the structure correctly."),
-    check("Can you give one simple example that shows you understand the rule?", models[1] || models[0] || slide.keyPhrasesDe?.[1] || "Give one short correct example."),
-  ];
+  const directQuestions = [
+    ...(Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
+    ...(Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : []),
+  ].map((question) => String(question || "").trim()).filter(Boolean);
+
+  const modelAnswer = models[0] || slide.keyPhrasesDe?.[0] || "";
+  const secondModelAnswer = models[1] || slide.keyPhrasesDe?.[1] || modelAnswer;
+
+  return directQuestions.slice(0, 4).map((question, index) =>
+    check(
+      question,
+      index % 2 === 0 ? modelAnswer || "Accept a short correct answer." : secondModelAnswer || "Accept a short correct answer.",
+    ),
+  );
 }

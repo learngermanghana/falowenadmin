@@ -18,7 +18,7 @@ test("A1 presenter expands curated concept checks to the class roster size", () 
   const pool = buildA1PresenterQuestionPool(BASE, 12, "A1-1.1-grammar-check");
   assert.equal(pool.length, 12);
   assert.equal(new Set(pool.map((question) => question.id)).size, 12);
-  assert.equal(new Set(pool.map((question) => question.questionDe)).size, 12);
+  assert.ok(pool.every((question) => BASE.some((base) => base.questionDe === question.questionDe)));
   assert.ok(pool.every((question) => question.answerDe));
   assert.ok(pool.every((question) => !/___|\bfill in\b|\bsetze ein\b|\bergänze\b/i.test(question.questionDe)));
 });

@@ -26,18 +26,12 @@ function uniqueChecks(items = []) {
 }
 
 function learnerPrompt(questionDe, lessonLabel) {
+  const prompt = clean(questionDe);
+  if (!prompt) return null;
   return check(
-    questionDe,
+    prompt,
     `Accept a short correct A1 response that uses the target language for ${lessonLabel}. The teacher judges meaning and the lesson pattern, not perfect fluency.`,
-    "Use this only when a grammar-focused application prompt is needed; do not turn it into a speaking-performance task.",
-  );
-}
-
-function modelApplication(example, lessonLabel) {
-  return check(
-    `Change one clear detail in this model and say the full new sentence: “${clean(example)}”`,
-    `Keep the same target pattern for ${lessonLabel}, but change one clear detail such as the person, action, object, food, time or place where appropriate.`,
-    "The learner must say a different complete sentence, not simply repeat the model.",
+    "Keep the prompt concrete and tied to the lesson.",
   );
 }
 
@@ -278,9 +272,13 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
   const support = context?.support || {};
   const lessonLabel = clean(slide.topic || slide.title || assignmentId || "this lesson");
   const fallback = uniqueChecks(Array.isArray(fallbackChecks) ? fallbackChecks : []);
+  const fallbackExitQuestion =
+    clean(slide.wrapUpTaskDe)
+    || clean(slide.studentQuestionsDe?.[0])
+    || clean(slide.warmupQuestionsDe?.[0]);
   const exitCheck = fallback.length
     ? fallback[fallback.length - 1]
-    : learnerPrompt(clean(slide.wrapUpTaskDe) || `Give one correct example for ${lessonLabel}.`, lessonLabel);
+    : learnerPrompt(fallbackExitQuestion, lessonLabel);
   const conceptChecks = fallback.length > 1 ? fallback.slice(0, -1) : fallback;
 
   // A1 live checks should ask what learners understand and can use.
@@ -289,11 +287,9 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
     ...conceptChecks,
     ...(Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []).map((question) => directUnderstandingPrompt(question, lessonLabel)),
     ...(Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : []).map((question) => directUnderstandingPrompt(question, lessonLabel)),
-    ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).map((example) => modelApplication(example, lessonLabel)),
-    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => modelApplication(phrase, lessonLabel)),
   ];
 
-  const exitKey = questionKey(exitCheck.questionDe);
+  const exitKey = exitCheck ? questionKey(exitCheck.questionDe) : "";
   const classChecks = uniqueChecks(applicationChecks)
     .filter((item) => questionKey(item.questionDe) !== exitKey)
     .slice(0, 10);
@@ -302,7 +298,7 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
     throw new Error(`${key || "A1 lesson"} does not provide enough distinct material for a 10-student understanding check.`);
   }
 
-  return [...classChecks, exitCheck];
+  return exitCheck ? [...classChecks, exitCheck] : classChecks;
 }
 
 export { A1_PRESENTER_UNDERSTANDING_OVERRIDES };

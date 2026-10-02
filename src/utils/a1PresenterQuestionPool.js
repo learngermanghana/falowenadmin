@@ -2,13 +2,9 @@ import { presenterConceptLabel } from "./presenterConceptLabels.js";
 
 const VARIANTS = [
   (question) => question,
-  (question) => `Explain this in your own words: ${question}`,
-  (question) => `Answer this, then give one simple German example: ${question}`,
-  (question) => `Teach this rule to a classmate in one clear sentence: ${question}`,
-  (question) => `Answer briefly, then explain why: ${question}`,
-  (question) => `Give the rule first, then one simple example: ${question}`,
-  (question) => `Answer without looking at the grammar note: ${question}`,
-  (question) => `How would you explain this idea to a beginner? ${question}`,
+  (question) => question,
+  (question) => question,
+  (question) => question,
 ];
 
 const PERFORMANCE_VARIANTS = [
@@ -46,7 +42,8 @@ function normalizeQuestion(question = {}, index = 0) {
  * Expand the small curated A1 concept bank into a roster-sized live-class pool.
  * Always keep at least 10 questions available, then grow with the selected class
  * roster so each learner can receive one unused question per round.
- * Variants deliberately stay concept-first: no gap-fill or workbook duplication.
+ * A1 roster expansion repeats the curated direct question when a class is larger
+ * than the available unique checks. It never wraps questions in generic meta-prompts.
  */
 export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0, seedPrefix = "a1") {
   const normalized = (Array.isArray(baseQuestions) ? baseQuestions : [])
@@ -70,9 +67,8 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
           ? KNOWLEDGE_VARIANTS
           : VARIANTS;
       const variantIndex = cycle % variants.length;
-      const round = Math.floor(cycle / variants.length);
       const rendered = variants[variantIndex](base.questionDe);
-      const questionDe = round > 0 ? `Follow-up ${round + 1}: ${rendered}` : rendered;
+      const questionDe = rendered;
       pool.push({
         id: `${clean(seedPrefix) || "a1"}-q${sourceIndex + 1}-v${cycle + 1}`,
         questionDe,
