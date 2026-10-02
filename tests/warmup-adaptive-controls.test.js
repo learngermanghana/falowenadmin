@@ -17,19 +17,16 @@ test("A2 and B1 use one reusable Activity timer with 7, 5 and 2 minute presets",
   assert.doesNotMatch(presenter, /Presentation · \$\{warmupMinutes\}/);
 });
 
-test("the shared Activity timer alarms at zero and A2/B1 warm-up advances automatically", () => {
+test("the shared Activity timer sounds a six-second alarm and stays on the warm-up slide", () => {
   assert.match(presenter, /function playPresenterTimerAlarm\(\)/);
-  assert.match(presenter, /duration: 1\.55/);
-  assert.match(presenter, /index === 3 \? 0\.11 : 0\.075/);
+  assert.match(presenter, /const alertDurationSeconds = 6/);
+  assert.match(presenter, /offset < alertDurationSeconds; offset \+= 0\.72/);
+  assert.match(presenter, /oscillator\.stop\(startedAt \+ alertDurationSeconds\)/);
   assert.match(presenter, /if \(!showPresenterTimer \|\| !timerRunning \|\| timerRemaining !== 0\) return undefined/);
   assert.match(presenter, /playPresenterTimerAlarm\(\)/);
-  assert.match(presenter, /warmupPerStudent && a2B1ActivityTimer/);
-  assert.match(presenter, /window\.setTimeout\(\(\) => \{/);
-  assert.match(presenter, /clampPresenterIndex\(current \+ 1, stages\.length\)/);
-  assert.match(presenter, /\}, 3000\)/);
   assert.match(presenter, /setTimerRunning\(false\)/);
-  assert.doesNotMatch(presenter, /timerMode === "prepare"/);
-  assert.doesNotMatch(presenter, /timerMode === "reading-silent"/);
+  assert.doesNotMatch(presenter, /clampPresenterIndex\(current \+ 1, stages\.length\)/);
+  assert.doesNotMatch(presenter, /\}, 3000\)/);
 });
 
 test("teacher can choose one through four warm-up questions", () => {
@@ -116,10 +113,14 @@ test("A2/B1 fullscreen warm-up shows a simple bottom countdown with short changi
   const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
   assert.match(presenter, /focusMode && warmupPerStudent && a2B1ActivityTimer/);
   assert.match(presenter, /aria-label="Warm-up time remaining"/);
-  assert.match(presenter, /Answer clearly/);
-  assert.match(presenter, /Add one detail/);
-  assert.match(presenter, /Finish your sentence/);
-  assert.match(presenter, /Time up · moving on/);
+  assert.match(presenter, /Think/);
+  assert.match(presenter, /Build/);
+  assert.match(presenter, /Add detail/);
+  assert.match(presenter, /Check/);
+  assert.match(presenter, /Say it/);
+  assert.match(presenter, /Time up · finish this turn/);
+  assert.match(presenter, /presenter-warmup-coaching-card/);
+  assert.match(presenter, /Math\.floor\(warmupElapsedSeconds \/ 8\)/);
   assert.match(presenter, /presenter-warmup-bottom-progress/);
   assert.match(presenter, /\$\{visibleWarmupAnsweredCount\}\/\$\{visibleWarmupQuestionCount\} answered/);
   assert.match(css, /\.presenter-warmup-bottom-timer\s*\{/);
