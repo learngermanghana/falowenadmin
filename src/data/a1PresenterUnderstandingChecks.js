@@ -35,14 +35,6 @@ function learnerPrompt(questionDe, lessonLabel) {
   );
 }
 
-function modelApplication(example, lessonLabel) {
-  return check(
-    `Change one clear detail in this model and say the full new sentence: “${clean(example)}”`,
-    `Keep the same target pattern for ${lessonLabel}, but change one clear detail such as the person, action, object, food, time or place where appropriate.`,
-    "The learner must say a different complete sentence, not simply repeat the model.",
-  );
-}
-
 function directUnderstandingPrompt(questionDe, lessonLabel) {
   return check(
     clean(questionDe),
@@ -295,8 +287,6 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
     ...conceptChecks,
     ...(Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []).map((question) => directUnderstandingPrompt(question, lessonLabel)),
     ...(Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : []).map((question) => directUnderstandingPrompt(question, lessonLabel)),
-    ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []).map((example) => modelApplication(example, lessonLabel)),
-    ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []).map((phrase) => modelApplication(phrase, lessonLabel)),
   ];
 
   const exitKey = exitCheck ? questionKey(exitCheck.questionDe) : "";
