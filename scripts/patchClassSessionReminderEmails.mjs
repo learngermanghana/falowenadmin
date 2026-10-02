@@ -249,7 +249,7 @@ const worker = fs.readFileSync(workerPath, "utf8");
 const checks = [
   [patchedIndex.includes(requireLine), "Class reminder worker import is missing."],
   [patchedIndex.includes(exportLine), "Class reminder scheduled export is missing."],
-  [worker.includes('schedule: "*/5 * * * *"'), "Five-minute class reminder schedule is missing."],
+  [worker.includes('schedule: "*/5 10-20 * * 1-5"'), "Weekday class-hour reminder schedule is missing."],
   [worker.includes("topicForSession"), "Session topic resolution is missing."],
   [worker.includes("remindersSuppressed"), "Cancelled-session reminder suppression is missing."],
   [worker.includes("holidayCalendar"), "Holiday closure lookup is missing."],

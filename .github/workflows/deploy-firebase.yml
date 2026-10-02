@@ -113,7 +113,7 @@ jobs:
           grep -F 'app.post("/payments/start-upgrade"' functions/index.js
           grep -F 'app.post("/payments/reconcile-student/:studentId"' functions/index.js
           grep -F 'exports.maintainStudentPaymentContracts = onSchedule' functions/index.js
-          grep -F 'schedule: "0 * * * *"' functions/index.js
+          grep -F 'schedule: "0 7,19 * * *"' functions/index.js
           grep -F 'schedule: "every 6 hours"' functions/index.js
           grep -F 'exports.autoSyncPaidStudentOrientation = onDocumentUpdated' functions/index.js
           grep -F 'exports.autoRemoveDeletedStudentFromOrientationSheet = onDocumentDeleted' functions/index.js
@@ -128,8 +128,12 @@ jobs:
           ! grep -F 'Check verb position, articles and every task point before submitting' src/utils/essayFeedbackEvidence.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
           grep -F 'module.exports.cleanupExpiredPendingStudents = onSchedule' functions/main.js
-          grep -F 'schedule: "0 * * * *"' functions/main.js
+          grep -F 'schedule: "0 3 * * *"' functions/main.js
           grep -F 'module.exports.sendClassSessionReminderEmails = onSchedule' functions/main.js
+          grep -F 'schedule: "*/5 10-20 * * 1-5"' functions/main.js
+          grep -F 'module.exports.sendSaturdayClassSessionReminderEmails = onSchedule' functions/main.js
+          grep -F 'schedule: "*/5 6-10 * * 6"' functions/main.js
+          grep -F 'class_session_reminder_skipped_outside_operating_window' functions/main.js
           grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
           grep -F 'exports.queueAttendanceConfirmationFromSession = onDocumentWritten' functions/index.js
           grep -F 'exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten' functions/index.js
@@ -143,7 +147,7 @@ jobs:
           grep -F 'exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger' functions/index.js
           grep -F 'exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob' functions/index.js
           grep -F 'module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob' functions/main.js
-          grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
+          grep -F 'schedule: "*/5 10-20 * * 1-5"' functions/classSessionReminderEmails.js
           grep -F 'async function loadReminderSessionWindow' functions/classSessionReminderEmails.js
           grep -F 'async function loadStudentsForDueClasses' functions/classSessionReminderEmails.js
           ! grep -F 'db.collection("classSessions").get(),' functions/classSessionReminderEmails.js
@@ -164,7 +168,7 @@ jobs:
           ! grep -F 'const studentSnap = await db.collection("students").get();' functions/attendanceConfirmationEmails.js
           grep -F 'acceptClassNameSessionMatch(session, klass)' functions/attendanceConfirmationEmails.js
           grep -F 'schedule: "0 8 * * *"' functions/leadClassStartReminderEmails.js
-          grep -F 'schedule: "*/15 * * * *"' functions/autoCompleteClassSessions.js
+          grep -F 'schedule: "5 21 * * 1-6"' functions/autoCompleteClassSessions.js
           grep -F 'async function loadRecentCompletionCandidates' functions/autoCompleteClassSessions.js
           ! grep -F 'const snapshot = await db.collection("classSessions").get();' functions/autoCompleteClassSessions.js
           grep -F 'schedule: "0 10 * * *"' functions/courseReviewRequestEmails.js
@@ -235,7 +239,7 @@ jobs:
             "functions:falowenadmin:sendAttendanceConfirmationEmails"
 
           deploy_group "class reminder worker" \
-            "functions:falowenadmin:sendClassSessionReminderEmails"
+            "functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendSaturdayClassSessionReminderEmails"
 
           deploy_group "automatic class completion worker" \
             "functions:falowenadmin:autoCompleteClassSessions"

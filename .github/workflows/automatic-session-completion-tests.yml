@@ -45,6 +45,7 @@ jobs:
           node scripts/patchAutomaticSessionCompletionUi.mjs
           node --check functions/index.js
           grep -F 'exports.autoCompleteClassSessions = createAutoCompleteClassSessionsJob' functions/index.js
+          grep -F 'schedule: "5 21 * * 1-6"' functions/autoCompleteClassSessions.js
           grep -F 'const classId = classIdForSession(session);' functions/autoCompleteClassSessions.js
           grep -F 'export async function undoSessionCompletion' src/services/liveClassServiceBase.js
           grep -F 'const canonicalClassId = String(classId || session.classRecordId || session.classId || "").trim();' src/services/liveClassServiceBase.js
