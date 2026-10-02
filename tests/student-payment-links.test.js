@@ -63,7 +63,7 @@ test("ordinary student payment links expose webhook fallback reconciliation", ()
   assert.match(component, /Recheck Paystack payment/);
   assert.match(component, /90 \* 1000/);
   assert.match(component, /automatic Paystack reconciliation/i);
-  assert.match(lifecyclePatch, /schedule: "0 \* \* \* \*"/);
+  assert.match(lifecyclePatch, /schedule: "0 7,19 \* \* \*"/);
   assert.match(lifecyclePatch, /reconcilePaymentReference/);
 });
 
