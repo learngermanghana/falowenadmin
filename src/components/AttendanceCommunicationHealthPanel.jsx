@@ -87,6 +87,7 @@ function deliveryStatusLabel(status) {
   if (status === "sent") return "Sent";
   if (status === "failed") return "Failed";
   if (status === "processing") return "Processing";
+  if (status === "cancelled") return "Cancelled";
   return status || "Unknown";
 }
 
@@ -95,7 +96,7 @@ export default function AttendanceCommunicationHealthPanel({ classId = "", class
   const [settings, setSettings] = useState(null);
   const [health, setHealth] = useState({
     records: [],
-    summary: { total: 0, sent: 0, failed: 0, processing: 0, unknown: 0, totalAttempts: 0 },
+    summary: { total: 0, sent: 0, failed: 0, processing: 0, cancelled: 0, unknown: 0, totalAttempts: 0 },
   });
   const [loading, setLoading] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -129,7 +130,7 @@ export default function AttendanceCommunicationHealthPanel({ classId = "", class
     setSettings(null);
     setHealth({
       records: [],
-      summary: { total: 0, sent: 0, failed: 0, processing: 0, unknown: 0, totalAttempts: 0 },
+      summary: { total: 0, sent: 0, failed: 0, processing: 0, cancelled: 0, unknown: 0, totalAttempts: 0 },
     });
     load();
     return () => {
@@ -148,11 +149,17 @@ export default function AttendanceCommunicationHealthPanel({ classId = "", class
       const result = await retryFailedAttendanceEmails(classId);
       const retried = Number(result?.retried || 0);
       const failedFound = Number(result?.failedFound || 0);
+      const invalidSkipped = Number(result?.invalidSkipped || 0);
+      const retryFailed = Number(result?.retryFailed || 0);
       const message = retried
         ? "Retried " + retried + " failed attendance email" + (retried === 1 ? "" : "s") + " for " + (className || classId) + "."
-        : failedFound
-          ? "Failed delivery records were found, but another job currently owns them. Refresh after that job finishes."
-          : "No failed attendance email remained to retry.";
+          + (invalidSkipped ? " Cancelled " + invalidSkipped + " stale report" + (invalidSkipped === 1 ? "" : "s") + " that predated enrollment." : "")
+          + (retryFailed ? " " + retryFailed + " retry" + (retryFailed === 1 ? "" : " retries") + " still failed." : "")
+        : invalidSkipped
+          ? "Cancelled " + invalidSkipped + " stale attendance report" + (invalidSkipped === 1 ? "" : "s") + " because the class session predates the student's enrollment."
+          : failedFound
+            ? "Failed delivery records were found, but another job currently owns them. Refresh after that job finishes."
+            : "No failed attendance email remained to retry.";
       success(message);
       await load();
     } catch (cause) {
@@ -187,6 +194,7 @@ export default function AttendanceCommunicationHealthPanel({ classId = "", class
         <article><span>Sent</span><strong>{summary.sent || 0}</strong></article>
         <article className={summary.failed ? "is-danger" : ""}><span>Failed</span><strong>{summary.failed || 0}</strong></article>
         <article className={summary.processing ? "is-warning" : ""}><span>Processing</span><strong>{summary.processing || 0}</strong></article>
+        <article><span>Cancelled stale</span><strong>{summary.cancelled || 0}</strong></article>
         <article><span>Attempts</span><strong>{summary.totalAttempts || 0}</strong></article>
       </div>
 
