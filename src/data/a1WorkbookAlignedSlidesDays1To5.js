@@ -286,6 +286,7 @@ export const a1WorkbookAlignedSlidesDays1To5 = [
       "Antwort: Ich komme aus Ghana. Welches W-Wort passt?",
     ],
     teacherNotesEn: [
+      "This is self-practice, not a tutor-marked assignment. Do not tell students to submit it as a scored workbook.",
       "Teach only the definite singular articles der, die and das here: masculine, feminine and neuter. Explicitly tell students that plural and indefinite articles come later.",
       "Teach the noun together with its article: der Tisch, die Frau, das Buch, die Schule, das Auto.",
       "Before W-word practice, teach the rule W-word + conjugated verb + subject/rest. Do not ask students to invent longer questions yet.",
