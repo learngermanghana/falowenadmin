@@ -49,6 +49,8 @@ jobs:
         run: |
           node --check functions/attendanceConfirmationEmails.js
           node --check scripts/patchAttendanceConfirmationEmails.mjs
+          node --check scripts/patchAttendanceConfirmationEventDriven.mjs
+          node --check scripts/patchAttendanceConfirmationEventDrivenV2.mjs
           node --check scripts/patchAttendanceParticipationSummaryEmail.mjs
           node --check scripts/patchAttendanceParticipationCanonicalIdentity.mjs
           node --check scripts/patchAttendanceParticipationSessionWindow.mjs
