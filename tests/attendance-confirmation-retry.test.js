@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { _test } = require("../functions/attendanceConfirmationRetry.js");
-const { resolveClassWebhookConfig, resolveWebhookConfig, rowForRetry, retrySafeCombinedMessage } = _test;
+const { resolveClassWebhookConfig, resolveWebhookConfig, rowForRetry, retrySafeCombinedMessage, deliveryPredatesEnrollment } = _test;
 
 test("retry rows preserve individual attendance delivery and disable marketing blocks", () => {
   const row = rowForRetry({
@@ -97,4 +97,22 @@ test("retry sanitizer changes only the legacy renderer trigger phrase", () => {
   assert.doesNotMatch(message, /attendance summary/i);
   assert.match(message, /attendance and participation summary/i);
   assert.match(message, /Class participation this week:/i);
+});
+
+
+test("retry rejects stored weekly summaries containing sessions before enrollment", () => {
+  const staleDelivery = {
+    deliveryPayload: {
+      attendance: {
+        lessons: [{ date: "2026-09-26", status: "absent" }],
+      },
+    },
+  };
+  assert.equal(deliveryPredatesEnrollment(staleDelivery, {
+    enrollDate: "2026-09-29T15:03:55.583Z",
+    trialStartedAt: "2026-09-29T15:03:55.583Z",
+  }), true);
+  assert.equal(deliveryPredatesEnrollment(staleDelivery, {
+    enrollDate: "2026-09-20T09:00:00.000Z",
+  }), false);
 });
