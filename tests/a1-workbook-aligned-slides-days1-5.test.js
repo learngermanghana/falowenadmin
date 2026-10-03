@@ -193,3 +193,48 @@ test("A1 Day 2 tests all subject-pronoun verb endings and sie/Sie", () => {
   assert.match(searchable, /Ihr lernen|Ihr lernt/);
   assert.doesNotMatch(searchable, /Wie heißt du|Woher kommst du|Stell dich/i);
 });
+
+
+test("A1 Day 3 foundation slide defers indefinite/plural articles and teaches W-question order first", () => {
+  const slide = getTeachingSlideByAssignmentId("A1-1.1-practice");
+  const searchable = [
+    slide.objective,
+    ...(slide.keyPhrasesDe || []),
+    ...(slide.studentQuestionsDe || []),
+    ...(slide.teacherNotesEn || []),
+    ...(slide.teacherSupport?.grammarFocusEn || []),
+    ...(slide.teacherSupport?.modelExamplesDe || []),
+  ].join(" ");
+
+  assert.match(searchable, /der.*masculine|der.*maskulin/i);
+  assert.match(searchable, /die.*feminine|die.*feminin/i);
+  assert.match(searchable, /das.*neuter|das.*neutrum/i);
+  assert.match(searchable, /plural.*later|indefinite.*later|ein\/eine.*yet/i);
+  assert.match(searchable, /W-word.*conjugated verb.*subject|W-Wort.*konjugiertes Verb.*Subjekt/i);
+  assert.match(searchable, /Noun \+ ist \+ adjective|Nomen \+ ist \+ Adjektiv/i);
+});
+
+test("A1 Day 3 present-tense slide tests pronoun-to-ending recognition instead of free question building", () => {
+  const slide = getTeachingSlideByAssignmentId("A1-1.2");
+  const searchable = [
+    slide.objective,
+    ...(slide.warmupQuestionsDe || []),
+    ...(slide.studentQuestionsDe || []),
+    ...(slide.keyPhrasesDe || []),
+    ...(slide.teacherNotesEn || []),
+    ...(slide.teacherSupport?.grammarFocusEn || []),
+    ...(slide.teacherSupport?.modelExamplesDe || []),
+  ].join(" ");
+
+  assert.match(searchable, /ich.*-e/i);
+  assert.match(searchable, /du.*-st/i);
+  assert.match(searchable, /er\s*\/\s*sie\s*\/\s*es.*-t/i);
+  assert.match(searchable, /wir.*-en/i);
+  assert.match(searchable, /ihr.*-t/i);
+  assert.match(searchable, /sie\s*\/\s*Sie.*-en/i);
+  assert.match(searchable, /Wir lernt.*Wir lernen/i);
+  assert.match(searchable, /Ihr lernen.*Ihr lernt/i);
+  assert.match(searchable, /arbeitest/i);
+  assert.match(searchable, /heißt/i);
+  assert.doesNotMatch((slide.studentQuestionsDe || []).join(" "), /Wie fragst|Stell dich|Vorstellung nennen/i);
+});
