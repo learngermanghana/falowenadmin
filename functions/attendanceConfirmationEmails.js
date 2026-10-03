@@ -713,7 +713,16 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
     ...(totalSent ? { attendanceConfirmationEmailLastSentAt: timestamp } : {}),
     attendanceConfirmationEmailLastError: lastDeliveryError,
   }, { merge: true });
-  return { sent: totalSent, failed: totalFailed, skipped: false };
+  if (totalFailed > 0) {
+    const error = new Error(
+      `Attendance delivery failed for ${totalFailed} recipient${totalFailed === 1 ? "" : "s"}; ${totalSent} already sent.`,
+    );
+    error.code = "ATTENDANCE_PARTIAL_FAILURE";
+    error.sent = totalSent;
+    error.failed = totalFailed;
+    throw error;
+  }
+  return { sent: totalSent, failed: 0, skipped: false };
 }
 
 async function sendAssignmentAttendanceCreditEmail({
