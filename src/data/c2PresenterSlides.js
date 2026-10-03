@@ -1120,6 +1120,501 @@ const C2_WARMUP_QUESTIONS = Object.freeze({
   ],
 });
 
+
+const C2_SKILL_TARGETS = Object.freeze({
+  1: "Bewertungen abstufen und Bedingungen sichtbar machen.",
+  2: "Informationsfokus steuern, ohne die Grundbedeutung zu verändern.",
+  3: "Zwischen Verbal- und Nominalstil funktional wechseln.",
+  4: "Fremdaussagen sprachlich distanzieren und ihren Evidenzstatus markieren.",
+  5: "Sicherheit, Vermutung und Hörensagen sprachlich auseinanderhalten.",
+  6: "Ursache, Bedingung, Zusammenhang und Folge präzise unterscheiden.",
+  7: "Institutionelle Handlungen idiomatisch und präzise ausdrücken.",
+  8: "Information verdichten, ohne Bezüge unklar zu machen.",
+  9: "Verantwortungsfokus durch Passiv und Passiv-Ersatzformen steuern.",
+  10: "Medizinische Evidenz vorsichtig und graduiert formulieren.",
+  11: "Einwand und Kontrast logisch sauber verknüpfen.",
+  12: "Rektion und präpositionale Ergänzungen sicher kontrollieren.",
+  13: "Bedeutungsnuancen durch Wortbildung und Wortwahl präzisieren.",
+  14: "Metaphorische und übertragene Bedeutungen kontrolliert einordnen.",
+  15: "Vergleiche und Gradunterschiede differenziert ausdrücken.",
+  16: "Information komprimieren, ohne Akteur oder Ursache zu verschleiern.",
+  17: "Voraussetzungen und Folgen mit konditionalen Strukturen präzisieren.",
+  18: "Irreale Alternativen rückblickend präzise formulieren.",
+  19: "Komplexe logische Beziehungen ohne Konnektoren-Überladung darstellen.",
+  20: "Aussagen pragmatisch abstufen, ohne die Position zu verwischen.",
+  21: "Institutionellen Stil mit präzisen Verb-Nomen-Verbindungen steuern.",
+  22: "Zeitliche Abläufe und Beziehungen logisch eindeutig darstellen.",
+  23: "Kritik diplomatisch formulieren, ohne den Inhalt abzuschwächen.",
+  24: "These, Begründung, Beleg, Einwand und Reaktion sauber trennen.",
+  25: "Statistische Evidenz sprachlich begrenzen und Schlussfolgerungen absichern.",
+  26: "Komplexe Gedanken hierarchisch in einer kontrollierten Satzperiode ordnen.",
+  27: "Redundanz reduzieren und zugleich Kohäsion und Register sichern.",
+  28: "Register, Evidenz, Bedeutung und Kohäsion unter Prüfungsdruck kontrollieren.",
+});
+
+function c2ProgressionLabel(day) {
+  const value = Number(day);
+  if (value <= 7) return "Phase 1 · Präzision";
+  if (value <= 14) return "Phase 2 · Evidenz & Distanz";
+  if (value <= 21) return "Phase 3 · Abwägung & Synthese";
+  if (value <= 27) return "Phase 4 · Transfer & Kontrolle";
+  return "Phase 5 · Prüfung";
+}
+
+const C2_GRAMMAR_APPLICATIONS = Object.freeze({
+  1: {
+    prompt: "Ein Recht auf Reparatur löst das Problem der Wegwerfgesellschaft.",
+    instruction: "Die Aussage ist zu absolut. Mache ihre Reichweite sprachlich sichtbar.",
+    task: "Formuliere sie differenzierter und ergänze eine Bedingung, unter der sie eher zutrifft.",
+    answer: "Ein Recht auf Reparatur dürfte die Wegwerfmentalität zumindest teilweise begrenzen, sofern Ersatzteile bezahlbar und langfristig verfügbar bleiben.",
+    teacherHint: "Achte auf Abstufung plus Bedingung; keine neue Evidenz erfinden.",
+  },
+  2: {
+    prompt: "Frühe Förderung verbessert die Bildungschancen vieler Kinder.",
+    instruction: "Verändere den Informationsfokus, nicht die Aussage.",
+    task: "Stelle die frühe Förderung ins Vorfeld bzw. in den Fokus und erkläre kurz, welche Information dadurch hervorgehoben wird.",
+    answer: "Entscheidend für die Bildungschancen vieler Kinder ist eine verlässliche frühe Förderung.",
+    teacherHint: "Bedeutung erhalten; nur Thema–Rhema und Vorfeld steuern.",
+  },
+  3: {
+    prompt: "Forschende prüfen die Ergebnisse erneut, bevor sie eine Empfehlung veröffentlichen.",
+    instruction: "Verdichte den Prozess, ohne den logischen Zusammenhang zu verlieren.",
+    task: "Formuliere den ersten Teil im Nominalstil. Sage danach, wann der Verbalstil hier verständlicher wäre.",
+    answer: "Die erneute Prüfung der Ergebnisse erfolgt vor der Veröffentlichung einer Empfehlung.",
+    teacherHint: "Nominalstil nur verwenden, wenn der Akteur nicht zentral ist.",
+  },
+  4: {
+    prompt: "Die Redaktion sagt: „Die Quelle ist nicht unabhängig bestätigt.“",
+    instruction: "Markiere die Aussage eindeutig als Fremdaussage.",
+    task: "Formuliere den Ausgangssatz als indirekte Rede und kennzeichne, dass die Bestätigung noch aussteht.",
+    answer: "Die Redaktion berichtet, die Quelle sei noch nicht unabhängig bestätigt.",
+    teacherHint: "Quelle, Aussage und Evidenzstatus getrennt halten.",
+  },
+  5: {
+    prompt: "Die neue Maßnahme hat das Vertrauen der Bevölkerung deutlich erhöht.",
+    instruction: "Es liegen bisher nur erste Umfragedaten vor.",
+    task: "Formuliere die Aussage mit subjektiver Modalität so, dass die begrenzte Evidenz sichtbar wird.",
+    answer: "Die neue Maßnahme dürfte das Vertrauen der Bevölkerung erhöht haben; belastbare Langzeitdaten liegen jedoch noch nicht vor.",
+    teacherHint: "Keine Gewissheit formulieren, wenn die Datenlage nur vorläufig ist.",
+  },
+  6: {
+    prompt: "Menschen mit niedrigerem Einkommen haben seltener Zugang zu Weiterbildung. Deshalb verursacht niedriges Einkommen geringere Bildungsbeteiligung.",
+    instruction: "Die zweite Aussage behauptet mehr Kausalität, als die Beobachtung trägt.",
+    task: "Formuliere den Zusammenhang vorsichtiger und nenne sprachlich, was noch geklärt werden müsste.",
+    answer: "Ein niedrigeres Einkommen kann den Zugang zu Weiterbildung erschweren; aus dem beobachteten Zusammenhang allein lässt sich jedoch keine eindeutige Ursache ableiten.",
+    teacherHint: "Korrelation nicht automatisch als Ursache darstellen.",
+  },
+  7: {
+    prompt: "Das Unternehmen macht etwas gegen die ständige Erreichbarkeit der Beschäftigten.",
+    instruction: "Ersetze die unpräzise Formulierung durch institutionell passenden Stil.",
+    task: "Nutze ein Funktionsverbgefüge und formuliere einen vollständigen, sachlichen Satz.",
+    answer: "Das Unternehmen ergreift Maßnahmen, um die ständige Erreichbarkeit der Beschäftigten zu begrenzen.",
+    teacherHint: "Funktionsverbgefüge soll Präzision schaffen, nicht bloß formeller klingen.",
+  },
+  8: {
+    prompt: "Beschäftigte, die von automatisierten Entscheidungen betroffen sind, benötigen nachvollziehbare Beschwerdewege.",
+    instruction: "Verdichte den Relativsatz, ohne den Bezug unklar zu machen.",
+    task: "Formuliere mit einem Partizipialattribut und prüfe anschließend, ob der Bezugsnomen sofort erkennbar bleibt.",
+    answer: "Die von automatisierten Entscheidungen betroffenen Beschäftigten benötigen nachvollziehbare Beschwerdewege.",
+    teacherHint: "Attribut direkt beim Bezugsnomen halten.",
+  },
+  9: {
+    prompt: "Die Plattform muss die Verwendung persönlicher Daten transparent dokumentieren.",
+    instruction: "Verschiebe den Fokus von der handelnden Plattform auf die Pflicht.",
+    task: "Formuliere eine passende Passiv-Ersatzform und erkläre, welche Information dadurch in den Vordergrund rückt.",
+    answer: "Die Verwendung persönlicher Daten ist transparent zu dokumentieren.",
+    teacherHint: "Pflicht sichtbar machen; Verantwortlichkeit nicht unbeabsichtigt verschleiern.",
+  },
+  10: {
+    prompt: "Die Behandlung wirkt bei dieser Patientengruppe.",
+    instruction: "Die Daten stammen aus einer kleinen Studie.",
+    task: "Formuliere eine evidenzgerechte Schlussfolgerung mit subjektiver Modalität.",
+    answer: "Die Behandlung dürfte bei dieser Patientengruppe wirksam sein; die geringe Stichprobe begrenzt jedoch die Aussagekraft.",
+    teacherHint: "Evidenzgrad und Begrenzung müssen sprachlich zusammenpassen.",
+  },
+  11: {
+    prompt: "Der Ausbau des öffentlichen Verkehrs ist teuer. Er kann langfristig Verkehrsflächen effizienter nutzen.",
+    instruction: "Verbinde Gegengrund und Hauptaussage logisch.",
+    task: "Formuliere einmal konzessiv und benenne anschließend, warum ein adversativer Konnektor hier eine andere Beziehung ausdrücken würde.",
+    answer: "Obwohl der Ausbau des öffentlichen Verkehrs teuer ist, kann er langfristig Verkehrsflächen effizienter nutzen.",
+    teacherHint: "Konzession = Gegengrund; Adversativität = Gegenüberstellung.",
+  },
+  12: {
+    prompt: "Institutionen müssen die Bedürfnisse neu Zugewanderter reagieren.",
+    instruction: "Die Rektion ist fehlerhaft.",
+    task: "Korrigiere den Satz und erkläre, welche Präposition mit dem Verb verbunden ist.",
+    answer: "Institutionen müssen auf die Bedürfnisse neu Zugewanderter reagieren.",
+    teacherHint: "Verb plus Präposition als feste Einheit behandeln.",
+  },
+  13: {
+    prompt: "Mehrsprachigkeit macht Kommunikation manchmal schwer und manchmal gut.",
+    instruction: "Die Aussage ist lexikalisch zu unpräzise.",
+    task: "Ersetze die unscharfen Wörter durch zwei bedeutungsgenauere Ausdrücke und erkläre den Unterschied.",
+    answer: "Mehrsprachigkeit kann Kommunikation erschweren, zugleich aber interkulturelle Verständigung fördern.",
+    teacherHint: "Nicht nur Synonyme tauschen; Bedeutungsnuancen sichtbar machen.",
+  },
+  14: {
+    prompt: "Ein Denkmal ist ein Fenster in die Vergangenheit.",
+    instruction: "Die Metapher kann mehrere Bedeutungen tragen.",
+    task: "Erkläre die übertragene Bedeutung und formuliere die Aussage anschließend in sachlich-analytischem Register.",
+    answer: "Ein Denkmal kann historische Perspektiven sichtbar machen, bildet Vergangenheit jedoch nicht neutral oder vollständig ab.",
+    teacherHint: "Metapher erklären, nicht wörtlich weiterführen.",
+  },
+  15: {
+    prompt: "Die Mieten in Stadt A sind hoch. In Stadt B sind sie auch hoch.",
+    instruction: "Die Aussage zeigt noch keinen präzisen Vergleich.",
+    task: "Formuliere einen differenzierten Vergleich mit Gradpartikel und benenne, worauf sich der Vergleich genau bezieht.",
+    answer: "Die durchschnittlichen Mieten in Stadt A liegen deutlich höher als in Stadt B, wobei der Unterschied in zentralen Lagen besonders ausgeprägt ist.",
+    teacherHint: "Vergleichsgröße explizit machen; keine unklare Steigerung.",
+  },
+  16: {
+    prompt: "Wenn Werbung personalisiert wird, kann sie Kaufentscheidungen stärker beeinflussen.",
+    instruction: "Komprimiere die Information, ohne Ursache und Wirkung zu verwischen.",
+    task: "Formuliere mit Nominalisierung und prüfe, ob der kausale Zusammenhang weiterhin verständlich bleibt.",
+    answer: "Die Personalisierung von Werbung kann zu einer stärkeren Beeinflussung von Kaufentscheidungen führen.",
+    teacherHint: "Informationsdichte darf Akteur und Beziehung nicht unklar machen.",
+  },
+  17: {
+    prompt: "Mehr Kitaplätze verbessern frühe Bildung.",
+    instruction: "Die Aussage gilt nicht unter jeder Bedingung.",
+    task: "Formuliere eine Bedingung, unter der die Aussage tragfähig ist, und eine zweite, die sie einschränkt.",
+    answer: "Mehr Kitaplätze können frühe Bildung verbessern, sofern zugleich genügend qualifiziertes Personal verfügbar ist.",
+    teacherHint: "Bedingung klar von Folge trennen.",
+  },
+  18: {
+    prompt: "Die Beschäftigte hatte keine Arbeitszeit für Weiterbildung und nahm deshalb nicht am Kurs teil.",
+    instruction: "Formuliere eine rückblickende irreale Alternative.",
+    task: "Zeige mit Konjunktiv II Vergangenheit, was unter einer anderen Bedingung möglich gewesen wäre.",
+    answer: "Hätte die Beschäftigte Arbeitszeit für Weiterbildung erhalten, hätte sie am Kurs teilnehmen können.",
+    teacherHint: "Irrealität in Bedingung und Folge konsistent markieren.",
+  },
+  19: {
+    prompt: "Die Lieferkette ist günstig, aber sie ist abhängig, und deshalb ist sie riskant, obwohl sie effizient ist.",
+    instruction: "Die logischen Beziehungen sind überladen.",
+    task: "Ordne Kontrast, Folge und Einschränkung in maximal zwei Sätzen mit passenden Konnektoren.",
+    answer: "Die Lieferkette ist zwar kostengünstig und effizient, zugleich erhöht ihre starke regionale Abhängigkeit jedoch das Ausfallrisiko.",
+    teacherHint: "Nicht mehrere Konnektoren stapeln; Beziehung priorisieren.",
+  },
+  20: {
+    prompt: "Soziale Medien zerstören die öffentliche Debatte.",
+    instruction: "Die Aussage ist zu absolut und pragmatisch zu hart.",
+    task: "Stufe sie ab, ohne die kritische Position aufzugeben, und erkläre die Wirkung deiner Partikel bzw. Abschwächung.",
+    answer: "Soziale Medien können die Qualität öffentlicher Debatten durchaus beeinträchtigen, insbesondere wenn polarisierende Inhalte algorithmisch verstärkt werden.",
+    teacherHint: "Abschwächen heißt nicht zurücknehmen; Position soll erkennbar bleiben.",
+  },
+  21: {
+    prompt: "Die Behörde entscheidet jetzt über den Antrag.",
+    instruction: "Formuliere den Vorgang im institutionellen Register.",
+    task: "Nutze eine passende Verb-Nomen-Verbindung und erkläre, warum sie hier idiomatischer wirkt.",
+    answer: "Die Behörde trifft nun eine Entscheidung über den Antrag.",
+    teacherHint: "Institutionellen Stil präzise, aber nicht unnötig bürokratisch formulieren.",
+  },
+  22: {
+    prompt: "Die Besucherzahlen stiegen. Danach wurden die Mieten in der Innenstadt höher.",
+    instruction: "Die zeitliche Beziehung ist bisher nur lose markiert.",
+    task: "Verbinde beide Aussagen mit einer temporalen Struktur, ohne automatisch Kausalität zu behaupten.",
+    answer: "Nachdem die Besucherzahlen gestiegen waren, erhöhten sich in der Innenstadt auch die Mieten.",
+    teacherHint: "Temporalität nicht als Kausalität ausgeben.",
+  },
+  23: {
+    prompt: "Ihr Vorschlag berücksichtigt unsere Sicherheitsinteressen nicht.",
+    instruction: "Die Kritik soll klar bleiben, aber diplomatischer formuliert werden.",
+    task: "Formuliere vorsichtig-diplomatisch, ohne den sachlichen Einwand abzuschwächen.",
+    answer: "Aus unserer Sicht berücksichtigt der Vorschlag unsere Sicherheitsinteressen bislang nicht in ausreichendem Maße.",
+    teacherHint: "Hedging soll Ton steuern, nicht den Inhalt verschwinden lassen.",
+  },
+  24: {
+    prompt: "Die Maßnahme ist sinnvoll, weil Fachleute sie unterstützen.",
+    instruction: "Begründung und Beleg werden vermischt.",
+    task: "Formuliere These, Begründung und Beleg als drei klar unterscheidbare Elemente.",
+    answer: "These: Die Maßnahme kann sinnvoll sein. Begründung: Sie adressiert das benannte Problem direkt. Beleg: Mehrere Fachleute verweisen auf entsprechende Erfahrungen aus vergleichbaren Fällen.",
+    teacherHint: "Expertenunterstützung ist ein Beleghinweis, nicht automatisch die Begründung selbst.",
+  },
+  25: {
+    prompt: "In der Studie korrelieren Bildschirmzeit und Schlafprobleme stark. Bildschirmzeit verursacht daher Schlafprobleme.",
+    instruction: "Die Schlussfolgerung überschreitet die Evidenz.",
+    task: "Formuliere eine zulässige Schlussfolgerung und benenne, welche zusätzliche Evidenz für eine Kausalaussage nötig wäre.",
+    answer: "Die Studie zeigt einen starken Zusammenhang zwischen Bildschirmzeit und Schlafproblemen; daraus lässt sich allein jedoch keine eindeutige Kausalität ableiten.",
+    teacherHint: "Korrelation, Evidenzstärke und Schlussfolgerung sauber trennen.",
+  },
+  26: {
+    prompt: "Die Technologie kann nützlich sein. Sie birgt Risiken. Diese Risiken sind noch nicht vollständig bekannt.",
+    instruction: "Ordne die drei Aussagen hierarchisch statt sie nur aneinanderzureihen.",
+    task: "Formuliere eine kontrollierte Satzperiode mit Hauptaussage, Einräumung und Einschränkung.",
+    answer: "Obwohl die Technologie einen erheblichen Nutzen verspricht, sollte ihr Einsatz nur schrittweise ausgeweitet werden, solange zentrale Risiken noch nicht hinreichend geklärt sind.",
+    teacherHint: "Hierarchie muss logisch lesbar bleiben; Länge allein ist kein Qualitätsmerkmal.",
+  },
+  27: {
+    prompt: "Wir möchten Ihnen mitteilen, dass wir Ihnen sagen möchten, dass Ihre Anfrage derzeit noch geprüft wird.",
+    instruction: "Die Formulierung ist redundant und registerschwach.",
+    task: "Kürze sie deutlich, bewahre den formellen Ton und halte den Bezug eindeutig.",
+    answer: "Ihre Anfrage wird derzeit noch geprüft.",
+    teacherHint: "Redundanz entfernen; Höflichkeit nicht mit unnötiger Länge verwechseln.",
+  },
+  28: {
+    prompt: "Die Maßnahme ist gut, weil sie viele Vorteile hat.",
+    instruction: "Simuliere die C2-Endkontrolle unter Zeitdruck.",
+    task: "Formuliere präziser. Prüfe danach in dieser Reihenfolge: Bedeutung → Evidenzgrad → Register → Kohäsion.",
+    answer: "Die Maßnahme erscheint unter den genannten Bedingungen grundsätzlich sinnvoll, da sie mehrere der zentralen Ziele adressiert; ihre langfristige Wirkung bleibt jedoch gesondert zu prüfen.",
+    teacherHint: "Nicht maximal komplex formulieren; kontrolliert und prüfbar bleiben.",
+  },
+});
+
+const C2_ANALYTICAL_TASKS = Object.freeze({
+  1: {
+    title: "Produktentscheidung · Reparieren oder ersetzen?",
+    instruction: "Bewerte einen konkreten Fall der Kreislaufwirtschaft statt abstrakt Pro und Contra zu sammeln.",
+    prompts: [
+      "Fall: Ein Hersteller verkauft ein fünf Jahre altes Smartphone weiter, dessen Akku austauschbar ist; ein Ersatzakku kostet 20 % eines Neugeräts.",
+      "Entscheide nach drei Kriterien: Ressourcenverbrauch · Kosten für den Nutzer · Verantwortung des Herstellers.",
+      "Welche Lösung ist unter diesen Bedingungen am überzeugendsten, und welche Bedingung könnte dein Urteil ändern?",
+    ],
+  },
+  2: {
+    title: "Schulbudget · Gleich verteilen oder gezielt fördern?",
+    instruction: "Entscheide, was Bildungsgerechtigkeit in einem konkreten Verteilungsproblem bedeutet.",
+    prompts: [
+      "Fall: Zwei Schulen erhalten zusätzliches Fördergeld. Schule A hat größere Klassen, Schule B deutlich mehr Kinder mit zusätzlichem Unterstützungsbedarf.",
+      "Entwickle zwei mögliche Verteilungsmodelle und nenne jeweils das zugrunde liegende Gerechtigkeitsprinzip.",
+      "Begründe, welches Modell du wählen würdest und welches Risiko dabei bestehen bleibt.",
+    ],
+  },
+  3: {
+    title: "Forschungsförderung · Nutzen jetzt oder Erkenntnis später?",
+    instruction: "Prüfe, wie Forschungsfreiheit und öffentlicher Nutzen in einer realen Förderentscheidung zusammenpassen.",
+    prompts: [
+      "Fall: Ein Förderprogramm kann entweder ein kurzfristig anwendbares Gesundheitsprojekt oder Grundlagenforschung ohne absehbare Anwendung finanzieren.",
+      "Welche Kriterien sollten vor der Entscheidung gelten: gesellschaftlicher Bedarf · wissenschaftliche Qualität · langfristiges Erkenntnispotenzial?",
+      "Formuliere eine Entscheidung, die mindestens ein starkes Gegenargument ernst nimmt.",
+    ],
+  },
+  4: {
+    title: "Eilmeldung · Was darf die Redaktion sagen?",
+    instruction: "Trenne Quelle, Bestätigung und zulässige Veröffentlichung.",
+    prompts: [
+      "Fall: Quelle A ist ein Augenzeuge; Quelle B ist eine Behörde; Quelle C ist ein Video ohne geklärte Herkunft. Nur A und B berichten dasselbe Ereignis.",
+      "Markiere: Was kann als bestätigt gelten, was nur als berichtet, was bleibt offen?",
+      "Formuliere eine zweisätzige Eilmeldung, die informiert, ohne Unsicherheit zu verstecken.",
+    ],
+  },
+  5: {
+    title: "Vertrauen nach einem Fehler · Offenlegen oder verteidigen?",
+    instruction: "Analysiere, welche Reaktion einer Institution Vertrauen eher stabilisieren kann.",
+    prompts: [
+      "Fall: Eine Behörde veröffentlicht eine fehlerhafte Zahl und korrigiert sie erst am nächsten Tag.",
+      "Vergleiche zwei Reaktionen: stille Korrektur vs. öffentliche Erklärung mit Ursache, Korrektur und künftigem Prüfverfahren.",
+      "Welche Reaktion ist überzeugender, und woran könnte man später messen, ob Vertrauen tatsächlich gestärkt wurde?",
+    ],
+  },
+  6: {
+    title: "Ungleiche Chancen · Ursache oder Symptom?",
+    instruction: "Prüfe einen beobachteten Unterschied, ohne vorschnell Kausalität anzunehmen.",
+    prompts: [
+      "Fall: In einem Unternehmen werden Beschäftigte aus Gruppe A seltener befördert als Beschäftigte aus Gruppe B, obwohl die Durchschnittsbewertungen ähnlich sind.",
+      "Welche zusätzlichen Daten brauchst du, bevor du eine Ursache benennst?",
+      "Welche Maßnahme wäre schon jetzt vertretbar, und welche wäre ohne weitere Evidenz zu weitgehend?",
+    ],
+  },
+  7: {
+    title: "Erreichbarkeit nach Feierabend · Wo liegt die Grenze?",
+    instruction: "Entwickle eine praktikable Regel zwischen Flexibilität und Schutz vor Dauererreichbarkeit.",
+    prompts: [
+      "Fall: Ein internationales Team arbeitet in drei Zeitzonen. Nachrichten nach Feierabend sind häufig, sofortige Antworten aber offiziell nicht verlangt.",
+      "Formuliere eine konkrete Unternehmensregel zu Erreichbarkeit und Ausnahmen.",
+      "Prüfe die Regel aus Sicht von Beschäftigten, Führungskräften und betrieblicher Flexibilität.",
+    ],
+  },
+  8: {
+    title: "KI-Vorauswahl · Wer verantwortet die Entscheidung?",
+    instruction: "Analysiere ein automatisiertes Verfahren entlang von Transparenz, Kontrolle und Folgen.",
+    prompts: [
+      "Fall: Ein KI-System sortiert Bewerbungen vor; Personalverantwortliche sehen nur die besten 20 %. Die Kriterien sind nicht vollständig erklärbar.",
+      "Welche Entscheidungsschritte dürfen automatisiert bleiben, welche müssen Menschen überprüfen?",
+      "Welche Beschwerde- oder Kontrollmöglichkeit wäre mindestens nötig, bevor das Verfahren eingesetzt wird?",
+    ],
+  },
+  9: {
+    title: "App-Daten · Zustimmung oder faktischer Zwang?",
+    instruction: "Prüfe, ob digitale Zustimmung unter konkreten Bedingungen wirklich selbstbestimmt ist.",
+    prompts: [
+      "Fall: Eine Navigations-App funktioniert nur mit Standortfreigabe; zusätzlich möchte sie Kontakte für personalisierte Empfehlungen nutzen.",
+      "Trenne notwendige von optionalen Daten und begründe die Grenze.",
+      "Welche Information müsste vor der Zustimmung so erklärt werden, dass eine echte Entscheidung möglich ist?",
+    ],
+  },
+  10: {
+    title: "Neue Therapie · Wie viel Unsicherheit ist vertretbar?",
+    instruction: "Treffe eine medizinethische Entscheidung mit expliziter Evidenzgrenze.",
+    prompts: [
+      "Fall: Eine Therapie zeigt in einer kleinen Studie starke Wirkung; seltene Nebenwirkungen können wegen der kurzen Laufzeit noch nicht zuverlässig beurteilt werden.",
+      "Welche Patientengruppe könnte einen früheren Zugang erhalten, und unter welchen Schutzbedingungen?",
+      "Formuliere eine Empfehlung, die Nutzen, Risiko und Unsicherheit getrennt benennt.",
+    ],
+  },
+  11: {
+    title: "Mobilitätspolitik · Parkraum verteuern?",
+    instruction: "Bewerte eine Klimamaßnahme anhand von Wirkung und sozialer Zumutbarkeit.",
+    prompts: [
+      "Fall: Eine Stadt möchte Parkgebühren stark erhöhen; zwei Außenbezirke haben jedoch nur stündliche Busverbindungen.",
+      "Welche flankierende Maßnahme müsste vor oder gleichzeitig mit der Preiserhöhung kommen?",
+      "Formuliere ein Urteil, das Klimawirkung und Mobilitätszugang sichtbar gegeneinander abwägt.",
+    ],
+  },
+  12: {
+    title: "Berufsabschluss anerkennen · Integration praktisch prüfen",
+    instruction: "Unterscheide individuelle Integrationsleistung von institutionellen Zugangsbarrieren.",
+    prompts: [
+      "Fall: Eine Pflegefachkraft spricht gut Deutsch, darf aber wegen eines langwierigen Anerkennungsverfahrens monatelang nicht im erlernten Beruf arbeiten.",
+      "Welche Aufgaben liegen bei der Person, welche bei Behörden bzw. Arbeitgebern?",
+      "Welche zwei Änderungen würden Teilhabe verbessern, ohne berufliche Qualitätsstandards aufzugeben?",
+    ],
+  },
+  13: {
+    title: "Mehrsprachiges Team · Eine Sprache für alles?",
+    instruction: "Entwickle eine Sprachregel, die Verständigung und Mehrsprachigkeit zusammen denkt.",
+    prompts: [
+      "Fall: In einem Team werden vier Sprachen gesprochen; offizielle Dokumente sind auf Deutsch, informelle Gespräche wechseln häufig die Sprache.",
+      "Wo ist eine gemeinsame Arbeitssprache notwendig, wo kann Mehrsprachigkeit einen Vorteil bieten?",
+      "Formuliere eine Regel, die niemanden ausschließt und dennoch effiziente Zusammenarbeit ermöglicht.",
+    ],
+  },
+  14: {
+    title: "Denkmal neu kontextualisieren · Erinnerung verändern?",
+    instruction: "Prüfe drei Umgangsformen mit umstrittener öffentlicher Erinnerung.",
+    prompts: [
+      "Fall: Ein historisches Denkmal ehrt eine Person, deren Rolle heute deutlich kritischer bewertet wird.",
+      "Vergleiche: unverändert lassen · Kontexttafel ergänzen · in ein Museum versetzen.",
+      "Welche Lösung verändert Erinnerung auf welche Weise, und welche Perspektive bleibt jeweils unsichtbar?",
+    ],
+  },
+  15: {
+    title: "Neubauprojekt · Mehr Wohnungen, aber für wen?",
+    instruction: "Bewerte ein Wohnungsprojekt nach Menge, Preis und langfristiger Wirkung.",
+    prompts: [
+      "Fall: Auf einem städtischen Grundstück sollen 300 Wohnungen entstehen; ohne Vorgaben wären nur 30 dauerhaft preisgebunden.",
+      "Vergleiche zwei Modelle: maximale Bauzahl vs. geringere Bauzahl mit höherem Anteil bezahlbarer Wohnungen.",
+      "Welche Kennzahl würdest du nach fünf Jahren prüfen, um die soziale Wirkung des Projekts zu bewerten?",
+    ],
+  },
+  16: {
+    title: "Personalisierte Werbung · Nützlich oder manipulierend?",
+    instruction: "Trenne legitime Personalisierung von problematischer Verhaltenssteuerung.",
+    prompts: [
+      "Fall: Ein Online-Shop erkennt wiederholte nächtliche Käufe und zeigt genau dann zeitlich begrenzte Rabatte.",
+      "Welche Form der Personalisierung ist noch Service, wo beginnt gezielte Ausnutzung von Verhalten?",
+      "Welche Transparenzregel würde die Entscheidung der Verbraucher stärken, ohne Personalisierung vollständig zu verbieten?",
+    ],
+  },
+  17: {
+    title: "Kita-Ausbau · Zugang gegen Qualität?",
+    instruction: "Entscheide, welche Voraussetzung für eine Ausweitung erfüllt sein muss.",
+    prompts: [
+      "Fall: Eine Kommune kann 200 zusätzliche Kitaplätze schaffen, wenn die Gruppengröße vorübergehend steigt.",
+      "Welche Qualitätsgrenze darf nicht unterschritten werden?",
+      "Formuliere eine konditionale Empfehlung: Ausbau ja, sofern …; Ausbau nein, falls …",
+    ],
+  },
+  18: {
+    title: "Weiterbildung im Betrieb · Chance ohne Zeit?",
+    instruction: "Prüfe, ob ein Weiterbildungsangebot real zugänglich ist.",
+    prompts: [
+      "Fall: Ein Unternehmen bezahlt einen Digitalkurs, erwartet aber, dass Beschäftigte ihn vollständig in ihrer Freizeit absolvieren.",
+      "Welche Beschäftigten werden dadurch besonders benachteiligt?",
+      "Entwickle ein Modell, das Eigeninitiative verlangt, aber Zeit- und Kostenbarrieren realistisch berücksichtigt.",
+    ],
+  },
+  19: {
+    title: "Lieferkette · Billig, effizient, abhängig",
+    instruction: "Entscheide zwischen Kostenoptimierung und Resilienz anhand eines konkreten Risikos.",
+    prompts: [
+      "Fall: 80 % eines wichtigen Bauteils kommen aus einer einzigen Region; ein zweiter Lieferant wäre 15 % teurer.",
+      "Welche Informationen brauchst du, um die Mehrkosten gegen das Ausfallrisiko abzuwägen?",
+      "Empfiehl eine Beschaffungsstrategie und benenne ihre wichtigste Nebenwirkung.",
+    ],
+  },
+  20: {
+    title: "Moderation · Schutz der Debatte oder Eingriff?",
+    instruction: "Prüfe eine konkrete Moderationsentscheidung statt abstrakt Meinungsfreiheit zu diskutieren.",
+    prompts: [
+      "Fall: Eine Plattform kennzeichnet nachweislich falsche Gesundheitsbehauptungen, löscht sie aber nicht; wiederholte Verstöße senken die Reichweite.",
+      "Welche Maßnahme ist Information, welche Moderation, welche Sanktion?",
+      "Wo würdest du eine Grenze setzen und wie müsste die Plattform diese Regel begründen?",
+    ],
+  },
+  21: {
+    title: "Digitales Amt · Effizient, aber für alle zugänglich?",
+    instruction: "Entwickle einen Bürgerservice mit digitalem Standard und realistischem Alternativzugang.",
+    prompts: [
+      "Fall: Ein Antrag kann online in fünf Minuten gestellt werden; persönliche Termine sind nur einmal pro Woche möglich.",
+      "Welche Nutzergruppen brauchen einen alternativen Zugang, und wie aufwendig darf dieser sein?",
+      "Formuliere einen Service-Standard, der Effizienz und Zugänglichkeit verbindet.",
+    ],
+  },
+  22: {
+    title: "Tourismusstadt · Einnahmen gegen Wohnraum",
+    instruction: "Bewerte eine touristische Maßnahme anhand lokaler Wirkung und kultureller Begegnung.",
+    prompts: [
+      "Fall: In einer Altstadt werden immer mehr Wohnungen kurzfristig an Touristen vermietet; gleichzeitig leben viele lokale Betriebe vom Tourismus.",
+      "Vergleiche eine Mengenbegrenzung, eine Abgabe und eine Wohnraumschutzregel.",
+      "Welche Kombination schützt Lebensqualität, ohne den lokalen Nutzen des Tourismus pauschal zu negieren?",
+    ],
+  },
+  23: {
+    title: "Verhandlung · Kooperation trotz Konflikt",
+    instruction: "Baue eine diplomatische Position mit klarer roter Linie und möglichem Kompromiss.",
+    prompts: [
+      "Fall: Zwei Staaten kooperieren wirtschaftlich, sind aber in einer Sicherheitsfrage grundlegend uneinig.",
+      "Definiere: gemeinsames Interesse · nicht verhandelbare Grenze · möglicher Zwischenschritt.",
+      "Formuliere einen Vorschlag, der Kooperation ermöglicht, ohne die Differenz sprachlich zu verstecken.",
+    ],
+  },
+  24: {
+    title: "Kontroverse · Was ist Fakt, was Wertung?",
+    instruction: "Zerlege eine öffentliche Streitfrage, bevor du Position beziehst.",
+    prompts: [
+      "Fall: Eine Kommune diskutiert eine nächtliche Verkehrsbeschränkung. Fachleute prognostizieren weniger Lärm; Anwohner und Gewerbe bewerten die Folgen unterschiedlich.",
+      "Trenne empirische Frage, Werturteil und politische Abwägung.",
+      "Formuliere ein starkes Gegenargument und eine Reaktion darauf, ohne das Gegenargument zu verzerren.",
+    ],
+  },
+  25: {
+    title: "Studie lesen · Starke Zahl, schwache Schlussfolgerung?",
+    instruction: "Prüfe eine Statistik auf Reichweite, Messung und Kausalität.",
+    prompts: [
+      "Fall: Eine Studie meldet 40 % geringeres Risiko in Gruppe A; die absolute Differenz beträgt jedoch nur 2 Prozentpunkte.",
+      "Welche Zahl ist für die Interpretation wichtiger, und welche Zusatzinformation fehlt noch?",
+      "Formuliere eine Schlussfolgerung, die verständlich ist, aber die Evidenz nicht überdehnt.",
+    ],
+  },
+  26: {
+    title: "Gesichtserkennung · Nutzen gegen Eingriff",
+    instruction: "Bewerte technischen Fortschritt mit expliziten ethischen Kriterien.",
+    prompts: [
+      "Fall: Gesichtserkennung könnte den Zugang zu einem Hochsicherheitsbereich beschleunigen, speichert dafür biometrische Daten aller Beschäftigten.",
+      "Prüfe Nutzen, Verhältnismäßigkeit, Alternativen und Verantwortlichkeit.",
+      "Unter welcher Bedingung wäre der Einsatz vertretbar – und welche Bedingung würde ihn ausschließen?",
+    ],
+  },
+  27: {
+    title: "Formeller Text · Präzise statt aufgebläht",
+    instruction: "Überarbeite einen kurzen Text nach Register, Kohäsion und Informationsdichte.",
+    prompts: [
+      "Fall: Ein formeller Absatz wiederholt dieselbe Aussage dreimal mit unterschiedlichen abstrakten Nomen.",
+      "Entscheide, welche Information zentral ist, welche gestrichen werden kann und wo ein expliziter Bezug nötig bleibt.",
+      "Formuliere eine knappe Überarbeitungsstrategie: kürzen · verbinden · präzisieren.",
+    ],
+  },
+  28: {
+    title: "Prüfungssimulation · 6-Minuten-Endkontrolle",
+    instruction: "Simuliere die letzte Kontrolle einer C2-Antwort unter Zeitdruck.",
+    prompts: [
+      "Fall: Deine Antwort ist vollständig, aber zwei Aussagen sind zu absolut, ein Bezug ist unklar und der Schluss wiederholt nur die Einleitung.",
+      "Priorisiere vier Kontrollen: Bedeutung · Evidenz · Register · Kohäsion. Was prüfst du zuerst und warum?",
+      "Formuliere anschließend eine kurze Synthese, die eine Bedingung oder Grenze sichtbar macht.",
+    ],
+  },
+});
+
 const C2_REFORMULATION_PREP = Object.freeze({
   2: {
     source: "Frühe Förderung verbessert die Bildungschancen vieler Kinder.",
@@ -1323,6 +1818,10 @@ function makeSlide(lesson) {
     grammarCheckModels: checks.models,
     grammarCheckMinutes: 10,
     runtimePerspectivesDe: lesson.perspectives,
+    skillTarget: C2_SKILL_TARGETS[Number(lesson.day)] || lesson.grammarFocus,
+    progressionLabel: c2ProgressionLabel(lesson.day),
+    analyticalTask: C2_ANALYTICAL_TASKS[Number(lesson.day)] || null,
+    grammarApplication: C2_GRAMMAR_APPLICATIONS[Number(lesson.day)] || null,
     writeType: lesson.writeType,
     reformulationPrep: C2_REFORMULATION_PREP[Number(lesson.day)] || null,
     canonicalWritingPromptDe: lesson.writingPrompt,

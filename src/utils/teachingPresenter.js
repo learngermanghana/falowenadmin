@@ -588,6 +588,24 @@ function lessonSummaryObjective(slide = {}) {
 }
 
 function buildLessonSummaryItems(slide = {}) {
+  const level = classroomLevel(slide);
+  if (level === "C2") {
+    const grammarFocus = String(slide.grammarTeachDe?.[0] || "")
+      .replace(/^Zielstruktur:\s*/i, "")
+      .replace(/\.$/, "")
+      .trim();
+    const skillTarget = String(slide.skillTarget || grammarFocus || "die heutige C2-Zielstruktur kontrolliert einsetzen").trim();
+    const analysisTitle = String(slide.analyticalTask?.title || "die heutige Fallanalyse").trim();
+    const transferDetail = String(slide.writeType || "").toLowerCase() === "reformulation"
+      ? "Du kannst die heutige Umformung vorbereiten, ohne Bedeutung, Evidenzgrad oder Register zu verändern."
+      : "Du kannst eine Position mit zwei tragenden Argumenten und einem relevanten Einwand für den Write-Bereich vorbereiten.";
+    return [
+      { label: "Sprache", detail: `Du kannst ${skillTarget.charAt(0).toLowerCase()}${skillTarget.slice(1)}` },
+      { label: "Analyse", detail: `Du kannst die Entscheidung aus „${analysisTitle}“ mit klaren Kriterien, Grenzen oder Evidenz begründen.` },
+      { label: "Transfer", detail: transferDetail },
+    ];
+  }
+
   const support = buildTeacherSlideSupport(slide);
   const topic = cleanTopic(slide);
   const grammar = (Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [])
@@ -622,6 +640,18 @@ function buildClassicStages(slide = {}, topicLabel = "") { const studentReferenc
 ]; }
 
 function buildC2GrammarApplication(slide = {}, grammarItems = [], modelItems = []) {
+  const curated = slide.grammarApplication;
+  if (curated?.prompt && curated?.task) {
+    return {
+      title: curated.title || "Jetzt anwenden",
+      instruction: String(curated.instruction || "Nutze die Zielstruktur, um ein konkretes sprachliches Problem zu lösen."),
+      prompt: String(curated.prompt),
+      task: String(curated.task),
+      answer: String(curated.answer || ""),
+      teacherHint: String(curated.teacherHint || ""),
+    };
+  }
+
   const focus = String(grammarItems[0] || "").replace(/^Zielstruktur:\s*/i, "").replace(/\.$/, "").trim();
   const rules = grammarItems.slice(1);
   const models = Array.isArray(modelItems) ? modelItems.filter(Boolean) : [];
@@ -677,96 +707,28 @@ function buildC2GrammarApplication(slide = {}, grammarItems = [], modelItems = [
 }
 
 function buildC2AnalyticalTask(slide = {}) {
-  const day = Math.max(1, Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 1));
-  const perspectives = Array.isArray(slide.runtimePerspectivesDe) ? slide.runtimePerspectivesDe.filter(Boolean) : [];
-  const grammar = Array.isArray(slide.grammarTeachDe) ? slide.grammarTeachDe.filter(Boolean) : [];
+  const curated = slide.analyticalTask;
+  if (curated?.title && Array.isArray(curated.prompts) && curated.prompts.length) {
+    return {
+      title: String(curated.title),
+      instruction: String(curated.instruction || "Analysiere den Fall und begründe deine Entscheidung."),
+      prompts: curated.prompts.filter(Boolean).slice(0, 3),
+      modelItems: [],
+      minutes: Number(curated.minutes || 14),
+    };
+  }
+
   const topic = cleanTopic(slide);
-  const first = perspectives[0] || `Formuliere eine belastbare Position zu „${topic}“.`;
-  const second = perspectives[1] || "Formuliere eine plausible Gegenposition.";
-  const third = perspectives[2] || "Formuliere eine dritte Perspektive oder Einschränkung.";
-  const modelItems = (Array.isArray(slide.speakingModels) ? slide.speakingModels : [])
-    .map((item) => item?.modelAnswerDe)
-    .filter(Boolean)
-    .slice(0, 2);
-  const mechanic = ((day - 1) % 7) + 1;
-
-  const variants = {
-    1: {
-      title: "Kriterienmatrix",
-      instruction: "Bewerte drei Positionen nach klaren Kriterien, bevor du dich festlegst.",
-      prompts: [
-        `Position A: ${first}`,
-        `Position B: ${second}`,
-        `Position C: ${third}`,
-        "Lege zwei Bewertungskriterien fest und zeige, welche Position unter welcher Bedingung stärker wird.",
-      ],
-    },
-    2: {
-      title: "Evidenz-Audit",
-      instruction: "Trenne Behauptung, notwendige Evidenz und zulässige Schlussfolgerung.",
-      prompts: [
-        `Prüfe diese Aussage: ${first}`,
-        "Welche Daten oder Beobachtungen würden die Aussage stützen?",
-        "Welche Evidenz würde sie relativieren?",
-        "Formuliere anschließend eine abgestufte Schlussfolgerung.",
-      ],
-    },
-    3: {
-      title: "Registerwahl · eine Formulierung vertiefen",
-      instruction: "Wähle ein Register und formuliere die Kernaussage nur einmal neu.",
-      prompts: [
-        `Ausgangsaussage: ${first}`,
-        "Wähle: neutral · akademisch verdichtet · vorsichtig-diplomatisch.",
-        grammar[0] ? `Formuliere eine Version und begründe kurz deine Wahl. Zielstruktur: ${grammar[0]}` : "Formuliere eine Version und begründe kurz deine Wahl.",
-      ],
-    },
-    4: {
-      title: "Quellen- und Distanzcheck",
-      instruction: "Ordne Aussage, Quelle und Evidenzstatus sprachlich sauber voneinander.",
-      prompts: [
-        `Fremdaussage: ${first}`,
-        "Formuliere sie als berichtete Aussage, ohne sie als Tatsache zu übernehmen.",
-        `Setze anschließend einen begründeten Gegenpunkt: ${second}`,
-        "Markiere abschließend, was belegt, plausibel oder noch offen ist.",
-      ],
-    },
-    5: {
-      title: "Stärkste Gegenposition",
-      instruction: "Formuliere die Gegenposition so stark wie möglich und antworte darauf, ohne sie zu verzerren.",
-      prompts: [
-        `Ausgangsthese: ${first}`,
-        `Stärkste Gegenposition: ${second}`,
-        "Welche Annahme ist in beiden Positionen unterschiedlich?",
-        "Formuliere eine Synthese mit Bedingung oder Grenze.",
-      ],
-    },
-    6: {
-      title: "Kausalitäts- und Folgenkarte",
-      instruction: "Baue eine belastbare Kette aus Ursache, Mechanismus, Folge und Einschränkung.",
-      prompts: [
-        `Thema: ${topic}`,
-        `Ausgangspunkt: ${first}`,
-        "Welche Verbindung ist wirklich kausal, welche nur plausibel oder korrelativ?",
-        "Formuliere die Schlussfolgerung so, dass sie nicht mehr behauptet als die Evidenz trägt.",
-      ],
-    },
-    7: {
-      title: "Synthese ohne Gleichmacherei",
-      instruction: "Verbinde mehrere Perspektiven, ohne ihre Unterschiede zu verwischen.",
-      prompts: [
-        `Perspektive 1: ${first}`,
-        `Perspektive 2: ${second}`,
-        `Perspektive 3: ${third}`,
-        "Formuliere eine Synthese: Was bleibt bestehen, was wird eingeschränkt, und welche Bedingung entscheidet?",
-      ],
-    },
-  };
-
-  const selected = variants[mechanic];
+  const foundation = getPresenterTopicFoundation(slide) || {};
   return {
-    ...selected,
-    prompts: Array.isArray(selected.prompts) ? selected.prompts.slice(0, 3) : [],
-    modelItems,
+    title: "Fallanalyse · Entscheidung begründen",
+    instruction: "Arbeite an einem konkreten Fall und mache Kriterien, Grenzen und Evidenz sichtbar.",
+    prompts: [
+      foundation.example ? `Fall: ${foundation.example}` : `Fall: Entwickle ein konkretes Beispiel zu „${topic}“.`,
+      foundation.tension ? `Prüfe die Kernspannung: ${foundation.tension}` : "Lege zwei nachvollziehbare Bewertungskriterien fest.",
+      foundation.question ? `Beantworte abschließend: ${foundation.question}` : "Formuliere eine begründete Entscheidung mit einer klaren Einschränkung.",
+    ],
+    modelItems: [],
     minutes: 14,
   };
 }
@@ -776,26 +738,27 @@ function buildC2WritingBridge(slide = {}) {
   const prompt = String(slide.canonicalWritingPromptDe || slide.wrapUpTaskDe || "").trim();
   if (opinion) {
     return {
-      title: "Write-Transfer · Position vorbereiten",
-      instruction: "Wähle eine Position und notiere zwei Stichpunkte. Die vollständige Stellungnahme schreibst du erst im Write-Bereich.",
+      title: "Write-Transfer · Stellungnahme vorbereiten",
+      instruction: "Prüfungsnah vorbereiten: noch nicht ausformulieren. Sichere zuerst These, zwei tragende Argumente und einen relevanten Einwand.",
       prompts: [
-        prompt,
-        "Wähle eine Position: Vorrang · stärkere gesellschaftliche Orientierung · ausgewogene Verbindung.",
-        "Notiere zwei Gründe. Optional: Welches Gegenargument musst du später berücksichtigen?",
+        `Aufgabe: ${prompt}`,
+        "Argumente: Notiere zwei tragende Gründe; jeder Grund braucht einen konkreten Bezug, ein Beispiel oder eine nachvollziehbare Folge.",
+        "Einwand: Notiere eine ernst zu nehmende Einschränkung oder Gegenposition und entscheide, wie du darauf reagieren wirst.",
       ],
       minutes: 6,
     };
   }
+
   const prep = slide.reformulationPrep || {};
   const source = String(prep.source || "").trim();
   const cue = String(prep.cue || "").trim();
   return {
     title: "Write-Transfer · Umformung vorbereiten",
-    instruction: "Bereite genau diese Umformung vor. Löse sie noch nicht vollständig; kläre zuerst Bedeutung, Zielstruktur und Kontrollpunkt.",
+    instruction: "Prüfungsnah vorbereiten: noch nicht vollständig lösen. Sichere zuerst Ausgangssatz, Ziel und Kontrollpunkt.",
     prompts: [
       source ? `Ausgangssatz: ${source}` : "Ausgangssatz: Lies den Satz im Write-Bereich genau.",
-      cue ? `Ziel: ${cue}.` : "Ziel: Wähle eine passende Struktur aus der heutigen Grammatik.",
-      "Kontrolle: Welche Bedeutung muss unverändert bleiben, und welche Stelle prüfst du nach der Umformung besonders?",
+      cue ? `Vorgabe: ${cue}.` : "Vorgabe: Nutze die heutige Zielstruktur, ohne die Aussage zu verstärken oder abzuschwächen.",
+      "Kontrollpunkt: Bedeutung erhalten. Danach Evidenzgrad, Register, Kasus, Wortstellung und Bezüge prüfen.",
     ],
     minutes: 6,
   };
@@ -1843,6 +1806,8 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         topic: topicLabel || slide.topic || "",
         objective: slide.objective || "",
         duration: slide.estimatedDuration || "",
+        skillTarget: slide.skillTarget || "",
+        progressionLabel: slide.progressionLabel || "",
         studentReference,
       },
       {
@@ -1877,7 +1842,8 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "C2-Grammatik",
         title: "Verstehen → anwenden → begründen",
         items: grammarItems,
-        modelItems: Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe.slice(0, 2) : [],
+        modelItems: [],
+        skillTarget: slide.skillTarget || "",
         application: buildC2GrammarApplication(
           slide,
           grammarItems,
@@ -1946,6 +1912,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
 export function getSpeakingQuestionModel(stage = {}, question = "") { return stage.questionModels?.find((item) => item.questionDe === question) || null; }
 export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   const presenterV2 = isTeachingPresenterV2Slide(slide);
+  const level = classroomLevel(slide);
   const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel);
   const filtered = stages.filter((stage) => {
     if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
@@ -1962,16 +1929,15 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       filtered.push({
         id: "lesson-summary",
         type: "summary",
-        kicker: "Abschluss",
-        title: "Lesson summary",
-        subtitle: "You should now be able to…",
+        kicker: level === "C2" ? "C2 · Kurzcheck" : "Abschluss",
+        title: level === "C2" ? "Was du jetzt können solltest" : "Lesson summary",
+        subtitle: level === "C2" ? "You should now be able to · Sprache · Analyse · Transfer." : "You should now be able to…",
         items: summaryItems,
         nextSteps,
         studentReference,
       });
     }
   }
-  const level = classroomLevel(slide);
   return filtered.map((stage) => ({
     ...stage,
     teacherPurpose: stage.teacherPurpose || buildPresenterTeacherPurpose(stage, level),
