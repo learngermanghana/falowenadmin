@@ -7,11 +7,11 @@ import {
 } from "../src/data/studentCurriculumParity.js";
 
 const LEARNER_REPO = "learngermanghana/falowenexamtrainer";
-// Reviewed against falowenexamtrainer@3cf869444ad03e88cc7a1dcfac10413ca11517aa:
+// Reviewed against learner main after the intentional A2 Day 8 restaurant metadata correction:
  // B2 drift is the intentional grammar-label normalization and C1 drift is the
  // canonical title/grammar reconciliation already mirrored by Admin strict parity.
 const EXPECTED_SOURCE_BLOBS = Object.freeze({
-  "web/src/components/A2SituationIntroduction.jsx": "139e4f113d2a072cd199d2c958ecdb0d4d5f4446",
+  "web/src/components/A2SituationIntroduction.jsx": "a9f02875fcbe1b3df32b958ee935726914c01aa8",
   "web/src/components/B1TopicIntroduction.js": "4ada05e34ef79a7749bf1aa1b4993f2ee3e20d48",
   "web/src/data/b2LessonContentAlignment.js": "b4d5aa85272b2668f071bc5581f336900647de36",
   "web/src/components/C1TopicIntroduction.jsx": "c2c221a6c850c8ad1f689827d417d62e8910c664",
