@@ -1931,7 +1931,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         type: "summary",
         kicker: level === "C2" ? "C2 · Kurzcheck" : "Abschluss",
         title: level === "C2" ? "Was du jetzt können solltest" : "Lesson summary",
-        subtitle: level === "C2" ? "Drei Punkte reichen: Sprache · Analyse · Transfer." : "You should now be able to…",
+        subtitle: level === "C2" ? "You should now be able to · Sprache · Analyse · Transfer." : "You should now be able to…",
         items: summaryItems,
         nextSteps,
         studentReference,
