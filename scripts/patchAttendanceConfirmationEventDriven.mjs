@@ -276,6 +276,15 @@ async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}
         fetchImpl,
       });
       sent += Number(result.sent || 0);
+      if (Number(result.failed || 0) > 0) {
+        const partialError = new Error(
+          `Attendance delivery failed for ${Number(result.failed || 0)} recipient(s); queue will retry failed deliveries.`,
+        );
+        partialError.code = "ATTENDANCE_PARTIAL_FAILURE";
+        partialError.sent = Number(result.sent || 0);
+        partialError.failed = Number(result.failed || 0);
+        throw partialError;
+      }
       await Promise.all(queueItems.map((item) => item.ref.delete()));
       results.push({ classId, ok: true, queuedEvents: queueItems.length, ...result });
     } catch (error) {
@@ -366,6 +375,7 @@ const checks = [
   [finalIndex.includes("exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten"), "Attendance check-in event trigger is missing."],
   [finalIndex.includes("exports.queueAttendanceConfirmationFromClassSession = onDocumentWritten"), "Class-session completion event trigger is missing."],
   [finalWorker.includes('schedule: "*/30 * * * *"'), "Attendance due-queue dispatcher schedule is missing."],
+  [finalWorker.includes('error.code = "ATTENDANCE_PARTIAL_FAILURE"'), "Partial attendance failures must preserve the queue for retry."],
 ];
 for (const [passed, message] of checks) {
   if (!passed) throw new Error(message);
