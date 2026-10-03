@@ -4,7 +4,15 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { _test } = require("../functions/attendanceConfirmationRetry.js");
-const { resolveClassWebhookConfig, resolveWebhookConfig, rowForRetry, retrySafeCombinedMessage, deliveryPredatesEnrollment } = _test;
+const {
+  resolveClassWebhookConfig,
+  resolveWebhookConfig,
+  rowForRetry,
+  retrySafeCombinedMessage,
+  deliveryPredatesEnrollment,
+  resolveDeliverySessionStarts,
+  retryCandidateStatus,
+} = _test;
 
 test("retry rows preserve individual attendance delivery and disable marketing blocks", () => {
   const row = rowForRetry({
@@ -100,19 +108,71 @@ test("retry sanitizer changes only the legacy renderer trigger phrase", () => {
 });
 
 
-test("retry rejects stored weekly summaries containing sessions before enrollment", () => {
+test("retry rejects stored weekly summaries containing sessions before enrollment", async () => {
   const staleDelivery = {
     deliveryPayload: {
       attendance: {
-        lessons: [{ date: "2026-09-26", status: "absent" }],
+        lessons: [{ date: "2026-09-26", startsAt: "2026-09-26T08:30:00.000Z", status: "absent" }],
       },
     },
   };
-  assert.equal(deliveryPredatesEnrollment(staleDelivery, {
+  assert.equal(await deliveryPredatesEnrollment(staleDelivery, {
     enrollDate: "2026-09-29T15:03:55.583Z",
     trialStartedAt: "2026-09-29T15:03:55.583Z",
   }), true);
-  assert.equal(deliveryPredatesEnrollment(staleDelivery, {
+  assert.equal(await deliveryPredatesEnrollment(staleDelivery, {
     enrollDate: "2026-09-20T09:00:00.000Z",
   }), false);
+});
+
+test("retry compares exact timestamps for enrollment later on the same day", async () => {
+  const delivery = {
+    sessionIds: ["hamburg-2026-10-03"],
+    deliveryPayload: {
+      attendance: {
+        lessons: [{ sessionId: "hamburg-2026-10-03", date: "2026-10-03", status: "absent" }],
+      },
+    },
+  };
+  const db = {
+    collection(name) {
+      assert.equal(name, "classSessions");
+      return {
+        doc(id) {
+          assert.equal(id, "hamburg-2026-10-03");
+          return {
+            async get() {
+              return {
+                exists: true,
+                data: () => ({ startsAt: "2026-10-03T08:30:00.000Z" }),
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const starts = await resolveDeliverySessionStarts(delivery, db);
+  assert.equal(starts[0].toISOString(), "2026-10-03T08:30:00.000Z");
+  assert.equal(await deliveryPredatesEnrollment(delivery, {
+    enrollDate: "2026-10-03T10:23:27.499Z",
+  }, db), true);
+  assert.equal(await deliveryPredatesEnrollment(delivery, {
+    enrollDate: "2026-10-03T07:00:00.000Z",
+  }, db), false);
+});
+
+test("stale processing retry records recover while fresh processing stays protected", () => {
+  const now = new Date("2026-10-03T12:00:00.000Z");
+  assert.equal(retryCandidateStatus({ status: "failed" }, now), true);
+  assert.equal(retryCandidateStatus({
+    status: "processing",
+    updatedAt: "2026-10-03T11:40:00.000Z",
+  }, now), true);
+  assert.equal(retryCandidateStatus({
+    status: "processing",
+    updatedAt: "2026-10-03T11:55:00.000Z",
+  }, now), false);
+  assert.equal(retryCandidateStatus({ status: "sent" }, now), false);
 });
