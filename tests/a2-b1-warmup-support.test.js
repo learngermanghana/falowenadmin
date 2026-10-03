@@ -39,8 +39,8 @@ for (const level of ["A2", "B1"]) {
   });
 }
 
-test("B2, C1 and C2 warm-ups use the same enhanced card structure with level-appropriate support", () => {
-  for (const level of ["B2", "C1", "C2"]) {
+test("B2 and C1 warm-ups keep enhanced support while C2 intentionally drops scaffolding", () => {
+  for (const level of ["B2", "C1"]) {
     const slide = getSlidesByCourse(level)[0];
     const warmup = buildTeachingPresenterStages(slide, slide.topic)
       .find((stage) => stage.id === "warmup");
@@ -61,8 +61,8 @@ test("B2, C1 and C2 warm-ups use the same enhanced card structure with level-app
 
   assert.match(b2.questionSupport[0].answerStarterDe, /Aus meiner Sicht/);
   assert.match(c1.questionSupport[0].answerStarterDe, /Bei der Beurteilung/);
-  assert.match(c2.questionSupport[0].answerStarterDe, /Grundsätzlich spricht dafür/);
-  assert.match(c2.questionSupport[0].hintEn, /underlying tension|evaluation criteria/i);
+  assert.deepEqual(c2.questionSupport, []);
+  assert.equal(c2.timingMode, "per-student");
 });
 
 test("warm-up keyword highlighting matches whole words instead of prefixes", () => {
