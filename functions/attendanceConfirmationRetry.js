@@ -13,6 +13,61 @@ function asDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function studentEnrollmentStart(student = {}) {
+  const classSpecific = [
+    student.classJoinedAt,
+    student.classAssignedAt,
+    student.classEnrollmentAt,
+    student.classEnrollmentDate,
+    student.classStartDate,
+  ].map(asDate).filter(Boolean);
+  const general = [
+    student.trialStartedAt,
+    student.enrollDate,
+    student.enrollmentDate,
+    student.registrationDate,
+    student.contractStart,
+    student.contractStartDate,
+  ].map(asDate).filter(Boolean);
+  const candidates = classSpecific.length ? classSpecific : general;
+  if (!candidates.length) return null;
+  return [...candidates].sort((left, right) => left.getTime() - right.getTime())[0];
+}
+
+function deliveryPredatesEnrollment(delivery = {}, student = {}) {
+  const enrollmentAt = studentEnrollmentStart(student);
+  if (!enrollmentAt) return false;
+  const enrollmentDate = enrollmentAt.toISOString().slice(0, 10);
+  const lessons = delivery?.deliveryPayload?.attendance?.lessons;
+  if (!Array.isArray(lessons) || !lessons.length) return false;
+  return lessons.some((lesson) => {
+    const lessonDate = normalize(lesson?.date);
+    return /^\d{4}-\d{2}-\d{2}$/.test(lessonDate) && lessonDate < enrollmentDate;
+  });
+}
+
+async function findStudentForDelivery(db, delivery = {}) {
+  const studentKey = normalize(delivery.studentKey);
+  if (studentKey) {
+    const direct = await db.collection("students").doc(studentKey).get();
+    if (direct.exists) return { id: direct.id, ...direct.data() };
+  }
+
+  const probes = [
+    ["uid", studentKey],
+    ["studentCode", studentKey],
+    ["studentcode", studentKey],
+    ["emailNormalized", normalize(delivery.studentEmail).toLowerCase()],
+    ["email", normalize(delivery.studentEmail)],
+  ];
+  for (const [field, value] of probes) {
+    if (!value) continue;
+    const snap = await db.collection("students").where(field, "==", value).limit(1).get();
+    if (!snap.empty) return { id: snap.docs[0].id, ...snap.docs[0].data() };
+  }
+  return null;
+}
+
 function isoDateInTimezone(value, timezone = ACCRA_TIMEZONE) {
   const date = asDate(value);
   if (!date) return "";
@@ -198,6 +253,7 @@ function deliveryHealthRecord(docSnap) {
     dueAt: serializedTimestamp(data.dueAt),
     createdAt: serializedTimestamp(data.createdAt),
     processingStartedAt: serializedTimestamp(data.processingStartedAt),
+    cancelledAt: serializedTimestamp(data.cancelledAt),
     sentAt: serializedTimestamp(data.sentAt),
     failedAt: serializedTimestamp(data.failedAt),
     retryStartedAt: serializedTimestamp(data.retryStartedAt),
@@ -217,7 +273,8 @@ function summarizeDeliveryHealthRecords(records = []) {
   const sent = rows.filter((row) => row.status === "sent").length;
   const failed = rows.filter((row) => row.status === "failed").length;
   const processing = rows.filter((row) => row.status === "processing").length;
-  const unknown = Math.max(0, rows.length - sent - failed - processing);
+  const cancelled = rows.filter((row) => row.status === "cancelled").length;
+  const unknown = Math.max(0, rows.length - sent - failed - processing - cancelled);
   const sorted = [...rows].sort((left, right) => deliveryRecordTime(right) - deliveryRecordTime(left));
   const latest = sorted[0] || null;
   const latestFailure = sorted.find((row) => row.status === "failed") || null;
@@ -228,6 +285,7 @@ function summarizeDeliveryHealthRecords(records = []) {
     sent,
     failed,
     processing,
+    cancelled,
     unknown,
     totalAttempts,
     latest,
@@ -300,7 +358,20 @@ async function retryFailedAttendanceDeliveries({
   }
 
   const reserved = [];
+  let invalidSkipped = 0;
   for (const docSnap of failedDocs) {
+    const delivery = { id: docSnap.id, ...docSnap.data() };
+    const student = await findStudentForDelivery(db, delivery);
+    if (student && deliveryPredatesEnrollment(delivery, student)) {
+      invalidSkipped += 1;
+      await docSnap.ref.set({
+        status: "cancelled",
+        lastError: "Cancelled stale attendance summary because it includes a class session before this student enrolled.",
+        cancelledAt: timestamp,
+        updatedAt: timestamp,
+      }, { merge: true });
+      continue;
+    }
     const item = await reserveFailedDelivery({ db, admin, docSnap });
     if (item) reserved.push(item);
   }
@@ -312,47 +383,56 @@ async function retryFailedAttendanceDeliveries({
       attendanceConfirmationEmailLastError: "",
       attendanceConfirmationEmailLastRetryCount: 0,
     }, { merge: true });
-    return { classId: id, failedFound: failedDocs.length, retried: 0 };
+    return { classId: id, failedFound: failedDocs.length, retried: 0, invalidSkipped };
   }
 
-  const refs = reserved.map((item) => item.ref);
-  const rows = reserved.map((item) => rowForRetry(item.delivery, klass));
-
-  try {
-    const upstream = await postAnnouncementRows(config, rows, fetchImpl);
-    await markRefs(refs, {
-      status: "sent",
-      sentAt: timestamp,
-      retrySentAt: timestamp,
-      updatedAt: timestamp,
-      upstreamCount: Number(upstream?.count || upstream?.sent || rows.length),
-      lastError: "",
-    });
-    await classRef.set({
-      attendanceConfirmationEmailLastRunAt: timestamp,
-      attendanceConfirmationEmailLastSentAt: timestamp,
-      attendanceConfirmationEmailLastStatus: "retry_sent",
-      attendanceConfirmationEmailLastSentCount: rows.length,
-      attendanceConfirmationEmailLastRetryCount: rows.length,
-      attendanceConfirmationEmailLastError: "",
-    }, { merge: true });
-    return { classId: id, failedFound: failedDocs.length, retried: rows.length };
-  } catch (error) {
-    const message = error?.message || "Attendance email retry failed";
-    await markRefs(refs, {
-      status: "failed",
-      lastError: message,
-      failedAt: timestamp,
-      retryFailedAt: timestamp,
-      updatedAt: timestamp,
-    });
-    await classRef.set({
-      attendanceConfirmationEmailLastRunAt: timestamp,
-      attendanceConfirmationEmailLastStatus: "retry_failed",
-      attendanceConfirmationEmailLastError: message,
-    }, { merge: true });
-    throw error;
+  let retried = 0;
+  let retryFailed = 0;
+  let lastRetryError = "";
+  for (const item of reserved) {
+    try {
+      const upstream = await postAnnouncementRows(config, [rowForRetry(item.delivery, klass)], fetchImpl);
+      await markRefs([item.ref], {
+        status: "sent",
+        sentAt: timestamp,
+        retrySentAt: timestamp,
+        updatedAt: timestamp,
+        upstreamCount: Number(upstream?.count || upstream?.sent || 1),
+        lastError: "",
+      });
+      retried += 1;
+    } catch (error) {
+      const message = error?.message || "Attendance email retry failed";
+      await markRefs([item.ref], {
+        status: "failed",
+        lastError: message,
+        failedAt: timestamp,
+        retryFailedAt: timestamp,
+        updatedAt: timestamp,
+      });
+      retryFailed += 1;
+      lastRetryError = message;
+    }
   }
+
+  await classRef.set({
+    attendanceConfirmationEmailLastRunAt: timestamp,
+    ...(retried ? { attendanceConfirmationEmailLastSentAt: timestamp } : {}),
+    attendanceConfirmationEmailLastStatus: retryFailed
+      ? (retried ? "retry_partial_failed" : "retry_failed")
+      : "retry_sent",
+    attendanceConfirmationEmailLastSentCount: retried,
+    attendanceConfirmationEmailLastRetryCount: retried,
+    attendanceConfirmationEmailLastError: lastRetryError,
+  }, { merge: true });
+
+  return {
+    classId: id,
+    failedFound: failedDocs.length,
+    retried,
+    retryFailed,
+    invalidSkipped,
+  };
 }
 
 module.exports = {
@@ -363,6 +443,8 @@ module.exports = {
     resolveWebhookConfig,
     rowForRetry,
     retrySafeCombinedMessage,
+    studentEnrollmentStart,
+    deliveryPredatesEnrollment,
     deliveryHealthRecord,
     summarizeDeliveryHealthRecords,
   },
