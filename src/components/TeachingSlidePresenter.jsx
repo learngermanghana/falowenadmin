@@ -707,6 +707,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           ) : null}
           {stage.type === "intro" ? (
             <>
+              {stage.skillTarget ? (
+                <div className="presenter-c2-skill-target">
+                  <span>{stage.progressionLabel || "C2-Fokus"}</span>
+                  <strong>Heute trainieren wir: {stage.skillTarget}</strong>
+                </div>
+              ) : null}
               <h1>{stage.title}</h1>
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
@@ -839,7 +845,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               <div className="presenter-c2-grammar-heading">
                 <span>{stage.kicker}</span>
                 <h1>{stage.title}</h1>
-                <p><strong>Was ist hier zu tun?</strong> Regel kurz verstehen, dann die Struktur selbst anwenden und die sprachliche Wirkung begründen.</p>
+                <p className="presenter-c2-grammar-skill">
+                  <strong>Heute trainieren wir:</strong> {stage.skillTarget || "Die Zielstruktur kontrolliert und funktional einsetzen."}
+                </p>
               </div>
               <div className="presenter-c2-grammar-rules">
                 {presenterItems.map((item, index) => (
@@ -865,7 +873,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <p>{stage.application.task}</p>
                   </div>
                   {stage.application.teacherHint ? (
-                    <p className="presenter-c2-grammar-teacher"><strong>Lehrerfokus:</strong> {stage.application.teacherHint}</p>
+                    <details className="presenter-c2-teacher-details">
+                      <summary>Lehrerhinweis</summary>
+                      <p>{stage.application.teacherHint}</p>
+                    </details>
                   ) : null}
                   {stage.application.answer ? (
                     <details className="presenter-advanced-models">
@@ -877,8 +888,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               ) : null}
               {Array.isArray(stage.modelItems) && stage.modelItems.length ? (
                 <details className="presenter-advanced-models">
-                  <summary>Weitere Modellsätze anzeigen</summary>
-                  <ul>{stage.modelItems.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <summary>Modellsätze vergleichen</summary>
+                  <ul>{stage.modelItems.slice(0, 2).map((item) => <li key={item}>{item}</li>)}</ul>
                 </details>
               ) : null}
             </section>
