@@ -68,6 +68,13 @@ test("per-student warm-up uses the speaking timer instead of the short answer ti
 });
 
 
+test("per-student warm-ups keep answer cards even when optional support is empty", () => {
+  assert.match(presenter, /const enhancedWarmup = warmupPerStudent;/);
+  assert.match(presenter, /const warmupHasSupport = Array\.isArray\(stage\?\.questionSupport\) && stage\.questionSupport\.length > 0/);
+  assert.match(presenter, /const hasSupport = warmupHasSupport && Boolean\(support\)/);
+  assert.match(presenter, /\{hasSupport \? \([\s\S]*presenter-warmup-support-actions[\s\S]*\) : null\}/);
+});
+
 test("teacher can tick warm-up questions as the student answers them", () => {
   assert.match(presenter, /const \[warmupAnswered, setWarmupAnswered\] = useState\(\{\}\)/);
   assert.match(presenter, /function toggleWarmupAnswered\(questionIndexValue\)/);
