@@ -5,7 +5,6 @@ import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { getC2TopicFoundation } from "../src/data/c2TopicFoundations.js";
 import {
   buildTeachingPresenterStages,
-  getSpeakingQuestionModel,
   isC2PresenterV2Slide,
   isTeachingPresenterV2Slide,
 } from "../src/utils/teachingPresenter.js";
