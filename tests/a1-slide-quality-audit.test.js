@@ -30,7 +30,7 @@ const GENERIC_PHRASES = [
 const TOPIC_SIGNALS = {
   "A1-0.1": ["guten morgen", "ihnen", "tschüss"],
   "A1-0.2": ["buchstab", "eszett", "umlaut"],
-  "A1-1.1": ["heiße", "wohn", "komm"],
+  "A1-1.1": ["verbendung", "pronomen", "lernen"],
   "A1-1.1-PRACTICE": ["w-frag", "wer", "woher"],
   "A1-1.2": ["verb", "-st", "-t"],
   "A1-2": ["telefon", "adresse", "nummer"],
