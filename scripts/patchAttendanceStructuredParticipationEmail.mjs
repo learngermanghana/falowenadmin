@@ -69,7 +69,8 @@ function structuredAttendancePayload({ records = [], participation = null, parti
       rate: attendanceRate(records),
       lessons: records.map((record) => ({
         sessionId: normalize(record?.session?.id || record?.session?.classSessionId),
-        date: isoDateInTimezone(record?.session?.startsAt, timezone),
+        startsAt: asDate(record?.session?.startsAt || record?.session?.startAt || record?.session?.date)?.toISOString() || "",
+        date: isoDateInTimezone(record?.session?.startsAt || record?.session?.startAt || record?.session?.date, timezone),
         label: formatDate(record?.session?.startsAt, timezone),
         status: comparable(record?.status),
       })),

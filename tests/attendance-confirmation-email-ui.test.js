@@ -8,6 +8,8 @@ const panelPath = new URL("../src/components/AttendanceConfirmationAutomationPan
 const retryPanelPath = new URL("../src/components/AttendanceFailedDeliveryRetryPanel.jsx", import.meta.url);
 const servicePath = new URL("../src/services/attendanceConfirmationEmailService.js", import.meta.url);
 const retryServicePath = new URL("../src/services/attendanceConfirmationRetryService.js", import.meta.url);
+const healthPanelPath = new URL("../src/components/AttendanceCommunicationHealthPanel.jsx", import.meta.url);
+const eventPatchPath = new URL("../scripts/patchAttendanceConfirmationEventDriven.mjs", import.meta.url);
 const workerPath = new URL("../functions/attendanceConfirmationEmails.js", import.meta.url);
 const retryWorkerPath = new URL("../functions/attendanceConfirmationRetry.js", import.meta.url);
 const patchPath = new URL("../scripts/patchAttendanceConfirmationEmails.mjs", import.meta.url);
@@ -69,6 +71,26 @@ test("scheduled attendance delivery keeps deduplication and individual delivery"
   assert.match(worker, /delivery_mode: "individual"/);
   assert.match(worker, /openTo/);
   assert.match(worker, /schedule: "\*\/30 \* \* \* \*"/);
+});
+
+test("partial attendance delivery preserves the event queue for automatic retry", async () => {
+  const [worker, eventPatch] = await Promise.all([source(workerPath), source(eventPatchPath)]);
+  assert.match(worker, /error\.code = "ATTENDANCE_PARTIAL_FAILURE"/);
+  assert.match(eventPatch, /Number\(result\.failed \|\| 0\) > 0/);
+  const failureCheck = eventPatch.indexOf("Number(result.failed || 0) > 0");
+  const queueDelete = eventPatch.indexOf("queueItems.map((item) => item.ref.delete())", failureCheck);
+  assert.ok(failureCheck >= 0);
+  assert.ok(queueDelete > failureCheck);
+});
+
+test("attendance retry UI reports all-failed retries as errors", async () => {
+  const panel = await source(healthPanelPath);
+  const failureBranch = panel.indexOf("if (retryFailed > 0)");
+  const errorToast = panel.indexOf("error(message)", failureBranch);
+  const successToast = panel.indexOf("success(message)", failureBranch);
+  assert.ok(failureBranch >= 0);
+  assert.ok(errorToast > failureBranch);
+  assert.ok(successToast > errorToast);
 });
 
 test("Firebase predeploy registers and validates scheduler plus protected health and retry routes", async () => {

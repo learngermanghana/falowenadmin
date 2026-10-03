@@ -1,5 +1,7 @@
 const ACCRA_TIMEZONE = "Africa/Accra";
 const MAX_RETRY_BATCH = 200;
+const RETRY_CONCURRENCY = 5;
+const STALE_PROCESSING_MS = 15 * 60 * 1000;
 
 function normalize(value) {
   return String(value || "").trim();
@@ -34,9 +36,53 @@ function studentEnrollmentStart(student = {}) {
   return [...candidates].sort((left, right) => left.getTime() - right.getTime())[0];
 }
 
-function deliveryPredatesEnrollment(delivery = {}, student = {}) {
+async function resolveDeliverySessionStarts(delivery = {}, db = null) {
+  const starts = [];
+  const unresolvedIds = new Set();
+  const lessons = delivery?.deliveryPayload?.attendance?.lessons;
+  if (Array.isArray(lessons)) {
+    for (const lesson of lessons) {
+      const inlineStart = asDate(
+        lesson?.startsAt || lesson?.startAt || lesson?.sessionStartsAt || lesson?.startedAt,
+      );
+      if (inlineStart) {
+        starts.push(inlineStart);
+        continue;
+      }
+      const sessionId = normalize(lesson?.sessionId || lesson?.classSessionId);
+      if (sessionId) unresolvedIds.add(sessionId);
+    }
+  }
+
+  for (const sessionId of Array.isArray(delivery?.sessionIds) ? delivery.sessionIds : []) {
+    const normalized = normalize(sessionId);
+    if (normalized) unresolvedIds.add(normalized);
+  }
+
+  if (db) {
+    for (const sessionId of unresolvedIds) {
+      const snap = await db.collection("classSessions").doc(sessionId).get();
+      if (!snap.exists) continue;
+      const session = snap.data() || {};
+      const resolvedStart = asDate(session.startsAt || session.startAt || session.date);
+      if (resolvedStart) starts.push(resolvedStart);
+    }
+  }
+
+  return starts;
+}
+
+async function deliveryPredatesEnrollment(delivery = {}, student = {}, db = null) {
   const enrollmentAt = studentEnrollmentStart(student);
   if (!enrollmentAt) return false;
+
+  const sessionStarts = await resolveDeliverySessionStarts(delivery, db);
+  if (sessionStarts.length) {
+    return sessionStarts.some((sessionAt) => sessionAt.getTime() < enrollmentAt.getTime());
+  }
+
+  // Legacy fallback: only cancel when the stored calendar date is strictly
+  // earlier. Same-day records need an exact timestamp and are never guessed.
   const enrollmentDate = enrollmentAt.toISOString().slice(0, 10);
   const lessons = delivery?.deliveryPayload?.attendance?.lessons;
   if (!Array.isArray(lessons) || !lessons.length) return false;
@@ -44,6 +90,14 @@ function deliveryPredatesEnrollment(delivery = {}, student = {}) {
     const lessonDate = normalize(lesson?.date);
     return /^\d{4}-\d{2}-\d{2}$/.test(lessonDate) && lessonDate < enrollmentDate;
   });
+}
+
+function retryCandidateStatus(data = {}, now = new Date()) {
+  const status = normalize(data.status).toLowerCase();
+  if (status === "failed") return true;
+  if (status !== "processing") return false;
+  const updated = asDate(data.updatedAt || data.retryStartedAt || data.processingStartedAt);
+  return !updated || now.getTime() - updated.getTime() >= STALE_PROCESSING_MS;
 }
 
 async function findStudentForDelivery(db, delivery = {}) {
@@ -206,14 +260,14 @@ async function postAnnouncementRows(config, rows, fetchImpl = fetch) {
   return body;
 }
 
-async function reserveFailedDelivery({ db, admin, docSnap }) {
+async function reserveFailedDelivery({ db, admin, docSnap, now = new Date() }) {
   const ref = docSnap.ref;
   let reserved = null;
   await db.runTransaction(async (transaction) => {
     const freshSnap = await transaction.get(ref);
     if (!freshSnap.exists) return;
     const data = freshSnap.data() || {};
-    if (normalize(data.status).toLowerCase() !== "failed") return;
+    if (!retryCandidateStatus(data, asDate(now) || new Date())) return;
     if (!normalize(data.studentEmail) || !normalize(data.message)) return;
     reserved = { id: freshSnap.id, ...data };
     transaction.set(ref, {
@@ -343,8 +397,9 @@ async function retryFailedAttendanceDeliveries({
   }, { merge: true });
 
   const deliverySnap = await db.collection("attendanceEmailDeliveries").where("classId", "==", id).get();
+  const retryNow = new Date();
   const failedDocs = deliverySnap.docs
-    .filter((docSnap) => normalize(docSnap.data()?.status).toLowerCase() === "failed")
+    .filter((docSnap) => retryCandidateStatus(docSnap.data() || {}, retryNow))
     .slice(0, Math.max(1, Math.min(Number(limit) || MAX_RETRY_BATCH, MAX_RETRY_BATCH)));
 
   if (!failedDocs.length) {
@@ -357,12 +412,12 @@ async function retryFailedAttendanceDeliveries({
     return { classId: id, failedFound: 0, retried: 0 };
   }
 
-  const reserved = [];
+  const eligibleDocs = [];
   let invalidSkipped = 0;
   for (const docSnap of failedDocs) {
     const delivery = { id: docSnap.id, ...docSnap.data() };
     const student = await findStudentForDelivery(db, delivery);
-    if (student && deliveryPredatesEnrollment(delivery, student)) {
+    if (student && await deliveryPredatesEnrollment(delivery, student, db)) {
       invalidSkipped += 1;
       await docSnap.ref.set({
         status: "cancelled",
@@ -372,46 +427,66 @@ async function retryFailedAttendanceDeliveries({
       }, { merge: true });
       continue;
     }
-    const item = await reserveFailedDelivery({ db, admin, docSnap });
-    if (item) reserved.push(item);
+    eligibleDocs.push(docSnap);
   }
 
-  if (!reserved.length) {
+  if (!eligibleDocs.length) {
     await classRef.set({
       attendanceConfirmationEmailLastRunAt: timestamp,
       attendanceConfirmationEmailLastStatus: "no_failed_deliveries",
       attendanceConfirmationEmailLastError: "",
       attendanceConfirmationEmailLastRetryCount: 0,
     }, { merge: true });
-    return { classId: id, failedFound: failedDocs.length, retried: 0, invalidSkipped };
+    return { classId: id, failedFound: failedDocs.length, retried: 0, retryFailed: 0, invalidSkipped };
   }
 
   let retried = 0;
   let retryFailed = 0;
+  let reservationSkipped = 0;
   let lastRetryError = "";
-  for (const item of reserved) {
-    try {
-      const upstream = await postAnnouncementRows(config, [rowForRetry(item.delivery, klass)], fetchImpl);
-      await markRefs([item.ref], {
-        status: "sent",
-        sentAt: timestamp,
-        retrySentAt: timestamp,
-        updatedAt: timestamp,
-        upstreamCount: Number(upstream?.count || upstream?.sent || 1),
-        lastError: "",
-      });
-      retried += 1;
-    } catch (error) {
-      const message = error?.message || "Attendance email retry failed";
-      await markRefs([item.ref], {
-        status: "failed",
-        lastError: message,
-        failedAt: timestamp,
-        retryFailedAt: timestamp,
-        updatedAt: timestamp,
-      });
-      retryFailed += 1;
-      lastRetryError = message;
+
+  // Keep concurrency bounded and reserve each record only immediately before
+  // its network request. An interrupted invocation can strand at most the small
+  // in-flight chunk, and stale processing records are eligible on the next run.
+  for (let offset = 0; offset < eligibleDocs.length; offset += RETRY_CONCURRENCY) {
+    const chunk = eligibleDocs.slice(offset, offset + RETRY_CONCURRENCY);
+    const outcomes = await Promise.all(chunk.map(async (docSnap) => {
+      const item = await reserveFailedDelivery({ db, admin, docSnap, now: retryNow });
+      if (!item) return { reserved: false };
+
+      try {
+        const upstream = await postAnnouncementRows(config, [rowForRetry(item.delivery, klass)], fetchImpl);
+        await markRefs([item.ref], {
+          status: "sent",
+          sentAt: timestamp,
+          retrySentAt: timestamp,
+          updatedAt: timestamp,
+          upstreamCount: Number(upstream?.count || upstream?.sent || 1),
+          lastError: "",
+        });
+        return { reserved: true, sent: true };
+      } catch (error) {
+        const message = error?.message || "Attendance email retry failed";
+        await markRefs([item.ref], {
+          status: "failed",
+          lastError: message,
+          failedAt: timestamp,
+          retryFailedAt: timestamp,
+          updatedAt: timestamp,
+        });
+        return { reserved: true, failed: true, message };
+      }
+    }));
+
+    for (const outcome of outcomes) {
+      if (!outcome.reserved) {
+        reservationSkipped += 1;
+      } else if (outcome.sent) {
+        retried += 1;
+      } else if (outcome.failed) {
+        retryFailed += 1;
+        lastRetryError = outcome.message || lastRetryError;
+      }
     }
   }
 
@@ -420,7 +495,9 @@ async function retryFailedAttendanceDeliveries({
     ...(retried ? { attendanceConfirmationEmailLastSentAt: timestamp } : {}),
     attendanceConfirmationEmailLastStatus: retryFailed
       ? (retried ? "retry_partial_failed" : "retry_failed")
-      : "retry_sent",
+      : retried
+        ? "retry_sent"
+        : "no_failed_deliveries",
     attendanceConfirmationEmailLastSentCount: retried,
     attendanceConfirmationEmailLastRetryCount: retried,
     attendanceConfirmationEmailLastError: lastRetryError,
@@ -432,6 +509,7 @@ async function retryFailedAttendanceDeliveries({
     retried,
     retryFailed,
     invalidSkipped,
+    reservationSkipped,
   };
 }
 
@@ -444,7 +522,9 @@ module.exports = {
     rowForRetry,
     retrySafeCombinedMessage,
     studentEnrollmentStart,
+    resolveDeliverySessionStarts,
     deliveryPredatesEnrollment,
+    retryCandidateStatus,
     deliveryHealthRecord,
     summarizeDeliveryHealthRecords,
   },

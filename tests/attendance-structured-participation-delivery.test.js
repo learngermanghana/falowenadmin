@@ -85,6 +85,7 @@ test("structured payload keeps attendance and participation together", () => {
   assert.equal(payload.attendance.present, 3);
   assert.equal(payload.attendance.rate, 100);
   assert.equal(payload.attendance.lessons.length, 3);
+  assert.equal(payload.attendance.lessons[0].startsAt, "2026-09-14T19:00:00.000Z");
   assert.equal(payload.participation.trackedLessons, 3);
   assert.equal(payload.participation.responses, 33);
   assert.equal(payload.participation.correct, 30);
