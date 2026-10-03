@@ -20,6 +20,8 @@ const {
   resolveWebhookConfig,
   studentBelongsToClass,
   studentBelongsToClassAt,
+  studentEnrollmentStart,
+  studentEligibleForClassSession,
   weekKey,
 } = _test;
 
@@ -110,6 +112,29 @@ test("multiple class transfers reconstruct historical membership without rewriti
   assert.equal(studentBelongsToClassAt(transferred, { id: "class-1", name: "A1 Munich Klasse" }, "2026-09-09"), true);
   assert.equal(studentBelongsToClassAt(transferred, { id: "class-2", name: "A1 Dortmund Klasse" }, "2026-09-15"), true);
   assert.equal(studentBelongsToClassAt(transferred, { id: "class-3", name: "A1 Hamburg Klasse" }, "2026-09-21"), true);
+});
+
+
+test("students are not counted absent for sessions before they enrolled", () => {
+  const hamburg = { ...klass, id: "hamburg", name: "A1 Hamburg Klasse" };
+  const vida = {
+    ...student,
+    className: "A1 Hamburg Klasse",
+    trialStartedAt: "2026-09-29T15:03:55.583Z",
+    enrollDate: "2026-09-29T15:03:55.583Z",
+  };
+  const emmanuel = {
+    ...student,
+    className: "A1 Hamburg Klasse",
+    trialStartedAt: "2026-10-03T10:23:27.499Z",
+    enrollDate: "2026-10-03T10:23:27.499Z",
+  };
+
+  assert.equal(studentEnrollmentStart(vida)?.toISOString(), "2026-09-29T15:03:55.583Z");
+  assert.equal(studentEligibleForClassSession(vida, hamburg, "2026-09-26T08:30:00.000Z"), false);
+  assert.equal(studentEligibleForClassSession(vida, hamburg, "2026-10-01T18:00:00.000Z"), true);
+  assert.equal(studentEligibleForClassSession(emmanuel, hamburg, "2026-10-03T08:30:00.000Z"), false);
+  assert.equal(studentEligibleForClassSession(emmanuel, hamburg, "2026-10-04T08:30:00.000Z"), true);
 });
 
 test("QR check-ins more than the late threshold after class start are Late", () => {
