@@ -1,3 +1,4 @@
+import { applyA2B1AdminLessonProfileToSlide } from "./a2B1LessonProfile.js";
 const lessonRoute = (day, view) => `/campus/course/lesson/B1/${day}?view=${view}`;
 
 const workbookConnection = (day, parts, options = {}) => ({
@@ -805,5 +806,6 @@ const byAssignmentId = Object.fromEntries(
 );
 
 export function getB1WorkbookAlignedSlideDay21To28(assignmentId) {
-  return byAssignmentId[String(assignmentId || "").trim().toUpperCase()] || null;
+  const slide = byAssignmentId[String(assignmentId || "").trim().toUpperCase()] || null;
+  return slide ? applyA2B1AdminLessonProfileToSlide(slide) : null;
 }

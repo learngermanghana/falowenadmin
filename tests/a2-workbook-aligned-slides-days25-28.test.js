@@ -67,35 +67,35 @@ test("A2 days 25-28 teacher support matches the grammar actually taught in Falow
   }
 });
 
-test("Day 25 represents two Lesen sections and explicitly no Hören", () => {
+test("Day 25 submits only Lesen and has no Schreiben or Teil 4", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-9.25");
   const labels = slide.workbookConnection.parts.map((part) => part.label);
-  assert.deepEqual(labels, ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen", "Teil 4 · Lesen"]);
-  assert.match(slide.workbookConnection.subtitle, /two Lesen tasks/i);
-  assert.match(slide.workbookConnection.subtitle, /no Hören/i);
-  assert.equal(labels.some((label) => /Hören/i.test(label)), false);
-  assert.match(slide.workbookConnection.parts.at(-1).detailEn, /Familie Meyer/i);
-  assert.match(slide.workbookConnection.parts.at(-1).detailEn, /no listening assignment/i);
+  assert.deepEqual(labels, ["Grammar", "Teil 1 · Sprechen", "Teil 3 · Lesen"]);
+  assert.match(slide.workbookConnection.subtitle, /Teil 2 · Schreiben is not required/i);
+  assert.match(slide.workbookConnection.subtitle, /no Teil 4/i);
+  assert.equal(labels.some((label) => /Schreiben|Teil 4|Hören/i.test(label)), false);
+  assert.deepEqual(slide.requiredSubmissionParts, ["teil3"]);
 });
 
-test("Day 26 keeps the family and childcare reading separate and Hören self-checked", () => {
+test("Day 26 keeps the family and childcare reading separate and Hören graded", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-10.26");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
   assert.match(reading.detailEn, /Separate comprehension topic/i);
   assert.match(reading.detailEn, /Mutterschutz|Elternzeit|childcare/i);
-  assert.match(listening.detailEn, /Goethe/i);
-  assert.match(listening.detailEn, /not submitted/i);
+  assert.match(listening.detailEn, /graded/i);
+  assert.match(listening.detailEn, /submit/i);
 });
 
-test("Day 27 follows production Goethe self-check behavior instead of stale source questions", () => {
+test("Day 27 follows the canonical graded protected Hören contract", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-10.27");
   const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
-  assert.match(listening.detailEn, /Production behavior/i);
-  assert.match(listening.detailEn, /self-check/i);
-  assert.match(listening.detailEn, /only Teil 2 and Teil 3 are submitted/i);
-  assert.match(slide.teacherNotesEn.join(" "), /source component contains listening questions/i);
-  assert.match(slide.teacherNotesEn.join(" "), /production cleanup/i);
+  assert.match(listening.detailEn, /graded/i);
+  assert.match(listening.detailEn, /submit/i);
+  assert.deepEqual(slide.requiredSubmissionParts, ["teil3", "teil4"]);
+  assert.equal(slide.workbookConnection.parts.some((part) => /Teil 2/.test(part.label)), false);
+  assert.match(slide.teacherNotesEn[0], /Schreiben: not required/i);
+  assert.match(slide.teacherNotesEn[0], /Teil 4 · Hören: submitted/i);
 });
 
 test("Day 28 uses the canonical Futur-I route and separates Germany-integration Lesen", () => {
@@ -105,8 +105,8 @@ test("Day 28 uses the canonical Futur-I route and separates Germany-integration 
   assert.equal(slide.workbookConnection.grammarUrl, "/campus/course/ueber-die-zukunft-sprechen-10-28-final-a2-grammar-notes");
   assert.match(reading.detailEn, /Separate Germany-integration comprehension/i);
   assert.match(reading.detailEn, /Ausländerbehörde|Arbeitsagentur/i);
-  assert.match(listening.detailEn, /Goethe/i);
-  assert.match(listening.detailEn, /not submitted/i);
+  assert.match(listening.detailEn, /graded/i);
+  assert.match(listening.detailEn, /submit/i);
 });
 
 test("the complete canonical A2 course now resolves to workbook-aligned teacher guides", () => {
