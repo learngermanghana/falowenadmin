@@ -151,10 +151,18 @@ export default function AttendanceCommunicationHealthPanel({ classId = "", class
       const failedFound = Number(result?.failedFound || 0);
       const invalidSkipped = Number(result?.invalidSkipped || 0);
       const retryFailed = Number(result?.retryFailed || 0);
+      if (retryFailed > 0) {
+        const message = retried
+          ? "Retried " + retried + " attendance email" + (retried === 1 ? "" : "s") + ", but " + retryFailed + " retry" + (retryFailed === 1 ? "" : " retries") + " still failed."
+          : "Retry failed for " + retryFailed + " attendance email" + (retryFailed === 1 ? "" : "s") + ". Check the delivery error and try again after the underlying issue is fixed.";
+        error(message);
+        await load();
+        return;
+      }
       const message = retried
         ? "Retried " + retried + " failed attendance email" + (retried === 1 ? "" : "s") + " for " + (className || classId) + "."
           + (invalidSkipped ? " Cancelled " + invalidSkipped + " stale report" + (invalidSkipped === 1 ? "" : "s") + " that predated enrollment." : "")
-          + (retryFailed ? " " + retryFailed + " retry" + (retryFailed === 1 ? "" : " retries") + " still failed." : "")
+
         : invalidSkipped
           ? "Cancelled " + invalidSkipped + " stale attendance report" + (invalidSkipped === 1 ? "" : "s") + " because the class session predates the student's enrollment."
           : failedFound
