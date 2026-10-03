@@ -850,15 +850,21 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </div>
               {stage.application ? (
                 <article className="presenter-c2-grammar-application">
-                  <span>AUFTRAG</span>
+                  <span className="presenter-c2-grammar-application-label">AUFTRAG</span>
                   <h2>{stage.application.title || "Jetzt anwenden"}</h2>
-                  <p>{stage.application.instruction}</p>
+                  <p className="presenter-c2-grammar-application-intro">{stage.application.instruction}</p>
                   {stage.application.prompt ? (
-                    <blockquote>{stage.application.prompt}</blockquote>
+                    <div className="presenter-c2-grammar-prompt">
+                      <span>AUSGANGSSATZ</span>
+                      <blockquote>{stage.application.prompt}</blockquote>
+                    </div>
                   ) : null}
-                  <p><strong>Student:</strong> {stage.application.task}</p>
+                  <div className="presenter-c2-grammar-task">
+                    <strong>Deine Aufgabe</strong>
+                    <p>{stage.application.task}</p>
+                  </div>
                   {stage.application.teacherHint ? (
-                    <p><strong>Lehrerfokus:</strong> {stage.application.teacherHint}</p>
+                    <p className="presenter-c2-grammar-teacher"><strong>Lehrerfokus:</strong> {stage.application.teacherHint}</p>
                   ) : null}
                   {stage.application.answer ? (
                     <details className="presenter-advanced-models">
