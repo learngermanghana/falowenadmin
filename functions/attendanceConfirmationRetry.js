@@ -491,44 +491,6 @@ async function retryFailedAttendanceDeliveries({
   }
 
   await classRef.set({
-      attendanceConfirmationEmailLastRunAt: timestamp,
-      attendanceConfirmationEmailLastStatus: "no_failed_deliveries",
-      attendanceConfirmationEmailLastError: "",
-      attendanceConfirmationEmailLastRetryCount: 0,
-    }, { merge: true });
-    return { classId: id, failedFound: failedDocs.length, retried: 0, invalidSkipped };
-  }
-
-  let retried = 0;
-  let retryFailed = 0;
-  let lastRetryError = "";
-  for (const item of reserved) {
-    try {
-      const upstream = await postAnnouncementRows(config, [rowForRetry(item.delivery, klass)], fetchImpl);
-      await markRefs([item.ref], {
-        status: "sent",
-        sentAt: timestamp,
-        retrySentAt: timestamp,
-        updatedAt: timestamp,
-        upstreamCount: Number(upstream?.count || upstream?.sent || 1),
-        lastError: "",
-      });
-      retried += 1;
-    } catch (error) {
-      const message = error?.message || "Attendance email retry failed";
-      await markRefs([item.ref], {
-        status: "failed",
-        lastError: message,
-        failedAt: timestamp,
-        retryFailedAt: timestamp,
-        updatedAt: timestamp,
-      });
-      retryFailed += 1;
-      lastRetryError = message;
-    }
-  }
-
-  await classRef.set({
     attendanceConfirmationEmailLastRunAt: timestamp,
     ...(retried ? { attendanceConfirmationEmailLastSentAt: timestamp } : {}),
     attendanceConfirmationEmailLastStatus: retryFailed
