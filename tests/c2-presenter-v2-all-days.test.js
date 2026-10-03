@@ -63,6 +63,12 @@ test("C2 Admin slides match the current Falowen runtime curriculum day 1–28", 
   slides.forEach((slide, index) => {
     assert.equal(slide.grammarTeachDe[0], "Zielstruktur: " + EXPECTED[index][2] + ".");
     assert.equal(slide.runtimePerspectivesDe.length, 3);
+    assert.ok(slide.skillTarget, slide.assignmentId + " missing skill target");
+    assert.ok(slide.progressionLabel, slide.assignmentId + " missing progression label");
+    assert.ok(slide.analyticalTask?.title, slide.assignmentId + " missing topic-specific analysis");
+    assert.equal(slide.analyticalTask?.prompts?.length, 3, slide.assignmentId + " analysis must have three prompts");
+    assert.ok(slide.grammarApplication?.prompt, slide.assignmentId + " missing concrete grammar source");
+    assert.ok(slide.grammarApplication?.task, slide.assignmentId + " missing concrete grammar task");
     assert.ok(["opinion","reformulation"].includes(slide.writeType));
   });
 });
@@ -78,17 +84,18 @@ test("C2 keeps the current odd/even Write standard", () => {
     assert.equal(writing.items.length, 1);
 
     if (expected === "opinion") {
-      assert.match(writing.title, /Position vorbereiten/i);
-      assert.match(JSON.stringify(writing), /zwei Gründe/i);
-      assert.match(JSON.stringify(writing), /Optional: Welches Gegenargument/i);
+      assert.match(writing.title, /Stellungnahme vorbereiten/i);
+      assert.match(JSON.stringify(writing), /zwei tragende Argumente/i);
+      assert.match(JSON.stringify(writing), /Einwand:/i);
+      assert.doesNotMatch(JSON.stringify(writing), /Vorrang · stärkere gesellschaftliche Orientierung/i);
       assert.equal(writing.items[0].prompts.length, 3);
     } else {
       assert.match(writing.title, /Umformung/i);
       assert.ok(slide.reformulationPrep?.source, slide.assignmentId + " missing reformulation source");
       assert.ok(slide.reformulationPrep?.cue, slide.assignmentId + " missing reformulation cue");
       assert.ok(JSON.stringify(writing).includes(slide.reformulationPrep.source), slide.assignmentId + " should show the exact source sentence");
-      assert.match(JSON.stringify(writing), /Ziel:/i);
-      assert.match(JSON.stringify(writing), /Bedeutung muss unverändert bleiben/i);
+      assert.match(JSON.stringify(writing), /Vorgabe:/i);
+      assert.match(JSON.stringify(writing), /Bedeutung erhalten/i);
       assert.equal(writing.items[0].prompts.length, 3);
     }
   }
@@ -107,12 +114,17 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     assert.deepEqual(grammar.items, slide.grammarTeachDe, slide.assignmentId + " must preserve runtime grammar");
 
     assert.equal(grammar.type, "c2-grammar");
-    assert.equal(grammar.modelItems.length, 2, slide.assignmentId + " should fold the two models into grammar");
+    assert.equal(grammar.modelItems.length, 0, slide.assignmentId + " should not repeat grammar examples in another model block");
+    assert.equal(grammar.skillTarget, slide.skillTarget);
+    assert.equal(grammar.application.prompt, slide.grammarApplication.prompt);
+    assert.equal(grammar.application.task, slide.grammarApplication.task);
 
     const analysis = stages.find((stage) => stage.id === "analysis");
     assert.equal(analysis.type, "flow");
     assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
-    assert.ok(analysis.items[0].prompts.length >= 2 && analysis.items[0].prompts.length <= 3);
+    assert.equal(analysis.title, slide.analyticalTask.title, slide.assignmentId + " should use its own topic task");
+    assert.deepEqual(analysis.items[0].prompts, slide.analyticalTask.prompts, slide.assignmentId + " should preserve curated case prompts");
+    assert.deepEqual(analysis.items[0].modelItems, [], slide.assignmentId + " analysis should not reveal a canned model");
     assert.equal(analysis.items[0].minutes, 14);
 
     const vocabulary = stages.find((stage) => stage.id === "phrases");
@@ -151,27 +163,51 @@ test("C2 warm-ups are topic-specific and avoid duplicate support scaffolding", (
   assert.match(journalism.warmupQuestionsDe.join(" "), /nicht unabhängig bestätigt/);
 });
 
-test("C2 rotates seven analytical mechanics across the 28 lessons", () => {
-  const expectedTitles = [
-    "Kriterienmatrix",
-    "Evidenz-Audit",
-    "Registerwahl · eine Formulierung vertiefen",
-    "Quellen- und Distanzcheck",
-    "Stärkste Gegenposition",
-    "Kausalitäts- und Folgenkarte",
-    "Synthese ohne Gleichmacherei",
-  ];
-
+test("all 28 C2 analytical tasks are topic-specific rather than mechanically rotated", () => {
   const slides = getSlidesByCourse("C2");
-  const firstCycle = slides.slice(0, 7).map((slide) =>
-    buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "analysis")?.title
-  );
-  assert.deepEqual(firstCycle, expectedTitles);
+  const titles = slides.map((slide) => slide.analyticalTask?.title);
+  assert.equal(new Set(titles).size, 28, "every C2 day should have its own analytical activity title");
+
+  const journalism = slides[3];
+  assert.match(journalism.analyticalTask.title, /Eilmeldung/i);
+  assert.match(journalism.analyticalTask.prompts.join(" "), /Quelle A/);
+  assert.match(journalism.analyticalTask.prompts.join(" "), /bestätigt|berichtet|offen/i);
+
+  const ai = slides[7];
+  assert.match(ai.analyticalTask.title, /KI-Vorauswahl/i);
+  assert.match(ai.analyticalTask.prompts.join(" "), /Bewerbungen|Beschwerde/i);
+
+  const statistics = slides[24];
+  assert.match(statistics.analyticalTask.title, /Studie lesen/i);
+  assert.match(statistics.analyticalTask.prompts.join(" "), /40 %|Prozentpunkte/i);
+});
+
+test("C2 progression and concrete grammar applications stay visible across the course", () => {
+  const slides = getSlidesByCourse("C2");
+  assert.equal(slides[0].progressionLabel, "Phase 1 · Präzision");
+  assert.equal(slides[7].progressionLabel, "Phase 2 · Evidenz & Distanz");
+  assert.equal(slides[14].progressionLabel, "Phase 3 · Abwägung & Synthese");
+  assert.equal(slides[21].progressionLabel, "Phase 4 · Transfer & Kontrolle");
+  assert.equal(slides[27].progressionLabel, "Phase 5 · Prüfung");
 
   for (const slide of slides) {
-    const expected = expectedTitles[(slide.dayNumber - 1) % 7];
-    const analysis = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "analysis");
-    assert.equal(analysis.title, expected, slide.assignmentId);
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const intro = stages.find((stage) => stage.id === "intro");
+    const grammar = stages.find((stage) => stage.id === "grammar");
+    assert.equal(intro.skillTarget, slide.skillTarget, slide.assignmentId);
+    assert.equal(intro.progressionLabel, slide.progressionLabel, slide.assignmentId);
+    assert.equal(grammar.application.prompt, slide.grammarApplication.prompt, slide.assignmentId);
+    assert.equal(grammar.application.task, slide.grammarApplication.task, slide.assignmentId);
+    assert.ok(grammar.application.answer, slide.assignmentId + " grammar application should have one revealable solution");
+  }
+});
+
+test("C2 lesson summary is reduced to language, analysis and transfer", () => {
+  for (const slide of getSlidesByCourse("C2")) {
+    const summary = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "lesson-summary");
+    assert.equal(summary.title, "Was du jetzt können solltest");
+    assert.deepEqual(summary.items.map((item) => item.label), ["Sprache", "Analyse", "Transfer"]);
+    assert.equal(summary.items.length, 3);
   }
 });
 
@@ -215,11 +251,11 @@ test("C2 Day 1 preserves the circular-economy teaching logic without another end
   assert.match(foundation.tension, /niedriger Preis und Bequemlichkeit/);
   assert.match(foundation.tension, /Langlebigkeit und Ressourcenschonung/);
 
-  assert.equal(analysis.title, "Kriterienmatrix");
-  assert.match(JSON.stringify(analysis), /Verbraucher tragen die größte Verantwortung/);
-  assert.match(JSON.stringify(analysis), /verbindlich(?:e|en) Regeln/);
-  assert.match(writing.title, /Position vorbereiten/);
-  assert.match(JSON.stringify(writing), /zwei Gründe/i);
+  assert.match(analysis.title, /Produktentscheidung/);
+  assert.match(JSON.stringify(analysis), /Smartphone/);
+  assert.match(JSON.stringify(analysis), /Ressourcenverbrauch/);
+  assert.match(writing.title, /Stellungnahme vorbereiten/);
+  assert.match(JSON.stringify(writing), /zwei tragende Argumente/i);
   assert.doesNotMatch(JSON.stringify(writing), /alle drei Perspektiven/i);
   assert.equal(stages.some((stage) => stage.id === "weekly-challenge"), false);
 });
