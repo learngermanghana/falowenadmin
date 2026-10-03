@@ -166,7 +166,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const visibleWarmupQuestionCount = warmupPerStudent ? Math.min(warmupQuestionCount, availableWarmupQuestions) : availableWarmupQuestions;
   const visibleStageItems = warmupPerStudent ? stage.items.slice(0, visibleWarmupQuestionCount) : stage?.items;
   const largeClassWarmup = warmupPerStudent && rosterCount >= 8;
-  const enhancedWarmup = warmupPerStudent && Array.isArray(stage?.questionSupport) && stage.questionSupport.length > 0;
+  const enhancedWarmup = warmupPerStudent;
+  const warmupHasSupport = Array.isArray(stage?.questionSupport) && stage.questionSupport.length > 0;
   const visibleWarmupAnsweredCount = warmupPerStudent
     ? Array.from({ length: visibleWarmupQuestionCount }, (_, index) => Boolean(warmupAnswered[index])).filter(Boolean).length
     : 0;
@@ -1457,17 +1458,20 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <>
                     <ol className="presenter-warmup-question-list">
                       {(visibleStageItems || []).map((item, itemIndex) => {
-                        const support = stage.questionSupport?.[itemIndex] || {};
-                        const hintOpen = Boolean(warmupSupportOpen[itemIndex + ":hint"]);
-                        const starterOpen = Boolean(warmupSupportOpen[itemIndex + ":starter"]);
-                        const followUpOpen = Boolean(warmupSupportOpen[itemIndex + ":followup"]);
-                        const difficultyClass = String(support.difficulty || "Extend").toLowerCase();
+                        const support = stage.questionSupport?.[itemIndex] || null;
+                        const hasSupport = warmupHasSupport && Boolean(support);
+                        const hintOpen = hasSupport && Boolean(warmupSupportOpen[itemIndex + ":hint"]);
+                        const starterOpen = hasSupport && Boolean(warmupSupportOpen[itemIndex + ":starter"]);
+                        const followUpOpen = hasSupport && Boolean(warmupSupportOpen[itemIndex + ":followup"]);
+                        const difficultyClass = hasSupport ? String(support.difficulty || "Extend").toLowerCase() : "";
 
                         return (
                           <li key={item} className={`presenter-warmup-question-card ${warmupAnswered[itemIndex] ? "is-answered" : ""}`}>
                             <div className="presenter-warmup-question-heading">
-                              <span className={"presenter-warmup-difficulty is-" + difficultyClass}>{support.difficulty || "Extend"}</span>
-                              <p>{renderWarmupQuestion(item, support.keywords)}</p>
+                              {hasSupport ? (
+                                <span className={"presenter-warmup-difficulty is-" + difficultyClass}>{support.difficulty || "Extend"}</span>
+                              ) : null}
+                              <p>{hasSupport ? renderWarmupQuestion(item, support.keywords) : item}</p>
                               <label className="presenter-warmup-answer-check">
                                 <input
                                   type="checkbox"
@@ -1478,46 +1482,50 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                                 <span>{warmupAnswered[itemIndex] ? "Answered" : "Tick when answered"}</span>
                               </label>
                             </div>
-                            <div className="presenter-warmup-support-actions">
-                              <button
-                                type="button"
-                                aria-expanded={hintOpen}
-                                onClick={() => toggleWarmupSupport(itemIndex, "hint")}
-                              >
-                                {hintOpen ? "Hide hint" : "Hint"}
-                              </button>
-                              <button
-                                type="button"
-                                aria-expanded={starterOpen}
-                                onClick={() => toggleWarmupSupport(itemIndex, "starter")}
-                              >
-                                {starterOpen ? "Hide starter" : "Answer starter"}
-                              </button>
-                              <button
-                                type="button"
-                                aria-expanded={followUpOpen}
-                                onClick={() => toggleWarmupSupport(itemIndex, "followup")}
-                              >
-                                {followUpOpen ? "Hide follow-up" : "Follow-up"}
-                              </button>
-                            </div>
-                            {hintOpen ? (
-                              <div className="presenter-warmup-support-line">
-                                <strong>Hint (EN)</strong>
-                                <span>{support.hintEn}</span>
-                              </div>
-                            ) : null}
-                            {starterOpen ? (
-                              <div className="presenter-warmup-support-line">
-                                <strong>Start</strong>
-                                <span>{support.answerStarterDe}</span>
-                              </div>
-                            ) : null}
-                            {followUpOpen ? (
-                              <div className="presenter-warmup-support-line">
-                                <strong>Follow-up</strong>
-                                <span>{support.followUpDe}</span>
-                              </div>
+                            {hasSupport ? (
+                              <>
+                                <div className="presenter-warmup-support-actions">
+                                  <button
+                                    type="button"
+                                    aria-expanded={hintOpen}
+                                    onClick={() => toggleWarmupSupport(itemIndex, "hint")}
+                                  >
+                                    {hintOpen ? "Hide hint" : "Hint"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-expanded={starterOpen}
+                                    onClick={() => toggleWarmupSupport(itemIndex, "starter")}
+                                  >
+                                    {starterOpen ? "Hide starter" : "Answer starter"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-expanded={followUpOpen}
+                                    onClick={() => toggleWarmupSupport(itemIndex, "followup")}
+                                  >
+                                    {followUpOpen ? "Hide follow-up" : "Follow-up"}
+                                  </button>
+                                </div>
+                                {hintOpen ? (
+                                  <div className="presenter-warmup-support-line">
+                                    <strong>Hint (EN)</strong>
+                                    <span>{support.hintEn}</span>
+                                  </div>
+                                ) : null}
+                                {starterOpen ? (
+                                  <div className="presenter-warmup-support-line">
+                                    <strong>Start</strong>
+                                    <span>{support.answerStarterDe}</span>
+                                  </div>
+                                ) : null}
+                                {followUpOpen ? (
+                                  <div className="presenter-warmup-support-line">
+                                    <strong>Follow-up</strong>
+                                    <span>{support.followUpDe}</span>
+                                  </div>
+                                ) : null}
+                              </>
                             ) : null}
                           </li>
                         );
