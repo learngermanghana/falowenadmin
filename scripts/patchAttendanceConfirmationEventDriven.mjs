@@ -278,7 +278,7 @@ async function runAttendanceConfirmationEmailJob({ admin, db, runtimeConfig = {}
       sent += Number(result.sent || 0);
       if (Number(result.failed || 0) > 0) {
         const partialError = new Error(
-          `Attendance delivery failed for ${Number(result.failed || 0)} recipient(s); queue will retry failed deliveries.`,
+          "Attendance delivery failed for " + Number(result.failed || 0) + " recipient(s); queue will retry failed deliveries.",
         );
         partialError.code = "ATTENDANCE_PARTIAL_FAILURE";
         partialError.sent = Number(result.sent || 0);

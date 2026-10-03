@@ -99,6 +99,8 @@ jobs:
         run: |
           node --check functions/attendanceConfirmationRetry.js
           node --check scripts/patchAttendanceConfirmationEmails.mjs
+          node --check scripts/patchAttendanceConfirmationEventDriven.mjs
+          node --check scripts/patchAttendanceConfirmationEventDrivenV2.mjs
           node --check scripts/patchAttendanceParticipationSummaryEmail.mjs
           node --check scripts/patchAttendanceParticipationCanonicalIdentity.mjs
           node --check scripts/patchAttendanceNoParticipationEncouragement.mjs
@@ -110,6 +112,7 @@ jobs:
           node --check scripts/patchParticipationSessionLegacySelection.mjs
           node scripts/patchClassParticipationApi.mjs
           node scripts/patchAttendanceConfirmationEmails.mjs
+          node scripts/patchAttendanceConfirmationEventDrivenV2.mjs
           node scripts/patchAttendanceParticipationSummaryEmail.mjs
           node scripts/patchAttendanceParticipationCanonicalIdentity.mjs
           node scripts/patchAttendanceNoParticipationEncouragement.mjs
