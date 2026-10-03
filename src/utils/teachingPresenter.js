@@ -1912,6 +1912,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
 export function getSpeakingQuestionModel(stage = {}, question = "") { return stage.questionModels?.find((item) => item.questionDe === question) || null; }
 export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   const presenterV2 = isTeachingPresenterV2Slide(slide);
+  const level = classroomLevel(slide);
   const stages = presenterV2 ? buildPresenterV2Stages(slide, topicLabel) : buildClassicStages(slide, topicLabel);
   const filtered = stages.filter((stage) => {
     if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
@@ -1937,7 +1938,6 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       });
     }
   }
-  const level = classroomLevel(slide);
   return filtered.map((stage) => ({
     ...stage,
     teacherPurpose: stage.teacherPurpose || buildPresenterTeacherPurpose(stage, level),
