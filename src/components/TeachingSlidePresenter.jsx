@@ -1361,7 +1361,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </div>
             </>
           ) : stage.type === "summary" ? (
-            <section className="presenter-lesson-summary">
+            <section className={`presenter-lesson-summary${presenterLevel === "C2" ? " is-c2" : ""}`}>
               <div className="presenter-lesson-summary-heading">
                 <span>{stage.kicker}</span>
                 <h1>{stage.title}</h1>
