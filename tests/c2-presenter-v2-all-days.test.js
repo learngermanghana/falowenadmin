@@ -48,7 +48,6 @@ const SPINE = [
   "phrases",
   "grammar",
   "analysis",
-  "questions",
   "writing",
   "workbook",
   "lesson-summary",
@@ -86,8 +85,11 @@ test("C2 keeps the current odd/even Write standard", () => {
       assert.equal(writing.items[0].prompts.length, 3);
     } else {
       assert.match(writing.title, /Umformung/i);
-      assert.match(JSON.stringify(writing), /Bedeutung muss unbedingt erhalten bleiben/i);
-      assert.match(JSON.stringify(writing), /eine Stelle.*besonders kontrollieren/i);
+      assert.ok(slide.reformulationPrep?.source, slide.assignmentId + " missing reformulation source");
+      assert.ok(slide.reformulationPrep?.cue, slide.assignmentId + " missing reformulation cue");
+      assert.ok(JSON.stringify(writing).includes(slide.reformulationPrep.source), slide.assignmentId + " should show the exact source sentence");
+      assert.match(JSON.stringify(writing), /Ziel:/i);
+      assert.match(JSON.stringify(writing), /Bedeutung muss unverändert bleiben/i);
       assert.equal(writing.items[0].prompts.length, 3);
     }
   }
@@ -120,22 +122,34 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     assert.equal(vocabulary.items.length, 6);
     assert.match(vocabulary.instruction, /nicht dekorativ/i);
 
-    const questions = stages.find((stage) => stage.id === "questions");
-    assert.equal(questions.requiresQuestionModel, true);
-    assert.equal(questions.items.length, 1);
-    assert.equal(questions.questionModels.length, 1);
-    assert.match(questions.title, /eine Frage vertiefen/i);
-    assert.match(questions.instruction, /höchstens zwei Perspektiven/i);
-    assert.match(questions.instruction, /nicht reformulieren/i);
-    assert.ok(getSpeakingQuestionModel(questions, questions.items[0])?.modelAnswerDe, slide.assignmentId + " missing speaking model");
+    assert.equal(ids.includes("questions"), false, slide.assignmentId + " should not repeat a seminar question after warm-up");
 
     const workbook = stages.find((stage) => stage.id === "workbook");
     assert.equal(workbook.items.length, 5);
 
-    for (const removed of ["practice", "mistakes", "grammar-check", "weekly-challenge", "wrapup"]) {
+    for (const removed of ["practice", "mistakes", "grammar-check", "weekly-challenge", "wrapup", "questions"]) {
       assert.equal(ids.includes(removed), false, slide.assignmentId + " still exposes duplicate stage " + removed);
     }
   }
+});
+
+test("C2 warm-ups are topic-specific and avoid duplicate support scaffolding", () => {
+  for (const slide of getSlidesByCourse("C2")) {
+    assert.equal(slide.warmupQuestionsDe.length, 3, slide.assignmentId);
+    const warmupText = slide.warmupQuestionsDe.join(" ");
+    assert.doesNotMatch(warmupText, /Was ist die Kernfrage bei/i);
+    assert.doesNotMatch(warmupText, /Welche zwei Interessen oder Werte geraten/i);
+    assert.doesNotMatch(warmupText, /Welche der drei Kursaussagen/i);
+    assert.doesNotMatch(warmupText, /Welche heutige Kollokation/i);
+
+    const warmup = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "warmup");
+    assert.equal(warmup.items.length, 3);
+    assert.deepEqual(warmup.questionSupport, []);
+  }
+
+  const journalism = getSlidesByCourse("C2")[3];
+  assert.match(journalism.warmupQuestionsDe.join(" "), /Eilmeldung/);
+  assert.match(journalism.warmupQuestionsDe.join(" "), /nicht unabhängig bestätigt/);
 });
 
 test("C2 rotates seven analytical mechanics across the 28 lessons", () => {
