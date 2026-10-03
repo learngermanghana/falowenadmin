@@ -183,6 +183,35 @@ function studentBelongsToClassAt(student = {}, klass = {}, when = null) {
   return membershipValues.some((value) => classValues.has(value));
 }
 
+function studentEnrollmentStart(student = {}) {
+  const classSpecific = [
+    student.classJoinedAt,
+    student.classAssignedAt,
+    student.classEnrollmentAt,
+    student.classEnrollmentDate,
+    student.classStartDate,
+  ].map(asDate).filter(Boolean);
+  const general = [
+    student.trialStartedAt,
+    student.enrollDate,
+    student.enrollmentDate,
+    student.registrationDate,
+    student.contractStart,
+    student.contractStartDate,
+  ].map(asDate).filter(Boolean);
+  const candidates = classSpecific.length ? classSpecific : general;
+  if (!candidates.length) return null;
+  return [...candidates].sort((left, right) => left.getTime() - right.getTime())[0];
+}
+
+function studentEligibleForClassSession(student = {}, klass = {}, when = null) {
+  if (!studentBelongsToClassAt(student, klass, when)) return false;
+  const sessionAt = asDate(when);
+  const enrollmentAt = studentEnrollmentStart(student);
+  if (!sessionAt || !enrollmentAt) return true;
+  return sessionAt.getTime() >= enrollmentAt.getTime();
+}
+
 function studentIdentityValues(student = {}) {
   return [
     student.id,
@@ -536,7 +565,7 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
   const students = allStudents.filter((student) => (
     isActiveStudent(student)
     && normalize(student.email)
-    && sessions.some((session) => studentBelongsToClassAt(student, klass, sessionStart(session)))
+    && sessions.some((session) => studentEligibleForClassSession(student, klass, sessionStart(session)))
   ));
 
   await classRef.set({
@@ -560,6 +589,8 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
   }
 
   let totalSent = 0;
+  let totalFailed = 0;
+  let lastDeliveryError = "";
   for (const group of groups) {
     const sessionData = [];
     let groupDueAt = null;
@@ -578,13 +609,13 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
     const rows = [];
     const deliveryRefs = [];
     const groupStudents = students.filter((student) => (
-      group.sessions.some((session) => studentBelongsToClassAt(student, klass, sessionStart(session)))
+      group.sessions.some((session) => studentEligibleForClassSession(student, klass, sessionStart(session)))
     ));
     for (const student of groupStudents) {
       const studentKey = studentDeliveryKey(student);
       if (!studentKey) continue;
       const records = sessionData
-        .filter(({ session }) => studentBelongsToClassAt(student, klass, sessionStart(session)))
+        .filter(({ session }) => studentEligibleForClassSession(student, klass, sessionStart(session)))
         .map(({ session, attendance, checkins }) => ({
           session,
           ...attendanceStatus({ session, attendance, checkins, student, lateMinutes }),
@@ -625,43 +656,64 @@ async function processClass({ admin, db, klass, allStudents, config, now, fetchI
     }
 
     if (!rows.length) continue;
-    try {
-      const upstream = await postAnnouncementRows(config, rows, fetchImpl);
-      await markDeliveryRefs(deliveryRefs, {
-        status: "sent",
-        sentAt: timestamp,
-        updatedAt: timestamp,
-        upstreamCount: Number(upstream?.count || upstream?.sent || rows.length),
-        lastError: "",
-      });
-      totalSent += rows.length;
-      await classRef.set({
-        attendanceConfirmationEmailLastStatus: "sent",
-        attendanceConfirmationEmailLastSentAt: timestamp,
-        attendanceConfirmationEmailLastSentCount: rows.length,
-        attendanceConfirmationEmailLastPeriodKey: group.periodKey,
-        attendanceConfirmationEmailLastSessionIds: group.sessions.map((session) => session.id),
-        attendanceConfirmationEmailLastError: "",
-      }, { merge: true });
-    } catch (error) {
-      await markDeliveryRefs(deliveryRefs, {
-        status: "failed",
-        lastError: error?.message || "Attendance email delivery failed",
-        failedAt: timestamp,
-        updatedAt: timestamp,
-      });
-      throw error;
+    let groupSent = 0;
+    let groupFailed = 0;
+    let groupLastError = "";
+
+    // Deliver one student at a time. A single bad recipient or stale row must
+    // never poison the whole class batch and make already-accepted students
+    // repeat on the next retry.
+    for (let index = 0; index < rows.length; index += 1) {
+      try {
+        const upstream = await postAnnouncementRows(config, [rows[index]], fetchImpl);
+        await markDeliveryRefs([deliveryRefs[index]], {
+          status: "sent",
+          sentAt: timestamp,
+          updatedAt: timestamp,
+          upstreamCount: Number(upstream?.count || upstream?.sent || 1),
+          lastError: "",
+        });
+        groupSent += 1;
+      } catch (error) {
+        const message = error?.message || "Attendance email delivery failed";
+        await markDeliveryRefs([deliveryRefs[index]], {
+          status: "failed",
+          lastError: message,
+          failedAt: timestamp,
+          updatedAt: timestamp,
+        });
+        groupFailed += 1;
+        groupLastError = message;
+      }
     }
+
+    totalSent += groupSent;
+    totalFailed += groupFailed;
+    if (groupLastError) lastDeliveryError = groupLastError;
+    await classRef.set({
+      attendanceConfirmationEmailLastStatus: groupFailed
+        ? (groupSent ? "partial_failed" : "failed")
+        : "sent",
+      ...(groupSent ? { attendanceConfirmationEmailLastSentAt: timestamp } : {}),
+      attendanceConfirmationEmailLastSentCount: groupSent,
+      attendanceConfirmationEmailLastPeriodKey: group.periodKey,
+      attendanceConfirmationEmailLastSessionIds: group.sessions.map((session) => session.id),
+      attendanceConfirmationEmailLastError: groupLastError,
+    }, { merge: true });
   }
 
   await classRef.set({
     attendanceConfirmationEmailLastRunAt: timestamp,
-    attendanceConfirmationEmailLastStatus: totalSent ? "sent" : "already_sent_or_not_due",
+    attendanceConfirmationEmailLastStatus: totalFailed
+      ? (totalSent ? "partial_failed" : "failed")
+      : totalSent
+        ? "sent"
+        : "already_sent_or_not_due",
     attendanceConfirmationEmailLastSentCount: totalSent,
     ...(totalSent ? { attendanceConfirmationEmailLastSentAt: timestamp } : {}),
-    attendanceConfirmationEmailLastError: "",
+    attendanceConfirmationEmailLastError: lastDeliveryError,
   }, { merge: true });
-  return { sent: totalSent, skipped: false };
+  return { sent: totalSent, failed: totalFailed, skipped: false };
 }
 
 async function sendAssignmentAttendanceCreditEmail({
@@ -821,6 +873,8 @@ module.exports = {
     resolveClassWebhookConfig,
     studentBelongsToClass,
     studentBelongsToClassAt,
+    studentEnrollmentStart,
+    studentEligibleForClassSession,
     weekKey,
   },
 };
