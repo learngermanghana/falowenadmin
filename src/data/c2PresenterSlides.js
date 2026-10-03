@@ -976,6 +976,219 @@ const REFORMULATION_FAMILIES = [
   ["wenn/indem → durch + Nominalgruppe", "Durch eine bessere Koordination der Prozesse steigt die Qualität."],
 ];
 
+
+const C2_WARMUP_QUESTIONS = Object.freeze({
+  1: [
+    "Ein Smartphone funktioniert noch, aber der Akku ist defekt. Was sollte zuerst passieren: reparieren, ersetzen oder neu kaufen?",
+    "Wer kann Langlebigkeit wirksamer beeinflussen: Hersteller, Politik oder Verbraucher?",
+    "Wann ist Recycling eine sinnvolle Lösung – und wann kommt es eigentlich zu spät?",
+  ],
+  2: [
+    "Zwei Kinder besuchen dieselbe Schule, bekommen zu Hause aber sehr unterschiedliche Unterstützung. Was wäre hier gerecht?",
+    "Welche Mindeststandards sollten für alle gelten, und wo braucht es individuelle Lernwege?",
+    "Kann gleiche Behandlung unfaire Ergebnisse erzeugen? Begründe am Bildungsbeispiel.",
+  ],
+  3: [
+    "Soll öffentlich finanzierte Forschung einen unmittelbaren gesellschaftlichen Nutzen zeigen müssen?",
+    "Wann schützt Forschungsfreiheit wichtige Entdeckungen – und wann braucht Forschung stärkere Verantwortung?",
+    "Wie stark darf Wissenschaft vereinfacht werden, damit sie verständlich bleibt, ohne ungenau zu werden?",
+  ],
+  4: [
+    "Eine Redaktion hat eine Eilmeldung, aber bisher nur eine einzige Quelle. Was darf sie bereits veröffentlichen?",
+    "Wie sollte sprachlich sichtbar werden, dass eine Behauptung noch nicht unabhängig bestätigt ist?",
+    "Was ist problematischer: zu spät informieren oder Unsicheres wie eine gesicherte Tatsache formulieren?",
+  ],
+  5: [
+    "Was schafft eher öffentliches Vertrauen: schnelle Entscheidungen oder nachvollziehbare Begründungen?",
+    "Wie sollte eine Institution mit einem eigenen Fehler umgehen, wenn sie Vertrauen erhalten will?",
+    "Woran lässt sich später prüfen, ob eine öffentlich begründete Maßnahme tatsächlich die angekündigten Ziele erreicht hat?",
+  ],
+  6: [
+    "Zwei ähnlich qualifizierte Personen haben sehr unterschiedliche Chancen auf dem Arbeitsmarkt. Welche Ursachen würdest du zuerst prüfen?",
+    "Wo endet Eigenverantwortung und wo beginnen strukturelle Nachteile?",
+    "Welche Maßnahme kann Chancen verbessern, ohne so zu tun, als hätten alle dieselben Ausgangsbedingungen?",
+  ],
+  7: [
+    "Homeoffice schafft Flexibilität, aber Arbeit und Freizeit vermischen sich. Welche Grenze sollte geschützt werden?",
+    "Wer trägt mehr Verantwortung für Erholung: Beschäftigte oder Arbeitgeber?",
+    "Wann wird hohe Leistungserwartung problematisch, obwohl Beschäftigte viel Autonomie haben?",
+  ],
+  8: [
+    "Darf ein KI-System Bewerbungen vorsortieren, wenn ein Mensch die Endentscheidung trifft?",
+    "Welche Entscheidung sollte auch bei hoher technischer Genauigkeit nicht vollständig automatisiert werden?",
+    "Wer muss erklären können, warum ein automatisiertes System zu einem bestimmten Ergebnis kam?",
+  ],
+  9: [
+    "Eine App braucht Standortdaten für eine Funktion. Welche Datennutzung wäre noch angemessen?",
+    "Ist Zustimmung wirklich freiwillig, wenn ein Dienst ohne Datenfreigabe kaum nutzbar ist?",
+    "Welche Information muss verständlich sein, bevor Nutzer sinnvoll entscheiden können?",
+  ],
+  10: [
+    "Eine neue Therapie wirkt vielversprechend, aber seltene Nebenwirkungen sind noch unklar. Wie würdest du das Risiko einordnen?",
+    "Wann kann ein höheres Forschungsrisiko ethisch vertretbar sein?",
+    "Was muss ein Patient verstehen, damit eine Einwilligung tatsächlich informiert ist?",
+  ],
+  11: [
+    "Eine Stadt erhöht Parkgebühren, hat aber nur wenige gute Busverbindungen. Ist die Maßnahme fair?",
+    "Welche Klimaschutzmaßnahme verändert Mobilität, ohne notwendige Wege zu ignorieren?",
+    "Wann wird individuelle Mobilitätsfreiheit zu einem Gegenargument – und wann reicht sie nicht aus?",
+  ],
+  12: [
+    "Eine qualifizierte Person spricht gut Deutsch, darf ihren Beruf aber wegen fehlender Anerkennung nicht ausüben. Wo liegt das Integrationsproblem?",
+    "Welche Verantwortung liegt bei Zugewanderten, welche bei Institutionen?",
+    "Woran erkennt man gesellschaftliche Teilhabe jenseits von Sprachkenntnissen?",
+  ],
+  13: [
+    "Kann eine Person mehrere Sprachen verwenden, ohne dass eine davon allein ihre Identität bestimmt?",
+    "Wann stärkt eine gemeinsame Verkehrssprache Verständigung – und wann verdrängt sie sprachliche Vielfalt?",
+    "Welche Rolle kann Sprache für Zugehörigkeit spielen, ohne Menschen auf eine Herkunft festzulegen?",
+  ],
+  14: [
+    "Ein Denkmal wird Jahrzehnte später kritisch neu bewertet. Soll es bleiben, verändert oder entfernt werden?",
+    "Wer entscheidet, welche Erinnerungen im öffentlichen Raum sichtbar bleiben?",
+    "Wie kann Literatur historische Erinnerung verändern, ohne selbst Geschichtsschreibung zu sein?",
+  ],
+  15: [
+    "Eine Mietbegrenzung entlastet bestehende Mieter, könnte aber Investitionen beeinflussen. Welche Wirkung würdest du zuerst prüfen?",
+    "Wie lässt sich neuer Wohnraum schaffen, ohne Bezahlbarkeit aus dem Blick zu verlieren?",
+    "Welche Interessen stehen bei Stadtentwicklung besonders oft gegeneinander?",
+  ],
+  16: [
+    "Wenn Werbung genau auf dein früheres Verhalten zugeschnitten ist, wo endet Information und wo beginnt Beeinflussung?",
+    "Welche Verantwortung bleibt bei Verbrauchern, wenn Plattformen ihre Aufmerksamkeit gezielt steuern?",
+    "Soll personalisierte Werbung stärker transparent gemacht werden als allgemeine Werbung?",
+  ],
+  17: [
+    "Ein Kitaplatz ist kostenlos, aber die Gruppen sind sehr groß. Ist der Zugang damit wirklich verbessert?",
+    "Welche Rolle sollte frühe Bildung spielen, ohne Familienautonomie unnötig einzuschränken?",
+    "Was ist wichtiger: mehr Betreuungsplätze oder höhere Qualität pro Platz?",
+  ],
+  18: [
+    "Eine Beschäftigte soll neue digitale Werkzeuge lernen, bekommt dafür aber keine Arbeitszeit. Wer trägt die Verantwortung?",
+    "Wann ist Weiterbildung persönliche Eigeninitiative, wann betriebliche Pflicht?",
+    "Welche Barriere verhindert lebenslanges Lernen häufiger: Zeit, Kosten oder fehlender Zugang – und warum?",
+  ],
+  19: [
+    "Eine Lieferkette ist sehr günstig, hängt aber von nur einer Region ab. Ist das noch effizient?",
+    "Wann rechtfertigen niedrigere Preise eine stärkere wirtschaftliche Abhängigkeit?",
+    "Wie viel regionale Produktion ist sinnvoll, wenn sie teurer, aber krisenfester ist?",
+  ],
+  20: [
+    "Ein Algorithmus zeigt dir immer ähnliche Meinungen, weil du oft darauf reagierst. Was verändert das an deiner Wahrnehmung?",
+    "Wann ist Inhaltsmoderation Schutz einer Debatte, wann kann sie als Eingriff in freie Meinungsäußerung wahrgenommen werden?",
+    "Welche Verantwortung haben Nutzer selbst für die Qualität öffentlicher Debatten?",
+  ],
+  21: [
+    "Ein Behördenantrag ist nur noch online verfügbar. Für wen entsteht dadurch ein neues Problem?",
+    "Was ist bürgerfreundlicher: maximale digitale Effizienz oder mehrere Zugangswege?",
+    "Wie kann Verwaltung einfacher kommunizieren, ohne rechtliche Genauigkeit zu verlieren?",
+  ],
+  22: [
+    "Eine historische Stadt verdient am Tourismus, aber Einheimische finden kaum noch Wohnraum. Was sollte zuerst geschützt werden?",
+    "Welche Form von Tourismus bringt lokalen Nutzen, ohne die Lebensqualität stark zu belasten?",
+    "Wann wird kulturelle Begegnung zu bloßem Konsum eines Ortes?",
+  ],
+  23: [
+    "Zwei Staaten sind in einer Sicherheitsfrage uneinig, arbeiten aber beim Handel zusammen. Ist das ein Widerspruch?",
+    "Wann ist ein Kompromiss in Verhandlungen sinnvoll, und wann würde er zentrale Interessen aufgeben?",
+    "Wie kann internationale Zusammenarbeit funktionieren, obwohl Macht und Interessen ungleich verteilt sind?",
+  ],
+  24: [
+    "Eine öffentliche Kontroverse enthält sowohl Fachfragen als auch Werturteile. Was muss zuerst voneinander getrennt werden?",
+    "Wann sollte Expertenwissen besonders stark gewichtet werden, und wo braucht eine Entscheidung zusätzlich gesellschaftliche Abwägung?",
+    "Woran erkennst du ein starkes Gegenargument statt eines bloßen Einwands?",
+  ],
+  25: [
+    "Eine Studie findet eine starke Korrelation. Was darf man daraus noch nicht automatisch schließen?",
+    "Welche Information über Stichprobe oder Messmethode kann eine beeindruckende Zahl relativieren?",
+    "Wie formuliert man ein Ergebnis verständlich, ohne wissenschaftliche Unsicherheit zu verstecken?",
+  ],
+  26: [
+    "Eine Technologie erhöht Sicherheit, greift aber in Privatsphäre ein. Welche Kriterien brauchst du für eine ethische Bewertung?",
+    "Reicht technischer Nutzen aus, um einen Eingriff zu rechtfertigen?",
+    "Wer sollte Verantwortung tragen, wenn die langfristigen Folgen einer neuen Technologie noch unsicher sind?",
+  ],
+  27: [
+    "Wann macht ein komplexerer Satz einen Text wirklich präziser – und wann nur schwerer lesbar?",
+    "Welche Eigenschaft ist in formellem Schreiben wichtiger: Dichte, Klarheit oder Register? Begründe.",
+    "Wie kann man Wiederholungen reduzieren, ohne wichtige Bezüge im Text unklar zu machen?",
+  ],
+  28: [
+    "Unter Zeitdruck: Woran entscheidest du, ob eine komplexe Struktur wirklich nötig ist?",
+    "Welche Kontrolle schützt eine C2-Antwort am stärksten vor Bedeutungsverlust: Register, Evidenz, Kasus oder Kohäsion?",
+    "Wie würdest du eine Schlusskontrolle organisieren, wenn nur noch zwei Minuten bleiben?",
+  ],
+});
+
+const C2_REFORMULATION_PREP = Object.freeze({
+  2: {
+    source: "Frühe Förderung verbessert die Bildungschancen vieler Kinder.",
+    cue: "Informationsfokus mit Thema–Rhema oder Vorfeld verändern",
+  },
+  4: {
+    source: "Die Redaktion sagt: „Die Quelle ist nicht unabhängig bestätigt.“",
+    cue: "als indirekte Rede mit passendem Konjunktiv formulieren",
+  },
+  6: {
+    source: "Weil finanzielle Ressourcen ungleich verteilt sind, entstehen unterschiedliche Chancen.",
+    cue: "die kausale Beziehung anders ausdrücken, ohne die Aussage zu verstärken",
+  },
+  8: {
+    source: "Systeme, die durch KI gesteuert werden, treffen immer häufiger Vorentscheidungen.",
+    cue: "den Relativsatz mit einem passenden Partizipialattribut verdichten",
+  },
+  10: {
+    source: "Die Behandlung ist wahrscheinlich bei bestimmten Patientengruppen wirksam.",
+    cue: "die Aussage mit subjektiver Modalität vorsichtiger und präziser formulieren",
+  },
+  12: {
+    source: "Institutionen müssen auf die Bedürfnisse neu Zugewanderter reagieren.",
+    cue: "Rektion und präpositionale Ergänzung kontrolliert umformen",
+  },
+  14: {
+    source: "Die öffentliche Erinnerung verändert sich, wenn neue Perspektiven sichtbar werden.",
+    cue: "die Aussage semantisch präzisieren, ohne eine stärkere Behauptung daraus zu machen",
+  },
+  16: {
+    source: "Wenn Werbung personalisiert wird, kann sie Kaufentscheidungen stärker beeinflussen.",
+    cue: "mit Informationskompression oder Nominalisierung umformen",
+  },
+  18: {
+    source: "Die Beschäftigte hatte keine Zeit für Weiterbildung und konnte den Kurs nicht besuchen.",
+    cue: "eine irreale Alternative mit Konjunktiv II Vergangenheit formulieren",
+  },
+  20: {
+    source: "Soziale Medien beeinflussen öffentliche Debatten stark.",
+    cue: "die Aussage pragmatisch abstufen, ohne die Kernaussage zu verlieren",
+  },
+  22: {
+    source: "Die Besucherzahlen stiegen. Danach wurden die Mieten in der Innenstadt höher.",
+    cue: "die zeitliche Beziehung mit einer passenden temporalen Verknüpfung ausdrücken",
+  },
+  24: {
+    source: "Die Maßnahme ist sinnvoll, weil Fachleute sie unterstützen.",
+    cue: "These, Begründung und Beleg sprachlich sauber voneinander trennen",
+  },
+  26: {
+    source: "Die Technologie kann nützlich sein. Sie birgt Risiken. Diese Risiken sind noch nicht vollständig bekannt.",
+    cue: "die Aussagen zu einer kontrollierten Satzperiode verbinden",
+  },
+  28: {
+    source: "Die Maßnahme ist gut, weil sie viele Vorteile hat.",
+    cue: "C2-gerecht reformulieren und dabei Register, Evidenz und Bedeutung kontrollieren",
+  },
+});
+
+function makeWarmupQuestions(lesson, topicFoundation) {
+  const curated = C2_WARMUP_QUESTIONS[Number(lesson.day)];
+  if (Array.isArray(curated) && curated.length) return curated;
+  return [
+    topicFoundation?.core || "Welche konkrete Frage steht heute im Mittelpunkt?",
+    lesson.perspectives?.[0] || "Welche Position ist hier besonders prüfenswert?",
+    topicFoundation?.example ? "Was zeigt das heutige Beispiel, und wo liegen seine Grenzen?" : "Welches konkrete Beispiel hilft bei der Bewertung?",
+  ].filter(Boolean);
+}
+
 function objectiveSentence(lesson) {
   return "Students teach and practise " + lesson.grammarFocus + " through the current Falowen C2 topic " + lesson.title + ", then transfer it into the same speaking and writing mode used in Course Book.";
 }
@@ -1055,12 +1268,7 @@ function makeSlide(lesson) {
     topic: lesson.chapter + " · " + lesson.topic,
     objective: objectiveSentence(lesson),
     estimatedDuration: "75–90 minutes",
-    warmupQuestionsDe: [
-      "Was ist die Kernfrage bei „" + lesson.title + "“?",
-      "Welche zwei Interessen oder Werte geraten bei diesem Thema in Spannung?",
-      "Welche der drei Kursaussagen findest du am schwierigsten zu beurteilen – und warum?",
-      "Welche heutige Kollokation passt zu einem ersten Argument?",
-    ],
+    warmupQuestionsDe: makeWarmupQuestions(lesson, topicFoundation),
     knowledgeTextDe: topicFoundation
       ? "1-Minuten-Wissen: Simple English: " + topicFoundation.en + " Auf Deutsch: " + topicFoundation.de + " Konkretes Beispiel: " + topicFoundation.example + " Kernfrage: " + topicFoundation.core + " Kernspannung: " + topicFoundation.tension
       : "1-Minuten-Wissen: " + lesson.topic + " Auf C2-Niveau reicht eine Pro-und-Contra-Liste nicht. Prüfe Annahmen, Bedingungen und Reichweite jeder Aussage und nutze die Grammatik, um genau diese Unterschiede sprachlich sichtbar zu machen.",
@@ -1116,6 +1324,7 @@ function makeSlide(lesson) {
     grammarCheckMinutes: 10,
     runtimePerspectivesDe: lesson.perspectives,
     writeType: lesson.writeType,
+    reformulationPrep: C2_REFORMULATION_PREP[Number(lesson.day)] || null,
     canonicalWritingPromptDe: lesson.writingPrompt,
   };
 }
