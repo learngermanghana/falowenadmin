@@ -36,7 +36,7 @@ test("A1 mastery checks test concepts instead of repeating workbook gap-fill dri
     }
   }
 
-  assert.match(A1_GRAMMAR_CHECKS["A1-1.1-PRACTICE"][0].questionDe, /concept behind W-Wörter/i);
+  assert.match(A1_GRAMMAR_CHECKS["A1-1.1-PRACTICE"][0].questionDe, /der, die and das/i);
   assert.match(A1_GRAMMAR_CHECKS["A1-9"][0].questionDe, /difference between kein and nicht/i);
   assert.match(A1_GRAMMAR_CHECKS["A1-12.1"][0].questionDe, /concept behind two-way prepositions/i);
 });
