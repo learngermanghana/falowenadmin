@@ -626,6 +626,7 @@ function buildC2GrammarApplication(slide = {}, grammarItems = [], modelItems = [
   const rules = grammarItems.slice(1);
   const models = Array.isArray(modelItems) ? modelItems.filter(Boolean) : [];
   const text = [focus, ...rules].join(" ");
+  const reformulationPrep = slide.reformulationPrep || null;
 
   if (/Nominalstil|Verbalstil/i.test(text)) {
     const verbal = rules.find((item) => /^Verbal:/i.test(String(item))) || "Verbal: Forschende prüfen die Ergebnisse erneut.";
@@ -656,15 +657,15 @@ function buildC2GrammarApplication(slide = {}, grammarItems = [], modelItems = [
   if (/Konjunktiv|indirekte Rede/i.test(text)) {
     return {
       title: "Jetzt anwenden",
-      instruction: "Der Student markiert eine fremde Aussage sprachlich als fremd, statt sie als eigene Tatsache zu übernehmen.",
-      prompt: models[0] || rules[1] || "Die Quelle sagt: Die Ergebnisse sind eindeutig.",
-      task: "Formuliere die Aussage als indirekte Rede. Sage danach, warum diese Form hier sinnvoll ist.",
-      answer: models[0] || "",
+      instruction: "Markiere eine fremde Aussage sprachlich als fremd, statt sie als eigene Tatsache zu übernehmen.",
+      prompt: String(reformulationPrep?.source || "Die Quelle sagt: „Die Ergebnisse sind eindeutig.“"),
+      task: "Formuliere den Ausgangssatz als indirekte Rede. Sage danach kurz, warum diese Form hier sinnvoll ist.",
+      answer: models[0] || rules[1] || "",
       teacherHint: "Erwartung: Quelle und eigene Position bleiben getrennt; der Evidenzstatus wird nicht künstlich verstärkt.",
     };
   }
 
-  const source = models[0] || rules[1] || rules[0] || "";
+  const source = String(reformulationPrep?.source || models[0] || rules[1] || rules[0] || "");
   return {
     title: "Jetzt anwenden",
     instruction: "Der Student benutzt die Zielstruktur aktiv, statt die Regel nur vorzulesen.",
@@ -785,13 +786,16 @@ function buildC2WritingBridge(slide = {}) {
       minutes: 6,
     };
   }
+  const prep = slide.reformulationPrep || {};
+  const source = String(prep.source || "").trim();
+  const cue = String(prep.cue || "").trim();
   return {
     title: "Write-Transfer · Umformung vorbereiten",
-    instruction: "Plane nur die Kernentscheidung; die vollständige Umformung machst du im Write-Bereich.",
+    instruction: "Bereite genau diese Umformung vor. Löse sie noch nicht vollständig; kläre zuerst Bedeutung, Zielstruktur und Kontrollpunkt.",
     prompts: [
-      "Welche Bedeutung muss unbedingt erhalten bleiben?",
-      "Wähle eine Zielstruktur aus der heutigen Grammatik.",
-      "Optional: Welche eine Stelle musst du beim Umformen besonders kontrollieren?",
+      source ? `Ausgangssatz: ${source}` : "Ausgangssatz: Lies den Satz im Write-Bereich genau.",
+      cue ? `Ziel: ${cue}.` : "Ziel: Wähle eine passende Struktur aus der heutigen Grammatik.",
+      "Kontrolle: Welche Bedeutung muss unverändert bleiben, und welche Stelle prüfst du nach der Umformung besonders?",
     ],
     minutes: 6,
   };
@@ -1710,7 +1714,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Warm-up",
         title: "Warm-up · Thema aktivieren",
         items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
-        questionSupport: buildWarmupQuestionSupport(slide),
+        questionSupport: [],
         suggestedMinutes: 5,
         timingMode: "per-student",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
@@ -1749,7 +1753,6 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         items: [focusTask],
         suggestedMinutes: focusTask.minutes,
       },
-      buildAdvancedDiscussionStage(slide, speakingStage, level),
       workbookStage,
     ];
   }
