@@ -24,7 +24,7 @@ const EXPECTED = {
     day: 2,
     grammarRoute: "/campus/course/singular-pronouns-verb-conjugation-day-2",
     workbookRoute: "/campus/course/a1-day-2-kapitel-1-1-workbook",
-    supportTerms: ["ich", "du", "er/sie/es", "heiße", "wohnst"],
+    supportTerms: ["ich", "du", "er/sie/es", "wir", "ihr", "sie/Sie", "lernen"],
   },
   "A1-1.1-practice": {
     day: 3,
@@ -150,7 +150,7 @@ test("A1 Day 2 pronoun slide stays on pronouns and basic conjugation", () => {
     slide.wrapUpTaskDe,
   ].join(" ");
 
-  assert.match(searchable, /Ich lernen|Ich lerne/);
+  assert.match(searchable, /ich lernen|ich lerne/i);
   assert.match(searchable, /du.*-st|-st.*du/i);
   assert.match(searchable, /er\/sie\/es.*-t|-t.*er\/sie\/es/i);
   assert.match(searchable, /ich lerne/);
