@@ -63,6 +63,7 @@ export function calculateWeightedMarkingOutcome({
   objectiveScore = null,
   objectiveDetails = {},
   hasWriting = writingPercent !== null && writingPercent !== undefined,
+  writingRequiredOverride = null,
 } = {}) {
   const resolvedLevel = markingLevel(level, assignmentId, assignmentKey);
   const writing = clampPercent(writingPercent);
@@ -70,11 +71,14 @@ export function calculateWeightedMarkingOutcome({
   const partStats = objectivePartStats(objectiveDetails);
   const isA2B1 = resolvedLevel === "A2" || resolvedLevel === "B1";
   const hasBothObjectiveParts = partStats.teil3.total > 0 && partStats.teil4.total > 0;
-  const writingRequirement = getA2B1WritingRequirement({
+  const cadenceWritingRequirement = getA2B1WritingRequirement({
     level: resolvedLevel,
     assignmentId,
     assignmentKey: assignmentKey || level,
   });
+  const writingRequirement = typeof writingRequiredOverride === "boolean"
+    ? writingRequiredOverride
+    : cadenceWritingRequirement;
   const writingAvailable = Boolean(
     hasWriting
       && writing !== null
