@@ -585,8 +585,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     : "";
 
   return (
-    <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
+    <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode && showPresenterTimer ? (
           <div
             className={`presenter-focus-stage-timer ${timerExpired ? "is-expired" : ""}`}
@@ -1337,7 +1337,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 {c2AnalysisStep >= 1 ? (
                   <article className="presenter-c2-analysis-step is-check">
                     <span>PRÜFE</span>
-                    <p>{String(stage.checkPrompt || "").replace(/^(Prüfe|Vergleiche|Entwickle|Welche|Markiere):?\s*/i, (match) => match)}</p>
+                    <p>{stage.checkPrompt}</p>
                   </article>
                 ) : null}
                 {c2AnalysisStep >= 2 ? (
