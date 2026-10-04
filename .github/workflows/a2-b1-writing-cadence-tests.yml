@@ -1,0 +1,46 @@
+name: A2 B1 writing cadence tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/data/**'
+      - 'src/utils/**'
+      - 'tests/a2-b1-writing-requirement.test.js'
+      - 'tests/question-aware-writing-marking.test.js'
+      - 'tests/b1-semantic-writing-marking.test.js'
+      - '.github/workflows/a2-b1-writing-cadence-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/**'
+      - 'src/utils/**'
+      - 'tests/a2-b1-writing-requirement.test.js'
+      - 'tests/question-aware-writing-marking.test.js'
+      - 'tests/b1-semantic-writing-marking.test.js'
+      - '.github/workflows/a2-b1-writing-cadence-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate writing requirement sources
+        run: |
+          node --check src/utils/a2B1WritingCadence.js
+          node --check src/utils/answerKeyNormalizer.js
+          node --check src/utils/questionAwareWritingMarking.js
+      - name: Verify cadence, legacy writing guards, normalization and scoring
+        run: >-
+          node --test
+          tests/a2-b1-writing-requirement.test.js
+          tests/question-aware-writing-marking.test.js
+          tests/a2-b1-marking-weights.test.js
+          tests/b1-semantic-writing-marking.test.js
+          tests/a1-question-aware-writing-marking.test.js
+          tests/a2-writing-cadence.test.js
+          tests/b1-writing-cadence.test.js
+          tests/assignment-registry.test.js
+          tests/answer-key-integrity.test.js

@@ -234,8 +234,11 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
   const parts = splitAnswersIntoParts(rawAnswers);
   const totalAnswers = countPartAnswers(parts);
   const isA2OrB1 = /^(A2|B1)-/i.test(assignmentKey);
+  const hasWritingPartsDeclaration = Array.isArray(sourceEntry.writingParts)
+    || Array.isArray(sourceEntry.writing_parts);
   const explicitWritingParts = normalizePartList(sourceEntry.writingParts || sourceEntry.writing_parts);
-  const writingParts = explicitWritingParts.length ? explicitWritingParts : (placeholderWriting ? ["main"] : (isA2OrB1 ? ["teil2"] : []));
+  // An explicit empty list means the workbook has no Schreiben task.
+  const writingParts = hasWritingPartsDeclaration ? explicitWritingParts : (placeholderWriting ? ["main"] : (isA2OrB1 ? ["teil2"] : []));
   const excludedParts = normalizePartList(sourceEntry.excludedParts || sourceEntry.excluded_parts);
   const referenceAnswerParts = normalizePartList(
     sourceEntry.referenceAnswerParts || sourceEntry.reference_answer_parts,

@@ -112,10 +112,11 @@ export function resolveA2B1WritingRequirement({
   referenceEntry = null,
 } = {}) {
   if (referenceEntry && typeof referenceEntry === "object") {
-    // The loaded answer-key entry is authoritative for marking. If it explicitly
-    // declares the current workbook parts, do not let older semantic task specs
-    // or teaching-slide metadata add Schreiben back to an objective-only day.
-    return getReferenceWritingRequirement(referenceEntry);
+    // Explicit part declarations are authoritative. Older registry imports keep
+    // only expectedParts, which cannot identify the grading mode; fall back to
+    // the current workbook cadence when the reference leaves this undecided.
+    const referenceRequirement = getReferenceWritingRequirement(referenceEntry);
+    if (referenceRequirement !== null) return referenceRequirement;
   }
   return getA2B1WritingRequirement({ level, assignmentId, assignmentKey });
 }

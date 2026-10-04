@@ -44,6 +44,7 @@ test("canonical B1 spec overrides stale registry metadata", () => {
     referenceEntry: {
       assignmentKey: "B1-8.25",
       level: "B1",
+      writingParts: ["teil2"],
       questionAwareWritingTask: {
         assignmentKey: "B1-8.25",
         level: "B1",
@@ -65,7 +66,7 @@ test("canonical B1 spec overrides stale registry metadata", () => {
 
 test("complete B1-1.2 friendship email is 3/3 and keeps its language score", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "B1-1.2", level: "B1" },
+    referenceEntry: { assignmentKey: "B1-1.2", level: "B1", writingParts: ["teil2"] },
     submission: { assignmentKey: "B1-1.2", level: "B1" },
     submissionText: completeFriendship,
   });
@@ -96,7 +97,7 @@ test("complete B1-1.2 friendship email is 3/3 and keeps its language score", () 
 
 test("B1-1.2 opinion essay cannot pass as a friend-for-life email", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "B1-1.2", level: "B1" },
+    referenceEntry: { assignmentKey: "B1-1.2", level: "B1", writingParts: ["teil2"] },
     submission: { assignmentKey: "B1-1.2", level: "B1" },
     submissionText: opinionInsteadOfFriendshipEmail,
   });
@@ -148,7 +149,7 @@ test("B1-8.25 historical complaint spec is inactive because the current workbook
 
 test("B1 semantic completion does not automatically inflate an 86 writing score to 90", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "B1-1.2", level: "B1" },
+    referenceEntry: { assignmentKey: "B1-1.2", level: "B1", writingParts: ["teil2"] },
     submission: { assignmentKey: "B1-1.2", level: "B1" },
     submissionText: completeFriendship,
   });

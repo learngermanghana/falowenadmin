@@ -38,6 +38,8 @@ const assignmentOptions = {
     assignmentKey: "B1-1.2",
     level: "B1",
     title: "Freunde fürs Leben",
+    // Historical writing task: current sparse references follow the no-writing cadence.
+    writingParts: ["teil2"],
   },
   submission: {
     assignmentKey: "B1-1.2",
@@ -100,7 +102,7 @@ ich hoffe, es geht dir gut. Ich schreibe dir, weil ich dir von einem neuen Freun
 Viele Grüße
 Reuben`;
 
-test("B1-1.2 resolves the actual workbook writing task and its three communicative points", () => {
+test("explicit legacy B1-1.2 writing reference resolves its three communicative points", () => {
   const task = resolveQuestionAwareWritingTask(assignmentOptions);
   assert.ok(task);
   assert.equal(task.assignmentKey, "B1-1.2");
@@ -528,9 +530,9 @@ Teil 4
 4. A
 5. A`;
 
-test("A2-1.2 recovers a zero writing score without retaining a stale zero contradiction", () => {
+test("explicit legacy A2-1.2 writing reference recovers a zero without a stale contradiction", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "A2-1.2", level: "A2" },
+    referenceEntry: { assignmentKey: "A2-1.2", level: "A2", writingParts: ["teil2"] },
     submission: { assignmentKey: "A2-1.2", level: "A2" },
     submissionText: vickyA2Day2,
   });
