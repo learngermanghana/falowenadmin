@@ -5,6 +5,7 @@ import { B1_WRITING_RUBRIC_VERSION, getB1WritingTaskSpec } from "../data/b1Writi
 import { getCachedAssignmentRegistryEntry } from "./assignmentRegistryCache.js";
 import { toQuestionAwareWritingTask } from "./assignmentRegistry.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
+import { resolveA2B1WritingRequirement } from "./a2B1WritingCadence.js";
 import { heuristicWritingMarker } from "./autoMarking.js";
 import { evaluateWritingTaskEvidence, missingTaskPointsFromEvidence, taskEvidenceSummary } from "./writingTaskEvidence.js";
 import { evaluateA1WritingTaskEvidence } from "./a1WritingTaskEvidence.js";
@@ -92,11 +93,21 @@ function b1FriendshipTaskPoints() {
 
 export function resolveQuestionAwareWritingTask(options = {}) {
   const existing = options.referenceEntry?.questionAwareWritingTask || options.submission?.questionAwareWritingTask;
-  if (existing?.assignmentKey) return applyAuthoritativeWritingOverride(existing);
-
-  const assignmentKey = assignmentKeyFromOptions(options);
-  const level = levelFromOptions(options, assignmentKey);
+  const assignmentKey = normalizeAssignmentKey(existing?.assignmentKey || assignmentKeyFromOptions(options));
+  const level = clean(existing?.level || levelFromOptions(options, assignmentKey)).toUpperCase();
   if (!assignmentKey || !["A1", "A2", "B1"].includes(level)) return null;
+
+  if (["A2", "B1"].includes(level)) {
+    const writingRequirement = resolveA2B1WritingRequirement({
+      level,
+      assignmentId: assignmentKey,
+      assignmentKey,
+      referenceEntry: options.referenceEntry,
+    });
+    if (writingRequirement === false) return null;
+  }
+
+  if (existing?.assignmentKey) return applyAuthoritativeWritingOverride(existing);
 
   const a1Spec = getA1WritingTaskSpec(assignmentKey);
   if (a1Spec) return applyAuthoritativeWritingOverride({ assignmentKey, level, ...a1Spec, source: "a1WritingTaskSpecs" });
@@ -952,9 +963,7 @@ function calibratedCompleteWritingScore({
 }
 
 export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSubmissionText = "") {
-  const task = options.referenceEntry?.questionAwareWritingTask
-    || options.submission?.questionAwareWritingTask
-    || resolveQuestionAwareWritingTask(options);
+  const task = resolveQuestionAwareWritingTask(options);
   if (!task || !["A1", "A2", "B1"].includes(task.level)) return result;
 
   const source = writingText(rawSubmissionText || options.submissionText || options.submission?.text || "", task);
