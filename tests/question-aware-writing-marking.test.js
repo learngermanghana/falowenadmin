@@ -4,12 +4,34 @@ import assert from "node:assert/strict";
 import { compareExaminerResults } from "../src/utils/markingIntelligence.js";
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpecs } from "../src/data/a2WritingTaskSpecs.js";
+import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
 import {
   applyQuestionAwareWritingGuard,
   enforceA2B1WritingConsistency,
   enrichOptionsWithQuestionAwareWritingTask,
   resolveQuestionAwareWritingTask,
 } from "../src/utils/questionAwareWritingMarking.js";
+
+const referenceEntryByAssignmentId = (assignmentId) => {
+  const entry = Object.values(answersDictionary).find((item) => item.assignment_id === assignmentId);
+  assert.ok(entry, `Missing answer entry for ${assignmentId}`);
+  return { ...entry, assignmentKey: assignmentId, level: assignmentId.split("-")[0] };
+};
+
+test("current A2/B1 no-writing manifest entries do not resolve a Schreiben task", () => {
+  for (const assignmentId of ["A2-2.5", "B1-7.22"]) {
+    const referenceEntry = referenceEntryByAssignmentId(assignmentId);
+    const options = {
+      referenceEntry,
+      submission: { assignmentKey: assignmentId, level: referenceEntry.level },
+    };
+    assert.equal(resolveQuestionAwareWritingTask(options), null, assignmentId);
+
+    const enriched = enrichOptionsWithQuestionAwareWritingTask(options);
+    assert.equal(enriched.referenceEntry.questionAwareWritingTask, undefined, assignmentId);
+    assert.equal(enriched.submission.questionAwareWritingTask, undefined, assignmentId);
+  }
+});
 
 const assignmentOptions = {
   referenceEntry: {
