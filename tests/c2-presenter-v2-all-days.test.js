@@ -65,6 +65,8 @@ test("C2 Admin slides match the current Falowen runtime curriculum day 1–28", 
     assert.equal(slide.runtimePerspectivesDe.length, 3);
     assert.ok(slide.skillTarget, slide.assignmentId + " missing skill target");
     assert.ok(slide.progressionLabel, slide.assignmentId + " missing progression label");
+    assert.match(slide.objective, /^Heute lernst du,/i, slide.assignmentId + " should use a student-facing German objective");
+    assert.ok(slide.teacherSupport?.lessonObjectiveEn?.startsWith("Teach and practise "), slide.assignmentId + " should keep the English teacher objective in metadata");
     assert.ok(slide.analyticalTask?.title, slide.assignmentId + " missing topic-specific analysis");
     assert.equal(slide.analyticalTask?.prompts?.length, 3, slide.assignmentId + " analysis must have three prompts");
     assert.ok(slide.grammarApplication?.prompt, slide.assignmentId + " missing concrete grammar source");
@@ -120,10 +122,15 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     assert.equal(grammar.application.task, slide.grammarApplication.task);
 
     const analysis = stages.find((stage) => stage.id === "analysis");
-    assert.equal(analysis.type, "flow");
+    assert.equal(analysis.type, "c2-analysis");
     assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
     assert.equal(analysis.title, slide.analyticalTask.title, slide.assignmentId + " should use its own topic task");
     assert.deepEqual(analysis.items[0].prompts, slide.analyticalTask.prompts, slide.assignmentId + " should preserve curated case prompts");
+    assert.equal(analysis.casePrompt, slide.analyticalTask.prompts[0], slide.assignmentId + " should reveal the case first");
+    assert.equal(analysis.checkPrompt, slide.analyticalTask.prompts[1], slide.assignmentId + " should reveal the check second");
+    assert.equal(analysis.decisionPrompt, slide.analyticalTask.prompts[2], slide.assignmentId + " should reveal the decision last");
+    assert.equal(analysis.progressiveReveal, true);
+    assert.deepEqual(analysis.rubric, ["Logik", "Evidenz", "Sprache / Register"]);
     assert.deepEqual(analysis.items[0].modelItems, [], slide.assignmentId + " analysis should not reveal a canned model");
     assert.equal(analysis.items[0].minutes, 14);
 
@@ -206,6 +213,8 @@ test("C2 lesson summary is reduced to language, analysis and transfer", () => {
   for (const slide of getSlidesByCourse("C2")) {
     const summary = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "lesson-summary");
     assert.equal(summary.title, "Was du jetzt können solltest");
+    assert.match(summary.subtitle, /^Du kannst jetzt/i);
+    assert.doesNotMatch(summary.subtitle, /You should now be able to/i);
     assert.deepEqual(summary.items.map((item) => item.label), ["Sprache", "Analyse", "Transfer"]);
     assert.equal(summary.items.length, 3);
   }
@@ -271,6 +280,37 @@ test("C2 presenter declaration stays idempotent with the build patch hook", asyn
   assert.match(declarations[0], /Array\.from\(\{ length: 28 \}/);
   assert.match(patchSource, /const c2DeclarationPattern = \/\^const C2_PRESENTER_V2_ASSIGNMENTS/);
   assert.match(patchSource, /next = next\.replace\(c2DeclarationPattern, ""\)/);
+});
+
+test("C2 Day 28 enters dedicated exam mode while Days 1–27 stay normal", () => {
+  const slides = getSlidesByCourse("C2");
+  for (const slide of slides.slice(0, 27)) {
+    assert.equal(slide.examMode, false, slide.assignmentId + " should not use exam mode");
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    assert.ok(stages.every((stage) => stage.examMode === false), slide.assignmentId + " should not mark presenter stages as exam mode");
+  }
+
+  const finalSlide = slides[27];
+  assert.equal(finalSlide.examMode, true);
+  const finalStages = buildTeachingPresenterStages(finalSlide, finalSlide.topic);
+  assert.ok(finalStages.every((stage) => stage.examMode === true));
+  const analysis = finalStages.find((stage) => stage.id === "analysis");
+  assert.match(analysis.kicker, /Prüfungsmodus/i);
+  assert.deepEqual(analysis.rubric, ["Logik", "Evidenz", "Sprache / Register"]);
+});
+
+test("C2 workbook bridge stays student-facing and German", () => {
+  for (const slide of getSlidesByCourse("C2")) {
+    const workbook = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "workbook");
+    assert.deepEqual(workbook.items.map((item) => item.label), [
+      "Grammatik",
+      "Kollokationen",
+      "Sprechen",
+      "Schreiben",
+      "Schreibvorbereitung",
+    ]);
+    assert.doesNotMatch(JSON.stringify(workbook.items), /Five-minute seminar|Write preparation|Learn \/ Grammar/);
+  }
 });
 
 test("high-signal updated C2 domains stay locked to the current learner curriculum", () => {
