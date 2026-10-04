@@ -29,6 +29,15 @@ function lessonUrl(value = "") {
   return `${FALOWEN_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
+function c2NextStepLabel(value = "") {
+  const label = String(value || "");
+  if (/Grammar/i.test(label)) return "1. Grammatik";
+  if (/Speak/i.test(label)) return "2. Sprechen";
+  if (/Write/i.test(label)) return "3. Schreiben";
+  if (/Workbook|Submit/i.test(label)) return "4. Workbook / Abgeben";
+  return label;
+}
+
 function renderWarmupQuestion(question = "", keywords = []) {
   return splitWarmupQuestionSegments(question, keywords).map((segment, index) => (
     segment.highlighted
@@ -128,6 +137,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [warmupSupportOpen, setWarmupSupportOpen] = useState({});
   const [warmupAnswered, setWarmupAnswered] = useState({});
   const [revealedFlowRole, setRevealedFlowRole] = useState("");
+  const [showC2TeacherInfo, setShowC2TeacherInfo] = useState(false);
+  const [c2AnalysisStep, setC2AnalysisStep] = useState(0);
+  const [c2RubricChecks, setC2RubricChecks] = useState({});
+  const [examSolutionUnlocked, setExamSolutionUnlocked] = useState(false);
   const warmupAudioContextRef = useRef(null);
   const contentRef = useRef(null);
   const lastContentSizeRef = useRef({ width: 0, height: 0 });
@@ -203,6 +216,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
 
   function goTo(index) {
     setRevealedFlowRole("");
+    setC2AnalysisStep(0);
+    setC2RubricChecks({});
+    setExamSolutionUnlocked(false);
+    setShowC2TeacherInfo(false);
     setStageIndex(clampPresenterIndex(index, stages.length));
   }
 
@@ -219,6 +236,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   function next() {
+    if (stage?.type === "c2-analysis" && c2AnalysisStep < 2) {
+      setC2AnalysisStep((current) => Math.min(2, current + 1));
+      return;
+    }
     if (stage?.type === "question-reveal" && questionIndex < stage.items.length - 1) {
       setQuestionIndex((current) => current + 1);
       setShowQuestionSupport(false);
@@ -228,6 +249,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   function previous() {
+    if (stage?.type === "c2-analysis" && c2AnalysisStep > 0) {
+      setC2AnalysisStep((current) => Math.max(0, current - 1));
+      return;
+    }
     if (stage?.type === "question-reveal" && questionIndex > 0) {
       setQuestionIndex((current) => current - 1);
       setShowQuestionSupport(false);
@@ -307,6 +332,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setReadingModeActive(false);
     setReadingPhase("idle");
     setActiveReadingAssignment(null);
+    setC2AnalysisStep(0);
+    setC2RubricChecks({});
+    setExamSolutionUnlocked(false);
+    setShowC2TeacherInfo(false);
     setKnowledgeChecksVisible(true);
   }
 
@@ -556,7 +585,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     : "";
 
   return (
-    <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
+    <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""} ${stage?.examMode ? "is-c2-exam-mode" : ""}`} role="dialog" aria-modal="true" aria-label="Teaching slide presenter">
       <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode && showPresenterTimer ? "presenter-has-focus-stage-timer" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode && showPresenterTimer ? (
           <div
@@ -693,7 +722,28 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               <button type="button" onClick={() => setContentPage((page) => Math.min(contentPageCount - 1, page + 1))} disabled={contentPage >= contentPageCount - 1}>Next</button>
             </div>
           ) : null}
-          {!focusMode && stage.teacherPurpose ? (
+          {!focusMode && stage.teacherPurpose && presenterLevel === "C2" ? (
+            <details
+              className="presenter-c2-teacher-info"
+              open={showC2TeacherInfo}
+              onToggle={(event) => setShowC2TeacherInfo(event.currentTarget.open)}
+            >
+              <summary>Lehrerinfo</summary>
+              <div className="presenter-c2-teacher-info-grid">
+                <p><strong>Schülerfokus</strong><span>{stage.teacherPurpose.student}</span></p>
+                <p><strong>Lehrerfokus</strong><span>{stage.teacherPurpose.teacher}</span></p>
+                {stage.id === "intro" && slide.teacherSupport?.lessonObjectiveEn ? (
+                  <p><strong>Teacher objective</strong><span>{slide.teacherSupport.lessonObjectiveEn}</span></p>
+                ) : null}
+                {stage.application?.teacherHint ? (
+                  <p><strong>Hinweis zur Aufgabe</strong><span>{stage.application.teacherHint}</span></p>
+                ) : null}
+                {stage.id === "intro" && stage.studentReference ? (
+                  <p><strong>Curriculum</strong><span>{stage.studentReference.courseBookLabel} · {stage.studentReference.title} · {stage.studentReference.statusLabel}</span></p>
+                ) : null}
+              </div>
+            </details>
+          ) : !focusMode && stage.teacherPurpose ? (
             <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
               <div>
                 <strong>Student</strong>
@@ -717,7 +767,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               {stage.topic ? <p className="presenter-topic">{stage.topic}</p> : null}
               {stage.objective ? <p className="presenter-objective">{stage.objective}</p> : null}
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
-              {stage.studentReference ? (
+              {stage.studentReference && presenterLevel !== "C2" ? (
                 <section className={`presenter-student-reference is-${stage.studentReference.status}`}>
                   <div>
                     <span>Student lesson</span>
@@ -730,7 +780,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   <p>{stage.studentReference.note}</p>
                 </section>
               ) : null}
-              {lessonContract ? (
+              {lessonContract && presenterLevel !== "C2" ? (
                 <section className="presenter-workbook-contract" aria-label="Workbook lesson contract">
                   <div className="presenter-workbook-contract-heading">
                     <span>Workbook contract</span>
@@ -872,17 +922,21 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <strong>Deine Aufgabe</strong>
                     <p>{stage.application.task}</p>
                   </div>
-                  {stage.application.teacherHint ? (
-                    <details className="presenter-c2-teacher-details">
-                      <summary>Lehrerhinweis</summary>
-                      <p>{stage.application.teacherHint}</p>
-                    </details>
-                  ) : null}
                   {stage.application.answer ? (
-                    <details className="presenter-advanced-models">
-                      <summary>Mögliche Lösung anzeigen</summary>
-                      <p>{stage.application.answer}</p>
-                    </details>
+                    stage.examMode && !examSolutionUnlocked ? (
+                      <button
+                        type="button"
+                        className="presenter-c2-exam-unlock"
+                        onClick={() => setExamSolutionUnlocked(true)}
+                      >
+                        Antwort abgeschlossen · Musterlösung freigeben
+                      </button>
+                    ) : (
+                      <details className="presenter-advanced-models presenter-c2-solution">
+                        <summary>Musterlösung nach der Antwort</summary>
+                        <p>{stage.application.answer}</p>
+                      </details>
+                    )
                   ) : null}
                 </article>
               ) : null}
@@ -1268,6 +1322,57 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 ))}
               </div>
             </section>
+          ) : stage.type === "c2-analysis" ? (
+            <section className={`presenter-c2-analysis${stage.examMode ? " is-exam-mode" : ""}`}>
+              <div className="presenter-c2-analysis-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                {stage.instruction ? <p>{stage.instruction}</p> : null}
+              </div>
+              <div className="presenter-c2-analysis-steps">
+                <article className="presenter-c2-analysis-step is-case">
+                  <span>FALL</span>
+                  <p>{String(stage.casePrompt || "").replace(/^Fall:\s*/i, "")}</p>
+                </article>
+                {c2AnalysisStep >= 1 ? (
+                  <article className="presenter-c2-analysis-step is-check">
+                    <span>PRÜFE</span>
+                    <p>{String(stage.checkPrompt || "").replace(/^(Prüfe|Vergleiche|Entwickle|Welche|Markiere):?\s*/i, (match) => match)}</p>
+                  </article>
+                ) : null}
+                {c2AnalysisStep >= 2 ? (
+                  <article className="presenter-c2-analysis-step is-decide">
+                    <span>ENTSCHEIDE</span>
+                    <p>{stage.decisionPrompt}</p>
+                  </article>
+                ) : null}
+              </div>
+              {c2AnalysisStep < 2 ? (
+                <button
+                  type="button"
+                  className="presenter-c2-analysis-next"
+                  onClick={() => setC2AnalysisStep((current) => Math.min(2, current + 1))}
+                >
+                  {c2AnalysisStep === 0 ? "Prüfkriterien zeigen →" : "Entscheidung zeigen →"}
+                </button>
+              ) : (
+                <div className="presenter-c2-rubric" aria-label="C2 response rubric">
+                  <strong>Kurzfeedback</strong>
+                  <div>
+                    {(stage.rubric || ["Logik", "Evidenz", "Sprache / Register"]).map((label) => (
+                      <label key={label}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(c2RubricChecks[label])}
+                          onChange={() => setC2RubricChecks((current) => ({ ...current, [label]: !current[label] }))}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
           ) : stage.type === "flow" ? (
             <>
               <div className="presenter-practice-heading">
@@ -1377,12 +1482,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </div>
               {Array.isArray(stage.nextSteps) && stage.nextSteps.length ? (
                 <div className="presenter-lesson-summary-next">
-                  <strong>Continue in Falowen</strong>
+                  <strong>{presenterLevel === "C2" ? "Weiter in Falowen" : "Continue in Falowen"}</strong>
                   <div>
                     {stage.nextSteps.map((item) => (
                       item.url
-                        ? <a key={item.label} href={lessonUrl(item.url)} target="_blank" rel="noreferrer">{item.label}</a>
-                        : <span key={item.label}>{item.label}</span>
+                        ? <a key={item.label} href={lessonUrl(item.url)} target="_blank" rel="noreferrer">{presenterLevel === "C2" ? c2NextStepLabel(item.label) : item.label}</a>
+                        : <span key={item.label}>{presenterLevel === "C2" ? c2NextStepLabel(item.label) : item.label}</span>
                     ))}
                   </div>
                 </div>
@@ -1574,9 +1679,11 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
             <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${progress}%` }} /></div>
           </div>
           <button type="button" onClick={next} disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}>
-            {stage.type === "question-reveal" && questionIndex < stage.items.length - 1
-              ? (advancedClassroom ? "Nächste Frage →" : "Next question →")
-              : "Next →"}
+            {stage.type === "c2-analysis" && c2AnalysisStep < 2
+              ? (c2AnalysisStep === 0 ? "Prüfen →" : "Entscheiden →")
+              : stage.type === "question-reveal" && questionIndex < stage.items.length - 1
+                ? (advancedClassroom ? "Nächste Frage →" : "Next question →")
+                : "Next →"}
           </button>
         </footer>
       </div>
