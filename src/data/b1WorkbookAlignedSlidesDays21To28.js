@@ -161,7 +161,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "The intended deep grammar is verified in Falowen source: dass clauses, relative clauses and reciprocal expressions miteinander/füreinander/voneinander/aufeinander, plus weil/wenn/obwohl.",
       "The current Day 22 student lesson does not expose that deep grammar through a direct grammar route, so do not provide a broken grammar link from the teacher guide.",
-      "The workbook comprehension topics are unrelated to relationships: Berlin and Bewerbung. Keep them separate from the production lesson.",
+      "The workbook comprehension topics are unrelated to relationships: Berlin and Bewerbung. Keep them separate from the production lesson. There is no submitted Teil 2 Schreiben on the current Day 22 workbook.",
       "Reading split: Teil 3 is the five-question Berlin text and Teil 4 is the five-question Bewerbung text. The answer key now follows the workbook's visible 5+5 structure.",
     ],
     interactionFlow: [
@@ -175,12 +175,11 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     workbookConnection: workbookConnection(22, [
       { label: "Grammar", detailEn: "No direct grammar route is currently exposed. Teach expectations with dass, people with relative clauses, reciprocal behavior with miteinander/füreinander/voneinander/aufeinander, and reasons/conditions with weil, wenn and obwohl." },
       { label: "Teil 1 · Sprechen", detailEn: "Explain what matters in a relationship: communication, trust, shared interests, respect/support and future plans. Build a fictional profile and justify priorities. Practice only." },
-      { label: "Teil 2 · Schreiben", detailEn: "Write 80–100 words responding to Maria about online dating: agreement/disagreement, advantages, risks, comparison with meeting in person, example and conclusion." },
       { label: "Teil 3 · Lesen", detailEn: "Scored reading: Berlin. Submit all five Berlin multiple-choice answers under Teil 3." },
       { label: "Teil 4 · Lesen", detailEn: "Scored second reading: Bewerbung. Submit all five Bewerbung multiple-choice answers under Teil 4." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 22 has two scored readings: Teil 3 = five Berlin answers; Teil 4 = five Bewerbung answers.",
+      subtitle: "Day 22 has no submitted Schreiben. It has two scored readings: Teil 3 = five Berlin answers; Teil 4 = five Bewerbung answers.",
     }),
     teacherSupport: {
       lessonOverviewEn: "Day 22 is a relationship-values production lesson with two unrelated scored reading assignments: Berlin in Teil 3 and Bewerbung in Teil 4.",
@@ -410,7 +409,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     assignmentId: "B1-8.25",
     title: "B1 Day 25 · Online einkaufen – Rechte und Risiken",
     topic: "8.25 Online einkaufen – Rechte und Risiken",
-    objective: "Students discuss online-shopping rights and risks and write a clear formal complaint requesting an appropriate solution.",
+    objective: "Students discuss online-shopping rights and risks, practise clear formal complaint language and complete the current scored reading.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Was kaufst du häufig online?",
@@ -457,7 +456,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     ],
     teacherNotesEn: [
       "Day 25 has no day-specific deep grammar page; use functional complaint language from the workbook plus the general B1 argument training in the Grammar tab.",
-      "For writing, insist on formal register, clear chronology (purchase → damage → return) and one explicit requested solution.",
+      "For complaint-language practice, model formal register, clear chronology (purchase → damage → return) and one explicit requested solution. The current workbook has no submitted Teil 2 Schreiben.",
       "Teil 3 is a separate mixed reading on self-employment, environmental habits and Verbraucherzentralen; it is not an online-shopping-only text.",
       "The old Day 25 listening link is removed in the rendered workbook. The marking contract excludes teil4, so Hören is not submitted or officially scored.",
     ],
@@ -466,18 +465,17 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { phase: "Polite request", detailEn: "9 min: reformulate demands with Könnten Sie …? and Ich bitte Sie, … zu …" },
       { phase: "Complaint chronology", detailEn: "10 min: order purchase, defect, return and desired solution into a coherent complaint." },
       { phase: "Role-play", detailEn: "10 min: customer and support agent negotiate replacement, repair or refund." },
-      { phase: "Workbook bridge", detailEn: "7 min: outline the formal letter and preview the separate Verbraucherberatung reading." },
+      { phase: "Workbook bridge", detailEn: "7 min: review the complaint-language model and preview the separate Verbraucherberatung reading." },
     ],
     wrapUpTaskDe: "Schreibe vier Sätze einer Reklamation: Kauf, Problem, Rücksendung und gewünschte Lösung. Nutze eine höfliche Bitte.",
     workbookConnection: workbookConnection(25, [
       { label: "Grammar", detailEn: "No separate deep grammar page. Functional focus from the workbook: formal complaint sequencing, dass for the problem, deshalb for the result, and polite requests such as Könnten Sie …? / Ich bitte Sie, … zu …" },
       { label: "Teil 1 · Sprechen", detailEn: "Discuss online-shopping advantages, consumer rights, risks, safe shops/payment and what to do with damaged or incorrect goods. Practice only." },
-      { label: "Teil 2 · Schreiben", detailEn: "Formal complaint to customer service about a damaged phone: date of purchase, damage, return details, requested replacement/repair/refund and polite request for a quick response." },
       { label: "Teil 3 · Lesen", detailEn: "Scored seven-question mixed reading about a self-employed hairdresser, environmental behavior and German Verbraucherzentralen; submit seven answer letters under Teil 3." },
       { label: "Teil 4 · Hören", detailEn: "SELF-CHECK/UNSCORED ONLY. The old listening link is removed from the rendered workbook and the marking contract excludes teil4. Do not submit it." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 25 uses workbook-based functional complaint language rather than a separate deep grammar page. Teil 4 is excluded from scoring/submission.",
+      subtitle: "Day 25 has no submitted Schreiben. It uses workbook-based functional complaint language; Teil 3 is scored and Teil 4 is excluded from scoring/submission.",
     }),
     teacherSupport: {
       lessonOverviewEn: "Day 25 turns consumer-rights vocabulary into a formal complaint workflow and then shifts to a broader consumer-advice reading.",
