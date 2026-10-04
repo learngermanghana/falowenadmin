@@ -1685,7 +1685,13 @@ function makeWarmupQuestions(lesson, topicFoundation) {
 }
 
 function objectiveSentence(lesson) {
-  return "Students teach and practise " + lesson.grammarFocus + " through the current Falowen C2 topic " + lesson.title + ", then transfer it into the same speaking and writing mode used in Course Book.";
+  const target = String(C2_SKILL_TARGETS[Number(lesson.day)] || lesson.grammarFocus || "").trim();
+  const sentence = target ? target.charAt(0).toLowerCase() + target.slice(1) : "die heutige C2-Zielstruktur kontrolliert einsetzen.";
+  return "Heute lernst du, " + sentence;
+}
+
+function teacherObjectiveSentence(lesson) {
+  return "Teach and practise " + lesson.grammarFocus + " through the current Falowen C2 topic " + lesson.title + ", then transfer it into the same speaking and writing mode used in Course Book.";
 }
 
 function commonMistakesDe(lesson) {
@@ -1800,15 +1806,16 @@ function makeSlide(lesson) {
       workbookUrl: null,
       subtitle: "Falowen C2 " + lesson.chapter + " · " + lesson.title,
       parts: [
-        { label: "Learn / Grammar", detailEn: lesson.grammarFocus + ": " + lesson.grammar[0] },
+        { label: "Grammatik", detailEn: lesson.grammarFocus + ": " + lesson.grammar[0] },
         { label: "Kollokationen", detailEn: lesson.collocations.map(([phrase]) => phrase).join(" · ") },
-        { label: "Sprechen", detailEn: "Five-minute seminar presentation using the same three current Falowen perspectives." },
-        { label: "Write", detailEn: writeDescription },
-        { label: "Write preparation", detailEn: writeTeaching.join(" · ") },
+        { label: "Sprechen", detailEn: "Fünfminütiger Seminarbeitrag mit den drei aktuellen Falowen-Perspektiven." },
+        { label: "Schreiben", detailEn: writeDescription },
+        { label: "Schreibvorbereitung", detailEn: writeTeaching.join(" · ") },
       ],
     },
     teacherSupport: {
       lessonOverviewEn: "Current Falowen runtime C2 lesson " + lesson.chapter + ": " + lesson.title + ". " + lesson.topic,
+      lessonObjectiveEn: teacherObjectiveSentence(lesson),
       grammarFocusEn: lesson.grammar,
       modelExamplesDe: lesson.grammar.slice(1),
       commonMistakesEn: commonMistakesDe(lesson),
@@ -1820,6 +1827,7 @@ function makeSlide(lesson) {
     runtimePerspectivesDe: lesson.perspectives,
     skillTarget: C2_SKILL_TARGETS[Number(lesson.day)] || lesson.grammarFocus,
     progressionLabel: c2ProgressionLabel(lesson.day),
+    examMode: Number(lesson.day) === 28,
     analyticalTask: C2_ANALYTICAL_TASKS[Number(lesson.day)] || null,
     grammarApplication: C2_GRAMMAR_APPLICATIONS[Number(lesson.day)] || null,
     writeType: lesson.writeType,
