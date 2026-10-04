@@ -373,6 +373,7 @@ function recomputeOutcome(result = {}, task = {}, writingScore) {
     objectiveScore: numericPercent(result.objectiveScore),
     objectiveDetails: result.objectiveDetails || {},
     hasWriting: true,
+    writingRequiredOverride: true,
   });
 }
 
