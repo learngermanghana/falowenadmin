@@ -1087,11 +1087,11 @@
         "Answer5": "C) Im Keller"
       },
       "teil4": {
-        "Answer1": "A) Die 2-Zimmer-Wohnung",
-        "Answer2": "A) Die 2-Zimmer-Wohnung",
-        "Answer3": "B) 200 Euro pro Monat",
-        "Answer4": "B) Die 3-Zimmer-Wohnung",
-        "Answer5": "B) Die 3-Zimmer-Wohnung"
+        "Answer1": "B) Drei Zimmer",
+        "Answer2": "A) Ein Bücherregal",
+        "Answer3": "B) Er ist ein bisschen zu klein.",
+        "Answer4": "A) Einen Schreibtisch, einen Stuhl und einen Computer",
+        "Answer5": "B) Eine Pflanze"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1eMuNXnkWU_AQr422gKKkm8v6-MQTY7B7pzIEXjt5q3s/gviz/tq?tqx=out:html&sheet=Key",
