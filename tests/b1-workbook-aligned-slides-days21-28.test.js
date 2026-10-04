@@ -83,10 +83,11 @@ test("Day 21 has no Teil 4 and matches the marking contract", () => {
   assert.match(slide.workbookConnection.subtitle, /excluded/i);
 });
 
-test("Day 22 follows the workbook five-plus-five Berlin/Bewerbung reading split", () => {
+test("Day 22 is objective-only and follows the workbook five-plus-five Berlin/Bewerbung reading split", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-7.22");
   const contract = contractByAssignmentId["B1-7.22"];
-  assert.deepEqual(contract.expectedParts, ["teil2", "teil3", "teil4"]);
+  assert.deepEqual(contract.expectedParts, ["teil3", "teil4"]);
+  assert.equal(slide.workbookConnection.parts.some((entry) => /Teil 2.*Schreiben/i.test(entry.label)), false);
   assert.equal(Object.keys(contract.answers.teil3).length, 5);
   assert.equal(Object.keys(contract.answers.teil4).length, 5);
 
@@ -126,10 +127,11 @@ test("Day 24 scores all seven current reading statements", () => {
   assert.match(listening, /excludes?/i);
 });
 
-test("Day 25 excludes the removed listening and submits only writing plus reading", () => {
+test("Day 25 excludes removed writing/listening and submits reading only", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-8.25");
   const contract = contractByAssignmentId["B1-8.25"];
-  assert.deepEqual(contract.expectedParts, ["teil2", "teil3"]);
+  assert.deepEqual(contract.expectedParts, ["teil3"]);
+  assert.equal(slide.workbookConnection.parts.some((entry) => /Teil 2.*Schreiben/i.test(entry.label)), false);
   assert.ok(contract.excludedParts.includes("teil4"));
   assert.equal(Object.keys(contract.answers.teil3).length, 7);
   assert.match(part(slide, "Teil 4 · Hören").detailEn, /removed/i);
