@@ -111,7 +111,11 @@ export function resolveA2B1WritingRequirement({
   assignmentKey = "",
   referenceEntry = null,
 } = {}) {
-  const referenceRequirement = getReferenceWritingRequirement(referenceEntry);
-  if (referenceRequirement !== null) return referenceRequirement;
+  if (referenceEntry && typeof referenceEntry === "object") {
+    // The loaded answer-key entry is authoritative for marking. If it explicitly
+    // declares the current workbook parts, do not let older semantic task specs
+    // or teaching-slide metadata add Schreiben back to an objective-only day.
+    return getReferenceWritingRequirement(referenceEntry);
+  }
   return getA2B1WritingRequirement({ level, assignmentId, assignmentKey });
 }
