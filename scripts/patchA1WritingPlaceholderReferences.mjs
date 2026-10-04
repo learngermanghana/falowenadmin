@@ -43,12 +43,16 @@ patchFile(new URL("../src/utils/answerKeyNormalizer.js", import.meta.url), (sour
     '  // Placeholder text belongs to the writing manifest; it is not a reference answer.\n  const parts = (format === "writing" && placeholderWriting) ? {} : splitAnswersIntoParts(rawAnswers);\n  const totalAnswers = countPartAnswers(parts);',
     "answer-key placeholder part exclusion",
   );
-  source = replaceOnce(
-    source,
-    '  const writingParts = explicitWritingParts.length ? explicitWritingParts : (isA2OrB1 ? ["teil2"] : []);',
-    '  const writingParts = explicitWritingParts.length ? explicitWritingParts : (placeholderWriting ? ["main"] : (isA2OrB1 ? ["teil2"] : []));',
-    "answer-key placeholder writing part",
-  );
+  // The current normalizer already handles placeholders while preserving an
+  // explicit empty writingParts list. Do not restore the old length-based fallback.
+  if (!source.includes('const writingParts = hasWritingPartsDeclaration ? explicitWritingParts :')) {
+    source = replaceOnce(
+      source,
+      '  const writingParts = explicitWritingParts.length ? explicitWritingParts : (isA2OrB1 ? ["teil2"] : []);',
+      '  const writingParts = explicitWritingParts.length ? explicitWritingParts : (placeholderWriting ? ["main"] : (isA2OrB1 ? ["teil2"] : []));',
+      "answer-key placeholder writing part",
+    );
+  }
   source = replaceOnce(
     source,
     '  const referenceAnswerParts = normalizePartList(\n    sourceEntry.referenceAnswerParts || sourceEntry.reference_answer_parts,\n    Object.keys(parts || {}).filter((partId) => !writingParts.includes(partId) && !excludedParts.includes(partId)),\n  );',

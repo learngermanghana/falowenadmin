@@ -8,6 +8,7 @@ on:
       - 'tests/a2-b1-writing-requirement.test.js'
       - 'tests/question-aware-writing-marking.test.js'
       - 'tests/b1-semantic-writing-marking.test.js'
+      - 'scripts/patchA1WritingPlaceholderReferences.mjs'
       - '.github/workflows/a2-b1-writing-cadence-tests.yml'
   push:
     branches: [main]
@@ -17,6 +18,7 @@ on:
       - 'tests/a2-b1-writing-requirement.test.js'
       - 'tests/question-aware-writing-marking.test.js'
       - 'tests/b1-semantic-writing-marking.test.js'
+      - 'scripts/patchA1WritingPlaceholderReferences.mjs'
       - '.github/workflows/a2-b1-writing-cadence-tests.yml'
 
 jobs:
@@ -32,6 +34,10 @@ jobs:
           node --check src/utils/a2B1WritingCadence.js
           node --check src/utils/answerKeyNormalizer.js
           node --check src/utils/questionAwareWritingMarking.js
+      - name: Apply production placeholder patch twice
+        run: |
+          node scripts/patchA1WritingPlaceholderReferences.mjs
+          node scripts/patchA1WritingPlaceholderReferences.mjs
       - name: Verify cadence, legacy writing guards, normalization and scoring
         run: >-
           node --test
