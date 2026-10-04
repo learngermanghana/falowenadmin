@@ -3995,25 +3995,25 @@
 }
 
 /* Day 28: exam mode keeps the timer prominent and the canvas visually quiet. */
-.presenter-shell.is-c2-exam-mode .presenter-kicker::after {
+.presenter-stage.is-c2-exam-mode .presenter-kicker::after {
   content: " · PRÜFUNGSMODUS";
   color: #7c3aed;
 }
 
-.presenter-shell.is-c2-exam-mode .presenter-timer {
+.presenter-stage.is-c2-exam-mode .presenter-timer {
   border-width: 2px;
   border-color: #8b5cf6;
   background: #faf8ff;
   box-shadow: 0 8px 24px rgba(76, 29, 149, 0.12);
 }
 
-.presenter-shell.is-c2-exam-mode .presenter-timer strong {
+.presenter-stage.is-c2-exam-mode .presenter-timer strong {
   min-width: 82px;
   color: #4c1d95;
   font-size: 1.28rem;
 }
 
-.presenter-shell.is-c2-exam-mode .presenter-focus-stage-timer {
+.presenter-stage.is-c2-exam-mode .presenter-focus-stage-timer {
   min-width: 290px;
   border-width: 2px;
   border-color: #8b5cf6;
@@ -4021,15 +4021,15 @@
   color: #4c1d95;
 }
 
-.presenter-shell.is-c2-exam-mode .presenter-focus-stage-timer > strong {
+.presenter-stage.is-c2-exam-mode .presenter-focus-stage-timer > strong {
   font-size: 1.35rem;
 }
 
-.presenter-shell.is-c2-exam-mode .presenter-c2-teacher-info {
+.presenter-stage.is-c2-exam-mode .presenter-c2-teacher-info {
   opacity: 0.72;
 }
 
-.presenter-shell.is-c2-exam-mode .presenter-c2-analysis-step {
+.presenter-stage.is-c2-exam-mode .presenter-c2-analysis-step {
   box-shadow: none;
 }
 
