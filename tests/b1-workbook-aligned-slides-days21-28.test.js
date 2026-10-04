@@ -86,7 +86,7 @@ test("Day 21 has no Teil 4 and matches the marking contract", () => {
 test("Day 22 follows the workbook five-plus-five Berlin/Bewerbung reading split", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-7.22");
   const contract = contractByAssignmentId["B1-7.22"];
-  assert.deepEqual(contract.expectedParts, ["teil2", "teil3", "teil4"]);
+  assert.deepEqual(contract.expectedParts, ["teil3", "teil4"]);
   assert.equal(Object.keys(contract.answers.teil3).length, 5);
   assert.equal(Object.keys(contract.answers.teil4).length, 5);
 
@@ -126,14 +126,14 @@ test("Day 24 scores all seven current reading statements", () => {
   assert.match(listening, /excludes?/i);
 });
 
-test("Day 25 excludes the removed listening and submits only writing plus reading", () => {
+test("Day 25 keeps Hören self-check and submits only reading", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-8.25");
   const contract = contractByAssignmentId["B1-8.25"];
-  assert.deepEqual(contract.expectedParts, ["teil2", "teil3"]);
+  assert.deepEqual(contract.expectedParts, ["teil3"]);
   assert.ok(contract.excludedParts.includes("teil4"));
   assert.equal(Object.keys(contract.answers.teil3).length, 7);
-  assert.match(part(slide, "Teil 4 · Hören").detailEn, /removed/i);
-  assert.match(part(slide, "Teil 4 · Hören").detailEn, /Do not submit/i);
+  assert.match(part(slide, "Teil 4 · Hören").detailEn, /self-check/i);
+  assert.match(part(slide, "Teil 4 · Hören").detailEn, /not submit/i);
 });
 
 test("Day 26 scores all seven current Urlaubsland reading questions", () => {
@@ -148,17 +148,15 @@ test("Day 26 scores all seven current Urlaubsland reading questions", () => {
 });
 
 for (const assignmentId of ["B1-10.27", "B1-10.28"]) {
-  test(`${assignmentId} blocks Teil 4 instead of inventing audio when the grader expects five answers`, () => {
+  test(`${assignmentId} keeps Teil 4 as self-check and excludes it from marking`, () => {
     const slide = getB1WorkbookAlignedSlideDay21To28(assignmentId);
     const contract = contractByAssignmentId[assignmentId];
-    assert.deepEqual(contract.expectedParts, ["teil2", "teil3", "teil4"]);
-    assert.equal(Object.keys(contract.answers.teil4).length, 5);
+    assert.deepEqual(contract.expectedParts, ["teil2", "teil3"]);
+    assert.ok(contract.excludedParts.includes("teil4"));
     const listening = part(slide, "Teil 4 · Hören").detailEn;
-    assert.match(listening, /BLOCKING MISMATCH/i);
-    assert.match(listening, /five reference answers/i);
-    assert.match(listening, /no live listening medium/i);
-    assert.match(listening, /Do not invent/i);
-    assert.match(slide.workbookConnection.subtitle, /unresolved Teil 4 source mismatch/i);
+    assert.match(listening, /self-check/i);
+    assert.match(listening, /not submitted/i);
+    assert.match(slide.workbookConnection.subtitle, /self-check/i);
   });
 }
 
