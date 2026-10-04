@@ -708,28 +708,29 @@ function buildC2GrammarApplication(slide = {}, grammarItems = [], modelItems = [
 
 function buildC2AnalyticalTask(slide = {}) {
   const curated = slide.analyticalTask;
-  if (curated?.title && Array.isArray(curated.prompts) && curated.prompts.length) {
-    return {
-      title: String(curated.title),
-      instruction: String(curated.instruction || "Analysiere den Fall und begründe deine Entscheidung."),
-      prompts: curated.prompts.filter(Boolean).slice(0, 3),
-      modelItems: [],
-      minutes: Number(curated.minutes || 14),
-    };
-  }
+  const prompts = curated?.title && Array.isArray(curated.prompts) && curated.prompts.length
+    ? curated.prompts.filter(Boolean).slice(0, 3)
+    : (() => {
+        const topic = cleanTopic(slide);
+        const foundation = getPresenterTopicFoundation(slide) || {};
+        return [
+          foundation.example ? `Fall: ${foundation.example}` : `Fall: Entwickle ein konkretes Beispiel zu „${topic}“.`,
+          foundation.tension ? `Prüfe die Kernspannung: ${foundation.tension}` : "Lege zwei nachvollziehbare Bewertungskriterien fest.",
+          foundation.question ? `Beantworte abschließend: ${foundation.question}` : "Formuliere eine begründete Entscheidung mit einer klaren Einschränkung.",
+        ];
+      })();
 
-  const topic = cleanTopic(slide);
-  const foundation = getPresenterTopicFoundation(slide) || {};
   return {
-    title: "Fallanalyse · Entscheidung begründen",
-    instruction: "Arbeite an einem konkreten Fall und mache Kriterien, Grenzen und Evidenz sichtbar.",
-    prompts: [
-      foundation.example ? `Fall: ${foundation.example}` : `Fall: Entwickle ein konkretes Beispiel zu „${topic}“.`,
-      foundation.tension ? `Prüfe die Kernspannung: ${foundation.tension}` : "Lege zwei nachvollziehbare Bewertungskriterien fest.",
-      foundation.question ? `Beantworte abschließend: ${foundation.question}` : "Formuliere eine begründete Entscheidung mit einer klaren Einschränkung.",
-    ],
+    title: String(curated?.title || "Fallanalyse · Entscheidung begründen"),
+    instruction: String(curated?.instruction || "Arbeite am Fall und begründe deine Entscheidung mit Kriterien, Evidenz und einer klaren Grenze."),
+    prompts,
+    casePrompt: prompts[0] || "",
+    checkPrompt: prompts[1] || "",
+    decisionPrompt: prompts[2] || "",
+    progressiveReveal: true,
+    rubric: ["Logik", "Evidenz", "Sprache / Register"],
     modelItems: [],
-    minutes: 14,
+    minutes: Number(curated?.minutes || 14),
   };
 }
 
@@ -1853,10 +1854,16 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       },
       {
         id: "analysis",
-        type: "flow",
-        kicker: "Analytische Fokusaufgabe",
+        type: "c2-analysis",
+        kicker: slide.examMode ? "Prüfungsmodus · Analyse" : "Analytische Fokusaufgabe",
         title: analyticalTask.title,
+        instruction: analyticalTask.instruction,
         items: [analyticalTask],
+        casePrompt: analyticalTask.casePrompt,
+        checkPrompt: analyticalTask.checkPrompt,
+        decisionPrompt: analyticalTask.decisionPrompt,
+        progressiveReveal: true,
+        rubric: analyticalTask.rubric,
         suggestedMinutes: analyticalTask.minutes,
       },
       {
@@ -1931,7 +1938,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
         type: "summary",
         kicker: level === "C2" ? "C2 · Kurzcheck" : "Abschluss",
         title: level === "C2" ? "Was du jetzt können solltest" : "Lesson summary",
-        subtitle: level === "C2" ? "You should now be able to · Sprache · Analyse · Transfer." : "You should now be able to…",
+        subtitle: level === "C2" ? "Du kannst jetzt … · Sprache · Analyse · Transfer." : "You should now be able to…",
         items: summaryItems,
         nextSteps,
         studentReference,
@@ -1940,6 +1947,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   }
   return filtered.map((stage) => ({
     ...stage,
+    examMode: Boolean(level === "C2" && slide.examMode),
     teacherPurpose: stage.teacherPurpose || buildPresenterTeacherPurpose(stage, level),
   }));
 }

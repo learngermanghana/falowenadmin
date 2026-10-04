@@ -80,7 +80,11 @@ test("Lesson summary is the final stage and keeps the Course Book next steps", (
       const summary = stages.at(-1);
       assert.equal(summary?.id, "lesson-summary", slide.assignmentId + " should finish with Lesson summary");
       assert.equal(summary?.type, "summary");
-      assert.match(summary?.subtitle || "", /You should now be able to/i);
+      if (level === "C2") {
+        assert.match(summary?.subtitle || "", /^Du kannst jetzt/i);
+      } else {
+        assert.match(summary?.subtitle || "", /You should now be able to/i);
+      }
       assert.ok(Array.isArray(summary?.items) && summary.items.length >= 2);
       assert.deepEqual(summary?.nextSteps?.map((item) => item.label), items.map((item) => item.label));
     }
