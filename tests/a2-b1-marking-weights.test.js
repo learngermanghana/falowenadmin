@@ -102,6 +102,48 @@ test("A2/B1 objective-only result with both Teil 3 and Teil 4 present cannot byp
   assert.equal(result.passed, false);
 });
 
+test("A2-2.5 ignores stale writing and scores the current objective-only assignment", () => {
+  const objectiveDetails = details({
+    teil3: [true, true, true, true, true],
+    teil4: [true, true, true, true, true],
+  });
+  const result = calculateWeightedMarkingOutcome({
+    level: "A2",
+    assignmentKey: "A2-2.5",
+    writingPercent: 0,
+    objectiveScore: 100,
+    objectiveDetails,
+    hasWriting: true,
+  });
+
+  assert.equal(result.policy, "a2-b1-objective-only");
+  assert.equal(result.writingRequired, false);
+  assert.equal(result.writingRequiredButMissing, false);
+  assert.equal(result.finalScore, 100);
+  assert.equal(result.passed, true);
+});
+
+test("B1-7.22 does not fail because Schreiben is absent", () => {
+  const objectiveDetails = details({
+    teil3: [true, true, true, true, false],
+    teil4: [true, true, true, true, true],
+  });
+  const result = calculateWeightedMarkingOutcome({
+    level: "B1",
+    assignmentKey: "B1-7.22",
+    writingPercent: null,
+    objectiveScore: 90,
+    objectiveDetails,
+    hasWriting: false,
+  });
+
+  assert.equal(result.policy, "a2-b1-objective-only");
+  assert.equal(result.writingRequired, false);
+  assert.equal(result.writingRequiredButMissing, false);
+  assert.equal(result.finalScore, 90);
+  assert.equal(result.passed, true);
+});
+
 test("A2/B1 falls back to 40/60 when deterministic part details are unavailable", () => {
   const result = calculateWeightedMarkingOutcome({
     level: "A2",
@@ -128,14 +170,14 @@ test("manual score calculator uses the same A2/B1 policy while keeping legacy sc
 });
 
 
-test("A2-1.2 example uses 40/30/30 and rounds 76.4 to 76", () => {
+test("A2 writing day A2-1.3 uses 40/30/30 and rounds 76.4 to 76", () => {
   const objectiveDetails = details({
     teil3: [true, true, true, true, true, true, true],
     teil4: [true, true, false, false, false],
   });
   const result = calculateWeightedMarkingOutcome({
     level: "A2",
-    assignmentKey: "A2-1.2",
+    assignmentKey: "A2-1.3",
     writingPercent: 86,
     objectiveScore: 75,
     objectiveDetails,
