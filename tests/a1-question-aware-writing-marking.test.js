@@ -246,6 +246,27 @@ Ama Mensah`;
   assert.ok(evidence.every((item) => item.status === "met"), JSON.stringify(evidence, null, 2));
 });
 
+test("A1-12.3 does not let a party statement borrow the family question mark", () => {
+  const task = getA1WritingTaskSpec("A1-12.3");
+  const evidence = evaluateA1WritingTaskEvidence(task, `teil1
+Lieber Jerome,
+Herzlichen Glückwunsch zum Geburtstag.
+Es gibt eine Geburtstagsfeier. Kann meine Familie mitkommen?
+Viele Grüße
+Samuel
+
+teil2
+Sehr geehrte Damen und Herren,
+Wann beginnt der Kurs? Wie viel kostet der Kurs? Kann ich online bezahlen?
+Mit freundlichen Grüßen
+Samuel Kumar`);
+
+  assert.equal(evidence.length, 6);
+  assert.equal(evidence[1].status, "missing");
+  assert.equal(evidence[2].status, "met");
+  assert.match(evidence[1].label, /party/i);
+});
+
 test("A1-12.3 accepts Samuel's clear party and course-cost questions despite A1 spelling errors", () => {
   const submission = `TEIL 1
 Lieber Jerome,
