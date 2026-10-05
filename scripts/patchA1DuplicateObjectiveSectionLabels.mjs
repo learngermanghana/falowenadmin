@@ -27,7 +27,13 @@ const writingPartHelper = `function isReferenceWritingPart(referenceEntry = {}, 
 
 `;
 
-if (!source.includes(writingPartHelper)) {
+const modernObjectivePartFilter = `  return [...new Set(partIds)].filter((partId) =>
+    detectPartType({ partId, referenceEntry }) === "objective",
+  );`;
+const desiredObjectivePartFilter = `  return [...new Set(partIds)].filter((partId) => !isReferenceWritingPart(referenceEntry, partId));`;
+const hasModernObjectivePartFilter = source.includes(modernObjectivePartFilter);
+
+if (!hasModernObjectivePartFilter && !source.includes(writingPartHelper)) {
   source = replaceOnce(
     source,
     "function getReferenceObjectivePartIds(referenceEntry = {}) {",
@@ -36,8 +42,7 @@ if (!source.includes(writingPartHelper)) {
   );
 }
 
-const desiredObjectivePartFilter = `  return [...new Set(partIds)].filter((partId) => !isReferenceWritingPart(referenceEntry, partId));`;
-if (!source.includes(desiredObjectivePartFilter)) {
+if (!hasModernObjectivePartFilter && !source.includes(desiredObjectivePartFilter)) {
   const objectivePartFilterCandidates = [
     `  return [...new Set(partIds)].filter((partId) => partId !== "teil2");`,
     `  return [...new Set(partIds)].filter((partId) => partId !== "teil2" || detectPartType({ partId, text: "", referenceEntry }) === "objective");`,
