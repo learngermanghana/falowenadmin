@@ -114,11 +114,12 @@ function evaluateA1123(taskPoints, source) {
   const formal = partText(source, "teil2");
 
   const congratulations = /\b(?:alles\s+gute|herzlichen\s+gl[uü]ckwunsch|gratuliere|gratulieren)\b/i;
-  const party = /\b(?:feier|party)\b[^?]{0,60}\?|\bgibt\s+es\s+(?:eine\s+)?(?:feier|party)\b/i;
+  const party = /\b(?:geburtstags?feier|feier|party)\b[^?]{0,60}\?|\bgibt\s+es\s+(?:eine\s+)?(?:geburtstags?feier|feier|party)\b/i;
   const familyCome = /\b(?:familie)\b[^?]{0,80}\b(?:mitkommen|kommen)\b|\bkann\s+meine\s+familie\s+mitkommen\b/i;
 
   const starts = /\bwann\s+beginnt\s+(?:der\s+)?kurs\b/i;
-  const costs = /\bwie\s+viel\s+kostet\s+(?:der\s+)?kurs\b/i;
+  // A1 task fulfilment follows communicative intent. Common spelling slips are corrected separately and should not erase an otherwise clear required point.
+  const costs = /\bwie\s+(?:viel|veil)\s+kostet\s+(?:der\s+)?kurs\b/i;
   const online = /\b(?:kann|darf)\s+ich\s+online\s+bezahlen\b|\bonline\s+bezahlen\b/i;
 
   return [
