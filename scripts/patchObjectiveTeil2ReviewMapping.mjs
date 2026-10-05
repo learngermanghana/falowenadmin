@@ -43,7 +43,11 @@ const newObjectivePartFilter = '  return [...new Set(partIds)].filter((partId) =
 
 if (source.includes(oldObjectivePartFilter)) {
   source = source.replace(oldObjectivePartFilter, newObjectivePartFilter);
-} else if (!source.includes(newObjectivePartFilter) && !source.includes("isReferenceWritingPart(referenceEntry, partId)")) {
+} else if (
+  !source.includes(newObjectivePartFilter)
+  && !source.includes("isReferenceWritingPart(referenceEntry, partId)")
+  && !source.includes('detectPartType({ partId, referenceEntry }) === "objective"')
+) {
   throw new Error("Could not find objective Teil 2 filter patch target in autoMarking.js");
 }
 
