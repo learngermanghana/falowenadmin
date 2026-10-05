@@ -307,6 +307,26 @@ test("missing webhook configuration stays retryable because delivery never start
   assert.equal(historyWrites.at(-1).deliveryStatus, "failed");
 });
 
+test("missing student email still records the completed mock for Admin", async () => {
+  const { db, historyWrites } = testDb();
+
+  const result = await processFinalMockResultScore({
+    db,
+    admin: testAdmin(),
+    runtimeConfig: {},
+    scoreId: "a1-final-mock-no-email",
+    score: score({ email: "" }),
+    now: new Date("2026-10-05T19:00:00Z"),
+  });
+
+  assert.equal(result.sent, false);
+  assert.equal(result.reason, "missing_email");
+  assert.ok(result.historyId);
+  assert.equal(historyWrites.at(-1).deliveryStatus, "skipped_missing_email");
+  assert.equal(historyWrites.at(-1).student_code, "AMA123");
+  assert.equal(historyWrites.at(-1).student_name, "Ama Mensah");
+});
+
 test("non-mock score creation is ignored by the trigger", async () => {
   let registered = null;
   const trigger = createFinalMockResultEmailTrigger({
