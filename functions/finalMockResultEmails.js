@@ -315,7 +315,25 @@ async function processFinalMockResultScore({
 } = {}) {
   if (!isFinalMockScore(score)) return { sent: false, reason: "not_final_mock" };
   const email = lower(score.email || score.studentEmail);
-  if (!email) return { sent: false, reason: "missing_email" };
+  if (!email) {
+    const row = buildFinalMockAnnouncementRow(score, { scoreId, now });
+    const historyId = await writeAnnouncementHistory({
+      db,
+      admin,
+      scoreId,
+      score,
+      row,
+      status: "skipped_missing_email",
+      error: "Student email is missing from the final mock score document.",
+    }).catch(() => "");
+    return {
+      sent: false,
+      reason: "missing_email",
+      scoreId: text(scoreId),
+      level: levelFromScore(score),
+      historyId,
+    };
+  }
 
   const reservation = await reserveFinalMockResultSend({ db, admin, scoreId, score, now });
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
