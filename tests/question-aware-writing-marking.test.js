@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { compareExaminerResults } from "../src/utils/markingIntelligence.js";
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 import { A2_WRITING_RUBRIC_VERSION, getA2WritingTaskSpecs } from "../src/data/a2WritingTaskSpecs.js";
+import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
 import {
   applyQuestionAwareWritingGuard,
   enforceA2B1WritingConsistency,
@@ -11,11 +12,34 @@ import {
   resolveQuestionAwareWritingTask,
 } from "../src/utils/questionAwareWritingMarking.js";
 
+const referenceEntryByAssignmentId = (assignmentId) => {
+  const entry = Object.values(answersDictionary).find((item) => item.assignment_id === assignmentId);
+  assert.ok(entry, `Missing answer entry for ${assignmentId}`);
+  return { ...entry, assignmentKey: assignmentId, level: assignmentId.split("-")[0] };
+};
+
+test("current A2/B1 no-writing manifest entries do not resolve a Schreiben task", () => {
+  for (const assignmentId of ["A2-2.5", "B1-7.22"]) {
+    const referenceEntry = referenceEntryByAssignmentId(assignmentId);
+    const options = {
+      referenceEntry,
+      submission: { assignmentKey: assignmentId, level: referenceEntry.level },
+    };
+    assert.equal(resolveQuestionAwareWritingTask(options), null, assignmentId);
+
+    const enriched = enrichOptionsWithQuestionAwareWritingTask(options);
+    assert.equal(enriched.referenceEntry.questionAwareWritingTask, undefined, assignmentId);
+    assert.equal(enriched.submission.questionAwareWritingTask, undefined, assignmentId);
+  }
+});
+
 const assignmentOptions = {
   referenceEntry: {
     assignmentKey: "B1-1.2",
     level: "B1",
     title: "Freunde fürs Leben",
+    // Historical writing task: current sparse references follow the no-writing cadence.
+    writingParts: ["teil2"],
   },
   submission: {
     assignmentKey: "B1-1.2",
@@ -78,7 +102,7 @@ ich hoffe, es geht dir gut. Ich schreibe dir, weil ich dir von einem neuen Freun
 Viele Grüße
 Reuben`;
 
-test("B1-1.2 resolves the actual workbook writing task and its three communicative points", () => {
+test("explicit legacy B1-1.2 writing reference resolves its three communicative points", () => {
   const task = resolveQuestionAwareWritingTask(assignmentOptions);
   assert.ok(task);
   assert.equal(task.assignmentKey, "B1-1.2");
@@ -506,9 +530,9 @@ Teil 4
 4. A
 5. A`;
 
-test("A2-1.2 recovers a zero writing score without retaining a stale zero contradiction", () => {
+test("explicit legacy A2-1.2 writing reference recovers a zero without a stale contradiction", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "A2-1.2", level: "A2" },
+    referenceEntry: { assignmentKey: "A2-1.2", level: "A2", writingParts: ["teil2"] },
     submission: { assignmentKey: "A2-1.2", level: "A2" },
     submissionText: vickyA2Day2,
   });

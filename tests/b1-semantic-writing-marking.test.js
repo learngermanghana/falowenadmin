@@ -18,13 +18,7 @@ Felix`;
 const opinionInsteadOfFriendshipEmail = `Teil 2
 Meiner Meinung nach ist Freundschaft im Leben sehr wichtig. Einerseits braucht jeder Mensch Freunde, andererseits kann eine Freundschaft auch schwierig sein. In meinem Heimatland verbringen viele Menschen viel Zeit mit Freunden. Zusammenfassend denke ich, dass Vertrauen wichtig ist.`;
 
-const completeComplaint = `Teil 2
-Sehr geehrte Damen und Herren,
-am 12. September habe ich bei Ihnen ein Smartphone gekauft. Leider ist das Display beschädigt und das Gerät funktioniert nicht richtig. Ich habe das Paket gestern mit der Sendungsnummer 12345 zurückgeschickt. Ich bitte um einen Ersatz oder eine Rückerstattung. Für eine schnelle Rückmeldung wäre ich Ihnen dankbar.
-Mit freundlichen Grüßen
-Felix Asadu`;
-
-test("all 28 B1 writing assignments have canonical semantic specs", () => {
+test("all 28 historical B1 semantic task specs remain structurally complete", () => {
   const specs = getB1WritingTaskSpecs();
   assert.equal(specs.length, 28);
   assert.equal(new Set(specs.map((spec) => spec.assignmentKey)).size, 28);
@@ -50,6 +44,7 @@ test("canonical B1 spec overrides stale registry metadata", () => {
     referenceEntry: {
       assignmentKey: "B1-8.25",
       level: "B1",
+      writingParts: ["teil2"],
       questionAwareWritingTask: {
         assignmentKey: "B1-8.25",
         level: "B1",
@@ -71,7 +66,7 @@ test("canonical B1 spec overrides stale registry metadata", () => {
 
 test("complete B1-1.2 friendship email is 3/3 and keeps its language score", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "B1-1.2", level: "B1" },
+    referenceEntry: { assignmentKey: "B1-1.2", level: "B1", writingParts: ["teil2"] },
     submission: { assignmentKey: "B1-1.2", level: "B1" },
     submissionText: completeFriendship,
   });
@@ -102,7 +97,7 @@ test("complete B1-1.2 friendship email is 3/3 and keeps its language score", () 
 
 test("B1-1.2 opinion essay cannot pass as a friend-for-life email", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "B1-1.2", level: "B1" },
+    referenceEntry: { assignmentKey: "B1-1.2", level: "B1", writingParts: ["teil2"] },
     submission: { assignmentKey: "B1-1.2", level: "B1" },
     submissionText: opinionInsteadOfFriendshipEmail,
   });
@@ -132,39 +127,29 @@ test("B1-1.2 opinion essay cannot pass as a friend-for-life email", () => {
   assert.ok(result.ai.markingContradictions?.some((item) => /taskCompletion reports complete/i.test(item)));
 });
 
-test("B1-8.25 formal damaged-phone complaint satisfies all five semantic points", () => {
-  const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "B1-8.25", level: "B1" },
+test("B1-8.25 historical complaint spec is inactive because the current workbook has no Schreiben", () => {
+  const options = {
+    referenceEntry: {
+      assignmentKey: "B1-8.25",
+      level: "B1",
+      expectedParts: ["teil3"],
+      writingParts: [],
+      aiGradedParts: [],
+      partGrading: {},
+    },
     submission: { assignmentKey: "B1-8.25", level: "B1" },
-    submissionText: completeComplaint,
-  });
+  };
 
-  const result = applyQuestionAwareWritingGuard({
-    level: "B1",
-    assignmentKey: "B1-8.25",
-    objectiveScore: 84,
-    writingScore: 88,
-    writingScorePercent: 88,
-    finalScore: 86,
-    score: 86,
-    taskCompletion: { completed: 5, total: 5, missing: [] },
-    missingTaskPoints: [],
-    feedback: "Clear formal complaint.",
-    status: "marked",
-    confidence: 0.86,
-  }, enriched, completeComplaint);
+  assert.equal(resolveQuestionAwareWritingTask(options), null);
 
-  assert.equal(result.writingScore, 88);
-  assert.equal(result.taskCompletion.completed, 5);
-  assert.equal(result.taskCompletion.total, 5);
-  assert.equal(result.taskPointEvidence.every((item) => item.status === "met"), true);
-  assert.equal(result.ai.questionAwareWritingGuard, undefined);
-  assert.equal(result.markingRubricVersion, B1_WRITING_RUBRIC_VERSION);
+  const enriched = enrichOptionsWithQuestionAwareWritingTask(options);
+  assert.equal(enriched.referenceEntry.questionAwareWritingTask, undefined);
+  assert.equal(enriched.submission.questionAwareWritingTask, undefined);
 });
 
 test("B1 semantic completion does not automatically inflate an 86 writing score to 90", () => {
   const enriched = enrichOptionsWithQuestionAwareWritingTask({
-    referenceEntry: { assignmentKey: "B1-1.2", level: "B1" },
+    referenceEntry: { assignmentKey: "B1-1.2", level: "B1", writingParts: ["teil2"] },
     submission: { assignmentKey: "B1-1.2", level: "B1" },
     submissionText: completeFriendship,
   });

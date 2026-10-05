@@ -1,3 +1,5 @@
+import { getA2B1WritingRequirement } from "./a2B1WritingCadence.js";
+
 export const MARKING_PASS_PERCENT = 60;
 export const A2_B1_WRITING_MIN_PERCENT = 40;
 export const A2_B1_PART_WEIGHTS = Object.freeze({
@@ -61,6 +63,7 @@ export function calculateWeightedMarkingOutcome({
   objectiveScore = null,
   objectiveDetails = {},
   hasWriting = writingPercent !== null && writingPercent !== undefined,
+  writingRequiredOverride = null,
 } = {}) {
   const resolvedLevel = markingLevel(level, assignmentId, assignmentKey);
   const writing = clampPercent(writingPercent);
@@ -68,13 +71,35 @@ export function calculateWeightedMarkingOutcome({
   const partStats = objectivePartStats(objectiveDetails);
   const isA2B1 = resolvedLevel === "A2" || resolvedLevel === "B1";
   const hasBothObjectiveParts = partStats.teil3.total > 0 && partStats.teil4.total > 0;
-  const writingAvailable = Boolean(hasWriting && writing !== null);
+  const cadenceWritingRequirement = getA2B1WritingRequirement({
+    level: resolvedLevel,
+    assignmentId,
+    assignmentKey: assignmentKey || level,
+  });
+  const writingRequirement = typeof writingRequiredOverride === "boolean"
+    ? writingRequiredOverride
+    : cadenceWritingRequirement;
+  const writingAvailable = Boolean(
+    hasWriting
+      && writing !== null
+      && writingRequirement !== false
+  );
 
   let finalScore = 0;
   let policy = "legacy-50-50";
   let scoreBreakdown = null;
 
-  if (isA2B1 && writingAvailable && (hasBothObjectiveParts || objective !== null)) {
+  if (isA2B1 && writingRequirement === false && objective !== null) {
+    policy = "a2-b1-objective-only";
+    finalScore = Math.round(objective);
+    scoreBreakdown = {
+      policy,
+      passMark: MARKING_PASS_PERCENT,
+      writingRequired: false,
+      objective: { percent: objective },
+      finalScore,
+    };
+  } else if (isA2B1 && writingAvailable && (hasBothObjectiveParts || objective !== null)) {
     policy = "a2-b1-40-30-30";
     const teil3Percent = hasBothObjectiveParts ? partStats.teil3.percent : objective;
     const teil4Percent = hasBothObjectiveParts ? partStats.teil4.percent : objective;
@@ -111,8 +136,14 @@ export function calculateWeightedMarkingOutcome({
     finalScore = Math.round(writing);
   }
 
-  const writingMinimumMet = !isA2B1 || !writingAvailable || writing >= A2_B1_WRITING_MIN_PERCENT;
-  const writingRequiredButMissing = isA2B1 && hasBothObjectiveParts && !writingAvailable;
+  const writingMinimumMet = writingRequirement === false
+    || !isA2B1
+    || !writingAvailable
+    || writing >= A2_B1_WRITING_MIN_PERCENT;
+  const writingRequiredButMissing = isA2B1
+    && writingRequirement !== false
+    && hasBothObjectiveParts
+    && !writingAvailable;
   const passed = finalScore >= MARKING_PASS_PERCENT && writingMinimumMet && !writingRequiredButMissing;
 
   return {
@@ -121,6 +152,7 @@ export function calculateWeightedMarkingOutcome({
     passed,
     policy,
     writingMinimumMet,
+    writingRequired: writingRequirement,
     writingRequiredButMissing,
     scoreBreakdown,
     objectivePartStats: partStats,
