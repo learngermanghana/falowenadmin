@@ -8,6 +8,7 @@ on:
       - 'tests/final-mock-result-emails.test.js'
       - '.github/workflows/final-mock-result-emails.yml'
       - '.github/workflows/deploy-firebase.yml'
+      - 'firebase.json'
   push:
     branches:
       - main
