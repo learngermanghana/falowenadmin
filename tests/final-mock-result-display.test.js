@@ -29,8 +29,10 @@ test("Admin result table shows final mock attempt type and four-skill breakdown"
 
 test("ordinary non-mock result rows do not inherit final mock practice labels", () => {
   assert.match(source, /const hasFinalMockMetadata = Boolean\(attemptType \|\| hasSectionScores\);/);
-  assert.match(source, /if \(!hasFinalMockMetadata\) return "";/);
-  assert.doesNotMatch(source, /attemptType === "practice" \|\| attemptNumber > 1/);
+  const guardIndex = source.indexOf('if (!hasFinalMockMetadata) return "";');
+  const practiceFallbackIndex = source.indexOf('if (attemptType === "practice" || attemptNumber > 1)');
+  assert.ok(guardIndex >= 0, "final mock metadata guard should exist");
+  assert.ok(practiceFallbackIndex > guardIndex, "attempt-number fallback must run only after the final mock guard");
   assert.match(source, /finalMockBreakdown\(row\) \|\| "—"/);
   assert.match(source, /finalMockAttemptLabel\(row\) \?/);
 });
