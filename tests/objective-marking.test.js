@@ -208,17 +208,17 @@ TEIL 3
 test("computes A1-14.1 objective score from reading and listening choices", () => {
   const result = computeObjectiveScore("A1-14.1", `
 Teil 1
-1. A
+1. B
 2. B
-3. B
+3. A
 4. A
-5. A
-
+5. B
 Teil 2
-Lieber Felix,
-ich kann leider nicht kommen, weil ich krank bin.
-Können wir uns nächste Woche treffen?
-Liebe Grüße
+1. R
+2. R
+3. R
+4. R
+5. F
 
 Teil 3
 1. A
@@ -229,20 +229,26 @@ Teil 3
 6. A
   `);
 
-  assert.equal(result.correctCount, 11);
-  assert.equal(result.totalCount, 11);
+  assert.equal(result.correctCount, 16);
+  assert.equal(result.totalCount, 16);
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
-  assert.equal(Object.values(result.details).some((detail) => detail.partId === "teil2"), false);
+  assert.equal(result.details["teil2.5"].correct, true);
 });
 
 test("A1-14.1 reports wrong listening answers under Teil 3", () => {
   const result = computeObjectiveScore("A1-14.1", `
 Teil 1
-1. A
+1. B
 2. B
-3. B
+3. A
 4. A
-5. A
+5. B
+Teil 2
+1. R
+2. R
+3. R
+4. R
+5. F
 
 Teil 3
 1. B
@@ -253,8 +259,8 @@ Teil 3
 6. C
   `);
 
-  assert.equal(result.totalCount, 11);
-  assert.equal(result.correctCount, 9);
+  assert.equal(result.totalCount, 16);
+  assert.equal(result.correctCount, 14);
   assert.equal(result.details["teil3.1"].correct, false);
   assert.equal(result.details["teil3.6"].correct, false);
   assert.equal(result.details["teil3.2"].correct, true);
@@ -743,3 +749,4 @@ test("A1-0.2 aligns a second 1-5 answer group without a Teil heading", () => {
   assert.equal(result.details[12].student.toLowerCase(), "tis");
   assert.equal(result.details[12].correct, true);
 });
+

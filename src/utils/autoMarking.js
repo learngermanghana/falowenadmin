@@ -1149,7 +1149,9 @@ function getReferenceObjectivePartIds(referenceEntry = {}) {
     const matches = String(text).match(/\b(?:teil|part)\s*(?:[1-4]|eins|zwei|drei|vier|one|two|three|four)\b|\b(?:lesen|h[oö]ren|hoeren|reading|listening)\b/gi) || [];
     matches.map(findPartId).filter((partId) => partId !== "unknown").forEach((partId) => partIds.push(partId));
   }
-  return [...new Set(partIds)].filter((partId) => partId !== "teil2");
+  return [...new Set(partIds)].filter((partId) =>
+    detectPartType({ partId, referenceEntry }) === "objective",
+  );
 }
 
 function selectSubmissionTextForPart(submissionText = "", partId = "main") {

@@ -49,22 +49,22 @@ Teil 3
   assert.equal(result.wrongAnswers.length, 0);
 });
 
-test("A1-14.1 scores the new listening choices and ignores the health letter", () => {
+test("A1-14.1 scores the new listening choices and the appointment email", () => {
   const referenceEntry = entryByAssignmentId("A1-14.1");
   assert.ok(referenceEntry);
 
   const submissionText = `Teil 1
-1. A
+1. B
 2. B
-3. B
+3. A
 4. A
-5. A
-
+5. B
 Teil 2
-Lieber Felix,
-ich kann leider nicht kommen, weil ich krank bin. Können wir uns nächste Woche treffen?
-Liebe Grüße,
-Mary
+1. R
+2. R
+3. R
+4. R
+5. F
 
 Teil 3
 1. A
@@ -75,7 +75,8 @@ Teil 3
 6. A`;
 
   const result = checkDeterministicObjectiveAnswers({ referenceEntry, submissionText });
-  assert.equal(result.objectiveCorrect, 11);
-  assert.equal(result.objectiveTotal, 11);
+  assert.equal(result.objectiveCorrect, 16);
+  assert.equal(result.objectiveTotal, 16);
   assert.equal(result.wrongAnswers.length, 0);
 });
+

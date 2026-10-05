@@ -697,17 +697,18 @@
   "A1 Weather 13": {
     "answers": {
       "teil1": {
-        "Answer1": "A) Anzeige A",
-        "Answer2": "B) Anzeige B",
-        "Answer3": "A) Anzeige A",
-        "Answer4": "A) Anzeige A",
-        "Answer5": "B) Anzeige B",
-        "Answer6": "B) Anzeige B"
+        "Answer1": "B) Text B",
+        "Answer2": "A) Text A",
+        "Answer3": "A) Text A",
+        "Answer4": "A) Text A",
+        "Answer5": "B) Text B"
       },
       "teil2": {
-        "Answer1": "A) Mallorca",
-        "Answer2": "B) Toronto",
-        "Answer3": "B) WG/Apartments"
+        "Answer1": "Richtig",
+        "Answer2": "Falsch",
+        "Answer3": "Falsch",
+        "Answer4": "Richtig",
+        "Answer5": "Falsch"
       },
       "teil4": {
         "Answer1": "B) Es ist kalt und es regnet.",
@@ -745,13 +746,13 @@
         "label": "Teil 1 Anzeigen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Grade the six advertisement questions against the reference answers."
+        "instruction": "Grade the five weather situation questions against the reference answers."
       },
       "teil2": {
         "label": "Teil 2 Nachricht",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Grade the three message questions against the reference answers."
+        "instruction": "Grade the five Richtig/Falsch statements about the Radio ND2 weekend weather report against the reference answers."
       },
       "teil3": {
         "label": "Teil 3 Schreiben",
@@ -770,11 +771,11 @@
   "A1 Health and Body Parts 14.1": {
     "answers": {
       "teil1": {
-        "Answer1": "A) Anzeige A",
+        "Answer1": "B) Anzeige B",
         "Answer2": "B) Anzeige B",
-        "Answer3": "B) Anzeige B",
-        "Answer4": "A) Anzeige A",
-        "Answer5": "A) Anzeige A"
+        "Answer3": "A) Anzeige A",
+        "Answer4": "A) Per Anruf oder E-Mail (Anzeige A)",
+        "Answer5": "B) Anzeige B"
       },
       "teil3": {
         "Answer1": "A) Fieber, Kopfschmerzen und Halsschmerzen",
@@ -783,6 +784,13 @@
         "Answer4": "A) Bahnhofstraße 12",
         "Answer5": "B) Seine Versichertenkarte",
         "Answer6": "A) Die Praxis anrufen"
+      },
+      "teil2": {
+        "Answer1": "Richtig",
+        "Answer2": "Richtig",
+        "Answer3": "Richtig",
+        "Answer4": "Richtig",
+        "Answer5": "Falsch"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/gviz/tq?tqx=out:html&sheet=Key",
@@ -794,14 +802,11 @@
       "teil2",
       "teil3"
     ],
-    "writingParts": [
-      "teil2"
-    ],
-    "aiGradedParts": [
-      "teil2"
-    ],
+    "writingParts": [],
+    "aiGradedParts": [],
     "referenceAnswerParts": [
       "teil1",
+      "teil2",
       "teil3"
     ],
     "answerLayout": "multipart",
@@ -813,10 +818,10 @@
         "instruction": "Grade the five health-service advertisement questions against the reference answers."
       },
       "teil2": {
-        "label": "Teil 2 Schreiben",
-        "hasReferenceAnswers": false,
-        "gradingMode": "ai_written_response",
-        "instruction": "Teil 2 is the third A1 letter-writing step after A1-12.3 and A1-13. It is an informal email to Felix, who invited the student to a birthday, but the student cannot attend. Grade exactly three content points: (1) say that they cannot come, (2) give one concrete health reason, and (3) ask for or suggest another time to meet. Greeting, closing and the student's name are required letter form but are not extra content points. Use simple A1 expectations for task completion, email form, understandable sentence structure, basic verb forms, word order, vocabulary, spelling and capitalization. There is no fixed reference answer."
+        "label": "Teil 2 Lesen: Ihr Termin",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade the five Richtig/Falsch statements about the appointment email against the reference answers."
       },
       "teil3": {
         "label": "Teil 3 Hören",
@@ -3836,3 +3841,4 @@
     }
   }
 }
+

@@ -2,23 +2,24 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
-import { autoMarkSubmission } from "../src/utils/autoMarking.js";
+import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 import { assignmentHasScoredWriting, enforceRegisteredWritingScore } from "../src/utils/naturalMarkingFeedback.js";
 import { getA1WritingTaskSpec } from "../src/data/a1WritingTaskSpecs.js";
 
 const MOMODOU_SUBMISSION = `TEIL 1
-1. A
-2. B
-3.A
-4.A
-5.B
-6.B
+1. B
+2. A
+3. A
+4. A
+5. B
 
 TEIL 2
-1. A
-2. B
-3. B
+1. R
+2. F
+3. F
+4. R
+5. F
 
 TEIL 3
 
@@ -30,13 +31,20 @@ function a113Reference() {
   return Object.values(answersDictionary).find((entry) => String(entry?.assignment_id || "").toUpperCase() === "A1-13");
 }
 
-test("A1-13 keeps all fifteen objective answers deterministic", () => {
+test("A1-13 keeps all sixteen objective answers deterministic", () => {
   const referenceEntry = a113Reference();
   assert.ok(referenceEntry, "A1-13 reference entry must exist");
 
   const result = computeObjectiveScore(referenceEntry, MOMODOU_SUBMISSION);
-  assert.equal(result.correctCount, 15);
-  assert.equal(result.totalCount, 15);
+  assert.equal(result.correctCount, 16);
+  assert.equal(result.totalCount, 16);
+  const deterministic = checkDeterministicObjectiveAnswers({ referenceEntry, submissionText: MOMODOU_SUBMISSION });
+  assert.equal(deterministic.objectiveCorrect, 16);
+  assert.equal(deterministic.objectiveTotal, 16);
+  assert.equal(deterministic.parts.some((part) => part.partId === "teil3"), false);
+  const wrong = computeObjectiveScore(referenceEntry, MOMODOU_SUBMISSION.replace("2. F", "2. R"));
+  assert.equal(wrong.correctCount, 15);
+  assert.equal(wrong.details["teil2.2"].correct, false);
 });
 
 test("A1-13 explicitly registers Teil 3 as AI-scored Schreiben", () => {
@@ -110,8 +118,8 @@ test("registered Teil 3 writing score is not erased by objective-only safeguards
   const referenceEntry = a113Reference();
   const result = enforceRegisteredWritingScore({
     objectiveScore: 100,
-    objectiveCorrect: 15,
-    objectiveTotal: 15,
+    objectiveCorrect: 16,
+    objectiveTotal: 16,
     writingScore: 74,
     writingScorePercent: 74,
     finalScore: 87,
