@@ -300,12 +300,27 @@ async function processFinalMockResultScore({
   const config = resolveAnnouncementConfig(runtimeConfig);
   const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
+  let historyId = "";
+  try {
+    historyId = await writeAnnouncementHistory({
+      db, admin, scoreId, score, row, status: "processing",
+    });
+  } catch (historyError) {
+    const message = historyError?.message || String(historyError);
+    await reservation.ref.set({
+      status: "failed",
+      failedAt: timestamp,
+      updatedAt: timestamp,
+      lastError: message,
+    }, { merge: true });
+    throw historyError;
+  }
+
   try {
     const upstream = await postAnnouncementRow(config, row, fetchImpl);
-    const historyId = await writeAnnouncementHistory({
-      db, admin, scoreId, score, row, status: "sent", upstream,
-    });
 
+    // Mark the dedupe state as sent immediately after the webhook succeeds.
+    // A later history-write problem must never cause the student's email to be sent twice.
     await reservation.ref.set({
       status: "sent",
       sentAt: timestamp,
@@ -314,6 +329,15 @@ async function processFinalMockResultScore({
       historyId,
       upstreamCount: number(upstream?.count || upstream?.sent || 1),
     }, { merge: true });
+
+    await writeAnnouncementHistory({
+      db, admin, scoreId, score, row, status: "sent", upstream,
+    }).catch((historyError) => {
+      console.warn("final_mock_result_history_update_failed", {
+        scoreId: text(scoreId),
+        message: historyError?.message || String(historyError),
+      });
+    });
 
     return {
       sent: true,
@@ -324,15 +348,16 @@ async function processFinalMockResultScore({
     };
   } catch (error) {
     const message = error?.message || String(error);
-    await writeAnnouncementHistory({
-      db, admin, scoreId, score, row, status: "failed", error: message,
-    }).catch(() => undefined);
     await reservation.ref.set({
       status: "failed",
       failedAt: timestamp,
       updatedAt: timestamp,
       lastError: message,
+      historyId,
     }, { merge: true });
+    await writeAnnouncementHistory({
+      db, admin, scoreId, score, row, status: "failed", error: message,
+    }).catch(() => undefined);
     throw error;
   }
 }
