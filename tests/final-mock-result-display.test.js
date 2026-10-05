@@ -27,8 +27,16 @@ test("Admin result table shows final mock attempt type and four-skill breakdown"
   assert.match(source, /\/25/);
 });
 
-test("ordinary non-mock result rows still have safe fallbacks", () => {
-  assert.match(source, /return "";/);
+test("ordinary non-mock result rows do not inherit final mock practice labels", () => {
+  assert.match(source, /const hasFinalMockMetadata = Boolean\(attemptType \|\| hasSectionScores\);/);
+  assert.match(source, /if \(!hasFinalMockMetadata\) return "";/);
+  assert.doesNotMatch(source, /attemptType === "practice" \|\| attemptNumber > 1/);
   assert.match(source, /finalMockBreakdown\(row\) \|\| "—"/);
   assert.match(source, /finalMockAttemptLabel\(row\) \?/);
+});
+
+test("final mock retries still use attempt number after final mock metadata is established", () => {
+  assert.match(source, /const hasSectionScores = Boolean\(/);
+  assert.match(source, /row\.sectionScores/);
+  assert.match(source, /if \(attemptType === "practice" \|\| attemptNumber > 1\) return `Practice attempt \$\{attemptNumber\}`;/);
 });
