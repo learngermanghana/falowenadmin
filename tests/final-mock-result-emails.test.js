@@ -321,7 +321,7 @@ test("non-mock score creation is ignored by the trigger", async () => {
 
   assert.equal(trigger, "registered");
   assert.equal(registered.options.document, "scores/{scoreId}");
-  assert.equal(registered.options.retry, true);
+  assert.equal(registered.options.retry, false);
 
   const result = await registered.handler({
     params: { scoreId: "regular-score" },
@@ -363,6 +363,12 @@ test("maintained Announcement Apps Script enforces event-level idempotency", () 
   assert.match(script, /announcementEventExists_/);
   assert.match(script, /duplicate: true/);
   assert.match(script, /event_id/);
+});
+
+test("final mock Firestore trigger keeps platform retries disabled until the deployed webhook is idempotent", () => {
+  const source = fs.readFileSync(path.join(root, "functions/finalMockResultEmails.js"), "utf8");
+  assert.match(source, /document: "scores\/\{scoreId\}"/);
+  assert.match(source, /retry: false/);
 });
 
 test("final mock email reuses shared Announcement webhook configuration", () => {
