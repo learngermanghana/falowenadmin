@@ -11,6 +11,7 @@ on:
       - 'docs/apps-script/score-results-upsert.gs'
       - 'docs/student-result-sheet-upsert.md'
       - 'tests/student-result-upsert.test.js'
+      - 'tests/final-mock-result-display.test.js'
       - '.github/workflows/student-result-upsert-tests.yml'
   push:
     branches:
@@ -24,6 +25,7 @@ on:
       - 'docs/apps-script/score-results-upsert.gs'
       - 'docs/student-result-sheet-upsert.md'
       - 'tests/student-result-upsert.test.js'
+      - 'tests/final-mock-result-display.test.js'
       - '.github/workflows/student-result-upsert-tests.yml'
 
 jobs:
@@ -40,5 +42,6 @@ jobs:
           node --check api/router.js
           node --check src/utils/studentResultUpsert.js
           node --check tests/student-result-upsert.test.js
+          node --check tests/final-mock-result-display.test.js
       - name: Test canonical result identity and sheet upsert safeguards
-        run: node --test tests/student-result-upsert.test.js
+        run: node --test tests/student-result-upsert.test.js tests/final-mock-result-display.test.js
