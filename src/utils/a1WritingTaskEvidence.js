@@ -117,7 +117,7 @@ function questionClauses(source = "") {
       const protectedDate = protectPeriods(date);
       if (!trailingPeriod) return protectedDate;
       const rest = whole.slice(offset + match.length);
-      const sentenceClearlyContinues = /^\s*(?:[a-zäöüß0-9]|[,:;?)\]}])/u.test(rest);
+      const sentenceClearlyContinues = /^\s*(?:[a-zäöüß0-9]|[,:;?\u0028\u0029\u005b\u005d\u007b\u007d])/u.test(rest);
       return protectedDate + (sentenceClearlyContinues ? "·" : ".");
     })
     .replace(/\b(?:z\.\s*B\.|d\.\s*h\.|u\.\s*a\.|bzw\.|ca\.|usw\.|etc\.|Dr\.|Prof\.|Nr\.)/gi, protectPeriods);
