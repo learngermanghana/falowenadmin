@@ -249,6 +249,8 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
     grammarFocusEn: [
       "Use haben + symptom noun for common complaints: Ich habe Kopfschmerzen.",
       "Use body part + tut/tun weh to say where it hurts.",
+      "Use kann + infinitive for a cancellation: Leider kann ich nicht kommen.",
+      "Ask Wann hast du Zeit? to a friend or Wann haben Sie Zeit? formally; answer with am + day and um + clock time.",
       "Day 14.1 has exactly three content points: cannot attend, concrete health reason, and another-meeting suggestion. Greeting, closing and name are checked separately as letter form.",
       "Use the health language as the reason for the cancellation, for example: Leider kann ich nicht kommen. Ich habe Fieber.",
     ],
@@ -256,12 +258,16 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
       "Lieber Felix, danke für deine Einladung.",
       "Leider kann ich nicht zu deinem Geburtstag kommen.",
       "Ich bin krank. Ich habe Fieber und Kopfschmerzen.",
-      "Können wir uns nächste Woche treffen?",
+      "Wann hast du Zeit?",
+      "Können wir uns am Montag um 16 Uhr treffen?",
       "Liebe Grüße\nMary",
     ],
     commonMistakesEn: [
       "Using ist weh instead of tut weh.",
       "Using tut with a plural body part instead of tun.",
+      "Using habe krank instead of bin krank or bin Fieber instead of habe Fieber.",
+      "Conjugating kommen again after kann instead of using the infinitive.",
+      "Using Wann du hast Zeit? instead of Wann hast du Zeit?, or swapping am and um.",
       "Naming a symptom without connecting it to the message about not being able to attend.",
       "Forgetting the suggestion for another meeting after the health reason.",
       "Forgetting the informal greeting, closing or name even though this is the third letter-writing task.",
@@ -286,3 +292,4 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
     ],
   },
 };
+

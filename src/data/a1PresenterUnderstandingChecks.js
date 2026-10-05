@@ -292,17 +292,17 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Exit-Check: Cancel, give a weather reason, and suggest a new day and time.", "For example: Leider kann ich nicht kommen. Es regnet sehr stark. Können wir uns am Montag um 16 Uhr treffen?", "The learner should combine weather grammar with practical letter time expressions."),
   ],
   "A1-14.1": [
-    check("How many CONTENT points does the Day 14.1 email have?", "Exactly three."),
-    check("What are the three Day 14.1 content points?", "Say you cannot come to the birthday, give one concrete health reason, and ask for or suggest another meeting."),
-    check("Is ‘Lieber Felix’ one of the three content points?", "No. It is required informal letter form, not a content point."),
-    check("Does ‘Ich habe einen Arm’ satisfy the health-reason point?", "No. It only names a body part; it does not describe a health problem."),
-    check("Ordne die Wörter: leider · kann · ich · nicht · kommen", "Leider kann ich nicht kommen.", "Build the first content point."),
-    check("Ordne die Wörter: habe · ich · Fieber", "Ich habe Fieber.", "Build a simple A1 health reason."),
-    check("Ordne die Wörter: Kopf · mein · tut · weh", "Mein Kopf tut weh.", "Build another valid A1 health reason."),
-    check("Do ‘Ich bin krank’ or ‘Ich habe Kopfschmerzen’ count as simple A1 health reasons?", "Yes. A clear simple health problem is enough at A1."),
-    check("Ordne die Wörter: wir · uns · Woche · treffen · nächste", "Treffen wir uns nächste Woche?", "Build the third content point: another meeting suggestion."),
-    check("You have greeting + point 1 + point 2 + closing, but no new meeting. What is missing?", "Content point 3: ask for or suggest another meeting."),
-    check("Exit-Check: Give the three Day 14.1 content points in order.", "1. Cannot come. 2. Concrete health reason. 3. Ask for or suggest another meeting.", "Do not include greeting or closing as task points."),
+    check("Ergänze: Ich ___ krank. Ich ___ Fieber.", "Ich bin krank. Ich habe Fieber.", "Use sein + adjective; haben + symptom noun."),
+    check("Was ist richtig: Mein Kopf tut weh oder Mein Kopf tun weh?", "Mein Kopf tut weh.", "A singular body part takes tut."),
+    check("Ergänze: Meine Beine ___ weh.", "Meine Beine tun weh.", "Plural body parts take tun."),
+    check("Korrigiere: Ich habe krank.", "Ich bin krank.", "krank is an adjective, so use sein, not haben."),
+    check("Ordne die Wörter: leider · kann · ich · nicht · kommen", "Leider kann ich nicht kommen.", "After Leider, the conjugated modal verb is in position two; kommen goes last."),
+    check("Korrigiere: Ich kann heute nicht komme.", "Ich kann heute nicht kommen.", "Use the infinitive kommen after kann."),
+    check("Dein Freund sagt: Ich habe am Montag Zeit. Frage nach der Zeit mit wann.", "Wann hast du Zeit?", "W-word + conjugated verb + subject; du takes hast."),
+    check("Frage die Kursleiterin höflich nach ihrer freien Zeit. Beginne mit wann und benutze Sie.", "Wann haben Sie Zeit?", "Formal Sie takes haben and is capitalized."),
+    check("Ergänze: Wir treffen uns ___ Samstag ___ 15 Uhr.", "Wir treffen uns am Samstag um 15 Uhr.", "Use am with a day and um with a clock time, as in chapter 13."),
+    check("Ordne die Wörter: können · wir · uns · nächste Woche · treffen", "Können wir uns nächste Woche treffen?", "In a yes/no question, the modal verb comes first and the infinitive last."),
+    check("Exit-Check: Sage Felix, dass du nicht zu seinem Geburtstag kommen kannst. Nenne einen Gesundheitsgrund und schlage einen neuen Tag mit Uhrzeit vor.", "Zum Beispiel: Leider kann ich nicht zu deinem Geburtstag kommen. Ich habe Kopfschmerzen. Können wir uns am Montag um 16 Uhr treffen?", "Accept another clear A1 health reason and meeting time. Check cancellation, reason and new meeting in actual German sentences."),
   ],
 };
 
@@ -345,3 +345,4 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
 }
 
 export { A1_PRESENTER_UNDERSTANDING_OVERRIDES };
+
