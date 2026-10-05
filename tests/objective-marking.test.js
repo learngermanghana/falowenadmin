@@ -519,33 +519,33 @@ ${"\u00a0"}Ich sehe den Tisch.
   assert.equal(Object.values(result.details).filter((detail) => !detail.correct).length, 0);
 });
 
-test("A2-4.11 choices keep explicit option letters before F-leading German answer text", () => {
+test("A2-4.11 grades the current 7-question Lesen and 5-question Hören key", () => {
   const result = computeObjectiveScore("A2-4.11", `
 LESEN
-1. C
+1. B
 2. A
 3. B
-4. B
-5. C
-
-HÖREN
-1. B
-2. B
-3. C
 4. C
 5. B
+6. A
+7. C
 
-SCHREIBEN
-Sehr geehrte Damen und Herren,
-ich möchte ein Auto mieten.
+HÖREN
+1. A
+2. B
+3. C
+4. B
+5. C
   `);
 
-  assert.equal(result.totalCount, 10);
-  assert.equal(result.correctCount, 10);
-  assert.equal(result.details["teil3.4"].expected, "B");
-  assert.equal(result.details["teil3.4"].correct, true);
-  assert.equal(result.details["teil4.4"].expected, "C");
-  assert.equal(result.details["teil4.4"].correct, true);
+  assert.equal(result.totalCount, 12);
+  assert.equal(result.correctCount, 12);
+  assert.equal(result.details["teil3.4"].expected, "C");
+  assert.equal(result.details["teil3.7"].expected, "C");
+  assert.equal(result.details["teil3.7"].correct, true);
+  assert.equal(result.details["teil4.4"].expected, "B");
+  assert.equal(result.details["teil4.5"].expected, "C");
+  assert.equal(result.details["teil4.5"].correct, true);
 });
 
 test("A2-1.3 recognizes parenthesized part labels and current 5+5 choices", () => {

@@ -1321,11 +1321,13 @@
   "A2 4.11 Unterwegs: Verkehrsmittel vergleichen": {
     "answers": {
       "teil3": {
-        "Answer1": "C) Taxi",
-        "Answer2": "A) 7 Euro",
-        "Answer3": "B) Am ZOB",
-        "Answer4": "B) Alle 20 Minuten",
-        "Answer5": "C) Die S8 fährt erst ab 08:30 Uhr."
+        "Answer1": "B) Weil man viel Gepäck bequem von Tür zu Tür transportieren kann.",
+        "Answer2": "A) Sie ist schneller als das Auto und steht nicht im Stau.",
+        "Answer3": "B) Entspannen, lesen oder am Laptop arbeiten.",
+        "Answer4": "C) Weil die Tickets viel günstiger sind als bei der Bahn.",
+        "Answer5": "B) Benzin ist teuer und Parkplätze sind schwer zu finden.",
+        "Answer6": "A) Weil Fahrradfahren gesünder und umweltfreundlicher ist.",
+        "Answer7": "C) Der Fernbus braucht am meisten Zeit, ist aber besonders preiswert."
       },
       "teil4": {
         "Answer1": "A) Mit dem Bus",
@@ -3841,4 +3843,3 @@
     }
   }
 }
-
