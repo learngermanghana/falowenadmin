@@ -267,6 +267,34 @@ Samuel Kumar`);
   assert.match(evidence[1].label, /party/i);
 });
 
+test("A1-12.3 preserves dates and abbreviations inside genuine party questions", () => {
+  const task = getA1WritingTaskSpec("A1-12.3");
+  const variants = [
+    "Ist eine Geburtstagsfeier am 12.10. geplant?",
+    "Ist eine Geburtstagsfeier z. B. am Samstag geplant?",
+  ];
+
+  for (const partyQuestion of variants) {
+    const evidence = evaluateA1WritingTaskEvidence(task, `teil1
+Lieber Jerome,
+Herzlichen Glückwunsch zum Geburtstag.
+${partyQuestion}
+Kann meine Familie mitkommen?
+Viele Grüße
+Samuel
+
+teil2
+Sehr geehrte Damen und Herren,
+Wann beginnt der Kurs? Wie viel kostet der Kurs? Kann ich online bezahlen?
+Mit freundlichen Grüßen
+Samuel Kumar`);
+
+    assert.equal(evidence[1].status, "met", partyQuestion);
+    assert.equal(evidence[2].status, "met", partyQuestion);
+    assert.match(evidence[1].evidence, /Geburtstagsfeier/i);
+  }
+});
+
 test("A1-12.3 accepts Samuel's clear party and course-cost questions despite A1 spelling errors", () => {
   const submission = `TEIL 1
 Lieber Jerome,
