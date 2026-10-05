@@ -92,6 +92,13 @@ function b1FriendshipTaskPoints() {
 }
 
 export function resolveQuestionAwareWritingTask(options = {}) {
+  // A manifest can replace a former writing task with an objective reading part.
+  // Honour that declaration before cached tasks or historical practice specs.
+  const reference = options.referenceEntry || {};
+  const writingParts = reference.writingParts ?? reference.writing_parts;
+  const aiParts = reference.aiGradedParts ?? reference.ai_graded_parts;
+  if (Array.isArray(writingParts) && writingParts.length === 0
+    && Array.isArray(aiParts) && aiParts.length === 0) return null;
   const existing = options.referenceEntry?.questionAwareWritingTask || options.submission?.questionAwareWritingTask;
   const assignmentKey = normalizeAssignmentKey(existing?.assignmentKey || assignmentKeyFromOptions(options));
   const level = clean(existing?.level || levelFromOptions(options, assignmentKey)).toUpperCase();

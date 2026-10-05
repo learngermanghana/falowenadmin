@@ -357,12 +357,14 @@ test("legacy flat A1 objective manifests stay unchanged and gain Schreiben only 
   }
 });
 
-test("A1-14.1 now commits its reading, writing and listening parts directly", () => {
+test("A1-14.1 appointment reading remains objective despite historical health letter specs", () => {
   const entry = referenceEntry("A1-14.1");
   assert.deepEqual(entry.expectedParts, ["teil1", "teil2", "teil3"]);
-  assert.deepEqual(entry.referenceAnswerParts, ["teil1", "teil3"]);
-  assert.deepEqual(entry.writingParts, ["teil2"]);
-  assert.deepEqual(entry.aiGradedParts, ["teil2"]);
-  assert.equal(entry.partGrading?.teil2?.gradingMode, "ai_written_response");
-  assert.equal(entry.partGrading?.teil3?.gradingMode, "answer_key");
+  assert.deepEqual(entry.referenceAnswerParts, ["teil1", "teil2", "teil3"]);
+  assert.deepEqual(entry.writingParts, []);
+  assert.deepEqual(entry.aiGradedParts, []);
+  assert.equal(entry.partGrading.teil2.gradingMode, "answer_key");
+  const options = { referenceEntry: entry, submission: { assignmentKey: "A1-14.1", level: "A1", questionAwareWritingTask: getA1WritingTaskSpec("A1-14.1") } };
+  assert.equal(resolveQuestionAwareWritingTask(options), null);
+  assert.equal(enrichOptionsWithQuestionAwareWritingTask(options), options);
 });
