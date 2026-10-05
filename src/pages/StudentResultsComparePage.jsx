@@ -7,6 +7,45 @@ import { useToast } from "../context/ToastContext.jsx";
 function norm(value) { return String(value || "").trim().toLowerCase(); }
 function assignmentKey(row = {}) { return studentResultKey(row) || norm(row.assignmentId || row.assignment_id || row.assignment); }
 
+const FINAL_MOCK_SECTION_LABELS = [
+  ["lesen", "Lesen"],
+  ["hoeren", "Hören"],
+  ["schreiben", "Schreiben"],
+  ["sprechen", "Sprechen"],
+];
+
+function formatFinalMockSectionScore(value) {
+  const score = Number(value);
+  if (!Number.isFinite(score)) return "";
+  return Number.isInteger(score) ? String(score) : score.toFixed(1);
+}
+
+function finalMockBreakdown(row = {}) {
+  const scores = row.sectionScores && typeof row.sectionScores === "object"
+    ? row.sectionScores
+    : null;
+  if (!scores) return "";
+
+  return FINAL_MOCK_SECTION_LABELS
+    .map(([key, label]) => {
+      const formatted = formatFinalMockSectionScore(scores[key]);
+      return formatted ? `${label} ${formatted}/25` : "";
+    })
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function finalMockAttemptLabel(row = {}) {
+  const explicit = String(row.attemptLabel || "").trim();
+  if (explicit) return explicit;
+
+  const attemptType = String(row.attemptType || "").trim().toLowerCase();
+  const attemptNumber = Math.max(1, Number(row.attempt) || 1);
+  if (attemptType === "readiness" || row.firstAttempt === true) return "First readiness attempt";
+  if (attemptType === "practice" || attemptNumber > 1) return `Practice attempt ${attemptNumber}`;
+  return "";
+}
+
 function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(), onToggleSelected, onToggleAll, allSelected = false, onEdit, editingId = "", editDraft = {}, onEditDraftChange, onCancelEdit, onSaveEdit, savingEditId = "" }) {
   const canBulkSelect = Boolean(onToggleSelected);
   const inputStyle = { width: "100%", minWidth: 90 };
@@ -19,7 +58,7 @@ function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(),
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead><tr>
           {canBulkSelect ? <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}><input type="checkbox" checked={allSelected && editableRows.length > 0} onChange={(event) => onToggleAll(event.target.checked, rows)} aria-label={`Select all ${source} rows`} /></th> : null}
-          {["Assignment", "Assignment ID", "Score", "Date", "Level", "Comments", "Action"].map((h) => <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>{h}</th>)}
+          {["Assignment", "Assignment ID", "Score", "Breakdown", "Date", "Level", "Comments", "Action"].map((h) => <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>{h}</th>)}
         </tr></thead>
         <tbody>{rows.map((row, index) => {
           const id = row.id || row.dedupe_id || row.dedupeId || `${source}-${index}`;
@@ -27,9 +66,25 @@ function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(),
           const isSelected = selectedIds.has(id);
           return <tr key={id}>
             {canBulkSelect ? <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><input type="checkbox" checked={isSelected} onChange={(event) => onToggleSelected(id, row, event.target.checked)} aria-label={`Select ${row.assignment || "result"}`} /></td> : null}
-            <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{isEditing ? <input style={inputStyle} value={editDraft.assignment || ""} onChange={(event) => onEditDraftChange("assignment", event.target.value)} /> : row.assignment || "—"}</td>
+            <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>
+              {isEditing ? (
+                <input style={inputStyle} value={editDraft.assignment || ""} onChange={(event) => onEditDraftChange("assignment", event.target.value)} />
+              ) : (
+                <>
+                  <div>{row.assignment || "—"}</div>
+                  {finalMockAttemptLabel(row) ? (
+                    <small style={{ display: "block", marginTop: 3, fontWeight: 700, opacity: 0.72 }}>
+                      {finalMockAttemptLabel(row)}
+                    </small>
+                  ) : null}
+                </>
+              )}
+            </td>
             <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{isEditing ? <input style={inputStyle} value={editDraft.assignmentId || ""} onChange={(event) => onEditDraftChange("assignmentId", event.target.value)} /> : <code>{row.assignmentId || row.assignment_id || "—"}</code>}</td>
             <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{isEditing ? <input style={{ ...inputStyle, minWidth: 70 }} type="number" min="0" max="100" value={editDraft.score} onChange={(event) => onEditDraftChange("score", event.target.value)} /> : <b>{row.score ?? row.finalScore ?? "—"}</b>}</td>
+            <td style={{ borderBottom: "1px solid #eee", padding: 6, minWidth: 230, whiteSpace: "normal" }}>
+              {finalMockBreakdown(row) || "—"}
+            </td>
             <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{row.date || row.updatedAt || row.createdAt || "—"}</td>
             <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{isEditing ? <input style={inputStyle} value={editDraft.level || ""} onChange={(event) => onEditDraftChange("level", event.target.value)} /> : row.level || "—"}</td>
             <td style={{ borderBottom: "1px solid #eee", padding: 6, maxWidth: 420, whiteSpace: "pre-wrap" }}>{isEditing ? <textarea style={commentStyle} value={editDraft.comments || ""} onChange={(event) => onEditDraftChange("comments", event.target.value)} /> : row.comments || row.feedback || "—"}</td>
