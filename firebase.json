@@ -28,6 +28,7 @@
         "node --check functions/index.js",
         "node --check functions/registrationLifecycleEvents.js",
         "node --check functions/trialAccessEmails.js",
+        "node --check functions/finalMockResultEmails.js",
         "node --check functions/studentLearningInterventionEmails.js",
         "node --check functions/main.js",
         "node scripts/patchSheetRowManagementRoutes.mjs",

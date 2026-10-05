@@ -211,92 +211,49 @@ Use quick templates for common messages:
 
 ### Set up the announcement sheet (auto-send broadcasts)
 
-Use this once so clicking **Save broadcast** in the Communication page writes directly into Google Sheets.
+Use the maintained idempotent Announcement web-app handler:
 
-1. **Create a Google Sheet** for announcements.
-2. In row 1, add exact headers:
+- Apps Script source: `docs/apps-script/announcement-idempotent-webhook.gs`
+- The handler keeps the existing announcement columns and adds an `event_id` column when needed.
+- Requests with the same stable `event_id` are acknowledged with `duplicate: true` and are **not appended again**, preventing duplicate emails after retries or lost responses.
+- The handler uses `LockService` so concurrent deliveries with the same event cannot race each other.
+
+1. Create or open the Google Sheet used for announcements.
+2. Keep the normal announcement columns in row 1:
 
    ```
    announcement,class,date,link,topic,email,attach_certificate,cert_level
    ```
 
-3. Open **Extensions → Apps Script** and paste this web-app handler:
+   The maintained handler will add `event_id` automatically if it is missing.
 
-   ```javascript
-   function doPost(e) {
-     try {
-       const body = JSON.parse(e.postData.contents || "{}");
-       const token = "REPLACE_WITH_OPTIONAL_SHARED_TOKEN"; // Set "" to disable token check.
+3. Open **Extensions → Apps Script**, replace the old append-only `doPost` handler with the contents of:
 
-       if (token && body.token !== token) {
-         return ContentService.createTextOutput(
-           JSON.stringify({ ok: false, error: "Unauthorized" })
-         ).setMimeType(ContentService.MimeType.JSON);
-       }
-
-       const ss = SpreadsheetApp.getActiveSpreadsheet();
-       const sheet = body.sheet_gid
-         ? ss.getSheets().find((s) => String(s.getSheetId()) === String(body.sheet_gid))
-         : (body.sheet_name ? ss.getSheetByName(body.sheet_name) : ss.getActiveSheet());
-
-       if (!sheet) {
-         return ContentService.createTextOutput(
-           JSON.stringify({ ok: false, error: "Target sheet not found" })
-         ).setMimeType(ContentService.MimeType.JSON);
-       }
-
-       const rows = Array.isArray(body.rows)
-         ? body.rows
-         : (body.row ? [body.row] : []);
-
-       if (!rows.length) {
-         return ContentService.createTextOutput(
-           JSON.stringify({ ok: false, error: "No row payload" })
-         ).setMimeType(ContentService.MimeType.JSON);
-       }
-
-       rows.forEach((r) => {
-         sheet.appendRow([
-           r.announcement || "",
-           r.class || "",
-           r.date || new Date().toISOString().slice(0, 10),
-           r.link || "",
-           r.topic || "",
-           r.email || "",
-           r.attach_certificate || "FALSE",
-           r.cert_level || "",
-         ]);
-       });
-
-       return ContentService.createTextOutput(
-         JSON.stringify({ ok: true, count: rows.length })
-       ).setMimeType(ContentService.MimeType.JSON);
-     } catch (err) {
-       return ContentService.createTextOutput(
-         JSON.stringify({ ok: false, error: String(err) })
-       ).setMimeType(ContentService.MimeType.JSON);
-     }
-   }
+   ```
+   docs/apps-script/announcement-idempotent-webhook.gs
    ```
 
-4. **Deploy** the script as a Web App:
-   - Deploy → New deployment → Type: Web app
+4. If the webhook uses a shared token, set the Apps Script property `ANNOUNCEMENT_WEBHOOK_TOKEN` to the same token used by Falowen Admin.
+
+5. Deploy the script as a Web App:
+   - Deploy → New deployment → Type: **Web app**
    - Execute as: **Me**
    - Who has access: **Anyone** (or anyone in your domain)
    - Copy the `/exec` URL.
 
-5. Add/update frontend env values:
+6. Configure Falowen Admin with the deployed webhook:
 
    ```bash
-   VITE_ANNOUNCEMENT_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
-   VITE_ANNOUNCEMENT_WEBHOOK_TOKEN=REPLACE_WITH_OPTIONAL_SHARED_TOKEN
-   VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME=Announcements
+   ANNOUNCEMENT_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
+   ANNOUNCEMENT_WEBHOOK_TOKEN=REPLACE_WITH_OPTIONAL_SHARED_TOKEN
+   ANNOUNCEMENT_WEBHOOK_SHEET_NAME=Announcements
    # or
-   VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID=123456789
+   ANNOUNCEMENT_WEBHOOK_SHEET_GID=123456789
    ```
 
-6. Restart frontend and open **Communication** to send broadcasts.
+   Browser-only legacy `VITE_ANNOUNCEMENT_*` variables remain supported where still needed, but automatic Firebase workers should use the server-side `ANNOUNCEMENT_*` configuration.
 
+7. Verify the deployed handler by sending the same payload twice with one `event_id`. The first request should return `count: 1`; the second should return `count: 0, duplicate: true`.
 
 ## Social Media Tracker Save Flow
 

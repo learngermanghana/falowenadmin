@@ -101,6 +101,8 @@ jobs:
           node --check functions/completionParticipationDocument.js
           node --check functions/registrationLifecycleEvents.js
           node --check functions/trialAccessEmails.js
+          node --check functions/finalMockResultEmails.js
+          node --test tests/final-mock-result-emails.test.js
           node --test tests/completion-participation-document.test.js tests/completion-pack-admin-ui.test.js
           node --test tests/registration-lifecycle-events.test.js tests/trial-access-emails.test.js tests/brochure-whatsapp.test.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
@@ -146,6 +148,7 @@ jobs:
           grep -F 'exports.sendEnrollmentConfirmationDocuments = registrationLifecycleTriggers.enrollmentConfirmed' functions/index.js
           grep -F 'exports.sendTrialAccessWelcomeEmail = createTrialAccessWelcomeEmailTrigger' functions/index.js
           grep -F 'exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob' functions/index.js
+          grep -F 'exports.sendFinalMockResultEmail = createFinalMockResultEmailTrigger' functions/index.js
           grep -F 'module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob' functions/main.js
           grep -F 'schedule: "*/5 10-20 * * 1-5"' functions/classSessionReminderEmails.js
           grep -F 'async function loadReminderSessionWindow' functions/classSessionReminderEmails.js
@@ -228,6 +231,9 @@ jobs:
 
           deploy_group "trial access email workers" \
             "functions:falowenadmin:sendTrialAccessWelcomeEmail,functions:falowenadmin:sendTrialAccessReminderEmails"
+
+          deploy_group "final mock result email worker" \
+            "functions:falowenadmin:sendFinalMockResultEmail"
 
           deploy_group "student learning nudge worker" \
             "functions:falowenadmin:sendStudentLearningNudges"

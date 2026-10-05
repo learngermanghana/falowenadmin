@@ -15,6 +15,7 @@ const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = requir
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
 const { createRegistrationLifecycleTriggers } = require("./registrationLifecycleEvents.js");
 const { createTrialAccessWelcomeEmailTrigger, createTrialAccessReminderEmailJob } = require("./trialAccessEmails.js");
+const { createFinalMockResultEmailTrigger } = require("./finalMockResultEmails.js");
 const { assignmentAttendanceEligibility } = require("./assignmentAttendanceEligibility.js");
 const {
   HOLIDAY_NOTICE_PROTOCOL_VERSION,
@@ -2350,6 +2351,13 @@ exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob({
   admin,
   db,
   onSchedule,
+  runtimeConfig,
+});
+
+exports.sendFinalMockResultEmail = createFinalMockResultEmailTrigger({
+  admin,
+  db,
+  onDocumentCreated,
   runtimeConfig,
 });
 
