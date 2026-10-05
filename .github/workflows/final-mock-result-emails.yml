@@ -9,6 +9,7 @@ on:
       - '.github/workflows/final-mock-result-emails.yml'
       - '.github/workflows/deploy-firebase.yml'
       - 'firebase.json'
+      - 'docs/apps-script/announcement-idempotent-webhook.gs'
   push:
     branches:
       - main
