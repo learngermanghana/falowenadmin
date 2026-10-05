@@ -137,6 +137,8 @@ function buildFinalMockAnnouncementRow(score = {}, { scoreId = "", now = new Dat
     attempt_number: String(Math.max(1, number(score.attempt, 1))),
     mock_attempt_id: text(score.mockAttemptId),
     score_id: text(scoreId),
+    event_id: upstreamEventId(scoreId),
+    idempotency_key: upstreamEventId(scoreId),
     score: formatScore(overall),
     score_max: "100",
     result_status: status.passed ? "passed" : "needs_more_practice",
@@ -194,6 +196,8 @@ async function postAnnouncementRow(config, row, fetchImpl = fetch) {
       ...(config.token ? { token: config.token } : {}),
       ...(config.sheetName ? { sheet_name: config.sheetName } : {}),
       ...(config.sheetGid ? { sheet_gid: config.sheetGid } : {}),
+      event_id: row.event_id,
+      idempotency_key: row.idempotency_key,
       row,
       rows: [row],
     }),
@@ -207,6 +211,10 @@ async function postAnnouncementRow(config, row, fetchImpl = fetch) {
 
 function stateId(scoreId = "") {
   return crypto.createHash("sha256").update(`final_mock_result::${text(scoreId)}`).digest("hex");
+}
+
+function upstreamEventId(scoreId = "") {
+  return `final_mock_result_${stateId(scoreId).slice(0, 40)}`;
 }
 
 async function reserveFinalMockResultSend({ db, admin, scoreId, score = {}, now = new Date() }) {
@@ -224,6 +232,10 @@ async function reserveFinalMockResultSend({ db, admin, scoreId, score = {}, now 
 
     if (status === "sent") {
       result = { reserved: false, ref, reason: "already_sent" };
+      return;
+    }
+    if (status === "delivery_uncertain") {
+      result = { reserved: false, ref, reason: "delivery_uncertain" };
       return;
     }
     if (processingFresh) {
@@ -348,17 +360,34 @@ async function processFinalMockResultScore({
     };
   } catch (error) {
     const message = error?.message || String(error);
+
+    // Once the POST has been attempted, a transport failure can be ambiguous:
+    // Apps Script may already have accepted and emailed the row even if Firebase
+    // never received the response. Do not make this reservation immediately
+    // reusable and do not throw into Firestore automatic retries, otherwise the
+    // same learner can receive the same result twice.
     await reservation.ref.set({
-      status: "failed",
-      failedAt: timestamp,
+      status: "delivery_uncertain",
+      deliveryUncertainAt: timestamp,
       updatedAt: timestamp,
       lastError: message,
       historyId,
+      eventId: row.event_id,
     }, { merge: true });
     await writeAnnouncementHistory({
-      db, admin, scoreId, score, row, status: "failed", error: message,
+      db, admin, scoreId, score, row, status: "delivery_uncertain", error: message,
     }).catch(() => undefined);
-    throw error;
+
+    return {
+      sent: false,
+      reason: "delivery_uncertain",
+      retryable: false,
+      scoreId: text(scoreId),
+      level: levelFromScore(score),
+      email,
+      eventId: row.event_id,
+      error: message,
+    };
   }
 }
 
@@ -410,5 +439,6 @@ module.exports = {
     resolveAnnouncementConfig,
     sectionScores,
     stateId,
+    upstreamEventId,
   },
 };
