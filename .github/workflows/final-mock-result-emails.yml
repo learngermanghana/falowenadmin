@@ -1,0 +1,33 @@
+name: Final Mock Result Emails
+
+on:
+  pull_request:
+    paths:
+      - 'functions/finalMockResultEmails.js'
+      - 'functions/index.js'
+      - 'tests/final-mock-result-emails.test.js'
+      - '.github/workflows/final-mock-result-emails.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/finalMockResultEmails.js'
+      - 'functions/index.js'
+      - 'tests/final-mock-result-emails.test.js'
+      - '.github/workflows/final-mock-result-emails.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check final mock result email modules
+        run: |
+          node --check functions/finalMockResultEmails.js
+          node --check functions/index.js
+          node --check tests/final-mock-result-emails.test.js
+      - name: Test A1 and A2 final mock result announcement delivery
+        run: node --test tests/final-mock-result-emails.test.js
