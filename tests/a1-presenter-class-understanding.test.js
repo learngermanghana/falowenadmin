@@ -66,8 +66,8 @@ test("A1-13 understanding slides check weather grammar, cancellation and sentenc
   assert.equal(new Set(pool.map((item) => item.sourceQuestion)).size, 10);
 });
 
-test("A1-14.1 understanding slides test the exact three health-letter content points", () => {
-  const checks = getA1PresenterUnderstandingChecks("A1-14.1", getA1GrammarChecks("A1-14.1"));
+test("A1-14.1 class checks apply health grammar and practical letter questions", () => {
+  const checks = resolvedChecksFor("A1-14.1");
   const classChecks = checks.slice(0, -1);
   const exitCheck = checks.at(-1);
   const combined = checks.map((item) => `${item.questionDe} ${item.answerDe}`).join("\n");
@@ -75,15 +75,22 @@ test("A1-14.1 understanding slides test the exact three health-letter content po
   assert.equal(classChecks.length, 10);
   assert.equal(checks.length, 11);
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
-  assert.match(combined, /exactly three|three Day 14\.1 content points/i);
-  assert.match(combined, /cannot come.*health reason.*another meeting/i);
-  assert.match(combined, /greeting.*not.*content|letter form/i);
-  assert.match(combined, /Ich bin krank|health problem/i);
-  assert.match(combined, /what is missing|Content point 3/i);
-  assert.match(combined, /einen Arm|does not describe a health problem/i);
-  assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
-  assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
+  assert.ok(classChecks.every((item) => item.answerDe && item.noteEn));
+  assert.doesNotMatch(combined, /How many CONTENT points|What are the three Day 14|what is missing|greeting.*content point/i);
+  assert.match(combined, /Ich bin krank.*Ich habe Fieber/s);
+  assert.match(combined, /Mein Kopf tut weh/);
+  assert.match(combined, /Meine Beine tun weh/);
+  assert.match(combined, /Ich kann heute nicht kommen/);
+  assert.match(combined, /Wann hast du Zeit/);
+  assert.match(combined, /Wann haben Sie Zeit/);
+  assert.match(combined, /am Samstag um 15 Uhr/);
+  assert.match(combined, /Können wir uns nächste Woche treffen/);
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
+  assert.match(exitCheck.answerDe, /nicht.*kommen.*Kopfschmerzen.*am Montag um 16 Uhr/s);
+
+  const pool = buildA1PresenterQuestionPool(classChecks, 10, "A1-14.1-grammar-check");
+  assert.equal(pool.length, 10);
+  assert.equal(new Set(pool.map((item) => item.sourceQuestion)).size, 10);
 });
 
 test("A1-4.7 Teil 3 uses practical request-and-response understanding questions", () => {
@@ -146,3 +153,4 @@ test("A1 presenter keeps class participation available from the first slide and 
   assert.doesNotMatch(presenter, /hidden={!participationCheckMode}/);
   assert.doesNotMatch(presenter, /aria-hidden={!participationCheckMode}/);
 });
+

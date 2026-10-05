@@ -170,10 +170,10 @@ export const A1_GRAMMAR_CHECKS = {
     check("How can you suggest a new day and time after cancelling?", "For example: Können wir uns am Montag um 16 Uhr treffen?"),
   ],
   "A1-14.1": [
-    check("How many content points does the Day 14.1 email have?", "Exactly three."),
-    check("What are the three Day 14.1 content points?", "Say you cannot come to the birthday, give one concrete health reason, and ask for or suggest another meeting."),
-    check("What makes a health sentence useful for this writing task?", "It must describe a real health problem that functions as the reason for not attending."),
-    check("What is letter form and not an extra content point in Day 14.1?", "The informal greeting, closing and name."),
+    check("Which is correct for a fever: ‘Ich bin Fieber’ or ‘Ich habe Fieber’?", "Ich habe Fieber. Use haben with a symptom noun and sein with krank: Ich bin krank."),
+    check("Which forms complete ‘Mein Kopf tut weh’ and ‘Meine Beine tun weh’, and why?", "Use tut with one body part and tun with plural body parts."),
+    check("Which cancellation is correct: ‘Ich kann nicht komme’ or ‘Ich kann nicht kommen’?", "Ich kann nicht kommen. After kann, use the infinitive kommen at the end."),
+    check("How do you ask a friend and a course office when they are free?", "Wann hast du Zeit? / Wann haben Sie Zeit? Use W-word + conjugated verb + subject."),
   ],
   "A1-14.2": [
     check("What is the basic difference between dative and accusative objects?", "Accusative often marks the direct object; dative often marks the recipient or the object required by certain verbs."),
@@ -212,3 +212,4 @@ export function getA1GrammarChecks(assignmentId, slide = {}) {
     ),
   );
 }
+

@@ -177,15 +177,15 @@ const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
   },
   "A1-14.1": {
     objective: "Students can describe simple pain and symptoms and use a health problem as the reason in a short informal A1 message, building on the letter-writing sequence from A1-12.3 and A1-13.",
-    warmupQuestionsDe: ["Welche Teile hat unsere kurze Nachricht aus 12.3 und 13?", "Was sagst du bei Kopfschmerzen oder Fieber?", "Wie sagst du höflich, dass du wegen deiner Gesundheit nicht kommen kannst?"],
-    keyPhrasesDe: ["Lieber Felix, danke für deine Einladung.", "Leider kann ich nicht zu deinem Geburtstag kommen.", "Ich bin krank. Ich habe Fieber und Kopfschmerzen.", "Können wir uns nächste Woche treffen?", "Liebe Grüße"],
+    warmupQuestionsDe: ["Wie gratulierst du Felix zum Geburtstag?", "Was sagst du bei Kopfschmerzen oder Fieber?", "Wie sagst du höflich, dass du wegen deiner Gesundheit nicht kommen kannst?"],
+    keyPhrasesDe: ["Lieber Felix, danke für deine Einladung.", "Leider kann ich nicht zu deinem Geburtstag kommen.", "Ich bin krank. Ich habe Fieber und Kopfschmerzen.", "Herzlichen Glückwunsch zum Geburtstag!", "Wann hast du Zeit?", "Können wir uns am Montag um 16 Uhr treffen?", "Liebe Grüße"],
     studentQuestionsDe: ["Welche Symptome hast du?", "Wie sagst du: I cannot come because I am sick, in simple A1 German?", "Welcher Gesundheitsgrund passt zu einer Absage?", "Welchen neuen Termin kannst du vorschlagen?"],
     teacherNotesEn: ["Make the progression explicit: Day 14.1 still has exactly three content points—cannot attend, concrete health reason, new meeting suggestion. Greeting, closing and name remain letter form, not extra task bullets.", "Teach health language as useful letter content, not only as isolated body-part vocabulary.", "Keep the reason A1-simple: two short sentences such as Leider kann ich nicht kommen. Ich habe Fieber. are fully acceptable; do not force a weil-clause.", "Keep informal register consistent because the message is to Felix: Lieber Felix / Liebe Grüße."],
     interactionFlow: [
-      { phase: "Writing recall", detailEn: "5 min: recall the rule from A1-12.3 and A1-13: exactly three content points, with greeting/closing/name checked separately as letter form." },
+      { phase: "Letter language recall", detailEn: "5 min: say a birthday wish from A1-12.3, a weather reason from A1-13, and a new-meeting question; now replace the weather reason with a health reason." },
       { phase: "Health language", detailEn: "8 min: practise haben + symptom and body part + tut/tun weh with familiar A1 examples." },
       { phase: "Health becomes a reason", detailEn: "10 min: turn a symptom into a reason for missing an event, for example: Leider kann ich nicht kommen. Ich habe Fieber." },
-      { phase: "Three-point check", detailEn: "10 min: identify point 1 (cannot attend), point 2 (concrete health reason) and point 3 (new meeting), then separate these from greeting/closing/name." },
+      { phase: "Grammar in the message", detailEn: "10 min: each student answers one concrete check on bin/habe, tut/tun weh, kann + infinitive, W-question order or am + day / um + time, then uses the answer in a short message." },
       { phase: "Guided third letter", detailEn: "12 min: students write to Felix and tick exactly three content points before checking greeting, closing and name." },
       { phase: "Timed independent transfer", detailEn: "15 min: write and self-check a fresh short A1 message using a different health reason without copying the model." },
     ],
@@ -216,3 +216,4 @@ export function enhanceA1GenericLessonSlide(slide = {}) {
 }
 
 export const A1_GENERIC_LESSON_UPGRADE_IDS = Object.freeze(Object.keys(A1_LESSON_CONTENT_UPGRADES));
+
