@@ -40,6 +40,14 @@ function finalMockAttemptLabel(row = {}) {
   if (explicit) return explicit;
 
   const attemptType = String(row.attemptType || "").trim().toLowerCase();
+  const hasSectionScores = Boolean(
+    row.sectionScores
+    && typeof row.sectionScores === "object"
+    && Object.keys(row.sectionScores).length,
+  );
+  const hasFinalMockMetadata = Boolean(attemptType || hasSectionScores);
+  if (!hasFinalMockMetadata) return "";
+
   const attemptNumber = Math.max(1, Number(row.attempt) || 1);
   if (attemptType === "readiness" || row.firstAttempt === true) return "First readiness attempt";
   if (attemptType === "practice" || attemptNumber > 1) return `Practice attempt ${attemptNumber}`;
