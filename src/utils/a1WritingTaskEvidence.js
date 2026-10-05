@@ -109,12 +109,33 @@ function evaluateA13(taskPoints, source) {
   ];
 }
 
+function questionClauses(source = "") {
+  const original = String(source || "").replace(/\r/g, "");
+  const protectPeriods = (value = "") => value.replace(/\./g, "·");
+  const masked = original
+    .replace(/\b\d{1,2}\.\d{1,2}(?:\.\d{2,4})?\.?/g, protectPeriods)
+    .replace(/\b(?:z\.\s*B\.|d\.\s*h\.|u\.\s*a\.|bzw\.|ca\.|usw\.|etc\.|Dr\.|Prof\.|Nr\.)/gi, protectPeriods);
+
+  const questions = [];
+  let start = 0;
+  for (let index = 0; index < masked.length; index += 1) {
+    const char = masked[index];
+    if (char === "." || char === "!" || char === "\n") start = index + 1;
+    if (char !== "?") continue;
+    const question = clean(original.slice(start, index + 1));
+    if (question) questions.push(question);
+    start = index + 1;
+  }
+  return questions;
+}
+
 function evaluateA1123(taskPoints, source) {
   const informal = partText(source, "teil1");
   const formal = partText(source, "teil2");
 
   const congratulations = /\b(?:alles\s+gute|herzlichen\s+gl[uü]ckwunsch|gratuliere|gratulieren)\b/i;
-  const party = /\b(?:geburtstags?feier|feier|party)\b[^.!?]{0,60}\?|\bgibt\s+es\s+(?:eine\s+)?(?:geburtstags?feier|feier|party)\b/i;
+  const partyNoun = /\b(?:geburtstags?feier|feier|party)\b/i;
+  const partyEvidence = questionClauses(informal).find((question) => partyNoun.test(question)) || "";
   const familyCome = /\b(?:familie)\b[^?]{0,80}\b(?:mitkommen|kommen)\b|\bkann\s+meine\s+familie\s+mitkommen\b/i;
 
   const starts = /\bwann\s+beginnt\s+(?:der\s+)?kurs\b/i;
@@ -124,7 +145,7 @@ function evaluateA1123(taskPoints, source) {
 
   return [
     row(taskPoints[0], congratulations.test(informal), sentenceFor(informal, congratulations)),
-    row(taskPoints[1], party.test(informal), sentenceFor(informal, party)),
+    row(taskPoints[1], Boolean(partyEvidence), partyEvidence),
     row(taskPoints[2], familyCome.test(informal), sentenceFor(informal, familyCome)),
     row(taskPoints[3], starts.test(formal), sentenceFor(formal, starts)),
     row(taskPoints[4], costs.test(formal), sentenceFor(formal, costs)),
