@@ -246,6 +246,74 @@ Ama Mensah`;
   assert.ok(evidence.every((item) => item.status === "met"), JSON.stringify(evidence, null, 2));
 });
 
+test("A1-12.3 accepts Samuel's clear party and course-cost questions despite A1 spelling errors", () => {
+  const submission = `TEIL 1
+Lieber Jerome,
+Ich hoffe, dass es dir gut geht. Ich schreibe dir, weil ich dir zum Geburtstag gratulieren möchte.Gibt es eine Geburtstagfeier?Kann meine Familie mitkommen? Ich werde Kekse und Geschenke für deinen Geburtstag mitbringen.
+
+Viele Grüße,
+Samuel.
+
+TEIL 2
+Sehr geehrte Damen und Herren,
+Ich hoffe,dass es Ihnen gut geht.Ich schreibe Ihnen, weil Ich den Deutschkurz besuchen möchte. Wann beginnt der Kurs? Wie veil kostet der Kurs? Kann Ich online bezahlen?
+Mit freundlichen Grüßen,
+Samuel Kumar.`;
+
+  const task = getA1WritingTaskSpec("A1-12.3");
+  const evidence = evaluateA1WritingTaskEvidence(task, submission);
+
+  assert.equal(evidence.length, 6);
+  assert.ok(evidence.every((item) => item.status === "met"), JSON.stringify(evidence, null, 2));
+  assert.match(evidence[1].evidence, /Geburtstagfeier/i);
+  assert.match(evidence[4].evidence, /Wie veil kostet der Kurs/i);
+
+  const guarded = applyQuestionAwareWritingGuard({
+    assignmentKey: "A1-12.3",
+    level: "A1",
+    writingScore: 70,
+    writingScorePercent: 70,
+    score: 70,
+    finalScore: 70,
+    status: "marked",
+    shouldSendAutomatically: true,
+    taskCompletion: {
+      completed: 4,
+      total: 6,
+      missing: [
+        "Teil 1: Ask whether there is a party",
+        "Teil 2: Ask how much the course costs",
+      ],
+    },
+    missingTaskPoints: [
+      "Teil 1: Ask whether there is a party",
+      "Teil 2: Ask how much the course costs",
+    ],
+    reviewReasons: [{
+      code: "missing_task_points",
+      message: "Required writing points are missing: Teil 1: Ask whether there is a party; Teil 2: Ask how much the course costs.",
+      source: "question_aware_writing",
+    }],
+    corrections: [{
+      partId: "teil2",
+      from: "Wie veil kostet der Kurs?",
+      to: "Wie viel kostet der Kurs?",
+      reason: "Spelling error in 'viel'.",
+    }],
+    parts: [],
+  }, {
+    referenceEntry: referenceEntry("A1-12.3"),
+    submission: { assignmentId: "A1-12.3", level: "A1" },
+  }, submission);
+
+  assert.deepEqual(guarded.missingTaskPoints || [], []);
+  assert.equal(guarded.taskCompletion.completed, 6);
+  assert.equal(guarded.taskCompletion.total, 6);
+  assert.equal(guarded.writingDimensions.taskFulfilment, 100);
+  assert.equal(guarded.writingScore, 70, "task fulfilment repair must not inflate the language score");
+  assert.equal((guarded.reviewReasons || []).some((item) => item.code === "missing_task_points"), false);
+});
+
 test("complete A1 task evidence does not inflate the examiner's language score", () => {
   const submission = `Teil 3
 Liebe Bina,
