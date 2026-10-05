@@ -187,24 +187,36 @@ function resolveAnnouncementConfig(runtimeConfig = {}, env = process.env) {
 
 async function postAnnouncementRow(config, row, fetchImpl = fetch) {
   if (!config.url) {
-    throw new Error("Announcement webhook is not configured for final mock result emails.");
+    const error = new Error("Announcement webhook is not configured for final mock result emails.");
+    error.deliveryAttempted = false;
+    throw error;
   }
-  const response = await fetchImpl(config.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...(config.token ? { token: config.token } : {}),
-      ...(config.sheetName ? { sheet_name: config.sheetName } : {}),
-      ...(config.sheetGid ? { sheet_gid: config.sheetGid } : {}),
-      event_id: row.event_id,
-      idempotency_key: row.idempotency_key,
-      row,
-      rows: [row],
-    }),
-  });
+
+  let response;
+  try {
+    response = await fetchImpl(config.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...(config.token ? { token: config.token } : {}),
+        ...(config.sheetName ? { sheet_name: config.sheetName } : {}),
+        ...(config.sheetGid ? { sheet_gid: config.sheetGid } : {}),
+        event_id: row.event_id,
+        idempotency_key: row.idempotency_key,
+        row,
+        rows: [row],
+      }),
+    });
+  } catch (fetchError) {
+    fetchError.deliveryAttempted = true;
+    throw fetchError;
+  }
+
   const body = await response.json().catch(() => ({}));
   if (!response.ok || body?.ok === false) {
-    throw new Error(body?.error || body?.message || `Announcement webhook returned HTTP ${response.status}`);
+    const error = new Error(body?.error || body?.message || `Announcement webhook returned HTTP ${response.status}`);
+    error.deliveryAttempted = true;
+    throw error;
   }
   return body;
 }
@@ -360,6 +372,20 @@ async function processFinalMockResultScore({
     };
   } catch (error) {
     const message = error?.message || String(error);
+
+    if (error?.deliveryAttempted === false) {
+      await reservation.ref.set({
+        status: "failed",
+        failedAt: timestamp,
+        updatedAt: timestamp,
+        lastError: message,
+        historyId,
+      }, { merge: true });
+      await writeAnnouncementHistory({
+        db, admin, scoreId, score, row, status: "failed", error: message,
+      }).catch(() => undefined);
+      throw error;
+    }
 
     // Once the POST has been attempted, a transport failure can be ambiguous:
     // Apps Script may already have accepted and emailed the row even if Firebase
