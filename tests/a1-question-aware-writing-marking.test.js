@@ -267,6 +267,27 @@ Samuel Kumar`);
   assert.match(evidence[1].label, /party/i);
 });
 
+test("A1-12.3 keeps a terminal date period as a sentence boundary", () => {
+  const task = getA1WritingTaskSpec("A1-12.3");
+  const evidence = evaluateA1WritingTaskEvidence(task, `teil1
+Lieber Jerome,
+Herzlichen Glückwunsch zum Geburtstag.
+Es gibt eine Geburtstagsfeier am 12.10. Kann meine Familie mitkommen?
+Viele Grüße
+Samuel
+
+teil2
+Sehr geehrte Damen und Herren,
+Wann beginnt der Kurs? Wie viel kostet der Kurs? Kann ich online bezahlen?
+Mit freundlichen Grüßen
+Samuel Kumar`);
+
+  assert.equal(evidence.length, 6);
+  assert.equal(evidence[1].status, "missing");
+  assert.equal(evidence[2].status, "met");
+  assert.match(evidence[1].label, /party/i);
+});
+
 test("A1-12.3 preserves dates and abbreviations inside genuine party questions", () => {
   const task = getA1WritingTaskSpec("A1-12.3");
   const variants = [

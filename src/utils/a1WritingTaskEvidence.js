@@ -113,7 +113,13 @@ function questionClauses(source = "") {
   const original = String(source || "").replace(/\r/g, "");
   const protectPeriods = (value = "") => value.replace(/\./g, "·");
   const masked = original
-    .replace(/\b\d{1,2}\.\d{1,2}(?:\.\d{2,4})?\.?/g, protectPeriods)
+    .replace(/\b(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)(\.)?/g, (match, date, trailingPeriod, offset, whole) => {
+      const protectedDate = protectPeriods(date);
+      if (!trailingPeriod) return protectedDate;
+      const rest = whole.slice(offset + match.length);
+      const sentenceClearlyContinues = /^\s*(?:[a-zäöüß0-9]|[,:;?)\]}])/u.test(rest);
+      return protectedDate + (sentenceClearlyContinues ? "·" : ".");
+    })
     .replace(/\b(?:z\.\s*B\.|d\.\s*h\.|u\.\s*a\.|bzw\.|ca\.|usw\.|etc\.|Dr\.|Prof\.|Nr\.)/gi, protectPeriods);
 
   const questions = [];
