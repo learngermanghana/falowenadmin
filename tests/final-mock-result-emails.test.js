@@ -351,6 +351,20 @@ test("Firebase production workflow deploys and validates the final mock result w
   assert.match(firebase, /node --check functions\/finalMockResultEmails\.js/);
 });
 
+test("maintained Announcement Apps Script enforces event-level idempotency", () => {
+  const script = fs.readFileSync(
+    path.join(root, "docs/apps-script/announcement-idempotent-webhook.gs"),
+    "utf8",
+  );
+
+  assert.match(script, /LockService\.getScriptLock/);
+  assert.match(script, /body\.event_id/);
+  assert.match(script, /idempotency_key/);
+  assert.match(script, /announcementEventExists_/);
+  assert.match(script, /duplicate: true/);
+  assert.match(script, /event_id/);
+});
+
 test("final mock email reuses shared Announcement webhook configuration", () => {
   const config = resolveAnnouncementConfig({
     communication: {
