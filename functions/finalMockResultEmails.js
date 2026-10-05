@@ -430,7 +430,7 @@ function createFinalMockResultEmailTrigger({
 
   return onDocumentCreated({
     document: "scores/{scoreId}",
-    retry: true,
+    retry: false,
   }, async (event) => {
     const snap = event?.data;
     if (!snap?.exists) return { sent: false, reason: "score_missing" };
