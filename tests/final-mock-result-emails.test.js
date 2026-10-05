@@ -17,6 +17,7 @@ const {
   buildFinalMockResultMessage,
   isFinalMockScore,
   resolveAnnouncementConfig,
+  upstreamEventId,
 } = _test;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -146,6 +147,8 @@ test("A2 practice attempt is labelled and targeted to one learner", () => {
   assert.equal(row.delivery_mode, "individual");
   assert.equal(row.allow_bcc_fallback, "FALSE");
   assert.equal(row.email_type, "final_mock_result");
+  assert.equal(row.event_id, upstreamEventId("score-a2-2"));
+  assert.equal(row.idempotency_key, upstreamEventId("score-a2-2"));
   assert.equal(row.cert_level, "A2");
   assert.equal(row.attempt_label, "Practice attempt 2");
   assert.equal(row.score, "64");
@@ -193,6 +196,9 @@ test("final mock result sends through the shared Announcement webhook and record
   assert.equal(webhookPayload.sheet_name, "Announcements");
   assert.equal(webhookPayload.rows.length, 1);
   assert.equal(webhookPayload.rows[0].email_type, "final_mock_result");
+  assert.equal(webhookPayload.event_id, webhookPayload.rows[0].event_id);
+  assert.equal(webhookPayload.idempotency_key, webhookPayload.rows[0].idempotency_key);
+  assert.equal(webhookPayload.event_id, upstreamEventId("a1-final-mock-AMA123-attempt-a1-1"));
   assert.equal(webhookPayload.rows[0].student_code, "AMA123");
   assert.equal(webhookPayload.rows[0].score, "78");
 
@@ -228,6 +234,77 @@ test("dedupe state prevents the same completed attempt from emailing twice", asy
   assert.equal(result.sent, false);
   assert.equal(result.reason, "already_sent");
   assert.equal(fetchCount, 0);
+});
+
+test("ambiguous webhook failure is terminal and is not made retryable", async () => {
+  const { db, sendWrites, historyWrites } = testDb();
+
+  const result = await processFinalMockResultScore({
+    db,
+    admin: testAdmin(),
+    runtimeConfig: {
+      communication: { announcement_webhook_url: "https://example.test/announcement" },
+    },
+    scoreId: "a1-final-mock-AMA123-ambiguous",
+    score: score({ mockAttemptId: "attempt-ambiguous" }),
+    fetchImpl: async () => {
+      const error = new Error("socket closed after upload");
+      throw error;
+    },
+  });
+
+  assert.equal(result.sent, false);
+  assert.equal(result.reason, "delivery_uncertain");
+  assert.equal(result.retryable, false);
+  assert.equal(result.eventId, upstreamEventId("a1-final-mock-AMA123-ambiguous"));
+  assert.equal(sendWrites.at(-1).status, "delivery_uncertain");
+  assert.equal(historyWrites.at(-1).deliveryStatus, "delivery_uncertain");
+});
+
+test("delivery-uncertain reservation suppresses a later automatic retry", async () => {
+  const { db } = testDb({
+    existingSend: {
+      status: "delivery_uncertain",
+      deliveryUncertainAt: new Date("2026-10-05T19:00:00Z"),
+    },
+  });
+  let fetchCount = 0;
+
+  const result = await processFinalMockResultScore({
+    db,
+    admin: testAdmin(),
+    runtimeConfig: {
+      communication: { announcement_webhook_url: "https://example.test/announcement" },
+    },
+    scoreId: "a1-final-mock-AMA123-ambiguous",
+    score: score(),
+    fetchImpl: async () => {
+      fetchCount += 1;
+      return { ok: true, status: 200, async json() { return { ok: true }; } };
+    },
+  });
+
+  assert.equal(result.sent, false);
+  assert.equal(result.reason, "delivery_uncertain");
+  assert.equal(fetchCount, 0);
+});
+
+test("missing webhook configuration stays retryable because delivery never started", async () => {
+  const { db, sendWrites, historyWrites } = testDb();
+
+  await assert.rejects(
+    processFinalMockResultScore({
+      db,
+      admin: testAdmin(),
+      runtimeConfig: {},
+      scoreId: "a2-final-mock-missing-config",
+      score: score({ source: "a2_final_mock", level: "A2" }),
+    }),
+    /webhook is not configured/i,
+  );
+
+  assert.equal(sendWrites.at(-1).status, "failed");
+  assert.equal(historyWrites.at(-1).deliveryStatus, "failed");
 });
 
 test("non-mock score creation is ignored by the trigger", async () => {
