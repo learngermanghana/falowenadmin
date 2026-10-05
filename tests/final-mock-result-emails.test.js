@@ -266,6 +266,12 @@ test("Falowen Admin index exports the final mock result trigger", () => {
   assert.match(source, /onDocumentCreated/);
 });
 
+test("Firebase production workflow deploys the final mock result worker", () => {
+  const workflow = fs.readFileSync(path.join(root, ".github/workflows/deploy-firebase.yml"), "utf8");
+  assert.match(workflow, /functions:falowenadmin:sendFinalMockResultEmail/);
+  assert.match(workflow, /exports\.sendFinalMockResultEmail = createFinalMockResultEmailTrigger/);
+});
+
 test("final mock email reuses shared Announcement webhook configuration", () => {
   const config = resolveAnnouncementConfig({
     communication: {
