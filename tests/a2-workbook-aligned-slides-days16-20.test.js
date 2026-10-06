@@ -84,9 +84,12 @@ test("Day 16 follows the actual reflexive-verbs grammar page", () => {
   assert.match(slide.teacherNotesEn.join(" "), /actual Day 16 grammar page.*reflexive verbs/i);
 });
 
-test("Day 17 keeps the A2 context query on the shared modal-verbs route", () => {
+test("Day 17 keeps the A2 context query and uses the Hamburg Lesen", () => {
   const slide = getA2WorkbookAlignedSlideDay16To20("A2-6.17");
   assert.equal(slide.workbookConnection.grammarUrl, "/campus/course/modal-verbs-day-14-3-6?level=A2&day=17");
+  const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
+  assert.match(reading.detailEn, /Hamburg|harbour cruise|Gästekarte|Richtig\/Falsch/i);
+  assert.match(slide.teacherNotesEn.join(" "), /Hamburg|Richtig\/Falsch/i);
 });
 
 test("Day 19 keeps the furniture-shopping invitation distinct from the consumption lesson", () => {

@@ -1634,11 +1634,14 @@
   "A2 6.17 In die Apotheke gehen": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Ruhe und viel trinken",
-        "Answer2": "A) Lutschtabletten",
-        "Answer3": "B) Nur wenige Tage",
-        "Answer4": "A) Bei hohem Fieber oder starken Schmerzen",
-        "Answer5": "C) Sie müssen zum Alter passen."
+        "Answer1": "B) Eine Stunde",
+        "Answer2": "B) 20 Euro",
+        "Answer3": "C) Um 20 Uhr",
+        "Answer4": "A) Richtig",
+        "Answer5": "B) Falsch",
+        "Answer6": "A) Richtig",
+        "Answer7": "B) Falsch",
+        "Answer8": "A) Richtig"
       },
       "teil4": {
         "Answer1": "B) Wegen Kopfschmerzen",

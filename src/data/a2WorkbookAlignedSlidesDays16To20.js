@@ -160,14 +160,14 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       "Keep the modal structure visible: conjugated modal in position 2, infinitive at the end.",
       "Follow the workbook speaking map: pharmacy jobs, symptoms, medication types, dialogue, prescriptions/dosage/side effects and pharmacy rules.",
       "Bridge to the writing task: explain why the medication is needed, ask about price/insurance and ask about dosage or possible side effects.",
-      "Lesen and Hören both follow pharmacy visits, so recycle symptom, recommendation, medication and service vocabulary across all parts.",
+      "Teil 3 Lesen now uses a Hamburg city-experience task with three multiple-choice items and five Richtig/Falsch statements. Teil 4 Hören remains the existing pharmacy listening task.",
     ],
     interactionFlow: [
       { phase: "Symptom sort", detailEn: "6 min: classify common symptoms and choose a suitable medicine/remedy vocabulary item." },
       { phase: "Modal meaning", detailEn: "9 min: contrast können, müssen and sollen through pharmacy questions, instructions and recommendations." },
       { phase: "Pharmacy counter", detailEn: "12 min: customer states symptoms and asks two questions; pharmacist recommends and explains dosage." },
       { phase: "Mini presentation", detailEn: "8 min: students explain when they go to a pharmacy and what information they need there." },
-      { phase: "Workbook bridge", detailEn: "6 min: outline the medication email and preview the reading/listening details about cough, headache, spray, tablets and advice." },
+      { phase: "Workbook bridge", detailEn: "6 min: outline the medication email, preview the Hamburg Lesen structure (3 multiple-choice + 5 Richtig/Falsch), then bridge to the existing pharmacy Hören." },
     ],
     wrapUpTaskDe: "Spiele eine kurze Apotheken-Situation: Nenne ein Problem, stelle eine Frage mit können oder sollen und wiederhole eine Empfehlung mit müssen.",
     workbookConnection: {
@@ -177,12 +177,12 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
         { label: "Grammar", detailEn: "Modal verbs in pharmacy communication: können for polite requests/possibility, müssen for necessity and sollen for recommendations; the infinitive stays at the end." },
         { label: "Teil 1 · Sprechen", detailEn: "Build pharmacy language around jobs, symptoms, medication, dialogue, prescriptions, dosage, side effects, package leaflets and emergency pharmacy services." },
         { label: "Teil 2 · Schreiben", detailEn: "Email/letter to a pharmacy about a medication: explain why it is needed, ask about costs/insurance and ask about dosage or side effects." },
-        { label: "Teil 3 · Lesen", detailEn: "A winter pharmacy visit: cold symptoms, cough syrup, throat tablets, nasal spray, home remedies, brochures and improvement after treatment." },
+        { label: "Teil 3 · Lesen", detailEn: "Hamburg city-experience reading: harbour cruise duration and Gästekarte price, Elbphilharmonie concert time, then five Richtig/Falsch statements about the two-day stay, Restaurant Seeblick, museum, Stadtpark and city map." },
         { label: "Teil 4 · Hören", detailEn: "Anna at the pharmacy: reason for visit, recommended headache medicine, an additional symptom, reaction to advice and an extra product/sample." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 17 turns pharmacy vocabulary into a functional modal-verb lesson. Students state a problem, ask for help, understand a recommendation and explain how medication should be taken, then repeat the same communication pattern in writing, reading and listening.",
+      lessonOverviewEn: "Day 17 keeps the pharmacy modal-verb speaking and writing lesson, while Teil 3 Lesen is now a separate Hamburg comprehension task with multiple-choice and Richtig/Falsch items. Teil 4 Hören remains the existing pharmacy listening assessment."
       grammarFocusEn: [
         "können expresses possibility and is useful for polite requests: Können Sie mir etwas empfehlen?",
         "müssen expresses necessity: Ich muss das Medikament zweimal täglich nehmen.",
