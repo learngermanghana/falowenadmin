@@ -160,14 +160,14 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "If the time expression is first, keep the conjugated verb in position 2: Am Dienstag arbeite ich ..., not Am Dienstag ich arbeite ... .",
       "Use können for current availability and müssen for an obligation; with the modal verb, keep the infinitive at the end.",
       "Follow the workbook speaking map across weekdays, work/school times, leisure, household chores, appointments and errands.",
-      "Bridge to the lunch invitation: explain why you are inviting the person, give date/time/place and explain what to bring or expect. Treat the Gülcan student-life Lesen and the Goethe Hören self-check as separate assessment practice.",
+      "Bridge to the lunch invitation: explain why you are inviting the person, give date/time/place and explain what to bring or expect. Treat the Hamburg tourist-information Lesen as the separate assessment practice for this workbook.",
     ],
     interactionFlow: [
       { phase: "Calendar build", detailEn: "7 min: students fill three weekday slots with work/study, one appointment and one leisure activity." },
       { phase: "Future Präsens", detailEn: "8 min: transform calendar entries into sentences with morgen, am ..., um ... Uhr and verb-second order." },
       { phase: "Modal constraints", detailEn: "8 min: add one kann/kann nicht availability statement and one muss obligation to the weekly plan." },
       { phase: "Lunch invitation", detailEn: "10 min: role-play and outline the exact writing task with reason, date/time/place and expectations." },
-      { phase: "Workbook bridge", detailEn: "6 min: introduce the Gülcan reading as separate student-life comprehension and clarify the Goethe listening self-check." },
+      { phase: "Workbook bridge", detailEn: "6 min: introduce the Hamburg tourist-information reading and show students how to scan for price, time, place and benefits." },
     ],
     wrapUpTaskDe: "Beschreibe drei Tage deiner Woche in 5 Sätzen. Benutze mindestens eine Uhrzeit, einmal kann/kann nicht und einmal muss.",
     workbookConnection: {
@@ -182,7 +182,7 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 22 teaches learners to make a weekly plan sound natural in German: time phrase + Präsens for fixed near-future plans, plus können/müssen to show availability and obligations. The speaking and writing are planning-focused; the reading and listening are separate assessment components.",
+      lessonOverviewEn: "Day 22 teaches learners to make a weekly plan sound natural in German: time phrase + Präsens for fixed near-future plans, plus können/müssen to show availability and obligations. The speaking and writing are planning-focused; the Hamburg reading is the separate assessment component.",
       grammarFocusEn: [
         "German commonly uses Präsens for a fixed near-future plan when the time is clear: Morgen treffe ich meine Freundin.",
         "If a time expression occupies position 1, the conjugated verb remains position 2: Am Montag arbeite ich bis 17 Uhr.",
