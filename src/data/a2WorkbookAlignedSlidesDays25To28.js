@@ -7,7 +7,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     assignmentId: "A2-9.25",
     title: "A2 Day 25 · Tagesablauf",
     topic: "9.25 Tagesablauf",
-    objective: "Students describe daily routines with Präsens, time expressions, separable verbs and sequencing words, then complete the Hamburg Tagesablauf reading as the only submitted workbook assessment."
+    objective: "Students describe daily routines with Präsens, time expressions, separable verbs and sequencing words, then complete the Hamburg Tagesablauf reading as the only submitted workbook assessment.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Wann stehst du normalerweise auf?",
@@ -57,15 +57,15 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Day 25 has no separate grammar-notes route. The grammar is taught inside the workbook: Präsens for routines, time expressions, separable verbs such as aufstehen and fernsehen, and sequence words such as dann, danach and später.",
       "Keep the separable-verb frame visible: Ich stehe um 7 Uhr auf. / Abends sehe ich fern.",
       "Build the speaking answer chronologically: Morgenroutine → Arbeit/Schule → Mittag/Nachmittag → Abend → Freizeit/Hobbys.",
-      "Bridge directly into the email: describe morning plus work/school, describe the evening, then ask about the friend's daily routine.",
-      "This workbook is structurally different: it has two reading sections and no Hören. Teil 3 follows Anna's daily routine; Teil 4 is a separate travel/hotel reading about Familie Meyer.",
+      "Bridge to the Hamburg Tagesablauf reading: learners scan the two-day itinerary for sequence, price, place and time details.",
+      "Lesen is the only submitted Day 25 assessment. There is no Schreiben or Hören submission.",
     ],
     interactionFlow: [
       { phase: "Timeline warm-up", detailEn: "6 min: students place five routine actions from waking up to bedtime on a simple timeline." },
       { phase: "Separable verbs", detailEn: "8 min: build and correct routine sentences with aufstehen and fernsehen, keeping the prefix at the end." },
       { phase: "Sequence practice", detailEn: "8 min: connect four actions with morgens, dann, danach, später and abends." },
       { phase: "Routine presentation", detailEn: "10 min: learners give a 30–45 second daily-routine mini-presentation in chronological order." },
-      { phase: "Workbook bridge", detailEn: "7 min: outline the routine email, preview Anna's routine reading and label the Familie Meyer travel reading as a separate second Lesen task; confirm there is no Hören." },
+      { phase: "Workbook bridge", detailEn: "7 min: preview Mein Tagesablauf in Hamburg and practise locating sequence, price, place and time details; confirm Lesen is the only submitted assessment." },
     ],
     wrapUpTaskDe: "Beschreibe deinen Tagesablauf in 6 Sätzen. Benutze mindestens ein trennbares Verb und die Wörter dann, danach oder später.",
     workbookConnection: {
@@ -75,9 +75,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       parts: [
         { label: "Grammar", detailEn: "Inline workbook grammar: use Präsens for regular routines, time expressions to locate actions, separable verbs such as aufstehen/fernsehen, and sequencing words such as dann, danach and später." },
         { label: "Teil 1 · Sprechen", detailEn: "Group practice only: describe Morgenroutine, Arbeit/Schule, Mittagspause, Nachmittag, Abendroutine and Freizeit/Hobbys as one chronological mini-presentation." },
-        { label: "Teil 2 · Schreiben", detailEn: "Email to a friend about your daily routine: describe your morning and work/school day, explain what you do in the evening, and ask about the friend's daily routine." },
-        { label: "Teil 3 · Lesen", detailEn: "Anna's daily routine: waking time, breakfast, morning activities, returning home and what she does after homework." },
-        { label: "Teil 4 · Lesen", detailEn: "Separate second reading: Familie Meyer travels on holiday and checks into a hotel. Do not label this as Hören; the Day 25 workbook explicitly has no listening assignment." },
+        { label: "Teil 3 · Lesen", detailEn: "Goethe A2 Lesen Teil 1: Mein Tagesablauf in Hamburg. Follow the tourist across two days and answer five questions on the harbor tour, price, restaurant, concert time, museum and Stadtpark." },
       ],
     },
     teacherSupport: {
