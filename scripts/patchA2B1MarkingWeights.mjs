@@ -162,7 +162,7 @@ service = replaceOnce(
 service = replaceOnce(
   service,
   `      deterministicObjectiveWeight: hasWritingScore ? OBJECTIVE_WEIGHT : 1,\n      deterministicWritingWeight: hasWritingScore ? WRITING_WEIGHT : 0,`,
-  `      deterministicObjectiveWeight: hasWritingScore ? 0.6 : 1,\n      deterministicWritingWeight: hasWritingScore ? 0.4 : 0,\n      deterministicPartWeights: hasWritingScore ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 } : null,`,
+  `      deterministicObjectiveWeight: hasWritingScore ? 0.6 : 1,\n      deterministicWritingWeight: hasWritingScore ? 0.4 : 0,\n      deterministicPartWeights: hasWritingScore ? (weightedOutcome.policy === "a2-b1-40-60" ? { teil2: 0.4, objective: 0.6 } : { teil2: 0.4, teil3: 0.3, teil4: 0.3 }) : null,`,
   "marking service diagnostic weights",
 );
 const sheetBreakdownAnchor = `function buildScoreBreakdown(details = {}, row = {}) {\n  if (Array.isArray(details.scoreBreakdown) && details.scoreBreakdown.length) return details.scoreBreakdown;\n  const breakdown = [];`;
@@ -201,7 +201,7 @@ router = replaceOnce(
 router = replaceOnce(
   router,
   `      deterministicObjectiveWeight: hasWriting ? OBJECTIVE_WEIGHT : 1,\n      deterministicWritingWeight: hasWriting ? WRITING_WEIGHT : 0,`,
-  `      deterministicObjectiveWeight: hasWriting ? 0.6 : 1,\n      deterministicWritingWeight: hasWriting ? 0.4 : 0,\n      deterministicPartWeights: hasWriting ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 } : null,`,
+  `      deterministicObjectiveWeight: hasWriting ? 0.6 : 1,\n      deterministicWritingWeight: hasWriting ? 0.4 : 0,\n      deterministicPartWeights: hasWriting ? (weightedOutcome.policy === "a2-b1-40-60" ? { teil2: 0.4, objective: 0.6 } : { teil2: 0.4, teil3: 0.3, teil4: 0.3 }) : null,`,
   "API diagnostic weights",
 );
 fs.writeFileSync(routerPath, router);
