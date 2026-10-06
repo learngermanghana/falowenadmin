@@ -749,7 +749,7 @@ function buildC2WritingBridge(slide = {}) {
       instruction: "Nutze dieselbe Leitfrage wie im Unterricht. Noch nicht ausformulieren: übertrage zuerst die mündlich entwickelte Argumentation in einen klaren Schreibplan.",
       prompts: [
         "These: Formuliere deine schriftliche Position zur Leitfrage in einem präzisen Satz.",
-        "Argumente: Entwickle zwei tragende Gründe. Jeder Grund braucht einen konkreten Bezug, ein Beispiel, eine Folge oder nachvollziehbare Evidenz.",
+        "Argumente: Entwickle zwei tragende Argumente. Jedes Argument braucht einen konkreten Bezug, ein Beispiel, eine Folge oder nachvollziehbare Evidenz.",
         "Einwand & Schluss: Nenne eine ernst zu nehmende Einschränkung oder Gegenposition, reagiere darauf und plane eine differenzierte Schlussposition.",
       ],
       centralQuestion,
