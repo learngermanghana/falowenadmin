@@ -210,7 +210,7 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
     assignmentId: "A2-9.23",
     title: "A2 Day 23 · Wie kommst du zur Schule oder zur Arbeit?",
     topic: "9.23 Schul- und Arbeitsweg",
-    objective: "Students describe commuting and transport with mit + Dativ, zu + Dativ and nach, discuss cars and transport choices, and prepare the car-dealer email plus transport reading while treating Hören as self-check.",
+    objective: "Students describe commuting and transport with mit + Dativ, zu + Dativ and nach, discuss transport choices, and complete the Markus commute reading as the assessed workbook task.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Wie kommst du normalerweise zur Arbeit oder zur Schule?",
@@ -260,15 +260,13 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       "Use the real Day 23 grammar page: transport normally uses mit + Dativ; destinations use zu + Dativ and nach for cities/countries without an article; zu Fuß is a fixed expression.",
       "Make the article change visible: die Bahn → mit der Bahn; der Bus → mit dem Bus.",
       "Follow the workbook speaking scope beyond commuting: transport types, car types/brands, car parts, traffic safety and everyday travel, while keeping the core personal prompt about the school/work route.",
-      "Bridge to the writing task: invite a friend to a car dealer because you need a car, propose when/where to meet and ask for the friend's opinion or model recommendation.",
-      "Lesen remains transport/travel related, but Teil 4 Hören is a Goethe video self-check; only Lesen and Schreiben are officially evaluated for this workbook.",
+      "Keep the workbook assessment focused on the Markus commute reading: scan for how he reaches the station, S-Bahn duration, why he avoids cycling in winter, Jan's parking problem and the 65-euro monthly ticket.",
     ],
     interactionFlow: [
       { phase: "Commute map", detailEn: "6 min: each student states origin, destination, transport and duration." },
       { phase: "Preposition sort", detailEn: "9 min: sort examples into mit + Dativ, zu/zur/zum, nach and the fixed phrase zu Fuß." },
       { phase: "Transport mini-presentation", detailEn: "10 min: route → reason → advantage/disadvantage → conclusion." },
-      { phase: "Car-dealer role-play", detailEn: "10 min: invite a friend, agree meeting details and ask for a recommendation." },
-      { phase: "Workbook bridge", detailEn: "6 min: preview the three-student transport reading and clarify the Goethe Hören self-check." },
+      { phase: "Reading bridge", detailEn: "10 min: preview Markus' commute blog and practise scanning for transport, duration, reason, problem and price." },
     ],
     wrapUpTaskDe: "Erkläre deinen Schul- oder Arbeitsweg in 5 Sätzen. Benutze mit + Dativ, eine Zielangabe mit zur/zum oder nach und einen Grund mit weil.",
     workbookConnection: {
@@ -277,13 +275,11 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
       parts: [
         { label: "Grammar", detailEn: "Transport: mit + Dativ (mit dem Bus, mit der Bahn). Destinations: zu + Dativ / zur / zum and nach for cities or countries without an article. Use the fixed expression zu Fuß." },
         { label: "Teil 1 · Sprechen", detailEn: "Discuss the school/work route and broader Autos und Transportmittel vocabulary: transport types, car types/brands, car parts, traffic rules/safety and everyday travel." },
-        { label: "Teil 2 · Schreiben", detailEn: "Email to a friend about going to a car dealer: explain why you need a car, suggest when and where to meet, and ask for the friend's opinion or recommended model." },
-        { label: "Teil 3 · Lesen", detailEn: "Transport/travel reading: Matthias, Bernd and Thomas describe trips, destinations and means of transport such as U-Bahn, car, bicycle, bus and motorcycle." },
-        { label: "Teil 4 · Hören", detailEn: "Goethe-standard YouTube self-check. Learners check their own answers with the video; the school officially evaluates Lesen and Schreiben for this workbook." },
+        { label: "Teil 3 · Lesen", detailEn: "Blogbeitrag “Mein Weg zur Arbeit”: Markus in Bremen walks to the station, takes the S-Bahn, sometimes cycles in summer, compares Jan's car commute and mentions a 65-euro monthly ticket." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 23 connects a practical commute description to transport prepositions. Students should be able to say how they travel, where they are going, how long the trip takes and why they choose that transport, then extend the topic into the car-dealer writing and transport reading.",
+      lessonOverviewEn: "Day 23 connects a practical commute description to transport prepositions. Students should be able to say how they travel, where they are going, how long the trip takes and why they choose that transport, then apply those skills to the Markus commute reading.",
       grammarFocusEn: [
         "Use mit + Dativ for most means of transport: mit dem Bus, mit der Bahn, mit dem Auto.",
         "Use zu + Dativ for many person/institution destinations and the contractions zur/zum: zur Arbeit, zur Schule, zum Bahnhof.",
