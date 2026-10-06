@@ -86,9 +86,9 @@ test("C2 keeps the current odd/even Write standard", () => {
     assert.equal(writing.items.length, 1);
 
     if (expected === "opinion") {
-      assert.match(writing.title, /Stellungnahme vorbereiten/i);
+      assert.match(writing.title, /dieselbe Leitfrage schriftlich/i);
       assert.match(JSON.stringify(writing), /zwei tragende Argumente/i);
-      assert.match(JSON.stringify(writing), /Einwand:/i);
+      assert.match(JSON.stringify(writing), /Einwand/i);
       assert.doesNotMatch(JSON.stringify(writing), /Vorrang · stärkere gesellschaftliche Orientierung/i);
       assert.equal(writing.items[0].prompts.length, 3);
     } else {
@@ -284,7 +284,7 @@ test("C2 Day 1 preserves the circular-economy teaching logic without another end
   assert.match(analysis.title, /Produktentscheidung/);
   assert.match(JSON.stringify(analysis), /Smartphone/);
   assert.match(JSON.stringify(analysis), /Ressourcenverbrauch/);
-  assert.match(writing.title, /Stellungnahme vorbereiten/);
+  assert.match(writing.title, /dieselbe Leitfrage schriftlich/i);
   assert.match(JSON.stringify(writing), /zwei tragende Argumente/i);
   assert.doesNotMatch(JSON.stringify(writing), /alle drei Perspektiven/i);
   assert.equal(stages.some((stage) => stage.id === "weekly-challenge"), false);
