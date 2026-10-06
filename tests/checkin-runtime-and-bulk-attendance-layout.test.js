@@ -28,3 +28,14 @@ test("Bulk attendance panel imports and uses its scoped layout stylesheet", () =
   assert.match(css, /\.bulk-attendance-row-copy/);
   assert.match(css, /@media \(max-width: 980px\)/);
 });
+
+
+test("CheckinDisplay anchors the live Ghana clock to backend serverTime", () => {
+  const page = fs.readFileSync("src/pages/CheckinDisplayPage.jsx", "utf8");
+  assert.match(page, /resolveDisplayStatusApiUrl/);
+  assert.match(page, /checkinStatus/);
+  assert.match(page, /data\?\.serverTime/);
+  assert.match(page, /performance\.now\(\)/);
+  assert.match(page, /serverClockAnchor\.serverTimeMs/);
+  assert.match(page, /Could not synchronize authoritative attendance clock/);
+});
