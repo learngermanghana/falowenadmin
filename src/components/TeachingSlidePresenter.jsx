@@ -755,6 +755,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </div>
             </aside>
           ) : null}
+          {presenterLevel === "C2" && stage.id !== "intro" && stage.centralQuestion ? (
+            <aside className="presenter-c2-guiding-question" aria-label="C2 Leitfrage">
+              <span>Leitfrage</span>
+              <strong>{stage.centralQuestion}</strong>
+            </aside>
+          ) : null}
           {stage.type === "intro" ? (
             <>
               {stage.skillTarget ? (
