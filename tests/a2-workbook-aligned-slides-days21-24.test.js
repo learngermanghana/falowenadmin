@@ -93,11 +93,11 @@ test("Day 21 keeps the Stefan Berger reading separate from weekend-condition gra
   assert.match(slide.teacherNotesEn.join(" "), /separate biography|Stefan Berger/i);
 });
 
-test("Day 22 keeps Gülcan student-life Lesen separate from weekly planning", () => {
+test("Day 22 keeps Hamburg tourist-information reading", () => {
   const slide = getA2WorkbookAlignedSlideDay21To24("A2-8.22");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   assert.match(reading.detailEn, /Separate comprehension topic/i);
-  assert.match(reading.detailEn, /Gülcan|international student/i);
+  assert.match(reading.detailEn, /Hamburg tourist-information reading
 });
 
 test("Day 23 keeps the transport reading aligned but Hören self-checked", () => {
