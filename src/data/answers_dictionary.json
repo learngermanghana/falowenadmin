@@ -3454,13 +3454,11 @@
   "B1 7.23 Erstes Date ? Typische Situationen": {
     "answers": {
       "teil3": {
-        "Answer1": "C) Elizabeth Magie Phillips",
-        "Answer2": "B) The Landlord’s Game",
-        "Answer3": "B) Wie unfair Monopole sind",
-        "Answer4": "C) Er gab es als seine eigene Idee aus.",
-        "Answer5": "D) So gut wie nichts",
-        "Answer6": "B) Weil Parker Brothers es verkaufte",
-        "Answer7": "B) Mary Pilon"
+        "Answer1": "B) Anzeige B",
+        "Answer2": "A) Anzeige A",
+        "Answer3": "D) Anzeige D",
+        "Answer4": "C) Anzeige C",
+        "Answer5": "E) Anzeige E"
       },
       "teil4": {}
     },

@@ -259,7 +259,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "The deep Day 23 grammar is available inside the workbook Grammar tab, but the lesson route does not expose a separate direct grammar page; leave grammarUrl unset and use the workbook link.",
       "Teach polite suggestions with könnten/würden, reasons with weil/da, conditions with wenn and balanced reactions with obwohl/aber.",
-      "Teil 3 is an unrelated seven-question reading about Elizabeth Magie Phillips and the history of Monopoly.",
+      "Teil 3 uses an Anzeigen matching task for first dates and partner search with five situations and six ads; one ad remains unused.",
       "Teil 4 is only a planned placeholder with no listening medium. The marking contract excludes teil4, so nothing should be submitted there.",
     ],
     interactionFlow: [
@@ -267,21 +267,21 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { phase: "Reason and condition", detailEn: "9 min: justify places with weil/da and build Wenn …, würde ich … responses." },
       { phase: "Date scenarios", detailEn: "12 min: role-play good chemistry, awkward silence, late arrival and polite rejection." },
       { phase: "Opinion rehearsal", detailEn: "9 min: respond to Sophie's view on the importance of a first date." },
-      { phase: "Workbook bridge", detailEn: "7 min: preview Monopoly vocabulary and make clear that the listening placeholder is not submitted." },
+      { phase: "Workbook bridge", detailEn: "7 min: preview first-date ads vocabulary and make clear that the listening placeholder is not submitted." },
     ],
     wrapUpTaskDe: "Formuliere zwei höfliche Vorschläge für ein erstes Date und begründe einen davon mit weil. Ergänze einen Wenn-Satz.",
     workbookConnection: workbookConnection(23, [
       { label: "Grammar", detailEn: "Open the workbook and use its Grammar tab. Focus: könnten/würden for polite suggestions, weil/da for reasons, wenn for conditions and obwohl/aber for polite contrast/reactions." },
       { label: "Teil 1 · Sprechen", detailEn: "Discuss typical first-date situations: preparation, meeting place, topics, feelings, respectful behavior and possible outcomes; compare options and justify one choice. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write an opinion response to Sophie on whether the first date is really important; discuss first impressions, why they can mislead, give an example and conclude." },
-      { label: "Teil 3 · Lesen", detailEn: "Scored separate reading: ‘Die Frau, die Monopoly erfand’ about Elizabeth Magie Phillips, The Landlord's Game, Charles Darrow and Mary Pilon; submit seven answer letters under Teil 3." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored Anzeigen matching task: five people choose among six first-date and partner-search ads; one ad remains unused. Submit five answer letters under Teil 3." },
       { label: "Teil 4 · Hören", detailEn: "NO SCORED TEIL 4. The workbook contains only a planned listening placeholder; no medium has been added and the marking contract explicitly excludes teil4." },
     ], {
       grammarUrl: null,
       subtitle: "Day 23 grammar is reached through the workbook Grammar tab. Teil 4 is a placeholder only and is excluded from scoring/submission.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 23 combines first-date functional language with a separate Monopoly reading and has no active listening assignment.",
+      lessonOverviewEn: "Day 23 combines first-date functional language with a separate first-date ads reading and has no active listening assignment.",
       grammarFocusEn: [
         "könnten and würden make suggestions softer and more polite.",
         "weil and da introduce reasons with verb-final order.",
@@ -297,7 +297,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       commonMistakesEn: [
         "Using direct wollen/müssen where a polite suggestion with könnten/würden is intended.",
         "Forgetting verb-final order after weil, da or wenn.",
-        "Forcing the Monopoly reading into the dating theme instead of treating it as separate comprehension.",
+        "Forcing the first-date ads reading into the dating theme instead of treating it as separate comprehension.",
         "Assigning or submitting a Day 23 listening task even though the medium is only planned and teil4 is excluded.",
       ],
     },
