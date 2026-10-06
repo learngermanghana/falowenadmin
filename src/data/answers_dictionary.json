@@ -2033,11 +2033,11 @@
   "A2 9.25 Tagesablauf": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Damit sie morgens Zeit spart.",
-        "Answer2": "B) Mit dem Bus",
-        "Answer3": "B) Um 12:30 Uhr",
-        "Answer4": "B) Sie geht ins Fitnessstudio.",
-        "Answer5": "C) Um 22:30 Uhr"
+        "Answer1": "B) Er macht eine Hafenrundfahrt an den Landungsbrücken.",
+        "Answer2": "B) 20 € (statt 25 €)",
+        "Answer3": "B) Im Restaurant Seeblick",
+        "Answer4": "C) Um 20 Uhr",
+        "Answer5": "B) Ein Besuch im Hafenmuseum und ein Spaziergang im Stadtpark"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1nOtlOXVblDt1RQ8JOLpBBLQfjmnxJ9YF6ylhZo4u6kY/gviz/tq?tqx=out:html&sheet=Key",
@@ -2046,6 +2046,10 @@
     "assignment_id": "A2-9.25",
     "expectedParts": [
       "teil3"
+    ],
+    "excludedParts": [
+      "teil2",
+      "teil4"
     ],
     "writingParts": [],
     "aiGradedParts": [],
