@@ -1,6 +1,7 @@
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
 
 export function calculateFinalScore(objectivePercentage, schreibenMark = "", options = {}) {
+  const hasObjective = options.hasObjective !== false && objectivePercentage !== null && objectivePercentage !== undefined;
   const objectiveScore = Number(objectivePercentage);
   const safeObjectiveScore = Number.isFinite(objectiveScore) ? objectiveScore : 0;
 
@@ -10,6 +11,12 @@ export function calculateFinalScore(objectivePercentage, schreibenMark = "", opt
 
   const writingScore = Number(schreibenMark);
   if (!Number.isFinite(writingScore)) return safeObjectiveScore;
+
+  if (!hasObjective) {
+    return calculateWeightedMarkingOutcome({
+      ...options, writingPercent: writingScore, objectiveScore: null, hasWriting: true,
+    }).finalScore;
+  }
 
   const level = options.level || options.assignmentId || options.assignmentKey || "";
   if (/\b(?:A2|B1)\b/i.test(String(level))) {

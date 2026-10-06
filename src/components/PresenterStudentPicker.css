@@ -464,6 +464,7 @@
 /* Minimal participation toolbar inside Focus Mode. */
 .presenter-stage.is-focus-mode .presenter-student-picker {
   width: auto;
+  display: block;
   border: 1px solid rgba(148, 163, 184, 0.72);
   border-radius: 14px;
   background: rgba(248, 250, 252, 0.95);
@@ -476,7 +477,7 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .presenter-stage.is-focus-mode .presenter-student-class-select,
@@ -512,11 +513,14 @@
 
 .presenter-stage.is-focus-mode .presenter-student-actions {
   display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
   gap: 0.25rem;
 }
 
 .presenter-stage.is-focus-mode .presenter-student-actions button,
 .presenter-stage.is-focus-mode .presenter-pick-student {
+  flex: 0 0 auto;
   min-height: 32px;
   padding: 0.38rem 0.55rem;
   border-radius: 999px;
@@ -526,6 +530,7 @@
 
 .presenter-stage.is-focus-mode .presenter-pick-student {
   margin-left: 0;
+  flex: 0 0 auto;
 }
 
 @media (max-width: 700px) {

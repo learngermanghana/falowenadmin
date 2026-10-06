@@ -642,7 +642,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}
               aria-label="Next slide"
             >
-              →
+              Next slide →
             </button>
           </div>
         ) : null}

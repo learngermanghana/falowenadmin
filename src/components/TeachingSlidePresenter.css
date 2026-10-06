@@ -2862,7 +2862,7 @@
 /* compact-presenter-chrome */
 @media (min-width: 1251px) {
   .presenter-topbar {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
   }
@@ -2872,9 +2872,9 @@
   }
 
   .presenter-v2-tools {
-    flex: 0 1 225px;
+    flex: 1 1 320px;
     gap: 0.4rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     margin-left: 0;
   }
 
@@ -3253,8 +3253,8 @@
 }
 
 .presenter-focus-dock button {
-  min-width: 30px;
-  min-height: 29px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.28rem 0.42rem;
   font-size: 0.68rem;
 }

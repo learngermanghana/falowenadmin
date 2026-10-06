@@ -1,3 +1,4 @@
+import { stripMarkingEmojis } from "./markingFeedbackText.js";
 import { buildEvidenceEssayFeedback } from "./essayFeedbackEvidence.js";
 
 function clampPercent(value) {
@@ -321,7 +322,7 @@ export function buildNaturalStudentFeedback(result = {}, submissionText = "") {
   }
 
   const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });
-  if (essayFeedback) return sanitizeFalseWritingFeedback(essayFeedback, submissionText);
+  if (essayFeedback) return stripMarkingEmojis(sanitizeFalseWritingFeedback(essayFeedback, submissionText));
 
   const sentences = [];
   const opening = objectiveScore !== null && objectiveScore >= 80 ? "Good work" : objectiveScore !== null && objectiveScore >= 60 ? "Good progress" : "Keep working steadily";
@@ -332,5 +333,5 @@ export function buildNaturalStudentFeedback(result = {}, submissionText = "") {
   if (tip) sentences.push(tip);
 
   const comment = sentences.join(" ").replace(/\s+/g, " ").trim();
-  return sanitizeFalseWritingFeedback(comment.split(/\s+/).slice(0, 60).join(" "), submissionText);
+  return stripMarkingEmojis(sanitizeFalseWritingFeedback(comment.split(/\s+/).slice(0, 60).join(" "), submissionText));
 }

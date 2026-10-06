@@ -1,3 +1,4 @@
+import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
@@ -158,7 +159,8 @@ function sanitizeMarkingResult(result = {}) {
   return {
     ...result,
     feedback,
-    improvementSummary: stripBoldMarkdown(result.improvementSummary || feedback),
+    improvementSummary: stripMarkingEmojis(stripBoldMarkdown(result.improvementSummary || feedback)),
+    aiOriginalFeedback: stripMarkingEmojis(result.aiOriginalFeedback || ""),
   };
 }
 
@@ -447,7 +449,7 @@ export async function saveMarkingResult(options = {}) {
 
 export async function saveScoreRow(options = {}) {
   assertSavableScore(options.score);
-  const receipt = await base.saveScoreRow(options);
+  const receipt = await base.saveScoreRow({ ...options, comments: stripMarkingEmojis(options.comments) });
   const scoreLabel = savedScoreLabel(receipt, options.score);
 
   return {

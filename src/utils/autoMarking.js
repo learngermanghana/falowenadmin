@@ -1,3 +1,4 @@
+import { stripMarkingEmojis } from "./markingFeedbackText.js";
 import { selectVersionedObjectiveReferenceEntry } from "./objectiveMarking.js";
 
 const PART_IDS = ["teil1", "teil2", "teil3", "teil4", "unknown"];
@@ -1046,7 +1047,7 @@ function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = 
 }
 
 function stripBoldMarkdown(value = "") {
-  return String(value || "").replace(/\*\*/g, "");
+  return stripMarkingEmojis(value).replace(/\*\*/g, "");
 }
 
 function combinePartFeedback(parts = []) {

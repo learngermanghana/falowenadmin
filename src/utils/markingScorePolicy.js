@@ -9,6 +9,7 @@ export const A2_B1_PART_WEIGHTS = Object.freeze({
 });
 
 function clampPercent(value) {
+  if (value === null || value === undefined || value === "") return null;
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return null;
   return Math.max(0, Math.min(100, numeric));

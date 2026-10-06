@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { MARKING_FEEDBACK_TEMPLATES } from "../data/markingFeedbackTemplates.js";
 import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, importAnswerDictionary, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
+import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";
 import { calculateFinalScore } from "../utils/finalScore.js";
 import { calculateWeightedMarkingOutcome } from "../utils/markingScorePolicy.js";
 import { useToast } from "../context/ToastContext.jsx";
@@ -35,18 +37,6 @@ function SubmissionAttemptLabels({ submission }) {
   );
 }
 
-function clampPercent(value) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return 0;
-  return Math.max(0, Math.min(100, Math.round(numeric)));
-}
-
-function objectivePercentFromResult(objectiveResult = {}) {
-  const total = Number(objectiveResult.totalCount || 0);
-  if (!total) return 0;
-  return (Number(objectiveResult.correctCount || 0) / total) * 100;
-}
-
 function getObjectiveAssignmentId(...candidates) {
   for (const candidate of candidates) {
     const assignmentId = inferAssignmentId(candidate);
@@ -55,43 +45,10 @@ function getObjectiveAssignmentId(...candidates) {
   return "";
 }
 
-function getMaxWritingScore(result = {}) {
-  const candidates = [
-    result.maxWritingScore,
-    result.writingMaxScore,
-    result.maxWritingPoints,
-    result.writingMaxPoints,
-    result.rubricMaxScore,
-    result.writingRubricMax,
-    result.ai?.maxWritingScore,
-    result.ai?.writingMaxScore,
-    ...(Array.isArray(result.parts)
-      ? result.parts
-        .filter((part) => String(part?.partType || "").toLowerCase() === "writing")
-        .flatMap((part) => [part.maxScore, part.maxPoints, part.total, part.totalPoints])
-      : []),
-  ];
-
-  const explicitMax = candidates.find((value) => Number.isFinite(Number(value)) && Number(value) > 0);
-  if (explicitMax) return Number(explicitMax);
-
-  const writingScore = Number(result.writingScore);
-  if (Number.isFinite(writingScore) && writingScore > 0 && writingScore <= 50) return 50;
-  return 100;
-}
-
-function writingScoreToPercent(writingScore, maxWritingScore = 100) {
-  const numericScore = Number(writingScore);
-  const numericMax = Number(maxWritingScore);
-  if (!Number.isFinite(numericScore)) return 0;
-  if (!Number.isFinite(numericMax) || numericMax <= 0) return clampPercent(numericScore);
-  return clampPercent((numericScore / numericMax) * 100);
-}
-
 function formatWritingScore(result = {}) {
   if (result.writingScore === null || result.writingScore === undefined) return "—";
   const maxWritingScore = getMaxWritingScore(result);
-  const writingPercent = writingScoreToPercent(result.writingScore, maxWritingScore);
+  const writingPercent = writingPercentFromResult(result);
   if (maxWritingScore && maxWritingScore !== 100) {
     return `${result.writingScore}/${maxWritingScore} → ${writingPercent}%`;
   }
@@ -103,49 +60,6 @@ function objectiveWrongAnswerRows(objectiveDetails = {}) {
     .map(([question, detail]) => ({ question, ...detail }))
     .filter((row) => row && row.correct === false);
 }
-
-function mergeObjectiveScore(result = {}, objectiveResult = {}) {
-  const objectivePercent = objectivePercentFromResult(objectiveResult);
-  const writingPercent = writingScoreToPercent(result.writingScore, getMaxWritingScore(result));
-  const hasObjective = Number(objectiveResult.totalCount || 0) > 0;
-  const hasWriting = result.writingScore !== null && result.writingScore !== undefined && Number.isFinite(Number(result.writingScore));
-  const weightedOutcome = calculateWeightedMarkingOutcome({
-    level: result.level || result.assignmentKey || result.assignmentId || "",
-    assignmentId: result.assignmentId,
-    assignmentKey: result.assignmentKey,
-    writingPercent: hasWriting ? writingPercent : null,
-    objectiveScore: hasObjective ? objectivePercent : null,
-    objectiveDetails: objectiveResult.details || {},
-    hasWriting,
-  });
-  const finalScore = weightedOutcome.finalScore || Math.round(
-    hasObjective && hasWriting
-      ? (objectivePercent + writingPercent) / 2
-      : hasObjective
-        ? objectivePercent
-        : writingPercent || Number(result.finalScore ?? result.score ?? 0),
-  );
-
-  return {
-    ...result,
-    score: finalScore,
-    finalScore,
-    passed: weightedOutcome.passed,
-    scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,
-    writingMinimumMet: weightedOutcome.writingMinimumMet,
-    markingPolicy: weightedOutcome.policy,
-    objectiveCorrect: objectiveResult.correctCount,
-    objectiveTotal: objectiveResult.totalCount,
-    objectiveDetails: objectiveResult.details,
-    objectiveScore: objectivePercent,
-    writingScore: result.writingScore ?? null,
-    writingScorePercent: hasWriting ? writingPercent : null,
-    maxWritingScore: getMaxWritingScore(result),
-    aiOriginalScore: result.aiOriginalScore ?? result.finalScore ?? result.score ?? null,
-    aiOriginalFeedback: result.aiOriginalFeedback ?? result.feedback ?? "",
-  };
-}
-
 
 function flattenAnswers(value, prefix = "") {
   if (typeof value === "string") {
@@ -353,20 +267,24 @@ export default function MarkingPage() {
     const selectedStudent = roster.find((row) => row.id === selectedStudentId);
     if (!selectedStudent?.studentCode || !selectedStudent?.level) {
       setSubmissions([]);
+      setLoadingSubmissions(false);
       return;
     }
 
+    let cancelled = false;
+    setSubmissions([]);
     (async () => {
       setLoadingSubmissions(true);
       try {
         const submissionRows = await fetchSubmissions(selectedStudent.level, selectedStudent.studentCode);
-        setSubmissions(submissionRows);
+        if (!cancelled) setSubmissions(submissionRows);
       } catch (err) {
-        error(err?.message || "Failed to load student submissions");
+        if (!cancelled) error(err?.message || "Failed to load student submissions");
       } finally {
-        setLoadingSubmissions(false);
+        if (!cancelled) setLoadingSubmissions(false);
       }
     })();
+    return () => { cancelled = true; };
   }, [roster, selectedStudentId, error]);
 
   useEffect(() => {
@@ -462,6 +380,9 @@ export default function MarkingPage() {
   }, [studentSubmissions, referenceAssignment, referenceEntries]);
 
   const selectedSubmission = latestSubmission;
+  const reviewIdentity = JSON.stringify([selectedStudentId, selectedSubmission?.path, selectedSubmission?.id, referenceAssignment]);
+  const reviewIdentityRef = useRef(reviewIdentity);
+  reviewIdentityRef.current = reviewIdentity;
 
   useEffect(() => {
     const submissionAssignment = selectedSubmission?.assignment || "";
@@ -472,10 +393,13 @@ export default function MarkingPage() {
     setAssignmentValue(nextAssignment);
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
+    setFeedback("");
+    setSaveReceipt(null);
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
   }, [
+    reviewIdentity,
     selectedStudent?.level,
     referenceEntry?.level,
     referenceEntry?.assignment,
@@ -541,7 +465,9 @@ export default function MarkingPage() {
     assignmentKey: smartMarkingResult?.assignmentKey || selectedSubmission?.assignmentKey || assignmentIdValue,
     objectiveDetails: objectiveMarkingResult.details || {},
   };
-  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark, scoringOptions);
+  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark, {
+    ...scoringOptions, hasObjective: objectiveMarkingResult.totalCount > 0,
+  });
   const manualWeightedOutcome = calculateWeightedMarkingOutcome({
     ...scoringOptions,
     writingPercent: schreibenMark === "" ? null : Number(schreibenMark),
@@ -555,6 +481,28 @@ export default function MarkingPage() {
     ? calculatedFinalScore
     : Number(calculatedFinalScore.toFixed(2));
   const displayedFinalScore = Number.isInteger(finalScore) ? finalScore : Number(finalScore.toFixed(2));
+
+  const currentReviewedResult = {
+    ...(smartMarkingResult || {}),
+    score: finalScore,
+    finalScore,
+    feedback: stripMarkingEmojis(feedback),
+    objectiveScore: objectiveMarkingResult.totalCount ? objectiveScorePercent : null,
+    objectiveCorrect: objectiveMarkingResult.correctCount,
+    objectiveTotal: objectiveMarkingResult.totalCount,
+    objectiveDetails: objectiveMarkingResult.details,
+    writingScore: schreibenMark === "" ? null : Number(schreibenMark),
+    writingScorePercent: schreibenMark === "" ? null : Number(schreibenMark),
+    maxWritingScore: 100,
+    scoreBreakdown: manualWeightedOutcome.scoreBreakdown
+      ? { ...manualWeightedOutcome.scoreBreakdown, finalScore }
+      : null,
+    markingPolicy: manualWeightedOutcome.policy,
+    writingMinimumMet: manualWeightedOutcome.writingMinimumMet,
+    passed: finalScore >= 60 && manualWeightedOutcome.writingMinimumMet
+      && !manualWeightedOutcome.writingRequiredButMissing,
+    manualOverride: true,
+  };
 
   const handleDeleteSubmission = async (submission) => {
     if (!submission?.path) {
@@ -663,6 +611,7 @@ export default function MarkingPage() {
 
 
   const handleAutoMark = async () => {
+    const startedIdentity = reviewIdentity;
     const submissionText = selectedSubmission?.text || "";
     if (!submissionText.trim()) {
       error("No student submission available to auto-mark.");
@@ -700,11 +649,12 @@ export default function MarkingPage() {
         submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
         submissionText,
       });
+      if (reviewIdentityRef.current !== startedIdentity) return;
       const result = mergeObjectiveScore(aiResult, deterministicObjective);
       setSmartMarkingResult(result);
-      setSchreibenMark(result.writingScore === null || result.writingScore === undefined
+      setSchreibenMark(result.writingScorePercent === null || result.writingScorePercent === undefined
         ? ""
-        : String(writingScoreToPercent(result.writingScore, getMaxWritingScore(result))));
+        : String(result.writingScorePercent));
       setFinalScoreOverride(null);
       setFeedback(result.feedback);
       await createMarkingJob({
@@ -723,7 +673,7 @@ export default function MarkingPage() {
       });
       success(result.status === "needs_review" ? "Smart marking saved for tutor review." : "Smart marking completed and saved.");
     } catch (err) {
-      error(err?.message || "Failed to auto-mark submission.");
+      if (reviewIdentityRef.current === startedIdentity) error(err?.message || "Failed to auto-mark submission.");
     } finally {
       setAutoMarking(false);
     }
@@ -735,15 +685,21 @@ export default function MarkingPage() {
       return;
     }
 
+    if (!feedback.trim()) {
+      error("Feedback is required before approving.");
+      return;
+    }
+
     try {
       setWorkflowSaving(true);
-      await updateMarkingWorkflowStatus({
+      await saveMarkingResult({
         submissionId: selectedSubmission.id,
         submissionPath: selectedSubmission.path,
+        result: currentReviewedResult,
         status: "sent",
         sentToStudent: true,
       });
-      setSmartMarkingResult((current) => current ? { ...current, status: "sent" } : current);
+      setSmartMarkingResult({ ...currentReviewedResult, status: "sent" });
       success("Feedback approved and marked as sent to student.");
     } catch (err) {
       error(err?.message || "Failed to approve and send feedback.");
@@ -826,7 +782,7 @@ export default function MarkingPage() {
       const safeAssignment = assignmentValue.trim();
 
       const currentScore = finalScore;
-      const currentFeedback = feedback.trim();
+      const currentFeedback = stripMarkingEmojis(feedback);
       const currentObjectiveResult = objectiveMarkingResult;
       const currentObjectiveScore = objectivePercentFromResult(currentObjectiveResult);
       const currentWritingScore = schreibenMark === "" ? null : Number(schreibenMark);
@@ -853,9 +809,9 @@ export default function MarkingPage() {
           writingScorePercent: currentWritingScore,
           maxWritingScore: 100,
           finalScore: currentScore,
-          scoreBreakdown: smartMarkingResult?.scoreBreakdown || manualWeightedOutcome.scoreBreakdown || null,
-          markingPolicy: smartMarkingResult?.markingPolicy || manualWeightedOutcome.policy,
-          writingMinimumMet: smartMarkingResult?.writingMinimumMet ?? manualWeightedOutcome.writingMinimumMet,
+          scoreBreakdown: currentReviewedResult.scoreBreakdown,
+          markingPolicy: currentReviewedResult.markingPolicy,
+          writingMinimumMet: currentReviewedResult.writingMinimumMet,
         },
       });
       setSaveReceipt(receipt);
@@ -865,7 +821,7 @@ export default function MarkingPage() {
           submissionId: selectedSubmission.id,
           submissionPath: selectedSubmission.path,
           result: {
-            ...(smartMarkingResult || {}),
+            ...currentReviewedResult,
             score: currentScore,
             finalScore: currentScore,
             feedback: currentFeedback,
@@ -1010,7 +966,7 @@ export default function MarkingPage() {
             onChange={(e) => setQuery(e.target.value)}
             style={{ minWidth: 280 }}
           />
-          <select value={selectedStudentId} onChange={(e) => setSelectedStudentId(e.target.value)} style={{ minWidth: 320 }}>
+          <select disabled={autoMarking || savingScore || workflowSaving} value={selectedStudentId} onChange={(e) => setSelectedStudentId(e.target.value)} style={{ minWidth: 320 }}>
             <option value="">Select student...</option>
             {filteredStudents.map((row) => (
               <option key={row.id} value={row.id}>
@@ -1029,7 +985,7 @@ export default function MarkingPage() {
             value={referenceQuery}
             onChange={(e) => setReferenceQuery(e.target.value)}
           />
-          <select value={referenceAssignment} onChange={(e) => setReferenceAssignment(e.target.value)}>
+          <select disabled={autoMarking || savingScore || workflowSaving} value={referenceAssignment} onChange={(e) => setReferenceAssignment(e.target.value)}>
             {filteredReferenceEntries.map((entry) => (
               <option key={entry.assignment} value={entry.assignment}>
                 {formatReferenceAssignmentLabel(entry)}
@@ -1082,7 +1038,7 @@ export default function MarkingPage() {
                     {row.assignmentId ? <> · ID: <code>{row.assignmentId}</code></> : null} · {row.createdAt?.toLocaleString() || "Unknown time"}
                     <SubmissionAttemptLabels submission={row} />
                   </div>
-                  <button type="button" onClick={() => void handleSelectFromNotification(row)}>Load</button>
+                  <button type="button" disabled={autoMarking || savingScore || workflowSaving} onClick={() => void handleSelectFromNotification(row)}>Load</button>
                 </div>
               ))}
               {!filteredAttempts.length ? <span style={{ fontSize: 12 }}>No attempts match this search.</span> : null}
@@ -1156,7 +1112,7 @@ export default function MarkingPage() {
                     </div>
                   ) : null}
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                    <button onClick={() => void handleSelectFromNotification(row)}>Load for marking</button>
+                    <button disabled={autoMarking || savingScore || workflowSaving} onClick={() => void handleSelectFromNotification(row)}>Load for marking</button>
                     <button
                       onClick={() => handleDeleteSubmission(row)}
                       disabled={deletingSubmissionPath === row.path}
@@ -1213,10 +1169,10 @@ export default function MarkingPage() {
                 </div>
               ) : null}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving}>Re-run AI marking</button>
-                <button type="button" onClick={handleApproveAndSend} disabled={workflowSaving}>Approve and send</button>
-                <button type="button" onClick={handleSendFeedbackToStudent} disabled={workflowSaving}>Send feedback to student</button>
-                <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving}>Mark as needs tutor review</button>
+                <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving || savingScore}>Re-run AI marking</button>
+                <button type="button" onClick={handleApproveAndSend} disabled={workflowSaving || autoMarking || savingScore}>Approve and send</button>
+                <button type="button" onClick={handleSendFeedbackToStudent} disabled={workflowSaving || autoMarking || savingScore}>Send feedback to student</button>
+                <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving || autoMarking || savingScore}>Mark as needs tutor review</button>
               </div>
               <WritingScoreExplanation result={smartMarkingResult} />
             </div>
@@ -1347,10 +1303,10 @@ export default function MarkingPage() {
             <input value={assignmentIdValue} onChange={(e) => setAssignmentIdValue(e.target.value)} />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
+            <button onClick={handleAutoMark} disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission}>
               {autoMarking ? "AI marking..." : "Run AI marking"}
             </button>
-            <button onClick={() => { setSchreibenMark(""); setFinalScoreOverride(null); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
+            <button disabled={workflowSaving || autoMarking || savingScore} onClick={() => { setSchreibenMark(""); setFinalScoreOverride(null); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
           </div>
         </div>
       </section>
@@ -1360,7 +1316,7 @@ export default function MarkingPage() {
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
           Saves row headers: studentcode, name, assignment, score, comments, date, level, link, assignment_id.
         </p>
-        <button onClick={handleSave} disabled={loading || savingScore}>{savingScore ? "Saving..." : "Save Final Score"}</button>
+        <button onClick={handleSave} disabled={loading || savingScore || autoMarking || workflowSaving || loadingSubmissions}>{savingScore ? "Saving..." : "Save Final Score"}</button>
         {savingScore && <p style={{ marginTop: 8, fontSize: 13 }}>Saving score, please wait...</p>}
         {saveReceipt && (
           <div style={{ marginTop: 12, border: "1px solid #ddd", borderRadius: 8, padding: 10, background: "#fafafa", display: "grid", gap: 8 }}>

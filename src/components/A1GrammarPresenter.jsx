@@ -454,7 +454,7 @@ export default function A1GrammarPresenter({
             <button type="button" onClick={previous} disabled={atStart} aria-label="Previous slide">←</button>
             <span>{stageIndex + 1}/{stages.length}</span>
             <button type="button" className="presenter-restore-control" onClick={exitPresentationView} aria-label="Restore presenter controls">Restore</button>
-            <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">→</button>
+            <button type="button" onClick={next} disabled={atEnd} aria-label="Next slide">Next slide →</button>
           </div>
         ) : null}
         <header className="presenter-topbar">
