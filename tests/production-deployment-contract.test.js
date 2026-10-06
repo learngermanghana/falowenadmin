@@ -4,6 +4,10 @@ import fs from "node:fs";
 
 test("admin production build runs the gate and stamps the deployed SHA", () => {
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+  assert.match(pkg.scripts.prebuild, /sync:runtime/);
+  assert.match(pkg.scripts["sync:runtime"], /patchPresenterStudentPicker\.mjs/);
+  assert.match(pkg.scripts["sync:runtime"], /patchPresenterRandomAndAttendanceDiagnostics\.mjs/);
+  assert.match(pkg.scripts["sync:runtime"], /patchCheckinWaitingRoomPlaylist\.mjs/);
   assert.match(pkg.scripts.build, /gate:production/);
   assert.match(pkg.scripts.build, /generate:build-identity/);
   assert.match(pkg.scripts["generate:build-identity"], /writeBuildIdentity\.mjs/);
