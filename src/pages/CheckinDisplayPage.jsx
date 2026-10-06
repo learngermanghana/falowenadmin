@@ -33,6 +33,12 @@ const SMART_HANDOFF_MIN_VISIBLE_MS = 3000;
 const SMART_HANDOFF_CONNECTED_VISIBLE_MS = 1200;
 const END_HANDSHAKE_RETRY_DELAYS_MS = Object.freeze([2000, 5000, 10000]);
 const END_HANDSHAKE_MAX_ATTEMPTS = END_HANDSHAKE_RETRY_DELAYS_MS.length + 1;
+function resolveDisplayStatusApiUrl() {
+  const checkinUrl = String(import.meta.env.VITE_CHECKIN_API_URL || "").trim();
+  if (!checkinUrl) return "";
+  return checkinUrl.replace(/\/checkin\/?$/, "/checkinStatus");
+}
+
 const WAITING_PIANO_CHORDS = [
   [130.81, 261.63, 329.63, 392.0],
   [110.0, 220.0, 261.63, 329.63],
@@ -280,6 +286,7 @@ export default function CheckinDisplayPage() {
   const endTime = sp.get("endTime") || "";
   const expectedCount = sp.get("expectedCount") || "";
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const serverClockAnchorRef = useRef(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [musicStarting, setMusicStarting] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.5);
@@ -370,9 +377,49 @@ export default function CheckinDisplayPage() {
   }, [classId, assignmentId]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
+    const statusApiUrl = resolveDisplayStatusApiUrl();
+    if (!statusApiUrl || !classId || !String(sessionId || "").trim()) {
+      const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+      return () => window.clearInterval(timer);
+    }
+
+    let cancelled = false;
+
+    const syncAuthoritativeClock = async () => {
+      try {
+        const u = new URL(statusApiUrl);
+        u.searchParams.set("classId", classId);
+        u.searchParams.set("sessionId", String(sessionId || "").trim());
+        const response = await fetch(u.toString(), { cache: "no-store" });
+        const data = await response.json().catch(() => ({}));
+        const authoritativeMs = Number(data?.serverTime || 0);
+        if (cancelled || !response.ok || !Number.isFinite(authoritativeMs) || authoritativeMs <= 0) return;
+        serverClockAnchorRef.current = {
+          serverTimeMs: authoritativeMs,
+          performanceMs: performance.now(),
+        };
+        setNowMs(authoritativeMs);
+      } catch (error) {
+        console.warn("Could not synchronize authoritative attendance clock", error);
+      }
+    };
+
+    void syncAuthoritativeClock();
+    const syncTimer = window.setInterval(syncAuthoritativeClock, 30 * 1000);
+    const tickTimer = window.setInterval(() => {
+      setNowMs(() => {
+        const anchor = serverClockAnchorRef.current;
+        if (!anchor) return Date.now();
+        return anchor.serverTimeMs + (performance.now() - anchor.performanceMs);
+      });
+    }, 1000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(syncTimer);
+      window.clearInterval(tickTimer);
+    };
+  }, [classId, sessionId]);
 
   useEffect(() => {
     if (!classId || !String(sessionId || "").trim()) {
