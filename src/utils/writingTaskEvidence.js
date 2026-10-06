@@ -152,7 +152,7 @@ function ruleForPoint(label = "", assignmentKey = "") {
   if (/ask felix about his parents/.test(value)) return /(?:deine|deiner|deinen)\s+eltern[\s\S]{0,60}\?|(?:mutter|vater)[\s\S]{0,60}\?/i;
   if (/weekend activity|concrete activity/.test(value)) return /\b(?:kino|restaurant|spazieren|wandern|schwimmen|fu[ßs]ball|essen|kochen|museum|sport|ausflug|fahren|gehen)\b/i;
   if (/when.*where|date.*place|date, time and place|date, place|meeting point|suggest when and where/.test(value)) return /\b(?:wann|am\s+\w+|am\s+\d|uhr|treffen|treffpunkt|wo|in\s+\w+|bei\s+\w+|vor\s+\w+)\b/i;
-  if (/bring|can expect/.test(value)) return /\b(?:mitbringen|bringen|solltest|sollten|kannst|k[oö]nnen|erwarten|es\s+gibt)\b/i;
+  if (/bring|can expect/.test(value)) return /\b(?:mitbringen|bring(?:e|st)?|bringen|solltest|sollten|erwarten|es\s+gibt|du\s+kannst\s+(?:dort|hier|mit|auch))\b/i;
   if (/do something together|invite.*shop|invite sandra|shared weekend/.test(value)) return /\b(?:zusammen|gemeinsam|mitkommen|einladen|einladung|mit\s+dir|mit\s+ihnen)\b/i;
   if (/free at the weekend/.test(value)) return /(?:hast\s+du|bist\s+du)[\s\S]{0,50}(?:zeit|frei)/i;
   if (/moved/.test(value)) return /\b(?:umgezogen|neue\s+wohnung|neues\s+zimmer|umzug)\b/i;
