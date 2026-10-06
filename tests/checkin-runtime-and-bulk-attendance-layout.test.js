@@ -34,6 +34,7 @@ test("CheckinDisplay anchors the live Ghana clock to backend serverTime", () => 
   const page = fs.readFileSync("src/pages/CheckinDisplayPage.jsx", "utf8");
   assert.match(page, /resolveDisplayStatusApiUrl/);
   assert.match(page, /checkinStatus/);
+  assert.match(page, /new URL\(statusApiUrl, window\.location\.origin\)/);
   assert.match(page, /data\?\.serverTime/);
   assert.match(page, /performance\.now\(\)/);
   assert.match(page, /serverClockAnchorRef\.current/);
