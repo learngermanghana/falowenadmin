@@ -474,25 +474,18 @@
   "A1 Instructions and Directions 11": {
     "answers": {
       "teil1": {
-        "Answer1": "B) Entschuldigung, wo ist der Bahnhof?",
-        "Answer2": "B) Links abbiegen",
-        "Answer3": "B) Auf der rechten Seite, direkt neben dem großen Supermarkt",
-        "Answer4": "B) Wie komme ich zur nächsten Apotheke?",
-        "Answer5": "C) Gute Reise und einen schönen Tag noch"
+        "Answer1": "B) An der Touristeninformation",
+        "Answer2": "A) Nach links",
+        "Answer3": "C) Den Hafen und das Restaurant Seeblick",
+        "Answer4": "B) 10 Minuten",
+        "Answer5": "A) Auf dem Stadtplan"
       },
       "teil2": {
-        "Answer1": "C) Wie komme ich zur nächsten Apotheke?",
-        "Answer2": "C) Rechts abbiegen",
-        "Answer3": "B) Auf der linken Seite, direkt neben der Bäckerei",
-        "Answer4": "A) Gehen Sie geradeaus bis zur Kreuzung, dann links",
-        "Answer5": "C) Einen schönen Tag noch"
-      },
-      "teil3": {
-        "Answer1": "Fragen nach dem Weg: 'Entschuldigung, wie komme ich zum Bahnhof'",
-        "Answer2": "Die Straße überqueren: 'Überqueren Sie die Straße'",
-        "Answer3": "Geradeaus gehen: 'Gehen Sie geradeaus'",
-        "Answer4": "Links abbiegen: 'Biegen Sie links ab'",
-        "Answer5": "Rechts abbiegen: 'Biegen Sie rechts ab'"
+        "Answer1": "A",
+        "Answer2": "B",
+        "Answer3": "A",
+        "Answer4": "B",
+        "Answer5": "A"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1kGGQZ89YZV-xGUdFKIHUFOVYG7wB7PnCBF8DqBd4Zok/gviz/tq?tqx=out:html&sheet=Key",
@@ -500,30 +493,22 @@
     "assignment_id": "A1-11",
     "expectedParts": [
       "teil1",
-      "teil2",
-      "teil3"
+      "teil2"
     ],
     "referenceAnswerParts": [
       "teil1",
-      "teil2",
-      "teil3"
+      "teil2"
     ],
     "answerLayout": "multipart",
     "partGrading": {
       "teil1": {
-        "label": "teil1",
+        "label": "Teil 1 Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
       },
       "teil2": {
-        "label": "teil2",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Grade this part against the reference answers in answers."
-      },
-      "teil3": {
-        "label": "teil3",
+        "label": "Teil 2 Hören",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
