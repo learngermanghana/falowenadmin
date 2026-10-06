@@ -67,25 +67,25 @@ test("A2 days 25-28 teacher support matches the grammar actually taught in Falow
   }
 });
 
-test("Day 25 represents two Lesen sections and explicitly no Hören", () => {
+test("Day 25 uses the Hamburg Lesen-only assessment and explicitly no Hören", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-9.25");
   const labels = slide.workbookConnection.parts.map((part) => part.label);
-  assert.deepEqual(labels, ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen", "Teil 4 · Lesen"]);
-  assert.match(slide.workbookConnection.subtitle, /two Lesen tasks/i);
+  assert.deepEqual(labels, ["Grammar", "Teil 1 · Sprechen", "Teil 3 · Lesen"]);
+  assert.match(slide.workbookConnection.subtitle, /Lesen is the only submitted assessment/i);
   assert.match(slide.workbookConnection.subtitle, /no Hören/i);
-  assert.equal(labels.some((label) => /Hören/i.test(label)), false);
-  assert.match(slide.workbookConnection.parts.at(-1).detailEn, /Familie Meyer/i);
-  assert.match(slide.workbookConnection.parts.at(-1).detailEn, /no listening assignment/i);
+  assert.equal(labels.some((label) => /Hören|Schreiben/i.test(label)), false);
+  assert.match(slide.workbookConnection.parts.at(-1).detailEn, /Mein Tagesablauf in Hamburg/i);
+  assert.match(slide.workbookConnection.parts.at(-1).detailEn, /five questions/i);
 });
 
-test("Day 26 keeps the family and childcare reading separate and Hören self-checked", () => {
+test("Day 26 uses the Gefühle reactions reading and graded protected Hören", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-10.26");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
-  assert.match(reading.detailEn, /Separate comprehension topic/i);
-  assert.match(reading.detailEn, /Mutterschutz|Elternzeit|childcare/i);
-  assert.match(listening.detailEn, /Goethe/i);
-  assert.match(listening.detailEn, /not submitted/i);
+  assert.match(reading.detailEn, /Gefühle und Reaktionen/i);
+  assert.match(reading.detailEn, /enthusiasm|interest|calmness|gratitude|satisfaction/i);
+  assert.match(listening.detailEn, /Protected Falowen/i);
+  assert.match(listening.detailEn, /graded questions|submitted assessment/i);
 });
 
 test("Day 27 follows production Goethe self-check behavior instead of stale source questions", () => {
