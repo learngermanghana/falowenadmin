@@ -414,6 +414,39 @@ function extractNumberedTextAnswers(text = "") {
   return Object.fromEntries(extractNumberedTextEntries(text).map((entry) => [entry.number, entry.answer]));
 }
 
+const A1_8_LEGACY_REFERENCE_ENTRY = {
+  answers: {
+    Answer1: "B) Zwei Uhr nachmittags",
+    Answer2: "B) 29 Tage",
+    Answer3: "B) April",
+    Answer4: "C) 03.02.2024",
+    Answer5: "C) Mittwoch",
+    Answer6: "Falsch",
+    Answer7: "Richtig",
+    Answer8: "Richtig",
+    Answer9: "Falsch",
+    Answer10: "Richtig",
+    Answer11: "B) Um Mitternacht",
+    Answer12: "B) Vier Uhr nachmittags",
+    Answer13: "C) 28 Tage",
+    Answer14: "B) Tag. Monat. Jahr",
+    Answer15: "D) Montag",
+  },
+  expectedParts: ["main"],
+  referenceAnswerParts: ["main"],
+};
+
+function isA18LegacySubmission(assignmentId = "", sections = [], submissionText = "") {
+  if (normalizeAssignmentId(assignmentId) !== "A1-8") return false;
+  if (sections.some((section) => section.partId === "teil3")) return true;
+  const objectiveCount = sections.reduce(
+    (count, section) => count + extractRestartedNumberingEntries(section.text).length,
+    0,
+  );
+  if (objectiveCount > 10) return true;
+  return extractNumberedTextEntries(submissionText).length > 10;
+}
+
 const A1_7_LEGACY_REFERENCE_ENTRY = {
   answers: {
     teil1: {
@@ -1121,13 +1154,16 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
 
   const rawSections = splitSubmissionIntoSections(submissionText);
   const legacyA17 = isA17LegacySubmission(assignmentId, rawSections);
+  const legacyA18 = isA18LegacySubmission(assignmentId, rawSections, submissionText);
   const legacyA2718 = isA2718LegacySubmission(assignmentId, rawSections);
   const hardcodedItems = buildHardcodedReferenceItems(assignmentId);
   const selectedReference = legacyA17
     ? A1_7_LEGACY_REFERENCE_ENTRY
-    : legacyA2718
-      ? A2_7_18_LEGACY_REFERENCE_ENTRY
-      : (source || {});
+    : legacyA18
+      ? A1_8_LEGACY_REFERENCE_ENTRY
+      : legacyA2718
+        ? A2_7_18_LEGACY_REFERENCE_ENTRY
+        : (source || {});
   const items = buildReferenceItems(selectedReference);
   const referenceItems = hardcodedItems.length ? hardcodedItems : items;
   if (!referenceItems.length) return { correctCount: 0, totalCount: 0, details: {} };
