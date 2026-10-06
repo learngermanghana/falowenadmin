@@ -1891,13 +1891,14 @@
   "A2 8.22 Die Woche Plannung": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Sie besucht einen Deutschkurs.",
-        "Answer2": "B) Sie arbeitet im Homeoffice.",
-        "Answer3": "C) Donnerstag",
-        "Answer4": "A) Einkauf und Wohnung putzen",
-        "Answer5": "A) Damit sie nichts vergisst."
-      },
-      "teil4": {}
+        "Answer1": "B) Zwei Tage",
+        "Answer2": "B) 20 €",
+        "Answer3": "C) An den Landungsbrücken",
+        "Answer4": "A) Freie Fahrt mit Bus und Bahn für zwei Tage",
+        "Answer5": "C) Um 20 Uhr",
+        "Answer6": "B) Seeblick",
+        "Answer7": "A) Ungefähr zwei Stunden"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1IltGaPYHb_jPazZNClHdjzTu-Tgs94zfHNzixrizvCs/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1IltGaPYHb_jPazZNClHdjzTu-Tgs94zfHNzixrizvCs/edit",
