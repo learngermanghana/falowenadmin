@@ -947,28 +947,28 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Use müssen/können/sollte to distinguish requirements, abilities and desirable qualities.",
       "Use weil/dass/wenn to justify personal suitability and conditions.",
       "The deep Day 20 grammar notes exist in the student source but the current lesson route/workbook does not expose a direct grammar link, so the teacher guide must not point to a broken URL.",
-      "Workbook exception: Lesen is Susanne's lost-wallet blog, unrelated to careers; Hören is Goethe self-check only, and students submit only Schreiben + Lesen.",
+      "Teil 3 Lesen now uses the Reiseleiter/in career article with seven scored questions. Teil 4 is a graded Cloudflare Hören task with five questions; students submit both objective parts.",
     ],
     interactionFlow: [
       { phase: "Profession definition", detailEn: "7 min: define three jobs with relative clauses." },
       { phase: "Requirement ladder", detailEn: "9 min: separate muss / muss ... können / sollte statements for one profession." },
       { phase: "Career path", detailEn: "10 min: explain school → training/study → entry → Weiterbildung → advancement with sequence language." },
       { phase: "Speaking rehearsal", detailEn: "11 min: 90-second answer on education, qualifications, experience and home-country route." },
-      { phase: "Workbook bridge", detailEn: "8 min: plan the Felix opinion, then flag the unrelated wallet reading and self-check-only Goethe Hören." },
+      { phase: "Workbook bridge", detailEn: "8 min: plan the Felix opinion, preview the Reiseleiter/in reading, then prepare students for the five-question graded Hören." },
     ],
     wrapUpTaskDe: "Beschreibe einen Beruf in 6 Sätzen. Nutze einen Relativsatz, zwei Modalverben und eine Begründung mit weil oder wenn.",
     workbookConnection: standardConnection(20, [
       { label: "Grammar", detailEn: "Deep grammar source: relative clauses for professions/duties, modal verbs for requirements and ability, and weil/dass/wenn for suitability and reasons. The current Day 20 lesson does not expose a direct grammar route." },
       { label: "Teil 1 · Sprechen", detailEn: "Choose one profession and explain the education/training route, qualifications, career path, personal experience and the situation in your home country. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Respond to Felix in 80–100 words on whether education and qualifications are important; compare formal training with practical experience and give an example." },
-      { label: "Teil 3 · Lesen", detailEn: "Separate/unrelated reading: SusannesAlltagsBlog lost-wallet story; answer six Richtig/Falsch statements about how the wallet was found and returned." },
-      { label: "Teil 4 · Hören", detailEn: "SELF-CHECK ONLY Goethe-standard Hören video. Students check answers themselves and do not submit Teil 4; only Schreiben and Lesen are submitted." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored reading: how to become a Reiseleiter/in, including qualifications, languages, problem-solving and training courses; answer seven multiple-choice questions." },
+      { label: "Teil 4 · Hören", detailEn: "Graded listening with five questions on school qualification, training length, pay, job tasks and patience. Submit all five answer letters." },
     ], {
       grammarUrl: null,
-      subtitle: "Teach toward the workbook tasks. Day 20 has no direct grammar link in the current student lesson, and Teil 4 Hören is self-check only and not submitted.",
+      subtitle: "Teach toward the workbook tasks. Day 20 has no direct grammar link in the current student lesson; Teil 3 Lesen and Teil 4 Hören are both graded."
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 20 consolidates career language around profession definitions, requirements and suitability. The workbook production is career-focused, but Lesen switches to a lost-wallet story and Hören is independent Goethe self-check rather than tutor-marked work.",
+      lessonOverviewEn: "Day 20 consolidates career language around profession definitions, requirements and suitability. The assessed reading now uses the Reiseleiter/in career profile, and Teil 4 is a graded listening task."
       grammarFocusEn: [
         "Relative clauses describe a profession or person precisely and place the conjugated verb at the end.",
         "muss expresses a requirement; kann/muss ... können expresses ability; sollte expresses a desirable quality or recommendation.",
@@ -985,7 +985,7 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
         "Using main-clause word order inside a relative clause.",
         "Saying man muss gut kommunizieren kann instead of man muss gut kommunizieren können.",
         "Giving only education details without describing duties or personal suitability.",
-        "Treating the Goethe Hören video as a submitted assignment even though the workbook explicitly says self-check only.",
+        "Forgetting that the new Hören is graded and must be submitted with five answer letters.",
       ],
     },
   },
