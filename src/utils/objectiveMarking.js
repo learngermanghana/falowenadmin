@@ -414,6 +414,40 @@ function extractNumberedTextAnswers(text = "") {
   return Object.fromEntries(extractNumberedTextEntries(text).map((entry) => [entry.number, entry.answer]));
 }
 
+const A1_7_LEGACY_REFERENCE_ENTRY = {
+  answers: {
+    teil1: {
+      Answer1: "B) Um Viertel vor sieben",
+      Answer2: "B) Um halb acht",
+      Answer3: "C) Um Viertel nach acht",
+      Answer4: "B) Am Dienstag und Donnerstag",
+      Answer5: "A) Um Viertel vor sieben",
+      Answer6: "C) Um Viertel nach sieben",
+      Answer7: "A) Um Viertel nach neun",
+    },
+    teil2: {
+      Answer1: "B) Um sieben Uhr",
+      Answer2: "B) Um acht Uhr",
+      Answer3: "B) Um sechs Uhr",
+      Answer4: "B) Um zehn Uhr",
+      Answer5: "A) Sie geht zur Arbeit",
+      Answer6: "B) Um neun Uhr",
+      Answer7: "B) Er geht in die Bibliothek",
+      Answer8: "B) Bis zwei Uhr nachmittags",
+      Answer9: "B) Um drei Uhr nachmittags",
+      Answer10: "B) Um sieben Uhr",
+    },
+  },
+  expectedParts: ["teil1", "teil2"],
+  referenceAnswerParts: ["teil1", "teil2"],
+};
+
+function isA17LegacySubmission(assignmentId = "", sections = []) {
+  if (normalizeAssignmentId(assignmentId) !== "A1-7") return false;
+  const objectiveSections = sections.filter((section) => section.partId === "teil1" || section.partId === "teil2");
+  return objectiveSections.some((section) => extractRestartedNumberingEntries(section.text).length > 5);
+}
+
 const A2_7_18_LEGACY_ADVERT_OPTION_MAPS = [
   { A: "A", B: "B", C: "D", D: "F" },
   { A: "E", B: "F", C: "C", D: "B" },
@@ -1086,9 +1120,15 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
     : assignmentIdOrReferenceEntry?.assignmentKey || assignmentIdOrReferenceEntry?.assignmentId || assignmentIdOrReferenceEntry?.assignment_id || "";
 
   const rawSections = splitSubmissionIntoSections(submissionText);
+  const legacyA17 = isA17LegacySubmission(assignmentId, rawSections);
   const legacyA2718 = isA2718LegacySubmission(assignmentId, rawSections);
   const hardcodedItems = buildHardcodedReferenceItems(assignmentId);
-  const items = buildReferenceItems(legacyA2718 ? A2_7_18_LEGACY_REFERENCE_ENTRY : (source || {}));
+  const selectedReference = legacyA17
+    ? A1_7_LEGACY_REFERENCE_ENTRY
+    : legacyA2718
+      ? A2_7_18_LEGACY_REFERENCE_ENTRY
+      : (source || {});
+  const items = buildReferenceItems(selectedReference);
   const referenceItems = hardcodedItems.length ? hardcodedItems : items;
   if (!referenceItems.length) return { correctCount: 0, totalCount: 0, details: {} };
 
