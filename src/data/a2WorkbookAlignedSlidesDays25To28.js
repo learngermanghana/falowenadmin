@@ -81,7 +81,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 25 consolidates everyday A2 narration through a daily-routine timeline. The teacher should help students order actions, control separable verbs and use time expressions naturally, then apply those skills to the Hamburg Tagesablauf reading. Lesen is the only submitted assessment, and there is no Hören section."
+      lessonOverviewEn: "Day 25 consolidates everyday A2 narration through a daily-routine timeline. The teacher should help students order actions, control separable verbs and use time expressions naturally, then apply those skills to the Hamburg Tagesablauf reading. Lesen is the only submitted assessment, and there is no Hören section.",
       grammarFocusEn: [
         "Regular routines are normally expressed in Präsens: Jeden Morgen fahre ich zur Arbeit.",
         "Use time expressions to structure the day: morgens, um 7 Uhr, am Nachmittag, abends.",
@@ -110,7 +110,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     assignmentId: "A2-10.26",
     title: "A2 Day 26 · Gefühle in verschiedenen Situationen",
     topic: "10.26 Gefühle in verschiedenen Situationen",
-    objective: "Students connect situations and emotions with wenn-clauses, describe positive and negative feelings with reasons and reactions, and prepare the thank-you writing while treating the family/childcare reading and the protected transcript-based Hören task as separate assessment practice.",
+    objective: "Students connect situations and emotions with wenn-clauses, describe positive and negative feelings with reasons and reactions, and apply those skills to the Gefühle und Reaktionen reading while keeping the graded Hören as a separate assessment component.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Wie fühlst du dich vor einer Prüfung?",
@@ -161,14 +161,14 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Move from situation → feeling → reaction/help so students do more than list emotion adjectives.",
       "Follow the speaking scope: positive feelings, negative feelings, typical everyday situations, useful emotion phrases and physical reactions.",
       "Bridge to the writing task: thank a neighbour for helping when you were ill, explain how the help benefited you and offer to return the favour.",
-      "Keep the task split explicit: Teil 3 Lesen is a separate family/pregnancy/childcare information text, and Teil 4 is a five-question graded Hören task using the protected Falowen recording.",
+      "Keep the task split explicit: Teil 3 Lesen is the Gefühle und Reaktionen im Gespräch task based on the Hamburg tourist dialogue, while Teil 4 is a five-question graded Hören task using the protected Falowen recording.",
     ],
     interactionFlow: [
       { phase: "Emotion sort", detailEn: "6 min: classify positive/negative emotions and match them to typical situations." },
       { phase: "wenn builder", detailEn: "9 min: create situation clauses with verb-final order and attach a feeling in the main clause." },
       { phase: "Reaction extension", detailEn: "8 min: after each feeling sentence, add what the speaker does or what helps." },
       { phase: "Thank-you scenario", detailEn: "10 min: explain help received during illness, emotional impact and a return favour before outlining the email." },
-      { phase: "Workbook bridge", detailEn: "6 min: label the pregnancy/parental-benefit/childcare reading as separate comprehension and preview the five-question protected Hören task." },
+      { phase: "Workbook bridge", detailEn: "6 min: preview the Gefühle und Reaktionen reading and practise identifying emotion from short reactions, then preview the five-question protected Hören task." },
     ],
     wrapUpTaskDe: "Beschreibe vier Situationen und deine Gefühle. Benutze mindestens zwei wenn-Sätze und sage bei einer Situation, was dir hilft.",
     workbookConnection: {
@@ -178,12 +178,12 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
         { label: "Grammar", detailEn: "Inline late-A2 grammar upgrade: use wenn to connect a situation or condition with a feeling. The conjugated verb goes to the end of the wenn-clause: Wenn ich eine Prüfung habe, bin ich nervös." },
         { label: "Teil 1 · Sprechen", detailEn: "Group practice only: discuss positive and negative feelings, typical situations, useful emotion phrases and physical reactions, then give a structured mini-presentation." },
         { label: "Teil 2 · Schreiben", detailEn: "Thank-you letter to a neighbour who helped while you were ill: thank the person warmly, explain how the help benefited you, and offer to give something back or return the favour." },
-        { label: "Teil 3 · Lesen", detailEn: "Separate comprehension topic: pregnancy advice, doctors/midwives, Mutterschutz, Elternzeit/Elterngeld/Kindergeld, paediatric check-ups and childcare/holiday activities." },
-        { label: "Teil 4 · Hören", detailEn: "Goethe past-paper self-check. Learners watch the video and check their own answers there; Teil 4 is not submitted and the school evaluates the writing and reading components." },
+        { label: "Teil 3 · Lesen", detailEn: "Gefühle und Reaktionen im Gespräch: five short Hamburg situations where the tourist shows enthusiasm, interest, calmness, gratitude and satisfaction through his reactions." },
+        { label: "Teil 4 · Hören", detailEn: "Protected Falowen Hören task with five graded questions on feelings in different situations. This is a submitted assessment component alongside Schreiben and Lesen." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 26 turns emotion vocabulary into connected A2 sentences with wenn. Students first identify a real situation, name the feeling, build the subordinate clause correctly and add a reaction. The thank-you writing is practical application; the family/childcare reading and Goethe listening are separate assessment components.",
+      lessonOverviewEn: "Day 26 turns emotion vocabulary into connected A2 sentences with wenn. Students identify a situation, name the feeling and interpret short reactions, then apply that skill to the Hamburg-based Gefühle und Reaktionen reading. The protected Falowen Hören remains a separate graded component.",
       grammarFocusEn: [
         "wenn introduces a recurring, possible or conditional situation: Ich bin nervös, wenn ich eine Prüfung habe.",
         "In the wenn-clause, move the conjugated verb to the end: wenn ich eine Prüfung habe, not wenn ich habe eine Prüfung.",
