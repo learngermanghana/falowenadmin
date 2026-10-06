@@ -1211,6 +1211,14 @@ export default function MarkingPage() {
                   {" + "}Teil 4 {smartMarkingResult.scoreBreakdown.teil4?.points ?? 0}/30
                   {" = "}<b>{smartMarkingResult.scoreBreakdown.finalScore ?? smartMarkingResult.finalScore}/100</b>
                 </div>
+              ) : smartMarkingResult.scoreBreakdown?.policy === "a2-b1-40-60" ? (
+                <div style={{ fontSize: 13, border: "1px solid #bfdbfe", borderRadius: 6, padding: 8, background: "#fff" }}>
+                  <b>Score formula:</b>{" "}
+                  Teil 2 Schreiben {smartMarkingResult.scoreBreakdown.teil2?.points ?? 0}/40
+                  {" + "}{smartMarkingResult.scoreBreakdown.objective?.partId === "teil4" ? "Teil 4" : smartMarkingResult.scoreBreakdown.objective?.partId === "teil3" ? "Teil 3" : "Objective"}{" "}
+                  {smartMarkingResult.scoreBreakdown.objective?.points ?? 0}/60
+                  {" = "}<b>{smartMarkingResult.scoreBreakdown.finalScore ?? smartMarkingResult.finalScore}/100</b>
+                </div>
               ) : null}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving}>Re-run AI marking</button>
@@ -1304,6 +1312,8 @@ export default function MarkingPage() {
                   ? "Using Objective Percentage only because Schreiben Mark is empty."
                   : manualWeightedOutcome.scoreBreakdown?.policy === "a2-b1-40-30-30"
                     ? `A2/B1 weighting: Teil 2 Schreiben ${manualWeightedOutcome.scoreBreakdown.teil2?.points ?? 0}/40 + Teil 3 ${manualWeightedOutcome.scoreBreakdown.teil3?.points ?? 0}/30 + Teil 4 ${manualWeightedOutcome.scoreBreakdown.teil4?.points ?? 0}/30 = ${manualWeightedOutcome.finalScore}/100.`
+                    : manualWeightedOutcome.scoreBreakdown?.policy === "a2-b1-40-60"
+                      ? `A2/B1 weighting: Teil 2 Schreiben ${manualWeightedOutcome.scoreBreakdown.teil2?.points ?? 0}/40 + ${manualWeightedOutcome.scoreBreakdown.objective?.partId === "teil4" ? "Teil 4" : manualWeightedOutcome.scoreBreakdown.objective?.partId === "teil3" ? "Teil 3" : "Objective"} ${manualWeightedOutcome.scoreBreakdown.objective?.points ?? 0}/60 = ${manualWeightedOutcome.finalScore}/100.`
                     : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
             </div>
             {finalScoreOverride !== null ? (
