@@ -124,6 +124,10 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     const analysis = stages.find((stage) => stage.id === "analysis");
     assert.equal(analysis.type, "c2-analysis");
     assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
+    assert.match(analysis.title, /^Leitfrage aufbauen · /, slide.assignmentId + " should teach one-question argument building");
+    assert.match(analysis.title, new RegExp(slide.analyticalTask.title.replace(/[.*+?^${}()|[\]\\]/g, "\\    const analysis = stages.find((stage) => stage.id === "analysis");
+    assert.equal(analysis.type, "c2-analysis");
+    assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
     assert.equal(analysis.title, slide.analyticalTask.title, slide.assignmentId + " should use its own topic task");
     assert.deepEqual(analysis.items[0].prompts, slide.analyticalTask.prompts, slide.assignmentId + " should preserve curated case prompts");
     assert.equal(analysis.casePrompt, slide.analyticalTask.prompts[0], slide.assignmentId + " should reveal the case first");
@@ -132,7 +136,20 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     assert.equal(analysis.progressiveReveal, true);
     assert.deepEqual(analysis.rubric, ["Logik", "Evidenz", "Sprache / Register"]);
     assert.deepEqual(analysis.items[0].modelItems, [], slide.assignmentId + " analysis should not reveal a canned model");
+    assert.equal(analysis.items[0].minutes, 14);")), slide.assignmentId + " should preserve its topic-specific task identity");
+    assert.deepEqual(analysis.items[0].sourceTask, slide.analyticalTask, slide.assignmentId + " should preserve the curated source task as background material");
+    assert.equal(analysis.centralQuestion, slide.centralQuestionDe);
+    assert.match(analysis.casePrompt, /^POSITION ·/);
+    assert.match(analysis.checkPrompt, /^BEGRÜNDUNG \+ BEISPIEL ·/);
+    assert.match(analysis.decisionPrompt, /^GEGENPOSITION \+ SYNTHESE ·/);
+    assert.equal(analysis.progressiveReveal, true);
+    assert.deepEqual(analysis.rubric, ["Logik", "Evidenz", "Sprache / Register"]);
+    assert.deepEqual(analysis.items[0].modelItems, [], slide.assignmentId + " analysis should not reveal a canned model");
     assert.equal(analysis.items[0].minutes, 14);
+
+    for (const stage of stages) {
+      assert.equal(stage.centralQuestion, slide.centralQuestionDe, slide.assignmentId + " should keep one Leitfrage across every C2 stage");
+    }
 
     const vocabulary = stages.find((stage) => stage.id === "phrases");
     assert.equal(vocabulary.type, "vocabulary");
@@ -151,23 +168,35 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
   }
 });
 
-test("C2 warm-ups are topic-specific and avoid duplicate support scaffolding", () => {
+test("all 28 C2 lessons use one Leitfrage and build on it instead of stacking discussion questions", () => {
   for (const slide of getSlidesByCourse("C2")) {
-    assert.equal(slide.warmupQuestionsDe.length, 3, slide.assignmentId);
-    const warmupText = slide.warmupQuestionsDe.join(" ");
-    assert.doesNotMatch(warmupText, /Was ist die Kernfrage bei/i);
-    assert.doesNotMatch(warmupText, /Welche zwei Interessen oder Werte geraten/i);
-    assert.doesNotMatch(warmupText, /Welche der drei Kursaussagen/i);
-    assert.doesNotMatch(warmupText, /Welche heutige Kollokation/i);
+    const foundation = getC2TopicFoundation(slide.dayNumber);
+    assert.ok(foundation, slide.assignmentId + " missing C2 foundation");
+    assert.equal(slide.centralQuestionDe, foundation.core, slide.assignmentId + " should use the chapter core as its Leitfrage");
+    assert.deepEqual(slide.warmupQuestionsDe, [slide.centralQuestionDe], slide.assignmentId + " should show one warm-up question");
+    assert.deepEqual(slide.studentQuestionsDe, [slide.centralQuestionDe], slide.assignmentId + " should expose one speaking question");
+    assert.equal(slide.speakingModels.length, 1, slide.assignmentId + " should keep one model tied to the Leitfrage");
+    assert.equal(slide.speakingModels[0].questionDe, slide.centralQuestionDe);
 
-    const warmup = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "warmup");
-    assert.equal(warmup.items.length, 3);
+    const stages = buildTeachingPresenterStages(slide, slide.topic);
+    const warmup = stages.find((stage) => stage.id === "warmup");
+    const foundationStage = stages.find((stage) => stage.id === "foundation");
+    const analysis = stages.find((stage) => stage.id === "analysis");
+
+    assert.deepEqual(warmup.items, [slide.centralQuestionDe]);
     assert.deepEqual(warmup.questionSupport, []);
+    assert.equal(foundationStage.question, slide.centralQuestionDe);
+    assert.equal(analysis.centralQuestion, slide.centralQuestionDe);
+    assert.match(analysis.instruction, /dieselbe Leitfrage/i);
+    assert.doesNotMatch(analysis.casePrompt, /\?$/);
+    assert.doesNotMatch(analysis.checkPrompt, /\?$/);
+    assert.doesNotMatch(analysis.decisionPrompt, /\?$/);
   }
 
-  const journalism = getSlidesByCourse("C2")[3];
-  assert.match(journalism.warmupQuestionsDe.join(" "), /Eilmeldung/);
-  assert.match(journalism.warmupQuestionsDe.join(" "), /nicht unabhängig bestätigt/);
+  const science = getSlidesByCourse("C2")[2];
+  assert.match(science.centralQuestionDe, /Forschungsfreiheit/i);
+  assert.match(science.centralQuestionDe, /gesellschaftliche Verantwortung/i);
+  assert.match(science.centralQuestionDe, /Wissenschaftskommunikation/i);
 });
 
 test("all 28 C2 analytical tasks are topic-specific rather than mechanically rotated", () => {
