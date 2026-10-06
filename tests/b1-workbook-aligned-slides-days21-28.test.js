@@ -83,6 +83,15 @@ test("Day 21 has no Teil 4 and matches the marking contract", () => {
   assert.match(slide.workbookConnection.subtitle, /excluded/i);
 });
 
+
+test("Day 21 uses the new seven-question Lebensformen reading", () => {
+  const slide = getB1WorkbookAlignedSlideDay21To28("B1-7.21");
+  const contract = contractByAssignmentId["B1-7.21"];
+  assert.equal(Object.keys(contract.answers.teil3).length, 7);
+  const reading = part(slide, "Teil 3 · Lesen").detailEn;
+  assert.match(reading, /Single-Haushalte|Patchwork|Mehrgenerationenwohnen/i);
+  assert.match(reading, /seven/i);
+});
 test("Day 22 is objective-only and follows the workbook five-plus-five Berlin/Bewerbung reading split", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-7.22");
   const contract = contractByAssignmentId["B1-7.22"];

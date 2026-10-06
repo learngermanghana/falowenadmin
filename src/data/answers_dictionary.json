@@ -3344,11 +3344,13 @@
   "B1 7.21 Lebensformen heute ? Familie, Wohnge": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Sie wollte Auslandserfahrung sammeln.",
-        "Answer2": "A) Niederlande",
-        "Answer3": "D) Ja, zwei Söhne.",
-        "Answer4": "D) Ja, fünf Geschwister.",
-        "Answer5": "C) Weil ihre Eltern dort wohnen."
+        "Answer1": "B) Es ist nicht mehr die einzige Art, wie Menschen zusammenleben.",
+        "Answer2": "A) Der Wunsch nach beruflicher Flexibilität und Unabhängigkeit.",
+        "Answer3": "B) Sie pflegen soziale Kontakte über Freundschaften und Vereine.",
+        "Answer4": "B) Neue Partner bringen Kinder aus früheren Beziehungen mit.",
+        "Answer5": "B) Geduld, Toleranz und gegenseitige Rücksichtnahme.",
+        "Answer6": "A) Weil sie nicht alleine wohnen oder ins Seniorenheim ziehen möchten.",
+        "Answer7": "B) Jung und Alt unterstützen sich gegenseitig im Alltag."
       },
       "teil4": {}
     },
