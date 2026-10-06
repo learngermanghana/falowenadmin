@@ -2,6 +2,7 @@ import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, q
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../utils/autoMarking.js";
+import { selectVersionedObjectiveReferenceEntry } from "../utils/objectiveMarking.js";
 import { inferSubmissionIdentityFromPath } from "../utils/submissionIdentity.js";
 import { resolveStudentIdentity } from "../utils/studentIdentity.js";
 import { AI_FEEDBACK_INSTRUCTION, limitFeedbackWords } from "../utils/feedbackPolicy.js";
@@ -724,7 +725,8 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
 }
 
 export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
-  const deterministicObjective = checkDeterministicObjectiveAnswers({ referenceEntry: referenceEntry || {}, submissionText, partId: "main" });
+  const effectiveReferenceEntry = selectVersionedObjectiveReferenceEntry(referenceEntry || {}, submissionText);
+  const deterministicObjective = checkDeterministicObjectiveAnswers({ referenceEntry: effectiveReferenceEntry, submissionText, partId: "main" });
   const objectiveFeedbackContext = deterministicObjective?.objectiveTotal ? {
     correct: deterministicObjective.objectiveCorrect,
     total: deterministicObjective.objectiveTotal,
@@ -733,9 +735,9 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
   } : null;
   const payload = {
     submission,
-    referenceEntry,
-    assignmentKey: referenceEntry?.assignmentKey || submission.assignmentKey || submission.assignmentId || "",
-    level: referenceEntry?.level || submission.level || "",
+    referenceEntry: effectiveReferenceEntry,
+    assignmentKey: effectiveReferenceEntry?.assignmentKey || effectiveReferenceEntry?.assignmentId || effectiveReferenceEntry?.assignment_id || submission.assignmentKey || submission.assignmentId || "",
+    level: effectiveReferenceEntry?.level || submission.level || "",
     submissionText,
     objectiveFeedbackContext,
     feedbackInstruction: AI_FEEDBACK_INSTRUCTION,
@@ -751,12 +753,12 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
   const row = buildScoreRow({
     ...identity,
     name: identity.studentName || submission.fullName || "",
-    assignment: submission.assignment || referenceEntry?.title || result.assignmentKey || "AI marked assignment",
+    assignment: submission.assignment || effectiveReferenceEntry?.title || result.assignmentKey || "AI marked assignment",
     assignmentId: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
     score: result.finalScore ?? result.score ?? 0,
     comments: result.feedback || result.improvementSummary || "AI marking completed.",
-    level: result.level || referenceEntry?.level || submission.level || "",
-    link: referenceEntry?.answerUrl || referenceEntry?.answer_url || referenceEntry?.sheetUrl || referenceEntry?.sheet_url || "",
+    level: result.level || effectiveReferenceEntry?.level || submission.level || "",
+    link: effectiveReferenceEntry?.answerUrl || effectiveReferenceEntry?.answer_url || effectiveReferenceEntry?.sheetUrl || effectiveReferenceEntry?.sheet_url || "",
     source: "ai_marking",
     markingDetails: result,
   });
