@@ -161,28 +161,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "The intended deep grammar is verified in Falowen source: dass clauses, relative clauses and reciprocal expressions miteinander/füreinander/voneinander/aufeinander, plus weil/wenn/obwohl.",
       "The current Day 22 student lesson does not expose that deep grammar through a direct grammar route, so do not provide a broken grammar link from the teacher guide.",
-      "The workbook comprehension topics are unrelated to relationships: Berlin and Bewerbung. Keep them separate from the production lesson. There is no submitted Teil 2 Schreiben on the current Day 22 workbook.",
-      "Reading split: Teil 3 is the five-question Berlin text and Teil 4 is the five-question Bewerbung text. The answer key now follows the workbook's visible 5+5 structure.",
+      "The workbook comprehension topics are unrelated to relationships: relationship article and Bewerbung. Keep them separate from the production lesson. There is no submitted Teil 2 Schreiben on the current Day 22 workbook.",
+      "Reading split: Teil 3 is the five-question relationship article text and Teil 4 is the five-question Bewerbung text. The answer key now follows the workbook's visible 5+5 structure.",
     ],
     interactionFlow: [
       { phase: "Value ranking", detailEn: "7 min: rank Vertrauen, Ehrlichkeit, Kommunikation, Unterstützung and Zukunftspläne." },
       { phase: "Grammar frames", detailEn: "10 min: build Mir ist wichtig, dass … and Partner, der/die … relative clauses." },
       { phase: "Reciprocal language", detailEn: "8 min: practise miteinander, füreinander, voneinander and aufeinander in relationship contexts." },
       { phase: "Online-dating argument", detailEn: "12 min: prepare one advantage, one risk, comparison with face-to-face contact and conclusion." },
-      { phase: "Marking bridge", detailEn: "8 min: remind students to submit the five Berlin answers under Teil 3 and the five Bewerbung answers under Teil 4." },
+      { phase: "Marking bridge", detailEn: "8 min: remind students to submit the five relationship article answers under Teil 3 and the five Bewerbung answers under Teil 4." },
     ],
     wrapUpTaskDe: "Nenne drei wichtige Werte in einer Beziehung. Nutze einen dass-Satz, einen Relativsatz und einen Ausdruck mit -einander.",
     workbookConnection: workbookConnection(22, [
       { label: "Grammar", detailEn: "No direct grammar route is currently exposed. Teach expectations with dass, people with relative clauses, reciprocal behavior with miteinander/füreinander/voneinander/aufeinander, and reasons/conditions with weil, wenn and obwohl." },
       { label: "Teil 1 · Sprechen", detailEn: "Explain what matters in a relationship: communication, trust, shared interests, respect/support and future plans. Build a fictional profile and justify priorities. Practice only." },
-      { label: "Teil 3 · Lesen", detailEn: "Scored reading: Berlin. Submit all five Berlin multiple-choice answers under Teil 3." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored reading: relationship values, trust, communication, support, personal space and independence; answer all seven multiple-choice questions under Teil 3." },
       { label: "Teil 4 · Lesen", detailEn: "Scored second reading: Bewerbung. Submit all five Bewerbung multiple-choice answers under Teil 4." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 22 has no submitted Schreiben. It has two scored readings: Teil 3 = five Berlin answers; Teil 4 = five Bewerbung answers.",
+      subtitle: "Day 22 has no submitted Schreiben. It has two scored readings: Teil 3 = five relationship article answers; Teil 4 = five Bewerbung answers.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 22 is a relationship-values production lesson with two unrelated scored reading assignments: Berlin in Teil 3 and Bewerbung in Teil 4.",
+      lessonOverviewEn: "Day 22 is a relationship-values production lesson with two unrelated scored reading assignments: relationship article in Teil 3 and Bewerbung in Teil 4.",
       grammarFocusEn: [
         "dass clauses express expectations and send the conjugated verb to the end.",
         "Relative clauses describe an ideal partner: der/die/das agrees with the antecedent and the verb comes last.",
@@ -198,8 +198,8 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       commonMistakesEn: [
         "Using a main-clause verb position inside dass or relative clauses.",
         "Using sich instead of a clearer reciprocal -einander form when mutual action is intended.",
-        "Treating Berlin or Bewerbung as relationship-topic texts; they are separate comprehension assignments.",
-        "Mixing the two reading answer sets; Berlin belongs in Teil 3 and Bewerbung belongs in Teil 4.",
+        "Treating relationship article or Bewerbung as relationship-topic texts; they are separate comprehension assignments.",
+        "Mixing the two reading answer sets; relationship article belongs in Teil 3 and Bewerbung belongs in Teil 4.",
       ],
     },
   },
