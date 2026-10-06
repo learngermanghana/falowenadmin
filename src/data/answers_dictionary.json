@@ -300,27 +300,20 @@
   "A1 Understanding Time 7": {
     "answers": {
       "Teil 1": {
-        "Answer1": "B) Um Viertel vor sieben",
-        "Answer2": "B) Um halb acht",
-        "Answer3": "C) Um Viertel nach acht",
-        "Answer4": "B) Am Dienstag und Donnerstag",
-        "Answer5": "A) Um Viertel vor sieben",
-        "Answer6": "C) Um Viertel nach sieben",
-        "Answer7": "A) Um Viertel nach neun"
+        "Answer1": "B) Zwei Tage",
+        "Answer2": "A) 10 Minuten",
+        "Answer3": "B) Eine Stunde",
+        "Answer4": "C) Um 20 Uhr",
+        "Answer5": "B) Zwei Stunden"
       },
       "Teil 2": {
-        "Answer1": "B) Um sieben Uhr",
-        "Answer2": "B) Um acht Uhr",
-        "Answer3": "B) Um sechs Uhr",
-        "Answer4": "B) Um zehn Uhr",
-        "Answer5": "A) Sie geht zur Arbeit",
-        "Answer6": "B) Um neun Uhr",
-        "Answer7": "B) Er geht in die Bibliothek",
-        "Answer8": "B) Bis zwei Uhr nachmittags",
-        "Answer9": "B) Um drei Uhr nachmittags",
-        "Answer10": "B) Um sieben Uhr"
+        "Answer1": "A) Richtig",
+        "Answer2": "B) Falsch",
+        "Answer3": "A) Richtig",
+        "Answer4": "B) Um sechs Uhr",
+        "Answer5": "A) Um Viertel vor sechs, er holt Anna ab."
       }
-    },
+    }
     "answer_url": "https://docs.google.com/spreadsheets/d/1dCI5BbOvfvI4RekolDshv19jyNFPmzenDSrgBMGL9Uk/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
     "assignment_id": "A1-7",
