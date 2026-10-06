@@ -182,7 +182,7 @@ export const a2WorkbookAlignedSlidesDays16To20 = [
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 17 keeps the pharmacy modal-verb speaking and writing lesson, while Teil 3 Lesen is now a separate Hamburg comprehension task with multiple-choice and Richtig/Falsch items. Teil 4 Hören remains the existing pharmacy listening assessment."
+      lessonOverviewEn: "Day 17 keeps the pharmacy modal-verb speaking and writing lesson, while Teil 3 Lesen is now a separate Hamburg comprehension task with multiple-choice and Richtig/Falsch items. Teil 4 Hören remains the existing pharmacy listening assessment.",
       grammarFocusEn: [
         "können expresses possibility and is useful for polite requests: Können Sie mir etwas empfehlen?",
         "müssen expresses necessity: Ich muss das Medikament zweimal täglich nehmen.",
