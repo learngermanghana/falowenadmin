@@ -349,39 +349,52 @@
   },
   "A1 The 24 Hour Clock and Dates 8": {
     "answers": {
-      "Answer1": "B) Zwei Uhr nachmittags",
-      "Answer2": "B) 29 Tage",
-      "Answer3": "B) April",
-      "Answer4": "C) 03.02.2024",
-      "Answer5": "C) Mittwoch",
-      "Answer6": "Falsch",
-      "Answer7": "Richtig",
-      "Answer8": "Richtig",
-      "Answer9": "Falsch",
-      "Answer10": "Richtig",
-      "Answer11": "B) Um Mitternacht",
-      "Answer12": "B) Vier Uhr nachmittags",
-      "Answer13": "C) 28 Tage",
-      "Answer14": "B) Tag. Monat. Jahr",
-      "Answer15": "D) Montag"
+      "Teil 1": {
+        "Answer1": "B) Um 14:00 Uhr",
+        "Answer2": "B) Um 18:30 Uhr",
+        "Answer3": "C) Um 20:00 Uhr",
+        "Answer4": "B) Am 12. Oktober",
+        "Answer5": "A) Um 08:00 Uhr morgens"
+      },
+      "Teil 2": {
+        "Answer1": "A) Richtig",
+        "Answer2": "A) Richtig",
+        "Answer3": "B) Falsch",
+        "Answer4": "A) Am 12. Mai um 14:45 Uhr.",
+        "Answer5": "B) Am Sonntag, den 14. Mai, um 18:30 Uhr."
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
     "assignment_id": "A1-8",
     "expectedParts": [
-      "main"
+      "teil1",
+      "teil2"
     ],
-    "answerLayout": "flat",
+    "answerLayout": "multipart",
     "referenceAnswerParts": [
-      "main"
+      "teil1",
+      "teil2"
     ],
     "partGrading": {
-      "main": {
-        "label": "main",
+      "teil1": {
+        "label": "Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+        "instruction": "Grade the five Day 12 reading questions against the reference answers in Teil 1."
+      },
+      "teil2": {
+        "label": "Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade the five Day 12 listening questions against the reference answers in Teil 2. The 12-hour conversion is ungraded practice."
       }
+    },
+    "partAliases": {
+      "teil1": "Teil 1",
+      "teil2": "Teil 2",
+      "Teil 1": "teil1",
+      "Teil 2": "teil2"
     }
   },
   "A1 Food and Negation 9": {
