@@ -286,7 +286,7 @@ export default function CheckinDisplayPage() {
   const endTime = sp.get("endTime") || "";
   const expectedCount = sp.get("expectedCount") || "";
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [serverClockAnchor, setServerClockAnchor] = useState(null);
+  const serverClockAnchorRef = useRef(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [musicStarting, setMusicStarting] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.5);
@@ -394,10 +394,10 @@ export default function CheckinDisplayPage() {
         const data = await response.json().catch(() => ({}));
         const authoritativeMs = Number(data?.serverTime || 0);
         if (cancelled || !response.ok || !Number.isFinite(authoritativeMs) || authoritativeMs <= 0) return;
-        setServerClockAnchor({
+        serverClockAnchorRef.current = {
           serverTimeMs: authoritativeMs,
           performanceMs: performance.now(),
-        });
+        };
         setNowMs(authoritativeMs);
       } catch (error) {
         console.warn("Could not synchronize authoritative attendance clock", error);
@@ -408,8 +408,9 @@ export default function CheckinDisplayPage() {
     const syncTimer = window.setInterval(syncAuthoritativeClock, 30 * 1000);
     const tickTimer = window.setInterval(() => {
       setNowMs(() => {
-        if (!serverClockAnchor) return Date.now();
-        return serverClockAnchor.serverTimeMs + (performance.now() - serverClockAnchor.performanceMs);
+        const anchor = serverClockAnchorRef.current;
+        if (!anchor) return Date.now();
+        return anchor.serverTimeMs + (performance.now() - anchor.performanceMs);
       });
     }, 1000);
 
@@ -418,7 +419,7 @@ export default function CheckinDisplayPage() {
       window.clearInterval(syncTimer);
       window.clearInterval(tickTimer);
     };
-  }, [classId, sessionId, serverClockAnchor]);
+  }, [classId, sessionId]);
 
   useEffect(() => {
     if (!classId || !String(sessionId || "").trim()) {
