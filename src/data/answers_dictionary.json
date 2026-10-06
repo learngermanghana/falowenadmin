@@ -1939,13 +1939,12 @@
   "A2 9.23 Wie kommst du zur Schule / zur Arbeit?": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Den Regionalzug",
-        "Answer2": "C) 45 Minuten",
-        "Answer3": "A) Bei gutem Wetter",
-        "Answer4": "B) Den Bus 16",
-        "Answer5": "C) Zu Fuß"
-      },
-      "teil4": {}
+        "Answer1": "B) Zu Fuß",
+        "Answer2": "B) 25 Minuten",
+        "Answer3": "A) Weil es ihm zu kalt ist.",
+        "Answer4": "B) Er findet schwer einen Parkplatz.",
+        "Answer5": "C) 65 Euro"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1u7kFhf4yTXKlRhxVNsr7nmDfaR1XBnkzwG6ZnIwvAmo/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1u7kFhf4yTXKlRhxVNsr7nmDfaR1XBnkzwG6ZnIwvAmo/edit",
@@ -1975,11 +1974,11 @@
   "A2 9.24 Einen Urlaub planen": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Angebot A",
-        "Answer2": "B) Angebot B",
-        "Answer3": "C) Angebot C",
-        "Answer4": "D) Angebot D",
-        "Answer5": "C) Angebot C"
+        "Answer1": "D) Anzeige D",
+        "Answer2": "C) Anzeige C",
+        "Answer3": "E) Anzeige E",
+        "Answer4": "A) Anzeige A",
+        "Answer5": "B) Anzeige B"
       },
       "teil4": {
         "Answer1": "B) Italien",

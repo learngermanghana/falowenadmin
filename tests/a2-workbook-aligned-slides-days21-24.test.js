@@ -71,12 +71,15 @@ test("A2 days 21-24 teacher support matches the grammar actually taught in Falow
   }
 });
 
-test("Days 21-23 keep Goethe self-check listening while Day 24 uses protected graded Hören", () => {
-  for (const assignmentId of ["A2-8.21", "A2-8.22", "A2-9.23"]) {
+test("Day 21 keeps Goethe self-check listening while Days 22-23 do not expose stale presenter Hören", () => {
+  const day21 = getA2WorkbookAlignedSlideDay21To24("A2-8.21");
+  const day21Listening = day21.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
+  assert.match(day21Listening.detailEn, /Goethe/i);
+  assert.match(day21Listening.detailEn, /self-check|check their own|correct their own/i);
+
+  for (const assignmentId of ["A2-8.22", "A2-9.23"]) {
     const slide = getA2WorkbookAlignedSlideDay21To24(assignmentId);
-    const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
-    assert.match(listening.detailEn, /Goethe/i);
-    assert.match(listening.detailEn, /self-check|check their own|correct their own/i);
+    assert.equal(slide.workbookConnection.parts.some((part) => part.label === "Teil 4 · Hören"), false);
   }
 
   const day24 = getA2WorkbookAlignedSlideDay21To24("A2-9.24");
@@ -93,28 +96,35 @@ test("Day 21 keeps the Stefan Berger reading separate from weekend-condition gra
   assert.match(slide.teacherNotesEn.join(" "), /separate biography|Stefan Berger/i);
 });
 
-test("Day 22 keeps Gülcan student-life Lesen separate from weekly planning", () => {
+test("Day 22 presenter is fully synchronized to the Hamburg reading", () => {
   const slide = getA2WorkbookAlignedSlideDay21To24("A2-8.22");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
-  assert.match(reading.detailEn, /Separate comprehension topic/i);
-  assert.match(reading.detailEn, /Gülcan|international student/i);
+  assert.match(reading.detailEn, /Hamburg tourist-information/i);
+  assert.match(reading.detailEn, /seven A2 multiple-choice questions/i);
+  assert.doesNotMatch(JSON.stringify(slide), /Gülcan/i);
+  assert.equal(slide.workbookConnection.parts.some((part) => part.label === "Teil 4 · Hören"), false);
+  assert.match(slide.teacherSupport.commonMistakesEn.join(" "), /Hamburg tourist-information reading/i);
 });
 
-test("Day 23 keeps the transport reading aligned but Hören self-checked", () => {
+test("Day 23 presenter uses the Markus commute reading and no Hören or Schreiben assessment part", () => {
   const slide = getA2WorkbookAlignedSlideDay21To24("A2-9.23");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
-  const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
-  assert.match(reading.detailEn, /Matthias, Bernd and Thomas/i);
-  assert.match(reading.detailEn, /transport|U-Bahn|motorcycle/i);
-  assert.match(listening.detailEn, /officially evaluates Lesen and Schreiben/i);
+  assert.match(reading.detailEn, /Markus|Bremen|S-Bahn/i);
+  assert.equal(slide.workbookConnection.parts.some((part) => part.label === "Teil 4 · Hören"), false);
+  assert.equal(slide.workbookConnection.parts.some((part) => part.label === "Teil 2 · Schreiben"), false);
 });
 
-test("Day 24 keeps restaurant and celebration Lesen separate and marks Sprechen as no-submission group practice", () => {
+test("Day 24 presenter uses the travel situations and advertisements reading", () => {
+  const slide = getA2WorkbookAlignedSlideDay21To24("A2-9.24");
+  const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
+  assert.match(reading.detailEn, /travel situations|advertisements A–F|diving|hostel/i);
+});
+
+test("Day 24 keeps travel-ad Lesen separate and marks Sprechen as no-submission group practice", () => {
   const slide = getA2WorkbookAlignedSlideDay21To24("A2-9.24");
   const speaking = slide.workbookConnection.parts.find((part) => part.label === "Teil 1 · Sprechen");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   assert.match(speaking.detailEn, /no speaking submission/i);
-  assert.match(reading.detailEn, /Separate comprehension topic/i);
-  assert.match(reading.detailEn, /wedding|business meal|children's birthday/i);
-  assert.match(slide.teacherNotesEn.join(" "), /restaurant\/celebration/i);
+  assert.match(reading.detailEn, /travel situations|advertisements A–F|diving|hostel/i);
+  assert.match(slide.teacherNotesEn.join(" "), /situations-and-advertisements/i);
 });
