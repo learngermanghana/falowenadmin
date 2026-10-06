@@ -210,7 +210,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     assignmentId: "A2-10.27",
     title: "A2 Day 27 · Digitale Kommunikation",
     topic: "10.27 Digitale Kommunikation",
-    objective: "Students express opinions about digital communication with dass-clauses, discuss uses, advantages, disadvantages and data concerns, and apply the same topic to the customer-service writing and mobile-communication reading while using a protected transcript-based Hören task for graded listening practice.",
+    objective: "Students express opinions about digital communication with dass-clauses, discuss uses, advantages and disadvantages, and apply the topic to digital notices and online ads while using a protected transcript-based Hören task for graded listening practice.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Welche digitalen Kommunikationsmittel benutzt du jeden Tag?",
@@ -260,7 +260,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       "Day 27 has no separate canonical grammar-notes route. The workbook's late-A2 learning upgrade teaches opinions with dass; after dass the conjugated verb goes to the end.",
       "Use the workbook speaking route: communication tool → use → opinion with dass → advantage/disadvantage → real example → conclusion.",
       "Bridge to the exact customer-service writing: the learner lost a phone, wants to order a new one from Jumia Ghana, asks for a model recommendation and requests ordering/delivery information.",
-      "Teil 3 Lesen stays strongly aligned to digital communication: German SIM cards, contracts, prepaid activation and public WLAN.",
+      "Teil 3 Lesen uses four digital formats from the Hamburg context: app notification, booking email, restaurant website and digital museum/city-map info.",
       "Day 27 Teil 4 now uses the protected Falowen recording with five transcript-based graded questions about Lisa, Markus and Sarah. Teach the live workbook behavior and do not use the old lost-phone listening questions.",
     ],
     interactionFlow: [
@@ -268,7 +268,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       { phase: "dass builder", detailEn: "9 min: turn simple opinions into Ich finde/glaube/denke, dass ... sentences with verb-final order." },
       { phase: "Pros and cons", detailEn: "9 min: add one advantage, one disadvantage and a real example to the chosen communication tool." },
       { phase: "Customer-service role-play", detailEn: "10 min: explain the lost phone, describe requirements, ask for a recommendation and clarify order/delivery." },
-      { phase: "Workbook bridge", detailEn: "6 min: preview contract/prepaid/WLAN reading details and then bridge into the five-question protected Hören task." },
+      { phase: "Workbook bridge", detailEn: "6 min: preview the app, email, website and digital-info reading formats, then bridge into the five-question protected Hören task." },
     ],
     wrapUpTaskDe: "Sprich 5 Sätze über digitale Kommunikation. Benutze mindestens zwei dass-Sätze und nenne einen Vorteil und einen Nachteil.",
     workbookConnection: {
@@ -278,12 +278,12 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
         { label: "Grammar", detailEn: "Inline late-A2 grammar upgrade: express opinions with dass after frames such as Ich finde, Ich glaube, Ich denke and Mir ist wichtig. The conjugated verb goes to the end of the dass-clause." },
         { label: "Teil 1 · Sprechen", detailEn: "Practice only: communication tool → usage → opinion with dass → advantage/disadvantage → real example → recommendation/conclusion." },
         { label: "Teil 2 · Schreiben", detailEn: "Customer-service email after losing a phone: explain why you need a new device, ask for a suitable model recommendation, and request information about ordering and delivery." },
-        { label: "Teil 3 · Lesen", detailEn: "Digital-communication reading: foreign SIM-card problems, German mobile contracts, cancellation periods, prepaid activation requirements and free public WLAN." },
-        { label: "Teil 4 · Hören", detailEn: "Production behavior is Goethe past-paper self-check: watch the YouTube video and check answers there. No separate Hören questions are submitted; only Teil 2 and Teil 3 are submitted." },
+        { label: "Teil 3 · Lesen", detailEn: "Digitale Mitteilungen & Online-Anzeigen: Hamburg app notification, Elbphilharmonie booking email, Restaurant Seeblick website and Hafenmuseum/Stadtpark digital info." },
+        { label: "Teil 4 · Hören", detailEn: "Protected Falowen Hören task with five graded questions about Lisa, Markus and Sarah. This is a submitted assessment component alongside Lesen." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 27 is a coherent digital-communication lesson built around opinion language with dass. Students should say what they use, explain why, evaluate one advantage and disadvantage, give an example and conclude. The writing and reading stay on topic; production Hören is deliberately a video self-check.",
+      lessonOverviewEn: "Day 27 is a coherent digital-communication lesson built around opinion language with dass. Students should interpret digital notices and online ads across app, email, website and digital-info formats. The protected Falowen Hören remains a separate graded component.",
       grammarFocusEn: [
         "Use dass after an opinion or statement frame: Ich finde, dass ... / Ich glaube, dass ... / Mir ist wichtig, dass ... .",
         "Move the conjugated verb to the end of the dass-clause: Ich finde, dass E-Mails praktisch sind.",
@@ -300,7 +300,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
         "Putting the conjugated verb directly after dass instead of at the end of the subordinate clause.",
         "Giving a bare opinion without an example, reason or contrast.",
         "Writing the phone-order email without covering recommendation plus ordering/delivery information.",
-        "Using the old lost-phone listening questions instead of the current protected transcript about everyday digital communication.",
+        "Treating the new digital notices reading as a general internet-safety text instead of extracting details from app, email, website and digital-info formats.",
       ],
     },
   },

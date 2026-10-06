@@ -88,14 +88,13 @@ test("Day 26 uses the Gefühle reactions reading and graded protected Hören", (
   assert.match(listening.detailEn, /graded questions|submitted assessment/i);
 });
 
-test("Day 27 follows production Goethe self-check behavior instead of stale source questions", () => {
+test("Day 27 uses digital notices Lesen and graded protected Hören", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-10.27");
+  const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
-  assert.match(listening.detailEn, /Production behavior/i);
-  assert.match(listening.detailEn, /self-check/i);
-  assert.match(listening.detailEn, /only Teil 2 and Teil 3 are submitted/i);
-  assert.match(slide.teacherNotesEn.join(" "), /source component contains listening questions/i);
-  assert.match(slide.teacherNotesEn.join(" "), /production cleanup/i);
+  assert.match(reading.detailEn, /Digitale Mitteilungen|Online-Anzeigen|app notification|booking email/i);
+  assert.match(listening.detailEn, /Protected Falowen/i);
+  assert.match(listening.detailEn, /five graded questions|submitted assessment/i);
 });
 
 test("Day 28 uses the canonical Futur-I route and separates Germany-integration Lesen", () => {
