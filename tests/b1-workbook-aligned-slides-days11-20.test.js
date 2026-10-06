@@ -105,18 +105,17 @@ test("Day 19 uses the interview reading and graded interview listening", () => {
   assert.match(slide.workbookConnection.subtitle, /five-question Frau Keller/i);
 });
 
-test("Day 20 keeps the lost-wallet Lesen separate and Hören self-check only", () => {
+test("Day 20 uses the Reiseleiter reading and graded Hören", () => {
   const slide = getB1WorkbookAlignedSlideDay11To20("B1-6.20");
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   const listening = part(slide, "Teil 4 · Hören").detailEn;
 
   assert.equal(slide.workbookConnection.grammarUrl, null);
-  assert.match(reading, /Susanne/i);
-  assert.match(reading, /lost-wallet|wallet/i);
-  assert.match(listening, /SELF-CHECK ONLY/i);
-  assert.match(listening, /do not submit/i);
-  assert.match(slide.workbookConnection.subtitle, /no direct grammar link/i);
-  assert.match(slide.workbookConnection.subtitle, /self-check only/i);
+  assert.match(reading, /Reiseleiter/i);
+  assert.match(reading, /seven/i);
+  assert.match(listening, /graded/i);
+  assert.match(listening, /five/i);
+  assert.match(slide.workbookConnection.subtitle, /Teil 3 Lesen and Teil 4 Hören are both graded/i);
 });
 
 test("all B1 Day 11-20 aligned slides carry teacher-first support and workbook connections", () => {
