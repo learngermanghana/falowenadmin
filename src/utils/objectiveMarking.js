@@ -453,6 +453,32 @@ function isA111LegacySubmission(assignmentId = "", sections = [], submissionText
   return extractNumberedTextEntries(submissionText).length > 10;
 }
 
+export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, submissionText = "", assignmentId = "") {
+  const resolvedAssignmentId = assignmentId
+    || referenceEntry?.assignmentKey
+    || referenceEntry?.assignmentId
+    || referenceEntry?.assignment_id
+    || "";
+  if (normalizeAssignmentId(resolvedAssignmentId) !== "A1-11") return referenceEntry || {};
+
+  const sections = splitSubmissionIntoSections(submissionText);
+  if (!isA111LegacySubmission(resolvedAssignmentId, sections, submissionText)) return referenceEntry || {};
+
+  return {
+    ...(referenceEntry || {}),
+    answers: A1_11_LEGACY_REFERENCE_ENTRY.answers,
+    expectedParts: A1_11_LEGACY_REFERENCE_ENTRY.expectedParts,
+    referenceAnswerParts: A1_11_LEGACY_REFERENCE_ENTRY.referenceAnswerParts,
+    writingParts: [],
+    aiGradedParts: [],
+    partGrading: {
+      teil1: { label: "Teil 1", hasReferenceAnswers: true, gradingMode: "answer_key" },
+      teil2: { label: "Teil 2", hasReferenceAnswers: true, gradingMode: "answer_key" },
+      teil3: { label: "Teil 3", hasReferenceAnswers: true, gradingMode: "answer_key" },
+    },
+  };
+}
+
 const A1_8_LEGACY_REFERENCE_ENTRY = {
   answers: {
     Answer1: "B) Zwei Uhr nachmittags",
@@ -1194,18 +1220,16 @@ export function computeObjectiveScore(assignmentIdOrReferenceEntry, submissionTe
   const rawSections = splitSubmissionIntoSections(submissionText);
   const legacyA17 = isA17LegacySubmission(assignmentId, rawSections);
   const legacyA18 = isA18LegacySubmission(assignmentId, rawSections, submissionText);
-  const legacyA111 = isA111LegacySubmission(assignmentId, rawSections, submissionText);
   const legacyA2718 = isA2718LegacySubmission(assignmentId, rawSections);
   const hardcodedItems = buildHardcodedReferenceItems(assignmentId);
+  const versionedReference = selectVersionedObjectiveReferenceEntry(source || {}, submissionText, assignmentId);
   const selectedReference = legacyA17
     ? A1_7_LEGACY_REFERENCE_ENTRY
     : legacyA18
       ? A1_8_LEGACY_REFERENCE_ENTRY
-      : legacyA111
-        ? A1_11_LEGACY_REFERENCE_ENTRY
-        : legacyA2718
-          ? A2_7_18_LEGACY_REFERENCE_ENTRY
-          : (source || {});
+      : legacyA2718
+        ? A2_7_18_LEGACY_REFERENCE_ENTRY
+        : versionedReference;
   const items = buildReferenceItems(selectedReference);
   const referenceItems = hardcodedItems.length ? hardcodedItems : items;
   if (!referenceItems.length) return { correctCount: 0, totalCount: 0, details: {} };
