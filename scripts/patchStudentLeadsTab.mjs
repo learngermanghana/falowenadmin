@@ -1,13 +1,13 @@
 import fs from "node:fs";
 
-const filePath = new URL("../src/pages/StudentDirectoryPage.jsx", import.meta.url);
+const filePath = new URL("../src/pages/StudentHubPage.jsx", import.meta.url);
 let source = fs.readFileSync(filePath, "utf8");
 let changed = false;
 
 function replaceOnce(search, replacement, label) {
   if (!source.includes(search)) {
     if (source.includes(replacement)) return;
-    throw new Error(`Could not patch StudentDirectoryPage: ${label}`);
+    throw new Error(`Could not patch StudentHubPage: ${label}`);
   }
   source = source.replace(search, replacement);
   changed = true;
@@ -15,54 +15,73 @@ function replaceOnce(search, replacement, label) {
 
 if (!source.includes('StudentLeadsPanel from "../components/StudentLeadsPanel.jsx"')) {
   replaceOnce(
-    'import StudentSupportTools from "../components/StudentSupportTools";\n',
-    'import StudentSupportTools from "../components/StudentSupportTools";\nimport StudentLeadsPanel from "../components/StudentLeadsPanel.jsx";\n',
+    'import StudentActivityPage from "./StudentActivityPage";\n',
+    'import StudentActivityPage from "./StudentActivityPage";\nimport StudentLeadsPanel from "../components/StudentLeadsPanel.jsx";\n',
     "StudentLeadsPanel import",
   );
 }
 
-if (!source.includes('new URLSearchParams(window.location.search).get("tab") === "leads"')) {
+if (!source.includes('if (value === "leads") return "leads";')) {
   replaceOnce(
-    '  const [activeTab, setActiveTab] = useState("directory");',
-    '  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") === "leads" ? "leads" : "directory");',
-    "Student Leads query tab",
+    'function normalizeTab(value) {\n  return value === "activity" ? "activity" : "students";\n}',
+    'function normalizeTab(value) {\n  if (value === "activity") return "activity";\n  if (value === "leads") return "leads";\n  return "students";\n}',
+    "Leads query-tab normalization",
   );
 }
 
-if (!source.includes('setActiveTab("leads")')) {
-  const addButtonEnd = `              Add Student
-            </button>`;
-  const leadsButton = `
+if (!source.includes('nextTab === "activity" || nextTab === "leads"')) {
+  replaceOnce(
+    '    if (nextTab === "activity") {\n      setSearchParams({ tab: "activity" });\n    } else {',
+    '    if (nextTab === "activity" || nextTab === "leads") {\n      setSearchParams({ tab: nextTab });\n    } else {',
+    "Leads query parameter persistence",
+  );
+}
+
+if (!source.includes('onClick={() => selectTab("leads")}')) {
+  const activityAnchor = `          {!isStaff && (
             <button
               type="button"
-              onClick={() => setActiveTab("leads")}
+              role="tab"
+              aria-selected={activeTab === "activity"}`;
+  const leadsButton = `          {!isStaff && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "leads"}
+              onClick={() => selectTab("leads")}
               style={{
-                border: activeTab === "leads" ? "1px solid #2563eb" : "1px solid #d1d5db",
-                background: activeTab === "leads" ? "#eff6ff" : "#fff",
-                color: "#1a2233",
+                ...TAB_STYLES.base,
+                ...(activeTab === "leads" ? TAB_STYLES.active : TAB_STYLES.inactive),
               }}
             >
-              Student Leads
-            </button>`;
-
-  if (!source.includes(addButtonEnd)) {
-    throw new Error("Could not patch StudentDirectoryPage: Student Leads tab button");
+              Leads
+            </button>
+          )}
+`;
+  if (!source.includes(activityAnchor)) {
+    throw new Error("Could not patch StudentHubPage: Leads tab button");
   }
-  source = source.replace(addButtonEnd, `${addButtonEnd}${leadsButton}`);
+  source = source.replace(activityAnchor, `${leadsButton}${activityAnchor}`);
   changed = true;
 }
 
-if (!source.includes('activeTab === "leads" && <StudentLeadsPanel />')) {
+if (!source.includes('activeTab === "leads" ? (')) {
   replaceOnce(
-    '        {activeTab === "add" && (',
-    '        {activeTab === "leads" && <StudentLeadsPanel />}\n\n        {activeTab === "add" && (',
-    "Student Leads panel render",
+    '      {!isStaff && activeTab === "activity" ? <StudentActivityPage /> : <StudentDirectoryPage />}',
+    `      {!isStaff && activeTab === "leads" ? (
+        <StudentLeadsPanel />
+      ) : !isStaff && activeTab === "activity" ? (
+        <StudentActivityPage />
+      ) : (
+        <StudentDirectoryPage />
+      )}`,
+    "Leads panel render",
   );
 }
 
 if (changed) {
   fs.writeFileSync(filePath, source);
-  console.log("Student Leads tab patched into Student Directory.");
+  console.log("Student Leads tab patched into Student Hub.");
 } else {
-  console.log("Student Leads tab already installed.");
+  console.log("Student Leads tab already installed in Student Hub.");
 }

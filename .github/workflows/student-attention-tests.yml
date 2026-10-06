@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - "src/pages/StudentDirectoryPage.jsx"
+      - "src/pages/StudentHubPage.jsx"
+      - "src/components/StudentLeadsPanel.jsx"
+      - "scripts/patchStudentLeadsTab.mjs"
       - "src/pages/DashboardPage.jsx"
       - "src/pages/DashboardPage.css"
       - "src/components/StudentLearningStatusPanel.jsx"
       - "src/utils/studentAttention.js"
       - "tests/student-attention.test.js"
       - "tests/student-attention-integration.test.js"
+      - "tests/student-leads-hub.test.js"
       - ".github/workflows/student-attention-tests.yml"
   workflow_dispatch:
 
@@ -31,7 +35,7 @@ jobs:
         run: npm ci
 
       - name: Test attention rules and placement
-        run: node --test tests/student-attention.test.js tests/student-attention-integration.test.js
+        run: node --test tests/student-attention.test.js tests/student-attention-integration.test.js tests/student-leads-hub.test.js
 
       - name: Build Falowen Admin
         run: npm run build
