@@ -72,12 +72,12 @@ test("A2 days 6-10 teacher support matches the grammar actually taught in Falowe
   }
 });
 
-test("Day 8 makes the restaurant email distinct from the recipe speaking lesson", () => {
+test("Day 8 uses the Restaurant Seeblick reading", () => {
   const slide = getA2WorkbookAlignedSlideDay6To10("A2-3.8");
-  const writing = slide.workbookConnection.parts.find((part) => part.label === "Teil 2 · Schreiben");
-  assert.match(writing.detailEn, /separate application task/i);
-  assert.match(writing.detailEn, /restaurant/i);
-  assert.match(slide.teacherNotesEn.join(" "), /not a recipe-writing task/i);
+  const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
+  assert.match(reading.detailEn, /Restaurant Seeblick/i);
+  assert.match(reading.detailEn, /reservation|fish|mineral water|tip/i);
+  assert.match(slide.teacherNotesEn.join(" "), /Restaurant Seeblick/i);
 });
 
 test("Day 9 identifies Kultur und Freizeit as a separate reading-comprehension topic", () => {
