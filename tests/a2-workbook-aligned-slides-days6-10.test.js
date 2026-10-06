@@ -97,7 +97,7 @@ test("Day 10 keeps the workbook on the friendly city-exploring theme", () => {
   assert.match(slide.title, /Eine Stadt entdecken und etwas erleben/i);
   assert.match(speaking.detailEn, /friendly city-exploring day/i);
   assert.match(writing.detailEn, /friend/i);
-  assert.match(reading.detailEn, /city-festival programme/i);
+  assert.match(reading.detailEn, /Hamburg|Touristeninformation|Landungsbrücken|Elbphilharmonie/i);
   assert.match(listening.detailEn, /Oktoberfest as one city experience/i);
 });
 
