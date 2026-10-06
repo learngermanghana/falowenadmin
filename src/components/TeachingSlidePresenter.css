@@ -1631,7 +1631,14 @@
     grid-template-columns: 1fr;
   }
 
-  .presenter-c2-guiding-question {
+  .presenter-c2-skill-target {
+    align-items: flex-start;
+    border-radius: 14px;
+    flex-direction: column;
+  }
+}
+
+.presenter-c2-guiding-question {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
@@ -1670,14 +1677,6 @@
     width: fit-content;
   }
 }
-
-.presenter-c2-skill-target {
-    align-items: flex-start;
-    border-radius: 14px;
-    flex-direction: column;
-  }
-}
-
 
 /* Keep the Common mistakes heading reachable even when the list is taller than the slide. */
 .presenter-stage-mistakes {
