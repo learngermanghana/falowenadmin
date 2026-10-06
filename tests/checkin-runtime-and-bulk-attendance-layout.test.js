@@ -36,6 +36,6 @@ test("CheckinDisplay anchors the live Ghana clock to backend serverTime", () => 
   assert.match(page, /checkinStatus/);
   assert.match(page, /data\?\.serverTime/);
   assert.match(page, /performance\.now\(\)/);
-  assert.match(page, /serverClockAnchor\.serverTimeMs/);
+  assert.match(page, /serverClockAnchorRef\.current/);
   assert.match(page, /Could not synchronize authoritative attendance clock/);
 });
