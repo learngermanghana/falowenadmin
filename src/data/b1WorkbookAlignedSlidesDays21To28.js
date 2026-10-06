@@ -64,21 +64,21 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Teach the actual Day 21 grammar: weil/obwohl/während/dass with verb-final order plus einerseits … andererseits, zwar … aber and nicht nur … sondern auch.",
       "The speaking and writing tasks both require comparison plus a clear personal judgement; do not accept lists of advantages without evaluation.",
-      "Teil 3 is the Andrea Müller family-at-different-places reading with five questions.",
+      "Teil 3 is the new „Lebensformen heute“ reading with seven questions on single households, Patchwork families, Senioren-WGs and Mehrgenerationenwohnen.",
       "There is genuinely no Teil 4 for Day 21. The workbook hides it and the marking contract explicitly excludes teil4.",
     ],
     interactionFlow: [
       { phase: "Contrast builder", detailEn: "8 min: turn simple pros/cons into einerseits … andererseits and zwar … aber sentences." },
       { phase: "Subordinate-clause check", detailEn: "9 min: practise weil/obwohl/während/dass with verb-final order." },
       { phase: "Living-form comparison", detailEn: "12 min: pairs compare family, WG and single life using cost, freedom, support and privacy." },
-      { phase: "Workbook bridge", detailEn: "10 min: rehearse the Mara opinion structure and preview Andrea Müller's distributed-family reading." },
+      { phase: "Workbook bridge", detailEn: "10 min: rehearse the Mara opinion structure and preview the seven-question modern-living reading." },
     ],
     wrapUpTaskDe: "Vergleiche zwei Lebensformen in fünf Sätzen. Nutze einen zweiteiligen Konnektor, einen Nebensatz und eine klare eigene Meinung.",
     workbookConnection: workbookConnection(21, [
       { label: "Grammar", detailEn: "Direct grammar page available: weigh advantages and disadvantages with weil, obwohl, während and dass plus einerseits … andererseits, zwar … aber and nicht nur … sondern auch." },
       { label: "Teil 1 · Sprechen", detailEn: "Compare Familie, Wohngemeinschaft and Singleleben; give advantages, disadvantages, a home-country/personal example and explain which form suits you best. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write 80–100 words responding to Mara about the best modern living arrangement; compare the three forms, include at least one advantage and disadvantage, an example and a clear conclusion." },
-      { label: "Teil 3 · Lesen", detailEn: "Scored reading: Andrea Müller and a family living across different German regions; answer all five multiple-choice questions and submit them under Teil 3." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored reading: modern living arrangements in Germany, including Single-Haushalte, Patchwork-Familien, Senioren-WGs and Mehrgenerationenwohnen; answer all seven multiple-choice questions under Teil 3." },
     ], {
       grammarUrl: lessonRoute(21, "grammar"),
       subtitle: "Day 21 has Grammar, Sprechen, Schreiben and Lesen only. There is no Teil 4, and teil4 is excluded by the marking contract.",
