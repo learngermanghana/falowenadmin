@@ -29,6 +29,14 @@ if (!source.includes('if (value === "leads") return "leads";')) {
   );
 }
 
+if (!source.includes('nextTab === "activity" || nextTab === "leads"')) {
+  replaceOnce(
+    '    if (nextTab === "activity") {\n      setSearchParams({ tab: "activity" });\n    } else {',
+    '    if (nextTab === "activity" || nextTab === "leads") {\n      setSearchParams({ tab: nextTab });\n    } else {',
+    "Leads query parameter persistence",
+  );
+}
+
 if (!source.includes('onClick={() => selectTab("leads")}')) {
   const activityAnchor = `          {!isStaff && (
             <button
