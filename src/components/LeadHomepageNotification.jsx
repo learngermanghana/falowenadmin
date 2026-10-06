@@ -62,7 +62,7 @@ export default function LeadHomepageNotification() {
           {error ? <small style={{ display: "block", color: "#991b1b", marginTop: 4 }}>Lead warning: {error}</small> : null}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link to="/students?tab=leads" style={{ fontWeight: 800 }}>Open leads</Link>
+          <Link to="/leads" style={{ fontWeight: 800 }}>Open leads</Link>
           <button type="button" onClick={handleMarkAllSeen} style={{ fontWeight: 800 }}>Mark all as seen</button>
         </div>
       </div>

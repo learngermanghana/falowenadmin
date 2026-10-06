@@ -1,6 +1,6 @@
-import StudentDirectoryPage from "./StudentDirectoryPage";
+import StudentLeadsPanel from "../components/StudentLeadsPanel.jsx";
 
-export default function StudentHubPage() {
+export default function LeadsPage() {
   return (
     <div style={{ display: "grid", gap: 14 }}>
       <section
@@ -17,14 +17,14 @@ export default function StudentHubPage() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0, fontSize: 22 }}>Students</h1>
+          <h1 style={{ margin: 0, fontSize: 22 }}>Leads</h1>
           <p style={{ margin: "4px 0 0", color: "#64748b" }}>
-            Manage student records, enrolment, classes, payments, account support, and completion tools.
+            Manage prospective students, follow-ups, brochure sharing, payment-link preparation, and conversion to students.
           </p>
         </div>
       </section>
 
-      <StudentDirectoryPage />
+      <StudentLeadsPanel />
     </div>
   );
 }

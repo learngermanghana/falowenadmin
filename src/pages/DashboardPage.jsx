@@ -357,7 +357,7 @@ export default function DashboardPage() {
         <StatCard label="Paid / active" value={loading ? "—" : analytics.paidStudents} helper={loading ? "Loading payment status…" : `${analytics.paymentRate}% marked paid or active`} tone="green" icon="✅" />
         <StatCard label="Balance due" value={loading ? "—" : moneyFormatter.format(analytics.totalBalance)} helper={loading ? "Loading balances…" : `${analytics.studentsWithBalance.length} student(s) with balances`} tone="amber" icon="💳" />
         <StatCard label="Upcoming holidays" value={upcomingHolidays.length} helper={`${affectedHolidayClassCount} affected class${affectedHolidayClassCount === 1 ? "" : "es"}`} tone="purple" icon="📅" />
-        <StatCard label="Leads needing attention" value={leadNotificationSummary.unresolvedCount} helper={`${leadNotificationSummary.unseenCount} new unseen lead${leadNotificationSummary.unseenCount === 1 ? "" : "s"}`} tone="rose" icon="🔔" to="/students?tab=leads" />
+        <StatCard label="Leads needing attention" value={leadNotificationSummary.unresolvedCount} helper={`${leadNotificationSummary.unseenCount} new unseen lead${leadNotificationSummary.unseenCount === 1 ? "" : "s"}`} tone="rose" icon="🔔" to="/leads" />
       </section>
 
       <section className="quick-actions-grid">

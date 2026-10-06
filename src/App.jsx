@@ -30,9 +30,9 @@ const TeachingSlidesPage = lazy(() => import("./pages/TeachingSlidesPage"));
 const TeacherLessonDashboardPage = lazy(() => import("./pages/TeacherLessonDashboardPage.jsx"));
 const ClassParticipationPage = lazy(() => import("./pages/ClassParticipationPage.jsx"));
 const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
+const LeadsPage = lazy(() => import("./pages/LeadsPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
-const TimedAssignmentAttemptsPage = lazy(() => import("./pages/TimedAssignmentAttemptsPage.jsx"));
 const OrientationPage = lazy(() => import("./pages/OrientationSetupTabsPage.jsx"));
 const ClassScheduleSetupPage = lazy(() => import("./pages/ClassScheduleSetupPage"));
 const ClassOperationsPage = lazy(() => import("./pages/ClassOperationsPage"));
@@ -129,7 +129,6 @@ function TopBar() {
             {isStaff ? (
               <>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
-                <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Timed Attempts</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
@@ -139,7 +138,7 @@ function TopBar() {
               <>
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
-                <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Timed Attempts</Link>
+                <Link to="/leads" onClick={() => setMenuOpen(false)}>Leads</Link>
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
@@ -254,13 +253,14 @@ export default function App() {
           <Route path="/teaching-slides" element={<ProtectedRoute allowStaff={false}><TeachingSlidesPage /></ProtectedRoute>} />
           <Route path="/orientation" element={<ProtectedRoute allowStaff={false}><OrientationPage /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><StudentHubPage /></ProtectedRoute>} />
-          <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><Navigate to="/students?tab=activity" replace /></ProtectedRoute>} />
+          <Route path="/leads" element={<ProtectedRoute allowStaff={false}><LeadsPage /></ProtectedRoute>} />
+          <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><Navigate to="/students" replace /></ProtectedRoute>} />
           <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
           <Route path="/visitor-guide" element={<PublicVisitorGuideRedirect />} />
           <Route path="/visitor-guide/edit" element={<PublicVisitorGuideRedirect />} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
-          <Route path="/timed-attempts" element={<ProtectedRoute><TimedAssignmentAttemptsPage /></ProtectedRoute>} />
+          <Route path="/timed-attempts" element={<ProtectedRoute><Navigate to="/student-results" replace /></ProtectedRoute>} />
           <Route path="/quality-check" element={<Navigate to="/" replace />} />
           <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
           <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
