@@ -3296,14 +3296,21 @@
   "B1 6.20 Wie wird man ?? (Ausbildung und Qu)": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Richtig",
-        "Answer2": "B) Falsch",
-        "Answer3": "B) Falsch",
-        "Answer4": "B) Falsch",
-        "Answer5": "A) Richtig",
-        "Answer6": "B) Falsch"
+        "Answer1": "B) Weil man Reisen und Beruf miteinander verbinden kann.",
+        "Answer2": "C) Es gibt keine staatlich vorgeschriebene, feste Ausbildung.",
+        "Answer3": "B) Ein Studium oder eine Ausbildung im Bereich Tourismus, Sprachen oder Kultur.",
+        "Answer4": "B) Fließendes Englisch und nach Möglichkeit die Sprache des Reiselandes.",
+        "Answer5": "A) Er muss ruhige und schnelle Entscheidungen treffen können.",
+        "Answer6": "B) Themen wie Rhetorik, Erste Hilfe und Reiserecht.",
+        "Answer7": "C) Sie sammeln Erfahrung auf kürzeren Fahrten."
       },
-      "teil4": {}
+      "teil4": {
+        "Answer1": "B) Mittleren Abschluss",
+        "Answer2": "B) Drei bis vier Jahre",
+        "Answer3": "B) Falsch",
+        "Answer4": "A) Man bastelt und singt mit den Kindern",
+        "Answer5": "B) Geduld"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1MaHnVgNn_PC74l5bfjPJp84Of1xGkL-kXneLL9awNHg/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/1MaHnVgNn_PC74l5bfjPJp84Of1xGkL-kXneLL9awNHg/edit",
@@ -3311,9 +3318,7 @@
     "assignment_id": "B1-6.20",
     "expectedParts": [
       "teil2",
-      "teil3"
-    ],
-    "excludedParts": [
+      "teil3",
       "teil4"
     ],
     "writingParts": [
@@ -3323,7 +3328,8 @@
       "teil2"
     ],
     "referenceAnswerParts": [
-      "teil3"
+      "teil3",
+      "teil4"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3338,6 +3344,12 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
+      },
+      "teil4": {
+        "label": "Teil 4 Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Teil 4 is the graded Hören task for this lesson. Grade it against the reference answers in answers."
       }
     }
   },
