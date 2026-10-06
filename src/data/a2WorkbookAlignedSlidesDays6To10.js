@@ -262,14 +262,14 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       "Teach restaurant language as useful A2 chunks rather than making students explain cooking procedures.",
       "Contrast direct commands with polite restaurant requests: not 'Gib mir Wasser!', but 'Könnte ich bitte ein Wasser bekommen?' or 'Ich hätte gern ein Wasser.'",
       "Make students perform the interaction as a role-play with one guest and one waiter/waitress.",
-      "Keep the existing Teil 3 Lesen and Teil 4 Hören content unchanged; they still use the original food/recipe material and existing answer keys.",
+      "Teil 3 Lesen now uses the Restaurant Seeblick dialogue: no reservation, fish recommendation, still water, positive feedback and a €2 tip. Teil 4 Hören remains unchanged.",
     ],
     interactionFlow: [
       { phase: "Restaurant phrases", detailEn: "8 min: practise menu, ordering, recommendation, problem and payment phrases as short chunks." },
       { phase: "Choice by situation", detailEn: "8 min: give a restaurant situation; students choose the appropriate phrase and complete it." },
       { phase: "Information gap", detailEn: "10 min: Partner A and Partner B receive different restaurant-menu information and must ask each other for the missing details." },
       { phase: "Progressive role-play", detailEn: "15 min: Round 1 order food and drink; Round 2 ask a restaurant question; Round 3 solve a wrong-order problem politely." },
-      { phase: "Workbook bridge", detailEn: "5 min: remind students that Teil 3 Lesen and Teil 4 Hören remain the existing food/recipe exercises." },
+      { phase: "Workbook bridge", detailEn: "5 min: preview the Restaurant Seeblick dialogue and its five comprehension targets, then bridge to the existing Teil 4 Hören." },
     ],
     presenterFocusedPractice: {
       title: "Informationslücke · Restaurant-Menü",
@@ -331,12 +331,12 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       parts: [
         { label: "Grammar", detailEn: "Polite restaurant communication: Ich hätte gern ..., Ich nehme ..., Könnte ich bitte ...?, Was empfehlen Sie?, Entschuldigung, ich habe ... bestellt., Wir möchten bitte zahlen." },
         { label: "Teil 1 · Sprechen", detailEn: "Restaurant role-play: greeting → menu → ordering → asking about a dish → solving a small problem → paying." },
-        { label: "Teil 3 · Lesen", detailEn: "Unchanged original reading task: recipe text with ingredients, sequence and cooking steps." },
+        { label: "Teil 3 · Lesen", detailEn: "Im Restaurant Seeblick am Hafen: identify the missing reservation, fish recommendation, still mineral water, positive reaction to the meal and €2 tip." },
         { label: "Teil 4 · Hören", detailEn: "Unchanged original listening task: food/cooking audio with the existing questions and answer key." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 8 is now a practical restaurant-communication lesson. Students should be able to order politely, ask for information, react to a simple service problem and pay. Reading and listening remain the original food/recipe tasks so existing assessment answers stay valid.",
+      lessonOverviewEn: "Day 8 is a practical restaurant-communication lesson. Students should be able to order politely, ask for information, react to service and pay. The Restaurant Seeblick reading reinforces the same functional language, while the existing listening remains a separate assessed task.",
       grammarFocusEn: [
         "Treat the target language as polite functional chunks: Ich hätte gern ..., Ich möchte ..., Ich nehme ... .",
         "Use Könnte ich bitte ...? for polite requests and Was empfehlen Sie? / Haben Sie ...? for questions.",
