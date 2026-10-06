@@ -4,6 +4,8 @@ import fs from "node:fs";
 
 import { checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 import { buildNaturalStudentFeedback } from "../src/utils/naturalMarkingFeedback.js";
+import { getA2WritingTaskSpec } from "../src/data/a2WritingTaskSpecs.js";
+import { evaluateWritingTaskEvidence } from "../src/utils/writingTaskEvidence.js";
 
 const submission = `TEIL 2
 
@@ -75,6 +77,19 @@ test("A2-8.21 feedback quotes the letter and recognises its natural conclusion",
   assert.match(feedback, /natural conclusion before the closing/i);
   assert.doesNotMatch(feedback, /add a clear conclusion/i);
   assert.doesNotMatch(feedback, /[\p{Extended_Pictographic}]/u);
+});
+
+
+
+test("A2-8.21 task evidence quotes the direct bring instruction", () => {
+  const task = getA2WritingTaskSpec("A2-8.21");
+  const writing = submission.split(/\n\s*TEIL3\b/i)[0];
+  const evidence = evaluateWritingTaskEvidence(task, writing);
+  const bringPoint = evidence.find((item) => /bring|can expect/i.test(item.label));
+
+  assert.equal(bringPoint?.status, "met");
+  assert.match(bringPoint?.evidence || "", /bring bitte bequeme Kleidung und ein Handtuch mit/i);
+  assert.doesNotMatch(bringPoint?.evidence || "", /Wenn das Wetter gut ist/i);
 });
 
 test("student-facing marking sources no longer introduce emoji headings", () => {
