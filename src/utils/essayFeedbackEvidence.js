@@ -242,7 +242,7 @@ function quotedFeedbackPhrases(value = "") {
 }
 
 function isCorrectiveWritingClaim(value = "") {
-  return /\b(?:write|use|replace|correct|revise|avoid|change|fix|article|articles|grammar|word order|spelling|instead of|rather than)\b/i.test(String(value || ""));
+  return /\b(?:write|use|replace|correct|revise|avoid|add|change|fix|article|articles|grammar|word order|spelling|instead of|rather than)\b/i.test(String(value || ""));
 }
 
 function submissionContainsExactPhrase(submission = "", phrase = "") {
@@ -326,6 +326,19 @@ function submissionAnchoredStrength(submission = "") {
   }
   const anchor = writingAnchor(submission);
   return anchor ? "Your sentence “" + anchor.replace(/[.!?]+$/, "") + "” clearly communicates the purpose of the message" : "";
+}
+
+function submissionAnchoredEndingStrength(submission = "") {
+  const lines = writingSectionText(submission)
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const closingIndex = lines.findIndex((line) => /^(?:liebe grüße|viele grüße|herzliche grüße|beste grüße|mit freundlichen grüßen)\b/i.test(line));
+  if (closingIndex <= 0) return "";
+
+  const ending = lines[closingIndex - 1].replace(/[.!?]+$/, "").trim();
+  if (!ending || ending.split(/\s+/).length < 3 || ending.length > 110) return "";
+  return `Your ending “${ending}” gives the email a natural conclusion before the closing`;
 }
 
 function submissionAnchoredNextStep(submission = "") {
@@ -459,7 +472,8 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
   const specificNextStep = specificAiWritingSentence(result, "next", submissionText);
   const anchoredStrength = submissionAnchoredStrength(submissionText);
   const anchoredNextStep = submissionAnchoredNextStep(submissionText);
-  const specificAnchoredStrength = anchoredStrength && !/^Your sentence “/i.test(anchoredStrength) ? anchoredStrength : "";
+  const specificAnchoredStrength = anchoredStrength;
+  const anchoredEndingStrength = submissionAnchoredEndingStrength(submissionText);
   const hasPriorityWritingEvidence = Boolean(
     priorityStrength
     || priorityTask
@@ -483,12 +497,13 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
       fallbackNextStep,
     ];
   const optionalSentences = [
+    specificAnchoredStrength,
+    anchoredEndingStrength,
     priorityStrength,
     priorityTask,
     priorityNextStep,
     specificStrength,
     specificNextStep,
-    priorityStrength || specificStrength ? "" : specificAnchoredStrength,
     anchoredNextStep,
     ...supplementalSentences,
   ];
