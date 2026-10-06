@@ -464,13 +464,24 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
   const sections = splitSubmissionIntoSections(submissionText);
   if (!isA111LegacySubmission(resolvedAssignmentId, sections, submissionText)) return referenceEntry || {};
 
+  const {
+    parts: _currentNormalizedParts,
+    rawAnswers: _currentRawAnswers,
+    totalAnswers: _currentTotalAnswers,
+    ...baseReference
+  } = referenceEntry || {};
+
   return {
-    ...(referenceEntry || {}),
+    ...baseReference,
     answers: A1_11_LEGACY_REFERENCE_ENTRY.answers,
+    rawAnswers: A1_11_LEGACY_REFERENCE_ENTRY.answers,
+    totalAnswers: 15,
     expectedParts: A1_11_LEGACY_REFERENCE_ENTRY.expectedParts,
     referenceAnswerParts: A1_11_LEGACY_REFERENCE_ENTRY.referenceAnswerParts,
     writingParts: [],
     aiGradedParts: [],
+    excludedParts: [],
+    answerLayout: "multipart",
     partGrading: {
       teil1: { label: "Teil 1", hasReferenceAnswers: true, gradingMode: "answer_key" },
       teil2: { label: "Teil 2", hasReferenceAnswers: true, gradingMode: "answer_key" },

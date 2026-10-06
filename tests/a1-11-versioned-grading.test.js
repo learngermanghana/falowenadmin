@@ -2,11 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
 
+import { normalizeAnswerKeyEntry } from "../src/utils/answerKeyNormalizer.js";
 import { checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
 
-const currentReferenceEntry = Object.values(answersDictionary).find(
-  (entry) => String(entry?.assignment_id || entry?.assignmentId || entry?.assignmentKey || "").toUpperCase() === "A1-11",
+const currentReferenceSource = Object.entries(answersDictionary).find(
+  ([, entry]) => String(entry?.assignment_id || entry?.assignmentId || entry?.assignmentKey || "").toUpperCase() === "A1-11",
+);
+const currentReferenceEntry = normalizeAnswerKeyEntry(
+  currentReferenceSource?.[0] || "A1-11",
+  currentReferenceSource?.[1] || {},
 );
 
 const legacySubmission = `Teil 1
@@ -57,7 +62,12 @@ test("A1-11 current Day 17 submissions use the new 5+5 key", () => {
 });
 
 
-test("A1-11 production deterministic scorer preserves the legacy 15-answer key", () => {
+test("A1-11 production deterministic scorer preserves the legacy 15-answer key from a normalized registry entry", () => {
+  assert.equal(currentReferenceEntry.assignmentKey, "A1-11");
+  assert.equal(currentReferenceEntry.totalAnswers, 10);
+  assert.equal(currentReferenceEntry.parts?.teil1?.answerCount, 5);
+  assert.equal(currentReferenceEntry.parts?.teil2?.answerCount, 5);
+
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: currentReferenceEntry,
     submissionText: legacySubmission,
