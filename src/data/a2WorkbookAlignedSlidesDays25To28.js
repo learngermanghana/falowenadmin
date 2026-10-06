@@ -7,7 +7,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     assignmentId: "A2-9.25",
     title: "A2 Day 25 · Tagesablauf",
     topic: "9.25 Tagesablauf",
-    objective: "Students describe a daily routine in clear chronological order using Präsens, time expressions, separable verbs and sequencing words, then transfer the same routine into the workbook email and two reading tasks.",
+    objective: "Students describe daily routines with Präsens, time expressions, separable verbs and sequencing words, then complete the Hamburg Tagesablauf reading as the only submitted workbook assessment."
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Wann stehst du normalerweise auf?",
@@ -69,7 +69,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
     ],
     wrapUpTaskDe: "Beschreibe deinen Tagesablauf in 6 Sätzen. Benutze mindestens ein trennbares Verb und die Wörter dann, danach oder später.",
     workbookConnection: {
-      subtitle: "Teach toward the actual Day 25 structure: Grammar, Sprechen, Schreiben and two Lesen tasks. This workbook has no Hören assignment.",
+      subtitle: "Teach toward the Day 25 Hamburg Tagesablauf reading. Lesen is the only submitted assessment, and there is no Hören assignment.",
       grammarUrl: null,
       workbookUrl: "/campus/course/a2-day-25-tagesablauf-workbook",
       parts: [
@@ -81,7 +81,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 25 consolidates everyday A2 narration through a daily-routine timeline. The teacher should help students order actions, control separable verbs and use time expressions naturally, then prepare the routine email and two distinct reading exercises. There is no Hören section.",
+      lessonOverviewEn: "Day 25 consolidates everyday A2 narration through a daily-routine timeline. The teacher should help students order actions, control separable verbs and use time expressions naturally, then apply those skills to the Hamburg Tagesablauf reading. Lesen is the only submitted assessment, and there is no Hören section."
       grammarFocusEn: [
         "Regular routines are normally expressed in Präsens: Jeden Morgen fahre ich zur Arbeit.",
         "Use time expressions to structure the day: morgens, um 7 Uhr, am Nachmittag, abends.",
@@ -98,7 +98,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
         "Keeping a separable verb together in a main clause: Ich aufstehe ... instead of Ich stehe ... auf.",
         "Using past tense when describing a normal routine instead of Präsens.",
         "Listing actions without sequence or time markers, making the routine difficult to follow.",
-        "Calling Teil 4 Hören. Day 25 has a second Lesen exercise and explicitly no Hören assignment.",
+        "Looking for a Schreiben or Hören submission on Day 25. The submitted assessment is the Hamburg Lesen task only.",
       ],
     },
   },
