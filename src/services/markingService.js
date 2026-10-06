@@ -181,7 +181,7 @@ function cleanDuplicateWritingScores(feedback = "", result = {}) {
     return text;
   }
 
-  const hasWritingHeader = /✍️\s*Writing feedback/i.test(text);
+  const hasWritingHeader = /(?:✍️\s*)?Writing feedback/i.test(text);
   if (!hasWritingHeader) {
     return text;
   }
@@ -191,8 +191,8 @@ function cleanDuplicateWritingScores(feedback = "", result = {}) {
   // "Writing score: 60% ... Writing score: 71%" appearing together.
   text = text.replace(/\bWriting score:\s*\d+\s*%\s*\.?/gi, "");
   text = text.replace(
-    /✍️\s*Writing feedback\s*-?\s*/i,
-    `✍️ Writing feedback - Writing score: ${writingPercent}% `,
+    /(?:✍️\s*)?Writing feedback\s*-?\s*/i,
+    `Writing feedback - Writing score: ${writingPercent}% `,
   );
 
   return text;
