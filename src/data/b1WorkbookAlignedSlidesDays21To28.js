@@ -274,7 +274,7 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       { label: "Grammar", detailEn: "Open the workbook and use its Grammar tab. Focus: könnten/würden for polite suggestions, weil/da for reasons, wenn for conditions and obwohl/aber for polite contrast/reactions." },
       { label: "Teil 1 · Sprechen", detailEn: "Discuss typical first-date situations: preparation, meeting place, topics, feelings, respectful behavior and possible outcomes; compare options and justify one choice. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write an opinion response to Sophie on whether the first date is really important; discuss first impressions, why they can mislead, give an example and conclude." },
-      { label: "Teil 3 · Lesen", detailEn: "Scored separate reading: ‘Die Frau, die first-date ads erfand’ about Elizabeth Magie Phillips, The Landlord's Game, Charles Darrow and Mary Pilon; submit five answer letters under Teil 3." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored Anzeigen matching task: five people choose among six first-date and partner-search ads; one ad remains unused. Submit five answer letters under Teil 3." },
       { label: "Teil 4 · Hören", detailEn: "NO SCORED TEIL 4. The workbook contains only a planned listening placeholder; no medium has been added and the marking contract explicitly excludes teil4." },
     ], {
       grammarUrl: null,
