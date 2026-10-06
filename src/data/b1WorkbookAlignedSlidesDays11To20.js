@@ -968,7 +968,7 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       subtitle: "Teach toward the workbook tasks. Day 20 has no direct grammar link in the current student lesson; Teil 3 Lesen and Teil 4 Hören are both graded."
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 20 consolidates career language around profession definitions, requirements and suitability. The assessed reading now uses the Reiseleiter/in career profile, and Teil 4 is a graded listening task."
+      lessonOverviewEn: "Day 20 consolidates career language around profession definitions, requirements and suitability. The assessed reading now uses the Reiseleiter/in career profile, and Teil 4 is a graded listening task.",
       grammarFocusEn: [
         "Relative clauses describe a profession or person precisely and place the conjugated verb at the end.",
         "muss expresses a requirement; kann/muss ... können expresses ability; sollte expresses a desirable quality or recommendation.",
