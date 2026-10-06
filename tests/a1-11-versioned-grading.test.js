@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import answersDictionary from "../src/data/answers_dictionary.json" with { type: "json" };
 
+import { checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
+
+const currentReferenceEntry = Object.values(answersDictionary).find(
+  (entry) => String(entry?.assignment_id || entry?.assignmentId || entry?.assignmentKey || "").toUpperCase() === "A1-11",
+);
 
 const legacySubmission = `Teil 1
 1. B
@@ -48,4 +54,27 @@ test("A1-11 current Day 17 submissions use the new 5+5 key", () => {
   const result = computeObjectiveScore("A1-11", currentSubmission);
   assert.equal(result.totalCount, 10);
   assert.equal(result.correctCount, 10);
+});
+
+
+test("A1-11 production deterministic scorer preserves the legacy 15-answer key", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: currentReferenceEntry,
+    submissionText: legacySubmission,
+  });
+  assert.ok(result);
+  assert.equal(result.objectiveTotal, 15);
+  assert.equal(result.objectiveCorrect, 15);
+  assert.equal(result.objectiveScore, 100);
+});
+
+test("A1-11 production deterministic scorer keeps current submissions on the 10-answer key", () => {
+  const result = checkDeterministicObjectiveAnswers({
+    referenceEntry: currentReferenceEntry,
+    submissionText: currentSubmission,
+  });
+  assert.ok(result);
+  assert.equal(result.objectiveTotal, 10);
+  assert.equal(result.objectiveCorrect, 10);
+  assert.equal(result.objectiveScore, 100);
 });
