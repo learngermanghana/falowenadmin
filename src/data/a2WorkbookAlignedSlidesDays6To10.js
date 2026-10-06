@@ -519,14 +519,14 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
       "Teach Präteritum as one conjugated past form and contrast it with Perfekt. At A2, prioritize war and hatte, then recognition/use of common forms such as ging, kam, fuhr, sah and fand.",
       "Use city-exploring examples: Letztes Jahr war ich in München. Wir hatten viel Zeit. Am Samstag besuchte ich die Altstadt. Danach ging ich in ein Café.",
       "Bridge to the informal email: name the place → suggest two activities → give a day and meeting point → ask what the friend prefers.",
-      "Teil 3 Lesen is a city-festival programme and Teil 4 Hören is an Oktoberfest example; both now sit naturally inside the broader theme of things you can discover and experience in a city.",
+      "Teil 3 Lesen is the Hamburg city-discovery text with Touristeninformation, Landungsbrücken, Elbphilharmonie, Restaurant Seeblick, Hafenmuseum and Stadtpark. Teil 4 Hören remains the Oktoberfest example.",
     ],
     interactionFlow: [
       { phase: "Friendly city plan", detailEn: "7 min: teacher models a simple day plan using Ort → erster Stopp → Essen/Café → Aktivität → Tipp." },
       { phase: "Perfekt vs Präteritum", detailEn: "9 min: compare paired examples and identify the one-conjugated-verb pattern of Präteritum." },
       { phase: "High-frequency past forms", detailEn: "8 min: practise war, hatte, ging, kam, fuhr, sah and fand in short city-exploring sentences." },
       { phase: "Student mini-presentation", detailEn: "10 min: students plan a relaxed city day and include at least two past-tense sentences from a previous experience." },
-      { phase: "Workbook bridge", detailEn: "7 min: plan the friendly invitation email, then preview the city-festival Lesen and Oktoberfest Hören categories." },
+      { phase: "Workbook bridge", detailEn: "7 min: plan the friendly invitation email, then preview the Hamburg city-discovery Lesen and the Oktoberfest Hören categories." },
     ],
     wrapUpTaskDe: "Sprich 5–6 Sätze über einen Tag in einer Stadt oder an einem neuen Ort. Benutze war oder hatte und mindestens eine weitere Präteritumform. Beende mit einer Empfehlung und einem Grund.",
     workbookConnection: {
@@ -536,12 +536,12 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
         { label: "Grammar", detailEn: "Präteritum: one conjugated past-tense verb; regular verbs often use -te, strong verbs have changed stems, and A2 prioritizes war/hatte plus common forms such as ging, kam, fuhr, sah and fand." },
         { label: "Teil 1 · Sprechen", detailEn: "Plan a friendly city-exploring day through Ort → erster Stopp → Essen/Café → Aktivität → Tipp." },
         { label: "Teil 2 · Schreiben", detailEn: "Informal email to a friend: say which place you want to discover, suggest two activities or places, give a concrete day and meeting point, and ask what the friend prefers." },
-        { label: "Teil 3 · Lesen", detailEn: "Read a Sunday city-festival programme and find times, activities, location, entry information and the bad-weather alternative." },
+        { label: "Teil 3 · Lesen", detailEn: "Eine Stadt entdecken und etwas erleben (Hamburg): identify where visitors get a city map, where the harbour tour starts, the 20:00 Elbphilharmonie concert, Restaurant Seeblick and the Stadtpark plan after the Hafenmuseum." },
         { label: "Teil 4 · Hören", detailEn: "Oktoberfest as one city experience: identify city, duration, food, clothing and additional activities/rides." },
       ],
     },
     teacherSupport: {
-      lessonOverviewEn: "Day 10 is now a friendly city-exploring lesson. Students plan what to see and do with a friend, then use high-frequency Präteritum forms to describe previous city experiences. The city-festival reading and Oktoberfest listening remain useful examples inside the broader idea of discovering what a city offers.",
+      lessonOverviewEn: "Day 10 is a friendly city-exploring lesson. Students plan what to see and do with a friend, then use high-frequency Präteritum forms to describe previous city experiences. The Hamburg reading gives a concrete two-day city plan, while the Oktoberfest listening remains a separate city-experience task.",
       grammarFocusEn: [
         "Präteritum usually uses one conjugated verb form: Ich war, ich hatte, ich ging, ich besuchte. Contrast this with Perfekt’s auxiliary + participle structure.",
         "Regular verbs commonly add -te plus endings: entdecken → entdeckte, besuchen → besuchte; verbs such as arbeiten add an extra e: arbeitete.",
