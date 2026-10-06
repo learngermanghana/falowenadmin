@@ -91,22 +91,18 @@ test("Day 17 does not invent a direct grammar route and points teachers to the w
   assert.match(part(slide, "Grammar").detailEn, /inside the workbook Grammar tab/i);
 });
 
-test("Day 19 keeps both reading texts in scored Teil 3 and excludes Teil 4", () => {
+test("Day 19 uses the interview reading and graded interview listening", () => {
   const slide = getB1WorkbookAlignedSlideDay11To20("B1-6.19");
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
-  const listeningSlot = part(slide, "Teil 4 · Hören").detailEn;
+  const listening = part(slide, "Teil 4 · Hören").detailEn;
 
-  assert.match(reading, /Feldheim/i);
-  assert.match(reading, /Murten/i);
-  assert.match(reading, /questions 1–3|questions 1-3/i);
-  assert.match(reading, /questions 4–6|questions 4-6/i);
-  assert.match(reading, /under Teil 3/i);
-  assert.match(listeningSlot, /NO SCORED TEIL 4/i);
-  assert.match(listeningSlot, /excluded/i);
-  assert.match(listeningSlot, /nothing should be submitted/i);
-  assert.match(listeningSlot, /Murten answers 4–6 belong to Teil 3|Murten answers 4-6 belong to Teil 3/i);
-  assert.match(slide.workbookConnection.subtitle, /Teil 3 contains both/i);
-  assert.match(slide.workbookConnection.subtitle, /Teil 4.*excluded/i);
+  assert.match(reading, /Felix|MediaPlus/i);
+  assert.match(reading, /seven/i);
+  assert.match(listening, /Frau Keller/i);
+  assert.match(listening, /five/i);
+  assert.match(listening, /graded|submit/i);
+  assert.match(slide.workbookConnection.subtitle, /seven-question Felix/i);
+  assert.match(slide.workbookConnection.subtitle, /five-question Frau Keller/i);
 });
 
 test("Day 20 keeps the lost-wallet Lesen separate and Hören self-check only", () => {
