@@ -199,7 +199,7 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
         "Using past forms for a fixed future plan when Präsens plus a time expression is the lesson target.",
         "Putting the subject before the verb after a fronted time expression: Am Dienstag ich arbeite ... .",
         "Forgetting the infinitive at the end after können or müssen.",
-        "Treating the Gülcan reading as if it directly tests weekly-planning grammar instead of separate reading comprehension.",
+        "Treating the Hamburg tourist-information reading as if it directly tests weekly-planning grammar instead of separate reading comprehension.",
       ],
     },
   },
