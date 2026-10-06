@@ -162,11 +162,11 @@ service = replaceOnce(
 service = replaceOnce(
   service,
   `      deterministicObjectiveWeight: hasWritingScore ? OBJECTIVE_WEIGHT : 1,\n      deterministicWritingWeight: hasWritingScore ? WRITING_WEIGHT : 0,`,
-  `      deterministicObjectiveWeight: hasWritingScore ? 0.6 : 1,\n      deterministicWritingWeight: hasWritingScore ? 0.4 : 0,\n      deterministicPartWeights: hasWritingScore ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 } : null,`,
+  `      deterministicObjectiveWeight: hasWritingScore ? 0.6 : 1,\n      deterministicWritingWeight: hasWritingScore ? 0.4 : 0,\n      deterministicPartWeights: hasWritingScore ? (weightedOutcome.policy === "a2-b1-40-60" ? { teil2: 0.4, objective: 0.6 } : { teil2: 0.4, teil3: 0.3, teil4: 0.3 }) : null,`,
   "marking service diagnostic weights",
 );
 const sheetBreakdownAnchor = `function buildScoreBreakdown(details = {}, row = {}) {\n  if (Array.isArray(details.scoreBreakdown) && details.scoreBreakdown.length) return details.scoreBreakdown;\n  const breakdown = [];`;
-const sheetBreakdownReplacement = `function buildScoreBreakdown(details = {}, row = {}) {\n  if (Array.isArray(details.scoreBreakdown) && details.scoreBreakdown.length) return details.scoreBreakdown;\n  if (details.scoreBreakdown?.policy === "a2-b1-40-30-30") {\n    return [\n      { label: "Teil 2 · Schreiben", score: \`\${details.scoreBreakdown.teil2?.points ?? 0}/40\`, reason: \`\${Math.round(details.scoreBreakdown.teil2?.percent ?? 0)}% writing\` },\n      { label: "Teil 3 · Objective", score: \`\${details.scoreBreakdown.teil3?.points ?? 0}/30\`, reason: \`\${details.scoreBreakdown.teil3?.correct ?? "—"}/\${details.scoreBreakdown.teil3?.total ?? "—"} correct\` },\n      { label: "Teil 4 · Objective", score: \`\${details.scoreBreakdown.teil4?.points ?? 0}/30\`, reason: \`\${details.scoreBreakdown.teil4?.correct ?? "—"}/\${details.scoreBreakdown.teil4?.total ?? "—"} correct\` },\n    ];\n  }\n  const breakdown = [];`;
+const sheetBreakdownReplacement = `function buildScoreBreakdown(details = {}, row = {}) {\n  if (Array.isArray(details.scoreBreakdown) && details.scoreBreakdown.length) return details.scoreBreakdown;\n  if (details.scoreBreakdown?.policy === "a2-b1-40-30-30") {\n    return [\n      { label: "Teil 2 · Schreiben", score: \`\${details.scoreBreakdown.teil2?.points ?? 0}/40\`, reason: \`\${Math.round(details.scoreBreakdown.teil2?.percent ?? 0)}% writing\` },\n      { label: "Teil 3 · Objective", score: \`\${details.scoreBreakdown.teil3?.points ?? 0}/30\`, reason: \`\${details.scoreBreakdown.teil3?.correct ?? "—"}/\${details.scoreBreakdown.teil3?.total ?? "—"} correct\` },\n      { label: "Teil 4 · Objective", score: \`\${details.scoreBreakdown.teil4?.points ?? 0}/30\`, reason: \`\${details.scoreBreakdown.teil4?.correct ?? "—"}/\${details.scoreBreakdown.teil4?.total ?? "—"} correct\` },\n    ];\n  }\n  if (details.scoreBreakdown?.policy === "a2-b1-40-60") {\n    const objective = details.scoreBreakdown.objective || {};\n    const partLabel = objective.partId === "teil4" ? "Teil 4" : objective.partId === "teil3" ? "Teil 3" : "Objective";\n    return [\n      { label: "Teil 2 · Schreiben", score: \`\${details.scoreBreakdown.teil2?.points ?? 0}/40\`, reason: \`\${Math.round(details.scoreBreakdown.teil2?.percent ?? 0)}% writing\` },\n      { label: \`\${partLabel} · Objective\`, score: \`\${objective.points ?? 0}/60\`, reason: objective.total ? \`\${objective.correct}/\${objective.total} correct\` : \`\${Math.round(objective.percent ?? 0)}% objective score\` },\n    ];\n  }\n  const breakdown = [];`;
 service = replaceOnce(service, sheetBreakdownAnchor, sheetBreakdownReplacement, "sheet 40/30/30 breakdown");
 fs.writeFileSync(servicePath, service);
 
@@ -201,7 +201,7 @@ router = replaceOnce(
 router = replaceOnce(
   router,
   `      deterministicObjectiveWeight: hasWriting ? OBJECTIVE_WEIGHT : 1,\n      deterministicWritingWeight: hasWriting ? WRITING_WEIGHT : 0,`,
-  `      deterministicObjectiveWeight: hasWriting ? 0.6 : 1,\n      deterministicWritingWeight: hasWriting ? 0.4 : 0,\n      deterministicPartWeights: hasWriting ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 } : null,`,
+  `      deterministicObjectiveWeight: hasWriting ? 0.6 : 1,\n      deterministicWritingWeight: hasWriting ? 0.4 : 0,\n      deterministicPartWeights: hasWriting ? (weightedOutcome.policy === "a2-b1-40-60" ? { teil2: 0.4, objective: 0.6 } : { teil2: 0.4, teil3: 0.3, teil4: 0.3 }) : null,`,
   "API diagnostic weights",
 );
 fs.writeFileSync(routerPath, router);

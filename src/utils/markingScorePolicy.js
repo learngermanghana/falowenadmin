@@ -7,6 +7,7 @@ export const A2_B1_PART_WEIGHTS = Object.freeze({
   teil3: 30,
   teil4: 30,
 });
+export const A2_B1_SINGLE_OBJECTIVE_WEIGHT = 60;
 
 function clampPercent(value) {
   const numeric = Number(value);
@@ -99,13 +100,11 @@ export function calculateWeightedMarkingOutcome({
       objective: { percent: objective },
       finalScore,
     };
-  } else if (isA2B1 && writingAvailable && (hasBothObjectiveParts || objective !== null)) {
+  } else if (isA2B1 && writingAvailable && hasBothObjectiveParts) {
     policy = "a2-b1-40-30-30";
-    const teil3Percent = hasBothObjectiveParts ? partStats.teil3.percent : objective;
-    const teil4Percent = hasBothObjectiveParts ? partStats.teil4.percent : objective;
     const teil2Points = roundPoint((writing / 100) * A2_B1_PART_WEIGHTS.teil2);
-    const teil3Points = roundPoint(((teil3Percent ?? 0) / 100) * A2_B1_PART_WEIGHTS.teil3);
-    const teil4Points = roundPoint(((teil4Percent ?? 0) / 100) * A2_B1_PART_WEIGHTS.teil4);
+    const teil3Points = roundPoint(((partStats.teil3.percent ?? 0) / 100) * A2_B1_PART_WEIGHTS.teil3);
+    const teil4Points = roundPoint(((partStats.teil4.percent ?? 0) / 100) * A2_B1_PART_WEIGHTS.teil4);
     finalScore = Math.round(teil2Points + teil3Points + teil4Points);
     scoreBreakdown = {
       policy,
@@ -113,18 +112,45 @@ export function calculateWeightedMarkingOutcome({
       writingMinimumPercent: A2_B1_WRITING_MIN_PERCENT,
       teil2: { percent: writing, points: teil2Points, maxPoints: A2_B1_PART_WEIGHTS.teil2 },
       teil3: {
-        percent: teil3Percent,
+        percent: partStats.teil3.percent,
         points: teil3Points,
         maxPoints: A2_B1_PART_WEIGHTS.teil3,
-        correct: partStats.teil3.total ? partStats.teil3.correct : null,
-        total: partStats.teil3.total || null,
+        correct: partStats.teil3.correct,
+        total: partStats.teil3.total,
       },
       teil4: {
-        percent: teil4Percent,
+        percent: partStats.teil4.percent,
         points: teil4Points,
         maxPoints: A2_B1_PART_WEIGHTS.teil4,
-        correct: partStats.teil4.total ? partStats.teil4.correct : null,
-        total: partStats.teil4.total || null,
+        correct: partStats.teil4.correct,
+        total: partStats.teil4.total,
+      },
+      finalScore,
+    };
+  } else if (isA2B1 && writingAvailable && objective !== null) {
+    policy = "a2-b1-40-60";
+    const objectivePartId = partStats.teil3.total > 0 && partStats.teil4.total === 0
+      ? "teil3"
+      : partStats.teil4.total > 0 && partStats.teil3.total === 0
+        ? "teil4"
+        : null;
+    const objectivePart = objectivePartId ? partStats[objectivePartId] : null;
+    const objectivePercent = objectivePart?.percent ?? objective;
+    const teil2Points = roundPoint((writing / 100) * A2_B1_PART_WEIGHTS.teil2);
+    const objectivePoints = roundPoint(((objectivePercent ?? 0) / 100) * A2_B1_SINGLE_OBJECTIVE_WEIGHT);
+    finalScore = Math.round(teil2Points + objectivePoints);
+    scoreBreakdown = {
+      policy,
+      passMark: MARKING_PASS_PERCENT,
+      writingMinimumPercent: A2_B1_WRITING_MIN_PERCENT,
+      teil2: { percent: writing, points: teil2Points, maxPoints: A2_B1_PART_WEIGHTS.teil2 },
+      objective: {
+        partId: objectivePartId,
+        percent: objectivePercent,
+        points: objectivePoints,
+        maxPoints: A2_B1_SINGLE_OBJECTIVE_WEIGHT,
+        correct: objectivePart?.total ? objectivePart.correct : null,
+        total: objectivePart?.total || null,
       },
       finalScore,
     };
@@ -142,7 +168,7 @@ export function calculateWeightedMarkingOutcome({
     || writing >= A2_B1_WRITING_MIN_PERCENT;
   const writingRequiredButMissing = isA2B1
     && writingRequirement !== false
-    && hasBothObjectiveParts
+    && objective !== null
     && !writingAvailable;
   const passed = finalScore >= MARKING_PASS_PERCENT && writingMinimumMet && !writingRequiredButMissing;
 

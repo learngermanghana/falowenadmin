@@ -104,6 +104,25 @@ function groupedWrongQuestions(result = {}) {
   return groups;
 }
 
+function exactCorrectAnswersSentence(result = {}, objectivePercent = null) {
+  if (objectivePercent === null || objectivePercent < 60 || !Array.isArray(result.wrongAnswers)) return "";
+
+  const seen = new Set();
+  const corrections = result.wrongAnswers.map((item, index) => {
+    const question = String(item?.question ?? item?.questionNumber ?? index + 1).trim();
+    const partId = normalizePartId(item?.partId || item?.part || "");
+    const expected = String(item?.expectedDisplay || item?.expected || "").replace(/\s+/g, " ").trim();
+    if (!question || !expected) return "";
+    const key = `${partId || "main"}:${question}`;
+    if (seen.has(key)) return "";
+    seen.add(key);
+    const label = partId && partId !== "main" ? `${partId} question ${question}` : `question ${question}`;
+    return `${label} → ${expected}`;
+  }).filter(Boolean);
+
+  return corrections.length ? `Correct answers: ${corrections.join("; ")}` : "";
+}
+
 function perfectObjectiveParts(result = {}) {
   const rows = uniqueObjectiveRows(result);
   const wrongRows = authoritativeWrongRows(result);
@@ -319,6 +338,10 @@ export function buildNaturalStudentFeedback(result = {}, submissionText = "") {
     const descriptions = groupedEntries.map(([part, questions]) => `${part === "main" ? "questions" : part} ${humanList(questions)}`);
     objectiveSentences.push(`Review ${humanList(descriptions)} carefully`);
   }
+
+  const derivedObjectivePercent = objectiveScore ?? (objectiveTotal > 0 ? Math.round((objectiveCorrect / objectiveTotal) * 100) : null);
+  const exactCorrections = exactCorrectAnswersSentence(result, derivedObjectivePercent);
+  if (exactCorrections) objectiveSentences.push(exactCorrections);
 
   const essayFeedback = buildEvidenceEssayFeedback({ result, submissionText, objectiveSentences });
   if (essayFeedback) return sanitizeFalseWritingFeedback(essayFeedback, submissionText);

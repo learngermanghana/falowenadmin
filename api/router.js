@@ -810,15 +810,15 @@ function buildObjectiveFeedback({ name = "Student", correct = 0, total = 0, wron
   const extraCount = Math.max(0, wrongAnswers.length - details.length);
 
   return [
-    "📌 Marking summary",
+    "Marking summary",
     percent === 100 ? `Excellent work, ${firstName}.` : `Good effort, ${firstName}.`,
     "",
-    "📊 Score",
+    "Score",
     `- Objective score: ${correct}/${total} correct (${percent}%)`,
     "",
     details.length
-      ? ["🛠 Corrections to review", ...details, extraCount ? `...and ${extraCount} more answer(s).` : ""].filter(Boolean).join("\n")
-      : "✅ All objective answers were correct.",
+      ? ["Corrections to review", ...details, extraCount ? `...and ${extraCount} more answer(s).` : ""].filter(Boolean).join("\n")
+      : "All objective answers were correct.",
     "",
     details.length
       ? "Next step: Review only the correction list above, then compare your answer with the full correct answer."
@@ -930,7 +930,7 @@ function buildWritingFeedbackSection(rawFeedback = "", writingScore = null) {
   if (!cleaned) return "";
 
   return [
-    "✍️ Writing feedback",
+    "Writing feedback",
     writingScore !== null ? `- Writing score: ${writingScore}%` : "",
     cleaned,
   ].filter(Boolean).join("\n");

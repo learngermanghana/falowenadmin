@@ -89,6 +89,22 @@ function formatWritingScore(result = {}) {
 }
 
 function buildScoreBreakdown(result = {}) {
+  if (result.scoreBreakdown?.policy === "a2-b1-40-30-30") {
+    return [
+      { label: "Teil 2 · Schreiben", value: `${result.scoreBreakdown.teil2?.points ?? 0}/40`, detail: `${Math.round(result.scoreBreakdown.teil2?.percent ?? 0)}%` },
+      { label: "Teil 3 · Objective", value: `${result.scoreBreakdown.teil3?.points ?? 0}/30`, detail: result.scoreBreakdown.teil3?.total ? `${result.scoreBreakdown.teil3.correct}/${result.scoreBreakdown.teil3.total} correct` : "" },
+      { label: "Teil 4 · Objective", value: `${result.scoreBreakdown.teil4?.points ?? 0}/30`, detail: result.scoreBreakdown.teil4?.total ? `${result.scoreBreakdown.teil4.correct}/${result.scoreBreakdown.teil4.total} correct` : "" },
+    ];
+  }
+  if (result.scoreBreakdown?.policy === "a2-b1-40-60") {
+    const objective = result.scoreBreakdown.objective || {};
+    const partLabel = objective.partId === "teil4" ? "Teil 4" : objective.partId === "teil3" ? "Teil 3" : "Objective";
+    return [
+      { label: "Teil 2 · Schreiben", value: `${result.scoreBreakdown.teil2?.points ?? 0}/40`, detail: `${Math.round(result.scoreBreakdown.teil2?.percent ?? 0)}%` },
+      { label: `${partLabel} · Objective`, value: `${objective.points ?? 0}/60`, detail: objective.total ? `${objective.correct}/${objective.total} correct` : `${Math.round(objective.percent ?? 0)}%` },
+    ];
+  }
+
   const rows = [];
   if (Number(result.objectiveTotal || 0) > 0) {
     rows.push({

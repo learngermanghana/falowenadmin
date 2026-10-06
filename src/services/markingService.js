@@ -101,12 +101,66 @@ function stripBoldMarkdown(value = "") {
   return String(value || "").replace(/\*\*/g, "");
 }
 
+function stripFeedbackEmojis(value = "") {
+  return String(value || "")
+    .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/^\s+(?=\S)/gm, "");
+}
+
+function objectivePartId(key = "", detail = {}) {
+  const explicit = String(detail?.partId || detail?.part || "").trim().toLowerCase();
+  if (/^teil[34]$/.test(explicit)) return explicit;
+  return String(key || "").trim().toLowerCase().match(/^(teil[34])(?:[._\s-]|$)/)?.[1] || "";
+}
+
+function reconcileDetectedObjectiveParts(result = {}) {
+  const details = result.objectiveDetails;
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return Array.isArray(result.detectedParts) ? result.detectedParts : [];
+  }
+
+  const stats = new Map();
+  Object.entries(details).forEach(([key, detail]) => {
+    if (!detail || typeof detail !== "object") return;
+    const partId = objectivePartId(key, detail);
+    if (!partId) return;
+    const current = stats.get(partId) || { correct: 0, total: 0 };
+    current.total += 1;
+    if (detail.correct === true) current.correct += 1;
+    stats.set(partId, current);
+  });
+  if (!stats.size) return Array.isArray(result.detectedParts) ? result.detectedParts : [];
+
+  const preserved = (Array.isArray(result.detectedParts) ? result.detectedParts : [])
+    .filter((part) => {
+      const partId = String(part?.partId || "").trim().toLowerCase();
+      const partType = String(part?.partType || "").trim().toLowerCase();
+      return partType !== "objective" && !stats.has(partId);
+    });
+
+  const objective = [...stats.entries()].map(([partId, stat]) => {
+    const wrong = Math.max(0, stat.total - stat.correct);
+    return {
+      partId,
+      partType: "objective",
+      correct: stat.correct,
+      total: stat.total,
+      answerCount: stat.total,
+      wrong,
+      summary: `${partId}: ${stat.total} objective answers found, ${stat.correct} correct, ${wrong} wrong`,
+    };
+  });
+
+  return [...preserved, ...objective];
+}
+
 function cleanLegacyObjectiveTail(feedback = "") {
   let text = String(feedback || "");
 
   // The old browser-side fallback appended this after the new smart feedback:
-  // "Objective score: ... Review these exact answers: ...". Keep the structured
-  // 📌/📊/🛠 feedback and remove only the legacy tail.
+  // "Objective score: ... Review these exact answers: ...". Remove only the
+  // legacy tail before the final student-facing feedback is normalized.
   text = text.replace(
     /\s*Objective score:\s*\d+\s*\/\s*\d+\s*correct\s*\(\s*\d+\s*%\s*\)\.\s*Review these exact answers:[\s\S]*$/i,
     "",
@@ -127,7 +181,7 @@ function cleanDuplicateWritingScores(feedback = "", result = {}) {
     return text;
   }
 
-  const hasWritingHeader = /✍️\s*Writing feedback/i.test(text);
+  const hasWritingHeader = /(?:✍️\s*)?Writing feedback/i.test(text);
   if (!hasWritingHeader) {
     return text;
   }
@@ -137,8 +191,8 @@ function cleanDuplicateWritingScores(feedback = "", result = {}) {
   // "Writing score: 60% ... Writing score: 71%" appearing together.
   text = text.replace(/\bWriting score:\s*\d+\s*%\s*\.?/gi, "");
   text = text.replace(
-    /✍️\s*Writing feedback\s*-?\s*/i,
-    `✍️ Writing feedback - Writing score: ${writingPercent}% `,
+    /(?:✍️\s*)?Writing feedback\s*-?\s*/i,
+    `Writing feedback - Writing score: ${writingPercent}% `,
   );
 
   return text;
@@ -146,7 +200,9 @@ function cleanDuplicateWritingScores(feedback = "", result = {}) {
 
 function sanitizeFeedback(feedback = "", result = {}) {
   return dedupeRepeatedFeedback(
-    cleanDuplicateWritingScores(cleanLegacyObjectiveTail(stripBoldMarkdown(feedback)), result)
+    stripFeedbackEmojis(
+      cleanDuplicateWritingScores(cleanLegacyObjectiveTail(stripBoldMarkdown(feedback)), result),
+    )
       .replace(/[ \t]{2,}/g, " ")
       .replace(/\n{3,}/g, "\n\n")
       .trim(),
@@ -157,8 +213,9 @@ function sanitizeMarkingResult(result = {}) {
   const feedback = sanitizeFeedback(result.feedback || "", result);
   return {
     ...result,
+    detectedParts: reconcileDetectedObjectiveParts(result),
     feedback,
-    improvementSummary: stripBoldMarkdown(result.improvementSummary || feedback),
+    improvementSummary: sanitizeFeedback(result.improvementSummary || feedback, result),
   };
 }
 

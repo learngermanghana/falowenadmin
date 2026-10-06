@@ -16,6 +16,7 @@ on:
       - 'src/services/markingServiceBase.js'
       - 'api/router.js'
       - 'tests/a2-b1-marking-weights.test.js'
+      - 'tests/a2-day21-marking-feedback.test.js'
       - '.github/workflows/a2-b1-marking-weights.yml'
   push:
     branches:
@@ -50,7 +51,10 @@ jobs:
         run: |
           node scripts/patchSmartMarkingNaturalFeedback.mjs
           node scripts/patchSharedWritingScoreRecovery.mjs
-          node scripts/patchSharedWritingScoreRecovery.mjs
+          node scripts/patchA2B1MarkingWeights.mjs
+          node scripts/patchA2B1WritingScoreNormalization.mjs
+          node scripts/patchA2B1MarkingWeights.mjs
+          node scripts/patchA2B1WritingScoreNormalization.mjs
       - name: Validate materialized weighted marking paths
         run: |
           node --check src/utils/markingScorePolicy.js
@@ -60,13 +64,15 @@ jobs:
           node --check src/services/markingServiceBase.js
           node --check api/router.js
           grep -F 'policy = "a2-b1-40-30-30"' src/utils/markingScorePolicy.js
+          grep -F 'policy = "a2-b1-40-60"' src/utils/markingScorePolicy.js
           grep -F 'passed: aggregate.passed' src/utils/autoMarking.js
-          grep -F 'deterministicPartWeights: hasWritingScore ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 }' src/services/markingServiceBase.js
-          grep -F 'deterministicPartWeights: hasWriting ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 }' api/router.js
+          grep -F 'weightedOutcome.policy === "a2-b1-40-60" ? { teil2: 0.4, objective: 0.6 }' src/services/markingServiceBase.js
+          grep -F 'weightedOutcome.policy === "a2-b1-40-60" ? { teil2: 0.4, objective: 0.6 }' api/router.js
           grep -F 'writingMinimumMet: weightedOutcome.writingMinimumMet' src/pages/MarkingPage.jsx
           grep -F 'if (/\b(?:A2|B1)\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;' src/pages/MarkingPage.jsx
           grep -F 'result.scoreBreakdown?.policy === "a2-b1-40-30-30"' src/pages/MarkingQuickPage.jsx
+          grep -F 'result.scoreBreakdown?.policy === "a2-b1-40-60"' src/pages/MarkingQuickPage.jsx
           grep -F 'writing_minimum_met:' src/services/markingServiceBase.js
           grep -F 'marking_policy:' src/services/markingServiceBase.js
       - name: Run weighted scoring regressions
-        run: node --test tests/a2-b1-marking-weights.test.js tests/final-score.test.js
+        run: node --test tests/a2-b1-marking-weights.test.js tests/a2-day21-marking-feedback.test.js tests/final-score.test.js
