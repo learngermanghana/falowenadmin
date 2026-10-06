@@ -1,3 +1,5 @@
+import { selectVersionedObjectiveReferenceEntry } from "./objectiveMarking.js";
+
 const PART_IDS = ["teil1", "teil2", "teil3", "teil4", "unknown"];
 const WRITING_CONFIDENCE_THRESHOLD = 0.75;
 const OBJECTIVE_OPTION_LETTERS = "ABCDEFX";
@@ -1162,12 +1164,13 @@ function selectSubmissionTextForPart(submissionText = "", partId = "main") {
 }
 
 export function checkDeterministicObjectiveAnswers({ referenceEntry = {}, submissionText = "", partId = "main" } = {}) {
-  const requestedParts = partId && partId !== "main" ? [partId] : getReferenceObjectivePartIds(referenceEntry);
+  const effectiveReferenceEntry = selectVersionedObjectiveReferenceEntry(referenceEntry, submissionText);
+  const requestedParts = partId && partId !== "main" ? [partId] : getReferenceObjectivePartIds(effectiveReferenceEntry);
   const partIds = requestedParts.length ? requestedParts : [partId || "main"];
   const markedParts = [];
 
   for (const currentPartId of partIds) {
-    const answerKey = getObjectiveAnswerKey(referenceEntry, currentPartId === "main" ? "unknown" : currentPartId);
+    const answerKey = getObjectiveAnswerKey(effectiveReferenceEntry, currentPartId === "main" ? "unknown" : currentPartId);
     const textForPart = selectSubmissionTextForPart(submissionText, currentPartId);
     const result = objectiveMarker(answerKey, textForPart, { partId: currentPartId });
     if (!result.total) continue;
