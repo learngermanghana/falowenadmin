@@ -1,3 +1,5 @@
+import "./StudentDirectoryPage.css";
+import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../utils/studentDetailTabs.js";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
@@ -12,24 +14,7 @@ import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue,
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
 
-const editableFields = [
-  "name",
-  "email",
-  "phone",
-  "studentCode",
-  "level",
-  "program",
-  "location",
-  "status",
-  "tuitionFee",
-  "initialPaymentAmount",
-  "paymentIntentAmount",
-  "balanceDue",
-  "paymentStatus",
-  "contractStart",
-  "contractEnd",
-  "contractTermMonths",
-];
+const editableFields = STUDENT_DETAIL_TABS.flatMap((tab) => tab.fields);
 
 const dateFields = new Set(["contractStart", "contractEnd"]);
 
@@ -354,6 +339,8 @@ export default function StudentDirectoryPage() {
   const [drafts, setDrafts] = useState({});
   const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [detailTab, setDetailTab] = useState("profile");
+  const [mobileDetails, setMobileDetails] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
   const [creatingStudent, setCreatingStudent] = useState(false);
@@ -432,12 +419,15 @@ export default function StudentDirectoryPage() {
   useEffect(() => {
     if (filteredStudents.length === 0) {
       setSelectedStudentId("");
+      setMobileDetails(false);
       return;
     }
 
     const hasSelected = filteredStudents.some((student) => student.id === selectedStudentId);
     if (!hasSelected) {
       setSelectedStudentId(filteredStudents[0].id);
+      setDetailTab("profile");
+      setMobileDetails(false);
     }
   }, [filteredStudents, selectedStudentId]);
 
@@ -640,10 +630,39 @@ export default function StudentDirectoryPage() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const renderEditableFields = (fields) => (
+    <div className="student-detail-fields">
+      {fields.map((field) => {
+        const draft = getDraft(selectedStudent);
+        const isSaving = savingId === selectedStudent.id;
+        return (
+          <label key={`${selectedStudent.id}-${field}`} style={{ display: "grid", gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{fieldLabels[field] || field}</span>
+            <input
+              type={dateFields.has(field) ? "date" : "text"}
+              value={draft[field]}
+              onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
+              style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
+              disabled={isSaving}
+            />
+            {field === "email" ? (
+              <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.45 }}>
+                Contact email can change without moving the account. Login, progress, scores and class history stay attached to the Firebase UID.
+                {selectedStudent.authEmail && selectedStudent.authEmail !== draft.email
+                  ? ` Current sign-in email: ${selectedStudent.authEmail}.`
+                  : ""}
+              </span>
+            ) : null}
+          </label>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div style={{ display: "grid", gap: 12, padding: 16 }}>
+    <div className="student-directory">
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
-        <h1 style={{ margin: "0 0 8px" }}>Student Directory</h1>
+        <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>Find a student</h2>
         <p style={{ margin: "0 0 12px", opacity: 0.8 }}>
           Search for a student, call them directly, edit records, and generate WhatsApp follow-up messages.
         </p>
@@ -735,8 +754,8 @@ export default function StudentDirectoryPage() {
                 {filteredStudents.length === 0 && <p>No students found for this search.</p>}
 
                 {filteredStudents.length > 0 && (
-                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
-                    <aside style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 8, maxHeight: 520, overflowY: "auto" }}>
+                  <div className={`student-workspace ${mobileDetails ? "is-detail-view" : "is-list-view"}`}>
+                    <aside className="student-sidebar" aria-label="Student list">
                       {filteredStudents.map((student) => {
                         const isSelected = student.id === selectedStudentId;
                         const phone = resolveStudentPhone(student, getDraft(student));
@@ -757,7 +776,13 @@ export default function StudentDirectoryPage() {
                           >
                             <button
                               type="button"
-                              onClick={() => setSelectedStudentId(student.id)}
+                              id={`student-list-${student.id}`}
+                              onClick={() => {
+                                setSelectedStudentId(student.id);
+                                setDetailTab("profile");
+                                setMobileDetails(true);
+                                requestAnimationFrame(() => document.getElementById("student-tab-profile")?.focus());
+                              }}
                               style={{
                                 width: "100%",
                                 textAlign: "left",
@@ -820,70 +845,53 @@ export default function StudentDirectoryPage() {
                     </aside>
 
                     {selectedStudent && (
-                      <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12 }}>
+                      <div className="student-details" key={selectedStudent.id}>
+                        <button type="button" className="student-back-button" onClick={() => {
+                          setMobileDetails(false);
+                          requestAnimationFrame(() => document.getElementById(`student-list-${selectedStudent.id}`)?.focus());
+                        }}>← Back to students</button>
                         <h2 style={{ marginTop: 0, marginBottom: 8 }}>{selectedStudent.name || "Student details"}</h2>
                         <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.75 }}>
-                          Edit this student profile and save changes. Use <strong>Transfer class</strong> below for class changes so attendance and participation history stay intact.
+                          Use the tabs to manage this student’s records, then save your changes. Use <strong>Transfer class</strong> in the Class tab for class changes so attendance and participation history stay intact.
                         </p>
 
-                        <StudentLearningStatusPanel student={selectedStudent} />
-
-                        <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
-                          {editableFields.map((field) => {
-                            const draft = getDraft(selectedStudent);
-                            const isSaving = savingId === selectedStudent.id;
-                            return (
-                              <label key={`${selectedStudent.id}-${field}`} style={{ display: "grid", gap: 6 }}>
-                                <span style={{ fontSize: 13, fontWeight: 600 }}>{fieldLabels[field] || field}</span>
-                                <input
-                                  type={dateFields.has(field) ? "date" : "text"}
-                                  value={draft[field]}
-                                  onChange={(event) => updateDraftField(selectedStudent.id, field, event.target.value, selectedStudent)}
-                                  style={{ width: "100%", padding: "8px 9px", borderRadius: 6, border: "1px solid #ccd4e2" }}
-                                  disabled={isSaving}
-                                />
-                                {field === "email" ? (
-                                  <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.45 }}>
-                                    Contact email can change without moving the account. Login, progress, scores and class history stay attached to the Firebase UID.
-                                    {selectedStudent.authEmail && selectedStudent.authEmail !== draft.email
-                                      ? ` Current sign-in email: ${selectedStudent.authEmail}.`
-                                      : ""}
-                                  </span>
-                                ) : null}
-                              </label>
-                            );
-                          })}
+                        <div className="student-detail-tabs" role="tablist" aria-label="Student details">
+                          {STUDENT_DETAIL_TABS.map((tab) => (
+                            <button key={tab.id} id={`student-tab-${tab.id}`} type="button" role="tab"
+                              aria-selected={detailTab === tab.id} aria-controls={`student-panel-${tab.id}`}
+                              tabIndex={detailTab === tab.id ? 0 : -1}
+                              onClick={() => setDetailTab(tab.id)}
+                              onKeyDown={(event) => {
+                                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                                event.preventDefault();
+                                const next = nextStudentDetailTab(tab.id, event.key);
+                                setDetailTab(next);
+                                document.getElementById(`student-tab-${next}`)?.focus();
+                              }}>{tab.label}</button>
+                          ))}
                         </div>
 
-                        <div style={{ marginTop: 14 }}>
-                          <button
-                            type="button"
-                            onClick={() => saveStudent(selectedStudent)}
-                            disabled={savingId === selectedStudent.id}
-                          >
-                            {savingId === selectedStudent.id ? "Saving..." : "Save student"}
-                          </button>
-                        </div>
+                        {STUDENT_DETAIL_TABS.filter((tab) => tab.fields.length > 0).map((tab) => (
+                          <section key={tab.id} id={`student-panel-${tab.id}`} role="tabpanel"
+                            aria-labelledby={`student-tab-${tab.id}`} hidden={detailTab !== tab.id}
+                            className="student-detail-panel">
+                            <h3>{tab.label === "Class" ? "Class and contract" : tab.label}</h3>
+                            {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
+                            {renderEditableFields(tab.fields)}
+                            {tab.id === "class" && <StudentClassTransferPanel
+                              key={selectedStudent.id} student={selectedStudent} classes={classes}
+                              onTransferred={handleStudentTransferred} pushToast={pushToast} />}
+                          </section>
+                        ))}
 
-                        <StudentClassTransferPanel
-                          key={selectedStudent.id}
-                          student={selectedStudent}
-                          classes={classes}
-                          onTransferred={handleStudentTransferred}
-                          pushToast={pushToast}
-                        />
-
+                        <section id="student-panel-support" role="tabpanel"
+                          aria-labelledby="student-tab-support" hidden={detailTab !== "support"}
+                          className="student-detail-panel">
                         <StudentSupportTools
                           student={selectedStudent}
                           draft={getDraft(selectedStudent)}
                           onStudentDeleted={handleSupportStudentDeleted}
                           onStudentUpdated={handleSupportStudentUpdated}
-                          pushToast={pushToast}
-                        />
-
-                        <CompletionPackPanel
-                          student={selectedStudent}
-                          draft={getDraft(selectedStudent)}
                           pushToast={pushToast}
                         />
 
@@ -968,6 +976,27 @@ export default function StudentDirectoryPage() {
                             Phone used: <strong>{resolveStudentPhone(selectedStudent, getDraft(selectedStudent)) || "No phone number found"}</strong>
                           </p>
                         </section>
+                        </section>
+                        <section id="student-panel-documents" role="tabpanel"
+                          aria-labelledby="student-tab-documents" hidden={detailTab !== "documents"}
+                          className="student-detail-panel">
+                        <CompletionPackPanel
+                          student={selectedStudent}
+                          draft={getDraft(selectedStudent)}
+                          pushToast={pushToast}
+                        />
+
+                        </section>
+                        <div style={{ marginTop: 14 }}>
+                          <button
+                            type="button"
+                            onClick={() => saveStudent(selectedStudent)}
+                            disabled={savingId === selectedStudent.id}
+                          >
+                            {savingId === selectedStudent.id ? "Saving..." : "Save student"}
+                          </button>
+                        </div>
+
                       </div>
                     )}
                   </div>
