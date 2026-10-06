@@ -4,9 +4,9 @@ import fs from "node:fs";
 
 test("admin production build runs the gate and stamps the deployed SHA", () => {
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-  assert.match(pkg.scripts.prebuild, /sync:build/);
-  assert.match(pkg.scripts["sync:build"], /patchPresenterStudentPicker\.mjs/);
-  assert.match(pkg.scripts["sync:build"], /patchPresenterRandomAndAttendanceDiagnostics\.mjs/);
+  assert.match(pkg.scripts.prebuild, /sync:presenter/);
+  assert.match(pkg.scripts["sync:presenter"], /patchPresenterStudentPicker\.mjs/);
+  assert.match(pkg.scripts["sync:presenter"], /patchPresenterRandomAndAttendanceDiagnostics\.mjs/);
   assert.match(pkg.scripts.build, /gate:production/);
   assert.match(pkg.scripts.build, /generate:build-identity/);
   assert.match(pkg.scripts["generate:build-identity"], /writeBuildIdentity\.mjs/);
