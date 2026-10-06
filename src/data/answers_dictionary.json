@@ -1216,11 +1216,11 @@
   "A2 3.8 Im Restaurant – bestellen und reagieren": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Für zwei Personen",
-        "Answer2": "B) Die Nudeln",
-        "Answer3": "A) Die Zwiebel",
-        "Answer4": "B) Nach fünf Minuten",
-        "Answer5": "C) Man mischt Nudeln und Gemüse und würzt."
+        "Answer1": "B) Nein, er kommt ohne Reservierung ins Restaurant.",
+        "Answer2": "B) Gebratenes Fischfilet mit Kartoffeln und Salat",
+        "Answer3": "C) Ein Mineralwasser ohne Kohlensäure",
+        "Answer4": "A) Er findet das Essen ausgezeichnet und lobt es.",
+        "Answer5": "B) Er gibt 2.00 € Trinkgeld (er rundet von 21.00 € auf 23.00 € auf)."
       },
       "teil4": {
         "Answer1": "B) Am Fenster",
