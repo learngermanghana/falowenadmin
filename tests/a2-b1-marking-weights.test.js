@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { calculateFinalScore } from "../src/utils/finalScore.js";
 import {
   A2_B1_PART_WEIGHTS,
+  A2_B1_SINGLE_OBJECTIVE_WEIGHT,
   A2_B1_WRITING_MIN_PERCENT,
   calculateWeightedMarkingOutcome,
   objectivePartStats,
@@ -144,7 +145,7 @@ test("B1-7.22 does not fail because Schreiben is absent", () => {
   assert.equal(result.passed, true);
 });
 
-test("A2/B1 falls back to 40/60 when deterministic part details are unavailable", () => {
+test("A2/B1 uses a truthful 40/60 breakdown when only one objective score is available", () => {
   const result = calculateWeightedMarkingOutcome({
     level: "A2",
     writingPercent: 80,
@@ -153,10 +154,13 @@ test("A2/B1 falls back to 40/60 when deterministic part details are unavailable"
     hasWriting: true,
   });
 
+  assert.equal(A2_B1_SINGLE_OBJECTIVE_WEIGHT, 60);
+  assert.equal(result.policy, "a2-b1-40-60");
   assert.equal(result.finalScore, 86);
   assert.equal(result.scoreBreakdown.teil2.points, 32);
-  assert.equal(result.scoreBreakdown.teil3.points, 27);
-  assert.equal(result.scoreBreakdown.teil4.points, 27);
+  assert.equal(result.scoreBreakdown.objective.points, 54);
+  assert.equal(result.scoreBreakdown.objective.partId, null);
+  assert.equal(result.scoreBreakdown.teil4, undefined);
 });
 
 test("manual score calculator uses the same A2/B1 policy while keeping legacy scoring elsewhere", () => {
@@ -189,4 +193,28 @@ test("A2 writing day A2-1.3 uses 40/30/30 and rounds 76.4 to 76", () => {
   assert.equal(result.scoreBreakdown.teil4.points, 12);
   assert.equal(result.finalScore, 76);
   assert.equal(result.policy, "a2-b1-40-30-30");
+});
+
+
+test("A2-8.21 scores Schreiben 40 plus its real Teil 3 objective section 60", () => {
+  const objectiveDetails = details({
+    teil3: [true, true, true, true, true],
+  });
+  const result = calculateWeightedMarkingOutcome({
+    level: "A2",
+    assignmentKey: "A2-8.21",
+    writingPercent: 83,
+    objectiveScore: 100,
+    objectiveDetails,
+    hasWriting: true,
+  });
+
+  assert.equal(result.policy, "a2-b1-40-60");
+  assert.equal(result.scoreBreakdown.teil2.points, 33.2);
+  assert.equal(result.scoreBreakdown.objective.partId, "teil3");
+  assert.equal(result.scoreBreakdown.objective.correct, 5);
+  assert.equal(result.scoreBreakdown.objective.total, 5);
+  assert.equal(result.scoreBreakdown.objective.points, 60);
+  assert.equal(result.scoreBreakdown.teil4, undefined);
+  assert.equal(result.finalScore, 93);
 });
