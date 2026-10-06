@@ -198,7 +198,7 @@ export const a2WorkbookAlignedSlidesDays25To28 = [
         "Keeping the conjugated verb in normal position inside the wenn-clause instead of placing it at the end.",
         "Using only single emotion words without connecting them to situations or reasons.",
         "Forgetting main-clause inversion when the wenn-clause is placed first.",
-        "Treating the pregnancy/childcare reading as if it directly tests emotion grammar rather than separate reading comprehension.",
+        "Treating the Gefühle und Reaktionen reading as simple vocabulary recall instead of interpreting how short reactions express emotion and attitude.",
       ],
     },
   },
