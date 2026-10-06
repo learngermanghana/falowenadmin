@@ -78,14 +78,14 @@ test("Day 25 uses the Hamburg Lesen-only assessment and explicitly no Hören", (
   assert.match(slide.workbookConnection.parts.at(-1).detailEn, /five questions/i);
 });
 
-test("Day 26 keeps the family and childcare reading separate and Hören self-checked", () => {
+test("Day 26 uses the Gefühle reactions reading and graded protected Hören", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-10.26");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
-  assert.match(reading.detailEn, /Separate comprehension topic/i);
-  assert.match(reading.detailEn, /Mutterschutz|Elternzeit|childcare/i);
-  assert.match(listening.detailEn, /Goethe/i);
-  assert.match(listening.detailEn, /not submitted/i);
+  assert.match(reading.detailEn, /Gefühle und Reaktionen/i);
+  assert.match(reading.detailEn, /enthusiasm|interest|calmness|gratitude|satisfaction/i);
+  assert.match(listening.detailEn, /Protected Falowen/i);
+  assert.match(listening.detailEn, /graded questions|submitted assessment/i);
 });
 
 test("Day 27 follows production Goethe self-check behavior instead of stale source questions", () => {
