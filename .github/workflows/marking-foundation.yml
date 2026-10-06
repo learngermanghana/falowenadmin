@@ -46,4 +46,4 @@ jobs:
           node --check src/utils/writingRubric.js
           node --check src/utils/writingFeedbackDepth.js
       - name: Run direct marking goldens without npm pretest
-        run: node --test tests/submission-sections.test.js tests/writing-rubric.test.js tests/golden-known-submissions.test.js tests/golden-objective-coverage.test.js tests/a1-12.1-objective-parts.test.js tests/compact-objective-paste.test.js
+        run: node --test tests/submission-sections.test.js tests/writing-rubric.test.js tests/golden-known-submissions.test.js tests/golden-objective-coverage.test.js tests/a1-11-versioned-grading.test.js tests/a1-12.1-objective-parts.test.js tests/compact-objective-paste.test.js
