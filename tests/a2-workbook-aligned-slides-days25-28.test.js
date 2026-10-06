@@ -97,15 +97,15 @@ test("Day 27 uses digital notices Lesen and graded protected Hören", () => {
   assert.match(listening.detailEn, /five graded questions|submitted assessment/i);
 });
 
-test("Day 28 uses the canonical Futur-I route and separates Germany-integration Lesen", () => {
+test("Day 28 uses the canonical Futur-I route with Hamburg future-plans Lesen", () => {
   const slide = getA2WorkbookAlignedSlideDay25To28("A2-10.28");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   const listening = slide.workbookConnection.parts.find((part) => part.label === "Teil 4 · Hören");
   assert.equal(slide.workbookConnection.grammarUrl, "/campus/course/ueber-die-zukunft-sprechen-10-28-final-a2-grammar-notes");
-  assert.match(reading.detailEn, /Separate Germany-integration comprehension/i);
-  assert.match(reading.detailEn, /Ausländerbehörde|Arbeitsagentur/i);
-  assert.match(listening.detailEn, /Goethe/i);
-  assert.match(listening.detailEn, /not submitted/i);
+  assert.match(reading.detailEn, /Reisepläne für Hamburg/i);
+  assert.match(reading.detailEn, /Seeblick|Elbphilharmonie|Hafenmuseum|Gästekarte/i);
+  assert.match(listening.detailEn, /Protected Falowen/i);
+  assert.match(listening.detailEn, /graded questions|submitted assessment/i);
 });
 
 test("the complete canonical A2 course now resolves to workbook-aligned teacher guides", () => {
