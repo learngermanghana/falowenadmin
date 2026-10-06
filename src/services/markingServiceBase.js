@@ -782,6 +782,21 @@ function serializeForSheet(value) {
 
 function buildScoreBreakdown(details = {}, row = {}) {
   if (Array.isArray(details.scoreBreakdown) && details.scoreBreakdown.length) return details.scoreBreakdown;
+  if (details.scoreBreakdown?.policy === "a2-b1-40-30-30") {
+    return [
+      { label: "Teil 2 · Schreiben", score: `${details.scoreBreakdown.teil2?.points ?? 0}/40`, reason: `${Math.round(details.scoreBreakdown.teil2?.percent ?? 0)}% writing` },
+      { label: "Teil 3 · Objective", score: `${details.scoreBreakdown.teil3?.points ?? 0}/30`, reason: `${details.scoreBreakdown.teil3?.correct ?? "—"}/${details.scoreBreakdown.teil3?.total ?? "—"} correct` },
+      { label: "Teil 4 · Objective", score: `${details.scoreBreakdown.teil4?.points ?? 0}/30`, reason: `${details.scoreBreakdown.teil4?.correct ?? "—"}/${details.scoreBreakdown.teil4?.total ?? "—"} correct` },
+    ];
+  }
+  if (details.scoreBreakdown?.policy === "a2-b1-40-60") {
+    const objective = details.scoreBreakdown.objective || {};
+    const partLabel = objective.partId === "teil4" ? "Teil 4" : objective.partId === "teil3" ? "Teil 3" : "Objective";
+    return [
+      { label: "Teil 2 · Schreiben", score: `${details.scoreBreakdown.teil2?.points ?? 0}/40`, reason: `${Math.round(details.scoreBreakdown.teil2?.percent ?? 0)}% writing` },
+      { label: `${partLabel} · Objective`, score: `${objective.points ?? 0}/60`, reason: objective.total ? `${objective.correct}/${objective.total} correct` : `${Math.round(objective.percent ?? 0)}% objective score` },
+    ];
+  }
   const breakdown = [];
   if (Number(details.objectiveTotal || 0) > 0) {
     breakdown.push({
