@@ -114,7 +114,6 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
 
     const grammar = stages.find((stage) => stage.id === "grammar");
     assert.deepEqual(grammar.items, slide.grammarTeachDe, slide.assignmentId + " must preserve runtime grammar");
-
     assert.equal(grammar.type, "c2-grammar");
     assert.equal(grammar.modelItems.length, 0, slide.assignmentId + " should not repeat grammar examples in another model block");
     assert.equal(grammar.skillTarget, slide.skillTarget);
@@ -125,19 +124,12 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     assert.equal(analysis.type, "c2-analysis");
     assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
     assert.match(analysis.title, /^Leitfrage aufbauen · /, slide.assignmentId + " should teach one-question argument building");
-    assert.match(analysis.title, new RegExp(slide.analyticalTask.title.replace(/[.*+?^${}()|[\]\\]/g, "\\    const analysis = stages.find((stage) => stage.id === "analysis");
-    assert.equal(analysis.type, "c2-analysis");
-    assert.equal(analysis.items.length, 1, slide.assignmentId + " should use one analytical focus task");
-    assert.equal(analysis.title, slide.analyticalTask.title, slide.assignmentId + " should use its own topic task");
-    assert.deepEqual(analysis.items[0].prompts, slide.analyticalTask.prompts, slide.assignmentId + " should preserve curated case prompts");
-    assert.equal(analysis.casePrompt, slide.analyticalTask.prompts[0], slide.assignmentId + " should reveal the case first");
-    assert.equal(analysis.checkPrompt, slide.analyticalTask.prompts[1], slide.assignmentId + " should reveal the check second");
-    assert.equal(analysis.decisionPrompt, slide.analyticalTask.prompts[2], slide.assignmentId + " should reveal the decision last");
-    assert.equal(analysis.progressiveReveal, true);
-    assert.deepEqual(analysis.rubric, ["Logik", "Evidenz", "Sprache / Register"]);
-    assert.deepEqual(analysis.items[0].modelItems, [], slide.assignmentId + " analysis should not reveal a canned model");
-    assert.equal(analysis.items[0].minutes, 14);")), slide.assignmentId + " should preserve its topic-specific task identity");
-    assert.deepEqual(analysis.items[0].sourceTask, slide.analyticalTask, slide.assignmentId + " should preserve the curated source task as background material");
+    assert.ok(analysis.title.includes(slide.analyticalTask.title), slide.assignmentId + " should preserve its topic-specific task identity");
+    assert.deepEqual(
+      analysis.items[0].sourceTask,
+      slide.analyticalTask,
+      slide.assignmentId + " should preserve the curated source task as background material",
+    );
     assert.equal(analysis.centralQuestion, slide.centralQuestionDe);
     assert.match(analysis.casePrompt, /^POSITION ·/);
     assert.match(analysis.checkPrompt, /^BEGRÜNDUNG \+ BEISPIEL ·/);
