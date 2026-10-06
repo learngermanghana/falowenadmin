@@ -120,12 +120,11 @@ test("Day 24 presenter uses the travel situations and advertisements reading", (
   assert.match(reading.detailEn, /travel situations|advertisements A–F|diving|hostel/i);
 });
 
-test("Day 24 keeps restaurant and celebration Lesen separate and marks Sprechen as no-submission group practice", () => {
+test("Day 24 keeps travel-ad Lesen separate and marks Sprechen as no-submission group practice", () => {
   const slide = getA2WorkbookAlignedSlideDay21To24("A2-9.24");
   const speaking = slide.workbookConnection.parts.find((part) => part.label === "Teil 1 · Sprechen");
   const reading = slide.workbookConnection.parts.find((part) => part.label === "Teil 3 · Lesen");
   assert.match(speaking.detailEn, /no speaking submission/i);
-  assert.match(reading.detailEn, /Separate comprehension topic/i);
-  assert.match(reading.detailEn, /wedding|business meal|children's birthday/i);
-  assert.match(slide.teacherNotesEn.join(" "), /restaurant\/celebration/i);
+  assert.match(reading.detailEn, /travel situations|advertisements A–F|diving|hostel/i);
+  assert.match(slide.teacherNotesEn.join(" "), /situations-and-advertisements/i);
 });
