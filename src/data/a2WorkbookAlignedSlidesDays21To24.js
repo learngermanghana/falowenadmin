@@ -177,8 +177,7 @@ export const a2WorkbookAlignedSlidesDays21To24 = [
         { label: "Grammar", detailEn: "Use Präsens with future-time phrases for fixed near-future plans; if the time phrase is first, keep verb-second order. Use können for availability and müssen for obligations, with the infinitive at the end." },
         { label: "Teil 1 · Sprechen", detailEn: "Describe a weekly plan through weekdays, work/school times, leisure, household chores, appointments and errands; turn the mind map into a 30–45 second mini-presentation." },
         { label: "Teil 2 · Schreiben", detailEn: "Lunch invitation: explain why you are inviting the person, state the date, time and place of the meeting, and explain what the person should bring or can expect." },
-        { label: "Teil 3 · Lesen", detailEn: "Separate comprehension topic: Gülcan's experience as an international student, including her first weeks, shared-flat life, language use and weekend/room arrangements." },
-        { label: "Teil 4 · Hören", detailEn: "Goethe Hören self-check via the workbook video. Learners correct their own listening answers; the submitted/evaluated workbook focus is the writing text and reading answer letters rather than Teil 4." },
+        { label: "Teil 3 · Lesen", detailEn: "Hamburg tourist-information dialogue with seven A2 multiple-choice questions on stay length, harbor-tour price, departure point, Gästekarte benefits, concert time, restaurant and museum duration." },
       ],
     },
     teacherSupport: {
