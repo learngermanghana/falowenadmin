@@ -725,7 +725,16 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
 }
 
 export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
-  const effectiveReferenceEntry = selectVersionedObjectiveReferenceEntry(referenceEntry || {}, submissionText);
+  const effectiveReferenceEntry = selectVersionedObjectiveReferenceEntry(
+    referenceEntry || {},
+    submissionText,
+    referenceEntry?.assignmentKey
+      || referenceEntry?.assignmentId
+      || referenceEntry?.assignment_id
+      || submission.assignmentKey
+      || submission.assignmentId
+      || "",
+  );
   const deterministicObjective = checkDeterministicObjectiveAnswers({ referenceEntry: effectiveReferenceEntry, submissionText, partId: "main" });
   const objectiveFeedbackContext = deterministicObjective?.objectiveTotal ? {
     correct: deterministicObjective.objectiveCorrect,
