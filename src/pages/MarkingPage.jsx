@@ -31,12 +31,11 @@ function SubmissionAttemptLabels({ submission }) {
   if (!submission) return null;
   const isResubmission = Boolean(submission.isResubmission || Number(submission.attempt) > 1 || normalize(submission.status) === "resubmitted");
   if (!isResubmission && !submission.previousScore && !submission.attempt) return null;
-  const badgeStyle = { border: "1px solid #f59e0b", background: "#fffbeb", color: "#92400e", borderRadius: 999, padding: "2px 7px", fontSize: 11, fontWeight: 700 };
   return (
-    <span style={{ display: "inline-flex", gap: 5, flexWrap: "wrap", marginLeft: 6 }}>
-      {isResubmission ? <span style={badgeStyle}>Resubmission</span> : null}
-      {submission.attempt ? <span style={badgeStyle}>Attempt {submission.attempt}</span> : null}
-      {submission.previousScore !== null && submission.previousScore !== undefined ? <span style={badgeStyle}>Previous score: {submission.previousScore}</span> : null}
+    <span className="marking-attempt-badges">
+      {isResubmission ? <span className="marking-attempt-badge">Resubmission</span> : null}
+      {submission.attempt ? <span className="marking-attempt-badge">Attempt {submission.attempt}</span> : null}
+      {submission.previousScore !== null && submission.previousScore !== undefined ? <span className="marking-attempt-badge">Previous score: {submission.previousScore}</span> : null}
     </span>
   );
 }
