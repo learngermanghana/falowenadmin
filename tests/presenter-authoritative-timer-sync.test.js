@@ -16,6 +16,7 @@ test("class timer accepts newest shared timer even when unrelated presenter stat
   assert.match(source, /timerUpdatedBy:\s*presenterLive\.deviceId/);
   assert.match(source, /const nowMs = Date\.now\(\)/);
   assert.match(source, /remoteEndAt - nowMs/);
+  assert.match(source, /sharedClassClock\(remote, nowMs/);
   assert.match(source, /Math\.min\(durationSeconds/);
 });
 

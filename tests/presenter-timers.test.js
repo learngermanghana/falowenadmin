@@ -21,7 +21,7 @@ test("presenter class timer caps oversized shared durations but honors shorter s
   assert.match(source, /configuredDurationSeconds > 0 && sharedDurationSeconds > 0/);
   assert.match(source, /Math\.min\(configuredDurationSeconds, sharedDurationSeconds\)/);
   assert.match(source, /sharedDurationSeconds \|\| configuredDurationSeconds/);
-  assert.match(source, /checkinStartedAtMs > 0 && configuredDurationSeconds > 0/);
+  assert.match(source, /sharedClassClock\(remote, nowMs, \{ durationSeconds \}\)/);
   assert.match(source, /checkinStartedAtMs \+ \(durationSeconds \* 1000\)/);
   assert.match(source, /Start class/);
   assert.match(source, /Class time is up/);
@@ -209,7 +209,7 @@ test("attendance-owned timer is consumed as authoritative shared state", () => {
   assert.match(source, /liveState\.classStartSource === "checkin"/);
   assert.match(source, /sessionTimingAuthority \|\| "attendance"/);
   assert.match(source, /const candidateRemoteEndAt = remoteRunning/);
-  assert.match(source, /rawRemoteEndAt \|\| derivedCheckinEndAt/);
+  assert.match(source, /const candidateRemoteEndAt = remoteRunning \? clock\.deadlineMs : 0/);
   assert.match(source, /const maximumAllowedEndAt/);
   assert.match(source, /Math\.min\(candidateRemoteEndAt, maximumAllowedEndAt\)/);
   assert.match(source, /Math\.min\(durationSeconds, Math\.ceil\(\(remoteEndAt - nowMs\) \/ 1000\)\)/);

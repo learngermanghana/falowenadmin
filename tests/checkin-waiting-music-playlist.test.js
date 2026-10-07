@@ -502,7 +502,7 @@ test("restored local class end keeps an explicit manual end-sync recovery path",
 
 test("ended class timing reacts when a shared end arrives later", () => {
   const page = fs.readFileSync(path.join(repoRoot, "src", "pages", "CheckinDisplayPage.jsx"), "utf8");
-  assert.match(page, /\[actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime\]/);
+  assert.match(page, /\[actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime, endTime/);
 });
 
 

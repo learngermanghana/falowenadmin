@@ -1,3 +1,4 @@
+import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { inferPresenterLevel } from "../utils/presenterSessionTiming.js";
 import {
@@ -37,7 +38,9 @@ function presenterUrlIdentity() {
     assignmentId: normalize(params.get("assignmentId")),
     curriculumDay: Number(params.get("curriculumDay") || 0),
     sessionDate: normalize(params.get("sessionDate")),
-    sessionKey: normalize(params.get("sessionKey")),
+    sessionKey: normalize(params.get("sessionKey")) || (params.get("sessionDate") && params.get("sessionId") && params.get("assignmentId")
+      ? presenterSessionKey({ sessionDate: params.get("sessionDate"), sessionId: params.get("sessionId"), assignmentId: params.get("assignmentId") })
+      : ""),
   };
 }
 
@@ -55,7 +58,7 @@ function mergePresenterContext(base = {}, urlIdentity = {}) {
 }
 
 export default function usePresenterLiveSession(slide = {}) {
-  const rawUrlIdentity = useMemo(presenterUrlIdentity, []);
+  const rawUrlIdentity = useMemo(() => presenterUrlIdentity(), []);
   const slideIds = [
     normalize(slide?.assignmentId).toLowerCase(),
     normalize(slide?.id).toLowerCase(),
@@ -105,9 +108,9 @@ export default function usePresenterLiveSession(slide = {}) {
   }), [urlIdentity]);
 
   const requestedSessionKey = normalize(urlIdentity.sessionKey || classContext.sessionKey);
-  const subscriptionSessionKey = requestedSessionKey.startsWith(`${sessionDate}__`)
+  const subscriptionSessionKey = normalize(urlIdentity.sessionKey) || (requestedSessionKey.startsWith(`${expectedSessionDate}__`)
     ? requestedSessionKey
-    : "";
+    : "");
 
   useEffect(() => {
     setLiveState({});

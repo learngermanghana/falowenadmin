@@ -3,6 +3,10 @@ import { createPortal } from "react-dom";
 import usePresenterLiveSession from "../hooks/usePresenterLiveSession.js";
 import { endPresenterLiveSession, startPresenterLiveSession } from "../services/presenterLiveSessionService.js";
 import {
+  formatClassCountdown,
+  formatTeachingDuration,
+  sharedClassClock,
+  presenterClassMatches,
   SESSION_MINUTES_BY_LEVEL,
   inferPresenterLevel,
   presenterSessionMinutes,
@@ -38,12 +42,7 @@ function currentPresenterClassId() {
 }
 
 function formatSessionTime(totalSeconds = 0) {
-  const safe = Math.max(0, Math.floor(Number(totalSeconds || 0)));
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const seconds = safe % 60;
-  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return formatClassCountdown(totalSeconds);
 }
 
 export function presenterClassTimerStorageKey(level = "", classId = "", now = new Date(), sessionKey = "") {
@@ -175,11 +174,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
       || 0,
   );
   const liveCurriculumDay = Number(liveState.curriculumDay || 0);
-  const liveSessionMatchesCurrentClass = Boolean(
-    currentClassId
-      && liveClassId
-      && currentClassId === liveClassId
-  );
+  const liveSessionMatchesCurrentClass = presenterClassMatches(currentClassId, presenterLive.classRecordId, { ...liveState, classId: liveClassId });
   const liveSessionMatchesCurrentDay = Boolean(
     currentCurriculumDay > 0
       && liveCurriculumDay > 0
@@ -245,6 +240,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
   const previousRemainingRef = useRef(durationSeconds);
   const audioContextRef = useRef(null);
   const lastRemoteTimerStampRef = useRef(0);
+  const lastRemoteTimerSignatureRef = useRef("");
   const expiryPublishedRef = useRef(false);
   const agendaAutoStartHandledRef = useRef(false);
   const manualAttendanceRepairRef = useRef(false);
@@ -274,6 +270,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
   useEffect(() => {
     setHydratedKey("");
     lastRemoteTimerStampRef.current = 0;
+    lastRemoteTimerSignatureRef.current = "";
     if (!durationSeconds) return;
     const restored = readStoredTimer(storageKey, durationSeconds);
     setRemaining(restored.remaining);
@@ -307,7 +304,9 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
     if (!presenterLive.hasSnapshot || !presenterLive.isToday || !remoteStamp) return;
     if (!liveSessionMatchesCurrentClassDay) return;
     if (normalize(remote.timerLevel).toUpperCase() !== level) return;
-    if (remoteStamp <= lastRemoteTimerStampRef.current) return;
+    const signature = JSON.stringify([remoteStamp, remote.timerRunning, remote.timerEndAt, remote.timerRemaining, remote.classStartedAtMs, remote.classEndedAtMs, remote.classLifecycleStatus]);
+    if (remoteStamp === lastRemoteTimerStampRef.current && signature === lastRemoteTimerSignatureRef.current) return;
+    lastRemoteTimerSignatureRef.current = signature;
 
     lastRemoteTimerStampRef.current = remoteStamp;
     const remoteEnded = remote.classLifecycleStatus === "ended"
@@ -315,19 +314,12 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
       || Number(remote.classEndedAtMs || 0) > 0;
     const remoteRunning = !remoteEnded && Boolean(remote.timerRunning);
     const nowMs = Date.now();
-    const rawRemoteEndAt = Math.max(0, Number(remote.timerEndAt || 0));
     const remoteDurationSeconds = Math.max(0, Number(remote.timerDurationSeconds || 0));
     const checkinStartedAtMs = remote.classStartSource === "checkin"
       ? Math.max(0, Number(remote.classStartedAtMs || 0))
       : 0;
-    const derivedCheckinEndAt = checkinStartedAtMs > 0 && durationSeconds > 0
-      ? checkinStartedAtMs + (durationSeconds * 1000)
-      : 0;
-    const candidateRemoteEndAt = remoteRunning
-      ? (checkinStartedAtMs > 0 && configuredDurationSeconds > 0
-        ? derivedCheckinEndAt
-        : (rawRemoteEndAt || derivedCheckinEndAt))
-      : 0;
+    const clock = sharedClassClock(remote, nowMs, { durationSeconds });
+    const candidateRemoteEndAt = remoteRunning ? clock.deadlineMs : 0;
     const maximumAllowedEndAt = checkinStartedAtMs > 0 && durationSeconds > 0
       ? checkinStartedAtMs + (durationSeconds * 1000)
       : nowMs + (durationSeconds * 1000);
@@ -358,7 +350,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
               ? "Updated from other device"
               : "Timer synchronized",
     );
-  }, [presenterLive.liveState?.timerUpdatedAtMs, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, presenterLive.publish, level, durationSeconds]);
+  }, [presenterLive.liveState, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.isRemoteState, presenterLive.publish, liveSessionMatchesCurrentClassDay, level, durationSeconds]);
 
   useEffect(() => {
     if (!presenterLive.classRecordId || !presenterLive.hasSnapshot || !durationSeconds) return;
@@ -376,6 +368,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
       timerRemaining: Number(remaining || 0),
       timerWarned: warnedMilestones,
       timerExpired: remaining <= 0,
+      timerUpdatedBy: presenterLive.deviceId,
       timerUpdatedAtMs: Date.now(),
     });
   }, [presenterLive.classRecordId, presenterLive.hasSnapshot, presenterLive.isToday, presenterLive.liveState?.timerUpdatedAtMs, presenterLive.publish, attendanceControlsTimer, durationSeconds, level, running, endAt, remaining, warnedMilestones]);
@@ -386,6 +379,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
       timerLevel: level,
       timerDurationSeconds: durationSeconds,
       timerWarned: warnedMilestones,
+      timerUpdatedBy: presenterLive.deviceId,
       timerUpdatedAtMs: Date.now(),
       ...patch,
     });
@@ -605,8 +599,6 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
     presenterLive.hasSnapshot,
     storageKey,
   ]);
-
-  if (!durationSeconds) return null;
 
   const expired = remaining <= 0;
   const warningClass = visualWarningClass(remaining);
@@ -856,6 +848,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
         : presenterLive.syncState === "offline"
           ? " · remote offline"
           : "";
+  const endedClassDuration = formatTeachingDuration(sharedClassClock(liveState).elapsedSeconds * 1000);
   const elapsedSeconds = Math.max(0, durationSeconds - Number(remaining || 0));
   const usedMinutes = Math.min(Math.round(durationMinutes), Math.floor(elapsedSeconds / 60));
   const remainingMinutes = Math.max(0, Math.ceil(Number(remaining || 0) / 60));
@@ -867,7 +860,9 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
     Number(stage?.suggestedMinutes || stage?.items?.[0]?.minutes || 0),
   );
 
-  const statusText = attendanceControlsTimer
+  const statusText = attendanceSessionEnded
+    ? "Class ended · countdown stopped"
+    : attendanceControlsTimer
     ? (expired
       ? "Class time is up."
       : attendanceTimerNeedsManualStart
@@ -906,6 +901,8 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
     }, 160);
   }
 
+  if (!durationSeconds) return null;
+
   const classEndedScreen = attendanceSessionEnded && !endedScreenDismissed && typeof document !== "undefined"
     ? createPortal(
       <div className="presenter-class-ended-screen" role="dialog" aria-modal="true" aria-labelledby="presenter-class-ended-title">
@@ -935,7 +932,7 @@ export default function PresenterSessionTimer({ slide, stage = null, toolbarActi
       <div className={`presenter-session-timer ${warningClass}`} aria-live="polite">
       <div className="presenter-session-timer-copy">
         <span>Class time · {level} · {durationMinutes} min</span>
-        <strong>{expired ? "TIME UP" : formatSessionTime(remaining)}</strong>
+        <strong>{attendanceSessionEnded ? `Taught ${endedClassDuration}` : expired ? "TIME UP" : formatSessionTime(remaining)}</strong>
         <div className="presenter-session-budget" aria-label="Lesson time budget">
           <div className="presenter-session-budget-copy">
             <span>{usedMinutes} / {Math.round(durationMinutes)} min used</span>

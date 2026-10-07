@@ -10,7 +10,7 @@ import { pianoPlaylist } from "../data/pianoPlaylist.js";
 import { skipWaitingMusicPlaylist, startWaitingMusicPlaylist, stopWaitingMusicPlaylist } from "../utils/pianoAudio.js";
 import { checkinSessionDateKey, parseCheckinSessionDate } from "../utils/checkinSessionDate.js";
 import { presenterSessionKey } from "../utils/presenterSessionIdentity.js";
-import { presenterSessionDurationSeconds } from "../utils/presenterSessionTiming.js";
+import { formatClassCountdown, formatTeachingDuration, sharedClassClock, presenterSessionDurationSeconds } from "../utils/presenterSessionTiming.js";
 import { subscribeSessionCheckins } from "../services/attendanceService.js";
 import { listClasses } from "../services/classesService.js";
 import {
@@ -919,9 +919,9 @@ export default function CheckinDisplayPage() {
     const sharedEnd = sharedAttendanceEndRequestId
       ? Number(presenterLiveState.classEndedAtMs || 0)
       : 0;
-    const nextStart = actualStartedAt || sharedStart;
+    const nextStart = sharedStart;
     const nextEnd = sharedEnd || actualEndedAt || null;
-    const startChanged = !actualStartedAt;
+    const startChanged = Number(actualStartedAt || 0) !== sharedStart;
     const endChanged = Boolean(sharedEnd && Number(actualEndedAt || 0) !== sharedEnd);
 
     if (!startChanged && !endChanged) return;
@@ -1027,17 +1027,24 @@ export default function CheckinDisplayPage() {
       return {
         kind: "ended",
         eyebrow: "Class ended",
-        value: formatDuration(actualEndedAt - actualStartedAt),
-        note: `Ended at ${formatLiveClockLabel(actualEndedAt)} · actual teaching duration`,
+        value: formatLiveClockLabel(actualEndedAt),
+        note: `Ended at ${ATTENDANCE_TIME_ZONE_LABEL} · Taught ${formatTeachingDuration(actualEndedAt - actualStartedAt)}`,
       };
     }
 
     if (actualStartedAt) {
+      const shared = String(presenterLiveState.sessionKey || "") === String(linkPresenterSessionKey || "") ? presenterLiveState : {};
+      const level = inferClassLevel({}, effectiveAssignmentId, classId);
+      const scheduledDuration = sessionDurationSeconds(startTime, endTime);
+      const presetDuration = presenterSessionDurationSeconds(level);
+      const rawDuration = Number(shared.timerDurationSeconds || scheduledDuration || presetDuration);
+      const durationSeconds = presetDuration && rawDuration ? Math.min(rawDuration, presetDuration) : rawDuration;
+      const clock = sharedClassClock(shared, nowMs, { startedAtMs: actualStartedAt, durationSeconds });
       return {
         kind: "active",
-        eyebrow: "Class started",
-        value: `${formatDuration(nowMs - actualStartedAt)} ago`,
-        note: `Actual start: ${formatLiveClockLabel(actualStartedAt)} ${ATTENDANCE_TIME_ZONE_LABEL}`,
+        eyebrow: clock.remainingSeconds > 0 ? "Class time remaining" : "Class time is up",
+        value: formatClassCountdown(clock.remainingSeconds),
+        note: `Started at ${formatLiveClockLabel(clock.startedAtMs)} ${ATTENDANCE_TIME_ZONE_LABEL} · Taught ${formatTeachingDuration(clock.elapsedSeconds * 1000)}`,
       };
     }
 
@@ -1065,7 +1072,7 @@ export default function CheckinDisplayPage() {
       value: "Waiting for teacher",
       note: "The class begins only when the teacher presses Start class & slides.",
     };
-  }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime]);
+  }, [actualEndedAt, actualStartedAt, dateLabel, delayUntil, nowMs, startTime, endTime, effectiveAssignmentId, classId, presenterLiveState, linkPresenterSessionKey]);
 
   const statusInfo = useMemo(() => {
     if (actualEndedAt) {
@@ -2042,7 +2049,7 @@ export default function CheckinDisplayPage() {
             <span>
               {actualStartedAt
                 ? actualEndedAt
-                  ? `Class ended at ${formatLiveClockLabel(actualEndedAt)} · ${formatDuration(actualEndedAt - actualStartedAt)} taught. ${slideSyncStatus.message || ""}`
+                  ? `Class ended at ${formatLiveClockLabel(actualEndedAt)} · ${formatTeachingDuration(actualEndedAt - actualStartedAt)} taught. ${slideSyncStatus.message || ""}`
                   : `Class started at ${formatLiveClockLabel(actualStartedAt)}. ${slideSyncStatus.message || "Synchronizing slide timer…"}`
                 : delayUntil && nowMs < delayUntil
                   ? `Waiting another ${formatDuration(delayUntil - nowMs)} · ${checkedInCount}${expectedTotal ? ` / ${expectedTotal}` : ""} checked in.`
