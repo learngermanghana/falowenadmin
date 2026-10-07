@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import ResultSubmissionViewer from "../components/ResultSubmissionViewer.jsx";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { loadRoster, updateFirestoreScore } from "../services/markingService.js";
 import { loadStudentResultSources, syncFirestoreScoreToSheet, syncFirestoreScoresToSheet } from "../services/studentResultsService.js";
 import { studentResultKey } from "../utils/studentResultUpsert.js";
@@ -54,7 +55,7 @@ function finalMockAttemptLabel(row = {}) {
   return "";
 }
 
-function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(), onToggleSelected, onToggleAll, allSelected = false, onEdit, editingId = "", editDraft = {}, onEditDraftChange, onCancelEdit, onSaveEdit, savingEditId = "" }) {
+function ResultTable({ rows, source, studentCode, studentLevel, onSync, syncingId, selectedIds = new Set(), onToggleSelected, onToggleAll, allSelected = false, onEdit, editingId = "", editDraft = {}, onEditDraftChange, onCancelEdit, onSaveEdit, savingEditId = "" }) {
   const canBulkSelect = Boolean(onToggleSelected);
   const inputStyle = { width: "100%", minWidth: 90 };
   const commentStyle = { ...inputStyle, minWidth: 280, minHeight: 74 };
@@ -103,7 +104,7 @@ function ResultTable({ rows, source, onSync, syncingId, selectedIds = new Set(),
                   <button type="button" disabled={savingEditId === id} onClick={onCancelEdit}>Cancel</button>
                 </> : onEdit ? <button type="button" onClick={() => onEdit(row, id)}>Edit</button> : null}
                 {onSync ? <button type="button" disabled={syncingId === id || isEditing} onClick={() => onSync(row, id)}>{syncingId === id ? "Updating..." : "Update sheet row"}</button> : null}
-                {!onSync && !onEdit ? "—" : null}
+                <ResultSubmissionViewer row={row} studentCode={studentCode} level={studentLevel} />
               </div>
             </td>
           </tr>;
@@ -125,6 +126,7 @@ const EMPTY_RESULT_SOURCES = {
 
 export default function StudentResultsComparePage() {
   const { success, error } = useToast();
+  const refreshVersion = useRef(0);
   const [roster, setRoster] = useState([]);
   const [query, setQuery] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -146,10 +148,14 @@ export default function StudentResultsComparePage() {
 
   async function refresh(nextStudent = student) {
     if (!nextStudent?.studentCode) return;
+    const version = ++refreshVersion.current;
     setLoading(true);
-    try { setData(await loadStudentResultSources(nextStudent.studentCode)); }
-    catch (err) { error(err?.message || "Failed to load student results."); }
-    finally { setLoading(false); }
+    try {
+      const sources = await loadStudentResultSources(nextStudent.studentCode);
+      if (version === refreshVersion.current) setData(sources);
+    }
+    catch (err) { if (version === refreshVersion.current) error(err?.message || "Failed to load student results."); }
+    finally { if (version === refreshVersion.current) setLoading(false); }
   }
 
   async function handleSync(row, id) {
@@ -221,7 +227,7 @@ export default function StudentResultsComparePage() {
     <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 8 }}>
       <input placeholder="Search student name/code/level" value={query} onChange={(e) => setQuery(e.target.value)} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <select value={studentId} onChange={(e) => { const row = roster.find((r) => r.id === e.target.value); setStudentId(e.target.value); if (row) void refresh(row); }} style={{ minWidth: 320 }}>
+        <select value={studentId} onChange={(e) => { const row = roster.find((r) => r.id === e.target.value); refreshVersion.current += 1; setLoading(false); setStudentId(e.target.value); setData(EMPTY_RESULT_SOURCES); setSelectedRows({}); setEditingId(""); if (row) void refresh(row); }} style={{ minWidth: 320 }}>
           <option value="">Select student...</option>{filtered.map((row) => <option key={row.id} value={row.id}>{row.name || "(No name)"} · {row.studentCode || "No code"} · {row.level || "No level"}</option>)}
         </select>
         <button type="button" disabled={!student || loading} onClick={() => refresh()}>{loading ? "Loading..." : "Refresh"}</button>
@@ -234,9 +240,9 @@ export default function StudentResultsComparePage() {
     </section>
     <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{[["firestore", "Firebase / Firestore"], ["sheet", "Sheet"], ["inconsistent", "Firestore-only"]].map(([id, label]) => <button key={id} type="button" onClick={() => setActiveTab(id)} style={{ fontWeight: activeTab === id ? 800 : 500 }}>{label}</button>)}</nav>
     <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-      {activeTab === "firestore" ? <ResultTable rows={data.firestoreRows} source="Firestore" onSync={handleSync} syncingId={syncingId} selectedIds={selectedIds} onToggleSelected={handleToggleSelected} onToggleAll={handleToggleAll} allSelected={data.firestoreRows.length > 0 && data.firestoreRows.every((row, index) => selectedIds.has(row.id || row.dedupe_id || row.dedupeId || `Firestore-${index}`))} onEdit={startEdit} editingId={editingId} editDraft={editDraft} onEditDraftChange={(field, value) => setEditDraft((current) => ({ ...current, [field]: value }))} onCancelEdit={() => { setEditingId(""); setEditDraft({}); }} onSaveEdit={handleSaveEdit} savingEditId={savingEditId} /> : null}
-      {activeTab === "sheet" ? <ResultTable rows={data.sheetRows} source="sheet" /> : null}
-      {activeTab === "inconsistent" ? <ResultTable rows={inconsistentRows} source="Firestore-only" onSync={handleSync} syncingId={syncingId} selectedIds={selectedIds} onToggleSelected={handleToggleSelected} onToggleAll={handleToggleAll} allSelected={inconsistentRows.length > 0 && inconsistentRows.every((row, index) => selectedIds.has(row.id || row.dedupe_id || row.dedupeId || `Firestore-only-${index}`))} onEdit={startEdit} editingId={editingId} editDraft={editDraft} onEditDraftChange={(field, value) => setEditDraft((current) => ({ ...current, [field]: value }))} onCancelEdit={() => { setEditingId(""); setEditDraft({}); }} onSaveEdit={handleSaveEdit} savingEditId={savingEditId} /> : null}
+      {activeTab === "firestore" ? <ResultTable studentCode={student?.studentCode} studentLevel={student?.level} rows={data.firestoreRows} source="Firestore" onSync={handleSync} syncingId={syncingId} selectedIds={selectedIds} onToggleSelected={handleToggleSelected} onToggleAll={handleToggleAll} allSelected={data.firestoreRows.length > 0 && data.firestoreRows.every((row, index) => selectedIds.has(row.id || row.dedupe_id || row.dedupeId || `Firestore-${index}`))} onEdit={startEdit} editingId={editingId} editDraft={editDraft} onEditDraftChange={(field, value) => setEditDraft((current) => ({ ...current, [field]: value }))} onCancelEdit={() => { setEditingId(""); setEditDraft({}); }} onSaveEdit={handleSaveEdit} savingEditId={savingEditId} /> : null}
+      {activeTab === "sheet" ? <ResultTable studentCode={student?.studentCode} studentLevel={student?.level} rows={data.sheetRows} source="sheet" /> : null}
+      {activeTab === "inconsistent" ? <ResultTable studentCode={student?.studentCode} studentLevel={student?.level} rows={inconsistentRows} source="Firestore-only" onSync={handleSync} syncingId={syncingId} selectedIds={selectedIds} onToggleSelected={handleToggleSelected} onToggleAll={handleToggleAll} allSelected={inconsistentRows.length > 0 && inconsistentRows.every((row, index) => selectedIds.has(row.id || row.dedupe_id || row.dedupeId || `Firestore-only-${index}`))} onEdit={startEdit} editingId={editingId} editDraft={editDraft} onEditDraftChange={(field, value) => setEditDraft((current) => ({ ...current, [field]: value }))} onCancelEdit={() => { setEditingId(""); setEditDraft({}); }} onSaveEdit={handleSaveEdit} savingEditId={savingEditId} /> : null}
     </section>
   </div>;
 }
