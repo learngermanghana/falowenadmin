@@ -74,6 +74,10 @@ export function previousTeacherLesson(slide = null) {
 export function learnerLessonUrl(slide = null) {
   if (!slide) return "https://www.falowen.app/campus/course";
   const level = normalize(slide.course).toUpperCase();
+  const chapter = String(slide.assignmentId || "").trim().match(/^A1-(\d+(?:\.\d+)*(?:-PRACTICE)?)$/i)?.[1];
+  if (level === "A1" && chapter) {
+    return `https://www.falowen.app/campus/course/lesson/A1/${encodeURIComponent(chapter.toLowerCase())}`;
+  }
   const day = Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 0);
   if (["A2", "B1", "B2", "C1", "C2"].includes(level) && day > 0) {
     return `https://www.falowen.app/campus/course/lesson/${encodeURIComponent(level)}/${day}`;

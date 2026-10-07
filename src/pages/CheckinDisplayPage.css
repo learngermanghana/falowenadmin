@@ -41,7 +41,14 @@
   flex-wrap: wrap;
 }
 
-.checkin-display-toolbar-actions button {
+.checkin-display-toolbar-actions button,
+.checkin-display-toolbar-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  text-decoration: none;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   background: #ffffff;
@@ -51,7 +58,8 @@
   cursor: pointer;
 }
 
-.checkin-display-toolbar-actions button:hover {
+.checkin-display-toolbar-actions button:hover,
+.checkin-display-toolbar-actions a:hover {
   background: #f8fafc;
 }
 
@@ -1638,7 +1646,8 @@
     width: 100%;
   }
 
-  .checkin-display-toolbar-actions button {
+  .checkin-display-toolbar-actions button,
+.checkin-display-toolbar-actions a {
     flex: 1 1 120px;
   }
 
@@ -1680,7 +1689,8 @@
     border-radius: 16px;
   }
 
-  .checkin-display-toolbar-actions button {
+  .checkin-display-toolbar-actions button,
+.checkin-display-toolbar-actions a {
     padding: 6px 9px;
   }
 

@@ -134,3 +134,11 @@ test("Admin top bar exposes the deployed commit badge", async () => {
   assert.match(app, /Falowen Admin build/);
   assert.match(css, /\.topbar-build-badge/);
 });
+
+test("attendance learner links use A1 chapters and mapped A2 lesson days", () => {
+  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-3.5", dayNumber: 13 }), "https://www.falowen.app/campus/course/lesson/A1/3.5");
+  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-1.1-PRACTICE", dayNumber: 4 }), "https://www.falowen.app/campus/course/lesson/A1/1.1-practice");
+  const a2 = resolveTeacherLessonSlide({ session: { assignmentIds: ["A2-3.6"] } });
+  assert.equal(learnerLessonUrl(a2), "https://www.falowen.app/campus/course/lesson/A2/6");
+  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "unknown", dayNumber: 13 }), "https://www.falowen.app/campus/course");
+});

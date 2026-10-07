@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
 import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
+import { learnerLessonUrl } from "../utils/teacherLessonDashboard.js";
 import { buildTeachingPresenterStages } from "../utils/teachingPresenter.js";
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import { pianoPlaylist } from "../data/pianoPlaylist.js";
@@ -726,6 +727,14 @@ export default function CheckinDisplayPage() {
     waitingWarmupTeaser?.course,
     waitingWarmupTeaser?.slideId,
   ]);
+
+  const falowenLessonUrl = useMemo(() => {
+    const slide = getTeachingSlideByAssignmentId(effectiveAssignmentId)
+      || getSlidesByCourse(waitingWarmupTeaser?.course || waitingClassLevel)
+        .find((candidate) => candidate.id === waitingWarmupTeaser?.slideId);
+    const url = learnerLessonUrl(slide);
+    return url.includes("/course/lesson/") ? url : "";
+  }, [effectiveAssignmentId, waitingClassLevel, waitingWarmupTeaser?.course, waitingWarmupTeaser?.slideId]);
 
   const resolvePresenterClass = useCallback(async () => {
     const classes = await listClasses();
@@ -1994,6 +2003,10 @@ export default function CheckinDisplayPage() {
         <div className="checkin-display-toolbar">
           <div className="checkin-display-brand">Falowen Attendance</div>
           <div className="checkin-display-toolbar-actions">
+            <button type="button" onClick={openSlidesManually} disabled={!presenterLessonUrl}>Open slides</button>
+            {falowenLessonUrl && (
+              <a href={falowenLessonUrl} target="_blank" rel="noopener noreferrer">Open lesson</a>
+            )}
             <button type="button" onClick={toggleFullscreen}>Full screen</button>
             <button type="button" onClick={copyCheckinLink}>{copiedLink ? "Link copied" : "Copy check-in link"}</button>
             <button type="button" onClick={() => setShowNames((value) => !value)}>

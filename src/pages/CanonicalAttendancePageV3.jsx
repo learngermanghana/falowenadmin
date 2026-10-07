@@ -1,3 +1,5 @@
+import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
+import { learnerLessonUrl } from "../utils/teacherLessonDashboard.js";
 import { parseAssignmentChapter } from "../utils/assignmentChapter.js";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -193,6 +195,9 @@ export default function CanonicalAttendancePageV3() {
   const today = localDate(new Date(), timezone);
   const isToday = selectedDate === today;
   const assignmentId = String(selected?.assignmentIds?.[0] || selected?.assignment_id || "").trim();
+  const lessonSlide = getTeachingSlideByAssignmentId(assignmentId);
+  const lessonUrl = learnerLessonUrl(lessonSlide);
+  const slidesUrl = lessonSlide ? `/teaching-slides/course/${encodeURIComponent(lessonSlide.course)}/${encodeURIComponent(lessonSlide.id)}?${new URLSearchParams({ present: "1", classId: String(klass?.id || ""), classRecordId: String(klass?.id || ""), sessionId: String(selectedId || ""), assignmentId, curriculumDay: String(lessonSlide.dayNumber || ""), sessionDate: selectedDate })}` : "";
   const sessionLabel = String(selected?.topic || klass?.name || "Live class").trim();
   const startTime = localTime(selected?.startsAt, timezone);
   const endTime = localTime(selected?.endsAt, timezone);
@@ -466,6 +471,8 @@ export default function CanonicalAttendancePageV3() {
             <button disabled={sessionBusy || sessionOpen || !assignmentId || !isToday || sessionLocked} onClick={() => changeCheckin("open")}>{sessionBusy && !sessionOpen ? "Opening…" : "Open Check-in"}</button>
             <button disabled={sessionBusy || !sessionOpen} onClick={() => changeCheckin("close")}>{sessionBusy && sessionOpen ? "Closing…" : "Close Check-in"}</button>
             <button type="button" onClick={refreshCheckins}>Refresh Check-ins</button>
+            {slidesUrl && <a href={slidesUrl} target="_blank" rel="noopener noreferrer">Open slides</a>}
+            {lessonUrl.includes("/course/lesson/") && <a href={lessonUrl} target="_blank" rel="noopener noreferrer">Open lesson</a>}
             <a href={displayUrl} target="_blank" rel="noreferrer">Open Full-Screen QR Page</a>
             <span style={{ marginLeft: "auto", fontSize: 12 }}>Status: <strong>{sessionOpen ? "OPEN" : "CLOSED"}</strong></span>
           </div>
