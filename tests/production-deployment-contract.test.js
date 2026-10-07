@@ -30,3 +30,25 @@ test("admin production health workflow checks the live commit SHA", () => {
   assert.match(workflow, /vercel@latest deploy --prebuilt --prod/);
   assert.match(workflow, /api\/deployment-status/);
 });
+
+
+test("mobile startup keeps Firestore and Storage out of the auth bootstrap", () => {
+  const app = fs.readFileSync("src/App.jsx", "utf8");
+  const authContext = fs.readFileSync("src/context/AuthContext.jsx", "utf8");
+  const loginPage = fs.readFileSync("src/pages/LoginPage.jsx", "utf8");
+  const firebaseAuth = fs.readFileSync("src/firebaseAuth.js", "utf8");
+
+  assert.match(app, /const LoginPage = lazy\(\(\) => import\("\.\/pages\/LoginPage"\)\)/);
+  assert.doesNotMatch(app, /import LoginPage from/);
+  assert.match(authContext, /from "\.\.\/firebaseAuth"/);
+  assert.doesNotMatch(authContext, /from "\.\.\/firebase"/);
+  assert.match(loginPage, /from "\.\.\/firebaseAuth"/);
+  assert.doesNotMatch(firebaseAuth, /firebase\/firestore|firebase\/storage/);
+});
+
+test("dashboard lead consumers share one short-lived lead request", () => {
+  const source = fs.readFileSync("src/services/studentLeadService.js", "utf8");
+  assert.match(source, /studentLeadRequestCache = new Map\(\)/);
+  assert.match(source, /if \(cached\?\.promise\) return cached\.promise/);
+  assert.match(source, /STUDENT_LEADS_CACHE_MS = 30_000/);
+});
