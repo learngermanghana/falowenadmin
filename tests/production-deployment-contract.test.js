@@ -2,11 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-test("admin production build runs the gate and stamps the deployed SHA", () => {
+test("admin production release gates and stamps SHA while Vercel build stays mutation-free", () => {
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-  assert.match(pkg.scripts.build, /gate:production/);
-  assert.match(pkg.scripts.build, /generate:build-identity/);
+  const workflow = fs.readFileSync(".github/workflows/production-release.yml", "utf8");
+
+  assert.equal(pkg.scripts.build, "vite build");
   assert.match(pkg.scripts["generate:build-identity"], /writeBuildIdentity\.mjs/);
+  assert.match(workflow, /npm run sync:build/);
+  assert.match(workflow, /npm run gate:production/);
+  assert.match(workflow, /npm run generate:build-identity/);
+  assert.match(workflow, /npx vite build/);
 });
 
 test("admin build identity is uncached and main is the only automatic Git deployment", () => {
