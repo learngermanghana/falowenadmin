@@ -1,3 +1,6 @@
+import { computeObjectiveScore } from "../utils/objectiveMarking.js";
+import { mergeObjectiveScore } from "../utils/markingReview.js";
+import { markingConsistencyWarnings, reconcileMarkingQuality, verifiedObjectiveZero } from "../utils/markingQuality.js";
 import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
@@ -75,7 +78,8 @@ function isBlockedScore(value) {
   return !Number.isFinite(numeric) || numeric <= 0;
 }
 
-function assertSavableScore(value) {
+function assertSavableScore(value, evidence = {}) {
+  if (value !== null && value !== "" && value !== undefined && Number(value) === 0 && verifiedObjectiveZero({ ...evidence, finalScore: value })) return 0;
   if (!isBlockedScore(value)) return Number(value);
   const saveError = new Error(BLOCKED_SCORE_MESSAGE);
   saveError.code = "MARKING_SCORE_BLOCKED";
@@ -181,7 +185,8 @@ function withReviewReason(result = {}, { code, message, source = "marking_servic
 }
 
 function finalizeMarkingResult(result = {}, submission = {}) {
-  return sanitizeMarkingResult(withResubmissionComparison(result, submission));
+  const warnings = markingConsistencyWarnings(result, submission);
+  return sanitizeMarkingResult(withResubmissionComparison({ ...result, consistencyWarnings: warnings, shouldSendAutomatically: false, ...(warnings.length ? { status: "needs_review" } : {}) }, submission));
 }
 
 function safeFirestoreId(value) {
@@ -372,6 +377,16 @@ export async function loadSubmissions(options = {}) {
 export async function markSubmissionWithAI(options = {}) {
   const originalSubmissionText = options.submissionText || options.submission?.text || "";
   const preparedOptions = prepareMarkingOptions(options);
+  const reference = preparedOptions.referenceEntry;
+  if (reference && Array.isArray(reference.writingParts) && reference.writingParts.length === 0
+    && !hasLikelyUnlabelledWritingBeforeObjective(originalSubmissionText)
+    && !/\b(?:schreiben|writing)\b/i.test(originalSubmissionText)) {
+    const objective = computeObjectiveScore(reference, originalSubmissionText);
+    if (objective.totalCount > 0) {
+      const exact = mergeObjectiveScore({ level: reference.level || options.submission?.level, assignmentKey: reference.assignmentKey || reference.assignment_id, writingScore: null, writingScorePercent: null, confidence: 1, status: "marked" }, objective);
+      return sanitizeMarkingResult(reconcileMarkingQuality(exact, objective, options.submission, { wordTarget: options.feedbackWordTarget }));
+    }
+  }
 
   let primary = applyQuestionAwareWritingGuard(
     sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions)),
@@ -431,7 +446,7 @@ export async function markSubmissionWithAI(options = {}) {
 
 export async function saveMarkingResult(options = {}) {
   const result = enrichTutorCalibration(options.result || {});
-  assertSavableScore(scoreValueFromResult(result));
+  assertSavableScore(scoreValueFromResult(result), result);
   const response = await base.saveMarkingResult({ ...options, result });
 
   try {
@@ -448,7 +463,7 @@ export async function saveMarkingResult(options = {}) {
 }
 
 export async function saveScoreRow(options = {}) {
-  assertSavableScore(options.score);
+  assertSavableScore(options.score, options.markingDetails || {});
   const receipt = await base.saveScoreRow({ ...options, comments: stripMarkingEmojis(options.comments) });
   const scoreLabel = savedScoreLabel(receipt, options.score);
 

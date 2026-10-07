@@ -724,7 +724,7 @@ async function saveAIAudit({ submission = {}, result = {}, receipt = {}, reason 
   }), { merge: true });
 }
 
-export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "" } = {}) {
+export async function markSubmissionWithAI({ submission = {}, referenceEntry = null, submissionText = "", feedbackWordTarget = 40 } = {}) {
   const effectiveReferenceEntry = selectVersionedObjectiveReferenceEntry(
     referenceEntry || {},
     submissionText,
@@ -749,7 +749,8 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     level: effectiveReferenceEntry?.level || submission.level || "",
     submissionText,
     objectiveFeedbackContext,
-    feedbackInstruction: AI_FEEDBACK_INSTRUCTION,
+    feedbackWordTarget,
+    feedbackInstruction: `${AI_FEEDBACK_INSTRUCTION} Keep writing feedback separate from objective results. Use the exact task points and CEFR level; do not expect advanced language from A1 students. Every writing correction must quote text actually present in this submission and provide a correction. Explain material deductions using task-point evidence and specific language issues. Do not invent missing task points or objective mistakes. ${feedbackWordTarget ? `Aim for ${feedbackWordTarget} words without dropping essential corrections.` : ""}`,
   };
 
   const res = await fetch("/api/marking/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });

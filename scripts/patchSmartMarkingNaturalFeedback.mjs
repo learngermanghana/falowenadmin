@@ -122,12 +122,19 @@ if (!pageSource.includes(wrapper)) {
   pageSource = pageSource.replace(wrapperAnchor, `${wrapper}${wrapperAnchor}`);
 }
 
-pageSource = replaceRequired(
-  pageSource,
-  "const result = mergeObjectiveScore(aiResult, deterministicObjective);",
-  "const result = mergeObjectiveScore(aiResult, deterministicObjective, submissionText);",
-  "final deterministic merge input",
-);
+if (pageSource.includes("reconcileMarkingQuality(mergeObjectiveScore(aiResult, deterministicObjective)")) {
+  pageSource = pageSource.replace(
+    "reconcileMarkingQuality(mergeObjectiveScore(aiResult, deterministicObjective)",
+    "reconcileMarkingQuality(mergeObjectiveScore(aiResult, deterministicObjective, submissionText)",
+  );
+} else if (!pageSource.includes("reconcileMarkingQuality(mergeObjectiveScore(aiResult, deterministicObjective, submissionText)")) {
+  pageSource = replaceRequired(
+    pageSource,
+    "const result = mergeObjectiveScore(aiResult, deterministicObjective);",
+    "const result = mergeObjectiveScore(aiResult, deterministicObjective, submissionText);",
+    "final deterministic merge input",
+  );
+}
 
 fs.writeFileSync(pageTarget, pageSource);
 console.log("Applied final deterministic feedback reconciliation to MarkingPage without changing shared markingReview behavior.");

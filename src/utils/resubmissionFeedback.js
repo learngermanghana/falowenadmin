@@ -1,4 +1,5 @@
 function normalizePercent(value) {
+  if (value === null || value === undefined || value === "") return null;
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return null;
   return Math.max(0, Math.min(100, Math.round(numeric)));

@@ -1,3 +1,4 @@
+import { markingConsistencyWarnings, reconcileMarkingQuality } from "../utils/markingQuality.js";
 import "./MarkingPage.css";
 import { answerKeyComparison, feedbackWordCount } from "../utils/markingWorkspace.js";
 import { submittedWorkFiles } from "../utils/studentResultSubmissions.js";
@@ -185,6 +186,7 @@ export default function MarkingPage() {
   const [queueStatus, setQueueStatus] = useState("all");
   const [selectedAttemptPath, setSelectedAttemptPath] = useState("");
   const [feedbackLimit, setFeedbackLimit] = useState("40");
+  const [qualityAcknowledgement, setQualityAcknowledgement] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
@@ -393,6 +395,7 @@ export default function MarkingPage() {
   const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id));
   const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
   const writingTask = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
+  const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTask);
   const queueRows = (allSubmissionAttempts.length ? allSubmissionAttempts : submissionNotifications).filter((row) => {
     const search = normalize(attemptSearch);
     const status = normalize(row.markingStatus || row.status || "pending");
@@ -668,13 +671,14 @@ export default function MarkingPage() {
         referenceEntry?.assignment,
       );
       const deterministicObjective = computeObjectiveScore(deterministicAssignmentId, submissionText);
-      const aiResult = await markSubmissionWithAI({
+      const aiResult = writingExpected || !deterministicObjective.totalCount ? await markSubmissionWithAI({
         referenceEntry: registryEntry,
         submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
         submissionText,
-      });
+        feedbackWordTarget: Number(feedbackLimit) || null,
+      }) : { level: selectedStudent.level, assignmentKey: deterministicAssignmentId, writingScorePercent: null, writingScore: null, status: "marked", confidence: 1 };
       if (reviewIdentityRef.current !== startedIdentity) return;
-      const result = mergeObjectiveScore(aiResult, deterministicObjective);
+      const result = reconcileMarkingQuality(mergeObjectiveScore(aiResult, deterministicObjective), deterministicObjective, selectedSubmission, { writingExpected, wordTarget: feedbackLimit });
       setSmartMarkingResult(result);
       setSchreibenMark(result.writingScorePercent === null || result.writingScorePercent === undefined
         ? ""
@@ -704,6 +708,7 @@ export default function MarkingPage() {
   };
 
   const handleApproveAndSend = async () => {
+    if (qualityNeedsReview) { error("Review the score and feedback warnings before sharing feedback."); return; }
     if (!selectedSubmission || !smartMarkingResult) {
       error("Run AI marking before approving feedback.");
       return;
@@ -783,7 +788,12 @@ export default function MarkingPage() {
     });
   };
 
+  const consistencyWarnings = markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore);
+  const qualitySignature = JSON.stringify([reviewIdentity, feedback, finalScore, schreibenMark, consistencyWarnings]);
+  const qualityNeedsReview = consistencyWarnings.length > 0 && qualityAcknowledgement !== qualitySignature;
+
   const handleSave = async (shareFeedback = false) => {
+    if (qualityNeedsReview) { error("Review the score and feedback warnings and confirm the review before saving."); return; }
     if (!selectedStudent) {
       error("Pick a student before saving.");
       return;
@@ -1097,6 +1107,7 @@ export default function MarkingPage() {
         <aside className="marking-column marking-review" aria-label="Score review">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>Review score and feedback</h3>
         <div style={{ display: "grid", gap: 8 }}>
+          {consistencyWarnings.length ? <section className="marking-key-status" aria-label="Marking consistency checks"><strong>Review before saving</strong><ul>{consistencyWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul><label><input type="checkbox" checked={qualityAcknowledgement === qualitySignature} onChange={(event) => setQualityAcknowledgement(event.target.checked ? qualitySignature : "")} />I checked these warnings against the submitted work and approve this mark.</label></section> : null}
           {writingTask ? <details open className="marking-task"><summary>Writing task points</summary><p>{writingTask.taskText}</p><ul>{writingTask.taskPoints.map((point) => <li key={point}>{point}</li>)}</ul></details> : null}
           <div className="marking-feedback-tools">
             <span>{feedbackWordCount(feedback)} feedback words</span>
@@ -1134,6 +1145,7 @@ export default function MarkingPage() {
                 <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving || autoMarking || savingScore}>Mark as needs tutor review</button>
               </div>
               <WritingScoreExplanation result={smartMarkingResult} />
+              {smartMarkingResult.writingRevisionComparison ? <details><summary>Writing changes in this attempt</summary><p>{smartMarkingResult.writingRevisionComparison.changed ? "The writing text changed. Compare these excerpts; changes alone do not prove improvement." : "The writing text is unchanged."}</p><strong>Previous text</strong>{smartMarkingResult.writingRevisionComparison.removed.map((text) => <p key={text}>{text}</p>)}<strong>Current text</strong>{smartMarkingResult.writingRevisionComparison.added.map((text) => <p key={text}>{text}</p>)}</details> : null}
             </div>
           ) : null}
           {objectiveMarkingResult.totalCount > 0 ? (
@@ -1263,7 +1275,7 @@ export default function MarkingPage() {
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleAutoMark} disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission}>
-              {autoMarking ? "AI marking..." : "Run AI marking"}
+              {autoMarking ? "Marking..." : writingExpected ? "Run AI marking" : "Check objective answers"}
             </button>
             <button disabled={workflowSaving || autoMarking || savingScore} onClick={() => { setSchreibenMark(""); setFinalScoreOverride(null); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
           </div>
