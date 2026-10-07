@@ -341,7 +341,7 @@ export default function MarkingPage() {
       const submissionAliases = [row.assignment, row.assignmentId, row.assignmentKey, submissionAssignmentId].map(normalize);
       return submissionAliases.some((alias) => referenceAliases.includes(alias));
     });
-    return exact || studentSubmissions[0];
+    return exact || null;
   }, [studentSubmissions, referenceAssignment, referenceEntries]);
 
   const selectedSubmission = studentSubmissions.find((row) => (row.path || row.id) === selectedAttemptPath) || latestSubmission;
@@ -361,13 +361,26 @@ export default function MarkingPage() {
   reviewIdentityRef.current = reviewIdentity;
 
   useEffect(() => {
+    const referenceAssignment = referenceEntry?.assignment || "";
     const submissionAssignment = selectedSubmission?.assignment || "";
-    const nextAssignment = submissionAssignment || referenceEntry?.assignment || "";
-    const submissionAssignmentId = selectedSubmission?.assignmentId || selectedSubmission?.assignmentKey || "";
-    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
+    const nextAssignment = submissionAssignment || referenceAssignment;
+    const submissionAssignmentId = inferAssignmentId(
+      selectedSubmission?.assignmentId,
+      selectedSubmission?.assignmentKey,
+      selectedSubmission?.raw?.assignment_id,
+      selectedSubmission?.raw?.assignmentId,
+      submissionAssignment,
+    );
+    const referenceAssignmentId = inferAssignmentId(
+      referenceEntry?.assignmentId,
+      referenceEntry?.assignment_id,
+      referenceEntry?.assignment,
+      ...(referenceEntry?.assignmentAliases || []),
+    );
+    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment) || inferLevel(referenceAssignment);
 
     setAssignmentValue(nextAssignment);
-    setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
+    setAssignmentIdValue(submissionAssignmentId || referenceAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
     setFeedback("");
     setSchreibenMark("");
@@ -378,9 +391,14 @@ export default function MarkingPage() {
     selectedStudent?.level,
     referenceEntry?.level,
     referenceEntry?.assignment,
+    referenceEntry?.assignmentId,
+    referenceEntry?.assignment_id,
+    referenceEntry?.assignmentAliases,
     selectedSubmission?.assignment,
     selectedSubmission?.assignmentId,
     selectedSubmission?.assignmentKey,
+    selectedSubmission?.raw?.assignment_id,
+    selectedSubmission?.raw?.assignmentId,
   ]);
 
   const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(
