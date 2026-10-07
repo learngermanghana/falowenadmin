@@ -255,6 +255,22 @@
   font-size: 13px;
 }
 
+.marking-attempt-badges {
+  display: inline-flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.marking-attempt-badge {
+  border: 1px solid #f59e0b;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .marking-inline-action {
   display: flex;
   gap: 8px;
