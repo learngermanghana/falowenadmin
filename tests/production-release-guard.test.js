@@ -27,10 +27,10 @@ test("production release workflow gates, verifies and retries Vercel production"
   assert.match(workflow, /relation" = "ahead"/);
   assert.match(workflow, /newer descendant/);
   assert.doesNotMatch(workflow, /npm run prebuild/);
-  assert.doesNotMatch(workflow, /npm run sync:build/);
-  assert.match(workflow, /Build committed production bundle[\s\S]*npx vite build/);
+  assert.match(workflow, /Prepare production source exactly once[\s\S]*npm run sync:build/);
+  assert.match(workflow, /Build production bundle without rerunning source sync[\s\S]*npx vite build/);
   assert.match(workflow, /tests\/student-leads-hub\.test\.js/);
-  assert.doesNotMatch(workflow, /Build committed production bundle[\s\S]{0,120}npm run build/);
+  assert.doesNotMatch(workflow, /Build production bundle without rerunning source sync[\s\S]{0,120}npm run build/);
   assert.match(workflow, /Wait for Vercel Git deployment/);
   assert.match(workflow, /Verify production contains this main commit/);
   assert.match(workflow, /scheduled-rate-limit-retry:/);
