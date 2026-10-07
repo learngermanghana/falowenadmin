@@ -23,6 +23,8 @@ on:
       - "scripts/patchStudentProfileUpdateApi.mjs"
       - "scripts/applyMarkingManualSelectionFix.mjs"
       - "scripts/patchSmartMarkingNaturalFeedback.mjs"
+      - "scripts/patchA2B1MarkingWeights.mjs"
+      - "scripts/patchSharedWritingScoreRecovery.mjs"
       - "scripts/checkProductionIdentity.mjs"
       - "package.json"
   push:
