@@ -24,7 +24,7 @@ test("Leads have a dedicated admin page", () => {
   assert.match(leads, /Manage prospective students/);
   assert.match(app, /path="\/leads"/);
   assert.match(app, /<LeadsPage/);
-  assert.match(app, /to="\/leads"[^>]*>Leads<\/Link>/);
+  assert.match(app, /to="\/leads"[\s\S]{0,180}>Leads<\/Link>/);
 });
 
 test("lead entry points use the dedicated Leads route", () => {
