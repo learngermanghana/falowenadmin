@@ -52,14 +52,75 @@ if (!directorySource.includes(emergencyMarker)) {
     `        resolveStudentPhone(student),\n        resolveEmergencyContactPhone(student),\n        resolveEmergencyContactName(student),\n        student.level,`,
   );
 
-  const gridCloseAnchor = `                          })}\n                        </div>\n\n                        <div style={{ marginTop: 14 }}>`;
-  if (!directorySource.includes(gridCloseAnchor)) {
-    throw new Error("Student profile field-grid anchor changed");
+  const profileFieldsAnchor = `                            {renderEditableFields(tab.fields)}`;
+  if (!directorySource.includes(profileFieldsAnchor)) {
+    throw new Error("Student profile fields render anchor changed");
   }
 
-  const emergencyField = `                          })}\n\n                          {(() => {\n                            const emergencyPhone = resolveEmergencyContactPhone(selectedStudent);\n                            const emergencyName = resolveEmergencyContactName(selectedStudent);\n                            const emergencyRelationship = resolveEmergencyContactRelationship(selectedStudent);\n                            const emergencyCallUrl = callUrl(emergencyPhone);\n                            const emergencyMeta = [emergencyName, emergencyRelationship].filter(Boolean).join(\" · \");\n\n                            return (\n                              <div style={{ display: \"grid\", gap: 6 }}>\n                                <span style={{ fontSize: 13, fontWeight: 600 }}>Emergency contact</span>\n                                <div style={{ display: \"flex\", gap: 8, alignItems: \"stretch\" }}>\n                                  <input\n                                    type=\"text\"\n                                    value={emergencyPhone}\n                                    readOnly\n                                    placeholder=\"Not provided\"\n                                    aria-label=\"Emergency contact phone number\"\n                                    style={{\n                                      width: \"100%\",\n                                      minWidth: 0,\n                                      padding: \"8px 9px\",\n                                      borderRadius: 6,\n                                      border: \"1px solid #ccd4e2\",\n                                      background: \"#f8fafc\",\n                                    }}\n                                  />\n                                  {emergencyCallUrl && (\n                                    <a\n                                      href={emergencyCallUrl}\n                                      aria-label={\`Call emergency contact at \${emergencyPhone}\`}\n                                      title={\`Call \${emergencyPhone}\`}\n                                      style={{\n                                        display: \"inline-flex\",\n                                        alignItems: \"center\",\n                                        justifyContent: \"center\",\n                                        padding: \"8px 12px\",\n                                        border: \"1px solid #15803d\",\n                                        borderRadius: 6,\n                                        background: \"#16a34a\",\n                                        color: \"#fff\",\n                                        fontWeight: 700,\n                                        textDecoration: \"none\",\n                                        whiteSpace: \"nowrap\",\n                                      }}\n                                    >\n                                      Call\n                                    </a>\n                                  )}\n                                </div>\n                                {emergencyMeta && <small style={{ color: \"#64748b\" }}>{emergencyMeta}</small>}\n                              </div>\n                            );\n                          })()}\n                        </div>\n\n                        <div style={{ marginTop: 14 }}>`;
+  const emergencyField = `                            {renderEditableFields(tab.fields)}
+                            {tab.id === "profile" && (() => {
+                              const emergencyPhone = resolveEmergencyContactPhone(selectedStudent);
+                              const emergencyName = resolveEmergencyContactName(selectedStudent);
+                              const emergencyRelationship = resolveEmergencyContactRelationship(selectedStudent);
+                              const emergencyCallUrl = callUrl(emergencyPhone);
+                              const emergencyMeta = [emergencyName, emergencyRelationship].filter(Boolean).join(" · ");
 
-  directorySource = directorySource.replace(gridCloseAnchor, emergencyField);
+                              return (
+                                <div
+                                  style={{
+                                    display: "grid",
+                                    gap: 6,
+                                    marginTop: 12,
+                                    paddingTop: 12,
+                                    borderTop: "1px solid #e2e8f0",
+                                  }}
+                                >
+                                  <span style={{ fontSize: 13, fontWeight: 600 }}>Emergency contact</span>
+                                  <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                                    <input
+                                      type="text"
+                                      value={emergencyPhone}
+                                      readOnly
+                                      placeholder="Not provided"
+                                      aria-label="Emergency contact phone number"
+                                      style={{
+                                        width: "100%",
+                                        minWidth: 0,
+                                        padding: "8px 9px",
+                                        borderRadius: 6,
+                                        border: "1px solid #ccd4e2",
+                                        background: "#f8fafc",
+                                      }}
+                                    />
+                                    {emergencyCallUrl && (
+                                      <a
+                                        href={emergencyCallUrl}
+                                        aria-label={\`Call emergency contact at \${emergencyPhone}\`}
+                                        title={\`Call \${emergencyPhone}\`}
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          padding: "8px 12px",
+                                          border: "1px solid #15803d",
+                                          borderRadius: 6,
+                                          background: "#16a34a",
+                                          color: "#fff",
+                                          fontWeight: 700,
+                                          textDecoration: "none",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                      >
+                                        Call
+                                      </a>
+                                    )}
+                                  </div>
+                                  {emergencyMeta && <small style={{ color: "#64748b" }}>{emergencyMeta}</small>}
+                                </div>
+                              );
+                            })()}`;
+
+  directorySource = directorySource.replace(profileFieldsAnchor, emergencyField);
   fs.writeFileSync(directoryPath, directorySource);
 }
 
