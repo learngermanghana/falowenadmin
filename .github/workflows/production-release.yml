@@ -19,6 +19,7 @@ on:
       - "tests/a2-b1-lesson-profile.test.js"
       - "tests/production-deployment-contract.test.js"
       - "scripts/writeBuildIdentity.mjs"
+      - "scripts/patchStudentProfileUpdateApi.mjs"
       - "scripts/checkProductionIdentity.mjs"
       - "package.json"
   push:
