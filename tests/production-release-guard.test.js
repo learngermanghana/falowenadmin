@@ -99,3 +99,18 @@ test("student profile sync patch matches the current directory structure", () =>
   }
 });
 
+test("manual marking sync patch matches the current MarkingPage effect", () => {
+  const patch = read("scripts/applyMarkingManualSelectionFix.mjs");
+  const markingPage = read("src/pages/MarkingPage.jsx");
+
+  assert.match(patch, /setFeedback\("")/);
+  assert.match(patch, /setSaveReceipt\(null\)/);
+  assert.match(patch, /reviewIdentity,/);
+  assert.match(patch, /selectedSubmission\?\.raw\?\.assignment_id/);
+
+  assert.match(markingPage, /setFeedback\("")/);
+  assert.match(markingPage, /setSaveReceipt\(null\)/);
+  assert.match(markingPage, /reviewIdentity,/);
+  assert.match(markingPage, /const submissionAssignmentId = selectedSubmission\?\.assignmentId \|\| selectedSubmission\?\.assignmentKey \|\| "";/);
+});
+
