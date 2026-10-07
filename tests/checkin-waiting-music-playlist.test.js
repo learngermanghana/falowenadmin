@@ -23,7 +23,7 @@ test("waiting room playlist includes every public MP3 and points only to real fi
 
   assert.ok(publicMp3Files.length >= 1);
   assert.equal(waitingMusicPlaylist.length, publicMp3Files.length);
-  assert.ok(waitingMusicPlaylist.some((track) => /Saxophone/i.test(track.title)));
+  assert.ok(waitingMusicPlaylist.some((track) => /Calm Piano/i.test(track.title)));
 
   const configuredFiles = waitingMusicPlaylist
     .map((track) => path.basename(decodeURIComponent(track.src)))
@@ -192,6 +192,7 @@ test("playlist patch upgrades an already-transformed legacy workspace and stays 
     "utf8",
   );
   fs.writeFileSync(path.join(scriptsDir, "patchCheckinWaitingRoomPlaylist.mjs"), patchSource);
+  fs.copyFileSync(path.join(repoRoot, "scripts", "waitingMusicPlaylist.mjs"), path.join(scriptsDir, "waitingMusicPlaylist.mjs"));
 
   const legacyTransformedPage = `
 import { pianoPlaylist } from "../data/pianoPlaylist.js";

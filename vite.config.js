@@ -1,3 +1,5 @@
+import path from "node:path"
+import { buildWaitingMusicPlaylist, waitingMusicModule } from "./scripts/waitingMusicPlaylist.mjs"
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -12,9 +14,20 @@ const falowenAdminBuildEnv = process.env.VERCEL_ENV
   || process.env.NODE_ENV
   || 'local'
 
+let musicPublicDir, musicPlaylistPath
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), {
+    name: 'waiting-music-from-public',
+    configResolved(config) { musicPublicDir = config.publicDir; musicPlaylistPath = path.resolve(config.root, 'src/data/pianoPlaylist.js'); },
+    load(id) {
+      if (id !== musicPlaylistPath) return null;
+      const playlist = buildWaitingMusicPlaylist(musicPublicDir);
+      if (!playlist.length) throw new Error('No waiting-room MP3 files exist in public/.');
+      return waitingMusicModule(playlist);
+    },
+  }],
   define: {
     'import.meta.env.VITE_FALOWEN_BUILD_SHA': JSON.stringify(falowenAdminBuildSha),
     'import.meta.env.VITE_FALOWEN_BUILD_ENV': JSON.stringify(falowenAdminBuildEnv),
