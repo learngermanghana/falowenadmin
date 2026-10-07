@@ -69,7 +69,8 @@ jobs:
           grep -F 'deterministicPartWeights: hasWriting ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 }' api/router.js
           grep -F 'writingMinimumMet: weightedOutcome.writingMinimumMet' src/utils/markingReview.js
           grep -F 'writingMinimumMet: manualWeightedOutcome.writingMinimumMet' src/pages/MarkingPage.jsx
-          grep -F 'if (/\b(?:A2|B1)\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;' src/pages/MarkingPage.jsx
+          grep -F 'if (/\b(?:A2|B1)\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;' src/pages/MarkingQuickPage.jsx
+          grep -F 'if (explicitMax) return Number(explicitMax);' src/utils/markingReview.js
           grep -F 'result.scoreBreakdown?.policy === "a2-b1-40-30-30"' src/pages/MarkingQuickPage.jsx
           grep -F 'writing_minimum_met:' src/services/markingServiceBase.js
           grep -F 'marking_policy:' src/services/markingServiceBase.js
