@@ -6,15 +6,37 @@ function replaceOnce(source, before, after, label) {
   return source.replace(before, after);
 }
 
-const maxScoreBefore = `  const writingScore = Number(result.writingScore);\n  if (Number.isFinite(writingScore) && writingScore > 0 && writingScore <= 50) return 50;\n  return 100;`;
-const maxScoreAfter = `  const levelHint = String(result.level || result.assignmentKey || result.assignmentId || result.assignment || "").toUpperCase();\n  if (/\\b(?:A2|B1)\\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;\n\n  const writingScore = Number(result.writingScore);\n  if (Number.isFinite(writingScore) && writingScore > 0 && writingScore <= 50) return 50;\n  return 100;`;
+const maxScoreBefore = `  const writingScore = Number(result.writingScore);
+  if (Number.isFinite(writingScore) && writingScore > 0 && writingScore <= 50) return 50;
+  return 100;`;
+const maxScoreAfter = `  const levelHint = String(result.level || result.assignmentKey || result.assignmentId || result.assignment || "").toUpperCase();
+  if (/\\b(?:A2|B1)\\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;
 
-for (const relativePath of ["../src/pages/MarkingPage.jsx", "../src/pages/MarkingQuickPage.jsx"]) {
-  const target = new URL(relativePath, import.meta.url);
-  let source = fs.readFileSync(target, "utf8");
-  source = replaceOnce(source, maxScoreBefore, maxScoreAfter, `${relativePath} A2/B1 writing percentage normalization`);
-  fs.writeFileSync(target, source);
+  const writingScore = Number(result.writingScore);
+  if (Number.isFinite(writingScore) && writingScore > 0 && writingScore <= 50) return 50;
+  return 100;`;
+
+// MarkingPage now imports getMaxWritingScore from the shared markingReview utility.
+// That helper already uses explicit max metadata when supplied and otherwise defaults
+// to /100, so no page-local normalization patch is needed there.
+const markingReviewPath = new URL("../src/utils/markingReview.js", import.meta.url);
+const markingReview = fs.readFileSync(markingReviewPath, "utf8");
+if (!markingReview.includes("export function getMaxWritingScore(result = {})")) {
+  throw new Error("Shared markingReview getMaxWritingScore helper is missing");
 }
+if (!markingReview.includes("if (explicitMax) return Number(explicitMax);") || !markingReview.includes("  return 100;")) {
+  throw new Error("Shared markingReview writing-score normalization changed");
+}
+
+const quickTarget = new URL("../src/pages/MarkingQuickPage.jsx", import.meta.url);
+let quickSource = fs.readFileSync(quickTarget, "utf8");
+quickSource = replaceOnce(
+  quickSource,
+  maxScoreBefore,
+  maxScoreAfter,
+  "MarkingQuickPage A2/B1 writing percentage normalization",
+);
+fs.writeFileSync(quickTarget, quickSource);
 
 const quickPath = new URL("../src/pages/MarkingQuickPage.jsx", import.meta.url);
 let quick = fs.readFileSync(quickPath, "utf8");
@@ -23,11 +45,12 @@ const quickBreakdownAfter = `function buildScoreBreakdown(result = {}) {\n  if (
 quick = replaceOnce(quick, quickBreakdownBefore, quickBreakdownAfter, "quick marking weighted score breakdown");
 fs.writeFileSync(quickPath, quick);
 
-for (const relativePath of ["../src/pages/MarkingPage.jsx", "../src/pages/MarkingQuickPage.jsx"]) {
-  const source = fs.readFileSync(new URL(relativePath, import.meta.url), "utf8");
-  if (!source.includes('if (/\\b(?:A2|B1)\\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;')) {
-    throw new Error(`A2/B1 writing percentage normalization missing in ${relativePath}`);
-  }
+const quickMaterialized = fs.readFileSync(quickPath, "utf8");
+if (!quickMaterialized.includes('if (/\\b(?:A2|B1)\\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;')) {
+  throw new Error("A2/B1 writing percentage normalization missing in MarkingQuickPage");
+}
+if (!markingReview.includes("if (explicitMax) return Number(explicitMax);") || !markingReview.includes("  return 100;")) {
+  throw new Error("Shared MarkingPage writing percentage normalization is missing");
 }
 if (!quick.includes('result.scoreBreakdown?.policy === "a2-b1-40-30-30"')) {
   throw new Error("Quick marking 40/30/30 breakdown renderer is missing");
