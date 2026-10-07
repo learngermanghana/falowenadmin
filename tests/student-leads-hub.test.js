@@ -37,13 +37,16 @@ test("lead entry points use the dedicated Leads route", () => {
   assert.doesNotMatch(notification, /students\?tab=leads/);
 });
 
-test("Student Activity and Timed Attempts are retired from admin navigation", () => {
+test("Student Activity stays retired while Timed Attempts is direct-link only", () => {
   const app = read("src/App.jsx");
+  const timedAttempts = read("src/pages/TimedAssignmentAttemptsPage.jsx");
 
   assert.doesNotMatch(app, />Timed Attempts<\/Link>/);
-  assert.match(app, /path="\/timed-attempts"[\s\S]{0,160}Navigate to="\/student-results"/);
+  assert.match(app, /TimedAssignmentAttemptsPage = lazy/);
+  assert.match(app, /path="\/timed-attempts"[\s\S]{0,160}<TimedAssignmentAttemptsPage/);
   assert.match(app, /path="\/student-activity"[\s\S]{0,160}Navigate to="\/students"/);
-  assert.doesNotMatch(app, /TimedAssignmentAttemptsPage = lazy/);
+  assert.match(timedAttempts, /Timed assignment attempts/);
+  assert.match(timedAttempts, /Reset timed attempt/);
 });
 
 test("build repair no longer patches Leads back into Students", () => {
