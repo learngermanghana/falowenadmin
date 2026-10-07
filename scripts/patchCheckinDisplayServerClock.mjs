@@ -29,7 +29,7 @@ if (!authoritativeClockMaterialized) {
     const syncServerClock = async () => {
       const sentAt = Date.now();
       try {
-        const response = await fetch(\`${window.location.origin}/?clock=${sentAt}\`, {
+        const response = await fetch(\`\${window.location.origin}/?clock=\${sentAt}\`, {
           method: "HEAD",
           cache: "no-store",
         });
