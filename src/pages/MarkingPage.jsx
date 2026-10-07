@@ -59,7 +59,7 @@ function formatWritingScore(result = {}) {
   return `${writingPercent}%`;
 }
 
-function flattenAnswers(value, prefix = "") {function flattenAnswers(value, prefix = "") {
+function flattenAnswers(value, prefix = "") {
   if (typeof value === "string") {
     return [`${prefix}${value}`];
   }
@@ -305,7 +305,7 @@ export default function MarkingPage() {
     window.localStorage.setItem(REFERENCE_ASSIGNMENT_STORAGE_KEY, referenceAssignment);
   }, [referenceAssignment]);
 
-  const selectedStudent = useMemo(() => {  const selectedStudent = useMemo(() => {
+  const selectedStudent = useMemo(() => {
     return roster.find((row) => row.id === selectedStudentId) || null;
   }, [roster, selectedStudentId]);
 
@@ -313,7 +313,7 @@ export default function MarkingPage() {
     return referenceEntries.find((entry) => entry.assignment === referenceAssignment) || null;
   }, [referenceAssignment, referenceEntries]);
 
-  const formattedReferenceAnswers = useMemo(() => {  const formattedReferenceAnswers = useMemo(() => {
+  const formattedReferenceAnswers = useMemo(() => {
     if (referenceEntry?.reference) return referenceEntry.reference;
     const lines = flattenAnswers(referenceEntry?.answers);
     return lines.join("\n");
@@ -378,7 +378,7 @@ export default function MarkingPage() {
     selectedSubmission?.assignmentKey,
   ]);
 
-  const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(  const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(
+  const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(
     assignmentIdValue,
     selectedSubmission?.assignmentKey,
     selectedSubmission?.assignmentId,
@@ -452,7 +452,7 @@ export default function MarkingPage() {
     manualOverride: true,
   };
 
-  const handleSelectFromNotification = async (submission) => {  const handleSelectFromNotification = async (submission) => {
+  const handleSelectFromNotification = async (submission) => {
     if (!submission?.studentCode && !submission?.studentName) {
       error("This notification is missing student information and cannot be opened.");
       return;
@@ -510,7 +510,7 @@ export default function MarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
   };
 
-  const handleAutoMark = async () => {  const handleAutoMark = async () => {
+  const handleAutoMark = async () => {
     const startedIdentity = reviewIdentity;
     const submissionText = selectedSubmission?.text || "";
     if (!submissionText.trim()) {
@@ -583,7 +583,7 @@ export default function MarkingPage() {
     }
   };
 
-  const handleSelectSubmissionText = (event) => {  const handleSelectSubmissionText = (event) => {
+  const handleSelectSubmissionText = (event) => {
     const { selectionStart, selectionEnd, value } = event.currentTarget;
     setSelectedHighlight(selectionEnd > selectionStart ? value.slice(selectionStart, selectionEnd).trim() : "");
   };
@@ -596,7 +596,7 @@ export default function MarkingPage() {
     setSelectedHighlight("");
   };
 
-  const consistencyWarnings = markingConsistencyWarnings(  const consistencyWarnings = markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore);
+  const consistencyWarnings = markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore);
   const qualitySignature = JSON.stringify([reviewIdentity, feedback, finalScore, schreibenMark, consistencyWarnings]);
   const qualityNeedsReview = consistencyWarnings.length > 0 && qualityAcknowledgement !== qualitySignature;
 
