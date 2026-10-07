@@ -32,10 +32,13 @@ function patchMarkingPage() {
     setAssignmentValue(nextAssignment);
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
+    setFeedback("");
+    setSaveReceipt(null);
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
   }, [
+    reviewIdentity,
     selectedStudent?.level,
     referenceEntry?.level,
     referenceEntry?.assignment,
@@ -66,10 +69,13 @@ function patchMarkingPage() {
     setAssignmentValue(nextAssignment);
     setAssignmentIdValue(submissionAssignmentId || referenceAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
+    setFeedback("");
+    setSaveReceipt(null);
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
   }, [
+    reviewIdentity,
     selectedStudent?.level,
     referenceEntry?.level,
     referenceEntry?.assignment,

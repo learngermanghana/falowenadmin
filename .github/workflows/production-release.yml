@@ -20,6 +20,7 @@ on:
       - "tests/production-deployment-contract.test.js"
       - "scripts/writeBuildIdentity.mjs"
       - "scripts/patchStudentProfileUpdateApi.mjs"
+      - "scripts/applyMarkingManualSelectionFix.mjs"
       - "scripts/checkProductionIdentity.mjs"
       - "package.json"
   push:
