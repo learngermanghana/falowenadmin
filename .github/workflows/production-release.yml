@@ -8,6 +8,8 @@ on:
       - "api/router.js"
       - "src/App.jsx"
       - "src/App.css"
+      - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "tests/student-leads-hub.test.js"
       - "vite.config.js"
       - "vercel.json"
       - "tests/production-release-guard.test.js"
@@ -60,12 +62,11 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Prepare production source exactly once
-        run: npm run prebuild
       - name: Run release-critical regressions
         run: >
           node --test
           tests/production-release-guard.test.js
+          tests/student-leads-hub.test.js
           tests/teacher-lesson-dashboard.test.js
           tests/student-admin-curriculum-parity.test.js
           tests/presenter-timers.test.js
@@ -81,7 +82,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: npm run generate:build-identity
-      - name: Build production bundle without rerunning prebuild
+      - name: Build committed production bundle
         run: npx vite build
       - name: Show generated build identity
         run: cat public/__falowen-admin-build.json
