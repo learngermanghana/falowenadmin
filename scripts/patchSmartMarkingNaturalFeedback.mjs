@@ -79,10 +79,10 @@ source = source.replace(
 fs.writeFileSync(target, source);
 console.log("Applied smart marking natural-feedback/scoring guard patch.");
 
-function replacePageOnce(pageSource, search, replacement, label) {
-  if (pageSource.includes(replacement)) return pageSource;
-  if (!pageSource.includes(search)) throw new Error(`MarkingPage deterministic feedback anchor changed: ${label}`);
-  return pageSource.replace(search, replacement);
+function replaceRequired(sourceText, search, replacementText, label) {
+  if (sourceText.includes(replacementText)) return sourceText;
+  if (!sourceText.includes(search)) throw new Error(`Deterministic feedback anchor changed: ${label}`);
+  return sourceText.replace(search, replacementText);
 }
 
 const pageTarget = path.join(root, "src/pages/MarkingPage.jsx");
@@ -90,7 +90,7 @@ let pageSource = fs.readFileSync(pageTarget, "utf8");
 
 const reconciliationImport = 'import { reconcileFinalDeterministicFeedback } from "../utils/finalDeterministicFeedback.js";';
 if (!pageSource.includes(reconciliationImport)) {
-  pageSource = replacePageOnce(
+  pageSource = replaceRequired(
     pageSource,
     'import { calculateFinalScore } from "../utils/finalScore.js";',
     `import { calculateFinalScore } from "../utils/finalScore.js";\n${reconciliationImport}`,
@@ -98,28 +98,31 @@ if (!pageSource.includes(reconciliationImport)) {
   );
 }
 
-pageSource = replacePageOnce(
+pageSource = replaceRequired(
   pageSource,
-  "function mergeObjectiveScore(result = {}, objectiveResult = {}) {",
-  'function mergeObjectiveScore(result = {}, objectiveResult = {}, submissionText = "") {',
-  "mergeObjectiveScore signature",
+  'import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";',
+  'import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore as mergeObjectiveScoreBase } from "../utils/markingReview.js";',
+  "markingReview merge import alias",
 );
 
-pageSource = replacePageOnce(
-  pageSource,
-  `  return {\n    ...result,\n    score: finalScore,`,
-  `  return reconcileFinalDeterministicFeedback({\n    ...result,\n    score: finalScore,`,
-  "mergeObjectiveScore reconciliation call",
-);
+const wrapperAnchor = `function objectiveWrongAnswerRows(objectiveDetails = {}) {`;
+const wrapper = `function mergeObjectiveScore(result = {}, objectiveResult = {}, submissionText = "") {
+  return reconcileFinalDeterministicFeedback(
+    mergeObjectiveScoreBase(result, objectiveResult),
+    objectiveResult,
+    submissionText,
+  );
+}
 
-pageSource = replacePageOnce(
-  pageSource,
-  `    aiOriginalFeedback: result.aiOriginalFeedback ?? result.feedback ?? "",\n  };\n}`,
-  `    aiOriginalFeedback: result.aiOriginalFeedback ?? result.feedback ?? "",\n  }, objectiveResult, submissionText);\n}`,
-  "mergeObjectiveScore reconciliation close",
-);
+`;
+if (!pageSource.includes(wrapper)) {
+  if (!pageSource.includes(wrapperAnchor)) {
+    throw new Error("Deterministic feedback anchor changed: MarkingPage merge wrapper insertion");
+  }
+  pageSource = pageSource.replace(wrapperAnchor, `${wrapper}${wrapperAnchor}`);
+}
 
-pageSource = replacePageOnce(
+pageSource = replaceRequired(
   pageSource,
   "const result = mergeObjectiveScore(aiResult, deterministicObjective);",
   "const result = mergeObjectiveScore(aiResult, deterministicObjective, submissionText);",
@@ -127,4 +130,4 @@ pageSource = replacePageOnce(
 );
 
 fs.writeFileSync(pageTarget, pageSource);
-console.log("Applied final deterministic feedback reconciliation to MarkingPage.");
+console.log("Applied final deterministic feedback reconciliation to MarkingPage without changing shared markingReview behavior.");
