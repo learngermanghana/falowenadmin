@@ -394,8 +394,9 @@ export default function MarkingPage() {
   const selectedSubmission = studentSubmissions.find((row) => (row.path || row.id) === selectedAttemptPath) || latestSubmission;
   const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id));
   const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
-  const writingTask = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
-  const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTask);
+  const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
+  const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
+  const writingTask = writingExpected ? writingTaskCandidate : null;
   const queueRows = (allSubmissionAttempts.length ? allSubmissionAttempts : submissionNotifications).filter((row) => {
     const search = normalize(attemptSearch);
     const status = normalize(row.markingStatus || row.status || "pending");

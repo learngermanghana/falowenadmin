@@ -1,3 +1,4 @@
+import { plainObjectiveAnswer } from "./markingFeedbackText.js";
 import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";
 
 function clampPercent(value) {
@@ -62,7 +63,7 @@ export function verifiedObjectiveMetadata(result = {}, objective = {}) {
     groups.get(partId).push([key, row]);
     if (row.correct === false) wrongAnswers.push({
       question: key.split(".").at(-1), partId,
-      student: row.student || "", expected: row.expectedDisplay || row.expected || row.rawExpected || "", correct: false,
+      student: plainObjectiveAnswer(row.student), expected: plainObjectiveAnswer(row.expectedDisplay || row.expected || row.rawExpected), correct: false,
     });
   }
   const detected = [...groups].map(([partId, rows]) => {

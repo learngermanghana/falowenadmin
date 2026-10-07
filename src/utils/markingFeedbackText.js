@@ -7,3 +7,9 @@ export function stripMarkingEmojis(value = "") {
     .join("\n")
     .trim();
 }
+
+export function plainObjectiveAnswer(value = "", fallback = "") {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  const letter = text.match(/^["'“”‘’„«»]*\s*([A-F])\s*["'“”‘’„«»]*$/i)?.[1];
+  return letter ? letter.toUpperCase() : text || fallback;
+}

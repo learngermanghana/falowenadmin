@@ -1,3 +1,4 @@
+import { plainObjectiveAnswer } from "../utils/markingFeedbackText.js";
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
@@ -556,9 +557,8 @@ function resolveWritingScore(aiResult = {}) {
 }
 
 function formatObjectiveAnswerForFeedback(value = "", fallback = "blank") {
-  const normalized = String(value || "").replace(/\s+/g, " ").trim();
-  const safe = normalized || fallback;
-  return `"${safe.length > 60 ? `${safe.slice(0, 57)}...` : safe}"`;
+  const safe = plainObjectiveAnswer(value, fallback);
+  return safe.length > 60 ? `${safe.slice(0, 57)}...` : safe;
 }
 
 function buildDetailedObjectiveFeedback(deterministicObjective = {}) {

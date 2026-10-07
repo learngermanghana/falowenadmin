@@ -56,3 +56,12 @@ test("zero is savable only with complete objective evidence and no writing score
   assert.equal(verifiedObjectiveZero({ ...result, objectiveDetails: {} }), false);
   assert.equal(verifiedObjectiveZero({ ...result, writingScorePercent: 0 }), false);
 });
+
+test("objective corrections display single letters without quotation marks", async () => {
+  const { plainObjectiveAnswer } = await import("../src/utils/markingFeedbackText.js");
+  for (const value of ['A', '"A"', '""A"', '“A”', "'a'"]) assert.equal(plainObjectiveAnswer(value), "A");
+  assert.equal(plainObjectiveAnswer("Richtig"), "Richtig");
+  const objective = { correctCount: 0, totalCount: 1, details: { "teil1.1": { partId: "teil1", student: '"A"', expected: '"B"', correct: false } } };
+  assert.match(exactObjectiveFeedback(objective), /your answer A; correct answer B/);
+  assert.doesNotMatch(exactObjectiveFeedback(objective), /["“”]/);
+});

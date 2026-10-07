@@ -55,3 +55,10 @@ test("health Teil 2 R/F answers are objective, including full UI labels and the 
   assert.equal(marked.objectiveCorrect, 16);
   assert.equal(marked.parts.every((part) => part.partType === "objective"), true);
 });
+
+test("A1-14.1 quoted choice letters still match the current objective-only key", () => {
+  const quoted = submission.replace(/\. ([AB])(?=\n|$)/g, '. "$1"');
+  const result = computeObjectiveScore("A1-14.1", quoted);
+  assert.equal(result.correctCount, 16);
+  assert.equal(result.totalCount, 16);
+});

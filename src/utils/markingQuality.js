@@ -1,5 +1,5 @@
 import { verifiedObjectiveMetadata } from "./markingReview.js";
-import { stripMarkingEmojis } from "./markingFeedbackText.js";
+import { plainObjectiveAnswer, stripMarkingEmojis } from "./markingFeedbackText.js";
 import { withResubmissionComparison } from "./resubmissionFeedback.js";
 
 const normalize = (value) => String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -16,7 +16,7 @@ export function exactObjectiveFeedback(objective, wordTarget = 40) {
   const wrong = rows.filter(([, row]) => !row.correct);
   const intro = summary.join(" ") || `${objective.correctCount}/${objective.totalCount} correct.`;
   if (!wrong.length) return `${intro} All objective answers are correct.`;
-  const corrections = wrong.map(([question, row]) => `${question}: your answer ${row.student || "was missing"}; correct answer ${row.expectedDisplay || row.expected || row.rawExpected}.`);
+  const corrections = wrong.map(([question, row]) => `${question}: your answer ${plainObjectiveAnswer(row.student, "was missing")}; correct answer ${plainObjectiveAnswer(row.expectedDisplay || row.expected || row.rawExpected)}.`);
   const limit = Number(wordTarget) || Infinity;
   let selected = [];
   for (const correction of corrections) {
