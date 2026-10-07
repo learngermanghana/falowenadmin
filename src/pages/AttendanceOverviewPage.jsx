@@ -4,7 +4,7 @@ import OperationsCommunicationPanel from "../components/OperationsCommunicationP
 import ClassAttendanceTracker from "../components/ClassAttendanceTracker.jsx";
 import AttendanceCommunicationHealthPanel from "../components/AttendanceCommunicationHealthPanel.jsx";
 import { listClassCohorts, listClassSessions } from "../services/liveClassService.js";
-import { classTimingSummary, weeklyTimetableLabels } from "../utils/attendanceClassTiming.js";
+import { orderAttendanceClasses, weeklyTimetableLabels } from "../utils/attendanceClassTiming.js";
 
 const GHANA_TIMEZONE = "Africa/Accra";
 const TERMINAL_CLASS_STATUSES = new Set([
@@ -88,18 +88,17 @@ const TIMING_TONES = {
   muted: { background: "#e2e8f0", color: "#475569" },
 };
 
-function ActiveClassCard({ klass, sessions, onOpenTracker }) {
+function ActiveClassCard({ klass, sessions, timing, rank, onOpenTracker }) {
   const classId = classRecordKey(klass);
   const sessionCount = Number(klass.generatedSessionCount || klass.sessionCount || 0);
   const timetable = weeklyTimetableLabels(klass);
-  const timing = Array.isArray(sessions) ? classTimingSummary(klass, sessions) : null;
   const timingTone = TIMING_TONES[timing?.tone] || TIMING_TONES.muted;
 
   return (
     <article style={{ border: "1px solid #dbe3ee", borderRadius: 12, padding: 14, background: "#fff" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
         <div>
-          <h3 style={{ margin: 0 }}>{klass.name || klass.className || classId}</h3>
+          <h3 style={{ margin: 0 }}>{rank}. {klass.name || klass.className || classId}</h3>
           <small style={{ color: "#64748b" }}>{classId}</small>
         </div>
         <span style={{ padding: "4px 9px", borderRadius: 999, ...timingTone, fontWeight: 800, fontSize: 12 }}>
@@ -108,6 +107,7 @@ function ActiveClassCard({ klass, sessions, onOpenTracker }) {
       </div>
 
       <div style={{ display: "grid", gap: 4, marginTop: 10, fontSize: 13 }}>
+        {timing?.source === "timetable" ? <small style={{ color: "#64748b" }}>From weekly timetable; no upcoming generated session.</small> : null}
         <span><strong>Course dates:</strong> {formatDate(klass.startDate)} → {formatDate(klass.endDate)}</span>
         <span><strong>Level:</strong> {klass.levelId || klass.level || "Not set"}</span>
         {timetable.length ? <span><strong>Weekly timetable:</strong> {timetable.join(" · ")}</span> : null}
@@ -135,14 +135,18 @@ export default function AttendanceOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sessionsByClass, setSessionsByClass] = useState({});
+  const [now, setNow] = useState(() => new Date());
+  const [classFilter, setClassFilter] = useState("upcoming");
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") === "tracker" ? "tracker" : "classes");
   const [selectedTrackerId, setSelectedTrackerId] = useState(() => searchParams.get("classId") || "");
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
-
     listClassCohorts()
       .then((rows) => {
         if (!active) return;
@@ -185,24 +189,19 @@ export default function AttendanceOverviewPage() {
     return () => { active = false; };
   }, [activeClasses]);
 
-  const orderedActiveClasses = useMemo(() => [...activeClasses].sort((left, right) => {
-    const leftTiming = classTimingSummary(left, sessionsByClass[classRecordKey(left)] || []);
-    const rightTiming = classTimingSummary(right, sessionsByClass[classRecordKey(right)] || []);
-    return leftTiming.sortTime - rightTiming.sortTime
-      || normalize(left.name || left.className).localeCompare(normalize(right.name || right.className));
-  }), [activeClasses, sessionsByClass]);
+  const orderedClassEntries = useMemo(
+    () => orderAttendanceClasses(activeClasses, sessionsByClass, now),
+    [activeClasses, sessionsByClass, now],
+  );
+  const orderedActiveClasses = useMemo(() => orderedClassEntries.map(({ klass }) => klass), [orderedClassEntries]);
+  const schedulesLoading = activeClasses.some((klass) => sessionsByClass[classRecordKey(klass)] === undefined);
+  const upcomingEntries = orderedClassEntries.filter(({ timing }) => Number.isFinite(timing?.sortTime));
+  const todayEntries = upcomingEntries.filter(({ timing }) => timing.tone === "today" || timing.tone === "live");
+  const visibleEntries = classFilter === "all" ? orderedClassEntries : classFilter === "today" ? todayEntries : upcomingEntries;
+  const unavailableCount = orderedClassEntries.filter(({ klass }) => sessionsByClass[classRecordKey(klass)] === null).length;
 
-  useEffect(() => {
-    if (!activeClasses.length) {
-      setSelectedTrackerId("");
-      return;
-    }
-    if (!activeClasses.some((klass) => classRecordKey(klass) === selectedTrackerId)) {
-      setSelectedTrackerId(classRecordKey(activeClasses[0]));
-    }
-  }, [activeClasses, selectedTrackerId]);
 
-  const selectedTrackerClass = activeClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || activeClasses[0] || null;
+  const selectedTrackerClass = activeClasses.find((klass) => classRecordKey(klass) === selectedTrackerId) || orderedActiveClasses[0] || null;
 
 
 
@@ -212,7 +211,8 @@ export default function AttendanceOverviewPage() {
   }
 
   function openTracker(classId = selectedTrackerId) {
-    const nextId = classId || classRecordKey(activeClasses[0]);
+    const nextId = activeClasses.some((klass) => classRecordKey(klass) === classId)
+      ? classId : classRecordKey(orderedActiveClasses[0]);
     if (nextId) setSelectedTrackerId(nextId);
     setActiveTab("tracker");
     setSearchParams({ tab: "tracker", ...(nextId ? { classId: nextId } : {}) }, { replace: true });
@@ -249,15 +249,25 @@ export default function AttendanceOverviewPage() {
 
       {!loading && !error && activeTab === "classes" ? (
         <section>
-          <h2>Active classes</h2>
-          {!activeClasses.length ? (
+          <h2>{classFilter === "all" ? "All active classes" : classFilter === "today" ? "Today’s classes" : "Next upcoming classes"}</h2>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }} aria-label="Filter active classes">
+            {[["upcoming", `Upcoming (${upcomingEntries.length})`], ["today", `Today (${todayEntries.length})`], ["all", `All classes (${activeClasses.length})`]].map(([value, label]) => (
+              <button key={value} type="button" aria-pressed={classFilter === value}
+                style={tabButtonStyle(classFilter === value)} onClick={() => setClassFilter(value)}>{label}</button>
+            ))}
+          </div>
+          <p>Classes in progress appear first, followed by the nearest upcoming sessions. This order updates automatically.</p>
+          {unavailableCount ? <p role="status">Schedules could not be loaded for {unavailableCount} class{unavailableCount === 1 ? "" : "es"}. Use All classes to view them.</p> : null}
+          {schedulesLoading ? <p role="status">Loading class schedules…</p> : !activeClasses.length ? (
             <p>No active classes were found in Live Classes.</p>
-          ) : (
+          ) : !visibleEntries.length ? <p>{classFilter === "today" ? "No remaining classes today. Choose Upcoming to see the next classes." : "No upcoming classes were found. Choose All classes to check their schedules."}</p> : (
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-              {orderedActiveClasses.map((klass) => (
+              {visibleEntries.map(({ klass, timing }, index) => (
                 <ActiveClassCard
                   key={classRecordKey(klass)}
                   klass={klass}
+                  timing={timing}
+                  rank={index + 1}
                   sessions={sessionsByClass[classRecordKey(klass)]}
                   onOpenTracker={openTracker}
                 />
@@ -276,8 +286,8 @@ export default function AttendanceOverviewPage() {
             </div>
             <label style={{ display: "grid", gap: 6, minWidth: 280 }}>
               <strong>Class shown in tracker</strong>
-              <select value={selectedTrackerId} onChange={(event) => openTracker(event.target.value)}>
-                {activeClasses.map((klass) => (
+              <select value={selectedTrackerClass ? classRecordKey(selectedTrackerClass) : ""} onChange={(event) => openTracker(event.target.value)}>
+                {orderedActiveClasses.map((klass) => (
                   <option key={classRecordKey(klass)} value={classRecordKey(klass)}>
                     {klass.name || klass.className || classRecordKey(klass)}
                   </option>
