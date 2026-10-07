@@ -21,6 +21,7 @@ test("production release workflow gates, verifies and retries Vercel production"
 
   assert.match(workflow, /branches: \[main\]/);
   assert.match(workflow, /release-gate:/);
+  assert.match(workflow, /config-regression:[\s\S]*Validate source sync on clean checkout[\s\S]*npm run sync:build/);
   assert.match(workflow, /release-gate:[\s\S]*github\.ref == 'refs\/heads\/main'/);
   assert.match(workflow, /verify-production:[\s\S]*github\.ref == 'refs\/heads\/main'/);
   assert.match(workflow, /compare\/\$TARGET_SHA\.\.\.\$deployed/);
