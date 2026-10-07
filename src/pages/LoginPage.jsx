@@ -1,7 +1,7 @@
 ﻿import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { auth } from "../firebase";
+import { auth } from "../firebaseAuth";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { isStaffEmail, STAFF_ACCOUNT_PASSWORD } from "../utils/authRoles";
 
