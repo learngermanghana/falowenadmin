@@ -62,6 +62,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Prepare production source exactly once
+        run: npm run sync:build
       - name: Run release-critical regressions
         run: >
           node --test
@@ -82,7 +84,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: npm run generate:build-identity
-      - name: Build committed production bundle
+      - name: Build production bundle without rerunning source sync
         run: npx vite build
       - name: Show generated build identity
         run: cat public/__falowen-admin-build.json
