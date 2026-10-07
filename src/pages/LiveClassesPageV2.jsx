@@ -360,7 +360,7 @@ export default function LiveClassesPageV2() {
       const movedCount = Number(rescheduleResult?.movedSessions || 1);
       const successMessage = rescheduleResult?.moveMode === "following"
         ? `${movedCount} sessions shifted. The selected lesson now starts ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}, and every following lesson kept its curriculum order. Attendance, class dates, reminders and calendar feed were updated atomically.${emailNote}`
-        : `Session moved to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Curriculum order, overlaps, Attendance, class dates, reminders and calendar feed were checked and updated atomically.${emailNote}`;
+        : `Session moved to ${formatDateTime(rescheduleResult?.startsAt || sessionChange.startsAt)}. Only this lesson moved. Its day and content were preserved; Attendance, class dates, reminders and calendar feed were updated.${emailNote}`;
       setSessionChange(null);
       await refreshDashboard(selectedClassId);
       setMessage(successMessage);
@@ -428,7 +428,7 @@ export default function LiveClassesPageV2() {
             <div style={{ padding: 10, borderRadius: 8, background: shiftingFollowing ? "#fff7ed" : "#fff", border: shiftingFollowing ? "1px solid #fdba74" : "1px solid #bfdbfe", color: shiftingFollowing ? "#9a3412" : "#334155" }}>
               {shiftingFollowing
                 ? "The selected lesson and every later curriculum lesson will shift by the same amount. Cancelled future lessons stay cancelled. The operation stops if a completed/live lesson would be moved or any new time would overlap another lesson."
-                : "Only this lesson will move. Its new time must remain after the previous curriculum lesson and before the next one, with no partial or full overlap."}
+                : "Move this lesson to any preferred date and time, even before or after other lesson days. Its day and content stay the same, and other lessons stay on their dates. The time must not overlap another scheduled lesson."}
             </div>
 
             <label style={{ display: "grid", gap: 6 }}>

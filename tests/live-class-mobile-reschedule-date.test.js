@@ -201,3 +201,10 @@ test("tablet status reason stays in the status value column", async () => {
     /td\[data-label="Status"\] > span,[\s\S]*td\[data-label="Status"\] > small \{[\s\S]*grid-column:\s*2;/,
   );
 });
+
+test("single lesson move keeps the preferred time outside the weekly timetable", () => {
+  const result = resolveManualRescheduleDateTime({ currentStartsAt: "2026-10-07T11:00:00Z", payload: { startsAt: "2026-10-11T15:30", moveMode: "single" }, timezone: "Africa/Accra", scheduleRules: [{ day: "wed", startTime: "11:00" }] });
+  assert.equal(result.startsAt, "2026-10-11T15:30");
+  assert.equal(result.manualScheduleOverride, true);
+  assert.equal(result.scheduleRuleApplied, false);
+});

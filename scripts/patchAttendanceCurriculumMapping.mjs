@@ -3,8 +3,8 @@ import fs from "node:fs";
 const target = new URL("../src/utils/liveClassSessionDedupe.js", import.meta.url);
 let source = fs.readFileSync(target, "utf8");
 
-const before = `export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0) {
-  const canUseStoredMapping = hasManualScheduleChange(session);
+const before = `export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0, preserveMapping = false) {
+  const canUseStoredMapping = preserveMapping || hasManualScheduleChange(session);
   const ids = canUseStoredMapping ? assignmentIdsForSession(session) : [];
   if (ids.length) {
     const exactMatch = groups.find((group) => sameAssignmentSet(ids, group.assignmentIds || []));
@@ -25,8 +25,8 @@ const before = `export function resolveSessionCourseGroup(session = {}, groups =
   return groups[fallbackIndex] || null;
 }`;
 
-const after = `export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0) {
-  const canUseStoredMapping = hasManualScheduleChange(session);
+const after = `export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0, preserveMapping = false) {
+  const canUseStoredMapping = preserveMapping || hasManualScheduleChange(session);
 
   // A reschedule changes only the date/time of a lesson. Its canonical curriculum
   // day must stay authoritative even when an older session record still carries

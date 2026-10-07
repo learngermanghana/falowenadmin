@@ -140,8 +140,25 @@ export function dedupeCompatibleSessions(sessions = [], { classId = "", timezone
   );
 }
 
-export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0) {
-  const canUseStoredMapping = hasManualScheduleChange(session);
+export function resolveSessionCourseGroup(session = {}, groups = [], fallbackIndex = 0, preserveMapping = false) {
+  const canUseStoredMapping = preserveMapping || hasManualScheduleChange(session);
+
+  // A reschedule changes only the date/time of a lesson. Its canonical curriculum
+  // day must stay authoritative even when an older session record still carries
+  // stale assignment IDs or a stale topic from another day.
+  if (canUseStoredMapping) {
+    const storedDay = Number(session.curriculumDay);
+    if (Number.isFinite(storedDay) && storedDay >= 0) {
+      const dayMatch = groups.find((group) => Number(group.day) === storedDay);
+      if (dayMatch) return dayMatch;
+    }
+
+    const storedIndex = Number(session.curriculumIndex || 0);
+    if (Number.isFinite(storedIndex) && storedIndex > 0 && groups[storedIndex - 1]) {
+      return groups[storedIndex - 1];
+    }
+  }
+
   const ids = canUseStoredMapping ? assignmentIdsForSession(session) : [];
   if (ids.length) {
     const exactMatch = groups.find((group) => sameAssignmentSet(ids, group.assignmentIds || []));
@@ -150,13 +167,6 @@ export function resolveSessionCourseGroup(session = {}, groups = [], fallbackInd
     const overlappingMatch = groups.find((group) => (group.assignmentIds || [])
       .some((assignmentId) => ids.includes(normalize(assignmentId).toUpperCase())));
     if (overlappingMatch) return overlappingMatch;
-  }
-
-  if (canUseStoredMapping) {
-    const storedIndex = Number(session.curriculumIndex || 0);
-    if (Number.isFinite(storedIndex) && storedIndex > 0 && groups[storedIndex - 1]) {
-      return groups[storedIndex - 1];
-    }
   }
 
   return groups[fallbackIndex] || null;
@@ -220,7 +230,7 @@ export function suppressNormalCurriculumDuplicates(sessions = []) {
 }
 
 function enrichCompleteSessionSet(ordered = [], groups = []) {
-  if (isChronologicalDayCurriculum(groups)) {
+  if (isChronologicalDayCurriculum(groups) && !ordered.some(hasManualScheduleChange)) {
     return ordered.map((session, index) => applyCurriculumGroup(session, groups[index] || null, index));
   }
 
@@ -228,8 +238,8 @@ function enrichCompleteSessionSet(ordered = [], groups = []) {
   const claimedGroupKeys = new Set();
 
   ordered.forEach((session) => {
-    if (isPlainGeneratedScheduledSession(session)) return;
-    const group = resolveSessionCourseGroup(session, groups, -1);
+    if (!isChronologicalDayCurriculum(groups) && isPlainGeneratedScheduledSession(session)) return;
+    const group = resolveSessionCourseGroup(session, groups, -1, isChronologicalDayCurriculum(groups));
     const key = courseGroupKey(group);
     if (!group || !key || claimedGroupKeys.has(key)) return;
     protectedGroups.set(session.id, group);
@@ -250,15 +260,6 @@ function enrichCompleteSessionSet(ordered = [], groups = []) {
 
 export function enrichSessionsWithStableCurriculum(_ = {}, sessions = [], groups = []) {
   const ordered = [...sessions].sort((left, right) => sessionTime(left) - sessionTime(right));
-
-  // A complete A1 day set follows chronological timetable order. If extra records
-  // exist, however, they may be generated aliases for an explicitly rescheduled
-  // day. Let the overfull path preserve that manual identity first, then suppress
-  // the generated alias instead of dropping a real later day.
-  if (isChronologicalDayCurriculum(groups) && ordered.length <= groups.length) {
-    return ordered.slice(0, groups.length)
-      .map((session, index) => applyCurriculumGroup(session, groups[index] || null, index));
-  }
 
   if (ordered.length <= groups.length) {
     return enrichCompleteSessionSet(ordered, groups);

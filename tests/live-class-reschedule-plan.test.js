@@ -101,24 +101,22 @@ test("single-session move is blocked when it overlaps another unfinished lesson"
   );
 });
 
-test("single-session move must remain between previous and next curriculum positions", () => {
+test("single-session move can pass the next curriculum position without moving other lessons", () => {
   const sessions = [
     session(0, "2026-06-19T18:00:00.000Z"),
     session(1, "2026-06-20T08:00:00.000Z"),
     session(2, "2026-06-25T18:00:00.000Z"),
   ];
 
-  assert.throws(
-    () => buildSessionReschedulePlan({
-      klass,
-      sessions,
-      sessionId: "day-1",
-      targetStartsAt: "2026-06-26T18:00:00.000Z",
-      targetEndsAt: "2026-06-26T19:00:00.000Z",
-      mode: "single",
-    }),
-    (error) => error?.code === "live-class/curriculum-order" && /Move this and all following sessions/.test(error.message),
-  );
+  const plan = buildSessionReschedulePlan({
+    klass, sessions, sessionId: "day-1",
+    targetStartsAt: "2026-06-26T18:00:00.000Z",
+    targetEndsAt: "2026-06-26T19:00:00.000Z", mode: "single",
+  });
+  assert.equal(plan.affectedCount, 1);
+  assert.equal(plan.changes[0].session.id, "day-1");
+  assert.equal(plan.changes[0].startsAt, "2026-06-26T18:00:00.000Z");
+  assert.equal(sessions[2].startsAt, "2026-06-25T18:00:00.000Z");
 });
 
 test("completed predecessors do not block the next unfinished lesson from moving earlier", () => {
@@ -189,7 +187,7 @@ test("completed history still counts toward all 25 lessons without causing an ac
   assert.equal(report.issues.some((issue) => ["duplicate-time", "overlap", "curriculum-order"].includes(issue.code)), false);
 });
 
-test("an unfinished predecessor still blocks an invalid backward move", () => {
+test("following mode still protects unfinished lessons before the shifted group", () => {
   const sessions = [
     session(11, "2026-07-16T18:00:00.000Z", "completed"),
     session(12, "2026-07-17T18:00:00.000Z", "scheduled"),
@@ -204,7 +202,7 @@ test("an unfinished predecessor still blocks an invalid backward move", () => {
       sessionId: "day-13",
       targetStartsAt: "2026-07-16T08:00:00.000Z",
       targetEndsAt: "2026-07-16T09:00:00.000Z",
-      mode: "single",
+      mode: "following",
     }),
     (error) => error?.code === "live-class/curriculum-order"
       && /cannot move before unfinished/i.test(error.message)
@@ -335,4 +333,29 @@ test("A1 Berlin following move keeps the selected 15 Sept lesson on 16 Sept and 
   assert.equal(plan.changes[1].startsAt, "2026-09-21T11:00:00.000Z");
   assert.equal(plan.changes[2].session.id, "day-7");
   assert.equal(plan.changes[2].startsAt, "2026-09-22T11:00:00.000Z");
+});
+
+test("Day 11 can be taught today with Day 10 still pending tomorrow", () => {
+  const sessions = [session(10, "2026-10-08T11:00:00Z"), session(11, "2026-10-09T11:00:00Z")];
+  const plan = buildSessionReschedulePlan({ klass, sessions, sessionId: "day-11", targetStartsAt: "2026-10-07T11:00:00Z", targetEndsAt: "2026-10-07T12:00:00Z", mode: "single" });
+  assert.equal(plan.affectedCount, 1);
+  assert.equal(plan.changes[0].session.curriculumDay, 11);
+  assert.equal(sessions[0].status, "scheduled");
+  assert.equal(sessions[0].startsAt, "2026-10-08T11:00:00.000Z");
+});
+
+test("refresh preserves the day and assignments of independently moved A1 lessons", async () => {
+  const { enrichSessionsWithStableCurriculum } = await import("../src/utils/liveClassSessionDedupe.js");
+  const sessions = groups.map((group, index) => session(Number(group.day), new Date(Date.UTC(2026, 9, 1 + index, 11)).toISOString()));
+  const day10 = sessions.find((item) => item.curriculumDay === 10);
+  const day11 = sessions.find((item) => item.curriculumDay === 11);
+  day10.startsAt = "2026-11-01T11:00:00Z";
+  day10.endsAt = "2026-11-01T12:00:00Z";
+  day10.manualDateOverride = true;
+  const refreshed = enrichSessionsWithStableCurriculum(klass, sessions, groups);
+  assert.equal(refreshed.find((item) => item.id === day10.id).curriculumDay, 10);
+  assert.equal(refreshed.find((item) => item.id === day11.id).curriculumDay, 11);
+  assert.deepEqual(refreshed.find((item) => item.id === day11.id).assignmentIds, day11.assignmentIds);
+  const report = inspectTimetableIntegrity({ klass: { ...klass, endDate: "2026-11-01" }, sessions: refreshed, requireCurriculum: true, enforceEndDate: false });
+  assert.equal(report.issues.some((issue) => issue.code === "curriculum-order"), false);
 });

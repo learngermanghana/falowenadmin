@@ -296,7 +296,9 @@ export function buildSessionReschedulePlan({
     target,
     mode: normalizedMode,
   });
-  assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
+  if (normalizedMode === "following") {
+    assertCurriculumBoundary({ ordered, selectedIndex, targetStart: target.start, mode: normalizedMode });
+  }
 
   const releasedCompletedSessions = completedPredecessorSlotsToRelease({
     ordered,

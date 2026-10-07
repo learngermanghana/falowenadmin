@@ -277,6 +277,7 @@ export function inspectTimetableIntegrity({
       const previous = orderedForValidation[index - 1];
       const current = orderedForValidation[index];
       if (!previous.startsAt || !current.startsAt) continue;
+      if (previous.session.manualDateOverride === true || current.session.manualDateOverride === true) continue;
       if (current.startsAt.getTime() <= previous.startsAt.getTime()) {
         pushIssue(
           issues,

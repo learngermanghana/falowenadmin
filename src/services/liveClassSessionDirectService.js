@@ -413,6 +413,13 @@ export async function rescheduleSession(sessionId, payload = {}) {
     return {
       session: change.session,
       patch: {
+        ...(reschedulePlan.mode === "single" ? {
+          manualDateOverride: true,
+          manualDateOverrideBy: adminId,
+          manualDateOverrideAt: serverTimestamp(),
+          manualDateOverrideReason: reason,
+          manualDateOverrideStartsAt: change.startsAt,
+        } : {}),
         previousStartsAt: change.session.startsAt || "",
         previousEndsAt: change.session.endsAt || "",
         startsAt: change.startsAt,

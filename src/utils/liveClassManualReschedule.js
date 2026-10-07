@@ -146,7 +146,7 @@ export function resolveManualRescheduleDateTime({
     throw codedError("live-class/invalid-time", "Choose a valid new Ghana date and time.");
   }
 
-  const manualScheduleOverride = payload.manualScheduleOverride === true;
+  const manualScheduleOverride = payload.manualScheduleOverride === true || payload.moveMode === "single";
   const adjusted = manualScheduleOverride
     ? { selected: selectedInput, scheduleRuleApplied: false }
     : applyWeekdayRuleToDateOnlyChange(selectedInput, current, scheduleRules);

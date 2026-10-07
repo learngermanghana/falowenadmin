@@ -28,6 +28,7 @@ if (!source.includes('label: "Wrong date"')) {
 }
 
 if (!hasAny([
+  "classId: dashboard?.klass?.id || dashboard?.klass?.classRecordId || selectedClassId || session.classRecordId || session.classId,",
   "classId: session.classId || dashboard?.klass?.id || selectedClassId,",
   "classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,",
 ])) {
