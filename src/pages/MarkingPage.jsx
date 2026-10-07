@@ -8,16 +8,13 @@ import { getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { MARKING_FEEDBACK_TEMPLATES } from "../data/markingFeedbackTemplates.js";
-import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, importAnswerDictionary, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
+import { createMarkingJob, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";
 import { calculateFinalScore } from "../utils/finalScore.js";
 import { calculateWeightedMarkingOutcome } from "../utils/markingScorePolicy.js";
 import { useToast } from "../context/ToastContext.jsx";
-import WritingScoreExplanation from "../components/WritingScoreExplanation.jsx";
-import MarkingHistoryPanel from "../components/MarkingHistoryPanel.jsx";
 
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
@@ -62,13 +59,7 @@ function formatWritingScore(result = {}) {
   return `${writingPercent}%`;
 }
 
-function objectiveWrongAnswerRows(objectiveDetails = {}) {
-  return Object.entries(objectiveDetails || {})
-    .map(([question, detail]) => ({ question, ...detail }))
-    .filter((row) => row && row.correct === false);
-}
-
-function flattenAnswers(value, prefix = "") {
+function flattenAnswers(value, prefix = "") {function flattenAnswers(value, prefix = "") {
   if (typeof value === "string") {
     return [`${prefix}${value}`];
   }
@@ -182,40 +173,29 @@ export default function MarkingPage() {
   const [submissionNotifications, setSubmissionNotifications] = useState([]);
   const [allSubmissionAttempts, setAllSubmissionAttempts] = useState([]);
   const [attemptSearch, setAttemptSearch] = useState("");
-  const [workspaceTab, setWorkspaceTab] = useState("queue");
   const [queueStatus, setQueueStatus] = useState("all");
   const [selectedAttemptPath, setSelectedAttemptPath] = useState("");
-  const [feedbackLimit, setFeedbackLimit] = useState("40");
+  const feedbackLimit = "40";
   const [qualityAcknowledgement, setQualityAcknowledgement] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
-  const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [referenceAssignment, setReferenceAssignment] = useState(() => {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(REFERENCE_ASSIGNMENT_STORAGE_KEY) || "";
   });
-  const [referenceQuery, setReferenceQuery] = useState("");
   const [schreibenMark, setSchreibenMark] = useState("");
   const [finalScoreOverride, setFinalScoreOverride] = useState(null);
   const [selectedHighlight, setSelectedHighlight] = useState("");
   const [assignmentValue, setAssignmentValue] = useState("");
   const [assignmentIdValue, setAssignmentIdValue] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [selectedFeedbackTemplateId, setSelectedFeedbackTemplateId] = useState(MARKING_FEEDBACK_TEMPLATES[0].id);
-  const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
-  const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
-  const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
-  const [workflowSaving, setWorkflowSaving] = useState(false);
+  const workflowSaving = false;
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
-  const [loadingAnswerKeys, setLoadingAnswerKeys] = useState(false);
-  const [importingAnswerKeys, setImportingAnswerKeys] = useState(false);
-  const [answerImportSummary, setAnswerImportSummary] = useState(null);
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) {
@@ -244,13 +224,10 @@ export default function MarkingPage() {
   }, []);
 
   const refreshAnswerKeyRegistry = useCallback(async () => {
-    setLoadingAnswerKeys(true);
     try {
       setAnswerKeyRegistry(await loadAnswerKeyRegistry());
     } catch (err) {
       error(err?.message || "Failed to load answer key registry");
-    } finally {
-      setLoadingAnswerKeys(false);
     }
   }, [error]);
 
@@ -303,7 +280,6 @@ export default function MarkingPage() {
     let cancelled = false;
 
     const loadLatestSubmissions = async () => {
-      setLoadingNotifications(true);
       try {
         const [rows, allAttempts] = await Promise.all([loadSubmissions(), loadSubmissions({ includeMarked: true })]);
         if (!cancelled) {
@@ -312,8 +288,6 @@ export default function MarkingPage() {
         }
       } catch (err) {
         if (!cancelled) error(err?.message || "Failed to load submission notifications");
-      } finally {
-        if (!cancelled) setLoadingNotifications(false);
       }
     };
 
@@ -331,13 +305,7 @@ export default function MarkingPage() {
     window.localStorage.setItem(REFERENCE_ASSIGNMENT_STORAGE_KEY, referenceAssignment);
   }, [referenceAssignment]);
 
-  const filteredStudents = useMemo(() => {
-    if (!query.trim()) return roster;
-    const q = normalize(query);
-    return roster.filter((row) => normalize(row.name).includes(q) || normalize(row.studentCode).includes(q) || normalize(row.level).includes(q));
-  }, [query, roster]);
-
-  const selectedStudent = useMemo(() => {
+  const selectedStudent = useMemo(() => {  const selectedStudent = useMemo(() => {
     return roster.find((row) => row.id === selectedStudentId) || null;
   }, [roster, selectedStudentId]);
 
@@ -345,27 +313,7 @@ export default function MarkingPage() {
     return referenceEntries.find((entry) => entry.assignment === referenceAssignment) || null;
   }, [referenceAssignment, referenceEntries]);
 
-  const filteredAttempts = useMemo(() => {
-    if (!attemptSearch.trim()) return [];
-    const search = normalize(attemptSearch);
-    return allSubmissionAttempts.filter((row) => [row.studentCode, row.studentName, row.assignmentId, row.assignmentKey, row.assignment]
-      .some((value) => normalize(value).includes(search)));
-  }, [allSubmissionAttempts, attemptSearch]);
-
-  const filteredReferenceEntries = useMemo(() => {
-    if (!referenceQuery.trim()) return referenceEntries;
-    const q = normalize(referenceQuery);
-    return referenceEntries.filter((entry) => {
-      const assignment = normalize(entry.assignment);
-      const level = normalize(entry.level);
-      const referenceText = normalize(entry.reference || "");
-      const topicDe = normalize(entry.de || "");
-      const topicEn = normalize(entry.en || "");
-      return assignment.includes(q) || level.includes(q) || referenceText.includes(q) || topicDe.includes(q) || topicEn.includes(q);
-    });
-  }, [referenceEntries, referenceQuery]);
-
-  const formattedReferenceAnswers = useMemo(() => {
+  const formattedReferenceAnswers = useMemo(() => {  const formattedReferenceAnswers = useMemo(() => {
     if (referenceEntry?.reference) return referenceEntry.reference;
     const lines = flattenAnswers(referenceEntry?.answers);
     return lines.join("\n");
@@ -417,7 +365,6 @@ export default function MarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
     setFeedback("");
-    setSaveReceipt(null);
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
@@ -431,28 +378,7 @@ export default function MarkingPage() {
     selectedSubmission?.assignmentKey,
   ]);
 
-  const latestNotifications = useMemo(() => submissionNotifications.slice(0, 60), [submissionNotifications]);
-
-  const combinedReferenceAndSubmission = useMemo(() => {
-    const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
-    const submissionText = (selectedSubmission?.text || "No student submission available.").trim();
-    const improvementSummary = (selectedSubmission?.improvementSummary || "").trim();
-    const previousSubmissionText = (selectedSubmission?.previousSubmissionText || "").trim();
-
-    const resubmissionContext = [];
-    if (improvementSummary) {
-      resubmissionContext.push(`Resubmission improvement summary\n${improvementSummary}`);
-    }
-    if (previousSubmissionText) {
-      resubmissionContext.push(`Previous submission\n${previousSubmissionText}`);
-    }
-
-    const contextBlock = resubmissionContext.length ? `\n\n${resubmissionContext.join("\n\n")}` : "";
-
-    return `Reference Answer\n${referenceText}\n\nStudent Submission\n${submissionText}${contextBlock}`;
-  }, [formattedReferenceAnswers, selectedSubmission]);
-
-  const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(
+  const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(  const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(
     assignmentIdValue,
     selectedSubmission?.assignmentKey,
     selectedSubmission?.assignmentId,
@@ -477,7 +403,6 @@ export default function MarkingPage() {
   }, [objectiveAssignmentId, selectedSubmission?.text]);
 
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
-  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
   const scoringLevel = smartMarkingResult?.level
     || selectedStudent?.level
     || referenceEntry?.level
@@ -527,30 +452,7 @@ export default function MarkingPage() {
     manualOverride: true,
   };
 
-  const handleDeleteSubmission = async (submission) => {
-    if (!submission?.path) {
-      error("Could not delete submission: missing document path.");
-      return;
-    }
-
-    const confirmed = window.confirm("Delete this submission permanently? This cannot be undone.");
-    if (!confirmed) return;
-
-    try {
-      setDeletingSubmissionPath(submission.path);
-      await deleteSubmission(submission.path);
-      setSubmissions((prev) => prev.filter((row) => row.path !== submission.path));
-      setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
-      setAllSubmissionAttempts((prev) => prev.filter((row) => row.path !== submission.path));
-      success("Submission deleted.");
-    } catch (err) {
-      error(err?.message || "Failed to delete submission.");
-    } finally {
-      setDeletingSubmissionPath("");
-    }
-  };
-
-  const handleSelectFromNotification = async (submission) => {
+  const handleSelectFromNotification = async (submission) => {  const handleSelectFromNotification = async (submission) => {
     if (!submission?.studentCode && !submission?.studentName) {
       error("This notification is missing student information and cannot be opened.");
       return;
@@ -583,11 +485,8 @@ export default function MarkingPage() {
     }
 
     setSelectedAttemptPath(submission.path || submission.id);
-    setWorkspaceTab("submission");
     setSubmissions(freshRows);
     setSelectedStudentId(matchingStudent.id);
-    setQuery("");
-    setActiveSubmissionTab("latest");
 
     const matchingReference = findReferenceEntryForSubmission(referenceEntries, submission);
     if (matchingReference?.assignment) {
@@ -611,31 +510,7 @@ export default function MarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
   };
 
-  const handleImportAnswerDictionary = async () => {
-    try {
-      setImportingAnswerKeys(true);
-      const summary = await importAnswerDictionary(answersDictionary);
-      setAnswerImportSummary(summary);
-      await refreshAnswerKeyRegistry();
-      success(`Imported ${summary.importedCount} of ${summary.totalAssignments} answer key assignments into Firestore (${summary.failedCount} failed).`);
-    } catch (err) {
-      error(err?.message || "Failed to import answer dictionary.");
-    } finally {
-      setImportingAnswerKeys(false);
-    }
-  };
-
-  const handleCopyCombined = async () => {
-    try {
-      await navigator.clipboard.writeText(combinedReferenceAndSubmission);
-      success("Combined reference and submission copied.");
-    } catch {
-      error("Could not copy combined text. Please copy manually.");
-    }
-  };
-
-
-  const handleAutoMark = async () => {
+  const handleAutoMark = async () => {  const handleAutoMark = async () => {
     const startedIdentity = reviewIdentity;
     const submissionText = selectedSubmission?.text || "";
     if (!submissionText.trim()) {
@@ -708,64 +583,7 @@ export default function MarkingPage() {
     }
   };
 
-  const handleApproveAndSend = async () => {
-    if (qualityNeedsReview) { error("Review the score and feedback warnings before sharing feedback."); return; }
-    if (!selectedSubmission || !smartMarkingResult) {
-      error("Run AI marking before approving feedback.");
-      return;
-    }
-
-    if (!feedback.trim()) {
-      error("Feedback is required before approving.");
-      return;
-    }
-
-    try {
-      setWorkflowSaving(true);
-      await saveMarkingResult({
-        submissionId: selectedSubmission.id,
-        submissionPath: selectedSubmission.path,
-        result: currentReviewedResult,
-        status: "sent",
-        sentToStudent: true,
-      });
-      setSmartMarkingResult({ ...currentReviewedResult, status: "sent" });
-      success("Feedback approved and marked as sent to student.");
-    } catch (err) {
-      error(err?.message || "Failed to approve and send feedback.");
-    } finally {
-      setWorkflowSaving(false);
-    }
-  };
-
-  const handleSendFeedbackToStudent = async () => {
-    await handleApproveAndSend();
-  };
-
-  const handleNeedsTutorReview = async () => {
-    if (!selectedSubmission) {
-      error("Load a submission before sending it to tutor review.");
-      return;
-    }
-
-    try {
-      setWorkflowSaving(true);
-      await updateMarkingWorkflowStatus({
-        submissionId: selectedSubmission.id,
-        submissionPath: selectedSubmission.path,
-        status: "needs_review",
-        sentToStudent: false,
-      });
-      setSmartMarkingResult((current) => current ? { ...current, status: "needs_review" } : current);
-      success("Submission moved to tutor review queue.");
-    } catch (err) {
-      error(err?.message || "Failed to update tutor review status.");
-    } finally {
-      setWorkflowSaving(false);
-    }
-  };
-
-  const handleSelectSubmissionText = (event) => {
+  const handleSelectSubmissionText = (event) => {  const handleSelectSubmissionText = (event) => {
     const { selectionStart, selectionEnd, value } = event.currentTarget;
     setSelectedHighlight(selectionEnd > selectionStart ? value.slice(selectionStart, selectionEnd).trim() : "");
   };
@@ -778,18 +596,7 @@ export default function MarkingPage() {
     setSelectedHighlight("");
   };
 
-  const handleInsertTemplate = () => {
-    const template = MARKING_FEEDBACK_TEMPLATES.find((item) => item.id === selectedFeedbackTemplateId);
-    if (!template) return;
-
-    setFeedback((current) => {
-      const trimmedCurrent = current.trim();
-      if (!trimmedCurrent) return template.text;
-      return `${trimmedCurrent}\n\n${template.text}`;
-    });
-  };
-
-  const consistencyWarnings = markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore);
+  const consistencyWarnings = markingConsistencyWarnings(  const consistencyWarnings = markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore);
   const qualitySignature = JSON.stringify([reviewIdentity, feedback, finalScore, schreibenMark, consistencyWarnings]);
   const qualityNeedsReview = consistencyWarnings.length > 0 && qualityAcknowledgement !== qualitySignature;
 
@@ -849,7 +656,6 @@ export default function MarkingPage() {
           writingMinimumMet: currentReviewedResult.writingMinimumMet,
         },
       });
-      setSaveReceipt(receipt);
 
       if (selectedSubmission?.id || selectedSubmission?.path) {
         await saveMarkingResult({
@@ -903,9 +709,6 @@ export default function MarkingPage() {
 
       success(`Saved score for ${receipt.row.name} (${receipt.row.assignment} · ${receipt.row.assignment_id || "No assignment ID"}). ${targetMessage}`);
     } catch (err) {
-      if (err?.receipt) {
-        setSaveReceipt(err.receipt);
-      }
       error(err?.message || "Failed to save score");
     } finally {
       setSavingScore(false);
@@ -956,7 +759,7 @@ export default function MarkingPage() {
     consistencyWarnings.join("\n") || "None",
   ].join("\n"));
 
-  const handleCopyMarkingReport = async () => {  const handleCopyMarkingReport = async () => {
+  const handleCopyMarkingReport = async () => {
     try {
       await navigator.clipboard.writeText(markingReport);
       success("Complete marking report copied.");
@@ -966,9 +769,8 @@ export default function MarkingPage() {
   };
 
   return (
-    <div className="marking-workspace" data-active-panel={workspaceTab}>
+    <div className="marking-workspace">
       <header className="marking-workspace-header"><div><strong>{selectedStudent?.name || "Select a submission"}</strong><span>{selectedSubmission?.assignment || referenceEntry?.assignment || ""}</span></div></header>
-      <nav className="marking-mobile-nav" aria-label="Marking workspace sections">{[["queue", "Queue"], ["submission", "Submission"], ["review", "Review"]].map(([id, label]) => <button type="button" key={id} aria-pressed={workspaceTab === id} onClick={() => setWorkspaceTab(id)}>{label}</button>)}</nav>
       {loading && <p role="status">Loading roster and submissions...</p>}
       <div className="marking-columns">
         <aside className="marking-column marking-queue" aria-label="Submission queue">
