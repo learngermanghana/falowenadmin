@@ -24,6 +24,8 @@ on:
       - "scripts/applyMarkingManualSelectionFix.mjs"
       - "scripts/patchSmartMarkingNaturalFeedback.mjs"
       - "scripts/patchA2B1MarkingWeights.mjs"
+      - "scripts/patchA2B1WritingScoreNormalization.mjs"
+      - "scripts/patchA2B1PassMetadata.mjs"
       - "scripts/patchSharedWritingScoreRecovery.mjs"
       - "scripts/checkProductionIdentity.mjs"
       - "package.json"
