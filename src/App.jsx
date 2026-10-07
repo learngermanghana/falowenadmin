@@ -33,6 +33,7 @@ const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
 const LeadsPage = lazy(() => import("./pages/LeadsPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
+const TimedAssignmentAttemptsPage = lazy(() => import("./pages/TimedAssignmentAttemptsPage.jsx"));
 const OrientationPage = lazy(() => import("./pages/OrientationSetupTabsPage.jsx"));
 const ClassScheduleSetupPage = lazy(() => import("./pages/ClassScheduleSetupPage"));
 const ClassOperationsPage = lazy(() => import("./pages/ClassOperationsPage"));
@@ -258,7 +259,7 @@ export default function App() {
           <Route path="/visitor-guide/edit" element={<PublicVisitorGuideRedirect />} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
           <Route path="/writing-submissions/:submissionId" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
-          <Route path="/timed-attempts" element={<ProtectedRoute><Navigate to="/student-results" replace /></ProtectedRoute>} />
+          <Route path="/timed-attempts" element={<ProtectedRoute><TimedAssignmentAttemptsPage /></ProtectedRoute>} />
           <Route path="/quality-check" element={<Navigate to="/" replace />} />
           <Route path="/class-schedule-setup" element={<ProtectedRoute allowStaff={false}><ClassScheduleSetupPage /></ProtectedRoute>} />
           <Route path="/holiday-calendar" element={<ProtectedRoute allowStaff={false}><HolidayCalendarPage /></ProtectedRoute>} />
