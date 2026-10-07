@@ -57,6 +57,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate source sync on clean checkout
+        run: npm run sync:build
       - name: Validate production release wiring
         run: node --test tests/production-release-guard.test.js tests/teacher-lesson-dashboard.test.js
 
