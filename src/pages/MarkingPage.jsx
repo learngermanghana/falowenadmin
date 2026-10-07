@@ -912,6 +912,30 @@ export default function MarkingPage() {
     }
   };
 
+  const markingReport = stripMarkingEmojis([
+    "Marking report",
+    `Student: ${selectedStudent?.name || selectedSubmission?.studentName || "Unknown"}`,
+    `Assignment: ${assignmentIdValue || selectedSubmission?.assignmentId || "Unknown"}`,
+    `Attempt: ${selectedSubmission?.attempt || 1}`,
+    `Final score: ${displayedFinalScore}/100`,
+    `Writing score entered: ${schreibenMark === "" ? "Not entered" : schreibenMark}`,
+    `Answer key check: ${keyComparison}`,
+    "", combinedReferenceAndSubmission,
+    "", "Current feedback", feedback || "No feedback yet.",
+    "", "Review warnings", consistencyWarnings.join("\n") || "None",
+    "", "Objective comparison", JSON.stringify(objectiveMarkingResult, null, 2),
+    "", "AI marking result", smartMarkingResult ? JSON.stringify(smartMarkingResult, null, 2) : "AI marking has not been run.",
+    "", "Reviewed result", JSON.stringify(currentReviewedResult, null, 2),
+  ].join("\n"));
+  const handleCopyMarkingReport = async () => {
+    try {
+      await navigator.clipboard.writeText(markingReport);
+      success("Complete marking report copied.");
+    } catch {
+      error("Could not copy the report. Open the marking report below and copy its text.");
+    }
+  };
+
   return (
     <div className="marking-workspace" data-active-panel={workspaceTab}>
       <header className="marking-workspace-header"><div><h2>Marking workspace</h2><p>Compare the submitted work and current key, review each score, then save the feedback.</p></div><div><strong>{selectedStudent?.name || "Select a submission"}</strong><div>{selectedSubmission?.assignment || referenceEntry?.assignment || ""}</div></div></header>
@@ -1093,8 +1117,12 @@ export default function MarkingPage() {
             </a>
           )}
         </div>
-      </section><section className="marking-card"><h3>Answer comparison</h3>{objectiveMarkingResult.totalCount ? <div className="marking-answer-list">{Object.entries(objectiveMarkingResult.details).map(([question, answer]) => <div className={answer.correct ? "marking-answer-correct" : "marking-answer-wrong"} key={question}><strong>{question} · {answer.correct ? "Correct" : "Needs correction"}</strong><div>Student: {answer.student || "No answer"}</div><div>Key: {answer.expectedDisplay || answer.expected || answer.rawExpected}</div></div>)}</div> : <p>This submission has no objective answers to compare. Review the writing task points.</p>}</section><details className="marking-copy-tools"><summary>Copy reference and submission</summary>      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>4) Combined reference + student answer</h3>
+      </section><section className="marking-card"><h3>Answer comparison</h3>{objectiveMarkingResult.totalCount ? <div className="marking-answer-list">{Object.entries(objectiveMarkingResult.details).map(([question, answer]) => <div className={answer.correct ? "marking-answer-correct" : "marking-answer-wrong"} key={question}><strong>{question} · {answer.correct ? "Correct" : "Needs correction"}</strong><div>Student: {answer.student || "No answer"}</div><div>Key: {answer.expectedDisplay || answer.expected || answer.rawExpected}</div></div>)}</div> : <p>This submission has no objective answers to compare. Review the writing task points.</p>}</section><details className="marking-copy-tools"><summary>Copy marking report or reference</summary>      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>Complete marking report</h3>
+        <p>Submission, reference, feedback, scores and debugging details in one block.</p>
+        <textarea aria-label="Complete marking report" readOnly rows={12} value={markingReport} />
+        <button type="button" disabled={!selectedSubmission} onClick={handleCopyMarkingReport}>Copy marking report</button>
+        <h3 style={{ marginTop: 20 }}>Reference and submission only</h3>
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
           Use this combined block for quick copy/paste into external marking tools.
         </p>
@@ -1111,6 +1139,7 @@ export default function MarkingPage() {
           {consistencyWarnings.length ? <section className="marking-key-status" aria-label="Marking consistency checks"><strong>Review before saving</strong><ul>{consistencyWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul><label><input type="checkbox" checked={qualityAcknowledgement === qualitySignature} onChange={(event) => setQualityAcknowledgement(event.target.checked ? qualitySignature : "")} />I checked these warnings against the submitted work and approve this mark.</label></section> : null}
           {writingTask ? <details open className="marking-task"><summary>Writing task points</summary><p>{writingTask.taskText}</p><ul>{writingTask.taskPoints.map((point) => <li key={point}>{point}</li>)}</ul></details> : null}
           <div className="marking-feedback-tools">
+            <button type="button" disabled={!selectedSubmission} onClick={handleCopyMarkingReport}>Copy complete report</button>
             <span>{feedbackWordCount(feedback)} feedback words</span>
             <label>Target words <select value={feedbackLimit} onChange={(event) => setFeedbackLimit(event.target.value)}><option value="40">40</option><option value="60">60</option><option value="100">100</option><option value="">No target</option></select></label>
             {feedbackLimit && feedbackWordCount(feedback) > Number(feedbackLimit) ? <span>Over target by {feedbackWordCount(feedback) - Number(feedbackLimit)} words</span> : null}
