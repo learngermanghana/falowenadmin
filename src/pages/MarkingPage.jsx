@@ -922,7 +922,7 @@ export default function MarkingPage() {
                         <td><strong>{question}</strong></td>
                         <td>{answer.student || "No answer"}</td>
                         <td>{answer.expectedDisplay || answer.expected || answer.rawExpected || "—"}</td>
-                        <td>{answer.correct ? "Correct" : "Needs correction"}</td>
+                        <td>{answer.correct ? "Correct" : String(answer.student || answer.submitted || "").trim() ? "Needs correction" : "Not answered"}</td>
                       </tr>
                     ))}
                   </tbody>
