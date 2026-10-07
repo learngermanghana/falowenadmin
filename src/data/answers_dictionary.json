@@ -2454,13 +2454,13 @@
   "B1 2.5 Der Besichtigungsg termin": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Am Samstag um 14:00 Uhr",
-        "Answer2": "B) Hell und geraumig",
-        "Answer3": "B) Die Badewanne",
-        "Answer4": "B) Zwei Monatsmieten",
-        "Answer5": "A) Ab dem ersten des nachsten Monats",
-        "Answer6": "B) Ein Jahr",
-        "Answer7": "C) Sie entschied sich, die Wohnung zu mieten"
+        "Answer1": "B) Seit drei Monaten",
+        "Answer2": "B) Die Bewerber durften die Räume einzeln nacheinander ansehen.",
+        "Answer3": "B) Er liegt auf der Rückseite des Hauses und ist ruhig.",
+        "Answer4": "C) 800 Euro",
+        "Answer5": "B) Weil die U-Bahn nah ist und die Einbauküche bereits enthalten ist.",
+        "Answer6": "A) Gehaltsnachweis und Schufa-Auskunft",
+        "Answer7": "B) Bis Freitag"
       },
       "teil4": {
         "Answer1": "A) Am fruhen Morgen",

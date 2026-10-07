@@ -660,7 +660,7 @@ export default function MarkingPage() {
         if (registryEntry) break;
       }
 
-      if (registryEntry && answerKeyComparison(referenceEntry, registryEntry) === "different") {
+      if (writingExpected && registryEntry && answerKeyComparison(referenceEntry, registryEntry) === "different") {
         throw new Error("The saved answer key differs from the current reference. Refresh or import the current answer keys before running AI marking.");
       }
       const deterministicAssignmentId = getObjectiveAssignmentId(
