@@ -13,7 +13,7 @@ import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
-const A2_B1_ACTIVITY_TIMER_PRESETS = [7, 5, 2];
+const A2_B1_ACTIVITY_TIMER_PRESETS = [7, 5, 3, 2, 1];
 const DEFAULT_ACTIVITY_TIMER_MINUTES = 5;
 
 function formatTimer(totalSeconds = 0) {
@@ -1535,7 +1535,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </ol>
               ) : stage.type === "list" ? (
                 <>
-                  {stage.timingLabel ? <p className="presenter-duration">{warmupPerStudent ? `${visibleWarmupQuestionCount} warm-up question${visibleWarmupQuestionCount === 1 ? "" : "s"} · choose 7, 5 or 2 min on the Activity timer` : stage.timingLabel}</p> : null}
+                  {stage.timingLabel ? <p className="presenter-duration">{warmupPerStudent ? `${visibleWarmupQuestionCount} warm-up question${visibleWarmupQuestionCount === 1 ? "" : "s"} · choose 7, 5, 3, 2 or 1 min on the Activity timer` : stage.timingLabel}</p> : null}
                   {warmupPerStudent ? (
                     <div className="presenter-warmup-controls">
                       <div className="presenter-warmup-question-count" role="group" aria-label="Warm-up questions per student">
@@ -1560,7 +1560,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       {largeClassWarmup ? (
                         <div className="presenter-warmup-warning">
                           <strong>{rosterCount} students in this class</strong>
-                          <span>Use fewer questions if needed and choose 7, 5 or 2 minutes on the Activity timer to control the pace.</span>
+                          <span>Use fewer questions if needed and choose 7, 5, 3, 2 or 1 minutes on the Activity timer to control the pace.</span>
                           {warmupQuestionCount !== 2 ? (
                             <button type="button" onClick={applyCompactWarmup}>Use 2 questions</button>
                           ) : (

@@ -6,7 +6,7 @@ const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresen
 const picker = fs.readFileSync(new URL("../src/components/PresenterStudentPicker.jsx", import.meta.url), "utf8");
 
 test("A2 and B1 use one reusable Activity timer with 7, 5 and 2 minute presets", () => {
-  assert.match(presenter, /A2_B1_ACTIVITY_TIMER_PRESETS = \[7, 5, 2\]/);
+  assert.match(presenter, /A2_B1_ACTIVITY_TIMER_PRESETS = \[7, 5, 3, 2, 1\]/);
   assert.match(presenter, /DEFAULT_ACTIVITY_TIMER_MINUTES = 5/);
   assert.match(presenter, /const \[activityTimerMinutes, setActivityTimerMinutes\]/);
   assert.match(presenter, /Activity timer/);
@@ -49,7 +49,7 @@ test("warm-up question count controls are projector-visible", () => {
 
 test("large rosters keep question-count advice separate from the Activity timer", () => {
   assert.match(presenter, /rosterCount >= 8/);
-  assert.match(presenter, /Use fewer questions if needed and choose 7, 5 or 2 minutes on the Activity timer/);
+  assert.match(presenter, /Use fewer questions if needed and choose 7, 5, 3, 2 or 1 minutes on the Activity timer/);
   assert.match(presenter, /Use 2 questions/);
   assert.match(presenter, /Restore 4 questions/);
   assert.doesNotMatch(presenter, /students × \{warmupMinutes\} min/);
