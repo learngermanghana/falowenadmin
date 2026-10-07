@@ -1,3 +1,9 @@
+import "./MarkingPage.css";
+import { answerKeyComparison, feedbackWordCount } from "../utils/markingWorkspace.js";
+import { submittedWorkFiles } from "../utils/studentResultSubmissions.js";
+import { getA1WritingTaskSpec } from "../data/a1WritingTaskSpecs.js";
+import { getB1WritingTaskSpec } from "../data/b1WritingTaskSpecs.js";
+import { getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
@@ -175,6 +181,10 @@ export default function MarkingPage() {
   const [submissionNotifications, setSubmissionNotifications] = useState([]);
   const [allSubmissionAttempts, setAllSubmissionAttempts] = useState([]);
   const [attemptSearch, setAttemptSearch] = useState("");
+  const [workspaceTab, setWorkspaceTab] = useState("queue");
+  const [queueStatus, setQueueStatus] = useState("all");
+  const [selectedAttemptPath, setSelectedAttemptPath] = useState("");
+  const [feedbackLimit, setFeedbackLimit] = useState("40");
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
@@ -379,7 +389,16 @@ export default function MarkingPage() {
     return exact || studentSubmissions[0];
   }, [studentSubmissions, referenceAssignment, referenceEntries]);
 
-  const selectedSubmission = latestSubmission;
+  const selectedSubmission = studentSubmissions.find((row) => (row.path || row.id) === selectedAttemptPath) || latestSubmission;
+  const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id));
+  const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
+  const writingTask = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
+  const queueRows = (allSubmissionAttempts.length ? allSubmissionAttempts : submissionNotifications).filter((row) => {
+    const search = normalize(attemptSearch);
+    const status = normalize(row.markingStatus || row.status || "pending");
+    return (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)))
+      && (queueStatus === "all" || (queueStatus === "pending" ? ["pending", "submitted", "resubmitted"].includes(status) : status === queueStatus));
+  });
   const reviewIdentity = JSON.stringify([selectedStudentId, selectedSubmission?.path, selectedSubmission?.id, referenceAssignment]);
   const reviewIdentityRef = useRef(reviewIdentity);
   reviewIdentityRef.current = reviewIdentity;
@@ -559,6 +578,8 @@ export default function MarkingPage() {
       return;
     }
 
+    setSelectedAttemptPath(submission.path || submission.id);
+    setWorkspaceTab("submission");
     setSubmissions(freshRows);
     setSelectedStudentId(matchingStudent.id);
     setQuery("");
@@ -635,6 +656,9 @@ export default function MarkingPage() {
         if (registryEntry) break;
       }
 
+      if (registryEntry && answerKeyComparison(referenceEntry, registryEntry) === "different") {
+        throw new Error("The saved answer key differs from the current reference. Refresh or import the current answer keys before running AI marking.");
+      }
       const deterministicAssignmentId = getObjectiveAssignmentId(
         registryEntry?.assignmentKey,
         assignmentIdValue,
@@ -759,7 +783,7 @@ export default function MarkingPage() {
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (shareFeedback = false) => {
     if (!selectedStudent) {
       error("Pick a student before saving.");
       return;
@@ -838,8 +862,8 @@ export default function MarkingPage() {
             aiOriginalScore,
             aiOriginalFeedback: smartMarkingResult?.aiOriginalFeedback ?? smartMarkingResult?.feedback ?? "",
           },
-          status: receipt.duplicateSkipped ? "needs_review" : "marked",
-          sentToStudent: false,
+          status: receipt.duplicateSkipped ? "needs_review" : shareFeedback ? "sent" : "marked",
+          sentToStudent: shareFeedback && !receipt.duplicateSkipped,
         });
       }
 
@@ -848,6 +872,9 @@ export default function MarkingPage() {
         return;
       }
 
+      setAllSubmissionAttempts((rows) => rows.map((row) => (row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id) ? {
+        ...row, markingStatus: shareFeedback ? "sent" : "marked", finalScore: currentScore,
+      } : row));
       const successfulTargets = [
         receipt.sheet.success ? "Google Sheets" : null,
         receipt.firestore.success ? "Firestore" : null,
@@ -875,98 +902,21 @@ export default function MarkingPage() {
   };
 
   return (
-    <div style={{ padding: 16, display: "grid", gap: 14 }}>
-      <h2>Student Work Marking</h2>
-      <p style={{ marginTop: -8, opacity: 0.8 }}>
-        Smart flow: AI marks every submission. Objective parts still receive the Firestore answer key as source-of-truth context; missing keys are sent to tutor review instead of guessed.
-      </p>
-
-      {loading && <p>Loading roster and submissions...</p>}
-
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <details>
-          <summary style={{ cursor: "pointer" }}>
-            <span style={{ fontSize: "1.17em", fontWeight: 700 }}>Answer Keys</span>
-            <span style={{ marginLeft: 8, fontSize: 13, opacity: 0.75 }}>
-              {loadingAnswerKeys ? "Loading..." : `${answerKeyRegistry.length} keys`}
-            </span>
-          </summary>
-          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>
-              Firestore source of truth: <code>answerKeyRegistry/{"{assignment_id}"}</code>. AI marks every submission and uses these objective keys as required marking context.
-            </p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" onClick={handleImportAnswerDictionary} disabled={importingAnswerKeys}>
-                {importingAnswerKeys ? "Importing..." : "Import Answer Dictionary"}
-              </button>
-              <button type="button" onClick={refreshAnswerKeyRegistry} disabled={loadingAnswerKeys}>Refresh keys</button>
-            </div>
-            {answerImportSummary ? (
-              <div style={{ border: "1px solid #d8e2ef", background: "#f8fbff", borderRadius: 8, padding: 10, fontSize: 13 }}>
-                <strong>Last import validation</strong>
-                <div>Imported: <b>{answerImportSummary.importedCount}</b> · Failed: <b>{answerImportSummary.failedCount}</b> · Total assignments: <b>{answerImportSummary.totalAssignments}</b></div>
-                <div>Sample keys: {answerImportSummary.sampleImportedKeys?.length ? answerImportSummary.sampleImportedKeys.join(", ") : "—"}</div>
-                {answerImportSummary.warnings?.length ? (
-                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                    {answerImportSummary.warnings.slice(0, 10).map((warning) => <li key={warning}>{warning}</li>)}
-                  </ul>
-                ) : <div>No warnings for missing assignment_id or answers.</div>}
-              </div>
-            ) : null}
-            {loadingAnswerKeys ? <p style={{ margin: 0 }}>Loading answer keys...</p> : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Assignment key</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Title</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Level</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Format</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Parts</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Answers</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Links</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Load status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {answerKeyRegistry.slice(0, 80).map((entry) => {
-                      const parts = Object.entries(entry.parts || {}).map(([partKey, part]) => ({ partId: part?.partId || partKey, ...part }));
-                      const answerCount = Number(entry.totalAnswers || parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0));
-                      const loadStatus = answerCount > 0 ? `Loaded ${entry.importedAt ? new Date(entry.importedAt).toLocaleString() : ""}`.trim() : "No parsed answers";
-                      return (
-                        <tr key={entry.id || entry.assignmentKey}>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><code>{entry.assignmentKey}</code></td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.title || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.level || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.format || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{parts.map((part) => part.partId).join(", ") || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{answerCount}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>
-                            {entry.answerUrl ? <a href={entry.answerUrl} target="_blank" rel="noreferrer">answer</a> : "—"}
-                            {entry.sheetUrl ? <> · <a href={entry.sheetUrl} target="_blank" rel="noreferrer">sheet</a></> : null}
-                          </td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{loadStatus}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </details>
-      </section>
-
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>1) Pick a student</h3>
+    <div className="marking-workspace" data-active-panel={workspaceTab}>
+      <header className="marking-workspace-header"><div><h2>Marking workspace</h2><p>Compare the submitted work and current key, review each score, then save the feedback.</p></div><div><strong>{selectedStudent?.name || "Select a submission"}</strong><div>{selectedSubmission?.assignment || referenceEntry?.assignment || ""}</div></div></header>
+      <nav className="marking-mobile-nav" aria-label="Marking workspace sections">{[["queue", "Queue"], ["submission", "Submission"], ["review", "Review"]].map(([id, label]) => <button type="button" key={id} aria-pressed={workspaceTab === id} onClick={() => setWorkspaceTab(id)}>{label}</button>)}</nav>
+      {loading && <p role="status">Loading roster and submissions...</p>}
+      <div className="marking-columns">
+        <aside className="marking-column marking-queue" aria-label="Submission queue">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>Student</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
           <input
             placeholder="Search by student name/code/level"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ minWidth: 280 }}
+
           />
-          <select disabled={autoMarking || savingScore || workflowSaving} value={selectedStudentId} onChange={(e) => setSelectedStudentId(e.target.value)} style={{ minWidth: 320 }}>
+          <select disabled={autoMarking || savingScore || workflowSaving} value={selectedStudentId} onChange={(e) => { setSelectedAttemptPath(""); setSelectedStudentId(e.target.value); }} >
             <option value="">Select student...</option>
             {filteredStudents.map((row) => (
               <option key={row.id} value={row.id}>
@@ -975,38 +925,7 @@ export default function MarkingPage() {
             ))}
           </select>
         </div>
-      </section>
-
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>2) Pick a reference answer</h3>
-        <div style={{ display: "grid", gap: 8 }}>
-          <input
-            placeholder="Search reference answers by assignment/level"
-            value={referenceQuery}
-            onChange={(e) => setReferenceQuery(e.target.value)}
-          />
-          <select disabled={autoMarking || savingScore || workflowSaving} value={referenceAssignment} onChange={(e) => setReferenceAssignment(e.target.value)}>
-            {filteredReferenceEntries.map((entry) => (
-              <option key={entry.assignment} value={entry.assignment}>
-                {formatReferenceAssignmentLabel(entry)}
-              </option>
-            ))}
-          </select>
-          {!filteredReferenceEntries.length && (
-            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>No reference answers match your search.</p>
-          )}
-          <textarea value={formattedReferenceAnswers} readOnly rows={10} />
-          {referenceEntry?.answer_url && (
-            <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">
-              Open answer source
-            </a>
-          )}
-        </div>
-      </section>
-
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>3) Load student submission</h3>
-        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+      </section><section className="marking-card"><h3>Submission queue</h3><label>Status<select value={queueStatus} onChange={(event) => setQueueStatus(event.target.value)}>{[["all", "All attempts"], ["pending", "Pending"], ["marked", "Marked"], ["needs_review", "Needs review"], ["failed", "Failed"], ["sent", "Shared"]].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <button
             onClick={() => setActiveSubmissionTab("latest")}
             style={{ fontWeight: activeSubmissionTab === "latest" ? 700 : 400 }}
@@ -1045,6 +964,9 @@ export default function MarkingPage() {
             </div>
           ) : <span style={{ display: "block", marginTop: 5, fontSize: 12, opacity: 0.75 }}>Includes marked, failed, pending, and resubmitted attempts.</span>}
         </div>
+<div className="marking-queue-list">{queueRows.map((row) => <button className="marking-queue-item" type="button" aria-pressed={(row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id)} key={row.path || row.id} disabled={autoMarking || savingScore || workflowSaving} onClick={() => void handleSelectFromNotification(row)}><strong>{row.studentName || row.studentCode || "Student"}</strong><span>{row.assignment || row.assignmentId}</span><small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small></button>)}{!queueRows.length ? <p>No submissions match this filter.</p> : null}</div></section></aside>
+        <main className="marking-column marking-submission" aria-label="Submission and reference">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>Student work</h3>
         {loadingSubmissions ? (
           <p style={{ margin: 0 }}>Loading submissions...</p>
         ) : activeSubmissionTab === "latest" ? (
@@ -1056,6 +978,7 @@ export default function MarkingPage() {
                 {" · "}Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
                 <SubmissionAttemptLabels submission={selectedSubmission} />
               </div>
+              {submittedWorkFiles(selectedSubmission).map((file) => <p key={file.url}><a href={file.url} target="_blank" rel="noopener noreferrer">{file.name}</a></p>)}
               <MarkingHistoryPanel submission={selectedSubmission} />
                             {selectedSubmission.improvementSummary ? (
                 <div style={{ marginBottom: 8, padding: 8, borderRadius: 6, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
@@ -1128,8 +1051,38 @@ export default function MarkingPage() {
           )
         ) : null}
       </section>
-
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>Current answer key</h3>
+        <div style={{ display: "grid", gap: 8 }}>
+          <input
+            placeholder="Search reference answers by assignment/level"
+            value={referenceQuery}
+            onChange={(e) => setReferenceQuery(e.target.value)}
+          />
+          <select disabled={autoMarking || savingScore || workflowSaving} value={referenceAssignment} onChange={(e) => { setSelectedAttemptPath(""); setReferenceAssignment(e.target.value); }}>
+            {filteredReferenceEntries.map((entry) => (
+              <option key={entry.assignment} value={entry.assignment}>
+                {formatReferenceAssignmentLabel(entry)}
+              </option>
+            ))}
+          </select>
+          {!filteredReferenceEntries.length && (
+            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>No reference answers match your search.</p>
+          )}
+          <div className={`marking-key-status marking-key-${keyComparison}`} role="status">
+            <strong>{keyComparison === "matched" ? "Answer keys match" : keyComparison === "different" ? "Answer keys differ — review before marking" : "No matching saved answer key"}</strong>
+            <div>Key version: {matchingRegistry?.version || matchingRegistry?.rubricVersion || "Not recorded"}</div>
+            <div>{matchingRegistry?.updatedAt || matchingRegistry?.importedAt || matchingRegistry?.syncedAt ? `Saved key updated: ${String(matchingRegistry.updatedAt || matchingRegistry.importedAt || matchingRegistry.syncedAt)}` : "Saved key update date unavailable."}</div>
+            {keyComparison === "different" ? <p>The reference shown here and the saved key used for AI marking differ. Refresh or import the current keys before marking.</p> : null}
+          </div>
+          <textarea aria-label="Current reference answers" value={formattedReferenceAnswers} readOnly rows={10} />
+          {referenceEntry?.answer_url && (
+            <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">
+              Open answer source
+            </a>
+          )}
+        </div>
+      </section><section className="marking-card"><h3>Answer comparison</h3>{objectiveMarkingResult.totalCount ? <div className="marking-answer-list">{Object.entries(objectiveMarkingResult.details).map(([question, answer]) => <div className={answer.correct ? "marking-answer-correct" : "marking-answer-wrong"} key={question}><strong>{question} · {answer.correct ? "Correct" : "Needs correction"}</strong><div>Student: {answer.student || "No answer"}</div><div>Key: {answer.expectedDisplay || answer.expected || answer.rawExpected}</div></div>)}</div> : <p>This submission has no objective answers to compare. Review the writing task points.</p>}</section><details className="marking-copy-tools"><summary>Copy reference and submission</summary>      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>4) Combined reference + student answer</h3>
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
           Use this combined block for quick copy/paste into external marking tools.
@@ -1140,11 +1093,17 @@ export default function MarkingPage() {
             <button onClick={handleCopyCombined}>Copy combined text</button>
           </div>
         </div>
-      </section>
-
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>5) Enter score and feedback</h3>
+      </section></details></main>
+        <aside className="marking-column marking-review" aria-label="Score review">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>Review score and feedback</h3>
         <div style={{ display: "grid", gap: 8 }}>
+          {writingTask ? <details open className="marking-task"><summary>Writing task points</summary><p>{writingTask.taskText}</p><ul>{writingTask.taskPoints.map((point) => <li key={point}>{point}</li>)}</ul></details> : null}
+          <div className="marking-feedback-tools">
+            <span>{feedbackWordCount(feedback)} feedback words</span>
+            <label>Target words <select value={feedbackLimit} onChange={(event) => setFeedbackLimit(event.target.value)}><option value="40">40</option><option value="60">60</option><option value="100">100</option><option value="">No target</option></select></label>
+            {feedbackLimit && feedbackWordCount(feedback) > Number(feedbackLimit) ? <span>Over target by {feedbackWordCount(feedback) - Number(feedbackLimit)} words</span> : null}
+            <button type="button" disabled={!feedback.trim()} onClick={async () => { try { await navigator.clipboard.writeText(stripMarkingEmojis(feedback)); success("Feedback copied."); } catch { error("Could not copy feedback. Select the text to copy it."); } }}>Copy feedback</button>
+          </div>
           {smartMarkingResult ? (
             <div style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 10, background: "#eff6ff", display: "grid", gap: 8 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, fontSize: 13 }}>
@@ -1272,7 +1231,7 @@ export default function MarkingPage() {
             Comments / Feedback
             <textarea
               value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
+              onChange={(e) => setFeedback(stripMarkingEmojis(e.target.value))}
               rows={8}
               style={{ fontSize: "1rem", lineHeight: 1.6, minHeight: 180 }}
               placeholder="Write clear, actionable feedback for the student..."
@@ -1310,13 +1269,12 @@ export default function MarkingPage() {
           </div>
         </div>
       </section>
-
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>6) Save to Google Sheets (and optionally Firestore)</h3>
+        <h3>Save reviewed mark</h3>
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
-          Saves row headers: studentcode, name, assignment, score, comments, date, level, link, assignment_id.
+          Save the reviewed score and feedback, or share the feedback with the student.
         </p>
-        <button onClick={handleSave} disabled={loading || savingScore || autoMarking || workflowSaving || loadingSubmissions}>{savingScore ? "Saving..." : "Save Final Score"}</button>
+        <button onClick={() => void handleSave(false)} disabled={loading || savingScore || autoMarking || workflowSaving || loadingSubmissions}>{savingScore ? "Saving..." : "Save Final Score"}</button>
         {savingScore && <p style={{ marginTop: 8, fontSize: 13 }}>Saving score, please wait...</p>}
         {saveReceipt && (
           <div style={{ marginTop: 12, border: "1px solid #ddd", borderRadius: 8, padding: 10, background: "#fafafa", display: "grid", gap: 8 }}>
@@ -1333,7 +1291,82 @@ export default function MarkingPage() {
             </div>
           </div>
         )}
-      </section>
+      </section></aside>
+      </div>
+      <div className="marking-save-bar"><strong>Final score: {displayedFinalScore}/100</strong><button type="button" onClick={() => setWorkspaceTab("review")}>Review mark</button><button type="button" onClick={() => void handleSave(false)} disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}>{savingScore ? "Saving..." : "Save mark"}</button><button type="button" onClick={() => void handleSave(true)} disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}>Save and share feedback</button></div>
+      <div className="marking-key-settings">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <details>
+          <summary style={{ cursor: "pointer" }}>
+            <span style={{ fontSize: "1.17em", fontWeight: 700 }}>Answer Keys</span>
+            <span style={{ marginLeft: 8, fontSize: 13, opacity: 0.75 }}>
+              {loadingAnswerKeys ? "Loading..." : `${answerKeyRegistry.length} keys`}
+            </span>
+          </summary>
+          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>
+              Firestore source of truth: <code>answerKeyRegistry/{"{assignment_id}"}</code>. AI marks every submission and uses these objective keys as required marking context.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={handleImportAnswerDictionary} disabled={importingAnswerKeys}>
+                {importingAnswerKeys ? "Importing..." : "Import Answer Dictionary"}
+              </button>
+              <button type="button" onClick={refreshAnswerKeyRegistry} disabled={loadingAnswerKeys}>Refresh keys</button>
+            </div>
+            {answerImportSummary ? (
+              <div style={{ border: "1px solid #d8e2ef", background: "#f8fbff", borderRadius: 8, padding: 10, fontSize: 13 }}>
+                <strong>Last import validation</strong>
+                <div>Imported: <b>{answerImportSummary.importedCount}</b> · Failed: <b>{answerImportSummary.failedCount}</b> · Total assignments: <b>{answerImportSummary.totalAssignments}</b></div>
+                <div>Sample keys: {answerImportSummary.sampleImportedKeys?.length ? answerImportSummary.sampleImportedKeys.join(", ") : "—"}</div>
+                {answerImportSummary.warnings?.length ? (
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {answerImportSummary.warnings.slice(0, 10).map((warning) => <li key={warning}>{warning}</li>)}
+                  </ul>
+                ) : <div>No warnings for missing assignment_id or answers.</div>}
+              </div>
+            ) : null}
+            {loadingAnswerKeys ? <p style={{ margin: 0 }}>Loading answer keys...</p> : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Assignment key</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Title</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Level</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Format</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Parts</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Answers</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Links</th>
+                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Load status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {answerKeyRegistry.slice(0, 80).map((entry) => {
+                      const parts = Object.entries(entry.parts || {}).map(([partKey, part]) => ({ partId: part?.partId || partKey, ...part }));
+                      const answerCount = Number(entry.totalAnswers || parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0));
+                      const loadStatus = answerCount > 0 ? `Loaded ${entry.importedAt ? new Date(entry.importedAt).toLocaleString() : ""}`.trim() : "No parsed answers";
+                      return (
+                        <tr key={entry.id || entry.assignmentKey}>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><code>{entry.assignmentKey}</code></td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.title || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.level || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.format || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{parts.map((part) => part.partId).join(", ") || "—"}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{answerCount}</td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>
+                            {entry.answerUrl ? <a href={entry.answerUrl} target="_blank" rel="noreferrer">answer</a> : "—"}
+                            {entry.sheetUrl ? <> · <a href={entry.sheetUrl} target="_blank" rel="noreferrer">sheet</a></> : null}
+                          </td>
+                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{loadStatus}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </details>
+      </section></div>
     </div>
   );
 }

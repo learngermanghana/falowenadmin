@@ -7,7 +7,7 @@ import StudentResultsComparePage from "./StudentResultsComparePage.jsx";
 import { warmAssignmentRegistryCache } from "../services/assignmentRegistryService.js";
 
 const tabs = [
-  { id: "work", label: "Marking", helper: "Use the original detailed marking workspace for manual review, AI support, final score saving, and student feedback." },
+  { id: "work", label: "Marking", helper: "Compare student work with the answer key, review scores and save feedback." },
   { id: "assignment-registry", label: "Assignment Registry", helper: "Verify, version and publish the exact writing task plus its private marking specification." },
   { id: "ai-audit", label: "AI Audit", helper: "Review AI marking records and saved audit details before syncing them." },
   { id: "answer-keys", label: "Answer Keys", helper: "Sync and check reference answer keys." },
@@ -30,7 +30,7 @@ export default function MarkingHubPage() {
         <div>
           <h2 style={{ margin: 0 }}>Marking</h2>
           <p style={{ margin: "4px 0 0", opacity: 0.75 }}>
-            The marking page now opens the original full marking workspace first. Quick Marking has been removed from this hub.
+            Review submissions, answer keys and student results.
           </p>
         </div>
 
