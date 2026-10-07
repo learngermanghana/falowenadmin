@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/production-release.yml"
+      - "scripts/**"
+      - "src/**"
       - ".github/workflows/teacher-lesson-dashboard-tests.yml"
       - "api/router.js"
       - "src/App.jsx"
@@ -23,6 +25,10 @@ on:
       - "scripts/patchStudentProfileUpdateApi.mjs"
       - "scripts/applyMarkingManualSelectionFix.mjs"
       - "scripts/patchSmartMarkingNaturalFeedback.mjs"
+      - "scripts/patchA2B1MarkingWeights.mjs"
+      - "scripts/patchA2B1WritingScoreNormalization.mjs"
+      - "scripts/patchA2B1PassMetadata.mjs"
+      - "scripts/patchSharedWritingScoreRecovery.mjs"
       - "scripts/checkProductionIdentity.mjs"
       - "package.json"
   push:
@@ -53,6 +59,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate source sync on clean checkout
+        run: npm run sync:build
       - name: Validate production release wiring
         run: node --test tests/production-release-guard.test.js tests/teacher-lesson-dashboard.test.js
 

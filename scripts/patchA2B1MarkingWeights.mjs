@@ -29,7 +29,8 @@ function addImport(source, anchor, importLine, label) {
   return source.replace(anchor, `${anchor}\n${importLine}`);
 }
 
-// Browser marking page: use 40/30/30 for A2/B1 and keep the manual score preview consistent.
+// Browser marking page: keep manual preview on the page, while the shared merge
+// helper now lives in markingReview.js after the marking-review refactor.
 const markingPagePath = new URL("../src/pages/MarkingPage.jsx", import.meta.url);
 let markingPage = fs.readFileSync(markingPagePath, "utf8");
 markingPage = addImport(
@@ -38,24 +39,42 @@ markingPage = addImport(
   'import { calculateWeightedMarkingOutcome } from "../utils/markingScorePolicy.js";',
   "MarkingPage weighting",
 );
-markingPage = replaceOnce(
-  markingPage,
-  `  let finalScore;\n  if (hasObjective && hasWriting) {\n    finalScore = Math.round((objectivePercent + writingPercent) / 2);\n  } else if (hasObjective) {\n    finalScore = Math.round(objectivePercent);\n  } else {\n    finalScore = Math.round(writingPercent || Number(result.finalScore ?? result.score ?? 0));\n  }`,
-  `  const weightedOutcome = calculateWeightedMarkingOutcome({\n    level: result.level || result.assignmentKey || result.assignmentId || "",\n    assignmentId: result.assignmentId,\n    assignmentKey: result.assignmentKey,\n    writingPercent: hasWriting ? writingPercent : null,\n    objectiveScore: hasObjective ? objectivePercent : null,\n    objectiveDetails: objectiveResult.details || {},\n    hasWriting,\n  });\n  const finalScore = weightedOutcome.finalScore;`,
-  "MarkingPage combined score",
-);
-markingPage = replaceOnce(
-  markingPage,
-  `    maxWritingScore: getMaxWritingScore(result),\n    aiOriginalScore: result.aiOriginalScore ?? result.finalScore ?? result.score ?? null,`,
-  `    maxWritingScore: getMaxWritingScore(result),\n    passed: weightedOutcome.passed,\n    scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null,\n    writingMinimumMet: weightedOutcome.writingMinimumMet,\n    markingPolicy: weightedOutcome.policy,\n    aiOriginalScore: result.aiOriginalScore ?? result.finalScore ?? result.score ?? null,`,
-  "MarkingPage score metadata",
-);
-markingPage = replaceOnce(
-  markingPage,
-  `  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);`,
-  `  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark, {\n    level: selectedStudent?.level || referenceEntry?.level || inferLevel(assignmentValue || objectiveAssignmentId),\n    assignmentId: objectiveAssignmentId,\n    objectiveDetails: objectiveMarkingResult.details || {},\n  });`,
-  "MarkingPage manual preview",
-);
+
+const markingReviewPath = new URL("../src/utils/markingReview.js", import.meta.url);
+const markingReview = fs.readFileSync(markingReviewPath, "utf8");
+const sharedMergeIsWeighted = [
+  'import { calculateWeightedMarkingOutcome } from "./markingScorePolicy.js";',
+  "const weightedOutcome = calculateWeightedMarkingOutcome({",
+  "scoreBreakdown: weightedOutcome.scoreBreakdown || result.scoreBreakdown || null",
+  "writingMinimumMet: weightedOutcome.writingMinimumMet",
+  "markingPolicy: weightedOutcome.policy",
+].every((marker) => markingReview.includes(marker));
+
+if (!sharedMergeIsWeighted) {
+  throw new Error("markingReview weighted merge is missing; update patchA2B1MarkingWeights.mjs");
+}
+
+const manualPreviewMaterialized = [
+  "const scoringOptions = {",
+  "objectiveDetails: objectiveMarkingResult.details || {}",
+  "calculateFinalScore(objectiveScorePercent, schreibenMark, {",
+  "calculateWeightedMarkingOutcome({",
+  "writingMinimumMet: manualWeightedOutcome.writingMinimumMet",
+].every((marker) => markingPage.includes(marker));
+
+if (!manualPreviewMaterialized) {
+  markingPage = replaceOnce(
+    markingPage,
+    `  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark);`,
+    `  const calculatedFinalScore = calculateFinalScore(objectiveScorePercent, schreibenMark, {
+    level: selectedStudent?.level || referenceEntry?.level || inferLevel(assignmentValue || objectiveAssignmentId),
+    assignmentId: objectiveAssignmentId,
+    objectiveDetails: objectiveMarkingResult.details || {},
+  });`,
+    "MarkingPage manual preview",
+  );
+}
+
 fs.writeFileSync(markingPagePath, markingPage);
 
 // Local auto-marking: preserve each objective Teil as its own 30-point component.
@@ -207,7 +226,8 @@ router = replaceOnce(
 fs.writeFileSync(routerPath, router);
 
 for (const [path, required] of [
-  [markingPagePath, ["calculateWeightedMarkingOutcome", "writingMinimumMet", "calculateFinalScore(objectiveScorePercent, schreibenMark, scoringOptions)"]],
+  [markingPagePath, ["calculateWeightedMarkingOutcome", "writingMinimumMet: manualWeightedOutcome.writingMinimumMet", "calculateFinalScore(objectiveScorePercent, schreibenMark, {"]],
+  [markingReviewPath, ["calculateWeightedMarkingOutcome", "writingMinimumMet: weightedOutcome.writingMinimumMet", "markingPolicy: weightedOutcome.policy"]],
   [autoMarkingPath, ["aggregatePartResults(parts = [], level", "passed: aggregate.passed", "objectiveDetails: aggregate.objectiveDetails"]],
   [deterministicPath, ["calculateWeightedMarkingOutcome", "writingMinimumMet: weightedOutcome.writingMinimumMet"]],
   [servicePath, ["deterministicPartWeights", "Teil 2 · Schreiben", "weightedOutcome.passed"]],
