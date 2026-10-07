@@ -49,9 +49,9 @@ jobs:
       - name: Apply production marking patches
         run: |
           node scripts/patchSmartMarkingNaturalFeedback.mjs
-          grep -F 'import { reconcileFinalDeterministicFeedback } from "./finalDeterministicFeedback.js";' src/utils/markingReview.js
-          grep -F 'export function mergeObjectiveScore(result = {}, objectiveResult = {}, submissionText = "")' src/utils/markingReview.js
-          grep -F '}, objectiveResult, submissionText);' src/utils/markingReview.js
+          grep -F 'import { reconcileFinalDeterministicFeedback } from "../utils/finalDeterministicFeedback.js";' src/pages/MarkingPage.jsx
+          grep -F 'mergeObjectiveScore as mergeObjectiveScoreBase' src/pages/MarkingPage.jsx
+          grep -F 'function mergeObjectiveScore(result = {}, objectiveResult = {}, submissionText = "")' src/pages/MarkingPage.jsx
           grep -F 'mergeObjectiveScore(aiResult, deterministicObjective, submissionText)' src/pages/MarkingPage.jsx
       - name: Test A1-9 final feedback reconciliation
         run: node --test --test-name-pattern="A1-9 final" tests/final-deterministic-feedback.test.js
