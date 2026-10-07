@@ -75,3 +75,27 @@ test("Presenter prebuild always defines nextLessonHref before passing it to stan
   );
 });
 
+test("student profile sync patch matches the current directory structure", () => {
+  const patch = read("scripts/patchStudentProfileUpdateApi.mjs");
+  const directory = read("src/pages/StudentDirectoryPage.jsx");
+  const functionsIndex = read("functions/index.js");
+
+  assert.match(patch, /profileFieldsAnchor/);
+  assert.match(patch, /renderEditableFields\(tab\.fields\)/);
+  assert.doesNotMatch(patch, /Student profile field-grid anchor changed/);
+
+  const emergencyAlreadyCommitted = directory.includes("STUDENT_EMERGENCY_CONTACT_FIELD");
+  if (!emergencyAlreadyCommitted) {
+    assert.match(directory, /function resolveStudentPhone\(student, draft = \{\}\)/);
+    assert.match(directory, /resolveStudentPhone\(student\),[\s\S]{0,120}student\.level/);
+    assert.match(directory, /\{renderEditableFields\(tab\.fields\)\}/);
+  }
+
+  const apiAlreadyRegistered = functionsIndex.includes(
+    "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist });",
+  );
+  if (!apiAlreadyRegistered) {
+    assert.match(functionsIndex, /function sessionDocRef\(classId, sessionId\)/);
+  }
+});
+
