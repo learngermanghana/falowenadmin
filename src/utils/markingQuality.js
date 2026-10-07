@@ -1,3 +1,4 @@
+import { verifiedObjectiveMetadata } from "./markingReview.js";
 import { stripMarkingEmojis } from "./markingFeedbackText.js";
 import { withResubmissionComparison } from "./resubmissionFeedback.js";
 
@@ -61,7 +62,13 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   const writingFeedback = stripMarkingEmojis(result.feedback).split(/(?<=[.!?])\s+/).filter((sentence) => !(objectiveSentences.test(sentence) && /answer|question|score|correct|wrong|mistake|error|\d+\s*\//i.test(sentence))).join(" ");
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, wordTarget) : "";
   const feedback = writingExpected ? [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n") : objectiveFeedback;
-  let updated = { ...result, feedback: stripMarkingEmojis(feedback || result.feedback), improvementSummary: stripMarkingEmojis(feedback || result.feedback) };
+  const metadata = verifiedObjectiveMetadata(writingExpected ? result : {}, objective);
+  let updated = {
+    ...result, ...metadata,
+    ...(!writingExpected ? { writingScore: null, writingScorePercent: null, taskPointEvidence: [], corrections: [] } : {}),
+    feedback: stripMarkingEmojis(feedback || result.feedback),
+    improvementSummary: stripMarkingEmojis(feedback || result.feedback),
+  };
   const warnings = markingConsistencyWarnings(updated, submission);
   updated = withResubmissionComparison(updated, submission);
   return { ...updated, ...(submission.previousSubmissionText ? { writingRevisionComparison: compareWritingRevisions(submission.previousSubmissionText, submission.text) } : {}), consistencyWarnings: warnings, shouldSendAutomatically: false, ...(warnings.length ? { status: "needs_review" } : {}) };

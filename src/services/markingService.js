@@ -388,6 +388,16 @@ export async function markSubmissionWithAI(options = {}) {
     }
   }
 
+  const finalizeVerified = (result) => {
+    if (!reference || isBlockedScore(scoreValueFromResult(result))) return finalizeMarkingResult(result, options.submission);
+    const objective = computeObjectiveScore(reference, originalSubmissionText);
+    const writingExpected = Array.isArray(reference.writingParts) ? reference.writingParts.length > 0 : hasWritingEvidence(result);
+    const cleaned = writingExpected ? result : { ...result, writingScore: null, writingScorePercent: null };
+    return finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, options.submission, {
+      writingExpected, wordTarget: options.feedbackWordTarget,
+    }), options.submission);
+  };
+
   let primary = applyQuestionAwareWritingGuard(
     sanitizeMarkingResult(await base.markSubmissionWithAI(preparedOptions)),
     preparedOptions,
@@ -409,7 +419,7 @@ export async function markSubmissionWithAI(options = {}) {
   primary = routeMissedWritingToReview(primary, originalSubmissionText);
 
   if (isBlockedScore(scoreValueFromResult(primary)) || !hasWritingEvidence(primary)) {
-    return finalizeMarkingResult(primary, options.submission);
+    return finalizeVerified(primary);
   }
 
   try {
@@ -424,7 +434,7 @@ export async function markSubmissionWithAI(options = {}) {
           recoveredFromSuspiciousPrimaryWritingZero: true,
         },
       }, primary);
-      return finalizeMarkingResult(withReviewReason({
+      return finalizeVerified(withReviewReason({
         ...recovered,
         status: "needs_review",
         shouldSendAutomatically: false,
@@ -432,15 +442,15 @@ export async function markSubmissionWithAI(options = {}) {
         code: "writing_zero_recovered_by_second_examiner",
         message: "The primary examiner returned an impossible zero writing score; the second examiner recovered a usable score, so tutor review is required.",
         source: "second_examiner",
-      }), options.submission);
+      }));
     }
-    return finalizeMarkingResult(mergeSecondExaminer(primary, secondary), options.submission);
+    return finalizeVerified(mergeSecondExaminer(primary, secondary));
   } catch (error) {
     console.warn("Second examiner unavailable; routing writing submission to tutor review.", {
       assignment: options?.submission?.assignment || options?.submission?.assignmentId || options?.submission?.assignmentKey || "",
       message: error?.message || String(error),
     });
-    return finalizeMarkingResult(mergeSecondExaminer(primary, null, error), options.submission);
+    return finalizeVerified(mergeSecondExaminer(primary, null, error));
   }
 }
 

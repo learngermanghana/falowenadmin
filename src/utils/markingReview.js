@@ -52,6 +52,40 @@ export function writingPercentFromResult(result = {}) {
   return writingScoreToPercent(result.writingScore, getMaxWritingScore(result));
 }
 
+// Every visible objective field comes from the same comparison, never an AI key.
+export function verifiedObjectiveMetadata(result = {}, objective = {}) {
+  const groups = new Map();
+  const wrongAnswers = [];
+  for (const [key, row] of Object.entries(objective.details || {})) {
+    const partId = row.partId || "main";
+    if (!groups.has(partId)) groups.set(partId, []);
+    groups.get(partId).push([key, row]);
+    if (row.correct === false) wrongAnswers.push({
+      question: key.split(".").at(-1), partId,
+      student: row.student || "", expected: row.expectedDisplay || row.expected || row.rawExpected || "", correct: false,
+    });
+  }
+  const detected = [...groups].map(([partId, rows]) => {
+    const correct = rows.filter(([, row]) => row.correct === true).length;
+    const answerCount = rows.filter(([, row]) => String(row.student || "").trim()).length;
+    return { partId, partType: "objective", answerCount, total: rows.length, correct, wrong: rows.length - correct,
+      summary: `${partId}: ${answerCount} objective answers found, ${correct} correct, ${rows.length - correct} wrong` };
+  });
+  const total = Number(objective.totalCount || 0);
+  const metadata = {
+    objectiveCorrect: Number(objective.correctCount || 0), objectiveTotal: total,
+    objectiveScore: total ? Number(objective.correctCount || 0) / total * 100 : null,
+    objectiveDetails: objective.details || {}, wrongAnswers,
+  };
+  const writingOnly = (parts) => Array.isArray(parts) ? parts.filter((part) => part?.partType === "writing") : [];
+  return {
+    ...metadata,
+    detectedParts: [...detected, ...writingOnly(result.detectedParts)],
+    parts: [...detected.map((part) => ({ ...part, score: part.correct, maxScore: part.total })), ...writingOnly(result.parts)],
+    ai: { ...(result.ai || {}), ...metadata, deterministicObjectiveMarked: true },
+  };
+}
+
 export function mergeObjectiveScore(result = {}, objectiveResult = {}) {
   const objectivePercent = objectivePercentFromResult(objectiveResult);
   const writingPercent = writingPercentFromResult(result);
@@ -72,6 +106,7 @@ export function mergeObjectiveScore(result = {}, objectiveResult = {}) {
 
   return {
     ...result,
+    ...verifiedObjectiveMetadata(result, objectiveResult),
     score: finalScore,
     finalScore,
     passed: weightedOutcome.passed,
