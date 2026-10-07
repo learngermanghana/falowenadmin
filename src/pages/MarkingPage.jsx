@@ -58,6 +58,12 @@ function formatWritingScore(result = {}) {
   return `${writingPercent}%`;
 }
 
+function objectiveWrongAnswerRows(objectiveDetails = {}) {
+  return Object.entries(objectiveDetails || {})
+    .map(([question, detail]) => ({ question, ...detail }))
+    .filter((row) => row && row.correct === false);
+}
+
 function flattenAnswers(value, prefix = "") {
   if (typeof value === "string") {
     return [`${prefix}${value}`];
