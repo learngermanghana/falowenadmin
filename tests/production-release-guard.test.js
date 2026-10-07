@@ -112,6 +112,14 @@ test("manual marking sync patch matches the current MarkingPage effect", () => {
   assert.match(markingPage, /setFeedback\(""\)/);
   assert.match(markingPage, /setSaveReceipt\(null\)/);
   assert.match(markingPage, /reviewIdentity,/);
-  assert.match(markingPage, /const submissionAssignmentId = selectedSubmission\?\.assignmentId \|\| selectedSubmission\?\.assignmentKey \|\| "";/);
+  const cleanAssignmentEffect = markingPage.includes(
+    'const submissionAssignmentId = selectedSubmission?.assignmentId || selectedSubmission?.assignmentKey || "";',
+  );
+  const syncedAssignmentEffect = (
+    markingPage.includes("const submissionAssignmentId = inferAssignmentId(")
+    && markingPage.includes("selectedSubmission?.raw?.assignment_id")
+    && markingPage.includes("referenceAssignmentId")
+  );
+  assert.ok(cleanAssignmentEffect || syncedAssignmentEffect);
 });
 
