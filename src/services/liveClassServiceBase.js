@@ -155,7 +155,7 @@ async function loadClassRecord(classId, transaction = null) {
   const ref = doc(db, "classes", String(classId));
   const snap = transaction ? await transaction.get(ref) : await getDoc(ref);
   if (!snap.exists()) throw new Error("Class not found");
-  return { id: snap.id, ...snap.data() };
+  return { ...snap.data(), id: snap.id };
 }
 
 export async function createClassCohort(payload) {
@@ -166,7 +166,7 @@ export async function createClassCohort(payload) {
   const slug = String(payload.slug || slugifyClassName(name)).trim();
   const duplicate = await getDocs(query(collection(db, "classes"), where("slug", "==", slug)));
   const duplicateDoc = duplicate.docs[0] || null;
-  const existing = duplicateDoc ? { id: duplicateDoc.id, ...duplicateDoc.data() } : null;
+  const existing = duplicateDoc ? { ...duplicateDoc.data(), id: duplicateDoc.id } : null;
   const canRestoreExisting = existing && (
     ["archived", "draft"].includes(String(existing.status || "").toLowerCase())
     || !existing.startDate
@@ -256,10 +256,10 @@ export async function rebuildClassSessionsFromSchedule(classId, classRecord = nu
     levelId: normalizedClass.levelId,
   });
   const existingSnap = await getDocs(query(collection(db, "classSessions"), where("classId", "==", classId)));
-  const sessions = existingSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
+  const sessions = existingSnap.docs.map((item) => ({ ...item.data(), id: item.id }));
   const attendanceEntries = await Promise.all(sessions.map(async (session) => {
     const snap = await getDoc(attendanceSessionRef(classId, session.id));
-    return [session.id, snap.exists() ? { id: snap.id, ...snap.data() } : null];
+    return [session.id, snap.exists() ? { ...snap.data(), id: snap.id } : null];
   }));
   const plan = buildRebuildClassSessionsPlan({ klass: normalizedClass, occurrences, sessions, attendanceBySessionId: new Map(attendanceEntries), buildCurriculumPatch });
   const batch = writeBatch(db);
@@ -317,7 +317,7 @@ export async function generateClassSessions(classId, classRecord = null) {
   const klass = classRecord || (await loadClassRecord(classId));
   const occurrences = generateSessionOccurrences({ classId, ...klass });
   const existingSnap = await getDocs(query(collection(db, "classSessions"), where("classId", "==", classId)));
-  const existingById = new Map(existingSnap.docs.map((item) => [item.id, { id: item.id, ...item.data() }]));
+  const existingById = new Map(existingSnap.docs.map((item) => [item.id, { ...item.data(), id: item.id }]));
   const batch = writeBatch(db);
   let created = 0;
   let enriched = 0;
@@ -372,7 +372,7 @@ export async function listClassSessions(classId) {
   const snap = await getDocs(
     query(collection(db, "classSessions"), where("classId", "==", classId), orderBy("startsAt", "asc")),
   );
-  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+  return snap.docs.map((item) => ({ ...item.data(), id: item.id }));
 }
 
 export async function syncClassCurriculum(classId, { force = false } = {}) {
@@ -412,9 +412,9 @@ export async function syncClassCurriculum(classId, { force = false } = {}) {
 export async function listClassCohorts() {
   const snap = await getDocs(query(collection(db, "classes"), orderBy("name", "asc")));
   return snap.docs.map((item) => ({
-    id: item.id,
     ...item.data(),
-    classUrl: buildClassUrl({ id: item.id, ...item.data() }),
+    id: item.id,
+    classUrl: buildClassUrl({ ...item.data(), id: item.id }),
   }));
 }
 
@@ -448,7 +448,7 @@ export async function updateSession(sessionId, patch) {
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
-    const session = { id: sessionSnap.id, ...sessionSnap.data() };
+    const session = { ...sessionSnap.data(), id: sessionSnap.id };
     const klass = await loadClassRecord(session.classId, transaction);
     const hasCurriculumPatch = Object.prototype.hasOwnProperty.call(patch, "assignmentIds")
       || Object.prototype.hasOwnProperty.call(patch, "chapterIds")
@@ -474,7 +474,7 @@ export async function cancelSession(sessionId, { reason, adminId }) {
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
-    const session = { id: sessionSnap.id, ...sessionSnap.data() };
+    const session = { ...sessionSnap.data(), id: sessionSnap.id };
     const klass = await loadClassRecord(session.classId, transaction);
     const patch = {
       status: "cancelled",
@@ -606,7 +606,7 @@ export async function rescheduleSession(sessionId, { startsAt, endsAt, adminId, 
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
-    const session = { id: sessionSnap.id, ...sessionSnap.data() };
+    const session = { ...sessionSnap.data(), id: sessionSnap.id };
     const klass = await loadClassRecord(session.classId, transaction);
     const patch = {
       previousStartsAt: session.startsAt || "",
@@ -653,7 +653,7 @@ export async function markSessionCompleted(sessionId, adminId = "admin") {
   await runTransaction(db, async (transaction) => {
     const sessionSnap = await transaction.get(sessionRef);
     if (!sessionSnap.exists()) throw new Error("Session not found");
-    const session = { id: sessionSnap.id, ...sessionSnap.data() };
+    const session = { ...sessionSnap.data(), id: sessionSnap.id };
     const klass = await loadClassRecord(session.classId, transaction);
     const patch = {
       status: "completed",

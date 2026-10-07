@@ -110,7 +110,7 @@ function resolveLevelFromSessions(sessions = []) {
 async function loadClassRecord(classId) {
   const snap = await getDoc(doc(db, "classes", normalize(classId)));
   if (!snap.exists()) throw new Error("Class not found");
-  return { id: snap.id, ...snap.data() };
+  return { ...snap.data(), id: snap.id };
 }
 
 function persistResolvedLevel(classId, klass, inferredLevel) {
@@ -126,7 +126,7 @@ function persistResolvedLevel(classId, klass, inferredLevel) {
 
 async function querySessions(field, identifier) {
   const snap = await getDocs(query(collection(db, "classSessions"), where(field, "==", identifier)));
-  return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+  return snap.docs.map((item) => ({ ...item.data(), id: item.id }));
 }
 
 function addSessions(target, results = []) {
@@ -157,7 +157,7 @@ async function loadCompatibleSessions(classId, klass = {}) {
       const lookup = new Set(identifiers.map(comparable));
       const snap = await getDocs(collection(db, "classSessions"));
       snap.docs.forEach((item) => {
-        const session = { id: item.id, ...item.data() };
+        const session = { ...item.data(), id: item.id };
         const values = [session.classId, session.classRecordId, session.className]
           .map(comparable)
           .filter(Boolean);
@@ -296,7 +296,7 @@ export async function updateCompatibleSession(classId, sessionId, patch = {}) {
   ]);
   if (!sessionSnap.exists()) throw new Error("Session not found");
 
-  const session = { id: sessionSnap.id, ...sessionSnap.data() };
+  const session = { ...sessionSnap.data(), id: sessionSnap.id };
   const merged = { ...session, ...patch };
   const assignmentIds = currentAssignmentIds(merged);
   const nextPatch = {

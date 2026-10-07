@@ -118,7 +118,7 @@ async function syncClassScheduleBoundsFromSessions(classId, { changedSessionId =
   const classSnap = await getDoc(classRef);
   if (!classSnap.exists()) throw new Error("Class not found");
 
-  const klass = { id: classSnap.id, ...classSnap.data() };
+  const klass = { ...classSnap.data(), id: classSnap.id };
   const sessions = await listClassSessions(classId);
   const bounds = classScheduleBoundsFromSessions(sessions, klass.timezone || "Africa/Accra");
   const patch = {

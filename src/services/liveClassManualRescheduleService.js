@@ -25,12 +25,12 @@ async function loadSession(sessionId) {
   if (!normalizedSessionId) throw new Error("Session ID is required.");
   const snap = await getDoc(doc(db, "classSessions", normalizedSessionId));
   if (!snap.exists()) throw new Error("Session not found");
-  return { id: snap.id, ...snap.data() };
+  return { ...snap.data(), id: snap.id };
 }
 
 async function loadClassScheduleRules(session = {}, payload = {}) {
   if (Array.isArray(payload.scheduleRules)) return payload.scheduleRules;
-  const classId = normalize(payload.classId || session.classId || session.classRecordId);
+  const classId = normalize(payload.classId || session.classRecordId || session.classId);
   if (!classId) return [];
   const snap = await getDoc(doc(db, "classes", classId));
   if (!snap.exists()) return [];
@@ -119,7 +119,7 @@ export async function rescheduleSession(sessionId, payload = {}) {
 
   const communication = await submitRescheduleCommunication({
     klass: {
-      id: normalize(result.classId || payload.classId || session.classId || session.classRecordId),
+      id: normalize(result.classId || payload.classId || session.classRecordId || session.classId),
       name: normalize(payload.className || session.className),
     },
     primarySession: session,

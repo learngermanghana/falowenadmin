@@ -296,7 +296,7 @@ export default function LiveClassesPageV2() {
     setMessage("");
     setSessionChange({
       sessionId: session.id,
-      classId: session.classId || session.classRecordId || dashboard?.klass?.id || selectedClassId,
+      classId: dashboard?.klass?.id || dashboard?.klass?.classRecordId || selectedClassId || session.classRecordId || session.classId,
       className: dashboard?.klass?.name || session.className || "",
       action: "reschedule",
       moveMode: "single",
@@ -317,7 +317,7 @@ export default function LiveClassesPageV2() {
 
     try {
       const adminId = user?.uid || user?.email || "admin";
-      const classId = sessionChange.classId || dashboard?.klass?.id || selectedClassId;
+      const classId = dashboard?.klass?.id || dashboard?.klass?.classRecordId || selectedClassId || sessionChange.classId;
       const className = sessionChange.className || dashboard?.klass?.name || "";
       const reason = String(sessionChange.reason || "").trim();
       if (!reason) throw new Error("Write the reason or message students should receive.");
