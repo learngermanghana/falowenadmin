@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
-import LoginPage from "./pages/LoginPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -11,6 +10,7 @@ const ADMIN_BUILD_SHA = String(import.meta.env.VITE_FALOWEN_BUILD_SHA || "dev");
 const ADMIN_BUILD_ENV = String(import.meta.env.VITE_FALOWEN_BUILD_ENV || "local");
 const ADMIN_BUILD_LABEL = ADMIN_BUILD_SHA === "dev" ? "dev" : ADMIN_BUILD_SHA.slice(0, 8);
 
+const LoginPage = lazy(() => import("./pages/LoginPage"));
 const LeadHomepageNotification = lazy(() => import("./components/LeadHomepageNotification.jsx"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AttendanceOverviewPage = lazy(() => import("./pages/AttendanceOverviewPage"));
@@ -77,11 +77,22 @@ function TopBar() {
       }
     };
 
-    refreshDeploymentStatus();
+    let idleId = null;
+    let startupTimerId = null;
+
+    // Deployment freshness is useful, but it must not compete with the first
+    // route chunk and its data on slower mobile connections.
+    if ("requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(refreshDeploymentStatus, { timeout: 2500 });
+    } else {
+      startupTimerId = window.setTimeout(refreshDeploymentStatus, 1200);
+    }
     timerId = window.setInterval(refreshDeploymentStatus, 5 * 60 * 1000);
 
     return () => {
       active = false;
+      if (idleId != null && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (startupTimerId != null) window.clearTimeout(startupTimerId);
       if (timerId) window.clearInterval(timerId);
     };
   }, [user]);

@@ -321,7 +321,10 @@ function resultWithSource(result, candidate) {
   };
 }
 
-export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
+const STUDENT_LEADS_CACHE_MS = 30_000;
+const studentLeadRequestCache = new Map();
+
+async function fetchStudentLeadsFresh(url = STUDENT_LEADS_PUBLISHED_URL) {
   const gid = await discoverLeadSheetGid(url);
   const errors = [];
 
@@ -359,4 +362,36 @@ export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
   }
 
   throw new Error(`Student leads sheet could not be loaded. Tried the Leads tab but Google did not return a valid CSV or readable published table. ${errors.slice(0, 6).join("; ")}`);
+}
+
+
+export async function fetchStudentLeads(url = STUDENT_LEADS_PUBLISHED_URL) {
+  const key = String(url || STUDENT_LEADS_PUBLISHED_URL);
+  const now = Date.now();
+  const cached = studentLeadRequestCache.get(key);
+
+  if (cached?.result && cached.expiresAt > now) return cached.result;
+  if (cached?.promise) return cached.promise;
+
+  const promise = fetchStudentLeadsFresh(key)
+    .then((result) => {
+      studentLeadRequestCache.set(key, {
+        result,
+        expiresAt: Date.now() + STUDENT_LEADS_CACHE_MS,
+        promise: null,
+      });
+      return result;
+    })
+    .catch((error) => {
+      studentLeadRequestCache.delete(key);
+      throw error;
+    });
+
+  studentLeadRequestCache.set(key, {
+    result: cached?.result || null,
+    expiresAt: cached?.expiresAt || 0,
+    promise,
+  });
+
+  return promise;
 }
