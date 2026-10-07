@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/production-release.yml"
+      - "scripts/**"
+      - "src/**"
       - ".github/workflows/teacher-lesson-dashboard-tests.yml"
       - "api/router.js"
       - "src/App.jsx"
