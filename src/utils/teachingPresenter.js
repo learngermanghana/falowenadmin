@@ -1580,6 +1580,21 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       },
       buildA2B1GrammarCheckStage(slide, support, level),
       ...(() => {
+        const challenge = getA2TeacherChallenge(normalizedAssignmentId(slide));
+        if (challenge) return [{
+          id: "scenario-challenge",
+          type: "scenario-challenge",
+          kicker: "Mitmach-Challenge · " + challenge.eyebrow,
+          title: challenge.title,
+          instruction: "Die Lehrkraft zeigt eine Situation und deckt die Modellantwort erst nach der mündlichen Antwort auf.",
+          grammar: challenge.grammar,
+          items: challenge.scenarios,
+          teacherPurpose: {
+            student: challenge.goal,
+            teacher: "Pick students, listen before revealing examples, and move through scenarios. No student login or submission.",
+          },
+          suggestedMinutes: 8,
+        }];
         const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
         return practiceStage ? [practiceStage] : [];
       })(),
