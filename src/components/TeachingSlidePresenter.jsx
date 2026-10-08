@@ -165,6 +165,10 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [careerStepIndex, setCareerStepIndex] = useState(0);
   const [careerAnswerVisible, setCareerAnswerVisible] = useState(false);
   const [careerMissionComplete, setCareerMissionComplete] = useState(false);
+  const [scenarioIndex, setScenarioIndex] = useState(0);
+  const [scenarioStepIndex, setScenarioStepIndex] = useState(0);
+  const [scenarioAnswerVisible, setScenarioAnswerVisible] = useState(false);
+  const [scenarioFinished, setScenarioFinished] = useState(false);
   const [readingModeActive, setReadingModeActive] = useState(false);
   const [readingPhase, setReadingPhase] = useState("idle");
   const [activeReadingAssignment, setActiveReadingAssignment] = useState(null);
@@ -204,6 +208,29 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     : null;
   const careerSteps = Array.isArray(activeCareer?.steps) ? activeCareer.steps : [];
   const activeCareerStep = careerSteps[careerStepIndex] || null;
+
+  const activeScenario = stage?.type === "scenario-challenge"
+    ? stage.items[scenarioIndex] || stage.items[0] || null : null;
+  const scenarioSteps = Array.isArray(activeScenario?.steps) ? activeScenario.steps : [];
+  const activeScenarioStep = scenarioSteps[scenarioStepIndex] || null;
+
+  function newRandomScenario() {
+    if (stage?.type !== "scenario-challenge" || !stage.items.length) return;
+    setScenarioIndex((current) => nextB1Day18CareerIndex(current, stage.items.length));
+    setScenarioStepIndex(0);
+    setScenarioAnswerVisible(false);
+    setScenarioFinished(false);
+  }
+
+  function nextScenarioStep() {
+    if (stage?.type !== "scenario-challenge" || scenarioFinished) return;
+    setScenarioAnswerVisible(false);
+    if (scenarioStepIndex < scenarioSteps.length - 1) {
+      setScenarioStepIndex((current) => current + 1);
+    } else {
+      setScenarioFinished(true);
+    }
+  }
 
   function newRandomCareer() {
     if (stage?.type !== "career-challenge" || !stage.items.length) return;
@@ -433,6 +460,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setCareerStepIndex(0);
     setCareerAnswerVisible(false);
     setCareerMissionComplete(false);
+    if (stage?.type === "scenario-challenge" && stage.items.length) {
+      setScenarioIndex(Math.floor(Math.random() * stage.items.length));
+    }
+    setScenarioStepIndex(0);
+    setScenarioAnswerVisible(false);
+    setScenarioFinished(false);
   }, [stage?.id]);
 
   useEffect(() => {
@@ -832,6 +865,69 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </section>
               ) : null}
             </>
+          ) : stage.type === "scenario-challenge" ? (
+            <section className="presenter-career-challenge" aria-label="Teacher-led scenario challenge">
+              <div className="presenter-career-challenge-heading">
+                <span>{stage.kicker}</span>
+                <h1>{stage.title}</h1>
+                <p>Sprich mit der Zielstruktur: <strong>{stage.grammar}</strong></p>
+              </div>
+              {activeScenario ? (
+                <>
+                  <div className="presenter-career-hero">
+                    <span className="presenter-career-emoji" role="img" aria-label="Scenario icon">{activeScenario.icon}</span>
+                    <div>
+                      <span className="presenter-career-eyebrow">DEINE ZUFÄLLIGE SITUATION</span>
+                      <h2>{activeScenario.label}</h2>
+                      <p>{activeScenario.context}</p>
+                    </div>
+                  </div>
+                  <div className="presenter-career-roadmap" aria-label="Challenge progress">
+                    {scenarioSteps.map((item, index) => (
+                      <div key={item.actionDe} className={`presenter-career-milestone ${index === scenarioStepIndex ? "is-current" : ""} ${index < scenarioStepIndex || scenarioFinished ? "is-complete" : ""}`}>
+                        <span>{index < scenarioStepIndex || scenarioFinished ? "✓" : index + 1}</span>
+                        <strong>{item.actionDe}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  {scenarioFinished ? (
+                    <div className="presenter-career-completion" role="status">
+                      <span aria-hidden="true">🏆</span>
+                      <h2>Mission geschafft!</h2>
+                      <p>Drei Antworten wurden besprochen. Wähle jetzt eine neue Situation.</p>
+                    </div>
+                  ) : activeScenarioStep ? (
+                    <div className="presenter-career-question">
+                      <span className="presenter-career-eyebrow">SCHRITT {scenarioStepIndex + 1} VON {scenarioSteps.length} · MÜNDLICHE ANTWORT</span>
+                      <h2>{activeScenarioStep.questionDe}</h2>
+                      {scenarioAnswerVisible ? (
+                        <div className="presenter-career-model" role="status">
+                          <span>Mögliche Modellantwort</span>
+                          <strong>{activeScenarioStep.modelDe}</strong>
+                          <small>Andere richtige Antworten sind möglich.</small>
+                        </div>
+                      ) : (
+                        <p className="presenter-career-waiting">Pick student: Lernende antworten zuerst laut. Die Modellantwort bleibt verborgen.</p>
+                      )}
+                    </div>
+                  ) : null}
+                  <div className="presenter-career-controls">
+                    <button type="button" className="presenter-career-new" onClick={newRandomScenario}>↻ Neue zufällige Situation</button>
+                    {!scenarioFinished && activeScenarioStep ? (
+                      <>
+                        <button type="button" className="presenter-career-reveal" onClick={() => setScenarioAnswerVisible((current) => !current)}>
+                          {scenarioAnswerVisible ? "Modellantwort verbergen" : "Modellantwort zeigen"}
+                        </button>
+                        <button type="button" className="presenter-career-next" onClick={nextScenarioStep}>
+                          {scenarioStepIndex === scenarioSteps.length - 1 ? "Mission abschließen ✓" : "Nächster Schritt →"}
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
+              <p className="presenter-career-teacher-note">Nur für die Lehrkraft: Bildschirm teilen, Pick student nutzen, Antworten anhören und die Modellantwort bei Bedarf zeigen. Kein Schülerzugang und keine automatische Bewertung.</p>
+            </section>
           ) : stage.type === "career-challenge" ? (
             <section className="presenter-career-challenge" aria-label="Teacher-led random career activity">
               <div className="presenter-career-challenge-heading">

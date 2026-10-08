@@ -1,5 +1,6 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
+import { getB1TeacherChallenge } from "../data/b1TeacherChallenges.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -1667,6 +1668,23 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
             suggestedMinutes: 8,
           }];
         }
+        // Keep exactly one practice slot; the scenario activity replaces its
+        // original focused-practice slide, never adding another page.
+        const challenge = getB1TeacherChallenge(normalizedAssignmentId(slide));
+        if (challenge) return [{
+          id: "scenario-challenge",
+          type: "scenario-challenge",
+          kicker: "Mitmach-Challenge · " + challenge.eyebrow,
+          title: challenge.title,
+          instruction: "Die Lehrkraft präsentiert eine Situation, lässt Lernende antworten und zeigt die Modellantwort erst danach.",
+          grammar: challenge.grammar,
+          items: challenge.scenarios,
+          teacherPurpose: {
+            student: challenge.goal,
+            teacher: "Share the slide, pick students, listen to oral answers, then optionally reveal models. No student login or submission.",
+          },
+          suggestedMinutes: 8,
+        }];
         const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
         return practiceStage ? [practiceStage] : [];
       })(),
