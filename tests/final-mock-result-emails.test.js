@@ -13,8 +13,11 @@ const {
 } = require("../functions/finalMockResultEmails.js");
 
 const {
+  buildExamRoomPracticeAnnouncementRow,
+  buildExamRoomPracticeResultMessage,
   buildFinalMockAnnouncementRow,
   buildFinalMockResultMessage,
+  isExamRoomEmailScore,
   isFinalMockScore,
   resolveAnnouncementConfig,
   upstreamEventId,
@@ -104,9 +107,11 @@ function testDb({ existingSend = null } = {}) {
   };
 }
 
-test("only A1 and A2 final mock scores enter the announcement flow", () => {
+test("A1, A2, B1 and B2 final mock scores enter the announcement flow", () => {
   assert.equal(isFinalMockScore(score()), true);
   assert.equal(isFinalMockScore(score({ source: "a2_final_mock", level: "A2" })), true);
+  assert.equal(isFinalMockScore(score({ source: "b1_final_mock", level: "B1" })), true);
+  assert.equal(isFinalMockScore(score({ source: "b2_final_mock", level: "B2" })), true);
   assert.equal(isFinalMockScore(score({ source: "falowen_admin_marking" })), false);
 });
 
@@ -158,6 +163,60 @@ test("A2 practice attempt is labelled and targeted to one learner", () => {
   assert.equal(row.sprechen_score, "18");
   assert.equal(row.attach_certificate, "FALSE");
   assert.equal(row.button_label, "Open Falowen Results");
+});
+
+test("Exams Room practice scores are converted to individual exam_room_result announcements", () => {
+  const practiceScore = score({
+    source: "exam_room_practice",
+    level: "A1",
+    assignment: "A1 Hören Sample 3",
+    assignmentId: "A1-EXAMS-HOEREN-SAMPLE-3",
+    score: 73,
+    finalScore: 73,
+    rawScore: 11,
+    total: 15,
+    passed: true,
+    attempt: 2,
+    firstAttempt: false,
+    attemptLabel: "",
+    attemptType: "practice",
+    mockAttemptId: "",
+    examRoomAttemptId: "hoeren-a1-sample-3-2",
+    link: "/exams/horen/a1/sample-3",
+    sectionScores: {},
+  });
+
+  assert.equal(isExamRoomEmailScore(practiceScore), true);
+  const row = buildExamRoomPracticeAnnouncementRow(practiceScore, {
+    scoreId: "practice-score-1",
+    now: new Date("2026-10-08T12:00:00Z"),
+  });
+  const message = buildExamRoomPracticeResultMessage(practiceScore);
+
+  assert.equal(row.email_type, "exam_room_result");
+  assert.equal(row.delivery_mode, "individual");
+  assert.equal(row.email, "ama@example.com");
+  assert.equal(row.assignment, "A1 Hören Sample 3");
+  assert.equal(row.score, "73");
+  assert.equal(row.score_max, "100");
+  assert.equal(row.link, "https://www.falowen.app/exams/horen/a1/sample-3");
+  assert.match(message, /A1 Hören Sample 3 result is ready/);
+  assert.match(message, /11\/15 · 73% — PASS/);
+});
+
+test("B2 final mock uses the same final_mock_result email contract", () => {
+  const row = buildFinalMockAnnouncementRow(score({
+    source: "b2_final_mock",
+    level: "B2",
+    assignment: "B2 Final Mock Exam",
+    assignmentId: "B2-FINAL-MOCK",
+    sectionScores: { lesen: 18, hoeren: 19, schreiben: 17, sprechen: 20 },
+  }), { scoreId: "b2-final-score" });
+
+  assert.equal(row.cert_level, "B2");
+  assert.equal(row.email_type, "final_mock_result");
+  assert.equal(row.lesen_score, "18");
+  assert.equal(row.sprechen_score, "20");
 });
 
 test("final mock result sends through the shared Announcement webhook and records Admin history", async () => {
@@ -327,13 +386,13 @@ test("missing student email still records the completed mock for Admin", async (
   assert.equal(historyWrites.at(-1).student_name, "Ama Mensah");
 });
 
-test("non-mock score creation is ignored by the trigger", async () => {
+test("non-Exams-Room score writes are ignored by the trigger", async () => {
   let registered = null;
   const trigger = createFinalMockResultEmailTrigger({
     db: { collection() {} },
     admin: testAdmin(),
     runtimeConfig: {},
-    onDocumentCreated(options, handler) {
+    onDocumentWritten(options, handler) {
       registered = { options, handler };
       return "registered";
     },
@@ -346,21 +405,23 @@ test("non-mock score creation is ignored by the trigger", async () => {
   const result = await registered.handler({
     params: { scoreId: "regular-score" },
     data: {
-      exists: true,
-      id: "regular-score",
-      data: () => score({ source: "falowen_admin_marking" }),
+      after: {
+        exists: true,
+        id: "regular-score",
+        data: () => score({ source: "falowen_admin_marking" }),
+      },
     },
   });
 
   assert.equal(result.sent, false);
-  assert.equal(result.reason, "not_final_mock");
+  assert.equal(result.reason, "not_exam_room_result");
 });
 
 test("Falowen Admin index exports the final mock result trigger", () => {
   const source = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
   assert.match(source, /createFinalMockResultEmailTrigger/);
   assert.match(source, /exports\.sendFinalMockResultEmail/);
-  assert.match(source, /onDocumentCreated/);
+  assert.match(source, /onDocumentWritten/);
 });
 
 test("Firebase production workflow deploys and validates the final mock result worker", () => {
@@ -368,6 +429,8 @@ test("Firebase production workflow deploys and validates the final mock result w
   const firebase = fs.readFileSync(path.join(root, "firebase.json"), "utf8");
   assert.match(workflow, /functions:falowenadmin:sendFinalMockResultEmail/);
   assert.match(workflow, /exports\.sendFinalMockResultEmail = createFinalMockResultEmailTrigger/);
+  assert.match(workflow, /CLOUD_RUNTIME_CONFIG_B64/);
+  assert.match(workflow, /functions\/\.env\.\$FIREBASE_PROJECT_ID/);
   assert.match(firebase, /node --check functions\/finalMockResultEmails\.js/);
 });
 

@@ -80,7 +80,10 @@ const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIP
 const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");
 
 function parseRuntimeConfig() {
-  const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
+  const b64 = String(process.env.CLOUD_RUNTIME_CONFIG_B64 || "").trim();
+  const raw = b64
+    ? Buffer.from(b64, "base64").toString("utf8")
+    : process.env.CLOUD_RUNTIME_CONFIG || "{}";
   try {
     return JSON.parse(raw);
   } catch {
@@ -2359,7 +2362,7 @@ exports.sendTrialAccessReminderEmails = createTrialAccessReminderEmailJob({
 exports.sendFinalMockResultEmail = createFinalMockResultEmailTrigger({
   admin,
   db,
-  onDocumentCreated,
+  onDocumentWritten,
   runtimeConfig,
 });
 
