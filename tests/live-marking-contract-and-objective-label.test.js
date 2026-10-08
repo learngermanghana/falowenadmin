@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { comparePublishedAnswerKeys, mergePublishedMarkingContract } from "../src/utils/publishedMarkingContract.js";
 import { getA2WritingTaskSpec } from "../src/data/a2WritingTaskSpecs.js";
 import { evaluateWritingTaskEvidence } from "../src/utils/writingTaskEvidence.js";
@@ -80,4 +81,11 @@ test("Flat perfect objective scores show Objective, not the internal main part i
   const metadata = verifiedObjectiveMetadata({}, objective);
   assert.match(metadata.detectedParts[0].summary, /^Objective:/);
   assert.equal(metadata.detectedParts[0].partId, "main");
+});
+
+test("The marking page surfaces staff-feed answer disagreements before allowing save", () => {
+  const page = readFileSync(new URL("../src/pages/MarkingPage.jsx", import.meta.url), "utf8");
+  assert.match(page, /learner_answer_key_disagreement/);
+  assert.match(page, /smartMarkingResult\.reviewReasons/);
+  assert.match(page, /qualityNeedsReview/);
 });
