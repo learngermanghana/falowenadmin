@@ -31,6 +31,66 @@
   font-size: 13px;
 }
 
+.marking-stage-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.marking-stage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px 11px;
+  color: #64748b;
+}
+
+.marking-stage > span {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.marking-stage strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.marking-stage.is-current {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.marking-stage.is-current > span {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.marking-stage.is-complete {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.marking-stage.is-complete > span {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .marking-mobile-nav {
   display: none;
 }
@@ -323,6 +383,42 @@
   color: #9a3412;
 }
 
+.marking-reference-selected {
+  display: grid;
+  gap: 3px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #eff6ff;
+  padding: 10px 11px;
+}
+
+.marking-reference-selected span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.marking-reference-selected strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.marking-reference-override {
+  font-size: 13px;
+}
+
+.marking-reference-override summary {
+  cursor: pointer;
+  color: #475569;
+  font-weight: 700;
+}
+
+.marking-reference-override[open] summary {
+  margin-bottom: 8px;
+}
+
 .marking-inline-warning {
   border: 1px solid #fed7aa;
   border-radius: 8px;
@@ -351,6 +447,29 @@
 
 .marking-table-scroll {
   overflow-x: auto;
+}
+
+.marking-objective-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.marking-compact-action {
+  min-height: 32px !important;
+  padding: 5px 9px !important;
+  font-size: 12px !important;
+}
+
+.marking-objective-clear {
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 10px 12px;
+  font-size: 13px;
 }
 
 .marking-objective-table {
@@ -553,6 +672,23 @@
 }
 
 @media (max-width: 560px) {
+  .marking-stage-bar {
+    gap: 5px;
+  }
+
+  .marking-stage {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 7px 5px;
+    text-align: center;
+  }
+
+  .marking-stage strong {
+    font-size: 11px;
+    white-space: normal;
+  }
+
   .marking-card {
     padding: 13px;
     border-radius: 10px;
