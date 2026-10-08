@@ -176,9 +176,7 @@ export default function MarkingPage() {
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [submissionNotifications, setSubmissionNotifications] = useState([]);
-  const [allSubmissionAttempts, setAllSubmissionAttempts] = useState([]);
   const [attemptSearch, setAttemptSearch] = useState("");
-  const [queueStatus, setQueueStatus] = useState("all");
   const [selectedAttemptPath, setSelectedAttemptPath] = useState("");
   const feedbackLimit = "40";
   const [qualityAcknowledgement, setQualityAcknowledgement] = useState("");
@@ -199,6 +197,7 @@ export default function MarkingPage() {
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
+  const [reportFallbackVisible, setReportFallbackVisible] = useState(false);
   const workflowSaving = false;
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
 
@@ -286,10 +285,9 @@ export default function MarkingPage() {
 
     const loadLatestSubmissions = async () => {
       try {
-        const [rows, allAttempts] = await Promise.all([loadSubmissions(), loadSubmissions({ includeMarked: true })]);
+        const rows = await loadSubmissions();
         if (!cancelled) {
           setSubmissionNotifications(rows);
-          setAllSubmissionAttempts(allAttempts);
         }
       } catch (err) {
         if (!cancelled) error(err?.message || "Failed to load submission notifications");
@@ -350,11 +348,12 @@ export default function MarkingPage() {
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
   const writingTask = writingExpected ? writingTaskCandidate : null;
-  const queueRows = (allSubmissionAttempts.length ? allSubmissionAttempts : submissionNotifications).filter((row) => {
+  const queueRows = submissionNotifications.filter((row) => {
     const search = normalize(attemptSearch);
     const status = normalize(row.markingStatus || row.status || "pending");
-    return (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)))
-      && (queueStatus === "all" || (queueStatus === "pending" ? ["pending", "submitted", "resubmitted"].includes(status) : status === queueStatus));
+    const stillNeedsMarking = !["marked", "sent"].includes(status);
+    return stillNeedsMarking
+      && (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)));
   });
   const reviewIdentity = JSON.stringify([selectedStudentId, selectedSubmission?.path, selectedSubmission?.id, referenceAssignment]);
   const reviewIdentityRef = useRef(reviewIdentity);
@@ -712,9 +711,6 @@ export default function MarkingPage() {
         return;
       }
 
-      setAllSubmissionAttempts((rows) => rows.map((row) => (row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id) ? {
-        ...row, markingStatus: shareFeedback ? "sent" : "marked", finalScore: currentScore,
-      } : row));
       const successfulTargets = [
         receipt.sheet.success ? "Google Sheets" : null,
         receipt.firestore.success ? "Firestore" : null,
@@ -768,13 +764,13 @@ export default function MarkingPage() {
     "MARKING SUMMARY",
     smartMarkingResult
       ? JSON.stringify({
-          level: smartMarkingResult.level,
-          assignmentKey: smartMarkingResult.assignmentKey,
-          objectiveScore: smartMarkingResult.objectiveScore,
-          writingScore: smartMarkingResult.writingScorePercent ?? smartMarkingResult.writingScore,
-          finalScore: smartMarkingResult.finalScore ?? smartMarkingResult.score,
-          confidence: smartMarkingResult.confidence,
-          status: smartMarkingResult.status,
+          level: currentReviewedResult.level,
+          assignmentKey: currentReviewedResult.assignmentKey,
+          objectiveScore: currentReviewedResult.objectiveScore,
+          writingScore: schreibenMark === "" ? null : Number(schreibenMark),
+          finalScore: displayedFinalScore,
+          confidence: currentReviewedResult.confidence,
+          status: currentReviewedResult.status,
         }, null, 2)
       : "AI marking has not been run.",
     "",
@@ -785,9 +781,11 @@ export default function MarkingPage() {
   const handleCopyMarkingReport = async () => {
     try {
       await navigator.clipboard.writeText(markingReport);
+      setReportFallbackVisible(false);
       success("Complete marking report copied.");
     } catch {
-      error("Could not copy the report. Open the marking report below and copy its text.");
+      setReportFallbackVisible(true);
+      error("Could not copy automatically. The full report is shown below for manual copying.");
     }
   };
 
@@ -800,8 +798,8 @@ export default function MarkingPage() {
           <section className="marking-card marking-queue-card">
             <div className="marking-section-heading">
               <div>
-                <h3>Submissions</h3>
-                <p>Find a student attempt and open it for marking.</p>
+                <h3>Submissions to mark</h3>
+                <p>Only incoming work that still needs marking.</p>
               </div>
               <span className="marking-count-badge">{queueRows.length}</span>
             </div>
@@ -811,11 +809,6 @@ export default function MarkingPage() {
               onChange={(event) => setAttemptSearch(event.target.value)}
               placeholder="Search student, code or assignment"
             />
-            <select aria-label="Filter submissions by status" value={queueStatus} onChange={(event) => setQueueStatus(event.target.value)}>
-              {[["pending", "Pending"], ["all", "All attempts"], ["needs_review", "Needs review"], ["marked", "Marked"], ["sent", "Shared"], ["failed", "Failed"]].map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
             <div className="marking-queue-list">
               {queueRows.map((row) => (
                 <button
@@ -843,7 +836,17 @@ export default function MarkingPage() {
                   <h3>Student work</h3>
                   <p>{selectedSubmission ? `${selectedSubmission.assignment || "Unknown assignment"} · ${selectedSubmission.status || "submitted"}` : "Select a submission from the queue."}</p>
                 </div>
-                {selectedSubmission ? <SubmissionAttemptLabels submission={selectedSubmission} /> : null}
+                <div className="marking-student-actions">
+                  {selectedSubmission ? <SubmissionAttemptLabels submission={selectedSubmission} /> : null}
+                  <button
+                    className="marking-primary-action"
+                    type="button"
+                    onClick={handleAutoMark}
+                    disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission}
+                  >
+                    {autoMarking ? "Marking..." : smartMarkingResult ? "Re-run AI marking" : "Mark with AI"}
+                  </button>
+                </div>
               </div>
               {loadingSubmissions ? <p>Loading submission...</p> : selectedSubmission ? (
                 <>
@@ -935,17 +938,9 @@ export default function MarkingPage() {
           <section className="marking-card marking-review-card">
             <div className="marking-section-heading">
               <div>
-                <h3>Mark with AI</h3>
-                <p>Run the marker, review the score, then edit the comment before saving.</p>
+                <h3>AI feedback & score</h3>
+                <p>Review the AI result, adjust the score if needed, then edit the comment before saving.</p>
               </div>
-              <button
-                className="marking-primary-action"
-                type="button"
-                onClick={handleAutoMark}
-                disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission}
-              >
-                {autoMarking ? "Marking..." : smartMarkingResult ? "Re-run AI marking" : "Mark with AI"}
-              </button>
             </div>
 
             {consistencyWarnings.length ? (
@@ -1063,6 +1058,12 @@ export default function MarkingPage() {
         </button>
       </div>
       <p className="marking-report-help">Copy full report includes the reference, student work, objective mapping, AI feedback, current comment and score summary for bug reports.</p>
+      {reportFallbackVisible ? (
+        <label className="marking-report-fallback">
+          Full report — select and copy manually
+          <textarea readOnly rows={12} value={markingReport} />
+        </label>
+      ) : null}
     </div>
   );
 }
