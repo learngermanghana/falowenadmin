@@ -68,3 +68,15 @@ test("B1 previous Day 15 and Day 20 comparison/method follow-up regressions rema
  assert.equal(getB1WarmupFollowUp("B1-5.15","Wie kann man Arbeit und Privatleben besser trennen?"),"Welche feste Regel hilft dir, nach der Arbeit wirklich abzuschalten?");
  assert.equal(getB1WarmupFollowUp("B1-6.20","Was ist wichtiger: Ausbildung oder Erfahrung?"),"Wann ist praktische Erfahrung wichtiger als eine Ausbildung?");
 });
+
+test("B1 Day 24 sustainability follow-up asks about the selected sustainable products", () => {
+ const question = "Welche nachhaltigen Produkte kaufst du bereits?";
+ const followUp = getB1WarmupFollowUp("B1-8.24", question);
+ assert.equal(followUp, "Warum kaufst du genau diese nachhaltigen Produkte?");
+ assert.doesNotMatch(followUp, /nachhaltiger als früher/i, "Do not imply a change in purchasing behavior");
+ const slide = getSlidesByCourse("B1").find(s => s.assignmentId === "B1-8.24");
+ const warmup = buildTeachingPresenterStages(slide, slide.topic).find(s => s.id === "warmup");
+ const index = warmup.items.indexOf(question);
+ assert.ok(index >= 0);
+ assert.equal(warmup.questionSupport[index].followUpDe, followUp);
+});

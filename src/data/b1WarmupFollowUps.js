@@ -418,7 +418,7 @@ export const B1_WARMUP_FOLLOWUPS = Object.freeze({
   "B1-8.24": [
     {
       "questionDe": "Welche nachhaltigen Produkte kaufst du bereits?",
-      "followUpDe": "Warum kaufst du genau diese Produkte nachhaltiger als früher?"
+      "followUpDe": "Warum kaufst du genau diese nachhaltigen Produkte?"
     },
     {
       "questionDe": "Ist nachhaltiger Konsum immer teurer?",
