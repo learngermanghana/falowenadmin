@@ -4082,3 +4082,231 @@
   max-width: 850px;
 }
 
+/* B1 Day 18: teacher-led oral career challenge (shared presenter screen only). */
+.presenter-career-challenge {
+  display: grid;
+  gap: clamp(0.8rem, 1.7vw, 1.35rem);
+  width: min(100%, 1060px);
+  margin: 0 auto;
+  min-width: 0;
+  color: #0f172a;
+}
+
+.presenter-career-challenge-heading {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.presenter-career-challenge-heading > span,
+.presenter-career-eyebrow {
+  color: #475569;
+  font-size: clamp(0.68rem, 1.05vw, 0.82rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.presenter-career-challenge-heading h1 {
+  font-size: clamp(1.45rem, 3.2vw, 2.35rem);
+  line-height: 1.14;
+  margin: 0;
+}
+
+.presenter-career-challenge-heading p,
+.presenter-career-hero p,
+.presenter-career-question p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.presenter-career-hero {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2.2vw, 1.65rem);
+  padding: clamp(1rem, 2.5vw, 1.8rem);
+  border-radius: 20px;
+  border: 1px solid #a5d8cb;
+  background: linear-gradient(120deg, #e7f8f2, #f4fbff);
+}
+
+.presenter-career-emoji {
+  display: grid;
+  place-items: center;
+  flex: 0 0 clamp(66px, 9vw, 102px);
+  width: clamp(66px, 9vw, 102px);
+  aspect-ratio: 1;
+  border-radius: 20px;
+  background: #fff;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
+
+.presenter-career-hero > div {
+  min-width: 0;
+}
+
+.presenter-career-hero h2 {
+  margin: 0.3rem 0;
+  font-size: clamp(1.5rem, 4.2vw, 3rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.presenter-career-roadmap {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.presenter-career-milestone {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 0.75rem;
+  background: #f8fafc;
+  opacity: 0.75;
+}
+
+.presenter-career-milestone > span {
+  display: grid;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #334155;
+  font-weight: 800;
+}
+
+.presenter-career-milestone strong {
+  font-size: clamp(0.85rem, 1.4vw, 1.05rem);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.presenter-career-milestone.is-current {
+  border-color: #02866b;
+  background: #ecfdf5;
+  opacity: 1;
+}
+
+.presenter-career-milestone.is-current > span,
+.presenter-career-milestone.is-complete > span {
+  background: #047857;
+  color: #fff;
+}
+
+.presenter-career-milestone.is-complete {
+  opacity: 1;
+}
+
+.presenter-career-question {
+  display: grid;
+  gap: 0.65rem;
+  padding: clamp(1rem, 2.3vw, 1.6rem);
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.presenter-career-question h2 {
+  font-size: clamp(1.28rem, 3vw, 2.2rem);
+  line-height: 1.25;
+  margin: 0;
+}
+
+.presenter-career-model {
+  display: grid;
+  gap: 0.35rem;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #86c9ab;
+  background: #ecfdf5;
+}
+
+.presenter-career-model > span {
+  color: #065f46;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.presenter-career-model strong {
+  font-size: clamp(1.05rem, 2.2vw, 1.5rem);
+  line-height: 1.35;
+}
+
+.presenter-career-model small,
+.presenter-career-waiting,
+.presenter-career-teacher-note {
+  color: #475569;
+}
+
+.presenter-career-completion {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  border-radius: 18px;
+  border: 1px solid #a5d8cb;
+  background: #ecfdf5;
+  padding: 1.7rem 1rem;
+}
+
+.presenter-career-completion > span {
+  font-size: 2.8rem;
+}
+
+.presenter-career-completion h2,
+.presenter-career-completion p {
+  margin: 0;
+}
+
+.presenter-career-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.presenter-career-controls > button {
+  font: inherit;
+  font-weight: 800;
+  font-size: clamp(0.88rem, 1.45vw, 1.02rem);
+  padding: 0.78rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid #94a3b8;
+  background: #fff;
+  color: #0f172a;
+}
+
+.presenter-career-controls > button:hover,
+.presenter-career-controls > button:focus-visible {
+  border-color: #047857;
+  outline-offset: 2px;
+}
+
+.presenter-career-controls > .presenter-career-next {
+  border-color: #047857;
+  background: #047857;
+  color: #fff;
+}
+
+.presenter-career-controls > .presenter-career-next:hover,
+.presenter-career-controls > .presenter-career-next:focus-visible {
+  background: #065f46;
+  color: #fff;
+}
+
+.presenter-career-teacher-note {
+  margin: 0;
+  font-size: clamp(0.73rem, 1.15vw, 0.88rem);
+}
+
+@media (max-width: 700px) {
+  .presenter-career-roadmap { grid-template-columns: 1fr; }
+  .presenter-career-milestone { padding: 0.5rem 0.7rem; }
+  .presenter-career-controls > button { flex: 1 1 190px; }
+}
