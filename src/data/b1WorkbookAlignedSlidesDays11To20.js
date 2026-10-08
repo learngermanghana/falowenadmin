@@ -716,31 +716,31 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Ich übe Vorstellungsgespräche, um sicherer zu werden.",
     ],
     studentQuestionsDe: [
-      "Was ist dein Wunschberuf, und welchen Schritt planst du dafür?",
-      "Warum machst du ein Praktikum? Antworte mit um ... zu.",
-      "Welchen Kurs kannst du besuchen, um dich beruflich zu verbessern?",
-      "Was übst du, um dich besser auf eine Bewerbung vorzubereiten?",
-      "Nenne drei Schritte zu deinem Wunschberuf mit um ... zu.",
+      "Welcher Beruf interessiert dich? Welchen Schritt machst du, um ihn zu erreichen?",
+      "Welche Ausbildung oder Qualifikation brauchst du? Erkläre deinen Plan mit um ... zu.",
+      "Welche Rolle spielen Praktikum und Weiterbildung? Nutze um ... zu.",
+      "Welche Fähigkeit möchtest du noch verbessern? Nutze um ... zu.",
+      "Welcher nächste Schritt bringt dich deinem Ziel näher? Nutze um ... zu.",
     ],
     speakingModels: [
       {
-        "questionDe": "Welcher Beruf interessiert dich und warum?",
+        "questionDe": "Welcher Beruf interessiert dich? Welchen Schritt machst du, um ihn zu erreichen?",
         "modelAnswerDe": "Mein Wunschberuf ist Lehrer. Ich studiere Pädagogik, um später an einer Schule zu arbeiten. Außerdem übe ich Präsentationen, um klarer und sicherer zu erklären."
       },
       {
-        "questionDe": "Welche Ausbildung oder Qualifikation brauchst du?",
+        "questionDe": "Welche Ausbildung oder Qualifikation brauchst du? Erkläre deinen Plan mit um ... zu.",
         "modelAnswerDe": "Für meinen geplanten Weg brauche ich eine passende pädagogische Ausbildung und gute Fachkenntnisse. Ich informiere mich über die Voraussetzungen, um den richtigen Ausbildungsweg zu wählen. Danach möchte ich ein Praktikum machen, um Erfahrung zu sammeln."
       },
       {
-        "questionDe": "Welche Rolle spielen Praktikum und Weiterbildung?",
+        "questionDe": "Welche Rolle spielen Praktikum und Weiterbildung? Nutze um ... zu.",
         "modelAnswerDe": "Ich mache ein Praktikum, um den Arbeitsalltag kennenzulernen. Später besuche ich eine Weiterbildung, um neue Methoden zu lernen und meine Kenntnisse zu erweitern."
       },
       {
-        "questionDe": "Welche Fähigkeit möchtest du noch verbessern?",
+        "questionDe": "Welche Fähigkeit möchtest du noch verbessern? Nutze um ... zu.",
         "modelAnswerDe": "Ich möchte sicherer vor Gruppen sprechen können. Ich übe kurze Präsentationen, um mein Selbstvertrauen zu stärken. Außerdem bitte ich andere um Rückmeldung, um meine Aussprache zu verbessern."
       },
       {
-        "questionDe": "Welcher nächste Schritt bringt dich deinem Ziel näher?",
+        "questionDe": "Welcher nächste Schritt bringt dich deinem Ziel näher? Nutze um ... zu.",
         "modelAnswerDe": "Mein nächster Schritt ist ein Praktikum an einer Schule. Ich aktualisiere meinen Lebenslauf, um mich dafür zu bewerben. Danach sammle ich praktische Erfahrungen, um meinen Wunschberuf besser kennenzulernen."
       }
     ],
