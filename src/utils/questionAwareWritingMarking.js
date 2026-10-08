@@ -730,10 +730,10 @@ function sanitizeStudentWritingFeedback(value = "", taskPointEvidence = []) {
 function joinStudentFeedback(parts = []) {
   const seen = new Set();
   return (Array.isArray(parts) ? parts : [])
-    .map((part) => clean(part))
+    .flatMap((part) => clean(part).split(/(?<=[.!?])\s+/).map(clean))
     .filter(Boolean)
-    .filter((part) => {
-      const key = part.toLowerCase();
+    .filter((sentence) => {
+      const key = sentence.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
