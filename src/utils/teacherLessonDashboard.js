@@ -1,5 +1,6 @@
 import { getTeachingSlideByAssignmentId, getSlidesByCourse } from "../data/teachingSlides.js";
 import { assignmentIdsForSession } from "./liveClassSessionDedupe.js";
+import { A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT } from "../data/a1PublishedWorkbookRoutes.js";
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -97,6 +98,11 @@ export function learnerLessonUrl(slide = null) {
   if (publishedWorkbook) return `${FALOWEN_COURSE_BASE}${publishedWorkbook}`;
 
   const level = normalize(slide.course).toUpperCase();
+  const a1Route = level === "A1"
+    ? A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT[normalize(slide.assignmentId).toUpperCase()]
+    : "";
+  if (a1Route) return `${FALOWEN_COURSE_BASE}${a1Route}`;
+
   const chapter = normalize(slide.assignmentId).match(/^A1-(\d+(?:\.\d+)*(?:-PRACTICE)?)$/i)?.[1];
   if (level === "A1" && chapter) {
     const key = chapter.toLowerCase();
