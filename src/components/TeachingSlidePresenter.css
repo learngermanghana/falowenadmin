@@ -4318,3 +4318,70 @@
   .presenter-career-milestone { padding: 0.5rem 0.7rem; }
   .presenter-career-controls > button { flex: 1 1 190px; }
 }
+
+
+/* A1 fullscreen mobile/tablet: stack the picker, activity timer and class clock.
+   Fixed overlays shared the same corner and intercepted student marking. Scoped to
+   A1 so B1/B2/C1/C2 presenter focus layouts remain unchanged. */
+@media (max-width: 900px) {
+  .presenter-stage.is-focus-mode.presenter-a1-stacked-controls {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    align-content: stretch;
+    gap: 0.3rem;
+    padding: 0.45rem;
+  }
+
+  .presenter-stage.is-focus-mode.presenter-a1-stacked-controls > .presenter-participation-dock,
+  .presenter-stage.is-focus-mode.presenter-a1-stacked-controls > .presenter-student-picker {
+    position: relative;
+    inset: auto;
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    max-height: min(24dvh, 165px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    pointer-events: auto;
+  }
+
+  .presenter-stage.is-focus-mode.presenter-a1-stacked-controls > .presenter-focus-stage-timer {
+    position: relative;
+    inset: auto;
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: stretch;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: min(30dvh, 180px);
+    overflow-y: auto;
+    padding: 0.36rem 0.48rem;
+  }
+
+  .presenter-stage.is-focus-mode.presenter-a1-stacked-controls > .presenter-focus-time {
+    position: relative;
+    inset: auto;
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: end;
+    width: max-content;
+    min-width: 0;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .presenter-stage.is-focus-mode.presenter-a1-stacked-controls > .presenter-content {
+    grid-column: 1;
+    grid-row: 4;
+    min-height: 0;
+    height: auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0.5rem 0.4rem 3.8rem;
+    overflow-y: auto;
+  }
+}
