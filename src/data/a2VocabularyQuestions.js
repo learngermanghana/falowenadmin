@@ -44,7 +44,7 @@ export const A2_VOCABULARY_QUESTIONS = Object.freeze({
     },
     {
       "term": "... ist genauso ... wie ...",
-      "questionDe": "Zwei Handys kosten gleich viel. Wie vergleichst du die Preise?"
+      "questionDe": "Zwei Handys im Geschäft kosten genau gleich viel. Wie vergleichst du ihre Preise?"
     },
     {
       "term": "... ist nicht so ... wie ...",
