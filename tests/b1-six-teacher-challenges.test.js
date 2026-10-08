@@ -70,3 +70,58 @@ test("Presenter exposes randomized, hidden model, teacher-led three-step scenari
   assert.match(jsx, /Kein Schülerzugang und keine automatische Bewertung/);
   assert.match(jsx, /presenter-career-challenge/);
 });
+
+test("Every teacher mission asks concrete topic-specific questions, not generic filler prompts", () => {
+  const disallowed = new Set([
+    "Situation verstehen",
+    "Passend reagieren",
+    "Lösung formulieren",
+    "Gib einen Tipp.",
+    "Nenne eine Möglichkeit.",
+    "Beschreibe das Problem.",
+    "Bitte um einen Termin.",
+  ]);
+  for (const [assignmentId] of REQUIRED) {
+    const activity = getB1TeacherChallenge(assignmentId);
+    const questions = [];
+    for (const scenario of activity.scenarios) {
+      assert.ok(scenario.context.length >= 100, `${assignmentId}: provide realistic context`);
+      assert.equal(scenario.steps.length, 3, assignmentId);
+      const actions = new Set();
+      for (const { actionDe, questionDe, modelDe } of scenario.steps) {
+        assert.equal(disallowed.has(actionDe), false, `${assignmentId}: generic step label ${actionDe}`);
+        assert.equal(disallowed.has(questionDe), false, `${assignmentId}: generic student prompt ${questionDe}`);
+        assert.ok(questionDe.includes("?") && questionDe.length >= 45, `${assignmentId}: ask a substantial German question: ${questionDe}`);
+        assert.ok(modelDe.length >= 40 && /[.!?]$/.test(modelDe), `${assignmentId}: answer the scenario in a full B1 sentence`);
+        actions.add(actionDe);
+        questions.push(questionDe);
+      }
+      assert.equal(actions.size, 3, `${assignmentId}: each scenario needs three distinct moves`);
+    }
+    assert.equal(new Set(questions).size, 9, `${assignmentId}: avoid duplicated questions across random scenarios`);
+  }
+});
+
+test("Each day's specific workbook grammar and real-life situation shape its models", () => {
+  const content = id => {
+    const activity = getB1TeacherChallenge(id);
+    return activity.scenarios.map(s => [
+      s.context,
+      ...s.steps.flatMap(step => [step.questionDe, step.modelDe]),
+    ].join(" ")).join(" ");
+  };
+  assert.match(content("B1-2.5"), /Könnten Sie mir sagen, ob/);
+  assert.match(content("B1-2.5"), /Kaution|Besichtigungstermin|Mitbewohner/);
+  for (const modal of ["sollte", "kann", "muss", "darf"]) {
+    assert.match(content("B1-3.8"), new RegExp(modal, "i"));
+  }
+  for (const connector of ["Als", "Während", "Nachdem"]) {
+    assert.match(content("B1-4.12"), new RegExp(connector, "i"));
+  }
+  assert.match(content("B1-6.19"), /Wie würden Sie/);
+  assert.match(content("B1-6.19"), /Könnten Sie/);
+  assert.match(content("B1-8.25"), /Größe 42|Kopfhörer|Expresslieferung/);
+  assert.match(content("B1-8.25"), /Deshalb|dass/);
+  assert.match(content("B1-9.26"), /Wenn|Falls/);
+  assert.match(content("B1-9.26"), /Anschluss|Gepäcknummer|Buchungsnummer/);
+});
