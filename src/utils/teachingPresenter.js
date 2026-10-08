@@ -2,6 +2,8 @@ import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
 import { getB1TeacherChallenge } from "../data/b1TeacherChallenges.js";
 import { getA2TeacherChallenge } from "../data/a2TeacherChallenges.js";
+import { getA2WarmupFollowUp } from "../data/a2WarmupFollowUps.js";
+import { getA2VocabularyQuestion } from "../data/a2VocabularyQuestions.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -284,7 +286,7 @@ function buildWarmupQuestionSupport(slide = {}) {
     keywords: warmupKeywords(question),
     hintEn: ["B2", "C1", "C2"].includes(level) ? advancedWarmupHintEn(question, level) : warmupHintEn(question),
     answerStarterDe: ["B2", "C1", "C2"].includes(level) ? advancedWarmupStarterDe(level, question) : warmupAnswerStarterDe(question),
-    followUpDe: ["B2", "C1", "C2"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question),
+    followUpDe: level === "A2" ? getA2WarmupFollowUp(slide.assignmentId, question) : (["B2", "C1", "C2"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question)),
     difficulty: warmupDifficulty(index, questions.length),
   }));
 }
@@ -458,7 +460,7 @@ function b1VocabularyFunction(term = "") {
   return "Du möchtest die kommunikative Funktion dieser Aussage passend ausdrücken.";
 }
 
-function buildVocabularyGapItems(items = [], level = "") {
+function buildVocabularyGapItems(items = [], level = "", assignmentId = "") {
   const sourceItems = (Array.isArray(items) ? items : [])
     .map((item) => ({
       term: String(item?.term || "").trim(),
@@ -481,7 +483,11 @@ function buildVocabularyGapItems(items = [], level = "") {
     const isA2 = normalizedLevel === "A2";
     const isB1 = normalizedLevel === "B1";
 
-    if (isB1) {
+    if (isA2) {
+      sentence = getA2VocabularyQuestion(assignmentId, item.term);
+      if (!sentence) continue; // Do not show generic or mismatched question text.
+      mode = "situation";
+    } else if (isB1) {
       sentence = b1VocabularyFunction(item.term);
       mode = "function";
     } else if (normalizedLevel === "C2" && item.example && item.example.toLocaleLowerCase("de-DE").includes(item.term.toLocaleLowerCase("de-DE"))) {
@@ -509,15 +515,15 @@ function buildVocabularyGapItems(items = [], level = "") {
     const options = [...baseOptions.slice(rotation), ...baseOptions.slice(0, rotation)];
 
     challenges.push({
-      sentence: isA2 && mode === "match" ? a2VocabularySituation(item.term) : sentence,
-      promptLabel: isA2 && mode === "match" ? "Situation" : (isB1 ? "Funktion" : ""),
+      sentence,
+      promptLabel: isA2 ? "Sprechsituation" : (isB1 ? "Funktion" : ""),
       answer: item.term,
       options,
       term: item.term,
-      mode: isA2 && mode === "match" ? "situation" : mode,
+      mode,
       modelExample: (isA2 || isB1) && item.example ? item.example : "",
       followUp: isA2
-        ? "Ergänze die Formulierung jetzt mündlich mit einer eigenen Idee."
+        ? "Antworte jetzt laut auf die Frage und benutze die passende Formulierung."
         : (isB1 ? "Begründe kurz deine Wahl und bilde danach einen eigenen Satz mit dieser Formulierung." : ""),
     });
 
@@ -1574,7 +1580,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: vocabularyStage ? "Wortschatz" : "Redemittel",
         title: vocabularyStage ? "Wortschatz für heute" : "Key phrases",
         items: vocabularyStage ? vocabularyItems : phraseItems,
-        challengeItems: vocabularyStage ? buildVocabularyGapItems(vocabularyItems, level) : [],
+        challengeItems: vocabularyStage ? buildVocabularyGapItems(vocabularyItems, level, slide.assignmentId) : [],
         instruction: vocabularyStage ? vocabularyInstruction(level) : "",
         suggestedMinutes: vocabularyStage ? 5 : 0,
       },
