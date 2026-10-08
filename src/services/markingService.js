@@ -15,6 +15,7 @@ import {
   applyQuestionAwareWritingGuard,
   enrichOptionsWithQuestionAwareWritingTask,
 } from "../utils/questionAwareWritingMarking.js";
+import { loadLiveMarkingContract } from "./liveMarkingContractService.js";
 import * as base from "./markingServiceBase.js";
 import { withResubmissionComparison } from "../utils/resubmissionFeedback.js";
 import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
@@ -201,13 +202,26 @@ function primaryConfidence(result = {}) {
   return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.5;
 }
 
-function prepareMarkingOptions(options = {}) {
+async function prepareMarkingOptions(options = {}) {
   const originalText = options.submissionText || options.submission?.text || "";
   const preparedText = ensureExplicitWritingLabel(originalText);
-  return enrichOptionsWithQuestionAwareWritingTask({
-    ...options,
-    submissionText: preparedText,
+  const assignmentKey = options.referenceEntry?.assignmentKey
+    || options.referenceEntry?.assignment_id
+    || options.submission?.assignmentKey || options.submission?.assignmentId || "";
+  // On each marking, read the deployed learner's staff-only contract. Failing
+  // to fetch never authorizes using unverified keys from a public document.
+  const live = await loadLiveMarkingContract(assignmentKey, {
+    ...(options.referenceEntry || {}), assignmentKey,
   });
+  return {
+    ...enrichOptionsWithQuestionAwareWritingTask({
+      ...options,
+      submissionText: preparedText,
+      referenceEntry: live?.referenceEntry || options.referenceEntry,
+    }),
+    learnerContractWarning: live?.warning || "",
+    learnerContractSourceVersion: live?.sourceVersion || "",
+  };
 }
 
 function routeMissedWritingToReview(result = {}, submissionText = "") {
@@ -376,26 +390,39 @@ export async function loadSubmissions(options = {}) {
 
 export async function markSubmissionWithAI(options = {}) {
   const originalSubmissionText = options.submissionText || options.submission?.text || "";
-  const preparedOptions = prepareMarkingOptions(options);
+  const preparedOptions = await prepareMarkingOptions(options);
   const reference = preparedOptions.referenceEntry;
+  const withPublishedContractAudit = (result) => {
+    const versioned = preparedOptions.learnerContractSourceVersion
+      ? { ...result, learnerContractSourceVersion: preparedOptions.learnerContractSourceVersion }
+      : result;
+    if (!preparedOptions.learnerContractWarning) return versioned;
+    return withReviewReason({
+      ...versioned, status: "needs_review", shouldSendAutomatically: false,
+    }, {
+      code: "learner_answer_key_disagreement",
+      message: preparedOptions.learnerContractWarning,
+      source: "learner_marking_contract",
+    });
+  };
   if (reference && Array.isArray(reference.writingParts) && reference.writingParts.length === 0
     && !hasLikelyUnlabelledWritingBeforeObjective(originalSubmissionText)
     && !/\b(?:schreiben|writing)\b/i.test(originalSubmissionText)) {
     const objective = computeObjectiveScore(reference, originalSubmissionText);
     if (objective.totalCount > 0) {
       const exact = mergeObjectiveScore({ level: reference.level || options.submission?.level, assignmentKey: reference.assignmentKey || reference.assignment_id, writingScore: null, writingScorePercent: null, confidence: 1, status: "marked" }, objective);
-      return sanitizeMarkingResult(reconcileMarkingQuality(exact, objective, options.submission, { wordTarget: options.feedbackWordTarget }));
+      return withPublishedContractAudit(sanitizeMarkingResult(reconcileMarkingQuality(exact, objective, options.submission, { wordTarget: options.feedbackWordTarget })));
     }
   }
 
   const finalizeVerified = (result) => {
-    if (!reference || isBlockedScore(scoreValueFromResult(result))) return finalizeMarkingResult(result, options.submission);
+    if (!reference || isBlockedScore(scoreValueFromResult(result))) return withPublishedContractAudit(finalizeMarkingResult(result, options.submission));
     const objective = computeObjectiveScore(reference, originalSubmissionText);
     const writingExpected = Array.isArray(reference.writingParts) ? reference.writingParts.length > 0 : hasWritingEvidence(result);
     const cleaned = writingExpected ? result : { ...result, writingScore: null, writingScorePercent: null };
-    return finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, options.submission, {
+    return withPublishedContractAudit(finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, options.submission, {
       writingExpected, wordTarget: options.feedbackWordTarget,
-    }), options.submission);
+    }), options.submission));
   };
 
   let primary = applyQuestionAwareWritingGuard(
