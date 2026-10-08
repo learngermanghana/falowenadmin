@@ -80,18 +80,29 @@ fs.writeFileSync(feedbackTarget, feedbackSource);
 
 const markingTarget = new URL("../src/pages/MarkingPage.jsx", import.meta.url);
 let markingSource = fs.readFileSync(markingTarget, "utf8");
-markingSource = replaceOnce(
-  markingSource,
-  '>Wrong objective answers</div>',
-  '>Objective answers to review</div>',
-  "objective issue table title",
-);
-markingSource = replaceOnce(
-  markingSource,
-  '<td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>Wrong</td>',
-  '<td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{String(row.student || row.submitted || "").trim() ? "Wrong" : "Not answered"}</td>',
-  "objective issue status",
-);
+const simplifiedObjectiveTable = markingSource.includes("<h3>Objective mapping</h3>");
+
+if (simplifiedObjectiveTable) {
+  markingSource = replaceOnce(
+    markingSource,
+    '<td>{answer.correct ? "Correct" : "Needs correction"}</td>',
+    '<td>{answer.correct ? "Correct" : String(answer.student || answer.submitted || "").trim() ? "Needs correction" : "Not answered"}</td>',
+    "simplified objective issue status",
+  );
+} else {
+  markingSource = replaceOnce(
+    markingSource,
+    '>Wrong objective answers</div>',
+    '>Objective answers to review</div>',
+    "objective issue table title",
+  );
+  markingSource = replaceOnce(
+    markingSource,
+    '<td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>Wrong</td>',
+    '<td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{String(row.student || row.submitted || "").trim() ? "Wrong" : "Not answered"}</td>',
+    "objective issue status",
+  );
+}
 fs.writeFileSync(markingTarget, markingSource);
 
 const { buildNaturalStudentFeedback } = await import(`${feedbackTarget.href}?missing-objective=${Date.now()}`);

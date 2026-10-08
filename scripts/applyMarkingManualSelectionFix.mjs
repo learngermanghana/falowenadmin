@@ -13,11 +13,17 @@ function patchMarkingPage() {
   const path = "src/pages/MarkingPage.jsx";
   let text = readFileSync(path, "utf8");
 
+  const simplifiedWorkspace = (text.includes('<h3>Submissions</h3>') || text.includes('<h3>Submissions to mark</h3>'))
+    && text.includes('aria-label="Reference answer"')
+    && text.includes('<h3>Objective mapping</h3>');
+
   text = text.replace(
     'const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");',
     'const [activeSubmissionTab, setActiveSubmissionTab] = useState("notifications");',
   );
 
+  // Never let a manually selected reference silently fall back to another
+  // submission from the same student.
   text = text.replace(
     '    return exact || studentSubmissions[0];',
     '    return exact || null;',
@@ -34,6 +40,29 @@ function patchMarkingPage() {
     setSmartMarkingResult(null);
     setFeedback("");
     setSaveReceipt(null);
+    setSchreibenMark("");
+    setFinalScoreOverride(null);
+    setSelectedHighlight("");
+  }, [
+    reviewIdentity,
+    selectedStudent?.level,
+    referenceEntry?.level,
+    referenceEntry?.assignment,
+    selectedSubmission?.assignment,
+    selectedSubmission?.assignmentId,
+    selectedSubmission?.assignmentKey,
+  ]);`;
+
+  const simplifiedAssignmentEffect = `  useEffect(() => {
+    const submissionAssignment = selectedSubmission?.assignment || "";
+    const nextAssignment = submissionAssignment || referenceEntry?.assignment || "";
+    const submissionAssignmentId = selectedSubmission?.assignmentId || selectedSubmission?.assignmentKey || "";
+    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
+
+    setAssignmentValue(nextAssignment);
+    setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
+    setSmartMarkingResult(null);
+    setFeedback("");
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
@@ -70,7 +99,6 @@ function patchMarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || referenceAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
     setFeedback("");
-    setSaveReceipt(null);
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
@@ -89,11 +117,34 @@ function patchMarkingPage() {
     selectedSubmission?.raw?.assignmentId,
   ]);`;
 
-  text = replaceRequired(text, oldAssignmentEffect, newAssignmentEffect, "assignment id controlled by selected reference answer");
+  const enhancedAssignmentEffect = newAssignmentEffect.replace(
+    '    setSelectedHighlight("");',
+    '    setSelectedHighlight("");\n    setShowAllObjectiveAnswers(false);',
+  );
 
-  text = text.replace("<h3>3) Load student submission</h3>", "<h3>3) Incoming work notifications</h3>");
+  const legacyNewAssignmentEffect = newAssignmentEffect.replace(
+    '    setFeedback("");\n    setSchreibenMark("");',
+    '    setFeedback("");\n    setSaveReceipt(null);\n    setSchreibenMark("");',
+  );
 
-  const oldTabButtons = `        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+  if (text.includes(enhancedAssignmentEffect)) {
+    // The focused marking UI also resets its issue-only objective view whenever
+    // the selected submission/reference changes. The assignment-id fix is
+    // already present, so there is nothing else to patch.
+  } else if (text.includes(simplifiedAssignmentEffect)) {
+    text = text.replace(simplifiedAssignmentEffect, newAssignmentEffect);
+  } else if (text.includes(oldAssignmentEffect)) {
+    text = text.replace(oldAssignmentEffect, legacyNewAssignmentEffect);
+  } else if (!text.includes(newAssignmentEffect) && !text.includes(legacyNewAssignmentEffect)) {
+    throw new Error("Could not find block for assignment id controlled by selected reference answer");
+  }
+
+  // The simplified marking workspace already replaces the old latest/notification
+  // tabs with one submission queue. Legacy UI rewrites are unnecessary there.
+  if (!simplifiedWorkspace) {
+    text = text.replace("<h3>3) Load student submission</h3>", "<h3>3) Incoming work notifications</h3>");
+
+    const oldTabButtons = `        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <button
             onClick={() => setActiveSubmissionTab("latest")}
             style={{ fontWeight: activeSubmissionTab === "latest" ? 700 : 400 }}
@@ -108,7 +159,7 @@ function patchMarkingPage() {
           </button>
         </div>`;
 
-  const newTabInfo = `        <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
+    const newTabInfo = `        <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
           <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>
             Manual student/reference selection no longer pulls the student’s last submission. Use incoming notifications below to load real submitted work.
           </p>
@@ -119,19 +170,20 @@ function patchMarkingPage() {
           ) : null}
         </div>`;
 
-  text = replaceRequired(text, oldTabButtons, newTabInfo, "remove latest submission tab");
+    text = replaceRequired(text, oldTabButtons, newTabInfo, "remove latest submission tab");
 
-  const attemptSearchPattern = /\n        <div style=\{\{ marginBottom: 12, padding: 10, border: "1px solid #e2e8f0", borderRadius: 8, background: "#f8fafc" \}\}>\n          <label style=\{\{ display: "grid", gap: 5, fontSize: 13, fontWeight: 700 \}\}>\n            Find all submission attempts\n[\s\S]*?        <\/div>\n        \{loadingSubmissions \? \(\n          <p style=\{\{ margin: 0 \}\}>Loading submissions\.\.\.<\/p>\n        \) : activeSubmissionTab === "latest" \? \(/;
-  if (attemptSearchPattern.test(text)) {
-    text = text.replace(attemptSearchPattern, '\n        {activeSubmissionTab === "latest" ? (');
-  } else if (!text.includes('{activeSubmissionTab === "latest" ? (')) {
-    throw new Error("Could not remove all-attempt/latest loading block");
+    const attemptSearchPattern = /\n        <div style=\{\{ marginBottom: 12, padding: 10, border: "1px solid #e2e8f0", borderRadius: 8, background: "#f8fafc" \}\}>\n          <label style=\{\{ display: "grid", gap: 5, fontSize: 13, fontWeight: 700 \}\}>\n            Find all submission attempts\n[\s\S]*?        <\/div>\n        \{loadingSubmissions \? \(\n          <p style=\{\{ margin: 0 \}\}>Loading submissions\.\.\.<\/p>\n        \) : activeSubmissionTab === "latest" \? \(/;
+    if (attemptSearchPattern.test(text)) {
+      text = text.replace(attemptSearchPattern, '\n        {activeSubmissionTab === "latest" ? (');
+    } else if (!text.includes('{activeSubmissionTab === "latest" ? (')) {
+      throw new Error("Could not remove all-attempt/latest loading block");
+    }
+
+    text = text.replace(
+      '<p style={{ margin: 0 }}>No submission found yet for this student.</p>',
+      '<p style={{ margin: 0 }}>No incoming submission loaded. Use Incoming notifications below when a student submits work.</p>',
+    );
   }
-
-  text = text.replace(
-    '<p style={{ margin: 0 }}>No submission found yet for this student.</p>',
-    '<p style={{ margin: 0 }}>No incoming submission loaded. Use Incoming notifications below when a student submits work.</p>',
-  );
 
   writeFileSync(path, text);
 }

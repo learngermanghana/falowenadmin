@@ -8,16 +8,13 @@ import { getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { MARKING_FEEDBACK_TEMPLATES } from "../data/markingFeedbackTemplates.js";
-import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, importAnswerDictionary, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow, updateMarkingWorkflowStatus } from "../services/markingService.js";
+import { createMarkingJob, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";
 import { calculateFinalScore } from "../utils/finalScore.js";
 import { calculateWeightedMarkingOutcome } from "../utils/markingScorePolicy.js";
 import { useToast } from "../context/ToastContext.jsx";
-import WritingScoreExplanation from "../components/WritingScoreExplanation.jsx";
-import MarkingHistoryPanel from "../components/MarkingHistoryPanel.jsx";
 
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
@@ -34,12 +31,11 @@ function SubmissionAttemptLabels({ submission }) {
   if (!submission) return null;
   const isResubmission = Boolean(submission.isResubmission || Number(submission.attempt) > 1 || normalize(submission.status) === "resubmitted");
   if (!isResubmission && !submission.previousScore && !submission.attempt) return null;
-  const badgeStyle = { border: "1px solid #f59e0b", background: "#fffbeb", color: "#92400e", borderRadius: 999, padding: "2px 7px", fontSize: 11, fontWeight: 700 };
   return (
-    <span style={{ display: "inline-flex", gap: 5, flexWrap: "wrap", marginLeft: 6 }}>
-      {isResubmission ? <span style={badgeStyle}>Resubmission</span> : null}
-      {submission.attempt ? <span style={badgeStyle}>Attempt {submission.attempt}</span> : null}
-      {submission.previousScore !== null && submission.previousScore !== undefined ? <span style={badgeStyle}>Previous score: {submission.previousScore}</span> : null}
+    <span className="marking-attempt-badges">
+      {isResubmission ? <span className="marking-attempt-badge">Resubmission</span> : null}
+      {submission.attempt ? <span className="marking-attempt-badge">Attempt {submission.attempt}</span> : null}
+      {submission.previousScore !== null && submission.previousScore !== undefined ? <span className="marking-attempt-badge">Previous score: {submission.previousScore}</span> : null}
     </span>
   );
 }
@@ -180,42 +176,31 @@ export default function MarkingPage() {
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [submissionNotifications, setSubmissionNotifications] = useState([]);
-  const [allSubmissionAttempts, setAllSubmissionAttempts] = useState([]);
   const [attemptSearch, setAttemptSearch] = useState("");
-  const [workspaceTab, setWorkspaceTab] = useState("queue");
-  const [queueStatus, setQueueStatus] = useState("all");
   const [selectedAttemptPath, setSelectedAttemptPath] = useState("");
-  const [feedbackLimit, setFeedbackLimit] = useState("40");
+  const feedbackLimit = "40";
   const [qualityAcknowledgement, setQualityAcknowledgement] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
-  const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [referenceAssignment, setReferenceAssignment] = useState(() => {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(REFERENCE_ASSIGNMENT_STORAGE_KEY) || "";
   });
-  const [referenceQuery, setReferenceQuery] = useState("");
   const [schreibenMark, setSchreibenMark] = useState("");
   const [finalScoreOverride, setFinalScoreOverride] = useState(null);
   const [selectedHighlight, setSelectedHighlight] = useState("");
   const [assignmentValue, setAssignmentValue] = useState("");
   const [assignmentIdValue, setAssignmentIdValue] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [selectedFeedbackTemplateId, setSelectedFeedbackTemplateId] = useState(MARKING_FEEDBACK_TEMPLATES[0].id);
-  const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
-  const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
-  const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
-  const [workflowSaving, setWorkflowSaving] = useState(false);
+  const [showAllObjectiveAnswers, setShowAllObjectiveAnswers] = useState(false);
+  const [reportFallbackVisible, setReportFallbackVisible] = useState(false);
+  const workflowSaving = false;
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
-  const [loadingAnswerKeys, setLoadingAnswerKeys] = useState(false);
-  const [importingAnswerKeys, setImportingAnswerKeys] = useState(false);
-  const [answerImportSummary, setAnswerImportSummary] = useState(null);
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) {
@@ -244,13 +229,10 @@ export default function MarkingPage() {
   }, []);
 
   const refreshAnswerKeyRegistry = useCallback(async () => {
-    setLoadingAnswerKeys(true);
     try {
       setAnswerKeyRegistry(await loadAnswerKeyRegistry());
     } catch (err) {
       error(err?.message || "Failed to load answer key registry");
-    } finally {
-      setLoadingAnswerKeys(false);
     }
   }, [error]);
 
@@ -303,17 +285,13 @@ export default function MarkingPage() {
     let cancelled = false;
 
     const loadLatestSubmissions = async () => {
-      setLoadingNotifications(true);
       try {
-        const [rows, allAttempts] = await Promise.all([loadSubmissions(), loadSubmissions({ includeMarked: true })]);
+        const rows = await loadSubmissions();
         if (!cancelled) {
           setSubmissionNotifications(rows);
-          setAllSubmissionAttempts(allAttempts);
         }
       } catch (err) {
         if (!cancelled) error(err?.message || "Failed to load submission notifications");
-      } finally {
-        if (!cancelled) setLoadingNotifications(false);
       }
     };
 
@@ -331,12 +309,6 @@ export default function MarkingPage() {
     window.localStorage.setItem(REFERENCE_ASSIGNMENT_STORAGE_KEY, referenceAssignment);
   }, [referenceAssignment]);
 
-  const filteredStudents = useMemo(() => {
-    if (!query.trim()) return roster;
-    const q = normalize(query);
-    return roster.filter((row) => normalize(row.name).includes(q) || normalize(row.studentCode).includes(q) || normalize(row.level).includes(q));
-  }, [query, roster]);
-
   const selectedStudent = useMemo(() => {
     return roster.find((row) => row.id === selectedStudentId) || null;
   }, [roster, selectedStudentId]);
@@ -344,26 +316,6 @@ export default function MarkingPage() {
   const referenceEntry = useMemo(() => {
     return referenceEntries.find((entry) => entry.assignment === referenceAssignment) || null;
   }, [referenceAssignment, referenceEntries]);
-
-  const filteredAttempts = useMemo(() => {
-    if (!attemptSearch.trim()) return [];
-    const search = normalize(attemptSearch);
-    return allSubmissionAttempts.filter((row) => [row.studentCode, row.studentName, row.assignmentId, row.assignmentKey, row.assignment]
-      .some((value) => normalize(value).includes(search)));
-  }, [allSubmissionAttempts, attemptSearch]);
-
-  const filteredReferenceEntries = useMemo(() => {
-    if (!referenceQuery.trim()) return referenceEntries;
-    const q = normalize(referenceQuery);
-    return referenceEntries.filter((entry) => {
-      const assignment = normalize(entry.assignment);
-      const level = normalize(entry.level);
-      const referenceText = normalize(entry.reference || "");
-      const topicDe = normalize(entry.de || "");
-      const topicEn = normalize(entry.en || "");
-      return assignment.includes(q) || level.includes(q) || referenceText.includes(q) || topicDe.includes(q) || topicEn.includes(q);
-    });
-  }, [referenceEntries, referenceQuery]);
 
   const formattedReferenceAnswers = useMemo(() => {
     if (referenceEntry?.reference) return referenceEntry.reference;
@@ -388,69 +340,86 @@ export default function MarkingPage() {
       const submissionAliases = [row.assignment, row.assignmentId, row.assignmentKey, submissionAssignmentId].map(normalize);
       return submissionAliases.some((alias) => referenceAliases.includes(alias));
     });
-    return exact || studentSubmissions[0];
+    return exact || null;
   }, [studentSubmissions, referenceAssignment, referenceEntries]);
 
   const selectedSubmission = studentSubmissions.find((row) => (row.path || row.id) === selectedAttemptPath) || latestSubmission;
+
+  useEffect(() => {
+    if (!selectedSubmission) return;
+    const automaticReference = findReferenceEntryForSubmission(referenceEntries, selectedSubmission);
+    if (automaticReference?.assignment) {
+      setReferenceAssignment((current) => current === automaticReference.assignment ? current : automaticReference.assignment);
+    }
+  }, [
+    selectedSubmission?.path,
+    selectedSubmission?.id,
+    selectedSubmission?.assignment,
+    selectedSubmission?.assignmentId,
+    selectedSubmission?.assignmentKey,
+    referenceEntries,
+  ]);
+
+  const automaticReferenceEntry = selectedSubmission
+    ? findReferenceEntryForSubmission(referenceEntries, selectedSubmission)
+    : null;
   const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id));
   const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
   const writingTask = writingExpected ? writingTaskCandidate : null;
-  const queueRows = (allSubmissionAttempts.length ? allSubmissionAttempts : submissionNotifications).filter((row) => {
+  const queueRows = submissionNotifications.filter((row) => {
     const search = normalize(attemptSearch);
     const status = normalize(row.markingStatus || row.status || "pending");
-    return (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)))
-      && (queueStatus === "all" || (queueStatus === "pending" ? ["pending", "submitted", "resubmitted"].includes(status) : status === queueStatus));
+    const stillNeedsMarking = !["marked", "sent"].includes(status);
+    return stillNeedsMarking
+      && (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)));
   });
   const reviewIdentity = JSON.stringify([selectedStudentId, selectedSubmission?.path, selectedSubmission?.id, referenceAssignment]);
   const reviewIdentityRef = useRef(reviewIdentity);
   reviewIdentityRef.current = reviewIdentity;
 
   useEffect(() => {
+    const referenceAssignment = referenceEntry?.assignment || "";
     const submissionAssignment = selectedSubmission?.assignment || "";
-    const nextAssignment = submissionAssignment || referenceEntry?.assignment || "";
-    const submissionAssignmentId = selectedSubmission?.assignmentId || selectedSubmission?.assignmentKey || "";
-    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
+    const nextAssignment = submissionAssignment || referenceAssignment;
+    const submissionAssignmentId = inferAssignmentId(
+      selectedSubmission?.assignmentId,
+      selectedSubmission?.assignmentKey,
+      selectedSubmission?.raw?.assignment_id,
+      selectedSubmission?.raw?.assignmentId,
+      submissionAssignment,
+    );
+    const referenceAssignmentId = inferAssignmentId(
+      referenceEntry?.assignmentId,
+      referenceEntry?.assignment_id,
+      referenceEntry?.assignment,
+      ...(referenceEntry?.assignmentAliases || []),
+    );
+    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment) || inferLevel(referenceAssignment);
 
     setAssignmentValue(nextAssignment);
-    setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
+    setAssignmentIdValue(submissionAssignmentId || referenceAssignmentId || buildAssignmentId(level, nextAssignment));
     setSmartMarkingResult(null);
     setFeedback("");
-    setSaveReceipt(null);
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
+    setShowAllObjectiveAnswers(false);
   }, [
     reviewIdentity,
     selectedStudent?.level,
     referenceEntry?.level,
     referenceEntry?.assignment,
+    referenceEntry?.assignmentId,
+    referenceEntry?.assignment_id,
+    referenceEntry?.assignmentAliases,
     selectedSubmission?.assignment,
     selectedSubmission?.assignmentId,
     selectedSubmission?.assignmentKey,
+    selectedSubmission?.raw?.assignment_id,
+    selectedSubmission?.raw?.assignmentId,
   ]);
-
-  const latestNotifications = useMemo(() => submissionNotifications.slice(0, 60), [submissionNotifications]);
-
-  const combinedReferenceAndSubmission = useMemo(() => {
-    const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
-    const submissionText = (selectedSubmission?.text || "No student submission available.").trim();
-    const improvementSummary = (selectedSubmission?.improvementSummary || "").trim();
-    const previousSubmissionText = (selectedSubmission?.previousSubmissionText || "").trim();
-
-    const resubmissionContext = [];
-    if (improvementSummary) {
-      resubmissionContext.push(`Resubmission improvement summary\n${improvementSummary}`);
-    }
-    if (previousSubmissionText) {
-      resubmissionContext.push(`Previous submission\n${previousSubmissionText}`);
-    }
-
-    const contextBlock = resubmissionContext.length ? `\n\n${resubmissionContext.join("\n\n")}` : "";
-
-    return `Reference Answer\n${referenceText}\n\nStudent Submission\n${submissionText}${contextBlock}`;
-  }, [formattedReferenceAnswers, selectedSubmission]);
 
   const objectiveAssignmentId = useMemo(() => getObjectiveAssignmentId(
     assignmentIdValue,
@@ -476,8 +445,12 @@ export default function MarkingPage() {
     return computeObjectiveScore(objectiveAssignmentId, selectedSubmission?.text || "");
   }, [objectiveAssignmentId, selectedSubmission?.text]);
 
+  const objectiveEntries = Object.entries(objectiveMarkingResult.details || {});
+  const objectiveIssueEntries = objectiveEntries.filter(([, answer]) => !answer?.correct);
+  const visibleObjectiveEntries = showAllObjectiveAnswers ? objectiveEntries : objectiveIssueEntries;
+  const markingStage = smartMarkingResult ? 3 : selectedSubmission ? 2 : 1;
+
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
-  const objectiveWrongRows = useMemo(() => objectiveWrongAnswerRows(objectiveMarkingResult.details), [objectiveMarkingResult.details]);
   const scoringLevel = smartMarkingResult?.level
     || selectedStudent?.level
     || referenceEntry?.level
@@ -527,29 +500,6 @@ export default function MarkingPage() {
     manualOverride: true,
   };
 
-  const handleDeleteSubmission = async (submission) => {
-    if (!submission?.path) {
-      error("Could not delete submission: missing document path.");
-      return;
-    }
-
-    const confirmed = window.confirm("Delete this submission permanently? This cannot be undone.");
-    if (!confirmed) return;
-
-    try {
-      setDeletingSubmissionPath(submission.path);
-      await deleteSubmission(submission.path);
-      setSubmissions((prev) => prev.filter((row) => row.path !== submission.path));
-      setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
-      setAllSubmissionAttempts((prev) => prev.filter((row) => row.path !== submission.path));
-      success("Submission deleted.");
-    } catch (err) {
-      error(err?.message || "Failed to delete submission.");
-    } finally {
-      setDeletingSubmissionPath("");
-    }
-  };
-
   const handleSelectFromNotification = async (submission) => {
     if (!submission?.studentCode && !submission?.studentName) {
       error("This notification is missing student information and cannot be opened.");
@@ -583,11 +533,8 @@ export default function MarkingPage() {
     }
 
     setSelectedAttemptPath(submission.path || submission.id);
-    setWorkspaceTab("submission");
     setSubmissions(freshRows);
     setSelectedStudentId(matchingStudent.id);
-    setQuery("");
-    setActiveSubmissionTab("latest");
 
     const matchingReference = findReferenceEntryForSubmission(referenceEntries, submission);
     if (matchingReference?.assignment) {
@@ -610,30 +557,6 @@ export default function MarkingPage() {
     setAssignmentValue(nextAssignment);
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
   };
-
-  const handleImportAnswerDictionary = async () => {
-    try {
-      setImportingAnswerKeys(true);
-      const summary = await importAnswerDictionary(answersDictionary);
-      setAnswerImportSummary(summary);
-      await refreshAnswerKeyRegistry();
-      success(`Imported ${summary.importedCount} of ${summary.totalAssignments} answer key assignments into Firestore (${summary.failedCount} failed).`);
-    } catch (err) {
-      error(err?.message || "Failed to import answer dictionary.");
-    } finally {
-      setImportingAnswerKeys(false);
-    }
-  };
-
-  const handleCopyCombined = async () => {
-    try {
-      await navigator.clipboard.writeText(combinedReferenceAndSubmission);
-      success("Combined reference and submission copied.");
-    } catch {
-      error("Could not copy combined text. Please copy manually.");
-    }
-  };
-
 
   const handleAutoMark = async () => {
     const startedIdentity = reviewIdentity;
@@ -708,63 +631,6 @@ export default function MarkingPage() {
     }
   };
 
-  const handleApproveAndSend = async () => {
-    if (qualityNeedsReview) { error("Review the score and feedback warnings before sharing feedback."); return; }
-    if (!selectedSubmission || !smartMarkingResult) {
-      error("Run AI marking before approving feedback.");
-      return;
-    }
-
-    if (!feedback.trim()) {
-      error("Feedback is required before approving.");
-      return;
-    }
-
-    try {
-      setWorkflowSaving(true);
-      await saveMarkingResult({
-        submissionId: selectedSubmission.id,
-        submissionPath: selectedSubmission.path,
-        result: currentReviewedResult,
-        status: "sent",
-        sentToStudent: true,
-      });
-      setSmartMarkingResult({ ...currentReviewedResult, status: "sent" });
-      success("Feedback approved and marked as sent to student.");
-    } catch (err) {
-      error(err?.message || "Failed to approve and send feedback.");
-    } finally {
-      setWorkflowSaving(false);
-    }
-  };
-
-  const handleSendFeedbackToStudent = async () => {
-    await handleApproveAndSend();
-  };
-
-  const handleNeedsTutorReview = async () => {
-    if (!selectedSubmission) {
-      error("Load a submission before sending it to tutor review.");
-      return;
-    }
-
-    try {
-      setWorkflowSaving(true);
-      await updateMarkingWorkflowStatus({
-        submissionId: selectedSubmission.id,
-        submissionPath: selectedSubmission.path,
-        status: "needs_review",
-        sentToStudent: false,
-      });
-      setSmartMarkingResult((current) => current ? { ...current, status: "needs_review" } : current);
-      success("Submission moved to tutor review queue.");
-    } catch (err) {
-      error(err?.message || "Failed to update tutor review status.");
-    } finally {
-      setWorkflowSaving(false);
-    }
-  };
-
   const handleSelectSubmissionText = (event) => {
     const { selectionStart, selectionEnd, value } = event.currentTarget;
     setSelectedHighlight(selectionEnd > selectionStart ? value.slice(selectionStart, selectionEnd).trim() : "");
@@ -776,17 +642,6 @@ export default function MarkingPage() {
     const comment = `Issue found: "${selectedHighlight}"\nCorrection:`;
     setFeedback((current) => current.trim() ? `${current.trimEnd()}\n\n${comment}` : comment);
     setSelectedHighlight("");
-  };
-
-  const handleInsertTemplate = () => {
-    const template = MARKING_FEEDBACK_TEMPLATES.find((item) => item.id === selectedFeedbackTemplateId);
-    if (!template) return;
-
-    setFeedback((current) => {
-      const trimmedCurrent = current.trim();
-      if (!trimmedCurrent) return template.text;
-      return `${trimmedCurrent}\n\n${template.text}`;
-    });
   };
 
   const consistencyWarnings = markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore);
@@ -849,7 +704,6 @@ export default function MarkingPage() {
           writingMinimumMet: currentReviewedResult.writingMinimumMet,
         },
       });
-      setSaveReceipt(receipt);
 
       if (selectedSubmission?.id || selectedSubmission?.path) {
         await saveMarkingResult({
@@ -883,9 +737,6 @@ export default function MarkingPage() {
         return;
       }
 
-      setAllSubmissionAttempts((rows) => rows.map((row) => (row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id) ? {
-        ...row, markingStatus: shareFeedback ? "sent" : "marked", finalScore: currentScore,
-      } : row));
       const successfulTargets = [
         receipt.sheet.success ? "Google Sheets" : null,
         receipt.firestore.success ? "Firestore" : null,
@@ -903,9 +754,6 @@ export default function MarkingPage() {
 
       success(`Saved score for ${receipt.row.name} (${receipt.row.assignment} · ${receipt.row.assignment_id || "No assignment ID"}). ${targetMessage}`);
     } catch (err) {
-      if (err?.receipt) {
-        setSaveReceipt(err.receipt);
-      }
       error(err?.message || "Failed to save score");
     } finally {
       setSavingScore(false);
@@ -913,502 +761,401 @@ export default function MarkingPage() {
   };
 
   const markingReport = stripMarkingEmojis([
-    "Marking report",
+    "Falowen marking bug report",
     `Student: ${selectedStudent?.name || selectedSubmission?.studentName || "Unknown"}`,
     `Assignment: ${assignmentIdValue || selectedSubmission?.assignmentId || "Unknown"}`,
     `Attempt: ${selectedSubmission?.attempt || 1}`,
     `Final score: ${displayedFinalScore}/100`,
-    `Writing score entered: ${schreibenMark === "" ? "Not entered" : schreibenMark}`,
     `Answer key check: ${keyComparison}`,
-    "", combinedReferenceAndSubmission,
-    "", "Current feedback", feedback || "No feedback yet.",
-    "", "Review warnings", consistencyWarnings.join("\n") || "None",
-    "", "Objective comparison", JSON.stringify(objectiveMarkingResult, null, 2),
-    "", "AI marking result", smartMarkingResult ? JSON.stringify(smartMarkingResult, null, 2) : "AI marking has not been run.",
-    "", "Reviewed result", JSON.stringify(currentReviewedResult, null, 2),
+    "",
+    "REFERENCE",
+    (formattedReferenceAnswers || "No reference answer available.").trim(),
+    "",
+    "STUDENT WORK",
+    (selectedSubmission?.text || "No student submission available.").trim(),
+    "",
+    "OBJECTIVE MAPPING",
+    objectiveMarkingResult.totalCount
+      ? Object.entries(objectiveMarkingResult.details).map(([question, answer]) =>
+          `${question}: Student=${answer.student || "No answer"} | Reference=${answer.expectedDisplay || answer.expected || answer.rawExpected || "—"} | ${answer.correct ? "Correct" : "Needs correction"}`
+        ).join("\n")
+      : "No objective answers detected.",
+    "",
+    "AI FEEDBACK",
+    smartMarkingResult?.feedback || "AI marking has not been run.",
+    "",
+    "CURRENT COMMENT / FEEDBACK",
+    feedback || "No feedback yet.",
+    "",
+    "MARKING SUMMARY",
+    smartMarkingResult
+      ? JSON.stringify({
+          level: currentReviewedResult.level,
+          assignmentKey: currentReviewedResult.assignmentKey,
+          objectiveScore: currentReviewedResult.objectiveScore,
+          writingScore: schreibenMark === "" ? null : Number(schreibenMark),
+          finalScore: displayedFinalScore,
+          confidence: currentReviewedResult.confidence,
+          status: currentReviewedResult.status,
+        }, null, 2)
+      : "AI marking has not been run.",
+    "",
+    "REVIEW WARNINGS",
+    consistencyWarnings.join("\n") || "None",
   ].join("\n"));
+
   const handleCopyMarkingReport = async () => {
     try {
       await navigator.clipboard.writeText(markingReport);
+      setReportFallbackVisible(false);
       success("Complete marking report copied.");
     } catch {
-      error("Could not copy the report. Open the marking report below and copy its text.");
+      setReportFallbackVisible(true);
+      error("Could not copy automatically. The full report is shown below for manual copying.");
     }
   };
 
   return (
-    <div className="marking-workspace" data-active-panel={workspaceTab}>
-      <header className="marking-workspace-header"><div><h2>Marking workspace</h2><p>Compare the submitted work and current key, review each score, then save the feedback.</p></div><div><strong>{selectedStudent?.name || "Select a submission"}</strong><div>{selectedSubmission?.assignment || referenceEntry?.assignment || ""}</div></div></header>
-      <nav className="marking-mobile-nav" aria-label="Marking workspace sections">{[["queue", "Queue"], ["submission", "Submission"], ["review", "Review"]].map(([id, label]) => <button type="button" key={id} aria-pressed={workspaceTab === id} onClick={() => setWorkspaceTab(id)}>{label}</button>)}</nav>
+    <div className="marking-workspace">
+      <header className="marking-workspace-header"><div><strong>{selectedStudent?.name || "Select a submission"}</strong><span>{selectedSubmission?.assignment || referenceEntry?.assignment || ""}</span></div></header>
+      <div className="marking-stage-bar" aria-label="Marking workflow">
+        {[
+          [1, "Student work"],
+          [2, "Mark with AI"],
+          [3, "Review & save"],
+        ].map(([stage, label]) => (
+          <div
+            key={stage}
+            className={`marking-stage ${markingStage === stage ? "is-current" : markingStage > stage ? "is-complete" : ""}`}
+          >
+            <span>{stage}</span>
+            <strong>{label}</strong>
+          </div>
+        ))}
+      </div>
       {loading && <p role="status">Loading roster and submissions...</p>}
       <div className="marking-columns">
-        <aside className="marking-column marking-queue" aria-label="Submission queue">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Student</h3>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-          <input
-            placeholder="Search by student name/code/level"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-
-          />
-          <select disabled={autoMarking || savingScore || workflowSaving} value={selectedStudentId} onChange={(e) => { setSelectedAttemptPath(""); setSelectedStudentId(e.target.value); }} >
-            <option value="">Select student...</option>
-            {filteredStudents.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.name || "(No name)"} · {row.studentCode || "No code"} · {row.level || "No level"}
-              </option>
-            ))}
-          </select>
-        </div>
-      </section><section className="marking-card"><h3>Submission queue</h3><label>Status<select value={queueStatus} onChange={(event) => setQueueStatus(event.target.value)}>{[["all", "All attempts"], ["pending", "Pending"], ["marked", "Marked"], ["needs_review", "Needs review"], ["failed", "Failed"], ["sent", "Shared"]].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-          <button
-            onClick={() => setActiveSubmissionTab("latest")}
-            style={{ fontWeight: activeSubmissionTab === "latest" ? 700 : 400 }}
-          >
-            Latest submission
-          </button>
-          <button
-            onClick={() => setActiveSubmissionTab("notifications")}
-            style={{ fontWeight: activeSubmissionTab === "notifications" ? 700 : 400 }}
-          >
-            Incoming notifications
-          </button>
-        </div>
-        <div style={{ marginBottom: 12, padding: 10, border: "1px solid #e2e8f0", borderRadius: 8, background: "#f8fafc" }}>
-          <label style={{ display: "grid", gap: 5, fontSize: 13, fontWeight: 700 }}>
-            Find all submission attempts
+        <aside className="marking-column marking-queue" aria-label="Submission queue">
+          <section className="marking-card marking-queue-card">
+            <div className="marking-section-heading">
+              <div>
+                <h3>Submissions to mark</h3>
+                <p>Only incoming work that still needs marking.</p>
+              </div>
+              <span className="marking-count-badge">{queueRows.length}</span>
+            </div>
             <input
+              aria-label="Search submissions"
               value={attemptSearch}
               onChange={(event) => setAttemptSearch(event.target.value)}
-              placeholder="Search student code/name or assignment ID"
+              placeholder="Search student, code or assignment"
             />
-          </label>
-          {attemptSearch.trim() ? (
-            <div style={{ display: "grid", gap: 6, marginTop: 8, maxHeight: 260, overflow: "auto" }}>
-              {filteredAttempts.map((row) => (
-                <div key={`attempt-${row.path || row.id}`} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: 6 }}>
-                  <div style={{ fontSize: 12 }}>
-                    <b>{row.studentName || "Unknown student"}</b> ({row.studentCode || "No code"}) · {row.assignment || "Unknown assignment"}
-                    {row.assignmentId ? <> · ID: <code>{row.assignmentId}</code></> : null} · {row.createdAt?.toLocaleString() || "Unknown time"}
-                    <SubmissionAttemptLabels submission={row} />
-                  </div>
-                  <button type="button" disabled={autoMarking || savingScore || workflowSaving} onClick={() => void handleSelectFromNotification(row)}>Load</button>
-                </div>
+            <div className="marking-queue-list">
+              {queueRows.map((row) => (
+                <button
+                  className="marking-queue-item"
+                  type="button"
+                  aria-pressed={(row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id)}
+                  key={row.path || row.id}
+                  disabled={autoMarking || savingScore || workflowSaving}
+                  onClick={() => void handleSelectFromNotification(row)}
+                >
+                  <strong>{row.studentName || row.studentCode || "Student"}</strong>
+                  <span>{row.assignment || row.assignmentId || "Unknown assignment"}</span>
+                  <small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small>
+                </button>
               ))}
-              {!filteredAttempts.length ? <span style={{ fontSize: 12 }}>No attempts match this search.</span> : null}
+              {!queueRows.length ? <p className="marking-empty">No submissions match this filter.</p> : null}
             </div>
-          ) : <span style={{ display: "block", marginTop: 5, fontSize: 12, opacity: 0.75 }}>Includes marked, failed, pending, and resubmitted attempts.</span>}
-        </div>
-<div className="marking-queue-list">{queueRows.map((row) => <button className="marking-queue-item" type="button" aria-pressed={(row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id)} key={row.path || row.id} disabled={autoMarking || savingScore || workflowSaving} onClick={() => void handleSelectFromNotification(row)}><strong>{row.studentName || row.studentCode || "Student"}</strong><span>{row.assignment || row.assignmentId}</span><small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small></button>)}{!queueRows.length ? <p>No submissions match this filter.</p> : null}</div></section></aside>
-        <main className="marking-column marking-submission" aria-label="Submission and reference">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Student work</h3>
-        {loadingSubmissions ? (
-          <p style={{ margin: 0 }}>Loading submissions...</p>
-        ) : activeSubmissionTab === "latest" ? (
-          selectedSubmission ? (
-            <>
-              <div style={{ fontSize: 13, marginBottom: 8 }}>
-                Assignment: <b>{selectedSubmission.assignment || "Unknown"}</b>
-                {selectedSubmission.assignmentId ? <> · ID: <code>{selectedSubmission.assignmentId}</code></> : null}
-                {" · "}Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
-                <SubmissionAttemptLabels submission={selectedSubmission} />
+          </section>
+        </aside>
+        <main className="marking-column marking-submission" aria-label="Submission and reference">
+          <div className="marking-reference-work-grid">
+            <section className="marking-card" id="marking-stage-work">
+              <div className="marking-section-heading">
+                <div>
+                  <h3>Student work</h3>
+                  <p>{selectedSubmission ? `${selectedSubmission.assignment || "Unknown assignment"} · ${selectedSubmission.status || "submitted"}` : "Select a submission from the queue."}</p>
+                </div>
+                <div className="marking-student-actions">
+                  {selectedSubmission ? <SubmissionAttemptLabels submission={selectedSubmission} /> : null}
+                  <button
+                    className="marking-primary-action"
+                    type="button"
+                    onClick={handleAutoMark}
+                    disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission}
+                  >
+                    {autoMarking ? "Marking..." : smartMarkingResult ? "Re-run AI marking" : "Mark with AI"}
+                  </button>
+                </div>
               </div>
-              {submittedWorkFiles(selectedSubmission).map((file) => <p key={file.url}><a href={file.url} target="_blank" rel="noopener noreferrer">{file.name}</a></p>)}
-              <MarkingHistoryPanel submission={selectedSubmission} />
-                            {selectedSubmission.improvementSummary ? (
-                <div style={{ marginBottom: 8, padding: 8, borderRadius: 6, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Resubmission improvement summary</div>
-                  <div style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{selectedSubmission.improvementSummary}</div>
-                </div>
-              ) : null}
-              {selectedSubmission.previousSubmissionText ? (
-                <details style={{ marginBottom: 8 }}>
-                  <summary style={{ cursor: "pointer", fontSize: 13 }}>View previous submission text</summary>
-                  <textarea readOnly rows={6} value={selectedSubmission.previousSubmissionText} style={{ marginTop: 8 }} />
-                </details>
-              ) : null}
-              <textarea
-                readOnly
-                rows={8}
-                value={selectedSubmission.text || "No submission text available."}
-                onSelect={handleSelectSubmissionText}
-                aria-label="Student submitted work"
-              />
-              {selectedHighlight ? (
-                <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={handleAddHighlightToComment}>Add Highlight to Comment</button>
-                  <span style={{ fontSize: 12, opacity: 0.8 }}>Selected: “{selectedHighlight}”</span>
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <p style={{ margin: 0 }}>No submission found yet for this student.</p>
-          )
-        ) : activeSubmissionTab === "notifications" ? (
-          loadingNotifications ? (
-            <p style={{ margin: 0 }}>Loading notifications...</p>
-          ) : latestNotifications.length ? (
-            <div style={{ display: "grid", gap: 8 }}>
-              {latestNotifications.map((row) => (
-                <div key={row.path || row.id} style={{ border: "1px solid #e1e1e1", borderRadius: 8, padding: 10, display: "grid", gap: 8 }}>
-                  <div style={{ fontSize: 13 }}>
-                    <b>{row.studentName || "Unknown student"}</b> ({row.studentCode || "No code"}) · {row.level || "No level"}
-                  </div>
-                  <div style={{ fontSize: 13 }}>
-                    <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
-                    {row.assignmentId ? <> · ID: <code>{row.assignmentId}</code></> : null}
-                    <SubmissionAttemptLabels submission={row} />
-                  </div>
-                  <div style={{ fontSize: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <span>Marking: <b>{row.markingStatus || "pending"}</b></span>
-                    {row.finalScore !== null && row.finalScore !== undefined ? <span>Final score: <b>{row.finalScore}</b></span> : null}
-                    {row.aiConfidence !== null && row.aiConfidence !== undefined ? <span>AI confidence: <b>{row.aiConfidence}</b></span> : null}
-                  </div>
-                  {row.improvementSummary ? (
-                    <div style={{ fontSize: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 6 }}>
-                      <b>Improvement summary:</b> {row.improvementSummary}
+              {loadingSubmissions ? <p>Loading submission...</p> : selectedSubmission ? (
+                <>
+                  {submittedWorkFiles(selectedSubmission).length ? (
+                    <div className="marking-file-links">
+                      {submittedWorkFiles(selectedSubmission).map((file) => <a key={file.url} href={file.url} target="_blank" rel="noopener noreferrer">{file.name}</a>)}
                     </div>
                   ) : null}
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                    <button disabled={autoMarking || savingScore || workflowSaving} onClick={() => void handleSelectFromNotification(row)}>Load for marking</button>
-                    <button
-                      onClick={() => handleDeleteSubmission(row)}
-                      disabled={deletingSubmissionPath === row.path}
-                    >
-                      {deletingSubmissionPath === row.path ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
+                  {selectedSubmission.improvementSummary ? (
+                    <details className="marking-compact-details">
+                      <summary>Resubmission context</summary>
+                      <p>{selectedSubmission.improvementSummary}</p>
+                      {selectedSubmission.previousSubmissionText ? <pre>{selectedSubmission.previousSubmissionText}</pre> : null}
+                    </details>
+                  ) : null}
+                  <textarea
+                    readOnly
+                    rows={14}
+                    value={selectedSubmission.text || "No submission text available."}
+                    onSelect={handleSelectSubmissionText}
+                    aria-label="Student submitted work"
+                  />
+                  {selectedHighlight ? (
+                    <div className="marking-inline-action">
+                      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={handleAddHighlightToComment}>Add selection to comment</button>
+                      <span>“{selectedHighlight}”</span>
+                    </div>
+                  ) : null}
+                </>
+              ) : <p className="marking-empty">No submission selected.</p>}
+            </section>
+
+            <section className="marking-card">
+              <div className="marking-section-heading">
+                <div>
+                  <h3>Reference</h3>
+                  <p>The answer key used to compare this submission.</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ margin: 0 }}>No incoming submissions found yet.</p>
-          )
-        ) : null}
-      </section>
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Current answer key</h3>
-        <div style={{ display: "grid", gap: 8 }}>
-          <input
-            placeholder="Search reference answers by assignment/level"
-            value={referenceQuery}
-            onChange={(e) => setReferenceQuery(e.target.value)}
-          />
-          <select disabled={autoMarking || savingScore || workflowSaving} value={referenceAssignment} onChange={(e) => { setSelectedAttemptPath(""); setReferenceAssignment(e.target.value); }}>
-            {filteredReferenceEntries.map((entry) => (
-              <option key={entry.assignment} value={entry.assignment}>
-                {formatReferenceAssignmentLabel(entry)}
-              </option>
-            ))}
-          </select>
-          {!filteredReferenceEntries.length && (
-            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>No reference answers match your search.</p>
-          )}
-          <div className={`marking-key-status marking-key-${keyComparison}`} role="status">
-            <strong>{keyComparison === "matched" ? "Answer keys match" : keyComparison === "different" ? "Answer keys differ — review before marking" : "No matching saved answer key"}</strong>
-            <div>Key version: {matchingRegistry?.version || matchingRegistry?.rubricVersion || "Not recorded"}</div>
-            <div>{matchingRegistry?.updatedAt || matchingRegistry?.importedAt || matchingRegistry?.syncedAt ? `Saved key updated: ${String(matchingRegistry.updatedAt || matchingRegistry.importedAt || matchingRegistry.syncedAt)}` : "Saved key update date unavailable."}</div>
-            {keyComparison === "different" ? <p>The reference shown here and the saved key used for AI marking differ. Refresh or import the current keys before marking.</p> : null}
-          </div>
-          <textarea aria-label="Current reference answers" value={formattedReferenceAnswers} readOnly rows={10} />
-          {referenceEntry?.answer_url && (
-            <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">
-              Open answer source
-            </a>
-          )}
-        </div>
-      </section><section className="marking-card"><h3>Answer comparison</h3>{objectiveMarkingResult.totalCount ? <div className="marking-answer-list">{Object.entries(objectiveMarkingResult.details).map(([question, answer]) => <div className={answer.correct ? "marking-answer-correct" : "marking-answer-wrong"} key={question}><strong>{question} · {answer.correct ? "Correct" : "Needs correction"}</strong><div>Student: {answer.student || "No answer"}</div><div>Key: {answer.expectedDisplay || answer.expected || answer.rawExpected}</div></div>)}</div> : <p>This submission has no objective answers to compare. Review the writing task points.</p>}</section><details className="marking-copy-tools"><summary>Copy marking report or reference</summary>      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Complete marking report</h3>
-        <p>Submission, reference, feedback, scores and debugging details in one block.</p>
-        <textarea aria-label="Complete marking report" readOnly rows={12} value={markingReport} />
-        <button type="button" disabled={!selectedSubmission} onClick={handleCopyMarkingReport}>Copy marking report</button>
-        <h3 style={{ marginTop: 20 }}>Reference and submission only</h3>
-        <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
-          Use this combined block for quick copy/paste into external marking tools.
-        </p>
-        <div style={{ display: "grid", gap: 8 }}>
-          <textarea readOnly rows={12} value={combinedReferenceAndSubmission} />
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCopyCombined}>Copy combined text</button>
-          </div>
-        </div>
-      </section></details></main>
-        <aside className="marking-column marking-review" aria-label="Score review">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Review score and feedback</h3>
-        <div style={{ display: "grid", gap: 8 }}>
-          {consistencyWarnings.length ? <section className="marking-key-status" aria-label="Marking consistency checks"><strong>Review before saving</strong><ul>{consistencyWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul><label><input type="checkbox" checked={qualityAcknowledgement === qualitySignature} onChange={(event) => setQualityAcknowledgement(event.target.checked ? qualitySignature : "")} />I checked these warnings against the submitted work and approve this mark.</label></section> : null}
-          {writingTask ? <details open className="marking-task"><summary>Writing task points</summary><p>{writingTask.taskText}</p><ul>{writingTask.taskPoints.map((point) => <li key={point}>{point}</li>)}</ul></details> : null}
-          <div className="marking-feedback-tools">
-            <button type="button" disabled={!selectedSubmission} onClick={handleCopyMarkingReport}>Copy complete report</button>
-            <span>{feedbackWordCount(feedback)} feedback words</span>
-            <label>Target words <select value={feedbackLimit} onChange={(event) => setFeedbackLimit(event.target.value)}><option value="40">40</option><option value="60">60</option><option value="100">100</option><option value="">No target</option></select></label>
-            {feedbackLimit && feedbackWordCount(feedback) > Number(feedbackLimit) ? <span>Over target by {feedbackWordCount(feedback) - Number(feedbackLimit)} words</span> : null}
-            <button type="button" disabled={!feedback.trim()} onClick={async () => { try { await navigator.clipboard.writeText(stripMarkingEmojis(feedback)); success("Feedback copied."); } catch { error("Could not copy feedback. Select the text to copy it."); } }}>Copy feedback</button>
-          </div>
-          {smartMarkingResult ? (
-            <div style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 10, background: "#eff6ff", display: "grid", gap: 8 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, fontSize: 13 }}>
-                <span>Detected level: <b>{smartMarkingResult.level}</b></span>
-                <span>Detected assignment: <b>{smartMarkingResult.assignmentKey || "Unknown"}</b></span>
-                <span>Objective score: <b>{smartMarkingResult.objectiveTotal ? `${smartMarkingResult.objectiveCorrect}/${smartMarkingResult.objectiveTotal} → ${Math.round(smartMarkingResult.objectiveScore ?? 0)}%` : "—"}</b></span>
-                <span>Writing score: <b>{formatWritingScore(smartMarkingResult)}</b></span>
-                <span>Current final score: <b>{displayedFinalScore}</b></span>
-                <span>AI confidence: <b>{smartMarkingResult.confidence}</b></span>
-                <span>Status: <b>{smartMarkingResult.status}</b></span>
+                <span className={`marking-key-pill marking-key-${keyComparison}`}>
+                  {keyComparison === "matched" ? "Key matched" : keyComparison === "different" ? "Key mismatch" : "Key unavailable"}
+                </span>
               </div>
-              <div style={{ fontSize: 13 }}>
-                <b>Detected parts:</b> {smartMarkingResult.detectedParts?.map((part) => part.summary || `${part.partId}: ${part.answerCount ?? part.total ?? "—"} ${part.partType || "answers"} found${part.correct !== undefined ? `, ${part.correct} correct, ${part.wrong ?? 0} wrong` : ""}`).join(", ") || "None"}
+              <div className="marking-reference-selected">
+                <span>{automaticReferenceEntry ? "Matched automatically" : "Current reference"}</span>
+                <strong>{referenceEntry ? formatReferenceAssignmentLabel(referenceEntry) : "No matching reference found"}</strong>
               </div>
-              {smartMarkingResult.scoreBreakdown?.policy === "a2-b1-40-30-30" ? (
-                <div style={{ fontSize: 13, border: "1px solid #bfdbfe", borderRadius: 6, padding: 8, background: "#fff" }}>
-                  <b>Score formula:</b>{" "}
-                  Teil 2 Schreiben {smartMarkingResult.scoreBreakdown.teil2?.points ?? 0}/40
-                  {" + "}Teil 3 {smartMarkingResult.scoreBreakdown.teil3?.points ?? 0}/30
-                  {" + "}Teil 4 {smartMarkingResult.scoreBreakdown.teil4?.points ?? 0}/30
-                  {" = "}<b>{smartMarkingResult.scoreBreakdown.finalScore ?? smartMarkingResult.finalScore}/100</b>
-                </div>
+              <details className="marking-reference-override">
+                <summary>Change reference</summary>
+                <select
+                  aria-label="Reference answer"
+                  disabled={autoMarking || savingScore || workflowSaving}
+                  value={referenceAssignment}
+                  onChange={(event) => setReferenceAssignment(event.target.value)}
+                >
+                  {referenceEntries.map((entry) => (
+                    <option key={entry.assignment} value={entry.assignment}>{formatReferenceAssignmentLabel(entry)}</option>
+                  ))}
+                </select>
+              </details>
+              {keyComparison === "different" ? (
+                <div className="marking-inline-warning">The page reference and saved AI key differ. Refresh or import the current key before AI marking.</div>
               ) : null}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button type="button" onClick={handleAutoMark} disabled={autoMarking || workflowSaving || savingScore}>Re-run AI marking</button>
-                <button type="button" onClick={handleApproveAndSend} disabled={workflowSaving || autoMarking || savingScore}>Approve and send</button>
-                <button type="button" onClick={handleSendFeedbackToStudent} disabled={workflowSaving || autoMarking || savingScore}>Send feedback to student</button>
-                <button type="button" onClick={handleNeedsTutorReview} disabled={workflowSaving || autoMarking || savingScore}>Mark as needs tutor review</button>
-              </div>
-              <WritingScoreExplanation result={smartMarkingResult} />
-              {smartMarkingResult.writingRevisionComparison ? <details><summary>Writing changes in this attempt</summary><p>{smartMarkingResult.writingRevisionComparison.changed ? "The writing text changed. Compare these excerpts; changes alone do not prove improvement." : "The writing text is unchanged."}</p><strong>Previous text</strong>{smartMarkingResult.writingRevisionComparison.removed.map((text) => <p key={text}>{text}</p>)}<strong>Current text</strong>{smartMarkingResult.writingRevisionComparison.added.map((text) => <p key={text}>{text}</p>)}</details> : null}
-            </div>
-          ) : null}
-          {objectiveMarkingResult.totalCount > 0 ? (
-            <div style={{ fontSize: 13, color: "#1f2937", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 8 }}>
-              Deterministic objective score for {objectiveAssignmentId}: <b>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount} → {Math.round(objectiveScorePercent)}%</b>
-            </div>
-          ) : null}
-          {objectiveWrongRows.length > 0 ? (
-            <div style={{ border: "1px solid #fecaca", borderRadius: 8, overflow: "hidden", background: "#fff7ed" }}>
-              <div style={{ padding: 8, fontSize: 13, fontWeight: 700, color: "#7f1d1d" }}>Wrong objective answers</div>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Question</th>
-                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Student</th>
-                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Correct</th>
-                      <th style={{ textAlign: "left", padding: 6, borderTop: "1px solid #fed7aa", borderBottom: "1px solid #fed7aa" }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {objectiveWrongRows.map((row) => (
-                      <tr key={row.question}>
-                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.question}</td>
-                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.student || "—"}</td>
-                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>{row.expected || row.rawExpected || "—"}</td>
-                        <td style={{ padding: 6, borderBottom: "1px solid #ffedd5" }}>Wrong</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : objectiveMarkingResult.totalCount > 0 ? (
-            <div style={{ fontSize: 13, color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 6, padding: 8 }}>
-              No wrong objective answers detected.
-            </div>
-          ) : null}
-          <label>
-            Schreiben Mark (out of 100)
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={schreibenMark}
-              onChange={(e) => {
-                const nextValue = e.target.value;
-                if (nextValue === "") {
-                  setSchreibenMark("");
-                  setFinalScoreOverride(null);
-                  return;
-                }
+              <textarea aria-label="Current reference answers" value={formattedReferenceAnswers} readOnly rows={14} />
+              {referenceEntry?.answer_url ? <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">Open answer source</a> : null}
+            </section>
+          </div>
 
-                setSchreibenMark(String(Math.max(0, Math.min(100, Number(nextValue)))));
-                setFinalScoreOverride(null);
-              }}
-              placeholder="Enter writing score"
-            />
-          </label>
-          <div style={{ padding: 12, borderRadius: 8, border: "2px solid #2563eb", background: "#eff6ff", display: "grid", gap: 6 }}>
-            <label style={{ fontSize: 18, fontWeight: 700 }}>
-              Final Score (editable)
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={finalScoreOverride === null ? displayedCalculatedFinalScore : finalScoreOverride}
-                onChange={(e) => {
-                  const nextValue = e.target.value;
-                  if (nextValue === "") {
-                    setFinalScoreOverride("");
-                    return;
-                  }
-
-                  setFinalScoreOverride(String(Math.max(0, Math.min(100, Number(nextValue)))));
-                }}
-              />
-            </label>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>
-              {finalScoreOverride !== null && finalScoreOverride !== ""
-                ? `Manual final score override. Calculated score: ${displayedCalculatedFinalScore}.`
-                : schreibenMark === ""
-                  ? "Using Objective Percentage only because Schreiben Mark is empty."
-                  : manualWeightedOutcome.scoreBreakdown?.policy === "a2-b1-40-30-30"
-                    ? `A2/B1 weighting: Teil 2 Schreiben ${manualWeightedOutcome.scoreBreakdown.teil2?.points ?? 0}/40 + Teil 3 ${manualWeightedOutcome.scoreBreakdown.teil3?.points ?? 0}/30 + Teil 4 ${manualWeightedOutcome.scoreBreakdown.teil4?.points ?? 0}/30 = ${manualWeightedOutcome.finalScore}/100.`
-                    : `Rounded average of Objective Percentage (${Number(objectiveScorePercent.toFixed(2))}) and Schreiben Mark (${schreibenMark}).`}
-            </div>
-            {finalScoreOverride !== null ? (
-              <button type="button" onClick={() => setFinalScoreOverride(null)} style={{ justifySelf: "start" }}>
-                Use calculated score ({displayedCalculatedFinalScore})
-              </button>
-            ) : null}
-          </div>
-          <label>
-            Comments / Feedback
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(stripMarkingEmojis(e.target.value))}
-              rows={8}
-              style={{ fontSize: "1rem", lineHeight: 1.6, minHeight: 180 }}
-              placeholder="Write clear, actionable feedback for the student..."
-            />
-          </label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <label style={{ display: "grid", gap: 4 }}>
-              Comment template
-              <select
-                value={selectedFeedbackTemplateId}
-                onChange={(e) => setSelectedFeedbackTemplateId(e.target.value)}
-              >
-                {MARKING_FEEDBACK_TEMPLATES.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="button" onClick={handleInsertTemplate}>Insert template</button>
-          </div>
-          <label>
-            Assignment
-            <input value={assignmentValue} onChange={(e) => setAssignmentValue(e.target.value)} />
-          </label>
-          <label>
-            Assignment ID (loaded from submission when available; editable)
-            <input value={assignmentIdValue} onChange={(e) => setAssignmentIdValue(e.target.value)} />
-          </label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleAutoMark} disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission}>
-              {autoMarking ? "Marking..." : writingExpected ? "Run AI marking" : "Check objective answers"}
-            </button>
-            <button disabled={workflowSaving || autoMarking || savingScore} onClick={() => { setSchreibenMark(""); setFinalScoreOverride(null); setFeedback(""); setSelectedHighlight(""); }}>Reset</button>
-          </div>
-        </div>
-      </section>
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>Save reviewed mark</h3>
-        <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
-          Save the reviewed score and feedback, or share the feedback with the student.
-        </p>
-        <button onClick={() => void handleSave(false)} disabled={loading || savingScore || autoMarking || workflowSaving || loadingSubmissions}>{savingScore ? "Saving..." : "Save Final Score"}</button>
-        {savingScore && <p style={{ marginTop: 8, fontSize: 13 }}>Saving score, please wait...</p>}
-        {saveReceipt && (
-          <div style={{ marginTop: 12, border: "1px solid #ddd", borderRadius: 8, padding: 10, background: "#fafafa", display: "grid", gap: 8 }}>
-            <div style={{ fontSize: 13 }}>
-              <b>Save receipt:</b> {saveReceipt.row.name} · {saveReceipt.row.assignment} · ID: <code>{saveReceipt.row.assignment_id || "—"}</code>
-            </div>
-            <div style={{ fontSize: 13 }}>
-              Google Sheets: <b>{saveReceipt.sheet.success ? "Success" : "Failed"}</b>
-              <div style={{ opacity: 0.85 }}>{saveReceipt.sheet.message}</div>
-            </div>
-            <div style={{ fontSize: 13 }}>
-              Firestore mirror: <b>{saveReceipt.firestore.success ? "Success" : "Failed"}</b>
-              <div style={{ opacity: 0.85 }}>{saveReceipt.firestore.message}</div>
-            </div>
-          </div>
-        )}
-      </section></aside>
-      </div>
-      <div className="marking-save-bar"><strong>Final score: {displayedFinalScore}/100</strong><button type="button" onClick={() => setWorkspaceTab("review")}>Review mark</button><button type="button" onClick={() => void handleSave(false)} disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}>{savingScore ? "Saving..." : "Save mark"}</button><button type="button" onClick={() => void handleSave(true)} disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}>Save and share feedback</button></div>
-      <div className="marking-key-settings">      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <details>
-          <summary style={{ cursor: "pointer" }}>
-            <span style={{ fontSize: "1.17em", fontWeight: 700 }}>Answer Keys</span>
-            <span style={{ marginLeft: 8, fontSize: 13, opacity: 0.75 }}>
-              {loadingAnswerKeys ? "Loading..." : `${answerKeyRegistry.length} keys`}
-            </span>
-          </summary>
-          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>
-              Firestore source of truth: <code>answerKeyRegistry/{"{assignment_id}"}</code>. AI marks every submission and uses these objective keys as required marking context.
-            </p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" onClick={handleImportAnswerDictionary} disabled={importingAnswerKeys}>
-                {importingAnswerKeys ? "Importing..." : "Import Answer Dictionary"}
-              </button>
-              <button type="button" onClick={refreshAnswerKeyRegistry} disabled={loadingAnswerKeys}>Refresh keys</button>
-            </div>
-            {answerImportSummary ? (
-              <div style={{ border: "1px solid #d8e2ef", background: "#f8fbff", borderRadius: 8, padding: 10, fontSize: 13 }}>
-                <strong>Last import validation</strong>
-                <div>Imported: <b>{answerImportSummary.importedCount}</b> · Failed: <b>{answerImportSummary.failedCount}</b> · Total assignments: <b>{answerImportSummary.totalAssignments}</b></div>
-                <div>Sample keys: {answerImportSummary.sampleImportedKeys?.length ? answerImportSummary.sampleImportedKeys.join(", ") : "—"}</div>
-                {answerImportSummary.warnings?.length ? (
-                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                    {answerImportSummary.warnings.slice(0, 10).map((warning) => <li key={warning}>{warning}</li>)}
-                  </ul>
-                ) : <div>No warnings for missing assignment_id or answers.</div>}
+          <section className="marking-card">
+            <div className="marking-section-heading">
+              <div>
+                <h3>Objective mapping</h3>
+                <p>{showAllObjectiveAnswers ? "Showing every objective answer." : "Showing only wrong or unanswered questions."}</p>
               </div>
-            ) : null}
-            {loadingAnswerKeys ? <p style={{ margin: 0 }}>Loading answer keys...</p> : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Assignment key</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Title</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Level</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Format</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Parts</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Answers</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Links</th>
-                      <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 6 }}>Load status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {answerKeyRegistry.slice(0, 80).map((entry) => {
-                      const parts = Object.entries(entry.parts || {}).map(([partKey, part]) => ({ partId: part?.partId || partKey, ...part }));
-                      const answerCount = Number(entry.totalAnswers || parts.reduce((sum, part) => sum + Number(part.answerCount || part.answers?.length || 0), 0));
-                      const loadStatus = answerCount > 0 ? `Loaded ${entry.importedAt ? new Date(entry.importedAt).toLocaleString() : ""}`.trim() : "No parsed answers";
-                      return (
-                        <tr key={entry.id || entry.assignmentKey}>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}><code>{entry.assignmentKey}</code></td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.title || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.level || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{entry.format || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{parts.map((part) => part.partId).join(", ") || "—"}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{answerCount}</td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>
-                            {entry.answerUrl ? <a href={entry.answerUrl} target="_blank" rel="noreferrer">answer</a> : "—"}
-                            {entry.sheetUrl ? <> · <a href={entry.sheetUrl} target="_blank" rel="noreferrer">sheet</a></> : null}
-                          </td>
-                          <td style={{ borderBottom: "1px solid #eee", padding: 6 }}>{loadStatus}</td>
+              <div className="marking-objective-actions">
+                {objectiveMarkingResult.totalCount ? <strong>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount}</strong> : null}
+                {objectiveMarkingResult.totalCount ? (
+                  <button
+                    type="button"
+                    className="marking-compact-action"
+                    onClick={() => setShowAllObjectiveAnswers((current) => !current)}
+                  >
+                    {showAllObjectiveAnswers ? "Show issues only" : "Show all answers"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            {objectiveMarkingResult.totalCount ? (
+              visibleObjectiveEntries.length ? (
+                <div className="marking-table-scroll">
+                  <table className="marking-objective-table">
+                    <thead><tr><th>Question</th><th>Student</th><th>Reference</th><th>Result</th></tr></thead>
+                    <tbody>
+                      {visibleObjectiveEntries.map(([question, answer]) => (
+                        <tr key={question} className={answer.correct ? "is-correct" : "is-wrong"}>
+                          <td><strong>{question}</strong></td>
+                          <td>{answer.student || "No answer"}</td>
+                          <td>{answer.expectedDisplay || answer.expected || answer.rawExpected || "—"}</td>
+                          <td>{answer.correct ? "Correct" : String(answer.student || answer.submitted || "").trim() ? "Needs correction" : "Not answered"}</td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="marking-objective-clear">All objective answers are correct. Use “Show all answers” if you want to inspect them.</div>
+              )
+            ) : <p className="marking-empty">No objective answers were detected. Use the reference and AI marking for the writing task.</p>}
+          </section>
+        </main>
+        <aside className="marking-column marking-review" id="marking-stage-review" aria-label="Score review">
+          <section className="marking-card marking-review-card">
+            <div className="marking-section-heading">
+              <div>
+                <h3>AI feedback & score</h3>
+                <p>Review the AI result, adjust the score if needed, then edit the comment before saving.</p>
               </div>
-            )}
-          </div>
-        </details>
-      </section></div>
+            </div>
+
+            {consistencyWarnings.length ? (
+              <div className="marking-inline-warning">
+                <strong>Review before saving</strong>
+                <ul>{consistencyWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+                <label className="marking-check">
+                  <input type="checkbox" checked={qualityAcknowledgement === qualitySignature} onChange={(event) => setQualityAcknowledgement(event.target.checked ? qualitySignature : "")} />
+                  I checked these warnings against the student work.
+                </label>
+              </div>
+            ) : null}
+
+            {smartMarkingResult ? (
+              <div className="marking-score-summary">
+                <div><span>Objective</span><strong>{smartMarkingResult.objectiveTotal ? `${smartMarkingResult.objectiveCorrect}/${smartMarkingResult.objectiveTotal} · ${Math.round(smartMarkingResult.objectiveScore ?? 0)}%` : "—"}</strong></div>
+                <div><span>Writing</span><strong>{formatWritingScore(smartMarkingResult)}</strong></div>
+                <div><span>Final</span><strong>{displayedFinalScore}/100</strong></div>
+                <div><span>Confidence</span><strong>{smartMarkingResult.confidence ?? "—"}</strong></div>
+              </div>
+            ) : null}
+
+            {writingTask ? (
+              <details className="marking-compact-details">
+                <summary>Writing task points</summary>
+                <p>{writingTask.taskText}</p>
+                <ul>{writingTask.taskPoints.map((point) => <li key={point}>{point}</li>)}</ul>
+              </details>
+            ) : null}
+
+            <div className="marking-score-fields">
+              {writingExpected ? (
+                <label>
+                  Writing mark
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={schreibenMark}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      if (nextValue === "") {
+                        setSchreibenMark("");
+                        setFinalScoreOverride(null);
+                        return;
+                      }
+                      setSchreibenMark(String(Math.max(0, Math.min(100, Number(nextValue)))));
+                      setFinalScoreOverride(null);
+                    }}
+                    placeholder="0–100"
+                  />
+                </label>
+              ) : null}
+              <label>
+                Final score
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={finalScoreOverride === null ? displayedCalculatedFinalScore : finalScoreOverride}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    if (nextValue === "") {
+                      setFinalScoreOverride("");
+                      return;
+                    }
+                    setFinalScoreOverride(String(Math.max(0, Math.min(100, Number(nextValue)))));
+                  }}
+                />
+              </label>
+            </div>
+
+            <label className="marking-feedback-field">
+              Comment / feedback
+              <textarea
+                value={feedback}
+                onChange={(event) => setFeedback(stripMarkingEmojis(event.target.value))}
+                rows={9}
+                placeholder="AI feedback appears here. Edit it before saving or sharing."
+              />
+              <small>{feedbackWordCount(feedback)} words</small>
+            </label>
+
+            <button
+              type="button"
+              className="marking-secondary-action"
+              disabled={!feedback.trim()}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(stripMarkingEmojis(feedback));
+                  success("Feedback copied.");
+                } catch {
+                  error("Could not copy feedback.");
+                }
+              }}
+            >
+              Copy feedback
+            </button>
+          </section>
+        </aside>
+      </div>
+      {selectedSubmission ? (
+        <div className="marking-mobile-sticky-action" aria-label="Current marking action">
+          {!smartMarkingResult ? (
+            <button
+              className="marking-primary-action"
+              type="button"
+              onClick={handleAutoMark}
+              disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions}
+            >
+              {autoMarking ? "Marking..." : "Mark with AI"}
+            </button>
+          ) : (
+            <>
+              <div className="marking-mobile-sticky-score">
+                <span>Final</span>
+                <strong>{displayedFinalScore}/100</strong>
+              </div>
+              <button
+                className="marking-primary-action"
+                type="button"
+                onClick={() => void handleSave(false)}
+                disabled={!feedback.trim() || savingScore || autoMarking || workflowSaving}
+              >
+                {savingScore ? "Saving..." : "Save mark"}
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
+      <div className="marking-save-bar">
+        <div className="marking-save-score">
+          <span>Final score</span>
+          <strong>{displayedFinalScore}/100</strong>
+        </div>
+        <button type="button" onClick={() => void handleSave(false)} disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}>
+          {savingScore ? "Saving..." : "Save mark"}
+        </button>
+        <button className="marking-primary-action" type="button" onClick={() => void handleSave(true)} disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}>
+          Save + share feedback
+        </button>
+        <button className="marking-report-action" type="button" disabled={!selectedSubmission} onClick={handleCopyMarkingReport}>
+          Copy full report
+        </button>
+      </div>
+      <p className="marking-report-help">Copy full report includes the reference, student work, objective mapping, AI feedback, current comment and score summary for bug reports.</p>
+      {reportFallbackVisible ? (
+        <label className="marking-report-fallback">
+          Full report — select and copy manually
+          <textarea readOnly rows={12} value={markingReport} />
+        </label>
+      ) : null}
     </div>
   );
 }

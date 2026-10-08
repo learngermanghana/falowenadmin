@@ -110,7 +110,13 @@ test("manual marking sync patch matches the current MarkingPage effect", () => {
   assert.match(patch, /selectedSubmission\?\.raw\?\.assignment_id/);
 
   assert.match(markingPage, /setFeedback\(""\)/);
-  assert.match(markingPage, /setSaveReceipt\(null\)/);
+  const simplifiedMarkingWorkspace = markingPage.includes("<h3>Objective mapping</h3>")
+    && markingPage.includes("Copy full report");
+  if (simplifiedMarkingWorkspace) {
+    assert.doesNotMatch(markingPage, /setSaveReceipt\(null\)/);
+  } else {
+    assert.match(markingPage, /setSaveReceipt\(null\)/);
+  }
   assert.match(markingPage, /reviewIdentity,/);
   const cleanAssignmentEffect = markingPage.includes(
     'const submissionAssignmentId = selectedSubmission?.assignmentId || selectedSubmission?.assignmentKey || "";',
