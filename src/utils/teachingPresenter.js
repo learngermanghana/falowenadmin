@@ -1,5 +1,6 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
+import { getB1ScenarioChallenge } from "../data/b1ScenarioChallenges.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -1663,6 +1664,26 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
             teacherPurpose: {
               student: "Say why each career step helps reach the goal, using um ... zu + Infinitiv.",
               teacher: "Share this screen, ask the question aloud, listen first, then optionally reveal a model. No student login or submission.",
+            },
+            suggestedMinutes: 8,
+          }];
+        }
+        // Each selected B1 mission takes the one existing focused-practice slot.
+        const scenarioChallenge = level === "B1"
+          ? getB1ScenarioChallenge(normalizedAssignmentId(slide))
+          : null;
+        if (scenarioChallenge) {
+          return [{
+            id: "scenario-challenge",
+            type: "scenario-challenge",
+            kicker: "Mitmach-Challenge · Mündliche Kommunikation",
+            title: scenarioChallenge.title,
+            instruction: "Die Lehrkraft wählt eine zufällige Situation, ruft Lernende auf und zeigt die Modellantwort erst nach ihrer Antwort.",
+            items: scenarioChallenge.items,
+            scenarioLabel: scenarioChallenge.label,
+            teacherPurpose: {
+              student: "Löse eine realistische Situation mündlich mit den passenden B1-Redemitteln.",
+              teacher: "Share the screen, pick a student, listen first, optionally reveal a model, then move to the next step. No student login or submission.",
             },
             suggestedMinutes: 8,
           }];
