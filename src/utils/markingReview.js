@@ -70,7 +70,7 @@ export function verifiedObjectiveMetadata(result = {}, objective = {}) {
     const correct = rows.filter(([, row]) => row.correct === true).length;
     const answerCount = rows.filter(([, row]) => String(row.student || "").trim()).length;
     return { partId, partType: "objective", answerCount, total: rows.length, correct, wrong: rows.length - correct,
-      summary: `${partId}: ${answerCount} objective answers found, ${correct} correct, ${rows.length - correct} wrong` };
+      summary: `${partId === "main" ? "Objective" : partId.replace(/^teil/i, "Teil ")}: ${answerCount} objective answers found, ${correct} correct, ${rows.length - correct} wrong` };
   });
   const total = Number(objective.totalCount || 0);
   const metadata = {
