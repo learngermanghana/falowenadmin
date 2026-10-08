@@ -2,7 +2,14 @@ const crypto = require("crypto");
 
 const PROCESSING_STALE_MS = 30 * 60 * 1000;
 const RESULT_URL = "https://www.falowen.app/campus/results";
-const FINAL_MOCK_SOURCES = new Set(["a1_final_mock", "a2_final_mock"]);
+const EXAMS_ROOM_URL = "https://www.falowen.app/exams/overview";
+const FINAL_MOCK_SOURCES = new Set([
+  "a1_final_mock",
+  "a2_final_mock",
+  "b1_final_mock",
+  "b2_final_mock",
+]);
+const EXAM_ROOM_PRACTICE_SOURCE = "exam_room_practice";
 
 function text(value) {
   return String(value == null ? "" : value).trim();
@@ -26,16 +33,25 @@ function isFinalMockScore(score = {}) {
   return FINAL_MOCK_SOURCES.has(lower(score.source));
 }
 
+function isExamRoomPracticeScore(score = {}) {
+  return lower(score.source) === EXAM_ROOM_PRACTICE_SOURCE;
+}
+
+function isExamRoomEmailScore(score = {}) {
+  return isFinalMockScore(score) || isExamRoomPracticeScore(score);
+}
+
 function levelFromScore(score = {}) {
   const direct = text(score.level).toUpperCase();
-  if (direct === "A1" || direct === "A2") return direct;
-  return lower(score.source) === "a2_final_mock" ? "A2" : "A1";
+  if (["A1", "A2", "B1", "B2", "C1", "C2"].includes(direct)) return direct;
+  const sourceMatch = lower(score.source).match(/^([abc][12])_final_mock$/);
+  return sourceMatch ? sourceMatch[1].toUpperCase() : "A1";
 }
 
 function attemptLabelFromScore(score = {}) {
   const explicit = text(score.attemptLabel);
   if (explicit) return explicit;
-  const attempt = Math.max(1, number(score.attempt, 1));
+  const attempt = Math.max(1, number(score.attempt ?? score.attemptNumber, 1));
   if (score.firstAttempt === true || lower(score.attemptType) === "readiness" || attempt === 1) {
     return "First readiness attempt";
   }
@@ -43,7 +59,10 @@ function attemptLabelFromScore(score = {}) {
 }
 
 function passStatus(score = {}) {
-  const passed = score.passed === true || lower(score.status) === "passed" || number(score.score ?? score.finalScore) >= 60;
+  const passed =
+    score.passed === true ||
+    lower(score.status) === "passed" ||
+    number(score.score ?? score.finalScore) >= 60;
   return { passed, label: passed ? "PASS" : "NEEDS MORE PRACTICE" };
 }
 
@@ -91,6 +110,34 @@ function buildFinalMockResultMessage(score = {}) {
   ].join("\n");
 }
 
+function buildExamRoomPracticeResultMessage(score = {}) {
+  const name = text(score.studentName || score.name) || "Student";
+  const level = levelFromScore(score);
+  const assignment = text(score.assignment || score.assignmentText) || `${level} Exams Room practice`;
+  const percent = number(score.score ?? score.finalScore ?? score.percent);
+  const rawScore = number(score.rawScore, Number.NaN);
+  const total = number(score.total, Number.NaN);
+  const status = passStatus(score);
+  const scoreLine =
+    Number.isFinite(rawScore) && Number.isFinite(total) && total > 0
+      ? `Score: ${formatScore(rawScore)}/${formatScore(total)} · ${formatScore(percent)}% — ${status.label}`
+      : `Score: ${formatScore(percent)}% — ${status.label}`;
+
+  return [
+    `Hello ${name},`,
+    "",
+    `Your ${assignment} result is ready.`,
+    "",
+    scoreLine,
+    "",
+    "This is Exams Room practice. It does not issue a course certificate.",
+    "Open Falowen to review the exercise and continue practising.",
+    "",
+    "Best regards,",
+    "Learn Language Education Academy (Falowen)",
+  ].join("\n");
+}
+
 function isoDate(value = new Date()) {
   const date = value instanceof Date ? value : new Date(value);
   const safe = Number.isNaN(date.getTime()) ? new Date() : date;
@@ -100,6 +147,21 @@ function isoDate(value = new Date()) {
     month: "2-digit",
     day: "2-digit",
   }).format(safe);
+}
+
+function eventKind(score = {}) {
+  return isFinalMockScore(score) ? "final_mock_result" : "exam_room_result";
+}
+
+function stateId(scoreId = "", score = {}) {
+  return crypto
+    .createHash("sha256")
+    .update(`${eventKind(score)}::${text(scoreId)}`)
+    .digest("hex");
+}
+
+function upstreamEventId(scoreId = "", score = {}) {
+  return `${eventKind(score)}_${stateId(scoreId, score).slice(0, 40)}`;
 }
 
 function buildFinalMockAnnouncementRow(score = {}, { scoreId = "", now = new Date() } = {}) {
@@ -134,11 +196,11 @@ function buildFinalMockAnnouncementRow(score = {}, { scoreId = "", now = new Dat
     assignment_id: text(score.assignmentId || score.assignment_id),
     attempt_label: attemptLabel,
     attempt_type: text(score.attemptType),
-    attempt_number: String(Math.max(1, number(score.attempt, 1))),
-    mock_attempt_id: text(score.mockAttemptId),
+    attempt_number: String(Math.max(1, number(score.attempt ?? score.attemptNumber, 1))),
+    mock_attempt_id: text(score.mockAttemptId || score.examRoomAttemptId),
     score_id: text(scoreId),
-    event_id: upstreamEventId(scoreId),
-    idempotency_key: upstreamEventId(scoreId),
+    event_id: upstreamEventId(scoreId, score),
+    idempotency_key: upstreamEventId(scoreId, score),
     score: formatScore(overall),
     score_max: "100",
     result_status: status.passed ? "passed" : "needs_more_practice",
@@ -150,6 +212,55 @@ function buildFinalMockAnnouncementRow(score = {}, { scoreId = "", now = new Dat
     practise_next: text(score.practiseNext),
     source: lower(score.source),
   };
+}
+
+function buildExamRoomPracticeAnnouncementRow(score = {}, { scoreId = "", now = new Date() } = {}) {
+  const level = levelFromScore(score);
+  const status = passStatus(score);
+  const assignment = text(score.assignment || score.assignmentText) || `${level} Exams Room practice`;
+  const link = text(score.link || score.route) || EXAMS_ROOM_URL;
+  const email = lower(score.email || score.studentEmail);
+
+  return {
+    announcement: buildExamRoomPracticeResultMessage(score),
+    class: text(score.className || score.class || level),
+    date: isoDate(now),
+    link: /^https?:\/\//i.test(link) ? link : `https://www.falowen.app${link.startsWith("/") ? link : `/${link}`}`,
+    topic: `${assignment} result`,
+    email,
+    attach_certificate: "FALSE",
+    cert_level: level,
+    delivery_mode: "individual",
+    allow_bcc_fallback: "FALSE",
+    email_type: "exam_room_result",
+    show_progress: "FALSE",
+    show_review: "FALSE",
+    show_app_button: "FALSE",
+    show_class: "TRUE",
+    show_date: "TRUE",
+    button_label: "Open Exams Room",
+    student_code: text(score.studentCode || score.studentcode),
+    student_name: text(score.studentName || score.name),
+    assignment,
+    assignment_id: text(score.assignmentId || score.assignment_id),
+    attempt_label: text(score.attemptLabel) || `Attempt ${Math.max(1, number(score.attempt ?? score.attemptNumber, 1))}`,
+    attempt_type: "practice",
+    attempt_number: String(Math.max(1, number(score.attempt ?? score.attemptNumber, 1))),
+    mock_attempt_id: text(score.examRoomAttemptId),
+    score_id: text(scoreId),
+    event_id: upstreamEventId(scoreId, score),
+    idempotency_key: upstreamEventId(scoreId, score),
+    score: formatScore(score.score ?? score.finalScore ?? score.percent),
+    score_max: "100",
+    result_status: status.passed ? "passed" : "needs_more_practice",
+    source: lower(score.source),
+  };
+}
+
+function buildAnnouncementRow(score = {}, options = {}) {
+  return isFinalMockScore(score)
+    ? buildFinalMockAnnouncementRow(score, options)
+    : buildExamRoomPracticeAnnouncementRow(score, options);
 }
 
 function resolveAnnouncementConfig(runtimeConfig = {}, env = process.env) {
@@ -187,7 +298,7 @@ function resolveAnnouncementConfig(runtimeConfig = {}, env = process.env) {
 
 async function postAnnouncementRow(config, row, fetchImpl = fetch) {
   if (!config.url) {
-    const error = new Error("Announcement webhook is not configured for final mock result emails.");
+    const error = new Error("Announcement webhook is not configured for Exams Room result emails.");
     error.deliveryAttempted = false;
     throw error;
   }
@@ -221,16 +332,8 @@ async function postAnnouncementRow(config, row, fetchImpl = fetch) {
   return body;
 }
 
-function stateId(scoreId = "") {
-  return crypto.createHash("sha256").update(`final_mock_result::${text(scoreId)}`).digest("hex");
-}
-
-function upstreamEventId(scoreId = "") {
-  return `final_mock_result_${stateId(scoreId).slice(0, 40)}`;
-}
-
 async function reserveFinalMockResultSend({ db, admin, scoreId, score = {}, now = new Date() }) {
-  const ref = db.collection("finalMockResultEmailSends").doc(stateId(scoreId));
+  const ref = db.collection("finalMockResultEmailSends").doc(stateId(scoreId, score));
   let result = { reserved: false, ref, reason: "" };
 
   await db.runTransaction(async (transaction) => {
@@ -258,10 +361,11 @@ async function reserveFinalMockResultSend({ db, admin, scoreId, score = {}, now 
     transaction.set(ref, {
       scoreId: text(scoreId),
       source: lower(score.source),
+      emailType: eventKind(score),
       level: levelFromScore(score),
       studentCode: text(score.studentCode || score.studentcode),
       studentEmail: lower(score.email || score.studentEmail),
-      mockAttemptId: text(score.mockAttemptId),
+      mockAttemptId: text(score.mockAttemptId || score.examRoomAttemptId),
       assignmentId: text(score.assignmentId || score.assignment_id),
       status: "processing",
       attemptCount: number(current.attemptCount) + 1,
@@ -285,13 +389,15 @@ async function writeAnnouncementHistory({
   error = "",
   upstream = {},
 } = {}) {
-  const historyId = `final-mock-result-${text(scoreId).replace(/[^a-zA-Z0-9_-]+/g, "_").slice(0, 160)}`;
+  const kind = eventKind(score);
+  const historyPrefix = kind === "final_mock_result" ? "final-mock-result" : "exam-room-result";
+  const historyId = `${historyPrefix}-${text(scoreId).replace(/[^a-zA-Z0-9_-]+/g, "_").slice(0, 160)}`;
   await db.collection("announcements").doc(historyId).set({
     ...row,
-    source: "final_mock_result",
+    source: kind,
     scoreId: text(scoreId),
     mockSource: lower(score.source),
-    mockAttemptId: text(score.mockAttemptId),
+    mockAttemptId: text(score.mockAttemptId || score.examRoomAttemptId),
     deliveryStatus: status,
     recipientCount: 1,
     successCount: status === "sent" ? 1 : 0,
@@ -313,10 +419,11 @@ async function processFinalMockResultScore({
   now = new Date(),
   fetchImpl = fetch,
 } = {}) {
-  if (!isFinalMockScore(score)) return { sent: false, reason: "not_final_mock" };
+  if (!isExamRoomEmailScore(score)) return { sent: false, reason: "not_exam_room_result" };
+
   const email = lower(score.email || score.studentEmail);
   if (!email) {
-    const row = buildFinalMockAnnouncementRow(score, { scoreId, now });
+    const row = buildAnnouncementRow(score, { scoreId, now });
     const historyId = await writeAnnouncementHistory({
       db,
       admin,
@@ -324,7 +431,7 @@ async function processFinalMockResultScore({
       score,
       row,
       status: "skipped_missing_email",
-      error: "Student email is missing from the final mock score document.",
+      error: "Student email is missing from the Exams Room score document.",
     }).catch(() => "");
     return {
       sent: false,
@@ -338,7 +445,7 @@ async function processFinalMockResultScore({
   const reservation = await reserveFinalMockResultSend({ db, admin, scoreId, score, now });
   if (!reservation.reserved) return { sent: false, reason: reservation.reason };
 
-  const row = buildFinalMockAnnouncementRow(score, { scoreId, now });
+  const row = buildAnnouncementRow(score, { scoreId, now });
   const config = resolveAnnouncementConfig(runtimeConfig);
   const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
@@ -361,8 +468,6 @@ async function processFinalMockResultScore({
   try {
     const upstream = await postAnnouncementRow(config, row, fetchImpl);
 
-    // Mark the dedupe state as sent immediately after the webhook succeeds.
-    // A later history-write problem must never cause the student's email to be sent twice.
     await reservation.ref.set({
       status: "sent",
       sentAt: timestamp,
@@ -375,7 +480,7 @@ async function processFinalMockResultScore({
     await writeAnnouncementHistory({
       db, admin, scoreId, score, row, status: "sent", upstream,
     }).catch((historyError) => {
-      console.warn("final_mock_result_history_update_failed", {
+      console.warn("exam_room_result_history_update_failed", {
         scoreId: text(scoreId),
         message: historyError?.message || String(historyError),
       });
@@ -386,6 +491,7 @@ async function processFinalMockResultScore({
       scoreId: text(scoreId),
       level: levelFromScore(score),
       email,
+      emailType: row.email_type,
       historyId,
     };
   } catch (error) {
@@ -405,11 +511,6 @@ async function processFinalMockResultScore({
       throw error;
     }
 
-    // Once the POST has been attempted, a transport failure can be ambiguous:
-    // Apps Script may already have accepted and emailed the row even if Firebase
-    // never received the response. Do not make this reservation immediately
-    // reusable and do not throw into Firestore automatic retries, otherwise the
-    // same learner can receive the same result twice.
     await reservation.ref.set({
       status: "delivery_uncertain",
       deliveryUncertainAt: timestamp,
@@ -438,20 +539,21 @@ async function processFinalMockResultScore({
 function createFinalMockResultEmailTrigger({
   db,
   admin,
-  onDocumentCreated,
+  onDocumentWritten,
   runtimeConfig = {},
   fetchImpl = fetch,
 } = {}) {
-  if (!db?.collection || !admin?.firestore?.FieldValue?.serverTimestamp || typeof onDocumentCreated !== "function") {
-    throw new Error("Final mock result email trigger dependencies are incomplete.");
+  if (!db?.collection || !admin?.firestore?.FieldValue?.serverTimestamp || typeof onDocumentWritten !== "function") {
+    throw new Error("Exams Room result email trigger dependencies are incomplete.");
   }
 
-  return onDocumentCreated({
+  return onDocumentWritten({
     document: "scores/{scoreId}",
     retry: false,
   }, async (event) => {
-    const snap = event?.data;
+    const snap = event?.data?.after || event?.data;
     if (!snap?.exists) return { sent: false, reason: "score_missing" };
+
     const score = snap.data?.() || {};
     const scoreId = text(event?.params?.scoreId || snap.id);
     const result = await processFinalMockResultScore({
@@ -463,7 +565,7 @@ function createFinalMockResultEmailTrigger({
       now: new Date(),
       fetchImpl,
     });
-    console.log("final_mock_result_email", result);
+    console.log("exam_room_result_email", result);
     return result;
   });
 }
@@ -472,11 +574,18 @@ module.exports = {
   createFinalMockResultEmailTrigger,
   processFinalMockResultScore,
   _test: {
+    EXAM_ROOM_PRACTICE_SOURCE,
+    EXAMS_ROOM_URL,
     FINAL_MOCK_SOURCES,
     RESULT_URL,
     attemptLabelFromScore,
+    buildAnnouncementRow,
+    buildExamRoomPracticeAnnouncementRow,
+    buildExamRoomPracticeResultMessage,
     buildFinalMockAnnouncementRow,
     buildFinalMockResultMessage,
+    isExamRoomEmailScore,
+    isExamRoomPracticeScore,
     isFinalMockScore,
     levelFromScore,
     passStatus,
