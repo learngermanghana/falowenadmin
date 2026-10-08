@@ -688,6 +688,27 @@ test("marking proxy feedback includes the student's exact wrong objective answer
   assert.doesNotMatch(result.feedback, /\*\*/);
 });
 
+test("A2 heuristic prioritizes weil word order over a superficial capitalization correction", () => {
+  const result = heuristicWritingMarker({
+    level: "A2",
+    partId: "teil2",
+    text: "Sehr geehrte Damen und Herren,\nich schreibe, weil ich möchte Zimmer reservieren.\nMit freundlichen Grüßen",
+  });
+  assert.match(result.feedback, /move the conjugated verb to the end/i);
+  assert.match(result.feedback, /weil ich Zimmer reservieren möchte/i);
+  assert.doesNotMatch(result.feedback, /Write “Ich schreibe, weil ich möchte Zimmer reservieren/);
+});
+
+test("A2 weil correction stops before a following main clause", () => {
+  const result = heuristicWritingMarker({
+    level: "A2",
+    partId: "teil2",
+    text: "Sehr geehrte Damen und Herren,\nIch schreibe, weil ich möchte ein Zimmer reservieren, aber ich kann erst morgen bezahlen.\nMit freundlichen Grüßen",
+  });
+  assert.match(result.feedback, /weil ich ein Zimmer reservieren möchte/i);
+  assert.doesNotMatch(result.feedback, /aber ich kann erst morgen bezahlen möchte/i);
+});
+
 test("writing feedback highlights exact submitted wording and concrete corrections", () => {
   const result = autoMarkSubmission({
     referenceEntry: { assignmentKey: "A2-writing-feedback", level: "A2", format: "writing" },

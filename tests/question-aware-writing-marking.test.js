@@ -455,6 +455,78 @@ test("A2-1.1 does not count a generic help question as the required final questi
 });
 
 
+const victoriaHotelReservationA249 = `Teil 2
+Lieber Herr Felix,
+
+Ich schreibe Ihnen,weil ich im Urlaub bin und für meinen Aufenthalt in Berlin ein Zimmer in Ihrem Hotel buchen möchte. Ich werde am Samstag, 10. Oktober, nachmittags ankommen. Wie viel kostet ein normales Zimmer und wie groß ist es. Ich würde auch gerne wissen, ob Sie ein kostenloses Frühstück servieren und ob es Internet gibt. Ich habe vor, drei Tage zu bleiben, bevor ich nach Fulda zurückkomme.
+Ich freue mich auf Ihre Antwort. Vielen Dank
+
+Teil 3
+1. B
+2. C
+3. B
+4. C
+5. B
+
+Teil 4
+1. C
+2. B
+3. A
+4. C
+5. B`;
+
+test("A2-4.9 recognizes Victoria's hotel booking, stay details, price and services without false missing points", () => {
+  const referenceEntry = referenceEntryByAssignmentId("A2-4.9");
+  const enriched = enrichOptionsWithQuestionAwareWritingTask({
+    referenceEntry,
+    submission: { assignmentKey: "A2-4.9", level: "A2" },
+    submissionText: victoriaHotelReservationA249,
+  });
+
+  const result = applyQuestionAwareWritingGuard({
+    level: "A2",
+    assignmentKey: "A2-4.9",
+    objectiveScore: 100,
+    objectiveCorrect: 10,
+    objectiveTotal: 10,
+    writingScore: 85,
+    writingScorePercent: 85,
+    finalScore: 94,
+    score: 94,
+    taskCompletion: {
+      completed: 1,
+      total: 3,
+      missing: [
+        "Ask for a free room",
+        "Give stay details such as dates, people or room type",
+      ],
+    },
+    missingTaskPoints: [
+      "Ask for a free room",
+      "Give stay details such as dates, people or room type",
+    ],
+    feedback: "Writing score: 85%. You covered one task point.",
+    status: "needs_review",
+    confidence: 0.95,
+  }, enriched, victoriaHotelReservationA249);
+
+  assert.deepEqual(result.taskPointEvidence.map((item) => item.status), ["met", "met", "met"]);
+  assert.equal(result.taskCompletion.completed, 3);
+  assert.equal(result.taskCompletion.total, 3);
+  assert.deepEqual(result.missingTaskPoints, []);
+  assert.match(result.taskPointEvidence[0].evidence, /Zimmer.*buchen/i);
+  assert.match(result.taskPointEvidence[1].evidence, /Samstag, 10\.|drei Tage/i);
+  assert.match(result.taskPointEvidence[2].evidence, /Wie viel kostet/i);
+  assert.match(result.taskPointEvidence[2].evidence, /Frühstück|Internet/i);
+  assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
+  assert.equal(result.ai.questionAwareWritingGuard.missingTaskPoints.length, 0);
+  assert.equal(result.writingScore, 70);
+  assert.equal(result.finalScore, 88);
+  assert.match(result.feedback, /requested formal register/i);
+  assert.doesNotMatch(result.feedback, /Still missing:/i);
+  assert.ok(result.corrections.some((item) => item.from === "Lieber Herr Felix" && item.to === "Sehr geehrter Herr Felix"));
+});
+
 test("all 28 A2 writing assignments have canonical semantic specs", () => {
   const specs = getA2WritingTaskSpecs();
   assert.equal(specs.length, 28);

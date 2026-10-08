@@ -24,6 +24,24 @@ export function dedupeRepeatedFeedback(value = "") {
     }
   }
 
+  const sentences = text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (sentences.length > 1) {
+    const seen = new Set();
+    const unique = sentences.filter((item) => {
+      const key = item
+        .toLocaleLowerCase("de-DE")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (unique.length !== sentences.length) return unique.join(" ");
+  }
+
   return text;
 }
 

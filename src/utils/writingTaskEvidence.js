@@ -30,6 +30,15 @@ function ruleForPoint(label = "", assignmentKey = "") {
   const value = clean(label).toLowerCase();
   const normalizedAssignmentKey = String(assignmentKey || "").trim().toUpperCase();
 
+  if (normalizedAssignmentKey === "A2-4.9") {
+    if (/ask for a free room/.test(value)) {
+      return /\bzimmer\b[\s\S]{0,90}\b(?:frei|verf[uü]gbar|reservier\w*|buch\w*)\b|\b(?:frei|verf[uü]gbar|reservier\w*|buch\w*)\b[\s\S]{0,90}\bzimmer\b/i;
+    }
+    if (/give stay details/.test(value)) {
+      return /\b(?:am\s+(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)|\d{1,2}\.\s*(?:januar|februar|m[aä]rz|april|mai|juni|juli|august|september|oktober|november|dezember)|(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag),?\s+\d{1,2}\.?\s*(?:januar|februar|m[aä]rz|april|mai|juni|juli|august|september|oktober|november|dezember)|vom\b|bis\b|\d+\s+(?:tag|tage|tagen|nacht|n[aä]chte)|(?:ein|zwei|drei|vier|f[uü]nf|sechs|sieben|acht|neun|zehn)\s+(?:tag|tage|tagen|nacht|n[aä]chte)|personen?|einzelzimmer|doppelzimmer|familienzimmer|zimmerart)\b/i;
+    }
+  }
+
   if (normalizedAssignmentKey === "A2-7.19") {
     if (/invite the friend to shop and explain why/.test(value)) {
       return [

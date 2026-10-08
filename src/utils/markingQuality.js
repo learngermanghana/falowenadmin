@@ -1,9 +1,42 @@
 import { verifiedObjectiveMetadata } from "./markingReview.js";
 import { plainObjectiveAnswer, stripMarkingEmojis } from "./markingFeedbackText.js";
 import { withResubmissionComparison } from "./resubmissionFeedback.js";
+import { dedupeRepeatedFeedback } from "./feedbackPolicy.js";
 
 const normalize = (value) => String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
 const percent = (value) => value === null || value === undefined || value === "" ? null : Number.isFinite(Number(value)) ? Number(value) : null;
+
+function currentWritingScore(result = {}) {
+  return percent(result.writingScorePercent ?? result.writingScore);
+}
+
+function normalizeWritingScoreClaim(feedback = "", result = {}) {
+  const writing = currentWritingScore(result);
+  if (writing === null) return String(feedback || "");
+  return String(feedback || "").replace(
+    /\bWriting score:\s*\d+(?:\.\d+)?\s*%/gi,
+    `Writing score: ${Math.round(writing)}%`,
+  );
+}
+
+function compactWrongQuestionSummary(rows = []) {
+  const groups = new Map();
+  rows.forEach(([question, row]) => {
+    const part = String(row?.partId || question.match(/^(teil\s*\d+)/i)?.[1] || "Objective")
+      .replace(/^teil/i, "Teil ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const number = String(question).match(/(\d+)(?!.*\d)/)?.[1] || String(question);
+    const current = groups.get(part) || [];
+    current.push(number);
+    groups.set(part, current);
+  });
+  const pieces = [...groups.entries()].map(([part, questions]) => {
+    const unique = [...new Set(questions)];
+    return `${part} question${unique.length === 1 ? "" : "s"} ${unique.join(", ")}`;
+  });
+  return pieces.length ? `Review ${pieces.join("; ")}.` : "";
+}
 
 export function exactObjectiveFeedback(objective, wordTarget = 40) {
   const rows = Object.entries(objective.details || {});
@@ -16,14 +49,28 @@ export function exactObjectiveFeedback(objective, wordTarget = 40) {
   const wrong = rows.filter(([, row]) => !row.correct);
   const intro = summary.join(" ") || `${objective.correctCount}/${objective.totalCount} correct.`;
   if (!wrong.length) return `${intro} All objective answers are correct.`;
-  const corrections = wrong.map(([question, row]) => `${question}: your answer ${plainObjectiveAnswer(row.student, "was missing")}; correct answer ${plainObjectiveAnswer(row.expectedDisplay || row.expected || row.rawExpected)}.`);
+
+  const corrections = wrong.map(([question, row]) => ({
+    question,
+    row,
+    text: `${question}: your answer ${plainObjectiveAnswer(row.student, "was missing")}; correct answer ${plainObjectiveAnswer(row.expectedDisplay || row.expected || row.rawExpected)}.`,
+  }));
   const limit = Number(wordTarget) || Infinity;
-  let selected = [];
-  for (const correction of corrections) {
-    if (`${intro} ${[...selected, correction].join(" ")} Review all flagged answers in the comparison.`.split(/\s+/).length > limit) break;
-    selected.push(correction);
+  const selected = [];
+
+  for (let index = 0; index < corrections.length; index += 1) {
+    const candidate = corrections[index];
+    const remaining = corrections.slice(index + 1).map((item) => [item.question, item.row]);
+    const fallback = compactWrongQuestionSummary(remaining);
+    const nextText = [intro, ...selected.map((item) => item.text), candidate.text, fallback].filter(Boolean).join(" ");
+    if (nextText.split(/\s+/).length > limit) break;
+    selected.push(candidate);
   }
-  return `${intro} ${selected.join(" ")}${selected.length < corrections.length ? " Review all flagged answers in the comparison." : ""}`.trim();
+
+  const selectedKeys = new Set(selected.map((item) => item.question));
+  const remaining = wrong.filter(([question]) => !selectedKeys.has(question));
+  const compactRemaining = compactWrongQuestionSummary(remaining);
+  return [intro, ...selected.map((item) => item.text), compactRemaining].filter(Boolean).join(" ").trim();
 }
 
 export function markingConsistencyWarnings(result, submission = {}, calculatedScore = null) {
@@ -40,8 +87,13 @@ export function markingConsistencyWarnings(result, submission = {}, calculatedSc
   if (expected && actual && expected !== actual) warnings.push("The marked assignment does not match the selected submission.");
   const evidence = Array.isArray(result.taskPointEvidence) ? result.taskPointEvidence : [];
   for (const item of evidence) {
-    if (item.evidence && !text.includes(normalize(item.evidence))) warnings.push(`Task evidence for “${item.label}” cannot be found in this submission.`);
-    if (item.status === "missing" && item.evidence && text.includes(normalize(item.evidence))) warnings.push(`“${item.label}” is marked missing but has supporting text. Check whether that text fulfils the point.`);
+    const fragments = String(item.evidence || "")
+      .split(/\s*\|\s*/)
+      .map((value) => normalize(value))
+      .filter(Boolean);
+    const allEvidencePresent = fragments.length > 0 && fragments.every((fragment) => text.includes(fragment));
+    if (fragments.length && !allEvidencePresent) warnings.push(`Task evidence for “${item.label}” cannot be found in this submission.`);
+    if (item.status === "missing" && allEvidencePresent) warnings.push(`“${item.label}” is marked missing but has supporting text. Check whether that text fulfils the point.`);
   }
   if (evidence.length && evidence.every((item) => item.status === "met") && /missing (?:required )?(?:task|content) point|(?:task|content) point[^.]{0,30}(?:missing|not addressed)/i.test(feedback)) warnings.push("Feedback claims a missing task point, but all task points are marked met.");
   for (const correction of result.corrections || []) {
@@ -61,13 +113,17 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   const objectiveSentences = /(?:lesen|hören|horen|hoeren|listening|reading|objective|teil\s*[34])\b/i;
   const writingFeedback = stripMarkingEmojis(result.feedback).split(/(?<=[.!?])\s+/).filter((sentence) => !(objectiveSentences.test(sentence) && /answer|question|score|correct|wrong|mistake|error|\d+\s*\//i.test(sentence))).join(" ");
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, wordTarget) : "";
-  const feedback = writingExpected ? [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n") : objectiveFeedback;
   const metadata = verifiedObjectiveMetadata(writingExpected ? result : {}, objective);
+  const feedback = writingExpected ? [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n") : objectiveFeedback;
+  const scoreAlignedFeedback = normalizeWritingScoreClaim(feedback || result.feedback, { ...result, ...metadata })
+    .replace(/\bMarking summary\b\s*[:.-]?\s*/gi, "")
+    .replace(/\bScore summary\b\s*[:.-]?\s*/gi, "");
+  const normalizedFeedback = dedupeRepeatedFeedback(stripMarkingEmojis(scoreAlignedFeedback));
   let updated = {
     ...result, ...metadata,
     ...(!writingExpected ? { writingScore: null, writingScorePercent: null, taskPointEvidence: [], corrections: [] } : {}),
-    feedback: stripMarkingEmojis(feedback || result.feedback),
-    improvementSummary: stripMarkingEmojis(feedback || result.feedback),
+    feedback: normalizedFeedback,
+    improvementSummary: normalizedFeedback,
   };
   const warnings = markingConsistencyWarnings(updated, submission);
   updated = withResubmissionComparison(updated, submission);

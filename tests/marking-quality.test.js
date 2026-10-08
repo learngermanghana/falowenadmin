@@ -36,6 +36,49 @@ test("flags task, assignment, objective and final score contradictions", () => {
   assert.ok(warnings.some((warning) => warning.includes("calculated score")));
   assert.ok(warnings.some((warning) => warning.includes("written in the feedback")));
 });
+
+test("mixed marking keeps the current writing score, names every wrong objective question, and accepts split task evidence", () => {
+  const mixedObjective = {
+    correctCount: 7,
+    totalCount: 10,
+    details: {
+      "teil3.1": { partId: "teil3", student: "C", expectedDisplay: "B) Drei Nächte", correct: false },
+      "teil3.2": { partId: "teil3", student: "C", expectedDisplay: "C) 82 Euro", correct: true },
+      "teil3.3": { partId: "teil3", student: "B", expectedDisplay: "B) Frühstück", correct: true },
+      "teil3.4": { partId: "teil3", student: "D", expectedDisplay: "C) Ab 14 Uhr", correct: false },
+      "teil3.5": { partId: "teil3", student: "B", expectedDisplay: "B) Rezeption informieren", correct: true },
+      "teil4.1": { partId: "teil4", student: "C", expectedDisplay: "C) teuer und voll", correct: true },
+      "teil4.2": { partId: "teil4", student: "A", expectedDisplay: "B) Wörthersee", correct: false },
+      "teil4.3": { partId: "teil4", student: "A", expectedDisplay: "A) Campingplatz", correct: true },
+      "teil4.4": { partId: "teil4", student: "C", expectedDisplay: "C) 15. bis 22. Juli", correct: true },
+      "teil4.5": { partId: "teil4", student: "B", expectedDisplay: "B) Lebensmittel und Packliste", correct: true },
+    },
+  };
+  const submission = {
+    assignmentId: "A2-4.9",
+    text: "TEIL 2\nWie viel kostet eine Nacht? Ist frühstück und WLAN im Gesamtpreis enthalten?\nTEIL 3\n1. C\n2. C\n3. B\n4. D\n5. B\nTEIL 4\n1. C\n2. A\n3. A\n4. C\n5. B",
+  };
+  const result = reconcileMarkingQuality({
+    assignmentKey: "A2-4.9",
+    writingScorePercent: 80,
+    writingScore: 80,
+    finalScore: 74,
+    feedback: "Writing score: 82%. You covered all 3 required points. You covered all 3 required points.",
+    taskPointEvidence: [{
+      label: "Ask about the price and additional services",
+      status: "met",
+      evidence: "Wie viel kostet eine Nacht? | Ist frühstück und WLAN im Gesamtpreis enthalten?",
+    }],
+  }, mixedObjective, submission, { writingExpected: true, wordTarget: 40 });
+
+  assert.match(result.feedback, /Writing score: 80%/);
+  assert.doesNotMatch(result.feedback, /Writing score: 82%/);
+  assert.equal((result.feedback.match(/You covered all 3 required points\./g) || []).length, 1);
+  assert.match(result.feedback, /Teil 4 question 2|teil4\.2:/i);
+  assert.doesNotMatch(result.feedback, /Review all flagged answers/);
+  assert.doesNotMatch(result.consistencyWarnings.join(" "), /Task evidence for/);
+});
+
 test("resubmissions without a previous score do not invent a zero baseline", () => {
   assert.equal(withResubmissionComparison({ finalScore: 80, feedback: "Good work." }, { attempt: 2 }).feedback, "Good work.");
 });

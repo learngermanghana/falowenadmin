@@ -394,6 +394,21 @@ function hasConcreteCorrections(result = {}) {
 
 function deterministicLanguageCorrections(source = "", partId = "teil2", task = {}) {
   const corrections = [];
+
+  if (String(task.register || "").toLowerCase() === "formal") {
+    const informalFormalGreeting = String(source || "").match(/(?:^|\n)\s*(Lieber\s+Herr\s+[A-ZÄÖÜ][A-Za-zÄÖÜäöüß-]*)\s*,?/);
+    if (informalFormalGreeting?.[1]) {
+      const from = informalFormalGreeting[1];
+      const surname = from.replace(/^Lieber\s+Herr\s+/i, "").trim();
+      corrections.push({
+        partId,
+        from,
+        to: `Sehr geehrter Herr ${surname}`,
+        reason: "Use a formal salutation for a formal hotel or business email.",
+      });
+    }
+  }
+
   const hopeClause = String(source || "").match(/\bIch\s+hoffe\s+es\s+geht\s+dir\s+gut[.?]/i);
   if (hopeClause?.[0]) {
     corrections.push({
