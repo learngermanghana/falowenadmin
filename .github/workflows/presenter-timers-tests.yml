@@ -16,6 +16,8 @@ on:
       - "src/components/TeachingSlidePresenter.jsx"
       - "src/components/TeachingSlidePresenter.css"
       - "src/utils/presenterReadingShare.js"
+      - "src/utils/a1PresenterActivityTimer.js"
+      - "tests/a1-presenter-activity-timer.test.js"
       - "src/components/A1GrammarPresenter.jsx"
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
       - "scripts/patchPresenterSessionAndResponseTimersCore.mjs"
@@ -44,6 +46,8 @@ on:
       - "src/components/PresenterStudentPicker.jsx"
       - "src/components/PresenterStudentPicker.css"
       - "src/utils/presenterReadingShare.js"
+      - "src/utils/a1PresenterActivityTimer.js"
+      - "tests/a1-presenter-activity-timer.test.js"
       - "scripts/patchPresenterSessionAndResponseTimers.mjs"
       - "scripts/patchPresenterSessionAndResponseTimersCore.mjs"
       - "scripts/patchPresenterRealtimeRemote.mjs"
@@ -76,6 +80,8 @@ jobs:
           node scripts/patchPresenterParticipationInsights.mjs
           node scripts/patchPresenterRandomAndAttendanceDiagnostics.mjs
           node scripts/patchPresenterConceptLabels.mjs
+      - name: Verify A1 activity timer behavior and controls
+        run: node --test tests/a1-presenter-activity-timer.test.js
       - name: Run presenter regressions
         run: node --test tests/presenter-timers.test.js tests/live-class-duration-editor.test.js tests/presenter-fullscreen-layout.test.js tests/presenter-authoritative-timer-sync.test.js tests/presenter-reading-share.test.js tests/presenter-reading-mode-wiring.test.js
       - name: Prepare waiting-room source for production bundle

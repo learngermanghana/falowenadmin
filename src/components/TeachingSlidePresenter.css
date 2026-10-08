@@ -2862,7 +2862,7 @@
 /* compact-presenter-chrome */
 @media (min-width: 1251px) {
   .presenter-topbar {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 0.5rem;
   }

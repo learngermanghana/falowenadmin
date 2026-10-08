@@ -26,12 +26,16 @@ fs.writeFileSync(teachingTarget, teachingSource);
 
 const a1Target = new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url);
 let a1Source = fs.readFileSync(a1Target, "utf8");
-a1Source = replaceOnce(
-  a1Source,
-  'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";\nimport "./TeachingSlidePresenter.css";',
-  'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";\nimport PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
-  "A1 presenter session timer import",
-);
+// Current A1 Presenter already owns its session timer. Keep this patch
+// idempotent when other imports (such as the activity timer) are added.
+if (!a1Source.includes('import PresenterSessionTimer from "./PresenterSessionTimer.jsx";')) {
+  a1Source = replaceOnce(
+    a1Source,
+    'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";\nimport "./TeachingSlidePresenter.css";',
+    'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";\nimport PresenterSessionTimer from "./PresenterSessionTimer.jsx";\nimport "./TeachingSlidePresenter.css";',
+    "A1 presenter session timer import",
+  );
+}
 if (!/<PresenterSessionTimer\b/.test(a1Source)) {
   a1Source = replaceOnce(
     a1Source,
