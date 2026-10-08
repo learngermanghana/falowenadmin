@@ -1373,7 +1373,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                         setShowVocabAnswer(false);
                       }}
                     >
-                      Welches Wort passt? starten
+                      {presenterLevel === "A2" ? "Redemittel-Fragen starten" : "Welches Wort passt? starten"}
                     </button>
                   ) : null}
                 </>
@@ -1384,12 +1384,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       ? "Präzisions- & Registercheck"
                       : (["A2", "B1"].includes(presenterLevel) ? "Redemittel-Check" : "Wortschatz-Check")} · {vocabChallengeIndex + 1}/{vocabChallenges.length}</span>
                     <h1>{presenterLevel === "A2"
-                      ? "Welche Formulierung passt?"
+                      ? "Was sagst du in dieser Situation?"
                       : (presenterLevel === "B1"
                         ? "Welche Formulierung passt zur Funktion?"
                         : (presenterLevel === "C2" ? "Welche Kollokation ist hier am präzisesten?" : "Welches Wort passt?"))}</h1>
                     <p>{presenterLevel === "A2"
-                      ? "Lies die Situation. Der Schüler wählt die passende Formulierung und ergänzt sie danach mündlich."
+                      ? "Lies die Frage vor. Die Lernenden wählen A, B oder C und antworten mit dem passenden Ausdruck. Zeige die Lösung erst danach."
                       : (presenterLevel === "B1"
                         ? "Lies die kommunikative Funktion. Der Schüler wählt das passende Redemittel, begründet die Wahl und bildet danach einen eigenen Satz."
                         : (presenterLevel === "C2"
