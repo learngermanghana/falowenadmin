@@ -213,6 +213,14 @@ jobs:
             # files first so the next batch never re-applies patches to the previous batch's
             # already-mutated source. Keep untracked auth/log files intact.
             git reset --hard "$GITHUB_SHA" >> firebase-deploy.log 2>&1
+
+            # Firebase Functions only receives runtime environment variables from
+            # its dotenv/parameter configuration. The GitHub Actions environment
+            # itself is not copied into the deployed function. Persist the existing
+            # runtime-config secret as base64 so webhook URLs/tokens reach workers.
+            runtime_config_b64="$(printf '%s' "$CLOUD_RUNTIME_CONFIG" | base64 -w0)"
+            printf 'CLOUD_RUNTIME_CONFIG_B64=%s\n' "$runtime_config_b64" > "functions/.env.$FIREBASE_PROJECT_ID"
+
             firebase deploy \
               --project "$FIREBASE_PROJECT_ID" \
               --only "$only" \
