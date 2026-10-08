@@ -1,4 +1,4 @@
-export const A2_WRITING_RUBRIC_VERSION = "a2-semantic-2026-09-25-v2";
+export const A2_WRITING_RUBRIC_VERSION = "a2-semantic-2026-10-08-v3";
 
 const rows = [
   ["A2-1.1", "Small Talk", "informal_email", "informal", "friend_or_personal_contact",
@@ -37,10 +37,10 @@ const rows = [
     "Sie planen einen Urlaub und möchten eine Unterkunft reservieren. Schreiben Sie eine E-Mail an ein Hotel.",
     ["Fragen Sie nach einem freien Zimmer.", "Nennen Sie wichtige Reisedaten, zum Beispiel Datum, Anzahl der Personen oder Zimmerart.", "Fragen Sie nach dem Preis und nach zusätzlichen Leistungen, zum Beispiel Frühstück oder WLAN."],
     ["Ask for a free room", "Give stay details such as dates, people or room type", "Ask about the price and additional services"]],
-  ["A2-4.10", "Tourismus und traditionelle Feste", "informal_email", "informal", "friend_or_personal_contact",
-    "Sie möchten einen Freund oder eine Freundin zu einem Fest einladen. Schreiben Sie eine E-Mail.",
-    ["Erzählen Sie von dem Fest und erklären Sie, warum es besonders ist.", "Laden Sie die Person ein und nennen Sie Datum und Ort.", "Erklären Sie, was die Person mitbringen sollte oder was sie dort erwarten kann."],
-    ["Explain the event and why it is special", "Invite the friend and give date and place", "Explain what the friend should bring or can expect"]],
+  ["A2-4.10", "Eine Stadt entdecken und etwas erleben", "informal_email", "informal", "friend_or_personal_contact",
+    "Sie möchten mit einem Freund oder einer Freundin einen Tag in einer Stadt oder in einem neuen Viertel verbringen. Schreiben Sie eine E-Mail.",
+    ["Sagen Sie, welchen Ort Sie gemeinsam entdecken möchten und warum.", "Schlagen Sie zwei Aktivitäten oder Orte vor, zum Beispiel einen Markt, einen Park, ein Café oder eine Sehenswürdigkeit.", "Nennen Sie einen konkreten Tag und Treffpunkt und fragen Sie, was die andere Person lieber machen möchte."],
+    ["Name the city or neighbourhood and explain why", "Suggest two activities or places", "Give a concrete day and meeting point and ask what the friend prefers"]],
   ["A2-4.11", "Verkehrsmittel vergleichen", "formal_email", "formal", "business",
     "Sie sind in Deutschland und möchten für das Wochenende ein Auto mieten. Schreiben Sie eine E-Mail an eine Autovermietung.",
     ["Fragen Sie, ob für das Wochenende noch ein Auto verfügbar ist.", "Fragen Sie, welche Dokumente benötigt werden.", "Fragen Sie nach dem Preis und ob eine Versicherung enthalten ist."],
