@@ -1686,9 +1686,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }
         // Keep exactly one practice slot; the scenario activity replaces its
         // original focused-practice slide, never adding another page.
-        const challenge = level === "A2"
-          ? getA2TeacherChallenge(normalizedAssignmentId(slide))
-          : getB1TeacherChallenge(normalizedAssignmentId(slide));
+        const challenge = getB1TeacherChallenge(normalizedAssignmentId(slide));
         if (challenge) return [{
           id: "scenario-challenge",
           type: "scenario-challenge",
