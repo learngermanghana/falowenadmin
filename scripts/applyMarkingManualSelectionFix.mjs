@@ -13,7 +13,7 @@ function patchMarkingPage() {
   const path = "src/pages/MarkingPage.jsx";
   let text = readFileSync(path, "utf8");
 
-  const simplifiedWorkspace = text.includes('<h3>Submissions</h3>')
+  const simplifiedWorkspace = (text.includes('<h3>Submissions</h3>') || text.includes('<h3>Submissions to mark</h3>'))
     && text.includes('aria-label="Reference answer"')
     && text.includes('<h3>Objective mapping</h3>');
 
