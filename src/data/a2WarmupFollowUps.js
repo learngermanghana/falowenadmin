@@ -76,7 +76,7 @@ export const A2_WARMUP_FOLLOWUPS = Object.freeze({
   "A2-2.5": [
     {
       "questionDe": "Was machst du gern am Wochenende?",
-      "followUpDe": "Mit wem machst du diese Aktivität am liebsten?"
+      "followUpDe": "Mit wem verbringst du dein Wochenende am liebsten?"
     },
     {
       "questionDe": "Wann stehst du am Wochenende auf?",
@@ -84,11 +84,11 @@ export const A2_WARMUP_FOLLOWUPS = Object.freeze({
     },
     {
       "questionDe": "Siehst du abends oft fern?",
-      "followUpDe": "Welche Sendung oder welchen Film siehst du dann gern?"
+      "followUpDe": "Was siehst du abends am liebsten im Fernsehen?"
     },
     {
       "questionDe": "Gehst du manchmal mit Freunden aus?",
-      "followUpDe": "Wohin geht ihr normalerweise, wenn ihr am Abend ausgeht?"
+      "followUpDe": "Wohin gehst du mit deinen Freunden am liebsten?"
     }
   ],
   "A2-3.6": [
@@ -390,7 +390,7 @@ export const A2_WARMUP_FOLLOWUPS = Object.freeze({
     },
     {
       "questionDe": "An welchem Tag kannst du Freunde treffen?",
-      "followUpDe": "Was möchtest du bei diesem Treffen gemeinsam machen?"
+      "followUpDe": "Was möchtest du mit deinen Freunden an diesem Tag machen?"
     },
     {
       "questionDe": "Was musst du diese Woche unbedingt erledigen?",
