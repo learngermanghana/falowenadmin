@@ -12,15 +12,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Frage nach der Wohnfläche.",
-            "questionDe": "Könnten Sie mir sagen, wie groß die Wohnung ist?",
-            "modelDe": "Frage nach den Nebenkosten."
+            "questionDe": "Frage nach der Wohnfläche.",
+            "modelDe": "Könnten Sie mir sagen, wie groß die Wohnung ist?"
           },
           {
-            "actionDe": "Könnten Sie mir sagen, ob die Nebenkosten in der Miete enthalten sind?",
+            "actionDe": "Frage nach den Nebenkosten.",
+            "questionDe": "Frage nach den Nebenkosten.",
+            "modelDe": "Könnten Sie mir sagen, ob die Nebenkosten in der Miete enthalten sind?"
+          },
+          {
+            "actionDe": "Bitte um einen zweiten Termin.",
             "questionDe": "Bitte um einen zweiten Termin.",
             "modelDe": "Wäre es möglich, einen zweiten Besichtigungstermin zu vereinbaren?"
-          },
-          {}
+          }
         ]
       },
       {
@@ -30,15 +34,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Frage nach öffentlichen Verkehrsmitteln.",
-            "questionDe": "Könnten Sie mir sagen, wie man mit dem Bus ins Zentrum kommt?",
-            "modelDe": "Frage nach dem Mietbeginn."
+            "questionDe": "Frage nach öffentlichen Verkehrsmitteln.",
+            "modelDe": "Könnten Sie mir sagen, wie man mit dem Bus ins Zentrum kommt?"
           },
           {
-            "actionDe": "Wissen Sie, ab wann die Wohnung frei ist?",
+            "actionDe": "Frage nach dem Mietbeginn.",
+            "questionDe": "Frage nach dem Mietbeginn.",
+            "modelDe": "Wissen Sie, ab wann die Wohnung frei ist?"
+          },
+          {
+            "actionDe": "Bitte um einen Grundriss.",
             "questionDe": "Bitte um einen Grundriss.",
             "modelDe": "Könnten Sie mir bitte einen Grundriss schicken?"
-          },
-          {}
+          }
         ]
       },
       {
@@ -48,15 +56,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Frage nach der Küche.",
-            "questionDe": "Könnten Sie mir sagen, ob eine Küche eingebaut werden kann?",
-            "modelDe": "Frage nach der Kaution."
+            "questionDe": "Frage nach der Küche.",
+            "modelDe": "Könnten Sie mir sagen, ob eine Küche eingebaut werden kann?"
           },
           {
-            "actionDe": "Dürfte ich fragen, wie hoch die Kaution ist?",
+            "actionDe": "Frage nach der Kaution.",
+            "questionDe": "Frage nach der Kaution.",
+            "modelDe": "Dürfte ich fragen, wie hoch die Kaution ist?"
+          },
+          {
+            "actionDe": "Bitte um Zeit zum Überlegen.",
             "questionDe": "Bitte um Zeit zum Überlegen.",
             "modelDe": "Wäre es möglich, Ihnen morgen Bescheid zu geben?"
-          },
-          {}
+          }
         ]
       }
     ]
@@ -72,15 +84,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Gib einen Rat.",
-            "questionDe": "Du solltest früher schlafen gehen.",
-            "modelDe": "Erkläre eine Notwendigkeit."
+            "questionDe": "Gib einen Rat.",
+            "modelDe": "Du solltest früher schlafen gehen."
           },
           {
-            "actionDe": "Du musst deinem Körper genug Ruhe geben.",
+            "actionDe": "Erkläre eine Notwendigkeit.",
+            "questionDe": "Erkläre eine Notwendigkeit.",
+            "modelDe": "Du musst deinem Körper genug Ruhe geben."
+          },
+          {
+            "actionDe": "Nenne eine Möglichkeit.",
             "questionDe": "Nenne eine Möglichkeit.",
             "modelDe": "Du kannst abends dein Handy ausschalten."
-          },
-          {}
+          }
         ]
       },
       {
@@ -90,15 +106,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Gib einen Rat.",
-            "questionDe": "Du solltest regelmäßig Wasser trinken.",
-            "modelDe": "Erkläre eine Notwendigkeit."
+            "questionDe": "Gib einen Rat.",
+            "modelDe": "Du solltest regelmäßig Wasser trinken."
           },
           {
-            "actionDe": "Du musst bei großer Hitze genug trinken.",
+            "actionDe": "Erkläre eine Notwendigkeit.",
+            "questionDe": "Erkläre eine Notwendigkeit.",
+            "modelDe": "Du musst bei großer Hitze genug trinken."
+          },
+          {
+            "actionDe": "Nenne eine Möglichkeit.",
             "questionDe": "Nenne eine Möglichkeit.",
             "modelDe": "Du kannst eine Wasserflasche mitnehmen."
-          },
-          {}
+          }
         ]
       },
       {
@@ -108,15 +128,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Gib einen Rat.",
-            "questionDe": "Du solltest öfter aufstehen und dich bewegen.",
-            "modelDe": "Erkläre eine Notwendigkeit."
+            "questionDe": "Gib einen Rat.",
+            "modelDe": "Du solltest öfter aufstehen und dich bewegen."
           },
           {
-            "actionDe": "Du musst auf regelmäßige Pausen achten.",
+            "actionDe": "Erkläre eine Notwendigkeit.",
+            "questionDe": "Erkläre eine Notwendigkeit.",
+            "modelDe": "Du musst auf regelmäßige Pausen achten."
+          },
+          {
+            "actionDe": "Nenne eine Möglichkeit.",
             "questionDe": "Nenne eine Möglichkeit.",
             "modelDe": "Du kannst in der Mittagspause spazieren gehen."
-          },
-          {}
+          }
         ]
       }
     ]
@@ -132,15 +156,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe den Anfang im Perfekt.",
-            "questionDe": "Wir sind früh losgewandert und haben den Wald erreicht.",
-            "modelDe": "Erzähle, was plötzlich passierte."
+            "questionDe": "Beschreibe den Anfang im Perfekt.",
+            "modelDe": "Wir sind früh losgewandert und haben den Wald erreicht."
           },
           {
-            "actionDe": "Als es anfing zu regnen, waren wir weit vom Parkplatz entfernt.",
+            "actionDe": "Erzähle, was plötzlich passierte.",
+            "questionDe": "Erzähle, was plötzlich passierte.",
+            "modelDe": "Als es anfing zu regnen, waren wir weit vom Parkplatz entfernt."
+          },
+          {
+            "actionDe": "Beschreibe das Ende.",
             "questionDe": "Beschreibe das Ende.",
             "modelDe": "Nachdem wir einen Unterstand gefunden hatten, haben wir auf besseres Wetter gewartet."
-          },
-          {}
+          }
         ]
       },
       {
@@ -150,15 +178,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe den Anfang im Perfekt.",
-            "questionDe": "Ich bin mit Freunden an einen See gefahren.",
-            "modelDe": "Erzähle, was plötzlich passierte."
+            "questionDe": "Beschreibe den Anfang im Perfekt.",
+            "modelDe": "Ich bin mit Freunden an einen See gefahren."
           },
           {
-            "actionDe": "Während wir unterwegs waren, hatte mein Fahrrad plötzlich einen Platten.",
+            "actionDe": "Erzähle, was plötzlich passierte.",
+            "questionDe": "Erzähle, was plötzlich passierte.",
+            "modelDe": "Während wir unterwegs waren, hatte mein Fahrrad plötzlich einen Platten."
+          },
+          {
+            "actionDe": "Beschreibe das Ende.",
             "questionDe": "Beschreibe das Ende.",
             "modelDe": "Nachdem wir den Reifen repariert hatten, sind wir weitergefahren."
-          },
-          {}
+          }
         ]
       },
       {
@@ -168,15 +200,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe den Anfang im Perfekt.",
-            "questionDe": "Wir haben am Nachmittag unser Zelt aufgebaut.",
-            "modelDe": "Erzähle, was plötzlich passierte."
+            "questionDe": "Beschreibe den Anfang im Perfekt.",
+            "modelDe": "Wir haben am Nachmittag unser Zelt aufgebaut."
           },
           {
-            "actionDe": "Als das Gewitter kam, waren wir noch am See.",
+            "actionDe": "Erzähle, was plötzlich passierte.",
+            "questionDe": "Erzähle, was plötzlich passierte.",
+            "modelDe": "Als das Gewitter kam, waren wir noch am See."
+          },
+          {
+            "actionDe": "Beschreibe das Ende.",
             "questionDe": "Beschreibe das Ende.",
             "modelDe": "Bevor es dunkel wurde, haben wir einen sicheren Platz gefunden."
-          },
-          {}
+          }
         ]
       }
     ]
@@ -192,15 +228,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Stelle dich höflich vor.",
-            "questionDe": "Guten Tag, ich heiße Samira und bewerbe mich um die Stelle an der Rezeption.",
-            "modelDe": "Erkläre deine Motivation."
+            "questionDe": "Stelle dich höflich vor.",
+            "modelDe": "Guten Tag, ich heiße Samira und bewerbe mich um die Stelle an der Rezeption."
           },
           {
-            "actionDe": "Ich interessiere mich für die Stelle, weil ich gern mit Menschen arbeite.",
+            "actionDe": "Erkläre deine Motivation.",
+            "questionDe": "Erkläre deine Motivation.",
+            "modelDe": "Ich interessiere mich für die Stelle, weil ich gern mit Menschen arbeite."
+          },
+          {
+            "actionDe": "Beschreibe eine Stärke mit Konjunktiv II.",
             "questionDe": "Beschreibe eine Stärke mit Konjunktiv II.",
             "modelDe": "Ich könnte Gäste auch in stressigen Situationen freundlich betreuen."
-          },
-          {}
+          }
         ]
       },
       {
@@ -210,15 +250,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Stelle dich höflich vor.",
-            "questionDe": "Guten Tag, mein Name ist Daniel und ich möchte gern in Ihrer Einrichtung arbeiten.",
-            "modelDe": "Erkläre deine Motivation."
+            "questionDe": "Stelle dich höflich vor.",
+            "modelDe": "Guten Tag, mein Name ist Daniel und ich möchte gern in Ihrer Einrichtung arbeiten."
           },
           {
-            "actionDe": "Ich bewerbe mich, weil mir die Arbeit mit Menschen wichtig ist.",
+            "actionDe": "Erkläre deine Motivation.",
+            "questionDe": "Erkläre deine Motivation.",
+            "modelDe": "Ich bewerbe mich, weil mir die Arbeit mit Menschen wichtig ist."
+          },
+          {
+            "actionDe": "Beschreibe eine Stärke mit Konjunktiv II.",
             "questionDe": "Beschreibe eine Stärke mit Konjunktiv II.",
             "modelDe": "Ich würde auch bei schwierigen Aufgaben ruhig und sorgfältig arbeiten."
-          },
-          {}
+          }
         ]
       },
       {
@@ -228,15 +272,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Stelle dich höflich vor.",
-            "questionDe": "Guten Tag, ich bin Maria und freue mich über die Einladung zu Ihrem Gespräch.",
-            "modelDe": "Erkläre deine Motivation."
+            "questionDe": "Stelle dich höflich vor.",
+            "modelDe": "Guten Tag, ich bin Maria und freue mich über die Einladung zu Ihrem Gespräch."
           },
           {
-            "actionDe": "Ich interessiere mich für die Stelle, weil ich gut organisieren kann.",
+            "actionDe": "Erkläre deine Motivation.",
+            "questionDe": "Erkläre deine Motivation.",
+            "modelDe": "Ich interessiere mich für die Stelle, weil ich gut organisieren kann."
+          },
+          {
+            "actionDe": "Beschreibe eine Stärke mit Konjunktiv II.",
             "questionDe": "Beschreibe eine Stärke mit Konjunktiv II.",
             "modelDe": "Ich könnte Ihr Team bei der Planung und Kommunikation unterstützen."
-          },
-          {}
+          }
         ]
       }
     ]
@@ -252,15 +300,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe das Problem höflich.",
-            "questionDe": "Ich habe das Handy gestern erhalten, aber leider ist das Display beschädigt.",
-            "modelDe": "Erkläre die Konsequenz."
+            "questionDe": "Beschreibe das Problem höflich.",
+            "modelDe": "Ich habe das Handy gestern erhalten, aber leider ist das Display beschädigt."
           },
           {
-            "actionDe": "Deshalb kann ich das Gerät nicht benutzen.",
+            "actionDe": "Erkläre die Konsequenz.",
+            "questionDe": "Erkläre die Konsequenz.",
+            "modelDe": "Deshalb kann ich das Gerät nicht benutzen."
+          },
+          {
+            "actionDe": "Bitte um eine Lösung.",
             "questionDe": "Bitte um eine Lösung.",
             "modelDe": "Könnten Sie mir bitte ein Ersatzgerät schicken?"
-          },
-          {}
+          }
         ]
       },
       {
@@ -270,15 +322,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe das Problem höflich.",
-            "questionDe": "Ich habe eine Jacke in Größe M bestellt, aber Größe S erhalten.",
-            "modelDe": "Erkläre die Konsequenz."
+            "questionDe": "Beschreibe das Problem höflich.",
+            "modelDe": "Ich habe eine Jacke in Größe M bestellt, aber Größe S erhalten."
           },
           {
-            "actionDe": "Deshalb passt mir die Jacke leider nicht.",
+            "actionDe": "Erkläre die Konsequenz.",
+            "questionDe": "Erkläre die Konsequenz.",
+            "modelDe": "Deshalb passt mir die Jacke leider nicht."
+          },
+          {
+            "actionDe": "Bitte um eine Lösung.",
             "questionDe": "Bitte um eine Lösung.",
             "modelDe": "Könnten Sie mir bitte die richtige Größe zusenden?"
-          },
-          {}
+          }
         ]
       },
       {
@@ -288,15 +344,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe das Problem höflich.",
-            "questionDe": "Meine Bestellung sollte am Montag ankommen, aber das Paket fehlt noch.",
-            "modelDe": "Erkläre die Konsequenz."
+            "questionDe": "Beschreibe das Problem höflich.",
+            "modelDe": "Meine Bestellung sollte am Montag ankommen, aber das Paket fehlt noch."
           },
           {
-            "actionDe": "Deshalb benötige ich eine Information zum Lieferstatus.",
+            "actionDe": "Erkläre die Konsequenz.",
+            "questionDe": "Erkläre die Konsequenz.",
+            "modelDe": "Deshalb benötige ich eine Information zum Lieferstatus."
+          },
+          {
+            "actionDe": "Bitte um eine Lösung.",
             "questionDe": "Bitte um eine Lösung.",
             "modelDe": "Könnten Sie bitte prüfen, wo sich meine Sendung befindet?"
-          },
-          {}
+          }
         ]
       }
     ]
@@ -312,15 +372,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe das Problem.",
-            "questionDe": "Unser Zug ist ausgefallen und wir kommen nicht pünktlich an.",
-            "modelDe": "Schlage eine Lösung vor."
+            "questionDe": "Beschreibe das Problem.",
+            "modelDe": "Unser Zug ist ausgefallen und wir kommen nicht pünktlich an."
           },
           {
-            "actionDe": "Wenn es einen Ersatzbus gibt, könnten wir damit weiterfahren.",
+            "actionDe": "Schlage eine Lösung vor.",
+            "questionDe": "Schlage eine Lösung vor.",
+            "modelDe": "Wenn es einen Ersatzbus gibt, könnten wir damit weiterfahren."
+          },
+          {
+            "actionDe": "Bitte höflich um Hilfe.",
             "questionDe": "Bitte höflich um Hilfe.",
             "modelDe": "Könnten Sie uns bitte eine andere Verbindung zeigen?"
-          },
-          {}
+          }
         ]
       },
       {
@@ -330,15 +394,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe das Problem.",
-            "questionDe": "Mein Koffer ist nach dem Flug nicht angekommen.",
-            "modelDe": "Schlage eine Lösung vor."
+            "questionDe": "Beschreibe das Problem.",
+            "modelDe": "Mein Koffer ist nach dem Flug nicht angekommen."
           },
           {
-            "actionDe": "Falls der Koffer gefunden wird, könnte man ihn an mein Hotel schicken.",
+            "actionDe": "Schlage eine Lösung vor.",
+            "questionDe": "Schlage eine Lösung vor.",
+            "modelDe": "Falls der Koffer gefunden wird, könnte man ihn an mein Hotel schicken."
+          },
+          {
+            "actionDe": "Bitte höflich um Hilfe.",
             "questionDe": "Bitte höflich um Hilfe.",
             "modelDe": "Könnten Sie bitte einen Verlustbericht aufnehmen?"
-          },
-          {}
+          }
         ]
       },
       {
@@ -348,15 +416,19 @@ export const B1_SCENARIO_CHALLENGES = Object.freeze({
         "steps": [
           {
             "actionDe": "Beschreibe das Problem.",
-            "questionDe": "Ich habe ein Zimmer gebucht, aber meine Reservierung ist nicht im System.",
-            "modelDe": "Schlage eine Lösung vor."
+            "questionDe": "Beschreibe das Problem.",
+            "modelDe": "Ich habe ein Zimmer gebucht, aber meine Reservierung ist nicht im System."
           },
           {
-            "actionDe": "Wenn noch ein Zimmer frei wäre, würden wir gern dort übernachten.",
+            "actionDe": "Schlage eine Lösung vor.",
+            "questionDe": "Schlage eine Lösung vor.",
+            "modelDe": "Wenn noch ein Zimmer frei wäre, würden wir gern dort übernachten."
+          },
+          {
+            "actionDe": "Bitte höflich um Hilfe.",
             "questionDe": "Bitte höflich um Hilfe.",
             "modelDe": "Könnten Sie bitte meine Buchungsbestätigung überprüfen?"
-          },
-          {}
+          }
         ]
       }
     ]
