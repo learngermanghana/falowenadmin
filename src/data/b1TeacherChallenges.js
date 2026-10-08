@@ -322,70 +322,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Falsche Größe",
-        "icon": "📦",
-        "context": "Du hast Schuhe in Größe 42 bestellt. Geliefert wurde Größe 39.",
+        "label": "Schuhe in der falschen Größe",
+        "icon": "👟",
+        "context": "Du hast im Online-Shop Schuhe in Größe 42 für 69 Euro bestellt. Acht Tage später erhältst du Größe 39. Auf dem Lieferschein steht jedoch Größe 42. Du möchtest einen Umtausch.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe die Bestellung.",
-            "modelDe": "Ich habe Schuhe in Größe 42 bestellt."
+            "actionDe": "Bestellung und Abweichung",
+            "questionDe": "Der Kundenservice fragt: „Was stimmt mit Ihrer Bestellung nicht?“ Wie erklärst du die falsche Größe mit dass?",
+            "modelDe": "Ich habe Schuhe in Größe 42 bestellt, aber festgestellt, dass Sie mir Größe 39 geliefert haben."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre das Problem.",
-            "modelDe": "Leider wurde Größe 39 geliefert, obwohl ich Größe 42 bestellt hatte."
+            "actionDe": "Beleg und Folge nennen",
+            "questionDe": "Der Kundenservice sagt: „Auf dem Lieferschein steht 42.“ Wie erklärst du den Widerspruch und warum du die Schuhe nicht nutzen kannst?",
+            "modelDe": "Auf dem Lieferschein steht zwar Größe 42, aber die Schuhe sind Größe 39. Deshalb passen sie mir leider nicht."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Fordere eine Lösung höflich.",
-            "modelDe": "Könnten Sie mir bitte die richtige Größe zuschicken?"
+            "actionDe": "Umtausch höflich fordern",
+            "questionDe": "Wie bittest du den Shop um die richtige Größe und ein Rücksendeetikett?",
+            "modelDe": "Könnten Sie mir bitte Schuhe in Größe 42 und ein kostenloses Rücksendeetikett schicken?"
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Defektes Gerät",
-        "icon": "📦",
-        "context": "Ein online gekaufter Kopfhörer funktioniert nicht.",
+        "label": "Kopfhörer funktionieren nicht",
+        "icon": "🎧",
+        "context": "Du hast kabellose Kopfhörer online bestellt. Schon am zweiten Tag lässt sich der linke Kopfhörer nicht mehr aufladen. Du hast bereits verschiedene Ladekabel ausprobiert.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe das Problem.",
-            "modelDe": "Ich habe letzte Woche Kopfhörer bestellt, die leider nicht funktionieren."
+            "actionDe": "Fehler präzise erklären",
+            "questionDe": "Der Service fragt: „Was genau funktioniert nicht?“ Wie beschreibst du den Defekt in einem vollständigen Satz?",
+            "modelDe": "Ich muss Ihnen mitteilen, dass sich der linke Kopfhörer seit gestern nicht mehr aufladen lässt."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre die Folge.",
-            "modelDe": "Deshalb kann ich das Produkt nicht benutzen."
+            "actionDe": "Bisherige Versuche erläutern",
+            "questionDe": "Die Mitarbeiterin fragt: „Haben Sie ein anderes Kabel getestet?“ Wie erklärst du deine Versuche und das Ergebnis?",
+            "modelDe": "Ich habe mehrere Ladekabel ausprobiert, aber das Problem besteht weiterhin. Deshalb kann ich das Produkt nicht richtig nutzen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um eine Lösung.",
-            "modelDe": "Ich bitte Sie, mir einen Ersatz zu schicken oder den Kaufpreis zu erstatten."
+            "actionDe": "Ersatz oder Erstattung erbitten",
+            "questionDe": "Wie formulierst du höflich zwei akzeptable Lösungen, ohne unfreundlich zu werden?",
+            "modelDe": "Könnten Sie mir bitte ein funktionierendes Ersatzgerät schicken oder den Kaufpreis erstatten?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Paket fehlt",
+        "label": "Expresspaket kommt zu spät",
         "icon": "📦",
-        "context": "Die Bestellung sollte am Montag kommen, aber das Paket ist nicht angekommen.",
+        "context": "Du hast ein Geburtstagsgeschenk mit Expresslieferung für Donnerstag bestellt. Am Samstag zeigt die Sendungsverfolgung immer noch „in Bearbeitung“. Du hast für die schnelle Lieferung extra bezahlt.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Nenne die Lieferzusage.",
-            "modelDe": "Laut Ihrer Bestätigung sollte das Paket am Montag ankommen."
+            "actionDe": "Lieferzusage belegen",
+            "questionDe": "Der Kundenservice fragt nach dem vereinbarten Termin. Wie erklärst du die Zusage und den aktuellen Status?",
+            "modelDe": "Laut Bestellbestätigung sollte das Paket am Donnerstag ankommen, aber am Samstag steht in der Sendungsverfolgung noch „in Bearbeitung“."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre das Problem.",
-            "modelDe": "Bis heute habe ich die Lieferung leider nicht erhalten."
+            "actionDe": "Folge sachlich begründen",
+            "questionDe": "Das Geschenk wird für Sonntag gebraucht. Wie erklärst du höflich, warum die Verzögerung ein Problem ist?",
+            "modelDe": "Ich benötige das Geschenk spätestens am Sonntag. Deshalb ist die verspätete Lieferung für mich ein Problem."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte höflich um Klärung.",
-            "modelDe": "Könnten Sie bitte prüfen, wo sich mein Paket befindet?"
+            "actionDe": "Klärung und Kosten ansprechen",
+            "questionDe": "Wie fragst du nach einem neuen Liefertermin und nach den zusätzlich bezahlten Expresskosten?",
+            "modelDe": "Könnten Sie bitte den Liefertermin prüfen und mir sagen, ob die zusätzlichen Expresskosten erstattet werden können?"
           }
         ]
       }
@@ -400,70 +400,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Zug verpasst",
-        "icon": "✈️",
-        "context": "Du hast den Anschlusszug verpasst und kommst zu spät an.",
+        "label": "Anschlusszug nach Berlin verpasst",
+        "icon": "🚆",
+        "context": "Dein erster Zug hatte 40 Minuten Verspätung. Deshalb hast du in Hannover den Anschluss nach Berlin verpasst. Dein Termin in Berlin beginnt um 18 Uhr, der nächste Zug fährt erst in einer Stunde.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Reagiere mit einem Wenn-Satz.",
-            "modelDe": "Wenn ich den Anschlusszug verpasse, informiere ich sofort meine Freunde."
+            "actionDe": "Verspätung erklären",
+            "questionDe": "Du rufst deine Gastgeber an. Wie erklärst du kurz, weshalb du zu spät kommst, und nutzt weil?",
+            "modelDe": "Ich komme wahrscheinlich später an, weil mein erster Zug Verspätung hatte und ich den Anschluss verpasst habe."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Schlage eine Alternative vor.",
-            "modelDe": "Ich könnte den nächsten Zug nehmen."
+            "actionDe": "Plan mit wenn entwickeln",
+            "questionDe": "Was würdest du tun, wenn der nächste Zug nicht rechtzeitig in Berlin ankommt? Formuliere einen Wenn-Satz.",
+            "modelDe": "Wenn der nächste Zug zu spät ankommt, würde ich meine Gastgeber informieren und nach einer anderen Verbindung suchen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte höflich um Hilfe.",
-            "modelDe": "Könnten Sie mir sagen, wann der nächste Zug fährt?"
+            "actionDe": "Auskunft höflich erfragen",
+            "questionDe": "Wie fragst du am Bahnschalter nach der schnellsten Alternative nach Berlin?",
+            "modelDe": "Könnten Sie mir bitte sagen, ob es heute noch eine schnellere Verbindung nach Berlin gibt?"
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Gepäck verloren",
-        "icon": "✈️",
-        "context": "Dein Koffer ist nach dem Flug nicht am Gepäckband.",
+        "label": "Koffer fehlt vor einer Konferenz",
+        "icon": "🧳",
+        "context": "Du bist in München gelandet. Dein Koffer mit der Kleidung für eine Konferenz am nächsten Morgen liegt nicht am Gepäckband. Du hast die Gepäcknummer und die Hoteladresse dabei.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Formuliere eine Bedingung.",
-            "modelDe": "Wenn mein Koffer nicht ankommt, melde ich das am Schalter."
+            "actionDe": "Verlust am Schalter melden",
+            "questionDe": "Wie beschreibst du am Gepäckschalter genau, welcher Koffer fehlt und welche Unterlagen du dabei hast?",
+            "modelDe": "Mein schwarzer Koffer ist nicht angekommen. Ich habe die Gepäcknummer und die Hoteladresse dabei."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Schlage einen ersten Schritt vor.",
-            "modelDe": "Ich würde zuerst die Gepäcknummer zeigen."
+            "actionDe": "Lösung unter Bedingung",
+            "questionDe": "Was sollte passieren, falls die Fluggesellschaft den Koffer erst heute Abend findet? Verwende falls und könnte.",
+            "modelDe": "Falls der Koffer heute Abend gefunden wird, könnte er direkt zu meinem Hotel gebracht werden."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um Unterstützung.",
-            "modelDe": "Könnten Sie bitte prüfen, wo mein Koffer ist?"
+            "actionDe": "Hilfe für morgen erbitten",
+            "questionDe": "Du brauchst morgen früh deine Sachen. Wie fragst du höflich nach dem Lieferzeitpunkt?",
+            "modelDe": "Könnten Sie bitte prüfen, wann der Koffer spätestens zu meinem Hotel geliefert werden kann?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Hotelbuchung fehlt",
-        "icon": "✈️",
-        "context": "An der Rezeption findet man deine Hotelreservierung nicht.",
+        "label": "Hotel findet die Buchung nicht",
+        "icon": "🏨",
+        "context": "Du kommst um 22 Uhr in deinem Hotel an. Die Rezeption findet deine bezahlte Reservierung für zwei Nächte nicht. Auf dem Handy hast du die Bestätigung mit der Buchungsnummer.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Erkläre die Situation.",
-            "modelDe": "Wenn die Reservierung nicht gefunden wird, zeige ich die Bestätigungs-E-Mail."
+            "actionDe": "Buchung sachlich nachweisen",
+            "questionDe": "Die Rezeption fragt: „Haben Sie wirklich reserviert?“ Wie erklärst du die Buchung mit dass und zeigst die Bestätigung?",
+            "modelDe": "Ich habe eine Bestätigung, dass ich zwei Nächte gebucht und bereits bezahlt habe. Hier ist meine Buchungsnummer."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Schlage eine Lösung vor.",
-            "modelDe": "Man könnte die Buchungsnummer noch einmal prüfen."
+            "actionDe": "Alternative bei ausgebuchtem Haus",
+            "questionDe": "Was würdest du vorschlagen, wenn das Hotel wirklich kein freies Zimmer mehr hat? Verwende wenn und würde.",
+            "modelDe": "Wenn hier kein Zimmer mehr frei wäre, würde ich um eine vergleichbare Unterkunft in der Nähe bitten."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte höflich um Hilfe.",
-            "modelDe": "Könnten Sie mir bitte ein anderes Zimmer anbieten?"
+            "actionDe": "Konkrete Hilfe erbitten",
+            "questionDe": "Wie bittest du die Mitarbeiterin höflich, die Buchung noch einmal zu prüfen und dir eine Lösung anzubieten?",
+            "modelDe": "Könnten Sie bitte die Buchungsnummer erneut prüfen und mir eine passende Lösung anbieten?"
           }
         ]
       }
