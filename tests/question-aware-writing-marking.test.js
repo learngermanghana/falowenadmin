@@ -515,7 +515,7 @@ test("A2-4.9 recognizes Victoria's hotel booking, stay details, price and servic
   assert.equal(result.taskCompletion.total, 3);
   assert.deepEqual(result.missingTaskPoints, []);
   assert.match(result.taskPointEvidence[0].evidence, /Zimmer.*buchen/i);
-  assert.match(result.taskPointEvidence[1].evidence, /10\. Oktober|drei Tage/i);
+  assert.match(result.taskPointEvidence[1].evidence, /Samstag, 10\.|drei Tage/i);
   assert.match(result.taskPointEvidence[2].evidence, /Wie viel kostet/i);
   assert.match(result.taskPointEvidence[2].evidence, /Frühstück|Internet/i);
   assert.equal(result.ai.questionAwareWritingGuard.registerMismatch, true);
