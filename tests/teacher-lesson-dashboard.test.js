@@ -6,6 +6,7 @@ import {
   buildTeacherRosterReadiness,
   grammarTargetForSlide,
   learnerLessonUrl,
+  learnerLessonLinksForAttendanceSession,
   previousTeacherLesson,
   resolveTeacherLessonSlide,
   selectTeacherLessonSession,
@@ -139,6 +140,74 @@ test("attendance learner links use A1 chapters and mapped A2 lesson days", () =>
   assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-3.5", dayNumber: 13 }), "https://www.falowen.app/campus/course/lesson/A1/3.5");
   assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-1.1-PRACTICE", dayNumber: 4 }), "https://www.falowen.app/campus/course/lesson/A1/1.1-practice");
   const a2 = resolveTeacherLessonSlide({ session: { assignmentIds: ["A2-3.6"] } });
-  assert.equal(learnerLessonUrl(a2), "https://www.falowen.app/campus/course/lesson/A2/6");
+  assert.equal(learnerLessonUrl(a2), "https://www.falowen.app/campus/course/a2-day-6-moebel-und-raeume-workbook");
   assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "unknown", dayNumber: 13 }), "https://www.falowen.app/campus/course");
+});
+
+test("Attendance Open lesson uses registered workbook destinations instead of generic lesson hubs", () => {
+  const examples = [
+    ["A1", "A1-0.2"],
+    ["A1", "A1-9"],
+    ["A2", "A2-3.6"],
+    ["B1", "B1-6.18"],
+  ];
+  for (const [course, assignmentId] of examples) {
+    const slide = getSlidesByCourse(course).find((item) => item.assignmentId === assignmentId);
+    assert.ok(slide, `${assignmentId} teaching slide is required`);
+    assert.ok(slide.workbookConnection?.workbookUrl, `${assignmentId} needs an exact workbook destination`);
+    assert.equal(
+      learnerLessonUrl(slide),
+      `https://www.falowen.app${slide.workbookConnection.workbookUrl}`,
+      `${assignmentId} must open its assigned workbook page, not an adjacent course day`,
+    );
+  }
+});
+
+test("Attendance exposes both A1 lessons on one class day instead of dropping the second chapter", () => {
+  const links = learnerLessonLinksForAttendanceSession({
+    session: { assignmentIds: ["A1-0.2", "A1-1.1"] },
+    dashboard: { klass: { levelId: "A1" } },
+  });
+  assert.deepEqual(links.map((link) => link.assignmentId), ["A1-0.2", "A1-1.1"]);
+  assert.deepEqual(links.map((link) => link.label), ["Open Chapter 0.2", "Open Chapter 1.1"]);
+  assert.equal(new Set(links.map((link) => link.url)).size, 2);
+  assert.ok(links.every((link) => link.url.startsWith("https://www.falowen.app/campus/course/")));
+});
+
+test("Attendance resolves a lesson from its class/day when assignment IDs are missing", () => {
+  const links = learnerLessonLinksForAttendanceSession({
+    session: { assignmentIds: [], curriculumDay: 18 },
+    dashboard: { klass: { levelId: "B1" } },
+  });
+  assert.equal(links.length, 1);
+  assert.equal(links[0].assignmentId, "B1-6.18");
+  assert.match(links[0].url, /\/campus\/course\/lesson\/B1\/18\?view=workbook$/);
+});
+
+test("A1 integer chapter never aliases a different attendance day", () => {
+  assert.equal(
+    learnerLessonUrl({ course: "A1", assignmentId: "A1-9", dayNumber: 16 }),
+    "https://www.falowen.app/campus/course/lesson/A1/chapter/9",
+  );
+});
+
+test("Attendance refuses off-site lesson destinations", () => {
+  const slide = {
+    course: "B1",
+    dayNumber: 18,
+    assignmentId: "B1-6.18",
+    workbookConnection: { workbookUrl: "https://other.example/attacker-lesson" },
+  };
+  assert.equal(learnerLessonUrl(slide), "https://www.falowen.app/campus/course/lesson/B1/18");
+});
+
+test("Both attendance screens render links to the same exact Course Book URLs", async () => {
+  const fs = await import("node:fs/promises");
+  const dashboard = await fs.readFile(new URL("../src/pages/CanonicalAttendancePageV3.jsx", import.meta.url), "utf8");
+  const display = await fs.readFile(new URL("../src/pages/CheckinDisplayPage.jsx", import.meta.url), "utf8");
+  assert.match(dashboard, /learnerLessonLinksForAttendanceSession/);
+  assert.match(dashboard, /lessonLinks\.map/);
+  assert.match(display, /learnerLessonUrl\(slide\)/);
+  assert.match(display, /url\.startsWith\("https:\/\/www\.falowen\.app\/campus\/course\/"\)/);
+  assert.doesNotMatch(display, /url\.includes\("\/course\/lesson\/"\)/);
 });
