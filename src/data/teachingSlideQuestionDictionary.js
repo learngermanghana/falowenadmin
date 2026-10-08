@@ -614,14 +614,14 @@ export const teachingSlideQuestionDictionary = {
   "B1-6.18": {
     warmupQuestionsDe: [
       "Welcher Wunschberuf begleitet dich schon lange?",
-      "Was ist wichtiger: Talent oder Ausbildung?",
-      "Wer hat dich bei deiner Berufswahl beeinflusst?",
+      "Welche Qualifikation brauchst du für diesen Beruf?",
+      "Welchen ersten Schritt kannst du in diesem Monat machen?",
     ],
     studentQuestionsDe: [
-      "Erkläre deinen Weg vom Interesse zum konkreten Berufsziel.",
-      "Welche Stationen sind nötig, um deinen Wunschberuf zu erreichen?",
-      "Erzähl von einer Person mit einem ungewöhnlichen Karriereweg.",
-      "Welche Hindernisse erwartest du und wie willst du damit umgehen?",
+      "Welchen Kurs möchtest du besuchen, um deinem Wunschberuf näherzukommen?",
+      "Warum machst du ein Praktikum? Antworte mit um ... zu.",
+      "Was lernst oder übst du, um dich beruflich weiterzuentwickeln?",
+      "Formuliere drei Schritte zum Wunschberuf mit um ... zu.",
     ],
   },
   "B1-6.19": {
