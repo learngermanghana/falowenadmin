@@ -4,6 +4,12 @@ import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
+import {
+  A1_ACTIVITY_TIMER_PRESETS,
+  DEFAULT_A1_ACTIVITY_MINUTES,
+  a1ActivityDeadline,
+  a1ActivitySecondsLeft,
+} from "../utils/a1PresenterActivityTimer.js";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -290,6 +296,13 @@ export default function A1GrammarPresenter({
   const lastContentSizeRef = useRef({ width: 0, height: 0 });
   const [fitMode, setFitMode] = useState("normal");
   const [focusMode, setFocusMode] = useState(false);
+  const [activityTimerMinutes, setActivityTimerMinutes] = useState(DEFAULT_A1_ACTIVITY_MINUTES);
+  const [activityRemainingSeconds, setActivityRemainingSeconds] = useState(DEFAULT_A1_ACTIVITY_MINUTES * 60);
+  const [activityDeadlineMs, setActivityDeadlineMs] = useState(0);
+  const activitySoundRef = useRef(null);
+  const activityAlarmPlayedRef = useRef(false);
+  const activityTimerRunning = activityDeadlineMs > 0;
+  const activityTimerExpired = !activityTimerRunning && activityRemainingSeconds === 0;
   const [classTimeState, setClassTimeState] = useState({
     remainingSeconds: 0,
     durationSeconds: 0,
@@ -339,6 +352,99 @@ export default function A1GrammarPresenter({
     }
     goTo(stageIndex - 1);
   }
+
+  // Independent of PresenterSessionTimer: never start, stop or reset the class clock.
+  function setActivityMinutes(minutes) {
+    if (!A1_ACTIVITY_TIMER_PRESETS.includes(minutes)) return;
+    setActivityTimerMinutes(minutes);
+    setActivityRemainingSeconds(minutes * 60);
+    setActivityDeadlineMs(0);
+    activityAlarmPlayedRef.current = false;
+  }
+
+  function resetActivityTimer() {
+    setActivityRemainingSeconds(activityTimerMinutes * 60);
+    setActivityDeadlineMs(0);
+    activityAlarmPlayedRef.current = false;
+  }
+
+  function primeActivitySound() {
+    if (typeof window === "undefined") return;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    try {
+      if (!activitySoundRef.current) activitySoundRef.current = new AudioContextClass();
+      if (activitySoundRef.current.state === "suspended") {
+        activitySoundRef.current.resume().catch(() => {});
+      }
+    } catch {
+      // Timers remain usable when the browser blocks audio.
+    }
+  }
+
+  function playActivityTimeUp() {
+    const context = activitySoundRef.current;
+    if (!context || context.state !== "running") return;
+    try {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.value = 740;
+      const start = context.currentTime;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.15, start + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.4);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(start + 0.42);
+    } catch {
+      // Visual time-up indication still works without sound.
+    }
+  }
+
+  function toggleActivityTimer() {
+    if (activityTimerRunning) {
+      setActivityRemainingSeconds(a1ActivitySecondsLeft(activityDeadlineMs));
+      setActivityDeadlineMs(0);
+    } else if (activityRemainingSeconds > 0) {
+      primeActivitySound();
+      setActivityDeadlineMs(a1ActivityDeadline(activityRemainingSeconds));
+    }
+  }
+
+  useEffect(() => {
+    // The next activity begins ready to start, never already counting down.
+    setActivityDeadlineMs(0);
+    setActivityRemainingSeconds(activityTimerMinutes * 60);
+    activityAlarmPlayedRef.current = false;
+  }, [stage?.id, slide?.assignmentId]);
+
+  useEffect(() => {
+    if (!activityDeadlineMs) return undefined;
+    const update = () => {
+      const secondsLeft = a1ActivitySecondsLeft(activityDeadlineMs);
+      setActivityRemainingSeconds(secondsLeft);
+      if (secondsLeft === 0) {
+        setActivityDeadlineMs(0);
+        if (!activityAlarmPlayedRef.current) {
+          activityAlarmPlayedRef.current = true;
+          playActivityTimeUp();
+        }
+      }
+    };
+    const timer = window.setInterval(update, 250);
+    update();
+    return () => window.clearInterval(timer);
+  }, [activityDeadlineMs]);
+
+  useEffect(() => () => {
+    try {
+      activitySoundRef.current?.close?.().catch?.(() => {});
+    } catch {
+      // Browsers may not expose an AudioContext close method.
+    }
+  }, []);
 
   async function presentFullscreen() {
     setFitMode("normal");
@@ -442,7 +548,25 @@ export default function A1GrammarPresenter({
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode ? "presenter-has-focus-stage-timer" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
+        {focusMode ? (
+          <div className={`presenter-focus-stage-timer ${activityTimerExpired ? "is-expired" : ""}`} aria-label="A1 activity timer">
+            <span>Activity timer</span>
+            <strong>{formatFocusTime(activityRemainingSeconds)}</strong>
+            <div className="presenter-focus-stage-timer-actions">
+              {A1_ACTIVITY_TIMER_PRESETS.map((minutes) => (
+                <button key={minutes} type="button" className={activityTimerMinutes === minutes ? "is-active" : ""}
+                  aria-pressed={activityTimerMinutes === minutes} onClick={() => setActivityMinutes(minutes)}>
+                  {minutes}m
+                </button>
+              ))}
+              <button type="button" onClick={toggleActivityTimer} disabled={activityRemainingSeconds <= 0}>
+                {activityTimerRunning ? "Pause" : "Start"}
+              </button>
+              <button type="button" onClick={resetActivityTimer}>Reset</button>
+            </div>
+          </div>
+        ) : null}
         {focusMode && classTimeState.durationSeconds > 0 ? (
           <div className={`presenter-focus-time ${classTimeState.expired ? "is-expired" : ""}`} aria-label="Class time remaining">
             <strong>{formatFocusTime(classTimeState.remainingSeconds)}</strong>
@@ -485,6 +609,22 @@ export default function A1GrammarPresenter({
                 {stages.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
               </select>
             </label>
+            <div className={`presenter-timer ${activityTimerExpired ? "presenter-timer-expired" : ""}`} role="group" aria-label="A1 activity timer controls">
+              <span className="presenter-timer-mode">Activity timer</span>
+              <strong>{formatFocusTime(activityRemainingSeconds)}</strong>
+              <div className="presenter-timer-presets" role="group" aria-label="Activity timer duration">
+                {A1_ACTIVITY_TIMER_PRESETS.map((minutes) => (
+                  <button key={minutes} type="button" className={activityTimerMinutes === minutes ? "is-active" : ""}
+                    aria-pressed={activityTimerMinutes === minutes} onClick={() => setActivityMinutes(minutes)}>
+                    {minutes}m
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={toggleActivityTimer} disabled={activityRemainingSeconds <= 0}>
+                {activityTimerRunning ? "Pause" : "Start"}
+              </button>
+              <button type="button" onClick={resetActivityTimer}>Reset</button>
+            </div>
           </div>
 
         </header>
