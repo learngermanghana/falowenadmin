@@ -868,7 +868,8 @@ function findWritingIssues(text = "") {
       break;
     }
 
-    if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine)) {
+    const hasSubstantiveWeilIssue = /\bweil\s+ich\s+möchte\b/i.test(line);
+    if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine) && !hasSubstantiveWeilIssue) {
       addWritingIssue(issues, {
         submitted: clipFeedbackSnippet(line),
         suggestion: `${line.charAt(0).toUpperCase()}${line.slice(1)}`,
@@ -877,6 +878,19 @@ function findWritingIssues(text = "") {
       break;
     }
     previousLine = line;
+  }
+
+  const weilWordOrder = sourceText.match(/\bweil\s+ich\s+möchte\s+([^.!?\n]{2,90})([.!?]?)/i);
+  if (weilWordOrder?.[0]) {
+    const content = String(weilWordOrder[1] || "").trim();
+    const punctuation = weilWordOrder[2] || "";
+    const submitted = clipFeedbackSnippet(weilWordOrder[0]);
+    const suggestion = `weil ich ${content} möchte${punctuation}`;
+    addWritingIssue(issues, {
+      submitted,
+      suggestion,
+      message: `After ${highlightWritingSnippet("weil")}, move the conjugated verb to the end: ${highlightWritingSnippet(submitted)} → ${highlightWritingSnippet(suggestion)}.`,
+    });
   }
 
   const englishPronoun = sourceText.match(/\bI\s+(?:möchte|moechte|will|kann|habe|bin)\b/i);
