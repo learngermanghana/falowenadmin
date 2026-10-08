@@ -6,6 +6,8 @@ import assert from "node:assert/strict";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
+const A2_CHALLENGE_IDS = new Set(["A2-2.4","A2-3.8","A2-6.17","A2-7.18","A2-7.20","A2-9.24","A2-3.6","A2-4.11","A2-5.13","A2-8.21","A2-10.27","A2-10.28"]);
+
 const OLD_REPETITIVE_IDS = new Set([
   "vocabulary-retrieval",
   "sentence-builder",
@@ -36,7 +38,7 @@ for (const level of ["A2", "B1"]) {
       const practiceId = level === "B1" && slide.assignmentId === "B1-6.18"
         ? "career-challenge"
         : level === "B1" && TEACHER_CHALLENGE_IDS.has(slide.assignmentId)
-          ? "scenario-challenge" : "practice";
+          ? "scenario-challenge" : level === "A2" && A2_CHALLENGE_IDS.has(slide.assignmentId) ? "scenario-challenge" : "practice";
       const practiceIndex = ids.indexOf(practiceId);
       assert.ok(practiceIndex >= 0, `${slide.assignmentId} should contain its focused practice slot`);
       assert.equal(
