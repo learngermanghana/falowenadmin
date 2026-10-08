@@ -10,70 +10,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Altbauwohnung",
+        "label": "Altbau: Miete und Termin",
         "icon": "🏠",
-        "context": "Die Wohnung kostet 780 Euro warm. Der Vermieter nennt die Nebenkosten nicht.",
+        "context": "Eine Altbauwohnung kostet laut Anzeige 780 Euro warm. Strom und Heizung werden nicht erklärt. Die Besichtigung ist am Mittwoch um 14 Uhr, aber du arbeitest bis 16 Uhr.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Frage höflich nach den Nebenkosten.",
-            "modelDe": "Könnten Sie mir sagen, ob die Nebenkosten in der Miete enthalten sind?"
+            "actionDe": "Warmmiete klären",
+            "questionDe": "Wie fragst du den Vermieter höflich, ob Strom und Heizung in den 780 Euro enthalten sind?",
+            "modelDe": "Könnten Sie mir sagen, ob Strom und Heizung in den 780 Euro enthalten sind?"
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Frage nach der Kaution.",
-            "modelDe": "Könnten Sie mir sagen, wie hoch die Kaution ist?"
+            "actionDe": "Kaution verhandeln",
+            "questionDe": "Du kannst eine hohe Kaution nicht auf einmal zahlen. Wie fragst du nach der Höhe und einer Ratenzahlung?",
+            "modelDe": "Dürfte ich fragen, wie hoch die Kaution ist und ob ich sie in Raten zahlen könnte?"
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Vereinbare einen Besichtigungstermin.",
-            "modelDe": "Könnten wir die Wohnung am Freitag besichtigen?"
+            "actionDe": "Termin verschieben",
+            "questionDe": "Du kannst erst nach 17 Uhr. Wie bittest du höflich um einen späteren Besichtigungstermin?",
+            "modelDe": "Wäre es möglich, die Wohnung am Mittwoch nach 17 Uhr zu besichtigen?"
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Kleine Stadtwohnung",
-        "icon": "🏠",
-        "context": "Die Wohnung liegt zentral, aber es gibt keine Angaben zum Balkon.",
+        "label": "Stadtwohnung: Ausstattung",
+        "icon": "🏙️",
+        "context": "Die Wohnung liegt zentral, hat aber laut Anzeige weder Angaben zum Balkon noch zu den Möbeln. Du hast kein Auto und möchtest am Samstag besichtigen.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Frage nach dem Balkon.",
-            "modelDe": "Könnten Sie mir sagen, ob die Wohnung einen Balkon hat?"
+            "actionDe": "Balkon und Möbel",
+            "questionDe": "Wie erkundigst du dich höflich, ob ein Balkon und eine Einbauküche vorhanden sind?",
+            "modelDe": "Könnten Sie mir sagen, ob die Wohnung einen Balkon und eine Einbauküche hat?"
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Frage nach der Verkehrsanbindung.",
-            "modelDe": "Wissen Sie, wie weit die nächste Haltestelle entfernt ist?"
+            "actionDe": "Verkehrsanbindung prüfen",
+            "questionDe": "Du fährst täglich zur Arbeit. Wie fragst du indirekt nach der nächsten Haltestelle?",
+            "modelDe": "Wissen Sie, wie weit die nächste Bushaltestelle entfernt ist?"
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um einen Termin.",
-            "modelDe": "Wäre eine Besichtigung am Dienstag möglich?"
+            "actionDe": "Samstagstermin erbitten",
+            "questionDe": "Der Vermieter bietet nur Freitag an. Wie schlägst du höflich Samstagvormittag vor?",
+            "modelDe": "Wäre es möglich, die Wohnung stattdessen am Samstagvormittag zu besichtigen?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Wohngemeinschaft",
-        "icon": "🏠",
-        "context": "Ein Zimmer ist frei. Die Anzeige nennt weder Mitbewohner noch Hausregeln.",
+        "label": "WG: Zusammenleben",
+        "icon": "🗝️",
+        "context": "Du interessierst dich für ein WG-Zimmer. In der Anzeige fehlen Informationen über Mitbewohner, Ruhezeiten und Besuch. Vor einer Zusage möchtest du die WG kennenlernen.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Frage nach den Mitbewohnern.",
+            "actionDe": "Mitbewohner kennenlernen",
+            "questionDe": "Wie fragst du höflich, mit wie vielen Personen du die Wohnung teilen würdest?",
             "modelDe": "Könnten Sie mir sagen, wie viele Personen in der WG wohnen?"
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Frage nach den Hausregeln.",
-            "modelDe": "Dürfte ich fragen, ob es feste Hausregeln gibt?"
+            "actionDe": "Hausregeln erfragen",
+            "questionDe": "Du lernst abends für Prüfungen. Wie erkundigst du dich nach Ruhezeiten und Besuchsregeln?",
+            "modelDe": "Dürfte ich fragen, ob es feste Ruhezeiten und Regeln für Besuch gibt?"
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um einen Termin.",
-            "modelDe": "Könnten wir einen Termin für die Besichtigung vereinbaren?"
+            "actionDe": "Kennenlernen vereinbaren",
+            "questionDe": "Du willst erst mit allen sprechen. Wie bittest du um ein gemeinsames Kennenlernen?",
+            "modelDe": "Wäre es möglich, einen Termin zu vereinbaren, bei dem ich die Mitbewohner kennenlernen könnte?"
           }
         ]
       }
@@ -88,70 +88,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Wenig Bewegung",
-        "icon": "💚",
-        "context": "Alex sitzt den ganzen Tag und macht kaum Pausen.",
+        "label": "Alex: Büro ohne Bewegung",
+        "icon": "🚶",
+        "context": "Alex sitzt täglich neun Stunden am Schreibtisch, fährt auch kurze Strecken mit dem Auto und klagt über Müdigkeit. Für ein Fitnessstudio hat Alex kein Geld.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Gib einen freundlichen Tipp.",
-            "modelDe": "Alex sollte in der Mittagspause spazieren gehen."
+            "actionDe": "Realistischen Rat geben",
+            "questionDe": "Welchen kleinen Bewegungsschritt sollte Alex schon während der Arbeit ausprobieren?",
+            "modelDe": "Alex sollte jede Stunde kurz aufstehen und sich bewegen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Möglichkeit.",
-            "modelDe": "Alex kann jeden Abend zwanzig Minuten Sport machen."
+            "actionDe": "Kostenfreie Möglichkeit",
+            "questionDe": "Was kann Alex nach der Arbeit tun, ohne Geld für ein Fitnessstudio auszugeben?",
+            "modelDe": "Alex kann nach der Arbeit zwanzig Minuten spazieren gehen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erkläre eine wichtige Grenze.",
-            "modelDe": "Alex darf Erholung und Schlaf nicht vergessen."
+            "actionDe": "Gesunde Grenze setzen",
+            "questionDe": "Alex möchte die Mittagspause streichen, um mehr zu schaffen. Was darf Alex nicht vergessen?",
+            "modelDe": "Alex darf die Pausen nicht dauerhaft ausfallen lassen, weil Erholung wichtig ist."
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Zu wenig Schlaf",
-        "icon": "💚",
-        "context": "Sam schläft oft nur fünf Stunden und lernt bis spät in die Nacht.",
+        "label": "Sam: Lernen statt Schlaf",
+        "icon": "🌙",
+        "context": "Sam lernt für eine Prüfung bis zwei Uhr morgens, schläft nur fünf Stunden und trinkt abends viel Kaffee. Am nächsten Tag kann Sam sich schlecht konzentrieren.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Gib eine Empfehlung.",
-            "modelDe": "Sam sollte früher schlafen gehen."
+            "actionDe": "Schlafrhythmus verbessern",
+            "questionDe": "Was sollte Sam heute Abend anders machen, um ausgeruhter zu sein?",
+            "modelDe": "Sam sollte früher mit dem Lernen aufhören und rechtzeitig schlafen gehen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Notwendigkeit.",
-            "modelDe": "Sam muss sich vor der Prüfung ausreichend erholen."
+            "actionDe": "Erholung priorisieren",
+            "questionDe": "Warum muss Sam ausreichend schlafen, statt die ganze Nacht weiterzulernen?",
+            "modelDe": "Sam muss genug schlafen, weil gute Erholung beim Konzentrieren hilft."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Nenne eine gesunde Möglichkeit.",
-            "modelDe": "Sam kann vor dem Schlafengehen das Handy ausschalten."
+            "actionDe": "Abendroutine vorschlagen",
+            "questionDe": "Was kann Sam vor dem Schlafengehen ändern, ohne auf das Lernen zu verzichten?",
+            "modelDe": "Sam kann einen Lernplan machen und abends auf Kaffee verzichten."
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Stressiger Alltag",
-        "icon": "💚",
-        "context": "Mina hat viel Stress und isst unterwegs oft unregelmäßig.",
+        "label": "Mina: Schichtarbeit und Stress",
+        "icon": "🥗",
+        "context": "Mina arbeitet in wechselnden Schichten, vergisst oft zu essen und fühlt sich gestresst. In der Mittagspause gibt es wenig Zeit und keine Kantine.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Gib einen Tipp.",
-            "modelDe": "Mina sollte regelmäßige Pausen einplanen."
+            "actionDe": "Essen vorausplanen",
+            "questionDe": "Welchen praktischen Rat sollte Mina für Tage ohne Kantine bekommen?",
+            "modelDe": "Mina sollte am Vorabend eine einfache Mahlzeit vorbereiten."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Möglichkeit.",
-            "modelDe": "Mina kann gesundes Essen vorbereiten."
+            "actionDe": "Pausen ermöglichen",
+            "questionDe": "Wie kann Mina trotz wechselnder Schichten regelmäßige Essenspausen einplanen?",
+            "modelDe": "Mina kann ihre Pausenzeiten vor jeder Schicht planen und einen Snack mitnehmen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erkläre eine Grenze.",
-            "modelDe": "Mina darf ihre Gesundheit nicht dauerhaft vernachlässigen."
+            "actionDe": "Belastung begrenzen",
+            "questionDe": "Mina möchte immer zusätzliche Schichten übernehmen. Was darf sie dabei nicht vergessen?",
+            "modelDe": "Mina darf ihre Erholung nicht vernachlässigen, weil sie auch Zeit zum Ausruhen braucht."
           }
         ]
       }
