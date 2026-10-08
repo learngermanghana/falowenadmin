@@ -346,7 +346,7 @@ const definitions = [
         "id": "scenario-2",
         "label": "Falsche Farbe geliefert",
         "icon": "🎯",
-        "context": "Du hast online eine blaue Jacke bestellt, aber eine rote Jacke bekommen.",
+        "context": "Du hast im Onlineshop eine blaue Jacke für deine Reise bestellt, aber im Paket liegt eine rote Jacke.",
         "steps": [
           {
             "actionDe": "Situation beschreiben",
