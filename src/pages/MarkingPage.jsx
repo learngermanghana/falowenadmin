@@ -197,6 +197,7 @@ export default function MarkingPage() {
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
+  const [showAllObjectiveAnswers, setShowAllObjectiveAnswers] = useState(false);
   const [reportFallbackVisible, setReportFallbackVisible] = useState(false);
   const workflowSaving = false;
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
@@ -343,6 +344,25 @@ export default function MarkingPage() {
   }, [studentSubmissions, referenceAssignment, referenceEntries]);
 
   const selectedSubmission = studentSubmissions.find((row) => (row.path || row.id) === selectedAttemptPath) || latestSubmission;
+
+  useEffect(() => {
+    if (!selectedSubmission) return;
+    const automaticReference = findReferenceEntryForSubmission(referenceEntries, selectedSubmission);
+    if (automaticReference?.assignment) {
+      setReferenceAssignment((current) => current === automaticReference.assignment ? current : automaticReference.assignment);
+    }
+  }, [
+    selectedSubmission?.path,
+    selectedSubmission?.id,
+    selectedSubmission?.assignment,
+    selectedSubmission?.assignmentId,
+    selectedSubmission?.assignmentKey,
+    referenceEntries,
+  ]);
+
+  const automaticReferenceEntry = selectedSubmission
+    ? findReferenceEntryForSubmission(referenceEntries, selectedSubmission)
+    : null;
   const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id));
   const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
@@ -385,6 +405,7 @@ export default function MarkingPage() {
     setSchreibenMark("");
     setFinalScoreOverride(null);
     setSelectedHighlight("");
+    setShowAllObjectiveAnswers(false);
   }, [
     reviewIdentity,
     selectedStudent?.level,
@@ -423,6 +444,11 @@ export default function MarkingPage() {
   const objectiveMarkingResult = useMemo(() => {
     return computeObjectiveScore(objectiveAssignmentId, selectedSubmission?.text || "");
   }, [objectiveAssignmentId, selectedSubmission?.text]);
+
+  const objectiveEntries = Object.entries(objectiveMarkingResult.details || {});
+  const objectiveIssueEntries = objectiveEntries.filter(([, answer]) => !answer?.correct);
+  const visibleObjectiveEntries = showAllObjectiveAnswers ? objectiveEntries : objectiveIssueEntries;
+  const markingStage = smartMarkingResult ? 3 : selectedSubmission ? 2 : 1;
 
   const objectiveScorePercent = objectivePercentFromResult(objectiveMarkingResult);
   const scoringLevel = smartMarkingResult?.level
@@ -792,6 +818,21 @@ export default function MarkingPage() {
   return (
     <div className="marking-workspace">
       <header className="marking-workspace-header"><div><strong>{selectedStudent?.name || "Select a submission"}</strong><span>{selectedSubmission?.assignment || referenceEntry?.assignment || ""}</span></div></header>
+      <div className="marking-stage-bar" aria-label="Marking workflow">
+        {[
+          [1, "Student work"],
+          [2, "Mark with AI"],
+          [3, "Review & save"],
+        ].map(([stage, label]) => (
+          <div
+            key={stage}
+            className={`marking-stage ${markingStage === stage ? "is-current" : markingStage > stage ? "is-complete" : ""}`}
+          >
+            <span>{stage}</span>
+            <strong>{label}</strong>
+          </div>
+        ))}
+      </div>
       {loading && <p role="status">Loading roster and submissions...</p>}
       <div className="marking-columns">
         <aside className="marking-column marking-queue" aria-label="Submission queue">
@@ -830,7 +871,7 @@ export default function MarkingPage() {
         </aside>
         <main className="marking-column marking-submission" aria-label="Submission and reference">
           <div className="marking-reference-work-grid">
-            <section className="marking-card">
+            <section className="marking-card" id="marking-stage-work">
               <div className="marking-section-heading">
                 <div>
                   <h3>Student work</h3>
@@ -889,16 +930,23 @@ export default function MarkingPage() {
                   {keyComparison === "matched" ? "Key matched" : keyComparison === "different" ? "Key mismatch" : "Key unavailable"}
                 </span>
               </div>
-              <select
-                aria-label="Reference answer"
-                disabled={autoMarking || savingScore || workflowSaving}
-                value={referenceAssignment}
-                onChange={(event) => { setSelectedAttemptPath(""); setReferenceAssignment(event.target.value); }}
-              >
-                {referenceEntries.map((entry) => (
-                  <option key={entry.assignment} value={entry.assignment}>{formatReferenceAssignmentLabel(entry)}</option>
-                ))}
-              </select>
+              <div className="marking-reference-selected">
+                <span>{automaticReferenceEntry ? "Matched automatically" : "Current reference"}</span>
+                <strong>{referenceEntry ? formatReferenceAssignmentLabel(referenceEntry) : "No matching reference found"}</strong>
+              </div>
+              <details className="marking-reference-override">
+                <summary>Change reference</summary>
+                <select
+                  aria-label="Reference answer"
+                  disabled={autoMarking || savingScore || workflowSaving}
+                  value={referenceAssignment}
+                  onChange={(event) => setReferenceAssignment(event.target.value)}
+                >
+                  {referenceEntries.map((entry) => (
+                    <option key={entry.assignment} value={entry.assignment}>{formatReferenceAssignmentLabel(entry)}</option>
+                  ))}
+                </select>
+              </details>
               {keyComparison === "different" ? (
                 <div className="marking-inline-warning">The page reference and saved AI key differ. Refresh or import the current key before AI marking.</div>
               ) : null}
@@ -911,30 +959,45 @@ export default function MarkingPage() {
             <div className="marking-section-heading">
               <div>
                 <h3>Objective mapping</h3>
-                <p>Student answer against the reference, question by question.</p>
+                <p>{showAllObjectiveAnswers ? "Showing every objective answer." : "Showing only wrong or unanswered questions."}</p>
               </div>
-              {objectiveMarkingResult.totalCount ? <strong>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount}</strong> : null}
+              <div className="marking-objective-actions">
+                {objectiveMarkingResult.totalCount ? <strong>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount}</strong> : null}
+                {objectiveMarkingResult.totalCount ? (
+                  <button
+                    type="button"
+                    className="marking-compact-action"
+                    onClick={() => setShowAllObjectiveAnswers((current) => !current)}
+                  >
+                    {showAllObjectiveAnswers ? "Show issues only" : "Show all answers"}
+                  </button>
+                ) : null}
+              </div>
             </div>
             {objectiveMarkingResult.totalCount ? (
-              <div className="marking-table-scroll">
-                <table className="marking-objective-table">
-                  <thead><tr><th>Question</th><th>Student</th><th>Reference</th><th>Result</th></tr></thead>
-                  <tbody>
-                    {Object.entries(objectiveMarkingResult.details).map(([question, answer]) => (
-                      <tr key={question} className={answer.correct ? "is-correct" : "is-wrong"}>
-                        <td><strong>{question}</strong></td>
-                        <td>{answer.student || "No answer"}</td>
-                        <td>{answer.expectedDisplay || answer.expected || answer.rawExpected || "—"}</td>
-                        <td>{answer.correct ? "Correct" : String(answer.student || answer.submitted || "").trim() ? "Needs correction" : "Not answered"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              visibleObjectiveEntries.length ? (
+                <div className="marking-table-scroll">
+                  <table className="marking-objective-table">
+                    <thead><tr><th>Question</th><th>Student</th><th>Reference</th><th>Result</th></tr></thead>
+                    <tbody>
+                      {visibleObjectiveEntries.map(([question, answer]) => (
+                        <tr key={question} className={answer.correct ? "is-correct" : "is-wrong"}>
+                          <td><strong>{question}</strong></td>
+                          <td>{answer.student || "No answer"}</td>
+                          <td>{answer.expectedDisplay || answer.expected || answer.rawExpected || "—"}</td>
+                          <td>{answer.correct ? "Correct" : String(answer.student || answer.submitted || "").trim() ? "Needs correction" : "Not answered"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="marking-objective-clear">All objective answers are correct. Use “Show all answers” if you want to inspect them.</div>
+              )
             ) : <p className="marking-empty">No objective answers were detected. Use the reference and AI marking for the writing task.</p>}
           </section>
         </main>
-        <aside className="marking-column marking-review" aria-label="Score review">
+        <aside className="marking-column marking-review" id="marking-stage-review" aria-label="Score review">
           <section className="marking-card marking-review-card">
             <div className="marking-section-heading">
               <div>
