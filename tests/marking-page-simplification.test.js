@@ -34,15 +34,27 @@ test("reference is selected automatically and manual override stays secondary", 
   assert.match(source, /aria-label="Reference answer"/);
 });
 
-test("stale or missing AI keys can be fixed from the marking page", () => {
-  assert.match(source, /syncAnswerKeysFromGitHub/);
-  assert.match(source, /answerKeySyncNeeded = keyComparison === "different" \|\| keyComparison === "missing"/);
+test("stale or missing AI keys are offered only after the registry check completes", () => {
+  assert.match(source, /answerKeyRegistryStatus/);
+  assert.match(source, /answerKeyRegistryReady = answerKeyRegistryStatus === "ready"/);
+  assert.match(source, /answerKeySyncNeeded = answerKeyRegistryReady && \(keyComparison === "different" \|\| keyComparison === "missing"\)/);
+  assert.match(source, /Checking the saved AI key before marking/);
+  assert.match(source, /Retry key check/);
   assert.match(source, /Sync latest answer keys/);
   assert.match(source, /Sync AI key/);
-  assert.match(source, /Updated \$\{result\.importedCount\} answer keys/);
   assert.doesNotMatch(source, /Refresh or import the current key before AI marking/);
   assert.match(css, /\.marking-key-sync-warning/);
   assert.match(css, /\.marking-sync-key-action/);
+});
+
+test("answer-key sync verifies the current assignment and reports partial failures", () => {
+  assert.match(source, /const refreshedRegistry = await refreshAnswerKeyRegistry\(\)/);
+  assert.match(source, /const refreshedComparison = answerKeyComparison\(referenceEntry, refreshedMatchingRegistry\)/);
+  assert.match(source, /const currentFailure = \(result\.failed \|\| \[\]\)\.find/);
+  assert.match(source, /AI marking remains blocked/);
+  assert.match(source, /result\.failedCount > 0/);
+  assert.match(source, /other answer key/);
+  assert.match(source, /This assignment’s AI key is ready/);
 });
 
 test("objective mapping defaults to issues and can reveal all answers", () => {

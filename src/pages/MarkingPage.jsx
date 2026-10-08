@@ -203,6 +203,8 @@ export default function MarkingPage() {
   const [reportFallbackVisible, setReportFallbackVisible] = useState(false);
   const workflowSaving = false;
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
+  const [answerKeyRegistryStatus, setAnswerKeyRegistryStatus] = useState("loading");
+  const [answerKeyRegistryError, setAnswerKeyRegistryError] = useState("");
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) {
@@ -231,15 +233,24 @@ export default function MarkingPage() {
   }, []);
 
   const refreshAnswerKeyRegistry = useCallback(async () => {
+    setAnswerKeyRegistryStatus("loading");
+    setAnswerKeyRegistryError("");
     try {
-      setAnswerKeyRegistry(await loadAnswerKeyRegistry());
+      const rows = await loadAnswerKeyRegistry();
+      setAnswerKeyRegistry(rows);
+      setAnswerKeyRegistryStatus("ready");
+      return rows;
     } catch (err) {
-      error(err?.message || "Failed to load answer key registry");
+      const message = err?.message || "Failed to load answer key registry";
+      setAnswerKeyRegistryStatus("error");
+      setAnswerKeyRegistryError(message);
+      error(message);
+      throw err;
     }
   }, [error]);
 
   useEffect(() => {
-    refreshAnswerKeyRegistry();
+    void refreshAnswerKeyRegistry().catch(() => {});
   }, [refreshAnswerKeyRegistry]);
 
   useEffect(() => {
@@ -365,9 +376,14 @@ export default function MarkingPage() {
   const automaticReferenceEntry = selectedSubmission
     ? findReferenceEntryForSubmission(referenceEntries, selectedSubmission)
     : null;
-  const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id));
+  const currentReferenceKey = normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id);
+  const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === currentReferenceKey);
   const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
-  const answerKeySyncNeeded = keyComparison === "different" || keyComparison === "missing";
+  const answerKeyRegistryReady = answerKeyRegistryStatus === "ready";
+  const answerKeyRegistryLoading = answerKeyRegistryStatus === "loading";
+  const answerKeyRegistryFailed = answerKeyRegistryStatus === "error";
+  const answerKeySyncNeeded = answerKeyRegistryReady && (keyComparison === "different" || keyComparison === "missing");
+  const aiMarkingBlockedByKey = !answerKeyRegistryReady || answerKeySyncNeeded;
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
   const writingTask = writingExpected ? writingTaskCandidate : null;
@@ -565,8 +581,27 @@ export default function MarkingPage() {
     try {
       setSyncingAnswerKeys(true);
       const result = await syncAnswerKeysFromGitHub();
-      await refreshAnswerKeyRegistry();
-      success(`Updated ${result.importedCount} answer keys. You can run AI marking now.`);
+      const refreshedRegistry = await refreshAnswerKeyRegistry();
+      const refreshedMatchingRegistry = refreshedRegistry.find(
+        (entry) => normalize(entry.assignmentKey) === currentReferenceKey,
+      );
+      const refreshedComparison = answerKeyComparison(referenceEntry, refreshedMatchingRegistry);
+      const currentFailure = (result.failed || []).find(
+        (item) => normalize(item.assignmentKey) === currentReferenceKey,
+      );
+
+      if (currentFailure || refreshedComparison !== "matched") {
+        const detail = currentFailure?.reason ? ` ${currentFailure.reason}` : "";
+        error(`The AI key for ${referenceEntry?.assignmentId || referenceEntry?.assignment_id || "this assignment"} was not updated successfully.${detail} AI marking remains blocked.`);
+        return;
+      }
+
+      if (result.failedCount > 0) {
+        error(`This assignment’s AI key is ready, but ${result.failedCount} other answer key${result.failedCount === 1 ? "" : "s"} failed to sync. You can mark this submission, but the other failures still need attention.`);
+        return;
+      }
+
+      success(`Updated ${result.importedCount} answer keys. This assignment’s AI key is ready.`);
     } catch (err) {
       error(err?.message || "Failed to update the saved AI answer keys.");
     } finally {
@@ -899,7 +934,7 @@ export default function MarkingPage() {
                     className="marking-primary-action"
                     type="button"
                     onClick={handleAutoMark}
-                    disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission || answerKeySyncNeeded}
+                    disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission || aiMarkingBlockedByKey}
                   >
                     {autoMarking ? "Marking..." : smartMarkingResult ? "Re-run AI marking" : "Mark with AI"}
                   </button>
@@ -942,8 +977,16 @@ export default function MarkingPage() {
                   <h3>Reference</h3>
                   <p>The answer key used to compare this submission.</p>
                 </div>
-                <span className={`marking-key-pill marking-key-${keyComparison}`}>
-                  {keyComparison === "matched" ? "Key matched" : keyComparison === "different" ? "Key mismatch" : "Key unavailable"}
+                <span className={`marking-key-pill marking-key-${answerKeyRegistryLoading ? "checking" : answerKeyRegistryFailed ? "error" : keyComparison}`}>
+                  {answerKeyRegistryLoading
+                    ? "Checking AI key..."
+                    : answerKeyRegistryFailed
+                      ? "Key check failed"
+                      : keyComparison === "matched"
+                        ? "Key matched"
+                        : keyComparison === "different"
+                          ? "Key mismatch"
+                          : "Key unavailable"}
                 </span>
               </div>
               <div className="marking-reference-selected">
@@ -963,6 +1006,27 @@ export default function MarkingPage() {
                   ))}
                 </select>
               </details>
+              {answerKeyRegistryLoading ? (
+                <div className="marking-inline-warning">
+                  Checking the saved AI key before marking. Sync is not available until this check finishes.
+                </div>
+              ) : null}
+              {answerKeyRegistryFailed ? (
+                <div className="marking-inline-warning marking-key-sync-warning">
+                  <div>
+                    <strong>Could not check the saved AI key.</strong>
+                    <p>{answerKeyRegistryError || "The answer-key registry could not be loaded."} Retry the check before marking.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="marking-sync-key-action"
+                    onClick={() => void refreshAnswerKeyRegistry().catch(() => {})}
+                    disabled={answerKeyRegistryLoading || syncingAnswerKeys || autoMarking || savingScore}
+                  >
+                    Retry key check
+                  </button>
+                </div>
+              ) : null}
               {answerKeySyncNeeded ? (
                 <div className="marking-inline-warning marking-key-sync-warning">
                   <div>
@@ -1136,7 +1200,20 @@ export default function MarkingPage() {
       </div>
       {selectedSubmission ? (
         <div className="marking-mobile-sticky-action" aria-label="Current marking action">
-          {answerKeySyncNeeded ? (
+          {answerKeyRegistryLoading ? (
+            <button className="marking-primary-action" type="button" disabled>
+              Checking AI key...
+            </button>
+          ) : answerKeyRegistryFailed ? (
+            <button
+              className="marking-primary-action"
+              type="button"
+              onClick={() => void refreshAnswerKeyRegistry().catch(() => {})}
+              disabled={answerKeyRegistryLoading || syncingAnswerKeys || autoMarking || savingScore}
+            >
+              Retry key check
+            </button>
+          ) : answerKeySyncNeeded ? (
             <button
               className="marking-primary-action"
               type="button"
@@ -1150,7 +1227,7 @@ export default function MarkingPage() {
               className="marking-primary-action"
               type="button"
               onClick={handleAutoMark}
-              disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions}
+              disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions || aiMarkingBlockedByKey}
             >
               {autoMarking ? "Marking..." : "Mark with AI"}
             </button>
