@@ -725,7 +725,7 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
     speakingModels: [
       {
         "questionDe": "Welcher Beruf interessiert dich? Welchen Schritt machst du, um ihn zu erreichen?",
-        "modelAnswerDe": "Mein Wunschberuf ist Lehrer. Ich studiere Pädagogik, um später an einer Schule zu arbeiten. Außerdem übe ich Präsentationen, um klarer und sicherer zu erklären."
+        "modelAnswerDe": "Der Beruf des Lehrers interessiert mich. Ich studiere Pädagogik, um später an einer Schule zu arbeiten. Außerdem übe ich Präsentationen, um klarer und sicherer zu erklären."
       },
       {
         "questionDe": "Welche Ausbildung oder Qualifikation brauchst du? Erkläre deinen Plan mit um ... zu.",
