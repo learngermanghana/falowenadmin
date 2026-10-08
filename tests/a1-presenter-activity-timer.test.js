@@ -79,7 +79,12 @@ test("A1 fullscreen keeps mobile picker, activity countdown and class timer in n
   const start = css.indexOf(marker);
   assert.ok(start >= 0, "A1 responsive layout must be present");
   const layout = css.slice(start);
-  assert.match(layout, /@media \(max-width: 900px\)/);
+  const stackedMaxWidth = Number(layout.match(/@media \(max-width: (\d+)px\)/)?.[1]);
+  assert.equal(stackedMaxWidth, 1350, "stacking must cover compact tablets and wide student marking controls");
+  for (const width of [375, 700, 900, 912, 1024, 1180, 1250, 1280, 1350]) {
+    assert.ok(width <= stackedMaxWidth, `${width}px viewport needs non-overlapping A1 controls`);
+  }
+  assert.ok(1351 > stackedMaxWidth, "desktop A1 layout resumes above the safe breakpoint");
   assert.match(layout, /grid-template-rows: auto auto auto minmax\(0, 1fr\)/);
   const blocks = [
     [".presenter-participation-dock", 1],
