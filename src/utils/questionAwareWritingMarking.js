@@ -25,13 +25,28 @@ function applyAuthoritativeWritingOverride(task = {}) {
   const a1Spec = getA1WritingTaskSpec(assignmentKey);
   const a2Spec = getA2WritingTaskSpec(assignmentKey);
   const b1Spec = getB1WritingTaskSpec(assignmentKey);
-  const next = a1Spec
-    ? { ...task, ...a1Spec, level: "A1" }
-    : a2Spec
-      ? { ...task, ...a2Spec, level: "A2" }
-      : b1Spec
-        ? { ...task, ...b1Spec, level: "B1" }
-        : task;
+  // A verified learner-published task outranks historical Admin rubrics.
+  // Preserve the tested English evidence labels only while all German task
+  // points still match; changed prompts require review instead of stale rules.
+  const publishedA2 = task.source === "learner-coursebook"
+    && Boolean(task.sourceVersion) && a2Spec
+    && Array.isArray(task.taskPointsDe) && task.taskPointsDe.length === 3
+    && clean(task.taskText);
+  const samePoints = publishedA2
+    && JSON.stringify(task.taskPointsDe.map(clean)) === JSON.stringify((a2Spec.taskPointsDe || []).map(clean));
+  const next = publishedA2
+    ? {
+      ...a2Spec, ...task, level: "A2",
+      taskPoints: samePoints ? [...a2Spec.taskPoints] : [...task.taskPointsDe],
+      rubricVersion: `learner-${task.sourceVersion}`,
+    }
+    : a1Spec
+      ? { ...task, ...a1Spec, level: "A1" }
+      : a2Spec
+        ? { ...task, ...a2Spec, level: "A2" }
+        : b1Spec
+          ? { ...task, ...b1Spec, level: "B1" }
+          : task;
   if (!next?.assignmentKey) return next;
 
   const a1Guidance = next.level === "A1"

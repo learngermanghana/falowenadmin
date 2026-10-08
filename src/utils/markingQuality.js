@@ -24,6 +24,7 @@ function compactWrongQuestionSummary(rows = []) {
   const groups = new Map();
   rows.forEach(([question, row]) => {
     const part = String(row?.partId || question.match(/^(teil\s*\d+)/i)?.[1] || "Objective")
+      .replace(/^main$/i, "Objective")
       .replace(/^teil/i, "Teil ")
       .replace(/\s+/g, " ")
       .trim();
@@ -45,7 +46,8 @@ export function exactObjectiveFeedback(objective, wordTarget = 40) {
   const partIds = [...new Set(rows.map(([, row]) => row.partId || "Objective"))];
   for (const part of partIds) {
     const answers = rows.filter(([, row]) => (row.partId || "Objective") === part);
-    summary.push(`${part.replace(/^teil/i, "Teil ")}: ${answers.filter(([, row]) => row.correct).length}/${answers.length} correct.`);
+    const label = /^main$/i.test(part) ? "Objective" : part.replace(/^teil/i, "Teil ");
+    summary.push(`${label}: ${answers.filter(([, row]) => row.correct).length}/${answers.length} correct.`);
   }
   const wrong = rows.filter(([, row]) => !row.correct);
   const intro = summary.join(" ") || `${objective.correctCount}/${objective.totalCount} correct.`;

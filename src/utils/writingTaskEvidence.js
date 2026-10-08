@@ -30,6 +30,23 @@ function ruleForPoint(label = "", assignmentKey = "") {
   const value = clean(label).toLowerCase();
   const normalizedAssignmentKey = String(assignmentKey || "").trim().toUpperCase();
 
+  if (normalizedAssignmentKey === "A2-4.10") {
+    // Current learner coursebook: invite a friend to explore a city, NOT a festival.
+    if (/name the city or neighbourhood and explain why/i.test(value)) {
+      return /\b(?:entdeck\w*|kennenlern\w*|besuch\w*|stadt|viertel|ort)\b[\s\S]{0,180}\bweil\b/i;
+    }
+    if (/suggest two activities or places/i.test(value)) {
+      return /\bzuerst\b[\s\S]{0,200}\bdanach\b/i;
+    }
+    if (/give a concrete day and meeting point and ask what the friend prefers/i.test(value)) {
+      return [
+        /\b(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|morgen|wochenende)\b/i,
+        /\b(?:treffen|treffpunkt|vor\s+(?:dem|der)|am\s+(?:bahnhof|markt|rathaus)|im\s+(?:caf[eé]|park))\b/i,
+        /\b(?:was\s+m[oö]chtest\s+du|was\s+meinst\s+du|was\s+denk\w*\s+du|welch\w*\s+ort\w*\s+m[oö]chtest\s+du)\b[^?]*\?/i,
+      ];
+    }
+  }
+
   if (normalizedAssignmentKey === "A2-4.9") {
     if (/ask for a free room/.test(value)) {
       return /\bzimmer\b[\s\S]{0,90}\b(?:frei|verf[uü]gbar|reservier\w*|buch\w*)\b|\b(?:frei|verf[uü]gbar|reservier\w*|buch\w*)\b[\s\S]{0,90}\bzimmer\b/i;

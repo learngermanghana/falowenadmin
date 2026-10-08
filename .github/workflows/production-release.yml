@@ -64,6 +64,8 @@ jobs:
         run: npm ci
       - name: Validate source sync on clean checkout
         run: npm run sync:build
+      - name: Verify live marking contract, Day 10 writing and objective labels
+        run: node --test tests/live-marking-contract-and-objective-label.test.js
       - name: Validate production release wiring
         run: node --test tests/production-release-guard.test.js tests/teacher-lesson-dashboard.test.js
 
@@ -90,6 +92,7 @@ jobs:
           tests/teaching-presenter.test.js
           tests/a2-b1-lesson-profile.test.js
           tests/production-deployment-contract.test.js
+          tests/live-marking-contract-and-objective-label.test.js
       - name: Check learner-source parity
         run: node scripts/auditStudentAdminCurriculumParity.mjs
       - name: Run production contract gate
