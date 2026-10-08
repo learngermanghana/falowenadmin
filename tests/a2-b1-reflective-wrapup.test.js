@@ -31,13 +31,16 @@ for (const level of ["A2", "B1"]) {
 
       assert.deepEqual(ids.slice(-3), ["questions", "workbook", "lesson-summary"], `${slide.assignmentId} should finish with production, workbook and summary`);
       assert.equal(ids.filter((id) => id === "grammar-check").length, 1, `${slide.assignmentId} should contain one compact grammar diagnostic`);
+      const scenarioDays = new Set(["B1-2.5", "B1-3.8", "B1-4.12", "B1-6.19", "B1-8.25", "B1-9.26"]);
       const practiceId = level === "B1" && slide.assignmentId === "B1-6.18"
         ? "career-challenge"
-        : "practice";
+        : level === "B1" && scenarioDays.has(slide.assignmentId)
+          ? "scenario-challenge"
+          : "practice";
       const practiceIndex = ids.indexOf(practiceId);
       assert.ok(practiceIndex >= 0, `${slide.assignmentId} should contain its focused practice slot`);
       assert.equal(
-        ids.filter((id) => id === "practice" || id === "career-challenge").length,
+        ids.filter((id) => id === "practice" || id === "career-challenge" || id === "scenario-challenge").length,
         1,
         `${slide.assignmentId} should keep exactly one focused practice slide`,
       );
