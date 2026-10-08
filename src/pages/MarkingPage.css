@@ -799,3 +799,168 @@
 .marking-mobile-sticky-score strong {
   font-size: 16px;
 }
+
+/* Desktop marking focus mode. Mobile styles and the existing workflow remain unchanged. */
+.marking-desktop-expand-control,
+.marking-desktop-toggle,
+.marking-desktop-save-actions,
+.marking-desktop-more,
+.marking-desktop-objective-summary {
+  display: none;
+}
+
+/* Preserve the existing mobile card flow despite the desktop disclosure wrappers. */
+.marking-reference-answers,
+.marking-objective-content {
+  display: contents;
+}
+
+@media (min-width: 821px) {
+  .marking-workspace {
+    max-width: 1380px;
+    gap: 12px;
+  }
+
+  .marking-stage-bar {
+    display: none;
+  }
+
+  .marking-columns {
+    grid-template-columns: minmax(220px, 250px) minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  /* Flatten only on desktop to place score review immediately after student work. */
+  .marking-submission,
+  .marking-reference-work-grid {
+    display: contents;
+  }
+
+  .marking-queue {
+    grid-column: 1;
+    grid-row: 1 / span 4;
+    align-self: start;
+    top: 84px;
+  }
+
+  .marking-reference-work-grid > section:first-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .marking-review {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .marking-reference-work-grid > section:nth-child(2) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .marking-submission > section.marking-objective-card {
+    grid-column: 2;
+    grid-row: 4;
+  }
+
+  .marking-queue-card {
+    padding: 12px;
+  }
+
+  .marking-queue-list {
+    max-height: calc(100vh - 240px);
+  }
+
+  .marking-card {
+    padding: 14px;
+  }
+
+  .marking-reference-card .marking-section-heading p,
+  .marking-mobile-objective-summary {
+    display: none;
+  }
+
+  .marking-desktop-objective-summary {
+    display: block;
+  }
+
+  .marking-desktop-expand-control {
+    display: flex;
+  }
+
+  .marking-reference-answers:not(.is-expanded),
+  .marking-objective-content:not(.is-expanded) {
+    display: none;
+  }
+
+  .marking-reference-answers.is-expanded {
+    display: grid;
+    gap: 10px;
+  }
+
+  .marking-objective-content.is-expanded {
+    display: block;
+  }
+
+  .marking-desktop-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .marking-objective-card:not(.is-expanded) .marking-objective-actions > .marking-compact-action:not(.marking-desktop-toggle) {
+    display: none;
+  }
+
+  .marking-score-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .marking-score-summary > div:last-child {
+    display: none;
+  }
+
+  .marking-review-card {
+    gap: 12px;
+  }
+
+  .marking-feedback-field textarea {
+    min-height: 150px;
+  }
+
+  .marking-desktop-save-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .marking-desktop-save-actions > .marking-primary-action {
+    flex: 1 1 220px;
+  }
+
+  .marking-desktop-more {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  .marking-desktop-more summary {
+    cursor: pointer;
+    font-weight: 650;
+  }
+
+  .marking-desktop-more[open] {
+    display: grid;
+    gap: 10px;
+  }
+
+  .marking-desktop-more p {
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .marking-save-bar,
+  .marking-report-help {
+    display: none;
+  }
+}
