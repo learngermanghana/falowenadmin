@@ -10,70 +10,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Altbauwohnung",
+        "label": "Altbau: Miete und Termin",
         "icon": "🏠",
-        "context": "Die Wohnung kostet 780 Euro warm. Der Vermieter nennt die Nebenkosten nicht.",
+        "context": "Eine Altbauwohnung kostet laut Anzeige 780 Euro warm. Strom und Heizung werden nicht erklärt. Die Besichtigung ist am Mittwoch um 14 Uhr, aber du arbeitest bis 16 Uhr.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Frage höflich nach den Nebenkosten.",
-            "modelDe": "Könnten Sie mir sagen, ob die Nebenkosten in der Miete enthalten sind?"
+            "actionDe": "Warmmiete klären",
+            "questionDe": "Wie fragst du den Vermieter höflich, ob Strom und Heizung in den 780 Euro enthalten sind?",
+            "modelDe": "Könnten Sie mir sagen, ob Strom und Heizung in den 780 Euro enthalten sind?"
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Frage nach der Kaution.",
-            "modelDe": "Könnten Sie mir sagen, wie hoch die Kaution ist?"
+            "actionDe": "Kaution verhandeln",
+            "questionDe": "Du kannst eine hohe Kaution nicht auf einmal zahlen. Wie fragst du nach der Höhe und einer Ratenzahlung?",
+            "modelDe": "Dürfte ich fragen, wie hoch die Kaution ist und ob ich sie in Raten zahlen könnte?"
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Vereinbare einen Besichtigungstermin.",
-            "modelDe": "Könnten wir die Wohnung am Freitag besichtigen?"
+            "actionDe": "Termin verschieben",
+            "questionDe": "Du kannst erst nach 17 Uhr. Wie bittest du höflich um einen späteren Besichtigungstermin?",
+            "modelDe": "Wäre es möglich, die Wohnung am Mittwoch nach 17 Uhr zu besichtigen?"
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Kleine Stadtwohnung",
-        "icon": "🏠",
-        "context": "Die Wohnung liegt zentral, aber es gibt keine Angaben zum Balkon.",
+        "label": "Stadtwohnung: Ausstattung",
+        "icon": "🏙️",
+        "context": "Die Wohnung liegt zentral, hat aber laut Anzeige weder Angaben zum Balkon noch zu den Möbeln. Du hast kein Auto und möchtest am Samstag besichtigen.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Frage nach dem Balkon.",
-            "modelDe": "Könnten Sie mir sagen, ob die Wohnung einen Balkon hat?"
+            "actionDe": "Balkon und Möbel",
+            "questionDe": "Wie erkundigst du dich höflich, ob ein Balkon und eine Einbauküche vorhanden sind?",
+            "modelDe": "Könnten Sie mir sagen, ob die Wohnung einen Balkon und eine Einbauküche hat?"
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Frage nach der Verkehrsanbindung.",
-            "modelDe": "Wissen Sie, wie weit die nächste Haltestelle entfernt ist?"
+            "actionDe": "Verkehrsanbindung prüfen",
+            "questionDe": "Du fährst täglich zur Arbeit. Wie fragst du indirekt nach der nächsten Haltestelle?",
+            "modelDe": "Wissen Sie, wie weit die nächste Bushaltestelle entfernt ist?"
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um einen Termin.",
-            "modelDe": "Wäre eine Besichtigung am Dienstag möglich?"
+            "actionDe": "Samstagstermin erbitten",
+            "questionDe": "Der Vermieter bietet nur Freitag an. Wie schlägst du höflich Samstagvormittag vor?",
+            "modelDe": "Wäre es möglich, die Wohnung stattdessen am Samstagvormittag zu besichtigen?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Wohngemeinschaft",
-        "icon": "🏠",
-        "context": "Ein Zimmer ist frei. Die Anzeige nennt weder Mitbewohner noch Hausregeln.",
+        "label": "WG: Zusammenleben",
+        "icon": "🗝️",
+        "context": "Du interessierst dich für ein WG-Zimmer. In der Anzeige fehlen Informationen über Mitbewohner, Ruhezeiten und Besuch. Vor einer Zusage möchtest du die WG kennenlernen.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Frage nach den Mitbewohnern.",
+            "actionDe": "Mitbewohner kennenlernen",
+            "questionDe": "Wie fragst du höflich, mit wie vielen Personen du die Wohnung teilen würdest?",
             "modelDe": "Könnten Sie mir sagen, wie viele Personen in der WG wohnen?"
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Frage nach den Hausregeln.",
-            "modelDe": "Dürfte ich fragen, ob es feste Hausregeln gibt?"
+            "actionDe": "Hausregeln erfragen",
+            "questionDe": "Du lernst abends für Prüfungen. Wie erkundigst du dich nach Ruhezeiten und Besuchsregeln?",
+            "modelDe": "Dürfte ich fragen, ob es feste Ruhezeiten und Regeln für Besuch gibt?"
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um einen Termin.",
-            "modelDe": "Könnten wir einen Termin für die Besichtigung vereinbaren?"
+            "actionDe": "Kennenlernen vereinbaren",
+            "questionDe": "Du willst erst mit allen sprechen. Wie bittest du um ein gemeinsames Kennenlernen?",
+            "modelDe": "Wäre es möglich, einen Termin zu vereinbaren, bei dem ich die Mitbewohner kennenlernen könnte?"
           }
         ]
       }
@@ -88,70 +88,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Wenig Bewegung",
-        "icon": "💚",
-        "context": "Alex sitzt den ganzen Tag und macht kaum Pausen.",
+        "label": "Alex: Büro ohne Bewegung",
+        "icon": "🚶",
+        "context": "Alex sitzt täglich neun Stunden am Schreibtisch, fährt auch kurze Strecken mit dem Auto und klagt über Müdigkeit. Für ein Fitnessstudio hat Alex kein Geld.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Gib einen freundlichen Tipp.",
-            "modelDe": "Alex sollte in der Mittagspause spazieren gehen."
+            "actionDe": "Realistischen Rat geben",
+            "questionDe": "Welchen kleinen Bewegungsschritt sollte Alex schon während der Arbeit ausprobieren?",
+            "modelDe": "Alex sollte jede Stunde kurz aufstehen und sich bewegen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Möglichkeit.",
-            "modelDe": "Alex kann jeden Abend zwanzig Minuten Sport machen."
+            "actionDe": "Kostenfreie Möglichkeit",
+            "questionDe": "Was kann Alex nach der Arbeit tun, ohne Geld für ein Fitnessstudio auszugeben?",
+            "modelDe": "Alex kann nach der Arbeit zwanzig Minuten spazieren gehen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erkläre eine wichtige Grenze.",
-            "modelDe": "Alex darf Erholung und Schlaf nicht vergessen."
+            "actionDe": "Gesunde Grenze setzen",
+            "questionDe": "Alex möchte die Mittagspause streichen, um mehr zu schaffen. Was darf Alex nicht vergessen?",
+            "modelDe": "Alex darf die Pausen nicht dauerhaft ausfallen lassen, weil Erholung wichtig ist."
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Zu wenig Schlaf",
-        "icon": "💚",
-        "context": "Sam schläft oft nur fünf Stunden und lernt bis spät in die Nacht.",
+        "label": "Sam: Lernen statt Schlaf",
+        "icon": "🌙",
+        "context": "Sam lernt für eine Prüfung bis zwei Uhr morgens, schläft nur fünf Stunden und trinkt abends viel Kaffee. Am nächsten Tag kann Sam sich schlecht konzentrieren.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Gib eine Empfehlung.",
-            "modelDe": "Sam sollte früher schlafen gehen."
+            "actionDe": "Schlafrhythmus verbessern",
+            "questionDe": "Was sollte Sam heute Abend anders machen, um ausgeruhter zu sein?",
+            "modelDe": "Sam sollte früher mit dem Lernen aufhören und rechtzeitig schlafen gehen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Notwendigkeit.",
-            "modelDe": "Sam muss sich vor der Prüfung ausreichend erholen."
+            "actionDe": "Erholung priorisieren",
+            "questionDe": "Warum muss Sam ausreichend schlafen, statt die ganze Nacht weiterzulernen?",
+            "modelDe": "Sam muss genug schlafen, weil gute Erholung beim Konzentrieren hilft."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Nenne eine gesunde Möglichkeit.",
-            "modelDe": "Sam kann vor dem Schlafengehen das Handy ausschalten."
+            "actionDe": "Abendroutine vorschlagen",
+            "questionDe": "Was kann Sam vor dem Schlafengehen ändern, ohne auf das Lernen zu verzichten?",
+            "modelDe": "Sam kann einen Lernplan machen und abends auf Kaffee verzichten."
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Stressiger Alltag",
-        "icon": "💚",
-        "context": "Mina hat viel Stress und isst unterwegs oft unregelmäßig.",
+        "label": "Mina: Schichtarbeit und Stress",
+        "icon": "🥗",
+        "context": "Mina arbeitet in wechselnden Schichten, vergisst oft zu essen und fühlt sich gestresst. In der Mittagspause gibt es wenig Zeit und keine Kantine.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Gib einen Tipp.",
-            "modelDe": "Mina sollte regelmäßige Pausen einplanen."
+            "actionDe": "Essen vorausplanen",
+            "questionDe": "Welchen praktischen Rat sollte Mina für Tage ohne Kantine bekommen?",
+            "modelDe": "Mina sollte am Vorabend eine einfache Mahlzeit vorbereiten."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Möglichkeit.",
-            "modelDe": "Mina kann gesundes Essen vorbereiten."
+            "actionDe": "Pausen ermöglichen",
+            "questionDe": "Wie kann Mina trotz wechselnder Schichten regelmäßige Essenspausen einplanen?",
+            "modelDe": "Mina kann ihre Pausenzeiten vor jeder Schicht planen und einen Snack mitnehmen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erkläre eine Grenze.",
-            "modelDe": "Mina darf ihre Gesundheit nicht dauerhaft vernachlässigen."
+            "actionDe": "Belastung begrenzen",
+            "questionDe": "Mina möchte immer zusätzliche Schichten übernehmen. Was darf sie dabei nicht vergessen?",
+            "modelDe": "Mina darf ihre Erholung nicht vernachlässigen, weil sie auch Zeit zum Ausruhen braucht."
           }
         ]
       }
@@ -166,70 +166,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Plötzlicher Regen",
-        "icon": "🏕️",
-        "context": "Du wanderst im Wald. Plötzlich beginnt ein Gewitter.",
+        "label": "Gewitter auf dem Wanderweg",
+        "icon": "⛈️",
+        "context": "Am Samstag wanderst du mit zwei Freunden durch einen Wald. Nach einer Stunde wird es dunkel, und ein Gewitter beginnt. Ihr entdeckt schließlich eine kleine Schutzhütte.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beginne die Geschichte.",
-            "modelDe": "Zuerst sind wir durch den Wald gewandert."
+            "actionDe": "Anfang im Perfekt",
+            "questionDe": "Was habt ihr am Samstag gemacht, bevor das Wetter schlechter wurde? Erzähle im Perfekt.",
+            "modelDe": "Wir sind am Samstag früh losgewandert und haben einen schönen Weg durch den Wald genommen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Beschreibe das Problem.",
-            "modelDe": "Als das Gewitter begann, hatten wir keinen Regenschirm."
+            "actionDe": "Wendepunkt mit als",
+            "questionDe": "Wie beschreibst du den Moment, als das Gewitter begann, mit als und einem Hintergrund im Präteritum?",
+            "modelDe": "Als das Gewitter begann, waren wir noch weit von unserem Parkplatz entfernt."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erzähle das Ende.",
-            "modelDe": "Danach haben wir eine Hütte gefunden und dort gewartet."
+            "actionDe": "Ende zeitlich verbinden",
+            "questionDe": "Wie ging das Abenteuer aus? Verbinde die Ereignisse mit nachdem.",
+            "modelDe": "Nachdem wir die Schutzhütte erreicht hatten, haben wir dort gewartet, bis der Regen schwächer wurde."
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Verlorener Weg",
-        "icon": "🏕️",
-        "context": "Du bist mit Freunden in den Bergen und der Weg ist nicht mehr zu sehen.",
+        "label": "Nebel in den Bergen",
+        "icon": "🥾",
+        "context": "Du unternimmst mit einer Freundin eine Bergwanderung. Am Nachmittag zieht Nebel auf; ihr findet die Wegmarkierung nicht mehr. Ihr habt eine Karte und ein aufgeladenes Handy.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe den Anfang.",
-            "modelDe": "Am Morgen sind wir in die Berge gefahren."
+            "actionDe": "Ausflug beginnen",
+            "questionDe": "Wo seid ihr am Morgen gestartet, und was habt ihr zuerst gemacht? Verwende Perfekt.",
+            "modelDe": "Am Morgen sind wir ins Gebirge gefahren und haben unsere Wanderung am Parkplatz begonnen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre den Wendepunkt.",
-            "modelDe": "Als es dunkel wurde, waren wir unsicher."
+            "actionDe": "Problem während des Weges",
+            "questionDe": "Was geschah, während ihr weiterwandertet? Nutze während und Präteritum für den Hintergrund.",
+            "modelDe": "Während wir weiterwanderten, wurde der Nebel dichter und wir konnten den Weg nicht mehr sehen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erzähle die Lösung.",
-            "modelDe": "Nachdem wir die Karte geprüft hatten, haben wir den Rückweg gefunden."
+            "actionDe": "Rückweg erzählen",
+            "questionDe": "Wie habt ihr das Problem gelöst? Verwende nachdem und berichte, was danach geschah.",
+            "modelDe": "Nachdem wir die Karte und das Handy geprüft hatten, haben wir den markierten Rückweg gefunden."
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Überraschung am See",
-        "icon": "🏕️",
-        "context": "Du machst einen Ausflug an einen See und entdeckst ein verletztes Tier.",
+        "label": "Tierrettung am See",
+        "icon": "🦆",
+        "context": "Du machst mit deiner Familie ein Picknick am See. Während eines Spaziergangs seht ihr einen verletzten Wasservogel. Ihr haltet Abstand und ruft eine örtliche Tierrettung.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Erzähle, wo du warst.",
-            "modelDe": "Wir waren am See und haben ein Picknick gemacht."
+            "actionDe": "Szene im Präteritum",
+            "questionDe": "Wo wart ihr, und was habt ihr vor dem Spaziergang gemacht? Verbinde war mit Perfekt.",
+            "modelDe": "Wir waren am See und haben dort zuerst zusammen ein Picknick gemacht."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erzähle die Entdeckung.",
-            "modelDe": "Während wir spazieren gingen, haben wir ein verletztes Tier gesehen."
+            "actionDe": "Entdeckung mit während",
+            "questionDe": "Wie erzählst du die überraschende Entdeckung mit während?",
+            "modelDe": "Während wir am Ufer spazieren gingen, haben wir einen verletzten Vogel entdeckt."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Beschreibe die Reaktion.",
-            "modelDe": "Danach haben wir Hilfe gerufen, weil das Tier verletzt war."
+            "actionDe": "Reaktion begründen",
+            "questionDe": "Was habt ihr danach getan, und warum habt ihr Abstand gehalten? Nutze danach und weil.",
+            "modelDe": "Danach haben wir die Tierrettung angerufen, weil der Vogel verletzt war und Hilfe brauchte."
           }
         ]
       }
@@ -244,70 +244,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Ausbildungsplatz",
-        "icon": "💼",
-        "context": "Du bewirbst dich für einen Ausbildungsplatz im Hotel.",
+        "label": "Hotelrezeption: Beschwerde eines Gastes",
+        "icon": "🏨",
+        "context": "Du bewirbst dich für eine Ausbildung an einer Hotelrezeption. Im Gespräch fragt die Personalchefin nach deiner Motivation und nach einem Gast, der sich über ein lautes Zimmer beschwert.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Stelle dich kurz vor.",
-            "modelDe": "Guten Tag, ich interessiere mich für die Ausbildung, weil ich gern mit Menschen arbeite."
+            "actionDe": "Berufswunsch erklären",
+            "questionDe": "Die Personalchefin fragt: „Warum möchten Sie gerade in unserem Hotel arbeiten?“ Was antwortest du mit weil?",
+            "modelDe": "Ich möchte gern in Ihrem Hotel arbeiten, weil ich Kontakt mit Menschen mag und Deutsch im Beruf einsetzen möchte."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Beschreibe eine Stärke.",
-            "modelDe": "Ich könnte gut im Team arbeiten, weil ich zuverlässig bin."
+            "actionDe": "Mit Gästen umgehen",
+            "questionDe": "Sie fragt: „Ein Gast beschwert sich über Lärm. Wie würden Sie reagieren?“ Wie antwortest du professionell?",
+            "modelDe": "Ich würde zuerst ruhig zuhören, mich für die Unannehmlichkeiten entschuldigen und nach einer Lösung suchen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Antworte auf eine Rückfrage höflich.",
-            "modelDe": "Gern würde ich Ihnen mehr über meine Erfahrungen erzählen."
+            "actionDe": "Teamstärke belegen",
+            "questionDe": "Sie fragt: „Was könnten Sie in unser Team einbringen?“ Nenne eine Stärke und ein konkretes Beispiel.",
+            "modelDe": "Ich könnte Ihr Team mit meiner Zuverlässigkeit unterstützen, weil ich bei Gruppenprojekten Aufgaben immer pünktlich erledigt habe."
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Bürojob",
-        "icon": "💼",
-        "context": "Du wirst zu einem Vorstellungsgespräch im Büro eingeladen.",
+        "label": "Büro: Zwei Aufgaben gleichzeitig",
+        "icon": "🗂️",
+        "context": "Du bewirbst dich in einem Büro. Die Stelle erfordert Organisation, grundlegende Computerkenntnisse und Zusammenarbeit. Im Gespräch wird eine dringende Doppelaufgabe beschrieben.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Erkläre deine Motivation.",
-            "modelDe": "Ich bewerbe mich, weil ich gerne organisiere und sorgfältig arbeite."
+            "actionDe": "Motivation konkretisieren",
+            "questionDe": "Der Arbeitgeber fragt: „Warum interessieren Sie sich für diese Bürostelle?“ Was antwortest du mit weil?",
+            "modelDe": "Ich interessiere mich für die Stelle, weil ich gern strukturiert arbeite und Aufgaben zuverlässig organisiere."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Fähigkeit.",
-            "modelDe": "Ich könnte Ihr Team mit meinen Computerkenntnissen unterstützen."
+            "actionDe": "Prioritäten setzen",
+            "questionDe": "Er fragt: „Zwei Kollegen brauchen gleichzeitig dringend Hilfe. Wie würden Sie vorgehen?“ Was sagst du?",
+            "modelDe": "Ich würde zuerst nach den Fristen fragen, die Aufgaben priorisieren und mit beiden Kollegen eine Lösung abstimmen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Stelle eine höfliche Frage.",
-            "modelDe": "Könnten Sie mir sagen, wie die Einarbeitung organisiert wird?"
+            "actionDe": "Höfliche Rückfrage stellen",
+            "questionDe": "Am Schluss heißt es: „Haben Sie noch Fragen an uns?“ Wie erkundigst du dich nach der Einarbeitung?",
+            "modelDe": "Könnten Sie mir bitte sagen, wie neue Mitarbeitende in Ihrem Büro eingearbeitet werden?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Sozialer Beruf",
-        "icon": "💼",
-        "context": "Du möchtest in einer sozialen Einrichtung arbeiten.",
+        "label": "Pflegeeinrichtung: Mit Menschen arbeiten",
+        "icon": "🤝",
+        "context": "Du bewirbst dich um eine Stelle in einer sozialen Einrichtung. Du hast bei einer freiwilligen Aktion geholfen. Die Leitung fragt, wie du mit verunsicherten Menschen umgehst.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe deine Motivation.",
-            "modelDe": "Ich möchte hier arbeiten, weil ich gern anderen Menschen helfe."
+            "actionDe": "Erfahrung glaubwürdig schildern",
+            "questionDe": "Die Leitung fragt: „Welche Erfahrungen haben Sie mit der Betreuung von Menschen?“ Was antwortest du ohne etwas zu erfinden?",
+            "modelDe": "Ich habe bei einer freiwilligen Aktion geholfen und dabei gelernt, geduldig zuzuhören."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre deine Stärken.",
-            "modelDe": "Ich würde geduldig zuhören und verantwortungsvoll handeln."
+            "actionDe": "Empathisch reagieren",
+            "questionDe": "Sie fragt: „Eine Bewohnerin wirkt ängstlich. Was würden Sie tun?“ Wie erklärst du dein Vorgehen?",
+            "modelDe": "Ich würde ruhig mit ihr sprechen, aufmerksam zuhören und bei Bedarf eine zuständige Fachkraft informieren."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Stelle eine professionelle Frage.",
-            "modelDe": "Könnten Sie mir sagen, welche Aufgaben am Anfang besonders wichtig sind?"
+            "actionDe": "Motivation begründen",
+            "questionDe": "Sie fragt: „Warum möchten Sie in einer sozialen Einrichtung arbeiten?“ Gib eine persönliche Begründung.",
+            "modelDe": "Ich möchte in Ihrer Einrichtung arbeiten, weil mir ein respektvoller Umgang mit Menschen sehr wichtig ist."
           }
         ]
       }
@@ -322,70 +322,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Falsche Größe",
-        "icon": "📦",
-        "context": "Du hast Schuhe in Größe 42 bestellt. Geliefert wurde Größe 39.",
+        "label": "Schuhe in der falschen Größe",
+        "icon": "👟",
+        "context": "Du hast im Online-Shop Schuhe in Größe 42 für 69 Euro bestellt. Acht Tage später erhältst du Größe 39. Auf dem Lieferschein steht jedoch Größe 42. Du möchtest einen Umtausch.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe die Bestellung.",
-            "modelDe": "Ich habe Schuhe in Größe 42 bestellt."
+            "actionDe": "Bestellung und Abweichung",
+            "questionDe": "Der Kundenservice fragt: „Was stimmt mit Ihrer Bestellung nicht?“ Wie erklärst du die falsche Größe mit dass?",
+            "modelDe": "Ich habe Schuhe in Größe 42 bestellt, aber festgestellt, dass Sie mir Größe 39 geliefert haben."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre das Problem.",
-            "modelDe": "Leider wurde Größe 39 geliefert, obwohl ich Größe 42 bestellt hatte."
+            "actionDe": "Beleg und Folge nennen",
+            "questionDe": "Der Kundenservice sagt: „Auf dem Lieferschein steht 42.“ Wie erklärst du den Widerspruch und warum du die Schuhe nicht nutzen kannst?",
+            "modelDe": "Auf dem Lieferschein steht zwar Größe 42, aber die Schuhe sind Größe 39. Deshalb passen sie mir leider nicht."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Fordere eine Lösung höflich.",
-            "modelDe": "Könnten Sie mir bitte die richtige Größe zuschicken?"
+            "actionDe": "Umtausch höflich fordern",
+            "questionDe": "Wie bittest du den Shop um die richtige Größe und ein Rücksendeetikett?",
+            "modelDe": "Könnten Sie mir bitte Schuhe in Größe 42 und ein kostenloses Rücksendeetikett schicken?"
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Defektes Gerät",
-        "icon": "📦",
-        "context": "Ein online gekaufter Kopfhörer funktioniert nicht.",
+        "label": "Kopfhörer funktionieren nicht",
+        "icon": "🎧",
+        "context": "Du hast kabellose Kopfhörer online bestellt. Schon am zweiten Tag lässt sich der linke Kopfhörer nicht mehr aufladen. Du hast bereits verschiedene Ladekabel ausprobiert.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe das Problem.",
-            "modelDe": "Ich habe letzte Woche Kopfhörer bestellt, die leider nicht funktionieren."
+            "actionDe": "Fehler präzise erklären",
+            "questionDe": "Der Service fragt: „Was genau funktioniert nicht?“ Wie beschreibst du den Defekt in einem vollständigen Satz?",
+            "modelDe": "Ich muss Ihnen mitteilen, dass sich der linke Kopfhörer seit gestern nicht mehr aufladen lässt."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre die Folge.",
-            "modelDe": "Deshalb kann ich das Produkt nicht benutzen."
+            "actionDe": "Bisherige Versuche erläutern",
+            "questionDe": "Die Mitarbeiterin fragt: „Haben Sie ein anderes Kabel getestet?“ Wie erklärst du deine Versuche und das Ergebnis?",
+            "modelDe": "Ich habe mehrere Ladekabel ausprobiert, aber das Problem besteht weiterhin. Deshalb kann ich das Produkt nicht richtig nutzen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um eine Lösung.",
-            "modelDe": "Ich bitte Sie, mir einen Ersatz zu schicken oder den Kaufpreis zu erstatten."
+            "actionDe": "Ersatz oder Erstattung erbitten",
+            "questionDe": "Wie formulierst du höflich zwei akzeptable Lösungen, ohne unfreundlich zu werden?",
+            "modelDe": "Könnten Sie mir bitte ein funktionierendes Ersatzgerät schicken oder den Kaufpreis erstatten?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Paket fehlt",
+        "label": "Expresspaket kommt zu spät",
         "icon": "📦",
-        "context": "Die Bestellung sollte am Montag kommen, aber das Paket ist nicht angekommen.",
+        "context": "Du hast ein Geburtstagsgeschenk mit Expresslieferung für Donnerstag bestellt. Am Samstag zeigt die Sendungsverfolgung immer noch „in Bearbeitung“. Du hast für die schnelle Lieferung extra bezahlt.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Nenne die Lieferzusage.",
-            "modelDe": "Laut Ihrer Bestätigung sollte das Paket am Montag ankommen."
+            "actionDe": "Lieferzusage belegen",
+            "questionDe": "Der Kundenservice fragt nach dem vereinbarten Termin. Wie erklärst du die Zusage und den aktuellen Status?",
+            "modelDe": "Laut Bestellbestätigung sollte das Paket am Donnerstag ankommen, aber am Samstag steht in der Sendungsverfolgung noch „in Bearbeitung“."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre das Problem.",
-            "modelDe": "Bis heute habe ich die Lieferung leider nicht erhalten."
+            "actionDe": "Folge sachlich begründen",
+            "questionDe": "Das Geschenk wird für Sonntag gebraucht. Wie erklärst du höflich, warum die Verzögerung ein Problem ist?",
+            "modelDe": "Ich benötige das Geschenk spätestens am Sonntag. Deshalb ist die verspätete Lieferung für mich ein Problem."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte höflich um Klärung.",
-            "modelDe": "Könnten Sie bitte prüfen, wo sich mein Paket befindet?"
+            "actionDe": "Klärung und Kosten ansprechen",
+            "questionDe": "Wie fragst du nach einem neuen Liefertermin und nach den zusätzlich bezahlten Expresskosten?",
+            "modelDe": "Könnten Sie bitte den Liefertermin prüfen und mir sagen, ob die zusätzlichen Expresskosten erstattet werden können?"
           }
         ]
       }
@@ -400,70 +400,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Zug verpasst",
-        "icon": "✈️",
-        "context": "Du hast den Anschlusszug verpasst und kommst zu spät an.",
+        "label": "Anschlusszug nach Berlin verpasst",
+        "icon": "🚆",
+        "context": "Dein erster Zug hatte 40 Minuten Verspätung. Deshalb hast du in Hannover den Anschluss nach Berlin verpasst. Dein Termin in Berlin beginnt um 18 Uhr, der nächste Zug fährt erst in einer Stunde.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Reagiere mit einem Wenn-Satz.",
-            "modelDe": "Wenn ich den Anschlusszug verpasse, informiere ich sofort meine Freunde."
+            "actionDe": "Verspätung erklären",
+            "questionDe": "Du rufst deine Gastgeber an. Wie erklärst du kurz, weshalb du zu spät kommst, und nutzt weil?",
+            "modelDe": "Ich komme wahrscheinlich später an, weil mein erster Zug Verspätung hatte und ich den Anschluss verpasst habe."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Schlage eine Alternative vor.",
-            "modelDe": "Ich könnte den nächsten Zug nehmen."
+            "actionDe": "Plan mit wenn entwickeln",
+            "questionDe": "Was würdest du tun, wenn der nächste Zug nicht rechtzeitig in Berlin ankommt? Formuliere einen Wenn-Satz.",
+            "modelDe": "Wenn der nächste Zug zu spät ankommt, würde ich meine Gastgeber informieren und nach einer anderen Verbindung suchen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte höflich um Hilfe.",
-            "modelDe": "Könnten Sie mir sagen, wann der nächste Zug fährt?"
+            "actionDe": "Auskunft höflich erfragen",
+            "questionDe": "Wie fragst du am Bahnschalter nach der schnellsten Alternative nach Berlin?",
+            "modelDe": "Könnten Sie mir bitte sagen, ob es heute noch eine schnellere Verbindung nach Berlin gibt?"
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Gepäck verloren",
-        "icon": "✈️",
-        "context": "Dein Koffer ist nach dem Flug nicht am Gepäckband.",
+        "label": "Koffer fehlt vor einer Konferenz",
+        "icon": "🧳",
+        "context": "Du bist in München gelandet. Dein Koffer mit der Kleidung für eine Konferenz am nächsten Morgen liegt nicht am Gepäckband. Du hast die Gepäcknummer und die Hoteladresse dabei.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Formuliere eine Bedingung.",
-            "modelDe": "Wenn mein Koffer nicht ankommt, melde ich das am Schalter."
+            "actionDe": "Verlust am Schalter melden",
+            "questionDe": "Wie beschreibst du am Gepäckschalter genau, welcher Koffer fehlt und welche Unterlagen du dabei hast?",
+            "modelDe": "Mein schwarzer Koffer ist nicht angekommen. Ich habe die Gepäcknummer und die Hoteladresse dabei."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Schlage einen ersten Schritt vor.",
-            "modelDe": "Ich würde zuerst die Gepäcknummer zeigen."
+            "actionDe": "Lösung unter Bedingung",
+            "questionDe": "Was sollte passieren, falls die Fluggesellschaft den Koffer erst heute Abend findet? Verwende falls und könnte.",
+            "modelDe": "Falls der Koffer heute Abend gefunden wird, könnte er direkt zu meinem Hotel gebracht werden."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte um Unterstützung.",
-            "modelDe": "Könnten Sie bitte prüfen, wo mein Koffer ist?"
+            "actionDe": "Hilfe für morgen erbitten",
+            "questionDe": "Du brauchst morgen früh deine Sachen. Wie fragst du höflich nach dem Lieferzeitpunkt?",
+            "modelDe": "Könnten Sie bitte prüfen, wann der Koffer spätestens zu meinem Hotel geliefert werden kann?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Hotelbuchung fehlt",
-        "icon": "✈️",
-        "context": "An der Rezeption findet man deine Hotelreservierung nicht.",
+        "label": "Hotel findet die Buchung nicht",
+        "icon": "🏨",
+        "context": "Du kommst um 22 Uhr in deinem Hotel an. Die Rezeption findet deine bezahlte Reservierung für zwei Nächte nicht. Auf dem Handy hast du die Bestätigung mit der Buchungsnummer.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Erkläre die Situation.",
-            "modelDe": "Wenn die Reservierung nicht gefunden wird, zeige ich die Bestätigungs-E-Mail."
+            "actionDe": "Buchung sachlich nachweisen",
+            "questionDe": "Die Rezeption fragt: „Haben Sie wirklich reserviert?“ Wie erklärst du die Buchung mit dass und zeigst die Bestätigung?",
+            "modelDe": "Ich habe eine Bestätigung, dass ich zwei Nächte gebucht und bereits bezahlt habe. Hier ist meine Buchungsnummer."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Schlage eine Lösung vor.",
-            "modelDe": "Man könnte die Buchungsnummer noch einmal prüfen."
+            "actionDe": "Alternative bei ausgebuchtem Haus",
+            "questionDe": "Was würdest du vorschlagen, wenn das Hotel wirklich kein freies Zimmer mehr hat? Verwende wenn und würde.",
+            "modelDe": "Wenn hier kein Zimmer mehr frei wäre, würde ich um eine vergleichbare Unterkunft in der Nähe bitten."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Bitte höflich um Hilfe.",
-            "modelDe": "Könnten Sie mir bitte ein anderes Zimmer anbieten?"
+            "actionDe": "Konkrete Hilfe erbitten",
+            "questionDe": "Wie bittest du die Mitarbeiterin höflich, die Buchung noch einmal zu prüfen und dir eine Lösung anzubieten?",
+            "modelDe": "Könnten Sie bitte die Buchungsnummer erneut prüfen und mir eine passende Lösung anbieten?"
           }
         ]
       }
