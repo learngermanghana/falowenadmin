@@ -76,10 +76,12 @@ const FALOWEN_COURSE_HOME = `${FALOWEN_COURSE_BASE}/campus/course`;
 
 function publishedCourseBookRoute(value = "") {
   const candidate = normalize(value);
-  if (!candidate || !candidate.startsWith("/campus/course/") || candidate.startsWith("//")) return "";
+  if (!candidate || candidate.startsWith("//")) return "";
   try {
     const parsed = new URL(candidate, FALOWEN_COURSE_BASE);
-    if (parsed.origin !== FALOWEN_COURSE_BASE) return "";
+    if (!["falowen.app", "www.falowen.app"].includes(parsed.hostname) ||
+        parsed.protocol !== "https:" ||
+        !parsed.pathname.startsWith("/campus/course/")) return "";
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
   } catch {
     return "";
