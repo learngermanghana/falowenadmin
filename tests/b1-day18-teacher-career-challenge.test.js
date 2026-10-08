@@ -65,7 +65,7 @@ test("Day 18 career challenge replaces prioritization rather than adding another
 test("Presenter keeps model hidden until teacher reveals it and offers teacher-only controls", () => {
   const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
   const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
-  assert.match(presenter, /stage\.type === "career-challenge"/);
+  assert.match(presenter, /\["career-challenge", "scenario-challenge"\]\.includes\(stage\.type\)/);
   assert.match(presenter, /careerAnswerVisible \? \(/);
   assert.match(presenter, /setCareerAnswerVisible\(false\)/);
   assert.match(presenter, /setCareerChallengeIndex\(\(current\) => nextB1Day18CareerIndex/);
