@@ -434,6 +434,24 @@
   padding-left: 18px;
 }
 
+.marking-key-sync-warning {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.marking-key-sync-warning p {
+  margin: 3px 0 0;
+}
+
+.marking-sync-key-action {
+  border-color: #ea580c !important;
+  background: #fff !important;
+  color: #9a3412 !important;
+  white-space: nowrap;
+}
+
 .marking-check {
   grid-template-columns: auto 1fr !important;
   align-items: start;
@@ -723,6 +741,14 @@
 
   .marking-section-heading {
     display: grid;
+  }
+
+  .marking-key-sync-warning {
+    grid-template-columns: 1fr;
+  }
+
+  .marking-sync-key-action {
+    width: 100%;
   }
 
   .marking-score-summary,
