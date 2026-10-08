@@ -115,7 +115,9 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, wordTarget) : "";
   const metadata = verifiedObjectiveMetadata(writingExpected ? result : {}, objective);
   const feedback = writingExpected ? [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n") : objectiveFeedback;
-  const scoreAlignedFeedback = normalizeWritingScoreClaim(feedback || result.feedback, { ...result, ...metadata });
+  const scoreAlignedFeedback = normalizeWritingScoreClaim(feedback || result.feedback, { ...result, ...metadata })
+    .replace(/\bMarking summary\b\s*[:.-]?\s*/gi, "")
+    .replace(/\bScore summary\b\s*[:.-]?\s*/gi, "");
   const normalizedFeedback = dedupeRepeatedFeedback(stripMarkingEmojis(scoreAlignedFeedback));
   let updated = {
     ...result, ...metadata,
