@@ -1,0 +1,33 @@
+// Exact destinations copied from the learner's a1AssignmentRegistry and
+// a1CanonicalLessonCatalog. Used only if the Admin slide lacks its workbook URL.
+// A1 numeric chapter IDs (e.g. A1-9) are NOT learner day numbers.
+export const A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT = Object.freeze({
+  "A1-0.1": "/campus/course/a1-day-1-greetings-workbook",
+  "A1-0.2": "/campus/course/a1-day-2-german-alphabet-reviewing-workbook",
+  "A1-1.1": "/campus/course/a1-day-2-kapitel-1-1-workbook",
+  "A1-1.1-PRACTICE": "/campus/course/a1-day-3-schreiben-sprechen-kapitel-1-1-workbook",
+  "A1-1.2": "/campus/course/a1-day-3-pronouns-introducing-yourself-workbook",
+  "A1-1.2-PRACTICE": "/campus/course/a1-day-3-kapitel-1-2-workbook",
+  "A1-1.3": "/campus/course/a1-day-5-introducing-yourself-and-articles-workbook",
+  "A1-2": "/campus/course/a1-day-4-numbers-for-beginners-workbook",
+  "A1-2.3": "/campus/course/a1-day-6-family-and-hobbies-workbook",
+  "A1-3": "/campus/course/a1-chapter-3-asking-about-prices-workbook",
+  "A1-3.5": "/campus/course/a1-day-13-revision-numbers-time-and-prices-workbook",
+  "A1-3.6": "/campus/course/modal-verbs-day-14-3-6",
+  "A1-4": "/campus/course/a1-day-8-countries-and-languages-workbook",
+  "A1-4.7": "/campus/course/speaking-exams-intro-4-7",
+  "A1-5": "/campus/course/a1-chapter-5-german-cases-workbook",
+  "A1-5.9": "/campus/course/verboten-erlaubt-5-9",
+  "A1-5.10": "/campus/course/a1-final-mock-exam",
+  "A1-6": "/campus/course/a1-day-10-objects-colors-possessive-articles-workbook",
+  "A1-7": "/campus/course/a1-day-11-understanding-time-workbook",
+  "A1-8": "/campus/course/a1-day-12-24-hour-clock-and-dates-workbook",
+  "A1-9": "/campus/course/a1-day-16-food-and-negation-food-and-daily-life-workbook",
+  "A1-10": "/campus/course/a1-day-16-food-and-negation-kapitel-10-workbook",
+  "A1-11": "/campus/course/a1-day-17-instructions-and-directions-kapitel-11-workbook",
+  "A1-12.1": "/campus/course/two-case-prepositions-wechselpraepositionen-day-18?view=workbook",
+  "A1-12.2": "/campus/course/a1-12-2-dative-articles-mit-bei-zu?view=workbook",
+  "A1-12.3": "/campus/course/letter-writing-intro-german-a1-day-12-3",
+  "A1-13": "/campus/course/a1-day-21-weather-workbook",
+  "A1-14.1": "/campus/course/a1-day-22-health-and-body-parts-workbook",
+});
