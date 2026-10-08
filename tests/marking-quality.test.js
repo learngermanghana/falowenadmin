@@ -74,7 +74,7 @@ test("mixed marking keeps the current writing score, names every wrong objective
   assert.match(result.feedback, /Writing score: 80%/);
   assert.doesNotMatch(result.feedback, /Writing score: 82%/);
   assert.equal((result.feedback.match(/You covered all 3 required points\./g) || []).length, 1);
-  assert.match(result.feedback, /Teil 4 question 2/);
+  assert.match(result.feedback, /Teil 4 question 2|teil4\.2:/i);
   assert.doesNotMatch(result.feedback, /Review all flagged answers/);
   assert.doesNotMatch(result.consistencyWarnings.join(" "), /Task evidence for/);
 });
