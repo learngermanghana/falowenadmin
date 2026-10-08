@@ -1,6 +1,7 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
 import { getB1TeacherChallenge } from "../data/b1TeacherChallenges.js";
+import { getA2TeacherChallenge } from "../data/a2TeacherChallenges.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -1670,7 +1671,9 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         }
         // Keep exactly one practice slot; the scenario activity replaces its
         // original focused-practice slide, never adding another page.
-        const challenge = getB1TeacherChallenge(normalizedAssignmentId(slide));
+        const challenge = level === "A2"
+          ? getA2TeacherChallenge(normalizedAssignmentId(slide))
+          : getB1TeacherChallenge(normalizedAssignmentId(slide));
         if (challenge) return [{
           id: "scenario-challenge",
           type: "scenario-challenge",
