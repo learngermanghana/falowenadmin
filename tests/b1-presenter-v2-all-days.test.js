@@ -1,4 +1,6 @@
 import test from "node:test";
+const TEACHER_CHALLENGE_IDS = new Set(["B1-2.5","B1-3.8","B1-4.12","B1-6.19","B1-8.25","B1-9.26"]);
+
 import assert from "node:assert/strict";
 
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
@@ -33,9 +35,9 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    const expectedStages = slide.assignmentId === "B1-6.18"
-      ? REQUIRED_STAGES.map((id) => id === "practice" ? "career-challenge" : id)
-      : REQUIRED_STAGES;
+    const replacement = slide.assignmentId === "B1-6.18" ? "career-challenge"
+      : TEACHER_CHALLENGE_IDS.has(slide.assignmentId) ? "scenario-challenge" : "practice";
+    const expectedStages = REQUIRED_STAGES.map((id) => id === "practice" ? replacement : id);
     assert.deepEqual(stageIds, expectedStages, `${slide.assignmentId} should have nine lesson stages without duplicated practice`);
 
     const knowledge = stages.find((stage) => stage.id === "knowledge");
@@ -52,6 +54,11 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
       const career = stages.find((stage) => stage.id === "career-challenge");
       assert.equal(career.type, "career-challenge");
       assert.equal(career.items.length, 6);
+      assert.equal(stageIds.includes("practice"), false);
+    } else if (TEACHER_CHALLENGE_IDS.has(slide.assignmentId)) {
+      const challenge = stages.find((stage) => stage.id === "scenario-challenge");
+      assert.equal(challenge.type, "scenario-challenge");
+      assert.equal(challenge.items.length, 3);
       assert.equal(stageIds.includes("practice"), false);
     } else {
       const practice = stages.find((stage) => stage.id === "practice");
