@@ -70,3 +70,36 @@ test("A1 activity timer does not replace the 60-minute class timer or student-an
   assert.match(source, /classTimeState\.remainingSeconds/);
   assert.match(source, /activitySoundRef\.current\?\.close\?\./);
 });
+
+test("A1 fullscreen keeps mobile picker, activity countdown and class timer in non-overlapping grid rows", () => {
+  const presenter = a1Presenter();
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  assert.match(presenter, /focusMode \? "presenter-has-focus-stage-timer presenter-a1-stacked-controls" : ""/);
+  const marker = "/* A1 fullscreen mobile/tablet: stack the picker, activity timer and class clock.";
+  const start = css.indexOf(marker);
+  assert.ok(start >= 0, "A1 responsive layout must be present");
+  const layout = css.slice(start);
+  assert.match(layout, /@media \(max-width: 900px\)/);
+  assert.match(layout, /grid-template-rows: auto auto auto minmax\(0, 1fr\)/);
+  const blocks = [
+    [".presenter-participation-dock", 1],
+    [".presenter-focus-stage-timer", 2],
+    [".presenter-focus-time", 3],
+    [".presenter-content", 4],
+  ];
+  for (const [selector, row] of blocks) {
+    const position = layout.indexOf(`> ${selector}`);
+    assert.ok(position >= 0, `${selector} must be scoped to the A1 presenter`);
+    const declarations = layout.slice(layout.indexOf("{", position) + 1, layout.indexOf("}", position));
+    assert.match(declarations, new RegExp(`grid-row: ${row};`), `${selector} belongs in row ${row}`);
+    if (row < 4) {
+      assert.match(declarations, /position: relative/);
+      assert.match(declarations, /inset: auto/);
+    }
+  }
+  assert.match(layout, /pointer-events: auto/);
+  assert.match(layout, /max-height: min\(24dvh, 165px\)/);
+  assert.match(layout, /overflow-y: auto/);
+  assert.match(layout, /\.presenter-stage\.is-focus-mode\.presenter-a1-stacked-controls > \.presenter-content/);
+  assert.doesNotMatch(layout, /\.presenter-stage\.is-focus-mode\s*>\s*\.presenter-focus-stage-timer/);
+});
