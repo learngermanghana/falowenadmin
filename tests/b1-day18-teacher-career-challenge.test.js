@@ -77,3 +77,12 @@ test("Presenter keeps model hidden until teacher reveals it and offers teacher-o
   assert.match(css, /\.presenter-career-model/);
   assert.match(css, /@media \(max-width: 700px\)/);
 });
+
+test("Career title has desktop clearance for Pick student without shifting other slides", () => {
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  assert.match(presenter, /className="presenter-career-hero"/);
+  assert.match(presenter, /<h2>\{activeCareer\.careerDe\}<\/h2>/);
+  assert.match(css, /@media \(min-width: 900px\)\s*\{\s*\.presenter-career-hero > div\s*\{\s*margin-inline-start: clamp\(2\.25rem, 4vw, 3\.5rem\)/);
+  assert.doesNotMatch(css, /\.presenter-hero > div\s*\{\s*margin-inline-start:/);
+});

@@ -4143,6 +4143,14 @@
   min-width: 0;
 }
 
+/* Give the floating Pick student panel breathing room beside the career name
+   on desktop; leave the narrow/mobile hero layout unchanged. */
+@media (min-width: 900px) {
+  .presenter-career-hero > div {
+    margin-inline-start: clamp(2.25rem, 4vw, 3.5rem);
+  }
+}
+
 .presenter-career-hero h2 {
   margin: 0.3rem 0;
   font-size: clamp(1.5rem, 4.2vw, 3rem);
