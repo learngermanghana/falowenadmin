@@ -67,7 +67,7 @@ const definitions = [
           {
             "actionDe": "Passend reagieren",
             "questionDe": "Wohin fahrt ihr mit dem Bus?",
-            "modelDe": "Wir fahren zum Kino."
+            "modelDe": "Wir fahren mit dem Bus zum Kino."
           },
           {
             "actionDe": "Aufgabe lösen",
@@ -529,7 +529,7 @@ const definitions = [
         "steps": [
           {
             "actionDe": "Situation beschreiben",
-            "questionDe": "Wo steht der Tisch?",
+            "questionDe": "Wo steht der kleine Tisch in der Küche?",
             "modelDe": "Der Tisch steht in der Küche."
           },
           {
@@ -566,7 +566,7 @@ const definitions = [
           },
           {
             "actionDe": "Passend reagieren",
-            "questionDe": "Vergleiche Bus und Fahrrad mit schneller als.",
+            "questionDe": "Welches Verkehrsmittel ist schneller, der Bus oder das Fahrrad?",
             "modelDe": "Mit dem Fahrrad bin ich schneller als mit dem Bus."
           },
           {
@@ -612,7 +612,7 @@ const definitions = [
           },
           {
             "actionDe": "Passend reagieren",
-            "questionDe": "Vergleiche Auto und Zug mit schneller als.",
+            "questionDe": "Was ist schneller, das Auto oder der Zug?",
             "modelDe": "Das Auto ist schneller als der Zug."
           },
           {
