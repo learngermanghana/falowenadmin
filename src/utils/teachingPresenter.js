@@ -1,4 +1,5 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
+import { B1_DAY18_CAREER_CHALLENGES } from "../data/b1Day18CareerChallenge.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -1652,6 +1653,19 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
         return practiceStage ? [practiceStage] : [];
       })(),
+      ...(normalizedAssignmentId(slide) === "B1-6.18" ? [{
+        id: "career-challenge",
+        type: "career-challenge",
+        kicker: "Mitmach-Challenge · um ... zu",
+        title: "Mein Weg zum Wunschberuf",
+        instruction: "Die Lehrkraft zeigt einen zufälligen Beruf. Die Lernenden antworten laut mit um ... zu; nur die Lehrkraft deckt das Beispiel auf und wechselt den Beruf.",
+        items: B1_DAY18_CAREER_CHALLENGES,
+        teacherPurpose: {
+          student: "Say why each career step helps reach the goal, using um ... zu + Infinitiv.",
+          teacher: "Share this screen, ask the question aloud, listen first, then optionally reveal a model. No student login or submission.",
+        },
+        suggestedMinutes: 8,
+      }] : []),
       buildProgressiveSpeakingStage(slide, speakingStage, level),
       workbookStage,
     ];
