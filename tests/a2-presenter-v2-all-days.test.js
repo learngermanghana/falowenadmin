@@ -89,16 +89,24 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.ok(workbook.items.length >= 4, `${slide.assignmentId} should expose workbook sections`);
     assert.match(workbook.workbookUrl, /^\/campus\/course\//, `${slide.assignmentId} workbook route`);
     assert.ok(stageIds.indexOf("questions") < stageIds.indexOf("workbook"), `${slide.assignmentId} production should come before workbook bridge`);
-    assert.equal(questions.type, "question-reveal");
-    assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
-    assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
-    assert.equal(questions.questionModels.length, 3, `${slide.assignmentId} should keep a model for each selected question`);
-    assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} should reveal model support`);
-    const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
-    assert.ok(difficulty, `${slide.assignmentId} needs an explicit difficulty map`);
-    assert.equal(questions.difficultySource, "curated");
-    assert.deepEqual(questions.difficultyIndexes, difficulty.indexes);
-    assert.deepEqual(questions.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
+    if (Array.isArray(slide.presenterSpeakingRounds) && slide.presenterSpeakingRounds.length) {
+      // Day 8 has its own progressive restaurant role-play instead of the
+      // generic three-question reveal; replacing practice must preserve it.
+      assert.equal(questions.type, "flow");
+      assert.equal(questions.variant, "scenario-task");
+      assert.ok(questions.items.length >= 3);
+    } else {
+      assert.equal(questions.type, "question-reveal");
+      assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
+      assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
+      assert.equal(questions.questionModels.length, 3, `${slide.assignmentId} should keep a model for each selected question`);
+      assert.ok(questions.supportItems.length >= 3, `${slide.assignmentId} should reveal model support`);
+      const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
+      assert.ok(difficulty, `${slide.assignmentId} needs an explicit difficulty map`);
+      assert.equal(questions.difficultySource, "curated");
+      assert.deepEqual(questions.difficultyIndexes, difficulty.indexes);
+      assert.deepEqual(questions.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
+    }
   }
 });
 
