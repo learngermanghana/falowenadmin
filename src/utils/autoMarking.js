@@ -868,8 +868,9 @@ function findWritingIssues(text = "") {
       break;
     }
 
+    const followsCommaGreeting = isWritingGreetingLine(previousLine) && /,$/.test(previousLine.trim());
     const hasSubstantiveWeilIssue = /\bweil\s+ich\s+möchte\b/i.test(line);
-    if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine) && !hasSubstantiveWeilIssue) {
+    if (/^[a-zäöüß]/.test(line) && !followsCommaGreeting && !/[,;:]$/.test(previousLine) && !hasSubstantiveWeilIssue) {
       addWritingIssue(issues, {
         submitted: clipFeedbackSnippet(line),
         suggestion: `${line.charAt(0).toUpperCase()}${line.slice(1)}`,
