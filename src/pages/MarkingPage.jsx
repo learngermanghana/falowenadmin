@@ -9,6 +9,7 @@ import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { createMarkingJob, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
+import { syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";
@@ -196,6 +197,7 @@ export default function MarkingPage() {
   const [feedback, setFeedback] = useState("");
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
+  const [syncingAnswerKeys, setSyncingAnswerKeys] = useState(false);
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
   const [showAllObjectiveAnswers, setShowAllObjectiveAnswers] = useState(false);
   const [reportFallbackVisible, setReportFallbackVisible] = useState(false);
@@ -365,6 +367,7 @@ export default function MarkingPage() {
     : null;
   const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id));
   const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
+  const answerKeySyncNeeded = keyComparison === "different" || keyComparison === "missing";
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
   const writingTask = writingExpected ? writingTaskCandidate : null;
@@ -558,6 +561,19 @@ export default function MarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
   };
 
+  const handleSyncAnswerKeys = async () => {
+    try {
+      setSyncingAnswerKeys(true);
+      const result = await syncAnswerKeysFromGitHub();
+      await refreshAnswerKeyRegistry();
+      success(`Updated ${result.importedCount} answer keys. You can run AI marking now.`);
+    } catch (err) {
+      error(err?.message || "Failed to update the saved AI answer keys.");
+    } finally {
+      setSyncingAnswerKeys(false);
+    }
+  };
+
   const handleAutoMark = async () => {
     const startedIdentity = reviewIdentity;
     const submissionText = selectedSubmission?.text || "";
@@ -584,7 +600,7 @@ export default function MarkingPage() {
       }
 
       if (writingExpected && registryEntry && answerKeyComparison(referenceEntry, registryEntry) === "different") {
-        throw new Error("The saved answer key differs from the current reference. Refresh or import the current answer keys before running AI marking.");
+        throw new Error("The saved AI key is out of date. Use “Sync latest answer keys” in the Reference card, then run AI marking again.");
       }
       const deterministicAssignmentId = getObjectiveAssignmentId(
         registryEntry?.assignmentKey,
@@ -883,7 +899,7 @@ export default function MarkingPage() {
                     className="marking-primary-action"
                     type="button"
                     onClick={handleAutoMark}
-                    disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission}
+                    disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission || answerKeySyncNeeded}
                   >
                     {autoMarking ? "Marking..." : smartMarkingResult ? "Re-run AI marking" : "Mark with AI"}
                   </button>
@@ -947,8 +963,21 @@ export default function MarkingPage() {
                   ))}
                 </select>
               </details>
-              {keyComparison === "different" ? (
-                <div className="marking-inline-warning">The page reference and saved AI key differ. Refresh or import the current key before AI marking.</div>
+              {answerKeySyncNeeded ? (
+                <div className="marking-inline-warning marking-key-sync-warning">
+                  <div>
+                    <strong>{keyComparison === "different" ? "Saved AI key is out of date." : "Saved AI key is missing."}</strong>
+                    <p>The page reference is ready. Update the saved AI key here before running AI marking.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="marking-sync-key-action"
+                    onClick={() => void handleSyncAnswerKeys()}
+                    disabled={syncingAnswerKeys || autoMarking || savingScore}
+                  >
+                    {syncingAnswerKeys ? "Syncing answer keys..." : "Sync latest answer keys"}
+                  </button>
+                </div>
               ) : null}
               <textarea aria-label="Current reference answers" value={formattedReferenceAnswers} readOnly rows={14} />
               {referenceEntry?.answer_url ? <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">Open answer source</a> : null}
@@ -1107,12 +1136,21 @@ export default function MarkingPage() {
       </div>
       {selectedSubmission ? (
         <div className="marking-mobile-sticky-action" aria-label="Current marking action">
-          {!smartMarkingResult ? (
+          {answerKeySyncNeeded ? (
+            <button
+              className="marking-primary-action"
+              type="button"
+              onClick={() => void handleSyncAnswerKeys()}
+              disabled={syncingAnswerKeys || autoMarking || savingScore}
+            >
+              {syncingAnswerKeys ? "Syncing..." : "Sync AI key"}
+            </button>
+          ) : !smartMarkingResult ? (
             <button
               className="marking-primary-action"
               type="button"
               onClick={handleAutoMark}
-              disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions}
+              disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions}
             >
               {autoMarking ? "Marking..." : "Mark with AI"}
             </button>
