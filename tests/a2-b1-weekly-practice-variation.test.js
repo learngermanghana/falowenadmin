@@ -29,6 +29,12 @@ test("A2 and B1 focused practice now exposes visible weekly variation", () => {
     const weeklyFamilies = new Set();
 
     for (const slide of slides) {
+      if (slide.assignmentId === "B1-6.18") {
+        const stages = buildTeachingPresenterStages(slide, slide.topic);
+        assert.equal(stages.filter((stage) => stage.id === "career-challenge").length, 1);
+        assert.equal(stages.some((stage) => stage.id === "practice"), false);
+        continue;
+      }
       const practice = practiceFor(slide);
       assert.ok(practice, `${slide.assignmentId} practice missing`);
       assert.equal(practice.type, "flow");
@@ -61,7 +67,7 @@ test("sentence-jumble weeks build real jumbled German from lesson model sentence
     const slides = getSlidesByCourse(level);
     const jumbleStages = slides
       .map((slide) => ({ slide, practice: practiceFor(slide) }))
-      .filter(({ practice }) => practice.variant === "sentence-jumble");
+      .filter(({ practice }) => practice?.variant === "sentence-jumble");
 
     assert.ok(jumbleStages.length >= 1, `${level} should keep at least one real jumbled-sentence lesson`);
 
@@ -99,7 +105,7 @@ test("weekly fallback reaches exam-style practice in weeks 9 and 10", () => {
   for (const level of ["A2", "B1"]) {
     const slides = getSlidesByCourse(level).filter((slide) => {
       const practice = practiceFor(slide);
-      return practice.weekNumber >= 9 && practice.variantSource === "weekly-profile";
+      return practice?.weekNumber >= 9 && practice?.variantSource === "weekly-profile";
     });
     assert.ok(slides.length >= 1, `${level} should keep at least one weekly-profile lesson in the exam phase`);
     for (const slide of slides) {

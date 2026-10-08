@@ -37,14 +37,21 @@ test("Next random career never repeats the current career", () => {
   assert.equal(nextB1Day18CareerIndex(0, 0, 0.5), 0);
 });
 
-test("Teacher-only career stage is inserted after B1 Day 18 grammar practice, not into other lessons", () => {
+test("Day 18 career challenge replaces prioritization rather than adding another practice page", () => {
   const day18 = getTeachingSlideByAssignmentId("B1-6.18");
   const stages = buildTeachingPresenterStages(day18);
   const career = stages.find((stage) => stage.id === "career-challenge");
   assert.ok(career);
   assert.equal(career.type, "career-challenge");
   assert.equal(career.items, B1_DAY18_CAREER_CHALLENGES);
-  assert.ok(stages.findIndex((stage) => stage.id === "career-challenge") > stages.findIndex((stage) => stage.id === "grammar-check"));
+  assert.deepEqual(stages.map((stage) => stage.id), [
+    "intro", "warmup", "knowledge", "phrases", "grammar-check",
+    "career-challenge", "questions", "workbook", "lesson-summary",
+  ]);
+  assert.equal(stages.length, 9, "Day 18 must use one practice slot, not an extra slide");
+  assert.equal(stages.filter((stage) => stage.id === "career-challenge").length, 1);
+  assert.equal(stages.some((stage) => stage.id === "practice"), false);
+  assert.equal(stages.some((stage) => stage.title === "Berufsweg priorisieren"), false);
   assert.match(career.instruction, /Lehrkraft/);
   assert.match(career.teacherPurpose.teacher, /No student login or submission/);
   assert.equal(day18.workbookConnection.grammarUrl, "/campus/course/lesson/B1/18?view=grammar");

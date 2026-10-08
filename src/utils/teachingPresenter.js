@@ -1650,22 +1650,26 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       },
       buildA2B1GrammarCheckStage(slide, support, level),
       ...(() => {
+        // Day 18 replaces "Berufsweg priorisieren" with the interactive career challenge.
+        // Keep one practice slot only; never add a second career activity slide.
+        if (normalizedAssignmentId(slide) === "B1-6.18") {
+          return [{
+            id: "career-challenge",
+            type: "career-challenge",
+            kicker: "Mitmach-Challenge · um ... zu",
+            title: "Mein Weg zum Wunschberuf",
+            instruction: "Die Lehrkraft zeigt einen zufälligen Beruf. Die Lernenden antworten laut mit um ... zu; nur die Lehrkraft deckt das Beispiel auf und wechselt den Beruf.",
+            items: B1_DAY18_CAREER_CHALLENGES,
+            teacherPurpose: {
+              student: "Say why each career step helps reach the goal, using um ... zu + Infinitiv.",
+              teacher: "Share this screen, ask the question aloud, listen first, then optionally reveal a model. No student login or submission.",
+            },
+            suggestedMinutes: 8,
+          }];
+        }
         const practiceStage = buildA2B1FocusedPracticeStage(slide, focusedPractice, support, level);
         return practiceStage ? [practiceStage] : [];
       })(),
-      ...(normalizedAssignmentId(slide) === "B1-6.18" ? [{
-        id: "career-challenge",
-        type: "career-challenge",
-        kicker: "Mitmach-Challenge · um ... zu",
-        title: "Mein Weg zum Wunschberuf",
-        instruction: "Die Lehrkraft zeigt einen zufälligen Beruf. Die Lernenden antworten laut mit um ... zu; nur die Lehrkraft deckt das Beispiel auf und wechselt den Beruf.",
-        items: B1_DAY18_CAREER_CHALLENGES,
-        teacherPurpose: {
-          student: "Say why each career step helps reach the goal, using um ... zu + Infinitiv.",
-          teacher: "Share this screen, ask the question aloud, listen first, then optionally reveal a model. No student login or submission.",
-        },
-        suggestedMinutes: 8,
-      }] : []),
       buildProgressiveSpeakingStage(slide, speakingStage, level),
       workbookStage,
     ];
