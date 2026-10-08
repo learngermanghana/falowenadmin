@@ -34,6 +34,17 @@ test("reference is selected automatically and manual override stays secondary", 
   assert.match(source, /aria-label="Reference answer"/);
 });
 
+test("stale or missing AI keys can be fixed from the marking page", () => {
+  assert.match(source, /syncAnswerKeysFromGitHub/);
+  assert.match(source, /answerKeySyncNeeded = keyComparison === "different" \|\| keyComparison === "missing"/);
+  assert.match(source, /Sync latest answer keys/);
+  assert.match(source, /Sync AI key/);
+  assert.match(source, /Updated \$\{result\.importedCount\} answer keys/);
+  assert.doesNotMatch(source, /Refresh or import the current key before AI marking/);
+  assert.match(css, /\.marking-key-sync-warning/);
+  assert.match(css, /\.marking-sync-key-action/);
+});
+
 test("objective mapping defaults to issues and can reveal all answers", () => {
   assert.match(source, /objectiveIssueEntries = objectiveEntries\.filter/);
   assert.match(source, /visibleObjectiveEntries = showAllObjectiveAnswers \? objectiveEntries : objectiveIssueEntries/);
