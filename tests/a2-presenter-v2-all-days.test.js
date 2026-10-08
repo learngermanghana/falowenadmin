@@ -18,6 +18,8 @@ const ASSIGNMENT_IDS = [
   "A2-10.26", "A2-10.27", "A2-10.28",
 ];
 
+const A2_CHALLENGE_IDS = new Set(["A2-2.4","A2-3.8","A2-6.17","A2-7.18","A2-7.20","A2-9.24","A2-3.6","A2-4.11","A2-5.13","A2-8.21","A2-10.27","A2-10.28"]);
+
 const REQUIRED_STAGES = [
   "intro", "warmup", "knowledge", "phrases", "grammar-check",
   "practice", "questions", "workbook", "lesson-summary",
@@ -51,13 +53,14 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    REQUIRED_STAGES.forEach((stageId) => {
+    const expectedPracticeId = A2_CHALLENGE_IDS.has(slide.assignmentId) ? "scenario-challenge" : "practice";
+    REQUIRED_STAGES.map(id => id === "practice" ? expectedPracticeId : id).forEach((stageId) => {
       assert.ok(stageIds.includes(stageId), `${slide.assignmentId} missing ${stageId}`);
     });
     assert.equal(stageIds.includes("wrapup"), false, `${slide.assignmentId} should not show the redundant mini-presentation slide`);
 
     const grammarCheck = stages.find((stage) => stage.id === "grammar-check");
-    const practice = stages.find((stage) => stage.id === "practice");
+    const practice = stages.find((stage) => stage.id === expectedPracticeId);
     const workbook = stages.find((stage) => stage.id === "workbook");
     const questions = stages.find((stage) => stage.id === "questions");
 
@@ -72,9 +75,16 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.equal(stageIds.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
     assert.equal(stageIds.includes("mistakes"), false, `${slide.assignmentId} should fold correction into the grammar check`);
 
-    assert.equal(practice.type, "flow");
-    assert.equal(practice.items.length, 1, `${slide.assignmentId} should have one focused practice activity`);
-    assert.ok(practice.items[0].minutes > 0, `${slide.assignmentId} should expose focused-practice timing`);
+    if (expectedPracticeId === "scenario-challenge") {
+      assert.equal(practice.type, "scenario-challenge");
+      assert.equal(practice.items.length, 3);
+      assert.equal(stageIds.includes("practice"), false);
+      assert.ok(practice.items.every(item => item.steps.length === 3));
+    } else {
+      assert.equal(practice.type, "flow");
+      assert.equal(practice.items.length, 1, `${slide.assignmentId} should have one focused practice activity`);
+      assert.ok(practice.items[0].minutes > 0, `${slide.assignmentId} should expose focused-practice timing`);
+    }
     assert.equal(workbook.type, "workbook");
     assert.ok(workbook.items.length >= 4, `${slide.assignmentId} should expose workbook sections`);
     assert.match(workbook.workbookUrl, /^\/campus\/course\//, `${slide.assignmentId} workbook route`);
