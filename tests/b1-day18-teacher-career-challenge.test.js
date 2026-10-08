@@ -44,7 +44,7 @@ test("Teacher-only career stage is inserted after B1 Day 18 grammar practice, no
   assert.ok(career);
   assert.equal(career.type, "career-challenge");
   assert.equal(career.items, B1_DAY18_CAREER_CHALLENGES);
-  assert.ok(stages.findIndex((stage) => stage.id === "career-challenge") > stages.findIndex((stage) => stage.id === "grammar"));
+  assert.ok(stages.findIndex((stage) => stage.id === "career-challenge") > stages.findIndex((stage) => stage.id === "grammar-check"));
   assert.match(career.instruction, /Lehrkraft/);
   assert.match(career.teacherPurpose.teacher, /No student login or submission/);
   assert.equal(day18.workbookConnection.grammarUrl, "/campus/course/lesson/B1/18?view=grammar");
