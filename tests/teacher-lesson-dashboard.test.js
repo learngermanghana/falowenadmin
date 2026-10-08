@@ -137,8 +137,8 @@ test("Admin top bar exposes the deployed commit badge", async () => {
 });
 
 test("attendance learner links use A1 chapters and mapped A2 lesson days", () => {
-  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-3.5", dayNumber: 13 }), "https://www.falowen.app/campus/course/lesson/A1/3.5");
-  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-1.1-PRACTICE", dayNumber: 4 }), "https://www.falowen.app/campus/course/lesson/A1/1.1-practice");
+  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-3.5", dayNumber: 13 }), "https://www.falowen.app/campus/course/a1-day-13-revision-numbers-time-and-prices-workbook");
+  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-1.1-PRACTICE", dayNumber: 4 }), "https://www.falowen.app/campus/course/a1-day-3-schreiben-sprechen-kapitel-1-1-workbook");
   const a2 = resolveTeacherLessonSlide({ session: { assignmentIds: ["A2-3.6"] } });
   assert.equal(learnerLessonUrl(a2), "https://www.falowen.app/campus/course/a2-day-6-moebel-und-raeume-workbook");
   assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "unknown", dayNumber: 13 }), "https://www.falowen.app/campus/course");
@@ -147,7 +147,6 @@ test("attendance learner links use A1 chapters and mapped A2 lesson days", () =>
 test("Attendance Open lesson uses registered workbook destinations instead of generic lesson hubs", () => {
   const examples = [
     ["A1", "A1-0.2"],
-    ["A1", "A1-9"],
     ["A2", "A2-3.6"],
     ["B1", "B1-6.18"],
   ];
@@ -161,6 +160,12 @@ test("Attendance Open lesson uses registered workbook destinations instead of ge
       `${assignmentId} must open its assigned workbook page, not an adjacent course day`,
     );
   }
+});
+
+test("Attendance falls back to the learner A1 catalog when the Admin slide has no workbook URL", () => {
+  const a1Day16 = getSlidesByCourse("A1").find((item) => item.assignmentId === "A1-9");
+  assert.ok(a1Day16);
+  assert.equal(learnerLessonUrl(a1Day16), "https://www.falowen.app/campus/course/a1-day-16-food-and-negation-food-and-daily-life-workbook");
 });
 
 test("Attendance exposes both A1 lessons on one class day instead of dropping the second chapter", () => {
@@ -184,11 +189,13 @@ test("Attendance resolves a lesson from its class/day when assignment IDs are mi
   assert.match(links[0].url, /\/campus\/course\/lesson\/B1\/18\?view=workbook$/);
 });
 
-test("A1 integer chapter never aliases a different attendance day", () => {
-  assert.equal(
-    learnerLessonUrl({ course: "A1", assignmentId: "A1-9", dayNumber: 16 }),
-    "https://www.falowen.app/campus/course/lesson/A1/chapter/9",
-  );
+test("A1 chapter 9 and chapter 10 open their distinct published Day 16 workbook pages", () => {
+  const chapter9 = learnerLessonUrl({ course: "A1", assignmentId: "A1-9", dayNumber: 16 });
+  const chapter10 = learnerLessonUrl({ course: "A1", assignmentId: "A1-10", dayNumber: 16 });
+  assert.equal(chapter9, "https://www.falowen.app/campus/course/a1-day-16-food-and-negation-food-and-daily-life-workbook");
+  assert.equal(chapter10, "https://www.falowen.app/campus/course/a1-day-16-food-and-negation-kapitel-10-workbook");
+  assert.notEqual(chapter9, chapter10);
+  assert.equal(learnerLessonUrl({ course: "A1", assignmentId: "A1-99", dayNumber: 16 }), "https://www.falowen.app/campus/course");
 });
 
 test("Attendance refuses off-site lesson destinations", () => {
