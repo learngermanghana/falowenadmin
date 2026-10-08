@@ -65,8 +65,8 @@ jobs:
         run: node scripts/patchNumberedTextObjectiveSections.mjs
       - name: Test A1 objective parser
         run: node --test tests/a1-02-unnumbered-trailing-objective-text.test.js
-      - name: Verify B1 Day 18 teacher-only career challenge
-        run: node --test tests/b1-day18-teacher-career-challenge.test.js
+      - name: Verify B1 Day 18 replacement and B1 presenter practice spine
+        run: node --test tests/b1-day18-teacher-career-challenge.test.js tests/b1-presenter-v2-all-days.test.js tests/a2-b1-weekly-practice-variation.test.js
       - name: Run teaching slide regression tests
         run: node --test tests/presenter-sentence-numbering.test.js tests/warmup-adaptive-controls.test.js tests/teaching-presenter.test.js tests/teacher-slide-support.test.js tests/a1-workbook-aligned-slides-days1-5.test.js tests/a1-workbook-aligned-slides-days6-10.test.js tests/a2-b1-warmup-support.test.js tests/a2-workbook-aligned-slides.test.js tests/a2-workbook-aligned-slides-days6-10.test.js tests/a2-workbook-aligned-slides-days11-15.test.js tests/a2-workbook-aligned-slides-days16-20.test.js tests/a2-workbook-aligned-slides-days21-24.test.js tests/a2-workbook-aligned-slides-days25-28.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js tests/c2-presenter-v2-all-days.test.js tests/teacher-lesson-guidance.test.js tests/*speaking-model-answers.test.js
       - name: Build production bundle
