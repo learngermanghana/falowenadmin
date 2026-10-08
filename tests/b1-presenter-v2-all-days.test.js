@@ -33,7 +33,10 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
-    assert.deepEqual(stageIds, REQUIRED_STAGES, `${slide.assignmentId} should use the stable B1 teaching spine`);
+    const expectedStages = slide.assignmentId === "B1-6.18"
+      ? REQUIRED_STAGES.map((id) => id === "practice" ? "career-challenge" : id)
+      : REQUIRED_STAGES;
+    assert.deepEqual(stageIds, expectedStages, `${slide.assignmentId} should have nine lesson stages without duplicated practice`);
 
     const knowledge = stages.find((stage) => stage.id === "knowledge");
     assert.equal(knowledge.type, "knowledge");
@@ -45,10 +48,17 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
     assert.equal(grammar.items.length, 3, `${slide.assignmentId} should use three short grammar diagnostics`);
     assert.ok(grammar.items.every((item) => item.prompt && item.answer), `${slide.assignmentId} grammar diagnostics need teacher keys`);
 
-    const practice = stages.find((stage) => stage.id === "practice");
-    assert.equal(practice.type, "flow");
-    assert.equal(practice.items.length, 1, `${slide.assignmentId} should use one focused task rather than a drill stack`);
-    assert.ok(practice.items[0].prompts?.length >= 2, `${slide.assignmentId} focused task needs actionable prompts`);
+    if (slide.assignmentId === "B1-6.18") {
+      const career = stages.find((stage) => stage.id === "career-challenge");
+      assert.equal(career.type, "career-challenge");
+      assert.equal(career.items.length, 6);
+      assert.equal(stageIds.includes("practice"), false);
+    } else {
+      const practice = stages.find((stage) => stage.id === "practice");
+      assert.equal(practice.type, "flow");
+      assert.equal(practice.items.length, 1, `${slide.assignmentId} should use one focused task rather than a drill stack`);
+      assert.ok(practice.items[0].prompts?.length >= 2, `${slide.assignmentId} focused task needs actionable prompts`);
+    }
 
     assert.equal(stageIds.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
     assert.equal(stageIds.includes("mistakes"), false, `${slide.assignmentId} should fold correction into the grammar diagnostic`);
