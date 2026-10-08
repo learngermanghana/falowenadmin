@@ -9,6 +9,15 @@ function replaceOnce(source, search, replacement, label) {
 const target = new URL("../src/utils/essayFeedbackEvidence.js", import.meta.url);
 let source = fs.readFileSync(target, "utf8");
 
+if (
+  source.includes("function hasBalancedFeedbackQuotes")
+  && source.includes("hasBalancedFeedbackQuotes(value) && quoted.length > 0")
+  && source.includes("structured && isGroundedCorrectiveFeedback(structured, submission)")
+) {
+  console.log("Corrective writing feedback already has enhanced grounding and quote-balance guards.");
+  process.exit(0);
+}
+
 source = replaceOnce(
   source,
   `function genericWritingSentence(value = "") {\n  return /^(?:the main purpose of your message is understandable|check verb position, articles and every task point before submitting|your message uses an appropriate greeting and closing|your free-text response is clear|reread .+ improve one wording choice before submitting)/i.test(String(value || "").trim());\n}\n`,
