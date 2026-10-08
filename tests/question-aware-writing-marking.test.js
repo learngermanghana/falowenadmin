@@ -523,6 +523,7 @@ test("A2-4.9 recognizes Victoria's hotel booking, stay details, price and servic
   assert.equal(result.writingScore, 70);
   assert.equal(result.finalScore, 88);
   assert.match(result.feedback, /requested formal register/i);
+  assert.equal((result.feedback.match(/requested formal register/gi) || []).length, 1);
   assert.doesNotMatch(result.feedback, /Still missing:/i);
   assert.ok(result.corrections.some((item) => item.from === "Lieber Herr Felix" && item.to === "Sehr geehrter Herr Felix"));
 });
