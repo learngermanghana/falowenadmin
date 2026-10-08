@@ -41,3 +41,11 @@ test("feedback normalization collapses an exactly repeated tutor paragraph", () 
   assert.equal(dedupeRepeatedFeedback(`${paragraph} ${paragraph}`), paragraph);
   assert.equal(dedupeRepeatedFeedback(`${paragraph}\n\n${paragraph}`), paragraph);
 });
+
+test("feedback normalization removes repeated sentences inside an otherwise unique comment", () => {
+  const feedback = "Writing score: 80%. You covered all 3 required points. You covered all 3 required points. Review Teil 4 question 2.";
+  assert.equal(
+    dedupeRepeatedFeedback(feedback),
+    "Writing score: 80%. You covered all 3 required points. Review Teil 4 question 2.",
+  );
+});
