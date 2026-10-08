@@ -31,7 +31,17 @@ for (const level of ["A2", "B1"]) {
 
       assert.deepEqual(ids.slice(-3), ["questions", "workbook", "lesson-summary"], `${slide.assignmentId} should finish with production, workbook and summary`);
       assert.equal(ids.filter((id) => id === "grammar-check").length, 1, `${slide.assignmentId} should contain one compact grammar diagnostic`);
-      assert.ok(ids.indexOf("grammar-check") < ids.indexOf("practice"), `${slide.assignmentId} grammar diagnostic should happen before practice`);
+      const practiceId = level === "B1" && slide.assignmentId === "B1-6.18"
+        ? "career-challenge"
+        : "practice";
+      const practiceIndex = ids.indexOf(practiceId);
+      assert.ok(practiceIndex >= 0, `${slide.assignmentId} should contain its focused practice slot`);
+      assert.equal(
+        ids.filter((id) => id === "practice" || id === "career-challenge").length,
+        1,
+        `${slide.assignmentId} should keep exactly one focused practice slide`,
+      );
+      assert.ok(ids.indexOf("grammar-check") < practiceIndex, `${slide.assignmentId} grammar diagnostic should happen before practice`);
 
       for (const oldId of OLD_REPETITIVE_IDS) {
         assert.equal(ids.includes(oldId), false, `${slide.assignmentId} still exposes repetitive ending ${oldId}`);
