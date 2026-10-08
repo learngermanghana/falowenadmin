@@ -755,6 +755,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </div>
             </aside>
           ) : null}
+          {presenterLevel === "C2" && !["intro", "warmup", "foundation"].includes(stage.id) && stage.centralQuestion ? (
+            <aside className="presenter-c2-guiding-question" aria-label="C2 Leitfrage">
+              <span>Leitfrage</span>
+              <strong>{stage.centralQuestion}</strong>
+            </aside>
+          ) : null}
           {stage.type === "intro" ? (
             <>
               {stage.skillTarget ? (
@@ -1331,18 +1337,18 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               </div>
               <div className="presenter-c2-analysis-steps">
                 <article className="presenter-c2-analysis-step is-case">
-                  <span>FALL</span>
+                  <span>POSITION</span>
                   <p>{String(stage.casePrompt || "").replace(/^Fall:\s*/i, "")}</p>
                 </article>
                 {c2AnalysisStep >= 1 ? (
                   <article className="presenter-c2-analysis-step is-check">
-                    <span>PRÜFE</span>
+                    <span>BAUE AUF</span>
                     <p>{stage.checkPrompt}</p>
                   </article>
                 ) : null}
                 {c2AnalysisStep >= 2 ? (
                   <article className="presenter-c2-analysis-step is-decide">
-                    <span>ENTSCHEIDE</span>
+                    <span>WÄGE AB</span>
                     <p>{stage.decisionPrompt}</p>
                   </article>
                 ) : null}
@@ -1353,7 +1359,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   className="presenter-c2-analysis-next"
                   onClick={() => setC2AnalysisStep((current) => Math.min(2, current + 1))}
                 >
-                  {c2AnalysisStep === 0 ? "Prüfkriterien zeigen →" : "Entscheidung zeigen →"}
+                  {c2AnalysisStep === 0 ? "Begründung aufbauen →" : "Gegenposition & Synthese →"}
                 </button>
               ) : (
                 <div className="presenter-c2-rubric" aria-label="C2 response rubric">
@@ -1680,7 +1686,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           </div>
           <button type="button" onClick={next} disabled={stageIndex === stages.length - 1 && (stage.type !== "question-reveal" || questionIndex === stage.items.length - 1)}>
             {stage.type === "c2-analysis" && c2AnalysisStep < 2
-              ? (c2AnalysisStep === 0 ? "Prüfen →" : "Entscheiden →")
+              ? (c2AnalysisStep === 0 ? "Begründen →" : "Abwägen →")
               : stage.type === "question-reveal" && questionIndex < stage.items.length - 1
                 ? (advancedClassroom ? "Nächste Frage →" : "Next question →")
                 : "Next →"}

@@ -1674,14 +1674,19 @@ const C2_REFORMULATION_PREP = Object.freeze({
   },
 });
 
-function makeWarmupQuestions(lesson, topicFoundation) {
+function makeCentralQuestion(lesson, topicFoundation) {
   const curated = C2_WARMUP_QUESTIONS[Number(lesson.day)];
-  if (Array.isArray(curated) && curated.length) return curated;
-  return [
-    topicFoundation?.core || "Welche konkrete Frage steht heute im Mittelpunkt?",
-    lesson.perspectives?.[0] || "Welche Position ist hier besonders prüfenswert?",
-    topicFoundation?.example ? "Was zeigt das heutige Beispiel, und wo liegen seine Grenzen?" : "Welches konkrete Beispiel hilft bei der Bewertung?",
-  ].filter(Boolean);
+  return String(
+    topicFoundation?.core
+      || (Array.isArray(curated) ? curated[0] : "")
+      || lesson.perspectives?.[0]
+      || ("Welche zentrale Frage steht hinter „" + lesson.title + "“?"),
+  ).trim();
+}
+
+function makeWarmupQuestions(lesson, topicFoundation) {
+  const centralQuestion = makeCentralQuestion(lesson, topicFoundation);
+  return centralQuestion ? [centralQuestion] : [];
 }
 
 function objectiveSentence(lesson) {
@@ -1711,26 +1716,20 @@ function commonMistakesDe(lesson) {
   ];
 }
 
-function makeSpeakingQuestions(lesson) {
-  return [
-    "Welche zentrale Spannung steckt hinter „" + lesson.title + "“?",
-    "Nimm differenziert Stellung zu: „" + lesson.perspectives[0] + "“",
-    "Nimm differenziert Stellung zu: „" + lesson.perspectives[1] + "“",
-    "Nimm differenziert Stellung zu: „" + lesson.perspectives[2] + "“",
-    "Halte einen strukturierten 3–5-minütigen Vortrag zu „" + lesson.title + "“ und schließe mit einer klaren Synthese.",
-  ];
+function makeSpeakingQuestions(lesson, topicFoundation) {
+  const centralQuestion = makeCentralQuestion(lesson, topicFoundation);
+  return centralQuestion ? [centralQuestion] : [];
 }
 
 function makeSpeakingModels(lesson, questions) {
+  const questionDe = questions[0];
+  if (!questionDe) return [];
   const c = lesson.collocations;
   const g = lesson.grammar;
-  return [
-    { questionDe: questions[0], modelAnswerDe: "Im Mittelpunkt steht " + lesson.topic + " Dabei treffen unterschiedliche Interessen aufeinander. " + c[0][1] + " Entscheidend ist deshalb eine differenzierte Abwägung statt einer pauschalen Bewertung." },
-    { questionDe: questions[1], modelAnswerDe: "Die Aussage lässt sich nur bedingt pauschalisieren. " + g[1] + " Zugleich sollte berücksichtigt werden: " + c[1][1] },
-    { questionDe: questions[2], modelAnswerDe: "Für diese Position spricht ein nachvollziehbares Argument; dennoch hängt ihre Tragfähigkeit von Bedingungen und Gegenpositionen ab. " + g[2] },
-    { questionDe: questions[3], modelAnswerDe: "Der Beitrag benennt einen wichtigen Aspekt, greift allein jedoch zu kurz. " + c[2][1] + " Eine C2-Antwort sollte die Reichweite der Aussage ausdrücklich begrenzen." },
-    { questionDe: questions[4], modelAnswerDe: "Zunächst würde ich die Leitfrage eingrenzen, anschließend die drei Perspektiven abwägen und mindestens eine Gegenposition ernsthaft prüfen. Sprachlich nutze ich die heutige Zielstruktur gezielt und formuliere am Ende eine Synthese, die Bedingungen und Grenzen sichtbar macht." },
-  ];
+  return [{
+    questionDe,
+    modelAnswerDe: "Die Frage lässt sich nicht pauschal beantworten. Zunächst formuliere ich eine klare Tendenz, dann begründe ich sie mit einem tragenden Argument und einem konkreten Beispiel oder Beleg. Anschließend prüfe ich eine ernst zu nehmende Gegenposition und begrenze meine Aussage, bevor ich zu einer Synthese komme. " + c[0][1] + " " + g[1],
+  }];
 }
 
 function makeGrammarChecks(lesson) {
@@ -1748,8 +1747,9 @@ function makeGrammarChecks(lesson) {
 }
 
 function makeSlide(lesson) {
-  const questions = makeSpeakingQuestions(lesson);
   const topicFoundation = getC2TopicFoundation(lesson.day);
+  const centralQuestion = makeCentralQuestion(lesson, topicFoundation);
+  const questions = makeSpeakingQuestions(lesson, topicFoundation);
   const checks = makeGrammarChecks(lesson);
   const writeDescription = lesson.writeType === "opinion"
     ? "Stellungnahme: ungefähr 350 Wörter, alle drei Beiträge berücksichtigen und eine eigene begründete Position entwickeln."
@@ -1769,6 +1769,7 @@ function makeSlide(lesson) {
     topic: lesson.chapter + " · " + lesson.topic,
     objective: objectiveSentence(lesson),
     estimatedDuration: "75–90 minutes",
+    centralQuestionDe: centralQuestion,
     warmupQuestionsDe: makeWarmupQuestions(lesson, topicFoundation),
     knowledgeTextDe: topicFoundation
       ? "1-Minuten-Wissen: Simple English: " + topicFoundation.en + " Auf Deutsch: " + topicFoundation.de + " Konkretes Beispiel: " + topicFoundation.example + " Kernfrage: " + topicFoundation.core + " Kernspannung: " + topicFoundation.tension
@@ -1785,17 +1786,17 @@ function makeSlide(lesson) {
     speakingModels: makeSpeakingModels(lesson, questions),
     teacherNotesEn: [
       "Runtime source: Falowen C2 standard curriculum, not the older mastery title list.",
-      "Teach the topic foundation first: simple meaning, concrete example and central tension. Then teach the three debate perspectives and grammar focus.",
-      "Keep the speaking task seminar-style: structured presentation, perspective weighing, examples and follow-up questions.",
+      "Keep one Leitfrage for the entire lesson. Use the foundation, vocabulary, grammar and analysis stages to help the learner build a stronger answer to that same question.",
+      "Treat the three course perspectives as idea material for arguments and counterarguments, not as three extra discussion questions.",
       "For even days, teach transformation families in Learn but do not reveal the exact Write answers.",
       "Correct after the full response; prioritise logic, register and two high-value language points.",
     ],
     interactionFlow: [
       { phase: "1-minute knowledge", detailEn: "3 min: read the topic frame, identify the central tension and activate two collocations." },
       { phase: "Grammar teaching", detailEn: "12 min: teach function, structure and the two current Falowen model examples." },
-      { phase: "Perspective check", detailEn: "12 min: test the assumptions and limits behind all three current Course Book statements." },
-      { phase: "Speaking transfer", detailEn: "15 min: build a structured seminar response using the target grammar and topic collocations." },
-      { phase: "C2 synthesis", detailEn: "15 min: deliver a 3–5-minute response with position, example/evidence, counterposition and synthesis." },
+      { phase: "Argument build", detailEn: "12 min: build one reason for the Leitfrage and support it with a concrete example, consequence or piece of evidence." },
+      { phase: "Counterposition", detailEn: "15 min: test the same answer against one serious counterargument or limitation." },
+      { phase: "C2 synthesis", detailEn: "15 min: answer the same Leitfrage in 3–5 minutes with position, reason, example/evidence, counterposition and synthesis." },
       { phase: "Writing transfer", detailEn: "12 min: prepare the same Write mode used by this Falowen day without exposing assessment answers." },
     ],
     wrapUpTaskDe: lesson.writeType === "opinion"
@@ -1808,7 +1809,7 @@ function makeSlide(lesson) {
       parts: [
         { label: "Grammatik", detailEn: lesson.grammarFocus + ": " + lesson.grammar[0] },
         { label: "Kollokationen", detailEn: lesson.collocations.map(([phrase]) => phrase).join(" · ") },
-        { label: "Sprechen", detailEn: "Fünfminütiger Seminarbeitrag mit den drei aktuellen Falowen-Perspektiven." },
+        { label: "Sprechen", detailEn: "Fünfminütiger Seminarbeitrag zur Leitfrage: Position → Begründung → Beispiel/Evidenz → Gegenposition → Synthese." },
         { label: "Schreiben", detailEn: writeDescription },
         { label: "Schreibvorbereitung", detailEn: writeTeaching.join(" · ") },
       ],

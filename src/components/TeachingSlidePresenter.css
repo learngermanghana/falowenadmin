@@ -1638,6 +1638,45 @@
   }
 }
 
+.presenter-c2-guiding-question {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  width: min(100%, 1280px);
+  margin: 0 auto 0.75rem;
+  border-left: 4px solid #7c3aed;
+  border-radius: 12px;
+  background: #faf8ff;
+  padding: 0.62rem 0.78rem;
+}
+
+.presenter-c2-guiding-question span {
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #6d28d9;
+  padding: 0.26rem 0.52rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.presenter-c2-guiding-question strong {
+  color: #3b0764;
+  font-size: clamp(0.92rem, 1.2vw, 1.08rem);
+  line-height: 1.38;
+}
+
+@media (max-width: 760px) {
+  .presenter-c2-guiding-question {
+    grid-template-columns: 1fr;
+  }
+
+  .presenter-c2-guiding-question span {
+    width: fit-content;
+  }
+}
 
 /* Keep the Common mistakes heading reachable even when the list is taller than the slide. */
 .presenter-stage-mistakes {

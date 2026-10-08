@@ -707,29 +707,33 @@ function buildC2GrammarApplication(slide = {}, grammarItems = [], modelItems = [
 }
 
 function buildC2AnalyticalTask(slide = {}) {
-  const curated = slide.analyticalTask;
-  const prompts = curated?.title && Array.isArray(curated.prompts) && curated.prompts.length
-    ? curated.prompts.filter(Boolean).slice(0, 3)
-    : (() => {
-        const topic = cleanTopic(slide);
-        const foundation = getPresenterTopicFoundation(slide) || {};
-        return [
-          foundation.example ? `Fall: ${foundation.example}` : `Fall: Entwickle ein konkretes Beispiel zu „${topic}“.`,
-          foundation.tension ? `Prüfe die Kernspannung: ${foundation.tension}` : "Lege zwei nachvollziehbare Bewertungskriterien fest.",
-          foundation.question ? `Beantworte abschließend: ${foundation.question}` : "Formuliere eine begründete Entscheidung mit einer klaren Einschränkung.",
-        ];
-      })();
+  const curated = slide.analyticalTask || null;
+  const foundation = getPresenterTopicFoundation(slide) || {};
+  const centralQuestion = String(slide.centralQuestionDe || foundation.question || "").trim();
+  const example = String(foundation.example || "").trim();
+  const tension = String(foundation.tension || "").trim();
+  const topicTitle = String(curated?.title || "Argumentation").trim();
+
+  const casePrompt = "POSITION · Formuliere zuerst eine vorläufige Antwort auf die Leitfrage in einem Satz. Entscheide dich nur für eine Tendenz: eher ja, eher nein oder es kommt auf Bedingungen an.";
+  const checkPrompt = example
+    ? "BEGRÜNDUNG + BEISPIEL · Entwickle einen tragenden Grund für deine Position und stütze ihn mit diesem konkreten Beispiel: " + example
+    : "BEGRÜNDUNG + BEISPIEL · Entwickle einen tragenden Grund und stütze ihn mit einem konkreten Beispiel, einer Folge oder einem nachvollziehbaren Beleg.";
+  const decisionPrompt = tension
+    ? "GEGENPOSITION + SYNTHESE · Prüfe deine Position an der Kernspannung „" + tension + "“. Nenne einen ernst zu nehmenden Gegenpunkt, reagiere darauf und formuliere danach deine endgültige, begrenzte Antwort."
+    : "GEGENPOSITION + SYNTHESE · Nenne einen ernst zu nehmenden Gegenpunkt, reagiere darauf und formuliere danach deine endgültige, begrenzte Antwort.";
 
   return {
-    title: String(curated?.title || "Fallanalyse · Entscheidung begründen"),
-    instruction: String(curated?.instruction || "Arbeite am Fall und begründe deine Entscheidung mit Kriterien, Evidenz und einer klaren Grenze."),
-    prompts,
-    casePrompt: prompts[0] || "",
-    checkPrompt: prompts[1] || "",
-    decisionPrompt: prompts[2] || "",
+    title: "Leitfrage aufbauen · " + topicTitle,
+    instruction: "Bearbeite keine neue Diskussionsfrage. Baue deine Antwort auf dieselbe Leitfrage Schritt für Schritt auf: Position → Begründung/Beispiel → Gegenposition → Synthese.",
+    prompts: [casePrompt, checkPrompt, decisionPrompt],
+    casePrompt,
+    checkPrompt,
+    decisionPrompt,
+    centralQuestion,
     progressiveReveal: true,
     rubric: ["Logik", "Evidenz", "Sprache / Register"],
     modelItems: [],
+    sourceTask: curated,
     minutes: Number(curated?.minutes || 14),
   };
 }
@@ -737,15 +741,19 @@ function buildC2AnalyticalTask(slide = {}) {
 function buildC2WritingBridge(slide = {}) {
   const opinion = String(slide.writeType || "").toLowerCase() === "opinion";
   const prompt = String(slide.canonicalWritingPromptDe || slide.wrapUpTaskDe || "").trim();
+  const foundation = getPresenterTopicFoundation(slide) || {};
+  const centralQuestion = String(slide.centralQuestionDe || foundation.question || "").trim();
   if (opinion) {
     return {
-      title: "Write-Transfer · Stellungnahme vorbereiten",
-      instruction: "Prüfungsnah vorbereiten: noch nicht ausformulieren. Sichere zuerst These, zwei tragende Argumente und einen relevanten Einwand.",
+      title: "Write-Transfer · dieselbe Leitfrage schriftlich",
+      instruction: "Nutze dieselbe Leitfrage wie im Unterricht. Noch nicht ausformulieren: übertrage zuerst die mündlich entwickelte Argumentation in einen klaren Schreibplan.",
       prompts: [
-        `Aufgabe: ${prompt}`,
-        "Argumente: Notiere zwei tragende Gründe; jeder Grund braucht einen konkreten Bezug, ein Beispiel oder eine nachvollziehbare Folge.",
-        "Einwand: Notiere eine ernst zu nehmende Einschränkung oder Gegenposition und entscheide, wie du darauf reagieren wirst.",
+        "These: Formuliere deine schriftliche Position zur Leitfrage in einem präzisen Satz.",
+        "Argumente: Entwickle zwei tragende Argumente. Jedes Argument braucht einen konkreten Bezug, ein Beispiel, eine Folge oder nachvollziehbare Evidenz.",
+        "Einwand & Schluss: Nenne eine ernst zu nehmende Einschränkung oder Gegenposition, reagiere darauf und plane eine differenzierte Schlussposition.",
       ],
+      centralQuestion,
+      canonicalPrompt: prompt,
       minutes: 6,
     };
   }
@@ -761,6 +769,7 @@ function buildC2WritingBridge(slide = {}) {
       cue ? `Vorgabe: ${cue}.` : "Vorgabe: Nutze die heutige Zielstruktur, ohne die Aussage zu verstärken oder abzuschwächen.",
       "Kontrollpunkt: Bedeutung erhalten. Danach Evidenzgrad, Register, Kasus, Wortstellung und Bezüge prüfen.",
     ],
+    centralQuestion,
     minutes: 6,
   };
 }
@@ -1815,7 +1824,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         id: "warmup",
         type: "list",
         kicker: "Warm-up",
-        title: "Warm-up · Position aktivieren",
+        title: "Leitfrage · erste Position",
         items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
         questionSupport: [],
         suggestedMinutes: 5,
@@ -1945,8 +1954,12 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
       });
     }
   }
+  const centralQuestion = level === "C2"
+    ? String(slide.centralQuestionDe || getPresenterTopicFoundation(slide)?.question || "").trim()
+    : "";
   return filtered.map((stage) => ({
     ...stage,
+    centralQuestion: level === "C2" ? centralQuestion : (stage.centralQuestion || ""),
     examMode: Boolean(level === "C2" && slide.examMode),
     teacherPurpose: stage.teacherPurpose || buildPresenterTeacherPurpose(stage, level),
   }));
