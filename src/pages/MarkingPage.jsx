@@ -697,7 +697,14 @@ export default function MarkingPage() {
     setSelectedHighlight("");
   };
 
-  const consistencyWarnings = markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore);
+  const consistencyWarnings = [
+    ...markingConsistencyWarnings(currentReviewedResult, selectedSubmission || {}, calculatedFinalScore),
+    ...(Array.isArray(smartMarkingResult?.reviewReasons)
+      ? smartMarkingResult.reviewReasons
+        .filter((reason) => reason?.code === "learner_answer_key_disagreement")
+        .map((reason) => reason.message).filter(Boolean)
+      : []),
+  ];
   const qualitySignature = JSON.stringify([reviewIdentity, feedback, finalScore, schreibenMark, consistencyWarnings]);
   const qualityNeedsReview = consistencyWarnings.length > 0 && qualityAcknowledgement !== qualitySignature;
 
