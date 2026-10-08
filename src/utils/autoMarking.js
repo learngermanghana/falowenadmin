@@ -881,7 +881,7 @@ function findWritingIssues(text = "") {
     previousLine = line;
   }
 
-  const weilWordOrder = sourceText.match(/\bweil\s+ich\s+möchte\s+([^.!?\n]{2,90})([.!?]?)/i);
+  const weilWordOrder = sourceText.match(/\bweil\s+ich\s+möchte\s+([^,.!?;\n]{2,90})([.!?]?)/i);
   if (weilWordOrder?.[0]) {
     const content = String(weilWordOrder[1] || "").trim();
     const punctuation = weilWordOrder[2] || "";
