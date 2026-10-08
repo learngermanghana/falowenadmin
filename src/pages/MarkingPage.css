@@ -271,6 +271,26 @@
   font-weight: 700;
 }
 
+.marking-student-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.marking-report-fallback {
+  display: grid;
+  gap: 6px;
+  margin-top: -4px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.marking-report-fallback textarea {
+  min-height: 220px;
+}
+
 .marking-inline-action {
   display: flex;
   gap: 8px;
@@ -546,6 +566,14 @@
   .marking-score-fields,
   .marking-save-bar {
     grid-template-columns: 1fr;
+  }
+
+  .marking-student-actions {
+    justify-content: flex-start;
+  }
+
+  .marking-student-actions .marking-primary-action {
+    width: 100%;
   }
 
   .marking-save-score {
