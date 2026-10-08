@@ -80,7 +80,7 @@ export const A2_WARMUP_FOLLOWUPS = Object.freeze({
     },
     {
       "questionDe": "Wann stehst du am Wochenende auf?",
-      "followUpDe": "Was machst du direkt nach dem Aufstehen am Wochenende?"
+      "followUpDe": "Was machst du direkt nach dem Aufstehen?"
     },
     {
       "questionDe": "Siehst du abends oft fern?",
