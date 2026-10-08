@@ -149,7 +149,8 @@ function isoDate(value = new Date()) {
   }).format(safe);
 }
 
-function eventKind(score = {}) {
+function eventKind(score = null) {
+  if (!score || !text(score.source)) return "final_mock_result";
   return isFinalMockScore(score) ? "final_mock_result" : "exam_room_result";
 }
 
