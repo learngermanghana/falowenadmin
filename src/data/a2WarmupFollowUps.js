@@ -22,7 +22,7 @@ export const A2_WARMUP_FOLLOWUPS = Object.freeze({
   "A2-1.2": [
     {
       "questionDe": "Wen kennst du besonders gut?",
-      "followUpDe": "Woher kennst du diese Person?"
+      "followUpDe": "Wo und wann hast du diese Person kennengelernt?"
     },
     {
       "questionDe": "Wie sieht diese Person aus?",
