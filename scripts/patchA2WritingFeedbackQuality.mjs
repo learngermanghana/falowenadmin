@@ -12,7 +12,7 @@ let autoSource = fs.readFileSync(autoTarget, "utf8");
 autoSource = replaceOnce(
   autoSource,
   '    if (/^[a-zäöüß]/.test(line) && !/[,;:]$/.test(previousLine)) {',
-  '    const followsCommaGreeting = isWritingGreetingLine(previousLine) && /,$/.test(previousLine.trim());\n    if (/^[a-zäöüß]/.test(line) && !followsCommaGreeting && !/[,;:]$/.test(previousLine)) {',
+  '    const followsCommaGreeting = isWritingGreetingLine(previousLine) && /,$/.test(previousLine.trim());\n    const hasSubstantiveWeilIssue = /\\bweil\\s+ich\\s+möchte\\b/i.test(line);\n    if (/^[a-zäöüß]/.test(line) && !followsCommaGreeting && !/[,;:]$/.test(previousLine) && !hasSubstantiveWeilIssue) {',
   "German letter greeting capitalization",
 );
 
