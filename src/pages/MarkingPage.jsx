@@ -1105,6 +1105,35 @@ export default function MarkingPage() {
           </section>
         </aside>
       </div>
+      {selectedSubmission ? (
+        <div className="marking-mobile-sticky-action" aria-label="Current marking action">
+          {!smartMarkingResult ? (
+            <button
+              className="marking-primary-action"
+              type="button"
+              onClick={handleAutoMark}
+              disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions}
+            >
+              {autoMarking ? "Marking..." : "Mark with AI"}
+            </button>
+          ) : (
+            <>
+              <div className="marking-mobile-sticky-score">
+                <span>Final</span>
+                <strong>{displayedFinalScore}/100</strong>
+              </div>
+              <button
+                className="marking-primary-action"
+                type="button"
+                onClick={() => void handleSave(false)}
+                disabled={!feedback.trim() || savingScore || autoMarking || workflowSaving}
+              >
+                {savingScore ? "Saving..." : "Save mark"}
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
       <div className="marking-save-bar">
         <div className="marking-save-score">
           <span>Final score</span>
