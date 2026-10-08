@@ -39,7 +39,7 @@ const rows = [
     ["Ask for a free room", "Give stay details such as dates, people or room type", "Ask about the price and additional services"]],
   ["A2-4.10", "Eine Stadt entdecken und etwas erleben", "informal_email", "informal", "friend_or_personal_contact",
     "Sie möchten mit einem Freund oder einer Freundin einen Tag in einer Stadt oder in einem neuen Viertel verbringen. Schreiben Sie eine E-Mail.",
-    ["Sagen Sie, welchen Ort Sie gemeinsam entdecken möchten und warum.", "Schlagen Sie zwei Aktivitäten oder Orte vor, zum Beispiel einen Markt, einen Park, ein Café oder eine Sehenswürdigkeit.", "Nennen Sie einen konkreten Tag und Treffpunkt und fragen Sie, was die andere Person lieber machen möchte."],
+    ["Sagen Sie, welchen Ort Sie gemeinsam entdecken möchten und warum.", "Schlagen Sie zwei Aktivitäten oder Orte vor, zum Beispiel einen Markt, einen Park, ein Café oder eine Sehenswürdigkeit.", "Nennen Sie einen konkreten Tag und Treffpunkt und fragen Sie, was die Person lieber machen möchte."],
     ["Name the city or neighbourhood and explain why", "Suggest two activities or places", "Give a concrete day and meeting point and ask what the friend prefers"]],
   ["A2-4.11", "Verkehrsmittel vergleichen", "formal_email", "formal", "business",
     "Sie sind in Deutschland und möchten für das Wochenende ein Auto mieten. Schreiben Sie eine E-Mail an eine Autovermietung.",
