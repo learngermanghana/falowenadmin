@@ -24,6 +24,7 @@ function compactWrongQuestionSummary(rows = []) {
   const groups = new Map();
   rows.forEach(([question, row]) => {
     const part = String(row?.partId || question.match(/^(teil\s*\d+)/i)?.[1] || "Objective")
+      .replace(/^main$/i, "Objective")
       .replace(/^teil/i, "Teil ")
       .replace(/\s+/g, " ")
       .trim();
