@@ -1,5 +1,6 @@
 import { getTeachingSlideByAssignmentId, getSlidesByCourse } from "../data/teachingSlides.js";
 import { assignmentIdsForSession } from "./liveClassSessionDedupe.js";
+import { A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT } from "../data/a1PublishedWorkbookRoutes.js";
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -71,18 +72,73 @@ export function previousTeacherLesson(slide = null) {
   return getSlidesByCourse(slide.course).find((candidate) => Number(candidate.dayNumber) === day - 1) || null;
 }
 
+const FALOWEN_COURSE_BASE = "https://www.falowen.app";
+const FALOWEN_COURSE_HOME = `${FALOWEN_COURSE_BASE}/campus/course`;
+
+function publishedCourseBookRoute(value = "") {
+  const candidate = normalize(value);
+  if (!candidate || candidate.startsWith("//")) return "";
+  try {
+    const parsed = new URL(candidate, FALOWEN_COURSE_BASE);
+    if (!["falowen.app", "www.falowen.app"].includes(parsed.hostname) ||
+        parsed.protocol !== "https:" ||
+        !parsed.pathname.startsWith("/campus/course/")) return "";
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "";
+  }
+}
+
 export function learnerLessonUrl(slide = null) {
-  if (!slide) return "https://www.falowen.app/campus/course";
+  if (!slide) return FALOWEN_COURSE_HOME;
+
+  // Lesson-owned workbook links are exact registered pages. Generic
+  // /lesson/LEVEL/DAY links can land on a resource hub or wrong A1 chapter.
+  const publishedWorkbook = publishedCourseBookRoute(slide.workbookConnection?.workbookUrl);
+  if (publishedWorkbook) return `${FALOWEN_COURSE_BASE}${publishedWorkbook}`;
+
   const level = normalize(slide.course).toUpperCase();
-  const chapter = String(slide.assignmentId || "").trim().match(/^A1-(\d+(?:\.\d+)*(?:-PRACTICE)?)$/i)?.[1];
-  if (level === "A1" && chapter) {
-    return `https://www.falowen.app/campus/course/lesson/A1/${encodeURIComponent(chapter.toLowerCase())}`;
-  }
+  const a1Route = level === "A1"
+    ? A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT[normalize(slide.assignmentId).toUpperCase()]
+    : "";
+  if (a1Route) return `${FALOWEN_COURSE_BASE}${a1Route}`;
+
+  // Never guess an A1 chapter URL: an unknown chapter or an integer chapter
+  // sent to /lesson/A1/N can silently open the wrong day instead of the page.
+  if (level === "A1") return FALOWEN_COURSE_HOME;
+
   const day = Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 0);
-  if (["A2", "B1", "B2", "C1", "C2"].includes(level) && day > 0) {
-    return `https://www.falowen.app/campus/course/lesson/${encodeURIComponent(level)}/${day}`;
+  if (["A2", "B1", "B2", "C1", "C2"].includes(level) && Number.isInteger(day) && day > 0) {
+    return `${FALOWEN_COURSE_BASE}/campus/course/lesson/${encodeURIComponent(level)}/${day}`;
   }
-  return "https://www.falowen.app/campus/course";
+  return FALOWEN_COURSE_HOME;
+}
+
+/**
+ * Attendance sessions may contain several assignments (e.g. A1-0.2 + A1-1.1).
+ * Expose the exact page for every mapped chapter; never link only the first.
+ */
+export function learnerLessonLinksForAttendanceSession({ session = null, dashboard = {} } = {}) {
+  if (!session) return [];
+  const slides = assignmentIdsForSession(session)
+    .map((assignmentId) => getTeachingSlideByAssignmentId(assignmentId))
+    .filter(Boolean);
+  if (!slides.length) {
+    const fallback = resolveTeacherLessonSlide({ dashboard, session });
+    if (fallback) slides.push(fallback);
+  }
+  const seen = new Set();
+  return slides.flatMap((slide) => {
+    const url = learnerLessonUrl(slide);
+    if (!url.startsWith(`${FALOWEN_COURSE_BASE}/campus/course/`) || seen.has(url)) return [];
+    seen.add(url);
+    const assignmentId = normalize(slide.assignmentId).toUpperCase();
+    const chapter = assignmentId.match(/^A1-(.+)$/)?.[1];
+    const label = chapter
+      ? `Open Chapter ${chapter.replace(/-PRACTICE$/i, " Practice")}`
+      : slides.length === 1 ? "Open lesson" : `Open ${assignmentId}`;
+    return [{ assignmentId, url, label }];
+  });
 }
 
 export function grammarTargetForSlide(slide = null) {

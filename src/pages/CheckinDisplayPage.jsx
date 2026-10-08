@@ -733,7 +733,7 @@ export default function CheckinDisplayPage() {
       || getSlidesByCourse(waitingWarmupTeaser?.course || waitingClassLevel)
         .find((candidate) => candidate.id === waitingWarmupTeaser?.slideId);
     const url = learnerLessonUrl(slide);
-    return url.includes("/course/lesson/") ? url : "";
+    return url.startsWith("https://www.falowen.app/campus/course/") ? url : "";
   }, [effectiveAssignmentId, waitingClassLevel, waitingWarmupTeaser?.course, waitingWarmupTeaser?.slideId]);
 
   const resolvePresenterClass = useCallback(async () => {
