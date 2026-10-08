@@ -117,12 +117,21 @@ function patchMarkingPage() {
     selectedSubmission?.raw?.assignmentId,
   ]);`;
 
+  const enhancedAssignmentEffect = newAssignmentEffect.replace(
+    '    setSelectedHighlight("");',
+    '    setSelectedHighlight("");\n    setShowAllObjectiveAnswers(false);',
+  );
+
   const legacyNewAssignmentEffect = newAssignmentEffect.replace(
     '    setFeedback("");\n    setSchreibenMark("");',
     '    setFeedback("");\n    setSaveReceipt(null);\n    setSchreibenMark("");',
   );
 
-  if (text.includes(simplifiedAssignmentEffect)) {
+  if (text.includes(enhancedAssignmentEffect)) {
+    // The focused marking UI also resets its issue-only objective view whenever
+    // the selected submission/reference changes. The assignment-id fix is
+    // already present, so there is nothing else to patch.
+  } else if (text.includes(simplifiedAssignmentEffect)) {
     text = text.replace(simplifiedAssignmentEffect, newAssignmentEffect);
   } else if (text.includes(oldAssignmentEffect)) {
     text = text.replace(oldAssignmentEffect, legacyNewAssignmentEffect);
