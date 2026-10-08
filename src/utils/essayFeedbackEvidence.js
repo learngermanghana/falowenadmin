@@ -123,6 +123,14 @@ function historyOf(result = {}) {
   return list(result.recentFeedback, result.previousFeedback, result.ai?.recentFeedback, result.ai?.previousFeedback);
 }
 
+function comparableCorrectionText(value = "") {
+  return String(value || "")
+    .toLocaleLowerCase("de")
+    .replace(/[“”"'‘’….,!?;:()\[\]{}-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function correctionOf(result = {}, submission = "") {
   const candidates = [
     ...(Array.isArray(result.corrections) ? result.corrections : []),
@@ -134,10 +142,12 @@ function correctionOf(result = {}, submission = "") {
     if (!item || typeof item !== "object") continue;
     const part = String(item.partId || item.part || "").toLowerCase();
     if (item.question || item.questionNumber || item.key || /teil\s*[34]/.test(part)) continue;
-    const from = String(item.from || item.original || item.student || item.error || "").trim();
-    const to = String(item.to || item.corrected || item.improved || item.correction || "").trim();
-    if (from && to && from !== to && from.length <= 90 && to.length <= 120
-      && String(submission).toLocaleLowerCase("de").includes(from.toLocaleLowerCase("de"))) return { from, to };
+    const from = String(item.from || item.original || item.student || item.error || item.submitted || "").trim();
+    const to = String(item.to || item.corrected || item.improved || item.correction || item.suggestion || "").trim();
+    if (!from || !to || from === to || from.length > 90 || to.length > 120) continue;
+    if (comparableCorrectionText(from) === comparableCorrectionText(to)) continue;
+    if (!String(submission).toLocaleLowerCase("de").includes(from.toLocaleLowerCase("de"))) continue;
+    return { from, to };
   }
   return null;
 }
@@ -254,10 +264,19 @@ function submissionContainsExactPhrase(submission = "", phrase = "") {
   return new RegExp("(?:^|[^\\p{L}\\p{N}])" + escaped + "(?:$|[^\\p{L}\\p{N}])", "iu").test(source);
 }
 
+function hasBalancedFeedbackQuotes(value = "") {
+  const text = String(value || "");
+  const straight = (text.match(/"/g) || []).length;
+  const openCurly = (text.match(/“/g) || []).length;
+  const closeCurly = (text.match(/”/g) || []).length;
+  return straight % 2 === 0 && openCurly === closeCurly;
+}
+
 function isGroundedCorrectiveFeedback(value = "", submission = "") {
   const feedback = String(value || "").trim();
   if (genericWritingSentence(feedback)) return false;
   if (!feedback || !isCorrectiveWritingClaim(feedback)) return Boolean(feedback);
+  if (!hasBalancedFeedbackQuotes(feedback)) return false;
   const quoted = quotedFeedbackPhrases(feedback);
   if (!quoted.length) return false;
   return quoted.some((quote) => submissionContainsExactPhrase(submission, quote));
@@ -279,7 +298,7 @@ function specificAiWritingSentence(result = {}, kind = "strength", submission = 
     const normalizedSubmission = String(submission).toLocaleLowerCase("de");
     const correctionIsAnchored = kind !== "next"
       || !isCorrectiveWritingClaim(value)
-      || (quoted.length > 0 && quoted.some((quote) => submissionContainsExactPhrase(submission, quote)));
+      || (hasBalancedFeedbackQuotes(value) && quoted.length > 0 && quoted.some((quote) => submissionContainsExactPhrase(submission, quote)));
     return wordCount >= 5
       && wordCount <= 45
       && !genericWritingSentence(value)
