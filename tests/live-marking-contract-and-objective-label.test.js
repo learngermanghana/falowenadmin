@@ -57,10 +57,10 @@ test("A conflicting learner objective key never silently overwrites the current 
 });
 
 test("Current A2-4.10 writing rubric credits city activities but checks for a meeting point", () => {
-  const writing = `Liebe Martha
-Wie geht es dir? Ich schreibe dir, weil ich möchte kumasi mit dir entdecken, weil Ich gehört habe, dass der ort schön ist. Wir könnten zuerst den markt in Obuasi besuchen, weil Ich gerne Kleidung kaufe und danach in ein lokales Restaurant gehen und Ashanti-Gerichte probieren. Wir könnten nächsten Freitag gehen, weil Ich dann frei habe. Was möchtest du machen?
+  const writing = `Liebe Mia
+Wie geht es dir? Ich möchte Accra mit dir entdecken, weil die Stadt interessant ist. Wir könnten zuerst den Markt besuchen und danach im Café etwas trinken. Wir könnten nächsten Freitag gehen, weil ich dann frei habe. Was möchtest du machen?
 Viele Grüße
-Vicky`;
+Alex`;
   const spec = getA2WritingTaskSpec("A2-4.10");
   assert.equal(spec.taskPoints.length, 3);
   assert.doesNotMatch(spec.taskText, /Fest einladen|mitbringen/);
