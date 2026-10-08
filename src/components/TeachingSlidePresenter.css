@@ -4321,9 +4321,11 @@
 
 
 /* A1 fullscreen mobile/tablet: stack the picker, activity timer and class clock.
-   Fixed overlays shared the same corner and intercepted student marking. Scoped to
-   A1 so B1/B2/C1/C2 presenter focus layouts remain unchanged. */
-@media (max-width: 900px) {
+   The picker can grow to 760px and the activity timer to 430px, with space also
+   needed for the class clock. Keep controls stacked through 1350px so 912px/1024px
+   tablets and the full student-marking toolbar cannot overlap. Scoped to A1 only;
+   B1/B2/C1/C2 presenter focus layouts remain unchanged. */
+@media (max-width: 1350px) {
   .presenter-stage.is-focus-mode.presenter-a1-stacked-controls {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto minmax(0, 1fr);
