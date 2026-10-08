@@ -166,70 +166,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Plötzlicher Regen",
-        "icon": "🏕️",
-        "context": "Du wanderst im Wald. Plötzlich beginnt ein Gewitter.",
+        "label": "Gewitter auf dem Wanderweg",
+        "icon": "⛈️",
+        "context": "Am Samstag wanderst du mit zwei Freunden durch einen Wald. Nach einer Stunde wird es dunkel, und ein Gewitter beginnt. Ihr entdeckt schließlich eine kleine Schutzhütte.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beginne die Geschichte.",
-            "modelDe": "Zuerst sind wir durch den Wald gewandert."
+            "actionDe": "Anfang im Perfekt",
+            "questionDe": "Was habt ihr am Samstag gemacht, bevor das Wetter schlechter wurde? Erzähle im Perfekt.",
+            "modelDe": "Wir sind am Samstag früh losgewandert und haben einen schönen Weg durch den Wald genommen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Beschreibe das Problem.",
-            "modelDe": "Als das Gewitter begann, hatten wir keinen Regenschirm."
+            "actionDe": "Wendepunkt mit als",
+            "questionDe": "Wie beschreibst du den Moment, als das Gewitter begann, mit als und einem Hintergrund im Präteritum?",
+            "modelDe": "Als das Gewitter begann, waren wir noch weit von unserem Parkplatz entfernt."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erzähle das Ende.",
-            "modelDe": "Danach haben wir eine Hütte gefunden und dort gewartet."
+            "actionDe": "Ende zeitlich verbinden",
+            "questionDe": "Wie ging das Abenteuer aus? Verbinde die Ereignisse mit nachdem.",
+            "modelDe": "Nachdem wir die Schutzhütte erreicht hatten, haben wir dort gewartet, bis der Regen schwächer wurde."
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Verlorener Weg",
-        "icon": "🏕️",
-        "context": "Du bist mit Freunden in den Bergen und der Weg ist nicht mehr zu sehen.",
+        "label": "Nebel in den Bergen",
+        "icon": "🥾",
+        "context": "Du unternimmst mit einer Freundin eine Bergwanderung. Am Nachmittag zieht Nebel auf; ihr findet die Wegmarkierung nicht mehr. Ihr habt eine Karte und ein aufgeladenes Handy.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe den Anfang.",
-            "modelDe": "Am Morgen sind wir in die Berge gefahren."
+            "actionDe": "Ausflug beginnen",
+            "questionDe": "Wo seid ihr am Morgen gestartet, und was habt ihr zuerst gemacht? Verwende Perfekt.",
+            "modelDe": "Am Morgen sind wir ins Gebirge gefahren und haben unsere Wanderung am Parkplatz begonnen."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre den Wendepunkt.",
-            "modelDe": "Als es dunkel wurde, waren wir unsicher."
+            "actionDe": "Problem während des Weges",
+            "questionDe": "Was geschah, während ihr weiterwandertet? Nutze während und Präteritum für den Hintergrund.",
+            "modelDe": "Während wir weiterwanderten, wurde der Nebel dichter und wir konnten den Weg nicht mehr sehen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Erzähle die Lösung.",
-            "modelDe": "Nachdem wir die Karte geprüft hatten, haben wir den Rückweg gefunden."
+            "actionDe": "Rückweg erzählen",
+            "questionDe": "Wie habt ihr das Problem gelöst? Verwende nachdem und berichte, was danach geschah.",
+            "modelDe": "Nachdem wir die Karte und das Handy geprüft hatten, haben wir den markierten Rückweg gefunden."
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Überraschung am See",
-        "icon": "🏕️",
-        "context": "Du machst einen Ausflug an einen See und entdeckst ein verletztes Tier.",
+        "label": "Tierrettung am See",
+        "icon": "🦆",
+        "context": "Du machst mit deiner Familie ein Picknick am See. Während eines Spaziergangs seht ihr einen verletzten Wasservogel. Ihr haltet Abstand und ruft eine örtliche Tierrettung.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Erzähle, wo du warst.",
-            "modelDe": "Wir waren am See und haben ein Picknick gemacht."
+            "actionDe": "Szene im Präteritum",
+            "questionDe": "Wo wart ihr, und was habt ihr vor dem Spaziergang gemacht? Verbinde war mit Perfekt.",
+            "modelDe": "Wir waren am See und haben dort zuerst zusammen ein Picknick gemacht."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erzähle die Entdeckung.",
-            "modelDe": "Während wir spazieren gingen, haben wir ein verletztes Tier gesehen."
+            "actionDe": "Entdeckung mit während",
+            "questionDe": "Wie erzählst du die überraschende Entdeckung mit während?",
+            "modelDe": "Während wir am Ufer spazieren gingen, haben wir einen verletzten Vogel entdeckt."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Beschreibe die Reaktion.",
-            "modelDe": "Danach haben wir Hilfe gerufen, weil das Tier verletzt war."
+            "actionDe": "Reaktion begründen",
+            "questionDe": "Was habt ihr danach getan, und warum habt ihr Abstand gehalten? Nutze danach und weil.",
+            "modelDe": "Danach haben wir die Tierrettung angerufen, weil der Vogel verletzt war und Hilfe brauchte."
           }
         ]
       }
@@ -244,70 +244,70 @@ const definitions = [
     "scenarios": [
       {
         "id": "scenario-1",
-        "label": "Ausbildungsplatz",
-        "icon": "💼",
-        "context": "Du bewirbst dich für einen Ausbildungsplatz im Hotel.",
+        "label": "Hotelrezeption: Beschwerde eines Gastes",
+        "icon": "🏨",
+        "context": "Du bewirbst dich für eine Ausbildung an einer Hotelrezeption. Im Gespräch fragt die Personalchefin nach deiner Motivation und nach einem Gast, der sich über ein lautes Zimmer beschwert.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Stelle dich kurz vor.",
-            "modelDe": "Guten Tag, ich interessiere mich für die Ausbildung, weil ich gern mit Menschen arbeite."
+            "actionDe": "Berufswunsch erklären",
+            "questionDe": "Die Personalchefin fragt: „Warum möchten Sie gerade in unserem Hotel arbeiten?“ Was antwortest du mit weil?",
+            "modelDe": "Ich möchte gern in Ihrem Hotel arbeiten, weil ich Kontakt mit Menschen mag und Deutsch im Beruf einsetzen möchte."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Beschreibe eine Stärke.",
-            "modelDe": "Ich könnte gut im Team arbeiten, weil ich zuverlässig bin."
+            "actionDe": "Mit Gästen umgehen",
+            "questionDe": "Sie fragt: „Ein Gast beschwert sich über Lärm. Wie würden Sie reagieren?“ Wie antwortest du professionell?",
+            "modelDe": "Ich würde zuerst ruhig zuhören, mich für die Unannehmlichkeiten entschuldigen und nach einer Lösung suchen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Antworte auf eine Rückfrage höflich.",
-            "modelDe": "Gern würde ich Ihnen mehr über meine Erfahrungen erzählen."
+            "actionDe": "Teamstärke belegen",
+            "questionDe": "Sie fragt: „Was könnten Sie in unser Team einbringen?“ Nenne eine Stärke und ein konkretes Beispiel.",
+            "modelDe": "Ich könnte Ihr Team mit meiner Zuverlässigkeit unterstützen, weil ich bei Gruppenprojekten Aufgaben immer pünktlich erledigt habe."
           }
         ]
       },
       {
         "id": "scenario-2",
-        "label": "Bürojob",
-        "icon": "💼",
-        "context": "Du wirst zu einem Vorstellungsgespräch im Büro eingeladen.",
+        "label": "Büro: Zwei Aufgaben gleichzeitig",
+        "icon": "🗂️",
+        "context": "Du bewirbst dich in einem Büro. Die Stelle erfordert Organisation, grundlegende Computerkenntnisse und Zusammenarbeit. Im Gespräch wird eine dringende Doppelaufgabe beschrieben.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Erkläre deine Motivation.",
-            "modelDe": "Ich bewerbe mich, weil ich gerne organisiere und sorgfältig arbeite."
+            "actionDe": "Motivation konkretisieren",
+            "questionDe": "Der Arbeitgeber fragt: „Warum interessieren Sie sich für diese Bürostelle?“ Was antwortest du mit weil?",
+            "modelDe": "Ich interessiere mich für die Stelle, weil ich gern strukturiert arbeite und Aufgaben zuverlässig organisiere."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Nenne eine Fähigkeit.",
-            "modelDe": "Ich könnte Ihr Team mit meinen Computerkenntnissen unterstützen."
+            "actionDe": "Prioritäten setzen",
+            "questionDe": "Er fragt: „Zwei Kollegen brauchen gleichzeitig dringend Hilfe. Wie würden Sie vorgehen?“ Was sagst du?",
+            "modelDe": "Ich würde zuerst nach den Fristen fragen, die Aufgaben priorisieren und mit beiden Kollegen eine Lösung abstimmen."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Stelle eine höfliche Frage.",
-            "modelDe": "Könnten Sie mir sagen, wie die Einarbeitung organisiert wird?"
+            "actionDe": "Höfliche Rückfrage stellen",
+            "questionDe": "Am Schluss heißt es: „Haben Sie noch Fragen an uns?“ Wie erkundigst du dich nach der Einarbeitung?",
+            "modelDe": "Könnten Sie mir bitte sagen, wie neue Mitarbeitende in Ihrem Büro eingearbeitet werden?"
           }
         ]
       },
       {
         "id": "scenario-3",
-        "label": "Sozialer Beruf",
-        "icon": "💼",
-        "context": "Du möchtest in einer sozialen Einrichtung arbeiten.",
+        "label": "Pflegeeinrichtung: Mit Menschen arbeiten",
+        "icon": "🤝",
+        "context": "Du bewirbst dich um eine Stelle in einer sozialen Einrichtung. Du hast bei einer freiwilligen Aktion geholfen. Die Leitung fragt, wie du mit verunsicherten Menschen umgehst.",
         "steps": [
           {
-            "actionDe": "Situation verstehen",
-            "questionDe": "Beschreibe deine Motivation.",
-            "modelDe": "Ich möchte hier arbeiten, weil ich gern anderen Menschen helfe."
+            "actionDe": "Erfahrung glaubwürdig schildern",
+            "questionDe": "Die Leitung fragt: „Welche Erfahrungen haben Sie mit der Betreuung von Menschen?“ Was antwortest du ohne etwas zu erfinden?",
+            "modelDe": "Ich habe bei einer freiwilligen Aktion geholfen und dabei gelernt, geduldig zuzuhören."
           },
           {
-            "actionDe": "Passend reagieren",
-            "questionDe": "Erkläre deine Stärken.",
-            "modelDe": "Ich würde geduldig zuhören und verantwortungsvoll handeln."
+            "actionDe": "Empathisch reagieren",
+            "questionDe": "Sie fragt: „Eine Bewohnerin wirkt ängstlich. Was würden Sie tun?“ Wie erklärst du dein Vorgehen?",
+            "modelDe": "Ich würde ruhig mit ihr sprechen, aufmerksam zuhören und bei Bedarf eine zuständige Fachkraft informieren."
           },
           {
-            "actionDe": "Lösung formulieren",
-            "questionDe": "Stelle eine professionelle Frage.",
-            "modelDe": "Könnten Sie mir sagen, welche Aufgaben am Anfang besonders wichtig sind?"
+            "actionDe": "Motivation begründen",
+            "questionDe": "Sie fragt: „Warum möchten Sie in einer sozialen Einrichtung arbeiten?“ Gib eine persönliche Begründung.",
+            "modelDe": "Ich möchte in Ihrer Einrichtung arbeiten, weil mir ein respektvoller Umgang mit Menschen sehr wichtig ist."
           }
         ]
       }
