@@ -1,4 +1,5 @@
-import { verifiedObjectiveMetadata } from "./markingReview.js";
+import { allowsConnectorAssessment } from "./a1ConnectorPolicy.js";
+import { verifiedObjectiveMetadata, writingPercentFromResult } from "./markingReview.js";
 import { plainObjectiveAnswer, stripMarkingEmojis } from "./markingFeedbackText.js";
 import { withResubmissionComparison } from "./resubmissionFeedback.js";
 import { dedupeRepeatedFeedback } from "./feedbackPolicy.js";
@@ -53,7 +54,7 @@ export function exactObjectiveFeedback(objective, wordTarget = 40) {
   const corrections = wrong.map(([question, row]) => ({
     question,
     row,
-    text: `${question}: your answer ${plainObjectiveAnswer(row.student, "was missing")}; correct answer ${plainObjectiveAnswer(row.expectedDisplay || row.expected || row.rawExpected)}.`,
+    text: `${question}: your answer ${plainObjectiveAnswer(row.student, "was missing")}; correct answer ${plainObjectiveAnswer(row.expectedDisplay || row.expected || row.rawExpected).replace(/[.!?]+$/, "")}.`,
   }));
   const limit = Number(wordTarget) || Infinity;
   const selected = [];
@@ -110,8 +111,24 @@ export function markingConsistencyWarnings(result, submission = {}, calculatedSc
 }
 
 export function reconcileMarkingQuality(result, objective, submission = {}, { writingExpected = false, wordTarget = 40 } = {}) {
-  const objectiveSentences = /(?:lesen|hören|horen|hoeren|listening|reading|objective|teil\s*[34])\b/i;
-  const writingFeedback = stripMarkingEmojis(result.feedback).split(/(?<=[.!?])\s+/).filter((sentence) => !(objectiveSentences.test(sentence) && /answer|question|score|correct|wrong|mistake|error|\d+\s*\//i.test(sentence))).join(" ");
+  const level = result.level || submission.level || String(submission.assignmentId || result.assignmentKey || "").split("-")[0];
+  const assignmentKey = submission.assignmentId || submission.assignmentKey || result.assignmentKey;
+  const assessConnectors = allowsConnectorAssessment(level, assignmentKey);
+  // Keep writing prose; replace the model's objective block as one unit so
+  // decimal question numbers and slash-separated answers cannot leave fragments.
+  let writingFeedback = stripMarkingEmojis(result.feedback)
+    .replace(/\bWriting score\s*:\s*\d+(?:\.\d+)?\s*%[.]?/gi, "")
+    .replace(/\bMarking summary\b[\s\S]*$/i, "")
+    .replace(/\b(?:Teil\s*[134]|objective|listening|reading|hören|horen)\s*(?:score|:|answers?)[\s\S]*$/i, "")
+    .trim();
+  writingFeedback = writingFeedback.split(/(?<=[.!?])\s+/)
+    .filter((sentence) => !/\b(?:objective|listening|reading|hören|horen)\b.*(?:wrong|correct|mistake|error)/i.test(sentence))
+    .filter((sentence) => assessConnectors || !/\bconnectors?\b|linking words|linking phrases/i.test(sentence))
+    .join(" ").trim();
+  const writingPercent = writingPercentFromResult(result);
+  if (writingExpected && (result.writingScorePercent != null || result.writingScore != null)) {
+    writingFeedback = `Writing score: ${writingPercent}%.${writingFeedback ? ` ${writingFeedback}` : ""}`;
+  }
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, wordTarget) : "";
   const metadata = verifiedObjectiveMetadata(writingExpected ? result : {}, objective);
   const feedback = writingExpected ? [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n") : objectiveFeedback;

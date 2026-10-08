@@ -1,3 +1,4 @@
+import { allowsConnectorAssessment } from "./a1ConnectorPolicy.js";
 import { stripMarkingEmojis } from "./markingFeedbackText.js";
 import { selectVersionedObjectiveReferenceEntry } from "./objectiveMarking.js";
 
@@ -1023,7 +1024,7 @@ function buildWritingImprovementSummary({ score = 0, text = "" } = {}) {
     : "Improve task completion, sentence accuracy, structure, and level-appropriate vocabulary.";
 }
 
-function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = {}) {
+function heuristicWritingMarker({ level = "", assignmentKey = "", partId = "unknown", text = "" } = {}) {
   const words = tokenize(text);
   const wordCount = words.length;
   const hasGreeting = /\b(lieber|liebe|hallo|guten tag|sehr geehrte|dear|hello|hi)\b/i.test(text);
@@ -1033,10 +1034,10 @@ function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = 
   const targetWords = level === "B1" ? 85 : level === "A2" ? 55 : 30;
   const completion = Math.min(1, wordCount / targetWords);
   const structure = Math.min(1, ((hasGreeting ? 0.35 : 0) + (hasClosing ? 0.35 : 0) + (String(text).split(/\n+/).filter((line) => line.trim()).length > 1 ? 0.3 : 0.15)));
-  const connectorScore = Math.min(1, connectors / (level === "B1" ? 4 : level === "A2" ? 3 : 1));
+  const connectorScore = allowsConnectorAssessment(level, assignmentKey) ? Math.min(1, connectors / (level === "B1" ? 4 : level === "A2" ? 3 : 1)) : null;
   const lexicalRange = Math.min(1, new Set(words).size / Math.max(8, wordCount * 0.7));
 
-  const score = Math.round((completion * 0.3 + structure * 0.2 + grammarSignal * 0.25 + connectorScore * 0.1 + lexicalRange * 0.15) * 100);
+  const score = Math.round((completion * 0.3 + structure * 0.2 + grammarSignal * 0.25 + (connectorScore ?? 0) * 0.1 + lexicalRange * 0.15) / (connectorScore === null ? 0.9 : 1) * 100);
   const confidence = Math.max(0.45, Math.min(0.9, 0.45 + completion * 0.25 + (hasGreeting || hasClosing ? 0.1 : 0) + (wordCount > 15 ? 0.1 : 0)));
   const rubric = WRITING_RUBRICS[level] || WRITING_RUBRICS.A1;
 
@@ -1047,7 +1048,7 @@ function heuristicWritingMarker({ level = "", partId = "unknown", text = "" } = 
     passed: score >= 60,
     level: level || "UNKNOWN",
     partId,
-    feedback: buildWritingFeedback({ level, score, rubric, text }),
+    feedback: allowsConnectorAssessment(level, assignmentKey) ? buildWritingFeedback({ level, score, rubric, text }) : buildWritingFeedback({ level, score, rubric, text }).replace(/You used[^.]*connector[^.]*\./gi, "").replace(/ or add clearer connectors/gi, ""),
     corrections: writingIssues.map((issue) => ({
       partId,
       type: "writing",
@@ -1098,7 +1099,7 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
   const parts = rawParts.map((part) => {
     const partType = detectPartType({ level, partId: part.partId, text: part.text, referenceEntry });
     if (partType === "writing") {
-      const writingResult = aiWritingMarker({ level, partId: part.partId, text: part.text, rubric: WRITING_RUBRICS[level] || WRITING_RUBRICS.A1 });
+      const writingResult = aiWritingMarker({ level, assignmentKey, partId: part.partId, text: part.text, rubric: WRITING_RUBRICS[level] || WRITING_RUBRICS.A1 });
       return { ...part, partType, result: writingResult, confidence: Math.min(part.confidence || 0.5, writingResult.confidence || 0.5) };
     }
 
