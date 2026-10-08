@@ -548,7 +548,7 @@ export default function A1GrammarPresenter({
 
   return (
     <div ref={presenterShellRef} className={`presenter-shell ${focusMode ? "is-presentation-mode" : ""}`} role="dialog" aria-modal="true" aria-label="A1 teaching presenter">
-      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode ? "presenter-has-focus-stage-timer" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
+      <div className={`presenter-stage ${focusMode ? "is-focus-mode" : ""} ${focusMode ? "presenter-has-focus-stage-timer presenter-a1-stacked-controls" : ""} ${String(stage.title || "").length > 58 ? "presenter-title-long" : String(stage.title || "").length > 38 ? "presenter-title-medium" : ""}`}>
         {focusMode ? (
           <div className={`presenter-focus-stage-timer ${activityTimerExpired ? "is-expired" : ""}`} aria-label="A1 activity timer">
             <span>Activity timer</span>
