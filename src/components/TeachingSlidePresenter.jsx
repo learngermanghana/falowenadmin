@@ -199,14 +199,14 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const presenterItemOffset = contentPageSize > 0 ? contentPage * contentPageSize : 0;
   const vocabChallenges = Array.isArray(stage?.challengeItems) ? stage.challengeItems : [];
   const activeVocabChallenge = vocabChallenges[vocabChallengeIndex] || vocabChallenges[0] || null;
-  const activeCareer = stage?.type === "career-challenge"
+  const activeCareer = ["career-challenge", "scenario-challenge"].includes(stage?.type)
     ? stage.items[careerChallengeIndex] || stage.items[0] || null
     : null;
   const careerSteps = Array.isArray(activeCareer?.steps) ? activeCareer.steps : [];
   const activeCareerStep = careerSteps[careerStepIndex] || null;
 
   function newRandomCareer() {
-    if (stage?.type !== "career-challenge" || !stage.items.length) return;
+    if (!["career-challenge", "scenario-challenge"].includes(stage?.type) || !stage.items.length) return;
     setCareerChallengeIndex((current) => nextB1Day18CareerIndex(current, stage.items.length));
     setCareerStepIndex(0);
     setCareerAnswerVisible(false);
@@ -214,7 +214,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   function advanceCareerStep() {
-    if (stage?.type !== "career-challenge" || careerMissionComplete) return;
+    if (!["career-challenge", "scenario-challenge"].includes(stage?.type) || careerMissionComplete) return;
     setCareerAnswerVisible(false);
     if (careerStepIndex < careerSteps.length - 1) {
       setCareerStepIndex((current) => current + 1);
@@ -832,21 +832,21 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </section>
               ) : null}
             </>
-          ) : stage.type === "career-challenge" ? (
-            <section className="presenter-career-challenge" aria-label="Teacher-led random career activity">
+          ) : ["career-challenge", "scenario-challenge"].includes(stage.type) ? (
+            <section className="presenter-career-challenge" aria-label={stage.type === "scenario-challenge" ? "Teacher-led random scenario challenge" : "Teacher-led random career activity"}>
               <div className="presenter-career-challenge-heading">
                 <span>{stage.kicker}</span>
                 <h1>{stage.title}</h1>
-                <p>Ich mache etwas, <strong>um ... zu + Infinitiv</strong>.</p>
+                <p>{stage.type === "scenario-challenge" ? stage.instruction : <>Ich mache etwas, <strong>um ... zu + Infinitiv</strong>.</>}</p>
               </div>
               {activeCareer ? (
                 <>
                   <div className="presenter-career-hero">
                     <span className="presenter-career-emoji" role="img" aria-label="Career icon">{activeCareer.icon}</span>
                     <div>
-                      <span className="presenter-career-eyebrow">DEIN ZUFÄLLIGER BERUF</span>
+                      <span className="presenter-career-eyebrow">{stage.scenarioLabel?.toUpperCase() || "DEIN ZUFÄLLIGER BERUF"}</span>
                       <h2>{activeCareer.careerDe}</h2>
-                      <p>Was machst du, um diesen Beruf zu erreichen?</p>
+                      <p>{stage.type === "scenario-challenge" ? "Wie löst du diese Situation auf Deutsch?" : "Was machst du, um diesen Beruf zu erreichen?"}</p>
                     </div>
                   </div>
                   <div className="presenter-career-roadmap" aria-label="Career roadmap progress">
@@ -865,13 +865,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <div className="presenter-career-completion" role="status">
                       <span aria-hidden="true">🏆</span>
                       <h2>Mission geschafft!</h2>
-                      <p>Drei Karriereschritte wurden mündlich besprochen. Wähle jetzt einen neuen Beruf.</p>
+                      <p>{stage.type === "scenario-challenge" ? "Drei Kommunikationsaufgaben wurden mündlich gelöst. Wähle jetzt eine neue Situation." : "Drei Karriereschritte wurden mündlich besprochen. Wähle jetzt einen neuen Beruf."}</p>
                     </div>
                   ) : activeCareerStep ? (
                     <div className="presenter-career-question">
                       <span className="presenter-career-eyebrow">SCHRITT {careerStepIndex + 1} VON {careerSteps.length} · MÜNDLICHE ANTWORT</span>
                       <h2>{activeCareerStep.questionDe}</h2>
-                      <p>Antworte mit <strong>um ... zu</strong>. Beispielmuster: „Ich ..., um ... zu ...“</p>
+                      {stage.type === "scenario-challenge" ? <p>Antworte frei und nutze die Grammatik und Redemittel dieser Lektion.</p> : <p>Antworte mit <strong>um ... zu</strong>. Beispielmuster: „Ich ..., um ... zu ...“</p>}
                       {careerAnswerVisible ? (
                         <div className="presenter-career-model" role="status">
                           <span>Mögliche Modellantwort</span>
@@ -885,7 +885,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   ) : null}
                   <div className="presenter-career-controls">
                     <button type="button" className="presenter-career-new" onClick={newRandomCareer}>
-                      ↻ Neuer zufälliger Beruf
+                      ↻ {stage.type === "scenario-challenge" ? "Neue zufällige Situation" : "Neuer zufälliger Beruf"}
                     </button>
                     {!careerMissionComplete && activeCareerStep ? (
                       <>
