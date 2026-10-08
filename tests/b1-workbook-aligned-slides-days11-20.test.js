@@ -107,6 +107,7 @@ test("Day 18 admin slide teaches only um ... zu while preserving assessed workbo
   assert.ok(support.modelExamplesDe.every((line) => /, um .* zu [^.,]+\./i.test(line)));
   assert.ok(slide.keyPhrasesDe.every((line) => /, um .* zu [^.,]+\./i.test(line)));
   assert.ok(slide.speakingModels.every((item) => item.modelAnswerDe.includes(", um ")));
+  assert.deepEqual(slide.speakingModels.map((item) => item.questionDe), slide.studentQuestionsDe);
   assert.match(slide.wrapUpTaskDe, /drei konkrete Schritte/i);
   assert.match(part(slide, "Grammar").detailEn, /Single grammar focus: um \.\.\. zu/);
   assert.ok(questions.studentQuestionsDe.some((line) => line.includes("um ... zu")));
