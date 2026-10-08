@@ -103,13 +103,10 @@ export function learnerLessonUrl(slide = null) {
     : "";
   if (a1Route) return `${FALOWEN_COURSE_BASE}${a1Route}`;
 
-  const chapter = normalize(slide.assignmentId).match(/^A1-(\d+(?:\.\d+)*(?:-PRACTICE)?)$/i)?.[1];
-  if (level === "A1" && chapter) {
-    const key = chapter.toLowerCase();
-    // A1/9 means Day 9; Chapter 9 must not be confused with that day.
-    const target = key.includes(".") ? key : `chapter/${key}`;
-    return `${FALOWEN_COURSE_BASE}/campus/course/lesson/A1/${target}`;
-  }
+  // Never guess an A1 chapter URL: an unknown chapter or an integer chapter
+  // sent to /lesson/A1/N can silently open the wrong day instead of the page.
+  if (level === "A1") return FALOWEN_COURSE_HOME;
+
   const day = Number(slide.dayNumber || String(slide.day || "").match(/\d+/)?.[0] || 0);
   if (["A2", "B1", "B2", "C1", "C2"].includes(level) && Number.isInteger(day) && day > 0) {
     return `${FALOWEN_COURSE_BASE}/campus/course/lesson/${encodeURIComponent(level)}/${day}`;
