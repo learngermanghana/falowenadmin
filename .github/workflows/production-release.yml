@@ -90,6 +90,7 @@ jobs:
           tests/teaching-presenter.test.js
           tests/a2-b1-lesson-profile.test.js
           tests/production-deployment-contract.test.js
+          tests/live-marking-contract-and-objective-label.test.js
       - name: Check learner-source parity
         run: node scripts/auditStudentAdminCurriculumParity.mjs
       - name: Run production contract gate
