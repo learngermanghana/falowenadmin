@@ -699,7 +699,7 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
     assignmentId: "B1-6.18",
     title: "B1 Day 18 · Wege zum Wunschberuf",
     topic: "6.18 Wege zum Wunschberuf",
-    objective: "Students explain realistic paths to a dream job using purpose/infinitive structures, relative clauses and conditional career language.",
+    objective: "Students describe concrete steps towards their dream job and explain the purpose of each step with one grammar pattern: um ... zu + Infinitiv.",
     estimatedDuration: "45–60 minutes",
     warmupQuestionsDe: [
       "Was ist dein Wunschberuf?",
@@ -708,83 +708,81 @@ export const b1WorkbookAlignedSlidesDays11To20 = [
       "Kann ein Praktikum bei der Berufswahl helfen? Warum?",
     ],
     keyPhrasesDe: [
-      "Ich mache ein Praktikum, um Erfahrungen zu sammeln.",
-      "Es ist wichtig, die eigenen Stärken zu kennen.",
-      "Ich suche einen Beruf, der zu meinen Stärken passt.",
-      "Je nachdem, welcher Beruf ..., braucht man ...",
-      "Ich finde, dass jeder seinen eigenen Weg wählen sollte.",
-      "Obwohl ein Studium Chancen bietet, ...",
+      "Ich mache ein Praktikum, um Berufserfahrung zu sammeln.",
+      "Ich lerne Deutsch, um in Deutschland zu arbeiten.",
+      "Ich besuche einen Kurs, um meine Fähigkeiten zu verbessern.",
+      "Ich schreibe einen Lebenslauf, um mich zu bewerben.",
+      "Ich mache eine Weiterbildung, um neue Kenntnisse zu erwerben.",
+      "Ich übe Vorstellungsgespräche, um sicherer zu werden.",
     ],
     studentQuestionsDe: [
-      "Welcher Beruf interessiert dich und warum?",
-      "Welche Ausbildung oder Qualifikation brauchst du?",
-      "Welche Rolle spielen Praktikum und Weiterbildung?",
-      "Welche Fähigkeit möchtest du noch verbessern?",
-      "Welcher nächste Schritt bringt dich deinem Ziel näher?",
+      "Welcher Beruf interessiert dich? Welchen Schritt machst du, um ihn zu erreichen?",
+      "Welche Ausbildung oder Qualifikation brauchst du? Erkläre deinen Plan mit um ... zu.",
+      "Welche Rolle spielen Praktikum und Weiterbildung? Nutze um ... zu.",
+      "Welche Fähigkeit möchtest du noch verbessern? Nutze um ... zu.",
+      "Welcher nächste Schritt bringt dich deinem Ziel näher? Nutze um ... zu.",
     ],
     speakingModels: [
       {
-        "questionDe": "Welcher Beruf interessiert dich und warum?",
-        "modelAnswerDe": "Mich interessiert der Beruf des Lehrers, weil ich gern erkläre und mit Menschen arbeite. Ich möchte Lernende dabei unterstützen, ihre Ziele zu erreichen. Besonders spannend finde ich, Unterricht abwechslungsreich zu gestalten."
+        "questionDe": "Welcher Beruf interessiert dich? Welchen Schritt machst du, um ihn zu erreichen?",
+        "modelAnswerDe": "Der Beruf des Lehrers interessiert mich. Ich studiere Pädagogik, um später an einer Schule zu arbeiten. Außerdem übe ich Präsentationen, um klarer und sicherer zu erklären."
       },
       {
-        "questionDe": "Welche Ausbildung oder Qualifikation brauchst du?",
-        "modelAnswerDe": "Für meinen geplanten Weg brauche ich eine passende pädagogische Ausbildung und gute Fachkenntnisse. Welche Qualifikation genau verlangt wird, hängt vom Land und von der Schule ab. Deshalb würde ich mich bei der gewünschten Ausbildungsstelle informieren."
+        "questionDe": "Welche Ausbildung oder Qualifikation brauchst du? Erkläre deinen Plan mit um ... zu.",
+        "modelAnswerDe": "Für meinen geplanten Weg brauche ich eine passende pädagogische Ausbildung und gute Fachkenntnisse. Ich informiere mich über die Voraussetzungen, um den richtigen Ausbildungsweg zu wählen. Danach möchte ich ein Praktikum machen, um Erfahrung zu sammeln."
       },
       {
-        "questionDe": "Welche Rolle spielen Praktikum und Weiterbildung?",
-        "modelAnswerDe": "Ein Praktikum zeigt mir, wie der Arbeitsalltag wirklich aussieht. Dabei kann ich prüfen, ob der Beruf zu mir passt. Durch Weiterbildungen kann ich später neue Methoden lernen und meine Kenntnisse erweitern."
+        "questionDe": "Welche Rolle spielen Praktikum und Weiterbildung? Nutze um ... zu.",
+        "modelAnswerDe": "Ich mache ein Praktikum, um den Arbeitsalltag kennenzulernen. Später besuche ich eine Weiterbildung, um neue Methoden zu lernen und meine Kenntnisse zu erweitern."
       },
       {
-        "questionDe": "Welche Fähigkeit möchtest du noch verbessern?",
-        "modelAnswerDe": "Ich möchte noch besser vor Gruppen sprechen können. Manchmal werde ich nervös, wenn viele Menschen zuhören. Deshalb übe ich kurze Präsentationen und bitte andere um Rückmeldung."
+        "questionDe": "Welche Fähigkeit möchtest du noch verbessern? Nutze um ... zu.",
+        "modelAnswerDe": "Ich möchte sicherer vor Gruppen sprechen können. Ich übe kurze Präsentationen, um mein Selbstvertrauen zu stärken. Außerdem bitte ich andere um Rückmeldung, um meine Aussprache zu verbessern."
       },
       {
-        "questionDe": "Welcher nächste Schritt bringt dich deinem Ziel näher?",
-        "modelAnswerDe": "Mein nächster Schritt ist, einen Praktikumsplatz an einer Schule zu suchen. Dafür möchte ich meinen Lebenslauf aktualisieren und Bewerbungen schreiben. So kann ich praktische Erfahrungen sammeln."
+        "questionDe": "Welcher nächste Schritt bringt dich deinem Ziel näher? Nutze um ... zu.",
+        "modelAnswerDe": "Mein nächster Schritt ist ein Praktikum an einer Schule. Ich aktualisiere meinen Lebenslauf, um mich dafür zu bewerben. Danach sammle ich praktische Erfahrungen, um meinen Wunschberuf besser kennenzulernen."
       }
     ],
     teacherNotesEn: [
-      "Teach goals with um ... zu and broader Infinitiv-mit-zu frames such as Es ist wichtig, ... zu ... .",
-      "Use relative clauses to define professions, skills and experiences precisely.",
-      "Use je nachdem to show that different careers and life situations require different routes.",
-      "The writing task responds to Lena and compares Ausbildung, Studium, Praktikum and Weiterbildung rather than describing one job only.",
+      "Teach only one grammar pattern: um ... zu + Infinitiv for the purpose of a career step; do not introduce other new grammar in this lesson.",
+      "Model the comma before um, put zu immediately before the infinitive, and keep the person performing both actions the same.",
+      "Contrast Ich mache ein Praktikum, um Erfahrungen zu sammeln with the common mistakes um ich Erfahrungen sammle and um Erfahrungen sammeln.",
+      "The writing task responds to Lena and compares Ausbildung, Studium, Praktikum and Weiterbildung as content; preserve the workbook task without adding grammar targets.",
       "Lesen/Hören test the tension between dream, labour-market reality, flexibility and continuing education and are submitted.",
     ],
     interactionFlow: [
-      { phase: "Career map", detailEn: "6 min: dream job → required route → qualification → experience → next step." },
-      { phase: "Purpose language", detailEn: "9 min: convert career actions into um...zu and Es ist wichtig, ... zu ... sentences." },
-      { phase: "Relative-clause definitions", detailEn: "10 min: define a job, skill and internship with der/die/das/in dem clauses." },
-      { phase: "Route comparison", detailEn: "11 min: compare Ausbildung, Studium, Praktikum and Weiterbildung with je nachdem / obwohl / wenn." },
-      { phase: "Workbook bridge", detailEn: "8 min: outline the Lena opinion and preview dream-vs-reality reading/listening language." },
+      { phase: "Career map", detailEn: "6 min: choose one dream job and identify training, practice and the next career step." },
+      { phase: "One grammar rule", detailEn: "9 min: teach Hauptsatz + Komma + um + Ziel + zu + Infinitiv; the acting person stays the same." },
+      { phase: "Guided sentence building", detailEn: "10 min: combine Ich mache ein Praktikum + Ich möchte Erfahrungen sammeln into Ich mache ein Praktikum, um Erfahrungen zu sammeln; repeat with Kurs and Deutsch lernen." },
+      { phase: "Error correction and practice", detailEn: "11 min: fix missing zu and repeated subjects after um; students explain three personal career steps using um ... zu." },
+      { phase: "Workbook bridge", detailEn: "8 min: outline the Lena opinion and preview the dream-vs-reality reading/listening tasks; do not add new grammar." },
     ],
-    wrapUpTaskDe: "Erkläre deinen Weg zum Wunschberuf in 6 Sätzen. Nutze um ... zu, einen Relativsatz und je nachdem oder wenn.",
+    wrapUpTaskDe: "Nenne deinen Wunschberuf und drei konkrete Schritte. Formuliere zu jedem Schritt einen Satz mit um ... zu, zum Beispiel: Ich mache ein Praktikum, um Berufserfahrung zu sammeln.",
     workbookConnection: standardConnection(18, [
-      { label: "Grammar", detailEn: "Career paths with um ... zu and Infinitiv mit zu; relative clauses for jobs/skills; je nachdem; reason/condition/contrast clauses with weil, dass, wenn and obwohl; application vocabulary." },
+      { label: "Grammar", detailEn: "Single grammar focus: um ... zu + Infinitiv for purpose and career goals. Same subject in both actions, comma before um, zu before the infinitive; practise three career-step sentences and correct typical mistakes." },
       { label: "Teil 1 · Sprechen", detailEn: "Explain how you can reach your dream job: motivation, training/degree, important skills, practical experience/application and your next career step. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Respond to Lena on whether there are different paths to a dream job; discuss Ausbildung, Studium, Praktikum or Weiterbildung and explain why different people need different routes." },
       { label: "Teil 3 · Lesen", detailEn: "Read ‘Berufswahl – Wunsch oder Realität?’ about passion versus security, changing labour markets, flexibility, Weiterbildung and expert advice." },
       { label: "Teil 4 · Hören", detailEn: "Submitted career-choice listening: enjoyment of work, value of internships, job availability and the balance between dream and reality." },
     ]),
     teacherSupport: {
-      lessonOverviewEn: "Day 18 shifts from learning strategies to career planning. Students must describe not only a desired profession but the realistic route, qualifications and decisions needed to reach it.",
+      lessonOverviewEn: "Day 18 shifts from learning strategies to career planning. Students describe the route to their dream job while learning just one grammar structure: um ... zu for the purpose of each step.",
       grammarFocusEn: [
-        "um ... zu states the purpose of a career action with the same subject.",
-        "Infinitiv mit zu follows frames such as Es ist wichtig / sinnvoll, ... zu ... and Ich habe vor, ... zu ... .",
-        "Relative clauses define the profession, skill or experience more precisely and put the conjugated verb at the end.",
-        "je nachdem introduces variation according to profession, strengths or life circumstances.",
+        "One focus only: um ... zu + Infinitiv states the purpose of an action when the acting person remains the same.",
+        "Pattern: main clause + comma + um + goal + zu + infinitive at the end. Students should form sentences without repeating the subject after um.",
       ],
       modelExamplesDe: [
         "Ich mache ein Praktikum, um Berufserfahrung zu sammeln.",
-        "Es ist wichtig, die eigenen Stärken zu kennen.",
-        "Ich suche einen Beruf, der zu meinen Interessen passt.",
-        "Je nachdem, welcher Beruf einen interessiert, braucht man eine Ausbildung oder ein Studium.",
+        "Ich lerne Deutsch, um in Deutschland zu arbeiten.",
+        "Ich besuche einen Kurs, um meine Fähigkeiten zu verbessern.",
+        "Ich schreibe einen Lebenslauf, um mich zu bewerben.",
       ],
       commonMistakesEn: [
-        "Using um ... zu when the sentence has two different subjects without restructuring.",
-        "Forgetting the final verb in relative clauses.",
-        "Saying Ich bewerbe eine Stelle instead of Ich bewerbe mich um eine Stelle.",
-        "Naming a dream job without explaining the route and qualifications.",
+        "Writing um ich Erfahrungen sammle instead of um Erfahrungen zu sammeln; do not repeat the subject after um.",
+        "Omitting zu: Ich mache ein Praktikum, um Erfahrungen sammeln instead of um Erfahrungen zu sammeln.",
+        "Placing zu before the object instead of the infinitive: um zu mich bewerben instead of um mich zu bewerben.",
+        "Naming a dream job without explaining the purpose of a concrete career step.",
       ],
     },
   },

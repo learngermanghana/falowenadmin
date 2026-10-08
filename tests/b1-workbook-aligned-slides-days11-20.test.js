@@ -6,6 +6,7 @@ import {
 } from "../src/data/b1WorkbookAlignedSlidesDays11To20.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
 import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
+import { getSlideQuestionSet } from "../src/data/teachingSlideQuestionDictionary.js";
 
 const EXPECTED = {
   "B1-4.11": { day: 11, grammar: true, terms: ["einander", "miteinander", "voneinander", "aufeinander"] },
@@ -15,7 +16,7 @@ const EXPECTED = {
   "B1-5.15": { day: 15, grammar: true, terms: ["Passiv", "Modalpassiv", "Partizip", "werden"] },
   "B1-5.16": { day: 16, grammar: true, terms: ["weil", "sollte", "Infinitiv", "damit", "um ... zu"] },
   "B1-5.17": { day: 17, grammar: false, terms: ["wenn", "weil", "dass", "um ... zu", "damit"] },
-  "B1-6.18": { day: 18, grammar: true, terms: ["Relativ", "je nachdem", "um ... zu", "Infinitiv"] },
+  "B1-6.18": { day: 18, grammar: true, terms: ["um ... zu", "Infinitiv", "purpose"] },
   "B1-6.19": { day: 19, grammar: true, terms: ["Sie", "würde", "könnte", "wäre", "deshalb"] },
   "B1-6.20": { day: 20, grammar: false, terms: ["Relative", "muss", "können", "weil"] },
 };
@@ -89,6 +90,43 @@ test("Day 17 does not invent a direct grammar route and points teachers to the w
   assert.equal(slide.workbookConnection.grammarUrl, null);
   assert.match(slide.workbookConnection.subtitle, /workbook's Grammar tab/i);
   assert.match(part(slide, "Grammar").detailEn, /inside the workbook Grammar tab/i);
+});
+
+test("Day 18 admin slide teaches only um ... zu while preserving assessed workbook parts", () => {
+  const slide = getB1WorkbookAlignedSlideDay11To20("B1-6.18");
+  const resolved = getTeachingSlideByAssignmentId("B1-6.18");
+  const support = buildTeacherSlideSupport(resolved);
+  const questions = getSlideQuestionSet("B1-6.18", {});
+
+  assert.equal(slide.assignmentId, "B1-6.18");
+  assert.equal(slide.workbookConnection.grammarUrl, "/campus/course/lesson/B1/18?view=grammar");
+  assert.equal(slide.workbookConnection.workbookUrl, "/campus/course/lesson/B1/18?view=workbook");
+  assert.match(slide.objective, /one grammar pattern: um \.\.\. zu/i);
+  assert.equal(support.grammarFocusEn.length, 2);
+  assert.ok(support.grammarFocusEn.every((line) => /um \.\.\. zu|main clause/i.test(line)));
+  assert.ok(support.modelExamplesDe.every((line) => /, um .* zu [^.,]+\./i.test(line)));
+  assert.ok(slide.keyPhrasesDe.every((line) => /, um .* zu [^.,]+\./i.test(line)));
+  assert.ok(slide.speakingModels.every((item) => item.modelAnswerDe.includes(", um ")));
+  assert.deepEqual(slide.speakingModels.map((item) => item.questionDe), slide.studentQuestionsDe);
+  assert.match(slide.wrapUpTaskDe, /drei konkrete Schritte/i);
+  assert.match(part(slide, "Grammar").detailEn, /Single grammar focus: um \.\.\. zu/);
+  assert.ok(questions.studentQuestionsDe.some((line) => line.includes("um ... zu")));
+
+  const grammarTeaching = [
+    slide.objective,
+    ...slide.teacherNotesEn.slice(0, 3),
+    ...slide.keyPhrasesDe,
+    ...support.grammarFocusEn,
+    ...support.modelExamplesDe,
+    ...slide.interactionFlow.flatMap((phase) => [phase.phase, phase.detailEn]),
+    part(slide, "Grammar").detailEn,
+    slide.wrapUpTaskDe,
+  ].join(" ");
+  assert.doesNotMatch(grammarTeaching, /Relativsatz|Relativpronomen|relative clause|je nachdem|obwohl|Konjunktiv II/i);
+
+  assert.match(part(slide, "Teil 2 · Schreiben").detailEn, /Lena/);
+  assert.match(part(slide, "Teil 3 · Lesen").detailEn, /Berufswahl/);
+  assert.match(part(slide, "Teil 4 · Hören").detailEn, /Submitted career-choice listening/);
 });
 
 test("Day 19 uses the interview reading and graded interview listening", () => {
