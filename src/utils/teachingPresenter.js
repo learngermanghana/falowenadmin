@@ -4,6 +4,8 @@ import { getB1TeacherChallenge } from "../data/b1TeacherChallenges.js";
 import { getA2TeacherChallenge } from "../data/a2TeacherChallenges.js";
 import { getA2WarmupFollowUp } from "../data/a2WarmupFollowUps.js";
 import { getA2VocabularyQuestion } from "../data/a2VocabularyQuestions.js";
+import { getB1WarmupFollowUp } from "../data/b1WarmupFollowUps.js";
+import { getB1VocabularyQuestion } from "../data/b1VocabularyQuestions.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -286,7 +288,7 @@ function buildWarmupQuestionSupport(slide = {}) {
     keywords: warmupKeywords(question),
     hintEn: ["B2", "C1", "C2"].includes(level) ? advancedWarmupHintEn(question, level) : warmupHintEn(question),
     answerStarterDe: ["B2", "C1", "C2"].includes(level) ? advancedWarmupStarterDe(level, question) : warmupAnswerStarterDe(question),
-    followUpDe: level === "A2" ? getA2WarmupFollowUp(slide.assignmentId, question) : (["B2", "C1", "C2"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question)),
+    followUpDe: level === "A2" ? getA2WarmupFollowUp(slide.assignmentId, question) : level === "B1" ? getB1WarmupFollowUp(slide.assignmentId, question) : (["B2", "C1", "C2"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question)),
     difficulty: warmupDifficulty(index, questions.length),
   }));
 }
@@ -414,24 +416,6 @@ const VOCABULARY_CLOZE_RULES = [
   { pattern: /\bMaßnahme(?:n)?\b/i, clue: "konkrete Handlung zur Lösung eines Problems" },
 ];
 
-function b1VocabularyFunction(term = "") {
-  const phrase = String(term || "").trim();
-  const lower = phrase.toLocaleLowerCase("de-DE");
-
-  if (lower.includes("weil")) return "Du möchtest eine Ursache oder Begründung erklären.";
-  if (lower.includes("ich denke") || lower.includes("ich glaube") || lower.includes("ich finde") || lower.includes("dass")) {
-    return "Du möchtest eine Meinung oder einen Gedanken ausdrücken.";
-  }
-  if (lower.startsWith("wenn") || lower.includes("wenn man")) {
-    return "Du möchtest eine Bedingung oder typische Situation beschreiben.";
-  }
-  if (lower.includes("sollte")) return "Du möchtest einen konkreten Rat geben.";
-  if (lower.includes("wichtig") && lower.includes(" zu")) return "Du möchtest sagen, was wichtig oder sinnvoll ist.";
-  if (lower.includes("um ") && lower.includes(" zu")) return "Du möchtest den Zweck deiner Handlung nennen.";
-  if (lower.includes("damit")) return "Du möchtest ein Ziel ausdrücken und einen vollständigen Nebensatz verwenden.";
-  return "Du möchtest die kommunikative Funktion dieser Aussage passend ausdrücken.";
-}
-
 function buildVocabularyGapItems(items = [], level = "", assignmentId = "") {
   const sourceItems = (Array.isArray(items) ? items : [])
     .map((item) => ({
@@ -460,8 +444,9 @@ function buildVocabularyGapItems(items = [], level = "", assignmentId = "") {
       if (!sentence) continue; // Do not show generic or mismatched question text.
       mode = "situation";
     } else if (isB1) {
-      sentence = b1VocabularyFunction(item.term);
-      mode = "function";
+      sentence = getB1VocabularyQuestion(assignmentId, item.term);
+      if (!sentence) continue; // No generic fallback for B1; exact lesson phrase only.
+      mode = "situation";
     } else if (normalizedLevel === "C2" && item.example && item.example.toLocaleLowerCase("de-DE").includes(item.term.toLocaleLowerCase("de-DE"))) {
       const start = item.example.toLocaleLowerCase("de-DE").indexOf(item.term.toLocaleLowerCase("de-DE"));
       sentence = item.example.slice(0, start) + "______" + item.example.slice(start + item.term.length);
@@ -488,7 +473,7 @@ function buildVocabularyGapItems(items = [], level = "", assignmentId = "") {
 
     challenges.push({
       sentence,
-      promptLabel: isA2 ? "Sprechsituation" : (isB1 ? "Funktion" : ""),
+      promptLabel: isA2 || isB1 ? "Sprechsituation" : "",
       answer: item.term,
       options,
       term: item.term,
@@ -496,7 +481,7 @@ function buildVocabularyGapItems(items = [], level = "", assignmentId = "") {
       modelExample: (isA2 || isB1) && item.example ? item.example : "",
       followUp: isA2
         ? "Antworte jetzt laut auf die Frage und benutze die passende Formulierung."
-        : (isB1 ? "Begründe kurz deine Wahl und bilde danach einen eigenen Satz mit dieser Formulierung." : ""),
+        : (isB1 ? "Antworte auf die Frage mit dem passenden Redemittel und begründe danach kurz deine Formulierung." : ""),
     });
 
     if (challenges.length >= 4) break;
@@ -1637,7 +1622,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Wortschatz",
         title: "Kollokationen & Redemittel",
         items: vocabularyStage ? vocabularyItems : phraseItems,
-        challengeItems: vocabularyStage ? buildVocabularyGapItems(vocabularyItems, level) : [],
+        challengeItems: vocabularyStage ? buildVocabularyGapItems(vocabularyItems, level, slide.assignmentId) : [],
         instruction: vocabularyStage
           ? "Achte auf feste Wortverbindungen und nutze mindestens eine davon später in deiner Antwort."
           : "",
