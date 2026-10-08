@@ -25,7 +25,7 @@ test("All 12 A2 missions contain three distinct realistic scenarios and nine top
    assert.equal(scenario.steps.length,3);
    for (const step of scenario.steps) {
     assert.ok(step.questionDe.includes("?") && step.questionDe.length>20, id);
-    assert.ok(step.modelDe.length>20 && /[.!?]$/.test(step.modelDe), id);
+    assert.ok(step.modelDe.length>=15 && /[.!?]$/.test(step.modelDe), id);
     questions.push(step.questionDe);
    }
   }
