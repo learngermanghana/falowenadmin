@@ -66,6 +66,15 @@ test("legacy noisy marking controls are removed from the main page", () => {
   assert.doesNotMatch(source, /marking-key-settings/);
 });
 
+test("mobile keeps the current marking action visible", () => {
+  assert.match(source, /marking-mobile-sticky-action/);
+  assert.match(source, /Current marking action/);
+  assert.match(source, /\{autoMarking \? "Marking\.\.\." : "Mark with AI"\}/);
+  assert.match(source, /\{savingScore \? "Saving\.\.\." : "Save mark"\}/);
+  assert.match(css, /\.marking-mobile-sticky-action/);
+  assert.match(css, /position:\s*fixed/);
+});
+
 test("marking layout uses one queue column and one focused review column", () => {
   assert.match(css, /grid-template-columns:\s*minmax\(240px, 290px\)\s+minmax\(0, 1fr\)/);
   assert.match(css, /\.marking-reference-work-grid/);
