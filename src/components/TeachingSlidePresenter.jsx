@@ -1373,7 +1373,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                         setShowVocabAnswer(false);
                       }}
                     >
-                      {presenterLevel === "A2" ? "Redemittel-Fragen starten" : "Welches Wort passt? starten"}
+                      {["A2", "B1"].includes(presenterLevel) ? "Redemittel-Fragen starten" : "Welches Wort passt? starten"}
                     </button>
                   ) : null}
                 </>
@@ -1386,12 +1386,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                     <h1>{presenterLevel === "A2"
                       ? "Was sagst du in dieser Situation?"
                       : (presenterLevel === "B1"
-                        ? "Welche Formulierung passt zur Funktion?"
+                        ? "Wie drückst du das passend aus?"
                         : (presenterLevel === "C2" ? "Welche Kollokation ist hier am präzisesten?" : "Welches Wort passt?"))}</h1>
                     <p>{presenterLevel === "A2"
                       ? "Lies die Frage vor. Die Lernenden wählen A, B oder C und antworten mit dem passenden Ausdruck. Zeige die Lösung erst danach."
                       : (presenterLevel === "B1"
-                        ? "Lies die kommunikative Funktion. Der Schüler wählt das passende Redemittel, begründet die Wahl und bildet danach einen eigenen Satz."
+                        ? "Lies die konkrete Frage vor. Die Lernenden wählen A, B oder C und antworten mündlich mit dem passenden Ausdruck. Lass sie die Wahl begründen, bevor du die Lösung zeigst."
                         : (presenterLevel === "C2"
                           ? "Lies den Satz mit der Lücke. Der Student wählt die präziseste Kollokation und begründet kurz, warum sie in diesem Register passt."
                           : "Wählt den Ausdruck, der am besten zum Beispiel oder in die Lücke passt."))}</p>
