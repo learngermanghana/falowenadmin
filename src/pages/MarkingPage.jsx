@@ -200,6 +200,8 @@ export default function MarkingPage() {
   const [syncingAnswerKeys, setSyncingAnswerKeys] = useState(false);
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
   const [showAllObjectiveAnswers, setShowAllObjectiveAnswers] = useState(false);
+  const [showDesktopReference, setShowDesktopReference] = useState(false);
+  const [showDesktopCorrections, setShowDesktopCorrections] = useState(false);
   const [reportFallbackVisible, setReportFallbackVisible] = useState(false);
   const workflowSaving = false;
   const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
@@ -971,7 +973,7 @@ export default function MarkingPage() {
               ) : <p className="marking-empty">No submission selected.</p>}
             </section>
 
-            <section className="marking-card">
+            <section className="marking-card marking-reference-card">
               <div className="marking-section-heading">
                 <div>
                   <h3>Reference</h3>
@@ -1043,18 +1045,31 @@ export default function MarkingPage() {
                   </button>
                 </div>
               ) : null}
-              <textarea aria-label="Current reference answers" value={formattedReferenceAnswers} readOnly rows={14} />
-              {referenceEntry?.answer_url ? <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">Open answer source</a> : null}
+              <div className="marking-desktop-expand-control">
+                <button type="button" className="marking-compact-action" aria-expanded={showDesktopReference} aria-controls="marking-reference-answers" onClick={() => setShowDesktopReference((current) => !current)}>
+                  {showDesktopReference ? "Hide answer key" : "View full answer key"}
+                </button>
+              </div>
+              <div id="marking-reference-answers" className={`marking-reference-answers ${showDesktopReference ? "is-expanded" : ""}`}>
+                <textarea aria-label="Current reference answers" value={formattedReferenceAnswers} readOnly rows={14} />
+                {referenceEntry?.answer_url ? <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">Open answer source</a> : null}
+              </div>
             </section>
           </div>
 
-          <section className="marking-card">
+          <section className={`marking-card marking-objective-card ${showDesktopCorrections ? "is-expanded" : ""}`}>
             <div className="marking-section-heading">
               <div>
                 <h3>Objective mapping</h3>
-                <p>{showAllObjectiveAnswers ? "Showing every objective answer." : "Showing only wrong or unanswered questions."}</p>
+                <p className="marking-mobile-objective-summary">{showAllObjectiveAnswers ? "Showing every objective answer." : "Showing only wrong or unanswered questions."}</p>
+                <p className="marking-desktop-objective-summary">{objectiveMarkingResult.totalCount
+                  ? `${Math.max(0, objectiveMarkingResult.totalCount - objectiveMarkingResult.correctCount)} to review · ${objectiveMarkingResult.correctCount}/${objectiveMarkingResult.totalCount} correct`
+                  : "Open to inspect any detected answers."}</p>
               </div>
               <div className="marking-objective-actions">
+                <button type="button" className="marking-desktop-toggle marking-compact-action" aria-expanded={showDesktopCorrections} aria-controls="marking-objective-content" onClick={() => setShowDesktopCorrections((current) => !current)}>
+                  {showDesktopCorrections ? "Hide corrections" : "View corrections"}
+                </button>
                 {objectiveMarkingResult.totalCount ? <strong>{objectiveMarkingResult.correctCount}/{objectiveMarkingResult.totalCount}</strong> : null}
                 {objectiveMarkingResult.totalCount ? (
                   <button
@@ -1067,6 +1082,7 @@ export default function MarkingPage() {
                 ) : null}
               </div>
             </div>
+            <div id="marking-objective-content" className={`marking-objective-content ${showDesktopCorrections ? "is-expanded" : ""}`}>
             {objectiveMarkingResult.totalCount ? (
               visibleObjectiveEntries.length ? (
                 <div className="marking-table-scroll">
@@ -1088,6 +1104,7 @@ export default function MarkingPage() {
                 <div className="marking-objective-clear">All objective answers are correct. Use “Show all answers” if you want to inspect them.</div>
               )
             ) : <p className="marking-empty">No objective answers were detected. Use the reference and AI marking for the writing task.</p>}
+            </div>
           </section>
         </main>
         <aside className="marking-column marking-review" id="marking-stage-review" aria-label="Score review">
@@ -1195,6 +1212,28 @@ export default function MarkingPage() {
             >
               Copy feedback
             </button>
+            <div className="marking-desktop-save-actions">
+              <button
+                className="marking-primary-action"
+                type="button"
+                onClick={() => void handleSave(true)}
+                disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}
+              >
+                {savingScore ? "Saving..." : "Save & share feedback"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSave(false)}
+                disabled={!selectedSubmission || !feedback.trim() || savingScore || autoMarking || workflowSaving}
+              >
+                Save only
+              </button>
+            </div>
+            <details className="marking-desktop-more">
+              <summary>More actions</summary>
+              <button className="marking-report-action" type="button" disabled={!selectedSubmission} onClick={handleCopyMarkingReport}>Copy full report</button>
+              <p>Includes student work, reference, answer mapping, feedback and scores for reporting issues.</p>
+            </details>
           </section>
         </aside>
       </div>
