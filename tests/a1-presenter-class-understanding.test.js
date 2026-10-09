@@ -128,14 +128,19 @@ test("A1-12.3 understanding slides teach exactly three content points and separa
   assert.equal(classChecks.length, 10);
   assert.equal(resolved.length, 11);
   assert.equal(new Set(classChecks.map((item) => item.questionDe)).size, 10);
-  assert.match(combined, /exactly three|three content points/i);
-  assert.match(combined, /greeting.*not.*content|letter form/i);
-  assert.match(combined, /birthday.*three content points|Congratulate.*party.*family/i);
-  assert.match(combined, /language-school|course begins|how much.*costs|pay online/i);
+  assert.match(combined, /genau drei|drei Inhaltspunkte/i);
+  assert.match(combined, /Anrede, Grußformel und Name/);
+  assert.match(combined, /Alles Gute zum Geburtstag/);
+  assert.match(combined, /Gibt es eine Party/);
+  assert.match(combined, /Kann meine Familie mitkommen/);
+  assert.match(combined, /Wann beginnt der Kurs/);
+  assert.match(combined, /Wie viel kostet der Kurs/);
+  assert.match(combined, /Kann ich online bezahlen/);
   assert.ok(classChecks.some((item) => /^Ordne die Wörter:/.test(item.questionDe)));
   assert.ok(classChecks.some((item) => !/^Ordne die Wörter:/.test(item.questionDe)));
   assert.match(exitCheck.questionDe, /^Exit-Check:/);
-  assert.match(exitCheck.answerDe, /exactly three content points/i);
+  assert.match(exitCheck.answerDe, /Wann beginnt der Kurs/);
+  assert.match(exitCheck.answerDe, /Grußformel und Name/);
 });
 
 test("A1 presenter keeps class participation available from the first slide and switches to unique questions for the understanding check", () => {
