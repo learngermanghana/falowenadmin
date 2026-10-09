@@ -30,6 +30,7 @@ export function mockSectionProgress(attempt = {}) {
 }
 
 export function mockActivityLabel(attempt = {}, now = Date.now()) {
+  if (attempt.status === "activity_only") return "Activity recorded · completion unverified";
   if (attempt.status === "completed") return "Completed";
   const update = toAttemptMillis(attempt.updatedAt || attempt.startedAt);
   if (!update) return "In progress · sync unknown";
