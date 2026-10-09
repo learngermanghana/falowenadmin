@@ -1,3 +1,5 @@
+import { enhanceA1Days11To15Slide } from "./a1Days11To15Slides.js";
+
 const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
   "A1-3.5": {
     objective: "Students can read and say common A1 numbers, tell basic times, and give simple prices accurately in short classroom and everyday exchanges.",
@@ -212,7 +214,8 @@ const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
 export function enhanceA1GenericLessonSlide(slide = {}) {
   const key = String(slide.assignmentId || "").trim().toUpperCase();
   const upgrade = A1_LESSON_CONTENT_UPGRADES[key];
-  return upgrade ? { ...slide, ...upgrade } : slide;
+  const lessonSlide = upgrade ? { ...slide, ...upgrade } : slide;
+  return enhanceA1Days11To15Slide(lessonSlide);
 }
 
 export const A1_GENERIC_LESSON_UPGRADE_IDS = Object.freeze(Object.keys(A1_LESSON_CONTENT_UPGRADES));
