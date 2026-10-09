@@ -19,6 +19,17 @@ const REQUIRED_CORE_STAGES = LEVEL === "A2"
   ? ["intro", "warmup", "knowledge", "phrases", "grammar-check", "practice", "questions", "workbook", "lesson-summary"]
   : ["intro", "warmup", "phrases", "grammar", "examples", "practice", "mistakes", "questions", "wrapup"];
 
+// Scenario and career challenges replace (rather than supplement) the focused
+// practice slide. Count only substantial, learner-response activities as practice.
+const PRACTICE_STAGE_IDS = ["practice", "scenario-challenge", "career-challenge"];
+const hasPracticeActivity = (stage) => Boolean(
+  stage &&
+  Array.isArray(stage.items) &&
+  stage.items.length > 0 &&
+  (stage.id === "practice"
+    ? stage.items.some((item) => Number(item.minutes || 0) > 0)
+    : Number(stage.suggestedMinutes || 0) > 0 && Boolean(stage.teacherPurpose?.student))
+);
 const normalize = (value = "") => String(value || "").trim();
 const normalizedAssignment = (slide = {}) => normalize(slide.assignmentId).toUpperCase();
 const isTutorial = (slide = {}) => {
@@ -63,9 +74,11 @@ for (const [index, slide] of slides.entries()) {
     });
   }
 
+  const practice = PRACTICE_STAGE_IDS.map((id) => stageMap.get(id)).find(hasPracticeActivity);
   if (!tutorial) {
     for (const stageId of REQUIRED_CORE_STAGES) {
-      if (!stageMap.has(stageId)) {
+      const present = stageId === "practice" ? Boolean(practice) : stageMap.has(stageId);
+      if (!present) {
         findings.push({ severity: "error", id: slide.assignmentId, message: "missing presenter stage: " + stageId });
       }
     }
@@ -74,7 +87,6 @@ for (const [index, slide] of slides.entries()) {
   const grammar = stageMap.get("grammar");
   const grammarCheck = stageMap.get("grammar-check");
   const examples = stageMap.get("examples");
-  const practice = stageMap.get("practice");
   const warmup = stageMap.get("warmup");
   const questions = stageMap.get("questions");
   const mistakes = stageMap.get("mistakes");
@@ -87,20 +99,17 @@ for (const [index, slide] of slides.entries()) {
       ? grammarCheck && Array.isArray(grammarCheck.items) && grammarCheck.items.length === 3
       : grammar && examples
   );
+  const hasSpeakingSupport = Boolean(questions && (
+    (Array.isArray(questions.supportItems) && questions.supportItems.length >= 3) ||
+    (questions.type === "flow" && Array.isArray(questions.items) && questions.items.length >= 2)
+  ));
   const check = tutorial || Boolean(
-    questions &&
-    Array.isArray(questions.supportItems) &&
-    questions.supportItems.length >= 3 &&
+    hasSpeakingSupport &&
     (LEVEL === "A2"
       ? knowledge && Array.isArray(knowledge.items) && knowledge.items.length === 3 && warmup
       : mistakes && wrapup)
   );
-  const produce = tutorial || Boolean(
-    practice &&
-    Array.isArray(practice.items) &&
-    practice.items.some((item) => Number(item.minutes || 0) > 0) &&
-    questions
-  );
+  const produce = tutorial || Boolean(practice && questions);
 
   // A2 is fully workbook-aligned, so transfer must be explicit. A1 still has
   // a few legacy presenter-transfer lessons that intentionally use the shared
