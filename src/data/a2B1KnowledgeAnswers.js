@@ -115,7 +115,7 @@ export const A2_B1_KNOWLEDGE_ANSWERS = Object.freeze({
   "A2-9.23": [
     "Nach „mit“ steht der Dativ, zum Beispiel „mit dem Bus“ und „mit der Bahn“.",
     "„zu“ benutzt man häufig bei Personen oder konkreten Zielen: „zur Arbeit“, „zum Arzt“.",
-    "Man sagt „nach Berlin“."
+    "Vor Städten ohne Artikel steht „nach“, zum Beispiel „nach Berlin“."
   ],
   "A2-9.24": [
     "Nach „weil“, „wenn“ und „falls“ steht das konjugierte Verb am Ende des Nebensatzes.",
