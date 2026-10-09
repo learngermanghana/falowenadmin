@@ -142,7 +142,7 @@ export default function TimedAssignmentAttemptsPage() {
         <label style={{ display: "grid", gap: 5 }}>
           <strong>Search student or assignment</strong>
           <input value={query} onChange={event => setQuery(event.target.value)}
-            placeholder="Email, student ID, mock ID or assignment…"
+            placeholder="Student name, email, ID, mock ID or assignment…"
             style={{ minHeight: 42, padding: 10, border: "1px solid #cbd5e1", borderRadius: 10 }} />
         </label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -181,7 +181,8 @@ export default function TimedAssignmentAttemptsPage() {
             <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
               <div style={{ display: "grid", gap: 4 }}>
                 <strong>{attempt.level} · {attempt.mockId} · Attempt {attempt.attemptNumber}</strong>
-                <span>{attempt.studentEmail || attempt.uid || "Student not identified"}</span>
+                <strong style={{ fontSize: 16 }}>{attempt.studentName || attempt.studentEmail || attempt.uid || "Student not identified"}</strong>
+                {attempt.studentName && attempt.studentEmail ? <span style={{ color: "#64748b", fontSize: 13 }}>{attempt.studentEmail}</span> : null}
               </div>
               <span style={{ fontSize: 12, fontWeight: 800, color: attempt.status === "completed" ? "#166534" : "#1d4ed8" }}>{status}</span>
             </div>
@@ -223,7 +224,7 @@ export default function TimedAssignmentAttemptsPage() {
           const remaining = remainingSeconds(end, now);
           return <article key={attempt.id} style={card}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-              <div><strong>{attempt.assignmentKey || "Timed assignment"}</strong><div style={{ color: "#475569" }}>{attempt.studentEmail || attempt.studentCode || attempt.studentId || "Unknown student"}</div></div>
+              <div><strong>{attempt.assignmentKey || "Timed assignment"}</strong><div style={{ color: "#475569" }}>{attempt.studentName || attempt.fullName || attempt.name || attempt.studentEmail || attempt.studentCode || attempt.studentId || "Unknown student"}</div>{(attempt.studentName || attempt.fullName || attempt.name) && attempt.studentEmail ? <small style={{ color: "#64748b" }}>{attempt.studentEmail}</small> : null}</div>
               <strong>{attempt.status || "active"}</strong>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 9, fontSize: 13 }}>
