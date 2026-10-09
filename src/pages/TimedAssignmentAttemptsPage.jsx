@@ -193,6 +193,7 @@ export default function TimedAssignmentAttemptsPage() {
               {attempt.overallScore !== null && attempt.overallScore !== undefined && <div><b>Verified score:</b> {attempt.overallScore}/100</div>}
             </div>
             <div>
+              {attempt.progressSource === "browser_reported" && <p style={{ color: "#92400e", fontSize: 12, margin: "0 0 5px" }}>Progress reported by the learner browser; not a verified exam score.</p>}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
                 <b>Mock progress</b><span>{progress.count} of {progress.total} sections completed</span>
               </div>
