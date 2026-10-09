@@ -38,7 +38,8 @@ test("unverified A1 learner activities do not inherit tutor-marked status from a
   const task = getA1LearningPath(row);
   assert.equal(task.kind, "review");
   assert.match(task.instruction, /Submission status has not been confirmed/);
-  assert.equal(task.activityUrl, "");
+  assert.equal(task.activityUrl, "/campus/course/a1-day-17-instructions-and-directions-kapitel-11-workbook");
+  assert.equal(task.kind, "review", "A published learner link never proves manual tutor marking");
   assert.equal(getA1LearningPath({ course: "A1", assignmentId: "A1-5.9" }), null);
   assert.equal(getA1LearningPath({ course: "A1", assignmentId: "A1-TUTORIAL" }), null);
   assert.equal(getA1LearningPath({ course: "B1", assignmentId: "B1-1.1" }), null);
