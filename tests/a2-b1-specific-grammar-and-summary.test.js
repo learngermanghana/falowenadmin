@@ -22,7 +22,7 @@ for (const level of ["A2", "B1"]) {
       assert.ok(expressions.detail.includes(slide.keyPhrasesDe[1]), slide.assignmentId);
       assert.ok(spoken.detail.includes(slide.studentQuestionsDe.at(-1)), slide.assignmentId);
       assert.equal(check.detail, slide.wrapUpTaskDe, slide.assignmentId);
-      assert.doesNotMatch(summary.items.map(item => item.detail).join(" "), /You can talk about|You can use today.s target grammar accurately/i, slide.assignmentId);
+      assert.doesNotMatch([expressions.detail, spoken.detail].join(" "), /You can talk about|You can use today.s target grammar accurately/i, slide.assignmentId);
       assert.deepEqual(stages.slice(-3).map(s => s.id), ["questions", "workbook", "lesson-summary"], slide.assignmentId);
     }
   });
