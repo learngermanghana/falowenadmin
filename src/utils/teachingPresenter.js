@@ -1176,7 +1176,13 @@ function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
     const matchingModel = questionModels.find((item) => (
       String(item?.questionDe || "").trim() === String(prompt || "").trim()
     ));
-    const modelAnswer = String(matchingModel?.modelAnswerDe || models[questionIndex] || models[index] || models[0] || "").trim();
+    // Lesson authors provide studentQuestionsDe and speakingModels in the same
+    // order, but occasionally paraphrase a question in speakingModels. Prefer
+    // that indexed answer over an unrelated sample grammar sentence.
+    const indexedModel = questionModels.length === questions.length
+      ? questionModels[questionIndex]?.modelAnswerDe
+      : "";
+    const modelAnswer = String(matchingModel?.modelAnswerDe || indexedModel || models[questionIndex] || models[index] || models[0] || "").trim();
     const teacherFocus = String(rules[questionIndex] || rules[index] || rules[0] || "").trim();
 
     return {
