@@ -1049,7 +1049,7 @@ function assessWritingRequirements(text = "", referenceEntry = {}) {
       fulfilled: /(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|\b(?:am )?\d{1,2}\.\s*(?:\d{1,2}\.|januar|februar|marz|april|mai|juni|juli|august|september|oktober|november|dezember))/.test(normalizedText),
     });
   }
-  if (/(?:was (?:sie|du) (?:lieber|bevorzug)|what (?:your friend|they) prefer|ask (?:what|which) .*prefer|frage.*(?:lieber|mochte))/.test(normalizedPrompt)) {
+  if (/(?:was (?:sie|du) (?:lieber|bevorzug)|what (?:your friend|they) prefer|ask (?:what|which) .*prefer|frage.*(?:lieber|mochte)|was .*lieber mochte|was .*lieber moechte)/.test(normalizedPrompt)) {
     requirements.push({
       label: "Ask what the friend prefers",
       fulfilled: /(?:was (?:mochtest|willst|magst) du|was (?:mochte|will) sie|was ist dir lieber|was bevorzugst du|welche[srn]? .*\?)/.test(normalizedText),
