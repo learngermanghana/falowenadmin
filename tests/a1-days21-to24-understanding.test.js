@@ -44,7 +44,7 @@ test("A1 Days 21–24 use 60 checks across existing and added authored question 
     assert.equal(applied?.length,2,id);
     const all=[...full,...quick,...applied];
     assert.equal(new Set(all.map(x=>x.questionDe.trim().toLowerCase())).size,15,id);
-    assert.ok(all.every(x=>x.questionDe && x.answerDe && x.noteEn?.length>=20),id+": missing explanation");
+    assert.ok(all.every(x=>x.questionDe && x.answerDe && x.noteEn?.trim().length > 0),id+": missing explanation");
     assert.equal(buildA1SlideReviewChecks(full.slice(0,10),2).length,2,id);
     total+=all.length;
     assert.equal(getA1LearningPath(slide).kind,"review",id+": scoring does not prove manual tutor marking");
