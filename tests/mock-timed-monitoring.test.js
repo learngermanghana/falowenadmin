@@ -27,10 +27,13 @@ test("stale in-progress progress never pretends the student is online", () => {
 test("navigation restores mock monitoring and preserves timed attempt resets", () => {
   const app=fs.readFileSync("src/App.jsx","utf8");
   const page=fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx","utf8");
-  assert.match(app,/to="\/timed-attempts"[\s\S]{0,180}>Mock Monitoring & Timers<\/Link>/);
+  assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 2, "both staff and administrator navigation must include the monitoring link");
   assert.match(page,/data-testid="mock-monitoring"/);
   assert.match(page,/data-testid="timed-assignments"/);
   assert.match(page,/Reset timed attempt/);
   assert.match(page,/progressSource|mockSectionProgress/);
   assert.match(page,/mockActivityLabel/);
+  assert.match(page,/\/api\/internal\/mock-attempts/);
+  assert.match(page,/getIdToken\(\)/);
+  assert.doesNotMatch(page,/collectionGroup\(/, "student mock records must not be queried directly from the Admin browser");
 });
