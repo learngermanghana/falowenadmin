@@ -41,7 +41,7 @@ test("Student Activity stays retired and mock timing monitor is in navigation", 
   const app = read("src/App.jsx");
   const timedAttempts = read("src/pages/TimedAssignmentAttemptsPage.jsx");
 
-  assert.match(app, /to="\/timed-attempts"[^>]*>Mock Monitoring & Timers<\/Link>/);
+  assert.match(app, /to="\/timed-attempts"[\s\S]{0,180}>Mock Monitoring & Timers<\/Link>/);
   assert.match(app, /TimedAssignmentAttemptsPage = lazy/);
   assert.match(app, /path="\/timed-attempts"[\s\S]{0,160}<TimedAssignmentAttemptsPage/);
   assert.match(app, /path="\/student-activity"[\s\S]{0,160}Navigate to="\/students"/);
