@@ -8,6 +8,8 @@ const ABSTRACT_PROMPT = /^(?:show this lesson point|teach this rule to|give one 
 export function buildA1SlideReviewChecks(checks = [], limit = 3) {
   const seen = new Set();
   const result = [];
+  const count = Math.max(0, Math.min(3, Number(limit) || 0));
+  if (!count) return result;
   for (const entry of Array.isArray(checks) ? checks : []) {
     const questionDe = clean(entry?.questionDe);
     const answerDe = clean(entry?.answerDe);
@@ -17,7 +19,7 @@ export function buildA1SlideReviewChecks(checks = [], limit = 3) {
       || OPEN_ENDED_GUIDE.test(answerDe)) continue;
     seen.add(key);
     result.push({ questionDe, answerDe, noteEn });
-    if (result.length >= Math.max(0, Math.min(3, Number(limit) || 0))) break;
+    if (result.length >= count) break;
   }
   return result;
 }
