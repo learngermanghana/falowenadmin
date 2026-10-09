@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
+import { buildA1CheckCoaching } from "../data/a1CheckCoaching.js";
+import { getA1LearningPath } from "../data/a1LearningPath.js";
+import { buildA1SlideReviewChecks } from "../data/a1SlideReview.js";
+import { getA1Days1To5QuickChecks, getA1Days1To5ApplicationChecks } from "../data/a1Days1To5Understanding.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
@@ -61,12 +65,12 @@ function a1TeacherPurpose(stage = {}) {
     teacher: "Kurz scannen und nur Fehler hervorheben, die in der Klasse tatsächlich auftreten.",
   };
   if (id === "sentence-build") return {
-    student: "Einen eigenen einfachen Satz mit der Zielgrammatik bilden.",
-    teacher: "Grammatik vor Wortschatz bewerten; ein einfacher korrekter Satz reicht.",
+    student: stage.lessonReviewMode ? "Eine kurze Verständnis- oder Korrekturaufgabe lösen." : "Einen eigenen einfachen Satz mit der Zielgrammatik bilden.",
+    teacher: stage.lessonReviewMode ? "Nur die heutige Regel prüfen; kurze richtige Antworten genügen." : "Grammatik vor Wortschatz bewerten; ein einfacher korrekter Satz reicht.",
   };
   if (id === "workbook" || id === "mock") return {
-    student: id === "mock" ? "Die Prüfungsteile möglichst ohne Hilfe durchführen." : "Die Grammatik in Falowen weiter üben.",
-    teacher: id === "mock" ? "Hilfen reduzieren und Prüfungsbereitschaft beobachten." : "Zur passenden Falowen-Aufgabe wechseln.",
+    student: id === "mock" ? "Die Prüfungsteile möglichst ohne Hilfe durchführen." : "Prüfe dein Verständnis mit der passenden Falowen-Aufgabe.",
+    teacher: id === "mock" ? "Hilfen reduzieren und Prüfungsbereitschaft beobachten." : (stage.reviewLabel || "Zur passenden Falowen-Aufgabe wechseln."),
   };
   if (id === "exit-check") return stage.examReadiness
     ? {
@@ -110,6 +114,7 @@ function stageList(slide, topicLabel) {
   const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
   const practicePrompts = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [];
   const hasWorkbookPlan = workbookParts.length > 0;
+  const learningPath = getA1LearningPath(slide);
   const transferItems = hasWorkbookPlan
     ? workbookParts.map((part) => ({ label: part.label, detail: part.detailEn }))
     : practicePrompts.slice(0, 4).map((question, index) => ({ label: `Übung ${index + 1}`, detail: question }));
@@ -194,12 +199,13 @@ function stageList(slide, topicLabel) {
       .map((stage) => ({ ...stage, examReadiness: true }));
   }
 
-  const quickChecks = grammarChecks.slice(0, 2);
+  const quickChecks = getA1Days1To5QuickChecks(slide.assignmentId) || grammarChecks.slice(0, 2);
   const correctionChecks = mainChecks
     .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
     .slice(0, 2);
   const modelExamples = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [];
-  const sentenceBuildChecks = modelExamples.slice(0, 2).map((example, index) => ({
+  const curatedApplicationChecks = getA1Days1To5ApplicationChecks(slide.assignmentId);
+  const sentenceBuildChecks = curatedApplicationChecks || modelExamples.slice(0, 2).map((example, index) => ({
     questionDe: index === 0
       ? `Change one detail but keep the grammar correct: “${example}”`
       : `Make a new sentence with the same grammar pattern: “${example}”`,
@@ -229,8 +235,8 @@ function stageList(slide, topicLabel) {
     {
       id: "grammar-check",
       type: "check",
-      kicker: "Class grammar check",
-      title: "One grammar question per student",
+      kicker: "Verständnis prüfen",
+      title: "One understanding question per student",
       items: mainChecks,
     },
     {
@@ -250,16 +256,25 @@ function stageList(slide, topicLabel) {
     {
       id: "sentence-build",
       type: "check",
-      kicker: "Build one sentence",
-      title: "Use the grammar correctly",
+      kicker: curatedApplicationChecks ? "Anwenden" : "Build one sentence",
+      title: curatedApplicationChecks ? "Two short lesson applications" : "Use the grammar correctly",
       items: sentenceBuildChecks,
+      lessonReviewMode: Boolean(curatedApplicationChecks),
     },
     {
       id: "workbook",
       type: "workbook",
-      kicker: "Transfer",
-      title: hasWorkbookPlan ? "Now practise it in Falowen" : "Now apply it",
+      kicker: "Falowen · next task",
+      title: learningPath?.label || (hasWorkbookPlan ? "Now practise it in Falowen" : "Now apply it"),
       items: transferItems,
+      activityKind: learningPath?.kind || "review",
+      activityInstruction: learningPath?.instruction || "",
+      reviewLabel: learningPath?.reviewLabel || "",
+      reviewChecks: buildA1SlideReviewChecks(mainChecks, 2),
+      reviewTitle: learningPath?.kind === "tutor-marked"
+        ? "Vor der Abgabe · prüfe diese zwei Punkte"
+        : "Verständnis-Check · prüfe diese zwei Punkte",
+      actionLabel: learningPath?.actionLabel || "Open Course Book activity",
       grammarUrl: slide.workbookConnection?.grammarUrl || "",
       workbookUrl: slide.workbookConnection?.workbookUrl || "",
     },
@@ -291,6 +306,7 @@ export default function A1GrammarPresenter({
   const [stageIndex, setStageIndex] = useState(0);
   const [itemIndex, setItemIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const [participationQuestion, setParticipationQuestion] = useState(null);
   const contentRef = useRef(null);
   const lastContentSizeRef = useRef({ width: 0, height: 0 });
@@ -321,11 +337,16 @@ export default function A1GrammarPresenter({
       ? stage.items[itemIndex]
       : null;
   const activeExamPerformance = Boolean(stage?.examReadiness && activeCheck?.responseMode === "performance");
+  const activeCoaching = stage?.examReadiness ? null : buildA1CheckCoaching(activeCheck, slide);
+  // Do not give hints during the scored one-question-per-student diagnostic
+  // or the final unaided exit check. Teacher checks appear after reveal only.
+  const canShowHint = Boolean(activeCoaching && !participationCheckMode && !stage?.exitCheck);
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
 
   function resetQuestionState() {
     setItemIndex(0);
     setShowAnswer(false);
+    setShowHint(false);
     setParticipationQuestion(null);
   }
 
@@ -339,6 +360,7 @@ export default function A1GrammarPresenter({
     if (manualCheckMode && itemIndex < stage.items.length - 1) {
       setItemIndex((current) => current + 1);
       setShowAnswer(false);
+      setShowHint(false);
       return;
     }
     goTo(stageIndex + 1);
@@ -348,6 +370,7 @@ export default function A1GrammarPresenter({
     if (manualCheckMode && itemIndex > 0) {
       setItemIndex((current) => current - 1);
       setShowAnswer(false);
+      setShowHint(false);
       return;
     }
     goTo(stageIndex - 1);
@@ -634,7 +657,11 @@ export default function A1GrammarPresenter({
             slide={slide}
             questions={participationCheckMode ? stage.items : []}
             questionContext={participationCheckMode ? stage.id : "class-participation"}
-            onQuestionChange={setParticipationQuestion}
+            onQuestionChange={(question) => {
+              setParticipationQuestion(question);
+              setShowAnswer(false);
+              setShowHint(false);
+            }}
             renderQuestionExternally={participationCheckMode}
           />
         </div>
@@ -662,7 +689,7 @@ export default function A1GrammarPresenter({
                 <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 grammar-check method"}</strong>
                 <p>{stage.examReadiness
                   ? "Warm-up diagnosis → exam map → Teil 1 → live performance/knowledge checks → mini mock exam → readiness decision → fresh exit check."
-                  : "Grammar notes first → quick rule check → one grammar question per student → fix mistakes → build one sentence → workbook transfer → exit check."}</p>
+                  : "Grammar notes first → check understanding → correct the target rule → one short application → tutor-marked assignment or self-practice → unaided exit check."}</p>
                 <small>{stage.examReadiness
                   ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
                   : "Use the grammar page to teach. Presenter should not reteach the lesson: it checks whether each learner can recognize, correct and apply the grammar. Record only Correct or Needs review."}</small>
@@ -696,13 +723,28 @@ export default function A1GrammarPresenter({
                 <>
                   <p className="presenter-question">{activeCheck?.questionDe}</p>
                   <div className="presenter-question-actions">
-                    <button type="button" onClick={() => setShowAnswer((current) => !current)} disabled={!activeCheck}>
+                    {canShowHint && !showAnswer ? (
+                      <button type="button" aria-expanded={showHint} onClick={() => setShowHint((current) => !current)}>
+                        {showHint ? "A1-Lernhilfe ausblenden" : "A1-Lernhilfe · vor der Antwort"}
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={() => {
+                      setShowAnswer((current) => !current);
+                      setShowHint(false);
+                    }} disabled={!activeCheck}>
                       {showAnswer ? "Antwort ausblenden" : "Antwort anzeigen"}
                     </button>
                   </div>
+                  {showHint && canShowHint && !showAnswer ? (
+                    <aside className="presenter-a1-check-hint">
+                      <strong>Lernhilfe · ein kleiner Schritt</strong>
+                      <p>{activeCoaching.hintDe}</p>
+                      <small>Keine fertige Antwort. Antworte selbst in einfachem Deutsch.</small>
+                    </aside>
+                  ) : null}
                   {showAnswer ? (
                     <div className="presenter-model-support">
-                      <strong>Richtige Antwort / teacher guide</strong>
+                      <strong>{activeCoaching?.flexibleAnswer ? "Mögliche Antwort / teacher guide" : "Richtige Antwort / teacher guide"}</strong>
                       <p>{activeCheck?.answerDe}</p>
                       {participationCheckMode ? (
                         <small>{stage.examReadiness
@@ -712,6 +754,26 @@ export default function A1GrammarPresenter({
                           : "Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for another distinct question."}</small>
                       ) : null}
                       {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
+                      {activeCoaching ? (
+                        <aside className="presenter-a1-check-feedback">
+                          <strong>Lehrerfeedback · nach der Antwort</strong>
+                          <p>{activeCoaching.feedbackQuestionDe}</p>
+                          <p><b>Prüfe:</b> {activeCoaching.checkDe}</p>
+                          {activeCoaching.lessonGrammarEn || activeCoaching.lessonPitfallEn ? (
+                            <details>
+                              <summary>Grammatik und mögliche Fehler dieser Lektion</summary>
+                              {activeCoaching.lessonGrammarEn ? (
+                                <p><b>Grammatikziel (falls relevant):</b> {activeCoaching.lessonGrammarEn}</p>
+                              ) : null}
+                              {activeCoaching.lessonPitfallEn ? (
+                                <p><b>Nur wenn tatsächlich gehört:</b> {activeCoaching.lessonPitfallEn}</p>
+                              ) : null}
+                            </details>
+                          ) : null}
+                          <p><b>Zweiter Versuch:</b> {activeCoaching.retryDe}</p>
+                          <small>Vergleiche die echte Antwort mit der Aufgabe. Eigene richtige A1-Antworten gelten auch. Keine automatische Bewertung.</small>
+                        </aside>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="presenter-model-support presenter-teacher-instruction" style={{ opacity: 0.8 }}>
@@ -735,6 +797,16 @@ export default function A1GrammarPresenter({
           ) : stage.type === "workbook" ? (
             <>
               <h1>{stage.title}</h1>
+              {stage.activityInstruction ? (
+                <div className="presenter-a1-learning-route" data-a1-learning-mode={stage.activityKind}>
+                  <strong>{stage.activityKind === "self-practice" ? "Self-practice · no marking" :
+                    stage.activityKind === "tutor-marked" ? "Tutor-marked · submit for review" :
+                    "Check the learner-page instructions"}
+                  </strong>
+                  <p>{stage.activityInstruction}</p>
+                  {stage.reviewLabel ? <small>{stage.reviewLabel}</small> : null}
+                </div>
+              ) : null}
               <div className="presenter-workbook-list">
                 {stage.items.map((item) => (
                   <article key={`${item.label}-${item.detail}`}>
@@ -743,9 +815,24 @@ export default function A1GrammarPresenter({
                   </article>
                 ))}
               </div>
+              {stage.reviewChecks?.length ? (
+                <section className="presenter-a1-review-checks" aria-label="Lesson-specific understanding review">
+                  <h2>{stage.reviewTitle}</h2>
+                  <p>Versuche zuerst selbst zu antworten. Die Lehrkraft kann die Lösung danach öffnen.</p>
+                  <div className="presenter-a1-review-checks-grid">
+                    {stage.reviewChecks.map((item) => (
+                      <details key={item.questionDe} className="presenter-a1-review-check">
+                        <summary>{item.questionDe}</summary>
+                        <p><b>Richtige Antwort:</b> {item.answerDe}</p>
+                        {item.noteEn ? <small><b>Erklärung:</b> {item.noteEn}</small> : null}
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
               <div className="presenter-workbook-actions">
                 {stage.grammarUrl ? <a href={lessonUrl(stage.grammarUrl)} target="_blank" rel="noreferrer">Open grammar notes</a> : null}
-                {stage.workbookUrl ? <a href={lessonUrl(stage.workbookUrl)} target="_blank" rel="noreferrer">Open workbook</a> : null}
+                {stage.workbookUrl ? <a href={lessonUrl(stage.workbookUrl)} target="_blank" rel="noreferrer">{stage.actionLabel || "Open workbook"}</a> : null}
               </div>
             </>
           ) : (

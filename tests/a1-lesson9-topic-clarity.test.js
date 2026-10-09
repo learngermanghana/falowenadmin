@@ -40,7 +40,8 @@ test("A1-9 patch remains order-independent after earlier A1 override patches", (
   const patch = fs.readFileSync("scripts/patchA1Lesson9Clarity.mjs", "utf8");
   const day2 = fs.readFileSync("scripts/patchA1Day2ContactChallenge.mjs", "utf8");
 
-  assert.match(day2, /const anchor = "const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \{\\n"/);
+  assert.match(day2, /getA1Days1To5UnderstandingChecks\("A1-2"\)/);
+  assert.doesNotMatch(day2, /Wie fragst du einen Freund nach seiner Telefonnummer\?/);
   assert.match(patch, /const anchor = \`const A1_PRESENTER_UNDERSTANDING_OVERRIDES = \{/);
   assert.doesNotMatch(
     patch,

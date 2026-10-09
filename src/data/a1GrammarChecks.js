@@ -43,10 +43,10 @@ export const A1_GRAMMAR_CHECKS = {
     check("What special forms should you remember for arbeiten and heißen?", "du arbeitest, er/sie/es arbeitet, ihr arbeitet; du heißt, er/sie/es heißt, ihr heißt."),
   ],
   "A1-2": [
-    check("What is special about the order of German numbers from 21 to 99?", "The ones come before the tens: einundzwanzig literally means one-and-twenty."),
-    check("Why is clear number pronunciation important for phone numbers and addresses?", "Because one wrong digit can change the whole contact detail."),
-    check("How do Germans usually give a phone number in a simple A1 conversation?", "By saying the digits or small number groups clearly and confirming when necessary."),
-    check("What question words or expressions help you ask for contact information?", "For example: Wie ist …? Wie lautet …? Wo wohnst du?"),
+    check("Wie bildet man zweistellige Zahlen wie 25?", "Einer + und + Zehner: fünfundzwanzig.", "From 21 to 99 the unit comes before und + tens."),
+    check("Wie schreibt man 16 und 17 korrekt?", "sechzehn und siebzehn.", "These shortened teen forms do not keep the full sechs or sieben."),
+    check("Wie schreibt man die Zahl 222?", "zweihundertzweiundzwanzig.", "Hundreds connect directly with the remaining number."),
+    check("Wie schreibt man die Zahl 2040?", "zweitausendvierzig.", "Combine zweitausend and vierzig into one number word."),
   ],
   "A1-1.3": [
     check("What is an indefinite article in German?", "ein or eine used when a noun is not yet specific or is being introduced."),

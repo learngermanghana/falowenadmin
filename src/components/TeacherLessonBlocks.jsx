@@ -1,4 +1,5 @@
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
+import { getA1LearningPath } from "../data/a1LearningPath.js";
 import { getTeacherLessonGuidance } from "../data/teacherLessonGuidance.js";
 import "./TeacherLessonBlocks.css";
 
@@ -27,8 +28,9 @@ function falowenHref(path = "") {
   return `${FALOWEN_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-function WorkbookConnection({ connection }) {
+function WorkbookConnection({ connection, slide }) {
   if (!connection) return null;
+  const a1Path = getA1LearningPath(slide);
   const parts = Array.isArray(connection.parts) ? connection.parts : [];
   const grammarHref = falowenHref(connection.grammarUrl);
   const workbookHref = falowenHref(connection.workbookUrl);
@@ -40,15 +42,20 @@ function WorkbookConnection({ connection }) {
       <div className="teacher-workbook-header">
         <SectionHeading
           step="03"
-          title="Workbook connection"
-          subtitle={subtitle}
+          title={a1Path?.label || "Workbook connection"}
+          subtitle={a1Path?.instruction || subtitle}
         />
         <div className="teacher-workbook-links no-print">
           {grammarHref ? <a href={grammarHref} target="_blank" rel="noreferrer">Open grammar notes</a> : null}
-          {workbookHref ? <a href={workbookHref} target="_blank" rel="noreferrer">Open student workbook</a> : null}
+          {workbookHref ? <a href={workbookHref} target="_blank" rel="noreferrer">{a1Path?.actionLabel || "Open student workbook"}</a> : null}
         </div>
       </div>
 
+      {a1Path ? (
+        <p className="teacher-a1-task-status" data-a1-learning-mode={a1Path.kind}>
+          <strong>Teacher guidance:</strong> {a1Path.reviewLabel}
+        </p>
+      ) : null}
       <div className="teacher-workbook-grid">
         {parts.map((part) => (
           <article key={part.label} className="teacher-workbook-card">
@@ -64,6 +71,7 @@ function WorkbookConnection({ connection }) {
 export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
   const support = buildTeacherSlideSupport(slide);
   const guidance = getTeacherLessonGuidance(slide);
+  const a1Understanding = String(slide.course || "").toUpperCase() === "A1" && String(slide.assignmentId || "").toUpperCase() !== "A1-5.9";
 
   if (handoutMode) {
     return (
@@ -84,7 +92,7 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
         </section>
 
         <section className="slide-panel">
-          <h2>Speaking questions (DE)</h2>
+          <h2>{a1Understanding ? "Understanding questions (DE)" : "Speaking questions (DE)"}</h2>
           <List items={slide.studentQuestionsDe} ordered />
         </section>
 
@@ -112,7 +120,7 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
         <p className="teacher-objective-copy">{slide.objective}</p>
       </section>
 
-      <WorkbookConnection connection={slide.workbookConnection} />
+      <WorkbookConnection connection={slide.workbookConnection} slide={slide} />
 
       <section className="slide-panel slide-panel-highlight">
         <SectionHeading step={guidance.steps.warmup} title="Warm-up" subtitle="Activate what students already know before teaching new language." />
@@ -120,7 +128,7 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
       </section>
 
       <section className="slide-panel">
-        <SectionHeading step={guidance.steps.vocabulary} title="Vocabulary & useful language" subtitle="Keep these visible while students speak." />
+        <SectionHeading step={guidance.steps.vocabulary} title="Vocabulary & useful language" subtitle={a1Understanding ? "Use these words to recognise and apply today’s lesson." : "Keep these visible while students speak."} />
         <List items={slide.keyPhrasesDe} />
       </section>
 
@@ -130,7 +138,7 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
       </section>
 
       <section className="slide-panel">
-        <SectionHeading step={guidance.steps.examples} title="Model examples" subtitle="Give students a complete model before asking for freer production." />
+        <SectionHeading step={guidance.steps.examples} title="Model examples" subtitle={a1Understanding ? "Demonstrate the correct form, then check if the student understands it." : "Give students a complete model before asking for freer production."} />
         <List items={support.modelExamplesDe} />
       </section>
 
@@ -153,7 +161,10 @@ export default function TeacherLessonBlocks({ slide, handoutMode = false }) {
 
       <section className="slide-panel teacher-section-wide">
         <div className="slide-panel-heading">
-          <SectionHeading step={guidance.steps.speaking} title="Speaking questions" subtitle={guidance.speakingSubtitle} />
+          <SectionHeading step={guidance.steps.speaking}
+            title={a1Understanding ? "Check understanding" : "Speaking questions"}
+            subtitle={a1Understanding ? "Ask a lesson-specific question. Check its factual answer or short application; no role-play is required." : guidance.speakingSubtitle}
+          />
           <span className="slide-question-count">{slide.studentQuestionsDe.length} prompts</span>
         </div>
         <List items={slide.studentQuestionsDe} ordered />

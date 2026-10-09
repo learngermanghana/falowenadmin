@@ -25,7 +25,7 @@ const TOPIC_SIGNALS = {
   "A1-1.1": ["verbendung", "pronomen", "lernen"],
   "A1-1.1-PRACTICE": ["w-frag", "wer", "woher"],
   "A1-1.2": ["verb", "-st", "-t"],
-  "A1-2": ["telefon", "adresse", "nummer"],
+  "A1-2": ["sechzehn", "fünfundzwanzig", "zweitausendvierzig"],
   "A1-1.3": ["artikel", "der", "die", "das"],
   "A1-2.3": ["famil", "gern", "hobby"],
   "A1-3": ["kostet", "kosten", "euro"],
@@ -130,6 +130,6 @@ test("A1 presenter checks the rule before the per-student grammar challenge", ()
   assert.ok(sentenceIndex > correctionIndex, "A1 controlled sentence build must follow correction");
   assert.match(presenter, /items:\s*quickChecks/);
   assert.match(presenter, /items:\s*mainChecks/);
-  assert.match(presenter, /kicker:\s*"Class grammar check"/);
-  assert.match(presenter, /title:\s*"One grammar question per student"/);
+  assert.match(presenter, /kicker:\s*"Verständnis prüfen"/);
+  assert.match(presenter, /title:\s*"One understanding question per student"/);
 });
