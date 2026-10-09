@@ -4492,3 +4492,31 @@
 }
 .presenter-a1-learning-route p { margin: 0.45rem 0; line-height: 1.5; }
 .presenter-a1-learning-route small { display: block; line-height: 1.4; color: #475569; }
+
+/* A1 understanding review: answers are hidden until the tutor reveals them.
+   These cards are lesson content, not progress or marking controls. */
+.presenter-a1-review-checks { margin-top: 0.9rem; }
+.presenter-a1-review-checks h2 { font-size: 1.05rem; margin: 0 0 0.25rem; }
+.presenter-a1-review-checks > p { margin: 0 0 0.6rem; line-height: 1.45; }
+.presenter-a1-review-checks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 0.65rem;
+}
+.presenter-a1-review-check {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.presenter-a1-review-check summary {
+  cursor: pointer;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.presenter-a1-review-check p, .presenter-a1-review-check small {
+  display: block;
+  line-height: 1.4;
+  margin: 0.55rem 0 0;
+}
