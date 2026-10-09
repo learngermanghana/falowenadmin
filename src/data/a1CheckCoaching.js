@@ -85,6 +85,8 @@ const SUPPORT = Object.freeze({
 });
 
 export function buildA1CheckCoaching(check = {}, slide = {}) {
+  // Some A1 lessons have no second check. Never dereference a null check.
+  if (!check || typeof check !== "object" || !slide || typeof slide !== "object") return null;
   const questionDe = text(check.questionDe);
   if (!questionDe || String(slide.course || "").toUpperCase() !== "A1") return null;
   const kind = taskKind(questionDe);
