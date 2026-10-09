@@ -15,7 +15,7 @@ export const A1_DAYS21_TO24_UNDERSTANDING = Object.freeze({
     q("Ergänze: „Wir danken ___ Lehrer.“ (der)", "Wir danken dem Lehrer.", "danken controls dative, so the masculine noun takes dem."),
     q("Welche Frage passt zu „Ich sehe den Mann“: wen oder wem?", "Wen?", "Wen? asks about the accusative person being seen."),
     q("Welche Frage passt zu „Ich helfe dem Mann“: wen oder wem?", "Wem?", "Wem? asks for the dative person being helped."),
-    q("Korrigiere: „Er hilft den Kindern.“", "Er hilft den Kindern.", "This sentence is already correct: dative plural uses den Kindern. Do not change a correct form."),
+    q("Korrigiere: „Er hilft die Kinder.“", "Er hilft den Kindern.", "helfen takes dative; plural dative uses den Kindern, including the noun ending -n."),
     q("Exit-Check: Ergänze „Ich sehe ___ Mann, ich helfe ___ Mann und ich danke ___ Frau“.", "Ich sehe den Mann. Ich helfe dem Mann. Ich danke der Frau.", "Check accusative with sehen and dative with helfen/danken without revealing the answer first."),
   ],
   "A1-5.10": [
