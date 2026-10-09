@@ -5,6 +5,7 @@ import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstand
 import { buildA1CheckCoaching } from "../data/a1CheckCoaching.js";
 import { getA1LearningPath } from "../data/a1LearningPath.js";
 import { buildA1SlideReviewChecks } from "../data/a1SlideReview.js";
+import { getA1Days1To5QuickChecks, getA1Days1To5ApplicationChecks } from "../data/a1Days1To5Understanding.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
@@ -64,8 +65,8 @@ function a1TeacherPurpose(stage = {}) {
     teacher: "Kurz scannen und nur Fehler hervorheben, die in der Klasse tatsächlich auftreten.",
   };
   if (id === "sentence-build") return {
-    student: "Einen eigenen einfachen Satz mit der Zielgrammatik bilden.",
-    teacher: "Grammatik vor Wortschatz bewerten; ein einfacher korrekter Satz reicht.",
+    student: stage.lessonReviewMode ? "Eine kurze Verständnis- oder Korrekturaufgabe lösen." : "Einen eigenen einfachen Satz mit der Zielgrammatik bilden.",
+    teacher: stage.lessonReviewMode ? "Nur die heutige Regel prüfen; kurze richtige Antworten genügen." : "Grammatik vor Wortschatz bewerten; ein einfacher korrekter Satz reicht.",
   };
   if (id === "workbook" || id === "mock") return {
     student: id === "mock" ? "Die Prüfungsteile möglichst ohne Hilfe durchführen." : "Prüfe dein Verständnis mit der passenden Falowen-Aufgabe.",
@@ -198,12 +199,13 @@ function stageList(slide, topicLabel) {
       .map((stage) => ({ ...stage, examReadiness: true }));
   }
 
-  const quickChecks = grammarChecks.slice(0, 2);
+  const quickChecks = getA1Days1To5QuickChecks(slide.assignmentId) || grammarChecks.slice(0, 2);
   const correctionChecks = mainChecks
     .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
     .slice(0, 2);
   const modelExamples = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [];
-  const sentenceBuildChecks = modelExamples.slice(0, 2).map((example, index) => ({
+  const curatedApplicationChecks = getA1Days1To5ApplicationChecks(slide.assignmentId);
+  const sentenceBuildChecks = curatedApplicationChecks || modelExamples.slice(0, 2).map((example, index) => ({
     questionDe: index === 0
       ? `Change one detail but keep the grammar correct: “${example}”`
       : `Make a new sentence with the same grammar pattern: “${example}”`,
@@ -254,9 +256,10 @@ function stageList(slide, topicLabel) {
     {
       id: "sentence-build",
       type: "check",
-      kicker: "Build one sentence",
-      title: "Use the grammar correctly",
+      kicker: curatedApplicationChecks ? "Anwenden" : "Build one sentence",
+      title: curatedApplicationChecks ? "Two short lesson applications" : "Use the grammar correctly",
       items: sentenceBuildChecks,
+      lessonReviewMode: Boolean(curatedApplicationChecks),
     },
     {
       id: "workbook",
