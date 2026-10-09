@@ -1840,13 +1840,12 @@
   "A2 8.21 Ein Wochenende planen": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Mit dem Zug",
-        "Answer2": "B) Am Rhein spazieren",
-        "Answer3": "B) Restaurant und Konzert",
-        "Answer4": "A) Sie gehen in ein Museum.",
-        "Answer5": "C) Um 17:00 Uhr"
-      },
-      "teil4": {}
+        "Answer1": "A) Richtig",
+        "Answer2": "A) Richtig",
+        "Answer3": "B) Falsch",
+        "Answer4": "B) Falsch",
+        "Answer5": "A) Richtig"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/16SKkqpJNa7NyqrnH5xyiyD5VH6AmmyJWG4dc2SiIVO4/gviz/tq?tqx=out:html&sheet=Key",
     "sheet_url": "https://docs.google.com/spreadsheets/d/16SKkqpJNa7NyqrnH5xyiyD5VH6AmmyJWG4dc2SiIVO4/edit",
