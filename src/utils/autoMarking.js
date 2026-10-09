@@ -1024,7 +1024,41 @@ function buildWritingImprovementSummary({ score = 0, text = "" } = {}) {
     : "Improve task completion, sentence accuracy, structure, and level-appropriate vocabulary.";
 }
 
-function heuristicWritingMarker({ level = "", assignmentKey = "", partId = "unknown", text = "" } = {}) {
+function assessWritingRequirements(text = "", referenceEntry = {}) {
+  const prompt = [referenceEntry?.prompt, referenceEntry?.instructions, referenceEntry?.task, referenceEntry?.description, referenceEntry?.writingPrompt]
+    .filter((value) => typeof value === "string").join(" ");
+  const normalizedPrompt = normalizeForCompare(prompt);
+  const normalizedText = normalizeForCompare(text);
+  const requirements = [];
+  // Only enforce constraints which are explicitly present in the assigned task.
+  if (/antwort|reply|zuruckschreib|write back/.test(normalizedPrompt)) {
+    requirements.push({
+      label: "Ask for a reply",
+      fulfilled: /(?:freue mich auf (?:deine|ihre|eine) antwort|schreib(?:e)? (?:mir|bitte)|antwort(?:e|en|est)? (?:mir|bitte)|lass mich wissen|gib mir bescheid|melde dich)/.test(normalizedText),
+    });
+  }
+  if (/(?:treffpunkt|meeting point|where (?:to|we should) meet|wo (?:wir uns )?treffen)/.test(normalizedPrompt)) {
+    requirements.push({
+      label: "Give a meeting point",
+      fulfilled: /(?:treffen (?:wir uns|uns)|treffpunkt|vor dem|vor der|am bahnhof|am eingang|bei der|bei dem|im cafe|in der bibliothek)/.test(normalizedText),
+    });
+  }
+  if (/(?:welchen tag|konkreten tag|which day|specific day|wann treffen)/.test(normalizedPrompt)) {
+    requirements.push({
+      label: "Give a concrete day",
+      fulfilled: /(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|\b(?:am )?\d{1,2}\.\s*(?:\d{1,2}\.|januar|februar|marz|april|mai|juni|juli|august|september|oktober|november|dezember))/.test(normalizedText),
+    });
+  }
+  if (/(?:was (?:sie|du) (?:lieber|bevorzug)|what (?:your friend|they) prefer|ask (?:what|which) .*prefer|frage.*(?:lieber|mochte))/.test(normalizedPrompt)) {
+    requirements.push({
+      label: "Ask what the friend prefers",
+      fulfilled: /(?:was (?:mochtest|willst|magst) du|was (?:mochte|will) sie|was ist dir lieber|was bevorzugst du|welche[srn]? .*\?)/.test(normalizedText),
+    });
+  }
+  return requirements;
+}
+
+function heuristicWritingMarker({ level = "", assignmentKey = "", partId = "unknown", text = "", referenceEntry = {} } = {}) {
   const words = tokenize(text);
   const wordCount = words.length;
   const hasGreeting = /\b(lieber|liebe|hallo|guten tag|sehr geehrte|dear|hello|hi)\b/i.test(text);
@@ -1037,7 +1071,11 @@ function heuristicWritingMarker({ level = "", assignmentKey = "", partId = "unkn
   const connectorScore = allowsConnectorAssessment(level, assignmentKey) ? Math.min(1, connectors / (level === "B1" ? 4 : level === "A2" ? 3 : 1)) : null;
   const lexicalRange = Math.min(1, new Set(words).size / Math.max(8, wordCount * 0.7));
 
-  const score = Math.round((completion * 0.3 + structure * 0.2 + grammarSignal * 0.25 + (connectorScore ?? 0) * 0.1 + lexicalRange * 0.15) / (connectorScore === null ? 0.9 : 1) * 100);
+  const requirements = assessWritingRequirements(text, referenceEntry);
+  const completedRequirements = requirements.filter((item) => item.fulfilled).length;
+  const completionRatio = requirements.length ? completedRequirements / requirements.length : 1;
+  const baseScore = (completion * 0.3 + structure * 0.2 + grammarSignal * 0.25 + (connectorScore ?? 0) * 0.1 + lexicalRange * 0.15) / (connectorScore === null ? 0.9 : 1) * 100;
+  const score = Math.round(requirements.length ? baseScore * 0.6 + completionRatio * 40 : baseScore);
   const confidence = Math.max(0.45, Math.min(0.9, 0.45 + completion * 0.25 + (hasGreeting || hasClosing ? 0.1 : 0) + (wordCount > 15 ? 0.1 : 0)));
   const rubric = WRITING_RUBRICS[level] || WRITING_RUBRICS.A1;
 
@@ -1048,7 +1086,8 @@ function heuristicWritingMarker({ level = "", assignmentKey = "", partId = "unkn
     passed: score >= 60,
     level: level || "UNKNOWN",
     partId,
-    feedback: allowsConnectorAssessment(level, assignmentKey) ? buildWritingFeedback({ level, score, rubric, text }) : buildWritingFeedback({ level, score, rubric, text }).replace(/You used[^.]*connector[^.]*\./gi, "").replace(/ or add clearer connectors/gi, ""),
+    feedback: (allowsConnectorAssessment(level, assignmentKey) ? buildWritingFeedback({ level, score, rubric, text }) : buildWritingFeedback({ level, score, rubric, text }).replace(/You used[^.]*connector[^.]*\./gi, "").replace(/ or add clearer connectors/gi, "")) + (requirements.some((item) => !item.fulfilled) ? ` Missing task points: ${requirements.filter((item) => !item.fulfilled).map((item) => item.label).join("; ")}.` : ""),
+    taskCompletion: { completed: completedRequirements, total: requirements.length, missing: requirements.filter((item) => !item.fulfilled).map((item) => item.label) },
     corrections: writingIssues.map((issue) => ({
       partId,
       type: "writing",
@@ -1099,7 +1138,7 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
   const parts = rawParts.map((part) => {
     const partType = detectPartType({ level, partId: part.partId, text: part.text, referenceEntry });
     if (partType === "writing") {
-      const writingResult = aiWritingMarker({ level, assignmentKey, partId: part.partId, text: part.text, rubric: WRITING_RUBRICS[level] || WRITING_RUBRICS.A1 });
+      const writingResult = aiWritingMarker({ level, assignmentKey, partId: part.partId, text: part.text, referenceEntry, rubric: WRITING_RUBRICS[level] || WRITING_RUBRICS.A1 });
       return { ...part, partType, result: writingResult, confidence: Math.min(part.confidence || 0.5, writingResult.confidence || 0.5) };
     }
 
