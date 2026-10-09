@@ -22,6 +22,7 @@ test("stale in-progress progress never pretends the student is online", () => {
     {level:"A2",mockId:"a2-mock-02",studentEmail:"b@domain.com",status:"in_progress"}];
   assert.equal(filterMockAttempts(rows,"A2","in_progress").length,1);
   assert.equal(filterMockAttempts(rows,"A1","in_progress").length,0);
+  assert.equal(filterMockAttempts([{...rows[0],studentName:"Ama Mensah"}],"mensah").length,1);
 });
 
 test("navigation restores mock monitoring and preserves timed attempt resets", () => {
@@ -36,4 +37,11 @@ test("navigation restores mock monitoring and preserves timed attempt resets", (
   assert.match(page,/\/api\/internal\/mock-attempts/);
   assert.match(page,/getIdToken\(\)/);
   assert.doesNotMatch(page,/collectionGroup\(/, "student mock records must not be queried directly from the Admin browser");
+});
+
+test("mock dashboard shows name above email and preserves email fallback", () => {
+  const page = fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx", "utf8");
+  assert.match(page, /attempt\.studentName \|\| attempt\.studentEmail/);
+  assert.match(page, /attempt\.studentName && attempt\.studentEmail/);
+  assert.match(page, /Student name, email, ID/);
 });
