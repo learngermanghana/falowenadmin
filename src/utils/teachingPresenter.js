@@ -6,6 +6,7 @@ import { getA2WarmupFollowUp } from "../data/a2WarmupFollowUps.js";
 import { getA2VocabularyQuestion } from "../data/a2VocabularyQuestions.js";
 import { getB1WarmupFollowUp } from "../data/b1WarmupFollowUps.js";
 import { getB1VocabularyQuestion } from "../data/b1VocabularyQuestions.js";
+import { getA2B1KnowledgeAnswers } from "../data/a2B1KnowledgeAnswers.js";
 import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2PresenterKnowledge.js";
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
@@ -1108,8 +1109,19 @@ function buildKnowledgeReferenceAnswer(question = "", textDe = "") {
     .join(" ");
 }
 
-function buildKnowledgeAnswerItems(knowledge = {}) {
+function buildKnowledgeAnswerItems(knowledge = {}, assignmentId = "") {
+  const curated = getA2B1KnowledgeAnswers(assignmentId);
   const checks = Array.isArray(knowledge.checks) ? knowledge.checks : [];
+  if (Array.isArray(curated) && curated.length === checks.length
+      && curated.every((answer) => typeof answer === "string" && answer.trim())) {
+    return curated;
+  }
+  // Earlier heuristics remain for any non-curated level; never fabricate a
+  // confident answer if A2/B1 source content is unexpectedly missing.
+  if (/^(A2|B1)-/.test(String(assignmentId || "").toUpperCase())) {
+    return checks.map(() => "Keine geprüfte Musterantwort verfügbar. Bitte den Text gemeinsam prüfen.");
+  }
+
   const explicit = Array.isArray(knowledge.answers) ? knowledge.answers : [];
   return checks.map((question, index) => {
     const curated = String(explicit[index] || "").trim();
@@ -1554,7 +1566,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         title: knowledge.title,
         textDe: knowledge.textDe,
         items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
-        answerItems: buildKnowledgeAnswerItems(knowledge),
+        answerItems: buildKnowledgeAnswerItems(knowledge, slide.assignmentId),
         instruction: "Lest den kurzen Text 1 Minute. Beantwortet danach die Fragen mündlich.",
         suggestedMinutes: 5,
       }] : []),
@@ -1639,7 +1651,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         title: knowledge.title,
         textDe: knowledge.textDe,
         items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
-        answerItems: buildKnowledgeAnswerItems(knowledge),
+        answerItems: buildKnowledgeAnswerItems(knowledge, slide.assignmentId),
         instruction: "Lies für die Hauptidee. Beantworte danach zwei Textfragen und eine Denkfrage.",
         suggestedMinutes: 6,
       }] : []),
