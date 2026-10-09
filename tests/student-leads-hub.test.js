@@ -37,11 +37,11 @@ test("lead entry points use the dedicated Leads route", () => {
   assert.doesNotMatch(notification, /students\?tab=leads/);
 });
 
-test("Student Activity stays retired while Timed Attempts is direct-link only", () => {
+test("Student Activity stays retired and mock timing monitor is in navigation", () => {
   const app = read("src/App.jsx");
   const timedAttempts = read("src/pages/TimedAssignmentAttemptsPage.jsx");
 
-  assert.doesNotMatch(app, />Timed Attempts<\/Link>/);
+  assert.match(app, /to="\/timed-attempts"[\s\S]{0,180}>Mock Monitoring & Timers<\/Link>/);
   assert.match(app, /TimedAssignmentAttemptsPage = lazy/);
   assert.match(app, /path="\/timed-attempts"[\s\S]{0,160}<TimedAssignmentAttemptsPage/);
   assert.match(app, /path="\/student-activity"[\s\S]{0,160}Navigate to="\/students"/);
