@@ -108,3 +108,24 @@ test("objective corrections display single letters without quotation marks", asy
   assert.match(exactObjectiveFeedback(objective), /your answer A; correct answer B/);
   assert.doesNotMatch(exactObjectiveFeedback(objective), /["“”]/);
 });
+
+test("internal main objective labels never appear or duplicate the verified objective comment", () => {
+  const flat = {
+    correctCount: 30, totalCount: 30,
+    details: Object.fromEntries(Array.from({ length: 30 }, (_, i) => [
+      String(i + 1), { partId: "main", student: "A", expected: "A", correct: true },
+    ])),
+  };
+  const mixed = reconcileMarkingQuality({
+    feedback: "Your greeting is clear. main: 30/30 correct. All objective answers are correct.",
+    writingScore: 85,
+    writingScorePercent: 85,
+    finalScore: 94,
+  }, flat, { assignmentId: "A2-1.1", text: "Liebe Mia, danke für deine Nachricht." }, { writingExpected: true });
+  assert.match(mixed.feedback, /Your greeting is clear/);
+  assert.match(mixed.feedback, /Objective: 30\/30 correct\. All objective answers are correct\./);
+  assert.doesNotMatch(mixed.feedback, /\bmain\s*:/i);
+  assert.equal((mixed.feedback.match(/All objective answers are correct/g) || []).length, 1);
+  const objectiveOnly = reconcileMarkingQuality({ feedback: "main: 30/30 correct." }, flat, {}, { writingExpected: false });
+  assert.equal(objectiveOnly.feedback, "Objective: 30/30 correct. All objective answers are correct.");
+});

@@ -573,23 +573,44 @@ function buildLessonSummaryItems(slide = {}) {
   }
 
   const support = buildTeacherSlideSupport(slide);
-  const topic = cleanTopic(slide);
   const grammar = (Array.isArray(support.grammarFocusEn) ? support.grammarFocusEn : [])
     .map((item) => String(item || "").trim())
     .find(Boolean);
   const speakingQuestions = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [];
+  const isA2B1 = level === "A2" || level === "B1";
   const items = [
     { label: "Main goal", detail: lessonSummaryObjective(slide) },
   ];
 
-  if (grammar) {
-    items.push({ label: "Language", detail: `You can use today’s target grammar accurately: ${grammar}` });
-  }
-  if (speakingQuestions.length) {
-    items.push({ label: "Speaking", detail: `You can talk about “${topic}”, answer lesson questions and add useful reasons or details.` });
+  if (isA2B1) {
+    // Turn the closing slide into an actual check of this day's taught language,
+    // not another generic "You can talk about..." summary. Keep one page.
+    const keyPhrases = [...new Set((slide.keyPhrasesDe || [])
+      .map((phrase) => String(phrase || "").trim())
+      .filter(Boolean))];
+    if (keyPhrases.length) {
+      items.push({
+        label: "Redemittel",
+        detail: `Wende zwei Formulierungen aus der heutigen Stunde passend an: „${keyPhrases[0]}“${keyPhrases[1] ? ` und „${keyPhrases[1]}“` : ""}.`,
+      });
+    } else if (grammar) {
+      items.push({ label: "Grammatik", detail: `Überprüfe die Zielstruktur anhand des heutigen Beispiels: ${grammar}` });
+    }
+    const speaking = speakingQuestions[speakingQuestions.length - 1];
+    if (speaking) {
+      items.push({
+        label: "Sprechprobe",
+        detail: `Antworte ohne Hilfestellung auf die konkrete Abschlussfrage: „${String(speaking).trim()}“`,
+      });
+    }
+  } else {
+    if (grammar) items.push({ label: "Language", detail: `You can use today’s target grammar accurately: ${grammar}` });
+    if (speakingQuestions.length) {
+      items.push({ label: "Speaking", detail: `You can talk about “${cleanTopic(slide)}”, answer lesson questions and add useful reasons or details.` });
+    }
   }
   if (slide.wrapUpTaskDe) {
-    items.push({ label: "Self-check", detail: String(slide.wrapUpTaskDe).trim() });
+    items.push({ label: isA2B1 ? "Selbstcheck" : "Self-check", detail: String(slide.wrapUpTaskDe).trim() });
   }
 
   return items.slice(0, 4);
@@ -1155,7 +1176,13 @@ function buildA2B1GrammarCheckStage(slide = {}, support = {}, level = "") {
     const matchingModel = questionModels.find((item) => (
       String(item?.questionDe || "").trim() === String(prompt || "").trim()
     ));
-    const modelAnswer = String(matchingModel?.modelAnswerDe || models[questionIndex] || models[index] || models[0] || "").trim();
+    // Lesson authors provide studentQuestionsDe and speakingModels in the same
+    // order, but occasionally paraphrase a question in speakingModels. Prefer
+    // that indexed answer over an unrelated sample grammar sentence.
+    const indexedModel = questionModels.length === questions.length
+      ? questionModels[questionIndex]?.modelAnswerDe
+      : "";
+    const modelAnswer = String(matchingModel?.modelAnswerDe || indexedModel || models[questionIndex] || models[index] || models[0] || "").trim();
     const teacherFocus = String(rules[questionIndex] || rules[index] || rules[0] || "").trim();
 
     return {
