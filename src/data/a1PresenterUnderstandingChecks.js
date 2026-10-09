@@ -54,7 +54,7 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
     check("Wie spricht man den Buchstaben I auf Deutsch aus?", "I."),
     check("Wie spricht man den Buchstaben A auf Deutsch aus?", "A."),
     check("Buchstabiere „Wasser“.", "W-A-S-S-E-R."),
-    check("Welcher Buchstabe kommt nach J?", "K."),
+    check("Wie buchstabierst du deinen Nachnamen?", "Accept any clearly spelled surname with its German letter names.", "The learner's surname is individual: listen for correct letter order and intelligible German letter names."),
     check("Exit-Check: Nenne die 26 Buchstaben als Standardalphabet und die vier zusätzlichen Zeichen Ä, Ö, Ü und ß.", "26 standard letters plus the additional characters Ä, Ö, Ü and ß."),
   ],
   "A1-1.1": [
