@@ -498,7 +498,7 @@ export const a2WorkbookAlignedSlidesDays6To10 = [
         modelAnswerDe: "Ich möchte die Altstadt von Köln besser kennenlernen, weil ich dort noch nicht viel gesehen habe."
       },
       {
-        questionDe: "Welche zwei Orte oder Aktivitäten würdest du wählen?",
+        questionDe: "Welche zwei Orte oder Aktivitäten würdest du für einen entspannten Tag wählen?",
         modelAnswerDe: "Zuerst würde ich über den Markt gehen. Danach könnten wir am Fluss spazieren und ein paar Fotos machen."
       },
       {
