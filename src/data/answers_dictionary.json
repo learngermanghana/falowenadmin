@@ -1625,21 +1625,18 @@
   "A2 6.17 In die Apotheke gehen": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Eine Stunde",
-        "Answer2": "B) 20 Euro",
-        "Answer3": "C) Um 20 Uhr",
-        "Answer4": "A) Richtig",
-        "Answer5": "B) Falsch",
-        "Answer6": "A) Richtig",
-        "Answer7": "B) Falsch",
-        "Answer8": "A) Richtig"
+        "Answer1": "B) Auf Sonnenschutzmittel und Hautcremes.",
+        "Answer2": "B) können Sie von Montag bis Freitag am Vormittag kommen.",
+        "Answer3": "B) Kunden, die wegen Krankheit nicht vorbeikommen können.",
+        "Answer4": "A) Wenn man vor 14:00 Uhr bestellt.",
+        "Answer5": "A) Auf einem Aushang neben der Tür."
       },
       "teil4": {
-        "Answer1": "B) Wegen Kopfschmerzen",
-        "Answer2": "C) Ibuprofen",
-        "Answer3": "B) Trockene Haut",
-        "Answer4": "B) Sie war erleichtert",
-        "Answer5": "B) Proben von Produkten"
+        "Answer1": "B) Halsschmerzen und eine laufende Nase.",
+        "Answer2": "A) Alle drei Stunden.",
+        "Answer3": "C) Nein, er braucht kein Rezept.",
+        "Answer4": "A) Ein Pflaster mit bunten Tieren.",
+        "Answer5": "B) Mit Karte."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1X-H0rjHjyJeTbm_bVNh_Bp8VMT-ZwZBQdhadUS1Coqs/gviz/tq?tqx=out:html&sheet=Key",
