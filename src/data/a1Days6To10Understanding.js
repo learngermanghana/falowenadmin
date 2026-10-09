@@ -95,7 +95,7 @@ export const A1_DAYS6_TO10_QUICK_CHECKS = Object.freeze({
     check("Welche Sprache spricht man in Deutschland?", "Deutsch.", "Language names are capitalised in German."),
   ],
   "A1-5": [
-    check("Welchen Artikel hat „Tisch“ im Nominativ?", "der Tisch.", "Tisch is masculine."),
+    check("Welchen Artikel hat „Tisch“ im Nominativ?", "der Tisch.", "Tisch is a masculine noun, so the nominative definite article is der."),
     check("Was bedeutet „direktes Objekt“?", "The person or thing receiving the action.", "Use Wen? or Was? after the verb to find the direct object."),
   ],
   "A1-6": [
