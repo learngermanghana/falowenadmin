@@ -14,6 +14,8 @@ on:
       - "src/data/a1Days6To10Understanding.js"
       - "src/data/a1Days11To15Understanding.js"
       - "src/data/a1Days16To20Understanding.js"
+      - "src/data/a1Days21To24Understanding.js"
+      - "src/data/a1Days21To24Slides.js"
       - "src/data/a1Days16To20Slides.js"
       - "src/data/a1Days11To15Slides.js"
       - "src/data/a1GenericLessonUpgrades.js"
@@ -35,6 +37,8 @@ on:
       - "tests/a1-days6-to10-understanding.test.js"
       - "tests/a1-days11-to15-understanding.test.js"
       - "tests/a1-days16-to20-understanding.test.js"
+      - "tests/a1-days21-to24-understanding.test.js"
+      - "scripts/auditA1FullCourseSlides.mjs"
       - "tests/a1-presenter-class-understanding.test.js"
       - "scripts/auditA1Days16To20Slides.mjs"
       - "scripts/auditA1Days11To15Slides.mjs"
@@ -56,6 +60,8 @@ on:
       - "src/data/a1Days6To10Understanding.js"
       - "src/data/a1Days11To15Understanding.js"
       - "src/data/a1Days16To20Understanding.js"
+      - "src/data/a1Days21To24Understanding.js"
+      - "src/data/a1Days21To24Slides.js"
       - "src/data/a1Days16To20Slides.js"
       - "src/data/a1Days11To15Slides.js"
       - "src/data/a1GenericLessonUpgrades.js"
@@ -77,6 +83,8 @@ on:
       - "tests/a1-days6-to10-understanding.test.js"
       - "tests/a1-days11-to15-understanding.test.js"
       - "tests/a1-days16-to20-understanding.test.js"
+      - "tests/a1-days21-to24-understanding.test.js"
+      - "scripts/auditA1FullCourseSlides.mjs"
       - "tests/a1-presenter-class-understanding.test.js"
       - "scripts/auditA1Days16To20Slides.mjs"
       - "scripts/auditA1Days11To15Slides.mjs"
@@ -101,7 +109,7 @@ jobs:
       - name: Apply normal build-time source synchronisation
         run: npm run sync:build
       - name: Test A1 scaffolds and existing grammar-diagnostic contract
-        run: node --test tests/a1-check-coaching.test.js tests/a1-learning-path.test.js tests/a1-slide-review.test.js tests/a1-days1-to5-understanding.test.js tests/a1-grammar-diagnostic-presenter.test.js tests/a1-presenter-class-understanding.test.js tests/a1-presenter-topic-integrity.test.js tests/a1-slide-quality-audit.test.js tests/a1-lesson9-topic-clarity.test.js tests/a1-workbook-aligned-slides-days1-5.test.js tests/a1-days6-to10-understanding.test.js tests/a1-workbook-aligned-slides-days6-10.test.js tests/a1-days11-to15-understanding.test.js tests/a1-days16-to20-understanding.test.js
+        run: node --test tests/a1-check-coaching.test.js tests/a1-learning-path.test.js tests/a1-slide-review.test.js tests/a1-days1-to5-understanding.test.js tests/a1-grammar-diagnostic-presenter.test.js tests/a1-presenter-class-understanding.test.js tests/a1-presenter-topic-integrity.test.js tests/a1-slide-quality-audit.test.js tests/a1-lesson9-topic-clarity.test.js tests/a1-workbook-aligned-slides-days1-5.test.js tests/a1-days6-to10-understanding.test.js tests/a1-workbook-aligned-slides-days6-10.test.js tests/a1-days11-to15-understanding.test.js tests/a1-days16-to20-understanding.test.js tests/a1-days21-to24-understanding.test.js
       - name: Audit each A1 lesson's question-specific guidance
         run: node scripts/auditA1CheckCoaching.mjs
       - name: Audit every A1 Day 1–5 lesson, answer and assignment route
@@ -112,5 +120,7 @@ jobs:
         run: node scripts/auditA1Days11To15Slides.mjs
       - name: Audit every A1 Day 16–20 lesson, answer and Course Book route
         run: node scripts/auditA1Days16To20Slides.mjs
+      - name: Audit the full 24-day A1 slide course
+        run: node scripts/auditA1FullCourseSlides.mjs
       - name: Compile Admin frontend
         run: npx vite build
