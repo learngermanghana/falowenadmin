@@ -9,6 +9,7 @@ import { getA1Days1To5QuickChecks, getA1Days1To5ApplicationChecks } from "../dat
 import { getA1Days6To10QuickChecks, getA1Days6To10ApplicationChecks } from "../data/a1Days6To10Understanding.js";
 import { getA1Days11To15QuickChecks, getA1Days11To15ApplicationChecks } from "../data/a1Days11To15Understanding.js";
 import { getA1Days16To20QuickChecks, getA1Days16To20ApplicationChecks } from "../data/a1Days16To20Understanding.js";
+import { getA1Days21To24QuickChecks, getA1Days21To24ApplicationChecks } from "../data/a1Days21To24Understanding.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
@@ -206,6 +207,7 @@ function stageList(slide, topicLabel) {
     || getA1Days6To10QuickChecks(slide.assignmentId)
     || getA1Days11To15QuickChecks(slide.assignmentId)
     || getA1Days16To20QuickChecks(slide.assignmentId)
+    || getA1Days21To24QuickChecks(slide.assignmentId)
     || grammarChecks.slice(0, 2);
   const correctionChecks = mainChecks
     .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
@@ -214,7 +216,8 @@ function stageList(slide, topicLabel) {
   const curatedApplicationChecks = getA1Days1To5ApplicationChecks(slide.assignmentId)
     || getA1Days6To10ApplicationChecks(slide.assignmentId)
     || getA1Days11To15ApplicationChecks(slide.assignmentId)
-    || getA1Days16To20ApplicationChecks(slide.assignmentId);
+    || getA1Days16To20ApplicationChecks(slide.assignmentId)
+    || getA1Days21To24ApplicationChecks(slide.assignmentId);
   const sentenceBuildChecks = curatedApplicationChecks || modelExamples.slice(0, 2).map((example, index) => ({
     questionDe: index === 0
       ? `Change one detail but keep the grammar correct: “${example}”`
