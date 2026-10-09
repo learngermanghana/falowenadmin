@@ -37,7 +37,7 @@ test("lead entry points use the dedicated Leads route", () => {
   assert.doesNotMatch(notification, /students\?tab=leads/);
 });
 
-test("Student Activity stays retired while Timed Attempts is direct-link only", () => {
+test("Student Activity stays retired and mock timing monitor is in navigation", () => {
   const app = read("src/App.jsx");
   const timedAttempts = read("src/pages/TimedAssignmentAttemptsPage.jsx");
 
