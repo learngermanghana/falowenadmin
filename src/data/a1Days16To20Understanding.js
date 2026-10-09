@@ -80,7 +80,7 @@ export const A1_DAYS16_TO20_UNDERSTANDING = Object.freeze({
     q("Was gehört zum Geburtstagsbrief als erster Inhaltspunkt?", "Gratuliere zum Geburtstag: Alles Gute zum Geburtstag!", "Greeting the friend is form; the birthday wish is a content point."),
     q("Welche Frage fragt nach einer Geburtstagsparty?", "Gibt es eine Party?", "This fulfils the birthday task's party question."),
     q("Wie fragst du, ob deine Familie mitkommen darf?", "Kann meine Familie mitkommen?", "This covers the birthday task's third content point."),
-    q("Wie fragst du eine Sprachschule nach dem Kursbeginn?", "Wann beginnt der Kurs?", "A W-question about starting time uses verb-second order."),
+    q("Ordne die Wörter: „wann / beginnt / der Kurs“.", "Wann beginnt der Kurs?", "A W-question about starting time uses verb-second order."),
     q("Wie fragst du nach der Möglichkeit, online zu bezahlen?", "Kann ich online bezahlen?", "Yes/no question starts with the conjugated modal verb."),
     q("Exit-Check: Nenne die drei Fragen/Inhaltspunkte zur Sprachschule und die erforderliche Briefform.", "Wann beginnt der Kurs? Wie viel kostet der Kurs? Kann ich online bezahlen? Dazu Anrede, Grußformel und Name.", "This matches the three published formal task bullets and separates them from letter structure."),
   ],
