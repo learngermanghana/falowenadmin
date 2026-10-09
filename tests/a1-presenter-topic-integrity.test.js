@@ -25,7 +25,7 @@ const TOPIC_SIGNALS = {
   "A1-1.1": ["verbendung", "pronomen", "lernen"],
   "A1-1.1-PRACTICE": ["w-frag", "wer", "woher"],
   "A1-1.2": ["verb", "-st", "-t"],
-  "A1-2": ["telefon", "adresse", "nummer"],
+  "A1-2": ["sechzehn", "fünfundzwanzig", "zweitausendvierzig"],
   "A1-1.3": ["artikel", "der", "die", "das"],
   "A1-2.3": ["famil", "gern", "hobby"],
   "A1-3": ["kostet", "kosten", "euro"],
