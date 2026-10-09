@@ -48,7 +48,9 @@ test("mock dashboard shows name above email and preserves email fallback", () =>
 
 test("A1 integrity flags are visible to Admin as unverified activity, not cheating verdicts", () => {
   const page = fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx", "utf8");
-  assert.match(page, /data-testid="a1-mock-integrity-review"/);
+  assert.match(page, /data-testid="mock-integrity-review"/);
+  assert.match(page, /"A1", "A2", "B1", "B2", "C1"/);
+  assert.match(page, /attempt.integrityOnly/);
   assert.match(page, /attempt\.integrity\?\.counts/);
   assert.match(page, /not proof of ChatGPT use or misconduct/);
   assert.match(page, /Recent activity log/);
