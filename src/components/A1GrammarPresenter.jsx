@@ -4,6 +4,7 @@ import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
 import { buildA1CheckCoaching } from "../data/a1CheckCoaching.js";
 import { getA1LearningPath } from "../data/a1LearningPath.js";
+import { buildA1SlideReviewChecks } from "../data/a1SlideReview.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
@@ -266,6 +267,10 @@ function stageList(slide, topicLabel) {
       activityKind: learningPath?.kind || "review",
       activityInstruction: learningPath?.instruction || "",
       reviewLabel: learningPath?.reviewLabel || "",
+      reviewChecks: buildA1SlideReviewChecks(mainChecks, 2),
+      reviewTitle: learningPath?.kind === "tutor-marked"
+        ? "Vor der Abgabe · prüfe diese zwei Punkte"
+        : "Verständnis-Check · prüfe diese zwei Punkte",
       actionLabel: learningPath?.actionLabel || "Open Course Book activity",
       grammarUrl: slide.workbookConnection?.grammarUrl || "",
       workbookUrl: slide.workbookConnection?.workbookUrl || "",
@@ -807,6 +812,21 @@ export default function A1GrammarPresenter({
                   </article>
                 ))}
               </div>
+              {stage.reviewChecks?.length ? (
+                <section className="presenter-a1-review-checks" aria-label="Lesson-specific understanding review">
+                  <h2>{stage.reviewTitle}</h2>
+                  <p>Versuche zuerst selbst zu antworten. Die Lehrkraft kann die Lösung danach öffnen.</p>
+                  <div className="presenter-a1-review-checks-grid">
+                    {stage.reviewChecks.map((item) => (
+                      <details key={item.questionDe} className="presenter-a1-review-check">
+                        <summary>{item.questionDe}</summary>
+                        <p><b>Richtige Antwort:</b> {item.answerDe}</p>
+                        {item.noteEn ? <small><b>Erklärung:</b> {item.noteEn}</small> : null}
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
               <div className="presenter-workbook-actions">
                 {stage.grammarUrl ? <a href={lessonUrl(stage.grammarUrl)} target="_blank" rel="noreferrer">Open grammar notes</a> : null}
                 {stage.workbookUrl ? <a href={lessonUrl(stage.workbookUrl)} target="_blank" rel="noreferrer">{stage.actionLabel || "Open workbook"}</a> : null}
