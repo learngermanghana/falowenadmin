@@ -1,3 +1,5 @@
+import { getA1Days1To5UnderstandingChecks } from "./a1Days1To5Understanding.js";
+
 function check(questionDe, answerDe, noteEn = "") {
   return { questionDe, answerDe, noteEn };
 }
@@ -308,6 +310,10 @@ const A1_PRESENTER_UNDERSTANDING_OVERRIDES = {
 
 export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks = [], context = {}) {
   const key = String(assignmentId || "").trim().toUpperCase();
+  // Curated learner-facing checks take priority over older generic and
+  // build-time-injected contact-dialogue prompts for these seven lesson blocks.
+  const verifiedDay1To5 = getA1Days1To5UnderstandingChecks(key);
+  if (verifiedDay1To5) return verifiedDay1To5;
   const override = A1_PRESENTER_UNDERSTANDING_OVERRIDES[key];
   if (Array.isArray(override) && override.length) return override;
 
