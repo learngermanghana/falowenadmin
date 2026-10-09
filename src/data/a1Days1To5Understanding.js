@@ -111,6 +111,80 @@ export const A1_DAYS1_TO5_UNDERSTANDING = Object.freeze({
   ],
 });
 
+// Two separate, unscored warm-up questions per block. They are not copied from
+// the 10 independent class-check prompts (no advance answer reveal).
+export const A1_DAYS1_TO5_QUICK_CHECKS = Object.freeze({
+  "A1-0.1": [
+    check("Was sagst du, wenn deine Freundin morgens kommt?", "Guten Morgen!", "Use the morning greeting without requiring a long dialogue."),
+    check("Ist „Tschüss“ ein formelles Wort?", "Nein, „Tschüss“ ist informell.", "Formal farewells normally use Auf Wiedersehen."),
+  ],
+  "A1-0.2": [
+    check("Wie heißt das Zeichen Ä?", "A-Umlaut.", "This is one of the three umlaut letters."),
+    check("Welches Zeichen nennt man Eszett?", "ß.", "Eszett is a special character, not another name for B."),
+  ],
+  "A1-1.1": [
+    check("Ergänze das Verb: „ich ___ Deutsch“ (lernen).", "ich lerne Deutsch.", "ich takes -e."),
+    check("Ergänze: „ihr ___ Deutsch“ (lernen).", "ihr lernt Deutsch.", "ihr takes -t."),
+  ],
+  "A1-1.1-PRACTICE": [
+    check("Ist „die Frau“ oder „das Frau“ richtig?", "die Frau.", "Frau is a feminine singular noun."),
+    check("Ergänze den Satz: „Das Haus ___ groß.“", "Das Haus ist groß.", "Use ist + adjective without a further ending."),
+  ],
+  "A1-1.2": [
+    check("Ist „wir lernt“ oder „wir lernen“ richtig?", "wir lernen.", "wir requires -en."),
+    check("Welche Form passt zu er: „arbeitet“ oder „arbeitst“?", "er arbeitet.", "er takes -et here; du arbeitest takes -est."),
+  ],
+  "A1-2": [
+    check("Wie schreibt man 21?", "einundzwanzig.", "Put ein before und + zwanzig."),
+    check("Wie schreibt man 30?", "dreißig.", "This is an irregular tens word; do not write dreizig."),
+  ],
+  "A1-1.3": [
+    check("Ist „die Lampe“ oder „das Lampe“ richtig?", "die Lampe.", "At Day 5 review the definite article with the noun."),
+    check("Wie heißt das Fragewort für einen Ort?", "Wo.", "Wo asks for a location, not origin."),
+  ],
+});
+
+// Controlled application tasks use the lesson's grammar. They are not
+// mini-dialogues, speeches or automatic proficiency assessments.
+export const A1_DAYS1_TO5_APPLICATION_CHECKS = Object.freeze({
+  "A1-0.1": [
+    check("Wähle die höfliche Frage: „Wie geht es dir?“ oder „Wie geht es Ihnen?“", "Wie geht es Ihnen?", "A formal conversation requires Ihnen."),
+    check("Korrigiere: „Gute Nacht!“, wenn du jemanden am Abend begrüßt.", "Guten Abend!", "Gute Nacht is for ending the day."),
+  ],
+  "A1-0.2": [
+    check("Buchstabiere „Haus“.", "H-A-U-S.", "Four letters in the correct order are sufficient."),
+    check("Welche Zeichen sind die Umlautbuchstaben?", "Ä, Ö und Ü.", "ß is an additional character but not an umlaut."),
+  ],
+  "A1-1.1": [
+    check("Korrigiere: „ich lernen Deutsch“.", "Ich lerne Deutsch.", "The ich verb ending is -e."),
+    check("Korrigiere: „Sie lernt Deutsch“, wenn du höflich sprichst.", "Sie lernen Deutsch.", "Formal Sie takes -en."),
+  ],
+  "A1-1.1-PRACTICE": [
+    check("Ordne die Wörter: „wohnst / wo / du“.", "Wo wohnst du?", "W-question order: W-word, conjugated verb, subject."),
+    check("Korrigiere: „Der Ball ist kleiner“, wenn du nur sagen willst, dass der Ball klein ist.", "Der Ball ist klein.", "The lesson uses a basic ist + adjective description, not a comparison."),
+  ],
+  "A1-1.2": [
+    check("Korrigiere: „du arbeitst“.", "du arbeitest.", "arbeiten inserts an e before the ending -st."),
+    check("Korrigiere: „du heißst“.", "du heißt.", "heißen uses du heißt."),
+  ],
+  "A1-2": [
+    check("Wie schreibt man 67 als Wort?", "siebenundsechzig.", "The units sieben come before the tens sechzig."),
+    check("Wie schreibt man 315 als Wort?", "dreihundertfünfzehn.", "Combine the hundred and remaining fifteen."),
+  ],
+  "A1-1.3": [
+    check("Ergänze: „Das Auto ___ schnell.“", "Das Auto ist schnell.", "The adjective follows ist without a special ending."),
+    check("Ordne die Wörter: „du / wie / heißt“.", "Wie heißt du?", "Use Wie + conjugated verb + subject."),
+  ],
+});
+
+export function getA1Days1To5QuickChecks(assignmentId = "") {
+  return A1_DAYS1_TO5_QUICK_CHECKS[String(assignmentId || "").trim().toUpperCase()] || null;
+}
+
+export function getA1Days1To5ApplicationChecks(assignmentId = "") {
+  return A1_DAYS1_TO5_APPLICATION_CHECKS[String(assignmentId || "").trim().toUpperCase()] || null;
+}
+
 export const A1_DAYS1_TO5_ASSIGNMENTS = Object.freeze(Object.keys(A1_DAYS1_TO5_UNDERSTANDING));
 
 export function getA1Days1To5UnderstandingChecks(assignmentId = "") {
