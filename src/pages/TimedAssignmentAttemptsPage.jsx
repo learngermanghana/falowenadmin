@@ -194,11 +194,12 @@ export default function TimedAssignmentAttemptsPage() {
               {attempt.overallScore !== null && attempt.overallScore !== undefined && <div><b>Verified score:</b> {attempt.overallScore}/100</div>}
             </div>
             <div>
+              {attempt.integrityOnly ? <p style={{ color: "#92400e", fontSize: 13 }}>Only a browser-reported exam activity record is available. Section completion and score are not independently verified{attempt.level === "C1" ? "; this is a Lesen sample, not a full C1 mock" : ""}.</p> : null}
               {attempt.progressSource === "browser_reported" && <p style={{ color: "#92400e", fontSize: 12, margin: "0 0 5px" }}>Progress reported by the learner browser; not a verified exam score.</p>}
 
-              {attempt.level === "A1" ? <div data-testid="a1-mock-integrity-review"
+              {["A1", "A2", "B1", "B2", "C1"].includes(attempt.level) ? <div data-testid="mock-integrity-review"
                 style={{ border: "1px solid #d4c2a3", borderRadius: 9, background: "#fff9ed", padding: 12, marginBottom: 10, color: "#563b20", fontSize: 13 }}>
-                <strong>Exam activity review: {attempt.integrity?.total ?? "Not yet recorded"} browser-reported flags</strong>
+                <strong>{attempt.level} exam activity review: {attempt.integrity?.total ?? "Not yet recorded"} browser-reported flags</strong>
                 <p style={{ margin: "5px 0" }}>These events are not proof of ChatGPT use or misconduct; review with the student before taking action.</p>
                 {attempt.integrity?.total > 0 ? <>
                   <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
@@ -219,6 +220,7 @@ export default function TimedAssignmentAttemptsPage() {
                 </> : null}
               </div> : null}
 
+              {!attempt.integrityOnly ? <>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
                 <b>Mock progress</b><span>{progress.count} of {progress.total} sections completed</span>
               </div>
@@ -229,6 +231,7 @@ export default function TimedAssignmentAttemptsPage() {
                     {progress.completed.includes(section) ? "✓ " : ""}{section === "hoeren" ? "Hören" : section === "schreiben" ? "Schreiben" : section === "sprechen" ? "Sprechen" : "Lesen"}
                   </span>)}
               </div>
+              </> : null}
             </div>
           </article>;
         })}
