@@ -144,6 +144,7 @@ function TopBar() {
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
+                <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock & Timers</Link>
               </>
             ) : (
               <>
