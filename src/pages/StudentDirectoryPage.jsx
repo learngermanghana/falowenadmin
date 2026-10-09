@@ -902,6 +902,7 @@ export default function StudentDirectoryPage() {
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
                             {renderEditableFields(tab.fields)}
                             {tab.id === "payments" && (
+                              <>
                         <StudentPaymentTools
                           student={selectedStudent}
                           draft={getDraft(selectedStudent)}
@@ -915,6 +916,7 @@ export default function StudentDirectoryPage() {
                           onStudentUpdated={handleSupportStudentUpdated}
                           pushToast={pushToast}
                         />
+                              </>
                             )}
                             {tab.id === "class" && <StudentClassTransferPanel
                               key={selectedStudent.id} student={selectedStudent} classes={classes}
