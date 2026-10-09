@@ -1,0 +1,49 @@
+name: A1 lesson-specific coaching
+
+on:
+  pull_request:
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/TeachingSlidePresenter.css"
+      - "src/data/a1CheckCoaching.js"
+      - "src/data/a1PresenterUnderstandingChecks.js"
+      - "src/data/a1GrammarChecks.js"
+      - "src/data/a1TopicTeacherSupport.js"
+      - "src/data/teachingSlides.js"
+      - "scripts/auditA1CheckCoaching.mjs"
+      - "tests/a1-check-coaching.test.js"
+      - ".github/workflows/a1-check-coaching-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/components/TeachingSlidePresenter.css"
+      - "src/data/a1CheckCoaching.js"
+      - "src/data/a1PresenterUnderstandingChecks.js"
+      - "src/data/a1GrammarChecks.js"
+      - "src/data/a1TopicTeacherSupport.js"
+      - "src/data/teachingSlides.js"
+      - "scripts/auditA1CheckCoaching.mjs"
+      - "tests/a1-check-coaching.test.js"
+      - ".github/workflows/a1-check-coaching-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  a1-lesson-coaching:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply normal build-time source synchronisation
+        run: npm run sync:build
+      - name: Test A1 scaffolds and existing grammar-diagnostic contract
+        run: node --test tests/a1-check-coaching.test.js tests/a1-grammar-diagnostic-presenter.test.js tests/a1-presenter-class-understanding.test.js
+      - name: Audit each A1 lesson's question-specific guidance
+        run: node scripts/auditA1CheckCoaching.mjs
+      - name: Compile Admin frontend
+        run: npx vite build
