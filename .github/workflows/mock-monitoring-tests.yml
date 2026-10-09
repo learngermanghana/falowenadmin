@@ -1,0 +1,30 @@
+name: Mock monitoring regressions
+
+on:
+  pull_request:
+    paths:
+      - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/utils/mockAttemptMonitoring.js"
+      - "src/App.jsx"
+      - "tests/mock-timed-monitoring.test.js"
+      - "tests/student-leads-hub.test.js"
+      - ".github/workflows/mock-monitoring-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/utils/mockAttemptMonitoring.js"
+      - "src/App.jsx"
+      - "tests/mock-timed-monitoring.test.js"
+      - "tests/student-leads-hub.test.js"
+      - ".github/workflows/mock-monitoring-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js
