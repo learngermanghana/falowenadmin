@@ -77,6 +77,47 @@ function relevantLanguageNote(notes = [], question = "", answer = "") {
   return entries[0]?.note || "";
 }
 
+function modelSentences(answer = "") {
+  // Only use sentences from this question's verified speaking model.
+  return String(answer || "").trim()
+    .split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ„])/u)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function speakingTaskChecks(question = "") {
+  const prompt = String(question || "").trim();
+  if (!prompt) return [];
+  const checks = [];
+
+  if (/\b(?:zwei|2|drei|3|vier|4)\b/i.test(prompt)) {
+    const count = prompt.match(/\b(?:zwei|2|drei|3|vier|4)\b/i)?.[0] || "mehrere";
+    checks.push("Sind die gefragten " + count.toLowerCase() + " Punkte wirklich genannt?");
+  }
+  if (/\b(?:vergleich|unterschied|vor- und nachteile|vorteile und nachteile|einerseits|andererseits)\b/i.test(prompt)) {
+    checks.push("Werden beide Seiten mit einem konkreten Unterschied oder Beispiel verglichen?");
+  }
+  if (/\b(?:warum|wieso|weshalb|begründe|begründ|grund)\b/i.test(prompt)) {
+    checks.push("Gibt es eine eigene, verständliche Begründung statt nur einer Behauptung?");
+  }
+  if (/\b(?:wann|zeitpunkt|uhrzeit)\b/i.test(prompt)) {
+    checks.push("Wird ein nachvollziehbarer Zeitpunkt genannt?");
+  }
+  if (/\b(?:wo|wohin|wohnort|welcher ort|welche stadt)\b/i.test(prompt)) {
+    checks.push("Wird der gefragte Ort oder die Richtung konkret genannt?");
+  }
+  if (/\b(?:beschreib|schilder|erzähle|erzähl)\b/i.test(prompt)) {
+    checks.push("Enthält die Schilderung konkrete Details statt nur einzelner Stichwörter?");
+  }
+  if (/\b(?:vorschlag|empfehl|einlad|würdest du .*(?:sagen|fragen|bitten))\b/i.test(prompt)) {
+    checks.push("Passt der Vorschlag oder die Formulierung zur beschriebenen Situation?");
+  }
+  if (!checks.length) {
+    checks.push("Hat die Antwort die konkrete Frage „" + prompt + "“ mit einem passenden eigenen Detail beantwortet?");
+  }
+  return checks.slice(0, 3);
+}
+
 export function buildA2B1SpeakingCoaching(slide = {}, questions = []) {
   const level = String(slide.course || "").trim().toUpperCase();
   if (!["A2", "B1"].includes(level)) return [];
@@ -96,19 +137,30 @@ export function buildA2B1SpeakingCoaching(slide = {}, questions = []) {
     const starter = sentenceStarter(answer);
     const languageFocusEn = relevantLanguageNote(grammarNotes, questionDe, answer);
     const commonErrorEn = relevantLanguageNote(mistakes, questionDe, answer);
+    const [, supportingIdeaDe = ""] = modelSentences(answer);
+    // These fallbacks are optional lesson checks, not a claim about what
+    // the student said (the presenter does not transcribe learner answers).
+    const lessonGrammarFocusEn = languageFocusEn
+      || (Array.isArray(grammarNotes) ? grammarNotes.find(Boolean) : "") || "";
+    const lessonPitfallEn = commonErrorEn
+      || (Array.isArray(mistakes) ? mistakes.find(Boolean) : "") || "";
 
     return {
       questionDe,
-      // All examples come from this question's own model and this lesson's Redemittel.
+      // All examples come from this question's own model and lesson Redemittel.
       hintDe: phrase
         ? `Benutze als Sprachhilfe: „${phrase}“`
         : `Möglicher Satzanfang: „${starter}“`,
       referenceIdeaDe: referenceSentence(answer),
+      supportingIdeaDe,
+      taskChecksDe: speakingTaskChecks(questionDe),
       languageFocusEn,
       commonErrorEn,
-      retryDe: phrase
-        ? `Antworte noch einmal in eigenen Worten. Versuche dabei: „${phrase}“`
-        : `Antworte noch einmal in eigenen Worten. Nutze den Satzanfang „${starter}“`,
+      lessonGrammarFocusEn,
+      lessonPitfallEn,
+      retryDe: supportingIdeaDe
+        ? `Antworte noch einmal auf „${questionDe}“. Ergänze ein eigenes Detail. Als mögliches Beispiel zeigt das Modell: „${supportingIdeaDe}“`
+        : `Antworte noch einmal auf „${questionDe}“. Ergänze ein konkretes Detail und nutze ${phrase ? `„${phrase}“` : `den Satzanfang „${starter}“`}.`,
     };
   });
 }

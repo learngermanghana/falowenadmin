@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { getSlidesByCourse } from "../src/data/teachingSlides.js";
-import { buildA2B1SpeakingCoaching } from "../src/data/a2B1SpeakingCoaching.js";
+import { buildA2B1SpeakingCoaching, speakingTaskChecks } from "../src/data/a2B1SpeakingCoaching.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 test("all 56 A2/B1 lessons use their own verified speaking answers for coaching", () => {
@@ -80,4 +80,57 @@ test("speaking feedback is teacher-controlled and does not replace participation
   for (const status of ["Correct", "Needs review", "Skip", "Absent"]) {
     assert.ok(picker.includes(`>${status}</button>`), `marking option ${status} must remain available`);
   }
+});
+
+
+test("each A2/B1 spoken answer has question-grounded content checks and a targeted second try", () => {
+  for (const level of ["A2", "B1"]) {
+    for (const slide of getSlidesByCourse(level)) {
+      const questions = slide.studentQuestionsDe || [];
+      const coaching = buildA2B1SpeakingCoaching(slide, questions);
+      const retries = new Set();
+      for (let i = 0; i < questions.length; i += 1) {
+        const item = coaching[i];
+        const model = slide.speakingModels[i];
+        assert.ok(item, slide.assignmentId + " missing item " + i);
+        assert.ok(item.taskChecksDe?.length, slide.assignmentId + " lacks question-specific content criteria");
+        assert.ok(item.taskChecksDe.every((check) => check.length > 20), slide.assignmentId + " has an empty content criterion");
+        assert.ok(item.retryDe.includes(questions[i]), slide.assignmentId + " retry belongs to a different question");
+        assert.ok(model.modelAnswerDe.startsWith(item.referenceIdeaDe), slide.assignmentId + " wrong question evidence");
+        if (item.supportingIdeaDe) {
+          assert.ok(model.modelAnswerDe.includes(item.supportingIdeaDe), slide.assignmentId + " unsupported second model detail");
+        }
+        if (slide.teacherSupport?.grammarFocusEn?.length) {
+          assert.ok(slide.teacherSupport.grammarFocusEn.includes(item.lessonGrammarFocusEn),
+            slide.assignmentId + " grammar note not authored for this lesson");
+        }
+        if (slide.teacherSupport?.commonMistakesEn?.length) {
+          assert.ok(slide.teacherSupport.commonMistakesEn.includes(item.lessonPitfallEn),
+            slide.assignmentId + " mistake warning not authored for this lesson");
+        }
+        retries.add(item.retryDe);
+      }
+      assert.equal(retries.size, questions.length, slide.assignmentId + ": generic/repeated speaking retries");
+    }
+  }
+});
+
+test("task checks match what the student was actually asked to do", () => {
+  assert.match(speakingTaskChecks("Welche drei Aktivitäten würdest du wählen?")[0], /drei/);
+  assert.ok(speakingTaskChecks("Welche Vor- und Nachteile hat die WG?").some((item) => /beide Seiten/.test(item)));
+  assert.ok(speakingTaskChecks("Warum ist Teamarbeit wichtig?").some((item) => /Begründung/.test(item)));
+  assert.ok(speakingTaskChecks("Wo und wann war dein Abenteuer?").some((item) => /Zeitpunkt/.test(item)));
+  assert.ok(speakingTaskChecks("Wo und wann war dein Abenteuer?").some((item) => /Ort/.test(item)));
+  assert.deepEqual(speakingTaskChecks(""), []);
+});
+
+test("feedback is explicitly conditional on listening to the learner and not presented as automatic grading", () => {
+  const presenter = fs.readFileSync("src/components/TeachingSlidePresenter.jsx", "utf8");
+  assert.match(presenter, /activeCoaching\.taskChecksDe/);
+  assert.match(presenter, /activeCoaching\.supportingIdeaDe/);
+  assert.match(presenter, /activeCoaching\.lessonGrammarFocusEn/);
+  assert.match(presenter, /activeCoaching\.lessonPitfallEn/);
+  assert.match(presenter, /wenn tatsächlich gehört/);
+  assert.match(presenter, /Keine automatische Bewertung/);
+  assert.match(presenter, /showSpeakingFeedback && activeCoaching/);
 });

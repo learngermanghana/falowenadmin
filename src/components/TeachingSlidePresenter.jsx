@@ -1510,11 +1510,20 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               {showSpeakingFeedback && activeCoaching ? (
                 <aside className="presenter-speaking-coaching-feedback">
                   <strong>Lehrerfeedback · nach der mündlichen Antwort</strong>
-                  <p><b>Inhalt prüfen:</b> {activeCoaching.referenceIdeaDe}</p>
-                  {activeCoaching.languageFocusEn ? <p><b>Grammatik beachten:</b> {activeCoaching.languageFocusEn}</p> : null}
-                  {activeCoaching.commonErrorEn ? <p><b>Typischer Fehler:</b> {activeCoaching.commonErrorEn}</p> : null}
-                  <p><b>Erneut versuchen:</b> {activeCoaching.retryDe}</p>
-                  <small>Nur Referenzpunkte: eigene passende Antworten gelten auch. Die Lehrkraft bewertet die tatsächlich gesprochene Antwort.</small>
+                  <p><b>Aufgabe prüfen:</b></p>
+                  <ul className="presenter-speaking-checks">
+                    {(activeCoaching.taskChecksDe || []).map((check) => <li key={check}>{check}</li>)}
+                  </ul>
+                  <p><b>Passendes Modellbeispiel:</b> {activeCoaching.referenceIdeaDe}</p>
+                  {activeCoaching.supportingIdeaDe ? <p><b>Weitere mögliche Information:</b> {activeCoaching.supportingIdeaDe}</p> : null}
+                  {activeCoaching.lessonGrammarFocusEn ? (
+                    <p><b>Grammatikziel dieser Lektion (falls in der Antwort relevant):</b> {activeCoaching.lessonGrammarFocusEn}</p>
+                  ) : null}
+                  {activeCoaching.lessonPitfallEn ? (
+                    <p><b>Möglichen Fehler nur korrigieren, wenn tatsächlich gehört:</b> {activeCoaching.lessonPitfallEn}</p>
+                  ) : null}
+                  <p><b>Gezielter zweiter Versuch:</b> {activeCoaching.retryDe}</p>
+                  <small>Die Modellbeispiele sind keine Pflichtformulierungen. Erst die echte mündliche Antwort anhören, dann passende Kriterien auswählen. Keine automatische Bewertung.</small>
                 </aside>
               ) : null}
               {showQuestionSupport && directAnswerMode ? (
