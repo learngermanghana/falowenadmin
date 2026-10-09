@@ -121,7 +121,10 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   let writingFeedback = stripMarkingEmojis(result.feedback)
     .replace(/\bWriting score\s*:\s*\d+(?:\.\d+)?\s*%[.]?/gi, "")
     .replace(/\bMarking summary\b[\s\S]*$/i, "")
-    .replace(/\b(?:Teil\s*[134]|objective|listening|reading|hören|horen)\s*(?:score|:|answers?)[\s\S]*$/i, "")
+    // "main" is an internal flat-objective part key, not a student-facing
+    // section. Discard an AI-generated "main: N/N correct" block; the
+    // deterministic objective summary is appended below with its real label.
+    .replace(/\b(?:Teil\s*[134]|objective|main|listening|reading|hören|horen)\s*(?:score|:|answers?)[\s\S]*$/i, "")
     .trim();
   writingFeedback = writingFeedback.split(/(?<=[.!?])\s+/)
     .filter((sentence) => !/\b(?:objective|listening|reading|hören|horen)\b.*(?:wrong|correct|mistake|error)/i.test(sentence))
