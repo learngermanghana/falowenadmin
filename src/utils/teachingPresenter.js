@@ -11,6 +11,7 @@ import { getA2FocusedPractice, getA2PresenterKnowledge } from "../data/a2Present
 import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1PresenterKnowledge.js";
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { getSpeakingDifficultySelection } from "../data/presenterSpeakingDifficulty.js";
+import { buildA2B1SpeakingCoaching } from "../data/a2B1SpeakingCoaching.js";
 import { buildCourseBookBridgeItems, getCurriculumParityReference } from "../data/studentCurriculumParity.js";
 
 const A1_PRESENTER_V2_EXCLUDED_ASSIGNMENTS = new Set(["A1-TUTORIAL"]);
@@ -1456,6 +1457,9 @@ function buildProgressiveSpeakingStage(slide = {}, speakingStage = {}, level = "
     instruction: "Nach Warm-up und Grammatik: eine leichte, eine neutrale und eine schwierigere Frage.",
     items: selectedQuestions,
     questionModels: selectedModels,
+    coachingItems: selectedQuestions.map((question) =>
+      (Array.isArray(speakingStage.coachingItems) ? speakingStage.coachingItems : [])
+        .find((item) => item?.questionDe === question) || null),
     questionLevels: labels,
     difficultySource: curated ? "curated" : "fallback",
     difficultyIndexes: indexes,
@@ -1520,6 +1524,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []),
     ])].slice(0, 5),
     questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [],
+    coachingItems: buildA2B1SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
     requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level),
     suggestedMinutes: interactionMinutes(slide, 3) || 10,
   };
