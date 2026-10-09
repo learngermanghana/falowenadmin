@@ -156,7 +156,16 @@ test("A1 Day 2 pronoun slide stays on pronouns and basic conjugation", () => {
   assert.match(searchable, /ich lerne/);
   assert.match(searchable, /du lernst/);
   assert.match(searchable, /er\/sie\/es lernt/);
-  assert.doesNotMatch(searchable, /Stell dich|self-introduction|Wie heißt du|Woher kommst du|Wo wohnst du/i);
+  // Teacher notes correctly warn that this is NOT a self-introduction lesson.
+  // Guard the actual learner prompts rather than flagging that warning as content.
+  const learnerPrompts = [
+    slide.objective,
+    ...(slide.warmupQuestionsDe || []),
+    ...(slide.studentQuestionsDe || []),
+    ...(slide.keyPhrasesDe || []),
+    slide.wrapUpTaskDe,
+  ].join(" ");
+  assert.doesNotMatch(learnerPrompts, /Stell dich|self-introduction|Wie heißt du|Woher kommst du|Wo wohnst du/i);
 });
 
 test("A1 alphabet slide checks the actual alphabet knowledge taught in the Course Book", () => {
