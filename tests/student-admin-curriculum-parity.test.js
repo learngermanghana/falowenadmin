@@ -98,8 +98,13 @@ test("A2 Day 5 summary tells students what they can do after the lesson", () => 
   assert.equal(summary?.id, "lesson-summary");
   assert.match(summary?.items?.[0]?.detail || "", /^You can describe free time/i);
   assert.match(summary?.items?.[0]?.detail || "", /separable verbs/i);
-  assert.ok(summary?.items?.some((item) => item.label === "Speaking"));
-  assert.ok(summary?.items?.some((item) => item.label === "Self-check"));
+  // A2/B1 now check the actual last lesson question instead of displaying a
+  // generic "Speaking" statement, while preserving the workbook self-check.
+  const spoken = summary?.items?.find((item) => item.label === "Sprechprobe");
+  assert.ok(spoken, "A2 Day 5 requires the contextual speaking exit-check");
+  assert.ok(spoken.detail.includes(slide.studentQuestionsDe.at(-1)));
+  const selfCheck = summary?.items?.find((item) => item.label === "Selbstcheck");
+  assert.equal(selfCheck?.detail, slide.wrapUpTaskDe);
 });
 
 test("C1 intro now reports Student/Admin aligned", () => {
