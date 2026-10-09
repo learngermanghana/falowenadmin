@@ -40,7 +40,7 @@ export function filterMockAttempts(attempts = [], query = "", status = "all") {
   const needle = query.trim().toLowerCase();
   return attempts.filter(attempt =>
     (status === "all" || attempt.status === status) &&
-    [attempt.studentEmail, attempt.uid, attempt.mockId, attempt.level, attempt.section]
+    [attempt.studentName, attempt.studentEmail, attempt.uid, attempt.mockId, attempt.level, attempt.section]
       .some(value => String(value || "").toLowerCase().includes(needle))
   );
 }
