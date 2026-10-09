@@ -9,7 +9,7 @@ test("admin navigation includes Mock & Timers for staff and administrators", () 
 test("monitoring preserves timed reset and includes read-only mock tracking", () => {
  const source = fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx", "utf8");
  assert.match(source,/collectionGroup\(db, "attempts"\)/);
- assert.match(source,/a1MockExamUsers/);
+ assert.match(source,/MockExamUsers/);
  assert.match(source,/Mock progress/);
  assert.match(source,/Recorded progress/);
  assert.match(source,/durationSeconds/);
