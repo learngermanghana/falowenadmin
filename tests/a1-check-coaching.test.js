@@ -53,6 +53,9 @@ test("A1 teaching scaffolds distinguish spelling, correction, register and factu
   assert.equal(buildA1CheckCoaching({ questionDe: "Was sagst du?", answerDe: "Accept a short correct A1 response." }, slide).flexibleAnswer, true);
   assert.equal(buildA1CheckCoaching({ questionDe: "Wie heißt du?", answerDe: "Ich heiße Ana." }, slide).flexibleAnswer, false);
   assert.equal(buildA1CheckCoaching({ questionDe: "" }, slide), null);
+  assert.equal(buildA1CheckCoaching(null, slide), null);
+  assert.equal(buildA1CheckCoaching(undefined, slide), null);
+  assert.equal(buildA1CheckCoaching(null, null), null);
   assert.equal(buildA1CheckCoaching({ questionDe: "Warum?" }, { course: "B1" }), null);
 });
 
