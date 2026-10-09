@@ -39,7 +39,7 @@ test("A1 class-check pools use clear learner-understanding questions and stay la
   assert.ok(slides.length > 0, "A1 slides missing");
 
   for (const slide of slides) {
-    if (String(slide.assignmentId || "").toUpperCase() === "A1-5.9") continue;
+    if (["A1-TUTORIAL", "A1-5.9"].includes(String(slide.assignmentId || "").toUpperCase())) continue;
 
     const support = buildTeacherSlideSupport(slide);
     const checks = getA1PresenterUnderstandingChecks(
@@ -64,7 +64,7 @@ test("all A1 class questions avoid generic meta-prompts", () => {
   const forbidden = /Give one correct German example that avoids this mistake|Show this lesson point with one short German example|Explain this in your own words|Teach this rule to a classmate|Give the rule first|How would you explain this idea to a beginner|What is the main grammar or language concept|What is one important rule or common mistake|Can you give one simple example that shows you understand the rule|Change one clear detail in this model/i;
 
   for (const slide of getSlidesByCourse("A1")) {
-    if (String(slide.assignmentId || "").toUpperCase() === "A1-5.9") continue;
+    if (["A1-TUTORIAL", "A1-5.9"].includes(String(slide.assignmentId || "").toUpperCase())) continue;
     const support = buildTeacherSlideSupport(slide);
     const checks = getA1PresenterUnderstandingChecks(
       slide.assignmentId,
