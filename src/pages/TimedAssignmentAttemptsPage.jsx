@@ -195,6 +195,30 @@ export default function TimedAssignmentAttemptsPage() {
             </div>
             <div>
               {attempt.progressSource === "browser_reported" && <p style={{ color: "#92400e", fontSize: 12, margin: "0 0 5px" }}>Progress reported by the learner browser; not a verified exam score.</p>}
+
+              {attempt.level === "A1" ? <div data-testid="a1-mock-integrity-review"
+                style={{ border: "1px solid #d4c2a3", borderRadius: 9, background: "#fff9ed", padding: 12, marginBottom: 10, color: "#563b20", fontSize: 13 }}>
+                <strong>Exam activity review: {attempt.integrity?.total ?? "Not yet recorded"} browser-reported flags</strong>
+                <p style={{ margin: "5px 0" }}>These events are not proof of ChatGPT use or misconduct; review with the student before taking action.</p>
+                {attempt.integrity?.total > 0 ? <>
+                  <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+                    {[
+                      ["tab_hidden", "Tab hidden"],
+                      ["window_blur", "Window unfocused"],
+                      ["fullscreen_exit", "Fullscreen exit"],
+                      ["paste_attempt", "Paste blocked"],
+                      ["copy_attempt", "Copy blocked"],
+                    ].filter(([key]) => Number(attempt.integrity?.counts?.[key] || 0) > 0)
+                      .map(([key, label]) => <span key={key}>{label}: {attempt.integrity.counts[key]}</span>)}
+                  </div>
+                  {attempt.integrity.events?.length ? <details style={{ marginTop: 7 }}>
+                    <summary>Recent activity log</summary>
+                    <ul>{attempt.integrity.events.map((event, index) =>
+                      <li key={index}>{formatDate(event.at)} · {event.section} · {String(event.type).replaceAll("_", " ")}</li>)}</ul>
+                  </details> : null}
+                </> : null}
+              </div> : null}
+
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
                 <b>Mock progress</b><span>{progress.count} of {progress.total} sections completed</span>
               </div>
