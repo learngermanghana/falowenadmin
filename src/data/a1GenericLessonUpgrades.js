@@ -1,5 +1,6 @@
 import { enhanceA1Days11To15Slide } from "./a1Days11To15Slides.js";
 import { enhanceA1Days16To20Slide } from "./a1Days16To20Slides.js";
+import { enhanceA1Days21To24Slide } from "./a1Days21To24Slides.js";
 
 const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
   "A1-3.5": {
@@ -216,7 +217,7 @@ export function enhanceA1GenericLessonSlide(slide = {}) {
   const key = String(slide.assignmentId || "").trim().toUpperCase();
   const upgrade = A1_LESSON_CONTENT_UPGRADES[key];
   const lessonSlide = upgrade ? { ...slide, ...upgrade } : slide;
-  return enhanceA1Days16To20Slide(enhanceA1Days11To15Slide(lessonSlide));
+  return enhanceA1Days21To24Slide(enhanceA1Days16To20Slide(enhanceA1Days11To15Slide(lessonSlide)));
 }
 
 export const A1_GENERIC_LESSON_UPGRADE_IDS = Object.freeze(Object.keys(A1_LESSON_CONTENT_UPGRADES));
