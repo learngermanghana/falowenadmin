@@ -79,7 +79,7 @@ jobs:
       - name: Verify A2 and B1 curated Wissensimpuls answer bank
         run: node --test tests/a2-b1-curated-knowledge-answers.test.js tests/a2-twelve-teacher-challenges.test.js tests/b1-six-teacher-challenges.test.js
       - name: Verify A2/B1 speaking hints and teacher feedback
-        run: node --test tests/a2-b1-speaking-coaching.test.js
+        run: node --test tests/a2-b1-speaking-coaching.test.js tests/a2-b1-teaching-audit.test.js
       - name: Audit each A2/B1 lesson for grounded speaking support
         run: node scripts/auditA2B1SpeakingCoaching.mjs
       - name: Run teaching slide regression tests
