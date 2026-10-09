@@ -129,6 +129,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [stageIndex, setStageIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showQuestionSupport, setShowQuestionSupport] = useState(false);
+  const [showSpeakingHint, setShowSpeakingHint] = useState(false);
+  const [showSpeakingFeedback, setShowSpeakingFeedback] = useState(false);
   const [timerRemaining, setTimerRemaining] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerMode, setTimerMode] = useState("activity");
@@ -270,6 +272,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   }
 
   function goTo(index) {
+    setShowSpeakingHint(false);
+    setShowSpeakingFeedback(false);
     setRevealedFlowRole("");
     setC2AnalysisStep(0);
     setC2RubricChecks({});
@@ -298,6 +302,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     if (stage?.type === "question-reveal" && questionIndex < stage.items.length - 1) {
       setQuestionIndex((current) => current + 1);
       setShowQuestionSupport(false);
+    setShowSpeakingHint(false);
+    setShowSpeakingFeedback(false);
       return;
     }
     goTo(stageIndex + 1);
@@ -311,6 +317,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     if (stage?.type === "question-reveal" && questionIndex > 0) {
       setQuestionIndex((current) => current - 1);
       setShowQuestionSupport(false);
+    setShowSpeakingHint(false);
+    setShowSpeakingFeedback(false);
       return;
     }
     goTo(stageIndex - 1);
@@ -426,6 +434,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     }
     setQuestionIndex(nextIndex);
     setShowQuestionSupport(false);
+    setShowSpeakingHint(false);
+    setShowSpeakingFeedback(false);
   }
 
   async function presentFullscreen() {
@@ -471,6 +481,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   useEffect(() => {
     setQuestionIndex(0);
     setShowQuestionSupport(false);
+    setShowSpeakingHint(false);
+    setShowSpeakingFeedback(false);
     setWarmupSupportOpen({});
     setWarmupAnswered({});
     setTimerRunning(false);
@@ -625,6 +637,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     ? String(stage.questionLevels[questionIndex] || "")
     : "";
   const activeModel = getSpeakingQuestionModel(stage, activeQuestion);
+  const activeCoaching = ["A2", "B1"].includes(presenterLevel) && stage.id === "questions"
+    ? (Array.isArray(stage.coachingItems) ? stage.coachingItems[questionIndex] : null)
+    : null;
   const directAnswerMode = stage.requiresQuestionModel || Boolean(activeModel);
   const b1CorrectionGuide = String(slide.course || "").toUpperCase() === "B1" && stage.id === "b1-grammar-check" && activeModel?.modelAnswerDe
     ? buildB1CorrectionTeacherGuide(activeQuestion, activeModel.modelAnswerDe)
@@ -1468,6 +1483,16 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
               {stage.instruction ? <p className="presenter-question-instruction">{stage.instruction}</p> : null}
               <p className="presenter-question">{activeQuestion}</p>
               <div className="presenter-question-actions">
+                {activeCoaching ? (
+                  <>
+                    <button type="button" aria-expanded={showSpeakingHint} onClick={() => setShowSpeakingHint((current) => !current)}>
+                      {showSpeakingHint ? "Sprachhilfe ausblenden" : "Sprachhilfe · vor der Antwort"}
+                    </button>
+                    <button type="button" aria-expanded={showSpeakingFeedback} onClick={() => setShowSpeakingFeedback((current) => !current)}>
+                      {showSpeakingFeedback ? "Feedback ausblenden" : "Lehrerfeedback · nach der Antwort"}
+                    </button>
+                  </>
+                ) : null}
                 <button type="button" onClick={() => setShowQuestionSupport((current) => !current)}>
                   {showQuestionSupport
                     ? (advancedClassroom ? "Modell ausblenden" : directAnswerMode ? "Hide model answer" : "Hide model support")
@@ -1475,6 +1500,23 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </button>
                 <button type="button" onClick={randomQuestion}>{advancedClassroom ? "Zufallsfrage" : "Random question"}</button>
               </div>
+              {showSpeakingHint && activeCoaching ? (
+                <aside className="presenter-speaking-coaching-hint">
+                  <strong>Sprachhilfe</strong>
+                  <p>{activeCoaching.hintDe}</p>
+                  <small>Ein Vorschlag, keine Musterlösung. Beantworte die Frage mit eigenen Informationen.</small>
+                </aside>
+              ) : null}
+              {showSpeakingFeedback && activeCoaching ? (
+                <aside className="presenter-speaking-coaching-feedback">
+                  <strong>Lehrerfeedback · nach der mündlichen Antwort</strong>
+                  <p><b>Inhalt prüfen:</b> {activeCoaching.referenceIdeaDe}</p>
+                  {activeCoaching.languageFocusEn ? <p><b>Grammatik beachten:</b> {activeCoaching.languageFocusEn}</p> : null}
+                  {activeCoaching.commonErrorEn ? <p><b>Typischer Fehler:</b> {activeCoaching.commonErrorEn}</p> : null}
+                  <p><b>Erneut versuchen:</b> {activeCoaching.retryDe}</p>
+                  <small>Nur Referenzpunkte: eigene passende Antworten gelten auch. Die Lehrkraft bewertet die tatsächlich gesprochene Antwort.</small>
+                </aside>
+              ) : null}
               {showQuestionSupport && directAnswerMode ? (
                 <div className="presenter-model-support">
                   <strong>Possible model answer</strong>
