@@ -4387,3 +4387,49 @@
     overflow-y: auto;
   }
 }
+
+/* Speaking help follows the existing question slide; no additional teaching stage. */
+.presenter-speaking-coaching-hint,
+.presenter-speaking-coaching-feedback {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0.75rem 0.95rem;
+  margin-top: 0.7rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.presenter-speaking-coaching-hint strong,
+.presenter-speaking-coaching-feedback strong {
+  display: block;
+  color: #0f172a;
+  margin-bottom: 0.35rem;
+  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+}
+
+.presenter-speaking-coaching-hint p,
+.presenter-speaking-coaching-feedback p {
+  margin: 0.32rem 0;
+  line-height: 1.45;
+}
+
+.presenter-speaking-coaching-hint small,
+.presenter-speaking-coaching-feedback small {
+  display: block;
+  margin-top: 0.4rem;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.presenter-question-actions button[aria-expanded="true"] {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+@media (max-width: 650px) {
+  .presenter-speaking-coaching-hint,
+  .presenter-speaking-coaching-feedback {
+    padding: 0.65rem 0.72rem;
+  }
+}
