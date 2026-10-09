@@ -1,6 +1,7 @@
 import { getA1Days1To5UnderstandingChecks } from "./a1Days1To5Understanding.js";
 import { getA1Days6To10UnderstandingChecks } from "./a1Days6To10Understanding.js";
 import { getA1Days11To15UnderstandingChecks } from "./a1Days11To15Understanding.js";
+import { getA1Days16To20UnderstandingChecks } from "./a1Days16To20Understanding.js";
 
 function check(questionDe, answerDe, noteEn = "") {
   return { questionDe, answerDe, noteEn };
@@ -320,6 +321,8 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
   if (verifiedDay6To10) return verifiedDay6To10;
   const verifiedDay11To15 = getA1Days11To15UnderstandingChecks(key);
   if (verifiedDay11To15) return verifiedDay11To15;
+  const verifiedDay16To20 = getA1Days16To20UnderstandingChecks(key);
+  if (verifiedDay16To20) return verifiedDay16To20;
   const override = A1_PRESENTER_UNDERSTANDING_OVERRIDES[key];
   if (Array.isArray(override) && override.length) return override;
 
