@@ -46,7 +46,7 @@ const LESSONS = Object.freeze({
     ],
   },
   "A1-14.2": {
-    subtitle: "Day 23 · Accusative and dative verb practice. No verified published Course Book URL or tutor-marked requirement for this chapter.",
+    subtitle: "Day 23 · Accusative and dative verb practice. No verified published Course Book URL or assignment submission requirement for this chapter.",
     parts: [
       { label: "Akkusativ erkennen", detailEn: "Identify wen? objects with sehen and masculine den Mann." },
       { label: "Dativ erkennen", detailEn: "Identify wem? objects with helfen and danken: dem Mann, der Frau." },
