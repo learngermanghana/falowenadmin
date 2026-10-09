@@ -1,4 +1,5 @@
 import { getA1Days1To5UnderstandingChecks } from "./a1Days1To5Understanding.js";
+import { getA1Days6To10UnderstandingChecks } from "./a1Days6To10Understanding.js";
 
 function check(questionDe, answerDe, noteEn = "") {
   return { questionDe, answerDe, noteEn };
@@ -314,6 +315,8 @@ export function getA1PresenterUnderstandingChecks(assignmentId, fallbackChecks =
   // build-time-injected contact-dialogue prompts for these seven lesson blocks.
   const verifiedDay1To5 = getA1Days1To5UnderstandingChecks(key);
   if (verifiedDay1To5) return verifiedDay1To5;
+  const verifiedDay6To10 = getA1Days6To10UnderstandingChecks(key);
+  if (verifiedDay6To10) return verifiedDay6To10;
   const override = A1_PRESENTER_UNDERSTANDING_OVERRIDES[key];
   if (Array.isArray(override) && override.length) return override;
 

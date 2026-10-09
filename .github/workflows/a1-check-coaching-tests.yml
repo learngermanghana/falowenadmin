@@ -11,6 +11,8 @@ on:
       - "src/data/a1LearningPath.js"
       - "src/data/a1SlideReview.js"
       - "src/data/a1Days1To5Understanding.js"
+      - "src/data/a1Days6To10Understanding.js"
+      - "src/data/a1WorkbookAlignedSlidesDays6To10.js"
       - "src/data/a1GrammarChecks.js"
       - "scripts/patchA1Day2ContactChallenge.mjs"
       - "tests/a1-presenter-topic-integrity.test.js"
@@ -24,7 +26,10 @@ on:
       - "tests/a1-learning-path.test.js"
       - "tests/a1-slide-review.test.js"
       - "tests/a1-days1-to5-understanding.test.js"
-      - "tests/a1-workbook-aligned-slides-days1-5.test.js"
+      - "tests/a1-days6-to10-understanding.test.js"
+      - "tests/a1-workbook-aligned-slides-days6-10.test.js"
+      - "scripts/auditA1Days6To10Slides.mjs"
+      - "tests/a1-workbook-aligned-slides-days1-5.test.js tests/a1-days6-to10-understanding.test.js tests/a1-workbook-aligned-slides-days6-10.test.js"
       - "scripts/auditA1Days1To5Slides.mjs"
       - ".github/workflows/a1-check-coaching-tests.yml"
   push:
@@ -38,6 +43,8 @@ on:
       - "src/data/a1LearningPath.js"
       - "src/data/a1SlideReview.js"
       - "src/data/a1Days1To5Understanding.js"
+      - "src/data/a1Days6To10Understanding.js"
+      - "src/data/a1WorkbookAlignedSlidesDays6To10.js"
       - "src/data/a1GrammarChecks.js"
       - "scripts/patchA1Day2ContactChallenge.mjs"
       - "tests/a1-presenter-topic-integrity.test.js"
@@ -51,6 +58,9 @@ on:
       - "tests/a1-learning-path.test.js"
       - "tests/a1-slide-review.test.js"
       - "tests/a1-days1-to5-understanding.test.js"
+      - "tests/a1-days6-to10-understanding.test.js"
+      - "tests/a1-workbook-aligned-slides-days6-10.test.js"
+      - "scripts/auditA1Days6To10Slides.mjs"
       - "tests/a1-workbook-aligned-slides-days1-5.test.js"
       - "scripts/auditA1Days1To5Slides.mjs"
       - ".github/workflows/a1-check-coaching-tests.yml"
@@ -75,5 +85,7 @@ jobs:
         run: node scripts/auditA1CheckCoaching.mjs
       - name: Audit every A1 Day 1–5 lesson, answer and assignment route
         run: node scripts/auditA1Days1To5Slides.mjs
+      - name: Audit every A1 Day 6–10 lesson, answer and assignment route
+        run: node scripts/auditA1Days6To10Slides.mjs
       - name: Compile Admin frontend
         run: npx vite build
