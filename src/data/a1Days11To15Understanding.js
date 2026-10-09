@@ -111,7 +111,7 @@ export const A1_DAYS11_TO15_APPLICATION_CHECKS = Object.freeze({
     check("Korrigiere: „halb neun = 9:30“.", "halb neun = 8:30.", "Half an hour before nine is 8:30."),
   ],
   "A1-3.6": [
-    check("Korrigiere: „Wir müssen heute arbeiten gehen“ als einfache Modalstruktur: Wo steht der Infinitiv?", "Wir müssen heute arbeiten gehen.", "In a modal construction, the infinitive group remains at the end; here arbeiten gehen is a two-verb infinitive group."),
+    check("Korrigiere: „Ich muss lernen heute.“", "Ich muss heute lernen.", "In the simple modal structure the infinitive lernen follows the time phrase at the end."),
     check("Ordne die Wörter: „möchte / Kaffee / trinken / ich“.", "Ich möchte Kaffee trinken.", "The finite modal is in position two and the infinitive last."),
   ],
   "A1-4.7": [
