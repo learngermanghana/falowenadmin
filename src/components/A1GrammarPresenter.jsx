@@ -6,6 +6,7 @@ import { buildA1CheckCoaching } from "../data/a1CheckCoaching.js";
 import { getA1LearningPath } from "../data/a1LearningPath.js";
 import { buildA1SlideReviewChecks } from "../data/a1SlideReview.js";
 import { getA1Days1To5QuickChecks, getA1Days1To5ApplicationChecks } from "../data/a1Days1To5Understanding.js";
+import { getA1Days6To10QuickChecks, getA1Days6To10ApplicationChecks } from "../data/a1Days6To10Understanding.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
@@ -199,12 +200,12 @@ function stageList(slide, topicLabel) {
       .map((stage) => ({ ...stage, examReadiness: true }));
   }
 
-  const quickChecks = getA1Days1To5QuickChecks(slide.assignmentId) || grammarChecks.slice(0, 2);
+  const quickChecks = getA1Days1To5QuickChecks(slide.assignmentId) || getA1Days6To10QuickChecks(slide.assignmentId) || grammarChecks.slice(0, 2);
   const correctionChecks = mainChecks
     .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
     .slice(0, 2);
   const modelExamples = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [];
-  const curatedApplicationChecks = getA1Days1To5ApplicationChecks(slide.assignmentId);
+  const curatedApplicationChecks = getA1Days1To5ApplicationChecks(slide.assignmentId) || getA1Days6To10ApplicationChecks(slide.assignmentId);
   const sentenceBuildChecks = curatedApplicationChecks || modelExamples.slice(0, 2).map((example, index) => ({
     questionDe: index === 0
       ? `Change one detail but keep the grammar correct: “${example}”`
