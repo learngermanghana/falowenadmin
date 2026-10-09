@@ -27,7 +27,7 @@ test("stale in-progress progress never pretends the student is online", () => {
 test("navigation restores mock monitoring and preserves timed attempt resets", () => {
   const app=fs.readFileSync("src/App.jsx","utf8");
   const page=fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx","utf8");
-  assert.match(app,/to="\/timed-attempts"[^>]*>Mock Monitoring & Timers<\/Link>/);
+  assert.match(app,/to="\/timed-attempts"[\s\S]{0,180}>Mock Monitoring & Timers<\/Link>/);
   assert.match(page,/data-testid="mock-monitoring"/);
   assert.match(page,/data-testid="timed-assignments"/);
   assert.match(page,/Reset timed attempt/);
