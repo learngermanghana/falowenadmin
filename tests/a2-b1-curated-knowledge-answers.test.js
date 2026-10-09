@@ -49,5 +49,5 @@ test("Text-answer regressions cover specific grammar and content questions",()=>
 test("Model answers remain behind the existing teacher reveal UI",()=>{
  const jsx=fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx",import.meta.url),"utf8");
  assert.match(jsx,/stage\.answerItems/);
- assert.match(jsx,/knowledgeAnswerVisible|revealedKnowledgeAnswers|knowledgeRevealed/);
+ assert.match(jsx,/knowledgeAnswersOpen/);
 });
