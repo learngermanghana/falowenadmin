@@ -62,7 +62,7 @@ export const A1_DAYS1_TO5_UNDERSTANDING = Object.freeze({
     check("Antwort: „Ich heiße Ama.“ Welches W-Wort passt?", "Wie? – Wie heißt du?", "Wie asks for a name; the conjugated verb directly follows the W-word."),
     check("Antwort: „Ich wohne in Accra.“ Welches W-Wort passt?", "Wo? – Wo wohnst du?", "Wo asks for a current location; do not use Woher here."),
     check("Antwort: „Ich komme aus Ghana.“ Welches W-Wort passt?", "Woher? – Woher kommst du?", "Woher asks about origin, while Wo asks where someone lives or is."),
-    check("Exit-Check: Ergänze der/die/das für Tisch, Frau und Buch und wähle das W-Wort für „Ich komme aus Ghana“.", "der Tisch · die Frau · das Buch · Woher?", "This self-practice exit check uses articles and W-questions only; do not introduce ein/eine."),
+    check("Exit-Check: Ergänze der/die/das für Tisch, Frau und Buch und wähle das W-Wort für „Ich komme aus Ghana“.", "der Tisch · die Frau · das Buch · Woher?", "This self-practice exit check stays within der, die, das and basic W-questions."),
   ],
 
   // Day 3, second block · Verb endings including arbeiten and heißen.
