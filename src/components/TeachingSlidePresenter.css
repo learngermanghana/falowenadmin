@@ -4422,6 +4422,41 @@
   line-height: 1.35;
 }
 
+/* A1 presenter retains its grammar-diagnostic flow; scaffolds are optional
+   before independent practice, teacher notes stay behind answer reveal. */
+.presenter-a1-check-hint,
+.presenter-a1-check-feedback {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.95rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.presenter-a1-check-hint strong,
+.presenter-a1-check-feedback strong {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+.presenter-a1-check-hint p,
+.presenter-a1-check-feedback p {
+  margin: 0.35rem 0;
+}
+.presenter-a1-check-feedback details {
+  margin: 0.5rem 0;
+}
+.presenter-a1-check-feedback summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.presenter-a1-check-hint small,
+.presenter-a1-check-feedback small {
+  display: block;
+  margin-top: 0.4rem;
+  color: #475569;
+}
+
 .presenter-speaking-checks {
   margin: 0.15rem 0 0.55rem;
   padding-left: 1.4rem;
