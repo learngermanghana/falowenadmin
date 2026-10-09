@@ -33,4 +33,7 @@ test("navigation restores mock monitoring and preserves timed attempt resets", (
   assert.match(page,/Reset timed attempt/);
   assert.match(page,/progressSource|mockSectionProgress/);
   assert.match(page,/mockActivityLabel/);
+  assert.match(page,/\/api\/internal\/mock-attempts/);
+  assert.match(page,/getIdToken\(\)/);
+  assert.doesNotMatch(page,/collectionGroup\(/, "student mock records must not be queried directly from the Admin browser");
 });
