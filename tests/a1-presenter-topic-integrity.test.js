@@ -130,6 +130,6 @@ test("A1 presenter checks the rule before the per-student grammar challenge", ()
   assert.ok(sentenceIndex > correctionIndex, "A1 controlled sentence build must follow correction");
   assert.match(presenter, /items:\s*quickChecks/);
   assert.match(presenter, /items:\s*mainChecks/);
-  assert.match(presenter, /kicker:\s*"Class grammar check"/);
-  assert.match(presenter, /title:\s*"One grammar question per student"/);
+  assert.match(presenter, /kicker:\s*"Verständnis prüfen"/);
+  assert.match(presenter, /title:\s*"One understanding question per student"/);
 });
