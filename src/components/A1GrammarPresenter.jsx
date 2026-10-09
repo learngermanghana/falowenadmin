@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
+import { buildA1CheckCoaching } from "../data/a1CheckCoaching.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
@@ -291,6 +292,7 @@ export default function A1GrammarPresenter({
   const [stageIndex, setStageIndex] = useState(0);
   const [itemIndex, setItemIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const [participationQuestion, setParticipationQuestion] = useState(null);
   const contentRef = useRef(null);
   const lastContentSizeRef = useRef({ width: 0, height: 0 });
@@ -321,11 +323,16 @@ export default function A1GrammarPresenter({
       ? stage.items[itemIndex]
       : null;
   const activeExamPerformance = Boolean(stage?.examReadiness && activeCheck?.responseMode === "performance");
+  const activeCoaching = stage?.examReadiness ? null : buildA1CheckCoaching(activeCheck, slide);
+  // Do not give hints during the scored one-question-per-student diagnostic
+  // or the final unaided exit check. Teacher checks appear after reveal only.
+  const canShowHint = Boolean(activeCoaching && !participationCheckMode && !stage?.exitCheck);
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
 
   function resetQuestionState() {
     setItemIndex(0);
     setShowAnswer(false);
+    setShowHint(false);
     setParticipationQuestion(null);
   }
 
@@ -339,6 +346,7 @@ export default function A1GrammarPresenter({
     if (manualCheckMode && itemIndex < stage.items.length - 1) {
       setItemIndex((current) => current + 1);
       setShowAnswer(false);
+      setShowHint(false);
       return;
     }
     goTo(stageIndex + 1);
@@ -348,6 +356,7 @@ export default function A1GrammarPresenter({
     if (manualCheckMode && itemIndex > 0) {
       setItemIndex((current) => current - 1);
       setShowAnswer(false);
+      setShowHint(false);
       return;
     }
     goTo(stageIndex - 1);
@@ -634,7 +643,11 @@ export default function A1GrammarPresenter({
             slide={slide}
             questions={participationCheckMode ? stage.items : []}
             questionContext={participationCheckMode ? stage.id : "class-participation"}
-            onQuestionChange={setParticipationQuestion}
+            onQuestionChange={(question) => {
+              setParticipationQuestion(question);
+              setShowAnswer(false);
+              setShowHint(false);
+            }}
             renderQuestionExternally={participationCheckMode}
           />
         </div>
@@ -696,13 +709,28 @@ export default function A1GrammarPresenter({
                 <>
                   <p className="presenter-question">{activeCheck?.questionDe}</p>
                   <div className="presenter-question-actions">
-                    <button type="button" onClick={() => setShowAnswer((current) => !current)} disabled={!activeCheck}>
+                    {canShowHint && !showAnswer ? (
+                      <button type="button" aria-expanded={showHint} onClick={() => setShowHint((current) => !current)}>
+                        {showHint ? "A1-Sprachhilfe ausblenden" : "A1-Sprachhilfe · vor der Antwort"}
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={() => {
+                      setShowAnswer((current) => !current);
+                      setShowHint(false);
+                    }} disabled={!activeCheck}>
                       {showAnswer ? "Antwort ausblenden" : "Antwort anzeigen"}
                     </button>
                   </div>
+                  {showHint && canShowHint && !showAnswer ? (
+                    <aside className="presenter-a1-check-hint">
+                      <strong>Sprachhilfe · ein kleiner Schritt</strong>
+                      <p>{activeCoaching.hintDe}</p>
+                      <small>Keine fertige Antwort. Antworte selbst in einfachem Deutsch.</small>
+                    </aside>
+                  ) : null}
                   {showAnswer ? (
                     <div className="presenter-model-support">
-                      <strong>Richtige Antwort / teacher guide</strong>
+                      <strong>{activeCoaching?.flexibleAnswer ? "Mögliche Antwort / teacher guide" : "Richtige Antwort / teacher guide"}</strong>
                       <p>{activeCheck?.answerDe}</p>
                       {participationCheckMode ? (
                         <small>{stage.examReadiness
@@ -712,6 +740,26 @@ export default function A1GrammarPresenter({
                           : "Accept a short correct explanation or a suitable simple German example. Record the result, then use Next student → above for another distinct question."}</small>
                       ) : null}
                       {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
+                      {activeCoaching ? (
+                        <aside className="presenter-a1-check-feedback">
+                          <strong>Lehrerfeedback · nach der Antwort</strong>
+                          <p>{activeCoaching.feedbackQuestionDe}</p>
+                          <p><b>Prüfe:</b> {activeCoaching.checkDe}</p>
+                          {activeCoaching.lessonGrammarEn || activeCoaching.lessonPitfallEn ? (
+                            <details>
+                              <summary>Grammatik und mögliche Fehler dieser Lektion</summary>
+                              {activeCoaching.lessonGrammarEn ? (
+                                <p><b>Grammatikziel (falls relevant):</b> {activeCoaching.lessonGrammarEn}</p>
+                              ) : null}
+                              {activeCoaching.lessonPitfallEn ? (
+                                <p><b>Nur wenn tatsächlich gehört:</b> {activeCoaching.lessonPitfallEn}</p>
+                              ) : null}
+                            </details>
+                          ) : null}
+                          <p><b>Zweiter Versuch:</b> {activeCoaching.retryDe}</p>
+                          <small>Vergleiche die echte Antwort mit der Aufgabe. Eigene richtige A1-Antworten gelten auch. Keine automatische Bewertung.</small>
+                        </aside>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="presenter-model-support presenter-teacher-instruction" style={{ opacity: 0.8 }}>
