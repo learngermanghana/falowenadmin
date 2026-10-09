@@ -64,6 +64,10 @@ jobs:
         run: npm ci
       - name: Validate source sync on clean checkout
         run: npm run sync:build
+      - name: Verify student payment link is discoverable
+        run: node --test tests/student-payment-links.test.js tests/student-payment-directory-access.test.js
+      - name: Compile Admin UI after source sync
+        run: npx vite build
       - name: Verify live marking contract, Day 10 writing and objective labels
         run: node --test tests/live-marking-contract-and-objective-label.test.js
       - name: Validate production release wiring
@@ -86,6 +90,8 @@ jobs:
           node --test
           tests/production-release-guard.test.js
           tests/student-leads-hub.test.js
+          tests/student-payment-links.test.js
+          tests/student-payment-directory-access.test.js
           tests/teacher-lesson-dashboard.test.js
           tests/student-admin-curriculum-parity.test.js
           tests/presenter-timers.test.js

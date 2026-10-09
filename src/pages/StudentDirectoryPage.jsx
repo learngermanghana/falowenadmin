@@ -6,6 +6,8 @@ import { createStudent, listAllStudents, updateStudentById } from "../services/s
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
+import StudentPaymentTools from "../components/StudentPaymentTools";
+import StudentUpgradeTools from "../components/StudentUpgradeTools";
 import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
@@ -850,7 +852,28 @@ export default function StudentDirectoryPage() {
                           setMobileDetails(false);
                           requestAnimationFrame(() => document.getElementById(`student-list-${selectedStudent.id}`)?.focus());
                         }}>← Back to students</button>
-                        <h2 style={{ marginTop: 0, marginBottom: 8 }}>{selectedStudent.name || "Student details"}</h2>
+                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                          <h2 style={{ marginTop: 0, marginBottom: 8 }}>{selectedStudent.name || "Student details"}</h2>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDetailTab("payments");
+                              requestAnimationFrame(() => document.getElementById("student-tab-payments")?.focus());
+                            }}
+                            aria-label="Generate payment link for selected student"
+                            style={{
+                              minHeight: 42,
+                              border: "1px solid #1d4ed8",
+                              background: "#eff6ff",
+                              color: "#1d4ed8",
+                              borderRadius: 10,
+                              padding: "8px 12px",
+                              fontWeight: 700,
+                            }}
+                          >
+                            Generate payment link →
+                          </button>
+                        </div>
                         <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.75 }}>
                           Use the tabs to manage this student’s records, then save your changes. Use <strong>Transfer class</strong> in the Class tab for class changes so attendance and participation history stay intact.
                         </p>
@@ -878,6 +901,23 @@ export default function StudentDirectoryPage() {
                             <h3>{tab.label === "Class" ? "Class and contract" : tab.label}</h3>
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
                             {renderEditableFields(tab.fields)}
+                            {tab.id === "payments" && (
+                              <>
+                        <StudentPaymentTools
+                          student={selectedStudent}
+                          draft={getDraft(selectedStudent)}
+                          onStudentUpdated={handleSupportStudentUpdated}
+                          pushToast={pushToast}
+                        />
+
+                        <StudentUpgradeTools
+                          student={selectedStudent}
+                          draft={getDraft(selectedStudent)}
+                          onStudentUpdated={handleSupportStudentUpdated}
+                          pushToast={pushToast}
+                        />
+                              </>
+                            )}
                             {tab.id === "class" && <StudentClassTransferPanel
                               key={selectedStudent.id} student={selectedStudent} classes={classes}
                               onTransferred={handleStudentTransferred} pushToast={pushToast} />}
