@@ -4476,3 +4476,19 @@
     padding: 0.65rem 0.72rem;
   }
 }
+
+.presenter-a1-learning-route {
+  margin: 0.6rem 0 0.9rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.presenter-a1-learning-route strong {
+  display: block;
+  font-weight: 700;
+}
+.presenter-a1-learning-route p { margin: 0.45rem 0; line-height: 1.5; }
+.presenter-a1-learning-route small { display: block; line-height: 1.4; color: #475569; }
