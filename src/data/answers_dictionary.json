@@ -1733,18 +1733,20 @@
   "A2 7.19 Einkaufen? Wo und wie?": {
     "answers": {
       "teil3": {
-        "Answer1": "A) Dienstag und Samstag",
-        "Answer2": "B) Kartenzahlung",
-        "Answer3": "B) Ab 19 Uhr",
-        "Answer4": "B) Kleidung und kleine Haushaltsartikel",
-        "Answer5": "A) Kleidung abgeben"
+        "Answer1": "B) Im Supermarkt oder Discounter.",
+        "Answer2": "A) Man findet viele verschiedene Produkte an einem Ort.",
+        "Answer3": "B) Bauern aus der Region.",
+        "Answer4": "C) Weil die Stimmung nett ist und man andere Leute trifft.",
+        "Answer5": "A) Man kann jederzeit bequem von zu Hause bestellen.",
+        "Answer6": "B) Man muss ein paar Tage auf die Lieferung warten.",
+        "Answer7": "B) Weil man dort gute Qualität und persönliche Beratung bekommt."
       },
       "teil4": {
-        "Answer1": "B) Bequeme Möglichkeit Produkte nach Hause zu bestellen",
-        "Answer2": "B) Hohe Anzahl von Rücksendungen und Umweltbelastung",
-        "Answer3": "A) Auf vertrauenswürdige Websites und Schutz persönlicher Daten",
-        "Answer4": "A) Aus nachhaltigen Quellen und fairen Bedingungen",
-        "Answer5": "B) Es hat den Konsum revolutioniert und neue Möglichkeiten geschaffen"
+        "Answer1": "B) Auf dem Wochenmarkt.",
+        "Answer2": "C) Kurz vor zwei Uhr.",
+        "Answer3": "A) Er ist billig und lange geöffnet.",
+        "Answer4": "B) Im Geschäft.",
+        "Answer5": "C) Bar."
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1OaEeNnHmG3brY-OhbHDpFmj86YUMLIqzMOEAlpAcnFE/gviz/tq?tqx=out:html&sheet=Key",
