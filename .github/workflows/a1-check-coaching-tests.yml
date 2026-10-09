@@ -10,6 +10,11 @@ on:
       - "src/data/a1CheckCoaching.js"
       - "src/data/a1LearningPath.js"
       - "src/data/a1SlideReview.js"
+      - "src/data/a1Days1To5Understanding.js"
+      - "src/data/a1GrammarChecks.js"
+      - "scripts/patchA1Day2ContactChallenge.mjs"
+      - "tests/a1-presenter-topic-integrity.test.js"
+      - "tests/a1-slide-quality-audit.test.js"
       - "src/data/a1PresenterUnderstandingChecks.js"
       - "src/data/a1GrammarChecks.js"
       - "src/data/a1TopicTeacherSupport.js"
@@ -18,6 +23,8 @@ on:
       - "tests/a1-check-coaching.test.js"
       - "tests/a1-learning-path.test.js"
       - "tests/a1-slide-review.test.js"
+      - "tests/a1-days1-to5-understanding.test.js"
+      - "scripts/auditA1Days1To5Slides.mjs"
       - ".github/workflows/a1-check-coaching-tests.yml"
   push:
     branches: [main]
@@ -29,6 +36,11 @@ on:
       - "src/data/a1CheckCoaching.js"
       - "src/data/a1LearningPath.js"
       - "src/data/a1SlideReview.js"
+      - "src/data/a1Days1To5Understanding.js"
+      - "src/data/a1GrammarChecks.js"
+      - "scripts/patchA1Day2ContactChallenge.mjs"
+      - "tests/a1-presenter-topic-integrity.test.js"
+      - "tests/a1-slide-quality-audit.test.js"
       - "src/data/a1PresenterUnderstandingChecks.js"
       - "src/data/a1GrammarChecks.js"
       - "src/data/a1TopicTeacherSupport.js"
@@ -37,6 +49,8 @@ on:
       - "tests/a1-check-coaching.test.js"
       - "tests/a1-learning-path.test.js"
       - "tests/a1-slide-review.test.js"
+      - "tests/a1-days1-to5-understanding.test.js"
+      - "scripts/auditA1Days1To5Slides.mjs"
       - ".github/workflows/a1-check-coaching-tests.yml"
   workflow_dispatch:
 
@@ -54,8 +68,10 @@ jobs:
       - name: Apply normal build-time source synchronisation
         run: npm run sync:build
       - name: Test A1 scaffolds and existing grammar-diagnostic contract
-        run: node --test tests/a1-check-coaching.test.js tests/a1-learning-path.test.js tests/a1-slide-review.test.js tests/a1-grammar-diagnostic-presenter.test.js tests/a1-presenter-class-understanding.test.js
+        run: node --test tests/a1-check-coaching.test.js tests/a1-learning-path.test.js tests/a1-slide-review.test.js tests/a1-days1-to5-understanding.test.js tests/a1-grammar-diagnostic-presenter.test.js tests/a1-presenter-class-understanding.test.js tests/a1-presenter-topic-integrity.test.js tests/a1-slide-quality-audit.test.js tests/a1-lesson9-topic-clarity.test.js
       - name: Audit each A1 lesson's question-specific guidance
         run: node scripts/auditA1CheckCoaching.mjs
+      - name: Audit every A1 Day 1–5 lesson, answer and assignment route
+        run: node scripts/auditA1Days1To5Slides.mjs
       - name: Compile Admin frontend
         run: npx vite build
