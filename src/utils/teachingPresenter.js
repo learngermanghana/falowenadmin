@@ -283,6 +283,19 @@ function advancedWarmupFollowUpDe(question = "", level = "") {
   return warmupFollowUpDe(question);
 }
 
+function c2GroundedWarmupFollowUp(slide = {}, question = "", index = 0) {
+  const foundation = getPresenterTopicFoundation(slide) || {};
+  const tension = String(foundation.tension || "").trim();
+  const core = String(foundation.question || "").trim();
+  const example = String(foundation.example || "").trim();
+  // Use the current lesson's authored conceptual anchor; never add a
+  // misleading unrelated generic follow-up.
+  if (index % 3 === 0 && tension) return `Welche Konsequenz hat für deine Antwort diese Kernspannung: ${tension}`;
+  if (index % 3 === 1 && example) return `Wende deine Aussage auf dieses Beispiel an: ${example}`;
+  if (core && core !== question) return `Wie hängt deine Antwort mit der Kernfrage zusammen: ${core}`;
+  return advancedWarmupFollowUpDe(question, "C2");
+}
+
 function buildWarmupQuestionSupport(slide = {}) {
   const level = classroomLevel(slide);
   if (!WARMUP_SUPPORT_LEVELS.has(level)) return [];
@@ -291,7 +304,7 @@ function buildWarmupQuestionSupport(slide = {}) {
     keywords: warmupKeywords(question),
     hintEn: ["B2", "C1", "C2"].includes(level) ? advancedWarmupHintEn(question, level) : warmupHintEn(question),
     answerStarterDe: ["B2", "C1", "C2"].includes(level) ? advancedWarmupStarterDe(level, question) : warmupAnswerStarterDe(question),
-    followUpDe: level === "A2" ? getA2WarmupFollowUp(slide.assignmentId, question) : level === "B1" ? getB1WarmupFollowUp(slide.assignmentId, question) : (["B2", "C1", "C2"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question)),
+    followUpDe: level === "A2" ? getA2WarmupFollowUp(slide.assignmentId, question) : level === "B1" ? getB1WarmupFollowUp(slide.assignmentId, question) : (level === "C2" ? c2GroundedWarmupFollowUp(slide, question, index) : (["B2", "C1"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question))),
     difficulty: warmupDifficulty(index, questions.length),
   }));
 }
@@ -484,7 +497,7 @@ function buildVocabularyGapItems(items = [], level = "", assignmentId = "") {
       modelExample: (isA2 || isB1) && item.example ? item.example : "",
       followUp: isA2
         ? "Antworte jetzt laut auf die Frage und benutze die passende Formulierung."
-        : (isB1 ? "Antworte auf die Frage mit dem passenden Redemittel und begründe danach kurz deine Formulierung." : ""),
+        : (isB1 ? "Antworte auf die Frage mit dem passenden Redemittel und begründe danach kurz deine Formulierung." : (normalizedLevel === "C2" ? "Begründe die Kollokation im gegebenen Register und formuliere eine ebenso präzise Alternative. Achte auf Bedeutungsunterschiede." : "")),
     });
 
     if (challenges.length >= 4) break;
