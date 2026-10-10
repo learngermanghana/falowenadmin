@@ -71,6 +71,23 @@ function classIdOf(entry = {}) {
   return normalize(entry.classId || entry.name || entry.id);
 }
 
+function preferredPresenterClassId(options = [], search = "") {
+  const params = new URLSearchParams(search);
+  const candidates = [params.get("classRecordId"), params.get("classId")].map(normalize).filter(Boolean);
+  for (const candidate of candidates) {
+    const matched = options.find((entry) =>
+      [entry.classRecordId, entry.id, entry.classId, entry.name].some((value) => normalize(value) === candidate));
+    if (matched) return classIdOf(matched);
+  }
+  const sessionName = normalize(params.get("sessionId")).replace(/_\d{4}-\d{2}-\d{2}_\d{4}$/, "").replace(/_/g, " ");
+  if (sessionName) {
+    const matched = options.find((entry) => [entry.classId, entry.name]
+      .some((value) => lower(value) === lower(sessionName)));
+    if (matched) return classIdOf(matched);
+  }
+  return "";
+}
+
 function classMatchesCourse(entry = {}, course = "") {
   const expected = normalize(course).toUpperCase();
   if (!expected) return true;
@@ -239,6 +256,7 @@ export default function PresenterStudentPicker({
 }) {
   const [classOptions, setClassOptions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState(() => safeStorageGet(LAST_CLASS_KEY));
+  const initialClassSearch = useRef(typeof window === "undefined" ? "" : window.location.search);
   const [students, setStudents] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -314,7 +332,11 @@ export default function PresenterStudentPicker({
   useEffect(() => {
     if (!matchingClasses.length) return;
     const validSelection = matchingClasses.some((entry) => classIdOf(entry) === selectedClassId);
-    if (!validSelection) setSelectedClassId(classIdOf(matchingClasses[0]));
+    const linkedClassId = preferredPresenterClassId(matchingClasses, initialClassSearch.current);
+    if (linkedClassId && selectedClassId !== linkedClassId && !initialClassSearch.current.includes("pickerClassOverride=1")) {
+      setSelectedClassId(linkedClassId);
+      initialClassSearch.current = ""; // respect subsequent manual class selection
+    } else if (!validSelection) setSelectedClassId(classIdOf(matchingClasses[0]));
   }, [matchingClasses, selectedClassId]);
 
   useEffect(() => {
@@ -359,7 +381,10 @@ export default function PresenterStudentPicker({
         setStudents(safeRows);
 
         try {
-          const cloud = await getCurrentClassParticipationSession({ classId: selectedClassId, assignmentId, sessionDate });
+          const cloud = await Promise.race([
+            getCurrentClassParticipationSession({ classId: selectedClassId, assignmentId, sessionDate }),
+            new Promise((_, reject) => window.setTimeout(() => reject(new Error("Participation sync timeout")), 8000)),
+          ]);
           if (cancelled || restoreSequence.current !== restoreId) return;
           if (cloud?.session) {
             const restored = cloudStateFromRecords(cloud.records, rosterEntries(safeRows));
