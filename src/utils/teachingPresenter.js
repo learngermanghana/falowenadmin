@@ -1895,7 +1895,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Warm-up",
         title: "Warm-up · Position aktivieren",
         items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
-        questionSupport: buildWarmupQuestionSupport(slide),
+        questionSupport: [],
         suggestedMinutes: 5,
         timingMode: "per-student",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
