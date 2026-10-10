@@ -1,3 +1,4 @@
+import { loadStudentSubmissionsWithSelection } from "../utils/selectedStudentSubmissions.js";
 import { markingConsistencyWarnings, reconcileMarkingQuality } from "../utils/markingQuality.js";
 import "./MarkingPage.css";
 import { answerKeyComparison, feedbackWordCount } from "../utils/markingWorkspace.js";
@@ -193,6 +194,7 @@ export default function MarkingPage() {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   const [selectedStudentId, setSelectedStudentId] = useState("");
+  const selectedQueueSubmissionRef = useRef(null);
   const [referenceAssignment, setReferenceAssignment] = useState(() => {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(REFERENCE_ASSIGNMENT_STORAGE_KEY) || "";
@@ -289,11 +291,15 @@ export default function MarkingPage() {
     }
 
     let cancelled = false;
+    const queueSelection = selectedQueueSubmissionRef.current;
+    const exactPath = queueSelection?.studentId === selectedStudentId ? queueSelection.path : "";
     setSubmissions([]);
     (async () => {
       setLoadingSubmissions(true);
       try {
-        const submissionRows = await fetchSubmissions(selectedStudent.level, selectedStudent.studentCode);
+        const submissionRows = await loadStudentSubmissionsWithSelection({
+          student: selectedStudent, exactPath, fetchSubmissions, fetchSubmissionByPath,
+        });
         if (!cancelled) setSubmissions(submissionRows);
       } catch (err) {
         if (!cancelled) error(err?.message || "Failed to load student submissions");
@@ -366,7 +372,9 @@ export default function MarkingPage() {
     return exact || null;
   }, [studentSubmissions, referenceAssignment, referenceEntries]);
 
-  const selectedSubmission = studentSubmissions.find((row) => (row.path || row.id) === selectedAttemptPath) || latestSubmission;
+  const selectedSubmission = selectedAttemptPath
+    ? studentSubmissions.find((row) => (row.path || row.id) === selectedAttemptPath) || null
+    : latestSubmission;
 
   useEffect(() => {
     if (!selectedSubmission) return;
@@ -410,6 +418,7 @@ export default function MarkingPage() {
     setDeletingSubmissionPath(row.path);
     try {
       await deleteSubmission(row.path);
+      if (selectedQueueSubmissionRef.current?.path === row.path) selectedQueueSubmissionRef.current = null;
       setSubmissionNotifications((previous) => previous.filter((item) => item.path !== row.path));
       setSubmissions((previous) => previous.filter((item) => item.path !== row.path));
       if (selectedSubmission?.path === row.path) setSelectedAttemptPath("");
@@ -596,6 +605,7 @@ export default function MarkingPage() {
       return;
     }
 
+    selectedQueueSubmissionRef.current = { studentId: matchingStudent.id, path: submission.path || "" };
     setSelectedAttemptPath(submission.path || submission.id);
     setSubmissions(freshRows);
     setSelectedStudentId(matchingStudent.id);
