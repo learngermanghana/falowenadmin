@@ -16,3 +16,12 @@ test("marking does not overwrite user-updated answer keys from GitHub manifest",
   assert.match(marking, /Existing edited answers were preserved/);
   assert.match(marking, /keyComparison === "missing"/);
 });
+
+test("empty registry shells block AI marking and never display metadata dumps", () => {
+  assert.match(marking, /scorableSavedKey\(matchingRegistry\)/);
+  assert.match(marking, /scorableSavedKey\(registryEntry\)/);
+  assert.match(marking, /if \(!registryEntry\) throw new Error/);
+  assert.match(marking, /if \(scorableSavedKey\(active\)\) return renderSavedAnswerKey\(active\)/);
+  assert.match(marking, /entry\.rawAnswers/);
+  assert.match(marking, /item\?\.rawCorrectAnswer/);
+});
