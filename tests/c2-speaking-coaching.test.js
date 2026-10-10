@@ -30,15 +30,12 @@ test("C2 coaching is absent rather than fabricated for missing models", () => {
   assert.deepEqual(buildC2SpeakingCoaching({ ...slide, course: "B1" }, slide.studentQuestionsDe), []);
 });
 
-test("C2 warm-up follow-ups use the day's own conceptual foundation", () => {
+test("C2 retains curated warm-up and includes register transfer for vocabulary", () => {
   for (const lesson of getSlidesByCourse("C2")) {
     const stages = buildTeachingPresenterStages(lesson, lesson.topic);
     const warmup = stages.find((stage) => stage.id === "warmup");
-    assert.ok(warmup?.questionSupport?.length, lesson.assignmentId);
-    for (const item of warmup.questionSupport) {
-      assert.ok(item.followUpDe?.trim(), lesson.assignmentId);
-      assert.ok(item.answerStarterDe?.trim(), lesson.assignmentId);
-    }
+    assert.equal(warmup.items.length, 3, lesson.assignmentId);
+    assert.deepEqual(warmup.questionSupport, [], lesson.assignmentId);
     const vocabulary = stages.find((stage) => stage.id === "phrases");
     assert.ok(vocabulary, lesson.assignmentId);
     for (const challenge of vocabulary.challengeItems || []) {
