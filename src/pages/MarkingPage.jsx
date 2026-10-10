@@ -8,7 +8,7 @@ import { getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { createMarkingJob, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
+import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
 import { syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
@@ -22,6 +22,13 @@ const DEFAULT_REFERENCE_LINK =
 const REFERENCE_ASSIGNMENT_STORAGE_KEY = "marking.referenceAssignment";
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function isSelfPracticeSubmission(row = {}) {
+  const raw = row.raw || {};
+  return raw.isSelfPractice === true || raw.selfPractice === true
+    || [raw.submissionType, raw.practiceType, raw.source, raw.assignmentType, row.assignmentType]
+      .some((value) => /^(self[-_ ]?practice|self[-_ ]?study)$/i.test(String(value || "").trim()));
 }
 
 function normalizeStudentCode(value) {
@@ -178,6 +185,7 @@ export default function MarkingPage() {
   const [submissions, setSubmissions] = useState([]);
   const [submissionNotifications, setSubmissionNotifications] = useState([]);
   const [attemptSearch, setAttemptSearch] = useState("");
+  const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
   const [selectedAttemptPath, setSelectedAttemptPath] = useState("");
   const feedbackLimit = "40";
   const [qualityAcknowledgement, setQualityAcknowledgement] = useState("");
@@ -396,6 +404,22 @@ export default function MarkingPage() {
     return stillNeedsMarking
       && (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)));
   });
+  const handleDeleteSelfPractice = async (row) => {
+    if (!isSelfPracticeSubmission(row) || !row.path || deletingSubmissionPath) return;
+    if (!window.confirm(`Permanently delete this self-practice submission from ${row.studentName || row.studentCode || "the student"}? This cannot be undone.`)) return;
+    setDeletingSubmissionPath(row.path);
+    try {
+      await deleteSubmission(row.path);
+      setSubmissionNotifications((previous) => previous.filter((item) => item.path !== row.path));
+      setSubmissions((previous) => previous.filter((item) => item.path !== row.path));
+      if (selectedSubmission?.path === row.path) setSelectedAttemptPath("");
+      success("Self-practice submission deleted.");
+    } catch (exception) {
+      error(exception?.message || "Could not delete this self-practice submission.");
+    } finally {
+      setDeletingSubmissionPath("");
+    }
+  };
   const reviewIdentity = JSON.stringify([selectedStudentId, selectedSubmission?.path, selectedSubmission?.id, referenceAssignment]);
   const reviewIdentityRef = useRef(reviewIdentity);
   reviewIdentityRef.current = reviewIdentity;
@@ -912,18 +936,26 @@ export default function MarkingPage() {
             />
             <div className="marking-queue-list">
               {queueRows.map((row) => (
-                <button
-                  className="marking-queue-item"
-                  type="button"
-                  aria-pressed={(row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id)}
-                  key={row.path || row.id}
-                  disabled={autoMarking || savingScore || workflowSaving}
-                  onClick={() => void handleSelectFromNotification(row)}
-                >
-                  <strong>{row.studentName || row.studentCode || "Student"}</strong>
-                  <span>{row.assignment || row.assignmentId || "Unknown assignment"}</span>
-                  <small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small>
-                </button>
+                <div className="marking-queue-row" key={row.path || row.id}>
+                  <button
+                    className="marking-queue-item"
+                    type="button"
+                    aria-pressed={(row.path || row.id) === (selectedSubmission?.path || selectedSubmission?.id)}
+                    disabled={autoMarking || savingScore || workflowSaving || Boolean(deletingSubmissionPath)}
+                    onClick={() => void handleSelectFromNotification(row)}
+                  >
+                    <strong>{row.studentName || row.studentCode || "Student"}</strong>
+                    <span>{row.assignment || row.assignmentId || "Unknown assignment"}</span>
+                    <small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small>
+                  </button>
+                  {isSelfPracticeSubmission(row) && row.path ? (
+                    <button type="button" className="marking-queue-delete" disabled={autoMarking || savingScore || workflowSaving || Boolean(deletingSubmissionPath)}
+                      onClick={() => void handleDeleteSelfPractice(row)}
+                      aria-label={`Delete self-practice submission for ${row.studentName || row.studentCode || "student"}`}>
+                      {deletingSubmissionPath === row.path ? "Deleting…" : "Delete"}
+                    </button>
+                  ) : null}
+                </div>
               ))}
               {!queueRows.length ? <p className="marking-empty">No submissions match this filter.</p> : null}
             </div>
