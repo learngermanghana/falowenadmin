@@ -140,3 +140,21 @@ test("mixed feedback is a single paragraph without an assigned practice task", (
   assert.match(result.feedback, /weil ich meiner Familie helfen möchte/);
   assert.match(result.feedback, /Teil 3: 1\/1 correct\. Teil 4: 1\/1 correct\./);
 });
+
+test("keeps actionable next-step corrections, without assigning exercises", () => {
+  const result = reconcileMarkingQuality({
+    feedback: "Your email has a clear purpose. Next step: check the verb position in subordinate clauses.",
+    writingScorePercent: 80, finalScore: 85,
+  }, objective, {}, { writingExpected: true });
+  assert.match(result.feedback, /Next step: check the verb position in subordinate clauses/);
+  assert.match(result.feedback, /Teil 3: 1\/1 correct/);
+});
+
+test("retains the fifth sentence when it contains the only correction", () => {
+  const fiveSentences = "You covered every task point. Your greeting fits the recipient. The email is coherent. Your vocabulary is varied. Check the verb position after weil.";
+  const result = reconcileMarkingQuality({
+    feedback: fiveSentences, writingScorePercent: 87, finalScore: 90,
+  }, objective, {}, { writingExpected: true });
+  assert.match(result.feedback, /Check the verb position after weil/);
+  assert.match(result.feedback, /Teil 4: 1\/1 correct/);
+});
