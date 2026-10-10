@@ -8,7 +8,7 @@ import { getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { createMarkingJob, deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
+import { createMarkingJob, deleteSubmission, fetchSubmissionByPath, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
 import { syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
@@ -27,7 +27,7 @@ function normalize(value) {
 function isSelfPracticeSubmission(row = {}) {
   const raw = row.raw || {};
   return raw.isSelfPractice === true || raw.selfPractice === true
-    || [raw.submissionType, raw.practiceType, raw.source, raw.assignmentType, row.assignmentType]
+    || [raw.submissionType, raw.practiceType, raw.source, raw.assignmentType, row.assignmentType, raw.assignment, raw.assignmentName, row.assignment]
       .some((value) => /^(self[-_ ]?practice|self[-_ ]?study)$/i.test(String(value || "").trim()));
 }
 
@@ -420,6 +420,20 @@ export default function MarkingPage() {
       setDeletingSubmissionPath("");
     }
   };
+  const handleRemoveFromQueue = async (row) => {
+    if (!row.path || deletingSubmissionPath) return;
+    if (!window.confirm("Remove this submission from the marking queue? The student's submitted work will be kept.")) return;
+    setDeletingSubmissionPath(row.path);
+    try {
+      await hideSubmissionFromQueue(row.path);
+      setSubmissionNotifications((previous) => previous.filter((item) => item.path !== row.path));
+      success("Submission removed from the queue. The student's work was preserved.");
+    } catch (exception) {
+      error(exception?.message || "Could not remove this submission.");
+    } finally {
+      setDeletingSubmissionPath("");
+    }
+  };
   const reviewIdentity = JSON.stringify([selectedStudentId, selectedSubmission?.path, selectedSubmission?.id, referenceAssignment]);
   const reviewIdentityRef = useRef(reviewIdentity);
   reviewIdentityRef.current = reviewIdentity;
@@ -560,20 +574,25 @@ export default function MarkingPage() {
     }
 
     let freshRows = [];
+    let selectedFreshRow = null;
     try {
+      // Queue rows may come from collection-group posts or nested submissions.
+      // Student-level fetches do not cover all these collections.
+      selectedFreshRow = submission.path ? await fetchSubmissionByPath(submission.path) : null;
       freshRows = await fetchSubmissions(matchingStudent.level, matchingStudent.studentCode);
     } catch (err) {
       error(err?.message || "Failed to verify this submission before loading.");
       return;
     }
-
+    if (selectedFreshRow && !freshRows.some((row) => row.path === selectedFreshRow.path)) {
+      freshRows.unshift(selectedFreshRow);
+    }
     const submissionStillExists = submission.path
-      ? freshRows.some((row) => row.path === submission.path)
+      ? Boolean(selectedFreshRow)
       : freshRows.some((row) => normalize(row.assignment) === normalize(submission.assignment));
-
     if (!submissionStillExists) {
       setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
-      error("This submission no longer exists (it may already be deleted).");
+      error("This submission no longer exists. It has been removed from this queue view.");
       return;
     }
 
@@ -948,11 +967,11 @@ export default function MarkingPage() {
                     <span>{row.assignment || row.assignmentId || "Unknown assignment"}</span>
                     <small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small>
                   </button>
-                  {isSelfPracticeSubmission(row) && row.path ? (
+                  {row.path ? (
                     <button type="button" className="marking-queue-delete" disabled={autoMarking || savingScore || workflowSaving || Boolean(deletingSubmissionPath)}
-                      onClick={() => void handleDeleteSelfPractice(row)}
-                      aria-label={`Delete self-practice submission for ${row.studentName || row.studentCode || "student"}`}>
-                      {deletingSubmissionPath === row.path ? "Deleting…" : "Delete"}
+                      onClick={() => void (isSelfPracticeSubmission(row) ? handleDeleteSelfPractice(row) : handleRemoveFromQueue(row))}
+                      aria-label={`${isSelfPracticeSubmission(row) ? "Delete self-practice submission" : "Remove submission from queue"} for ${row.studentName || row.studentCode || "student"}`}>
+                      {deletingSubmissionPath === row.path ? "Working…" : isSelfPracticeSubmission(row) ? "Delete" : "Remove"}
                     </button>
                   ) : null}
                 </div>
