@@ -992,7 +992,7 @@ export default function MarkingPage() {
                   </button>
                   {(
                     <button type="button" className="marking-queue-delete" disabled={autoMarking || savingScore || workflowSaving || Boolean(deletingSubmissionPath)}
-                      onClick={() => void (isSelfPracticeSubmission(row) ? handleDeleteSelfPractice(row) : handleRemoveFromQueue(row))}
+                      onClick={() => void (isSelfPracticeSubmission(row) && row.path ? handleDeleteSelfPractice(row) : handleRemoveFromQueue(row))}
                       aria-label={`${isSelfPracticeSubmission(row) && row.path ? "Delete self-practice submission" : "Remove submission from queue"} for ${row.studentName || row.studentCode || "student"}`}>
                       {deletingSubmissionPath === queueRowKey(row) ? "Working…" : isSelfPracticeSubmission(row) && row.path ? "Delete" : "Remove"}
                     </button>
