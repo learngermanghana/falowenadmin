@@ -750,7 +750,7 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
     submissionText,
     objectiveFeedbackContext,
     feedbackWordTarget,
-    feedbackInstruction: `${AI_FEEDBACK_INSTRUCTION} Keep writing feedback separate from objective results. Use the exact task points and CEFR level; do not expect advanced language from A1 students. Every writing correction must quote text actually present in this submission and provide a correction. Explain material deductions using task-point evidence and specific language issues. Do not invent missing task points or objective mistakes. ${feedbackWordTarget ? `Aim for ${feedbackWordTarget} words without dropping essential corrections.` : ""}`,
+    feedbackInstruction: `${AI_FEEDBACK_INSTRUCTION} Write the writing-specific portion only; the system will combine it with verified objective scores into one short student-facing paragraph. Do not repeat objective results or writing score. Do not assign follow-up practice. Use the exact task points and CEFR level; do not expect advanced language from A1 students. Every writing correction must quote text actually present in this submission and provide a correction. Explain material deductions using task-point evidence and specific language issues. Do not invent missing task points or objective mistakes. ${feedbackWordTarget ? `Aim for ${feedbackWordTarget} words without dropping essential corrections.` : ""}`,
   };
 
   const res = await fetch("/api/marking/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });

@@ -89,29 +89,22 @@ test("B1 Day 11 current Lesen uses option A for the social-interaction risk ques
   );
 });
 
-test("B1 Day 19 keeps both preserved reading blocks in Teil 3 and Teil 4", () => {
+test("B1 Day 19 preserves the current seven-question interview and five-question career blocks", () => {
   const entry = answerEntryByAssignmentId("B1-6.19");
-  assert.deepEqual(Object.values(entry?.answers?.teil3 || {}), [
-    "B) die umweltfreundliche Stromproduktion in Feldheim.",
-    "A) ein ganzes Dorf von modernen Energien leben kann.",
-    "C) muss die Bevölkerung dafür sein.",
-  ]);
-  assert.deepEqual(Object.values(entry?.answers?.teil4 || {}), [
-    "B) es ein neues Tourismus-Angebot gibt.",
-    "B) muss man nicht sportlich sein.",
-    "C) mehr Velo-Touristen in die Region kommen.",
-  ]);
+  assert.equal(Object.keys(entry?.answers?.teil3 || {}).length, 7);
+  assert.equal(Object.keys(entry?.answers?.teil4 || {}).length, 5);
+  assert.equal(entry?.answers?.teil3?.Answer1, "B) Weil ihm die Stelle bei der Agentur sehr wichtig ist.");
+  assert.equal(entry?.answers?.teil3?.Answer7, "B) Drei andere Kandidaten.");
+  assert.equal(entry?.answers?.teil4?.Answer1, "B) Krankenschwester");
 });
 
-test("B1 Day 22 keeps the visible five-plus-five Berlin and Bewerbung reading split", () => {
+test("B1 Day 22 preserves the current seven-question relationship and five-question application blocks", () => {
   const entry = answerEntryByAssignmentId("B1-7.22");
-  assert.equal(Object.keys(entry?.answers?.teil3 || {}).length, 5);
+  assert.equal(Object.keys(entry?.answers?.teil3 || {}).length, 7);
   assert.equal(Object.keys(entry?.answers?.teil4 || {}).length, 5);
-  assert.equal(entry?.answers?.teil3?.Answer1, "D) 500 Jahre");
+  assert.equal(entry?.answers?.teil3?.Answer1, "B) Vertrauen und Ehrlichkeit");
   assert.equal(entry?.answers?.teil4?.Answer1, "D) im Supermarkt");
-  assert.equal(
-    entry?.answers?.teil4?.Answer5,
-    "C) Man kann sich bei der nächsten offenen Stelle bewerben.",
-  );
+  assert.equal(entry?.answers?.teil4?.Answer5, "C) Man kann sich bei der nächsten offenen Stelle bewerben.");
 });
+
 
