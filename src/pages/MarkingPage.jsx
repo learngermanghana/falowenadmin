@@ -1,3 +1,6 @@
+const queueRowKey = (row) => String(row?.path || row?.id || [row?.studentCode, row?.studentName, row?.assignmentId || row?.assignment, row?.submittedAt || row?.createdAt || ""].join("|"));
+const QUEUE_HIDDEN_STORAGE = "falowen-admin-queue-hidden-v1";
+const readHiddenQueue = () => { try { return JSON.parse(window.localStorage.getItem(QUEUE_HIDDEN_STORAGE) || "[]"); } catch { return []; } };
 import { loadStudentSubmissionsWithSelection } from "../utils/selectedStudentSubmissions.js";
 import { markingConsistencyWarnings, reconcileMarkingQuality } from "../utils/markingQuality.js";
 import "./MarkingPage.css";
@@ -185,6 +188,16 @@ export default function MarkingPage() {
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [submissionNotifications, setSubmissionNotifications] = useState([]);
+  const [hiddenQueueKeys, setHiddenQueueKeys] = useState(readHiddenQueue);
+  const dismissQueueRow = (row) => {
+    const key = queueRowKey(row);
+    setHiddenQueueKeys((previous) => {
+      const next = [...new Set([...previous, key])];
+      window.localStorage.setItem(QUEUE_HIDDEN_STORAGE, JSON.stringify(next));
+      return next;
+    });
+    setSubmissionNotifications((previous) => previous.filter((item) => queueRowKey(item) !== key));
+  };
   const [attemptSearch, setAttemptSearch] = useState("");
   const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
   const [selectedAttemptPath, setSelectedAttemptPath] = useState("");
@@ -409,7 +422,7 @@ export default function MarkingPage() {
     const search = normalize(attemptSearch);
     const status = normalize(row.markingStatus || row.status || "pending");
     const stillNeedsMarking = !["marked", "sent"].includes(status);
-    return stillNeedsMarking
+    return stillNeedsMarking && !hiddenQueueKeys.includes(queueRowKey(row))
       && (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)));
   });
   const handleDeleteSelfPractice = async (row) => {
@@ -419,7 +432,7 @@ export default function MarkingPage() {
     try {
       await deleteSubmission(row.path);
       if (selectedQueueSubmissionRef.current?.path === row.path) selectedQueueSubmissionRef.current = null;
-      setSubmissionNotifications((previous) => previous.filter((item) => item.path !== row.path));
+      dismissQueueRow(row);
       setSubmissions((previous) => previous.filter((item) => item.path !== row.path));
       if (selectedSubmission?.path === row.path) setSelectedAttemptPath("");
       success("Self-practice submission deleted.");
@@ -430,12 +443,12 @@ export default function MarkingPage() {
     }
   };
   const handleRemoveFromQueue = async (row) => {
-    if (!row.path || deletingSubmissionPath) return;
+    if (deletingSubmissionPath) return;
     if (!window.confirm("Remove this submission from the marking queue? The student's submitted work will be kept.")) return;
-    setDeletingSubmissionPath(row.path);
+    setDeletingSubmissionPath(queueRowKey(row));
     try {
-      await hideSubmissionFromQueue(row.path);
-      setSubmissionNotifications((previous) => previous.filter((item) => item.path !== row.path));
+      if (row.path) await hideSubmissionFromQueue(row.path);
+      dismissQueueRow(row);
       success("Submission removed from the queue. The student's work was preserved.");
     } catch (exception) {
       error(exception?.message || "Could not remove this submission.");
@@ -577,7 +590,7 @@ export default function MarkingPage() {
     const matchingStudent = findRosterMatchForSubmission(roster, submission);
 
     if (!matchingStudent) {
-      setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
+      dismissQueueRow(submission);
       error("Student for this submission was not found in the roster.");
       return;
     }
@@ -600,7 +613,7 @@ export default function MarkingPage() {
       ? Boolean(selectedFreshRow)
       : freshRows.some((row) => normalize(row.assignment) === normalize(submission.assignment));
     if (!submissionStillExists) {
-      setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
+      dismissQueueRow(submission);
       error("This submission no longer exists. It has been removed from this queue view.");
       return;
     }
@@ -977,11 +990,11 @@ export default function MarkingPage() {
                     <span>{row.assignment || row.assignmentId || "Unknown assignment"}</span>
                     <small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small>
                   </button>
-                  {row.path ? (
+                  {(
                     <button type="button" className="marking-queue-delete" disabled={autoMarking || savingScore || workflowSaving || Boolean(deletingSubmissionPath)}
                       onClick={() => void (isSelfPracticeSubmission(row) ? handleDeleteSelfPractice(row) : handleRemoveFromQueue(row))}
                       aria-label={`${isSelfPracticeSubmission(row) ? "Delete self-practice submission" : "Remove submission from queue"} for ${row.studentName || row.studentCode || "student"}`}>
-                      {deletingSubmissionPath === row.path ? "Working…" : isSelfPracticeSubmission(row) ? "Delete" : "Remove"}
+                      {deletingSubmissionPath === queueRowKey(row) ? "Working…" : isSelfPracticeSubmission(row) ? "Delete" : "Remove"}
                     </button>
                   ) : null}
                 </div>
