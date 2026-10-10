@@ -1601,6 +1601,21 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   </article>
                 ) : null}
               </div>
+              {stage.seminarCoaching ? (
+                <details className="presenter-advanced-models">
+                  <summary>Sprachhilfe zur Seminarfrage</summary>
+                  <p>{stage.seminarCoaching.hintDe}</p>
+                </details>
+              ) : null}
+              {c2AnalysisStep >= 2 && stage.seminarCoaching ? (
+                <details className="presenter-advanced-models">
+                  <summary>Lehrerfeedback nach der Antwort</summary>
+                  <ul>{stage.seminarCoaching.taskChecksDe.map((check) => <li key={check}>{check}</li>)}</ul>
+                  <p><strong>Modellgedanke:</strong> {stage.seminarCoaching.referenceIdeaDe}</p>
+                  <p><strong>Zweiter Versuch:</strong> {stage.seminarCoaching.retryDe}</p>
+                  <small>Erst die Antwort anhören. Das ist eine Lehrhilfe, keine automatische Bewertung.</small>
+                </details>
+              ) : null}
               {c2AnalysisStep < 2 ? (
                 <button
                   type="button"

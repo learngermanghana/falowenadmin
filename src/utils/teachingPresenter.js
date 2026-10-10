@@ -12,6 +12,7 @@ import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1Present
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { getSpeakingDifficultySelection } from "../data/presenterSpeakingDifficulty.js";
 import { buildA2B1SpeakingCoaching } from "../data/a2B1SpeakingCoaching.js";
+import { buildC2SpeakingCoaching } from "../data/c2SpeakingCoaching.js";
 import { buildCourseBookBridgeItems, getCurriculumParityReference } from "../data/studentCurriculumParity.js";
 
 const A1_PRESENTER_V2_EXCLUDED_ASSIGNMENTS = new Set(["A1-TUTORIAL"]);
@@ -282,6 +283,19 @@ function advancedWarmupFollowUpDe(question = "", level = "") {
   return warmupFollowUpDe(question);
 }
 
+function c2GroundedWarmupFollowUp(slide = {}, question = "", index = 0) {
+  const foundation = getPresenterTopicFoundation(slide) || {};
+  const tension = String(foundation.tension || "").trim();
+  const core = String(foundation.question || "").trim();
+  const example = String(foundation.example || "").trim();
+  // Use the current lesson's authored conceptual anchor; never add a
+  // misleading unrelated generic follow-up.
+  if (index % 3 === 0 && tension) return `Welche Konsequenz hat für deine Antwort diese Kernspannung: ${tension}`;
+  if (index % 3 === 1 && example) return `Wende deine Aussage auf dieses Beispiel an: ${example}`;
+  if (core && core !== question) return `Wie hängt deine Antwort mit der Kernfrage zusammen: ${core}`;
+  return advancedWarmupFollowUpDe(question, "C2");
+}
+
 function buildWarmupQuestionSupport(slide = {}) {
   const level = classroomLevel(slide);
   if (!WARMUP_SUPPORT_LEVELS.has(level)) return [];
@@ -290,7 +304,7 @@ function buildWarmupQuestionSupport(slide = {}) {
     keywords: warmupKeywords(question),
     hintEn: ["B2", "C1", "C2"].includes(level) ? advancedWarmupHintEn(question, level) : warmupHintEn(question),
     answerStarterDe: ["B2", "C1", "C2"].includes(level) ? advancedWarmupStarterDe(level, question) : warmupAnswerStarterDe(question),
-    followUpDe: level === "A2" ? getA2WarmupFollowUp(slide.assignmentId, question) : level === "B1" ? getB1WarmupFollowUp(slide.assignmentId, question) : (["B2", "C1", "C2"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question)),
+    followUpDe: level === "A2" ? getA2WarmupFollowUp(slide.assignmentId, question) : level === "B1" ? getB1WarmupFollowUp(slide.assignmentId, question) : (level === "C2" ? c2GroundedWarmupFollowUp(slide, question, index) : (["B2", "C1"].includes(level) ? advancedWarmupFollowUpDe(question, level) : warmupFollowUpDe(question))),
     difficulty: warmupDifficulty(index, questions.length),
   }));
 }
@@ -483,7 +497,7 @@ function buildVocabularyGapItems(items = [], level = "", assignmentId = "") {
       modelExample: (isA2 || isB1) && item.example ? item.example : "",
       followUp: isA2
         ? "Antworte jetzt laut auf die Frage und benutze die passende Formulierung."
-        : (isB1 ? "Antworte auf die Frage mit dem passenden Redemittel und begründe danach kurz deine Formulierung." : ""),
+        : (isB1 ? "Antworte auf die Frage mit dem passenden Redemittel und begründe danach kurz deine Formulierung." : (normalizedLevel === "C2" ? "Begründe die Kollokation im gegebenen Register und formuliere eine ebenso präzise Alternative. Achte auf Bedeutungsunterschiede." : "")),
     });
 
     if (challenges.length >= 4) break;
@@ -1484,6 +1498,9 @@ function buildAdvancedDiscussionStage(slide = {}, speakingStage = {}, level = ""
     instruction: instructionByLevel[level] || "",
     items: centralQuestion ? [centralQuestion] : [],
     questionModels: matchingModel ? [matchingModel] : [],
+    coachingItems: centralQuestion
+      ? [(speakingStage.coachingItems || []).find((item) => item?.questionDe === centralQuestion) || null]
+      : [],
     supportItems: Array.isArray(speakingStage.supportItems) ? speakingStage.supportItems.slice(0, 3) : [],
     suggestedMinutes: level === "B2" ? 10 : 12,
   };
@@ -1524,7 +1541,9 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []),
     ])].slice(0, 5),
     questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [],
-    coachingItems: buildA2B1SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
+    coachingItems: level === "C2"
+      ? buildC2SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [])
+      : buildA2B1SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
     requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level),
     suggestedMinutes: interactionMinutes(slide, 3) || 10,
   };
@@ -1737,7 +1756,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Warm-up",
         title: "Warm-up · Thema aktivieren",
         items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
-        questionSupport: buildWarmupQuestionSupport(slide),
+        questionSupport: [],
         suggestedMinutes: 5,
         timingMode: "per-student",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
@@ -1923,6 +1942,11 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         decisionPrompt: analyticalTask.decisionPrompt,
         progressiveReveal: true,
         rubric: analyticalTask.rubric,
+        seminarCoaching: (() => {
+          const questions = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [];
+          const question = questions[questions.length - 1];
+          return buildC2SpeakingCoaching(slide, question ? [question] : [])[0] || null;
+        })(),
         suggestedMinutes: analyticalTask.minutes,
       },
       {
