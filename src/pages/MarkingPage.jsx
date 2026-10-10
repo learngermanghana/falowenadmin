@@ -83,7 +83,7 @@ function scorableSavedKey(entry) {
 function renderSavedAnswerKey(entry) {
   if (!scorableSavedKey(entry)) return "";
   if (entry.rawAnswers && flattenAnswers(entry.rawAnswers).some((line) => line.trim())) {
-    return flattenAnswers(entry.rawAnswers).join("\\n");
+    return flattenAnswers(entry.rawAnswers).join("\n");
   }
   return Object.entries(entry.parts || {}).flatMap(([part, questions]) =>
     (Array.isArray(questions) ? questions : Object.values(questions || {})).map((item, index) => {
@@ -91,7 +91,7 @@ function renderSavedAnswerKey(entry) {
       const answer = item?.rawCorrectAnswer || [item?.correctLetter, item?.correctText].filter(Boolean).join(") ") || item?.raw;
       return answer ? `${part} · ${number}: ${answer}` : "";
     }).filter(Boolean)
-  ).join("\\n");
+  ).join("\n");
 }
 
 function flattenAnswers(value, prefix = "") {
