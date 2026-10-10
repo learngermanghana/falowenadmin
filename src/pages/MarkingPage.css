@@ -964,3 +964,56 @@
     display: none;
   }
 }
+
+/* Keep each submission's name, assignment and status in its own card on narrow phones. */
+.marking-queue-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+  background: #fff;
+}
+.marking-queue-row .marking-queue-item {
+  min-width: 0;
+  height: auto;
+  align-content: start;
+  justify-items: start;
+  padding: 10px 12px !important;
+}
+.marking-queue-row .marking-queue-item > strong,
+.marking-queue-row .marking-queue-item > span,
+.marking-queue-row .marking-queue-item > small {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  position: static;
+}
+.marking-queue-row .marking-queue-item > strong { font-size: 14px; line-height: 1.35; }
+.marking-queue-row .marking-queue-item > span { font-size: 12px; }
+.marking-queue-row .marking-queue-item > small { font-size: 11px; }
+.marking-workspace .marking-queue-delete {
+  width: fit-content;
+  min-height: 34px;
+  margin: 0 0 6px 10px;
+  padding: 5px 12px;
+  font-size: 12px;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+.marking-workspace .marking-queue-delete:hover:not(:disabled) {
+  background: #fef2f2;
+}
+.marking-queue-list { gap: 9px; }
+@media (max-width: 820px) {
+  .marking-queue-list { max-height: none; overflow: visible; }
+  .marking-workspace-header > div { min-width: 0; }
+  .marking-workspace-header strong,
+  .marking-workspace-header span { overflow-wrap: anywhere; }
+}
