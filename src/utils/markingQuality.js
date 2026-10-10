@@ -84,6 +84,16 @@ export function markingConsistencyWarnings(result, submission = {}, calculatedSc
   const objectiveWrong = details.filter((row) => row.correct === false);
   const mentionsWrongObjective = /(?:lesen|hören|horen|listening|reading|objective)[^.\n]{0,70}(?:wrong|incorrect|mistake|error)|(?:wrong|incorrect)[^.\n]{0,40}(?:lesen|hören|horen|listening|reading|objective)/i.test(feedback);
   if (details.length && !objectiveWrong.length && mentionsWrongObjective) warnings.push("Feedback claims objective mistakes, but every objective answer matches the key.");
+  // A matched Admin key is not proof that it agrees with the published
+  // coursebook. Keep any source disagreement as a separate manual review.
+  const repeatedTaskPoints = feedback.match(/you covered all (?:three|3) required points\.?/gi) || [];
+  if (repeatedTaskPoints.length > 1) warnings.push("Feedback repeats the task-point assessment. Edit the comment before sharing.");
+  if (/\b(?:hotel|breakfast|parking|cancellation conditions)\b/i.test(feedback)
+    && /\b(?:kumasi|bahnhof|bus fahren|reiseziel)\b/i.test(text)
+    && !/\b(?:hotel|breakfast|parking|cancellation)\b/i.test(text)) {
+    warnings.push("Feedback contains hotel-specific advice that is not supported by this holiday-planning submission.");
+  }
+
   if (objectiveWrong.length && /all (?:objective )?answers (?:are|were) correct/i.test(feedback)) warnings.push("Feedback says all answers are correct, but the comparison contains incorrect or missing answers.");
   const expected = normalize(submission.assignmentId || submission.assignmentKey);
   const actual = normalize(result.assignmentKey || result.assignmentId);
