@@ -36,8 +36,33 @@ export function requiresDuplicateTutorVerification(row = {}) {
   );
 }
 
+// Only actual tutor-marked assignments belong in the incoming marking queue.
+// Older A1 self-practice posts often lack an assignment ID altogether.
+export function isNonMarkablePracticeSubmission(row = {}) {
+  const raw = row.raw || {};
+  const explicitTutorMarking = [raw.requiresTutorMarking, raw.tutorMarked, raw.teacherMarked].some((v) => v === true)
+    || /tutor[-_ ]?marked|teacher[-_ ]?marked/i.test(String(raw.assessmentType || raw.markingType || ""));
+  if (explicitTutorMarking) return false;
+  const indicators = [
+    raw.activityType, raw.assignmentType, raw.submissionType, raw.assessmentType,
+    raw.markingType, raw.mode, raw.source, raw.origin, raw.workbookType,
+    raw.pageUrl, raw.workbookUrl, raw.lessonUrl, raw.sourcePath, row.path,
+  ].map(normalize).join(" ");
+  if (/self[-_ ]?practic|self[-_ ]?learning|practice[-_ ]?only|ungraded|a1-day-6-family-and-hobbies-workbook/.test(indicators)) return true;
+  if (raw.requiresTutorMarking === false || raw.tutorMarked === false || raw.teacherMarked === false) return true;
+  const level = normalize(row.level || raw.level);
+  const assignmentId = normalize(row.assignmentId || row.assignmentKey || raw.assignmentId || raw.assignment_id || "");
+  const submissionPath = normalize(row.path);
+  // A1 general discussion/practice posts with "Unknown assignment" are not
+  // independently identified teacher assignments; keep real A1 assignment IDs.
+  if (level === "a1" && !/^a1[-.][\w.-]+$/.test(assignmentId) && /\/posts\//.test(submissionPath)) return true;
+  if (level === "a1" && /^a1-2\.3(?:-practice)?$/.test(assignmentId)) return true;
+  return false;
+}
+
 export function shouldIncludeInIncomingQueue(row = {}, lastScore = null, queueStartDate = "") {
   const raw = row.raw || {};
+  if (isNonMarkablePracticeSubmission(row)) return false;
   const submissionTime = getSubmissionTimestamp(row);
   const queueStartTime = timestampMillis(queueStartDate);
   if (queueStartTime && (!submissionTime || submissionTime < queueStartTime)) return false;

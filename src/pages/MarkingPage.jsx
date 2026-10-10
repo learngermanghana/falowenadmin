@@ -9,7 +9,6 @@ import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { createMarkingJob, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
-import { syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";
@@ -63,6 +62,36 @@ function objectiveWrongAnswerRows(objectiveDetails = {}) {
   return Object.entries(objectiveDetails || {})
     .map(([question, detail]) => ({ question, ...detail }))
     .filter((row) => row && row.correct === false);
+}
+
+function scorableSavedKey(entry) {
+  if (!entry || typeof entry !== "object") return false;
+  const answerValues = (value) => {
+    if (!value || typeof value !== "object") return [];
+    if (Array.isArray(value)) return value.flatMap(answerValues);
+    const entries = Object.values(value);
+    if ("questionKey" in value || "questionNumber" in value) {
+      return [value.rawCorrectAnswer, value.correctLetter, value.correctText, value.raw,
+        ...(Array.isArray(value.acceptedAnswers) ? value.acceptedAnswers : [])]
+        .filter((v) => typeof v === "string" && v.trim());
+    }
+    return entries.flatMap((item) => typeof item === "string" && item.trim() ? [item] : answerValues(item));
+  };
+  return answerValues(entry.rawAnswers).length > 0 || answerValues(entry.parts).length > 0;
+}
+
+function renderSavedAnswerKey(entry) {
+  if (!scorableSavedKey(entry)) return "";
+  if (entry.rawAnswers && flattenAnswers(entry.rawAnswers).some((line) => line.trim())) {
+    return flattenAnswers(entry.rawAnswers).join("\n");
+  }
+  return Object.entries(entry.parts || {}).flatMap(([part, questions]) =>
+    (Array.isArray(questions) ? questions : Object.values(questions || {})).map((item, index) => {
+      const number = item?.questionNumber || index + 1;
+      const answer = item?.rawCorrectAnswer || [item?.correctLetter, item?.correctText].filter(Boolean).join(") ") || item?.raw;
+      return answer ? `${part} · ${number}: ${answer}` : "";
+    }).filter(Boolean)
+  ).join("\n");
 }
 
 function flattenAnswers(value, prefix = "") {
@@ -333,10 +362,14 @@ export default function MarkingPage() {
   }, [referenceAssignment, referenceEntries]);
 
   const formattedReferenceAnswers = useMemo(() => {
-    if (referenceEntry?.reference) return referenceEntry.reference;
-    const lines = flattenAnswers(referenceEntry?.answers);
-    return lines.join("\n");
-  }, [referenceEntry]);
+    // The persisted registry is the active answer key. The bundled dictionary
+    // only supplies a fallback when no saved key exists for the assignment.
+    const key = normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id);
+    const active = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey || entry.id) === key);
+    if (scorableSavedKey(active)) return renderSavedAnswerKey(active);
+    if (answerKeyRegistryStatus === "ready") return "No current saved answer key for this assignment. Publish the updated key before marking.";
+    return "Checking the current saved answer key...";
+  }, [referenceEntry, answerKeyRegistry, answerKeyRegistryStatus]);
 
   const studentSubmissions = useMemo(() => submissions, [submissions]);
 
@@ -380,11 +413,11 @@ export default function MarkingPage() {
     : null;
   const currentReferenceKey = normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id);
   const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === currentReferenceKey);
-  const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
+  const keyComparison = scorableSavedKey(matchingRegistry) ? answerKeyComparison(referenceEntry, matchingRegistry) : "missing";
   const answerKeyRegistryReady = answerKeyRegistryStatus === "ready";
   const answerKeyRegistryLoading = answerKeyRegistryStatus === "loading";
   const answerKeyRegistryFailed = answerKeyRegistryStatus === "error";
-  const answerKeySyncNeeded = answerKeyRegistryReady && (keyComparison === "different" || keyComparison === "missing");
+  const answerKeySyncNeeded = answerKeyRegistryReady && keyComparison === "missing";
   const aiMarkingBlockedByKey = !answerKeyRegistryReady || answerKeySyncNeeded;
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
@@ -463,8 +496,8 @@ export default function MarkingPage() {
   ]);
 
   const objectiveMarkingResult = useMemo(() => {
-    return computeObjectiveScore(objectiveAssignmentId, selectedSubmission?.text || "");
-  }, [objectiveAssignmentId, selectedSubmission?.text]);
+    return scorableSavedKey(matchingRegistry) ? computeObjectiveScore(matchingRegistry, selectedSubmission?.text || "") : { correctCount: 0, totalCount: 0, details: {} };
+  }, [matchingRegistry, objectiveAssignmentId, selectedSubmission?.text]);
 
   const objectiveEntries = Object.entries(objectiveMarkingResult.details || {});
   const objectiveIssueEntries = objectiveEntries.filter(([, answer]) => !answer?.correct);
@@ -582,30 +615,15 @@ export default function MarkingPage() {
   const handleSyncAnswerKeys = async () => {
     try {
       setSyncingAnswerKeys(true);
-      const result = await syncAnswerKeysFromGitHub();
       const refreshedRegistry = await refreshAnswerKeyRegistry();
-      const refreshedMatchingRegistry = refreshedRegistry.find(
-        (entry) => normalize(entry.assignmentKey) === currentReferenceKey,
-      );
-      const refreshedComparison = answerKeyComparison(referenceEntry, refreshedMatchingRegistry);
-      const currentFailure = (result.failed || []).find(
-        (item) => normalize(item.assignmentKey) === currentReferenceKey,
-      );
-
-      if (currentFailure || refreshedComparison !== "matched") {
-        const detail = currentFailure?.reason ? ` ${currentFailure.reason}` : "";
-        error(`The AI key for ${referenceEntry?.assignmentId || referenceEntry?.assignment_id || "this assignment"} was not updated successfully.${detail} AI marking remains blocked.`);
-        return;
+      const saved = refreshedRegistry.find((entry) => normalize(entry.assignmentKey || entry.id) === currentReferenceKey);
+      if (scorableSavedKey(saved)) {
+        success("Current saved answer key refreshed. Existing edited answers were preserved.");
+      } else {
+        error("No saved key exists for this assignment. Publish its latest answers to the Admin registry before marking. Bulk GitHub sync is disabled here to protect newer keys.");
       }
-
-      if (result.failedCount > 0) {
-        error(`This assignment’s AI key is ready, but ${result.failedCount} other answer key${result.failedCount === 1 ? "" : "s"} failed to sync. You can mark this submission, but the other failures still need attention.`);
-        return;
-      }
-
-      success(`Updated ${result.importedCount} answer keys. This assignment’s AI key is ready.`);
     } catch (err) {
-      error(err?.message || "Failed to update the saved AI answer keys.");
+      error(err?.message || "Could not refresh the saved answer key.");
     } finally {
       setSyncingAnswerKeys(false);
     }
@@ -633,12 +651,11 @@ export default function MarkingPage() {
       let registryEntry = null;
       for (const candidateKey of candidateKeys) {
         registryEntry = await loadAnswerKey(candidateKey);
-        if (registryEntry) break;
+        if (scorableSavedKey(registryEntry)) break;
+        registryEntry = null;
       }
 
-      if (writingExpected && registryEntry && answerKeyComparison(referenceEntry, registryEntry) === "different") {
-        throw new Error("The saved AI key is out of date. Use “Sync latest answer keys” in the Reference card, then run AI marking again.");
-      }
+      if (!registryEntry) throw new Error("This assignment has no usable saved answer key. Publish the current answers before marking.");
       const deterministicAssignmentId = getObjectiveAssignmentId(
         registryEntry?.assignmentKey,
         assignmentIdValue,
@@ -647,7 +664,7 @@ export default function MarkingPage() {
         referenceEntry?.assignmentId,
         referenceEntry?.assignment,
       );
-      const deterministicObjective = computeObjectiveScore(deterministicAssignmentId, submissionText);
+      const deterministicObjective = computeObjectiveScore(registryEntry || deterministicAssignmentId, submissionText);
       const aiResult = writingExpected || !deterministicObjective.totalCount ? await markSubmissionWithAI({
         referenceEntry: registryEntry,
         submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
@@ -994,7 +1011,7 @@ export default function MarkingPage() {
                       : keyComparison === "matched"
                         ? "Key matched"
                         : keyComparison === "different"
-                          ? "Key mismatch"
+                          ? "Saved key active"
                           : "Key unavailable"}
                 </span>
               </div>
@@ -1039,8 +1056,8 @@ export default function MarkingPage() {
               {answerKeySyncNeeded ? (
                 <div className="marking-inline-warning marking-key-sync-warning">
                   <div>
-                    <strong>{keyComparison === "different" ? "Saved AI key is out of date." : "Saved AI key is missing."}</strong>
-                    <p>The page reference is ready. Update the saved AI key here before running AI marking.</p>
+                    <strong>Saved answer key is missing.</strong>
+                    <p>Publish the current coursebook answers to the Admin answer-key registry, then refresh here. Older bundled answers will not replace saved edits.</p>
                   </div>
                   <button
                     type="button"
@@ -1048,7 +1065,7 @@ export default function MarkingPage() {
                     onClick={() => void handleSyncAnswerKeys()}
                     disabled={syncingAnswerKeys || autoMarking || savingScore}
                   >
-                    {syncingAnswerKeys ? "Syncing answer keys..." : "Sync latest answer keys"}
+                    {syncingAnswerKeys ? "Refreshing key..." : "Refresh saved key"}
                   </button>
                 </div>
               ) : null}
