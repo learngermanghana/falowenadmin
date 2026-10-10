@@ -333,10 +333,16 @@ export default function MarkingPage() {
   }, [referenceAssignment, referenceEntries]);
 
   const formattedReferenceAnswers = useMemo(() => {
+    // The persisted registry is the active answer key. The bundled dictionary
+    // only supplies a fallback when no saved key exists for the assignment.
+    const key = normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id);
+    const active = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey || entry.id) === key);
+    if (active?.parts && Object.keys(active.parts).length) return flattenAnswers(active.parts).join("\n");
+    if (active?.rawAnswers) return flattenAnswers(active.rawAnswers).join("\n");
+    if (active) return "Current saved key is available, but has no displayable answer parts.";
     if (referenceEntry?.reference) return referenceEntry.reference;
-    const lines = flattenAnswers(referenceEntry?.answers);
-    return lines.join("\n");
-  }, [referenceEntry]);
+    return flattenAnswers(referenceEntry?.answers).join("\n");
+  }, [referenceEntry, answerKeyRegistry]);
 
   const studentSubmissions = useMemo(() => submissions, [submissions]);
 
@@ -384,7 +390,7 @@ export default function MarkingPage() {
   const answerKeyRegistryReady = answerKeyRegistryStatus === "ready";
   const answerKeyRegistryLoading = answerKeyRegistryStatus === "loading";
   const answerKeyRegistryFailed = answerKeyRegistryStatus === "error";
-  const answerKeySyncNeeded = answerKeyRegistryReady && (keyComparison === "different" || keyComparison === "missing");
+  const answerKeySyncNeeded = answerKeyRegistryReady && keyComparison === "missing";
   const aiMarkingBlockedByKey = !answerKeyRegistryReady || answerKeySyncNeeded;
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
@@ -463,8 +469,8 @@ export default function MarkingPage() {
   ]);
 
   const objectiveMarkingResult = useMemo(() => {
-    return computeObjectiveScore(objectiveAssignmentId, selectedSubmission?.text || "");
-  }, [objectiveAssignmentId, selectedSubmission?.text]);
+    return computeObjectiveScore(matchingRegistry || objectiveAssignmentId, selectedSubmission?.text || "");
+  }, [matchingRegistry, objectiveAssignmentId, selectedSubmission?.text]);
 
   const objectiveEntries = Object.entries(objectiveMarkingResult.details || {});
   const objectiveIssueEntries = objectiveEntries.filter(([, answer]) => !answer?.correct);
@@ -582,6 +588,12 @@ export default function MarkingPage() {
   const handleSyncAnswerKeys = async () => {
     try {
       setSyncingAnswerKeys(true);
+      // Never replace an edited saved answer key with an older bundled manifest.
+      if (matchingRegistry) {
+        await refreshAnswerKeyRegistry();
+        success("The saved key is already active. Newer answers are not replaced with bundled keys.");
+        return;
+      }
       const result = await syncAnswerKeysFromGitHub();
       const refreshedRegistry = await refreshAnswerKeyRegistry();
       const refreshedMatchingRegistry = refreshedRegistry.find(
@@ -636,9 +648,6 @@ export default function MarkingPage() {
         if (registryEntry) break;
       }
 
-      if (writingExpected && registryEntry && answerKeyComparison(referenceEntry, registryEntry) === "different") {
-        throw new Error("The saved AI key is out of date. Use “Sync latest answer keys” in the Reference card, then run AI marking again.");
-      }
       const deterministicAssignmentId = getObjectiveAssignmentId(
         registryEntry?.assignmentKey,
         assignmentIdValue,
@@ -647,7 +656,7 @@ export default function MarkingPage() {
         referenceEntry?.assignmentId,
         referenceEntry?.assignment,
       );
-      const deterministicObjective = computeObjectiveScore(deterministicAssignmentId, submissionText);
+      const deterministicObjective = computeObjectiveScore(registryEntry || deterministicAssignmentId, submissionText);
       const aiResult = writingExpected || !deterministicObjective.totalCount ? await markSubmissionWithAI({
         referenceEntry: registryEntry,
         submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
@@ -994,7 +1003,7 @@ export default function MarkingPage() {
                       : keyComparison === "matched"
                         ? "Key matched"
                         : keyComparison === "different"
-                          ? "Key mismatch"
+                          ? "Saved key active"
                           : "Key unavailable"}
                 </span>
               </div>
