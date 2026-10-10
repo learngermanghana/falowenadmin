@@ -594,7 +594,9 @@ export default function MarkingPage() {
         success("The saved key is already active. Newer answers are not replaced with bundled keys.");
         return;
       }
-      const result = await syncAnswerKeysFromGitHub();
+      error("No saved key exists for this assignment. Publish the latest answer key to the Admin registry before marking; a bulk GitHub sync could overwrite newer keys.");
+      return;
+      // No implicit full-registry overwrite from this marking screen.
       const refreshedRegistry = await refreshAnswerKeyRegistry();
       const refreshedMatchingRegistry = refreshedRegistry.find(
         (entry) => normalize(entry.assignmentKey) === currentReferenceKey,
