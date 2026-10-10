@@ -964,3 +964,61 @@
     display: none;
   }
 }
+
+
+/* Queue rows must retain independent height even when legacy dashboard
+   button/strong rules apply. Prevent long names from painting over neighbors. */
+.marking-workspace .marking-queue-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  min-width: 0;
+}
+.marking-workspace .marking-queue-item {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex: 0 0 auto;
+  height: auto !important;
+  min-height: 84px !important;
+  max-height: none !important;
+  line-height: 1.35;
+  gap: 5px;
+  padding: 12px !important;
+  text-align: left;
+  overflow: hidden;
+}
+.marking-workspace .marking-queue-item > strong,
+.marking-workspace .marking-queue-item > span,
+.marking-workspace .marking-queue-item > small {
+  display: block;
+  position: static;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-align: left;
+}
+.marking-workspace .marking-queue-item > strong {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #172033;
+}
+.marking-workspace .marking-queue-item > span {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.marking-workspace .marking-queue-item > small {
+  font-size: 11px;
+  line-height: 1.35;
+}
