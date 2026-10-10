@@ -41,6 +41,10 @@ export default function TimedAssignmentAttemptsPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [mockStatus, setMockStatus] = useState("all");
+  const [writingReviewId, setWritingReviewId] = useState("");
+  const [writingReview, setWritingReview] = useState(null);
+  const [writingReviewError, setWritingReviewError] = useState("");
+  const [writingReviewLoading, setWritingReviewLoading] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -85,6 +89,34 @@ export default function TimedAssignmentAttemptsPage() {
       setMockLoading(false);
     }
   }, []);
+
+  const openWritingReview = async (attempt) => {
+    const identifier = String(attempt.id || "");
+    setWritingReviewId(identifier);
+    setWritingReview(null);
+    setWritingReviewError("");
+    setWritingReviewLoading(true);
+    try {
+      if (attempt.progressSource === "browser_reported") {
+        throw new Error("This is browser-reported progress, not a server-verified writing attempt.");
+      }
+      const user = auth?.currentUser;
+      if (!user) throw new Error("Staff sign-in required");
+      const token = await user.getIdToken();
+      const endpoint = MOCK_MONITOR_URL.replace(/\/internal\/mock-attempts(?:\?.*)?$/, "/internal/mock-writing-review");
+      const response = await fetch(endpoint + "?attempt=" + encodeURIComponent(identifier), {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok !== true) throw new Error(data.error || "Could not load writing review");
+      setWritingReview(data.review);
+    } catch (err) {
+      setWritingReviewError(err?.message || "Could not load writing review");
+    } finally {
+      setWritingReviewLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadMocks();
@@ -206,6 +238,38 @@ export default function TimedAssignmentAttemptsPage() {
                   </span>)}
               </div>
             </div>
+            {attempt.progressSource !== "browser_reported" && (
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 12 }}>
+                <button type="button" onClick={() => void openWritingReview(attempt)}
+                  style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #2563eb", color: "#1d4ed8", background: "#eff6ff", fontWeight: 700, cursor: "pointer" }}>
+                  Review Schreiben submission
+                </button>
+                {writingReviewId === attempt.id && (
+                  <section aria-label="Schreiben marking review" style={{ marginTop: 12, display: "grid", gap: 10, overflowWrap: "anywhere" }}>
+                    {writingReviewLoading && <p>Loading writing review…</p>}
+                    {writingReviewError && <p role="alert" style={{ color: "#b91c1c" }}>{writingReviewError}</p>}
+                    {writingReview?.status === "not_recorded" && <p>No detailed Schreiben review was stored for this attempt. Earlier attempts may only have a score.</p>}
+                    {writingReview?.status === "saved" && (
+                      <>
+                        <p style={{ margin: 0 }}><strong>Verified Schreiben score:</strong> {writingReview.score}/{writingReview.maxScore} · Saved {formatDate(writingReview.submittedAt)}</p>
+                        <h4 style={{ margin: "4px 0" }}>Student's submitted answers</h4>
+                        {Object.entries(writingReview.answers || {}).map(([part, answer]) => (
+                          <div key={part} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: 12, borderRadius: 9 }}>
+                            <strong>{part}</strong>
+                            <p style={{ whiteSpace: "pre-wrap", marginBottom: 0 }}>{typeof answer === "string" ? answer : JSON.stringify(answer, null, 2)}</p>
+                          </div>
+                        ))}
+                        <h4 style={{ margin: "4px 0" }}>Original marking result and feedback</h4>
+                        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 12, background: "#f1f5f9", borderRadius: 9, padding: 12, maxHeight: 440, overflow: "auto" }}>
+                          {JSON.stringify(writingReview.marking || {}, null, 2)}
+                        </pre>
+                        <p style={{ color: "#64748b", fontSize: 12, margin: 0 }}>This is the original grading record for audit. Viewing it does not change the student's score.</p>
+                      </>
+                    )}
+                  </section>
+                )}
+              </div>
+            )}
           </article>;
         })}
       </section>}
