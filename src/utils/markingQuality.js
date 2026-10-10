@@ -133,11 +133,15 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   // Student-facing output is one concise paragraph: personalised writing first,
   // verified objective scores second. The detailed corrections stay in structured fields.
   writingFeedback = writingFeedback
-    .replace(/\b(?:Next practice|Practice next|Your next exercise|Next step)\s*[:–-][^.?!]*(?:[.?!]|$)/gi, "")
+    // Remove assigned exercises, but retain instructional corrections such as
+    // "Next step: check the verb position in subordinate clauses."
+    .replace(/\b(?:Next practice|Practice next|Your next exercise|Next step)\s*[:–-]\s*(?:(?:Please\s+)?(?:write|compose|draft|create|complete|do|try|practise|practice)\b)[^.?!]*(?:[.?!]|$)/gi, "")
     .replace(/\s+/g, " ").trim();
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, 22) : "";
-  const compactWriting = writingFeedback.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 4).join(" ");
-  const feedback = [writingExpected ? compactWriting : "", objectiveFeedback].filter(Boolean).join(" ").trim();
+  // Never drop a valid correction just because it happens to be sentence five.
+  // The AI is prompted to keep its writing comment concise; objective scoring
+  // is appended from verified answers and is never inferred from that prose.
+  const feedback = [writingExpected ? writingFeedback : "", objectiveFeedback].filter(Boolean).join(" ").trim();
   const metadata = verifiedObjectiveMetadata(writingExpected ? result : {}, objective);
   const scoreAlignedFeedback = normalizeWritingScoreClaim(feedback || result.feedback, { ...result, ...metadata })
     .replace(/\bMarking summary\b\s*[:.-]?\s*/gi, "")
