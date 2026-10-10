@@ -51,7 +51,7 @@ export function exactObjectiveFeedback(objective, wordTarget = 40) {
   }
   const wrong = rows.filter(([, row]) => !row.correct);
   const intro = summary.join(" ") || `${objective.correctCount}/${objective.totalCount} correct.`;
-  if (!wrong.length) return intro;
+  if (!wrong.length) return `${intro} All objective answers are correct.`;
 
   const corrections = wrong.map(([question, row]) => ({
     question,
