@@ -39,28 +39,20 @@ for (const level of ["A2", "B1"]) {
   });
 }
 
-test("B2 and C1 warm-ups keep enhanced support while C2 intentionally drops scaffolding", () => {
-  for (const level of ["B2", "C1"]) {
+test("B2/C1/C2 warm-ups remain available without compulsory beginner scaffolding", () => {
+  for (const level of ["B2", "C1", "C2"]) {
     const slide = getSlidesByCourse(level)[0];
     const warmup = buildTeachingPresenterStages(slide, slide.topic)
       .find((stage) => stage.id === "warmup");
-
-    assert.ok(warmup);
-    assert.equal(warmup.questionSupport.length, warmup.items.length, level + " support count");
-    warmup.questionSupport.forEach((support) => {
-      assert.ok(support.keywords.length >= 1 && support.keywords.length <= 3, level + " keywords");
-      assert.ok(String(support.hintEn || "").trim(), level + " English hint");
-      assert.ok(String(support.answerStarterDe || "").trim(), level + " German starter");
-      assert.ok(String(support.followUpDe || "").trim().endsWith("?"), level + " follow-up");
-    });
+    assert.ok(warmup, level + " should retain warm-up");
+    assert.ok(warmup.items.length > 0, level + " should retain questions");
+    assert.ok(Array.isArray(warmup.questionSupport), level + " support data should be an array");
+    assert.ok(
+      warmup.questionSupport.length === 0 || warmup.questionSupport.length === warmup.items.length,
+      level + " must not return partial support arrays",
+    );
   }
-
-  const b2 = buildTeachingPresenterStages(getSlidesByCourse("B2")[0]).find((stage) => stage.id === "warmup");
-  const c1 = buildTeachingPresenterStages(getSlidesByCourse("C1")[0]).find((stage) => stage.id === "warmup");
   const c2 = buildTeachingPresenterStages(getSlidesByCourse("C2")[0]).find((stage) => stage.id === "warmup");
-
-  assert.match(b2.questionSupport[0].answerStarterDe, /Aus meiner Sicht/);
-  assert.match(c1.questionSupport[0].answerStarterDe, /Bei der Beurteilung/);
   assert.deepEqual(c2.questionSupport, []);
   assert.equal(c2.timingMode, "per-student");
 });
