@@ -339,9 +339,9 @@ export default function MarkingPage() {
     if (active?.parts && Object.keys(active.parts).length) return flattenAnswers(active.parts).join("\n");
     if (active?.rawAnswers) return flattenAnswers(active.rawAnswers).join("\n");
     if (active) return "Current saved key is available, but has no displayable answer parts.";
-    if (referenceEntry?.reference) return referenceEntry.reference;
-    return flattenAnswers(referenceEntry?.answers).join("\n");
-  }, [referenceEntry, answerKeyRegistry]);
+    if (answerKeyRegistryStatus === "ready") return "No current saved answer key for this assignment. Publish the updated key before marking.";
+    return "Checking the current saved answer key...";
+  }, [referenceEntry, answerKeyRegistry, answerKeyRegistryStatus]);
 
   const studentSubmissions = useMemo(() => submissions, [submissions]);
 
