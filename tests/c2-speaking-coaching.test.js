@@ -9,14 +9,12 @@ test("all 28 C2 seminars show question-matched guidance without additional slide
   assert.equal(lessons.length, 28);
   for (const lesson of lessons) {
     const stages = buildTeachingPresenterStages(lesson, lesson.topic);
-    const speaking = stages.find((stage) => stage.id === "questions");
-    assert.ok(speaking, lesson.assignmentId);
-    assert.equal(speaking.items.length, 1, lesson.assignmentId);
-    assert.equal(speaking.coachingItems.length, 1, lesson.assignmentId);
-    const question = speaking.items[0];
+    const analysis = stages.find((stage) => stage.id === "analysis");
+    assert.ok(analysis, lesson.assignmentId);
+    const question = lesson.studentQuestionsDe.at(-1);
     const matchingModel = lesson.speakingModels.find((model) => model.questionDe === question);
     assert.ok(matchingModel?.modelAnswerDe, lesson.assignmentId);
-    const coaching = speaking.coachingItems[0];
+    const coaching = analysis.seminarCoaching;
     assert.ok(coaching, lesson.assignmentId);
     assert.equal(coaching.questionDe, question);
     assert.ok(coaching.hintDe && coaching.retryDe);
