@@ -1026,8 +1026,8 @@ export default function MarkingPage() {
               {answerKeySyncNeeded ? (
                 <div className="marking-inline-warning marking-key-sync-warning">
                   <div>
-                    <strong>{keyComparison === "different" ? "Saved AI key is out of date." : "Saved AI key is missing."}</strong>
-                    <p>The page reference is ready. Update the saved AI key here before running AI marking.</p>
+                    <strong>Saved answer key is missing.</strong>
+                    <p>Publish the current coursebook answers to the Admin answer-key registry, then refresh here. Older bundled answers will not replace saved edits.</p>
                   </div>
                   <button
                     type="button"
@@ -1035,7 +1035,7 @@ export default function MarkingPage() {
                     onClick={() => void handleSyncAnswerKeys()}
                     disabled={syncingAnswerKeys || autoMarking || savingScore}
                   >
-                    {syncingAnswerKeys ? "Syncing answer keys..." : "Sync latest answer keys"}
+                    {syncingAnswerKeys ? "Refreshing key..." : "Refresh saved key"}
                   </button>
                 </div>
               ) : null}
