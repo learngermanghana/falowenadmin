@@ -990,13 +990,13 @@ export default function MarkingPage() {
                     <span>{row.assignment || row.assignmentId || "Unknown assignment"}</span>
                     <small>{row.markingStatus || row.status || "Pending"}{row.attempt ? ` · Attempt ${row.attempt}` : ""}</small>
                   </button>
-                  {(
+                  {
                     <button type="button" className="marking-queue-delete" disabled={autoMarking || savingScore || workflowSaving || Boolean(deletingSubmissionPath)}
                       onClick={() => void (isSelfPracticeSubmission(row) && row.path ? handleDeleteSelfPractice(row) : handleRemoveFromQueue(row))}
                       aria-label={`${isSelfPracticeSubmission(row) && row.path ? "Delete self-practice submission" : "Remove submission from queue"} for ${row.studentName || row.studentCode || "student"}`}>
                       {deletingSubmissionPath === queueRowKey(row) ? "Working…" : isSelfPracticeSubmission(row) && row.path ? "Delete" : "Remove"}
                     </button>
-                  ) : null}
+                  }
                 </div>
               ))}
               {!queueRows.length ? <p className="marking-empty">No submissions match this filter.</p> : null}
