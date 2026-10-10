@@ -1895,7 +1895,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         kicker: "Warm-up",
         title: "Warm-up · Position aktivieren",
         items: Array.isArray(slide.warmupQuestionsDe) ? slide.warmupQuestionsDe : [],
-        questionSupport: [],
+        questionSupport: buildWarmupQuestionSupport(slide),
         suggestedMinutes: 5,
         timingMode: "per-student",
         timingLabel: warmupTimingLabel(slide, slide.warmupQuestionsDe?.length),
@@ -1942,6 +1942,11 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         decisionPrompt: analyticalTask.decisionPrompt,
         progressiveReveal: true,
         rubric: analyticalTask.rubric,
+        seminarCoaching: (() => {
+          const questions = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [];
+          const question = questions[questions.length - 1];
+          return buildC2SpeakingCoaching(slide, question ? [question] : [])[0] || null;
+        })(),
         suggestedMinutes: analyticalTask.minutes,
       },
       {
