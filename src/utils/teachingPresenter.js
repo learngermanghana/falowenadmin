@@ -12,6 +12,7 @@ import { getB1FocusedPractice, getB1PresenterKnowledge } from "../data/b1Present
 import { getPresenterTopicFoundation } from "../data/presenterTopicFoundations.js";
 import { getSpeakingDifficultySelection } from "../data/presenterSpeakingDifficulty.js";
 import { buildA2B1SpeakingCoaching } from "../data/a2B1SpeakingCoaching.js";
+import { buildC2SpeakingCoaching } from "../data/c2SpeakingCoaching.js";
 import { buildCourseBookBridgeItems, getCurriculumParityReference } from "../data/studentCurriculumParity.js";
 
 const A1_PRESENTER_V2_EXCLUDED_ASSIGNMENTS = new Set(["A1-TUTORIAL"]);
@@ -1484,6 +1485,9 @@ function buildAdvancedDiscussionStage(slide = {}, speakingStage = {}, level = ""
     instruction: instructionByLevel[level] || "",
     items: centralQuestion ? [centralQuestion] : [],
     questionModels: matchingModel ? [matchingModel] : [],
+    coachingItems: centralQuestion
+      ? [(speakingStage.coachingItems || []).find((item) => item?.questionDe === centralQuestion) || null]
+      : [],
     supportItems: Array.isArray(speakingStage.supportItems) ? speakingStage.supportItems.slice(0, 3) : [],
     suggestedMinutes: level === "B2" ? 10 : 12,
   };
@@ -1524,7 +1528,9 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
       ...(Array.isArray(slide.keyPhrasesDe) ? slide.keyPhrasesDe : []),
     ])].slice(0, 5),
     questionModels: Array.isArray(slide.speakingModels) ? slide.speakingModels : [],
-    coachingItems: buildA2B1SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
+    coachingItems: level === "C2"
+      ? buildC2SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [])
+      : buildA2B1SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
     requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level),
     suggestedMinutes: interactionMinutes(slide, 3) || 10,
   };
