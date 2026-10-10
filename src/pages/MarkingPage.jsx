@@ -9,7 +9,6 @@ import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { createMarkingJob, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
-import { syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";
@@ -588,38 +587,15 @@ export default function MarkingPage() {
   const handleSyncAnswerKeys = async () => {
     try {
       setSyncingAnswerKeys(true);
-      // Never replace an edited saved answer key with an older bundled manifest.
-      if (matchingRegistry) {
-        await refreshAnswerKeyRegistry();
-        success("The saved key is already active. Newer answers are not replaced with bundled keys.");
-        return;
-      }
-      error("No saved key exists for this assignment. Publish the latest answer key to the Admin registry before marking; a bulk GitHub sync could overwrite newer keys.");
-      return;
-      // No implicit full-registry overwrite from this marking screen.
       const refreshedRegistry = await refreshAnswerKeyRegistry();
-      const refreshedMatchingRegistry = refreshedRegistry.find(
-        (entry) => normalize(entry.assignmentKey) === currentReferenceKey,
-      );
-      const refreshedComparison = answerKeyComparison(referenceEntry, refreshedMatchingRegistry);
-      const currentFailure = (result.failed || []).find(
-        (item) => normalize(item.assignmentKey) === currentReferenceKey,
-      );
-
-      if (currentFailure || refreshedComparison !== "matched") {
-        const detail = currentFailure?.reason ? ` ${currentFailure.reason}` : "";
-        error(`The AI key for ${referenceEntry?.assignmentId || referenceEntry?.assignment_id || "this assignment"} was not updated successfully.${detail} AI marking remains blocked.`);
-        return;
+      const saved = refreshedRegistry.find((entry) => normalize(entry.assignmentKey || entry.id) === currentReferenceKey);
+      if (saved) {
+        success("Current saved answer key refreshed. Existing edited answers were preserved.");
+      } else {
+        error("No saved key exists for this assignment. Publish its latest answers to the Admin registry before marking. Bulk GitHub sync is disabled here to protect newer keys.");
       }
-
-      if (result.failedCount > 0) {
-        error(`This assignment’s AI key is ready, but ${result.failedCount} other answer key${result.failedCount === 1 ? "" : "s"} failed to sync. You can mark this submission, but the other failures still need attention.`);
-        return;
-      }
-
-      success(`Updated ${result.importedCount} answer keys. This assignment’s AI key is ready.`);
     } catch (err) {
-      error(err?.message || "Failed to update the saved AI answer keys.");
+      error(err?.message || "Could not refresh the saved answer key.");
     } finally {
       setSyncingAnswerKeys(false);
     }
