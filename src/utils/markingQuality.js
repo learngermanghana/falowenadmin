@@ -133,13 +133,12 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   // Student-facing output is one concise paragraph: personalised writing first,
   // verified objective scores second. The detailed corrections stay in structured fields.
   writingFeedback = writingFeedback
-    .replace(/\\b(?:Next practice|Practice next|Your next exercise|Next step)\\s*[:–-][^.?!]*(?:[.?!]|$)/gi, "")
-    .replace(/\\s+/g, " ").trim();
+    .replace(/\b(?:Next practice|Practice next|Your next exercise|Next step)\s*[:–-][^.?!]*(?:[.?!]|$)/gi, "")
+    .replace(/\s+/g, " ").trim();
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, 22) : "";
-  const compactWriting = writingFeedback.split(/(?<=[.!?])\\s+/).filter(Boolean).slice(0, 4).join(" ");
+  const compactWriting = writingFeedback.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 4).join(" ");
   const feedback = [writingExpected ? compactWriting : "", objectiveFeedback].filter(Boolean).join(" ").trim();
   const metadata = verifiedObjectiveMetadata(writingExpected ? result : {}, objective);
-  const feedback = writingExpected ? [writingFeedback, objectiveFeedback].filter(Boolean).join("\n\n") : objectiveFeedback;
   const scoreAlignedFeedback = normalizeWritingScoreClaim(feedback || result.feedback, { ...result, ...metadata })
     .replace(/\bMarking summary\b\s*[:.-]?\s*/gi, "")
     .replace(/\bScore summary\b\s*[:.-]?\s*/gi, "");
