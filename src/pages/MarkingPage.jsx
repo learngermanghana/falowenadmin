@@ -449,7 +449,7 @@ export default function MarkingPage() {
     try {
       if (row.path) await hideSubmissionFromQueue(row.path);
       dismissQueueRow(row);
-      success("Submission removed from the queue. The student's work was preserved.");
+      success(row.path ? "Submission removed from the queue. The student's work was preserved." : "Entry hidden on this browser. No student work was deleted.");
     } catch (exception) {
       error(exception?.message || "Could not remove this submission.");
     } finally {
@@ -993,8 +993,8 @@ export default function MarkingPage() {
                   {(
                     <button type="button" className="marking-queue-delete" disabled={autoMarking || savingScore || workflowSaving || Boolean(deletingSubmissionPath)}
                       onClick={() => void (isSelfPracticeSubmission(row) ? handleDeleteSelfPractice(row) : handleRemoveFromQueue(row))}
-                      aria-label={`${isSelfPracticeSubmission(row) ? "Delete self-practice submission" : "Remove submission from queue"} for ${row.studentName || row.studentCode || "student"}`}>
-                      {deletingSubmissionPath === queueRowKey(row) ? "Working…" : isSelfPracticeSubmission(row) ? "Delete" : "Remove"}
+                      aria-label={`${isSelfPracticeSubmission(row) && row.path ? "Delete self-practice submission" : "Remove submission from queue"} for ${row.studentName || row.studentCode || "student"}`}>
+                      {deletingSubmissionPath === queueRowKey(row) ? "Working…" : isSelfPracticeSubmission(row) && row.path ? "Delete" : "Remove"}
                     </button>
                   ) : null}
                 </div>
