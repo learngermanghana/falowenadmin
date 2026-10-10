@@ -5,13 +5,13 @@ import { withResubmissionComparison } from "../src/utils/resubmissionFeedback.js
 const objective = { correctCount: 2, totalCount: 2, details: { "teil3.1": { partId: "teil3", student: "A", expected: "A", correct: true }, "teil4.1": { partId: "teil4", student: "B", expected: "B", correct: true } } };
 test("objective-only comments use the verified answers instead of AI deductions", () => {
   const result = reconcileMarkingQuality({ feedback: "Your listening has errors. Improve your writing.", finalScore: 100 }, objective, {}, { writingExpected: false });
-  assert.equal(result.feedback, "Teil 3: 1/1 correct. Teil 4: 1/1 correct. All objective answers are correct.");
+  assert.equal(result.feedback, "Teil 3: 1/1 correct. Teil 4: 1/1 correct.");
   assert.equal(result.shouldSendAutomatically, false);
 });
-test("mixed comments separate writing advice from exact objective feedback", () => {
+test("mixed comments combine writing advice and exact objective feedback", () => {
   const result = reconcileMarkingQuality({ feedback: "✅ Check verb placement. Your listening has mistakes.", writingScorePercent: 80, finalScore: 92 }, objective, { text: "Ich gehe morgen.", previousScore: 80, attempt: 2 }, { writingExpected: true });
   assert.match(result.feedback, /Check verb placement/);
-  assert.match(result.feedback, /All objective answers are correct/);
+  assert.match(result.feedback, /Teil 3: 1\/1 correct\. Teil 4: 1\/1 correct\./);
   assert.doesNotMatch(result.feedback, /listening has mistakes|✅/);
   assert.match(result.feedback, /80% to 92%/);
 });
@@ -128,4 +128,15 @@ test("internal main objective labels never appear or duplicate the verified obje
   assert.equal((mixed.feedback.match(/All objective answers are correct/g) || []).length, 1);
   const objectiveOnly = reconcileMarkingQuality({ feedback: "main: 30/30 correct." }, flat, {}, { writingExpected: false });
   assert.equal(objectiveOnly.feedback, "Objective: 30/30 correct. All objective answers are correct.");
+});
+
+test("mixed feedback is a single paragraph without an assigned practice task", () => {
+  const result = reconcileMarkingQuality({
+    feedback: 'Your email clearly describes future plans. The sentence "weil ich meiner Familie helfen möchte" has correct verb placement. Consider varying future-time expressions. Next practice: Write two more sentences.',
+    writingScorePercent: 100, finalScore: 100,
+  }, objective, { text: "weil ich meiner Familie helfen möchte" }, { writingExpected: true });
+  assert.equal(result.feedback.includes("\n"), false);
+  assert.doesNotMatch(result.feedback, /Next practice|Write two more sentences/);
+  assert.match(result.feedback, /weil ich meiner Familie helfen möchte/);
+  assert.match(result.feedback, /Teil 3: 1\/1 correct\. Teil 4: 1\/1 correct\./);
 });
