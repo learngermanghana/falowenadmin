@@ -452,6 +452,13 @@ export async function updateMarkingWorkflowStatus({ submissionId, submissionPath
   }
 }
 
+export async function fetchSubmissionByPath(path) {
+  const segments = String(path || "").split("/").filter(Boolean);
+  if (segments.length < 2 || segments.length % 2 !== 0) return null;
+  const snapshot = await getDoc(doc(db, ...segments));
+  return snapshot.exists() ? normalizeSubmissionDoc(snapshot) : null;
+}
+
 export async function deleteSubmission(path) {
   const segments = String(path || "").split("/").filter(Boolean);
   if (!segments.length) throw new Error("Missing submission path");
