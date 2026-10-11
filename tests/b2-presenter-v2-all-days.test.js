@@ -274,3 +274,17 @@ test("B1 remains fully enabled after the B2 redesign", () => {
   assert.equal(b1Slides.length, 28);
   assert.ok(b1Slides.every((slide) => isTeachingPresenterV2Slide(slide)));
 });
+
+ test("all 28 B2 lessons provide unambiguous selectable vocabulary answers", () => {
+  const slides = getSlidesByCourse("B2");
+  assert.equal(slides.length, 28);
+  for (const slide of slides) {
+    const vocabulary = buildTeachingPresenterStages(slide, slide.topic).find(stage => stage.type === "vocabulary");
+    assert.ok(vocabulary.challengeItems.length >= 2, slide.assignmentId);
+    for (const challenge of vocabulary.challengeItems) {
+      assert.equal(challenge.options.length, 3, slide.assignmentId);
+      assert.equal(new Set(challenge.options).size, 3, slide.assignmentId);
+      assert.equal(challenge.options.filter(option => option === challenge.answer).length, 1, slide.assignmentId);
+    }
+  }
+});

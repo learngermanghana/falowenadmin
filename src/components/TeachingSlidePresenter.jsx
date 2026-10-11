@@ -1,3 +1,4 @@
+import C2GrammarTeaching from "./C2GrammarTeaching.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildTeachingPresenterStages,
@@ -163,6 +164,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   const [vocabChallengeMode, setVocabChallengeMode] = useState(false);
   const [vocabChallengeIndex, setVocabChallengeIndex] = useState(0);
   const [showVocabAnswer, setShowVocabAnswer] = useState(false);
+  const [selectedVocabOption, setSelectedVocabOption] = useState(null);
   const [careerChallengeIndex, setCareerChallengeIndex] = useState(0);
   const [careerStepIndex, setCareerStepIndex] = useState(0);
   const [careerAnswerVisible, setCareerAnswerVisible] = useState(false);
@@ -495,6 +497,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setVocabChallengeMode(false);
     setVocabChallengeIndex(0);
     setShowVocabAnswer(false);
+    setSelectedVocabOption(null);
     setReadingModeActive(false);
     setReadingPhase("idle");
     setActiveReadingAssignment(null);
@@ -1117,6 +1120,8 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   <strong>Heute trainieren wir:</strong> {stage.skillTarget || "Die Zielstruktur kontrolliert und funktional einsetzen."}
                 </p>
               </div>
+              <C2GrammarTeaching day={slide.dayNumber} compact />
+              <details className="presenter-advanced-models"><summary>Weitere Beispiele aus der Lektion</summary>
               <div className="presenter-c2-grammar-rules">
                 {presenterItems.map((item, index) => (
                   <article key={item + index}>
@@ -1125,6 +1130,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   </article>
                 ))}
               </div>
+              </details>
               {stage.application ? (
                 <article className="presenter-c2-grammar-application">
                   <span className="presenter-c2-grammar-application-label">AUFTRAG</span>
@@ -1386,6 +1392,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                         setVocabChallengeMode(true);
                         setVocabChallengeIndex(0);
                         setShowVocabAnswer(false);
+                        setSelectedVocabOption(null);
                       }}
                     >
                       {["A2", "B1"].includes(presenterLevel) ? "Redemittel-Fragen starten" : "Welches Wort passt? starten"}
@@ -1417,15 +1424,31 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                         <strong className="presenter-vocabulary-prompt-label">{activeVocabChallenge.promptLabel}</strong>
                       ) : null}
                       <p className="presenter-vocabulary-cloze-sentence">{activeVocabChallenge.sentence}</p>
-                      <div className="presenter-vocabulary-options" role="list" aria-label="Drei Wortschatzoptionen">
+                      <div className="presenter-vocabulary-options" role="group" aria-label="Drei Wortschatzoptionen">
                         {(activeVocabChallenge.options || []).map((option, optionIndex) => (
-                          <span key={option} role="listitem">
+                          <button
+                            key={option}
+                            type="button"
+                            aria-pressed={selectedVocabOption === option}
+                            className={showVocabAnswer && option === activeVocabChallenge.answer
+                              ? "is-correct"
+                              : (showVocabAnswer && selectedVocabOption === option ? "is-incorrect" : "")}
+                            onClick={() => {
+                              setSelectedVocabOption(option);
+                              setShowVocabAnswer(true);
+                            }}
+                          >
                             {["A2", "B1"].includes(presenterLevel) ? `${String.fromCharCode(65 + optionIndex)}. ${option}` : option}
-                          </span>
+                          </button>
                         ))}
                       </div>
                       {showVocabAnswer ? (
-                        <div className="presenter-vocabulary-answer">
+                        <div className="presenter-vocabulary-answer" role="status">
+                          {selectedVocabOption ? (
+                            <p>{selectedVocabOption === activeVocabChallenge.answer
+                              ? "Richtig!"
+                              : "Noch nicht richtig. Die passende Formulierung ist unten markiert."}</p>
+                          ) : null}
                           <strong>Passende Formulierung</strong>
                           <span>{activeVocabChallenge.answer}</span>
                           {activeVocabChallenge.followUp ? <p>{activeVocabChallenge.followUp}</p> : null}
@@ -1454,6 +1477,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       onClick={() => {
                         setVocabChallengeIndex((current) => Math.max(0, current - 1));
                         setShowVocabAnswer(false);
+                        setSelectedVocabOption(null);
                       }}
                       disabled={vocabChallengeIndex === 0}
                     >
@@ -1464,6 +1488,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                       onClick={() => {
                         setVocabChallengeIndex((current) => Math.min(vocabChallenges.length - 1, current + 1));
                         setShowVocabAnswer(false);
+                        setSelectedVocabOption(null);
                       }}
                       disabled={vocabChallengeIndex >= vocabChallenges.length - 1}
                     >

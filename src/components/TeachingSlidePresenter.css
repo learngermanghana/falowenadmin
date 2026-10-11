@@ -2316,7 +2316,7 @@
   gap: 0.65rem;
 }
 
-.presenter-vocabulary-options span {
+.presenter-vocabulary-options button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4520,3 +4520,13 @@
   line-height: 1.4;
   margin: 0.55rem 0 0;
 }
+
+.presenter-vocabulary-options button { cursor: pointer; font-family: inherit; }
+.presenter-vocabulary-options button:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.presenter-vocabulary-options button.is-correct { border: 3px solid #15803d; background: #dcfce7; color: #14532d; }
+.presenter-vocabulary-options button.is-incorrect { border: 3px solid #b91c1c; background: #fee2e2; color: #7f1d1d; }
+
+/* Teach in readable steps before the independent C2 application. */
+.presenter-c2-grammar { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; }
+.presenter-c2-grammar > * { grid-area: auto; }
+.presenter-c2-grammar [data-c2-grammar-teaching] { font-size: clamp(1rem, 1.6vw, 1.45rem); }
