@@ -3,6 +3,7 @@ import { verifiedObjectiveMetadata, writingPercentFromResult } from "./markingRe
 import { plainObjectiveAnswer, stripMarkingEmojis } from "./markingFeedbackText.js";
 import { withResubmissionComparison } from "./resubmissionFeedback.js";
 import { dedupeRepeatedFeedback } from "./feedbackPolicy.js";
+import { groundedA1WritingCorrections, objectiveLanguageCorrections, languageFeedbackSentence } from "./groundedLanguageCorrections.js";
 
 const normalize = (value) => String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
 const percent = (value) => value === null || value === undefined || value === "" ? null : Number.isFinite(Number(value)) ? Number(value) : null;
@@ -138,10 +139,36 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
     .replace(/\b(?:Next practice|Practice next|Your next exercise|Next step)\s*[:–-]\s*(?:(?:Please\s+)?(?:write|compose|draft|create|complete|do|try|practise|practice)\b)[^.?!]*(?:[.?!]|$)/gi, "")
     .replace(/\s+/g, " ").trim();
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, 22) : "";
+  // Correct meaning does not imply perfect spelling. Keep the objective score
+  // authoritative while reporting verifiable language issues separately.
+  const objectiveLanguageNotes = objectiveLanguageCorrections(objective, { level });
+  const sourceText = String(submission.text || "");
+  const groundedWriting = writingExpected ? groundedA1WritingCorrections(sourceText, { level }) : [];
+  const modelWriting = Array.isArray(result.corrections) ? result.corrections.filter((item) =>
+    item && typeof item === "object"
+    && String(item.from || "").trim() && String(item.to || "").trim()
+    && sourceText.toLocaleLowerCase("de").includes(String(item.from).trim().toLocaleLowerCase("de"))
+    && !/^(?:teil[134]|main)$/i.test(String(item.partId || item.part || ""))
+  ) : [];
+  const writingCorrections = [...modelWriting];
+  for (const correction of groundedWriting) {
+    if (!writingCorrections.some((item) => String(item.from).toLocaleLowerCase("de") === correction.from.toLocaleLowerCase("de"))) {
+      writingCorrections.push(correction);
+    }
+  }
+  const languageAccuracyNotes = [
+    ...objectiveLanguageNotes.slice(0, 2).map((item) => languageFeedbackSentence(item, { objective: true })),
+    ...writingCorrections.filter((item) => item.reason && item.to).slice(0, 3)
+      .map((item) => languageFeedbackSentence(item)),
+  ];
+  const novelLanguageNotes = languageAccuracyNotes.filter((note) => {
+    const quoted = [...note.matchAll(/“([^”]+)”/g)].map((match) => match[1]);
+    return !quoted.length || !quoted.every((phrase) => writingFeedback.toLocaleLowerCase("de").includes(phrase.toLocaleLowerCase("de")));
+  });
   // Never drop a valid correction just because it happens to be sentence five.
   // The AI is prompted to keep its writing comment concise; objective scoring
   // is appended from verified answers and is never inferred from that prose.
-  const feedback = [writingExpected ? writingFeedback : "", objectiveFeedback].filter(Boolean).join(" ").trim();
+  const feedback = [writingExpected ? writingFeedback : "", objectiveFeedback, ...novelLanguageNotes].filter(Boolean).join(" ").trim();
   const metadata = verifiedObjectiveMetadata(writingExpected ? result : {}, objective);
   const scoreAlignedFeedback = normalizeWritingScoreClaim(feedback || result.feedback, { ...result, ...metadata })
     .replace(/\bMarking summary\b\s*[:.-]?\s*/gi, "")
@@ -149,7 +176,8 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   const normalizedFeedback = dedupeRepeatedFeedback(stripMarkingEmojis(scoreAlignedFeedback));
   let updated = {
     ...result, ...metadata,
-    ...(!writingExpected ? { writingScore: null, writingScorePercent: null, taskPointEvidence: [], corrections: [] } : {}),
+    ...(!writingExpected ? { writingScore: null, writingScorePercent: null, taskPointEvidence: [], corrections: [] } : { corrections: writingCorrections }),
+    languageAccuracyNotes, objectiveLanguageCorrections: objectiveLanguageNotes,
     feedback: normalizedFeedback,
     improvementSummary: normalizedFeedback,
   };
