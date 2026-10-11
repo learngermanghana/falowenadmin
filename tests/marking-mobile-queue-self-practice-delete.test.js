@@ -15,14 +15,16 @@ test("marking queue has separate responsive cards with readable student and assi
 test("only explicitly identified self-practice records can be deleted after confirmation", () => {
   expect(page).toContain("function isSelfPracticeSubmission");
   expect(page).toContain("raw.isSelfPractice === true");
-  expect(page).toContain('{row.path ? (');
-  expect(page).toContain('isSelfPracticeSubmission(row) ? "Delete" : "Remove"');
-  expect(page).toContain("await hideSubmissionFromQueue(row.path)");
+  expect(page).toContain('className="marking-queue-delete"');
+  expect(page).toContain('isSelfPracticeSubmission(row) && row.path ? "Delete" : "Remove"');
+  expect(page).toContain("if (row.path) await hideSubmissionFromQueue(row.path)");
   expect(page).toContain("await fetchSubmissionByPath(submission.path)");
   expect(page).toContain("if (!isSelfPracticeSubmission(row) || !row.path || deletingSubmissionPath) return");
   expect(page).toContain("window.confirm(");
   expect(page).toContain("await deleteSubmission(row.path)");
-  expect(page).toContain("setSubmissionNotifications((previous)");
+  expect(page).toContain("dismissQueueRow(row)");
+  expect(page).toContain("QUEUE_HIDDEN_STORAGE");
+  expect(css).toContain("min-height: 42px");
 });
 
 test("queue uses exact document lookup for nested self-practice submissions", () => {
