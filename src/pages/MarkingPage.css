@@ -1017,3 +1017,27 @@
   .marking-workspace-header strong,
   .marking-workspace-header span { overflow-wrap: anywhere; }
 }
+
+/* Keep queue removal visible and touch-friendly on compact marking screens. */
+.marking-workspace .marking-queue-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  min-width: 88px;
+  font-weight: 750;
+  margin: 0 10px 10px;
+  border: 1px solid #fca5a5;
+  border-radius: 9px;
+  background: #fff7f7;
+}
+.marking-workspace .marking-queue-delete:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+@media (max-width: 820px) {
+  .marking-queue-row .marking-queue-delete {
+    width: calc(100% - 20px);
+    margin: 0 10px 10px;
+  }
+}
