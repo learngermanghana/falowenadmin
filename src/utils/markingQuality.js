@@ -144,7 +144,7 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
   const objectiveLanguageNotes = objectiveLanguageCorrections(objective, { level });
   const sourceText = String(submission.text || "");
   const groundedWriting = writingExpected ? groundedA1WritingCorrections(sourceText, { level }) : [];
-  const modelWriting = Array.isArray(result.corrections) ? result.corrections.filter((item) =>
+  const modelWriting = writingExpected && Array.isArray(result.corrections) ? result.corrections.filter((item) =>
     item && typeof item === "object"
     && String(item.from || "").trim() && String(item.to || "").trim()
     && sourceText.toLocaleLowerCase("de").includes(String(item.from).trim().toLocaleLowerCase("de"))
