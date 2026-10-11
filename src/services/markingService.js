@@ -411,7 +411,7 @@ export async function markSubmissionWithAI(options = {}) {
     const objective = computeObjectiveScore(reference, originalSubmissionText);
     if (objective.totalCount > 0) {
       const exact = mergeObjectiveScore({ level: reference.level || options.submission?.level, assignmentKey: reference.assignmentKey || reference.assignment_id, writingScore: null, writingScorePercent: null, confidence: 1, status: "marked" }, objective);
-      return withPublishedContractAudit(sanitizeMarkingResult(reconcileMarkingQuality(exact, objective, options.submission, { wordTarget: options.feedbackWordTarget })));
+      return withPublishedContractAudit(sanitizeMarkingResult(reconcileMarkingQuality(exact, objective, { ...(options.submission || {}), text: originalSubmissionText }, { wordTarget: options.feedbackWordTarget })));
     }
   }
 
@@ -420,7 +420,7 @@ export async function markSubmissionWithAI(options = {}) {
     const objective = computeObjectiveScore(reference, originalSubmissionText);
     const writingExpected = Array.isArray(reference.writingParts) ? reference.writingParts.length > 0 : hasWritingEvidence(result);
     const cleaned = writingExpected ? result : { ...result, writingScore: null, writingScorePercent: null };
-    return withPublishedContractAudit(finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, options.submission, {
+    return withPublishedContractAudit(finalizeMarkingResult(reconcileMarkingQuality(mergeObjectiveScore(cleaned, objective), objective, { ...(options.submission || {}), text: originalSubmissionText }, {
       writingExpected, wordTarget: options.feedbackWordTarget,
     }), options.submission));
   };
