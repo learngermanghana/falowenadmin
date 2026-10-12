@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { selectFirebaseDeployTargets, WORKER_TARGETS } from "../scripts/selectFirebaseDeployTargets.mjs";
+import os from "node:os";
+import path from "node:path";
+import { selectFirebaseDeployTargets, writeDeployPlan, WORKER_TARGETS } from "../scripts/selectFirebaseDeployTargets.mjs";
 
 test("trial email edits deploy both trial workers without unrelated attendance workers", () => {
   const plan = selectFirebaseDeployTargets({ changedPaths: ["functions/trialAccessEmails.js"] });
@@ -37,4 +39,29 @@ test("every selected worker belongs to an existing quota-safe deployment group",
   assert.match(workflow, /fetch-depth: 0/);
   assert.match(workflow, /cancel-in-progress: false/);
   assert.match(workflow, /status: 'success'/);
+});
+
+
+test("a workflow-only push does not redeploy old changes or a missing baseline", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "falowen-plan-"));
+  try {
+    const plan = writeDeployPlan({ before: "old-release", triggerBefore: "current-push", head: "HEAD", full: false, outputPath: path.join(dir, "plan.json"), readGit: args => {
+      if (args[0] === "merge-base") return "";
+      assert.equal(args.at(-2), "current-push");
+      return ".github/workflows/deploy-firebase.yml\0scripts/selectFirebaseDeployTargets.mjs\0";
+    } });
+    assert.equal(plan.mode, "skip");
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("runtime pushes still include shared changes left behind by failed deployments", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "falowen-plan-"));
+  try {
+    const plan = writeDeployPlan({ before: "last-real-release", triggerBefore: "current-push", head: "HEAD", full: false, outputPath: path.join(dir, "plan.json"), readGit: args => {
+      if (args[0] === "merge-base") return "";
+      return args.at(-2) === "current-push" ? "functions/trialAccessEmails.js\0" : "functions/index.js\0functions/trialAccessEmails.js\0";
+    } });
+    assert.equal(plan.mode, "full");
+    assert.match(fs.readFileSync(".github/workflows/deploy-firebase.yml", "utf8"), /step.conclusion === 'success'/);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

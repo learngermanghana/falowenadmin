@@ -63,14 +63,23 @@ jobs:
               ...context.repo, workflow_id: 'deploy-firebase.yml',
               branch: 'main', status: 'success', per_page: 50,
             });
-            // Push runs provide a consistent baseline; manual recovery runs are excluded.
-            const run = response.data.workflow_runs.find(run => run.event === 'push');
-            core.setOutput('sha', run?.head_sha || '');
+            // A skipped metadata-only run did not release functions and cannot
+            // advance the baseline past an earlier failed deployment.
+            let sha = '';
+            for (const run of response.data.workflow_runs) {
+              if (!['push', 'workflow_dispatch'].includes(run.event)) continue;
+              const jobs = await github.rest.actions.listJobsForWorkflowRun({ ...context.repo, run_id: run.id });
+              const released = jobs.data.jobs.some(job => job.steps?.some(step =>
+                step.name === 'Deploy Firebase functions in quota-safe batches' && step.conclusion === 'success'));
+              if (released) { sha = run.head_sha; break; }
+            }
+            core.setOutput('sha', sha);
 
       - name: Select affected Firebase functions
         id: plan
         env:
           FIREBASE_DEPLOY_BASE_SHA: ${{ steps.baseline.outputs.sha }}
+          FIREBASE_TRIGGER_BASE_SHA: ${{ github.event.before }}
           FIREBASE_FULL_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.full_deploy }}
         run: node scripts/selectFirebaseDeployTargets.mjs
 

@@ -32,17 +32,26 @@ function readPredeployPaths() {
     .flatMap(command => [...command.matchAll(/scripts\/[\w./-]+\.mjs/g)].map(match => match[0]));
 }
 
-export function writeDeployPlan({ before, head, full, outputPath, readGit = args => execFileSync("git", args, { encoding: "utf8" }) }) {
-  let changedPaths = null;
-  if (!full && before && !/^0+$/.test(before)) {
-    try {
-      readGit(["merge-base", "--is-ancestor", before, head]);
-      changedPaths = readGit(["diff", "--name-only", "-z", before, head]).split("\0").filter(Boolean);
-    } catch {
-      // Missing/shallow/non-ancestor baselines must never silently omit workers.
-    }
+function readChangedPaths(before, head, readGit) {
+  if (!before || /^0+$/.test(before)) return null;
+  try {
+    readGit(["merge-base", "--is-ancestor", before, head]);
+    return readGit(["diff", "--name-only", "-z", before, head]).split("\0").filter(Boolean);
+  } catch {
+    return null;
   }
-  const plan = selectFirebaseDeployTargets({ changedPaths, predeployPaths: readPredeployPaths(), full });
+}
+
+export function writeDeployPlan({ before, triggerBefore, head, full, outputPath, readGit = args => execFileSync("git", args, { encoding: "utf8" }) }) {
+  const predeployPaths = readPredeployPaths();
+  let plan;
+  if (!full && triggerBefore) {
+    const triggerPlan = selectFirebaseDeployTargets({ changedPaths: readChangedPaths(triggerBefore, head, readGit), predeployPaths });
+    if (triggerPlan.mode === "skip") plan = triggerPlan;
+  }
+  // Only a runtime change needs recovery of earlier failed function changes.
+  // Skipped workflow-only runs are excluded from the successful baseline below.
+  if (!plan) plan = selectFirebaseDeployTargets({ changedPaths: readChangedPaths(before, head, readGit), predeployPaths, full });
   fs.writeFileSync(outputPath, JSON.stringify(plan, null, 2));
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `mode=${plan.mode}\n`);
   console.log(JSON.stringify(plan));
@@ -52,6 +61,7 @@ export function writeDeployPlan({ before, head, full, outputPath, readGit = args
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   writeDeployPlan({
     before: process.env.FIREBASE_DEPLOY_BASE_SHA,
+    triggerBefore: process.env.FIREBASE_TRIGGER_BASE_SHA,
     head: process.env.GITHUB_SHA || "HEAD",
     full: process.env.FIREBASE_FULL_DEPLOY === "true",
     outputPath: process.env.FIREBASE_DEPLOY_PLAN || "/tmp/falowen-firebase-deploy-plan.json",
