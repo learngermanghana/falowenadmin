@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
@@ -321,6 +321,13 @@ export default function A1GrammarPresenter({
   const [showAnswer, setShowAnswer] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [participationQuestion, setParticipationQuestion] = useState(null);
+  // The picker uses this callback in its restore/reset effects. Keep it stable
+  // when answer/hint/timer state changes so those effects do not restart.
+  const handleParticipationQuestionChange = useCallback((question) => {
+    setParticipationQuestion(question);
+    setShowAnswer(false);
+    setShowHint(false);
+  }, []);
   const contentRef = useRef(null);
   const lastContentSizeRef = useRef({ width: 0, height: 0 });
   const [fitMode, setFitMode] = useState("normal");
@@ -670,11 +677,7 @@ export default function A1GrammarPresenter({
             slide={slide}
             questions={participationCheckMode ? stage.items : []}
             questionContext={participationCheckMode ? stage.id : "class-participation"}
-            onQuestionChange={(question) => {
-              setParticipationQuestion(question);
-              setShowAnswer(false);
-              setShowHint(false);
-            }}
+            onQuestionChange={handleParticipationQuestionChange}
             renderQuestionExternally={participationCheckMode}
           />
         </div>

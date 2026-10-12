@@ -69,7 +69,8 @@ test("A1 exam-readiness and scored class checks stay independent from optional h
   assert.match(presenter, /showAnswer \? \(/);
   assert.match(presenter, /Lehrerfeedback · nach der Antwort/);
   assert.match(presenter, /Keine automatische Bewertung/);
-  assert.match(presenter, /onQuestionChange=\{\(question\) => \{/);
+  assert.match(presenter, /onQuestionChange=\{handleParticipationQuestionChange\}/);
+  assert.match(presenter, /const handleParticipationQuestionChange = useCallback\(/);
   assert.match(presenter, /setParticipationQuestion\(question\);\s*setShowAnswer\(false\);\s*setShowHint\(false\)/);
   assert.match(presenter, /<PresenterStudentPicker/);
   assert.match(presenter, /id: "grammar-check"/);
