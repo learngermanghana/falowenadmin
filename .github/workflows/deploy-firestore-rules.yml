@@ -31,9 +31,9 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
       - name: Deploy verified rules
         run: |
-          if ! "$RUNNER_TEMP/falowen-rules-tests/node_modules/.bin/firebase" deploy --only firestore:rules --project falowen-examiner-trainer --non-interactive > "$RUNNER_TEMP/firestore-deploy.log" 2>&1; then
+          if ! "$RUNNER_TEMP/falowen-rules-tests/node_modules/.bin/firebase" deploy --only firestore:rules --project falowen-examiner-trainer --non-interactive --json > "$RUNNER_TEMP/firestore-deploy.log" 2>&1; then
             cat "$RUNNER_TEMP/firestore-deploy.log"
-            while IFS= read -r line; do echo "::error::$line"; done < <(tail -15 "$RUNNER_TEMP/firestore-deploy.log")
+            while IFS= read -r line; do echo "::error::$line"; done < <(tail -50 "$RUNNER_TEMP/firestore-deploy.log")
             exit 1
           fi
           cat "$RUNNER_TEMP/firestore-deploy.log"
