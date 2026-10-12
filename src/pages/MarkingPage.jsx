@@ -1,3 +1,4 @@
+import { startVisiblePolling } from "../utils/visiblePolling.js";
 const queueRowKey = (row) => String(row?.path || row?.id || [row?.studentCode, row?.studentName, row?.assignmentId || row?.assignment, row?.submittedAt || row?.createdAt || ""].join("|"));
 const QUEUE_HIDDEN_STORAGE = "falowen-admin-queue-hidden-v1";
 const readHiddenQueue = () => { try { return JSON.parse(window.localStorage.getItem(QUEUE_HIDDEN_STORAGE) || "[]"); } catch { return []; } };
@@ -337,12 +338,11 @@ export default function MarkingPage() {
       }
     };
 
-    loadLatestSubmissions();
-    const refreshId = window.setInterval(loadLatestSubmissions, 20000);
+    const stopPolling = startVisiblePolling(loadLatestSubmissions, 60000);
 
     return () => {
       cancelled = true;
-      window.clearInterval(refreshId);
+      stopPolling();
     };
   }, [error]);
 
@@ -1394,3 +1394,4 @@ export default function MarkingPage() {
     </div>
   );
 }
+

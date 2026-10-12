@@ -1,5 +1,6 @@
+import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { collection, deleteDoc, doc, documentId, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import {
   clockLabel,
@@ -52,19 +53,26 @@ export default function TimedAssignmentAttemptsPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  useEffect(() => onSnapshot(
-    collection(db, COLLECTION),
-    snapshot => {
-      setAttempts(snapshot.docs
-        .map(entry => ({ id: entry.id, ...entry.data() }))
-        .filter(entry => entry.timerRecord === true || String(entry.id || "").startsWith("timed__"))
+  useEffect(() => {
+    const records = [new Map(), new Map()];
+    const sources = [
+      firestoreQuery(collection(db, COLLECTION), where("timerRecord", "==", true)),
+      // Older timed records used an ID prefix before timerRecord was introduced.
+      firestoreQuery(collection(db, COLLECTION),
+        where(documentId(), ">=", "timed__"),
+        where(documentId(), "<=", "timed__\uf8ff")),
+    ];
+    const ready = new Set();
+    const unsubscribes = sources.map((source, index) => onSnapshot(source, snapshot => {
+      records[index] = new Map(snapshot.docs.map(entry => [entry.id, { id: entry.id, ...entry.data() }]));
+      ready.add(index);
+      setAttempts([...new Map([...records[0], ...records[1]]).values()]
         .sort((a, b) => (toAttemptMillis(b.startedAt) || Number(b.clientStartedAt) || 0) -
           (toAttemptMillis(a.startedAt) || Number(a.clientStartedAt) || 0)));
-      setLoading(false);
-      setTimerError("");
-    },
-    error => { setLoading(false); setTimerError(error?.message || "Could not load timed assignments."); },
-  ), []);
+      if (ready.size === sources.length) { setLoading(false); setTimerError(""); }
+    }, error => { setLoading(false); setTimerError(error?.message || "Could not load timed assignments."); }));
+    return () => unsubscribes.forEach(unsubscribe => unsubscribe());
+  }, []);
 
   const loadMocks = useCallback(async () => {
     try {
@@ -119,11 +127,7 @@ export default function TimedAssignmentAttemptsPage() {
   };
 
   useEffect(() => {
-    loadMocks();
-    const interval = window.setInterval(loadMocks, 30000);
-    const onFocus = () => loadMocks();
-    window.addEventListener("focus", onFocus);
-    return () => { window.clearInterval(interval); window.removeEventListener("focus", onFocus); };
+    return startVisiblePolling(loadMocks, 30000);
   }, [loadMocks]);
 
   const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus), [mocks, query, mockStatus]);
@@ -308,3 +312,4 @@ export default function TimedAssignmentAttemptsPage() {
     </div>
   );
 }
+

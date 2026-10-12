@@ -1,3 +1,4 @@
+import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
@@ -146,11 +147,10 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
       }
     };
 
-    loadHistory();
-    const timer = window.setInterval(loadHistory, 5000);
+    const stopPolling = startVisiblePolling(loadHistory, 60000);
     return () => {
       active = false;
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [studentId]);
 
@@ -364,3 +364,4 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
     </section>
   );
 }
+

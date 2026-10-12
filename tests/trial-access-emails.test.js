@@ -203,6 +203,7 @@ test("scheduled trial worker recovers a missing Day-0 welcome", async () => {
     collection(name) {
       if (name === "students") {
         return {
+          where() { return this; },
           async get() {
             return {
               size: 1,
@@ -397,4 +398,45 @@ test("Announcement Apps Script is the default owner of trial email delivery", as
   assert.equal(result.deliveryMode, "apps_script_native");
   assert.equal(result.checked, 0);
   assert.equal(result.sent, 0);
+});
+
+
+test("hourly candidates use bounded queries, deduplicate legacy dates and omit old rows", async () => {
+  const recent = student({ createdAt: new Date(NOW) });
+  const old = student({ createdAt: new Date(NOW - 100 * DAY_MS) });
+  const rows = [
+    { id: "recent", data: () => recent },
+    { id: "numeric", data: () => student({ createdAt: NOW }) },
+    { id: "legacy", data: () => student({ createdAt: undefined, enrollDate: new Date(NOW).toISOString() }) },
+    { id: "old", data: () => old },
+  ];
+  let queries = 0;
+  const db = { collection() {
+    return { where(field, _op, lower) {
+      return { where(_field, _upperOp, upper) {
+        return { async get() {
+          queries += 1;
+          const docs = rows.filter(row => {
+            const value = row.data()[field];
+            return typeof value === typeof lower && value >= lower && value <= upper;
+          });
+          return { docs, size: docs.length };
+        } };
+      } };
+    }, get() { throw new Error("hourly scan must not read the entire student collection"); } };
+  } };
+  const result = await _test.loadTrialEmailCandidates(db, new Date(NOW));
+  assert.deepEqual(result.docs.map(doc => doc.id).sort(), ["legacy", "numeric", "recent"]);
+  assert.equal(result.size, 3);
+  assert.equal(queries, 48);
+});
+
+test("daily recovery sweep retains students with unusual or extended trial dates", async () => {
+  const docs = [{ id: "extended", data: () => student({ createdAt: new Date(NOW - 100 * DAY_MS), trialPurgeAt: new Date(NOW + DAY_MS) }) }];
+  let scans = 0;
+  const db = { collection() { return { async get() { scans += 1; return { docs, size: docs.length }; } }; } };
+  const now = new Date(NOW); now.setUTCHours(3);
+  const result = await _test.loadTrialEmailCandidates(db, now);
+  assert.equal(result.docs[0].id, "extended");
+  assert.equal(scans, 1);
 });
