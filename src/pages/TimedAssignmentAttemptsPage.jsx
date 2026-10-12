@@ -6,12 +6,16 @@ import { auth, db } from "../firebase";
 import {
   clockLabel,
   filterMockAttempts,
+  filterTimedAttempts,
+  timedAttemptStatus,
+  timedAttemptStatusLabel,
   mockActivityLabel,
   mockSectionProgress,
   remainingSeconds,
   toAttemptMillis,
   MOCK_SECTIONS,
 } from "../utils/mockAttemptMonitoring";
+import "./TimedAssignmentAttemptsPage.css";
 
 const COLLECTION = "submissionLocks";
 const MOCK_MONITOR_URL = String(
@@ -41,8 +45,9 @@ export default function TimedAssignmentAttemptsPage() {
   const [lastChecked, setLastChecked] = useState("");
   const [partial, setPartial] = useState(false);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState("mocks");
   const [mockStatus, setMockStatus] = useState("all");
+  const [timedStatus, setTimedStatus] = useState("all");
   const [writingReviewId, setWritingReviewId] = useState("");
   const [writingReview, setWritingReview] = useState(null);
   const [writingReviewError, setWritingReviewError] = useState("");
@@ -131,20 +136,27 @@ export default function TimedAssignmentAttemptsPage() {
   };
 
   useEffect(() => {
+    // Avoid repeating the mock-monitor network request while staff view Campus timers.
+    if (category !== "mocks") return undefined;
     return startVisiblePolling(loadMocks, 30000);
-  }, [loadMocks]);
+  }, [loadMocks, category]);
 
   const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus), [mocks, query, mockStatus]);
-  const filteredTimed = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return attempts.filter(attempt => !needle || [
-      attempt.studentEmail, attempt.studentCode, attempt.studentId, attempt.assignmentKey, attempt.level, attempt.status,
-    ].some(value => String(value || "").toLowerCase().includes(needle)));
-  }, [attempts, query]);
-  const inProgress = mocks.filter(row => row.status === "in_progress").length;
-  const completed = mocks.filter(row => row.status === "completed").length;
-  const showMocks = category === "all" || category === "mocks";
-  const showTimed = category === "all" || category === "timed";
+  const filteredTimed = useMemo(() => filterTimedAttempts(attempts, query, timedStatus), [attempts, query, timedStatus]);
+  const mockInProgress = mocks.filter(row => row.status === "in_progress").length;
+  const mockCompleted = mocks.filter(row => row.status === "completed").length;
+  const timedInProgress = attempts.filter(row => timedAttemptStatus(row) === "in_progress").length;
+  const timedCompleted = attempts.filter(row => timedAttemptStatus(row) === "completed").length;
+  const showMocks = category === "mocks";
+  const showTimed = category === "timed";
+  const switchCategory = (next) => {
+    setCategory(next);
+    setQuery("");
+    setMockStatus("all");
+    setTimedStatus("all");
+    setWritingReviewId("");
+    setWritingReview(null);
+  };
 
   const resetAttempt = async (attempt) => {
     const label = [attempt.studentEmail || attempt.studentCode || attempt.studentId, attempt.assignmentKey]
@@ -158,51 +170,62 @@ export default function TimedAssignmentAttemptsPage() {
   };
 
   return (
-    <div style={{ display: "grid", gap: 18 }}>
+    <div className="mock-timed-monitor" style={{ display: "grid", gap: 18 }}>
       <header style={{ ...card, background: "linear-gradient(135deg,#eff6ff,#fff)" }}>
         <p style={{ color: "#1d4ed8", fontWeight: 800, fontSize: 12, margin: 0, textTransform: "uppercase" }}>Exam controls</p>
-        <h1 style={{ margin: 0 }}>Mock monitoring &amp; timed attempts</h1>
+        <h1 style={{ margin: 0 }}>Mock exams &amp; Campus timers</h1>
         <p style={{ margin: 0, color: "#475569", lineHeight: 1.6 }}>
-          Track A1, A2 and B1 full-mock progress, section timers and timed workbook assignments in one place.
-          Mock status reflects the most recently saved progress, not a continuous online-presence signal.
+          Exam Room mocks and Campus timed assignments are monitored separately. Choose a tab to see the right students and filter by status.
+          Mock status shows saved progress, not a continuous online-presence signal.
         </p>
       </header>
 
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))", gap: 10 }} aria-label="Monitoring summary">
-        {[
+      <nav className="monitor-switcher" role="tablist" aria-label="Monitoring source">
+        <button type="button" role="tab" id="monitor-mocks-tab" aria-controls="mock-monitoring"
+          aria-selected={showMocks} className="monitor-tab" onClick={() => switchCategory("mocks")}>
+          <strong>Exam Room mocks</strong>
+          <span>Full mock exams · {mockLoading && !lastChecked ? "Loading…" : mocks.length + " attempts"}</span>
+        </button>
+        <button type="button" role="tab" id="monitor-timed-tab" aria-controls="timed-assignments"
+          aria-selected={showTimed} className="monitor-tab" onClick={() => switchCategory("timed")}>
+          <strong>Campus timed tests</strong>
+          <span>Timed assignments · {loading ? "Loading…" : attempts.length + " attempts"}</span>
+        </button>
+      </nav>
+
+      <section className="monitor-summary" aria-label={showMocks ? "Exam Room mock summary" : "Campus timed test summary"}>
+        {(showMocks ? [
           ["Mocks recorded", mockLoading && !lastChecked ? "…" : mocks.length],
-          ["In progress", inProgress],
-          ["Completed mocks", completed],
-          ["Timed assignments", loading ? "…" : attempts.length],
-        ].map(([label, value]) =>
-          <div key={label} style={card}><span style={{ color: "#64748b", fontSize: 13 }}>{label}</span><strong style={{ fontSize: 25 }}>{value}</strong></div>)}
+          ["In progress", mockInProgress],
+          ["Completed mocks", mockCompleted],
+        ] : [
+          ["Timed attempts", loading ? "…" : attempts.length],
+          ["In progress", timedInProgress],
+          ["Completed tests", timedCompleted],
+        ]).map(([label, value]) =>
+          <div key={label} className="monitor-summary-card"><span>{label}</span><strong>{value}</strong></div>)}
       </section>
 
       <section style={card}>
-        <label style={{ display: "grid", gap: 5 }}>
-          <strong>Search student or assignment</strong>
-          <input value={query} onChange={event => setQuery(event.target.value)}
-            placeholder="Student name, email, ID, mock ID or assignment…"
-            style={{ minHeight: 42, padding: 10, border: "1px solid #cbd5e1", borderRadius: 10 }} />
+        <label className="monitor-search">
+          <strong>{showMocks ? "Search Exam Room mocks" : "Search Campus timed tests"}</strong>
+          <input type="search" value={query} onChange={event => setQuery(event.target.value)}
+            placeholder={showMocks ? "Student name, email, ID or mock ID…" : "Student name, email, ID or assignment…"} />
         </label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {[[ "all", "All monitoring" ], [ "mocks", "Mock tests" ], [ "timed", "Timed assignments" ]].map(([key,label]) =>
-            <button key={key} type="button" aria-pressed={category === key} onClick={() => setCategory(key)}
-              style={{ padding: "9px 12px", borderRadius: 10, cursor: "pointer", border: "1px solid #cbd5e1", background: category === key ? "#dbeafe" : "#fff", fontWeight: 700 }}>{label}</button>)}
-        </div>
       </section>
 
-      {showMocks && <section style={{ display: "grid", gap: 12 }} data-testid="mock-monitoring">
+      {showMocks && <section id="mock-monitoring" role="tabpanel" aria-labelledby="monitor-mocks-tab" className="monitor-content" data-testid="mock-monitoring">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <div><h2 style={{ margin: 0 }}>Mock test progress &amp; timing</h2>
+          <div><h2 style={{ margin: 0 }}>Exam Room · Full mock exams</h2>
             <small style={{ color: "#64748b" }}>Last synced: {lastChecked ? formatDate(lastChecked) : "not yet"} · refreshes every 30 seconds</small>
           </div>
           <button type="button" onClick={loadMocks} style={{ border: "1px solid #2563eb", borderRadius: 10, background: "#fff", color: "#1d4ed8", padding: "9px 12px", fontWeight: 750, cursor: "pointer" }}>Refresh now</button>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="monitor-status-filters" role="group" aria-label="Filter Exam Room mock status">
           {[[ "all", "All" ], [ "in_progress", "In progress" ], [ "completed", "Completed" ]].map(([value,label]) =>
-            <button key={value} type="button" onClick={() => setMockStatus(value)} aria-pressed={mockStatus === value}
-              style={{ padding: "8px 12px", borderRadius: 9, background: mockStatus === value ? "#dbeafe" : "#fff", border: "1px solid #cbd5e1", cursor: "pointer" }}>{label}</button>)}
+            <button className="monitor-status-button" key={value} type="button"
+              onClick={() => setMockStatus(value)} aria-pressed={mockStatus === value}>{label}</button>)}
+          <span className="monitor-filter-count">{filteredMocks.length} shown</span>
         </div>
         {mockError && <div role="alert" style={{ ...card, color: "#991b1b", borderColor: "#fecaca" }}>
           {mockError}{lastChecked ? " · Showing last successfully loaded data." : ""}
@@ -282,29 +305,35 @@ export default function TimedAssignmentAttemptsPage() {
         })}
       </section>}
 
-      {showTimed && <section style={{ display: "grid", gap: 10 }} data-testid="timed-assignments">
-        <h2 style={{ margin: 0 }}>Timed assignment attempts</h2>
+      {showTimed && <section id="timed-assignments" role="tabpanel" aria-labelledby="monitor-timed-tab" className="monitor-content" data-testid="timed-assignments">
+        <h2 style={{ margin: 0 }}>Campus · Timed assignment attempts</h2>
         <p style={{ margin: 0, color: "#64748b" }}>
-          Countdown derives from the learner's saved start time and assigned duration.
-          Reset removes only that timed workbook attempt, not a mock result.
+          These are timed tests in the Campus workbook, not full mocks from Exam Room.
+          The countdown uses the saved start time and duration. Reset removes only the Campus timer, not a mock result.
         </p>
+        <div className="monitor-status-filters" role="group" aria-label="Filter Campus timed test status">
+          {[[ "all", "All" ], [ "in_progress", "In progress" ], [ "completed", "Completed" ]].map(([value,label]) =>
+            <button className="monitor-status-button" key={value} type="button"
+              onClick={() => setTimedStatus(value)} aria-pressed={timedStatus === value}>{label}</button>)}
+          <span className="monitor-filter-count">{filteredTimed.length} shown</span>
+        </div>
         {timerError && <div role="alert" style={{ ...card, color: "#991b1b", borderColor: "#fecaca" }}>{timerError}</div>}
         {loading && <p>Loading timed assignments…</p>}
-        {!loading && !filteredTimed.length && <div style={card}>No timed attempts match this search.</div>}
+        {!loading && !filteredTimed.length && <div style={card}>No Campus timed attempts match these filters.</div>}
         {filteredTimed.map(attempt => {
           const end = timeEnd(attempt);
           const remaining = remainingSeconds(end, now);
           return <article key={attempt.id} style={card}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
               <div><strong>{attempt.assignmentKey || "Timed assignment"}</strong><div style={{ color: "#475569" }}>{attempt.studentName || attempt.fullName || attempt.name || attempt.studentEmail || attempt.studentCode || attempt.studentId || "Unknown student"}</div>{(attempt.studentName || attempt.fullName || attempt.name) && attempt.studentEmail ? <small style={{ color: "#64748b" }}>{attempt.studentEmail}</small> : null}</div>
-              <strong>{attempt.status || "active"}</strong>
+              <strong className={timedAttemptStatus(attempt) === "completed" ? "monitor-timed-state is-completed" : "monitor-timed-state"}>{timedAttemptStatusLabel(attempt, now)}</strong>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 9, fontSize: 13 }}>
               <span><b>Level:</b> {attempt.level || "—"}</span>
               <span><b>Started:</b> {formatDate(attempt.startedAt || attempt.clientStartedAt)}</span>
               <span><b>Ends:</b> {end ? formatDate(end) : "—"}</span>
               <span><b>Duration:</b> {attempt.durationSeconds ? Math.round(attempt.durationSeconds / 60) + " min" : "—"}</span>
-              <span><b>Time left:</b> {attempt.status === "submitted" ? "Submitted" : attempt.status === "expired" ? "Expired" : clockLabel(remaining)}</span>
+              <span><b>Time left:</b> {timedAttemptStatus(attempt) === "completed" ? "Submitted" : timedAttemptStatusLabel(attempt, now).startsWith("Time expired") ? "Expired" : clockLabel(remaining)}</span>
             </div>
             <div><button type="button" disabled={resettingId === attempt.id} onClick={() => resetAttempt(attempt)}
               style={{ color: "#b91c1c", border: "1px solid #dc2626", borderRadius: 10, padding: "9px 12px", background: "#fff", fontWeight: 800, cursor: "pointer" }}>
