@@ -23,7 +23,10 @@ test('A1 linked roster loads once; hint, answer and student buttons survive rere
   const checks = [{ questionDe: 'Welche Antwort ist richtig?', answerDe: 'Die richtige Antwort.' }, { questionDe: 'Frage zwei', answerDe: 'Antwort zwei' }, { questionDe: 'Exit', answerDe: 'Exit-Antwort' }];
   let loads = 0;
   const loadedClasses = [];
+  const liveSession = { liveState: {}, hasSnapshot: false, isToday: true, isRemoteState: false, classRecordId: '', deviceId: 'test-device', publish: async () => {} };
   const mocks = {
+    '../hooks/usePresenterLiveSession.js': { __esModule: true, default: () => liveSession },
+    '../services/presenterLiveSessionService.js': { setPresenterClassContext() {} },
     '../utils/presenterClassContext.js': contextModule.exports,
     '../utils/presenterConceptLabels.js': { presenterConceptLabel: (_question, options = {}) => options.fallback || 'Lesson concept' },
     '../services/classesService.js': { listClasses: async () => [
