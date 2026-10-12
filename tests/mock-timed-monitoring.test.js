@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { mockSectionProgress, remainingSeconds, clockLabel, mockActivityLabel, filterMockAttempts } from "../src/utils/mockAttemptMonitoring.js";
+import { mockSectionProgress, remainingSeconds, clockLabel, mockActivityLabel, filterMockAttempts, filterTimedAttempts, timedAttemptStatus, timedAttemptStatusLabel } from "../src/utils/mockAttemptMonitoring.js";
 
 test("mock monitor shows four-section progress and true section remaining time", () => {
   assert.deepEqual(mockSectionProgress({completedSections:["lesen","hoeren"]}), {
@@ -44,4 +44,46 @@ test("mock dashboard shows name above email and preserves email fallback", () =>
   assert.match(page, /attempt\.studentName \|\| attempt\.studentEmail/);
   assert.match(page, /attempt\.studentName && attempt\.studentEmail/);
   assert.match(page, /Student name, email, ID/);
+});
+
+test("Exam Room and Campus filters are independent, visible and accessible", () => {
+  const page = fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx", "utf8");
+  const css = fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.css", "utf8");
+  assert.match(page, /useState\("mocks"\)/, "open Exam Room first");
+  assert.match(page, /role="tablist"/);
+  assert.match(page, /Exam Room mocks/);
+  assert.match(page, /Campus timed tests/);
+  assert.match(page, /aria-selected=\{showMocks\}/);
+  assert.match(page, /aria-selected=\{showTimed\}/);
+  assert.match(page, /Filter Exam Room mock status/);
+  assert.match(page, /Filter Campus timed test status/);
+  assert.match(page, /onClick=\{\(\) => setMockStatus\(value\)\}/);
+  assert.match(page, /onClick=\{\(\) => setTimedStatus\(value\)\}/);
+  assert.match(page, /filterTimedAttempts\(attempts, query, timedStatus\)/);
+  assert.match(page, /aria-pressed=\{mockStatus === value\}/);
+  assert.match(page, /aria-pressed=\{timedStatus === value\}/);
+  assert.match(css, /button\.monitor-status-button\s*\{[^}]*background-color: #fff;[^}]*color: #253650/s);
+  assert.match(css, /button\.monitor-status-button\[aria-pressed="true"\]\s*\{[^}]*background-color: #1d4ed8;[^}]*color: #fff/s);
+  assert.match(css, /@media \(max-width: 670px\)/);
+});
+
+test("Campus timed tests correctly filter submitted vs unfinished or expired locks", () => {
+  const timed = [
+    {id: "a", studentName: "Ama", assignmentKey: "A1-1", status: "active"},
+    {id: "b", studentEmail: "kojo@example.com", assignmentKey: "B1-5", status: "submitted"},
+    {id: "c", studentName: "Kate", assignmentKey: "A2-3", status: "expired"},
+    {id: "d", fullName: "Mia", assignmentKey: "A1-2", status: "completed"},
+  ];
+  assert.equal(timedAttemptStatus(timed[0]), "in_progress");
+  assert.equal(timedAttemptStatus(timed[1]), "completed");
+  assert.equal(timedAttemptStatus(timed[2]), "in_progress", "expired does not mean submitted");
+  assert.equal(timedAttemptStatus(timed[3]), "completed");
+  assert.equal(timedAttemptStatusLabel(timed[2]), "Time expired · not submitted");
+  assert.equal(timedAttemptStatusLabel({status:"active", startedAt:1720000000000, durationSeconds:60},1720000061000),
+    "Time expired · not submitted");
+  assert.equal(filterTimedAttempts(timed,"","in_progress").length,2);
+  assert.equal(filterTimedAttempts(timed,"","completed").length,2);
+  assert.deepEqual(filterTimedAttempts(timed,"kojo@example.com","completed").map(row => row.id), ["b"]);
+  assert.deepEqual(filterTimedAttempts(timed,"mia","all").map(row => row.id), ["d"]);
+  assert.equal(filterTimedAttempts(timed,"B1","in_progress").length,0);
 });
