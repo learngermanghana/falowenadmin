@@ -25,6 +25,7 @@ test('A1 linked roster loads once; hint, answer and student buttons survive rere
   const loadedClasses = [];
   const mocks = {
     '../utils/presenterClassContext.js': contextModule.exports,
+    '../utils/presenterConceptLabels.js': { presenterConceptLabel: (_question, options = {}) => options.fallback || 'Lesson concept' },
     '../services/classesService.js': { listClasses: async () => [
       { id: 'other', classId: 'A1 Hamburg Klasse', name: 'A1 Hamburg Klasse', level: 'A1' },
       { id: 'LnvBRAxp5IjmQZzfM6eY', classId: 'A1 Berlin Klasse', name: 'A1 Berlin Klasse', level: 'A1' },
