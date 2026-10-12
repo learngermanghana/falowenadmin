@@ -103,3 +103,8 @@
     padding: 12px;
   }
 }
+
+.student-contract-extension { margin-top: 20px; }
+.student-contract-extension p { color: #526075; font-size: 14px; }
+.student-contract-extension-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.student-contract-extension-actions button { min-height: 44px; padding: 8px 14px; }

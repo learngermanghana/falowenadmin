@@ -241,7 +241,7 @@ export default function PresenterStudentPicker({
   const [classOptions, setClassOptions] = useState([]);
   const classContext = useMemo(() => readPresenterClassContext(window.location.search), []);
   const classContextApplied = useRef(false);
-  const [selectedClassId, setSelectedClassId] = useState(() => classContext.classRecordId || classContext.classId || safeStorageGet(LAST_CLASS_KEY));
+  const [selectedClassId, setSelectedClassId] = useState(() => (classContext.classRecordId || classContext.classId) ? "" : safeStorageGet(LAST_CLASS_KEY));
   const [students, setStudents] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);

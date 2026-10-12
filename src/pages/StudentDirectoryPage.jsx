@@ -1,3 +1,4 @@
+import { extendContractDate } from "../utils/contractExtension.js";
 import "./StudentDirectoryPage.css";
 import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../utils/studentDetailTabs.js";
 import { useEffect, useMemo, useState } from "react";
@@ -918,6 +919,19 @@ export default function StudentDirectoryPage() {
                         />
                               </>
                             )}
+                            {tab.id === "class" && <div className="student-contract-extension">
+                              <strong>Extend contract</strong>
+                              <p>Add calendar months to the contract end date above, then save the student.</p>
+                              <div className="student-contract-extension-actions">
+                                {[1, 3, 6].map((months) => <button key={months} type="button" disabled={savingId === selectedStudent.id || !getDraft(selectedStudent).contractEnd} onClick={() => {
+                                  try {
+                                    const nextEnd = extendContractDate(getDraft(selectedStudent).contractEnd, months);
+                                    updateDraftField(selectedStudent.id, "contractEnd", nextEnd, selectedStudent);
+                                  } catch (err) { pushToast({ type: "error", message: err.message }); }
+                                }}>+{months} {months === 1 ? "month" : "months"}</button>)}
+                              </div>
+                              {!getDraft(selectedStudent).contractEnd && <p>Set the contract end date to enable extensions.</p>}
+                            </div>}
                             {tab.id === "class" && <StudentClassTransferPanel
                               key={selectedStudent.id} student={selectedStudent} classes={classes}
                               onTransferred={handleStudentTransferred} pushToast={pushToast} />}
