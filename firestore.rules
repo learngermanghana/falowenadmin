@@ -1,279 +1,69 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null && (
-        !exists(/databases/$(database)/documents/accountDeletionRequests/$(request.auth.uid)) ||
-        get(/databases/$(database)/documents/accountDeletionRequests/$(request.auth.uid)).data.status == 'cancelled'
-      );
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email in [
+          "moxflex@gmail.com"
+        ];
     }
 
-    function isStaff() {
-      return signedIn() && (
-        request.auth.token.get('admin', false) == true ||
-        request.auth.token.get('staff', false) == true ||
-        request.auth.token.get('role', '') in ['admin', 'staff', 'tutor'] ||
-        request.auth.token.get('email', '') in ['moxflex@gmail.com', 'staff@falowen.app']
-      );
+    // Answer key sync metadata written by Falowen Admin.
+    match /answerKeyRegistry/{docId} {
+      allow read, write: if isAdmin();
     }
 
-    function ownsResource() {
-      return signedIn() && (
-        resource.data.userId == request.auth.uid ||
-        resource.data.uid == request.auth.uid ||
-        resource.data.ownerUid == request.auth.uid
-      );
+    match /answerKeySyncRuns/{docId} {
+      allow read, write: if isAdmin();
     }
 
-    function ownsIncoming() {
-      return signedIn() && (
-        request.resource.data.userId == request.auth.uid ||
-        request.resource.data.uid == request.auth.uid ||
-        request.resource.data.ownerUid == request.auth.uid
-      );
-    }
-
-    function ownsStudentResource() {
-      return signedIn() && (
-        resource.data.studentId == request.auth.uid ||
-        resource.data.userId == request.auth.uid ||
-        resource.data.uid == request.auth.uid ||
-        resource.data.ownerUid == request.auth.uid
-      );
-    }
-
-    function ownsStudentIncoming() {
-      return signedIn() && (
-        request.resource.data.studentId == request.auth.uid ||
-        request.resource.data.userId == request.auth.uid ||
-        request.resource.data.uid == request.auth.uid ||
-        request.resource.data.ownerUid == request.auth.uid
-      );
-    }
-
-    function ownershipFieldsUnchanged() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-        'studentId',
-        'userId',
-        'uid',
-        'ownerUid'
-      ]);
-    }
-
-    match /users/{userId}/{document=**} {
-      allow read: if isOwner(userId) || isStaff();
-      allow create, update, delete: if isOwner(userId);
-    }
-
-    match /writingProgress/{progressId} {
-      allow create: if ownsIncoming();
-      allow read: if ownsResource() || isStaff();
-      allow update: if ownsResource() && ownsIncoming() && ownershipFieldsUnchanged();
-      allow delete: if ownsResource();
-
-      match /attempts/{attemptId} {
-        allow create: if ownsIncoming();
-        allow read: if ownsResource() || isStaff();
-        allow update: if ownsResource() && ownsIncoming() && ownershipFieldsUnchanged();
-        allow delete: if ownsResource();
-      }
-    }
-
-    // Assignment submission persistence.
-    // Students can save/retrieve their own drafts, submissions, and one-time submission locks.
-    // Staff can read/write for support and grading workflows.
-    match /submissionDrafts/{draftId} {
-      allow create: if ownsStudentIncoming() || isStaff();
-      allow read: if ownsStudentResource() || isStaff();
-      allow update: if (ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
-      allow delete: if ownsStudentResource() || isStaff();
-    }
-
-    match /submissions/{submissionId} {
-      allow create: if ownsStudentIncoming() || isStaff();
-      allow read: if ownsStudentResource() || isStaff();
-      allow update: if (ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
-      allow delete: if isStaff();
-    }
-
-    match /submissionLocks/{lockId} {
-      allow create: if ownsStudentIncoming() || isStaff();
-      allow read: if ownsStudentResource() || isStaff();
-      allow update: if (ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
-      allow delete: if isStaff();
-    }
-
-    // Timed assignment attempts are one-use student records.
-    // Students may create their own attempt and move it forward only.
-    // Staff may delete an attempt to explicitly reset it.
-    match /timedAssignmentAttempts/{attemptId} {
-      allow create: if ownsStudentIncoming()
-        && request.resource.data.status == 'active'
-        && request.resource.data.startedAt == request.time
-        && request.resource.data.durationSeconds is int
-        && request.resource.data.durationSeconds > 0
-        && request.resource.data.durationSeconds <= 7200;
-
-      allow read: if ownsStudentResource() || isStaff();
-
-      allow update: if isStaff() || (
-        ownsStudentResource()
-        && ownsStudentIncoming()
-        && ownershipFieldsUnchanged()
-        && request.resource.data.assignmentKey == resource.data.assignmentKey
-        && request.resource.data.level == resource.data.level
-        && request.resource.data.durationSeconds == resource.data.durationSeconds
-        && request.resource.data.startedAt == resource.data.startedAt
-        && request.resource.data.clientStartedAt == resource.data.clientStartedAt
-        && (
-          (resource.data.status == 'active' && request.resource.data.status in ['active', 'expired', 'submitted'])
-          || (resource.data.status == 'expired' && request.resource.data.status in ['expired', 'submitted'])
-          || (resource.data.status == 'submitted' && request.resource.data.status == 'submitted')
-        )
-      );
-
-      allow delete: if isStaff();
-    }
-
-    // Shared, canonical A1-C1 course progress snapshot.
-    // Students own their own snapshot; staff can read it for Admin/email/reporting.
-    match /courseCompletionSnapshots/{snapshotId} {
-      allow create: if ownsStudentIncoming() || isStaff();
-      allow read: if ownsStudentResource() || isStaff();
-      allow update: if (ownsStudentResource() && ownsStudentIncoming() && ownershipFieldsUnchanged()) || isStaff();
-      allow delete: if ownsStudentResource() || isStaff();
-    }
-
-    match /writingReferences/{docId} {
-      allow create: if ownsIncoming();
-      allow read: if ownsResource() || isStaff();
-      allow update: if ownsResource() && ownsIncoming() && ownershipFieldsUnchanged();
-      allow delete: if ownsResource();
-    }
-
-    match /savedWriting/{docId} {
-      allow create: if ownsIncoming();
-      allow read: if ownsResource() || isStaff();
-      allow update: if ownsResource() && ownsIncoming() && ownershipFieldsUnchanged();
-      allow delete: if ownsResource();
-    }
-
-    match /writingFeedback/{docId} {
-      allow create: if ownsIncoming();
-      allow read: if ownsResource() || isStaff();
-      allow update: if ownsResource() && ownsIncoming() && ownershipFieldsUnchanged();
-      allow delete: if ownsResource();
-    }
-
-    // Live, ungraded classroom multiple-choice responses.
-    // Signed-in users may read class responses. Students may only create/update
-    // their own response document; staff may manage them for classroom support.
-    match /classResponses/{responseId} {
-      allow read: if signedIn();
-      allow create: if ownsStudentIncoming() || isStaff();
-      allow update: if (
-        ownsStudentResource() &&
-        ownsStudentIncoming() &&
-        ownershipFieldsUnchanged()
-      ) || isStaff();
-      allow delete: if ownsStudentResource() || isStaff();
-    }
-
-    // Canonical live-class records are readable by signed-in students.
-    // Only admins and tutors can change scheduling and communication records.
-    match /classes/{document=**} {
-      allow read: if signedIn();
-      allow write: if isStaff();
-    }
-    match /classSessions/{document=**} {
-      allow read: if signedIn();
-      allow write: if isStaff();
-    }
-    match /zoomProfiles/{document=**} {
-      allow read: if signedIn();
-      allow write: if isStaff();
-    }
-    match /calendarFeeds/{document=**} {
-      allow read: if signedIn();
-      allow write: if isStaff();
-    }
-    match /auditLogs/{document=**} {
-      allow read, write: if isStaff();
-    }
-    match /emailQueue/{document=**} {
-      allow read, write: if isStaff();
-    }
-
-    // Existing Falowen collections that previously used the authenticated
-    // fallback are listed explicitly so they cannot override private writing
-    // and user-document rules.
-    match /aiAuditLogs/{document=**} { allow read, write: if signedIn(); }
-    match /announcements/{document=**} { allow read, write: if signedIn(); }
-    match /archived/{document=**} { allow read, write: if signedIn(); }
-    match /assignmentProgress/{document=**} { allow read, write: if signedIn(); }
-    match /attendance/{document=**} { allow read, write: if signedIn(); }
-    match /class_board/{document=**} { allow read, write: if signedIn(); }
-    match /class_lesson_notes/{document=**} { allow read, write: if signedIn(); }
-    match /grammarQuestions/{document=**} { allow read, write: if signedIn(); }
-    match /group_discussion/{document=**} { allow read, write: if signedIn(); }
-    match /language/{document=**} { allow read, write: if signedIn(); }
-    match /leadCaptures/{document=**} { allow read, write: if signedIn(); }
-    match /lessonProgress/{document=**} { allow read, write: if signedIn(); }
-    match /loginSessions/{document=**} { allow read, write: if signedIn(); }
-    match /notifications/{document=**} { allow read, write: if signedIn(); }
-    match /paystackInitRequests/{document=**} { allow read, write: if signedIn(); }
-    match /paystackWebhookEvents/{document=**} { allow read, write: if signedIn(); }
-    match /presentationSessions/{document=**} { allow read, write: if signedIn(); }
-    match /qa_posts/{document=**} { allow read, write: if signedIn(); }
-    match /scores/{document=**} { allow read, write: if signedIn(); }
-    match /sessions/{document=**} { allow read, write: if signedIn(); }
-    match /studentActivityEvents/{document=**} { allow read, write: if signedIn(); }
-    match /studentNotifications/{document=**} { allow read, write: if signedIn(); }
-    match /accountDeletionRequests/{uid} {
-      allow read: if isStaff() || (request.auth != null && request.auth.uid == uid);
+    // Writing submissions can be monitored from the admin dashboard.
+    match /writingSubmissions/{docId} {
+      allow read: if isAdmin();
       allow write: if false;
     }
-    match /students/{studentId} {
-      // Recovery may look up a missing UID document before querying the legacy
-      // student-code profile. Only the root profile is readable while paused.
-      allow read: if signedIn() || (request.auth != null && (studentId == request.auth.uid || resource.data.uid == request.auth.uid || resource.data.email == request.auth.token.email));
-      allow create: if signedIn() && (isStaff() || !request.resource.data.keys().hasAny(['accountDeletionStatus', 'notificationsPausedForDeletion', 'systemDeletionTest']));
-      allow update: if signedIn() && (isStaff() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['accountDeletionStatus', 'notificationsPausedForDeletion', 'systemDeletionTest']));
-      allow delete: if isStaff() || (signedIn() && resource.data.uid == request.auth.uid);
-      match /{collectionId}/{documentId}/{nested=**} {
-        allow read, write: if signedIn();
-      }
-    }
-    match /studyBuddyUsage/{document=**} { allow read, write: if signedIn(); }
-    match /usageQuotas/{document=**} { allow read, write: if signedIn(); }
-    match /writingScoreStats/{document=**} { allow read, write: if signedIn(); }
-    match /writingSubmissions/{document=**} { allow read, write: if signedIn(); }
 
-
-    // Legacy marking stores attempts in submissions/{level}/{studentCode}/{attempt}.
-    // The student-code collection name varies, so staff need the full subtree.
-    match /submissions/{document=**} {
-      allow read, write: if isStaff();
+    // Live class administration collections used by /live-classes.
+    match /classes/{classId} {
+      allow read, write: if isAdmin();
     }
 
-    // Admin and staff marking/dashboard access, including collection-group queries.
-    // These grants do not change students' existing ownership permissions.
-    match /{path=**}/submissions/{submissionId} {
-      allow read, write: if isStaff();
+    match /classSessions/{sessionId} {
+      allow read, write: if isAdmin();
     }
-    match /{path=**}/posts/{postId} {
-      allow read, write: if isStaff();
-    }
-    match /examTutorReviewQueue/{document=**} { allow read, write: if isStaff(); }
-    match /ai_issue_reports/{document=**} { allow read, write: if isStaff(); }
-    match /markingJobs/{document=**} { allow read, write: if isStaff(); }
-    match /answerKeyRegistry/{document=**} { allow read, write: if isStaff(); }
-    match /answerKeySyncRuns/{document=**} { allow read, write: if isStaff(); }
 
+    match /attendance/{classId}/sessions/{sessionId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /attendance/{classId}/sessions/{sessionId}/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    match /calendarFeeds/{feedId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /studentNotifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /emailQueue/{emailId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Do not deploy this file blindly if your live project already has broader
+    // Firestore rules in Firebase Console. Merge these answer-key rules into
+    // your existing rules first so other admin pages do not lose access.
     match /{document=**} {
       allow read, write: if false;
     }

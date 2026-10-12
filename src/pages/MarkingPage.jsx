@@ -582,8 +582,8 @@ export default function MarkingPage() {
     try {
       // Queue rows may come from collection-group posts or nested submissions.
       // Student-level fetches do not cover all these collections.
-      selectedFreshRow = submission.path ? await fetchSubmissionByPath(submission.path) : null;
-      freshRows = await fetchSubmissions(matchingStudent.level, matchingStudent.studentCode);
+      freshRows = await loadStudentSubmissionsWithSelection({ student: matchingStudent, exactPath: submission.path || "", fetchSubmissions, fetchSubmissionByPath });
+      selectedFreshRow = submission.path ? freshRows.find((row) => row.path === submission.path) || null : null;
     } catch (err) {
       error(err?.message || "Failed to verify this submission before loading.");
       return;

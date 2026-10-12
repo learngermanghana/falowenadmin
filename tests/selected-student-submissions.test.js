@@ -25,3 +25,13 @@ test("deleted exact document is not resurrected and lookup errors propagate", as
   assert.deepEqual(await loadStudentSubmissionsWithSelection({ ...args, fetchSubmissionByPath: async () => null }), []);
   await assert.rejects(loadStudentSubmissionsWithSelection({ ...args, fetchSubmissionByPath: async () => { throw new Error("permission denied"); } }), /permission denied/);
 });
+test("a readable exact submission opens when listing other attempts is denied", async () => {
+  const row = { path: "students/B/posts/attempt2", text: "Verified work" };
+  const denied = Object.assign(new Error("Missing or insufficient permissions."), { code: "permission-denied" });
+  assert.deepEqual(await loadStudentSubmissionsWithSelection({ student, exactPath: row.path,
+    fetchSubmissions: async () => { throw denied; }, fetchSubmissionByPath: async () => row }), [row]);
+  await assert.rejects(loadStudentSubmissionsWithSelection({ student, exactPath: "",
+    fetchSubmissions: async () => { throw denied; }, fetchSubmissionByPath: async () => row }), /permissions/);
+  await assert.rejects(loadStudentSubmissionsWithSelection({ student, exactPath: row.path,
+    fetchSubmissions: async () => { throw denied; }, fetchSubmissionByPath: async () => { throw denied; } }), /permissions/);
+});
