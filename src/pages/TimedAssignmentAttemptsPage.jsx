@@ -1,4 +1,5 @@
 import { startVisiblePolling } from "../utils/visiblePolling.js";
+import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerHealth.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, documentId, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -62,15 +63,18 @@ export default function TimedAssignmentAttemptsPage() {
         where(documentId(), ">=", "timed__"),
         where(documentId(), "<=", "timed__\uf8ff")),
     ];
-    const ready = new Set();
+    const health = createTimedAttemptListenerHealth(sources.length);
+    const updateHealth = ({ loading, error }) => {
+      setLoading(loading);
+      setTimerError(error);
+    };
     const unsubscribes = sources.map((source, index) => onSnapshot(source, snapshot => {
       records[index] = new Map(snapshot.docs.map(entry => [entry.id, { id: entry.id, ...entry.data() }]));
-      ready.add(index);
       setAttempts([...new Map([...records[0], ...records[1]]).values()]
         .sort((a, b) => (toAttemptMillis(b.startedAt) || Number(b.clientStartedAt) || 0) -
           (toAttemptMillis(a.startedAt) || Number(a.clientStartedAt) || 0)));
-      if (ready.size === sources.length) { setLoading(false); setTimerError(""); }
-    }, error => { setLoading(false); setTimerError(error?.message || "Could not load timed assignments."); }));
+      updateHealth(health.snapshot(index));
+    }, error => { updateHealth(health.failure(index, error)); }));
     return () => unsubscribes.forEach(unsubscribe => unsubscribe());
   }, []);
 
