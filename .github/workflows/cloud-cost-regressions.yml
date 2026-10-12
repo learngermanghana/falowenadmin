@@ -6,10 +6,12 @@ on:
       - 'functions/trialAccessEmails.js'
       - 'functions/pendingStudentCleanup.js'
       - 'src/utils/visiblePolling.js'
+      - 'src/utils/timedAttemptListenerHealth.js'
       - 'src/components/StudentPaymentTools.jsx'
       - 'src/pages/MarkingPage.jsx'
       - 'src/pages/TimedAssignmentAttemptsPage.jsx'
       - 'tests/cloud-cost-polling.test.js'
+      - 'tests/timed-attempt-listener-health.test.js'
       - 'tests/trial-access-emails.test.js'
       - '.github/workflows/cloud-cost-regressions.yml'
   workflow_dispatch:
@@ -22,4 +24,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/cloud-cost-polling.test.js tests/trial-access-emails.test.js tests/mock-timed-monitoring.test.js tests/student-payment-listener-stability.test.js
+      - run: node --test tests/cloud-cost-polling.test.js tests/timed-attempt-listener-health.test.js tests/trial-access-emails.test.js tests/mock-timed-monitoring.test.js tests/student-payment-listener-stability.test.js
