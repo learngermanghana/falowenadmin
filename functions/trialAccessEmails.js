@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const {
   TRIAL_DURATION_MS,
+  TRIAL_RETENTION_MS,
   hasQualifyingPayment,
   pendingStartedAtMillis,
   trialExpiredAtMillis,
@@ -487,6 +488,32 @@ async function writeTrialEmailDiagnostic({
   }
 }
 
+// A daily compatibility sweep retains recovery for legacy date formats and
+// explicitly extended trials. Ordinary hourly ticks only read recent records.
+async function loadTrialEmailCandidates(db, now) {
+  if (now.getUTCHours() === 3) return db.collection("students").get();
+  const oldest = new Date(now.getTime() - TRIAL_DURATION_MS - TRIAL_RETENTION_MS);
+  const fields = [
+    "trialStartedAt", "trialStartAt", "trialStart", "trial_started_at",
+    "registrationDate", "registration_date", "registeredAt", "registered_at",
+    "signupAt", "signupDate", "joined_at", "joinedAt", "enrollDate",
+    "enrollmentDate", "createdAt", "created_at",
+  ];
+  const docs = new Map();
+  for (const field of fields) {
+    const snapshots = await Promise.all([
+      [oldest, now],
+      [oldest.toISOString(), now.toISOString()],
+      [oldest.getTime(), now.getTime()],
+    ].map(([start, end]) => db.collection("students")
+      .where(field, ">=", start).where(field, "<=", end).get()));
+    for (const snapshot of snapshots) {
+      for (const doc of snapshot.docs) docs.set(doc.id, doc);
+    }
+  }
+  return { docs: [...docs.values()], size: docs.size };
+}
+
 async function runTrialAccessEmailJob({
   db,
   admin,
@@ -508,10 +535,8 @@ async function runTrialAccessEmailJob({
     };
   }
 
-  // Scan all students so this scheduled worker can recover a missed Day-0
-  // trigger. Eligibility remains strict: unpaid trial students only.
-  const snapshot = await db.collection("students").get();
   const nowDate = asDate(now) || new Date();
+  const snapshot = await loadTrialEmailCandidates(db, nowDate);
 
   const results = [];
   const skipped = [];
@@ -669,7 +694,9 @@ module.exports = {
     stageButtonLabel,
     stageTopic,
     studentLevel,
+    loadTrialEmailCandidates,
     trialEmailEligibility,
     trialEmailStage,
   },
 };
+
