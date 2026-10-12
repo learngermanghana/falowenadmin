@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = fs.readFileSync(path.join(root, "src/components/StudentPaymentTools.jsx"), "utf8");
 
 test("selected-student listener does not restart when the parent callback identity changes", () => {
-  assert.match(source, /import \{ useEffect, useMemo, useRef, useState \} from "react";/);
+  assert.match(source, /import \{ (?:useCallback, )?useEffect, useMemo, useRef, useState \} from "react";/);
   assert.match(source, /const onStudentUpdatedRef = useRef\(onStudentUpdated\);/);
   assert.match(source, /onStudentUpdatedRef\.current = onStudentUpdated;/);
   assert.match(source, /const notifyStudentUpdated = onStudentUpdatedRef\.current;/);
@@ -22,3 +22,4 @@ test("selected-student listener does not restart when the parent callback identi
 test("selected-student listener has an explicit error callback", () => {
   assert.match(source, /Could not refresh the selected student in real time\./);
 });
+

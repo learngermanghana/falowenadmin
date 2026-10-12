@@ -1,5 +1,6 @@
-import { startVisiblePolling } from "../utils/visiblePolling.js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useAdminRefresh } from "../hooks/useAdminRefresh.js";
+import AdminRefreshStatus from "./AdminRefreshStatus.jsx";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { createStudentPaymentLink, listStudentPayments } from "../services/studentPaymentService.js";
@@ -131,35 +132,10 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
     return unsubscribe;
   }, [studentId]);
 
-  useEffect(() => {
-    if (!studentId) {
-      setPayments([]);
-      return undefined;
-    }
-
-    let active = true;
-    const loadHistory = async () => {
-      try {
-        const rows = await listStudentPayments(studentId);
-        if (active) setPayments(rows);
-      } catch (error) {
-        console.warn("Could not refresh student payment history.", error);
-      }
-    };
-
-    const stopPolling = startVisiblePolling(loadHistory, 60000);
-    return () => {
-      active = false;
-      stopPolling();
-    };
-  }, [studentId]);
-
-  const refreshPaymentHistory = async () => {
-    if (!studentId) return [];
-    const rows = await listStudentPayments(studentId);
-    setPayments(rows);
-    return rows;
-  };
+  const loadPaymentHistory = useCallback(() => studentId ? listStudentPayments(studentId) : Promise.resolve([]), [studentId]);
+  const historyRefresh = useAdminRefresh(loadPaymentHistory, setPayments);
+  useEffect(() => { setPayments([]); }, [studentId]);
+  const refreshPaymentHistory = historyRefresh.refresh;
 
   const reconcilePendingPayments = async ({ silent = false } = {}) => {
     if (!studentId || reconciling) return { ok: true, checked: 0, applied: 0 };
@@ -342,6 +318,7 @@ export default function StudentPaymentTools({ student, draft = {}, onStudentUpda
           Falowen uses the Paystack webhook first. If that callback is missed, pending links are also verified automatically after 90 seconds while this student page is open, or you can use <strong>Recheck Paystack payment</strong> above.
         </div>
         <h4 style={{ margin: "4px 0 8px" }}>Payment history</h4>
+        <AdminRefreshStatus {...historyRefresh} label="payment history" />
         {payments.length === 0 ? (
           <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>No generated Paystack payments yet.</p>
         ) : (

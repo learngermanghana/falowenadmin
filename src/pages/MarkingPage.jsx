@@ -1,4 +1,5 @@
-import { startVisiblePolling } from "../utils/visiblePolling.js";
+import { useAdminRefresh } from "../hooks/useAdminRefresh.js";
+import AdminRefreshStatus from "../components/AdminRefreshStatus.jsx";
 const queueRowKey = (row) => String(row?.path || row?.id || [row?.studentCode, row?.studentName, row?.assignmentId || row?.assignment, row?.submittedAt || row?.createdAt || ""].join("|"));
 const QUEUE_HIDDEN_STORAGE = "falowen-admin-queue-hidden-v1";
 const readHiddenQueue = () => { try { return JSON.parse(window.localStorage.getItem(QUEUE_HIDDEN_STORAGE) || "[]"); } catch { return []; } };
@@ -324,27 +325,8 @@ export default function MarkingPage() {
     return () => { cancelled = true; };
   }, [roster, selectedStudentId, error]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadLatestSubmissions = async () => {
-      try {
-        const rows = await loadSubmissions();
-        if (!cancelled) {
-          setSubmissionNotifications(rows);
-        }
-      } catch (err) {
-        if (!cancelled) error(err?.message || "Failed to load submission notifications");
-      }
-    };
-
-    const stopPolling = startVisiblePolling(loadLatestSubmissions, 60000);
-
-    return () => {
-      cancelled = true;
-      stopPolling();
-    };
-  }, [error]);
+  const loadQueue = useCallback(() => loadSubmissions(), []);
+  const queueRefresh = useAdminRefresh(loadQueue, setSubmissionNotifications);
 
   useEffect(() => {
     if (!referenceAssignment || typeof window === "undefined") return;
@@ -970,6 +952,7 @@ export default function MarkingPage() {
               </div>
               <span className="marking-count-badge">{queueRows.length}</span>
             </div>
+            <AdminRefreshStatus {...queueRefresh} label="submission queue" />
             <input
               aria-label="Search submissions"
               value={attemptSearch}
