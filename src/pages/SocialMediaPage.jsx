@@ -328,10 +328,16 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
   const buffer = document.createElement("canvas");
   buffer.width = width;
   buffer.height = height;
-  const ctx = buffer.getContext("2d");
+  let ctx = buffer.getContext("2d");
   if (!ctx) return false;
 
   const photoLayout = drawBackground(ctx, width, height, template, photo, photoControls);
+  const backgroundCtx = ctx;
+  const contentCanvas = document.createElement("canvas");
+  contentCanvas.width = width;
+  contentCanvas.height = height * 2;
+  ctx = contentCanvas.getContext("2d");
+  if (!ctx) return false;
   const pad = Math.round(width * 0.065);
   const rightBoundary = photoLayout ? photoLayout.photoX - width * 0.035 : width - pad;
   const maxWidth = Math.max(width * 0.38, rightBoundary - pad);
@@ -381,7 +387,11 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
   const footerSpace = width * 0.19;
   const buttonHeight = width * 0.075;
   const buttonWidth = Math.min(maxWidth, width * 0.39);
-  const buttonY = Math.min(y, height - footerSpace - buttonHeight);
+  const buttonY = height - footerSpace - buttonHeight;
+  const contentLimit = buttonY - width * 0.025;
+  const contentScale = Math.min(1, contentLimit / Math.max(y, 1));
+  ctx = backgroundCtx;
+  ctx.drawImage(contentCanvas, 0, 0, width, Math.ceil(y), pad * (1 - contentScale), 0, width * contentScale, y * contentScale);
   roundRect(ctx, pad, buttonY, buttonWidth, buttonHeight, buttonHeight / 2);
   ctx.fillStyle = template.accent;
   ctx.fill();
@@ -470,7 +480,12 @@ export default function SocialMediaPage() {
       setLoading(true);
       setError("");
       try {
-        const rows = (await listClassCohorts()).slice().sort(classSort);
+        const rows = (await listClassCohorts()).filter((klass) => {
+          const status = String(klass.status || "").toLowerCase();
+          const start = String(klass.startDate || "").slice(0, 10);
+          const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Accra", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+          return !["archived", "graduated", "cancelled", "completed", "active"].includes(status) && /^\d{4}-\d{2}-\d{2}$/.test(start) && start >= today;
+        }).sort(classSort);
         setClasses(rows);
         const preferred = rows.find((item) => String(item.status || "").toLowerCase() === "upcoming") || rows[0] || null;
         if (preferred) {
@@ -625,7 +640,7 @@ export default function SocialMediaPage() {
             {error ? <p style={{ color: "#b91c1c" }}>{error}</p> : null}
             {!loading && !error && (
               <select value={selectedClassId} onChange={(event) => chooseClass(event.target.value)} style={inputStyle}>
-                {classes.length === 0 ? <option value="">No classes found</option> : null}
+                {classes.length === 0 ? <option value="">No upcoming classes</option> : null}
                 {classes.map((klass) => (
                   <option key={klass.id} value={klass.id}>
                     {klass.name || klass.levelId || klass.id} · {klass.status || "no status"} · {formatShortDate(klass.startDate) || "no start date"}
