@@ -44,3 +44,33 @@ export function filterMockAttempts(attempts = [], query = "", status = "all") {
       .some(value => String(value || "").toLowerCase().includes(needle))
   );
 }
+
+const FINISHED_TIMED_STATUSES = new Set(["submitted", "completed", "complete", "finished"]);
+
+export function timedAttemptStatus(attempt = {}) {
+  // Only a submitted attempt is completed. A lock that expired without a
+  // submission is still unfinished; don't call it a completed student test.
+  return FINISHED_TIMED_STATUSES.has(String(attempt.status || "").trim().toLowerCase())
+    ? "completed" : "in_progress";
+}
+
+export function timedAttemptStatusLabel(attempt = {}, now = Date.now()) {
+  if (timedAttemptStatus(attempt) === "completed") return "Completed";
+  const start = toAttemptMillis(attempt.startedAt) || toAttemptMillis(attempt.clientStartedAt);
+  const duration = Number(attempt.durationSeconds) || 0;
+  const deadline = start && duration > 0 ? start + duration * 1000 : 0;
+  if (String(attempt.status || "").toLowerCase() === "expired" || (deadline && deadline <= now)) {
+    return "Time expired · not submitted";
+  }
+  return "In progress";
+}
+
+export function filterTimedAttempts(attempts = [], query = "", status = "all") {
+  const needle = query.trim().toLowerCase();
+  return attempts.filter(attempt =>
+    (status === "all" || timedAttemptStatus(attempt) === status) &&
+    [attempt.studentName, attempt.fullName, attempt.name, attempt.studentEmail, attempt.studentCode,
+      attempt.studentId, attempt.assignmentKey, attempt.level, attempt.status]
+      .some(value => String(value || "").toLowerCase().includes(needle))
+  );
+}
