@@ -254,6 +254,12 @@ service cloud.firestore {
     match /writingSubmissions/{document=**} { allow read, write: if signedIn(); }
 
 
+    // Legacy marking stores attempts in submissions/{level}/{studentCode}/{attempt}.
+    // The student-code collection name varies, so staff need the full subtree.
+    match /submissions/{document=**} {
+      allow read, write: if isStaff();
+    }
+
     // Admin and staff marking/dashboard access, including collection-group queries.
     // These grants do not change students' existing ownership permissions.
     match /{path=**}/submissions/{submissionId} {

@@ -10,7 +10,7 @@ before(async () => {
   });
   await env.withSecurityRulesDisabled(async context => {
     const db = context.firestore();
-    for (const path of ['examTutorReviewQueue/review', 'ai_issue_reports/report', 'submissions/flat', 'submissions/A1/posts/nested', 'courses/A1/submissions/legacy', 'answerKeyRegistry/key', 'markingJobs/job']) {
+    for (const path of ['examTutorReviewQueue/review', 'ai_issue_reports/report', 'submissions/flat', 'submissions/A1/ST001/attempt-1', 'submissions/A1/posts/nested', 'courses/A1/submissions/legacy', 'answerKeyRegistry/key', 'markingJobs/job']) {
       await setDoc(doc(db, path), { studentId: 'student-owner', userId: 'student-owner', status: 'pending' });
     }
   });
@@ -28,6 +28,7 @@ for (const [label, token] of [
   test(`${label} can load dashboard panels and all submission shapes`, async () => {
     const db = env.authenticatedContext(`operator-${label.replace(/ /g, '-')}`, token).firestore();
     for (const name of ['examTutorReviewQueue', 'ai_issue_reports', 'answerKeyRegistry', 'markingJobs']) await assertSucceeds(getDocs(collection(db, name)));
+    await assertSucceeds(getDocs(collection(db, 'submissions', 'A1', 'ST001')));
     await assertSucceeds(getDocs(collectionGroup(db, 'submissions')));
     await assertSucceeds(getDocs(collectionGroup(db, 'posts')));
     await assertSucceeds(setDoc(doc(db, 'markingJobs/new-job'), { studentId: 'student-owner' }));
@@ -39,6 +40,7 @@ test('ordinary student and signed-out accounts cannot access staff panels or oth
     const db = context.firestore();
     for (const name of ['examTutorReviewQueue', 'ai_issue_reports', 'answerKeyRegistry', 'markingJobs']) await assertFails(getDocs(collection(db, name)));
     await assertFails(getDoc(doc(db, 'submissions/flat')));
+    await assertFails(getDocs(collection(db, 'submissions', 'A1', 'ST001')));
     await assertFails(getDocs(collectionGroup(db, 'posts')));
     await assertFails(setDoc(doc(db, 'markingJobs/forbidden'), { studentId: 'student-owner' }));
   }
