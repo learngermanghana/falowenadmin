@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
+import { readPresenterClassContext, requestedPresenterClass } from "../utils/presenterClassContext.js";
 import {
   getCurrentClassParticipationSession,
   saveClassParticipationSession,
@@ -238,7 +239,9 @@ export default function PresenterStudentPicker({
   onReadingAssignmentChange,
 }) {
   const [classOptions, setClassOptions] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState(() => safeStorageGet(LAST_CLASS_KEY));
+  const classContext = useMemo(() => readPresenterClassContext(window.location.search), []);
+  const classContextApplied = useRef(false);
+  const [selectedClassId, setSelectedClassId] = useState(() => classContext.classRecordId || classContext.classId || safeStorageGet(LAST_CLASS_KEY));
   const [students, setStudents] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -267,7 +270,7 @@ export default function PresenterStudentPicker({
 
   const course = normalize(slide?.course).toUpperCase();
   const assignmentId = normalize(slide?.assignmentId || slide?.id);
-  const sessionDate = localDateKey();
+  const sessionDate = classContext.sessionDate || localDateKey();
   const activeClasses = useMemo(() => classOptions.filter((entry) => !entry.archived && entry.status !== "archived"), [classOptions]);
   const matchingClasses = useMemo(() => {
     const matches = activeClasses.filter((entry) => classMatchesCourse(entry, course));
@@ -313,9 +316,17 @@ export default function PresenterStudentPicker({
 
   useEffect(() => {
     if (!matchingClasses.length) return;
+    if (!classContextApplied.current) {
+      classContextApplied.current = true;
+      const requestedClass = requestedPresenterClass(matchingClasses, classContext);
+      if (requestedClass) {
+        setSelectedClassId(classIdOf(requestedClass));
+        return;
+      }
+    }
     const validSelection = matchingClasses.some((entry) => classIdOf(entry) === selectedClassId);
     if (!validSelection) setSelectedClassId(classIdOf(matchingClasses[0]));
-  }, [matchingClasses, selectedClassId]);
+  }, [matchingClasses, selectedClassId, classContext]);
 
   useEffect(() => {
     if (!selectedClassId || !assignmentId) {
