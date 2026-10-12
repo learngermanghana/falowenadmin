@@ -1,3 +1,4 @@
+import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { plainObjectiveAnswer } from "../utils/markingFeedbackText.js";
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
@@ -782,8 +783,8 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
 
   const reviewReason = "AI marking saved as draft only. Tutor must click Save Final Score before anything is written to the final score sheet.";
   const receipt = skippedScoreReceipt(row, reviewReason);
-  await saveAIAudit({ submission, result, receipt, reason: reviewReason });
-  return { ...result, scoreSaveReceipt: receipt };
+  const auditWarning = await tryStoreMarkingDraft(() => saveAIAudit({ submission, result, receipt, reason: reviewReason }), "aiMarkingAudit");
+  return { ...result, scoreSaveReceipt: receipt, storageWarnings: auditWarning ? [auditWarning] : [] };
 }
 
 const SAVE_SCORES_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_SCORE_FIRESTORE || "true").toLowerCase() !== "false";

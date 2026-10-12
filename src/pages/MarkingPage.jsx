@@ -1,3 +1,4 @@
+import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { useAdminRefresh } from "../hooks/useAdminRefresh.js";
 import AdminRefreshStatus from "../components/AdminRefreshStatus.jsx";
 const queueRowKey = (row) => String(row?.path || row?.id || [row?.studentCode, row?.studentName, row?.assignmentId || row?.assignment, row?.submittedAt || row?.createdAt || ""].join("|"));
@@ -680,7 +681,11 @@ export default function MarkingPage() {
       ].filter(Boolean);
       let registryEntry = null;
       for (const candidateKey of candidateKeys) {
-        registryEntry = await loadAnswerKey(candidateKey);
+        try { registryEntry = await loadAnswerKey(candidateKey); }
+        catch (err) {
+          if (["permission-denied", "firestore/permission-denied"].includes(err?.code)) throw new Error("Firestore denied reading answerKeyRegistry. AI marking has not started.");
+          throw err;
+        }
         if (registryEntry) break;
       }
 
@@ -710,20 +715,26 @@ export default function MarkingPage() {
         : String(result.writingScorePercent));
       setFinalScoreOverride(null);
       setFeedback(result.feedback);
-      await createMarkingJob({
+      const jobWarning = await tryStoreMarkingDraft(() => createMarkingJob({
         submissionId: selectedSubmission.id,
         submissionPath: selectedSubmission.path,
         assignmentKey: result.assignmentKey,
         level: result.level,
         status: "pending",
-      });
-      await saveMarkingResult({
+      }), "markingJobs");
+      const draftWarning = await tryStoreMarkingDraft(() => saveMarkingResult({
         submissionId: selectedSubmission.id,
         submissionPath: selectedSubmission.path,
         result,
         status: result.status,
         sentToStudent: result.shouldSendAutomatically && result.status === "marked",
-      });
+      }), "markingResults");
+      const storageWarnings = [...(result.storageWarnings || []), jobWarning, draftWarning].filter(Boolean);
+      if (storageWarnings.length) {
+        setSmartMarkingResult({ ...result, storageWarnings });
+        error(`AI marking completed and is displayed for review. ${storageWarnings.join(" ")} Draft storage is incomplete; keep this page open or copy the report before leaving.`);
+        return;
+      }
       success(result.status === "needs_review" ? "Smart marking saved for tutor review." : "Smart marking completed and saved.");
     } catch (err) {
       if (reviewIdentityRef.current === startedIdentity) error(err?.message || "Failed to auto-mark submission.");
