@@ -78,9 +78,12 @@ test('A1 linked roster loads once; hint, answer and student buttons survive rere
     await click(document.querySelector('.presenter-footer button:last-of-type'));
     await click(button('Pick student'));
     assert.ok(document.querySelector('.presenter-student-current').textContent.includes('Ama Mensah'));
-    assert.ok(document.querySelector('.presenter-question').textContent.includes('Welche Antwort ist richtig?'));
+    const selectedQuestion = document.querySelector('.presenter-question').textContent.trim();
+    const selectedCheck = checks.find(check => check.questionDe === selectedQuestion);
+    assert.ok(selectedCheck, 'a distinct question must be assigned to the picked student');
     await click(button('Antwort anzeigen'));
-    assert.ok(document.querySelector('.presenter-model-support')?.textContent.includes('Die richtige Antwort.'));
+    assert.ok(document.querySelector('.presenter-model-support')?.textContent.includes(selectedCheck.answerDe));
+    assert.equal(document.querySelector('.presenter-question').textContent.trim(), selectedQuestion);
     assert.equal(loads, settledLoads, 'picking and revealing an answer must not restart roster restore');
     const select = document.querySelector('.presenter-student-class-select select');
     await React.act(async () => { select.value = 'A1 Hamburg Klasse'; select.dispatchEvent(new dom.window.Event('change', { bubbles: true })); });
