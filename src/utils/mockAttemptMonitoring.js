@@ -1,5 +1,40 @@
 export const MOCK_SECTIONS = ["lesen", "hoeren", "schreiben", "sprechen"];
 
+export const MOCK_SECTION_NAMES = Object.freeze({
+  lesen: "Lesen",
+  hoeren: "Hören",
+  schreiben: "Schreiben",
+  sprechen: "Sprechen",
+});
+
+const validSectionScore = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const score = Number(value);
+  return Number.isFinite(score) && score >= 0 && score <= 25 ? score : null;
+};
+
+// Only scores explicitly verified by the staff-only projection are audited.
+// A browser-only or old response cannot be mistaken for an authenticated mark.
+export function mockAuditScoreRows(attempt = {}) {
+  const verified = ["verified", "incomplete", "in_progress"].includes(attempt.scoreVerification);
+  const scores = verified && attempt.sectionScores && typeof attempt.sectionScores === "object"
+    ? attempt.sectionScores : {};
+  return MOCK_SECTIONS.map(key => ({
+    key,
+    label: MOCK_SECTION_NAMES[key],
+    score: validSectionScore(scores[key]),
+    status: !verified ? "unavailable"
+      : validSectionScore(scores[key]) === null ? "pending"
+        : attempt.scoreVerification === "verified" || attempt.status === "completed"
+          ? "verified" : "graded",
+  }));
+}
+
+export function formatMockAuditScore(value) {
+  if (value === null || value === undefined) return "—";
+  return Number.isInteger(value) ? String(value) : Number(value).toFixed(1);
+}
+
 export function toAttemptMillis(value) {
   if (!value) return 0;
   if (typeof value.toMillis === "function") return value.toMillis();
