@@ -141,6 +141,75 @@
 .mock-timed-monitor .monitor-timed-state.is-completed {
   color: #166534;
 }
+.mock-timed-monitor .monitor-mock-score-audit {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+  display: grid;
+  gap: 9px;
+}
+.mock-timed-monitor .monitor-mock-score-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mock-timed-monitor .monitor-mock-score-heading strong {
+  color: #15253b;
+  font-size: 0.95rem;
+}
+.mock-timed-monitor .monitor-mock-score-heading span {
+  color: #475569;
+  font-size: 0.78rem;
+}
+.mock-timed-monitor .monitor-mock-score-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.mock-timed-monitor .monitor-mock-score-cell {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #dce5f1;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+}
+.mock-timed-monitor .monitor-mock-score-cell > span {
+  color: #475569;
+  font-size: 0.79rem;
+  font-weight: 700;
+}
+.mock-timed-monitor .monitor-mock-score-cell > strong {
+  color: #17253a;
+  font-size: 1.08rem;
+  font-variant-numeric: tabular-nums;
+}
+.mock-timed-monitor .monitor-mock-score-cell > small {
+  color: #475569;
+  font-size: 0.73rem;
+}
+.mock-timed-monitor .monitor-mock-audit-warning {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid #fca5a5;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.mock-timed-monitor .monitor-mock-audit-note {
+  margin: 0;
+  color: #475569;
+  font-size: 0.79rem;
+}
+@media (max-width: 670px) {
+  .mock-timed-monitor .monitor-mock-score-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 670px) {
   .mock-timed-monitor .monitor-switcher {
     gap: 8px;
