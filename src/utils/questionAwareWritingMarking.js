@@ -10,6 +10,7 @@ import { heuristicWritingMarker } from "./autoMarking.js";
 import { evaluateWritingTaskEvidence, missingTaskPointsFromEvidence, taskEvidenceSummary } from "./writingTaskEvidence.js";
 import { evaluateA1WritingTaskEvidence } from "./a1WritingTaskEvidence.js";
 import { evaluateB1WritingTaskEvidence } from "./b1WritingTaskEvidence.js";
+import { evaluateWritingStructureReview } from "./writingStructureReview.js";
 import {
   detectWritingTextType,
   extractWritingTaskPoints,
@@ -1134,7 +1135,11 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
     buildCanonicalStudentImprovement(missingTaskPoints),
     canonicalFormatFeedback,
   ]);
-  const finalizeWritingResult = (nextResult) => enforceA2B1WritingConsistency(nextResult, {
+  const finalizeWritingResult = (nextResult) => enforceA2B1WritingConsistency({
+    ...nextResult,
+    // Structure indicators guide the tutor; they never cap or auto-inflate a score.
+    writingStructureReview: evaluateWritingStructureReview(task, source),
+  }, {
     task,
     taskPointEvidence,
     genreMismatch,
