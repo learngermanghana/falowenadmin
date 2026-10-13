@@ -28,7 +28,7 @@ test("lead identification can use phone, but no consent means no matching",()=>{
 
 
 test("positive payment statuses are exact, never substrings of unpaid or negative statuses",()=>{
-  for(const value of ["paid","PAID","fully_paid","paid in full","payment_completed","success","successful","payment successful","settled"]){
+  for(const value of ["paid","PAID","fully_paid","paid in full","payment_completed","success","successful","payment successful","settled","registered_paid","REGISTERED PAID","registered-paid","complete","COMPLETE"]){
     assert.equal(isSettledPlacementPayment(value),true,value);
   }
   for(const value of ["unpaid","UNPAID","not paid","not_paid","un-paid","partially paid","partial_paid","unpaid - overdue","not completed","incomplete","payment incomplete","payment failed","pending","not_requested","refunded","",null]){
@@ -43,6 +43,10 @@ test("unpaid registered leads remain registered, and unpaid unregistered leads n
     assert.equal(placementConversionStage(attempt,{status:"placement_completed",paymentStatus:payment}),"Follow up",payment);
   }
   assert.equal(placementConversionStage(attempt,{status:"placement_completed",paymentStatus:"fully_paid"}),"Paid · registration review");
+  for(const payment of ["registered_paid","registered paid","complete"]){
+    assert.equal(placementConversionStage(attempt,{status:"student_registered",studentCode:"A1-23",paymentStatus:payment}),"Active / paid student",payment);
+    assert.equal(placementConversionStage(attempt,{status:"placement_completed",paymentStatus:payment}),"Paid · registration review",payment);
+  }
 });
 
 test("paid registration-review leads count towards registered-or-paid total",()=>{

@@ -32,6 +32,9 @@ const SETTLED_PAYMENT_STATUSES = new Set([
   "payment complete", "payment completed", "completed", "success",
   "successful", "succeeded", "payment success", "payment successful",
   "settled", "confirmed paid",
+  // Keep exact matches while recognising canonical success values already used
+  // by StudentLeadsPanel and leadNotificationService. "unpaid" and negatives stay false.
+  "registered paid", "complete",
 ]);
 
 export function isSettledPlacementPayment(value) {
