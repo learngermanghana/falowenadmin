@@ -3,7 +3,8 @@ import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerH
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, documentId, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { fetchPlacementAttempts, fetchPlacementLeads, normalizePlacementResults, placementStatus } from "../services/placementAttemptService.js";
+import { useAuth } from "../context/AuthContext";
+import { fetchPlacementAttempts, fetchPlacementLeads, normalizePlacementResults, placementStatus, countRegisteredOrPaidPlacements } from "../services/placementAttemptService.js";
 import {
   clockLabel,
   filterMockAttempts,
@@ -36,6 +37,7 @@ const timeEnd = (attempt) => {
 };
 
 export default function TimedAssignmentAttemptsPage() {
+  const { isStaff } = useAuth();
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timerError, setTimerError] = useState("");
@@ -44,10 +46,11 @@ export default function TimedAssignmentAttemptsPage() {
   const [mockLoading, setMockLoading] = useState(true);
   const [mockError, setMockError] = useState("");
   const [placementRecords, setPlacementRecords] = useState([]);
-  const [placementLeads, setPlacementLeads] = useState([]);
+  const [placementLeads, setPlacementLeads] = useState(null);
   const [placementLoading, setPlacementLoading] = useState(false);
   const [placementLoadedAt, setPlacementLoadedAt] = useState("");
   const [placementError, setPlacementError] = useState("");
+  const [placementLeadError, setPlacementLeadError] = useState("");
   const [placementFilter, setPlacementFilter] = useState("all");
   const [lastChecked, setLastChecked] = useState("");
   const [partial, setPartial] = useState(false);
@@ -121,16 +124,26 @@ export default function TimedAssignmentAttemptsPage() {
   const loadPlacement = useCallback(async () => {
     setPlacementLoading(true);
     try {
-      const [results, leads] = await Promise.all([
+      // Keep the attempts visible even when the independent published Leads
+      // feed is down, but NEVER infer conversion status from an empty fallback.
+      const [attemptResult, leadResult] = await Promise.allSettled([
         fetchPlacementAttempts(auth),
         fetchPlacementLeads(),
       ]);
-      setPlacementRecords(results.attempts);
-      setPlacementLeads(leads);
-      setPlacementLoadedAt(results.checkedAt || new Date().toISOString());
-      setPlacementError("");
-    } catch (error) {
-      setPlacementError(error?.message || "Could not load placement attempts.");
+      if (attemptResult.status === "fulfilled") {
+        setPlacementRecords(attemptResult.value.attempts);
+        setPlacementLoadedAt(attemptResult.value.checkedAt || new Date().toISOString());
+        setPlacementError("");
+      } else {
+        setPlacementError(attemptResult.reason?.message || "Could not load placement attempts.");
+      }
+      if (leadResult.status === "fulfilled") {
+        setPlacementLeads(leadResult.value);
+        setPlacementLeadError("");
+      } else {
+        setPlacementLeads(null);
+        setPlacementLeadError("Leads sheet unavailable. Registration and payment status cannot be verified. Refresh to retry.");
+      }
     } finally { setPlacementLoading(false); }
   }, []);
 
@@ -190,7 +203,7 @@ export default function TimedAssignmentAttemptsPage() {
   const showPlacement = category === "placement";
   const placementCompleted = placementRows.filter(x=>x.completedAt).length;
   const placementContacted = placementRows.filter(x=>x.consent).length;
-  const placementRegistered = placementRows.filter(x=>/registered|student/i.test(x.conversionStage)).length;
+  const placementRegistered = countRegisteredOrPaidPlacements(placementRows, Array.isArray(placementLeads));
   const switchCategory = (next) => {
     setCategory(next);
     setQuery("");
@@ -363,7 +376,7 @@ export default function TimedAssignmentAttemptsPage() {
           <div>
             <h2 style={{margin:0}}>Public German placement test</h2>
             <p style={{color:"#64748b",margin:"5px 0 0",fontSize:13}}>
-              Last checked: {placementLoadedAt ? formatDate(placementLoadedAt) : "not yet"} · No continuous polling · {placementRegistered} registered or paid leads
+              Last checked: {placementLoadedAt ? formatDate(placementLoadedAt) : "not yet"} · No continuous polling · {placementRegistered === null ? "Conversion counts unavailable" : `${placementRegistered} registered or paid leads`}
             </p>
           </div>
           <button type="button" onClick={loadPlacement} disabled={placementLoading} style={{padding:"10px 15px",border:"1px solid #2563eb",borderRadius:10,background:"#fff",color:"#1d4ed8",fontWeight:800,cursor:"pointer"}}>
@@ -378,6 +391,7 @@ export default function TimedAssignmentAttemptsPage() {
           <span className="monitor-filter-count">{filteredPlacement.length} shown</span>
         </div>
         {placementError && <div role="alert" style={{...card,borderColor:"#fecaca",color:"#991b1b"}}>{placementError}{placementLoadedAt?" · Showing previously loaded data.":""}</div>}
+        {placementLeadError && <div role="alert" style={{...card,borderColor:"#fde68a",color:"#92400e"}}>{placementLeadError} Existing attempts and scores remain available.</div>}
         {placementLoading && !placementLoadedAt && <p>Loading placement records…</p>}
         {!placementLoading && !filteredPlacement.length && <div style={card}>{placementError?"Placement monitoring could not be loaded.":"No placement records match these filters."}</div>}
         {filteredPlacement.map(attempt=>{
@@ -413,7 +427,7 @@ export default function TimedAssignmentAttemptsPage() {
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen placement result")+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Email learner</a>}
                 {attempt.consent&&phone&&<a target="_blank" rel="noopener noreferrer" href={"https://wa.me/"+phone+"?text="+encodeURIComponent(followup)} style={{color:"#166534",fontWeight:700}}>WhatsApp</a>}
-                {attempt.consent&&<a href="/leads" style={{color:"#1d4ed8",fontWeight:700}}>Open Leads</a>}
+                {attempt.consent&&!isStaff&&<a href="/leads" style={{color:"#1d4ed8",fontWeight:700}}>Open Leads</a>}
               </div>
             </div>
           </article>;
