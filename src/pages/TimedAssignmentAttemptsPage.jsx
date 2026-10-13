@@ -3,6 +3,7 @@ import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerH
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, documentId, onSnapshot, query as firestoreQuery, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { fetchPlacementAttempts, fetchPlacementLeads, normalizePlacementResults, placementStatus } from "../services/placementAttemptService.js";
 import {
   clockLabel,
   filterMockAttempts,
@@ -42,6 +43,12 @@ export default function TimedAssignmentAttemptsPage() {
   const [mocks, setMocks] = useState([]);
   const [mockLoading, setMockLoading] = useState(true);
   const [mockError, setMockError] = useState("");
+  const [placementRecords, setPlacementRecords] = useState([]);
+  const [placementLeads, setPlacementLeads] = useState([]);
+  const [placementLoading, setPlacementLoading] = useState(false);
+  const [placementLoadedAt, setPlacementLoadedAt] = useState("");
+  const [placementError, setPlacementError] = useState("");
+  const [placementFilter, setPlacementFilter] = useState("all");
   const [lastChecked, setLastChecked] = useState("");
   const [partial, setPartial] = useState(false);
   const [query, setQuery] = useState("");
@@ -60,6 +67,10 @@ export default function TimedAssignmentAttemptsPage() {
   }, []);
 
   useEffect(() => {
+    // Mount the Firestore listener only while the Campus tab is open.
+    // Placement and mocks should not incur background Firestore reads.
+    if (category !== "timed") { setLoading(false); return undefined; }
+    setLoading(true);
     const records = [new Map(), new Map()];
     const sources = [
       firestoreQuery(collection(db, COLLECTION), where("timerRecord", "==", true)),
@@ -81,7 +92,7 @@ export default function TimedAssignmentAttemptsPage() {
       updateHealth(health.snapshot(index));
     }, error => { updateHealth(health.failure(index, error)); }));
     return () => unsubscribes.forEach(unsubscribe => unsubscribe());
-  }, []);
+  }, [category]);
 
   const loadMocks = useCallback(async () => {
     try {
@@ -106,6 +117,27 @@ export default function TimedAssignmentAttemptsPage() {
       setMockLoading(false);
     }
   }, []);
+
+  const loadPlacement = useCallback(async () => {
+    setPlacementLoading(true);
+    try {
+      const [results, leads] = await Promise.all([
+        fetchPlacementAttempts(auth),
+        fetchPlacementLeads(),
+      ]);
+      setPlacementRecords(results.attempts);
+      setPlacementLeads(leads);
+      setPlacementLoadedAt(results.checkedAt || new Date().toISOString());
+      setPlacementError("");
+    } catch (error) {
+      setPlacementError(error?.message || "Could not load placement attempts.");
+    } finally { setPlacementLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    // One request on opening the tab, then only when staff clicks Refresh.
+    if (category === "placement") void loadPlacement();
+  }, [category, loadPlacement]);
 
   const openWritingReview = async (attempt) => {
     const identifier = String(attempt.id || "");
@@ -143,17 +175,28 @@ export default function TimedAssignmentAttemptsPage() {
 
   const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus), [mocks, query, mockStatus]);
   const filteredTimed = useMemo(() => filterTimedAttempts(attempts, query, timedStatus), [attempts, query, timedStatus]);
+  const placementRows = useMemo(()=>normalizePlacementResults(placementRecords,placementLeads),[placementRecords,placementLeads]);
+  const filteredPlacement = useMemo(()=>placementRows.filter(row=>{
+    if(placementFilter!=="all" && (placementFilter==="contacted" ? !row.consent : placementStatus(row,now)!==placementFilter))return false;
+    const needle=query.trim().toLowerCase();
+    return !needle || [row.id,row.name,row.email,row.phone,row.score?.level,row.conversionStage].some(v=>String(v||"").toLowerCase().includes(needle));
+  }),[placementRows,placementFilter,query,now]);
   const mockInProgress = mocks.filter(row => row.status === "in_progress").length;
   const mockCompleted = mocks.filter(row => row.status === "completed").length;
   const timedInProgress = attempts.filter(row => timedAttemptStatus(row) === "in_progress").length;
   const timedCompleted = attempts.filter(row => timedAttemptStatus(row) === "completed").length;
   const showMocks = category === "mocks";
   const showTimed = category === "timed";
+  const showPlacement = category === "placement";
+  const placementCompleted = placementRows.filter(x=>x.completedAt).length;
+  const placementContacted = placementRows.filter(x=>x.consent).length;
+  const placementRegistered = placementRows.filter(x=>/registered|student/i.test(x.conversionStage)).length;
   const switchCategory = (next) => {
     setCategory(next);
     setQuery("");
     setMockStatus("all");
     setTimedStatus("all");
+    setPlacementFilter("all");
     setWritingReviewId("");
     setWritingReview(null);
   };
@@ -175,8 +218,8 @@ export default function TimedAssignmentAttemptsPage() {
         <p style={{ color: "#1d4ed8", fontWeight: 800, fontSize: 12, margin: 0, textTransform: "uppercase" }}>Exam controls</p>
         <h1 style={{ margin: 0 }}>Mock exams &amp; Campus timers</h1>
         <p style={{ margin: 0, color: "#475569", lineHeight: 1.6 }}>
-          Exam Room mocks and Campus timed assignments are monitored separately. Choose a tab to see the right students and filter by status.
-          Mock status shows saved progress, not a continuous online-presence signal.
+          Monitor Exam Room mocks, Campus timed assignments and public placement tests separately.
+          Placement activity is saved only at start, completion and optional contact capture; the countdown is not a live online-presence signal.
         </p>
       </header>
 
@@ -191,10 +234,19 @@ export default function TimedAssignmentAttemptsPage() {
           <strong>Campus timed tests</strong>
           <span>Timed assignments · {loading ? "Loading…" : attempts.length + " attempts"}</span>
         </button>
+        <button type="button" role="tab" id="monitor-placement-tab" aria-controls="placement-attempts"
+          aria-selected={showPlacement} className="monitor-tab" onClick={() => switchCategory("placement")}>
+          <strong>Placement tests</strong>
+          <span>A1–B1 · 30 questions · 20 min</span>
+        </button>
       </nav>
 
-      <section className="monitor-summary" aria-label={showMocks ? "Exam Room mock summary" : "Campus timed test summary"}>
-        {(showMocks ? [
+      <section className="monitor-summary" aria-label={showMocks ? "Exam Room mock summary" : showPlacement ? "Placement test summary" : "Campus timed test summary"}>
+        {(showPlacement ? [
+          ["Attempts captured", placementLoading && !placementLoadedAt ? "…" : placementRecords.length],
+          ["Completed", placementCompleted],
+          ["Contact leads", placementContacted],
+        ] : showMocks ? [
           ["Mocks recorded", mockLoading && !lastChecked ? "…" : mocks.length],
           ["In progress", mockInProgress],
           ["Completed mocks", mockCompleted],
@@ -208,9 +260,9 @@ export default function TimedAssignmentAttemptsPage() {
 
       <section style={card}>
         <label className="monitor-search">
-          <strong>{showMocks ? "Search Exam Room mocks" : "Search Campus timed tests"}</strong>
+          <strong>{showMocks ? "Search Exam Room mocks" : showPlacement ? "Search placement attempts" : "Search Campus timed tests"}</strong>
           <input type="search" value={query} onChange={event => setQuery(event.target.value)}
-            placeholder={showMocks ? "Student name, email, ID or mock ID…" : "Student name, email, ID or assignment…"} />
+            placeholder={showPlacement ? "Search name, email, attempt ID or level…" : showMocks ? "Student name, email, ID or mock ID…" : "Student name, email, ID or assignment…"} />
         </label>
       </section>
 
@@ -301,6 +353,69 @@ export default function TimedAssignmentAttemptsPage() {
                 )}
               </div>
             )}
+          </article>;
+        })}
+      </section>}
+
+
+      {showPlacement && <section id="placement-attempts" role="tabpanel" aria-labelledby="monitor-placement-tab" className="monitor-content" data-testid="placement-monitoring">
+        <div style={{ display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap",alignItems:"center" }}>
+          <div>
+            <h2 style={{margin:0}}>Public German placement test</h2>
+            <p style={{color:"#64748b",margin:"5px 0 0",fontSize:13}}>
+              Last checked: {placementLoadedAt ? formatDate(placementLoadedAt) : "not yet"} · No continuous polling · {placementRegistered} registered or paid leads
+            </p>
+          </div>
+          <button type="button" onClick={loadPlacement} disabled={placementLoading} style={{padding:"10px 15px",border:"1px solid #2563eb",borderRadius:10,background:"#fff",color:"#1d4ed8",fontWeight:800,cursor:"pointer"}}>
+            {placementLoading?"Refreshing…":"Refresh placements"}
+          </button>
+        </div>
+        <p style={{margin:0,color:"#475569",fontSize:13}}>Scores are available to staff only. Anonymous starts cannot be contacted until the learner chooses to save contact details. The suggested level is a preliminary recommendation, not an official certificate.</p>
+        <div className="monitor-status-filters" role="group" aria-label="Filter placement status">
+          {[["all","All"],["in_progress","In progress"],["completed","Completed"],["expired","Expired"],["contacted","Contact saved"]].map(([value,label])=>
+            <button key={value} className="monitor-status-button" type="button" aria-pressed={placementFilter===value} onClick={()=>setPlacementFilter(value)}>{label}</button>
+          )}
+          <span className="monitor-filter-count">{filteredPlacement.length} shown</span>
+        </div>
+        {placementError && <div role="alert" style={{...card,borderColor:"#fecaca",color:"#991b1b"}}>{placementError}{placementLoadedAt?" · Showing previously loaded data.":""}</div>}
+        {placementLoading && !placementLoadedAt && <p>Loading placement records…</p>}
+        {!placementLoading && !filteredPlacement.length && <div style={card}>{placementError?"Placement monitoring could not be loaded.":"No placement records match these filters."}</div>}
+        {filteredPlacement.map(attempt=>{
+          const status=placementStatus(attempt,now);
+          const score=attempt.score;
+          const email=attempt.email||"";
+          const phone=String(attempt.phone||"").replace(/\D/g,"").replace(/^0(?=\d{9}$)/,"233");
+          const followup="Hello"+(attempt.name?" "+attempt.name:"")+", thank you for completing Falowen's German placement test. Your suggested starting level is "+(score?.level||"your recommended level")+". We can help you choose a class and register: https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test";
+          return <article key={attempt.id} style={card}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+              <div style={{display:"grid",gap:4}}>
+                <strong style={{fontSize:16}}>{attempt.name || "Anonymous learner"}</strong>
+                <small style={{color:"#64748b",overflowWrap:"anywhere"}}>{attempt.email||attempt.phone||attempt.id}</small>
+              </div>
+              <strong style={{color:status==="completed"?"#166534":status==="expired"?"#b45309":"#1d4ed8"}}>
+                {status==="in_progress"?"In progress":status==="expired"?"Expired":"Completed"}
+              </strong>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:10,fontSize:13}}>
+              <span><b>Started:</b> {formatDate(attempt.startedAt)}</span>
+              <span><b>Submitted:</b> {formatDate(attempt.completedAt)}</span>
+              <span><b>Suggested level:</b> {score?.level||"—"}</span>
+              <span><b>Overall:</b> {score ? score.total+"/30" : "—"}</span>
+              <span><b>A1:</b> {score ? score.a1+"/10" : "—"}</span>
+              <span><b>A2:</b> {score ? score.a2+"/10" : "—"}</span>
+              <span><b>B1:</b> {score ? score.b1+"/10" : "—"}</span>
+              <span><b>Answered:</b> {score ? score.answered+"/30" : "—"}</span>
+            </div>
+            <div style={{borderTop:"1px solid #e2e8f0",paddingTop:11,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+              <strong style={{color:attempt.consent?"#14532d":"#64748b",fontSize:13}}>
+                {attempt.conversionStage}
+              </strong>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen placement result")+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Email learner</a>}
+                {attempt.consent&&phone&&<a target="_blank" rel="noopener noreferrer" href={"https://wa.me/"+phone+"?text="+encodeURIComponent(followup)} style={{color:"#166534",fontWeight:700}}>WhatsApp</a>}
+                {attempt.consent&&<a href="/leads" style={{color:"#1d4ed8",fontWeight:700}}>Open Leads</a>}
+              </div>
+            </div>
           </article>;
         })}
       </section>}
