@@ -1041,3 +1041,10 @@
     margin: 0 10px 10px;
   }
 }
+
+/* Structure review is an advisory checklist, not a score or warning badge. */
+.marking-writing-structure-checks { display: grid; gap: 9px; padding-left: 22px; margin: 10px 0; }
+.marking-writing-structure-checks li { line-height: 1.5; overflow-wrap: anywhere; }
+.marking-writing-structure-checks li strong { display: block; color: #1e3a5f; }
+.marking-writing-structure-checks li span { display: block; color: #475569; }
+.marking-structure-disclaimer { font-size: .85rem; color: #475569; line-height: 1.55; margin: 8px 0 0; }
