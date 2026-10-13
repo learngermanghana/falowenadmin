@@ -13,6 +13,7 @@ import { getA1WritingTaskSpec } from "../data/a1WritingTaskSpecs.js";
 import { getB1WritingTaskSpec } from "../data/b1WritingTaskSpecs.js";
 import { getA2WritingTaskSpec } from "../data/a2WritingTaskSpecs.js";
 import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
+import { evaluateWritingStructureReview } from "../utils/writingStructureReview.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { createMarkingJob, deleteSubmission, fetchSubmissionByPath, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
@@ -401,6 +402,10 @@ export default function MarkingPage() {
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
   const writingTask = writingExpected ? writingTaskCandidate : null;
+  const writingStructureReview = smartMarkingResult?.writingStructureReview
+    || (writingTask && selectedSubmission?.text
+      ? evaluateWritingStructureReview(writingTask, selectedSubmission.text)
+      : null);
   const queueRows = submissionNotifications.filter((row) => {
     const search = normalize(attemptSearch);
     const status = normalize(row.markingStatus || row.status || "pending");
@@ -1216,6 +1221,21 @@ export default function MarkingPage() {
                 <summary>Writing task points</summary>
                 <p>{writingTask.taskText}</p>
                 <ul>{writingTask.taskPoints.map((point) => <li key={point}>{point}</li>)}</ul>
+              </details>
+            ) : null}
+            {writingStructureReview ? (
+              <details className="marking-compact-details" data-writing-structure-review="true">
+                <summary>A1–B1 writing structure · {writingStructureReview.label}</summary>
+                <p>{writingStructureReview.teacherNote}</p>
+                <ul className="marking-writing-structure-checks">
+                  {writingStructureReview.checks.map((check) => (
+                    <li key={check.label}>
+                      <strong>{check.status === "observed" ? "Cued" : "Check"}: {check.label}</strong>
+                      <span>{check.note}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="marking-structure-disclaimer">Advisory cues only. Verify against the student’s actual writing and published task points. Different correct phrases are accepted. No score is automatically deducted for absent template words or paragraph connectors.</p>
               </details>
             ) : null}
 
