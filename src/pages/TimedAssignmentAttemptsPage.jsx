@@ -11,6 +11,8 @@ import {
   timedAttemptStatusLabel,
   mockActivityLabel,
   mockSectionProgress,
+  mockAuditScoreRows,
+  formatMockAuditScore,
   remainingSeconds,
   toAttemptMillis,
   MOCK_SECTIONS,
@@ -240,6 +242,8 @@ export default function TimedAssignmentAttemptsPage() {
           const remaining = remainingSeconds(attempt.sectionDeadlineMs, now);
           const current = attempt.section;
           const status = mockActivityLabel(attempt, now);
+          const scoreRows = mockAuditScoreRows(attempt);
+          const hasVerifiedMarks = scoreRows.some(row => row.score !== null);
           return <article key={attempt.id} style={card}>
             <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
               <div style={{ display: "grid", gap: 4 }}>
@@ -254,8 +258,50 @@ export default function TimedAssignmentAttemptsPage() {
               <div><b>Section time left:</b> {attempt.status === "completed" ? "Finished" : clockLabel(remaining)}</div>
               <div><b>Started:</b> {formatDate(attempt.startedAt)}</div>
               <div><b>Last update:</b> {formatDate(attempt.updatedAt)}</div>
-              {attempt.overallScore !== null && attempt.overallScore !== undefined && <div><b>Verified score:</b> {attempt.overallScore}/100</div>}
+              {attempt.overallScore !== null && attempt.overallScore !== undefined && <div><b>Verified total:</b> {formatMockAuditScore(attempt.overallScore)}/100</div>}
             </div>
+            <section className="monitor-mock-score-audit" aria-label="Saved section scores">
+              <div className="monitor-mock-score-heading">
+                <strong>Section scores · staff audit</strong>
+                <span>{attempt.scoreVerification === "verified" ? "Server-verified results" :
+                  attempt.scoreVerification === "in_progress" ? "Verified sections only · mock unfinished" :
+                  attempt.scoreVerification === "incomplete" ? "Some verified scores are missing" :
+                  "Verified section scores not available"}</span>
+              </div>
+              <div className="monitor-mock-score-grid">
+                {scoreRows.map(row => (
+                  <div className="monitor-mock-score-cell" key={row.key}>
+                    <span>{row.label}</span>
+                    <strong>{row.score === null ? "—" : `${formatMockAuditScore(row.score)}/25`}</strong>
+                    <small>{row.score === null
+                      ? attempt.status === "completed" ? "Not recorded" : "Pending"
+                      : row.status === "graded" ? "Section verified · overall pending" : "Verified"}</small>
+                  </div>
+                ))}
+              </div>
+              {attempt.scoreMatchesOverall === false && (
+                <p className="monitor-mock-audit-warning" role="alert">
+                  Score mismatch: verified sections add up to {formatMockAuditScore(attempt.sectionTotal)}/100,
+                  but the saved overall result is {formatMockAuditScore(attempt.overallScore)}/100. Investigate before using this result.
+                </p>
+              )}
+              {attempt.status === "completed" && attempt.scoreVerification === "incomplete" && (
+                <p className="monitor-mock-audit-warning" role="alert">
+                  This completed attempt does not contain all four verified section scores. Review the saved result.
+                </p>
+              )}
+              {attempt.status === "completed" && attempt.completionSyncStatus === "failed" && (
+                <p className="monitor-mock-audit-warning" role="alert">
+                  The mock was graded, but saving the score to the student results record failed.
+                </p>
+              )}
+              {attempt.status === "completed" && attempt.completionSyncStatus === "saved" && (
+                <p className="monitor-mock-audit-note">Result saved to student scores.</p>
+              )}
+              {!hasVerifiedMarks && attempt.progressSource === "browser_reported" && (
+                <p className="monitor-mock-audit-note">This attempt only reports browser progress, so no scores are verified.</p>
+              )}
+            </section>
             <div>
               {attempt.progressSource === "browser_reported" && <p style={{ color: "#92400e", fontSize: 12, margin: "0 0 5px" }}>Progress reported by the learner browser; not a verified exam score.</p>}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
