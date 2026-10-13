@@ -18,6 +18,7 @@ function detectKind(task = {}) {
   const level = String(task.level || "").trim().toUpperCase();
   if (!["A1", "A2", "B1"].includes(level)) return "";
   const type = String(task.textType || "").toLowerCase();
+  if (level === "A1" && task.letterWriting && String(task.register || "").toLowerCase() === "unspecified") return "mixed";
   if (level === "B1" && /opinion|essay|forum|comment|discussion/.test(type)) return "opinion";
   if (/email|letter|message|complaint|invitation/.test(type) || task.letterWriting) {
     const formal = String(task.register || "").toLowerCase() === "formal";
@@ -47,20 +48,23 @@ export function evaluateWritingStructureReview(task = {}, source = "") {
   const shortA1 = level === "A1";
   const checks = [];
 
-  if (kind === "opinion") {
+  if (kind === "mixed") {
+    checks.push(makeCheck("Informal letter in Teil 1", null, "Assess an informal greeting, three task points and an appropriate friendly ending in the first letter."));
+    checks.push(makeCheck("Formal letter in Teil 2", null, "Assess a formal greeting, all published task points and a formal ending in the second letter."));
+  } else if (kind === "opinion") {
     checks.push(
-      makeCheck("Introduction and topic", wordCount >= 12, "Read the opening and confirm it introduces the assigned topic, not merely a generic statement."),
+      makeCheck("Introduction and topic", null, "Read the opening and confirm it introduces the assigned topic, not merely a generic statement."),
       makeCheck("Own opinion", matches(text, ESSAY_OPINION), "A clear personal position is required; equivalent phrasing is valid."),
       makeCheck("Arguments, reasons and examples", matches(text, ESSAY_REASON), "Look for reasons and a relevant example supporting the stated position."),
       makeCheck("Advantages, disadvantages or counterview", matches(text, ESSAY_BALANCE), "Check the comparison or counterview *if the task asks for it*. It need not use Einerseits/Andererseits."),
-      makeCheck("Conclusion", matches(text, ESSAY_END) || paragraphs.length >= 3, "Look for a final conclusion in the student's own words; no mandatory closing phrase."),
+      makeCheck("Conclusion", matches(text, ESSAY_END), "Look for a final conclusion in the student's own words; no mandatory closing phrase."),
     );
   } else {
     const formal = kind === "formal";
     checks.push(
       makeCheck("Appropriate salutation", bodies.some(line => matches(line, formal ? FORMAL_GREETING : INFORMAL_GREETING)), "The greeting must match the recipient. A different correct greeting earns the same credit."),
       makeCheck("Opening / reason for writing", matches(text, REASON), "A clear purpose is needed, but 'Ich schreibe dir/Ihnen, weil …' is a learning model, not compulsory wording."),
-      makeCheck("Required content points", wordCount > 0, "Use the separate task-point evidence below; phrases such as Erstens, Zweitens and Außerdem are optional."),
+      makeCheck("Required content points", null, "Use the separate task-point evidence below; phrases such as Erstens, Zweitens and Außerdem are optional."),
       makeCheck("Appropriate closing", matches(text, formal ? FORMAL_CLOSING : INFORMAL_CLOSING), "Check a natural, register-appropriate sign-off, without insisting on one exact formula."),
     );
     if (!shortA1) checks.push(makeCheck(
@@ -73,12 +77,14 @@ export function evaluateWritingStructureReview(task = {}, source = "") {
   return {
     level,
     kind,
-    label: kind === "opinion" ? "B1 opinion essay" : kind === "formal" ? "Formal letter or email" : "Informal letter or email",
+    label: kind === "opinion" ? "B1 opinion essay" : kind === "formal" ? "Formal letter or email" : kind === "mixed" ? "A1 informal and formal letters" : "Informal letter or email",
     wordCount,
     advisoryOnly: true,
     templateOpeningsOptional: true,
     checks,
-    teacherNote: shortA1
+    teacherNote: kind === "mixed"
+      ? "A1: review the informal and formal letters separately using the six published communicative points. Exact openings and paragraph markers are not required."
+      : shortA1
       ? "A1: prioritize the published task points, suitable salutation and closing, and short correct sentences within the word limit. Do not require paragraph markers."
       : kind === "opinion"
         ? "B1: review the introduction, position, arguments with examples, counterview when asked, and conclusion. Do not require exact essay phrases or a letter greeting."
