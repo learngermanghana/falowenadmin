@@ -16,6 +16,7 @@ import {
   enrichOptionsWithQuestionAwareWritingTask,
 } from "../utils/questionAwareWritingMarking.js";
 import { loadLiveMarkingContract } from "./liveMarkingContractService.js";
+import answersDictionary from "../data/answers_dictionary.json";
 import * as base from "./markingServiceBase.js";
 import { withResubmissionComparison } from "../utils/resubmissionFeedback.js";
 import { sanitizeFirestoreData } from "../utils/firestoreSanitizer.js";
@@ -208,11 +209,15 @@ async function prepareMarkingOptions(options = {}) {
   const assignmentKey = options.referenceEntry?.assignmentKey
     || options.referenceEntry?.assignment_id
     || options.submission?.assignmentKey || options.submission?.assignmentId || "";
-  // On each marking, read the deployed learner's staff-only contract. Failing
-  // to fetch never authorizes using unverified keys from a public document.
+  // Compare the live staff-only learner key with the bundled Admin dictionary
+  // as well as the Firestore registry. The registry may be an outdated snapshot.
+  // Only reconcile if the independent current Admin key verifies every answer.
+  const canonicalReference = Object.values(answersDictionary || {}).find((item) =>
+    String(item?.assignment_id || item?.assignmentId || "").trim().toUpperCase()
+      === String(assignmentKey || "").trim().toUpperCase());
   const live = await loadLiveMarkingContract(assignmentKey, {
     ...(options.referenceEntry || {}), assignmentKey,
-  });
+  }, { authoritativeReferenceEntry: canonicalReference || null });
   return {
     ...enrichOptionsWithQuestionAwareWritingTask({
       ...options,
@@ -221,6 +226,7 @@ async function prepareMarkingOptions(options = {}) {
     }),
     learnerContractWarning: live?.warning || "",
     learnerContractSourceVersion: live?.sourceVersion || "",
+    learnerContractKeyStatus: live?.keyStatus || "",
   };
 }
 
@@ -393,9 +399,15 @@ export async function markSubmissionWithAI(options = {}) {
   const preparedOptions = await prepareMarkingOptions(options);
   const reference = preparedOptions.referenceEntry;
   const withPublishedContractAudit = (result) => {
-    const versioned = preparedOptions.learnerContractSourceVersion
-      ? { ...result, learnerContractSourceVersion: preparedOptions.learnerContractSourceVersion }
-      : result;
+    const versioned = {
+      ...result,
+      ...(preparedOptions.learnerContractSourceVersion
+        ? { learnerContractSourceVersion: preparedOptions.learnerContractSourceVersion }
+        : {}),
+      ...(preparedOptions.learnerContractKeyStatus
+        ? { learnerContractKeyStatus: preparedOptions.learnerContractKeyStatus }
+        : {}),
+    };
     if (!preparedOptions.learnerContractWarning) return versioned;
     return withReviewReason({
       ...versioned, status: "needs_review", shouldSendAutomatically: false,
