@@ -15,7 +15,7 @@ function makeCheck(label, observed, note) {
 }
 
 function detectKind(task = {}) {
-  const level = String(task.level || "").trim().toUpperCase();
+  const level = (String(task.level || "").trim().toUpperCase() || String(task.assignmentKey || "").match(/^(A1|A2|B1)-/)?.[1] || "");
   if (!["A1", "A2", "B1"].includes(level)) return "";
   const type = String(task.textType || "").toLowerCase();
   if (level === "A1" && task.letterWriting && String(task.register || "").toLowerCase() === "unspecified") return "mixed";
@@ -41,7 +41,7 @@ const ESSAY_END = /\b(?:zusammenfassend|abschlie(?:ß|ss)end|zum schluss|insgesa
 export function evaluateWritingStructureReview(task = {}, source = "") {
   const kind = detectKind(task);
   if (!kind || !normalize(source)) return null;
-  const level = String(task.level || "").toUpperCase();
+  const level = (String(task.level || "").trim().toUpperCase() || String(task.assignmentKey || "").match(/^(A1|A2|B1)-/)?.[1] || "");
   const {text, lines, wordCount} = letterParts(source);
   const bodies = lines.filter(line => !/^(?:teil\s*[1-4]|part\s*[1-4])\b/i.test(line));
   const paragraphs = text.split(/\n\s*\n+/).map(item => item.trim()).filter(Boolean);
