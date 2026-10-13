@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/services/placementAttemptService.js"
+      - "tests/placement-attempt-monitoring.test.js"
       - "src/utils/mockAttemptMonitoring.js"
       - "src/App.jsx"
       - "tests/mock-timed-monitoring.test.js"
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - "src/pages/TimedAssignmentAttemptsPage.jsx"
+      - "src/services/placementAttemptService.js"
+      - "tests/placement-attempt-monitoring.test.js"
       - "src/utils/mockAttemptMonitoring.js"
       - "src/App.jsx"
       - "tests/mock-timed-monitoring.test.js"
@@ -27,4 +31,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: node --test tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js
+      - run: node --test tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js tests/placement-attempt-monitoring.test.js

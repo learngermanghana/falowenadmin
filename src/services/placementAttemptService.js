@@ -25,23 +25,60 @@ export function leadForPlacement(attempt,leads=[]) {
       || (phone && phone===normalPhone(lead.number));
   })||null;
 }
+// Payment status must be a complete successful value, never a substring.
+ // "unpaid", "not paid", "partially paid", "incomplete", etc. must not become paid.
+const SETTLED_PAYMENT_STATUSES = new Set([
+  "paid", "fully paid", "paid in full", "payment paid", "payment received",
+  "payment complete", "payment completed", "completed", "success",
+  "successful", "succeeded", "payment success", "payment successful",
+  "settled", "confirmed paid",
+]);
+
+export function isSettledPlacementPayment(value) {
+  const normalized = String(value || "").trim().toLowerCase()
+    .replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+  return SETTLED_PAYMENT_STATUSES.has(normalized);
+}
+
 export function placementConversionStage(attempt,lead) {
   if(!attempt?.consent)return "Anonymous result";
-  const status=String(lead?.status||"").toLowerCase(),payment=String(lead?.paymentStatus||"").toLowerCase();
+  const status=String(lead?.status||"").toLowerCase();
+  const isPaid=isSettledPlacementPayment(lead?.paymentStatus);
   if(lead?.studentCode||/student_registered|registered|converted|enrolled/.test(status)){
-    if(/paid|success|complete/.test(payment))return "Active / paid student";
-    return "Registered";
+    return isPaid ? "Active / paid student" : "Registered";
   }
-  if(/paid|success|complete/.test(payment))return "Paid · registration review";
+  if(isPaid)return "Paid · registration review";
   if(/application|registration_started/.test(status))return "Application started";
   return "Follow up";
 }
 export const placementStatus=(attempt,now=Date.now())=>
   attempt.completedAt?"completed":(attempt.startedAt&&Date.parse(attempt.startedAt)+20*60000<=now?"expired":"in_progress");
-export const normalizePlacementResults=(attempts=[],leads=[])=>attempts.map(attempt=>{
-  const lead=leadForPlacement(attempt,leads);
-  return {...attempt,lead,conversionStage:placementConversionStage(attempt,lead)};
+export const normalizePlacementResults=(attempts=[],leads=null)=>attempts.map(attempt=>{
+  // Null means the Leads feed could not be verified (or has not loaded yet).
+  // An actual, successfully loaded empty array is different: no matching leads.
+  const available=Array.isArray(leads);
+  const lead=available ? leadForPlacement(attempt,leads) : null;
+  return {
+    ...attempt,
+    lead,
+    conversionStage: !available && attempt.consent
+      ? "Conversion unavailable"
+      : placementConversionStage(attempt,lead),
+  };
 });
-export async function fetchPlacementLeads(){
-  try{return (await fetchStudentLeads()).leads||[];}catch(_){return [];}
+
+export const countRegisteredOrPaidPlacements=(rows=[],leadsAvailable=true)=>{
+  if(!leadsAvailable)return null;
+  return rows.filter(row=>[
+    "Registered", "Active / paid student", "Paid · registration review",
+  ].includes(row.conversionStage)).length;
+};
+
+export async function fetchPlacementLeads(fetchLeads=fetchStudentLeads){
+  // Do not turn a failed Leads request into []: staff would see paid students as unconverted.
+  const result=await fetchLeads();
+  if(!Array.isArray(result?.leads)){
+    throw new Error("The Leads feed returned an invalid response.");
+  }
+  return result.leads;
 }
