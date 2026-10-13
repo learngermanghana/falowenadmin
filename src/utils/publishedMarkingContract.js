@@ -90,7 +90,7 @@ export function comparePublishedAnswerKeys(current = {}, incoming = {}) {
   return {
     safe: false,
     differences,
-    reason: `Answer-key conflict in ${labels.join(", ")}${remainder}. The saved Admin key and live learner key cannot be verified as equivalent. Confirm these exact questions before saving; no answer key was automatically replaced.`,
+    reason: `Tutor review required: answer-key conflict in ${labels.join(", ")}${remainder}. The saved Admin key and live learner key cannot be verified as equivalent. Confirm these exact questions before saving; no answer key was automatically replaced.`,
   };
 }
 
