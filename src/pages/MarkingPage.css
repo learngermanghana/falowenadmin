@@ -429,6 +429,13 @@
   line-height: 1.5;
 }
 
+.marking-key-verification {
+  margin: 0 0 10px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .marking-inline-warning ul {
   margin: 6px 0;
   padding-left: 18px;
