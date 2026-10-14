@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { mockSectionProgress, remainingSeconds, clockLabel, mockActivityLabel, filterMockAttempts, filterTimedAttempts, timedAttemptStatus, timedAttemptStatusLabel } from "../src/utils/mockAttemptMonitoring.js";
+import { mockSectionProgress, mockAuditScoreRows, formatMockAuditScore, remainingSeconds, clockLabel, mockActivityLabel, filterMockAttempts, filterTimedAttempts, timedAttemptStatus, timedAttemptStatusLabel } from "../src/utils/mockAttemptMonitoring.js";
 
 test("mock monitor shows four-section progress and true section remaining time", () => {
   assert.deepEqual(mockSectionProgress({completedSections:["lesen","hoeren"]}), {
@@ -65,6 +65,53 @@ test("Exam Room and Campus filters are independent, visible and accessible", () 
   assert.match(css, /button\.monitor-status-button\s*\{[^}]*background-color: #fff;[^}]*color: #253650/s);
   assert.match(css, /button\.monitor-status-button\[aria-pressed="true"\]\s*\{[^}]*background-color: #1d4ed8;[^}]*color: #fff/s);
   assert.match(css, /@media \(max-width: 670px\)/);
+});
+
+test("staff audit displays four section marks, preserves real zero and rejects browser-only scores", () => {
+  const completed = mockAuditScoreRows({
+    status: "completed",
+    scoreVerification: "verified",
+    sectionScores: { lesen: 0, hoeren: 17.5, schreiben: 20, sprechen: 22 },
+  });
+  assert.deepEqual(completed.map(row => [row.label, row.score, row.status]), [
+    ["Lesen", 0, "verified"],
+    ["Hören", 17.5, "verified"],
+    ["Schreiben", 20, "verified"],
+    ["Sprechen", 22, "verified"],
+  ]);
+  assert.equal(formatMockAuditScore(17.5), "17.5");
+  assert.equal(formatMockAuditScore(0), "0");
+  assert.equal(formatMockAuditScore(null), "—");
+
+  const unfinished = mockAuditScoreRows({
+    status: "in_progress", scoreVerification: "in_progress",
+    sectionScores: { schreiben: 15, sprechen: null },
+  });
+  assert.equal(unfinished[0].score, null);
+  assert.equal(unfinished[2].score, 15);
+  assert.equal(unfinished[2].status, "graded");
+  assert.equal(unfinished[3].status, "pending");
+
+  const browser = mockAuditScoreRows({
+    status: "completed", progressSource: "browser_reported",
+    scoreVerification: "browser_reported",
+    sectionScores: { lesen: 25, hoeren: 25, schreiben: 25, sprechen: 25 },
+  });
+  assert.equal(browser.every(row => row.score === null && row.status === "unavailable"), true);
+});
+
+test("Admin Mock & Timers surfaces verified breakdown and discrepancies without changing scores", () => {
+  const page = fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx", "utf8");
+  const css = fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.css", "utf8");
+  assert.match(page, /mockAuditScoreRows\(attempt\)/);
+  assert.match(page, /Section scores · staff audit/);
+  assert.match(page, /Saved section scores/);
+  assert.match(page, /scoreMatchesOverall === false/);
+  assert.match(page, /completionSyncStatus === "failed"/);
+  assert.match(page, /Result saved to student scores/);
+  assert.match(page, /Review Schreiben submission/);
+  assert.match(css, /monitor-mock-score-grid/);
+  assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
 test("Campus timed tests correctly filter submitted vs unfinished or expired locks", () => {
