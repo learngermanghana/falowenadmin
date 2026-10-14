@@ -17,7 +17,7 @@ const flattenAnswers = answers => {
 };
 
 function answerChoice(value = "") {
-  const match = normalizedAnswer(value).match(/^([A-D])(?:\s*[).:-]\s*(.*))?$/i);
+  const match = normalizedAnswer(value).match(/^([A-F])(?:\s*[).:-]\s*(.*))?$/i);
   return match ? { letter: match[1].toUpperCase(), description: normalizedAnswer(match[2] || "").toLocaleLowerCase("de") } : null;
 }
 
