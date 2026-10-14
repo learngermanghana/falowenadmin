@@ -67,18 +67,18 @@ export function limitFeedbackWords(value, maxWords = AI_FEEDBACK_MAX_WORDS) {
   // boundary is available.
   const sentenceEnd = [...clipped.matchAll(/[.!?](?=\s|$)/g)].at(-1);
   const complete = sentenceEnd ? clipped.slice(0, sentenceEnd.index + 1).trim() : clipped;
-  const completeCount = complete.split(/\\s+/).filter(Boolean).length;
+  const completeCount = complete.split(/\s+/).filter(Boolean).length;
   // Do not reduce an otherwise useful tutor comment to a few praise words.
   // Retain a short actionable clause when the next full sentence is too long
   // to fit; small caps (e.g. a 13-word test) still prefer complete sentences.
   if (sentenceEnd && completeCount < Math.min(AI_FEEDBACK_MIN_WORDS, Math.floor(limit / 2))) {
     const remainder = clipped.slice(sentenceEnd.index + 1).trim();
     const firstClause = remainder.match(/^([^,;:]+)[,;:]/)?.[1]?.trim();
-    const corrective = /\\b(?:correct|use|write|replace|avoid|add|remove|check|review|remember|improve|fix)\\b/i;
+    const corrective = /\b(?:correct|use|write|replace|avoid|add|remove|check|review|remember|improve|fix)\b/i;
     if (firstClause && corrective.test(firstClause)) {
       return dedupeRepeatedFeedback(complete + " " + firstClause + ".");
     }
-    if (corrective.test(remainder)) return dedupeRepeatedFeedback(clipped.replace(/[,;:\\s]+$/, "") + "…");
+    if (corrective.test(remainder)) return dedupeRepeatedFeedback(clipped.replace(/[,;:\s]+$/, "") + "…");
   }
   return dedupeRepeatedFeedback(complete);
 }
