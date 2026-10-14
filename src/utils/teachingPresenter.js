@@ -1317,6 +1317,7 @@ function a2B1PresenterWeek(slide = {}) {
 function explicitA2B1PracticeVariant(focusedPractice = {}) {
   const title = String(focusedPractice?.title || "").trim();
   if (/informationslücke/i.test(title)) return "information-gap";
+  if (/berufsberatung/i.test(title)) return "decision-task";
   if (/fehlerdetektiv|aussage reparieren/i.test(title)) return "error-detective";
   if (/sortier|ordnen|ordnet|reihenfolge|rekonstruier|priorisier|zuordnen|zeitlinie|argumentkette|wirkungskette/i.test(title)) return "sorting-match";
   if (/mini-fallstudie|verbraucherfall|situation.*gefühl|problem.*ursache/i.test(title)) return "scenario-task";
@@ -1410,7 +1411,10 @@ export function getA2B1PracticeVariant(slide = {}, focusedPractice = {}) {
   return {
     variant,
     weekNumber,
-    weekFamily: profile.family,
+    // A lesson-specific decision must not retain the weekly "Error detective" header.
+    weekFamily: explicitVariant === "decision-task"
+      ? A2_B1_WEEKLY_PRACTICE_PROFILES[8].family
+      : profile.family,
     variantLabel: practiceVariantLabel(variant, profile.label),
     source: explicitVariant ? "lesson-override" : "weekly-profile",
   };

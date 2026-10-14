@@ -168,10 +168,10 @@ const A2_KNOWLEDGE = {
     textDe: "Wer über einen Traumberuf spricht, kann Aufgaben, Fähigkeiten und persönliche Gründe verbinden. „Ich möchte Ärztin werden“ ist ein Start, aber eine stärkere Antwort erklärt auch, was man in diesem Beruf macht und warum er zur eigenen Person passt. Ausbildung, Erfahrung, Arbeitszeiten und Entwicklungsmöglichkeiten können ebenfalls wichtig sein.",
     checks: ["Welche drei Bereiche sollte man bei einem Traumberuf erklären?", "Warum ist nur der Berufsname nicht genug?", "Welche praktischen Faktoren nennt der Text?"],
     activity: {
-      title: "Berufsberatung",
-      instruction: "Ordnet der Person einen Beruf zu und begründet eure Wahl mit zwei Informationen.",
-      prompts: ["arbeitet gern mit Menschen", "ist geduldig und organisiert", "möchte später Verantwortung übernehmen"],
-      modelItems: ["Zum Beispiel Pflege, Medizin, Unterricht oder Beratung.", "Der Beruf passt, weil die Person gern mit Menschen arbeitet und geduldig ist."],
+      title: "Berufsberatung · Welcher Beruf passt?",
+      instruction: "Ihr arbeitet in einer Berufsberatung. Lest das Profil und empfehlt der Person einen passenden Beruf. Erklärt eure Wahl in 2–3 vollständigen Sätzen: Verwendet mindestens zwei Informationen und einen weil-Satz.",
+      prompts: ["Die Person arbeitet gern mit Menschen.", "Sie ist geduldig und organisiert.", "Später möchte sie Verantwortung übernehmen."],
+      modelItems: ["Ich empfehle den Beruf Lehrerin oder Lehrer.", "Dieser Beruf passt, weil die Person gern mit Menschen arbeitet und geduldig ist. Später kann sie in der Schule mehr Verantwortung übernehmen."],
     },
   },
   "A2-5.13": {
