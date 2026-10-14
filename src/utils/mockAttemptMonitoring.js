@@ -74,3 +74,15 @@ export function filterTimedAttempts(attempts = [], query = "", status = "all") {
       .some(value => String(value || "").toLowerCase().includes(needle))
   );
 }
+
+export function mockScoreBreakdown(attempt = {}) {
+  const labels = { lesen: "Lesen", hoeren: "Hören", schreiben: "Schreiben", sprechen: "Sprechen" };
+  const rows = MOCK_SECTIONS.map(key => {
+    const value = attempt.sectionScores?.[key];
+    const score = value !== null && value !== undefined && value !== "" ? Number(value) : NaN;
+    return { key, label: labels[key], score: Number.isFinite(score) && score >= 0 && score <= 25 ? score : null };
+  });
+  const recorded = rows.filter(row => row.score !== null);
+  const minimum = recorded.length ? Math.min(...recorded.map(row => row.score)) : null;
+  return rows.map(row => ({ ...row, weakest: recorded.length === 4 && row.score === minimum }));
+}
