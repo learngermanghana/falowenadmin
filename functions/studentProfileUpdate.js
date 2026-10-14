@@ -310,7 +310,7 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       return res.json({
         ok: true, studentId,
         updates: { ...updates, ...identityPatch, ...(pending ? { studentProfileSheetSync: sheetSync } : {}) },
-        sheetSync,
+        ...(pending ? { sheetSync } : {}),
         ...(emailWasEdited ? { authIdentity } : {}),
       });
     } catch (error) {
