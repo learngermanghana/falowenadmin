@@ -5,8 +5,19 @@ export const AI_FEEDBACK_MAX_WORDS = 65;
 
 export const AI_FEEDBACK_INSTRUCTION = `Write one natural tutor comment for the student. Keep the detailed marking evidence in the structured fields, not in the student-facing feedback. The feedback must be one short paragraph of ${AI_FEEDBACK_MIN_WORDS} to ${AI_FEEDBACK_MAX_WORDS} words. Begin with one genuine strength, mention one accurate quotation from the student's actual writing and explain why it is effective, include one genuine correction or a brief optional improvement (never invent an error), and leave objective scores to the verified scoring system. Never assign a new practice exercise. For all levels A1–C2, base the comment on the actual writing task and student's sentences; do not praise only greetings or a connector such as "weil". Evaluate the actual assignment points, consistent du/Sie register, appropriate length where the task specifies a word limit, and sentence variety. Never demand memorised formulas such as "Ich schreibe" or "Ich freue mich"; reward natural equivalent expressions. Avoid praising repeated stock openings. Comment on one concrete way to improve. Use the deterministic objective result as the source of truth for objective scores and wrong answers. Never replace it with an AI-recount. Do not use headings, bullet points, score-report labels, emojis, markdown, asterisks, or stock openings such as "Good effort". Do not list every correction when the structured marking data already contains them. Sound like a human German tutor: warm, direct, specific, and easy to read.`;
 
+function cleanFeedbackFragments(value = "") {
+  return stripMarkingEmojis(value)
+    .replace(/\*\*/g, "")
+    .replace(/\s+/g, " ")
+    // A legacy word cutoff can leave "Remove the You covered..." in the middle
+    // of an otherwise valid comment. Discard only that stranded instruction.
+    .replace(/\b(?:Remove|Replace|Add) the\s+(?=You (?:covered|addressed)|Teil\s*[34]\s*:|All objective answers)/gi, "")
+    .replace(/(?:^|(?<=[.!?]\s))(?:Remove|Replace|Add|Check|Review) (?:the|a|an|this|that)\s*$/i, "")
+    .trim();
+}
+
 export function dedupeRepeatedFeedback(value = "") {
-  const text = stripMarkingEmojis(value);
+  const text = cleanFeedbackFragments(value);
   if (!text) return "";
 
   const paragraphs = text.split(/\n{2,}/).map((item) => item.trim()).filter(Boolean);
@@ -46,11 +57,15 @@ export function dedupeRepeatedFeedback(value = "") {
 }
 
 export function limitFeedbackWords(value, maxWords = AI_FEEDBACK_MAX_WORDS) {
-  return stripMarkingEmojis(value)
-    .replace(/\*\*/g, "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, maxWords)
-    .join(" ");
+  const words = cleanFeedbackFragments(value).split(/\s+/).filter(Boolean);
+  const limit = Number.isFinite(Number(maxWords)) ? Math.max(1, Math.floor(Number(maxWords))) : AI_FEEDBACK_MAX_WORDS;
+  if (words.length <= limit) return dedupeRepeatedFeedback(words.join(" "));
+
+  const clipped = words.slice(0, limit).join(" ");
+  // Prefer the last fully finished sentence over a dangling instruction.
+  // Keep the legacy word cap for punctuation-free input, where no sentence
+  // boundary is available.
+  const sentenceEnd = [...clipped.matchAll(/[.!?](?=\s|$)/g)].at(-1);
+  const complete = sentenceEnd ? clipped.slice(0, sentenceEnd.index + 1).trim() : clipped;
+  return dedupeRepeatedFeedback(complete);
 }
