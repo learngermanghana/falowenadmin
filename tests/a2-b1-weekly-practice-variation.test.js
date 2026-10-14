@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
+import { getA2PresenterKnowledge } from "../src/data/a2PresenterKnowledge.js";
 
 const ALLOWED_VARIANTS = new Set([
   "sentence-jumble",
@@ -87,6 +88,7 @@ test("lesson-specific activities override the weekly fallback when their format 
   const cases = [
     ["A2-2.4", "information-gap"],
     ["A2-4.9", "error-detective"],
+    ["A2-5.12", "decision-task"],
     ["A2-5.13", "transformation"],
     ["B1-3.9", "scenario-task"],
     ["B1-9.26", "decision-task"],
@@ -112,4 +114,22 @@ test("weekly fallback reaches exam-style practice in weeks 9 and 10", () => {
       assert.equal(practiceFor(slide).variant, "exam-challenge", slide.assignmentId);
     }
   }
+});
+
+test("A2 Day 12 Berufsberatung asks for a job decision, two reasons and weil, never a fake error correction", () => {
+  const knowledge = getA2PresenterKnowledge("A2-5.12");
+  const slide = getTeachingSlideByAssignmentId("A2-5.12");
+  assert.ok(knowledge && slide);
+  const practice = practiceFor(slide);
+  assert.equal(practice.variant, "decision-task");
+  assert.equal(practice.variantLabel, "Entscheidung");
+  assert.equal(practice.variantSource, "lesson-override");
+  assert.match(practice.items[0].title, /Berufsberatung/);
+  assert.match(practice.items[0].instruction, /passenden Beruf/);
+  assert.match(practice.items[0].instruction, /mindestens zwei Informationen/);
+  assert.match(practice.items[0].instruction, /weil-Satz/);
+  assert.equal(practice.items[0].prompts.length, 3);
+  assert.ok(practice.items[0].prompts.every((prompt) => /[.!?]$/.test(prompt)));
+  assert.match(practice.items[0].modelItems.join(" "), /weil/);
+  assert.notEqual(practice.variantLabel, "Fehlerdetektiv");
 });
