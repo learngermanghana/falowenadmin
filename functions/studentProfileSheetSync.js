@@ -47,7 +47,7 @@ function resolveStudentSheetSyncConfig(runtimeConfig = {}, env = process.env) {
 
 function sheetSyncIdentity(student = {}, studentId = "") {
   return {
-    uid: String(student.uid || student.authUid || studentId || "").trim(),
+    uid: String(student.uid || student.authUid || "").trim(),
     studentCode: String(student.studentCode || student.studentcode || "").trim(),
     email: String(student.email || "").trim(),
   };
