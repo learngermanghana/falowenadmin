@@ -718,7 +718,7 @@ function isStudentFacingTaskClaim(sentence = "", taskPointEvidence = []) {
   if (/question-aware writing check|writing score is capped|language quality cannot replace task fulfilment/.test(normalized)) {
     return true;
   }
-  if (/\b(?:you (?:covered|completed|addressed) all (?:\d+|three|required)?\s*(?:task\s+)?points?|all (?:task\s+)?points? (?:are )?(?:complete|completed|covered|addressed)|you covered:|still missing:|next step: add)\b/.test(normalized)) {
+  if (/\b(?:you (?:covered|completed|addressed) all (?:(?:\d+|three)\s+)?(?:required\s+)?(?:task\s+)?points?|all (?:task\s+)?points? (?:are )?(?:complete|completed|covered|addressed)|you covered:|still missing:|next step: add)\b/.test(normalized)) {
     return true;
   }
   if (/\b(?:required (?:writing )?task|required writing points?|task points?|task completion|task fulfilment)\b/.test(normalized)) {
