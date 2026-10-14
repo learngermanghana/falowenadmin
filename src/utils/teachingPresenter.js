@@ -1317,6 +1317,7 @@ function a2B1PresenterWeek(slide = {}) {
 function explicitA2B1PracticeVariant(focusedPractice = {}) {
   const title = String(focusedPractice?.title || "").trim();
   if (/informationslücke/i.test(title)) return "information-gap";
+  if (/berufsberatung/i.test(title)) return "decision-task";
   if (/fehlerdetektiv|aussage reparieren/i.test(title)) return "error-detective";
   if (/sortier|ordnen|ordnet|reihenfolge|rekonstruier|priorisier|zuordnen|zeitlinie|argumentkette|wirkungskette/i.test(title)) return "sorting-match";
   if (/mini-fallstudie|verbraucherfall|situation.*gefühl|problem.*ursache/i.test(title)) return "scenario-task";
