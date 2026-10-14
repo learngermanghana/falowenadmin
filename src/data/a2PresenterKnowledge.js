@@ -169,7 +169,7 @@ const A2_KNOWLEDGE = {
     checks: ["Welche drei Bereiche sollte man bei einem Traumberuf erklären?", "Warum ist nur der Berufsname nicht genug?", "Welche praktischen Faktoren nennt der Text?"],
     activity: {
       title: "Berufsberatung · Welcher Beruf passt?",
-      instruction: "Ihr seid Berufsberater. Lest die drei Informationen über die Person. Wählt einen passenden Beruf und erklärt in 2–3 vollständigen Sätzen, warum er zu ihr passt. Nutzt mindestens zwei Informationen und einen weil-Satz. Hier gibt es keinen Fehler zu korrigieren.",
+      instruction: "Ihr arbeitet in einer Berufsberatung. Lest das Profil und empfehlt der Person einen passenden Beruf. Erklärt eure Wahl in 2–3 vollständigen Sätzen: Verwendet mindestens zwei Informationen und einen weil-Satz.",
       prompts: ["Die Person arbeitet gern mit Menschen.", "Sie ist geduldig und organisiert.", "Später möchte sie Verantwortung übernehmen."],
       modelItems: ["Ich empfehle den Beruf Lehrerin oder Lehrer.", "Dieser Beruf passt, weil die Person gern mit Menschen arbeitet und geduldig ist. Später kann sie in der Schule mehr Verantwortung übernehmen."],
     },
