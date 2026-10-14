@@ -250,7 +250,19 @@ async function syncStudentSheetAndRecord({ studentRef, studentId, profile, reque
   return status;
 }
 
-function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [], runtimeConfig = {} }) {
+function studentProfileRuntimeConfig() {
+  try {
+    const encoded = String(process.env.CLOUD_RUNTIME_CONFIG_B64 || "").trim();
+    const raw = encoded ? Buffer.from(encoded, "base64").toString("utf8")
+      : String(process.env.CLOUD_RUNTIME_CONFIG || "{}");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [], runtimeConfig = studentProfileRuntimeConfig() }) {
   if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
   }
