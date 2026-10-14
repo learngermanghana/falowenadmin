@@ -43,6 +43,24 @@ test("A2-5.12 accepts direct and indirect vacancy inquiries with both hours and 
   assert.equal(noSalary[2].status, "missing");
 });
 
+test("A2-5.12 does not confuse a vacancy availability inquiry with a working-hours question", () => {
+  const task = getA2WritingTaskSpec("A2-5.12");
+  const example = "Sehr geehrte Damen und Herren,\\nIch habe fünf Jahre Berufserfahrung und gute Fähigkeiten. Wie sind die Arbeitszeiten für diese Stelle? Wie hoch ist das Gehalt?";
+  const points = evaluateWritingTaskEvidence(task, example);
+  assert.deepEqual(points.map(point => point.status), ["missing", "met", "met"]);
+});
+
+test("answer key comparison treats E and F as formatted letter choices", () => {
+  assert.equal(comparePublishedAnswerKeys({ teil3: { Answer1: "F", Answer2: "E" } }, { teil3: { Answer1: "F) Anzeige F", Answer2: "E) Anzeige E" } }).safe, true);
+});
+
+test("feedback cap retains a useful correction following short praise", () => {
+  const long = "Strong work on the content. Correct the position of the conjugated verb in each dependent clause, especially after weil and wenn, and review the agreement in these several long examples before making the final version.";
+  const clipped = limitFeedbackWords(long, 20);
+  assert.match(clipped, /Correct the position/i);
+  assert.ok(clipped.split(/\\s+/).length <= 20);
+});
+
 test("A2-5.12 question-aware guard caps unjustified full-content scores without changing objective credit", () => {
   const result = applyQuestionAwareWritingGuard({
     level: "A2",
