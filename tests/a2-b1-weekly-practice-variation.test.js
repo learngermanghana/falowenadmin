@@ -124,6 +124,9 @@ test("A2 Day 12 Berufsberatung asks for a job decision, two reasons and weil, ne
   assert.equal(practice.variant, "decision-task");
   assert.equal(practice.variantLabel, "Entscheidung");
   assert.equal(practice.variantSource, "lesson-override");
+  assert.equal(practice.weekNumber, 5);
+  assert.equal(practice.weekFamily, "Scenarios & decisions");
+  assert.doesNotMatch(practice.weekFamily, /error detective|transformation/i);
   assert.match(practice.items[0].title, /Berufsberatung/);
   assert.match(practice.items[0].instruction, /passenden Beruf/);
   assert.match(practice.items[0].instruction, /mindestens zwei Informationen/);
