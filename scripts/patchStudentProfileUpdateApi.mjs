@@ -13,7 +13,9 @@ if (!source.includes(moduleImport)) {
 }
 
 const legacyRegistration = "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth });";
-const registration = "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist });";
+const registration = "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist, runtimeConfig });";
+const previousRegistration = "registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist });";
+if (source.includes(previousRegistration)) source = source.replace(previousRegistration, registration);
 if (source.includes(legacyRegistration)) {
   source = source.replace(legacyRegistration, registration);
 }
