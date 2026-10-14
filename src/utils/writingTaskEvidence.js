@@ -21,7 +21,7 @@ function firstEvidence(source = "", pattern) {
     return [...new Set(pattern.map((item) => firstEvidence(source, item)).filter(Boolean))].join(" | ");
   }
   if (typeof pattern === "function") {
-    return test(pattern, source) ? list.slice(0, 2).join(" | ") : "";
+    return list.find((sentence) => test(pattern, sentence)) || (test(pattern, source) ? list.slice(0, 2).join(" | ") : "");
   }
   return list.find((sentence) => test(pattern, sentence)) || "";
 }
@@ -29,6 +29,26 @@ function firstEvidence(source = "", pattern) {
 function ruleForPoint(label = "", assignmentKey = "") {
   const value = clean(label).toLowerCase();
   const normalizedAssignmentKey = String(assignmentKey || "").trim().toUpperCase();
+
+  if (normalizedAssignmentKey === "A2-5.12") {
+    if (/ask whether there are open positions|fragen sie.*offene stellen/i.test(value)) {
+      // Mentioning "eine offene Stelle" is not the same as asking the
+      // employer whether a position is available.
+      return (source) => sentences(source).some((sentence) => {
+        const vacancy = /\b(?:stelle[n]?|arbeitsstelle[n]?|stellenangebot[e]?|job[s]?|position[en]?|mitarbeiter)\b/i.test(sentence);
+        const directQuestion = /\?/.test(sentence)
+          && /\b(?:gibt\s+es|haben\s+sie|sind|ist|welche|wie\s+viele)\b/i.test(sentence);
+        const indirectQuestion = /\b(?:wissen|erfahren|fragen|sagen|mitteilen)\b[^.!?\n]{0,85}\bob\b/i.test(sentence);
+        return vacancy && (directQuestion || indirectQuestion);
+      });
+    }
+    if (/ask about working hours and salary|fragen sie nach den arbeitszeiten und dem gehalt/i.test(value)) {
+      return [
+        /\b(?:arbeitszeit(?:en)?|arbeitsstunden|schicht(?:en)?|arbeitstag(?:e|en)?|stundenplan)\b/i,
+        /\b(?:gehalt|lohn|verdienst|bezahlung)\b/i,
+      ];
+    }
+  }
 
   if (normalizedAssignmentKey === "A2-4.10") {
     // Current learner coursebook: invite a friend to explore a city, NOT a festival.
