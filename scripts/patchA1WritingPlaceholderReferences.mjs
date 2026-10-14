@@ -106,6 +106,9 @@ patchFile(new URL("../src/utils/autoMarking.js", import.meta.url), (source) => {
 });
 
 patchFile(new URL("../src/pages/MarkingPage.jsx", import.meta.url), (source) => {
+  // Current marking uses the canonical normalized page manifest directly.
+  // Do not reintroduce the legacy Firestore override when running sync:build.
+  if (source.includes("const pageAIReference = useMemo(")) return source;
   source = replaceOnce(
     source,
     '      const deterministicAssignmentId = getObjectiveAssignmentId(\n        registryEntry?.assignmentKey,',
