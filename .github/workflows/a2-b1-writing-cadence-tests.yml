@@ -42,6 +42,7 @@ jobs:
         run: >-
           node --test
           tests/a2-b1-writing-requirement.test.js
+          tests/a2-marking-feedback-regression.test.js
           tests/question-aware-writing-marking.test.js
           tests/a2-b1-marking-weights.test.js
           tests/b1-semantic-writing-marking.test.js
