@@ -5,6 +5,7 @@ import { evaluateWritingTaskEvidence } from "../src/utils/writingTaskEvidence.js
 import { applyQuestionAwareWritingGuard } from "../src/utils/questionAwareWritingMarking.js";
 import { comparePublishedAnswerKeys } from "../src/utils/publishedMarkingContract.js";
 import { dedupeRepeatedFeedback, limitFeedbackWords } from "../src/utils/feedbackPolicy.js";
+import { reconcileMarkingQuality } from "../src/utils/markingQuality.js";
 
 const victoriaSubmission = [
   "TEIL 2",
@@ -95,4 +96,24 @@ test("staff key comparison ignores choice-label formatting but names real mismat
     ...labelled, teil4: { Answer1: "B) Lehrer" },
   });
   assert.equal(conflictingDescription.safe, false);
+});
+
+test("formal salutation feedback replaces false ich capitalization with the missing comma", () => {
+  const objective = {
+    correctCount: 2, totalCount: 2,
+    details: {
+      "teil3.1": { partId: "teil3", correct: true, student: "A", expected: "A" },
+      "teil4.1": { partId: "teil4", correct: true, student: "B", expected: "B" },
+    },
+  };
+  const source = "Review exact wording: Write \"Ich schreibe Ihnen ,weil ich über eine offene Stelle in Ihrem Beruf frage.\" instead of \"ich schreibe Ihnen ,weil ich über eine offene Stelle in Ihrem Beruf frage.\"";
+  const reviewed = reconcileMarkingQuality(
+    { feedback: source, writingScore: 86, writingScorePercent: 86, finalScore: 94 },
+    objective,
+    { text: victoriaSubmission, assignmentId: "A2-5.12" },
+    { writingExpected: true },
+  );
+  assert.match(reviewed.feedback, /Add a comma after the formal salutation/);
+  assert.doesNotMatch(reviewed.feedback, /Write "Ich schreibe Ihnen|Write “Ich schreibe Ihnen/);
+  assert.match(reviewed.feedback, /All objective answers are correct/);
 });
