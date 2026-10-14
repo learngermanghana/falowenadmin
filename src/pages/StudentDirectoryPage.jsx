@@ -501,7 +501,9 @@ export default function StudentDirectoryPage() {
         delete next[student.id];
         return next;
       });
-      if (Object.prototype.hasOwnProperty.call(payload, "email")) {
+      if (result?.sheetSync?.status === "failed" || result?.sheetSync?.status === "pending") {
+        pushToast({ type: "error", message: `Saved ${student.name || student.id} in Firestore. Google Sheet sync ${result.sheetSync.status}; use Retry sheet sync.` });
+      } else if (Object.prototype.hasOwnProperty.call(payload, "email")) {
         const signInEmail = String(result?.authIdentity?.email || "").trim();
         pushToast({
           type: "success",
@@ -509,8 +511,6 @@ export default function StudentDirectoryPage() {
             ? `Saved contact email. Falowen sign-in remains linked to ${signInEmail} and the student's Firebase UID.`
             : "Saved contact email. Falowen sign-in remains linked to the student's existing Firebase UID.",
         });
-      } else if (result?.sheetSync?.status === "failed" || result?.sheetSync?.status === "pending") {
-        pushToast({ type: "error", message: `Saved ${student.name || student.id} in Firestore. Google Sheet sync ${result.sheetSync.status}; use Retry sheet sync.` });
       } else {
         pushToast({ type: "success", message: `Saved ${student.name || student.id}.` });
       }
