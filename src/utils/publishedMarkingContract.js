@@ -16,15 +16,42 @@ const flattenAnswers = answers => {
   return flat;
 };
 
+function answerChoice(value = "") {
+  const match = normalizedAnswer(value).match(/^([A-F])(?:\s*[).:-]\s*(.*))?$/i);
+  return match ? { letter: match[1].toUpperCase(), description: normalizedAnswer(match[2] || "").toLocaleLowerCase("de") } : null;
+}
+
+function answersEquivalent(current, incoming) {
+  const a = normalizedAnswer(current);
+  const b = normalizedAnswer(incoming);
+  if (a.toLocaleLowerCase("de") === b.toLocaleLowerCase("de")) return true;
+  const choiceA = answerChoice(a);
+  const choiceB = answerChoice(b);
+  // "B" and "B) Tierärztin" encode the same selected option. Do not ignore
+  // conflicting descriptions when both versions explicitly provide one.
+  return Boolean(choiceA && choiceB && choiceA.letter === choiceB.letter
+    && (!choiceA.description || !choiceB.description || choiceA.description === choiceB.description));
+}
+
 export function comparePublishedAnswerKeys(current = {}, incoming = {}) {
   const existing = flattenAnswers(current);
   const next = flattenAnswers(incoming);
   if (!next.size) return { safe: false, reason: "Published answer key is empty." };
   if (!existing.size) return { safe: true, reason: "No older answer key exists." };
-  if (existing.size !== next.size || [...existing].some(([key, value]) => next.get(key) !== value)) {
-    return { safe: false, reason: "Coursebook answer keys differ from the current Admin key; tutor review is required before replacing them." };
+  const differences = [...new Set([...existing.keys(), ...next.keys()])]
+    .filter((key) => !existing.has(key) || !next.has(key) || !answersEquivalent(existing.get(key), next.get(key)));
+  if (differences.length) {
+    const examples = differences.slice(0, 3).map((key) =>
+      key + " (Admin: " + (existing.get(key) ?? "missing") + "; coursebook: " + (next.get(key) ?? "missing") + ")");
+    const remaining = differences.length > 3 ? " (+" + (differences.length - 3) + " more)" : "";
+    return {
+      safe: false,
+      differences,
+      reason: "Coursebook answer keys differ from the current Admin key at " + examples.join("; ") + remaining
+        + "; tutor review is required before replacing them.",
+    };
   }
-  return { safe: true, reason: "" };
+  return { safe: true, reason: "", differences: [] };
 }
 
 export function mergePublishedMarkingContract(referenceEntry = {}, contract = {}) {

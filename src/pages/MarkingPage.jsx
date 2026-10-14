@@ -7,7 +7,8 @@ const readHiddenQueue = () => { try { return JSON.parse(window.localStorage.getI
 import { loadStudentSubmissionsWithSelection } from "../utils/selectedStudentSubmissions.js";
 import { markingConsistencyWarnings, reconcileMarkingQuality } from "../utils/markingQuality.js";
 import "./MarkingPage.css";
-import { answerKeyComparison, feedbackWordCount } from "../utils/markingWorkspace.js";
+import { feedbackWordCount } from "../utils/markingWorkspace.js";
+import { normalizeAnswerKeyEntry } from "../utils/answerKeyNormalizer.js";
 import { submittedWorkFiles } from "../utils/studentResultSubmissions.js";
 import { getA1WritingTaskSpec } from "../data/a1WritingTaskSpecs.js";
 import { getB1WritingTaskSpec } from "../data/b1WritingTaskSpecs.js";
@@ -16,8 +17,7 @@ import { stripMarkingEmojis } from "../utils/markingFeedbackText.js";
 import { evaluateWritingStructureReview } from "../utils/writingStructureReview.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { createMarkingJob, deleteSubmission, fetchSubmissionByPath, fetchSubmissions, hideSubmissionFromQueue, loadAnswerKey, loadAnswerKeyRegistry, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
-import { syncAnswerKeysFromGitHub } from "../services/answerKeySyncService.js";
+import { createMarkingJob, deleteSubmission, fetchSubmissionByPath, fetchSubmissions, hideSubmissionFromQueue, loadRoster, loadSubmissions, markSubmissionWithAI, saveMarkingResult, saveScoreRow } from "../services/markingService.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { objectivePercentFromResult, getMaxWritingScore, writingPercentFromResult, mergeObjectiveScore } from "../utils/markingReview.js";
@@ -224,16 +224,12 @@ export default function MarkingPage() {
   const [feedback, setFeedback] = useState("");
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
-  const [syncingAnswerKeys, setSyncingAnswerKeys] = useState(false);
   const [smartMarkingResult, setSmartMarkingResult] = useState(null);
   const [showAllObjectiveAnswers, setShowAllObjectiveAnswers] = useState(false);
   const [showDesktopReference, setShowDesktopReference] = useState(false);
   const [showDesktopCorrections, setShowDesktopCorrections] = useState(false);
   const [reportFallbackVisible, setReportFallbackVisible] = useState(false);
   const workflowSaving = false;
-  const [answerKeyRegistry, setAnswerKeyRegistry] = useState([]);
-  const [answerKeyRegistryStatus, setAnswerKeyRegistryStatus] = useState("loading");
-  const [answerKeyRegistryError, setAnswerKeyRegistryError] = useState("");
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) {
@@ -260,27 +256,6 @@ export default function MarkingPage() {
       };
     });
   }, []);
-
-  const refreshAnswerKeyRegistry = useCallback(async () => {
-    setAnswerKeyRegistryStatus("loading");
-    setAnswerKeyRegistryError("");
-    try {
-      const rows = await loadAnswerKeyRegistry();
-      setAnswerKeyRegistry(rows);
-      setAnswerKeyRegistryStatus("ready");
-      return rows;
-    } catch (err) {
-      const message = err?.message || "Failed to load answer key registry";
-      setAnswerKeyRegistryStatus("error");
-      setAnswerKeyRegistryError(message);
-      error(message);
-      throw err;
-    }
-  }, [error]);
-
-  useEffect(() => {
-    void refreshAnswerKeyRegistry().catch(() => {});
-  }, [refreshAnswerKeyRegistry]);
 
   useEffect(() => {
     (async () => {
@@ -391,14 +366,14 @@ export default function MarkingPage() {
   const automaticReferenceEntry = selectedSubmission
     ? findReferenceEntryForSubmission(referenceEntries, selectedSubmission)
     : null;
-  const currentReferenceKey = normalize(referenceEntry?.assignmentId || referenceEntry?.assignment_id);
-  const matchingRegistry = answerKeyRegistry.find((entry) => normalize(entry.assignmentKey) === currentReferenceKey);
-  const keyComparison = answerKeyComparison(referenceEntry, matchingRegistry);
-  const answerKeyRegistryReady = answerKeyRegistryStatus === "ready";
-  const answerKeyRegistryLoading = answerKeyRegistryStatus === "loading";
-  const answerKeyRegistryFailed = answerKeyRegistryStatus === "error";
-  const answerKeySyncNeeded = answerKeyRegistryReady && (keyComparison === "different" || keyComparison === "missing");
-  const aiMarkingBlockedByKey = !answerKeyRegistryReady || answerKeySyncNeeded;
+  // The checked-in coursebook dictionary is the page's authoritative key.
+  // Firestore registry copies can be stale and must not block tutor marking.
+  const pageAIReference = useMemo(() => referenceEntry
+    ? normalizeAnswerKeyEntry(referenceEntry.assignment || referenceEntry.assignmentId || "", referenceEntry)
+    : null, [referenceEntry]);
+  const pageReferenceReady = Boolean(pageAIReference?.assignmentKey
+    && (pageAIReference.totalAnswers > 0 || pageAIReference.writingParts?.length > 0));
+  const aiMarkingBlockedByKey = !pageReferenceReady;
   const writingTaskCandidate = getA1WritingTaskSpec(referenceEntry?.assignmentId) || getA2WritingTaskSpec(referenceEntry?.assignmentId) || getB1WritingTaskSpec(referenceEntry?.assignmentId);
   const writingExpected = Array.isArray(referenceEntry?.writingParts) ? referenceEntry.writingParts.length > 0 : Boolean(writingTaskCandidate);
   const writingTask = writingExpected ? writingTaskCandidate : null;
@@ -633,38 +608,6 @@ export default function MarkingPage() {
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
   };
 
-  const handleSyncAnswerKeys = async () => {
-    try {
-      setSyncingAnswerKeys(true);
-      const result = await syncAnswerKeysFromGitHub();
-      const refreshedRegistry = await refreshAnswerKeyRegistry();
-      const refreshedMatchingRegistry = refreshedRegistry.find(
-        (entry) => normalize(entry.assignmentKey) === currentReferenceKey,
-      );
-      const refreshedComparison = answerKeyComparison(referenceEntry, refreshedMatchingRegistry);
-      const currentFailure = (result.failed || []).find(
-        (item) => normalize(item.assignmentKey) === currentReferenceKey,
-      );
-
-      if (currentFailure || refreshedComparison !== "matched") {
-        const detail = currentFailure?.reason ? ` ${currentFailure.reason}` : "";
-        error(`The AI key for ${referenceEntry?.assignmentId || referenceEntry?.assignment_id || "this assignment"} was not updated successfully.${detail} AI marking remains blocked.`);
-        return;
-      }
-
-      if (result.failedCount > 0) {
-        error(`This assignment’s AI key is ready, but ${result.failedCount} other answer key${result.failedCount === 1 ? "" : "s"} failed to sync. You can mark this submission, but the other failures still need attention.`);
-        return;
-      }
-
-      success(`Updated ${result.importedCount} answer keys. This assignment’s AI key is ready.`);
-    } catch (err) {
-      error(err?.message || "Failed to update the saved AI answer keys.");
-    } finally {
-      setSyncingAnswerKeys(false);
-    }
-  };
-
   const handleAutoMark = async () => {
     const startedIdentity = reviewIdentity;
     const submissionText = selectedSubmission?.text || "";
@@ -675,43 +618,17 @@ export default function MarkingPage() {
 
     try {
       setAutoMarking(true);
-      const candidateKeys = [
-        assignmentIdValue,
-        selectedSubmission?.assignmentKey,
-        selectedSubmission?.assignmentId,
-        selectedSubmission?.raw?.assignment_id,
-        selectedSubmission?.raw?.assignmentId,
-        referenceEntry?.assignmentId,
-        referenceEntry?.assignment_id,
-      ].filter(Boolean);
-      let registryEntry = null;
-      for (const candidateKey of candidateKeys) {
-        try { registryEntry = await loadAnswerKey(candidateKey); }
-        catch (err) {
-          if (["permission-denied", "firestore/permission-denied"].includes(err?.code)) throw new Error("Firestore denied reading answerKeyRegistry. AI marking has not started.");
-          throw err;
-        }
-        if (registryEntry) break;
+      if (!pageReferenceReady || !pageAIReference) {
+        throw new Error("The current assignment has no usable page reference. Select a valid assignment before marking.");
       }
-
-      if (writingExpected && registryEntry && answerKeyComparison(referenceEntry, registryEntry) === "different") {
-        throw new Error("The saved AI key is out of date. Use “Sync latest answer keys” in the Reference card, then run AI marking again.");
-      }
-      const deterministicAssignmentId = getObjectiveAssignmentId(
-        registryEntry?.assignmentKey,
-        assignmentIdValue,
-        selectedSubmission?.assignmentKey,
-        selectedSubmission?.assignmentId,
-        referenceEntry?.assignmentId,
-        referenceEntry?.assignment,
-      );
-      const deterministicObjective = computeObjectiveScore(deterministicAssignmentId, submissionText);
+      const registryEntry = pageAIReference;
+      const deterministicObjective = computeObjectiveScore(registryEntry, submissionText);
       const aiResult = writingExpected || !deterministicObjective.totalCount ? await markSubmissionWithAI({
         referenceEntry: registryEntry,
         submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
         submissionText,
         feedbackWordTarget: Number(feedbackLimit) || null,
-      }) : { level: selectedStudent.level, assignmentKey: deterministicAssignmentId, writingScorePercent: null, writingScore: null, status: "marked", confidence: 1 };
+      }) : { level: selectedStudent.level, assignmentKey: registryEntry.assignmentKey, writingScorePercent: null, writingScore: null, status: "marked", confidence: 1 };
       if (reviewIdentityRef.current !== startedIdentity) return;
       const result = reconcileMarkingQuality(mergeObjectiveScore(aiResult, deterministicObjective), deterministicObjective, selectedSubmission, { writingExpected, wordTarget: feedbackLimit });
       setSmartMarkingResult(result);
@@ -890,7 +807,7 @@ export default function MarkingPage() {
     `Assignment: ${assignmentIdValue || selectedSubmission?.assignmentId || "Unknown"}`,
     `Attempt: ${selectedSubmission?.attempt || 1}`,
     `Final score: ${displayedFinalScore}/100`,
-    `Answer key check: ${keyComparison}`,
+    `Answer key check: ${pageReferenceReady ? "page reference ready" : "page reference missing"}`,
     "",
     "REFERENCE",
     (formattedReferenceAnswers || "No reference answer available.").trim(),
@@ -1016,7 +933,7 @@ export default function MarkingPage() {
                     className="marking-primary-action"
                     type="button"
                     onClick={handleAutoMark}
-                    disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission || aiMarkingBlockedByKey}
+                    disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || !selectedSubmission || aiMarkingBlockedByKey}
                   >
                     {autoMarking ? "Marking..." : smartMarkingResult ? "Re-run AI marking" : "Mark with AI"}
                   </button>
@@ -1059,16 +976,8 @@ export default function MarkingPage() {
                   <h3>Reference</h3>
                   <p>The answer key used to compare this submission.</p>
                 </div>
-                <span className={`marking-key-pill marking-key-${answerKeyRegistryLoading ? "checking" : answerKeyRegistryFailed ? "error" : keyComparison}`}>
-                  {answerKeyRegistryLoading
-                    ? "Checking AI key..."
-                    : answerKeyRegistryFailed
-                      ? "Key check failed"
-                      : keyComparison === "matched"
-                        ? "Key matched"
-                        : keyComparison === "different"
-                          ? "Key mismatch"
-                          : "Key unavailable"}
+                <span className={`marking-key-pill marking-key-${pageReferenceReady ? "matched" : "error"}`}>
+                  {pageReferenceReady ? "Page reference ready" : "Page reference missing"}
                 </span>
               </div>
               <div className="marking-reference-selected">
@@ -1088,41 +997,9 @@ export default function MarkingPage() {
                   ))}
                 </select>
               </details>
-              {answerKeyRegistryLoading ? (
-                <div className="marking-inline-warning">
-                  Checking the saved AI key before marking. Sync is not available until this check finishes.
-                </div>
-              ) : null}
-              {answerKeyRegistryFailed ? (
-                <div className="marking-inline-warning marking-key-sync-warning">
-                  <div>
-                    <strong>Could not check the saved AI key.</strong>
-                    <p>{answerKeyRegistryError || "The answer-key registry could not be loaded."} Retry the check before marking.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="marking-sync-key-action"
-                    onClick={() => void refreshAnswerKeyRegistry().catch(() => {})}
-                    disabled={answerKeyRegistryLoading || syncingAnswerKeys || autoMarking || savingScore}
-                  >
-                    Retry key check
-                  </button>
-                </div>
-              ) : null}
-              {answerKeySyncNeeded ? (
-                <div className="marking-inline-warning marking-key-sync-warning">
-                  <div>
-                    <strong>{keyComparison === "different" ? "Saved AI key is out of date." : "Saved AI key is missing."}</strong>
-                    <p>The page reference is ready. Update the saved AI key here before running AI marking.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="marking-sync-key-action"
-                    onClick={() => void handleSyncAnswerKeys()}
-                    disabled={syncingAnswerKeys || autoMarking || savingScore}
-                  >
-                    {syncingAnswerKeys ? "Syncing answer keys..." : "Sync latest answer keys"}
-                  </button>
+              {!pageReferenceReady ? (
+                <div className="marking-inline-warning" role="alert">
+                  No valid page reference is available for this assignment. Choose an assignment with a verified reference before marking.
                 </div>
               ) : null}
               <div className="marking-desktop-expand-control">
@@ -1334,34 +1211,16 @@ export default function MarkingPage() {
       </div>
       {selectedSubmission ? (
         <div className="marking-mobile-sticky-action" aria-label="Current marking action">
-          {answerKeyRegistryLoading ? (
+          {!pageReferenceReady ? (
             <button className="marking-primary-action" type="button" disabled>
-              Checking AI key...
-            </button>
-          ) : answerKeyRegistryFailed ? (
-            <button
-              className="marking-primary-action"
-              type="button"
-              onClick={() => void refreshAnswerKeyRegistry().catch(() => {})}
-              disabled={answerKeyRegistryLoading || syncingAnswerKeys || autoMarking || savingScore}
-            >
-              Retry key check
-            </button>
-          ) : answerKeySyncNeeded ? (
-            <button
-              className="marking-primary-action"
-              type="button"
-              onClick={() => void handleSyncAnswerKeys()}
-              disabled={syncingAnswerKeys || autoMarking || savingScore}
-            >
-              {syncingAnswerKeys ? "Syncing..." : "Sync AI key"}
+              Page reference missing
             </button>
           ) : !smartMarkingResult ? (
             <button
               className="marking-primary-action"
               type="button"
               onClick={handleAutoMark}
-              disabled={autoMarking || syncingAnswerKeys || savingScore || workflowSaving || loadingSubmissions || aiMarkingBlockedByKey}
+              disabled={autoMarking || savingScore || workflowSaving || loadingSubmissions || aiMarkingBlockedByKey}
             >
               {autoMarking ? "Marking..." : "Mark with AI"}
             </button>

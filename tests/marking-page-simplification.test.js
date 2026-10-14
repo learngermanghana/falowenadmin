@@ -18,7 +18,7 @@ test("marking page keeps the core review workflow visible", () => {
   assert.match(source, /<h3>Student work<\/h3>/);
   assert.match(source, /<h3>Reference<\/h3>/);
   assert.match(source, /<h3>Objective mapping<\/h3>/);
-  assert.match(source, />Mark with AI<\/button>/);
+  assert.match(source, /onClick=\{handleAutoMark\}/);
   assert.match(source, /<h3>AI feedback & score<\/h3>/);
   assert.match(source, /Student work/);
   assert.match(source, /Mark with AI/);
@@ -34,27 +34,23 @@ test("reference is selected automatically and manual override stays secondary", 
   assert.match(source, /aria-label="Reference answer"/);
 });
 
-test("stale or missing AI keys are offered only after the registry check completes", () => {
-  assert.match(source, /answerKeyRegistryStatus/);
-  assert.match(source, /answerKeyRegistryReady = answerKeyRegistryStatus === "ready"/);
-  assert.match(source, /answerKeySyncNeeded = answerKeyRegistryReady && \(keyComparison === "different" \|\| keyComparison === "missing"\)/);
-  assert.match(source, /Checking the saved AI key before marking/);
-  assert.match(source, /Retry key check/);
-  assert.match(source, /Sync latest answer keys/);
-  assert.match(source, /Sync AI key/);
-  assert.doesNotMatch(source, /Refresh or import the current key before AI marking/);
-  assert.match(css, /\.marking-key-sync-warning/);
-  assert.match(css, /\.marking-sync-key-action/);
+test("AI marking uses the authoritative page reference even when the saved registry is stale", () => {
+  assert.match(source, /const pageAIReference = useMemo\(/);
+  assert.match(source, /normalizeAnswerKeyEntry\(referenceEntry\.assignment/);
+  assert.match(source, /pageReferenceReady = Boolean\(/);
+  assert.match(source, /const aiMarkingBlockedByKey = !pageReferenceReady/);
+  assert.match(source, /const registryEntry = pageAIReference/);
+  assert.match(source, /computeObjectiveScore\(registryEntry, submissionText\)/);
+  assert.match(source, /Page reference ready/);
+  assert.doesNotMatch(source, /Syncing answer keys|Saved AI key is out of date|Sync latest answer keys/);
+  assert.doesNotMatch(source, /loadAnswerKeyRegistry\(|loadAnswerKey\(|syncAnswerKeysFromGitHub/);
 });
 
-test("answer-key sync verifies the current assignment and reports partial failures", () => {
-  assert.match(source, /const refreshedRegistry = await refreshAnswerKeyRegistry\(\)/);
-  assert.match(source, /const refreshedComparison = answerKeyComparison\(referenceEntry, refreshedMatchingRegistry\)/);
-  assert.match(source, /const currentFailure = \(result\.failed \|\| \[\]\)\.find/);
-  assert.match(source, /AI marking remains blocked/);
-  assert.match(source, /result\.failedCount > 0/);
-  assert.match(source, /other answer key/);
-  assert.match(source, /This assignment’s AI key is ready/);
+test("mobile and desktop AI marking remain usable with the page reference", () => {
+  assert.match(source, /!selectedSubmission \|\| aiMarkingBlockedByKey/);
+  assert.match(source, /loadingSubmissions \|\| aiMarkingBlockedByKey/);
+  assert.match(source, /Page reference missing/);
+  assert.doesNotMatch(source, /Retry key check|Sync AI key/);
 });
 
 test("objective mapping defaults to issues and can reveal all answers", () => {

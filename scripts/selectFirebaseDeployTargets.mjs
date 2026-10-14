@@ -12,11 +12,16 @@ export const WORKER_TARGETS = {
   "functions/autoCompleteClassSessions.js": ["api", "autoCompleteClassSessions"],
 };
 
+// Frontend-only build patches must not consume Cloud Run deployment quota.
+// This patch is used by npm sync:build, not by firebase.json predeploy.
+const FRONTEND_ONLY_BUILD_SCRIPTS = new Set(["scripts/patchA1WritingPlaceholderReferences.mjs"]);
+
 export function selectFirebaseDeployTargets({ changedPaths, predeployPaths = [], full = false }) {
   if (full || changedPaths === null) return { mode: "full", targets: [], reason: "Full deployment or no reliable successful baseline." };
   const targets = new Set();
   const predeploy = new Set(predeployPaths);
   for (const path of changedPaths) {
+    if (FRONTEND_ONLY_BUILD_SCRIPTS.has(path) && !predeploy.has(path)) continue;
     if (WORKER_TARGETS[path]) {
       WORKER_TARGETS[path].forEach(target => targets.add(target));
     } else if (path.startsWith("functions/") || path === "firebase.json" || predeploy.has(path) || (path.startsWith("scripts/") && path !== "scripts/selectFirebaseDeployTargets.mjs")) {

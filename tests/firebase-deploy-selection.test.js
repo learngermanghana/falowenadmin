@@ -31,6 +31,19 @@ test("frontend, selector, and workflow-only edits have no runtime deployment tar
   assert.equal(selectFirebaseDeployTargets({ changedPaths: ["src/pages/MarkingPage.jsx", "scripts/selectFirebaseDeployTargets.mjs", ".github/workflows/deploy-firebase.yml"] }).mode, "skip");
 });
 
+test("frontend marking build patches do not redeploy Cloud Run functions", () => {
+  const plan = selectFirebaseDeployTargets({ changedPaths: [
+    "src/pages/MarkingPage.jsx",
+    "scripts/patchA1WritingPlaceholderReferences.mjs",
+    "scripts/selectFirebaseDeployTargets.mjs",
+  ]});
+  assert.equal(plan.mode, "skip");
+  assert.equal(selectFirebaseDeployTargets({
+    changedPaths: ["scripts/patchA1WritingPlaceholderReferences.mjs"],
+    predeployPaths: ["scripts/patchA1WritingPlaceholderReferences.mjs"],
+  }).mode, "full", "predeploy changes must never be skipped");
+});
+
 test("every selected worker belongs to an existing quota-safe deployment group", () => {
   const workflow = fs.readFileSync(".github/workflows/deploy-firebase.yml", "utf8");
   for (const targets of Object.values(WORKER_TARGETS)) {

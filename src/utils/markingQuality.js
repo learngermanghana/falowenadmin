@@ -113,13 +113,33 @@ export function markingConsistencyWarnings(result, submission = {}, calculatedSc
   return [...new Set(warnings)];
 }
 
+function repairSalutationCapitalizationAdvice(value = "", submissionText = "") {
+  const lines = String(submissionText || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const salutationIndex = lines.findIndex((line) => /^Sehr geehrte(?:r|n)?\b/i.test(line));
+  if (salutationIndex < 0 || !lines[salutationIndex + 1]) return value;
+  const opening = lines[salutationIndex + 1];
+  return String(value || "").replace(
+    /(?:Review exact wording:\s*)?Write\s+[“"]([^”"]{3,200})[”"]\s+instead of\s+[“"]([^”"]{3,200})[”"]\.?/gi,
+    (match, corrected, submitted) => {
+      const caseOnly = corrected.length === submitted.length
+        && corrected[0] === submitted[0].toLocaleUpperCase("de")
+        && corrected.slice(1) === submitted.slice(1)
+        && corrected[0] !== submitted[0];
+      if (!caseOnly || !opening.toLocaleLowerCase("de").startsWith(submitted.toLocaleLowerCase("de"))) return match;
+      // After a formal email greeting the next line begins lowercase when
+      // the greeting is followed by a comma. Repair the missing comma instead.
+      return /,$/.test(lines[salutationIndex]) ? "" : "Add a comma after the formal salutation.";
+    },
+  );
+}
+
 export function reconcileMarkingQuality(result, objective, submission = {}, { writingExpected = false, wordTarget = 40 } = {}) {
   const level = result.level || submission.level || String(submission.assignmentId || result.assignmentKey || "").split("-")[0];
   const assignmentKey = submission.assignmentId || submission.assignmentKey || result.assignmentKey;
   const assessConnectors = allowsConnectorAssessment(level, assignmentKey);
   // Keep writing prose; replace the model's objective block as one unit so
   // decimal question numbers and slash-separated answers cannot leave fragments.
-  let writingFeedback = stripMarkingEmojis(result.feedback)
+  let writingFeedback = repairSalutationCapitalizationAdvice(stripMarkingEmojis(result.feedback), submission.text)
     .replace(/\bWriting score\s*:\s*\d+(?:\.\d+)?\s*%[.]?/gi, "")
     .replace(/\bMarking summary\b[\s\S]*$/i, "")
     // "main" is an internal flat-objective part key, not a student-facing
