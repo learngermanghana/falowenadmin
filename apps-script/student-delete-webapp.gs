@@ -184,6 +184,25 @@ function studentDeleteJson_(payload) {
  * Write only existing columns in the master student tab and verify every changed
  * cell. No headers are added or deleted; all unrelated columns stay intact.
  */
+function studentDeleteEquivalentSyncValue_(field, expected, rawValue, rendered, timeZone) {
+  const left = studentDeleteText_(expected);
+  const right = studentDeleteText_(rendered);
+  if (left === right) return true;
+  if (field === 'balanceDue' && left !== '' && right !== '') {
+    const number = value => Number(String(value).replace(/[,\s]/g, ''));
+    return Number.isFinite(number(left)) && Number.isFinite(number(right)) && number(left) === number(right);
+  }
+  if (field === 'contractStart' || field === 'contractEnd') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(left)) return false;
+    if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
+      return Utilities.formatDate(rawValue, timeZone, 'yyyy-MM-dd') === left;
+    }
+    const legacyDate = right.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (legacyDate) return [legacyDate[3], legacyDate[1].padStart(2, '0'), legacyDate[2].padStart(2, '0')].join('-') === left;
+  }
+  return false;
+}
+
 function studentDeleteSyncProfile_(spreadsheet, payload) {
   const fieldHeaders = {
     name: 'name', phone: 'phone', location: 'location', level: 'level',
@@ -249,8 +268,11 @@ function studentDeleteSyncProfile_(spreadsheet, payload) {
     const verifiedFields = [];
     for (const field of fields) {
       const expected = studentDeleteText_(changes[field]);
-      const actual = studentDeleteText_(sheet.getRange(row, headerColumn[fieldHeaders[field]]).getDisplayValue());
-      if (expected !== actual) throw new Error('Student sheet read-back mismatch: ' + field);
+      const cell = sheet.getRange(row, headerColumn[fieldHeaders[field]]);
+      const actual = studentDeleteText_(cell.getDisplayValue());
+      if (!studentDeleteEquivalentSyncValue_(field, expected, cell.getValue(), actual, spreadsheet.getSpreadsheetTimeZone())) {
+        throw new Error('Student sheet read-back mismatch: ' + field);
+      }
       verifiedFields.push(field);
     }
     return { ok: true, verified: true, matchedRows: 1, row, verifiedFields: verifiedFields };
