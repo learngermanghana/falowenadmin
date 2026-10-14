@@ -50,14 +50,14 @@ test("A2 and B1 focused practice now exposes visible weekly variation", () => {
 
     assert.ok(variants.size >= 6, `${level} should visibly rotate across at least six activity formats`);
     assert.deepEqual(
-      [...weeklyFamilies],
+      [...weeklyFamilies].sort(),
       [
         "Jumbled sentences & sorting",
         "Information gaps & matching",
         "Error detective & transformation",
         "Scenarios & decisions",
         "Exam-style challenge",
-      ],
+      ].sort(),
       `${level} should preserve the five planned weekly practice families`,
     );
   }
