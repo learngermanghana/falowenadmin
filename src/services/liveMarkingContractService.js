@@ -10,7 +10,7 @@ export const LEARNER_MARKING_CONTRACT_URL =
 
 const normalizeId = value => String(value || "").trim().toUpperCase();
 
-export async function loadLiveMarkingContract(assignmentId, referenceEntry = {}) {
+export async function loadLiveMarkingContract(assignmentId, referenceEntry = {}, options = {}) {
   const id = normalizeId(assignmentId);
   if (!/^(A1|A2|B1|B2|C1|C2)-[A-Z0-9.]+$/.test(id)) return null;
   try {
@@ -29,7 +29,7 @@ export async function loadLiveMarkingContract(assignmentId, referenceEntry = {})
       console.warn("Learner marking manifest unavailable", { assignmentId: id, status: response.status });
       return null;
     }
-    return mergePublishedMarkingContract(referenceEntry, await response.json());
+    return mergePublishedMarkingContract(referenceEntry, await response.json(), options);
   } catch (error) {
     console.warn("Could not refresh learner marking contract", { assignmentId: id, message: error?.message });
     return null;

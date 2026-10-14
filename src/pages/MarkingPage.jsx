@@ -1202,9 +1202,15 @@ export default function MarkingPage() {
                 <ul>{consistencyWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
                 <label className="marking-check">
                   <input type="checkbox" checked={qualityAcknowledgement === qualitySignature} onChange={(event) => setQualityAcknowledgement(event.target.checked ? qualitySignature : "")} />
-                  I checked these warnings against the student work.
+                  I verified the flagged questions against the current coursebook and checked the score and feedback.
                 </label>
               </div>
+            ) : null}
+
+            {smartMarkingResult?.learnerContractKeyStatus === "verified_admin_dictionary" ? (
+              <p className="marking-key-verification" role="status">
+                Answer keys verified against the current Admin dictionary. An older saved key differed, but the verified live key was used for this marking without overwriting the saved registry.
+              </p>
             ) : null}
 
             {smartMarkingResult ? (

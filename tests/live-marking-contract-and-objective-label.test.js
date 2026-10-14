@@ -57,6 +57,79 @@ test("A conflicting learner objective key never silently overwrites the current 
   assert.equal(mergePublishedMarkingContract(lesson, { ...contract, assignmentId: "A2-4.9" }).writingUpdated, undefined);
 });
 
+test("Format-only answer differences do not trigger a false review warning", () => {
+  const sameAnswers = {
+    "Teil 3": { Frage01: " a.   IN DER Touristeninformation! ", Frage2: "B: An den Landungsbrücken." },
+    teil4: { Answer1: "a: eine hafenrundfahrt.", Answer2: "b) 20 €" },
+  };
+  const comparison = comparePublishedAnswerKeys(answerKey, sameAnswers);
+  assert.equal(comparison.safe, true);
+  assert.deepEqual(comparison.differences, []);
+  const outcome = mergePublishedMarkingContract(lesson, {
+    ...contract, answerKey: { answers: sameAnswers },
+  });
+  assert.equal(outcome.warning, "");
+  assert.equal(outcome.answersUpdated, true);
+});
+
+test("Option changes and missing questions still require precise review", () => {
+  const changedOption = structuredClone(answerKey);
+  changedOption.teil4.Answer2 = "A) 20 Euro";
+  const optionCheck = comparePublishedAnswerKeys(answerKey, changedOption);
+  assert.equal(optionCheck.safe, false);
+  assert.deepEqual(optionCheck.differences, ["teil4.q2"]);
+  assert.match(optionCheck.reason, /Teil 4 Q2/);
+
+  const changedText = structuredClone(answerKey);
+  changedText.teil3.Answer1 = "A) Im Bahnhof";
+  assert.deepEqual(comparePublishedAnswerKeys(answerKey, changedText).differences, ["teil3.q1"]);
+
+  const incomplete = structuredClone(answerKey);
+  delete incomplete.teil4.Answer2;
+  assert.deepEqual(comparePublishedAnswerKeys(answerKey, incomplete).differences, ["teil4.q2"]);
+  const ambiguous = structuredClone(answerKey);
+  ambiguous.teil4.Answer2 = "B";
+  assert.equal(comparePublishedAnswerKeys(answerKey, ambiguous).safe, false);
+});
+
+test("Outdated registry copies are reconciled only against a matching official Admin key", () => {
+  const staleRegistry = {
+    ...lesson,
+    rawAnswers: {
+      teil3: { ...answerKey.teil3, Answer1: "B) In der Touristeninformation" },
+      teil4: answerKey.teil4,
+    },
+    parts: {
+      teil3: { partId: "teil3", answers: [{ questionKey: "Answer1", correctLetter: "B" }] },
+    },
+  };
+  const verified = mergePublishedMarkingContract(staleRegistry, contract, {
+    authoritativeReferenceEntry: { answers: answerKey },
+  });
+  assert.equal(verified.warning, "");
+  assert.equal(verified.keyStatus, "verified_admin_dictionary");
+  assert.equal(verified.answersUpdated, true);
+  assert.equal(verified.referenceEntry.parts.teil3.answers[0].correctLetter, "A");
+
+  const unverified = mergePublishedMarkingContract(staleRegistry, contract, {
+    authoritativeReferenceEntry: { answers: { ...answerKey, teil4: { ...answerKey.teil4, Answer2: "C) 40 Euro" } } },
+  });
+  assert.equal(unverified.keyStatus, "conflict");
+  assert.equal(unverified.answersUpdated, false);
+  assert.match(unverified.warning, /Teil 3 Q1/);
+  assert.deepEqual(unverified.referenceEntry.rawAnswers, staleRegistry.rawAnswers);
+
+  const changedOptionButSameText = {
+    ...contract,
+    answerKey: { answers: { ...answerKey, teil4: { ...answerKey.teil4, Answer2: "C) 20 Euro" } } },
+  };
+  const realConflict = mergePublishedMarkingContract(lesson, changedOptionButSameText, {
+    authoritativeReferenceEntry: { answers: answerKey },
+  });
+  assert.equal(realConflict.answersUpdated, false);
+  assert.match(realConflict.warning, /Teil 4 Q2/);
+});
+
 test("Current A2-4.10 writing rubric credits city activities but checks for a meeting point", () => {
   const writing = `Liebe Mia
 Wie geht es dir? Ich möchte Accra mit dir entdecken, weil die Stadt interessant ist. Wir könnten zuerst den Markt besuchen und danach im Café etwas trinken. Wir könnten nächsten Freitag gehen, weil ich dann frei habe. Was möchtest du machen?
