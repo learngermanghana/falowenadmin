@@ -36,9 +36,11 @@ function ruleForPoint(label = "", assignmentKey = "") {
       // employer whether a position is available.
       return (source) => sentences(source).some((sentence) => {
         const vacancy = /\b(?:stelle[n]?|arbeitsstelle[n]?|stellenangebot[e]?|job[s]?|position[en]?|mitarbeiter)\b/i.test(sentence);
-        const directQuestion = /\?/.test(sentence)
-          && /\b(?:gibt\s+es|haben\s+sie|sind|ist|welche|wie\s+viele)\b/i.test(sentence);
-        const indirectQuestion = /\b(?:wissen|erfahren|fragen|sagen|mitteilen)\b[^.!?\n]{0,85}\bob\b/i.test(sentence);
+        // An hours/salary question mentioning "diese Stelle" is not a vacancy inquiry.
+        const availabilityQuestion = /\b(?:gibt\s+es|haben\s+sie)\b[^?]{0,110}\b(?:stellen?|arbeitsstellen?|stellenangebote?|jobs?|positionen?)\b|\b(?:stellen?|arbeitsstellen?|stellenangebote?|jobs?|positionen?)\b[^?]{0,65}\b(?:frei|offen|verf[uü]gbar)\b/i;
+        const directQuestion = /\?/.test(sentence) && availabilityQuestion.test(sentence);
+        const indirectQuestion = /\b(?:wissen|erfahren|fragen|sagen|mitteilen)\b[^.!?\n]{0,85}\bob\b/i.test(sentence)
+          && /\bob\b[^.!?\n]{0,100}(?:\bes\b[^.!?\n]{0,60}\b(?:stellen?|jobs?|positionen?)\b[^.!?\n]{0,30}\bgibt\b|\bsie\b[^.!?\n]{0,60}\b(?:stellen?|jobs?|positionen?)\b[^.!?\n]{0,30}\bhaben\b|\b(?:stellen?|jobs?|positionen?)\b[^.!?\n]{0,35}\b(?:frei|offen|verf[uü]gbar)\b)/i.test(sentence);
         return vacancy && (directQuestion || indirectQuestion);
       });
     }
