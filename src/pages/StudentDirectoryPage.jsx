@@ -963,7 +963,7 @@ export default function StudentDirectoryPage() {
                                     selectedStudent.studentProfileSheetSync.status === "pending" ? "Pending" : "Sync failed"
                                   }</strong>
                                   {selectedStudent.studentProfileSheetSync.checkedAt && (
-                                    <small style={{ display: "block" }}>Checked: {formatDate(selectedStudent.studentProfileSheetSync.checkedAt)}</small>
+                                    <small style={{ display: "block" }}>Checked: {formatDisplayDate(selectedStudent.studentProfileSheetSync.checkedAt)}</small>
                                   )}
                                   {selectedStudent.studentProfileSheetSync.error && (
                                     <p style={{ margin: "6px 0" }}>{selectedStudent.studentProfileSheetSync.error}</p>
