@@ -13,6 +13,7 @@ import {
   timedAttemptStatusLabel,
   mockActivityLabel,
   mockSectionProgress,
+  mockScoreBreakdown,
   remainingSeconds,
   toAttemptMillis,
   MOCK_SECTIONS,
@@ -321,6 +322,15 @@ export default function TimedAssignmentAttemptsPage() {
               <div><b>Last update:</b> {formatDate(attempt.updatedAt)}</div>
               {attempt.overallScore !== null && attempt.overallScore !== undefined && <div><b>Verified score:</b> {attempt.overallScore}/100</div>}
             </div>
+            {attempt.status === "completed" && <div aria-label="Final mock section scores"
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}>
+              {mockScoreBreakdown(attempt).map(skill => <div key={skill.key}
+                style={{ padding: 10, borderRadius: 10, border: "1px solid #e2e8f0", background: skill.weakest ? "#fff7ed" : "#f8fafc" }}>
+                <strong>{skill.label}</strong>
+                <div>{skill.score === null ? "Not recorded" : `${skill.score}/25`}</div>
+                {skill.weakest && <small>Lowest section score</small>}
+              </div>)}
+            </div>}
             <div>
               {attempt.progressSource === "browser_reported" && <p style={{ color: "#92400e", fontSize: 12, margin: "0 0 5px" }}>Progress reported by the learner browser; not a verified exam score.</p>}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
