@@ -628,7 +628,7 @@ export default function MarkingPage() {
         submission: { ...selectedSubmission, assignmentKey: registryEntry?.assignmentKey || selectedSubmission.assignmentKey },
         submissionText,
         feedbackWordTarget: Number(feedbackLimit) || null,
-      }) : { level: selectedStudent.level, assignmentKey: deterministicAssignmentId, writingScorePercent: null, writingScore: null, status: "marked", confidence: 1 };
+      }) : { level: selectedStudent.level, assignmentKey: registryEntry.assignmentKey, writingScorePercent: null, writingScore: null, status: "marked", confidence: 1 };
       if (reviewIdentityRef.current !== startedIdentity) return;
       const result = reconcileMarkingQuality(mergeObjectiveScore(aiResult, deterministicObjective), deterministicObjective, selectedSubmission, { writingExpected, wordTarget: feedbackLimit });
       setSmartMarkingResult(result);
