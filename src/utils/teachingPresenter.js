@@ -1411,7 +1411,10 @@ export function getA2B1PracticeVariant(slide = {}, focusedPractice = {}) {
   return {
     variant,
     weekNumber,
-    weekFamily: profile.family,
+    // A lesson-specific decision must not retain the weekly "Error detective" header.
+    weekFamily: explicitVariant === "decision-task"
+      ? A2_B1_WEEKLY_PRACTICE_PROFILES[8].family
+      : profile.family,
     variantLabel: practiceVariantLabel(variant, profile.label),
     source: explicitVariant ? "lesson-override" : "weekly-profile",
   };
