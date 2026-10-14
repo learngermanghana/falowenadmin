@@ -18,7 +18,7 @@ test("marking page keeps the core review workflow visible", () => {
   assert.match(source, /<h3>Student work<\/h3>/);
   assert.match(source, /<h3>Reference<\/h3>/);
   assert.match(source, /<h3>Objective mapping<\/h3>/);
-  assert.match(source, />Mark with AI<\/button>/);
+  assert.match(source, /onClick=\{handleAutoMark\}/);
   assert.match(source, /<h3>AI feedback & score<\/h3>/);
   assert.match(source, /Student work/);
   assert.match(source, /Mark with AI/);
