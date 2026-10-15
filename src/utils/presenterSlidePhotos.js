@@ -27,7 +27,6 @@ const ASSIGNMENT_PHOTOS = Object.freeze({
   "B1-6.18": "interview", // Wege zum Wunschberuf
   "B1-6.19": "interview", // Das Vorstellungsgespräch
   "B1-8.25": "boutique", // Online einkaufen – Rechte und Risiken
-  "B2-1.4": "interview", // Beruf und Karriere
 });
 
 function assignmentId(slide = {}) {
