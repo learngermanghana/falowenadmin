@@ -11,6 +11,7 @@ import { getA1Days11To15QuickChecks, getA1Days11To15ApplicationChecks } from "..
 import { getA1Days16To20QuickChecks, getA1Days16To20ApplicationChecks } from "../data/a1Days16To20Understanding.js";
 import { getA1Days21To24QuickChecks, getA1Days21To24ApplicationChecks } from "../data/a1Days21To24Understanding.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
   A1_ACTIVITY_TIMER_PRESETS,
@@ -346,6 +347,7 @@ export default function A1GrammarPresenter({
     expired: false,
   });
   const stage = stages[stageIndex] || stages[0];
+  const stagePhoto = getPresenterSlidePhoto(slide, stage);
   const teacherPurpose = a1TeacherPurpose(stage);
 
   const checkMode = stage?.type === "check";
@@ -682,7 +684,12 @@ export default function A1GrammarPresenter({
           />
         </div>
 
-        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-fit-${fitMode}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-fit-${fitMode} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
+          {stagePhoto ? (
+            <figure className="presenter-slide-photo" aria-hidden="true">
+              <img src={stagePhoto.src} alt="" width="640" height="420" loading="lazy" decoding="async" draggable="false" />
+            </figure>
+          ) : null}
           {!focusMode && teacherPurpose ? (
             <aside className="presenter-teacher-purpose" aria-label="Teacher purpose">
               <div>
