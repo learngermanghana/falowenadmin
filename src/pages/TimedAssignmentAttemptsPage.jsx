@@ -317,6 +317,41 @@ export default function TimedAssignmentAttemptsPage() {
         {!mockLoading && !filteredMocks.length && <div style={card}>
           {mockError ? "Mock monitoring is unavailable." : "No mock attempts match these filters. Mock 2 exercises stored only in browser storage will not appear here."}
         </div>}
+        {filteredMocks.some(attempt=>attempt.status==="completed" && attempt.progressSource!=="browser_reported") && (
+          <section className="monitor-mock-summary-table" aria-label="Completed mock results by skill">
+            <div className="monitor-mock-summary-table__heading">
+              <div>
+                <h3 style={{margin:0}}>Completed mock results · {mockLevel==="all"?"All levels":mockLevel}</h3>
+                <small>Five verified results per student and attempt. Filter A1, A2 or B1 above to compare within a level.</small>
+              </div>
+              <small>Showing up to 50 recent completed mocks</small>
+            </div>
+            <div className="monitor-mock-summary-table__scroll" role="region" aria-label="Scroll mock result columns" tabIndex={0}>
+              <table>
+                <thead><tr>
+                  <th scope="col">Student</th>
+                  <th scope="col">Level</th>
+                  <th scope="col">Mock</th>
+                  {MOCK_SECTIONS.map(section=><th scope="col" key={section}>{MOCK_SECTION_LABELS[section]} <small>/25</small></th>)}
+                  <th scope="col">Total <small>/100</small></th>
+                </tr></thead>
+                <tbody>
+                  {filteredMocks.filter(attempt=>attempt.status==="completed" && attempt.progressSource!=="browser_reported").slice(0,50).map(attempt=>{
+                    const scores=mockVerifiedScores(attempt);
+                    return <tr key={attempt.id}>
+                      <th scope="row">{attempt.studentName || attempt.studentEmail || attempt.uid || "Student not identified"}</th>
+                      <td>{attempt.level}</td>
+                      <td>{attempt.mockId} · #{attempt.attemptNumber}</td>
+                      {MOCK_SECTIONS.map(section=><td key={section} data-label={MOCK_SECTION_LABELS[section]}>{mockScoreText(scores?.sections?.[section])}</td>)}
+                      <td className="monitor-mock-summary-table__total">{mockScoreText(scores?.total,100)}</td>
+                    </tr>;
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <small className="monitor-mock-scores__note">“Not recorded” means a verified skill mark is missing from that historical attempt; it is not a zero score. Expand each student card below for the original attempt details.</small>
+          </section>
+        )}
         {filteredMocks.map(attempt => {
           const progress = mockSectionProgress(attempt);
           const remaining = remainingSeconds(attempt.sectionDeadlineMs, now);
