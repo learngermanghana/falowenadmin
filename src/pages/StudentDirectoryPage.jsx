@@ -15,6 +15,7 @@ import StudentClassTransferPanel from "../components/StudentClassTransferPanel.j
 import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
 import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
 import { resolveEmergencyContactPhone, resolveEmergencyContactName } from "../utils/studentEmergencyContact.js";
+import { matchesPhoneDigits } from "../utils/studentPhoneSearch.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
@@ -392,7 +393,6 @@ export default function StudentDirectoryPage() {
 
   const filteredStudents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const queryDigits = normalizedQuery.replace(/\D/g, "");
     if (!normalizedQuery) return viewStudents;
 
     return viewStudents.filter((student) => {
@@ -413,12 +413,10 @@ export default function StudentDirectoryPage() {
 
       // Also compare phone digits without spaces, international-prefix pluses,
       // or punctuation; keep ordinary name/email/class searches unchanged.
-      const phoneDigits = [
-        resolveStudentPhone(student),
-        resolveEmergencyContactPhone(student),
-      ].map(value=>String(value || "").replace(/\D/g,""));
       return haystack.includes(normalizedQuery) ||
-        (queryDigits.length >= 5 && phoneDigits.some(number=>number.includes(queryDigits)));
+        matchesPhoneDigits(normalizedQuery, [
+          resolveStudentPhone(student), resolveEmergencyContactPhone(student),
+        ]);
     });
   }, [viewStudents, query]);
 
