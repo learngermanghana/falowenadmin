@@ -4,6 +4,7 @@ import { plainObjectiveAnswer, stripMarkingEmojis } from "./markingFeedbackText.
 import { withResubmissionComparison } from "./resubmissionFeedback.js";
 import { dedupeRepeatedFeedback } from "./feedbackPolicy.js";
 import { groundedA1WritingCorrections, objectiveLanguageCorrections, languageFeedbackSentence } from "./groundedLanguageCorrections.js";
+import { buildEvidenceEssayFeedback } from "./essayFeedbackEvidence.js";
 
 const normalize = (value) => String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
 const percent = (value) => value === null || value === undefined || value === "" ? null : Number.isFinite(Number(value)) ? Number(value) : null;
@@ -133,6 +134,53 @@ function repairSalutationCapitalizationAdvice(value = "", submissionText = "") {
   );
 }
 
+function recoverThinWritingFeedback(original = "", result = {}, submission = {}, assignmentKey = "", level = "") {
+  const current = String(original || "").trim();
+  const content = String(submission.text || "").trim();
+  const writingOnly = content.split(/(?:^|\n)\s*(?:teil|part)\s*[34]\b/i)[0];
+  const currentWords = current.split(/\s+/).filter(Boolean).length;
+  const writingWords = writingOnly.split(/\s+/).filter(Boolean).length;
+  const targetLevel = String(level || "").toUpperCase();
+  if (!["A2", "B1"].includes(targetLevel) || writingWords < 35 || currentWords >= 32) return current;
+
+  // Keep genuine, specific corrections. Only reconstruct examiner comments that
+  // contain little beyond greeting/connector praise or an unspecific summary.
+  const hasCorrection = /\b(?:correct|revise|replace|instead of|write [“"]|use [“"]|add a comma|check verb|word order)\b/i.test(current);
+  if (hasCorrection) return current;
+  const overlyThin = currentWords < 18
+    || /\b(?:greeting|connector|well organi[sz]ed|well structured)\b/i.test(current);
+  if (!overlyThin) return current;
+
+  const notGreetingPraise = (item) => !/\b(?:greeting|connector|salutation)\b/i.test(String(item || ""));
+  const safeStrengths = (value) => Array.isArray(value)
+    ? value.filter(notGreetingPraise)
+    : notGreetingPraise(value) && value ? [value] : [];
+  const rich = buildEvidenceEssayFeedback({
+    result: {
+      ...result,
+      assignmentKey: result.assignmentKey || assignmentKey,
+      level: targetLevel,
+      writingStrengths: safeStrengths(result.writingStrengths),
+      strengths: safeStrengths(result.strengths),
+      feedback: "",
+      improvementSummary: "",
+      aiDetailedFeedback: "",
+      aiOriginalFeedback: "",
+      ai: {
+        ...(result.ai || {}),
+        writingStrengths: safeStrengths(result.ai?.writingStrengths),
+        strengths: safeStrengths(result.ai?.strengths),
+        originalFeedback: "",
+        detailedFeedback: "",
+      },
+    },
+    submissionText: content,
+    forceContextDepth: true,
+  });
+  const richWords = rich.split(/\s+/).filter(Boolean).length;
+  return richWords >= 32 && richWords >= currentWords + 10 ? rich : current;
+}
+
 export function reconcileMarkingQuality(result, objective, submission = {}, { writingExpected = false, wordTarget = 40 } = {}) {
   const level = result.level || submission.level || String(submission.assignmentId || result.assignmentKey || "").split("-")[0];
   const assignmentKey = submission.assignmentId || submission.assignmentKey || result.assignmentKey;
@@ -158,6 +206,9 @@ export function reconcileMarkingQuality(result, objective, submission = {}, { wr
     // "Next step: check the verb position in subordinate clauses."
     .replace(/\b(?:Next practice|Practice next|Your next exercise|Next step)\s*[:–-]\s*(?:(?:Please\s+)?(?:write|compose|draft|create|complete|do|try|practise|practice)\b)[^.?!]*(?:[.?!]|$)/gi, "")
     .replace(/\s+/g, " ").trim();
+  if (writingExpected) {
+    writingFeedback = recoverThinWritingFeedback(writingFeedback, result, submission, assignmentKey, level);
+  }
   const objectiveFeedback = objective.totalCount > 0 ? exactObjectiveFeedback(objective, 22) : "";
   // Correct meaning does not imply perfect spelling. Keep the objective score
   // authoritative while reporting verifiable language issues separately.

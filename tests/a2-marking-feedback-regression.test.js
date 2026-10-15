@@ -135,3 +135,75 @@ test("formal salutation feedback replaces false ich capitalization with the miss
   assert.doesNotMatch(reviewed.feedback, /Write "Ich schreibe Ihnen|Write “Ich schreibe Ihnen/);
   assert.match(reviewed.feedback, /All objective answers are correct/);
 });
+
+test("A2-5.12 replaces greeting-only feedback with grounded evidence without touching a 97/100 score", () => {
+  const submission = [
+    "TEIL 2",
+    "Sehr geehrte Damen und Herren,",
+    "Ich hoffe, es geht Ihnen gut. Ich schreibe Ihnen, weil ich mich um eine Stelle als Sekretärin bewerben möchte.",
+    "Gibt es bei Ihnen noch offene Stellen? Welche Aufgaben hat die Sekretärin bei Ihnen?",
+    "Während meines letzten Praktikums habe ich in einem Büro gearbeitet. Ich war dort als Sekretärin tätig.",
+    "Außerdem bin ich zuverlässig und arbeite gern im Team.",
+    "Im Umgang mit Kunden habe ich noch wenig Erfahrung, möchte mich darin aber gern verbessern.",
+    "Außerdem möchte ich gern wissen: Wie sind die Arbeitszeiten und wie hoch ist das Gehalt?",
+    "Wird das Gehalt monatlich oder wöchentlich gezahlt?",
+    "Ich freue mich auf Ihre Antwort.",
+    "Mit freundlichen Grüßen",
+    "Lernende",
+    "TEIL 3",
+    "1. A", "2. B", "3. C", "4. D", "5. B",
+    "TEIL 4",
+    "1. B", "2. C", "3. A", "4. C", "5. B",
+  ].join("\n");
+  const objective = {
+    correctCount: 10,
+    totalCount: 10,
+    details: Object.fromEntries([
+      ...["A", "B", "C", "D", "B"].map((letter, index) => [
+        `teil3.${index + 1}`, { partId: "teil3", student: letter, expected: letter, correct: true },
+      ]),
+      ...["B", "C", "A", "C", "B"].map((letter, index) => [
+        `teil4.${index + 1}`, { partId: "teil4", student: letter, expected: letter, correct: true },
+      ]),
+    ]),
+  };
+  const result = reconcileMarkingQuality({
+    level: "A2",
+    assignmentKey: "A2-5.12",
+    finalScore: 97,
+    writingScore: 92,
+    writingScorePercent: 92,
+    taskCompletion: { completed: 3, total: 3, missing: [] },
+    taskPointEvidence: [
+      { label: "Ask about open positions", status: "met", evidence: "Gibt es bei Ihnen noch offene Stellen?" },
+      { label: "Describe relevant skills", status: "met", evidence: "Außerdem bin ich zuverlässig und arbeite gern im Team." },
+      { label: "Ask about hours and salary", status: "met", evidence: "Wie sind die Arbeitszeiten und wie hoch ist das Gehalt?" },
+    ],
+    writingStrengths: ['You used clear greeting "Sehr geehrte Damen und Herren" and connector "und"'],
+    feedback: 'You used clear greeting "Sehr geehrte Damen und Herren" and connector "und".',
+  }, objective, { assignmentId: "A2-5.12", text: submission }, { writingExpected: true });
+
+  assert.equal(result.finalScore, 97);
+  assert.equal(result.writingScorePercent, 92);
+  assert.equal(result.objectiveScore, 100);
+  assert.match(result.feedback, /position is available|vacancy is available/i);
+  assert.match(result.feedback, /work or internship experience|practical experience/i);
+  assert.match(result.feedback, /working hours and salary/i);
+  assert.match(result.feedback, /specific office task|office task/i);
+  assert.match(result.feedback, /Teil 3: 5\/5 correct/);
+  assert.match(result.feedback, /Teil 4: 5\/5 correct/);
+  assert.match(result.feedback, /All objective answers are correct/);
+  assert.ok(result.feedback.split(/\s+/).length >= 50, result.feedback);
+  assert.doesNotMatch(result.feedback, /connector "und"/);
+  assert.deepEqual(result.consistencyWarnings, []);
+});
+
+test("A2 rich examiner comments and objective-only grading remain unchanged", () => {
+  const rich = "You ask whether vacancies are available and describe your practical experience in the office. Your questions about working hours and salary are specific. For an even stronger application, mention one secretarial duty you performed.";
+  const source = "TEIL 2\nSehr geehrte Damen und Herren,\nGibt es offene Stellen? Ich war in einem Büro tätig und arbeite gern im Team. Wie sind die Arbeitszeiten und wie hoch ist das Gehalt?\nMit freundlichen Grüßen\nTEIL 3\n1. A";
+  const objective = { correctCount: 1, totalCount: 1, details: { "teil3.1": { partId: "teil3", student: "A", expected: "A", correct: true } } };
+  const preserved = reconcileMarkingQuality({ level: "A2", assignmentKey: "A2-5.12", feedback: rich, writingScore: 92, finalScore: 97 }, objective, { text: source, assignmentId: "A2-5.12" }, { writingExpected: true });
+  assert.ok(preserved.feedback.startsWith(rich));
+  const objectiveOnly = reconcileMarkingQuality({ feedback: rich, finalScore: 100 }, objective, { text: source }, { writingExpected: false });
+  assert.doesNotMatch(objectiveOnly.feedback, /secretarial|vacanc|office/i);
+});

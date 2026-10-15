@@ -73,6 +73,33 @@ function contextualB1OpinionSentence(source = "") {
   return "For stronger B1 argumentation, state the position explicitly and develop one reason with a contrasting view, a concrete example and a short consequence";
 }
 
+function a2VacancyApplicationFeedback(source = "") {
+  const sentences = [];
+  const vacancyQuestion = /(?:gibt es|haben sie|ob es|ob sie)[^.!?]{0,85}(?:offene stellen|freie stellen|stellenangebote|offene positionen)/i.test(source);
+  const relevantExperience = /(?:praktikum|berufserfahrung|in einem büro gearbeitet|als sekretärin tätig)/i.test(source);
+  const abilities = /(?:zuverlässig|teamfähig|arbeite gern im team|kunden|organisiert|erfahrung|fähigkeiten|fertigkeiten)/i.test(source);
+  const asksHours = /(?:arbeitszeiten|arbeitszeit)/i.test(source);
+  const asksSalary = /(?:gehalt|bezahlung|verdienst|lohn)/i.test(source);
+
+  if (vacancyQuestion && relevantExperience) {
+    sentences.push("You ask directly whether a position is available and support your application with relevant previous work or internship experience");
+  } else if (vacancyQuestion) {
+    sentences.push("Your application asks clearly whether a vacancy is available");
+  }
+  if (abilities && relevantExperience) {
+    sentences.push("Describing your skills alongside practical experience helps the employer understand what you could bring to the role");
+  }
+  if (asksHours && asksSalary) {
+    sentences.push("The questions about working hours and salary give the employer two concrete points to answer");
+  }
+
+  // An optional improvement, not a claim that a required task point is missing.
+  if (relevantExperience && !/\b(?:termine? (?:koordiniert|vereinbart|geplant)|dokumente? (?:bearbeitet|sortiert)|anrufe? (?:angenommen|beantwortet)|rechnungen? (?:erstellt|bearbeitet)|kunden? (?:betreut|beraten))\b/i.test(source)) {
+    sentences.push("To strengthen the application further, add one specific office task you performed during that experience");
+  }
+  return sentences;
+}
+
 function combineRubricAndContext(rubric = [], contextual = "") {
   const ordered = rubric.length
     ? [rubric[0], contextual, ...rubric.slice(1)]
@@ -89,7 +116,14 @@ export function writingDepthSentences(result = {}, submission = "", explicitLeve
   if (words < 20) return [];
 
   const rubric = rubricFeedbackSentences(result, submission, level);
-  if (level === "A2") return combineRubricAndContext(rubric, contextualA2Sentence(source));
+  if (level === "A2") {
+    const assignment = String(result.assignmentKey || result.assignmentId || result.assignment || "").trim().toUpperCase();
+    if (assignment === "A2-5.12") {
+      const applicationSentences = a2VacancyApplicationFeedback(source);
+      if (applicationSentences.length) return unique([...applicationSentences, ...rubric]).slice(0, 5);
+    }
+    return combineRubricAndContext(rubric, contextualA2Sentence(source));
+  }
 
   const formal = /\bsehr geehrte\b/i.test(source) && /\bmit freundlichen gr(?:ü|u)(?:ß|ss)en\b/i.test(source);
   const opinion = /\b(?:meiner meinung nach|ich bin der meinung|ich denke|ich finde|ich glaube|einerseits|andererseits|zusammenfassend)\b/i.test(source);

@@ -437,7 +437,7 @@ function conciseObjective(values = []) {
     .replace(/\s+carefully$/i, ""));
 }
 
-export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", objectiveSentences = [] } = {}) {
+export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", objectiveSentences = [], forceContextDepth = false } = {}) {
   const level = levelOf(result);
   if (!level || !freeText(submissionText) || !hasWritingEvidence(result, submissionText)) return "";
   const writingScore = writingScoreOf(result);
@@ -504,6 +504,7 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
   const optionalSentences = [
     priorityStrength,
     priorityTask,
+    ...(forceContextDepth ? writingDepthSentences(result, submissionText, level) : []),
     priorityNextStep,
     specificStrength,
     specificNextStep,
@@ -511,9 +512,11 @@ export function buildEvidenceEssayFeedback({ result = {}, submissionText = "", o
     anchoredNextStep,
     ...supplementalSentences,
   ];
-  const feedbackMaximum = hasPriorityWritingEvidence
-    ? level === "B1" ? 90 : level === "A2" ? 75 : 60
-    : level === "B1" ? 120 : level === "A2" ? 100 : 60;
+  const feedbackMaximum = forceContextDepth
+    ? (level === "B1" ? 100 : level === "A2" ? 90 : 70)
+    : hasPriorityWritingEvidence
+      ? level === "B1" ? 90 : level === "A2" ? 75 : 60
+      : level === "B1" ? 120 : level === "A2" ? 100 : 60;
   const feedback = completeSentences({
     opening: `${choose(openings, `${seed}:opening`, history)}${name ? `, ${name}` : ""}`,
     objectiveValues: conciseObjective(objectiveSentences),
