@@ -431,18 +431,28 @@ export default function A1GrammarPresenter({
     const context = activitySoundRef.current;
     if (!context || context.state !== "running") return;
     try {
+      const startedAt = context.currentTime;
+      // Match the six-second repeating A2/B1 presenter timer alarm.
+      const alertDurationSeconds = 6;
       const oscillator = context.createOscillator();
       const gain = context.createGain();
       oscillator.type = "sine";
-      oscillator.frequency.value = 740;
-      const start = context.currentTime;
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.15, start + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.4);
+      oscillator.frequency.setValueAtTime(920, startedAt);
+      gain.gain.setValueAtTime(0.0001, startedAt);
+      for (let offset = 0; offset < alertDurationSeconds; offset += 0.72) {
+        const pulseStart = startedAt + offset;
+        const pulsePeak = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.05);
+        const pulseHold = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.34);
+        const pulseEnd = Math.min(startedAt + alertDurationSeconds, pulseStart + 0.56);
+        gain.gain.setValueAtTime(0.0001, pulseStart);
+        gain.gain.exponentialRampToValueAtTime(0.24, pulsePeak);
+        gain.gain.setValueAtTime(0.24, pulseHold);
+        gain.gain.exponentialRampToValueAtTime(0.0001, pulseEnd);
+      }
       oscillator.connect(gain);
       gain.connect(context.destination);
-      oscillator.start(start);
-      oscillator.stop(start + 0.42);
+      oscillator.start(startedAt);
+      oscillator.stop(startedAt + alertDurationSeconds);
     } catch {
       // Visual time-up indication still works without sound.
     }

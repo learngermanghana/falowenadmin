@@ -42,6 +42,24 @@ test("A1 activity timer can pause, resume, reset and refuses invalid durations",
   assert.equal(a1ActivitySecondsLeft(NaN, start), 0);
 });
 
+test("A1 time-up uses the same six-second repeating alarm as A2/B1", () => {
+  const source = a1Presenter();
+  const sharedPresenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const a1Alarm = source.match(/function playActivityTimeUp\(\) \{[\s\S]*?\n  \}/)?.[0] || "";
+  const a2B1Alarm = sharedPresenter.match(/function playPresenterTimerAlarm\(\) \{[\s\S]*?\n  \}/)?.[0] || "";
+
+  for (const alarm of [a1Alarm, a2B1Alarm]) {
+    assert.match(alarm, /const alertDurationSeconds = 6/);
+    assert.match(alarm, /oscillator\.frequency\.setValueAtTime\(920, startedAt\)/);
+    assert.match(alarm, /offset < alertDurationSeconds; offset \+= 0\.72/);
+    assert.match(alarm, /gain\.gain\.exponentialRampToValueAtTime\(0\.24, pulsePeak\)/);
+    assert.match(alarm, /oscillator\.stop\(startedAt \+ alertDurationSeconds\)/);
+  }
+  assert.doesNotMatch(a1Alarm, /oscillator\.stop\(start \+ 0\.42\)/);
+  assert.match(source, /primeActivitySound\(\);\s*\n\s*setActivityDeadlineMs\(a1ActivityDeadline\(activityRemainingSeconds\)\)/);
+  assert.match(source, /if \(!activityAlarmPlayedRef\.current\) \{\s*activityAlarmPlayedRef\.current = true;\s*playActivityTimeUp\(\)/);
+});
+
 test("A1 lesson presenter has active activity controls in toolbar and full-screen", () => {
   const source = a1Presenter();
   assert.match(source, /A1_ACTIVITY_TIMER_PRESETS\.map/g);
