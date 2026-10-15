@@ -392,7 +392,7 @@ export default function StudentDirectoryPage() {
 
   const filteredStudents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const queryDigits = normalizedQuery.replace(/\\D/g, "");
+    const queryDigits = normalizedQuery.replace(/\D/g, "");
     if (!normalizedQuery) return viewStudents;
 
     return viewStudents.filter((student) => {
@@ -416,7 +416,7 @@ export default function StudentDirectoryPage() {
       const phoneDigits = [
         resolveStudentPhone(student),
         resolveEmergencyContactPhone(student),
-      ].map(value=>String(value || "").replace(/\\D/g,""));
+      ].map(value=>String(value || "").replace(/\D/g,""));
       return haystack.includes(normalizedQuery) ||
         (queryDigits.length >= 5 && phoneDigits.some(number=>number.includes(queryDigits)));
     });
