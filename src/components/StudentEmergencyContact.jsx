@@ -8,8 +8,8 @@ export default function StudentEmergencyContact({ student }) {
     <section className="student-emergency-contact" aria-label="Emergency contact">
       <div className="student-emergency-contact-heading">
         <h4>Emergency contact</h4>
-        {source === "guardian" ? (
-          <span>Guardian / next of kin (not designated as emergency contact)</span>
+        {source === "guardian" || source === "nextOfKin" ? (
+          <span>{source === "guardian" ? "Guardian" : "Next of kin"} (not designated as emergency contact)</span>
         ) : null}
       </div>
       {source === "missing" ? (
@@ -24,7 +24,7 @@ export default function StudentEmergencyContact({ student }) {
               <span>{phone || "Not provided"}</span>
               {callHref ? (
                 <a className="student-emergency-contact-call"
-                  href={callHref} aria-label={"Call emergency contact at " + phone}>
+                  href={callHref} aria-label={"Call " + (source === "guardian" ? "guardian" : source === "nextOfKin" ? "next of kin" : "emergency contact") + " at " + phone}>
                   Call
                 </a>
               ) : null}
