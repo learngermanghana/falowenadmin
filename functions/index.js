@@ -1,3 +1,4 @@
+const { resolveChatModel, buildChatRequest } = require("./chatModelConfig.js");
 const { stripMarkingEmojis } = require("./markingFeedbackText.js");
 const admin = require("firebase-admin");
 const express = require("express");
@@ -1809,7 +1810,7 @@ async function callOpenAiForMarking(payload = {}) {
     throw error;
   }
 
-  const model = String(process.env.OPENAI_MARKING_MODEL || "gpt-4o-mini").trim();
+  const model = resolveChatModel(process.env.OPENAI_MARKING_MODEL);
   const assignmentKey = String(payload.assignmentKey || payload.referenceEntry?.assignmentKey || "").trim();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -1817,7 +1818,7 @@ async function callOpenAiForMarking(payload = {}) {
       authorization: `Bearer ${apiKey}`,
       "content-type": "application/json",
     },
-    body: JSON.stringify({
+    body: JSON.stringify(buildChatRequest({
       model,
       temperature: 0.1,
       response_format: { type: "json_object" },
@@ -1825,7 +1826,7 @@ async function callOpenAiForMarking(payload = {}) {
         { role: "system", content: "Return valid JSON only. Do not include markdown." },
         { role: "user", content: buildMarkingPrompt(payload) },
       ],
-    }),
+    })),
   });
 
   const bodyText = await response.text();
