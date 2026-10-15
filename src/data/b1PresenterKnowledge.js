@@ -213,10 +213,16 @@ const B1_KNOWLEDGE = {
     textDe: "Nicht jeder Beruf verlangt denselben Ausbildungsweg. Manche Tätigkeiten setzen ein Studium voraus, andere eine berufliche Ausbildung oder praktische Zertifikate. Zusätzlich können Sprachkenntnisse, Berufserfahrung oder rechtliche Anerkennungen wichtig sein. Wer einen Beruf recherchiert, sollte deshalb zwischen Muss-Voraussetzungen und hilfreichen Zusatzqualifikationen unterscheiden. Auch der Ort kann eine Rolle spielen, weil berufliche Regeln nicht überall gleich sind. So lässt sich besser planen, welche Schritte wirklich notwendig sind und welche nur zusätzliche Chancen schaffen.",
     checks: ["Welche verschiedenen Ausbildungswege nennt der Text?", "Welche zusätzlichen Voraussetzungen können wichtig sein?", "Warum muss man Pflicht und Zusatzqualifikation unterscheiden?"],
     activity: {
-      title: "Muss, kann, hilfreich",
-      instruction: "Sortiert die Qualifikationen in zwingend, möglich oder hilfreich. Begründet eure Einteilung.",
-      prompts: ["Studium", "Praktikum", "Sprachzertifikat", "Berufserfahrung"],
-      modelItems: ["Je nach Beruf muss man ein Studium oder eine Ausbildung abschließen.", "Ein Praktikum kann hilfreich sein, um Erfahrung zu sammeln."],
+      title: "Stellenanzeigen-Check · Muss, kann, hilfreich",
+      instruction: "Lehrkraft: Lies zuerst die konkrete Stellenanzeige. Stelle eine Frage zu Pflicht (muss), eine zu Vorteil (hilfreich) und eine zu freiwilligen Möglichkeiten (kann). Antworten gelten nur für diese Stelle. Erst danach Modell anzeigen.",
+      prompts: [
+        "Hotelrezeption: Deutsch-B2-Zertifikat ist Pflicht; Berufserfahrung von Vorteil; Praktikum freiwillig; Studium nicht verlangt.",
+        "Welche Qualifikation muss man laut dieser Anzeige haben? Welche ist hilfreich? Was kann man freiwillig machen?",
+      ],
+      modelItems: [
+        "Für diese Hotelstelle muss man ein B2-Sprachzertifikat haben.",
+        "Berufserfahrung ist hilfreich. Man kann freiwillig ein Praktikum machen. Ein Studium ist hier keine Voraussetzung.",
+      ],
     },
   },
   "B1-7.21": {
