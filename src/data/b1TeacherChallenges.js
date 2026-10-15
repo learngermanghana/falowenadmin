@@ -468,6 +468,84 @@ const definitions = [
         ]
       }
     ]
+  },
+  {
+    "assignmentId": "B1-6.20",
+    "title": "Stellenanzeigen-Check · Muss, kann, hilfreich",
+    "eyebrow": "Berufliche Voraussetzungen prüfen",
+    "grammar": "Man muss ... / ... ist hilfreich / ... kann man ...",
+    "goal": "Read an actual job-ad style requirement and distinguish mandatory, optional and advantageous qualifications without making universal claims about an occupation.",
+    "scenarios": [
+      {
+        "id": "scenario-1",
+        "label": "Hotelrezeption · Berlin",
+        "icon": "🏨",
+        "context": "In einer erfundenen Stellenanzeige für die Hotelrezeption steht: Deutsch B2 mit Sprachzertifikat ist Pflicht. Berufserfahrung ist von Vorteil. Ein Praktikum ist möglich, aber freiwillig. Ein Studium wird für diese Stelle nicht verlangt.",
+        "steps": [
+          {
+            "actionDe": "Pflicht erkennen",
+            "questionDe": "Welche Qualifikation muss man laut dieser konkreten Stellenanzeige für die Hotelrezeption nachweisen?",
+            "modelDe": "Laut der Anzeige muss man ein Deutsch-B2-Sprachzertifikat nachweisen, weil es eine Voraussetzung für die Stelle ist."
+          },
+          {
+            "actionDe": "Vorteil erklären",
+            "questionDe": "Welche Qualifikation ist nur hilfreich, und wie begründest du das mit den Angaben aus der Anzeige?",
+            "modelDe": "Berufserfahrung ist hilfreich, aber nicht zwingend, weil sie in dieser Anzeige nur als Vorteil genannt wird."
+          },
+          {
+            "actionDe": "Optionales unterscheiden",
+            "questionDe": "Was kann man freiwillig machen, und braucht man für diese Hotelstelle unbedingt ein Studium?",
+            "modelDe": "Man kann freiwillig ein Praktikum machen, aber man muss für diese Stelle kein Studium abgeschlossen haben."
+          }
+        ]
+      },
+      {
+        "id": "scenario-2",
+        "label": "Projektassistenz · Forschung",
+        "icon": "🔬",
+        "context": "Eine erfundene Forschungsorganisation sucht eine Projektassistenz. In der Anzeige steht: Ein abgeschlossenes Studium ist Voraussetzung. Ein Sprachzertifikat ist erwünscht, aber keine Pflicht. Berufserfahrung ist hilfreich; ein Praktikum darf man freiwillig absolvieren.",
+        "steps": [
+          {
+            "actionDe": "Studium einordnen",
+            "questionDe": "Was muss eine Bewerberin für diese konkrete Projektassistenzstelle haben, und woran erkennst du die Pflicht?",
+            "modelDe": "Für diese Stelle muss eine Bewerberin ein abgeschlossenes Studium haben, denn die Anzeige nennt es ausdrücklich als Voraussetzung."
+          },
+          {
+            "actionDe": "Zusatzqualifikationen prüfen",
+            "questionDe": "Sind das Sprachzertifikat und die Berufserfahrung zwingend notwendig oder nur ein Vorteil für die Bewerbung?",
+            "modelDe": "Das Sprachzertifikat und die Berufserfahrung sind hilfreich, aber laut dieser Anzeige keine zwingenden Voraussetzungen."
+          },
+          {
+            "actionDe": "Möglichkeit formulieren",
+            "questionDe": "Welche freiwillige Möglichkeit steht in der Anzeige, und wie drückst du sie mit „kann“ aus?",
+            "modelDe": "Man kann freiwillig ein Praktikum machen, um praktische Einblicke zu gewinnen; für diese Stelle ist es keine Pflicht."
+          }
+        ]
+      },
+      {
+        "id": "scenario-3",
+        "label": "Kundenservice · Teamleitung",
+        "icon": "🎧",
+        "context": "Eine erfundene Firma sucht eine Teamleitung im Kundenservice. Laut Anzeige sind mindestens zwei Jahre Berufserfahrung zwingend. Ein Sprachzertifikat ist ein zusätzlicher Vorteil. Ein Praktikum ist möglich, und ein Studium wird nicht vorausgesetzt.",
+        "steps": [
+          {
+            "actionDe": "Erfahrung als Pflicht",
+            "questionDe": "Welche Qualifikation ist in dieser Stellenanzeige verpflichtend, und wie formulierst du das mit „muss“?",
+            "modelDe": "Wer sich für diese Teamleitung bewirbt, muss mindestens zwei Jahre Berufserfahrung haben, weil das ausdrücklich verlangt wird."
+          },
+          {
+            "actionDe": "Zertifikat als Vorteil",
+            "questionDe": "Welche Qualifikation ist für diese Stelle hilfreich, obwohl sie in der Anzeige nicht als Pflicht genannt wird?",
+            "modelDe": "Ein Sprachzertifikat ist für diese Stelle hilfreich, aber man muss es laut der Anzeige nicht unbedingt besitzen."
+          },
+          {
+            "actionDe": "Nicht vorgeschrieben",
+            "questionDe": "Muss man für diese Stelle studiert haben, und was kann man freiwillig tun, um Erfahrungen zu sammeln?",
+            "modelDe": "Man muss für diese Stelle nicht studiert haben; man kann aber freiwillig ein Praktikum machen, um Erfahrungen zu sammeln."
+          }
+        ]
+      }
+    ]
   }
 ];
 export const B1_TEACHER_CHALLENGES = Object.freeze(Object.fromEntries(
