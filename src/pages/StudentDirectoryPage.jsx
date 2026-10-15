@@ -906,7 +906,7 @@ export default function StudentDirectoryPage() {
                             <h3>{tab.label === "Class" ? "Class and contract" : tab.label}</h3>
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
                             {renderEditableFields(tab.fields)}
-                            {/* STUDENT_EMERGENCY_CONTACT_FIELD: always visible in the staff-only Profile tab. */}
+                            {/* STUDENT_EMERGENCY_CONTACT_FIELD: Emergency contact stays in the staff-only Profile tab. */}
                             {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
                             {tab.id === "payments" && (
                               <>
