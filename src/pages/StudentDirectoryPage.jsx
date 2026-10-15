@@ -392,6 +392,7 @@ export default function StudentDirectoryPage() {
 
   const filteredStudents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const queryDigits = normalizedQuery.replace(/\\D/g, "");
     if (!normalizedQuery) return viewStudents;
 
     return viewStudents.filter((student) => {
@@ -410,7 +411,14 @@ export default function StudentDirectoryPage() {
         .map((value) => String(value || "").toLowerCase())
         .join(" ");
 
-      return haystack.includes(normalizedQuery);
+      // Also compare phone digits without spaces, international-prefix pluses,
+      // or punctuation; keep ordinary name/email/class searches unchanged.
+      const phoneDigits = [
+        resolveStudentPhone(student),
+        resolveEmergencyContactPhone(student),
+      ].map(value=>String(value || "").replace(/\\D/g,""));
+      return haystack.includes(normalizedQuery) ||
+        (queryDigits.length >= 5 && phoneDigits.some(number=>number.includes(queryDigits)));
     });
   }, [viewStudents, query]);
 
