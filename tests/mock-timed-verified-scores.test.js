@@ -68,3 +68,18 @@ test("admin page explains verified archived scores and filters by Goethe level",
  assert.match(page,/published_final_result/);
  assert.match(page,/Skill-by-skill mock result/);
 });
+
+
+test("completed A1 A2 and B1 mocks appear in a scan-friendly five-score table at the top",()=>{
+  const source=readFileSync(resolve(root,"src/pages/TimedAssignmentAttemptsPage.jsx"),"utf8");
+  const css=readFileSync(resolve(root,"src/pages/TimedAssignmentAttemptsPage.css"),"utf8");
+  assert.match(source,/aria-label="Completed mock results by skill"/);
+  assert.match(source,/<th scope="col">Student<\/th>/);
+  assert.match(source,/<th scope="col">Level<\/th>/);
+  assert.match(source,/MOCK_SECTIONS\.map\(section=><th scope="col"/);
+  assert.match(source,/mockScoreText\(scores\?\.sections\?\.\[section\]\)/);
+  assert.match(source,/mockScoreText\(scores\?\.total,100\)/);
+  assert.match(source,/attempt\.status==="completed" && attempt\.progressSource!=="browser_reported"/);
+  assert.match(css,/monitor-mock-summary-table__scroll/);
+  assert.match(css,/overflow-x: auto/);
+});
