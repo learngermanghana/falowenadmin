@@ -15,6 +15,7 @@ import {
   mockSectionProgress,
   mockScoreText,
   mockVerifiedScores,
+  mockCompleteSkillCount,
   MOCK_SECTION_LABELS,
   remainingSeconds,
   toAttemptMillis,
@@ -60,6 +61,7 @@ export default function TimedAssignmentAttemptsPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("mocks");
   const [mockStatus, setMockStatus] = useState("all");
+  const [mockLevel, setMockLevel] = useState("all");
   const [timedStatus, setTimedStatus] = useState("all");
   const [writingReviewId, setWritingReviewId] = useState("");
   const [writingReview, setWritingReview] = useState(null);
@@ -189,7 +191,7 @@ export default function TimedAssignmentAttemptsPage() {
     return startVisiblePolling(loadMocks, 30000);
   }, [loadMocks, category]);
 
-  const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus), [mocks, query, mockStatus]);
+  const filteredMocks = useMemo(() => filterMockAttempts(mocks, query, mockStatus, mockLevel), [mocks, query, mockStatus, mockLevel]);
   const filteredTimed = useMemo(() => filterTimedAttempts(attempts, query, timedStatus), [attempts, query, timedStatus]);
   const placementRows = useMemo(()=>normalizePlacementResults(placementRecords,placementLeads),[placementRecords,placementLeads]);
   const filteredPlacement = useMemo(()=>placementRows.filter(row=>{
@@ -211,6 +213,7 @@ export default function TimedAssignmentAttemptsPage() {
     setCategory(next);
     setQuery("");
     setMockStatus("all");
+    setMockLevel("all");
     setTimedStatus("all");
     setPlacementFilter("all");
     setWritingReviewId("");
@@ -295,6 +298,17 @@ export default function TimedAssignmentAttemptsPage() {
               onClick={() => setMockStatus(value)} aria-pressed={mockStatus === value}>{label}</button>)}
           <span className="monitor-filter-count">{filteredMocks.length} shown</span>
         </div>
+        <div className="monitor-status-filters" role="group" aria-label="Filter Exam Room mock level">
+          <strong style={{fontSize:12,color:"#475569"}}>Level</strong>
+          {["all","A1","A2","B1"].map(level=>
+            <button className="monitor-status-button" key={level} type="button"
+              onClick={()=>setMockLevel(level)} aria-pressed={mockLevel===level}>
+              {level==="all"?"All levels":level}
+            </button>)}
+        </div>
+        <p className="monitor-mock-scores__note" style={{margin:0}}>
+          Completed mocks show Lesen, Hören, Schreiben, Sprechen and Total separately. Results must be server-verified; unavailable historical section marks are labelled “Not recorded”.
+        </p>
         {mockError && <div role="alert" style={{ ...card, color: "#991b1b", borderColor: "#fecaca" }}>
           {mockError}{lastChecked ? " · Showing last successfully loaded data." : ""}
         </div>}
@@ -327,8 +341,8 @@ export default function TimedAssignmentAttemptsPage() {
             {verifiedScores ? (
               <section className="monitor-mock-scores" aria-label={`Verified mock scores for ${attempt.level} ${attempt.mockId}`}>
                 <div className="monitor-mock-scores__header">
-                  <strong>Verified mock scores · {attempt.level}</strong>
-                  <small>Four sections × 25 points · Total /100</small>
+                  <strong>{attempt.level} · Skill-by-skill mock result</strong>
+                  <small>Lesen · Hören · Schreiben · Sprechen: each /25 · Total /100</small>
                 </div>
                 <div className="monitor-mock-scores__grid">
                   {MOCK_SECTIONS.map(section => (
@@ -342,6 +356,11 @@ export default function TimedAssignmentAttemptsPage() {
                     <strong>{mockScoreText(verifiedScores.total, 100)}</strong>
                   </div>
                 </div>
+                {mockCompleteSkillCount(attempt) === 4 && (
+                  <small className="monitor-mock-scores__note">
+                    {verifiedScores.source === "published_final_result" ? "Recovered from the student's saved verified final mock result." : "Verified and saved with the completed mock attempt."}
+                  </small>
+                )}
                 {MOCK_SECTIONS.some(section=>verifiedScores.sections[section] === null) && (
                   <small className="monitor-mock-scores__note">Some older mock records have no saved section breakdown. Missing marks are shown as “Not recorded,” not zero.</small>
                 )}
