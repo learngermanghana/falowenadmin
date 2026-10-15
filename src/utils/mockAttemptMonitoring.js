@@ -22,7 +22,12 @@ export function mockVerifiedScores(attempt = {}) {
     sections: Object.fromEntries(MOCK_SECTIONS.map(section =>
       [section, mockScoreValue(sections[section])])),
     total: mockScoreValue(attempt.overallScore, 100),
+    source: attempt.scoreSource === "published_final_result" ? "published_final_result" : "verified_attempt",
   };
+}
+export function mockCompleteSkillCount(attempt = {}) {
+  const scores=mockVerifiedScores(attempt);
+  return scores ? MOCK_SECTIONS.filter(section=>scores.sections[section] !== null).length : 0;
 }
 
 
@@ -62,10 +67,11 @@ export function mockActivityLabel(attempt = {}, now = Date.now()) {
   return now - update > 10 * 60 * 1000 ? "In progress · no recent update" : "In progress · recently updated";
 }
 
-export function filterMockAttempts(attempts = [], query = "", status = "all") {
+export function filterMockAttempts(attempts = [], query = "", status = "all", level = "all") {
   const needle = query.trim().toLowerCase();
   return attempts.filter(attempt =>
     (status === "all" || attempt.status === status) &&
+    (level === "all" || attempt.level === level) &&
     [attempt.studentName, attempt.studentEmail, attempt.uid, attempt.mockId, attempt.level, attempt.section]
       .some(value => String(value || "").toLowerCase().includes(needle))
   );
