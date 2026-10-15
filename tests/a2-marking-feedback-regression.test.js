@@ -174,6 +174,11 @@ test("A2-5.12 replaces greeting-only feedback with grounded evidence without tou
     writingScore: 92,
     writingScorePercent: 92,
     taskCompletion: { completed: 3, total: 3, missing: [] },
+    taskPointEvidence: [
+      { label: "Ask about open positions", status: "met", evidence: "Gibt es bei Ihnen noch offene Stellen?" },
+      { label: "Describe relevant skills", status: "met", evidence: "Außerdem bin ich zuverlässig und arbeite gern im Team." },
+      { label: "Ask about hours and salary", status: "met", evidence: "Wie sind die Arbeitszeiten und wie hoch ist das Gehalt?" },
+    ],
     writingStrengths: ['You used clear greeting "Sehr geehrte Damen und Herren" and connector "und"'],
     feedback: 'You used clear greeting "Sehr geehrte Damen und Herren" and connector "und".',
   }, objective, { assignmentId: "A2-5.12", text: submission }, { writingExpected: true });
