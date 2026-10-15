@@ -165,3 +165,48 @@
     text-align: right;
   }
 }
+
+
+/* Verified A1/A2/B1 mock results: readable as five cells on any screen. */
+.mock-timed-monitor .monitor-mock-scores {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  background: #f8fafc;
+  border: 1px solid #dbe5f0;
+  border-radius: 12px;
+}
+.mock-timed-monitor .monitor-mock-scores__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+}
+.mock-timed-monitor .monitor-mock-scores__header strong { color: #0f172a; font-size: 14px; }
+.mock-timed-monitor .monitor-mock-scores__header small { color: #475569; font-size: 12px; }
+.mock-timed-monitor .monitor-mock-scores__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.mock-timed-monitor .monitor-mock-score {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: 4px;
+  padding: 10px 9px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+.mock-timed-monitor .monitor-mock-score span { color: #334155; font-size: 12px; font-weight: 700; }
+.mock-timed-monitor .monitor-mock-score strong { color: #0f172a; font-size: 18px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.mock-timed-monitor .monitor-mock-score--total { background: #eff6ff; border-color: #93c5fd; }
+.mock-timed-monitor .monitor-mock-score--total strong { color: #1e40af; }
+.mock-timed-monitor .monitor-mock-scores__note { color: #92400e; font-size: 12px; line-height: 1.5; }
+@media (max-width: 780px) {
+  .mock-timed-monitor .monitor-mock-scores__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mock-timed-monitor .monitor-mock-score--total { grid-column: 1 / -1; }
+}

@@ -1,4 +1,30 @@
 export const MOCK_SECTIONS = ["lesen", "hoeren", "schreiben", "sprechen"];
+export const MOCK_SECTION_LABELS = Object.freeze({
+  lesen: "Lesen", hoeren: "Hören", schreiben: "Schreiben", sprechen: "Sprechen",
+});
+
+// Scores in the staff monitor are server-verified /25 points, not raw answer counts.
+export function mockScoreValue(value, max = 25) {
+  if (value === null || value === undefined || value === "" || typeof value === "boolean") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= max ? parsed : null;
+}
+export function mockScoreText(value, max = 25) {
+  const score = mockScoreValue(value, max);
+  if (score === null) return "Not recorded";
+  return (Number.isInteger(score) ? String(score) : score.toFixed(1)) + "/" + max;
+}
+export function mockVerifiedScores(attempt = {}) {
+  if (attempt.status !== "completed" || attempt.progressSource === "browser_reported") return null;
+  const sections = attempt.sectionScores && typeof attempt.sectionScores === "object"
+    ? attempt.sectionScores : {};
+  return {
+    sections: Object.fromEntries(MOCK_SECTIONS.map(section =>
+      [section, mockScoreValue(sections[section])])),
+    total: mockScoreValue(attempt.overallScore, 100),
+  };
+}
+
 
 export function toAttemptMillis(value) {
   if (!value) return 0;
