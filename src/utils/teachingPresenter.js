@@ -1725,7 +1725,9 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
           type: "scenario-challenge",
           kicker: "Mitmach-Challenge · " + challenge.eyebrow,
           title: challenge.title,
-          instruction: "Die Lehrkraft präsentiert eine Situation, lässt Lernende antworten und zeigt die Modellantwort erst danach.",
+          instruction: normalizedAssignmentId(slide) === "B1-6.20"
+            ? "Lehrkraft: Lies zuerst die Stellenanzeige vor. Stelle nacheinander die drei Fragen: Was muss man haben? Was ist hilfreich? Was kann man freiwillig machen? Nach jeder Schülerantwort Modellantwort zeigen und zu Nächster Schritt wechseln. Gültig ist jeweils nur die konkrete Anzeige."
+            : "Die Lehrkraft präsentiert eine Situation, lässt Lernende antworten und zeigt die Modellantwort erst danach.",
           grammar: challenge.grammar,
           items: challenge.scenarios,
           teacherPurpose: {
