@@ -5,6 +5,7 @@ import {
   getStudentEmergencyContact, resolveEmergencyContactPhone,
   resolveEmergencyContactName, callEmergencyContactUrl,
 } from "../src/utils/studentEmergencyContact.js";
+import { matchesStudentDirectorySearch } from "../src/utils/studentDirectorySearch.js";
 
 test("reads emergency phone, name and relationship from mixed Firestore/import field names", () => {
   const row = {
@@ -64,6 +65,31 @@ test("never relabels the student's own phone number as an emergency contact", ()
   assert.equal(callEmergencyContactUrl("0302-000-000"), "tel:0302000000");
 });
 
+test("formatted emergency phones match digits-only staff searches", () => {
+  const student = {
+    name: "Akua Student",
+    email: "akua@example.com",
+    "Emergency Contact Phone Number": "+233 24 123 4567",
+    "Emergency Contact Name": "Mary Sample",
+    className: "A2 Berlin",
+  };
+  assert.equal(matchesStudentDirectorySearch(student, "233241234567", "055 777 8888"), true);
+  assert.equal(matchesStudentDirectorySearch(student, "+233 (24) 123-4567", "055 777 8888"), true);
+  assert.equal(matchesStudentDirectorySearch(student, "241234567", "055 777 8888"), true);
+  assert.equal(matchesStudentDirectorySearch(student, "0557778888", "055 777 8888"), true);
+  assert.equal(matchesStudentDirectorySearch(student, "Mary Sample", "055 777 8888"), true);
+  assert.equal(matchesStudentDirectorySearch(student, "A2 Berlin", "055 777 8888"), true);
+  assert.equal(matchesStudentDirectorySearch(student, "different person", "055 777 8888"), false);
+  assert.equal(matchesStudentDirectorySearch(student, "123400000", "055 777 8888"), false);
+});
+
+test("phone normalization does not turn names or tiny numeric terms into broad matches", () => {
+  const student = { name: "Pat Student", emergencyContactPhone: "+233 24 123 4567" };
+  assert.equal(matchesStudentDirectorySearch(student, "3", "055 777 8888"), false);
+  assert.equal(matchesStudentDirectorySearch(student, "233 abc", "055 777 8888"), false);
+  assert.equal(matchesStudentDirectorySearch(student, "", "055 777 8888"), true);
+});
+
 test("staff-only Student Profile renders emergency contacts without another data fetch", () => {
   const page = fs.readFileSync("src/pages/StudentDirectoryPage.jsx", "utf8");
   const card = fs.readFileSync("src/components/StudentEmergencyContact.jsx", "utf8");
@@ -71,8 +97,7 @@ test("staff-only Student Profile renders emergency contacts without another data
   const patch = fs.readFileSync("scripts/patchStudentProfileUpdateApi.mjs", "utf8");
   assert.match(page, /STUDENT_EMERGENCY_CONTACT_FIELD/);
   assert.match(page, /\{tab\.id === "profile" && <StudentEmergencyContact student=\{selectedStudent\} \/>\}/);
-  assert.match(page, /resolveEmergencyContactPhone\(student\)/);
-  assert.match(page, /resolveEmergencyContactName\(student\)/);
+  assert.match(page, /matchesStudentDirectorySearch\(student, query, resolveStudentPhone\(student\)\)/);
   assert.match(card, /Emergency contact/);
   assert.match(card, /href=\{callHref\}/);
   assert.match(card, /source === "guardian" \|\| source === "nextOfKin"/);
