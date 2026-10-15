@@ -137,21 +137,21 @@ function repairSalutationCapitalizationAdvice(value = "", submissionText = "") {
 function recoverThinWritingFeedback(original = "", result = {}, submission = {}, assignmentKey = "", level = "") {
   const current = String(original || "").trim();
   const content = String(submission.text || "").trim();
-  const writingOnly = content.split(/(?:^|\\n)\\s*(?:teil|part)\\s*[34]\\b/i)[0];
-  const currentWords = current.split(/\\s+/).filter(Boolean).length;
-  const writingWords = writingOnly.split(/\\s+/).filter(Boolean).length;
+  const writingOnly = content.split(/(?:^|\n)\s*(?:teil|part)\s*[34]\b/i)[0];
+  const currentWords = current.split(/\s+/).filter(Boolean).length;
+  const writingWords = writingOnly.split(/\s+/).filter(Boolean).length;
   const targetLevel = String(level || "").toUpperCase();
   if (!["A2", "B1"].includes(targetLevel) || writingWords < 35 || currentWords >= 32) return current;
 
   // Keep genuine, specific corrections. Only reconstruct examiner comments that
   // contain little beyond greeting/connector praise or an unspecific summary.
-  const hasCorrection = /\\b(?:correct|revise|replace|instead of|write [“"]|use [“"]|add a comma|check verb|word order)\\b/i.test(current);
+  const hasCorrection = /\b(?:correct|revise|replace|instead of|write [“"]|use [“"]|add a comma|check verb|word order)\b/i.test(current);
   if (hasCorrection && currentWords >= 12) return current;
   const overlyThin = currentWords < 18
-    || /\\b(?:greeting|connector|well organi[sz]ed|well structured)\\b/i.test(current);
+    || /\b(?:greeting|connector|well organi[sz]ed|well structured)\b/i.test(current);
   if (!overlyThin) return current;
 
-  const notGreetingPraise = (item) => !/\\b(?:greeting|connector|salutation)\\b/i.test(String(item || ""));
+  const notGreetingPraise = (item) => !/\b(?:greeting|connector|salutation)\b/i.test(String(item || ""));
   const safeStrengths = (value) => Array.isArray(value)
     ? value.filter(notGreetingPraise)
     : notGreetingPraise(value) && value ? [value] : [];
@@ -177,7 +177,7 @@ function recoverThinWritingFeedback(original = "", result = {}, submission = {},
     submissionText: content,
     forceContextDepth: true,
   });
-  const richWords = rich.split(/\\s+/).filter(Boolean).length;
+  const richWords = rich.split(/\s+/).filter(Boolean).length;
   return richWords >= 32 && richWords >= currentWords + 10 ? rich : current;
 }
 
