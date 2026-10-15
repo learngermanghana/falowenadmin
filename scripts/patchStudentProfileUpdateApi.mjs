@@ -128,7 +128,13 @@ const finalDirectory = fs.readFileSync(directoryPath, "utf8");
 if (!finalDirectory.includes(emergencyMarker)) {
   throw new Error("Student emergency contact field patch did not apply");
 }
-if (!finalDirectory.includes("Emergency contact") || !finalDirectory.includes("resolveEmergencyContactPhone")) {
+// The committed staff-only profile card uses the shared search helper.
+// Retain compatibility with older builds where this script injected the UI.
+const committedEmergencyUi = finalDirectory.includes('<StudentEmergencyContact student={selectedStudent} />')
+  && finalDirectory.includes("matchesStudentDirectorySearch(student, query, resolveStudentPhone(student))");
+const legacyInjectedUi = finalDirectory.includes("Emergency contact")
+  && finalDirectory.includes("resolveEmergencyContactPhone");
+if (!committedEmergencyUi && !legacyInjectedUi) {
   throw new Error("Student emergency contact display is incomplete");
 }
 

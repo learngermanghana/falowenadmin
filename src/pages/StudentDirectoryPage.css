@@ -108,3 +108,86 @@
 .student-contract-extension p { color: #526075; font-size: 14px; }
 .student-contract-extension-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .student-contract-extension-actions button { min-height: 44px; padding: 8px 14px; }
+
+
+/* Emergency contact is part of the authenticated Admin student profile only. */
+.student-emergency-contact {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #d8e4ef;
+  border-radius: 12px;
+  background: #f8fbff;
+  min-width: 0;
+}
+
+.student-emergency-contact-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+}
+
+.student-emergency-contact-heading h4 {
+  margin: 0;
+  color: #152b49;
+  font-size: 0.98rem;
+}
+
+.student-emergency-contact-heading > span,
+.student-emergency-contact-empty {
+  color: #526175;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.student-emergency-contact-empty {
+  margin: 7px 0 0;
+}
+
+.student-emergency-contact-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 10px 14px;
+  margin: 12px 0 0;
+}
+
+.student-emergency-contact-details > div { min-width: 0; }
+.student-emergency-contact-details dt {
+  font-size: 0.75rem;
+  color: #55677f;
+  font-weight: 700;
+}
+.student-emergency-contact-details dd {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  color: #14283f;
+  overflow-wrap: anywhere;
+}
+.student-emergency-contact-phone dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.student-emergency-contact-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 15px;
+  border: 1px solid #15803d;
+  border-radius: 8px;
+  background: #15803d;
+  color: #fff;
+  font-weight: 750;
+  text-decoration: none;
+}
+.student-emergency-contact-call:hover,
+.student-emergency-contact-call:focus-visible {
+  background: #166534;
+  color: #fff;
+}
+.student-emergency-contact-call:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 3px;
+}
