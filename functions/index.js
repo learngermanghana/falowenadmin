@@ -1820,6 +1820,7 @@ async function callOpenAiForMarking(payload = {}) {
     },
     body: JSON.stringify(buildChatRequest({
       model,
+      max_completion_tokens: 4096,
       temperature: 0.1,
       response_format: { type: "json_object" },
       messages: [
