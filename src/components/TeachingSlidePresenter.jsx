@@ -9,6 +9,7 @@ import {
 import { splitWarmupQuestionSegments } from "../utils/warmupText.js";
 import { numberedPresenterSentences } from "../utils/presenterSentenceNumbering.js";
 import { getA2B1AdminLessonProfileForSlide } from "../data/a2B1LessonProfile.js";
+import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
@@ -635,6 +636,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
   if (!stage) return null;
 
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
+  const stagePhoto = getPresenterSlidePhoto(slide, stage);
   const activeQuestion = stage.type === "question-reveal" ? stage.items[questionIndex] : "";
   const activeQuestionLevel = stage.type === "question-reveal" && Array.isArray(stage.questionLevels)
     ? String(stage.questionLevels[questionIndex] || "")
@@ -802,7 +804,12 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
           onReadingAssignmentChange={setActiveReadingAssignment}
         />
 
-        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode}`}>
+        <main ref={contentRef} className={`presenter-content presenter-content-${stage.type} presenter-stage-${stage.id} presenter-fit-${fitMode} ${stagePhoto ? `presenter-has-photo presenter-photo-${stagePhoto.density}` : ""}`}>
+          {stagePhoto ? (
+            <figure className="presenter-slide-photo" aria-hidden="true">
+              <img src={stagePhoto.src} alt="" width="640" height="420" loading="lazy" decoding="async" draggable="false" />
+            </figure>
+          ) : null}
           {contentPageCount > 1 ? (
             <div className="presenter-content-pager" aria-label="Slide content pages">
               <span>{contentPage + 1}/{contentPageCount}</span>

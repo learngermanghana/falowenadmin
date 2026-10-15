@@ -5,6 +5,10 @@ on:
     paths:
       - "src/components/SessionDictionaryPicker.jsx"
       - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/TeachingSlidePresenter.css"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/utils/presenterSlidePhotos.js"
+      - "public/presenter-photos/**"
       - "src/components/TeacherLessonBlocks.jsx"
       - "src/components/TeacherLessonBlocks.css"
       - "src/components/StudentCourseSlides.jsx"
@@ -29,6 +33,10 @@ on:
     paths:
       - "src/components/SessionDictionaryPicker.jsx"
       - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/TeachingSlidePresenter.css"
+      - "src/components/A1GrammarPresenter.jsx"
+      - "src/utils/presenterSlidePhotos.js"
+      - "public/presenter-photos/**"
       - "src/components/TeacherLessonBlocks.jsx"
       - "src/components/TeacherLessonBlocks.css"
       - "src/components/StudentCourseSlides.jsx"
@@ -60,6 +68,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Verify image assets and non-displacing presenter layout
+        run: node --test tests/presenter-slide-photos.test.js
       - name: Apply B2/C1 speaking-model patch
         run: node scripts/patchB2C1SpeakingModels.mjs
       - name: Apply objective parser patch
