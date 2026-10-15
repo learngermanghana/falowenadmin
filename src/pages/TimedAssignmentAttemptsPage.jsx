@@ -13,6 +13,9 @@ import {
   timedAttemptStatusLabel,
   mockActivityLabel,
   mockSectionProgress,
+  mockScoreText,
+  mockVerifiedScores,
+  MOCK_SECTION_LABELS,
   remainingSeconds,
   toAttemptMillis,
   MOCK_SECTIONS,
@@ -305,6 +308,7 @@ export default function TimedAssignmentAttemptsPage() {
           const remaining = remainingSeconds(attempt.sectionDeadlineMs, now);
           const current = attempt.section;
           const status = mockActivityLabel(attempt, now);
+          const verifiedScores = mockVerifiedScores(attempt);
           return <article key={attempt.id} style={card}>
             <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
               <div style={{ display: "grid", gap: 4 }}>
@@ -319,8 +323,32 @@ export default function TimedAssignmentAttemptsPage() {
               <div><b>Section time left:</b> {attempt.status === "completed" ? "Finished" : clockLabel(remaining)}</div>
               <div><b>Started:</b> {formatDate(attempt.startedAt)}</div>
               <div><b>Last update:</b> {formatDate(attempt.updatedAt)}</div>
-              {attempt.overallScore !== null && attempt.overallScore !== undefined && <div><b>Verified score:</b> {attempt.overallScore}/100</div>}
             </div>
+            {verifiedScores ? (
+              <section className="monitor-mock-scores" aria-label={`Verified mock scores for ${attempt.level} ${attempt.mockId}`}>
+                <div className="monitor-mock-scores__header">
+                  <strong>Verified mock scores · {attempt.level}</strong>
+                  <small>Four sections × 25 points · Total /100</small>
+                </div>
+                <div className="monitor-mock-scores__grid">
+                  {MOCK_SECTIONS.map(section => (
+                    <div className="monitor-mock-score" key={section}>
+                      <span>{MOCK_SECTION_LABELS[section]}</span>
+                      <strong>{mockScoreText(verifiedScores.sections[section])}</strong>
+                    </div>
+                  ))}
+                  <div className="monitor-mock-score monitor-mock-score--total">
+                    <span>Total</span>
+                    <strong>{mockScoreText(verifiedScores.total, 100)}</strong>
+                  </div>
+                </div>
+                {MOCK_SECTIONS.some(section=>verifiedScores.sections[section] === null) && (
+                  <small className="monitor-mock-scores__note">Some older mock records have no saved section breakdown. Missing marks are shown as “Not recorded,” not zero.</small>
+                )}
+              </section>
+            ) : attempt.status === "completed" && attempt.progressSource !== "browser_reported" ? (
+              <p className="monitor-mock-scores__note">This attempt has no server-verified score record yet. Section scores are not available.</p>
+            ) : null}
             <div>
               {attempt.progressSource === "browser_reported" && <p style={{ color: "#92400e", fontSize: 12, margin: "0 0 5px" }}>Progress reported by the learner browser; not a verified exam score.</p>}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
