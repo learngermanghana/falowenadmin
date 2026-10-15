@@ -22,6 +22,15 @@ test("curated A2/B1 lessons get their own meaningful photographs", () => {
   assert.equal(shopping.src, "/presenter-photos/clothes-shopping.jpg");
 });
 
+test("B2 Day 4 plastic and packaging never displays the stale interview photo", () => {
+  // B2 Day 4 is "Plastik, Verpackungen und bewusster Einkauf", not a career lesson.
+  const photo = getPresenterSlidePhoto(
+    { course: "B2", assignmentId: "B2-1.4", title: "Plastik, Verpackungen und bewusster Einkauf" },
+    { type: "intro", title: "Plastik, Verpackungen und bewusster Einkauf" },
+  );
+  assert.equal(photo, null);
+});
+
 test("photos never take space on exercises, dense vocabulary or unrelated slides", () => {
   const slide = { course: "A2", assignmentId: "A2-7.19" };
   for (const type of ["grammar-check", "question-reveal", "flow", "scenario-challenge",
