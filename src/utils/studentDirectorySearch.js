@@ -21,13 +21,14 @@ export function matchesStudentDirectorySearch(student = {}, query = "", primaryP
     student.program,
   ].map((value) => String(value || "").toLowerCase()).join(" ");
 
-  if (haystack.includes(term)) return true;
+  // Only normalize phone-like searches. Short numeric searches are too
+  // ambiguous and would otherwise match nearly every stored phone number.
+  const phoneLike = /^[+\d\s()./-]+$/.test(term);
+  const digits = phoneLike ? term.replace(/\D/g, "") : "";
+  if (phoneLike && digits.length > 0 && digits.length < 4) return false;
 
-  // Only treat a phone-like search as phone digits. A one-digit query must not
-  // match nearly every phone in the directory.
-  if (!/^[+\d\s()./-]+$/.test(term)) return false;
-  const digits = term.replace(/\D/g, "");
-  if (digits.length < 4) return false;
+  if (haystack.includes(term)) return true;
+  if (!phoneLike || digits.length < 4) return false;
 
   return [primaryPhone, emergencyPhone].some(
     (value) => String(value || "").replace(/\D/g, "").includes(digits),
