@@ -1538,7 +1538,10 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     id: "questions",
     type: "question-reveal",
     kicker: "Sprechen",
-    title: advanced ? "Sprechtraining" : "Speaking questions",
+    title: normalizedAssignmentId(slide) === "A1-3" ? "Wissenscheck · Preise, Vorlieben & Pronomen" : (advanced ? "Sprechtraining" : "Speaking questions"),
+    instruction: normalizedAssignmentId(slide) === "A1-3"
+      ? "Lehrkraft: Stelle jeweils nur eine Frage. Lass die Lernenden zuerst mündlich antworten; danach Modellantwort aufdecken. Prüfe kostet/kosten, er/sie/es und mag/gern/lieber."
+      : "",
     items: Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [],
     supportItems: [...new Set([
       ...(Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : []),
@@ -1548,7 +1551,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     coachingItems: level === "C2"
       ? buildC2SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [])
       : buildA2B1SpeakingCoaching(slide, Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : []),
-    requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level),
+    requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level) || normalizedAssignmentId(slide) === "A1-3",
     suggestedMinutes: interactionMinutes(slide, 3) || 10,
   };
   const workbookStage = {
