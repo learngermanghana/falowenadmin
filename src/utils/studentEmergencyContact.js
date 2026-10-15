@@ -24,21 +24,17 @@ const PHONE_KEYS = [
   "emergencyContactPhoneNumber", "emergencyContactPhone", "emergencyContactNumber",
   "emergencyPhone", "emergency_phone_number", "emergency_contact_phone_number",
   "emergency contact phone", "emergency contact number", "emergency number",
-  "phone number in case of emergency", "nextOfKinPhone", "nextOfKinContact",
+  "phone number in case of emergency",
 ];
 const NAME_KEYS = [
   "emergencyContactName", "emergencyContactPerson", "emergency contact name",
-  "emergency contact person", "emergency_contact_person", "nextOfKinName",
+  "emergency contact person", "emergency_contact_person",
 ];
 const RELATIONSHIP_KEYS = [
   "emergencyContactRelationship", "emergencyContactRelation",
   "emergency contact relationship", "relationship to emergency contact",
-  "nextOfKinRelationship", "guardianRelationship",
-];
 
-const FALLBACK_PHONE = ["guardianPhone", "guardianPhoneNumber", "nextOfKinPhone"];
-const FALLBACK_NAME = ["guardianName", "nextOfKinName"];
-const FALLBACK_RELATION = ["guardianRelationship", "nextOfKinRelationship"];
+];
 
 function nestedEmergency(student) {
   const candidate = student.emergencyContact || student.emergency_contact || student.emergencyContactDetails;
@@ -66,12 +62,24 @@ export function getStudentEmergencyContact(student = {}) {
 
   // A guardian/next of kin is not automatically a designated emergency
   // contact: label this distinctly so teachers do not mistake the two.
-  const fallback = {
-    phone: fromFields(record, FALLBACK_PHONE),
-    name: fromFields(record, FALLBACK_NAME),
-    relationship: fromFields(record, FALLBACK_RELATION),
+  const guardian = {
+    phone: fromFields(record, ["guardianPhone", "guardianPhoneNumber"]),
+    name: fromFields(record, ["guardianName"]),
+    relationship: fromFields(record, ["guardianRelationship"]),
   };
-  return { ...fallback, source: fallback.phone || fallback.name || fallback.relationship ? "guardian" : "missing" };
+  const nextOfKin = {
+    phone: fromFields(record, ["nextOfKinPhone", "nextOfKinContact"]),
+    name: fromFields(record, ["nextOfKinName"]),
+    relationship: fromFields(record, ["nextOfKinRelationship"]),
+  };
+  const populated = (entry) => entry.phone || entry.name || entry.relationship;
+  if (!populated(guardian) && !populated(nextOfKin)) {
+    return { phone: "", name: "", relationship: "", source: "missing" };
+  }
+  // Prefer the complete callable record, never combine separate people's
+  // contact details into one misleading phone/name pair.
+  const useGuardian = Boolean((guardian.phone || !nextOfKin.phone) && populated(guardian));
+  return { ...(useGuardian ? guardian : nextOfKin), source: useGuardian ? "guardian" : "nextOfKin" };
 }
 
 export function resolveEmergencyContactPhone(student = {}) {
