@@ -4530,3 +4530,62 @@
 .presenter-c2-grammar { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; }
 .presenter-c2-grammar > * { grid-area: auto; }
 .presenter-c2-grammar [data-c2-grammar-teaching] { font-size: clamp(1rem, 1.6vw, 1.45rem); }
+
+
+/* presenter-curated-classroom-photos
+   Images decorate existing space ONLY. They never enter normal grid flow,
+   move stage controls, or take height away from the footer/student picker. */
+.presenter-content.presenter-has-photo {
+  position: relative;
+  isolation: isolate;
+}
+
+.presenter-content.presenter-has-photo > :not(.presenter-slide-photo) {
+  position: relative;
+  z-index: 1;
+}
+
+.presenter-slide-photo {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  inset-block-start: clamp(0.6rem, 2.2vw, 1.65rem);
+  inset-inline-end: clamp(0.7rem, 2.1vw, 1.8rem);
+  width: min(39%, 420px);
+  height: min(34vh, 290px);
+  max-height: 55%;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  opacity: 0.72;
+  box-shadow: 0 10px 35px rgb(15 23 42 / 7%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 36%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 36%);
+}
+
+.presenter-slide-photo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+.presenter-photo-compact > .presenter-slide-photo {
+  width: min(23%, 220px);
+  height: min(18vh, 150px);
+  max-height: 28%;
+  opacity: 0.54;
+}
+
+.presenter-fit-tight > .presenter-slide-photo {
+  display: none;
+}
+
+/* On smaller iPhone/Android, laptop-height, or busy classroom layouts,
+   hiding the decoration is safer than pushing any teacher control offscreen. */
+@media (max-width: 950px), (max-height: 600px) {
+  .presenter-slide-photo {
+    display: none;
+  }
+}
