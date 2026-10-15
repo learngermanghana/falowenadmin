@@ -14,7 +14,7 @@ import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
 import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
 import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
-import { resolveEmergencyContactPhone, resolveEmergencyContactName } from "../utils/studentEmergencyContact.js";
+import { matchesStudentDirectorySearch } from "../utils/studentDirectorySearch.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
@@ -390,29 +390,9 @@ export default function StudentDirectoryPage() {
     archived: students.filter(isArchivedStudent).length,
   }), [attentionSummary.total, students]);
 
-  const filteredStudents = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return viewStudents;
-
-    return viewStudents.filter((student) => {
-      const haystack = [
-        student.name,
-        student.email,
-        student.studentCode,
-        student.className,
-        student.status,
-        resolveStudentPhone(student),
-        resolveEmergencyContactPhone(student),
-        resolveEmergencyContactName(student),
-        student.level,
-        student.program,
-      ]
-        .map((value) => String(value || "").toLowerCase())
-        .join(" ");
-
-      return haystack.includes(normalizedQuery);
-    });
-  }, [viewStudents, query]);
+  const filteredStudents = useMemo(() => (
+    viewStudents.filter((student) => matchesStudentDirectorySearch(student, query, resolveStudentPhone(student)))
+  ), [viewStudents, query]);
 
   const selectDirectoryView = (view) => {
     const nextView = normalizeDirectoryView(view);
