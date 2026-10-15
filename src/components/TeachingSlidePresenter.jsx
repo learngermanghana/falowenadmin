@@ -896,6 +896,7 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 <span>{stage.kicker}</span>
                 <h1>{stage.title}</h1>
                 <p>Sprich mit der Zielstruktur: <strong>{stage.grammar}</strong></p>
+                {stage.instruction ? <p className="presenter-question-instruction">{stage.instruction}</p> : null}
               </div>
               {activeScenario ? (
                 <>
@@ -1573,7 +1574,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                   {activeModel?.modelAnswerDe ? (
                     <small>{b1CorrectionGuide.length
                       ? "Teacher guide: explain the rule, point to the corrected word order/form, then ask for one new example."
-                      : "Example only — adapt the details to your own experience."}</small>
+                      : String(slide.assignmentId || "").toUpperCase() === "A1-3"
+                        ? "Prüfe die genaue Form: kostet/kosten, er/sie/es und mag/gern/lieber. Weitere grammatisch richtige Beispielsätze sind möglich."
+                        : "Example only — adapt the details to your own experience."}</small>
                   ) : null}
                 </div>
               ) : showQuestionSupport && stage.supportItems?.length ? (
