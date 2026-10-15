@@ -146,7 +146,7 @@ function recoverThinWritingFeedback(original = "", result = {}, submission = {},
   // Keep genuine, specific corrections. Only reconstruct examiner comments that
   // contain little beyond greeting/connector praise or an unspecific summary.
   const hasCorrection = /\b(?:correct|revise|replace|instead of|write [“"]|use [“"]|add a comma|check verb|word order)\b/i.test(current);
-  if (hasCorrection && currentWords >= 12) return current;
+  if (hasCorrection) return current;
   const overlyThin = currentWords < 18
     || /\b(?:greeting|connector|well organi[sz]ed|well structured)\b/i.test(current);
   if (!overlyThin) return current;
