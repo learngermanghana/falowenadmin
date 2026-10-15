@@ -13,6 +13,8 @@ import CompletionPackPanel from "../components/CompletionPackPanel.jsx";
 import BrochureWhatsappPanel from "../components/BrochureWhatsappPanel.jsx";
 import StudentClassTransferPanel from "../components/StudentClassTransferPanel.jsx";
 import StudentLearningStatusPanel from "../components/StudentLearningStatusPanel.jsx";
+import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
+import { resolveEmergencyContactPhone, resolveEmergencyContactName } from "../utils/studentEmergencyContact.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
 import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
@@ -400,6 +402,8 @@ export default function StudentDirectoryPage() {
         student.className,
         student.status,
         resolveStudentPhone(student),
+        resolveEmergencyContactPhone(student),
+        resolveEmergencyContactName(student),
         student.level,
         student.program,
       ]
@@ -902,6 +906,8 @@ export default function StudentDirectoryPage() {
                             <h3>{tab.label === "Class" ? "Class and contract" : tab.label}</h3>
                             {tab.id === "profile" && <StudentLearningStatusPanel student={selectedStudent} />}
                             {renderEditableFields(tab.fields)}
+                            {/* STUDENT_EMERGENCY_CONTACT_FIELD: always visible in the staff-only Profile tab. */}
+                            {tab.id === "profile" && <StudentEmergencyContact student={selectedStudent} />}
                             {tab.id === "payments" && (
                               <>
                         <StudentPaymentTools
