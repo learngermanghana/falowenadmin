@@ -12,7 +12,9 @@ const PLATFORMS = ["TikTok", "Instagram", "YouTube Shorts"];
 const LEVELS = ["A1", "A2", "B1"];
 const STATUS = ["Draft", "Ready", "Published"];
 function dictionaryEntries(level) {
-  return Object.values(courseDictionary[level] || {}).sort(compareCourseDictionaryEntries);
+  return Object.values(courseDictionary[level] || {})
+    .filter((entry) => !/tutorial/i.test(String(entry.assignment_id || "")))
+    .sort(compareCourseDictionaryEntries);
 }
 function readSaved() {
   try {
@@ -43,8 +45,8 @@ function safeUrl(value) {
 }
 export default function SocialCourseContentCreator() {
   const { pushToast } = useToast();
-  const [level, setLevel] = useState("A1");
-  const [assignmentId, setAssignmentId] = useState(() => dictionaryEntries("A1")[0]?.assignment_id || "");
+  const [level, setLevel] = useState("A2");
+  const [assignmentId, setAssignmentId] = useState(() => dictionaryEntries("A2")[0]?.assignment_id || "");
   const [templateId, setTemplateId] = useState("speaking");
   const [platform, setPlatform] = useState("TikTok");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -73,7 +75,12 @@ export default function SocialCourseContentCreator() {
   const priorUse = saved.find((row) => row.key === key);
   const sourceUrl = slide ? "/teaching-slides/course/" + slide.course + "/" + slide.id + "?present=1" : "";
 
+  function clearPostState() {
+    setStatus("Draft");
+    setPublishedUrl("");
+  }
   function changeLevel(value) {
+    clearPostState();
     setLevel(value);
     setAssignmentId(dictionaryEntries(value)[0]?.assignment_id || "");
     setSelectedIndex(0);
@@ -81,12 +88,14 @@ export default function SocialCourseContentCreator() {
     setCaptionEdit(null);
   }
   function changeLesson(value) {
+    clearPostState();
     setAssignmentId(value);
     setSelectedIndex(0);
     setEdits({});
     setCaptionEdit(null);
   }
   function changeTemplate(value) {
+    clearPostState();
     setTemplateId(value);
     setSelectedIndex(0);
     setEdits({});
@@ -203,7 +212,7 @@ export default function SocialCourseContentCreator() {
           <div className="social-form-row">
             <label htmlFor="social-content-choice">Lesson content</label>
             <select id="social-content-choice" value={choices.length ? Math.min(selectedIndex, choices.length - 1) : ""} disabled={!choices.length}
-              onChange={(e) => { setSelectedIndex(Number(e.target.value)); setEdits({}); setCaptionEdit(null); }}>
+              onChange={(e) => { clearPostState(); setSelectedIndex(Number(e.target.value)); setEdits({}); setCaptionEdit(null); }}>
               {choices.length ? choices.map((item, index) => <option key={index} value={index}>{index + 1}. {item.text.slice(0, 112)}</option>) : <option value="">No authored content available</option>}
             </select>
             <small>{selected ? "Source: " + selected.source : "Select another lesson or template. Any manual additions need teacher review."}</small>
@@ -229,7 +238,7 @@ export default function SocialCourseContentCreator() {
           {priorUse && <p className="social-inline-info">Already saved as {priorUse.status} for {priorUse.platform}. Select another source item to avoid repeating the same video.</p>}
           <div className="social-form-row">
             <label htmlFor="social-platform">Destination</label>
-            <select id="social-platform" value={platform} onChange={(e) => { setPlatform(e.target.value); setCaptionEdit(null); }}>
+            <select id="social-platform" value={platform} onChange={(e) => { clearPostState(); setPlatform(e.target.value); setCaptionEdit(null); }}>
               {PLATFORMS.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </div>
