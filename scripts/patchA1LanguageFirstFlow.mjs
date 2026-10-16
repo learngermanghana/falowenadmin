@@ -13,8 +13,13 @@ if (source.includes('id: "speak-first"') || source.includes('id: "mini-dialogue"
   throw new Error("A1 Presenter still contains teaching-first stages that duplicate the grammar page.");
 }
 
-if (!source.includes('id: "quick-check"') || !source.includes('id: "grammar-check"') || !source.includes('id: "sentence-build"')) {
-  throw new Error("A1 grammar-diagnostic stages are incomplete.");
+if (!source.includes('id: "quick-check"') || !source.includes('id: "grammar-check"') ||
+    !source.includes('id: "mini-mission"') || !source.includes('id: "listen-respond"') ||
+    !source.includes('id: "exit-check"')) {
+  throw new Error("A1 grammar checks and classroom speaking stages are incomplete.");
+}
+if (source.includes('id: "sentence-build"') || source.includes('id: "workbook",')) {
+  throw new Error("Retired A1 sentence-build and workbook bridge stages must stay removed.");
 }
 
 console.log("A1 grammar-diagnostic presenter flow is build-safe.");
