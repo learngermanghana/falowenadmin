@@ -8,6 +8,10 @@ on:
       - "scripts/patchB1ActionablePractice.mjs"
       - "scripts/patchA2B1ReflectiveWrapup.mjs"
       - "src/utils/teachingPresenter.js"
+      - "src/data/a2PresenterKnowledge.js"
+      - "src/components/TeachingSlidePresenter.jsx"
+      - "src/components/TeachingSlidePresenter.css"
+      - "tests/a2-one-minute-knowledge.test.js"
       - "src/data/a2WorkbookAlignedSlides.js"
       - "src/data/a2WorkbookAlignedSlidesDays6To10.js"
       - "src/data/a2WorkbookAlignedSlidesDays11To15.js"
@@ -53,5 +57,7 @@ jobs:
           node --check src/utils/teachingPresenter.js
       - name: Run A2 B1 weekly challenge regressions
         run: node --test tests/a2-b1-reflective-wrapup.test.js
+      - name: Verify A2 Day 14 career-coach cases and model answers
+        run: node --test --test-name-pattern "A2 Day 14" tests/a2-one-minute-knowledge.test.js
       - name: Build production bundle
         run: npm run build
