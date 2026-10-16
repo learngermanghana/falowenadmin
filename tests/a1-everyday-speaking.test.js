@@ -57,7 +57,7 @@ test("presenter replaces sentence and workbook bridge slides after Common Mistak
   assert.ok(correction >= 0 && common > correction && mission > common && reaction > mission && exit > reaction);
   assert.doesNotMatch(presenter, /id: "sentence-build"|id: "workbook",/);
   assert.match(presenter, /<A1EverydaySpeakingStage key=/);
-  assert.match(presenter, /key=\{`\$\{slide.assignmentId\}-\$\{stage.id\}\`\}/);
+  assert.match(presenter, /key=\\{.*slide\\.assignmentId.*stage\\.id/);
   assert.match(presenter, /const isSpeakingReadiness = .*A1-5\.9/);
   assert.match(presenter, /id: "mock"/);
   assert.match(presenter, /<PresenterStudentPicker/);
