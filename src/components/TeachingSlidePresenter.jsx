@@ -1688,6 +1688,37 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 </div>
               )}
             </section>
+          ) : stage.type === "dialogue" ? (
+            <section data-testid="a1-day8-travel-dialogue" className="presenter-travel-dialogue">
+              <div className="presenter-practice-heading">
+                <div>
+                  <h1>{stage.title}</h1>
+                  {stage.subtitle ? <p>{stage.subtitle}</p> : null}
+                </div>
+                <span className="presenter-travel-dialogue-badge">SHORT DIALOGUE</span>
+              </div>
+              {stage.instruction ? <p className="presenter-travel-dialogue-instruction">{stage.instruction}</p> : null}
+              <div className="presenter-travel-dialogue-turns">
+                {(stage.turns || []).map((turn, index) => (
+                  <article key={index} className="presenter-travel-dialogue-turn">
+                    <div className="presenter-travel-dialogue-utterance">
+                      <span className="presenter-travel-dialogue-speaker">A</span>
+                      <div>
+                        <strong lang="de">{turn.questionDe}</strong>
+                        {turn.questionEn ? <p lang="en">{turn.questionEn}</p> : null}
+                      </div>
+                    </div>
+                    <div className="presenter-travel-dialogue-utterance">
+                      <span className="presenter-travel-dialogue-speaker is-b">B</span>
+                      <strong lang="de">{turn.answerDe}</strong>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <p className="presenter-travel-dialogue-footer">
+                Paararbeit: Tauscht die Rollen und ersetzt Ghana, Deutschland und die Sprachen durch eigene Beispiele.
+              </p>
+            </section>
           ) : stage.type === "flow" ? (
             <>
               <div className="presenter-practice-heading">

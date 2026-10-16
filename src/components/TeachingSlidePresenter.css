@@ -4910,3 +4910,84 @@
 @media (max-width: 390px) {
   .presenter-a1-speaking-words { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+
+/* A1 Day 8 · teacher-led travel dialogue, shown in Admin slides only */
+.presenter-travel-dialogue {
+  display: grid;
+  gap: clamp(12px, 1.5vw, 20px);
+}
+.presenter-travel-dialogue-badge {
+  align-self: start;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.presenter-travel-dialogue-instruction {
+  margin: 0;
+  color: #475569;
+  font-size: clamp(.9rem, 1.2vw, 1.08rem);
+}
+.presenter-travel-dialogue-turns {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.presenter-travel-dialogue-turn {
+  display: grid;
+  gap: 15px;
+  border-radius: 18px;
+  border: 1px solid #dbe5df;
+  background: #fff;
+  padding: clamp(15px, 1.5vw, 22px);
+  min-width: 0;
+}
+.presenter-travel-dialogue-utterance {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+}
+.presenter-travel-dialogue-utterance strong {
+  color: #132d25;
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: clamp(1rem, 1.65vw, 1.4rem);
+  line-height: 1.45;
+}
+.presenter-travel-dialogue-utterance p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: clamp(.85rem, 1.1vw, 1.03rem);
+  line-height: 1.4;
+}
+.presenter-travel-dialogue-speaker {
+  display: inline-grid;
+  flex: 0 0 31px;
+  height: 31px;
+  place-items: center;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 800;
+}
+.presenter-travel-dialogue-speaker.is-b {
+  background: #dcfce7;
+  color: #166534;
+}
+.presenter-travel-dialogue-footer {
+  margin: 0;
+  border-radius: 12px;
+  padding: 12px 15px;
+  background: #f0fdf4;
+  color: #166534;
+  font-weight: 600;
+}
+@media (max-width: 900px) {
+  .presenter-travel-dialogue-turns { grid-template-columns: 1fr; }
+}
