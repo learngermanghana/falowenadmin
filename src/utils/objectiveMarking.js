@@ -456,6 +456,25 @@ function isA111LegacySubmission(assignmentId = "", sections = [], submissionText
 // Preserve the original Day 8 listening answers for submissions made before
 // the country/origin dialogue was introduced. Old work must not be regraded
 // against questions that those learners never heard.
+const A1_4_LISTENING_V2_ANSWERS = {
+  "Teil 2": {
+    Answer1: "C) Neun",
+    Answer2: "B) Polnisch",
+    Answer3: "D) Niederländisch",
+    Answer4: "A) Deutsch",
+    Answer5: "C) Paris",
+    Answer6: "B) Amsterdam",
+    Answer7: "C) In der Schweiz",
+  },
+  "Teil 3": {
+    Answer1: "A) Aus Spanien",
+    Answer2: "B) In Berlin",
+    Answer3: "B) Spanisch und ein bisschen Italienisch",
+    Answer4: "A) Jeden Tag",
+    Answer5: "B) Fußball spielen und Musik hören",
+  },
+};
+
 const A1_4_LEGACY_ANSWERS = {
   Answer1: "C) Neun",
   Answer2: "B) Polnisch",
@@ -478,7 +497,29 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
     || referenceEntry?.assignment_id
     || "";
   if (normalizeAssignmentId(resolvedAssignmentId) === "A1-4") {
-    if (/A1-4-LISTENING-V2/i.test(submissionText)) return referenceEntry || {};
+    if (/A1-4-LISTENING-V2/i.test(submissionText)) {
+      // The tagged lesson must grade against V2 even if an older cloud
+      // answer-key registry has not yet been synced on this Admin device.
+      const {
+        parts: _oldParts,
+        rawAnswers: _oldRawAnswers,
+        totalAnswers: _oldTotalAnswers,
+        ...baseReference
+      } = referenceEntry || {};
+      return {
+        ...baseReference,
+        answers: A1_4_LISTENING_V2_ANSWERS,
+        rawAnswers: A1_4_LISTENING_V2_ANSWERS,
+        totalAnswers: 12,
+        expectedParts: ["teil2", "teil3"],
+        referenceAnswerParts: ["teil2", "teil3"],
+        answerLayout: "multipart",
+        partGrading: {
+          teil2: { label: "Lesen", hasReferenceAnswers: true, gradingMode: "answer_key" },
+          teil3: { label: "Hören", hasReferenceAnswers: true, gradingMode: "answer_key" },
+        },
+      };
+    }
     // The old workbook serialized its 12 objective answers as a flat key:
     // 7 reading questions + 5 listening questions. Keep that key stable.
     const {
