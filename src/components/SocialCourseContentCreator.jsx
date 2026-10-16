@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { courseDictionary, compareCourseDictionaryEntries } from "../data/courseDictionary.js";
 import { getTeachingSlideByAssignmentId } from "../data/teachingSlides.js";
 import {
-  SOCIAL_VIDEO_TEMPLATES, lessonContentChoices, socialScript,
+  SOCIAL_VIDEO_TEMPLATES, lessonContentChoices, lessonAnswerSuggestions, socialScript,
   socialCaption, notebookPack, socialUseKey,
 } from "../utils/socialCourseTemplates.js";
 import { useToast } from "../context/ToastContext";
@@ -60,6 +60,7 @@ export default function SocialCourseContentCreator() {
   const slide = getTeachingSlideByAssignmentId(entry.assignment_id);
   const choices = useMemo(() => lessonContentChoices(slide || {}, templateId), [slide, templateId]);
   const selected = choices[selectedIndex] || choices[0] || null;
+  const answerSuggestions = useMemo(() => lessonAnswerSuggestions(slide || {}), [slide]);
   const primary = edits.primary ?? selected?.text ?? "";
   const answer = edits.answer ?? selected?.answer ?? "";
   const suggestion = selected?.suggestion || "";
@@ -216,6 +217,13 @@ export default function SocialCourseContentCreator() {
             <label htmlFor="social-answer">{templateId === "grammar" ? "Teacher-approved example" : templateId === "vocabulary" ? "Reviewed English meaning" : templateId === "mistake" ? "Reviewed correction / explanation" : "Verified model answer"}</label>
             <textarea id="social-answer" value={answer} rows={3} onChange={(e) => setEdits((current) => ({ ...current, answer: e.target.value }))} placeholder="Use an accurate example already present in the lesson, or enter a teacher-reviewed answer." />
             {suggestion && !answer && <button type="button" className="social-text-button" onClick={() => setEdits((current) => ({ ...current, answer: suggestion }))}>Use lesson example (review first): {suggestion.slice(0, 80)}</button>}
+            {answerSuggestions.length > 0 && (
+              <select aria-label="Choose an existing lesson example" value="" onChange={(e) => { if (e.target.value) setEdits((current) => ({ ...current, answer: e.target.value })); }}>
+                <option value="">Insert an existing lesson example…</option>
+                {answerSuggestions.map((item, index) => <option key={index} value={item}>{item.slice(0, 125)}</option>)}
+              </select>
+            )}
+            {answerSuggestions.length > 0 && <small>Examples come from this lesson but may not answer the chosen question. Check the match before marking Ready.</small>}
           </div>
           {needsReview && <p className="social-inline-warning">This is a draft: {primary.trim() ? "add a teacher-verified answer or explanation before publishing." : "choose source material before exporting."}</p>}
           {priorUse && <p className="social-inline-info">Already saved as {priorUse.status} for {priorUse.platform}. Select another source item to avoid repeating the same video.</p>}
@@ -236,7 +244,7 @@ export default function SocialCourseContentCreator() {
           </div>
           <pre className="social-script-preview">{script}</pre>
           <div className="social-actions">
-            <button type="button" className="social-primary-button" disabled={!primary.trim()} onClick={() => downloadText(downloadedName + "-notebooklm.txt", notebookPack(scriptInput))}>Download NotebookLM pack</button>
+            <button type="button" className="social-primary-button" disabled={!primary.trim()} onClick={() => downloadText(downloadedName + "-notebooklm.txt", notebookPack({ ...scriptInput, captionOverride: caption }))}>Download NotebookLM pack</button>
             <button type="button" className="social-button-quiet" disabled={!primary.trim()} onClick={() => downloadText(downloadedName + "-script.txt", script)}>Download script</button>
           </div>
           <div className="social-caption-block">
