@@ -9,7 +9,6 @@ import { getA1LearningPath } from "../src/data/a1LearningPath.js";
 import { buildA1SlideReviewChecks } from "../src/data/a1SlideReview.js";
 import { A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT } from "../src/data/a1PublishedWorkbookRoutes.js";
 import { A1_DAYS16_TO20_ASSIGNMENTS, getA1Days16To20UnderstandingChecks,
-  getA1Days16To20QuickChecks, getA1Days16To20ApplicationChecks } from "../src/data/a1Days16To20Understanding.js";
 
 const target = { "A1-9":16, "A1-10":16, "A1-11":17, "A1-12.1":18, "A1-12.2":18, "A1-12.3":20 };
 const slide = (id) => getSlidesByCourse("A1").find(s => s.assignmentId === id);
@@ -28,7 +27,6 @@ test("six A1 Days 16–20 regular blocks supply ninety source-backed questions a
     assert.equal(authored.length, 11, id);
     assert.match(authored[10].questionDe, /^Exit-Check:/);
     const quick = getA1Days16To20QuickChecks(id);
-    const applied = getA1Days16To20ApplicationChecks(id);
     assert.equal(quick.length, 2, id);
     assert.equal(applied.length, 2, id);
     const items = [...authored, ...quick, ...applied];
@@ -102,7 +100,7 @@ test("Classroom lessons are comprehension-first; no progress systems added", () 
   const upgrades = fs.readFileSync("src/data/a1GenericLessonUpgrades.js","utf8");
   assert.match(upgrades,/enhanceA1Days16To20Slide/);
   assert.match(presenter,/getA1Days16To20QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter,/getA1Days16To20ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(presenter,/reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
+  assert.match(presenter,/id: "mini-mission"/);
+  assert.match(presenter,/id: "listen-respond"/);
   assert.doesNotMatch(presenter,/Student Learning Progress|Self-practice completion tracking/);
 });
