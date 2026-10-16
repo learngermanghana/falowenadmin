@@ -102,7 +102,9 @@ test("Classroom lessons are comprehension-first; no progress systems added", () 
   const upgrades = fs.readFileSync("src/data/a1GenericLessonUpgrades.js","utf8");
   assert.match(upgrades,/enhanceA1Days16To20Slide/);
   assert.match(presenter,/getA1Days16To20QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter,/getA1Days16To20ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(presenter,/reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.doesNotMatch(presenter,/Student Learning Progress|Self-practice completion tracking/);
 });

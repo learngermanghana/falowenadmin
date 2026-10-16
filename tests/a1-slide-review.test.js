@@ -52,17 +52,13 @@ test("review cards with no verified answers are omitted rather than invented", (
   assert.equal(buildA1SlideReviewChecks(source, 2)[0].answerDe, "Eszett.");
 });
 
-test("A1 assignments and self-practice display hidden answers without progress widgets", () => {
+test("the unused A1 workbook connection stage is replaced by classroom speaking", () => {
   const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
   const css = fs.readFileSync("src/components/TeachingSlidePresenter.css", "utf8");
-  assert.match(source, /reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
-  assert.match(source, /Lesson-specific understanding review/);
-  assert.match(source, /stage.reviewChecks\.map/);
-  assert.match(source, /<details key=\{item.questionDe\}/);
-  assert.match(source, /Richtige Antwort:/);
-  assert.match(source, /stage.activityKind === "self-practice"/);
-  assert.match(source, /stage.activityKind === "tutor-marked"/);
-  assert.match(source, /stage.actionLabel/);
-  assert.match(css, /\.presenter-a1-review-checks-grid/);
-  assert.doesNotMatch(source, /Student Learning Progress|Self-practice completion tracking/);
+  assert.match(source, /id: "mini-mission"/);
+  assert.match(source, /id: "listen-respond"/);
+  assert.match(source, /<A1EverydaySpeakingStage/);
+  assert.doesNotMatch(source, /id: "workbook",|id: "sentence-build"/);
+  assert.ok(css.includes(".presenter-a1-speaking-stage"));
+  assert.match(source, /id: "mock"/);
 });

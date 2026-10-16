@@ -15,7 +15,9 @@ test("normal A1 Presenter is a grammar diagnostic, while A1-5.9 keeps exam readi
   assert.match(source, /id: "quick-check"/);
   assert.match(source, /id: "grammar-check"/);
   assert.match(source, /id: "mistake-fix"/);
-  assert.match(source, /id: "sentence-build"/);
+  assert.match(source, /id: "mini-mission"/);
+  assert.match(source, /id: "listen-respond"/);
+  assert.doesNotMatch(source, /id: "workbook",/);
   assert.match(source, /id: "exit-check"/);
   assert.doesNotMatch(source, /id: "speak-first"/);
   assert.doesNotMatch(source, /id: "mini-dialogue"/);

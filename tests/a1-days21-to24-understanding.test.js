@@ -112,7 +112,9 @@ test("A1 Days 21–24 slides use the existing Presenter without adding tracking"
   const upgrade=fs.readFileSync("src/data/a1GenericLessonUpgrades.js","utf8");
   assert.match(upgrade,/enhanceA1Days21To24Slide/);
   assert.match(presenter,/getA1Days21To24QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter,/getA1Days21To24ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(presenter,/reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.doesNotMatch(presenter,/Student Learning Progress|Self-practice completion tracking/);
 });

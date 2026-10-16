@@ -90,8 +90,10 @@ test("Days 6–10 use the existing answer-reveal slide and no progress modificat
   const resolver = fs.readFileSync("src/data/a1PresenterUnderstandingChecks.js", "utf8");
   assert.match(resolver, /getA1Days6To10UnderstandingChecks\(key\)/);
   assert.match(presenter, /getA1Days6To10QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /getA1Days6To10ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.match(slides, /Self-practice bridge/);
   assert.match(slides, /Reading\/Hören workbook bridge/);
   assert.doesNotMatch(slides, /phase: "Language mini-interview"|phase: "Apartment speaking"|phase: "Hobby round"/);

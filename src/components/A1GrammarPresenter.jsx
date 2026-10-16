@@ -3,14 +3,15 @@ import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
 import { getA1PresenterUnderstandingChecks } from "../data/a1PresenterUnderstandingChecks.js";
 import { buildA1CheckCoaching } from "../data/a1CheckCoaching.js";
-import { getA1LearningPath } from "../data/a1LearningPath.js";
 import { buildA1SlideReviewChecks } from "../data/a1SlideReview.js";
-import { getA1Days1To5QuickChecks, getA1Days1To5ApplicationChecks } from "../data/a1Days1To5Understanding.js";
-import { getA1Days6To10QuickChecks, getA1Days6To10ApplicationChecks } from "../data/a1Days6To10Understanding.js";
-import { getA1Days11To15QuickChecks, getA1Days11To15ApplicationChecks } from "../data/a1Days11To15Understanding.js";
-import { getA1Days16To20QuickChecks, getA1Days16To20ApplicationChecks } from "../data/a1Days16To20Understanding.js";
-import { getA1Days21To24QuickChecks, getA1Days21To24ApplicationChecks } from "../data/a1Days21To24Understanding.js";
+import { getA1Days1To5QuickChecks } from "../data/a1Days1To5Understanding.js";
+import { getA1Days6To10QuickChecks } from "../data/a1Days6To10Understanding.js";
+import { getA1Days11To15QuickChecks } from "../data/a1Days11To15Understanding.js";
+import { getA1Days16To20QuickChecks } from "../data/a1Days16To20Understanding.js";
+import { getA1Days21To24QuickChecks } from "../data/a1Days21To24Understanding.js";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
+import A1EverydaySpeakingStage from "./A1EverydaySpeakingStage.jsx";
+import { getA1EverydaySpeaking } from "../data/a1EverydaySpeaking.js";
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import {
@@ -69,9 +70,13 @@ function a1TeacherPurpose(stage = {}) {
     student: "Typische Fehler erkennen.",
     teacher: "Kurz scannen und nur Fehler hervorheben, die in der Klasse tatsächlich auftreten.",
   };
-  if (id === "sentence-build") return {
-    student: stage.lessonReviewMode ? "Eine kurze Verständnis- oder Korrekturaufgabe lösen." : "Einen eigenen einfachen Satz mit der Zielgrammatik bilden.",
-    teacher: stage.lessonReviewMode ? "Nur die heutige Regel prüfen; kurze richtige Antworten genügen." : "Grammatik vor Wortschatz bewerten; ein einfacher korrekter Satz reicht.",
+  if (id === "mini-mission") return {
+    student: "Fünf Wörter lernen und in einer echten Mini-Situation sprechen.",
+    teacher: "Die Situation lesen, Wörter kurz vorsprechen, dann Partnerantworten hören. Bei Bedarf die kleine Grammatikhilfe öffnen.",
+  };
+  if (id === "listen-respond") return {
+    student: "Der Lehrkraft aufmerksam zuhören und spontan auf Deutsch antworten.",
+    teacher: "Die Frage laut vorlesen, Antwort abwarten und erst danach eine mögliche Antwort zeigen. Keine Aufnahme oder Benotung.",
   };
   if (id === "workbook" || id === "mock") return {
     student: id === "mock" ? "Die Prüfungsteile möglichst ohne Hilfe durchführen." : "Prüfe dein Verständnis mit der passenden Falowen-Aufgabe.",
@@ -116,13 +121,6 @@ function stageList(slide, topicLabel) {
   );
   const mainChecks = checks.slice(0, Math.max(1, checks.length - 1));
   const exitChecks = checks.slice(Math.max(1, checks.length - 1));
-  const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
-  const practicePrompts = Array.isArray(slide.studentQuestionsDe) ? slide.studentQuestionsDe : [];
-  const hasWorkbookPlan = workbookParts.length > 0;
-  const learningPath = getA1LearningPath(slide);
-  const transferItems = hasWorkbookPlan
-    ? workbookParts.map((part) => ({ label: part.label, detail: part.detailEn }))
-    : practicePrompts.slice(0, 4).map((question, index) => ({ label: `Übung ${index + 1}`, detail: question }));
 
   if (isSpeakingReadiness) {
     const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
@@ -213,19 +211,7 @@ function stageList(slide, topicLabel) {
   const correctionChecks = mainChecks
     .filter((item) => /mistake|correct|avoid this/i.test(String(item?.questionDe || "")))
     .slice(0, 2);
-  const modelExamples = Array.isArray(support.modelExamplesDe) ? support.modelExamplesDe : [];
-  const curatedApplicationChecks = getA1Days1To5ApplicationChecks(slide.assignmentId)
-    || getA1Days6To10ApplicationChecks(slide.assignmentId)
-    || getA1Days11To15ApplicationChecks(slide.assignmentId)
-    || getA1Days16To20ApplicationChecks(slide.assignmentId)
-    || getA1Days21To24ApplicationChecks(slide.assignmentId);
-  const sentenceBuildChecks = curatedApplicationChecks || modelExamples.slice(0, 2).map((example, index) => ({
-    questionDe: index === 0
-      ? `Change one detail but keep the grammar correct: “${example}”`
-      : `Make a new sentence with the same grammar pattern: “${example}”`,
-    answerDe: `Accept a new A1 sentence that keeps the same target grammar as: ${example}`,
-    noteEn: "Check the grammar pattern first; vocabulary can stay simple.",
-  }));
+  const speaking = getA1EverydaySpeaking(slide.assignmentId);
   const mistakeItems = Array.isArray(support.commonMistakesEn) ? support.commonMistakesEn : [];
 
   return [
@@ -267,31 +253,25 @@ function stageList(slide, topicLabel) {
       title: "Common mistakes to watch",
       items: mistakeItems,
     },
-    {
-      id: "sentence-build",
-      type: "check",
-      kicker: curatedApplicationChecks ? "Anwenden" : "Build one sentence",
-      title: curatedApplicationChecks ? "Two short lesson applications" : "Use the grammar correctly",
-      items: sentenceBuildChecks,
-      lessonReviewMode: Boolean(curatedApplicationChecks),
-    },
-    {
-      id: "workbook",
-      type: "workbook",
-      kicker: "Falowen · next task",
-      title: learningPath?.label || (hasWorkbookPlan ? "Now practise it in Falowen" : "Now apply it"),
-      items: transferItems,
-      activityKind: learningPath?.kind || "review",
-      activityInstruction: learningPath?.instruction || "",
-      reviewLabel: learningPath?.reviewLabel || "",
-      reviewChecks: buildA1SlideReviewChecks(mainChecks, 2),
-      reviewTitle: learningPath?.kind === "tutor-marked"
-        ? "Vor der Abgabe · prüfe diese zwei Punkte"
-        : "Verständnis-Check · prüfe diese zwei Punkte",
-      actionLabel: learningPath?.actionLabel || "Open Course Book activity",
-      grammarUrl: slide.workbookConnection?.grammarUrl || "",
-      workbookUrl: slide.workbookConnection?.workbookUrl || "",
-    },
+    ...(speaking ? [
+      {
+        id: "mini-mission",
+        type: "speaking-activity",
+        kind: "mission",
+        kicker: "Deutsch im Alltag",
+        words: speaking.words,
+        ...speaking.mission,
+        items: [speaking.mission],
+      },
+      {
+        id: "listen-respond",
+        type: "speaking-activity",
+        kind: "reaction",
+        kicker: "Hör zu und reagiere!",
+        ...speaking.reaction,
+        items: [speaking.reaction],
+      },
+    ] : []),
     {
       id: "exit-check",
       type: "check",
@@ -722,7 +702,7 @@ export default function A1GrammarPresenter({
                 <strong>{stage.examReadiness ? "A1 speaking readiness method" : "A1 grammar-check method"}</strong>
                 <p>{stage.examReadiness
                   ? "Warm-up diagnosis → exam map → Teil 1 → live performance/knowledge checks → mini mock exam → readiness decision → fresh exit check."
-                  : "Grammar notes first → check understanding → correct the target rule → one short application → tutor-marked assignment or self-practice → unaided exit check."}</p>
+                  : "Grammar notes first → check understanding → correct the target rule → five-word Mini-Mission → listen and respond → unaided exit check."}</p>
                 <small>{stage.examReadiness
                   ? "Use grammar only when it blocks the speaking task. During the mock exam, reduce teacher help and judge whether the student can perform independently."
                   : "Use the grammar page to teach. Presenter should not reteach the lesson: it checks whether each learner can recognize, correct and apply the grammar. Record only Correct or Needs review."}</small>
@@ -827,6 +807,8 @@ export default function A1GrammarPresenter({
                 </>
               )}
             </section>
+          ) : stage.type === "speaking-activity" ? (
+            <A1EverydaySpeakingStage key={`${slide.assignmentId}-${stage.id}`} stage={stage} />
           ) : stage.type === "workbook" ? (
             <>
               <h1>{stage.title}</h1>

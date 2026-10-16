@@ -111,8 +111,10 @@ test("A1 presenter and existing teacher view use the correct source material wit
   assert.match(registry, /enhanceA1Days11To15Slide\(lessonSlide\)/);
   assert.match(resolver, /getA1Days11To15UnderstandingChecks\(key\)/);
   assert.match(presenter, /getA1Days11To15QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /getA1Days11To15ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
-  assert.match(presenter, /<details key=\{item\.questionDe\}/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.doesNotMatch(presenter, /Student Learning Progress|Self-practice completion tracking/);
 });

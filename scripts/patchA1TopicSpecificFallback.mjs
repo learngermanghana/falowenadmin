@@ -43,8 +43,9 @@ const presenter = fs.readFileSync(presenterPath, "utf8");
 if (!presenter.includes("const A1_GRAMMAR_CHECK_FLOW_VERSION = 3;")) {
   throw new Error("A1 topic-specific support requires the grammar-diagnostic presenter.");
 }
-if (!presenter.includes('id: "sentence-build"') || !presenter.includes("Change one detail but keep the grammar correct")) {
-  throw new Error("A1 grammar-diagnostic sentence-building check is missing.");
+if (!presenter.includes('id: "mini-mission"') || !presenter.includes('id: "listen-respond"') ||
+    !presenter.includes("getA1EverydaySpeaking(slide.assignmentId)")) {
+  throw new Error("A1 chapter-specific speaking and listening activities are missing.");
 }
 
 const finalSource = fs.readFileSync(slidesPath, "utf8");

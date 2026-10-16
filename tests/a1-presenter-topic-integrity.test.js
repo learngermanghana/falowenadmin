@@ -122,12 +122,16 @@ test("A1 presenter checks the rule before the per-student grammar challenge", ()
   const quickIndex = presenter.indexOf('id: "quick-check"');
   const challengeIndex = presenter.indexOf('id: "grammar-check"', quickIndex);
   const correctionIndex = presenter.indexOf('id: "mistake-fix"', challengeIndex);
-  const sentenceIndex = presenter.indexOf('id: "sentence-build"', correctionIndex);
+  const mistakesIndex = presenter.indexOf('id: "mistakes"', correctionIndex);
+  const missionIndex = presenter.indexOf('id: "mini-mission"', mistakesIndex);
+  const reactionIndex = presenter.indexOf('id: "listen-respond"', missionIndex);
 
   assert.ok(quickIndex >= 0, "A1 quick grammar check is missing");
   assert.ok(challengeIndex > quickIndex, "A1 per-student grammar challenge must follow the quick check");
   assert.ok(correctionIndex > challengeIndex, "A1 correction check must follow the class challenge");
-  assert.ok(sentenceIndex > correctionIndex, "A1 controlled sentence build must follow correction");
+  assert.ok(mistakesIndex > correctionIndex, "Common Mistakes must follow correction");
+  assert.ok(missionIndex > mistakesIndex, "Mini-Mission must follow Common Mistakes");
+  assert.ok(reactionIndex > missionIndex, "Listening response must follow the speaking mission");
   assert.match(presenter, /items:\s*quickChecks/);
   assert.match(presenter, /items:\s*mainChecks/);
   assert.match(presenter, /kicker:\s*"Verständnis prüfen"/);

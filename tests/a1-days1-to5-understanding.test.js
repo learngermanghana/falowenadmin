@@ -99,13 +99,15 @@ test("Days 1–5 checks preserve the workbook scope and the tutor/self-practice 
   assert.doesNotMatch(day5, /indefinite article|ein\/eine|ein or eine|einen|einem/i);
 });
 
-test("A1 Presenter uses separate unscored recall and short application checks", () => {
+test("A1 Presenter keeps recall and adds chapter-specific oral application", () => {
   const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
   assert.match(source, /getA1Days1To5QuickChecks\(slide\.assignmentId\)/);
-  assert.match(source, /getA1Days1To5ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(source, /title: curatedApplicationChecks \? "Two short lesson applications"/);
+  assert.match(source, /id: "mini-mission"/);
+  assert.match(source, /id: "listen-respond"/);
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.match(source, /items: mainChecks/);
   assert.match(source, /exitCheck: true/);
-  assert.match(source, /data-a1-learning-mode=\{stage.activityKind\}/);
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.doesNotMatch(source, /id: "mini-dialogue"|id: "speak-first"/);
 });

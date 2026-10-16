@@ -207,15 +207,17 @@ test("different A1 lessons do not reuse the same examples, mistakes, or core und
   assert.deepEqual(duplicates, [], duplicates.join("\n"));
 });
 
-test("A1 presenter keeps the grammar-diagnostic direction and always provides a transfer stage", () => {
+test("A1 presenter keeps grammar diagnosis and uses creative oral application stages", () => {
   const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
   assert.match(presenter, /A1 · Grammar check/);
   assert.match(presenter, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
   assert.match(presenter, /id: "quick-check"/);
   assert.match(presenter, /id: "grammar-check"/);
   assert.match(presenter, /id: "mistake-fix"/);
-  assert.match(presenter, /id: "sentence-build"/);
-  assert.match(presenter, /practicePrompts\.slice\(0, 4\)/);
-  assert.match(presenter, /hasWorkbookPlan \? "Now practise it in Falowen" : "Now apply it"/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
+  assert.match(presenter, /id: "exit-check"/);
+  assert.ok(presenter.includes("getA1EverydaySpeaking(slide.assignmentId)"));
+  assert.doesNotMatch(presenter, /id: "sentence-build"|id: "workbook",/);
   assert.doesNotMatch(presenter, /A1 · Language-first/);
 });

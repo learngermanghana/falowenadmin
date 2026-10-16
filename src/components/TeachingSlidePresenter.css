@@ -4740,3 +4740,173 @@
   .presenter-career-options button.is-selected { padding: calc(0.65rem - 1px); }
   .presenter-career-nav { justify-content: flex-start; }
 }
+
+
+/* A1 everyday speaking: two compact classroom stages after Common Mistakes. */
+.presenter-content-speaking-activity {
+  justify-content: flex-start;
+  padding-top: clamp(0.7rem, 2vw, 1.5rem);
+}
+.presenter-a1-speaking-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(0.65rem, 1.4vw, 1.1rem);
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  color: #0f172a;
+}
+.presenter-a1-speaking-rounds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.presenter-a1-speaking-rounds button {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #93a6c3;
+  border-radius: 10px;
+  background: #fff;
+  color: #334155;
+  font-weight: 800;
+  cursor: pointer;
+}
+.presenter-a1-speaking-rounds button[aria-pressed="true"] {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1e40af;
+}
+.presenter-a1-speaking-rounds button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.presenter-a1-speaking-heading,
+.presenter-a1-speaking-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.presenter-a1-speaking-heading { justify-content: space-between; }
+.presenter-a1-speaking-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  color: #1d4ed8;
+}
+.presenter-a1-speaking-duration {
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: #475569;
+}
+.presenter-a1-speaking-stage h1 {
+  margin: 0;
+  line-height: 1.15;
+  font-size: clamp(1.65rem, 3.5vw, 2.8rem);
+  color: #0f172a;
+}
+.presenter-a1-speaking-instruction,
+.presenter-a1-speaking-before-answer {
+  margin: 0;
+  color: #475569;
+  font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+}
+.presenter-a1-speaking-words {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.presenter-a1-speaking-word {
+  min-width: 0;
+  min-height: 3.1rem;
+  display: grid;
+  place-items: center;
+  padding: 0.65rem 0.45rem;
+  text-align: center;
+  font-weight: 780;
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow-wrap: anywhere;
+}
+.presenter-a1-speaking-situation,
+.presenter-a1-speaking-prompt,
+.presenter-a1-speaking-answer,
+.presenter-a1-speaking-hint {
+  border-radius: 15px;
+  padding: clamp(0.8rem, 2vw, 1.25rem);
+  border: 1px solid #dbe4f0;
+  background: #f8fafc;
+}
+.presenter-a1-speaking-situation > span,
+.presenter-a1-speaking-prompt > span {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+}
+.presenter-a1-speaking-situation p,
+.presenter-a1-speaking-prompt p,
+.presenter-a1-speaking-hint p,
+.presenter-a1-speaking-answer p {
+  margin: 0;
+  line-height: 1.4;
+}
+.presenter-a1-speaking-situation p { font-size: clamp(0.95rem, 1.7vw, 1.18rem); }
+.presenter-a1-speaking-prompt {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.presenter-a1-speaking-prompt p {
+  font-size: clamp(1.13rem, 2.1vw, 1.65rem);
+  font-weight: 780;
+}
+.presenter-a1-speaking-actions button {
+  border: 1px solid #93a6c3;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-size: clamp(0.85rem, 1.2vw, 0.98rem);
+  font-weight: 800;
+  color: #0f172a;
+  background: #fff;
+  cursor: pointer;
+}
+.presenter-a1-speaking-actions button:hover { border-color: #2563eb; }
+.presenter-a1-speaking-actions button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+.presenter-a1-speaking-actions .presenter-a1-speaking-reveal {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+.presenter-a1-speaking-hint { background: #fff7ed; border-color: #fed7aa; }
+.presenter-a1-speaking-answer { background: #f0fdf4; border-color: #86efac; }
+.presenter-a1-speaking-answer > strong { display: block; margin-bottom: 0.45rem; color: #166534; }
+.presenter-a1-speaking-model {
+  font-size: clamp(1.05rem, 2vw, 1.5rem);
+  font-weight: 750;
+  color: #14532d;
+}
+.presenter-a1-speaking-followup {
+  border-top: 1px solid #bbf7d0;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+}
+.presenter-a1-speaking-followup strong { display: block; margin-bottom: 0.3rem; }
+.presenter-a1-speaking-answer small { display: block; margin-top: 0.6rem; line-height: 1.5; }
+
+@media (max-width: 700px) {
+  .presenter-a1-speaking-words { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .presenter-a1-speaking-stage { gap: 0.65rem; }
+  .presenter-a1-speaking-actions button { flex: 1 1 190px; }
+}
+@media (max-width: 390px) {
+  .presenter-a1-speaking-words { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
