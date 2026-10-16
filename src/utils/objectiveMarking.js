@@ -453,12 +453,97 @@ function isA111LegacySubmission(assignmentId = "", sections = [], submissionText
   return extractNumberedTextEntries(submissionText).length > 10;
 }
 
+// Preserve the original Day 8 listening answers for submissions made before
+// the country/origin dialogue was introduced. Old work must not be regraded
+// against questions that those learners never heard.
+const A1_4_LISTENING_V2_ANSWERS = {
+  "Teil 2": {
+    Answer1: "C) Neun",
+    Answer2: "B) Polnisch",
+    Answer3: "D) Niederländisch",
+    Answer4: "A) Deutsch",
+    Answer5: "C) Paris",
+    Answer6: "B) Amsterdam",
+    Answer7: "C) In der Schweiz",
+  },
+  "Teil 3": {
+    Answer1: "A) Aus Spanien",
+    Answer2: "B) In Berlin",
+    Answer3: "B) Spanisch und ein bisschen Italienisch",
+    Answer4: "A) Jeden Tag",
+    Answer5: "B) Fußball spielen und Musik hören",
+  },
+};
+
+const A1_4_LEGACY_ANSWERS = {
+  Answer1: "C) Neun",
+  Answer2: "B) Polnisch",
+  Answer3: "D) Niederländisch",
+  Answer4: "A) Deutsch",
+  Answer5: "C) Paris",
+  Answer6: "B) Amsterdam",
+  Answer7: "C) In der Schweiz",
+  Answer8: "C) In Italien und Frankreich",
+  Answer9: "C) Rom",
+  Answer10: "B) Das Essen",
+  Answer11: "B) Paris",
+  Answer12: "A) Nach Spanien",
+};
+
 export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, submissionText = "", assignmentId = "") {
   const resolvedAssignmentId = assignmentId
     || referenceEntry?.assignmentKey
     || referenceEntry?.assignmentId
     || referenceEntry?.assignment_id
     || "";
+  if (normalizeAssignmentId(resolvedAssignmentId) === "A1-4") {
+    if (/A1-4-LISTENING-V2/i.test(submissionText)) {
+      // The tagged lesson must grade against V2 even if an older cloud
+      // answer-key registry has not yet been synced on this Admin device.
+      const {
+        parts: _oldParts,
+        rawAnswers: _oldRawAnswers,
+        totalAnswers: _oldTotalAnswers,
+        ...baseReference
+      } = referenceEntry || {};
+      return {
+        ...baseReference,
+        answers: A1_4_LISTENING_V2_ANSWERS,
+        rawAnswers: A1_4_LISTENING_V2_ANSWERS,
+        totalAnswers: 12,
+        expectedParts: ["teil2", "teil3"],
+        referenceAnswerParts: ["teil2", "teil3"],
+        answerLayout: "multipart",
+        partGrading: {
+          teil2: { label: "Lesen", hasReferenceAnswers: true, gradingMode: "answer_key" },
+          teil3: { label: "Hören", hasReferenceAnswers: true, gradingMode: "answer_key" },
+        },
+      };
+    }
+    // The old workbook serialized its 12 objective answers as a flat key:
+    // 7 reading questions + 5 listening questions. Keep that key stable.
+    const {
+      parts: _newParts,
+      rawAnswers: _newRawAnswers,
+      totalAnswers: _newTotalAnswers,
+      ...baseReference
+    } = referenceEntry || {};
+    return {
+      ...baseReference,
+      answers: A1_4_LEGACY_ANSWERS,
+      rawAnswers: A1_4_LEGACY_ANSWERS,
+      totalAnswers: 12,
+      expectedParts: ["main"],
+      referenceAnswerParts: ["main"],
+      writingParts: [],
+      aiGradedParts: [],
+      excludedParts: [],
+      answerLayout: "flat",
+      partGrading: {
+        main: { label: "main", hasReferenceAnswers: true, gradingMode: "answer_key" },
+      },
+    };
+  }
   if (normalizeAssignmentId(resolvedAssignmentId) !== "A1-11") return referenceEntry || {};
 
   const sections = splitSubmissionIntoSections(submissionText);
