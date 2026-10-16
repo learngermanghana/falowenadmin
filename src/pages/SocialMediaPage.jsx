@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { listClassCohorts } from "../services/liveClassService";
 import { normalizeScheduleRules } from "../utils/liveClassScheduling";
 import { useToast } from "../context/ToastContext";
+import SocialCourseContentCreator from "../components/SocialCourseContentCreator.jsx";
+import "./SocialMediaPage.css";
 
 const FORMATS = [
   { id: "square", label: "Square post", width: 1080, height: 1080, hint: "Instagram / Facebook" },
@@ -453,6 +455,7 @@ export default function SocialMediaPage() {
   const canvasRef = useRef(null);
   const renderVersionRef = useRef(0);
   const isNarrow = useNarrowWorkspace();
+  const [activeTab, setActiveTab] = useState("creator");
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
@@ -501,6 +504,7 @@ export default function SocialMediaPage() {
   }, []);
 
   useEffect(() => {
+    if (activeTab !== "posters") return undefined;
     const renderVersion = ++renderVersionRef.current;
     let cancelled = false;
     setRendering(true);
@@ -524,7 +528,7 @@ export default function SocialMediaPage() {
     return () => {
       cancelled = true;
     };
-  }, [draft, template, format, photoSrc, photoControls, posterSignature]);
+  }, [draft, template, format, photoSrc, photoControls, posterSignature, activeTab]);
 
   const chooseClass = (classId) => {
     setSelectedClassId(classId);
@@ -615,13 +619,26 @@ export default function SocialMediaPage() {
   const startDays = selectedClass ? daysUntil(selectedClass.startDate) : null;
 
   return (
-    <div style={{ display: "grid", gap: 16, padding: isNarrow ? 8 : 16, minWidth: 0 }}>
-      <section style={panelStyle}>
+    <div className="social-studio-shell">
+      <header className="social-studio-hero">
+        <div>
+          <span className="social-studio-kicker">Falowen Admin</span>
+          <h1>Social Media Studio</h1>
+          <p>Turn existing German lessons into short-video scripts, or prepare a class poster.</p>
+        </div>
+      </header>
+      <nav className="social-studio-tabs" aria-label="Social media tools">
+        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "creator"} onClick={() => setActiveTab("creator")}>Course Content Creator</button>
+        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "posters"} onClick={() => setActiveTab("posters")}>Class Posters</button>
+      </nav>
+      {activeTab === "creator" ? <SocialCourseContentCreator /> : (
+        <div className="social-poster-workspace">
+          <section className="social-poster-header">
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <h1 style={{ margin: 0 }}>Social Media</h1>
+            <h2 style={{ margin: 0 }}>Class Poster Studio</h2>
             <p style={{ margin: "6px 0 0", color: "#64748b", maxWidth: 760 }}>
-              Select a class, choose a design, adjust the auto-filled details and photo crop, then export a ready PNG.
+              Select a class and export a branded poster. Open the optional panels to customize the design.
             </p>
           </div>
           {selectedClass && startDays != null && (
@@ -651,8 +668,8 @@ export default function SocialMediaPage() {
             <button type="button" onClick={resetFromClass} disabled={!selectedClass} style={{ marginTop: 10 }}>Reset details from class</button>
           </section>
 
-          <section style={panelStyle}>
-            <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>2. Choose template</h2>
+          <details className="social-poster-details">
+            <summary>2. Choose template</summary>
             <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {TEMPLATES.map((item) => (
                 <button key={item.id} type="button" onClick={() => setTemplateId(item.id)} style={{ minHeight: 76, borderRadius: 12, border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1", background: item.background, color: item.text, padding: 10, fontWeight: 800, textAlign: "left" }}>
@@ -661,10 +678,10 @@ export default function SocialMediaPage() {
                 </button>
               ))}
             </div>
-          </section>
+          </details>
 
-          <section style={panelStyle}>
-            <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>3. Size & temporary photo</h2>
+          <details className="social-poster-details">
+            <summary>3. Size &amp; photo</summary>
             <div style={{ display: "grid", gap: 10 }}>
               {FORMATS.map((item) => (
                 <label key={item.id} style={{ display: "flex", gap: 9, alignItems: "center", cursor: "pointer" }}>
@@ -693,10 +710,10 @@ export default function SocialMediaPage() {
                 </div>
               ) : null}
             </div>
-          </section>
+          </details>
 
-          <section style={panelStyle}>
-            <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>4. Edit poster details</h2>
+          <details className="social-poster-details">
+            <summary>4. Edit poster details</summary>
             <div style={{ display: "grid", gap: 10 }}>
               <Field label="Small heading" value={draft.eyebrow} onChange={(value) => updateDraft("eyebrow", value)} />
               <Field label="Class name" value={draft.className} onChange={(value) => updateDraft("className", value)} />
@@ -711,7 +728,7 @@ export default function SocialMediaPage() {
               <Field label="Phone (optional)" value={draft.phone} onChange={(value) => updateDraft("phone", value)} />
               <Field label="Footer" value={draft.footer} onChange={(value) => updateDraft("footer", value)} />
             </div>
-          </section>
+          </details>
         </div>
 
         <div style={{ display: "grid", gap: 14, position: isNarrow ? "static" : "sticky", top: isNarrow ? undefined : 12, minWidth: 0 }}>
@@ -739,6 +756,9 @@ export default function SocialMediaPage() {
           </section>
         </div>
       </div>
+    </div>
+        </div>
+      )}
     </div>
   );
 }
