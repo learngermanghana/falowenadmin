@@ -4589,3 +4589,154 @@
     display: none;
   }
 }
+
+/* A2 Day 14: one career decision per page with plausible, selectable options. */
+.presenter-career-coach {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+  min-width: 0;
+}
+
+.presenter-career-case {
+  display: grid;
+  gap: 0.42rem;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 14px;
+  padding: clamp(0.8rem, 1.4vw, 1.25rem);
+}
+
+.presenter-career-progress {
+  font-size: 0.78rem;
+  font-weight: 850;
+  color: #1d4ed8;
+}
+
+.presenter-career-case h2 {
+  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+  margin: 0;
+}
+
+.presenter-career-case p,
+.presenter-career-model p,
+.presenter-career-transfer p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.presenter-career-options {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.presenter-career-options button {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #94a3b8;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.presenter-career-options button span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #e2e8f0;
+  font-weight: 900;
+}
+
+.presenter-career-options button.is-selected {
+  border: 2px solid #1d4ed8;
+  background: #dbeafe;
+  padding: calc(0.75rem - 1px) calc(0.9rem - 1px);
+}
+
+.presenter-career-options button.is-selected span {
+  color: #fff;
+  background: #1d4ed8;
+}
+
+.presenter-career-options button:focus-visible,
+.presenter-career-model-toggle:focus-visible,
+.presenter-career-nav button:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.presenter-career-model-toggle {
+  justify-self: start;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #1d4ed8;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1e40af;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.presenter-career-model {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  background: #f0fdf4;
+  padding: 0.8rem 0.95rem;
+  color: #14532d;
+}
+
+.presenter-career-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.presenter-career-nav button {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.55rem 0.8rem;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.presenter-career-nav button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.presenter-career-transfer {
+  display: grid;
+  gap: 0.4rem;
+  border-top: 1px solid #dbe4f0;
+  padding-top: 0.8rem;
+}
+
+.presenter-career-transfer summary {
+  cursor: pointer;
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .presenter-career-options button { padding: 0.65rem; font-size: 0.9rem; }
+  .presenter-career-options button.is-selected { padding: calc(0.65rem - 1px); }
+  .presenter-career-nav { justify-content: flex-start; }
+}
