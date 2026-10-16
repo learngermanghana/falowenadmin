@@ -52,7 +52,7 @@ test("A1 presenter preserves the grammar diagnostic and adds communicative missi
     assert.ok(presenter.includes(`id: "${stage}"`), `missing ${stage}`);
   }
   assert.doesNotMatch(presenter, /id: "sentence-build"|id: "workbook",/);
-  assert.match(presenter, /A1-5\\.9/);
+  assert.ok(presenter.includes("A1-5.9"));
   assert.match(presenter, /A1EverydaySpeakingStage/);
   assert.match(presenter, /<PresenterStudentPicker/);
 });
