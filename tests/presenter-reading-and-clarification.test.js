@@ -74,14 +74,14 @@ test("evidence labels use Satz for one sentence and Sätze for lists or ranges",
   let pluralCount = 0;
   for (const [id, reading] of Object.entries(PRESENTER_READING_LESSONS)) {
     reading.evidence.forEach((reference, index) => {
-      const expected = /^\\d+$/.test(String(reference).trim()) ? "Satz" : "Sätze";
+      const expected = /^\d+$/.test(String(reference).trim()) ? "Satz" : "Sätze";
       assert.ok(reading.answers[index].endsWith(`Beleg: ${expected} ${reference}.`),
         `${id}: wrong evidence label for ${reference}`);
       if (expected === "Satz") singleCount++; else pluralCount++;
     });
   }
   assert.ok(singleCount > 0 && pluralCount > 0, "the readings need both evidence forms");
-  assert.match(PRESENTER_READING_LESSONS["B1-7.23"].answers[0], /Beleg: Sätze 2–3, 5\\.$/);
+  assert.match(PRESENTER_READING_LESSONS["B1-7.23"].answers[0], /Beleg: Sätze 2–3, 5\.$/);
 });
 
 test("B1-7.22 reading stays aligned with partners, relationship values and online dating", () => {
