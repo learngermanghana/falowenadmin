@@ -22,12 +22,15 @@ test("every normal A1 teaching block has two genuinely authored speaking stages"
     for (const [type, keys] of [
       ["mission", ["title", "situation", "prompt", "model", "hint", "secondRound"]],
       ["reaction", ["title", "situation", "prompt", "model", "note"]],
+      ["reaction.second", ["situation", "prompt", "model", "note"]],
     ]) {
       for (const key of keys) {
-        assert.ok(String(activity[type]?.[key] || "").trim().length > 6,
+        const target = type === "reaction.second" ? activity.reaction.second : activity[type];
+        assert.ok(String(target?.[key] || "").trim().length > 6,
           `${slide.assignmentId}: ${type} missing ${key}`);
       }
-      assert.doesNotMatch(activity[type].prompt, /change one detail|same grammar pattern|make a new sentence/i,
+      const prompt = type === "reaction.second" ? activity.reaction.second.prompt : activity[type].prompt;
+      assert.doesNotMatch(prompt, /change one detail|same grammar pattern|make a new sentence/i,
         `${slide.assignmentId}: generic prompt is forbidden`);
     }
   }
@@ -73,6 +76,8 @@ test("new classroom practice reveals hints and models on demand, without scoring
   assert.match(jsx, /aria-expanded=\{showModel\}/);
   assert.match(jsx, /stage.words.map/);
   assert.match(jsx, /Musterantwort anzeigen/);
+  assert.match(jsx, /Situation \{number \+ 1\}/);
+  assert.match(jsx, /setShowModel\(false\)/);
   assert.doesNotMatch(jsx, /submitAssignment|saveAttempt|awardScore|markCorrect/);
   assert.match(css, /\.presenter-a1-speaking-words/);
   assert.match(css, /@media \(max-width: 700px\)/);
