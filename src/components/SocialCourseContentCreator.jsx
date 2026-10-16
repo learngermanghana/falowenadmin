@@ -220,14 +220,14 @@ export default function SocialCourseContentCreator() {
           <h3 className="social-subhead">2. Review the teaching text</h3>
           <div className="social-form-row">
             <label htmlFor="social-primary">{templateId === "grammar" ? "Verified grammar explanation" : templateId === "mistake" ? "Common mistake teaching note" : templateId === "vocabulary" ? "German phrase" : "German question"}</label>
-            <textarea id="social-primary" value={primary} rows={3} onChange={(e) => { setEdits((current) => ({ ...current, primary: e.target.value })); setCaptionEdit(null); }} />
+            <textarea id="social-primary" value={primary} rows={3} onChange={(e) => { clearPostState(); setEdits((current) => ({ ...current, primary: e.target.value })); setCaptionEdit(null); }} />
           </div>
           <div className="social-form-row">
             <label htmlFor="social-answer">{templateId === "grammar" ? "Teacher-approved example" : templateId === "vocabulary" ? "Reviewed English meaning" : templateId === "mistake" ? "Reviewed correction / explanation" : "Verified model answer"}</label>
-            <textarea id="social-answer" value={answer} rows={3} onChange={(e) => setEdits((current) => ({ ...current, answer: e.target.value }))} placeholder="Use an accurate example already present in the lesson, or enter a teacher-reviewed answer." />
-            {suggestion && !answer && <button type="button" className="social-text-button" onClick={() => setEdits((current) => ({ ...current, answer: suggestion }))}>Use lesson example (review first): {suggestion.slice(0, 80)}</button>}
+            <textarea id="social-answer" value={answer} rows={3} onChange={(e) => { clearPostState(); setEdits((current) => ({ ...current, answer: e.target.value })); }} placeholder="Use an accurate example already present in the lesson, or enter a teacher-reviewed answer." />
+            {suggestion && !answer && <button type="button" className="social-text-button" onClick={() => { clearPostState(); setEdits((current) => ({ ...current, answer: suggestion })); }}>Use lesson example (review first): {suggestion.slice(0, 80)}</button>}
             {answerSuggestions.length > 0 && (
-              <select aria-label="Choose an existing lesson example" value="" onChange={(e) => { if (e.target.value) setEdits((current) => ({ ...current, answer: e.target.value })); }}>
+              <select aria-label="Choose an existing lesson example" value="" onChange={(e) => { if (e.target.value) { clearPostState(); setEdits((current) => ({ ...current, answer: e.target.value })); } }}>
                 <option value="">Insert an existing lesson example…</option>
                 {answerSuggestions.map((item, index) => <option key={index} value={item}>{item.slice(0, 125)}</option>)}
               </select>
@@ -261,13 +261,13 @@ export default function SocialCourseContentCreator() {
               <h3>Post caption</h3>
               <button type="button" className="social-button-quiet" onClick={() => copy(caption, "Caption")}>Copy</button>
             </div>
-            <textarea value={caption} rows={5} onChange={(e) => setCaptionEdit(e.target.value)} aria-label="Editable social media caption" />
+            <textarea value={caption} rows={5} onChange={(e) => { clearPostState(); setCaptionEdit(e.target.value); }} aria-label="Editable social media caption" />
           </div>
           <details className="social-save-details">
             <summary>Save & track content</summary>
             <div className="social-form-row">
               <label htmlFor="social-status">Status</label>
-              <select id="social-status" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <select id="social-status" value={status} onChange={(e) => { if (e.target.value !== "Published") setPublishedUrl(""); setStatus(e.target.value); }}>
                 {STATUS.map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
             </div>
