@@ -3,6 +3,11 @@ import { listClassCohorts } from "../services/liveClassService";
 import { normalizeScheduleRules } from "../utils/liveClassScheduling";
 import { useToast } from "../context/ToastContext";
 import SocialCourseContentCreator from "../components/SocialCourseContentCreator.jsx";
+import { QRCodeCanvas } from "qrcode.react";
+import {
+  CAMPAIGN_FORMATS, campaignClassEligibility, accraToday,
+  createClassCampaign, classCampaignManifest, isSafeCampaignUrl, makeCampaignZip,
+} from "../utils/socialClassCampaign.js";
 import "./SocialMediaPage.css";
 
 const FORMATS = [
@@ -126,7 +131,7 @@ function draftFromClass(klass = {}) {
   const startDate = formatDate(klass.startDate);
   const endDate = formatShortDate(klass.endDate);
   const mode = textValue(klass.learningMode, klass.mode, klass.location);
-  const fee = formatFee(textValue(klass.tuitionFee, klass.fee, klass.price, 3000));
+  const fee = formatFee(textValue(klass.tuitionGhs, klass.tuitionFee, klass.fee, klass.price));
   const classUrl = textValue(klass.classUrl, klass.registrationUrl, klass.url);
   const registerUrl = classUrl
     ? classUrl.startsWith("http") ? classUrl : `https://www.falowen.app${classUrl.startsWith("/") ? classUrl : `/${classUrl}`}`
@@ -138,7 +143,7 @@ function draftFromClass(klass = {}) {
     level: level || "German A1–C1",
     startDate: startDate || "Starting soon",
     schedule: formatSchedule(klass.scheduleRules),
-    mode: mode || "Online & in-person options",
+    mode,
     fee,
     duration: endDate ? `Runs until ${endDate}` : "",
     cta: "REGISTER NOW",
@@ -429,6 +434,40 @@ async function renderPoster(canvas, data, template, format, photoSrc, photoContr
   return true;
 }
 
+function drawRegistrationQr(canvas, qrCanvas) {
+  if (!canvas || !qrCanvas?.width || !qrCanvas?.height) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const width = canvas.width;
+  const height = canvas.height;
+  const size = Math.round(width * 0.125);
+  const gutter = Math.round(width * 0.010);
+  const frame = size + gutter * 2;
+  const x = width - frame - Math.round(width * 0.055);
+  const y = height - width * 0.19 - width * 0.065 - gutter;
+  ctx.save();
+  roundRect(ctx, x, y, frame, frame, Math.round(width * 0.009));
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  ctx.drawImage(qrCanvas, x + gutter, y + gutter, size, size);
+  ctx.restore();
+}
+function downloadBrowserBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function toPngBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not export campaign image.")), "image/png");
+  });
+}
+
 function Field({ label, value, onChange, placeholder = "" }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
@@ -453,9 +492,14 @@ function Slider({ label, value, min, max, step = 1, onChange, suffix = "" }) {
 export default function SocialMediaPage() {
   const { pushToast } = useToast();
   const canvasRef = useRef(null);
+  const qrCanvasRef = useRef(null);
   const renderVersionRef = useRef(0);
   const isNarrow = useNarrowWorkspace();
   const [activeTab, setActiveTab] = useState("creator");
+  const [campaignMode, setCampaignMode] = useState(true);
+  const [campaignSlideId, setCampaignSlideId] = useState("registration");
+  const [includeQr, setIncludeQr] = useState(true);
+  const [exportingPack, setExportingPack] = useState(false);
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
@@ -472,9 +516,17 @@ export default function SocialMediaPage() {
   const template = useMemo(() => TEMPLATES.find((item) => item.id === templateId) || TEMPLATES[0], [templateId]);
   const format = useMemo(() => FORMATS.find((item) => item.id === formatId) || FORMATS[0], [formatId]);
   const selectedClass = useMemo(() => classes.find((item) => item.id === selectedClassId) || null, [classes, selectedClassId]);
+  const campaignSlides = useMemo(
+    () => selectedClass ? createClassCampaign(selectedClass, draft, accraToday()) : [],
+    [selectedClass, draft],
+  );
+  const selectedCampaign = campaignSlides.find((item) => item.id === campaignSlideId) || campaignSlides[0] || null;
+  const previewDraft = campaignMode && selectedCampaign ? selectedCampaign.data : draft;
+  const previewFormat = campaignMode && selectedCampaign ? CAMPAIGN_FORMATS[selectedCampaign.format] : format;
+  const qrValue = isSafeCampaignUrl(draft.website) ? draft.website : "";
   const posterSignature = useMemo(
-    () => JSON.stringify({ draft, templateId, formatId, photoSrc, photoControls }),
-    [draft, templateId, formatId, photoSrc, photoControls],
+    () => JSON.stringify({ previewDraft, previewFormat, templateId, campaignMode, campaignSlideId, includeQr, qrValue, photoSrc, photoControls }),
+    [previewDraft, previewFormat, templateId, campaignMode, campaignSlideId, includeQr, qrValue, photoSrc, photoControls],
   );
   const exportReady = !photoReading && !rendering && renderedSignature === posterSignature;
 
@@ -483,12 +535,10 @@ export default function SocialMediaPage() {
       setLoading(true);
       setError("");
       try {
-        const rows = (await listClassCohorts()).filter((klass) => {
-          const status = String(klass.status || "").toLowerCase();
-          const start = String(klass.startDate || "").slice(0, 10);
-          const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Accra", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-          return !["archived", "graduated", "cancelled", "completed", "active"].includes(status) && /^\d{4}-\d{2}-\d{2}$/.test(start) && start >= today;
-        }).sort(classSort);
+        const today = accraToday();
+        const rows = (await listClassCohorts())
+          .filter((klass) => campaignClassEligibility(klass, today))
+          .sort(classSort);
         setClasses(rows);
         const preferred = rows.find((item) => String(item.status || "").toLowerCase() === "upcoming") || rows[0] || null;
         if (preferred) {
