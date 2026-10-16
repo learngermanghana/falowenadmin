@@ -78,6 +78,8 @@ jobs:
         run: node --test tests/a1-02-unnumbered-trailing-objective-text.test.js
       - name: Verify B1 Day 18 replacement and B1 presenter practice spine
         run: node --test tests/b1-day18-teacher-career-challenge.test.js tests/b1-presenter-v2-all-days.test.js tests/b1-six-teacher-challenges.test.js tests/a2-b1-reflective-wrapup.test.js
+      - name: Verify A2/B1 reading evidence labels and teacher answers
+        run: node --test tests/presenter-reading-and-clarification.test.js tests/a2-b1-curated-knowledge-answers.test.js tests/presenter-vocabulary-cloze-a2-c2.test.js
       - name: Verify twelve A2 scenario challenge replacements
         run: node --test tests/a2-twelve-teacher-challenges.test.js
       - name: Verify A2 warm-up followups and Wortschatz questions
