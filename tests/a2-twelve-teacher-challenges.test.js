@@ -42,7 +42,9 @@ test("A2 selected days replace one practice page; all 28 retain exact nine-stage
   assert.deepEqual(ids.slice(-3),["questions","workbook","lesson-summary"],slide.assignmentId);
   assert.equal(ids[5],days.has(slide.assignmentId)?"scenario-challenge":"practice",slide.assignmentId);
   assert.equal(ids.filter(id=>["practice","scenario-challenge"].includes(id)).length,1,slide.assignmentId);
-  assert.ok(stages[7].workbookUrl,slide.assignmentId);
+  assert.equal(stages[7].type,"clarification",slide.assignmentId);
+  assert.equal(stages[7].title,"Was ist noch unklar?",slide.assignmentId);
+  assert.ok(stages[7].items.some(item=>item.label==="Grammatik"),slide.assignmentId);
   if(days.has(slide.assignmentId)) {
    assert.equal(stages[5].items,getA2TeacherChallenge(slide.assignmentId).scenarios);
    assert.match(stages[5].teacherPurpose.teacher,/No student login or submission/);
