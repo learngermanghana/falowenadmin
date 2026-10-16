@@ -4,7 +4,7 @@ function lesson(id, title, sentences, purpose, checks) {
   return [id, {
     title, textDe: sentences.join(" "), readingPurpose: purpose,
     checks: checks.map(([question]) => question),
-    answers: checks.map(([, answer, evidence]) => `${answer} Beleg: Satz ${evidence}.`),
+    answers: checks.map(([, answer, evidence]) => `${answer} Beleg: ${/^\d+$/.test(String(evidence).trim()) ? "Satz" : "Sätze"} ${evidence}.`),
     evidence: checks.map(([, , evidence]) => evidence),
   }];
 }
@@ -549,16 +549,16 @@ export const PRESENTER_READING_LESSONS = Object.fromEntries([
     ["Welche Bereiche werden geteilt?", "Küche und Bad sind gemeinsam; die einzelnen Zimmer bleiben private Bereiche.", "2, 4"],
     ["Behauptung: Nach der Vereinbarung gibt es für Ama keine Nachteile mehr. Stimmt das?", "Nein: Sie vermisst weiterhin manchmal mehr Ruhe, entscheidet sich aber trotzdem fürs Bleiben.", "5"]
   ]),
-  lesson("B1-7.22", "Hilfe braucht eine Absprache", [
-    "Kojo hilft seiner Schwester häufig bei Behördenterminen und sagt zunächst jede Bitte sofort zu.",
-    "Als mehrere Termine mit seinem Kurs zusammenfallen, ärgert er sich, spricht aber lange nicht darüber.",
-    "Seine Schwester weiß deshalb nicht, dass die Hilfe für ihn schwierig geworden ist.",
-    "In einem Gespräch vereinbaren sie, Termine früher abzustimmen und bei Bedarf eine andere Unterstützung zu suchen.",
-    "Kojo möchte weiter helfen, ohne dafür regelmäßig seinen Unterricht zu verpassen."
-  ], "Findet heraus, welche unausgesprochene Erwartung das Problem verschärft.", [
-    ["Was ermöglicht eine bessere Lösung?", "Kojo spricht seine Grenze offen an, sodass beide die Unterstützung gemeinsam planen können.", "2–5"],
-    ["Warum erkennt die Schwester das Problem zunächst nicht?", "Kojo sagt zu und spricht seinen Ärger lange nicht aus; sie kennt seine Schwierigkeit nicht.", "1–3"],
-    ["Kojos Grenze dient auch dazu, seine Hilfe langfristig mit seinem Alltag zu verbinden. Belegt?", "Ja: Er möchte weiter unterstützen und gleichzeitig regelmäßige Kursbesuche ermöglichen; deshalb wird gemeinsam geplant.", "4–5"]
+  lesson("B1-7.22", "Erwartungen in einer Partnerschaft", [
+    "Leila und Tom haben sich über eine Dating-App kennengelernt und sind seit drei Monaten ein Paar.",
+    "Leila möchte die Wochenenden oft gemeinsam verbringen, während Tom auch Zeit für seine Freunde braucht.",
+    "Als Tom zwei Treffen kurzfristig absagt, glaubt Leila zunächst, dass ihm die Beziehung nicht wichtig ist.",
+    "In einem ruhigen Gespräch erklären beide ihre Erwartungen und vereinbaren, gemeinsame Termine früher abzusprechen.",
+    "Sie sind sich einig, dass Online-Dating neue Kontakte ermöglicht, eine Beziehung, in der man einander vertraut und respektiert, aber mehr braucht als schöne Profile."
+  ], "Erkennt unterschiedliche Erwartungen an eine Partnerschaft und bewertet die Grenzen des Online-Datings.", [
+    ["Welche unterschiedlichen Erwartungen haben Leila und Tom?", "Leila möchte oft gemeinsame Wochenenden verbringen, Tom braucht auch Zeit für seine Freunde.", "2"],
+    ["Warum zweifelt Leila zunächst an Toms Interesse, und wie lösen sie das Problem?", "Tom sagt Treffen kurzfristig ab; sie klären ihre Erwartungen in einem Gespräch und sprechen Termine künftig früher ab.", "3–4"],
+    ["Wie beurteilen die beiden Online-Dating und die Werte in einer Beziehung?", "Eine Dating-App kann das Kennenlernen erleichtern; für eine Partnerschaft sind Vertrauen und gegenseitiger Respekt wichtiger als schöne Profile.", "1, 5"]
   ]),
   lesson("B1-7.23", "Ein erstes Treffen ohne Druck", [
     "Lea und Ben verabreden sich nach einigen Nachrichten zum ersten Mal in einem Café.",
@@ -575,7 +575,7 @@ export const PRESENTER_READING_LESSONS = Object.fromEntries([
     "Saras Waschmaschine funktioniert nach acht Jahren nicht mehr zuverlässig, und sie überlegt, ein sparsameres Modell zu kaufen.",
     "Eine Werkstatt stellt fest, dass nur ein kleines Teil ersetzt werden muss.",
     "Sara vergleicht deshalb nicht nur Stromverbrauch und Preis, sondern auch Material und Aufwand für die Herstellung einer neuen Maschine.",
-    "Da die Reparatur bezahlbar ist, lässt sie das vorhandene Gerät weiter nutzen.",
+    "Da die Reparatur bezahlbar ist, lässt Sara die Maschine reparieren und nutzt sie danach weiter.",
     "Für sie ist ein neues Produkt nicht automatisch nachhaltiger, nur weil es im Betrieb weniger Energie verbraucht."
   ], "Erkennt, welche zusätzlichen Faktoren Saras Entscheidung beeinflussen.", [
     ["Warum entscheidet Sara sich für eine Reparatur?", "Ein kleines Teil reicht aus, die Reparatur ist bezahlbar und vermeidet zunächst eine Neuanschaffung.", "2–4"],

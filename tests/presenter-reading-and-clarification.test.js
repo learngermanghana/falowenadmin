@@ -67,3 +67,37 @@ test("clarification UI invites questions without an answer-reveal exercise", () 
   assert.match(branch, /30 Sekunden/);
   assert.doesNotMatch(branch, /<button|modelItems|answerItems|Open workbook/);
 });
+
+
+test("evidence labels use Satz for one sentence and Sätze for lists or ranges", () => {
+  let singleCount = 0;
+  let pluralCount = 0;
+  for (const [id, reading] of Object.entries(PRESENTER_READING_LESSONS)) {
+    reading.evidence.forEach((reference, index) => {
+      const expected = /^\\d+$/.test(String(reference).trim()) ? "Satz" : "Sätze";
+      assert.ok(reading.answers[index].endsWith(`Beleg: ${expected} ${reference}.`),
+        `${id}: wrong evidence label for ${reference}`);
+      if (expected === "Satz") singleCount++; else pluralCount++;
+    });
+  }
+  assert.ok(singleCount > 0 && pluralCount > 0, "the readings need both evidence forms");
+  assert.match(PRESENTER_READING_LESSONS["B1-7.23"].answers[0], /Beleg: Sätze 2–3, 5\\.$/);
+});
+
+test("B1-7.22 reading stays aligned with partners, relationship values and online dating", () => {
+  const relationship = PRESENTER_READING_LESSONS["B1-7.22"];
+  assert.match(relationship.textDe, /Dating-App/);
+  assert.match(relationship.textDe, /ein Paar/);
+  assert.match(relationship.textDe, /Erwartungen/);
+  assert.match(relationship.textDe, /einander vertraut und respektiert/);
+  assert.match(relationship.readingPurpose, /Online-Dating/);
+  assert.match(relationship.answers[2], /Vertrauen und gegenseitiger Respekt/);
+  assert.doesNotMatch(relationship.textDe, /Schwester|Behördentermine|Unterricht verpassen/);
+});
+
+test("B1-8.24 names the repair and continued use without an unintended causative", () => {
+  const repair = PRESENTER_READING_LESSONS["B1-8.24"];
+  assert.match(repair.textDe, /lässt Sara die Maschine reparieren und nutzt sie danach weiter/);
+  assert.doesNotMatch(repair.textDe, /lässt sie das vorhandene Gerät weiter nutzen/);
+  assert.match(repair.answers[0], /Reparatur/);
+});
