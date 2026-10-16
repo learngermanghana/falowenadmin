@@ -5,6 +5,7 @@ import {
   getA1WorkbookAlignedSlideDay6To10,
 } from "../src/data/a1WorkbookAlignedSlidesDays6To10.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
+import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 
 const EXPECTED = {
@@ -24,7 +25,7 @@ const EXPECTED = {
     day: 8,
     grammarRoute: "/campus/course/forming-basic-statements-german-a1-day-8",
     workbookRoute: "/campus/course/a1-day-8-countries-and-languages-workbook",
-    supportTerms: ["woher", "wohin", "nach", "in die Schweiz", "war/hatte"],
+    supportTerms: ["woher", "wohin", "nach", "in die Schweiz", "man spricht", "du sprichst"],
   },
   "A1-5": {
     day: 9,
@@ -129,4 +130,24 @@ test("A1-6 Day 10 keeps colors in grammar support and apartment tasks in the wor
   assert.match(part(slide, "Grammar").detailEn, /colors/i);
   assert.match(part(slide, "Teil 2 · Questions").detailEn, /Die Wohnung/i);
   assert.equal(slide.workbookConnection.parts.some((entry) => /Teil .*Color/i.test(entry.label)), false);
+});
+
+test("A1 Day 8 travel dialogue is a dedicated Admin slide, not part of the grammar text", () => {
+  const slide = getA1WorkbookAlignedSlideDay6To10("A1-4");
+  const stages = buildTeachingPresenterStages(slide);
+  const roleplay = stages.filter((stage) => stage.id === "travel-dialogue");
+  assert.equal(roleplay.length, 1, "Exactly one dedicated classroom role-play stage");
+  assert.equal(roleplay[0].type, "dialogue");
+  assert.equal(roleplay[0].title, "Eine Reise nach Deutschland");
+  assert.equal(roleplay[0].subtitle, "A trip to Germany");
+  assert.deepEqual(roleplay[0].turns, [
+    { questionDe: "Woher kommst du?", questionEn: "Where are you from?", answerDe: "Ich komme aus Ghana." },
+    { questionDe: "Wohin fährst du?", questionEn: "Where are you travelling to?", answerDe: "Ich fahre nach Deutschland." },
+    { questionDe: "Welche Sprache sprichst du?", questionEn: "What language do you speak?", answerDe: "Ich spreche Englisch und ein bisschen Deutsch." },
+  ]);
+  const ids = stages.map((stage) => stage.id);
+  assert.ok(ids.indexOf("travel-dialogue") > ids.indexOf("practice"));
+  assert.ok(ids.indexOf("travel-dialogue") < ids.indexOf("workbook"));
+  assert.doesNotMatch(slide.teacherSupport.grammarFocusEn.join(" "), /war\/hatte|Präteritum|liegen/i);
+  assert.match(slide.workbookConnection.subtitle, /three-part workbook/i);
 });
