@@ -74,7 +74,7 @@ test("other levels retain lesson-level model support", () => {
     for (const slide of getSlidesByCourse(level)) {
       const stage = buildTeachingPresenterStages(slide).find((item) => item.type === "question-reveal");
       if (!stage) continue;
-      assert.equal(stage.requiresQuestionModel, false);
+      assert.equal(stage.requiresQuestionModel, level === "A1" && slide.assignmentId === "A1-3");
       assert.ok(stage.supportItems.length > 0);
     }
   }

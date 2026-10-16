@@ -175,10 +175,16 @@ const B1_KNOWLEDGE = {
   "B1-6.20": {
     ...getPresenterReadingLesson("B1-6.20"),
     activity: {
-      title: "Muss, kann, hilfreich",
-      instruction: "Sortiert die Qualifikationen in zwingend, möglich oder hilfreich. Begründet eure Einteilung.",
-      prompts: ["Studium", "Praktikum", "Sprachzertifikat", "Berufserfahrung"],
-      modelItems: ["Je nach Beruf muss man ein Studium oder eine Ausbildung abschließen.", "Ein Praktikum kann hilfreich sein, um Erfahrung zu sammeln."],
+      title: "Stellenanzeigen-Check · Muss, kann, hilfreich",
+      instruction: "Lehrkraft: Lies zuerst die konkrete Stellenanzeige. Stelle eine Frage zu Pflicht (muss), eine zu Vorteil (hilfreich) und eine zu freiwilligen Möglichkeiten (kann). Antworten gelten nur für diese Stelle. Erst danach Modell anzeigen.",
+      prompts: [
+        "Hotelrezeption: Deutsch-B2-Zertifikat ist Pflicht; Berufserfahrung von Vorteil; Praktikum freiwillig; Studium nicht verlangt.",
+        "Welche Qualifikation muss man laut dieser Anzeige haben? Welche ist hilfreich? Was kann man freiwillig machen?",
+      ],
+      modelItems: [
+        "Für diese Hotelstelle muss man ein B2-Sprachzertifikat haben.",
+        "Berufserfahrung ist hilfreich. Man kann freiwillig ein Praktikum machen. Ein Studium ist hier keine Voraussetzung.",
+      ],
     },
   },
   "B1-7.21": {

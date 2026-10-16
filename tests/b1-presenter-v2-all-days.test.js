@@ -1,5 +1,5 @@
 import test from "node:test";
-const TEACHER_CHALLENGE_IDS = new Set(["B1-2.5","B1-3.8","B1-4.12","B1-6.19","B1-8.25","B1-9.26"]);
+const TEACHER_CHALLENGE_IDS = new Set(["B1-2.5","B1-3.8","B1-4.12","B1-6.19","B1-6.20","B1-8.25","B1-9.26"]);
 
 import assert from "node:assert/strict";
 

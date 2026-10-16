@@ -6,6 +6,7 @@ import {
 } from "../src/data/a1WorkbookAlignedSlidesDays6To10.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
 import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
+import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 const EXPECTED = {
   "A1-2.3": {
@@ -129,4 +130,24 @@ test("A1-6 Day 10 keeps colors in grammar support and apartment tasks in the wor
   assert.match(part(slide, "Grammar").detailEn, /colors/i);
   assert.match(part(slide, "Teil 2 · Questions").detailEn, /Die Wohnung/i);
   assert.equal(slide.workbookConnection.parts.some((entry) => /Teil .*Color/i.test(entry.label)), false);
+});
+
+
+test("A1 Day 7 presenter tests price questions, pronouns and preferences with revealable answers", () => {
+  const slide = getA1WorkbookAlignedSlideDay6To10("A1-3");
+  const stages = buildTeachingPresenterStages(slide, slide.topic);
+  const questions = stages.find((stage) => stage.id === "questions");
+  assert.equal(questions.type, "question-reveal");
+  assert.match(questions.title, /Wissenscheck/);
+  assert.equal(questions.items.length, 10);
+  assert.equal(questions.questionModels.length, questions.items.length);
+  assert.equal(questions.requiresQuestionModel, true);
+  for (const prompt of questions.items) {
+    assert.ok(questions.questionModels.some((model) => model.questionDe === prompt && model.modelAnswerDe));
+  }
+  const searchable = questions.questionModels.map((model) => model.modelAnswerDe).join(" ");
+  for (const pattern of [/Wie viel kostet der Tisch/, /Wie viel kosten die Bücher/, /Er kostet/, /Sie kostet/, /Es kostet/, /Sie kosten/, /Ich mag/, /höre gern/, /spiele lieber/]) {
+    assert.match(searchable, pattern);
+  }
+  assert.match(questions.instruction, /Modellantwort aufdecken/);
 });

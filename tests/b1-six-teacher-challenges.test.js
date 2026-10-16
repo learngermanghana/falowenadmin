@@ -10,11 +10,12 @@ const REQUIRED = new Map([
   ["B1-3.8", "Health Coach"],
   ["B1-4.12", "Adventure Builder"],
   ["B1-6.19", "Interview Challenge"],
+  ["B1-6.20", "Stellenanzeigen-Check · Muss, kann, hilfreich"],
   ["B1-8.25", "Complaint Challenge"],
   ["B1-9.26", "Travel Rescue Mission"],
 ]);
 
-test("Six curriculum-aligned challenge definitions contain complete three-step scenario missions", () => {
+test("Seven curriculum-aligned challenge definitions contain complete three-step scenario missions", () => {
   assert.deepEqual(new Set(Object.keys(B1_TEACHER_CHALLENGES)), new Set(REQUIRED.keys()));
   for (const [assignmentId, title] of REQUIRED) {
     const activity = getB1TeacherChallenge(assignmentId);
@@ -34,7 +35,7 @@ test("Six curriculum-aligned challenge definitions contain complete three-step s
   assert.equal(getB1TeacherChallenge("B1-6.18"), null, "Career challenge must remain distinct");
 });
 
-test("All six B1 missions replace focused practice with no duplicate slide, preserving grammar, speaking and workbook", () => {
+test("All seven B1 missions replace focused practice with no duplicate slide, preserving grammar, speaking and workbook", () => {
   const slides = getSlidesByCourse("B1");
   for (const [assignmentId, title] of REQUIRED) {
     const slide = slides.find(x => x.assignmentId === assignmentId);
@@ -120,6 +121,8 @@ test("Each day's specific workbook grammar and real-life situation shape its mod
   }
   assert.match(content("B1-6.19"), /Wie würden Sie/);
   assert.match(content("B1-6.19"), /Könnten Sie/);
+  assert.match(content("B1-6.20"), /Sprachzertifikat|Berufserfahrung/);
+  assert.match(content("B1-6.20"), /muss|hilfreich|kann/i);
   assert.match(content("B1-8.25"), /Größe 42|Kopfhörer|Expresslieferung/);
   assert.match(content("B1-8.25"), /Deshalb|dass/);
   assert.match(content("B1-9.26"), /Wenn|Falls/);
