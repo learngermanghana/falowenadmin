@@ -24,7 +24,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Deine Lehrerin kommt in den Raum.",
       "prompt": "Die Lehrkraft sagt: „Guten Morgen! Wie geht es Ihnen?“ Antworte.",
       "model": "Mir geht es gut, danke. Und Ihnen?",
-      "note": "Akzeptiere auch „Gut, danke“; prüfe die höfliche Anrede."
+      "note": "Akzeptiere auch „Gut, danke“; prüfe die höfliche Anrede.",
+      "second": {
+        "situation": "Ein Lehrer kommt am Abend.",
+        "prompt": "Die Lehrkraft sagt: „Guten Abend!“ Antworte höflich.",
+        "model": "Guten Abend!",
+        "note": "Auch „Guten Abend! Wie geht es Ihnen?“ ist möglich."
+      }
     }
   },
   "A1-0.2": {
@@ -48,7 +54,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Dein Partner kann das Wort nicht lesen.",
       "prompt": "Die Lehrkraft sagt: „Wie buchstabiert man Schule?“ Buchstabiere es.",
       "model": "S – C – H – U – L – E.",
-      "note": "Es geht um Buchstabennamen, nicht um das Vorlesen des ganzen Wortes."
+      "note": "Es geht um Buchstabennamen, nicht um das Vorlesen des ganzen Wortes.",
+      "second": {
+        "situation": "Du buchstabierst ein Wort für deinen Partner.",
+        "prompt": "Die Lehrkraft fragt: „Wie buchstabiert man Wasser?“",
+        "model": "W – A – S – S – E – R.",
+        "note": "Alle Buchstaben einzeln auf Deutsch sprechen."
+      }
     }
   },
   "A1-1.1": {
@@ -72,7 +84,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du sprichst mit einem anderen Lernenden.",
       "prompt": "Die Lehrkraft fragt: „Lernst du Deutsch?“ Antworte mit einem ganzen Satz.",
       "model": "Ja, ich lerne Deutsch.",
-      "note": "Für „ich“: lerne, nicht lernen."
+      "note": "Für „ich“: lerne, nicht lernen.",
+      "second": {
+        "situation": "Ein Mitschüler fragt nach deinem Wohnort.",
+        "prompt": "Die Lehrkraft fragt: „Wohnst du in Accra?“ Antworte.",
+        "model": "Ja, ich wohne in Accra.",
+        "note": "ich wohne, nicht ich wohnen."
+      }
     }
   },
   "A1-1.1-PRACTICE": {
@@ -96,7 +114,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Dein Partner nennt eine Antwort.",
       "prompt": "Die Lehrkraft sagt: „Ich wohne in Accra.“ Stelle die passende Frage.",
       "model": "Wo wohnst du?",
-      "note": "Wo fragt nach dem Ort; die Frage beginnt mit Wo + wohnst."
+      "note": "Wo fragt nach dem Ort; die Frage beginnt mit Wo + wohnst.",
+      "second": {
+        "situation": "Du triffst eine neue Person.",
+        "prompt": "Die Lehrkraft fragt: „Wie heißt du?“ Antworte.",
+        "model": "Ich heiße Ama.",
+        "note": "Ein eigener Name ist richtig; Wie fragt nach dem Namen."
+      }
     }
   },
   "A1-1.2": {
@@ -120,7 +144,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Dein Partner fragt nach mehreren Personen.",
       "prompt": "Die Lehrkraft fragt: „Spielt ihr Fußball?“ Antworte mit „wir“.",
       "model": "Ja, wir spielen Fußball.",
-      "note": "Bei wir steht die Endung -en."
+      "note": "Bei wir steht die Endung -en.",
+      "second": {
+        "situation": "Du sprichst über einen Kollegen.",
+        "prompt": "Die Lehrkraft fragt: „Arbeitet er im Büro?“ Antworte.",
+        "model": "Ja, er arbeitet im Büro.",
+        "note": "Bei arbeiten mit er ist -et erforderlich."
+      }
     }
   },
   "A1-2": {
@@ -144,7 +174,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du hörst eine Zahl im Geschäft.",
       "prompt": "Die Lehrkraft fragt: „Wie sagt man 21 auf Deutsch?“ Antworte laut.",
       "model": "einundzwanzig.",
-      "note": "Erst ein, dann undzwanzig; nicht zwanzigeins."
+      "note": "Erst ein, dann undzwanzig; nicht zwanzigeins.",
+      "second": {
+        "situation": "Du hörst eine weitere Zahl.",
+        "prompt": "Die Lehrkraft fragt: „Wie sagt man 50 auf Deutsch?“",
+        "model": "fünfzig.",
+        "note": "Achte auf fünfzig, nicht fünzig."
+      }
     }
   },
   "A1-1.3": {
@@ -168,7 +204,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Dein Partner beginnt ein Gespräch.",
       "prompt": "Die Lehrkraft fragt: „Woher kommst du?“ Antworte in einem Satz.",
       "model": "Ich komme aus Ghana.",
-      "note": "Eine andere wahre Herkunftsangabe ist ebenfalls richtig."
+      "note": "Eine andere wahre Herkunftsangabe ist ebenfalls richtig.",
+      "second": {
+        "situation": "Du stellst dich einem Partner vor.",
+        "prompt": "Die Lehrkraft fragt: „Wo wohnst du?“ Antworte.",
+        "model": "Ich wohne in Accra.",
+        "note": "Der eigene Wohnort ist richtig; wohne passt zu ich."
+      }
     }
   },
   "A1-2.3": {
@@ -192,7 +234,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Ein Freund stellt dir eine Frage.",
       "prompt": "Die Lehrkraft fragt: „Hast du einen Bruder?“ Antworte in einem ganzen Satz.",
       "model": "Ja, ich habe einen Bruder.",
-      "note": "„Nein, ich habe keinen Bruder“ ist ebenfalls richtig, wenn es zur Person passt."
+      "note": "„Nein, ich habe keinen Bruder“ ist ebenfalls richtig, wenn es zur Person passt.",
+      "second": {
+        "situation": "Du lernst eine neue Person kennen.",
+        "prompt": "Die Lehrkraft fragt: „Welche Sprachen sprichst du?“",
+        "model": "Ich spreche Englisch und ein bisschen Deutsch.",
+        "note": "Eine eigene wahre Sprachantwort zählt."
+      }
     }
   },
   "A1-3": {
@@ -216,7 +264,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Ein Kunde fragt dich nach einem Produkt.",
       "prompt": "Die Lehrkraft sagt: „Die Äpfel kosten vier Euro.“ Sage den Preis der Äpfel.",
       "model": "Die Äpfel kosten vier Euro.",
-      "note": "Bei Äpfel steht kosten, nicht kostet."
+      "note": "Bei Äpfel steht kosten, nicht kostet.",
+      "second": {
+        "situation": "Ein Kunde fragt nach dem Buch.",
+        "prompt": "Die Lehrkraft fragt: „Wie viel kostet das Buch?“ Antworte: acht Euro.",
+        "model": "Das Buch kostet acht Euro.",
+        "note": "Singular Buch nimmt kostet."
+      }
     }
   },
   "A1-4": {
@@ -240,7 +294,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du lernst jemanden im Unterricht kennen.",
       "prompt": "Die Lehrkraft fragt: „Sprichst du Deutsch?“ Antworte.",
       "model": "Ja, ich spreche ein bisschen Deutsch.",
-      "note": "Auch „Nein, ich spreche noch kein Deutsch“ passt."
+      "note": "Auch „Nein, ich spreche noch kein Deutsch“ passt.",
+      "second": {
+        "situation": "Eine Mitschülerin fragt nach deiner Heimat.",
+        "prompt": "Die Lehrkraft fragt: „Woher kommst du?“",
+        "model": "Ich komme aus Ghana.",
+        "note": "Ein anderes richtiges Herkunftsland ist möglich."
+      }
     }
   },
   "A1-5": {
@@ -264,7 +324,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du schaust aus dem Fenster.",
       "prompt": "Die Lehrkraft fragt: „Siehst du den Hund?“ Antworte mit dem ganzen Satz.",
       "model": "Ja, ich sehe den Hund.",
-      "note": "Bei sehen: der Hund → den Hund."
+      "note": "Bei sehen: der Hund → den Hund.",
+      "second": {
+        "situation": "Du kaufst Obst am Markt.",
+        "prompt": "Die Lehrkraft fragt: „Was kaufst du?“ Antworte mit Apfel.",
+        "model": "Ich kaufe einen Apfel.",
+        "note": "Maskuliner Akkusativ einen Apfel."
+      }
     }
   },
   "A1-6": {
@@ -288,7 +354,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Ein Freund fragt nach einem Möbelstück.",
       "prompt": "Die Lehrkraft fragt: „Ist das dein Tisch?“ Antworte mit „mein“.",
       "model": "Ja, das ist mein Tisch.",
-      "note": "der Tisch → mein Tisch; nicht meine Tisch."
+      "note": "der Tisch → mein Tisch; nicht meine Tisch.",
+      "second": {
+        "situation": "Du zeigst dein Zimmer.",
+        "prompt": "Die Lehrkraft fragt: „Welche Farbe hat deine Lampe?“ Antworte.",
+        "model": "Meine Lampe ist rot.",
+        "note": "Nach sein steht die Farbe ohne zusätzliche Adjektivendung."
+      }
     }
   },
   "A1-7": {
@@ -312,7 +384,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Dein Partner hat keine Uhr.",
       "prompt": "Die Lehrkraft fragt: „Wie spät ist es? Es ist 8:30 Uhr.“ Antworte mit „halb“.",
       "model": "Es ist halb neun.",
-      "note": "Bei halb nennt man die nächste Stunde."
+      "note": "Bei halb nennt man die nächste Stunde.",
+      "second": {
+        "situation": "Ein Freund hat die Uhrzeit nicht verstanden.",
+        "prompt": "Die Lehrkraft sagt: „Es ist 7:15 Uhr.“ Sage die Uhrzeit mit Viertel.",
+        "model": "Es ist Viertel nach sieben.",
+        "note": "Viertel nach sieben entspricht 7:15."
+      }
     }
   },
   "A1-8": {
@@ -336,7 +414,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Jemand nennt dir eine Uhrzeit.",
       "prompt": "Die Lehrkraft sagt: „Der Kurs beginnt um 16:00 Uhr.“ Wiederhole den Termin.",
       "model": "Der Kurs beginnt um sechzehn Uhr.",
-      "note": "Beim 24-Stunden-System: sechzehn Uhr, nicht sechs Uhr."
+      "note": "Beim 24-Stunden-System: sechzehn Uhr, nicht sechs Uhr.",
+      "second": {
+        "situation": "Du hörst eine neue Kurszeit.",
+        "prompt": "Die Lehrkraft sagt: „Der Unterricht beginnt um 18:00 Uhr.“ Wiederhole die Zeit.",
+        "model": "Der Unterricht beginnt um achtzehn Uhr.",
+        "note": "Eine offizielle 24-Stunden-Angabe."
+      }
     }
   },
   "A1-3.5": {
@@ -360,7 +444,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du hast den Preis nicht verstanden.",
       "prompt": "Die Lehrkraft sagt: „Das Ticket kostet zwölf Euro.“ Frage höflich nach dem Preis.",
       "model": "Wie viel kostet das Ticket?",
-      "note": "Als kurze Rückfrage passt auch: „Zwölf Euro?“"
+      "note": "Als kurze Rückfrage passt auch: „Zwölf Euro?“",
+      "second": {
+        "situation": "Du stehst vor dem Kino.",
+        "prompt": "Die Lehrkraft fragt: „Wie spät ist es? 8:30 Uhr.“ Antworte mit halb.",
+        "model": "Es ist halb neun.",
+        "note": "halb neun bedeutet 8:30."
+      }
     }
   },
   "A1-3.6": {
@@ -384,7 +474,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du hast noch Hausaufgaben.",
       "prompt": "Die Lehrkraft fragt: „Kannst du heute ins Kino gehen?“ Antworte mit „müssen“.",
       "model": "Nein, ich muss Deutsch lernen.",
-      "note": "Das Vollverb lernen steht am Ende."
+      "note": "Das Vollverb lernen steht am Ende.",
+      "second": {
+        "situation": "Deine Freundin fragt nach deinen Hausaufgaben.",
+        "prompt": "Die Lehrkraft fragt: „Musst du heute Deutsch lernen?“ Antworte.",
+        "model": "Ja, ich muss heute Deutsch lernen.",
+        "note": "Das Vollverb lernen steht am Ende."
+      }
     }
   },
   "A1-4.7": {
@@ -408,7 +504,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Deine Lehrkraft spielt kurz den Prüfer.",
       "prompt": "Die Lehrkraft fragt: „Wie heißen Sie?“ Antworte mit einem ganzen Satz.",
       "model": "Ich heiße Ama.",
-      "note": "Nutze die höfliche Prüfungsfrage mit Sie; eigener Name ist richtig."
+      "note": "Nutze die höfliche Prüfungsfrage mit Sie; eigener Name ist richtig.",
+      "second": {
+        "situation": "Eine kurze Frage in der Prüfung.",
+        "prompt": "Die Lehrkraft fragt höflich: „Wo wohnen Sie?“ Antworte.",
+        "model": "Ich wohne in Accra.",
+        "note": "Eigener Ort erlaubt; antworten mit ich wohne."
+      }
     }
   },
   "A1-9": {
@@ -432,7 +534,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du bestellst ein Getränk.",
       "prompt": "Die Lehrkraft fragt: „Möchtest du einen Kaffee?“ Du möchtest keinen Kaffee. Antworte.",
       "model": "Nein, danke. Ich möchte keinen Kaffee.",
-      "note": "keinen gehört zum maskulinen Akkusativ Kaffee."
+      "note": "keinen gehört zum maskulinen Akkusativ Kaffee.",
+      "second": {
+        "situation": "Dein Freund fragt nach Milch.",
+        "prompt": "Die Lehrkraft fragt: „Hast du Milch?“ Du hast keine. Antworte.",
+        "model": "Nein, ich habe keine Milch.",
+        "note": "Milch ist feminin: keine Milch."
+      }
     }
   },
   "A1-10": {
@@ -456,7 +564,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Ein Freund fragt nach deinem Tagesablauf.",
       "prompt": "Die Lehrkraft fragt: „Wann frühstückst du?“ Antworte mit einer Uhrzeit.",
       "model": "Ich frühstücke um sieben Uhr.",
-      "note": "Die eigene echte Uhrzeit ist auch richtig."
+      "note": "Die eigene echte Uhrzeit ist auch richtig.",
+      "second": {
+        "situation": "Ihr unterhaltet euch über den Abend.",
+        "prompt": "Die Lehrkraft fragt: „Was machst du abends?“ Antworte mit kochen.",
+        "model": "Abends koche ich.",
+        "note": "Verb koche auf Position 2 nach Abends."
+      }
     }
   },
   "A1-11": {
@@ -480,7 +594,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du stehst vor dem Bahnhof.",
       "prompt": "Die Lehrkraft fragt: „Entschuldigung, wie komme ich zum Bahnhof?“ Gib eine einfache Weganweisung.",
       "model": "Gehen Sie bitte geradeaus.",
-      "note": "Eine andere klare Richtung ist richtig, wenn die Situation sie erlaubt."
+      "note": "Eine andere klare Richtung ist richtig, wenn die Situation sie erlaubt.",
+      "second": {
+        "situation": "Ein Tourist braucht Hilfe.",
+        "prompt": "Die Lehrkraft fragt: „Wie komme ich zur Post?“ Sage: rechts abbiegen.",
+        "model": "Biegen Sie rechts ab.",
+        "note": "Imperativ mit Sie: Biegen Sie."
+      }
     }
   },
   "A1-12.1": {
@@ -504,7 +624,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du legst ein Buch auf einen Tisch.",
       "prompt": "Die Lehrkraft fragt: „Wohin legst du das Buch?“ Antworte.",
       "model": "Ich lege das Buch auf den Tisch.",
-      "note": "Wohin? → auf den Tisch (Akkusativ)."
+      "note": "Wohin? → auf den Tisch (Akkusativ).",
+      "second": {
+        "situation": "Ein Buch befindet sich auf einem Tisch.",
+        "prompt": "Die Lehrkraft fragt: „Wo liegt das Buch?“ Antworte.",
+        "model": "Das Buch liegt auf dem Tisch.",
+        "note": "Wo? bezeichnet den Ort; hier Dativ dem."
+      }
     }
   },
   "A1-12.2": {
@@ -528,7 +654,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Du fragst deinen Partner nach seinem Beruf.",
       "prompt": "Die Lehrkraft fragt: „Was machst du beruflich?“ Antworte als Schüler oder Schülerin.",
       "model": "Ich bin Schüler. / Ich bin Schülerin.",
-      "note": "Auch eine andere passende echte Berufsaussage ist richtig."
+      "note": "Auch eine andere passende echte Berufsaussage ist richtig.",
+      "second": {
+        "situation": "Deine Freundin arbeitet bei einer Bank.",
+        "prompt": "Die Lehrkraft fragt: „Wo arbeitet deine Freundin?“",
+        "model": "Sie arbeitet bei einer Bank.",
+        "note": "bei einer Bank nennt den Arbeitgeber."
+      }
     }
   },
   "A1-12.3": {
@@ -552,7 +684,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Deine Freundin möchte eine Zusage.",
       "prompt": "Die Lehrkraft sagt: „Kommst du am Samstag zu meiner Feier?“ Antworte höflich.",
       "model": "Ja, gern! Vielen Dank für die Einladung.",
-      "note": "Achte auf eine echte Antwort und eine passende Höflichkeitsformel."
+      "note": "Achte auf eine echte Antwort und eine passende Höflichkeitsformel.",
+      "second": {
+        "situation": "Ein Freund bedankt sich für deine Nachricht.",
+        "prompt": "Die Lehrkraft sagt: „Danke für deine Nachricht!“ Reagiere freundlich.",
+        "model": "Gern! Viele Grüße!",
+        "note": "Im informellen Kontext ist Viele Grüße möglich."
+      }
     }
   },
   "A1-13": {
@@ -576,7 +714,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Eine Freundin fragt nach dem Wetter.",
       "prompt": "Die Lehrkraft fragt: „Wie ist das Wetter bei dir?“ Antworte mit einem Wettersatz.",
       "model": "Es ist heute sonnig.",
-      "note": "„Es regnet“ oder „Es ist kalt“ sind ebenso richtig, je nach Wetter."
+      "note": "„Es regnet“ oder „Es ist kalt“ sind ebenso richtig, je nach Wetter.",
+      "second": {
+        "situation": "Du hörst die Wetterfrage.",
+        "prompt": "Die Lehrkraft fragt: „Regnet es heute?“ Antworte mit Ja.",
+        "model": "Ja, heute regnet es.",
+        "note": "Es regnet, ohne zusätzliches ist."
+      }
     }
   },
   "A1-14.1": {
@@ -600,7 +744,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Der Arzt stellt dir eine Frage.",
       "prompt": "Die Lehrkraft fragt: „Was tut Ihnen weh?“ Antworte mit „Bauch“.",
       "model": "Mein Bauch tut weh.",
-      "note": "Ein Körperteil reicht, aber der ganze Satz ist das Übungsziel."
+      "note": "Ein Körperteil reicht, aber der ganze Satz ist das Übungsziel.",
+      "second": {
+        "situation": "Du bist beim Arzt.",
+        "prompt": "Die Lehrkraft fragt: „Sind Sie krank?“ Antworte.",
+        "model": "Ja, ich bin krank.",
+        "note": "krank mit sein: ich bin krank."
+      }
     }
   },
   "A1-14.2": {
@@ -624,7 +774,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Dein Freund braucht Unterstützung.",
       "prompt": "Die Lehrkraft fragt: „Hilfst du dem Mann?“ Antworte mit einem ganzen Satz.",
       "model": "Ja, ich helfe dem Mann.",
-      "note": "Bei helfen bleibt der Mann im Dativ: dem Mann."
+      "note": "Bei helfen bleibt der Mann im Dativ: dem Mann.",
+      "second": {
+        "situation": "Du stehst neben einem Mann.",
+        "prompt": "Die Lehrkraft fragt: „Siehst du den Mann?“ Antworte.",
+        "model": "Ja, ich sehe den Mann.",
+        "note": "sehen + Akkusativ: den Mann."
+      }
     }
   },
   "A1-5.10": {
@@ -648,7 +804,13 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "situation": "Dein Freund lädt dich heute ein.",
       "prompt": "Die Lehrkraft fragt: „Warum kommst du heute nicht?“ Antworte mit „weil ich krank bin“.",
       "model": "Ich komme heute nicht, weil ich krank bin.",
-      "note": "Der Grund folgt nach weil; bin steht am Satzende."
+      "note": "Der Grund folgt nach weil; bin steht am Satzende.",
+      "second": {
+        "situation": "Du erklärst eine Absage.",
+        "prompt": "Die Lehrkraft fragt: „Warum bleibst du zu Hause?“ Antworte mit lernen.",
+        "model": "Ich bleibe zu Hause, weil ich lernen muss.",
+        "note": "Im weil-Satz steht das konjugierte Modalverb muss am Ende."
+      }
     }
   }
 });
