@@ -12,6 +12,7 @@ import {
   A1_DAYS21_TO24_ASSIGNMENTS,
   getA1Days21To24AdditionalUnderstandingChecks,
   getA1Days21To24QuickChecks,
+  getA1Days21To24ApplicationChecks,
 } from "../src/data/a1Days21To24Understanding.js";
 
 const slides = getSlidesByCourse("A1");
@@ -38,6 +39,7 @@ test("A1 Days 21–24 use 60 checks across existing and added authored question 
         id+": use new curated case/conjunction bank");
     }
     const quick = getA1Days21To24QuickChecks(id);
+    const applied = getA1Days21To24ApplicationChecks(id);
     assert.equal(quick?.length,2,id);
     assert.equal(applied?.length,2,id);
     const all=[...full,...quick,...applied];
@@ -110,7 +112,9 @@ test("A1 Days 21–24 slides use the existing Presenter without adding tracking"
   const upgrade=fs.readFileSync("src/data/a1GenericLessonUpgrades.js","utf8");
   assert.match(upgrade,/enhanceA1Days21To24Slide/);
   assert.match(presenter,/getA1Days21To24QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter,/id: "mini-mission"/);
-  assert.match(presenter,/id: "listen-respond"/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
+  // Retired workbook/sentence-build presenter assertion: replaced by speaking missions.
   assert.doesNotMatch(presenter,/Student Learning Progress|Self-practice completion tracking/);
 });
