@@ -2032,6 +2032,7 @@ export function buildTeachingPresenterStages(slide = {}, topicLabel = "") {
   const filtered = stages.filter((stage) => {
     if (stage.type === "intro") return Boolean(stage.title || stage.topic || stage.objective);
     if (stage.type === "task") return Boolean(stage.body);
+    if (stage.type === "dialogue") return Array.isArray(stage.turns) && stage.turns.length > 0;
     if (stage.type === "foundation") return Boolean(stage.intro || stage.example || stage.tension || stage.question || stage.simpleEnglish);
     if (stage.type === "knowledge") return Boolean(stage.textDe) && Array.isArray(stage.items) && stage.items.length > 0;
     return Array.isArray(stage.items) && stage.items.length > 0;
