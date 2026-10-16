@@ -51,14 +51,13 @@ test("unverified A1 learner activities do not inherit tutor-marked status from a
   assert.equal(misleading.kind, "self-practice");
 });
 
-test("A1 classroom slides use understanding checks, not A2/B1 roleplay as the default", () => {
+test("A1 classroom slides keep understanding checks and move the workbook bridge out of the presenter", () => {
   const presenter = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
   const guide = fs.readFileSync("src/components/TeacherLessonBlocks.jsx", "utf8");
-  assert.match(presenter, /getA1LearningPath\(slide\)/);
   assert.match(presenter, /Verständnis prüfen/);
   assert.match(presenter, /One understanding question per student/);
-  assert.match(presenter, /data-a1-learning-mode=\{stage.activityKind\}/);
-  assert.match(presenter, /stage.actionLabel/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
   assert.match(guide, /getA1LearningPath\(slide\)/);
   assert.match(guide, /Check understanding/);
   assert.match(guide, /no role-play is required/);
