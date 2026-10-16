@@ -185,9 +185,24 @@ const B1_KNOWLEDGE = {
     ...getPresenterReadingLesson("B1-7.21"),
     activity: {
       title: "Lebensform für drei Profile",
-      instruction: "Ordnet jedem Profil eine passende Wohnform zu und nennt eine Einschränkung.",
-      prompts: ["Student mit kleinem Budget", "Person mit starkem Bedürfnis nach Ruhe", "junge Familie mit gegenseitiger Unterstützung"],
-      modelItems: ["Für den Studenten kann eine WG günstig sein, obwohl weniger Privatsphäre vorhanden ist.", "Für die zweite Person ist eine eigene Wohnung wahrscheinlich passender."],
+      instruction: "Wählt für jedes Profil eine passende Wohnmöglichkeit aus. Begründet eure Wahl und nennt eine Einschränkung.",
+      prompts: ["Student mit kleinem Budget", "Person mit starkem Bedürfnis nach Ruhe", "Junge Familie mit gegenseitiger Unterstützung"],
+      housingOptions: [
+        { id: "small-flat", de: "die kleine Wohnung", en: "small apartment", note: "wenig Platz, oft geringere Kosten" },
+        { id: "shared-room", de: "das Zimmer in einer WG", en: "room in a shared flat", note: "Miete teilen, weniger Privatsphäre" },
+        { id: "studio", de: "die Einzimmerwohnung", en: "studio apartment", note: "eigener Wohnraum, wenig Platz" },
+        { id: "quiet-flat", de: "die ruhige Wohnung am Stadtrand", en: "quiet flat on the outskirts", note: "weniger Lärm, längerer Arbeitsweg" },
+        { id: "ground-floor", de: "die Erdgeschosswohnung", en: "ground-floor apartment", note: "wenige Treppen, eventuell weniger Privatsphäre" },
+        { id: "family-flat", de: "die große Familienwohnung", en: "large family apartment", note: "mehr Platz, höhere Miete" },
+        { id: "multigenerational", de: "die Wohnung im Mehrgenerationenhaus", en: "flat in a multigenerational house", note: "gegenseitige Hilfe, weniger Rückzugsmöglichkeiten" },
+        { id: "garden-house", de: "das kleine Haus mit Garten", en: "small house with a garden", note: "Platz für Kinder, höhere Kosten" },
+      ],
+      housingSentenceStarter: "Für dieses Profil würde ich … wählen, weil … . Allerdings … .",
+      modelItems: [
+        "Für den Studenten ist das Zimmer in einer WG geeignet, weil er die Miete teilen kann. Allerdings hat er weniger Privatsphäre.",
+        "Für die ruhesuchende Person passt die ruhige Wohnung am Stadtrand, weil es dort weniger Lärm gibt. Allerdings ist der Weg zur Arbeit möglicherweise länger.",
+        "Für die junge Familie ist die Wohnung im Mehrgenerationenhaus praktisch, weil die Familienmitglieder einander unterstützen können. Allerdings gibt es weniger Rückzugsmöglichkeiten.",
+      ],
     },
   },
   "B1-7.22": {

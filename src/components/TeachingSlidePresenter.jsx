@@ -11,6 +11,7 @@ import { numberedPresenterSentences } from "../utils/presenterSentenceNumbering.
 import { getA2B1AdminLessonProfileForSlide } from "../data/a2B1LessonProfile.js";
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
+import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
 import "./TeachingSlidePresenter.css";
@@ -1813,7 +1814,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                           ) : null}
                         </section>
                       ) : null}
-                      {!item.decisionCases?.length && Array.isArray(item.prompts) && item.prompts.length ? (
+                      {!item.decisionCases?.length && Array.isArray(item.housingOptions) && item.housingOptions.length ? (
+                        <B1HousingChoicePractice
+                          prompts={item.prompts}
+                          housingOptions={item.housingOptions}
+                          sentenceStarter={item.housingSentenceStarter}
+                        />
+                      ) : !item.decisionCases?.length && Array.isArray(item.prompts) && item.prompts.length ? (
                         <ol className="presenter-practice-prompts">
                           {item.prompts.map((prompt) => <li key={prompt}>{prompt}</li>)}
                         </ol>
