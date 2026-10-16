@@ -487,6 +487,13 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setScenarioFinished(false);
   }, [stage?.id]);
 
+  // Teacher may change the activity timer without losing the current career choice.
+  useEffect(() => {
+    setCareerCaseIndex(0);
+    setCareerCaseSelections({});
+    setCareerCaseModelsOpen({});
+  }, [stage?.id, slide?.assignmentId]);
+
   useEffect(() => {
     setQuestionIndex(0);
     setShowQuestionSupport(false);
@@ -499,9 +506,6 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setContentPage(0);
     setContentPageSize(0);
     setKnowledgeAnswersOpen({});
-    setCareerCaseIndex(0);
-    setCareerCaseSelections({});
-    setCareerCaseModelsOpen({});
     setActiveKnowledgeSentence(0);
     setKnowledgeChecksVisible(false);
     setVocabChallengeMode(false);
