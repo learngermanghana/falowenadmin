@@ -756,6 +756,7 @@ export default function SocialMediaPage() {
           </section>
         </div>
       </div>
+        </div>
       )}
     </div>
   );
