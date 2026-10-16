@@ -259,7 +259,8 @@ export const a1WorkbookAlignedSlidesDays6To10 = [
       ],
     },
   },
-      id: "a1-day-9-german-cases",
+  {
+    id: "a1-day-9-german-cases",
     course: "A1",
     day: "Day 9",
     dayNumber: 9,
