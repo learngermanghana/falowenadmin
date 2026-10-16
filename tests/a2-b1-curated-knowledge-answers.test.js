@@ -44,7 +44,7 @@ test("Reading keys address plausible misunderstandings with explicit evidence",(
  assert.match(answer("B1-4.10",2), /Ja:.*Mutter/);
  assert.match(answer("B1-10.28",2), /probeweise/);
  for(const id of Object.keys(A2_B1_KNOWLEDGE_ANSWERS)) {
-  assert.ok(getA2B1KnowledgeAnswers(id).every(a=>/Beleg: Satz [1-5]/.test(a)),id);
+  assert.ok(getA2B1KnowledgeAnswers(id).every(a=>/Beleg: (?:Satz [1-5]|Sätze [1-5][–,-])/.test(a)),id);
  }
 });
 
