@@ -190,10 +190,62 @@ const A2_KNOWLEDGE = {
     textDe: "Eine berufliche Entwicklung besteht oft aus mehreren Schritten. Menschen sammeln Erfahrung, lernen neue Fähigkeiten, wechseln Aufgaben oder machen eine Weiterbildung. Nicht jede Karriere verläuft geradlinig. Wichtig ist, ein nächstes realistisches Ziel zu kennen und zu überlegen, welche Kenntnisse oder Erfahrungen dafür noch fehlen. Auch private Ziele können berufliche Entscheidungen beeinflussen.",
     checks: ["Welche Möglichkeiten beruflicher Entwicklung nennt der Text?", "Verläuft jede Karriere geradlinig?", "Was sollte man für das nächste Ziel prüfen?"],
     activity: {
-      title: "Mini-Wissensquiz",
-      instruction: "Entscheidet: richtig oder falsch. Begründet jede Antwort mit dem Text.",
-      prompts: ["Eine Karriere muss immer geradlinig sein.", "Weiterbildung kann ein Karriereschritt sein.", "Private Ziele können berufliche Entscheidungen beeinflussen."],
-      modelItems: ["Falsch.", "Richtig.", "Richtig."],
+      title: "Karriere-Coach · Was ist der nächste Schritt?",
+      instruction: "Lest jeden Fall genau. Alle drei Möglichkeiten können helfen – aber welche passt JETZT am besten? Wählt eine Antwort, erklärt warum und bildet einen Satz mit „um ... zu“.",
+      // Keep three actionable prompts for the A2 lesson contract; the presenter
+      // renders the detailed, interactive decisionCases instead of duplicating them.
+      prompts: ["Ama: Welche Fähigkeit fehlt für die Büroarbeit?", "Kojo: Wie kann er Gespräche mit Kunden üben?", "Sara: Wie kann sie sich auf die Teamleitung vorbereiten?"],
+      modelItems: [
+        "Ama besucht einen Computerkurs, um Tabellen am Computer zu bearbeiten.",
+        "Kojo übt Kundengespräche, um beim Sprechen sicherer zu werden.",
+        "Sara macht eine Weiterbildung, um später ein Team zu leiten.",
+      ],
+      decisionCases: [
+        {
+          id: "ama",
+          name: "Ama · Büroassistenz",
+          situation: "Ama möchte als Büroassistentin arbeiten. Sie hat schon einen guten Lebenslauf und ein Praktikum gemacht. Aber sie kann Tabellen am Computer noch nicht gut bearbeiten.",
+          question: "Was sollte Ama zuerst machen?",
+          options: [
+            "Ein weiteres Praktikum im Büro machen.",
+            "Einen Computerkurs für Tabellen besuchen.",
+            "Ein Bewerbungstraining besuchen.",
+          ],
+          correctIndex: 1,
+          explanation: "Ein weiteres Praktikum oder Bewerbungstraining kann helfen. Ama hat aber schon Erfahrung und einen guten Lebenslauf. Sie muss zuerst die Arbeit mit Tabellen lernen.",
+          model: "Ama besucht einen Computerkurs, um Tabellen am Computer zu bearbeiten.",
+        },
+        {
+          id: "kojo",
+          name: "Kojo · Verkauf",
+          situation: "Kojo möchte im Verkauf arbeiten. Er kennt viele deutsche Wörter und kann gut schreiben. Aber Gespräche mit Kunden fallen ihm schwer. Er hat bald ein Vorstellungsgespräch.",
+          question: "Welche Vorbereitung hilft Kojo jetzt am meisten?",
+          options: [
+            "Mehr Wörter über Produkte lernen.",
+            "Seine schriftliche Bewerbung verbessern.",
+            "Kundengespräche mit einem Partner üben.",
+          ],
+          correctIndex: 2,
+          explanation: "Neue Wörter und eine bessere Bewerbung sind nützlich. Kojo kennt aber schon viele Wörter. Sein Problem ist das Sprechen mit Kunden, deshalb sollte er echte Gespräche üben.",
+          model: "Kojo übt Kundengespräche, um beim Sprechen sicherer zu werden.",
+        },
+        {
+          id: "sara",
+          name: "Sara · Teamleitung",
+          situation: "Sara arbeitet seit einem Jahr in einem Geschäft und kennt die Produkte gut. Später möchte sie ein Team leiten. Sie hat aber noch nie Arbeitspläne gemacht oder Aufgaben verteilt.",
+          question: "Welcher nächste Schritt passt am besten zu Saras Ziel?",
+          options: [
+            "Eine Weiterbildung für Teamleitung machen.",
+            "Einen Kurs über neue Produkte besuchen.",
+            "Ein Bewerbungstraining für andere Geschäfte besuchen.",
+          ],
+          correctIndex: 0,
+          explanation: "Produktwissen und Bewerbungen können für Saras Beruf nützlich sein. Für ihr Ziel fehlen ihr aber Kenntnisse über Arbeitspläne und die Arbeit mit einem Team.",
+          model: "Sara macht eine Weiterbildung, um später ein Team zu leiten.",
+        },
+      ],
+      transferPrompt: "Und du? Was machst du, um dein Berufsziel zu erreichen?",
+      transferModel: "Ich lerne Deutsch, um später in Deutschland zu arbeiten.",
     },
   },
   "A2-6.15": {
