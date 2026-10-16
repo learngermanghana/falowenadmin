@@ -167,37 +167,56 @@
   },
   "A1 Countries and Languages 4": {
     "answers": {
-      "Answer1": "C) Neun",
-      "Answer2": "B) Polnisch",
-      "Answer3": "D) Niederländisch",
-      "Answer4": "A) Deutsch",
-      "Answer5": "C) Paris",
-      "Answer6": "B) Amsterdam",
-      "Answer7": "C) In der Schweiz",
-      "Answer8": "C) In Italien und Frankreich",
-      "Answer9": "C) Rom",
-      "Answer10": "B) Das Essen",
-      "Answer11": "B) Paris",
-      "Answer12": "A) Nach Spanien"
+      "Teil 2": {
+        "Answer1": "C) Neun",
+        "Answer2": "B) Polnisch",
+        "Answer3": "D) Niederländisch",
+        "Answer4": "A) Deutsch",
+        "Answer5": "C) Paris",
+        "Answer6": "B) Amsterdam",
+        "Answer7": "C) In der Schweiz"
+      },
+      "Teil 3": {
+        "Answer1": "A) Aus Spanien",
+        "Answer2": "B) In Berlin",
+        "Answer3": "B) Spanisch und ein bisschen Italienisch",
+        "Answer4": "A) Jeden Tag",
+        "Answer5": "B) Fußball spielen und Musik hören"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1SiYvtaw-LwoeCff7yxlpWsfENMlIbQRqfuh3MPobPOE/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
     "assignment_id": "A1-4",
     "expectedParts": [
-      "main"
+      "teil2",
+      "teil3"
     ],
-    "answerLayout": "flat",
+    "answerLayout": "multipart",
     "referenceAnswerParts": [
-      "main"
+      "teil2",
+      "teil3"
     ],
     "partGrading": {
-      "main": {
-        "label": "main",
+      "teil2": {
+        "label": "Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+        "instruction": "Grade the seven Germany's neighbours reading questions in Teil 2."
+      },
+      "teil3": {
+        "label": "Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade the five A1 Day 8 Herkunft und Sprachen listening questions against the new 2026-10-16 version. Teil 1 translation answers are tutor-reviewed, not included in objective scoring."
       }
-    }
+    },
+    "partAliases": {
+      "teil2": "Teil 2",
+      "teil3": "Teil 3",
+      "Teil 2": "teil2",
+      "Teil 3": "teil3"
+    },
+    "listeningVersion": "A1-4-LISTENING-V2"
   },
   "A1 Objects and Colors 6": {
     "answers": {
