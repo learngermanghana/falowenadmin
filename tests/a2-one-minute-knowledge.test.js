@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
-import { A2_PRESENTER_KNOWLEDGE_ASSIGNMENTS, getA2PresenterKnowledge } from "../src/data/a2PresenterKnowledge.js";
+import { A2_PRESENTER_KNOWLEDGE_ASSIGNMENTS, getA2PresenterKnowledge, getA2FocusedPractice } from "../src/data/a2PresenterKnowledge.js";
 import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js";
 
 const A2_ASSIGNMENTS = [
@@ -120,4 +120,47 @@ test("A2 Day 6 checks position versus movement before article transformation", (
   assert.ok(ids.indexOf("grammar-check") < ids.indexOf("practice"));
   assert.ok(ids.indexOf("practice") < ids.indexOf("questions"));
   assert.ok(ids.indexOf("questions") < ids.indexOf("workbook"));
+});
+
+test("A2 Day 14 uses career-coaching choices with three relevant alternatives", () => {
+  const focused = getA2FocusedPractice("A2-5.14");
+  assert.match(focused.title, /Karriere-Coach/);
+  assert.doesNotMatch(focused.title, /Mini-Wissensquiz/);
+  assert.equal(focused.decisionCases.length, 3);
+  assert.deepEqual(focused.decisionCases.map((item) => item.correctIndex), [1, 2, 0]);
+  for (const item of focused.decisionCases) {
+    assert.ok(item.id && item.name && item.situation && item.question);
+    assert.equal(item.options.length, 3);
+    assert.ok(item.options.every((option) => option.split(/\s+/).length >= 4));
+    assert.ok(item.explanation.split(/\s+/).length >= 18);
+    assert.match(item.model, /, um .* zu (?:bearbeiten|werden|leiten)\./);
+  }
+  const slide = getTeachingSlideByAssignmentId("A2-5.14");
+  const practice = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "practice");
+  assert.equal(practice.variant, "decision-task");
+  assert.equal(practice.variantLabel, "Entscheidung");
+  assert.deepEqual(practice.items[0].decisionCases, focused.decisionCases);
+  assert.match(practice.items[0].transferPrompt, /Berufsziel/);
+  assert.match(practice.items[0].transferModel, /um .* zu arbeiten/);
+});
+
+test("A2 Day 14 options are clickable and answers are revealed on demand", async () => {
+  const fs = await import("node:fs");
+  const presenter = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../src/components/TeachingSlidePresenter.css", import.meta.url), "utf8");
+  assert.match(presenter, /activeCareerDecisionCase\.options\.map/);
+  assert.match(presenter, /aria-pressed=\{careerCaseSelections\[activeCareerDecisionCase\.id\] === optionIndex\}/);
+  assert.match(presenter, /setCareerCaseSelections/);
+  assert.match(presenter, /Modell anzeigen/);
+  assert.match(presenter, /Beste Antwort:/);
+  assert.match(presenter, /activeCareerDecisionCase\.explanation/);
+  assert.match(presenter, /activeCareerDecisionCase\.model/);
+  assert.match(presenter, /careerCaseModelsOpen\[activeCareerDecisionCase\.id\] \? \(/);
+  assert.match(presenter, /Nächster Fall/);
+  assert.match(presenter, /setCareerCaseIndex\(0\)/);
+  assert.match(presenter, /setCareerCaseModelsOpen\(\{\}\)/);
+  assert.match(presenter, /!item\.decisionCases\?\.length && Array\.isArray\(item\.modelItems\)/);
+  assert.match(css, /\.presenter-career-options button\.is-selected/);
+  assert.match(css, /\.presenter-career-model/);
+  assert.match(css, /\.presenter-career-transfer summary/);
 });
