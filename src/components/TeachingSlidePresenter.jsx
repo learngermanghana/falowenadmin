@@ -160,6 +160,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     expired: false,
   });
   const [knowledgeAnswersOpen, setKnowledgeAnswersOpen] = useState({});
+  const [careerCaseIndex, setCareerCaseIndex] = useState(0);
+  const [careerCaseSelections, setCareerCaseSelections] = useState({});
+  const [careerCaseModelsOpen, setCareerCaseModelsOpen] = useState({});
   const [activeKnowledgeSentence, setActiveKnowledgeSentence] = useState(0);
   const [knowledgeChecksVisible, setKnowledgeChecksVisible] = useState(false);
   const [vocabChallengeMode, setVocabChallengeMode] = useState(false);
@@ -206,6 +209,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     ? pageableItems.slice(contentPage * contentPageSize, (contentPage + 1) * contentPageSize)
     : pageableItems;
   const presenterItemOffset = contentPageSize > 0 ? contentPage * contentPageSize : 0;
+  const careerDecisionCases = stage?.type === "flow" && Array.isArray(stage?.items?.[0]?.decisionCases)
+    ? stage.items[0].decisionCases : [];
+  const activeCareerDecisionCase = careerDecisionCases[careerCaseIndex] || null;
   const vocabChallenges = Array.isArray(stage?.challengeItems) ? stage.challengeItems : [];
   const activeVocabChallenge = vocabChallenges[vocabChallengeIndex] || vocabChallenges[0] || null;
   const activeCareer = stage?.type === "career-challenge"
@@ -493,6 +499,9 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
     setContentPage(0);
     setContentPageSize(0);
     setKnowledgeAnswersOpen({});
+    setCareerCaseIndex(0);
+    setCareerCaseSelections({});
+    setCareerCaseModelsOpen({});
     setActiveKnowledgeSentence(0);
     setKnowledgeChecksVisible(false);
     setVocabChallengeMode(false);
@@ -1743,12 +1752,69 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                           ))}
                         </div>
                       ) : null}
-                      {Array.isArray(item.prompts) && item.prompts.length ? (
+                      {activeCareerDecisionCase && item.decisionCases?.length ? (
+                        <section className="presenter-career-coach" aria-label="Karriere-Coach: Fallbeispiele">
+                          <div className="presenter-career-case">
+                            <span className="presenter-career-progress">Fall {careerCaseIndex + 1} von {careerDecisionCases.length}</span>
+                            <h2>{activeCareerDecisionCase.name}</h2>
+                            <p>{activeCareerDecisionCase.situation}</p>
+                            <strong>{activeCareerDecisionCase.question}</strong>
+                          </div>
+                          <div className="presenter-career-options" role="group" aria-label="Wähle den besten nächsten Schritt">
+                            {activeCareerDecisionCase.options.map((option, optionIndex) => (
+                              <button
+                                key={option}
+                                type="button"
+                                className={careerCaseSelections[activeCareerDecisionCase.id] === optionIndex ? "is-selected" : ""}
+                                aria-pressed={careerCaseSelections[activeCareerDecisionCase.id] === optionIndex}
+                                onClick={() => setCareerCaseSelections((current) => ({
+                                  ...current,
+                                  [activeCareerDecisionCase.id]: optionIndex,
+                                }))}
+                              >
+                                <span>{String.fromCharCode(65 + optionIndex)}</span>
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            className="presenter-career-model-toggle"
+                            aria-expanded={Boolean(careerCaseModelsOpen[activeCareerDecisionCase.id])}
+                            onClick={() => setCareerCaseModelsOpen((current) => ({
+                              ...current,
+                              [activeCareerDecisionCase.id]: !current[activeCareerDecisionCase.id],
+                            }))}
+                          >
+                            {careerCaseModelsOpen[activeCareerDecisionCase.id] ? "Modell ausblenden" : "Modell anzeigen"}
+                          </button>
+                          {careerCaseModelsOpen[activeCareerDecisionCase.id] ? (
+                            <aside className="presenter-career-model" aria-live="polite">
+                              <strong>Beste Antwort: {String.fromCharCode(65 + activeCareerDecisionCase.correctIndex)} · {activeCareerDecisionCase.options[activeCareerDecisionCase.correctIndex]}</strong>
+                              <p>{activeCareerDecisionCase.explanation}</p>
+                              <p><strong>Modellsatz mit „um … zu“:</strong> {activeCareerDecisionCase.model}</p>
+                            </aside>
+                          ) : null}
+                          <nav className="presenter-career-nav" aria-label="Karriere-Coach Fälle">
+                            <button type="button" onClick={() => setCareerCaseIndex((index) => Math.max(0, index - 1))} disabled={careerCaseIndex === 0}>Zurück</button>
+                            <span>{careerCaseIndex + 1} / {careerDecisionCases.length}</span>
+                            <button type="button" onClick={() => setCareerCaseIndex((index) => Math.min(careerDecisionCases.length - 1, index + 1))} disabled={careerCaseIndex === careerDecisionCases.length - 1}>Nächster Fall</button>
+                          </nav>
+                          {careerCaseIndex === careerDecisionCases.length - 1 && item.transferPrompt ? (
+                            <div className="presenter-career-transfer">
+                              <strong>Jetzt du!</strong>
+                              <p>{item.transferPrompt}</p>
+                              {item.transferModel ? <details><summary>Modell anzeigen</summary><p>{item.transferModel}</p></details> : null}
+                            </div>
+                          ) : null}
+                        </section>
+                      ) : null}
+                      {!item.decisionCases?.length && Array.isArray(item.prompts) && item.prompts.length ? (
                         <ol className="presenter-practice-prompts">
                           {item.prompts.map((prompt) => <li key={prompt}>{prompt}</li>)}
                         </ol>
                       ) : null}
-                      {Array.isArray(item.modelItems) && item.modelItems.length ? (
+                      {!item.decisionCases?.length && Array.isArray(item.modelItems) && item.modelItems.length ? (
                         <details className="presenter-practice-details">
                           <summary>Modell anzeigen</summary>
                           <ul>{item.modelItems.map((model) => <li key={model}>{model}</li>)}</ul>
