@@ -12,7 +12,6 @@ import {
   A1_DAYS1_TO5_ASSIGNMENTS,
   getA1Days1To5UnderstandingChecks,
   getA1Days1To5QuickChecks,
-  getA1Days1To5ApplicationChecks,
 } from "../src/data/a1Days1To5Understanding.js";
 
 const normalized = (value) => String(value || "").trim().toLowerCase();
@@ -46,13 +45,11 @@ test("Days 1–5 contain exactly seven published blocks with complete lesson-aut
       id + ": each check needs a concrete answer and teacher explanation");
     assert.match(exact[10].questionDe, /^Exit-Check:/, id + ": fresh final check missing");
     assert.equal(getA1Days1To5QuickChecks(id).length, 2);
-    assert.equal(getA1Days1To5ApplicationChecks(id).length, 2);
     const classQuestions = new Set(exact.map((item) => normalized(item.questionDe)));
     for (const early of getA1Days1To5QuickChecks(id)) {
       assert.ok(!classQuestions.has(normalized(early.questionDe)), id + ": quick check leaks graded class question");
       assert.ok(early.answerDe && early.noteEn, id + ": quick check needs a real answer");
     }
-    for (const applied of getA1Days1To5ApplicationChecks(id)) {
       assert.ok(!classQuestions.has(normalized(applied.questionDe)), id + ": repeat of class check");
       assert.ok(applied.answerDe && applied.noteEn, id + ": application needs a real answer");
     }
@@ -99,13 +96,12 @@ test("Days 1–5 checks preserve the workbook scope and the tutor/self-practice 
   assert.doesNotMatch(day5, /indefinite article|ein\/eine|ein or eine|einen|einem/i);
 });
 
-test("A1 Presenter uses separate unscored recall and short application checks", () => {
+test("A1 Presenter retains grammar retrieval followed by creative oral application", () => {
   const source = fs.readFileSync("src/components/A1GrammarPresenter.jsx", "utf8");
   assert.match(source, /getA1Days1To5QuickChecks\(slide\.assignmentId\)/);
-  assert.match(source, /getA1Days1To5ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(source, /title: curatedApplicationChecks \? "Two short lesson applications"/);
+  assert.match(source, /id: "mini-mission"/);
+  assert.match(source, /id: "listen-respond"/);
   assert.match(source, /items: mainChecks/);
   assert.match(source, /exitCheck: true/);
-  assert.match(source, /data-a1-learning-mode=\{stage.activityKind\}/);
   assert.doesNotMatch(source, /id: "mini-dialogue"|id: "speak-first"/);
 });
