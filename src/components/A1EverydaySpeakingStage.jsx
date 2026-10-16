@@ -5,7 +5,9 @@ import { useState } from "react";
 export default function A1EverydaySpeakingStage({ stage }) {
   const [showHint, setShowHint] = useState(false);
   const [showModel, setShowModel] = useState(false);
+  const [reactionRound, setReactionRound] = useState(0);
   const isMission = stage.kind === "mission";
+  const active = !isMission && reactionRound === 1 ? stage.second : stage;
 
   return (
     <section
@@ -25,6 +27,25 @@ export default function A1EverydaySpeakingStage({ stage }) {
           : "Höre deiner Lehrkraft zu. Antworte erst selbst auf Deutsch."}
       </p>
 
+      {!isMission ? (
+        <div className="presenter-a1-speaking-rounds" role="group" aria-label="Hörsituationen wählen">
+          {[0, 1].map((number) => (
+            <button
+              key={number}
+              type="button"
+              aria-pressed={reactionRound === number}
+              onClick={() => {
+                setReactionRound(number);
+                setShowModel(false);
+                setShowHint(false);
+              }}
+            >
+              Situation {number + 1}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {isMission ? (
         <div className="presenter-a1-speaking-words" aria-label="Fünf Wörter für heute">
           {stage.words.map((word) => <span key={word} className="presenter-a1-speaking-word">{word}</span>)}
@@ -33,12 +54,12 @@ export default function A1EverydaySpeakingStage({ stage }) {
 
       <div className="presenter-a1-speaking-situation">
         <span>{isMission ? "SITUATION" : "HÖRSITUATION"}</span>
-        <p>{stage.situation}</p>
+        <p>{active.situation}</p>
       </div>
 
       <div className="presenter-a1-speaking-prompt">
         <span>{isMission ? "DEINE MISSION" : "DIE LEHRKRAFT SPRICHT – DU ANTWORTEST"}</span>
-        <p>{stage.prompt}</p>
+        <p>{active.prompt}</p>
       </div>
 
       <div className="presenter-a1-speaking-actions">
@@ -67,14 +88,14 @@ export default function A1EverydaySpeakingStage({ stage }) {
       {showModel ? (
         <div className="presenter-a1-speaking-answer" aria-live="polite">
           <strong>Mögliche Antwort</strong>
-          <p className="presenter-a1-speaking-model">{stage.model}</p>
+          <p className="presenter-a1-speaking-model">{active.model}</p>
           {isMission ? (
             <div className="presenter-a1-speaking-followup">
               <strong>Zweite Runde</strong>
               <p>{stage.secondRound}</p>
             </div>
           ) : (
-            <small><b>Lehrerhinweis:</b> {stage.note}</small>
+            <small><b>Lehrerhinweis:</b> {active.note}</small>
           )}
         </div>
       ) : (
