@@ -217,7 +217,7 @@ test("A1 presenter keeps grammar diagnosis and uses creative oral application st
   assert.match(presenter, /id: "mini-mission"/);
   assert.match(presenter, /id: "listen-respond"/);
   assert.match(presenter, /id: "exit-check"/);
-  assert.match(presenter, /getA1EverydaySpeaking\\(slide\\.assignmentId\\)/);
+  assert.ok(presenter.includes("getA1EverydaySpeaking(slide.assignmentId)"));
   assert.doesNotMatch(presenter, /id: "sentence-build"|id: "workbook",/);
   assert.doesNotMatch(presenter, /A1 · Language-first/);
 });
