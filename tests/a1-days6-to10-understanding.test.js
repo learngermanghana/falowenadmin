@@ -8,7 +8,6 @@ import { getA1LearningPath } from "../src/data/a1LearningPath.js";
 import { getA1PresenterUnderstandingChecks } from "../src/data/a1PresenterUnderstandingChecks.js";
 import { buildA1SlideReviewChecks } from "../src/data/a1SlideReview.js";
 import { A1_DAYS6_TO10_ASSIGNMENTS, getA1Days6To10UnderstandingChecks,
-  getA1Days6To10QuickChecks, getA1Days6To10ApplicationChecks } from "../src/data/a1Days6To10Understanding.js";
 
 const lower = (x) => String(x || "").trim().toLocaleLowerCase("de-DE");
 const expected = {
@@ -36,7 +35,6 @@ test("all five A1 Days 6–10 modules provide 75 independent, grounded question/
       { slide, support: buildTeacherSlideSupport(slide) }), checks, id);
     assert.match(checks[10].questionDe, /^Exit-Check:/);
     const quick = getA1Days6To10QuickChecks(id);
-    const applied = getA1Days6To10ApplicationChecks(id);
     assert.equal(quick.length, 2, id);
     assert.equal(applied.length, 2, id);
     const all = [...checks, ...quick, ...applied];
@@ -90,8 +88,8 @@ test("Days 6–10 use the existing answer-reveal slide and no progress modificat
   const resolver = fs.readFileSync("src/data/a1PresenterUnderstandingChecks.js", "utf8");
   assert.match(resolver, /getA1Days6To10UnderstandingChecks\(key\)/);
   assert.match(presenter, /getA1Days6To10QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /getA1Days6To10ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
   assert.match(slides, /Self-practice bridge/);
   assert.match(slides, /Reading\/Hören workbook bridge/);
   assert.doesNotMatch(slides, /phase: "Language mini-interview"|phase: "Apartment speaking"|phase: "Hobby round"/);
