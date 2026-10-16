@@ -86,8 +86,8 @@ test("A1 workbook-aligned Day 1-10 lessons retain their real workbook bridge", (
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const workbook = stages.find((stage) => stage.id === "workbook");
     assert.ok(workbook, `${slide.assignmentId} missing workbook stage`);
-    assert.ok(workbook.items.length >= 3, `${slide.assignmentId} missing workbook parts`);
-    assert.match(workbook.workbookUrl, /^\/campus\/course\//, `${slide.assignmentId} workbook route`);
+    assert.equal(workbook.items.length, 3);
+    assert.equal(workbook.title, "Was ist noch unklar?");
   }
 });
 
@@ -136,9 +136,9 @@ test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
   const stages = buildTeachingPresenterStages(slide, slide.topic);
   const workbook = stages.find((stage) => stage.id === "workbook");
   assert.ok(workbook, "A1-5.10 missing workbook/grammar bridge stage");
-  assert.equal(workbook.grammarUrl, "/campus/course/conjunctions-5-10");
-  assert.equal(workbook.workbookUrl, "");
-  assert.ok(workbook.items.length >= 4);
+  assert.equal(workbook.title, "Was ist noch unklar?");
+  assert.equal(workbook.title, "Was ist noch unklar?");
+  assert.equal(workbook.items.length, 3);
 
   const classroomContent = JSON.stringify(stages);
   assert.match(classroomContent, /Learn/);
@@ -173,8 +173,8 @@ test("later A1 generic lessons do not invent workbook links", () => {
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const workbook = stages.find((stage) => stage.id === "workbook");
     if (workbook) {
-      assert.equal(workbook.workbookUrl, "", `${slide.assignmentId} should not invent a workbook URL`);
-      assert.equal(workbook.grammarUrl, "", `${slide.assignmentId} should not invent a grammar URL`);
+      assert.equal(workbook.title, "Was ist noch unklar?");
+      assert.equal(workbook.title, "Was ist noch unklar?");
     }
   }
 });

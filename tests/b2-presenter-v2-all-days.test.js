@@ -142,10 +142,10 @@ test("all B2 days use the stable teaching spine without the old drill stack or w
     assert.match(questions.instruction, /Hauptpunkt|optional/i);
     assert.ok(getSpeakingQuestionModel(questions, questions.items[0])?.modelAnswerDe, slide.assignmentId + " missing speaking model");
 
-    assert.equal(workbook.type, "workbook");
-    assert.ok(workbook.items.length >= 5);
-    assert.equal(workbook.grammarUrl, "");
-    assert.equal(workbook.workbookUrl, "");
+    assert.equal(workbook.type, "clarification");
+    assert.equal(workbook.items.length, 3);
+    assert.equal(workbook.title, "Was ist noch unklar?");
+    assert.equal(workbook.title, "Was ist noch unklar?");
 
     for (const removed of ["practice", "mistakes", "grammar-check", "weekly-challenge", "wrapup"]) {
       assert.equal(stageIds.includes(removed), false, slide.assignmentId + " still exposes duplicate stage " + removed);

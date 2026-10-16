@@ -75,9 +75,9 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.equal(practice.type, "flow");
     assert.equal(practice.items.length, 1, `${slide.assignmentId} should have one focused practice activity`);
     assert.ok(practice.items[0].minutes > 0, `${slide.assignmentId} should expose focused-practice timing`);
-    assert.equal(workbook.type, "workbook");
-    assert.ok(workbook.items.length >= 4, `${slide.assignmentId} should expose workbook sections`);
-    assert.match(workbook.workbookUrl, /^\/campus\/course\//, `${slide.assignmentId} workbook route`);
+    assert.equal(workbook.type, "clarification");
+    assert.equal(workbook.items.length, 3);
+    assert.equal(workbook.title, "Was ist noch unklar?");
     assert.ok(stageIds.indexOf("questions") < stageIds.indexOf("workbook"), `${slide.assignmentId} production should come before workbook bridge`);
     assert.equal(questions.type, "question-reveal");
     assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);

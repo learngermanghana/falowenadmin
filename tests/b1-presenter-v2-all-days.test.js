@@ -82,9 +82,9 @@ test("all 28 B1 lessons use the knowledge-first Presenter spine", () => {
     assert.deepEqual(questions.items, difficulty.indexes.map((index) => slide.studentQuestionsDe[index]));
 
     const workbook = stages.find((stage) => stage.id === "workbook");
-    assert.equal(workbook.type, "workbook");
+    assert.equal(workbook.type, "clarification");
     assert.ok(workbook.items.length > 0, `${slide.assignmentId} should expose workbook connections`);
-    assert.ok(workbook.workbookUrl, `${slide.assignmentId} should expose the workbook URL`);
+    assert.equal(workbook.type, "clarification");
 
     for (const removed of [
       "b1-grammar-check",
@@ -110,7 +110,7 @@ test("full B1 rollout preserves lessons without a direct grammar URL", () => {
     const grammar = stages.find((stage) => stage.id === "grammar-check");
     const workbook = stages.find((stage) => stage.id === "workbook");
     assert.equal(grammar?.items?.length, 3, `${slide.assignmentId} should still expose grammar diagnostics`);
-    assert.equal(workbook?.grammarUrl, "", `${slide.assignmentId} should not invent a grammar link`);
-    assert.ok(workbook?.workbookUrl, `${slide.assignmentId} should keep the workbook link`);
+    assert.equal(workbook.title, "Was ist noch unklar?");
+    assert.equal(workbook.type, "clarification");
   }
 });

@@ -7,7 +7,7 @@ import { buildTeachingPresenterStages } from "../src/utils/teachingPresenter.js"
 test("A2 Day 8 knowledge activity is food matching, not recipe imperative practice", () => {
   const knowledge = getA2PresenterKnowledge("A2-3.8");
   assert.ok(knowledge);
-  assert.match(knowledge.title, /Essen im Restaurant/);
+  assert.match(knowledge.title, /Bestellung im Restaurant/);
   assert.match(knowledge.activity.instruction, /Gericht, Getränk oder Beilage/);
   assert.doesNotMatch(knowledge.textDe, /Imperativ/i);
   assert.doesNotMatch(knowledge.activity.instruction, /du, ihr oder Sie/i);

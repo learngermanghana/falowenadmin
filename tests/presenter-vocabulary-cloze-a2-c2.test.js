@@ -82,8 +82,8 @@ test("A2 Day 22 keeps concise explicit teacher answers", () => {
     .find((stage) => stage.id === "knowledge");
 
   assert.deepEqual(knowledge.answerItems, [
-    "Feste Termine.",
-    "Das Präsens.",
-    "Damit man flexibel bleibt, wenn sich etwas ändert.",
+    "Sie berücksichtigt Wege, Essen und freie Zeit zusätzlich zu festen Terminen. Beleg: Satz 2–5.",
+    "Am Dienstagabend, nicht direkt nach der Arbeit am Montag. Beleg: Satz 3.",
+    "Nein: Nach Arbeitsende braucht sie noch eine Stunde für Heimweg und Essen. Beleg: Satz 1–2.",
   ]);
 });

@@ -1,8 +1,8 @@
+import { getPresenterReadingLesson } from "./presenterReadingLessons.js";
+
 const B1_KNOWLEDGE = {
   "B1-1.1": {
-    title: "Träume verändern sich mit Erfahrungen",
-    textDe: "Viele Berufswünsche entstehen früh, aber sie bleiben nicht immer gleich. Erfahrungen in Schule, Ausbildung, Arbeit oder Familie können zeigen, welche Fähigkeiten wirklich wichtig sind. Wenn man über einen früheren Traum spricht, hilft das Perfekt, konkrete Erfahrungen zu erzählen. Für aktuelle Wünsche und Pläne benutzt man häufig das Präsens. Interessant ist deshalb nicht nur, welchen Beruf jemand einmal wollte, sondern auch, welche Erfahrungen die heutige Entscheidung beeinflusst haben.",
-    checks: ["Warum verändern sich Berufswünsche manchmal?", "Welche Zeitform passt zu abgeschlossenen Erfahrungen?", "Welche Information muss man aus dem Text ableiten: Was ist wichtiger als nur der Berufsname?"],
+    ...getPresenterReadingLesson("B1-1.1"),
     activity: {
       title: "Zeitlinie statt Mini-Präsentation",
       instruction: "Ordnet die Informationen einer Person in früher, Erfahrung und heute. Formuliert danach zwei passende Sätze.",
@@ -11,9 +11,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-1.2": {
-    title: "Freundschaft zeigt sich im Verhalten",
-    textDe: "Bei Freundschaften sagen allgemeine Adjektive wie nett oder sympathisch nur wenig aus. Aussagekräftiger ist ein konkretes Verhalten: Jemand hört zu, hält Versprechen oder hilft in schwierigen Situationen. Gründe können mit weil oder denn erklärt werden; deshalb zeigt eine Folge. Wer eine Person beschreibt, sollte Eigenschaften und Beispiele verbinden. So entsteht eine glaubwürdige Beschreibung statt einer Liste von Adjektiven.",
-    checks: ["Warum sind konkrete Beispiele stärker als nur Adjektive?", "Welche Wörter drücken Grund und Folge aus?", "Welche Art von Verhalten zeigt laut Text Vertrauen?"],
+    ...getPresenterReadingLesson("B1-1.2"),
     activity: {
       title: "Beobachtung oder Bewertung?",
       instruction: "Unterscheidet zwischen einer bloßen Bewertung und einem beobachtbaren Beispiel. Verbessert die schwachen Aussagen.",
@@ -22,9 +20,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-1.3": {
-    title: "Erfolg hat selten nur einen Grund",
-    textDe: "Erfolgsgeschichten wirken im Rückblick oft einfach, obwohl der Weg meistens komplizierter war. Menschen brauchen Fähigkeiten, Unterstützung, Zeit und manchmal auch Glück. Hindernisse gehören ebenfalls dazu. Wer über Erfolg spricht, sollte deshalb Ursache, Schwierigkeit und Reaktion unterscheiden. Eine überzeugende Geschichte zeigt nicht nur das Ergebnis, sondern erklärt, was trotz eines Problems passiert ist und welche Entscheidung den nächsten Schritt möglich gemacht hat.",
-    checks: ["Welche Faktoren können Erfolg beeinflussen?", "Warum ist nur das Ergebnis keine vollständige Erfolgsgeschichte?", "Welche logische Beziehung beschreibt trotz eines Problems?"],
+    ...getPresenterReadingLesson("B1-1.3"),
     activity: {
       title: "Argumentkette ordnen",
       instruction: "Ordnet die Karten zu Ausgangslage → Hindernis → Reaktion → Ergebnis und verbindet sie sprachlich.",
@@ -33,9 +29,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-2.4": {
-    title: "Wohnungssuche ist eine Prioritätenfrage",
-    textDe: "Bei der Wohnungssuche lassen sich selten alle Wünsche gleichzeitig erfüllen. Eine zentrale Lage kann kurze Wege bieten, aber auch höhere Mieten bedeuten. Mehr Platz ist angenehm, während eine kleinere Wohnung oft günstiger ist. Deshalb hilft es, Kriterien zu priorisieren: Was ist unverzichtbar, was wäre nur schön, und worauf kann man verzichten? Gute Entscheidungen vergleichen mehrere Faktoren statt nur einen einzelnen Vorteil.",
-    checks: ["Warum muss man bei der Wohnungssuche Prioritäten setzen?", "Welche zwei Gegensätze nennt der Text?", "Welche drei Kategorien helfen beim Priorisieren?"],
+    ...getPresenterReadingLesson("B1-2.4"),
     activity: {
       title: "Priorisieren statt aufzählen",
       instruction: "Ordnet fünf Wohnungskriterien in Muss, wichtig und optional. Begründet nur die ersten zwei Prioritäten.",
@@ -44,9 +38,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-2.5": {
-    title: "Eine Besichtigung ist auch ein Informationsgespräch",
-    textDe: "Bei einem Besichtigungstermin geht es nicht nur darum, eine Wohnung anzusehen. Interessenten müssen wichtige Informationen klären: Nebenkosten, Kaution, Einzugstermin, Hausordnung oder mögliche Reparaturen. Direkte Fragen können unhöflich wirken, besonders gegenüber einer unbekannten Person. Indirekte Fragen und Konjunktiv-II-Formen machen das Gespräch höflicher, ohne unklar zu werden. Gleichzeitig sollte man konkrete Antworten notieren, damit verschiedene Wohnungen später sachlich miteinander verglichen werden können.",
-    checks: ["Welche Informationen sollte man bei einer Besichtigung klären?", "Warum sind indirekte Fragen nützlich?", "Welche grammatische Form macht Fragen höflicher?"],
+    ...getPresenterReadingLesson("B1-2.5"),
     activity: {
       title: "Direkt → professionell",
       instruction: "Formuliert drei direkte Fragen so um, dass sie bei einer Wohnungsbesichtigung höflich und klar klingen.",
@@ -55,9 +47,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-2.6": {
-    title: "Stadt oder Land hängt von der Lebenssituation ab",
-    textDe: "Die Frage Stadt oder Land lässt sich nicht allgemein beantworten. Für manche Menschen sind kurze Wege, Kultur und Arbeitsmöglichkeiten entscheidend; andere schätzen Ruhe, Natur und mehr Platz. Ein Vergleich wird stärker, wenn er ein klares Kriterium benutzt und anschließend eine Einschränkung nennt. So kann die Stadt zum Beispiel praktischer sein, obwohl das Leben dort teurer und lauter ist.",
-    checks: ["Welche Vorteile werden für Stadt und Land genannt?", "Was macht einen Vergleich stärker?", "Welche Einschränkung könnte trotz eines Vorteils wichtig sein?"],
+    ...getPresenterReadingLesson("B1-2.6"),
     activity: {
       title: "Zwei Profile, zwei Entscheidungen",
       instruction: "Ordnet jedem Profil Stadt oder Land zu. Nutzt pro Entscheidung einen Vergleich und eine Einschränkung.",
@@ -66,9 +56,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-3.7": {
-    title: "Essen lässt sich nicht nur als gesund oder ungesund einteilen",
-    textDe: "Bei Ernährung spielen Zutaten, Menge, Häufigkeit, Preis und persönliche Gewohnheiten zusammen. Fast Food kann praktisch und günstig sein, enthält aber je nach Produkt viel Salz, Zucker oder Fett. Hausmannskost ist nicht automatisch gesund, wenn große Mengen oder sehr fettreiche Zutaten verwendet werden. Eine differenzierte Bewertung fragt deshalb nach dem konkreten Produkt und dem gesamten Essverhalten statt nach einem einfachen Etikett.",
-    checks: ["Welche Faktoren beeinflussen die Bewertung von Essen?", "Warum ist Hausmannskost nicht automatisch gesund?", "Welche Schlussfolgerung muss man aus dem Text ziehen: Reicht das Etikett Fast Food?"],
+    ...getPresenterReadingLesson("B1-3.7"),
     activity: {
       title: "Behauptung prüfen",
       instruction: "Entscheidet, welche Aussage zu pauschal ist, und formuliert sie genauer.",
@@ -77,9 +65,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-3.8": {
-    title: "Gesundheitsratschläge haben unterschiedliche Stärke",
-    textDe: "Ein Ratschlag ist nicht dasselbe wie eine Pflicht. Bei Gesundheit sollte man sprachlich unterscheiden, ob etwas empfohlen, notwendig, möglich oder erlaubt ist. Ausreichend Schlaf kann helfen; bei bestimmten Beschwerden sollte man ärztlichen Rat suchen; in Notfällen muss man sofort handeln. Wer jedes Problem mit müssen formuliert, klingt schnell zu absolut. Gute Beratung passt die sprachliche Stärke an die Situation an.",
-    checks: ["Welche vier Bedeutungsstufen nennt der Text?", "Warum ist müssen nicht für jeden Tipp passend?", "Welche Formulierung passt eher zu einer Möglichkeit?"],
+    ...getPresenterReadingLesson("B1-3.8"),
     activity: {
       title: "Tipp, Pflicht oder Möglichkeit?",
       instruction: "Sortiert die Situationen nach sollte, muss oder kann und begründet die sprachliche Stärke.",
@@ -88,9 +74,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-3.9": {
-    title: "Work-Life-Balance braucht Grenzen und Methoden",
-    textDe: "Flexible Arbeit kann Zeit sparen, aber sie löst das Problem von Stress nicht automatisch. Wenn berufliche Nachrichten ständig in die Freizeit reichen, verschwimmen Grenzen. Unternehmen können helfen, indem sie realistische Arbeitsmengen planen und Erreichbarkeit begrenzen. Beschäftigte können feste Pausen oder Feierabendzeiten setzen, um sich besser zu erholen. Eine gute Lösung verbindet also persönliche Strategien mit passenden Arbeitsbedingungen.",
-    checks: ["Warum bedeutet flexible Arbeit nicht automatisch weniger Stress?", "Welche Maßnahmen können Unternehmen ergreifen?", "Welche zwei Ebenen müssen für eine gute Lösung zusammenkommen?"],
+    ...getPresenterReadingLesson("B1-3.9"),
     activity: {
       title: "Mini-Fallstudie · Zu Hause, aber nie Feierabend",
       instruction: "Analysiert den Fall und nennt eine Maßnahme des Arbeitgebers sowie eine persönliche Strategie.",
@@ -99,9 +83,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-4.10": {
-    title: "Digitale Auszeit bedeutet nicht digitale Ablehnung",
-    textDe: "Eine digitale Auszeit soll Technik nicht grundsätzlich ersetzen. Ziel ist ein bewussterer Umgang mit Bildschirmzeit, Unterbrechungen und ständiger Erreichbarkeit. Manche Menschen schlafen besser, wenn sie ihr Smartphone abends früher weglegen. Andere brauchen digitale Geräte beruflich und können deshalb keine langen Offline-Zeiten einplanen. Je genauer eine Regel zur eigenen Situation passt, desto wahrscheinlicher wird sie im Alltag eingehalten.",
-    checks: ["Was ist das Ziel einer digitalen Auszeit?", "Warum funktionieren lange Offline-Zeiten nicht für alle?", "Welche Beziehung beschreibt je genauer … desto wahrscheinlicher?"],
+    ...getPresenterReadingLesson("B1-4.10"),
     activity: {
       title: "Regel bewerten",
       instruction: "Vergleicht drei Digital-Detox-Regeln und entscheidet, welche am realistischsten ist. Nennt ein Kriterium.",
@@ -110,9 +92,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-4.11": {
-    title: "Teamarbeit braucht sichtbare Kooperation",
-    textDe: "Ein Team funktioniert nicht nur, weil mehrere Menschen dieselbe Aufgabe haben. Gute Zusammenarbeit entsteht, wenn Mitglieder Informationen miteinander teilen, voneinander lernen und aufeinander reagieren. Rollen sollten klar sein, aber Unterstützung darf trotzdem flexibel bleiben. Besonders bei Problemen ist wichtig, Kritik an der Aufgabe von Kritik an der Person zu unterscheiden. So kann ein Team Fehler ansprechen, ohne Vertrauen zu verlieren.",
-    checks: ["Welche drei Formen von Kooperation nennt der Text?", "Warum sollten Rollen klar sein?", "Was muss man bei Kritik unterscheiden?"],
+    ...getPresenterReadingLesson("B1-4.11"),
     activity: {
       title: "Kooperationskarte",
       instruction: "Ordnet die Situationen zu miteinander, voneinander oder aufeinander. Formuliert danach einen vollständigen Team-Satz.",
@@ -121,9 +101,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-4.12": {
-    title: "Eine gute Abenteuergeschichte zeigt Reihenfolge und Wendepunkt",
-    textDe: "Bei einer Erzählung reicht es nicht, Ereignisse nur nacheinander aufzuzählen. Leser oder Zuhörer müssen erkennen, was zuerst passierte, wann sich die Situation änderte und welche Folge daraus entstand. Zeitwörter wie bevor, nachdem, während und als helfen dabei. Besonders wichtig ist der Wendepunkt: Dort entsteht ein Problem, eine Überraschung oder eine Entscheidung, die die weitere Geschichte verändert.",
-    checks: ["Welche Informationen braucht eine verständliche Erzählung?", "Welche vier Zeitwörter nennt der Text?", "Was ist ein Wendepunkt?"],
+    ...getPresenterReadingLesson("B1-4.12"),
     activity: {
       title: "Geschichte rekonstruieren",
       instruction: "Ordnet vier Ereignisse logisch und verbindet mindestens zwei davon mit nachdem, bevor oder während.",
@@ -132,9 +110,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-4.13": {
-    title: "Eine Filmkritik trennt Beschreibung von Bewertung",
-    textDe: "Eine Filmkritik sollte nicht nur erzählen, was im Film passiert. Sie beschreibt wichtige Elemente wie Handlung, Figuren oder Atmosphäre und bewertet anschließend, wie gut diese Elemente funktionieren. Eine Meinung wirkt stärker, wenn sie durch ein konkretes Beispiel gestützt wird. Auch eine Einschränkung ist nützlich: Ein Film kann zwar lang sein, aber trotzdem spannende Figuren oder eine überzeugende Geschichte haben.",
-    checks: ["Welche zwei Hauptaufgaben hat eine Filmkritik?", "Warum braucht eine Bewertung ein Beispiel?", "Welche sprachliche Struktur eignet sich für eine Einschränkung?"],
+    ...getPresenterReadingLesson("B1-4.13"),
     activity: {
       title: "Beobachtung → Bewertung → Beleg",
       instruction: "Ordnet die Aussagen und baut daraus zwei Kritik-Sätze.",
@@ -143,9 +119,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-5.14": {
-    title: "Lernmethoden lösen unterschiedliche Probleme",
-    textDe: "Digitales und traditionelles Lernen sind keine einfachen Gegensätze. Online-Lernen kann flexibler sein und Materialien schnell verfügbar machen, während Präsenzunterricht direkten Austausch erleichtert. Welche Methode besser funktioniert, hängt vom Lernziel, der Selbstorganisation und der Art der Aufgabe ab. Für manche Inhalte ist eine Mischung sinnvoll: Wissen kann digital vorbereitet und anschließend gemeinsam diskutiert oder praktisch angewendet werden.",
-    checks: ["Welche Vorteile nennt der Text für beide Lernformen?", "Wovon hängt die passende Methode ab?", "Warum kann eine Mischung sinnvoll sein?"],
+    ...getPresenterReadingLesson("B1-5.14"),
     activity: {
       title: "Zwei Positionen vergleichen",
       instruction: "Vergleicht die Aussagen und formuliert einen differenzierten Gegensatz mit hingegen, während oder im Gegensatz dazu.",
@@ -154,9 +128,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-5.15": {
-    title: "Homeoffice verschiebt Grenzen zwischen Arbeit und Privatleben",
-    textDe: "Homeoffice kann Arbeitswege sparen und mehr Flexibilität schaffen. Gleichzeitig verschwimmen bei manchen Menschen die Grenzen zwischen Arbeit und Freizeit, weil Arbeitsplatz und Privatbereich am selben Ort liegen. Digitale Kommunikation ersetzt außerdem nicht jede persönliche Abstimmung. Unternehmen müssen deshalb Prozesse, Erreichbarkeit und Verantwortlichkeiten klar organisieren. Entscheidend ist nicht nur, ob Homeoffice angeboten wird, sondern wie die Zusammenarbeit gestaltet wird.",
-    checks: ["Welche zwei Vorteile bzw. Risiken nennt der Text?", "Warum reicht das Angebot von Homeoffice allein nicht?", "Welche organisatorischen Bereiche müssen Unternehmen klären?"],
+    ...getPresenterReadingLesson("B1-5.15"),
     activity: {
       title: "Mini-Fallstudie · Immer erreichbar",
       instruction: "Analysiert das Problem und schlagt zwei konkrete Regeln vor. Eine Regel soll das Team, eine die einzelne Person betreffen.",
@@ -165,9 +137,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-5.16": {
-    title: "Prüfungsangst wird durch Vorbereitung und Bewertung beeinflusst",
-    textDe: "Nervosität vor einer Prüfung ist normal, aber starke Angst kann Konzentration und Schlaf beeinträchtigen. Häufig verstärkt sich Stress, wenn Aufgaben zu spät begonnen werden oder wenn jemand nur an mögliche Fehler denkt. Hilfreich können realistische Lernpläne, kurze Pausen, Bewegung und Prüfungssimulationen sein. Das Ziel ist nicht, jede Nervosität zu vermeiden, sondern Strategien zu kennen, damit man trotz Anspannung handlungsfähig bleibt.",
-    checks: ["Welche Folgen kann starke Prüfungsangst haben?", "Welche Strategien nennt der Text?", "Was ist laut Text das realistische Ziel?"],
+    ...getPresenterReadingLesson("B1-5.16"),
     activity: {
       title: "Problem → Ursache → Strategie",
       instruction: "Ordnet jedem Problem eine plausible Ursache und eine konkrete Strategie zu.",
@@ -176,9 +146,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-5.17": {
-    title: "Lernen wird wirksamer, wenn Wissen aktiv benutzt wird",
-    textDe: "Nur lesen oder markieren reicht oft nicht, um neue Informationen langfristig zu behalten. Lernen wird aktiver, wenn man Fragen beantwortet, Inhalte erklärt, Beispiele bildet oder sich selbst testet. Wiederholung bleibt wichtig, aber der Abstand zwischen Wiederholungen kann entscheidend sein. Unterschiedliche Aufgaben brauchen unterschiedliche Methoden. Wer eine Lernstrategie auswählt, sollte deshalb prüfen, welches Ziel damit erreicht werden soll.",
-    checks: ["Welche aktiven Lernmethoden nennt der Text?", "Warum ist Wiederholung allein nicht genug?", "Welche Frage sollte man vor der Wahl einer Methode stellen?"],
+    ...getPresenterReadingLesson("B1-5.17"),
     activity: {
       title: "Methode zum Lernziel",
       instruction: "Ordnet jeder Aufgabe eine passende Lernmethode zu und erklärt die Entscheidung.",
@@ -187,9 +155,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-6.18": {
-    title: "Ein Berufsweg besteht aus Voraussetzungen und nächsten Schritten",
-    textDe: "Zum Wunschberuf führen oft mehrere Wege. Je nach Beruf können Ausbildung, Studium, Praktikum, Anerkennung oder bestimmte Sprachkenntnisse nötig sein. Ein realistischer Plan beginnt deshalb mit den Voraussetzungen und nicht nur mit dem Berufswunsch. Danach kann man prüfen, welche Erfahrung schon vorhanden ist und welcher nächste Schritt fehlt. So wird aus einem allgemeinen Ziel eine konkrete berufliche Route.",
-    checks: ["Welche möglichen Voraussetzungen nennt der Text?", "Womit sollte ein realistischer Berufsplan beginnen?", "Was muss man nach den Voraussetzungen prüfen?"],
+    ...getPresenterReadingLesson("B1-6.18"),
     activity: {
       title: "Berufsweg priorisieren",
       instruction: "Ordnet die Schritte für eine Person und begründet, welcher Schritt zuerst kommen muss.",
@@ -198,9 +164,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-6.19": {
-    title: "Im Vorstellungsgespräch zählt Präzision statt Perfektion",
-    textDe: "Im Vorstellungsgespräch wollen Arbeitgeber nicht nur perfekte Sätze hören. Sie möchten verstehen, welche Erfahrungen, Fähigkeiten und Erwartungen eine Person mitbringt. Gute Antworten sind konkret, aber nicht unnötig lang. Höfliche Rückfragen zeigen Interesse und helfen, wichtige Informationen über Aufgaben, Arbeitszeit oder Entwicklungsmöglichkeiten zu bekommen. Wer eine schwierige Frage nicht sofort versteht, darf höflich um Wiederholung bitten.",
-    checks: ["Was möchten Arbeitgeber im Gespräch verstehen?", "Warum sind Rückfragen wichtig?", "Was kann man tun, wenn man eine Frage nicht versteht?"],
+    ...getPresenterReadingLesson("B1-6.19"),
     activity: {
       title: "Antwort-Upgrade",
       instruction: "Verbessert kurze Antworten so, dass sie konkret, höflich und glaubwürdig werden.",
@@ -209,9 +173,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-6.20": {
-    title: "Qualifikationen unterscheiden sich je nach Beruf",
-    textDe: "Nicht jeder Beruf verlangt denselben Ausbildungsweg. Manche Tätigkeiten setzen ein Studium voraus, andere eine berufliche Ausbildung oder praktische Zertifikate. Zusätzlich können Sprachkenntnisse, Berufserfahrung oder rechtliche Anerkennungen wichtig sein. Wer einen Beruf recherchiert, sollte deshalb zwischen Muss-Voraussetzungen und hilfreichen Zusatzqualifikationen unterscheiden. Auch der Ort kann eine Rolle spielen, weil berufliche Regeln nicht überall gleich sind. So lässt sich besser planen, welche Schritte wirklich notwendig sind und welche nur zusätzliche Chancen schaffen.",
-    checks: ["Welche verschiedenen Ausbildungswege nennt der Text?", "Welche zusätzlichen Voraussetzungen können wichtig sein?", "Warum muss man Pflicht und Zusatzqualifikation unterscheiden?"],
+    ...getPresenterReadingLesson("B1-6.20"),
     activity: {
       title: "Muss, kann, hilfreich",
       instruction: "Sortiert die Qualifikationen in zwingend, möglich oder hilfreich. Begründet eure Einteilung.",
@@ -220,9 +182,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-7.21": {
-    title: "Lebensformen verteilen Kosten, Aufgaben und Privatsphäre unterschiedlich",
-    textDe: "Eine Wohngemeinschaft, das Leben mit Familie und eine eigene Wohnung bieten unterschiedliche Vorteile. In einer WG können Kosten geteilt werden, während Regeln und Rücksicht wichtiger werden. Allein zu wohnen bietet mehr Privatsphäre, ist aber oft teurer. Familienleben kann Unterstützung geben, gleichzeitig müssen Aufgaben und persönliche Bedürfnisse abgestimmt werden. Welche Form passt, hängt deshalb stark von Lebensphase, Budget und persönlichen Prioritäten ab.",
-    checks: ["Welche Vor- und Nachteile werden für verschiedene Lebensformen genannt?", "Welche drei Faktoren beeinflussen die passende Wahl?", "Warum ist eine WG nicht automatisch besser, obwohl sie günstiger sein kann?"],
+    ...getPresenterReadingLesson("B1-7.21"),
     activity: {
       title: "Lebensform für drei Profile",
       instruction: "Ordnet jedem Profil eine passende Wohnform zu und nennt eine Einschränkung.",
@@ -231,9 +191,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-7.22": {
-    title: "Beziehungen brauchen Erwartungen, Kommunikation und Grenzen",
-    textDe: "Menschen erwarten in Beziehungen nicht alle dasselbe. Für manche sind Ehrlichkeit und Verlässlichkeit besonders wichtig, andere legen großen Wert auf gemeinsame Interessen oder persönliche Freiheit. Konflikte entstehen oft nicht durch unterschiedliche Wünsche selbst, sondern weil Erwartungen nicht ausgesprochen werden. Eine stabile Beziehung braucht deshalb Kommunikation darüber, was beide Personen voneinander erwarten und welche Grenzen respektiert werden sollen.",
-    checks: ["Welche Werte nennt der Text?", "Warum entstehen Konflikte nicht nur durch unterschiedliche Wünsche?", "Welche Fähigkeit ist für gemeinsame Erwartungen entscheidend?"],
+    ...getPresenterReadingLesson("B1-7.22"),
     activity: {
       title: "Werte in einer Situation",
       instruction: "Lest den Fall, identifiziert zwei wichtige Werte und formuliert eine faire Lösung.",
@@ -242,9 +200,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-7.23": {
-    title: "Ein erstes Date ist vor allem eine Kommunikationssituation",
-    textDe: "Bei einem ersten Treffen kennen sich zwei Menschen noch nicht gut. Deshalb helfen offene Fragen, aktives Zuhören und respektvolle Grenzen. Persönliche Themen können interessant sein, sollten aber nicht erzwungen werden. Wenn etwas unklar ist, kann man höflich nachfragen. Auch eine Absage oder das Ende eines Treffens lässt sich direkt und freundlich formulieren. Gute Kommunikation bedeutet hier nicht perfekte Sätze, sondern Respekt und Klarheit.",
-    checks: ["Welche drei Kommunikationsprinzipien nennt der Text?", "Warum sollten persönliche Themen nicht erzwungen werden?", "Was bedeutet Klarheit bei einer Absage?"],
+    ...getPresenterReadingLesson("B1-7.23"),
     activity: {
       title: "Unangenehm oder respektvoll?",
       instruction: "Bewertet die Reaktionen und formuliert problematische Aussagen höflicher.",
@@ -253,9 +209,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-8.24": {
-    title: "Nachhaltiger Konsum beginnt vor dem Kauf",
-    textDe: "Nachhaltigkeit bedeutet nicht nur Recycling. Schon vor dem Kauf kann man prüfen, ob ein Produkt wirklich gebraucht wird, wie lange es hält und ob es repariert werden kann. Regionale oder gebrauchte Produkte können in manchen Situationen Ressourcen sparen, sind aber nicht automatisch immer die beste Wahl. Entscheidend ist, mehrere Faktoren zu betrachten: Herstellung, Transport, Lebensdauer, Nutzung und Entsorgung.",
-    checks: ["Warum beginnt nachhaltiger Konsum vor dem Kauf?", "Welche Faktoren sollte man betrachten?", "Warum ist regional nicht automatisch immer die beste Lösung?"],
+    ...getPresenterReadingLesson("B1-8.24"),
     activity: {
       title: "Argumentkarte Nachhaltigkeit",
       instruction: "Ordnet die Argumente nach Kauf vermeiden, länger nutzen, anders kaufen oder richtig entsorgen. Wählt anschließend die wirksamste Maßnahme für den Fall.",
@@ -264,9 +218,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-8.25": {
-    title: "Beim Onlinekauf sind Information und Dokumentation wichtig",
-    textDe: "Onlinekäufe sind bequem, aber Käufer können ein Produkt vor dem Kauf nicht direkt prüfen. Deshalb sind Produktbeschreibung, Lieferbedingungen, Rückgaberegeln und sichere Zahlungswege wichtig. Wenn etwas beschädigt oder falsch geliefert wird, helfen Bestellnummer, Fotos und schriftliche Kommunikation. Eine Reklamation sollte sachlich erklären, was passiert ist und welche Lösung erwartet wird, zum Beispiel Ersatz oder Rückerstattung. Wer Belege aufbewahrt und Fristen prüft, kann sein Anliegen außerdem klarer dokumentieren.",
-    checks: ["Welche Informationen sollte man vor dem Kauf prüfen?", "Welche Belege helfen bei einer Reklamation?", "Was muss eine sachliche Reklamation enthalten?"],
+    ...getPresenterReadingLesson("B1-8.25"),
     activity: {
       title: "Verbraucherfall lösen",
       instruction: "Analysiert den Fall und formuliert die drei wichtigsten Sätze einer schriftlichen Reklamation.",
@@ -275,9 +227,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-9.26": {
-    title: "Reiseprobleme werden leichter, wenn man Optionen ordnet",
-    textDe: "Verspätung, Gepäckverlust oder eine falsche Buchung können eine Reise schnell verändern. In solchen Situationen hilft es, zuerst das dringendste Problem zu identifizieren und dann mögliche Lösungen zu vergleichen. Nicht jede Lösung ist gleich realistisch: Zeit, Kosten, Sicherheit und vorhandene Informationen spielen eine Rolle. Wer Bedingungen formulieren kann, ist flexibler: Falls der nächste Zug ausfällt, braucht man eine Alternative.",
-    checks: ["Welche typischen Reiseprobleme nennt der Text?", "Welche Kriterien helfen beim Vergleichen von Lösungen?", "Warum sind Bedingungssätze in Problemsituationen nützlich?"],
+    ...getPresenterReadingLesson("B1-9.26"),
     activity: {
       title: "Entscheidungsbaum Reiseproblem",
       instruction: "Wählt für jede Bedingung den nächsten sinnvollen Schritt und formuliert ihn mit wenn oder falls.",
@@ -286,9 +236,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-10.27": {
-    title: "Umweltfreundlicher Alltag besteht aus vielen kleinen Entscheidungen",
-    textDe: "Einzelne Gewohnheiten lösen Umweltprobleme nicht allein, aber sie beeinflussen Ressourcenverbrauch und Nachfrage. Weniger Autofahrten, energiesparendes Verhalten, bewusster Einkauf und weniger Abfall können zusammen einen Unterschied machen. Wichtig ist, Maßnahmen realistisch zu bewerten: Eine Idee ist nur dann dauerhaft nützlich, wenn Menschen sie im Alltag tatsächlich umsetzen können. Deshalb sollte man Wirkung und praktische Umsetzbarkeit gemeinsam betrachten.",
-    checks: ["Welche Alltagsbereiche nennt der Text?", "Warum reicht eine einzelne Maßnahme nicht?", "Welche zwei Kriterien sollte man gemeinsam bewerten?"],
+    ...getPresenterReadingLesson("B1-10.27"),
     activity: {
       title: "Wirkungskette",
       instruction: "Verbindet Handlung → direkte Folge → mögliche Umweltwirkung. Nutzt mindestens einmal indem.",
@@ -297,9 +245,7 @@ const B1_KNOWLEDGE = {
     },
   },
   "B1-10.28": {
-    title: "Klimafreundliches Leben braucht persönliche und politische Rahmenbedingungen",
-    textDe: "Menschen können im Alltag klimafreundlicher handeln, doch nicht jede Entscheidung liegt allein bei ihnen. Öffentliche Verkehrsmittel, sichere Radwege, Energiepreise und verfügbare Produkte beeinflussen, welche Optionen realistisch sind. Persönliche Verantwortung und gute Rahmenbedingungen ergänzen sich deshalb. Eine faire Diskussion sollte fragen, was Einzelne verändern können und welche Maßnahmen Unternehmen, Städte oder Politik ermöglichen müssen. Besonders wirksam werden Veränderungen häufig dann, wenn klimafreundliche Optionen nicht nur vorhanden, sondern auch bezahlbar und praktisch sind.",
-    checks: ["Welche Rahmenbedingungen nennt der Text?", "Warum liegt nicht jede Entscheidung nur beim Einzelnen?", "Welche zwei Verantwortungsebenen müssen zusammen gedacht werden?"],
+    ...getPresenterReadingLesson("B1-10.28"),
     activity: {
       title: "Maßnahmen nach Verantwortung ordnen",
       instruction: "Ordnet die Maßnahmen zu Einzelperson, Unternehmen oder Stadt/Politik und erklärt, wo Zusammenarbeit nötig ist.",
