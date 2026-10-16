@@ -27,7 +27,7 @@ test("A2-C2 vocabulary challenges only use real target words and three visible c
         assert.ok(new Set(item.options).size === 3, `${slide.assignmentId} options must be unique`);
         assert.equal(item.answer, item.term, `${slide.assignmentId} answer must be the vocabulary item itself`);
         assert.equal(item.clue, undefined, `${slide.assignmentId} should not use a generic clue fallback`);
-        assert.ok(["cloze", "match"].includes(item.mode), `${slide.assignmentId} challenge mode must be safe`);
+        assert.ok(["cloze", "match", "situation", "precision-cloze"].includes(item.mode), `${slide.assignmentId} challenge mode must be safe`);
       }
     }
   }
