@@ -209,7 +209,7 @@ const A2_KNOWLEDGE = {
           options: [
             "Ein weiteres Praktikum im Büro machen.",
             "Einen Computerkurs für Tabellen besuchen.",
-            "Ein Bewerbungstraining besuchen.",
+            "Ein Bewerbungstraining für Bürostellen besuchen.",
           ],
           correctIndex: 1,
           explanation: "Ein weiteres Praktikum oder Bewerbungstraining kann helfen. Ama hat aber schon Erfahrung und einen guten Lebenslauf. Sie muss zuerst die Arbeit mit Tabellen lernen.",
