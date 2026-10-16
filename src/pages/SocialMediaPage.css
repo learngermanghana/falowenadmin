@@ -56,3 +56,33 @@
 .social-poster-details button,.social-poster-workspace button{cursor:pointer}
 @media(max-width:950px){.social-creator-grid{grid-template-columns:1fr}.social-preview-panel{position:static}}
 @media(max-width:560px){.social-studio-shell{padding:10px}.social-studio-hero h1{font-size:23px}.social-studio-tabs{display:grid;grid-template-columns:1fr 1fr;width:100%}.social-studio-tab{padding:10px 8px;font-size:12px}.social-panel{padding:14px}.social-section-lead h2{font-size:18px}.social-script-preview{font-size:12px;max-height:360px}.social-actions>*{flex:1}.social-source-note{display:block}.social-source-note a{display:block;margin-top:5px}}
+
+
+/* Class campaign composer: compact, responsive and visually separate from lesson scripts. */
+.social-enrollment-pill{padding:8px 12px;border:1px solid #b8e8da;background:#ecfbf4;border-radius:999px;color:#176647;font-size:12px;font-weight:800}
+.social-campaign-picker h3{margin:0;font-size:15px}
+.social-campaign-top{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:10px}
+.social-campaign-help{display:block;font-size:12px;color:#64748b;line-height:1.5;margin:6px 0 12px}
+.social-campaign-switch{display:flex;gap:3px;padding:3px;background:#eff3f8;border-radius:9px}
+.social-campaign-switch button{font:inherit;font-size:11px;font-weight:800;border:0;padding:8px 9px;border-radius:7px;background:transparent;color:#64748b}
+.social-campaign-switch button[aria-pressed="true"]{color:#1c4c82;background:#fff;box-shadow:0 1px 5px #102e5522}
+.social-campaign-assets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.social-campaign-assets button{font:inherit;text-align:left;background:#fff;border:1px solid #d9e3ef;border-radius:10px;padding:11px;min-height:61px;display:grid;gap:5px;color:#234469}
+.social-campaign-assets button[aria-pressed="true"]{border:2px solid #2a65b2;background:#f0f6ff;padding:10px}
+.social-campaign-item-title{font-size:12px;font-weight:800}
+.social-campaign-assets small{color:#6e8096;font-size:10px}
+.social-campaign-download{display:block;width:100%;margin-top:12px}
+.social-campaign-checkbox{display:flex;align-items:flex-start;gap:9px;color:#42536d;font-weight:700;font-size:12px;line-height:1.4;margin-top:10px}
+.social-campaign-checkbox input{width:16px;height:16px;flex:0 0 16px;accent-color:#285b9e}
+.social-campaign-error{display:block;color:#b45309;font-size:12px;margin:7px 0}
+.social-qr-cache{position:absolute;left:-99999px;top:0;pointer-events:none;width:196px;height:196px;overflow:hidden}
+.social-poster-workspace .social-poster-details{background:#fff}
+@media(max-width:550px){
+  .social-campaign-picker{padding:13px}
+  .social-campaign-assets{grid-template-columns:1fr 1fr}
+  .social-campaign-assets button{min-height:70px;padding:9px}
+  .social-campaign-assets button[aria-pressed="true"]{padding:8px}
+  .social-campaign-top{align-items:flex-start}
+  .social-campaign-switch{width:100%}
+  .social-campaign-switch button{flex:1}
+}
