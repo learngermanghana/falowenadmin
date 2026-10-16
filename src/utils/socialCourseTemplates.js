@@ -22,6 +22,16 @@ function unique(items) {
     return true;
   });
 }
+export function lessonAnswerSuggestions(slide = {}) {
+  const examples = [
+    ...(Array.isArray(slide.speakingModels) ? slide.speakingModels : []).map((model) => model?.modelAnswerDe),
+    ...strings(slide.teacherSupport?.modelExamplesDe),
+    ...strings(slide.modelExamplesDe),
+    ...strings(slide.keyPhrasesDe),
+  ];
+  return [...new Set(examples.filter((value) => typeof value === "string").map((value) => value.trim()).filter(Boolean))];
+}
+
 export function lessonContentChoices(slide = {}, templateId = "speaking") {
   const support = slide.teacherSupport || {};
   const paired = (Array.isArray(slide.speakingModels) ? slide.speakingModels : [])
@@ -118,7 +128,7 @@ export function socialCaption({ entry = {}, templateId = "speaking", primary = "
   const excerpt = String(primary || "").trim();
   return [opening, excerpt.length <= 180 ? excerpt : excerpt.slice(0, 177) + "...", "Practise German with Falowen: https://www.falowen.app", "#Falowen #LearnGerman #" + level + "German #GermanPractice"].filter(Boolean).join("\n\n");
 }
-export function notebookPack({ entry = {}, templateId = "speaking", primary = "", answer = "", platform = "TikTok" } = {}) {
+export function notebookPack({ entry = {}, templateId = "speaking", primary = "", answer = "", platform = "TikTok", captionOverride = "" } = {}) {
   return [
     "FALOWEN NOTEBOOKLM VIDEO SOURCE",
     "Lesson: " + (entry.assignment_id || "") + " — " + (entry.de || "") + " / " + (entry.en || ""),
@@ -139,7 +149,7 @@ export function notebookPack({ entry = {}, templateId = "speaking", primary = ""
     "Do not present Falowen practice tasks as official Goethe exam materials.",
     "",
     "=== SOCIAL CAPTION ===",
-    socialCaption({ entry, templateId, primary }),
+    captionOverride || socialCaption({ entry, templateId, primary }),
   ].join("\n");
 }
 export function socialUseKey({ assignmentId, templateId, question, platform }) {
