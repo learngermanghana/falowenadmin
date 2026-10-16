@@ -41,30 +41,18 @@ test("A1 mastery checks test concepts instead of repeating workbook gap-fill dri
   assert.match(A1_GRAMMAR_CHECKS["A1-12.1"][0].questionDe, /concept behind two-way prepositions/i);
 });
 
-test("A1 presenter uses the language-first classroom flow with retrieval, speaking and workbook transfer", () => {
+test("A1 presenter preserves the grammar diagnostic and adds communicative missions", () => {
   const page = fs.readFileSync(new URL("../src/pages/TeachingSlidesPage.jsx", import.meta.url), "utf8");
   const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
 
   assert.match(page, /import A1GrammarPresenter/);
-  assert.match(page, /a1GrammarLesson/);
   assert.match(page, /<A1GrammarPresenter/);
-  assert.match(page, /A1-TUTORIAL/);
-
-  assert.match(presenter, /A1_LANGUAGE_FIRST_FLOW_VERSION/);
-  assert.match(presenter, /Remember before we start/);
-  assert.match(presenter, /Say it before we explain it/);
-  assert.match(presenter, /1-minute knowledge/);
-  assert.match(presenter, /Pronunciation focus/);
-  assert.match(presenter, /Muster und Regel verstehen/);
-  assert.match(presenter, /Build the sentence/);
-  assert.match(presenter, /Use it in a short conversation/);
-  assert.match(presenter, /up to 15 different questions/);
-  assert.match(presenter, /Typical mistakes to fix/);
-  assert.match(presenter, /Cumulative A1 checkpoint/);
-  assert.match(presenter, /Before you leave this lesson/);
-  assert.match(presenter, /Now complete the workbook/);
-  assert.match(presenter, /Exit Check/);
-  assert.match(presenter, /studentQuestionsDe/);
-  assert.match(presenter, /Start workbook/);
-  assert.doesNotMatch(presenter, /requiresQuestionModel/);
+  assert.match(presenter, /A1_GRAMMAR_CHECK_FLOW_VERSION = 3/);
+  for (const stage of ["quick-check", "grammar-check", "mistake-fix", "mistakes", "mini-mission", "listen-respond", "exit-check"]) {
+    assert.ok(presenter.includes(`id: "${stage}"`), `missing ${stage}`);
+  }
+  assert.doesNotMatch(presenter, /id: "sentence-build"|id: "workbook",/);
+  assert.match(presenter, /A1-5\\.9/);
+  assert.match(presenter, /A1EverydaySpeakingStage/);
+  assert.match(presenter, /<PresenterStudentPicker/);
 });
