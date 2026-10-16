@@ -27,7 +27,7 @@ test("A2-C2 vocabulary challenges only use real target words and three visible c
         assert.ok(new Set(item.options).size === 3, `${slide.assignmentId} options must be unique`);
         assert.equal(item.answer, item.term, `${slide.assignmentId} answer must be the vocabulary item itself`);
         assert.equal(item.clue, undefined, `${slide.assignmentId} should not use a generic clue fallback`);
-        assert.ok(["cloze", "match"].includes(item.mode), `${slide.assignmentId} challenge mode must be safe`);
+        assert.ok(["cloze", "match", "situation", "precision-cloze"].includes(item.mode), `${slide.assignmentId} challenge mode must be safe`);
       }
     }
   }
@@ -82,8 +82,8 @@ test("A2 Day 22 keeps concise explicit teacher answers", () => {
     .find((stage) => stage.id === "knowledge");
 
   assert.deepEqual(knowledge.answerItems, [
-    "Sie berücksichtigt Wege, Essen und freie Zeit zusätzlich zu festen Terminen. Beleg: Satz 2–5.",
+    "Sie berücksichtigt Wege, Essen und freie Zeit zusätzlich zu festen Terminen. Beleg: Sätze 2–5.",
     "Am Dienstagabend, nicht direkt nach der Arbeit am Montag. Beleg: Satz 3.",
-    "Nein: Nach Arbeitsende braucht sie noch eine Stunde für Heimweg und Essen. Beleg: Satz 1–2.",
+    "Nein: Nach Arbeitsende braucht sie noch eine Stunde für Heimweg und Essen. Beleg: Sätze 1–2.",
   ]);
 });
