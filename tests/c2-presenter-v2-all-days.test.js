@@ -143,7 +143,7 @@ test("all 28 C2 lessons use the analytical teaching spine without duplicate chal
     assert.equal(ids.includes("questions"), false, slide.assignmentId + " should not repeat a seminar question after warm-up");
 
     const workbook = stages.find((stage) => stage.id === "workbook");
-    assert.equal(workbook.items.length, 5);
+    assert.equal(workbook.items.length, 3);
 
     for (const removed of ["practice", "mistakes", "grammar-check", "weekly-challenge", "wrapup", "questions"]) {
       assert.equal(ids.includes(removed), false, slide.assignmentId + " still exposes duplicate stage " + removed);
@@ -303,11 +303,9 @@ test("C2 workbook bridge stays student-facing and German", () => {
   for (const slide of getSlidesByCourse("C2")) {
     const workbook = buildTeachingPresenterStages(slide, slide.topic).find((stage) => stage.id === "workbook");
     assert.deepEqual(workbook.items.map((item) => item.label), [
+      "Wort oder Ausdruck",
       "Grammatik",
-      "Kollokationen",
-      "Sprechen",
-      "Schreiben",
-      "Schreibvorbereitung",
+      "Aufgabe",
     ]);
     assert.doesNotMatch(JSON.stringify(workbook.items), /Five-minute seminar|Write preparation|Learn \/ Grammar/);
   }

@@ -36,14 +36,16 @@ test("All 56 A2 and B1 Wissensimpuls slides reveal three verified answers, never
  }
 });
 
-test("Text-answer regressions cover specific grammar and content questions",()=>{
+test("Reading keys address plausible misunderstandings with explicit evidence",()=>{
  const answer=(id,n)=>getA2B1KnowledgeAnswers(id)[n];
- assert.match(answer("A2-3.6",0),/Dativ|Wo\?/);
- assert.match(answer("A2-3.6",1),/Akkusativ|Wohin\?/);
- assert.match(answer("A2-4.10",1),/war.*hatte/);
- assert.match(answer("B1-3.8",0),/Empfehlung.*Notwendigkeit.*Möglichkeit.*Erlaubnis/);
- assert.match(answer("B1-4.12",1),/bevor.*nachdem.*während.*als/);
- assert.match(answer("B1-8.24",2),/Herstellung.*Nutzung.*Entsorgung/);
+ assert.match(answer("A2-3.7",2), /Strom und Internet/);
+ assert.match(answer("A2-5.14",2), /Tabellen/);
+ assert.match(answer("B1-2.5",2), /Nicht geklärt/);
+ assert.match(answer("B1-4.10",2), /Ja:.*Mutter/);
+ assert.match(answer("B1-10.28",2), /probeweise/);
+ for(const id of Object.keys(A2_B1_KNOWLEDGE_ANSWERS)) {
+  assert.ok(getA2B1KnowledgeAnswers(id).every(a=>/Beleg: Satz [1-5]/.test(a)),id);
+ }
 });
 
 test("Model answers remain behind the existing teacher reveal UI",()=>{

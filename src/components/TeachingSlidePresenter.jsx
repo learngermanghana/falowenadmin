@@ -1881,6 +1881,20 @@ export default function TeachingSlidePresenter({ slide, topicLabel, onExit }) {
                 ))}
               </div>
             </section>
+          ) : stage.type === "clarification" ? (
+            <section className="presenter-clarification">
+              <h1>{stage.title}</h1>
+              <p>{stage.instruction}</p>
+              <div className="presenter-workbook-list">
+                {stage.items.map((item) => (
+                  <article key={item.label}>
+                    <strong>{item.label}</strong>
+                    <p>{item.detail}</p>
+                  </article>
+                ))}
+              </div>
+              <p className="presenter-duration">30 Sekunden nachdenken · Fragen laut oder im Chat stellen</p>
+            </section>
           ) : stage.type === "workbook" ? (
             <>
               <h1>{stage.title}</h1>

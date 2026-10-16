@@ -1272,8 +1272,8 @@ function buildPresenterTeacherPurpose(stage = {}, level = "") {
     teacher: "Nicht die komplette Prüfungsantwort auf der Folie schreiben lassen.",
   };
   if (id === "workbook") return {
-    student: "Die Unterrichtsidee in die Falowen-Aufgabe übertragen.",
-    teacher: "Zum passenden Workbook wechseln; die Folie ist nur die Brücke.",
+    student: "Offene Fragen zu Wörtern, Grammatik oder Aufgaben klären.",
+    teacher: "30 Sekunden Denkzeit geben; Fragen sammeln oder eine beobachtete Schwierigkeit klären.",
   };
   if (id === "lesson-summary") return {
     student: "Die wichtigsten Lernpunkte sichern.",
@@ -1513,7 +1513,6 @@ function buildAdvancedDiscussionStage(slide = {}, speakingStage = {}, level = ""
 function buildPresenterV2Stages(slide = {}, topicLabel = "") {
   const support = buildTeacherSlideSupport(slide);
   const flow = Array.isArray(slide.interactionFlow) ? slide.interactionFlow : [];
-  const workbookParts = Array.isArray(slide.workbookConnection?.parts) ? slide.workbookConnection.parts : [];
   const advanced = isAdvancedClassroomSlide(slide);
   const grammarItems = advanced
     ? buildAdvancedGrammarItems(slide, support)
@@ -1551,15 +1550,23 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
     requiresQuestionModel: ["A2", "B1", "B2", "C1", "C2"].includes(level),
     suggestedMinutes: interactionMinutes(slide, 3) || 10,
   };
+  // Keep the existing stage identity/order for navigation and saved presenter state.
   const workbookStage = {
     id: "workbook",
-    type: "workbook",
-    kicker: "Workbook",
-    title: advanced ? "Workbook-Verbindung" : "Workbook connection",
-    items: workbookParts.map((part) => ({ label: part.label, detail: part.detailEn })),
-    grammarUrl: slide.workbookConnection?.grammarUrl || "",
-    workbookUrl: slide.workbookConnection?.workbookUrl || "",
-    suggestedMinutes: interactionMinutes(slide, Math.max(0, flow.length - 1)) || 7,
+    type: "clarification",
+    kicker: "Fragen & Klärung",
+    title: "Was ist noch unklar?",
+    instruction: "Überlegt kurz: Was habt ihr heute noch nicht ganz verstanden? Fragt laut oder schreibt in den Chat.",
+    items: [
+      { label: "Wort oder Ausdruck", detail: "Was bedeutet das?" },
+      { label: "Grammatik", detail: "Wann und wie benutze ich das?" },
+      { label: "Aufgabe", detail: "Was genau soll ich machen?" },
+    ],
+    suggestedMinutes: 3,
+    teacherPurpose: {
+      student: "Überlegt kurz: Was habt ihr heute noch nicht ganz verstanden?",
+      teacher: "30 Sekunden Denkzeit geben. Fragen sammeln und schwierige Punkte mit einem kurzen Beispiel erklären. Wenn keine Fragen kommen, eine beobachtete Schwierigkeit aus der Stunde aufgreifen.",
+    },
   };
 
   if (level === "A2") {
@@ -1595,7 +1602,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         textDe: knowledge.textDe,
         items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
         answerItems: buildKnowledgeAnswerItems(knowledge, slide.assignmentId),
-        instruction: "Lest den kurzen Text 1 Minute. Beantwortet danach die Fragen mündlich.",
+        instruction: knowledge.readingPurpose,
         suggestedMinutes: 5,
       }] : []),
       {
@@ -1680,7 +1687,7 @@ function buildPresenterV2Stages(slide = {}, topicLabel = "") {
         textDe: knowledge.textDe,
         items: Array.isArray(knowledge.checks) ? knowledge.checks : [],
         answerItems: buildKnowledgeAnswerItems(knowledge, slide.assignmentId),
-        instruction: "Lies für die Hauptidee. Beantworte danach zwei Textfragen und eine Denkfrage.",
+        instruction: knowledge.readingPurpose,
         suggestedMinutes: 6,
       }] : []),
       {

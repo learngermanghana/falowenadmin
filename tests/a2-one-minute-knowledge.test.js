@@ -70,8 +70,8 @@ test("A2 Presenter uses the stable teaching spine and removes repetitive ending 
     assert.equal(questions.type, "question-reveal");
     assert.equal(questions.items.length, 3, `${assignmentId} speaking production should use Easy, Neutral and Difficult`);
 
-    assert.equal(workbook.type, "workbook");
-    assert.ok(workbook.items.length >= 4, `${assignmentId} workbook bridge missing`);
+    assert.equal(workbook.type, "clarification");
+    assert.equal(workbook.items.length, 3);
 
     for (const removed of [
       "grammar",
@@ -97,10 +97,9 @@ test("A2 Day 6 checks position versus movement before article transformation", (
   const grammar = stages.find((stage) => stage.id === "grammar-check");
   const practice = stages.find((stage) => stage.id === "practice");
 
-  assert.match(knowledge.textDe, /Wo\?/);
-  assert.match(knowledge.textDe, /Wohin\?/);
-  assert.match(knowledge.textDe, /Dativ/);
-  assert.match(knowledge.textDe, /Akkusativ/);
+  assert.match(knowledge.textDe, /steht das Sofa neben der Tür/);
+  assert.match(knowledge.textDe, /stellt sie das Sofa neben das Fenster/);
+  assert.match(knowledge.answerItems[2], /zuerst.*neben das Fenster/);
 
   const grammarText = grammar.items
     .map((item) => [item.prompt, item.example, item.answer, item.note].filter(Boolean).join(" "))

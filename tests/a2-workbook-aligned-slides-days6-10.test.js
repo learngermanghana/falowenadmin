@@ -105,9 +105,9 @@ test("Day 10 Wissensimpuls and focused practice stay inside the city-exploring s
   const knowledge = getA2PresenterKnowledge("A2-4.10");
 
   assert.ok(knowledge);
-  assert.match(knowledge.title, /Eine Stadt entdecken/i);
-  assert.match(knowledge.textDe, /Stadt oder ein neues Viertel/i);
-  assert.match(knowledge.textDe, /war und hatte/i);
+  assert.match(knowledge.title, /Blick auf die Stadt/i);
+  assert.match(knowledge.textDe, /Altstadt/i);
+  assert.match(knowledge.textDe, /war.*hatte/i);
   assert.equal(knowledge.activity.title, "Entdeckungstag in der Stadt");
   assert.match(knowledge.activity.instruction, /Stadttag/i);
   assert.deepEqual(knowledge.activity.prompts, [

@@ -40,7 +40,7 @@ test("A2 knowledge tells learners how to use the text and Day 22 uses vocabulary
     .find((stage) => stage.id === "knowledge");
   assert.equal(
     knowledgeStage.instruction,
-    "Lest den kurzen Text 1 Minute. Beantwortet danach die Fragen mündlich.",
+    "Findet heraus, warum Mia Zeit zwischen Terminen lässt.",
   );
 
   const knowledge = getA2PresenterKnowledge("A2-8.22");
