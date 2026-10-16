@@ -705,26 +705,26 @@ export default function SocialMediaPage() {
         <div>
           <span className="social-studio-kicker">Falowen Admin</span>
           <h1>Social Media Studio</h1>
-          <p>Turn existing German lessons into short-video scripts, or prepare a class poster.</p>
+          <p>Prepare German lesson content and ready-to-share campaigns for upcoming classes.</p>
         </div>
       </header>
       <nav className="social-studio-tabs" aria-label="Social media tools">
         <button type="button" className="social-studio-tab" aria-pressed={activeTab === "creator"} onClick={() => setActiveTab("creator")}>Course Content Creator</button>
-        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "posters"} onClick={() => setActiveTab("posters")}>Class Posters</button>
+        <button type="button" className="social-studio-tab" aria-pressed={activeTab === "posters"} onClick={() => setActiveTab("posters")}>Upcoming Classes</button>
       </nav>
       {activeTab === "creator" ? <SocialCourseContentCreator /> : (
         <div className="social-poster-workspace">
           <section className="social-poster-header">
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <h2 style={{ margin: 0 }}>Class Poster Studio</h2>
+            <h2 style={{ margin: 0 }}>Upcoming Classes</h2>
             <p style={{ margin: "6px 0 0", color: "#64748b", maxWidth: 760 }}>
-              Select a class and export a branded poster. Open the optional panels to customize the design.
+              Create a full campaign from real class details. Use the original poster editor whenever you need a single custom design.
             </p>
           </div>
-          {selectedClass && startDays != null && (
-            <span style={{ borderRadius: 999, padding: "7px 11px", background: startDays >= 0 ? "#ecfdf5" : "#f8fafc", color: startDays >= 0 ? "#047857" : "#64748b", fontWeight: 700, fontSize: 13 }}>
-              {startDays === 0 ? "Starts today" : startDays > 0 ? `Starts in ${startDays} day${startDays === 1 ? "" : "s"}` : "Already started"}
+          {selectedClass && (
+            <span className="social-enrollment-pill">
+              {ongoingClass ? "Ongoing · enrollment open" : startDays === 0 ? "Starts today" : startDays === 1 ? "Starts tomorrow" : startDays > 1 ? `Starts in ${startDays} days` : "Registration open"}
             </span>
           )}
         </div>
@@ -738,7 +738,7 @@ export default function SocialMediaPage() {
             {error ? <p style={{ color: "#b91c1c" }}>{error}</p> : null}
             {!loading && !error && (
               <select value={selectedClassId} onChange={(event) => chooseClass(event.target.value)} style={inputStyle}>
-                {classes.length === 0 ? <option value="">No upcoming classes</option> : null}
+                {classes.length === 0 ? <option value="">No classes currently accepting registration</option> : null}
                 {classes.map((klass) => (
                   <option key={klass.id} value={klass.id}>
                     {klass.name || klass.levelId || klass.id} · {klass.status || "no status"} · {formatShortDate(klass.startDate) || "no start date"}
@@ -746,11 +746,41 @@ export default function SocialMediaPage() {
                 ))}
               </select>
             )}
-            <button type="button" onClick={resetFromClass} disabled={!selectedClass} style={{ marginTop: 10 }}>Reset details from class</button>
+            <button type="button" onClick={resetFromClass} disabled={!selectedClass} className="social-button-quiet" style={{ marginTop: 10 }}>Refresh from class data</button>
+            <small className="social-campaign-help">Only upcoming public classes with open registration, or ongoing classes explicitly accepting enrollment, are shown.</small>
+          </section>
+
+          <section className="social-panel social-campaign-picker">
+            <div className="social-campaign-top">
+              <h3>2. Generate content</h3>
+              <div className="social-campaign-switch" role="group" aria-label="Creation mode">
+                <button type="button" aria-pressed={campaignMode} onClick={() => setCampaignMode(true)}>Campaign</button>
+                <button type="button" aria-pressed={!campaignMode} onClick={() => setCampaignMode(false)}>Single poster</button>
+              </div>
+            </div>
+            {campaignMode ? (
+              <>
+                <p className="social-campaign-help">Choose a post to preview, or download all five ready-to-share designs and captions.</p>
+                <div className="social-campaign-assets" role="group" aria-label="Campaign assets">
+                  {campaignSlides.map((slide) => (
+                    <button type="button" key={slide.id}
+                      aria-pressed={campaignSlideId === slide.id}
+                      onClick={() => setCampaignSlideId(slide.id)}>
+                      <span className="social-campaign-item-title">{slide.label}</span>
+                      <small>{CAMPAIGN_FORMATS[slide.format].width} × {CAMPAIGN_FORMATS[slide.format].height}</small>
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="social-primary-button social-campaign-download" disabled={!selectedClass || photoReading || exportingPack || !qrValue} onClick={downloadCampaignPack}>
+                  {exportingPack ? "Preparing five images…" : "Download full campaign ZIP"}
+                </button>
+                <small className="social-campaign-help">Contains five PNGs plus captions and a review checklist. No video upload or AI use.</small>
+              </>
+            ) : <p className="social-campaign-help">Use the existing single-poster workflow, with your choice of size and style.</p>}
           </section>
 
           <details className="social-poster-details">
-            <summary>2. Choose template</summary>
+            <summary>3. Poster design &amp; colors</summary>
             <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {TEMPLATES.map((item) => (
                 <button key={item.id} type="button" onClick={() => setTemplateId(item.id)} style={{ minHeight: 76, borderRadius: 12, border: templateId === item.id ? `2px solid ${item.accent}` : "1px solid #cbd5e1", background: item.background, color: item.text, padding: 10, fontWeight: 800, textAlign: "left" }}>
@@ -762,9 +792,9 @@ export default function SocialMediaPage() {
           </details>
 
           <details className="social-poster-details">
-            <summary>3. Size &amp; photo</summary>
+            <summary>4. Size &amp; photo</summary>
             <div style={{ display: "grid", gap: 10 }}>
-              {FORMATS.map((item) => (
+              {campaignMode ? <p className="social-campaign-help">Campaign sizes are optimized automatically for each asset.</p> : FORMATS.map((item) => (
                 <label key={item.id} style={{ display: "flex", gap: 9, alignItems: "center", cursor: "pointer" }}>
                   <input type="radio" name="promo-format" checked={formatId === item.id} onChange={() => setFormatId(item.id)} />
                   <span><strong>{item.label}</strong> <small style={{ color: "#64748b" }}>({item.hint})</small></span>
@@ -794,7 +824,7 @@ export default function SocialMediaPage() {
           </details>
 
           <details className="social-poster-details">
-            <summary>4. Edit poster details</summary>
+            <summary>5. Review / edit class details</summary>
             <div style={{ display: "grid", gap: 10 }}>
               <Field label="Small heading" value={draft.eyebrow} onChange={(value) => updateDraft("eyebrow", value)} />
               <Field label="Class name" value={draft.className} onChange={(value) => updateDraft("className", value)} />
@@ -806,6 +836,11 @@ export default function SocialMediaPage() {
               <Field label="Duration / extra line" value={draft.duration} onChange={(value) => updateDraft("duration", value)} />
               <Field label="Button text" value={draft.cta} onChange={(value) => updateDraft("cta", value)} />
               <Field label="Registration URL" value={draft.website} onChange={(value) => updateDraft("website", value)} />
+              {!qrValue && <small className="social-campaign-error">A valid HTTPS registration URL is needed for the full campaign export.</small>}
+              <label className="social-campaign-checkbox">
+                <input type="checkbox" checked={includeQr} onChange={(event) => setIncludeQr(event.target.checked)} />
+                Add scannable registration QR code to exported posters
+              </label>
               <Field label="Phone (optional)" value={draft.phone} onChange={(value) => updateDraft("phone", value)} />
               <Field label="Footer" value={draft.footer} onChange={(value) => updateDraft("footer", value)} />
             </div>
@@ -817,14 +852,14 @@ export default function SocialMediaPage() {
             <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 17 }}>Live preview</h2>
-                <small style={{ color: "#64748b" }}>{format.width} × {format.height}px PNG{rendering || photoReading ? " • Rendering…" : ""}</small>
+                <small style={{ color: "#64748b" }}>{previewFormat.width} × {previewFormat.height}px PNG{rendering || photoReading ? " • Rendering…" : ""}</small>
               </div>
               <button type="button" onClick={exportImage} disabled={!exportReady} style={{ fontWeight: 800 }}>
                 {exportReady ? "Export PNG" : "Rendering…"}
               </button>
             </div>
             <div style={{ display: "grid", placeItems: "center", borderRadius: 14, background: "#e2e8f0", padding: isNarrow ? 6 : 12, overflow: "hidden", minWidth: 0 }}>
-              <canvas ref={canvasRef} style={{ display: "block", width: "100%", maxWidth: format.id === "story" ? 460 : 650, height: "auto", borderRadius: 10, boxShadow: "0 18px 45px rgba(15,23,42,.18)" }} />
+              <canvas ref={canvasRef} style={{ display: "block", width: "100%", maxWidth: previewFormat.id === "story" ? 460 : 650, height: "auto", borderRadius: 10, boxShadow: "0 18px 45px rgba(15,23,42,.18)" }} />
             </div>
           </section>
 
@@ -834,9 +869,13 @@ export default function SocialMediaPage() {
               <button type="button" onClick={copyCaption}>Copy caption</button>
             </div>
             <textarea readOnly rows={7} value={caption} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.45 }} />
+            <small className="social-campaign-help">Review the final class date, fee and registration details before publishing.</small>
           </section>
         </div>
       </div>
+          <div className="social-qr-cache" aria-hidden="true">
+            <QRCodeCanvas ref={qrCanvasRef} value={qrValue || "https://www.falowen.app/classes"} size={196} marginSize={2} />
+          </div>
         </div>
       )}
     </div>
