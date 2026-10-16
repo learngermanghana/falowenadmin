@@ -59,6 +59,6 @@ test("the unused A1 workbook connection stage is replaced by classroom speaking"
   assert.match(source, /id: "listen-respond"/);
   assert.match(source, /<A1EverydaySpeakingStage/);
   assert.doesNotMatch(source, /id: "workbook",|id: "sentence-build"/);
-  assert.match(css, /\\.presenter-a1-speaking-stage/);
+  assert.ok(css.includes(".presenter-a1-speaking-stage"));
   assert.match(source, /id: "mock"/);
 });
