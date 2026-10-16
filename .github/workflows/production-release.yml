@@ -66,6 +66,8 @@ jobs:
         run: npm run sync:build
       - name: Verify student payment link is discoverable
         run: node --test tests/student-payment-links.test.js tests/student-payment-directory-access.test.js
+      - name: Test deterministic social content templates
+        run: node --test tests/social-course-templates.test.js tests/social-course-review-state.test.js tests/social-class-campaign.test.js
       - name: Compile Admin UI after source sync
         run: npx vite build
       - name: Verify live marking contract, Day 10 writing and objective labels
@@ -98,6 +100,9 @@ jobs:
           tests/teaching-presenter.test.js
           tests/a2-b1-lesson-profile.test.js
           tests/production-deployment-contract.test.js
+          tests/social-course-templates.test.js
+          tests/social-course-review-state.test.js
+          tests/social-class-campaign.test.js
           tests/live-marking-contract-and-objective-label.test.js
           tests/student-emergency-contact.test.js
       - name: Check learner-source parity
