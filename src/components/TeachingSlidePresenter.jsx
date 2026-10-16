@@ -11,9 +11,9 @@ import { numberedPresenterSentences } from "../utils/presenterSentenceNumbering.
 import { getA2B1AdminLessonProfileForSlide } from "../data/a2B1LessonProfile.js";
 import { getPresenterSlidePhoto } from "../utils/presenterSlidePhotos.js";
 import { nextB1Day18CareerIndex } from "../data/b1Day18CareerChallenge.js";
+import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import PresenterSessionTimer from "./PresenterSessionTimer.jsx";
-import B1HousingChoicePractice from "./B1HousingChoicePractice.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
