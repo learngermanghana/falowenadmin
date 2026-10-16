@@ -562,14 +562,15 @@ export default function SocialMediaPage() {
     (async () => {
       const completed = await renderPoster(
         canvasRef.current,
-        draft,
+        previewDraft,
         template,
-        format,
+        previewFormat,
         photoSrc,
         photoControls,
         () => !cancelled && renderVersionRef.current === renderVersion,
       );
       if (!cancelled && renderVersionRef.current === renderVersion) {
+        if (completed && includeQr && qrValue) drawRegistrationQr(canvasRef.current, qrCanvasRef.current);
         if (completed) setRenderedSignature(posterSignature);
         setRendering(false);
       }
@@ -578,7 +579,7 @@ export default function SocialMediaPage() {
     return () => {
       cancelled = true;
     };
-  }, [draft, template, format, photoSrc, photoControls, posterSignature, activeTab]);
+  }, [previewDraft, template, previewFormat, photoSrc, photoControls, posterSignature, activeTab, includeQr, qrValue]);
 
   const chooseClass = (classId) => {
     setSelectedClassId(classId);
@@ -620,6 +621,41 @@ export default function SocialMediaPage() {
     setPhotoControls(DEFAULT_PHOTO);
   };
 
+  const downloadCampaignPack = async () => {
+    if (exportingPack || !selectedClass || photoReading || !campaignSlides.length) return;
+    if (!isSafeCampaignUrl(draft.website)) {
+      pushToast({ type: "error", message: "Enter a valid HTTPS class registration URL before exporting the campaign." });
+      return;
+    }
+    setExportingPack(true);
+    try {
+      const items = [];
+      const prefix = String(draft.className || "falowen-class")
+        .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "falowen-class";
+      for (const slide of campaignSlides) {
+        const canvas = document.createElement("canvas");
+        const completed = await renderPoster(
+          canvas, slide.data, template, CAMPAIGN_FORMATS[slide.format],
+          photoSrc, photoControls,
+        );
+        if (!completed) throw new Error("Could not render " + slide.label + ".");
+        if (includeQr && qrValue) drawRegistrationQr(canvas, qrCanvasRef.current);
+        const blob = await toPngBlob(canvas);
+        items.push({ name: slide.filename, content: new Uint8Array(await blob.arrayBuffer()) });
+      }
+      items.push({
+        name: "captions-and-review.txt",
+        content: classCampaignManifest(selectedClass, campaignSlides),
+      });
+      downloadBrowserBlob(makeCampaignZip(items), prefix + "-falowen-campaign.zip");
+      pushToast({ type: "success", message: "Five campaign images and captions exported as a ZIP." });
+    } catch (err) {
+      pushToast({ type: "error", message: err?.message || "Could not export campaign." });
+    } finally {
+      setExportingPack(false);
+    }
+  };
+
   const exportImage = () => {
     if (!exportReady) {
       pushToast({ type: "info", message: "Please wait for the latest poster preview to finish rendering." });
@@ -632,20 +668,14 @@ export default function SocialMediaPage() {
         pushToast({ type: "error", message: "Could not export this image." });
         return;
       }
-      const link = document.createElement("a");
       const className = String(draft.className || "class-promo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      const objectUrl = URL.createObjectURL(blob);
-      link.href = objectUrl;
-      link.download = `${className || "class-promo"}-${format.id}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      downloadBrowserBlob(blob, `${className || "class-promo"}-${campaignMode && selectedCampaign ? selectedCampaign.filename : format.id + ".png"}`);
       pushToast({ type: "success", message: "Promo image exported as PNG." });
     }, "image/png");
   };
 
   const caption = useMemo(() => {
+    if (campaignMode && selectedCampaign) return selectedCampaign.caption;
     const parts = [
       `German class registration is open: ${draft.className}.`,
       draft.startDate ? `Starts: ${draft.startDate}.` : "",
@@ -655,7 +685,7 @@ export default function SocialMediaPage() {
       "#LearnGerman #GermanInGhana #Falowen",
     ].filter(Boolean);
     return parts.join("\n");
-  }, [draft]);
+  }, [draft, campaignMode, selectedCampaign]);
 
   const copyCaption = async () => {
     try {
@@ -667,6 +697,7 @@ export default function SocialMediaPage() {
   };
 
   const startDays = selectedClass ? daysUntil(selectedClass.startDate) : null;
+  const ongoingClass = ["active", "ongoing"].includes(String(selectedClass?.status || "").toLowerCase());
 
   return (
     <div className="social-studio-shell">
