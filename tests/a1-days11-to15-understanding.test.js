@@ -12,7 +12,6 @@ import {
   A1_DAYS11_TO15_ASSIGNMENTS,
   getA1Days11To15UnderstandingChecks,
   getA1Days11To15QuickChecks,
-  getA1Days11To15ApplicationChecks,
 } from "../src/data/a1Days11To15Understanding.js";
 
 const expected = {
@@ -44,7 +43,6 @@ test("A1 Days 11–15 include 75 unique checks, correct answers and teacher expl
     assert.equal(verified.length, 11);
     assert.match(verified[10].questionDe, /^Exit-Check:/);
     const quick = getA1Days11To15QuickChecks(id);
-    const applied = getA1Days11To15ApplicationChecks(id);
     assert.equal(quick.length, 2);
     assert.equal(applied.length, 2);
     const all = [...verified, ...quick, ...applied];
@@ -111,8 +109,7 @@ test("A1 presenter and existing teacher view use the correct source material wit
   assert.match(registry, /enhanceA1Days11To15Slide\(lessonSlide\)/);
   assert.match(resolver, /getA1Days11To15UnderstandingChecks\(key\)/);
   assert.match(presenter, /getA1Days11To15QuickChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /getA1Days11To15ApplicationChecks\(slide\.assignmentId\)/);
-  assert.match(presenter, /reviewChecks: buildA1SlideReviewChecks\(mainChecks, 2\)/);
-  assert.match(presenter, /<details key=\{item\.questionDe\}/);
+  assert.match(presenter, /id: "mini-mission"/);
+  assert.match(presenter, /id: "listen-respond"/);
   assert.doesNotMatch(presenter, /Student Learning Progress|Self-practice completion tracking/);
 });
