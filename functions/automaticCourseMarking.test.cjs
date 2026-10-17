@@ -73,6 +73,17 @@ for (const existing of [false,true]) test(`marking publishes once and preserves 
   assert.equal(store.rows.get('scores/real__A1-1.1').score,existing?77:90);
   assert.equal(store.rows.get('submissions/s1').markingStatus,existing?'needs_review':'marked');
   assert.equal([...store.rows.keys()].filter(k=>k.startsWith('automaticScoreSync/')).length,existing?0:1);
+  const notifications = [...store.rows.entries()].filter(([key])=>key.startsWith('studentNotifications/'));
+  assert.equal(notifications.length,existing?0:1);
+  if (!existing) {
+    const [path, notification] = notifications[0];
+    assert.equal(path, `studentNotifications/${idForPath('submissions/s1')}`);
+    assert.equal(notification.title, 'Your assignment has been marked');
+    assert.equal(notification.score,90);
+    assert.equal(notification.studentCode,'real');
+    assert.equal(notification.data.route,'/campus/results');
+    assert.deepEqual(store.rows.get(`students/uid/notifications/${idForPath('submissions/s1')}`),notification);
+  }
   assert.equal(store.rows.get(`aiMarkingAudit/${idForPath('submissions/s1')}`).referenceVersion,'v1');
 });
 test('missing answer key preserves original work and routes to tutor without score',async()=>{
@@ -82,6 +93,7 @@ test('missing answer key preserves original work and routes to tutor without sco
   assert.equal(store.rows.get('submissions/s').submissionText,'Work');
   assert.equal(store.rows.get('submissions/s').markingStatus,'needs_review');
   assert.equal([...store.rows.keys()].some(k=>k.startsWith('scores/')),false);
+  assert.equal([...store.rows.keys()].some(k=>k.startsWith('studentNotifications/')),false);
 });
 
 for (const shape of ['nested','uid']) test(`resolves server-owned student identity for ${shape} submissions`,async()=>{

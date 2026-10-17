@@ -128,6 +128,25 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           submissionId: snap.id, submissionPath: snap.ref.path,
         });
         tx.set(scoreRef, row);
+        // Persist the same inbox event used by tutor marking, atomically with the score.
+        // The existing notification consumer mirrors it and delivers device push.
+        const notificationId = idForPath(snap.ref.path);
+        const score = Number(row.score);
+        const passed = score >= 60;
+        const body = `Score: ${score}/100 · ${passed ? 'Passed' : 'Needs improvement'}. Open Results to read your feedback and correction points.`;
+        const notification = {
+          type: 'Scores', category: 'feedback', title: 'Your assignment has been marked',
+          body, message: body, timestamp: now(), createdAt: timestamp, sentAt: timestamp,
+          route: '/campus/results', source: 'automatic_course_marking',
+          studentCode: studentCode.toLowerCase(), studentCodeOriginal: studentCode,
+          studentName: row.studentName, assignment: row.assignment, assignmentId: job.assignmentKey,
+          level: job.level, score, status: passed ? 'passed' : 'needs_improvement', read: false,
+          data: { type: 'marked_assignment', category: 'feedback', route: '/campus/results',
+            assignmentId: job.assignmentKey, submissionId: snap.id, score: String(score),
+            status: passed ? 'passed' : 'needs_improvement' },
+        };
+        tx.set(db.collection('studentNotifications').doc(notificationId), notification);
+        tx.set(db.doc(`${studentSnap.ref.path}/notifications/${notificationId}`), notification);
         tx.create(db.collection('automaticScoreSync').doc(idForPath(snap.ref.path)), { row, scorePath: scoreRef.path, status: 'pending', attempts: 0 });
       });
     } catch (error) {
