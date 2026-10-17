@@ -228,6 +228,10 @@ jobs:
           git reset --hard "$GITHUB_SHA"
           git clean -fd
 
+      - name: Install shared marking build dependencies
+        if: steps.plan.outputs.mode != 'skip'
+        run: npm ci --ignore-scripts
+
       - name: Install functions dependencies
         if: steps.plan.outputs.mode != 'skip'
         working-directory: functions
@@ -280,6 +284,11 @@ jobs:
             runtime_config_b64="$(printf '%s' "$CLOUD_RUNTIME_CONFIG" | base64 -w0)"
             printf 'CLOUD_RUNTIME_CONFIG_B64=%s\n' "$runtime_config_b64" > "functions/.env.$FIREBASE_PROJECT_ID"
 
+            # The score worker must share Admin's existing webhook and sheet selectors.
+            if [[ "$only" == *":markCourseSubmissionAutomatically"* || "$only" == *":syncAutomaticCourseScore"* ]]; then
+              node scripts/ensureScoreWebhookSecrets.mjs
+            fi
+
             firebase deploy \
               --project "$FIREBASE_PROJECT_ID" \
               --only "$only" \
@@ -289,6 +298,13 @@ jobs:
 
           deploy_group "Falowen API" \
             "functions:falowenadmin:api"
+
+          # Make consumers available before producers create automatic jobs.
+          deploy_group "automatic course score Sheet sync worker" \
+            "functions:falowenadmin:syncAutomaticCourseScore"
+
+          deploy_group "automatic course marking worker" \
+            "functions:falowenadmin:markCourseSubmissionAutomatically"
 
           deploy_group "assignment marking workers" \
             "functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob"

@@ -55,7 +55,8 @@
         "node scripts/patchAutoCompleteClassSessions.mjs",
         "node scripts/patchCloudCostOptimizations.mjs",
         "node scripts/patchCourseReviewRequestEmails.mjs",
-        "node scripts/patchGoetheExamConfig.mjs"
+        "node scripts/patchGoetheExamConfig.mjs",
+        "node scripts/buildAutomaticMarking.mjs"
       ],
       "ignore": [
         "node_modules",

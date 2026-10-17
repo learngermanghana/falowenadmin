@@ -77,6 +77,8 @@ const classScheduleAppsScriptUrlSecret = defineSecret("CLASS_SCHEDULE_APPS_SCRIP
 const holidaysAppsScriptUrlSecret = defineSecret("HOLIDAYS_APPS_SCRIPT_URL");
 const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
 const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");
+const scoresWebhookUrlSecret = defineSecret("SCORES_WEBHOOK_URL");
+const scoresWebhookTokenSecret = defineSecret("SCORES_WEBHOOK_TOKEN");
 const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIPT_URL");
 const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");
 
@@ -2324,11 +2326,15 @@ async function createAutomaticMarkingJob(event, collectionShape) {
     updatedAt: now,
   };
 
-  await db.collection("markingJobs").add(payload);
-  await snap.ref.set({
-    markingStatus: "pending",
-    markingJobCreatedAt: now,
-  }, { merge: true });
+  const { idForPath, eligible } = require("./automaticCourseMarking");
+  const jobRef = db.collection("markingJobs").doc(idForPath(submissionPath));
+  await db.runTransaction(async tx => {
+    if ((await tx.get(jobRef)).exists) return;
+    tx.create(jobRef, { ...payload, studentCode: event.params?.studentCode || "",
+      automatic: eligible(submission, payload.level, payload.assignmentKey) });
+    tx.set(snap.ref, { markingStatus: "pending", markingJobCreatedAt: now }, { merge: true });
+  });
+
 
   try {
     await applyAssignmentAttendance(event, submission);
@@ -2383,6 +2389,23 @@ exports.createNestedSubmissionMarkingJob = onDocumentCreated("submissions/{level
 exports.createPostSubmissionMarkingJob = onDocumentCreated("submissions/{level}/posts/{submissionId}", async (event) => {
   await createAutomaticMarkingJob(event, "posts");
 });
+
+// Marking runs on Firebase, using the same generated pipeline as tutor marking.
+const { createCourseMarkingWorker, createScoreSyncWorker } = require("./automaticCourseMarking");
+exports.markCourseSubmissionAutomatically = onDocumentCreated({
+  document: "markingJobs/{jobId}", secrets: [openAiApiKeySecret],
+  timeoutSeconds: 540, memory: "512MiB", maxInstances: 2, concurrency: 1, retry: true,
+}, createCourseMarkingWorker({
+  admin, db, loadReference: loadAnswerKeyRegistryEntry, callAi: callOpenAiForMarking,
+  mark: options => require("./automaticMarkingPipeline.cjs").markSubmissionWithAI(options),
+}));
+exports.syncAutomaticCourseScore = onDocumentCreated({
+  document: "automaticScoreSync/{syncId}", secrets: [scoresWebhookUrlSecret, scoresWebhookTokenSecret],
+  timeoutSeconds: 60, maxInstances: 1, concurrency: 1, retry: true,
+}, createScoreSyncWorker({ db, config: () => require("./scoreWebhookConfig").scoreWebhookConfig(runtimeConfig, {
+  ...process.env, SCORES_WEBHOOK_URL: scoresWebhookUrlSecret.value(),
+  SCORES_WEBHOOK_TOKEN: scoresWebhookTokenSecret.value(),
+}) }));
 
 exports.sendDueHolidayNotices = onSchedule({
   schedule: "0 7 * * *",
