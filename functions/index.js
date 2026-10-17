@@ -2327,13 +2327,18 @@ async function createAutomaticMarkingJob(event, collectionShape) {
   };
 
   const { idForPath, eligible } = require("./automaticCourseMarking");
-  const jobRef = db.collection("markingJobs").doc(idForPath(submissionPath));
-  await db.runTransaction(async tx => {
-    if ((await tx.get(jobRef)).exists) return;
-    tx.create(jobRef, { ...payload, studentCode: event.params?.studentCode || "",
-      automatic: eligible(submission, payload.level, payload.assignmentKey) });
-    tx.set(snap.ref, { markingStatus: "pending", markingJobCreatedAt: now }, { merge: true });
-  });
+  // Only create a markingJobs document when the submission can actually be
+  // marked. Ineligible jobs previously triggered an extra Cloud Function
+  // invocation that immediately returned. Attendance is still credited below.
+  if (eligible(submission, payload.level, payload.assignmentKey)) {
+    const jobRef = db.collection("markingJobs").doc(idForPath(submissionPath));
+    await db.runTransaction(async tx => {
+      if ((await tx.get(jobRef)).exists) return;
+      tx.create(jobRef, { ...payload, studentCode: event.params?.studentCode || "",
+        automatic: true });
+      tx.set(snap.ref, { markingStatus: "pending", markingJobCreatedAt: now }, { merge: true });
+    });
+  }
 
 
   try {
@@ -2401,13 +2406,14 @@ exports.markCourseSubmissionAutomatically = onDocumentCreated({
 }));
 exports.syncAutomaticCourseScore = onDocumentCreated({
   document: "automaticScoreSync/{syncId}", secrets: [scoresWebhookUrlSecret, scoresWebhookTokenSecret],
-  timeoutSeconds: 60, maxInstances: 1, concurrency: 1, retry: true,
+  timeoutSeconds: 60, maxInstances: 1, concurrency: 1, retry: true, cpu: "gcf_gen1",
 }, createScoreSyncWorker({ db, config: () => require("./scoreWebhookConfig").scoreWebhookConfig(runtimeConfig, {
   ...process.env, SCORES_WEBHOOK_URL: scoresWebhookUrlSecret.value(),
   SCORES_WEBHOOK_TOKEN: scoresWebhookTokenSecret.value(),
 }) }));
 
 exports.sendDueHolidayNotices = onSchedule({
+  cpu: "gcf_gen1",
   schedule: "0 7 * * *",
   timeZone: "Africa/Accra",
   secrets: [holidaysAppsScriptUrlSecret, holidaysSyncSecret],
