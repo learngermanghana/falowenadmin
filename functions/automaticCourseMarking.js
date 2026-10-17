@@ -194,6 +194,9 @@ function createScoreSyncWorker({ db, config, post = fetch }) {
       const batch = db.batch();
       batch.set(ref, { status: 'synced', receipt: clean(receipt) }, { merge: true });
       batch.set(db.doc(job.scorePath), { sheetSaved: true }, { merge: true });
+      if (job.source === 'course_speaking_mock') {
+        batch.set(db.doc(job.scorePath), { sheetSyncStatus: 'complete', sheetSyncError: '', sheetSyncLeaseUntil: 0 }, { merge: true });
+      }
       await batch.commit();
     } catch (error) {
       await ref.set({ status: attempts >= 5 ? 'needs_review' : 'pending', error: String(error.message).slice(0, 500) }, { merge: true });
