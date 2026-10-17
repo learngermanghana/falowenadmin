@@ -457,7 +457,7 @@ export function getPresenterTopicFoundation(slide = {}) {
       questionLabel: "Kernfrage",
       question: item.core,
       suggestedMinutes: 7,
-      teacherNote: "Do not debate yet. Clarify the concept, assumptions, affected actors and central tension before students evaluate the three course perspectives.",
+      teacherNote: "Do not introduce a second debate question. Clarify the concept, assumptions, affected actors and central tension, then keep returning to the same Leitfrage while the learner builds position, reason, example, counterposition and synthesis.",
     };
   }
 
