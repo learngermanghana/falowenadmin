@@ -1,5 +1,6 @@
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { plainObjectiveAnswer } from "../utils/markingFeedbackText.js";
+import { assignmentTitle } from "../utils/assignmentTitle.js";
 import { addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { normalizeAnswerDictionary, safeRegistryId, validateAnswerDictionary } from "../utils/answerKeyNormalizer.js";
@@ -179,7 +180,8 @@ function normalizeSubmissionDoc(docSnap, fallback = {}) {
   const resubmittedAt = readTimestamp(data.resubmittedAt);
   const createdAt = resubmittedAt || submittedAt;
   const text = normalize(data.text || data.answer || data.answers || data.content || data.message || data.submissionText || data.writing || data.work || "");
-  const assignment = normalize(data.assignment || data.assignmentTitle || data.assignmentName || data.topic || fallback.assignment || "");
+  const assignment = assignmentTitle(data.assignment, data.assignmentTitle, data.assignmentName, data.topic,
+    fallback.assignment, data.assignmentId, data.assignment_id, data.assignmentKey, fallback.assignmentId);
   const assignmentId = normalize(data.assignmentId || data.assignment_id || data.assignmentKey || data.canonicalAssignmentKey || fallback.assignmentId || "");
   const pathIdentity = inferSubmissionIdentityFromPath(docSnap.ref.path);
 
@@ -771,7 +773,7 @@ export async function markSubmissionWithAI({ submission = {}, referenceEntry = n
   const row = buildScoreRow({
     ...identity,
     name: identity.studentName || submission.fullName || "",
-    assignment: submission.assignment || effectiveReferenceEntry?.title || result.assignmentKey || "AI marked assignment",
+    assignment: assignmentTitle(submission.assignment, submission.assignmentTitle, effectiveReferenceEntry?.title, result.assignmentKey, "AI marked assignment"),
     assignmentId: result.assignmentKey || submission.assignmentId || submission.assignmentKey || "",
     score: result.finalScore ?? result.score ?? 0,
     comments: result.feedback || result.improvementSummary || "AI marking completed.",
@@ -836,7 +838,7 @@ function buildScoreRow({ studentCode, studentEmail = "", studentId = "", student
   const row = {
     ...identity,
     name: identity.studentName,
-    assignment,
+    assignment: assignmentTitle(assignment, safeAssignmentId),
     assignment_id: safeAssignmentId,
     assignmentId: safeAssignmentId,
     score,

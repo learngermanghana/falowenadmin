@@ -3,6 +3,8 @@ const { withMarkingTransport } = require('./automaticMarkingContext');
 const RESULTS_URL = 'https://www.falowen.app/campus/results';
 const idForPath = path => `auto_${crypto.createHash('sha256').update(path).digest('hex')}`;
 const clean = value => JSON.parse(JSON.stringify(value));
+const assignmentTitle = (...values) => values.find(value => typeof value === 'string'
+  && value.trim() && !/^(true|false)$/i.test(value.trim()))?.trim() || '';
 
 function eligible(submission, level, assignmentKey) {
   return ['A1', 'A2', 'B1'].includes(level)
@@ -113,7 +115,8 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
           studentcode: studentCode, studentCode, studentId,
           studentEmail: student.email || student.studentEmail || '',
           studentName: student.name || student.fullName || submission.studentName || '', name: student.name || student.fullName || submission.studentName || '',
-          assignment: submission.assignmentTitle || submission.title || job.assignmentKey,
+          assignment: assignmentTitle(submission.assignmentTitle, submission.title, submission.assignment,
+            referenceEntry.title, job.assignmentKey),
           assignment_id: job.assignmentKey, assignmentId: job.assignmentKey,
           score: result.finalScore ?? result.score, comments: result.feedback,
           passed: result.passed, passStatus: result.passStatus, writingMinimumMet: result.writingMinimumMet,

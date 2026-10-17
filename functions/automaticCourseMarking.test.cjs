@@ -106,6 +106,14 @@ test('missing answer key preserves original work and routes to tutor without sco
   assert.equal([...store.rows.keys()].some(k=>k.startsWith('scores/')),false);
   assert.equal([...store.rows.keys()].some(k=>k.startsWith('studentNotifications/')),false);
 });
+for (const title of [true, 'TRUE', undefined, 'A1 · Day 1 · Grüße']) test(`automatic export uses a real assignment title (${title})`,async()=>{
+  const store=memoryDb({'markingJobs/j':{automatic:true,submissionPath:'submissions/s',level:'A1',assignmentKey:'A1-1.1',status:'pending'},
+    'submissions/s':{studentId:'uid',submissionText:'Work',assignment:true,assignmentTitle:title},'students/uid':{studentCode:'real'}});
+  await createCourseMarkingWorker({db:store.db,loadReference:async()=>({parts:[{}],title:'Reference title'}),mark:async()=>({status:'marked',score:80,confidence:.99})})({data:store.snapshot('markingJobs/j')});
+  const expected=typeof title==='string' && title!=='TRUE'?title:'Reference title';
+  assert.equal(store.rows.get('scores/real__A1-1.1').assignment,expected);
+  assert.equal(store.rows.get(`automaticScoreSync/${idForPath('submissions/s')}`).row.assignment,expected);
+});
 
 for (const shape of ['nested','uid']) test(`resolves server-owned student identity for ${shape} submissions`,async()=>{
  const path=shape==='nested'?'submissions/A2/real/nested1':'submissions/flatUid';
