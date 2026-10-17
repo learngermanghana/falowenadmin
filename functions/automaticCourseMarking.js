@@ -96,6 +96,8 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const status = publish ? 'marked' : 'needs_review';
         tx.set(db.collection('markingResults').doc(snap.id), clean({
           ...submission, submissionId: snap.id, submissionPath: snap.ref.path,
+          studentId, studentCode, studentName: student.name || student.fullName || submission.studentName || '', assignmentId: job.assignmentKey,
+          assignmentTitle: assignmentTitle(submission.assignmentTitle, submission.title, referenceEntry.title, job.assignmentKey),
           result, status, finalScore: result.finalScore ?? result.score, feedback: result.feedback,
           sentToStudent: publish, source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
         }));

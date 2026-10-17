@@ -1,6 +1,7 @@
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { useAdminRefresh } from "../hooks/useAdminRefresh.js";
 import AdminRefreshStatus from "../components/AdminRefreshStatus.jsx";
+import AutomaticMarkingReview from "../components/AutomaticMarkingReview.jsx";
 const queueRowKey = (row) => String(row?.path || row?.id || [row?.studentCode, row?.studentName, row?.assignmentId || row?.assignment, row?.submittedAt || row?.createdAt || ""].join("|"));
 const QUEUE_HIDDEN_STORAGE = "falowen-admin-queue-hidden-v1";
 const readHiddenQueue = () => { try { return JSON.parse(window.localStorage.getItem(QUEUE_HIDDEN_STORAGE) || "[]"); } catch { return []; } };
@@ -188,6 +189,17 @@ function findRosterMatchForSubmission(roster = [], submission = {}) {
 }
 
 export default function MarkingPage() {
+  const [tab, setTab] = useState('incoming');
+  return <>
+    <nav aria-label="Marking sections" style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+      <button type="button" aria-pressed={tab === 'incoming'} onClick={() => setTab('incoming')}>Submissions to mark</button>
+      <button type="button" aria-pressed={tab === 'automatic'} onClick={() => setTab('automatic')}>AI-marked · Review & edit</button>
+    </nav>
+    {tab === 'automatic' ? <AutomaticMarkingReview /> : <TutorMarkingWorkspace />}
+  </>;
+}
+
+function TutorMarkingWorkspace() {
   const { success, error } = useToast();
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
