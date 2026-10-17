@@ -47,14 +47,29 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
     if (!claimed) return;
     try {
       // Resolve identity from the server-owned student record, never from form fields.
-      let studentSnap = submission.studentId ? await db.collection('students').doc(submission.studentId).get() : null;
-      if (submission.studentId && !studentSnap?.exists) {
-        const matches = await db.collection('students').where('uid', '==', submission.studentId).limit(1).get();
+      const requestedUid = String(submission.studentId || submission.uid || submission.userId || '').trim();
+      const pathSegments = snap.ref.path.split('/');
+      const pathCode = pathSegments.length === 4 && pathSegments[2] !== 'posts' ? pathSegments[2] : '';
+      const serverCode = String(job.studentCode || pathCode || '').trim();
+      let studentSnap = requestedUid ? await db.collection('students').doc(requestedUid).get() : null;
+      if (requestedUid && !studentSnap?.exists) {
+        const matches = await db.collection('students').where('uid', '==', requestedUid).limit(1).get();
         studentSnap = matches.docs[0] || null;
+      }
+      if (!studentSnap?.exists && serverCode) {
+        studentSnap = await db.collection('students').doc(serverCode).get();
+        for (const field of ['studentCode', 'studentcode']) {
+          if (studentSnap?.exists) break;
+          const matches = await db.collection('students').where(field, '==', serverCode).limit(1).get();
+          studentSnap = matches.docs[0] || null;
+        }
       }
       const student = studentSnap?.exists ? studentSnap.data() : null;
       const registeredCode = String(student?.studentCode || student?.studentcode || '').trim();
-      if (!registeredCode) throw new Error('Registered student identity unavailable; tutor review required');
+      const studentId = String(student?.uid || requestedUid || student?.userId || student?.studentId || studentSnap?.id || '').trim();
+      if (!registeredCode || !studentId || (requestedUid && studentId !== requestedUid)) {
+        throw new Error('Registered student identity unavailable; tutor review required');
+      }
       const referenceEntry = await loadReference(job.assignmentKey);
       if (!referenceEntry?.parts) throw new Error('No registered answer key; tutor review required');
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
@@ -66,7 +81,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
       const release = releasable(result);
       const timestamp = new Date(now()).toISOString();
       const studentCode = registeredCode;
-      if (!studentCode || !submission.studentId) throw new Error('Student identity missing; tutor review required');
+      if (!studentCode || !studentId) throw new Error('Student identity missing; tutor review required');
       const scoreId = `${studentCode}__${job.assignmentKey}`.replace(/[/#?[\]]+/g, '_');
       const scoreRef = db.collection('scores').doc(scoreId);
       await db.runTransaction(async tx => {
@@ -95,7 +110,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         tx.set(jobRef, { status, completedAt: timestamp, leaseUntil: 0 }, { merge: true });
         if (!publish) return;
         const row = clean({
-          studentcode: studentCode, studentCode, studentId: submission.studentId,
+          studentcode: studentCode, studentCode, studentId,
           studentEmail: student.email || student.studentEmail || '',
           studentName: student.name || student.fullName || submission.studentName || '', name: student.name || student.fullName || submission.studentName || '',
           assignment: submission.assignmentTitle || submission.title || job.assignmentKey,

@@ -43,7 +43,17 @@ function memoryDb(initial) {
   const ref = path => ({path,id:path.split('/').at(-1),get:async()=>snapshot(path),set:async(data,opts)=>put(path,data,opts)});
   const snapshot = path => ({ref:ref(path),id:path.split('/').at(-1),exists:rows.has(path),data:()=>rows.get(path)});
   const put = (path,data,opts) => rows.set(path,opts?.merge ? {...rows.get(path),...data}:data);
-  const db={doc:ref,collection:path=>({doc:id=>ref(`${path}/${id}`)}),runTransaction:async work=>{
+  const db={
+    doc:ref,
+    collection:path=>({
+      doc:id=>ref(`${path}/${id}`),
+      where:(field,_operator,value)=>({
+        limit:()=>({get:async()=>({docs:[...rows.keys()]
+          .filter(k=>k.startsWith(path+'/') && rows.get(k)?.[field]===value)
+          .slice(0,1).map(snapshot)})}),
+      }),
+    }),
+    runTransaction:async work=>{
     const pending=[];
     const tx={get:r=>r.get(),set:(r,d,o)=>pending.push(()=>put(r.path,d,o)),create:(r,d)=>pending.push(()=>{assert.equal(rows.has(r.path),false);put(r.path,d);})};
     const result=await work(tx);pending.forEach(f=>f());return result;
@@ -72,4 +82,14 @@ test('missing answer key preserves original work and routes to tutor without sco
   assert.equal(store.rows.get('submissions/s').submissionText,'Work');
   assert.equal(store.rows.get('submissions/s').markingStatus,'needs_review');
   assert.equal([...store.rows.keys()].some(k=>k.startsWith('scores/')),false);
+});
+
+for (const shape of ['nested','uid']) test(`resolves server-owned student identity for ${shape} submissions`,async()=>{
+ const path=shape==='nested'?'submissions/A2/real/nested1':'submissions/flatUid';
+ const store=memoryDb({'markingJobs/j':{automatic:true,submissionPath:path,level:'A2',assignmentKey:'A2-1.1',studentCode:shape==='nested'?'real':'',status:'pending'},
+  [path]:{status:'submitted',submissionText:'Meine Antwort',...(shape==='uid'?{uid:'user1'}:{})},
+  'students/user1':{studentCode:'real',uid:'user1',email:'test@example.test'}});
+ await createCourseMarkingWorker({db:store.db,loadReference:async()=>({parts:[{}]}),mark:async()=>({status:'marked',score:90,finalScore:90,confidence:.99,feedback:'Clear'})})({data:store.snapshot('markingJobs/j')});
+ assert.equal(store.rows.get(path).markingStatus,'marked');
+ assert.equal(store.rows.get('scores/real__A2-1.1').studentId,'user1');
 });
