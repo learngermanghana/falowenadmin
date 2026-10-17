@@ -1,3 +1,5 @@
+const { registerStudentTrialRecoveryRoute } = require("./studentTrialRecovery.js");
+
 const EDITABLE_STUDENT_FIELDS = new Set([
   "name",
   "email",
@@ -391,6 +393,11 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
         error: error?.message || "Could not load class transfer history",
       });
     }
+  });
+
+  registerStudentTrialRecoveryRoute({
+    app, db, admin, requireAuth,
+    assertStaff: (user) => assertStudentProfileEditor(user, staffEmails),
   });
 }
 
