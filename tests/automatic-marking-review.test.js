@@ -86,12 +86,24 @@ test('invalid scores and missing reasons cannot change a result', async () => {
 });
 test('approves original AI result without running AI again and publishes notification', async () => {
   const f = fixture(); f.rows.delete('scores/s'); f.detail.score = null;
+  Object.assign(f.rows.get('markingResults/work').result, { corrections: [{ original: 'a', corrected: 'b' }],
+    objectiveCorrect: 12, objectiveTotal: 12, objectiveScore: 100, writingScorePercent: 60,
+    writingMinimumMet: true, markingRubricVersion: 'v1', scoreBreakdown: [{ label: 'Writing', score: 60 }] });
   f.rows.get('markingResults/work').sentToStudent = false;
   await f.save(f.detail, { approve: true });
   assert.equal(f.rows.get('scores/real__A1-1.1').score, 80);
   assert.equal(f.rows.get('scores/real__A1-1.1').comments, 'Original AI');
   assert.equal(f.rows.get('markingResults/work').sentToStudent, true);
   assert.equal(f.rows.get('markingResults/work').tutorReview.action, 'approve');
+  const published = f.rows.get('scores/real__A1-1.1');
+  assert.equal(published.objectiveCorrect, 12);
+  assert.equal(published.objective_score, 100);
+  assert.equal(published.writing_score, 60);
+  assert.equal(published.writingMinimumMet, true);
+  assert.equal(published.markingRubricVersion, 'v1');
+  assert.deepEqual(JSON.parse(published.corrections), [{ original: 'a', corrected: 'b' }]);
+  const sync = [...f.rows.entries()].find(([key]) => key.startsWith('automaticScoreSync/'))[1];
+  assert.deepEqual(sync.row.scoreBreakdown, published.scoreBreakdown);
   assert.equal([...f.rows.keys()].filter(key => key.startsWith('studentNotifications/')).length, 1);
 });
 test('approval retains the AI writing-minimum failure even above 60', async () => {

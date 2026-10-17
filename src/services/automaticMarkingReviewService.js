@@ -68,7 +68,18 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
       Object.assign(correction, { passed, failed: !passed, status: passed ? 'passed' : 'failed', result: passed ? 'passed' : 'failed' });
     }
     const student = registered.data();
-    const updated = { ...current, ...correction, passStatus: correction.passed ? 'passed' : 'failed', comments: feedback.trim(), feedback: feedback.trim(),
+    const evidence = Object.fromEntries([
+      'objectiveScore', 'objectiveCorrect', 'objectiveTotal', 'objectiveDetails', 'wrongAnswers',
+      'writingScore', 'writingScorePercent', 'maxWritingScore', 'writingMinimumMet',
+      'markingRubricVersion', 'scoreBreakdown', 'taskPointEvidence', 'writingDimensions',
+      'taskCompletion', 'missingTaskPoints', 'improvementSummary', 'confidence',
+    ].filter(key => ai[key] !== undefined).map(key => [key, ai[key]]));
+    Object.assign(evidence, {
+      corrections: JSON.stringify(ai.corrections || []),
+      objective_score: ai.objectiveScore ?? '', objective_correct: ai.objectiveCorrect ?? '',
+      objective_total: ai.objectiveTotal ?? '', writing_score: ai.writingScorePercent ?? ai.writingScore ?? '',
+    });
+    const updated = { ...evidence, ...current, ...correction, passStatus: correction.passed ? 'passed' : 'failed', comments: feedback.trim(), feedback: feedback.trim(),
       studentCode, studentcode: studentCode, studentId: student.uid || detail.row.studentId,
       studentEmail: student.email || '', name: student.name || student.fullName || detail.row.studentName || '',
       assignmentId, assignment_id: assignmentId, level: detail.row.level || assignmentId.split('-')[0],
