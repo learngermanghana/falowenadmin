@@ -37,6 +37,18 @@ test('sheet retries use the saved result and stable upsert identity, not AI', as
   await worker({data:{ref}});
   assert.equal(calls,2);
 });
+test('speaking sync preserves its separate history identity and marks background export complete', async () => {
+  const updates = [];
+  const ref = { id: 'speaking-job', get: async () => ({ data: () => ({ source: 'course_speaking_mock', scorePath: 'scores/s', attempts: 0 }) }), set: async () => {} };
+  const saved = { score: 69, dedupe_id: 'student__A2-8.22__course_speaking_mock' };
+  let payload;
+  const db = { doc: path => ({ path, get: async () => ({ exists: true, data: () => saved }) }),
+    batch: () => ({ set: (target, patch) => updates.push([target.path, patch]), commit: async () => {} }) };
+  await createScoreSyncWorker({ db, config: () => ({ url: 'https://example.test', token: 'secret' }),
+    post: async (_url, options) => { payload = JSON.parse(options.body); return { ok: true, json: async () => ({ ok: true, mode: 'upsert' }) }; } })({ data: { ref } });
+  assert.equal(payload.rows[0].dedupe_id, saved.dedupe_id);
+  assert.ok(updates.some(([path, patch]) => path === 'scores/s' && patch.sheetSyncStatus === 'complete'));
+});
 
 function memoryDb(initial) {
   const rows = new Map(Object.entries(initial));
