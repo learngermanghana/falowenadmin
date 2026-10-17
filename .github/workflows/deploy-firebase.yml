@@ -285,9 +285,8 @@ jobs:
             printf 'CLOUD_RUNTIME_CONFIG_B64=%s\n' "$runtime_config_b64" > "functions/.env.$FIREBASE_PROJECT_ID"
 
             # The score worker must share Admin's existing webhook and sheet selectors.
-            if [[ "$only" == *":markCourseSubmissionAutomatically"* || "$only" == *":syncAutomaticCourseScore"* ]]; then
-              node scripts/ensureScoreWebhookSecrets.mjs
-            fi
+            # Firebase validates all declared secrets even for an API-only batch.
+            node scripts/ensureScoreWebhookSecrets.mjs
 
             firebase deploy \
               --project "$FIREBASE_PROJECT_ID" \
