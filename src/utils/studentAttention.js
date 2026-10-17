@@ -33,6 +33,10 @@ const firstText = (...values) => values.map(text).find(Boolean) || "";
 export const isExpiredTrialStudent = (student = {}) => {
   const status = lower(student.status || student.studentStatus || student.enrollmentStatus).replace(/[_-]+/g, " ");
   const trialStatus = lower(student.trialStatus || student.trial_status).replace(/[_-]+/g, " ");
+  const paymentStatus = lower(student.paymentStatus || student.payment_status || student.financeStatus).replace(/[_-]+/g, " ");
+  if (["paid", "partially paid", "partial", "successful", "success", "complete", "completed"].includes(paymentStatus)) return false;
+  if (["paid", "converted"].includes(status)) return false;
+  if ([student.paid, student.paidAmount, student.amountPaid, student.totalPaid].some((value) => Number(value) > 0)) return false;
   return status === "trial expired" || trialStatus === "expired" || trialStatus === "trial expired";
 };
 
@@ -49,17 +53,17 @@ export const isRetainedExpiredTrialStudent = (student = {}, nowMs = Date.now()) 
   return !purgeAt || nowMs < purgeAt;
 };
 
-export const isArchivedStudent = (student = {}) => {
-  if (isRetainedExpiredTrialStudent(student)) return false;
+export const isArchivedStudent = (student = {}, nowMs = Date.now()) => {
+  if (isRetainedExpiredTrialStudent(student, nowMs)) return false;
   const status = lower(student.status || student.studentStatus || student.enrollmentStatus);
   return ["archived", "inactive", "withdrawn", "removed", "cancelled", "canceled"].some((token) =>
     status.includes(token),
   );
 };
 
-export const isTrialOrUnpaidStudent = (student = {}) => {
-  if (isRetainedExpiredTrialStudent(student)) return true;
-  if (isArchivedStudent(student)) return false;
+export const isTrialOrUnpaidStudent = (student = {}, nowMs = Date.now()) => {
+  if (isRetainedExpiredTrialStudent(student, nowMs)) return true;
+  if (isArchivedStudent(student, nowMs)) return false;
   const status = lower(student.status);
   const paymentStatus = lower(student.paymentStatus);
   const balance = firstNumber(student.balanceDue, student.balance, student.outstandingBalance, student.amountDue);
