@@ -84,6 +84,8 @@ for (const existing of [false,true]) test(`marking publishes once and preserves 
   assert.equal(marks,1);
   assert.equal(store.rows.get('scores/real__A1-1.1').score,existing?77:90);
   assert.equal(store.rows.get('submissions/s1').markingStatus,existing?'needs_review':'marked');
+  assert.equal(store.rows.get('markingResults/s1').publicationStatus,existing?'awaiting_approval':'published');
+  if (existing) assert.match(store.rows.get('markingResults/s1').publicationReviewReasons[0], /existing score/);
   assert.equal([...store.rows.keys()].filter(k=>k.startsWith('automaticScoreSync/')).length,existing?0:1);
   const notifications = [...store.rows.entries()].filter(([key])=>key.startsWith('studentNotifications/'));
   assert.equal(notifications.length,existing?0:1);

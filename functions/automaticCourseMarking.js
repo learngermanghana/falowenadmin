@@ -94,24 +94,33 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         // Never overwrite a tutor's decision or a previous attempt automatically.
         const publish = release && !existingScore.exists;
         const status = publish ? 'marked' : 'needs_review';
+        const publicationReviewReasons = publish ? [] : [
+          ...(existingScore.exists ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
+          ...(result.status !== 'marked' ? ['The marking pipeline requested tutor review.'] : []),
+          ...(!Number.isFinite(Number(result.confidence)) || Number(result.confidence) < 0.8 ? ['AI confidence is below the automatic-release threshold.'] : []),
+          ...(result.consistencyWarnings || []).map(value => typeof value === 'string' ? value : value.message || value.code || 'Marking consistency warning.'),
+          ...(result.reviewReasons || []).map(value => typeof value === 'string' ? value : value.message || value.code || 'Marking validation requires review.'),
+          ...(result.secondExaminer?.requiresTutorReview ? ['The second examiner requested tutor review.'] : []),
+          ...((result.finalScore ?? result.score) == null || !Number.isFinite(Number(result.finalScore ?? result.score)) ? ['A valid final score is unavailable.'] : []),
+        ];
         tx.set(db.collection('markingResults').doc(snap.id), clean({
           ...submission, submissionId: snap.id, submissionPath: snap.ref.path,
           studentId, studentCode, studentName: student.name || student.fullName || submission.studentName || '', assignmentId: job.assignmentKey,
           assignmentTitle: assignmentTitle(submission.assignmentTitle, submission.title, referenceEntry.title, job.assignmentKey),
-          result, status, finalScore: result.finalScore ?? result.score, feedback: result.feedback,
+          result, status, publicationReviewReasons, publicationStatus: publish ? 'published' : 'awaiting_approval', finalScore: result.finalScore ?? result.score, feedback: result.feedback,
           sentToStudent: publish, source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
         }));
         tx.set(db.collection('aiMarkingAudit').doc(idForPath(snap.ref.path)), clean({
           submissionId: snap.id, submissionPath: snap.ref.path, submission,
           referenceEntry, referenceVersion: referenceEntry.version || referenceEntry.updatedAt || '',
-          result, status, automatic: true, createdAt: timestamp,
+          result, status, publicationReviewReasons, automatic: true, createdAt: timestamp,
         }));
         tx.set(submissionRef, clean({
           markingStatus: status, markingUpdatedAt: timestamp,
           ...(publish ? { finalScore: result.finalScore ?? result.score, aiFeedback: result.feedback,
             feedbackSentToStudent: true, resultUrl: RESULTS_URL, automaticMarking: true } : {}),
         }), { merge: true });
-        tx.set(jobRef, { status, completedAt: timestamp, leaseUntil: 0 }, { merge: true });
+        tx.set(jobRef, { status, publicationReviewReasons, completedAt: timestamp, leaseUntil: 0 }, { merge: true });
         if (!publish) return;
         const row = clean({
           studentcode: studentCode, studentCode, studentId,
