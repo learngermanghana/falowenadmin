@@ -17,7 +17,7 @@ import StudentEmergencyContact from "../components/StudentEmergencyContact.jsx";
 import { matchesStudentDirectorySearch } from "../utils/studentDirectorySearch.js";
 import { calculatePaystackCharge, calculatePaystackGrossAmount, parseMoneyValue, PAYSTACK_CHARGE_RATE, STUDENT_PAYSTACK_CHARGE_SHARE } from "../utils/paystackCharges";
 import { getEffectiveClassEndDate } from "../utils/liveClassScheduling";
-import { isArchivedStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention } from "../utils/studentAttention";
+import { isArchivedStudent, isRetainedExpiredTrialStudent, isTrialOrUnpaidStudent, resolveStudentLearningStatus, sortStudentsByAttention, summarizeStudentAttention, trialRecoveryPurgeAtMs } from "../utils/studentAttention";
 
 const editableFields = STUDENT_DETAIL_TABS.flatMap((tab) => tab.fields);
 
@@ -327,7 +327,7 @@ function whatsappUrl(phone, message) {
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 }
 
-const DIRECTORY_VIEWS = new Set(["all", "trials", "attention", "archived"]);
+const DIRECTORY_VIEWS = new Set(["all", "trials", "expired", "attention", "archived"]);
 
 function normalizeDirectoryView(value) {
   const normalized = String(value || "").trim().toLowerCase();
@@ -378,6 +378,7 @@ export default function StudentDirectoryPage() {
 
   const viewStudents = useMemo(() => {
     if (directoryView === "trials") return students.filter(isTrialOrUnpaidStudent);
+    if (directoryView === "expired") return students.filter(isRetainedExpiredTrialStudent);
     if (directoryView === "attention") return sortStudentsByAttention(students).map(({ student }) => student);
     if (directoryView === "archived") return students.filter(isArchivedStudent);
     return students.filter((student) => !isArchivedStudent(student));
@@ -386,13 +387,17 @@ export default function StudentDirectoryPage() {
   const directoryCounts = useMemo(() => ({
     all: students.filter((student) => !isArchivedStudent(student)).length,
     trials: students.filter(isTrialOrUnpaidStudent).length,
+    expired: students.filter(isRetainedExpiredTrialStudent).length,
     attention: attentionSummary.total,
     archived: students.filter(isArchivedStudent).length,
   }), [attentionSummary.total, students]);
 
+  // A staff search searches every loaded record regardless of the chosen tab.
+  // In particular, inactive/archived aliases must not conceal retained trials.
   const filteredStudents = useMemo(() => (
-    viewStudents.filter((student) => matchesStudentDirectorySearch(student, query, resolveStudentPhone(student)))
-  ), [viewStudents, query]);
+    (query.trim() ? students : viewStudents)
+      .filter((student) => matchesStudentDirectorySearch(student, query, resolveStudentPhone(student)))
+  ), [students, viewStudents, query]);
 
   const selectDirectoryView = (view) => {
     const nextView = normalizeDirectoryView(view);
@@ -658,6 +663,7 @@ export default function StudentDirectoryPage() {
             {[
               ["all", "All students"],
               ["trials", "Trials & unpaid"],
+              ["expired", "Expired trials"],
               ["attention", "Needs attention"],
               ["archived", "Archived"],
             ].map(([view, label]) => (
@@ -714,7 +720,7 @@ export default function StudentDirectoryPage() {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, phone, email, class, student code..."
+              placeholder="Search all records by name, phone, email, class, student code..."
               style={{ width: "100%", maxWidth: 460, padding: "8px 10px", borderRadius: 8, border: "1px solid #ccd4e2" }}
             />
           </>
@@ -731,11 +737,14 @@ export default function StudentDirectoryPage() {
               <>
                 <p style={{ marginTop: 0 }}>
                   Showing <strong>{filteredStudents.length}</strong> student record{filteredStudents.length === 1 ? "" : "s"} in <strong>{
+                    query.trim() ? "All-record search results" :
                     directoryView === "attention" ? "Needs attention" :
                     directoryView === "trials" ? "Trials & unpaid" :
+                    directoryView === "expired" ? "Expired trials" :
                     directoryView === "archived" ? "Archived" : "All students"
                   }</strong>.
-                  {directoryView === "attention" ? " This queue is calculated from data already loaded in Admin; opening it creates no new intervention write." : ""}
+                  {query.trim() ? " Search includes retained expired trials and archived records, regardless of the selected tab." : ""}
+                  {directoryView === "attention" && !query.trim() ? " This queue is calculated from data already loaded in Admin; opening it creates no new intervention write." : ""}
                 </p>
 
                 {filteredStudents.length === 0 && <p>No students found for this search.</p>}
@@ -781,9 +790,14 @@ export default function StudentDirectoryPage() {
                                 color: "#1a2233",
                               }}
                             >
-                              <div style={{ fontWeight: 600 }}>{student.name || "Unnamed"}</div>
+                              <div style={{ fontWeight: 600 }}>{student.name || student.fullName || student.displayName || student.studentName || [student.firstName, student.lastName].filter(Boolean).join(" ") || "Unnamed"}</div>
                               <div style={{ fontSize: 12, opacity: 0.8 }}>{student.studentCode || "No student code"}</div>
                               <div style={{ fontSize: 12, opacity: 0.75 }}>{student.className || "No class"}</div>
+                              {isRetainedExpiredTrialStudent(student) && (
+                                <div style={{ fontSize: 12, color: "#9a3412", fontWeight: 700, marginTop: 4 }}>
+                                  Trial expired · {trialRecoveryPurgeAtMs(student) ? `recovery until ${new Date(trialRecoveryPurgeAtMs(student)).toLocaleDateString()}` : "retained for recovery"}
+                                </div>
+                              )}
                               {learningStatus?.primaryReason ? (
                                 <div
                                   style={{
@@ -838,7 +852,15 @@ export default function StudentDirectoryPage() {
                           requestAnimationFrame(() => document.getElementById(`student-list-${selectedStudent.id}`)?.focus());
                         }}>← Back to students</button>
                         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-                          <h2 style={{ marginTop: 0, marginBottom: 8 }}>{selectedStudent.name || "Student details"}</h2>
+                          <div>
+                            <h2 style={{ marginTop: 0, marginBottom: 8 }}>{selectedStudent.name || selectedStudent.fullName || selectedStudent.displayName || "Student details"}</h2>
+                            {isRetainedExpiredTrialStudent(selectedStudent) && (
+                              <p style={{ marginTop: 0, fontSize: 12, color: "#9a3412" }}>
+                                Trial expired · account and learning history retained for payment reactivation.
+                                {trialRecoveryPurgeAtMs(selectedStudent) ? ` Recovery ends ${new Date(trialRecoveryPurgeAtMs(selectedStudent)).toLocaleDateString()}.` : ""}
+                              </p>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
