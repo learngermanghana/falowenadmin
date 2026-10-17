@@ -45,7 +45,7 @@ function validateTrialRecovery(payload = {}, now = Date.now()) {
 }
 
 function registerStudentTrialRecoveryRoute({ app, db, admin, requireAuth, assertStaff }) {
-  if (!app?.post || !db?.collection || !admin?.auth || !admin?.firestore?.Timestamp || !requireAuth || !assertStaff) {
+  if (!app?.post || !db?.collection || !requireAuth || !assertStaff) {
     throw new Error("Missing trial recovery route dependencies");
   }
 
@@ -54,6 +54,9 @@ function registerStudentTrialRecoveryRoute({ app, db, admin, requireAuth, assert
       const actor = await requireAuth(req);
       assertStaff(actor);
       const recovery = validateTrialRecovery(req.body || {});
+      if (typeof admin?.auth !== "function" || !admin?.firestore?.Timestamp?.fromMillis || !admin?.firestore?.FieldValue?.serverTimestamp) {
+        throw new Error("Firebase Admin identity recovery is unavailable");
+      }
       // Never create an unrelated account just because a published sheet row exists.
       const authUser = await admin.auth().getUser(recovery.uid);
       if (lower(authUser.email) !== recovery.email) {
