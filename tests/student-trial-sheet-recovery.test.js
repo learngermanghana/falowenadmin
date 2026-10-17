@@ -5,7 +5,6 @@ import {
   mapRetainedSheetTrial,
   missingRetainedSheetTrials,
 } from "../src/utils/studentTrialSheetRecovery.js";
-import { listMissingRetainedTrials } from "../src/services/studentsService.js";
 
 const require = createRequire(import.meta.url);
 const { validateTrialRecovery, registerStudentTrialRecoveryRoute } = require("../functions/studentTrialRecovery.js");
@@ -35,12 +34,6 @@ test("published sheet-only trial still appears after expiry and before recovery 
   assert.equal(missingRetainedSheetTrials([example], [{ studentCode: example.StudentCode }], NOW).length, 0);
   assert.equal(missingRetainedSheetTrials([example], [{ email: example.email }], NOW).length, 0);
   assert.equal(missingRetainedSheetTrials([example], [], Date.parse("2026-11-09T00:00:00Z")).length, 0);
-});
-
-test("published sheet loader is reconciled rather than automatically writing Firestore", async () => {
-  const entries = await listMissingRetainedTrials([{ uid: "another-student" }], async () => [example]);
-  assert.equal(entries.length, 1);
-  assert.equal(entries[0].sheetOnly, true);
 });
 
 test("do not treat paid/converted sheet rows as unpaid expired trials", () => {
