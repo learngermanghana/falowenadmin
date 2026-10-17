@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { loadAutomaticMarkingPage, openAutomaticMarking, saveAutomaticMarkingReview } from '../services/automaticMarkingReviewService.js';
+import { closeAutomaticMarkingReview, loadAutomaticMarkingPage, openAutomaticMarking, saveAutomaticMarkingReview } from '../services/automaticMarkingReviewService.js';
 import { assignmentTitle } from '../utils/assignmentTitle.js';
 
 export default function AutomaticMarkingReview() {
@@ -11,6 +11,7 @@ export default function AutomaticMarkingReview() {
   const [score, setScore] = useState('');
   const [feedback, setFeedback] = useState('');
   const [reason, setReason] = useState('');
+  const [showReviewed, setShowReviewed] = useState(false);
   async function load(more = false) {
     setBusy(true); setError('');
     try {
@@ -36,25 +37,39 @@ export default function AutomaticMarkingReview() {
       await load();
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
+  async function closeReview() {
+    if ((String(detail.score?.score ?? detail.row.finalScore ?? '') !== score
+      || (detail.score?.comments || detail.row.feedback || detail.row.result?.feedback || '') !== feedback || reason)
+      && !window.confirm('Close without saving your edits? The saved score and feedback will stay unchanged.')) return;
+    setBusy(true); setError('');
+    try {
+      await closeAutomaticMarkingReview(detail);
+      setPage(previous => ({ ...previous, rows: previous.rows.map(row => row.id === detail.row.id
+        ? { ...row, reviewClosedAt: new Date().toISOString() } : row) }));
+      setDetail(null); setMessage('Review closed. Find it again with Show reviewed.');
+    } catch (err) { setError(err.message); } finally { setBusy(false); }
+  }
+  const visibleRows = page.rows.filter(row => showReviewed || !(row.reviewClosedAt || row.tutorReview));
   const original = detail?.audit?.result || detail?.row.result;
   return <section className="marking-card" aria-label="Automatic marking audit">
     <h2>AI-marked work</h2>
     <p>Open saved work to check the AI decision. Corrections keep the original AI evidence and queue a Sheet update.</p>
     <button type="button" disabled={busy} onClick={() => load()}>Refresh</button>
+    <label style={{ marginLeft: 16 }}><input type="checkbox" checked={showReviewed} onChange={event => setShowReviewed(event.target.checked)} /> Show reviewed</label>
     {busy && <p role="status">Loading…</p>}
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
     <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', textAlign: 'left' }}>
       <thead><tr><th>Student</th><th>Assignment</th><th>Score</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody>{page.rows.map(row => <tr key={row.id}>
+      <tbody>{visibleRows.map(row => <tr key={row.id}>
         <td>{row.studentName || row.studentCode || row.studentId || 'Student'}</td>
         <td>{assignmentTitle(row.assignmentTitle, row.assignment, row.result?.assignmentKey, row.assignmentId)}</td>
         <td>{row.finalScore ?? '—'}</td>
-        <td>{row.tutorReview ? 'Tutor reviewed' : row.status === 'marked' ? 'AI-marked' : 'Needs review'}</td>
+        <td>{row.reviewClosedAt || row.tutorReview ? 'Tutor reviewed' : row.status === 'marked' ? 'AI-marked' : 'Needs review'}</td>
         <td><button type="button" disabled={busy} onClick={() => open(row)}>Open & review</button></td>
       </tr>)}</tbody>
     </table></div>
-    {!busy && !page.rows.length && <p>No automatically marked work found.</p>}
+    {!busy && !visibleRows.length && <p>No work awaiting review in this page.{page.hasMore ? ' Load more to check the next page.' : ''}</p>}
     {page.hasMore && <button type="button" disabled={busy} onClick={() => load(true)}>Load more</button>}
     {detail && <article style={{ marginTop: 24 }}>
       <h3>Submitted work</h3>
@@ -77,7 +92,7 @@ export default function AutomaticMarkingReview() {
         <label>Reason for correction<textarea required value={reason} onChange={event => setReason(event.target.value)} disabled={busy} style={{ display: 'block', width: '100%' }} /></label>
         <button type="submit" disabled={busy}>Save tutor correction & sync Sheet</button>
       </form> : <p>This work has no uniquely linked published score. Use Submissions to mark for tutor marking.</p>}
-      <button type="button" disabled={busy} onClick={() => setDetail(null)}>Close review</button>
+      <button type="button" disabled={busy} onClick={closeReview}>Close review · mark reviewed</button>
     </article>}
   </section>;
 }

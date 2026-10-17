@@ -27,8 +27,8 @@ function fixture() {
     writes.forEach(write => write());
   };
   const api = new Function('collection', 'doc', 'auth', 'db', 'runTransaction', 'buildManualScoreCorrection', 'assignmentTitle',
-    `${source}; return { saveAutomaticMarkingReview };`)(collection, doc, { currentUser: { uid: 'tutor1' } }, {}, runTransaction, buildManualScoreCorrection, assignmentTitle);
-  return { rows, save: api.saveAutomaticMarkingReview,
+    `${source}; return { saveAutomaticMarkingReview, closeAutomaticMarkingReview };`)(collection, doc, { currentUser: { uid: 'tutor1' } }, {}, runTransaction, buildManualScoreCorrection, assignmentTitle);
+  return { rows, save: api.saveAutomaticMarkingReview, close: api.closeAutomaticMarkingReview,
     detail: { row: { id: 'work', submissionPath: 'submissions/work' }, score: { id: 's', updatedAt: 'v1' } } };
 }
 test('tutor correction preserves AI evidence, records history and queues Sheet sync atomically', async () => {
@@ -55,6 +55,15 @@ test('stale result cannot overwrite another tutor correction', async () => {
   await assert.rejects(f.save(f.detail, { score: 90, feedback: 'Changed', reason: 'Recheck' }), /changed/);
   assert.equal(f.rows.size, 3);
   assert.equal(f.rows.get('scores/s').score, 80);
+});
+test('closing review persists acknowledgement without editing a score or queueing sync', async () => {
+  const f = fixture();
+  await f.close(f.detail);
+  assert.equal(f.rows.get('markingResults/work').reviewClosedBy, 'tutor1');
+  assert.ok(f.rows.get('markingResults/work').reviewClosedAt);
+  assert.equal(f.rows.get('scores/s').score, 80);
+  assert.equal(f.rows.get('markingResults/work').result.feedback, 'Original AI');
+  assert.equal(f.rows.size, 3);
 });
 test('feedback-only corrections also queue a Sheet update', async () => {
   const f = fixture();

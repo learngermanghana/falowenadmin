@@ -51,9 +51,21 @@ export async function saveAutomaticMarkingReview(detail, { score, feedback, reas
     tx.set(reviewRef, { ...review, previousScore: current.score, previousFeedback: current.comments || current.feedback || '' });
     tx.set(scoreRef, updated);
     // Keep the original AI result and its evidence intact; tutor changes have a separate history.
-    tx.set(markingRef, { finalScore: correction.score, feedback: feedback.trim(), tutorReview: review, updatedAt: timestamp }, { merge: true });
+    tx.set(markingRef, { finalScore: correction.score, feedback: feedback.trim(), tutorReview: review,
+      reviewClosedAt: timestamp, reviewClosedBy: auth.currentUser.uid, updatedAt: timestamp }, { merge: true });
     tx.set(submissionRef, { finalScore: correction.score, aiFeedback: feedback.trim(), markingStatus: 'marked',
       markingUpdatedAt: timestamp, tutorReviewed: true }, { merge: true });
     tx.set(syncRef, { scorePath: scoreRef.path, row: updated, status: 'pending', attempts: 0, createdAt: timestamp });
+  });
+}
+
+export async function closeAutomaticMarkingReview(detail) {
+  if (!auth.currentUser) throw new Error('Sign in before closing a review.');
+  const ref = doc(db, 'markingResults', detail.row.id);
+  await runTransaction(db, async tx => {
+    const saved = await tx.get(ref);
+    if (!saved.exists()) throw new Error('This result is no longer available.');
+    // Closing acknowledges the review; it never changes the student's mark or AI evidence.
+    tx.set(ref, { reviewClosedAt: new Date().toISOString(), reviewClosedBy: auth.currentUser.uid }, { merge: true });
   });
 }
