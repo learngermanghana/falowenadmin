@@ -3,7 +3,7 @@ import "./StudentDirectoryPage.css";
 import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../utils/studentDetailTabs.js";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
+import { createStudent, listAllStudents, listMissingRetainedTrials, recoverMissingTrialStudent, updateStudentById } from "../services/studentsService";
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
@@ -340,6 +340,9 @@ export default function StudentDirectoryPage() {
   const directoryView = normalizeDirectoryView(searchParams.get("view"));
   const [activeTab, setActiveTab] = useState("directory");
   const [students, setStudents] = useState([]);
+  const [sheetOnlyTrials, setSheetOnlyTrials] = useState([]);
+  const [sheetTrialError, setSheetTrialError] = useState("");
+  const [restoringTrialUid, setRestoringTrialUid] = useState("");
   const [classes, setClasses] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [query, setQuery] = useState("");
@@ -362,6 +365,11 @@ export default function StudentDirectoryPage() {
         const [records, classRows] = await Promise.all([listAllStudents(), listClassCohorts()]);
         setStudents(records);
         setClasses(classRows);
+        // Fail open to Firestore records if the published sheet is unavailable.
+        // A missing Firestore record must not silently disappear from staff search.
+        listMissingRetainedTrials(records)
+          .then((rows) => { setSheetOnlyTrials(rows); setSheetTrialError(""); })
+          .catch((sheetError) => setSheetTrialError(sheetError?.message || "Published sheet unavailable"));
       } catch (err) {
         setError(err?.message || "Failed to load students");
       } finally {
@@ -385,12 +393,12 @@ export default function StudentDirectoryPage() {
   }, [directoryView, students]);
 
   const directoryCounts = useMemo(() => ({
-    all: students.filter((student) => !isArchivedStudent(student)).length,
-    trials: students.filter(isTrialOrUnpaidStudent).length,
-    expired: students.filter(isRetainedExpiredTrialStudent).length,
+    all: students.filter((student) => !isArchivedStudent(student)).length + sheetOnlyTrials.length,
+    trials: students.filter(isTrialOrUnpaidStudent).length + sheetOnlyTrials.length,
+    expired: students.filter(isRetainedExpiredTrialStudent).length + sheetOnlyTrials.length,
     attention: attentionSummary.total,
     archived: students.filter(isArchivedStudent).length,
-  }), [attentionSummary.total, students]);
+  }), [attentionSummary.total, students, sheetOnlyTrials]);
 
   // A staff search searches every loaded record regardless of the chosen tab.
   // In particular, inactive/archived aliases must not conceal retained trials.
@@ -398,6 +406,29 @@ export default function StudentDirectoryPage() {
     (query.trim() ? students : viewStudents)
       .filter((student) => matchesStudentDirectorySearch(student, query, resolveStudentPhone(student)))
   ), [students, viewStudents, query]);
+
+  const visibleSheetOnlyTrials = useMemo(() => (
+    (query.trim() || ["all", "trials", "expired"].includes(directoryView) ? sheetOnlyTrials : [])
+      .filter((student) => matchesStudentDirectorySearch(student, query, student.phone))
+  ), [sheetOnlyTrials, directoryView, query]);
+
+  const restoreSheetTrial = async (student) => {
+    if (!window.confirm(`Restore ${student.name} from the master sheet to Firestore? This keeps the trial expired and does not enable access or mark payment.`)) return;
+    setRestoringTrialUid(student.uid);
+    try {
+      const result = await recoverMissingTrialStudent(student);
+      const refreshed = await listAllStudents();
+      setStudents(refreshed);
+      setSheetOnlyTrials((rows) => rows.filter((row) => row.uid !== student.uid));
+      setSelectedStudentId(result.studentId || student.uid);
+      setQuery(student.studentCode);
+      pushToast({ type: "success", message: result.recovered ? `Restored ${student.name} without reactivating trial access.` : `${student.name} already exists in Firestore; refreshed directory.` });
+    } catch (restoreError) {
+      pushToast({ type: "error", message: restoreError?.message || "Trial recovery failed" });
+    } finally {
+      setRestoringTrialUid("");
+    }
+  };
 
   const selectDirectoryView = (view) => {
     const nextView = normalizeDirectoryView(view);
@@ -747,7 +778,33 @@ export default function StudentDirectoryPage() {
                   {directoryView === "attention" && !query.trim() ? " This queue is calculated from data already loaded in Admin; opening it creates no new intervention write." : ""}
                 </p>
 
-                {filteredStudents.length === 0 && <p>No students found for this search.</p>}
+                {sheetTrialError && (
+                  <p style={{ fontSize: 12, color: "#92400e" }} role="status">
+                    Master sheet cross-check unavailable: {sheetTrialError}. Showing Firestore records only.
+                  </p>
+                )}
+
+                {visibleSheetOnlyTrials.length > 0 && (
+                  <div style={{ margin: "12px 0", border: "1px solid #fcd34d", borderRadius: 10, padding: 12, background: "#fffbeb" }} aria-label="Sheet-only expired trial students">
+                    <h3 style={{ margin: "0 0 6px", fontSize: 15 }}>On master sheet · missing in Firestore ({visibleSheetOnlyTrials.length})</h3>
+                    <p style={{ margin: "0 0 10px", fontSize: 13 }}>These trial records are still in their recovery window but are not in Admin's Firestore directory. Restore only after confirming the student identity.</p>
+                    {visibleSheetOnlyTrials.map((student) => (
+                      <div key={student.uid} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: 9, borderRadius: 8, background: "#fff", marginTop: 7, flexWrap: "wrap" }}>
+                        <div>
+                          <strong>{student.name}</strong> · {student.studentCode}
+                          <div style={{ fontSize: 12, color: "#475569" }}>{student.email} · {student.level} · {student.className}</div>
+                          <div style={{ fontSize: 12, color: "#9a3412" }}>Trial expired · Retained until {new Date(student.trialPurgeAt).toLocaleDateString()}</div>
+                        </div>
+                        <button type="button" disabled={restoringTrialUid !== ""} onClick={() => restoreSheetTrial(student)}
+                          style={{ border: "1px solid #92400e", background: "#fff7ed", color: "#92400e", borderRadius: 8, padding: "8px 10px", fontWeight: 700 }}>
+                          {restoringTrialUid === student.uid ? "Checking identity..." : "Restore in Admin"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {filteredStudents.length === 0 && visibleSheetOnlyTrials.length === 0 && <p>No students found for this search.</p>}
 
                 {filteredStudents.length > 0 && (
                   <div className={`student-workspace ${mobileDetails ? "is-detail-view" : "is-list-view"}`}>
