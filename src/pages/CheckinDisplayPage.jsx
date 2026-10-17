@@ -388,7 +388,7 @@ export default function CheckinDisplayPage() {
 
     const syncAuthoritativeClock = async () => {
       try {
-        const u = new URL(statusApiUrl);
+        const u = new URL(statusApiUrl, window.location.origin);
         u.searchParams.set("classId", classId);
         u.searchParams.set("sessionId", String(sessionId || "").trim());
         const response = await fetch(u.toString(), { cache: "no-store" });
