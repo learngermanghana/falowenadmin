@@ -3413,20 +3413,14 @@
   "B1 7.22 Was ist dir in einer Beziehung wichtig?": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Vertrauen und Ehrlichkeit",
-        "Answer2": "B) Weil sie das Vertrauen und die Basis der Beziehung zerstört.",
-        "Answer3": "B) Sie sollten Probleme direkt und offen ansprechen.",
-        "Answer4": "B) Dass man den Partner bei seinen Zielen ermutigt und in schweren Zeiten beisteht.",
-        "Answer5": "A) Damit jeder eigene Hobbys und persönliche Kontakte pflegen kann.",
-        "Answer6": "B) Es kann auf Dauer zu Spannungen führen.",
-        "Answer7": "A) Ein gewisses Maß an Eigenständigkeit neben gemeinsamen Interessen."
+        "Answer1": "B) Sie nutzen dafür häufig Apps auf dem Smartphone.",
+        "Answer2": "B) Sie können schnell feststellen, ob sie dieselben Interessen haben.",
+        "Answer3": "C) Das große Angebot kann dazu führen, dass Beziehungen schneller beendet werden."
       },
       "teil4": {
-        "Answer1": "D) im Supermarkt",
-        "Answer2": "B) Name, Alter, Wohnort",
-        "Answer3": "D) Zeugnisse und Anschreiben",
-        "Answer4": "A) Man lernt den Arbeitgeber kennen.",
-        "Answer5": "C) Man kann sich bei der nächsten offenen Stelle bewerben."
+        "Answer1": "B) Anzeige B",
+        "Answer2": "A) Anzeige A",
+        "Answer3": "C) Anzeige C"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/gviz/tq?tqx=out:html&sheet=Key",
