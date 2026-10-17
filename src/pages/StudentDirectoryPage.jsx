@@ -3,7 +3,7 @@ import "./StudentDirectoryPage.css";
 import { STUDENT_DETAIL_TABS, nextStudentDetailTab } from "../utils/studentDetailTabs.js";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { createStudent, listAllStudents, updateStudentById } from "../services/studentsService";
+import { createStudent, listAllStudents, updateStudentById, retryStudentSheetSync } from "../services/studentsService";
 import { listClassCohorts } from "../services/liveClassService";
 import { useToast } from "../context/ToastContext";
 import StudentSupportTools from "../components/StudentSupportTools";
@@ -485,7 +485,9 @@ export default function StudentDirectoryPage() {
         delete next[student.id];
         return next;
       });
-      if (Object.prototype.hasOwnProperty.call(payload, "email")) {
+      if (result?.sheetSync?.status === "failed" || result?.sheetSync?.status === "pending") {
+        pushToast({ type: "error", message: `Saved ${student.name || student.id} in Firestore. Google Sheet sync ${result.sheetSync.status}; use Retry sheet sync.` });
+      } else if (Object.prototype.hasOwnProperty.call(payload, "email")) {
         const signInEmail = String(result?.authIdentity?.email || "").trim();
         pushToast({
           type: "success",
@@ -547,6 +549,26 @@ export default function StudentDirectoryPage() {
       }
       return next;
     });
+  };
+
+
+  const retryProfileSheetSync = async (student) => {
+    setSavingId(student.id);
+    try {
+      const response = await retryStudentSheetSync(student.id);
+      const sync = response?.sheetSync || { status: "failed", error: "Missing sync receipt" };
+      setStudents((prev) => prev.map((record) => (record.id === student.id ? {
+        ...record, studentProfileSheetSync: sync,
+      } : record)));
+      pushToast({
+        type: sync.status === "synced" ? "success" : "error",
+        message: sync.status === "synced" ? "Google Sheet verified." : (sync.error || "Google Sheet sync still pending."),
+      });
+    } catch (error) {
+      pushToast({ type: "error", message: error?.message || "Google Sheet retry failed" });
+    } finally {
+      setSavingId("");
+    }
   };
 
   const createStudentRecord = async () => {
@@ -918,6 +940,29 @@ export default function StudentDirectoryPage() {
                               </div>
                               {!getDraft(selectedStudent).contractEnd && <p>Set the contract end date to enable extensions.</p>}
                             </div>}
+                            {tab.id === "class" && selectedStudent.studentProfileSheetSync?.status &&
+                              selectedStudent.studentProfileSheetSync.status !== "not_applicable" && (
+                                <div role="status" aria-label="Student Google Sheet synchronization"
+                                  style={{ marginTop: 12, padding: 12, border: "1px solid #cbd5e1", borderRadius: 10 }}>
+                                  <strong>Google Sheet: {
+                                    selectedStudent.studentProfileSheetSync.status === "synced" ? "Synced" :
+                                    selectedStudent.studentProfileSheetSync.status === "pending" ? "Pending" : "Sync failed"
+                                  }</strong>
+                                  {selectedStudent.studentProfileSheetSync.checkedAt && (
+                                    <small style={{ display: "block" }}>Checked: {formatDisplayDate(selectedStudent.studentProfileSheetSync.checkedAt)}</small>
+                                  )}
+                                  {selectedStudent.studentProfileSheetSync.error && (
+                                    <p style={{ margin: "6px 0" }}>{selectedStudent.studentProfileSheetSync.error}</p>
+                                  )}
+                                  {selectedStudent.studentProfileSheetSync.status !== "synced" && (
+                                    <button type="button"
+                                      disabled={savingId === selectedStudent.id}
+                                      onClick={() => retryProfileSheetSync(selectedStudent)}>
+                                      Retry sheet sync
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                             {tab.id === "class" && <StudentClassTransferPanel
                               key={selectedStudent.id} student={selectedStudent} classes={classes}
                               onTransferred={handleStudentTransferred} pushToast={pushToast} />}

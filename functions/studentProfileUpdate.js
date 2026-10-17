@@ -1,3 +1,4 @@
+const { sheetPatchFromUpdates, sheetSyncIdentity, resolveStudentSheetSyncConfig, writeProfileToStudentSheet } = require("./studentProfileSheetSync.js");
 const EDITABLE_STUDENT_FIELDS = new Set([
   "name",
   "email",
@@ -219,7 +220,49 @@ async function resolveStudentAuthIdentity({ studentRef, admin }) {
   };
 }
 
-function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [] }) {
+async function syncStudentSheetAndRecord({ studentRef, studentId, profile, requestedFields, identity, runtimeConfig, requestId }) {
+  const fields = [...new Set(requestedFields)].filter(Boolean);
+  const updates = Object.fromEntries(fields.map(field => [field, profile[field] ?? ""]));
+  const sync = await writeProfileToStudentSheet({
+    studentId, identity, updates,
+    config: resolveStudentSheetSyncConfig(runtimeConfig),
+  });
+  const status = {
+    status: sync.status,
+    fields: sync.fields || fields,
+    identity,
+    requestId,
+    error: sync.error || "",
+    verifiedRow: sync.row || null,
+    checkedAt: new Date().toISOString(),
+  };
+  try {
+    // Only record the result if this is still the current sync request.
+    const snap = await studentRef.get();
+    const current = snap?.data?.()?.studentProfileSheetSync || {};
+    if (current.requestId === requestId) {
+      await studentRef.update({ studentProfileSheetSync: status });
+    }
+  } catch (error) {
+    // The Firestore save already succeeded: never claim it rolled back.
+    return { ...status, status: "pending", error: "Sheet check finished but its status could not be saved: " + (error?.message || "unknown error") };
+  }
+  return status;
+}
+
+function studentProfileRuntimeConfig() {
+  try {
+    const encoded = String(process.env.CLOUD_RUNTIME_CONFIG_B64 || "").trim();
+    const raw = encoded ? Buffer.from(encoded, "base64").toString("utf8")
+      : String(process.env.CLOUD_RUNTIME_CONFIG || "{}");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails = [], runtimeConfig = studentProfileRuntimeConfig() }) {
   if (!app?.patch || !app?.post || !app?.get || !db?.collection || !db?.batch || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Student profile update route dependencies are incomplete");
   }
@@ -245,18 +288,41 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
       const identityPatch = authIdentity?.email
         ? { authEmail: authIdentity.email }
         : {};
-
+      // Existing test doubles without get() continue to exercise the normal
+      // Firestore update; real Admin document refs also provide readback.
+      const existing = typeof studentRef.get === "function" ? await studentRef.get() : null;
+      const previous = existing?.data?.() || {};
+      const sheetPatch = sheetPatchFromUpdates(updates);
+      const changedFields = Object.keys(sheetPatch);
+      const requestId = changedFields.length
+        ? [Date.now(), Math.random().toString(36).slice(2)].join("-") : "";
+      const pending = changedFields.length && existing ? {
+        status: "pending", requestId, fields: changedFields,
+        identity: sheetSyncIdentity(previous, studentId),
+        checkedAt: new Date().toISOString(),
+      } : null;
       await studentRef.update({
         ...updates,
         ...identityPatch,
+        ...(pending ? { studentProfileSheetSync: pending } : {}),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: String(user?.email || user?.uid || "").trim(),
       });
 
+      let sheetSync = { status: "not_applicable", fields: [] };
+      if (pending) {
+        sheetSync = await syncStudentSheetAndRecord({
+          studentRef, studentId,
+          profile: { ...previous, ...updates },
+          requestedFields: changedFields,
+          identity: pending.identity,
+          runtimeConfig, requestId,
+        });
+      }
       return res.json({
-        ok: true,
-        studentId,
-        updates: { ...updates, ...identityPatch },
+        ok: true, studentId,
+        updates: { ...updates, ...identityPatch, ...(pending ? { studentProfileSheetSync: sheetSync } : {}) },
+        ...(pending ? { sheetSync } : {}),
         ...(emailWasEdited ? { authIdentity } : {}),
       });
     } catch (error) {
@@ -264,6 +330,34 @@ function registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffE
         ok: false,
         error: isMissingStudentError(error) ? "Student not found" : error?.message || "Student profile update failed",
       });
+    }
+  });
+
+  app.post("/students/:studentId/sync-sheet", async (req, res) => {
+    try {
+      const user = await requireAuth(req);
+      assertStudentProfileEditor(user, staffEmails);
+      const studentId = cleanStudentId(req.params?.studentId);
+      if (!studentId) return res.status(400).json({ ok: false, error: "Student ID is required" });
+      const studentRef = db.collection("students").doc(studentId);
+      const snapshot = await studentRef.get();
+      if (!snapshot.exists) return res.status(404).json({ ok: false, error: "Student not found" });
+      const student = snapshot.data() || {};
+      const saved = student.studentProfileSheetSync || {};
+      const fields = Array.isArray(saved.fields) ? saved.fields.filter(field => Object.prototype.hasOwnProperty.call(sheetPatchFromUpdates({ [field]: "" }), field)) : [];
+      if (!fields.length) return res.status(400).json({ ok: false, error: "There are no changed student sheet fields to retry" });
+      const requestId = [Date.now(), Math.random().toString(36).slice(2)].join("-");
+      const identity = saved.identity || sheetSyncIdentity(student, studentId);
+      await studentRef.update({ studentProfileSheetSync: {
+        status: "pending", fields, identity, requestId, checkedAt: new Date().toISOString(),
+      } });
+      const sheetSync = await syncStudentSheetAndRecord({
+        studentRef, studentId, profile: student, requestedFields: fields,
+        identity, runtimeConfig, requestId,
+      });
+      return res.json({ ok: true, studentId, sheetSync });
+    } catch (error) {
+      return res.status(statusCodeForError(error)).json({ ok: false, error: error?.message || "Student sheet retry failed" });
     }
   });
 

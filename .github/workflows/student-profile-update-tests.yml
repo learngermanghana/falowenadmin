@@ -11,6 +11,9 @@ on:
       - 'functions/studentProfileUpdate.js'
       - 'scripts/patchStudentProfileUpdateApi.mjs'
       - 'tests/student-profile-update-api.test.js'
+      - 'tests/student-profile-sheet-sync.test.js'
+      - 'functions/studentProfileSheetSync.js'
+      - 'apps-script/student-delete-webapp.gs'
       - 'tests/students-service-admin.test.js'
       - 'vite.config.js'
       - 'firebase.json'
@@ -29,6 +32,9 @@ on:
       - 'functions/studentProfileUpdate.js'
       - 'scripts/patchStudentProfileUpdateApi.mjs'
       - 'tests/student-profile-update-api.test.js'
+      - 'tests/student-profile-sheet-sync.test.js'
+      - 'functions/studentProfileSheetSync.js'
+      - 'apps-script/student-delete-webapp.gs'
       - 'tests/students-service-admin.test.js'
       - 'vite.config.js'
       - 'firebase.json'
@@ -62,6 +68,8 @@ jobs:
           grep -F 'node scripts/patchStudentProfileUpdateApi.mjs' package.json
           grep -F "'/api'" vite.config.js
           grep -F 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net' vite.config.js
+      - name: Test verified student master-sheet sync
+        run: node --test tests/student-profile-sheet-sync.test.js
       - name: Test staff-only atomic profile updates
         run: node --test tests/student-profile-update-api.test.js
       - name: Test history-preserving class transfers
