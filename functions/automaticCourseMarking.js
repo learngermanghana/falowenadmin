@@ -132,7 +132,8 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         // The existing notification consumer mirrors it and delivers device push.
         const notificationId = idForPath(snap.ref.path);
         const score = Number(row.score);
-        const passed = score >= 60;
+        const passed = typeof result.passed === 'boolean'
+          ? result.passed : result.writingMinimumMet !== false && score >= 60;
         const body = `Score: ${score}/100 · ${passed ? 'Passed' : 'Needs improvement'}. Open Results to read your feedback and correction points.`;
         const notification = {
           type: 'Scores', category: 'feedback', title: 'Your assignment has been marked',

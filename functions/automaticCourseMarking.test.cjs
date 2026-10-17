@@ -86,6 +86,17 @@ for (const existing of [false,true]) test(`marking publishes once and preserves 
   }
   assert.equal(store.rows.get(`aiMarkingAudit/${idForPath('submissions/s1')}`).referenceVersion,'v1');
 });
+for (const outcome of [{passed:false,writingMinimumMet:false},{writingMinimumMet:false},{passed:true}]) {
+  test(`notification follows grading outcome ${JSON.stringify(outcome)}`,async()=>{
+    const store=memoryDb({'markingJobs/j':{automatic:true,submissionPath:'submissions/s',level:'A2',assignmentKey:'A2-1.1',status:'pending'},
+      'submissions/s':{studentId:'uid',submissionText:'Work'},'students/uid':{studentCode:'real'}});
+    await createCourseMarkingWorker({db:store.db,loadReference:async()=>({parts:[{}]}),mark:async()=>({status:'marked',score:80,confidence:.99,...outcome})})({data:store.snapshot('markingJobs/j')});
+    const notification=store.rows.get(`studentNotifications/${idForPath('submissions/s')}`);
+    assert.equal(notification.status,outcome.passed===true?'passed':'needs_improvement');
+    assert.equal(notification.data.status,notification.status);
+    assert.match(notification.body,outcome.passed===true?/Passed/:/Needs improvement/);
+  });
+}
 test('missing answer key preserves original work and routes to tutor without score',async()=>{
   const store=memoryDb({'markingJobs/j':{automatic:true,submissionPath:'submissions/s',level:'A2',assignmentKey:'A2-1.1',status:'pending'},
     'submissions/s':{studentId:'uid',submissionText:'Work'},'students/uid':{studentCode:'real'}});
