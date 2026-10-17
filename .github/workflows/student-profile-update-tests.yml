@@ -9,6 +9,8 @@ on:
       - 'tests/student-class-transfer.test.js'
       - 'tests/student-class-transfer-roster.test.js'
       - 'functions/studentProfileUpdate.js'
+      - 'functions/studentTrialRecovery.js'
+      - 'tests/student-trial-sheet-recovery.test.js'
       - 'scripts/patchStudentProfileUpdateApi.mjs'
       - 'tests/student-profile-update-api.test.js'
       - 'tests/students-service-admin.test.js'
@@ -52,6 +54,7 @@ jobs:
           node scripts/patchStudentProfileUpdateApi.mjs
           node scripts/patchStudentProfileUpdateApi.mjs
           node --check functions/studentProfileUpdate.js
+          node --check functions/studentTrialRecovery.js
           node --check functions/index.js
           grep -F 'const { registerStudentProfileUpdateRoute } = require("./studentProfileUpdate.js");' functions/index.js
           grep -F 'registerStudentProfileUpdateRoute({ app, db, admin, requireAuth, staffEmails: teacherAllowlist });' functions/index.js
@@ -64,6 +67,8 @@ jobs:
           grep -F 'https://us-central1-falowen-examiner-trainer.cloudfunctions.net' vite.config.js
       - name: Test staff-only atomic profile updates
         run: node --test tests/student-profile-update-api.test.js
+      - name: Test sheet-only trial identity recovery
+        run: node --test tests/student-trial-sheet-recovery.test.js
       - name: Test history-preserving class transfers
         run: node --test tests/student-class-transfer.test.js
       - name: Test current-class roster precedence
