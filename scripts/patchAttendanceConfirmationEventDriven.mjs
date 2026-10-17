@@ -315,6 +315,7 @@ function createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeCo
   // Firestore events create the queue records, so this no longer scans every
   // class and every student every 30 minutes.
   return onSchedule({
+    cpu: "gcf_gen1",
     schedule: "*/30 * * * *",
     timeZone: ACCRA_TIMEZONE,
     retryCount: 1,

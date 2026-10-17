@@ -1,0 +1,25 @@
+name: Verify Cloud Run cost guards
+
+on:
+  pull_request:
+    paths:
+      - 'functions/**'
+      - 'scripts/patchAttendanceConfirmationEventDriven.mjs'
+      - 'tests/cloud-cost-guards.test.cjs'
+      - '.github/workflows/cloud-cost-guards.yml'
+  workflow_dispatch:
+
+jobs:
+  cloud-cost-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci --prefix functions --no-audit --no-fund
+      - run: node --check functions/main.js && node --check functions/index.js
+      - run: node --check scripts/patchAttendanceConfirmationEventDriven.mjs
+      - run: node --test tests/cloud-cost-guards.test.cjs functions/automaticCourseMarking.test.cjs functions/classEmailScheduling.test.js
