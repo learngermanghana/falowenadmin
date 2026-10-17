@@ -617,6 +617,7 @@ function createStudentLearningNudgeJob({ admin, db, onSchedule, runtimeConfig = 
   }
 
   return onSchedule({
+    cpu: "gcf_gen1",
     schedule: "15 9 * * *",
     timeZone: TZ,
     retryCount: 0,
