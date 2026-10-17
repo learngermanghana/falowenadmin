@@ -1,0 +1,164 @@
+const crypto = require('node:crypto');
+const { withMarkingTransport } = require('./automaticMarkingContext');
+const RESULTS_URL = 'https://www.falowen.app/campus/results';
+const idForPath = path => `auto_${crypto.createHash('sha256').update(path).digest('hex')}`;
+const clean = value => JSON.parse(JSON.stringify(value));
+
+function eligible(submission, level, assignmentKey) {
+  return ['A1', 'A2', 'B1'].includes(level)
+    && new RegExp(`^${level}-[0-9]+(?:[._][0-9]+)*$`).test(assignmentKey)
+    && !['draft', 'cancelled', 'deleted'].includes(String(submission.status || '').toLowerCase())
+    && !submission.examTask && !submission.mockAttemptId && !submission.courseSpeakingAttemptId
+    && !/mock|exam-speaking/i.test(String(submission.source || submission.type || ''));
+}
+function releasable(result = {}) {
+  const score = result.finalScore ?? result.score;
+  return result.status === 'marked' && score !== null && score !== ''
+    && Number.isFinite(Number(score)) && Number(score) >= 0 && Number(score) <= 100
+    && Number(result.confidence) >= 0.8
+    && !(result.consistencyWarnings || []).length && !(result.reviewReasons || []).length
+    && !result.secondExaminer?.requiresTutorReview;
+}
+
+function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now = () => Date.now() }) {
+  return async function processJob(event) {
+    const jobRef = event.data.ref;
+    const job = event.data.data();
+    if (!job.automatic || !/^submissions\/[^/]+(?:\/[^/]+\/[^/]+)?$/.test(job.submissionPath || '')) return;
+    const submissionRef = db.doc(job.submissionPath);
+    const snap = await submissionRef.get();
+    if (!snap.exists) return;
+    const submission = snap.data();
+    if (!eligible(submission, job.level, job.assignmentKey)) return;
+    const token = crypto.randomUUID();
+    const claimed = await db.runTransaction(async tx => {
+      const fresh = (await tx.get(jobRef)).data();
+      if (['marked', 'needs_review'].includes(fresh.status)) return false;
+      if (fresh.status === 'marking' && fresh.leaseUntil > now()) throw new Error('Marking lease is still active');
+      if ((fresh.attempts || 0) >= 2) {
+        tx.set(jobRef, { status: 'needs_review', error: 'Automatic marking retry limit reached' }, { merge: true });
+        tx.set(submissionRef, { markingStatus: 'needs_review' }, { merge: true });
+        return false;
+      }
+      tx.set(jobRef, { status: 'marking', leaseUntil: now() + 540000, token, attempts: (fresh.attempts || 0) + 1 }, { merge: true });
+      tx.set(submissionRef, { markingStatus: 'marking' }, { merge: true });
+      return true;
+    });
+    if (!claimed) return;
+    try {
+      // Resolve identity from the server-owned student record, never from form fields.
+      let studentSnap = submission.studentId ? await db.collection('students').doc(submission.studentId).get() : null;
+      if (submission.studentId && !studentSnap?.exists) {
+        const matches = await db.collection('students').where('uid', '==', submission.studentId).limit(1).get();
+        studentSnap = matches.docs[0] || null;
+      }
+      const student = studentSnap?.exists ? studentSnap.data() : null;
+      const registeredCode = String(student?.studentCode || student?.studentcode || '').trim();
+      if (!registeredCode) throw new Error('Registered student identity unavailable; tutor review required');
+      const referenceEntry = await loadReference(job.assignmentKey);
+      if (!referenceEntry?.parts) throw new Error('No registered answer key; tutor review required');
+      const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
+      if (!text) throw new Error('Submission text is missing; tutor review required');
+      const result = await withMarkingTransport(callAi, () => mark({
+        submission: { ...submission, id: snap.id, path: snap.ref.path, text },
+        submissionText: text, referenceEntry,
+      }));
+      const release = releasable(result);
+      const timestamp = new Date(now()).toISOString();
+      const studentCode = registeredCode;
+      if (!studentCode || !submission.studentId) throw new Error('Student identity missing; tutor review required');
+      const scoreId = `${studentCode}__${job.assignmentKey}`.replace(/[/#?[\]]+/g, '_');
+      const scoreRef = db.collection('scores').doc(scoreId);
+      await db.runTransaction(async tx => {
+        const fresh = (await tx.get(jobRef)).data();
+        const existingScore = await tx.get(scoreRef);
+        const currentSubmission = (await tx.get(submissionRef)).data();
+        if (fresh.token !== token || currentSubmission.markingStatus === 'marked') return;
+        // Never overwrite a tutor's decision or a previous attempt automatically.
+        const publish = release && !existingScore.exists;
+        const status = publish ? 'marked' : 'needs_review';
+        tx.set(db.collection('markingResults').doc(snap.id), clean({
+          ...submission, submissionId: snap.id, submissionPath: snap.ref.path,
+          result, status, finalScore: result.finalScore ?? result.score, feedback: result.feedback,
+          sentToStudent: publish, source: 'automatic_course_marking', createdAt: timestamp, updatedAt: timestamp,
+        }));
+        tx.set(db.collection('aiMarkingAudit').doc(idForPath(snap.ref.path)), clean({
+          submissionId: snap.id, submissionPath: snap.ref.path, submission,
+          referenceEntry, referenceVersion: referenceEntry.version || referenceEntry.updatedAt || '',
+          result, status, automatic: true, createdAt: timestamp,
+        }));
+        tx.set(submissionRef, clean({
+          markingStatus: status, markingUpdatedAt: timestamp,
+          ...(publish ? { finalScore: result.finalScore ?? result.score, aiFeedback: result.feedback,
+            feedbackSentToStudent: true, resultUrl: RESULTS_URL, automaticMarking: true } : {}),
+        }), { merge: true });
+        tx.set(jobRef, { status, completedAt: timestamp, leaseUntil: 0 }, { merge: true });
+        if (!publish) return;
+        const row = clean({
+          studentcode: studentCode, studentCode, studentId: submission.studentId,
+          studentEmail: student.email || student.studentEmail || '',
+          studentName: student.name || student.fullName || submission.studentName || '', name: student.name || student.fullName || submission.studentName || '',
+          assignment: submission.assignmentTitle || submission.title || job.assignmentKey,
+          assignment_id: job.assignmentKey, assignmentId: job.assignmentKey,
+          score: result.finalScore ?? result.score, comments: result.feedback,
+          passed: result.passed, passStatus: result.passStatus, writingMinimumMet: result.writingMinimumMet,
+          markingRubricVersion: result.markingRubricVersion,
+          objectiveScore: result.objectiveScore, objectiveCorrect: result.objectiveCorrect, objectiveTotal: result.objectiveTotal,
+          writingScore: result.writingScore, writingScorePercent: result.writingScorePercent, maxWritingScore: result.maxWritingScore,
+          date: timestamp, createdAt: timestamp, updatedAt: timestamp, level: job.level,
+          link: RESULTS_URL, source: 'automatic_course_marking', dedupe_id: scoreId,
+          objective_score: result.objectiveScore ?? '', objective_correct: result.objectiveCorrect ?? '',
+          objective_total: result.objectiveTotal ?? '', writing_score: result.writingScorePercent ?? result.writingScore ?? '',
+          corrections: JSON.stringify(result.corrections || []), sheetSaved: false,
+          submissionId: snap.id, submissionPath: snap.ref.path,
+        });
+        tx.set(scoreRef, row);
+        tx.create(db.collection('automaticScoreSync').doc(idForPath(snap.ref.path)), { row, scorePath: scoreRef.path, status: 'pending', attempts: 0 });
+      });
+    } catch (error) {
+      // Keep the saved work in the tutor queue; never invent a mark on failure.
+      await db.runTransaction(async tx => {
+        const fresh = (await tx.get(jobRef)).data();
+        if (fresh.token !== token) return;
+        tx.set(jobRef, { status: 'needs_review', error: String(error.message).slice(0, 500), leaseUntil: 0 }, { merge: true });
+        tx.set(submissionRef, { markingStatus: 'needs_review' }, { merge: true });
+      });
+    }
+  };
+}
+
+function createScoreSyncWorker({ db, config, post = fetch }) {
+  return async event => {
+    const ref = event.data.ref;
+    const job = (await ref.get()).data();
+    if (!job || job.status === 'synced' || job.status === 'needs_review') return;
+    const attempts = Number(job.attempts || 0) + 1;
+    await ref.set({ attempts }, { merge: true });
+    try {
+      const settings = config();
+      if (!settings.url || !settings.token) throw new Error('Score Sheet webhook is not configured');
+      // Read the latest saved score so a later tutor correction wins over a retry.
+      const score = await db.doc(job.scorePath).get();
+      if (!score.exists) throw new Error('Saved score is missing');
+      const response = await post(settings.url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(30000),
+        body: JSON.stringify({ token: settings.token, action: 'upsertScoreRows', mode: 'upsert',
+          event_id: ref.id, source: 'falowen-admin',
+          ...(settings.sheetName ? { sheet_name: settings.sheetName } : {}),
+          ...(settings.sheetGid ? { sheet_gid: settings.sheetGid } : {}),
+          dedupe_columns: ['studentcode', 'assignment_id'], remove_duplicate_rows: true,
+          create_missing_columns: true, rows: [score.data()] }),
+      });
+      const receipt = await response.json();
+      if (!response.ok || receipt.ok !== true || !(receipt.action === 'upsertScoreRows' || receipt.mode === 'upsert' || receipt.upsert === true)) throw new Error('Score Sheet did not confirm an upsert');
+      const batch = db.batch();
+      batch.set(ref, { status: 'synced', receipt: clean(receipt) }, { merge: true });
+      batch.set(db.doc(job.scorePath), { sheetSaved: true }, { merge: true });
+      await batch.commit();
+    } catch (error) {
+      await ref.set({ status: attempts >= 5 ? 'needs_review' : 'pending', error: String(error.message).slice(0, 500) }, { merge: true });
+      if (attempts < 5) throw error;
+    }
+  };
+}
+module.exports = { idForPath, eligible, releasable, createCourseMarkingWorker, createScoreSyncWorker };
