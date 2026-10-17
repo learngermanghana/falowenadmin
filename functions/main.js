@@ -44,6 +44,7 @@ module.exports.sendStudentLearningNudges = createStudentLearningNudgeJob({
 });
 
 module.exports.cleanupExpiredPendingStudents = onSchedule({
+  cpu: "gcf_gen1",
   schedule: "0 3 * * *",
   timeZone: "Africa/Accra",
   retryCount: 1,
@@ -108,12 +109,14 @@ async function runClassReminderIfOpen() {
 // 18:00-20:30, plus Saturday 07:00-10:00. Scheduler windows begin early
 // enough to preserve the 30-minute and 10-minute reminder emails.
 module.exports.sendClassSessionReminderEmails = onSchedule({
+  cpu: "gcf_gen1",
   schedule: "*/5 10-20 * * 1-5",
   timeZone: "Africa/Accra",
   retryCount: 1,
 }, runClassReminderIfOpen);
 
 module.exports.sendSaturdayClassSessionReminderEmails = onSchedule({
+  cpu: "gcf_gen1",
   schedule: "*/5 6-10 * * 6",
   timeZone: "Africa/Accra",
   retryCount: 1,
