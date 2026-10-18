@@ -50,6 +50,7 @@ export default function HoerenStudioPage() {
   const [busy, setBusy] = useState("");
   const [progress, setProgress] = useState("");
   const [audioBlob, setAudioBlob] = useState(null);
+  const [generatedClips, setGeneratedClips] = useState(null);
   const [audioUrl, setAudioUrl] = useState("");
 
   useEffect(() => {
@@ -69,9 +70,15 @@ export default function HoerenStudioPage() {
   const ready = Boolean(status?.ready);
   const filename = safeFileName(level, topic);
 
-  function clearAudio() {
+  function clearAudio(keepGenerated = false) {
     setAudioBlob(null);
     setAudioUrl("");
+    if (!keepGenerated) setGeneratedClips(null);
+  }
+  async function assembleCachedClips(clips) {
+    const userAudio = scene !== "none" && useAtmosphere && atmosphereFile ? await decodeLocalAtmosphere(atmosphereFile) : null;
+    const soundscape = { scene, ambience: useAtmosphere, bell: openingBell, ending: endingSound, volume: soundVolume / 100, userAudio };
+    return assembleListeningExam(transcript.lines, clips, { repeats, lineGap, repeatGap, soundscape });
   }
   function setTypeAndTemplate(next) {
     setType(next);
@@ -105,16 +112,28 @@ export default function HoerenStudioPage() {
         clips.push(base64WavToBytes(reply.audioBase64));
         setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, speech: reply.remaining } }));
       }
+      setGeneratedClips(clips);
       setProgress("Assembling dialogue and locally mixing atmosphere…");
-      const userAudio = scene !== "none" && useAtmosphere && atmosphereFile ? await decodeLocalAtmosphere(atmosphereFile) : null;
-      const soundscape = { scene, ambience: useAtmosphere, bell: openingBell, ending: endingSound, volume: soundVolume / 100, userAudio };
-      const blob = assembleListeningExam(transcript.lines, clips, { repeats, lineGap, repeatGap, soundscape });
+      const blob = await assembleCachedClips(clips);
       setAudioBlob(blob);
       setAudioUrl(URL.createObjectURL(blob));
       toast.success("Your Hören recording is ready. Download WAV or export an MP3.");
     } catch (error) {
       toast.error(`${error.message} Audio generation stopped; any successful clips still count toward today's limit.`);
     } finally { setBusy(""); setProgress(""); await reloadStatus(); }
+  }
+
+  async function remixWithoutGoogle() {
+    if (!generatedClips?.length) return;
+    setBusy("remix");
+    setProgress("Mixing existing voices without Google API requests…");
+    try {
+      const blob = await assembleCachedClips(generatedClips);
+      setAudioBlob(blob);
+      setAudioUrl(URL.createObjectURL(blob));
+      toast.success("Remixed using cached voice clips. No Gemini quota used.");
+    } catch (error) { toast.error(error.message); }
+    finally { setBusy(""); setProgress(""); }
   }
 
   async function downloadMp3() {
@@ -167,35 +186,36 @@ export default function HoerenStudioPage() {
             <label className="hoeren-choice"><input type="radio" name="engine" checked={engine === "flash"} disabled={!!busy} onChange={() => { setEngine("flash"); clearAudio(); }} /><span><strong>Flash · Higher fidelity</strong><small>More expressive, higher API cost</small></span></label>
           </fieldset>
           <div className="hoeren-input-grid">
-            <label>Line spacing (seconds)<input type="number" value={lineGap} step="0.1" min="0" max="5" disabled={!!busy} onChange={(event) => { setLineGap(Number(event.target.value)); clearAudio(); }} /></label>
-            <label>Play the full audio<select value={repeats} disabled={!!busy} onChange={(event) => { setRepeats(Number(event.target.value)); clearAudio(); }}><option value={1}>Once</option><option value={2}>Twice (Goethe-style)</option></select></label>
+            <label>Line spacing (seconds)<input type="number" value={lineGap} step="0.1" min="0" max="5" disabled={!!busy} onChange={(event) => { setLineGap(Number(event.target.value)); clearAudio(true); }} /></label>
+            <label>Play the full audio<select value={repeats} disabled={!!busy} onChange={(event) => { setRepeats(Number(event.target.value)); clearAudio(true); }}><option value={1}>Once</option><option value={2}>Twice (Goethe-style)</option></select></label>
           </div>
-          {repeats === 2 ? <label>Silence before second playback (seconds)<input type="number" min="0" max="30" step="1" value={repeatGap} disabled={!!busy} onChange={(event) => { setRepeatGap(Number(event.target.value)); clearAudio(); }} /></label> : null}
+          {repeats === 2 ? <label>Silence before second playback (seconds)<input type="number" min="0" max="30" step="1" value={repeatGap} disabled={!!busy} onChange={(event) => { setRepeatGap(Number(event.target.value)); clearAudio(true); }} /></label> : null}
           <p className="hoeren-hint">Repeats and pauses are added locally after synthesis. Playing the recording twice does not double the Google API charge.</p>
           <fieldset className="hoeren-fieldset hoeren-atmosphere">
             <legend>Sound effects &amp; atmosphere · no extra AI credits</legend>
             <label>Recording environment
-              <select value={scene} disabled={!!busy} onChange={(event) => { setScene(event.target.value); clearAudio(); }}>
+              <select value={scene} disabled={!!busy} onChange={(event) => { setScene(event.target.value); clearAudio(true); }}>
                 {Object.entries(SCENES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
             {scene !== "none" ? <>
-              <label className="hoeren-effect-option"><input type="checkbox" checked={useAtmosphere} disabled={!!busy} onChange={(event) => { setUseAtmosphere(event.target.checked); clearAudio(); }} /> Ambient background</label>
-              <label className="hoeren-effect-option"><input type="checkbox" checked={openingBell} disabled={!!busy} onChange={(event) => { setOpeningBell(event.target.checked); clearAudio(); }} /> {scene === "station" ? "Station announcement bell" : "Short opening chime"}</label>
-              {scene === "station" ? <label className="hoeren-effect-option"><input type="checkbox" checked={endingSound} disabled={!!busy} onChange={(event) => { setEndingSound(event.target.checked); clearAudio(); }} /> Gentle departing-train cue</label> : null}
+              <label className="hoeren-effect-option"><input type="checkbox" checked={useAtmosphere} disabled={!!busy} onChange={(event) => { setUseAtmosphere(event.target.checked); clearAudio(true); }} /> Ambient background</label>
+              <label className="hoeren-effect-option"><input type="checkbox" checked={openingBell} disabled={!!busy} onChange={(event) => { setOpeningBell(event.target.checked); clearAudio(true); }} /> {scene === "station" ? "Station announcement bell" : "Short opening chime"}</label>
+              {scene === "station" ? <label className="hoeren-effect-option"><input type="checkbox" checked={endingSound} disabled={!!busy} onChange={(event) => { setEndingSound(event.target.checked); clearAudio(true); }} /> Gentle departing-train cue</label> : null}
               <label>Effects volume: {soundVolume}%
-                <input type="range" min="0" max="35" step="1" value={soundVolume} disabled={!!busy} onChange={(event) => { setSoundVolume(Number(event.target.value)); clearAudio(); }} />
+                <input type="range" min="0" max="35" step="1" value={soundVolume} disabled={!!busy} onChange={(event) => { setSoundVolume(Number(event.target.value)); clearAudio(true); }} />
               </label>
               <label>Optional real-life ambience (MP3/WAV, up to 15 MB)
-                <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/mp4,audio/ogg,.mp3,.wav,.m4a,.ogg" disabled={!!busy} onChange={(event) => { setAtmosphereFile(event.target.files?.[0] || null); clearAudio(); }} />
+                <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/mp4,audio/ogg,.mp3,.wav,.m4a,.ogg" disabled={!!busy} onChange={(event) => { setAtmosphereFile(event.target.files?.[0] || null); clearAudio(true); }} />
               </label>
-              {atmosphereFile ? <button className="hoeren-quiet" type="button" disabled={!!busy} onClick={() => { setAtmosphereFile(null); clearAudio(); }}>Remove background recording ({atmosphereFile.name})</button> : null}
+              {atmosphereFile ? <button className="hoeren-quiet" type="button" disabled={!!busy} onClick={() => { setAtmosphereFile(null); clearAudio(true); }}>Remove background recording ({atmosphereFile.name})</button> : null}
               <p className="hoeren-hint">Built-in sounds are simple, locally generated ambience. For a truly realistic station, upload a sound you recorded or have permission to reuse. Atmosphere is mixed quietly beneath the voices, and your uploaded sound stays in your browser.</p>
             </> : null}
           </fieldset>
           <div className="hoeren-divider" />
+          {generatedClips?.length && !audioBlob ? <button type="button" className="hoeren-button" disabled={!!busy} onClick={remixWithoutGoogle}>Remix existing recording · no Gemini credits</button> : null}
           <button type="button" className="hoeren-button" disabled={!ready || !!busy || !!transcript.error || !spokenLines.length || spokenLines.length > 18 || spokenLines.length > (status?.remaining.speech ?? 0)} onClick={generateAudio}>
-            {busy === "audio" ? "Generating German audio…" : "Generate Hören recording"}
+            {busy === "audio" ? "Generating German audio…" : generatedClips?.length ? "Regenerate voices · uses Google quota" : "Generate Hören recording"}
           </button>
           {progress ? <p role="status" aria-live="polite">{progress}</p> : null}
           {!transcript.error && spokenLines.length > 18 ? <p className="hoeren-validation">Maximum 18 spoken lines per recording, to prevent accidental high-cost requests.</p> : null}
