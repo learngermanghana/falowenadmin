@@ -32,6 +32,7 @@ const ClassParticipationPage = lazy(() => import("./pages/ClassParticipationPage
 const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
 const LeadsPage = lazy(() => import("./pages/LeadsPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
+const HoerenStudioPage = lazy(() => import("./pages/HoerenStudioPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
 const TimedAssignmentAttemptsPage = lazy(() => import("./pages/TimedAssignmentAttemptsPage.jsx"));
 const OrientationPage = lazy(() => import("./pages/OrientationSetupTabsPage.jsx"));
@@ -154,6 +155,7 @@ function TopBar() {
                 <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
+                {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link> : null}
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
                 <Link to="/timed-attempts" onClick={() => setMenuOpen(false)}>Mock Monitoring & Timers</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
@@ -201,6 +203,13 @@ function ToastViewport() {
 
 function MarkingRoute() {
   return <ProtectedRoute allowStaff={false}><MarkingHubPage /></ProtectedRoute>;
+}
+
+function OwnerStudioRoute() {
+  const { user, loading, isStaff } = useAuth();
+  const ownerUid = String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim();
+  if (!loading && user && (isStaff || !ownerUid || user.uid !== ownerUid)) return <Navigate to="/" replace />;
+  return <ProtectedRoute allowStaff={false}><HoerenStudioPage /></ProtectedRoute>;
 }
 
 function ExamReviewRoute() {
@@ -268,6 +277,7 @@ export default function App() {
           <Route path="/leads" element={<ProtectedRoute allowStaff={false}><LeadsPage /></ProtectedRoute>} />
           <Route path="/student-activity" element={<ProtectedRoute allowStaff={false}><Navigate to="/students" replace /></ProtectedRoute>} />
           <Route path="/social-media" element={<ProtectedRoute allowStaff={false}><SocialMediaPage /></ProtectedRoute>} />
+          <Route path="/ai-studio" element={<OwnerStudioRoute />} />
           <Route path="/visitor-guide" element={<PublicVisitorGuideRedirect />} />
           <Route path="/visitor-guide/edit" element={<PublicVisitorGuideRedirect />} />
           <Route path="/writing-submissions" element={<ProtectedRoute allowStaff={false}><WritingSubmissionTrackerPage /></ProtectedRoute>} />
