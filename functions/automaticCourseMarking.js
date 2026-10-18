@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+const { familyRecordingReference } = require('./a1FamilyRecordingReference');
 const { withMarkingTransport } = require('./automaticMarkingContext');
 const RESULTS_URL = 'https://www.falowen.app/campus/results';
 const idForPath = path => `auto_${crypto.createHash('sha256').update(path).digest('hex')}`;
@@ -72,8 +73,9 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
       if (!registeredCode || !studentId || (requestedUid && studentId !== requestedUid)) {
         throw new Error('Registered student identity unavailable; tutor review required');
       }
-      const referenceEntry = await loadReference(job.assignmentKey);
+      let referenceEntry = await loadReference(job.assignmentKey);
       if (!referenceEntry?.parts) throw new Error('No registered answer key; tutor review required');
+      referenceEntry = familyRecordingReference(referenceEntry, submission, job.assignmentKey);
       const text = String(submission.submissionText || submission.text || submission.answer || submission.workContent || '').trim();
       if (!text) throw new Error('Submission text is missing; tutor review required');
       const result = await withMarkingTransport(callAi, () => mark({

@@ -130,6 +130,10 @@ export function resolveQuestionAwareWritingTask(options = {}) {
     if (writingRequirement === false) return null;
   }
 
+  // A verified recorded-workbook reference supplies the spoken task; historical
+  // writing specs must not impose handwriting, letter form or five support ideas.
+  if (existing?.source === "a1-3-recorded-family-v1" && existing.modality === "spoken_transcript"
+    && assignmentKey === "A1-3" && reference.version === existing.source) return existing;
   if (existing?.assignmentKey) return applyAuthoritativeWritingOverride(existing);
 
   const a1Spec = getA1WritingTaskSpec(assignmentKey);
@@ -1061,7 +1065,7 @@ export function applyQuestionAwareWritingGuard(result = {}, options = {}, rawSub
       },
     };
   }
-  const deterministicCorrections = deterministicLanguageCorrections(source, primaryWritingPartId(task), task);
+  const deterministicCorrections = task.modality === "spoken_transcript" ? [] : deterministicLanguageCorrections(source, primaryWritingPartId(task), task);
   const structured = readStructuredTask(result);
   const taskPointEvidence = task.level === "A1" && task.rubricVersion === A1_WRITING_RUBRIC_VERSION
     ? evaluateA1WritingTaskEvidence(task, source)
