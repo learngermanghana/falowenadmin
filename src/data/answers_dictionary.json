@@ -3364,13 +3364,11 @@
   "B1 7.21 Lebensformen heute ? Familie, Wohnge": {
     "answers": {
       "teil3": {
-        "Answer1": "B) Es ist nicht mehr die einzige Art, wie Menschen zusammenleben.",
-        "Answer2": "A) Der Wunsch nach beruflicher Flexibilität und Unabhängigkeit.",
-        "Answer3": "B) Sie pflegen soziale Kontakte über Freundschaften und Vereine.",
-        "Answer4": "B) Neue Partner bringen Kinder aus früheren Beziehungen mit.",
-        "Answer5": "B) Geduld, Toleranz und gegenseitige Rücksichtnahme.",
-        "Answer6": "A) Weil sie nicht alleine wohnen oder ins Seniorenheim ziehen möchten.",
-        "Answer7": "B) Jung und Alt unterstützen sich gegenseitig im Alltag."
+        "Answer1": "a) Weil ein WG-Zimmer preiswerter ist als eine eigene Wohnung.",
+        "Answer2": "b) Einige Menschen fühlen sich manchmal einsam.",
+        "Answer3": "b) Fast 40 Prozent.",
+        "Answer4": "b) Menschen unterschiedlichen Alters wohnen im selben Gebäude.",
+        "Answer5": "c) Die Nachbarn helfen sich gegenseitig bei alltäglichen Aufgaben."
       },
       "teil4": {}
     },
