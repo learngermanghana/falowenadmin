@@ -604,20 +604,14 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
     }
   },
   "A1-12.1": {
-    "words": [
-      "das Buch",
-      "der Tisch",
-      "auf",
-      "liegen",
-      "legen"
-    ],
+    "words": ["auf dem Tisch", "auf den Tisch", "mit dem Bus", "beim Arzt", "zum Arzt"],
     "mission": {
       "title": "Wo oder wohin?",
       "situation": "Ein Buch liegt auf einem Tisch.",
       "prompt": "Sage, wo das Buch liegt.",
       "model": "Das Buch liegt auf dem Tisch.",
       "hint": "Wo? → auf dem Tisch (Dativ).",
-      "secondRound": "Zweite Runde: Ich lege das Buch auf den Tisch (Wohin?)."
+      "secondRound": "Zweite Runde: Sage, womit du zum Arzt fährst: Ich fahre mit dem Bus zum Arzt."
     },
     "reaction": {
       "title": "Du bewegst das Buch",
@@ -626,10 +620,10 @@ export const A1_EVERYDAY_SPEAKING = Object.freeze({
       "model": "Ich lege das Buch auf den Tisch.",
       "note": "Wohin? → auf den Tisch (Akkusativ).",
       "second": {
-        "situation": "Ein Buch befindet sich auf einem Tisch.",
-        "prompt": "Die Lehrkraft fragt: „Wo liegt das Buch?“ Antworte.",
-        "model": "Das Buch liegt auf dem Tisch.",
-        "note": "Wo? bezeichnet den Ort; hier Dativ dem."
+        "situation": "Du fährst zum Arzt und bist danach dort.",
+        "prompt": "Sage: mit dem Bus fahren, zum Arzt gehen, beim Arzt sein.",
+        "model": "Ich fahre mit dem Bus zum Arzt. Jetzt bin ich beim Arzt.",
+        "note": "mit, bei und zu verlangen Dativ: dem Bus, beim Arzt, zum Arzt."
       }
     }
   },

@@ -162,6 +162,9 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
       "Ich lege das Buch auf den Tisch.",
       "Wir sind in der Küche.",
       "Wir gehen in die Küche.",
+      "Ich fahre mit dem Bus.",
+      "Ich bin beim Arzt. Ich gehe zum Arzt.",
+      "Wir fahren zur Arbeit.",
     ],
     commonMistakesEn: [
       "Choosing the case only from the preposition without asking Wo? or Wohin?.",

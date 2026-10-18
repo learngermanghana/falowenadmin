@@ -1,4 +1,4 @@
-import { courseDictionary } from "./courseDictionary.js";
+import { courseDictionary, retiredCourseDictionary } from "./courseDictionary.js";
 import { enhanceA1GenericLessonSlide } from "./a1GenericLessonUpgrades.js";
 import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";
 import { getCourseTaskDay } from "./courseSessionGroups.js";
@@ -269,8 +269,8 @@ function enhanceA1Day2PronounSlide(slide) {
   };
 }
 
-function buildLevelSlides(level) {
-  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));
+function buildLevelSlides(level, dictionary = courseDictionary[level]) {
+  const entries = Object.values(dictionary || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));
   return entries.map((entry, index) => {
     const lessonNumber = String(level || "").toUpperCase() === "A1"
       ? getCourseTaskDay("A1", entry.assignment_id, index)
@@ -327,7 +327,7 @@ const curatedSlidesByAssignment = Object.fromEntries(
   ].map((slide) => [slide.assignmentId, slide]),
 );
 
-const a1Slides = buildLevelSlides("A1").map((slide, index) =>
+const a1Slides = [...buildLevelSlides("A1"), ...buildLevelSlides("A1", retiredCourseDictionary.A1)].map((slide, index) =>
   normalizeA1SlideDay(curatedSlidesByAssignment[slide.assignmentId] || slide, index),
 );
 const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);

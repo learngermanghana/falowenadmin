@@ -137,6 +137,7 @@ export const A1_GRAMMAR_CHECKS = {
     check("What question helps you choose dative with a two-way preposition?", "Wo? — where is something located?"),
     check("What question helps you choose accusative with a two-way preposition?", "Wohin? — where is something moving or being placed?"),
     check("Why can ‘auf dem Tisch’ and ‘auf den Tisch’ both be correct?", "The first describes location; the second describes movement toward the table."),
+    check("Complete: Ich fahre mit ___ Bus, bin ___ Arzt und gehe ___ Arzt.", "mit dem Bus, beim Arzt, zum Arzt. mit, bei and zu always take dative."),
   ],
   "A1-12.2": [
     check("What does als express when talking about a profession?", "It means ‘as’ in the role or profession: Ich arbeite als Lehrer."),
