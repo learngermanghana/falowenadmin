@@ -222,7 +222,7 @@ test("Presenter selectively reveals only one B2 private role card at a time", ()
   assert.match(presenter, /Show Role B only\. Partner A looks away\. Then hide it\./);
   // A stage navigation reset also clears other presenter state, so the
   // role-hide operation need not be immediately adjacent to setStageIndex.
-  assert.match(presenter, /function goTo\\(index\\)\\s*\\{[\\s\\S]*?setRevealedFlowRole\\(""\\);[\\s\\S]*?setStageIndex\\(clampPresenterIndex/);
+  assert.match(presenter, /function goTo\(index\)\s*\{[\s\S]*?setRevealedFlowRole\(""\);[\s\S]*?setStageIndex\(clampPresenterIndex/);
   assert.match(css, /\.presenter-role-gap-card/);
   assert.match(css, /\.presenter-role-gap-actions button\.is-active/);
 });
