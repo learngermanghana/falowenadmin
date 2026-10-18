@@ -62,7 +62,7 @@ test("all 141 A2 source speaking questions keep models while Presenter selects t
 });
 
 test("A2 answers stay aligned with all 28 daily topics", () => {
-  const topics = ["Familie", "Freundin", "Schwester", "Film", "Fußball", "Wohnzimmer", "Wohnung", "Speisekarte", "Cape Coast", "Musikfest", "Bus", "Koch", "Alex Mensah", "Verkäufer", "Fußball", "Wohlbefinden", "Husten", "Konto", "Geschäft", "Wasserkocher", "Wochenende", "Montag", "Bus", "Hamburg", "sechs Uhr", "Prüfung", "WhatsApp", "Deutschkenntnisse"];
+  const topics = ["Familie", "Freundin", "Schwester", "Film", "Fußball", "Wohnzimmer", "Wohnung", "Guten Abend", "Cape Coast", "Köln", "Bus", "Koch", "Alex Mensah", "Verkäufer", "Fußball", "Wohlbefinden", "Husten", "Konto", "Geschäft", "Wasserkocher", "Wochenende", "Montag", "Bus", "Hamburg", "sechs Uhr", "Prüfung", "WhatsApp", "Deutschkenntnisse"];
   for (const slide of getSlidesByCourse("A2")) {
     assert.ok(slide.speakingModels[0].modelAnswerDe.includes(topics[slide.dayNumber - 1]), slide.assignmentId);
   }
