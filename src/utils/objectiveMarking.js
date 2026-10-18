@@ -551,9 +551,9 @@ const A1_7_READING_V2_ANSWERS = {
     Answer5: "Falsch",
   },
   "Teil 2": {
-      "Answer1": "A) Richtig",
-      "Answer2": "B) Falsch",
-      "Answer3": "A) Richtig",
+      "Answer1": "Richtig",
+      "Answer2": "Falsch",
+      "Answer3": "Richtig",
       "Answer4": "B) Um sechs Uhr",
       "Answer5": "A) Um Viertel vor sechs, er holt Anna ab."
   },
