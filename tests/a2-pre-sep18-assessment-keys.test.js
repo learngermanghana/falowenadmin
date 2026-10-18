@@ -37,7 +37,7 @@ test("A2 grading keys keep their reviewed canonical assessment shapes", () => {
 });
 
 
-test("A2-9.24 stable Anzeige codes score the restored matching task correctly", () => {
+test("A2-9.24 awards five Anzeige points while keeping unanswered Teil 4 in the ten-point total", () => {
   const result = computeObjectiveScore("A2-9.24", `
 Teil 3
 1. D
@@ -48,7 +48,8 @@ Teil 3
   `);
 
   assert.equal(result.correctCount, 5);
-  assert.equal(result.totalCount, 5);
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.details["teil4.1"].correct, false);
 });
 
 test("A2-7.18 current 5+5 Lesen and Hören submission scores 10/10", () => {
