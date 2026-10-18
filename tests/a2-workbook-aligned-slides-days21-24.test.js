@@ -40,7 +40,9 @@ test("A2 days 21-24 expose the exact canonical grammar and workbook routes", () 
     assert.equal(slide.workbookConnection.workbookUrl, expected.workbookRoute);
     assert.deepEqual(
       slide.workbookConnection.parts.map((part) => part.label),
-      ["A2-8.22", "A2-9.23"].includes(assignmentId)\n        ? ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen"]\n        : ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen", "Teil 4 · Hören"],
+      ["A2-8.22", "A2-9.23"].includes(assignmentId)
+        ? ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen"]
+        : ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen", "Teil 4 · Hören"],
     );
   }
 });
