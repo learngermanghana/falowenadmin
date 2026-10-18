@@ -90,21 +90,21 @@ test("Day 21 follows the five-question Lebensformen reading currently in the stu
   assert.equal(Object.keys(contract.answers.teil3).length, 5);
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   assert.match(reading, /Single-Haushalte|Patchwork|Mehrgenerationenwohnen/i);
-  assert.match(reading, /three/i);
+  assert.match(reading, /five/i);
 });
 test("Day 22 follows three Online-Dating answers and seven relationship-expert statements", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-7.22");
   const contract = contractByAssignmentId["B1-7.22"];
   assert.deepEqual(contract.expectedParts, ["teil3", "teil4"]);
   assert.equal(slide.workbookConnection.parts.some((entry) => /Teil 2.*Schreiben/i.test(entry.label)), false);
-  assert.equal(Object.keys(contract.answers.teil3).length, 5);
+  assert.equal(Object.keys(contract.answers.teil3).length, 3);
   assert.equal(Object.keys(contract.answers.teil4).length, 7);
 
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   const secondReading = part(slide, "Teil 4 · Lesen").detailEn;
   assert.match(reading, /Online-Dating/i);
   assert.match(reading, /Online-Dating/i);
-  assert.match(reading, /five/i);
+  assert.match(reading, /three/i);
   assert.match(reading, /Teil 3/i);
   assert.match(secondReading, /Fernbeziehung|Partnerschaft/i);
   assert.match(secondReading, /seven/i);
