@@ -6,14 +6,14 @@ This feature adds original Goethe-style **practice** recordings (not official re
 
 ## Activation (required; fail closed)
 
-1. Determine the Firebase Authentication **UID** for the single Falowen owner account. Do not use a student's account.
-2. Configure `HOEREN_STUDIO_OWNER_UID` in the **existing Firebase Functions runtime environment**, or place `{ "ai_studio": { "owner_uid": "<YOUR_FIREBASE_UID>" } }` into the deployment's securely managed `CLOUD_RUNTIME_CONFIG`. Keep any preexisting config keys. The backend refuses all users if this UID is missing.
+1. The operator-provided Firebase owner UID has been pinned as a SHA-256 digest in `functions/hoerenStudioApi.js`. The backend checks the verified Firebase ID token; the raw UID is not committed.
+2. No Firebase UID runtime setting is needed for this account. If the owner changes, update the pinned digest after verifying the replacement UID. An explicitly configured `HOEREN_STUDIO_OWNER_UID` or `CLOUD_RUNTIME_CONFIG.ai_studio.owner_uid` overrides the pinned account.
 3. Set the Firebase Functions Secret Manager secret: `firebase functions:secrets:set GEMINI_API_KEY --project <FIREBASE_PROJECT>`. Use a *restricted Gemini API key* from Google AI Studio. Never commit it to Git or put it in a `VITE_*` variable.
 4. Bindings are declared in `functions/index.js`. Deploy the existing Firebase API function after validating the project selection, e.g. `firebase deploy --only functions:api --project <FIREBASE_PROJECT>` (check actual function codebase and name in the deployment first). Deployment **cannot complete until the secret exists**.
-5. In the Vercel project building Falowen Admin, set the non-secret **build** variable `VITE_HOEREN_STUDIO_OWNER_UID=<YOUR_FIREBASE_UID>` and redeploy the admin website. This only hides the navigation and route from other UI accounts; the real authorization always takes place in Firebase.
+5. `VITE_HOEREN_STUDIO_OWNER_UID` was set for production and preview in the existing Vercel **attendance** project, confirmed to own `admin.falowen.app`. Redeploy that website to include the build-time value. Backend Firebase authorization is enforced separately.
 6. Open `/ai-studio` with the owner account and verify the status says the key is ready. Test one short script/clip using Flash-Lite. Confirm browser preview, downloaded WAV, German numbers and pronunciation before producing lessons.
 
-**Do not merge/deploy blindly** while owner UID, Secret Manager access, quota eligibility and Firebase project are unverified. No secret or billing plan is created by this commit.
+**Do not merge/deploy blindly** until the Gemini secret is correctly bound to the Firebase API and quotas are verified. The Gemini API secret was created by the operator in Google Cloud. No new billing plan is configured by this PR.
 
 ## Budget safeguards
 
