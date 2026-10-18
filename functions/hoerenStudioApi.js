@@ -10,9 +10,23 @@ const SCRIPT_MODEL = "gemini-3.5-flash-lite";
 const LIMITS = Object.freeze({ script: 5, speech: 36 });
 const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2"]);
 const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone"]);
+const crypto = require("node:crypto");
+// SHA-256 identifier for the single verified Falowen owner UID. This is not an API secret.
+// Using a digest avoids publishing the Firebase account UID in public repository code.
+const DEFAULT_OWNER_UID_SHA256 = "e8bc09aac410e86216e384ab4c612d6ac6551273085f8344206b23f4004f90a1";
 
 function ownerUid(runtimeConfig = {}, env = process.env) {
   return String(env.HOEREN_STUDIO_OWNER_UID || runtimeConfig.ai_studio?.owner_uid || "").trim();
+}
+
+function isStudioOwner(uid, runtimeConfig = {}, env = process.env) {
+  const expected = ownerUid(runtimeConfig, env);
+  if (expected) return uid === expected;
+  const actualHash = crypto.createHash("sha256").update(String(uid || "")).digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(actualHash, "hex"),
+    Buffer.from(DEFAULT_OWNER_UID_SHA256, "hex")
+  );
 }
 
 function validateSpeechRequest(body = {}) {
@@ -104,9 +118,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
   async function guard(req, res, next) {
     try {
       const user = await requireAuth(req);
-      const targetUid = ownerUid(runtimeConfig);
-      if (!targetUid) return res.status(503).json({ ok: false, error: "Hören Studio owner UID is not configured." });
-      if (user.uid !== targetUid) return res.status(403).json({ ok: false, error: "This is a private owner-only studio." });
+      if (!isStudioOwner(user.uid, runtimeConfig)) return res.status(403).json({ ok: false, error: "This is a private owner-only studio." });
       req.hoerenOwnerUid = user.uid;
       next();
     } catch {
@@ -183,6 +195,6 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 }
 
 module.exports = {
-  MODELS, LIMITS, ownerUid, validateSpeechRequest, validateScriptRequest,
+  MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest, validateScriptRequest,
   extractAudio, extractScript, registerHoerenStudioRoutes,
 };
