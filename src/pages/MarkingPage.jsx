@@ -393,13 +393,18 @@ function TutorMarkingWorkspace() {
     || (writingTask && selectedSubmission?.text
       ? evaluateWritingStructureReview(writingTask, selectedSubmission.text)
       : null);
+  // loadSubmissions() is the shared authority for pending work on both the
+  // dashboard and this page. Re-filtering by raw status can hide pending work.
   const queueRows = submissionNotifications.filter((row) => {
     const search = normalize(attemptSearch);
-    const status = normalize(row.markingStatus || row.status || "pending");
-    const stillNeedsMarking = !["marked", "sent"].includes(status);
-    return stillNeedsMarking && !hiddenQueueKeys.includes(queueRowKey(row))
+    return !hiddenQueueKeys.includes(queueRowKey(row))
       && (!search || [row.studentName, row.studentCode, row.assignment, row.assignmentId].some((value) => normalize(value).includes(search)));
   });
+  const hiddenPendingCount = submissionNotifications.filter((row) => hiddenQueueKeys.includes(queueRowKey(row))).length;
+  const restoreHiddenQueue = () => {
+    window.localStorage.removeItem(QUEUE_HIDDEN_STORAGE);
+    setHiddenQueueKeys([]);
+  };
   const handleDeleteSelfPractice = async (row) => {
     if (!isSelfPracticeSubmission(row) || !row.path || deletingSubmissionPath) return;
     if (!window.confirm(`Permanently delete this self-practice submission from ${row.studentName || row.studentCode || "the student"}? This cannot be undone.`)) return;
@@ -927,7 +932,17 @@ function TutorMarkingWorkspace() {
                   }
                 </div>
               ))}
-              {!queueRows.length ? <p className="marking-empty">No submissions match this filter.</p> : null}
+              {hiddenPendingCount > 0 ? (
+                <p className="marking-empty">
+                  {hiddenPendingCount} pending submission{hiddenPendingCount === 1 ? "" : "s"} hidden in this browser.{" "}
+                  <button type="button" onClick={restoreHiddenQueue}>Show hidden submissions</button>
+                </p>
+              ) : null}
+              {!queueRows.length ? (
+                <p className="marking-empty">
+                  {attemptSearch ? "No submissions match your search. Clear the search to see all pending work." : hiddenPendingCount ? "Pending work is hidden in this browser. Use Show hidden submissions above." : "No submissions awaiting marking."}
+                </p>
+              ) : null}
             </div>
           </section>
         </aside>
