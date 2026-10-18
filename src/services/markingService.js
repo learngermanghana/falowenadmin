@@ -1,3 +1,4 @@
+import { familyRecordingReference } from "../utils/a1FamilyRecordingReference.js";
 import { computeObjectiveScore } from "../utils/objectiveMarking.js";
 import { mergeObjectiveScore } from "../utils/markingReview.js";
 import { markingConsistencyWarnings, reconcileMarkingQuality, verifiedObjectiveZero } from "../utils/markingQuality.js";
@@ -217,7 +218,8 @@ async function prepareMarkingOptions(options = {}) {
     ...enrichOptionsWithQuestionAwareWritingTask({
       ...options,
       submissionText: preparedText,
-      referenceEntry: live?.referenceEntry || options.referenceEntry,
+      referenceEntry: familyRecordingReference(live?.referenceEntry || options.referenceEntry,
+        { ...(options.submission || {}), submissionText: originalText }, assignmentKey),
     }),
     learnerContractWarning: live?.warning || "",
     learnerContractSourceVersion: live?.sourceVersion || "",

@@ -112,20 +112,13 @@ const dictionary = JSON.parse(fs.readFileSync(dictionaryTarget, "utf8"));
 const assignmentEntry = Object.values(dictionary).find((entry) => String(entry?.assignment_id || entry?.assignmentId || "").trim().toUpperCase() === "A1-3");
 if (!assignmentEntry) throw new Error("A1-3 answer-key entry not found");
 
+// The unversioned manifest remains the legacy three-part writing assignment.
+// Recorded revisions are transformed at marking time by the shared adapter.
 assignmentEntry.expectedParts = ["teil1", "teil2", "teil3"];
 assignmentEntry.writingParts = ["teil2"];
 assignmentEntry.aiGradedParts = ["teil2"];
 assignmentEntry.referenceAnswerParts = ["teil1", "teil3"];
 assignmentEntry.answerLayout = "multipart";
-assignmentEntry.partGrading = {
-  ...(assignmentEntry.partGrading || {}),
-  teil2: {
-    label: "Teil 2 Schreiben",
-    hasReferenceAnswers: false,
-    gradingMode: "ai_written_response",
-    instruction: "Teil 2 is a Schreiben/writing part. Grade it with AI using A1 task completion, understandable sentences, basic verb forms, spelling, capitalization, plural forms, vocabulary, and clarity. Do not mark it wrong because there is no fixed reference answer.",
-  },
-};
 
 fs.writeFileSync(dictionaryTarget, `${JSON.stringify(dictionary, null, 2)}\n`);
 console.log("A1-3 now preserves complete comma answers, price values, tolerant preference wording, registered Teil 2 writing, and specific A1 writing evidence.");

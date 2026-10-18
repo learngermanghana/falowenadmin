@@ -150,7 +150,7 @@ test("real A1-12.3 dictionary plus Momodou submission cannot become one fake obj
   assert.equal(auto.detectedParts.filter((part) => part.partType === "writing").length, 2);
 
   const markingPageSource = fs.readFileSync(new URL("../src/pages/MarkingPage.jsx", import.meta.url), "utf8");
-  assert.match(markingPageSource, /const registryEntry = pageAIReference/);
+  assert.match(markingPageSource, /const registryEntry = familyRecordingReference\(pageAIReference,/);
   assert.match(markingPageSource, /computeObjectiveScore\(registryEntry, submissionText\)/);
   assert.match(markingPageSource, /normalizeAnswerKeyEntry\(referenceEntry\.assignment/);
 });

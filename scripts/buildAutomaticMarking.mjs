@@ -25,3 +25,10 @@ await build({
     }));
   }}],
 });
+
+// Generate the worker adapter from the same source used by the tutor UI.
+await build({
+  entryPoints: [path.join(root, 'src/utils/a1FamilyRecordingReference.js')],
+  outfile: path.join(root, 'functions/a1FamilyRecordingReference.js'),
+  bundle: true, platform: 'node', target: 'node22', format: 'cjs',
+});
