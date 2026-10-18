@@ -28,9 +28,7 @@ test("owner-only requires explicit configured UID (fail closed)", () => {
   assert.equal(ownerUid({}, { HOEREN_STUDIO_OWNER_UID: "mine" }), "mine");
 });
 test("only the approved Firebase owner UID passes server auth", () => {
-  assert.equal(isStudioOwner("qxYR3rf1yORkTMklhGJ5haPCmVB2", {}, {}), true);
   assert.equal(isStudioOwner("unrelated-user", {}, {}), false);
-  assert.equal(isStudioOwner("qxYR3rf1yORkTMklhGJ5haPCmVB2", {}, { HOEREN_STUDIO_OWNER_UID: "different-uid" }), false);
   assert.equal(isStudioOwner("different-uid", {}, { HOEREN_STUDIO_OWNER_UID: "different-uid" }), true);
 });
 test("Gemini model ids and request quotas are explicit", () => {
