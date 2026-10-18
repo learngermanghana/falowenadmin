@@ -87,7 +87,7 @@ test("Day 21 has no Teil 4 and matches the marking contract", () => {
 test("Day 21 follows the five-question Lebensformen reading currently in the student workbook", () => {
   const slide = getB1WorkbookAlignedSlideDay21To28("B1-7.21");
   const contract = contractByAssignmentId["B1-7.21"];
-  assert.equal(Object.keys(contract.answers.teil3).length, 3);
+  assert.equal(Object.keys(contract.answers.teil3).length, 5);
   const reading = part(slide, "Teil 3 · Lesen").detailEn;
   assert.match(reading, /Single-Haushalte|Patchwork|Mehrgenerationenwohnen/i);
   assert.match(reading, /three/i);
