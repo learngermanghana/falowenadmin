@@ -39,7 +39,8 @@ test("AI marking uses the authoritative page reference even when the saved regis
   assert.match(source, /normalizeAnswerKeyEntry\(referenceEntry\.assignment/);
   assert.match(source, /pageReferenceReady = Boolean\(/);
   assert.match(source, /const aiMarkingBlockedByKey = !pageReferenceReady/);
-  assert.match(source, /const registryEntry = pageAIReference/);
+  assert.match(source, /const registryEntry = familyRecordingReference\(pageAIReference/);
+  assert.match(source, /selectedSubmission, submissionText/);
   assert.match(source, /computeObjectiveScore\(registryEntry, submissionText\)/);
   assert.match(source, /Page reference ready/);
   assert.doesNotMatch(source, /Syncing answer keys|Saved AI key is out of date|Sync latest answer keys/);
@@ -63,7 +64,11 @@ test("objective mapping defaults to issues and can reveal all answers", () => {
 
 test("submission queue is limited to work that still needs marking", () => {
   assert.match(source, /Only incoming work that still needs marking/);
-  assert.match(source, /!\["marked", "sent"\]\.includes\(status\)/);
+  // The shared loadSubmissions() query is now the authority for pending work;
+  // filtering individual raw statuses again would hide valid pending attempts.
+  assert.match(source, /const queueRows = submissionNotifications\.filter/);
+  assert.match(source, /!hiddenQueueKeys\.includes\(queueRowKey\(row\)\)/);
+  assert.match(source, /loadSubmissions\(/);
   assert.doesNotMatch(source, /Filter submissions by status/);
   assert.doesNotMatch(source, /All attempts/);
 });
