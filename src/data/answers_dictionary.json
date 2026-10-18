@@ -3416,9 +3416,13 @@
         "Answer3": "C) Das große Angebot kann dazu führen, dass Beziehungen schneller beendet werden."
       },
       "teil4": {
-        "Answer1": "B) Anzeige B",
-        "Answer2": "A) Anzeige A",
-        "Answer3": "C) Anzeige C"
+        "Answer1": "B) Dr. Claudia Seidel",
+        "Answer2": "0) Keine Person",
+        "Answer3": "A) Prof. Dr. Julian Hofmann",
+        "Answer4": "C) Markus Lindner",
+        "Answer5": "A) Prof. Dr. Julian Hofmann",
+        "Answer6": "0) Keine Person",
+        "Answer7": "B) Dr. Claudia Seidel"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1b4CY4c1YK-QrIKmmq6NX60cdmWJ6u0X6C-qcyoFjbBU/gviz/tq?tqx=out:html&sheet=Key",
