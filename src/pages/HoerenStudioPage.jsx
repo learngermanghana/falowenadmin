@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext";
-import { getStudioStatus, makeListeningScript, makeSpeechClip } from "../services/hoerenStudioService";
+import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson } from "../services/hoerenStudioService";
+import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
@@ -52,6 +53,13 @@ export default function HoerenStudioPage() {
   const [audioBlob, setAudioBlob] = useState(null);
   const [generatedClips, setGeneratedClips] = useState(null);
   const [audioUrl, setAudioUrl] = useState("");
+  const [questions, setQuestions] = useState([]);
+  const [questionKind, setQuestionKind] = useState("richtig-falsch");
+  const [questionScript, setQuestionScript] = useState("");
+  const [teacherApproved, setTeacherApproved] = useState(false);
+  const [publishDay, setPublishDay] = useState(18);
+  const [assignmentKey, setAssignmentKey] = useState("A1-12.1");
+  const [published, setPublished] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -69,6 +77,97 @@ export default function HoerenStudioPage() {
   const spokenLines = transcript.lines.filter((line) => line.type === "speech");
   const ready = Boolean(status?.ready);
   const filename = safeFileName(level, topic);
+  const reviewedQuestions = useMemo(() => {
+    try { return { data: validateDraftQuestions({ script, questions, kind: questionKind }), error: "" }; }
+    catch (error) { return { data: [], error: error.message }; }
+  }, [script, questions, questionKind]);
+  const questionsMatchScript = questionScript === script;
+  const canPublish = !!audioBlob && !!reviewedQuestions.data.length && questionsMatchScript &&
+    teacherApproved && !busy && ["A1", "A2", "B1"].includes(level) &&
+    new RegExp(`^${level}-[0-9]{1,2}(?:\\.[0-9]{1,2})?import { useEffect, useMemo, useState } from "react";
+import { useToast } from "../context/ToastContext";
+import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson } from "../services/hoerenStudioService";
+import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
+import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
+import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
+import { encodeWavAsMp3 } from "../utils/hoerenMp3";
+import "./HoerenStudioPage.css";
+
+const TEMPLATES = {
+  dialogue: "A: Guten Tag! Ich möchte eine Fahrkarte nach Berlin kaufen.\nB: Möchten Sie heute oder morgen fahren?\nA: Morgen früh, bitte.\nB: Der Zug fährt um acht Uhr fünfzehn.\n[PAUSE 3]\nA: Vielen Dank!",
+  announcement: "A: Achtung, liebe Fahrgäste! Der Zug nach Berlin fährt heute nicht von Gleis eins, sondern von Gleis vier.\n[PAUSE 3]\nA: Bitte beachten Sie die geänderte Abfahrtszeit um neun Uhr zwanzig.",
+  telephone: "A: Guten Tag, hier spricht Anna Müller. Ich kann heute leider nicht zum Deutschkurs kommen.\n[PAUSE 3]\nA: Bitte rufen Sie mich morgen nach zehn Uhr zurück. Vielen Dank!",
+};
+const LEVELS = ["A1", "A2", "B1", "B2"];
+const TYPE_LABELS = { dialogue: "Two-person conversation", announcement: "Public announcement", telephone: "Telephone message" };
+
+function downloadFile(data, filename, mimeType) {
+  const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type: mimeType }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function safeFileName(level, topic) {
+  const suffix = topic.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 44) || "listening";
+  return `falowen-${level.toLowerCase()}-hoeren-${suffix}`;
+}
+
+export default function HoerenStudioPage() {
+  const toast = useToast();
+  const [level, setLevel] = useState("A1");
+  const [type, setType] = useState("dialogue");
+  const [topic, setTopic] = useState("Eine Fahrkarte am Bahnhof kaufen");
+  const [engine, setEngine] = useState("lite");
+  const [script, setScript] = useState(TEMPLATES.dialogue);
+  const [lineGap, setLineGap] = useState(0.7);
+  const [repeats, setRepeats] = useState(2);
+  const [repeatGap, setRepeatGap] = useState(6);
+  const [scene, setScene] = useState("station");
+  const [useAtmosphere, setUseAtmosphere] = useState(true);
+  const [openingBell, setOpeningBell] = useState(true);
+  const [endingSound, setEndingSound] = useState(true);
+  const [soundVolume, setSoundVolume] = useState(12);
+  const [atmosphereFile, setAtmosphereFile] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [serverError, setServerError] = useState("");
+  const [busy, setBusy] = useState("");
+  const [progress, setProgress] = useState("");
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [generatedClips, setGeneratedClips] = useState(null);
+  const [audioUrl, setAudioUrl] = useState("");
+  const [questions, setQuestions] = useState([]);
+  const [questionKind, setQuestionKind] = useState("richtig-falsch");
+  const [questionScript, setQuestionScript] = useState("");
+  const [teacherApproved, setTeacherApproved] = useState(false);
+  const [publishDay, setPublishDay] = useState(18);
+  const [assignmentKey, setAssignmentKey] = useState("A1-12.1");
+  const [published, setPublished] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    getStudioStatus().then((data) => {
+      if (alive) { setStatus(data); setServerError(""); }
+    }).catch((error) => { if (alive) setServerError(error.message); });
+    return () => { alive = false; };
+  }, []);
+  useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
+
+  const transcript = useMemo(() => {
+    try { return { lines: parseStudioTranscript(script), error: "" }; }
+    catch (error) { return { lines: [], error: error.message }; }
+  }, [script]);
+  const spokenLines = transcript.lines.filter((line) => line.type === "speech");
+  const ready = Boolean(status?.ready);
+).test(assignmentKey.trim());
+  const updateQuestions = (index, changes) => {
+    setQuestions(existing => existing.map((q, i) => i === index ? { ...q, ...changes } : q));
+    setTeacherApproved(false); setPublished(null);
+  };
+
 
   function clearAudio(keepGenerated = false) {
     setAudioBlob(null);
@@ -83,6 +182,7 @@ export default function HoerenStudioPage() {
   function setTypeAndTemplate(next) {
     setType(next);
     setScript(TEMPLATES[next]);
+    setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null);
     clearAudio();
   }
   async function reloadStatus() {
@@ -94,10 +194,44 @@ export default function HoerenStudioPage() {
     try {
       const result = await makeListeningScript({ topic, type, level });
       setScript(result.script);
+      setQuestions(result.questions || []);
+      setQuestionKind(result.kind || "richtig-falsch");
+      setQuestionScript(result.script);
+      setTeacherApproved(false); setPublished(null);
       setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, script: result.remaining } }));
-      toast.success("German listening script generated. Please review it before creating audio.");
+      toast.success("Script and five Hören questions generated together in one Gemini request. Review the answers.");
     } catch (error) { toast.error(error.message); }
     finally { setBusy(""); await reloadStatus(); }
+  }
+  async function generateQuestions() {
+    if (script.trim().length < 35 || !ready) return;
+    setBusy("questions"); setProgress("");
+    try {
+      const result = await makeListeningQuestions({ script, kind: questionKind });
+      setQuestions(result.questions);
+      setQuestionScript(script);
+      setTeacherApproved(false); setPublished(null);
+      toast.success("Five listening questions generated. Check all answers and source quotes.");
+    } catch (error) { toast.error(error.message); }
+    finally { setBusy(""); await reloadStatus(); }
+  }
+  async function publishToCourseBook() {
+    if (!canPublish) return;
+    setBusy("publish"); setProgress("Preparing MP3 locally and uploading to Falowen…");
+    try {
+      const mp3 = await encodeWavAsMp3(audioBlob);
+      const result = await publishListeningLesson({
+        mp3,
+        metadata: {
+          level, day: Number(publishDay), assignmentKey: assignmentKey.trim().toUpperCase(),
+          title: topic.trim(), script, kind: questionKind,
+          questions: reviewedQuestions.data, teacherApproved,
+        },
+      });
+      setPublished(result);
+      toast.success("Published! The five questions are now available in the selected Course Book lesson.");
+    } catch (error) { toast.error(error.message); }
+    finally { setBusy(""); setProgress(""); }
   }
   async function generateAudio() {
     if (transcript.error || !spokenLines.length) return;
@@ -174,10 +308,53 @@ export default function HoerenStudioPage() {
           <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script} onClick={generateScript}>{busy === "script" ? "Generating script…" : "Generate Goethe-style script"}</button>
           <p className="hoeren-hint">You can also write or paste your own script without using Google's script-generation quota.</p>
           <label>Transcript — edit before creating audio
-            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(event.target.value); clearAudio(); }} />
+            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(event.target.value); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
           </label>
           <p className="hoeren-hint"><strong>Format:</strong> One line per turn, starting with <code>A:</code> or <code>B:</code>. Insert <code>[PAUSE 3]</code> as its own line for three seconds of silence. Two distinct German voices are used for A and B.</p>
           {transcript.error ? <p className="hoeren-validation" role="alert">{transcript.error}</p> : <p className="hoeren-hint">{spokenLines.length} spoken lines · {transcript.lines.filter((line) => line.type === "pause").length} custom pauses</p>}
+          <fieldset className="hoeren-fieldset">
+            <legend>2. Generate &amp; review Hören questions</legend>
+            <label>Question format
+              <select value={questionKind} disabled={!!busy} onChange={(event) => {
+                setQuestionKind(event.target.value); setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null);
+              }}>{Object.entries(QUESTION_KINDS).map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}</select>
+            </label>
+            <p className="hoeren-hint">New AI scripts include five Richtig/Falsch questions in the same Google request. Generating questions separately for a pasted or edited script uses one of your five daily script requests.</p>
+            <button type="button" className="hoeren-quiet" disabled={!ready || !!busy || !status?.remaining.script || script.trim().length < 35} onClick={generateQuestions}>
+              {busy === "questions" ? "Creating questions…" : "Generate 5 questions · one script quota"}
+            </button>
+            {questions.length ? <>
+              {!questionsMatchScript ? <p className="hoeren-validation">The script changed. Review the questions and regenerate them, or restore the reviewed script before publishing.</p> : null}
+              {questions.map((q, index) => <div className="hoeren-question" key={index}>
+                <strong>Question {index + 1}</strong>
+                <label>Statement / question
+                  <textarea rows={2} value={q.question || ""} disabled={!!busy} onChange={e => updateQuestions(index, { question: e.target.value })} />
+                </label>
+                {questionKind === "richtig-falsch" ? <label>Correct answer
+                  <select value={q.answer || ""} disabled={!!busy} onChange={e => updateQuestions(index, { answer: e.target.value })}>
+                    <option value="">Choose</option><option>Richtig</option><option>Falsch</option>
+                  </select>
+                </label> : <>
+                  {(q.options || ["", "", ""]).map((option, optionIndex) => <label key={optionIndex}>
+                    Option {optionIndex + 1}
+                    <input value={option} disabled={!!busy} onChange={e => updateQuestions(index, {
+                      options: [0, 1, 2].map(i => i === optionIndex ? e.target.value : (q.options?.[i] || "")),
+                    })} />
+                  </label>)}
+                  <label>Correct option
+                    <select value={Number.isInteger(q.correctIndex) ? q.correctIndex : ""} disabled={!!busy}
+                      onChange={e => updateQuestions(index, { correctIndex: Number(e.target.value) })}>
+                      <option value="">Choose</option><option value="0">Option 1</option><option value="1">Option 2</option><option value="2">Option 3</option>
+                    </select>
+                  </label>
+                </>}
+                <label>Exact supporting quote from the spoken script
+                  <textarea rows={2} value={q.evidence || ""} disabled={!!busy} onChange={e => updateQuestions(index, { evidence: e.target.value })} />
+                </label>
+              </div>)}
+              {reviewedQuestions.error ? <p className="hoeren-validation" role="alert">{reviewedQuestions.error}</p> : <p className="hoeren-hint">All five questions have structurally valid answers and matching supporting quotes. Check their meaning before approving.</p>}
+            </> : <p className="hoeren-hint">Your five questions and their source quotes will appear here for editing.</p>}
+          </fieldset>
         </section>
         <section className="hoeren-panel">
           <h2>2. Audio settings</h2>
@@ -232,6 +409,32 @@ export default function HoerenStudioPage() {
           </div> : <div className="hoeren-placeholder">Your approved recording will appear here for playback and download.</div>}
         </section>
       </div>
+      <section className="hoeren-panel">
+        <h2>4. Teacher approval &amp; publish to Course Book</h2>
+        <p className="hoeren-hint">Publish only after listening to the final MP3 and checking all five answers. This adds a separate auto-marked Hören practice exercise to the lesson; it does not overwrite the existing tutor assignment or its answer sheet.</p>
+        <div className="hoeren-input-grid">
+          <label>Falowen level
+            <input value={level} readOnly aria-label="Selected course level" />
+          </label>
+          <label>Course Book day
+            <input type="number" min="1" max="60" value={publishDay} disabled={!!busy}
+              onChange={e => { setPublishDay(e.target.value); setTeacherApproved(false); }} />
+          </label>
+        </div>
+        <label>Existing assignment ID (e.g. A1-12.1)
+          <input value={assignmentKey} disabled={!!busy} onChange={e => { setAssignmentKey(e.target.value.toUpperCase()); setTeacherApproved(false); }} />
+        </label>
+        <label className="hoeren-effect-option">
+          <input type="checkbox" checked={teacherApproved} disabled={!!busy || !audioBlob || !!reviewedQuestions.error || !questionsMatchScript}
+            onChange={e => setTeacherApproved(e.target.checked)} />
+          I listened to the full recording and personally checked all five questions, answers and quotes.
+        </label>
+        <button type="button" className="hoeren-button" disabled={!canPublish} onClick={publishToCourseBook}>
+          {busy === "publish" ? "Publishing to Falowen…" : "Publish approved MP3 + 5 questions"}
+        </button>
+        {published ? <div className="hoeren-output" role="status">Published to {published.assignmentKey} · Day {published.day} · Revision {published.revision.slice(0, 8)}. The student practice will appear in the Course Book.</div> : null}
+        <p className="hoeren-hint">No Google generation occurs during publishing. Cloudflare R2 and Firebase may charge their normal storage or request costs.</p>
+      </section>
       <p className="hoeren-footer">Practice recordings are original teaching materials and not official Goethe-Institut exam audio. Listen and check all numbers, names and pronunciation before use.</p>
     </div>
   );
