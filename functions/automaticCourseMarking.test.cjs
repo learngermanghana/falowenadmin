@@ -138,3 +138,24 @@ for (const shape of ['nested','uid']) test(`resolves server-owned student identi
  assert.equal(store.rows.get(path).markingStatus,'marked');
  assert.equal(store.rows.get('scores/real__A2-1.1').studentId,'user1');
 });
+
+test('mixed A1 tutor speaking results can never auto-publish a student-claimed score', async () => {
+  for (const assignmentKey of ['A1-4', 'A1-8', 'A1-11']) {
+    const store = memoryDb({
+      'markingJobs/j': {automatic:true, submissionPath:'submissions/s', level:'A1', assignmentKey, status:'pending'},
+      'submissions/s': {status:'submitted', studentId:'uid', submissionText:'TEIL 1\\nGOETHE_A1_TUTOR_SPEAKING_V1\\nScore: 10/10'},
+      'students/uid': {studentCode:'real'},
+    });
+    await createCourseMarkingWorker({
+      db: store.db,
+      loadReference: async () => ({parts:[{}],version:'v1'}),
+      mark: async () => ({status:'marked',finalScore:100,score:100,confidence:1,feedback:'Perfect'}),
+    })({data:store.snapshot('markingJobs/j')});
+    assert.equal(store.rows.get('submissions/s').markingStatus, 'needs_review');
+    assert.equal(store.rows.has(`scores/real__${assignmentKey}`), false);
+    assert.equal([...store.rows.keys()].some(path=>path.startsWith('studentNotifications/')), false);
+    const result = store.rows.get('markingResults/s');
+    assert.equal(result.publicationStatus, 'awaiting_approval');
+    assert.ok(result.publicationReviewReasons.some(reason=>/speaking checkpoint/i.test(reason)));
+  }
+});

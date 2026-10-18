@@ -55,17 +55,17 @@ Teil 2
 4. B
 5. A`;
 
-test("A1-11 current Day 17 submissions use the new 5+5 key", () => {
+test("A1-11 current answer sheet excludes replaced Teil 1 reading", () => {
   const result = computeObjectiveScore("A1-11", currentSubmission);
-  assert.equal(result.totalCount, 10);
-  assert.equal(result.correctCount, 10);
+  assert.equal(result.totalCount, 5);
+  assert.equal(result.correctCount, 5);
 });
 
 
 test("A1-11 production deterministic scorer preserves the legacy 15-answer key from a normalized registry entry", () => {
   assert.equal(currentReferenceEntry.assignmentKey, "A1-11");
-  assert.equal(currentReferenceEntry.totalAnswers, 10);
-  assert.equal(currentReferenceEntry.parts?.teil1?.answerCount, 5);
+  assert.equal(currentReferenceEntry.totalAnswers, 5);
+  assert.equal(currentReferenceEntry.parts?.teil1, undefined);
   assert.equal(currentReferenceEntry.parts?.teil2?.answerCount, 5);
 
   const result = checkDeterministicObjectiveAnswers({
@@ -78,13 +78,13 @@ test("A1-11 production deterministic scorer preserves the legacy 15-answer key f
   assert.equal(result.objectiveScore, 100);
 });
 
-test("A1-11 production deterministic scorer keeps current submissions on the 10-answer key", () => {
+test("A1-11 production deterministic scorer uses the five remaining Hören answers", () => {
   const result = checkDeterministicObjectiveAnswers({
     referenceEntry: currentReferenceEntry,
     submissionText: currentSubmission,
   });
   assert.ok(result);
-  assert.equal(result.objectiveTotal, 10);
-  assert.equal(result.objectiveCorrect, 10);
+  assert.equal(result.objectiveTotal, 5);
+  assert.equal(result.objectiveCorrect, 5);
   assert.equal(result.objectiveScore, 100);
 });
