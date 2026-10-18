@@ -638,6 +638,40 @@
           "4": "Parkausweise bekommt man bei Frau Meyer an der Rezeption. Bei always takes dative; an der describes a location.",
           "5": "Herr Weber ist nicht im Büro. Er ist mit dem Auto zu einem Kunden gefahren. Mit and zu always take dative."
         }
+      },
+      "a1-12.1-bahnhof-hoeren-v3": {
+        "answers": {
+          "Teil 1": {
+            "Answer1": "Richtig",
+            "Answer2": "Falsch",
+            "Answer3": "Falsch",
+            "Answer4": "Richtig",
+            "Answer5": "Falsch"
+          },
+          "Teil 3": {
+            "Answer1": "Richtig",
+            "Answer2": "Falsch",
+            "Answer3": "Richtig",
+            "Answer4": "Falsch",
+            "Answer5": "Richtig"
+          }
+        },
+        "expectedParts": [
+          "teil1",
+          "teil3"
+        ],
+        "referenceAnswerParts": [
+          "teil1",
+          "teil3"
+        ],
+        "answerLayout": "multipart",
+        "explanations": {
+          "teil3.1": "Die Kundin fährt mit ihrer Schwester nach Berlin (mit + Dativ).",
+          "teil3.2": "Die Fahrkarten bekommt sie bei dem Mitarbeiter, nicht am Automaten (bei + Dativ).",
+          "teil3.3": "Der Mitarbeiter sagt: Gehen Sie zuerst in die Bahnhofshalle (Wohin? Akkusativ).",
+          "teil3.4": "Die Plätze sind im zweiten Wagen, nicht im dritten (Wo? Dativ).",
+          "teil3.5": "Der Koffer soll unter den Sitz gestellt werden (Wohin? Akkusativ)."
+        }
       }
     }
   },

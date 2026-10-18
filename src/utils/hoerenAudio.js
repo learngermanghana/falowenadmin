@@ -1,3 +1,5 @@
+import { applySoundscapeToPcm } from "./hoerenSoundscape.js";
+
 // Offline audio assembly. Gemini 3.8 unary TTS outputs 24 kHz, mono, 16-bit WAV.
 // Doing the pauses and repeats locally avoids additional Google synthesis charges.
 export function parseStudioTranscript(source) {
@@ -75,13 +77,14 @@ export function assembleListeningExam(lines, clipBytes, options = {}) {
     }
   }
   if (!index) throw new Error("The transcript has no spoken lines.");
-  const pieces = repeats === 2 ? [...onePass, silence(repeatGap), ...onePass] : onePass;
+  const intro = options.soundscape?.scene && options.soundscape.scene !== "none" && options.soundscape.bell !== false && Number(options.soundscape.volume ?? 0.14) > 0 ? [silence(2.35)] : [];
+  const pieces = repeats === 2 ? [...intro, ...onePass, silence(repeatGap), ...onePass] : [...intro, ...onePass];
   const size = pieces.reduce((total, part) => total + part.length, 0);
   if (size > 50_000_000) throw new Error("Audio is too long to assemble in the browser.");
   const samples = new Uint8Array(size);
   let offset = 0;
   for (const piece of pieces) { samples.set(piece, offset); offset += piece.length; }
-  return writeWav(samples);
+  return writeWav(options.soundscape ? applySoundscapeToPcm(samples, options.soundscape) : samples);
 }
 
 export function base64WavToBytes(base64) {
