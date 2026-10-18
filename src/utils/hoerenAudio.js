@@ -77,7 +77,8 @@ export function assembleListeningExam(lines, clipBytes, options = {}) {
     }
   }
   if (!index) throw new Error("The transcript has no spoken lines.");
-  const pieces = repeats === 2 ? [...onePass, silence(repeatGap), ...onePass] : onePass;
+  const intro = options.soundscape?.scene && options.soundscape.scene !== "none" && options.soundscape.bell !== false && Number(options.soundscape.volume ?? 0.14) > 0 ? [silence(2.35)] : [];
+  const pieces = repeats === 2 ? [...intro, ...onePass, silence(repeatGap), ...onePass] : [...intro, ...onePass];
   const size = pieces.reduce((total, part) => total + part.length, 0);
   if (size > 50_000_000) throw new Error("Audio is too long to assemble in the browser.");
   const samples = new Uint8Array(size);
