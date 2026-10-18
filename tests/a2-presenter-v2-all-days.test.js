@@ -89,6 +89,15 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.equal(workbook.items.length, 3);
     assert.equal(workbook.title, "Was ist noch unklar?");
     assert.ok(stageIds.indexOf("questions") < stageIds.indexOf("workbook"), `${slide.assignmentId} production should come before workbook bridge`);
+    if (slide.assignmentId === "A2-3.8") {
+      // Day 8 deliberately uses a three-round restaurant dialogue instead
+      // of a fixed Easy/Neutral/Difficult question reveal.
+      assert.equal(questions.type, "flow");
+      assert.equal(questions.items.length, 3);
+      assert.deepEqual(questions.items, slide.presenterSpeakingRounds);
+      assert.ok(questions.items.every((item) => Number(item.minutes) > 0));
+      continue;
+    }
     assert.equal(questions.type, "question-reveal");
     assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
     assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);
