@@ -1298,6 +1298,8 @@ export default async function handler(req, res) {
     return proxyToFalowenFunction(req, res, path, url);
   }
 
+  if (path.startsWith("ai-studio/")) return proxyToFalowenFunction(req, res, path, url);
+
   if (
     path.startsWith("holidays/") ||
     path.startsWith("orientation/") ||
