@@ -491,6 +491,23 @@ const A1_4_LEGACY_ANSWERS = {
 };
 
 // Revised Day 11 signs reading; Hören retains the current recorded exercise.
+const A1_7_READING_V1_ANSWERS = {
+  "Teil 1": {
+    Answer1: "B) Zwei Tage",
+    Answer2: "A) 10 Minuten",
+    Answer3: "B) Eine Stunde",
+    Answer4: "C) Um 20 Uhr",
+    Answer5: "B) Zwei Stunden",
+  },
+  "Teil 2": {
+    Answer1: "A) Richtig",
+    Answer2: "B) Falsch",
+    Answer3: "A) Richtig",
+    Answer4: "B) Um sechs Uhr",
+    Answer5: "A) Um Viertel vor sechs, er holt Anna ab.",
+  },
+};
+
 const A1_7_READING_V2_ANSWERS = {
   "Teil 1": {
     Answer1: "Falsch",
@@ -516,7 +533,6 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
     || "";
   if (normalizeAssignmentId(resolvedAssignmentId) === "A1-7") {
     const revisedReading = /A1-7-READING-V2/i.test(submissionText);
-    if (!revisedReading) return referenceEntry || {};
     // Choose only one reference representation, even when Firestore has both
     // normalized parts and rawAnswers from a previous answer-key sync.
     const {
@@ -527,7 +543,7 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
     } = referenceEntry || {};
     return {
       ...baseReference,
-      answers: A1_7_READING_V2_ANSWERS,
+      answers: revisedReading ? A1_7_READING_V2_ANSWERS : A1_7_READING_V1_ANSWERS,
       totalAnswers: 10,
       expectedParts: ["teil1", "teil2"],
       referenceAnswerParts: ["teil1", "teil2"],
