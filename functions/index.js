@@ -12,6 +12,7 @@ const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require("fir
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
+const { registerHoerenStudioRoutes } = require("./hoerenStudioApi.js");
 const { createAttendanceConfirmationEmailJob, sendAssignmentAttendanceCreditEmail } = require("./attendanceConfirmationEmails.js");
 const { retryFailedAttendanceDeliveries, listAttendanceDeliveryHealth } = require("./attendanceConfirmationRetry.js");
 const { registerCompletionDocumentRoute } = require("./completionParticipationDocument.js");
@@ -77,6 +78,7 @@ const classScheduleAppsScriptUrlSecret = defineSecret("CLASS_SCHEDULE_APPS_SCRIP
 const holidaysAppsScriptUrlSecret = defineSecret("HOLIDAYS_APPS_SCRIPT_URL");
 const holidaysSyncSecret = defineSecret("HOLIDAYS_SYNC_SECRET");
 const openAiApiKeySecret = defineSecret("OPENAI_API_KEY");
+const geminiAudioKeySecret = defineSecret("GEMINI_API_KEY");
 const scoresWebhookUrlSecret = defineSecret("SCORES_WEBHOOK_URL");
 const scoresWebhookTokenSecret = defineSecret("SCORES_WEBHOOK_TOKEN");
 const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIPT_URL");
@@ -2616,6 +2618,8 @@ registerCompletionDocumentRoute({ app, db, runtimeConfig, requireAuth });
 
 exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob({ admin, db, onSchedule, runtimeConfig });
 
+registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey: geminiAudioKeySecret, runtimeConfig });
+
 exports.api = onRequest({
   secrets: [
     attendancePinSaltSecret,
@@ -2626,6 +2630,7 @@ exports.api = onRequest({
     holidaysAppsScriptUrlSecret,
     holidaysSyncSecret,
     openAiApiKeySecret,
+    geminiAudioKeySecret,
     studentDeleteAppsScriptUrlSecret,
     studentDeleteSyncSecret,
   ],
