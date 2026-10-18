@@ -490,12 +490,77 @@ const A1_4_LEGACY_ANSWERS = {
   Answer12: "A) Nach Spanien",
 };
 
+// Preserve original A1-6 apartment/vocabulary answers for submissions
+// received before the 10-question reading and listening workbook.
+const A1_6_LEGACY_ANSWERS = {
+  "Answer1": "Das Wohnzimmer – the living room",
+  "Answer2": "Die Küche – the kitchen",
+  "Answer3": "Das Schlafzimmer – the bedroom",
+  "Answer4": "Das Badezimmer – the bathroom",
+  "Answer5": "Der Balkon – the balcony",
+  "Answer6": "Der Flur – the hallway",
+  "Answer7": "Das Bett – the bed",
+  "Answer8": "Der Tisch – the table",
+  "Answer9": "Der Stuhl – the chair",
+  "Answer10": "Der Schrank – the wardrobe",
+  "Answer11": "B) Vier",
+  "Answer12": "A) Ein Sofa und ein Fernseher",
+  "Answer13": "B) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen",
+  "Answer14": "C) Ein großes Bett",
+  "Answer15": "D) Eine Dusche, eine Badewanne und ein Waschbecken",
+  "Answer16": "B) Klein und schön",
+  "Answer17": "C) Blumen und einen kleinen Tisch mit zwei Stühlen",
+  "Answer18": "B",
+  "Answer19": "B",
+  "Answer20": "B",
+  "Answer21": "C",
+  "Answer22": "D",
+  "Answer23": "B",
+  "Answer24": "C"
+};
+
+const A1_6_WORKBOOK_V2_ANSWERS = {
+  "Teil 1": { Answer1: "Falsch", Answer2: "Richtig", Answer3: "Richtig", Answer4: "Falsch", Answer5: "Richtig" },
+  "Teil 2": { Answer1: "B", Answer2: "A", Answer3: "C", Answer4: "B", Answer5: "C" },
+};
+
 export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, submissionText = "", assignmentId = "") {
   const resolvedAssignmentId = assignmentId
     || referenceEntry?.assignmentKey
     || referenceEntry?.assignmentId
     || referenceEntry?.assignment_id
     || "";
+  if (normalizeAssignmentId(resolvedAssignmentId) === "A1-6") {
+    const isV2 = /A1-6-WORKBOOK-V2/i.test(submissionText);
+    // Choose exactly one answer representation. Cloud-synced entries contain
+    // both parts and rawAnswers, which otherwise count Richtig/Falsch twice.
+    const {
+      parts: _normalizedParts,
+      rawAnswers: _rawAnswers,
+      answerKeys: _answerKeys,
+      answer_key: _answerKey,
+      key: _key,
+      totalAnswers: _oldTotalAnswers,
+      ...baseReference
+    } = referenceEntry || {};
+    return {
+      ...baseReference,
+      answers: isV2 ? A1_6_WORKBOOK_V2_ANSWERS : A1_6_LEGACY_ANSWERS,
+      totalAnswers: isV2 ? 10 : 24,
+      expectedParts: isV2 ? ["teil1", "teil2"] : ["main"],
+      referenceAnswerParts: isV2 ? ["teil1", "teil2"] : ["main"],
+      writingParts: [],
+      aiGradedParts: [],
+      excludedParts: [],
+      answerLayout: isV2 ? "multipart" : "flat",
+      partGrading: isV2
+        ? {
+          teil1: { label: "Lesen", hasReferenceAnswers: true, gradingMode: "answer_key" },
+          teil2: { label: "Hören", hasReferenceAnswers: true, gradingMode: "answer_key" },
+        }
+        : { main: { label: "main", hasReferenceAnswers: true, gradingMode: "answer_key" } },
+    };
+  }
   if (normalizeAssignmentId(resolvedAssignmentId) === "A1-4") {
     if (/A1-4-LISTENING-V2/i.test(submissionText)) {
       // The tagged lesson must grade against V2 even if an older cloud
