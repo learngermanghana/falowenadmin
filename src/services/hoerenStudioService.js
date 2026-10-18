@@ -25,6 +25,19 @@ export const makeListeningQuestions = ({ script, kind }) => request("questions",
 // Student API already owns the Cloudflare R2 credentials, Firestore storage and learner access checks.
 // Do not pass R2 credentials or Gemini secrets through the browser.
 const COURSE_API_BASE = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://api-awc2au65xa-ew.a.run.app").replace(/\/+$/, "");
+export async function getHoerenPublishCatalog() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in with your Falowen owner account.");
+  const response = await fetch(`${COURSE_API_BASE}/course-media/studio/assignments`, {
+    headers: { Authorization: `Bearer ${await user.getIdToken()}` }, cache: "no-store",
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok || !Array.isArray(data.lessons)) {
+    throw new Error(data.error || "Falowen's Course Book lesson catalogue is unavailable.");
+  }
+  return data.lessons;
+}
+
 export async function publishListeningLesson({ metadata, mp3 }) {
   const user = auth.currentUser;
   if (!user) throw new Error("Sign in with your Falowen owner account.");
