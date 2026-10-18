@@ -1,4 +1,4 @@
-import { applySoundscapeToPcm } from "./hoerenSoundscape";
+import { applySoundscapeToPcm } from "./hoerenSoundscape.js";
 
 // Offline audio assembly. Gemini 3.8 unary TTS outputs 24 kHz, mono, 16-bit WAV.
 // Doing the pauses and repeats locally avoids additional Google synthesis charges.
