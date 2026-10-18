@@ -11,6 +11,9 @@ on:
       - 'tests/golden-*.test.js'
       - 'tests/a1-6-versioned-workbook.test.js'
       - 'tests/a1-7-versioned-reading.test.js'
+      - 'tests/a1-tutor-speaking-replacements.test.js'
+      - 'functions/automaticCourseMarking.js'
+      - 'functions/automaticCourseMarking.test.cjs'
       - 'tests/submission-sections.test.js'
       - 'tests/writing-rubric.test.js'
       - 'package.json'
@@ -48,4 +51,4 @@ jobs:
           node --check src/utils/writingRubric.js
           node --check src/utils/writingFeedbackDepth.js
       - name: Run direct marking goldens without npm pretest
-        run: node --test tests/submission-sections.test.js tests/writing-rubric.test.js tests/golden-known-submissions.test.js tests/golden-objective-coverage.test.js tests/a1-11-versioned-grading.test.js tests/a1-12.1-objective-parts.test.js tests/compact-objective-paste.test.js tests/a1-6-versioned-workbook.test.js tests/a1-7-versioned-reading.test.js
+        run: node --test tests/submission-sections.test.js tests/writing-rubric.test.js tests/golden-known-submissions.test.js tests/golden-objective-coverage.test.js tests/a1-11-versioned-grading.test.js tests/a1-12.1-objective-parts.test.js tests/compact-objective-paste.test.js tests/a1-6-versioned-workbook.test.js tests/a1-7-versioned-reading.test.js tests/a1-tutor-speaking-replacements.test.js functions/automaticCourseMarking.test.cjs
