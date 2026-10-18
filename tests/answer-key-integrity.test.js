@@ -98,13 +98,13 @@ test("B1 Day 19 preserves the current seven-question interview and five-question
   assert.equal(entry?.answers?.teil4?.Answer1, "B) Krankenschwester");
 });
 
-test("B1 Day 22 preserves the current seven-question relationship and five-question application blocks", () => {
+test("B1 Day 22 matches the current three-question Online-Dating and seven-statement expert readings", () => {
   const entry = answerEntryByAssignmentId("B1-7.22");
-  assert.equal(Object.keys(entry?.answers?.teil3 || {}).length, 7);
-  assert.equal(Object.keys(entry?.answers?.teil4 || {}).length, 5);
-  assert.equal(entry?.answers?.teil3?.Answer1, "B) Vertrauen und Ehrlichkeit");
-  assert.equal(entry?.answers?.teil4?.Answer1, "D) im Supermarkt");
-  assert.equal(entry?.answers?.teil4?.Answer5, "C) Man kann sich bei der nächsten offenen Stelle bewerben.");
+  assert.equal(Object.keys(entry?.answers?.teil3 || {}).length, 3);
+  assert.equal(Object.keys(entry?.answers?.teil4 || {}).length, 7);
+  assert.equal(entry?.answers?.teil3?.Answer1, "B) Sie nutzen dafür häufig Apps auf dem Smartphone.");
+  assert.equal(entry?.answers?.teil4?.Answer1, "B) Dr. Claudia Seidel");
+  assert.equal(entry?.answers?.teil4?.Answer7, "B) Dr. Claudia Seidel");
 });
 
 
