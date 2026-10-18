@@ -40,11 +40,11 @@ test("A2 grading keys keep their reviewed canonical assessment shapes", () => {
 test("A2-9.24 stable Anzeige codes score the restored matching task correctly", () => {
   const result = computeObjectiveScore("A2-9.24", `
 Teil 3
-1. A
-2. B
-3. C
-4. D
-5. C
+1. D
+2. C
+3. E
+4. A
+5. B
   `);
 
   assert.equal(result.correctCount, 5);
@@ -62,10 +62,10 @@ Teil 3
 
 Teil 4
 1. B
-2. B
+2. A
 3. B
 4. A
-5. D
+5. C
   `);
 
   assert.equal(result.correctCount, 10);
@@ -111,11 +111,11 @@ Teil 4
 test("A2-10.28 scores the new five-question Zukunftspläne listening key", () => {
   const result = computeObjectiveScore("A2-10.28", `
 Teil 3
-1. A
-2. B
-3. C
+1. B
+2. A
+3. B
 4. B
-5. B
+5. C
 
 Teil 4
 1. B
@@ -135,18 +135,19 @@ test("A2-10.27 restored listening answers are scored instead of treated as missi
   const result = computeObjectiveScore("A2-10.27", `
 Teil 3
 1. B
-2. B
-3. C
+2. C
+3. A
 4. B
 5. B
 
 Teil 4
-1. B
+1. A
 2. B
 3. B
-4. A
+4. B
+5. C
   `);
 
-  assert.equal(result.correctCount, 9);
-  assert.equal(result.totalCount, 9);
+  assert.equal(result.correctCount, 10);
+  assert.equal(result.totalCount, 10);
 });
