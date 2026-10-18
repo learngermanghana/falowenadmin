@@ -55,7 +55,7 @@ function extractScript(result = {}) {
   return text;
 }
 
-async function postGemini(url, key, payload, timeoutMs = 55_000) {
+async function postGemini(url, key, payload, timeoutMs = 38_000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -174,7 +174,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
           response_format: { type: "audio", mime_type: "audio/wav" },
           generation_config: { speech_config: [{ voice: speaker === "A" ? "Kore" : "Puck" }] },
         },
-        65_000,
+        45_000,
       );
       res.set("Cache-Control", "no-store");
       return res.json({ ok: true, ...extractAudio(result), remaining });
