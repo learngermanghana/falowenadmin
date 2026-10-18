@@ -23,7 +23,7 @@ const EXPECTED = {
   "A2-3.8": {
     grammarRoute: "/campus/course/imperativ-rezepte-und-essen-3-8-grammar-notes",
     workbookRoute: "/campus/course/a2-day-8-rezepte-und-essen-workbook",
-    supportTerms: ["höflich", "Könnte", "hätte", "bitte", "Sie"],
+    supportTerms: ["polite", "Könnte", "hätte", "bitte", "Sie"],
   },
   "A2-4.9": {
     grammarRoute: "/campus/course/perfekt-urlaub-4-9-grammar-notes",
