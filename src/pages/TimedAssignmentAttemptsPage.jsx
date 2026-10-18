@@ -481,7 +481,16 @@ export default function TimedAssignmentAttemptsPage() {
           const score=attempt.score;
           const email=attempt.email||"";
           const phone=String(attempt.phone||"").replace(/\D/g,"").replace(/^0(?=\d{9}$)/,"233");
-          const followup="Hello"+(attempt.name?" "+attempt.name:"")+", thank you for completing Falowen's German placement test. Your suggested starting level is "+(score?.level||"your recommended level")+". We can help you choose a class and register: https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test";
+          const followup=[
+            "Hello "+(attempt.name||"learner")+",",
+            "Thank you for completing the Falowen German placement test.",
+            "Your recommended starting level is "+(score?.level||"being reviewed")+".",
+            score?"Your scores: A1 "+score.a1+"/10 · A2 "+score.a2+"/10 · B1 "+score.b1+"/10 · Total "+score.total+"/30.":"",
+            "This is a preliminary class-placement recommendation, not an official Goethe or CEFR certificate.",
+            "Explore classes and register: https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test",
+            "If you need guidance, just reply to this email.",
+            "Best regards,\nFalowen Admissions\nwww.falowen.app"
+          ].filter(Boolean).join("\n\n");
           return <article key={attempt.id} style={card}>
             <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
               <div style={{display:"grid",gap:4}}>
@@ -509,7 +518,7 @@ export default function TimedAssignmentAttemptsPage() {
                 {attempt.conversionStage}
               </strong>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen placement result")+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Draft follow-up</a>}
+                {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen German placement result — "+(score?.level||"recommendation"))+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Draft follow-up</a>}
                 {attempt.consent&&phone&&<a target="_blank" rel="noopener noreferrer" href={"https://wa.me/"+phone+"?text="+encodeURIComponent(followup)} style={{color:"#166534",fontWeight:700}}>WhatsApp</a>}
                 {attempt.consent&&!isStaff&&<a href="/leads" style={{color:"#1d4ed8",fontWeight:700}}>Open Leads</a>}
               </div>
