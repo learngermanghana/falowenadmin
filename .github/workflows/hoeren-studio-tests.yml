@@ -11,6 +11,10 @@ on:
       - "src/utils/hoerenSoundscape.js"
       - "src/utils/hoerenMp3.js"
       - "tests/a1-12.1-hoeren-v3-and-soundscape.test.js"
+      - "functions/hoerenQuestions.js"
+      - "src/utils/hoerenQuestions.js"
+      - "tests/hoeren-question-publishing.test.js"
+      - "src/App.css"
       - "src/App.jsx"
       - "api/router.js"
       - "tests/hoeren-studio.test.js"
@@ -25,6 +29,6 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: node --check functions/hoerenStudioApi.js && node --check functions/index.js
-      - run: node --test tests/hoeren-studio.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js
+      - run: node --check functions/hoerenStudioApi.js && node --check functions/hoerenQuestions.js && node --check functions/index.js
+      - run: node --test tests/hoeren-studio.test.js tests/a1-12.1-hoeren-v3-and-soundscape.test.js tests/hoeren-question-publishing.test.js
       - run: npm run build
