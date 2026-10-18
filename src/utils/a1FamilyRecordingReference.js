@@ -1,3 +1,5 @@
+import { normalizeAnswerKeyEntry } from "./answerKeyNormalizer.js";
+const GRAMMAR_REVISION = 'a1-3-recorded-family-grammar-v2';
 const REVISION = 'a1-3-recorded-family-v1';
 const familyGrading = {
   label: 'Teil 2 Sprechen · Familie (transcript)',
@@ -9,7 +11,7 @@ const familyGrading = {
 function familyRecordingReference(reference, submission = {}, assignmentKey) {
   submission = { ...(submission.raw || {}), ...submission };
   assignmentKey = String(assignmentKey || reference?.assignmentKey || reference?.assignment_id || submission.assignmentKey || '').toUpperCase();
-  if (assignmentKey !== 'A1-3' || submission.workbookRevision !== REVISION) return reference;
+  if (assignmentKey !== 'A1-3' || ![REVISION, GRAMMAR_REVISION].includes(submission.workbookRevision)) return reference;
   if (!reference) throw new Error('A reference is required for recorded family marking');
   const recording = submission.recordings?.find(item => item.sectionKey === 'teil-2');
   const transcript = String(recording?.transcript || '').trim();
@@ -18,7 +20,11 @@ function familyRecordingReference(reference, submission = {}, assignmentKey) {
     throw new Error('Saved family recording and matching transcript are required; tutor review needed');
   }
   const parts = Object.fromEntries(Object.entries(reference.parts || {}).filter(([key]) => key === 'teil1'));
-  return { ...reference, parts, rawAnswers: { teil1: reference.rawAnswers?.teil1 || {} },
+  const isGrammar = submission.workbookRevision === GRAMMAR_REVISION;
+  const grammarSpec = reference.workbookRevisions?.[GRAMMAR_REVISION];
+  if (isGrammar && !grammarSpec) throw new Error("The current grammar answer key is required; tutor review needed");
+  const grammar = isGrammar ? normalizeAnswerKeyEntry("A1-3", { assignment_id: "A1-3", ...grammarSpec }) : null;
+  const result = { ...reference, parts, rawAnswers: { teil1: reference.rawAnswers?.teil1 || {} },
     expectedParts: ['teil1', 'teil2'], excludedParts: ['teil3'], referenceAnswerParts: ['teil1'],
     writingParts: ['teil2'], aiGradedParts: ['teil2'],
     partGrading: { teil1: reference.partGrading?.teil1 || {}, teil2: familyGrading },
@@ -30,6 +36,12 @@ function familyRecordingReference(reference, submission = {}, assignmentKey) {
       taskPoints: ['Describe your family in understandable A1 German', 'Include concrete details about your family'],
       gradingInstruction: familyGrading.instruction,
     },
-    totalAnswers: parts.teil1?.answerCount || 4, version: REVISION };
+    totalAnswers: parts.teil1?.answerCount || 4, version: submission.workbookRevision };
+  if (!isGrammar) return result;
+  return { ...result, parts: { ...parts, teil3: grammar.parts.teil3 },
+    rawAnswers: { ...result.rawAnswers, teil3: grammar.rawAnswers.teil3 },
+    expectedParts: ["teil1", "teil2", "teil3"], excludedParts: [], referenceAnswerParts: ["teil1", "teil3"],
+    partGrading: { ...result.partGrading, teil3: grammar.partGrading.teil3 },
+    totalAnswers: result.totalAnswers + grammar.totalAnswers };
 }
-export { REVISION, familyGrading, familyRecordingReference };
+export { GRAMMAR_REVISION, REVISION, familyGrading, familyRecordingReference };

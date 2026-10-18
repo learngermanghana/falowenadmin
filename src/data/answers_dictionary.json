@@ -3819,7 +3819,38 @@
     ],
     "aiGradedParts": [
       "teil2"
-    ]
+    ],
+    "workbookRevisions": {
+      "a1-3-recorded-family-grammar-v2": {
+        "answers": {
+          "teil3": {
+            "Answer1": "gern",
+            "Answer2": "Magst",
+            "Answer3": "gern",
+            "Answer4": "mögen",
+            "Answer5": "gern",
+            "Answer6": "mag"
+          }
+        },
+        "expectedParts": [
+          "teil1",
+          "teil2",
+          "teil3"
+        ],
+        "referenceAnswerParts": [
+          "teil1",
+          "teil3"
+        ],
+        "partGrading": {
+          "teil3": {
+            "label": "Teil 3 gern oder mögen? (six blanks in five questions)",
+            "hasReferenceAnswers": true,
+            "gradingMode": "answer_key",
+            "instruction": "Grade each blank independently: question 5 has blanks 5 and 6."
+          }
+        }
+      }
+    }
   },
   "A2 4.10 Eine Stadt entdecken und etwas erleben": {
     "answers": {

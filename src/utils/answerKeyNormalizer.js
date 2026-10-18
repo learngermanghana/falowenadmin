@@ -272,6 +272,7 @@ export function normalizeAnswerKeyEntry(sourceKey, sourceEntry = {}) {
     answerUrl: sourceEntry.answerUrl || sourceEntry.answer_url || "",
     sheetUrl: sourceEntry.sheetUrl || sourceEntry.sheet_url || "",
     rawAnswers,
+    ...(sourceEntry.workbookRevisions ? { workbookRevisions: sourceEntry.workbookRevisions } : {}),
     parts,
     expectedParts: normalizedExpectedParts,
     excludedParts,
