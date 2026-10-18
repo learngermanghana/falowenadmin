@@ -18,7 +18,9 @@ const slidesPath = new URL("../src/data/teachingSlides.js", import.meta.url);
 let slides = fs.readFileSync(slidesPath, "utf8");
 
 if (!slides.includes("A1_LESSON_9_TOPIC_LANGUAGE")) {
-  const buildAnchor = `\nfunction buildLevelSlides(level) {`;
+  const buildAnchor = slides.includes("\nfunction buildLevelSlides(level, dictionary = courseDictionary[level]) {")
+    ? "\nfunction buildLevelSlides(level, dictionary = courseDictionary[level]) {"
+    : "\nfunction buildLevelSlides(level) {";
   const helper = `
 function enhanceA1Lesson9TopicLanguage(slide) {
   // A1_LESSON_9_TOPIC_LANGUAGE

@@ -508,6 +508,7 @@ export async function importAnswerDictionary(dictionary) {
       answerUrl: entry.answerUrl,
       sheetUrl: entry.sheetUrl,
       rawAnswers: entry.rawAnswers,
+      ...(entry.workbookRevisions ? { workbookRevisions: entry.workbookRevisions } : {}),
       parts: entry.parts,
       expectedParts: entry.expectedParts,
       answerLayout: entry.answerLayout,

@@ -51,8 +51,8 @@ function patchFile(relativePath, replacements) {
   let content = fs.readFileSync(filePath, "utf8");
   let changed = false;
 
-  for (const { from, to } of replacements) {
-    if (content.includes(to)) continue;
+  for (const { from, to, alreadyApplied } of replacements) {
+    if (content.includes(to) || (alreadyApplied && content.includes(alreadyApplied))) continue;
     if (!content.includes(from)) {
       throw new Error(`Unable to patch ${relativePath}: expected text not found: ${from}`);
     }
@@ -99,10 +99,12 @@ patchFile("src/data/teachingSlides.js", [
   {
     from: 'function buildLevelSlides(level) {\n  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));\n  return entries.map((entry, index) => createTemplateSlide(level, entry, index + 1));\n}',
     to: 'function buildLevelSlides(level) {\n  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));\n  return entries.map((entry, index) => {\n    const lessonNumber = String(level || "").toUpperCase() === "A1"\n      ? getCourseTaskDay("A1", entry.assignment_id, index)\n      : index + 1;\n    return createTemplateSlide(level, entry, lessonNumber);\n  });\n}',
+    alreadyApplied: 'function buildLevelSlides(level, dictionary = courseDictionary[level]) {',
   },
   {
     from: 'const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);',
     to: 'const a1Slides = buildLevelSlides("A1").map((slide, index) =>\n  normalizeA1SlideDay(curatedSlidesByAssignment[slide.assignmentId] || slide, index),\n);',
+    alreadyApplied: 'const a1Slides = [...buildLevelSlides("A1"), ...buildLevelSlides("A1", retiredCourseDictionary.A1)].map',
   },
 ]);
 

@@ -52,6 +52,7 @@ function registryPayloadForEntry(entry, extra = {}) {
     answerUrl: entry.answerUrl,
     sheetUrl: entry.sheetUrl,
     rawAnswers: entry.rawAnswers,
+    ...(entry.workbookRevisions ? { workbookRevisions: entry.workbookRevisions } : {}),
     parts: entry.parts,
     expectedParts: entry.expectedParts,
     excludedParts: entry.excludedParts,
