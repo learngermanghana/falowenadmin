@@ -490,12 +490,57 @@ const A1_4_LEGACY_ANSWERS = {
   Answer12: "A) Nach Spanien",
 };
 
+// Revised Day 11 signs reading; Hören retains the current recorded exercise.
+const A1_7_READING_V2_ANSWERS = {
+  "Teil 1": {
+    Answer1: "Falsch",
+    Answer2: "Richtig",
+    Answer3: "Richtig",
+    Answer4: "Richtig",
+    Answer5: "Falsch",
+  },
+  "Teil 2": {
+      "Answer1": "A) Richtig",
+      "Answer2": "B) Falsch",
+      "Answer3": "A) Richtig",
+      "Answer4": "B) Um sechs Uhr",
+      "Answer5": "A) Um Viertel vor sechs, er holt Anna ab."
+  },
+};
+
 export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, submissionText = "", assignmentId = "") {
   const resolvedAssignmentId = assignmentId
     || referenceEntry?.assignmentKey
     || referenceEntry?.assignmentId
     || referenceEntry?.assignment_id
     || "";
+  if (normalizeAssignmentId(resolvedAssignmentId) === "A1-7") {
+    const revisedReading = /A1-7-READING-V2/i.test(submissionText);
+    if (!revisedReading) return referenceEntry || {};
+    // Choose only one reference representation, even when Firestore has both
+    // normalized parts and rawAnswers from a previous answer-key sync.
+    const {
+      parts: _normalizedParts, rawAnswers: _rawAnswers,
+      answerKeys: _answerKeys, answer_key: _answerKey, key: _key,
+      totalAnswers: _oldTotal,
+      ...baseReference
+    } = referenceEntry || {};
+    return {
+      ...baseReference,
+      answers: A1_7_READING_V2_ANSWERS,
+      totalAnswers: 10,
+      expectedParts: ["teil1", "teil2"],
+      referenceAnswerParts: ["teil1", "teil2"],
+      writingParts: [],
+      aiGradedParts: [],
+      excludedParts: [],
+      answerLayout: "multipart",
+      partGrading: {
+        teil1: { label: "Lesen", hasReferenceAnswers: true, gradingMode: "answer_key" },
+        teil2: { label: "Hören", hasReferenceAnswers: true, gradingMode: "answer_key" },
+      },
+    };
+  }
   if (normalizeAssignmentId(resolvedAssignmentId) === "A1-4") {
     if (/A1-4-LISTENING-V2/i.test(submissionText)) {
       // The tagged lesson must grade against V2 even if an older cloud
