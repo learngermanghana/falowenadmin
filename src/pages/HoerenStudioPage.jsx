@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext";
 import { getStudioStatus, makeListeningScript, makeSpeechClip } from "../services/hoerenStudioService";
 import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
+import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
+import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import "./HoerenStudioPage.css";
 
 const TEMPLATES = {
@@ -37,6 +39,12 @@ export default function HoerenStudioPage() {
   const [lineGap, setLineGap] = useState(0.7);
   const [repeats, setRepeats] = useState(2);
   const [repeatGap, setRepeatGap] = useState(6);
+  const [scene, setScene] = useState("station");
+  const [useAtmosphere, setUseAtmosphere] = useState(true);
+  const [openingBell, setOpeningBell] = useState(true);
+  const [endingSound, setEndingSound] = useState(true);
+  const [soundVolume, setSoundVolume] = useState(12);
+  const [atmosphereFile, setAtmosphereFile] = useState(null);
   const [status, setStatus] = useState(null);
   const [serverError, setServerError] = useState("");
   const [busy, setBusy] = useState("");
@@ -97,14 +105,27 @@ export default function HoerenStudioPage() {
         clips.push(base64WavToBytes(reply.audioBase64));
         setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, speech: reply.remaining } }));
       }
-      setProgress("Assembling pauses and repeats on your device…");
-      const blob = assembleListeningExam(transcript.lines, clips, { repeats, lineGap, repeatGap });
+      setProgress("Assembling dialogue and locally mixing atmosphere…");
+      const userAudio = scene !== "none" && useAtmosphere && atmosphereFile ? await decodeLocalAtmosphere(atmosphereFile) : null;
+      const soundscape = { scene, ambience: useAtmosphere, bell: openingBell, ending: endingSound, volume: soundVolume / 100, userAudio };
+      const blob = assembleListeningExam(transcript.lines, clips, { repeats, lineGap, repeatGap, soundscape });
       setAudioBlob(blob);
       setAudioUrl(URL.createObjectURL(blob));
-      toast.success("Your Hören recording is ready. Download the WAV to keep it.");
+      toast.success("Your Hören recording is ready. Download WAV or export an MP3.");
     } catch (error) {
       toast.error(`${error.message} Audio generation stopped; any successful clips still count toward today's limit.`);
     } finally { setBusy(""); setProgress(""); await reloadStatus(); }
+  }
+
+  async function downloadMp3() {
+    if (!audioBlob) return;
+    setBusy("mp3");
+    try {
+      const mp3 = await encodeWavAsMp3(audioBlob);
+      downloadFile(mp3, `${filename}.mp3`, "audio/mpeg");
+      toast.success("MP3 exported on your device. No additional Gemini credits used.");
+    } catch (error) { toast.error(error.message); }
+    finally { setBusy(""); }
   }
 
   return (
@@ -112,7 +133,7 @@ export default function HoerenStudioPage() {
       <header className="hoeren-hero">
         <div className="hoeren-kicker">FALOWEN · PRIVATE AI STUDIO</div>
         <h1>Hören Studio</h1>
-        <p>Create original Goethe-style German listening practice. Review the transcript, generate natural voices, add exact pauses and download an exam-ready WAV.</p>
+        <p>Create original Goethe-style German listening practice. Review the transcript, generate natural voices, add subtle atmosphere and download exam-ready MP3 or WAV.</p>
         <div className="hoeren-tags"><span>Owner account only</span><span>No audio stored online</span><span>Daily budget limits</span></div>
       </header>
       {serverError ? <div className="hoeren-alert" role="alert">Studio setup: {serverError}. Access is disabled until the owner UID and Gemini API key are configured securely.</div> : null}
@@ -151,19 +172,41 @@ export default function HoerenStudioPage() {
           </div>
           {repeats === 2 ? <label>Silence before second playback (seconds)<input type="number" min="0" max="30" step="1" value={repeatGap} disabled={!!busy} onChange={(event) => { setRepeatGap(Number(event.target.value)); clearAudio(); }} /></label> : null}
           <p className="hoeren-hint">Repeats and pauses are added locally after synthesis. Playing the recording twice does not double the Google API charge.</p>
+          <fieldset className="hoeren-fieldset hoeren-atmosphere">
+            <legend>Sound effects &amp; atmosphere · no extra AI credits</legend>
+            <label>Recording environment
+              <select value={scene} disabled={!!busy} onChange={(event) => { setScene(event.target.value); clearAudio(); }}>
+                {Object.entries(SCENES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            {scene !== "none" ? <>
+              <label className="hoeren-effect-option"><input type="checkbox" checked={useAtmosphere} disabled={!!busy} onChange={(event) => { setUseAtmosphere(event.target.checked); clearAudio(); }} /> Ambient background</label>
+              <label className="hoeren-effect-option"><input type="checkbox" checked={openingBell} disabled={!!busy} onChange={(event) => { setOpeningBell(event.target.checked); clearAudio(); }} /> {scene === "station" ? "Station announcement bell" : "Short opening chime"}</label>
+              {scene === "station" ? <label className="hoeren-effect-option"><input type="checkbox" checked={endingSound} disabled={!!busy} onChange={(event) => { setEndingSound(event.target.checked); clearAudio(); }} /> Gentle departing-train cue</label> : null}
+              <label>Effects volume: {soundVolume}%
+                <input type="range" min="0" max="35" step="1" value={soundVolume} disabled={!!busy} onChange={(event) => { setSoundVolume(Number(event.target.value)); clearAudio(); }} />
+              </label>
+              <label>Optional real-life ambience (MP3/WAV, up to 15 MB)
+                <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/mp4,audio/ogg,.mp3,.wav,.m4a,.ogg" disabled={!!busy} onChange={(event) => { setAtmosphereFile(event.target.files?.[0] || null); clearAudio(); }} />
+              </label>
+              {atmosphereFile ? <button className="hoeren-quiet" type="button" disabled={!!busy} onClick={() => { setAtmosphereFile(null); clearAudio(); }}>Remove background recording ({atmosphereFile.name})</button> : null}
+              <p className="hoeren-hint">Built-in sounds are simple, locally generated ambience. For a truly realistic station, upload a sound you recorded or have permission to reuse. Atmosphere is mixed quietly beneath the voices, and your uploaded sound stays in your browser.</p>
+            </> : null}
+          </fieldset>
           <div className="hoeren-divider" />
           <button type="button" className="hoeren-button" disabled={!ready || !!busy || !!transcript.error || !spokenLines.length || spokenLines.length > 18 || spokenLines.length > (status?.remaining.speech ?? 0)} onClick={generateAudio}>
             {busy === "audio" ? "Generating German audio…" : "Generate Hören recording"}
           </button>
           {progress ? <p role="status" aria-live="polite">{progress}</p> : null}
           {!transcript.error && spokenLines.length > 18 ? <p className="hoeren-validation">Maximum 18 spoken lines per recording, to prevent accidental high-cost requests.</p> : null}
-          <p className="hoeren-hint">Google returns WAV audio. No MP3 encoding or automatic student publication is included in this first version.</p>
+          <p className="hoeren-hint">Audio and atmosphere are mixed in your browser. Download WAV or convert to MP3 locally; no separate Google API charge for either format. MP3 conversion needs internet access once to load its encoder.</p>
           {audioBlob ? <div className="hoeren-output">
             <h3>3. Preview and download</h3>
             <audio controls preload="metadata" src={audioUrl} aria-label="Preview generated Hören recording" />
             <p>{(audioBlob.size / 1_000_000).toFixed(1)} MB · WAV · 24 kHz</p>
             <div className="hoeren-downloads">
-              <button type="button" className="hoeren-button" onClick={() => downloadFile(audioBlob, `${filename}.wav`, "audio/wav")}>Download audio</button>
+              <button type="button" className="hoeren-button" disabled={!!busy} onClick={downloadMp3}>{busy === "mp3" ? "Converting to MP3…" : "Download MP3"}</button>
+              <button type="button" className="hoeren-quiet" disabled={!!busy} onClick={() => downloadFile(audioBlob, `${filename}.wav`, "audio/wav")}>Download WAV</button>
               <button type="button" className="hoeren-quiet" onClick={() => downloadFile(script, `${filename}.txt`, "text/plain;charset=utf-8")}>Download transcript</button>
             </div>
           </div> : <div className="hoeren-placeholder">Your approved recording will appear here for playback and download.</div>}
