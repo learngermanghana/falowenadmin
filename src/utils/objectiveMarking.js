@@ -565,9 +565,10 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
     || referenceEntry?.assignmentId
     || referenceEntry?.assignment_id
     || "";
-  if (normalizeAssignmentId(resolvedAssignmentId) === "A1-12.1" && /A1-12\.1-READING-V2/i.test(submissionText)) {
+  if (normalizeAssignmentId(resolvedAssignmentId) === "A1-12.1" && /A1-12\.1-(?:READING-V2|BAHNHOF-HOEREN-V3)/i.test(submissionText)) {
     const source = Object.values(answersDictionary).find(entry => entry.assignment_id === "A1-12.1");
-    const revision = source.workbookRevisions["a1-12.1-bahn-auto-beruf-v2"];
+    const newListening = /A1-12\.1-BAHNHOF-HOEREN-V3/i.test(submissionText);
+    const revision = source.workbookRevisions[newListening ? "a1-12.1-bahnhof-hoeren-v3" : "a1-12.1-bahn-auto-beruf-v2"];
     const { parts: _parts, rawAnswers: _rawAnswers, answerKeys: _keys, answer_key: _key, key: _legacyKey, ...base } = referenceEntry;
     return { ...base, ...revision, totalAnswers: 10, excludedParts: ["teil2"], writingParts: [], aiGradedParts: [],
       partGrading: {
