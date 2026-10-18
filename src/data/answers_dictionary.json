@@ -220,30 +220,16 @@
   },
   "A1 Objects and Colors 6": {
     "answers": {
-      "Answer1": "Das Wohnzimmer – the living room",
-      "Answer2": "Die Küche – the kitchen",
-      "Answer3": "Das Schlafzimmer – the bedroom",
-      "Answer4": "Das Badezimmer – the bathroom",
-      "Answer5": "Der Balkon – the balcony",
-      "Answer6": "Der Flur – the hallway",
-      "Answer7": "Das Bett – the bed",
-      "Answer8": "Der Tisch – the table",
-      "Answer9": "Der Stuhl – the chair",
-      "Answer10": "Der Schrank – the wardrobe",
-      "Answer11": "B) Vier",
-      "Answer12": "A) Ein Sofa und ein Fernseher",
-      "Answer13": "B) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen",
-      "Answer14": "C) Ein großes Bett",
-      "Answer15": "D) Eine Dusche, eine Badewanne und ein Waschbecken",
-      "Answer16": "B) Klein und schön",
-      "Answer17": "C) Blumen und einen kleinen Tisch mit zwei Stühlen",
-      "Answer18": "B",
-      "Answer19": "B",
-      "Answer20": "B",
-      "Answer21": "C",
-      "Answer22": "D",
-      "Answer23": "B",
-      "Answer24": "C"
+      "Answer1": "Falsch",
+      "Answer2": "Richtig",
+      "Answer3": "Richtig",
+      "Answer4": "Falsch",
+      "Answer5": "Richtig",
+      "Answer6": "B",
+      "Answer7": "A",
+      "Answer8": "C",
+      "Answer9": "B",
+      "Answer10": "C"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
@@ -260,7 +246,7 @@
         "label": "main",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+        "instruction": "A1-6 redesigned workbook: Answer1–5 Lesen Richtig/Falsch; Answer6–10 Hören A/B/C. Grade only these ten responses against this key."
       }
     }
   },
