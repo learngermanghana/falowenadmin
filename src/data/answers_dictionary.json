@@ -605,6 +605,42 @@
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
       }
+    },
+    "workbookRevisions": {
+      "a1-12.1-bahn-auto-beruf-v2": {
+        "answers": {
+          "Teil 1": {
+            "Answer1": "Richtig",
+            "Answer2": "Falsch",
+            "Answer3": "Falsch",
+            "Answer4": "Richtig",
+            "Answer5": "Falsch"
+          },
+          "Teil 3": {
+            "Answer1": "A) Richtig",
+            "Answer2": "A) Richtig",
+            "Answer3": "A) Richtig",
+            "Answer4": "A) Richtig",
+            "Answer5": "A) Richtig"
+          }
+        },
+        "expectedParts": [
+          "teil1",
+          "teil3"
+        ],
+        "referenceAnswerParts": [
+          "teil1",
+          "teil3"
+        ],
+        "answerLayout": "multipart",
+        "explanations": {
+          "1": "Fahrgäste mit Fahrkarte gehen direkt zum Gleis 4. Zu always takes dative: zu dem = zum.",
+          "2": "Fahrkarten kauft man am Automaten im Bahnhofsgebäude, nicht auf Gleis 4. In dem = im describes a location (dative).",
+          "3": "Parken ist nur mit Parkausweis erlaubt. Mit always takes dative.",
+          "4": "Parkausweise bekommt man bei Frau Meyer an der Rezeption. Bei always takes dative; an der describes a location.",
+          "5": "Herr Weber ist nicht im Büro. Er ist mit dem Auto zu einem Kunden gefahren. Mit and zu always take dative."
+        }
+      }
     }
   },
   "A1 Professions and Prepositions 12.2": {

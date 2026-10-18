@@ -565,6 +565,17 @@ export function selectVersionedObjectiveReferenceEntry(referenceEntry = {}, subm
     || referenceEntry?.assignmentId
     || referenceEntry?.assignment_id
     || "";
+  if (normalizeAssignmentId(resolvedAssignmentId) === "A1-12.1" && /A1-12\.1-READING-V2/i.test(submissionText)) {
+    const source = Object.values(answersDictionary).find(entry => entry.assignment_id === "A1-12.1");
+    const revision = source.workbookRevisions["a1-12.1-bahn-auto-beruf-v2"];
+    const { parts: _parts, rawAnswers: _rawAnswers, answerKeys: _keys, answer_key: _key, key: _legacyKey, ...base } = referenceEntry;
+    return { ...base, ...revision, totalAnswers: 10, excludedParts: ["teil2"], writingParts: [], aiGradedParts: [],
+      partGrading: {
+        teil1: { label: "Bahn, Auto & Beruf", hasReferenceAnswers: true, gradingMode: "answer_key" },
+        teil3: { label: "Hören", hasReferenceAnswers: true, gradingMode: "answer_key" },
+      },
+    };
+  }
   if (normalizeAssignmentId(resolvedAssignmentId) === "A1-6") {
     const isV2 = /A1-6-WORKBOOK-V2/i.test(submissionText);
     // Choose exactly one answer representation. Cloud-synced entries contain
