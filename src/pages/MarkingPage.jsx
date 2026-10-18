@@ -1,3 +1,4 @@
+import { familyRecordingReference } from "../utils/a1FamilyRecordingReference.js";
 import { tryStoreMarkingDraft } from "../utils/markingDraftStorage.js";
 import { useAdminRefresh } from "../hooks/useAdminRefresh.js";
 import AdminRefreshStatus from "../components/AdminRefreshStatus.jsx";
@@ -638,7 +639,8 @@ function TutorMarkingWorkspace() {
       if (!pageReferenceReady || !pageAIReference) {
         throw new Error("The current assignment has no usable page reference. Select a valid assignment before marking.");
       }
-      const registryEntry = pageAIReference;
+      const registryEntry = familyRecordingReference(pageAIReference,
+        { ...selectedSubmission, submissionText }, pageAIReference.assignmentKey);
       const deterministicObjective = computeObjectiveScore(registryEntry, submissionText);
       const aiResult = writingExpected || !deterministicObjective.totalCount ? await markSubmissionWithAI({
         referenceEntry: registryEntry,

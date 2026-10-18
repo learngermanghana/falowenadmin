@@ -112,17 +112,13 @@ const dictionary = JSON.parse(fs.readFileSync(dictionaryTarget, "utf8"));
 const assignmentEntry = Object.values(dictionary).find((entry) => String(entry?.assignment_id || entry?.assignmentId || "").trim().toUpperCase() === "A1-3");
 if (!assignmentEntry) throw new Error("A1-3 answer-key entry not found");
 
-// Keep the checked-in manifest aligned with the recorded two-part workbook.
-const { createRequire } = await import("node:module");
-const { familyGrading } = createRequire(import.meta.url)("../functions/a1FamilyRecordingReference.js");
-assignmentEntry.expectedParts = ["teil1", "teil2"];
+// The unversioned manifest remains the legacy three-part writing assignment.
+// Recorded revisions are transformed at marking time by the shared adapter.
+assignmentEntry.expectedParts = ["teil1", "teil2", "teil3"];
 assignmentEntry.writingParts = ["teil2"];
 assignmentEntry.aiGradedParts = ["teil2"];
-assignmentEntry.referenceAnswerParts = ["teil1"];
-assignmentEntry.excludedParts = ["teil3"];
+assignmentEntry.referenceAnswerParts = ["teil1", "teil3"];
 assignmentEntry.answerLayout = "multipart";
-assignmentEntry.answers = { teil1: assignmentEntry.answers.teil1 };
-assignmentEntry.partGrading = { teil1: assignmentEntry.partGrading?.teil1 || {}, teil2: familyGrading };
 
 fs.writeFileSync(dictionaryTarget, `${JSON.stringify(dictionary, null, 2)}\n`);
 console.log("A1-3 now preserves complete comma answers, price values, tolerant preference wording, registered Teil 2 writing, and specific A1 writing evidence.");

@@ -3771,15 +3771,27 @@
         "Answer2": "Sie kostet 15 Euro.",
         "Answer3": "Es kostet 25.000 Euro.",
         "Answer4": "Er kostet 50 Euro."
+      },
+      "teil3": {
+        "Answer1": "Ich spiele gern Fußball. / Ich spiele nicht gern Fußball.",
+        "Answer2": "Ich mag Schwimmen. / Ich mag nicht Schwimmen.",
+        "Answer3": "Ich mag Lesen. / Ich mag nicht Lesen.",
+        "Answer4": "Ich mag Malen. / Ich mag nicht Malen.",
+        "Answer5": "Ich mag Musik. / Ich mag nicht Musik.",
+        "Answer6": "Ich mag Kochen. / Ich mag nicht Kochen.",
+        "Answer7": "Ich mag Reisen. / Ich mag nicht Reisen.",
+        "Answer8": "Ich mag Gartenarbeit. / Ich mag nicht Gartenarbeit."
       }
     },
     "assignment_id": "A1-3",
     "expectedParts": [
       "teil1",
-      "teil2"
+      "teil2",
+      "teil3"
     ],
     "referenceAnswerParts": [
-      "teil1"
+      "teil1",
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -3789,11 +3801,17 @@
         "gradingMode": "answer_key",
         "instruction": "Grade this part against the reference answers in answers."
       },
+      "teil3": {
+        "label": "teil3",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade this part against the reference answers in answers."
+      },
       "teil2": {
-        "label": "Teil 2 Sprechen · Familie (transcript)",
+        "label": "Teil 2 Schreiben",
         "hasReferenceAnswers": false,
         "gradingMode": "ai_written_response",
-        "instruction": "Assess the learner's recorded A1 family description using the transcript only. Reward understandable simple German and concrete family details. Family members, names/ages, jobs, hobbies and home are support ideas, not five mandatory points. This is spoken work: do not require a letter, greeting, closing, written layout or a minimum word count, and do not penalize spelling or capitalization introduced by transcription. Assess task completion, basic verb forms, word order, vocabulary and clarity. Do not claim to assess pronunciation from a transcript. Ignore any earlier AI feedback; grade the learner's own response independently."
+        "instruction": "Teil 2 is the A1 family-writing task. The student writes one short connected text about their family. The workbook gives family members, names/ages, jobs, hobbies and where the family lives as support ideas; do not require every support idea as a separate compulsory point. Grade whether the response is genuinely about the student's family, includes concrete family details, and is understandable A1 German. Also assess basic verb forms, spelling, capitalization, plural forms, vocabulary and clarity. Reward simple correct A1 sentences."
       }
     },
     "writingParts": [
@@ -3801,9 +3819,6 @@
     ],
     "aiGradedParts": [
       "teil2"
-    ],
-    "excludedParts": [
-      "teil3"
     ]
   },
   "A2 4.10 Eine Stadt entdecken und etwas erleben": {
