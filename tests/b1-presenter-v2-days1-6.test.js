@@ -19,7 +19,7 @@ test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
     const stages = buildTeachingPresenterStages(slide, slide.topic);
     const stageIds = stages.map((stage) => stage.id);
 
-    ["intro", "warmup", "knowledge", "phrases", "grammar-check", "practice", "questions", "workbook", "lesson-summary"]
+    ["intro", "warmup", "knowledge", "phrases", "grammar-check", "questions", "workbook", "lesson-summary"]
       .forEach((stageId) => assert.ok(stageIds.includes(stageId), `${slide.assignmentId} missing ${stageId}`));
     assert.equal(stageIds.includes("wrapup"), false, `${slide.assignmentId} should not show the redundant mini-presentation slide`);
 
@@ -35,8 +35,16 @@ test("B1 Day 1-6 keep Presenter 2.0 stages after the full B1 rollout", () => {
     assert.ok(questionStage.supportItems.length >= 1);
 
     const practiceStage = stages.find((stage) => stage.id === "practice");
-    assert.equal(practiceStage.items.length, 1);
-    assert.ok(practiceStage.items[0].minutes > 0);
+    const challengeStage = stages.find((stage) => stage.id === "scenario-challenge");
+    assert.equal(Number(Boolean(practiceStage)) + Number(Boolean(challengeStage)), 1, slide.assignmentId);
+    if (challengeStage) {
+      assert.equal(challengeStage.type, "scenario-challenge");
+      assert.ok(challengeStage.items.length >= 1, slide.assignmentId);
+      assert.ok(challengeStage.suggestedMinutes > 0);
+    } else {
+      assert.equal(practiceStage.items.length, 1);
+      assert.ok(practiceStage.items[0].minutes > 0);
+    }
   });
 });
 

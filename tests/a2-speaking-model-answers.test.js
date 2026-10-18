@@ -26,6 +26,16 @@ test("all 141 A2 source speaking questions keep models while Presenter selects t
     const stage = buildTeachingPresenterStages(slide).find(s => s.id === "questions");
     const difficulty = getSpeakingDifficultySelection(slide.assignmentId);
     assert.ok(difficulty, `${slide.assignmentId} needs curated speaking difficulty`);
+    if (Array.isArray(slide.presenterSpeakingRounds) && slide.presenterSpeakingRounds.length) {
+      // Day 8 intentionally uses three progressive restaurant role-play rounds.
+      // All five source questions and their full models remain on the slide.
+      assert.equal(slide.assignmentId, "A2-3.8");
+      assert.equal(stage.type, "flow");
+      assert.equal(stage.items.length, slide.presenterSpeakingRounds.length);
+      assert.equal(stage.items.length, 3);
+      assert.deepEqual(stage.items, slide.presenterSpeakingRounds);
+      continue;
+    }
     assert.equal(stage.requiresQuestionModel, true);
     assert.deepEqual(stage.questionLevels, ["Easy", "Neutral", "Difficult"]);
     assert.equal(stage.difficultySource, "curated");
@@ -52,7 +62,7 @@ test("all 141 A2 source speaking questions keep models while Presenter selects t
 });
 
 test("A2 answers stay aligned with all 28 daily topics", () => {
-  const topics = ["Familie", "Freundin", "Schwester", "Film", "Fußball", "Wohnzimmer", "Wohnung", "Reis", "Cape Coast", "Musikfest", "Bus", "Koch", "Alex Mensah", "Verkäufer", "Fußball", "Wohlbefinden", "Husten", "Konto", "Geschäft", "Wasserkocher", "Wochenende", "Montag", "Bus", "Hamburg", "sechs Uhr", "Prüfung", "WhatsApp", "Deutschkenntnisse"];
+  const topics = ["Familie", "Freundin", "Schwester", "Film", "Fußball", "Wohnzimmer", "Wohnung", "Guten Abend", "Cape Coast", "Köln", "Bus", "Koch", "Alex Mensah", "Verkäufer", "Fußball", "Wohlbefinden", "Husten", "Konto", "Geschäft", "Wasserkocher", "Wochenende", "Montag", "Bus", "Hamburg", "sechs Uhr", "Prüfung", "WhatsApp", "Deutschkenntnisse"];
   for (const slide of getSlidesByCourse("A2")) {
     assert.ok(slide.speakingModels[0].modelAnswerDe.includes(topics[slide.dayNumber - 1]), slide.assignmentId);
   }
@@ -67,7 +77,7 @@ test("A2 model answers demonstrate requested grammar and cover multipart questio
   assert.match(answer(4, 2), /in ein Restaurant/);
   assert.match(answer(5, 3), /stehe.*auf.*kaufe.*ein.*rufe.*an/s);
   assert.match(answer(7, 2), /Wohnung, die/);
-  assert.match(answer(8, 2), /Wasche.*Schneide.*Koche/s);
+  assert.match(answer(8, 2), /Was empfehlen Sie heute\?.*vegetarisches Gericht\?/s);
   assert.match(answer(10, 3), /war.*hatten/s);
   assert.match(answer(13, 2), /konnte/);
   assert.match(answer(13, 3), /musste/);

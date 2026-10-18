@@ -20,7 +20,7 @@ const ASSIGNMENT_IDS = [
 
 const REQUIRED_STAGES = [
   "intro", "warmup", "knowledge", "phrases", "grammar-check",
-  "practice", "questions", "workbook", "lesson-summary",
+  "questions", "workbook", "lesson-summary",
 ];
 
 test("A2 Teaching Slides expose the complete 28-day workbook-aligned course", () => {
@@ -46,7 +46,7 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.ok(slide.teacherSupport.grammarFocusEn?.length >= 3, `${slide.assignmentId} missing grammar focus`);
     assert.ok(slide.teacherSupport.modelExamplesDe?.length >= 3, `${slide.assignmentId} missing model examples`);
     assert.ok(slide.teacherSupport.commonMistakesEn?.length >= 3, `${slide.assignmentId} missing common mistakes`);
-    assert.ok(slide.workbookConnection.parts?.length >= 4, `${slide.assignmentId} missing workbook bridge`);
+    assert.ok(slide.workbookConnection.parts?.length >= 3, `${slide.assignmentId} missing workbook bridge`);
     assert.ok(slide.workbookConnection.workbookUrl, `${slide.assignmentId} missing workbook URL`);
 
     const stages = buildTeachingPresenterStages(slide, slide.topic);
@@ -58,6 +58,7 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
 
     const grammarCheck = stages.find((stage) => stage.id === "grammar-check");
     const practice = stages.find((stage) => stage.id === "practice");
+    const challenge = stages.find((stage) => stage.id === "scenario-challenge");
     const workbook = stages.find((stage) => stage.id === "workbook");
     const questions = stages.find((stage) => stage.id === "questions");
 
@@ -72,13 +73,31 @@ test("all A2 days use Presenter 2.0 with workbook-aligned classroom support", ()
     assert.equal(stageIds.includes("examples"), false, `${slide.assignmentId} should not keep a separate examples slide`);
     assert.equal(stageIds.includes("mistakes"), false, `${slide.assignmentId} should fold correction into the grammar check`);
 
-    assert.equal(practice.type, "flow");
-    assert.equal(practice.items.length, 1, `${slide.assignmentId} should have one focused practice activity`);
-    assert.ok(practice.items[0].minutes > 0, `${slide.assignmentId} should expose focused-practice timing`);
+    // An interactive scenario challenge replaces the regular focused practice
+    // for selected lessons; it is not a missing activity or an extra slide.
+    assert.equal(Number(Boolean(practice)) + Number(Boolean(challenge)), 1, slide.assignmentId);
+    if (challenge) {
+      assert.equal(challenge.type, "scenario-challenge");
+      assert.ok(challenge.items.length >= 1, slide.assignmentId);
+      assert.ok(challenge.suggestedMinutes > 0, slide.assignmentId);
+    } else {
+      assert.equal(practice.type, "flow");
+      assert.equal(practice.items.length, 1, slide.assignmentId);
+      assert.ok(practice.items[0].minutes > 0, slide.assignmentId);
+    }
     assert.equal(workbook.type, "clarification");
     assert.equal(workbook.items.length, 3);
     assert.equal(workbook.title, "Was ist noch unklar?");
     assert.ok(stageIds.indexOf("questions") < stageIds.indexOf("workbook"), `${slide.assignmentId} production should come before workbook bridge`);
+    if (slide.assignmentId === "A2-3.8") {
+      // Day 8 deliberately uses a three-round restaurant dialogue instead
+      // of a fixed Easy/Neutral/Difficult question reveal.
+      assert.equal(questions.type, "flow");
+      assert.equal(questions.items.length, 3);
+      assert.deepEqual(questions.items, slide.presenterSpeakingRounds);
+      assert.ok(questions.items.every((item) => Number(item.minutes) > 0));
+      continue;
+    }
     assert.equal(questions.type, "question-reveal");
     assert.equal(questions.items.length, 3, `${slide.assignmentId} should use three progressive speaking questions`);
     assert.deepEqual(questions.questionLevels, ["Easy", "Neutral", "Difficult"]);

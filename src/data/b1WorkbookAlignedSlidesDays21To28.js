@@ -64,21 +64,21 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "Teach the actual Day 21 grammar: weil/obwohl/während/dass with verb-final order plus einerseits … andererseits, zwar … aber and nicht nur … sondern auch.",
       "The speaking and writing tasks both require comparison plus a clear personal judgement; do not accept lists of advantages without evaluation.",
-      "Teil 3 is the new „Lebensformen heute“ reading with seven questions on single households, Patchwork families, Senioren-WGs and Mehrgenerationenwohnen.",
+      "Teil 3 is the new „Lebensformen heute“ reading with five questions on WGs, single households and Mehrgenerationenhäuser.",
       "There is genuinely no Teil 4 for Day 21. The workbook hides it and the marking contract explicitly excludes teil4.",
     ],
     interactionFlow: [
       { phase: "Contrast builder", detailEn: "8 min: turn simple pros/cons into einerseits … andererseits and zwar … aber sentences." },
       { phase: "Subordinate-clause check", detailEn: "9 min: practise weil/obwohl/während/dass with verb-final order." },
       { phase: "Living-form comparison", detailEn: "12 min: pairs compare family, WG and single life using cost, freedom, support and privacy." },
-      { phase: "Workbook bridge", detailEn: "10 min: rehearse the Mara opinion structure and preview the seven-question modern-living reading." },
+      { phase: "Workbook bridge", detailEn: "10 min: rehearse the Mara opinion structure and preview the five-question modern-living reading." },
     ],
     wrapUpTaskDe: "Vergleiche zwei Lebensformen in fünf Sätzen. Nutze einen zweiteiligen Konnektor, einen Nebensatz und eine klare eigene Meinung.",
     workbookConnection: workbookConnection(21, [
       { label: "Grammar", detailEn: "Direct grammar page available: weigh advantages and disadvantages with weil, obwohl, während and dass plus einerseits … andererseits, zwar … aber and nicht nur … sondern auch." },
       { label: "Teil 1 · Sprechen", detailEn: "Compare Familie, Wohngemeinschaft and Singleleben; give advantages, disadvantages, a home-country/personal example and explain which form suits you best. Practice only." },
       { label: "Teil 2 · Schreiben", detailEn: "Write 80–100 words responding to Mara about the best modern living arrangement; compare the three forms, include at least one advantage and disadvantage, an example and a clear conclusion." },
-      { label: "Teil 3 · Lesen", detailEn: "Scored reading: modern living arrangements in Germany, including Single-Haushalte, Patchwork-Familien, Senioren-WGs and Mehrgenerationenwohnen; answer all seven multiple-choice questions under Teil 3." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored reading: modern living arrangements in Germany, including WGs, Single-Haushalte and Mehrgenerationenwohnen; answer all five multiple-choice questions under Teil 3." },
     ], {
       grammarUrl: lessonRoute(21, "grammar"),
       subtitle: "Day 21 has Grammar, Sprechen, Schreiben and Lesen only. There is no Teil 4, and teil4 is excluded by the marking contract.",
@@ -161,28 +161,28 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
     teacherNotesEn: [
       "The intended deep grammar is verified in Falowen source: dass clauses, relative clauses and reciprocal expressions miteinander/füreinander/voneinander/aufeinander, plus weil/wenn/obwohl.",
       "The current Day 22 student lesson does not expose that deep grammar through a direct grammar route, so do not provide a broken grammar link from the teacher guide.",
-      "The workbook comprehension topics are unrelated to relationships: relationship article and Bewerbung. Keep them separate from the production lesson. There is no submitted Teil 2 Schreiben on the current Day 22 workbook.",
-      "Reading split: Teil 3 is the five-question relationship article text and Teil 4 is the five-question Bewerbung text. The answer key now follows the workbook's visible 5+5 structure.",
+      "The two scored readings concern modern relationships: Teil 3 is a three-question Online-Dating article; Teil 4 is seven statements matched to experts discussing Fernbeziehungen and Living Apart Together. There is no submitted Teil 2 Schreiben.",
+      "Reading split: Teil 3 has three Online-Dating multiple-choice questions; Teil 4 has seven person-matching statements, with 0 for no match. The answer key follows the workbook's visible 3+7 structure.",
     ],
     interactionFlow: [
       { phase: "Value ranking", detailEn: "7 min: rank Vertrauen, Ehrlichkeit, Kommunikation, Unterstützung and Zukunftspläne." },
       { phase: "Grammar frames", detailEn: "10 min: build Mir ist wichtig, dass … and Partner, der/die … relative clauses." },
       { phase: "Reciprocal language", detailEn: "8 min: practise miteinander, füreinander, voneinander and aufeinander in relationship contexts." },
       { phase: "Online-dating argument", detailEn: "12 min: prepare one advantage, one risk, comparison with face-to-face contact and conclusion." },
-      { phase: "Marking bridge", detailEn: "8 min: remind students to submit the five relationship article answers under Teil 3 and the five Bewerbung answers under Teil 4." },
+      { phase: "Marking bridge", detailEn: "8 min: remind students to submit three Online-Dating answers under Teil 3 and seven expert-matching answers (A/B/C/0) under Teil 4." },
     ],
     wrapUpTaskDe: "Nenne drei wichtige Werte in einer Beziehung. Nutze einen dass-Satz, einen Relativsatz und einen Ausdruck mit -einander.",
     workbookConnection: workbookConnection(22, [
       { label: "Grammar", detailEn: "No direct grammar route is currently exposed. Teach expectations with dass, people with relative clauses, reciprocal behavior with miteinander/füreinander/voneinander/aufeinander, and reasons/conditions with weil, wenn and obwohl." },
       { label: "Teil 1 · Sprechen", detailEn: "Explain what matters in a relationship: communication, trust, shared interests, respect/support and future plans. Build a fictional profile and justify priorities. Practice only." },
-      { label: "Teil 3 · Lesen", detailEn: "Scored reading: relationship values, trust, communication, support, personal space and independence; answer all seven multiple-choice questions under Teil 3." },
-      { label: "Teil 4 · Lesen", detailEn: "Scored second reading: Bewerbung. Submit all five Bewerbung multiple-choice answers under Teil 4." },
+      { label: "Teil 3 · Lesen", detailEn: "Scored Online-Dating article: answer the three current multiple-choice questions under Teil 3." },
+      { label: "Teil 4 · Lesen", detailEn: "Scored second reading: Fernbeziehung und getrenntes Wohnen, with seven statements matched to three experts or 0 (no person). Submit all seven under Teil 4." },
     ], {
       grammarUrl: null,
-      subtitle: "Day 22 has no submitted Schreiben. It has two scored readings: Teil 3 = five relationship article answers; Teil 4 = five Bewerbung answers.",
+      subtitle: "Day 22 has no submitted Schreiben. It has two scored readings: Teil 3 = three Online-Dating answers; Teil 4 = seven expert-matching answers.",
     }),
     teacherSupport: {
-      lessonOverviewEn: "Day 22 is a relationship-values production lesson with two unrelated scored reading assignments: relationship article in Teil 3 and Bewerbung in Teil 4.",
+      lessonOverviewEn: "Day 22 is a relationship-values lesson with two scored readings: Online-Dating in Teil 3 and three expert perspectives on Fernbeziehung / Living Apart Together in Teil 4.",
       grammarFocusEn: [
         "dass clauses express expectations and send the conjugated verb to the end.",
         "Relative clauses describe an ideal partner: der/die/das agrees with the antecedent and the verb comes last.",
@@ -198,8 +198,8 @@ export const b1WorkbookAlignedSlidesDays21To28 = [
       commonMistakesEn: [
         "Using a main-clause verb position inside dass or relative clauses.",
         "Using sich instead of a clearer reciprocal -einander form when mutual action is intended.",
-        "Treating relationship article or Bewerbung as relationship-topic texts; they are separate comprehension assignments.",
-        "Mixing the two reading answer sets; relationship article belongs in Teil 3 and Bewerbung belongs in Teil 4.",
+        "Confusing the three Online-Dating multiple-choice answers with the seven expert-person matching answers.",
+        "Mixing answer formats: Teil 3 needs three A/B/C choices, while Teil 4 needs seven A/B/C/0 matches.",
       ],
     },
   },
