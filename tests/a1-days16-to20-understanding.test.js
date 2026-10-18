@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { getSlidesByCourse } from "../src/data/teachingSlides.js";
+import { getSlidesByCourse, getTeachingSlideByAssignmentId } from "../src/data/teachingSlides.js";
 import { getA1GrammarChecks } from "../src/data/a1GrammarChecks.js";
 import { buildTeacherSlideSupport } from "../src/data/teacherSlideSupport.js";
 import { getA1PresenterUnderstandingChecks } from "../src/data/a1PresenterUnderstandingChecks.js";
@@ -12,7 +12,7 @@ import { A1_DAYS16_TO20_ASSIGNMENTS, getA1Days16To20UnderstandingChecks,
   getA1Days16To20QuickChecks, getA1Days16To20ApplicationChecks } from "../src/data/a1Days16To20Understanding.js";
 
 const target = { "A1-9":16, "A1-10":16, "A1-11":17, "A1-12.1":18, "A1-12.2":18, "A1-12.3":20 };
-const slide = (id) => getSlidesByCourse("A1").find(s => s.assignmentId === id);
+const slide = (id) => getTeachingSlideByAssignmentId(id);
 
 test("six A1 Days 16–20 regular blocks supply ninety source-backed questions and teacher explanations", () => {
   assert.deepEqual([...A1_DAYS16_TO20_ASSIGNMENTS].sort(), Object.keys(target).sort());
@@ -43,9 +43,10 @@ test("six A1 Days 16–20 regular blocks supply ninety source-backed questions a
   assert.equal(total, 90);
 });
 
-test("Day 16 and Day 18 remain two distinct lesson blocks each", () => {
+test("Day 18 combines grammar while the legacy 12.2 teaching bank remains available", () => {
   assert.equal(slide("A1-9").dayNumber, slide("A1-10").dayNumber);
   assert.equal(slide("A1-12.1").dayNumber, slide("A1-12.2").dayNumber);
+  assert.equal(getSlidesByCourse("A1").some(s => s.assignmentId === "A1-12.2"), false);
   assert.notEqual(slide("A1-9").workbookConnection.workbookUrl, slide("A1-10").workbookConnection.workbookUrl);
   assert.notEqual(slide("A1-12.1").workbookConnection.workbookUrl, slide("A1-12.2").workbookConnection.workbookUrl);
   assert.match(JSON.stringify(getA1Days16To20UnderstandingChecks("A1-9")), /keinen Käse|nicht warm/);
@@ -79,15 +80,15 @@ test("Day 20 exactly follows the informal birthday + formal language-school writ
   assert.match(qs,/Kann ich online bezahlen/);
 });
 
-test("Day 19 Goethe speaking-readiness exam stays a distinct unchanged flow", () => {
+test("Day 19 is a required three-part speaking assessment", () => {
   const s = slide("A1-5.9");
   assert.ok(s);
   assert.equal(s.dayNumber,19);
   assert.equal(s.estimatedDuration,"60 minutes");
   assert.deepEqual(s.interactionFlow.map(x=>Number(x.detailEn.match(/(\d+)\s*min/i)?.[1]||0)),[5,5,10,10,10,15,5]);
-  assert.equal(getA1LearningPath(s),null);
+  assert.equal(getA1LearningPath(s).kind,"graded-speaking");
   assert.equal(getA1Days16To20UnderstandingChecks("A1-5.9"),null);
-  assert.match(s.workbookConnection.subtitle,/exam-readiness lab/i);
+  assert.match(s.workbookConnection.subtitle,/Required assignment A1-5.9/i);
 });
 
 test("Classroom lessons are comprehension-first; no progress systems added", () => {

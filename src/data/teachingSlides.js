@@ -359,6 +359,7 @@ export function getSlidesByCourse(courseId) {
   const normalized = String(courseId || "").trim().toUpperCase();
   return teachingSlides
     .filter((slide) => String(slide.course || "").trim().toUpperCase() === normalized)
+    .filter((slide) => !(normalized === "A1" && slide.assignmentId === "A1-12.2"))
     .sort((a, b) => Number(a.dayNumber || 0) - Number(b.dayNumber || 0));
 }
 
