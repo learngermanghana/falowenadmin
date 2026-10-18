@@ -47,7 +47,9 @@ test("A2 days 6-10 each expose the exact Falowen grammar and workbook routes", (
     assert.equal(slide.workbookConnection.workbookUrl, expected.workbookRoute);
     assert.deepEqual(
       slide.workbookConnection.parts.map((part) => part.label),
-      assignmentId === "A2-3.8"\n        ? ["Grammar", "Teil 1 · Sprechen", "Teil 3 · Lesen", "Teil 4 · Hören"]\n        : ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen", "Teil 4 · Hören"],
+      assignmentId === "A2-3.8"
+        ? ["Grammar", "Teil 1 · Sprechen", "Teil 3 · Lesen", "Teil 4 · Hören"]
+        : ["Grammar", "Teil 1 · Sprechen", "Teil 2 · Schreiben", "Teil 3 · Lesen", "Teil 4 · Hören"],
     );
     assert.ok(slide.teacherNotesEn.some((note) => /workbook|teil|lesen|hören/i.test(note)));
   }
