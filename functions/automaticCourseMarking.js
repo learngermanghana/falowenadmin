@@ -2,6 +2,9 @@ const crypto = require('node:crypto');
 const { familyRecordingReference } = require('./a1FamilyRecordingReference');
 const { withMarkingTransport } = require('./automaticMarkingContext');
 const RESULTS_URL = 'https://www.falowen.app/campus/results';
+// Until the speaking score has authenticated backend provenance, no score may
+// be automatically published for the three mixed A1 tutor workbooks.
+const A1_SPEAKING_REVIEW_ASSIGNMENTS = new Set(['A1-4', 'A1-8', 'A1-11']);
 const idForPath = path => `auto_${crypto.createHash('sha256').update(path).digest('hex')}`;
 const clean = value => JSON.parse(JSON.stringify(value));
 const assignmentTitle = (...values) => values.find(value => typeof value === 'string'
@@ -82,7 +85,8 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         submission: { ...submission, id: snap.id, path: snap.ref.path, text },
         submissionText: text, referenceEntry,
       }));
-      const release = releasable(result);
+      const speakingReviewRequired = A1_SPEAKING_REVIEW_ASSIGNMENTS.has(String(job.assignmentKey || "").toUpperCase());
+      const release = !speakingReviewRequired && releasable(result);
       const timestamp = new Date(now()).toISOString();
       const studentCode = registeredCode;
       if (!studentCode || !studentId) throw new Error('Student identity missing; tutor review required');
@@ -97,6 +101,7 @@ function createCourseMarkingWorker({ admin, db, loadReference, callAi, mark, now
         const publish = release && !existingScore.exists;
         const status = publish ? 'marked' : 'needs_review';
         const publicationReviewReasons = publish ? [] : [
+          ...(speakingReviewRequired ? ['Speaking checkpoint requires verified server assessment or tutor review; student-supplied score is not authoritative.'] : []),
           ...(existingScore.exists ? ['An existing score is saved for this assignment; automatic marking cannot overwrite it.'] : []),
           ...(result.status !== 'marked' ? ['The marking pipeline requested tutor review.'] : []),
           ...(!Number.isFinite(Number(result.confidence)) || Number(result.confidence) < 0.8 ? ['AI confidence is below the automatic-release threshold.'] : []),
