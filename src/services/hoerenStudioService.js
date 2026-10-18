@@ -24,7 +24,7 @@ export const makeListeningQuestions = ({ script, kind }) => request("questions",
 
 // Student API already owns the Cloudflare R2 credentials, Firestore storage and learner access checks.
 // Do not pass R2 credentials or Gemini secrets through the browser.
-const COURSE_API_BASE = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://api-awc2au65xa-ew.a.run.app").replace(/\/+$/, "");
+const COURSE_API_BASE = (import.meta.env.VITE_FALOWEN_COURSE_API_URL || "https://www.falowen.app/api").replace(/\/+$/, "");
 export async function getHoerenPublishCatalog() {
   const user = auth.currentUser;
   if (!user) throw new Error("Sign in with your Falowen owner account.");
