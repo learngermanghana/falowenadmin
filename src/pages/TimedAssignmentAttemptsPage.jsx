@@ -465,7 +465,7 @@ export default function TimedAssignmentAttemptsPage() {
             {placementLoading?"Refreshing…":"Refresh placements"}
           </button>
         </div>
-        <p style={{margin:0,color:"#475569",fontSize:13}}>Scores are available to staff only. Anonymous starts cannot be contacted until the learner chooses to save contact details. The suggested level is a preliminary recommendation, not an official certificate.</p>
+        <p style={{margin:0,color:"#475569",fontSize:13}}>Scores are available to staff only. A visitor can finish without saving their name or email, so their result appears without contact details. The suggested level is not an official certificate. “Draft follow-up” opens your email app; it does not send anything automatically.</p>
         <div className="monitor-status-filters" role="group" aria-label="Filter placement status">
           {[["all","All"],["in_progress","In progress"],["completed","Completed"],["expired","Expired"],["contacted","Contact saved"]].map(([value,label])=>
             <button key={value} className="monitor-status-button" type="button" aria-pressed={placementFilter===value} onClick={()=>setPlacementFilter(value)}>{label}</button>
@@ -481,12 +481,23 @@ export default function TimedAssignmentAttemptsPage() {
           const score=attempt.score;
           const email=attempt.email||"";
           const phone=String(attempt.phone||"").replace(/\D/g,"").replace(/^0(?=\d{9}$)/,"233");
-          const followup="Hello"+(attempt.name?" "+attempt.name:"")+", thank you for completing Falowen's German placement test. Your suggested starting level is "+(score?.level||"your recommended level")+". We can help you choose a class and register: https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test";
+          const followup=[
+            "Hello "+(attempt.name||"learner")+",",
+            "Thank you for completing the Falowen German placement test.",
+            "Your recommended starting level is "+(score?.level||"being reviewed")+".",
+            score?"Your scores: A1 "+score.a1+"/10 · A2 "+score.a2+"/10 · B1 "+score.b1+"/10 · Total "+score.total+"/30.":"",
+            "This is a preliminary class-placement recommendation, not an official Goethe or CEFR certificate.",
+            "Explore classes and register: https://www.falowen.app/signup?level="+encodeURIComponent(score?.level||"A1")+"&source=placement-test",
+            "If you need guidance, just reply to this email.",
+            "Best regards,\nFalowen Admissions\nwww.falowen.app"
+          ].filter(Boolean).join("\n\n");
           return <article key={attempt.id} style={card}>
             <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
               <div style={{display:"grid",gap:4}}>
-                <strong style={{fontSize:16}}>{attempt.name || "Anonymous learner"}</strong>
+                <strong style={{fontSize:16}}>{attempt.name || (attempt.completedAt ? "Result saved · no contact details" : "Visitor · no contact details")}</strong>
                 <small style={{color:"#64748b",overflowWrap:"anywhere"}}>{attempt.email||attempt.phone||attempt.id}</small>
+                {attempt.emailSentAt && <small style={{color:"#166534",fontWeight:700}}>Result email sent · {formatDate(attempt.emailSentAt)}</small>}
+                {attempt.consent && attempt.email && !attempt.emailSentAt && <small style={{color:"#b45309"}}>Result email not confirmed · manual follow-up available</small>}
               </div>
               <strong style={{color:status==="completed"?"#166534":status==="expired"?"#b45309":"#1d4ed8"}}>
                 {status==="in_progress"?"In progress":status==="expired"?"Expired":"Completed"}
@@ -507,7 +518,7 @@ export default function TimedAssignmentAttemptsPage() {
                 {attempt.conversionStage}
               </strong>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen placement result")+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Email learner</a>}
+                {attempt.consent&&email&&<a href={"mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent("Your Falowen German placement result — "+(score?.level||"recommendation"))+"&body="+encodeURIComponent(followup)} style={{color:"#1d4ed8",fontWeight:700}}>Draft follow-up</a>}
                 {attempt.consent&&phone&&<a target="_blank" rel="noopener noreferrer" href={"https://wa.me/"+phone+"?text="+encodeURIComponent(followup)} style={{color:"#166534",fontWeight:700}}>WhatsApp</a>}
                 {attempt.consent&&!isStaff&&<a href="/leads" style={{color:"#1d4ed8",fontWeight:700}}>Open Leads</a>}
               </div>
