@@ -11,6 +11,7 @@ const LIMITS = Object.freeze({ script: 5, speech: 36 });
 const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2"]);
 const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone"]);
 const crypto = require("node:crypto");
+const { extractLessonDraft, questionInstructions } = require("./hoerenQuestions");
 // SHA-256 identifier for the single verified Falowen owner UID. This is not an API secret.
 // Using a digest avoids publishing the Firebase account UID in public repository code.
 const DEFAULT_OWNER_UID_SHA256 = "e8bc09aac410e86216e384ab4c612d6ac6551273085f8344206b23f4004f90a1";
@@ -153,15 +154,38 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`,
         key,
         { contents: [{ role: "user", parts: [{ text:
-          `Create an ORIGINAL Goethe-style German listening practice transcript, not an official Goethe recording. Level: ${level}. Type: ${type}. Topic: ${topic}.\n` +
-          "Write only the transcript in natural, grammatically correct standard German. Use short realistic sentences and varied everyday details. " +
-          "Use EXACTLY one spoken turn per line prefixed 'A: ' or 'B: '. For an announcement or telephone message use only A. " +
-          "For dialogue use A and B and 8–12 turns; for other types use 3–5 lines. Do not include questions/answers, sound effects, Markdown or stage directions. " +
-          "Do not invent an affiliation with Goethe-Institut. Aim for about 80–130 spoken words."
-        }] }],
-          generationConfig: { temperature: 0.6, maxOutputTokens: 550 } },
+          `Create an original German listening dialogue. Level ${level}. Type ${type}. Topic ${topic}.\n` +
+          "Use realistic grammatically correct German, 8–12 alternating A:/B: turns (or A: only for announcements), around 80–130 spoken words. No stage directions or official Goethe affiliation. " +
+          questionInstructions("richtig-falsch")
+        }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 1750 } },
       );
-      return res.json({ ok: true, script: extractScript(result), remaining });
+      const draft = extractLessonDraft(result);
+      return res.json({ ok: true, ...draft, remaining });
+    } catch (error) { return handleError(res, error); }
+  });
+
+  // Optional separate generation; spends one of the same five daily script requests.
+  app.post("/ai-studio/questions", guard, async (req, res) => {
+    try {
+      const script = String(req.body?.script || "").trim();
+      const kind = String(req.body?.kind || "richtig-falsch");
+      if (script.length < 35 || script.length > 6000 || !["richtig-falsch", "multiple-choice"].includes(kind)) {
+        return res.status(400).json({ ok: false, error: "Enter a complete script and a supported question type." });
+      }
+      const key = String(geminiKey.value() || "").trim();
+      if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
+      const remaining = await reserveUsage(db, req.hoerenOwnerUid, "script");
+      const result = await postGemini(
+        `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`, key,
+        { contents: [{ role: "user", parts: [{ text:
+          "Create five accurate listening questions from this exact German transcript. Preserve the transcript completely. " +
+          questionInstructions(kind) + "\nTranscript:\n" + script
+        }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: 1700 } },
+      );
+      const draft = extractLessonDraft(result);
+      if (draft.script !== script || draft.kind !== kind) throw Object.assign(
+        new Error("Google modified the supplied script or question type. Please retry."), { status: 502 });
+      return res.json({ ok: true, questions: draft.questions, kind, remaining });
     } catch (error) { return handleError(res, error); }
   });
 
