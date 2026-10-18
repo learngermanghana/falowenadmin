@@ -220,34 +220,53 @@
   },
   "A1 Objects and Colors 6": {
     "answers": {
-      "Answer1": "Falsch",
-      "Answer2": "Richtig",
-      "Answer3": "Richtig",
-      "Answer4": "Falsch",
-      "Answer5": "Richtig",
-      "Answer6": "B",
-      "Answer7": "A",
-      "Answer8": "C",
-      "Answer9": "B",
-      "Answer10": "C"
+      "Teil 1": {
+        "Answer1": "Falsch",
+        "Answer2": "Richtig",
+        "Answer3": "Richtig",
+        "Answer4": "Falsch",
+        "Answer5": "Richtig"
+      },
+      "Teil 2": {
+        "Answer1": "B",
+        "Answer2": "A",
+        "Answer3": "C",
+        "Answer4": "B",
+        "Answer5": "C"
+      }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
     "assignment_id": "A1-6",
     "expectedParts": [
-      "main"
+      "teil1",
+      "teil2"
     ],
-    "answerLayout": "flat",
+    "answerLayout": "multipart",
     "referenceAnswerParts": [
-      "main"
+      "teil1",
+      "teil2"
     ],
     "partGrading": {
-      "main": {
-        "label": "main",
+      "teil1": {
+        "label": "Lesen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "A1-6 redesigned workbook: Answer1–5 Lesen Richtig/Falsch; Answer6–10 Hören A/B/C. Grade only these ten responses against this key."
+        "instruction": "Grade five true/false questions about the signs and objects."
+      },
+      "teil2": {
+        "label": "Hören",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade five A/B/C questions about Aria and Marcus."
       }
+    },
+    "workbookVersion": "A1-6-WORKBOOK-V2",
+    "partAliases": {
+      "teil1": "Teil 1",
+      "teil2": "Teil 2",
+      "Teil 1": "teil1",
+      "Teil 2": "teil2"
     }
   },
   "A1 Nominative and Accusative Cases 5": {
