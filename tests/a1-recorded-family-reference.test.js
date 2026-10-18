@@ -35,3 +35,20 @@ test('worker and tutor adapters produce identical versioned references from the 
   assert.deepEqual(workerAdapter.familyRecordingReference(reference, recorded, 'A1-3'), familyRecordingReference(reference, { raw: recorded }, 'A1-3'));
   assert.deepEqual(reference.expectedParts, ['teil1', 'teil2', 'teil3']);
 });
+
+test('new grammar revision scores all six blanks and retains the recorded family rubric', () => {
+  const revision = 'a1-3-recorded-family-grammar-v2';
+  const grammarText = `${text}\n\nTEIL 3\n1. gern\n2. Magst\n3. gern\n4. mögen\n5. gern\n6. mag`;
+  const submission = { ...recorded, workbookRevision: revision, submissionText: grammarText };
+  const current = familyRecordingReference(reference, submission, 'A1-3');
+  assert.deepEqual(current.expectedParts, ['teil1', 'teil2', 'teil3']);
+  assert.equal(current.parts.teil3.answerCount, 6);
+  assert.equal(current.totalAnswers, 10);
+  const score = computeObjectiveScore(current, grammarText);
+  assert.equal(score.totalCount, 10);
+  assert.equal(score.correctCount, 10);
+  const wrong = computeObjectiveScore(current, grammarText.replace('6. mag', '6. gern'));
+  assert.equal(wrong.correctCount, 9);
+  assert.equal(resolveQuestionAwareWritingTask({ referenceEntry: current, submission }).modality, 'spoken_transcript');
+  assert.deepEqual(workerAdapter.familyRecordingReference(reference, submission, 'A1-3'), current);
+});
