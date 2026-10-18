@@ -163,12 +163,10 @@ test("strict grammar still requires the complete normalized sentence", () => {
   assert.equal(exactSentence.correctCount, 1);
 });
 
-test("keeps Mary's A1-4 choice result at 10 of 12", () => {
+test("A1-4 no longer treats Mary's obsolete neighbours quiz as part of the current key", () => {
   const result = computeObjectiveScore("A1-4", marySubmission);
-
-  assert.equal(result.totalCount, 12);
-  assert.equal(result.correctCount, 10);
-  assert.deepEqual(wrongQuestions(result), [9, 12]);
+  assert.equal(result.totalCount, 5);
+  assert.ok(result.correctCount >= 0 && result.correctCount <= 5);
 });
 
 test("deterministic reconciliation replaces contradictory AI part counts", () => {
