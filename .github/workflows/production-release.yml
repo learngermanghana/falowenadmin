@@ -109,6 +109,8 @@ jobs:
           tests/live-marking-contract-and-objective-label.test.js
           tests/student-emergency-contact.test.js
       - name: Check learner-source parity
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/auditStudentAdminCurriculumParity.mjs
       - name: Run production contract gate
         run: npm run gate:production
