@@ -1,0 +1,92 @@
+// Offline audio assembly. Gemini 3.8 unary TTS outputs 24 kHz, mono, 16-bit WAV.
+// Doing the pauses and repeats locally avoids additional Google synthesis charges.
+export function parseStudioTranscript(source) {
+  const lines = String(source || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length > 40) throw new Error("Maximum 40 transcript lines.");
+  if (!lines.length) throw new Error("Enter a script or generate one first.");
+  return lines.map((line, index) => {
+    const pause = line.match(/^\[PAUSE\s+(\d{1,2})\]$/i);
+    if (pause) {
+      const seconds = Number(pause[1]);
+      if (seconds < 1 || seconds > 20) throw new Error("Pauses must last 1–20 seconds.");
+      return { type: "pause", seconds };
+    }
+    const turn = line.match(/^([AB]):\s*(.+)$/i);
+    if (!turn) throw new Error(`Line ${index + 1}: use A: text, B: text, or [PAUSE 3].`);
+    if (turn[2].length > 320) throw new Error(`Line ${index + 1} is too long (max 320 characters).`);
+    return { type: "speech", speaker: turn[1].toUpperCase(), text: turn[2] };
+  });
+}
+
+function readClip(wavBytes) {
+  const bytes = wavBytes instanceof Uint8Array ? wavBytes : new Uint8Array(wavBytes);
+  const data = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const ascii = (pos, n) => String.fromCharCode(...bytes.subarray(pos, pos + n));
+  if (bytes.length < 44 || ascii(0, 4) !== "RIFF" || ascii(8, 4) !== "WAVE") throw new Error("Invalid WAV recording.");
+  let offset = 12, format = null, sound = null;
+  while (offset + 8 <= bytes.length) {
+    const label = ascii(offset, 4);
+    const size = data.getUint32(offset + 4, true);
+    const start = offset + 8;
+    if (start + size > bytes.length) throw new Error("Invalid WAV chunk length.");
+    if (label === "fmt ") {
+      if (size < 16) throw new Error("Invalid WAV format.");
+      format = { codec: data.getUint16(start, true), channels: data.getUint16(start + 2, true), rate: data.getUint32(start + 4, true), bits: data.getUint16(start + 14, true) };
+    }
+    if (label === "data") sound = bytes.slice(start, start + size);
+    offset = start + size + (size % 2);
+  }
+  if (!format || !sound || format.codec !== 1 || format.channels !== 1 || format.bits !== 16 || format.rate !== 24_000) {
+    throw new Error("Expected 24 kHz mono 16-bit PCM audio from Google.");
+  }
+  return sound;
+}
+
+function writeWav(samples) {
+  const output = new Uint8Array(44 + samples.length);
+  const d = new DataView(output.buffer);
+  const ascii = (pos, s) => { for (let i = 0; i < s.length; i += 1) output[pos + i] = s.charCodeAt(i); };
+  ascii(0, "RIFF"); d.setUint32(4, 36 + samples.length, true); ascii(8, "WAVE");
+  ascii(12, "fmt "); d.setUint32(16, 16, true); d.setUint16(20, 1, true);
+  d.setUint16(22, 1, true); d.setUint32(24, 24_000, true); d.setUint32(28, 48_000, true);
+  d.setUint16(32, 2, true); d.setUint16(34, 16, true); ascii(36, "data");
+  d.setUint32(40, samples.length, true); output.set(samples, 44);
+  return new Blob([output], { type: "audio/wav" });
+}
+
+function silence(seconds) {
+  // Even byte count for 16-bit PCM; clamp locally to avoid huge allocations.
+  return new Uint8Array(Math.round(Math.max(0, Math.min(seconds, 30)) * 24_000) * 2);
+}
+
+export function assembleListeningExam(lines, clipBytes, options = {}) {
+  const repeats = options.repeats === 2 ? 2 : 1;
+  const lineGap = Math.max(0, Math.min(Number(options.lineGap ?? 0.65), 5));
+  const repeatGap = Math.max(0, Math.min(Number(options.repeatGap ?? 6), 30));
+  const onePass = [];
+  let index = 0;
+  for (const line of lines) {
+    if (line.type === "pause") onePass.push(silence(line.seconds));
+    else {
+      if (!clipBytes[index]) throw new Error("One of the generated lines is missing.");
+      onePass.push(readClip(clipBytes[index]));
+      index += 1;
+      if (lineGap) onePass.push(silence(lineGap));
+    }
+  }
+  if (!index) throw new Error("The transcript has no spoken lines.");
+  const pieces = repeats === 2 ? [...onePass, silence(repeatGap), ...onePass] : onePass;
+  const size = pieces.reduce((total, part) => total + part.length, 0);
+  if (size > 50_000_000) throw new Error("Audio is too long to assemble in the browser.");
+  const samples = new Uint8Array(size);
+  let offset = 0;
+  for (const piece of pieces) { samples.set(piece, offset); offset += piece.length; }
+  return writeWav(samples);
+}
+
+export function base64WavToBytes(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
