@@ -53,6 +53,13 @@ function TopBar() {
   const nav = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onEscape = (event) => { if (event.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [menuOpen]);
   const [deploymentStatus, setDeploymentStatus] = useState(null);
 
   useEffect(() => {
@@ -110,9 +117,9 @@ function TopBar() {
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
             aria-controls="topbar-navigation"
-            aria-label="Toggle navigation menu"
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
           >
-            ☰
+            {menuOpen ? "✕" : "☰"}
           </button>
 
           <Link to={isStaff ? "/students" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
