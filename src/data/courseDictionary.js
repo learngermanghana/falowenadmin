@@ -23,9 +23,8 @@ export const courseDictionary = {
     "A1-9": { assignment_id: "A1-9", chapter: "9", de: "Essen und Verneinung", en: "Food and Negation" },
     "A1-10": { assignment_id: "A1-10", chapter: "10", de: "Essen und Alltag", en: "Food and Daily Life" },
     "A1-11": { assignment_id: "A1-11", chapter: "11", de: "Anweisungen und Wegbeschreibung – Imperativ mit Sie", en: "Instructions and Directions – Polite Sie Imperative" },
-    "A1-12.1": { assignment_id: "A1-12.1", chapter: "12.1", de: "Zwei-Wege-Präpositionen", en: "Two-way Prepositions" },
-    "A1-12.2": { assignment_id: "A1-12.2", chapter: "12.2", de: "Berufe und Präpositionen", en: "Professions and Prepositions" },
-    "A1-5.9": { assignment_id: "A1-5.9", chapter: "5.9", de: "Goethe A1 Sprechen Training", en: "Goethe A1 Speaking Practice" },
+    "A1-12.1": { assignment_id: "A1-12.1", chapter: "12.1", de: "Wechselpräpositionen und Dativpräpositionen", en: "Two-Way and Dative Prepositions" },
+    "A1-5.9": { assignment_id: "A1-5.9", chapter: "5.9", de: "Goethe A1 Sprechen Training", en: "Goethe A1 Speaking Confidence Lab" },
     "A1-12.3": { assignment_id: "A1-12.3", chapter: "12.3", de: "Einführung ins Briefeschreiben", en: "Introduction to Letter Writing" },
     "A1-13": { assignment_id: "A1-13", chapter: "13", de: "Wetter", en: "Weather" },
     "A1-14.1": { assignment_id: "A1-14.1", chapter: "14.1", de: "Gesundheit und Körperteile", en: "Health and Body Parts" },
@@ -181,3 +180,8 @@ export function getUnifiedTopicLabel(assignmentId, fallbackTopic = "") {
   const title = level === "A1" ? entry.en : entry.de;
   return `${entry.chapter}. ${title || entry.de || entry.en}`;
 }
+
+// Historical teaching lookups may read this archive; schedulers use courseDictionary.
+export const retiredCourseDictionary = {
+  A1: { "A1-12.2": { assignment_id: "A1-12.2", chapter: "12.2", de: "Berufe und Präpositionen", en: "Professions and Prepositions" } },
+};

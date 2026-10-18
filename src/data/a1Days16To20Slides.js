@@ -78,31 +78,32 @@ const plans = Object.freeze({
     exit: "Ergänze: „___ Sie geradeaus; ___ Sie links ___; ___ Sie die Straße.“",
   },
   "A1-12.1": {
-    subtitle: "A1 Day 18 · Wechselpräpositionen Course Book assignment. Existing answer key has three parts.",
+    subtitle: "A1 Day 18 · Two-way and dative prepositions in chapter 12.1. The existing 12.1 exercise and three-part answer key are unchanged.",
     parts: [
       { label: "Teil 1", detailEn: "Review the published part and apply the location/destination case decision." },
       { label: "Teil 2", detailEn: "Use the learner page's actual questions. Compare Wo? + dative with Wohin? + accusative." },
       { label: "Teil 3", detailEn: "Check the final published part; the admin slides do not invent additional activities." },
     ],
     notes: [
-      "Day 18 has two separate lessons: A1-12.1 two-way prepositions and A1-12.2 workplace prepositions.",
-      "Use static Wo? + dative versus directed Wohin? + accusative only in taught matched pairs: auf dem/den Tisch, in der/die Küche.",
+      "Day 18 combines two-way prepositions and dative prepositions (especially mit, bei and zu) under A1-12.1. The separate 12.2 exercise is retired; a new combined exercise will be authored later.",
+      "Teach Wo? + dative versus destination Wohin? + accusative for two-way prepositions. Then contrast dative-only mit, bei and zu: mit dem Bus, beim Arzt, zum Arzt and zur Arbeit. Movement alone does not determine the case.",
       "The marking manifest establishes three answer-key-backed parts, but not who marks them.",
     ],
     questions: [
       "Warum heißt es „auf dem Tisch“ bei Wo?",
       "Warum heißt es „auf den Tisch“ bei Wohin?",
-      "Ergänze: „Wir sind in ___ Küche.“",
-      "Was ist richtig: Das Buch liegt auf dem oder den Tisch?",
+      "Ergänze: „Ich fahre mit ___ Bus.“",
+      "Ergänze: „Ich bin ___ Arzt; dann gehe ich ___ Arbeit.“",
     ],
     flow: [
-      ["Wo oder Wohin?", "8 min: classify each sentence as a stationary location or destination."],
-      ["Auf dem / auf den", "10 min: match location and placement sentences and identify the changed masculine article."],
-      ["In der / in die", "9 min: compare the two feminine kitchen examples."],
-      ["Fall korrigieren", "8 min: correct one wrong location and one wrong destination sentence."],
-      ["Workbook übertragen", "10 min: open A1-12.1 and work through its three actual learner parts."],
+      ["Wo oder Wohin?", "8 min: distinguish location from a destination with auf dem/den Tisch and in der/die Küche."],
+      ["Mit wem? Womit?", "8 min: learners produce mit dem Bus, mit dem Auto and mit meiner Freundin from transport/person cues."],
+      ["Bei oder zu?", "9 min: contrast Ich bin beim Arzt / Ich gehe zum Arzt and bei meiner Mutter / zu meiner Mutter. Learners explain why both forms use dative."],
+      ["Gemischte Fälle", "10 min: learners choose in den Park, im Park, mit dem Bus and zur Arbeit. Movement alone is not the rule."],
+      ["Workbook übertragen", "10 min: retain the current 12.1 exercise and answer key; the combined standard exercise will be authored later."],
     ],
-    exit: "Ergänze die Fälle: „Das Buch liegt auf ___ Tisch; ich lege es auf ___ Tisch.“",
+    exit: "Ergänze: „Das Buch liegt auf ___ Tisch; ich lege es auf ___ Tisch; ich fahre mit ___ Bus; ich bin ___ Arzt; ich gehe ___ Arzt.“",
+
   },
   "A1-12.2": {
     subtitle: "A1 Day 18 · Berufe und Präpositionen Course Book assignment. Existing answer key has three parts.",
@@ -112,7 +113,7 @@ const plans = Object.freeze({
       { label: "Teil 3", detailEn: "Complete the published final part on work context and destination language." },
     ],
     notes: [
-      "This is the second Day 18 lesson, separate from Wechselpräpositionen A1-12.1.",
+      "Legacy 12.2 teaching material: teach this grammar within the combined A1-12.1 lesson. Do not assign a separate 12.2 exercise.",
       "Teach als + profession, bei + employer, in + workplace, zur Arbeit + direction with short recognisable sentences.",
       "All three learner parts are answer-key-backed but there is no proof of manual tutor marking in the source.",
     ],
@@ -127,7 +128,7 @@ const plans = Object.freeze({
       ["Als oder bei?", "9 min: match profession with als and employer with bei."],
       ["In oder zur?", "9 min: distinguish where a person works from travelling to work."],
       ["Satzfehler beheben", "10 min: correct two mixed-up prepositions without a job interview."],
-      ["Workbook übertragen", "10 min: inspect the three real A1-12.2 sections and apply the matching grammar."],
+      ["Workbook übertragen", "10 min: open the combined 12.1 grammar notes, then retain the current 12.1 exercise. No separate 12.2 submission."],
     ],
     exit: "Ergänze die vier Wörter: „___ Lehrer, ___ einer Bank, ___ einem Krankenhaus, ___ Arbeit“.",
   },
@@ -169,6 +170,14 @@ export function enhanceA1Days16To20Slide(slide = {}) {
   if (!workbookUrl) throw new Error(id + ": no verified published learner destination");
   return {
     ...slide,
+    ...(id === "A1-12.1" ? { title: "A1 Day 18 · Two-Way and Dative Prepositions", topic: "12.1 Two-Way and Dative Prepositions" } : {}),
+    ...(id === "A1-12.1" ? {
+      teacherSupport: {
+        ...(slide.teacherSupport || {}),
+        grammarFocusEn: ["Two-way prepositions: Wo? + dative, destination Wohin? + accusative.", "Dative-only mit, bei and zu: mit dem Bus, beim Arzt, zum Arzt, zur Arbeit. Movement alone is not the rule."],
+        modelExamplesDe: ["Das Buch liegt auf dem Tisch.", "Ich lege das Buch auf den Tisch.", "Ich fahre mit dem Bus.", "Ich bin beim Arzt.", "Ich gehe zum Arzt.", "Wir fahren zur Arbeit."],
+      },
+    } : {}),
     studentQuestionsDe: plan.questions,
     teacherNotesEn: plan.notes,
     interactionFlow: plan.flow.map(([phase, detailEn]) => ({ phase, detailEn })),

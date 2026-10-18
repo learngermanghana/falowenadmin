@@ -26,7 +26,7 @@ export const A1_PUBLISHED_WORKBOOK_BY_ASSIGNMENT = Object.freeze({
   "A1-10": "/campus/course/a1-day-16-food-and-negation-kapitel-10-workbook",
   "A1-11": "/campus/course/a1-day-17-instructions-and-directions-kapitel-11-workbook",
   "A1-12.1": "/campus/course/two-case-prepositions-wechselpraepositionen-day-18?view=workbook",
-  "A1-12.2": "/campus/course/a1-12-2-dative-articles-mit-bei-zu?view=workbook",
+  "A1-12.2": "/campus/course/two-case-prepositions-wechselpraepositionen-day-18?view=grammar",
   "A1-12.3": "/campus/course/letter-writing-intro-german-a1-day-12-3",
   "A1-13": "/campus/course/a1-day-21-weather-workbook",
   "A1-14.1": "/campus/course/a1-day-22-health-and-body-parts-workbook",

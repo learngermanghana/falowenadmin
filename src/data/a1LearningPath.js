@@ -9,7 +9,15 @@ const TUTOR_MARKED = /\btutor[-\s]?marked\b/i;
 export function getA1LearningPath(slide = {}) {
   if (clean(slide.course).toUpperCase() !== "A1") return null;
   const id = clean(slide.assignmentId).toUpperCase();
-  if (id === "A1-TUTORIAL" || id === "A1-5.9") return null;
+  if (id === "A1-TUTORIAL") return null;
+  if (id === "A1-5.9") return {
+    kind: "graded-speaking", assignmentId: id,
+    label: "Required speaking assignment",
+    instruction: "Complete Teil 1, Teil 2 and Teil 3 with the AI examiner. Submit the complete assessment to save your score and feedback.",
+    actionLabel: "Open speaking assignment",
+    reviewLabel: "Teacher: confirm that all three verified speaking parts and the final score are saved.",
+    activityUrl: "https://www.falowen.app/campus/course/verboten-erlaubt-5-9",
+  };
 
   const connection = slide.workbookConnection || {};
   const sourceText = [

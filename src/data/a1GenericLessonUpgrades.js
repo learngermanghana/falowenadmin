@@ -116,9 +116,9 @@ const A1_LESSON_CONTENT_UPGRADES = Object.freeze({
     wrapUpTaskDe: "Beschreibe deinen Alltag in vier Sätzen und beginne mindestens einen Satz mit einer Zeitangabe.",
   },
   "A1-12.1": {
-    objective: "Students can distinguish location from movement with common two-way prepositions by using dative for Wo? and accusative for Wohin? in simple examples.",
+    objective: "Students can distinguish location from destination with two-way prepositions and use dative-only mit, bei and zu in simple travel, appointment and workplace sentences.",
     warmupQuestionsDe: ["Wo ist dein Handy jetzt?", "Wohin legst du dein Buch?", "Was ist der Unterschied zwischen Wo? und Wohin?"],
-    keyPhrasesDe: ["Das Buch liegt auf dem Tisch.", "Ich lege das Buch auf den Tisch.", "Wir sind in der Küche.", "Wir gehen in die Küche.", "Das Bild hängt an der Wand."],
+    keyPhrasesDe: ["Das Buch liegt auf dem Tisch.", "Ich lege das Buch auf den Tisch.", "Wir sind in der Küche.", "Wir gehen in die Küche.", "Ich fahre mit dem Bus.", "Ich bin beim Arzt.", "Ich gehe zum Arzt.", "Wir fahren zur Arbeit."],
     studentQuestionsDe: ["Wo liegt dein Handy?", "Wohin legst du deinen Stift?", "Wo bist du jetzt?", "Wohin gehst du nach dem Kurs?"],
     teacherNotesEn: ["Teach the meaning contrast before article tables: location versus movement toward a destination.", "Use matched sentence pairs so learners see dem/den and der/die changes in context.", "Keep the preposition set small and high-frequency during live practice."],
     interactionFlow: [

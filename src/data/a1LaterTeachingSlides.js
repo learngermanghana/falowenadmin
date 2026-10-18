@@ -151,7 +151,7 @@ export const a1LaterTeachingSlides = [
     workbookConnection: {
       grammarUrl: "",
       workbookUrl: "https://www.falowen.app/campus/course/verboten-erlaubt-5-9",
-      subtitle: "A1-5.9 is an exam-readiness lab. The student page is used for Goethe A1 speaking practice, not as a separate grammar topic.",
+      subtitle: "Required assignment A1-5.9 · Goethe A1 Speaking Confidence Lab · Complete all three speaking parts with the AI examiner and save the combined score. This replaces the retired 12.2 exercise; A1 still has 19 required assignments.",
       parts: [
         { label: "Teil 1 · Sich vorstellen", detailEn: "Name, age, country, residence, languages, profession/study and hobby; then spelling and a number task." },
         { label: "Teil 2 · Fragen und Antworten", detailEn: "Turn a topic/keyword into a suitable question, listen to the partner and answer in a complete short sentence." },

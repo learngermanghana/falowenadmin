@@ -153,6 +153,7 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
   "A1-12.1": {
     grammarFocusEn: [
       "Use dative with a two-way preposition for location: Wo?",
+      "Use mit, bei and zu with dative even with a destination: mit dem Bus, beim Arzt, zum Arzt, zur Arbeit.",
       "Use accusative with a two-way preposition for movement toward a destination: Wohin?",
       "Make the article change visible, especially dem/der/den versus den/die/das.",
     ],
@@ -161,10 +162,13 @@ export const A1_TOPIC_TEACHER_SUPPORT = {
       "Ich lege das Buch auf den Tisch.",
       "Wir sind in der Küche.",
       "Wir gehen in die Küche.",
+      "Ich fahre mit dem Bus.",
+      "Ich bin beim Arzt. Ich gehe zum Arzt.",
+      "Wir fahren zur Arbeit.",
     ],
     commonMistakesEn: [
       "Choosing the case only from the preposition without asking Wo? or Wohin?.",
-      "Using dative for movement toward a destination.",
+      "Treating all movement as accusative: zu always takes dative, and movement within a location can use dative.",
       "Forgetting the masculine article change between dem and den.",
     ],
   },

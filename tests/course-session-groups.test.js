@@ -6,10 +6,10 @@ import {
   getCourseSessionGroups,
 } from "../src/data/courseSessionGroups.js";
 
-test("A1 has 29 curriculum tasks but 25 attendance days", () => {
+test("A1 has 28 curriculum tasks but 25 attendance days", () => {
   const groups = getCourseSessionGroups("A1");
   assert.equal(getCourseSessionCount("A1"), 25);
-  assert.equal(groups.reduce((total, group) => total + group.assignmentIds.length, 0), 29);
+  assert.equal(groups.reduce((total, group) => total + group.assignmentIds.length, 0), 28);
 });
 
 test("same-day A1 tasks share one attendance session", () => {
@@ -26,8 +26,8 @@ test("same-day A1 tasks share one attendance session", () => {
     ["A1-9", "A1-10"],
   );
   assert.deepEqual(
-    findCourseSessionGroup("A1", "A1-12.2")?.assignmentIds,
-    ["A1-12.1", "A1-12.2"],
+    findCourseSessionGroup("A1", "A1-12.1")?.assignmentIds,
+    ["A1-12.1"],
   );
 });
 
