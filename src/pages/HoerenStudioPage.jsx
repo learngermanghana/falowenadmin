@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext";
-import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson } from "../services/hoerenStudioService";
+import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson, getHoerenPublishCatalog } from "../services/hoerenStudioService";
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
@@ -60,6 +60,8 @@ export default function HoerenStudioPage() {
   const [publishDay, setPublishDay] = useState(18);
   const [assignmentKey, setAssignmentKey] = useState("A1-12.1");
   const [published, setPublished] = useState(null);
+  const [courseLessons, setCourseLessons] = useState([]);
+  const [courseLessonsError, setCourseLessonsError] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -69,6 +71,13 @@ export default function HoerenStudioPage() {
     return () => { alive = false; };
   }, []);
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
+  useEffect(() => {
+    let active = true;
+    getHoerenPublishCatalog().then(lessons => {
+      if (active) { setCourseLessons(lessons); setCourseLessonsError(""); }
+    }).catch(error => { if (active) setCourseLessonsError(error.message); });
+    return () => { active = false; };
+  }, []);
 
   const transcript = useMemo(() => {
     try { return { lines: parseStudioTranscript(script), error: "" }; }
@@ -82,9 +91,12 @@ export default function HoerenStudioPage() {
     catch (error) { return { data: [], error: error.message }; }
   }, [script, questions, questionKind]);
   const questionsMatchScript = questionScript === script;
+  const availableDays = [...new Set(courseLessons.filter(item => item.level === level).map(item => Number(item.day)))].sort((a, b) => a - b);
+  const filteredAssignments = courseLessons.filter(item => item.level === level && Number(item.day) === Number(publishDay));
+  const selectedAssignment = filteredAssignments.find(item => item.assignmentKey === assignmentKey);
   const canPublish = !!audioBlob && !!reviewedQuestions.data.length && questionsMatchScript &&
     teacherApproved && !busy && ["A1", "A2", "B1"].includes(level) &&
-    new RegExp("^" + level + "-[0-9]{1,2}(?:\\.[0-9]{1,2})?$" ).test(assignmentKey.trim());
+    !!selectedAssignment && Number.isInteger(Number(publishDay));
   const updateQuestions = (index, changes) => {
     setQuestions(existing => existing.map((q, i) => i === index ? { ...q, ...changes } : q));
     setTeacherApproved(false); setPublished(null);
@@ -339,13 +351,29 @@ export default function HoerenStudioPage() {
             <input value={level} readOnly aria-label="Selected course level" />
           </label>
           <label>Course Book day
-            <input type="number" min="1" max="60" value={publishDay} disabled={!!busy}
-              onChange={e => { setPublishDay(e.target.value); setTeacherApproved(false); }} />
+            <select value={availableDays.includes(Number(publishDay)) ? String(publishDay) : ""} disabled={!!busy || !availableDays.length}
+              onChange={e => {
+                const day = Number(e.target.value);
+                const first = courseLessons.find(item => item.level === level && Number(item.day) === day);
+                setPublishDay(day); setAssignmentKey(first?.assignmentKey || "");
+                setTeacherApproved(false); setPublished(null);
+              }}>
+              <option value="">Select day</option>
+              {availableDays.map(day => <option key={day} value={day}>Day {day}</option>)}
+            </select>
           </label>
         </div>
-        <label>Existing assignment ID (e.g. A1-12.1)
-          <input value={assignmentKey} disabled={!!busy} onChange={e => { setAssignmentKey(e.target.value.toUpperCase()); setTeacherApproved(false); }} />
+        <label>Falowen assignment
+          <select value={selectedAssignment ? assignmentKey : ""} disabled={!!busy || !filteredAssignments.length}
+            onChange={e => { setAssignmentKey(e.target.value); setTeacherApproved(false); setPublished(null); }}>
+            <option value="">Select assignment</option>
+            {filteredAssignments.map(item => <option key={item.assignmentKey} value={item.assignmentKey}>
+              {item.assignmentKey} · {item.title}
+            </option>)}
+          </select>
         </label>
+        {courseLessonsError ? <p className="hoeren-validation" role="alert">{courseLessonsError}</p> : null}
+        {selectedAssignment ? <p className="hoeren-hint">Course Book: {selectedAssignment.route}</p> : null}
         <label className="hoeren-effect-option">
           <input type="checkbox" checked={teacherApproved} disabled={!!busy || !audioBlob || !!reviewedQuestions.error || !questionsMatchScript}
             onChange={e => setTeacherApproved(e.target.checked)} />
