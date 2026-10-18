@@ -164,6 +164,10 @@ function detectPartType({ partId, text, referenceEntry = {} } = {}) {
     const inferred = findPartId(value);
     return inferred !== "unknown" ? inferred : String(value || "").trim().toLowerCase();
   });
+  // Pre-assessed speaking results are student-submitted text, not trusted server
+  // marks. Never feed the claimed score into either objective or writing grading.
+  const speakingGrading = referenceEntry.partGrading?.[normalizedPartId]?.gradingMode || "";
+  if (/tutor_verified_speaking/i.test(speakingGrading)) return "speaking";
   if (declaredWritingParts.includes(normalizedPartId)) return "writing";
 
   const declaredObjectiveParts = Array.isArray(referenceEntry.referenceAnswerParts)
@@ -1098,6 +1102,13 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
 
   const parts = rawParts.map((part) => {
     const partType = detectPartType({ level, partId: part.partId, text: part.text, referenceEntry });
+    if (partType === "speaking") {
+      return {
+        ...part, partType,
+        result: { status: "needs_review", score: null, feedback: "Speaking assessment awaits tutor verification; a score embedded in a student submission is not trusted." },
+        confidence: 0.2,
+      };
+    }
     if (partType === "writing") {
       const writingResult = aiWritingMarker({ level, assignmentKey, partId: part.partId, text: part.text, rubric: WRITING_RUBRICS[level] || WRITING_RUBRICS.A1 });
       return { ...part, partType, result: writingResult, confidence: Math.min(part.confidence || 0.5, writingResult.confidence || 0.5) };
@@ -1110,13 +1121,14 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
 
   const aggregate = aggregatePartResults(parts);
   const hasWriting = parts.some((part) => part.partType === "writing");
+  const hasUnverifiedSpeaking = parts.some((part) => part.partType === "speaking");
   const isObjectiveAssignment = String(referenceEntry?.format || "").toLowerCase() === "objective";
   const unclearStructure = !level || !assignmentKey || (!isObjectiveAssignment && parts.some((part) => part.partId === "unknown" && !looksLikeWritingTask(part.text)));
   const objectiveNeedsReview = parts.some((part) => part.partType === "objective" && (part.result?.status === "needs_review" || part.result?.needsReview?.length));
   const missingRequiredObjectiveKey = parts.some((part) => part.partType === "objective" && !part.result?.total);
-  const needsReview = unclearStructure || aggregate.confidence < WRITING_CONFIDENCE_THRESHOLD || missingRequiredObjectiveKey || objectiveNeedsReview;
+  const needsReview = hasUnverifiedSpeaking || unclearStructure || aggregate.confidence < WRITING_CONFIDENCE_THRESHOLD || missingRequiredObjectiveKey || objectiveNeedsReview;
   const status = needsReview ? "needs_review" : "marked";
-  const shouldSendAutomatically = !hasWriting || aggregate.confidence >= WRITING_CONFIDENCE_THRESHOLD;
+  const shouldSendAutomatically = !hasUnverifiedSpeaking && (!hasWriting || aggregate.confidence >= WRITING_CONFIDENCE_THRESHOLD);
 
   return {
     score: aggregate.finalScore,
@@ -1135,6 +1147,7 @@ function routeAndMarkSubmission({ referenceEntry = {}, submission = {}, submissi
     improvementSummary: stripBoldMarkdown(parts.map((part) => part.result?.improvementSummary).filter(Boolean).join("\n")),
     confidence: aggregate.confidence,
     status,
+    ...(hasUnverifiedSpeaking ? { reviewReasons: ["Speaking score is not server-verified; tutor review required before publication."] } : {}),
     shouldSendAutomatically,
     dataModel: {
       markingProfilePath: assignmentKey ? `markingProfiles/${assignmentKey}` : "markingProfiles/{assignmentKey}",
