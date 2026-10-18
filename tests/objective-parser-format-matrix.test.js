@@ -99,9 +99,9 @@ C
 
 Teil 4
 B
-C
-A
 B
+A
+C
 A`;
 
   const result = computeObjectiveScore("A2-6.16", submission);
@@ -114,7 +114,7 @@ A`;
   );
   assert.deepEqual(
     [1, 2, 3, 4, 5].map((question) => result.details[`teil4.${question}`].student),
-    ["B", "C", "A", "B", "A"],
+    ["B", "B", "A", "C", "A"],
   );
   assert.equal(Object.values(result.details).filter((detail) => detail.student).length, 10);
   assert.equal(result.details["teil3.1"].correct, true);
