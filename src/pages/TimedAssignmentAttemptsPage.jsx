@@ -266,7 +266,7 @@ export default function TimedAssignmentAttemptsPage() {
       recovered = recovered.filter(item => isMatchingCampusTimer(item, assignmentKey));
       setRecoveredTimed(recovered);
 
-      // Admin's marking loader supports flat submissions, collectionGroup(posts),
+      // Admin's marking loader supports flat and grouped posts,
       // nested submission collections, and historical identity aliases.
       // Never infer that homework is missing from a timer status alone.
       const receiptResult = await findCampusSubmissionReceipts({
