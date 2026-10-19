@@ -176,3 +176,18 @@ test("long Goethe recordings permit up to 36 speech segments", () => {
   const tooLong = Array.from({ length: 37 }, (_, i) => `A: Satz ${i + 1}.`).join("\n");
   assert.match(inspectHoerenDraft({ script: tooLong, kind: "multiple-choice" }).errors.join(" "), /36 spoken segments/);
 });
+
+
+test("autoformat preserves commas in spoken comparisons and line-separated turns", () => {
+  const spoken = "A: Wir vergleichen Modell A: günstig, B: schnell und C: leise.";
+  assert.equal(formatStudioTranscript(spoken), spoken);
+  assert.deepEqual(parseStudioTranscript(spoken).map(line => line.text), ["Wir vergleichen Modell A: günstig, B: schnell und C: leise."]);
+  const separate = "A: Guten Tag,\nB: Hallo!";
+  assert.equal(formatStudioTranscript(separate), separate);
+  assert.equal(parseStudioTranscript(separate)[0].text, "Guten Tag,");
+  assert.equal(sameSpokenTranscript(separate, separate.replace("Tag,", "Tag")), false);
+  const pasted = "A: Guten Tag.,B: Hallo!,[PAUSE 3],A: Bis morgen.";
+  assert.equal(formatStudioTranscript(pasted), "A: Guten Tag.\nB: Hallo!\n[PAUSE 3]\nA: Bis morgen.");
+  const ambiguous = "A: Wähle A: günstig, B: schnell";
+  assert.equal(formatStudioTranscript(ambiguous), ambiguous);
+});
