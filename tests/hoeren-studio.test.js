@@ -2,8 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { parseStudioTranscript, assembleListeningExam } from "../src/utils/hoerenAudio.js";
+import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 
 const require = createRequire(import.meta.url);
+const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions/hoerenExamProfiles.js");
+const { validateQuestionSet, extractLessonDraft, questionInstructions } = require("../functions/hoerenQuestions.js");
 const {
   MODELS, LIMITS, ownerUid, isStudioOwner, validateSpeechRequest,
   validateScriptRequest, extractAudio, extractScript,
@@ -43,7 +46,8 @@ test("speech requests strictly limit paid generation inputs", () => {
   assert.throws(() => validateSpeechRequest({ text: "x".repeat(321) }), /320/);
   assert.throws(() => validateSpeechRequest({ text: "Hello", engine: "unknown" }), /engine/);
   assert.throws(() => validateSpeechRequest({ text: "[PAUSE 3]" }), /Pause/);
-  assert.throws(() => validateScriptRequest({ level: "C2", type: "dialogue", topic: "Hallo" }), /level/);
+  assert.throws(() => validateScriptRequest({ level: "C2", type: "dialogue", topic: "Hallo" }), /Teil/);
+  assert.equal(validateSpeechRequest({ text: "Guten Tag", speaker: "C" }).speaker, "C");
 });
 test("Goethe-style editable transcript parses exact pauses and voices", () => {
   assert.deepEqual(parseStudioTranscript("A: Hallo\n[PAUSE 3]\nB: Guten Tag"), [
@@ -72,4 +76,39 @@ test("Google REST audio and script are checked before accepting a response", () 
   assert.throws(() => extractAudio({ steps: [] }), /did not return audio/);
   assert.equal(extractScript({ candidates: [{ content: { parts: [{ text: "A: Guten Tag" }] } }] }), "A: Guten Tag");
   assert.throws(() => extractScript({ candidates: [] }), /empty/);
+});
+
+test("all official Hören Teil/Aufgabe selections are configured", () => {
+  for (const [level, count] of Object.entries({ A2: 4, B1: 4, B2: 4, C1: 4, C2: 3 })) {
+    assert.equal(Object.keys(EXAM_PROFILES[level]).length, count);
+  }
+  const profile = getExamProfile("C1", "1");
+  assert.equal(profile.label, "Podcast · Buch 1/2/3");
+  assert.equal(profile.repeats, 1);
+  assert.equal(profile.questionCount, 6);
+  assert.equal(profile.kind, "multiple-choice");
+  assert.equal(validateScriptRequest({ level: "C1", part: "1", type: "podcast", topic: "Drei Bücher" }).profile, profile);
+  assert.throws(() => validateScriptRequest({ level: "C1", part: "1", type: "telephone", topic: "Drei Bücher" }), /does not match/);
+  assert.equal(getExamProfile("C2", "4"), null);
+  const prompt = buildExamPrompt(profile, "Neue Romane", questionInstructions(profile.kind, profile.questionCount));
+  assert.match(prompt, /Buch 1/);
+  assert.match(prompt, /exactly 6 objects/);
+  assert.match(prompt, /once|Einmaliges/);
+});
+test("C1 Buch 1/2/3 matching requires six evidence-backed choices", () => {
+  const script = "A: Erstes Buch ist ein Roman über eine Forschungsreise. Zweites Buch erzählt von historischen Häfen. Drittes Buch erklärt den Klimawandel.";
+  const names = ["Buch 1 – Reise", "Buch 2 – Häfen", "Buch 3 – Klima"];
+  const fragments = ["Erstes Buch ist ein Roman", "Zweites Buch erzählt von historischen Häfen", "Drittes Buch erklärt den Klimawandel"];
+  const questions = Array.from({ length: 6 }, (_, i) => ({
+    question: "Welches Buch passt zur Aussage Nummer " + (i + 1) + "?",
+    options: names,
+    correctIndex: i % 3,
+    evidence: fragments[i % 3],
+  }));
+  assert.equal(validateQuestionSet({ script, kind: "multiple-choice", questions, expectedCount: 6 }).length, 6);
+  assert.equal(validateDraftQuestions({ script, kind: "multiple-choice", questions, expectedCount: 6 }).length, 6);
+  assert.throws(() => validateQuestionSet({ script, kind: "multiple-choice", questions: questions.slice(0, 5), expectedCount: 6 }), /Exactly 6/);
+  const result = { candidates: [{ content: { parts: [{ text: JSON.stringify({ script, kind: "multiple-choice", questions }) }] } }] };
+  assert.equal(extractLessonDraft(result, 6).questions.length, 6);
+  assert.throws(() => extractLessonDraft(result, 5), /Exactly 5/);
 });
