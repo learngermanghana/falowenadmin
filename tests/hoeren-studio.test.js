@@ -191,3 +191,37 @@ test("autoformat preserves commas in spoken comparisons and line-separated turns
   const ambiguous = "A: Wähle A: günstig, B: schnell";
   assert.equal(formatStudioTranscript(ambiguous), ambiguous);
 });
+
+test("pasted transcript delimiters accept spaces and tabs without joining speakers", () => {
+  for (const separator of [", ", ",\t", ", \t"]) {
+    const turns = `A: Hallo.${separator}B: Guten Tag.`;
+    assert.equal(formatStudioTranscript(turns), "A: Hallo.\nB: Guten Tag.");
+    assert.deepEqual(parseStudioTranscript(turns), [
+      { type: "speech", speaker: "A", text: "Hallo." },
+      { type: "speech", speaker: "B", text: "Guten Tag." },
+    ]);
+    assert.equal(sameSpokenTranscript(turns, "A: Hallo.\nB: Guten Tag."), true);
+
+    const pauseTurn = `[PAUSE 3]${separator}A: Bis bald.`;
+    assert.equal(formatStudioTranscript(pauseTurn), "[PAUSE 3]\nA: Bis bald.");
+    assert.deepEqual(parseStudioTranscript(pauseTurn), [
+      { type: "pause", seconds: 3 },
+      { type: "speech", speaker: "A", text: "Bis bald." },
+    ]);
+
+    const toPause = `A: Hallo.${separator}[PAUSE 3]`;
+    assert.equal(formatStudioTranscript(toPause), "A: Hallo.\n[PAUSE 3]");
+  }
+});
+
+test("comma delimiters never consume newlines or reassign spoken comparison text", () => {
+  const alreadySplit = "A: Guten Tag,\nB: Hallo!";
+  assert.equal(formatStudioTranscript(alreadySplit), alreadySplit);
+  assert.equal(formatStudioTranscript("A: Hallo.,\nB: Guten Tag."), "A: Hallo.,\nB: Guten Tag.");
+  assert.equal(formatStudioTranscript("[PAUSE 3],\nA: Bis bald."), "[PAUSE 3],\nA: Bis bald.");
+  const comparison = "A: Modell A: günstig, B: schnell und C: leise.";
+  assert.equal(formatStudioTranscript(comparison), comparison);
+  assert.deepEqual(parseStudioTranscript(comparison).map(line => line.speaker), ["A"]);
+  const comparisonTab = "A: Modell A: günstig,\tB: schnell.";
+  assert.equal(formatStudioTranscript(comparisonTab), comparisonTab);
+});
