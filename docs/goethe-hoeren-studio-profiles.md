@@ -2,9 +2,19 @@
 
 Owner-only page: https://admin.falowen.app/ai-studio
 
+## Separate editor workflows
+
+The AI Studio now has two visible modes. **Course Book Audio** supports flexible listening lessons at A1–C2 with an editable recording type, topic and Richtig/Falsch or multiple-choice question format. An existing lesson can be selected at the start of the workflow; teacher-approved five-question A1–B1 lessons still use the existing publishing endpoint. Course Book audio can also be created and downloaded without questions, but direct publication still requires five verified questions.
+
+**Goethe Exam Audio** supports the A2–C2 level/Teil presets below. The selected task locks the recording structure, exact question kind and count, and one/two-playback default. Its question-format selector is completely hidden: only the question content and answer key remain editable for teacher review. Goethe exercises export locally and are never sent to the Course Book publishing endpoint.
+
+A pre-audio checker validates transcript notation, segment and question counts, literal supporting evidence, and C1 Teil 1's shared Buch 1/2/3 answer options. Warnings flag unusual word counts or speakers. These are structural checks, **not** automatic guarantees that the listening answers are semantically correct. A teacher must check correctness.
+
+The sentence editor can change one speaker's line without discarding other voice clips. Successful clips are cached in the current browser session under voice model + speaker + exact text. Only missing clips call Google's TTS API; rearranging or remixing unchanged clips is free of further synthesis requests. Reloading or closing the page discards this ephemeral cache.
+
 ## Selection
 
-Choose **A2, B1, B2 or C1**, then **Hören Teil 1–4**. Choose **C2**, then **Hören Aufgabe 1–3** (Goethe C2 uses *Aufgabe*, not *Teil*, in its listening model exam). A1 keeps the original generic recording tools.
+Choose **A2, B1, B2 or C1**, then **Hören Teil 1–4**. Choose **C2**, then **Hören Aufgabe 1–3** (Goethe C2 uses *Aufgabe*, not *Teil*, in its listening model exam). A1 remains available under the Course Book Audio workflow.
 
 The profile changes:
 - Recording structure (podcast, interview, lecture, announcements, discussion, etc.).
@@ -23,7 +33,7 @@ The existing studio uses a maximum of 18 TTS clips per recording (320 characters
 
 C2 Aufgabe 1 and certain lower-level mixed/picture-matching tasks are **adapted practice segments**, not complete official-format exam reproductions: image choices and mixed answer modes are represented using text Richtig/Falsch or a–c selection. Editors must review each question and evidence and confirm the selected Teil fits learner objectives. The description on screen explains each format. C2 Aufgabe 1 uses one excerpt with five statements, not all 15 statements from five excerpts.
 
-Only existing five-question A1–B1 Course Book activities can currently be published directly. Higher levels and longer exercise formats remain **local MP3/WAV/transcript/question-key exports**, with publish disabled. Do not bypass that safeguard until student rendering, storage, grading and scoring are updated for all Goethe-style answer modes.
+Only existing five-question A1–B1 **Course Book Audio** activities can currently be published directly. Higher levels and longer exercise formats remain **local MP3/WAV/transcript/question-key exports**, with publish disabled. Do not bypass that safeguard until student rendering, storage, grading and scoring are updated for all Goethe-style answer modes.
 
 Server controls: `functions/hoerenExamProfiles.js`, `functions/hoerenStudioApi.js`, `functions/hoerenQuestions.js`.
 Client: `src/pages/HoerenStudioPage.jsx`, `src/utils/hoerenQuestions.js`, `src/services/hoerenStudioService.js`.
