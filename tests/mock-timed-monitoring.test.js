@@ -30,6 +30,7 @@ test("navigation restores mock monitoring and preserves timed attempt resets", (
   const page=fs.readFileSync("src/pages/TimedAssignmentAttemptsPage.jsx","utf8");
   assert.equal(app.split("\n").filter(line => line.includes('to="/timed-attempts"') && line.includes("Mock Monitoring & Timers</Link>")).length, 2, "both staff and administrator navigation must include the monitoring link");
   assert.match(page,/data-testid="mock-monitoring"/);
+  assert.match(page, /key=\{receipt\.path\}/, "multi-layout receipt cards need unique full-path keys");
   assert.match(page,/data-testid="timed-assignments"/);
   assert.match(page,/Reset timed attempt/);
   assert.match(page,/progressSource|mockSectionProgress/);
