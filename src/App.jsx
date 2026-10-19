@@ -159,7 +159,7 @@ function TopBar() {
                 <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/leads" onClick={() => setMenuOpen(false)}>Leads</Link>
-                <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Exam File and Date</Link>
+                <Link to="/exam-file" onClick={() => setMenuOpen(false)}>Goethe Exam File</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/social-media" onClick={() => setMenuOpen(false)}>Social Media</Link>
                 {String(import.meta.env.VITE_HOEREN_STUDIO_OWNER_UID || "").trim() === user.uid ? <Link to="/ai-studio" onClick={() => setMenuOpen(false)}>AI Hören Studio</Link> : null}
