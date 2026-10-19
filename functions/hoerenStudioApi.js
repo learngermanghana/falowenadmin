@@ -47,12 +47,16 @@ function validateScriptRequest(body = {}) {
   const type = String(body.type || "dialogue").toLowerCase();
   const topic = String(body.topic || "").trim();
   const part = String(body.part || "").trim();
-  const profile = getExamProfile(level, part);
-  if (level !== "A1" && !profile) throw Object.assign(new Error("Select a supported Hören Teil/Aufgabe for this level."), { status: 400 });
-  if (profile && type !== profile.type) throw Object.assign(new Error("Recording type does not match this exam Teil."), { status: 400 });
+  const mode = String(body.mode || (part ? "goethe" : "course")).toLowerCase();
+  const kind = String(body.kind || "richtig-falsch");
+  if (!["course", "goethe"].includes(mode)) throw Object.assign(new Error("Select Course Book or Goethe exam mode."), { status: 400 });
   if (!ALLOWED_LEVELS.has(level) || !ALLOWED_TYPES.has(type)) throw Object.assign(new Error("Unsupported exam level or recording type."), { status: 400 });
   if (topic.length < 4 || topic.length > 240) throw Object.assign(new Error("Enter a topic (4–240 characters)."), { status: 400 });
-  return { level, type, topic, part, profile };
+  if (!["richtig-falsch", "multiple-choice"].includes(kind)) throw Object.assign(new Error("Unsupported question format."), { status: 400 });
+  const profile = mode === "goethe" ? getExamProfile(level, part) : null;
+  if (mode === "goethe" && !profile) throw Object.assign(new Error("Select a supported Hören Teil/Aufgabe for this level."), { status: 400 });
+  if (profile && type !== profile.type) throw Object.assign(new Error("Recording type does not match this exam Teil."), { status: 400 });
+  return { level, type, topic, part, profile, mode, kind: profile?.kind || kind };
 }
 
 function extractAudio(result = {}) {
@@ -151,7 +155,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
 
   app.post("/ai-studio/script", guard, async (req, res) => {
     try {
-      const { level, type, topic, profile } = validateScriptRequest(req.body);
+      const { level, type, topic, profile, kind, mode } = validateScriptRequest(req.body);
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       const remaining = await reserveUsage(db, req.hoerenOwnerUid, "script");
@@ -160,13 +164,13 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
         key,
         { contents: [{ role: "user", parts: [{ text:
           profile ? buildExamPrompt(profile, topic, questionInstructions(profile.kind, profile.questionCount)) :
-          (`Create an original German listening dialogue. Level ${level}. Type ${type}. Topic ${topic}.\n` +
-          "Use realistic grammatically correct German, 8–12 alternating A:/B: turns (or A: only for announcements), around 80–130 spoken words. No stage directions or official Goethe affiliation. " +
-          questionInstructions("richtig-falsch"))
+          (`Create an original German listening recording for a Falowen Course Book activity. CEFR level ${level}. Recording format ${type}. Topic ${topic}.\n` +
+          "Write a practical teaching text with realistic, grammatically correct German, about 80–150 spoken words. Use A:/B:/C: for speaker turns, [PAUSE 3] as an optional standalone instruction; 18 segments maximum, each no more than 320 characters. Do not claim official Goethe affiliation. " +
+          questionInstructions(kind))
         }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: profile ? 6000 : 1750 } },
       );
       const draft = extractLessonDraft(result, profile?.questionCount || 5);
-      if (profile && draft.kind !== profile.kind) throw new Error("Google returned the wrong answer format.");
+      if (draft.kind !== kind) throw new Error("Google returned the wrong answer format.");
       return res.json({ ok: true, ...draft, remaining });
     } catch (error) { return handleError(res, error); }
   });
@@ -179,8 +183,10 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       if (script.length < 35 || script.length > 7500 || !["richtig-falsch", "multiple-choice"].includes(kind)) {
         return res.status(400).json({ ok: false, error: "Enter a complete script and a supported question type." });
       }
-      const profile = getExamProfile(req.body?.level, req.body?.part);
-      if (req.body?.level && req.body.level !== "A1" && !profile) return res.status(400).json({ ok: false, error: "Choose a valid exam level and Teil." });
+      const mode = String(req.body?.mode || (req.body?.part ? "goethe" : "course")).toLowerCase();
+      if (!["goethe", "course"].includes(mode)) return res.status(400).json({ ok: false, error: "Choose a valid production mode." });
+      const profile = mode === "goethe" ? getExamProfile(req.body?.level, req.body?.part) : null;
+      if (mode === "goethe" && !profile) return res.status(400).json({ ok: false, error: "Choose a valid exam level and Teil." });
       if (profile && kind !== profile.kind) return res.status(400).json({ ok: false, error: "Question type must match the selected Teil." });
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
