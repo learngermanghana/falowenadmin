@@ -188,7 +188,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       const result = await postGemini(
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`, key,
         { contents: [{ role: "user", parts: [{ text:
-          "Create five accurate listening questions from this exact German transcript. Preserve the transcript completely. " +
+          `Create ${profile?.questionCount || 5} accurate listening questions from this exact German transcript. Preserve the transcript completely. ` +
           questionInstructions(kind, profile?.questionCount || 5) + (profile ? "\nSelected format: " + profile.structure : "") + "\nTranscript:\n" + script
         }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: profile ? 5500 : 1700 } },
       );
