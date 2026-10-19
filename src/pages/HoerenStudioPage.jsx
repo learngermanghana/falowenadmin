@@ -391,42 +391,31 @@ export default function HoerenStudioPage() {
             {level === "C1" && examPart === "1" ? <p><strong>Book matching:</strong> 3 original books (Buch 1, Buch 2, Buch 3), 6 statements, one play. Exam reading time: 60 seconds.</p> : null}
           </div> : null}
           {mode === "course" ? <div className="hoeren-course-destination">
-            <h3>Target Course Book assignment</h3>
-            <p className="hoeren-hint">Select the existing assignment before creating audio. For direct publishing, only A1–B1 five-question practice is currently supported.</p>
-        <div className="hoeren-input-grid">
-          <label>Falowen level
-            <input value={level} readOnly aria-label="Selected course level" />
-          </label>
-          <label>Course Book day
-            <select value={availableDays.includes(Number(publishDay)) ? String(publishDay) : ""} disabled={!!busy || !availableDays.length}
-              onChange={e => {
-                const day = Number(e.target.value);
-                const first = courseLessons.find(item => item.level === level && Number(item.day) === day);
-                setPublishDay(day); setAssignmentKey(first?.assignmentKey || "");
-                setTeacherApproved(false); setPublished(null);
-              }}>
-              <option value="">Select day</option>
-              {availableDays.map(day => <option key={day} value={day}>Day {day}</option>)}
-            </select>
-          </label>
-        </div>
-        <label>Falowen assignment
-          <select value={selectedAssignment ? assignmentKey : ""} disabled={!!busy || !filteredAssignments.length}
-            onChange={e => { setAssignmentKey(e.target.value); setTeacherApproved(false); setPublished(null); }}>
-            <option value="">Select assignment</option>
-            {filteredAssignments.map(item => <option key={item.assignmentKey} value={item.assignmentKey}>
-              {item.assignmentKey} · {item.title}
-            </option>)}
-          </select>
-        </label>
-        {courseLessonsError ? <p className="hoeren-validation" role="alert">{courseLessonsError}</p> : null}
-        {selectedAssignment ? <>
-          <p className="hoeren-hint">Course Book: {selectedAssignment.route}</p>
-          <button type="button" className="hoeren-quiet" disabled={!!busy} onClick={() => {
-            setTopic(selectedAssignment.title); clearAudio();
-          }}>Use this assignment title as the recording topic</button>
-        </> : null}
-
+            <h3>Choose a Course Book chapter by title</h3>
+            <p className="hoeren-hint">All {courseCatalog.length} {level} dictionary lessons are available for generating audio, including chapters not yet in the student publish catalogue. The lesson title and ID guide the AI automatically.</p>
+            <label>Search chapter, lesson title or assignment ID
+              <input type="search" value={lessonSearch} disabled={!!busy}
+                onChange={e => setLessonSearch(e.target.value)}
+                placeholder="e.g. B1-10.28, Klimafreundlich leben" />
+            </label>
+            <label>Dictionary lesson title
+              <select value={filteredCatalog.some(item => item.assignmentKey === assignmentKey) ? assignmentKey : ""}
+                disabled={!!busy || !courseCatalog.length}
+                onChange={e => chooseCourseLesson(e.target.value)}>
+                <option value="">Select a lesson by title</option>
+                {filteredCatalog.map(item => <option key={item.assignmentKey} value={item.assignmentKey}>{item.label}</option>)}
+              </select>
+            </label>
+            {filteredCatalog.length === 0 ? <p className="hoeren-hint">No matching titles. Clear your search to show the complete dictionary.</p> : null}
+            {selectedCourseEntry ? <div className="hoeren-exam-schema">
+              <strong>{selectedCourseEntry.assignmentKey} · {selectedCourseEntry.germanTitle}</strong>
+              <p>Chapter {selectedCourseEntry.chapter} · {selectedCourseEntry.englishTitle}</p>
+              <p>{selectedCourseEntry.publishable && ["A1", "A2", "B1"].includes(level)
+                ? "This lesson has a supported student publishing destination."
+                : "Available for script, questions and audio export. Direct publishing is not available for this lesson."}</p>
+              {selectedCourseEntry.publishRoute ? <p>Course Book location: {selectedCourseEntry.publishRoute}</p> : null}
+            </div> : null}
+            {courseLessonsError ? <p className="hoeren-hint">Publishing status unavailable: {courseLessonsError}. The full course dictionary remains available for audio creation.</p> : null}
           </div> : <div className="hoeren-exam-schema">
             <strong>Goethe Hören preset is locked</strong>
             <p>{selectedProfile ? `${selectedProfile.questionCount} questions · ${QUESTION_KINDS[selectedProfile.kind]} · play ${selectedProfile.repeats === 1 ? "once" : "twice"}` : "Select an exam Teil to load its rules."}</p>
@@ -435,9 +424,9 @@ export default function HoerenStudioPage() {
             <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
             <label>Voice segments budget<input value={`Up to 18 speech clips · ${status?.remaining.speech ?? "—"} left today`} readOnly /></label>
           </div>
-          <label>Topic for an original script<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
-          <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
-          <p className="hoeren-hint">You can also write or paste your own script without using Google's script-generation quota.</p>
+          <label>{mode === "course" ? "Lesson-aligned audio topic (optional subtopic)" : "Topic for an original exam script"}<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
+          <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile) || (mode === "course" && !selectedCourseEntry)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
+          <p className="hoeren-hint">{mode === "course" ? "The selected dictionary chapter, assignment ID and German/English titles are passed to the AI so the recording and questions stay aligned with that course lesson." : "You can also write or paste your own script without spending a script-generation request."}</p>
           <label>Transcript — edit before creating audio
             <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(event.target.value); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
           </label>
