@@ -106,3 +106,19 @@ test("a query cannot represent every historical record; never call an unresolved
   assert.equal(result.incomplete, true);
   assert.equal(result.receipts.length, 2);
 });
+
+ test("finds identity-free legacy receipts in both level cases without collapsing repeated IDs", async () => {
+  const samples = [
+    doc("submissions/A1/A1007/shared", { assignmentId: "A1-11" }),
+    doc("submissions/a1/A1007/shared", { assignment_key: "A1-11" }),
+    doc("submissions/a1/uid42/by-uid", { assignmentId: "A1-11" }),
+    doc("submissions/a1/other/shared", { assignmentId: "A1-11" }),
+  ];
+  const result = await findCampusSubmissionReceipts({
+    db: {}, studentInput: "uid42", assignmentKey: "A1-11",
+    timerRecords: [{ studentId: "uid42", studentCode: "A1007" }],
+    firestore: makeAdapter(samples),
+  });
+  assert.equal(result.incomplete, false);
+  assert.deepEqual(result.receipts.map(row => row.path).sort(), samples.slice(0, 3).map(row => row.path).sort());
+});

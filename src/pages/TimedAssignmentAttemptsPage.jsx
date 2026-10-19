@@ -623,7 +623,7 @@ export default function TimedAssignmentAttemptsPage() {
           {lookupNotice && <p role="status" style={{ margin: 0, color: "#1e40af" }}>{lookupNotice}</p>}
           <div data-testid="campus-submission-receipts" style={{ display: "grid", gap: 6 }}>
             {submissionReceipts.map(receipt => (
-              <div key={receipt.id} style={{ background: "#eff6ff", borderRadius: 8, padding: 10, fontSize: 13 }}>
+              <div key={receipt.path} style={{ background: "#eff6ff", borderRadius: 8, padding: 10, fontSize: 13 }}>
                 <strong>Saved workbook submission</strong> · {receipt.assignmentKey || receipt.assignmentId} · {receipt.status || "unknown status"}
                 <div>Submitted: {formatDate(receipt.submittedAt || receipt.createdAt)} · Firestore path: {receipt.path}</div>
                 <div>Marking: {receipt.markingStatus || "awaiting processing"}</div>

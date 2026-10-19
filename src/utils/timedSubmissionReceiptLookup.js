@@ -41,7 +41,7 @@ export function isReceiptForCampusAssignment(data = {}, path = "", assignmentKey
   const expected = normalizeTimedAssignmentKey(assignmentKey);
   const values = [
     data.canonicalAssignmentKey, data.assignmentKey, data.assignmentId,
-    data.assignment_id, data.assignment, data.raw?.assignmentKey,
+    data.assignment_id, data.assignment_key, data.assignment, data.raw?.assignmentKey,
     path.split("/").pop(),
   ];
   if (!values.some(item => normalizeTimedAssignmentKey(item) === expected)) return false;
@@ -58,7 +58,8 @@ export function isReceiptForCampusAssignment(data = {}, path = "", assignmentKey
   const matchedEmail = plan.emails?.some(email => lowercase(email) === lowercase(identity.studentEmail));
   const matchedCode = plan.codes?.some(code => lowercase(code) === lowercase(identity.studentCode));
   const nestedPathMatches = plan.nestedIds?.some(id =>
-    path.startsWith(`submissions/${plan.level}/${id}/`));
+    [plan.level, plan.level?.toLowerCase()].some(level =>
+      path.startsWith(`submissions/${level}/${id}/`)));
   // Never return another student's submission solely from a reused student code.
   if (identityUids.length && plan.uids?.length && !matchedUid) return false;
   return Boolean(matchedUid || matchedEmail || matchedCode || nestedPathMatches);
@@ -80,11 +81,13 @@ export async function findCampusSubmissionReceipts({
         ref: query(source, where(selector.field, "==", selector.value), limit(maxPerQuery)) });
     }
   }
-  for (const id of plan.nestedIds) {
-    targets.push({
-      description: `submissions/${plan.level}/${id}`,
-      ref: query(collection(db, "submissions", plan.level, id), limit(maxPerQuery)),
-    });
+  for (const level of unique([plan.level, plan.level.toLowerCase()])) {
+    for (const id of plan.nestedIds) {
+      targets.push({
+        description: `submissions/${level}/${id}`,
+        ref: query(collection(db, "submissions", level, id), limit(maxPerQuery)),
+      });
+    }
   }
   const receipts = new Map();
   const errors = [];
