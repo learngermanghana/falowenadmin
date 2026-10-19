@@ -1,4 +1,4 @@
-import { parseStudioTranscript } from "./hoerenAudio.js";
+import { parseStudioTranscript, sameSpokenTranscript } from "./hoerenAudio.js";
 import { validateDraftQuestions, normalizeQuote } from "./hoerenQuestions.js";
 
 // Structural checks only: a matching quote cannot prove an answer is semantically true.
@@ -14,7 +14,7 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
     spokenLines = parsed.filter(line => line.type === "speech");
     pauseCount = parsed.length - spokenLines.length;
     wordCount = spokenLines.reduce((total, line) => total + line.text.trim().split(/\s+/u).filter(Boolean).length, 0);
-    if (spokenLines.length > 18) errors.push("Audio generation is limited to 18 spoken segments.");
+    if (spokenLines.length > 36) errors.push("Audio generation is limited to 36 spoken segments.");
     if (!spokenLines.length) errors.push("Add at least one spoken segment.");
   } catch (error) {
     errors.push(error.message);
@@ -31,7 +31,7 @@ export function inspectHoerenDraft({ script, kind, questions = [], expectedCount
   }
 
   if (questions.length) {
-    if (questionScript !== script) errors.push("The transcript changed since the questions were generated. Regenerate or verify the questions.");
+    if (!sameSpokenTranscript(questionScript, script)) errors.push("The transcript changed since the questions were generated. Regenerate or verify the questions.");
     try {
       validateDraftQuestions({ script, questions, kind, expectedCount });
     } catch (error) {
