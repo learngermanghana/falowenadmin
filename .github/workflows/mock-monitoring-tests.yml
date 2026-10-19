@@ -7,6 +7,8 @@ on:
       - "src/services/placementAttemptService.js"
       - "tests/placement-attempt-monitoring.test.js"
       - "src/utils/mockAttemptMonitoring.js"
+      - "src/utils/timedAttemptLookup.js"
+      - "tests/timed-attempt-lookup.test.js"
       - "src/App.jsx"
       - "tests/mock-timed-monitoring.test.js"
       - "tests/student-leads-hub.test.js"
@@ -18,6 +20,8 @@ on:
       - "src/services/placementAttemptService.js"
       - "tests/placement-attempt-monitoring.test.js"
       - "src/utils/mockAttemptMonitoring.js"
+      - "src/utils/timedAttemptLookup.js"
+      - "tests/timed-attempt-lookup.test.js"
       - "src/App.jsx"
       - "tests/mock-timed-monitoring.test.js"
       - "tests/student-leads-hub.test.js"
@@ -31,4 +35,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: node --test tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js tests/placement-attempt-monitoring.test.js
+      - run: node --test tests/mock-timed-monitoring.test.js tests/student-leads-hub.test.js tests/placement-attempt-monitoring.test.js tests/timed-attempt-lookup.test.js
