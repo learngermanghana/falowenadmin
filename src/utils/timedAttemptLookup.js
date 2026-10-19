@@ -12,5 +12,5 @@ export function buildCampusTimedAttemptId(studentUid, assignmentKey) {
 export function isMatchingCampusTimer(record, assignmentKey) {
   return Boolean(record && record.id?.startsWith("timed__")
     && normalizeTimedAssignmentKey(record.assignmentKey) === normalizeTimedAssignmentKey(assignmentKey)
-    && record.studentId && record.timerRecord === true);
+    && record.studentId && (record.timerRecord === true || record.timerRecord == null));
 }
