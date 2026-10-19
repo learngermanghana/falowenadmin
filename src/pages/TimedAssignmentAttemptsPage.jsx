@@ -1,3 +1,4 @@
+import { fetchSubmissionReceipts } from "../services/submissionReceiptService.js";
 import { startVisiblePolling } from "../utils/visiblePolling.js";
 import { createTimedAttemptListenerHealth } from "../utils/timedAttemptListenerHealth.js";
 import { buildCampusTimedAttemptId, isMatchingCampusTimer, normalizeTimedAssignmentKey } from "../utils/timedAttemptLookup.js";
@@ -54,7 +55,6 @@ export default function TimedAssignmentAttemptsPage() {
   const [recoveredTimed, setRecoveredTimed] = useState([]);
   const [lookupNotice, setLookupNotice] = useState("");
   const [submissionReceipts, setSubmissionReceipts] = useState([]);
-  const [submissionLookupLimited, setSubmissionLookupLimited] = useState(false);
   const [mocks, setMocks] = useState([]);
   const [mockLoading, setMockLoading] = useState(true);
   const [mockError, setMockError] = useState("");
@@ -243,7 +243,6 @@ export default function TimedAssignmentAttemptsPage() {
     setLookupNotice("");
     setRecoveredTimed([]);
     setSubmissionReceipts([]);
-    setSubmissionLookupLimited(false);
     if (!isStaff) { setLookupError("Staff access is required to search Campus timers."); return; }
     if (!who || !/^(A1|A2|B1)-[A-Z0-9._-]+$/.test(assignmentKey)) {
       setLookupError("Enter a student UID or email and an assignment code such as A1-11.");
@@ -265,23 +264,10 @@ export default function TimedAssignmentAttemptsPage() {
       recovered = recovered.filter(item => isMatchingCampusTimer(item, assignmentKey));
       setRecoveredTimed(recovered);
 
-      // Timed attempt state is not evidence of a saved course submission.
-      // Check the separate submissions collection for a real Firestore receipt.
-      const matchingSubmissions = await getDocs(firestoreQuery(
-        collection(db, "submissions"),
-        where(who.includes("@") ? "studentEmail" : "studentId", "==",
-          who.includes("@") ? who.toLowerCase() : who),
-        limit(200),
-      ));
-      const receipts = matchingSubmissions.docs
-        .map(item => ({ id: item.id, ...item.data() }))
-        .filter(item => normalizeTimedAssignmentKey(
-          item.canonicalAssignmentKey || item.assignmentKey || item.assignmentId || item.assignment_id,
-        ) === assignmentKey);
+      // Timer state and actual saved work are separate records.
+      const receipts = await fetchSubmissionReceipts({ who, assignmentKey, timerRecords: recovered });
       setSubmissionReceipts(receipts);
-      setSubmissionLookupLimited(matchingSubmissions.size >= 200);
-      setLookupNotice(`For ${assignmentKey}: ${recovered.length} timer record(s) and ${receipts.length} actual submission receipt(s)`
-        + (matchingSubmissions.size >= 200 ? " in the first 200 submission records for this student; inspect older records separately." : "."));
+      setLookupNotice(`For ${assignmentKey}: ${recovered.length} timer record(s) and ${receipts.length} actual submission receipt(s).`);
     } catch (error) {
       setLookupError(error?.message || "Could not look up this Campus timer.");
     } finally {
@@ -624,13 +610,12 @@ export default function TimedAssignmentAttemptsPage() {
           {lookupNotice && <p role="status" style={{ margin: 0, color: "#1e40af" }}>{lookupNotice}</p>}
           <div data-testid="campus-submission-receipts" style={{ display: "grid", gap: 6 }}>
             {submissionReceipts.map(receipt => (
-              <div key={receipt.id} style={{ background: "#eff6ff", borderRadius: 8, padding: 10, fontSize: 13 }}>
+              <div key={receipt.path} style={{ background: "#eff6ff", borderRadius: 8, padding: 10, fontSize: 13 }}>
                 <strong>Saved workbook submission</strong> · {receipt.assignmentKey || receipt.assignmentId} · {receipt.status || "unknown status"}
-                <div>Submitted: {formatDate(receipt.submittedAt || receipt.createdAt)} · Receipt ID: submissions/{receipt.id}</div>
+                <div>Submitted: {formatDate(receipt.submittedAt || receipt.createdAt)} · Receipt path: {receipt.path}</div>
                 <div>Marking: {receipt.markingStatus || "awaiting processing"}</div>
               </div>
             ))}
-            {submissionLookupLimited ? <small>The first 200 student records were checked; older submissions may require a separate search.</small> : null}
           </div>
         </form>}
         <div className="monitor-status-filters" role="group" aria-label="Filter Campus timed test status">
