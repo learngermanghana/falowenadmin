@@ -3,12 +3,14 @@ import { applySoundscapeToPcm } from "./hoerenSoundscape.js";
 // Offline audio assembly. Gemini 3.8 unary TTS outputs 24 kHz, mono, 16-bit WAV.
 // Doing the pauses and repeats locally avoids additional Google synthesis charges.
 export function formatStudioTranscript(source) {
-  // Only split delimiters immediately after sentence-ending punctuation, with no
-  // intervening whitespace. Do not mistake spoken lists such as "A: ... , B: ..."
-  // or commas at the end of existing lines for new voice segments.
+  // A pasted comma delimiter may have spaces or tabs after it, but must
+  // immediately follow sentence-ending punctuation (or a completed pause).
+  // Restrict delimiter whitespace to horizontal whitespace so we never consume
+  // newlines separating already-formatted turns. Preserve spoken lists such as
+  // "Modell A: günstig, B: schnell".
   return String(source || "").replace(/\r\n/g, "\n")
-    .replace(/(?<=[.!?]),(?=(?:[ABC]:\s|\[PAUSE\s+\d{1,2}\]))/gi, "\n")
-    .replace(/(\[PAUSE\s+\d{1,2}\]),(?=[ABC]:\s)/gi, "$1\n");
+    .replace(/(?<=[.!?]),[ \t]*(?=(?:[ABC]:[ \t]|\[PAUSE[ \t]+\d{1,2}\]))/gi, "\n")
+    .replace(/(\[PAUSE[ \t]+\d{1,2}\]),[ \t]*(?=[ABC]:[ \t])/gi, "$1\n");
 }
 
 export function sameSpokenTranscript(a, b) {
