@@ -283,7 +283,7 @@ function getExamProfile(level, part) {
   return EXAM_PROFILES[String(level || "").toUpperCase()]?.[String(part || "")] || null;
 }
 function buildExamPrompt(profile, topic, questionInstructions) {
-  const speakerRule = "Write the transcript as separate A:, B: or C: lines (C only for a third speaker), maximum 18 spoken lines and 320 characters per spoken line. Each text line is a spoken segment, not a paragraph heading. [PAUSE 3] may appear on a line by itself. Do not include timestamps, voice directions, or labels such as Buch 1 outside of spoken lines.";
+  const speakerRule = "Write the transcript as separate A:, B: or C: lines (C only for a third speaker), maximum 36 spoken lines and 320 characters per spoken line. Each text line is a spoken segment, not a paragraph heading. [PAUSE 3] may appear on a line by itself. Do not include timestamps, voice directions, or labels such as Buch 1 outside of spoken lines.";
   return [
     "Create an ORIGINAL, copyright-safe German Hören PRACTICE task, not an official Goethe recording.",
     "Target Goethe-Zertifikat " + profile.level + " Hören " + profile.examLabel + " " + profile.part + ": " + profile.label + ".",

@@ -2,9 +2,20 @@ import { applySoundscapeToPcm } from "./hoerenSoundscape.js";
 
 // Offline audio assembly. Gemini 3.8 unary TTS outputs 24 kHz, mono, 16-bit WAV.
 // Doing the pauses and repeats locally avoids additional Google synthesis charges.
+export function formatStudioTranscript(source) {
+  return String(source || "").replace(/,\s*(?=(?:[ABC]:\s|\[PAUSE\s+\d+\]))/gi, "\n").replace(/\r\n/g, "\n");
+}
+
+export function sameSpokenTranscript(a, b) {
+  try {
+    const normalize = value => parseStudioTranscript(formatStudioTranscript(value)).map(line => line.type === "pause" ? `PAUSE:${line.seconds}` : `${line.speaker}:${line.text.replace(/\s+/g, " ").trim()}`).join("\n");
+    return normalize(a) === normalize(b);
+  } catch { return false; }
+}
+
 export function parseStudioTranscript(source) {
-  const lines = String(source || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (lines.length > 40) throw new Error("Maximum 40 transcript lines.");
+  const lines = formatStudioTranscript(source).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length > 64) throw new Error("Maximum 64 transcript lines.");
   if (!lines.length) throw new Error("Enter a script or generate one first.");
   return lines.map((line, index) => {
     const pause = line.match(/^\[PAUSE\s+(\d{1,2})\]$/i);
