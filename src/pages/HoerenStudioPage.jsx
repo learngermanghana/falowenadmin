@@ -12,7 +12,7 @@ const TEMPLATES = {
   announcement: "A: Achtung, liebe Fahrgäste! Der Zug nach Berlin fährt heute nicht von Gleis eins, sondern von Gleis vier.\n[PAUSE 3]\nA: Bitte beachten Sie die geänderte Abfahrtszeit um neun Uhr zwanzig.",
   telephone: "A: Guten Tag, hier spricht Anna Müller. Ich kann heute leider nicht zum Deutschkurs kommen.\n[PAUSE 3]\nA: Bitte rufen Sie mich morgen nach zehn Uhr zurück. Vielen Dank!",
 };
-const LEVELS = ["A1", "A2", "B1", "B2"];
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const TYPE_LABELS = { dialogue: "Two-person conversation", announcement: "Public announcement", telephone: "Telephone message" };
 
 function downloadFile(data, filename, mimeType) {
@@ -25,14 +25,15 @@ function downloadFile(data, filename, mimeType) {
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
-function safeFileName(level, topic) {
+function safeFileName(level, topic, part) {
   const suffix = topic.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 44) || "listening";
-  return `falowen-${level.toLowerCase()}-hoeren-${suffix}`;
+  return `falowen-${level.toLowerCase()}-hoeren${part ? `-teil-${part}` : ""}-${suffix}`;
 }
 
 export default function HoerenStudioPage() {
   const toast = useToast();
   const [level, setLevel] = useState("A1");
+  const [examPart, setExamPart] = useState("");
   const [type, setType] = useState("dialogue");
   const [topic, setTopic] = useState("Eine Fahrkarte am Bahnhof kaufen");
   const [engine, setEngine] = useState("lite");
@@ -84,18 +85,20 @@ export default function HoerenStudioPage() {
     catch (error) { return { lines: [], error: error.message }; }
   }, [script]);
   const spokenLines = transcript.lines.filter((line) => line.type === "speech");
+  const selectedProfile = status?.profiles?.[level]?.[examPart] || null;
+  const questionCount = selectedProfile?.questionCount || 5;
   const ready = Boolean(status?.ready);
-  const filename = safeFileName(level, topic);
+  const filename = safeFileName(level, topic, examPart);
   const reviewedQuestions = useMemo(() => {
-    try { return { data: validateDraftQuestions({ script, questions, kind: questionKind }), error: "" }; }
+    try { return { data: validateDraftQuestions({ script, questions, kind: questionKind, expectedCount: questionCount }), error: "" }; }
     catch (error) { return { data: [], error: error.message }; }
-  }, [script, questions, questionKind]);
+  }, [script, questions, questionKind, questionCount]);
   const questionsMatchScript = questionScript === script;
   const availableDays = [...new Set(courseLessons.filter(item => item.level === level).map(item => Number(item.day)))].sort((a, b) => a - b);
   const filteredAssignments = courseLessons.filter(item => item.level === level && Number(item.day) === Number(publishDay));
   const selectedAssignment = filteredAssignments.find(item => item.assignmentKey === assignmentKey);
   const canPublish = !!audioBlob && !!reviewedQuestions.data.length && questionsMatchScript &&
-    teacherApproved && !busy && ["A1", "A2", "B1"].includes(level) &&
+    teacherApproved && !busy && ["A1", "A2", "B1"].includes(level) && questionCount === 5 &&
     !!selectedAssignment && Number.isInteger(Number(publishDay));
   const updateQuestions = (index, changes) => {
     setQuestions(existing => existing.map((q, i) => i === index ? { ...q, ...changes } : q));
@@ -113,6 +116,21 @@ export default function HoerenStudioPage() {
     const soundscape = { scene, ambience: useAtmosphere, bell: openingBell, ending: endingSound, volume: soundVolume / 100, userAudio };
     return assembleListeningExam(transcript.lines, clips, { repeats, lineGap, repeatGap, soundscape });
   }
+  function setLevelAndPart(nextLevel, nextPart) {
+    const profile = status?.profiles?.[nextLevel]?.[nextPart];
+    setLevel(nextLevel); setExamPart(nextLevel === "A1" ? "" : nextPart);
+    if (profile) {
+      setType(profile.type); setTopic(profile.topic); setScript(profile.preview);
+      setQuestionKind(profile.kind); setRepeats(profile.repeats);
+      setScene("none"); setUseAtmosphere(false);
+    } else if (nextLevel === "A1") {
+      setType("dialogue"); setQuestionKind("richtig-falsch");
+      setTopic("Eine Fahrkarte am Bahnhof kaufen"); setScript(TEMPLATES.dialogue);
+      setRepeats(2);
+    }
+    setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null);
+    clearAudio();
+  }
   function setTypeAndTemplate(next) {
     setType(next);
     setScript(TEMPLATES[next]);
@@ -126,14 +144,14 @@ export default function HoerenStudioPage() {
   async function generateScript() {
     setBusy("script"); setProgress(""); clearAudio();
     try {
-      const result = await makeListeningScript({ topic, type, level });
+      const result = await makeListeningScript({ topic, type, level, part: examPart });
       setScript(result.script);
       setQuestions(result.questions || []);
       setQuestionKind(result.kind || "richtig-falsch");
       setQuestionScript(result.script);
       setTeacherApproved(false); setPublished(null);
       setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, script: result.remaining } }));
-      toast.success("Script and five Hören questions generated together in one Gemini request. Review the answers.");
+      toast.success(`Script and ${questionCount} Hören questions generated. Review the answers before approving.`);
     } catch (error) { toast.error(error.message); }
     finally { setBusy(""); await reloadStatus(); }
   }
@@ -141,11 +159,11 @@ export default function HoerenStudioPage() {
     if (script.trim().length < 35 || !ready) return;
     setBusy("questions"); setProgress("");
     try {
-      const result = await makeListeningQuestions({ script, kind: questionKind });
+      const result = await makeListeningQuestions({ script, kind: questionKind, level, part: examPart });
       setQuestions(result.questions);
       setQuestionScript(script);
       setTeacherApproved(false); setPublished(null);
-      toast.success("Five listening questions generated. Check all answers and source quotes.");
+      toast.success(`${questionCount} listening questions generated. Check answers and supporting quotes.`);
     } catch (error) { toast.error(error.message); }
     finally { setBusy(""); await reloadStatus(); }
   }
@@ -163,7 +181,7 @@ export default function HoerenStudioPage() {
         },
       });
       setPublished(result);
-      toast.success("Published! The five questions are now available in the selected Course Book lesson.");
+      toast.success("Published! The reviewed questions are now available in the selected Course Book lesson.");
     } catch (error) { toast.error(error.message); }
     finally { setBusy(""); setProgress(""); }
   }
@@ -235,27 +253,39 @@ export default function HoerenStudioPage() {
         <section className="hoeren-panel">
           <h2>1. Prepare the recording</h2>
           <div className="hoeren-input-grid">
-            <label>German level<select value={level} disabled={!!busy} onChange={(event) => { setLevel(event.target.value); clearAudio(); }}>{LEVELS.map((choice) => <option key={choice}>{choice}</option>)}</select></label>
-            <label>Recording type<select value={type} disabled={!!busy} onChange={(event) => setTypeAndTemplate(event.target.value)}>{Object.entries(TYPE_LABELS).map(([value, name]) => <option key={value} value={value}>{name}</option>)}</select></label>
+            <label>German level<select value={level} disabled={!!busy} onChange={event => setLevelAndPart(event.target.value, event.target.value === "A1" ? "" : "1")}>{LEVELS.map(choice => <option key={choice}>{choice}</option>)}</select></label>
+            {level !== "A1" ? <label>Hören {level === "C2" ? "Aufgabe" : "Teil"}<select value={examPart} disabled={!!busy || !status?.profiles?.[level]} onChange={event => setLevelAndPart(level, event.target.value)}>
+              {Object.entries(status?.profiles?.[level] || {}).map(([part, profile]) => <option key={part} value={part}>{profile.examLabel} {part} · {profile.label}</option>)}
+            </select></label> : <label>Recording type<select value={type} disabled={!!busy} onChange={event => setTypeAndTemplate(event.target.value)}>{Object.entries(TYPE_LABELS).map(([value,name]) => <option key={value} value={value}>{name}</option>)}</select></label>}
+          </div>
+          {selectedProfile ? <div className="hoeren-placeholder">
+            <strong>{level} Hören · {selectedProfile.examLabel} {examPart} — {selectedProfile.label}</strong>
+            <p>{selectedProfile.structure}</p>
+            <p>{questionCount} questions · {selectedProfile.repeats === 1 ? "Listen once" : "Listen twice"} · target ~{selectedProfile.wordTarget} spoken words. Original Falowen practice, not an official Goethe recording.</p>
+            {level === "C1" && examPart === "1" ? <p><strong>Book matching:</strong> 3 original books (Buch 1, Buch 2, Buch 3), 6 statements, one play. Exam reading time: 60 seconds.</p> : null}
+          </div> : null}
+          <div className="hoeren-input-grid">
+            <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
+            <label>Voice segments budget<input value={`Up to 18 speech clips · ${status?.remaining.speech ?? "—"} left today`} readOnly /></label>
           </div>
           <label>Topic for an original script<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
-          <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script} onClick={generateScript}>{busy === "script" ? "Generating script…" : "Generate Goethe-style script"}</button>
+          <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (level !== "A1" && !selectedProfile)} onClick={generateScript}>{busy === "script" ? "Generating script…" : "Generate Goethe-style script"}</button>
           <p className="hoeren-hint">You can also write or paste your own script without using Google's script-generation quota.</p>
           <label>Transcript — edit before creating audio
             <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(event.target.value); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
           </label>
-          <p className="hoeren-hint"><strong>Format:</strong> One line per turn, starting with <code>A:</code> or <code>B:</code>. Insert <code>[PAUSE 3]</code> as its own line for three seconds of silence. Two distinct German voices are used for A and B.</p>
+          <p className="hoeren-hint"><strong>Format:</strong> One line per turn, starting with <code>A:</code> or <code>B:</code>. Insert <code>[PAUSE 3]</code> as its own line for three seconds of silence. Up to three German voices are used for A, B and C.</p>
           {transcript.error ? <p className="hoeren-validation" role="alert">{transcript.error}</p> : <p className="hoeren-hint">{spokenLines.length} spoken lines · {transcript.lines.filter((line) => line.type === "pause").length} custom pauses</p>}
           <fieldset className="hoeren-fieldset">
             <legend>2. Generate &amp; review Hören questions</legend>
             <label>Question format
-              <select value={questionKind} disabled={!!busy} onChange={(event) => {
+              <select value={questionKind} disabled={!!busy || !!selectedProfile} onChange={(event) => {
                 setQuestionKind(event.target.value); setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null);
               }}>{Object.entries(QUESTION_KINDS).map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}</select>
             </label>
-            <p className="hoeren-hint">New AI scripts include five Richtig/Falsch questions in the same Google request. Generating questions separately for a pasted or edited script uses one of your five daily script requests.</p>
+            <p className="hoeren-hint">The selected Teil determines the question format and count. AI creates the script and questions in one request. Regenerating questions from edited text uses one of your five daily script requests.</p>
             <button type="button" className="hoeren-quiet" disabled={!ready || !!busy || !status?.remaining.script || script.trim().length < 35} onClick={generateQuestions}>
-              {busy === "questions" ? "Creating questions…" : "Generate 5 questions · one script quota"}
+              {busy === "questions" ? "Creating questions…" : "Generate {questionCount} questions · one script quota"}
             </button>
             {questions.length ? <>
               {!questionsMatchScript ? <p className="hoeren-validation">The script changed. Review the questions and regenerate them, or restore the reviewed script before publishing.</p> : null}
@@ -286,8 +316,8 @@ export default function HoerenStudioPage() {
                   <textarea rows={2} value={q.evidence || ""} disabled={!!busy} onChange={e => updateQuestions(index, { evidence: e.target.value })} />
                 </label>
               </div>)}
-              {reviewedQuestions.error ? <p className="hoeren-validation" role="alert">{reviewedQuestions.error}</p> : <p className="hoeren-hint">All five questions have structurally valid answers and matching supporting quotes. Check their meaning before approving.</p>}
-            </> : <p className="hoeren-hint">Your five questions and their source quotes will appear here for editing.</p>}
+              {reviewedQuestions.error ? <p className="hoeren-validation" role="alert">{reviewedQuestions.error}</p> : <p className="hoeren-hint">All {questionCount} questions have structurally valid answers and matching supporting quotes. Check their meaning before approving.</p>}
+            </> : <p className="hoeren-hint">Your {questionCount} questions and their source quotes will appear here for editing.</p>}
           </fieldset>
         </section>
         <section className="hoeren-panel">
@@ -298,10 +328,10 @@ export default function HoerenStudioPage() {
           </fieldset>
           <div className="hoeren-input-grid">
             <label>Line spacing (seconds)<input type="number" value={lineGap} step="0.1" min="0" max="5" disabled={!!busy} onChange={(event) => { setLineGap(Number(event.target.value)); clearAudio(true); }} /></label>
-            <label>Play the full audio<select value={repeats} disabled={!!busy} onChange={(event) => { setRepeats(Number(event.target.value)); clearAudio(true); }}><option value={1}>Once</option><option value={2}>Twice (Goethe-style)</option></select></label>
+            <label>Play the full audio<select value={repeats} disabled={!!busy} onChange={(event) => { setRepeats(Number(event.target.value)); clearAudio(true); }}><option value={1}>Once</option><option value={2}>Twice (exam replay or manual)</option></select></label>
           </div>
           {repeats === 2 ? <label>Silence before second playback (seconds)<input type="number" min="0" max="30" step="1" value={repeatGap} disabled={!!busy} onChange={(event) => { setRepeatGap(Number(event.target.value)); clearAudio(true); }} /></label> : null}
-          <p className="hoeren-hint">Repeats and pauses are added locally after synthesis. Playing the recording twice does not double the Google API charge.</p>
+          <p className="hoeren-hint">Repeats and pauses are added locally after synthesis. Playing the recording twice does not double the Google API charge. {selectedProfile ? `The selected exam format normally plays ${selectedProfile.repeats === 1 ? "once" : "twice"}.` : ""}</p>
           <fieldset className="hoeren-fieldset hoeren-atmosphere">
             <legend>Sound effects &amp; atmosphere · no extra AI credits</legend>
             <label>Recording environment
@@ -336,6 +366,7 @@ export default function HoerenStudioPage() {
             <audio controls preload="metadata" src={audioUrl} aria-label="Preview generated Hören recording" />
             <p>{(audioBlob.size / 1_000_000).toFixed(1)} MB · WAV · 24 kHz</p>
             <div className="hoeren-downloads">
+              {questions.length && !reviewedQuestions.error ? <button type="button" className="hoeren-quiet" onClick={() => downloadFile(JSON.stringify({ level, examPart, title: topic, kind: questionKind, questions: reviewedQuestions.data }, null, 2), `${filename}-questions-key.json`, "application/json")}>Download questions &amp; answer key</button> : null}
               <button type="button" className="hoeren-button" disabled={!!busy} onClick={downloadMp3}>{busy === "mp3" ? "Converting to MP3…" : "Download MP3"}</button>
               <button type="button" className="hoeren-quiet" disabled={!!busy} onClick={() => downloadFile(audioBlob, `${filename}.wav`, "audio/wav")}>Download WAV</button>
               <button type="button" className="hoeren-quiet" onClick={() => downloadFile(script, `${filename}.txt`, "text/plain;charset=utf-8")}>Download transcript</button>
@@ -345,7 +376,8 @@ export default function HoerenStudioPage() {
       </div>
       <section className="hoeren-panel">
         <h2>4. Teacher approval &amp; publish to Course Book</h2>
-        <p className="hoeren-hint">Publish only after listening to the final MP3 and checking all five answers. This adds a separate auto-marked Hören practice exercise to the lesson; it does not overwrite the existing tutor assignment or its answer sheet.</p>
+        {questionCount !== 5 || !["A1", "A2", "B1"].includes(level) ? <p className="hoeren-hint">This {level} {selectedProfile?.examLabel || "Teil"} {examPart} template supports creation and local export. Direct Course Book publishing is disabled until the student player can handle this exercise format.</p> : null}
+        <p className="hoeren-hint">Publish only after listening to the final MP3 and checking all answers. Course Book publishing currently supports five-question A1–B1 activities; higher-level or longer exam Teils can be downloaded but not yet published. This does not overwrite existing tutor assignments.</p>
         <div className="hoeren-input-grid">
           <label>Falowen level
             <input value={level} readOnly aria-label="Selected course level" />
