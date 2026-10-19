@@ -108,9 +108,9 @@ export async function findCampusSubmissionReceipts({
         const path = result.ref?.path || result.id;
         if (!isReceiptForCampusAssignment(data, path, assignmentKey, plan)) continue;
         receipts.set(path, {
+          ...data,
           id: result.id,
           path,
-          ...data,
         });
       }
     });

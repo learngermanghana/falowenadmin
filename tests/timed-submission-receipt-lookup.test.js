@@ -122,3 +122,16 @@ test("a query cannot represent every historical record; never call an unresolved
   assert.equal(result.incomplete, false);
   assert.deepEqual(result.receipts.map(row => row.path).sort(), samples.slice(0, 3).map(row => row.path).sort());
 });
+
+ test("stored metadata cannot override the reference path or document ID", async () => {
+  const samples = [undefined, null, "shared-path"].flatMap((path, index) => [
+    doc(`submissions/flat${index}`, { uid: "uid42", assignmentKey: "A1-11", id: "stored-id", path }),
+    doc(`classes/A1/students/A1007/posts/flat${index}`, { uid: "uid42", assignmentKey: "A1-11", id: "stored-id", path }),
+  ]);
+  const result = await findCampusSubmissionReceipts({
+    db: {}, studentInput: "uid42", assignmentKey: "A1-11", firestore: makeAdapter(samples),
+  });
+  assert.deepEqual(result.receipts.map(row => row.path).sort(), samples.map(row => row.path).sort());
+  assert.equal(new Set(result.receipts.map(row => row.path)).size, samples.length);
+  for (const row of result.receipts) assert.equal(row.id, row.path.split("/").at(-1));
+});
