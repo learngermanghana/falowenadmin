@@ -4,7 +4,7 @@ import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQues
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
 import { getStudioCourseCatalog, getStudioCourseContext, resolveStudioCourseModeLesson } from "../utils/hoerenCourseCatalog.js";
-import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
+import { assembleListeningExam, base64WavToBytes, parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
 import "./HoerenStudioPage.css";
@@ -119,7 +119,7 @@ export default function HoerenStudioPage() {
     try { return { data: validateDraftQuestions({ script, questions, kind: questionKind, expectedCount: questionCount }), error: "" }; }
     catch (error) { return { data: [], error: error.message }; }
   }, [script, questions, questionKind, questionCount]);
-  const questionsMatchScript = questionScript === script;
+  const questionsMatchScript = sameSpokenTranscript(questionScript, script);
   const draftAudit = useMemo(() => inspectHoerenDraft({
     script, kind: questionKind, questions, expectedCount: questionCount,
     profile: selectedProfile, mode, questionScript,
@@ -231,10 +231,10 @@ export default function HoerenStudioPage() {
     try {
       const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind,
         lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
-      setScript(result.script);
+      setScript(formatStudioTranscript(result.script));
       setQuestions(result.questions || []);
       setQuestionKind(result.kind || "richtig-falsch");
-      setQuestionScript(result.script);
+      setQuestionScript(formatStudioTranscript(result.script));
       setTeacherApproved(false); setPublished(null);
       setStatus((previous) => previous && ({ ...previous, remaining: { ...previous.remaining, script: result.remaining } }));
       toast.success(`Script and ${questionCount} Hören questions generated. Review the answers before approving.`);
@@ -423,15 +423,16 @@ export default function HoerenStudioPage() {
           </div>}
           <div className="hoeren-input-grid">
             <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
-            <label>Voice segments budget<input value={`Up to 18 speech clips · ${status?.remaining.speech ?? "—"} left today`} readOnly /></label>
+            <label>Voice segments budget<input value={`Up to 36 speech clips · ${status?.remaining.speech ?? "—"} left today`} readOnly /></label>
           </div>
           <label>{mode === "course" ? "Lesson-aligned audio topic (optional subtopic)" : "Topic for an original exam script"}<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
           <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile) || (mode === "course" && !selectedCourseEntry)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
           <p className="hoeren-hint">{mode === "course" ? "The selected dictionary chapter, assignment ID and German/English titles are passed to the AI so the recording and questions stay aligned with that course lesson." : "You can also write or paste your own script without spending a script-generation request."}</p>
           <label>Transcript — edit before creating audio
-            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(event.target.value); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
+            <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(formatStudioTranscript(event.target.value)); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
           </label>
-          <p className="hoeren-hint"><strong>Transcript format:</strong> Start spoken segments with <code>A:</code>, <code>B:</code> or <code>C:</code>. Add <code>[PAUSE 3]</code> on its own line. A, B and C use distinct voices.</p>
+          <p className="hoeren-hint">Pasted comma-separated speaker turns and pauses are automatically placed on their own lines.</p>
+           <p className="hoeren-hint"><strong>Transcript format:</strong> Start spoken segments with <code>A:</code>, <code>B:</code> or <code>C:</code>. Add <code>[PAUSE 3]</code> on its own line. A, B and C use distinct voices.</p>
           {!transcript.error && spokenLines.length ? <details className="hoeren-sentence-editor">
             <summary>Edit individual voice segments · reuse unchanged audio</summary>
             <p className="hoeren-hint">Apply a correction to just one sentence. Previously generated unchanged speech stays cached in this browser session, so only changed sentences need another Google request. Keep the transcript and questions aligned.</p>
@@ -536,7 +537,7 @@ export default function HoerenStudioPage() {
             {busy === "audio" ? "Preparing German audio…" : clipsToGenerate ? `Generate ${clipsToGenerate} missing voice clip(s)` : "Assemble saved voices · no Gemini credits"}
           </button>
           {progress ? <p role="status" aria-live="polite">{progress}</p> : null}
-          {!transcript.error && spokenLines.length > 18 ? <p className="hoeren-validation">Maximum 18 spoken lines per recording, to prevent accidental high-cost requests.</p> : null}
+          {!transcript.error && spokenLines.length > 36 ? <p className="hoeren-validation">Maximum 36 spoken lines per recording, to prevent accidental high-cost requests.</p> : null}
           <p className="hoeren-hint">Audio and atmosphere are mixed in your browser. Download WAV or convert to MP3 locally; no separate Google API charge for either format. MP3 conversion needs internet access once to load its encoder.</p>
           {audioBlob ? <div className="hoeren-output">
             <h3>3. Preview and download</h3>
