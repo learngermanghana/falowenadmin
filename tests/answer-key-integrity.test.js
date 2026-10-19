@@ -108,3 +108,20 @@ test("B1 Day 22 matches the current three-question Online-Dating and seven-state
 });
 
 
+
+test("A1 Day 4 Chapter 2 has two five-answer writing Teile and tutor-verified phone speaking", () => {
+  const entry = answerEntryByAssignmentId("A1-2");
+  assert.ok(entry);
+  assert.deepEqual(entry.expectedParts, ["teil1", "teil2", "teil3"]);
+  assert.deepEqual(entry.referenceAnswerParts, ["teil1", "teil2"]);
+  assert.deepEqual(entry.speakingParts, ["teil3"]);
+  assert.equal(entry.workbookVersion, "A1-2-FORM-WORDS-PHONE-V2");
+  assert.equal(entry.answers["Teil 1"].Answer1, "26");
+  assert.equal(entry.answers["Teil 1"].Answer5, "240");
+  assert.deepEqual(Object.values(entry.answers["Teil 2"]), [
+    "zwölf", "sechzehn", "zweihunderteinundzwanzig",
+    "dreitausendvierhundertfünfunddreißig", "siebzig",
+  ]);
+  assert.equal(entry.partGrading.teil3.gradingMode, "tutor_verified_speaking");
+  assert.equal(validateAnswerEntry("A1 Numbers and Addresses 2", entry).errors.length, 0);
+});
