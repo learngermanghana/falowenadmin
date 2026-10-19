@@ -7,7 +7,8 @@ export function formatStudioTranscript(source) {
   // intervening whitespace. Do not mistake spoken lists such as "A: ... , B: ..."
   // or commas at the end of existing lines for new voice segments.
   return String(source || "").replace(/\r\n/g, "\n")
-    .replace(/(?<=[.!?]),(?=(?:[ABC]:\s|\[PAUSE\s+\d{1,2}\]))/gi, "\n");
+    .replace(/(?<=[.!?]),(?=(?:[ABC]:\s|\[PAUSE\s+\d{1,2}\]))/gi, "\n")
+    .replace(/(\[PAUSE\s+\d{1,2}\]),(?=[ABC]:\s)/gi, "$1\n");
 }
 
 export function sameSpokenTranscript(a, b) {
