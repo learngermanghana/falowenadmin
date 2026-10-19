@@ -3,7 +3,7 @@ import { useToast } from "../context/ToastContext";
 import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson, getHoerenPublishCatalog } from "../services/hoerenStudioService";
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
-import { getStudioCourseCatalog, getStudioCourseContext } from "../utils/hoerenCourseCatalog.js";
+import { getStudioCourseCatalog, getStudioCourseContext, resolveStudioCourseModeLesson } from "../utils/hoerenCourseCatalog.js";
 import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
@@ -182,9 +182,8 @@ export default function HoerenStudioPage() {
     } else {
       setExamPart("");
       setType("dialogue"); setQuestionKind("richtig-falsch"); setRepeats(2);
-      const rows = getStudioCourseCatalog(level, courseLessons);
-      const existing = rows.find(row => row.assignmentKey.toUpperCase() === assignmentKey.toUpperCase());
-      chooseCourseLesson(existing?.assignmentKey || rows.find(row => row.chapter !== "0")?.assignmentKey);
+      const courseLesson = resolveStudioCourseModeLesson(level, assignmentKey, courseLessons);
+      chooseCourseLesson(courseLesson?.assignmentKey);
     }
   }
   function updateSpokenSegment(spokenIndex, text, speaker) {

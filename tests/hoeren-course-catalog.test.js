@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { getStudioCourseCatalog, getStudioCourseContext, STUDIO_COURSE_LEVELS } from "../src/utils/hoerenCourseCatalog.js";
+import { getStudioCourseCatalog, getStudioCourseContext, resolveStudioCourseModeLesson, STUDIO_COURSE_LEVELS } from "../src/utils/hoerenCourseCatalog.js";
 import { validateCourseLessonContext, courseLessonPrompt } from "../functions/hoerenCurriculumContext.js";
 import { validateScriptRequest } from "../functions/hoerenStudioApi.js";
 
@@ -62,4 +62,41 @@ test("UI picks from dictionary titles, not only publishable days", () => {
   assert.match(page, /getStudioCourseContext\(selectedCourseEntry\)/);
   assert.match(page, /selectedCourseEntry\?\.publishable/);
   assert.doesNotMatch(page, /Select day<\/option>/);
+});
+
+test("Goethe A2 switch does not leave stale A1 course lesson selected", () => {
+  const restored = resolveStudioCourseModeLesson("A2", "A1-12.1");
+  assert.ok(restored, "A2 has a valid first chapter fallback");
+  assert.equal(restored.level, "A2");
+  assert.ok(restored.assignmentKey.startsWith("A2-"));
+  assert.ok(restored.chapter !== "0");
+  assert.ok(restored.germanTitle);
+});
+
+test("returning from another Goethe level selects a valid titled lesson", () => {
+  for (const level of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
+    const selected = resolveStudioCourseModeLesson(level, "B1-10.28");
+    assert.ok(selected, level + " must restore a real lesson");
+    assert.equal(selected.level, level);
+    assert.ok(selected.germanTitle);
+    assert.ok(selected.chapter !== "0");
+    if (level === "B1") assert.equal(selected.assignmentKey, "B1-10.28");
+    else assert.notEqual(selected.assignmentKey, "B1-10.28");
+  }
+});
+
+test("Course Book return preserves an existing lesson and its canonical title", () => {
+  const selected = resolveStudioCourseModeLesson("B1", "b1-10.28", [
+    { level: "B1", assignmentKey: "B1-10.28", day: 28, route: "/campus/course/b1" },
+  ]);
+  assert.equal(selected.assignmentKey, "B1-10.28");
+  assert.equal(selected.germanTitle, "Klimafreundlich leben");
+  assert.equal(selected.publishable, true);
+  assert.equal(selected.publishDay, 28);
+});
+
+test("Goethe to Course Book mode calls validated current-level fallback", () => {
+  const page = readFileSync(new URL("../src/pages/HoerenStudioPage.jsx", import.meta.url), "utf8");
+  assert.match(page, /resolveStudioCourseModeLesson\(level, assignmentKey, courseLessons\)/);
+  assert.match(page, /chooseCourseLesson\(courseLesson\?\.assignmentKey\)/);
 });

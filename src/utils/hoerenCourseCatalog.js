@@ -59,3 +59,17 @@ export function getStudioCourseContext(entry) {
     englishTitle: entry.englishTitle || entry.title,
   };
 }
+
+/**
+ * Resolve a Course Book lesson when returning from Goethe mode.
+ * The exam level may have changed, so never reuse a stale assignment ID
+ * without verifying that it belongs to the current level's dictionary.
+ */
+export function resolveStudioCourseModeLesson(level, previousAssignmentKey, publishLessons = []) {
+  const rows = getStudioCourseCatalog(level, publishLessons);
+  const prior = canonicalId(previousAssignmentKey);
+  return rows.find(row => canonicalId(row.assignmentKey) === prior)
+    || rows.find(row => row.chapter !== "0")
+    || rows[0]
+    || null;
+}
