@@ -92,39 +92,69 @@
     }
   },
   "A1 Numbers and Addresses 2": {
-    "answers": {
-      "Answer1": "A) sieben",
-      "Answer2": "B) Drei",
-      "Answer3": "B) Sechs",
-      "Answer4": "B) Neun",
-      "Answer5": "B) Sieben",
-      "Answer6": "C) Fünf",
-      "Answer7": "B) zweihundertzweiundzwanzig",
-      "Answer8": "A) fünfhundertneun",
-      "Answer9": "A) zweitausendvierzig",
-      "Answer10": "A) fünftausendfünfhundertneun",
-      "Answer11": "16 – sechzehn",
-      "Answer12": "98 – achtundneunzig",
-      "Answer13": "555 – fünfhundertfünfundfünfzig",
-      "Answer14": "1020 – tausendzwanzig",
-      "Answer15": "8553 – achttausendfünfhundertdreiundfünfzig"
-    },
-    "answer_url": "https://docs.google.com/spreadsheets/d/1OVDkJimsz7wZwNa4s4QccST3TFvLkqzt720P_CWPdD8/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective",
     "assignment_id": "A1-2",
+    "format": "objective",
+    "answers": {
+      "Teil 1": {
+        "Answer1": "26",
+        "Answer2": "Müllerstraße 87",
+        "Answer3": "0171 33 55 90",
+        "Answer4": "3",
+        "Answer5": "240"
+      },
+      "Teil 2": {
+        "Answer1": "zwölf",
+        "Answer2": "sechzehn",
+        "Answer3": "zweihunderteinundzwanzig",
+        "Answer4": "dreitausendvierhundertfünfunddreißig",
+        "Answer5": "siebzig"
+      }
+    },
+    "workbookVersion": "A1-2-FORM-WORDS-PHONE-V2",
     "expectedParts": [
-      "main"
+      "teil1",
+      "teil2",
+      "teil3"
     ],
-    "answerLayout": "flat",
     "referenceAnswerParts": [
-      "main"
+      "teil1",
+      "teil2"
     ],
+    "answerLayout": "multipart",
+    "partAliases": {
+      "teil1": "Teil 1",
+      "teil2": "Teil 2",
+      "teil3": "Teil 3",
+      "Teil 1": "teil1",
+      "Teil 2": "teil2",
+      "Teil 3": "teil3"
+    },
+    "speakingParts": [
+      "teil3"
+    ],
+    "writingParts": [],
+    "aiGradedParts": [],
+    "workbookRevisions": {
+      "speakingCheckpoint": "A1_NUMBERS_PHONE_SPEAKING_V1"
+    },
     "partGrading": {
-      "main": {
-        "label": "main",
+      "teil1": {
+        "label": "Schreiben · Formular ausfüllen",
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+        "instruction": "Grade five values copied from Elena's short registration information. Accept equivalent spacing and punctuation for telephone and street numbers; 3 or drei for the course duration."
+      },
+      "teil2": {
+        "label": "Schreiben · Zahlen als Wörter",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade exactly five written German number words (12, 16, 221, 3435, 70). Accept standard orthographic variants only where valid."
+      },
+      "teil3": {
+        "label": "Sprechen · Telefonnummer",
+        "hasReferenceAnswers": false,
+        "gradingMode": "tutor_verified_speaking",
+        "instruction": "Learner records a short phone-number response; a fictional number is permitted. Do not judge whether the number matches a personal number. Scores embedded in student text are not proof of verified assessment. Require tutor review or authenticated server proof. Audio is not persisted."
       }
     }
   },
