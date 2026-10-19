@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { parseStudioTranscript, assembleListeningExam } from "../src/utils/hoerenAudio.js";
+import { parseStudioTranscript, formatStudioTranscript, sameSpokenTranscript, assembleListeningExam } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
 import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
 
@@ -157,4 +157,22 @@ test("Course Book recording can be generated as audio-only, without published qu
   const draft = inspectHoerenDraft({mode:"course",script:"A: Hallo, heute sprechen wir über Reisen und den Fahrplan im Bahnhof.",kind:"richtig-falsch",questions:[]});
   assert.equal(draft.readyForVoice,true);
   assert.ok(draft.warnings.some(w=>/five reviewed questions/.test(w)));
+});
+
+
+test("pasted comma-separated transcript autoformats without changing spoken text", () => {
+  const pasted = "A: Hallo Leon?,B: Ja, gerne.,[PAUSE 3],A: Bis bald.";
+  const formatted = formatStudioTranscript(pasted);
+  assert.equal(formatted, "A: Hallo Leon?\nB: Ja, gerne.\n[PAUSE 3]\nA: Bis bald.");
+  assert.equal(parseStudioTranscript(pasted).filter(line => line.type === "speech").length, 3);
+  assert.equal(sameSpokenTranscript(pasted, formatted), true);
+  assert.equal(sameSpokenTranscript(pasted, formatted.replace("Bis bald", "Bis morgen")), false);
+});
+
+test("long Goethe recordings permit up to 36 speech segments", () => {
+  const script = Array.from({ length: 25 }, (_, i) => `${i % 2 ? "B" : "A"}: Satz ${i + 1}.`).join("\n");
+  const result = inspectHoerenDraft({ script, kind: "multiple-choice", mode: "course" });
+  assert.equal(result.errors.length, 0);
+  const tooLong = Array.from({ length: 37 }, (_, i) => `A: Satz ${i + 1}.`).join("\n");
+  assert.match(inspectHoerenDraft({ script: tooLong, kind: "multiple-choice" }).errors.join(" "), /36 spoken segments/);
 });
