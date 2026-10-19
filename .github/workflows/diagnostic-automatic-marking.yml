@@ -1,0 +1,23 @@
+name: Assignment submission and auto-marking diagnostic
+on:
+  push:
+    branches:
+      - diagnostic/assignment-submission-marking-20261019
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: In-memory student submission and marking regression tests
+        run: node --test functions/automaticCourseMarking.test.cjs tests/structured-submission-payload.test.js tests/submission-identity.test.js tests/marking-queue.test.js
+      - name: Generate production worker using same predeploy build command
+        run: node scripts/buildAutomaticMarking.mjs --prepared
+      - name: Test generated objective and AI marking pipeline
+        run: node --test functions/automaticMarkingPipeline.test.cjs
