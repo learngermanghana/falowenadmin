@@ -14,7 +14,7 @@ const TEMPLATES = {
   telephone: "A: Guten Tag, hier spricht Anna Müller. Ich kann heute leider nicht zum Deutschkurs kommen.\n[PAUSE 3]\nA: Bitte rufen Sie mich morgen nach zehn Uhr zurück. Vielen Dank!",
 };
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-const TYPE_LABELS = { dialogue: "Two-person conversation", announcement: "Public announcement", telephone: "Telephone message", podcast: "Podcast", radio: "Radio programme", interview: "Interview", discussion: "Discussion", lecture: "Lecture" };
+const TYPE_LABELS = { dialogue: "Two-person conversation", announcement: "Public announcement", telephone: "Telephone message" };
 
 function downloadFile(data, filename, mimeType) {
   const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type: mimeType }));
@@ -393,7 +393,12 @@ export default function HoerenStudioPage() {
           </select>
         </label>
         {courseLessonsError ? <p className="hoeren-validation" role="alert">{courseLessonsError}</p> : null}
-        {selectedAssignment ? <p className="hoeren-hint">Course Book: {selectedAssignment.route}</p> : null}
+        {selectedAssignment ? <>
+          <p className="hoeren-hint">Course Book: {selectedAssignment.route}</p>
+          <button type="button" className="hoeren-quiet" disabled={!!busy} onClick={() => {
+            setTopic(selectedAssignment.title); clearAudio();
+          }}>Use this assignment title as the recording topic</button>
+        </> : null}
 
           </div> : <div className="hoeren-exam-schema">
             <strong>Goethe Hören preset is locked</strong>
