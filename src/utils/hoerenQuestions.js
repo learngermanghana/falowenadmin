@@ -21,9 +21,9 @@ export function parseGeminiLessonDraft(text) {
   };
 }
 
-export function validateDraftQuestions({ script, questions, kind }) {
+export function validateDraftQuestions({ script, questions, kind, expectedCount = 5 }) {
   if (!QUESTION_KINDS[kind]) throw new Error("Choose a supported question type.");
-  if (!Array.isArray(questions) || questions.length !== 5) throw new Error("Review exactly five listening questions.");
+  if (!Array.isArray(questions) || questions.length !== expectedCount) throw new Error(`Review exactly ${expectedCount} listening questions.`);
   const whole = normalizeQuote(script);
   if (whole.length < 35 || whole.length > 7500) throw new Error("A complete script is required.");
   return questions.map((q, index) => {
