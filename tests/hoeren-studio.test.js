@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { parseStudioTranscript, assembleListeningExam } from "../src/utils/hoerenAudio.js";
 import { validateDraftQuestions } from "../src/utils/hoerenQuestions.js";
+import { inspectHoerenDraft } from "../src/utils/hoerenDraftQuality.js";
 
 const require = createRequire(import.meta.url);
 const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("../functions/hoerenExamProfiles.js");
@@ -46,7 +47,7 @@ test("speech requests strictly limit paid generation inputs", () => {
   assert.throws(() => validateSpeechRequest({ text: "x".repeat(321) }), /320/);
   assert.throws(() => validateSpeechRequest({ text: "Hello", engine: "unknown" }), /engine/);
   assert.throws(() => validateSpeechRequest({ text: "[PAUSE 3]" }), /Pause/);
-  assert.throws(() => validateScriptRequest({ level: "C2", type: "dialogue", topic: "Hallo" }), /Teil/);
+  assert.throws(() => validateScriptRequest({ mode: "goethe", level: "C2", type: "dialogue", topic: "Hallo" }), /Teil/);
   assert.equal(validateSpeechRequest({ text: "Guten Tag", speaker: "C" }).speaker, "C");
 });
 test("Goethe-style editable transcript parses exact pauses and voices", () => {
@@ -111,4 +112,49 @@ test("C1 Buch 1/2/3 matching requires six evidence-backed choices", () => {
   const result = { candidates: [{ content: { parts: [{ text: JSON.stringify({ script, kind: "multiple-choice", questions }) }] } }] };
   assert.equal(extractLessonDraft(result, 6).questions.length, 6);
   assert.throws(() => extractLessonDraft(result, 5), /Exactly 5/);
+});
+
+test("Course Book mode accepts any supported level with manually selected multiple choice", () => {
+  const request = validateScriptRequest({ mode: "course", level: "B2", type: "interview", topic: "Arbeit und Beruf", kind: "multiple-choice" });
+  assert.equal(request.mode, "course");
+  assert.equal(request.profile, null);
+  assert.equal(request.kind, "multiple-choice");
+  const legacy = validateScriptRequest({ level: "A1", type: "dialogue", topic: "Bus fahren" });
+  assert.equal(legacy.mode, "course");
+  assert.throws(() => validateScriptRequest({ mode: "something", level: "A1", topic: "Bus fahren" }), /Course Book/);
+});
+
+test("Goethe mode locks the correct question kind and task profile", () => {
+  const profile = getExamProfile("C1", "1");
+  assert.equal(validateScriptRequest({ mode: "goethe", level: "C1", part: "1", type: "podcast", topic: "Bücher", kind: "richtig-falsch" }).kind, profile.kind);
+  assert.throws(() => validateScriptRequest({ mode: "goethe", level: "C1", type: "dialogue", topic: "Bücher" }), /Teil/);
+  assert.equal(getExamProfile("C2", "3").questionCount, 10);
+});
+
+test("structural exam preflight rejects wrong counts and preserves teacher review", () => {
+  const p = getExamProfile("C1", "1");
+  const script = "A: Buch eins ist ein spannender Roman über Wetter. Buch zwei ist eine Studie über Städte. Buch drei ist ein Essay über den Wald.";
+  const options = ["Buch 1 – Wetter", "Buch 2 – Städte", "Buch 3 – Wald"];
+  const evidence = ["Buch eins ist ein spannender Roman", "Buch zwei ist eine Studie", "Buch drei ist ein Essay"];
+  const questions = Array.from({length: 6}, (_,i) => ({
+    question: "Welches Buch beschreibt Aussage Nummer " + (i+1) + "?",
+    options, correctIndex: i % 3, evidence: evidence[i % 3],
+  }));
+  const good = inspectHoerenDraft({mode:"goethe",script,kind:"multiple-choice",questions,expectedCount:6,profile:p,questionScript:script});
+  assert.equal(good.errors.length,0);
+  assert.equal(good.readyForVoice,true);
+  const badCount = inspectHoerenDraft({mode:"goethe",script,kind:"multiple-choice",questions:questions.slice(0,5),expectedCount:6,profile:p,questionScript:script});
+  assert.equal(badCount.readyForVoice,false);
+  assert.match(badCount.errors.join(" "), /6/);
+  const badChoices=questions.map(q=>({...q,options:["Roman","Sachbuch","Essay"]}));
+  const invalid = inspectHoerenDraft({mode:"goethe",script,kind:"multiple-choice",questions:badChoices,expectedCount:6,profile:p,questionScript:script});
+  assert.match(invalid.errors.join(" "), /Buch 1/);
+  const changed = inspectHoerenDraft({mode:"goethe",script:script+" Extra.",kind:"multiple-choice",questions,expectedCount:6,profile:p,questionScript:script});
+  assert.equal(changed.readyForVoice,false);
+});
+
+test("Course Book recording can be generated as audio-only, without published questions", () => {
+  const draft = inspectHoerenDraft({mode:"course",script:"A: Hallo, heute sprechen wir über Reisen und den Fahrplan im Bahnhof.",kind:"richtig-falsch",questions:[]});
+  assert.equal(draft.readyForVoice,true);
+  assert.ok(draft.warnings.some(w=>/five reviewed questions/.test(w)));
 });
