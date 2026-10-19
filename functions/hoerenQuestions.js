@@ -2,9 +2,9 @@
 function norm(value) {
   return String(value || "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase("de-DE");
 }
-function validateQuestionSet({ script, kind, questions }) {
-  if (!["richtig-falsch", "multiple-choice"].includes(kind) || !Array.isArray(questions) || questions.length !== 5) {
-    throw new Error("Exactly five questions and a supported question type are required.");
+function validateQuestionSet({ script, kind, questions, expectedCount = 5 }) {
+  if (!["richtig-falsch", "multiple-choice"].includes(kind) || !Array.isArray(questions) || questions.length !== expectedCount || expectedCount < 1 || expectedCount > 15) {
+    throw new Error(`Exactly ${expectedCount} questions and a supported question type are required.`);
   }
   const source = norm(script);
   if (source.length < 35 || source.length > 7500) throw new Error("Invalid script length.");
@@ -24,7 +24,7 @@ function validateQuestionSet({ script, kind, questions }) {
   }
   return questions;
 }
-function extractLessonDraft(result = {}) {
+function extractLessonDraft(result = {}, expectedCount = 5) {
   const raw = (result.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim()
     .replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
   let obj;
@@ -32,15 +32,15 @@ function extractLessonDraft(result = {}) {
   catch { throw new Error("Google did not return structured questions. Try again."); }
   const script = String(obj?.script || "").trim();
   const kind = String(obj?.kind || "richtig-falsch");
-  validateQuestionSet({ script, kind, questions: obj?.questions });
+  validateQuestionSet({ script, kind, questions: obj?.questions, expectedCount });
   return { script, kind, questions: obj.questions };
 }
-function questionInstructions(kind) {
+function questionInstructions(kind, count = 5) {
   const task = kind === "multiple-choice"
     ? "Each question must have options: three distinct strings, and correctIndex: 0, 1 or 2. No answer field."
     : "Each question must be a true/false statement with answer: 'Richtig' or 'Falsch'. Mix true and false statements.";
   return "Return ONLY a JSON object with properties script (complete transcript), kind ('" + kind +
-    "'), and questions (exactly five objects). Every question needs a question string and an evidence string copied verbatim as a contiguous quote from the transcript (6+ characters). " +
+    "'), and questions (exactly " + count + " objects). Every question needs a question string and an evidence string copied verbatim as a contiguous quote from the transcript (6+ characters). " +
     task + " Confirm every correct answer against its own evidence. No explanations outside JSON.";
 }
 module.exports = { norm, validateQuestionSet, extractLessonDraft, questionInstructions };

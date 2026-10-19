@@ -13,7 +13,7 @@ export function parseStudioTranscript(source) {
       if (seconds < 1 || seconds > 20) throw new Error("Pauses must last 1–20 seconds.");
       return { type: "pause", seconds };
     }
-    const turn = line.match(/^([AB]):\s*(.+)$/i);
+    const turn = line.match(/^([ABC]):\s*(.+)$/i);
     if (!turn) throw new Error(`Line ${index + 1}: use A: text, B: text, or [PAUSE 3].`);
     if (turn[2].length > 320) throw new Error(`Line ${index + 1} is too long (max 320 characters).`);
     return { type: "speech", speaker: turn[1].toUpperCase(), text: turn[2] };

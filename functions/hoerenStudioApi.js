@@ -8,10 +8,11 @@ const MODELS = Object.freeze({
 });
 const SCRIPT_MODEL = "gemini-3.5-flash-lite";
 const LIMITS = Object.freeze({ script: 5, speech: 36 });
-const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2"]);
-const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone"]);
+const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
+const ALLOWED_TYPES = new Set(["dialogue", "announcement", "telephone", "podcast", "radio", "interview", "discussion", "lecture"]);
 const crypto = require("node:crypto");
 const { extractLessonDraft, questionInstructions } = require("./hoerenQuestions");
+const { EXAM_PROFILES, getExamProfile, buildExamPrompt } = require("./hoerenExamProfiles");
 // SHA-256 identifier for the single verified Falowen owner UID. This is not an API secret.
 // Using a digest avoids publishing the Firebase account UID in public repository code.
 const DEFAULT_OWNER_UID_SHA256 = "e8bc09aac410e86216e384ab4c612d6ac6551273085f8344206b23f4004f90a1";
@@ -35,7 +36,7 @@ function validateSpeechRequest(body = {}) {
   const speaker = String(body.speaker || "A").trim().toUpperCase();
   const engine = String(body.engine || "lite").trim();
   if (!text || text.length > 320) throw Object.assign(new Error("Each spoken line must contain 1–320 characters."), { status: 400 });
-  if (!["A", "B"].includes(speaker)) throw Object.assign(new Error("Choose voice A or B."), { status: 400 });
+  if (!["A", "B", "C"].includes(speaker)) throw Object.assign(new Error("Choose voice A, B or C."), { status: 400 });
   if (!Object.hasOwn(MODELS, engine)) throw Object.assign(new Error("Unsupported voice engine."), { status: 400 });
   if (/\[(?:PAUSE|SILENCE|REPEAT)/i.test(text)) throw Object.assign(new Error("Pause instructions must be separate from spoken lines."), { status: 400 });
   return { text, speaker, engine };
@@ -45,9 +46,17 @@ function validateScriptRequest(body = {}) {
   const level = String(body.level || "A1").toUpperCase();
   const type = String(body.type || "dialogue").toLowerCase();
   const topic = String(body.topic || "").trim();
+  const part = String(body.part || "").trim();
+  const mode = String(body.mode || (part ? "goethe" : "course")).toLowerCase();
+  const kind = String(body.kind || "richtig-falsch");
+  if (!["course", "goethe"].includes(mode)) throw Object.assign(new Error("Select Course Book or Goethe exam mode."), { status: 400 });
   if (!ALLOWED_LEVELS.has(level) || !ALLOWED_TYPES.has(type)) throw Object.assign(new Error("Unsupported exam level or recording type."), { status: 400 });
   if (topic.length < 4 || topic.length > 240) throw Object.assign(new Error("Enter a topic (4–240 characters)."), { status: 400 });
-  return { level, type, topic };
+  if (!["richtig-falsch", "multiple-choice"].includes(kind)) throw Object.assign(new Error("Unsupported question format."), { status: 400 });
+  const profile = mode === "goethe" ? getExamProfile(level, part) : null;
+  if (mode === "goethe" && !profile) throw Object.assign(new Error("Select a supported Hören Teil/Aufgabe for this level."), { status: 400 });
+  if (profile && type !== profile.type) throw Object.assign(new Error("Recording type does not match this exam Teil."), { status: 400 });
+  return { level, type, topic, part, profile, mode, kind: profile?.kind || kind };
 }
 
 function extractAudio(result = {}) {
@@ -139,14 +148,14 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
       return res.json({
         ok: true, ready: Boolean(String(geminiKey.value() || "").trim()),
         remaining: { script: Math.max(0, LIMITS.script - usage.script), speech: Math.max(0, LIMITS.speech - usage.speech) },
-        limits: LIMITS, models: MODELS,
+        limits: LIMITS, models: MODELS, profiles: EXAM_PROFILES,
       });
     } catch (error) { return handleError(res, error); }
   });
 
   app.post("/ai-studio/script", guard, async (req, res) => {
     try {
-      const { level, type, topic } = validateScriptRequest(req.body);
+      const { level, type, topic, profile, kind, mode } = validateScriptRequest(req.body);
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       const remaining = await reserveUsage(db, req.hoerenOwnerUid, "script");
@@ -154,12 +163,14 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`,
         key,
         { contents: [{ role: "user", parts: [{ text:
-          `Create an original German listening dialogue. Level ${level}. Type ${type}. Topic ${topic}.\n` +
-          "Use realistic grammatically correct German, 8–12 alternating A:/B: turns (or A: only for announcements), around 80–130 spoken words. No stage directions or official Goethe affiliation. " +
-          questionInstructions("richtig-falsch")
-        }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 1750 } },
+          profile ? buildExamPrompt(profile, topic, questionInstructions(profile.kind, profile.questionCount)) :
+          (`Create an original German listening recording for a Falowen Course Book activity. CEFR level ${level}. Recording format ${type}. Topic ${topic}.\n` +
+          "Write a practical teaching text with realistic, grammatically correct German, about 80–150 spoken words. Use A:/B:/C: for speaker turns, [PAUSE 3] as an optional standalone instruction; 18 segments maximum, each no more than 320 characters. Do not claim official Goethe affiliation. " +
+          questionInstructions(kind))
+        }] }], generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: profile ? 6000 : 1750 } },
       );
-      const draft = extractLessonDraft(result);
+      const draft = extractLessonDraft(result, profile?.questionCount || 5);
+      if (draft.kind !== kind) throw new Error("Google returned the wrong answer format.");
       return res.json({ ok: true, ...draft, remaining });
     } catch (error) { return handleError(res, error); }
   });
@@ -169,20 +180,25 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
     try {
       const script = String(req.body?.script || "").trim();
       const kind = String(req.body?.kind || "richtig-falsch");
-      if (script.length < 35 || script.length > 6000 || !["richtig-falsch", "multiple-choice"].includes(kind)) {
+      if (script.length < 35 || script.length > 7500 || !["richtig-falsch", "multiple-choice"].includes(kind)) {
         return res.status(400).json({ ok: false, error: "Enter a complete script and a supported question type." });
       }
+      const mode = String(req.body?.mode || (req.body?.part ? "goethe" : "course")).toLowerCase();
+      if (!["goethe", "course"].includes(mode)) return res.status(400).json({ ok: false, error: "Choose a valid production mode." });
+      const profile = mode === "goethe" ? getExamProfile(req.body?.level, req.body?.part) : null;
+      if (mode === "goethe" && !profile) return res.status(400).json({ ok: false, error: "Choose a valid exam level and Teil." });
+      if (profile && kind !== profile.kind) return res.status(400).json({ ok: false, error: "Question type must match the selected Teil." });
       const key = String(geminiKey.value() || "").trim();
       if (!key) return res.status(503).json({ ok: false, error: "Gemini API key is not configured." });
       const remaining = await reserveUsage(db, req.hoerenOwnerUid, "script");
       const result = await postGemini(
         `https://generativelanguage.googleapis.com/v1beta/models/${SCRIPT_MODEL}:generateContent`, key,
         { contents: [{ role: "user", parts: [{ text:
-          "Create five accurate listening questions from this exact German transcript. Preserve the transcript completely. " +
-          questionInstructions(kind) + "\nTranscript:\n" + script
-        }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: 1700 } },
+          `Create ${profile?.questionCount || 5} accurate listening questions from this exact German transcript. Preserve the transcript completely. ` +
+          questionInstructions(kind, profile?.questionCount || 5) + (profile ? "\nSelected format: " + profile.structure : "") + "\nTranscript:\n" + script
+        }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: profile ? 5500 : 1700 } },
       );
-      const draft = extractLessonDraft(result);
+      const draft = extractLessonDraft(result, profile?.questionCount || 5);
       if (draft.script !== script || draft.kind !== kind) throw Object.assign(
         new Error("Google modified the supplied script or question type. Please retry."), { status: 502 });
       return res.json({ ok: true, questions: draft.questions, kind, remaining });
@@ -208,7 +224,7 @@ function registerHoerenStudioRoutes({ app, db, requireAuth, geminiKey, runtimeCo
             }],
           }],
           response_format: { type: "audio", mime_type: "audio/wav" },
-          generation_config: { speech_config: [{ voice: speaker === "A" ? "Kore" : "Puck" }] },
+          generation_config: { speech_config: [{ voice: speaker === "A" ? "Kore" : speaker === "B" ? "Puck" : "Charon" }] },
         },
         45_000,
       );
