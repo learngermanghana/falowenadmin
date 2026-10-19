@@ -502,6 +502,13 @@
         "Answer3": "A",
         "Answer4": "B",
         "Answer5": "A"
+      },
+      "teil3": {
+        "Answer1": "Richtig",
+        "Answer2": "Falsch",
+        "Answer3": "Falsch",
+        "Answer4": "Richtig",
+        "Answer5": "Falsch"
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1kGGQZ89YZV-xGUdFKIHUFOVYG7wB7PnCBF8DqBd4Zok/gviz/tq?tqx=out:html&sheet=Key",
@@ -509,10 +516,12 @@
     "assignment_id": "A1-11",
     "expectedParts": [
       "teil1",
-      "teil2"
+      "teil2",
+      "teil3"
     ],
     "referenceAnswerParts": [
-      "teil2"
+      "teil2",
+      "teil3"
     ],
     "answerLayout": "multipart",
     "partGrading": {
@@ -527,6 +536,12 @@
         "hasReferenceAnswers": true,
         "gradingMode": "answer_key",
         "instruction": "Grade the five Bahnhof listening questions. Former Teil 1 reading questions have been replaced."
+      },
+      "teil3": {
+        "label": "Lesen · Wegbeschreibung",
+        "hasReferenceAnswers": true,
+        "gradingMode": "answer_key",
+        "instruction": "Grade the five Richtig/Falsch statements against Teil 3 reference answers. Anna turns right; her house is opposite the bakery. Sarah turns left; the café is next to the post. The park is just behind the bus stop."
       }
     },
     "writingParts": [],
@@ -536,6 +551,10 @@
     ],
     "workbookRevisions": {
       "speakingCheckpoint": "GOETHE_A1_TUTOR_SPEAKING_V1"
+    },
+    "partAliases": {
+      "teil3": "Teil 3",
+      "Teil 3": "teil3"
     }
   },
   "A1 Two Case Preposition 12.1": {
