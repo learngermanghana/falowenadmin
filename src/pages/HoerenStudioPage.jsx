@@ -285,7 +285,7 @@ export default function HoerenStudioPage() {
             </label>
             <p className="hoeren-hint">The selected Teil determines the question format and count. AI creates the script and questions in one request. Regenerating questions from edited text uses one of your five daily script requests.</p>
             <button type="button" className="hoeren-quiet" disabled={!ready || !!busy || !status?.remaining.script || script.trim().length < 35} onClick={generateQuestions}>
-              {busy === "questions" ? "Creating questions…" : "Generate {questionCount} questions · one script quota"}
+              {busy === "questions" ? "Creating questions…" : `Generate ${questionCount} questions · one script quota`}
             </button>
             {questions.length ? <>
               {!questionsMatchScript ? <p className="hoeren-validation">The script changed. Review the questions and regenerate them, or restore the reviewed script before publishing.</p> : null}
