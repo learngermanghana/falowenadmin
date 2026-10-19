@@ -25,6 +25,8 @@ test("recovered rows must be proper matching timer records", () => {
   assert.equal(isMatchingCampusTimer(record, "a1-11"), true);
   assert.equal(isMatchingCampusTimer(record, "A1-12"), false);
   assert.equal(isMatchingCampusTimer({ ...record, timerRecord: false }, "A1-11"), false);
+  // Older deterministic timed records predate the explicit timerRecord flag.
+  assert.equal(isMatchingCampusTimer({ ...record, timerRecord: undefined }, "A1-11"), true);
   assert.equal(isMatchingCampusTimer({ ...record, id: "other__uid__a1-11" }, "A1-11"), false);
   assert.equal(isMatchingCampusTimer({ ...record, studentId: "" }, "A1-11"), false);
 });
