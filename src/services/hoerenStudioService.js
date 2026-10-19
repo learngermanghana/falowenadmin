@@ -18,9 +18,9 @@ async function request(endpoint, payload) {
 }
 
 export const getStudioStatus = () => request("status");
-export const makeListeningScript = ({ topic, type, level, part, mode, kind }) => request("script", { topic, type, level, part, mode, kind });
+export const makeListeningScript = ({ topic, type, level, part, mode, kind, lessonContext }) => request("script", { topic, type, level, part, mode, kind, lessonContext });
 export const makeSpeechClip = ({ text, speaker, engine }) => request("speech", { text, speaker, engine });
-export const makeListeningQuestions = ({ script, kind, level, part, mode }) => request("questions", { script, kind, level, part, mode });
+export const makeListeningQuestions = ({ script, kind, level, part, mode, lessonContext }) => request("questions", { script, kind, level, part, mode, lessonContext });
 
 // Student API already owns the Cloudflare R2 credentials, Firestore storage and learner access checks.
 // Do not pass R2 credentials or Gemini secrets through the browser.

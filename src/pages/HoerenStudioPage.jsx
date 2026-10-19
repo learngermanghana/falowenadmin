@@ -3,6 +3,7 @@ import { useToast } from "../context/ToastContext";
 import { getStudioStatus, makeListeningScript, makeSpeechClip, makeListeningQuestions, publishListeningLesson, getHoerenPublishCatalog } from "../services/hoerenStudioService";
 import { QUESTION_KINDS, validateDraftQuestions } from "../utils/hoerenQuestions";
 import { inspectHoerenDraft } from "../utils/hoerenDraftQuality.js";
+import { getStudioCourseCatalog, getStudioCourseContext } from "../utils/hoerenCourseCatalog.js";
 import { assembleListeningExam, base64WavToBytes, parseStudioTranscript } from "../utils/hoerenAudio";
 import { SCENES, decodeLocalAtmosphere } from "../utils/hoerenSoundscape";
 import { encodeWavAsMp3 } from "../utils/hoerenMp3";
@@ -58,9 +59,9 @@ export default function HoerenStudioPage() {
   const [level, setLevel] = useState("A1");
   const [examPart, setExamPart] = useState("");
   const [type, setType] = useState("dialogue");
-  const [topic, setTopic] = useState("Eine Fahrkarte am Bahnhof kaufen");
+  const [topic, setTopic] = useState("Wechselpräpositionen und Dativpräpositionen");
   const [engine, setEngine] = useState("lite");
-  const [script, setScript] = useState(TEMPLATES.dialogue);
+  const [script, setScript] = useState("");
   const [lineGap, setLineGap] = useState(0.7);
   const [repeats, setRepeats] = useState(2);
   const [repeatGap, setRepeatGap] = useState(6);
@@ -87,6 +88,7 @@ export default function HoerenStudioPage() {
   const [published, setPublished] = useState(null);
   const [courseLessons, setCourseLessons] = useState([]);
   const [courseLessonsError, setCourseLessonsError] = useState("");
+  const [lessonSearch, setLessonSearch] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -126,12 +128,23 @@ export default function HoerenStudioPage() {
   const cachedVoiceCount = spokenLines.filter(line => voiceClipCache.current.has(clipKey(line))).length;
   const missingVoiceKeys = [...new Set(spokenLines.map(clipKey))].filter(key => !voiceClipCache.current.has(key));
   const clipsToGenerate = missingVoiceKeys.length;
-  const availableDays = [...new Set(courseLessons.filter(item => item.level === level).map(item => Number(item.day)))].sort((a, b) => a - b);
-  const filteredAssignments = courseLessons.filter(item => item.level === level && Number(item.day) === Number(publishDay));
-  const selectedAssignment = filteredAssignments.find(item => item.assignmentKey === assignmentKey);
+  // The complete dictionary is the browsing source; the student API only
+  // confirms which lessons currently support direct publication.
+  const courseCatalog = useMemo(() => getStudioCourseCatalog(level, courseLessons), [level, courseLessons]);
+  const selectedCourseEntry = courseCatalog.find(entry => entry.assignmentKey.toUpperCase() === assignmentKey.toUpperCase()) || null;
+  const selectedAssignment = selectedCourseEntry?.publishable
+    ? courseLessons.find(item => String(item.level).toUpperCase() === level &&
+        String(item.assignmentKey).toUpperCase() === selectedCourseEntry.assignmentKey.toUpperCase() &&
+        Number(item.day) === selectedCourseEntry.publishDay)
+    : null;
+  const filteredCatalog = courseCatalog.filter(entry => {
+    const query = lessonSearch.toLocaleLowerCase().trim();
+    return !query || [entry.assignmentKey, entry.chapter, entry.title, entry.germanTitle, entry.englishTitle]
+      .some(value => String(value || "").toLocaleLowerCase().includes(query));
+  });
   const canPublish = !!audioBlob && !!reviewedQuestions.data.length && questionsMatchScript &&
     teacherApproved && !busy && mode === "course" && ["A1", "A2", "B1"].includes(level) && questionCount === 5 &&
-    !!selectedAssignment && Number.isInteger(Number(publishDay));
+    !!selectedAssignment && !!selectedCourseEntry?.publishable && Number(publishDay) === Number(selectedCourseEntry.publishDay) && Number.isInteger(Number(publishDay));
   const updateQuestions = (index, changes) => {
     setQuestions(existing => existing.map((q, i) => i === index ? { ...q, ...changes } : q));
     setTeacherApproved(false); setPublished(null);
@@ -148,6 +161,18 @@ export default function HoerenStudioPage() {
     const soundscape = { scene, ambience: useAtmosphere, bell: openingBell, ending: endingSound, volume: soundVolume / 100, userAudio };
     return assembleListeningExam(transcript.lines, clips, { repeats, lineGap, repeatGap, soundscape });
   }
+  function chooseCourseLesson(nextKey, nextLevel = level) {
+    const choice = getStudioCourseCatalog(nextLevel, courseLessons).find(entry =>
+      entry.assignmentKey.toUpperCase() === String(nextKey || "").toUpperCase());
+    setLevel(nextLevel);
+    setLessonSearch("");
+    setAssignmentKey(choice?.assignmentKey || "");
+    setPublishDay(choice?.publishDay ?? choice?.day ?? 0);
+    setTopic(choice?.germanTitle || "");
+    setScript("");
+    setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null);
+    clearAudio();
+  }
   function changeProductionMode(nextMode) {
     if (nextMode === mode) return;
     setMode(nextMode);
@@ -156,11 +181,10 @@ export default function HoerenStudioPage() {
       setLevelAndPart(examLevel, "1");
     } else {
       setExamPart("");
-      setType("dialogue"); setTopic("Eine Fahrkarte am Bahnhof kaufen");
-      setScript(TEMPLATES.dialogue); setQuestionKind("richtig-falsch");
-      setQuestions([]); setQuestionScript("");
-      setTeacherApproved(false); setPublished(null); setRepeats(2);
-      clearAudio();
+      setType("dialogue"); setQuestionKind("richtig-falsch"); setRepeats(2);
+      const rows = getStudioCourseCatalog(level, courseLessons);
+      const existing = rows.find(row => row.assignmentKey.toUpperCase() === assignmentKey.toUpperCase());
+      chooseCourseLesson(existing?.assignmentKey || rows.find(row => row.chapter !== "0")?.assignmentKey);
     }
   }
   function updateSpokenSegment(spokenIndex, text, speaker) {
@@ -206,7 +230,8 @@ export default function HoerenStudioPage() {
   async function generateScript() {
     setBusy("script"); setProgress(""); clearAudio();
     try {
-      const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind });
+      const result = await makeListeningScript({ topic, type, level, part: mode === "goethe" ? examPart : "", mode, kind: questionKind,
+        lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
       setScript(result.script);
       setQuestions(result.questions || []);
       setQuestionKind(result.kind || "richtig-falsch");
@@ -221,7 +246,8 @@ export default function HoerenStudioPage() {
     if (script.trim().length < 35 || !ready) return;
     setBusy("questions"); setProgress("");
     try {
-      const result = await makeListeningQuestions({ script, kind: questionKind, level, part: mode === "goethe" ? examPart : "", mode });
+      const result = await makeListeningQuestions({ script, kind: questionKind, level, part: mode === "goethe" ? examPart : "", mode,
+        lessonContext: mode === "course" ? getStudioCourseContext(selectedCourseEntry) : null });
       setQuestions(result.questions);
       setQuestionScript(script);
       setTeacherApproved(false); setPublished(null);
@@ -238,7 +264,7 @@ export default function HoerenStudioPage() {
         mp3,
         metadata: {
           level, day: Number(publishDay), assignmentKey: assignmentKey.trim().toUpperCase(),
-          title: topic.trim(), script, kind: questionKind,
+          title: selectedCourseEntry?.germanTitle || topic.trim(), script, kind: questionKind,
           questions: reviewedQuestions.data, teacherApproved,
         },
       });
@@ -347,7 +373,10 @@ export default function HoerenStudioPage() {
             <label>German level<select value={level} disabled={!!busy} onChange={event => {
               const next = event.target.value;
               if (mode === "goethe") setLevelAndPart(next, "1");
-              else { setLevel(next); setQuestions([]); setQuestionScript(""); setTeacherApproved(false); setPublished(null); clearAudio(); }
+              else {
+                const first = getStudioCourseCatalog(next, courseLessons).find(entry => entry.chapter !== "0");
+                chooseCourseLesson(first?.assignmentKey, next);
+              }
             }}>{LEVELS.filter(choice => mode === "course" || choice !== "A1").map(choice => <option key={choice}>{choice}</option>)}</select></label>
             {mode === "goethe" ? <label>Hören {level === "C2" ? "Aufgabe" : "Teil"}
               <select value={examPart} disabled={!!busy || !status?.profiles?.[level]} onChange={event => setLevelAndPart(level, event.target.value)}>
@@ -364,42 +393,31 @@ export default function HoerenStudioPage() {
             {level === "C1" && examPart === "1" ? <p><strong>Book matching:</strong> 3 original books (Buch 1, Buch 2, Buch 3), 6 statements, one play. Exam reading time: 60 seconds.</p> : null}
           </div> : null}
           {mode === "course" ? <div className="hoeren-course-destination">
-            <h3>Target Course Book assignment</h3>
-            <p className="hoeren-hint">Select the existing assignment before creating audio. For direct publishing, only A1–B1 five-question practice is currently supported.</p>
-        <div className="hoeren-input-grid">
-          <label>Falowen level
-            <input value={level} readOnly aria-label="Selected course level" />
-          </label>
-          <label>Course Book day
-            <select value={availableDays.includes(Number(publishDay)) ? String(publishDay) : ""} disabled={!!busy || !availableDays.length}
-              onChange={e => {
-                const day = Number(e.target.value);
-                const first = courseLessons.find(item => item.level === level && Number(item.day) === day);
-                setPublishDay(day); setAssignmentKey(first?.assignmentKey || "");
-                setTeacherApproved(false); setPublished(null);
-              }}>
-              <option value="">Select day</option>
-              {availableDays.map(day => <option key={day} value={day}>Day {day}</option>)}
-            </select>
-          </label>
-        </div>
-        <label>Falowen assignment
-          <select value={selectedAssignment ? assignmentKey : ""} disabled={!!busy || !filteredAssignments.length}
-            onChange={e => { setAssignmentKey(e.target.value); setTeacherApproved(false); setPublished(null); }}>
-            <option value="">Select assignment</option>
-            {filteredAssignments.map(item => <option key={item.assignmentKey} value={item.assignmentKey}>
-              {item.assignmentKey} · {item.title}
-            </option>)}
-          </select>
-        </label>
-        {courseLessonsError ? <p className="hoeren-validation" role="alert">{courseLessonsError}</p> : null}
-        {selectedAssignment ? <>
-          <p className="hoeren-hint">Course Book: {selectedAssignment.route}</p>
-          <button type="button" className="hoeren-quiet" disabled={!!busy} onClick={() => {
-            setTopic(selectedAssignment.title); clearAudio();
-          }}>Use this assignment title as the recording topic</button>
-        </> : null}
-
+            <h3>Choose a Course Book chapter by title</h3>
+            <p className="hoeren-hint">All {courseCatalog.length} {level} dictionary lessons are available for generating audio, including chapters not yet in the student publish catalogue. The lesson title and ID guide the AI automatically.</p>
+            <label>Search chapter, lesson title or assignment ID
+              <input type="search" value={lessonSearch} disabled={!!busy}
+                onChange={e => setLessonSearch(e.target.value)}
+                placeholder="e.g. B1-10.28, Klimafreundlich leben" />
+            </label>
+            <label>Dictionary lesson title
+              <select value={filteredCatalog.some(item => item.assignmentKey === assignmentKey) ? assignmentKey : ""}
+                disabled={!!busy || !courseCatalog.length}
+                onChange={e => chooseCourseLesson(e.target.value)}>
+                <option value="">Select a lesson by title</option>
+                {filteredCatalog.map(item => <option key={item.assignmentKey} value={item.assignmentKey}>{item.label}</option>)}
+              </select>
+            </label>
+            {filteredCatalog.length === 0 ? <p className="hoeren-hint">No matching titles. Clear your search to show the complete dictionary.</p> : null}
+            {selectedCourseEntry ? <div className="hoeren-exam-schema">
+              <strong>{selectedCourseEntry.assignmentKey} · {selectedCourseEntry.germanTitle}</strong>
+              <p>Chapter {selectedCourseEntry.chapter} · {selectedCourseEntry.englishTitle}</p>
+              <p>{selectedCourseEntry.publishable && ["A1", "A2", "B1"].includes(level)
+                ? "This lesson has a supported student publishing destination."
+                : "Available for script, questions and audio export. Direct publishing is not available for this lesson."}</p>
+              {selectedCourseEntry.publishRoute ? <p>Course Book location: {selectedCourseEntry.publishRoute}</p> : null}
+            </div> : null}
+            {courseLessonsError ? <p className="hoeren-hint">Publishing status unavailable: {courseLessonsError}. The full course dictionary remains available for audio creation.</p> : null}
           </div> : <div className="hoeren-exam-schema">
             <strong>Goethe Hören preset is locked</strong>
             <p>{selectedProfile ? `${selectedProfile.questionCount} questions · ${QUESTION_KINDS[selectedProfile.kind]} · play ${selectedProfile.repeats === 1 ? "once" : "twice"}` : "Select an exam Teil to load its rules."}</p>
@@ -408,9 +426,9 @@ export default function HoerenStudioPage() {
             <label>Recording style<input value={selectedProfile?.type || type} readOnly /></label>
             <label>Voice segments budget<input value={`Up to 18 speech clips · ${status?.remaining.speech ?? "—"} left today`} readOnly /></label>
           </div>
-          <label>Topic for an original script<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
-          <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
-          <p className="hoeren-hint">You can also write or paste your own script without using Google's script-generation quota.</p>
+          <label>{mode === "course" ? "Lesson-aligned audio topic (optional subtopic)" : "Topic for an original exam script"}<input value={topic} disabled={!!busy} maxLength={240} onChange={(event) => { setTopic(event.target.value); clearAudio(); }} placeholder="e.g. Shopping at a supermarket" /></label>
+          <button className="hoeren-button" type="button" disabled={!ready || !!busy || topic.trim().length < 4 || !status?.remaining.script || (mode === "goethe" && !selectedProfile) || (mode === "course" && !selectedCourseEntry)} onClick={generateScript}>{busy === "script" ? "Generating script…" : mode === "goethe" ? "Generate complete Goethe task" : "Generate Course Book script + questions"}</button>
+          <p className="hoeren-hint">{mode === "course" ? "The selected dictionary chapter, assignment ID and German/English titles are passed to the AI so the recording and questions stay aligned with that course lesson." : "You can also write or paste your own script without spending a script-generation request."}</p>
           <label>Transcript — edit before creating audio
             <textarea rows={13} spellCheck lang="de" value={script} disabled={!!busy} onChange={(event) => { setScript(event.target.value); setTeacherApproved(false); setPublished(null); clearAudio(); }} />
           </label>
